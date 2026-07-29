@@ -1,0 +1,535 @@
+{
+  "company_code": "TRANSP",
+  "as_of_date": "2026-03-31",
+  "source": "docs/fixtures/ob01/Cursor-Balances-Reference.xlsx (QBO Balance Sheet, accrual, pulled 2026-07-28 16:48 CDT)",
+  "basis": "Owner ruling 2026-07-29 (Cursor-OpeningBalances-OB01.md) \u2014 clone-as-is now, adjustable live, no finality gate. README 'do not enter as-is' note is SUPERSEDED by this ruling.",
+  "acceptance_totals_cents": {
+    "assets": -834113738,
+    "liabilities": 133235669,
+    "equity": -967349407,
+    "balance_check": 0
+  },
+  "match_aliases_and_fold_note": "2026-07-29 prod-truth pass against live Neon catalogs.accounts (unmasked): two fixture labels are QBO-report-only spellings of live CoA rows (match_aliases below); one fixture label ('Net Income') is a QBO Balance Sheet rollup with NO catalogs.accounts row in any chart of accounts and is folded into Retained Earnings instead (fold_into below) \u2014 -106348665 (Net Income) + -861000742 (Retained Earnings) = -967349407, exactly the fixture's acceptance equity total, proving the fold reproduces the intended consolidated Equity rather than a guessed number. 'Unauthorized Expenses Anarely Alcazar' already matches the live CoA exactly and needs no alias.",
+  "match_aliases": {
+    "Accounts Receivable (A/R) [control]": "Accounts Receivable (A/R)",
+    "Unauthorized Expenses Ignacio Munoz": "Unauthorized Expenses Ignacio Mu\u00f1oz"
+  },
+  "fold_into": {
+    "Net Income": "Retained Earnings"
+  },
+  "lines": [
+    {
+      "qbo_account_name": "BOA-CHECKING-1135",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 14775316,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "BOA-SAVINGS-1148",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": -12403407,
+      "adjustment_cents": 0,
+      "notes": "REVIEW - negative bank balance; verify vs statement"
+    },
+    {
+      "qbo_account_name": "Cash on hand",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 0,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "Comdata-Prepay Express Code Account",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": -24666563,
+      "adjustment_cents": 0,
+      "notes": "REVIEW - negative; fuel prepay clearing"
+    },
+    {
+      "qbo_account_name": "Factoring Reserves Love's Solutions",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 1299499,
+      "adjustment_cents": 0,
+      "notes": "Factoring reserve = short-term asset (locked)"
+    },
+    {
+      "qbo_account_name": "Faro Factoring Reserves",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": -19263181,
+      "adjustment_cents": 0,
+      "notes": "REVIEW - factoring reserve should be asset (positive)"
+    },
+    {
+      "qbo_account_name": "IBC-5231",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 34761328,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "IBC-AHORROS-6089",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": -43869143,
+      "adjustment_cents": 0,
+      "notes": "REVIEW - negative savings balance"
+    },
+    {
+      "qbo_account_name": "Petty Cash",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 400000,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "PNC-2786",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 152337,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "PNC-2954",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 154796553,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "PNC-2962",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": -48102,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "Relay-Diesel Bank Account",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 515396,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "RTS-Factoring Reserves",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": -44602701,
+      "adjustment_cents": 0,
+      "notes": "REVIEW - factoring reserve should be asset (positive)"
+    },
+    {
+      "qbo_account_name": "Transportation/Trucking Loan Account",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": -1400000,
+      "adjustment_cents": 0,
+      "notes": "Intercompany - reconcile vs TRK"
+    },
+    {
+      "qbo_account_name": "VANTAGE-6071",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 0,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "VANTAGE-6107",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": -81531,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "VANTAGE-6224",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 1586975,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "WF - General Operating 6103",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 954315,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "WF - Payroll 6129",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": -75377,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "WF - Savings 6137",
+      "section": "ASSETS",
+      "subsection": "Bank Accounts",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": -2350126,
+      "adjustment_cents": 0,
+      "notes": "REVIEW - negative savings balance"
+    },
+    {
+      "qbo_account_name": "Accounts Receivable (A/R) [control]",
+      "section": "ASSETS",
+      "subsection": "Accounts Receivable",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": -93408200,
+      "adjustment_cents": 0,
+      "notes": "REVIEW - negative A/R control; expect positive after cleanup"
+    },
+    {
+      "qbo_account_name": "Unauthorized Expenses Anarely Alcazar",
+      "section": "ASSETS",
+      "subsection": "Accounts Receivable",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 7025348,
+      "adjustment_cents": 0,
+      "notes": "Receivable pursued in bankruptcy - NOT written off (locked \u00a77)"
+    },
+    {
+      "qbo_account_name": "Unauthorized Expenses Ignacio Munoz",
+      "section": "ASSETS",
+      "subsection": "Accounts Receivable",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 33675138,
+      "adjustment_cents": 0,
+      "notes": "Receivable pursued in bankruptcy - NOT written off (locked \u00a77)"
+    },
+    {
+      "qbo_account_name": "Driver Cash Advance",
+      "section": "ASSETS",
+      "subsection": "Other Current Assets",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 114516,
+      "adjustment_cents": 0,
+      "notes": "Driver Cash Advance = asset (locked)"
+    },
+    {
+      "qbo_account_name": "eCapital",
+      "section": "ASSETS",
+      "subsection": "Other Current Assets",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 49720,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "Loans to Others/IH 35 Trucking",
+      "section": "ASSETS",
+      "subsection": "Other Current Assets",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": -14642214,
+      "adjustment_cents": 0,
+      "notes": "Intercompany - reconcile vs TRK books"
+    },
+    {
+      "qbo_account_name": "LOVES SOLUTIONS,LLC",
+      "section": "ASSETS",
+      "subsection": "Other Current Assets",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": -579344,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "QuickBooks Tax Holding Account",
+      "section": "ASSETS",
+      "subsection": "Other Current Assets",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 165006,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "RTS FINANCIAL-VIRTUAL ACCT",
+      "section": "ASSETS",
+      "subsection": "Other Current Assets",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": -827002028,
+      "adjustment_cents": 0,
+      "notes": "REVIEW - factoring virtual/clearing acct; large negative from embezzlement-period cleanup in progress. DO NOT enter as-is."
+    },
+    {
+      "qbo_account_name": "Uncategorized Asset",
+      "section": "ASSETS",
+      "subsection": "Other Current Assets",
+      "account_type": "Asset",
+      "qbo_snapshot_cents": 6732,
+      "adjustment_cents": 0,
+      "notes": "REVIEW - uncategorized; reclassify before entry"
+    },
+    {
+      "qbo_account_name": "Accounts Payable (A/P)",
+      "section": "LIABILITIES",
+      "subsection": "Accounts Payable",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": 78221377,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "Capital One-Scentsx",
+      "section": "LIABILITIES",
+      "subsection": "Credit Cards",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": -1325000,
+      "adjustment_cents": 0,
+      "notes": "REVIEW - Scentsx related; verify entity"
+    },
+    {
+      "qbo_account_name": "Amex Card-",
+      "section": "LIABILITIES",
+      "subsection": "Credit Cards",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": 6681476,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "Citi-Executive Card",
+      "section": "LIABILITIES",
+      "subsection": "Credit Cards",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": 189774,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "Comdata-Driven Fuel Card",
+      "section": "LIABILITIES",
+      "subsection": "Credit Cards",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": -11249556,
+      "adjustment_cents": 0,
+      "notes": "REVIEW - negative CC balance (credit/overpay)"
+    },
+    {
+      "qbo_account_name": "Discover Card-4451",
+      "section": "LIABILITIES",
+      "subsection": "Credit Cards",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": 2673321,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "Capital Partners-Cash Advane",
+      "section": "LIABILITIES",
+      "subsection": "Other Current Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": 9680000,
+      "adjustment_cents": 0,
+      "notes": "Merchant cash advance - review ASC classification"
+    },
+    {
+      "qbo_account_name": "Faro Loan",
+      "section": "LIABILITIES",
+      "subsection": "Other Current Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": -2327521,
+      "adjustment_cents": 0,
+      "notes": "REVIEW - factoring advance liability; expect positive"
+    },
+    {
+      "qbo_account_name": "Loan-Scentsx",
+      "section": "LIABILITIES",
+      "subsection": "Other Current Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": 61737725,
+      "adjustment_cents": 0,
+      "notes": "REVIEW - Scentsx related-party; verify entity/classification"
+    },
+    {
+      "qbo_account_name": "Owner Loan-Acct-4019",
+      "section": "LIABILITIES",
+      "subsection": "Other Current Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": 8074876,
+      "adjustment_cents": 0,
+      "notes": "Related-party owner loan"
+    },
+    {
+      "qbo_account_name": "Owner Loan-Acct-9745",
+      "section": "LIABILITIES",
+      "subsection": "Other Current Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": -19072598,
+      "adjustment_cents": 0,
+      "notes": "REVIEW - owner loan negative"
+    },
+    {
+      "qbo_account_name": "RTS-Loans",
+      "section": "LIABILITIES",
+      "subsection": "Other Current Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": 0,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "RTS - NEWCO LOAN",
+      "section": "LIABILITIES",
+      "subsection": "Other Current Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": 0,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "Direct Deposit Payable",
+      "section": "LIABILITIES",
+      "subsection": "Other Current Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": 0,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "Direct Deposit Payable ( 353 )",
+      "section": "LIABILITIES",
+      "subsection": "Other Current Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": 0,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "Federal Taxes (941/943/944)",
+      "section": "LIABILITIES",
+      "subsection": "Other Current Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": -319246,
+      "adjustment_cents": 0,
+      "notes": "Payroll tax liability"
+    },
+    {
+      "qbo_account_name": "Federal Unemployment (940)",
+      "section": "LIABILITIES",
+      "subsection": "Other Current Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": 16325,
+      "adjustment_cents": 0,
+      "notes": "Payroll tax liability"
+    },
+    {
+      "qbo_account_name": "TX Unemployment Tax",
+      "section": "LIABILITIES",
+      "subsection": "Other Current Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": 91303,
+      "adjustment_cents": 0,
+      "notes": "Payroll tax liability"
+    },
+    {
+      "qbo_account_name": "Sent Payments to trucking",
+      "section": "LIABILITIES",
+      "subsection": "Other Current Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": -5020,
+      "adjustment_cents": 0,
+      "notes": "Intercompany"
+    },
+    {
+      "qbo_account_name": "2025-Damage Claim Escrow",
+      "section": "LIABILITIES",
+      "subsection": "Long-term Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": 451884,
+      "adjustment_cents": 0,
+      "notes": "Escrow = liability (locked)"
+    },
+    {
+      "qbo_account_name": "2026-Damage Claim Escrow",
+      "section": "LIABILITIES",
+      "subsection": "Long-term Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": 581000,
+      "adjustment_cents": 0,
+      "notes": "Escrow = liability (locked)"
+    },
+    {
+      "qbo_account_name": "EXPRESS CODE",
+      "section": "LIABILITIES",
+      "subsection": "Long-term Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": 4000,
+      "adjustment_cents": 0,
+      "notes": null
+    },
+    {
+      "qbo_account_name": "Independence Bank-Credit Line",
+      "section": "LIABILITIES",
+      "subsection": "Long-term Liabilities",
+      "account_type": "Liability",
+      "qbo_snapshot_cents": -868451,
+      "adjustment_cents": 0,
+      "notes": "REVIEW - LOC negative"
+    },
+    {
+      "qbo_account_name": "Opening Balance Equity",
+      "section": "EQUITY",
+      "subsection": "Equity",
+      "account_type": "Equity",
+      "qbo_snapshot_cents": 0,
+      "adjustment_cents": 0,
+      "notes": "OBE must net ~0; temporary clearing -> Retained Earnings (locked \u00a72)"
+    },
+    {
+      "qbo_account_name": "Retained Earnings",
+      "section": "EQUITY",
+      "subsection": "Equity",
+      "account_type": "Equity",
+      "qbo_snapshot_cents": -861000742,
+      "adjustment_cents": 0,
+      "notes": "REVIEW - reflects embezzlement-period cleanup; will shift as Martin finalizes"
+    },
+    {
+      "qbo_account_name": "Net Income",
+      "section": "EQUITY",
+      "subsection": "Equity",
+      "account_type": "Equity",
+      "qbo_snapshot_cents": -106348665,
+      "adjustment_cents": 0,
+      "notes": "Current-year P&L to date; rolls to RE at close. Not a postable catalogs.accounts row \u2014 folded into Retained Earnings per fold_into above (owner ruling 2026-07-29), never staged as its own account."
+    }
+  ]
+}

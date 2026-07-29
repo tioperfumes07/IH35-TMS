@@ -1,8 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
+  cloneAsIsImportAndCommit,
   commitObRegister,
   computeCommitBlockers,
   computeObTotals,
+  importObRegisterFromFixture,
   importObRegisterFromQbo,
   OB_OBE_RESIDUAL_TOLERANCE_CENTS,
   OB_REGISTER_PERIODS,
@@ -26,15 +28,26 @@ type StagedFixture = {
   account_name: string;
   account_type: string;
   amount_cents: number;
+  qbo_snapshot_cents?: number | null;
+  adjustment_cents?: number;
   created_by_user_id: string;
 };
 
 /**
  * Fake client that answers by SQL shape and RECORDS every write, so a test can assert not just the
- * thrown refusal but that catalogs.accounts was never touched — a refusal that still wrote would be
+ * refusal outcome but that catalogs.accounts was never touched — a refusal that still wrote would be
  * the exact defect this gate exists to prevent.
+ *
+ * NOTE: `isFinal` is accepted only so a test can prove the register's OWN finality row exists and is
+ * still IGNORED by the commit gate (owner ruling 2026-07-29 — no finality gate). It is never read by
+ * computeCommitBlockers.
  */
-function fakeClient(opts: { companyCode?: string; staged?: StagedFixture[]; isFinal?: boolean }) {
+function fakeClient(opts: {
+  companyCode?: string;
+  staged?: StagedFixture[];
+  isFinal?: boolean;
+  mostRecentByAccount?: Record<string, { qbo_snapshot_cents: number | null; adjustment_cents: number }>;
+}) {
   const staged = opts.staged ?? [];
   const writes: Array<{ sql: string; values: unknown[] }> = [];
   const client = {
@@ -57,6 +70,8 @@ function fakeClient(opts: { companyCode?: string; staged?: StagedFixture[]; isFi
             account_name: s.account_name,
             account_type: s.account_type,
             amount_cents: String(s.amount_cents),
+            qbo_snapshot_cents: s.qbo_snapshot_cents ?? null,
+            adjustment_cents: String(s.adjustment_cents ?? s.amount_cents),
             source: "manual",
             source_account_label: null,
             qbo_account_id: null,
@@ -70,6 +85,13 @@ function fakeClient(opts: { companyCode?: string; staged?: StagedFixture[]; isFi
           })),
         };
       }
+      // loadMostRecentLine — no JOIN, just the two persistence columns for one account/period. Used to
+      // prove "re-import refreshes the Snapshot only; a prior Adjustment persists".
+      if (/SELECT qbo_snapshot_cents, adjustment_cents\s+FROM accounting\.ob_register_staging_lines/.test(sql)) {
+        const accountId = String(values[2]);
+        const prior = opts.mostRecentByAccount?.[accountId];
+        return prior ? { rows: [{ qbo_snapshot_cents: prior.qbo_snapshot_cents, adjustment_cents: prior.adjustment_cents }] } : { rows: [] };
+      }
       if (/FROM accounting\.ob_source_finality/.test(sql)) {
         return opts.isFinal
           ? {
@@ -82,6 +104,11 @@ function fakeClient(opts: { companyCode?: string; staged?: StagedFixture[]; isFi
       if (/FROM integrations\.qbo_connections/.test(sql)) {
         return { rows: [{ n: opts.companyCode === "USMCA" ? "0" : "1" }] };
       }
+      if (/FROM catalogs\.accounts\s+WHERE operating_company_id/.test(sql)) {
+        // importObRegisterFromFixture's account lookup — no accounts by default (tests that need a
+        // match pass their own client or assert on `unmapped`).
+        return { rows: [] };
+      }
       writes.push({ sql, values });
       if (/RETURNING id/.test(sql)) return { rows: [{ id: "written" }] };
       return { rows: [] };
@@ -90,10 +117,10 @@ function fakeClient(opts: { companyCode?: string; staged?: StagedFixture[]; isFi
   return client;
 }
 
-/** A balanced, OBE-cleared register: Dr cash 100.00 / Cr equity 100.00. */
+/** A balanced, OBE-cleared register: Dr cash 100.00 / Cr equity 100.00. Hand-entered (no Snapshot). */
 const BALANCED: StagedFixture[] = [
-  { id: "line-cash", account_id: CASH, account_name: "Cash", account_type: "Asset", amount_cents: 10_000, created_by_user_id: MAKER },
-  { id: "line-eq", account_id: EQUITY, account_name: "Retained Earnings", account_type: "Equity", amount_cents: 10_000, created_by_user_id: MAKER },
+  { id: "line-cash", account_id: CASH, account_name: "Cash", account_type: "Asset", amount_cents: 10_000, qbo_snapshot_cents: null, adjustment_cents: 10_000, created_by_user_id: MAKER },
+  { id: "line-eq", account_id: EQUITY, account_name: "Retained Earnings", account_type: "Equity", amount_cents: 10_000, qbo_snapshot_cents: null, adjustment_cents: 10_000, created_by_user_id: MAKER },
 ];
 
 beforeEach(() => {
@@ -101,22 +128,9 @@ beforeEach(() => {
   mockIsEnabled.mockResolvedValue(true);
 });
 
-describe("OB-01 commit is data-gated on source finality", () => {
-  it("refuses to commit when the source period is not marked final — and writes nothing", async () => {
+describe("OB-01 commit — owner ruling 2026-07-29: NO finality gate", () => {
+  it("commits a balanced register even though no finality row exists at all", async () => {
     const client = fakeClient({ staged: BALANCED, isFinal: false });
-
-    // A refusal RETURNS — throwing would make withCompanyScope roll back the commit_refused audit
-    // row along with it, and the attempt would leave no trace.
-    const result = await commitObRegister(client, OPCO, CHECKER);
-
-    expect(result.committed).toBe(false);
-    expect(result.blockers).toContain("source_not_final");
-    expect(client.accountUpdates()).toHaveLength(0);
-    expect(client.auditEvents()).toContain("commit_refused");
-  });
-
-  it("commits once the period is final and a different user checks it", async () => {
-    const client = fakeClient({ staged: BALANCED, isFinal: true });
 
     const result = await commitObRegister(client, OPCO, CHECKER);
 
@@ -126,7 +140,30 @@ describe("OB-01 commit is data-gated on source finality", () => {
     expect(client.auditEvents()).toContain("committed");
   });
 
-  it("refuses when the committer is also the maker (maker/checker separation)", async () => {
+  it("commits identically whether the (advisory) finality flag is true or false", async () => {
+    const notFinal = await commitObRegister(fakeClient({ staged: BALANCED, isFinal: false }), OPCO, CHECKER);
+    const final = await commitObRegister(fakeClient({ staged: BALANCED, isFinal: true }), OPCO, CHECKER);
+    expect(notFinal.committed).toBe(true);
+    expect(final.committed).toBe(true);
+  });
+
+  it("writes opening_balance_qbo_snapshot_cents and opening_balance_adjustment_cents on commit", async () => {
+    const client = fakeClient({
+      staged: [
+        { id: "l1", account_id: CASH, account_name: "Cash", account_type: "Asset", amount_cents: 12_000, qbo_snapshot_cents: 10_000, adjustment_cents: 2_000, created_by_user_id: MAKER },
+        { id: "l2", account_id: EQUITY, account_name: "Retained Earnings", account_type: "Equity", amount_cents: 12_000, qbo_snapshot_cents: 10_000, adjustment_cents: 2_000, created_by_user_id: MAKER },
+      ],
+    });
+    await commitObRegister(client, OPCO, CHECKER);
+    const [update] = client.accountUpdates();
+    // UPDATE catalogs.accounts SET opening_balance_cents=$1, opening_balance_as_of=$2,
+    // opening_balance_qbo_snapshot_cents=$3, opening_balance_adjustment_cents=$4 WHERE id=$5 ...
+    expect(update!.values[0]).toBe(12_000); // amount_cents (Adjusted Opening)
+    expect(update!.values[2]).toBe(10_000); // qbo_snapshot_cents
+    expect(update!.values[3]).toBe(2_000); // adjustment_cents
+  });
+
+  it("refuses when the committer is also the maker (maker/checker separation) — unaffected by the ruling", async () => {
     const client = fakeClient({ staged: BALANCED, isFinal: true });
 
     const result = await commitObRegister(client, OPCO, MAKER);
@@ -136,7 +173,33 @@ describe("OB-01 commit is data-gated on source finality", () => {
     expect(client.accountUpdates()).toHaveLength(0);
   });
 
-  it("refuses an unbalanced register even when the period is final", async () => {
+  it("bypassMakerChecker (system clone-as-is path only) skips maker/checker but not other checks", async () => {
+    // Same actor stages AND "commits" — would refuse under a human commit, but the system path passes
+    // bypassMakerChecker because there is no second human by construction.
+    const balancedByOneActor: StagedFixture[] = [
+      { id: "l1", account_id: CASH, account_name: "Cash", account_type: "Asset", amount_cents: 10_000, qbo_snapshot_cents: 10_000, adjustment_cents: 0, created_by_user_id: MAKER },
+      { id: "l2", account_id: EQUITY, account_name: "Retained Earnings", account_type: "Equity", amount_cents: 10_000, qbo_snapshot_cents: 10_000, adjustment_cents: 0, created_by_user_id: MAKER },
+    ];
+    const client = fakeClient({ staged: balancedByOneActor });
+    const result = await commitObRegister(client, OPCO, MAKER, { bypassMakerChecker: true });
+    expect(result.committed).toBe(true);
+    expect(client.accountUpdates()).toHaveLength(2);
+  });
+
+  it("bypassMakerChecker still refuses an unbalanced register — it is not a rubber stamp", async () => {
+    const client = fakeClient({
+      staged: [
+        { id: "l1", account_id: CASH, account_name: "Cash", account_type: "Asset", amount_cents: 10_000, qbo_snapshot_cents: 10_000, adjustment_cents: 0, created_by_user_id: MAKER },
+        { id: "l2", account_id: EQUITY, account_name: "Retained Earnings", account_type: "Equity", amount_cents: 9_000, qbo_snapshot_cents: 9_000, adjustment_cents: 0, created_by_user_id: MAKER },
+      ],
+    });
+    const result = await commitObRegister(client, OPCO, MAKER, { bypassMakerChecker: true });
+    expect(result.committed).toBe(false);
+    expect(result.blockers).toContain("unbalanced");
+    expect(client.accountUpdates()).toHaveLength(0);
+  });
+
+  it("refuses an unbalanced register", async () => {
     const client = fakeClient({
       isFinal: true,
       staged: [
@@ -170,7 +233,7 @@ describe("OB-01 commit is data-gated on source finality", () => {
     expect(client.accountUpdates()).toHaveLength(0);
   });
 
-  it("audits the finality flip itself, in both directions", async () => {
+  it("setObSourceFinality still records the audited flip — it is advisory-only, not deleted", async () => {
     const client = fakeClient({ staged: BALANCED, isFinal: false });
     await setObSourceFinality(client, OPCO, MAKER, { is_final: true, note: "QBO cleanup complete" });
     expect(client.auditEvents()).toContain("finality_set");
@@ -203,18 +266,24 @@ describe("OB-01 totals use the existing signed-actual convention", () => {
       { account_type: "Expense", account_name: "Fuel", amount_cents: 500 },
     ]);
     expect(totals.unsupported_types).toEqual(["Fuel"]);
-    const blockers = computeCommitBlockers({ isFinal: true, totals, makers: [MAKER], checkerUserId: CHECKER });
+    const blockers = computeCommitBlockers({ totals, makers: [MAKER], checkerUserId: CHECKER });
     expect(blockers).toContain("non_balance_sheet_account_type");
   });
 
-  it("reports every blocker at once so a reviewer fixes them in one pass", () => {
+  it("reports every blocker at once so a reviewer fixes them in one pass — the removed finality blocker cannot appear", () => {
     const totals = computeObTotals([]);
-    const blockers = computeCommitBlockers({ isFinal: false, totals, makers: [], checkerUserId: CHECKER });
-    expect(blockers).toEqual(expect.arrayContaining(["source_not_final", "no_staged_lines"]));
+    const blockers = computeCommitBlockers({ totals, makers: [], checkerUserId: CHECKER });
+    expect(blockers).toEqual(["no_staged_lines"]);
+  });
+
+  it("checkerUserId: null (system path) never raises maker_is_checker", () => {
+    const totals = computeObTotals([{ account_type: "Asset", account_name: "Cash", amount_cents: 1 }]);
+    const blockers = computeCommitBlockers({ totals, makers: [MAKER], checkerUserId: null });
+    expect(blockers).not.toContain("maker_is_checker");
   });
 });
 
-describe("OB-01 QBO import", () => {
+describe("OB-01 QBO import — re-import refreshes the Snapshot only", () => {
   it("refuses to import for USMCA — there is no QBO realm to pull from", async () => {
     const client = fakeClient({ companyCode: "USMCA" });
     await expect(importObRegisterFromQbo(client, OPCO, MAKER)).rejects.toBeInstanceOf(ObRegisterError);
@@ -259,5 +328,203 @@ describe("OB-01 QBO import", () => {
     expect(result.as_of_date).toBe("2024-12-31");
     expect(client.accountUpdates()).toHaveLength(0);
     expect(client.auditEvents()).toContain("import_staged");
+  });
+});
+
+describe("OB-01 clone-as-is fixture import", () => {
+  it("matches exact account names and reports unmapped names honestly — never invents a match", async () => {
+    const client = fakeClient({});
+    client.query = (async (sql: string, values: unknown[] = []) => {
+      if (/FROM org\.companies/.test(sql)) return { rows: [{ id: OPCO, code: "TRANSP" }] };
+      if (/FROM catalogs\.accounts\s+WHERE operating_company_id/.test(sql)) {
+        return { rows: [{ id: CASH, account_name: "BOA-CHECKING-1135" }] };
+      }
+      if (/SELECT qbo_snapshot_cents, adjustment_cents/.test(sql)) return { rows: [] };
+      client.writes.push({ sql, values });
+      if (/RETURNING id/.test(sql)) return { rows: [{ id: "written" }] };
+      return { rows: [] };
+    }) as typeof client.query;
+
+    const result = await importObRegisterFromFixture(client, OPCO, MAKER, [
+      { qbo_account_name: "BOA-CHECKING-1135", qbo_snapshot_cents: 14_775_316 },
+      { qbo_account_name: "Some Account That Does Not Exist", qbo_snapshot_cents: 100 },
+    ]);
+
+    expect(result.mapped_count).toBe(1);
+    expect(result.staged_count).toBe(1);
+    expect(result.unmapped).toEqual([
+      { qbo_account_name: "Some Account That Does Not Exist", reason: expect.stringContaining("never invented") },
+    ]);
+  });
+
+  it("refuses for a non-TRANSP entity — the fixture is TRANSP-only", async () => {
+    const client = fakeClient({ companyCode: "USMCA" });
+    await expect(importObRegisterFromFixture(client, OPCO, MAKER, [])).rejects.toMatchObject({
+      code: "fixture_entity_mismatch",
+    });
+  });
+
+  it("match_aliases resolves a QBO-report-only spelling to the live CoA row (Accounts Receivable [control])", async () => {
+    const client = fakeClient({});
+    client.query = (async (sql: string, values: unknown[] = []) => {
+      if (/FROM org\.companies/.test(sql)) return { rows: [{ id: OPCO, code: "TRANSP" }] };
+      if (/FROM catalogs\.accounts\s+WHERE operating_company_id/.test(sql)) {
+        return { rows: [{ id: CASH, account_name: "Accounts Receivable (A/R)" }] };
+      }
+      if (/SELECT qbo_snapshot_cents, adjustment_cents/.test(sql)) return { rows: [] };
+      client.writes.push({ sql, values });
+      if (/RETURNING id/.test(sql)) return { rows: [{ id: "written" }] };
+      return { rows: [] };
+    }) as typeof client.query;
+
+    const result = await importObRegisterFromFixture(client, OPCO, MAKER, {
+      lines: [{ qbo_account_name: "Accounts Receivable (A/R) [control]", qbo_snapshot_cents: -93_408_200 }],
+      match_aliases: { "Accounts Receivable (A/R) [control]": "Accounts Receivable (A/R)" },
+    });
+
+    expect(result.unmapped).toEqual([]);
+    expect(result.mapped_count).toBe(1);
+    expect(result.staged_count).toBe(1);
+  });
+
+  it("diacritic-fold alone (no alias) resolves an ASCII fixture label to the live accented CoA row", async () => {
+    const client = fakeClient({});
+    client.query = (async (sql: string, values: unknown[] = []) => {
+      if (/FROM org\.companies/.test(sql)) return { rows: [{ id: OPCO, code: "TRANSP" }] };
+      if (/FROM catalogs\.accounts\s+WHERE operating_company_id/.test(sql)) {
+        return { rows: [{ id: CASH, account_name: "Unauthorized Expenses Ignacio Mu\u00f1oz" }] };
+      }
+      if (/SELECT qbo_snapshot_cents, adjustment_cents/.test(sql)) return { rows: [] };
+      client.writes.push({ sql, values });
+      if (/RETURNING id/.test(sql)) return { rows: [{ id: "written" }] };
+      return { rows: [] };
+    }) as typeof client.query;
+
+    // Deliberately NO match_aliases entry here — proves the general diacritic-fold pass works on its
+    // own, independent of the documented alias for this exact case.
+    const result = await importObRegisterFromFixture(client, OPCO, MAKER, [
+      { qbo_account_name: "Unauthorized Expenses Ignacio Munoz", qbo_snapshot_cents: 33_675_138 },
+    ]);
+
+    expect(result.unmapped).toEqual([]);
+    expect(result.mapped_count).toBe(1);
+    expect(result.staged_count).toBe(1);
+  });
+
+  it("fold_into folds Net Income's cents into Retained Earnings's snapshot and never reports it unmapped", async () => {
+    const client = fakeClient({});
+    client.query = (async (sql: string, values: unknown[] = []) => {
+      if (/FROM org\.companies/.test(sql)) return { rows: [{ id: OPCO, code: "TRANSP" }] };
+      if (/FROM catalogs\.accounts\s+WHERE operating_company_id/.test(sql)) {
+        return { rows: [{ id: EQUITY, account_name: "Retained Earnings" }] };
+      }
+      if (/SELECT qbo_snapshot_cents, adjustment_cents/.test(sql)) return { rows: [] };
+      client.writes.push({ sql, values });
+      if (/RETURNING id/.test(sql)) return { rows: [{ id: "written" }] };
+      return { rows: [] };
+    }) as typeof client.query;
+
+    const result = await importObRegisterFromFixture(client, OPCO, MAKER, {
+      lines: [
+        { qbo_account_name: "Retained Earnings", qbo_snapshot_cents: -861_000_742 },
+        { qbo_account_name: "Net Income", qbo_snapshot_cents: -106_348_665 },
+      ],
+      fold_into: { "Net Income": "Retained Earnings" },
+    });
+
+    expect(result.unmapped).toEqual([]);
+    expect(result.mapped_count).toBe(2);
+    expect(result.staged_count).toBe(1); // Net Income has no account row of its own — only RE is staged
+    const [insert] = client.writes.filter((w) => /INSERT INTO accounting\.ob_register_staging_lines/.test(w.sql));
+    // amount_cents ($4) and qbo_snapshot_cents ($5) both carry the folded total.
+    expect(insert!.values[3]).toBe(-967_349_407);
+    expect(insert!.values[4]).toBe(-967_349_407);
+  });
+
+  it("fold_into reports the fold source unmapped (naming the missing target) when the target itself does not resolve — never invents a home for it", async () => {
+    const client = fakeClient({});
+    client.query = (async (sql: string, values: unknown[] = []) => {
+      if (/FROM org\.companies/.test(sql)) return { rows: [{ id: OPCO, code: "TRANSP" }] };
+      if (/FROM catalogs\.accounts\s+WHERE operating_company_id/.test(sql)) return { rows: [] };
+      if (/SELECT qbo_snapshot_cents, adjustment_cents/.test(sql)) return { rows: [] };
+      client.writes.push({ sql, values });
+      if (/RETURNING id/.test(sql)) return { rows: [{ id: "written" }] };
+      return { rows: [] };
+    }) as typeof client.query;
+
+    const result = await importObRegisterFromFixture(client, OPCO, MAKER, {
+      lines: [{ qbo_account_name: "Net Income", qbo_snapshot_cents: -106_348_665 }],
+      fold_into: { "Net Income": "Retained Earnings" },
+    });
+
+    expect(result.unmapped).toEqual([
+      { qbo_account_name: "Net Income", reason: expect.stringContaining('fold_into target "Retained Earnings"') },
+    ]);
+    expect(result.staged_count).toBe(0);
+  });
+});
+
+describe("OB-01 clone-as-is import + commit (the owner-ordered system action)", () => {
+  it("imports from the fixture (no QBO connection) and commits with bypassMakerChecker", async () => {
+    const client = fakeClient({ companyCode: "TRANSP" });
+    let accountsQueried = false;
+    client.query = (async (sql: string, values: unknown[] = []) => {
+      if (/FROM org\.companies/.test(sql)) return { rows: [{ id: OPCO, code: "TRANSP" }] };
+      if (/FROM integrations\.qbo_connections/.test(sql)) return { rows: [{ n: "0" }] }; // no QBO connection
+      if (/FROM catalogs\.accounts\s+WHERE operating_company_id/.test(sql)) {
+        accountsQueried = true;
+        return {
+          rows: [
+            { id: CASH, account_name: "Cash" },
+            { id: EQUITY, account_name: "Retained Earnings" },
+          ],
+        };
+      }
+      if (/SELECT qbo_snapshot_cents, adjustment_cents/.test(sql)) return { rows: [] };
+      if (/FROM accounting\.ob_register_staging_lines/.test(sql) && /JOIN catalogs\.accounts/.test(sql)) {
+        return {
+          rows: [
+            {
+              id: "l1", account_id: CASH, account_number: null, account_name: "Cash", account_type: "Asset",
+              amount_cents: "10000", qbo_snapshot_cents: 10_000, adjustment_cents: "0", source: "qbo_import",
+              source_account_label: "Cash", qbo_account_id: null, status: "staged", note: null,
+              created_by_user_id: MAKER, updated_by_user_id: MAKER, updated_at: "2026-07-28T00:00:00.000Z",
+              posted_opening_balance_cents: null, posted_opening_balance_as_of: null,
+            },
+            {
+              id: "l2", account_id: EQUITY, account_number: null, account_name: "Retained Earnings", account_type: "Equity",
+              amount_cents: "10000", qbo_snapshot_cents: 10_000, adjustment_cents: "0", source: "qbo_import",
+              source_account_label: "Retained Earnings", qbo_account_id: null, status: "staged", note: null,
+              created_by_user_id: MAKER, updated_by_user_id: MAKER, updated_at: "2026-07-28T00:00:00.000Z",
+              posted_opening_balance_cents: null, posted_opening_balance_as_of: null,
+            },
+          ],
+        };
+      }
+      if (/FROM accounting\.ob_source_finality/.test(sql)) return { rows: [] };
+      client.writes.push({ sql, values });
+      if (/RETURNING id/.test(sql)) return { rows: [{ id: "written" }] };
+      return { rows: [] };
+    }) as typeof client.query;
+
+    const result = await cloneAsIsImportAndCommit(client, OPCO, MAKER);
+
+    expect(accountsQueried).toBe(true);
+    expect(result.import_source).toBe("fixture");
+    expect(result.commit.committed).toBe(true);
+    if (result.commit.committed) expect(result.commit.accounts_written).toBe(2);
+  });
+
+  it("refuses honestly for TRK/USMCA with neither a QBO connection nor a fixture", async () => {
+    const client = fakeClient({ companyCode: "USMCA" });
+    client.query = (async (sql: string) => {
+      if (/FROM org\.companies/.test(sql)) return { rows: [{ id: OPCO, code: "USMCA" }] };
+      if (/FROM integrations\.qbo_connections/.test(sql)) return { rows: [{ n: "0" }] };
+      return { rows: [] };
+    }) as typeof client.query;
+
+    await expect(cloneAsIsImportAndCommit(client, OPCO, MAKER)).rejects.toMatchObject({
+      code: "clone_as_is_no_source",
+    });
   });
 });

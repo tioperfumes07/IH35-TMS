@@ -1,11 +1,13 @@
 /**
  * OB-01 — the commit gate, proven against a REAL migrated Postgres (not mocks). Proves:
- *   (a) no finality row            -> REFUSED (source_not_final), catalogs.accounts untouched
- *   (b) final, but unbalanced      -> REFUSED (unbalanced), catalogs.accounts still untouched
- *   (c) final + balanced, checker == maker -> REFUSED (maker_is_checker), still untouched
- *   (d) final + balanced + a real checker  -> COMMITTED, opening_balance_cents / _as_of written
- *   (e) every refusal and the commit leave a WORM audit row, and that table rejects UPDATE + DELETE
- *   (f) the staged rows are INVISIBLE from another entity's RLS context (no cross-entity read)
+ *   (a) unbalanced register           -> REFUSED (unbalanced), catalogs.accounts untouched — with NO
+ *       finality row ever set, proving the 2026-07-29 owner ruling (no finality gate) actually holds
+ *   (b) balanced, checker == maker    -> REFUSED (maker_is_checker), still untouched
+ *   (c) balanced + a real checker     -> COMMITTED, opening_balance_cents / _as_of / _qbo_snapshot /
+ *       _adjustment written, still with no finality row ever set
+ *   (d) every refusal and the commit leave a WORM audit row, and that table rejects UPDATE + DELETE
+ *   (e) the staged rows are INVISIBLE from another entity's RLS context (no cross-entity read)
+ *   (f) setObSourceFinality is advisory only — flipping it does not change commit_blockers
  *
  * The service runs on the caller's client exactly as the routes drive it. Runs only in CI
  * (GITHUB_ACTIONS=true) where a migrated Postgres exists.
@@ -151,31 +153,25 @@ describeIntegration("OB-01 opening balance commit gate (real Postgres)", () => {
     await db.end();
   });
 
-  it("(a) no finality row -> commit REFUSED source_not_final, nothing written", async () => {
-    await bypass((client) => upsertObRegisterLine(client, companyId, maker, { account_id: cash, amount_cents: 10_000 }));
+  it("(a) unbalanced register -> commit REFUSED unbalanced, nothing written — NO finality row exists", async () => {
+    await bypass((client) =>
+      upsertObRegisterLine(client, companyId, maker, { account_id: cash, adjustment_cents: 10_000 })
+    );
 
+    // No accounting.ob_source_finality row has ever been inserted for this period at this point in the
+    // suite. Owner ruling 2026-07-29: that must NOT be what blocks the commit — only the register's own
+    // unbalanced contents should.
     const blockers = await expectRefusal(checker);
-    expect(blockers).toContain("source_not_final");
+    expect(blockers).not.toContain("source_not_final" as never);
+    expect(blockers).toContain("unbalanced");
     expect(await writtenCount()).toBe(0);
     // The refusal SURVIVES as a WORM row — the point of returning rather than throwing.
     expect(await auditCount("commit_refused")).toBe(1);
   });
 
-  it("(b) marked final but unbalanced -> still REFUSED, nothing written", async () => {
+  it("(b) balanced but checker IS the maker -> REFUSED maker_is_checker, still no finality row", async () => {
     await bypass((client) =>
-      setObSourceFinality(client, companyId, maker, { is_final: true, note: `ob01 db test ${suffix}` })
-    );
-
-    const blockers = await expectRefusal(checker);
-    expect(blockers).not.toContain("source_not_final");
-    expect(blockers).toContain("unbalanced");
-    expect(await writtenCount()).toBe(0);
-    expect(await auditCount("commit_refused")).toBe(2);
-  });
-
-  it("(c) final + balanced but checker IS the maker -> REFUSED maker_is_checker", async () => {
-    await bypass((client) =>
-      upsertObRegisterLine(client, companyId, maker, { account_id: capital, amount_cents: 10_000 })
+      upsertObRegisterLine(client, companyId, maker, { account_id: capital, adjustment_cents: 10_000 })
     );
 
     const blockers = await expectRefusal(maker);
@@ -183,7 +179,7 @@ describeIntegration("OB-01 opening balance commit gate (real Postgres)", () => {
     expect(await writtenCount()).toBe(0);
   });
 
-  it("(d) final + balanced + independent checker -> COMMITTED and written to catalogs.accounts", async () => {
+  it("(c) balanced + independent checker -> COMMITTED, no finality row was ever set", async () => {
     const res = await bypass((client) => commitObRegister(client, companyId, checker));
     expect(res.committed).toBe(true);
     expect(res.accounts_written).toBe(2);
@@ -191,8 +187,14 @@ describeIntegration("OB-01 opening balance commit gate (real Postgres)", () => {
 
     const rows = await bypass(async () =>
       (
-        await db.query<{ id: string; opening_balance_cents: string; opening_balance_as_of: string }>(
-          `SELECT id::text, opening_balance_cents::text, to_char(opening_balance_as_of,'YYYY-MM-DD') AS opening_balance_as_of
+        await db.query<{
+          id: string;
+          opening_balance_cents: string;
+          opening_balance_as_of: string;
+          opening_balance_adjustment_cents: string;
+        }>(
+          `SELECT id::text, opening_balance_cents::text, to_char(opening_balance_as_of,'YYYY-MM-DD') AS opening_balance_as_of,
+                  opening_balance_adjustment_cents::text
              FROM catalogs.accounts WHERE id = ANY($1::uuid[]) ORDER BY account_number`,
           [[cash, capital]]
         )
@@ -202,6 +204,9 @@ describeIntegration("OB-01 opening balance commit gate (real Postgres)", () => {
     for (const r of rows) {
       expect(r.opening_balance_cents).toBe("10000");
       expect(r.opening_balance_as_of).toBe(AS_OF);
+      // These lines were entered manually (never imported), so the Snapshot column stays NULL and the
+      // Adjustment IS the full committed amount — Adjusted Opening = coalesce(NULL,0) + adjustment.
+      expect(r.opening_balance_adjustment_cents).toBe("10000");
     }
 
     const staged = await bypass(async () =>
@@ -215,9 +220,22 @@ describeIntegration("OB-01 opening balance commit gate (real Postgres)", () => {
     );
     expect(Number(staged)).toBe(2);
     expect(await auditCount("committed")).toBe(2);
+
+    // Confirms no finality row exists for this period from THIS suite's actors — the commit above did
+    // not need one, and setObSourceFinality was never called before it.
+    const finalityRows = await bypass(async () =>
+      (
+        await db.query<{ c: string }>(
+          `SELECT count(*)::text AS c FROM accounting.ob_source_finality
+            WHERE operating_company_id = $1::uuid AND as_of_date = $2::date AND set_by = ANY($3::uuid[])`,
+          [companyId, AS_OF, [maker, checker]]
+        )
+      ).rows[0]!.c
+    );
+    expect(Number(finalityRows)).toBe(0);
   });
 
-  it("(e) the audit trail is WORM — UPDATE and DELETE are rejected by the database", async () => {
+  it("(d) the audit trail is WORM — UPDATE and DELETE are rejected by the database", async () => {
     const id = await bypass(async () =>
       (
         await db.query<{ id: string }>(
@@ -271,7 +289,7 @@ describeIntegration("OB-01 opening balance commit gate (real Postgres)", () => {
     }
   });
 
-  it("(f) staged rows are invisible from another entity's RLS context", async () => {
+  it("(e) staged rows are invisible from another entity's RLS context", async () => {
     const other = await bypass(async () =>
       (
         await db.query<{ id: string }>(`SELECT id::text FROM org.companies WHERE code = 'USMCA' LIMIT 1`)
@@ -291,5 +309,21 @@ describeIntegration("OB-01 opening balance commit gate (real Postgres)", () => {
     } finally {
       await db.query("ROLLBACK").catch(() => {});
     }
+  });
+
+  it("(f) setObSourceFinality is advisory only — flipping it does not change commit_blockers", async () => {
+    // The period is already committed with a balanced, non-maker-checker-conflicted register from (c),
+    // so commit_blockers is currently empty. Flip finality both ways and prove the blocker set is
+    // unaffected either way — the only thing setObSourceFinality changes is its own audited table.
+    await bypass((client) => setObSourceFinality(client, companyId, maker, { is_final: true, note: `ob01 db test ${suffix}` }));
+    const afterFinal = await bypass((client) => commitObRegister(client, companyId, checker));
+    // Nothing is staged anymore (the prior test committed everything), so this attempt is refused for
+    // no_staged_lines — the SAME reason regardless of the finality flip below.
+    expect(afterFinal.blockers).toEqual(["no_staged_lines"]);
+
+    await bypass((client) => setObSourceFinality(client, companyId, maker, { is_final: false, note: null }));
+    const afterNotFinal = await bypass((client) => commitObRegister(client, companyId, checker));
+    expect(afterNotFinal.blockers).toEqual(afterFinal.blockers);
+    expect(await auditCount("finality_set")).toBe(2);
   });
 });

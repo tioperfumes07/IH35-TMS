@@ -3,13 +3,14 @@ import { apiRequest } from "./client";
 /**
  * OB-01 Opening Balance Register client.
  *
- * Import → staging → owner review → commit. The commit is data-gated: the backend refuses it unless
- * the accountant has marked that entity/period's QBO cleanup FINAL, a different user staged the
- * lines, the entry balances, and Opening Balance Equity has been reclassed. Nothing here posts a
- * journal entry and nothing writes to QuickBooks.
+ * Owner ruling 2026-07-29: opening balances are LIVE and CHANGE — there is no finality gate. Import →
+ * staging → commit, three columns per account (QBO Snapshot | editable Adjustment | Adjusted Opening =
+ * Snapshot + Adjustment, the committed value). Re-import refreshes the Snapshot only; a prior
+ * Adjustment persists. The commit still refuses when the register does not balance, Opening Balance
+ * Equity has not been reclassed, a line sits on a non-balance-sheet account, or (for a human commit)
+ * the checker is also a maker. Nothing here posts a journal entry and nothing writes to QuickBooks.
  */
 export type ObCommitBlocker =
-  | "source_not_final"
   | "no_staged_lines"
   | "maker_is_checker"
   | "unbalanced"
@@ -22,6 +23,11 @@ export type ObRegisterLine = {
   account_number: string | null;
   account_name: string;
   account_type: string | null;
+  /** QBO/fixture snapshot as last imported. NULL when this line has never been imported. */
+  qbo_snapshot_cents: number | null;
+  /** Owner/accountant editable layer on top of the snapshot. Persists across re-import. */
+  adjustment_cents: number;
+  /** Adjusted Opening = coalesce(qbo_snapshot_cents, 0) + adjustment_cents — the committed value. */
   amount_cents: number;
   source: "manual" | "qbo_import";
   source_account_label: string | null;
@@ -97,7 +103,7 @@ export function getOpeningBalanceRegisterAudit(operatingCompanyId: string) {
 export function patchOpeningBalanceLine(input: {
   operating_company_id: string;
   account_id: string;
-  amount_cents: number;
+  adjustment_cents: number;
   note?: string | null;
 }) {
   return apiRequest<{ line: ObRegisterLine }>("/api/v1/accounting/opening-balance-register/line", {
@@ -115,6 +121,42 @@ export function importOpeningBalancesFromQbo(operatingCompanyId: string) {
     mapped_count: number;
     unmapped: Array<{ qbo_account_id: string; report_account_name: string; reason: string }>;
   }>("/api/v1/accounting/opening-balance-register/import-from-qbo", {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId },
+  });
+}
+
+/** TRANSP-only — imports docs/fixtures/ob01/transp-2026-03-31.json into staging. */
+export function importOpeningBalancesFromFixture(operatingCompanyId: string) {
+  return apiRequest<{
+    as_of_date: string;
+    company_code: string;
+    staged_count: number;
+    mapped_count: number;
+    unmapped: Array<{ qbo_account_name: string; reason: string }>;
+  }>("/api/v1/accounting/opening-balance-register/import-from-fixture", {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId },
+  });
+}
+
+/** Owner ruling 2026-07-29: import (QBO if connected, else the TRANSP fixture) AND commit now. */
+export function cloneAsIsImportAndCommit(operatingCompanyId: string) {
+  return apiRequest<{
+    as_of_date: string;
+    company_code: string;
+    import_source: "qbo" | "fixture";
+    staged_count: number;
+    mapped_count: number;
+    unmapped: Array<{ reason: string; [key: string]: unknown }>;
+    commit: {
+      committed: boolean;
+      as_of_date: string;
+      company_code: string;
+      accounts_written: number;
+      blockers?: ObCommitBlocker[];
+    };
+  }>("/api/v1/accounting/opening-balance-register/clone-as-is-commit", {
     method: "POST",
     body: { operating_company_id: operatingCompanyId },
   });
