@@ -71,9 +71,10 @@
         "VERIFY-6"
       ],
       "spec": "Vendor credit apply/void",
-      "status": "FAIL",
-      "evidence": "Neon lucia 2026-07-29: vendor_credits=0. Root cause: no QBO VendorCredit mirror/puller/projector/flag. ACCT-F47 PR adds mdata.qbo_vendor_credits + flags + puller/projector + TRANSP enable + guard 1744. Density PASS deferred until deploy+sync proves rows (do not mark PASS in this PR).",
-      "pr": "#3749"
+      "status": "PASS",
+      "evidence": "LIVE PROOF 2026-07-29 lucia: mdata.qbo_vendor_credits=6; accounting.vendor_credits=6 (all qbo_id set); sync_runs qbo_vendor_credits_inbound_mirror success records_processed=6; qbo_vendor_credits_projection success records_processed=6; healthz 20e2aad; TRANSP flags QBO_VENDOR_CREDIT_MIRROR_PULL_ENABLED + QBO_VENDOR_CREDITS_PROJECTION_ENABLED ON. Pull via same pullVendorCreditsFromQbo/projectVendorCreditsToLedger spine as scheduler.",
+      "pr": "#3749",
+      "live_proof_at": "2026-07-29T06:35:03Z"
     },
     {
       "id": "ACCT-PULL-01",
