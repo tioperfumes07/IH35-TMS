@@ -1115,6 +1115,7 @@
     "1736": "1736-verify-ob01-fixture-tieout.mjs",
     "1738": "1738-verify-expenses-projection-opco-lines.mjs",
     "1740": "1740-verify-held-posting-flags-enable.mjs",
+    "1742": "1742-verify-fixed-asset-autopost-trk-enable.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
