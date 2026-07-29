@@ -7,9 +7,11 @@ import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import {
+  cloneAsIsImportAndCommit,
   commitOpeningBalanceRegister,
   getOpeningBalanceRegister,
   getOpeningBalanceRegisterAudit,
+  importOpeningBalancesFromFixture,
   importOpeningBalancesFromQbo,
   patchOpeningBalanceLine,
   setOpeningBalanceSourceFinality,
@@ -20,13 +22,14 @@ import {
 /**
  * OB-01 — Opening Balance Register.
  *
- * The commit button is deliberately not "disabled and unexplained": every reason the backend would
- * refuse is listed, because an operator staring at a greyed-out button is how an opening-balance
- * ceremony stalls. The backend re-checks all of them — this screen never decides.
+ * Owner ruling 2026-07-29: balances are LIVE and CHANGE — there is no finality gate. Three columns
+ * per account: QBO Snapshot (read-only, refreshed by re-import) | Adjustment (owner/accountant
+ * editable, persists across re-import) | Adjusted Opening (= Snapshot + Adjustment, the value a
+ * commit writes to the account). The commit button is deliberately not "disabled and unexplained":
+ * every reason the backend would refuse is listed. The backend re-checks all of them — this screen
+ * never decides.
  */
 const BLOCKER_COPY: Record<ObCommitBlocker, string> = {
-  source_not_final:
-    "The QBO cleanup for this entity and period is not marked final yet. Only the accountant who finished the cleanup can mark it.",
   no_staged_lines: "Nothing is staged. Import from QuickBooks or enter balances by hand first.",
   maker_is_checker:
     "You staged or edited these balances. A second person has to commit them (maker/checker).",
@@ -48,7 +51,7 @@ function inputToCents(value: string): number | null {
   return Math.round(Number(trimmed) * 100);
 }
 
-function AmountCell({
+function AdjustmentCell({
   row,
   disabled,
   onSave,
@@ -57,12 +60,12 @@ function AmountCell({
   disabled: boolean;
   onSave: (accountId: string, cents: number) => void;
 }) {
-  const [draft, setDraft] = useState(() => centsToInput(row.amount_cents));
+  const [draft, setDraft] = useState(() => centsToInput(row.adjustment_cents));
   const [invalid, setInvalid] = useState(false);
 
   useEffect(() => {
-    setDraft(centsToInput(row.amount_cents));
-  }, [row.amount_cents]);
+    setDraft(centsToInput(row.adjustment_cents));
+  }, [row.adjustment_cents]);
 
   const commitDraft = () => {
     const cents = inputToCents(draft);
@@ -71,14 +74,14 @@ function AmountCell({
       return;
     }
     setInvalid(false);
-    if (cents !== row.amount_cents) onSave(row.account_id, cents);
+    if (cents !== row.adjustment_cents) onSave(row.account_id, cents);
   };
 
   return (
     <input
       value={draft}
       disabled={disabled}
-      aria-label={`Opening balance for ${row.account_name}`}
+      aria-label={`Adjustment for ${row.account_name}`}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={commitDraft}
       onKeyDown={(e) => {
@@ -117,7 +120,7 @@ export function OpeningBalanceRegisterPage() {
     setBanner({ tone: "error", text: error instanceof Error ? error.message : "Request failed" });
 
   const patchLine = useMutation({
-    mutationFn: (input: { account_id: string; amount_cents: number }) =>
+    mutationFn: (input: { account_id: string; adjustment_cents: number }) =>
       patchOpeningBalanceLine({ operating_company_id: operatingCompanyId, ...input }),
     onSuccess: () => {
       setBanner(null);
@@ -131,13 +134,49 @@ export function OpeningBalanceRegisterPage() {
     onSuccess: (result) => {
       setBanner({
         tone: "ok",
-        text: `Staged ${result.staged_count} account${result.staged_count === 1 ? "" : "s"} from QuickBooks as of ${result.as_of_date}${
+        text: `Refreshed the QBO Snapshot for ${result.staged_count} account${result.staged_count === 1 ? "" : "s"} as of ${result.as_of_date} (Adjustments preserved)${
           result.unmapped.length > 0 ? ` · ${result.unmapped.length} line(s) could not be mapped and were not staged` : ""
         }`,
       });
       refresh();
     },
     onError,
+  });
+
+  const importFromFixture = useMutation({
+    mutationFn: () => importOpeningBalancesFromFixture(operatingCompanyId),
+    onSuccess: (result) => {
+      setBanner({
+        tone: "ok",
+        text: `Refreshed the QBO Snapshot for ${result.staged_count} account${result.staged_count === 1 ? "" : "s"} from the clone-as-is fixture as of ${result.as_of_date}${
+          result.unmapped.length > 0 ? ` · ${result.unmapped.length} line(s) had no matching account and were not staged` : ""
+        }`,
+      });
+      refresh();
+    },
+    onError,
+  });
+
+  const cloneAsIs = useMutation({
+    mutationFn: () => cloneAsIsImportAndCommit(operatingCompanyId),
+    onSuccess: (result) => {
+      if (result.commit.committed) {
+        setBanner({
+          tone: "ok",
+          text: `Clone-as-is: imported from ${result.import_source} and committed ${result.commit.accounts_written} account${result.commit.accounts_written === 1 ? "" : "s"} as of ${result.as_of_date}, Adjustment 0.`,
+        });
+      } else {
+        setBanner({
+          tone: "error",
+          text: `Clone-as-is imported ${result.staged_count} line(s) from ${result.import_source} but the commit was refused: ${result.commit.blockers.join(", ")}`,
+        });
+      }
+      refresh();
+    },
+    onError: (error: unknown) => {
+      onError(error);
+      refresh();
+    },
   });
 
   const setFinality = useMutation({
@@ -197,18 +236,33 @@ export function OpeningBalanceRegisterPage() {
           row.posted_opening_balance_cents === null ? "—" : formatUsdCents(row.posted_opening_balance_cents),
       },
       {
-        key: "amount_cents",
-        label: "Staged balance",
+        key: "qbo_snapshot_cents",
+        label: "QBO Snapshot",
+        className: "text-right",
+        cellClass: "text-right tabular-nums text-gray-700",
+        render: (row) => (row.qbo_snapshot_cents === null ? "—" : formatUsdCents(row.qbo_snapshot_cents)),
+      },
+      {
+        key: "adjustment_cents",
+        label: "Adjustment",
         alwaysVisible: true,
         className: "text-right",
         cellClass: "text-right",
         render: (row) => (
-          <AmountCell
+          <AdjustmentCell
             row={row}
             disabled={patchLine.isPending}
-            onSave={(account_id, amount_cents) => patchLine.mutate({ account_id, amount_cents })}
+            onSave={(account_id, adjustment_cents) => patchLine.mutate({ account_id, adjustment_cents })}
           />
         ),
+      },
+      {
+        key: "amount_cents",
+        label: "Adjusted Opening",
+        alwaysVisible: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums font-semibold text-gray-900",
+        render: (row) => formatUsdCents(row.amount_cents),
       },
       {
         key: "debit_or_credit",
@@ -223,6 +277,7 @@ export function OpeningBalanceRegisterPage() {
   const totals = view?.totals;
   const blockers = view?.commit_blockers ?? [];
   const canImport = view?.import_source === "qbo";
+  const canImportFixture = view?.company_code === "TRANSP";
 
   const kpiStrip = view ? (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -248,20 +303,42 @@ export function OpeningBalanceRegisterPage() {
       title="Opening Balance Register"
       subtitle={
         view
-          ? `${view.company_code} · as of ${view.as_of_date} · ${view.period_basis}`
-          : "Import, review and commit per-account opening balances"
+          ? `${view.company_code} · as of ${view.as_of_date} · ${view.period_basis} · balances are live and adjustable — no finality lock`
+          : "Import, adjust and commit per-account opening balances — Snapshot | Adjustment | Adjusted Opening"
       }
       kpiStrip={kpiStrip}
       actions={
         <>
+          {canImportFixture ? (
+            <button
+              type="button"
+              disabled={cloneAsIs.isPending || !operatingCompanyId}
+              onClick={() => cloneAsIs.mutate()}
+              title="Import the QBO/fixture snapshot AND commit it now, Adjustment 0 — no maker/checker pair required"
+              className="rounded-sm border border-emerald-700 bg-emerald-700 px-3 py-1 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-40"
+            >
+              {cloneAsIs.isPending ? "Cloning…" : "Clone-as-is import + commit"}
+            </button>
+          ) : null}
+          {canImportFixture ? (
+            <button
+              type="button"
+              disabled={importFromFixture.isPending || !operatingCompanyId}
+              onClick={() => importFromFixture.mutate()}
+              title="Refresh the QBO Snapshot column from the owner-provided fixture — Adjustments are preserved"
+              className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-40"
+            >
+              {importFromFixture.isPending ? "Importing…" : "Refresh Snapshot from fixture"}
+            </button>
+          ) : null}
           <button
             type="button"
             disabled={!canImport || importFromQbo.isPending || !operatingCompanyId}
             onClick={() => importFromQbo.mutate()}
-            title={canImport ? undefined : "This entity has no QuickBooks connection — enter balances by hand"}
+            title={canImport ? "Refresh the QBO Snapshot column — Adjustments are preserved" : "This entity has no QuickBooks connection — enter balances by hand"}
             className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-40"
           >
-            {importFromQbo.isPending ? "Importing…" : "Import from QBO"}
+            {importFromQbo.isPending ? "Importing…" : "Refresh Snapshot from QBO"}
           </button>
           <button
             type="button"
@@ -292,13 +369,18 @@ export function OpeningBalanceRegisterPage() {
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-gray-900">Source period finality</p>
+              <p className="text-sm font-semibold text-gray-900">
+                Source period cleanup{" "}
+                <span className="ml-1 rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs font-normal text-gray-500">
+                  advisory only — does not block commit
+                </span>
+              </p>
               <p className="text-sm text-gray-600">
                 {view.finality.is_final
                   ? `Marked final${view.finality.set_by_name ? ` by ${view.finality.set_by_name}` : ""}${
                       view.finality.set_at ? ` on ${formatDateUS(view.finality.set_at)}` : ""
-                    }. Committing is permitted.`
-                  : "Not final. The commit is refused until the accountant confirms the QuickBooks cleanup for this entity and period is done."}
+                    }. Balances are live and can still be adjusted and re-committed at any time.`
+                  : "Not yet marked final by the accountant. This is Martin's own tracking note — it no longer blocks committing; balances are live and change (owner ruling 2026-07-29)."}
               </p>
             </div>
             <button
@@ -339,7 +421,7 @@ export function OpeningBalanceRegisterPage() {
         loading={registerQuery.isPending}
         storageKey="accounting-opening-balance-register"
         initialPageSize={100}
-        emptyText="No opening balances staged yet. Import from QuickBooks, or enter them by hand."
+        emptyText="No opening balances staged yet. Import from QuickBooks (or the clone-as-is fixture), or enter them by hand."
       />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">

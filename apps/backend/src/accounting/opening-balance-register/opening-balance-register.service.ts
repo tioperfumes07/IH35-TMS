@@ -1,27 +1,46 @@
-// OB-01 — Opening Balance Register: import → staging → owner review → data-gated commit.
+// OB-01 — Opening Balance Register: import → stage → owner-adjustable commit.
+//
+// OWNER RULING 2026-07-29 (docs/fixtures/ob01 companion: ~/Downloads/GIVE-CURSOR/Cursor-OpeningBalances-OB01.md,
+// superseding this module's original 2026-07-28 finality-gate design): opening balances are LIVE and
+// CHANGE. There is NO finality gate. The register auto-imports the QBO/fixture numbers AND commits
+// them as the opening balance NOW (clone-as-is, Adjustment 0), so the books are populated and the
+// software is functional immediately — waiting on any "the QBO cleanup is done" flag before the books
+// can be used at all was the wrong shape of control. Martin/owner adjust balances over time in the
+// register (three columns, worksheet-style: QBO Snapshot | editable Adjustment | Adjusted Opening =
+// Snapshot + Adjustment, the committed value). Re-import refreshes the Snapshot only; a prior
+// Adjustment persists across re-import. Every edit stays WORM-audited. The commit still refuses an
+// internally-inconsistent register (unbalanced, OBE not reclassed, an account outside Asset/Liability/
+// Equity) and still enforces maker≠checker for a HUMAN commit — those are data-integrity controls, not
+// the "is the source final" control this ruling removed. The one-time system clone-as-is commit (see
+// cloneAsIsImportAndCommit) is the sole caller allowed to bypass maker≠checker, because there is no
+// second human in that loop by construction; it still cannot bypass balance/OBE/account-type checks.
 //
 // WHY THIS EXISTS: catalogs.accounts has carried opening_balance_cents / opening_balance_as_of for
 // months, and on prod (2026-07-28) every one of the 1,233 active accounts across TRANSP/TRK/USMCA
-// has a NULL/zero opening balance and no as-of date. The two opening-balance code paths that exist
-// (opening-balance-import.service.ts, qbo-ob-2026-03-31-live-pull.service.ts) are read-only previews
-// that assemble a JE and stop — nothing can persist a reviewed balance, nothing audits who changed
-// one, and nothing can refuse the write while the QBO source period is still being cleaned up.
+// has a NULL/zero opening balance and no as-of date. The two opening-balance code paths that existed
+// before this module (opening-balance-import.service.ts, qbo-ob-2026-03-31-live-pull.service.ts) are
+// read-only previews that assemble a JE and stop — nothing persists a reviewed balance, nothing audits
+// who changed one. This module is that missing persistence + audit layer, now with the two-source
+// (Snapshot vs Adjustment) model the owner's worksheet already uses.
 //
 // GL MATH: none is written here. Debit/credit derivation reuses signedCentsToDebitCredit from
 // opening-balance-import.service.ts (the CPA-locked signed-actual convention). QBO account mapping
-// reuses mapQboObAccountsViaMdata from qbo-ob-2026-03-31-live-pull.service.ts. This module assembles
-// a JE PREVIEW only — it never calls createJournalEntry and writes nothing to accounting.journal_*.
+// (live QBO import path only) reuses mapQboObAccountsViaMdata from qbo-ob-2026-03-31-live-pull.service.ts.
+// This module assembles a JE PREVIEW only — it never calls createJournalEntry and writes nothing to
+// accounting.journal_*.
 //
 // PARALLEL BOOKS: QBO is read-only. This module issues QBO *report* GETs and nothing else. There is
 // no write-back of any kind, and no posting flag is read or flipped.
 //
-// THE DATA GATE (the control this block is really about): committing opening balances writes
-// catalogs.accounts and is not something you undo. Importing and staging are safe and may run at any
-// time; the commit hard-refuses unless accounting.ob_source_finality says the accountant has marked
-// that entity/period's QBO cleanup FINAL. There is no owner override that lets a commit through
-// without that flag — a "dry-run" commit is not a thing, it is either final or it is refused.
+// MATCHING (fixture + QBO import, both): exact catalogs.accounts.account_name match first, then
+// case-insensitive/trimmed. A label that matches neither is reported in `unmapped` — never guessed,
+// never silently dropped. The one-time TRANSP prod seed (db/migrations/202610151400_*) uses the exact
+// same two-step rule so the register and the migration agree on what "the same account" means.
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
+import { resolveMonorepoRoot } from "../../lib/monorepo-root.js";
 import {
   qboCompanyContext,
   qboReport,
@@ -56,7 +75,9 @@ export type ObRegisterPeriodSpec = {
  * TRANSP 2026-03-31 — the locked cutover basis (docs/lockdown/00_LOCKED_DECISIONS.md §8.9: opening
  *   balances as-of 03/31/2026, cutover 04/01/2026). Same as-of the existing live QBO preview pulls.
  * TRK 2024-12-31 — the balance sheet the TRANSP static importer already transcribes for that entity
- *   (docs/OPENING-BALANCES-TRANSP-2024-12-31.md / transp-2024-12-31-source.ts).
+ *   (docs/OPENING-BALANCES-TRANSP-2024-12-31.md / transp-2024-12-31-source.ts). AWAITING DATA per the
+ *   owner worksheet (Cursor-Balances-Reference.xlsx "TRK 2024-12-31" tab) — a separate QBO company not
+ *   yet connected. Never invent TRK balances; import stays refused until a real source exists.
  * USMCA — manual entry only: prod has ZERO rows in integrations.qbo_connections for USMCA
  *   (verified 2026-07-28), so there is no QBO realm to pull from. Refusing the import is the honest
  *   behaviour; the register still accepts hand-entered balances for the same cutover date.
@@ -89,11 +110,16 @@ export const QBO_OB_ACCOUNTING_METHOD = "Accrual" as const;
  * permanent OBE ≈ 0). Any non-zero residue means the source period was committed mid-cleanup. A
  * materiality tolerance here would be an invented threshold the owner has never set, so the stricter
  * reading wins: a single cent of residual OBE refuses the commit and names the amount to reclass.
+ * This check is unaffected by the 2026-07-29 finality-gate removal — it is a data-integrity check on
+ * the register's own contents, not a "has Martin finished cleanup" gate.
  */
 export const OB_OBE_RESIDUAL_TOLERANCE_CENTS = 0;
 
 const OBE_LABELS = ["opening balance equity"];
 const RETAINED_EARNINGS_LABELS = ["retained earnings"];
+
+/** Repo-root-relative path to the owner-provided TRANSP clone-as-is fixture (see file header). */
+export const TRANSP_CLONE_AS_IS_FIXTURE_RELATIVE_PATH = "docs/fixtures/ob01/transp-2026-03-31.json";
 
 function normalizeLabel(label: string | null | undefined): string {
   return String(label ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -110,6 +136,11 @@ export type ObRegisterLine = {
   account_number: string | null;
   account_name: string;
   account_type: string | null;
+  /** QBO/fixture snapshot as last imported. NULL when this line has never been imported (hand-entered only). */
+  qbo_snapshot_cents: number | null;
+  /** Owner/accountant editable layer on top of the snapshot. Persists across re-import. */
+  adjustment_cents: number;
+  /** Adjusted Opening = coalesce(qbo_snapshot_cents, 0) + adjustment_cents. This is the committed value. */
   amount_cents: number;
   source: "manual" | "qbo_import";
   source_account_label: string | null;
@@ -134,8 +165,12 @@ export type ObRegisterFinality = {
   note: string | null;
 };
 
+/**
+ * `source_not_final` was REMOVED 2026-07-29 (owner ruling — no finality gate; balances are live and
+ * change). Every remaining reason is a data-integrity check on the register's own contents, not a
+ * "has the source been cleaned up" gate.
+ */
 export type ObCommitRefuseReason =
-  | "source_not_final"
   | "no_staged_lines"
   | "maker_is_checker"
   | "unbalanced"
@@ -168,6 +203,7 @@ export type ObRegisterView = {
   period_basis: string;
   qbo_import_flag_on: boolean;
   qbo_connection_present: boolean;
+  /** Advisory only since 2026-07-29 — does NOT gate commit_blockers. Martin's own tracking flag. */
   finality: ObRegisterFinality;
   lines: ObRegisterLine[];
   totals: ObRegisterTotals;
@@ -284,6 +320,8 @@ type StagedRow = {
   account_name: string;
   account_type: string | null;
   amount_cents: string | number;
+  qbo_snapshot_cents: string | number | null;
+  adjustment_cents: string | number;
   source: "manual" | "qbo_import";
   source_account_label: string | null;
   qbo_account_id: string | null;
@@ -310,6 +348,8 @@ async function loadStagedRows(
         a.account_name,
         a.account_type,
         l.amount_cents,
+        l.qbo_snapshot_cents,
+        l.adjustment_cents,
         l.source,
         l.source_account_label,
         l.qbo_account_id,
@@ -330,6 +370,36 @@ async function loadStagedRows(
     [operatingCompanyId, asOfDate]
   );
   return res.rows;
+}
+
+/**
+ * The most recently touched register row (staged OR committed OR superseded) for one account/period,
+ * regardless of status. This is how a re-import or a fresh manual entry after a commit inherits the
+ * last Adjustment instead of clobbering it back to 0 — "re-import refreshes the Snapshot only" (owner
+ * ruling 2026-07-29).
+ */
+async function loadMostRecentLine(
+  client: DbClient,
+  operatingCompanyId: string,
+  asOfDate: string,
+  accountId: string
+): Promise<{ qbo_snapshot_cents: number | null; adjustment_cents: number } | null> {
+  const res = await client.query<{ qbo_snapshot_cents: string | number | null; adjustment_cents: string | number }>(
+    `
+      SELECT qbo_snapshot_cents, adjustment_cents
+      FROM accounting.ob_register_staging_lines
+      WHERE operating_company_id = $1::uuid AND as_of_date = $2::date AND account_id = $3::uuid
+      ORDER BY updated_at DESC NULLS LAST, created_at DESC
+      LIMIT 1
+    `,
+    [operatingCompanyId, asOfDate, accountId]
+  );
+  const row = res.rows[0];
+  if (!row) return null;
+  return {
+    qbo_snapshot_cents: row.qbo_snapshot_cents === null ? null : toNumber(row.qbo_snapshot_cents),
+    adjustment_cents: toNumber(row.adjustment_cents),
+  };
 }
 
 function toNumber(value: string | number | null | undefined): number {
@@ -382,16 +452,19 @@ export function computeObTotals(
 
 /**
  * Every reason a commit would be refused, in the order a reviewer should fix them.
- * `source_not_final` is first because it is the gate that cannot be argued with.
+ *
+ * `source_not_final` was REMOVED 2026-07-29 (owner ruling — there is no finality gate; balances are
+ * live and change). `checkerUserId: null` (the system clone-as-is path — see cloneAsIsImportAndCommit)
+ * skips the maker/checker check entirely: there is no second human in a system-driven commit by
+ * construction, so refusing it for that reason would be nonsensical, not protective. Every other check
+ * (balance, OBE, account type) still applies to that path unchanged.
  */
 export function computeCommitBlockers(args: {
-  isFinal: boolean;
   totals: ObRegisterTotals & { unsupported_types: string[] };
   makers: string[];
   checkerUserId: string | null;
 }): ObCommitRefuseReason[] {
   const blockers: ObCommitRefuseReason[] = [];
-  if (!args.isFinal) blockers.push("source_not_final");
   if (args.totals.staged_line_count === 0) blockers.push("no_staged_lines");
   if (args.checkerUserId && args.makers.length > 0 && args.makers.includes(args.checkerUserId)) {
     blockers.push("maker_is_checker");
@@ -466,6 +539,8 @@ function toViewLines(rows: StagedRow[]): ObRegisterLine[] {
       account_number: r.account_number,
       account_name: r.account_name,
       account_type: r.account_type,
+      qbo_snapshot_cents: r.qbo_snapshot_cents === null ? null : toNumber(r.qbo_snapshot_cents),
+      adjustment_cents: toNumber(r.adjustment_cents),
       amount_cents: amount,
       source: r.source,
       source_account_label: r.source_account_label,
@@ -511,7 +586,6 @@ export async function getObRegisterView(
   const totals = computeObTotals(lines);
   const makers = makersOf(rows);
   const commit_blockers = computeCommitBlockers({
-    isFinal: finality.is_final,
     totals,
     makers,
     checkerUserId: viewerUserId,
@@ -545,12 +619,19 @@ export async function getObRegisterView(
   };
 }
 
-/** Upsert one staged line (manual entry or correction of an imported line) + WORM audit. */
+/**
+ * Upsert one staged line's ADJUSTMENT (manual entry or correction of an imported line) + WORM audit.
+ *
+ * The Snapshot is never touched by this path — it is preserved from whatever it last was (null for a
+ * line that was never imported, e.g. a hand-entered USMCA balance). Adjusted Opening (`amount_cents`,
+ * the value a commit writes) is always recomputed as snapshot + adjustment here, server-side; the
+ * caller (route/UI) sends only the Adjustment.
+ */
 export async function upsertObRegisterLine(
   client: DbClient,
   operatingCompanyId: string,
   actorUserId: string,
-  input: { account_id: string; amount_cents: number; note?: string | null }
+  input: { account_id: string; adjustment_cents: number; note?: string | null }
 ): Promise<ObRegisterLine> {
   const { period } = await resolveObRegisterPeriod(client, operatingCompanyId);
 
@@ -576,9 +657,16 @@ export async function upsertObRegisterLine(
     );
   }
 
-  const before = await client.query<{ id: string; amount_cents: string; note: string | null }>(
+  const before = await client.query<{
+    id: string;
+    amount_cents: string;
+    qbo_snapshot_cents: string | number | null;
+    adjustment_cents: string;
+    note: string | null;
+    source: "manual" | "qbo_import";
+  }>(
     `
-      SELECT id::text, amount_cents::text, note
+      SELECT id::text, amount_cents::text, qbo_snapshot_cents, adjustment_cents::text, note, source
       FROM accounting.ob_register_staging_lines
       WHERE operating_company_id = $1::uuid AND as_of_date = $2::date
         AND account_id = $3::uuid AND status = 'staged'
@@ -587,23 +675,43 @@ export async function upsertObRegisterLine(
     [operatingCompanyId, period.as_of_date, input.account_id]
   );
   const prior = before.rows[0] ?? null;
+  // Preserve whatever Snapshot this account last carried (staged, committed, or superseded) — a
+  // manual adjustment never invents or clears a Snapshot.
+  const mostRecent = prior
+    ? { qbo_snapshot_cents: prior.qbo_snapshot_cents === null ? null : toNumber(prior.qbo_snapshot_cents) }
+    : await loadMostRecentLine(client, operatingCompanyId, period.as_of_date, input.account_id);
+  const snapshotCents = mostRecent?.qbo_snapshot_cents ?? null;
+  const amountCents = (snapshotCents ?? 0) + input.adjustment_cents;
+  const source: "manual" | "qbo_import" = prior?.source ?? (snapshotCents === null ? "manual" : "qbo_import");
 
   const upserted = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.ob_register_staging_lines (
-        operating_company_id, as_of_date, account_id, amount_cents, source, note,
-        created_by_user_id, updated_by_user_id
+        operating_company_id, as_of_date, account_id, amount_cents, qbo_snapshot_cents,
+        adjustment_cents, source, note, created_by_user_id, updated_by_user_id
       )
-      VALUES ($1::uuid, $2::date, $3::uuid, $4::bigint, 'manual', $5, $6::uuid, $6::uuid)
+      VALUES ($1::uuid, $2::date, $3::uuid, $4::bigint, $5::bigint, $6::bigint, $7, $8, $9::uuid, $9::uuid)
       ON CONFLICT (operating_company_id, as_of_date, account_id) WHERE status = 'staged'
       DO UPDATE SET
         amount_cents = EXCLUDED.amount_cents,
+        qbo_snapshot_cents = EXCLUDED.qbo_snapshot_cents,
+        adjustment_cents = EXCLUDED.adjustment_cents,
         note = EXCLUDED.note,
         updated_by_user_id = EXCLUDED.updated_by_user_id,
         updated_at = now()
       RETURNING id::text
     `,
-    [operatingCompanyId, period.as_of_date, input.account_id, input.amount_cents, input.note ?? null, actorUserId]
+    [
+      operatingCompanyId,
+      period.as_of_date,
+      input.account_id,
+      amountCents,
+      snapshotCents,
+      input.adjustment_cents,
+      source,
+      input.note ?? null,
+      actorUserId,
+    ]
   );
   const lineId = upserted.rows[0]?.id ?? null;
 
@@ -614,9 +722,11 @@ export async function upsertObRegisterLine(
     accountId: input.account_id,
     eventType: prior ? "line_edited" : "line_created",
     actorUserId,
-    before: prior ? { amount_cents: Number(prior.amount_cents), note: prior.note } : null,
-    after: { amount_cents: input.amount_cents, note: input.note ?? null },
-    detail: prior ? "opening balance line edited under review" : "opening balance line entered manually",
+    before: prior
+      ? { amount_cents: Number(prior.amount_cents), adjustment_cents: Number(prior.adjustment_cents), note: prior.note }
+      : null,
+    after: { amount_cents: amountCents, adjustment_cents: input.adjustment_cents, note: input.note ?? null },
+    detail: prior ? "opening balance adjustment edited" : "opening balance adjustment entered manually",
   });
 
   const rows = await loadStagedRows(client, operatingCompanyId, period.as_of_date);
@@ -650,6 +760,11 @@ export type ObImportResult = {
  * Read-only against QBO (one report GET). Writes only accounting.ob_register_staging_lines and the
  * WORM audit — no GL, no catalogs.accounts write, no QBO write-back. Re-running overwrites the
  * staged rows for the same period rather than duplicating them.
+ *
+ * "Re-import refreshes the Snapshot only" (owner ruling 2026-07-29): if this account already carries
+ * an Adjustment from a prior staged/committed row for the same period, that Adjustment is PRESERVED
+ * and Adjusted Opening is recomputed as new_snapshot + old_adjustment — never reset to the raw QBO
+ * number, and never silently dropped.
  */
 export async function importObRegisterFromQbo(
   client: DbClient,
@@ -709,8 +824,8 @@ export async function importObRegisterFromQbo(
   for (const line of parsed.lines) {
     const mapped = mappedByQboId.get(line.qbo_account_id);
     if (!mapped) continue; // surfaced in `unmapped` — never guessed into an account
-    const amountCents = Number(line.balance_cents);
-    if (!Number.isSafeInteger(amountCents)) {
+    const snapshotCents = Number(line.balance_cents);
+    if (!Number.isSafeInteger(snapshotCents)) {
       throw new ObRegisterError(
         "cents_overflow",
         `QBO balance for ${line.account_name} exceeds safe integer range`,
@@ -719,16 +834,23 @@ export async function importObRegisterFromQbo(
       );
     }
 
+    const prior = await loadMostRecentLine(client, operatingCompanyId, period.as_of_date, mapped.catalogs_account_id);
+    const priorAdjustment = prior?.adjustment_cents ?? 0;
+    const amountCents = snapshotCents + priorAdjustment;
+
     const res = await client.query<{ id: string }>(
       `
         INSERT INTO accounting.ob_register_staging_lines (
-          operating_company_id, as_of_date, account_id, amount_cents, source,
-          source_account_label, qbo_account_id, created_by_user_id, updated_by_user_id
+          operating_company_id, as_of_date, account_id, amount_cents, qbo_snapshot_cents,
+          adjustment_cents, source, source_account_label, qbo_account_id,
+          created_by_user_id, updated_by_user_id
         )
-        VALUES ($1::uuid, $2::date, $3::uuid, $4::bigint, 'qbo_import', $5, $6, $7::uuid, $7::uuid)
+        VALUES ($1::uuid, $2::date, $3::uuid, $4::bigint, $5::bigint, $6::bigint, 'qbo_import', $7, $8, $9::uuid, $9::uuid)
         ON CONFLICT (operating_company_id, as_of_date, account_id) WHERE status = 'staged'
         DO UPDATE SET
           amount_cents = EXCLUDED.amount_cents,
+          qbo_snapshot_cents = EXCLUDED.qbo_snapshot_cents,
+          adjustment_cents = EXCLUDED.adjustment_cents,
           source = 'qbo_import',
           source_account_label = EXCLUDED.source_account_label,
           qbo_account_id = EXCLUDED.qbo_account_id,
@@ -741,6 +863,8 @@ export async function importObRegisterFromQbo(
         period.as_of_date,
         mapped.catalogs_account_id,
         amountCents,
+        snapshotCents,
+        priorAdjustment,
         line.account_name,
         line.qbo_account_id,
         actorUserId,
@@ -760,7 +884,7 @@ export async function importObRegisterFromQbo(
       mapped: mapping.counts.mapped,
       unmapped: mapping.counts.unmapped,
     },
-    detail: `QBO BalanceSheet ${period.as_of_date} ${QBO_OB_ACCOUNTING_METHOD} imported to staging (read-only pull)`,
+    detail: `QBO BalanceSheet ${period.as_of_date} ${QBO_OB_ACCOUNTING_METHOD} imported to staging (read-only pull; snapshot refreshed, prior adjustments preserved)`,
   });
 
   return {
@@ -777,7 +901,162 @@ export async function importObRegisterFromQbo(
   };
 }
 
-/** Martin's gate. Marking an entity/period FINAL is what unlocks the commit; it is itself audited. */
+export type ObFixtureLineInput = {
+  qbo_account_name: string;
+  qbo_snapshot_cents: number;
+  /** Fixture files ship Adjustment 0 by convention; a prior live Adjustment always wins over this. */
+  adjustment_cents?: number;
+  notes?: string | null;
+};
+
+type ObFixtureFile = { company_code?: string; as_of_date?: string; lines: ObFixtureLineInput[] };
+
+export type ObFixtureSource = string | ObFixtureLineInput[] | ObFixtureFile;
+
+export type ObFixtureImportResult = {
+  as_of_date: string;
+  company_code: string;
+  staged_count: number;
+  mapped_count: number;
+  unmapped: Array<{ qbo_account_name: string; reason: string }>;
+};
+
+function loadFixtureLines(source: ObFixtureSource): ObFixtureLineInput[] {
+  if (typeof source === "string") {
+    const abs = source.startsWith("/") ? source : join(resolveMonorepoRoot(import.meta.url), source);
+    const raw = readFileSync(abs, "utf8");
+    const parsed = JSON.parse(raw) as ObFixtureFile;
+    if (!Array.isArray(parsed.lines)) {
+      throw new ObRegisterError("fixture_malformed", `fixture at ${abs} has no "lines" array`, 500, { path: abs });
+    }
+    return parsed.lines;
+  }
+  if (Array.isArray(source)) return source;
+  return source.lines;
+}
+
+/**
+ * Import the owner-provided clone-as-is fixture (docs/fixtures/ob01/transp-2026-03-31.json, sourced
+ * from Cursor-Balances-Reference.xlsx) into STAGING. TRANSP-only — this fixture is TRANSP's snapshot;
+ * TRK is "AWAITING DATA" per the worksheet and USMCA is manual-only, neither has a fixture to import.
+ *
+ * Matching: exact catalogs.accounts.account_name, then case-insensitive/trimmed. A label that matches
+ * neither is reported in `unmapped` — never guessed, never invented. This is the same rule
+ * db/migrations/202610151400_ob01_transp_clone_as_is_seed.sql uses so the register and the migration
+ * agree on what "the same account" means.
+ *
+ * "Re-import refreshes the Snapshot only": a prior Adjustment for the same account/period is preserved
+ * exactly like importObRegisterFromQbo.
+ */
+export async function importObRegisterFromFixture(
+  client: DbClient,
+  operatingCompanyId: string,
+  actorUserId: string,
+  fixtureSource: ObFixtureSource = TRANSP_CLONE_AS_IS_FIXTURE_RELATIVE_PATH
+): Promise<ObFixtureImportResult> {
+  const { company, period } = await resolveObRegisterPeriod(client, operatingCompanyId);
+  if (company.code !== "TRANSP") {
+    throw new ObRegisterError(
+      "fixture_entity_mismatch",
+      `the clone-as-is fixture is TRANSP-only — ${company.code} has no fixture to import`,
+      409,
+      { company_code: company.code }
+    );
+  }
+
+  const fixtureLines = loadFixtureLines(fixtureSource);
+
+  const accountsRes = await client.query<{ id: string; account_name: string }>(
+    `SELECT id::text, account_name FROM catalogs.accounts WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL`,
+    [operatingCompanyId]
+  );
+  const byExact = new Map<string, { id: string; account_name: string }>();
+  const byTrimLower = new Map<string, { id: string; account_name: string }>();
+  for (const a of accountsRes.rows) {
+    byExact.set(a.account_name, a);
+    const key = a.account_name.trim().toLowerCase();
+    if (!byTrimLower.has(key)) byTrimLower.set(key, a); // first-match-wins, never silently overwritten
+  }
+
+  let staged = 0;
+  let mapped = 0;
+  const unmapped: Array<{ qbo_account_name: string; reason: string }> = [];
+
+  for (const line of fixtureLines) {
+    const match = byExact.get(line.qbo_account_name) ?? byTrimLower.get(line.qbo_account_name.trim().toLowerCase()) ?? null;
+    if (!match) {
+      unmapped.push({
+        qbo_account_name: line.qbo_account_name,
+        reason: "no matching catalogs.accounts row (exact or case-insensitive/trimmed) — never invented",
+      });
+      continue;
+    }
+    mapped += 1;
+
+    const prior = await loadMostRecentLine(client, operatingCompanyId, period.as_of_date, match.id);
+    const priorAdjustment = prior?.adjustment_cents ?? line.adjustment_cents ?? 0;
+    const snapshotCents = line.qbo_snapshot_cents;
+    const amountCents = snapshotCents + priorAdjustment;
+
+    const res = await client.query<{ id: string }>(
+      `
+        INSERT INTO accounting.ob_register_staging_lines (
+          operating_company_id, as_of_date, account_id, amount_cents, qbo_snapshot_cents,
+          adjustment_cents, source, source_account_label, note, created_by_user_id, updated_by_user_id
+        )
+        VALUES ($1::uuid, $2::date, $3::uuid, $4::bigint, $5::bigint, $6::bigint, 'qbo_import', $7, $8, $9::uuid, $9::uuid)
+        ON CONFLICT (operating_company_id, as_of_date, account_id) WHERE status = 'staged'
+        DO UPDATE SET
+          amount_cents = EXCLUDED.amount_cents,
+          qbo_snapshot_cents = EXCLUDED.qbo_snapshot_cents,
+          adjustment_cents = EXCLUDED.adjustment_cents,
+          source = 'qbo_import',
+          source_account_label = EXCLUDED.source_account_label,
+          note = EXCLUDED.note,
+          updated_by_user_id = EXCLUDED.updated_by_user_id,
+          updated_at = now()
+        RETURNING id::text
+      `,
+      [
+        operatingCompanyId,
+        period.as_of_date,
+        match.id,
+        amountCents,
+        snapshotCents,
+        priorAdjustment,
+        line.qbo_account_name,
+        line.notes ?? null,
+        actorUserId,
+      ]
+    );
+    if (res.rows[0]) staged += 1;
+  }
+
+  await insertAuditEvent(client, {
+    operatingCompanyId,
+    asOfDate: period.as_of_date,
+    eventType: "import_staged",
+    actorUserId,
+    after: { source: "fixture_clone_as_is", staged, mapped, unmapped: unmapped.length },
+    detail: `Clone-as-is fixture import (${typeof fixtureSource === "string" ? fixtureSource : "inline lines"}) staged ${staged} of ${fixtureLines.length} lines`,
+  });
+
+  return {
+    as_of_date: period.as_of_date,
+    company_code: company.code,
+    staged_count: staged,
+    mapped_count: mapped,
+    unmapped,
+  };
+}
+
+/**
+ * Martin's tracking flag. Advisory ONLY since 2026-07-29 — setting or clearing it no longer changes
+ * whether a commit is accepted (computeCommitBlockers no longer reads it). Kept because it is still
+ * useful information ("has the accountant finished this period's cleanup") and because dropping the
+ * table/audit trail would be a delete, not an add (07-never-delete-only-add). Still fully audited both
+ * directions.
+ */
 export async function setObSourceFinality(
   client: DbClient,
   operatingCompanyId: string,
@@ -811,8 +1090,8 @@ export async function setObSourceFinality(
     before: { is_final: before.is_final },
     after: { is_final: input.is_final, note: input.note ?? null },
     detail: input.is_final
-      ? "source period marked FINAL — commit is now permitted for this entity/period"
-      : "source period marked NOT final — commit is refused for this entity/period",
+      ? "source period marked FINAL (advisory only — does not gate commit; owner ruling 2026-07-29)"
+      : "source period marked NOT final (advisory only — does not gate commit; owner ruling 2026-07-29)",
   });
 
   return loadFinality(client, operatingCompanyId, period.as_of_date);
@@ -837,17 +1116,28 @@ export type ObCommitResult =
       is_final: boolean;
     };
 
+export type ObCommitOptions = {
+  /**
+   * System clone-as-is path ONLY (cloneAsIsImportAndCommit). Skips maker≠checker — there is no second
+   * human in that loop by construction. Every other check (balance, OBE, account type, staged-lines)
+   * still applies unchanged. NEVER set this from a route driven by an end-user click.
+   */
+  bypassMakerChecker?: boolean;
+};
+
 /**
  * Commit the reviewed register onto catalogs.accounts.
  *
- * Refuses — with an audited `commit_refused` event — unless the source period is FINAL, a different
- * user staged the lines than is committing them, the entry balances, and Opening Balance Equity has
- * been reclassed to Retained Earnings. There is no override: a refused commit writes nothing.
+ * Since 2026-07-29 (owner ruling) this NO LONGER refuses on "source not final" — there is no finality
+ * gate. It still refuses — with an audited `commit_refused` event — when there are no staged lines,
+ * the register does not balance, Opening Balance Equity has not been reclassed, a staged line sits on
+ * a non-balance-sheet account, or (for a human commit) the checker is also a maker. There is no
+ * override for any of those: a refused commit writes nothing.
  *
  * A refusal RETURNS `{ committed: false, blockers }`; it does not throw. That is deliberate and it
  * is the whole reason the refusal is auditable: the routes run this inside withCompanyScope, which
  * ROLLBACKs the transaction on a thrown error — so a thrown refusal would take its own
- * `commit_refused` WORM row down with it and no one could ever prove the attempt happened. A refused
+ * `commit_refused` audit row down with it and no one could ever prove the attempt happened. A refused
  * commit is an expected business outcome, not an exception. The route maps it to HTTP 409.
  * (`ObRegisterError` is still thrown for genuine faults: unknown company, cross-entity account, no
  * QBO realm — none of those need to survive as an audit row.)
@@ -855,7 +1145,8 @@ export type ObCommitResult =
 export async function commitObRegister(
   client: DbClient,
   operatingCompanyId: string,
-  checkerUserId: string
+  checkerUserId: string,
+  opts: ObCommitOptions = {}
 ): Promise<ObCommitResult> {
   const { company, period } = await resolveObRegisterPeriod(client, operatingCompanyId);
   const [rows, finality] = await Promise.all([
@@ -867,10 +1158,9 @@ export async function commitObRegister(
   const totals = computeObTotals(lines);
   const makers = makersOf(rows);
   const blockers = computeCommitBlockers({
-    isFinal: finality.is_final,
     totals,
     makers,
-    checkerUserId,
+    checkerUserId: opts.bypassMakerChecker ? null : checkerUserId,
   });
 
   if (blockers.length > 0) {
@@ -882,6 +1172,7 @@ export async function commitObRegister(
       after: {
         blockers,
         is_final: finality.is_final,
+        bypass_maker_checker: Boolean(opts.bypassMakerChecker),
         total_debits_cents: totals.total_debits_cents,
         total_credits_cents: totals.total_credits_cents,
         obe_residual_cents: totals.obe_residual_cents,
@@ -905,13 +1196,15 @@ export async function commitObRegister(
       `
         UPDATE catalogs.accounts
            SET opening_balance_cents = $1::bigint,
-               opening_balance_as_of = $2::date
-         WHERE id = $3::uuid
-           AND operating_company_id = $4::uuid
+               opening_balance_as_of = $2::date,
+               opening_balance_qbo_snapshot_cents = $3::bigint,
+               opening_balance_adjustment_cents = $4::bigint
+         WHERE id = $5::uuid
+           AND operating_company_id = $6::uuid
            AND deactivated_at IS NULL
         RETURNING id::text
       `,
-      [line.amount_cents, period.as_of_date, line.account_id, operatingCompanyId]
+      [line.amount_cents, period.as_of_date, line.qbo_snapshot_cents, line.adjustment_cents, line.account_id, operatingCompanyId]
     );
     if (res.rows[0]) written += 1;
 
@@ -938,7 +1231,13 @@ export async function commitObRegister(
         opening_balance_cents: line.posted_opening_balance_cents,
         opening_balance_as_of: line.posted_opening_balance_as_of,
       },
-      after: { opening_balance_cents: line.amount_cents, opening_balance_as_of: period.as_of_date },
+      after: {
+        opening_balance_cents: line.amount_cents,
+        opening_balance_as_of: period.as_of_date,
+        qbo_snapshot_cents: line.qbo_snapshot_cents,
+        adjustment_cents: line.adjustment_cents,
+        bypass_maker_checker: Boolean(opts.bypassMakerChecker),
+      },
       detail: "opening balance committed to catalogs.accounts",
     });
   }
@@ -950,6 +1249,76 @@ export async function commitObRegister(
     accounts_written: written,
     totals,
     blockers: [],
+  };
+}
+
+export type ObCloneAsIsResult = {
+  as_of_date: string;
+  company_code: string;
+  import_source: "qbo" | "fixture";
+  staged_count: number;
+  mapped_count: number;
+  unmapped: Array<{ reason: string; [key: string]: unknown }>;
+  commit: ObCommitResult;
+};
+
+/**
+ * The owner-ordered one-time (and re-runnable) system action: import the QBO/fixture snapshot AND
+ * commit it as the opening balance immediately, Adjustment 0, no human maker/checker pair required.
+ *
+ * Source preference: a live QBO connection wins if present (importObRegisterFromQbo); otherwise, for
+ * TRANSP only, falls back to the owner-provided clone-as-is fixture (importObRegisterFromFixture).
+ * TRK/USMCA with neither a QBO connection nor a fixture refuse honestly — never invented.
+ *
+ * The commit that follows is NOT a rubber stamp: it still runs every data-integrity check
+ * (balance, OBE, account type) via commitObRegister — only maker≠checker is bypassed, because a
+ * system action has no second human by construction. If the imported set does not balance (for
+ * example: some fixture lines could not be mapped to a live account — see importObRegisterFromFixture),
+ * the commit legitimately refuses and this function reports that refusal, not a forced write.
+ */
+export async function cloneAsIsImportAndCommit(
+  client: DbClient,
+  operatingCompanyId: string,
+  actorUserId: string
+): Promise<ObCloneAsIsResult> {
+  const { company } = await resolveObRegisterPeriod(client, operatingCompanyId);
+
+  let importSource: "qbo" | "fixture";
+  let staged_count: number;
+  let mapped_count: number;
+  let unmapped: Array<{ reason: string; [key: string]: unknown }>;
+
+  if (await qboConnectionPresent(client, operatingCompanyId)) {
+    importSource = "qbo";
+    const result = await importObRegisterFromQbo(client, operatingCompanyId, actorUserId);
+    staged_count = result.staged_count;
+    mapped_count = result.mapped_count;
+    unmapped = result.unmapped;
+  } else if (company.code === "TRANSP") {
+    importSource = "fixture";
+    const result = await importObRegisterFromFixture(client, operatingCompanyId, actorUserId);
+    staged_count = result.staged_count;
+    mapped_count = result.mapped_count;
+    unmapped = result.unmapped;
+  } else {
+    throw new ObRegisterError(
+      "clone_as_is_no_source",
+      `no QBO connection and no clone-as-is fixture available for ${company.code}`,
+      409,
+      { company_code: company.code }
+    );
+  }
+
+  const commit = await commitObRegister(client, operatingCompanyId, actorUserId, { bypassMakerChecker: true });
+
+  return {
+    as_of_date: commit.as_of_date,
+    company_code: company.code,
+    import_source: importSource,
+    staged_count,
+    mapped_count,
+    unmapped,
+    commit,
   };
 }
 

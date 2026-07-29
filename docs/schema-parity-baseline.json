@@ -952,7 +952,9 @@
       "source_account_label",
       "status",
       "updated_at",
-      "updated_by_user_id"
+      "updated_by_user_id",
+      "adjustment_cents",
+      "qbo_snapshot_cents"
     ],
     "accounting.ob_source_finality": [
       "as_of_date",
@@ -2129,7 +2131,9 @@
       "qbo_synced_at",
       "system_purpose",
       "updated_at",
-      "updated_by_user_id"
+      "updated_by_user_id",
+      "opening_balance_adjustment_cents",
+      "opening_balance_qbo_snapshot_cents"
     ],
     "catalogs.audit_event_types": [
       "code",

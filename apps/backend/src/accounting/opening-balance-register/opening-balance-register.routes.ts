@@ -9,8 +9,10 @@ import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../shared.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import {
+  cloneAsIsImportAndCommit,
   commitObRegister,
   getObRegisterView,
+  importObRegisterFromFixture,
   importObRegisterFromQbo,
   listObRegisterAudit,
   ObRegisterError,
@@ -20,7 +22,8 @@ import {
 
 const financeRoles = new Set(["Owner", "Administrator", "Accountant"]);
 
-/** Marking a source period FINAL is the accountant's call (Martin) or the owner's. */
+/** Marking a source period FINAL is the accountant's call (Martin) or the owner's — advisory only
+ * since the 2026-07-29 owner ruling (no finality gate); kept for Martin's own tracking. */
 const finalityRoles = new Set(["Owner", "Administrator", "Accountant"]);
 
 function ensureRole(req: FastifyRequest, reply: FastifyReply, roles: Set<string>) {
@@ -53,7 +56,7 @@ function sendObError(reply: FastifyReply, error: unknown) {
 const lineBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   account_id: z.string().uuid(),
-  amount_cents: z.number().int(),
+  adjustment_cents: z.number().int(),
   note: z.string().max(2000).nullish(),
 });
 
@@ -114,7 +117,7 @@ async function registerOpeningBalanceRegisterRoutes(app: FastifyInstance) {
       const line = await withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
         upsertObRegisterLine(client, body.data.operating_company_id, user.uuid, {
           account_id: body.data.account_id,
-          amount_cents: body.data.amount_cents,
+          adjustment_cents: body.data.adjustment_cents,
           note: body.data.note ?? null,
         })
       );
@@ -124,7 +127,8 @@ async function registerOpeningBalanceRegisterRoutes(app: FastifyInstance) {
     }
   });
 
-  // Read-only QBO BalanceSheet pull → staging. USMCA (no realm) is refused, not faked.
+  // Read-only QBO BalanceSheet pull → staging. USMCA (no realm) is refused, not faked. Re-import
+  // refreshes the Snapshot only — a prior Adjustment on the same account/period is preserved.
   app.post("/api/v1/accounting/opening-balance-register/import-from-qbo", async (req, reply) => {
     const user = ensureRole(req, reply, financeRoles);
     if (!user) return;
@@ -136,6 +140,51 @@ async function registerOpeningBalanceRegisterRoutes(app: FastifyInstance) {
       return await withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
         importObRegisterFromQbo(client, body.data.operating_company_id, user.uuid)
       );
+    } catch (error) {
+      return sendObError(reply, error);
+    }
+  });
+
+  // TRANSP-only: import the owner-provided clone-as-is fixture (docs/fixtures/ob01) into staging.
+  // Read-only against the repo fixture, writes only staging + WORM audit. Never invents a match.
+  app.post("/api/v1/accounting/opening-balance-register/import-from-fixture", async (req, reply) => {
+    const user = ensureRole(req, reply, financeRoles);
+    if (!user) return;
+    const body = commitBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    if (!(await ensureMembership(reply, user.uuid, body.data.operating_company_id))) return;
+
+    try {
+      return await withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
+        importObRegisterFromFixture(client, body.data.operating_company_id, user.uuid)
+      );
+    } catch (error) {
+      return sendObError(reply, error);
+    }
+  });
+
+  // Owner ruling 2026-07-29 — clone-as-is NOW: import (QBO if connected, else the TRANSP fixture) AND
+  // commit immediately, Adjustment 0, no human maker/checker pair. Still refuses on unbalanced / OBE /
+  // non-balance-sheet-account-type — see cloneAsIsImportAndCommit.
+  app.post("/api/v1/accounting/opening-balance-register/clone-as-is-commit", async (req, reply) => {
+    const user = ensureRole(req, reply, financeRoles);
+    if (!user) return;
+    const body = commitBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    if (!(await ensureMembership(reply, user.uuid, body.data.operating_company_id))) return;
+
+    try {
+      const result = await withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
+        cloneAsIsImportAndCommit(client, body.data.operating_company_id, user.uuid)
+      );
+      if (!result.commit.committed) {
+        return reply.code(409).send({
+          error: "commit_refused",
+          message: `clone-as-is commit refused: ${result.commit.blockers.join(", ")}`,
+          ...result,
+        });
+      }
+      return result;
     } catch (error) {
       return sendObError(reply, error);
     }
@@ -162,8 +211,9 @@ async function registerOpeningBalanceRegisterRoutes(app: FastifyInstance) {
     }
   });
 
-  // The only write to catalogs.accounts. Refuses unless the source period is FINAL, the checker is
-  // not a maker, the entry balances, and OBE has been reclassed. A refusal writes nothing.
+  // The only write to catalogs.accounts. Owner ruling 2026-07-29: no finality gate. Refuses unless
+  // the checker is not a maker, the entry balances, every line is a balance-sheet account, and OBE
+  // has been reclassed. A refusal writes nothing.
   app.post("/api/v1/accounting/opening-balance-register/commit", async (req, reply) => {
     const user = ensureRole(req, reply, financeRoles);
     if (!user) return;
