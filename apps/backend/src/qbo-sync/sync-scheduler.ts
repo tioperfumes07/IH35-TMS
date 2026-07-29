@@ -11,6 +11,7 @@ import { pullApBillsFromQbo, projectApBillsToLedger } from "./ap-bills-puller.js
 import { pullApBillPaymentsFromQbo, projectApBillPaymentsToLedger } from "./ap-bill-payments-puller.js";
 import { pullPurchasesFromQbo, projectPurchasesToExpenses } from "./qbo-purchases-puller.js";
 import { pullVendorCreditsFromQbo, projectVendorCreditsToLedger } from "./qbo-vendor-credits-puller.js";
+import { pullArInvoicesFromQbo, projectArInvoicesToLedger } from "./qbo-ar-invoices-puller.js";
 import { pullArPaymentsFromQbo, projectArPaymentsToLedger } from "./qbo-ar-payments-puller.js";
 import { countUnresolvedDrift, detectDriftForCompany } from "./drift-detector.js";
 import { maybeFireDriftAlert } from "./sync-alerts.js";
@@ -165,6 +166,25 @@ async function runScheduledSyncForCompany(
         vendors_unresolved: res.vendorsUnresolved,
       },
       "[qbo-sync-scheduler] qbo_vendor_credits_project complete (vendor credit headers from mirror)"
+    );
+    return res;
+  }, failures, log);
+
+  // Inbound QBO A/R invoices -> mdata.qbo_ar_invoices -> accounting.invoices (qbo_invoice_id).
+  // MUST run before ar_payments_project so Stage 2b payment_applications can resolve LinkedTxn Invoice ids.
+  // Gated QBO_AR_INVOICE_MIRROR_PULL_ENABLED / QBO_AR_INVOICES_PROJECTION_ENABLED (default OFF; TRANSP
+  // armed by 202610191400). SUBLEDGER ONLY — NO GL.
+  await runStep("ar_invoices_pull", operatingCompanyId, () => pullArInvoicesFromQbo(operatingCompanyId), failures, log);
+  await runStep("ar_invoices_project", operatingCompanyId, async () => {
+    const res = await projectArInvoicesToLedger(operatingCompanyId);
+    log?.info(
+      {
+        operating_company_id: operatingCompanyId,
+        enabled: res.enabled,
+        invoices_projected: res.invoicesProjected,
+        customers_unresolved: res.customersUnresolved,
+      },
+      "[qbo-sync-scheduler] ar_invoices_project complete (invoice headers from mirror; unblocks payment_applications)"
     );
     return res;
   }, failures, log);

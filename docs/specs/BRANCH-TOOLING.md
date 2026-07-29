@@ -303,6 +303,34 @@ plus an overlapping change to reproduce the old behaviour.
 **Do not "fix" a red branch-fresh by widening this rule.** If it fires, main genuinely moved underneath you
 in a way that matters — rebase.
 
+### Correction 2026-07-29 — the overlap must be measured against the PR HEAD, not `HEAD`
+
+The rule above was right; the implementation read the wrong commit, so for one day it behaved exactly like
+the zero-behind gate it replaced.
+
+On a `pull_request` event `actions/checkout` resolves **`refs/pull/<n>/merge`** — the branch with main
+*already merged in*. The gate diffed `mergeBase..HEAD`, so in CI "what this branch changes" silently
+included **everything main changed**. Overlap was therefore non-empty for *every* branch that was behind,
+whatever it touched. PR #3768 was a one-file docs change sharing nothing with main and was failed with all
+seven of main's files listed as files "this branch also changes".
+
+The inversion is the tell: a **CONFLICTING** PR has no merge ref, so checkout falls back to the branch tip
+and the gate **passed** it — while cleanly-mergeable PRs went red. Green on the broken ones, red on the
+clean ones.
+
+The selftest could not catch it because `buildRepo()` checked out the plain branch tip — the one shape that
+never reproduces CI. Three arms now build a real merge ref: no-overlap must PASS, same-file must still FAIL,
+and the no-env fallback must not be falsely red. A shared file is seeded at the base and edited in different
+regions by each side, because an add/add conflict has no merge ref — the same reason conflicting PRs dodged
+the bug.
+
+**Fix:** the gate anchors on `merge-base(origin/main, <head sha>)` and diffs both sides from it — symmetric
+three-dot diffs, the same "files changed" GitHub shows. The head sha comes from `GITHUB_HEAD_SHA`
+(`github.event.pull_request.head.sha`, wired in `ci.yml`), falling back to `--head-sha` /
+`BRANCH_FRESH_HEAD_SHA` / `HEAD` for local runs. A second benefit falls out: a branch that has **merged main**
+is now correctly FRESH, because the merge base moves to main's tip and `mainFiles` goes empty — merging main
+to stay current no longer leaves you permanently red.
+
 ---
 
 ## §N+1. Migration numbers come from a RESERVED PER-LANE BAND (permanent — 2026-07-28)

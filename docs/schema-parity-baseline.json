@@ -7456,6 +7456,28 @@
       "vendor_name",
       "vendor_qbo_id"
     ],
+    "mdata.qbo_ar_invoices": [
+      "active",
+      "balance_cents",
+      "created_at",
+      "currency",
+      "customer_name",
+      "customer_qbo_id",
+      "doc_number",
+      "due_date",
+      "id",
+      "last_seen_at",
+      "mirrored_at",
+      "operating_company_id",
+      "payload_json",
+      "private_note",
+      "qbo_id",
+      "qbo_sync_token",
+      "qbo_updated_at",
+      "total_cents",
+      "txn_date",
+      "updated_at"
+    ],
     "mdata.qbo_ar_payments": [
       "active",
       "created_at",
