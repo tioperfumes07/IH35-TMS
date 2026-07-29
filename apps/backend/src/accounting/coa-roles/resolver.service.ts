@@ -85,6 +85,9 @@ export const COA_ROLE_VALUES = [
   "fixed_asset_default",
   "accum_depr_default",
   "depr_expense_default",
+  // Held posting flags CoA (202610131200) — picker defaults; posters may still use row FKs.
+  "prepaid_asset_default",
+  "amortization_expense_default",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

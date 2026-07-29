@@ -37,9 +37,68 @@ export type RegisterOwnedUnitResult = {
   fixed_asset_id?: string;
   asset_number?: string | null;
   schedule_periods?: number;
+  /** Where accum_depr_account_id came from — an "unresolved" row cannot autopost its credit leg. */
+  accum_depr_source?: AccumDeprResolution["source"];
 };
 
 const TRUCK_CLASS_CODE = "truck";
+
+export type AccumDeprResolution = {
+  account_id: string | null;
+  source: "per_unit" | "class_default" | "unresolved";
+  /** Why a per-unit match was not used — for the audit trail, not for control flow. */
+  detail?: "no_unit_digits" | "ambiguous_unit_digits" | "no_match" | "ambiguous_match";
+};
+
+/**
+ * TRK books ~187 per-unit Accumulated Depreciation accounts (QBO clone), e.g.
+ *   "Accumulated Depreciation TRUCK 105" · "Accumulared Depreciation TRUCK 167" (typo is real)
+ *   "Accumulated Depreciation REEFER #10202" · "Accumulated Depreciation - Reefer 10332"
+ * The fixed-asset CLASS therefore cannot carry a single accum account — resolving it per unit is
+ * what lets fixed-assets.routes.ts build the depreciation JE, whose credit leg is accum_depr.
+ *
+ * Matching is on the account_subtype (robust to the "Accumulared" typo and to the punctuation
+ * variants) plus an EXACT numeric-token equality against the unit number's digits. Token equality —
+ * not substring — is deliberate: unit 202 must not match "REEFER #10202". Anything ambiguous or
+ * unmatched returns null and falls back to the class default, so a wrong account is never guessed
+ * onto a GL leg.
+ */
+export async function resolvePerUnitAccumDeprAccountId(
+  client: DbClient,
+  input: { operating_company_id: string; unit_number: string; class_default_account_id: string | null }
+): Promise<AccumDeprResolution> {
+  const fallback = (detail: AccumDeprResolution["detail"]): AccumDeprResolution =>
+    input.class_default_account_id
+      ? { account_id: input.class_default_account_id, source: "class_default", detail }
+      : { account_id: null, source: "unresolved", detail };
+
+  const runs = String(input.unit_number ?? "").match(/\d+/g) ?? [];
+  const only = runs.length === 1 ? runs[0] : undefined;
+  if (runs.length === 0) return fallback("no_unit_digits");
+  if (!only) return fallback("ambiguous_unit_digits");
+  const digits = only.replace(/^0+/, "") || "0";
+
+  const matches = await client.query<{ id: string }>(
+    `SELECT a.id::text AS id
+       FROM catalogs.accounts a
+      WHERE a.operating_company_id = $1::uuid
+        AND a.deactivated_at IS NULL
+        AND a.is_postable = true
+        AND a.account_subtype = 'AccumulatedDepreciation'
+        AND EXISTS (
+          SELECT 1
+            FROM unnest(regexp_split_to_array(a.account_name, '[^0-9]+')) AS tok
+           WHERE tok <> ''
+             AND ltrim(tok, '0') = $2
+        )
+      LIMIT 2`,
+    [input.operating_company_id, digits]
+  );
+
+  if (matches.rows.length === 0) return fallback("no_match");
+  if (matches.rows.length > 1) return fallback("ambiguous_match");
+  return { account_id: matches.rows[0].id, source: "per_unit" };
+}
 
 export async function registerOwnedUnitAsFixedAsset(
   client: DbClient,
@@ -114,6 +173,12 @@ export async function registerOwnedUnitAsFixedAsset(
   );
   if (!cls.rows[0]) return { created: false, reason: "class_missing" };
 
+  const accumDepr = await resolvePerUnitAccumDeprAccountId(client, {
+    operating_company_id: input.operating_company_id,
+    unit_number: unit.rows[0].unit_number,
+    class_default_account_id: cls.rows[0].default_accum_depr_account_id,
+  });
+
   const purchaseDate =
     input.purchase_date ??
     unit.rows[0].acquired_date?.slice(0, 10) ??
@@ -168,7 +233,7 @@ export async function registerOwnedUnitAsFixedAsset(
       cls.rows[0].default_method || "straight_line",
       cls.rows[0].default_useful_life_months || 60,
       cls.rows[0].default_asset_account_id,
-      cls.rows[0].default_accum_depr_account_id,
+      accumDepr.account_id,
       cls.rows[0].default_depr_expense_account_id,
       input.actor_user_id,
     ]
@@ -196,6 +261,9 @@ export async function registerOwnedUnitAsFixedAsset(
       unit_number: unit.rows[0].unit_number,
       purchase_price_cents: price,
       class_code: TRUCK_CLASS_CODE,
+      accum_depr_account_id: accumDepr.account_id,
+      accum_depr_source: accumDepr.source,
+      accum_depr_detail: accumDepr.detail ?? null,
     },
     "info",
     "ND-FA-01"
@@ -206,6 +274,7 @@ export async function registerOwnedUnitAsFixedAsset(
     fixed_asset_id: inserted.rows[0].id,
     asset_number: assetNumber,
     schedule_periods: schedule.rows.length,
+    accum_depr_source: accumDepr.source,
   };
 }
 
@@ -214,6 +283,8 @@ export type BulkRegisterResult = {
   skipped_already: number;
   missing_price: string[];
   errors: Array<{ unit_number: string; reason: string }>;
+  /** Registered but with no accumulated-depreciation account — depreciation autopost cannot run. */
+  accum_depr_unresolved: string[];
 };
 
 /**
@@ -244,6 +315,7 @@ export async function registerRealTrkOwnedUnits(
     skipped_already: 0,
     missing_price: [],
     errors: [],
+    accum_depr_unresolved: [],
   };
 
   for (const u of units.rows) {
@@ -259,8 +331,10 @@ export async function registerRealTrkOwnedUnits(
       purchase_price_cents: price,
       actor_user_id: input.actor_user_id,
     });
-    if (result.created) out.registered += 1;
-    else if (result.reason === "already_registered") out.skipped_already += 1;
+    if (result.created) {
+      out.registered += 1;
+      if (result.accum_depr_source === "unresolved") out.accum_depr_unresolved.push(u.unit_number);
+    } else if (result.reason === "already_registered") out.skipped_already += 1;
     else out.errors.push({ unit_number: u.unit_number, reason: result.reason ?? "unknown" });
   }
 

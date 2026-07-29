@@ -52,6 +52,13 @@ const ROLE_LABELS: Record<CoaRole, string> = {
   warranty_recovery: "Warranty recovery (contra-expense)",
   insurance_expense: "Insurance expense (fleet premium)",
   unbilled_revenue: "Unbilled revenue (ASC 606 earn latch)",
+  prepaid_asset_default: "Prepaid Expenses (default asset)",
+  amortization_expense_default: "Amortization Expense (default)",
+  fixed_asset_default: "Fixed asset default",
+  accum_depr_default: "Accumulated depreciation default",
+  depr_expense_default: "Depreciation expense default",
+  factor_wire_fee: "Factor ACH/wire fee",
+  heavy_repair_expense: "Heavy repair expense",
 };
 
 export function CoaRolesPage() {
