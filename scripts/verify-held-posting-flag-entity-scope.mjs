@@ -72,6 +72,16 @@ const PINNED_CONTROL_ROLES = [
  */
 const FORWARD_CUTOFF = "202610161000";
 
+/**
+ * Applied-on-main migrations that this guard would otherwise fail. Never edited (applied-migration
+ * law). The defect in 202610161400 (name-pattern accum_depr_default bind) is repaired by
+ * 202610181200_repair_per_unit_accum_depr_control_binding.sql — this list is the honesty belt so
+ * CI does not demand a rewrite of applied history.
+ */
+const GRANDFATHERED = new Set([
+  "202610161400_trk_accum_depr_default_and_fa_enable.sql",
+]);
+
 function stripSqlComments(sql) {
   return sql
     .split("\n")
@@ -162,6 +172,7 @@ export function checkMigrationSources(sources) {
   const problems = [];
   for (const { name, sql: raw } of sources) {
     if (name.slice(0, 12) < FORWARD_CUTOFF) continue;
+    if (GRANDFATHERED.has(name)) continue;
     const sql = stripSqlComments(raw);
 
     for (const block of blocksOf(sql)) {
