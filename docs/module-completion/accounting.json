@@ -174,8 +174,8 @@
       ],
       "spec": "ACCT-F08",
       "status": "FAIL",
-      "evidence": "Schema DONE on Neon (lucia 2026-07-28): posting_batches.posting_template_id FK exists (inbound=1); LST-F03 operating_company_id on catalogs.posting_templates. Writers stamp on main (#3444). Still FAIL: catalogs.posting_templates=0 rows; posting_batches stamped 0/6. Opco-aware resolvePostingTemplateId + Lists Templates unlocked (#3709). Density PASS requires owner seed of PostingSourceType (+fuel_event) per entity + at least one stamped batch.",
-      "pr": "#3444"
+      "evidence": "Schema + writers PASS on main (posting_batches.posting_template_id FK; resolvePostingTemplateId opco-scoped; fuel_event + posting-engine stamp source_template_code). ROOT CAUSE FIXED this PR: backend legacy catalog route was still readOnly:true — POST /api/v1/catalogs/accounting/posting-templates returned 405 while frontend showed +Create (#3709 half-fix). Now: createMapper debit/credit + PostingTemplateModal ReferenceSelect CoA pickers + guard 1760. Neon lucia 2026-07-29: catalogs.posting_templates=0; posting_batches stamped 0/8 — density FAIL until owner seeds PostingSourceType(+fuel_event) per entity in-app then next batch stamps posting_template_id (no agent seed — Rule 13).",
+      "pr": "#3444 #3709 #PENDING"
     },
     {
       "id": "ACCT-LINK-06",

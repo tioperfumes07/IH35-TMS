@@ -247,7 +247,9 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
     nameColumn: "template_name",
     descriptionColumn: "description",
     activeMode: "is_active",
-    readOnly: true,
+    // ACCT-LINK-05: owner seeds PostingSourceType (+ fuel_event) rows in-app; consumers stamp
+    // posting_template_id once a matching active per-entity template exists.
+    requiredMetadata: ["debit_account_id", "credit_account_id"],
     // LST-F03: per-entity after 202608000000 (FORCE RLS company_scope).
     entityScoped: true,
     selectMetadataSql: [
@@ -256,6 +258,46 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
       "'default_class_id', t.default_class_id",
       "'default_memo', t.default_memo",
     ],
+    createMapper: (metadata) => ({
+      debit_account_id: String(metadata.debit_account_id),
+      credit_account_id: String(metadata.credit_account_id),
+      default_class_id: (metadata.default_class_id as string | null | undefined) ?? null,
+      default_memo: (metadata.default_memo as string | null | undefined) ?? null,
+    }),
+    updateMapper: (metadata) => ({
+      ...(metadata.debit_account_id !== undefined ? { debit_account_id: String(metadata.debit_account_id) } : {}),
+      ...(metadata.credit_account_id !== undefined ? { credit_account_id: String(metadata.credit_account_id) } : {}),
+      ...(metadata.default_class_id !== undefined
+        ? { default_class_id: (metadata.default_class_id as string | null) ?? null }
+        : {}),
+      ...(metadata.default_memo !== undefined ? { default_memo: (metadata.default_memo as string | null) ?? null } : {}),
+    }),
+    validate: async (client, mapped, oc) => {
+      const debit = mapped.debit_account_id as string | null | undefined;
+      const credit = mapped.credit_account_id as string | null | undefined;
+      if (debit && credit && debit === credit) return "debit_credit_must_differ";
+      const idsToCheck = [debit, credit].filter((id): id is string => typeof id === "string" && id.length > 0);
+      if (idsToCheck.length) {
+        const acct = await client.query(
+          `SELECT id::text AS id FROM catalogs.accounts
+            WHERE operating_company_id = $1 AND deactivated_at IS NULL AND id = ANY($2::uuid[])`,
+          [oc, idsToCheck]
+        );
+        const found = new Set(acct.rows.map((r) => String(r.id)));
+        for (const id of idsToCheck) {
+          if (!found.has(id)) return "invalid_account_or_class_reference";
+        }
+      }
+      const classId = mapped.default_class_id as string | null | undefined;
+      if (classId) {
+        const cls = await client.query(
+          `SELECT id FROM catalogs.classes WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL LIMIT 1`,
+          [classId, oc]
+        );
+        if (!cls.rows[0]) return "invalid_account_or_class_reference";
+      }
+      return null;
+    },
   });
 
   registerLegacyAccountingCatalogRoutes(app, {
