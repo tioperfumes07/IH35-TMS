@@ -35,7 +35,7 @@ async function readVendorDrift(client: PoolClient, opco: string): Promise<DriftR
       SELECT v.id::text, v.vendor_name, v.phone, v.email,
              qv.qbo_id, qv.display_name, qv.primary_phone, qv.primary_email
       FROM mdata.vendors v
-      JOIN mdata.qbo_vendors qv
+      JOIN accounting.qbo_vendors qv
         ON qv.qbo_id = v.qbo_vendor_id AND qv.operating_company_id = v.operating_company_id
       WHERE v.operating_company_id = $1::uuid
         AND (

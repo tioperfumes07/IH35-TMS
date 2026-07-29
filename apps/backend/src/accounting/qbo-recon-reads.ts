@@ -100,7 +100,7 @@ export async function fetchQboReconciliation(
       (SELECT count(*) FROM mdata.qbo_customers WHERE operating_company_id = $1)              AS mirror_customers,
       (SELECT count(*) FROM mdata.vendors
          WHERE operating_company_id = $1 AND deactivated_at IS NULL)                          AS tms_vendors,
-      (SELECT count(*) FROM mdata.qbo_vendors WHERE operating_company_id = $1)                AS mirror_vendors,
+      (SELECT count(*) FROM accounting.qbo_vendors WHERE operating_company_id = $1)                AS mirror_vendors,
       (SELECT count(*) FROM catalogs.accounts
          WHERE operating_company_id = $1 AND deactivated_at IS NULL)                          AS tms_accounts,
       (SELECT count(*) FROM mdata.qbo_accounts WHERE operating_company_id = $1)               AS mirror_accounts,

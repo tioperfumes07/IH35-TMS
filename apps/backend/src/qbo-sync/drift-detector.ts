@@ -353,7 +353,7 @@ async function detectVendorsDrift(client: PoolClient, operatingCompanyId: string
   const missingLocal = await client.query<{ qbo_id: string; display_name: string }>(
     `
       SELECT qv.qbo_id, qv.display_name
-      FROM mdata.qbo_vendors qv
+      FROM accounting.qbo_vendors qv
       WHERE qv.operating_company_id = $1::uuid
         AND qv.qbo_id IS NOT NULL
         AND qv.active = true
@@ -381,7 +381,7 @@ async function detectVendorsDrift(client: PoolClient, operatingCompanyId: string
         v.vendor_name AS local_name,
         qv.display_name AS qbo_name
       FROM mdata.vendors v
-      JOIN mdata.qbo_vendors qv
+      JOIN accounting.qbo_vendors qv
         ON qv.qbo_id = v.qbo_vendor_id
        AND qv.operating_company_id = $1::uuid
       WHERE v.operating_company_id = $1::uuid

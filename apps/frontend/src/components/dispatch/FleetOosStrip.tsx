@@ -77,7 +77,12 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
       byUnitId.set(unitId, {
         unitId,
         unitNumber: String(unit.unit_number ?? unitId),
-        reason: String(unit.oos_reason ?? unit.status ?? "Unavailable for dispatch"),
+        // Only a REAL recorded reason. This used to fall back to `unit.status`, which put the raw
+        // enum "OutOfService" on the card directly beneath the label that already says "Out of
+        // service" — 13 units on prod showed the enum, because none of them has an oos_reason. An
+        // empty string renders nothing (see below); inventing a sentence the operator never wrote
+        // would be worse than showing no reason at all.
+        reason: String(unit.oos_reason ?? "").trim(),
         etaBack: "TBD",
         statusLabel: statusLabelForUnit(unit),
       });
@@ -131,7 +136,7 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
                   {row.statusLabel}
                 </span>
               </div>
-              <div className="mt-1 text-gray-700">{row.reason}</div>
+              {row.reason ? <div className="mt-1 text-gray-700">{row.reason}</div> : null}
               <div className="mt-1 text-gray-500">
                 ETA back: <span className="font-medium text-gray-800">{row.etaBack}</span>
               </div>
