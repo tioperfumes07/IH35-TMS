@@ -76,10 +76,12 @@ const BESPOKE_HUB_KEY = {
  */
 const KNOWN_BESPOKE_NO_TILE = new Map([
   ["file_categories", "21 rows · WIRE (global) · needs code/display_name shape fix first"],
-  ["mexico_states", "32 rows · WIRE (global) · no shape fix needed — wireable as-is"],
-  ["us_states", "56 rows · WIRE (global) · no shape fix needed — wireable as-is"],
   ["wo_cancellation_reasons", "6 rows · WIRE (global) · needs code/display_name shape fix first"],
 ]);
+// LST-F20d shrank this from 4 to 2: us_states (56) and mexico_states (32) now have read-only hub
+// tiles at /lists/reference/*. They are NOT editable and never will be — no operating_company_id,
+// fixed geographic reference feeding address validation, treated as system data by QBO/NetSuite/
+// McLeod alike. Reachable was the gap; a creator wizard would have been a defect.
 
 /** Classifications that MUST be wired. The rest are excluded, each with a written reason in the inventory. */
 const WIREABLE = new Set(["ROUTED", "ROUTED-PENDING", "ROUTED-NEEDS-SEED", "ROUTED-READ-ONLY"]);

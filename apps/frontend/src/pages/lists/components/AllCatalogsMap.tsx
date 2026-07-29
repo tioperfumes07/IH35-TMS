@@ -211,6 +211,18 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "Insurance Carriers", description: "Insurance provider directory names", live: false },
     ],
   },
+  {
+    // LST-F20d — global reference data: no operating_company_id, identical for every entity, and
+    // deliberately view-only. States feed driver/customer address validation; an operator does not
+    // invent a 57th US state, and QBO/NetSuite/McLeod all treat these as system reference too.
+    key: "reference",
+    label: "Reference",
+    pillClass: "bg-slate-100 text-slate-700",
+    catalogs: [
+      { name: "US States", description: "US states and territories — view only", live: true, catalogKey: "us-states" },
+      { name: "Mexico States", description: "Mexican states — view only", live: true, catalogKey: "mexico-states" },
+    ],
+  },
 ];
 
 // Accounting is pinned FIRST; every other domain follows alphabetically by label; catalogs within
