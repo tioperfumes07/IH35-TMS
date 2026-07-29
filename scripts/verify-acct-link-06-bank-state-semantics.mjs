@@ -37,8 +37,8 @@ export function contractErrors(root = ROOT) {
   if (/review_state\s*=\s*['"]categorized['"]/.test(tieout)) {
     failures.push("live tie-out must not use review_state='categorized'; posted rows become review_state='matched'");
   }
-  if (!/IS DISTINCT FROM 'transfer'/.test(tieout) && !/category_kind[\s\S]{0,80}transfer/.test(tieout)) {
-    failures.push("live tie-out must exclude transfer categorizations that intentionally omit GL account");
+  if (!/NOT IN \('transfer', 'fuel'\)/.test(tieout) && !/IS DISTINCT FROM 'transfer'/.test(tieout)) {
+    failures.push("live tie-out must exclude transfer/fuel/insurance label-only categorizations that omit GL account");
   }
   if (!/status\s*=\s*['"]categorized['"]/.test(route)) {
     failures.push("categorization route must persist status='categorized'");

@@ -54,11 +54,15 @@ async function main() {
   // Transfer / match-only categorizations (obligation-reconcile + transfer match) set
   // status='categorized' without a GL account — account is required for expense/income
   // categorize paths that feed BANK_FEED_GL posting, not for pure transfers.
+  // Obligation-reconcile bulk actions set status='categorized' for Transfer/Fuel/Insurance
+  // without resolving a GL account (label-only). Expense/income categorize routes that feed
+  // BANK_FEED_GL must still carry coa_account_id or categorization_gl_account_id.
   const uncategorized = await client.query(`
     SELECT count(*)::int AS n
     FROM banking.bank_transactions
     WHERE status = 'categorized'
-      AND COALESCE(category_kind, '') IS DISTINCT FROM 'transfer'
+      AND COALESCE(lower(category_kind), '') NOT IN ('transfer', 'fuel')
+      AND COALESCE(lower(category), '') NOT IN ('transfer', 'fuel', 'insurance')
       AND matched_transfer_id IS NULL
       AND coa_account_id IS NULL
       AND categorization_gl_account_id IS NULL
