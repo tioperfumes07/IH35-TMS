@@ -6,10 +6,10 @@
       "operating_company_id": "91e0bf0a-133f-4ce8-a734-2586cfa66d96"
     },
     {
+      "_comment": "USMCA HAS NOT BEGUN OPERATING (owner, 2026-07-29: plates and IRP are ~2 weeks out). This rule stays INACTIVE until the owner turns it on. `active_from` was REMOVED, not updated to a guessed date: resolveLeaseCompanyId() treats a PAST active_from as an override that re-enables the rule even when active=false, so the stale 2026-07-01 value meant this rule already returned the USMCA id on every ingest despite reading as off. With no active_from, active:false genuinely blocks and the resolver returns null. To activate when USMCA is really operating, set active:true (do not re-add a date).",
       "samsara_tag": "USMCA",
       "operating_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80",
-      "active": false,
-      "active_from": "2026-07-01"
+      "active": false
     },
     {
       "samsara_tag": "IH 35 Trucking",
