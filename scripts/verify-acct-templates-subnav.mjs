@@ -52,8 +52,16 @@ if (!new RegExp(`path="${LIVE_PATH}"`).test(manifest) || !/<PostingTemplatesList
 }
 
 const page = read("apps/frontend/src/pages/lists/accounting/PostingTemplatesListPage.tsx");
-if (!/displayName="Posting Templates"/.test(page)) {
-  failures.push("PostingTemplatesListPage must remain the live posting-templates surface");
+// ACCT-LINK-05: custom list + PostingTemplateModal (debit/credit CoA) replaced the generic
+// AccountingCatalogListPage displayName prop — still the live surface when title + modal + client match.
+const liveSurface =
+  (/title="Posting Templates"/.test(page) || /displayName="Posting Templates"/.test(page)) &&
+  /PostingTemplateModal/.test(page) &&
+  /postingTemplatesCatalogClient/.test(page);
+if (!liveSurface) {
+  failures.push(
+    "PostingTemplatesListPage must remain the live posting-templates surface (title + PostingTemplateModal + postingTemplatesCatalogClient)"
+  );
 }
 
 if (failures.length) {
