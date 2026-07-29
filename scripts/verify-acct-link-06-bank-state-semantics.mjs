@@ -40,6 +40,12 @@ export function contractErrors(root = ROOT) {
   if (!/NOT IN \('transfer', 'fuel'\)/.test(tieout) && !/IS DISTINCT FROM 'transfer'/.test(tieout)) {
     failures.push("live tie-out must exclude transfer/fuel/insurance label-only categorizations that omit GL account");
   }
+  if (!/linked_entity_id IS NULL/.test(tieout)) {
+    failures.push("live tie-out must treat linked_entity_id (bill categorize) as resolved without GL");
+  }
+  if (!/category\), ''\) NOT IN \('transfer', 'fuel', 'insurance', 'bill'\)/.test(tieout) && !/'bill'/.test(tieout)) {
+    failures.push("live tie-out must exclude obligation/bill label-only categories");
+  }
   if (!/status\s*=\s*['"]categorized['"]/.test(route)) {
     failures.push("categorization route must persist status='categorized'");
   }

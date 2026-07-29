@@ -54,24 +54,51 @@ async function main() {
   // Transfer / match-only categorizations (obligation-reconcile + transfer match) set
   // status='categorized' without a GL account — account is required for expense/income
   // categorize paths that feed BANK_FEED_GL posting, not for pure transfers.
-  // Obligation-reconcile bulk actions set status='categorized' for Transfer/Fuel/Insurance
-  // without resolving a GL account (label-only). Expense/income categorize routes that feed
-  // BANK_FEED_GL must still carry coa_account_id or categorization_gl_account_id.
+  // status='categorized' is the workflow flag. A row is economically resolved when it has a GL
+  // account (expense/income categorize), OR a matched_*/linked_entity_id (bill/match/transfer),
+  // OR an obligation-reconcile label-only category (Fuel/Insurance/Transfer) that intentionally
+  // omits GL. Fail only pure label-only orphans with no resolution of any kind.
   const uncategorized = await client.query(`
     SELECT count(*)::int AS n
     FROM banking.bank_transactions
     WHERE status = 'categorized'
-      AND COALESCE(lower(category_kind), '') NOT IN ('transfer', 'fuel')
-      AND COALESCE(lower(category), '') NOT IN ('transfer', 'fuel', 'insurance')
-      AND matched_transfer_id IS NULL
       AND coa_account_id IS NULL
       AND categorization_gl_account_id IS NULL
+      AND linked_entity_id IS NULL
+      AND matched_invoice_id IS NULL
+      AND matched_bill_id IS NULL
+      AND matched_payment_id IS NULL
+      AND matched_bill_payment_id IS NULL
+      AND matched_transfer_id IS NULL
+      AND matched_journal_entry_id IS NULL
+      AND COALESCE(lower(category_kind), '') NOT IN ('transfer', 'fuel')
+      AND COALESCE(lower(category), '') NOT IN ('transfer', 'fuel', 'insurance', 'bill')
   `);
   const uncategorizedCount = Number(uncategorized.rows[0]?.n ?? 0);
   if (uncategorizedCount > 0) {
+    const sample = await client.query(`
+      SELECT id::text, category, category_kind, review_state, linked_entity_id IS NOT NULL AS has_link
+      FROM banking.bank_transactions
+      WHERE status = 'categorized'
+        AND coa_account_id IS NULL
+        AND categorization_gl_account_id IS NULL
+        AND linked_entity_id IS NULL
+        AND matched_invoice_id IS NULL
+        AND matched_bill_id IS NULL
+        AND matched_payment_id IS NULL
+        AND matched_bill_payment_id IS NULL
+        AND matched_transfer_id IS NULL
+        AND matched_journal_entry_id IS NULL
+        AND COALESCE(lower(category_kind), '') NOT IN ('transfer', 'fuel')
+        AND COALESCE(lower(category), '') NOT IN ('transfer', 'fuel', 'insurance', 'bill')
+      LIMIT 5
+    `);
+    const detail = sample.rows
+      .map((r) => `${r.id}:{cat=${r.category}|kind=${r.category_kind}|rs=${r.review_state}}`)
+      .join("; ");
     fail(
-      `${uncategorizedCount} row(s) have status='categorized' but NEITHER coa_account_id NOR ` +
-        `categorization_gl_account_id is set -- the categorize step is a label with no actual account behind it.`
+      `${uncategorizedCount} row(s) have status='categorized' with no GL, no match/link, and no ` +
+        `obligation label -- categorize is empty. sample=[${detail}]`
     );
   }
 
