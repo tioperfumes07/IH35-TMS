@@ -1112,6 +1112,7 @@
     "1733": "1733-verify-vendor-type-catalog-backed.mjs",
     "1734": "1734-verify-ob01-opening-balance-register.mjs",
     "1735": "1735-verify-no-placeholder-module-routes.mjs",
+    "1738": "1738-verify-expenses-projection-opco-lines.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
