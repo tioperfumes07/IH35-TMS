@@ -79,12 +79,14 @@ export async function resolveCustomerQboId(client: PoolClient, oc: string, custo
 
 async function resolveVendorQboId(client: PoolClient, oc: string, vendorUuid: string): Promise<string | null> {
   await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
+  // Linkage: mdata.vendors.qbo_vendor_id = accounting.qbo_vendors.qbo_id (Rule 14 canonical).
+  // There is no vendor_uuid column on accounting.qbo_vendors (or the RETIRE mdata mirror).
   const res = await client.query<{ qbo_id: string | null }>(
     `
       SELECT qv.qbo_id
       FROM mdata.vendors v
-      LEFT JOIN mdata.qbo_vendors qv
-        ON qv.vendor_uuid = v.id
+      LEFT JOIN accounting.qbo_vendors qv
+        ON qv.qbo_id = v.qbo_vendor_id
        AND qv.operating_company_id = v.operating_company_id
        AND qv.active = true
       WHERE v.id = $2::uuid

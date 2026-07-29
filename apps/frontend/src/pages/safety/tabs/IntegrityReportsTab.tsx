@@ -1,3 +1,4 @@
+import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -112,7 +113,7 @@ export function IntegrityReportsTab() {
         render: (row) => {
           const rowId = row.id ? String(row.id) : "";
           const observation = observationsById.get(rowId);
-          return String(observation?.status ?? row.status ?? "new");
+          return humanizeEnumLabel(observation?.status ?? row.status ?? "new");
         },
       },
       {
