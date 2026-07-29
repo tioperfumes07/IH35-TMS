@@ -1129,6 +1129,7 @@
     "1750": "1750-verify-acct-f51-account-register-zero-net.mjs",
     "1751": "1751-verify-fuel-kpi-money-format.mjs",
     "1752": "1752-verify-fleet-table-status-humanized.mjs",
+    "1753": "1753-verify-qbo-ar-invoices-inbound.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
@@ -1143,7 +1144,7 @@
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "_how_to_claim": "Pick the next free number in your band, add \"<number>\": \"<filename>\", commit it WITH the guard.",
   "generated_at": "2026-07-28T13:11:57Z",
-  "total_claimed": 811,
+  "total_claimed": 810,
   "known_duplicates_frozen": {
     "15": [
       "15-verify-accounting-autoload-coverage.mjs",
