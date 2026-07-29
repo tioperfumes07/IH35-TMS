@@ -60,6 +60,17 @@ function analyze() {
     failures.push("projector must NOT insert GENERATED amount_open_cents");
   }
   if (!/INNER JOIN mdata\.customers/.test(puller)) failures.push("projector must INNER JOIN mdata.customers (skip unresolved)");
+  // sql-read-targets binds the first alias for a table in a SQL string. Reusing `c` for
+  // mdata.customers AND later for the candidates CTE falsely flags cand columns as customer phantoms.
+  if (!/INNER JOIN mdata\.customers cust\b/.test(puller)) {
+    failures.push("projector must alias mdata.customers as cust (not c) for sql-read-targets");
+  }
+  if (!/FROM candidates cand\b/.test(puller)) {
+    failures.push("projector must alias candidates CTE as cand (not c) for sql-read-targets");
+  }
+  if (/INNER JOIN mdata\.customers c\b/.test(puller) || /FROM candidates c\b/.test(puller)) {
+    failures.push("projector must not reuse alias c for customers or candidates (sql-read-targets collision)");
+  }
   if (!/INV-' \|\|/.test(puller)) failures.push("projector must mint INV-YYYY-NNNNN display_ids for new rows");
   if (!/QBO_AR_INVOICES_MIRROR_SYNC_KIND/.test(kind) || !/QBO_AR_INVOICES_PROJECTION_SYNC_KIND/.test(kind)) {
     failures.push("sync-kind constants missing");
