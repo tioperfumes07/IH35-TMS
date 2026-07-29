@@ -7,6 +7,14 @@
 /** Money flag — DEFAULT OFF. With it OFF the FIN-21 poster writes ZERO journal entries. */
 export const AMORTIZATION_GL_POSTING_FLAG_KEY = "AMORTIZATION_GL_POSTING_ENABLED";
 
+/**
+ * Money flag — DEFAULT OFF. Gates the CREATE-TIME prepaid PURCHASE entry
+ * (Dr prepaid asset / Cr cash-or-A/P) written by postPrepaidPurchase. Distinct from
+ * AMORTIZATION_GL_POSTING_FLAG_KEY, which gates the PERIOD amortization entries: an owner can
+ * capitalize purchases without yet amortizing, or vice versa.
+ */
+export const PREPAID_PURCHASE_POST_FLAG_KEY = "PREPAID_EXPENSES_POST_ENABLED";
+
 export type BalancedLine = { debit_or_credit: "debit" | "credit"; amount_cents: number };
 
 /** Balance-or-fail: total debits must equal total credits and be > 0. Mirrors createJournalEntry's guard. */
@@ -31,6 +39,15 @@ export function buildPrepaidAmortizationIdempotencyKey(
   periodNumber: number
 ): string {
   return ["ih35:prepaid-amort:v1", operatingCompanyId.toLowerCase(), assetId.toLowerCase(), String(periodNumber)].join(":");
+}
+
+/**
+ * Deterministic per-asset idempotency key for the ONE create-time purchase entry. There is no period
+ * component: a prepaid asset is purchased exactly once, so a re-run (retry, duplicate submit) resolves
+ * the same key and re-links instead of double-capitalizing.
+ */
+export function buildPrepaidPurchaseIdempotencyKey(operatingCompanyId: string, assetId: string): string {
+  return ["ih35:prepaid-purchase:v1", operatingCompanyId.toLowerCase(), assetId.toLowerCase()].join(":");
 }
 
 export function buildDepreciationIdempotencyKey(
