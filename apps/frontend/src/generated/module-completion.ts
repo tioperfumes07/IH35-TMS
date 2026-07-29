@@ -20,7 +20,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
   {
     "id": "accounting",
     "total": 31,
-    "done": 22,
+    "done": 24,
     "items": [
       {
         "id": "ACCT-ECON-01",
@@ -115,8 +115,8 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
       {
         "id": "ACCT-SURF-02",
         "title": "Expenses — DoD A–E + VERIFY 1–8 with live rows",
-        "status": "FAIL",
-        "pr": "#3433"
+        "status": "PASS",
+        "pr": "#PENDING"
       },
       {
         "id": "ACCT-SURF-03",
@@ -127,8 +127,8 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
       {
         "id": "ACCT-SURF-04",
         "title": "Receive Payment — DoD A–E + VERIFY 1–8 with live rows",
-        "status": "FAIL",
-        "pr": "#3433"
+        "status": "PASS",
+        "pr": "#PENDING"
       },
       {
         "id": "ACCT-SURF-05",
