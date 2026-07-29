@@ -317,6 +317,7 @@ export async function projectArInvoicesToLedger(
       );
       customersUnresolved = Number(unresolved.rows[0]?.n ?? 0);
 
+      // C6-MONEY-JE-EXEMPT: qbo-ar-invoice-mirror-projection; subledger-only clone — no TMS JE (parallel books)
       const projected = await client.query(
         `
         WITH candidates AS (

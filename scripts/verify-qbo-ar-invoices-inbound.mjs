@@ -56,6 +56,12 @@ function analyze() {
   if (!/export async function projectArInvoicesToLedger/.test(puller)) failures.push("puller missing projectArInvoicesToLedger");
   if (!/qboPaginateEntity[\s\S]{0,80}"Invoice"/.test(puller)) failures.push("puller must paginate QBO entity Invoice");
   if (!/INSERT\s+INTO\s+accounting\.invoices/.test(puller)) failures.push("projector must INSERT INTO accounting.invoices");
+  if (!/C6-MONEY-JE-EXEMPT:/.test(puller)) {
+    failures.push("projector INSERT must carry C6-MONEY-JE-EXEMPT (subledger-only; no TMS JE)");
+  }
+  if (/postSourceTransaction|createJournalEntry/.test(puller)) {
+    failures.push("puller must not reference a GL poster — subledger-only (NO GL)");
+  }
   if (/INSERT\s+INTO\s+accounting\.invoices[\s\S]{0,500}amount_open_cents/i.test(puller)) {
     failures.push("projector must NOT insert GENERATED amount_open_cents");
   }
