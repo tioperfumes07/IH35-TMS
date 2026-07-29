@@ -14,9 +14,13 @@
   }
 }
 
-@media (max-width: 767px) {
+/* The top bar stacks well before it would overlap. It previously stacked only at <=767px, but the
+   three-column chrome (wordmark + entity chip | nav | language/switcher/bell/help/clock/user) needs
+   far more than 768px: between 768px and ~1400px the columns overflowed and rendered ON TOP of each
+   other, which made the company switcher physically unclickable on every page. Stack at <=1279px. */
+@media (max-width: 1279px) {
   .top-bar {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     row-gap: 0.5rem;
   }
 
