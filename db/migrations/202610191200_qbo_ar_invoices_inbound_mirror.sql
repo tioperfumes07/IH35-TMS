@@ -1,11 +1,16 @@
 -- ACCT-PAYAPPS / payment_applications unblock — INBOUND QuickBooks Invoice mirror + default-OFF flags.
 --
+-- CANONICAL-CHECK: qbo_ar_invoice_mirror. Read-only INBOUND QBO Invoice staging clone (mdata).
+-- Distinct from accounting.invoices (TMS/QBO projected A/R subledger) and from mdata.qbo_invoices
+-- (OUTBOUND TMS→QBO push mirror that requires invoice_id NOT NULL). This table does NOT replace
+-- either; it feeds Stage 2 projection INTO accounting.invoices.qbo_invoice_id so
+-- accounting.payment_applications Stage 2b can resolve Payment.Line LinkedTxn Invoice ids.
+-- No GL. Parallel to mdata.qbo_ar_payments / mdata.qbo_vendor_credits.
+--
 -- WHY (Neon lucia 2026-07-29 TRANSP): accounting.payments=12123, payment_applications=0,
 -- mdata.qbo_ar_payments=23830 with ~12206 Line LinkedTxn Invoice links, accounting.invoices=1 with
--- qbo_invoice_id NULL, mdata.qbo_invoices=0. Stage 2b of qbo-ar-payments-puller joins
--- accounting.invoices.qbo_invoice_id — without an inbound Invoice clone the join always misses.
--- mdata.qbo_invoices is OUTBOUND-shaped (invoice_id NOT NULL → accounting.invoices) and cannot host
--- QBO→TMS clones. This adds mdata.qbo_ar_invoices (inbound, parallel to qbo_ar_payments).
+-- qbo_invoice_id NULL, mdata.qbo_invoices=0 (outbound-shaped). Stage 2b of qbo-ar-payments-puller
+-- joins accounting.invoices.qbo_invoice_id — without an inbound Invoice clone the join always misses.
 --
 -- SUBLEDGER ONLY — NO GL. Flags DEFAULT OFF. Additive / idempotent / FORCE RLS.
 
