@@ -330,7 +330,7 @@ export async function projectArInvoicesToLedger(
             m.balance_cents,
             m.private_note,
             m.currency,
-            c.id AS customer_id,
+            cust.id AS customer_id,
             EXTRACT(YEAR FROM COALESCE(m.txn_date, CURRENT_DATE))::int AS yr,
             i.display_id AS existing_display_id,
             i.id AS existing_id,
@@ -341,9 +341,9 @@ export async function projectArInvoicesToLedger(
               ELSE 'sent'
             END AS status
           FROM mdata.qbo_ar_invoices m
-          INNER JOIN mdata.customers c
-            ON c.operating_company_id = m.operating_company_id
-           AND c.qbo_customer_id = m.customer_qbo_id
+          INNER JOIN mdata.customers cust
+            ON cust.operating_company_id = m.operating_company_id
+           AND cust.qbo_customer_id = m.customer_qbo_id
           LEFT JOIN accounting.invoices i
             ON i.operating_company_id = m.operating_company_id
            AND i.qbo_invoice_id = m.qbo_id
@@ -354,13 +354,13 @@ export async function projectArInvoicesToLedger(
         ),
         new_ranked AS (
           SELECT
-            c.*,
+            cand.*,
             row_number() OVER (
-              PARTITION BY c.yr
-              ORDER BY c.txn_date NULLS LAST, c.qbo_id
+              PARTITION BY cand.yr
+              ORDER BY cand.txn_date NULLS LAST, cand.qbo_id
             ) AS rn
-          FROM candidates c
-          WHERE c.existing_id IS NULL
+          FROM candidates cand
+          WHERE cand.existing_id IS NULL
         ),
         max_by_year AS (
           SELECT
@@ -380,26 +380,26 @@ export async function projectArInvoicesToLedger(
         ),
         prepared AS (
           SELECT
-            c.operating_company_id,
-            c.customer_id,
-            c.qbo_id,
-            c.qbo_sync_token,
-            c.txn_date,
-            c.due_date,
-            c.total_cents,
-            c.amount_paid_cents,
-            c.private_note,
-            c.currency,
-            c.status,
+            cand.operating_company_id,
+            cand.customer_id,
+            cand.qbo_id,
+            cand.qbo_sync_token,
+            cand.txn_date,
+            cand.due_date,
+            cand.total_cents,
+            cand.amount_paid_cents,
+            cand.private_note,
+            cand.currency,
+            cand.status,
             COALESCE(
-              c.existing_display_id,
-              'INV-' || c.yr::text || '-' || lpad((COALESCE(mx.max_seq, 0) + nr.rn)::text, 5, '0')
+              cand.existing_display_id,
+              'INV-' || cand.yr::text || '-' || lpad((COALESCE(mx.max_seq, 0) + nr.rn)::text, 5, '0')
             ) AS display_id
-          FROM candidates c
+          FROM candidates cand
           LEFT JOIN new_ranked nr
-            ON nr.operating_company_id = c.operating_company_id
-           AND nr.qbo_id = c.qbo_id
-          LEFT JOIN max_by_year mx ON mx.yr = c.yr
+            ON nr.operating_company_id = cand.operating_company_id
+           AND nr.qbo_id = cand.qbo_id
+          LEFT JOIN max_by_year mx ON mx.yr = cand.yr
         )
         INSERT INTO accounting.invoices (
           operating_company_id,
