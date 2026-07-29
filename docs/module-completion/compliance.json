@@ -1,0 +1,55 @@
+{
+  "module": "compliance",
+  "title": "Compliance — acceptance checklist",
+  "complete": false,
+  "as_of": "2026-07-29",
+  "live_sha": null,
+  "desktop_audit": null,
+  "spec_sources": [
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts"
+  ],
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21).",
+  "items": [
+    {
+      "id": "COMP-S01",
+      "title": "Surface /compliance renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "COMP-S02",
+      "title": "Surface /compliance/property-tax renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "COMP-S03",
+      "title": "Surface /compliance/property-tax/:id renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    }
+  ],
+  "M": 3
+}

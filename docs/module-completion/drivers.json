@@ -1,0 +1,276 @@
+{
+  "module": "drivers",
+  "title": "Drivers — acceptance checklist",
+  "complete": false,
+  "as_of": "2026-07-29",
+  "live_sha": null,
+  "desktop_audit": null,
+  "spec_sources": [
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts"
+  ],
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21).",
+  "items": [
+    {
+      "id": "DRV-S01",
+      "title": "Surface /drivers renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S02",
+      "title": "Surface /drivers/:id renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S03",
+      "title": "Surface /drivers/:id/hos renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S04",
+      "title": "Surface /drivers/:id/profile renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S05",
+      "title": "Surface /drivers/alerts renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S06",
+      "title": "Surface /drivers/applicants renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S07",
+      "title": "Surface /drivers/auto-deductions renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S08",
+      "title": "Surface /drivers/cash-advances renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S09",
+      "title": "Surface /drivers/deductions renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S10",
+      "title": "Surface /drivers/disputes renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S11",
+      "title": "Surface /drivers/leave renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S12",
+      "title": "Surface /drivers/messages renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S13",
+      "title": "Surface /drivers/onboarding/:session_id renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S14",
+      "title": "Surface /drivers/pay-rate-templates renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S15",
+      "title": "Surface /drivers/permits renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S16",
+      "title": "Surface /drivers/pre-settlements renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S17",
+      "title": "Surface /drivers/profiles renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S18",
+      "title": "Surface /drivers/retention renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S19",
+      "title": "Surface /drivers/settlements renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "DRV-S20",
+      "title": "Surface /drivers/team-splits renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    }
+  ],
+  "M": 20
+}

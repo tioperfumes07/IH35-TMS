@@ -1,0 +1,133 @@
+{
+  "module": "fuel",
+  "title": "Fuel — acceptance checklist",
+  "complete": false,
+  "as_of": "2026-07-29",
+  "live_sha": null,
+  "desktop_audit": null,
+  "spec_sources": [
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts"
+  ],
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21).",
+  "items": [
+    {
+      "id": "FUEL-S01",
+      "title": "Surface /fuel renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "FUEL-S02",
+      "title": "Surface /fuel/compliance renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "FUEL-S03",
+      "title": "Surface /fuel/expense-mapping renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "FUEL-S04",
+      "title": "Surface /fuel/fraud-alerts renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "FUEL-S05",
+      "title": "Surface /fuel/history renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "FUEL-S06",
+      "title": "Surface /fuel/inbox renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "FUEL-S07",
+      "title": "Surface /fuel/loves-prices renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "FUEL-S08",
+      "title": "Surface /fuel/planner renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "FUEL-S09",
+      "title": "Surface /fuel/settings renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    }
+  ],
+  "M": 9
+}

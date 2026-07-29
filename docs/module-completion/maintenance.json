@@ -1,0 +1,523 @@
+{
+  "module": "maintenance",
+  "title": "Maintenance — acceptance checklist",
+  "complete": false,
+  "as_of": "2026-07-29",
+  "live_sha": null,
+  "desktop_audit": null,
+  "spec_sources": [
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts"
+  ],
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21).",
+  "items": [
+    {
+      "id": "MAINT-S01",
+      "title": "Surface /maintenance renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S02",
+      "title": "Surface /maintenance/active-wos renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S03",
+      "title": "Surface /maintenance/arriving-soon renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S04",
+      "title": "Surface /maintenance/brake-wear renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S05",
+      "title": "Surface /maintenance/compliance renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S06",
+      "title": "Surface /maintenance/damage-reports renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S07",
+      "title": "Surface /maintenance/defects renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S08",
+      "title": "Surface /maintenance/defects/:defectId renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S09",
+      "title": "Surface /maintenance/driver-reports renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S10",
+      "title": "Surface /maintenance/drivers renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S11",
+      "title": "Surface /maintenance/fault-drafts renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S12",
+      "title": "Surface /maintenance/fault-rules renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S13",
+      "title": "Surface /maintenance/fleet-table renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S14",
+      "title": "Surface /maintenance/in-transit renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S15",
+      "title": "Surface /maintenance/in-transit-issues renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S16",
+      "title": "Surface /maintenance/inspections renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S17",
+      "title": "Surface /maintenance/kpi-dashboard renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S18",
+      "title": "Surface /maintenance/parts renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S19",
+      "title": "Surface /maintenance/parts-inventory renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S20",
+      "title": "Surface /maintenance/pm-auto-engine renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S21",
+      "title": "Surface /maintenance/pm-schedule renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S22",
+      "title": "Surface /maintenance/position-history renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S23",
+      "title": "Surface /maintenance/pre-flight-dvir renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S24",
+      "title": "Surface /maintenance/reports renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S25",
+      "title": "Surface /maintenance/rm-status-board renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S26",
+      "title": "Surface /maintenance/road-service renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S27",
+      "title": "Surface /maintenance/service-location renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S28",
+      "title": "Surface /maintenance/settings renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S29",
+      "title": "Surface /maintenance/severe-repairs renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S30",
+      "title": "Surface /maintenance/tire-wear renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S31",
+      "title": "Surface /maintenance/tires renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S32",
+      "title": "Surface /maintenance/triage renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S33",
+      "title": "Surface /maintenance/vehicles renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S34",
+      "title": "Surface /maintenance/vendors renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S35",
+      "title": "Surface /maintenance/vendors/:vendorId renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S36",
+      "title": "Surface /maintenance/warranty-claims renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S37",
+      "title": "Surface /maintenance/work-orders renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S38",
+      "title": "Surface /maintenance/work-orders/:id renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    },
+    {
+      "id": "MAINT-S39",
+      "title": "Surface /maintenance/work-orders/new renders real entity-scoped data with no dead end",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "DOD-C"
+      ],
+      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "status": "OPEN",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "pr": null
+    }
+  ],
+  "M": 39
+}
