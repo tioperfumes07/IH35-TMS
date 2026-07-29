@@ -2,6 +2,10 @@
 // (TIER-1 FINANCIAL; BUILD-AND-HOLD, flag OFF).
 //
 // REUSES the established accounting spine end-to-end (NO new GL math, NO ad-hoc poster):
+//   - Prepaid PURCHASE (create-time capitalization, flag PREPAID_EXPENSES_POST_ENABLED):
+//        Dr  prepaid_assets.asset_account_id    = total_amount_cents
+//        Cr  prepaid_assets.payment_account_id  = total_amount_cents
+//     posted on the CALLER'S transaction so the entry and the asset header commit together.
 //   - Prepaid amortization: per accounting.prepaid_amortization_rows where posted=false AND
 //     period_date <= run_date, post ONE balanced JE per period:
 //        Dr  prepaid_assets.expense_account_id   = row.amount_cents
@@ -32,14 +36,16 @@ import { computeDepreciationSchedule } from "../fixed-assets.math.js";
 import {
   AMORTIZATION_GL_POSTING_FLAG_KEY,
   AmortizationPostingError,
+  PREPAID_PURCHASE_POST_FLAG_KEY,
   assertBalanced,
   buildDepreciationIdempotencyKey,
   buildPrepaidAmortizationIdempotencyKey,
+  buildPrepaidPurchaseIdempotencyKey,
   type BalancedLine,
 } from "./amortization-posting.math.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
 
-type DbClient = {
+export type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
 };
 
@@ -66,13 +72,22 @@ export type AmortizationReversalResult = {
 
 const todayIso = (): string => companyBusinessDate();
 
-/** Closed-period guard — reuses the shared accounting.closed_period_cutoff DB function (no new math). */
-async function assertOpenPeriod(client: DbClient, operatingCompanyId: string, postingDate: string): Promise<void> {
+/**
+ * Closed-period cutoff for one entity — reuses the shared accounting.closed_period_cutoff DB function
+ * (no new math). Exported so a sibling poster can enforce the same lock with its OWN error taxonomy
+ * instead of copying the query.
+ */
+export async function readClosedPeriodCutoff(client: DbClient, operatingCompanyId: string): Promise<string | null> {
   const res = await client.query<{ cutoff: string | null }>(
     `SELECT accounting.closed_period_cutoff($1::uuid)::text AS cutoff`,
     [operatingCompanyId]
   );
-  const closedThrough = res.rows[0]?.cutoff ?? null;
+  return res.rows[0]?.cutoff ?? null;
+}
+
+/** Closed-period guard — reuses the shared accounting.closed_period_cutoff DB function (no new math). */
+async function assertOpenPeriod(client: DbClient, operatingCompanyId: string, postingDate: string): Promise<void> {
+  const closedThrough = await readClosedPeriodCutoff(client, operatingCompanyId);
   if (closedThrough && postingDate <= closedThrough) {
     throw new AmortizationPostingError(
       "PERIOD_LOCKED",
@@ -83,7 +98,7 @@ async function assertOpenPeriod(client: DbClient, operatingCompanyId: string, po
 }
 
 /** Find an already-posted JE for a deterministic idempotency key (drift-heal + already-posted detection). */
-async function findExistingPostedJe(client: DbClient, operatingCompanyId: string, idempotencyKey: string): Promise<string | null> {
+export async function findExistingPostedJe(client: DbClient, operatingCompanyId: string, idempotencyKey: string): Promise<string | null> {
   const res = await client.query<{ journal_entry_uuid: string }>(
     `
       SELECT journal_entry_uuid::text
@@ -97,7 +112,13 @@ async function findExistingPostedJe(client: DbClient, operatingCompanyId: string
   return res.rows[0]?.journal_entry_uuid ?? null;
 }
 
-async function insertJournalEntryHeader(
+/**
+ * JE header insert — the ONE journal-entry header write shared by every poster in this spine
+ * (prepaid purchase, prepaid amortization, depreciation, and the Finance-Hub loan payment poster in
+ * ../finance-hub-amortization-posting). Exported so a sibling poster reuses this exact SQL rather than
+ * duplicating a second header INSERT that could drift on status / source / qbo_sync_pending.
+ */
+export async function insertJournalEntryHeader(
   client: DbClient,
   operatingCompanyId: string,
   entryDate: string,
@@ -118,14 +139,15 @@ async function insertJournalEntryHeader(
   return id;
 }
 
-type LineToPost = BalancedLine & { account_id: string; description: string };
+export type LineToPost = BalancedLine & { account_id: string; description: string };
 
 /**
- * Insert the two balanced posting lines for one period + their source links. Idempotent via the
- * deterministic per-(asset,period) idempotency_key (ON CONFLICT DO NOTHING). Returns the inserted
- * posting ids (empty when a conflict no-op'd — i.e. already posted).
+ * Insert the balanced posting lines for one entry + their source links. Idempotent via the
+ * deterministic idempotency_key (ON CONFLICT DO NOTHING). Returns the inserted posting ids (empty
+ * when a conflict no-op'd — i.e. already posted). Line count is caller-driven: two legs for the
+ * prepaid/depreciation pairs, three for a loan payment's principal/interest/cash split.
  */
-async function insertBalancedPostingLines(
+export async function insertBalancedPostingLines(
   client: DbClient,
   args: {
     operatingCompanyId: string;
@@ -180,6 +202,137 @@ async function insertBalancedPostingLines(
     lineSequence += 1;
   }
   return postingIds;
+}
+
+// ===========================================================================================
+// PREPAID PURCHASE (create-time capitalization)
+// ===========================================================================================
+
+export type PrepaidPurchasePostingResult =
+  | { result: "skipped_flag_off"; asset_id: string; journal_entry_id: null }
+  | { result: "posted" | "already_posted"; asset_id: string; journal_entry_id: string; amount_cents: number };
+
+/**
+ * Post the ONE create-time purchase entry that capitalizes a prepaid asset:
+ *
+ *   Dr  prepaid_assets.asset_account_id    = total_amount_cents   (the asset acquired)
+ *   Cr  prepaid_assets.payment_account_id  = total_amount_cents   (cash paid, or A/P if unpaid)
+ *
+ * Runs on the CALLER'S client so the entry commits (or rolls back) atomically with the asset header
+ * and its amortization rows — a capitalized asset with no entry, or an entry with no asset, is never
+ * observable. Reuses this file's JE spine (header + balanced lines + source links + idempotency key):
+ * no new GL math. Accounts come from the ROW's own FK columns, not role bindings, exactly as the
+ * period amortization poster does.
+ *
+ * Flag OFF (default) => ZERO journal entries; the caller reports the honest skipped_flag_off signal.
+ * Accounts missing while the flag is ON => throws ACCOUNT_MISSING (fail CLOSED, never a partial post).
+ */
+export async function postPrepaidPurchase(
+  client: DbClient,
+  input: {
+    operatingCompanyId: string;
+    assetId: string;
+    purchaseDate: string;
+    description: string;
+    totalAmountCents: number;
+    assetAccountId: string | null;
+    paymentAccountId: string | null;
+  },
+  actor: Actor
+): Promise<PrepaidPurchasePostingResult> {
+  const flagOn = await isEnabled(client as never, PREPAID_PURCHASE_POST_FLAG_KEY, {
+    operating_company_id: input.operatingCompanyId,
+    user_uuid: actor.userId,
+  });
+  if (!flagOn) return { result: "skipped_flag_off", asset_id: input.assetId, journal_entry_id: null };
+
+  if (!input.assetAccountId || !input.paymentAccountId) {
+    throw new AmortizationPostingError(
+      "ACCOUNT_MISSING",
+      `Prepaid asset ${input.assetId} cannot capitalize: asset_account_id and payment_account_id are both required while ${PREPAID_PURCHASE_POST_FLAG_KEY} is ON`,
+      { asset_account_id: input.assetAccountId, payment_account_id: input.paymentAccountId }
+    );
+  }
+
+  const idempotencyKey = buildPrepaidPurchaseIdempotencyKey(input.operatingCompanyId, input.assetId);
+  const existing = await findExistingPostedJe(client, input.operatingCompanyId, idempotencyKey);
+  if (existing) {
+    return {
+      result: "already_posted",
+      asset_id: input.assetId,
+      journal_entry_id: existing,
+      amount_cents: input.totalAmountCents,
+    };
+  }
+
+  await assertOpenPeriod(client, input.operatingCompanyId, input.purchaseDate);
+
+  const lines: LineToPost[] = [
+    {
+      account_id: input.assetAccountId,
+      debit_or_credit: "debit",
+      amount_cents: input.totalAmountCents,
+      description: `Prepaid asset ${input.description}`,
+    },
+    {
+      account_id: input.paymentAccountId,
+      debit_or_credit: "credit",
+      amount_cents: input.totalAmountCents,
+      description: `Prepaid purchase payment ${input.description}`,
+    },
+  ];
+  assertBalanced(lines);
+
+  const journalEntryId = await insertJournalEntryHeader(
+    client,
+    input.operatingCompanyId,
+    input.purchaseDate,
+    `Prepaid purchase ${input.description}`,
+    actor.userId
+  );
+  await insertBalancedPostingLines(client, {
+    operatingCompanyId: input.operatingCompanyId,
+    journalEntryId,
+    idempotencyKey,
+    sourceTransactionType: "prepaid_purchase",
+    sourceTransactionId: input.assetId,
+    lines,
+    links: [{ linked_object_type: "prepaid_asset", linked_object_id: input.assetId, relationship_role: "prepaid_purchase" }],
+  });
+
+  await client.query(
+    `
+      UPDATE accounting.prepaid_assets
+      SET purchase_je_id = $3::uuid, posting_status = 'posted', posted_at = now(),
+          updated_at = now(), updated_by_user_id = $4::uuid
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+    `,
+    [input.assetId, input.operatingCompanyId, journalEntryId, actor.userId]
+  );
+
+  await appendCrudAudit(
+    client as never,
+    actor.userId,
+    "accounting.prepaid_purchase.posted",
+    {
+      resource_type: "accounting.prepaid_assets",
+      resource_id: input.assetId,
+      operating_company_id: input.operatingCompanyId,
+      journal_entry_id: journalEntryId,
+      amount_cents: input.totalAmountCents,
+      asset_account_id: input.assetAccountId,
+      payment_account_id: input.paymentAccountId,
+    },
+    "info",
+    "FIN-21-PREPAID-PURCHASE-GL"
+  );
+
+  return {
+    result: "posted",
+    asset_id: input.assetId,
+    journal_entry_id: journalEntryId,
+    amount_cents: input.totalAmountCents,
+  };
 }
 
 // ===========================================================================================

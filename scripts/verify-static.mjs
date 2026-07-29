@@ -242,6 +242,20 @@ export function runStatic({
     .readdirSync(dir)
     .filter((f) => /^verify-.*\.mjs$/.test(f) && f !== self && !NON_STATIC_ORCHESTRATORS.has(f))
     .sort()
+    // docs/module-completion/<module>.md is GENERATED from the .json beside it and is no longer
+    // committed (it conflicted on every merge). Four guards READ those files —
+    // verify-banking-fail-registry, verify-projection-flags-off-by-design,
+    // verify-bank-econ-04-honesty-keep and verify-bankfeed-je-match. In CI the generator is
+    // verify-step 1431 and every reader is 1467+, so ordering holds there. This sweep runs
+    // ALPHABETICALLY, where "bank*" sorts before "module-completion" — so the readers would run
+    // against files that do not exist yet and fail for a reason that has nothing to do with them.
+    // Hoisting the generator to the front makes the local sweep agree with CI.
+    .sort((a, b) => {
+      const gen = "verify-module-completion.mjs";
+      if (a === gen) return -1;
+      if (b === gen) return 1;
+      return 0;
+    })
     .map((f) => path.join(dir, f));
   return files.map((f) => {
     const r = classify(f, sharedClassifyOptions);

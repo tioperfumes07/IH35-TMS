@@ -50,13 +50,53 @@ export function parseRegistry(src) {
   return out;
 }
 
+/**
+ * Each `GenericCatalogConfig` object literal, extracted by BALANCED BRACES so a config's fields can
+ * only ever be read together. Substring checks across the whole file cannot tell which config a field
+ * belongs to.
+ */
+export function backendConfigs(src) {
+  const out = [];
+  for (const m of src.matchAll(/urlSegment:/g)) {
+    let depth = 0;
+    let i = m.index;
+    while (i > 0) {
+      if (src[i] === "}") depth += 1;
+      else if (src[i] === "{") {
+        if (depth === 0) break;
+        depth -= 1;
+      }
+      i -= 1;
+    }
+    let j = i;
+    depth = 0;
+    while (j < src.length) {
+      if (src[j] === "{") depth += 1;
+      else if (src[j] === "}") {
+        depth -= 1;
+        if (depth === 0) break;
+      }
+      j += 1;
+    }
+    out.push(src.slice(i, j + 1));
+  }
+  return out;
+}
+
 export function chainProblems({ registry, hub, backend }) {
   const problems = [];
   for (const { catalogName, domain, catalogKey } of parseRegistry(registry)) {
     // 2. backend registered at the matching path
     const prefix = `/api/v1/catalogs/${domain}`;
-    const hasBackend =
-      backend.includes(`routePrefix: "${prefix}"`) && backend.includes(`urlSegment: "${catalogKey}"`);
+    // The prefix and the segment must belong to the SAME config object. This used to be two
+    // INDEPENDENT substring checks over the whole file, which passes whenever some OTHER catalog
+    // happens to supply the missing half — so a catalog with no registration of its own could read as
+    // registered. It went unnoticed while only one catalog per domain existed; adding a second
+    // dispatch catalog exposed it, and the guard's own selftest is what caught it. Pair them by
+    // extracting each config's braces.
+    const hasBackend = backendConfigs(backend).some(
+      (cfg) => cfg.includes(`routePrefix: "${prefix}"`) && cfg.includes(`urlSegment: "${catalogKey}"`)
+    );
     if (!hasBackend) {
       problems.push(
         `${catalogName}: no backend registration at routePrefix "${prefix}" + urlSegment "${catalogKey}" — the hub tile would open a page whose API 404s (facade).`

@@ -422,16 +422,17 @@ export async function setOverride(
     throw new Error("override_target_required");
   }
 
-  // FACT-01 — FACTORING_GL_POSTING_ENABLED is TRANSP-only (flag contract + Faro borrower).
-  // Refuse enabling (or writing any override) for TRK/USMCA so the kill-switch cannot silently widen.
+  // FACT-01 / owner WO 2026-07-29 — FACTORING_GL_POSTING_ENABLED for TRANSP + USMCA only.
+  // TRK is the asset holder / not a Faro borrower — refuse enabling there.
+  // Owner WO 2026-07-29: TRANSP + USMCA may enable; TRK is asset holder / not a factorer — refuse.
   if (input.flag_key === "FACTORING_GL_POSTING_ENABLED" && input.operating_company_id && input.enabled) {
     const co = await client.query<{ code: string }>(
       `SELECT code FROM org.companies WHERE id = $1::uuid LIMIT 1`,
       [input.operating_company_id]
     );
     const code = co.rows[0]?.code ?? "";
-    if (code !== "TRANSP") {
-      throw new Error("factoring_flag_transp_only");
+    if (code !== "TRANSP" && code !== "USMCA") {
+      throw new Error("factoring_flag_transp_usmca_only");
     }
   }
 

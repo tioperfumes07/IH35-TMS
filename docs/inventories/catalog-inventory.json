@@ -1,0 +1,585 @@
+{
+  "_README": "LST-ORPH-05 catalog inventory. EVERY catalogs.* base table must carry a classification: ROUTED (reachable via a registered route + hub tile), HEADLESS-BY-DESIGN (a system lookup no operator edits), or RETIRE (superseded; must never gain an editable route). ROUTED-READ-ONLY means the catalog IS reachable at its own route but is deliberately not editable (code-managed or owner-gated) \u2014 it must never gain a creator wizard. ROUTED-PENDING means the owner has ruled it an operator surface (QuickBooks-style creator wizard) but the route/creator is not built yet. UNCLASSIFIED is a DEFECT the guard fails on \u2014 a catalog nobody has ruled on is how a table quietly becomes unreachable or wrongly editable. Row counts are a 2026-07-28 prod snapshot (pg_class/pg_stat_all_tables, role-safe) and are informational only; the guard checks CLASSIFICATION, never counts.",
+  "snapshot_date": "2026-07-28",
+  "totals": {
+    "tables": 114,
+    "routed": 61,
+    "unrouted": 53
+  },
+  "tables": {
+    "accident_types": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+    },
+    "account_merge_records": {
+      "rows": 0,
+      "classification": "HEADLESS-BY-DESIGN",
+      "note": "audit trail of account merges"
+    },
+    "account_role_bindings": {
+      "rows": 0,
+      "classification": "ROUTED-READ-ONLY",
+      "note": "per Blueprint v3 \u00a77.3.2.5 \u2014 routed, but binding changes are owner-only WF-064 gated; not a normal add-row creator."
+    },
+    "account_types": {
+      "rows": 15,
+      "classification": "HEADLESS-BY-DESIGN",
+      "note": "per docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md L285 \u2014 GLOBAL-BY-DESIGN, shared CoA type taxonomy, companyScoped:false, do NOT per-entity convert"
+    },
+    "accounts": {
+      "rows": 1408,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "additional_charges": {
+      "rows": 18,
+      "classification": "ROUTED",
+      "note": "ROUTED \u2014 registered by the older dispatch catalog helper, which declares `catalogPath` rather than `urlSegment`. An earlier extraction looked only for `urlSegment` and reported this table as unrouted; corrected 2026-07-28 after a duplicate registration broke boot (CI boot smoke caught it)."
+    },
+    "air_bag_catalog": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+    },
+    "asset_condition_codes": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "asset_locations": {
+      "rows": 9,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "asset_statuses": {
+      "rows": 12,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "audit_event_types": {
+      "rows": 13,
+      "classification": "HEADLESS-BY-DESIGN",
+      "note": "system lookup read by the audit writer; not user-maintained"
+    },
+    "battery_catalog": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+    },
+    "cancellation_reasons": {
+      "rows": 9,
+      "classification": "RETIRE",
+      "note": "RETIRE \u2014 legacy GLOBAL table (9 rows, no operating_company_id, RLS OFF). per OWNER RULING A (2026-07-25), FINAL-TABLES-WIRING L26, reaffirmed 2026-07-28; enforced by guard 1359. FOLD CHECK DONE 2026-07-28 on a validated read (visible 63 == physical 63): ALL 9 of its reason_codes are ALREADY present in canonical, which carries 21 distinct codes \u2014 so the fold is a NO-OP and archiving loses nothing (F9 satisfied). Archive + repoint of dispatch.load_cancellations still needs its own owner-gated migration; must NEVER gain an editable route."
+    },
+    "cargo_claim_reasons": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "cash_advance_types": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+    },
+    "catalog_registry": {
+      "rows": 8,
+      "classification": "HEADLESS-BY-DESIGN",
+      "note": "meta-registry describing the catalogs themselves"
+    },
+    "cdl_endorsements": {
+      "rows": 18,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "cdl_restrictions": {
+      "rows": 21,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "chart_of_accounts_seeds": {
+      "rows": 9,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "civil_fine_types": {
+      "rows": 57,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "classes": {
+      "rows": 177,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "company_violation_types": {
+      "rows": 15,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "complaint_types": {
+      "rows": 295,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "currency_codes": {
+      "rows": 6,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "customer_quality_event_reasons": {
+      "rows": 72,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "def_stations": {
+      "rows": 0,
+      "classification": "ROUTED-NEEDS-SEED",
+      "note": "same 0067-seed-never-persisted class as FUEL-07 \u2014 real routed catalog that is EMPTY because its seed never persisted; do NOT mark headless. Seed follow-up required"
+    },
+    "detail_types": {
+      "rows": 144,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "detention_reasons": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "ROUTED \u2014 registered by the older dispatch catalog helper, which declares `catalogPath` rather than `urlSegment`. An earlier extraction looked only for `urlSegment` and reported this table as unrouted; corrected 2026-07-28 after a duplicate registration broke boot (CI boot smoke caught it)."
+    },
+    "dispatch_flag_colors": {
+      "rows": 24,
+      "classification": "ROUTED-PENDING",
+      "note": "per docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md \u2014 per-entity master catalog (operator surface); route + creator not yet built"
+    },
+    "dispatcher_error_reasons": {
+      "rows": 75,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "dot_violation_types": {
+      "rows": 213,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "driver_deduction_types": {
+      "rows": 21,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "driver_leave_balances": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "per docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md \u2014 per-entity master catalog (operator surface); route + creator not yet built"
+    },
+    "driver_load_statuses": {
+      "rows": 39,
+      "classification": "ROUTED-PENDING",
+      "note": "per docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md \u2014 per-entity master catalog (operator surface); route + creator not yet built"
+    },
+    "driver_pay_types": {
+      "rows": 6,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "driver_termination_reasons": {
+      "rows": 48,
+      "classification": "ROUTED-PENDING",
+      "note": "per docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md \u2014 per-entity master catalog (operator surface); route + creator not yet built"
+    },
+    "employment_statuses": {
+      "rows": 18,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "equipment_line_item_templates": {
+      "rows": 42,
+      "classification": "ROUTED-PENDING",
+      "note": "per docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md \u2014 per-entity master catalog (operator surface); route + creator not yet built"
+    },
+    "equipment_types": {
+      "rows": 21,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "equipment_types_dedup_ledger_0318": {
+      "rows": 2,
+      "classification": "HEADLESS-BY-DESIGN",
+      "note": "one-off migration dedup ledger (0318); historical record"
+    },
+    "escrow_types": {
+      "rows": 3,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "excel_upload_jobs": {
+      "rows": 0,
+      "classification": "HEADLESS-BY-DESIGN",
+      "note": "job queue, not a catalog"
+    },
+    "expense_categories": {
+      "rows": 9,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "expensive_states": {
+      "rows": 0,
+      "classification": "ROUTED-NEEDS-SEED",
+      "note": "same 0067-seed-never-persisted class as FUEL-07 \u2014 real routed catalog that is EMPTY because its seed never persisted; do NOT mark headless. Seed follow-up required"
+    },
+    "file_categories": {
+      "rows": 21,
+      "classification": "HEADLESS-BY-DESIGN",
+      "note": "document-category lookup consumed by the docs module"
+    },
+    "fmcsa_lookups": {
+      "rows": 1,
+      "classification": "HEADLESS-BY-DESIGN",
+      "note": "external FMCSA lookup cache"
+    },
+    "form_425c_company_profiles": {
+      "rows": 6,
+      "classification": "HEADLESS-BY-DESIGN",
+      "note": "425C filing profile, owned by the compliance module"
+    },
+    "fuel_brands": {
+      "rows": 9,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "fuel_card_types": {
+      "rows": 0,
+      "classification": "ROUTED-NEEDS-SEED",
+      "note": "same 0067-seed-never-persisted class as FUEL-07 \u2014 real routed catalog that is EMPTY because its seed never persisted; do NOT mark headless. Seed follow-up required"
+    },
+    "fuel_dispatch_routes": {
+      "rows": 9,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "fuel_exception_types": {
+      "rows": 0,
+      "classification": "ROUTED-NEEDS-SEED",
+      "note": "same 0067-seed-never-persisted class as FUEL-07 \u2014 real routed catalog that is EMPTY because its seed never persisted; do NOT mark headless. Seed follow-up required"
+    },
+    "fuel_grades": {
+      "rows": 9,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "fuel_pump_types": {
+      "rows": 9,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "fuel_station_brands": {
+      "rows": 0,
+      "classification": "ROUTED-NEEDS-SEED",
+      "note": "same 0067-seed-never-persisted class as FUEL-07 \u2014 real routed catalog that is EMPTY because its seed never persisted; do NOT mark headless. Seed follow-up required"
+    },
+    "fuel_station_states": {
+      "rows": 9,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "fuel_stations": {
+      "rows": 0,
+      "classification": "ROUTED-NEEDS-SEED",
+      "note": "same 0067-seed-never-persisted class as FUEL-07 \u2014 real routed catalog that is EMPTY because its seed never persisted; do NOT mark headless. Seed follow-up required"
+    },
+    "fuel_stop_reason_codes": {
+      "rows": 0,
+      "classification": "ROUTED-NEEDS-SEED",
+      "note": "same 0067-seed-never-persisted class as FUEL-07 \u2014 real routed catalog that is EMPTY because its seed never persisted; do NOT mark headless. Seed follow-up required"
+    },
+    "fuel_tax_jurisdictions": {
+      "rows": 174,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "ifta_states": {
+      "rows": 0,
+      "classification": "RETIRE",
+      "note": "RETIRE \u2014 near-twin of catalogs.fuel_tax_jurisdictions; retired 2026-07-28 (stop-write + REVOKE + deprecated COMMENT, PR #3698)."
+    },
+    "internal_fine_reasons": {
+      "rows": 19,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "items": {
+      "rows": 236,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "journal_entry_types": {
+      "rows": 16,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "labor_rates": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "per docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md \u2014 per-entity master catalog (operator surface); route + creator not yet built"
+    },
+    "lease_terms": {
+      "rows": 12,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "leave_policies": {
+      "rows": 3,
+      "classification": "ROUTED-PENDING",
+      "note": "per docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md \u2014 per-entity master catalog (operator surface); route + creator not yet built"
+    },
+    "leave_types": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+    },
+    "license_classes": {
+      "rows": 18,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "load_cancellation_reasons": {
+      "rows": 63,
+      "classification": "ROUTED",
+      "note": "CANONICAL cancellation catalog \u2014 per-entity (operating_company_id + FORCE RLS), 63 rows = 21 codes x 3 entities. per OWNER RULING A (2026-07-25), FINAL-TABLES-WIRING L26, reaffirmed 2026-07-28; enforced by guard 1359."
+    },
+    "load_trailer_equipment": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+    },
+    "load_types": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "ROUTED \u2014 registered by the older dispatch catalog helper, which declares `catalogPath` rather than `urlSegment`. An earlier extraction looked only for `urlSegment` and reported this table as unrouted; corrected 2026-07-28 after a duplicate registration broke boot (CI boot smoke caught it)."
+    },
+    "lumper_providers": {
+      "rows": 15,
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Holds 15 rows that no operator can currently see or edit."
+    },
+    "maintenance_failure_codes": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "maintenance_labor_codes": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "maintenance_part_locations": {
+      "rows": 123,
+      "classification": "ROUTED-PENDING",
+      "note": "per docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md \u2014 per-entity master catalog (operator surface); route + creator not yet built"
+    },
+    "maintenance_parts": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "maintenance_priority_levels": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "maintenance_service_tasks": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "maintenance_shop_locations": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "maintenance_vendors": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "medical_card_statuses": {
+      "rows": 12,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "mexico_states": {
+      "rows": 32,
+      "classification": "HEADLESS-BY-DESIGN",
+      "note": "geographic reference constant"
+    },
+    "mpg_bands": {
+      "rows": 0,
+      "classification": "ROUTED-NEEDS-SEED",
+      "note": "same 0067-seed-never-persisted class as FUEL-07 \u2014 real routed catalog that is EMPTY because its seed never persisted; do NOT mark headless. Seed follow-up required"
+    },
+    "mx_customs_brokers": {
+      "rows": 0,
+      "classification": "ROUTED-NEEDS-SEED",
+      "note": "same 0067-seed-never-persisted class as FUEL-07 \u2014 real routed catalog that is EMPTY because its seed never persisted; do NOT mark headless. Seed follow-up required"
+    },
+    "parts": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+    },
+    "pay_rate_templates": {
+      "rows": 6,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "payee_tax_profile": {
+      "rows": 0,
+      "classification": "HEADLESS-BY-DESIGN",
+      "note": "tax profile projection"
+    },
+    "payment_methods": {
+      "rows": 27,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "payment_terms": {
+      "rows": 15,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "pickup_time_types": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "ROUTED \u2014 registered by the older dispatch catalog helper, which declares `catalogPath` rather than `urlSegment`. An earlier extraction looked only for `urlSegment` and reported this table as unrouted; corrected 2026-07-28 after a duplicate registration broke boot (CI boot smoke caught it)."
+    },
+    "pm_intervals": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+    },
+    "posting_templates": {
+      "rows": 0,
+      "classification": "ROUTED-READ-ONLY",
+      "note": "per Blueprint v3 \u00a77.3.2.4.2 \u2014 HAS a UI route (/catalogs/posting-templates) with a list and read-only detail; templates are code-managed and NOT editable. Routed for inspection/audit, never a creator."
+    },
+    "qbo_categories": {
+      "rows": 0,
+      "classification": "ROUTED-READ-ONLY",
+      "note": "engine/QBO mirror \u2014 routed for inspection, not user-editable (on-record ruling 2026-07-28)."
+    },
+    "relay_accounts": {
+      "rows": 0,
+      "classification": "ROUTED-NEEDS-SEED",
+      "note": "same 0067-seed-never-persisted class as FUEL-07 \u2014 real routed catalog that is EMPTY because its seed never persisted; do NOT mark headless. Seed follow-up required"
+    },
+    "repair_locations": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+    },
+    "settlement_templates": {
+      "rows": 0,
+      "classification": "HEADLESS-BY-DESIGN",
+      "note": "settlement engine template store"
+    },
+    "tax_codes": {
+      "rows": 6,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "tax_form_thresholds": {
+      "rows": 8,
+      "classification": "HEADLESS-BY-DESIGN",
+      "note": "IRS threshold reference constant"
+    },
+    "tire_catalog": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+    },
+    "tire_positions": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "toll_providers": {
+      "rows": 0,
+      "classification": "ROUTED-NEEDS-SEED",
+      "note": "same 0067-seed-never-persisted class as FUEL-07 \u2014 real routed catalog that is EMPTY because its seed never persisted; do NOT mark headless. Seed follow-up required"
+    },
+    "tractor_statuses": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "trailer_parts": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+    },
+    "trailer_statuses": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "trailer_types": {
+      "rows": 12,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "truck_parts": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+    },
+    "unit_ownership_types": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "us_states": {
+      "rows": 56,
+      "classification": "HEADLESS-BY-DESIGN",
+      "note": "geographic reference constant"
+    },
+    "vendor_types": {
+      "rows": 24,
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Holds 24 rows that no operator can currently see or edit."
+    },
+    "void_cancel_reasons": {
+      "rows": 18,
+      "classification": "ROUTED-PENDING",
+      "note": "Per-entity void/cancel governance reasons (operating_company_id present). Released from CONFLICT-HOLD \u2014 not part of the load-cancellation consolidation. Needs its own route + creator."
+    },
+    "wo_cancellation_reasons": {
+      "rows": 6,
+      "classification": "HEADLESS-BY-DESIGN",
+      "note": "GLOBAL-BY-DESIGN \u2014 no operating_company_id; shared work-order cancellation taxonomy. Owner 2026-07-28: do NOT per-entity-convert and do NOT bundle with the load-cancellation consolidation."
+    },
+    "work_order_statuses": {
+      "rows": 0,
+      "classification": "ROUTED",
+      "note": "reachable via a registered catalogs route and on a Lists hub tile"
+    },
+    "work_order_templates": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+    },
+    "workflow_requests": {
+      "rows": 0,
+      "classification": "HEADLESS-BY-DESIGN",
+      "note": "workflow state, not a catalog"
+    },
+    "workplace_incident_types": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+    }
+  },
+  "owner_rulings": {
+    "2026-07-28": "Every catalog requires a QuickBooks-style creator wizard so lists and catalogs stay editable. All previously-UNCLASSIFIED tables are therefore operator surfaces (ROUTED-PENDING), not headless.",
+    "2026-07-28-cancellation": "RULING A STANDS: catalogs.load_cancellation_reasons is CANONICAL (per-entity, FORCE RLS); catalogs.cancellation_reasons is RETIRE (global, RLS off). The reversed wording from the 2026-07-15 audit is SUPERSEDED and was discarded \u2014 guard 1359 exists to catch it. wo_cancellation_reasons is GLOBAL-BY-DESIGN and untouched."
+  }
+}

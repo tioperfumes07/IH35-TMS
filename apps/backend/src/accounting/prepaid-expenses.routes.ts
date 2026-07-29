@@ -5,8 +5,10 @@
  * POST /api/v1/accounting/prepaid-expenses          create asset + generate schedule
  *
  * NetSuite/QBO parity: Prepaid expenses module — asset header + monthly amortization schedule.
- * GL posting GATED behind PREPAID_EXPENSES_POST_ENABLED (default OFF).
- * Balanced-JE preview always returned. Posting refused until flag ON (fail-loud).
+ * Create-time purchase GL posting GATED behind PREPAID_EXPENSES_POST_ENABLED (default OFF): with the
+ * flag OFF the asset is created unposted and the balanced-JE preview is returned; with it ON the
+ * purchase entry (Dr prepaid asset / Cr cash-or-A/P) posts through the shared FIN-21 JE spine in the
+ * SAME transaction as the asset header — never a partial post, never an ad-hoc poster here.
  * Money = integer cents. Entity-scoped. RLS enforced.
  */
 import type { FastifyInstance } from "fastify";
@@ -15,6 +17,8 @@ import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { AmortizationPostingError } from "./amortization-posting/amortization-posting.math.js";
+import { postPrepaidPurchase, type PrepaidPurchasePostingResult } from "./amortization-posting/amortization-posting.service.js";
 
 const PREPAID_POST_FLAG = "PREPAID_EXPENSES_POST_ENABLED";
 
@@ -327,88 +331,134 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
 
     const input = parsed.data;
 
-    return withCompanyScope(user.uuid, input.operating_company_id, async (client) => {
-      const postEnabled = await isEnabled(client, PREPAID_POST_FLAG);
-      if (postEnabled) {
-        return reply.code(422).send({
-          error: "gl_posting_not_implemented",
-          message: "PREPAID_EXPENSES_POST_ENABLED is ON but posting is not yet implemented. Set flag OFF.",
+    try {
+      return await withCompanyScope(user.uuid, input.operating_company_id, async (client) => {
+        const postEnabled = await isEnabled(client, PREPAID_POST_FLAG, {
+          operating_company_id: input.operating_company_id,
+          user_uuid: String(user.uuid),
+        });
+        // Fail CLOSED *before* any write: with posting ON, an asset whose purchase entry cannot
+        // resolve both legs would be capitalized off-ledger. Refuse the whole create instead.
+        if (postEnabled && (!input.asset_account_id || !input.payment_account_id)) {
+          return reply.code(422).send({
+            error: "gl_accounts_required",
+            message:
+              `${PREPAID_POST_FLAG} is ON: asset_account_id and payment_account_id are both required so the ` +
+              "purchase entry (Dr prepaid asset / Cr cash-or-A/P) can post. Nothing was created.",
+          });
+        }
+
+        const [sy, sm] = input.start_date.split("-").map(Number);
+        const endYear = sy + Math.floor((sm - 1 + input.periods) / 12);
+        const endMonth = ((sm - 1 + input.periods) % 12) + 1;
+        const endDate = new Date(endYear, endMonth - 1, 0);
+        const endDateStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}`;
+
+        const periodCents = Math.floor(input.total_amount_cents / input.periods);
+        const remainderCents = input.total_amount_cents - periodCents * input.periods;
+
+        const assetRes = await client.query(
+          `INSERT INTO accounting.prepaid_assets (
+            operating_company_id, description, asset_number, vendor_uuid,
+            purchase_date, start_date, end_date, total_amount_cents,
+            periods, period_amount_cents, remainder_cents,
+            asset_account_id, expense_account_id, payment_account_id,
+            created_by_user_id, updated_by_user_id
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$15)
+          RETURNING id, asset_number, description,
+            purchase_date::text, start_date::text, end_date::text,
+            total_amount_cents::text, periods, period_amount_cents::text,
+            remainder_cents::text, status, posting_status, created_at::text`,
+          [
+            input.operating_company_id, input.description, input.asset_number ?? null,
+            input.vendor_uuid ?? null, input.purchase_date, input.start_date, endDateStr,
+            input.total_amount_cents, input.periods, periodCents, remainderCents,
+            input.asset_account_id ?? null, input.expense_account_id ?? null,
+            input.payment_account_id ?? null, user.uuid,
+          ]
+        );
+        const asset = assetRes.rows[0] as PrepaidInsertRow;
+
+        const { rows: schedRows } = buildScheduleRows(
+          asset.id, input.operating_company_id, input.start_date,
+          input.periods, input.total_amount_cents, user.uuid
+        );
+
+        for (const row of schedRows) {
+          await client.query(
+            `INSERT INTO accounting.prepaid_amortization_rows
+              (asset_id, operating_company_id, period_number, period_date,
+               amount_cents, remaining_balance_cents, created_by_user_id, updated_by_user_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$7)`,
+            [row.assetId, row.operatingCompanyId, row.periodNumber, row.periodDate,
+             row.amount, row.balance, row.userId]
+          );
+        }
+
+        // Create-time capitalization through the shared FIN-21 spine, on THIS transaction. A throw
+        // here (closed period, unbalanced, accounts vanished) rolls back the asset + schedule with it
+        // and is mapped to a 4xx below — the asset is never left capitalized without its entry.
+        const purchasePosting: PrepaidPurchasePostingResult = await postPrepaidPurchase(
+          client,
+          {
+            operatingCompanyId: input.operating_company_id,
+            assetId: asset.id,
+            purchaseDate: input.purchase_date,
+            description: input.description,
+            totalAmountCents: input.total_amount_cents,
+            assetAccountId: input.asset_account_id ?? null,
+            paymentAccountId: input.payment_account_id ?? null,
+          },
+          { userId: String(user.uuid) }
+        );
+        const posted = purchasePosting.result === "posted" || purchasePosting.result === "already_posted";
+
+        await appendCrudAudit(client, user.uuid, "prepaid_asset.created", {
+          asset_id: asset.id,
+          operating_company_id: input.operating_company_id,
+          total_amount_cents: input.total_amount_cents,
+          periods: input.periods,
+          gl_posting_status: posted ? "posted" : "deferred",
+          purchase_je_id: purchasePosting.journal_entry_id,
+        }, "info", "UI-1-prepaid");
+
+        return reply.code(201).send({
+          id: asset.id,
+          asset_number: asset.asset_number,
+          description: asset.description,
+          purchase_date: asset.purchase_date,
+          start_date: asset.start_date,
+          end_date: asset.end_date,
+          total_amount_cents: Number(asset.total_amount_cents),
+          periods: asset.periods,
+          period_amount_cents: Number(asset.period_amount_cents),
+          remainder_cents: Number(asset.remainder_cents),
+          status: asset.status,
+          posting_status: posted ? "posted" : asset.posting_status,
+          created_at: asset.created_at,
+          schedule_rows_created: schedRows.length,
+          purchase_je_id: purchasePosting.journal_entry_id,
+          gl_posting_status: posted
+            ? `posted — purchase JE ${purchasePosting.journal_entry_id}`
+            : `deferred — ${PREPAID_POST_FLAG} is OFF`,
+        });
+      });
+    } catch (error) {
+      // The poster's fail-closed refusals surface as 4xx with the whole create rolled back.
+      if (error instanceof AmortizationPostingError) {
+        const statusByCode: Record<string, number> = {
+          ACCOUNT_MISSING: 422,
+          PERIOD_LOCKED: 422,
+          UNBALANCED_ENTRY: 422,
+        };
+        return reply.code(statusByCode[error.code] ?? 400).send({
+          error: error.code,
+          message: error.message,
+          details: error.details ?? null,
         });
       }
-
-      const [sy, sm] = input.start_date.split("-").map(Number);
-      const endYear = sy + Math.floor((sm - 1 + input.periods) / 12);
-      const endMonth = ((sm - 1 + input.periods) % 12) + 1;
-      const endDate = new Date(endYear, endMonth - 1, 0);
-      const endDateStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}`;
-
-      const periodCents = Math.floor(input.total_amount_cents / input.periods);
-      const remainderCents = input.total_amount_cents - periodCents * input.periods;
-
-      const assetRes = await client.query(
-        `INSERT INTO accounting.prepaid_assets (
-          operating_company_id, description, asset_number, vendor_uuid,
-          purchase_date, start_date, end_date, total_amount_cents,
-          periods, period_amount_cents, remainder_cents,
-          asset_account_id, expense_account_id, payment_account_id,
-          created_by_user_id, updated_by_user_id
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$15)
-        RETURNING id, asset_number, description,
-          purchase_date::text, start_date::text, end_date::text,
-          total_amount_cents::text, periods, period_amount_cents::text,
-          remainder_cents::text, status, posting_status, created_at::text`,
-        [
-          input.operating_company_id, input.description, input.asset_number ?? null,
-          input.vendor_uuid ?? null, input.purchase_date, input.start_date, endDateStr,
-          input.total_amount_cents, input.periods, periodCents, remainderCents,
-          input.asset_account_id ?? null, input.expense_account_id ?? null,
-          input.payment_account_id ?? null, user.uuid,
-        ]
-      );
-      const asset = assetRes.rows[0] as PrepaidInsertRow;
-
-      const { rows: schedRows } = buildScheduleRows(
-        asset.id, input.operating_company_id, input.start_date,
-        input.periods, input.total_amount_cents, user.uuid
-      );
-
-      for (const row of schedRows) {
-        await client.query(
-          `INSERT INTO accounting.prepaid_amortization_rows
-            (asset_id, operating_company_id, period_number, period_date,
-             amount_cents, remaining_balance_cents, created_by_user_id, updated_by_user_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$7)`,
-          [row.assetId, row.operatingCompanyId, row.periodNumber, row.periodDate,
-           row.amount, row.balance, row.userId]
-        );
-      }
-
-      await appendCrudAudit(client, user.uuid, "prepaid_asset.created", {
-        asset_id: asset.id,
-        operating_company_id: input.operating_company_id,
-        total_amount_cents: input.total_amount_cents,
-        periods: input.periods,
-        gl_posting_status: "deferred",
-      }, "info", "UI-1-prepaid");
-
-      return reply.code(201).send({
-        id: asset.id,
-        asset_number: asset.asset_number,
-        description: asset.description,
-        purchase_date: asset.purchase_date,
-        start_date: asset.start_date,
-        end_date: asset.end_date,
-        total_amount_cents: Number(asset.total_amount_cents),
-        periods: asset.periods,
-        period_amount_cents: Number(asset.period_amount_cents),
-        remainder_cents: Number(asset.remainder_cents),
-        status: asset.status,
-        posting_status: asset.posting_status,
-        created_at: asset.created_at,
-        schedule_rows_created: schedRows.length,
-        gl_posting_status: "deferred — PREPAID_EXPENSES_POST_ENABLED is OFF",
-      });
-    });
+      throw error;
+    }
   });
 }
 
