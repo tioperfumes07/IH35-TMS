@@ -1131,6 +1131,7 @@
     "1751": "1751-verify-fuel-kpi-money-format.mjs",
     "1752": "1752-verify-fleet-table-status-humanized.mjs",
     "1754": "1754-verify-acct-link-06-bank-state-semantics.mjs",
+    "1755": "1755-verify-degraded-count-reaches-ui.mjs",
     "1756": "1756-verify-qbo-ar-invoices-inbound.mjs",
     "1757": "1757-verify-wireable-catalogs-are-counted.mjs",
     "1758": "1758-verify-acct-f52-month-close-ifta-quarterly.mjs",
