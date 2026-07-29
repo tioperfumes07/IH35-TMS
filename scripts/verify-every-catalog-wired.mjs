@@ -47,6 +47,40 @@ const MANIFEST = join(ROOT, "apps", "frontend", "src", "routes", "manifest.tsx")
 const FE_REGISTRY = join(ROOT, "apps", "frontend", "src", "hooks", "useCatalogQuery.ts");
 const BACKEND_DIR = join(ROOT, "apps", "backend", "src");
 
+/**
+ * Bespoke catalogs whose AllCatalogsMap `catalogKey` is NOT the kebab-cased table name.
+ *
+ * Kept as an explicit, tiny map on purpose. Every attempt in this repo to INFER the link between a
+ * table and its UI key has produced a wrong answer — the hub is keyed kebab-case while tables are
+ * snake_case, and `accounts` is not `accounts` at all. A declared exception is checkable; an inferred
+ * one fails silently in whichever direction nobody tested. If this map grows past a handful, that is
+ * the signal to give bespoke catalogs a declared key in catalog-inventory.json instead.
+ */
+const BESPOKE_HUB_KEY = {
+  accounts: "chart-of-accounts",
+};
+
+/**
+ * Bespoke catalogs the owner's map marks WIRE that have a backend route and NO hub tile today.
+ *
+ * These were invisible before LST-F20c: the bespoke exemption skipped the hub-tile leg, so the gate
+ * reported "0 orphans" while 115 rows of owner-designated reference data had no front door. Naming
+ * them here does not bless them — it FREEZES them. This list may only SHRINK: a new offender fails
+ * the gate, and an entry that becomes wired must be deleted from this list or the gate fails too, so
+ * it cannot rot into a permanent allowlist.
+ *
+ * Why they are not simply wired in the same change: `file_categories` and `wo_cancellation_reasons`
+ * carry `add code/display_name` in the owner's map shape_fix column — a schema change, which is
+ * owner-gated and belongs nowhere near a guard PR. `mexico_states` and `us_states` need no shape fix
+ * and are wireable as-is. Tracked in docs/trackers/LST-F20c-BESPOKE-CATALOGS-NO-HUB-TILE-2026-07-29.md.
+ */
+const KNOWN_BESPOKE_NO_TILE = new Map([
+  ["file_categories", "21 rows · WIRE (global) · needs code/display_name shape fix first"],
+  ["mexico_states", "32 rows · WIRE (global) · no shape fix needed — wireable as-is"],
+  ["us_states", "56 rows · WIRE (global) · no shape fix needed — wireable as-is"],
+  ["wo_cancellation_reasons", "6 rows · WIRE (global) · needs code/display_name shape fix first"],
+]);
+
 /** Classifications that MUST be wired. The rest are excluded, each with a written reason in the inventory. */
 const WIREABLE = new Set(["ROUTED", "ROUTED-PENDING", "ROUTED-NEEDS-SEED", "ROUTED-READ-ONLY"]);
 /** Excluded, by design. HEADLESS-BY-DESIGN = a system lookup no operator edits. RETIRE = superseded. */
@@ -273,7 +307,36 @@ function main() {
     const cfgs = backend.get(table) ?? [];
     const cfg = cfgs.find((c) => c.urlSegment && c.routePrefix);
     if (!cfg) {
-      if (bespoke.has(table)) continue; // served by a hand-written catalog route module
+      if (bespoke.has(table)) {
+        // LST-F20c — a bespoke backend route proves the API exists, NOT that an operator can reach it.
+        // This exemption used to skip the hub-tile leg entirely, so a catalog with a complete backend
+        // and ZERO user interface reported as fully wired. dispatch_flag_colors sat that way with 24
+        // live rows across all 3 entities, counted in the Lists badge and openable from nowhere, while
+        // this gate said "0 orphans".
+        //
+        // The reason the leg was skipped is real: a bespoke catalog has no factory config, so there is
+        // no declared `urlSegment` to match a hub tile against. Deriving the key from the table name is
+        // right for 16 of the 18 bespoke catalogs but silently wrong for the rest — `accounts` is keyed
+        // `chart-of-accounts`. So the exceptions are DECLARED below, never inferred: an unlisted
+        // mismatch fails loudly instead of passing quietly.
+        const hubKey = BESPOKE_HUB_KEY[table] ?? table.replace(/_/g, "-");
+        const hasTile = hubByKey.has(hubKey);
+        if (hasTile && KNOWN_BESPOKE_NO_TILE.has(table)) {
+          // The ratchet must tighten: a fixed entry has to leave the list, or the list rots into a
+          // permanent allowlist that hides the next regression.
+          problems.missingHub.push(
+            `${table} — now HAS a hub tile but is still listed in KNOWN_BESPOKE_NO_TILE. Delete it ` +
+              `from that list so the gap count actually goes down.`
+          );
+        } else if (!hasTile && !KNOWN_BESPOKE_NO_TILE.has(table)) {
+          problems.missingHub.push(
+            `${table} [${cls}] — bespoke catalogs/*.routes.ts serves it, but NO AllCatalogsMap tile ` +
+              `(looked for catalogKey "${hubKey}"); the API works and no operator can reach it. Add the ` +
+              `tile, or declare the real key in BESPOKE_HUB_KEY if the tile uses a different one.`
+          );
+        }
+        continue;
+      }
       problems.orphan.push(`${table} [${cls}] — no backend catalog route (neither a factory config nor a catalogs/*.routes.ts serving it)`);
       continue;
     }
