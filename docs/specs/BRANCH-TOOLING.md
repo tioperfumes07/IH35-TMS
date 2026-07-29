@@ -64,8 +64,12 @@ run `npm run verify:static` and fix any `FAIL-test(gated)` locally — never pus
   `main` requires `hold-merge-gate` from GitHub Actions integration `15368`, and the capability maps to the
   exact wired `hold-merge-gate / hold-merge-gate` context. Missing `gh`, missing authentication, offline/API
   failure, malformed output, timeout, wrong integration, or absent live rule hard-fails. GitHub runs the
-  context with authoritative PR metadata and remains fail-closed: a protected PR without
-  `JORGE-APPROVED` is red and cannot merge.
+  context with authoritative PR metadata and remains fail-closed on its REAL check — the db-migrate
+  firewall on a held migration. It does **not** require the `JORGE-APPROVED` label: since the owner
+  ruling of 2026-07-26, `scripts/verify-hold-merge-gate.mjs:28` treats that label as
+  *"optional/legacy; no longer required"*, and the owner reaffirmed it on 2026-07-29. The earlier
+  sentence here — "a protected PR without `JORGE-APPROVED` is red and cannot merge" — described
+  behaviour the gate had already stopped enforcing, and is corrected.
 - PASS-8 is producer→consumer orchestration: local `verify:static` does not generate the ignored
   `PASS-8-PRE-PROD-SMOKE-RESULTS.*` report, so an absent report may skip only as the explicit
   `pass8-artifact` capability backed by the wired conditional CI context
