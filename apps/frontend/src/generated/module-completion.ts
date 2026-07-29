@@ -1071,7 +1071,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
   {
     "id": "lists",
     "total": 23,
-    "done": 16,
+    "done": 17,
     "items": [
       {
         "id": "LST-CAT-01",
@@ -1160,8 +1160,8 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
       {
         "id": "LST-MAINT-01",
         "title": "Maintenance catalogs have rows on the active entity",
-        "status": "FAIL",
-        "pr": ""
+        "status": "PASS",
+        "pr": "#3783"
       },
       {
         "id": "LST-PICKER-01",

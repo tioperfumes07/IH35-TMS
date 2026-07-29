@@ -680,9 +680,9 @@
         "DOD-E"
       ],
       "spec": "Lists hub domain map",
-      "status": "FAIL",
-      "evidence": "BROWSER-VERIFIED 2026-07-24 19:55 CT, app.ih35dispatch.com/lists as tioperfumes07@gmail.com, company='IH 35 Transportation' (TRANSP), live_sha 2088757. Domain badges rendered: SAFETY 30 \u00b7 MAINTENANCE 0 \u00b7 DISPATCH 6 \u00b7 FUEL 15 \u00b7 DRIVERS 48 \u00b7 FLEET 20 \u00b7 ACCOUNTING 531 \u00b7 NAMES MASTER 0. MAINTENANCE badge reads 0 while the hub lists 10 live maintenance catalogs. Verified NOT a count bug \u2014 Neon lucia, TRANSP 91e0bf0a: maintenance_failure_codes 0, labor_codes 0, parts 0, priority_levels 0, service_tasks 0, shop_locations 0, vendors 0, work_order_statuses 0, reference.oem_parts 0. The badge is honest; the catalogs are genuinely empty on TRANSP.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "CLOSED 2026-07-29: ROOT CAUSE 0066 seed ineffective under FORCE RLS (0 rows). FIX migration 202610211200 RLS-safe reseed (ih35_app+opco GUC+RESET ROLE) + agent Neon apply. LIVE Neon lucia TRANSP/USMCA/TRK: work_order_statuses=5, priority=5, labor=5, failure=5, tasks=5, shops=5 each. Guard verify-lst-maint01-reseed-rls-safe (step 1778). catalogs.parts/oem_parts remain separate shapes (not this FAIL).",
+      "pr": "#3783",
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
@@ -741,7 +741,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD \u2014 financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD \u2014 financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
+      "live_proof": "2026-07-29 Neon lucia TRANSP/USMCA/TRK wo_st=pri=labor=fail=tasks=shops=5"
     },
     {
       "id": "LST-PICKER-01",
@@ -1257,5 +1258,8 @@
       "gate": "NON-FINANCIAL \u2014 self-mergeable on green CI per \u00a71.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
     }
   ],
-  "M": 18
+  "M": 18,
+  "pass_count": 16,
+  "total_count": 23,
+  "progress": "16 of 23"
 }
