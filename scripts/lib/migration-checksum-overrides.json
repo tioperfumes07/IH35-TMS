@@ -316,5 +316,13 @@
     "reason": "Applied to prod, then corrected: the original REFUSED to run on a non-empty table, which CI's fresh-DB run disproved (0062 seeds 15 rows; prod has 0). Emptiness was never the basis for retirement \u2014 being UNWIRED is \u2014 so the abort became a NOTICE. The APPLIED EFFECT is identical: REVOKE write + deprecated COMMENT, SELECT preserved, zero rows touched. Only the non-executing guard clause changed. RENUMBERED 202610060000 -> 202610090000: another lane landed 202610060000_nd_fa_heavy_repair_expense_coa.sql on the same number while this was in flight; two migrations sharing a leading number order only by accident. Both prod ledger rows were re-pointed to the new filename in the same session.",
     "added_at": "2026-07-28",
     "added_in_pr": "C11-IFTA-STATES-RETIREMENT"
+  },
+  {
+    "filename": "202610121800_acct_econ_05_qbo_vendors_canonical_backfill.sql",
+    "ledger_checksum": "acct-econ-05-backfill-manual",
+    "disk_checksum": "c3c14c527dbecfa44c827ef95e8aa6d8d60da0f77d5b28f4f716527faaa04218",
+    "reason": "LIVE RENDER OUTAGE 2026-07-29: owner/manual Neon-apply ledgered this file with sentinel checksum 'acct-econ-05-backfill-manual' (not a sha256). Disk sha256 is c3c14c52\u2026. db:migrate pre_deploy then aborts on \"modified after apply\" and has blocked every deploy after #3733 (47013bc, f04d8a8, ce3d88f all pre_deploy_failed). Accept historical ledger\u2194disk sentinel; do not re-apply. Never edit an applied migration.",
+    "added_at": "2026-07-29",
+    "added_in_pr": "DEPLOY-UNBLOCK-ACCT-ECON-05-121800"
   }
 ]
