@@ -1,3 +1,4 @@
+import { unverifiableReasonText } from "../../../lib/unverifiableReasonText";
 import { BackendVersionFooter } from "../../../components/shared/BackendVersionFooter";
 import type { AuthMeResponse } from "../../../types/api";
 import { useState } from "react";
@@ -279,7 +280,7 @@ export function DefaultHome({ auth }: Props) {
               tr == null ? null : tr.status === "unverifiable" ? (
                 <span>
                   Invoice↔GL linkage unverifiable
-                  {tr.unverifiable_reason ? `: ${tr.unverifiable_reason}` : ""}
+                  {tr.unverifiable_reason ? `: ${unverifiableReasonText(tr.unverifiable_reason)}` : ""}
                 </span>
               ) : (
                 <span>
@@ -382,7 +383,7 @@ export function DefaultHome({ auth }: Props) {
             !fb
               ? null
               : fb.status === "unverifiable" || fb.status === "accounting_exception"
-                ? `Factoring balance ${fb.status}${fb.unverifiable_reason ? `: ${fb.unverifiable_reason}` : ""}`
+                ? `Factoring balance ${fb.status}${fb.unverifiable_reason ? `: ${unverifiableReasonText(fb.unverifiable_reason)}` : ""}`
                 : `${fb.invoices_factored ?? 0} invoices factored`
           }
         />

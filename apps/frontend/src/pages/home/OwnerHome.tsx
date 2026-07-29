@@ -8,6 +8,7 @@
  * All other roles continue to see the standard HomePage.
  */
 
+import { unverifiableReasonText } from "../../lib/unverifiableReasonText";
 import { BackendVersionFooter } from "../../components/shared/BackendVersionFooter";
 import type { AuthMeResponse } from "../../types/api";
 import { useState } from "react";
@@ -55,6 +56,32 @@ import "./home-print.css";
 type Props = {
   auth: AuthMeResponse["user"];
 };
+
+
+/**
+ * An entity with no factoring contract is NOT an unverifiable balance — it is a balance that does not
+ * apply.
+ *
+ * OWNER RULING 2026-07-29: "usmca does not have a contract with faro factoring, faro is for ih 35
+ * transportation", and "usmca doesnt factor YET". IH 35 Trucking does not factor at all — it is the
+ * asset holder and leases equipment.
+ *
+ * Those are two different states and this branch covers both without asserting either is permanent:
+ * TRK is excluded by design, USMCA is simply not there yet. The card stops saying "not applicable" for
+ * USMCA on its own the moment a contract exists.
+ *
+ * Before this, Home showed them "FACTORING BALANCE — Unverifiable · Factoring balance unverifiable:
+ * faro_contract_entity_mismatch". That reads as a system fault and puts a raw internal reason code in
+ * front of the owner, for a state that is simply correct. No serious accounting product reports a
+ * not-applicable figure as unverifiable; QuickBooks and NetSuite both distinguish "not configured for
+ * this entity" from "we could not compute this".
+ *
+ * The backend reason code is unchanged and still travels in the payload for diagnostics — only the
+ * PRESENTATION of this one expected case changes.
+ */
+function isNoFactoringContract(fb: { status?: string | null; unverifiable_reason?: string | null }): boolean {
+  return fb.unverifiable_reason === "faro_contract_entity_mismatch";
+}
 
 export function OwnerHome({ auth }: Props) {
   const displayName = auth.email ?? "Owner";
@@ -299,7 +326,7 @@ export function OwnerHome({ auth }: Props) {
               tr == null ? null : tr.status === "unverifiable" ? (
                 <span>
                   Invoice↔GL linkage unverifiable
-                  {tr.unverifiable_reason ? `: ${tr.unverifiable_reason}` : ""}
+                  {tr.unverifiable_reason ? `: ${unverifiableReasonText(tr.unverifiable_reason)}` : ""}
                 </span>
               ) : (
                 <span>
@@ -385,13 +412,15 @@ export function OwnerHome({ auth }: Props) {
           number={
             !fb
               ? "—"
-              : fb.status === "unverifiable" || fb.status === "accounting_exception"
-                ? fb.status === "accounting_exception"
-                  ? "Exception"
-                  : "Unverifiable"
-                : fb.outstanding_cents == null
-                  ? "—"
-                  : formatUsdFromCents(fb.outstanding_cents)
+              : isNoFactoringContract(fb)
+                ? "Not applicable"
+                : fb.status === "unverifiable" || fb.status === "accounting_exception"
+                  ? fb.status === "accounting_exception"
+                    ? "Exception"
+                    : "Unverifiable"
+                  : fb.outstanding_cents == null
+                    ? "—"
+                    : formatUsdFromCents(fb.outstanding_cents)
           }
           isLoading={factoringBalanceQuery.isLoading}
           isError={factoringBalanceQuery.isError}
@@ -401,9 +430,11 @@ export function OwnerHome({ auth }: Props) {
           subtext={
             !fb
               ? null
-              : fb.status === "unverifiable" || fb.status === "accounting_exception"
-                ? `Factoring balance ${fb.status}${fb.unverifiable_reason ? `: ${fb.unverifiable_reason}` : ""}`
-                : `${fb.invoices_factored ?? 0} invoices factored`
+              : isNoFactoringContract(fb)
+                ? "This entity has no factoring contract"
+                : fb.status === "unverifiable" || fb.status === "accounting_exception"
+                  ? `Factoring balance ${fb.status}${fb.unverifiable_reason ? `: ${unverifiableReasonText(fb.unverifiable_reason)}` : ""}`
+                  : `${fb.invoices_factored ?? 0} invoices factored`
           }
         />
       </section>
