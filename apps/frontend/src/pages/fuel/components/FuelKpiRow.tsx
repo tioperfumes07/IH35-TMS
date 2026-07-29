@@ -42,8 +42,19 @@ function metric(raw: number | null | undefined): number | null {
   const n = Number(raw);
   return Number.isFinite(n) ? n : null;
 }
+/**
+ * toFixed() alone renders "$54409" — no thousands separator. Every other money figure in the product
+ * is grouped ("$4,718" on Home, "−$168,722.50" on Cash Flow), so the fuel KPIs were the odd ones out
+ * and a five-figure spend was genuinely hard to read at a glance. toLocaleString applies the same
+ * grouping while honouring the requested precision.
+ */
 const fixed = (n: number | null, digits: number, prefix = "", suffix = "") =>
-  n === null ? null : `${prefix}${n.toFixed(digits)}${suffix}`;
+  n === null
+    ? null
+    : `${prefix}${n.toLocaleString("en-US", {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+      })}${suffix}`;
 
 export function FuelKpiRow({ dashboard, lovesSyncStatus }: Props) {
   const lovesSyncAt = lovesSyncStatus?.last_synced_at ?? dashboard?.loves_sync_at ?? null;
