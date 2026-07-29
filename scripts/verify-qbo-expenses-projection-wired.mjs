@@ -134,10 +134,17 @@ function analyzeMigrations() {
   for (const f of files) {
     if (f === OWNER_APPROVED_ENABLE_MIGRATION) continue;
     const body = fs.readFileSync(path.join(MIGRATIONS_DIR, f), "utf8");
-    if (FLAGS.some((flag) => body.includes(flag)) && overrideOnRe.test(body) && FLAGS.some((flag) => body.includes(flag))) {
-      // Only flag when the override insert references our flags specifically.
-      if (FLAGS.some((flag) => new RegExp(`feature_flag_overrides[\\s\\S]*${flag}`).test(body) || new RegExp(`${flag}[\\s\\S]*feature_flag_overrides`).test(body))) {
-        failures.push(`${f} seeds a feature_flag_overrides ON for a QBO-expenses flag — build-and-HOLD forbids seeding ON; the owner flips it per-entity.`);
+    // Only fail when an INSERT INTO feature_flag_overrides block names our flag AND enables it.
+    // Do NOT match flag names that appear only in comments (false-positive on other enable migs).
+    for (const flag of FLAGS) {
+      const insertBlocks = body.matchAll(/INSERT\s+INTO\s+lib\.feature_flag_overrides[\s\S]{0,1200}?(?:;|\$\$)/gi);
+      for (const m of insertBlocks) {
+        const block = m[0];
+        if (block.includes(flag) && /enabled[\s\S]{0,80}?true/i.test(block)) {
+          failures.push(
+            `${f} seeds a feature_flag_overrides ON for ${flag} — build-and-HOLD forbids seeding ON; the owner flips it per-entity.`
+          );
+        }
       }
     }
   }

@@ -938,6 +938,7 @@
     ],
     "accounting.ob_register_staging_lines": [
       "account_id",
+      "adjustment_cents",
       "amount_cents",
       "as_of_date",
       "committed_at",
@@ -948,13 +949,12 @@
       "note",
       "operating_company_id",
       "qbo_account_id",
+      "qbo_snapshot_cents",
       "source",
       "source_account_label",
       "status",
       "updated_at",
-      "updated_by_user_id",
-      "adjustment_cents",
-      "qbo_snapshot_cents"
+      "updated_by_user_id"
     ],
     "accounting.ob_source_finality": [
       "as_of_date",
@@ -1535,9 +1535,13 @@
       "display_id",
       "id",
       "issue_date",
+      "last_qbo_synced_at",
       "notes",
       "operating_company_id",
+      "qbo_id",
+      "qbo_sync_token",
       "source_payment_id",
+      "source_system",
       "status",
       "vendor_id"
     ],
@@ -2120,8 +2124,10 @@
       "is_locked",
       "is_postable",
       "notes",
+      "opening_balance_adjustment_cents",
       "opening_balance_as_of",
       "opening_balance_cents",
+      "opening_balance_qbo_snapshot_cents",
       "operating_company_id",
       "parent_account_id",
       "qbo_account_id",
@@ -2131,9 +2137,7 @@
       "qbo_synced_at",
       "system_purpose",
       "updated_at",
-      "updated_by_user_id",
-      "opening_balance_adjustment_cents",
-      "opening_balance_qbo_snapshot_cents"
+      "updated_by_user_id"
     ],
     "catalogs.audit_event_types": [
       "code",
@@ -7608,6 +7612,30 @@
       "rows_upserted",
       "started_at",
       "sync_type"
+    ],
+    "mdata.qbo_vendor_credits": [
+      "active",
+      "ap_account_name",
+      "ap_account_qbo_id",
+      "balance_cents",
+      "created_at",
+      "currency",
+      "doc_number",
+      "id",
+      "last_seen_at",
+      "linked_txn_count",
+      "mirrored_at",
+      "operating_company_id",
+      "payload_json",
+      "private_note",
+      "qbo_id",
+      "qbo_sync_token",
+      "qbo_updated_at",
+      "total_cents",
+      "txn_date",
+      "updated_at",
+      "vendor_name",
+      "vendor_qbo_id"
     ],
     "mdata.qbo_vendors": [
       "account_number",
