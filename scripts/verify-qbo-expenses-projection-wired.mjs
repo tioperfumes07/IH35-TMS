@@ -64,6 +64,21 @@ export function analyzePuller(text) {
         "projectPurchasesToExpenses still loops mirror.rows — that pattern caused prod idle_in_transaction FATAL (IH35-TMS-PROD-25)."
       );
     }
+    // Prod 2026-07-29: QBO_EXPENSES_PROJECTION_ENABLED ON TRANSP, mirror 28k rows, expenses stayed 0
+    // because expense_lines.operating_company_id is NOT NULL (no default) and the set-based line INSERT
+    // omitted it — the whole projection txn rolled back. Never ship that shape again.
+    const lineInserts = projectFn.match(/INSERT\s+INTO\s+accounting\.expense_lines\s*\(([^)]+)\)/gi) ?? [];
+    if (lineInserts.length === 0) {
+      failures.push("projectPurchasesToExpenses must INSERT INTO accounting.expense_lines (at least once).");
+    }
+    for (const ins of lineInserts) {
+      if (!/\boperating_company_id\b/i.test(ins)) {
+        failures.push(
+          "projectPurchasesToExpenses expense_lines INSERT must include operating_company_id " +
+            "(NOT NULL, no default — omitting it rolls the whole projection txn back to expenses=0)."
+        );
+      }
+    }
   }
   return failures;
 }
@@ -136,10 +151,15 @@ if (process.argv.includes("--selftest")) {
     await isEnabled(client, PURCHASES_MIRROR_PULL_FLAG, { operating_company_id });
     export async function projectPurchasesToExpenses() {
       await client.query(\`INSERT INTO accounting.expenses (...) SELECT ... FROM mdata.qbo_purchases m\`);
+      await client.query(\`INSERT INTO accounting.expense_lines (operating_company_id, expense_id, line_sequence) SELECT ...\`);
     }`;
   const badEnv = `const A = process.env.QBO_PURCHASES_MIRROR_PULL_ENABLED === "true";
     export async function projectPurchasesToExpenses() {
       for (const m of mirror.rows) { await client.query("x"); }
+    }`;
+  const badMissingOpco = `export async function projectPurchasesToExpenses() {
+      await client.query(\`INSERT INTO accounting.expenses (...) SELECT ... FROM mdata.qbo_purchases m\`);
+      await client.query(\`INSERT INTO accounting.expense_lines (expense_id, line_sequence, amount) SELECT ...\`);
     }`;
   const goodSched = `runStep("qbo_purchases_pull", id, () => pullPurchasesFromQbo(id));
     runStep("qbo_purchases_project", id, () => projectPurchasesToExpenses(id));`;
@@ -150,6 +170,7 @@ if (process.argv.includes("--selftest")) {
   const checks = {
     pullerGoodPasses: analyzePuller(goodPuller).length === 0,
     pullerEnvFails: analyzePuller(badEnv).length > 0,
+    pullerMissingOpcoFails: analyzePuller(badMissingOpco).length > 0,
     schedGoodPasses: analyzeScheduler(goodSched).length === 0,
     schedBadFails: analyzeScheduler(badSched).length > 0,
     postGoodPasses: analyzePosting(goodPost).length === 0,

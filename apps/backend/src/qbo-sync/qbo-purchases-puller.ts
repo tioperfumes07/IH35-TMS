@@ -27,7 +27,7 @@ import type { PoolClient } from "pg";
 import { qboCompanyContext, qboPaginateEntity } from "../integrations/qbo/qbo-client.js";
 import { withLuciaBypass } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-import { QBO_PURCHASES_MIRROR_SYNC_KIND } from "./qbo-purchases-sync-kind.js";
+import { QBO_PURCHASES_MIRROR_SYNC_KIND, QBO_PURCHASES_EXPENSES_PROJECTION_SYNC_KIND } from "./qbo-purchases-sync-kind.js";
 import { recordFlagDisabledMirrorSyncRun } from "./record-flag-disabled-sync-run.js";
 
 // Default-OFF financial flags (financial cluster — HOLD for owner approval). SINGLE SOURCE OF TRUTH is the
@@ -37,7 +37,7 @@ import { recordFlagDisabledMirrorSyncRun } from "./record-flag-disabled-sync-run
 const PURCHASES_MIRROR_PULL_FLAG = "QBO_PURCHASES_MIRROR_PULL_ENABLED";
 const EXPENSES_PROJECTION_FLAG = "QBO_EXPENSES_PROJECTION_ENABLED";
 
-export { QBO_PURCHASES_MIRROR_SYNC_KIND };
+export { QBO_PURCHASES_MIRROR_SYNC_KIND, QBO_PURCHASES_EXPENSES_PROJECTION_SYNC_KIND };
 
 export type PurchasesPullResult = {
   enabled: boolean;
@@ -166,7 +166,15 @@ async function upsertPurchaseMirror(
 }
 
 /** Durable audit begin — own COMMIT via withLuciaBypass. Survives later data-txn rollback. */
-export async function beginPurchasesMirrorSyncRun(operatingCompanyId: string): Promise<string | null> {
+export async function beginPurchasesMirrorSyncRun(
+  operatingCompanyId: string,
+  kind: string = QBO_PURCHASES_MIRROR_SYNC_KIND,
+  payload: Record<string, unknown> = {
+    direction: "qbo_to_tms",
+    mirror_table: "mdata.qbo_purchases",
+    source_id_key: "qbo_id",
+  }
+): Promise<string | null> {
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     const exists = await client.query<{ ok: boolean }>(`SELECT to_regclass('qbo.sync_runs') IS NOT NULL AS ok`);
@@ -184,15 +192,7 @@ export async function beginPurchasesMirrorSyncRun(operatingCompanyId: string): P
         VALUES ($1, $2, 'running', now(), 0, $3::jsonb)
         RETURNING id::text
       `,
-      [
-        operatingCompanyId,
-        QBO_PURCHASES_MIRROR_SYNC_KIND,
-        JSON.stringify({
-          direction: "qbo_to_tms",
-          mirror_table: "mdata.qbo_purchases",
-          source_id_key: "qbo_id",
-        }),
-      ]
+      [operatingCompanyId, kind, JSON.stringify(payload)]
     );
     return res.rows[0]?.id ?? null;
   });
@@ -341,9 +341,15 @@ export function parsePurchaseLines(payload: unknown): PurchaseLine[] {
  * round-trips; Postgres marked the session idle_in_transaction, killed the connection, rolled
  * the entire projection back to 0 rows, and the uncaught pool error bounced the API worker.
  *
+ * ROOT FIX (prod 2026-07-29 — flag ON, mirror full, expenses=0): every expense_lines INSERT must
+ * stamp operating_company_id. That column is NOT NULL with no default; omitting it fails the line
+ * INSERT and the deferred header/line balance trigger rolls the WHOLE projection txn (headers too)
+ * back to zero. Do not "fix" this by flipping QBO_EXPENSES_PROJECTION_ENABLED off — the flag is correct.
+ *
  * Flag check runs in its OWN short txn; projection runs in a separate short txn. Never shares a
  * connection/tx with Stage 1 QBO HTTP pull. posting_status stays 'unposted' (NO GL). No-op unless
- * QBO_EXPENSES_PROJECTION_ENABLED is ON for this entity.
+ * QBO_EXPENSES_PROJECTION_ENABLED is ON for this entity. Writes qbo.sync_runs kind
+ * qbo_purchases_expenses_projection (NOT mdata.qbo_sync_runs — that table is CoA/customer/vendor CDC only).
  */
 export async function projectPurchasesToExpenses(operatingCompanyId: string): Promise<PurchasesProjectResult> {
   const projectedAt = new Date().toISOString();
@@ -354,18 +360,30 @@ export async function projectPurchasesToExpenses(operatingCompanyId: string): Pr
     enabled = await isEnabled(client, EXPENSES_PROJECTION_FLAG, { operating_company_id: operatingCompanyId });
   });
   if (!enabled) {
+    await recordFlagDisabledMirrorSyncRun({
+      operatingCompanyId,
+      kind: QBO_PURCHASES_EXPENSES_PROJECTION_SYNC_KIND,
+      flagKey: EXPENSES_PROJECTION_FLAG,
+      mirrorTable: "accounting.expenses",
+    });
     return { enabled: false, expensesProjected: 0, linesProjected: 0, projectedAt };
   }
 
+  const runId = await beginPurchasesMirrorSyncRun(operatingCompanyId, QBO_PURCHASES_EXPENSES_PROJECTION_SYNC_KIND, {
+    direction: "mirror_to_subledger",
+    source_table: "mdata.qbo_purchases",
+    target_table: "accounting.expenses",
+  });
   let expensesProjected = 0;
   let linesProjected = 0;
 
-  // Separate short txn — busy set-based SQL only (no per-row awaits, no QBO network).
-  await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  try {
+    // Separate short txn — busy set-based SQL only (no per-row awaits, no QBO network).
+    await withLuciaBypass(async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
 
-    const header = await client.query(
-      `
+      const header = await client.query(
+        `
         INSERT INTO accounting.expenses (
           operating_company_id, qbo_purchase_id, vendor_uuid, transaction_date,
           total_amount_cents, memo, status, posting_status, qbo_sync_pending, is_active, created_at, updated_at
@@ -395,12 +413,12 @@ export async function projectPurchasesToExpenses(operatingCompanyId: string): Pr
           is_active = true,
           updated_at = now()
       `,
-      [operatingCompanyId]
-    );
-    expensesProjected = header.rowCount ?? 0;
+        [operatingCompanyId]
+      );
+      expensesProjected = header.rowCount ?? 0;
 
-    const lines = await client.query(
-      `
+      const lines = await client.query(
+        `
         WITH src AS (
           SELECT
             e.id AS expense_id,
@@ -426,10 +444,12 @@ export async function projectPurchasesToExpenses(operatingCompanyId: string): Pr
           FROM src
         )
         INSERT INTO accounting.expense_lines (
+          operating_company_id,
           expense_id, line_sequence, amount, amount_cents, description, expense_account_uuid, ps_category_qbo_id, section,
           expense_category_uuid
         )
         SELECT
+          s.operating_company_id,
           s.expense_id,
           s.line_sequence,
           s.amt,
@@ -468,16 +488,18 @@ export async function projectPurchasesToExpenses(operatingCompanyId: string): Pr
           ps_category_qbo_id = EXCLUDED.ps_category_qbo_id,
           expense_category_uuid = COALESCE(EXCLUDED.expense_category_uuid, accounting.expense_lines.expense_category_uuid)
       `,
-      [operatingCompanyId]
-    );
-    linesProjected = lines.rowCount ?? 0;
+        [operatingCompanyId]
+      );
+      linesProjected = lines.rowCount ?? 0;
 
-    const synth = await client.query(
-      `
+      const synth = await client.query(
+        `
         INSERT INTO accounting.expense_lines (
+          operating_company_id,
           expense_id, line_sequence, amount, amount_cents, description, section
         )
         SELECT
+          e.operating_company_id,
           e.id,
           1,
           (e.total_amount_cents / 100.0),
@@ -490,10 +512,28 @@ export async function projectPurchasesToExpenses(operatingCompanyId: string): Pr
           AND NOT EXISTS (SELECT 1 FROM accounting.expense_lines l WHERE l.expense_id = e.id)
         ON CONFLICT (expense_id, line_sequence) DO NOTHING
       `,
-      [operatingCompanyId]
-    );
-    linesProjected += synth.rowCount ?? 0;
-  });
+        [operatingCompanyId]
+      );
+      linesProjected += synth.rowCount ?? 0;
+    });
 
-  return { enabled: true, expensesProjected, linesProjected, projectedAt };
+    await finishPurchasesMirrorSyncRun({
+      runId,
+      operatingCompanyId,
+      success: true,
+      recordsProcessed: expensesProjected,
+    });
+    return { enabled: true, expensesProjected, linesProjected, projectedAt };
+  } catch (error) {
+    await finishPurchasesMirrorSyncRun({
+      runId,
+      operatingCompanyId,
+      success: false,
+      recordsProcessed: expensesProjected,
+      errorMessage: String((error as Error)?.message ?? error),
+    }).catch(() => {
+      /* audit best-effort; rethrow original */
+    });
+    throw error;
+  }
 }

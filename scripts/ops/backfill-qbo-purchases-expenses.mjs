@@ -95,9 +95,11 @@ seq AS (
   FROM src
 )
 INSERT INTO accounting.expense_lines (
+  operating_company_id,
   expense_id, line_sequence, amount, amount_cents, description, expense_account_uuid, ps_category_qbo_id, section
 )
 SELECT
+  s.operating_company_id,
   s.expense_id,
   s.line_sequence,
   s.amt,
@@ -124,9 +126,11 @@ RETURNING expense_id
 // 3) Synthesize a single header-total line for expenses whose QBO Purchase carried no usable positive line.
 const SYNTH_LINE_SQL = `
 INSERT INTO accounting.expense_lines (
+  operating_company_id,
   expense_id, line_sequence, amount, amount_cents, description, section
 )
 SELECT
+  e.operating_company_id,
   e.id,
   1,
   (e.total_amount_cents / 100.0),
