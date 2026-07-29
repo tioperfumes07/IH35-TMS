@@ -190,7 +190,12 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
           padding: `${spacing.topbarPaddingY}px ${spacing.topbarPaddingX}px`,
         }}
       >
-      <div className="flex items-center gap-2">
+      {/* min-w-0 is REQUIRED on the grid item itself, not only on the inner flex row. A grid item
+          defaults to min-width:auto, so it refuses to shrink below its content and OVERFLOWS its
+          1fr column — which is why the entity chip ("IH 35 Transportation LLC") rendered underneath
+          the Tasks and Program buttons on every page. The inner div already had min-w-0; that alone
+          cannot help, because the overflow happens one level up. */}
+      <div className="flex min-w-0 items-center gap-2">
         {onOpenMobileNav ? (
           <button
             type="button"
@@ -235,7 +240,9 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
         <CarrierSwitcher />
       </div>
 
-      <div className="relative flex items-center justify-end gap-2 text-sm text-gray-700">
+      {/* Same reason as the left column: without min-w-0 this item cannot shrink and the action
+          buttons collide with the centre status bar at narrow widths. */}
+      <div className="relative flex min-w-0 items-center justify-end gap-2 text-sm text-gray-700">
         {office ? (
           <div ref={createMenuRef} className="relative">
             <button

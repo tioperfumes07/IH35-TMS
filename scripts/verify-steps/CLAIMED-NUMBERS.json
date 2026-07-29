@@ -1113,6 +1113,7 @@
     "1734": "1734-verify-ob01-opening-balance-register.mjs",
     "1735": "1735-verify-no-placeholder-module-routes.mjs",
     "1736": "1736-verify-ob01-fixture-tieout.mjs",
+    "1737": "1737-verify-topbar-grid-items-shrinkable.mjs",
     "1738": "1738-verify-expenses-projection-opco-lines.mjs",
     "1739": "1739-verify-backend-version-from-backend.mjs",
     "1740": "1740-verify-held-posting-flags-enable.mjs",
