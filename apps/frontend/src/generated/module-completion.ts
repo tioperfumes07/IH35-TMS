@@ -104,7 +104,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
         "id": "ACCT-LINK-06",
         "title": "bank feed matched_journal_entry_id density + categorize→GL poster wired (ACCT-F05)",
         "status": "FAIL",
-        "pr": "#3424"
+        "pr": "#3424 #PENDING-LINK06"
       },
       {
         "id": "ACCT-SURF-01",

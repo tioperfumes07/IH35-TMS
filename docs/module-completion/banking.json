@@ -36,7 +36,7 @@
       ],
       "spec": "Match/Categorize \u2192 JE",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 16:50Z: matched_je=3/10628; categorized_at_not_null=3 \u2014 unchanged. Poster path wired (#3424 merged on main): bulk categorize\u2192maybePostBankCategorizationToGl sets matched_journal_entry_id when flag ON. Density is ops backlog \u2014 not a broken poster. GUARD: verify-step 1480 (verify-bank-econ-02-poster-path-wired). FAIL until operator categorizes at scale + Neon re-count.",
+      "evidence": "LIVE REFRESH 2026-07-25 16:50Z: matched_je=3/10628; categorized_at_not_null=3 \u2014 unchanged. Poster path wired (#3424 merged on main): bulk categorize\u2192maybePostBankCategorizationToGl sets matched_journal_entry_id when flag ON. Density is ops backlog \u2014 not a broken poster. GUARD: verify-step 1480 (verify-bank-econ-02-poster-path-wired). FAIL until operator categorizes at scale + Neon re-count. Companion ACCT-LINK-06 / guard 1762: autoCategorize\u2192CHAIN-05 poster path fixed this PR; density still FAIL until apply-historical dry_run=false. verify-step 1480 still required.",
       "pr": "#3424"
     },
     {
