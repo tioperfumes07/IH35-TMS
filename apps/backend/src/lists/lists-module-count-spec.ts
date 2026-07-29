@@ -59,8 +59,6 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     // the table actually has is_active.
     { table: "cash_advance_types", activeFilter: "is_active", companyScoped: true },
     { table: "leave_types", activeFilter: "is_active", companyScoped: true },
-    { table: "driver_leave_balances", activeFilter: "none", companyScoped: true },
-    { table: "leave_policies", activeFilter: "none", companyScoped: true },
     { table: "pay_rate_templates", activeFilter: "is_active", companyScoped: true },
     { table: "driver_deduction_types", activeFilter: "is_active", companyScoped: true },
     { table: "driver_pay_types", activeFilter: "is_active", companyScoped: true },
@@ -91,7 +89,6 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "trailer_parts", activeFilter: "is_active", companyScoped: true },
     { table: "truck_parts", activeFilter: "is_active", companyScoped: true },
     { table: "work_order_templates", activeFilter: "is_active", companyScoped: true },
-    { table: "equipment_line_item_templates", activeFilter: "is_active", companyScoped: true },
     { table: "maintenance_failure_codes", activeFilter: "is_active", companyScoped: true },
     { table: "maintenance_labor_codes", activeFilter: "is_active", companyScoped: true },
     { table: "maintenance_parts", activeFilter: "is_active", companyScoped: true },
