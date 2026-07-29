@@ -39,24 +39,41 @@ function write(cwd, rel, body) {
  * Build a repo where `main` advanced with `mainFiles` and a feature branch changed `branchFiles`,
  * both from a common base. Returns the base sha the gate should be told about.
  */
-function buildRepo(mainFiles, branchFiles) {
+function buildRepo(mainFiles, branchFiles, { checkoutMergeRef = false } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "branch-fresh-"));
   git(dir, ["init", "-q", "-b", "main"]);
   git(dir, ["config", "user.email", "selftest@local"]);
   git(dir, ["config", "user.name", "selftest"]);
 
   write(dir, "seed.txt", "seed\n");
+  // A path both sides touch has to already EXIST at the base, and each side has to edit a different
+  // region of it — otherwise the two commits are an add/add conflict and `git merge` cannot produce
+  // a merge ref at all. That is not a fixture detail: GitHub cannot build refs/pull/<n>/merge for a
+  // CONFLICTING PR either, which is why those PRs skipped this bug entirely and stayed green while
+  // clean ones went red. The overlap must be a CLEAN same-file overlap to reproduce CI.
+  const shared = mainFiles.filter((f) => branchFiles.includes(f));
+  const seedLines = (f) => Array.from({ length: 40 }, (_, i) => `${f} line ${i + 1}`).join("\n") + "\n";
+  const editLine = (f, lineIdx, text) => {
+    const lines = seedLines(f).split("\n");
+    lines[lineIdx] = text;
+    return lines.join("\n");
+  };
+  for (const f of shared) write(dir, f, seedLines(f));
   git(dir, ["add", "."]);
   git(dir, ["commit", "-qm", "base"]);
   const base = git(dir, ["rev-parse", "HEAD"]);
 
   git(dir, ["checkout", "-q", "-b", "feature"]);
-  for (const f of branchFiles) write(dir, f, "branch change\n");
+  for (const f of branchFiles) {
+    write(dir, f, shared.includes(f) ? editLine(f, 39, "branch edits the END") : "branch change\n");
+  }
   git(dir, ["add", "."]);
   git(dir, ["commit", "-qm", "branch work"]);
 
   git(dir, ["checkout", "-q", "main"]);
-  for (const f of mainFiles) write(dir, f, "main change\n");
+  for (const f of mainFiles) {
+    write(dir, f, shared.includes(f) ? editLine(f, 0, "main edits the START") : "main change\n");
+  }
   git(dir, ["add", "."]);
   git(dir, ["commit", "-qm", "main moved"]);
 
@@ -64,16 +81,33 @@ function buildRepo(mainFiles, branchFiles) {
   git(dir, ["remote", "add", "origin", dir]);
   git(dir, ["fetch", "-q", "origin", "main"]);
   git(dir, ["checkout", "-q", "feature"]);
-  return { dir, base };
+  const head = git(dir, ["rev-parse", "HEAD"]);
+
+  // Reproduce what CI actually checks out. On a `pull_request` event actions/checkout resolves
+  // `refs/pull/<n>/merge` — main ALREADY MERGED INTO the branch — and leaves it as a detached HEAD.
+  // Every case below used to run against the plain branch tip, which is why this suite passed while
+  // the gate was failing real PRs: the fixture never reproduced the shape that breaks it.
+  if (checkoutMergeRef) {
+    git(dir, ["merge", "-q", "--no-edit", "main"]);
+    const mergeRef = git(dir, ["rev-parse", "HEAD"]);
+    git(dir, ["checkout", "-q", "--detach", mergeRef]);
+  }
+  return { dir, base, head };
 }
 
-function runGate(dir, base) {
+function runGate(dir, base, headSha) {
   const r = spawnSync("node", [SCRIPT, "--base-sha", base], {
     cwd: dir,
     encoding: "utf8",
     // Scrubbed too: the gate under test shells out to git, so an inherited GIT_DIR would make it
     // grade the repo being pushed instead of the fixture and the arms would prove nothing.
-    env: { ...gitChildEnv(), GITHUB_BASE_SHA: base },
+    env: {
+      ...gitChildEnv(),
+      GITHUB_BASE_SHA: base,
+      // Mirrors the workflow, which passes github.event.pull_request.head.sha. Omitted when the
+      // case is deliberately proving the no-env fallback.
+      ...(headSha ? { GITHUB_HEAD_SHA: headSha } : {}),
+    },
   });
   return { code: r.status, out: `${r.stdout || ""}${r.stderr || ""}` };
 }
@@ -107,15 +141,46 @@ const CASES = [
     expect: 1,
     expectText: /verify-steps/,
   },
+  // ── The cases that reproduce CI, where HEAD is refs/pull/<n>/merge ───────────────────────────
+  // PR #3768 was a ONE-FILE docs change that shared nothing with main, and this gate failed it,
+  // naming all 7 files main had touched as files "this branch also changes". They came from the
+  // merge ref, not the branch. Because the gate is REQUIRED, that made every cleanly-mergeable PR
+  // red as soon as anything merged — the exact N^2 treadmill the overlap rule was written to kill —
+  // while CONFLICTING PRs stayed green, since GitHub cannot build a merge ref for them. Green on
+  // the broken ones, red on the clean ones.
+  {
+    name: "MERGE REF checkout, no overlap -> PASS (regression: #3768 was failed by main's own files)",
+    main: ["apps/backend/src/accounting/month-close.service.ts"],
+    branch: ["docs/trackers/LST-F24.md"],
+    mergeRef: true,
+    expect: 0,
+    expectText: /NO overlap/,
+  },
+  {
+    name: "MERGE REF checkout, SAME FILE changed -> FAIL (must still catch real staleness)",
+    main: ["apps/frontend/src/shared/Widget.tsx"],
+    branch: ["apps/frontend/src/shared/Widget.tsx"],
+    mergeRef: true,
+    expect: 1,
+    expectText: /this branch also changes/,
+  },
+  {
+    name: "MERGE REF checkout with NO head-sha env -> still not falsely red (fallback is fail-open)",
+    main: ["apps/backend/src/accounting/month-close.service.ts"],
+    branch: ["docs/trackers/LST-F24.md"],
+    mergeRef: true,
+    omitHeadSha: true,
+    expect: 0,
+  },
 ];
 
 let failures = 0;
 for (const c of CASES) {
-  const { dir, base } = buildRepo(c.main, c.branch);
+  const { dir, base, head } = buildRepo(c.main, c.branch, { checkoutMergeRef: c.mergeRef === true });
   try {
-    const { code, out } = runGate(dir, base);
+    const { code, out } = runGate(dir, base, c.omitHeadSha ? undefined : head);
     const okCode = code === c.expect;
-    const okText = c.expectText.test(out);
+    const okText = c.expectText ? c.expectText.test(out) : true;
     if (okCode && okText) {
       console.log(`  ok: ${c.name}`);
     } else {

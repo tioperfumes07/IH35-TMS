@@ -68,10 +68,31 @@ export function resolveBaseSha(cliArgs = process.argv.slice(2)) {
   }
 }
 
+/**
+ * The commit that represents THIS BRANCH'S OWN WORK.
+ *
+ * On a `pull_request` event `actions/checkout` checks out `refs/pull/<n>/merge` — the branch with
+ * main ALREADY MERGED IN — so bare `HEAD` in CI is not the branch, it is branch+main. Diffing from
+ * the merge base to that HEAD therefore reports every file main touched as a file "this branch also
+ * changes", which made the overlap test fire on branches that overlap nothing. See the merge-ref
+ * case in verify-branch-fresh-selftest.mjs.
+ */
+export function resolveHeadSha(cliArgs = process.argv.slice(2)) {
+  const cliHeadIdx = cliArgs.indexOf("--head-sha");
+  return (
+    (cliHeadIdx >= 0 ? cliArgs[cliHeadIdx + 1] : undefined) ??
+    process.env.BRANCH_FRESH_HEAD_SHA ??
+    process.env.GITHUB_HEAD_SHA ??
+    process.env.PR_HEAD_SHA ??
+    "HEAD"
+  );
+}
+
 export function verifyBranchFresh(cliArgs = process.argv.slice(2)) {
   const argMainRefIdx = cliArgs.indexOf("--main-ref");
   const argMaxIdx = cliArgs.indexOf("--max-commits");
   const baseSha = resolveBaseSha(cliArgs);
+  const headSha = resolveHeadSha(cliArgs);
   const mainRef = (argMainRefIdx >= 0 ? cliArgs[argMainRefIdx + 1] : undefined) ?? "origin/main";
   const maxBehind = Number(
     (argMaxIdx >= 0 ? cliArgs[argMaxIdx + 1] : undefined) ??
@@ -121,9 +142,16 @@ export function verifyBranchFresh(cliArgs = process.argv.slice(2)) {
     let branchFiles = [];
     let mergeBase = "";
     try {
-      mergeBase = runGit(["merge-base", baseSha, mainRef]);
+      // Anchor on merge-base(mainRef, headSha), NOT merge-base(baseSha, mainRef), so the two sides
+      // are symmetric three-dot diffs — the same thing GitHub shows as "files changed". This is what
+      // makes the gate correct in both directions:
+      //   • CI checks out the PR MERGE REF, so bare HEAD already contains main. Anchoring off the
+      //     resolved head sha keeps branchFiles to the branch's own work.
+      //   • A branch that has legitimately merged main is now FRESH: the merge base moves up to
+      //     main's tip, mainFiles goes empty, and it stops being punished for staying current.
+      mergeBase = runGit(["merge-base", mainRef, headSha]);
       mainFiles = runGit(["diff", "--name-only", `${mergeBase}..${mainRef}`]).split("\n").filter(Boolean);
-      branchFiles = runGit(["diff", "--name-only", `${mergeBase}..HEAD`]).split("\n").filter(Boolean);
+      branchFiles = runGit(["diff", "--name-only", `${mergeBase}..${headSha}`]).split("\n").filter(Boolean);
     } catch (error) {
       // If the comparison itself cannot be made, fall back to the strict rule rather than guessing.
       fail(
@@ -166,9 +194,9 @@ export function verifyBranchFresh(cliArgs = process.argv.slice(2)) {
     }
 
     console.log(
-      `verify:branch-fresh OK (base=${baseSha} behind=${behindCount} but NO overlap with ${mainRef}: ` +
-        `${mainFiles.length} file(s) moved on main, ${branchFiles.length} changed here, 0 shared, ` +
-        `no globally-allocated path touched by both) — rebase not required`
+      `verify:branch-fresh OK (base=${baseSha} head=${headSha} behind=${behindCount} but NO overlap ` +
+        `with ${mainRef}: ${mainFiles.length} file(s) moved on main, ${branchFiles.length} changed ` +
+        `here, 0 shared, no globally-allocated path touched by both) — rebase not required`
     );
     return { baseSha, behindCount, mainRef, maxBehind, overlapFree: true };
   }
