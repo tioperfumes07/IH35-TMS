@@ -1359,6 +1359,14 @@ export const COA_ROLE_VALUES = [
   "insurance_expense",
   // DISP-01 — Unbilled Revenue (TRANSP 1240 / USMCA 1150). No shape fallback.
   "unbilled_revenue",
+  // Held posting flags CoA (202610131200)
+  "prepaid_asset_default",
+  "amortization_expense_default",
+  "fixed_asset_default",
+  "accum_depr_default",
+  "depr_expense_default",
+  "factor_wire_fee",
+  "heavy_repair_expense",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

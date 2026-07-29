@@ -1,4 +1,4 @@
-/** FACT-01 — FACTORING_GL_POSTING_ENABLED overrides TRANSP-only. */
+/** FACT-01 — FACTORING_GL_POSTING_ENABLED arms for TRANSP + USMCA only; TRK forbidden. */
 export default {
   name: "verify-factoring-flag-scope",
   async run(ctx) {
