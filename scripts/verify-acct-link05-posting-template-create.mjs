@@ -1,6 +1,6 @@
+#!/usr/bin/env node
 // ACCT-LINK-05: validation error keys in PostingTemplateModal must NOT end in Id
 // (entity-link-adoption treats *Id JSX reads as naked IDs). Use debitAccount/creditAccount.
-#!/usr/bin/env node
 /**
  * ACCT-LINK-05 / ACCT-F08 — posting_templates create path + consumer stamp wiring (guard 1760).
  *
