@@ -31,6 +31,10 @@ jobs:
     timeout-minutes: 10
     env:
       GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      # checkout resolves refs/pull/<n>/merge on a pull_request event, so HEAD here is the branch
+      # with main ALREADY merged in. Without the real head sha the gate reads main's own files as
+      # this branch's changes and fails every cleanly-mergeable PR. See verify-branch-fresh.mjs.
+      GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
