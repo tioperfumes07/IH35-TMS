@@ -899,6 +899,32 @@ export function getFactoringAdvance(id: string, operatingCompanyId: string) {
   return apiRequest<FactoringAdvanceDetail>(withCompany(`/api/v1/accounting/factoring-advances/${id}`, operatingCompanyId));
 }
 
+/** Advance packet: header + invoices + reserve movements + interest accruals (JE ids when posted). */
+export type FactoringAdvancePacket = {
+  advance: Record<string, unknown>;
+  invoices: Array<Record<string, unknown>>;
+  reserve_movements: Array<{
+    id: string;
+    movement_type?: string;
+    amount_cents?: number;
+    movement_date?: string;
+    journal_entry_id?: string | null;
+    notes?: string | null;
+  }>;
+  interest_accruals: Array<{
+    id: string;
+    accrual_date?: string;
+    interest_cents?: number;
+    journal_entry_id?: string | null;
+  }>;
+};
+
+export function getFactoringAdvancePacket(id: string, operatingCompanyId: string) {
+  return apiRequest<FactoringAdvancePacket>(
+    withCompany(`/api/v1/accounting/factoring-advances/${id}/packet`, operatingCompanyId)
+  );
+}
+
 export function listFactoringReserveBalances(operatingCompanyId: string) {
   return apiRequest<{
     rows: FactorReserveBalance[];

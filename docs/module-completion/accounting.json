@@ -368,7 +368,7 @@
       ],
       "spec": "Law \u00a79 cross-module",
       "status": "UNVERIFIED",
-      "evidence": "Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural DoD guard scripts/verify-acct-surf-09-crosslinks.mjs (routes+More\u25be+EntityLink+canonical factoring_advances/escrow_*/driver_settlements). Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser cross-link economics + Neon density proof (Rule 23 \u2014 no structural PASS flip). LINK-02 detail_types FK FROZEN.",
+      "evidence": "Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural More▾ guard verify-acct-surf-09-crosslinks.mjs + reverse-drill guard verify-acct-surf-09-reverse-drill.mjs (1788): SettlementDetail→/accounting/escrow?holder_id=, EscrowPage AccountingSubNav+deep-link+Settlements/Factoring cross-links, FactoringDetail getFactoringAdvancePacket + JE EntityLinks on reserve/interest. Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser cross-link economics + Neon density proof (Rule 23 — no structural PASS flip). LINK-02 detail_types FK FROZEN.",
       "pr": null
     },
     {
