@@ -434,7 +434,45 @@ export function reactivateDriverTerminationReason(id: string) {
   });
 }
 
-export function listDispatchFlagColors(operatingCompanyId: string) {
+export function listDispatchFlagColors(operatingCompanyId: string, includeInactive = false) {
   const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeInactive) query.set("include_inactive", "true");
   return apiRequest<{ flags: DispatchFlagColor[] }>(`/api/v1/catalogs/dispatch-flag-colors?${query.toString()}`);
+}
+
+/**
+ * LST-F20b — write side of the dispatch flag-colour catalog.
+ *
+ * These call the EXISTING bespoke route module (`catalogs/dispatch-flag-colors.routes.ts`), which is
+ * already audited and RLS-scoped and stays the single writer. A generic-factory config at
+ * `/api/v1/catalogs/dispatch/dispatch-flag-colors` was considered and rejected: it would have been a
+ * SECOND writer over the same table with looser validation (the factory code regex admits hyphens,
+ * this route's `flag_code` does not), i.e. the split-brain that forced catalogs.vendor_types to carry
+ * a both-way sync trigger.
+ */
+export type DispatchFlagColorInput = {
+  operating_company_id: string;
+  flag_code: string;
+  display_name: string;
+  hex_color: string;
+  icon_emoji?: string;
+  severity_order?: number;
+  description?: string;
+  sort_order?: number;
+};
+
+export function createDispatchFlagColor(payload: DispatchFlagColorInput) {
+  return apiRequest<{ id: string }>("/api/v1/catalogs/dispatch-flag-colors", { method: "POST", body: payload });
+}
+
+export function updateDispatchFlagColor(id: string, payload: Partial<Omit<DispatchFlagColorInput, "operating_company_id" | "flag_code">>) {
+  return apiRequest<{ ok: true }>(`/api/v1/catalogs/dispatch-flag-colors/${id}`, { method: "PATCH", body: payload });
+}
+
+export function deactivateDispatchFlagColor(id: string) {
+  return apiRequest<{ ok: true }>(`/api/v1/catalogs/dispatch-flag-colors/${id}/deactivate`, { method: "POST" });
+}
+
+export function reactivateDispatchFlagColor(id: string) {
+  return apiRequest<{ ok: true }>(`/api/v1/catalogs/dispatch-flag-colors/${id}/reactivate`, { method: "POST" });
 }

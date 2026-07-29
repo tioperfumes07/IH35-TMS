@@ -39,6 +39,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Dispatch",
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
+      { name: "Dispatch Flag Colors", description: "Board flag colours and their severity order", live: true, catalogKey: "dispatch-flag-colors" },
       { name: "Load Trailer Equipment", description: "Trailer equipment required per load", live: true, catalogKey: "load-trailer-equipment" },
       { name: "Load Types", description: "Linehaul mode/type setup", live: true, catalogKey: "load-types" },
       { name: "Detention Reasons", description: "Detention billing reason catalog", live: true, catalogKey: "detention-reasons" },
