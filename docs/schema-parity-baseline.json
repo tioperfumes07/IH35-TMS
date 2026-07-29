@@ -2222,6 +2222,20 @@
       "updated_at",
       "updated_by_user_id"
     ],
+    "catalogs.customer_types": [
+      "code",
+      "created_at",
+      "created_by_user_id",
+      "deactivated_at",
+      "description",
+      "display_name",
+      "id",
+      "is_active",
+      "operating_company_id",
+      "sort_order",
+      "updated_at",
+      "updated_by_user_id"
+    ],
     "catalogs.detail_types": [
       "account_type_id",
       "code",
