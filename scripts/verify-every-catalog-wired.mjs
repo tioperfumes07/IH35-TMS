@@ -33,6 +33,15 @@ import { join } from "node:path";
 
 const ROOT = process.cwd();
 const INVENTORY = join(ROOT, "docs", "inventories", "catalog-inventory.json");
+/**
+ * The OWNER's wiring map (docs/inventories/catalog-wiring-map.csv) is the authority on which catalogs
+ * are excluded and why. It supersedes the inventory's classification where the two disagree — and they
+ * did, in both directions: the map excludes 6 template/system tables the inventory treated as wireable
+ * (chart_of_accounts_seeds, driver_leave_balances, equipment_line_item_templates, leave_policies,
+ * pay_rate_templates, work_order_templates), and marks 7 GLOBAL catalogs as WIRE that the inventory had
+ * written off as headless. Reading only the inventory therefore under-covered the global catalogs.
+ */
+const WIRING_MAP = join(ROOT, "docs", "inventories", "catalog-wiring-map.csv");
 const HUB = join(ROOT, "apps", "frontend", "src", "pages", "lists", "components", "AllCatalogsMap.tsx");
 const MANIFEST = join(ROOT, "apps", "frontend", "src", "routes", "manifest.tsx");
 const FE_REGISTRY = join(ROOT, "apps", "frontend", "src", "hooks", "useCatalogQuery.ts");
@@ -134,7 +143,17 @@ export function bespokeRouteTables(files) {
   for (const { path, src } of files) {
     if (!path.includes("/catalogs/")) continue;
     if (!/\bapp\.(get|post|put|patch|delete)\s*\(/.test(src)) continue;
-    for (const m of src.matchAll(/catalogs\.([a-z_][a-z0-9_]*)/g)) served.add(m[1]);
+    // The file must register a route whose PATH names this catalog. Referencing the table is not
+    // enough even inside catalogs/: stub-catalog-purge.routes.ts mentions many tables while serving
+    // none of them as an editable catalog, and it was making audit_event_types read as wired.
+    const registeredPaths = [...src.matchAll(/app\.(?:get|post|put|patch|delete)\s*\(\s*[`"']([^`"']+)/g)].map(
+      (m) => m[1]
+    );
+    for (const m of src.matchAll(/catalogs\.([a-z_][a-z0-9_]*)/g)) {
+      const table = m[1];
+      const kebab = table.replace(/_/g, "-");
+      if (registeredPaths.some((rp) => rp.includes(kebab) || rp.includes(table))) served.add(table);
+    }
   }
   return served;
 }
@@ -163,6 +182,18 @@ function main() {
   const inventory = JSON.parse(readFileSync(INVENTORY, "utf8"));
   const tables = inventory.tables ?? {};
   const tableNames = Object.keys(tables);
+
+  // Owner map: table -> status. EXCLUDE (system) and TEMPLATE (special) are the written-reason
+  // allowlist; everything else must be wired.
+  const mapStatus = new Map();
+  for (const line of readFileSync(WIRING_MAP, "utf8").split("\n").slice(1)) {
+    if (!line.trim()) continue;
+    const cells = line.split(",");
+    const table = cells[0]?.trim();
+    const status = cells[5]?.trim();
+    if (table && status) mapStatus.set(table, status);
+  }
+  const OWNER_EXCLUDED = new Set(["EXCLUDE (system)", "TEMPLATE (special)"]);
   if (tableNames.length === 0) {
     console.error("verify-every-catalog-wired FAIL — inventory lists 0 tables; refusing to report green");
     process.exit(1);
@@ -199,8 +230,18 @@ function main() {
       problems.unclassified.push(table);
       continue;
     }
-    if (EXCLUDED.has(cls)) continue;
-    if (!WIREABLE.has(cls)) {
+    // Owner map wins where it and the inventory disagree.
+    const owner = mapStatus.get(table);
+    if (owner && OWNER_EXCLUDED.has(owner)) continue;
+
+    // A table the owner marked WIRE is wireable even if the inventory called it headless — that is the
+    // 7 GLOBAL catalogs the inventory had written off. The ONE exception is a table the repo has since
+    // RETIRED by a merged migration (ifta_states, 202610090000): it must never regain an editable route,
+    // so the RETIRE classification still wins over the map.
+    const ownerSaysWire = Boolean(owner) && !OWNER_EXCLUDED.has(owner);
+    if (cls === "RETIRE") continue;
+    if (!ownerSaysWire && EXCLUDED.has(cls)) continue;
+    if (!ownerSaysWire && !WIREABLE.has(cls)) {
       problems.unclassified.push(`${table} (unknown classification "${cls}")`);
       continue;
     }
