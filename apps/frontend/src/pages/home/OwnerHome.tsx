@@ -8,6 +8,7 @@
  * All other roles continue to see the standard HomePage.
  */
 
+import { BackendVersionFooter } from "../../components/shared/BackendVersionFooter";
 import type { AuthMeResponse } from "../../types/api";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -523,9 +524,8 @@ export function OwnerHome({ auth }: Props) {
         <ComplianceFilingsDueWidget operatingCompanyId={selectedCompanyId ?? null} />
       </div>
 
-      <footer className="order-8 text-xs text-gray-500">
-        Backend version: {import.meta.env.VITE_BUILD_COMMIT ? String(import.meta.env.VITE_BUILD_COMMIT) : "not available"}
-      </footer>
+      <BackendVersionFooter className="order-8 text-xs text-gray-500" />
+
     </div>
   );
 }
