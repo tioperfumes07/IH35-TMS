@@ -20,7 +20,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
   {
     "id": "accounting",
     "total": 31,
-    "done": 25,
+    "done": 26,
     "items": [
       {
         "id": "ACCT-ECON-01",
@@ -151,8 +151,8 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
       {
         "id": "ACCT-SURF-07",
         "title": "Account Register + All Transactions reverse to money docs",
-        "status": "UNVERIFIED",
-        "pr": ""
+        "status": "PASS",
+        "pr": "#PENDING"
       },
       {
         "id": "ACCT-SURF-08",

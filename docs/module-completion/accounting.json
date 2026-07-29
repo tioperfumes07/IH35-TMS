@@ -340,9 +340,10 @@
         "VERIFY-4"
       ],
       "spec": "Law \u00a79 reverse",
-      "status": "UNVERIFIED",
-      "evidence": "Routes mounted (account-register + transactions); sourceRoute + detail_path reverse drill guarded (verify-acct-surf-07-register step 1462); Desktop SURF DoD UNVERIFIED browser TRANSP+USMCA click-through.",
-      "pr": null
+      "status": "PASS",
+      "evidence": "Structural guard verify-acct-surf-07-register.mjs (step 1462) PASS on main. LIVE browser 2026-07-29 app.ih35dispatch.com: TRANSP All Transactions 10,477 live rows, Open-source-record on a bill row drilled to /accounting/bills/0ccecb8c-... (real bill detail, not a list redisplay); USMCA All Transactions 143 live rows, drill-through to /accounting/bills/996907d6-... . USMCA Account Register (Accounts Payable A/P #2000) showed 2 live rows (07/22 + 07/29/2026) and the SAME row-click drilled to the identical bill detail page \u2014 reverse drill proven on Account Register itself, not just All Transactions. TRANSP Account Register rendered chrome (heading+columns+selector) without crash for accounts genuinely empty in-window (sparse ledger OK, SURF-03 pattern). ACCT-F51 (this PR): found + fixed a real crash \u2014 fn_account_balances_as_of's HAVING clause excludes any account whose opening+closing balance are both exactly $0 (e.g. TRANSP \"Income Accounts\" 1\u00a2 debit + 1\u00a2 credit wash on 2026-05-19, Neon lucia-confirmed), and getAccountRegister threw account_not_found on that exclusion \u2192 404 \u2192 browser-reproduced \"Couldn't load the register\". Fixed with a metadata-only fallback (no new GL math, canonical fn still reused) + 2 new unit tests + guard verify-acct-f51-account-register-zero-net (step 1750). Guards 1462+1750 both PASS.",
+      "pr": "#PENDING",
+      "live_proof": "2026-07-29 browser TRANSP+USMCA All Transactions live rows + drill-through; USMCA Account Register live rows + drill-through; zero-net crash (ACCT-F51) reproduced + fixed same PR"
     },
     {
       "id": "ACCT-SURF-08",
@@ -460,7 +461,7 @@
       "live_proof": "2026-07-28 browser TRANSP: accounting + bills + expenses non-blank; guard 1650 PASS"
     }
   ],
-  "pass_count": 25,
+  "pass_count": 26,
   "total_count": 31,
-  "progress": "25 of 31"
+  "progress": "26 of 31"
 }

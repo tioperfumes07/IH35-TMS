@@ -147,11 +147,37 @@ export async function getAccountRegister(
        FROM accounting.fn_account_balances_as_of($1::uuid, $2::date, $3::date)`,
     [input.operating_company_id, input.to_date, input.from_date]
   );
-  const acct = balRes.rows.find((r) => r.account_id === input.account_id);
-  if (!acct) throw new Error("account_not_found");
+  let acct = balRes.rows.find((r) => r.account_id === input.account_id);
+  // ACCT-F51: fn_account_balances_as_of's HAVING clause (by design, for balance-sheet-style listings)
+  // excludes any account whose opening AND closing balance are both exactly $0 for this window — e.g. a
+  // wash entry (equal offsetting debit+credit), or a real account with no activity yet. That exclusion is
+  // an honest EMPTY register, not a missing account, and must not 404/crash the page (ACCT-R-44 precedent:
+  // an accounting surface never unmounts to a blank/error page on a well-formed-but-sparse response). Fall
+  // back to a direct metadata lookup ONLY to confirm the account itself exists in this company's chart —
+  // the balance is already known to be zero by construction of the exclusion, so this is not new GL math.
+  if (!acct) {
+    const metaRes = await client.query<{
+      account_id: string;
+      account_code: string;
+      account_name: string;
+      account_type: string;
+    }>(
+      `SELECT id::text AS account_id, COALESCE(account_number, '') AS account_code, account_name, account_type
+         FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [input.account_id, input.operating_company_id]
+    );
+    const meta = metaRes.rows[0];
+    if (!meta) throw new Error("account_not_found");
+    const inferredNormal: NormalBalance = ["Asset", "CostOfGoodsSold", "Expense", "OtherExpense"].includes(
+      meta.account_type
+    )
+      ? "debit"
+      : "credit";
+    acct = { ...meta, normal_balance: inferredNormal, opening_balance_cents: 0 };
+  }
   const normal: NormalBalance = acct.normal_balance === "debit" ? "debit" : "credit";
   const openingRaw = acct.opening_balance_cents != null ? Number(acct.opening_balance_cents) : 0;
-  const openingNatural = normal === "credit" ? -openingRaw : openingRaw;
+  const openingNatural = (normal === "credit" ? -openingRaw : openingRaw) || 0; // avoid -0 on a zero balance
 
   const params: unknown[] = [input.operating_company_id, input.account_id, input.from_date, input.to_date];
   let where = `p.operating_company_id = $1::uuid AND p.account_id = $2::uuid

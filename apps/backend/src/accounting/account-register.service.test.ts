@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildRegisterRows, type RawPosting } from "./account-register.service.js";
+import { buildRegisterRows, getAccountRegister, type RawPosting } from "./account-register.service.js";
 
 function posting(over: Partial<RawPosting>): RawPosting {
   return {
@@ -78,6 +78,64 @@ describe("account register — running-balance math", () => {
     expect(rows[0].payee).toBe("Love's Travel Stop");
     expect(rows[0].split_account).toBe("-Split-");
     expect(rows[0].class_name).toBe("TRK-101");
+  });
+});
+
+// ACCT-F51: fn_account_balances_as_of excludes accounts whose opening AND closing balance are both
+// exactly $0 (e.g. a wash entry — equal offsetting debit + credit to the same account). Before the fix,
+// getAccountRegister threw "account_not_found" for any such REAL, existing, non-deactivated account —
+// crashing the page (404 → "Couldn't load the register") instead of rendering an honest empty register.
+// Reproduced live 2026-07-29 on prod: TRANSP "Income Accounts" (acct QBO-1150040073) has a 1-cent debit +
+// 1-cent credit on 2026-05-19 that net to $0, and 404'd the account-register endpoint.
+describe("account register — zero-net (wash) account does not crash", () => {
+  function mockClient(opts: { hasMeta: boolean }) {
+    const calls: string[] = [];
+    return {
+      calls,
+      query: async (sql: string) => {
+        calls.push(sql);
+        if (sql.includes("fn_account_balances_as_of")) {
+          return { rows: [] }; // excluded by the HAVING clause — opening AND closing are both $0
+        }
+        if (sql.includes("FROM catalogs.accounts")) {
+          return {
+            rows: opts.hasMeta
+              ? [{ account_id: "acct-1", account_code: "QBO-1150040073", account_name: "Income Accounts", account_type: "Income" }]
+              : [],
+          };
+        }
+        // postings query
+        return { rows: [] };
+      },
+    };
+  }
+
+  it("renders an honest $0 / 0-row register instead of throwing account_not_found", async () => {
+    const client = mockClient({ hasMeta: true });
+    const report = await getAccountRegister(client, {
+      operating_company_id: "co-1",
+      account_id: "acct-1",
+      from_date: "2026-01-01",
+      to_date: "2026-12-31",
+    });
+    expect(report.account.account_name).toBe("Income Accounts");
+    expect(report.account.normal_balance).toBe("credit"); // Income → credit-normal
+    expect(report.opening_balance_cents).toBe(0);
+    expect(report.closing_balance_cents).toBe(0);
+    expect(report.rows).toEqual([]);
+    expect(client.calls.some((s) => s.includes("fn_account_balances_as_of"))).toBe(true); // still reused first
+  });
+
+  it("still throws account_not_found for a genuinely unknown / cross-entity account_id", async () => {
+    const client = mockClient({ hasMeta: false });
+    await expect(
+      getAccountRegister(client, {
+        operating_company_id: "co-1",
+        account_id: "does-not-exist",
+        from_date: "2026-01-01",
+        to_date: "2026-12-31",
+      })
+    ).rejects.toThrow("account_not_found");
   });
 });
 

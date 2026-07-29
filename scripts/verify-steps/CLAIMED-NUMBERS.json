@@ -1117,6 +1117,11 @@
     "1740": "1740-verify-held-posting-flags-enable.mjs",
     "1742": "1742-verify-fixed-asset-autopost-trk-enable.mjs",
     "1744": "1744-verify-qbo-vendor-credits-mirror.mjs",
+    "1746": "1746-verify-held-posting-flag-entity-scope.mjs",
+    "1747": "1747-verify-acct-surf-02-expenses.mjs",
+    "1748": "1748-verify-acct-surf-04-receive-payment.mjs",
+    "1749": "1749-verify-acct-r03-merge-records-density.mjs",
+    "1750": "1750-verify-acct-f51-account-register-zero-net.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
@@ -1125,17 +1130,13 @@
     "06": "06-verify-scheduler-tenant-context.mjs",
     "07": "07-verify-canonical-schema-names.mjs",
     "08": "08-verify-outbox-handler-parity.mjs",
-    "09": "09-verify-migration-application-consistency.mjs",
-    "1746": "1746-verify-held-posting-flag-entity-scope.mjs",
-    "1747": "1747-verify-acct-surf-02-expenses.mjs",
-    "1748": "1748-verify-acct-surf-04-receive-payment.mjs",
-    "1749": "1749-verify-acct-r03-merge-records-density.mjs"
+    "09": "09-verify-migration-application-consistency.mjs"
   },
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "_how_to_claim": "Pick the next free number in your band, add \"<number>\": \"<filename>\", commit it WITH the guard.",
-  "generated_at": "2026-07-29T11:52:05Z",
-  "total_claimed": 837,
+  "generated_at": "2026-07-29T12:51:14.487Z",
+  "total_claimed": 838,
   "known_duplicates_frozen": {
     "15": [
       "15-verify-accounting-autoload-coverage.mjs",
