@@ -5,7 +5,7 @@
 // This is NOT a posting check (that guard is scripts/verify-bank-feed-gl-posting.mjs, unchanged).
 // This proves the categorize->match->post CHAIN stays internally consistent on LIVE rows, which is
 // the precondition for any live balance tie-out to mean anything:
-//   1. every review_state='categorized' row has a resolved GL account (categorize really happened)
+//   1. every status='categorized' row has a resolved GL account (categorize really happened)
 //   2. every review_state='matched' row references something real (match really happened)
 //   3. no row is double-claimed by a bill-side match AND a bank-feed-GL post (CHAIN-05's own
 //      dedupe contract, verified against live rows -- not just against service code)
@@ -47,18 +47,26 @@ async function main() {
     return;
   }
 
-  // 1. categorized rows must have a resolved account.
+  // 1. Categorization is a workflow status, not a review_state. CHAIN-05 changes a successfully
+  // posted row's review_state to 'matched' while retaining status='categorized', so filtering on
+  // review_state categorized (non-terminal) would silently omit every posted categorization from this tie-out.
+  // Keep the operational state predicate aligned with categorization.routes.ts.
+  // Transfer / match-only categorizations (obligation-reconcile + transfer match) set
+  // status='categorized' without a GL account — account is required for expense/income
+  // categorize paths that feed BANK_FEED_GL posting, not for pure transfers.
   const uncategorized = await client.query(`
     SELECT count(*)::int AS n
     FROM banking.bank_transactions
-    WHERE review_state = 'categorized'
+    WHERE status = 'categorized'
+      AND COALESCE(category_kind, '') IS DISTINCT FROM 'transfer'
+      AND matched_transfer_id IS NULL
       AND coa_account_id IS NULL
       AND categorization_gl_account_id IS NULL
   `);
   const uncategorizedCount = Number(uncategorized.rows[0]?.n ?? 0);
   if (uncategorizedCount > 0) {
     fail(
-      `${uncategorizedCount} row(s) have review_state='categorized' but NEITHER coa_account_id NOR ` +
+      `${uncategorizedCount} row(s) have status='categorized' but NEITHER coa_account_id NOR ` +
         `categorization_gl_account_id is set -- the categorize step is a label with no actual account behind it.`
     );
   }
