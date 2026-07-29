@@ -1071,7 +1071,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
   {
     "id": "lists",
     "total": 23,
-    "done": 19,
+    "done": 20,
     "items": [
       {
         "id": "LST-CAT-01",
@@ -1190,8 +1190,8 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
       {
         "id": "LST-ORPH-02",
         "title": "Held-migration registry reports applied state truthfully",
-        "status": "FAIL",
-        "pr": "3494"
+        "status": "PASS",
+        "pr": "#3515"
       },
       {
         "id": "LST-ORPH-03",
