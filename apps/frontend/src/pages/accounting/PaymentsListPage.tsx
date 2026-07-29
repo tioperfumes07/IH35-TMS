@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listPayments, type Payment, type PaymentMethod } from "../../api/accounting";
 import { Button } from "../../components/Button";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -112,7 +113,15 @@ export function PaymentsListPage() {
         sortable: true,
         render: (row) => <span className={row.voided_at ? "text-gray-500 line-through" : "text-gray-900"}>{row.display_id}</span>,
       },
-      { key: "customer_name", label: "Customer", sortable: true },
+      {
+        key: "customer_name",
+        label: "Customer",
+        sortable: true,
+        sortValue: (row) => row.customer_name ?? "",
+        render: (row) => (
+          <EntityLink kind="customer" id={row.customer_id} label={row.customer_name ?? row.customer_id?.slice(0, 8)} />
+        ),
+      },
       { key: "payment_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.payment_date) },
       { key: "payment_method", label: "Method", sortable: true },
       {

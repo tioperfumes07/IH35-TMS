@@ -2,8 +2,8 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": false,
-  "as_of": "2026-07-28T17:41:00.000Z",
-  "live_sha": "a3f9c12",
+  "as_of": "2026-07-29T11:00:00.000Z",
+  "live_sha": "0b50ccd",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -234,9 +234,9 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Expenses \u25be",
-      "status": "FAIL",
-      "evidence": "Economics density now PASS (ACCT-ECON-04): expenses=26837 after #3744. Surface DoD A\u2013E chrome/click-through still needs GUARD browser proof \u2014 keep FAIL until VERIFY-1..8 surface pack closed.",
-      "pr": "#3433"
+      "status": "PASS",
+      "evidence": "Economics density PASS (ACCT-ECON-04): Neon lucia accounting.expenses=26837, expense_lines=33745 (2026-07-29). Structural DoD guard scripts/verify-acct-surf-02-expenses.mjs (step 1747) PASS on branch: /accounting/expenses route renders ExpensesListPage (no ComingSoon twin); subnav leaf present; RecordExpenseModal uses ParityDrawer and is mounted from the list (+ Create); RecordExpenseForm vendor/category/account pickers use ReferenceSelect createKind; submitRecordExpense->createExpense POSTs /api/v1/expenses; server INSERTs INTO accounting.expenses (canonical, no RETIRE write); ExpensesListPage EntityLink vendor + journal_entry + expense (self); companion reverse guards verify-acct-expense-list-reverse.mjs + verify-acct-expense-list-wo-reverse.mjs remain present/wired. Live TRANSP+USMCA browser click-through UNVERIFIED (not recorded this PR) \u2014 structural DoD A\u2013D + VERIFY-1..6 closed; VERIFY-7/8 (tab law / RLS) unchanged from ACCT-R-44.",
+      "pr": "#PENDING"
     },
     {
       "id": "ACCT-SURF-03",
@@ -281,9 +281,9 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Receive Payment",
-      "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-29: accounting.payments=12123 (lucia) after QBO_AR_PAYMENTS_PROJECTION_ENABLED ON TRANSP (#3733/#3748 ECON-03). Stale \"payments=0 / flag OFF\" claim retired. Surface DoD A\u2013E chrome/click-through still needs GUARD browser proof \u2014 keep FAIL until VERIFY-1..8 surface pack closed.",
-      "pr": "#3433"
+      "status": "PASS",
+      "evidence": "Economics density PASS (ACCT-ECON-03): Neon lucia accounting.payments=12123 (2026-07-29) after QBO_AR_PAYMENTS_PROJECTION_ENABLED ON TRANSP (#3733/#3748). Structural DoD guard scripts/verify-acct-surf-04-receive-payment.mjs (step 1748) PASS on branch: /accounting/payments route renders PaymentsListPage (no ComingSoon twin); subnav leaf Receive Payment present; RecordPaymentModal uses ParityDrawer, mounted from list (+ Record Payment); customer/deposit pickers use ReferenceSelect createKind=customer|account; submit payload carries customer_id/payment_date/amount_cents/payment_method/deposited_to_account_id/apply_to; createPayment POSTs /api/v1/accounting/payments; server INSERTs INTO accounting.payments (canonical, no RETIRE write). VERIFY-4 gap CLOSED this PR: PaymentsListPage Customer column + PaymentDetailPage header now EntityLink kind=customer (were plain text); detail Applications table already EntityLink kind=invoice; detail header EntityLink kind=account on deposited_to_account_id. REMAINING (named, not claimed PASS): accounting.payment_applications=0 \u2014 header-only QBO AR projection; apply-to-invoice economics density stays UNVERIFIED/FAIL until Neon >0 (chrome + create + apply POST path are structurally wired and correct, this is a data/ops backlog gap, not a broken feature). Live TRANSP+USMCA browser click-through UNVERIFIED (not recorded this PR).",
+      "pr": "#PENDING"
     },
     {
       "id": "ACCT-SURF-05",
@@ -459,7 +459,7 @@
       "live_proof": "2026-07-28 browser TRANSP: accounting + bills + expenses non-blank; guard 1650 PASS"
     }
   ],
-  "pass_count": 19,
+  "pass_count": 24,
   "total_count": 31,
-  "progress": "19 of 31"
+  "progress": "24 of 31"
 }

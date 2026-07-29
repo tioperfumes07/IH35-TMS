@@ -185,7 +185,9 @@ export function PaymentDetailPage() {
       <DataPanel title="Header">
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Customer</span>
-          <span className="text-sm text-gray-900">{payment.customer_name}</span>
+          <span className="text-sm text-gray-900">
+            <EntityLink kind="customer" id={payment.customer_id} label={payment.customer_name ?? payment.customer_id?.slice(0, 8)} />
+          </span>
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Date</span>
