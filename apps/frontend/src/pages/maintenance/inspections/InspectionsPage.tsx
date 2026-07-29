@@ -1,3 +1,4 @@
+import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
 import { useMemo, useState } from "react";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { DatePicker } from "../../../components/forms/DatePicker";
@@ -210,7 +211,7 @@ export function InspectionsPage() {
       { key: "inspection_type", label: "Type", sortable: true, render: (row) => row.inspection_type_label ?? row.inspection_type },
       { key: "unit_number", label: "Unit", sortable: true, render: (row) => <EntityLink kind="unit" id={row.unit_id ?? undefined} label={String(row.unit_number ?? row.unit_id ?? "—")} /> },
       { key: "inspector_name", label: "Inspector", sortable: true, render: (row) => String(row.inspector_name ?? "—") },
-      { key: "outcome", label: "Outcome", sortable: true, render: (row) => String(row.outcome ?? row.status ?? "—") },
+      { key: "outcome", label: "Outcome", sortable: true, render: (row) => humanizeEnumLabel(row.outcome ?? row.status ?? "—") },
       { key: "dvir_submission_id", label: "DVIR", render: (row) => (row.dvir_submission_id ? "Linked" : "—") },
       { key: "photo_count", label: "Photos", render: (row) => String(row.photo_count ?? 0) },
       {

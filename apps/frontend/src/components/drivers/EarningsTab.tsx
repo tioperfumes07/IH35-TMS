@@ -1,3 +1,4 @@
+import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
@@ -126,7 +127,7 @@ const LIABILITY_COLUMNS: Array<ParityColumn<LiabilityRow>> = [
     key: "status",
     label: "Status",
     sortable: true,
-    render: (row) => String(row.display_status ?? row.status ?? "active"),
+    render: (row) => humanizeEnumLabel(row.display_status ?? row.status ?? "active"),
   },
 ];
 
