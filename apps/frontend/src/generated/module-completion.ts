@@ -20,7 +20,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
   {
     "id": "accounting",
     "total": 31,
-    "done": 24,
+    "done": 25,
     "items": [
       {
         "id": "ACCT-ECON-01",
@@ -145,8 +145,8 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
       {
         "id": "ACCT-R-03",
         "title": "Chart of Accounts merge is a real merge (repoint + merge record), not deactivate-only",
-        "status": "FAIL",
-        "pr": "ACCT-R-03 HOLD"
+        "status": "PASS",
+        "pr": "#pending-r03"
       },
       {
         "id": "ACCT-SURF-07",
