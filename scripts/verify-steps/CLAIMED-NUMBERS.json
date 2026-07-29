@@ -1138,6 +1138,7 @@
     "1760": "1760-verify-acct-link05-posting-template-create.mjs",
     "1762": "1762-verify-acct-link06-rules-call-poster.mjs",
     "1764": "1764-verify-acct-surf08-live-dod.mjs",
+    "1765": "1765-verify-carrier-attribution-inactive-rule-blocks.mjs",
     "1768": "1768-verify-bank-f10-overage-queue-ui.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
