@@ -1,13 +1,16 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { gitChildEnv } from "../../../trusted-git-environment.mjs";
 
 export function runGitOrThrow(args, options = {}) {
   const cwd = options.cwd;
   const result = spawnSync("git", args, {
     cwd,
     encoding: "utf8",
-    env: { ...process.env, ...(options.env ?? {}) },
+    // gitChildEnv, not process.env: when the suite runs under a git hook, an inherited GIT_DIR beats
+    // `cwd:` and these fixture `config` / `add` / `commit` calls land on the real repo.
+    env: { ...gitChildEnv(), ...(options.env ?? {}) },
   });
   if ((result.status ?? 1) !== 0) {
     throw new Error(`${result.stdout ?? ""}${result.stderr ?? ""}`.trim() || `git ${args.join(" ")} failed`);

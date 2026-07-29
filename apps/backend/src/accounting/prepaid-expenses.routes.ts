@@ -272,7 +272,13 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
         [pp.data.id]
       );
 
-      const postEnabled = await isEnabled(client, PREPAID_POST_FLAG);
+      // Entity-scoped: PREPAID_EXPENSES_POST_ENABLED is a per-entity override (ACCT-F43 arms TRK and
+      // USMCA). Resolving it without the company would report posting_enabled=false on an entity
+      // where the create path posts for real — a preview that contradicts what the button does.
+      const postEnabled = await isEnabled(client, PREPAID_POST_FLAG, {
+        operating_company_id: qp.data.operating_company_id,
+        user_uuid: String(user.uuid),
+      });
       const totalCents = Number(a.total_s);
       const periodCents = Number(a.period_s);
 

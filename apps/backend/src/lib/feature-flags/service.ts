@@ -109,6 +109,17 @@ export const POSTING_FLAG_KEYS: ReadonlySet<string> = new Set([
   // 202606141200 / 202606300040) — NO new GL math, this is classification only.
   "VOID_ENFORCEMENT_ENABLED",
   "WO_VOID_ENABLED",
+  // The three held posting flags. 202610161200 (#3746) arms prepaid + FH-3 loan payment for TRK and
+  // USMCA; depreciation autopost stays OFF pending the accumulated-depreciation control decision.
+  // Each gates a REAL balanced JE, but none of the keys matches an isPostingFlag() pattern —
+  // `_POST_ENABLED` and `_AUTOPOST_ENABLED` both miss `_POSTING_ENABLED$` — so unenrolled they fall
+  // through to global default_enabled/rollout_pct and one global flip would arm GL posting for
+  // EVERY entity, including the ones the owner excluded
+  // (TRANSP leases its equipment; booking depreciation there is wrong books, not a preference).
+  // Enrolment makes enable possible ONLY through an explicit per-entity override. Default OFF.
+  "PREPAID_EXPENSES_POST_ENABLED",
+  "FINANCE_HUB_AMORTIZATION_POST_ENABLED",
+  "FIXED_ASSET_AUTOPOST_ENABLED",
 ]);
 
 export function isPostingFlag(flagKey: string): boolean {
