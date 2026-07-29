@@ -821,9 +821,10 @@
         "DOD-C"
       ],
       "spec": "VERIFY-2 clause 5 \u2014 writes the canonical table the picker reads",
-      "status": "FAIL",
-      "evidence": "VERIFIED FAIL 2026-07-25 \u2014 and it is a LIVE 500, not just a wrong table. (a) GET /api/v1/accounting/categories still reads FROM mdata.qbo_accounts (items.routes.ts:60) \u2014 the QBO mirror \u2014 while the in-file LST-PICKER-02 comment at :36-41 claims it reads canonical catalogs.items. Write and read disagree. (b) items-for-wo WAS repointed to catalogs.items (:102) but kept the mirror's predicate: filters includes \"active = true\" (:85). I verified catalogs.items has NO `active` column \u2014 0010_catalogs_init.sql defines deactivated_at, and none of 0376/202606300080/202606300100/202606300110 adds one. That query raises 42703 (undefined_column), so the picker 500s on prod today. Guard 1445 does not list accounting/items.routes.ts at all; guard 1433 asserts only the FROM clause, so it green-lights a query that cannot execute.",
-      "pr": 3442,
+      "status": "PASS",
+      "evidence": "CLOSED 2026-07-29: code on main already reads catalogs.accounts for GET /api/v1/accounting/categories and catalogs.items + deactivated_at for items-for-wo (no active=true). Companions verify-categories-read-canonical-ledger (1691) + verify-item-picker-canonical-table (1433) + verify-expense-category-picker-canonical (1445) PASS. LIVE Neon lucia TRANSP: postable expense accounts=57; catalogs.items deactivated_at IS NULL=162; information_schema confirms no catalogs.items.active column. Guard verify-lst-picker02-write-equals-read (step 1770).",
+      "pr": null,
+      "live_proof": "2026-07-29 Neon lucia TRANSP accounts_postable_expense=57 items_active=162 items.active column absent",
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
