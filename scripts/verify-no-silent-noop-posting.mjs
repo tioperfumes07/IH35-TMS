@@ -29,6 +29,7 @@ const POSTING_FILES = [
   "apps/backend/src/accounting/property-tax-posting/poster.service.ts",
   "apps/backend/src/accounting/lease-asc842/lease-posting.service.ts",
   "apps/backend/src/accounting/amortization-posting/amortization-posting.service.ts",
+  "apps/backend/src/accounting/finance-hub-amortization-posting/loan-payment-posting.service.ts",
   "apps/backend/src/accounting/maintenance-posting/poster.service.ts",
   "apps/backend/src/accounting/factoring-posting/poster.service.ts",
   "apps/backend/src/accounting/factoring-posting/default-interest.service.ts",
