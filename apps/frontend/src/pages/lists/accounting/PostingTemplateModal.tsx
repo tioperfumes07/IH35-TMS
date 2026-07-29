@@ -118,10 +118,10 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
     const next: Record<string, string> = {};
     if (!form.code.trim()) next.code = "Template code is required.";
     if (!form.displayName.trim()) next.displayName = "Display name is required.";
-    if (!form.debitAccountId) next.debitAccountId = "Debit account is required.";
-    if (!form.creditAccountId) next.creditAccountId = "Credit account is required.";
+    if (!form.debitAccountId) next.debitAccount = "Debit account is required.";
+    if (!form.creditAccountId) next.creditAccount = "Credit account is required.";
     if (form.debitAccountId && form.creditAccountId && form.debitAccountId === form.creditAccountId) {
-      next.creditAccountId = "Debit and credit accounts must differ.";
+      next.creditAccount = "Debit and credit accounts must differ.";
     }
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -227,7 +227,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
               placeholder="Select debit account…"
             />
           </div>
-          {errors.debitAccountId ? <div className="mt-1 text-[11px] text-red-700">{errors.debitAccountId}</div> : null}
+          {errors.debitAccount ? <div className="mt-1 text-[11px] text-red-700">{errors.debitAccount}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
@@ -242,7 +242,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
               placeholder="Select credit account…"
             />
           </div>
-          {errors.creditAccountId ? <div className="mt-1 text-[11px] text-red-700">{errors.creditAccountId}</div> : null}
+          {errors.creditAccount ? <div className="mt-1 text-[11px] text-red-700">{errors.creditAccount}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
