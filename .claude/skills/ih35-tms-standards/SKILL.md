@@ -30,8 +30,14 @@ Everything is verified against live evidence — no guessing, ever.
 - Merge to `main` = ship to prod; no second gate; green CI ≠ approval.
 - **Self-merge OK:** pure frontend/docs/CI-action bumps + non-financial backend touching none of the financial
   cluster / migrations / `accounting.*` / `catalogs.*` / `mdata.*`.
-- **STOP + owner `JORGE-APPROVED`:** any financial change / financial cluster / DB migration / schema / touch to
-  `accounting.*`·`catalogs.*`·`mdata.*` / runtime dep bump. **Financial cluster NEVER self-merge.**
+- **Financial cluster / migration / schema / `accounting.*`·`catalogs.*`·`mdata.*` / runtime dep bump: BUILD it,
+  never merge it yourself — Devin merges on green** (owner ruling 2026-07-29). **The `JORGE-APPROVED` label is
+  NOT a merge gate** (owner 2026-07-26 + 2026-07-29; `verify-hold-merge-gate.mjs` has treated it as optional
+  since 07-26). The owner does not review PRs — asking for the label at merge time is itself a violation, and a
+  gate nobody operates is a control deficiency, not a control. The controls that DO operate: builder≠merger,
+  independent reviewer≠builder (Rule 11), `ih35_app` cannot run DDL (owner applies on Neon), posting flags
+  default OFF per entity, 18-key evidence block (CI 1324/1430/1431). **Owner questions are settled BEFORE
+  implementation, never at merge** (`PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26`).
 - **Financial cluster** = `accounting.*` OR `catalogs.accounts`, any `db/migrations/*.sql`, posting/GL/ledger/
   balances/periods/reconcile-commit/reclassify-apply/role-GRANT/opening-balances. Branch → typecheck + run
   migration locally on a THROWAWAY PG → show diff + full SQL → WAIT for OK → merge. Reuse the poster; no new GL math.

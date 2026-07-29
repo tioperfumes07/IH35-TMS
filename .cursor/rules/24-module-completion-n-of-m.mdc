@@ -43,7 +43,8 @@ ITEMS_TOUCHED: ACCT-… | BANK-…
 1. Every checklist item → `PASS` with LIVE Neon (`bypass_rls=lucia`) + DoD A–E + VERIFY 1–8 evidence in the item, **or** owner-written HOLD with tracker + future block id.
 2. Set `complete: true` in the JSON; regenerate `.md`.
 3. Desktop module audit (`~/Desktop/IH35-CURSOR-AUDIT/modules/<module>.md`) agrees — no ranked FAIL open for that module’s money leaves.
-4. Claude coder merge only after `JORGE-APPROVED` on financial.
+4. Builders (Cursor, Claude) never merge their own financial work — **Devin merges on green**. The
+   `JORGE-APPROVED` label is not a merge gate (owner rulings 2026-07-26, 2026-07-29).
 
 ## Session header (Rule 20 companion)
 

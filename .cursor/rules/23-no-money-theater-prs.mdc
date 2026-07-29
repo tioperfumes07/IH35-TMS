@@ -40,7 +40,8 @@ Commit + PR body MUST include (git fails otherwise — verify-step 1430):
 
 ## Owner merge law (Claude coder)
 
-Refuse merge of theater. Require `JORGE-APPROVED` on financial. Cursor builds; Claude merges. Volume ≠ Done.
+Refuse merge of theater. **Cursor and Claude build; Devin merges on green** (owner ruling 2026-07-29). The
+`JORGE-APPROVED` label is **not** a merge gate — see `13-financial-and-accounting-law`. Volume ≠ Done.
 
 ## CI teeth (mechanical — not memory)
 
