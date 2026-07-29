@@ -39,7 +39,12 @@ const EXCLUDED_TABLE_SUFFIXES = [
 // by POST /api/v1/catalogs/accounts/:id/merge — not a Lists/Excel generic CRUD catalog (no upload/export,
 // REVOKE UPDATE/DELETE). Grandfathered until a read-only audit route is spec'd; factory registration would
 // falsely imply editable catalog chrome.
-const KNOWN_STUB_TABLES = ["account_merge_records", "payee_tax_profile", "tax_form_thresholds", "vendor_types"];
+// vendor_types REMOVED from this list by LST-WIRE-04: it is no longer a stub. It now has a factory
+// config, a frontend registry entry, a Lists hub tile and an inline "+ Add new vendor type" creator,
+// after an additive migration gave it the canonical code/display_name/sort_order shape. It was
+// grandfathered here while the vendor-type picker was a frozen TypeScript union and the catalog — 8
+// rows per entity, FORCE RLS — was read by nothing.
+const KNOWN_STUB_TABLES = ["account_merge_records", "payee_tax_profile", "tax_form_thresholds"];
 
 function fail(message) {
   console.error(`verify:catalog-factory-coverage FAIL: ${message}`);

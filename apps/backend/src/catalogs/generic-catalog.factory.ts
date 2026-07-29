@@ -26,6 +26,21 @@ export type GenericCatalogConfig = {
   softDeleteColumn: string;
   codeRegex?: RegExp;
   readOnly?: boolean;
+  /**
+   * Physical column that holds the catalog's CODE, when it is not literally `code`.
+   * catalogs.labor_rates uses rate_code; catalogs.maintenance_part_locations uses location_code.
+   */
+  codeColumn?: string;
+  /**
+   * Physical column that holds the catalog's DISPLAY NAME, when it is neither `display_name` nor
+   * `name` (e.g. rate_name, location_name).
+   *
+   * This exists so a domain-named catalog can be served WITHOUT adding synonym columns to its table.
+   * Adding a second `display_name` alongside `rate_name` would put the same fact in two places and
+   * invite them to drift — the split-brain that made catalogs.vendor_types need a sync trigger. An
+   * alias keeps ONE physical column as the truth.
+   */
+  displayNameColumn?: string;
 };
 
 type RouteMode = "all" | "extensions";
@@ -34,12 +49,17 @@ const tableNameGuard = /^[a-z_]+$/;
 const urlSegmentGuard = /^[a-z-]+$/;
 const columnGuard = /^[a-z_]+$/;
 
-function dbColumnForApiColumn(column: string): string {
-  if (column === "display_name") return "name";
+/** API column -> physical column, honouring the per-catalog aliases. */
+function dbColumnForApiColumn(column: string, config?: GenericCatalogConfig): string {
+  if (column === "display_name") return config?.displayNameColumn ?? "name";
+  if (column === "code" && config?.codeColumn) return config.codeColumn;
   return column;
 }
 
-function apiColumnForDbColumn(column: string): string {
+/** Physical column -> API column (the inverse). */
+function apiColumnForDbColumn(column: string, config?: GenericCatalogConfig): string {
+  if (config?.displayNameColumn && column === config.displayNameColumn) return "display_name";
+  if (config?.codeColumn && column === config.codeColumn) return "code";
   if (column === "name") return "display_name";
   return column;
 }
@@ -62,6 +82,8 @@ function toImportConfig(config: GenericCatalogConfig): CatalogImportConfig {
     columnAliases: {
       name: "display_name",
       display_name: "display_name",
+      ...(config.displayNameColumn ? { [config.displayNameColumn]: "display_name" } : {}),
+      ...(config.codeColumn ? { [config.codeColumn]: "code" } : {}),
     },
   };
 }
@@ -97,15 +119,15 @@ export function createCatalogRoutes(
   const selectColumns = [
     "t.id",
     ...config.allowedColumns.map((column) => {
-      const dbColumn = dbColumnForApiColumn(column);
-      const apiColumn = apiColumnForDbColumn(dbColumn);
+      const dbColumn = dbColumnForApiColumn(column, config);
+      const apiColumn = apiColumnForDbColumn(dbColumn, config);
       return `t.${dbColumn} AS ${apiColumn}`;
     }),
     "t.created_at",
     "t.updated_at",
   ];
 
-  const sortColumn = dbColumnForApiColumn(config.defaultSort.column);
+  const sortColumn = dbColumnForApiColumn(config.defaultSort.column, config);
   const sortDir = config.defaultSort.dir.toUpperCase() === "DESC" ? "DESC" : "ASC";
 
   if (mode === "all" || mode === "extensions") {
@@ -125,7 +147,7 @@ export function createCatalogRoutes(
           if (q.search && config.searchableColumns.length > 0) {
             values.push(`%${q.search}%`);
             const searchClauses = config.searchableColumns.map((column) => {
-              const dbColumn = dbColumnForApiColumn(column);
+              const dbColumn = dbColumnForApiColumn(column, config);
               return `COALESCE(t.${dbColumn}::text, '') ILIKE $${values.length}`;
             });
             where.push(`(${searchClauses.join(" OR ")})`);
@@ -177,7 +199,7 @@ export function createCatalogRoutes(
           let paramIndex = 3;
           for (const column of config.allowedColumns) {
             if (!(column in body)) continue;
-            insertColumns.push(dbColumnForApiColumn(column));
+            insertColumns.push(dbColumnForApiColumn(column, config));
             insertValues.push(body[column as keyof typeof body]);
             placeholders.push(`$${paramIndex}`);
             paramIndex += 1;
@@ -235,7 +257,7 @@ export function createCatalogRoutes(
 
           for (const column of config.allowedColumns) {
             if (!(column in body)) continue;
-            add(dbColumnForApiColumn(column), body[column as keyof typeof body]);
+            add(dbColumnForApiColumn(column, config), body[column as keyof typeof body]);
           }
           if (config.softDeleteColumn in body && body[config.softDeleteColumn as keyof typeof body] === false) {
             add("deactivated_at", new Date().toISOString());

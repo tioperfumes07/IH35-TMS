@@ -2,13 +2,14 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ApiError } from "../../api/client";
-import { createVendor, type CreateVendorInput } from "../../api/mdata";
+import { createVendor } from "../../api/mdata";
 import { listPaymentTermOptions } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { Modal } from "../Modal";
 import { ActionButton } from "../shared/ActionButton";
-import { SelectCombobox } from "../shared/SelectCombobox";
 import { Combobox } from "../Combobox";
+import { ReferenceSelect } from "../parity/ReferenceSelect";
+import { useCatalogQuery } from "../../hooks/useCatalogQuery";
 import { useToast } from "../Toast";
 import { emptyVendorProfileMeta, serializeVendorNotes, type VendorProfileMeta } from "../../lib/vendorProfileMeta";
 import { isTestVendorFixtureName } from "../../lib/testVendorFixtureName";
@@ -17,19 +18,11 @@ import { isTestVendorFixtureName } from "../../lib/testVendorFixtureName";
 // extended with the trucking classification fields (vendor type / tax ID / vendor code) the profile edits.
 // The lean structured-contact + address fields serialize into the same `notes` meta blob the Vendor
 // profile reads, so anything captured here round-trips to the profile (VendorDetail) with no migration.
-// NOTE (V1 follow-up): vendor_type is a fixed enum today — a catalog-backed vendor-type list with an
-// inline "+ Add new type" mini-create needs catalogs.vendor_types (gated migration), tracked separately.
-
-const VENDOR_TYPES: CreateVendorInput["vendor_type"][] = [
-  "Fuel",
-  "Repair",
-  "Tires",
-  "Towing",
-  "Insurance",
-  "Permit",
-  "Toll",
-  "Other",
-];
+// LST-WIRE-04 — vendor_type is now CATALOG-BACKED (catalogs.vendor_types), per entity, with an inline
+// "+ Add new vendor type" row. It used to be a frozen TypeScript union of eight values while the
+// catalog sat seeded and completely unread: the owner could pick a type but could never add, rename or
+// retire one, and per-entity types were impossible. The stale note that used to live here claimed this
+// was blocked on "catalogs.vendor_types (gated migration)" — that table already existed, with data.
 
 type SectionProps = { title: string; children: React.ReactNode };
 
@@ -90,7 +83,7 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
 
   // Name and contact
   const [name, setName] = useState("");
-  const [vendorType, setVendorType] = useState<CreateVendorInput["vendor_type"]>("Other");
+  const [vendorType, setVendorType] = useState<string>("Other");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [contactName, setContactName] = useState("");
@@ -116,6 +109,22 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
 
   const [formError, setFormError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; vendor_code?: string }>({});
+
+  // Vendor types come from the canonical catalog, entity-scoped, so a type added here is the same row
+  // every other surface reads.
+  const vendorTypesQuery = useCatalogQuery({
+    catalogName: "vendors.vendor_types",
+    companyId: operatingCompanyId,
+    enabled: open && Boolean(operatingCompanyId),
+  });
+  const vendorTypeOptions = useMemo(
+    () =>
+      (vendorTypesQuery.data?.rows ?? []).map((row: Record<string, unknown>) => ({
+        value: String(row.display_name ?? ""),
+        label: String(row.display_name ?? ""),
+      })),
+    [vendorTypesQuery.data]
+  );
 
   const paymentTermsQuery = useQuery({
     queryKey: ["payment-term-options", operatingCompanyId],
@@ -285,17 +294,16 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
             />
             <label className="block text-sm">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Vendor type</span>
-              <SelectCombobox
+              <ReferenceSelect
                 value={vendorType}
-                onChange={(event) => setVendorType(event.target.value as CreateVendorInput["vendor_type"])}
-                className="h-9 w-full text-sm"
-              >
-                {VENDOR_TYPES.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </SelectCombobox>
+                onChange={(next) => setVendorType(next ?? "")}
+                options={vendorTypeOptions}
+                createKind="vendor_type"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Select vendor type…"
+                addNewLabel="+ Add new vendor type"
+                onOptionCreated={(opt) => setVendorType(opt.label)}
+              />
             </label>
             <Field label="Email" value={email} onChange={setEmail} />
             <Field label="Phone" value={phone} onChange={setPhone} />

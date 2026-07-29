@@ -306,6 +306,17 @@ export const CATALOG_PICKER_CONFIGS = {
   // ── Batch 1, config-driven. Every one verified: one route factory, one tableName, SELECT+INSERT. ──
   // Dispatch — apps/backend/src/catalogs/dispatch/shared.ts:104 builds `catalogs.${tableName}` once
   // and uses it for the list SELECT (:138) and the create INSERT (:204).
+  // LST-WIRE-04 — vendor types. The vendor create form used a FROZEN TypeScript union of eight
+  // values while catalogs.vendor_types sat seeded and unread, so a type could be picked but never
+  // added, renamed or retired. This entry gives the picker its canonical table plus the inline
+  // "+ Add new vendor type" row, per entity.
+  vendor_type: catalogEntry({
+    key: "vendor_type",
+    label: "Vendor type",
+    table: "catalogs.vendor_types",
+    endpoint: "/api/v1/catalogs/vendors/vendor-types",
+    evidence: "apps/backend/src/catalogs/generic-catalog.factory.ts:143 (SELECT) and :188 (INSERT) — both catalogs.${config.tableName} from vendorTypesCatalogConfig",
+  }),
   load_type: catalogEntry({
     key: "load_type",
     label: "Load type",

@@ -3,8 +3,9 @@
  * QB-STD-5: writes to mdata.vendors (canonical — same table listVendors reads from) so the
  * created vendor survives reload. Previously used createQboVendor → mdata.qbo_vendors (mirror).
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createVendor } from "../../../api/mdata";
+import { useCatalogQuery } from "../../../hooks/useCatalogQuery";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 
@@ -14,8 +15,10 @@ type Props = {
   onClose: () => void;
 };
 
-const VENDOR_TYPES = ["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"] as const;
-type VendorType = (typeof VENDOR_TYPES)[number];
+// LST-WIRE-04 — vendor types are catalog-backed (catalogs.vendor_types), entity-scoped and
+// operator-managed. They were a frozen literal list here, which meant a type added to the catalog
+// could never be chosen. Fetched at render so a type created in one surface appears in all of them.
+type VendorType = string;
 
 type FormState = {
   displayName: string;
@@ -35,6 +38,16 @@ type FormState = {
 };
 
 export function NewVendorDrawerForm({ operatingCompanyId, onCreated, onClose }: Props) {
+  const vendorTypesQuery = useCatalogQuery({
+    catalogName: "vendors.vendor_types",
+    companyId: operatingCompanyId,
+    enabled: Boolean(operatingCompanyId),
+  });
+  const vendorTypeNames = useMemo(
+    () => (vendorTypesQuery.data?.rows ?? []).map((r: Record<string, unknown>) => String(r.display_name ?? "")).filter(Boolean),
+    [vendorTypesQuery.data]
+  );
+
   const { pushToast } = useToast();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<FormState>({
@@ -103,7 +116,7 @@ export function NewVendorDrawerForm({ operatingCompanyId, onCreated, onClose }: 
       <label className="block">
         <span className="text-xs font-medium text-gray-700">Vendor type</span>
         <select className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={form.vendorType} onChange={(e) => set("vendorType", e.target.value as VendorType)} aria-label="Vendor type">
-          {VENDOR_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+          {vendorTypeNames.map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
       </label>
       <label className="block">

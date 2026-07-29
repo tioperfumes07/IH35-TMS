@@ -923,6 +923,48 @@
       "voided_at",
       "voided_by_user_id"
     ],
+    "accounting.ob_register_audit_events": [
+      "account_id",
+      "actor_user_id",
+      "after_json",
+      "as_of_date",
+      "before_json",
+      "created_at",
+      "detail",
+      "event_type",
+      "id",
+      "operating_company_id",
+      "staging_line_id"
+    ],
+    "accounting.ob_register_staging_lines": [
+      "account_id",
+      "amount_cents",
+      "as_of_date",
+      "committed_at",
+      "committed_by_user_id",
+      "created_at",
+      "created_by_user_id",
+      "id",
+      "note",
+      "operating_company_id",
+      "qbo_account_id",
+      "source",
+      "source_account_label",
+      "status",
+      "updated_at",
+      "updated_by_user_id"
+    ],
+    "accounting.ob_source_finality": [
+      "as_of_date",
+      "created_at",
+      "id",
+      "is_final",
+      "note",
+      "operating_company_id",
+      "set_at",
+      "set_by",
+      "updated_at"
+    ],
     "accounting.outbox_events": [
       "aggregate_id",
       "aggregate_type",
@@ -2180,6 +2222,20 @@
       "updated_at",
       "updated_by_user_id"
     ],
+    "catalogs.customer_types": [
+      "code",
+      "created_at",
+      "created_by_user_id",
+      "deactivated_at",
+      "description",
+      "display_name",
+      "id",
+      "is_active",
+      "operating_company_id",
+      "sort_order",
+      "updated_at",
+      "updated_by_user_id"
+    ],
     "catalogs.detail_types": [
       "account_type_id",
       "code",
@@ -2595,15 +2651,18 @@
       "region"
     ],
     "catalogs.vendor_types": [
+      "code",
       "created_at",
       "created_by_user_id",
       "deactivated_at",
+      "display_name",
       "id",
       "is_active",
       "is_system",
       "notes",
       "operating_company_id",
       "qbo_vendor_type_id",
+      "sort_order",
       "updated_at",
       "updated_by_user_id",
       "vendor_type_code",
@@ -9998,48 +10057,6 @@
       "template_name",
       "to_phone",
       "variables"
-    ],
-    "accounting.ob_register_audit_events": [
-      "account_id",
-      "actor_user_id",
-      "after_json",
-      "as_of_date",
-      "before_json",
-      "created_at",
-      "detail",
-      "event_type",
-      "id",
-      "operating_company_id",
-      "staging_line_id"
-    ],
-    "accounting.ob_register_staging_lines": [
-      "account_id",
-      "amount_cents",
-      "as_of_date",
-      "committed_at",
-      "committed_by_user_id",
-      "created_at",
-      "created_by_user_id",
-      "id",
-      "note",
-      "operating_company_id",
-      "qbo_account_id",
-      "source",
-      "source_account_label",
-      "status",
-      "updated_at",
-      "updated_by_user_id"
-    ],
-    "accounting.ob_source_finality": [
-      "as_of_date",
-      "created_at",
-      "id",
-      "is_final",
-      "note",
-      "operating_company_id",
-      "set_at",
-      "set_by",
-      "updated_at"
     ]
   }
 }

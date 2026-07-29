@@ -29,7 +29,7 @@
  *
  * Usage: node scripts/verify-converted-catalog-reachable-from-hub.mjs [--selftest]
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 const ROOT = resolve(new URL("..", import.meta.url).pathname);
@@ -40,6 +40,32 @@ const HUB = "apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx";
 const BE_ROUTES = "apps/backend/src/catalogs/generic-catalog.routes.ts";
 
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
+
+/**
+ * Every backend file that declares catalog configs — NOT just generic-catalog.routes.ts.
+ *
+ * Catalogs are legitimately registered across several modules (catalogs/fuel/index.ts,
+ * catalogs/fleet/*, catalogs/driver/*, and inline createCatalogRoutes({...}) calls). Reading only the
+ * one file made every catalog registered elsewhere look unregistered, so this guard reported 29
+ * working catalogs as facades the moment their frontend registry entries were added.
+ */
+function readAllBackendCatalogSources() {
+  const roots = [resolve(ROOT, "apps/backend/src/catalogs")];
+  const parts = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = resolve(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith(".ts") && !e.name.includes(".test.")) {
+        const src = readFileSync(p, "utf8");
+        // Both spellings, or the modules that use catalogPath are never even read.
+        if (src.includes("urlSegment:") || src.includes("catalogPath:")) parts.push(src);
+      }
+    }
+  };
+  for (const r of roots) walk(r);
+  return parts.join("\n");
+}
 
 /** Pull {catalogName, domain, catalogKey} from the frontend registry. */
 export function parseRegistry(src) {
@@ -57,7 +83,10 @@ export function parseRegistry(src) {
  */
 export function backendConfigs(src) {
   const out = [];
-  for (const m of src.matchAll(/urlSegment:/g)) {
+  // Anchor on BOTH spellings — urlSegment (generic factory) and catalogPath (dispatch/driver route
+  // modules). Anchoring on urlSegment alone yielded zero configs for those modules, so four served
+  // dispatch catalogs read as facades.
+  for (const m of src.matchAll(/(?:urlSegment|catalogPath):/g)) {
     let depth = 0;
     let i = m.index;
     while (i > 0) {
@@ -95,7 +124,14 @@ export function chainProblems({ registry, hub, backend }) {
     // dispatch catalog exposed it, and the guard's own selftest is what caught it. Pair them by
     // extracting each config's braces.
     const hasBackend = backendConfigs(backend).some(
-      (cfg) => cfg.includes(`routePrefix: "${prefix}"`) && cfg.includes(`urlSegment: "${catalogKey}"`)
+      (cfg) =>
+        // The URL segment is spelled `urlSegment` by the generic factory and `catalogPath` by the
+        // dispatch/driver/accounting route modules; and those modules bake the prefix into their shared
+        // registrar, so routePrefix is often absent from the config. Requiring urlSegment + routePrefix
+        // together reported seven SERVED catalogs as facades. Accept either spelling, and accept a
+        // config that declares the segment without a prefix.
+        (cfg.includes(`urlSegment: "${catalogKey}"`) || cfg.includes(`catalogPath: "${catalogKey}"`)) &&
+        (cfg.includes(`routePrefix: "${prefix}"`) || !cfg.includes("routePrefix:"))
     );
     if (!hasBackend) {
       problems.push(
@@ -108,8 +144,13 @@ export function chainProblems({ registry, hub, backend }) {
         `${catalogName}: not in AllCatalogsMap — the catalog is live and manageable but the owner cannot find it from the Lists hub (invisible).`
       );
     }
-    // the hub must carry the domain the registry claims
-    if (!new RegExp(`key:\\s*"${domain}"`).test(hub)) {
+    // The hub must carry the domain the registry claims — allowing for the ONE normalisation the app
+    // itself performs. AllCatalogsMap groups driver catalogs under "drivers" (plural) while their API
+    // routePrefix is /api/v1/catalogs/driver (singular); buildCatalogPath() maps drivers -> driver via
+    // normalizeListsDomain, so both spellings resolve to the same page. Without this the guard reports
+    // every driver catalog as having "nowhere to live" while its tile works perfectly.
+    const hubDomainAliases = domain === "driver" ? ["driver", "drivers"] : [domain];
+    if (!hubDomainAliases.some((d) => new RegExp(`key:\\s*"${d}"`).test(hub))) {
       problems.push(
         `${catalogName}: AllCatalogsMap has no domain "${domain}" — its tile has nowhere to live.`
       );
@@ -120,7 +161,7 @@ export function chainProblems({ registry, hub, backend }) {
 
 function run() {
   const registry = read(FE_REGISTRY);
-  const problems = chainProblems({ registry, hub: read(HUB), backend: read(BE_ROUTES) });
+  const problems = chainProblems({ registry, hub: read(HUB), backend: readAllBackendCatalogSources() });
   if (problems.length) {
     console.error(`[${LABEL}] FAILED — ${problems.length} issue(s):`);
     for (const p of problems) console.error(`  ✗ ${p}`);
@@ -141,7 +182,7 @@ function selftest() {
 
   const registry = read(FE_REGISTRY);
   const hub = read(HUB);
-  const backend = read(BE_ROUTES);
+  const backend = readAllBackendCatalogSources();
 
   const cases = [
     [

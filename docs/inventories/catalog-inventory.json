@@ -2,7 +2,7 @@
   "_README": "LST-ORPH-05 catalog inventory. EVERY catalogs.* base table must carry a classification: ROUTED (reachable via a registered route + hub tile), HEADLESS-BY-DESIGN (a system lookup no operator edits), or RETIRE (superseded; must never gain an editable route). ROUTED-READ-ONLY means the catalog IS reachable at its own route but is deliberately not editable (code-managed or owner-gated) \u2014 it must never gain a creator wizard. ROUTED-PENDING means the owner has ruled it an operator surface (QuickBooks-style creator wizard) but the route/creator is not built yet. UNCLASSIFIED is a DEFECT the guard fails on \u2014 a catalog nobody has ruled on is how a table quietly becomes unreachable or wrongly editable. Row counts are a 2026-07-28 prod snapshot (pg_class/pg_stat_all_tables, role-safe) and are informational only; the guard checks CLASSIFICATION, never counts.",
   "snapshot_date": "2026-07-28",
   "totals": {
-    "tables": 114,
+    "tables": 115,
     "routed": 61,
     "unrouted": 53
   },
@@ -576,6 +576,11 @@
       "rows": 0,
       "classification": "ROUTED-PENDING",
       "note": "OWNER RULING 2026-07-28: every catalog gets a QuickBooks-style creator wizard so the list can be edited and added to. Needs a registered route + hub tile + inline creator. Currently EMPTY \u2014 almost certainly BECAUSE there is no creator to add rows with."
+    },
+    "customer_types": {
+      "rows": 0,
+      "classification": "ROUTED-PENDING",
+      "note": "LST-WIRE-07 2026-07-29: CREATED by migration 202610150000 (QuickBooks Customer Type). Canonical shape from the outset, entity-scoped, FORCE RLS, 6 starter types seeded per active company. Route/registry/tile wiring follows."
     }
   },
   "owner_rulings": {

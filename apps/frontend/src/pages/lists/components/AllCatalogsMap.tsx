@@ -24,6 +24,8 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Safety",
     pillClass: "bg-red-50 text-red-700",
     catalogs: [
+      { name: "Accident Types", description: "Accident classification codes", live: true, catalogKey: "accident-types" },
+      { name: "Workplace Incident Types", description: "Non-vehicle workplace incident categories", live: true, catalogKey: "workplace-incident-types" },
       { name: "Internal Fine Reasons", description: "Default internal penalty reason codes", live: true, catalogKey: "internal-fine-reasons" },
       { name: "Civil Fine Types", description: "External citation/fine category definitions", live: true, catalogKey: "civil-fine-types" },
       { name: "Company Violation Types", description: "Policy and integrity violation code set", live: true, catalogKey: "company-violation-types" },
@@ -37,6 +39,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Dispatch",
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
+      { name: "Load Trailer Equipment", description: "Trailer equipment required per load", live: true, catalogKey: "load-trailer-equipment" },
       { name: "Load Types", description: "Linehaul mode/type setup", live: true, catalogKey: "load-types" },
       { name: "Detention Reasons", description: "Detention billing reason catalog", live: true, catalogKey: "detention-reasons" },
       { name: "Pickup Time Types", description: "Pickup scheduling semantics", live: true, catalogKey: "pickup-time-types" },
@@ -55,6 +58,13 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Drivers",
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
+      { name: "Termination Reasons", description: "Driver separation reason codes", live: true, catalogKey: "termination-reasons" },
+      { name: "Cash Advance Types", description: "Driver cash advance categories", live: true, catalogKey: "cash-advance-types" },
+      { name: "CDL Endorsements", description: "Commercial licence endorsement codes", live: true, catalogKey: "endorsements" },
+      { name: "CDL Restrictions", description: "Commercial licence restriction codes", live: true, catalogKey: "restrictions" },
+      { name: "Employment Statuses", description: "Driver employment status values", live: true, catalogKey: "employment-status" },
+      { name: "Leave Types", description: "Driver leave categories", live: true, catalogKey: "leave-types" },
+      { name: "Medical Card Statuses", description: "DOT medical card status values", live: true, catalogKey: "medical-card-status" },
       { name: "Pay Rate Templates", description: "Driver pay model templates", live: true, catalogKey: "pay-rate-templates" },
       { name: "Driver Deduction Types", description: "Standard deduction reason set", live: true, catalogKey: "deduction-types" },
       { name: "Driver Pay Types", description: "Pay event and compensation code set", live: true, catalogKey: "pay-types" },
@@ -77,6 +87,16 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Maintenance",
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
+      { name: "Labor Rates", description: "Billable and internal labor rate codes", live: true, catalogKey: "labor-rates" },
+      { name: "Part Locations", description: "Where parts are stored or fitted", live: true, catalogKey: "part-locations" },
+      { name: "Air Bag Catalog", description: "Air bag part reference", live: true, catalogKey: "air-bag-catalog" },
+      { name: "Battery Catalog", description: "Battery part reference", live: true, catalogKey: "battery-catalog" },
+      { name: "PM Intervals", description: "Preventive maintenance interval definitions", live: true, catalogKey: "pm-intervals" },
+      { name: "Repair Locations", description: "Where repairs are performed", live: true, catalogKey: "repair-locations" },
+      { name: "Tire Catalog", description: "Tire model reference", live: true, catalogKey: "tire-catalog" },
+      { name: "Trailer Parts", description: "Trailer part reference", live: true, catalogKey: "trailer-parts" },
+      { name: "Truck Parts", description: "Truck part reference", live: true, catalogKey: "truck-parts" },
+      { name: "Work Order Templates", description: "Reusable work order definitions", live: true, catalogKey: "work-order-templates" },
       { name: "Maintenance Failure Codes", description: "Failure code taxonomy for diagnostics", live: true, catalogKey: "failure-codes" },
       { name: "Maintenance Labor Codes", description: "Labor operation and billing codes", live: true, catalogKey: "labor-codes" },
       { name: "Maintenance Parts", description: "Parts master with optional SKU metadata", live: true, catalogKey: "parts" },
@@ -94,6 +114,10 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Fuel",
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
+      { name: "DEF Stations", description: "DEF fill locations", live: true, catalogKey: "def-stations" },
+      { name: "Fuel Stations", description: "Fuel stop locations", live: true, catalogKey: "fuel-stations" },
+      { name: "Relay Accounts", description: "Relay fuel account references", live: true, catalogKey: "relay-accounts" },
+      { name: "Toll Providers", description: "Toll transponder providers", live: true, catalogKey: "toll-providers" },
       { name: "Fuel Card Types", description: "Fuel card program and method types", live: true, catalogKey: "card-types" },
       { name: "Fuel Exception Types", description: "Fuel anomaly and exception categories", live: true, catalogKey: "exception-types" },
       { name: "Fuel Station Brands", description: "Station brand catalog with partner metadata", live: true, catalogKey: "station-brands" },
@@ -130,6 +154,9 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Accounting",
     pillClass: "bg-slate-200 text-slate-800",
     catalogs: [
+      { name: "Account Types", description: "Chart-of-accounts type lookup", live: true, catalogKey: "account-types-lookup" },
+      { name: "Detail Types", description: "Chart-of-accounts detail-type lookup", live: true, catalogKey: "detail-types-lookup" },
+      { name: "Audit Event Types", description: "Audit taxonomy — read-only by design", live: true, catalogKey: "audit-event-types" },
       { name: "Chart of Accounts", description: "GL account catalog and hierarchy", live: true, catalogKey: "chart-of-accounts" },
       { name: "Account Type", description: "Fixed account-type taxonomy (read-only reference)", live: true, catalogKey: "account-types" },
       { name: "Detail Type", description: "Account-type sub-classifications: canonical system set + per-entity custom", live: true, catalogKey: "detail-types" },
@@ -156,7 +183,19 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Customers",
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
+      { name: "Customer Types", description: "QuickBooks-style customer classification", live: true, catalogKey: "customer-types" },
       { name: "Customer Quality Event Reasons", description: "Customer service-quality event reason codes", live: true, catalogKey: "customer-quality-event-reasons" },
+    ],
+  },
+  {
+    key: "vendors",
+    label: "Vendors",
+    pillClass: "bg-slate-100 text-slate-700",
+    catalogs: [
+      // LST-WIRE-04 — vendor types were a frozen TypeScript union in the vendor create form. The
+      // catalog existed, seeded per entity, and nothing read it: the owner could pick a type but
+      // never add, rename or retire one. This tile is the operator's way in.
+      { name: "Vendor Types", description: "Vendor classification codes (Fuel, Repair, Tires…)", live: true, catalogKey: "vendor-types" },
     ],
   },
   {
