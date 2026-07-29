@@ -25,8 +25,15 @@ owner ruling.
 ## §1 — PERMISSIONS & MERGE GATES (override everything)
 Merge to `main` = ship to prod; no second gate; green CI ≠ approval. **Self-merge OK:** pure frontend/docs/CI-
 action bumps + non-financial backend touching none of the financial cluster / migrations / `accounting.*` /
-`catalogs.*` / `mdata.*`. **STOP + owner `JORGE-APPROVED`:** any financial change, any migration/schema, any
-touch to `accounting.*`/`catalogs.*`/`mdata.*`, any runtime dep bump. **Financial cluster NEVER self-merge.**
+`catalogs.*` / `mdata.*`. **Financial cluster: the builder never merges its own work — Devin merges on green**
+(owner ruling 2026-07-29). **The `JORGE-APPROVED` label is NOT a merge gate** (owner rulings 2026-07-26 and
+2026-07-29; `21-session-operating-decree`, `PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26`, and
+`verify-hold-merge-gate.mjs` which has treated it as optional since 07-26). The owner does not review PRs;
+asking for the label at merge time is itself a violation. A gate nobody operates is a control deficiency —
+it records an approval that never ran. The controls that DO operate: builder≠merger, Rule 11's independent
+reviewer≠builder, `ih35_app` cannot run DDL (owner applies on Neon), posting flags default OFF per entity,
+and the 18-key evidence block (CI 1324/1430/1431). **Owner questions are settled BEFORE implementation,
+never at merge.**
 Prod DB access gated — ask every time; `ih35_app` CANNOT run DDL (owner applies on Neon; GUARD re-proves).
 Prohibited outright (direct owner to do it): moving money/posting to prod without per-action OK, entering
 credentials, changing access controls, permanently deleting data, submitting to any external financial system.
