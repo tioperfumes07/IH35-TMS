@@ -14,6 +14,7 @@ const ListsHubPage = React.lazy(() => import("../pages/lists/ListsHubPage").then
 const ProgramBoardPage = React.lazy(() => import("../pages/program/ProgramBoardPage").then((m) => ({ default: m.ProgramBoardPage })));
 const FinalAdditionsPage = React.lazy(() => import("../pages/program/FinalAdditionsPage").then((m) => ({ default: m.FinalAdditionsPage })));
 const ProgramTrackerPage = React.lazy(() => import("../pages/program/ProgramTrackerPage").then((m) => ({ default: m.ProgramTrackerPage })));
+const ModuleCompletionPage = React.lazy(() => import("../pages/program/ModuleCompletionPage").then((m) => ({ default: m.ModuleCompletionPage })));
 const SystemModulePage = React.lazy(() => import("../pages/system/SystemModulePage").then((m) => ({ default: m.SystemModulePage })));
 const DomainCatalogHubPage = React.lazy(() => import("../pages/lists/DomainCatalogHubPage").then((m) => ({ default: m.DomainCatalogHubPage })));
 // CATALOG-2 — factory-backed generic catalog CRUD (registry-driven, additive to the hand-rolled
@@ -754,6 +755,17 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ProgramTrackerPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Module Completion — the build scoreboard (N of M acceptance items per module), read from
+            docs/module-completion/*.json via the generated data module. Additive route; no sidebar
+            item is added, so the locked sidebar count is unchanged. */}
+        <Route
+          path="/program/modules"
+          element={
+            <ProtectedRoute>
+              <ModuleCompletionPage />
             </ProtectedRoute>
           }
         />

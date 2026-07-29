@@ -1105,6 +1105,7 @@
     "1725": "1725-verify-qbo-autocomplete-rate-limited.mjs",
     "1726": "1726-verify-acct-f06-vendor-product-readers.mjs",
     "1727": "1727-verify-migration-no-raise-on-role-binding.mjs",
+    "1729": "1729-verify-module-completion-ui-in-sync.mjs",
     "1732": "1732-verify-posting-flags-require-bound-accounts.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
