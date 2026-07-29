@@ -64,23 +64,23 @@ Left on the list deliberately. Each needs its own read against current state; no
 LST-F07, LST-F12, LST-F19, LST-F20, LST-F21, LST-F24, LST-GUARD, LST-REGISTRY, SAF-F03, SAF-F04,
 SAF-F13, SAF-F16, SAF-F17.
 
-### Re-tested and NARROWED (still open, smaller than filed)
+### Re-tested — CLOSED or REASSIGNED
 
 | block | filed as | actually |
 |---|---|---|
-| **LST-F11** · names catalogs `live:false` | 4 catalogs dead | **2** remain (`Shippers`, `Consignees`). Brokers is now backed by a dedicated route. |
-| **LST-F13** · parts-catalog + abandonment-defaults hub-unreachable | both unreachable | **half done** — a `parts` hub tile exists; `abandonment-defaults` still has none. |
+| **LST-F11** · names catalogs `live:false` | 4 catalogs dead | **CLOSED — premise wrong.** Brokers is now backed by a dedicated route. The 2 that remain (`Shippers`, `Consignees`) have **NO backing table anywhere in the database** — no `shipper*`/`consignee*` base table exists in any schema. They carry no `catalogKey` and are marked `live: false`, which is the HONEST state for a catalog that does not exist. Flipping them live would create exactly the lie-live defect `verify-every-catalog-wired` exists to catch. Building the catalogs is a new feature, not a fix. |
+| **LST-F13** · parts-catalog + abandonment-defaults hub-unreachable | both unreachable | **PARTLY CLOSED, remainder is not this lane.** The `parts` hub tile exists. `abandonment-defaults` is **`driver_finance.abandonment_defaults`** — it is not a `catalogs.*` table at all, so it is outside the catalog completeness gate by design, and `driver_finance.*` is the money lane's schema. 0 rows on prod. Reassigned, not fixed here. |
 
 ---
 
 ## Net effect on the backlog
 
 - Started: **24** pending blocks in this lane (Lists + Safety).
-- **13 written off** — 10 superseded, 3 premise-wrong.
-- **2 re-tested and NARROWED** (LST-F11 4→2 catalogs, LST-F13 half done). Still open, smaller.
-- **13 untested**, still counted as open. None claimed closed.
+- **14 written off** — 10 superseded, 4 premise-wrong (LST-F11 joins them).
+- **1 reassigned** — LST-F13's remainder is a `driver_finance.*` table, not a Lists catalog.
+- **9 untested**, still counted as open. None claimed closed.
 
-**Remaining in this lane: 11.**
+**Remaining in this lane: 9.**
 
 One block moved lanes rather than closing: LST-F26's real defect is financial and now sits with the
 money lane, with the five affected account numbers named.
