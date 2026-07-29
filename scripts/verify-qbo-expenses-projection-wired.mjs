@@ -108,9 +108,16 @@ function analyzeMigrations() {
   if (!sql.includes(PROJECTION_KEY)) {
     failures.push(`No migration creates the projection idempotency key ${PROJECTION_KEY} — the Purchase->expenses upsert is not idempotent.`);
   }
+  // Build-and-HOLD carve-out: ONE owner-approved migration. Block B (2026-07-28, owner-decisions
+  // RESOLVED) directs these projections ON for TRANSP and names the mechanism explicitly: "Enable via
+  // lib.feature_flag_overrides (user_uuid NULL, no expiry), owner-gated migration". Build-and-HOLD
+  // governed WHEN, not HOW. Pinned to one exact filename — any other migration seeding these flags ON,
+  // including a renamed copy or a different entity, still fails.
+  const OWNER_APPROVED_ENABLE_MIGRATION = "202610110000_enable_qbo_projection_flags_transp.sql";
   // Build-and-HOLD: no migration may seed a per-entity ON override for these flags (owner flips them ON).
   const overrideOnRe = /INSERT\s+INTO\s+lib\.feature_flag_overrides[\s\S]{0,400}?enabled[\s\S]{0,40}?true/i;
   for (const f of files) {
+    if (f === OWNER_APPROVED_ENABLE_MIGRATION) continue;
     const body = fs.readFileSync(path.join(MIGRATIONS_DIR, f), "utf8");
     if (FLAGS.some((flag) => body.includes(flag)) && overrideOnRe.test(body) && FLAGS.some((flag) => body.includes(flag))) {
       // Only flag when the override insert references our flags specifically.
