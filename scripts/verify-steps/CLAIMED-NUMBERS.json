@@ -1127,6 +1127,7 @@
     "1749": "1749-verify-acct-r03-merge-records-density.mjs",
     "1750": "1750-verify-acct-f51-account-register-zero-net.mjs",
     "1751": "1751-verify-fuel-kpi-money-format.mjs",
+    "1752": "1752-verify-fleet-table-status-humanized.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",

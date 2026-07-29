@@ -1,3 +1,4 @@
+import { humanizeEnumLabel } from "../lib/humanizeEnumLabel";
 import { useCallback, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -112,7 +113,10 @@ function fleetSortValue(row: FleetRow, key: string): string | number | null {
     case "type": return displayType(row);
     case "make_model": return `${row.make ?? ""} ${row.model ?? ""}`.trim();
     case "year": return row.year != null ? Number(row.year) : null;
-    case "status": return row.status ?? null;
+    // Humanised, not raw. The STATUS column rendered the machine enum on every row — "InService" on
+    // all 109 units on prod. humanizeEnumLabel keeps the value (it is often the only status recorded)
+    // while making it readable: "InService" -> "In service", "OutOfService" -> "Out of service".
+    case "status": return row.status ? humanizeEnumLabel(row.status) : null;
     case "location": return fleetLocationText(row) || null;
     case "odometer": return row.odometer_mi ?? null;
     case "next_pm": return row.next_due_odometer ?? null;
