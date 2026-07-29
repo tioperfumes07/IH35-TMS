@@ -168,7 +168,7 @@ export function OpeningBalanceRegisterPage() {
       } else {
         setBanner({
           tone: "error",
-          text: `Clone-as-is imported ${result.staged_count} line(s) from ${result.import_source} but the commit was refused: ${result.commit.blockers.join(", ")}`,
+          text: `Clone-as-is imported ${result.staged_count} line(s) from ${result.import_source} but the commit was refused: ${(result.commit.blockers ?? []).join(", ") || "unknown"}`,
         });
       }
       refresh();
@@ -315,7 +315,7 @@ export function OpeningBalanceRegisterPage() {
               disabled={cloneAsIs.isPending || !operatingCompanyId}
               onClick={() => cloneAsIs.mutate()}
               title="Import the QBO/fixture snapshot AND commit it now, Adjustment 0 — no maker/checker pair required"
-              className="rounded-sm border border-emerald-700 bg-emerald-700 px-3 py-1 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-40"
+              className="rounded-sm border border-slate-700 bg-slate-700 px-3 py-1 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
             >
               {cloneAsIs.isPending ? "Cloning…" : "Clone-as-is import + commit"}
             </button>

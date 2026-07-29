@@ -452,6 +452,19 @@ export function checkFrontend({ page, subnav, routeManifest }) {
   if (!page.includes("cloneAsIsImportAndCommit")) {
     problems.push("the page has no clone-as-is import+commit action wired to the API");
   }
+  // §7 financial palette + null-safe refused-commit banner (CI catch-ups 2026-07-29).
+  if (/\b(bg|text|border|hover:bg)-(emerald|amber|green|yellow)-\d{2,3}\b/.test(page)) {
+    problems.push(
+      "OpeningBalanceRegisterPage uses off-palette §7 status colors (emerald/amber/green/yellow) — " +
+        "financial UI is slate/navy only (verify-section7-palette-financial)."
+    );
+  }
+  if (!/commit\.blockers\s*\?\?\s*\[\]/.test(page) && !/\(result\.commit\.blockers\s*\?\?\s*\[\]\)/.test(page)) {
+    problems.push(
+      "clone-as-is refused-commit banner must coalesce result.commit.blockers ?? [] " +
+        "(optional on the API type — bare .join fails tsc -b)."
+    );
+  }
   if (!subnav.includes(ROUTE_PATH)) {
     problems.push(`sub-nav has no leaf for ${ROUTE_PATH} — the page would be URL-only`);
   }
