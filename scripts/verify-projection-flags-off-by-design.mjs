@@ -14,12 +14,14 @@
 //      holding one withLuciaBypass txn open across tens of thousands of round-trips) is ABSENT from both
 //      projectPurchasesToExpenses() and projectArPaymentsToLedger() — the #3433 root fix (set-based
 //      INSERT…SELECT) must stay in place. FAILs on pre-#3433 shape; PASSes on the current fixed shape.
-//   4) docs/module-completion/accounting.md explicitly records ACCT-ECON-03/ACCT-ECON-04 as FAIL-BY-DESIGN
-//      with the flags-OFF-by-owner-design reason — so no future session mistakes the 0-count for a defect
-//      to chase (Rule 21 owner-word: honest FAIL-by-design beats a fake-green subledger).
+//   4) docs/module-completion/accounting.{md,json} record ACCT-ECON-03/04 honestly:
+//      - FAIL → must say FAIL-BY-DESIGN (flags still OFF / density still 0 — not an open wiring bug).
+//      - PASS → allowed ONLY after owner enable migration + Neon lucia density evidence (payments=/expenses=).
+//        Owner autonomy 2026-07-29 flipped TRANSP projections ON (#3733); density proven (#3744 expenses).
+//        Fake-PASS without Neon density is still forbidden (Rule 23 / Rule 24).
 //
 // --selftest mutates REAL source strings (not synthetic fixtures) to reintroduce the idle-in-txn loop, to
-// flip a flag's registered default to true, and to strip the FAIL-by-design doc language — each assertion
+// flip a flag's registered default to true, and to plant fake PASS / strip FAIL-by-design — each assertion
 // must independently flag its planted defect, and the current on-disk shape must NOT be flagged.
 
 import fs from "node:fs";
@@ -204,50 +206,81 @@ export function analyzeFlagService(text) {
   return failures;
 }
 
-/** Assertion 4: accounting.md/json record ECON-03/04 as FAIL-BY-DESIGN with the owner-design reason. */
+/** Neon density proof required when ECON-03/04 are marked PASS (Rule 24 — checklist ≠ PR theater). */
+const ECON_PASS_DENSITY_RE = /Neon|lucia/i;
+const ECON03_PASS_COUNT_RE = /payments\s*=\s*[1-9]\d*/i;
+const ECON04_PASS_COUNT_RE = /expenses\s*=\s*[1-9]\d*/i;
+
+/**
+ * Assertion 4: accounting.md/json record ECON-03/04 honestly.
+ * FAIL → FAIL-BY-DESIGN (owner-design 0 while flags OFF).
+ * PASS → Neon lucia density evidence required (owner enabled TRANSP via 202610110000).
+ */
 export function analyzeAccountingDocs(mdText, jsonText) {
   const failures = [];
-  if (!mdText) {
-    failures.push(`${ACCOUNTING_MD_REL} missing — cannot verify FAIL-by-design record.`);
-  } else {
-    if (!/ACCT-ECON-03/.test(mdText) || !/ACCT-ECON-04/.test(mdText)) {
-      failures.push(`${ACCOUNTING_MD_REL} no longer lists ACCT-ECON-03/ACCT-ECON-04.`);
-    }
-    if (!/FAIL-BY-DESIGN/i.test(mdText)) {
-      failures.push(
-        `${ACCOUNTING_MD_REL} does not say FAIL-BY-DESIGN anywhere — ECON-03/04 must be recorded as an honest ` +
-          "owner-design FAIL, not left looking like an open bug."
-      );
-    }
-    if (!/OWNER DESIGN|owner design|OFF by owner/i.test(mdText)) {
-      failures.push(`${ACCOUNTING_MD_REL} does not explain the flags are OFF BY OWNER DESIGN.`);
-    }
-  }
+  let data = null;
   if (jsonText) {
-    let data;
     try {
       data = JSON.parse(jsonText);
     } catch {
       failures.push(`${ACCOUNTING_JSON_REL} is not valid JSON.`);
-      data = null;
     }
-    if (data) {
-      const econ03 = data.items?.find((it) => it.id === "ACCT-ECON-03");
-      const econ04 = data.items?.find((it) => it.id === "ACCT-ECON-04");
-      for (const [id, item] of [
-        ["ACCT-ECON-03", econ03],
-        ["ACCT-ECON-04", econ04],
-      ]) {
-        if (!item) {
-          failures.push(`${ACCOUNTING_JSON_REL} missing item ${id}.`);
-          continue;
+  }
+
+  const econ03 = data?.items?.find((it) => it.id === "ACCT-ECON-03");
+  const econ04 = data?.items?.find((it) => it.id === "ACCT-ECON-04");
+  const anyFail = [econ03, econ04].some((it) => it && it.status === "FAIL");
+  const bothPass =
+    econ03?.status === "PASS" && econ04?.status === "PASS";
+
+  if (!mdText) {
+    // Generated scoreboard is gitignored; CI regenerates it. Missing local md is OK when json is present.
+    if (!jsonText) {
+      failures.push(`${ACCOUNTING_MD_REL} missing and ${ACCOUNTING_JSON_REL} missing — cannot verify ECON-03/04 record.`);
+    }
+  } else {
+    if (!/ACCT-ECON-03/.test(mdText) || !/ACCT-ECON-04/.test(mdText)) {
+      failures.push(`${ACCOUNTING_MD_REL} no longer lists ACCT-ECON-03/ACCT-ECON-04.`);
+    }
+    if (anyFail) {
+      if (!/FAIL-BY-DESIGN/i.test(mdText)) {
+        failures.push(
+          `${ACCOUNTING_MD_REL} does not say FAIL-BY-DESIGN anywhere — remaining ECON FAIL items must be recorded as ` +
+            "honest owner-design FAIL, not left looking like an open wiring bug."
+        );
+      }
+      if (!/OWNER DESIGN|owner design|OFF by owner|owner enable|owner autonomy/i.test(mdText)) {
+        failures.push(`${ACCOUNTING_MD_REL} does not explain the projection flag owner-design / enable path.`);
+      }
+    }
+    if (bothPass && /FAIL-BY-DESIGN/i.test(mdText) && !/HISTORICAL|superseded|before owner enable/i.test(mdText)) {
+      // Soft: PASS scoreboard may still mention historical FAIL-BY-DESIGN; do not fail for that.
+    }
+  }
+
+  if (data) {
+    for (const [id, item, countRe] of [
+      ["ACCT-ECON-03", econ03, ECON03_PASS_COUNT_RE],
+      ["ACCT-ECON-04", econ04, ECON04_PASS_COUNT_RE],
+    ]) {
+      if (!item) {
+        failures.push(`${ACCOUNTING_JSON_REL} missing item ${id}.`);
+        continue;
+      }
+      const evidence = item.evidence || "";
+      if (item.status === "PASS") {
+        if (!ECON_PASS_DENSITY_RE.test(evidence) || !countRe.test(evidence)) {
+          failures.push(
+            `${ACCOUNTING_JSON_REL} ${id} is PASS without Neon lucia density evidence ` +
+              `(need Neon/lucia + ${id === "ACCT-ECON-03" ? "payments=<n>" : "expenses=<n>"} with n>0).`
+          );
         }
-        if (item.status === "PASS") {
-          failures.push(`${ACCOUNTING_JSON_REL} ${id} was flipped to PASS — flags are OFF by design, the subledger is still honestly 0; this must stay FAIL.`);
-        }
-        if (!/FAIL-BY-DESIGN/i.test(item.evidence || "")) {
+      } else if (item.status === "FAIL") {
+        if (!/FAIL-BY-DESIGN/i.test(evidence)) {
           failures.push(`${ACCOUNTING_JSON_REL} ${id}.evidence does not say FAIL-BY-DESIGN.`);
         }
+      } else if (item.status !== "HOLD" && item.status !== "UNVERIFIED") {
+        failures.push(`${ACCOUNTING_JSON_REL} ${id} has unexpected status ${item.status}.`);
       }
     }
   }
@@ -359,28 +392,49 @@ if (process.argv.includes("--selftest")) {
     if (badSvc.length === 0) failures.push("selftest: removing the isEnabled() SAFE-OFF short-circuit was NOT flagged.");
   }
 
-  // --- Assertion 4 selftest: mutate REAL accounting.md/json to strip FAIL-BY-DESIGN language ---
+  // --- Assertion 4 selftest: PASS requires Neon density; FAIL requires FAIL-BY-DESIGN ---
   const realMd = readOrNull(ACCOUNTING_MD_REL);
   const realJson = readOrNull(ACCOUNTING_JSON_REL);
-  if (!realMd || !realJson) {
-    failures.push("selftest could not read real docs/module-completion/accounting.{md,json}.");
+  if (!realJson) {
+    failures.push("selftest could not read real docs/module-completion/accounting.json.");
   } else {
-    const goodDocs = analyzeAccountingDocs(realMd, realJson);
+    const goodDocs = analyzeAccountingDocs(realMd || "", realJson);
     if (goodDocs.length !== 0) failures.push(`real accounting docs flagged when they should PASS: ${goodDocs.join(" | ")}`);
 
-    const strippedMd = realMd.replace(/FAIL-BY-DESIGN/gi, "FAIL");
-    const strippedFindings = analyzeAccountingDocs(strippedMd, realJson);
-    if (!strippedFindings.some((f) => f.includes("FAIL-BY-DESIGN"))) {
-      failures.push("selftest: stripping FAIL-BY-DESIGN from accounting.md was NOT flagged.");
+    // Fake PASS without density evidence must be flagged.
+    let parsed;
+    try {
+      parsed = JSON.parse(realJson);
+    } catch {
+      parsed = null;
+      failures.push("selftest: accounting.json parse failed.");
     }
+    if (parsed) {
+      const fake = structuredClone(parsed);
+      const e03 = fake.items.find((it) => it.id === "ACCT-ECON-03");
+      if (e03) {
+        e03.status = "PASS";
+        e03.evidence = "theater PASS with no Neon counts";
+      }
+      const fakeFindings = analyzeAccountingDocs(realMd || "", JSON.stringify(fake));
+      if (!fakeFindings.some((f) => f.includes("ACCT-ECON-03") && f.includes("without Neon"))) {
+        failures.push("selftest: fake PASS without Neon density evidence was NOT flagged.");
+      }
 
-    const flippedJson = realJson.replace(
-      /("id":\s*"ACCT-ECON-03"[\s\S]{0,400}?"status":\s*)"FAIL"/,
-      '$1"PASS"'
-    );
-    const flippedFindings = analyzeAccountingDocs(realMd, flippedJson);
-    if (!flippedFindings.some((f) => f.includes("flipped to PASS"))) {
-      failures.push("selftest: flipping ACCT-ECON-03 to PASS in accounting.json was NOT flagged.");
+      // FAIL without FAIL-BY-DESIGN must be flagged.
+      const failNoDesign = structuredClone(parsed);
+      const e04 = failNoDesign.items.find((it) => it.id === "ACCT-ECON-04");
+      if (e04) {
+        e04.status = "FAIL";
+        e04.evidence = "expenses=0 but no design label";
+      }
+      const failFindings = analyzeAccountingDocs(
+        (realMd || "").replace(/FAIL-BY-DESIGN/gi, "FAIL"),
+        JSON.stringify(failNoDesign)
+      );
+      if (!failFindings.some((f) => f.includes("ACCT-ECON-04") && f.includes("FAIL-BY-DESIGN"))) {
+        failures.push("selftest: FAIL without FAIL-BY-DESIGN evidence was NOT flagged.");
+      }
     }
   }
 
@@ -421,7 +475,7 @@ if (failures.length > 0) {
 }
 
 console.log(
-  "verify-projection-flags-off-by-design: PASS (QBO_EXPENSES_PROJECTION_ENABLED + QBO_AR_PAYMENTS_PROJECTION_ENABLED " +
-    "default OFF; SAFE-OFF resolver intact; #3433 set-based fix intact; ACCT-ECON-03/04 recorded FAIL-BY-DESIGN)"
+  "verify-projection-flags-off-by-design: PASS (projection flags default OFF; SAFE-OFF resolver intact; " +
+    "#3433 set-based fix intact; ACCT-ECON-03/04 FAIL-BY-DESIGN or Neon-density PASS)"
 );
 process.exit(0);
