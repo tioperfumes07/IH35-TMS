@@ -46,7 +46,11 @@ ITEMS_TOUCHED: ACCT-… | BANK-…
 4. Builders (Cursor, Claude) never merge their own financial work — **Devin merges on green**. The
    `JORGE-APPROVED` label is not a merge gate (owner rulings 2026-07-26, 2026-07-29).
 
-## Session header (Rule 20 companion)
+## Session header — THIS is the BLOCK progress header (there is no Rule 20)
+
+This section previously called itself a "Rule 20 companion". **No file numbered 20 exists in
+`.cursor/rules/`** — 08, 09 and 20 are all absent. The header spec lives here and nowhere else, so this
+is the canonical definition, not a pointer to one.
 
 When working a money module, open with:
 
