@@ -50,7 +50,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
         "id": "ACCT-ECON-05",
         "title": "vendor_credits live path exercised or honest empty",
         "status": "FAIL",
-        "pr": "#3710 #3712"
+        "pr": "#3749"
       },
       {
         "id": "ACCT-PULL-01",

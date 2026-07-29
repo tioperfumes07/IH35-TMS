@@ -10,6 +10,7 @@ import { reconcileItems } from "./items-reconciler.js";
 import { pullApBillsFromQbo, projectApBillsToLedger } from "./ap-bills-puller.js";
 import { pullApBillPaymentsFromQbo, projectApBillPaymentsToLedger } from "./ap-bill-payments-puller.js";
 import { pullPurchasesFromQbo, projectPurchasesToExpenses } from "./qbo-purchases-puller.js";
+import { pullVendorCreditsFromQbo, projectVendorCreditsToLedger } from "./qbo-vendor-credits-puller.js";
 import { pullArPaymentsFromQbo, projectArPaymentsToLedger } from "./qbo-ar-payments-puller.js";
 import { countUnresolvedDrift, detectDriftForCompany } from "./drift-detector.js";
 import { maybeFireDriftAlert } from "./sync-alerts.js";
@@ -146,6 +147,24 @@ async function runScheduledSyncForCompany(
         lines_projected: res.linesProjected,
       },
       "[qbo-sync-scheduler] qbo_purchases_project complete (expense headers + lines from payload_json)"
+    );
+    return res;
+  }, failures, log);
+
+  // Inbound QBO VendorCredit -> mdata.qbo_vendor_credits mirror -> accounting.vendor_credits.
+  // ISOLATED like purchases/AR: MUST run even if an earlier step failed. Both stages gated default-OFF
+  // (QBO_VENDOR_CREDIT_MIRROR_PULL_ENABLED / QBO_VENDOR_CREDITS_PROJECTION_ENABLED). SUBLEDGER ONLY — NO GL.
+  await runStep("qbo_vendor_credits_pull", operatingCompanyId, () => pullVendorCreditsFromQbo(operatingCompanyId), failures, log);
+  await runStep("qbo_vendor_credits_project", operatingCompanyId, async () => {
+    const res = await projectVendorCreditsToLedger(operatingCompanyId);
+    log?.info(
+      {
+        operating_company_id: operatingCompanyId,
+        enabled: res.enabled,
+        credits_projected: res.creditsProjected,
+        vendors_unresolved: res.vendorsUnresolved,
+      },
+      "[qbo-sync-scheduler] qbo_vendor_credits_project complete (vendor credit headers from mirror)"
     );
     return res;
   }, failures, log);
