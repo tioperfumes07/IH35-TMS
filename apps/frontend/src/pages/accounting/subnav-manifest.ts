@@ -127,6 +127,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Integration transactions", path: "/accounting/integration-transactions", section: "more" },
 
   // More ▾ — period / analysis
+  { label: "Opening Balance Register", path: "/accounting/opening-balance-register", section: "more" },
   { label: "Sales tax", path: "/accounting/sales-tax", section: "more" },
   { label: "Month close", path: "/accounting/month-close", section: "more" },
   { label: "Period close", path: "/accounting/period-close", section: "more" },

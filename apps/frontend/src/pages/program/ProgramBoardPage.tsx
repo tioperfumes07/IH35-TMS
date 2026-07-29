@@ -303,6 +303,14 @@ function liveStateChip(state: string | undefined): { bg: string; fg: string; lab
   }
 }
 
+// In-module nav for PROGRAM. Declared as data (not inline JSX) because verify-nav-integrity reads
+// `href: "…"` entries to prove every route has a real door — a route reachable only by typing its URL
+// is a dead page, and an allowlist entry would assert reachability without providing it.
+const PROGRAM_MODULE_NAV: ReadonlyArray<{ href: string; label: string }> = [
+  { href: "/program/modules", label: "Module Completion" },
+  { href: "/program/tracker", label: "Build Progress" },
+];
+
 export function ProgramBoardPage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
@@ -481,9 +489,17 @@ export function ProgramBoardPage() {
         title="Program Board"
         subtitle="Live block/task tracker — two-way. The agent asks; you answer. Nothing is ever lost."
         actions={
-          <a href="/program/tracker" className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-gray-50">
-            Build Progress →
-          </a>
+          <div className="flex items-center gap-2">
+            {PROGRAM_MODULE_NAV.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-gray-50"
+              >
+                {link.label} →
+              </a>
+            ))}
+          </div>
         }
       />
 

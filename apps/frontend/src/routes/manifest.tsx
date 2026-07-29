@@ -14,6 +14,7 @@ const ListsHubPage = React.lazy(() => import("../pages/lists/ListsHubPage").then
 const ProgramBoardPage = React.lazy(() => import("../pages/program/ProgramBoardPage").then((m) => ({ default: m.ProgramBoardPage })));
 const FinalAdditionsPage = React.lazy(() => import("../pages/program/FinalAdditionsPage").then((m) => ({ default: m.FinalAdditionsPage })));
 const ProgramTrackerPage = React.lazy(() => import("../pages/program/ProgramTrackerPage").then((m) => ({ default: m.ProgramTrackerPage })));
+const ModuleCompletionPage = React.lazy(() => import("../pages/program/ModuleCompletionPage").then((m) => ({ default: m.ModuleCompletionPage })));
 const SystemModulePage = React.lazy(() => import("../pages/system/SystemModulePage").then((m) => ({ default: m.SystemModulePage })));
 const DomainCatalogHubPage = React.lazy(() => import("../pages/lists/DomainCatalogHubPage").then((m) => ({ default: m.DomainCatalogHubPage })));
 // CATALOG-2 — factory-backed generic catalog CRUD (registry-driven, additive to the hand-rolled
@@ -293,6 +294,9 @@ const ExpenseCategoryMapPage = React.lazy(() => import("../pages/accounting/Expe
 const CoaRolesPage = React.lazy(() => import("../pages/accounting/CoaRolesPage").then((m) => ({ default: m.CoaRolesPage })));
 const DailyReconPage = React.lazy(() => import("../pages/accounting/DailyReconPage").then((m) => ({ default: m.DailyReconPage })));
 const QboReconciliationPage = React.lazy(() => import("../pages/accounting/QboReconciliationPage").then((m) => ({ default: m.QboReconciliationPage })));
+const OpeningBalanceRegisterPage = React.lazy(() =>
+  import("../pages/accounting/OpeningBalanceRegisterPage").then((m) => ({ default: m.OpeningBalanceRegisterPage }))
+);
 const SalesTaxPage = React.lazy(() => import("../pages/accounting/SalesTaxPage").then((m) => ({ default: m.SalesTaxPage })));
 const AccountingAuditTrailPage = React.lazy(() => import("../pages/accounting/AccountingAuditTrailPage").then((m) => ({ default: m.AccountingAuditTrailPage })));
 const PostingLineagePage = React.lazy(() => import("../pages/accounting/PostingLineagePage").then((m) => ({ default: m.PostingLineagePage })));
@@ -754,6 +758,17 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ProgramTrackerPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Module Completion — the build scoreboard (N of M acceptance items per module), read from
+            docs/module-completion/*.json via the generated data module. Additive route; no sidebar
+            item is added, so the locked sidebar count is unchanged. */}
+        <Route
+          path="/program/modules"
+          element={
+            <ProtectedRoute>
+              <ModuleCompletionPage />
             </ProtectedRoute>
           }
         />
@@ -3671,6 +3686,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <QboReconciliationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/opening-balance-register"
+          element={
+            <ProtectedRoute>
+              <OpeningBalanceRegisterPage />
             </ProtectedRoute>
           }
         />
