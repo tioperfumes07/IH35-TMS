@@ -31,7 +31,7 @@ On the **first reply of every new conversation**, Cursor MUST open with:
 
 `NEW SESSION · rules autoloaded · tiered model in force (Rule 12)`
 
-So Jorge knows permanent rules just loaded. Do not skip. Same-thread continuations use Rule 20 progress headers instead.
+So Jorge knows permanent rules just loaded. Do not skip. Same-thread continuations use the BLOCK progress header defined in `.cursor/rules/24-module-completion-n-of-m.mdc` → "Session header" ("Rule 20" does not exist as a file).
 
 **Also load sequence law:** `docs/trackers/OWNER-EXECUTION-PLAN-2026-07-22.md` + scoreboard `MODULE-DEEP-AUDIT-SCOREBOARD-2026-07-22.md`. If Jorge says “continue building,” follow Phase 1→2 (module deep audit then that module’s PRs) — do not invent a random pile order.
 
