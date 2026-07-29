@@ -3,10 +3,10 @@ import { useState } from "react";
 import { listDispatchCancellationReasons } from "../../api/dispatch";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../Button";
-import { Combobox } from "../Combobox";
 import { Modal } from "../Modal";
 import { MoneyInput } from "../forms/MoneyInput";
 import { ApiError } from "../../api/client";
+import { ReferenceSelect } from "../parity/ReferenceSelect";
 
 /** Pull a human message out of a cancel API failure (validation_error details, field message, or text). */
 function extractCancelError(err: unknown): string {
@@ -49,6 +49,8 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
   const [charge, setCharge] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  /** Optimistic rows from inline "+ Create" so submit works before the list refetch lands. */
+  const [createdReasons, setCreatedReasons] = useState<Array<Record<string, unknown>>>([]);
   const reasonsQuery = useQuery({
     queryKey: ["dispatch", "cancellation-reasons", operatingCompanyId],
     queryFn: () => listDispatchCancellationReasons(operatingCompanyId).then((value) => value.reasons),
@@ -61,7 +63,13 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
   // non-owner's becomes a "requested" cancellation pending an Owner's approval.
   const isOwner = String(user?.role ?? "") === "Owner";
 
-  const reasons = reasonsQuery.data ?? [];
+  const reasons = (() => {
+    const byCode = new Map<string, Record<string, unknown>>();
+    for (const reason of [...(reasonsQuery.data ?? []), ...createdReasons]) {
+      byCode.set(String(reason.reason_code), reason);
+    }
+    return [...byCode.values()];
+  })();
   const selectedReason = reasons.find((reason) => String(reason.reason_code) === reasonCode) ?? null;
   const needsApproval = Boolean(selectedReason?.requires_owner_approval);
   const ownerInlineApprove = needsApproval && isOwner;
@@ -91,6 +99,7 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
             setNotes("");
             setBillable(false);
             setCharge("");
+            setCreatedReasons([]);
             onClose();
           } catch (err) {
             // Surface the API error instead of silently hanging (the original bug); keep the form editable.
@@ -102,16 +111,38 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
       >
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600">Cancellation Reason</label>
-          <Combobox
+          {/*
+            LST-PICKER-01 slice: Cancel Load used a bare Combobox with no inline create, so operators
+            had to leave the cancel flow and navigate to Lists → Load Cancellation Reasons. Wire the
+            shared ReferenceSelect: "+ Create cancellation reason" is the permanent FIRST ROW inside
+            the dropdown; create POSTs catalogs.load_cancellation_reasons (same table
+            listDispatchCancellationReasons / cancelLoad read). Options are keyed by reason_code.
+          */}
+          <ReferenceSelect
+            value={reasonCode}
+            onChange={(nextCode) => setReasonCode(nextCode)}
             options={reasons.map((reason) => ({
               value: String(reason.reason_code),
               label: String(reason.reason_label ?? reason.display_name ?? reason.reason_code),
-              sublabel: `${String(reason.reason_code)}${reason.requires_owner_approval ? " · Owner approval" : ""}`,
+              type: `${String(reason.reason_code)}${reason.requires_owner_approval ? " · Owner approval" : ""}`,
             }))}
-            value={reasonCode}
-            onChange={(nextCode) => setReasonCode(nextCode)}
+            createKind="load_cancellation_reason"
+            operatingCompanyId={operatingCompanyId}
+            createdValueField="code"
             placeholder="Select reason"
             loading={reasonsQuery.isLoading}
+            onOptionCreated={(opt) => {
+              setCreatedReasons((prev) => [
+                ...prev,
+                {
+                  reason_code: opt.value,
+                  reason_label: opt.label,
+                  display_name: opt.label,
+                  requires_owner_approval: false,
+                },
+              ]);
+              void reasonsQuery.refetch();
+            }}
           />
         </div>
         <div className="space-y-1">
