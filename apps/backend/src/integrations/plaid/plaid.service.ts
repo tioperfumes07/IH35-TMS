@@ -8,6 +8,7 @@ import {
   normalizeBankTransactionDescription,
 } from "../../banking/bank-tx-dedup.js";
 import { applyBankingRulesForTransaction } from "../../banking/banking-rules.engine.js";
+import { maybePostBankCategorizationToGl } from "../../banking/bank-feed-gl-posting.service.js";
 import { dispatchNotification, listCompanyUserIdsByRoles } from "../../notifications/dispatcher.js";
 import { sendEmail } from "../../notifications/email.service.js";
 import {
@@ -447,45 +448,81 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
   return { bankAccountIds: createdIds, item_id: itemId };
 }
 
-export async function autoCategorize(transaction: Pick<BankTransaction, "operating_company_id" | "id" | "plaid_category">) {
+/**
+ * ACCT-LINK-06 / ACCT-F05 — Plaid category rules must land on the SAME CHAIN-05 terminal state as the
+ * For Review categorize routes: status=categorized + categorization_gl_account_id (+ legacy coa_account_id)
+ * then maybePostBankCategorizationToGl when an actor is known. Writing only coa_account_id left rows
+ * invisible to the poster and starved matched_journal_entry_id density.
+ */
+export async function autoCategorize(
+  transaction: Pick<BankTransaction, "operating_company_id" | "id" | "plaid_category">,
+  opts?: { actorUserUuid?: string; dryRun?: boolean }
+) {
   const rules = await loadCategoryRules(transaction.operating_company_id);
   if (rules.length === 0) return null;
 
   const categories = transaction.plaid_category ?? [];
-  const matched = rules.find((rule) => matchesRule(rule.plaid_category_pattern, categories));
-  if (!matched) return null;
+  const matched = rules.find(
+    (rule) => Boolean(rule.coa_account_id) && matchesRule(rule.plaid_category_pattern, categories)
+  );
+  if (!matched?.coa_account_id) return null;
+  if (opts?.dryRun) return matched;
 
+  let applied = false;
   await withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [transaction.operating_company_id]);
-    const hasCoaColumn = await client.query<{ exists: boolean }>(
+    const updated = await client.query(
       `
-        SELECT EXISTS (
-          SELECT 1
-          FROM information_schema.columns
-          WHERE table_schema = 'banking'
-            AND table_name = 'bank_transactions'
-            AND column_name = 'coa_account_id'
-        ) AS exists
-      `
+        UPDATE banking.bank_transactions
+        SET
+          status = 'categorized',
+          category = COALESCE(NULLIF(BTRIM(category), ''), 'rule_match'),
+          category_kind = COALESCE(NULLIF(BTRIM(category_kind), ''), 'expense'),
+          categorization_gl_account_id = $2::uuid,
+          coa_account_id = $2::uuid,
+          categorized_at = COALESCE(categorized_at, now()),
+          skip_reason = NULL,
+          investigate_note = NULL,
+          updated_at = now()
+        WHERE id = $1::uuid
+          AND operating_company_id = $3::uuid
+          AND matched_journal_entry_id IS NULL
+          AND categorization_gl_account_id IS NULL
+          AND COALESCE(status, 'pending_categorization') IN ('pending_categorization', 'uncategorized')
+      `,
+      [transaction.id, matched.coa_account_id, transaction.operating_company_id]
     );
-    if (hasCoaColumn.rows[0]?.exists) {
-      const updated = await client.query(
-        `UPDATE banking.bank_transactions SET coa_account_id = $2, updated_at = now() WHERE id = $1 AND operating_company_id = $3 AND coa_account_id IS NULL`,
-        [
-        transaction.id,
-        matched.coa_account_id,
-        transaction.operating_company_id,
-      ]);
-      if ((updated.rowCount ?? 0) === 0) return;
-      console.info("[PLAID_CATEGORIZE_RULE_MATCH]", {
+    applied = (updated.rowCount ?? 0) > 0;
+    if (!applied) return;
+    console.info("[PLAID_CATEGORIZE_RULE_MATCH]", {
+      operatingCompanyId: transaction.operating_company_id,
+      transactionId: transaction.id,
+      ruleId: matched.id,
+      matchedPattern: matched.plaid_category_pattern,
+      coaAccountId: matched.coa_account_id,
+      chain05: true,
+    });
+  });
+
+  if (!applied) return null;
+
+  // Poster is flag-gated (BANK_FEED_GL_POSTING_ENABLED). Skip when no actor (Plaid sync path) —
+  // tags are still CHAIN-05 complete so apply-historical / categorize can post later.
+  if (opts?.actorUserUuid) {
+    try {
+      await maybePostBankCategorizationToGl({
+        companyId: transaction.operating_company_id,
+        actorUserUuid: opts.actorUserUuid,
+        bankTransactionId: transaction.id,
+      });
+    } catch (err) {
+      console.warn("[PLAID_CATEGORIZE_RULE_MATCH_GL_FAILED]", {
         operatingCompanyId: transaction.operating_company_id,
         transactionId: transaction.id,
-        ruleId: matched.id,
-        matchedPattern: matched.plaid_category_pattern,
-        coaAccountId: matched.coa_account_id,
+        message: String((err as Error)?.message ?? err),
       });
     }
-  });
+  }
 
   return matched;
 }

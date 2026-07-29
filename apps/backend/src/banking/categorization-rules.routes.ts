@@ -300,10 +300,25 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
     if (!canDeactivate(user.role)) return reply.code(403).send({ error: "forbidden" });
     const params = ruleIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = companyQuerySchema
+      .extend({
+        // ACCT-LINK-06 — default dry_run=true so Owner/Accountant cannot mint mass bank_categorization
+        // JEs by accident while BANK_FEED_GL_POSTING_ENABLED is already ON for live opcos.
+        dry_run: z
+          .union([z.boolean(), z.enum(["true", "false", "1", "0"])])
+          .optional()
+          .transform((v) => {
+            if (v === undefined) return true;
+            if (typeof v === "boolean") return v;
+            return v === "true" || v === "1";
+          }),
+      })
+      .safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
 
+    const dryRun = query.data.dry_run !== false;
     let matched = 0;
+    let posted = 0;
     try {
       const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
         const ruleRes = await client.query<{ id: string }>(
@@ -323,7 +338,9 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
             SELECT id, operating_company_id, plaid_category
             FROM banking.bank_transactions
             WHERE operating_company_id = $1
-              AND coa_account_id IS NULL
+              AND categorization_gl_account_id IS NULL
+              AND matched_journal_entry_id IS NULL
+              AND COALESCE(status, 'pending_categorization') IN ('pending_categorization', 'uncategorized')
             ORDER BY created_at DESC
           `,
           [query.data.operating_company_id]
@@ -331,37 +348,47 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
 
         let localMatched = 0;
         for (const tx of txRes.rows) {
-          const rule = await autoCategorize({
-            id: tx.id,
-            operating_company_id: tx.operating_company_id,
-            plaid_category: tx.plaid_category ?? [],
-          });
+          const rule = await autoCategorize(
+            {
+              id: tx.id,
+              operating_company_id: tx.operating_company_id,
+              plaid_category: tx.plaid_category ?? [],
+            },
+            dryRun
+              ? { dryRun: true }
+              : { actorUserUuid: String(user.uuid), dryRun: false }
+          );
           if (rule) localMatched += 1;
         }
 
-        await appendCrudAudit(
-          client,
-          user.uuid,
-          "banking.categorization_rule.apply_historical",
-          {
-            resource_type: "banking.transaction_categories",
-            resource_id: params.data.id,
-            operating_company_id: query.data.operating_company_id,
-            matched: localMatched,
-          },
-          "info",
-          "P5-T4-AUTOCAT"
-        );
-        return { matched: localMatched };
+        if (!dryRun) {
+          await appendCrudAudit(
+            client,
+            user.uuid,
+            "banking.categorization_rule.apply_historical",
+            {
+              resource_type: "banking.transaction_categories",
+              resource_id: params.data.id,
+              operating_company_id: query.data.operating_company_id,
+              matched: localMatched,
+              dry_run: false,
+              chain05: true,
+            },
+            "info",
+            "P5-T4-AUTOCAT"
+          );
+        }
+        return { matched: localMatched, posted: dryRun ? 0 : localMatched };
       });
       matched = result.matched;
+      posted = result.posted;
     } catch (error) {
       if ((error as Error).message === "categorization_rule_not_found") {
         return reply.code(404).send({ error: "categorization_rule_not_found" });
       }
       throw error;
     }
-    return { matched };
+    return { matched, posted, dry_run: dryRun };
   });
 }
 

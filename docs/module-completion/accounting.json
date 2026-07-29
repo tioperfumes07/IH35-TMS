@@ -188,8 +188,8 @@
       ],
       "spec": "ACCT-F05 \u00b7 companion BANK-ECON-02",
       "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25: matched_je=3/10622 (lucia); categorized_at_not_null=3. Wiring PASS on main: #3424 bulk+single categorize\u2192maybePostBankCategorizationToGl\u2192postSourceTransaction(bank_categorization)+matched_journal_entry_id lockstep stamp; BANK_FEED_GL_POSTING_ENABLED default OFF. Density is ops backlog \u2014 poster works when used; not a broken poster. GUARD: verify-bankfeed-je-match (step 1486). Remains FAIL until operator categorization volume moves matched_JE density.",
-      "pr": "#3424"
+      "evidence": "LIVE REFRESH 2026-07-29 Neon lucia: matched_je=5/10708; categorized+GL with JE=5/5 (poster OK). ROOT CAUSE (dual-path): autoCategorize/apply-historical wrote only coa_account_id \u2014 never status=categorized nor categorization_gl_account_id nor maybePostBankCategorizationToGl \u2014 so rules could not feed CHAIN-05. THIS PR: autoCategorize writes CHAIN-05 tags + calls poster when actor present; apply-historical defaults dry_run=true and passes actorUserUuid on apply; guard 1762. BANK_FEED_GL_POSTING_ENABLED overrides already ON for TRANSP/TRK/USMCA. Status remains FAIL until operator dry_run then dry_run=false apply-historical (or For Review volume) moves matched_JE density. Existing guards: 1480, 1421, 1507, 1754.",
+      "pr": "#3424 #PENDING-LINK06"
     },
     {
       "id": "ACCT-SURF-01",

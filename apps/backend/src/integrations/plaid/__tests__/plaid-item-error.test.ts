@@ -1,11 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 import { handleItemError } from "../plaid.service.js";
 
-vi.mock("../../../auth/db.js", () => ({
-  withLuciaBypass: vi.fn(async (fn: (client: { query: ReturnType<typeof vi.fn> }) => Promise<unknown>) =>
-    fn({ query: vi.fn(async () => ({ rows: [{ id: "acct-1", institution_name: "Amex" }] })) })
-  ),
-}));
+vi.mock("../../../auth/db.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../auth/db.js")>();
+  return {
+    ...actual,
+    withLuciaBypass: vi.fn(async (fn: (client: { query: ReturnType<typeof vi.fn> }) => Promise<unknown>) =>
+      fn({ query: vi.fn(async () => ({ rows: [{ id: "acct-1", institution_name: "Amex" }] })) })
+    ),
+  };
+});
 
 vi.mock("../../../notifications/email.service.js", () => ({
   sendEmail: vi.fn(async () => undefined),
