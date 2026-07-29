@@ -91,6 +91,9 @@ export type CatalogCreateValues = {
   display_name: string;
   code?: string;
   description?: string;
+  /** Optional extras for catalogs whose create requires more than name/code (e.g. event_type). */
+  event_type?: string;
+  severity?: string;
 };
 
 /**
@@ -442,6 +445,49 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/fuel/station-brands",
     evidence: "apps/backend/src/catalogs/fuel/factory.ts:83,159 + fuel/index.ts:22 tableName fuel_station_brands",
   }),
+
+  // Dispatcher error reasons — UserDetail previously toasted "Add reason in catalog" (fake +Add).
+  // Write path: generic factory POST /api/v1/catalogs/dispatch/dispatcher-error-reasons (entityScoped).
+  // label column (not display_name); event_type+severity required — passed via createExtras from the form.
+  dispatcher_error_reason: {
+    key: "dispatcher_error_reason",
+    label: "error reason",
+    backend: "catalog",
+    readTable: "catalogs.dispatcher_error_reasons",
+    writeTable: "catalogs.dispatcher_error_reasons",
+    readEndpoint: "/api/v1/catalogs/dispatch/dispatcher-error-reasons",
+    writeEndpoint: "/api/v1/catalogs/dispatch/dispatcher-error-reasons",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence:
+      "apps/backend/src/catalogs/generic-catalog.factory.ts entityScoped INSERT + routes.ts dispatchErrorReasonsCatalogConfig; picker list apps/backend/src/mdata/dispatcher-safety-events.routes.ts GET catalogs/dispatcher-error-reasons",
+    fields: CATALOG_FIELDS,
+    create: async (operatingCompanyId, values) => {
+      const label = values.display_name.trim();
+      const code = deriveCatalogCode(label, values.code).replace(/-/g, "_");
+      const eventType = (values.event_type ?? "other").trim();
+      const severity = (values.severity ?? "warning").trim();
+      const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+      const created = await apiRequest<{ id: string; code?: string; label?: string; display_name?: string }>(
+        `/api/v1/catalogs/dispatch/dispatcher-error-reasons?${query.toString()}`,
+        {
+          method: "POST",
+          body: {
+            code,
+            label,
+            event_type: eventType,
+            severity,
+            description: values.description?.trim() || undefined,
+          },
+        }
+      );
+      return {
+        id: String(created.id),
+        label: created.label ?? created.display_name ?? label,
+        code: created.code ?? code,
+      };
+    },
+  },
 } as const satisfies Record<string, CatalogPickerConfig>;
 
 /** Every create kind <ReferenceSelect> accepts — derived from the config, never hand-maintained. */

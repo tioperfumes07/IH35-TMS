@@ -73,6 +73,8 @@ export type ReferenceSelectProps = {
    * create time matches no option after the list refetches and the selection silently empties.
    */
   createdValueField?: "id" | "code";
+  /** Extra create fields from parent form context (e.g. dispatcher event_type already selected). */
+  createExtras?: { event_type?: string; severity?: string };
 };
 
 export function ReferenceSelect({
@@ -89,6 +91,7 @@ export function ReferenceSelect({
   onOptionCreated,
   lockControl,
   createdValueField = "id",
+  createExtras,
 }: ReferenceSelectProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [created, setCreated] = useState<ReferenceOption[]>([]);
@@ -156,6 +159,7 @@ export function ReferenceSelect({
           open
           config={config}
           operatingCompanyId={operatingCompanyId}
+          createExtras={createExtras}
           onClose={() => setCreateOpen(false)}
           onCreated={handleCreated}
         />
