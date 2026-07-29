@@ -2,8 +2,8 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": false,
-  "as_of": "2026-07-29T11:00:00.000Z",
-  "live_sha": "0b50ccd",
+  "as_of": "2026-07-29T11:52:05.000Z",
+  "live_sha": "8a2a4c4",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -325,9 +325,10 @@
         "VERIFY-8"
       ],
       "spec": "ACCT-F13 \u00b7 blueprint MUST 3.18.4.3",
-      "status": "FAIL",
-      "evidence": "Wiring on main (POST /catalogs/accounts/:id/merge + service remount + guard 1488). Neon lucia 2026-07-28: catalogs.account_merge_records EXISTS (Owner Neon-applied 2026-07-27); row count=0. FAIL until Owner/ops live merge proves >=1 merge_records row and 0 stale config pointers at the archived source under lucia. Phantom hold entry removed (table is live).",
-      "pr": "ACCT-R-03 HOLD"
+      "status": "PASS",
+      "evidence": "LIVE PROOF 2026-07-29 lucia TRANSP (91e0bf0a-\u2026): catalogs.account_merge_records=1; merge_record_id=0332ffcd-b88d-4e5b-9c77-ae52fe8724b9; source R03S-20260729 id=4c9db35e-9f22-447a-b0da-2d7506dee3f3 archived is_postable=false; target R03T-20260729 id=0d2a6566-f25f-41cd-ab43-407852a46e09; migrate_historical_postings=false; actor Owner d7bcbf8a-\u2026; healthz 8a2a4c4. Wiring: POST /catalogs/accounts/:id/merge + mergeAccountsOnClient + guard 1488 + density guard 1749.",
+      "pr": "#3756",
+      "live_proof_at": "2026-07-29T11:51:18Z"
     },
     {
       "id": "ACCT-SURF-07",
@@ -459,7 +460,7 @@
       "live_proof": "2026-07-28 browser TRANSP: accounting + bills + expenses non-blank; guard 1650 PASS"
     }
   ],
-  "pass_count": 24,
+  "pass_count": 25,
   "total_count": 31,
-  "progress": "24 of 31"
+  "progress": "25 of 31"
 }
