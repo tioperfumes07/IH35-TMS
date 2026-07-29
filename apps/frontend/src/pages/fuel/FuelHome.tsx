@@ -49,6 +49,53 @@ export function FuelFraudAlertsKpiCard() {
   );
 }
 
+type OveragePendingSummary = {
+  events: unknown[];
+  total_count: number;
+};
+
+async function fetchOveragePending(companyId: string): Promise<OveragePendingSummary> {
+  const params = new URLSearchParams({
+    operating_company_id: companyId,
+    status: "pending_review",
+    limit: "1",
+  });
+  return apiRequest(`/api/v1/fuel/card-overage-events?${params.toString()}`);
+}
+
+/** BANK-F10 — reachable from Fuel Home (does not add a Fuel sub-nav tab). */
+export function FuelCardOverageKpiCard() {
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
+
+  const pendingQuery = useQuery({
+    queryKey: ["fuel", "card-overage-events", "pending-summary", companyId],
+    queryFn: () => fetchOveragePending(companyId),
+    enabled: Boolean(companyId),
+    refetchInterval: 60_000,
+    retry: false,
+  });
+
+  const pending = pendingQuery.data?.total_count ?? 0;
+  const tone = pending > 0 ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-white";
+
+  return (
+    <Link
+      to="/fuel/card-overage"
+      className={`block rounded-sm border px-3 py-2 text-[11px] transition hover:shadow-xs ${tone}`}
+      data-testid="fuel-card-overage-kpi"
+    >
+      <div className="text-[10px] uppercase text-gray-500">Card overage queue</div>
+      <div className={`text-lg font-semibold ${pending > 0 ? "text-amber-800" : "text-gray-900"}`}>
+        {pendingQuery.isError ? "—" : pending}
+      </div>
+      <div className="text-[10px] text-gray-600">
+        Pending review · BANK-F10 approve-then-recover
+      </div>
+    </Link>
+  );
+}
+
 /**
  * Fuel Home tab — wires live planner dashboard KPIs (f-01-fuel-home-stub).
  * Backend GET /api/v1/fuel/planner/dashboard already computes mtd_spend / fleet_mpg / etc.
@@ -78,8 +125,9 @@ export function FuelHomePage() {
           Could not load fuel dashboard KPIs. Retry or check fuel planner permissions.
         </p>
       ) : null}
-      <div className="max-w-xs">
+      <div className="grid max-w-2xl grid-cols-1 gap-2 sm:grid-cols-2">
         <FuelFraudAlertsKpiCard />
+        <FuelCardOverageKpiCard />
       </div>
       <div className="max-w-md">
         <RelayHistoryImport />

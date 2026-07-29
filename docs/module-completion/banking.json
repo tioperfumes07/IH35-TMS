@@ -266,7 +266,7 @@
       ],
       "spec": "FUEL-03 fuel.fuel_card_overage_events \u2192 approve-then-recover \u2192 fuel_overage_receivable JE (FUEL-04)",
       "status": "FAIL",
-      "evidence": "2026-07-28: FUEL-03 engine on main (evaluate on both fuel writers; NOT createSettlementDeduction). Neon lucia: fuel.fuel_card_overage_policies count=3 (TRANSP/USMCA/TRK $900); events table applied (202609090010/020). DOD-A gap re-closed after #3717 squash-drop of #3722: GET/POST /api/v1/fuel/card-overage-events* \u2192 approveAndPostFuelCardOverage. GUARDs 1609+1623+1716. STAYS FAIL: FUEL_CARD_OVERAGE_ENGINE_ENABLED + GL_POSTING default OFF; zero live posted recoveries; Fuel UI queue UNVERIFIED.",
+      "evidence": "2026-07-29: Fuel UI queue mounted at /fuel/card-overage (CardOverageQueuePage) + Fuel Home KPI link; approve POSTs existing approveAndPostFuelCardOverage. Guard verify-bank-f10-overage-queue-ui (step 1768) + 1609/1623/1716. Neon lucia: policies=3 entities; events=0; engine+GL flags default OFF. STAYS FAIL until live posted recoveries + flag enable (Rule 23).",
       "pr": null
     }
   ],
