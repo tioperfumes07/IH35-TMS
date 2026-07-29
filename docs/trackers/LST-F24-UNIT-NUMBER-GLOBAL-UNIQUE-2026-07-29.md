@@ -1,26 +1,61 @@
-# LST-F24 — `mdata.units.unit_number` is globally unique, not per-entity
+# LST-F24 — WITHDRAWN. The constraint is correct; the OWNERSHIP DATA is not.
 
-**Status: CONFIRMED REAL. Needs an owner decision — the fix is a schema change on a hub table.**
+**Status: my recommendation was WRONG and is withdrawn. A larger, real finding replaced it.**
 
-## The defect
+## OWNER RULING 2026-07-29 — read this first
 
-```
-units_unit_number_key  UNIQUE (unit_number)      <- global, across ALL entities
-units_vin_key          UNIQUE (vin)              <- global, and CORRECT
-```
+> "usmca or transportation do not own that equipment, they are not purchasing that equipment. we leave
+> those numbers because those are the assigned unit numbers. so we leave the same number. the same
+> units trucking owns it leases to both transportation and to usmca."
 
-`unit_number` is unique across the whole database. If IH 35 Trucking owns a unit numbered `T150`,
-USMCA can never create one with that number, and vice versa.
+IH 35 Trucking owns **all** the equipment and leases it to Transportation and to USMCA. A unit number
+therefore identifies **one physical truck**, which moves between lessees over time. Under that model:
 
-`vin` being globally unique is right and must stay: a VIN identifies one physical vehicle worldwide.
-`unit_number` is a fleet's internal name for a truck, and two carriers can each have a unit 101.
+- **`UNIQUE (unit_number)` globally is CORRECT and must stay.** Scoping it per entity — which is what I
+  recommended below — would allow two DIFFERENT physical trucks to carry the same number and would
+  destroy the very identity the number exists to provide.
+- The lease relationship is already modelled: `owner_company_id` (TRK) +
+  `currently_leased_to_company_id` (TRANSP or USMCA).
+- The owner's actual ask is that the unit **name/number be EDITABLE**, not that the constraint be
+  relaxed. Editable ≠ non-unique.
 
-## Against the systems we are matching
+I recommended the opposite of the correct fix because I reasoned from a generic multi-carrier pattern
+(McLeod/Alvys scope unit numbers per carrier) instead of from THIS company's structure, where one
+entity owns the iron and leases it out. The generic pattern was real; it was the wrong model to apply.
 
-McLeod and Alvys both scope unit/tractor numbers to the carrier. In a multi-entity system a global
-unique forces artificial numbering — the second entity has to invent a prefix or a suffix purely to
-dodge a database constraint, and that invented number then appears on settlements, IFTA filings and
-maintenance records forever.
+---
+
+## THE REAL FINDING — ownership data contradicts the business model on 99 of 186 units
+
+Verified live on prod, complete read (visible 186 == n_live_tup 186):
+
+| owner_company_id (prod) | currently_leased_to | units | expected under the owner's model |
+|---|---|---|---|
+| **USMCA Freight Solutions** | **(not leased out)** | **93** | TRK owns, leased to USMCA |
+| IH 35 Trucking | IH 35 Transportation | 87 | correct as recorded |
+| **IH 35 Transportation** | itself | **5** | TRK owns, leased to TRANSP |
+| **IH 35 Transportation** | (not leased out) | **1** | TRK owns, leased to TRANSP |
+
+**99 units carry an owner the business model says they cannot have.** All 186 have a VIN. NO unit has
+`title_status` or `lien_holder` populated, so `owner_company_id` is the only ownership signal in the
+system — and for 99 units it disagrees with the owner.
+
+## Why this matters far more than the constraint did
+
+**Depreciation.** `accounting/owned-unit-fixed-asset-register.service.ts:147` filters
+`owner_company_id = $2::uuid`, and `FIXED_ASSET_AUTOPOST` is scoped to TRK only. 93 units recorded as
+USMCA-owned are therefore EXCLUDED from TRK's fixed-asset register — understating TRK's depreciation
+and its balance sheet, while implying USMCA holds assets it never purchased.
+
+**Lease accounting (ASC 842).** The intercompany lease for those 99 units does not exist in the data:
+`currently_leased_to_company_id` is NULL on all 93 USMCA rows. There is nothing to build a lessor/
+lessee position from.
+
+**Insurance, IRP, titles.** The columns exist (`us_insurance_*`, `mx_insurance_*`, `texas_irp_number`,
+`title_status`, `lien_holder`) and are unpopulated, so nothing independently corroborates ownership.
+
+A CPA, auditor, lender or insurer reading this would ask why a company that "is not purchasing
+equipment" carries 93 units on its books. That question has no good answer in the current data.
 
 ## Live state (prod, complete read: visible 186 == n_live_tup 186)
 
@@ -49,17 +84,32 @@ Both are seed-import paths. Today they are correct BECAUSE the constraint is glo
 `unit_number` becomes per-entity, `LIMIT 1` silently picks whichever entity's unit sorts first, and a
 CSV import can attach a row to the wrong company's truck.
 
-## Recommended order — the order matters
+## Recommendation — REPLACED
 
-1. **Scope the two seed-import lookups** by owner/leased-to, exactly as the Relay ingest already does.
-2. **Then** migrate the constraint: drop `units_unit_number_key`, add
-   `UNIQUE (owner_company_id, unit_number)`. Additive-safe: no existing row violates it, since all 186
-   numbers are already distinct.
-3. Keep `units_vin_key` global. Do not touch it.
-4. Guard: no lookup of `mdata.units` by `unit_number` without an entity predicate.
+**DO NOT change `units_unit_number_key`.** It is correct. Withdraw the migration proposed below.
 
-Doing 2 before 1 converts a naming limitation into a data-integrity defect. That is why this is written
-down rather than shipped in a hurry.
+**DO NOT bulk-update the 99 rows without the owner's explicit instruction.** Reassigning ownership of
+99 vehicles is a financial and legal act, not a data cleanup: it moves assets between balance sheets,
+changes which entity depreciates them, and creates 99 intercompany lease relationships that do not
+currently exist. It is squarely CLAUDE.md §1.3/§1.4 territory and belongs to the money lane with the
+owner's sign-off.
+
+**What should happen, in order:**
+1. Owner confirms the intended end state per unit: `owner_company_id = TRK` for all 186, with
+   `currently_leased_to_company_id` set to TRANSP or USMCA per actual assignment.
+2. Money lane writes ONE owner-gated migration performing that correction, with a full before/after
+   row count and audit rows — never a silent UPDATE.
+3. Confirm the fixed-asset register and `FIXED_ASSET_AUTOPOST` then see all TRK-owned units.
+4. Guard: no unit may have `owner_company_id` set to an entity that does not purchase equipment.
+   TRK is the asset holder; that is a business invariant and belongs in CI.
+
+**Separately, and safe now:** make the unit number/name EDITABLE, which is what the owner actually
+asked for. That is a UI/route change and does not touch the constraint.
+
+**Still worth doing regardless (my lane):** the two `csv-seed-import.ts` lookups at :229 and :325
+resolve a unit by `unit_number` with `LIMIT 1` and no entity filter. Under the corrected model that is
+harmless today, because the number IS globally unique. It stays worth scoping for clarity, but it is
+no longer a prerequisite for anything.
 
 ## Why this was not fixed here
 
