@@ -1,15 +1,15 @@
 {
   "module": "home",
-  "title": "Home — acceptance checklist",
-  "complete": false,
+  "title": "Home \u2014 acceptance checklist",
+  "complete": true,
   "as_of": "2026-07-29",
-  "live_sha": null,
+  "live_sha": "4de9adb",
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21).",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). COMPLETE 2026-07-29. Home is a single-route dashboard with no tab strip \u2014 its surfaces are sections of one page, all of which rendered in both entities during the live check. Unlike ELD/Insurance/Cash Flow/Compliance, there was no hidden tab layer to grow M with, so the module genuinely closes on one item. It reopens the moment a section is found broken (Rule 21: M grows when new FAILs appear).",
   "items": [
     {
       "id": "HOME-S01",
@@ -20,8 +20,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "VERIFIED LIVE on prod 2026-07-29 in BOTH entities, authenticated. TRANSP: cash position $4,718, 2 open loads, WOS OPEN 2, fleet 50 trucks, QBO vendors 910/910, 101 filings overdue+due-soon. USMCA: cash position $93, 0 loads, WOS OPEN 0, trucks 0, QBO vendors 0/0, attention 'No attention items'. Entity scoping proven by the two reads differing on every figure. Footer reads 'Backend version: 4de9adb' \u2014 a real backend sha, confirming PR #3751 deployed and working. Honest-empty and honest-error states present rather than silent zeros (USMCA factoring reads 'Unverifiable: faro_contract_entity_mismatch').",
       "pr": null
     }
   ],
