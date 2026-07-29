@@ -1,3 +1,4 @@
+import { openWorkOrderPredicate } from "../kpi/canonical-kpis.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
@@ -242,6 +243,7 @@ async function computeWoLinkedEconomics(
       SELECT COUNT(*)::text AS c
       FROM maintenance.work_orders wo
       WHERE wo.operating_company_id = $1::uuid
+        AND wo.voided_at IS NULL
         AND (${existsClauses.join(" OR ")})
     `,
     [operatingCompanyId]
@@ -336,6 +338,7 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
             SELECT status::text AS status, COUNT(*)::text AS c
             FROM maintenance.work_orders
             WHERE operating_company_id = $1::uuid
+              AND voided_at IS NULL
             GROUP BY status
           `,
           [parsed.data.operating_company_id]
@@ -512,11 +515,17 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
         if (!rel.rows[0]?.ok) return { open: 0, in_progress: 0 };
         // open = canonical open set (matches the Maintenance dashboard open_wos); in_progress = subset.
         // Returns { open, in_progress } to match the Home tile (api/home.ts fetchHomeWosOpenCount).
+        //
+        // MAINT-VOID: this claimed to match the maintenance dashboard but re-typed the status list and
+        // omitted the void filter, so VOIDED work orders were counted. On prod that made Home report
+        // "2 open work orders" when both rows were voided demo records (DEMO-WO-001/002, voided
+        // 2026-07-13) and the maintenance table itself correctly showed "0 of 0". Now it uses the ONE
+        // canonical predicate so the two can never disagree again.
         const res = await client.query(
           `
             SELECT
-              count(*) FILTER (WHERE status IN ('open','in_progress','waiting_parts'))::text AS open,
-              count(*) FILTER (WHERE status = 'in_progress')::text AS in_progress
+              count(*) FILTER (WHERE ${openWorkOrderPredicate()})::text AS open,
+              count(*) FILTER (WHERE status = 'in_progress' AND voided_at IS NULL)::text AS in_progress
             FROM maintenance.work_orders
             WHERE operating_company_id = $1::uuid
           `,

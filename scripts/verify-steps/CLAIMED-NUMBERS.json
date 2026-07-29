@@ -1108,6 +1108,7 @@
     "1727": "1727-verify-migration-no-raise-on-role-binding.mjs",
     "1729": "1729-verify-module-completion-ui-in-sync.mjs",
     "1731": "1731-verify-every-catalog-wired.mjs",
+    "1743": "1743-verify-work-order-queries-exclude-voided.mjs",
     "1732": "1732-verify-posting-flags-require-bound-accounts.mjs",
     "1733": "1733-verify-vendor-type-catalog-backed.mjs",
     "1734": "1734-verify-ob01-opening-balance-register.mjs",

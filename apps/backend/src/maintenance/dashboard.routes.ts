@@ -172,6 +172,10 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         `
           SELECT * FROM maintenance.work_orders
           WHERE operating_company_id = $1
+            -- MAINT-VOID: voided work orders are not recent ACTIVITY, they are retracted records.
+            -- Without this the voided demo rows DEMO-WO-001/002 sat in this panel on prod while the
+            -- main work-order table correctly showed none.
+            AND voided_at IS NULL
           ORDER BY opened_at DESC NULLS LAST, created_at DESC
           LIMIT 5
         `,
@@ -182,6 +186,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
           SELECT * FROM maintenance.work_orders
           WHERE operating_company_id = $1
             AND status = 'complete'
+            AND voided_at IS NULL
           ORDER BY updated_at DESC NULLS LAST
           LIMIT 5
         `,
@@ -308,7 +313,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         : `NULL::int`;
       const woExpr = hasWo
         ? `(SELECT COUNT(*) FROM maintenance.work_orders wo
-             WHERE wo.unit_id = u.id AND wo.status NOT IN ('complete', 'cancelled'))`
+             WHERE wo.unit_id = u.id AND wo.voided_at IS NULL AND wo.status NOT IN ('complete', 'cancelled'))`
         : `0`;
       // §4 scope fix (same root cause as fleet-table/kpis above): scope by owner OR lessee, not
       // owner_company_id alone, so leased-in units' live maintenance status (odometer/next PM
@@ -381,6 +386,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
           FROM maintenance.work_orders
           WHERE operating_company_id = $1::uuid
             AND status NOT IN ('complete', 'cancelled')
+            AND voided_at IS NULL
         `,
         [companyId]
       );
@@ -413,6 +419,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
           FROM maintenance.work_orders
           WHERE operating_company_id = $1::uuid
             AND status NOT IN ('complete', 'cancelled')
+            AND voided_at IS NULL
           GROUP BY 1, 2
           ORDER BY open_work_orders DESC, service_location ASC
           LIMIT 250

@@ -93,6 +93,7 @@ export async function countPastDueMaintenanceWorkOrders(client: Queryable, opera
       SELECT count(*)::int AS count
       FROM maintenance.work_orders w
       WHERE w.operating_company_id = $1::uuid
+        AND w.voided_at IS NULL
         AND w.status NOT IN ('complete', 'cancelled', 'completed')
         AND w.due_date IS NOT NULL
         AND w.due_date < CURRENT_DATE
