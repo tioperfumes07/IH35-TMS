@@ -47,7 +47,10 @@ Cursor must ground every decision in the *current* state of these, not memory:
 ## 2. PERMISSIONS & MERGE GATES (from Law of the Land §1 — these override everything else)
 - **Merge to `main` = ship to production. There is no second gate.** A green CI check is **NOT** approval.
 - **Self-merge on green (no asking):** pure-frontend UI, docs, CI-action bumps, and **non-financial** backend that touches none of the financial cluster, DB migrations, or `accounting.*`/`catalogs.*`/`mdata.*`.
-- **STOP and get the owner's explicit `JORGE-APPROVED` before merging** ANY: financial backend change, financial cluster (posting/GL/ledger/balances/periods/reconcile/opening-balances/grants/RLS), DB migration/schema change, any `accounting.*`/`catalogs.*`/`mdata.*` (schema OR data), or runtime dependency bump.
+- **Financial cluster, migrations, schema, `accounting.*`/`catalogs.*`/`mdata.*`, runtime dep bumps: BUILD them, never merge them yourself — Devin merges on green** (owner rulings 2026-07-26 and 2026-07-29: *"remove the gate. you build and devin merges."*).
+- **The `JORGE-APPROVED` label is NOT a merge gate. Do not ask for it, and do not block on it.** The owner does not review PRs (`docs/specs/PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26.md`), and `scripts/verify-hold-merge-gate.mjs:28` has treated the label as *"optional/legacy; no longer required"* since 2026-07-26 — CI has agreed with the owner longer than these docs have. A gate nobody operates is a control deficiency, not a control: it records an approval step that never ran, which is worse to a CPA, auditor, lender or court than having no step at all. **Asking for the label at merge time is itself a violation.**
+- **Unanswered owner questions are settled BEFORE implementation starts, never at merge.** "May we merge this PR?" is not an owner question.
+- **The controls that actually operate** — and therefore ARE the financial controls: builder is never the merger; Rule 11's independent reviewer is never the builder; `ih35_app` cannot run DDL (Postgres itself refuses, the owner applies on Neon); money-posting flags default OFF per entity; the 18-key evidence block, CI-enforced at verify-steps 1324/1430/1431. Each of those leaves evidence a reviewer can test.
 - **Financial cluster = build-and-HOLD, no exceptions.** The app role `ih35_app` **cannot run DDL.** Cursor builds + validates migrations on a throwaway Postgres (apply-twice, idempotent), hands the owner the full SQL + sha256; **the owner applies on Neon and ledger-backfills.** Never build finance/posting logic solo — design docs are fine; the posting engine is reused, never re-invented.
 - **Prohibited outright** (direct the owner to do it): moving money / sending payments / posting to prod without per-action OK; entering credentials into forms; changing access controls/sharing; permanently deleting data; submitting to any external financial system.
 - **When unsure, STOP and ask.** Do not decide the scope of your own authority.
@@ -115,7 +118,7 @@ Escalate to a higher tier the moment a task touches money, schema, RLS, migratio
 4. **Build + verify locally** — `npm run verify:static` then, before any substantive push, `npm run verify:local-ci` (the exact CI command on an ephemeral throwaway Postgres; it cannot miss a guard). Frontend: `tsc -b` + `vitest run` + mobile-responsive audit.
 5. **Independent Code-Review Agent pass** (+ Financial Agent if money-touching). Resolve findings.
 6. **PR** with root-cause + scope + verification + the linkage declaration in the body.
-7. **Merge only per §2.** Financial/migration → build-and-HOLD → owner `JORGE-APPROVED` + owner Neon-apply → GUARD re-proves live.
+7. **Merge only per §2.** Financial/migration → build → **Devin merges on green** → owner Neon-apply for DDL → GUARD re-proves live. Never block on a `JORGE-APPROVED` label; it is not a merge gate.
 8. **Verify deploy** — poll `/api/v1/healthz/shallow` until `version` == the merge SHA; confirm deep health green; confirm the *effect* on prod (row/column/policy) with the RLS bypass.
 9. Never `git add -A` blindly (untracked worktrees must never be committed); stage explicit paths.
 
