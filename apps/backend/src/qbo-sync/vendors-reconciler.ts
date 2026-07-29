@@ -60,7 +60,7 @@ async function createMissingFromMirror(client: PoolClient, operatingCompanyId: s
           CASE WHEN qv.active THEN NULL ELSE now() END,
           now(),
           'synced'
-        FROM mdata.qbo_vendors qv
+        FROM accounting.qbo_vendors qv
         WHERE qv.operating_company_id = $1::uuid
           AND qv.qbo_id IS NOT NULL
           AND NOT EXISTS (
@@ -90,7 +90,7 @@ async function healFieldDrift(client: PoolClient, operatingCompanyId: string): P
           qbo_sync_error = NULL,
           qbo_synced_at = now(),
           updated_at = now()
-        FROM mdata.qbo_vendors qv
+        FROM accounting.qbo_vendors qv
         WHERE qv.operating_company_id = $1::uuid
           AND qv.qbo_id = v.qbo_vendor_id
           AND v.operating_company_id = qv.operating_company_id
