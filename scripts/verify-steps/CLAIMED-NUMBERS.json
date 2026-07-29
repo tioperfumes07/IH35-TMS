@@ -1144,6 +1144,7 @@
     "1770": "1770-verify-lst-picker02-write-equals-read.mjs",
     "1772": "1772-verify-lst-a01-hub-reachability-closed.mjs",
     "1774": "1774-verify-lst-cat06-dispatcher-error-reasons-closed.mjs",
+    "1776": "1776-verify-lst-orph02-held-registry-truth.mjs",
     "1778": "1778-verify-lst-maint01-reseed-rls-safe.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
