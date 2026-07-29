@@ -32,10 +32,27 @@
 // PARALLEL BOOKS: QBO is read-only. This module issues QBO *report* GETs and nothing else. There is
 // no write-back of any kind, and no posting flag is read or flipped.
 //
-// MATCHING (fixture + QBO import, both): exact catalogs.accounts.account_name match first, then
-// case-insensitive/trimmed. A label that matches neither is reported in `unmapped` — never guessed,
-// never silently dropped. The one-time TRANSP prod seed (db/migrations/202610151400_*) uses the exact
-// same two-step rule so the register and the migration agree on what "the same account" means.
+// MATCHING (fixture import only — 2026-07-29 prod-truth pass, Cursor-Balances-Reference.xlsx vs live
+// Neon catalogs.accounts): four ordered passes, each a documented, deterministic rule — never a fuzzy
+// guess. A label that matches none of the four is reported in `unmapped`:
+//   1. `match_aliases` in the fixture file — an explicit, owner-verified rename for a SPECIFIC label
+//      (e.g. QBO's report-only "Accounts Receivable (A/R) [control]" -> the live CoA's plain
+//      "Accounts Receivable (A/R)"; the worksheet's ASCII "Ignacio Munoz" -> the live CoA's accented
+//      "Ignacio Muñoz"). This is the ONLY pass that is per-label data, not a general rule — it exists
+//      precisely so a rename never needs a guessed general rule.
+//   2. exact catalogs.accounts.account_name match.
+//   3. case-insensitive/trimmed match.
+//   4. trailing " [control]" suffix stripped (QBO's Balance Sheet report appends this to the A/R
+//      control account label; the live CoA row never carries it) — deterministic, not a guess.
+//   5. diacritic-fold compare (Unicode NFD decomposition with combining marks stripped, then
+//      trim/lower) — catches an ASCII-vs-accented spelling difference generally, beyond the one
+//      `match_aliases` entry that documents this specific case.
+// `fold_into` in the fixture file names labels that are NOT postable catalogs.accounts rows at all
+// (QBO's Balance Sheet "Net Income" line is a rollup of not-yet-closed P&L accounts, not a GL account
+// in any chart of accounts) and folds their cents into a named target label's snapshot BEFORE staging
+// — never left in `unmapped` when the target resolves. The one-time TRANSP prod seed
+// (db/migrations/202610151400_*) implements the identical alias + fold rules in SQL so the register
+// and the migration agree on what "the same account" means.
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -128,6 +145,79 @@ function normalizeLabel(label: string | null | undefined): string {
 function matchesAnyLabel(name: string | null | undefined, labels: readonly string[]): boolean {
   const n = normalizeLabel(name);
   return labels.some((l) => normalizeLabel(l) === n);
+}
+
+/** Deterministic QBO Balance Sheet report normalize — the control-account rollup suffix, not a guess. */
+function stripControlSuffix(name: string): string {
+  return name.replace(/\s*\[control\]\s*$/i, "");
+}
+
+/** Unicode NFD decomposition + strip combining marks (U+0300–U+036F) — "Muñoz" -> "Munoz". */
+function diacriticFold(name: string): string {
+  return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function trimLower(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+type FixtureAccountRow = { id: string; account_name: string };
+
+/** Four independent lookup indexes over the SAME live catalogs.accounts rows — see the file header's
+ * "MATCHING" section for the ordered rule these back. */
+function buildFixtureAccountIndexes(accounts: FixtureAccountRow[]): {
+  byExact: Map<string, FixtureAccountRow>;
+  byTrimLower: Map<string, FixtureAccountRow>;
+  byControlStripped: Map<string, FixtureAccountRow>;
+  byDiacriticFold: Map<string, FixtureAccountRow>;
+} {
+  const byExact = new Map<string, FixtureAccountRow>();
+  const byTrimLower = new Map<string, FixtureAccountRow>();
+  const byControlStripped = new Map<string, FixtureAccountRow>();
+  const byDiacriticFold = new Map<string, FixtureAccountRow>();
+  for (const a of accounts) {
+    byExact.set(a.account_name, a);
+    // first-match-wins on every index — never silently overwritten by a later duplicate label.
+    const tl = trimLower(a.account_name);
+    if (!byTrimLower.has(tl)) byTrimLower.set(tl, a);
+    const cs = trimLower(stripControlSuffix(a.account_name));
+    if (!byControlStripped.has(cs)) byControlStripped.set(cs, a);
+    const df = trimLower(diacriticFold(a.account_name));
+    if (!byDiacriticFold.has(df)) byDiacriticFold.set(df, a);
+  }
+  return { byExact, byTrimLower, byControlStripped, byDiacriticFold };
+}
+
+/**
+ * Resolve one fixture label to a live account using the ordered rule documented in the file header's
+ * "MATCHING" section: alias -> exact -> trim/lower -> control-suffix-stripped -> diacritic-fold.
+ * Returns null (never a guess) when none of the four passes finds a live account.
+ */
+function resolveFixtureAccountMatch(
+  qboAccountName: string,
+  idx: ReturnType<typeof buildFixtureAccountIndexes>,
+  matchAliases: Record<string, string>
+): { account: FixtureAccountRow; strategy: string } | null {
+  const alias = matchAliases[qboAccountName];
+  const candidates = alias ? [alias, qboAccountName] : [qboAccountName];
+
+  for (const c of candidates) {
+    const hit = idx.byExact.get(c);
+    if (hit) return { account: hit, strategy: c === alias ? "match_aliases+exact" : "exact" };
+  }
+  for (const c of candidates) {
+    const hit = idx.byTrimLower.get(trimLower(c));
+    if (hit) return { account: hit, strategy: c === alias ? "match_aliases+trim_lower" : "trim_lower" };
+  }
+  for (const c of candidates) {
+    const hit = idx.byControlStripped.get(trimLower(stripControlSuffix(c)));
+    if (hit) return { account: hit, strategy: "control_suffix_stripped" };
+  }
+  for (const c of candidates) {
+    const hit = idx.byDiacriticFold.get(trimLower(diacriticFold(c)));
+    if (hit) return { account: hit, strategy: "diacritic_fold" };
+  }
+  return null;
 }
 
 export type ObRegisterLine = {
@@ -909,7 +999,15 @@ export type ObFixtureLineInput = {
   notes?: string | null;
 };
 
-type ObFixtureFile = { company_code?: string; as_of_date?: string; lines: ObFixtureLineInput[] };
+type ObFixtureFile = {
+  company_code?: string;
+  as_of_date?: string;
+  lines: ObFixtureLineInput[];
+  /** Explicit, owner-verified rename for a SPECIFIC fixture label — see file header "MATCHING" §1. */
+  match_aliases?: Record<string, string>;
+  /** Fixture labels that are not postable catalogs.accounts rows — see file header "MATCHING" fold note. */
+  fold_into?: Record<string, string>;
+};
 
 export type ObFixtureSource = string | ObFixtureLineInput[] | ObFixtureFile;
 
@@ -921,7 +1019,9 @@ export type ObFixtureImportResult = {
   unmapped: Array<{ qbo_account_name: string; reason: string }>;
 };
 
-function loadFixtureLines(source: ObFixtureSource): ObFixtureLineInput[] {
+type ObFixtureLoaded = { lines: ObFixtureLineInput[]; match_aliases: Record<string, string>; fold_into: Record<string, string> };
+
+function loadFixtureFile(source: ObFixtureSource): ObFixtureLoaded {
   if (typeof source === "string") {
     const abs = source.startsWith("/") ? source : join(resolveMonorepoRoot(import.meta.url), source);
     const raw = readFileSync(abs, "utf8");
@@ -929,10 +1029,10 @@ function loadFixtureLines(source: ObFixtureSource): ObFixtureLineInput[] {
     if (!Array.isArray(parsed.lines)) {
       throw new ObRegisterError("fixture_malformed", `fixture at ${abs} has no "lines" array`, 500, { path: abs });
     }
-    return parsed.lines;
+    return { lines: parsed.lines, match_aliases: parsed.match_aliases ?? {}, fold_into: parsed.fold_into ?? {} };
   }
-  if (Array.isArray(source)) return source;
-  return source.lines;
+  if (Array.isArray(source)) return { lines: source, match_aliases: {}, fold_into: {} };
+  return { lines: source.lines, match_aliases: source.match_aliases ?? {}, fold_into: source.fold_into ?? {} };
 }
 
 /**
@@ -940,10 +1040,13 @@ function loadFixtureLines(source: ObFixtureSource): ObFixtureLineInput[] {
  * from Cursor-Balances-Reference.xlsx) into STAGING. TRANSP-only — this fixture is TRANSP's snapshot;
  * TRK is "AWAITING DATA" per the worksheet and USMCA is manual-only, neither has a fixture to import.
  *
- * Matching: exact catalogs.accounts.account_name, then case-insensitive/trimmed. A label that matches
- * neither is reported in `unmapped` — never guessed, never invented. This is the same rule
- * db/migrations/202610151400_ob01_transp_clone_as_is_seed.sql uses so the register and the migration
- * agree on what "the same account" means.
+ * Matching: the five-pass rule documented in the file header's "MATCHING" section (match_aliases ->
+ * exact -> trim/lower -> control-suffix-stripped -> diacritic-fold). A label that matches none of them
+ * is reported in `unmapped` — never guessed, never invented. `fold_into` labels (fixture rows that are
+ * not postable catalogs.accounts rows, e.g. QBO's "Net Income" rollup) are folded into their named
+ * target's snapshot before staging instead of being matched to their own account. This is the same
+ * rule db/migrations/202610151400_ob01_transp_clone_as_is_seed.sql implements in SQL so the register
+ * and the migration agree on what "the same account" means.
  *
  * "Re-import refreshes the Snapshot only": a prior Adjustment for the same account/period is preserved
  * exactly like importObRegisterFromQbo.
@@ -964,39 +1067,68 @@ export async function importObRegisterFromFixture(
     );
   }
 
-  const fixtureLines = loadFixtureLines(fixtureSource);
+  const { lines: fixtureLines, match_aliases: matchAliases, fold_into: foldInto } = loadFixtureFile(fixtureSource);
 
-  const accountsRes = await client.query<{ id: string; account_name: string }>(
+  const accountsRes = await client.query<FixtureAccountRow>(
     `SELECT id::text, account_name FROM catalogs.accounts WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL`,
     [operatingCompanyId]
   );
-  const byExact = new Map<string, { id: string; account_name: string }>();
-  const byTrimLower = new Map<string, { id: string; account_name: string }>();
-  for (const a of accountsRes.rows) {
-    byExact.set(a.account_name, a);
-    const key = a.account_name.trim().toLowerCase();
-    if (!byTrimLower.has(key)) byTrimLower.set(key, a); // first-match-wins, never silently overwritten
-  }
+  const idx = buildFixtureAccountIndexes(accountsRes.rows);
 
-  let staged = 0;
-  let mapped = 0;
+  // fold_into sources (e.g. "Net Income") are NOT matched to their own account — they never had one.
+  // Their cents are folded into the named target's Snapshot before staging, keyed by the fixture's own
+  // qbo_account_name so the fold target does not depend on which live account label it resolved to.
+  const foldSourceNames = new Set(Object.keys(foldInto));
+  const normalLines = fixtureLines.filter((l) => !foldSourceNames.has(l.qbo_account_name));
+  const foldSourceLines = fixtureLines.filter((l) => foldSourceNames.has(l.qbo_account_name));
+
+  type Resolved = { line: ObFixtureLineInput; match: FixtureAccountRow; strategy: string };
+  const resolved: Resolved[] = [];
   const unmapped: Array<{ qbo_account_name: string; reason: string }> = [];
 
-  for (const line of fixtureLines) {
-    const match = byExact.get(line.qbo_account_name) ?? byTrimLower.get(line.qbo_account_name.trim().toLowerCase()) ?? null;
-    if (!match) {
+  for (const line of normalLines) {
+    const found = resolveFixtureAccountMatch(line.qbo_account_name, idx, matchAliases);
+    if (!found) {
       unmapped.push({
         qbo_account_name: line.qbo_account_name,
-        reason: "no matching catalogs.accounts row (exact or case-insensitive/trimmed) — never invented",
+        reason: "no matching catalogs.accounts row (match_aliases / exact / trim-lower / control-suffix / diacritic-fold) — never invented",
       });
       continue;
     }
-    mapped += 1;
+    resolved.push({ line, match: found.account, strategy: found.strategy });
+  }
 
+  // Fold each fold_into source's cents onto its target's resolved snapshot. "Never leave [a fold
+  // source] unmapped if the fold target exists" — if the target itself did not resolve, the fold
+  // source honestly reports unmapped naming the missing target, rather than inventing a home for it.
+  const foldAdditionsByAccountId = new Map<string, number>();
+  for (const line of foldSourceLines) {
+    const targetLabel = foldInto[line.qbo_account_name];
+    const target = resolved.find((r) => r.line.qbo_account_name === targetLabel);
+    if (!target) {
+      unmapped.push({
+        qbo_account_name: line.qbo_account_name,
+        reason: `fold_into target "${targetLabel}" did not resolve to a live account in this fixture run — cannot fold, never invented`,
+      });
+      continue;
+    }
+    foldAdditionsByAccountId.set(
+      target.match.id,
+      (foldAdditionsByAccountId.get(target.match.id) ?? 0) + line.qbo_snapshot_cents
+    );
+  }
+
+  let staged = 0;
+  for (const { line, match, strategy } of resolved) {
+    const foldAddition = foldAdditionsByAccountId.get(match.id) ?? 0;
     const prior = await loadMostRecentLine(client, operatingCompanyId, period.as_of_date, match.id);
     const priorAdjustment = prior?.adjustment_cents ?? line.adjustment_cents ?? 0;
-    const snapshotCents = line.qbo_snapshot_cents;
+    const snapshotCents = line.qbo_snapshot_cents + foldAddition;
     const amountCents = snapshotCents + priorAdjustment;
+    const note =
+      foldAddition !== 0
+        ? `${line.notes ? `${line.notes} — ` : ""}includes ${foldAddition} cents folded in from Net Income (owner ruling 2026-07-29)`
+        : line.notes ?? null;
 
     const res = await client.query<{ id: string }>(
       `
@@ -1024,13 +1156,15 @@ export async function importObRegisterFromFixture(
         amountCents,
         snapshotCents,
         priorAdjustment,
-        line.qbo_account_name,
-        line.notes ?? null,
+        `${line.qbo_account_name} (matched via ${strategy})`,
+        note,
         actorUserId,
       ]
     );
     if (res.rows[0]) staged += 1;
   }
+
+  const mapped = fixtureLines.length - unmapped.length;
 
   await insertAuditEvent(client, {
     operatingCompanyId,

@@ -118,6 +118,18 @@ export function checkFixtureTieout(json) {
     if (declared.equity !== equity) problems.push(`declared equity(${declared.equity}) != re-summed equity(${equity})`);
   }
 
+  // Structural check on the 2026-07-29 prod-truth matching metadata: an alias/fold declared for a
+  // label that isn't even in the fixture's own lines is dead law — it silently stops protecting
+  // anything the moment the fixture is regenerated.
+  const lineNames = new Set((Array.isArray(json.lines) ? json.lines : []).map((l) => l.qbo_account_name));
+  for (const key of Object.keys(json.match_aliases ?? {})) {
+    if (!lineNames.has(key)) problems.push(`match_aliases key "${key}" is not a qbo_account_name in fixture lines`);
+  }
+  for (const [key, target] of Object.entries(json.fold_into ?? {})) {
+    if (!lineNames.has(key)) problems.push(`fold_into key "${key}" is not a qbo_account_name in fixture lines`);
+    if (typeof target !== "string" || !target.trim()) problems.push(`fold_into["${key}"] must name a non-empty target label`);
+  }
+
   return problems;
 }
 
@@ -181,6 +193,16 @@ function selftest() {
     {
       why: "the fixture file itself is missing",
       run: () => checkFixtureTieout(null),
+      expectFail: true,
+    },
+    {
+      why: "a match_aliases key points at a label that is not in the fixture's own lines",
+      run: () => checkFixtureTieout({ ...json, match_aliases: { ...json.match_aliases, "Not A Real Line": "Something" } }),
+      expectFail: true,
+    },
+    {
+      why: "a fold_into key points at a label that is not in the fixture's own lines",
+      run: () => checkFixtureTieout({ ...json, fold_into: { ...json.fold_into, "Not A Real Line": "Retained Earnings" } }),
       expectFail: true,
     },
   ];

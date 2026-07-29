@@ -9,6 +9,14 @@
     "equity": -967349407,
     "balance_check": 0
   },
+  "match_aliases_and_fold_note": "2026-07-29 prod-truth pass against live Neon catalogs.accounts (unmasked): two fixture labels are QBO-report-only spellings of live CoA rows (match_aliases below); one fixture label ('Net Income') is a QBO Balance Sheet rollup with NO catalogs.accounts row in any chart of accounts and is folded into Retained Earnings instead (fold_into below) \u2014 -106348665 (Net Income) + -861000742 (Retained Earnings) = -967349407, exactly the fixture's acceptance equity total, proving the fold reproduces the intended consolidated Equity rather than a guessed number. 'Unauthorized Expenses Anarely Alcazar' already matches the live CoA exactly and needs no alias.",
+  "match_aliases": {
+    "Accounts Receivable (A/R) [control]": "Accounts Receivable (A/R)",
+    "Unauthorized Expenses Ignacio Munoz": "Unauthorized Expenses Ignacio Mu\u00f1oz"
+  },
+  "fold_into": {
+    "Net Income": "Retained Earnings"
+  },
   "lines": [
     {
       "qbo_account_name": "BOA-CHECKING-1135",
@@ -521,7 +529,7 @@
       "account_type": "Equity",
       "qbo_snapshot_cents": -106348665,
       "adjustment_cents": 0,
-      "notes": "Current-year P&L to date; rolls to RE at close"
+      "notes": "Current-year P&L to date; rolls to RE at close. Not a postable catalogs.accounts row \u2014 folded into Retained Earnings per fold_into above (owner ruling 2026-07-29), never staged as its own account."
     }
   ]
 }

@@ -54,6 +54,7 @@ const ROUTE_MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 const ROUTE_PATH = "/accounting/opening-balance-register";
 const FIXTURE_JSON = "docs/fixtures/ob01/transp-2026-03-31.json";
 const FIXTURE_XLSX = "docs/fixtures/ob01/Cursor-Balances-Reference.xlsx";
+const SEED_MIGRATION_SUFFIX = "_ob01_transp_clone_as_is_seed.sql";
 
 const OB_TABLES = [
   "accounting.ob_register_staging_lines",
@@ -224,6 +225,23 @@ export function checkService(source) {
     problems.push("no bypassMakerChecker option found — cloneAsIsImportAndCommit would have no legitimate way to skip maker/checker");
   }
 
+  // 2026-07-29 prod-truth matching pass (57/57 fixture lines): the fixture's match_aliases and
+  // fold_into keys must actually be read and applied, not just declared in the fixture file with no
+  // code path honoring them. Each of these four checks corresponds to one of the ordered matching
+  // passes documented in the service file header.
+  if (!/match_aliases/.test(code)) {
+    problems.push("service no longer reads match_aliases from the fixture — an explicit rename (e.g. the A/R [control] alias) would silently stop resolving");
+  }
+  if (!/fold_into/.test(code)) {
+    problems.push("service no longer reads fold_into from the fixture — Net Income would go back to being reported unmapped instead of folded into Retained Earnings");
+  }
+  if (!/stripControlSuffix/.test(code)) {
+    problems.push("service no longer strips the QBO report's trailing \" [control]\" suffix as a deterministic normalize pass");
+  }
+  if (!/normalize\(\s*"NFD"\s*\)/.test(code)) {
+    problems.push("service no longer diacritic-folds (NFD + strip combining marks) as a matching pass — an ASCII-vs-accented label would go unmapped");
+  }
+
   // Parallel books: this module reads QBO reports and nothing else. Executable code only.
   if (/createJournalEntry/.test(code)) {
     problems.push("service calls createJournalEntry — opening balances are staged, never posted here");
@@ -358,6 +376,57 @@ export function checkFixture({ xlsxExists, json }) {
       problems.push(`fixture's own declared totals do not balance: assets(${a}) - (liabilities(${l}) + equity(${e})) = ${a - (l + e)}`);
     }
   }
+  // 2026-07-29 prod-truth pass: the two documented renames and the Net Income fold must be declared in
+  // the fixture itself (the service and the seed migration both read these, so a fixture that stops
+  // declaring them would silently regress to 3 unmapped lines / an unbalanced clone-as-is commit).
+  if (json?.match_aliases?.["Accounts Receivable (A/R) [control]"] !== "Accounts Receivable (A/R)") {
+    problems.push('fixture is missing the "Accounts Receivable (A/R) [control]" -> "Accounts Receivable (A/R)" match_aliases entry');
+  }
+  if (!json?.match_aliases?.["Unauthorized Expenses Ignacio Munoz"]?.includes("Mu")) {
+    problems.push('fixture is missing the "Unauthorized Expenses Ignacio Munoz" match_aliases entry');
+  }
+  if (json?.fold_into?.["Net Income"] !== "Retained Earnings") {
+    problems.push('fixture is missing the "Net Income" -> "Retained Earnings" fold_into entry');
+  }
+  return problems;
+}
+
+/**
+ * The 202610151400 TRANSP prod seed migration: the alias table for the two renames, the Net Income
+ * fold into Retained Earnings, and NO stale "N lines expected to skip" language now that the alias
+ * pass is expected to close every gap on the live prod CoA.
+ */
+export function checkSeedMigration(sql) {
+  const problems = [];
+  const code = stripSqlComments(sql);
+  if (
+    !/\(\s*'Accounts Receivable \(A\/R\) \[control\]'\s*,\s*-?[\d_]+::bigint\s*,\s*'Accounts Receivable \(A\/R\)'\s*\)/.test(
+      code
+    )
+  ) {
+    problems.push('seed migration no longer carries the "Accounts Receivable (A/R) [control]" -> "Accounts Receivable (A/R)" match_alias pair');
+  }
+  if (!/match_alias/i.test(sql)) {
+    problems.push("seed migration no longer carries a match_alias column — the alias rename pass would be gone");
+  }
+  if (!/Retained Earnings/.test(code) || !/-106348665/.test(code)) {
+    problems.push("seed migration no longer folds the Net Income amount into Retained Earnings");
+  }
+  if (/\(\s*'Net Income'\s*,/.test(code)) {
+    problems.push("seed migration still attempts to match a live account named 'Net Income' — it has no catalogs.accounts row in any chart of accounts and must only be folded, never matched");
+  }
+  if (/3 of the 57 lines are expected/i.test(sql)) {
+    problems.push('seed migration still documents "3 of the 57 lines are expected to skip" — the 2026-07-29 alias pass closes those gaps; expect 0 skips on prod');
+  }
+  if (/RAISE EXCEPTION|RAISE '/i.test(code)) {
+    problems.push("seed migration RAISEs on an unmapped line — must NOTICE and continue, never fail the whole migration over one label");
+  }
+  if (/'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'/i.test(sql)) {
+    problems.push("seed migration contains a hardcoded UUID literal — resolve TRANSP by code");
+  }
+  if (/DELETE FROM|DROP TABLE/i.test(code)) {
+    problems.push("seed migration deletes or drops something — this must stay a pure additive UPDATE");
+  }
   return problems;
 }
 
@@ -420,6 +489,12 @@ function findColumnsMigration() {
   return match ? { file: match, sql: readFileSync(join(dir, match), "utf8") } : null;
 }
 
+function findSeedMigration() {
+  const dir = join(ROOT, "db", "migrations");
+  const match = readdirSync(dir).find((f) => f.endsWith(SEED_MIGRATION_SUFFIX));
+  return match ? { file: match, sql: readFileSync(join(dir, match), "utf8") } : null;
+}
+
 /**
  * SELFTEST — every check must be capable of failing. Each case takes the REAL current source and
  * mutates exactly the thing the check exists to protect, so a check that has quietly become a
@@ -430,13 +505,14 @@ function selftest() {
   const routes = read(ROUTES);
   const migration = findMigration();
   const columnsMigration = findColumnsMigration();
+  const seedMigration = findSeedMigration();
   const page = read(PAGE);
   const subnav = read(SUBNAV);
   const routeManifest = read(ROUTE_MANIFEST);
   const fixtureJson = readJson(FIXTURE_JSON);
   const fixtureXlsxExists = existsSync(join(ROOT, FIXTURE_XLSX));
 
-  if (!service || !routes || !migration || !columnsMigration || !page || !subnav || !routeManifest || !fixtureJson) {
+  if (!service || !routes || !migration || !columnsMigration || !seedMigration || !page || !subnav || !routeManifest || !fixtureJson) {
     console.error("verify-ob01-opening-balance-register SELFTEST FAIL — a source file is missing; cannot self-test");
     process.exit(1);
   }
@@ -449,6 +525,7 @@ function selftest() {
         ...checkRoutes(routes),
         ...checkMigration(migration.sql),
         ...checkColumnsMigration(columnsMigration.sql),
+        ...checkSeedMigration(seedMigration.sql),
         ...checkFixture({ xlsxExists: fixtureXlsxExists, json: fixtureJson }),
         ...checkFrontend({ page, subnav, routeManifest }),
       ],
@@ -559,6 +636,75 @@ function selftest() {
       run: () => checkFixture({ xlsxExists: false, json: fixtureJson }),
       expectFail: true,
     },
+    {
+      why: "the fixture's match_aliases entries are deleted (57/57 mapping would regress to unmapped)",
+      run: () => checkFixture({ xlsxExists: fixtureXlsxExists, json: { ...fixtureJson, match_aliases: {} } }),
+      expectFail: true,
+    },
+    {
+      why: "the fixture's fold_into entry is deleted (Net Income would go back to unmapped)",
+      run: () => checkFixture({ xlsxExists: fixtureXlsxExists, json: { ...fixtureJson, fold_into: {} } }),
+      expectFail: true,
+    },
+    {
+      why: "the service stops reading match_aliases from the fixture",
+      run: () => checkService(service.replace(/match_aliases/g, "matchAliasesRemoved")),
+      expectFail: true,
+    },
+    {
+      why: "the service stops reading fold_into from the fixture",
+      run: () => checkService(service.replace(/fold_into/g, "foldIntoRemoved")),
+      expectFail: true,
+    },
+    {
+      why: "the service stops stripping the QBO report's [control] suffix",
+      run: () => checkService(service.replace(/stripControlSuffix/g, "removedHelper")),
+      expectFail: true,
+    },
+    {
+      why: "the service stops diacritic-folding (NFD)",
+      run: () => checkService(service.replace(/normalize\(\s*"NFD"\s*\)/g, 'normalize("NFC")')),
+      expectFail: true,
+    },
+    {
+      why: "the seed migration loses the A/R [control] match_alias",
+      run: () =>
+        checkSeedMigration(
+          seedMigration.sql.replace(
+            "('Accounts Receivable (A/R) [control]', -93408200::bigint, 'Accounts Receivable (A/R)'),",
+            "('Accounts Receivable (A/R) [control]', -93408200::bigint, NULL::text),"
+          )
+        ),
+      expectFail: true,
+    },
+    {
+      why: "the seed migration stops folding Net Income into Retained Earnings",
+      run: () => checkSeedMigration(seedMigration.sql.replace(/-106348665/g, "0")),
+      expectFail: true,
+    },
+    {
+      why: "the seed migration tries to match a live 'Net Income' account instead of folding it",
+      run: () => checkSeedMigration(`${seedMigration.sql}\n('Net Income', -106348665::bigint, NULL::text),`),
+      expectFail: true,
+    },
+    {
+      why: "the seed migration regresses to documenting 3 lines expected to skip",
+      run: () =>
+        checkSeedMigration(
+          `${seedMigration.sql}\n-- On prod, 3 of the 57 lines are expected to skip this reason\n`
+        ),
+      expectFail: true,
+    },
+    {
+      why: "the seed migration starts RAISEing on an unmapped line instead of NOTICE-and-continue",
+      run: () => checkSeedMigration(seedMigration.sql.replace("RAISE NOTICE 'OB-01 TRANSP clone-as-is seed: no live", "RAISE EXCEPTION 'OB-01 TRANSP clone-as-is seed: no live")),
+      expectFail: true,
+    },
+    {
+      why: "the seed migration starts DELETEing rows",
+      run: () => checkSeedMigration(`${seedMigration.sql}\nDELETE FROM catalogs.accounts;`),
+      expectFail: true,
+    },
   ];
 
   let failures = 0;
@@ -598,6 +744,7 @@ function main() {
   const routeManifest = read(ROUTE_MANIFEST);
   const migration = findMigration();
   const columnsMigration = findColumnsMigration();
+  const seedMigration = findSeedMigration();
   const fixtureJson = readJson(FIXTURE_JSON);
   const fixtureXlsxExists = existsSync(join(ROOT, FIXTURE_XLSX));
 
@@ -606,6 +753,7 @@ function main() {
   if (!page) problems.push(`${PAGE} is missing`);
   if (!migration) problems.push("no db/migrations/*_ob01_opening_balance_register.sql migration found");
   if (!columnsMigration) problems.push("no db/migrations/*_ob01_snapshot_adjustment_columns.sql migration found");
+  if (!seedMigration) problems.push(`no db/migrations/*${SEED_MIGRATION_SUFFIX} migration found`);
   if (!tests) {
     problems.push(`${TESTS} is missing — the refusal has no behavioural proof`);
   } else {
@@ -624,6 +772,7 @@ function main() {
   if (routes) problems.push(...checkRoutes(routes));
   if (migration) problems.push(...checkMigration(migration.sql));
   if (columnsMigration) problems.push(...checkColumnsMigration(columnsMigration.sql));
+  if (seedMigration) problems.push(...checkSeedMigration(seedMigration.sql));
   problems.push(...checkFixture({ xlsxExists: fixtureXlsxExists, json: fixtureJson }));
   if (page && subnav && routeManifest) problems.push(...checkFrontend({ page, subnav, routeManifest }));
 

@@ -363,6 +363,105 @@ describe("OB-01 clone-as-is fixture import", () => {
       code: "fixture_entity_mismatch",
     });
   });
+
+  it("match_aliases resolves a QBO-report-only spelling to the live CoA row (Accounts Receivable [control])", async () => {
+    const client = fakeClient({});
+    client.query = (async (sql: string, values: unknown[] = []) => {
+      if (/FROM org\.companies/.test(sql)) return { rows: [{ id: OPCO, code: "TRANSP" }] };
+      if (/FROM catalogs\.accounts\s+WHERE operating_company_id/.test(sql)) {
+        return { rows: [{ id: CASH, account_name: "Accounts Receivable (A/R)" }] };
+      }
+      if (/SELECT qbo_snapshot_cents, adjustment_cents/.test(sql)) return { rows: [] };
+      client.writes.push({ sql, values });
+      if (/RETURNING id/.test(sql)) return { rows: [{ id: "written" }] };
+      return { rows: [] };
+    }) as typeof client.query;
+
+    const result = await importObRegisterFromFixture(client, OPCO, MAKER, {
+      lines: [{ qbo_account_name: "Accounts Receivable (A/R) [control]", qbo_snapshot_cents: -93_408_200 }],
+      match_aliases: { "Accounts Receivable (A/R) [control]": "Accounts Receivable (A/R)" },
+    });
+
+    expect(result.unmapped).toEqual([]);
+    expect(result.mapped_count).toBe(1);
+    expect(result.staged_count).toBe(1);
+  });
+
+  it("diacritic-fold alone (no alias) resolves an ASCII fixture label to the live accented CoA row", async () => {
+    const client = fakeClient({});
+    client.query = (async (sql: string, values: unknown[] = []) => {
+      if (/FROM org\.companies/.test(sql)) return { rows: [{ id: OPCO, code: "TRANSP" }] };
+      if (/FROM catalogs\.accounts\s+WHERE operating_company_id/.test(sql)) {
+        return { rows: [{ id: CASH, account_name: "Unauthorized Expenses Ignacio Mu\u00f1oz" }] };
+      }
+      if (/SELECT qbo_snapshot_cents, adjustment_cents/.test(sql)) return { rows: [] };
+      client.writes.push({ sql, values });
+      if (/RETURNING id/.test(sql)) return { rows: [{ id: "written" }] };
+      return { rows: [] };
+    }) as typeof client.query;
+
+    // Deliberately NO match_aliases entry here — proves the general diacritic-fold pass works on its
+    // own, independent of the documented alias for this exact case.
+    const result = await importObRegisterFromFixture(client, OPCO, MAKER, [
+      { qbo_account_name: "Unauthorized Expenses Ignacio Munoz", qbo_snapshot_cents: 33_675_138 },
+    ]);
+
+    expect(result.unmapped).toEqual([]);
+    expect(result.mapped_count).toBe(1);
+    expect(result.staged_count).toBe(1);
+  });
+
+  it("fold_into folds Net Income's cents into Retained Earnings's snapshot and never reports it unmapped", async () => {
+    const client = fakeClient({});
+    client.query = (async (sql: string, values: unknown[] = []) => {
+      if (/FROM org\.companies/.test(sql)) return { rows: [{ id: OPCO, code: "TRANSP" }] };
+      if (/FROM catalogs\.accounts\s+WHERE operating_company_id/.test(sql)) {
+        return { rows: [{ id: EQUITY, account_name: "Retained Earnings" }] };
+      }
+      if (/SELECT qbo_snapshot_cents, adjustment_cents/.test(sql)) return { rows: [] };
+      client.writes.push({ sql, values });
+      if (/RETURNING id/.test(sql)) return { rows: [{ id: "written" }] };
+      return { rows: [] };
+    }) as typeof client.query;
+
+    const result = await importObRegisterFromFixture(client, OPCO, MAKER, {
+      lines: [
+        { qbo_account_name: "Retained Earnings", qbo_snapshot_cents: -861_000_742 },
+        { qbo_account_name: "Net Income", qbo_snapshot_cents: -106_348_665 },
+      ],
+      fold_into: { "Net Income": "Retained Earnings" },
+    });
+
+    expect(result.unmapped).toEqual([]);
+    expect(result.mapped_count).toBe(2);
+    expect(result.staged_count).toBe(1); // Net Income has no account row of its own — only RE is staged
+    const [insert] = client.writes.filter((w) => /INSERT INTO accounting\.ob_register_staging_lines/.test(w.sql));
+    // amount_cents ($4) and qbo_snapshot_cents ($5) both carry the folded total.
+    expect(insert!.values[3]).toBe(-967_349_407);
+    expect(insert!.values[4]).toBe(-967_349_407);
+  });
+
+  it("fold_into reports the fold source unmapped (naming the missing target) when the target itself does not resolve — never invents a home for it", async () => {
+    const client = fakeClient({});
+    client.query = (async (sql: string, values: unknown[] = []) => {
+      if (/FROM org\.companies/.test(sql)) return { rows: [{ id: OPCO, code: "TRANSP" }] };
+      if (/FROM catalogs\.accounts\s+WHERE operating_company_id/.test(sql)) return { rows: [] };
+      if (/SELECT qbo_snapshot_cents, adjustment_cents/.test(sql)) return { rows: [] };
+      client.writes.push({ sql, values });
+      if (/RETURNING id/.test(sql)) return { rows: [{ id: "written" }] };
+      return { rows: [] };
+    }) as typeof client.query;
+
+    const result = await importObRegisterFromFixture(client, OPCO, MAKER, {
+      lines: [{ qbo_account_name: "Net Income", qbo_snapshot_cents: -106_348_665 }],
+      fold_into: { "Net Income": "Retained Earnings" },
+    });
+
+    expect(result.unmapped).toEqual([
+      { qbo_account_name: "Net Income", reason: expect.stringContaining('fold_into target "Retained Earnings"') },
+    ]);
+    expect(result.staged_count).toBe(0);
+  });
 });
 
 describe("OB-01 clone-as-is import + commit (the owner-ordered system action)", () => {
