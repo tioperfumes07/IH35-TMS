@@ -77,7 +77,8 @@ export function FuelCardOverageKpiCard() {
   });
 
   const pending = pendingQuery.data?.total_count ?? 0;
-  const tone = pending > 0 ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-white";
+  // §7 palette — non-financial UI: slate only (no amber/emerald status classes).
+  const tone = pending > 0 ? "border-slate-300 bg-slate-100" : "border-gray-200 bg-white";
 
   return (
     <Link
@@ -86,7 +87,7 @@ export function FuelCardOverageKpiCard() {
       data-testid="fuel-card-overage-kpi"
     >
       <div className="text-[10px] uppercase text-gray-500">Card overage queue</div>
-      <div className={`text-lg font-semibold ${pending > 0 ? "text-amber-800" : "text-gray-900"}`}>
+      <div className={`text-lg font-semibold ${pending > 0 ? "text-slate-800" : "text-gray-900"}`}>
         {pendingQuery.isError ? "—" : pending}
       </div>
       <div className="text-[10px] text-gray-600">

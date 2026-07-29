@@ -185,7 +185,7 @@ export function CardOverageQueuePage() {
         }
       />
 
-      <p className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+      <p className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
         Engine + GL posting flags default OFF. Queue stays empty until{" "}
         <code className="font-mono">FUEL_CARD_OVERAGE_ENGINE_ENABLED</code> is on and events evaluate.
         Approve never invents density — it calls the same poster as the API.
