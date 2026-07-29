@@ -277,6 +277,10 @@ export type Transfer = {
   qbo_journal_entry_id: string | null;
   /** TMS GL journal entry when TRANSFER_GL_POSTING_ENABLED posted (via posting spine). */
   journal_entry_id?: string | null;
+  /** BANK-DOM-05: joins initiator+counterparty legs when set. */
+  intercompany_transfer_group_id?: string | null;
+  counterparty_company_id?: string | null;
+  intercompany_leg?: "initiator" | "counterparty" | string | null;
   revoked_at: string | null;
   revoked_reason: string | null;
   created_at: string;
@@ -285,6 +289,19 @@ export type Transfer = {
   to_bank_name?: string | null;
   from_coa_name?: string | null;
   to_coa_name?: string | null;
+};
+
+export type IntercompanyEntityPair = {
+  id: string;
+  operating_company_id: string;
+  counterparty_company_id: string;
+  counterparty_code?: string | null;
+  intercompany_account_id: string;
+  account_number?: string | null;
+  account_name?: string | null;
+  system_purpose?: string | null;
+  notes?: string | null;
+  deactivated_at?: string | null;
 };
 
 export type EscrowDriverBalance = {
@@ -1029,6 +1046,50 @@ export function createTransfer(
       ...payload,
     },
   });
+}
+
+/** BANK-DOM-05: two reciprocal entity legs via createIntercompanyTransfer. */
+export function createIntercompanyTransfer(
+  operatingCompanyId: string,
+  payload: {
+    counterparty_company_id: string;
+    transfer_type?: TransferType;
+    from_account_id: string;
+    from_account_kind?: TransferAccountKind;
+    to_account_id: string;
+    to_account_kind?: TransferAccountKind;
+    amount_cents: number;
+    transfer_date: string;
+    memo?: string;
+    reference_number?: string;
+  }
+) {
+  return apiRequest<{
+    intercompany_transfer_group_id: string;
+    initiator: Transfer;
+    counterparty: Transfer;
+  }>(`/api/v1/banking/transfers/intercompany`, {
+    method: "POST",
+    body: {
+      operating_company_id: operatingCompanyId,
+      transfer_type: payload.transfer_type ?? "bank_to_bank",
+      from_account_kind: payload.from_account_kind ?? "bank",
+      to_account_kind: payload.to_account_kind ?? "bank",
+      ...payload,
+    },
+  });
+}
+
+export function listIntercompanyPairs(operatingCompanyId: string, includeInactive = false) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeInactive) params.set("include_inactive", "1");
+  return apiRequest<{ pairs: IntercompanyEntityPair[] }>(`/api/v1/banking/intercompany-pairs?${params.toString()}`);
+}
+
+export function getIntercompanyTransferGroup(groupId: string, operatingCompanyId: string) {
+  return apiRequest<{ group_id: string; legs: Transfer[] }>(
+    `/api/v1/banking/intercompany-transfers/${groupId}?${q(operatingCompanyId)}`
+  );
 }
 
 export function recordCcPayment(
