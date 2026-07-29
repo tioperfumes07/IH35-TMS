@@ -114,9 +114,13 @@ export function MonthClosePage() {
       },
       {
         id: "fuel_tax",
-        label: "Fuel tax filing",
+        label: "Fuel tax filing (IFTA)",
         complete: status.fuel_tax.complete,
-        detail: status.fuel_tax.ifta_filed ? "Filing marked complete." : "Filing not marked for selected period.",
+        detail: !status.fuel_tax.due_this_month
+          ? `No IFTA filing due this month (${status.fuel_tax.quarter_label} in progress).`
+          : status.fuel_tax.ifta_filed
+            ? `IFTA ${status.fuel_tax.quarter_label} return filed.`
+            : `IFTA ${status.fuel_tax.quarter_label} return not yet filed — required before quarter-end close.`,
         href: "/reports/ifta-preparer",
       },
       {
