@@ -201,11 +201,20 @@ export function parseMigrations(migrationsDir) {
       const colSet = schema.get(ev.relation);
       for (const c of ev.cols) colSet.add(c);
 
-      // Record LIKE inheritance for a post-pass. It cannot be resolved inline: the source table may
-      // be created in a LATER migration file than the one that inherits from it.
+      // LIKE copies the source's columns AS THEY EXIST AT THIS POINT in migration order — later
+      // ALTERs to the source are NOT propagated. So inherit immediately from the current snapshot when
+      // the source is already known. Resolving against the source's FINAL state instead over-inherited
+      // 9 columns onto accounting.qbo_vendors (account_number, billing_*, tax_id, terms, track_*) that
+      // were added to mdata.qbo_vendors AFTER the LIKE and do not exist on the copy — the DB meta-guard
+      // caught it. Only a source not yet seen is deferred to the post-pass.
       for (const src of ev.likeSources) {
-        if (!likeEdges.has(ev.relation)) likeEdges.set(ev.relation, new Set());
-        likeEdges.get(ev.relation).add(src);
+        const snapshot = schema.get(src);
+        if (snapshot && snapshot.size > 0) {
+          for (const c of snapshot) colSet.add(c);
+        } else {
+          if (!likeEdges.has(ev.relation)) likeEdges.set(ev.relation, new Set());
+          likeEdges.get(ev.relation).add(src);
+        }
       }
     }
 

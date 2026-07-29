@@ -1199,17 +1199,11 @@
       "remote_count"
     ],
     "accounting.qbo_vendors": [
-      "account_number",
       "active",
-      "billing_address_line1",
-      "billing_city",
-      "billing_postal_code",
-      "billing_state",
       "company_name",
       "created_at",
       "created_in_tms",
       "default_ap_account_qbo_id",
-      "default_expense_account_qbo_id",
       "display_name",
       "eligible_1099",
       "id",
@@ -1228,9 +1222,6 @@
       "qbo_sync_token",
       "qbo_updated_at",
       "sync_status",
-      "tax_id",
-      "terms",
-      "track_1099",
       "updated_at"
     ],
     "accounting.recon_exceptions": [
