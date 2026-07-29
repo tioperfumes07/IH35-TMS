@@ -1,0 +1,25 @@
+# RULE 25 — VERIFY-STEP ODD/EVEN BANDS (owner 2026-07-28)
+
+## Standing split (non-negotiable)
+
+| Coder | Verify-step numbers |
+|---|---|
+| **Cursor** | **EVEN** only (`…1750, 1752, 1754, 1756…`) |
+| **Claude** | **ODD** only (`…1751, 1753, 1755…`) |
+
+## How to claim
+
+1. Read `scripts/verify-steps/CLAIMED-NUMBERS.json`
+2. Pick the next free number in **your** parity band
+3. Add `"NNNN": "NNNN-verify-….mjs"` in the **same commit** as the guard + `scripts/verify-steps/NNNN-….mjs`
+4. Never edit `package.json` / locked-guards / ci.yml (Rule 17)
+
+## Forbidden
+
+- Cursor claiming an odd step number (Claude's band)
+- Claude claiming an even step number (Cursor's band)
+- "Next free overall" without checking parity — that is how collisions return
+
+## Why
+
+CLAIMED-NUMBERS alone still races when both agents grab `max+1`. Odd/even makes concurrent claims merge-conflict on different keys instead of the same key, and stops Cursor/Claude from stealing each other's in-flight numbers.
