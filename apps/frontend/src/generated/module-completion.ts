@@ -327,12 +327,24 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
   },
   {
     "id": "cash-flow",
-    "total": 1,
-    "done": 0,
+    "total": 3,
+    "done": 1,
     "items": [
       {
         "id": "CASH-S01",
         "title": "Surface /cash-flow renders real entity-scoped data with no dead end",
+        "status": "PASS",
+        "pr": ""
+      },
+      {
+        "id": "CASH-T01",
+        "title": "Tab \"Actual vs Projected\" opens and renders real entity-scoped data",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "CASH-T02",
+        "title": "Tab \"Manual Daily Projections\" opens and renders real entity-scoped data",
         "status": "OPEN",
         "pr": ""
       }
@@ -340,13 +352,13 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
   },
   {
     "id": "compliance",
-    "total": 3,
-    "done": 0,
+    "total": 9,
+    "done": 1,
     "items": [
       {
         "id": "COMP-S01",
         "title": "Surface /compliance renders real entity-scoped data with no dead end",
-        "status": "OPEN",
+        "status": "PASS",
         "pr": ""
       },
       {
@@ -358,6 +370,42 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
       {
         "id": "COMP-S03",
         "title": "Surface /compliance/property-tax/:id renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "COMP-T01",
+        "title": "Tab \"Overview\" opens and renders real entity-scoped data",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "COMP-T02",
+        "title": "Tab \"HOS Tracker\" opens and renders real entity-scoped data",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "COMP-T03",
+        "title": "Tab \"HOS Viewer\" opens and renders real entity-scoped data",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "COMP-T04",
+        "title": "Tab \"Violations\" opens and renders real entity-scoped data",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "COMP-T05",
+        "title": "Tab \"HOS History\" opens and renders real entity-scoped data",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "COMP-T06",
+        "title": "Tab \"Required Documents\" opens and renders real entity-scoped data",
         "status": "OPEN",
         "pr": ""
       }
@@ -740,12 +788,36 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
   },
   {
     "id": "eld",
-    "total": 1,
-    "done": 0,
+    "total": 5,
+    "done": 1,
     "items": [
       {
         "id": "ELD-S01",
         "title": "Surface /eld renders real entity-scoped data with no dead end",
+        "status": "PASS",
+        "pr": ""
+      },
+      {
+        "id": "ELD-T01",
+        "title": "Tab \"HOS Violations\" opens and renders real entity-scoped data",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "ELD-T02",
+        "title": "Tab \"Unidentified Driving\" opens and renders real entity-scoped data",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "ELD-T03",
+        "title": "Tab \"Driver Certifications\" opens and renders real entity-scoped data",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "ELD-T04",
+        "title": "Tab \"ELD Settings\" opens and renders real entity-scoped data",
         "status": "OPEN",
         "pr": ""
       }
@@ -864,24 +936,54 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
   {
     "id": "home",
     "total": 1,
-    "done": 0,
+    "done": 1,
     "items": [
       {
         "id": "HOME-S01",
         "title": "Surface /home renders real entity-scoped data with no dead end",
-        "status": "OPEN",
+        "status": "PASS",
         "pr": ""
       }
     ]
   },
   {
     "id": "insurance",
-    "total": 1,
-    "done": 0,
+    "total": 6,
+    "done": 1,
     "items": [
       {
         "id": "INS-S01",
         "title": "Surface /insurance renders real entity-scoped data with no dead end",
+        "status": "PASS",
+        "pr": ""
+      },
+      {
+        "id": "INS-T01",
+        "title": "Tab \"Policies\" opens and renders real entity-scoped data",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "INS-T02",
+        "title": "Tab \"Type Catalog\" opens and renders real entity-scoped data",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "INS-T03",
+        "title": "Tab \"Coverage Gaps\" opens and renders real entity-scoped data",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "INS-T04",
+        "title": "Tab \"Claims\" opens and renders real entity-scoped data",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "INS-T05",
+        "title": "Tab \"Lawsuits\" opens and renders real entity-scoped data",
         "status": "OPEN",
         "pr": ""
       }
