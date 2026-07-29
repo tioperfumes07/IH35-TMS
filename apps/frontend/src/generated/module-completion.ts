@@ -1071,7 +1071,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
   {
     "id": "lists",
     "total": 23,
-    "done": 15,
+    "done": 16,
     "items": [
       {
         "id": "LST-CAT-01",
@@ -1172,8 +1172,8 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
       {
         "id": "LST-PICKER-02",
         "title": "Inline create writes the SAME table the picker reads",
-        "status": "FAIL",
-        "pr": "3442"
+        "status": "PASS",
+        "pr": ""
       },
       {
         "id": "LST-PICKER-03",
