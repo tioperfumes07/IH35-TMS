@@ -1083,6 +1083,7 @@
     "1684": "1684-verify-bank-f09-settings-reports-email-queue.mjs",
     "1685": "1685-verify-lists-badge-counts-every-live-catalog.mjs",
     "1687": "1687-verify-schema-parity-window-bounded.mjs",
+    "1689": "1689-verify-baseline-columns-exist-in-db.mjs",
     "1691": "1691-verify-categories-read-canonical-ledger.mjs",
     "1693": "1693-verify-qbo-mirror-requires-connection.mjs",
     "1695": "1695-verify-inline-create-inside-picker.mjs",
