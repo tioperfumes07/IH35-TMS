@@ -20,7 +20,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
   {
     "id": "accounting",
     "total": 31,
-    "done": 21,
+    "done": 22,
     "items": [
       {
         "id": "ACCT-ECON-01",
@@ -49,7 +49,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
       {
         "id": "ACCT-ECON-05",
         "title": "vendor_credits live path exercised or honest empty",
-        "status": "FAIL",
+        "status": "PASS",
         "pr": "#3749"
       },
       {
