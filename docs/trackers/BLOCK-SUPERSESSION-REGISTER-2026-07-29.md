@@ -16,7 +16,7 @@ precisely so nobody has to guess.
 
 ---
 
-## SUPERSEDED — 7
+## SUPERSEDED — 8
 
 | block | verdict | check that proves it |
 |---|---|---|
@@ -27,6 +27,7 @@ precisely so nobody has to guess.
 | **LST-F15** · maintenance-vendors FK to mdata.vendors | SUPERSEDED | `catalogs.maintenance_vendors.linked_vendor_id` **exists on prod** (information_schema, 1 column). Migration 202609100000 landed. Table holds 0 rows, so there is nothing to backfill. |
 | **SAF-F06** · base-less fetch / wrong host | SUPERSEDED | `verify-no-base-less-api-fetch` exits 0. |
 | **SAF-F27** · 7 double-registered Safety routes | SUPERSEDED | `grep -oE 'path="/safety/[a-z-]+"' \| sort \| uniq -d` → **no duplicates**. |
+| **LST-SEED-01** · complaint_types leak-test pollution | SUPERSEDED | The cleanup was already done, by soft-delete. `catalogs.complaint_types` holds 295 rows: **36 active** (the real types) and **259 archived** (`is_active=false`). Polluted rows that are still ACTIVE: **0**. The catalog list filters `is_active=true` by default, so an operator sees only the 36. |
 
 ## PREMISE WRONG — 2
 
@@ -35,11 +36,23 @@ precisely so nobody has to guess.
 | **LST-F16** · expensive_states "seeded/counted but no CREATE TABLE" | table missing | `to_regclass('catalogs.expensive_states')` is **non-null** — the table exists, with **0 rows**. This is a SEEDING question, not a schema bug. Re-file as a seed task if the rows are wanted. |
 | **LST-F25** · tire-positions "missing table indistinguishable from empty" | table may be missing | `to_regclass('catalogs.tire_positions')` is **non-null**, **0 rows**. Empty, not missing. The distinguishability concern is valid as a general principle and is covered by LST-F21 (silent partial counts), which stays open. |
 
+## CORRECTION — made during this register's own review
+
+My first pass on **LST-SEED-01** counted 259 of 295 complaint_types rows matching test/leak patterns
+and escalated it as "worse than filed — urgent, an operator can now open the hub and see the
+pollution." **That was wrong**, and it is corrected above rather than quietly amended.
+
+All 259 are already `is_active = false`. They were soft-deleted — void-not-delete, correctly applied —
+and the catalog list filters to active rows, so the operator sees the 36 real types and none of the
+pollution. The count I reported was real; the conclusion I drew from it was not, because I measured
+the rows before checking the flag that governs whether anyone can see them.
+
+Recorded because the same mistake is easy to repeat: **a row count is not a visibility claim.**
+
 ## STILL REAL — re-confirmed, evidence sharpened
 
 | block | status | sharpened evidence |
 |---|---|---|
-| **LST-SEED-01** · complaint_types leak-test pollution | **REAL — WORSE THAN FILED** | **259 of 295 rows** on prod match test/leak patterns (88%), spread across **all 3 entities**, 271 distinct `type_code`s. Now urgent: complaint-types was wired to the Lists hub in #3740, so an operator can open it and see the pollution. Cleanup is void-not-delete (`is_active=false`), never DELETE. |
 | **LST-F26** · QuickCreate `kind=category` writes a GL account | **REAL** | `catalogPickerRegistry.ts:269` — `category` declares `readTable`/`writeTable` = `catalogs.accounts` and writes `/api/v1/catalogs/accounting/chart-of-accounts`. Labelled "category", creates a chart-of-account. Confirmed exactly as filed. |
 | **SAF-F14** · DOT/HOS creators use raw `driver_id` text | **REAL — NARROWED** | Only **one** file left: `apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx`. The HOS tab already uses `DriverPickerWithCreate`. Scope is one picker swap, not seven. |
 
@@ -55,10 +68,10 @@ SAF-F03, SAF-F04, SAF-F13, SAF-F16, SAF-F17, SAF-F26.
 ## Net effect on the backlog
 
 - Started: **24** pending blocks in this lane (Lists + Safety).
-- **9 written off** — 7 superseded, 2 premise-wrong.
-- **3 re-confirmed real**, one of them materially worse than filed.
+- **10 written off** — 8 superseded, 2 premise-wrong.
+- **2 re-confirmed real** (LST-F26, SAF-F14 — the latter narrowed from 7 files to 1).
 - **12 untested**, still counted as open.
 
-**Remaining in this lane: 15.**
+**Remaining in this lane: 14.**
 
 The ACCT (29) and BANK (3) families are the money lane and are not assessed here.
