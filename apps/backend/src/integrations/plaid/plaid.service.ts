@@ -648,7 +648,9 @@ export async function syncTransactions(itemId: string) {
             -- shares the dedup hash — so this single arbiter covers every collision in the 'added' batch and
             -- skips it instead of aborting the whole transaction (the 0-transactions / 500 bug). 'modified'
             -- txns (same plaid_transaction_id, changed fields) take the separate UPDATE path, not this insert.
-            ON CONFLICT (bank_account_id, dedup_hash) DO NOTHING
+            ON CONFLICT (bank_account_id, dedup_hash)
+            WHERE dedup_hash IS NOT NULL AND voided_at IS NULL
+            DO NOTHING
             RETURNING id, operating_company_id, plaid_category
           `,
           [

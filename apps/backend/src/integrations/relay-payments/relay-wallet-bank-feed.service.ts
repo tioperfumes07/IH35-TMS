@@ -442,7 +442,11 @@ export async function upsertRelayWalletBankFeedRow(
         $11::uuid, $12::uuid, $13::uuid, $14::uuid, $14::uuid, $15::uuid,
         now(), now()
       )
-      ON CONFLICT (bank_account_id, dedup_hash) DO UPDATE SET
+      -- Partial unique uq_bank_transactions_account_dedup requires the same WHERE on ON CONFLICT
+      -- (mig 202609010050/051). Bare ON CONFLICT fails: "no unique or exclusion constraint matching…".
+      ON CONFLICT (bank_account_id, dedup_hash)
+        WHERE dedup_hash IS NOT NULL AND voided_at IS NULL
+        DO UPDATE SET
         source_ref = EXCLUDED.source_ref,
         description = EXCLUDED.description,
         merchant_name = EXCLUDED.merchant_name,
@@ -674,7 +678,9 @@ export async function upsertRelayWalletDepositFeedRow(
         '{}'::text[], false, true, $6, $7, 'csv_import', $8, $9, 'for_review', 'pending_categorization',
         now(), now()
       )
-      ON CONFLICT (bank_account_id, dedup_hash) DO UPDATE SET
+      ON CONFLICT (bank_account_id, dedup_hash)
+        WHERE dedup_hash IS NOT NULL AND voided_at IS NULL
+        DO UPDATE SET
         source_ref = EXCLUDED.source_ref,
         description = EXCLUDED.description,
         is_credit = true,

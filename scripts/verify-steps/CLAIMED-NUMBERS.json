@@ -1146,6 +1146,7 @@
     "1774": "1774-verify-lst-cat06-dispatcher-error-reasons-closed.mjs",
     "1778": "1778-verify-lst-maint01-reseed-rls-safe.mjs",
     "1788": "1788-verify-acct-surf-09-reverse-drill.mjs",
+    "1794": "1794-verify-bank-dedup-on-conflict-partial-index.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
