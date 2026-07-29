@@ -293,6 +293,9 @@ const ExpenseCategoryMapPage = React.lazy(() => import("../pages/accounting/Expe
 const CoaRolesPage = React.lazy(() => import("../pages/accounting/CoaRolesPage").then((m) => ({ default: m.CoaRolesPage })));
 const DailyReconPage = React.lazy(() => import("../pages/accounting/DailyReconPage").then((m) => ({ default: m.DailyReconPage })));
 const QboReconciliationPage = React.lazy(() => import("../pages/accounting/QboReconciliationPage").then((m) => ({ default: m.QboReconciliationPage })));
+const OpeningBalanceRegisterPage = React.lazy(() =>
+  import("../pages/accounting/OpeningBalanceRegisterPage").then((m) => ({ default: m.OpeningBalanceRegisterPage }))
+);
 const SalesTaxPage = React.lazy(() => import("../pages/accounting/SalesTaxPage").then((m) => ({ default: m.SalesTaxPage })));
 const AccountingAuditTrailPage = React.lazy(() => import("../pages/accounting/AccountingAuditTrailPage").then((m) => ({ default: m.AccountingAuditTrailPage })));
 const PostingLineagePage = React.lazy(() => import("../pages/accounting/PostingLineagePage").then((m) => ({ default: m.PostingLineagePage })));
@@ -3671,6 +3674,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <QboReconciliationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/opening-balance-register"
+          element={
+            <ProtectedRoute>
+              <OpeningBalanceRegisterPage />
             </ProtectedRoute>
           }
         />
