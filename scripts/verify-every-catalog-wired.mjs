@@ -1,0 +1,331 @@
+#!/usr/bin/env node
+/**
+ * COMPLETENESS GATE — every wireable catalogs.* table must be reachable and editable.
+ *
+ * This is a finish line, not a spot check. It fails until the orphan count is ZERO, and it is
+ * deliberately dynamic: the table list is not hardcoded here. It comes from
+ * docs/inventories/catalog-inventory.json (the LST-ORPH-05 classification of every catalogs.* base
+ * table, a prod snapshot) and is CROSS-CHECKED against db/migrations — so a catalogs table added by a
+ * future migration and never classified fails this gate instead of quietly becoming unreachable.
+ *
+ * THREE LEGS, and all three must belong to the same catalog:
+ *   1. BACKEND   — a catalog config whose `tableName` matches, carrying routePrefix + urlSegment.
+ *   2. HUB       — an AllCatalogsMap entry whose catalogKey equals that config's urlSegment.
+ *   3. MANIFEST  — the generic /lists/catalogs/:domain/:catalogKey route exists to resolve it.
+ *   4. FRONTEND REGISTRY — an entry in GENERIC_CATALOG_REGISTRY (useCatalogQuery.ts). Without it,
+ *      catalogKeyToCatalogName() returns null and the page renders "unknown catalog" even though the
+ *      backend route and the hub tile both exist. This leg was missing from the first version of this
+ *      gate, which meant a catalog could reach ZERO defects and still not open — the gate would have
+ *      certified a broken surface.
+ *
+ * The legs are read with balanced-brace extraction (the guard-1665 shape), never independent
+ * substring checks over the whole file. Two independent substrings pass whenever some OTHER catalog
+ * supplies the missing half — that exact bug let a catalog with no registration of its own read as
+ * registered, and it survived until a second catalog was added to the same domain.
+ *
+ * LIE-LIVE: an AllCatalogsMap entry marked `live: true` whose backend leg is missing is reported
+ * separately and by name. That is worse than an orphan — the hub advertises a working list, the tile
+ * opens, and the API 404s. Termination Reasons is the canonical instance.
+ */
+import { readFileSync } from "node:fs";
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
+
+const ROOT = process.cwd();
+const INVENTORY = join(ROOT, "docs", "inventories", "catalog-inventory.json");
+const HUB = join(ROOT, "apps", "frontend", "src", "pages", "lists", "components", "AllCatalogsMap.tsx");
+const MANIFEST = join(ROOT, "apps", "frontend", "src", "routes", "manifest.tsx");
+const FE_REGISTRY = join(ROOT, "apps", "frontend", "src", "hooks", "useCatalogQuery.ts");
+const BACKEND_DIR = join(ROOT, "apps", "backend", "src");
+
+/** Classifications that MUST be wired. The rest are excluded, each with a written reason in the inventory. */
+const WIREABLE = new Set(["ROUTED", "ROUTED-PENDING", "ROUTED-NEEDS-SEED", "ROUTED-READ-ONLY"]);
+/** Excluded, by design. HEADLESS-BY-DESIGN = a system lookup no operator edits. RETIRE = superseded. */
+const EXCLUDED = new Set(["HEADLESS-BY-DESIGN", "RETIRE"]);
+
+/**
+ * Extract each object literal that contains `tableName:`, by walking braces outward then inward.
+ * Reused from guard 1665 — fields of one config must be read together or they cannot be attributed.
+ */
+export function configObjects(src, anchor = /tableName:/g) {
+  const out = [];
+  for (const m of src.matchAll(anchor)) {
+    let depth = 0;
+    let i = m.index;
+    while (i > 0) {
+      if (src[i] === "}") depth += 1;
+      else if (src[i] === "{") {
+        if (depth === 0) break;
+        depth -= 1;
+      }
+      i -= 1;
+    }
+    let j = i;
+    depth = 0;
+    while (j < src.length) {
+      if (src[j] === "{") depth += 1;
+      else if (src[j] === "}") {
+        depth -= 1;
+        if (depth === 0) break;
+      }
+      j += 1;
+    }
+    out.push(src.slice(i, j + 1));
+  }
+  return out;
+}
+
+function field(cfg, name) {
+  const m = cfg.match(new RegExp(`${name}:\\s*"([^"]+)"`));
+  return m ? m[1] : null;
+}
+
+/** Every backend catalog config, keyed by the table it serves. */
+export function backendByTable(files) {
+  const byTable = new Map();
+  for (const { path, src } of files) {
+    for (const cfg of configObjects(src)) {
+      const tableName = field(cfg, "tableName");
+      if (!tableName) continue;
+      const urlSegment = field(cfg, "urlSegment");
+      const routePrefix = field(cfg, "routePrefix");
+      if (!byTable.has(tableName)) byTable.set(tableName, []);
+      byTable.get(tableName).push({ tableName, urlSegment, routePrefix, path });
+    }
+  }
+  return byTable;
+}
+
+/** Every hub tile: { catalogKey, name, live }. */
+export function hubEntries(src) {
+  const out = [];
+  for (const cfg of configObjects(src, /catalogKey:/g)) {
+    const catalogKey = field(cfg, "catalogKey");
+    const name = field(cfg, "name");
+    if (!catalogKey) continue;
+    out.push({ catalogKey, name: name ?? catalogKey, live: /live:\s*true/.test(cfg) });
+  }
+  return out;
+}
+
+/**
+ * Bespoke catalog routes: a table can be served by a hand-written *.routes.ts under
+ * apps/backend/src/catalogs/** instead of the generic factory (civil-fine-types.routes.ts is one).
+ * Those are legitimately wired, so the backend leg accepts them too.
+ *
+ * The file must BOTH reference `catalogs.<table>` AND register an HTTP route. Referencing the table
+ * is not enough on its own: safety-v5.routes.ts merely LEFT JOINs catalogs.internal_fine_reasons to
+ * label a fine, which does not give an operator any way to edit that list. Counting a JOIN as
+ * "wired" would mark genuinely unreachable catalogs as done — the precise failure this gate exists
+ * to prevent.
+ */
+export function bespokeRouteTables(files) {
+  const served = new Set();
+  for (const { path, src } of files) {
+    if (!path.includes("/catalogs/")) continue;
+    if (!/\bapp\.(get|post|put|patch|delete)\s*\(/.test(src)) continue;
+    for (const m of src.matchAll(/catalogs\.([a-z_][a-z0-9_]*)/g)) served.add(m[1]);
+  }
+  return served;
+}
+
+function readBackendFiles() {
+  const files = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith(".ts") && !e.name.includes(".test.")) {
+        const src = readFileSync(p, "utf8");
+        if (src.includes("tableName:") || src.includes("catalogs.")) {
+          files.push({ path: p.replace(ROOT + "/", ""), src });
+        }
+      }
+    }
+  };
+  walk(BACKEND_DIR);
+  return files;
+}
+
+function main() {
+  if (process.argv.includes("--selftest")) return selftest();
+
+  const inventory = JSON.parse(readFileSync(INVENTORY, "utf8"));
+  const tables = inventory.tables ?? {};
+  const tableNames = Object.keys(tables);
+  if (tableNames.length === 0) {
+    console.error("verify-every-catalog-wired FAIL — inventory lists 0 tables; refusing to report green");
+    process.exit(1);
+  }
+
+  const hubSrc = readFileSync(HUB, "utf8");
+  const manifestSrc = readFileSync(MANIFEST, "utf8");
+  const feRegistrySrc = readFileSync(FE_REGISTRY, "utf8");
+  const feCatalogKeys = new Set(
+    [...feRegistrySrc.matchAll(/catalogKey:\s*"([a-z0-9-]+)"/g)].map((m) => m[1])
+  );
+  const backendFiles = readBackendFiles();
+  const backend = backendByTable(backendFiles);
+  const bespoke = bespokeRouteTables(backendFiles);
+  const hub = hubEntries(hubSrc);
+  const hubByKey = new Map(hub.map((h) => [h.catalogKey, h]));
+
+  const problems = { unclassified: [], orphan: [], lieLive: [], missingHub: [], missingFeRegistry: [] };
+
+  // LEG 3 asserted once: the generic catalog route must exist, or no catalog resolves.
+  if (!manifestSrc.includes('path="/lists/catalogs/:domain/:catalogKey"')) {
+    console.error(
+      "verify-every-catalog-wired FAIL — the generic route /lists/catalogs/:domain/:catalogKey is gone.\n" +
+        "Every catalog resolves through it; without it EVERY hub tile is a dead link."
+    );
+    process.exit(1);
+  }
+
+  let wireable = 0;
+  for (const table of tableNames) {
+    const entry = tables[table];
+    const cls = entry?.classification;
+    if (!cls) {
+      problems.unclassified.push(table);
+      continue;
+    }
+    if (EXCLUDED.has(cls)) continue;
+    if (!WIREABLE.has(cls)) {
+      problems.unclassified.push(`${table} (unknown classification "${cls}")`);
+      continue;
+    }
+    wireable += 1;
+
+    const cfgs = backend.get(table) ?? [];
+    const cfg = cfgs.find((c) => c.urlSegment && c.routePrefix);
+    if (!cfg) {
+      if (bespoke.has(table)) continue; // served by a hand-written catalog route module
+      problems.orphan.push(`${table} [${cls}] — no backend catalog route (neither a factory config nor a catalogs/*.routes.ts serving it)`);
+      continue;
+    }
+    if (!feCatalogKeys.has(cfg.urlSegment)) {
+      problems.missingFeRegistry.push(
+        `${table} [${cls}] — backend route exists but NO GENERIC_CATALOG_REGISTRY entry (catalogKey "${cfg.urlSegment}"); the page resolves to null and renders "unknown catalog"`
+      );
+    }
+    if (!hubByKey.has(cfg.urlSegment)) {
+      problems.missingHub.push(
+        `${table} [${cls}] — backend registered at ${cfg.routePrefix}/${cfg.urlSegment} but NO AllCatalogsMap tile; unreachable from the hub`
+      );
+    }
+  }
+
+  // LIE-LIVE: hub advertises a working list with no backend behind it.
+  //
+  // A tile is backed if EITHER a factory config exposes that urlSegment OR a bespoke catalogs route
+  // serves the matching table. Hub keys are kebab-case ("civil-fine-types") while table names are
+  // snake_case ("civil_fine_types"), so the two must be normalised before comparison — an earlier
+  // revision compared them raw and reported every bespoke-routed catalog as a liar, including
+  // Civil Fine Types, which has had a working route module all along.
+  const backendSegments = new Set(
+    [...backend.values()].flat().map((c) => c.urlSegment).filter(Boolean)
+  );
+  // A tile is BACKED when a factory config exposes that urlSegment, OR a bespoke catalogs route serves
+  // the matching table, OR the tile has its own DEDICATED page route in the manifest.
+  //
+  // The third case matters and was missing: Driver Teams, OEM Parts Reference and QBO bulk-link are
+  // real features with hand-built pages at /lists/<domain>/<key>, not generic catalog surfaces. Judging
+  // them only by the generic-catalog path reported four working screens as liars. Maintenance Services
+  // Catalog is a fourth: it is served by catalogs/maintenance/services.routes.ts under a urlSegment
+  // that does not kebab-map to any table name.
+  const dedicatedRouteKeys = new Set(
+    [...manifestSrc.matchAll(/path="\/lists\/[a-z-]+\/([a-z0-9-]+)"/g)].map((m) => m[1])
+  );
+  const backedKeys = new Set([
+    ...backendSegments,
+    ...[...bespoke].map((t) => t.replace(/_/g, "-")),
+    ...dedicatedRouteKeys,
+  ]);
+  for (const h of hub) {
+    if (h.live && !backedKeys.has(h.catalogKey)) {
+      problems.lieLive.push(`"${h.name}" (catalogKey ${h.catalogKey}) — live:true but no backend route; the tile opens and the API 404s`);
+    }
+  }
+
+  const total =
+    problems.unclassified.length +
+    problems.orphan.length +
+    problems.lieLive.length +
+    problems.missingHub.length +
+    problems.missingFeRegistry.length;
+
+  if (total > 0) {
+    console.error(`verify-every-catalog-wired FAIL — ${total} catalog wiring defect(s) across ${wireable} wireable table(s):\n`);
+    const section = (label, list) => {
+      if (!list.length) return;
+      console.error(`  ${label} (${list.length}):`);
+      for (const l of list) console.error(`    - ${l}`);
+      console.error("");
+    };
+    section("UNCLASSIFIED — a catalog nobody has ruled on", problems.unclassified);
+    section("ORPHAN — wireable but no backend registration", problems.orphan);
+    section("NO HUB TILE — backend exists but nothing links to it", problems.missingHub);
+    section("NO FRONTEND REGISTRY ENTRY — the page cannot resolve the catalog", problems.missingFeRegistry);
+    section("LIE-LIVE — hub says live:true, no backend behind it", problems.lieLive);
+    console.error("This gate fails until the count is 0. Wire them through the generic catalog factory.");
+    process.exit(1);
+  }
+
+  console.log(
+    `verify-every-catalog-wired OK — ${wireable} wireable catalog(s) all have backend + hub tile + route; ` +
+      `0 orphans, 0 lie-live, 0 unclassified (${tableNames.length} tables classified)`
+  );
+}
+
+function selftest() {
+  const cases = [
+    {
+      name: "fields of DIFFERENT configs are not combined",
+      src: `const a = { tableName: "alpha", routePrefix: "/api/v1/catalogs/x" };\nconst b = { tableName: "beta", urlSegment: "beta-seg" };`,
+      check: (m) => {
+        const alpha = m.get("alpha")?.[0];
+        const beta = m.get("beta")?.[0];
+        return alpha?.urlSegment === null && beta?.routePrefix === null;
+      },
+    },
+    {
+      name: "a complete config is read whole",
+      src: `const a = { tableName: "gamma", routePrefix: "/api/v1/catalogs/y", urlSegment: "gamma-seg" };`,
+      check: (m) => {
+        const g = m.get("gamma")?.[0];
+        return g?.urlSegment === "gamma-seg" && g?.routePrefix === "/api/v1/catalogs/y";
+      },
+    },
+  ];
+
+  let bad = 0;
+  for (const c of cases) {
+    const m = backendByTable([{ path: "test.ts", src: c.src }]);
+    if (!c.check(m)) {
+      console.error(`  selftest FAIL — ${c.name}`);
+      bad += 1;
+    } else {
+      console.log(`  selftest OK — ${c.name}`);
+    }
+  }
+
+  // Hub extraction: live flag must be read from the SAME entry as the key.
+  const hub = hubEntries(
+    `[{ name: "A", live: true, catalogKey: "a-key" }, { name: "B", live: false, catalogKey: "b-key" }]`
+  );
+  const aLive = hub.find((h) => h.catalogKey === "a-key")?.live === true;
+  const bDead = hub.find((h) => h.catalogKey === "b-key")?.live === false;
+  if (aLive && bDead) console.log("  selftest OK — live flag attributed to the correct hub entry");
+  else {
+    console.error("  selftest FAIL — live flag attributed to the wrong hub entry");
+    bad += 1;
+  }
+
+  if (bad) {
+    console.error(`verify-every-catalog-wired SELFTEST FAIL — ${bad} case(s)`);
+    process.exit(1);
+  }
+  console.log("verify-every-catalog-wired SELFTEST OK");
+}
+
+main();

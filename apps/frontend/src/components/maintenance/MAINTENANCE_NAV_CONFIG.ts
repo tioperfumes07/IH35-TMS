@@ -53,7 +53,10 @@ export const MAINTENANCE_OPERATION_LINKS: MaintenanceNavLink[] = [
 ];
 
 /** Lists → Maintenance catalogs (AllCatalogsMap maintenance domain). */
-export const MAINTENANCE_LISTS_CATALOG_COUNT = 10;
+// LST-WIRE-03 — 10 → 18. Eight maintenance catalogs were unrouted and untiled (air bag, battery,
+// PM intervals, repair locations, tire, trailer parts, truck parts, work order templates); they are
+// now wired end-to-end and appear on the Lists hub.
+export const MAINTENANCE_LISTS_CATALOG_COUNT = 18;
 
 export const MAINTENANCE_MODULE_NAV_COUNT = MAINTENANCE_MODULE_NAV_LINKS.length;
 export const MAINTENANCE_MASTER_DATA_NAV_COUNT = MAINTENANCE_MASTER_DATA_LINKS.length;

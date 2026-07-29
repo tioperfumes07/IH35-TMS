@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
+import { useCatalogQuery } from "../../../hooks/useCatalogQuery";
 import { createPartsInventoryPurchase } from "../../../api/maintenance";
 import { createVendor, createCustomer } from "../../../api/mdata";
 import { chartOfAccountsCatalogClient, classesCatalogClient, itemsCatalogClient } from "../../../api/catalogs-accounting";
@@ -35,7 +36,8 @@ type Props = {
   onCreated: (created: { id: string; label: string }) => void;
 };
 
-const VENDOR_TYPES = ["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"] as const;
+// LST-WIRE-04 — vendor types come from catalogs.vendor_types (entity-scoped, operator-managed).
+// They were a frozen literal list here, so a type added to the catalog could never be selected.
 
 const schema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -43,7 +45,7 @@ const schema = z.object({
   company: z.string().trim().optional(),
   email: z.string().trim().email("Valid email required").optional().or(z.literal("")),
   phone: z.string().trim().optional(),
-  vendorType: z.enum(VENDOR_TYPES).optional(),
+  vendorType: z.string().trim().min(1).optional(),
   sku: z.string().trim().optional(),
   unitPrice: z.coerce.number().int().min(0).optional(),
   qtyReceived: z.coerce.number().int().min(1).optional(),
@@ -83,6 +85,15 @@ export function QuickCreateEntityModal({
   onCreated,
 }: Props) {
   const { pushToast } = useToast();
+  const vendorTypesQuery = useCatalogQuery({
+    catalogName: "vendors.vendor_types",
+    companyId: operatingCompanyId,
+    enabled: open && kind === "vendor" && Boolean(operatingCompanyId),
+  });
+  const vendorTypeNames = useMemo(
+    () => (vendorTypesQuery.data?.rows ?? []).map((r: Record<string, unknown>) => String(r.display_name ?? "")).filter(Boolean),
+    [vendorTypesQuery.data]
+  );
   const [saving, setSaving] = useState(false);
   const form = useForm<FormValues>({
     defaultValues: {
@@ -332,7 +343,7 @@ export function QuickCreateEntityModal({
           <label className="block">
             <span className="text-xs font-medium text-gray-600">Vendor type</span>
             <select className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" {...form.register("vendorType")} aria-label="Quick create vendor type">
-              {VENDOR_TYPES.map((t) => (
+              {vendorTypeNames.map((t) => (
                 <option key={t} value={t}>{t}</option>
               ))}
             </select>

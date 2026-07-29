@@ -1306,7 +1306,10 @@ export function getVendor(id: string, operatingCompanyId?: string | null) {
 
 export type CreateVendorInput = {
   name: string;
-  vendor_type: "Fuel" | "Repair" | "Tires" | "Towing" | "Insurance" | "Permit" | "Toll" | "Other";
+  // LST-WIRE-04 — was a frozen union of eight literals, which made catalogs.vendor_types unusable:
+  // a type added to the catalog could never be sent, because the type system rejected it. Vendor types
+  // are operator-managed per entity now, so this is the catalog's display_name.
+  vendor_type: string;
   vendor_code?: string;
   phone?: string;
   email?: string;
@@ -1350,7 +1353,10 @@ export function ensureDriverVendors(operatingCompanyId: string) {
 export type UpdateVendorInput = Partial<{
   name: string;
   vendor_code: string | null;
-  vendor_type: "Fuel" | "Repair" | "Tires" | "Towing" | "Insurance" | "Permit" | "Toll" | "Other";
+  // LST-WIRE-04 — was a frozen union of eight literals, which made catalogs.vendor_types unusable:
+  // a type added to the catalog could never be sent, because the type system rejected it. Vendor types
+  // are operator-managed per entity now, so this is the catalog's display_name.
+  vendor_type: string;
   phone: string | null;
   email: string | null;
   operating_company_id: string;

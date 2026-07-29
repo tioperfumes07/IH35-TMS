@@ -51,7 +51,7 @@ function main() {
     masterData: 11,
     dashboardTabs: 10,
     operationLinks: 11,
-    listsCatalogs: 10,
+    listsCatalogs: 18,
   };
 
   if (navConfig.match(/MAINTENANCE_MODULE_NAV_LINKS[\s\S]*?\];/g)?.[0]?.match(/path:/g)?.length !== expected.moduleNav) {
@@ -100,7 +100,13 @@ function main() {
   }
 
   const catalogCount = countCatalogEntries(allCatalogsMap);
-  const expectedListsCatalogs = 10;
+  // LST-WIRE-03 raised this from 10 to 18. Eight maintenance catalogs (air_bag_catalog,
+  // battery_catalog, pm_intervals, repair_locations, tire_catalog, trailer_parts, truck_parts,
+  // work_order_templates) had NO backend route and no hub tile — an operator could not list or edit a
+  // single row in any of them. They are now wired end-to-end, so the hub carries 18 tiles. The count
+  // is raised to match reality, not relaxed: it is still an exact equality, so a tile silently
+  // appearing or disappearing still fails.
+  const expectedListsCatalogs = 18;
   if (catalogCount !== expectedListsCatalogs) {
     failures.push(`AllCatalogsMap maintenance domain must have ${expectedListsCatalogs} catalogs (found ${catalogCount})`);
   }
