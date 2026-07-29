@@ -98,7 +98,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
         "id": "ACCT-LINK-05",
         "title": "posting_templates inbound FK from consumers",
         "status": "FAIL",
-        "pr": "#3444"
+        "pr": "#3444 #3709 #PENDING"
       },
       {
         "id": "ACCT-LINK-06",
