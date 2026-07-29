@@ -11,16 +11,32 @@ const COUNT_SPEC = path.join(ROOT, "apps/backend/src/lists/lists-module-count-sp
 // nine live catalogs were on the Lists hub but absent from the spec, so the badges understated
 // TRANSP by 548 active rows (SAFETY 30 vs 372, DISPATCH 6 vs 18, DRIVERS 48 vs 64, ACCOUNTING 531
 // vs 709, all browser-verified against Neon).
+// LST-F20 (2026-07-29): 28 catalogs the inventory classifies as WIREABLE were in no domain badge,
+// so their rows were uncounted. Five of them (dispatch_flag_colors, driver_leave_balances,
+// leave_policies, parts, equipment_line_item_templates) have no catalog route and no
+// useCatalogQuery key yet — they were briefly dropped from this pass on the theory that an
+// unreachable table should not be counted. That was WRONG and is recorded here so it is not
+// re-attempted: catalog-inventory.json classifies all five ROUTED-PENDING, and the OWNER RULING of
+// 2026-07-28 is that EVERY catalog gets a QuickBooks-style creator wizard so it can be edited and
+// added to. They are catalogs whose route is not built yet, not non-catalogs. Excluding them would
+// have silenced a real, owner-acknowledged wiring gap and let the badge under-report by their
+// contents — the same defect class this work fixes. The missing routes are the gap; the count is
+// not where it gets hidden.
 const EXPECTED_TABLE_COUNTS = {
   fleet: 10,
-  fuel: 12,
-  maintenance: 9,
-  safety: 6, // +complaint_types, +dot_violation_types, +cargo_claim_reasons
+  fuel: 16, // LST-F20: +def_stations +fuel_stations +relay_accounts +toll_providers
+  // LST-F20: +air_bag_catalog +battery_catalog +equipment_line_item_templates +labor_rates
+  // +maintenance_part_locations +parts +pm_intervals +repair_locations +tire_catalog +trailer_parts
+  // +truck_parts +work_order_templates
+  maintenance: 21,
+  safety: 8, // +complaint_types, +dot_violation_types, +cargo_claim_reasons; LST-F20: +accident_types +workplace_incident_types
   // LST-COUNT-01 (2026-07-28): +dispatcher_error_reasons +customer_quality_event_reasons. Both are
   // LIVE and per-entity on prod (75 and 72 rows, verified under lucia) and were absent from the count
   // spec entirely, so the DISPATCH badge understated by their whole contents.
-  dispatch: 7, // +load_cancellation_reasons +dispatcher_error_reasons +customer_quality_event_reasons
-  drivers: 11, // +driver_termination_reasons +driver_load_statuses (LST-A-01 hub)
+  // LST-F20: +dispatch_flag_colors +load_trailer_equipment +lumper_providers +mx_customs_brokers
+  dispatch: 11, // +load_cancellation_reasons +dispatcher_error_reasons +customer_quality_event_reasons
+  // LST-F20: +cash_advance_types +driver_leave_balances +leave_policies +leave_types
+  drivers: 15, // +driver_termination_reasons +driver_load_statuses (LST-A-01 hub)
   accounting: 16, // +journal_entry_types, +account_types, +detail_types, +void_cancel_reasons
 };
 
