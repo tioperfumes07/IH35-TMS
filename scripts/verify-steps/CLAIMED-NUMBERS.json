@@ -1117,6 +1117,7 @@
     "1738": "1738-verify-expenses-projection-opco-lines.mjs",
     "1739": "1739-verify-backend-version-from-backend.mjs",
     "1740": "1740-verify-held-posting-flags-enable.mjs",
+    "1741": "1741-verify-no-raw-status-enum-in-ui.mjs",
     "1742": "1742-verify-fixed-asset-autopost-trk-enable.mjs",
     "1743": "1743-verify-work-order-queries-exclude-voided.mjs",
     "1744": "1744-verify-qbo-vendor-credits-mirror.mjs",
