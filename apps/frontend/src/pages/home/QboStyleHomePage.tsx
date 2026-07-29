@@ -19,6 +19,7 @@
  * NON-FINANCIAL: 100% read/aggregate over existing endpoints. No posting.
  * RLS: companyId set via existing useCompanyContext().
  */
+import { unverifiableReasonText } from "../../lib/unverifiableReasonText";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -289,7 +290,7 @@ export function QboStyleHomePage({ auth }: Props) {
                 <p className="mt-1 text-xs text-slate-600">
                   Invoice↔GL linkage unverifiable
                   {revenueQuery.data?.unverifiable_reason
-                    ? `: ${revenueQuery.data.unverifiable_reason}`
+                    ? `: ${unverifiableReasonText(revenueQuery.data.unverifiable_reason)}`
                     : ""}
                 </p>
               </div>

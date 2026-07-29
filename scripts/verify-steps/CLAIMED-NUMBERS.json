@@ -1122,6 +1122,7 @@
     "1742": "1742-verify-fixed-asset-autopost-trk-enable.mjs",
     "1743": "1743-verify-work-order-queries-exclude-voided.mjs",
     "1744": "1744-verify-qbo-vendor-credits-mirror.mjs",
+    "1745": "1745-verify-no-raw-reason-code-in-ui.mjs",
     "1746": "1746-verify-held-posting-flag-entity-scope.mjs",
     "1747": "1747-verify-acct-surf-02-expenses.mjs",
     "1748": "1748-verify-acct-surf-04-receive-payment.mjs",
