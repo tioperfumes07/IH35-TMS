@@ -431,8 +431,9 @@
       ],
       "spec": "ASC 606 earn-first \u00b7 blueprint \u00a718 \u00b7 EXEMPLAR-DISP-01",
       "status": "UNVERIFIED",
-      "evidence": "Code+guard on branch; flag OFF; LIVE PROOF UNVERIFIED until owner Neon-applies 202609290000 + enables REVENUE_RECOGNITION_POST_ENABLED per entity",
-      "pr": "#3663"
+      "evidence": "Pre-flip wiring durable: revenue-recognition + fixed-assets isEnabled pass operating_company_id (0243-h3-2); dispatch loads hook postLoadRevenueLatch on delivered_pending_docs + completed_docs_received; poster gates REVENUE_RECOGNITION_POST_ENABLED with opco; RLS-safe unbilled_revenue role-bind migration 202610201200 (ih35_app + opco GUC). Guard verify-acct-disp01-preflip-wiring (step 1766). LIVE Neon: TRANSP/USMCA unbilled_revenue bound; latch rows 0; flag default OFF. LIVE PROOF UNVERIFIED until owner enables REVENUE_RECOGNITION_POST_ENABLED per entity + earn/bill smoke.",
+      "pr": null,
+      "live_proof": "UNVERIFIED — flag OFF by design; density 0 until owner flip + smoke"
     },
     {
       "id": "ACCT-R-04",

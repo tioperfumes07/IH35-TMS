@@ -194,7 +194,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
         "id": "DISP-01",
         "title": "Two-event delivery revenue latch (Unbilled → A/R)",
         "status": "UNVERIFIED",
-        "pr": "#3663"
+        "pr": ""
       },
       {
         "id": "ACCT-R-04",

@@ -300,7 +300,12 @@ async function registerRevenueRecognitionRoutes(app: FastifyInstance) {
         [pp.data.id]
       );
 
-      const postEnabled = await isEnabled(client, POST_FLAG);
+      // DISP-01 / 0243-h3-2 — POSTING_FLAG_KEYS enrollment requires opco context so per-entity
+      // overrides (TRANSP first) take effect. Bare isEnabled(client, POST_FLAG) was global-only.
+      const postEnabled = await isEnabled(client, POST_FLAG, {
+        operating_company_id: qp.data.operating_company_id,
+        user_uuid: user.uuid,
+      });
       let recognizedTotal = 0;
 
       const obligations = (obRes.rows as RevObligationDetailRow[]).map((o) => {

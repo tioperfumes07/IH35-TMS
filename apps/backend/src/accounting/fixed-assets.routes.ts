@@ -266,7 +266,10 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
       );
       const disposal = dispRes.rows[0] as FixedAssetDisposalRow | undefined;
 
-      const autopostEnabled = await isEnabled(client, AUTOPOST_FLAG);
+      const autopostEnabled = await isEnabled(client, AUTOPOST_FLAG, {
+        operating_company_id: qp.data.operating_company_id,
+        user_uuid: user.uuid,
+      });
       const periodAmount = compute.rows.find((r) => r.depreciation_amount_cents > 0)?.depreciation_amount_cents ?? 0;
 
       const je_preview = {
