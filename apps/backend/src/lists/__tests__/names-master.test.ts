@@ -12,7 +12,7 @@ const queryMock = vi.fn(async (sql: string) => {
   if (sql.includes("count(*)")) {
     if (sql.includes("customer_contacts")) return { rows: [{ count: "2" }] };
     if (sql.includes("mdata.qbo_customers")) return { rows: [{ count: "0" }] };
-    if (sql.includes("mdata.qbo_vendors")) return { rows: [{ count: "0" }] };
+    if (sql.includes("accounting.qbo_vendors")) return { rows: [{ count: "0" }] };
     if (sql.includes("FROM mdata.customers")) return { rows: [{ count: "3" }] };
     if (sql.includes("FROM mdata.vendors")) return { rows: [{ count: "4" }] };
     if (sql.includes("FROM mdata.drivers")) return { rows: [{ count: "5" }] };
@@ -34,7 +34,7 @@ const queryMock = vi.fn(async (sql: string) => {
       ],
     };
   }
-  if (sql.includes("mdata.qbo_vendors")) {
+  if (sql.includes("accounting.qbo_vendors")) {
     return { rows: [] };
   }
   if (sql.includes("mdata.qbo_customers")) {

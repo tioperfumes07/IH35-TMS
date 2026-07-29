@@ -1,4 +1,5 @@
-{  "_comment": "REAL phantom-column bugs found by verify-sql-column-existence (SELECT references a column absent from the prod schema baseline \u2192 500/42703 on that path; mocked tests hid them). Frozen here as a RATCHET backlog: the guard BLOCKS any NEW phantom column; these are tracked for correct per-case fixes. NEVER treat an entry as an 'accepted false positive' \u2014 every key is a live defect until removed. Extended 2026-07-27 when CTE coverage was restored (WITH queries no longer skipped): new keys are CTE-surfaced backlog, not waived defects. Remove a key here as its bug is fixed.",
+{
+  "_comment": "REAL phantom-column bugs found by verify-sql-column-existence (SELECT references a column absent from the prod schema baseline \u2192 500/42703 on that path; mocked tests hid them). Frozen here as a RATCHET backlog: the guard BLOCKS any NEW phantom column; these are tracked for correct per-case fixes. NEVER treat an entry as an 'accepted false positive' \u2014 every key is a live defect until removed. Extended 2026-07-27 when CTE coverage was restored (WITH queries no longer skipped): new keys are CTE-surfaced backlog, not waived defects. Remove a key here as its bug is fixed.",
   "entries": [
     "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts#accounting.journal_entries.reference_no",
     "apps/backend/src/accounting/invoices.routes.ts#mdata.loads.invoice_id",
@@ -43,7 +44,6 @@
     "apps/backend/src/drivers/messages.service.ts#mdata.drivers.read_at",
     "apps/backend/src/insurance/policy-unit-fleet.service.ts#catalogs.accounts.length",
     "apps/backend/src/integrations/qbo/sync-outbound-accounting.entities.ts#mdata.qbo_customers.customer_uuid",
-    "apps/backend/src/integrations/qbo/sync-outbound-accounting.entities.ts#mdata.qbo_vendors.vendor_uuid",
     "apps/backend/src/integrations/samsara/geofences/reconciliation.service.ts#mdata.loads.delivered_at",
     "apps/backend/src/integrations/samsara/geofences/reconciliation.service.ts#mdata.loads.uuid",
     "apps/backend/src/integrity/anomaly-detector.service.ts#mdata.drivers.active",

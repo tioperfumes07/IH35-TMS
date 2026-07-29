@@ -26,6 +26,7 @@ const MIRROR_TABLES = [
   "mdata.qbo_items",
   "mdata.qbo_customers",
   "mdata.qbo_vendors",
+  "accounting.qbo_vendors",
 ];
 
 /** Pure comparison so the selftest runs with no database. */

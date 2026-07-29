@@ -16,7 +16,7 @@ type Client = { query: <T=Record<string,unknown>>(sql:string,values?:unknown[])=
 
 const ENTITIES = [
   { entity: "customers", table: "mdata.qbo_customers" },
-  { entity: "vendors", table: "mdata.qbo_vendors" },
+  { entity: "vendors", table: "accounting.qbo_vendors" },
   { entity: "items", table: "mdata.qbo_items" },
   { entity: "accounts", table: "mdata.qbo_accounts" },
   { entity: "classes", table: "mdata.qbo_classes" },

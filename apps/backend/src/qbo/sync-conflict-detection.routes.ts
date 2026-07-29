@@ -154,7 +154,7 @@ function entitySql(entity: EntityType) {
           'active', CASE WHEN m.raw_payload ? 'Active' THEN lower(m.raw_payload->>'Active') ELSE NULL END
         ) AS qbo_snapshot,
         m.raw_payload
-      FROM mdata.qbo_vendors m
+      FROM accounting.qbo_vendors m
       WHERE m.operating_company_id = $1::uuid
     `;
   }
