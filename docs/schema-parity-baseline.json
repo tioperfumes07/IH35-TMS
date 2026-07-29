@@ -923,6 +923,48 @@
       "voided_at",
       "voided_by_user_id"
     ],
+    "accounting.ob_register_audit_events": [
+      "account_id",
+      "actor_user_id",
+      "after_json",
+      "as_of_date",
+      "before_json",
+      "created_at",
+      "detail",
+      "event_type",
+      "id",
+      "operating_company_id",
+      "staging_line_id"
+    ],
+    "accounting.ob_register_staging_lines": [
+      "account_id",
+      "amount_cents",
+      "as_of_date",
+      "committed_at",
+      "committed_by_user_id",
+      "created_at",
+      "created_by_user_id",
+      "id",
+      "note",
+      "operating_company_id",
+      "qbo_account_id",
+      "source",
+      "source_account_label",
+      "status",
+      "updated_at",
+      "updated_by_user_id"
+    ],
+    "accounting.ob_source_finality": [
+      "as_of_date",
+      "created_at",
+      "id",
+      "is_final",
+      "note",
+      "operating_company_id",
+      "set_at",
+      "set_by",
+      "updated_at"
+    ],
     "accounting.outbox_events": [
       "aggregate_id",
       "aggregate_type",
@@ -1131,13 +1173,6 @@
       "updated_at"
     ],
     "accounting.qbo_accounts": [
-      "like",
-      "parent_id",
-      "parent_synced",
-      "qbo_last_error",
-      "qbo_last_push_at",
-      "qbo_push_attempts",
-      "sync_status",
       "account_sub_type",
       "account_type",
       "active",
@@ -1150,20 +1185,21 @@
       "mirrored_at",
       "name",
       "operating_company_id",
+      "parent_id",
+      "parent_synced",
       "payload_json",
       "qbo_id",
-      "qbo_sync_token",
-      "qbo_updated_at",
-      "updated_at"
-    ],
-    "accounting.qbo_customers": [
-      "archived_at",
-      "like",
       "qbo_last_error",
       "qbo_last_push_at",
       "qbo_push_attempts",
+      "qbo_sync_token",
+      "qbo_updated_at",
       "sync_status",
+      "updated_at"
+    ],
+    "accounting.qbo_customers": [
       "active",
+      "archived_at",
       "company_name",
       "created_at",
       "created_in_tms",
@@ -1178,8 +1214,12 @@
       "primary_email",
       "primary_phone",
       "qbo_id",
+      "qbo_last_error",
+      "qbo_last_push_at",
+      "qbo_push_attempts",
       "qbo_sync_token",
       "qbo_updated_at",
+      "sync_status",
       "updated_at"
     ],
     "accounting.qbo_remote_count_collection_state": [
@@ -1194,40 +1234,36 @@
     "accounting.qbo_remote_counts": [
       "collected_at",
       "collection_run_id",
-      "count_value",
       "created_at",
-      "entity_key",
       "entity_type",
       "id",
-      "last_polled_at",
       "operating_company_id",
       "remote_count"
     ],
     "accounting.qbo_vendors": [
-      "default_ap_account_qbo_id",
-      "eligible_1099",
-      "like",
-      "payment_terms_qbo_id",
-      "qbo_last_error",
-      "qbo_last_push_at",
-      "qbo_push_attempts",
-      "sync_status",
       "active",
       "company_name",
       "created_at",
       "created_in_tms",
+      "default_ap_account_qbo_id",
       "display_name",
+      "eligible_1099",
       "id",
       "last_push_at",
       "last_seen_at",
       "mirrored_at",
       "operating_company_id",
       "payload_json",
+      "payment_terms_qbo_id",
       "primary_email",
       "primary_phone",
       "qbo_id",
+      "qbo_last_error",
+      "qbo_last_push_at",
+      "qbo_push_attempts",
       "qbo_sync_token",
       "qbo_updated_at",
+      "sync_status",
       "updated_at"
     ],
     "accounting.recon_exceptions": [
@@ -8614,10 +8650,10 @@
       "voided_reason"
     ],
     "safety.civil_fines": [
+      "civil_fine_type_id",
       "driver_settlement_deduction_id",
       "voided_at",
-      "voided_reason",
-      "civil_fine_type_id"
+      "voided_reason"
     ],
     "safety.clearinghouse_query": [
       "consent_on_file",
@@ -9170,6 +9206,7 @@
       "created_at",
       "created_by",
       "csa_points",
+      "dot_violation_type_id",
       "driver_id",
       "duration_minutes",
       "id",
@@ -9182,8 +9219,7 @@
       "violation_type",
       "void_reason",
       "voided_at",
-      "voided_by",
-      "dot_violation_type_id"
+      "voided_by"
     ],
     "safety.incidents": [
       "auto_created_claim_id",
@@ -10007,48 +10043,6 @@
       "template_name",
       "to_phone",
       "variables"
-    ],
-    "accounting.ob_register_audit_events": [
-      "account_id",
-      "actor_user_id",
-      "after_json",
-      "as_of_date",
-      "before_json",
-      "created_at",
-      "detail",
-      "event_type",
-      "id",
-      "operating_company_id",
-      "staging_line_id"
-    ],
-    "accounting.ob_register_staging_lines": [
-      "account_id",
-      "amount_cents",
-      "as_of_date",
-      "committed_at",
-      "committed_by_user_id",
-      "created_at",
-      "created_by_user_id",
-      "id",
-      "note",
-      "operating_company_id",
-      "qbo_account_id",
-      "source",
-      "source_account_label",
-      "status",
-      "updated_at",
-      "updated_by_user_id"
-    ],
-    "accounting.ob_source_finality": [
-      "as_of_date",
-      "created_at",
-      "id",
-      "is_final",
-      "note",
-      "operating_company_id",
-      "set_at",
-      "set_by",
-      "updated_at"
     ]
   }
 }
