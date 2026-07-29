@@ -27,6 +27,8 @@ const GenericCatalogPage = React.lazy(() => import("../pages/lists/GenericCatalo
 const MaintenancePartsCatalog = React.lazy(() => import("../pages/lists/MaintenancePartsCatalog").then((m) => ({ default: m.MaintenancePartsCatalog })));
 // LST-F20b — bespoke page: its backend answers at /api/v1/catalogs/dispatch-flag-colors, not the
 // generic /api/v1/catalogs/{domain}/{segment}, so it cannot ride GenericCatalogPage.
+// LST-F20d — global reference catalogs (no operating_company_id); read-only by design.
+const StatesCatalogPage = React.lazy(() => import("../pages/lists/reference/StatesCatalogPage").then((m) => ({ default: m.StatesCatalogPage })));
 const DispatchFlagColorsCatalog = React.lazy(() => import("../pages/lists/dispatch/DispatchFlagColorsCatalog").then((m) => ({ default: m.DispatchFlagColorsCatalog })));
 const DetailTypesListPage = React.lazy(() => import("../pages/lists/accounting/DetailTypesListPage").then((m) => ({ default: m.DetailTypesListPage })));
 const NamesMasterHub = React.lazy(() => import("../pages/lists/names/NamesMasterHub").then((m) => ({ default: m.NamesMasterHub })));
@@ -2388,6 +2390,22 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <MaintenanceLaborCodesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/reference/us-states"
+          element={
+            <ProtectedRoute>
+              <StatesCatalogPage variant="us" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/reference/mexico-states"
+          element={
+            <ProtectedRoute>
+              <StatesCatalogPage variant="mx" />
             </ProtectedRoute>
           }
         />
