@@ -1681,6 +1681,8 @@ export type MonthCloseStatus = {
   fuel_tax: {
     complete: boolean;
     ifta_filed: boolean;
+    quarter_label: string;
+    due_this_month: boolean;
   };
   adjusting_entries: {
     count: number;
