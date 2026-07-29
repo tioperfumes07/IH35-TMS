@@ -326,6 +326,647 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
     ]
   },
   {
+    "id": "cash-flow",
+    "total": 1,
+    "done": 0,
+    "items": [
+      {
+        "id": "CASH-S01",
+        "title": "Surface /cash-flow renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      }
+    ]
+  },
+  {
+    "id": "compliance",
+    "total": 3,
+    "done": 0,
+    "items": [
+      {
+        "id": "COMP-S01",
+        "title": "Surface /compliance renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "COMP-S02",
+        "title": "Surface /compliance/property-tax renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "COMP-S03",
+        "title": "Surface /compliance/property-tax/:id renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      }
+    ]
+  },
+  {
+    "id": "dispatch",
+    "total": 37,
+    "done": 0,
+    "items": [
+      {
+        "id": "DISP-S01",
+        "title": "Surface /dispatch renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S02",
+        "title": "Surface /dispatch/alerts renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S03",
+        "title": "Surface /dispatch/alerts/late-arrivals renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S04",
+        "title": "Surface /dispatch/assignment-history renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S05",
+        "title": "Surface /dispatch/assignments renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S06",
+        "title": "Surface /dispatch/at-risk renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S07",
+        "title": "Surface /dispatch/book-load renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S08",
+        "title": "Surface /dispatch/border-crossing renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S09",
+        "title": "Surface /dispatch/border-crossing/history renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S10",
+        "title": "Surface /dispatch/borders/geofence-history renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S11",
+        "title": "Surface /dispatch/chat renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S12",
+        "title": "Surface /dispatch/detention renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S13",
+        "title": "Surface /dispatch/equipment-transfers renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S14",
+        "title": "Surface /dispatch/factoring-packets renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S15",
+        "title": "Surface /dispatch/factoring-queue renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S16",
+        "title": "Surface /dispatch/geofencing renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S17",
+        "title": "Surface /dispatch/in-transit-issues renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S18",
+        "title": "Surface /dispatch/incidents renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S19",
+        "title": "Surface /dispatch/layovers/driver/:driverId renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S20",
+        "title": "Surface /dispatch/loads renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S21",
+        "title": "Surface /dispatch/loads/:id renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S22",
+        "title": "Surface /dispatch/loads/:id/banking renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S23",
+        "title": "Surface /dispatch/map renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S24",
+        "title": "Surface /dispatch/notify-preferences renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S25",
+        "title": "Surface /dispatch/ocr-queue renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S26",
+        "title": "Surface /dispatch/planner renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S27",
+        "title": "Surface /dispatch/planners renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S28",
+        "title": "Surface /dispatch/planners/driver renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S29",
+        "title": "Surface /dispatch/planners/loads renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S30",
+        "title": "Surface /dispatch/planners/timeline renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S31",
+        "title": "Surface /dispatch/planners/truck renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S32",
+        "title": "Surface /dispatch/pod-review renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S33",
+        "title": "Surface /dispatch/pre-settlements renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S34",
+        "title": "Surface /dispatch/settings renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S35",
+        "title": "Surface /dispatch/settlements renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S36",
+        "title": "Surface /dispatch/trip-pairing renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DISP-S37",
+        "title": "Surface /dispatch/trip-profitability renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      }
+    ]
+  },
+  {
+    "id": "driver-hub",
+    "total": 2,
+    "done": 0,
+    "items": [
+      {
+        "id": "DHUB-S01",
+        "title": "Surface /driver-hub renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DHUB-S02",
+        "title": "Surface /driver-hub/reporting renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      }
+    ]
+  },
+  {
+    "id": "drivers",
+    "total": 20,
+    "done": 0,
+    "items": [
+      {
+        "id": "DRV-S01",
+        "title": "Surface /drivers renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S02",
+        "title": "Surface /drivers/:id renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S03",
+        "title": "Surface /drivers/:id/hos renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S04",
+        "title": "Surface /drivers/:id/profile renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S05",
+        "title": "Surface /drivers/alerts renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S06",
+        "title": "Surface /drivers/applicants renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S07",
+        "title": "Surface /drivers/auto-deductions renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S08",
+        "title": "Surface /drivers/cash-advances renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S09",
+        "title": "Surface /drivers/deductions renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S10",
+        "title": "Surface /drivers/disputes renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S11",
+        "title": "Surface /drivers/leave renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S12",
+        "title": "Surface /drivers/messages renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S13",
+        "title": "Surface /drivers/onboarding/:session_id renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S14",
+        "title": "Surface /drivers/pay-rate-templates renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S15",
+        "title": "Surface /drivers/permits renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S16",
+        "title": "Surface /drivers/pre-settlements renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S17",
+        "title": "Surface /drivers/profiles renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S18",
+        "title": "Surface /drivers/retention renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S19",
+        "title": "Surface /drivers/settlements renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "DRV-S20",
+        "title": "Surface /drivers/team-splits renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      }
+    ]
+  },
+  {
+    "id": "eld",
+    "total": 1,
+    "done": 0,
+    "items": [
+      {
+        "id": "ELD-S01",
+        "title": "Surface /eld renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      }
+    ]
+  },
+  {
+    "id": "fleet",
+    "total": 7,
+    "done": 0,
+    "items": [
+      {
+        "id": "FLEET-S01",
+        "title": "Surface /fleet renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "FLEET-S02",
+        "title": "Surface /fleet/:id renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "FLEET-S03",
+        "title": "Surface /fleet/map renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "FLEET-S04",
+        "title": "Surface /fleet/trailers/:id renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "FLEET-S05",
+        "title": "Surface /fleet/transfers-in-progress renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "FLEET-S06",
+        "title": "Surface /fleet/units/:id renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "FLEET-S07",
+        "title": "Surface /fleet/units/:id/detail renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      }
+    ]
+  },
+  {
+    "id": "fuel",
+    "total": 9,
+    "done": 0,
+    "items": [
+      {
+        "id": "FUEL-S01",
+        "title": "Surface /fuel renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "FUEL-S02",
+        "title": "Surface /fuel/compliance renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "FUEL-S03",
+        "title": "Surface /fuel/expense-mapping renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "FUEL-S04",
+        "title": "Surface /fuel/fraud-alerts renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "FUEL-S05",
+        "title": "Surface /fuel/history renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "FUEL-S06",
+        "title": "Surface /fuel/inbox renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "FUEL-S07",
+        "title": "Surface /fuel/loves-prices renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "FUEL-S08",
+        "title": "Surface /fuel/planner renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "FUEL-S09",
+        "title": "Surface /fuel/settings renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      }
+    ]
+  },
+  {
+    "id": "home",
+    "total": 1,
+    "done": 0,
+    "items": [
+      {
+        "id": "HOME-S01",
+        "title": "Surface /home renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      }
+    ]
+  },
+  {
+    "id": "insurance",
+    "total": 1,
+    "done": 0,
+    "items": [
+      {
+        "id": "INS-S01",
+        "title": "Surface /insurance renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      }
+    ]
+  },
+  {
+    "id": "legal",
+    "total": 12,
+    "done": 0,
+    "items": [
+      {
+        "id": "LEGAL-S01",
+        "title": "Surface /legal renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "LEGAL-S02",
+        "title": "Surface /legal/attorney-review renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "LEGAL-S03",
+        "title": "Surface /legal/contracts renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "LEGAL-S04",
+        "title": "Surface /legal/matters renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "LEGAL-S05",
+        "title": "Surface /legal/matters/:id renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "LEGAL-S06",
+        "title": "Surface /legal/matters/new renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "LEGAL-S07",
+        "title": "Surface /legal/policies renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "LEGAL-S08",
+        "title": "Surface /legal/privacy renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "LEGAL-S09",
+        "title": "Surface /legal/reports renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "LEGAL-S10",
+        "title": "Surface /legal/templates renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "LEGAL-S11",
+        "title": "Surface /legal/templates/:id renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "LEGAL-S12",
+        "title": "Surface /legal/terms renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      }
+    ]
+  },
+  {
     "id": "lists",
     "total": 23,
     "done": 15,
@@ -466,6 +1107,247 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
         "id": "LST-ORPH-05",
         "title": "Catalog inventory reconciled: every catalogs.* table classified",
         "status": "PASS",
+        "pr": ""
+      }
+    ]
+  },
+  {
+    "id": "maintenance",
+    "total": 39,
+    "done": 0,
+    "items": [
+      {
+        "id": "MAINT-S01",
+        "title": "Surface /maintenance renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S02",
+        "title": "Surface /maintenance/active-wos renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S03",
+        "title": "Surface /maintenance/arriving-soon renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S04",
+        "title": "Surface /maintenance/brake-wear renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S05",
+        "title": "Surface /maintenance/compliance renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S06",
+        "title": "Surface /maintenance/damage-reports renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S07",
+        "title": "Surface /maintenance/defects renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S08",
+        "title": "Surface /maintenance/defects/:defectId renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S09",
+        "title": "Surface /maintenance/driver-reports renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S10",
+        "title": "Surface /maintenance/drivers renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S11",
+        "title": "Surface /maintenance/fault-drafts renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S12",
+        "title": "Surface /maintenance/fault-rules renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S13",
+        "title": "Surface /maintenance/fleet-table renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S14",
+        "title": "Surface /maintenance/in-transit renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S15",
+        "title": "Surface /maintenance/in-transit-issues renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S16",
+        "title": "Surface /maintenance/inspections renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S17",
+        "title": "Surface /maintenance/kpi-dashboard renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S18",
+        "title": "Surface /maintenance/parts renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S19",
+        "title": "Surface /maintenance/parts-inventory renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S20",
+        "title": "Surface /maintenance/pm-auto-engine renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S21",
+        "title": "Surface /maintenance/pm-schedule renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S22",
+        "title": "Surface /maintenance/position-history renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S23",
+        "title": "Surface /maintenance/pre-flight-dvir renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S24",
+        "title": "Surface /maintenance/reports renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S25",
+        "title": "Surface /maintenance/rm-status-board renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S26",
+        "title": "Surface /maintenance/road-service renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S27",
+        "title": "Surface /maintenance/service-location renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S28",
+        "title": "Surface /maintenance/settings renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S29",
+        "title": "Surface /maintenance/severe-repairs renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S30",
+        "title": "Surface /maintenance/tire-wear renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S31",
+        "title": "Surface /maintenance/tires renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S32",
+        "title": "Surface /maintenance/triage renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S33",
+        "title": "Surface /maintenance/vehicles renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S34",
+        "title": "Surface /maintenance/vendors renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S35",
+        "title": "Surface /maintenance/vendors/:vendorId renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S36",
+        "title": "Surface /maintenance/warranty-claims renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S37",
+        "title": "Surface /maintenance/work-orders renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S38",
+        "title": "Surface /maintenance/work-orders/:id renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "MAINT-S39",
+        "title": "Surface /maintenance/work-orders/new renders real entity-scoped data with no dead end",
+        "status": "OPEN",
         "pr": ""
       }
     ]
@@ -700,6 +1582,43 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
       {
         "id": "SAF-DOM-02",
         "title": "company_violations retired jsonb: re-backfill sweep, auto-fine trigger repoint, DB-enforced archive (held migration)",
+        "status": "OPEN",
+        "pr": ""
+      }
+    ]
+  },
+  {
+    "id": "tasks",
+    "total": 5,
+    "done": 0,
+    "items": [
+      {
+        "id": "TASK-S01",
+        "title": "Surface /tasks renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "TASK-S02",
+        "title": "Surface /tasks/calendar renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "TASK-S03",
+        "title": "Surface /tasks/chat renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "TASK-S04",
+        "title": "Surface /tasks/mine renders real entity-scoped data with no dead end",
+        "status": "OPEN",
+        "pr": ""
+      },
+      {
+        "id": "TASK-S05",
+        "title": "Surface /tasks/report renders real entity-scoped data with no dead end",
         "status": "OPEN",
         "pr": ""
       }
