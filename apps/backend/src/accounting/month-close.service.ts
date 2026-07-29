@@ -34,6 +34,8 @@ export type MonthCloseStatus = {
   fuel_tax: {
     complete: boolean;
     ifta_filed: boolean;
+    quarter_label: string;
+    due_this_month: boolean;
   };
   adjusting_entries: {
     count: number;
@@ -57,6 +59,18 @@ function parsePeriod(period: string) {
   return {
     period_start: start.toISOString().slice(0, 10),
     period_end: end.toISOString().slice(0, 10),
+  };
+}
+
+// ACCT-F52: IFTA fuel tax is filed QUARTERLY (canonical `reports.ifta_filings`, quarter label
+// "YYYY-Q#" per apps/backend/src/reports/ifta/mileage-aggregator.service.ts#parseQuarterLabel — NOT
+// `accounting.sales_tax_returns`, which is an unrelated state sales-tax table). The checklist item
+// only blocks close on the LAST month of a quarter (Mar/Jun/Sep/Dec); other months have nothing due.
+function iftaQuarterInfo(year: number, month: number): { quarterLabel: string; dueThisMonth: boolean } {
+  const quarter = Math.ceil(month / 3);
+  return {
+    quarterLabel: `${year}-Q${quarter}`,
+    dueThisMonth: month % 3 === 0,
   };
 }
 
@@ -176,18 +190,23 @@ async function loadChecklist(client: Client, input: { operatingCompanyId: string
     [input.operatingCompanyId, input.periodEnd]
   );
 
+  const periodEndYear = Number(input.periodEnd.slice(0, 4));
+  const periodEndMonth = Number(input.periodEnd.slice(5, 7));
+  const { quarterLabel: iftaQuarterLabel, dueThisMonth: iftaDueThisMonth } = iftaQuarterInfo(
+    periodEndYear,
+    periodEndMonth
+  );
   const fuelTaxRes = await client.query<{ ifta_filed: boolean }>(
     `
       SELECT EXISTS (
         SELECT 1
-        FROM accounting.sales_tax_returns r
-        WHERE r.operating_company_id = $1::uuid
-          AND r.period_start = $2::date
-          AND r.period_end = $3::date
-          AND r.status IN ('filed', 'paid')
+        FROM reports.ifta_filings f
+        WHERE f.operating_company_id = $1::uuid
+          AND f.quarter = $2::text
+          AND f.status = 'filed'
       ) AS ifta_filed
     `,
-    [input.operatingCompanyId, input.periodStart, input.periodEnd]
+    [input.operatingCompanyId, iftaQuarterLabel]
   );
 
   const adjustingEntriesRes = await client.query<{ count: number }>(
@@ -220,7 +239,8 @@ async function loadChecklist(client: Client, input: { operatingCompanyId: string
   const bankReconComplete = accountsPending.length === 0;
   const arComplete = arOverdueCount === 0 || acknowledgments.ar_aging_review;
   const apComplete = apOverdueCount === 0 || acknowledgments.ap_aging_review;
-  const fuelTaxComplete = iftaFiled;
+  // Nothing is due for a non-quarter-end month; only the quarter's closing month can block on it.
+  const fuelTaxComplete = !iftaDueThisMonth || iftaFiled;
   const periodOpen = period?.status === "open";
   const canLock = periodOpen && bankReconComplete && arComplete && apComplete && fuelTaxComplete;
 
@@ -230,6 +250,8 @@ async function loadChecklist(client: Client, input: { operatingCompanyId: string
     arOverdueCount,
     apOverdueCount,
     iftaFiled,
+    iftaQuarterLabel,
+    iftaDueThisMonth,
     adjustingCount,
     canLock,
     acknowledgments,
@@ -268,8 +290,10 @@ export async function getMonthCloseStatus(input: { userId: string; operatingComp
         reviewed: checklist.acknowledgments.ap_aging_review,
       },
       fuel_tax: {
-        complete: checklist.iftaFiled,
+        complete: !checklist.iftaDueThisMonth || checklist.iftaFiled,
         ifta_filed: checklist.iftaFiled,
+        quarter_label: checklist.iftaQuarterLabel,
+        due_this_month: checklist.iftaDueThisMonth,
       },
       adjusting_entries: {
         count: checklist.adjustingCount,
