@@ -1137,6 +1137,7 @@
     "1758": "1758-verify-acct-f52-month-close-ifta-quarterly.mjs",
     "1760": "1760-verify-acct-link05-posting-template-create.mjs",
     "1762": "1762-verify-acct-link06-rules-call-poster.mjs",
+    "1764": "1764-verify-acct-surf08-live-dod.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",

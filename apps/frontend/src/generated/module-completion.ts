@@ -20,7 +20,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
   {
     "id": "accounting",
     "total": 31,
-    "done": 26,
+    "done": 27,
     "items": [
       {
         "id": "ACCT-ECON-01",
@@ -157,8 +157,8 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
       {
         "id": "ACCT-SURF-08",
         "title": "Period close / Audit trail / Posting lineage — active path + evidence",
-        "status": "UNVERIFIED",
-        "pr": ""
+        "status": "PASS",
+        "pr": "#PENDING-SURF08"
       },
       {
         "id": "ACCT-SURF-09",
