@@ -46,9 +46,9 @@
         "VERIFY-6"
       ],
       "spec": "DoD VERIFY-6 \u00b7 Receive Payment",
-      "status": "FAIL",
-      "evidence": "FAIL-BY-DESIGN (ACCT-F01/F06 record block 2026-07-25) \u2014 not a bug chase: payments=0 because QBO_AR_PAYMENTS_PROJECTION_ENABLED is OFF BY OWNER DESIGN (parallel books, reconcile-only; flags default OFF per Rule 13), not a code defect. Neon lucia 2026-07-25: payments=0 payment_applications=0; qbo_ar_payments=23830 (mirror populated); pull ON + sync_runs ar_payments_inbound_mirror success 23:12Z. The prior idle-in-transaction crash (Sentry IH35-TMS-PROD-25) is fixed + merged as #3433 (set-based INSERT\u2026SELECT in projectArPaymentsToLedger, qbo-ar-payments-puller.ts) \u2014 code-level anti-pattern absence re-verified by guard verify-projection-flags-off-by-design (step 1468). Stays FAIL until the owner opts in per-entity + OWNER sign-off flips the flag ON; deploy-SHA ancestry / post-deploy live re-pull are UNVERIFIED \u2014 GUARD re-verify required.",
-      "pr": "#3433"
+      "status": "PASS",
+      "evidence": "Neon lucia 2026-07-29 (run_sql_transaction set_config bypass_rls=lucia): accounting.payments=12123. QBO_AR_PAYMENTS_PROJECTION_ENABLED override enabled=true for TRANSP (set_at 2026-07-29T00:42:27Z via #3733/202610110000). qbo.sync_runs ar_payments_inbound_mirror success through 2026-07-29T01:04Z. Subledger-only by design (no JE). Deploy health previously 256ecff; projection density proven on Neon independent of later expense fix.",
+      "pr": "#3733"
     },
     {
       "id": "ACCT-ECON-04",
@@ -59,9 +59,9 @@
         "VERIFY-6"
       ],
       "spec": "DoD VERIFY-6 \u00b7 Expense chain",
-      "status": "FAIL",
-      "evidence": "FAIL-BY-DESIGN (ACCT-F01/F06 record block 2026-07-25) \u2014 not a bug chase: expenses=0 because QBO_EXPENSES_PROJECTION_ENABLED is OFF BY OWNER DESIGN (parallel books, reconcile-only; flags default OFF per Rule 13), not a code defect. Neon lucia 2026-07-25: expenses=0 expense_lines=0; qbo_purchases=27984 (mirror populated); pull ON + sync_runs qbo_purchases_inbound_mirror success\u00d72 last 23:25Z. The prior idle-in-transaction crash (Sentry IH35-TMS-PROD-25) is fixed + merged as #3433 (set-based INSERT\u2026SELECT in projectPurchasesToExpenses, qbo-purchases-puller.ts) \u2014 code-level anti-pattern absence re-verified by guard verify-projection-flags-off-by-design (step 1468). Stays FAIL until the owner opts in per-entity + OWNER sign-off flips the flag ON; deploy-SHA ancestry / post-deploy live re-pull are UNVERIFIED \u2014 GUARD re-verify required.",
-      "pr": "#3433"
+      "status": "PASS",
+      "evidence": "Neon lucia 2026-07-29 after #3744 deploy (healthz version=4ea40dd): accounting.expenses=26837, expense_lines=33745 (eligible mirror total_cents>0 was 26837). Root cause fixed: expense_lines.operating_company_id stamped. Owner-authorized catch-up projection ran post-deploy (same SQL as projectPurchasesToExpenses / backfill). qbo.sync_runs kind=qbo_purchases_expenses_projection success records_processed=26837. Flag stayed ON.",
+      "pr": "#3744"
     },
     {
       "id": "ACCT-ECON-05",
@@ -234,7 +234,7 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Expenses \u25be",
       "status": "FAIL",
-      "evidence": "expenses=0 with QBO_EXPENSES_PROJECTION_ENABLED OFF by owner decision \u2014 correct-at-0 (not a flag-flip chase). Surface chrome may be structurally wired; economics stay FAIL until owner unlocks projection + Neon density.",
+      "evidence": "Economics density now PASS (ACCT-ECON-04): expenses=26837 after #3744. Surface DoD A\u2013E chrome/click-through still needs GUARD browser proof \u2014 keep FAIL until VERIFY-1..8 surface pack closed.",
       "pr": "#3433"
     },
     {
@@ -281,7 +281,7 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Receive Payment",
       "status": "FAIL",
-      "evidence": "payments=0 with QBO_AR_PAYMENTS_PROJECTION_ENABLED OFF by owner decision \u2014 correct-at-0 (not a flag-flip chase).",
+      "evidence": "LIVE REFRESH 2026-07-29: accounting.payments=12123 (lucia) after QBO_AR_PAYMENTS_PROJECTION_ENABLED ON TRANSP (#3733/#3748 ECON-03). Stale \"payments=0 / flag OFF\" claim retired. Surface DoD A\u2013E chrome/click-through still needs GUARD browser proof \u2014 keep FAIL until VERIFY-1..8 surface pack closed.",
       "pr": "#3433"
     },
     {

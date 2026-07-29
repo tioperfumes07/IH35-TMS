@@ -20,7 +20,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
   {
     "id": "accounting",
     "total": 31,
-    "done": 19,
+    "done": 21,
     "items": [
       {
         "id": "ACCT-ECON-01",
@@ -37,14 +37,14 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
       {
         "id": "ACCT-ECON-03",
         "title": "AR payments live density > 0 after QBO pull+project",
-        "status": "FAIL",
-        "pr": "#3433"
+        "status": "PASS",
+        "pr": "#3733"
       },
       {
         "id": "ACCT-ECON-04",
         "title": "expenses live density > 0 after Purchase pull+project",
-        "status": "FAIL",
-        "pr": "#3433"
+        "status": "PASS",
+        "pr": "#3744"
       },
       {
         "id": "ACCT-ECON-05",
