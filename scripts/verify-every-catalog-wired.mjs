@@ -87,8 +87,18 @@ export function backendByTable(files) {
     for (const cfg of configObjects(src)) {
       const tableName = field(cfg, "tableName");
       if (!tableName) continue;
-      const urlSegment = field(cfg, "urlSegment");
-      const routePrefix = field(cfg, "routePrefix");
+      // Registrations spell the URL segment TWO ways: `urlSegment` (generic factory) and `catalogPath`
+      // (the dispatch/*.routes.ts modules). Reading only urlSegment reported four served catalogs as
+      // orphans AND let a duplicate registration through — the boot failed with
+      // "Method 'GET' already declared for route '/api/v1/catalogs/dispatch/load-types'". This is the
+      // same blind spot that broke boot in #3727; it is spelled out here so it is not made a third time.
+      const urlSegment = field(cfg, "urlSegment") ?? field(cfg, "catalogPath");
+      // routePrefix may be absent: the dispatch modules bake it into registerDispatchCatalogCrudRoutes,
+      // so the config carries only catalogPath + tableName. Derive the domain from the module's own
+      // directory (apps/backend/src/catalogs/<domain>/…) rather than treating the config as unregistered.
+      const declaredPrefix = field(cfg, "routePrefix");
+      const dirDomain = path.match(/apps\/backend\/src\/catalogs\/([a-z-]+)\//)?.[1] ?? null;
+      const routePrefix = declaredPrefix ?? (dirDomain ? `/api/v1/catalogs/${dirDomain}` : null);
       if (!byTable.has(tableName)) byTable.set(tableName, []);
       byTable.get(tableName).push({ tableName, urlSegment, routePrefix, path });
     }

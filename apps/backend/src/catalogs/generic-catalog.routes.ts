@@ -68,86 +68,6 @@ export const fleetEquipmentTypesCatalogConfig: GenericCatalogConfig = {
  */
 const dispatchCatalogCodeRegex = /^[A-Z][A-Z0-9_-]+$/;
 
-export const dispatchLoadTypesCatalogConfig: GenericCatalogConfig = {
-  catalogName: "dispatch.load_types",
-  tableName: "load_types",
-  routePrefix: "/api/v1/catalogs/dispatch",
-  urlSegment: "load-types",
-  displayName: "Load Types",
-  allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
-  requiredColumns: ["code", "display_name"],
-  validators: {
-    code: z.string().trim().regex(dispatchCatalogCodeRegex),
-    display_name: z.string().trim().min(1).max(160),
-    description: z.string().trim().max(500).optional(),
-    is_active: z.coerce.boolean().default(true),
-    sort_order: z.coerce.number().int().min(0).max(10000).default(100),
-  },
-  searchableColumns: ["code", "display_name", "description"],
-  defaultSort: { column: "sort_order", dir: "asc" },
-  softDeleteColumn: "is_active",
-};
-
-export const dispatchDetentionReasonsCatalogConfig: GenericCatalogConfig = {
-  catalogName: "dispatch.detention_reasons",
-  tableName: "detention_reasons",
-  routePrefix: "/api/v1/catalogs/dispatch",
-  urlSegment: "detention-reasons",
-  displayName: "Detention Reasons",
-  allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
-  requiredColumns: ["code", "display_name"],
-  validators: {
-    code: z.string().trim().regex(dispatchCatalogCodeRegex),
-    display_name: z.string().trim().min(1).max(160),
-    description: z.string().trim().max(500).optional(),
-    is_active: z.coerce.boolean().default(true),
-    sort_order: z.coerce.number().int().min(0).max(10000).default(100),
-  },
-  searchableColumns: ["code", "display_name", "description"],
-  defaultSort: { column: "sort_order", dir: "asc" },
-  softDeleteColumn: "is_active",
-};
-
-export const dispatchPickupTimeTypesCatalogConfig: GenericCatalogConfig = {
-  catalogName: "dispatch.pickup_time_types",
-  tableName: "pickup_time_types",
-  routePrefix: "/api/v1/catalogs/dispatch",
-  urlSegment: "pickup-time-types",
-  displayName: "Pickup Time Types",
-  allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
-  requiredColumns: ["code", "display_name"],
-  validators: {
-    code: z.string().trim().regex(dispatchCatalogCodeRegex),
-    display_name: z.string().trim().min(1).max(160),
-    description: z.string().trim().max(500).optional(),
-    is_active: z.coerce.boolean().default(true),
-    sort_order: z.coerce.number().int().min(0).max(10000).default(100),
-  },
-  searchableColumns: ["code", "display_name", "description"],
-  defaultSort: { column: "sort_order", dir: "asc" },
-  softDeleteColumn: "is_active",
-};
-
-export const dispatchAdditionalChargesCatalogConfig: GenericCatalogConfig = {
-  catalogName: "dispatch.additional_charges",
-  tableName: "additional_charges",
-  routePrefix: "/api/v1/catalogs/dispatch",
-  urlSegment: "additional-charges",
-  displayName: "Additional Charges",
-  allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
-  requiredColumns: ["code", "display_name"],
-  validators: {
-    code: z.string().trim().regex(dispatchCatalogCodeRegex),
-    display_name: z.string().trim().min(1).max(160),
-    description: z.string().trim().max(500).optional(),
-    is_active: z.coerce.boolean().default(true),
-    sort_order: z.coerce.number().int().min(0).max(10000).default(100),
-  },
-  searchableColumns: ["code", "display_name", "description"],
-  defaultSort: { column: "sort_order", dir: "asc" },
-  softDeleteColumn: "is_active",
-};
-
 const reasonCodeRegex = /^[A-Z][A-Z0-9_-]+$/;
 const SEVERITY_VALUES = ["info", "warning", "severe"] as const;
 
@@ -289,106 +209,6 @@ export const workplaceIncidentTypesCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/safety",
   urlSegment: "workplace-incident-types",
   displayName: "Workplace Incident Types",
-  allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
-  requiredColumns: ["code", "display_name"],
-  validators: {
-    code: z.string().trim().regex(wireCodeRegex),
-    display_name: z.string().trim().min(1).max(160),
-    description: z.string().trim().max(500).optional(),
-    is_active: z.coerce.boolean().default(true),
-    sort_order: z.coerce.number().int().min(0).max(10000).default(100),
-  },
-  searchableColumns: ["code", "display_name", "description"],
-  defaultSort: { column: "sort_order", dir: "asc" },
-  softDeleteColumn: "is_active",
-};
-
-export const cdlEndorsementsCatalogConfig: GenericCatalogConfig = {
-  catalogName: "driver.cdl_endorsements",
-  tableName: "cdl_endorsements",
-  routePrefix: "/api/v1/catalogs/driver",
-  urlSegment: "cdl-endorsements",
-  displayName: "Cdl Endorsements",
-  allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
-  requiredColumns: ["code", "display_name"],
-  validators: {
-    code: z.string().trim().regex(wireCodeRegex),
-    display_name: z.string().trim().min(1).max(160),
-    description: z.string().trim().max(500).optional(),
-    is_active: z.coerce.boolean().default(true),
-    sort_order: z.coerce.number().int().min(0).max(10000).default(100),
-  },
-  searchableColumns: ["code", "display_name", "description"],
-  defaultSort: { column: "sort_order", dir: "asc" },
-  softDeleteColumn: "is_active",
-};
-
-export const cdlRestrictionsCatalogConfig: GenericCatalogConfig = {
-  catalogName: "driver.cdl_restrictions",
-  tableName: "cdl_restrictions",
-  routePrefix: "/api/v1/catalogs/driver",
-  urlSegment: "cdl-restrictions",
-  displayName: "Cdl Restrictions",
-  allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
-  requiredColumns: ["code", "display_name"],
-  validators: {
-    code: z.string().trim().regex(wireCodeRegex),
-    display_name: z.string().trim().min(1).max(160),
-    description: z.string().trim().max(500).optional(),
-    is_active: z.coerce.boolean().default(true),
-    sort_order: z.coerce.number().int().min(0).max(10000).default(100),
-  },
-  searchableColumns: ["code", "display_name", "description"],
-  defaultSort: { column: "sort_order", dir: "asc" },
-  softDeleteColumn: "is_active",
-};
-
-export const employmentStatusesCatalogConfig: GenericCatalogConfig = {
-  catalogName: "driver.employment_statuses",
-  tableName: "employment_statuses",
-  routePrefix: "/api/v1/catalogs/driver",
-  urlSegment: "employment-statuses",
-  displayName: "Employment Statuses",
-  allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
-  requiredColumns: ["code", "display_name"],
-  validators: {
-    code: z.string().trim().regex(wireCodeRegex),
-    display_name: z.string().trim().min(1).max(160),
-    description: z.string().trim().max(500).optional(),
-    is_active: z.coerce.boolean().default(true),
-    sort_order: z.coerce.number().int().min(0).max(10000).default(100),
-  },
-  searchableColumns: ["code", "display_name", "description"],
-  defaultSort: { column: "sort_order", dir: "asc" },
-  softDeleteColumn: "is_active",
-};
-
-export const licenseClassesCatalogConfig: GenericCatalogConfig = {
-  catalogName: "driver.license_classes",
-  tableName: "license_classes",
-  routePrefix: "/api/v1/catalogs/driver",
-  urlSegment: "license-classes",
-  displayName: "License Classes",
-  allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
-  requiredColumns: ["code", "display_name"],
-  validators: {
-    code: z.string().trim().regex(wireCodeRegex),
-    display_name: z.string().trim().min(1).max(160),
-    description: z.string().trim().max(500).optional(),
-    is_active: z.coerce.boolean().default(true),
-    sort_order: z.coerce.number().int().min(0).max(10000).default(100),
-  },
-  searchableColumns: ["code", "display_name", "description"],
-  defaultSort: { column: "sort_order", dir: "asc" },
-  softDeleteColumn: "is_active",
-};
-
-export const medicalCardStatusesCatalogConfig: GenericCatalogConfig = {
-  catalogName: "driver.medical_card_statuses",
-  tableName: "medical_card_statuses",
-  routePrefix: "/api/v1/catalogs/driver",
-  urlSegment: "medical-card-statuses",
-  displayName: "Medical Card Statuses",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -749,11 +569,6 @@ export async function registerGenericCatalogRoutes(app: FastifyInstance) {
   createCatalogRoutes(app, dispatchErrorReasonsCatalogConfig, { mode: "all" });
   createCatalogRoutes(app, customerQualityEventReasonsCatalogConfig, { mode: "all" });
   createCatalogRoutes(app, dispatchLumperProvidersCatalogConfig, { mode: "all" });
-  // LST-WIRE-01 — the four lie-live dispatch catalogs.
-  createCatalogRoutes(app, dispatchLoadTypesCatalogConfig, { mode: "all" });
-  createCatalogRoutes(app, dispatchDetentionReasonsCatalogConfig, { mode: "all" });
-  createCatalogRoutes(app, dispatchPickupTimeTypesCatalogConfig, { mode: "all" });
-  createCatalogRoutes(app, dispatchAdditionalChargesCatalogConfig, { mode: "all" });
 
   // LST-WIRE-04 — vendor types: was a hardcoded TS union; now operator-managed.
   createCatalogRoutes(app, vendorTypesCatalogConfig, { mode: "all" });
@@ -761,11 +576,6 @@ export async function registerGenericCatalogRoutes(app: FastifyInstance) {
   // LST-WIRE-03 — 23 previously unrouted catalogs.
   createCatalogRoutes(app, accidentTypesCatalogConfig, { mode: "all" });
   createCatalogRoutes(app, workplaceIncidentTypesCatalogConfig, { mode: "all" });
-  createCatalogRoutes(app, cdlEndorsementsCatalogConfig, { mode: "all" });
-  createCatalogRoutes(app, cdlRestrictionsCatalogConfig, { mode: "all" });
-  createCatalogRoutes(app, employmentStatusesCatalogConfig, { mode: "all" });
-  createCatalogRoutes(app, licenseClassesCatalogConfig, { mode: "all" });
-  createCatalogRoutes(app, medicalCardStatusesCatalogConfig, { mode: "all" });
   createCatalogRoutes(app, leaveTypesCatalogConfig, { mode: "all" });
   createCatalogRoutes(app, cashAdvanceTypesCatalogConfig, { mode: "all" });
   createCatalogRoutes(app, pmIntervalsCatalogConfig, { mode: "all" });

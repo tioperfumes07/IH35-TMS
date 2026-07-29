@@ -677,6 +677,121 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     ],
     defaultSort: { column: "sort_order", dir: "asc" },
   },
+  // LST-WIRE-06 — seven catalogs whose backend routes are registered with `catalogPath` rather than
+  // `urlSegment`. The completeness gate could not see that spelling, so it reported them as wired when
+  // their pages could not resolve. Frontend registry entries only; no accounting.* code or migration.
+  "accounting.journal_entry_types": {
+    catalogName: "accounting.journal_entry_types",
+    displayName: "Journal Entry Types",
+    domain: "accounting",
+    catalogKey: "journal-entry-types",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Journal Entry Type", sortable: true, filterable: true },
+      { key: "is_active", label: "Status", sortable: true, filterable: false },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Journal Entry Type", type: "text", required: true },
+    ],
+    defaultSort: { column: "code", dir: "asc" },
+  },
+  "accounting.accounts": {
+    catalogName: "accounting.accounts",
+    displayName: "Accounts",
+    domain: "accounting",
+    catalogKey: "chart-of-accounts",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Account", sortable: true, filterable: true },
+      { key: "is_active", label: "Status", sortable: true, filterable: false },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Account", type: "text", required: true },
+    ],
+    defaultSort: { column: "code", dir: "asc" },
+  },
+  "accounting.classes": {
+    catalogName: "accounting.classes",
+    displayName: "Classes",
+    domain: "accounting",
+    catalogKey: "classes",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Classe", sortable: true, filterable: true },
+      { key: "is_active", label: "Status", sortable: true, filterable: false },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Classe", type: "text", required: true },
+    ],
+    defaultSort: { column: "code", dir: "asc" },
+  },
+  "accounting.payment_terms": {
+    catalogName: "accounting.payment_terms",
+    displayName: "Payment Terms",
+    domain: "accounting",
+    catalogKey: "payment-terms",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Payment Term", sortable: true, filterable: true },
+      { key: "is_active", label: "Status", sortable: true, filterable: false },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Payment Term", type: "text", required: true },
+    ],
+    defaultSort: { column: "code", dir: "asc" },
+  },
+  "accounting.items": {
+    catalogName: "accounting.items",
+    displayName: "Items",
+    domain: "accounting",
+    catalogKey: "items",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Item", sortable: true, filterable: true },
+      { key: "is_active", label: "Status", sortable: true, filterable: false },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Item", type: "text", required: true },
+    ],
+    defaultSort: { column: "code", dir: "asc" },
+  },
+  "accounting.posting_templates": {
+    catalogName: "accounting.posting_templates",
+    displayName: "Posting Templates",
+    domain: "accounting",
+    catalogKey: "posting-templates",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Posting Template", sortable: true, filterable: true },
+      { key: "is_active", label: "Status", sortable: true, filterable: false },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Posting Template", type: "text", required: true },
+    ],
+    defaultSort: { column: "code", dir: "asc" },
+  },
+  "accounting.account_role_bindings": {
+    catalogName: "accounting.account_role_bindings",
+    displayName: "Account Role Bindings",
+    domain: "accounting",
+    catalogKey: "account-role-bindings",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Account Role Binding", sortable: true, filterable: true },
+      { key: "is_active", label: "Status", sortable: true, filterable: false },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Account Role Binding", type: "text", required: true },
+    ],
+    defaultSort: { column: "code", dir: "asc" },
+  },
   // LST-WIRE-05 — the eight financial catalogs. Each already had a working backend route and no
   // registry entry, so its page rendered "unknown catalog". Frontend-only: no accounting.* code and no
   // migration is touched here — those remain the money lane's.
@@ -907,7 +1022,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     catalogName: "driver.cdl_endorsements",
     displayName: "Cdl Endorsements",
     domain: "driver",
-    catalogKey: "cdl-endorsements",
+    catalogKey: "endorsements",
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Cdl Endorsement", sortable: true, filterable: true },
@@ -927,7 +1042,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     catalogName: "driver.cdl_restrictions",
     displayName: "Cdl Restrictions",
     domain: "driver",
-    catalogKey: "cdl-restrictions",
+    catalogKey: "restrictions",
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Cdl Restriction", sortable: true, filterable: true },
@@ -947,7 +1062,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     catalogName: "driver.employment_statuses",
     displayName: "Employment Statuses",
     domain: "driver",
-    catalogKey: "employment-statuses",
+    catalogKey: "employment-status",
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Employment Statuse", sortable: true, filterable: true },
@@ -987,7 +1102,7 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     catalogName: "driver.medical_card_statuses",
     displayName: "Medical Card Statuses",
     domain: "driver",
-    catalogKey: "medical-card-statuses",
+    catalogKey: "medical-card-status",
     columns: [
       { key: "code", label: "Code", sortable: true, filterable: true },
       { key: "display_name", label: "Medical Card Statuse", sortable: true, filterable: true },

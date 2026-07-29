@@ -58,7 +58,8 @@ function readAllBackendCatalogSources() {
       if (e.isDirectory()) walk(p);
       else if (e.name.endsWith(".ts") && !e.name.includes(".test.")) {
         const src = readFileSync(p, "utf8");
-        if (src.includes("urlSegment:")) parts.push(src);
+        // Both spellings, or the modules that use catalogPath are never even read.
+        if (src.includes("urlSegment:") || src.includes("catalogPath:")) parts.push(src);
       }
     }
   };
@@ -82,7 +83,10 @@ export function parseRegistry(src) {
  */
 export function backendConfigs(src) {
   const out = [];
-  for (const m of src.matchAll(/urlSegment:/g)) {
+  // Anchor on BOTH spellings — urlSegment (generic factory) and catalogPath (dispatch/driver route
+  // modules). Anchoring on urlSegment alone yielded zero configs for those modules, so four served
+  // dispatch catalogs read as facades.
+  for (const m of src.matchAll(/(?:urlSegment|catalogPath):/g)) {
     let depth = 0;
     let i = m.index;
     while (i > 0) {
@@ -120,7 +124,14 @@ export function chainProblems({ registry, hub, backend }) {
     // dispatch catalog exposed it, and the guard's own selftest is what caught it. Pair them by
     // extracting each config's braces.
     const hasBackend = backendConfigs(backend).some(
-      (cfg) => cfg.includes(`routePrefix: "${prefix}"`) && cfg.includes(`urlSegment: "${catalogKey}"`)
+      (cfg) =>
+        // The URL segment is spelled `urlSegment` by the generic factory and `catalogPath` by the
+        // dispatch/driver/accounting route modules; and those modules bake the prefix into their shared
+        // registrar, so routePrefix is often absent from the config. Requiring urlSegment + routePrefix
+        // together reported seven SERVED catalogs as facades. Accept either spelling, and accept a
+        // config that declares the segment without a prefix.
+        (cfg.includes(`urlSegment: "${catalogKey}"`) || cfg.includes(`catalogPath: "${catalogKey}"`)) &&
+        (cfg.includes(`routePrefix: "${prefix}"`) || !cfg.includes("routePrefix:"))
     );
     if (!hasBackend) {
       problems.push(
