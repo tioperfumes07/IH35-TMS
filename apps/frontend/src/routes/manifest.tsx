@@ -81,6 +81,9 @@ const PortalProfilePage = React.lazy(() => import("../portal/PortalProfilePage")
 import { PortalRouteGuard } from "../portal/PortalRouteGuard";
 import { FuelPlannerHomePage, type FuelTabId } from "../pages/fuel/FuelPlannerHome";
 const FraudAlertsListPage = React.lazy(() => import("../pages/fuel/fraud-alerts/FraudAlertsList").then((m) => ({ default: m.FraudAlertsListPage })));
+const CardOverageQueuePage = React.lazy(() =>
+  import("../pages/fuel/card-overage/CardOverageQueuePage").then((m) => ({ default: m.CardOverageQueuePage }))
+);
 const BankingHomePage = React.lazy(() => import("../pages/banking/BankingHome").then((m) => ({ default: m.BankingHomePage })));
 const TransfersListPage = React.lazy(() => import("../pages/banking/TransfersListPage").then((m) => ({ default: m.TransfersListPage })));
 const BankingObligationReconcilePage = React.lazy(() => import("../pages/banking/BankingObligationReconcilePage").then((m) => ({ default: m.BankingObligationReconcilePage })));
@@ -1369,6 +1372,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FraudAlertsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fuel/card-overage"
+          element={
+            <ProtectedRoute>
+              <CardOverageQueuePage />
             </ProtectedRoute>
           }
         />
