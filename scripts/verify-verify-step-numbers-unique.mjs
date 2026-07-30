@@ -49,6 +49,7 @@ export function analyse(groups, registry, frozen) {
   const problems = [];
   const frozenSet = new Set(frozen);
 
+  const notes = [];
   const duplicates = [...groups.entries()].filter(([, v]) => v.length > 1).map(([k]) => k);
   const newDuplicates = duplicates.filter((n) => !frozenSet.has(n));
   const staleFrozen = frozen.filter((n) => !duplicates.includes(n));
@@ -66,14 +67,32 @@ export function analyse(groups, registry, frozen) {
         `The frozen list must only ever shrink, or it stops describing reality.`
     );
   }
-  for (const n of unregistered) {
-    problems.push(
-      `step number "${n}" (${groups.get(n).join(", ")}) is NOT in CLAIMED-NUMBERS.json — unregistered numbers ` +
-        `are how two lanes claim the same one.`
+  // TOOL-F03 (2026-07-30): registration in CLAIMED-NUMBERS.json is NO LONGER a failure.
+  //
+  // The stated reason was "unregistered numbers are how two lanes claim the same one". They are not.
+  // Two lanes claiming one number produces TWO FILES with that number, which is `newDuplicates` above —
+  // computed from the directory, independent of any registry. Registration restated a claim the
+  // FILENAME already makes, and the cost was concrete: every guard PR from either agent had to edit
+  // one shared JSON, and GitHub cannot run this repo's json-union merge driver, so any two guard PRs
+  // conflicted on merge. That is a guaranteed conflict bought for zero additional safety.
+  //
+  // What actually prevents two lanes picking one number is the PARITY BAND — Claude ODD, Cursor EVEN
+  // (owner ruling 2026-07-28) — which until now was a rule in a document with no enforcement anywhere.
+  // scripts/verify-verify-step-lane-band.mjs enforces it mechanically, the way
+  // verify-migration-lane-band.mjs has enforced the migration bands since the same day. With parity
+  // enforced by branch prefix, the lanes CANNOT collide, and the registry is free to be what it always
+  // really was: documentation and history.
+  //
+  // The registry is NOT deleted (§7 additive-only) and is still reported, so drift stays visible.
+  if (unregistered.length > 0) {
+    notes.push(
+      `${unregistered.length} step number(s) not listed in CLAIMED-NUMBERS.json ` +
+        `(${unregistered.slice(0, 5).join(", ")}${unregistered.length > 5 ? ", …" : ""}) — informational; ` +
+        `uniqueness comes from the directory and lane parity is enforced by verify:verify-step-lane-band.`
     );
   }
 
-  return { problems, duplicates, newDuplicates, staleFrozen, unregistered };
+  return { problems, duplicates, newDuplicates, staleFrozen, unregistered, notes };
 }
 
 export function run() {
@@ -121,14 +140,32 @@ function selftest() {
   }
   console.log("  caught: a NEW duplicate step number");
 
+  // TOOL-F03: an unregistered number is INFORMATIONAL, not a failure. It previously failed the build,
+  // which forced every guard PR to edit one shared JSON and made any two guard PRs conflict on merge
+  // (GitHub cannot run this repo's json-union merge driver). It bought nothing: two lanes claiming one
+  // number produce two FILES with that number, which is the duplicate check above, computed from the
+  // directory. Lane parity — the thing that actually prevents the collision — is now enforced by
+  // scripts/verify-verify-step-lane-band.mjs.
   const unregistered = new Map(base);
   unregistered.set("1004", ["1004-f.mjs"]);
   r = analyse(unregistered, registry, frozen);
-  if (!r.problems.some((p) => p.includes('"1004"') && p.includes("NOT in CLAIMED-NUMBERS"))) {
-    console.error("SELFTEST FAIL: an unregistered step number was not caught.");
+  if (r.problems.length !== 0) {
+    console.error(`SELFTEST FAIL: an unregistered number must not fail the build: ${r.problems.join("; ")}`);
     process.exit(1);
   }
-  console.log("  caught: a step number missing from the registry");
+  if (!r.notes.some((n) => n.includes("not listed in CLAIMED-NUMBERS.json"))) {
+    console.error("SELFTEST FAIL: an unregistered number must still be REPORTED so drift stays visible.");
+    process.exit(1);
+  }
+  console.log("  reported (not failed): a step number missing from the registry");
+
+  // And the collision it was pretending to prevent must STILL fail.
+  r = analyse(new Map([["1004", ["1004-f.mjs", "1004-g.mjs"]]]), {}, []);
+  if (!r.problems.some((p) => p.includes("NEW duplicate step number"))) {
+    console.error("SELFTEST FAIL: a duplicate number must still fail even when unregistered.");
+    process.exit(1);
+  }
+  console.log("  caught: a duplicate number, registry or no registry");
 
   // A frozen entry that no longer collides must FAIL, so the list can only shrink.
   r = analyse(new Map([["1002", ["1002-b.mjs"]]]), { 1002: "y" }, frozen);
