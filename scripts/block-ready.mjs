@@ -826,6 +826,7 @@ function runCheckC3() {
   const steps = [
     "rm -rf apps/backend/dist",
     "npm run build:backend",
+    "node scripts/generate-module-completion-data.mjs",
     "cd apps/frontend && npx tsc -b && cd ../..",
   ];
   for (const step of steps) {

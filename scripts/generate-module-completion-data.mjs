@@ -14,14 +14,19 @@
  *   node scripts/generate-module-completion-data.mjs --check    # verify in sync (exit 1 on drift)
  */
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 // Import the CANONICAL scoring rule rather than re-implementing it. An earlier draft of this
 // generator counted only PASS and reported accounting as 17 of 31 while CI reported 19 of 31 — the
 // in-app scoreboard would have contradicted the guard on day one. There is one definition of done.
 import { qualifiesHold } from "./verify-module-completion.mjs";
 
-const MANIFEST_DIR = join(process.cwd(), "docs", "module-completion");
-const OUT = join(process.cwd(), "apps", "frontend", "src", "generated", "module-completion.ts");
+// ALWAYS resolve from this script's location — never process.cwd(). Frontend package.json runs
+// `node ../../scripts/generate-…` from apps/frontend; cwd-relative paths then look for
+// apps/frontend/docs/module-completion and CI perf/security builds fail ENOENT.
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const MANIFEST_DIR = join(ROOT, "docs", "module-completion");
+const OUT = join(ROOT, "apps", "frontend", "src", "generated", "module-completion.ts");
 
 /**
  * The first 14 sidebar modules, in sidebar order — the owner's current build target. Kept here rather
@@ -112,7 +117,7 @@ if (process.argv.includes("--check")) {
   writeFileSync(OUT, out, "utf8");
   const d = buildData();
   console.log(
-    `generate-module-completion-data OK — ${d.modules.length} module manifest(s) → ${OUT.replace(process.cwd() + "/", "")}`
+    `generate-module-completion-data OK — ${d.modules.length} module manifest(s) → ${OUT.replace(ROOT + "/", "")}`
   );
   for (const m of d.modules) console.log(`  ${m.id}: ${m.done} of ${m.total}`);
 }

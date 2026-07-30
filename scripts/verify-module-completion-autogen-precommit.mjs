@@ -129,6 +129,22 @@ export function run(root = ROOT) {
   if (!fs.existsSync(path.join(root, "scripts", "agent-sync-main.mjs"))) {
     f.push("scripts/agent-sync-main.mjs missing — Cursor rebases need the driver-aware sync helper");
   }
+  try {
+    const tscStep = fs.readFileSync(path.join(root, "scripts", "verify-steps", "04-frontend-tsc.mjs"), "utf8");
+    if (!/generate-module-completion-data\.mjs/.test(tscStep)) {
+      f.push("scripts/verify-steps/04-frontend-tsc.mjs must regenerate module-completion.ts before tsc");
+    }
+  } catch {
+    f.push("scripts/verify-steps/04-frontend-tsc.mjs missing");
+  }
+  try {
+    const gen = fs.readFileSync(path.join(root, "scripts", "generate-module-completion-data.mjs"), "utf8");
+    if (!/fileURLToPath/.test(gen) || !/dirname\(fileURLToPath/.test(gen)) {
+      f.push("generate-module-completion-data.mjs must resolve ROOT from import.meta.url (not process.cwd)");
+    }
+  } catch {
+    f.push("scripts/generate-module-completion-data.mjs missing");
+  }
   f.push(...assertTrackedGone(root));
   return f;
 }
