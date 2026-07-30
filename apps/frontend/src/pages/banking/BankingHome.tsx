@@ -177,6 +177,11 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         }),
     [tiles, factoringReserve],
   );
+  // BANK-SURF-05 — resolve Relay via CoA system_purpose (never phantom is_relay).
+  const relayWalletTiles = useMemo(
+    () => sortedBankTiles.filter((t) => t.is_relay_wallet === true || t.system_purpose === "relay_fuel_wallet"),
+    [sortedBankTiles],
+  );
   // SyncStatusStrip data. FIX-3: "Transactions" must be the REAL bank-transaction total (canonical
   // banking.bank_transactions, entity-scoped) — it previously read qboStats.synced, a count of
   // qbo_sync_queue entities (any type) in status 'synced', which is NOT a bank-transaction total and
@@ -823,44 +828,56 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       ) : null}
 
       {activeTab === "relay_card" ? (
-        <div className="space-y-3">
-          {/* is_relay is PHANTOM — never .find/.filter tiles by it (verify-banking-relay-tab-honesty). */}
-          <div
-            className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
-            data-testid="banking-relay-entry-unproven-banner"
-          >
-            <p className="font-semibold">No Relay card / fuel-wallet bank tiles are mapped for this company yet.</p>
-            <p className="mt-1">
-              Empty Relay tab is not "no fuel spend." Fuel card activity may still sit in for-review bank transactions
-              awaiting Match/Categorize, or Relay may need account tags / Plaid mapping under Plaid Connections.
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <ActionButton onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`)}>
-                Open for-review queue
-              </ActionButton>
-              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.plaid_connections)}>Plaid Connections</ActionButton>
-            </div>
-          </div>
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Relay Card · Banking</p>
-              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.transactions)}>Open in Transactions</ActionButton>
-            </div>
+        <div className="space-y-3" data-testid="banking-relay-tab">
+          {/* BANK-SURF-05: identify wallets via is_relay_wallet / system_purpose — never .find(is_relay). */}
+          {relayWalletTiles.length === 0 ? (
             <div
-              className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
-              data-testid="banking-relay-phantom-field-unproven-notice"
+              className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+              data-testid="banking-relay-no-wallet-bound-notice"
             >
-              <p className="font-semibold">Relay Card accounts cannot be identified yet</p>
+              <p className="font-semibold">No Relay fuel wallet is bound for this operating company.</p>
               <p className="mt-1">
-                Account-tiles cannot express Relay identity today: <code className="text-[11px]">is_relay</code> is a
-                phantom field (not populated by any migration or backend writer). An empty Relay tab is not “no Relay
-                activity” — the system cannot identify Relay accounts in this feed yet.
+                Identity uses <code className="text-[11px]">catalogs.accounts.system_purpose = &apos;relay_fuel_wallet&apos;</code>{" "}
+                linked through <code className="text-[11px]">banking.bank_accounts.ledger_account_id</code>. An empty
+                Relay tab here means no bank account tile carries that CoA bind for the selected company — not missing
+                Plaid tags. Fuel lines may still appear on the Transactions register once ingest has rows.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <ActionButton onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`)}>
+                  Open for-review queue
+                </ActionButton>
+                <ActionButton onClick={() => navigate(BANKING_TAB_PATH.transactions)}>Open Transactions</ActionButton>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-sm border border-gray-200 bg-white p-3">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Relay Card · Banking</p>
+                <ActionButton
+                  onClick={() => {
+                    const first = relayWalletTiles[0];
+                    if (first?.id) navigate(`/banking/accounts/${first.id}`);
+                  }}
+                >
+                  Open wallet register
+                </ActionButton>
+              </div>
+              <AccountTilesRow
+                tiles={relayWalletTiles}
+                selectedId={selectedAccountId}
+                onSelect={(id) => {
+                  setSelectedAccountId(id);
+                  navigate(`/banking/accounts/${id}`);
+                }}
+                onView={(id) => navigate(`/banking/accounts/${id}`)}
+                onInspect={(id) => setInspectTileId(id)}
+                onManageAccounts={() => setManageOpen(true)}
+              />
+              <p className="mt-2 text-xs text-gray-600">
+                Relay fuel-line breakdown stays on the Transactions register when a Relay wallet row is expanded.
               </p>
             </div>
-            <p className="mt-2 text-xs text-gray-600">
-              Relay fuel-line breakdown stays on the Transactions register when a Relay wallet row is expanded.
-            </p>
-          </div>
+          )}
         </div>
       ) : null}
 

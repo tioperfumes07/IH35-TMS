@@ -10,9 +10,14 @@ type Props = {
   onInspect?: () => void;
 };
 
+function isRelayWalletTile(tile: BankingTile) {
+  return tile.is_relay_wallet === true || tile.system_purpose === "relay_fuel_wallet";
+}
+
 function badgeClass(tile: BankingTile) {
   if (tile.tag?.includes("DIP")) return "bg-slate-100 text-slate-700";
-  if (tile.is_relay) return "bg-slate-100 text-slate-700";
+  // BANK-SURF-05: never style off phantom is_relay — use CoA system_purpose enrichment.
+  if (isRelayWalletTile(tile)) return "bg-slate-100 text-slate-700";
   if (tile.tag === "Factoring") return "bg-slate-100 text-slate-700";
   if (tile.tag === "Escrow") return "bg-slate-100 text-slate-700";
   if (tile.account_type?.toLowerCase().includes("credit")) return "bg-red-100 text-red-700";
@@ -29,7 +34,9 @@ export function AccountTile({ tile, selected, onSelect, onView, onInspect }: Pro
     >
       <button type="button" onClick={onSelect} className="min-h-0 flex-1 text-left">
         <div className="mb-1 flex items-start justify-between gap-1">
-          <span className={`rounded-sm px-2 py-0.5 text-[10px] ${badgeClass(tile)}`}>{tile.tag || tile.account_type}</span>
+          <span className={`rounded-sm px-2 py-0.5 text-[10px] ${badgeClass(tile)}`}>
+            {isRelayWalletTile(tile) ? tile.tag || "Relay" : tile.tag || tile.account_type}
+          </span>
           <span className="text-[10px] text-gray-500">{tile.tile_kind}</span>
         </div>
         <div className="truncate text-xs font-semibold text-gray-900">{tile.display_name}</div>

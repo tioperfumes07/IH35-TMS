@@ -21,18 +21,19 @@ export type BankingTile = {
    * always: `tiles.filter(t => t.is_relay)` is permanently `[]` and `tiles.find(t => t.is_relay)` is
    * permanently `undefined` (navigating off that resolves to NO account).
    *
-   * The real, migration-backed Relay identifier is
-   *   catalogs.accounts.system_purpose = 'relay_fuel_wallet'  ->  banking.bank_accounts.ledger_account_id
-   * (202607290000_relay_internal_bank_seed.sql, 202607470000_relay_wallet_banking_registration.sql,
-   * apps/backend/src/integrations/relay-payments/relay-wallet-bank-feed.service.ts). Both of those
-   * migrations are HELD-FOR-JORGE and absent from db/migrations/.ledger.json, and
-   * views.banking_account_tiles projects neither ledger_account_id nor system_purpose — so the
-   * /api/v1/banking/account-tiles payload cannot express "this tile is Relay" at all yet.
+   * Use `is_relay_wallet` / `system_purpose` instead (BANK-SURF-05 — GET /account-tiles enriches via
+   * ledger_account_id → catalogs.accounts.system_purpose = 'relay_fuel_wallet').
    *
    * Enforced by scripts/verify-banking-relay-tab-honesty.mjs (the guard auto-lifts if a migration
    * ever genuinely adds and sets the column).
    */
   is_relay: boolean;
+  /** CoA FK on the real bank account row (null for virtual tiles / unbound accounts). */
+  ledger_account_id?: string | null;
+  /** From catalogs.accounts via ledger_account_id — use for Relay identity, not is_relay. */
+  system_purpose?: string | null;
+  /** True when system_purpose === 'relay_fuel_wallet' (route-enriched; not the phantom is_relay). */
+  is_relay_wallet?: boolean;
   display_order: number;
   last_txn_date?: string | null;
 };
