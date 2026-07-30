@@ -935,6 +935,7 @@
     "1488": "1488-verify-acct-r03-coa-merge-repoint.mjs",
     "1489": "1489-verify-acct-r01-escrow-canonical-write-path.mjs",
     "1490": "1490-verify-acct-r11-tx-fields-sent.mjs",
+    "1498": "1498-verify-acct-r16-revenue-leakage.mjs",
     "1491": "1491-verify-saf-b31-safety-placeholder-surfaces.mjs",
     "1492": "1492-verify-g4-deploy-smoke-env-in-render.mjs",
     "1493": "1493-verify-factoring-queue-page-uses-paritytable.mjs",

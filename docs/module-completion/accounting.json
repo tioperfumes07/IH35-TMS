@@ -460,9 +460,26 @@
       "evidence": "Guard scripts/verify-no-partial-optional-chain.mjs (step 1650) PASS on origin/main — 1918 files, 0 partial chains. LIVE browser 2026-07-28 app.ih35dispatch.com: /accounting hub renders KPIs+nav (not blank); /accounting/bills renders Bills heading + Bill # columns (355 a11y refs); /accounting/expenses renders Expenses heading + Expense#/Date/Payee/JE columns (not blank). PR #3669 shipped the chain fix; this closes the Rule 23 browser re-click gate.",
       "pr": "#3669",
       "live_proof": "2026-07-28 browser TRANSP: accounting + bills + expenses non-blank; guard 1650 PASS"
+    },
+    {
+      "id": "ACCT-R-16",
+      "title": "ASC 606 revenue leakage + unbilled tracking (earn/bill latch gaps)",
+      "layers": [
+        "DOD-A",
+        "DOD-C",
+        "DOD-D",
+        "VERIFY-3",
+        "VERIFY-4",
+        "VERIFY-6"
+      ],
+      "spec": "audit8-revenue-leakage-detection · ASC 606 · DISP-01 latch companion",
+      "status": "PASS",
+      "evidence": "LIVE 2026-07-30 Neon lucia: delivered_like=2 missing_earn=1 (DEMO-L004) earn_missing_bill=0 unbilled_open=0; GET /api/v1/accounting/revenue-leakage + RevenueRecognitionPage LeakagePanel (no new tab). Guard 1498. Read-only — no new GL math.",
+      "pr": null,
+      "live_proof": "Neon lucia missing_earn=1 of 2 delivered+; latch table accounting.load_revenue_recognition_postings"
     }
   ],
-  "pass_count": 31,
-  "total_count": 31,
-  "progress": "27 of 31"
+  "pass_count": 32,
+  "total_count": 32,
+  "progress": "32 of 32"
 }
