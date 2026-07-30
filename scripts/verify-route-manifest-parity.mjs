@@ -173,12 +173,6 @@ const REFUSED_MOUNTS = new Map([
       "apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx calls it and gets a 404 today.",
   ],
   [
-    "banking/categorization-rules.routes.ts",
-    "HELD financial — banking categorization rules, including POST :id/apply-historical which " +
-      "re-categorizes historical bank transactions in bulk. Reason carried over from " +
-      "scripts/verify-no-orphan-routes.mjs; owner review required.",
-  ],
-  [
     "driver-finance/settlement-payment.routes.ts",
     "HELD financial — marks settlement payments sent/cleared/bounced/paid. Money-moving. Reason " +
       "carried over from scripts/verify-no-orphan-routes.mjs; owner OK required.",
