@@ -415,6 +415,46 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/driver/deduction-types",
     evidence: "apps/backend/src/catalogs/driver/factory.ts:94,172 + driver/index.ts:14 tableName driver_deduction_types",
   }),
+  // Escrow forfeit draw reasons — same table as driver_deduction_types, but create MUST set
+  // may_draw_escrow=true so the new row appears in EscrowForfeitModal's filtered picker.
+  escrow_draw_reason: {
+    key: "escrow_draw_reason",
+    label: "escrow draw reason",
+    backend: "catalog",
+    readTable: "catalogs.driver_deduction_types",
+    writeTable: "catalogs.driver_deduction_types",
+    readEndpoint: "/api/v1/catalogs/driver/deduction-types",
+    writeEndpoint: "/api/v1/catalogs/driver/deduction-types",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence:
+      "apps/backend/src/catalogs/driver/factory.ts SELECT+INSERT catalogs.driver_deduction_types (optionalBooleans may_draw_escrow); EscrowForfeitModal filtered consumer",
+    fields: CATALOG_FIELDS,
+    create: async (operatingCompanyId, values) => {
+      const displayName = values.display_name.trim();
+      const code = deriveCatalogCode(displayName, values.code);
+      const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+      const created = await apiRequest<{ id: string; code?: string; display_name?: string }>(
+        `/api/v1/catalogs/driver/deduction-types?${query.toString()}`,
+        {
+          method: "POST",
+          body: {
+            code,
+            display_name: displayName,
+            description: values.description?.trim() || undefined,
+            may_draw_escrow: true,
+            is_active: true,
+            sort_order: 0,
+          },
+        }
+      );
+      return {
+        id: String(created.id),
+        label: created.display_name ?? displayName,
+        code: created.code ?? code,
+      };
+    },
+  },
   driver_pay_type: catalogEntry({
     key: "driver_pay_type",
     label: "Driver pay type",
