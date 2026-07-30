@@ -96,7 +96,12 @@ export function run(baseRef = "origin/main") {
   if (files.length === 0) return { ok: true, message: `${LABEL} OK — no new migrations` };
 
   const migrations = files.map((file) => ({ file, sql: readFileSync(file, "utf8") }));
-  const message = git(["log", "-1", "--format=%B"]);
+  // The evidence may live on ANY commit in the branch range, not just HEAD. Reading only HEAD forced
+  // every follow-up commit on a branch to repeat the REHEARSED line verbatim — so a later, unrelated
+  // commit (a frontend client, a doc fix) would fail the guard even though the migration it is asking
+  // about was rehearsed and recorded two commits earlier. That is friction with no safety value, and
+  // it pushes toward copy-pasting evidence, which is how evidence stops meaning anything.
+  const message = git(["log", `${baseRef}..HEAD`, "--format=%B"]) || git(["log", "-1", "--format=%B"]);
   const { problems, dataMigrations } = analyse(migrations, message);
 
   if (problems.length > 0) return { ok: false, message: `${LABEL} FAILED:\n  - ${problems.join("\n  - ")}` };
