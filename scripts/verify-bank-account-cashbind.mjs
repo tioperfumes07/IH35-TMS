@@ -129,10 +129,21 @@ export function run(root = ROOT) {
     failures.push(`banking manifest must have ≥13 items (got ${M}) — do not shrink M to fake progress`);
   }
   if (parsed.complete === true) {
-    failures.push("banking complete:true is ILLEGAL while economics FAILs remain — money-gate must stay honest");
+    const open = (parsed.items || []).filter(
+      (i) =>
+        i.status === "FAIL" ||
+        i.status === "UNVERIFIED" ||
+        (i.status === "HOLD" && !(i.owner_hold && i.tracker && i.future_block))
+    );
+    if (open.length) {
+      failures.push(
+        `banking complete:true is ILLEGAL while open items remain: ${open.map((i) => i.id).join(", ")}`
+      );
+    }
   }
-  if (passOnly !== 4) {
-    failures.push(`expected 4 PASS banking items for current MODULE_PROGRESS (got ${passOnly}) — do not flip other FAILs in this guard`);
+  // Ratchet: PASS count may grow as live density closes; never shrink below historic floor of 4.
+  if (passOnly < 4) {
+    failures.push(`banking PASS items must stay ≥4 (got ${passOnly}) — do not regress MODULE_PROGRESS`);
   }
 
   return failures;

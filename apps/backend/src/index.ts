@@ -4,6 +4,7 @@ import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
 import rateLimit from "@fastify/rate-limit";
 import { CLOUDFLARE_IP_RANGES, resolveClientIp, type IpResolvable } from "./config/client-ip.js";
+import { installEmptyJsonBodyParser } from "./config/empty-json-body-parser.js";
 import cron from "node-cron";
 import { registerPhoneAuthRoutes } from "./auth/phone-routes.js";
 import { registerEmailAuthRoutes } from "./auth/email-routes.js";
@@ -224,6 +225,7 @@ import { registerSafetyOnboardingRoutes } from "./safety/onboarding.routes.js";
 import { registerOnboardingStateRoutes } from "./onboarding/state.routes.js";
 import { registerLiabilitiesRoutes } from "./liabilities/liabilities.routes.js";
 import { registerBankTxCategorizationRoutes } from "./banking/categorization.routes.js";
+import { registerCategorizationRulesRoutes } from "./banking/categorization-rules.routes.js";
 import { registerBankingRoutes } from "./banking/banking.routes.js";
 import { registerBankAccountCompanyAuditRoutes } from "./banking/integrity/account-company-audit.routes.js";
 import { registerAccountBalanceRoutes } from "./banking/account-balance.routes.js";
@@ -521,6 +523,9 @@ const repoRoot = resolveMonorepoRoot(import.meta.url);
 // egress IPs (see config/client-ip.ts). `true` would be worse than nothing — it trusts any caller's
 // X-Forwarded-For, letting a client pick its own rate-limit bucket.
 const app = Fastify({ logger: true, trustProxy: [...CLOUDFLARE_IP_RANGES] });
+// Tolerate an empty application/json body on POST actions whose inputs are all in the URL/query (e.g.
+// categorization-rules/:id/apply-historical). Must run before routes are registered. See the helper.
+installEmptyJsonBodyParser(app);
 attachHttpErrorMonitor(app);
 let shuttingDown = false;
 
@@ -981,6 +986,8 @@ async function main() {
   await registerCashAdvancesRoutes(app);
   await registerDriverHubRequestRoutes(app);
   await registerBankTxCategorizationRoutes(app);
+  // ACCT-LINK-06 — apply-historical + rules CRUD (was orphan HELD; owner live-ops 2026-07-30).
+  await registerCategorizationRulesRoutes(app);
   await registerBankingRoutes(app);
   await registerBankAccountCompanyAuditRoutes(app);
   await registerPlaidBankingItemsRoutes(app);

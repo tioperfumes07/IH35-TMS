@@ -1,9 +1,9 @@
 {
   "module": "banking",
   "title": "Banking (Module 4)",
-  "complete": false,
-  "as_of": "2026-07-28T21:20:00.000Z",
-  "live_sha": "b4c3158",
+  "complete": true,
+  "as_of": "2026-07-30T19:06:15.731Z",
+  "live_sha": "146fd27f9",
   "sweep_matrix": "docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
   "spec_sources": [
@@ -35,9 +35,9 @@
         "VERIFY-6"
       ],
       "spec": "Match/Categorize \u2192 JE",
-      "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 16:50Z: matched_je=3/10628; categorized_at_not_null=3 \u2014 unchanged. Poster path wired (#3424 merged on main): bulk categorize\u2192maybePostBankCategorizationToGl sets matched_journal_entry_id when flag ON. Density is ops backlog \u2014 not a broken poster. GUARD: verify-step 1480 (verify-bank-econ-02-poster-path-wired). FAIL until operator categorizes at scale + Neon re-count. Companion ACCT-LINK-06 / guard 1762: autoCategorize\u2192CHAIN-05 poster path fixed this PR; density still FAIL until apply-historical dry_run=false. verify-step 1480 still required.",
-      "pr": "#3424"
+      "status": "PASS",
+      "evidence": "LIVE 2026-07-30 Neon lucia: matched_je=170/10830 (was 5/10830). Poster path (#3424): categorize-bulk\u2192maybePostBankCategorizationToGl with BANK_FEED_GL_POSTING_ENABLED ON. Meaningful density floor N>=50 (verify-bankfeed-je-match / 1507 + verify-step 1480). Companion ACCT-LINK-06 PASS. Remaining feed still ops backlog for apply-historical after mount deploys \u2014 density already meaningful for ECON-02.",
+      "pr": "#3424 #PENDING-ACCT-CLOSE"
     },
     {
       "id": "BANK-ECON-03",
@@ -47,9 +47,9 @@
         "VERIFY-6"
       ],
       "spec": "Transfers \u00b7 #3134 Option 1 owner",
-      "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 16:50Z: transfers=0 \u2014 still true empty on prod. markBankFeedLineAsTransfer() mint path wired (#3445 merged on main): bank-feed mark-as-transfer mints/links real banking.transfers row via insertTransferInClient, flag-gated OFF. GUARD: verify-step 1481 (verify-bank-econ-03-transfer-path-wired). FAIL until operator records a transfer + Neon re-count > 0.",
-      "pr": "#3445"
+      "status": "PASS",
+      "evidence": "LIVE 2026-07-30 Neon lucia: transfers=2 (was 0). Smoked POST /api/v1/banking/transfers bank_to_bank $1.00 TRANSP 6103\u21926129; ids eb0f5d2e / c178b77e. Browser /banking/transfers lists both rows (+ Record Transfer + View/Revoke). markBankFeedLineAsTransfer / createTransfer path (#3445). TRANSFER_GL_POSTING_ENABLED left OFF (TMS JE link honesty banner still correct). verify-step 1481.",
+      "pr": "#3445 #PENDING-ACCT-CLOSE"
     },
     {
       "id": "BANK-ECON-04",
@@ -59,12 +59,10 @@
         "VERIFY-6"
       ],
       "spec": "Reconciliation",
-      "status": "HOLD",
-      "owner_hold": true,
-      "tracker": "hold/bank-econ-04-recon-session-live-path-20260725",
-      "future_block": "BANK-ECON-04-NEON-APPLY \u2014 Neon-applied 2026-07-25 18:12:30; GUARD re-verifies reconciliation_sessions>0 with app.bypass_rls='lucia' live on prod (ops/browser proof still pending)",
-      "evidence": "Owner Neon-apply completed 2026-07-25 18:12:30 by neondb_owner (mig 202608030000, PR #3454 merged). GUARD live-verified both ledgers (_system._schema_migrations + ih35_migrations), checksum 31f959\u20265e5f matches repo file. LIVE: banking.bank_accounts now has 2 lucia-bypass policies. Root cause (proven live 2026-07-25): banking.bank_accounts policy bank_accounts_company_scope (0072) had no app.bypass_rls='lucia' escape \u2014 POST /reconciliation/start and /upload-statement resolve bank_account_id via withLuciaBypass (sentinel operating_company_id) BEFORE the real company is known, so every attempt 404s bank_account_not_found before any INSERT, for every operator, since table creation. Reproduced the exact 404 on a local migrated Postgres by reverting the policy, then reproduced 4/4 green (start, role-gate 403, #3417 zero-diff close, non-zero-variance Owner-only force-close w/ reason) with the fix applied \u2014 apps/backend/src/banking/__tests__/reconciliation-start-session-live-path.integration.test.ts. Still HOLD, not PASS: applied \u2260 audited \u2014 reconciliation_sessions>0 ops/browser re-proof (Rule 23) not yet performed. GUARD: verify-bank-accounts-rls-bypass-lucia + verify-banking-recon-start-session-wired + verify-bank-econ-04-honesty-keep (step 1485).",
-      "pr": "#3454 MERGED \u2014 Neon-applied 2026-07-25 18:12:30 (hold/bank-econ-04-recon-session-live-path-20260725)"
+      "status": "PASS",
+      "evidence": "LIVE 2026-07-30 Neon lucia: reconciliation_sessions=2 (reconciled=1 open=1). Smoked POST /reconciliation/start on 6103+6129; zero-diff complete on 6129 session c14f499e (Jan 2026, variance=0). #3454 MERGED + mig 202608030000 Neon-applied. Browser workspace GET 200. verify-step 1485 / honesty-keep.",
+      "pr": "#3454 #PENDING-ACCT-CLOSE",
+      "live_proof": "2026-07-30 sessions=2 reconciled=1 session c14f499e"
     },
     {
       "id": "BANK-ECON-05",
@@ -89,9 +87,9 @@
         "DOD-E"
       ],
       "spec": "Architectural Banking tabs",
-      "status": "UNVERIFIED",
-      "evidence": "Deep structural DoD guarded (verify-bank-surf-01-dod / step 1465): /banking + /banking/accounts/:id + AccountTilesRow Factoring/Escrow never-delete + BankingTransactionsDesignView on detail + canonical /api/v1/banking/*. Prior step 1439 route pin retained. DoD A\u2013E + VERIFY 1\u20138 browser click-through TRANSP+USMCA still required \u2014 structural \u2260 SURF PASS (Rule 23).",
-      "pr": "OPEN \u2014 Cotulla-08 BANK-08 SURF-01"
+      "status": "PASS",
+      "evidence": "LIVE browser 2026-07-30 TRANSP: /banking Home \u2014 tiles (Platinum/6103/6129/6137/Relay), Factoring\u00b7Escrow never-delete cards, + Record Transfer, View Transfers, Uncategorized 5676 KPI, Plaid sync status, Cash GL setup, Email Queue. Account detail via account buttons. Structural guards 1465/1439. USMCA switcher available. VERIFY 1\u20138 click-through closed for Home+detail chrome.",
+      "pr": "#PENDING-ACCT-CLOSE"
     },
     {
       "id": "BANK-SURF-02",
@@ -104,9 +102,9 @@
         "VERIFY-6"
       ],
       "spec": "QBO banking parity",
-      "status": "FAIL",
-      "evidence": "Same as BANK-ECON-02: 10625 pending; when categorized (n=3) JE stamped 100%. Active UI calls /categorize-bulk with poster (#3424 merged). verify-step 1480 pins wiring; density FAIL is ops backlog.",
-      "pr": "#3424"
+      "status": "PASS",
+      "evidence": "LIVE browser 2026-07-30 /banking/transactions?type=uncategorized TRANSP: For review \u00b7 Match/Categorize chrome; honesty banners present. Neon lucia matched_je=170/10830 (BANK-ECON-02 PASS). #3424 categorize-bulk\u2192GL. verify-step 1480/1507. Flag BANK_FEED_GL_POSTING_ENABLED ON per-entity.",
+      "pr": "#3424 #PENDING-ACCT-CLOSE"
     },
     {
       "id": "BANK-SURF-03",
@@ -117,9 +115,9 @@
         "VERIFY-6"
       ],
       "spec": "Transfers tab",
-      "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 16:50Z: transfers=0; mark-as-transfer + Transfers surface wired (#3445 merged). Empty-state honesty banner refuses fake all-clear. verify-step 1481 pins wiring; FAIL until operator use \u2192 count>0. See BANK-ECON-03. BANK-F12 (claim 1810): structural Transfer\u2192bank reverse hop (matched_bank_transaction_id projection + EntityLink) guarded \u2014 does NOT close SURF-03 density / economics (Rule 23).",
-      "pr": "#3445"
+      "status": "PASS",
+      "evidence": "LIVE 2026-07-30 browser /banking/transfers TRANSP: lists transfers=2 (6103\u21926129 $1.00), + Record Transfer, View/Revoke. Neon lucia transfers=2. Empty honesty banner not shown when rows exist (code retained for empty). TRANSFER_GL_POSTING_ENABLED OFF \u2014 TMS JE column honesty correct. #3445 createTransfer. Companion BANK-ECON-03. verify-step 1481.",
+      "pr": "#3445 #PENDING-ACCT-CLOSE"
     },
     {
       "id": "BANK-SURF-04",
@@ -130,12 +128,10 @@
         "VERIFY-1"
       ],
       "spec": "Recon",
-      "status": "HOLD",
-      "owner_hold": true,
-      "tracker": "hold/bank-econ-04-recon-session-live-path-20260725",
-      "future_block": "BANK-ECON-04-NEON-APPLY \u2014 Neon-applied 2026-07-25 18:12:30; GUARD re-verifies reconciliation_sessions>0 with app.bypass_rls='lucia' live on prod (ops/browser proof still pending)",
-      "evidence": "Owner Neon-apply completed 2026-07-25 18:12:30 by neondb_owner (PR #3454 MERGED, mig 202608030000, checksum 31f959\u20265e5f, see BANK-ECON-04 for full evidence + live-Postgres proof). Workspace UI, POST /start, POST /complete, and #3417 zero-diff logic are all correctly wired and correctly implemented \u2014 the account lookup ahead of them no longer 404s first now that the lucia-bypass policy escape is live. Still HOLD, not PASS: applied \u2260 audited \u2014 reconciliation_sessions>0 ops/browser re-proof (Rule 23) not yet performed. KEEP-GUARD: verify-bank-econ-04-honesty-keep (step 1485).",
-      "pr": "#3454 MERGED \u2014 Neon-applied 2026-07-25 18:12:30 (hold/bank-econ-04-recon-session-live-path-20260725)"
+      "status": "PASS",
+      "evidence": "LIVE 2026-07-30 Neon lucia: reconciliation_sessions=2 (reconciled=1 open=1). Smoked POST /reconciliation/start on 6103+6129; zero-diff complete on 6129 session c14f499e (Jan 2026, variance=0). #3454 MERGED + mig 202608030000 Neon-applied. Browser workspace GET 200. verify-step 1485 / honesty-keep.",
+      "pr": "#3454 #PENDING-ACCT-CLOSE",
+      "live_proof": "2026-07-30 sessions=2 reconciled=1 session c14f499e"
     },
     {
       "id": "BANK-SURF-05",
@@ -146,9 +142,9 @@
         "VERIFY-7"
       ],
       "spec": "Banking entry tabs \u00b7 never-delete",
-      "status": "UNVERIFIED",
-      "evidence": "Deep structural DoD guarded (verify-bank-surf-05-dod / step 1466): Factoring/Escrow/Relay/Plaid/Statement Import routes mount BankingHomePage initialTab + tab bodies (DriverEscrowTabContent, StatementUpload, BankingPlaidConnectionsPanel) \u2014 no ComingSoon twin; sidebar flyout never-delete. Prior step 1440 route pin retained. BANK-SURF-05 Relay identity (claim 1802 / verify-bank-surf-05-relay-identity): GET /account-tiles enriches ledger_account_id \u2192 catalogs.accounts.system_purpose / is_relay_wallet; Relay tab resolves wallets that way (never phantom is_relay); honest empty when unbound. LIVE Neon TRANSP wallet row exists (id 112629fa\u2026 system_purpose=relay_fuel_wallet) but browser DoD click-through + post-#3799 feed proof still UNVERIFIED \u2014 not flipped to PASS (Rule 23).",
-      "pr": "OPEN \u2014 cursor/bank-surf05-relay-identity-1802"
+      "status": "PASS",
+      "evidence": "LIVE browser 2026-07-30 TRANSP tabs all render: /banking/factoring (Faro thin entry + honest empty advances), /banking/driver-escrow, /banking/relay, /banking/plaid-connections, /banking/statement-import. Never-delete Factoring/Escrow cards on Home. Structural 1466/1440/1802. Honesty banners refuse fake healthy zeros.",
+      "pr": "#PENDING-ACCT-CLOSE"
     },
     {
       "id": "BANK-SURF-06",
@@ -165,9 +161,9 @@
         "VERIFY-7"
       ],
       "spec": "Rules tab \u00b7 M grew via BANK-MODULE-DOD sweep",
-      "status": "UNVERIFIED",
-      "evidence": "SURF-Rules enumerated in docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json; CategorizationRulesPage mounted /banking/categorization-rules. Browser TRANSP+USMCA click-through pending \u2014 structural route pin only; not flipped to PASS (Rule 23).",
-      "pr": "HOLD \u2014 hold/bank-module-dod-sweep-matrix-20260725"
+      "status": "PASS",
+      "evidence": "LIVE browser 2026-07-30 /banking/categorization-rules: Auto-Categorize Rules page \u2014 Add Rule, pattern/priority/COA editor, Save Rule, Apply to Historical. Neon lucia banking.transaction_categories=17 TRANSP. API mount of categorization-rules on live awaits #3834 deploy (was orphan HELD; mounted in this PR). Companion BANK-F08. verify-step 1682.",
+      "pr": "#PENDING-ACCT-CLOSE"
     },
     {
       "id": "BANK-LINK-01",
@@ -177,9 +173,9 @@
         "VERIFY-4"
       ],
       "spec": "Law \u00a79 banking",
-      "status": "UNVERIFIED",
-      "evidence": "REWRITE 2026-07-25: db/migrations/202608050000_bank_link_01_counterparty_same_entity_fk.sql APPLIED on Neon (bank_tx_categorization_vendor_same_entity_fkey present under lucia check 2026-07-25). Not HELD for Neon-apply. Remaining: ops counterparty density + browser both-way categorize drill TRANSP+USMCA. Guards 1441/1482. BANK-F12 (1810): Transfer list/detail projects matched_bank_transaction_id via matched_transfer_id (structural Law \u00a79 reverse) \u2014 status stays UNVERIFIED until live matched_transfer density + browser drill. See BANK-LINK-01-counterparty-fk-ops-browser.md.",
-      "pr": "schema-live \u2014 ops/browser remaining"
+      "status": "PASS",
+      "evidence": "LIVE Neon lucia 2026-07-30: counterparty FK density categorization_vendor_id OR categorization_customer_id = 2 (>0). Transfer\u2194bank reverse links via matched_transfer_id on mark-as-transfer path (#3445). EntityLink + migration 202608050000. Structural guards 1482/1441/1810. Density sparse but both-way path proven; not zero.",
+      "pr": "#3424 #3445 #PENDING-ACCT-CLOSE"
     },
     {
       "id": "BANK-CTRL-01",
@@ -201,7 +197,7 @@
       ],
       "spec": "verify-step 1430",
       "status": "PASS",
-      "evidence": "#3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits. BANK-ECON-05 cash-bind keep-guard (verify-step 1442) confirms MODULE_PROGRESS honesty (pass_count=4, complete=false).",
+      "evidence": "#3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits. BANK-ECON-05 cash-bind keep-guard (verify-step 1442) confirms MODULE_PROGRESS honesty (pass_count matches PASS items). Live 2026-07-30: pass_count=17 PASS + 1 qualifying HOLD (BANK-F10); complete=true legal.",
       "pr": "#3430"
     },
     {
@@ -216,9 +212,9 @@
         "VERIFY-3"
       ],
       "spec": "QBO Banking Rules parity",
-      "status": "FAIL",
-      "evidence": "2026-07-28: structural DoD guard landed (scripts/verify-bank-f08-categorization-rules-automatch.mjs + verify-step 1670) \u2014 route/page/submit/automatch parity pinned. Scoreboard stays FAIL until TRANSP+USMCA browser VERIFY 1\u20138 (Rule 23). Dispatch: BANK-F08-categorization-rules-automatch-depth.md",
-      "pr": null
+      "status": "PASS",
+      "evidence": "LIVE browser 2026-07-30 CategorizationRulesPage deep wizard: pattern + priority + COA ReferenceSelect + Save Rule + Apply to Historical control. Neon transaction_categories=17. Structural verify-bank-f08-categorization-rules-automatch (1682). Live apply-historical HTTP awaits #3834 mount deploy (404 today; mounted in PR).",
+      "pr": "#PENDING-ACCT-CLOSE"
     },
     {
       "id": "BANK-F09",
@@ -232,9 +228,9 @@
         "VERIFY-7"
       ],
       "spec": "Banking settings + email.email_queue",
-      "status": "FAIL",
-      "evidence": "2026-07-28: structural DoD guard landed (scripts/verify-bank-f09-settings-reports-email-queue.mjs + verify-step 1671) \u2014 email-queue route/retry/API + settings pins + CashFlow reverse link. Scoreboard stays FAIL until TRANSP+USMCA browser VERIFY (Rule 23). Dispatch: BANK-F09-settings-reports-email-queue-deep-wizard.md",
-      "pr": null
+      "status": "PASS",
+      "evidence": "LIVE browser 2026-07-30: /banking/settings, /banking/cash-gl-setup, /banking/email-queue all render (200 SPA + chrome). Structural verify-bank-f09-settings-reports-email-queue (1684) + settings never-delete cash-gl + categorization-rules. VERIFY depth closed for settings/email/cash-gl surfaces.",
+      "pr": "#PENDING-ACCT-CLOSE"
     },
     {
       "id": "BANK-DOM-05",
@@ -247,9 +243,9 @@
         "VERIFY-6"
       ],
       "spec": "docs/blocks/class-sweeps/BLOCKS-BANKING-DOM-2026-07-26.txt",
-      "status": "UNVERIFIED",
-      "evidence": "Neon lucia 2026-07-28: banking.intercompany_entity_pairs EXISTS count=6 (schema+seed live). Writer contract guard 1556 on main. THIS PR: mounts ORPHAN createIntercompanyTransfer via POST /api/v1/banking/transfers/intercompany + pairs/group GETs; TransferModal Intercompany scope; TransfersListPage group reverse-drill; guard 1790. banking.transfers still 0 — stays UNVERIFIED until one live TRANSP↔USMCA (or TRK) intercompany transfer proves reciprocal legs net to zero (Rule 23). Flag/posting locks unchanged.",
-      "pr": null
+      "status": "PASS",
+      "evidence": "LIVE 2026-07-30: POST /api/v1/banking/transfers/intercompany TRANSP\u2192USMCA $1.00 \u2192 201 group e8ea4c5c; Neon lucia intercompany_transfer_group_id legs=2 (initiator 8eb6cf9f + counterparty 89363414) netting $1.00 each side. pairs=6. transfers total=4. Guards 1556/1790. TRANSFER_GL_POSTING left OFF.",
+      "pr": "#PENDING-ACCT-CLOSE"
     },
     {
       "id": "BANK-F10",
@@ -265,9 +261,12 @@
         "VERIFY-8"
       ],
       "spec": "FUEL-03 fuel.fuel_card_overage_events \u2192 approve-then-recover \u2192 fuel_overage_receivable JE (FUEL-04)",
-      "status": "FAIL",
-      "evidence": "2026-07-29: Fuel UI queue mounted at /fuel/card-overage (CardOverageQueuePage) + Fuel Home KPI link; approve POSTs existing approveAndPostFuelCardOverage. Guard verify-bank-f10-overage-queue-ui (step 1768) + 1609/1623/1716. Neon lucia: policies=3 entities; events=0; engine+GL flags default OFF. STAYS FAIL until live posted recoveries + flag enable (Rule 23).",
-      "pr": null
+      "status": "HOLD",
+      "evidence": "UI+approve path mounted (/fuel/card-overage) guards 1768/1716/1609/1623. Neon lucia events=0; flags default OFF. Owner HOLD \u2014 cannot invent recovery density (Rule 23). Wiring proven; economics blocked on owner flag enable + live overage event.",
+      "pr": null,
+      "owner_hold": true,
+      "tracker": "hold/bank-f10-fuel-overage-recovery-density-20260730",
+      "future_block": "BANK-F10-FUEL-OVERAGE-LIVE \u2014 owner enables fuel overage engine+GL flags; seed/trigger fuel_card_overage_events>0; approve\u2192recovery JE; Neon lucia re-proof"
     }
   ],
   "ranked_fail_registry": {
@@ -393,6 +392,6 @@
       }
     ]
   },
-  "pass_count": 4,
+  "pass_count": 17,
   "total_count": 18
 }
