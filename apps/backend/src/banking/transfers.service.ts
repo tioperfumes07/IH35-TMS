@@ -646,10 +646,18 @@ export async function listTransfers(input: {
           ta.account_name AS to_coa_name,
           ${TRANSFER_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
         FROM banking.transfers t
-        LEFT JOIN banking.bank_accounts fb ON fb.id = t.from_account_id
-        LEFT JOIN banking.bank_accounts tb ON tb.id = t.to_account_id
-        LEFT JOIN catalogs.accounts fa ON fa.id = t.from_account_id
-        LEFT JOIN catalogs.accounts ta ON ta.id = t.to_account_id
+        LEFT JOIN banking.bank_accounts fb
+          ON fb.id = t.from_account_id
+         AND fb.operating_company_id = t.operating_company_id
+        LEFT JOIN banking.bank_accounts tb
+          ON tb.id = t.to_account_id
+         AND tb.operating_company_id = t.operating_company_id
+        LEFT JOIN catalogs.accounts fa
+          ON fa.id = t.from_account_id
+         AND fa.operating_company_id = t.operating_company_id
+        LEFT JOIN catalogs.accounts ta
+          ON ta.id = t.to_account_id
+         AND ta.operating_company_id = t.operating_company_id
         WHERE ${whereSql}
         ORDER BY t.transfer_date DESC, t.created_at DESC
         LIMIT $${values.length - 1} OFFSET $${values.length}
