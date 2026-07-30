@@ -659,6 +659,10 @@ test("a migration branch gets the migration-db-replay step", () => {
   const replay = steps.find((s) => s.label === "migration-db-replay");
   assert.ok(replay, "migration branch must get the replay step");
   assert.match(replay.command, /verify:db:reset/);
+  // TOOL-F06: the step must supply its own DATABASE_URL. Relying on the ambient environment forces the
+  // caller to export it, which turns the global "database" capability true and makes block-ready run
+  // and demand a .block-ready manifest — reintroducing the very coupling TOOL-F05 set out to avoid.
+  assert.match(replay.command, /^DATABASE_URL=postgres:\/\/verify:verify@127\.0\.0\.1:54329\/ih35_verify /);
   assert.equal(replay.serverRequiredCiEquivalent, undefined, "must NOT be deferrable to CI");
   // No requiredCapabilities on purpose: declaring "database" would make the global capability decide
   // it, and once that capability is true `block-ready` also runs and demands a .block-ready manifest —
