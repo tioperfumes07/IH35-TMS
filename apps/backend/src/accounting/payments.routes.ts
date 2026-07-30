@@ -92,7 +92,9 @@ async function fetchPaymentDetail(
         c.customer_name,
         ${PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
       FROM accounting.payments p
-      JOIN mdata.customers c ON c.id = p.customer_id
+      JOIN mdata.customers c
+        ON c.id = p.customer_id
+       AND c.operating_company_id = p.operating_company_id
       WHERE p.id = $1
       LIMIT 1
     `,
@@ -169,7 +171,10 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         `
           SELECT COUNT(*)::int AS total
           FROM accounting.payments p
-          JOIN mdata.customers c ON c.id = p.customer_id
+          JOIN mdata.customers c
+            ON c.id = p.customer_id
+           AND c.operating_company_id = p.operating_company_id
+           AND c.operating_company_id = $1
           WHERE ${where.join(" AND ")}
         `,
         values
@@ -187,7 +192,10 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
             c.customer_name,
             ${PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
           FROM accounting.payments p
-          JOIN mdata.customers c ON c.id = p.customer_id
+          JOIN mdata.customers c
+            ON c.id = p.customer_id
+           AND c.operating_company_id = p.operating_company_id
+           AND c.operating_company_id = $1
           WHERE ${where.join(" AND ")}
           ORDER BY p.payment_date DESC, p.created_at DESC
           LIMIT $${limitIdx}
