@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createHosViolation } from "../../../api/safetyV64";
+import { listDotViolationTypes } from "../../../api/catalogs-safety";
 import { Button } from "../../../components/Button";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { Modal } from "../../../components/Modal";
 import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 
 type Source = "samsara_auto" | "manual_office" | "dot_citation";
 
@@ -35,6 +37,7 @@ function fromDatetimeLocalValue(local: string): string {
 }
 
 export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
+  const queryClient = useQueryClient();
   const [form, setForm] = useState({
     driver_id: "",
     violation_type: "",
@@ -43,6 +46,33 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
     source: "manual_office" as Source,
     notes: "",
   });
+
+  // DUAL_PATH_OLD_ACTIVE: HoursOfServicePage drawer still took free-text violation_type while
+  // HOSViolationsTab already catalogs via ReferenceSelect. Same catalog + FK + CSA weight.
+  const violationTypesQuery = useQuery({
+    queryKey: ["catalogs", "dot-violation-types", "hos", operatingCompanyId],
+    queryFn: () =>
+      listDotViolationTypes(operatingCompanyId, {
+        limit: 200,
+        is_active: "true",
+        basic_category: "hours_of_service",
+      }),
+    enabled: open && Boolean(operatingCompanyId),
+  });
+
+  const violationTypeRows = violationTypesQuery.data?.rows ?? [];
+
+  const violationTypeOptions = useMemo(
+    () =>
+      violationTypeRows.map((row) => ({
+        value: row.violation_code,
+        label: row.display_name,
+        type: row.violation_code,
+      })),
+    [violationTypeRows]
+  );
+
+  const selectedViolationType = violationTypeRows.find((row) => row.violation_code === form.violation_type);
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -57,6 +87,8 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
           : null,
         source: form.source,
         notes: form.notes.trim() || null,
+        csa_points: selectedViolationType?.severity_weight ?? null,
+        dot_violation_type_id: selectedViolationType?.id ?? null,
       }),
     onSuccess: () => {
       setForm({
@@ -100,17 +132,29 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
               dataField="hos-vio-driver-id"
             />
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600" htmlFor="hos-vio-type">
+          <div className="flex flex-col gap-1" data-testid="hos-vio-type">
+            <label className="text-xs font-semibold text-gray-600">
               Violation type <span className="text-red-600">*</span>
             </label>
-            <input
-              id="hos-vio-type"
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
-              placeholder="e.g. 11_HOUR"
-              value={form.violation_type}
-              onChange={(e) => setForm((v) => ({ ...v, violation_type: e.target.value }))}
-              required
+            {/*
+              LST-PICKER-01: free-text dual path killed. ReferenceSelect first-row create →
+              POST catalogs.dot_violation_types (same as HOSViolationsTab / guard 1816).
+            */}
+            <ReferenceSelect
+              value={form.violation_type || null}
+              onChange={(next) => setForm((v) => ({ ...v, violation_type: next ?? "" }))}
+              options={violationTypeOptions}
+              createKind="dot_violation_type"
+              operatingCompanyId={operatingCompanyId}
+              createdValueField="code"
+              placeholder={violationTypesQuery.isLoading ? "Loading types…" : "Select violation type"}
+              loading={violationTypesQuery.isLoading}
+              disabled={!operatingCompanyId || violationTypesQuery.isLoading}
+              onOptionCreated={() => {
+                void queryClient.invalidateQueries({
+                  queryKey: ["catalogs", "dot-violation-types", "hos", operatingCompanyId],
+                });
+              }}
             />
           </div>
           <div className="flex flex-col gap-1">
