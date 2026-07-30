@@ -1176,6 +1176,7 @@
     "1824": "1824-verify-lst-picker01-hos-create-modal-dot-type-inline-create.mjs",
     "1826": "1826-verify-lst-picker01-escrow-draw-reason-inline-create.mjs",
     "1828": "1828-verify-lst-picker-no-lists-json-partial-thrash.mjs",
+    "1830": "1830-verify-lst-picker01-payrun-payment-method-inline-create.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
