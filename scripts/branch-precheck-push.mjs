@@ -61,13 +61,32 @@ export function behindOriginMainCount(root) {
 // two DIFFERENT migration files and still collide, because the NUMBER is the shared resource, not the
 // filename. Overlap-by-filename cannot see that, so these are coupled by prefix instead.
 //
-// db/migrations/ is coupled UNCONDITIONALLY and deliberately: the rule is "strictly above main's
-// current max", so ANY migration landing on main invalidates a branch's number even when the two
-// numbers differ. There is no safe narrowing here.
+// TOOL-F02 (2026-07-30): db/migrations/ is NO LONGER coupled by directory. The earlier comment here
+// claimed "the rule is strictly above main's current max, so ANY migration landing on main invalidates
+// a branch's number — there is no safe narrowing". That was asserted, never verified, and it is WRONG.
 //
-// package-lock.json is coupled because a lockfile is one resolved graph, not a set of independent
-// lines.
-export const COUPLED_ALLOCATION_PREFIXES = ["db/migrations/", "package-lock.json"];
+// scripts/db-migrate.mjs is LEDGER-BASED, not max-number-based:
+//     for (const migration of diskMigrations) { if (ledgerByFile.has(migration)) continue; ... }
+// It applies every migration NOT ALREADY IN THE LEDGER, over a filename-sorted list
+// (lib/migration-filename-validation.mjs: readdirSync(...).filter(isMigrationFile).sort()). There is
+// no comparison against a maximum anywhere in that file. So a migration numbered BELOW main's current
+// max still applies correctly when its branch merges later — it is simply "not in the ledger yet".
+//
+// That unverified rule was the single biggest source of forced rebases: every migration PR was
+// invalidated by every other migration merge, so N open migration PRs cost N^2 rebuilds. Same N^2
+// shape as the zero-behind rule and the verify-steps directory coupling, for the same reason — a
+// proxy standing in for the thing actually being protected.
+//
+// What IS actually protected, and still is:
+//   · TWO BRANCHES PICKING THE SAME FILENAME -> still blocked below, by number, not by directory.
+//     (Also independently prevented by the per-lane bands: Claude HH 00-11, Cursor HH 12-23.)
+//   · ORDER DEPENDENCIES between migrations -> caught by the fresh-database apply that every PR
+//     already runs (verify:db:reset in ci/build-typecheck), which replays ALL migrations from scratch
+//     in filename order. If a lower-numbered migration depended on a higher-numbered one, that job
+//     fails. Branch freshness never checked this and could not have.
+//
+// package-lock.json stays coupled: a lockfile is one resolved graph, not a set of independent lines.
+export const COUPLED_ALLOCATION_PREFIXES = ["package-lock.json"];
 
 // scripts/verify-steps/ is DIFFERENT, and treating it like db/migrations/ was wrong. Verify-step
 // numbers are not "above the max" — they are claimed from a banded namespace (Claude odd, Cursor even)
@@ -90,6 +109,17 @@ export function stepNumbersIn(files) {
   return out;
 }
 
+// The migration NUMBER is the shared resource, not the directory. Two branches adding 202610270000 and
+// 202610280000 collide in no way; two branches both adding 202610270000 do.
+export function migrationNumbersIn(files) {
+  const out = new Set();
+  for (const f of files) {
+    const m = /^db\/migrations\/(\d+)_/.exec(f);
+    if (m) out.add(m[1]);
+  }
+  return out;
+}
+
 // The freshness decision, pure and therefore testable. Kept identical in SPIRIT to
 // scripts/verify-branch-fresh.mjs (CI): behind is fine, behind-and-overlapping is not.
 export function freshnessVerdict({ behind, mainFiles, branchFiles }) {
@@ -99,6 +129,10 @@ export function freshnessVerdict({ behind, mainFiles, branchFiles }) {
   const branchSteps = stepNumbersIn(branchFiles);
   const stepCollisions = [...branchSteps].filter((n) => mainSteps.has(n));
 
+  const mainMigrations = migrationNumbersIn(mainFiles);
+  const branchMigrations = migrationNumbersIn(branchFiles);
+  const migrationCollisions = [...branchMigrations].filter((n) => mainMigrations.has(n));
+
   // CLAIMED-NUMBERS.json is an append-only union registry. Both sides touching it is the NORMAL case
   // for any two guard PRs and is not a conflict on its own — the merge driver already treats only the
   // `claimed` subtree as strict, and only a same-key clash inside it is real. The observable proxy for
@@ -106,14 +140,18 @@ export function freshnessVerdict({ behind, mainFiles, branchFiles }) {
   // and judged by stepCollisions instead. If the numbers are disjoint, the registry union-merges.
   const branchSet = new Set(branchFiles);
   const overlap = mainFiles.filter(
-    (f) => branchSet.has(f) && f !== CLAIMED_REGISTRY && !(f.startsWith(STEP_DIR) && stepNumbersIn([f]).size > 0)
+    (f) =>
+      branchSet.has(f) &&
+      f !== CLAIMED_REGISTRY &&
+      !(f.startsWith(STEP_DIR) && stepNumbersIn([f]).size > 0) &&
+      !(f.startsWith("db/migrations/") && migrationNumbersIn([f]).size > 0)
   );
 
   const coupled = COUPLED_ALLOCATION_PREFIXES.filter(
     (prefix) => mainFiles.some((f) => f.startsWith(prefix)) && branchFiles.some((f) => f.startsWith(prefix))
   );
 
-  if (overlap.length === 0 && coupled.length === 0 && stepCollisions.length === 0) {
+  if (overlap.length === 0 && coupled.length === 0 && stepCollisions.length === 0 && migrationCollisions.length === 0) {
     return { ok: true, reason: `behind ${behind} but no overlap with main` };
   }
 
@@ -121,12 +159,14 @@ export function freshnessVerdict({ behind, mainFiles, branchFiles }) {
   if (overlap.length) why.push(`shares ${overlap.length} changed file(s) with main: ${overlap.slice(0, 5).join(", ")}`);
   for (const c of coupled) why.push(`both touch ${c} (globally allocated numbering)`);
   if (stepCollisions.length) why.push(`both claim verify-step number(s) ${stepCollisions.join(", ")}`);
+  if (migrationCollisions.length) why.push(`both claim migration number(s) ${migrationCollisions.join(", ")}`);
 
   return {
     ok: false,
     overlap,
     coupled,
     stepCollisions,
+    migrationCollisions,
     reason:
       `local branch is ${behind} commit(s) behind origin/main AND overlaps it — ${why.join("; ")}. ` +
       `Rebuild: \`git cherry-pick <sha>\` onto a fresh branch from origin/main, or ` +

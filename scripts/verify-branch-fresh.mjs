@@ -175,6 +175,23 @@ export function verifyBranchFresh(cliArgs = process.argv.slice(2)) {
     const branchSteps = stepNumbers(branchFiles);
     const stepCollisions = [...branchSteps].filter((n) => mainSteps.has(n));
 
+    // TOOL-F02: the migration NUMBER is the shared resource, not the directory. db-migrate.mjs is
+    // LEDGER-BASED — it applies every migration not already in the ledger, over a filename-sorted
+    // list, with no comparison against a maximum. A migration numbered below main's current max
+    // therefore still applies when its branch merges later. Order dependencies are caught by the
+    // fresh-database replay every PR already runs (verify:db:reset), not by this gate.
+    const migrationNumbers = (files) => {
+      const out = new Set();
+      for (const f of files) {
+        const m = /^db\/migrations\/(\d+)_/.exec(f);
+        if (m) out.add(m[1]);
+      }
+      return out;
+    };
+    const mainMigrations = migrationNumbers(mainFiles);
+    const branchMigrations = migrationNumbers(branchFiles);
+    const migrationCollisions = [...branchMigrations].filter((n) => mainMigrations.has(n));
+
     // CLAIMED-NUMBERS.json is an append-only union registry, and adding a step file is the normal
     // shape of any guard PR. Two guard PRs both touching them is NOT a conflict — only claiming the
     // SAME number is. Excluded from plain overlap and judged by stepCollisions instead. (Keeping the
@@ -182,22 +199,23 @@ export function verifyBranchFresh(cliArgs = process.argv.slice(2)) {
     // treadmill relocated rather than removed — and nearly every quality PR in this repo adds a guard.)
     const branchSet = new Set(branchFiles);
     const overlap = mainFiles.filter(
-      (f) => branchSet.has(f) && f !== CLAIMED_REGISTRY && !/^scripts\/verify-steps\/\d+-/.test(f)
+      (f) =>
+        branchSet.has(f) &&
+        f !== CLAIMED_REGISTRY &&
+        !/^scripts\/verify-steps\/\d+-/.test(f) &&
+        !/^db\/migrations\/\d+_/.test(f)
     );
 
     // Paths where correctness is GLOBAL, not per-file: two PRs can touch different files here and
     // still collide, because the thing being allocated is a number shared across the repo. Migration
     // numbering is "strictly above main's max", so two DIFFERENT migration files still collide — that
     // one stays unconditional.
-    const COUPLED = [
-      { prefix: "db/migrations/", why: "migration numbers are globally ordered; two lanes can pick the same one" },
-      { prefix: "package-lock.json", why: "lockfile resolution is global" },
-    ];
+    const COUPLED = [{ prefix: "package-lock.json", why: "lockfile resolution is global" }];
     const coupled = COUPLED.filter(
       (c) => mainFiles.some((f) => f.startsWith(c.prefix)) && branchFiles.some((f) => f.startsWith(c.prefix))
     );
 
-    if (overlap.length > 0 || coupled.length > 0 || stepCollisions.length > 0) {
+    if (overlap.length > 0 || coupled.length > 0 || stepCollisions.length > 0 || migrationCollisions.length > 0) {
       const reasons = [];
       if (overlap.length > 0) {
         reasons.push(
@@ -210,6 +228,9 @@ export function verifyBranchFresh(cliArgs = process.argv.slice(2)) {
       }
       if (stepCollisions.length > 0) {
         reasons.push(`both claim verify-step number(s) ${stepCollisions.join(", ")} — banded namespace collision`);
+      }
+      if (migrationCollisions.length > 0) {
+        reasons.push(`both claim migration number(s) ${migrationCollisions.join(", ")} — same filename would collide`);
       }
       fail(
         `base ${baseSha} is ${behindCount} commit(s) behind ${mainRef} AND overlaps it. Rebase.\n  - ` +
