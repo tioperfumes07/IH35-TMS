@@ -201,7 +201,7 @@
       ],
       "spec": "verify-step 1430",
       "status": "PASS",
-      "evidence": "#3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits. BANK-ECON-05 cash-bind keep-guard (verify-step 1442) confirms MODULE_PROGRESS honesty (pass_count=4, complete=false).",
+      "evidence": "#3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits. BANK-ECON-05 cash-bind keep-guard (verify-step 1442) confirms MODULE_PROGRESS honesty (pass_count matches PASS items, complete=false). Live 2026-07-30: pass_count=7 after ECON-02/03 + SURF-03 density closes.",
       "pr": "#3430"
     },
     {

@@ -2,7 +2,7 @@
 /**
  * 1832 — ACCT close: categorization-rules routes mounted + escrow abandon trigger text-cast.
  * Blocks: (1) registerCategorizationRulesRoutes orphaning again (apply-historical 404),
- *         (2) migration 202610290000 missing (22P02 on every load status update).
+ *         (2) migration 202610291200 missing (22P02 on every load status update).
  */
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
@@ -19,7 +19,7 @@ function selftest() {
   if (!index.includes("registerCategorizationRulesRoutes")) {
     throw new Error("selftest: expected registerCategorizationRulesRoutes import/call in index.ts");
   }
-  const mig = join(ROOT, "db/migrations/202610290000_disp01_escrow_abandon_trigger_text_cast.sql");
+  const mig = join(ROOT, "db/migrations/202610291200_disp01_escrow_abandon_trigger_text_cast.sql");
   if (!existsSync(mig)) throw new Error("selftest: migration file missing");
   const sql = readFileSync(mig, "utf8");
   if (!sql.includes("NEW.status::text")) throw new Error("selftest: expected ::text cast in migration");
@@ -45,8 +45,8 @@ function main() {
     fail("registerCategorizationRulesRoutes must NOT be on verify-no-orphan-routes ALLOWLIST once mounted");
   }
 
-  const migPath = join(ROOT, "db/migrations/202610290000_disp01_escrow_abandon_trigger_text_cast.sql");
-  if (!existsSync(migPath)) fail("missing db/migrations/202610290000_disp01_escrow_abandon_trigger_text_cast.sql");
+  const migPath = join(ROOT, "db/migrations/202610291200_disp01_escrow_abandon_trigger_text_cast.sql");
+  if (!existsSync(migPath)) fail("missing db/migrations/202610291200_disp01_escrow_abandon_trigger_text_cast.sql");
   const sql = readFileSync(migPath, "utf8");
   if (!sql.includes("NEW.status::text NOT IN")) {
     fail("migration must compare NEW.status::text (not bare enum literals)");
