@@ -86,8 +86,18 @@ BEGIN
 
   -- Retire ONLY: USMCA + no operational history + a same-name TRANSP driver exists (the twin that
   -- proves this row is a copy). A genuine USMCA hire has no TRANSP twin and is left untouched.
+  -- HOTFIX 2026-07-30: `status` MUST move with `deactivated_at`. mdata.drivers carries
+  -- chk_drivers_status_deactivated_consistent:
+  --     CHECK (deactivated_at IS NULL OR status = ANY (ARRAY['Inactive','Terminated']))
+  -- Setting only deactivated_at violated it, so this migration failed in Render's pre-deploy on every
+  -- attempt from 10:36 onward and — because db:migrate is the FIRST link in the preDeploy chain and it
+  -- aborts the whole chain — it blocked EVERY subsequent deploy, including Cursor's. The local fixture
+  -- reproduced prod's DATA SHAPE but not its CONSTRAINTS, which is why it passed here and failed there.
+  -- 'Inactive', not 'Terminated': all 13 pre-existing deactivated drivers on prod use 'Inactive', and
+  -- these are superseded import rows, not terminated people.
   UPDATE mdata.drivers d
-     SET deactivated_at = now()
+     SET deactivated_at = now(),
+         status = 'Inactive'
    WHERE d.operating_company_id = v_usmca
      AND d.deactivated_at IS NULL
      AND NOT EXISTS (SELECT 1 FROM mdata.loads l WHERE l.assigned_primary_driver_id = d.id)

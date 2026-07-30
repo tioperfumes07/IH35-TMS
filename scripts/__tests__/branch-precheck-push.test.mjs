@@ -198,11 +198,27 @@ test("refuses when behind origin/main AND the same file changed", () => {
   assert.equal(result.category, GATE_RESULT_CATEGORIES.FRESHNESS);
 });
 
-test("refuses when both sides add migrations, even with different filenames", () => {
+// TOOL-F02: this previously asserted that ANY two migrations conflict, on the belief that numbering is
+// "strictly above main's max". scripts/db-migrate.mjs is LEDGER-BASED — it applies every migration not
+// already in the ledger over a filename-sorted list, with no max comparison — so a lower number still
+// applies when merged later. The old rule invalidated every migration PR on every other migration
+// merge. Both directions are pinned now.
+test("allows both sides adding migrations with DIFFERENT numbers", () => {
   const dir = makeFeatureRepo();
-  writeAndCommit(dir, "db/migrations/202610240000_mine.sql", "-- mine\n", "branch migration");
+  writeAndCommit(dir, "db/migrations/202610270000_mine.sql", "-- mine\n", "branch migration");
   runGitOrThrow(["checkout", "main"], { cwd: dir });
-  writeAndCommit(dir, "db/migrations/202610221200_theirs.sql", "-- theirs\n", "main migration");
+  writeAndCommit(dir, "db/migrations/202610261200_theirs.sql", "-- theirs\n", "main migration");
+  runGitOrThrow(["push", "origin", "main"], { cwd: dir });
+  runGitOrThrow(["checkout", "feat/precheck"], { cwd: dir });
+  const result = runPrecheckPush({ root: dir, skipFetch: true, steps: [] });
+  assert.equal(result.ok, true, result.reason);
+});
+
+test("refuses when both sides claim the SAME migration number", () => {
+  const dir = makeFeatureRepo();
+  writeAndCommit(dir, "db/migrations/202610270000_mine.sql", "-- mine\n", "branch migration");
+  runGitOrThrow(["checkout", "main"], { cwd: dir });
+  writeAndCommit(dir, "db/migrations/202610270000_theirs.sql", "-- theirs\n", "main migration");
   runGitOrThrow(["push", "origin", "main"], { cwd: dir });
   runGitOrThrow(["checkout", "feat/precheck"], { cwd: dir });
   const result = runPrecheckPush({ root: dir, skipFetch: true, steps: [] });

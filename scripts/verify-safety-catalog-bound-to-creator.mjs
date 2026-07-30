@@ -93,17 +93,28 @@ export function run() {
  * proves only that the regex compiles; this proves the guard still sees the repository it guards.
  */
 function selftest() {
-  const targets = [
-    { path: join(ROOT, "apps/frontend/src/pages/safety/components/FineCreateModal.tsx"), fn: "listCivilFineTypes" },
-    { path: join(ROOT, "apps/frontend/src/pages/safety/tabs/HOSViolationsTab.tsx"), fn: "listDotViolationTypes" },
-  ];
-  const originals = targets.map((t) => ({ ...t, text: readFileSync(t.path, "utf8") }));
-
+  // Unbind EVERY creator that currently consumes the list fn — if a second surface is wired
+  // (e.g. HosViolationCreateModal alongside HOSViolationsTab), mutating only one file leaves the
+  // catalog still "bound" and the selftest false-fails with "guard did not name listDot…".
+  const fns = ["listCivilFineTypes", "listDotViolationTypes"];
   const clean = run();
   if (!clean.ok) {
     console.error("SELFTEST FAIL: the repository is already failing the guard before any mutation.");
     process.exit(1);
   }
+
+  const targets = [];
+  for (const fn of fns) {
+    const bound = clean.bound.find((b) => b.fn === fn);
+    if (!bound || bound.consumers.length === 0) {
+      console.error(`SELFTEST FAIL: ${fn} has no creator consumers to mutate.`);
+      process.exit(1);
+    }
+    for (const rel of bound.consumers) {
+      targets.push({ path: join(ROOT, rel), fn });
+    }
+  }
+  const originals = targets.map((t) => ({ ...t, text: readFileSync(t.path, "utf8") }));
 
   let caught;
   try {
@@ -120,12 +131,12 @@ function selftest() {
   }
 
   if (caught.ok) {
-    console.error("SELFTEST FAIL: both creator bindings were removed and the guard still passed.");
+    console.error("SELFTEST FAIL: creator bindings were removed and the guard still passed.");
     process.exit(1);
   }
-  const missed = originals.filter((o) => !caught.unbound.includes(o.fn));
+  const missed = fns.filter((fn) => !caught.unbound.includes(fn));
   if (missed.length > 0) {
-    console.error(`SELFTEST FAIL: guard did not name ${missed.map((m) => m.fn).join(", ")}.`);
+    console.error(`SELFTEST FAIL: guard did not name ${missed.join(", ")}.`);
     process.exit(1);
   }
   const after = run();
@@ -133,7 +144,9 @@ function selftest() {
     console.error("SELFTEST FAIL: restore did not return the repository to green.");
     process.exit(1);
   }
-  console.log(`SELFTEST PASS: unbinding both creators was caught (${caught.unbound.join(", ")}) and restore is green.`);
+  console.log(
+    `SELFTEST PASS: unbinding ${originals.length} creator file(s) was caught (${caught.unbound.join(", ")}) and restore is green.`
+  );
 }
 
 if (process.argv.includes("--selftest")) {

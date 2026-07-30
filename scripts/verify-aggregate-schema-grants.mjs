@@ -86,6 +86,13 @@ export function hasSchemaGrant(schema, sql, runtimeRole = RUNTIME_ROLE) {
 
 const SQL_FALSE_SCHEMAS = new Set([
   "excluded",
+  // BANK-F13 (2026-07-30): table aliases in the superseded-duplicate predicate
+  // (apps/backend/src/banking/pending-categorization.ts). They are correlated-subquery aliases for
+  // banking.bank_accounts / banking.bank_transactions, not schemas — the scanner reads `self_acct.id`
+  // as `<schema>.<table>` and demanded a GRANT USAGE for a schema that does not exist.
+  "self_acct",
+  "twin_acct",
+  "twin_bt",
   "agg",
   "load_scope",
   "pay",
