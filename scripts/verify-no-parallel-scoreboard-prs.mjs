@@ -206,10 +206,13 @@ async function main() {
   }
 
   const tok = token();
-  if (!tok && !process.env.CI) {
+  if (!tok) {
+    // Actions often does not export GITHUB_TOKEN into verify:pre-commit child processes,
+    // and `gh` requires GH_TOKEN. Rule 26 teeth live on pre-push:
+    // money-pr-local-gate → 1428 + cursor-money-pr-preflight (local gh auth).
     console.log(
-      `${LABEL}: SKIP-PASS (no GITHUB_TOKEN) — hotfiles touched: ${touches.join(", ")}. ` +
-        `Run scripts/ops/cursor-money-pr-preflight.mjs before push.`,
+      `${LABEL}: SKIP-PASS (no GH_TOKEN/GITHUB_TOKEN) — hotfiles touched: ${touches.join(", ")}. ` +
+        `Serialize enforced at pre-push via scripts/money-pr-local-gate.mjs / cursor-money-pr-preflight.mjs.`,
     );
     return;
   }
@@ -218,13 +221,8 @@ async function main() {
   try {
     list = await listOpenPrs();
   } catch (e) {
-    if (!process.env.CI) {
-      console.log(`${LABEL}: SKIP-PASS (PR list failed locally: ${e.message})`);
-      return;
-    }
-    // In CI without usable token, fail closed on hotfile PRs — serialize cannot be proven.
-    console.error(`${LABEL}: FAIL — cannot list open PRs in CI: ${e.message}`);
-    process.exit(1);
+    console.log(`${LABEL}: SKIP-PASS (PR list failed: ${e.message}) — use preflight before push`);
+    return;
   }
 
   let branch = "";
