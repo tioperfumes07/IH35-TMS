@@ -1180,6 +1180,7 @@
     "1829": "1829-verify-empty-json-body-parser-installed.mjs",
     "1830": "1830-verify-lst-picker01-payrun-payment-method-inline-create.mjs",
     "1832": "1832-verify-acct-close-categorization-rules-mounted.mjs",
+    "1834": "1834-verify-relay-fuel-driver-match-fallbacks.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",

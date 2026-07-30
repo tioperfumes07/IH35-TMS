@@ -2,7 +2,7 @@
  * RELAY-FUEL-INGEST-1 (doc 21/23 Part A): owner-triggered CSV import of Relay fuel transactions. The daily
  * pull / webhook cover live sync; this endpoint ingests a Relay CSV EXPORT (the owner's historical data)
  * that has no API equivalent. It maps each CSV row → the confirmed Relay API shape → parseRelayFuelTransactionRow
- * → upsertRelayFuelTransaction, so it reuses ALL the deployed ingest logic (driver match via integration_id,
+ * → upsertRelayFuelTransaction, so it reuses ALL the deployed ingest logic (driver match via integration_id / phone / name,
  * per-fuel-type lines, idempotent upsert). Owner/Administrator only. Staging + canonical fuel bridge;
  * TMS GL post runs AFTER commit via flushFuelGlPostsAfterCommit (EXPENSE_GL_POSTING_ENABLED, default OFF).
  *
