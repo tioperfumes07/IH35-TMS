@@ -248,7 +248,7 @@
       ],
       "spec": "docs/blocks/class-sweeps/BLOCKS-BANKING-DOM-2026-07-26.txt",
       "status": "UNVERIFIED",
-      "evidence": "Neon lucia 2026-07-28: banking.intercompany_entity_pairs EXISTS count=6 (schema+seed live). banking.transfers still 0. Code+guard 1556 on main. UNVERIFIED until one TRANSP\u2194USMCA intercompany transfer proves reciprocal legs net to zero on live data (Rule 23). Flag/posting locks unchanged.",
+      "evidence": "Neon lucia 2026-07-28: banking.intercompany_entity_pairs EXISTS count=6 (schema+seed live). Writer contract guard 1556 on main. THIS PR: mounts ORPHAN createIntercompanyTransfer via POST /api/v1/banking/transfers/intercompany + pairs/group GETs; TransferModal Intercompany scope; TransfersListPage group reverse-drill; guard 1790. banking.transfers still 0 — stays UNVERIFIED until one live TRANSP↔USMCA (or TRK) intercompany transfer proves reciprocal legs net to zero (Rule 23). Flag/posting locks unchanged.",
       "pr": null
     },
     {

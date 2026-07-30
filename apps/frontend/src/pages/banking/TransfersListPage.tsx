@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
-import { getPlaidBankAccounts, getTransfer, listTransfers, revokeTransfer, type Transfer, type TransferType } from "../../api/banking";
+import { getIntercompanyTransferGroup, getPlaidBankAccounts, getTransfer, listTransfers, revokeTransfer, type Transfer, type TransferType } from "../../api/banking";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
@@ -133,6 +133,38 @@ export function TransfersListPage() {
         render: (row) =>
           row.journal_entry_id ? (
             <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id.slice(0, 8)} />
+          ) : (
+            <span className="text-xs text-slate-500">—</span>
+          ),
+      },
+      {
+        key: "intercompany_transfer_group_id",
+        label: "Interco",
+        render: (row) =>
+          row.intercompany_transfer_group_id ? (
+            <button
+              type="button"
+              className="text-xs text-slate-800 underline"
+              data-testid="transfer-intercompany-group-link"
+              onClick={() => {
+                if (!companyId || !row.intercompany_transfer_group_id) return;
+                void getIntercompanyTransferGroup(row.intercompany_transfer_group_id, companyId)
+                  .then((detail) => {
+                    const lines = detail.legs
+                      .map(
+                        (leg) =>
+                          `${leg.intercompany_leg ?? "leg"} · ${(leg as { entity_code?: string }).entity_code ?? leg.operating_company_id.slice(0, 8)} · ${formatMoney(
+                            Number(leg.amount_cents)
+                          )} · ${leg.id.slice(0, 8)}`
+                      )
+                      .join("\n");
+                    window.alert(`Intercompany group ${detail.group_id}\n${lines || "(no legs)"}`);
+                  })
+                  .catch((error) => pushToast(String((error as Error).message || "Failed to load intercompany legs"), "error"));
+              }}
+            >
+              {row.intercompany_leg ?? "group"} · {row.intercompany_transfer_group_id.slice(0, 8)}
+            </button>
           ) : (
             <span className="text-xs text-slate-500">—</span>
           ),
