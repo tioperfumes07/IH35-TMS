@@ -91,8 +91,43 @@ export function assertGatedBatch(sources) {
   }
 
   // --- code cut over ---
+  //
+  // SAF-B28 BLIND SPOT, fixed 2026-07-30. This check used to match ONLY
+  // `JSON.stringify(body.data.related_...)` — the shape the CREATE path happened to use. The PATCH
+  // path wrote the very same retired columns with `JSON.stringify(value ?? null)` inside a generic
+  // sets.push(`${key} = $${idx}::jsonb`) loop, so the guard could not see it and CI stayed green while
+  // editing a violation's related drivers/units/fines SILENTLY NO-OPPED: the write went to columns no
+  // reader consumes, and the join tables the readers DO consume were never touched.
+  //
+  // An assertion pinned to one expression shape only ever catches the author who wrote that shape. So
+  // this now asserts the OUTCOME — the retired column names must not appear as a SQL assignment or in
+  // an INSERT column list anywhere in the file, however the value is produced.
+  for (const col of ["related_drivers", "related_units", "related_fine_ids"]) {
+    // `col = $n` / `col = $n::jsonb` — a SET in an UPDATE, or a generic sets.push template.
+    if (new RegExp(`${col}\\s*=\\s*\\$`).test(code[CV_ROUTES])) {
+      problems.push(`${CV_ROUTES}: still WRITES the retired jsonb column ${col} (SQL assignment) — readers use the join tables, so this edit would silently no-op.`);
+    }
+    // A template-built assignment: sets.push(`${key} = $${idx}::jsonb`) with col reachable as a key.
+    if (new RegExp(`['"\`]${col}['"\`][^\\n]{0,80}::jsonb`).test(code[CV_ROUTES])) {
+      problems.push(`${CV_ROUTES}: builds a ::jsonb write for the retired column ${col}.`);
+    }
+  }
   if (/JSON\.stringify\(body\.data\.related_(drivers|units|fine_ids)/.test(code[CV_ROUTES])) {
     problems.push(`${CV_ROUTES}: still WRITES the retired jsonb columns — the join tables would be bypassed on create.`);
+  }
+
+  // POSITIVE half: it is not enough that the jsonb write is gone — the PATCH must actually sync the
+  // join tables, or an edit becomes a no-op in the other direction. Upsert re-links (including
+  // RE-linking a previously retired row) and absent ids retire via is_active = false, never DELETE
+  // (DELETE is REVOKEd on all three tables by 202607840000, and void-not-delete is repo law).
+  if (!/ON CONFLICT \(violation_id, \$\{column\}\)/.test(code[CV_ROUTES])) {
+    problems.push(`${CV_ROUTES}: the PATCH does not upsert the join tables — an edit would not re-link ids.`);
+  }
+  if (!/is_active = TRUE/.test(code[CV_ROUTES])) {
+    problems.push(`${CV_ROUTES}: the PATCH never re-activates a link — a previously retired id could never be re-linked.`);
+  }
+  if (!/is_active\s*=\s*(FALSE|false)/.test(code[CV_ROUTES])) {
+    problems.push(`${CV_ROUTES}: the PATCH never retires an absent id — removing a driver from the list would not take effect.`);
   }
   for (const t of ["company_violation_drivers", "company_violation_units", "company_violation_fines"]) {
     if (!code[CV_ROUTES].includes(t)) {
@@ -128,6 +163,7 @@ export function assertGatedBatch(sources) {
 if (SELFTEST) {
   const live = Object.fromEntries(FILES.map((rel) => [rel, read(rel)]));
   const failures = [];
+  const ARM_COUNT = 10;
   const expectCaught = (name, mutated, needle) => {
     if (JSON.stringify(mutated) === JSON.stringify(live)) {
       failures.push(`${name}: inert mutation — the guard was never actually exercised`);
@@ -155,6 +191,20 @@ if (SELFTEST) {
   expectCaught("jsonb-write-returns",
     { ...live, [CV_ROUTES]: live[CV_ROUTES].replace("body.data.source_doc_id ?? null,", "JSON.stringify(body.data.related_drivers ?? null),\n          body.data.source_doc_id ?? null,") },
     "still WRITES the retired jsonb columns");
+  // SAF-B28 arms (2026-07-30). The first one replays the EXACT shape that was invisible to the old
+  // check: a generic sets.push template writing the retired column, which is how the PATCH silently
+  // no-opped for months while CI stayed green.
+  expectCaught("patch-jsonb-write-via-generic-template",
+    { ...live, [CV_ROUTES]: live[CV_ROUTES].replace(
+      "const LINK_KEYS =",
+      "sets.push(`related_drivers = $${idx}::jsonb`);\n    const LINK_KEYS =") },
+    "retired jsonb column related_drivers");
+  expectCaught("patch-stops-upserting-links",
+    { ...live, [CV_ROUTES]: live[CV_ROUTES].split("ON CONFLICT (violation_id, ${column})").join("ON CONFLICT DO NOTHING --") },
+    "does not upsert the join tables");
+  expectCaught("patch-stops-retiring-absent-ids",
+    { ...live, [CV_ROUTES]: live[CV_ROUTES].split("is_active = FALSE").join("is_active = TRUE") },
+    "never retires an absent id");
   expectCaught("hardcoded-target-returns",
     { ...live, [FE_ESCROW]: live[FE_ESCROW] + "\nconst ESCROW_TARGET_DEFAULT = 1000;\n" },
     "hardcoded escrow target constant is back");
@@ -170,7 +220,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 8 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — ${ARM_COUNT} planted defects caught, live sources clean`);
   process.exit(0);
 }
 
