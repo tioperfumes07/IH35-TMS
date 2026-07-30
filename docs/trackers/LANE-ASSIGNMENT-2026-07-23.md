@@ -82,6 +82,19 @@ Do not edit, in either lane, for any reason:
 - `docs/schema-parity-baseline.json` (regenerate only through its explicit env-gated path)
 - `CLAUDE.md`, `AGENTS.md`, `docs/specs/DEFINITION-OF-DONE.md` — owner-governed; propose in chat instead.
 
+### 3a. Scoreboard hotfiles — SERIALIZE (Cursor, Rule 26 — 2026-07-30)
+
+At most **one open Cursor PR** may edit any of:
+
+- `docs/module-completion/accounting.json`
+- `docs/module-completion/banking.json`
+- `docs/trackers/ACCT-SURF-DOD-SWEEP-MATRIX-2026-07-25.json`
+- `scripts/verify-steps/CLAIMED-NUMBERS.json`
+
+Stacking parallel scoreboard leaves caused permanent rebase thrash + overlay rebuilds that
+clobbered `apps/**` exports. Before push: `node scripts/ops/cursor-money-pr-preflight.mjs`.
+CI: verify-step **1428** (`verify-no-parallel-scoreboard-prs`).
+
 ---
 
 ## 4. Merge authority

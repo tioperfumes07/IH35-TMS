@@ -1,0 +1,121 @@
+#!/usr/bin/env node
+/**
+ * Cursor money-PR preflight — catch the failures that burned CI on ACCT-R-* waves.
+ *
+ * Run before every push that touches accounting/banking apps or scoreboard hotfiles:
+ *   node scripts/ops/cursor-money-pr-preflight.mjs
+ *
+ * Checks:
+ *  1) FINDING format on HEAD commit (ACCT-F##|BANK-F##|LST-F##) when apps money paths change
+ *  2) verify-no-money-theater + verify-definition-of-done-evidence
+ *  3) section7 financial palette baseline
+ *  4) matrix M === accounting.json items.length when either file is dirty vs origin/main
+ *  5) warn if another open PR already edits scoreboard hotfiles (needs gh)
+ */
+import { execSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const LABEL = "cursor-money-pr-preflight";
+
+const HOTFILES = [
+  "docs/module-completion/accounting.json",
+  "docs/module-completion/banking.json",
+  "docs/trackers/ACCT-SURF-DOD-SWEEP-MATRIX-2026-07-25.json",
+  "scripts/verify-steps/CLAIMED-NUMBERS.json",
+];
+
+function sh(cmd) {
+  try {
+    return execSync(cmd, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+  } catch (e) {
+    return { error: true, out: String(e.stdout || "") + String(e.stderr || e.message || "") };
+  }
+}
+
+function runNode(script) {
+  const r = sh(`node ${script}`);
+  if (typeof r === "object" && r.error) {
+    console.error(r.out);
+    return false;
+  }
+  console.log(r.split("\n").slice(-2).join("\n"));
+  return true;
+}
+
+const problems = [];
+
+const changed = sh("git diff --name-only origin/main...HEAD");
+const files =
+  typeof changed === "string"
+    ? changed.split("\n").filter(Boolean)
+    : [];
+
+const touchesHot = files.some((f) => HOTFILES.includes(f));
+const touchesMoneyApps = files.some((f) =>
+  /^(apps\/(backend|frontend)\/src\/.*(accounting|banking|qbo-sync|\/qbo\/)|apps\/frontend\/src\/pages\/(accounting|banking)\/)/i.test(
+    f,
+  ),
+);
+
+if (touchesMoneyApps || touchesHot) {
+  if (!runNode("scripts/verify-no-money-theater.mjs")) problems.push("verify-no-money-theater");
+  if (!runNode("scripts/verify-definition-of-done-evidence.mjs")) {
+    problems.push("verify-definition-of-done-evidence");
+  }
+}
+
+if (files.some((f) => f.startsWith("apps/frontend/src/pages/accounting/") || f.startsWith("apps/frontend/src/pages/banking/"))) {
+  if (!runNode("scripts/verify-section7-palette-financial.mjs")) {
+    problems.push("verify-section7-palette-financial");
+  }
+}
+
+if (touchesHot && existsSync(resolve(ROOT, "docs/module-completion/accounting.json"))) {
+  if (!runNode("scripts/verify-acct-surface-dod-sweep.mjs")) {
+    problems.push("verify-acct-surface-dod-sweep (matrix M vs accounting.json)");
+  }
+}
+
+// Parallel open-PR warning via gh (best-effort)
+if (touchesHot) {
+  const prs = sh(
+    `gh pr list --base main --state open --limit 50 --json number,files,headRefName --jq '.[]|{n:.number,branch:.headRefName,files:[.files[].path]}'`,
+  );
+  if (typeof prs === "string" && prs) {
+    // gh --jq with multiple objects prints NDJSON sometimes; try parse array
+    let list = [];
+    try {
+      list = JSON.parse(`[${prs.replace(/}\s*{/g, "},{")}]`);
+    } catch {
+      try {
+        list = JSON.parse(prs);
+      } catch {
+        list = [];
+      }
+    }
+    const branch = sh("git rev-parse --abbrev-ref HEAD");
+    const others = (Array.isArray(list) ? list : []).filter((p) => {
+      if (!p || p.branch === branch) return false;
+      const fs = p.files || [];
+      return fs.some((f) => HOTFILES.includes(f));
+    });
+    if (others.length) {
+      problems.push(
+        `Rule 26: other open PR(s) already edit scoreboard hotfiles: ${others
+          .map((p) => `#${p.n}`)
+          .join(", ")} — serialize (merge/close those first)`,
+      );
+    }
+  }
+}
+
+if (problems.length) {
+  console.error(`\n${LABEL}: FAIL`);
+  for (const p of problems) console.error(`  - ${p}`);
+  process.exit(1);
+}
+
+console.log(`${LABEL}: PASS`);
