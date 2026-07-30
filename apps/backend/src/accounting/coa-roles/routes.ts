@@ -4,6 +4,8 @@ import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../shared.js";
 import { requiredCoaRolesForCompanyCode } from "./entity-required-roles.js";
 import { COA_ROLE_VALUES } from "./resolver.service.js";
+import { computePostingFeatureReadiness, loadPostingFlagRequirements } from "./posting-flag-readiness.js";
+import { isEnabled } from "../../lib/feature-flags/service.js";
 
 const roleSchema = z.enum(COA_ROLE_VALUES);
 
@@ -143,8 +145,27 @@ export async function registerCoaRolesRoutes(app: FastifyInstance) {
         `,
         [query.data.operating_company_id]
       );
-      const mapped = new Set(rows.rows.map((row: unknown) => String((row as { role?: string }).role ?? "")));
+      const mapped = new Set<string>(
+        rows.rows.map((row: unknown) => String((row as { role?: string }).role ?? ""))
+      );
       const missing = required.filter((role) => !mapped.has(role));
+
+      // Posting-flag readiness. `valid` above only covers REQUIRED roles, so it reported true while
+      // three posting features were dead on every entity — their roles are classed optional. A poster
+      // with an unbound role THROWS on first use, so an unbound optional role is not a cosmetic gap.
+      // Flag state MUST come from isEnabled(), never a raw read of lib.feature_flag_overrides. An
+      // override row is only half the answer: isEnabled also applies the flag's `default_enabled` and
+      // the posting OFF short-circuit. Reading the override table directly would report a
+      // default-enabled flag with no override row as OFF — under-reporting exactly the armed-but-
+      // blocked state this endpoint exists to surface. verify-per-entity-only-flag-gates caught this.
+      const enabledFlags = new Set<string>();
+      for (const flagKey of Object.keys(loadPostingFlagRequirements().requirements)) {
+        if (await isEnabled(client, flagKey, { operating_company_id: query.data.operating_company_id })) {
+          enabledFlags.add(flagKey);
+        }
+      }
+      const featureReadiness = computePostingFeatureReadiness(mapped, enabledFlags);
+
       return {
         company_code: companyCode || null,
         required_roles: required,
@@ -152,6 +173,9 @@ export async function registerCoaRolesRoutes(app: FastifyInstance) {
         mapped_roles: Array.from(mapped.values()).sort(),
         missing_roles: missing,
         valid: missing.length === 0,
+        posting_feature_readiness: featureReadiness,
+        posting_features_blocked: featureReadiness.filter((f) => !f.ready).length,
+        posting_features_armed_but_blocked: featureReadiness.filter((f) => f.armed_but_blocked).length,
       };
     });
 
