@@ -1147,6 +1147,7 @@
     "1774": "1774-verify-lst-cat06-dispatcher-error-reasons-closed.mjs",
     "1776": "1776-verify-lst-orph02-held-registry-truth.mjs",
     "1778": "1778-verify-lst-maint01-reseed-rls-safe.mjs",
+    "1780": "1780-verify-lst-rls01-global-catalog-write-authz-closed.mjs",
     "1788": "1788-verify-acct-surf-09-reverse-drill.mjs",
     "1790": "1790-verify-bank-dom-05-intercompany-route-ui.mjs",
     "1792": "1792-verify-bank-record-transfer-trigger-wired.mjs",
