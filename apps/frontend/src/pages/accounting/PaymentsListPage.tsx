@@ -144,7 +144,8 @@ export function PaymentsListPage() {
       {
         key: "matched_bank_transaction_id",
         label: "Bank txn",
-        sortable: false,
+        sortable: true,
+        sortValue: (row) => row.matched_bank_transaction_id ?? "",
         render: (row) =>
           row.matched_bank_transaction_id ? (
             <EntityLink
