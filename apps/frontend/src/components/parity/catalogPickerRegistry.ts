@@ -220,6 +220,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "legacy-bespoke-form",
     evidence: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx:149-162 (QB-STD-5 canonical fix)",
   },
+
   customer: {
     key: "customer",
     label: "customer",
@@ -232,6 +233,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "legacy-bespoke-form",
     evidence: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx:164-173 (D1-1)",
   },
+
   account: {
     key: "account",
     label: "account",
@@ -244,6 +246,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "legacy-bespoke-form",
     evidence: "apps/backend/src/catalogs/accounting/index.ts:17 (tableName catalogs.accounts) — create commit is FINANCIAL-GATED in NewAccountDrawerForm",
   },
+
   // NOTE: every legacy `label` is byte-identical to its key so `catalogAddNewLabel` reproduces the
   // previous `+ Add new ${createKind}` string exactly. Do not "improve" these — the six must not move.
   service: {
@@ -258,6 +261,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "legacy-bespoke-form",
     evidence: "apps/frontend/src/components/parity/drawers/NewServiceDrawerForm.tsx:5 (QB-STD-5) + apps/backend/src/catalogs/accounting/index.ts:145",
   },
+
   item: {
     key: "item",
     label: "item",
@@ -270,6 +274,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "legacy-bespoke-form",
     evidence: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx:174-203 (QB-STD-5)",
   },
+
   category: {
     key: "category",
     label: "category",
@@ -282,6 +287,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "legacy-bespoke-form",
     evidence: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx:204-225 (FIX-02)",
   },
+
   class: {
     key: "class",
     label: "class",
@@ -294,6 +300,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "legacy-bespoke-form",
     evidence: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx:226-239 (QB-STD-5)",
   },
+
   part: {
     key: "part",
     label: "part",
@@ -306,6 +313,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "legacy-bespoke-form",
     evidence: "apps/backend/src/maintenance/parts-inventory.routes.ts:44 (SELECT) and :63 (INSERT) — both maintenance.parts_inventory",
   },
+
 
   // ── Batch 1, config-driven. Every one verified: one route factory, one tableName, SELECT+INSERT. ──
   // Dispatch — apps/backend/src/catalogs/dispatch/shared.ts:104 builds `catalogs.${tableName}` once
@@ -321,6 +329,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/vendors/vendor-types",
     evidence: "apps/backend/src/catalogs/generic-catalog.factory.ts:143 (SELECT) and :188 (INSERT) — both catalogs.${config.tableName} from vendorTypesCatalogConfig",
   }),
+
   load_type: catalogEntry({
     key: "load_type",
     label: "Load type",
@@ -328,6 +337,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/dispatch/load-types",
     evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
   }),
+
   detention_reason: catalogEntry({
     key: "detention_reason",
     label: "Detention reason",
@@ -335,6 +345,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/dispatch/detention-reasons",
     evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
   }),
+
   pickup_time_type: catalogEntry({
     key: "pickup_time_type",
     label: "Pickup time type",
@@ -342,6 +353,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/dispatch/pickup-time-types",
     evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
   }),
+
   additional_charge: catalogEntry({
     key: "additional_charge",
     label: "Accessorial charge",
@@ -349,6 +361,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/dispatch/additional-charges",
     evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
   }),
+
 
   // Load cancellation reasons — bespoke POST body (reason_code + required category), same canonical
   // table the Cancel Load dropdown reads via GET /api/v1/dispatch/cancellation-reasons.
@@ -399,6 +412,7 @@ export const CATALOG_PICKER_CONFIGS = {
     },
   },
 
+
   // Driver — apps/backend/src/catalogs/driver/factory.ts: SELECT :94 and INSERT :172 both
   // `catalogs.${config.tableName}`. escrow-types deliberately excluded (financial cluster).
   pay_rate_template: catalogEntry({
@@ -408,6 +422,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/driver/pay-rate-templates",
     evidence: "apps/backend/src/catalogs/driver/factory.ts:94,172 + driver/index.ts:6 tableName pay_rate_templates",
   }),
+
   driver_deduction_type: catalogEntry({
     key: "driver_deduction_type",
     label: "Driver deduction type",
@@ -415,6 +430,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/driver/deduction-types",
     evidence: "apps/backend/src/catalogs/driver/factory.ts:94,172 + driver/index.ts:14 tableName driver_deduction_types",
   }),
+
   // Escrow forfeit draw reasons — same table as driver_deduction_types, but create MUST set
   // may_draw_escrow=true so the new row appears in EscrowForfeitModal's filtered picker.
   escrow_draw_reason: {
@@ -455,6 +471,7 @@ export const CATALOG_PICKER_CONFIGS = {
       };
     },
   },
+
   driver_pay_type: catalogEntry({
     key: "driver_pay_type",
     label: "Driver pay type",
@@ -462,6 +479,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/driver/pay-types",
     evidence: "apps/backend/src/catalogs/driver/factory.ts:94,172 + driver/index.ts:22 tableName driver_pay_types",
   }),
+
 
   // Fuel — apps/backend/src/catalogs/fuel/factory.ts: SELECT :83 and INSERT :159 both
   // `catalogs.${config.tableName}`.
@@ -472,6 +490,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/fuel/card-types",
     evidence: "apps/backend/src/catalogs/fuel/factory.ts:83,159 + fuel/index.ts:6 tableName fuel_card_types",
   }),
+
   fuel_exception_type: catalogEntry({
     key: "fuel_exception_type",
     label: "Fuel exception type",
@@ -479,6 +498,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/fuel/exception-types",
     evidence: "apps/backend/src/catalogs/fuel/factory.ts:83,159 + fuel/index.ts:14 tableName fuel_exception_types",
   }),
+
   fuel_station_brand: catalogEntry({
     key: "fuel_station_brand",
     label: "Fuel station brand",
@@ -486,6 +506,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/fuel/station-brands",
     evidence: "apps/backend/src/catalogs/fuel/factory.ts:83,159 + fuel/index.ts:22 tableName fuel_station_brands",
   }),
+
 
   // Civil fine types — FineCreateModal previously used Combobox allowAddNew with an external mutate
   // (not ReferenceSelect / CatalogQuickCreateDrawer). POST body matches generic {code, display_name}.
@@ -497,6 +518,7 @@ export const CATALOG_PICKER_CONFIGS = {
     evidence:
       "apps/backend/src/catalogs/safety/civil-fine-types.routes.ts:28 (SELECT) and :110 (INSERT) — both catalogs.civil_fine_types; FineCreateModal catalogs-safety list consumer",
   }),
+
 
 // Complaint types — ComplaintsTab had SelectCombobox with Lists-only management (no inline create).
   // Options keyed by type_code (createdValueField=code); v6.4 complaints store type_code, not UUID.
@@ -538,6 +560,7 @@ export const CATALOG_PICKER_CONFIGS = {
     },
   },
 
+
   // DOT violation types — HOSViolationsTab had Combobox with NO inline create (Lists-only).
   // Options keyed by violation_code; create defaults basic_category=hours_of_service so the row
   // appears in the HOS-filtered picker list.
@@ -552,7 +575,7 @@ export const CATALOG_PICKER_CONFIGS = {
     entityScoped: true,
     readWriteParity: "same-endpoint-verified",
     evidence:
-      "apps/backend/src/catalogs/safety/dot-violation-types.routes.ts SELECT+INSERT catalogs.dot_violation_types; HOSViolationsTab catalogs-safety list consumer",
+      "apps/backend/src/catalogs/safety/dot-violation-types.routes.ts SELECT+INSERT catalogs.dot_violation_types; HOSViolationsTab + HosViolationCreateModal catalogs-safety list consumers",
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
       const displayName = values.display_name.trim();
@@ -581,6 +604,7 @@ export const CATALOG_PICKER_CONFIGS = {
       };
     },
   },
+
 
   // Company violation types — CompanyViolationCreateModal used Combobox allowAddNew + external
   // mini-form (not ReferenceSelect first-row). POST uses type_code/type_name/default_severity.
@@ -623,6 +647,7 @@ export const CATALOG_PICKER_CONFIGS = {
     },
   },
 
+
   // Cargo claim reasons — CargoClaimIntakeSurface used a bare <select> with NO inline create.
   // Options keyed by reason_code (createdValueField=code); claim stores claim_reason_code.
   cargo_claim_reason: {
@@ -664,6 +689,7 @@ export const CATALOG_PICKER_CONFIGS = {
       };
     },
   },
+
 
   // Internal fine reasons — InternalFinesPage used SelectCombobox sentinel + external Modal
   // (not ReferenceSelect / CatalogQuickCreateDrawer). Options keyed by UUID (reason_uuid).
@@ -709,6 +735,7 @@ export const CATALOG_PICKER_CONFIGS = {
     },
   },
 
+
   // Dispatcher error reasons — UserDetail previously toasted "Add reason in catalog" (fake +Add).
   // Write path: generic factory POST /api/v1/catalogs/dispatch/dispatcher-error-reasons (entityScoped).
   // label column (not display_name); event_type+severity required — passed via createExtras from the form.
@@ -752,6 +779,7 @@ export const CATALOG_PICKER_CONFIGS = {
     },
   },
 
+
   // Customer quality event reasons — CustomerDetail Reason Combobox had no inline create at all.
   // Same factory surface as LST-A-01 Lists hub: POST /api/v1/catalogs/customers/customer-quality-event-reasons.
   customer_quality_event_reason: {
@@ -793,6 +821,7 @@ export const CATALOG_PICKER_CONFIGS = {
       };
     },
   },
+
 } as const satisfies Record<string, CatalogPickerConfig>;
 
 /** Every create kind <ReferenceSelect> accepts — derived from the config, never hand-maintained. */
