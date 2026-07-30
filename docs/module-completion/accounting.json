@@ -235,8 +235,8 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Expenses \u25be",
       "status": "PASS",
-      "evidence": "Economics density PASS (ACCT-ECON-04): Neon lucia accounting.expenses=26837, expense_lines=33745 (2026-07-29). Structural DoD guard scripts/verify-acct-surf-02-expenses.mjs (step 1747) PASS on branch: /accounting/expenses route renders ExpensesListPage (no ComingSoon twin); subnav leaf present; RecordExpenseModal uses ParityDrawer and is mounted from the list (+ Create); RecordExpenseForm vendor/category/account pickers use ReferenceSelect createKind; submitRecordExpense->createExpense POSTs /api/v1/expenses; server INSERTs INTO accounting.expenses (canonical, no RETIRE write); ExpensesListPage EntityLink vendor + journal_entry + expense (self); companion reverse guards verify-acct-expense-list-reverse.mjs + verify-acct-expense-list-wo-reverse.mjs remain present/wired. Live TRANSP+USMCA browser click-through UNVERIFIED (not recorded this PR) \u2014 structural DoD A\u2013D + VERIFY-1..6 closed; VERIFY-7/8 (tab law / RLS) unchanged from ACCT-R-44.",
-      "pr": "#PENDING"
+      "evidence": "Economics density PASS (ACCT-ECON-04): Neon lucia accounting.expenses=26837, expense_lines=33745 (2026-07-29). Structural DoD guard scripts/verify-acct-surf-02-expenses.mjs (step 1747) PASS on branch: /accounting/expenses route renders ExpensesListPage (no ComingSoon twin); subnav leaf present; RecordExpenseModal uses ParityDrawer and is mounted from the list (+ Create); RecordExpenseForm vendor/category/account pickers use ReferenceSelect createKind; submitRecordExpense->createExpense POSTs /api/v1/expenses; server INSERTs INTO accounting.expenses (canonical, no RETIRE write); ExpensesListPage EntityLink vendor + journal_entry + expense (self); companion reverse guards verify-acct-expense-list-reverse.mjs + verify-acct-expense-list-wo-reverse.mjs remain present/wired. Live TRANSP+USMCA browser click-through UNVERIFIED (not recorded this PR) \u2014 structural DoD A\u2013D + VERIFY-1..6 closed; VERIFY-7/8 (tab law / RLS) unchanged from ACCT-R-44. ACCT-F17 (claim 1804): expenses list/detail project matched_bank_transaction_id via banking.bank_transactions.matched_expense_id + EntityLink bank_transaction. LIVE density of matched_expense_id still UNVERIFIED \u2014 do not re-PASS this item on chrome alone (Rule 23).",
+      "pr": "OPEN \u2014 cursor/acct-f17-expense-bank-reverse-1804"
     },
     {
       "id": "ACCT-SURF-03",
@@ -368,7 +368,7 @@
       ],
       "spec": "Law \u00a79 cross-module",
       "status": "UNVERIFIED",
-      "evidence": "Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural More▾ guard verify-acct-surf-09-crosslinks.mjs + reverse-drill guard verify-acct-surf-09-reverse-drill.mjs (1788): SettlementDetail→/accounting/escrow?holder_id=, EscrowPage AccountingSubNav+deep-link+Settlements/Factoring cross-links, FactoringDetail getFactoringAdvancePacket + JE EntityLinks on reserve/interest. Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser cross-link economics + Neon density proof (Rule 23 — no structural PASS flip). LINK-02 detail_types FK FROZEN.",
+      "evidence": "Frozen map docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md. Structural More\u25be guard verify-acct-surf-09-crosslinks.mjs + reverse-drill guard verify-acct-surf-09-reverse-drill.mjs (1788): SettlementDetail\u2192/accounting/escrow?holder_id=, EscrowPage AccountingSubNav+deep-link+Settlements/Factoring cross-links, FactoringDetail getFactoringAdvancePacket + JE EntityLinks on reserve/interest. Desktop Expected vs Actual: ~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md. Stays UNVERIFIED until TRANSP+USMCA browser cross-link economics + Neon density proof (Rule 23 \u2014 no structural PASS flip). LINK-02 detail_types FK FROZEN.",
       "pr": null
     },
     {
@@ -433,7 +433,7 @@
       "status": "UNVERIFIED",
       "evidence": "Pre-flip wiring durable: revenue-recognition + fixed-assets isEnabled pass operating_company_id (0243-h3-2); dispatch loads hook postLoadRevenueLatch on delivered_pending_docs + completed_docs_received; poster gates REVENUE_RECOGNITION_POST_ENABLED with opco; RLS-safe unbilled_revenue role-bind migration 202610201200 (ih35_app + opco GUC). Guard verify-acct-disp01-preflip-wiring (step 1766). LIVE Neon: TRANSP/USMCA unbilled_revenue bound; latch rows 0; flag default OFF. LIVE PROOF UNVERIFIED until owner enables REVENUE_RECOGNITION_POST_ENABLED per entity + earn/bill smoke.",
       "pr": null,
-      "live_proof": "UNVERIFIED — flag OFF by design; density 0 until owner flip + smoke"
+      "live_proof": "UNVERIFIED \u2014 flag OFF by design; density 0 until owner flip + smoke"
     },
     {
       "id": "ACCT-R-04",

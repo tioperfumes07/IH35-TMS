@@ -161,7 +161,21 @@ export type ExpenseListRow = {
   journal_entry_id: string | null;
   linked_work_order_uuid: string | null;
   work_order_display_id: string | null;
+  /** ACCT-F17 — bank txn stamped via matched_expense_id (Law §9 reverse). */
+  matched_bank_transaction_id: string | null;
 };
+
+/** Bank-recon accept stamps banking.bank_transactions.matched_expense_id — reverse hop for Expenses. */
+const EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL = `
+  (
+    SELECT bt.id::text
+    FROM banking.bank_transactions bt
+    WHERE bt.operating_company_id = e.operating_company_id
+      AND bt.matched_expense_id = e.id
+    ORDER BY bt.transaction_date DESC, bt.created_at DESC
+    LIMIT 1
+  )
+`;
 
 /**
  * READ-ONLY expenses list query (GAP-EXPENSES browse). SELECT only — no writes.
@@ -238,7 +252,8 @@ export async function queryExpensesList(
             AND rm.ledger_entry_id = e.id
             AND rm.operating_company_id = e.operating_company_id
             AND rm.match_state IN ('auto_matched', 'user_matched')
-        )                                            AS is_reconciled
+        )                                            AS is_reconciled,
+        ${EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL}   AS matched_bank_transaction_id
       FROM accounting.expenses e
       LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
       LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid
@@ -342,7 +357,8 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             ${hasUnitId ? "u.unit_number" : "NULL::text"}  AS unit_display_id,
             ${hasWorkOrderId ? "wo.display_id" : "NULL::text"} AS work_order_display_id,
             pay_acct.account_number                      AS payment_account_number,
-            pay_acct.account_name                        AS payment_account_name
+            pay_acct.account_name                        AS payment_account_name,
+            ${EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL}   AS matched_bank_transaction_id
           FROM accounting.expenses e
           LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
           LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid
