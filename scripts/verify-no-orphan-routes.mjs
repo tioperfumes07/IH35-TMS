@@ -42,7 +42,7 @@ const ALLOWLIST = new Map([
   ["registerDispatchViewRoutes", "dead code — driver-PWA view; also references a non-existent evidence table (separate finding)"],
   // --- Held: money-moving / financial surface, awaiting explicit owner approval before mounting ---
   ["registerSettlementPaymentRoutes", "HELD financial — moves settlement payments; needs owner OK"],
-  ["registerCategorizationRulesRoutes", "HELD — banking categorization rules; owner review"],
+  // registerCategorizationRulesRoutes — MOUNTED 2026-07-30 (ACCT-LINK-06 apply-historical live ops).
   // --- Collision/unsafe: mounting duplicates an existing route -> boot crash. Do NOT mount. ---
   // ACCT-R-13 (2026-07-25): registerSettlementApprovalRoutes is now MOUNTED (index.ts) — removed
   // from this list. Its old reason ("collides with SettlementsMvp on /settlements/:id/approve") was
