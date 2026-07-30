@@ -584,6 +584,22 @@ export async function revokeTransfer(transferId: string, operatingCompanyId: str
   return transfer;
 }
 
+/**
+ * BANK-F12 — Law §9 reverse hop: transfer → banking.bank_transactions.
+ * Feed/recon stamps banking.bank_transactions.matched_transfer_id.
+ * Entity-scoped — never cross opco.
+ */
+const TRANSFER_MATCHED_BANK_TRANSACTION_ID_SQL = `
+  (
+    SELECT bt.id::text
+    FROM banking.bank_transactions bt
+    WHERE bt.operating_company_id = t.operating_company_id
+      AND bt.matched_transfer_id = t.id
+    ORDER BY bt.transaction_date DESC, bt.created_at DESC
+    LIMIT 1
+  )
+`;
+
 export async function listTransfers(input: {
   userId: string;
   operatingCompanyId: string;
@@ -627,12 +643,21 @@ export async function listTransfers(input: {
           fb.account_name AS from_bank_name,
           tb.account_name AS to_bank_name,
           fa.account_name AS from_coa_name,
-          ta.account_name AS to_coa_name
+          ta.account_name AS to_coa_name,
+          ${TRANSFER_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
         FROM banking.transfers t
-        LEFT JOIN banking.bank_accounts fb ON fb.id = t.from_account_id
-        LEFT JOIN banking.bank_accounts tb ON tb.id = t.to_account_id
-        LEFT JOIN catalogs.accounts fa ON fa.id = t.from_account_id
-        LEFT JOIN catalogs.accounts ta ON ta.id = t.to_account_id
+        LEFT JOIN banking.bank_accounts fb
+          ON fb.id = t.from_account_id
+         AND fb.operating_company_id = t.operating_company_id
+        LEFT JOIN banking.bank_accounts tb
+          ON tb.id = t.to_account_id
+         AND tb.operating_company_id = t.operating_company_id
+        LEFT JOIN catalogs.accounts fa
+          ON fa.id = t.from_account_id
+         AND fa.operating_company_id = t.operating_company_id
+        LEFT JOIN catalogs.accounts ta
+          ON ta.id = t.to_account_id
+         AND ta.operating_company_id = t.operating_company_id
         WHERE ${whereSql}
         ORDER BY t.transfer_date DESC, t.created_at DESC
         LIMIT $${values.length - 1} OFFSET $${values.length}
@@ -648,10 +673,12 @@ export async function getTransferDetail(transferId: string, operatingCompanyId: 
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     const transferRes = await client.query(
       `
-        SELECT *
-        FROM banking.transfers
-        WHERE id = $1
-          AND operating_company_id = $2
+        SELECT
+          t.*,
+          ${TRANSFER_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
+        FROM banking.transfers t
+        WHERE t.id = $1
+          AND t.operating_company_id = $2
         LIMIT 1
       `,
       [transferId, operatingCompanyId]
