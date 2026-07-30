@@ -27,8 +27,15 @@ try {
 try {
   git(`config merge.json-union.name "deep JSON union of derived/registry files (see scripts/git-merge-driver.mjs)"`);
   git(`config merge.json-union.driver "node scripts/git-merge-driver.mjs %O %A %B %P"`);
-  // (recursive unset → git reuses this same driver for internal ancestor merges)
-  process.stdout.write("git-merge-driver: registered merge.json-union for derived/registry JSON files.\n");
+  git(
+    `config merge.catalog-picker-union.name "keep-all catalogPickerRegistry.ts keys (see scripts/git-merge-catalog-picker-registry.mjs)"`
+  );
+  git(
+    `config merge.catalog-picker-union.driver "node scripts/git-merge-catalog-picker-registry.mjs %O %A %B %P"`
+  );
+  process.stdout.write(
+    "git-merge-driver: registered merge.json-union + merge.catalog-picker-union for registry hot files.\n"
+  );
 } catch (err) {
   // never fail an install over this
   process.stderr.write(`git-merge-driver: could not register (${err.message}); merges on registry files may conflict until 'npm run setup:git-drivers'.\n`);
