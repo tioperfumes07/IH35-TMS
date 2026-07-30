@@ -2,7 +2,7 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": true,
-  "as_of": "2026-07-30T22:39:09.000Z",
+  "as_of": "2026-07-30T22:53:51.000Z",
   "live_sha": "efba811",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
@@ -493,9 +493,24 @@
       "evidence": "LIVE 2026-07-30 Neon lucia TRANSP: dup_groups=2634 dup_rows=6632 (vendor_uuid+transaction_date+total_amount_cents). GET /api/v1/expenses/duplicates + ExpensesListPage panel. Guard 1471. Read-only \u2014 no auto-void/merge.",
       "pr": null,
       "live_proof": "Neon lucia 2634 duplicate fingerprint groups / 6632 expense rows"
+    },
+    {
+      "id": "ACCT-R-14",
+      "title": "Sales-tax return module mounted (prepare/file/mark-paid)",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "VERIFY-3",
+        "VERIFY-7"
+      ],
+      "spec": "audit4-tax-return-automation \u00b7 QBO sales tax return",
+      "status": "PASS",
+      "evidence": "BUILT: accounting/sales-tax/sales-tax.routes.ts autoloaded via registerAccountingRoutes; FE SalesTaxPage + subnav Sales tax; Neon tables sales_tax_agencies/returns exist (agencies=0 returns=0 honest empty). Guard verify-acct-r14-sales-tax-autoload step 1486 PASS. LIVE 2026-07-30 API /sales-tax/agencies returns 401 unauth (mounted, not 404).",
+      "pr": null,
+      "live_proof": "API path mounted (401!=404); tables present; guard 1486 PASS"
     }
   ],
-  "pass_count": 33,
-  "total_count": 33,
-  "progress": "33 of 33"
+  "pass_count": 34,
+  "total_count": 34,
+  "progress": "34 of 34"
 }
