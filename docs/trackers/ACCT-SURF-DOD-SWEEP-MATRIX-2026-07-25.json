@@ -7,9 +7,9 @@
   "surface_map": "docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md",
   "desktop_clickthrough": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md",
   "module_progress": {
-    "N": 8,
-    "M": 35,
-    "note": "M=35 after ACCT-R-15"
+    "N": 36,
+    "M": 36,
+    "note": "M=36 after ACCT-R-10 My Accountant scoreboard leaf"
   },
   "entities": [
     "TRANSP",

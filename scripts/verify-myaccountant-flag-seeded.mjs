@@ -129,11 +129,23 @@ export function run() {
     ...checkPageGate(pageSrc),
   ];
 
+  // ACCT-R-10 scoreboard leaf (Rule 24) — must run before PASS return
+  try {
+    const acct = JSON.parse(fs.readFileSync(path.join(ROOT, "docs/module-completion/accounting.json"), "utf8"));
+    const leaf = (acct.items || []).find((i) => i.id === "ACCT-R-10");
+    if (!leaf || leaf.status !== "PASS") {
+      failures.push("docs/module-completion/accounting.json missing ACCT-R-10 PASS leaf");
+    }
+  } catch (e) {
+    failures.push(`accounting.json unreadable: ${e.message}`);
+  }
+
   if (failures.length) {
     console.error(`[${LABEL}] FAIL — ${FLAG_KEY} is not correctly seeded / gated:`);
     for (const f of failures) console.error(`  - ${f}`);
     return { ok: false, offenders: failures };
   }
+
   console.log(`[${LABEL}] PASS — ${FLAG_KEY} seeded (default OFF), per-entity-only enrolled, page gate wired`);
   return { ok: true, offenders: [] };
 }

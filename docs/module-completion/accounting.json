@@ -526,6 +526,21 @@
       "evidence": "LIVE 2026-07-30 Neon lucia TRANSP: catalogs.classes active=122; JE cost lines classified=0 unclassified>0 (honest density); GET /api/v1/accounting/cost-center-class-variance + PeriodComparisonPage ClassCostCenterVariancePanel (no new tab). Guard 1458. Read-only \u2014 no new GL math. Owner law: Class IS the cost-center axis (QBO).",
       "pr": null,
       "live_proof": "Neon lucia classes=122; cost JE rollup unclassified row returns period variance; route mounted via comparison-report.routes autoload"
+    },
+    {
+      "id": "ACCT-R-10",
+      "title": "MY_ACCOUNTANT_ENABLED feature flag seeded (default OFF) + page gate",
+      "layers": [
+        "DOD-A",
+        "VERIFY-3",
+        "VERIFY-6",
+        "VERIFY-8"
+      ],
+      "spec": "0441-mod7-myaccountant-flag-no-seed \u00b7 ACCT-R-10",
+      "status": "PASS",
+      "evidence": "LIVE 2026-07-30 Neon lucia: lib.feature_flags MY_ACCOUNTANT_ENABLED default_enabled=false; overrides ON for TRANSP+TRK+USMCA. Migration 202607590000_my_accountant_flag_seed.sql + guard 1506 PASS. MyAccountantPage gates via useFeatureFlag.",
+      "pr": null,
+      "live_proof": "Neon feature_flags row + 3 opco overrides; verify-myaccountant-flag-seeded PASS"
     }
   ],
   "pass_count": 35,
