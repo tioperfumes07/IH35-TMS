@@ -6,11 +6,11 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createInternalFine, disputeInternalFine, getInternalFines, voidInternalFine } from "../../api/safety";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
-import { listInternalFineReasons, createInternalFineReason } from "../../api/catalogs-safety";
-import { Modal } from "../../components/Modal";
+import { listInternalFineReasons } from "../../api/catalogs-safety";
 import { listDispatchLoads, type DispatchStatus } from "../../api/dispatch";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { companyToday } from "../../lib/businessDate";
 import { useAuth } from "../../auth/useAuth";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -79,27 +79,16 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
 
   const reasons = reasonsQuery.data?.rows ?? [];
 
-  // SAF-F24: inline "+ Add new reason" — Law §4 requires the create affordance INSIDE the dropdown
-  // (was an external <Link> to /lists), opening a mini-create without leaving the page. On success the
-  // catalog refetches and the new reason is auto-selected.
-  const [reasonModalOpen, setReasonModalOpen] = useState(false);
-  const [newReason, setNewReason] = useState({ reason_code: "", reason_name: "", default_amount: 0 });
-  const createReasonMutation = useMutation({
-    mutationFn: () =>
-      createInternalFineReason(operatingCompanyId, {
-        reason_code: newReason.reason_code.trim(),
-        reason_name: newReason.reason_name.trim(),
-        default_amount: newReason.default_amount,
-        is_active: true,
-      }),
-    onSuccess: async (created) => {
-      await queryClient.invalidateQueries({ queryKey: ["catalogs", "safety", "internal-fine-reasons", "picker", operatingCompanyId] });
-      setForm((v) => ({ ...v, reason_uuid: String(created.id) }));
-      setReasonModalOpen(false);
-      setNewReason({ reason_code: "", reason_name: "", default_amount: 0 });
-    },
-  });
-  const ADD_REASON_SENTINEL = "__add_reason__";
+  const reasonOptions = useMemo(
+    () =>
+      reasons.map((r) => ({
+        value: String(r.id),
+        label: String(r.reason_name),
+        type: String(r.reason_code),
+      })),
+    [reasons]
+  );
+
   const loads = loadsQuery.data?.loads ?? [];
 
   const createMutation = useMutation({
@@ -207,30 +196,34 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
             placeholder="Search by driver"
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
           />
-          <SelectCombobox
-            value={form.reason_uuid}
-            onChange={(e) => {
-              // SAF-F24: the sentinel opens the mini-create instead of selecting a reason.
-              if (e.target.value === ADD_REASON_SENTINEL) {
-                setReasonModalOpen(true);
-                return;
-              }
-              setForm((v) => ({ ...v, reason_uuid: e.target.value }));
+          {/*
+            LST-PICKER-01: ReferenceSelect first-row create → POST catalogs.internal_fine_reasons
+            (same table the picker lists). Options keyed by UUID (reason_uuid). Selecting a reason
+            prefills the fine amount from catalog default_amount (cents → dollars).
+          */}
+          <ReferenceSelect
+            value={form.reason_uuid || null}
+            onChange={(next) => {
+              const row = reasons.find((r) => String(r.id) === String(next ?? ""));
+              const defaultDollars =
+                row && Number.isFinite(Number(row.default_amount)) ? Number(row.default_amount) / 100 : null;
+              setForm((v) => ({
+                ...v,
+                reason_uuid: next ?? "",
+                ...(defaultDollars != null && defaultDollars > 0 ? { amount: defaultDollars } : {}),
+              }));
             }}
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-            data-testid="internal-fine-reason-picker"
-          >
-            <option value="" disabled>
-              Select a reason
-            </option>
-            {/* Law §4: inline "+ Add new" as the first row inside the dropdown. */}
-            <option value={ADD_REASON_SENTINEL}>+ Add new reason…</option>
-            {reasons.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.reason_name}
-              </option>
-            ))}
-          </SelectCombobox>
+            options={reasonOptions}
+            createKind="internal_fine_reason"
+            operatingCompanyId={operatingCompanyId}
+            placeholder={reasonsQuery.isLoading ? "Loading reasons…" : "Select a reason"}
+            loading={reasonsQuery.isLoading}
+            onOptionCreated={() => {
+              void queryClient.invalidateQueries({
+                queryKey: ["catalogs", "safety", "internal-fine-reasons", "picker", operatingCompanyId],
+              });
+            }}
+          />
           {/* M-1 (GUARD inline FAIL): this is the inline-create fine AMOUNT (sent to createInternalFine as
               dollars; display is $row.amount.toFixed(2)). dollars-mode MoneyInput; amount stays a DOLLAR
               number, byte-for-byte (the backend does Math.round(amount*100) for the liability). */}
@@ -273,58 +266,9 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           {form.status === "approved" && approverName ? (
             <span className="text-[11px] text-gray-600">Approving as {approverName} — creates a recoverable driver liability on save.</span>
           ) : null}
-          {/* SAF-F24: the external "Add reason in catalog" Link is removed — reason creation is now the
-              inline "+ Add new reason…" row inside the picker (Law §4). */}
+          {/* SAF-F24 / LST-PICKER-01: reason create is ReferenceSelect first-row (CatalogQuickCreateDrawer). */}
         </div>
       </div>
-
-      <Modal variant="drawer" open={reasonModalOpen} onClose={() => setReasonModalOpen(false)} title="New internal-fine reason">
-        <div className="space-y-2 text-xs" data-testid="internal-fine-reason-create-modal">
-          <label className="block">
-            <span className="text-slate-600">Reason code</span>
-            <input
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
-              value={newReason.reason_code}
-              onChange={(e) => setNewReason((v) => ({ ...v, reason_code: e.target.value }))}
-              placeholder="e.g. LATE_BOL"
-            />
-          </label>
-          <label className="block">
-            <span className="text-slate-600">Reason name</span>
-            <input
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
-              value={newReason.reason_name}
-              onChange={(e) => setNewReason((v) => ({ ...v, reason_name: e.target.value }))}
-              placeholder="e.g. Late BOL submission"
-            />
-          </label>
-          <label className="block">
-            <span className="text-slate-600">Default amount (USD)</span>
-            <MoneyInput
-              valueDollars={newReason.default_amount || null}
-              onChangeDollars={(d) => setNewReason((v) => ({ ...v, default_amount: d ?? 0 }))}
-              ariaLabel="Default amount (USD)"
-              placeholder="0.00"
-            />
-          </label>
-          {createReasonMutation.isError ? (
-            <p className="text-[11px] text-red-600">{(createReasonMutation.error as Error)?.message ?? "Could not create the reason."}</p>
-          ) : null}
-          <div className="flex justify-end gap-2 pt-1">
-            <button type="button" className="rounded-sm border border-gray-300 px-3 py-1" onClick={() => setReasonModalOpen(false)}>
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="rounded-sm bg-[#1F2A44] px-3 py-1 font-semibold text-white disabled:opacity-50"
-              disabled={!newReason.reason_code.trim() || !newReason.reason_name.trim() || createReasonMutation.isPending}
-              onClick={() => createReasonMutation.mutate()}
-            >
-              {createReasonMutation.isPending ? "Adding…" : "Add reason"}
-            </button>
-          </div>
-        </div>
-      </Modal>
 
       <ParityTable<InternalFineRow>
         columns={columns}
