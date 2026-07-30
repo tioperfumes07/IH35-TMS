@@ -1154,6 +1154,7 @@
     "1794": "1794-verify-bank-dedup-on-conflict-partial-index.mjs",
     "1796": "1796-verify-bank-account-detail-record-transfer.mjs",
     "1798": "1798-verify-customer-payment-bank-reverse-links.mjs",
+    "1802": "1802-verify-bank-surf-05-relay-identity.mjs",
     "1806": "1806-verify-module-completion-autogen-precommit.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",

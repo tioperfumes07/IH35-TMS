@@ -200,10 +200,22 @@ export async function registerBankingRoutes(app: FastifyInstance) {
 
     const tiles = await withCompanyScope(user.uuid, companyId, async (client) => {
       const hideOn = await isBankAccountHideEnabled(client, companyId);
+      // BANK-SURF-05: views.banking_account_tiles.is_relay is PHANTOM (never written). Real Relay
+      // identity is catalogs.accounts.system_purpose = 'relay_fuel_wallet' via bank_accounts.ledger_account_id.
       const res = await client.query(
         `
-          SELECT t.*
+          SELECT
+            t.*,
+            ba.ledger_account_id,
+            ca.system_purpose,
+            (ca.system_purpose = 'relay_fuel_wallet') AS is_relay_wallet
           FROM views.banking_account_tiles t
+          LEFT JOIN banking.bank_accounts ba
+            ON ba.id = t.id
+           AND ba.operating_company_id = t.operating_company_id
+          LEFT JOIN catalogs.accounts ca
+            ON ca.id = ba.ledger_account_id
+           AND ca.operating_company_id = ba.operating_company_id
           WHERE t.operating_company_id = $1
             AND (
               t.tile_kind <> 'real'

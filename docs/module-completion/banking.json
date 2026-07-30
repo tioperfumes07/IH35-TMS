@@ -147,8 +147,8 @@
       ],
       "spec": "Banking entry tabs \u00b7 never-delete",
       "status": "UNVERIFIED",
-      "evidence": "Deep structural DoD guarded (verify-bank-surf-05-dod / step 1466): Factoring/Escrow/Relay/Plaid/Statement Import routes mount BankingHomePage initialTab + tab bodies (DriverEscrowTabContent, StatementUpload, BankingPlaidConnectionsPanel) \u2014 no ComingSoon twin; sidebar flyout never-delete. Prior step 1440 route pin retained. Browser DoD click-through still UNVERIFIED \u2014 not flipped to PASS (Rule 23).",
-      "pr": "OPEN \u2014 Cotulla-08 BANK-08 SURF-05"
+      "evidence": "Deep structural DoD guarded (verify-bank-surf-05-dod / step 1466): Factoring/Escrow/Relay/Plaid/Statement Import routes mount BankingHomePage initialTab + tab bodies (DriverEscrowTabContent, StatementUpload, BankingPlaidConnectionsPanel) \u2014 no ComingSoon twin; sidebar flyout never-delete. Prior step 1440 route pin retained. BANK-SURF-05 Relay identity (claim 1802 / verify-bank-surf-05-relay-identity): GET /account-tiles enriches ledger_account_id \u2192 catalogs.accounts.system_purpose / is_relay_wallet; Relay tab resolves wallets that way (never phantom is_relay); honest empty when unbound. LIVE Neon TRANSP wallet row exists (id 112629fa\u2026 system_purpose=relay_fuel_wallet) but browser DoD click-through + post-#3799 feed proof still UNVERIFIED \u2014 not flipped to PASS (Rule 23).",
+      "pr": "OPEN \u2014 cursor/bank-surf05-relay-identity-1802"
     },
     {
       "id": "BANK-SURF-06",
