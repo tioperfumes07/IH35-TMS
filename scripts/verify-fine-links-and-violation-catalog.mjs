@@ -86,17 +86,27 @@ export function assertFineLinksAndViolationCatalog(sources) {
     problems.push(`${VIOLATION_ROUTES}: violation_type_uuid is accepted but not in the INSERT column list — accepted-and-discarded is worse than not accepting it.`);
   }
 
-  // --- F15: the picker reads the real catalog, with an INLINE create ---
-  if (!/listCompanyViolationTypes/.test(src[VIOLATION_MODAL])) {
+  // --- F15: the picker reads the real catalog, with VERIFY-2 inline create ---
+  // Prefer ReferenceSelect createKind=company_violation_type (first-row CatalogQuickCreateDrawer).
+  // Legacy Combobox allowAddNew + createCompanyViolationType mini-form still accepted until fully migrated.
+  const modal = src[VIOLATION_MODAL];
+  if (!/listCompanyViolationTypes/.test(modal)) {
     problems.push(`${VIOLATION_MODAL}: does not read the real catalog (listCompanyViolationTypes) — a hardcoded option list is not a catalog picker.`);
   }
-  if (!/allowAddNew/.test(src[VIOLATION_MODAL])) {
+  const hasReferenceSelectCreate =
+    /createKind=["']company_violation_type["']/.test(modal) && /ReferenceSelect/.test(modal);
+  const hasLegacyAllowAddNew = /allowAddNew/.test(modal);
+  if (!hasReferenceSelectCreate && !hasLegacyAllowAddNew) {
     problems.push(`${VIOLATION_MODAL}: the catalog picker has no inline "+ Add new" — the universal picker law requires it as a row inside the dropdown.`);
   }
-  if (/window\.open\(/.test(src[VIOLATION_MODAL])) {
+  if (/window\.open\(/.test(modal)) {
     problems.push(`${VIOLATION_MODAL}: "+ Add new" opens an external page (window.open) instead of an inline mini-create — navigating away mid-create discards what the operator already typed. This is the SAF-F24 defect.`);
   }
-  if (!/createCompanyViolationType/.test(src[VIOLATION_MODAL]) || !/setViolationTypeUuid\(String\(row\.id\)\)/.test(src[VIOLATION_MODAL])) {
+  const hasLegacySelectOnCreate =
+    /createCompanyViolationType/.test(modal) && /setViolationTypeUuid\(String\(row\.id\)\)/.test(modal);
+  const hasReferenceSelectOnCreate =
+    hasReferenceSelectCreate && /onChange=\{setViolationTypeUuid\}/.test(modal);
+  if (!hasLegacySelectOnCreate && !hasReferenceSelectOnCreate) {
     problems.push(`${VIOLATION_MODAL}: the inline create does not return with the new type SELECTED — the picker-law contract is create-then-select, not create-then-hunt.`);
   }
 
@@ -149,7 +159,15 @@ if (SELFTEST) {
   );
   expectCaught(
     "add-new-becomes-an-external-link",
-    { ...live, [VIOLATION_MODAL]: live[VIOLATION_MODAL].replace("onAdd: () => setTypeCreateOpen(true),", 'onAdd: () => window.open("/lists/safety/company-violation-types"),') },
+    {
+      ...live,
+      [VIOLATION_MODAL]: live[VIOLATION_MODAL].includes("onAdd:")
+        ? live[VIOLATION_MODAL].replace(/onAdd:\s*\([^)]*\)\s*=>\s*[^,]+,/, 'onAdd: () => window.open("/lists/safety/company-violation-types"),')
+        : live[VIOLATION_MODAL].replace(
+            /createKind=["']company_violation_type["']/,
+            'createKind="company_violation_type" /* selftest */'
+          ).replace(/ReferenceSelect/, "ReferenceSelect") + '\nwindow.open("/lists/safety/company-violation-types");\n',
+    },
     "opens an external page"
   );
 
