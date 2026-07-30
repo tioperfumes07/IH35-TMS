@@ -551,6 +551,8 @@ export type ExpenseListRow = {
   journal_entry_id: string | null;
   linked_work_order_uuid: string | null;
   work_order_display_id: string | null;
+  /** ACCT-F17 — reverse bank hop when matched_expense_id is stamped. */
+  matched_bank_transaction_id?: string | null;
 };
 
 export function listExpenses(
@@ -613,6 +615,8 @@ export type ExpenseDetail = {
   unit_display_id: string | null;
   linked_work_order_uuid: string | null;
   work_order_display_id: string | null;
+  /** ACCT-F17 — reverse bank hop when matched_expense_id is stamped. */
+  matched_bank_transaction_id?: string | null;
 };
 
 export function getExpense(id: string, operatingCompanyId: string) {

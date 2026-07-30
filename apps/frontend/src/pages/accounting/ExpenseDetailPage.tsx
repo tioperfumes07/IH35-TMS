@@ -134,6 +134,16 @@ export function ExpenseDetailPage() {
             <EntityLink kind="journal_entry" id={expense.journal_entry_id} label={expense.journal_entry_id.slice(0, 8)} />
           </DataPanelRow>
         ) : null}
+        {expense.matched_bank_transaction_id ? (
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Bank transaction</span>
+            <EntityLink
+              kind="bank_transaction"
+              id={expense.matched_bank_transaction_id}
+              label={expense.matched_bank_transaction_id.slice(0, 8)}
+            />
+          </DataPanelRow>
+        ) : null}
         {expense.payment_account_uuid ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Payment account</span>

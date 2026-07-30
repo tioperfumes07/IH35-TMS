@@ -168,6 +168,22 @@ export function ExpensesListPage() {
       ),
     },
     {
+      key: "matched_bank_transaction_id",
+      label: "Bank txn",
+      sortable: true,
+      sortValue: (r) => r.matched_bank_transaction_id ?? "",
+      render: (r) =>
+        r.matched_bank_transaction_id ? (
+          <EntityLink
+            kind="bank_transaction"
+            id={r.matched_bank_transaction_id}
+            label={r.matched_bank_transaction_id.slice(0, 8)}
+          />
+        ) : (
+          <span className="text-gray-400">—</span>
+        ),
+    },
+    {
       key: "total_amount_cents",
       label: "Amount",
       sortable: true,
