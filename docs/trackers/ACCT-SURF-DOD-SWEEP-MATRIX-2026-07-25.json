@@ -8,8 +8,8 @@
   "desktop_clickthrough": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md",
   "module_progress": {
     "N": 8,
-    "M": 32,
-    "note": "M=32 synced to accounting.json items.length (Cursor ACCT close wave 2026-07-30)."
+    "M": 33,
+    "note": "M=33 after R16+R17"
   },
   "entities": [
     "TRANSP",

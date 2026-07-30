@@ -12,6 +12,7 @@ import { postSourceTransaction, reversePostedSourceTransaction, PostingEngineErr
 import { canVoid, isVoidEnforcementEnabled } from "./void.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { listExpenseDuplicateGroups } from "./expense-duplicate.service.js";
 
 export const EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED";
 
@@ -307,6 +308,29 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     if ("unavailable" in result) return reply.code(200).send({ rows: [] });
     return reply.code(200).send(result);
   });
+
+  // ACCT-R-17 — duplicate expense fingerprint groups (READ-ONLY). Must register before /:id.
+  app.get(
+    "/api/v1/expenses/duplicates",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+
+      const parsed = companyQuerySchema
+        .extend({ limit: z.coerce.number().int().min(1).max(200).default(50) })
+        .safeParse(req.query ?? {});
+      if (!parsed.success) return validationError(reply, parsed.error);
+
+      return withCompanyScope(String(user.uuid), parsed.data.operating_company_id, async (client) => {
+        if (!(await relationExists(client, "accounting.expenses"))) {
+          return { group_count: 0, expense_count: 0, groups: [] };
+        }
+        return listExpenseDuplicateGroups(client, parsed.data.operating_company_id, parsed.data.limit);
+      });
+    },
+  );
 
   // Law §9 reverse drill-through: expense detail (header + lines + vendor/JE/load/unit/GL ids).
   // Entity-scoped via withCompanyScope + explicit operating_company_id filter. SELECT only.

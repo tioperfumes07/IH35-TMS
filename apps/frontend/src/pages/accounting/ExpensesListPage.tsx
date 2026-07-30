@@ -2,7 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery } from "@tanstack/react-query";
-import { listExpenses, type ExpenseListRow, type ExpenseListStatus } from "../../api/accounting";
+import {
+  listExpenses,
+  listExpenseDuplicates,
+  type ExpenseListRow,
+  type ExpenseListStatus,
+} from "../../api/accounting";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -79,6 +84,12 @@ export function ExpensesListPage() {
         date_to: toDate || undefined,
         limit: 200,
       }).then((res) => res.rows),
+    enabled: Boolean(companyId),
+  });
+
+  const dupQuery = useQuery({
+    queryKey: ["accounting", "expense-duplicates", companyId],
+    queryFn: () => listExpenseDuplicates(companyId, 25),
     enabled: Boolean(companyId),
   });
 
@@ -269,6 +280,35 @@ export function ExpensesListPage() {
       <div className="space-y-3">
         {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
         {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
+        {companyId && dupQuery.data && dupQuery.data.group_count > 0 ? (
+          <div
+            className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+            data-testid="expense-duplicates-panel"
+          >
+            <div className="mb-1 font-semibold">
+              Possible duplicate expenses: {dupQuery.data.group_count.toLocaleString()} groups (
+              {dupQuery.data.expense_count.toLocaleString()} rows) — same vendor + date + amount
+            </div>
+            <ul className="max-h-40 space-y-1 overflow-y-auto">
+              {dupQuery.data.groups.slice(0, 8).map((g) => (
+                <li key={`${g.vendor_uuid}-${g.transaction_date}-${g.total_amount_cents}`}>
+                  <span className="font-medium">{g.vendor_name ?? g.vendor_uuid.slice(0, 8)}</span>
+                  {" · "}
+                  {formatDateUS(g.transaction_date) || g.transaction_date}
+                  {" · "}
+                  {money(g.total_amount_cents)}
+                  {" · "}
+                  {g.count}×
+                  {g.members.slice(0, 3).map((m) => (
+                    <span key={m.id} className="ml-2 inline-block">
+                      <EntityLink kind="expense" id={m.id} label={m.expense_number ?? m.id.slice(0, 8)} />
+                    </span>
+                  ))}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         {highlightedExpenseId ? (
           <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
             Deep-link expense <span className="font-mono font-semibold">{highlightedExpenseId.slice(0, 8)}</span>
