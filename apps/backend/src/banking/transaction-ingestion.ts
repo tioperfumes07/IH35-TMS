@@ -57,7 +57,9 @@ export async function insertPlaidSyncedBankTransaction(
       VALUES (
         $1,$2,$3,$4::date,$5::date,$6,$7,$8,$9::text[],$10,$11,$12,$13,$14,now(),now()
       )
-      ON CONFLICT (bank_account_id, dedup_hash) DO UPDATE SET
+      ON CONFLICT (bank_account_id, dedup_hash)
+      WHERE dedup_hash IS NOT NULL AND voided_at IS NULL
+      DO UPDATE SET
         source = 'plaid',
         source_ref = EXCLUDED.source_ref,
         plaid_transaction_id = COALESCE(banking.bank_transactions.plaid_transaction_id, EXCLUDED.plaid_transaction_id),
@@ -129,7 +131,9 @@ export async function insertCsvStatementBankTransaction(
         updated_at
       )
       VALUES ($1,$2,NULL,$3::date,$4::date,$5,$6,NULL,'{}'::text[],false,$7,$8,$9,$10,$11,now(),now())
-      ON CONFLICT (bank_account_id, dedup_hash) DO NOTHING
+      ON CONFLICT (bank_account_id, dedup_hash)
+      WHERE dedup_hash IS NOT NULL AND voided_at IS NULL
+      DO NOTHING
       RETURNING id
     `,
     [

@@ -1203,7 +1203,9 @@ async function upsertBankTransactions(
               VALUES (
                 $1,$2,$3,$4::date,$5::date,$6::bigint,$7,$8,'{}'::text[],$9,$10,$11,'pending_categorization',$12,$13,$14
               )
-              ON CONFLICT (bank_account_id, dedup_hash) DO NOTHING
+              ON CONFLICT (bank_account_id, dedup_hash)
+              WHERE dedup_hash IS NOT NULL AND voided_at IS NULL
+              DO NOTHING
             `,
             [
               bankAccountId,
