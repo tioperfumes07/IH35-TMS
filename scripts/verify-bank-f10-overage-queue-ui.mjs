@@ -77,19 +77,25 @@ function collectProblemsFromSources(sources) {
       const banking = JSON.parse(bankingRaw);
       const item = banking.items?.find((i) => i.id === "BANK-F10");
       if (!item) problems.push(`${FILES.bankingJson} must contain BANK-F10`);
-      else if (item.status === "PASS") {
-        problems.push(`BANK-F10 must stay FAIL or qualifying HOLD until live Neon recovery density (got PASS)`);
-      } else if (item.status === "HOLD") {
-        if (!item.owner_hold || !item.tracker || !item.future_block) {
-          problems.push("BANK-F10 HOLD requires owner_hold + tracker + future_block (Rule 24)");
+      else {
+        const ev = String(item.evidence ?? "");
+        const events = Number((ev.match(/events\s*=\s*(\d+)/i) || [])[1] || NaN);
+        const posted = Number((ev.match(/posted\s*=\s*(\d+)/i) || [])[1] || NaN);
+        const densityOk = Number.isFinite(events) && events >= 1 && Number.isFinite(posted) && posted >= 1;
+        const uiOk = /card-overage|CardOverage|queue UI/i.test(ev);
+        if (item.status === "PASS") {
+          if (!densityOk) problems.push("BANK-F10 PASS requires events>=1 and posted>=1 in evidence");
+          if (!uiOk) problems.push("BANK-F10 PASS evidence must note Fuel card-overage queue UI mounted");
+        } else if (item.status === "HOLD") {
+          if (!item.owner_hold || !item.tracker || !item.future_block) {
+            problems.push("BANK-F10 HOLD requires owner_hold + tracker + future_block (Rule 24)");
+          }
+          if (!uiOk) problems.push("BANK-F10 HOLD evidence must note Fuel card-overage queue UI mounted");
+        } else if (item.status !== "FAIL") {
+          problems.push(`BANK-F10 must be FAIL|HOLD|PASS (got ${item.status})`);
+        } else if (!uiOk) {
+          problems.push("BANK-F10 evidence must note Fuel card-overage queue UI mounted");
         }
-        if (!/card-overage|CardOverage|queue UI/i.test(String(item.evidence ?? ""))) {
-          problems.push("BANK-F10 HOLD evidence must note Fuel card-overage queue UI mounted");
-        }
-      } else if (item.status !== "FAIL") {
-        problems.push(`BANK-F10 must stay FAIL or qualifying HOLD until live Neon recovery density (got ${item.status})`);
-      } else if (!/card-overage|CardOverage|queue UI/i.test(String(item.evidence ?? ""))) {
-        problems.push("BANK-F10 evidence must note Fuel card-overage queue UI mounted");
       }
     } catch {
       problems.push(`${FILES.bankingJson} must be valid JSON`);
@@ -137,10 +143,12 @@ function selftest() {
         [FILES.page]: realPage,
         [FILES.home]: realHome,
         [FILES.manifest]: realManifest,
-        [FILES.bankingJson]: realBanking.replace(
-          /("id": "BANK-F10"[\s\S]*?"status": )"(FAIL|HOLD)"/,
-          '$1"PASS"'
-        ),
+        [FILES.bankingJson]: realBanking
+          .replace(/("id": "BANK-F10"[\s\S]*?"status": )"(FAIL|HOLD|PASS)"/, '$1"PASS"')
+          .replace(
+            /("id": "BANK-F10"[\s\S]*?"evidence":\s*")[^"]*(")/,
+            "$1theater pass no density$2"
+          ),
       },
     },
   ];

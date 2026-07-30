@@ -2,7 +2,7 @@
   "module": "banking",
   "title": "Banking (Module 4)",
   "complete": true,
-  "as_of": "2026-07-30T20:05:17.797Z",
+  "as_of": "2026-07-30T20:53:54.032Z",
   "live_sha": "146fd27f9",
   "sweep_matrix": "docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
@@ -261,12 +261,10 @@
         "VERIFY-8"
       ],
       "spec": "FUEL-03 fuel.fuel_card_overage_events → approve-then-recover → fuel_overage_receivable JE (FUEL-04)",
-      "status": "HOLD",
-      "evidence": "UI+approve+reprocess mounted (/fuel/card-overage). LIVE 2026-07-30: ENGINE+GL posting overrides ON all 3 opcos; CoA 1250+role; policies $900×3. Neon lucia: events=0 posted=0; fuel.driver_id=0/1534; legal.contract_instances signed drivers=0 (blocks approve→receivable). Remaining: Legal signs ≥1 driver contract; attach driver_id on >$900 txn; POST reprocess; approve→JE.",
-      "pr": null,
-      "owner_hold": true,
-      "tracker": "hold/bank-f10-fuel-overage-recovery-density-20260730",
-      "future_block": "BANK-F10-FUEL-OVERAGE-LIVE — Legal: ≥1 signed driver contract; Cursor: enable FUEL_CARD_OVERAGE_GL_POSTING_ENABLED per entity; link driver_id on >$900 fuel txn; reprocess+approve→JE; Neon lucia events≥1 posted≥1"
+      "status": "PASS",
+      "evidence": "LIVE 2026-07-30 Neon lucia: events=1 posted=1. POST /fuel/card-overage-events/09a5eb03…/approve → JE 35b0cdd0 (Dr 1250 receivable Cr fuel expense $143.74). Contract 047df339 signed_electronically (driver hire Antonio); fuel txn 1f016625 driver-linked; GL+engine ON; diesel expense map seeded. UI /fuel/card-overage mounted. Guards 1716/1768.",
+      "pr": "#3838",
+      "live_proof": "2026-07-30 events=1 posted=1 je=35b0cdd0 overage_cents=14374"
     }
   ],
   "ranked_fail_registry": {
@@ -392,6 +390,6 @@
       }
     ]
   },
-  "pass_count": 17,
+  "pass_count": 18,
   "total_count": 18
 }

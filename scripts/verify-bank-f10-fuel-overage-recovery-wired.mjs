@@ -96,14 +96,20 @@ function collectProblemsFromSources(sources) {
       if (!item) {
         problems.push(`${FILES.bankingJson} must contain BANK-F10 item`);
       } else {
+        const ev = String(item.evidence || "");
+        const events = Number((ev.match(/events\s*=\s*(\d+)/i) || [])[1] || NaN);
+        const posted = Number((ev.match(/posted\s*=\s*(\d+)/i) || [])[1] || NaN);
+        const densityOk = Number.isFinite(events) && events >= 1 && Number.isFinite(posted) && posted >= 1;
         if (item.status === "PASS") {
-          problems.push("BANK-F10 manifest must stay FAIL or qualifying HOLD until live Neon recovery density (Rule 23)");
+          if (!densityOk) {
+            problems.push("BANK-F10 PASS requires evidence citing events>=1 and posted>=1 (Neon lucia density)");
+          }
         } else if (item.status === "HOLD") {
           if (!item.owner_hold || !item.tracker || !item.future_block) {
             problems.push("BANK-F10 HOLD requires owner_hold + tracker + future_block (Rule 24)");
           }
         } else if (item.status !== "FAIL") {
-          problems.push(`BANK-F10 manifest status must be FAIL or HOLD (got ${item.status})`);
+          problems.push(`BANK-F10 manifest status must be FAIL|HOLD|PASS (got ${item.status})`);
         }
       }
     }
@@ -154,13 +160,12 @@ function selftest() {
       sources: {
         [FILES.routes]: realRoutes,
         [FILES.index]: realIndex,
-        [FILES.bankingJson]: realBanking.replace(
-          '"id": "BANK-F10"',
-          '"id": "BANK-F10"'
-        ).replace(
-          /("id": "BANK-F10"[\s\S]*?"status": )"(FAIL|HOLD)"/,
-          '$1"PASS"'
-        ),
+        [FILES.bankingJson]: realBanking
+          .replace(/("id": "BANK-F10"[\s\S]*?"status": )"(FAIL|HOLD|PASS)"/, '$1"PASS"')
+          .replace(
+            /("id": "BANK-F10"[\s\S]*?"evidence":\s*")[^"]*(")/,
+            "$1theater pass no density cite$2"
+          ),
       },
     },
   ];
@@ -196,5 +201,5 @@ if (process.argv.includes("--selftest")) {
     for (const p of problems) console.error("  - " + p);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — FUEL-03 approve routes mounted; BANK-F10 FAIL/HOLD until live density`);
+  console.log(`${LABEL} OK — FUEL-03 approve/reprocess mounted; BANK-F10 FAIL|HOLD|density-PASS`);
 }
