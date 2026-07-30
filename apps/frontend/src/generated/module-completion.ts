@@ -1071,7 +1071,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
   {
     "id": "lists",
     "total": 23,
-    "done": 17,
+    "done": 18,
     "items": [
       {
         "id": "LST-CAT-01",
@@ -1130,8 +1130,8 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
       {
         "id": "LST-A-01",
         "title": "Every converted catalog reachable from the Lists hub",
-        "status": "FAIL",
-        "pr": "3471"
+        "status": "PASS",
+        "pr": ""
       },
       {
         "id": "LST-CAT-07",
