@@ -648,6 +648,22 @@ export async function voidJournalEntry(
   return result;
 }
 
+/**
+ * ACCT-F18 — Law §9 reverse hop: journal entry → banking.bank_transactions.
+ * Bank-recon accept stamps banking.bank_transactions.matched_journal_entry_id.
+ * Entity-scoped — never cross opco.
+ */
+const JE_MATCHED_BANK_TRANSACTION_ID_SQL = `
+  (
+    SELECT bt.id::text
+    FROM banking.bank_transactions bt
+    WHERE bt.operating_company_id = je.operating_company_id
+      AND bt.matched_journal_entry_id = je.id
+    ORDER BY bt.transaction_date DESC, bt.created_at DESC
+    LIMIT 1
+  )
+`;
+
 export async function listJournalEntries(input: {
   userId: string;
   operating_company_id: string;
@@ -711,6 +727,7 @@ export async function listJournalEntries(input: {
           je.qbo_sync_pending,
           je.created_at::text,
           je.updated_at::text,
+          ${JE_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id,
           COALESCE(SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE 0 END),0)::bigint AS debit_total_cents,
           COALESCE(SUM(CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE 0 END),0)::bigint AS credit_total_cents
         FROM accounting.journal_entries je
@@ -803,7 +820,8 @@ export async function getJournalEntryDetail(userId: string, operatingCompanyId: 
           je.qbo_journal_entry_id,
           je.qbo_sync_pending,
           je.created_at::text,
-          je.updated_at::text
+          je.updated_at::text,
+          ${JE_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
         FROM accounting.journal_entries je
         ${typeJoin}
         WHERE je.id = $1

@@ -98,6 +98,23 @@ export function ManualJEListPage() {
       { key: "debit_total_cents", label: "Debits", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (entry) => `$${((entry.debit_total_cents ?? 0) / 100).toFixed(2)}` },
       { key: "credit_total_cents", label: "Credits", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (entry) => `$${((entry.credit_total_cents ?? 0) / 100).toFixed(2)}` },
       {
+        key: "matched_bank_transaction_id",
+        label: "Bank",
+        sortable: true,
+        sortValue: (entry) => entry.matched_bank_transaction_id ?? "",
+        render: (entry) =>
+          entry.matched_bank_transaction_id ? (
+            <EntityLink
+              kind="bank_transaction"
+              id={entry.matched_bank_transaction_id}
+              label={entry.matched_bank_transaction_id.slice(0, 8)}
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            "—"
+          ),
+      },
+      {
         key: "actions",
         label: "Actions",
         alwaysVisible: true,
