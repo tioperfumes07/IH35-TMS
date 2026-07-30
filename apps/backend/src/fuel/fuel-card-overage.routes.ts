@@ -9,7 +9,10 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
-import { approveAndPostFuelCardOverage } from "./fuel-card-overage.service.js";
+import {
+  approveAndPostFuelCardOverage,
+  reprocessUnprocessedFuelOverages,
+} from "./fuel-card-overage.service.js";
 
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -235,6 +238,27 @@ export async function registerFuelCardOverageRoutes(app: FastifyInstance) {
       }
 
       return outcome;
+    }
+  );
+
+  /** Owner/Admin backfill: re-evaluate fuel txns that have driver_id but no overage event yet. */
+  app.post(
+    "/api/v1/fuel/card-overage-events/reprocess",
+    { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return;
+      if (!new Set(["Owner", "Administrator"]).has(String(authUser.role ?? ""))) {
+        return reply.code(403).send({ error: "forbidden" });
+      }
+      const body = approveBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return sendValidationError(reply, body.error);
+      await assertCompanyMembership(authUser.uuid, body.data.operating_company_id);
+      const stats = await reprocessUnprocessedFuelOverages(
+        body.data.operating_company_id,
+        authUser.uuid
+      );
+      return { ok: true, ...stats };
     }
   );
 }

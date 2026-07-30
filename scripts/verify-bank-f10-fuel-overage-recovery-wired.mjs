@@ -62,6 +62,12 @@ function collectProblemsFromSources(sources) {
     if (!routes.includes("approveAndPostFuelCardOverage")) {
       problems.push(`${FILES.routes} must call approveAndPostFuelCardOverage (approve-then-recover)`);
     }
+    if (!routes.includes('"/api/v1/fuel/card-overage-events/reprocess"')) {
+      problems.push(`${FILES.routes} must expose POST /api/v1/fuel/card-overage-events/reprocess`);
+    }
+    if (!routes.includes("reprocessUnprocessedFuelOverages")) {
+      problems.push(`${FILES.routes} must call reprocessUnprocessedFuelOverages`);
+    }
     if (!routes.includes("fuel.fuel_card_overage_events")) {
       problems.push(`${FILES.routes} must read fuel.fuel_card_overage_events (canonical table)`);
     }

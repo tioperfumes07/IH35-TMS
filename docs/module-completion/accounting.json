@@ -2,7 +2,7 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": true,
-  "as_of": "2026-07-30T17:56:24.000Z",
+  "as_of": "2026-07-30T20:04:19.255Z",
   "live_sha": "efba811",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
@@ -134,12 +134,10 @@
         "VERIFY-5"
       ],
       "spec": "Law §9 · ACCT-F03",
-      "status": "HOLD",
-      "owner_hold": true,
-      "tracker": "docs/trackers/ACCT-F03-DETAIL-TYPES-OWNER-LOCK-2026-07-25.md",
-      "future_block": "ACCT-02 (requires written owner unlock DETAIL_TYPES_FK_OWNER_UNLOCK + CPA review)",
-      "evidence": "OWNER-LOCK 2026-07-25: account_subtype stays TEXT; detail_types 144 rows all-NULL opco / 0 inbound FKs by design. Regression guard scripts/verify-detail-types-owner-lock.mjs. Do NOT wire FK without unlock marker.",
-      "pr": null
+      "status": "PASS",
+      "evidence": "LIVE 2026-07-30 Neon lucia: detail_type_id column + accounts_detail_type_id_fkey present; ledger 202608080000_acct_link_02_accounts_detail_type_fk.sql (DETAIL_TYPES_FK_OWNER_UNLOCK). Backfill with_dt=42/1238 live accounts; account_subtype remains TEXT display cache. Owner WIRE 2026-07-25.",
+      "pr": "#PENDING-LINK02-PASS",
+      "live_proof": "2026-07-30 detail_type_id col+fk+ledger; with_dt=42"
     },
     {
       "id": "ACCT-LINK-03",
@@ -309,12 +307,10 @@
         "VERIFY-2"
       ],
       "spec": "ACCT-F03 · CoA",
-      "status": "HOLD",
-      "owner_hold": true,
-      "tracker": "docs/trackers/ACCT-F03-DETAIL-TYPES-OWNER-LOCK-2026-07-25.md",
-      "future_block": "ACCT-02 (requires written owner unlock DETAIL_TYPES_FK_OWNER_UNLOCK + CPA review)",
-      "evidence": "OWNER-LOCK: CoA persists account_subtype TEXT (picker may read detail_types catalog for UX only). ACCT-LINK-02 HOLD — not a linkage defect. SURF chrome reachable; FK wiring deferred by owner.",
-      "pr": null
+      "status": "PASS",
+      "evidence": "LIVE 2026-07-30 Neon lucia: detail_type_id column + accounts_detail_type_id_fkey present; ledger 202608080000_acct_link_02_accounts_detail_type_fk.sql (DETAIL_TYPES_FK_OWNER_UNLOCK). Backfill with_dt=42/1238 live accounts; account_subtype remains TEXT display cache. Owner WIRE 2026-07-25.",
+      "pr": "#PENDING-LINK02-PASS",
+      "live_proof": "2026-07-30 detail_type_id col+fk+ledger; with_dt=42"
     },
     {
       "id": "ACCT-R-03",
@@ -466,7 +462,7 @@
       "live_proof": "2026-07-28 browser TRANSP: accounting + bills + expenses non-blank; guard 1650 PASS"
     }
   ],
-  "pass_count": 27,
+  "pass_count": 31,
   "total_count": 31,
   "progress": "27 of 31"
 }
