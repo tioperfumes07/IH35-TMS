@@ -193,7 +193,7 @@ function catalogEntry(entry: {
  *    → every maintenance catalog create 404s.
  *  - /api/v1/catalogs/accounting/payment-terms — codeColumn and nameColumn are BOTH "terms_name"
  *    (apps/backend/src/catalogs/accounting/index.ts:100-101) → INSERT names the column twice → 42701.
- *  - /api/v1/catalogs/safety/* (except civil_fine_types + complaint_types wired below) — remaining
+ *  - /api/v1/catalogs/safety/* (except civil_fine_types + complaint_types + dot_violation_types wired below) — remaining
  *    safety catalogs use bespoke column names (type_code/type_name, reason_code/reason_name,
  *    violation_code/display_name). civil_fine_types matches {code, display_name}; complaint_types
  *    uses a per-catalog create map.
@@ -494,6 +494,50 @@ export const CATALOG_PICKER_CONFIGS = {
         id: String(created.id),
         label: created.type_name ?? typeName,
         code: created.type_code ?? typeCode,
+      };
+    },
+  },
+
+  // DOT violation types — HOSViolationsTab had Combobox with NO inline create (Lists-only).
+  // Options keyed by violation_code; create defaults basic_category=hours_of_service so the row
+  // appears in the HOS-filtered picker list.
+  dot_violation_type: {
+    key: "dot_violation_type",
+    label: "DOT violation type",
+    backend: "catalog",
+    readTable: "catalogs.dot_violation_types",
+    writeTable: "catalogs.dot_violation_types",
+    readEndpoint: "/api/v1/catalogs/safety/dot-violation-types",
+    writeEndpoint: "/api/v1/catalogs/safety/dot-violation-types",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence:
+      "apps/backend/src/catalogs/safety/dot-violation-types.routes.ts SELECT+INSERT catalogs.dot_violation_types; HOSViolationsTab catalogs-safety list consumer",
+    fields: CATALOG_FIELDS,
+    create: async (operatingCompanyId, values) => {
+      const displayName = values.display_name.trim();
+      // Schema: /^[A-Z0-9][A-Z0-9.-]*$/ — deriveCatalogCode is hyphen-safe and matches.
+      const violationCode = deriveCatalogCode(displayName, values.code);
+      const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+      const created = await apiRequest<{
+        id: string;
+        violation_code?: string;
+        display_name?: string;
+      }>(`/api/v1/catalogs/safety/dot-violation-types?${query.toString()}`, {
+        method: "POST",
+        body: {
+          violation_code: violationCode,
+          display_name: displayName,
+          description: values.description?.trim() || null,
+          basic_category: "hours_of_service",
+          is_active: true,
+          sort_order: 0,
+        },
+      });
+      return {
+        id: String(created.id),
+        label: created.display_name ?? displayName,
+        code: created.violation_code ?? violationCode,
       };
     },
   },

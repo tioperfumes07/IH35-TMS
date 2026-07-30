@@ -4,10 +4,10 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createHosViolation, listHosViolations, voidHosViolation } from "../../../api/safetyV64";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { listDotViolationTypes } from "../../../api/catalogs-safety";
-import { Combobox } from "../../../components/Combobox";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
@@ -174,14 +174,24 @@ export function HOSViolationsTab() {
             placeholder="Search driver…"
           />
         </div>
-        <Combobox
-          options={violationTypeOptions}
+        {/*
+          LST-PICKER-01: Combobox had no inline create — operators had to leave HOS intake for Lists.
+          ReferenceSelect first-row create → POST catalogs.dot_violation_types (HOS basic_category).
+          Options keyed by violation_code (createdValueField=code).
+        */}
+        <ReferenceSelect
           value={form.violation_type || null}
           onChange={(next) => setForm((v) => ({ ...v, violation_type: next ?? "" }))}
+          options={violationTypeOptions.map((o) => ({ value: o.value, label: o.label, type: o.sublabel }))}
+          createKind="dot_violation_type"
+          operatingCompanyId={companyId}
+          createdValueField="code"
           placeholder="Violation type"
           loading={violationTypesQuery.isLoading}
-          allowClear
-          dataField="violation_type"
+          onOptionCreated={() => {
+            void queryClient.invalidateQueries({ queryKey: ["catalogs", "dot-violation-types", "hos", companyId] });
+            void violationTypesQuery.refetch();
+          }}
         />
         <DateTimePicker
           aria-label="Occurred at"
