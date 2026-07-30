@@ -36,6 +36,13 @@ const FIELDS = [
   { col: "bill_or_expense_ref", state: "billOrExpenseRef", testid: "accident-bill-or-expense-ref" },
 ];
 
+// SAF-B04: enum comboboxes. Not in FIELDS above because they are `z.enum(...)`, not accidentTextField,
+// and are written by an UPDATE ... SET rather than appearing in the accident INSERT column list.
+const ENUM_FIELDS = [
+  { col: "record_type", state: "recordType", setter: "setRecordType" },
+  { col: "service_type", state: "serviceType", setter: "setServiceType" },
+];
+
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 
 export function assertAccidentFieldsPersisted(sources) {
@@ -79,6 +86,58 @@ export function assertAccidentFieldsPersisted(sources) {
       problems.push(`${MIGRATION}: does not ADD COLUMN ${f.col} — the write would 500 (phantom column).`);
     }
   }
+  // ── SAF-B04: the NON-TEXT controls the FIELDS loop above cannot describe ───────────────────────
+  //
+  // The original defect (verified 2026-07-25) was that Record Type and Service Type were hardcoded
+  // no-op comboboxes — `value` fixed, `onChange` EMPTY — and every cost line had state, an editor and
+  // a running total but was never sent. The code has since been fixed, but this guard still only knew
+  // about the 7 TEXT fields, so CI stayed green either way. A fix nothing asserts is a fix that can
+  // silently regress, which is precisely the shape-vs-substance failure this file exists to kill.
+  //
+  // These two shapes cannot join the FIELDS loop: the enums are `z.enum([...]).nullish()` rather than
+  // `accidentTextField`, and cost lines are an ARRAY written to a DIFFERENT table
+  // (safety.accident_cost_lines), so they have no column in the accident INSERT list at all.
+
+  for (const e of ENUM_FIELDS) {
+    if (!new RegExp(`value=\\{${e.state}\\}`).test(drawer)) {
+      problems.push(`${DRAWER}: ${e.col} combobox is not controlled (expected value={${e.state}}).`);
+    }
+    // The exact original defect: a control that renders and accepts clicks but throws them away.
+    const onChange = new RegExp(`value=\\{${e.state}\\}\\s*\\n?\\s*onChange=\\{\\(([^)]*)\\)\\s*=>\\s*([^}]*)\\}`);
+    const m = onChange.exec(drawer);
+    if (!m) {
+      problems.push(`${DRAWER}: ${e.col} combobox has no onChange — a no-op control discards the user's choice on save.`);
+    } else if (!m[2].includes(e.setter)) {
+      problems.push(`${DRAWER}: ${e.col} onChange does not call ${e.setter} — the control renders but never updates state.`);
+    }
+    if (!new RegExp(`${e.col}:\\s*${e.state}`).test(drawer)) {
+      problems.push(`${DRAWER}: ${e.col} is not in the save payload.`);
+    }
+    if (!new RegExp(`${e.col}:\\s*z\\.enum`).test(route)) {
+      problems.push(`${ROUTE}: the accident zod schema does not accept ${e.col} as an enum.`);
+    }
+    if (!new RegExp(`${e.col}\\s*=\\s*\\$`).test(route)) {
+      problems.push(`${ROUTE}: ${e.col} is never written (no "SET ${e.col} = $n") — accepted but discarded.`);
+    }
+  }
+
+  // Cost lines: money on an accident report. These feed insurance claims and litigation, so a silently
+  // dropped line is not a cosmetic loss.
+  if (!/const \[costLines, setCostLines\]/.test(drawer)) {
+    problems.push(`${DRAWER}: costLines state is gone — the cost-line editor would have nowhere to write.`);
+  }
+  // Anchored on a property boundary: an unanchored /cost_lines:/ also matches `unused_cost_lines:`,
+  // so a renamed-and-therefore-ignored key would have slipped through. The mutation arm caught this.
+  if (!/(^|[{,(\s])cost_lines:\s*costLines/m.test(drawer)) {
+    problems.push(`${DRAWER}: cost_lines is not in the save payload — every cost line the user entered is discarded.`);
+  }
+  if (!/cost_lines:\s*z\.array/.test(route)) {
+    problems.push(`${ROUTE}: the accident zod schema does not accept cost_lines as an array.`);
+  }
+  if (!/INSERT INTO safety\.accident_cost_lines/.test(route)) {
+    problems.push(`${ROUTE}: cost lines are accepted but never INSERTed into safety.accident_cost_lines.`);
+  }
+
   return problems;
 }
 
@@ -110,6 +169,39 @@ if (SELFTEST) {
   // 4. the payload stops sending a field.
   expectCaught("payload-drops-field", { ...live, [DRAWER]: live[DRAWER].replace(/police_report_number: policeReportNumber\.trim\(\) \|\| null,/, "") }, "police_report_number is not in the save payload");
 
+  // ── SAF-B04 arms: the enum controls and the cost lines ────────────────────────────────────────
+  // 5. THE ORIGINAL DEFECT — a combobox whose onChange throws the choice away. This is the exact shape
+  //    verified on 2026-07-25: value fixed, onChange empty, CI green.
+  expectCaught(
+    "enum-onchange-noop",
+    { ...live, [DRAWER]: live[DRAWER].replace(/onChange=\{\(next\) => setRecordType\([^}]*\}/, "onChange={() => {}}") },
+    "record_type"
+  );
+  // 6. the enum stops being sent.
+  expectCaught(
+    "enum-dropped-from-payload",
+    { ...live, [DRAWER]: live[DRAWER].replace("record_type: recordType,", "") },
+    "record_type is not in the save payload"
+  );
+  // 7. the backend stops writing the enum.
+  expectCaught(
+    "enum-not-written",
+    { ...live, [ROUTE]: live[ROUTE].replace(/SET record_type = \$3,/, "SET ") },
+    "record_type is never written"
+  );
+  // 8. cost lines stop being sent — money silently discarded.
+  expectCaught(
+    "cost-lines-dropped-from-payload",
+    { ...live, [DRAWER]: live[DRAWER].replace(/cost_lines: costLines/, "unused_cost_lines: costLines") },
+    "every cost line the user entered is discarded"
+  );
+  // 9. cost lines accepted but never persisted.
+  expectCaught(
+    "cost-lines-not-inserted",
+    { ...live, [ROUTE]: live[ROUTE].replace("INSERT INTO safety.accident_cost_lines", "SELECT 1 -- safety.accident_cost_lines") },
+    "never INSERTed into safety.accident_cost_lines"
+  );
+
   const liveProblems = assertAccidentFieldsPersisted(live);
   if (liveProblems.length) failures.push(`live sources FAIL: ${liveProblems.join(" | ")}`);
 
@@ -118,7 +210,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 4 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 8 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
@@ -128,4 +220,6 @@ if (problems.length) {
   for (const p of problems) console.error(`  ${p}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — all 7 accident wizard fields are controlled, sent, accepted, written, and columned`);
+console.log(
+  `${LABEL} OK — ${FIELDS.length} text field(s) + ${ENUM_FIELDS.length} enum control(s) + cost lines are controlled, sent, accepted and written`
+);
