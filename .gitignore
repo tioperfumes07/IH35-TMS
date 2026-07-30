@@ -77,3 +77,9 @@ docs/module-completion/accounting.md
 docs/module-completion/banking.md
 docs/module-completion/lists.md
 docs/module-completion/safety.md
+
+# Same thrash class for the in-app scoreboard TS (2026-07-29): committing
+# apps/frontend/src/generated/module-completion.ts made every manifest-touching Cursor PR conflict
+# on the derived file. Generate on typecheck/build/dev (frontend package.json) and via
+# MODULE_COMPLETION_AUTOGEN / verify-module-completion --write-md. Do not re-commit it.
+apps/frontend/src/generated/module-completion.ts

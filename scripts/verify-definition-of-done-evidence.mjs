@@ -90,10 +90,24 @@ const IS_LABEL_LINE = /^[\s>*_#\-]*(ROOT CAUSE|FIX|GUARD|LIVE PROOF|UNVERIFIED|R
  */
 export function proofLineIsSubstantiated(text) {
   const lines = text.split(/\r?\n/);
-  const start = lines.findIndex((l) => /^[\s>*_#\-]*(LIVE PROOF|UNVERIFIED)\b/i.test(l));
+  // Require a real LABEL (`LIVE PROOF:` / `UNVERIFIED:` / `### LIVE PROOF`), not prose that
+  // happens to mention those words inside FIX/ROOT CAUSE (Cursor false-positive class 2026-07-29).
+  const start = lines.findIndex(
+    (l) =>
+      /^[\s>*_#\-]*(LIVE PROOF|UNVERIFIED)\b\s*:/i.test(l) ||
+      /^[\s>*_#\-]*#{1,6}\s+(LIVE PROOF|UNVERIFIED)\b/i.test(l)
+  );
   if (start === -1) return true; // absence is already reported by EVIDENCE_KEYS
-  const isUnverified = /^[\s>*_#\-]*UNVERIFIED\b/i.test(lines[start]);
-  const head = lines[start].replace(/^[\s>*_#\-]*(LIVE PROOF|UNVERIFIED)\b\s*:?/i, "");
+  const labelLine = lines[start];
+  // Cursor agents often write `LIVE PROOF: UNVERIFIED — <blocker>` (or `:`) on one line.
+  // Treat that as the UNVERIFIED form (named blocker required), not LIVE PROOF (artifact required).
+  const isUnverified =
+    /^[\s>*_#\-]*UNVERIFIED\b/i.test(labelLine) ||
+    /^[\s>*_#\-]*#{0,6}\s*LIVE PROOF\b[^:\n]*:\s*UNVERIFIED\b/i.test(labelLine);
+  let head = labelLine.replace(/^[\s>*_#\-]*(?:#{1,6}\s+)?(LIVE PROOF|UNVERIFIED)\b\s*:?/i, "");
+  if (isUnverified) {
+    head = head.replace(/^\s*UNVERIFIED\b\s*[:—–-]*\s*/i, "");
+  }
   const rest = [];
   for (let i = start + 1; i < lines.length && !IS_LABEL_LINE.test(lines[i]); i += 1) rest.push(lines[i]);
   const section = [head, ...rest].join(" ").trim();
@@ -300,6 +314,33 @@ if (SELFTEST) {
   ]);
   if (headingForm.length) failures.push(`false-positive on the PR-template heading form: ${headingForm.join(" | ")}`);
 
+  // Negative: LIVE PROOF: UNVERIFIED — <blocker> (Cursor habit) must NOT be flagged.
+  const liveProofUnverified = assertDoDEvidence([
+    {
+      ...good,
+      body:
+        "ROOT CAUSE: y\nFIX: z\nGUARD: scripts/verify-x.mjs\n" +
+        "LIVE PROOF: UNVERIFIED — browser click-through not re-proven this PR\nREMAINING: the live check",
+    },
+  ]);
+  if (liveProofUnverified.length) {
+    failures.push(`false-positive on LIVE PROOF: UNVERIFIED — blocker: ${liveProofUnverified.join(" | ")}`);
+  }
+
+  // Negative: FIX prose that mentions the words LIVE PROOF / UNVERIFIED without a labelled line
+  // must still use the real LIVE PROOF: line below — not treat the prose as the proof section.
+  const proseMention = assertDoDEvidence([
+    {
+      ...good,
+      body:
+        "ROOT CAUSE: y\nFIX: keep LIVE PROOF UNVERIFIED format accepted by prior commit.\n" +
+        "GUARD: scripts/verify-x.mjs\nLIVE PROOF: UNVERIFIED: CI pending\nREMAINING: none",
+    },
+  ]);
+  if (proseMention.length) {
+    failures.push(`false-positive on LIVE PROOF words inside FIX prose: ${proseMention.join(" | ")}`);
+  }
+
   // Negative: an honest UNVERIFIED with a named blocker must NOT be flagged.
   const unverified = assertDoDEvidence([
     {
@@ -324,7 +365,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 9 planted defects caught; compliant, heading-form, honest-UNVERIFIED and docs-only commits not flagged`);
+  console.log(`${LABEL} SELFTEST PASS — planted defects caught; compliant, heading-form, LIVE PROOF:UNVERIFIED, honest-UNVERIFIED and docs-only commits not flagged`);
   process.exit(0);
 }
 

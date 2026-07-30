@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# Re-register merge drivers on every checkout (worktrees / fresh clones without npm prepare).
+if command -v node >/dev/null 2>&1 && [ -f scripts/setup-git-merge-drivers.mjs ]; then
+  node scripts/setup-git-merge-drivers.mjs >/dev/null 2>&1 || true
+fi

@@ -1,4 +1,9 @@
 #!/usr/bin/env sh
+# Re-register merge drivers after every merge (worktrees / shallow clones may lack prepare).
+if command -v node >/dev/null 2>&1 && [ -f scripts/setup-git-merge-drivers.mjs ]; then
+  node scripts/setup-git-merge-drivers.mjs >/dev/null 2>&1 || true
+fi
+
 # After a successful merge, canonicalize the schema-parity baseline EXACTLY from the merged migration
 # set (pure static parser — NO DB). The json-union merge driver already prevented a git conflict on it;
 # this guarantees the committed baseline matches what CI's `verify:schema-parity` expects, so a merge
@@ -7,4 +12,10 @@ if git diff --name-only ORIG_HEAD HEAD 2>/dev/null | grep -Eq '^db/migrations/.*
   node scripts/verify-schema-parity.mjs --update >/dev/null 2>&1 || true
   git add docs/schema-parity-baseline.json 2>/dev/null || true
   echo "post-merge: schema-parity baseline canonicalized (verify-schema-parity --update)."
+fi
+
+# Regenerated UI scoreboard (gitignored) after module-completion JSON merges.
+if git diff --name-only ORIG_HEAD HEAD 2>/dev/null | grep -Eq '^docs/module-completion/[^/]+\.json$'; then
+  node scripts/generate-module-completion-data.mjs >/dev/null 2>&1 || true
+  echo "post-merge: module-completion.ts regenerated locally (gitignored)."
 fi

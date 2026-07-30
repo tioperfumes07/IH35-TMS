@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "typecheck": "tsc -b --pretty false",
+    "dev": "node ../../scripts/generate-module-completion-data.mjs && vite",
+    "build": "node ../../scripts/generate-module-completion-data.mjs && tsc -b && vite build",
+    "typecheck": "node ../../scripts/generate-module-completion-data.mjs && tsc -b --pretty false",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",

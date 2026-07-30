@@ -92,7 +92,7 @@ export function buildPrecheckSteps(root) {
       command: "node scripts/money-pr-local-gate.mjs",
     },
     { label: "build-backend", command: "npm run build:backend" },
-    { label: "frontend-tsc", command: "cd apps/frontend && npx tsc -b && cd ../.." },
+    { label: "frontend-tsc", command: "node scripts/generate-module-completion-data.mjs && cd apps/frontend && npx tsc -b && cd ../.." },
     {
       label: "block-ready",
       command: "npm run block-ready",
