@@ -171,10 +171,61 @@ test("refuses main branch", () => {
   assert.equal(result.category, GATE_RESULT_CATEGORIES.BRANCH);
 });
 
-test("refuses when behind origin/main", () => {
+// FRESHNESS IS BY OVERLAP, NOT BY DISTANCE (2026-07-30). This case previously asserted the opposite —
+// that being ANY commits behind origin/main refuses — which is the defect, not the contract. CI's
+// verify-branch-fresh.mjs had already moved to the overlap rule, so the two enforcement points
+// disagreed: a branch CI would merge without complaint could not even be pushed, and every unrelated
+// merge invalidated every open branch. The cases below pin BOTH directions so neither can regress.
+test("allows behind origin/main when the changed files are disjoint", () => {
   const dir = makeFeatureRepo();
   runGitOrThrow(["checkout", "main"], { cwd: dir });
   writeAndCommit(dir, "ahead.txt", "ahead\n", "main moved");
+  runGitOrThrow(["push", "origin", "main"], { cwd: dir });
+  runGitOrThrow(["checkout", "feat/precheck"], { cwd: dir });
+  const result = runPrecheckPush({ root: dir, skipFetch: true, steps: [] });
+  assert.equal(result.ok, true, result.reason);
+});
+
+test("refuses when behind origin/main AND the same file changed", () => {
+  const dir = makeFeatureRepo();
+  runGitOrThrow(["checkout", "main"], { cwd: dir });
+  // `change.txt` is the file the feature branch itself edits in makeFeatureRepo().
+  writeAndCommit(dir, "change.txt", "main edited the same file\n", "main moved");
+  runGitOrThrow(["push", "origin", "main"], { cwd: dir });
+  runGitOrThrow(["checkout", "feat/precheck"], { cwd: dir });
+  const result = runPrecheckPush({ root: dir, skipFetch: true, steps: [] });
+  assert.equal(result.ok, false);
+  assert.equal(result.category, GATE_RESULT_CATEGORIES.FRESHNESS);
+});
+
+test("refuses when both sides add migrations, even with different filenames", () => {
+  const dir = makeFeatureRepo();
+  writeAndCommit(dir, "db/migrations/202610240000_mine.sql", "-- mine\n", "branch migration");
+  runGitOrThrow(["checkout", "main"], { cwd: dir });
+  writeAndCommit(dir, "db/migrations/202610221200_theirs.sql", "-- theirs\n", "main migration");
+  runGitOrThrow(["push", "origin", "main"], { cwd: dir });
+  runGitOrThrow(["checkout", "feat/precheck"], { cwd: dir });
+  const result = runPrecheckPush({ root: dir, skipFetch: true, steps: [] });
+  assert.equal(result.ok, false);
+  assert.equal(result.category, GATE_RESULT_CATEGORIES.FRESHNESS);
+});
+
+test("allows two guard PRs claiming DIFFERENT verify-step numbers", () => {
+  const dir = makeFeatureRepo();
+  writeAndCommit(dir, "scripts/verify-steps/1795-mine.mjs", "// mine\n", "branch guard");
+  runGitOrThrow(["checkout", "main"], { cwd: dir });
+  writeAndCommit(dir, "scripts/verify-steps/1806-theirs.mjs", "// theirs\n", "main guard");
+  runGitOrThrow(["push", "origin", "main"], { cwd: dir });
+  runGitOrThrow(["checkout", "feat/precheck"], { cwd: dir });
+  const result = runPrecheckPush({ root: dir, skipFetch: true, steps: [] });
+  assert.equal(result.ok, true, result.reason);
+});
+
+test("refuses when both sides claim the SAME verify-step number", () => {
+  const dir = makeFeatureRepo();
+  writeAndCommit(dir, "scripts/verify-steps/1795-mine.mjs", "// mine\n", "branch guard");
+  runGitOrThrow(["checkout", "main"], { cwd: dir });
+  writeAndCommit(dir, "scripts/verify-steps/1795-theirs.mjs", "// theirs\n", "main guard");
   runGitOrThrow(["push", "origin", "main"], { cwd: dir });
   runGitOrThrow(["checkout", "feat/precheck"], { cwd: dir });
   const result = runPrecheckPush({ root: dir, skipFetch: true, steps: [] });

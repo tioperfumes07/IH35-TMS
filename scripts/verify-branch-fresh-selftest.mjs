@@ -135,11 +135,22 @@ const CASES = [
     expectText: /db\/migrations\//,
   },
   {
-    name: "behind and BOTH add verify-steps -> FAIL (duplicate step number race)",
+    name: "behind and BOTH claim THE SAME verify-step number -> FAIL (duplicate step number race)",
     main: ["scripts/verify-steps/1665-other.mjs"],
     branch: ["scripts/verify-steps/1665-mine.mjs"],
     expect: 1,
-    expectText: /verify-steps/,
+    expectText: /verify-step number\(s\) 1665/,
+  },
+  {
+    // Verify-step numbers come from a BANDED namespace (Claude odd / Cursor even), so two guard PRs
+    // adding 1806 and 1795 collide in no way. Coupling the whole directory failed this case and made
+    // every guard PR block every other guard PR — the N^2 treadmill relocated, not removed, and nearly
+    // every quality PR in this repo adds a guard. CLAIMED-NUMBERS.json is an append-only union
+    // registry and is touched by both sides in the normal case, so it must not count as overlap either.
+    name: "behind and both add verify-steps with DIFFERENT numbers -> PASS (banded namespace)",
+    main: ["scripts/verify-steps/1806-other.mjs", "scripts/verify-steps/CLAIMED-NUMBERS.json"],
+    branch: ["scripts/verify-steps/1795-mine.mjs", "scripts/verify-steps/CLAIMED-NUMBERS.json"],
+    expect: 0,
   },
   // ── The cases that reproduce CI, where HEAD is refs/pull/<n>/merge ───────────────────────────
   // PR #3768 was a ONE-FILE docs change that shared nothing with main, and this gate failed it,

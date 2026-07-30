@@ -160,23 +160,44 @@ export function verifyBranchFresh(cliArgs = process.argv.slice(2)) {
       );
     }
 
+    // Verify-step numbers are claimed from a BANDED namespace (Claude odd / Cursor even) and recorded
+    // in CLAIMED-NUMBERS.json. The filename carries the claim, so the file list is the claim list.
+    const stepNumbers = (files) => {
+      const out = new Set();
+      for (const f of files) {
+        const m = /^scripts\/verify-steps\/(\d+)-/.exec(f);
+        if (m) out.add(m[1]);
+      }
+      return out;
+    };
+    const CLAIMED_REGISTRY = "scripts/verify-steps/CLAIMED-NUMBERS.json";
+    const mainSteps = stepNumbers(mainFiles);
+    const branchSteps = stepNumbers(branchFiles);
+    const stepCollisions = [...branchSteps].filter((n) => mainSteps.has(n));
+
+    // CLAIMED-NUMBERS.json is an append-only union registry, and adding a step file is the normal
+    // shape of any guard PR. Two guard PRs both touching them is NOT a conflict — only claiming the
+    // SAME number is. Excluded from plain overlap and judged by stepCollisions instead. (Keeping the
+    // whole directory coupled made every guard PR block every other guard PR, which is the N^2
+    // treadmill relocated rather than removed — and nearly every quality PR in this repo adds a guard.)
     const branchSet = new Set(branchFiles);
-    const overlap = mainFiles.filter((f) => branchSet.has(f));
+    const overlap = mainFiles.filter(
+      (f) => branchSet.has(f) && f !== CLAIMED_REGISTRY && !/^scripts\/verify-steps\/\d+-/.test(f)
+    );
 
     // Paths where correctness is GLOBAL, not per-file: two PRs can touch different files here and
-    // still collide, because the thing being allocated is a number shared across the repo. Both of
-    // tonight's real collisions were exactly this — a duplicate migration number and a duplicate
-    // verify-step number — and neither would be caught by a same-file check.
+    // still collide, because the thing being allocated is a number shared across the repo. Migration
+    // numbering is "strictly above main's max", so two DIFFERENT migration files still collide — that
+    // one stays unconditional.
     const COUPLED = [
       { prefix: "db/migrations/", why: "migration numbers are globally ordered; two lanes can pick the same one" },
-      { prefix: "scripts/verify-steps/", why: "verify-step numbers are globally allocated" },
       { prefix: "package-lock.json", why: "lockfile resolution is global" },
     ];
     const coupled = COUPLED.filter(
       (c) => mainFiles.some((f) => f.startsWith(c.prefix)) && branchFiles.some((f) => f.startsWith(c.prefix))
     );
 
-    if (overlap.length > 0 || coupled.length > 0) {
+    if (overlap.length > 0 || coupled.length > 0 || stepCollisions.length > 0) {
       const reasons = [];
       if (overlap.length > 0) {
         reasons.push(
@@ -186,6 +207,9 @@ export function verifyBranchFresh(cliArgs = process.argv.slice(2)) {
       }
       for (const c of coupled) {
         reasons.push(`both touch ${c.prefix} — ${c.why}`);
+      }
+      if (stepCollisions.length > 0) {
+        reasons.push(`both claim verify-step number(s) ${stepCollisions.join(", ")} — banded namespace collision`);
       }
       fail(
         `base ${baseSha} is ${behindCount} commit(s) behind ${mainRef} AND overlaps it. Rebase.\n  - ` +
