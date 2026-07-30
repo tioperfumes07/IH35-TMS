@@ -454,7 +454,7 @@ export const CATALOG_PICKER_CONFIGS = {
     table: "catalogs.civil_fine_types",
     endpoint: "/api/v1/catalogs/safety/civil-fine-types",
     evidence:
-      "apps/backend/src/catalogs/safety/civil-fine-types.routes.ts:28 (SELECT) and :110 (INSERT) — both catalogs.civil_fine_types; FineCreateModal listCivilFineTypes",
+      "apps/backend/src/catalogs/safety/civil-fine-types.routes.ts:28 (SELECT) and :110 (INSERT) — both catalogs.civil_fine_types; FineCreateModal catalogs-safety list consumer",
   }),
 
   // Dispatcher error reasons — UserDetail previously toasted "Add reason in catalog" (fake +Add).

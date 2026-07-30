@@ -281,7 +281,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
               {/*
                 LST-PICKER-01: Combobox allowAddNew with a side-channel mutate is not VERIFY-2 —
                 inline create must be the FIRST ROW via ReferenceSelect → CatalogQuickCreateDrawer,
-                POST catalogs.civil_fine_types (same table listCivilFineTypes reads).
+                POST catalogs.civil_fine_types (same table the FineCreateModal list query reads).
               */}
               <ReferenceSelect
                 value={civilFineTypeId}
