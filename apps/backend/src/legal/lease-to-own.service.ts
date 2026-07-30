@@ -143,3 +143,89 @@ export async function listFleetUnitsForPicker(
   );
   return res.rows as FleetPickerUnit[];
 }
+
+export type FleetPickerTrailer = {
+  id: string;
+  equipment_number: string | null;
+  vin: string | null;
+  equipment_type: string | null;
+  make: string | null;
+  model: string | null;
+  year: number | null;
+  status: string | null;
+  owner_company_id: string | null;
+  owner_label: string | null;
+};
+
+/**
+ * LEASE-04 — TRAILERS for the lease-contract picker.
+ *
+ * listFleetUnitsForPicker above reads mdata.units, which holds tractors. Trailers are a DIFFERENT
+ * table, mdata.equipment, so a contract creator using only that function can select trucks and
+ * nothing else — flatbeds and reefers were simply unreachable, which is the gap the owner hit when
+ * he went to create a lease.
+ *
+ * equipment_type is returned so the UI can group and filter by trailer type (flatbed, reefer, dry
+ * van...). It is returned RAW and un-normalised on purpose: the owner is re-categorising trailers in
+ * the Fleet module, so a mapping baked in here would fight that work and go stale the moment he
+ * changes one. NULL types are returned too, rather than hidden — an uncategorised trailer must still
+ * be selectable for a lease, or the contract silently omits assets that exist.
+ *
+ * Same exclusions as the unit picker: never sold, disposed or deactivated.
+ */
+export async function listFleetTrailersForPicker(
+  client: QueryableClient,
+  args: { ownerCompanyId?: string | null },
+): Promise<FleetPickerTrailer[]> {
+  const params: unknown[] = [];
+  let ownerFilter = "";
+  if (args.ownerCompanyId) {
+    params.push(args.ownerCompanyId);
+    ownerFilter = `AND e.owner_company_id = $${params.length}`;
+  }
+  const res = await client.query(
+    `SELECT e.id::text, e.equipment_number, e.vin, e.equipment_type,
+            e.make, e.model, e.year,
+            e.status::text AS status,
+            e.owner_company_id::text AS owner_company_id,
+            COALESCE(oc.short_name, oc.legal_name) AS owner_label
+       FROM mdata.equipment e
+       LEFT JOIN org.companies oc ON oc.id = e.owner_company_id
+      WHERE e.deactivated_at IS NULL
+        AND e.disposed_date IS NULL
+        AND e.status::text NOT IN ('Sold','Totaled')
+        ${ownerFilter}
+      ORDER BY e.equipment_type NULLS LAST, e.equipment_number`,
+    params,
+  );
+  return res.rows as FleetPickerTrailer[];
+}
+
+/**
+ * The distinct trailer TYPES actually present in the fleet, with a live count. Drives the "flatbeds —
+ * 10 selected" grouping the owner described, and is derived from the data rather than a hardcoded
+ * list, so re-categorising a trailer in Fleet is reflected immediately with no code change.
+ */
+export async function listTrailerTypesForPicker(
+  client: QueryableClient,
+  args: { ownerCompanyId?: string | null },
+): Promise<Array<{ equipment_type: string | null; trailer_count: number }>> {
+  const params: unknown[] = [];
+  let ownerFilter = "";
+  if (args.ownerCompanyId) {
+    params.push(args.ownerCompanyId);
+    ownerFilter = `AND e.owner_company_id = $${params.length}`;
+  }
+  const res = await client.query(
+    `SELECT e.equipment_type, COUNT(*)::int AS trailer_count
+       FROM mdata.equipment e
+      WHERE e.deactivated_at IS NULL
+        AND e.disposed_date IS NULL
+        AND e.status::text NOT IN ('Sold','Totaled')
+        ${ownerFilter}
+      GROUP BY e.equipment_type
+      ORDER BY e.equipment_type NULLS LAST`,
+    params,
+  );
+  return res.rows as Array<{ equipment_type: string | null; trailer_count: number }>;
+}

@@ -7,6 +7,10 @@ import { z } from "zod";
 import type { FastifyInstance } from "fastify";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import {
+  listFleetTrailersForPicker,
+  listTrailerTypesForPicker,
+} from "../legal/lease-to-own.service.js";
+import {
   getAssetLeaseParties,
   getLeaseContractLines,
   listLeaseContracts,
@@ -50,6 +54,39 @@ export async function registerLeaseContractRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
       getAssetLeaseParties(client, query.data.operating_company_id, params.data.id)
+    );
+    return { rows };
+  });
+
+  // LEASE-04: trailers for the lease-contract picker. The existing legal picker reads mdata.units
+  // (tractors) only, so flatbeds and reefers were unreachable when creating a contract. Owner-filter is
+  // optional; default is every owner with a badge, matching the unit picker's behaviour.
+  app.get("/api/v1/fleet/lease-picker/trailers", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const owner = typeof (req.query as Record<string, unknown>)?.owner_company_id === "string"
+      ? String((req.query as Record<string, unknown>).owner_company_id)
+      : null;
+    const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      listFleetTrailersForPicker(client, { ownerCompanyId: owner })
+    );
+    return { rows };
+  });
+
+  // Trailer TYPES with live counts — drives the "flatbeds - 10 selected, total 8,000" grouping.
+  // Derived from the data, so re-categorising a trailer in Fleet shows up with no code change.
+  app.get("/api/v1/fleet/lease-picker/trailer-types", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const owner = typeof (req.query as Record<string, unknown>)?.owner_company_id === "string"
+      ? String((req.query as Record<string, unknown>).owner_company_id)
+      : null;
+    const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      listTrailerTypesForPicker(client, { ownerCompanyId: owner })
     );
     return { rows };
   });
