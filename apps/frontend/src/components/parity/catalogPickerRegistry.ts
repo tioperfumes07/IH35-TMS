@@ -193,9 +193,9 @@ function catalogEntry(entry: {
  *    → every maintenance catalog create 404s.
  *  - /api/v1/catalogs/accounting/payment-terms — codeColumn and nameColumn are BOTH "terms_name"
  *    (apps/backend/src/catalogs/accounting/index.ts:100-101) → INSERT names the column twice → 42701.
- *  - /api/v1/catalogs/safety/*       — each safety catalog uses bespoke column names
- *    (type_code/type_name, reason_code/reason_name, violation_code/display_name), so none accepts the
- *    generic {code, display_name} body. Needs per-catalog field maps; also owned by in-flight branches.
+ *  - /api/v1/catalogs/safety/* (except civil_fine_types) — remaining safety catalogs use bespoke
+ *    column names (type_code/type_name, reason_code/reason_name). civil_fine_types matches
+ *    {code, display_name} and is wired as civil_fine_type below.
  *  - /api/v1/catalogs/driver/{license-classes,endorsements,restrictions,...} — FIXED by SWEEP-C11
  *    (2026-07-25): this surface's POST/PATCH/DELETE now return 410 (writesBlocked, factory.ts) —
  *    it can no longer diverge from the canonical /api/v1/lists/drivers/* (reference.*) surface.
@@ -444,6 +444,17 @@ export const CATALOG_PICKER_CONFIGS = {
     table: "catalogs.fuel_station_brands",
     endpoint: "/api/v1/catalogs/fuel/station-brands",
     evidence: "apps/backend/src/catalogs/fuel/factory.ts:83,159 + fuel/index.ts:22 tableName fuel_station_brands",
+  }),
+
+  // Civil fine types — FineCreateModal previously used Combobox allowAddNew with an external mutate
+  // (not ReferenceSelect / CatalogQuickCreateDrawer). POST body matches generic {code, display_name}.
+  civil_fine_type: catalogEntry({
+    key: "civil_fine_type",
+    label: "civil fine type",
+    table: "catalogs.civil_fine_types",
+    endpoint: "/api/v1/catalogs/safety/civil-fine-types",
+    evidence:
+      "apps/backend/src/catalogs/safety/civil-fine-types.routes.ts:28 (SELECT) and :110 (INSERT) — both catalogs.civil_fine_types; FineCreateModal catalogs-safety list consumer",
   }),
 
   // Dispatcher error reasons — UserDetail previously toasted "Add reason in catalog" (fake +Add).
