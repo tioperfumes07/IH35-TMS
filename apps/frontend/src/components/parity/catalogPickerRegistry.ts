@@ -193,7 +193,7 @@ function catalogEntry(entry: {
  *    → every maintenance catalog create 404s.
  *  - /api/v1/catalogs/accounting/payment-terms — codeColumn and nameColumn are BOTH "terms_name"
  *    (apps/backend/src/catalogs/accounting/index.ts:100-101) → INSERT names the column twice → 42701.
- *  - /api/v1/catalogs/safety/* (except civil_fine_types + complaint_types + dot_violation_types wired below) — remaining
+ *  - /api/v1/catalogs/safety/* (except civil_fine_types + complaint_types + company_violation_types + dot_violation_types wired below) — remaining
  *    safety catalogs use bespoke column names (type_code/type_name, reason_code/reason_name,
  *    violation_code/display_name). civil_fine_types matches {code, display_name}; complaint_types
  *    uses a per-catalog create map.
@@ -538,6 +538,47 @@ export const CATALOG_PICKER_CONFIGS = {
         id: String(created.id),
         label: created.display_name ?? displayName,
         code: created.violation_code ?? violationCode,
+      };
+    },
+  },
+
+  // Company violation types — CompanyViolationCreateModal used Combobox allowAddNew + external
+  // mini-form (not ReferenceSelect first-row). POST uses type_code/type_name/default_severity.
+  company_violation_type: {
+    key: "company_violation_type",
+    label: "company violation type",
+    backend: "catalog",
+    readTable: "catalogs.company_violation_types",
+    writeTable: "catalogs.company_violation_types",
+    readEndpoint: "/api/v1/catalogs/safety/company-violation-types",
+    writeEndpoint: "/api/v1/catalogs/safety/company-violation-types",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence:
+      "apps/backend/src/catalogs/safety/company-violation-types.routes.ts:26 (SELECT) and :110 (INSERT) — both catalogs.company_violation_types",
+    fields: CATALOG_FIELDS,
+    create: async (operatingCompanyId, values) => {
+      const typeName = values.display_name.trim();
+      const typeCode = deriveCatalogCode(typeName, values.code);
+      const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+      const created = await apiRequest<{ id: string; type_code?: string; type_name?: string }>(
+        `/api/v1/catalogs/safety/company-violation-types?${query.toString()}`,
+        {
+          method: "POST",
+          body: {
+            type_code: typeCode,
+            type_name: typeName,
+            // Backend requires 1–10; inline create defaults to 1 (operator can edit on Lists later).
+            default_severity: 1,
+            amount_cents: null,
+            is_active: true,
+          },
+        }
+      );
+      return {
+        id: String(created.id),
+        label: `${created.type_code ?? typeCode} — ${created.type_name ?? typeName}`,
+        code: created.type_code ?? typeCode,
       };
     },
   },
