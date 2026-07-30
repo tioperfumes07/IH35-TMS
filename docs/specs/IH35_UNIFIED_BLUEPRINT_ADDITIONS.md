@@ -1943,6 +1943,17 @@ Claim economics owner locks (2026-07-22 — FINAL):
 
 ---
 
+## 2026-07-30 — ACCT-R-15 cost-center dimension = QBO Class (LOCKED clarification)
+
+Cost-center tracking for expense/GL variance uses the existing **`catalogs.classes`** dimension
+(QuickBooks Class / NetSuite department-style axis). Agents MUST NOT invent a parallel
+`catalogs.cost_centers` (or similar) table without a separate owner NEW-SPEC + FINANCIAL-HOLD
+migration. Variance tooling is read-only on JE postings (`Expense` / `CostOfGoodsSold` /
+`OtherExpense`) by `class_id`, including an explicit `(unclassified)` row for NULL density honesty.
+Surface: Accounting → Period comparison (no new tab).
+
+---
+
 ## 2026-07-27 — DRV-02 escrow recovery-source catalog (owner-authorized)
 
 `catalogs.driver_deduction_types` is the single editable recovery-reason catalog. It is distinct from

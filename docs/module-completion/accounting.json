@@ -2,7 +2,7 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": true,
-  "as_of": "2026-07-30T22:53:51.000Z",
+  "as_of": "2026-07-30T23:06:46.000Z",
   "live_sha": "efba811",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
@@ -508,9 +508,27 @@
       "evidence": "BUILT: accounting/sales-tax/sales-tax.routes.ts autoloaded via registerAccountingRoutes; FE SalesTaxPage + subnav Sales tax; Neon tables sales_tax_agencies/returns exist (agencies=0 returns=0 honest empty). Guard verify-acct-r14-sales-tax-autoload step 1486 PASS. LIVE 2026-07-30 API /sales-tax/agencies returns 401 unauth (mounted, not 404).",
       "pr": null,
       "live_proof": "API path mounted (401!=404); tables present; guard 1486 PASS"
+    },
+    {
+      "id": "ACCT-R-15",
+      "title": "Cost-center Class variance tooling (catalogs.classes dimension)",
+      "layers": [
+        "DOD-A",
+        "DOD-C",
+        "DOD-D",
+        "VERIFY-3",
+        "VERIFY-4",
+        "VERIFY-6",
+        "VERIFY-7"
+      ],
+      "spec": "audit7-cost-center-tracking \u00b7 QBO Class / NetSuite department parity \u2014 no parallel cost_centers table",
+      "status": "PASS",
+      "evidence": "LIVE 2026-07-30 Neon lucia TRANSP: catalogs.classes active=122; JE cost lines classified=0 unclassified>0 (honest density); GET /api/v1/accounting/cost-center-class-variance + PeriodComparisonPage ClassCostCenterVariancePanel (no new tab). Guard 1458. Read-only \u2014 no new GL math. Owner law: Class IS the cost-center axis (QBO).",
+      "pr": null,
+      "live_proof": "Neon lucia classes=122; cost JE rollup unclassified row returns period variance; route mounted via comparison-report.routes autoload"
     }
   ],
-  "pass_count": 34,
-  "total_count": 34,
-  "progress": "34 of 34"
+  "pass_count": 35,
+  "total_count": 35,
+  "progress": "35 of 35"
 }

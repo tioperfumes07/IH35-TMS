@@ -8,8 +8,8 @@
   "desktop_clickthrough": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md",
   "module_progress": {
     "N": 8,
-    "M": 34,
-    "note": "M=34 after R14"
+    "M": 35,
+    "note": "M=35 after ACCT-R-15"
   },
   "entities": [
     "TRANSP",

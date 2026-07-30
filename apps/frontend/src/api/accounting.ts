@@ -1952,6 +1952,39 @@ export function getComparisonReport(
   return apiRequest<ComparisonReportResponse>(`/api/v1/accounting/comparison-report?${query.toString()}`);
 }
 
+/** ACCT-R-15 — QBO Class cost-center variance (read-only). */
+export type CostCenterClassVarianceRow = {
+  class_id: string | null;
+  class_name: string;
+  class_code: string | null;
+  period_1_cost_cents: number;
+  period_2_cost_cents: number;
+  variance_cents: number;
+  variance_pct: number | null;
+  posting_lines_period_1: number;
+  posting_lines_period_2: number;
+};
+
+export type CostCenterClassVarianceResponse = {
+  dimension: "catalogs.classes";
+  periods: [string, string];
+  period_bounds: [{ start: string; end: string }, { start: string; end: string }];
+  classes_active: number;
+  classified_posting_lines: number;
+  unclassified_posting_lines: number;
+  rows: CostCenterClassVarianceRow[];
+};
+
+export function getCostCenterClassVariance(operatingCompanyId: string, periods: string) {
+  const query = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+    periods,
+  });
+  return apiRequest<CostCenterClassVarianceResponse>(
+    `/api/v1/accounting/cost-center-class-variance?${query.toString()}`,
+  );
+}
+
 export type AccountingReconciliationWorkspace = {
   unreconciled_bank_transactions: Array<{
     id: string;
