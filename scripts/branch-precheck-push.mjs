@@ -239,7 +239,23 @@ export function buildPrecheckSteps(root) {
       ? [
           {
             label: "migration-db-replay",
-            command: "npm run verify:db:reset",
+            // TOOL-F06: the URL is supplied BY THE STEP, not taken from the environment.
+            //
+            // TOOL-F05 declared no requiredCapabilities so that migration safety would not depend on
+            // the global "database" capability — because the moment that capability is true,
+            // `block-ready` also runs and demands a registered .block-ready manifest. That reasoning
+            // was right and the implementation still leaked: the step needs DATABASE_URL, so the only
+            // way to satisfy it was to export DATABASE_URL globally, which turns the capability true
+            // and drags block-ready in anyway. The coupling returned by the exact side door I said I
+            // had closed. Found by hitting it on a real migration branch (LEASE-01), not by re-reading
+            // the code.
+            //
+            // Supplying the URL inline keeps the environment clean: the capability detector never sees
+            // a global DATABASE_URL, block-ready keeps its CI-equivalent skip, and the replay still
+            // runs. verify-db-reset.mjs independently refuses anything that is not a local verify
+            // database, so this cannot be pointed at prod.
+            command:
+              "DATABASE_URL=postgres://verify:verify@127.0.0.1:54329/ih35_verify npm run verify:db:reset",
           },
         ]
       : []),
