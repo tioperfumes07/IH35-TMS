@@ -2,12 +2,13 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createSafetyFine } from "../../../api/safety";
 import { listDrivers, listUnits } from "../../../api/mdata";
-import { createCivilFineType, listCivilFineTypes } from "../../../api/catalogs-safety";
+import { listCivilFineTypes } from "../../../api/catalogs-safety";
 import { confirmUpload, requestUploadUrl } from "../../../api/docs";
 import { listDispatchLoads } from "../../../api/dispatch";
 import { Button } from "../../../components/Button";
 import { Combobox } from "../../../components/Combobox";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -21,21 +22,6 @@ type Props = {
   onCreated: () => void;
 };
 
-/**
- * SAF-B14 — derive a catalog code from a typed name for the inline "+ Add new". The backend enforces
- * `^[A-Z][A-Z0-9-]+$` (shared.ts `catalogCodeSchema`); producing anything else would 400 the officer
- * mid-ticket, so the shape is guaranteed here rather than hoped for.
- */
-export function toCatalogCode(displayName: string): string {
-  const upper = displayName
-    .trim()
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  const leading = upper.replace(/^[^A-Z]+/, "");
-  const base = leading || "FINE";
-  return base.length >= 2 ? base.slice(0, 60) : `${base}-TYPE`;
-}
 
 export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const [subjectType, setSubjectType] = useState<"driver" | "company">("driver");
@@ -133,25 +119,6 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
       })),
     [civilFineTypeRows]
   );
-
-  // §7 — every reference dropdown ends with an inline "+ Add new", writing the same canonical table it
-  // reads (catalogs.civil_fine_types), so an officer facing an unlisted violation is never forced back
-  // to free text.
-  const createTypeMutation = useMutation({
-    mutationFn: (displayName: string) =>
-      createCivilFineType(operatingCompanyId, {
-        code: toCatalogCode(displayName),
-        display_name: displayName.trim(),
-        description: null,
-        metadata: {},
-        is_active: true,
-        sort_order: 0,
-      }),
-    onSuccess: async (row) => {
-      await civilFineTypesQuery.refetch();
-      applyFineType(row.id, row.display_name);
-    },
-  });
 
   function applyFineType(id: string | null, displayNameOverride?: string) {
     setCivilFineTypeId(id);
@@ -311,25 +278,24 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
             </div>
             <div className="flex flex-col gap-1 md:col-span-2">
               <label className="text-xs font-semibold text-gray-600">Violation type</label>
-              <Combobox
-                options={civilFineTypeOptions}
+              {/*
+                LST-PICKER-01: Combobox allowAddNew with a side-channel mutate is not VERIFY-2 —
+                inline create must be the FIRST ROW via ReferenceSelect → CatalogQuickCreateDrawer,
+                POST catalogs.civil_fine_types (same table listCivilFineTypes reads).
+              */}
+              <ReferenceSelect
                 value={civilFineTypeId}
                 onChange={(value) => applyFineType(value)}
+                options={civilFineTypeOptions.map((o) => ({ value: o.value, label: o.label, type: o.sublabel }))}
+                createKind="civil_fine_type"
+                operatingCompanyId={operatingCompanyId}
                 placeholder="Select a violation type"
-                loading={civilFineTypesQuery.isLoading || createTypeMutation.isPending}
-                allowClear
-                allowAddNew={{
-                  label: "+ Add new violation type",
-                  onAdd: (query) => {
-                    const name = query.trim();
-                    if (name) createTypeMutation.mutate(name);
-                  },
+                loading={civilFineTypesQuery.isLoading}
+                onOptionCreated={(opt) => {
+                  applyFineType(opt.value, opt.label);
+                  void civilFineTypesQuery.refetch();
                 }}
-                dataField="civil_fine_type_id"
               />
-              {createTypeMutation.isError ? (
-                <span className="text-[11px] text-red-600">Could not add that violation type.</span>
-              ) : null}
             </div>
             <div className="flex flex-col gap-1 md:col-span-2">
               <label className="text-xs font-semibold text-gray-600">Violation description</label>
