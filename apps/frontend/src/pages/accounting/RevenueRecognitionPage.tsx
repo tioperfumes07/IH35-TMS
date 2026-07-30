@@ -11,8 +11,9 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { CollapsedListFilters } from "../../components/table";
 import {
-  getRevenueContracts, getRevenueContractDetail,
+  getRevenueContracts, getRevenueContractDetail, getRevenueLeakage,
   type RevenueContractListItem, type RevenueContractDetail, type RevenueObligation,
+  type RevenueLeakageRow,
 } from "../../api/revenue-recognition";
 
 const fmtCents = (c: number) => formatUsdCents(c);
@@ -123,6 +124,112 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
           ) : detail.obligations.map((ob) => <ObligationBlock key={ob.id} ob={ob} />)}
         </div>
       </div>
+    </div>
+  );
+}
+
+function LeakagePanel({ operatingCompanyId }: { operatingCompanyId: string }) {
+  const q = useQuery({
+    queryKey: ["revenue-leakage", operatingCompanyId],
+    queryFn: () => getRevenueLeakage({ operating_company_id: operatingCompanyId, limit: 100 }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const s = q.data;
+  const gapLabel = (gap: RevenueLeakageRow["gap"]) =>
+    gap === "missing_earn" ? "Missing earn latch" : "Earn without bill latch";
+
+  const columns = useMemo<ParityColumn<RevenueLeakageRow>[]>(
+    () => [
+      {
+        key: "load",
+        label: "Load",
+        sortable: true,
+        sortValue: (row) => row.load_number ?? row.load_id,
+        render: (row) => (
+          <EntityLink kind="load" id={row.load_id} label={row.load_number ?? row.load_id.slice(0, 8)} />
+        ),
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (row) => <span className="capitalize text-gray-600">{titleize(row.status)}</span>,
+      },
+      {
+        key: "gap",
+        label: "Gap",
+        sortable: true,
+        render: (row) => <span className="text-slate-700">{gapLabel(row.gap)}</span>,
+      },
+      {
+        key: "rate",
+        label: "Rate",
+        sortable: true,
+        sortValue: (row) => row.rate_total_cents,
+        render: (row) => <span className="tabular-nums">{fmtCents(row.rate_total_cents)}</span>,
+      },
+      {
+        key: "links",
+        label: "Links",
+        render: (row) =>
+          row.earn_journal_entry_id ? (
+            <EntityLink kind="journal_entry" id={row.earn_journal_entry_id} label="Earn JE" />
+          ) : (
+            <span className="text-gray-400">—</span>
+          ),
+      },
+    ],
+    [],
+  );
+
+  return (
+    <div className="mb-4 space-y-2" data-testid="revenue-leakage-panel">
+      <div>
+        <h3 className="text-sm font-semibold text-gray-900">ASC 606 leakage / unbilled</h3>
+        <p className="text-xs text-gray-500">
+          Delivered (or later) loads missing the earn latch, or earn posted without the bill event. Read-only — no GL posts from this surface.
+        </p>
+      </div>
+      {q.isError ? (
+        <ListErrorState
+          title="Failed to load leakage report."
+          status={0}
+          message="Retry after confirming company context."
+          onRetry={() => void q.refetch()}
+        />
+      ) : (
+        <>
+          {s ? (
+            <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4" data-testid="revenue-leakage-kpis">
+              <div>
+                <div className="text-gray-500">Delivered+</div>
+                <div className="text-base font-semibold tabular-nums">{s.delivered_like_count}</div>
+              </div>
+              <div>
+                <div className="text-gray-500">Missing earn</div>
+                <div className="text-base font-semibold tabular-nums text-slate-700">{s.missing_earn_count}</div>
+              </div>
+              <div>
+                <div className="text-gray-500">Earn w/o bill</div>
+                <div className="text-base font-semibold tabular-nums text-slate-700">{s.earn_missing_bill_count}</div>
+              </div>
+              <div>
+                <div className="text-gray-500">Unbilled open</div>
+                <div className="text-base font-semibold tabular-nums">{fmtCents(s.unbilled_open_cents)}</div>
+              </div>
+            </div>
+          ) : null}
+          <ParityTable
+            columns={columns}
+            rows={s?.rows ?? []}
+            rowKey={(row) => `${row.gap}-${row.load_id}`}
+            loading={q.isLoading}
+            storageKey="revenue-leakage-rows"
+            tableTestId="revenue-leakage-table"
+            emptyText="No leakage rows for this entity."
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -258,9 +365,10 @@ export function RevenueRecognitionPage() {
   if (!flagLoading && !enabled) {
     return (
       <AccountingSubNavWrapper title="Revenue Recognition" subtitle="Deferred revenue schedules and recognition rules">
+        {operatingCompanyId ? <LeakagePanel operatingCompanyId={operatingCompanyId} /> : null}
         <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
-          Revenue recognition schedules are not yet enabled for this account.
-          <p className="mt-1 text-xs text-gray-400">Enable the REVENUE_RECOGNITION_ENABLED feature flag to use this module.</p>
+          Revenue recognition contract schedules are not yet enabled for this account.
+          <p className="mt-1 text-xs text-gray-400">Enable the REVENUE_RECOGNITION_ENABLED feature flag to use the contracts table. Leakage / unbilled tracking above stays available.</p>
         </div>
       </AccountingSubNavWrapper>
     );
@@ -268,6 +376,7 @@ export function RevenueRecognitionPage() {
 
   return (
     <AccountingSubNavWrapper title="Revenue Recognition" subtitle="ASC 606 contracts, obligations, and recognition schedule (read-only; GL posting gated)">
+      {operatingCompanyId ? <LeakagePanel operatingCompanyId={operatingCompanyId} /> : null}
       {detailId && detail && !detailLoading && (
         <DetailPanel detail={detail} onClose={() => setDetailId(null)} />
       )}

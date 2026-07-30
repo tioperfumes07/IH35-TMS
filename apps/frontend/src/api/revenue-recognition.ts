@@ -80,6 +80,32 @@ export function getRevenueContracts(input: {
   return apiRequest<RevenueContractList>(`/api/v1/accounting/revenue-contracts?${q}`);
 }
 
+/** ACCT-R-16 — ASC 606 leakage / unbilled (read-only). */
+export type RevenueLeakageRow = {
+  load_id: string;
+  load_number: string | null;
+  status: string;
+  rate_total_cents: number;
+  customer_id: string | null;
+  gap: "missing_earn" | "earn_missing_bill";
+  earn_journal_entry_id: string | null;
+  earn_amount_cents: number | null;
+};
+
+export type RevenueLeakageSummary = {
+  delivered_like_count: number;
+  missing_earn_count: number;
+  earn_missing_bill_count: number;
+  unbilled_open_cents: number;
+  rows: RevenueLeakageRow[];
+};
+
+export function getRevenueLeakage(input: { operating_company_id: string; limit?: number }) {
+  const q = new URLSearchParams({ operating_company_id: input.operating_company_id });
+  if (input.limit != null) q.set("limit", String(input.limit));
+  return apiRequest<RevenueLeakageSummary>(`/api/v1/accounting/revenue-leakage?${q}`);
+}
+
 export function getRevenueContractDetail(id: string, operating_company_id: string) {
   const q = new URLSearchParams({ operating_company_id });
   return apiRequest<RevenueContractDetail>(`/api/v1/accounting/revenue-contracts/${id}?${q}`);

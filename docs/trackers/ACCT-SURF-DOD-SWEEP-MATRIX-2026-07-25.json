@@ -8,8 +8,8 @@
   "desktop_clickthrough": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md",
   "module_progress": {
     "N": 8,
-    "M": 31,
-    "note": "Structural sweep matrix only — no FAIL→PASS; browser click-through remains UNVERIFIED per cell unless STRUCTURAL guard cited. M=31 after ACCT-R-04 leaf added (2026-07-28)."
+    "M": 32,
+    "note": "M=32 synced to accounting.json items.length (Cursor ACCT close wave 2026-07-30)."
   },
   "entities": [
     "TRANSP",
@@ -60,7 +60,7 @@
         "TRANSP": {
           "DOD-A": {
             "status": "STRUCTURAL",
-            "evidence": "route /accounting/bills → BillsPage; subnav leaf present; verify-acct-surf-01-bills"
+            "evidence": "route /accounting/bills \u2192 BillsPage; subnav leaf present; verify-acct-surf-01-bills"
           },
           "DOD-B": {
             "status": "UNVERIFIED",
@@ -88,11 +88,11 @@
           },
           "VERIFY-3": {
             "status": "STRUCTURAL",
-            "evidence": "POST /api/v1/accounting/bills → accounting.bills INSERT; verify-acct-surf-01-bills server half"
+            "evidence": "POST /api/v1/accounting/bills \u2192 accounting.bills INSERT; verify-acct-surf-01-bills server half"
           },
           "VERIFY-4": {
             "status": "UNVERIFIED",
-            "blocker": "bill⇄payment⇄aging both-way browser not run TRANSP"
+            "blocker": "bill\u21c4payment\u21c4aging both-way browser not run TRANSP"
           },
           "VERIFY-5": {
             "status": "UNVERIFIED",
@@ -104,7 +104,7 @@
           },
           "VERIFY-7": {
             "status": "STRUCTURAL",
-            "evidence": "Bills ▾ 8 leaves in subnav-manifest; verify-acct-surfaces-structural"
+            "evidence": "Bills \u25be 8 leaves in subnav-manifest; verify-acct-surfaces-structural"
           },
           "VERIFY-8": {
             "status": "UNVERIFIED",
@@ -190,7 +190,7 @@
           },
           "DOD-D": {
             "status": "UNVERIFIED",
-            "blocker": "repair-bill purpose→economics browser not run TRANSP"
+            "blocker": "repair-bill purpose\u2192economics browser not run TRANSP"
           },
           "DOD-E": {
             "status": "UNVERIFIED",
@@ -206,11 +206,11 @@
           },
           "VERIFY-3": {
             "status": "STRUCTURAL",
-            "evidence": "same createBill → accounting.bills path as bill hub"
+            "evidence": "same createBill \u2192 accounting.bills path as bill hub"
           },
           "VERIFY-4": {
             "status": "UNVERIFIED",
-            "blocker": "bill⇄WO⇄maintenance reverse browser not run TRANSP"
+            "blocker": "bill\u21c4WO\u21c4maintenance reverse browser not run TRANSP"
           },
           "VERIFY-5": {
             "status": "UNVERIFIED",
@@ -304,11 +304,11 @@
           },
           "DOD-C": {
             "status": "UNVERIFIED",
-            "blocker": "fuel⇄unit/load reverse browser not run TRANSP"
+            "blocker": "fuel\u21c4unit/load reverse browser not run TRANSP"
           },
           "DOD-D": {
             "status": "UNVERIFIED",
-            "blocker": "fuel purpose→economics browser not run TRANSP"
+            "blocker": "fuel purpose\u2192economics browser not run TRANSP"
           },
           "DOD-E": {
             "status": "UNVERIFIED",
@@ -324,11 +324,11 @@
           },
           "VERIFY-3": {
             "status": "STRUCTURAL",
-            "evidence": "createBill → accounting.bills canonical"
+            "evidence": "createBill \u2192 accounting.bills canonical"
           },
           "VERIFY-4": {
             "status": "UNVERIFIED",
-            "blocker": "fuel⇄dispatch cross-module browser not run TRANSP"
+            "blocker": "fuel\u21c4dispatch cross-module browser not run TRANSP"
           },
           "VERIFY-5": {
             "status": "UNVERIFIED",
@@ -422,7 +422,7 @@
           },
           "DOD-C": {
             "status": "UNVERIFIED",
-            "blocker": "vendor⇄bill reverse browser not run TRANSP"
+            "blocker": "vendor\u21c4bill reverse browser not run TRANSP"
           },
           "DOD-D": {
             "status": "STRUCTURAL",
@@ -442,11 +442,11 @@
           },
           "VERIFY-3": {
             "status": "STRUCTURAL",
-            "evidence": "POST bills → accounting.bills"
+            "evidence": "POST bills \u2192 accounting.bills"
           },
           "VERIFY-4": {
             "status": "UNVERIFIED",
-            "blocker": "vendor⇄payment⇄aging browser not run TRANSP"
+            "blocker": "vendor\u21c4payment\u21c4aging browser not run TRANSP"
           },
           "VERIFY-5": {
             "status": "UNVERIFIED",
@@ -540,7 +540,7 @@
           },
           "DOD-C": {
             "status": "UNVERIFIED",
-            "blocker": "template⇄bill reverse browser not run TRANSP"
+            "blocker": "template\u21c4bill reverse browser not run TRANSP"
           },
           "DOD-D": {
             "status": "UNVERIFIED",
@@ -560,11 +560,11 @@
           },
           "VERIFY-3": {
             "status": "UNVERIFIED",
-            "blocker": "template→bill connectivity browser not run TRANSP"
+            "blocker": "template\u2192bill connectivity browser not run TRANSP"
           },
           "VERIFY-4": {
             "status": "UNVERIFIED",
-            "blocker": "recurring⇄bill reverse browser not run TRANSP"
+            "blocker": "recurring\u21c4bill reverse browser not run TRANSP"
           },
           "VERIFY-5": {
             "status": "UNVERIFIED",
@@ -650,7 +650,7 @@
         "TRANSP": {
           "DOD-A": {
             "status": "STRUCTURAL",
-            "evidence": "route /accounting/expenses → ExpensesListPage; verify-acct-surfaces-structural"
+            "evidence": "route /accounting/expenses \u2192 ExpensesListPage; verify-acct-surfaces-structural"
           },
           "DOD-B": {
             "status": "UNVERIFIED",
@@ -658,7 +658,7 @@
           },
           "DOD-C": {
             "status": "UNVERIFIED",
-            "blocker": "expense⇄WO reverse browser not run TRANSP"
+            "blocker": "expense\u21c4WO reverse browser not run TRANSP"
           },
           "DOD-D": {
             "status": "STRUCTURAL",
@@ -682,7 +682,7 @@
           },
           "VERIFY-4": {
             "status": "UNVERIFIED",
-            "blocker": "expense⇄category reverse browser not run; ACCT-LINK-04 FAIL"
+            "blocker": "expense\u21c4category reverse browser not run; ACCT-LINK-04 FAIL"
           },
           "VERIFY-5": {
             "status": "UNVERIFIED",
@@ -694,7 +694,7 @@
           },
           "VERIFY-7": {
             "status": "STRUCTURAL",
-            "evidence": "Expenses ▾ leaves in subnav-manifest"
+            "evidence": "Expenses \u25be leaves in subnav-manifest"
           },
           "VERIFY-8": {
             "status": "UNVERIFIED",
@@ -776,7 +776,7 @@
           },
           "DOD-C": {
             "status": "UNVERIFIED",
-            "blocker": "receipt⇄expense reverse browser not run TRANSP"
+            "blocker": "receipt\u21c4expense reverse browser not run TRANSP"
           },
           "DOD-D": {
             "status": "UNVERIFIED",
@@ -812,7 +812,7 @@
           },
           "VERIFY-7": {
             "status": "STRUCTURAL",
-            "evidence": "Receipts leaf in Expenses ▾ subnav"
+            "evidence": "Receipts leaf in Expenses \u25be subnav"
           },
           "VERIFY-8": {
             "status": "UNVERIFIED",
@@ -894,7 +894,7 @@
           },
           "DOD-C": {
             "status": "UNVERIFIED",
-            "blocker": "payment⇄bill reverse browser not run TRANSP"
+            "blocker": "payment\u21c4bill reverse browser not run TRANSP"
           },
           "DOD-D": {
             "status": "STRUCTURAL",
@@ -914,7 +914,7 @@
           },
           "VERIFY-3": {
             "status": "STRUCTURAL",
-            "evidence": "payVendorBill → accounting.bill_payments; verify-acct-surf-03-bill-payment"
+            "evidence": "payVendorBill \u2192 accounting.bill_payments; verify-acct-surf-03-bill-payment"
           },
           "VERIFY-4": {
             "status": "UNVERIFIED",
@@ -1004,7 +1004,7 @@
         "TRANSP": {
           "DOD-A": {
             "status": "STRUCTURAL",
-            "evidence": "AP Aging in Bill payment ▾ subnav → /reports/ap-aging"
+            "evidence": "AP Aging in Bill payment \u25be subnav \u2192 /reports/ap-aging"
           },
           "DOD-B": {
             "status": "UNVERIFIED",
@@ -1012,7 +1012,7 @@
           },
           "DOD-C": {
             "status": "UNVERIFIED",
-            "blocker": "aging⇄bill reverse browser not run TRANSP"
+            "blocker": "aging\u21c4bill reverse browser not run TRANSP"
           },
           "DOD-D": {
             "status": "UNVERIFIED",
@@ -1032,11 +1032,11 @@
           },
           "VERIFY-3": {
             "status": "UNVERIFIED",
-            "blocker": "aging→bill drill connectivity browser not run TRANSP"
+            "blocker": "aging\u2192bill drill connectivity browser not run TRANSP"
           },
           "VERIFY-4": {
             "status": "UNVERIFIED",
-            "blocker": "aging⇄vendor⇄bill reverse browser not run TRANSP"
+            "blocker": "aging\u21c4vendor\u21c4bill reverse browser not run TRANSP"
           },
           "VERIFY-5": {
             "status": "UNVERIFIED",
@@ -1122,7 +1122,7 @@
         "TRANSP": {
           "DOD-A": {
             "status": "STRUCTURAL",
-            "evidence": "route /accounting/invoices mounted; verify-acct-surfaces-structural More ▾"
+            "evidence": "route /accounting/invoices mounted; verify-acct-surfaces-structural More \u25be"
           },
           "DOD-B": {
             "status": "UNVERIFIED",
@@ -1130,7 +1130,7 @@
           },
           "DOD-C": {
             "status": "UNVERIFIED",
-            "blocker": "invoice⇄customer reverse browser not run TRANSP"
+            "blocker": "invoice\u21c4customer reverse browser not run TRANSP"
           },
           "DOD-D": {
             "status": "UNVERIFIED",
@@ -1154,7 +1154,7 @@
           },
           "VERIFY-4": {
             "status": "UNVERIFIED",
-            "blocker": "invoice⇄payment reverse browser not run TRANSP"
+            "blocker": "invoice\u21c4payment reverse browser not run TRANSP"
           },
           "VERIFY-5": {
             "status": "UNVERIFIED",
@@ -1166,7 +1166,7 @@
           },
           "VERIFY-7": {
             "status": "STRUCTURAL",
-            "evidence": "Invoices leaf in More ▾ subnav-manifest"
+            "evidence": "Invoices leaf in More \u25be subnav-manifest"
           },
           "VERIFY-8": {
             "status": "UNVERIFIED",
@@ -1248,7 +1248,7 @@
           },
           "DOD-C": {
             "status": "UNVERIFIED",
-            "blocker": "payment⇄invoice reverse browser not run TRANSP"
+            "blocker": "payment\u21c4invoice reverse browser not run TRANSP"
           },
           "DOD-D": {
             "status": "STRUCTURAL",
@@ -1272,7 +1272,7 @@
           },
           "VERIFY-4": {
             "status": "UNVERIFIED",
-            "blocker": "payment⇄invoice reverse browser not run TRANSP"
+            "blocker": "payment\u21c4invoice reverse browser not run TRANSP"
           },
           "VERIFY-5": {
             "status": "UNVERIFIED",
@@ -1284,7 +1284,7 @@
           },
           "VERIFY-7": {
             "status": "STRUCTURAL",
-            "evidence": "Receive Payment in More ▾ subnav"
+            "evidence": "Receive Payment in More \u25be subnav"
           },
           "VERIFY-8": {
             "status": "UNVERIFIED",
@@ -1390,7 +1390,7 @@
           },
           "VERIFY-4": {
             "status": "UNVERIFIED",
-            "blocker": "JE⇄register reverse browser not run TRANSP"
+            "blocker": "JE\u21c4register reverse browser not run TRANSP"
           },
           "VERIFY-5": {
             "status": "UNVERIFIED",
@@ -1402,7 +1402,7 @@
           },
           "VERIFY-7": {
             "status": "STRUCTURAL",
-            "evidence": "Journal entries leaf in More ▾ subnav"
+            "evidence": "Journal entries leaf in More \u25be subnav"
           },
           "VERIFY-8": {
             "status": "UNVERIFIED",
@@ -1484,7 +1484,7 @@
           },
           "DOD-C": {
             "status": "STRUCTURAL",
-            "evidence": "ACCT-LINK-02 FAIL — text subtype only; 0 inbound FKs; owner WIRE vs LOCK FROZEN"
+            "evidence": "ACCT-LINK-02 FAIL \u2014 text subtype only; 0 inbound FKs; owner WIRE vs LOCK FROZEN"
           },
           "DOD-D": {
             "status": "UNVERIFIED",
@@ -1508,7 +1508,7 @@
           },
           "VERIFY-4": {
             "status": "UNVERIFIED",
-            "blocker": "CoA⇄register reverse browser not run TRANSP"
+            "blocker": "CoA\u21c4register reverse browser not run TRANSP"
           },
           "VERIFY-5": {
             "status": "STRUCTURAL",
@@ -1602,7 +1602,7 @@
           },
           "DOD-C": {
             "status": "UNVERIFIED",
-            "blocker": "register⇄money-doc reverse browser not run TRANSP"
+            "blocker": "register\u21c4money-doc reverse browser not run TRANSP"
           },
           "DOD-D": {
             "status": "UNVERIFIED",
@@ -1626,7 +1626,7 @@
           },
           "VERIFY-4": {
             "status": "UNVERIFIED",
-            "blocker": "register⇄JE⇄bill reverse browser not run TRANSP"
+            "blocker": "register\u21c4JE\u21c4bill reverse browser not run TRANSP"
           },
           "VERIFY-5": {
             "status": "UNVERIFIED",
@@ -1638,7 +1638,7 @@
           },
           "VERIFY-7": {
             "status": "STRUCTURAL",
-            "evidence": "Account Register + All Transactions in More ▾ subnav"
+            "evidence": "Account Register + All Transactions in More \u25be subnav"
           },
           "VERIFY-8": {
             "status": "UNVERIFIED",
@@ -1712,7 +1712,7 @@
         "TRANSP": {
           "DOD-A": {
             "status": "STRUCTURAL",
-            "evidence": "period-close→month-close redirect; audit-trail + posting-lineage mounted; verify-acct-surfaces-structural EXTRA"
+            "evidence": "period-close\u2192month-close redirect; audit-trail + posting-lineage mounted; verify-acct-surfaces-structural EXTRA"
           },
           "DOD-B": {
             "status": "UNVERIFIED",
@@ -1720,7 +1720,7 @@
           },
           "DOD-C": {
             "status": "UNVERIFIED",
-            "blocker": "close⇄JE reverse browser not run TRANSP"
+            "blocker": "close\u21c4JE reverse browser not run TRANSP"
           },
           "DOD-D": {
             "status": "UNVERIFIED",
@@ -1744,7 +1744,7 @@
           },
           "VERIFY-4": {
             "status": "UNVERIFIED",
-            "blocker": "close⇄register reverse browser not run TRANSP"
+            "blocker": "close\u21c4register reverse browser not run TRANSP"
           },
           "VERIFY-5": {
             "status": "UNVERIFIED",
@@ -1756,7 +1756,7 @@
           },
           "VERIFY-7": {
             "status": "STRUCTURAL",
-            "evidence": "Period close + audit-trail + posting-lineage in More ▾ subnav"
+            "evidence": "Period close + audit-trail + posting-lineage in More \u25be subnav"
           },
           "VERIFY-8": {
             "status": "UNVERIFIED",
@@ -1821,7 +1821,7 @@
     },
     {
       "id": "accounting-more",
-      "label": "More ▾ — Factoring / Escrow / Settlements cross-links",
+      "label": "More \u25be \u2014 Factoring / Escrow / Settlements cross-links",
       "route": "/accounting/factoring",
       "manifest_item": "ACCT-SURF-09",
       "canonical_table": "accounting.factoring_advances",
@@ -1838,7 +1838,7 @@
           },
           "DOD-C": {
             "status": "UNVERIFIED",
-            "blocker": "factoring⇄invoice⇄escrow reverse browser not run TRANSP"
+            "blocker": "factoring\u21c4invoice\u21c4escrow reverse browser not run TRANSP"
           },
           "DOD-D": {
             "status": "UNVERIFIED",
@@ -1850,7 +1850,7 @@
           },
           "VERIFY-1": {
             "status": "UNVERIFIED",
-            "blocker": "More ▾ chrome browser not run TRANSP"
+            "blocker": "More \u25be chrome browser not run TRANSP"
           },
           "VERIFY-2": {
             "status": "UNVERIFIED",
@@ -1862,7 +1862,7 @@
           },
           "VERIFY-4": {
             "status": "UNVERIFIED",
-            "blocker": "settlements⇄accounting reverse browser not run TRANSP"
+            "blocker": "settlements\u21c4accounting reverse browser not run TRANSP"
           },
           "VERIFY-5": {
             "status": "UNVERIFIED",
@@ -1874,7 +1874,7 @@
           },
           "VERIFY-7": {
             "status": "STRUCTURAL",
-            "evidence": "Factoring/Escrow/Settlements leaves in More ▾ (NEVER-DELETE)"
+            "evidence": "Factoring/Escrow/Settlements leaves in More \u25be (NEVER-DELETE)"
           },
           "VERIFY-8": {
             "status": "UNVERIFIED",

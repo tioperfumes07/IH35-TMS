@@ -14,6 +14,7 @@ import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { getRevenueLeakage } from "./revenue-leakage.service.js";
 
 const POST_FLAG = "REVENUE_RECOGNITION_POST_ENABLED";
 
@@ -368,6 +369,22 @@ async function registerRevenueRecognitionRoutes(app: FastifyInstance) {
         obligations,
       };
     });
+  });
+
+  // ACCT-R-16 — ASC 606 leakage / unbilled tracking (READ-ONLY; no posting).
+  app.get("/api/v1/accounting/revenue-leakage", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!accountingRoles(user.role)) return reply.code(403).send({ error: "forbidden" });
+
+    const parsed = companyQuerySchema
+      .extend({ limit: z.coerce.number().int().min(1).max(500).default(100) })
+      .safeParse(req.query ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+
+    return withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) =>
+      getRevenueLeakage(client, parsed.data.operating_company_id, parsed.data.limit),
+    );
   });
 }
 
