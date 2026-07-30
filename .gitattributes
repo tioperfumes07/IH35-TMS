@@ -42,3 +42,18 @@ package.json                            merge=json-union
 #   any other mutable line here, REMOVE this union rule in the same PR or the corruption returns
 #   silently — a duplicated row is not a merge failure, so CI will not catch it.
 docs/trackers/PARITYTABLE-MIGRATION-TRACKER.md  merge=union
+
+# LST-PICKER / VERIFY-STEP CLAIM TREADMILL KILLER (2026-07-30):
+# Every LST-PICKER slice (and every new verify-step) touches CLAIMED-NUMBERS.json. Without a union
+# driver, whichever PR merges first conflicts EVERY sibling on that registry — hours of hand rebase
+# with zero product progress (same class as package.json / held-migrations before their drivers).
+# json-union deep-merges the `claimed` object so both sides' numbers survive.
+scripts/verify-steps/CLAIMED-NUMBERS.json       merge=json-union
+
+# Same treadmill on catalogPickerRegistry.ts: each picker slice ADDS one top-level config key.
+# catalog-picker-union keep-alls keys from both sides (theirs wins on same-key collision).
+apps/frontend/src/components/parity/catalogPickerRegistry.ts  merge=catalog-picker-union
+
+# PARTIAL LST-PICKER evidence notes are APPEND-ONLY — never edit lists.json evidence for PARTIAL
+# slices (that file's evidence string is one in-place line → guaranteed conflict). Append here.
+docs/module-completion/lists-picker-partials.md merge=union

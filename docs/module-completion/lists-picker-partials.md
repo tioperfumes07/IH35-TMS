@@ -1,0 +1,11 @@
+# LST-PICKER-01 partial slices (APPEND-ONLY)
+
+> **Law (2026-07-30):** Do **not** append PARTIAL notes into `docs/module-completion/lists.json`
+> evidence while `LST-PICKER-01` status stays `FAIL`. That evidence field is one in-place string —
+> every parallel slice PR conflicts on it. Append a one-line note here instead.
+> This file is `merge=union` in `.gitattributes` (line-based keep-both).
+
+<!-- Append below this line. One bullet per Cursor/Claude slice. -->
+
+- 2026-07-30 · guard 1826 · EscrowForfeitModal → `createKind=escrow_draw_reason` (`may_draw_escrow=true`) · PR #3825
+- 2026-07-30 · guard 1822 · CargoClaimIntakeSurface → `createKind=cargo_claim_reason` · PR #3822

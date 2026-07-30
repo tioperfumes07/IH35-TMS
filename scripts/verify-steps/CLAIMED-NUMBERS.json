@@ -1169,6 +1169,7 @@
     "1816": "1816-verify-lst-picker01-dot-violation-type-inline-create.mjs",
     "1818": "1818-verify-lst-picker01-complaint-type-inline-create.mjs",
     "1826": "1826-verify-lst-picker01-escrow-draw-reason-inline-create.mjs",
+    "1828": "1828-verify-lst-picker-no-lists-json-partial-thrash.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
@@ -1184,7 +1185,7 @@
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "_how_to_claim": "ODD/EVEN SPLIT (owner-locked 2026-07-28): Cursor = EVEN only; Claude = ODD only. Pick the next free number in YOUR band, add \"<number>\": \"<filename>\", commit it WITH the guard. Never claim the other coder's parity.",
   "generated_at": "2026-07-28T13:11:57Z",
-  "total_claimed": 886,
+  "total_claimed": 887,
   "known_duplicates_frozen": {
     "15": [
       "15-verify-accounting-autoload-coverage.mjs",
