@@ -90,7 +90,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Violation type (catalog)</label>
             {/*
-              LST-PICKER-01: Combobox allowAddNew + external mini-form is not VERIFY-2.
+              LST-PICKER-01: External Combobox mini-create is not VERIFY-2.
               ReferenceSelect first-row create → POST catalogs.company_violation_types.
             */}
             <ReferenceSelect

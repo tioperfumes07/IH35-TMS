@@ -36,7 +36,9 @@ export function collectProblems(root = ROOT) {
     if (!/ReferenceSelect/.test(modal)) {
       problems.push(`${MODAL}: must import/use ReferenceSelect`);
     }
-    if (/allowAddNew|createCompanyViolationType\(|typeCreateOpen|company-violation-type-create-inline/.test(modal)) {
+    // Strip block comments so explanatory notes do not trip the dual-path detector.
+    const modalCode = modal.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+    if (/allowAddNew|createCompanyViolationType\(|typeCreateOpen|company-violation-type-create-inline/.test(modalCode)) {
       problems.push(`${MODAL}: must not keep Combobox allowAddNew / external mini-create dual path`);
     }
   }
