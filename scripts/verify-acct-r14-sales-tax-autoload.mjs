@@ -23,6 +23,8 @@ const LABEL = "verify-acct-r14-sales-tax-autoload";
 const SALES_TAX_ROUTES = "apps/backend/src/accounting/sales-tax/sales-tax.routes.ts";
 const ACCOUNTING_INDEX = "apps/backend/src/accounting/index.ts";
 const BACKEND_INDEX = "apps/backend/src/index.ts";
+const FE_PAGE = "apps/frontend/src/pages/accounting/SalesTaxPage.tsx";
+const FE_SUBNAV = "apps/frontend/src/pages/accounting/subnav-manifest.ts";
 
 function read(rel) {
   const abs = path.join(ROOT, rel);
@@ -31,7 +33,7 @@ function read(rel) {
 }
 
 /** Pure checks for --selftest */
-export function check({ salesTaxRoutes, accountingIndex, backendIndex }) {
+export function check({ salesTaxRoutes, accountingIndex, backendIndex, fePage, feSubnav }) {
   const failures = [];
 
   if (!salesTaxRoutes) {
@@ -67,6 +69,18 @@ export function check({ salesTaxRoutes, accountingIndex, backendIndex }) {
     }
   }
 
+  if (!fePage) {
+    failures.push(`${FE_PAGE}: missing`);
+  } else if (!/prepareSalesTaxReturn|fileSalesTaxReturn|markSalesTaxReturnPaid/.test(fePage)) {
+    failures.push(`${FE_PAGE}: must wire prepare/file/mark-paid actions`);
+  }
+
+  if (!feSubnav) {
+    failures.push(`${FE_SUBNAV}: missing`);
+  } else if (!/path:\s*"\/accounting\/sales-tax"/.test(feSubnav)) {
+    failures.push(`${FE_SUBNAV}: must keep Sales tax leaf under Accounting`);
+  }
+
   return failures;
 }
 
@@ -74,14 +88,20 @@ function runScan() {
   const salesTax = read(SALES_TAX_ROUTES);
   const acctIdx = read(ACCOUNTING_INDEX);
   const backendIdx = read(BACKEND_INDEX);
+  const fePage = read(FE_PAGE);
+  const feSubnav = read(FE_SUBNAV);
   const failures = check({
     salesTaxRoutes: salesTax.error ? null : salesTax.text,
     accountingIndex: acctIdx.error ? null : acctIdx.text,
     backendIndex: backendIdx.error ? null : backendIdx.text,
+    fePage: fePage.error ? null : fePage.text,
+    feSubnav: feSubnav.error ? null : feSubnav.text,
   });
   if (salesTax.error) failures.unshift(salesTax.error);
   if (acctIdx.error) failures.unshift(acctIdx.error);
   if (backendIdx.error) failures.unshift(backendIdx.error);
+  if (fePage.error) failures.unshift(fePage.error);
+  if (feSubnav.error) failures.unshift(feSubnav.error);
 
   if (failures.length) {
     console.error(`FAIL(${LABEL}):`);
@@ -105,11 +125,17 @@ export async function registerAccountingRoutes(app) {
 import { registerAccountingRoutes } from "./accounting/index.js";
 await registerAccountingRoutes(app);
 `;
+  const goodFePage = `
+prepareSalesTaxReturn(); fileSalesTaxReturn(); markSalesTaxReturnPaid();
+`;
+  const goodFeSubnav = `{ label: "Sales tax", path: "/accounting/sales-tax", section: "more" },`;
 
   const pass = check({
     salesTaxRoutes: goodSalesTax,
     accountingIndex: goodAcctIndex,
     backendIndex: goodBackend,
+    fePage: goodFePage,
+    feSubnav: goodFeSubnav,
   });
   if (pass.length) {
     console.error(`FAIL(${LABEL} --selftest): good fixture should pass`, pass);
@@ -120,6 +146,8 @@ await registerAccountingRoutes(app);
     salesTaxRoutes: "export const x = 1;",
     accountingIndex: goodAcctIndex,
     backendIndex: goodBackend.replace("await registerAccountingRoutes(app)", "// removed"),
+    fePage: goodFePage,
+    feSubnav: goodFeSubnav,
   });
   if (!fail.length) {
     console.error(`FAIL(${LABEL} --selftest): bad fixture should fail`);
