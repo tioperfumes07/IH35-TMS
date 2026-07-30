@@ -54,6 +54,7 @@ import {
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
+import { ReferenceSelect } from "../components/parity/ReferenceSelect";
 import { CustomerEditModal, type CustomerEditFormValues } from "../components/customers/CustomerEditModal";
 import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificationModal";
 import { FreeTimeDetentionEditor } from "../components/customers/FreeTimeDetentionEditor";
@@ -2518,20 +2519,59 @@ export function CustomerDetailPage() {
             />
             <div>
               <label className="mb-1 block text-xs font-semibold text-gray-600">Reason</label>
-              <Combobox
-                options={(qualityReasonsQuery.data ?? []).map((reason) => ({
-                  value: reason.id,
-                  label: reason.label,
-                  sublabel: reason.severity,
-                }))}
-                value={qualityForm.reason_id || null}
-                onChange={(nextValue) => {
-                  const reason = (qualityReasonsQuery.data ?? []).find((entry) => entry.id === nextValue);
-                  setQualityForm((current) => ({ ...current, reason_id: nextValue ?? "", severity: reason?.severity ?? current.severity }));
-                }}
-                loading={qualityReasonsQuery.isLoading}
-                placeholder="Select reason"
-              />
+              {/*
+                LST-PICKER-01: Reason was a bare Combobox with no inline create — operators had to leave
+                the quality-event flow and open Lists. Wire ReferenceSelect → POST
+                catalogs.customer_quality_event_reasons (entityScoped factory; same table the reasons
+                query reads). event_type/severity come from the form via createExtras.
+              */}
+              {operatingCompanyId ? (
+                <ReferenceSelect
+                  value={qualityForm.reason_id || null}
+                  onChange={(nextValue) => {
+                    const reason = (qualityReasonsQuery.data ?? []).find((entry) => entry.id === nextValue);
+                    setQualityForm((current) => ({
+                      ...current,
+                      reason_id: nextValue ?? "",
+                      severity: reason?.severity ?? current.severity,
+                    }));
+                  }}
+                  options={(qualityReasonsQuery.data ?? []).map((reason) => ({
+                    value: reason.id,
+                    label: reason.label,
+                    type: reason.severity,
+                  }))}
+                  createKind="customer_quality_event_reason"
+                  operatingCompanyId={operatingCompanyId}
+                  createdValueField="id"
+                  createExtras={{
+                    event_type: qualityForm.event_type,
+                    severity: qualityForm.severity,
+                  }}
+                  loading={qualityReasonsQuery.isLoading}
+                  placeholder="Select reason"
+                  onOptionCreated={(opt) => {
+                    setQualityForm((current) => ({ ...current, reason_id: opt.value }));
+                    void qualityReasonsQuery.refetch();
+                  }}
+                />
+              ) : (
+                <Combobox
+                  options={(qualityReasonsQuery.data ?? []).map((reason) => ({
+                    value: reason.id,
+                    label: reason.label,
+                    sublabel: reason.severity,
+                  }))}
+                  value={qualityForm.reason_id || null}
+                  onChange={(nextValue) => {
+                    const reason = (qualityReasonsQuery.data ?? []).find((entry) => entry.id === nextValue);
+                    setQualityForm((current) => ({ ...current, reason_id: nextValue ?? "", severity: reason?.severity ?? current.severity }));
+                  }}
+                  loading={qualityReasonsQuery.isLoading}
+                  placeholder="Select reason"
+                  disabled
+                />
+              )}
             </div>
             <SelectField
               label="Severity"

@@ -488,6 +488,48 @@ export const CATALOG_PICKER_CONFIGS = {
       };
     },
   },
+
+  // Customer quality event reasons — CustomerDetail Reason Combobox had no inline create at all.
+  // Same factory surface as LST-A-01 Lists hub: POST /api/v1/catalogs/customers/customer-quality-event-reasons.
+  customer_quality_event_reason: {
+    key: "customer_quality_event_reason",
+    label: "quality reason",
+    backend: "catalog",
+    readTable: "catalogs.customer_quality_event_reasons",
+    writeTable: "catalogs.customer_quality_event_reasons",
+    readEndpoint: "/api/v1/catalogs/customers/customer-quality-event-reasons",
+    writeEndpoint: "/api/v1/catalogs/customers/customer-quality-event-reasons",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence:
+      "apps/backend/src/catalogs/generic-catalog.factory.ts entityScoped INSERT + routes.ts customerQualityEventReasonsCatalogConfig",
+    fields: CATALOG_FIELDS,
+    create: async (operatingCompanyId, values) => {
+      const label = values.display_name.trim();
+      const code = deriveCatalogCode(label, values.code).replace(/-/g, "_");
+      const eventType = (values.event_type ?? "other").trim();
+      const severity = (values.severity ?? "warning").trim();
+      const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+      const created = await apiRequest<{ id: string; code?: string; label?: string; display_name?: string }>(
+        `/api/v1/catalogs/customers/customer-quality-event-reasons?${query.toString()}`,
+        {
+          method: "POST",
+          body: {
+            code,
+            label,
+            event_type: eventType,
+            severity,
+            description: values.description?.trim() || undefined,
+          },
+        }
+      );
+      return {
+        id: String(created.id),
+        label: created.label ?? created.display_name ?? label,
+        code: created.code ?? code,
+      };
+    },
+  },
 } as const satisfies Record<string, CatalogPickerConfig>;
 
 /** Every create kind <ReferenceSelect> accepts — derived from the config, never hand-maintained. */
