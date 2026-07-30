@@ -1177,6 +1177,7 @@
     "1824": "1824-verify-lst-picker01-hos-create-modal-dot-type-inline-create.mjs",
     "1826": "1826-verify-lst-picker01-escrow-draw-reason-inline-create.mjs",
     "1828": "1828-verify-lst-picker-no-lists-json-partial-thrash.mjs",
+    "1829": "1829-verify-empty-json-body-parser-installed.mjs",
     "1830": "1830-verify-lst-picker01-payrun-payment-method-inline-create.mjs",
     "1832": "1832-verify-acct-close-categorization-rules-mounted.mjs",
     "01": "01-ensure-database-url.mjs",
@@ -1192,7 +1193,7 @@
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "_how_to_claim": "ODD/EVEN SPLIT (owner-locked 2026-07-28): Cursor = EVEN only; Claude = ODD only. Pick the next free number in YOUR band, add \"<number>\": \"<filename>\", commit it WITH the guard. Never claim the other coder's parity.",
-  "generated_at": "2026-07-30T17:57:50Z",
+  "generated_at": "2026-07-28T13:11:57Z",
   "total_claimed": 888,
   "known_duplicates_frozen": {
     "15": [
