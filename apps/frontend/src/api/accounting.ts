@@ -185,6 +185,8 @@ export type Payment = {
   voided_at: string | null;
   void_reason: string | null;
   created_at: string;
+  /** Law §9: bank feed / recon reverse hop (source_bank_transaction_id or matched_payment_id). */
+  matched_bank_transaction_id?: string | null;
 };
 
 export type PaymentApplication = {

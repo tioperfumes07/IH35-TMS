@@ -133,7 +133,29 @@ export function PaymentsListPage() {
       },
       { key: "amount_cents", label: "Amount", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_cents) },
       { key: "amount_applied_cents", label: "Applied", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_applied_cents) },
-      { key: "amount_unapplied_cents", label: "Unapplied", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_unapplied_cents) },
+      {
+        key: "amount_unapplied_cents",
+        label: "Unapplied",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums",
+        render: (row) => money(row.amount_unapplied_cents),
+      },
+      {
+        key: "matched_bank_transaction_id",
+        label: "Bank txn",
+        sortable: false,
+        render: (row) =>
+          row.matched_bank_transaction_id ? (
+            <EntityLink
+              kind="bank_transaction"
+              id={row.matched_bank_transaction_id}
+              label={row.matched_bank_transaction_id.slice(0, 8)}
+            />
+          ) : (
+            "-"
+          ),
+      },
       {
         key: "status",
         label: "Status",

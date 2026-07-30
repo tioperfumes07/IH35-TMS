@@ -61,6 +61,26 @@ const voidBodySchema = z.object({
   void_reason: z.string().trim().min(3).max(500),
 });
 
+/**
+ * Law §9 reverse hop: payment → banking.bank_transactions.
+ * Prefer payments.source_bank_transaction_id (create/categorize provenance); else recon match
+ * banking.bank_transactions.matched_payment_id (bank-recon/match.service.ts).
+ * Entity-scoped — never cross opco.
+ */
+const PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL = `
+  COALESCE(
+    p.source_bank_transaction_id::text,
+    (
+      SELECT bt.id::text
+      FROM banking.bank_transactions bt
+      WHERE bt.operating_company_id = p.operating_company_id
+        AND bt.matched_payment_id = p.id
+      ORDER BY bt.transaction_date DESC, bt.created_at DESC
+      LIMIT 1
+    )
+  )
+`;
+
 async function fetchPaymentDetail(
   client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
   paymentId: string
@@ -69,7 +89,8 @@ async function fetchPaymentDetail(
     `
       SELECT
         p.*,
-        c.customer_name
+        c.customer_name,
+        ${PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
       FROM accounting.payments p
       JOIN mdata.customers c ON c.id = p.customer_id
       WHERE p.id = $1
@@ -163,7 +184,8 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         `
           SELECT
             p.*,
-            c.customer_name
+            c.customer_name,
+            ${PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
           FROM accounting.payments p
           JOIN mdata.customers c ON c.id = p.customer_id
           WHERE ${where.join(" AND ")}

@@ -1151,6 +1151,7 @@
     "1792": "1792-verify-bank-record-transfer-trigger-wired.mjs",
     "1794": "1794-verify-bank-dedup-on-conflict-partial-index.mjs",
     "1796": "1796-verify-bank-account-detail-record-transfer.mjs",
+    "1798": "1798-verify-customer-payment-bank-reverse-links.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
