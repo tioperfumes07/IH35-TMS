@@ -83,7 +83,8 @@ def ensure_root():
 def rebase_branch(n: int, br: str) -> bool:
     d = Path(f"/tmp/cur-serialize-rb-{n}")
     shutil.rmtree(d, ignore_errors=True)
-    sh(["git", "fetch", "origin", "main", br], cwd=ROOT)
+    # Bare roots often lack origin/<feature> until explicitly fetched.
+    sh(["git", "fetch", "origin", "main", f"+refs/heads/{br}:refs/remotes/origin/{br}"], cwd=ROOT)
     add = sh(["git", "worktree", "add", "-f", "-B", br, str(d), f"origin/{br}"], cwd=ROOT)
     if add.returncode != 0:
         log(f"#{n} worktree-add-fail {(add.stderr or '')[-200:]}")

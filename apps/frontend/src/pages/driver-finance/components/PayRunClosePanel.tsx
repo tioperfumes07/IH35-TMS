@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
 import {
   closeSettlementPayRun,
@@ -8,10 +7,9 @@ import {
   previewSettlementPayRun,
   type SettlementPayRunResult,
 } from "../../../api/driverFinance";
-import { listPaymentMethods } from "../../../api/paymentMethods";
 import { Button } from "../../../components/Button";
+import { PaymentMethodPicker } from "../../../components/driver-finance/PaymentMethodPicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useToast } from "../../../components/Toast";
 
 const COA_ROLES_HREF = "/accounting/settings/coa-roles";
@@ -61,11 +59,6 @@ export function PayRunClosePanel({ settlementId, companyId, userRole, settlement
   const canAct = AUTHORITY_ROLES.has(String(userRole ?? ""));
   const postable = ["locked", "final", "closed", "paid", "approved", "ready"].includes(settlementStatus);
 
-  const methodsQuery = useQuery({
-    queryKey: ["catalogs", "payment-methods", companyId],
-    queryFn: () => listPaymentMethods(companyId),
-    enabled: Boolean(companyId && canAct),
-  });
 
   if (!canAct) return null;
 
@@ -126,7 +119,6 @@ export function PayRunClosePanel({ settlementId, companyId, userRole, settlement
     }
   }
 
-  const methods = Array.isArray(methodsQuery.data) ? methodsQuery.data : [];
 
   return (
     <div
@@ -148,21 +140,18 @@ export function PayRunClosePanel({ settlementId, companyId, userRole, settlement
       <div className="mb-2 grid gap-2 sm:grid-cols-2">
         <label className="block text-xs">
           <span className="mb-1 block font-medium text-gray-600">Payment method (net cash leg)</span>
-          <SelectCombobox
-            value={paymentMethodId}
-            onChange={(event) => setPaymentMethodId(event.target.value)}
-            className="w-full rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs"
-          >
-            <option value="">— Select —</option>
-            {methods
-              .filter((m) => m.is_active)
-              .map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                  {m.gl_account_id ? "" : " (no GL)"}
-                </option>
-              ))}
-          </SelectCombobox>
+          {/*
+            LST-PICKER-01: reuse PaymentMethodPicker (Combobox first-row "+ Add new payment method"
+            → POST catalogs.payment_methods). Prior native select had zero inline create — operators
+            had to leave pay-run close and open Lists → Payment Methods.
+          */}
+          <div className="mt-1" data-testid="payrun-payment-method-picker">
+            <PaymentMethodPicker
+              operatingCompanyId={companyId}
+              value={paymentMethodId || null}
+              onChange={(next) => setPaymentMethodId(next ?? "")}
+            />
+          </div>
         </label>
         <label className="block text-xs">
           <span className="mb-1 block font-medium text-gray-600">Payment reference (optional)</span>
