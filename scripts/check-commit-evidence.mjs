@@ -7,7 +7,7 @@
  * file's assertion instead of re-implementing it, so the local hook and the CI gate can never drift
  * apart ? a second copy of a rule is a rule that will disagree with itself.
  *
- * Money paths ALSO run assertNoMoneyTheater (DoD ß10 / verify-step 1430) ? FINDING + LANE +
+ * Money paths ALSO run assertNoMoneyTheater (DoD ù10 / verify-step 1430) ? FINDING + LANE +
  * DOD-A..E + VERIFY-1..8 + MODULE_PROGRESS + Rule 16 required or the commit is rejected.
  *
  * AMEND HOLE (fixed Rule 25 / 2026-07-28): `git commit --amend` with a message-only rewrite leaves
@@ -77,8 +77,10 @@ Rule 16 evidence block. Template:
   ROOT CAUSE: the actual mechanism, not the symptom
   FIX:        what changed, and why this is the root fix rather than a patch
   GUARD:      scripts/verify-*.mjs + scripts/verify-steps/NNNN-*.mjs
-  LIVE PROOF: endpoint / health sha / DB row / browser ? or UNVERIFIED + blocker
-  REMAINING:  what is still open
+  LIVE PROOF: endpoint / health sha / DB row / browser ó or:
+  LIVE PROOF: UNVERIFIED: <named blocker>
+  (also accepted: UNVERIFIED: <named blocker> as its own labelled line)
+  REMAINING:  what is still open (or "none")
 
 Canonical standard: docs/specs/DEFINITION-OF-DONE.md
 Bypassing with --no-verify does NOT skip this: CI verify-step 1324 enforces the
@@ -87,7 +89,7 @@ Pre-push also runs scripts/money-pr-local-gate.mjs (Rule 25).
 `);
     if (isMoneyAppCommit(files) || files.some((f) => /^db\/migrations\//i.test(f))) {
       console.error(`
-MONEY / MIGRATION PATH ? also required (DoD ß10 / Rules 23?25):
+MONEY / MIGRATION PATH ? also required (DoD ù10 / Rules 23?25):
 
 ${MONEY_DOD_COMMIT_TEMPLATE}
 

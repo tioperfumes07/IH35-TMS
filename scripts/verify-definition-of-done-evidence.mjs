@@ -92,8 +92,16 @@ export function proofLineIsSubstantiated(text) {
   const lines = text.split(/\r?\n/);
   const start = lines.findIndex((l) => /^[\s>*_#\-]*(LIVE PROOF|UNVERIFIED)\b/i.test(l));
   if (start === -1) return true; // absence is already reported by EVIDENCE_KEYS
-  const isUnverified = /^[\s>*_#\-]*UNVERIFIED\b/i.test(lines[start]);
-  const head = lines[start].replace(/^[\s>*_#\-]*(LIVE PROOF|UNVERIFIED)\b\s*:?/i, "");
+  const labelLine = lines[start];
+  // Cursor agents often write `LIVE PROOF: UNVERIFIED — <blocker>` (or `:`) on one line.
+  // Treat that as the UNVERIFIED form (named blocker required), not LIVE PROOF (artifact required).
+  const isUnverified =
+    /^[\s>*_#\-]*UNVERIFIED\b/i.test(labelLine) ||
+    /^[\s>*_#\-]*LIVE PROOF\b[^:\n]*:\s*UNVERIFIED\b/i.test(labelLine);
+  let head = labelLine.replace(/^[\s>*_#\-]*(LIVE PROOF|UNVERIFIED)\b\s*:?/i, "");
+  if (isUnverified) {
+    head = head.replace(/^\s*UNVERIFIED\b\s*[:—–-]*\s*/i, "");
+  }
   const rest = [];
   for (let i = start + 1; i < lines.length && !IS_LABEL_LINE.test(lines[i]); i += 1) rest.push(lines[i]);
   const section = [head, ...rest].join(" ").trim();
@@ -300,6 +308,19 @@ if (SELFTEST) {
   ]);
   if (headingForm.length) failures.push(`false-positive on the PR-template heading form: ${headingForm.join(" | ")}`);
 
+  // Negative: LIVE PROOF: UNVERIFIED — <blocker> (Cursor habit) must NOT be flagged.
+  const liveProofUnverified = assertDoDEvidence([
+    {
+      ...good,
+      body:
+        "ROOT CAUSE: y\nFIX: z\nGUARD: scripts/verify-x.mjs\n" +
+        "LIVE PROOF: UNVERIFIED — browser click-through not re-proven this PR\nREMAINING: the live check",
+    },
+  ]);
+  if (liveProofUnverified.length) {
+    failures.push(`false-positive on LIVE PROOF: UNVERIFIED — blocker: ${liveProofUnverified.join(" | ")}`);
+  }
+
   // Negative: an honest UNVERIFIED with a named blocker must NOT be flagged.
   const unverified = assertDoDEvidence([
     {
@@ -324,7 +345,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 9 planted defects caught; compliant, heading-form, honest-UNVERIFIED and docs-only commits not flagged`);
+  console.log(`${LABEL} SELFTEST PASS — planted defects caught; compliant, heading-form, LIVE PROOF:UNVERIFIED, honest-UNVERIFIED and docs-only commits not flagged`);
   process.exit(0);
 }
 

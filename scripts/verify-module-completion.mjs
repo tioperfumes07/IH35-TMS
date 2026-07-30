@@ -315,6 +315,17 @@ if (isMain) {
   }
   if (WRITE_MD) {
     console.log(`${LABEL}: wrote docs/module-completion/*.md`);
+    // Same thrash class as the .md files: JSON edit without regenerating the in-app TS fails CI.
+    // --write-md is the agent/human "I touched manifests" path — keep the generated UI data in lockstep.
+    try {
+      execSync(`${process.execPath} scripts/generate-module-completion-data.mjs`, {
+        cwd: ROOT,
+        stdio: "inherit",
+      });
+    } catch {
+      console.error(`${LABEL}: FAIL — could not regenerate module-completion.ts after --write-md`);
+      process.exit(1);
+    }
     process.exit(0);
   }
   if (problems.length) {

@@ -67,6 +67,27 @@ if echo "$CHANGED_FILES" | grep -qE "apps/frontend/src/pages/(safety|maintenance
   fi
 fi
 
+# MODULE_COMPLETION_AUTOGEN (HARD — Cursor thrash class 2026-07-29)
+#
+# docs/module-completion/*.json is the source of truth. apps/frontend/src/generated/
+# module-completion.ts is DERIVED. Cursor PRs repeatedly edited the JSON (evidence lines)
+# without regenerating the TS → every build-typecheck failed verify-module-completion-ui-in-sync.
+# Claude PRs usually skipped the manifest edit or regenerated; Cursor did not.
+#
+# When any module-completion manifest is staged, regenerate the TS and stage it in the same
+# commit so the two cannot diverge. CI still fail-closes on drift (verify-step 1729).
+if echo "$CHANGED_FILES" | grep -qE '^docs/module-completion/[^/]+\.json$'; then
+  if ! command -v node >/dev/null 2>&1; then
+    echo "COMMIT BLOCKED: node required to regenerate module-completion.ts after manifest edit"
+    exit 1
+  fi
+  echo "MODULE_COMPLETION_AUTOGEN: regenerating apps/frontend/src/generated/module-completion.ts"
+  node scripts/generate-module-completion-data.mjs || exit 1
+  git add apps/frontend/src/generated/module-completion.ts
+  # Re-check after stage — refuse if still stale (generator/path bug).
+  node scripts/generate-module-completion-data.mjs --check || exit 1
+fi
+
 # Run typecheck on staged changes (existing behavior — keep)
 # This is a soft check; CI is authoritative.
 if command -v npm >/dev/null 2>&1; then
