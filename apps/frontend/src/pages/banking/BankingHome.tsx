@@ -237,10 +237,20 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     }
     pushToast("Select a bank account first, then open Bank Register.", "error");
   };
+  // Doc-18 + owner P0 2026-07-29: + Record Transfer must be reachable from Banking Home
+  // (/banking = accounts tab). Hiding it only on Transactions left the modal/API orphaned —
+  // TransfersListPage pointed at a button that never rendered on the default surface.
   const navActions = (
     <>
       <ActionButton onClick={openBankRegister}>Bank Register</ActionButton>
       <ActionButton onClick={() => navigate("/lists/accounting/chart-of-accounts")}>Chart of Accounts</ActionButton>
+      <ActionButton
+        data-testid="banking-home-record-transfer"
+        onClick={() => setTransferModalOpen(true)}
+      >
+        + Record Transfer
+      </ActionButton>
+      <ActionButton onClick={() => navigate("/banking/transfers")}>View Transfers</ActionButton>
     </>
   );
 
@@ -283,9 +293,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     ) : activeTab === "transactions" ? (
       <>
         <ActionButton onClick={() => setManualJeOpen(true)}>+ Manual JE</ActionButton>
-        <ActionButton onClick={() => setTransferModalOpen(true)}>+ Record Transfer</ActionButton>
         <ActionButton onClick={() => setCcPaymentModalOpen(true)}>+ Pay Credit Card</ActionButton>
-        <ActionButton onClick={() => navigate("/banking/transfers")}>View Transfers</ActionButton>
       </>
     ) : activeTab === "reconciliation" ? (
       <>

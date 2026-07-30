@@ -16,6 +16,7 @@ import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { formatDateUS } from "../../lib/formatDate";
+import { TransferModal } from "./TransferModal";
 
 const PAGE_SIZE = 50;
 
@@ -43,6 +44,7 @@ export function TransfersListPage() {
   const [accountId, setAccountId] = useState("");
   const [offset, setOffset] = useState(0);
   const [revokingId, setRevokingId] = useState("");
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
 
   const canRevoke = auth.user?.role === "Owner";
 
@@ -211,7 +213,13 @@ export function TransfersListPage() {
         title="Transfers"
         subtitle="Bank transfers and credit-card payments"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <ActionButton
+              data-testid="transfers-page-record-transfer"
+              onClick={() => setTransferModalOpen(true)}
+            >
+              + Record Transfer
+            </ActionButton>
             <Link to="/banking" className="text-sm text-slate-700 hover:underline">
               Back to Banking Home
             </Link>
@@ -240,14 +248,20 @@ export function TransfersListPage() {
         >
           <p className="font-semibold">No bank transfers recorded for this company in the selected filters.</p>
           <p className="mt-1">
-            Transfer workflow is not proven live until at least one transfer is recorded from Banking Home (+ Record
-            Transfer / + Pay Credit Card). An empty list is not “all clear” — it is unproven use. Inter-account moves
-            that only exist as unmatched for-review bank feed rows still need Match/Categorize on Transactions.
+            Transfer workflow is not proven live until at least one transfer is recorded via + Record Transfer (this
+            page or Banking Home) or + Pay Credit Card. An empty list is not “all clear” — it is unproven use.
+            Inter-account moves that only exist as unmatched for-review bank feed rows still need Match/Categorize on
+            Transactions.
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
-            <Link to="/banking" className="text-xs font-medium text-slate-800 underline">
-              Banking Home — Record Transfer
-            </Link>
+            <button
+              type="button"
+              className="text-xs font-medium text-slate-800 underline"
+              data-testid="transfers-empty-record-transfer"
+              onClick={() => setTransferModalOpen(true)}
+            >
+              + Record Transfer
+            </button>
             <Link to="/banking/transactions?type=uncategorized" className="text-xs font-medium text-slate-800 underline">
               Open for-review queue
             </Link>
@@ -348,6 +362,16 @@ export function TransfersListPage() {
           Next
         </ActionButton>
       </div>
+
+      <TransferModal
+        open={transferModalOpen}
+        operatingCompanyId={companyId}
+        onClose={() => setTransferModalOpen(false)}
+        onSaved={() => {
+          void queryClient.invalidateQueries({ queryKey: ["banking", "transfers", companyId] });
+          setTransferModalOpen(false);
+        }}
+      />
     </div>
   );
 }
