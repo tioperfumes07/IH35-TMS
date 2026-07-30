@@ -46,6 +46,22 @@ export const POSTING_FLAG_REQUIREMENTS = {
     "ar_control",
     "cash_clearing",
   ],
+  // ADDED 2026-07-30. These four were MISSING from this map, and the gap was not theoretical: a flag
+  // parity migration armed three of them for TRANSP, TRK and USMCA and this guard said nothing,
+  // because a flag absent from the map is a flag nobody checks. Roles read from the posters
+  // themselves, not inferred:
+  //   parts-inventory-posting/poster.service.ts:154        -> maintenance_parts_expense + cash_clearing
+  //   safety-fine-posting/poster.service.ts:232            -> civil_fines_expense + cash_clearing
+  //   insurance-claim-recovery-posting/poster.service.ts:119 -> insurance_recovery + cash_clearing
+  //   fuel/fuel-card-overage.service.ts                    -> fuel_overage_receivable
+  // Verified on prod 2026-07-30 (accounting.chart_of_accounts_roles, 112 rows, positive control
+  // cash_clearing=3 / fuel_overage_receivable=3 in the same query): the first three roles have ZERO
+  // active bindings on every entity, so those posters throw CoaRoleResolutionError the moment the
+  // flag is on. The safety-fine poster documents exactly that at its resolve site.
+  PARTS_PURCHASE_GL_POSTING_ENABLED: ["maintenance_parts_expense", "cash_clearing"],
+  SAFETY_FINE_GL_POSTING_ENABLED: ["civil_fines_expense", "cash_clearing"],
+  INSURANCE_CLAIM_RECOVERY_GL_POSTING_ENABLED: ["insurance_recovery", "cash_clearing"],
+  FUEL_CARD_OVERAGE_GL_POSTING_ENABLED: ["fuel_overage_receivable"],
 };
 
 const PUSH_FLAGS = new Set(["QBO_JE_PUSH_ENABLED", "QBO_ENTITY_PUSH_ENABLED"]);
