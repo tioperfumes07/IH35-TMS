@@ -125,6 +125,16 @@ export function CargoClaimIntakeSurface({
 
 
   const reasons = reasonsQuery.data?.rows ?? [];
+
+  const reasonOptions = useMemo(
+    () =>
+      reasons.map((r) => ({
+        value: String(r.reason_code),
+        label: String(r.display_name),
+        type: String(r.reason_code),
+      })),
+    [reasons]
+  );
   const customers = customersQuery.data?.customers ?? [];
   const customerOptions: ReferenceOption[] = customers.map((c) => ({
     value: c.id,
@@ -365,19 +375,28 @@ export function CargoClaimIntakeSurface({
             </label>
             <label className="block">
               <span className={labelSpan}>Claim reason</span>
-              <select
-                className={inputClass}
-                data-testid={`${pageTestId}-reason`}
-                value={form.claimReasonCode}
-                onChange={(e) => set({ claimReasonCode: e.target.value })}
-              >
-                <option value="">— Select reason —</option>
-                {reasons.map((r) => (
-                  <option key={r.id} value={r.reason_code}>
-                    {r.display_name}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-1" data-testid={`${pageTestId}-reason`}>
+                {/*
+                  LST-PICKER-01: ReferenceSelect first-row create → POST catalogs.cargo_claim_reasons.
+                  Options keyed by reason_code (createdValueField=code).
+                */}
+                <ReferenceSelect
+                  value={form.claimReasonCode || null}
+                  onChange={(v) => set({ claimReasonCode: v ?? "" })}
+                  options={reasonOptions}
+                  createKind="cargo_claim_reason"
+                  operatingCompanyId={operatingCompanyId}
+                  createdValueField="code"
+                  placeholder={reasonsQuery.isLoading ? "Loading reasons…" : "Select reason"}
+                  loading={reasonsQuery.isLoading}
+                  disabled={!operatingCompanyId || reasonsQuery.isLoading}
+                  onOptionCreated={() => {
+                    void queryClient.invalidateQueries({
+                      queryKey: ["catalogs", "cargo-claim-reasons", operatingCompanyId],
+                    });
+                  }}
+                />
+              </div>
             </label>
             <label className="block">
               <span className={labelSpan}>Claimed amount</span>

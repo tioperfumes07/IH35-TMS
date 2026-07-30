@@ -623,6 +623,48 @@ export const CATALOG_PICKER_CONFIGS = {
     },
   },
 
+  // Cargo claim reasons — CargoClaimIntakeSurface used a bare <select> with NO inline create.
+  // Options keyed by reason_code (createdValueField=code); claim stores claim_reason_code.
+  cargo_claim_reason: {
+    key: "cargo_claim_reason",
+    label: "claim reason",
+    backend: "catalog",
+    readTable: "catalogs.cargo_claim_reasons",
+    writeTable: "catalogs.cargo_claim_reasons",
+    readEndpoint: "/api/v1/catalogs/safety/cargo-claim-reasons",
+    writeEndpoint: "/api/v1/catalogs/safety/cargo-claim-reasons",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence:
+      "apps/backend/src/catalogs/safety/cargo-claim-reasons.routes.ts SELECT+INSERT catalogs.cargo_claim_reasons; CargoClaimIntakeSurface catalogs-safety list consumer",
+    fields: CATALOG_FIELDS,
+    create: async (operatingCompanyId, values) => {
+      const displayName = values.display_name.trim();
+      const reasonCode = deriveCatalogCode(displayName, values.code);
+      const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+      const created = await apiRequest<{
+        id: string;
+        reason_code?: string;
+        display_name?: string;
+      }>(`/api/v1/catalogs/safety/cargo-claim-reasons?${query.toString()}`, {
+        method: "POST",
+        body: {
+          reason_code: reasonCode,
+          display_name: displayName,
+          description: values.description?.trim() || null,
+          claim_category: "other",
+          is_active: true,
+          sort_order: 0,
+        },
+      });
+      return {
+        id: String(created.id),
+        label: created.display_name ?? displayName,
+        code: created.reason_code ?? reasonCode,
+      };
+    },
+  },
+
   // Dispatcher error reasons — UserDetail previously toasted "Add reason in catalog" (fake +Add).
   // Write path: generic factory POST /api/v1/catalogs/dispatch/dispatcher-error-reasons (entityScoped).
   // label column (not display_name); event_type+severity required — passed via createExtras from the form.
