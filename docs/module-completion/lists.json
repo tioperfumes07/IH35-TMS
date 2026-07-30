@@ -986,8 +986,10 @@
         "VERIFY-3"
       ],
       "spec": "Rule 10 (ledgered != effective) + Rule 13 build-and-HOLD",
-      "status": "FAIL",
-      "evidence": "VERIFIED FAIL on origin/main 2026-07-25, FIXED on the open PR #3515. On main .held-migrations.json has 112 entries with 22 lacking applied_on_prod, but only 12 were ever genuinely unapplied \u2014 so 10 entries report unapplied while live on prod. Guard 1361 passes but is structurally blind: 9 of the 10 are absent from the pinned oracle prod-migration-ledger-checksums.json and most fall past its window max, so it reports 'unassertable' rather than failing. Branch hold/held-registry-applied-held-split-2026-07-25 (#3515) is truthful \u2014 applied_held 111 + superseded 1 + held 0, snapshot regenerated 362->374, adding verify-steps 1483 and 1487. Closes when #3515 merges.",
+      "status": "PASS",
+      "evidence": "CLOSED 2026-07-29: #3515 merged (applied_held split). LIVE registry on origin/main tip: held=13 (allowlisted unapplied) · applied_held=156 all applied_on_prod:true · superseded=0. Companions verify-held-registry-ledger-parity + verify-held-registry-integrity PASS. Guard verify-lst-orph02-held-registry-truth (step 1776).",
+      "pr": "#3515",
+      "live_proof": "2026-07-29 registry held=13 applied_held=156; companions green; #3515 merged 2026-07-25",
       "build_standard": {
         "standard_version": "2026-07-25",
         "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) \u2014 source .cursor/rule wins on conflict",
