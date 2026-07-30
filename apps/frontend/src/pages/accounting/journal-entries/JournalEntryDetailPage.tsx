@@ -276,6 +276,18 @@ export function JournalEntryDetailPage() {
           <span className="text-xs font-semibold text-gray-600">QBO Link</span>
           <span className="text-sm text-gray-900">{entry.qbo_journal_entry_id || "Not linked"}</span>
         </DataPanelRow>
+        {entry.matched_bank_transaction_id ? (
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Bank transaction</span>
+            <span className="text-sm text-gray-900" data-testid="journal-entry-matched-bank">
+              <EntityLink
+                kind="bank_transaction"
+                id={entry.matched_bank_transaction_id}
+                label={entry.matched_bank_transaction_id.slice(0, 8)}
+              />
+            </span>
+          </DataPanelRow>
+        ) : null}
       </DataPanel>
 
       <DataPanel title="Source links">

@@ -1097,6 +1097,8 @@ export type JournalEntry = {
   qbo_sync_pending: boolean;
   debit_total_cents?: number;
   credit_total_cents?: number;
+  /** ACCT-F18 — bank txn stamped via matched_journal_entry_id (Law §9 reverse). */
+  matched_bank_transaction_id?: string | null;
   postings?: JournalEntryPosting[];
   created_at: string;
   updated_at: string;
