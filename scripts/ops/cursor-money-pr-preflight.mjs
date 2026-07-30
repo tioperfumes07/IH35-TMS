@@ -82,7 +82,7 @@ if (touchesHot && existsSync(resolve(ROOT, "docs/module-completion/accounting.js
 // Parallel open-PR warning via gh (best-effort)
 if (touchesHot) {
   const prs = sh(
-    `gh pr list --base main --state open --limit 50 --json number,files,headRefName --jq '.[]|{n:.number,branch:.headRefName,files:[.files[].path]}'`,
+    `gh pr list --base main --state open --limit 50 --json number,files,headRefName,isDraft --jq '.[]|select(.isDraft|not)|{n:.number,branch:.headRefName,files:[.files[].path]}'`,
   );
   if (typeof prs === "string" && prs) {
     // gh --jq with multiple objects prints NDJSON sometimes; try parse array
@@ -104,9 +104,9 @@ if (touchesHot) {
     });
     if (others.length) {
       problems.push(
-        `Rule 26: other open PR(s) already edit scoreboard hotfiles: ${others
+        `Rule 26: other ready PR(s) already edit scoreboard hotfiles: ${others
           .map((p) => `#${p.n}`)
-          .join(", ")} — serialize (merge/close those first)`,
+          .join(", ")} — serialize (merge/close those first; drafts may wait)`,
       );
     }
   }

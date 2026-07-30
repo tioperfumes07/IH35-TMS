@@ -7,7 +7,8 @@ guard hot-file thrash.
 
 ## Law (non-negotiable)
 
-At most **ONE open Cursor PR** may edit any of these hotfiles:
+At most **ONE ready-for-review Cursor PR** may edit any of these hotfiles
+(drafts may wait in the serialize queue; they do not block the active PR):
 
 | Hotfile |
 |---|
@@ -30,7 +31,7 @@ At most **ONE open Cursor PR** may edit any of these hotfiles:
 ## CI
 
 `scripts/verify-no-parallel-scoreboard-prs.mjs` (verify-step **1428**) fails when the current PR
-diff edits a scoreboard hotfile **and** another open PR against `main` also edits one
+diff edits a scoreboard hotfile **and** another **non-draft** open PR against `main` also edits one
 (when `GH_TOKEN`/`GITHUB_TOKEN` is available). Local preflight covers the same intent without token.
 
 ## Tie-breakers
