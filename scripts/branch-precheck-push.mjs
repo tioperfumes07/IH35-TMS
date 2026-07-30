@@ -57,6 +57,83 @@ export function behindOriginMainCount(root) {
   return Number(runGitOrThrow(["rev-list", "--count", "HEAD..origin/main"], { cwd: root }) || "0");
 }
 
+// Paths where correctness depends on GLOBAL allocation, not on file identity: two branches can touch
+// two DIFFERENT migration files and still collide, because the NUMBER is the shared resource, not the
+// filename. Overlap-by-filename cannot see that, so these are coupled by prefix instead.
+//
+// db/migrations/ is coupled UNCONDITIONALLY and deliberately: the rule is "strictly above main's
+// current max", so ANY migration landing on main invalidates a branch's number even when the two
+// numbers differ. There is no safe narrowing here.
+//
+// package-lock.json is coupled because a lockfile is one resolved graph, not a set of independent
+// lines.
+export const COUPLED_ALLOCATION_PREFIXES = ["db/migrations/", "package-lock.json"];
+
+// scripts/verify-steps/ is DIFFERENT, and treating it like db/migrations/ was wrong. Verify-step
+// numbers are not "above the max" — they are claimed from a banded namespace (Claude odd, Cursor even)
+// and recorded in CLAIMED-NUMBERS.json. Two branches adding steps 1795 and 1806 do not collide in any
+// way; only two branches claiming the SAME number do. Coupling the whole directory made every guard PR
+// block every other guard PR — the N^2 treadmill relocated from "any file" to "this directory", which
+// is worse, because essentially every quality PR in this repo adds a guard.
+//
+// So: conflict on a step number only when the two sides claim the SAME number. The filenames carry the
+// claim (`scripts/verify-steps/1795-*.mjs`), so the file list is the claim list.
+const STEP_DIR = "scripts/verify-steps/";
+const CLAIMED_REGISTRY = "scripts/verify-steps/CLAIMED-NUMBERS.json";
+
+export function stepNumbersIn(files) {
+  const out = new Set();
+  for (const f of files) {
+    const m = /^scripts\/verify-steps\/(\d+)-/.exec(f);
+    if (m) out.add(m[1]);
+  }
+  return out;
+}
+
+// The freshness decision, pure and therefore testable. Kept identical in SPIRIT to
+// scripts/verify-branch-fresh.mjs (CI): behind is fine, behind-and-overlapping is not.
+export function freshnessVerdict({ behind, mainFiles, branchFiles }) {
+  if (!(behind > 0)) return { ok: true, reason: "not behind" };
+
+  const mainSteps = stepNumbersIn(mainFiles);
+  const branchSteps = stepNumbersIn(branchFiles);
+  const stepCollisions = [...branchSteps].filter((n) => mainSteps.has(n));
+
+  // CLAIMED-NUMBERS.json is an append-only union registry. Both sides touching it is the NORMAL case
+  // for any two guard PRs and is not a conflict on its own — the merge driver already treats only the
+  // `claimed` subtree as strict, and only a same-key clash inside it is real. The observable proxy for
+  // a same-key clash is a step-number collision, so the registry is excluded from plain file overlap
+  // and judged by stepCollisions instead. If the numbers are disjoint, the registry union-merges.
+  const branchSet = new Set(branchFiles);
+  const overlap = mainFiles.filter(
+    (f) => branchSet.has(f) && f !== CLAIMED_REGISTRY && !(f.startsWith(STEP_DIR) && stepNumbersIn([f]).size > 0)
+  );
+
+  const coupled = COUPLED_ALLOCATION_PREFIXES.filter(
+    (prefix) => mainFiles.some((f) => f.startsWith(prefix)) && branchFiles.some((f) => f.startsWith(prefix))
+  );
+
+  if (overlap.length === 0 && coupled.length === 0 && stepCollisions.length === 0) {
+    return { ok: true, reason: `behind ${behind} but no overlap with main` };
+  }
+
+  const why = [];
+  if (overlap.length) why.push(`shares ${overlap.length} changed file(s) with main: ${overlap.slice(0, 5).join(", ")}`);
+  for (const c of coupled) why.push(`both touch ${c} (globally allocated numbering)`);
+  if (stepCollisions.length) why.push(`both claim verify-step number(s) ${stepCollisions.join(", ")}`);
+
+  return {
+    ok: false,
+    overlap,
+    coupled,
+    stepCollisions,
+    reason:
+      `local branch is ${behind} commit(s) behind origin/main AND overlaps it — ${why.join("; ")}. ` +
+      `Rebuild: \`git cherry-pick <sha>\` onto a fresh branch from origin/main, or ` +
+      `\`npm run branch:rebuild-linear -- --source <sha> --message "…"\`.`,
+  };
+}
+
 function runStep(command, label, root, env = process.env) {
   console.log(`[branch:precheck-push] RUN ${label}: ${command}`);
   const res = spawnSync(command, { cwd: root, shell: true, encoding: "utf8", env });
@@ -321,15 +398,35 @@ export function runPrecheckPush(options = {}) {
       };
     }
   }
+  // FRESHNESS BY OVERLAP, NOT BY DISTANCE — aligned with scripts/verify-branch-fresh.mjs (CI).
+  //
+  // This gate used to fail whenever the branch was ANY commits behind origin/main. CI stopped doing
+  // that (the overlap rule, docs/specs/BRANCH-TOOLING.md §N), but this local gate did not, so the two
+  // enforcement points disagreed: CI would happily merge a behind-but-non-overlapping branch that
+  // this hook refused to even push. With a busy queue that means a rebuild after every unrelated
+  // merge — the exact N^2 treadmill the overlap rule was written to kill. Measured on 2026-07-29: two
+  // full rebuilds of branches whose file sets did not intersect main's changes at all.
+  //
+  // Being behind is fine. Being behind ON THE SAME FILES is not, and neither is touching a path where
+  // the allocation is global (migration numbers, verify-step numbers, the lockfile).
   const behind = behindOriginMainCount(root);
   if (behind > 0) {
-    return {
-      ok: false,
-      category: GATE_RESULT_CATEGORIES.FRESHNESS,
-      reason:
-        `local branch is ${behind} commit(s) behind origin/main — prefer \`git cherry-pick <sha>\` onto a fresh branch from origin/main; or \`npm run branch:rebuild-linear -- --source <sha> --message "…"\` (commit-own patch only; never two-dot vs current main)`,
-      step: "branch-freshness",
-    };
+    const mergeBase = runGitOrThrow(["merge-base", "HEAD", "origin/main"], { cwd: root });
+    const mainFiles = runGitOrThrow(["diff", "--name-only", `${mergeBase}..origin/main`], { cwd: root })
+      .split("\n")
+      .filter(Boolean);
+    const branchFiles = runGitOrThrow(["diff", "--name-only", `${mergeBase}..HEAD`], { cwd: root })
+      .split("\n")
+      .filter(Boolean);
+    const verdict = freshnessVerdict({ behind, mainFiles, branchFiles });
+    if (!verdict.ok) {
+      return {
+        ok: false,
+        category: GATE_RESULT_CATEGORIES.FRESHNESS,
+        reason: verdict.reason,
+        step: "branch-freshness",
+      };
+    }
   }
 
   if (!env.GITHUB_BASE_SHA && !env.BRANCH_FRESH_BASE_SHA) {
