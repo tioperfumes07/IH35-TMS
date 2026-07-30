@@ -1,0 +1,38 @@
+# RULE 26 — SERIALIZE SCOREBOARD HOTFILES (2026-07-30)
+
+**Why:** Parallel Cursor accounting/banking PRs each edited `docs/module-completion/accounting.json`
+(and the ACCT surface matrix / CLAIMED-NUMBERS). Every merge forced a rebase treadmill; overlay
+rebuilds then clobbered `apps/**` files from main (TS breakages). Same defect class as Rule 17
+guard hot-file thrash.
+
+## Law (non-negotiable)
+
+At most **ONE open Cursor PR** may edit any of these hotfiles:
+
+| Hotfile |
+|---|
+| `docs/module-completion/accounting.json` |
+| `docs/module-completion/banking.json` |
+| `docs/trackers/ACCT-SURF-DOD-SWEEP-MATRIX-2026-07-25.json` |
+| `scripts/verify-steps/CLAIMED-NUMBERS.json` |
+
+## Required workflow
+
+1. **Before opening** a PR that touches a hotfile: `gh pr list` — if another open PR already
+   touches any hotfile above, **do not open**. Finish/merge that PR first (or drop scoreboard
+   from the new PR and land the leaf in a follow-up after merge).
+2. **Before push:** run `node scripts/ops/cursor-money-pr-preflight.mjs`
+   (FINDING must be `ACCT-F##` / `BANK-F##` / `LST-F##`, §7 palette, matrix M sync, theater keys).
+3. **Never** rebuild a branch by `git checkout <old-tip> -- apps/frontend/src/api/accounting.ts`
+   (or other shared money files) onto a newer `main` — that clobbers later merged exports.
+4. Feature code PRs that do **not** touch the hotfile list may still run in parallel.
+
+## CI
+
+`scripts/verify-no-parallel-scoreboard-prs.mjs` (verify-step **1428**) fails when the current PR
+diff edits a scoreboard hotfile **and** another open PR against `main` also edits one
+(when `GH_TOKEN`/`GITHUB_TOKEN` is available). Local preflight covers the same intent without token.
+
+## Tie-breakers
+
+Parallel volume < one green merge · rebase thrash < serialize · overlay rebuild < cherry-pick named files.
