@@ -1,0 +1,40 @@
+{
+  "_why": "SINGLE SOURCE OF TRUTH for which CoA roles each money-posting feature flag needs. Read by BOTH the CI guard (scripts/verify-posting-flags-require-bound-accounts.mjs) and the runtime readiness endpoint (apps/backend/src/accounting/coa-roles/routes.ts). Two copies drift — that is exactly how the local and CI branch-freshness gates ended up disagreeing (TOOL-F01, 2026-07-30). One file, two consumers.",
+  "_rule": "A flag ABSENT from this map is a flag NOBODY checks. On 2026-07-30 this map held only 6 flags, and a migration armed three posters whose roles have zero bindings on prod — every one of them throws CoaRoleResolutionError on first use. Add the flag here the moment a poster is written.",
+  "_roles_are_read_from_the_poster": "Each role list is taken from the poster's actual resolveRoleAccount() call sites, not inferred from names. Grepping for role-shaped strings produced WRONG names once already.",
+  "requirements": {
+    "QBO_AR_PAYMENTS_PROJECTION_ENABLED": ["ar_control"],
+    "QBO_EXPENSES_PROJECTION_ENABLED": ["ap_control", "expense_default"],
+    "PREPAID_EXPENSES_POST_ENABLED": ["prepaid_asset_default"],
+    "FINANCE_HUB_AMORTIZATION_POST_ENABLED": ["amortization_expense_default"],
+    "FIXED_ASSET_AUTOPOST_ENABLED": ["depr_expense_default", "accum_depr_default"],
+    "FACTORING_GL_POSTING_ENABLED": [
+      "factoring_advance_liability",
+      "factoring_recoursed_ar",
+      "factor_reserve_held",
+      "factor_fee_expense",
+      "factor_wire_fee",
+      "default_interest_expense",
+      "ar_control",
+      "cash_clearing"
+    ],
+    "PARTS_PURCHASE_GL_POSTING_ENABLED": ["maintenance_parts_expense", "cash_clearing"],
+    "SAFETY_FINE_GL_POSTING_ENABLED": ["civil_fines_expense", "cash_clearing"],
+    "INSURANCE_CLAIM_RECOVERY_GL_POSTING_ENABLED": ["insurance_recovery", "cash_clearing"],
+    "FUEL_CARD_OVERAGE_GL_POSTING_ENABLED": ["fuel_overage_receivable"],
+    "REVENUE_RECOGNITION_POST_ENABLED": ["unbilled_revenue", "revenue_default", "ar_control"]
+  },
+  "labels": {
+    "QBO_AR_PAYMENTS_PROJECTION_ENABLED": "A/R payment projection",
+    "QBO_EXPENSES_PROJECTION_ENABLED": "Expense projection",
+    "PREPAID_EXPENSES_POST_ENABLED": "Prepaid expense posting",
+    "FINANCE_HUB_AMORTIZATION_POST_ENABLED": "Amortization posting",
+    "FIXED_ASSET_AUTOPOST_ENABLED": "Fixed-asset depreciation autopost",
+    "FACTORING_GL_POSTING_ENABLED": "Factoring GL posting",
+    "PARTS_PURCHASE_GL_POSTING_ENABLED": "Parts purchase GL posting",
+    "SAFETY_FINE_GL_POSTING_ENABLED": "Safety fine GL posting",
+    "INSURANCE_CLAIM_RECOVERY_GL_POSTING_ENABLED": "Insurance claim recovery posting",
+    "FUEL_CARD_OVERAGE_GL_POSTING_ENABLED": "Fuel card overage GL posting",
+    "REVENUE_RECOGNITION_POST_ENABLED": "Revenue recognition posting"
+  }
+}

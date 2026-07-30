@@ -26,43 +26,21 @@ const ROOT = process.cwd();
 const MIGRATIONS = join(ROOT, "db/migrations");
 const LABEL = "verify-posting-flags-require-bound-accounts";
 
-/** Posting flags that move money / project ledger. Push flags are excluded (must stay OFF). */
-export const POSTING_FLAG_REQUIREMENTS = {
-  QBO_AR_PAYMENTS_PROJECTION_ENABLED: ["ar_control"],
-  QBO_EXPENSES_PROJECTION_ENABLED: ["ap_control", "expense_default"],
-  PREPAID_EXPENSES_POST_ENABLED: ["prepaid_asset_default"],
-  FINANCE_HUB_AMORTIZATION_POST_ENABLED: ["amortization_expense_default"],
-  // Depreciation JE has two legs: expense DEBIT + accumulated-depreciation CREDIT.
-  // Arming autopost with only the expense side bound yields an unbalanced/blocked JE.
-  FIXED_ASSET_AUTOPOST_ENABLED: ["depr_expense_default", "accum_depr_default"],
-  // Every role the factoring poster puts on a leg (advance, reserve release, chargeback, interest).
-  FACTORING_GL_POSTING_ENABLED: [
-    "factoring_advance_liability",
-    "factoring_recoursed_ar",
-    "factor_reserve_held",
-    "factor_fee_expense",
-    "factor_wire_fee",
-    "default_interest_expense",
-    "ar_control",
-    "cash_clearing",
-  ],
-  // ADDED 2026-07-30. These four were MISSING from this map, and the gap was not theoretical: a flag
-  // parity migration armed three of them for TRANSP, TRK and USMCA and this guard said nothing,
-  // because a flag absent from the map is a flag nobody checks. Roles read from the posters
-  // themselves, not inferred:
-  //   parts-inventory-posting/poster.service.ts:154        -> maintenance_parts_expense + cash_clearing
-  //   safety-fine-posting/poster.service.ts:232            -> civil_fines_expense + cash_clearing
-  //   insurance-claim-recovery-posting/poster.service.ts:119 -> insurance_recovery + cash_clearing
-  //   fuel/fuel-card-overage.service.ts                    -> fuel_overage_receivable
-  // Verified on prod 2026-07-30 (accounting.chart_of_accounts_roles, 112 rows, positive control
-  // cash_clearing=3 / fuel_overage_receivable=3 in the same query): the first three roles have ZERO
-  // active bindings on every entity, so those posters throw CoaRoleResolutionError the moment the
-  // flag is on. The safety-fine poster documents exactly that at its resolve site.
-  PARTS_PURCHASE_GL_POSTING_ENABLED: ["maintenance_parts_expense", "cash_clearing"],
-  SAFETY_FINE_GL_POSTING_ENABLED: ["civil_fines_expense", "cash_clearing"],
-  INSURANCE_CLAIM_RECOVERY_GL_POSTING_ENABLED: ["insurance_recovery", "cash_clearing"],
-  FUEL_CARD_OVERAGE_GL_POSTING_ENABLED: ["fuel_overage_receivable"],
-};
+/**
+ * Posting flags that move money / project ledger. Push flags are excluded (must stay OFF).
+ *
+ * SOURCE OF TRUTH IS config/posting-flag-requirements.json — read, not duplicated. The runtime
+ * readiness endpoint (apps/backend/src/accounting/coa-roles/routes.ts) reads the SAME file, so the
+ * guard and the running system can never disagree about what a flag needs. A second copy is how the
+ * local and CI branch-freshness gates drifted into contradicting each other (TOOL-F01, 2026-07-30);
+ * the same mistake here would mean CI passing a flag the app cannot actually serve.
+ *
+ * Roles are taken from each poster's actual resolveRoleAccount() call sites, never inferred from
+ * names — grepping for role-shaped strings produced WRONG names once already.
+ */
+export const POSTING_FLAG_REQUIREMENTS = JSON.parse(
+  readFileSync(join(ROOT, "config/posting-flag-requirements.json"), "utf8")
+).requirements;
 
 const PUSH_FLAGS = new Set(["QBO_JE_PUSH_ENABLED", "QBO_ENTITY_PUSH_ENABLED"]);
 

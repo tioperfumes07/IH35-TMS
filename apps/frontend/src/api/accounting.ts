@@ -1527,12 +1527,28 @@ export function upsertCoaRole(
   });
 }
 
+export type PostingFeatureReadiness = {
+  flag_key: string;
+  label: string;
+  required_roles: string[];
+  missing_roles: string[];
+  ready: boolean;
+  flag_enabled: boolean;
+  /** Flag is ON but a required role is unbound: the poster throws on first use. */
+  armed_but_blocked: boolean;
+};
+
 export function validateCoaRoles(operatingCompanyId: string) {
   return apiRequest<{
     required_roles: CoaRole[];
     mapped_roles: CoaRole[];
     missing_roles: CoaRole[];
     valid: boolean;
+    // `valid` covers REQUIRED roles only. Posting features can be blocked by roles classed OPTIONAL,
+    // which is how this screen reported all-green while three posting features were dead.
+    posting_feature_readiness?: PostingFeatureReadiness[];
+    posting_features_blocked?: number;
+    posting_features_armed_but_blocked?: number;
   }>(withCompany("/api/v1/accounting/coa-roles/validate", operatingCompanyId));
 }
 
