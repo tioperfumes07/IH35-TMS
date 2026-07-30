@@ -6571,6 +6571,22 @@
       "updated_at",
       "uuid"
     ],
+    "mdata.asset_leases": [
+      "commenced_on",
+      "created_at",
+      "created_by_user_id",
+      "deactivated_at",
+      "ended_on",
+      "equipment_id",
+      "id",
+      "is_active",
+      "lessee_company_id",
+      "lessor_company_id",
+      "operating_company_id",
+      "unit_id",
+      "updated_at",
+      "updated_by_user_id"
+    ],
     "mdata.asset_status_history": [
       "asset_id",
       "changed_at",
@@ -7132,6 +7148,47 @@
       "to_driver_id",
       "transfer_location",
       "updated_at"
+    ],
+    "mdata.lease_contract_groups": [
+      "allocation_method",
+      "asset_group_label",
+      "created_at",
+      "group_total_cents",
+      "id",
+      "lease_contract_id",
+      "operating_company_id",
+      "updated_at"
+    ],
+    "mdata.lease_contract_units": [
+      "created_at",
+      "deactivated_at",
+      "equipment_id",
+      "id",
+      "is_active",
+      "lease_contract_group_id",
+      "lease_contract_id",
+      "monthly_amount_cents",
+      "operating_company_id",
+      "unit_id",
+      "updated_at"
+    ],
+    "mdata.lease_contracts": [
+      "asc842_classification",
+      "commenced_on",
+      "contract_format",
+      "contract_instance_id",
+      "created_at",
+      "created_by_user_id",
+      "deactivated_at",
+      "ended_on",
+      "id",
+      "is_active",
+      "lessee_company_id",
+      "lessor_company_id",
+      "operating_company_id",
+      "status",
+      "updated_at",
+      "updated_by_user_id"
     ],
     "mdata.load_stops": [
       "actual_arrival_at",

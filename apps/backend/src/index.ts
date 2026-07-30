@@ -352,6 +352,7 @@ import { registerApPaymentApplicationRoutes } from "./ap/payment-application.rou
 import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes.js";
 import { registerOcrRoutes } from "./ocr/ocr.routes.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
+import { registerLeaseContractRoutes } from "./fleet/lease-contracts.routes.js";
 import { registerLegalTemplateRoutes } from "./legal/templates.routes.js";
 import { registerLegalContractRoutes } from "./legal/contracts.routes.js";
 import { registerLegalSignRoutes } from "./legal/sign.routes.js";
@@ -1089,6 +1090,9 @@ async function main() {
   await registerFinanceHubRoutes(app);
   await registerApPaymentApplicationRoutes(app);
   await registerCompanyRoutes(app);
+  // LEASE-02: explicit mount. A fastify-plugin default export alone is not mounted here, so the
+  // route module would exist and answer 404 — verify-route-manifest-parity flagged exactly that.
+  await registerLeaseContractRoutes(app);
   await registerLegalTemplateRoutes(app);
   await registerLegalContractRoutes(app);
   await registerLegalSignRoutes(app);

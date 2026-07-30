@@ -1,5 +1,5 @@
 {
-  "generated_note": "Prod relation snapshot (read-only) \u2014 canonical set for the phantom-relation CI guard. Regenerate via scripts/gen-canonical-relations.mjs after schema changes. GATED prod access (CLAUDE.md \u00a71.5). | +catalogs.account_merge_records (ACCT-R-03 Neon-applied 2026-07-27; phantom debt cleared 2026-07-28) | +mdata.qbo_vendor_credits (ACCT-F47 mirror; shipping 202610171200) | +mdata.qbo_ar_invoices (ACCT-PAYAPPS-01; shipping 202610191200) | +accounting.load_revenue_recognition_postings (DISP-01 latch; Neon-proven 2026-07-30)",
+  "generated_note": "Prod relation snapshot (read-only) \u2014 canonical set for the phantom-relation CI guard. Regenerate via scripts/gen-canonical-relations.mjs after schema changes. GATED prod access (CLAUDE.md \u00a71.5). | +catalogs.account_merge_records (ACCT-R-03 Neon-applied 2026-07-27; phantom debt cleared 2026-07-28) | +mdata.qbo_vendor_credits (ACCT-F47 mirror; shipping 202610171200) | +mdata.qbo_ar_invoices (ACCT-PAYAPPS-01; shipping 202610191200) | +accounting.load_revenue_recognition_postings (DISP-01 latch; Neon-proven 2026-07-30) | +mdata.asset_leases, +mdata.lease_contracts, +mdata.lease_contract_groups, +mdata.lease_contract_units (LEASE-01/02; shipping 202610300000 and 202610310000)",
   "count": 729,
   "relations": [
     "_system._schema_migrations",
@@ -441,6 +441,7 @@
     "master_data.customer_terms_history",
     "master_data.unit_permits",
     "master_data.unit_toll_tags",
+    "mdata.asset_leases",
     "mdata.asset_status_history",
     "mdata.assets",
     "mdata.customer_contacts",
@@ -463,6 +464,9 @@
     "mdata.equipment_log",
     "mdata.equipment_plates",
     "mdata.equipment_transfers",
+    "mdata.lease_contract_groups",
+    "mdata.lease_contract_units",
+    "mdata.lease_contracts",
     "mdata.load_stops",
     "mdata.loads",
     "mdata.location_contacts",
