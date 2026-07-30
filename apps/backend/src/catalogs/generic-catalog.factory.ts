@@ -10,7 +10,16 @@ import {
   processCatalogImportJob,
   type CatalogImportConfig,
 } from "./excel-uploader.js";
-import { companyQuerySchema, currentAuthUser, idParamSchema, listQuerySchema, validationError } from "./fleet/shared.js";
+import {
+  companyQuerySchema,
+  companyScopedCompanyQuerySchema,
+  companyScopedListQuerySchema,
+  currentAuthUser,
+  idParamSchema,
+  listQuerySchema,
+  validationError,
+  withCompanyScope,
+} from "./fleet/shared.js";
 
 export type GenericCatalogConfig = {
   catalogName: string;
@@ -26,6 +35,13 @@ export type GenericCatalogConfig = {
   softDeleteColumn: string;
   codeRegex?: RegExp;
   readOnly?: boolean;
+  /**
+   * When true, every list/create/update requires operating_company_id, runs under withCompanyScope
+   * (membership + app.operating_company_id GUC), and CREATE inserts operating_company_id.
+   * Required for FORCE-RLS per-entity catalogs — without it INSERTs omit the NOT NULL column and
+   * SELECTs return 0 under company_scope.
+   */
+  entityScoped?: boolean;
   /**
    * Physical column that holds the catalog's CODE, when it is not literally `code`.
    * catalogs.labor_rates uses rate_code; catalogs.maintenance_part_locations uses location_code.
@@ -135,13 +151,17 @@ export function createCatalogRoutes(
       app.get(basePath, async (req, reply) => {
         const authUser = currentAuthUser(req, reply);
         if (!authUser) return;
-        const parsed = listQuerySchema.safeParse(req.query ?? {});
+        const parsed = (config.entityScoped ? companyScopedListQuerySchema : listQuerySchema).safeParse(req.query ?? {});
         if (!parsed.success) return validationError(reply, parsed.error);
         const q = parsed.data;
 
-        const payload = await withCurrentUser(authUser.uuid, async (client) => {
+        const runList = async (client: any) => {
           const values: unknown[] = [];
           const where: string[] = [];
+          if (config.entityScoped) {
+            values.push(q.operating_company_id);
+            where.push(`t.operating_company_id = $${values.length}`);
+          }
           if (q.is_active === "true") where.push(`t.${config.softDeleteColumn} = true AND t.deactivated_at IS NULL`);
           if (q.is_active === "false") where.push(`(t.${config.softDeleteColumn} = false OR t.deactivated_at IS NOT NULL)`);
           if (q.search && config.searchableColumns.length > 0) {
@@ -171,9 +191,12 @@ export function createCatalogRoutes(
             values
           );
           return { rows: rowsRes.rows, total: Number((countRes.rows[0] as { total?: string } | undefined)?.total ?? 0) };
-        });
+        };
 
-        return payload;
+        if (config.entityScoped) {
+          return withCompanyScope(authUser.uuid, q.operating_company_id as string, runList);
+        }
+        return withCurrentUser(authUser.uuid, runList);
       });
 
       app.post(basePath, async (req, reply) => {
@@ -181,15 +204,22 @@ export function createCatalogRoutes(
         if (!authUser) return;
         if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
         if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
-        const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+        const parsedQuery = (config.entityScoped ? companyScopedCompanyQuerySchema : companyQuerySchema).safeParse(
+          req.query ?? {}
+        );
         if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
         const parsedBody = createBodySchema.safeParse(req.body ?? {});
         if (!parsedBody.success) return validationError(reply, parsedBody.error);
         const body = parsedBody.data;
+        const operatingCompanyId = parsedQuery.data.operating_company_id as string | undefined;
 
-        const created = await withCurrentUser(authUser.uuid, async (client) => {
+        const runCreate = async (client: any) => {
           if ("code" in body && body.code) {
-            const conflict = await client.query(`SELECT id FROM catalogs.${config.tableName} WHERE code = $1 LIMIT 1`, [body.code]);
+            const conflictSql = config.entityScoped
+              ? `SELECT id FROM catalogs.${config.tableName} WHERE code = $1 AND operating_company_id = $2 LIMIT 1`
+              : `SELECT id FROM catalogs.${config.tableName} WHERE code = $1 LIMIT 1`;
+            const conflictVals = config.entityScoped ? [body.code, operatingCompanyId] : [body.code];
+            const conflict = await client.query(conflictSql, conflictVals);
             if (conflict.rows.length > 0) return { error: `catalog_${config.tableName}_code_conflict` as const };
           }
 
@@ -197,6 +227,12 @@ export function createCatalogRoutes(
           const insertValues: unknown[] = [authUser.uuid, authUser.uuid];
           const placeholders = ["$1", "$2"];
           let paramIndex = 3;
+          if (config.entityScoped) {
+            insertColumns.push("operating_company_id");
+            insertValues.push(operatingCompanyId);
+            placeholders.push(`$${paramIndex}`);
+            paramIndex += 1;
+          }
           for (const column of config.allowedColumns) {
             if (!(column in body)) continue;
             insertColumns.push(dbColumnForApiColumn(column, config));
@@ -218,9 +254,14 @@ export function createCatalogRoutes(
             resource_id: row.id,
             resource_type: `catalogs.${config.tableName}`,
             catalog_display_name: config.displayName,
+            ...(operatingCompanyId ? { operating_company_id: operatingCompanyId } : {}),
           });
           return { row };
-        });
+        };
+
+        const created = config.entityScoped
+          ? await withCompanyScope(authUser.uuid, operatingCompanyId as string, runCreate)
+          : await withCurrentUser(authUser.uuid, runCreate);
 
         if ("error" in created) return reply.code(409).send({ error: created.error });
         return reply.code(201).send(created.row);

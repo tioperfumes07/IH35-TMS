@@ -17,6 +17,7 @@ import { listCustomers, listDrivers } from "../api/mdata";
 import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
 import { Button } from "../components/Button";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
+import { ReferenceSelect } from "../components/parity/ReferenceSelect";
 import { DriverPickerWithCreate } from "../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../components/forms/MoneyInput";
 import { DatePicker } from "../components/forms/DatePicker";
@@ -495,26 +496,51 @@ export function UserDetailPage() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Error reason</label>
-            <Combobox
-              options={reasonOptions}
-              value={errorReasonId}
-              onChange={(value) => {
-                setErrorReasonId(value);
-                const next = availableReasons.find((reason) => reason.id === value);
-                if (next) setSeverity(next.severity);
-              }}
-              placeholder="Select reason"
-              disabled={!eventType}
-              loading={reasonsQuery.isLoading}
-              allowAddNew={
-                isOwner
-                  ? {
-                      label: "Add reason in catalog",
-                      onAdd: (query) => pushToast(`Add "${query}" from dispatcher error reasons catalog`, "info"),
-                    }
-                  : undefined
-              }
-            />
+            {/*
+              LST-PICKER-01: was a Combobox whose allowAddNew only toasted
+              "Add … from dispatcher error reasons catalog" — fake +Add, no write.
+              Wire ReferenceSelect → POST catalogs.dispatcher_error_reasons (same table the
+              listDispatcherErrorReasons picker reads). event_type comes from the form above.
+            */}
+            {selectedCompanyId ? (
+              <ReferenceSelect
+                value={errorReasonId}
+                onChange={(value) => {
+                  setErrorReasonId(value);
+                  const next = availableReasons.find((reason) => reason.id === value);
+                  if (next) setSeverity(next.severity);
+                }}
+                options={reasonOptions.map((o) => ({ value: o.value, label: o.label, type: o.sublabel }))}
+                createKind="dispatcher_error_reason"
+                operatingCompanyId={selectedCompanyId}
+                createdValueField="id"
+                createExtras={
+                  eventType
+                    ? { event_type: eventType, severity }
+                    : undefined
+                }
+                placeholder={eventType ? "Select reason" : "Select event type first"}
+                disabled={!eventType}
+                loading={reasonsQuery.isLoading}
+                onOptionCreated={(opt) => {
+                  setErrorReasonId(opt.value);
+                  void reasonsQuery.refetch();
+                }}
+              />
+            ) : (
+              <Combobox
+                options={reasonOptions}
+                value={errorReasonId}
+                onChange={(value) => {
+                  setErrorReasonId(value);
+                  const next = availableReasons.find((reason) => reason.id === value);
+                  if (next) setSeverity(next.severity);
+                }}
+                placeholder="Select operating company first"
+                disabled
+                loading={reasonsQuery.isLoading}
+              />
+            )}
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Severity</label>

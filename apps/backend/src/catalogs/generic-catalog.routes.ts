@@ -77,6 +77,8 @@ export const dispatchErrorReasonsCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/dispatch",
   urlSegment: "dispatcher-error-reasons",
   displayName: "Dispatcher Error Reasons",
+  entityScoped: true,
+  displayNameColumn: "label",
   allowedColumns: ["code", "label", "description", "event_type", "severity", "is_active"],
   requiredColumns: ["code", "label", "event_type", "severity"],
   validators: {
@@ -110,6 +112,8 @@ export const customerQualityEventReasonsCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/customers",
   urlSegment: "customer-quality-event-reasons",
   displayName: "Customer Quality Event Reasons",
+  entityScoped: true,
+  displayNameColumn: "label",
   allowedColumns: ["code", "label", "description", "event_type", "severity", "is_active"],
   requiredColumns: ["code", "label", "event_type", "severity"],
   validators: {

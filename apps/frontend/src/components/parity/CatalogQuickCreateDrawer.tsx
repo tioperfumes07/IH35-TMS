@@ -20,11 +20,20 @@ type Props = {
   operatingCompanyId: string;
   onClose: () => void;
   onCreated: (created: CatalogCreateResult) => void;
+  /** Merged into create() for catalogs that need form context (e.g. event_type from parent). */
+  createExtras?: { event_type?: string; severity?: string };
 };
 
 type FieldValues = Record<string, string>;
 
-export function CatalogQuickCreateDrawer({ open, config, operatingCompanyId, onClose, onCreated }: Props) {
+export function CatalogQuickCreateDrawer({
+  open,
+  config,
+  operatingCompanyId,
+  onClose,
+  onCreated,
+  createExtras,
+}: Props) {
   const { pushToast } = useToast();
   const [saving, setSaving] = useState(false);
   const [values, setValues] = useState<FieldValues>({});
@@ -58,6 +67,8 @@ export function CatalogQuickCreateDrawer({ open, config, operatingCompanyId, onC
         display_name: displayName,
         code: values.code?.trim() || undefined,
         description: values.description?.trim() || undefined,
+        event_type: createExtras?.event_type,
+        severity: createExtras?.severity,
       });
       pushToast("Created successfully", "success");
       setValues({});
