@@ -77,14 +77,26 @@ const sameNumber = freshnessVerdict({
 check("two guard PRs claiming the SAME step number => blocked", sameNumber.ok === false);
 check("same-number reason names the number", String(sameNumber.reason).includes("1795"));
 
-// ARM 3d — db/migrations/ must stay UNCONDITIONALLY coupled. Migration numbering is "strictly above
-// main's max", so different filenames still collide. This is the one place the blunt rule is correct.
+// ARM 3d — TOOL-F02. Two DIFFERENT migration numbers must be ALLOWED. The previous rule coupled the
+// whole db/migrations/ directory on the belief that numbering is "strictly above main's max" — that
+// was never verified and is wrong: scripts/db-migrate.mjs is LEDGER-BASED (applies anything not in the
+// ledger, filename-sorted, no max comparison), so a lower number still applies when merged later. The
+// directory coupling invalidated every migration PR on every other migration merge.
 const twoMigrations = freshnessVerdict({
   behind: 1,
-  mainFiles: ["db/migrations/202610220000_a.sql"],
-  branchFiles: ["db/migrations/202610240000_b.sql"],
+  mainFiles: ["db/migrations/202610261200_a.sql"],
+  branchFiles: ["db/migrations/202610270000_b.sql"],
 });
-check("two different migrations => still blocked (above-the-max rule)", twoMigrations.ok === false);
+check("two DIFFERENT migration numbers => allowed (ledger-based runner)", twoMigrations.ok === true, JSON.stringify(twoMigrations.reason));
+
+// ARM 3e — the real migration collision: the SAME number, which would be two files claiming one slot.
+const sameMigration = freshnessVerdict({
+  behind: 1,
+  mainFiles: ["db/migrations/202610270000_theirs.sql"],
+  branchFiles: ["db/migrations/202610270000_mine.sql"],
+});
+check("two branches claiming the SAME migration number => blocked", sameMigration.ok === false);
+check("same-migration-number reason names the number", String(sameMigration.reason).includes("202610270000"));
 
 // ARM 4 — not behind at all. Must PASS without consulting file lists.
 check("not behind => allowed", freshnessVerdict({ behind: 0, mainFiles: ["x"], branchFiles: ["x"] }).ok === true);

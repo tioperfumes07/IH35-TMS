@@ -128,11 +128,22 @@ const CASES = [
     expectText: /this branch also changes/,
   },
   {
-    name: "behind and BOTH add migrations -> FAIL (duplicate migration number race)",
+    name: "behind and BOTH claim THE SAME migration number -> FAIL (duplicate number race)",
     main: ["db/migrations/202610060000_other_lane.sql"],
     branch: ["db/migrations/202610060000_my_lane.sql"],
     expect: 1,
-    expectText: /db\/migrations\//,
+    expectText: /migration number\(s\) 202610060000/,
+  },
+  {
+    // TOOL-F02. db-migrate.mjs is LEDGER-BASED — it applies every migration not already in the ledger,
+    // over a filename-sorted list, with NO comparison against a maximum. So a migration numbered below
+    // main's current max still applies when its branch merges later, and coupling the whole directory
+    // invalidated every migration PR on every other migration merge (N^2 rebuilds). Order dependencies
+    // are caught by the fresh-database replay every PR already runs (verify:db:reset), not here.
+    name: "behind and both add migrations with DIFFERENT numbers -> PASS (ledger-based runner)",
+    main: ["db/migrations/202610261200_other_lane.sql"],
+    branch: ["db/migrations/202610270000_my_lane.sql"],
+    expect: 0,
   },
   {
     name: "behind and BOTH claim THE SAME verify-step number -> FAIL (duplicate step number race)",
