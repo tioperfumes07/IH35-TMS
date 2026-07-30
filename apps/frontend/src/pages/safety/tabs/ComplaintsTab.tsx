@@ -13,6 +13,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
@@ -86,6 +87,16 @@ export function ComplaintsTab() {
     }
     return map;
   }, [complaintTypesQuery.data]);
+
+  const complaintTypeOptions = useMemo(
+    () =>
+      (complaintTypesQuery.data?.rows ?? []).map((t) => ({
+        value: String(t.type_code),
+        label: String(t.type_name),
+        type: String(t.type_code),
+      })),
+    [complaintTypesQuery.data]
+  );
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -211,16 +222,23 @@ export function ComplaintsTab() {
               placeholder="Respondent driver"
               className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
             />
-            <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={form.complaint_type} onChange={(e) => setForm((v) => ({ ...v, complaint_type: e.target.value }))}>
-              <option value="" disabled>
-                {complaintTypesQuery.isLoading ? "Loading types…" : "Type"}
-              </option>
-              {(complaintTypesQuery.data?.rows ?? []).map((t) => (
-                <option key={t.id} value={t.type_code}>
-                  {t.type_name}
-                </option>
-              ))}
-            </SelectCombobox>
+            {/*
+              LST-PICKER-01: ReferenceSelect first-row create → POST catalogs.complaint_types.
+              Options keyed by type_code (createdValueField=code) — v6.4 stores the code.
+            */}
+            <ReferenceSelect
+              value={form.complaint_type || null}
+              onChange={(next) => setForm((v) => ({ ...v, complaint_type: next ?? "" }))}
+              options={complaintTypeOptions}
+              createKind="complaint_type"
+              operatingCompanyId={companyId}
+              createdValueField="code"
+              placeholder={complaintTypesQuery.isLoading ? "Loading types…" : "Type"}
+              loading={complaintTypesQuery.isLoading}
+              onOptionCreated={() => {
+                void queryClient.invalidateQueries({ queryKey: ["safety-v64", "complaint-types", companyId] });
+              }}
+            />
             <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Summary" value={form.summary} onChange={(e) => setForm((v) => ({ ...v, summary: e.target.value }))} />
             <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={form.severity} onChange={(e) => setForm((v) => ({ ...v, severity: e.target.value as typeof form.severity }))}>
               <option value="low">low</option>
