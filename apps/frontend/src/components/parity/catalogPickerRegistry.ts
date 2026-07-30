@@ -346,6 +346,55 @@ export const CATALOG_PICKER_CONFIGS = {
     evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
   }),
 
+  // Load cancellation reasons — bespoke POST body (reason_code + required category), same canonical
+  // table the Cancel Load dropdown reads via GET /api/v1/dispatch/cancellation-reasons.
+  // VERIFY-2 cl.5: write = catalogs.load_cancellation_reasons (routes.ts INSERT :135) = list SELECT :224.
+  // Category defaults to "other" on inline create; Lists → Load Cancellation Reasons edits it later.
+  load_cancellation_reason: {
+    key: "load_cancellation_reason",
+    label: "cancellation reason",
+    backend: "catalog",
+    readTable: "catalogs.load_cancellation_reasons",
+    writeTable: "catalogs.load_cancellation_reasons",
+    readEndpoint: "/api/v1/catalogs/load-cancellation-reasons",
+    writeEndpoint: "/api/v1/catalogs/load-cancellation-reasons",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence:
+      "apps/backend/src/catalogs/load-cancellation-reasons.routes.ts:112 (SELECT) and :135 (INSERT) — both catalogs.load_cancellation_reasons; cancel picker list at dispatch/cancellation.service.ts:224",
+    fields: CATALOG_FIELDS,
+    create: async (operatingCompanyId, values) => {
+      const displayName = values.display_name.trim();
+      // Backend regex is /^[A-Z][A-Z0-9_]+$/ (underscores, not hyphens).
+      const source = (values.code ?? "").trim() || displayName;
+      let reasonCode = source
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .slice(0, 80);
+      if (!/^[A-Z]/.test(reasonCode)) reasonCode = `C_${reasonCode}`.slice(0, 80);
+      reasonCode = reasonCode.replace(/_+$/g, "");
+      if (reasonCode.length < 2) reasonCode = "OTHER";
+      const created = await apiRequest<{
+        reason: { id: string; reason_code: string; display_name: string };
+      }>("/api/v1/catalogs/load-cancellation-reasons", {
+        method: "POST",
+        body: {
+          operating_company_id: operatingCompanyId,
+          reason_code: reasonCode,
+          display_name: displayName,
+          category: "other",
+          description: values.description?.trim() || undefined,
+        },
+      });
+      return {
+        id: String(created.reason.id),
+        label: created.reason.display_name,
+        code: created.reason.reason_code,
+      };
+    },
+  },
+
   // Driver — apps/backend/src/catalogs/driver/factory.ts: SELECT :94 and INSERT :172 both
   // `catalogs.${config.tableName}`. escrow-types deliberately excluded (financial cluster).
   pay_rate_template: catalogEntry({
