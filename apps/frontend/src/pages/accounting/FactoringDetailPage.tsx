@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   getFactoringAdvance,
+  getFactoringAdvancePacket,
   markAdvanced,
   markReserveHeld,
   recourseReturn,
@@ -69,6 +70,14 @@ export function FactoringDetailPage() {
   const query = useQuery({
     queryKey: ["accounting", "factoring-advance", selectedCompanyId, id],
     queryFn: () => getFactoringAdvance(id, selectedCompanyId!),
+    enabled: Boolean(id && selectedCompanyId),
+  });
+
+  // ACCT-SURF-09: reverse drill — packet already returns journal_entry_id on reserve/interest rows;
+  // surface EntityLinks so Accounting ↔ factoring JE is not a dead end.
+  const packetQuery = useQuery({
+    queryKey: ["accounting", "factoring-advance-packet", selectedCompanyId, id],
+    queryFn: () => getFactoringAdvancePacket(id, selectedCompanyId!),
     enabled: Boolean(id && selectedCompanyId),
   });
 
@@ -262,6 +271,59 @@ export function FactoringDetailPage() {
           onSortChange={onSortChange}
         />
       </DataPanel>
+
+      <DataPanel title="Reserve movements & interest (JE reverse)">
+        {packetQuery.isLoading ? (
+          <p className="text-xs text-slate-500">Loading advance packet…</p>
+        ) : packetQuery.isError ? (
+          <p className="text-xs text-red-700">Could not load advance packet for JE links.</p>
+        ) : (
+          <div className="space-y-3 text-sm">
+            <div>
+              <p className="mb-1 text-xs font-semibold text-slate-600">Reserve movements</p>
+              {(packetQuery.data?.reserve_movements ?? []).length === 0 ? (
+                <p className="text-xs text-slate-500">No reserve movements yet (honest empty).</p>
+              ) : (
+                <ul className="space-y-1">
+                  {(packetQuery.data?.reserve_movements ?? []).map((row) => (
+                    <li key={row.id} className="flex flex-wrap items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-1 text-xs">
+                      <span className="font-medium">{String(row.movement_type ?? "movement")}</span>
+                      <span>{money(Number(row.amount_cents ?? 0))}</span>
+                      <span className="text-slate-500">{row.movement_date ? formatDateUS(String(row.movement_date)) : "—"}</span>
+                      {row.journal_entry_id ? (
+                        <EntityLink kind="journal_entry" id={row.journal_entry_id} label={`JE ${row.journal_entry_id.slice(0, 8)}`} />
+                      ) : (
+                        <span className="text-slate-400">JE —</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div>
+              <p className="mb-1 text-xs font-semibold text-slate-600">Interest accruals</p>
+              {(packetQuery.data?.interest_accruals ?? []).length === 0 ? (
+                <p className="text-xs text-slate-500">No interest accruals yet (honest empty).</p>
+              ) : (
+                <ul className="space-y-1">
+                  {(packetQuery.data?.interest_accruals ?? []).map((row) => (
+                    <li key={row.id} className="flex flex-wrap items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-1 text-xs">
+                      <span>{row.accrual_date ? formatDateUS(String(row.accrual_date)) : "—"}</span>
+                      <span>{money(Number(row.interest_cents ?? 0))}</span>
+                      {row.journal_entry_id ? (
+                        <EntityLink kind="journal_entry" id={row.journal_entry_id} label={`JE ${row.journal_entry_id.slice(0, 8)}`} />
+                      ) : (
+                        <span className="text-slate-400">JE —</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
+      </DataPanel>
+
       {selectedCompanyId ? <FactorReserveCard operatingCompanyId={selectedCompanyId} /> : null}
 
       <ParityDrawer

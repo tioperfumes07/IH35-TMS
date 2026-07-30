@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { listEscrowAccounts, listEscrowPostings, type EscrowAccount, type EscrowPosting } from "../../api/accounting";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -9,6 +10,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { EscrowDeductionsPendingTab } from "../driver-finance/EscrowDeductionsPendingTab";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 type EscrowViewTab = "accounts" | "pending";
 
@@ -56,6 +58,7 @@ export function EscrowPage() {
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [searchParams] = useSearchParams();
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
   // orphan-triage F1: "Pending Review" surfaces EscrowDeductionsPendingTab (auto-proposed
   // abandonment deductions awaiting Owner decision) — distinct from the accounts/postings ledger
@@ -81,7 +84,26 @@ export function EscrowPage() {
       pushToast(String((error as Error)?.message ?? "Failed to load escrow postings"), "error"),
   });
 
-  const accountRows = (accountsQuery.data?.rows ?? []) as EscrowAccount[];
+  const accountRows = useMemo(
+    () => (accountsQuery.data?.rows ?? []) as EscrowAccount[],
+    [accountsQuery.data?.rows]
+  );
+
+  // ACCT-SURF-09: deep-link from Settlements (?account_id= / ?holder_id=) so reverse drill lands on a row.
+  useEffect(() => {
+    if (!accountRows.length) return;
+    const accountId = searchParams.get("account_id");
+    const holderId = searchParams.get("holder_id");
+    if (!accountId && !holderId) return;
+    let next: EscrowAccount | undefined;
+    if (accountId) next = accountRows.find((row) => row.id === accountId);
+    if (!next && holderId) next = accountRows.find((row) => row.holder_id === holderId);
+    if (next && next.id !== selectedAccountId) {
+      setSelectedAccountId(next.id);
+      postingsQuery.mutate(next.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- select when accounts load / URL deep-link changes
+  }, [accountRows, searchParams]);
 
   const selectedAccount = useMemo(
     () => accountRows.find((row) => row.id === selectedAccountId) ?? null,
@@ -135,8 +157,37 @@ export function EscrowPage() {
   );
 
   return (
-    <div className="space-y-4 p-4">
-      <PageHeader title="Escrow" subtitle="Escrow accounts and posting history" />
+    <AccountingSubNavWrapper>
+      <div className="space-y-4 p-4">
+      <PageHeader
+        title="Escrow"
+        subtitle="Escrow accounts and posting history"
+        actions={
+          <div className="flex flex-wrap gap-2 text-xs">
+            <Link
+              to="/driver-finance/settlements"
+              className="rounded-sm border border-slate-300 bg-white px-2 py-1 font-medium text-slate-800 hover:bg-slate-50"
+              data-testid="escrow-settlements-cross-link"
+            >
+              Settlements
+            </Link>
+            <Link
+              to="/accounting/factoring"
+              className="rounded-sm border border-slate-300 bg-white px-2 py-1 font-medium text-slate-800 hover:bg-slate-50"
+              data-testid="escrow-factoring-cross-link"
+            >
+              Factoring
+            </Link>
+            <Link
+              to="/banking/driver-escrow"
+              className="rounded-sm border border-slate-300 bg-white px-2 py-1 font-medium text-slate-800 hover:bg-slate-50"
+              data-testid="escrow-banking-virtual-bank-link"
+            >
+              Banking · Driver Escrow
+            </Link>
+          </div>
+        }
+      />
 
       <div className="flex items-center gap-1 rounded-sm border border-gray-300 p-0.5 text-xs w-fit">
         {(["accounts", "pending"] as const).map((tab) => (
@@ -208,6 +259,7 @@ export function EscrowPage() {
           ) : null}
         </>
       ) : null}
-    </div>
+      </div>
+    </AccountingSubNavWrapper>
   );
 }

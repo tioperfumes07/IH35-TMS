@@ -4,7 +4,6 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   acknowledgeSettlement,
   finalizeSettlement,
-  getEscrowTimeline,
   openSettlementDispute,
   getSettlementPaymentEvents,
   getSettlement,
@@ -293,8 +292,11 @@ export function SettlementDetailPage() {
         isRefreshing={debt.isStale}
         onOpenBreakdown={() => setLiabilityOpen(true)}
         onOpenEscrow={() => {
-          // Law §9 reverse: settlement → Banking Driver Escrow virtual bank (not a toast dead-end).
-          navigate("/banking/driver-escrow");
+          // ACCT-SURF-09: settlement → Accounting Escrow (canonical books surface), not toast/banking-only.
+          // Banking Driver Escrow remains reachable as a second hop from Accounting Escrow / Banking Home.
+          const q = new URLSearchParams();
+          if (driverId) q.set("holder_id", driverId);
+          navigate(`/accounting/escrow${q.toString() ? `?${q.toString()}` : ""}`);
         }}
       />
       <PendingAckNotice pendingAckCount={debt.debt?.pending_ack_count ?? 0} />
@@ -331,10 +333,11 @@ export function SettlementDetailPage() {
           <EscrowVisualizer
             preClause={debt.debt?.escrow_pre_clause ?? 0}
             postClause={debt.debt?.escrow_post_clause ?? 0}
-            onOpenTimeline={async () => {
-              if (!driverId || !companyId) return;
-              const timeline = await getEscrowTimeline(driverId, companyId);
-              pushToast(`Escrow timeline rows: ${timeline.timeline.length}`, "info");
+            onOpenTimeline={() => {
+              // ACCT-SURF-09: timeline opens Accounting Escrow for this driver — no toast dead-end.
+              const q = new URLSearchParams();
+              if (driverId) q.set("holder_id", driverId);
+              navigate(`/accounting/escrow${q.toString() ? `?${q.toString()}` : ""}`);
             }}
           />
           <FinalizeBlock

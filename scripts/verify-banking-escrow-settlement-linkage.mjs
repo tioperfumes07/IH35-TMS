@@ -1,5 +1,12 @@
 #!/usr/bin/env node
-/** Banking Full Audit FAIL 31 — Escrow ↔ settlement both-way linkage. */
+/**
+ * Banking Full Audit FAIL 31 — Escrow ↔ settlement both-way linkage.
+ *
+ * ACCT-SURF-09 (2026-07-29): SettlementDetail opens Accounting Escrow
+ * (`/accounting/escrow?holder_id=`) as the canonical books surface. Banking
+ * Driver Escrow (`/banking/driver-escrow`) remains reachable as a second hop
+ * (Rule 07 never-delete) — typically via Accounting Escrow cross-link.
+ */
 import fs from "node:fs";
 
 export function run(root = process.cwd()) {
@@ -14,6 +21,9 @@ export function run(root = process.cwd()) {
     `${root}/apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx`,
     "utf8"
   );
+  const accountingEscrow = fs.existsSync(`${root}/apps/frontend/src/pages/accounting/EscrowPage.tsx`)
+    ? fs.readFileSync(`${root}/apps/frontend/src/pages/accounting/EscrowPage.tsx`, "utf8")
+    : "";
 
   if (!routes.includes("settlement_id::text AS settlement_id")) {
     failures.push("escrow-visualizer timeline must SELECT settlement_id from escrow_ledger");
@@ -24,9 +34,31 @@ export function run(root = process.cwd()) {
   if (!escrow.includes('kind="settlement"') || !escrow.includes("banking-escrow-settlement-link")) {
     failures.push("DriverEscrowTabContent must EntityLink settlement when settlement_id present");
   }
-  if (!settlement.includes('navigate("/banking/driver-escrow")') && !settlement.includes("navigate('/banking/driver-escrow')")) {
-    failures.push("SettlementDetailPage onOpenEscrow must navigate to /banking/driver-escrow (not toast-only)");
+
+  const opensAccountingEscrow =
+    settlement.includes("/accounting/escrow") &&
+    (settlement.includes("onOpenEscrow") || settlement.includes("onOpenTimeline"));
+  const opensBankingEscrow =
+    settlement.includes('navigate("/banking/driver-escrow")') ||
+    settlement.includes("navigate('/banking/driver-escrow')") ||
+    settlement.includes("/banking/driver-escrow");
+  if (!opensAccountingEscrow && !opensBankingEscrow) {
+    failures.push(
+      "SettlementDetailPage escrow open must navigate to /accounting/escrow (canonical) or /banking/driver-escrow (not toast-only)"
+    );
   }
+
+  // Rule 07: Banking Driver Escrow entry stays reachable (Settlement OR Accounting Escrow hop).
+  const bankingEscrowReachable =
+    opensBankingEscrow ||
+    accountingEscrow.includes("/banking/driver-escrow") ||
+    accountingEscrow.includes("escrow-banking-virtual-bank-link");
+  if (!bankingEscrowReachable) {
+    failures.push(
+      "Banking /banking/driver-escrow must stay reachable from SettlementDetail or Accounting Escrow (never-delete)"
+    );
+  }
+
   return failures;
 }
 
@@ -47,7 +79,11 @@ if (process.argv.includes("--selftest")) {
   );
   mk(
     "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
-    `navigate("/banking/driver-escrow")\n`
+    `onOpenEscrow\nnavigate(\`/accounting/escrow?holder_id=\${driverId}\`)\n`
+  );
+  mk(
+    "apps/frontend/src/pages/accounting/EscrowPage.tsx",
+    `/banking/driver-escrow\nescrow-banking-virtual-bank-link\n`
   );
   if (run(tmp).length) throw new Error("PASS fail: " + run(tmp).join("; "));
   mk("apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx", "x\n");
