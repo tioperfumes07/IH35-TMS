@@ -579,6 +579,40 @@ export function listExpenses(
   return apiRequest<{ rows: ExpenseListRow[] }>(withCompany(`/api/v1/expenses${qs ? `?${qs}` : ""}`, operatingCompanyId));
 }
 
+/** ACCT-R-17 — duplicate expense fingerprint groups (vendor + date + amount). */
+export type ExpenseDuplicateMember = {
+  id: string;
+  expense_number: string | null;
+  vendor_uuid: string;
+  vendor_name: string | null;
+  transaction_date: string;
+  total_amount_cents: number;
+  status: string;
+  journal_entry_id: string | null;
+};
+
+export type ExpenseDuplicateGroup = {
+  vendor_uuid: string;
+  vendor_name: string | null;
+  transaction_date: string;
+  total_amount_cents: number;
+  count: number;
+  members: ExpenseDuplicateMember[];
+};
+
+export type ExpenseDuplicateSummary = {
+  group_count: number;
+  expense_count: number;
+  groups: ExpenseDuplicateGroup[];
+};
+
+export function listExpenseDuplicates(operatingCompanyId: string, limit = 50) {
+  const q = new URLSearchParams({ limit: String(limit) });
+  return apiRequest<ExpenseDuplicateSummary>(
+    withCompany(`/api/v1/expenses/duplicates?${q}`, operatingCompanyId),
+  );
+}
+
 export type ExpenseDetailLine = {
   id: string;
   line_sequence: number;
