@@ -1170,6 +1170,7 @@
     "1818": "1818-verify-lst-picker01-complaint-type-inline-create.mjs",
     "1820": "1820-verify-lst-picker01-internal-fine-reason-inline-create.mjs",
     "1822": "1822-verify-lst-picker01-cargo-claim-reason-inline-create.mjs",
+    "1824": "1824-verify-lst-picker01-hos-create-modal-dot-type-inline-create.mjs",
     "1826": "1826-verify-lst-picker01-escrow-draw-reason-inline-create.mjs",
     "1828": "1828-verify-lst-picker-no-lists-json-partial-thrash.mjs",
     "01": "01-ensure-database-url.mjs",
