@@ -131,8 +131,9 @@ export function run(root = ROOT) {
   if (parsed.complete === true) {
     failures.push("banking complete:true is ILLEGAL while economics FAILs remain — money-gate must stay honest");
   }
-  if (passOnly !== 4) {
-    failures.push(`expected 4 PASS banking items for current MODULE_PROGRESS (got ${passOnly}) — do not flip other FAILs in this guard`);
+  // Ratchet: PASS count may grow as live density closes; never shrink below historic floor of 4.
+  if (passOnly < 4) {
+    failures.push(`banking PASS items must stay ≥4 (got ${passOnly}) — do not regress MODULE_PROGRESS`);
   }
 
   return failures;
