@@ -6,11 +6,13 @@
  * IFTA/Fuel History. Returns a gl_post_candidate so the CALLER can invoke maybePostFuelExpenseFromCanonicalTxn
  * AFTER this transaction commits (EXPENSE_GL_POSTING_ENABLED, default OFF). Do not post inside this txn.
  *
- * Resolves (read-only) the driver via mdata.drivers.integration_id and the unit via the "Truck #" prompt.
+ * Resolves (read-only) the driver via integration_id → unique phone → unique name
+ * (see relay-fuel-driver-match.ts) and the unit via the "Truck #" prompt.
  */
 import type { RelayFuelTransaction } from "./relay-client.js";
 import type { DbClient } from "./db-client.type.js";
 import { bridgeRelayFuelToCanonical } from "./relay-fuel-canonical-bridge.js";
+import { resolveMatchedDriverId } from "./relay-fuel-driver-match.js";
 import { upsertRelayWalletBankFeedRow } from "./relay-wallet-bank-feed.service.js";
 import type { FuelTxnGlPostCandidate } from "../../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 
@@ -62,27 +64,6 @@ export function findTruckNumberPrompt(prompts: { label: string; value: string }[
   return value && value.length > 0 ? value : null;
 }
 
-async function resolveMatchedDriverId(
-  client: DbClient,
-  operatingCompanyId: string,
-  relayDriverIntegrationId: string | null
-): Promise<string | null> {
-  if (!relayDriverIntegrationId) return null;
-  const res = await client.query<{ id: string }>(
-    `
-      SELECT id::text AS id
-      FROM mdata.drivers
-      WHERE operating_company_id = $1::uuid
-        AND integration_id = $2
-        AND deactivated_at IS NULL
-        AND archived_at IS NULL
-      LIMIT 1
-    `,
-    [operatingCompanyId, relayDriverIntegrationId]
-  );
-  return res.rows[0]?.id ?? null;
-}
-
 async function resolveMatchedUnitId(
   client: DbClient,
   operatingCompanyId: string,
@@ -119,7 +100,12 @@ export async function upsertRelayFuelTransaction(
   const truckNumber = findTruckNumberPrompt(tx.prompts ?? []);
   const relayDriverIntegrationId = tx.driver?.integration_id ?? null;
 
-  const matchedDriverId = await resolveMatchedDriverId(client, operatingCompanyId, relayDriverIntegrationId);
+  const matchedDriverId = await resolveMatchedDriverId(client, operatingCompanyId, {
+    integration_id: relayDriverIntegrationId,
+    phone: tx.driver?.phone ?? null,
+    first_name: tx.driver?.first_name ?? null,
+    last_name: tx.driver?.last_name ?? null,
+  });
   const matchedUnitId = await resolveMatchedUnitId(client, operatingCompanyId, truckNumber);
 
   const totalAmountPaidCents = dollarsToCents(tx.total_amount_paid, "total_amount_paid");
