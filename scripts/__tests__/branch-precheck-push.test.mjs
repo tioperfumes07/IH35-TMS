@@ -646,3 +646,40 @@ test("production CLI ignores BRANCH_PRECHECK_STEPS_JSON and IH35_BRANCH_TOOLING_
   assert.match(combined, /money-pr-local-gate/, "Rule 25 fail-fast step must execute first");
   assert.match(combined, /build-backend/, "the real built-in gate chain must have executed");
 });
+
+// TOOL-F05: a branch that ADDS A MIGRATION must have replayed it against a real database before push.
+// Enforced by a dedicated `migration-db-replay` step with NO serverRequiredCiEquivalent — deferring to
+// CI is exactly what sent three broken migrations to CI and one to production on 2026-07-30, where it
+// blocked every deploy for ~5.5 hours. It is deliberately NOT done by making `block-ready` unskippable:
+// that step also needs a registered .block-ready manifest, which would trade one blocker for another.
+test("a migration branch gets the migration-db-replay step", () => {
+  const dir = makeFeatureRepo();
+  writeAndCommit(dir, "db/migrations/202610990000_x.sql", "-- x\n", "branch migration");
+  const steps = buildPrecheckSteps(dir);
+  const replay = steps.find((s) => s.label === "migration-db-replay");
+  assert.ok(replay, "migration branch must get the replay step");
+  assert.match(replay.command, /verify:db:reset/);
+  assert.equal(replay.serverRequiredCiEquivalent, undefined, "must NOT be deferrable to CI");
+  // No requiredCapabilities on purpose: declaring "database" would make the global capability decide
+  // it, and once that capability is true `block-ready` also runs and demands a .block-ready manifest —
+  // coupling migration safety to registry ceremony. verify-db-reset refuses safely on its own.
+  assert.equal(replay.requiredCapabilities, undefined, "must not join the capability system");
+});
+
+test("a NON-migration branch does not get the replay step", () => {
+  const dir = makeFeatureRepo();
+  assert.equal(buildPrecheckSteps(dir).find((s) => s.label === "migration-db-replay"), undefined);
+});
+
+test("the replay step always runs — its command refuses safely when no database is up", () => {
+  const step = { label: "migration-db-replay", command: "npm run verify:db:reset" };
+  // With no requiredCapabilities the preflight always says run; verify-db-reset.mjs then refuses
+  // unless DATABASE_URL is a local verify database, printing the commands to start one.
+  assert.equal(preflightStep(step, { database: false }, validCapabilityPolicy).action, "run");
+  assert.equal(preflightStep(step, { database: true }, validCapabilityPolicy).action, "run");
+});
+
+test("block-ready keeps its CI-equivalent skip — migrations are not coupled to manifest ceremony", () => {
+  const step = { label: "block-ready", requiredCapabilities: ["database"], serverRequiredCiEquivalent: "ci / build-typecheck" };
+  assert.equal(preflightStep(step, { database: false }, validCapabilityPolicy).action, "skip-capability");
+});
