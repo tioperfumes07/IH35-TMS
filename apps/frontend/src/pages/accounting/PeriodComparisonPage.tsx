@@ -3,9 +3,11 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   getComparisonReport,
+  getCostCenterClassVariance,
   type ComparisonReportBasis,
   type ComparisonReportRow,
   type ComparisonReportType,
+  type CostCenterClassVarianceRow,
 } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -145,6 +147,107 @@ export function PeriodComparisonPage() {
           emptyText="No comparison rows."
         />
       )}
+
+      <ClassCostCenterVariancePanel companyId={companyId} periods={periods} />
     </AccountingSubNavWrapper>
+  );
+}
+
+/** ACCT-R-15 — Class = QBO cost-center dimension; variance on existing Period comparison leaf (no new tab). */
+function ClassCostCenterVariancePanel({ companyId, periods }: { companyId: string; periods: string }) {
+  const classQuery = useQuery({
+    queryKey: ["accounting", "cost-center-class-variance", companyId, periods],
+    queryFn: () => getCostCenterClassVariance(companyId, periods),
+    enabled: Boolean(companyId),
+  });
+
+  const period1Label = classQuery.data?.periods[0] ?? "Period 1";
+  const period2Label = classQuery.data?.periods[1] ?? "Period 2";
+
+  const columns = useMemo<ParityColumn<CostCenterClassVarianceRow>[]>(
+    () => [
+      {
+        key: "class_name",
+        label: "Class / cost center",
+        sortable: true,
+        render: (row) =>
+          row.class_id ? (
+            <Link
+              to={`/lists/accounting/classes?class_id=${encodeURIComponent(row.class_id)}`}
+              className="text-sm font-medium text-slate-700 hover:underline"
+            >
+              {row.class_name}
+              {row.class_code ? ` (${row.class_code})` : ""}
+            </Link>
+          ) : (
+            <span className="text-slate-700">{row.class_name}</span>
+          ),
+      },
+      {
+        key: "period_1_cost_cents",
+        label: period1Label,
+        sortable: true,
+        render: (row) => money(row.period_1_cost_cents),
+      },
+      {
+        key: "period_2_cost_cents",
+        label: period2Label,
+        sortable: true,
+        render: (row) => money(row.period_2_cost_cents),
+      },
+      {
+        key: "variance_cents",
+        label: "Variance",
+        sortable: true,
+        render: (row) => (
+          <span className={`font-semibold ${row.variance_cents < 0 ? "text-red-700" : "text-slate-700"}`}>
+            {money(row.variance_cents)}
+          </span>
+        ),
+      },
+      {
+        key: "variance_pct",
+        label: "Variance %",
+        sortable: true,
+        render: (row) =>
+          row.variance_pct == null ? "n/a" : `${row.variance_pct.toFixed(2)}%`,
+      },
+    ],
+    [period1Label, period2Label],
+  );
+
+  return (
+    <section className="mt-6 space-y-2" data-testid="cost-center-class-variance-panel">
+      <div>
+        <h2 className="text-sm font-semibold text-gray-900">Cost centers (Class variance)</h2>
+        <p className="text-xs text-gray-600">
+          QBO Class dimension (`catalogs.classes`) — expense / COGS / other-expense JE rollup. No new GL math.
+        </p>
+      </div>
+      {classQuery.data ? (
+        <p className="text-xs text-gray-600" data-testid="cost-center-class-density">
+          Active classes: {classQuery.data.classes_active} · Classified cost lines:{" "}
+          {classQuery.data.classified_posting_lines} · Unclassified cost lines:{" "}
+          {classQuery.data.unclassified_posting_lines}
+        </p>
+      ) : null}
+      {!companyId ? null : classQuery.isError ? (
+        <ListErrorState
+          title="Failed to load Class cost-center variance"
+          status={0}
+          message="Use YYYY-QN or YYYY-MM in the periods input."
+          onRetry={() => void classQuery.refetch()}
+        />
+      ) : (
+        <ParityTable
+          columns={columns}
+          rows={classQuery.data?.rows ?? []}
+          rowKey={(row) => row.class_id ?? "__unclassified__"}
+          loading={classQuery.isLoading}
+          storageKey="cost-center-class-variance"
+          emptyText="No Class cost rows for these periods."
+        />
+      )}
+    </section>
   );
 }

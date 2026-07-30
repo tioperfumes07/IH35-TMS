@@ -1,14 +1,19 @@
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
-import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
+import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { getComparisonReport } from "./comparison-report.service.js";
+import { getCostCenterClassVariance } from "./cost-center-class-variance.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const comparisonReportQuerySchema = companyQuerySchema.extend({
   type: z.enum(["pl", "bs"]),
   periods: z.string().min(3),
   basis: z.enum(["accrual", "cash"]).optional(),
+});
+
+const classVarianceQuerySchema = companyQuerySchema.extend({
+  periods: z.string().min(3),
 });
 
 const comparisonReadRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
@@ -41,6 +46,25 @@ export async function registerComparisonReportRoutes(app: FastifyInstance) {
         periods: query.data.periods,
       });
       return report;
+    } catch (error) {
+      const message = String((error as Error).message ?? "");
+      if (message === "invalid_periods") return reply.code(400).send({ error: "invalid_periods" });
+      throw error;
+    }
+  });
+
+  // ACCT-R-15 — Class / cost-center variance (read-only; catalogs.classes dimension)
+  app.get("/api/v1/accounting/cost-center-class-variance", async (req, reply) => {
+    const user = comparisonReader(req, reply);
+    if (!user) return;
+
+    const query = classVarianceQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    try {
+      return await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+        getCostCenterClassVariance(client, query.data.operating_company_id, query.data.periods),
+      );
     } catch (error) {
       const message = String((error as Error).message ?? "");
       if (message === "invalid_periods") return reply.code(400).send({ error: "invalid_periods" });
