@@ -193,9 +193,10 @@ function catalogEntry(entry: {
  *    → every maintenance catalog create 404s.
  *  - /api/v1/catalogs/accounting/payment-terms — codeColumn and nameColumn are BOTH "terms_name"
  *    (apps/backend/src/catalogs/accounting/index.ts:100-101) → INSERT names the column twice → 42701.
- *  - /api/v1/catalogs/safety/* (except civil_fine_types) — remaining safety catalogs use bespoke
- *    column names (type_code/type_name, reason_code/reason_name). civil_fine_types matches
- *    {code, display_name} and is wired as civil_fine_type below.
+ *  - /api/v1/catalogs/safety/* (except civil_fine_types + complaint_types wired below) — remaining
+ *    safety catalogs use bespoke column names (type_code/type_name, reason_code/reason_name,
+ *    violation_code/display_name). civil_fine_types matches {code, display_name}; complaint_types
+ *    uses a per-catalog create map.
  *  - /api/v1/catalogs/driver/{license-classes,endorsements,restrictions,...} — FIXED by SWEEP-C11
  *    (2026-07-25): this surface's POST/PATCH/DELETE now return 410 (writesBlocked, factory.ts) —
  *    it can no longer diverge from the canonical /api/v1/lists/drivers/* (reference.*) surface.
@@ -456,6 +457,46 @@ export const CATALOG_PICKER_CONFIGS = {
     evidence:
       "apps/backend/src/catalogs/safety/civil-fine-types.routes.ts:28 (SELECT) and :110 (INSERT) — both catalogs.civil_fine_types; FineCreateModal catalogs-safety list consumer",
   }),
+
+// Complaint types — ComplaintsTab had SelectCombobox with Lists-only management (no inline create).
+  // Options keyed by type_code (createdValueField=code); v6.4 complaints store type_code, not UUID.
+  complaint_type: {
+    key: "complaint_type",
+    label: "complaint type",
+    backend: "catalog",
+    readTable: "catalogs.complaint_types",
+    writeTable: "catalogs.complaint_types",
+    readEndpoint: "/api/v1/catalogs/safety/complaint-types",
+    writeEndpoint: "/api/v1/catalogs/safety/complaint-types",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence:
+      "apps/backend/src/catalogs/safety/complaint-types.routes.ts SELECT+INSERT catalogs.complaint_types; ComplaintsTab catalogs-safety list consumer",
+    fields: CATALOG_FIELDS,
+    create: async (operatingCompanyId, values) => {
+      const typeName = values.display_name.trim();
+      const typeCode = deriveCatalogCode(typeName, values.code);
+      const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+      const created = await apiRequest<{
+        id: string;
+        type_code?: string;
+        type_name?: string;
+      }>(`/api/v1/catalogs/safety/complaint-types?${query.toString()}`, {
+        method: "POST",
+        body: {
+          type_code: typeCode,
+          type_name: typeName,
+          default_severity: null,
+          is_active: true,
+        },
+      });
+      return {
+        id: String(created.id),
+        label: created.type_name ?? typeName,
+        code: created.type_code ?? typeCode,
+      };
+    },
+  },
 
   // Dispatcher error reasons — UserDetail previously toasted "Add reason in catalog" (fake +Add).
   // Write path: generic factory POST /api/v1/catalogs/dispatch/dispatcher-error-reasons (entityScoped).
