@@ -22,6 +22,7 @@ import { useListState } from "../../components/list-state";
 import type { PlaidBankTransaction } from "../../api/banking";
 import { formatUsdCents } from "../../lib/money";
 import { BankingTransactionsDesignView, spentReceived } from "./components/BankingTransactionsDesignView";
+import { TransferModal } from "./TransferModal";
 
 const PAGE_SIZE = 50;
 
@@ -57,6 +58,7 @@ export function BankAccountDetailPage() {
   const companyId = selectedCompanyId ?? "";
   const [syncing, setSyncing] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
 
   const canSync = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
   const canDisconnect = auth.user?.role === "Owner";
@@ -88,7 +90,15 @@ export function BankAccountDetailPage() {
         title={headerTitle}
         subtitle={account?.account_mask ? `••••${account.account_mask}` : ""}
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Owner P0 2026-07-29: account detail had Sync/Disconnect only — same orphan as Home before navActions. */}
+            <ActionButton
+              data-testid="bank-account-detail-record-transfer"
+              disabled={!id || !companyId}
+              onClick={() => setTransferModalOpen(true)}
+            >
+              + Record Transfer
+            </ActionButton>
             {canSync ? (
               <ActionButton
                 disabled={syncing || !account?.is_active}
@@ -172,6 +182,17 @@ export function BankAccountDetailPage() {
         onManageConnections={() => navigate("/banking")}
         onDataChanged={() => {
           void queryClient.invalidateQueries({ queryKey: ["banking"] });
+        }}
+      />
+
+      <TransferModal
+        open={transferModalOpen}
+        operatingCompanyId={companyId}
+        prefill={id ? { from_account_id: id } : null}
+        onClose={() => setTransferModalOpen(false)}
+        onSaved={() => {
+          void queryClient.invalidateQueries({ queryKey: ["banking"] });
+          setTransferModalOpen(false);
         }}
       />
     </div>
