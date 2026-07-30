@@ -10,7 +10,8 @@
  *   - matched_journal_entry_id stamped in lockstep after post
  *   - single-row + bulk categorize routes both await the poster (#3424)
  *   - BANK_FEED_GL_POSTING_ENABLED flag gate (default OFF)
- *   - ACCT-LINK-06 + BANK-ECON-02 stay FAIL with honest density evidence
+ *   - ACCT-LINK-06 + BANK-ECON-02: FAIL while density near-zero; PASS only when evidence
+ *     cites matched_je=N/M with N >= MEANINGFUL_MATCHED_JE (live ops floor above the historic ~5).
  *
  *   node scripts/verify-bankfeed-je-match.mjs
  *   node scripts/verify-bankfeed-je-match.mjs --selftest
@@ -20,6 +21,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { run as runBulkPoster } from "./verify-banking-bulk-categorize-posts-je.mjs";
+import { densityIsMeaningful, MEANINGFUL_MATCHED_JE } from "./lib/matched-je-density.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const POSTER = "apps/backend/src/banking/bank-feed-gl-posting.service.ts";
@@ -106,23 +108,30 @@ export function run(root = ROOT) {
     if (!item) {
       failures.push(`${ACCT_MANIFEST} missing item ${ACCT_ITEM} (ACCT-F05 bank feed JE linkage)`);
     } else {
-      if (item.status === "PASS") {
-        failures.push(
-          `${ACCT_ITEM} must stay FAIL until matched_JE density is meaningful — PASS is theater at ~3/10622 (Rule 23)`
-        );
-      }
-      if (item.status !== "FAIL") {
-        failures.push(`${ACCT_ITEM} must be FAIL (ops backlog density; wiring-only honesty PR)`);
-      }
       const ev = String(item.evidence || "");
       if (!/#3424/.test(ev)) {
         failures.push(`${ACCT_ITEM} evidence must cite PR #3424 (bulk categorize→GL poster on main)`);
       }
-      if (!/matched_je|matched_journal_entry_id|3\/10/i.test(ev)) {
-        failures.push(`${ACCT_ITEM} evidence must cite honest matched_JE density (~3/10622), not invented PASS`);
+      if (!/matched_je|matched_journal_entry_id/i.test(ev)) {
+        failures.push(`${ACCT_ITEM} evidence must cite honest matched_JE density (matched_je=N/M)`);
       }
-      if (!/ops backlog|density/i.test(ev)) {
-        failures.push(`${ACCT_ITEM} evidence must name density as ops backlog (poster works when used)`);
+      if (item.status === "PASS") {
+        if (!densityIsMeaningful(ev)) {
+          failures.push(
+            `${ACCT_ITEM} PASS requires matched_je=N/M with N>=${MEANINGFUL_MATCHED_JE} in evidence (Rule 23 — no theater PASS)`
+          );
+        }
+      } else if (item.status === "FAIL") {
+        if (!/ops backlog|density|FAIL until/i.test(ev)) {
+          failures.push(`${ACCT_ITEM} FAIL evidence must name density backlog (poster works when used)`);
+        }
+        if (densityIsMeaningful(ev)) {
+          failures.push(
+            `${ACCT_ITEM} evidence cites meaningful density but status is still FAIL — flip to PASS`
+          );
+        }
+      } else {
+        failures.push(`${ACCT_ITEM} must be FAIL (near-zero density) or PASS (meaningful matched_je=N/M)`);
       }
     }
   }
@@ -135,19 +144,29 @@ export function run(root = ROOT) {
     const item = (data.items || []).find((it) => it.id === BANK_ITEM);
     if (!item) {
       failures.push(`${BANK_MANIFEST} missing companion item ${BANK_ITEM}`);
-    } else if (item.status === "PASS") {
-      failures.push(`${BANK_ITEM} must stay FAIL — density ~3/10622 is not meaningful (Rule 23)`);
-    } else if (item.status !== "FAIL") {
-      failures.push(`${BANK_ITEM} must remain FAIL until operator categorization density moves`);
+    } else {
+      const ev = String(item.evidence || "");
+      if (item.status === "PASS") {
+        if (!densityIsMeaningful(ev)) {
+          failures.push(
+            `${BANK_ITEM} PASS requires matched_je=N/M with N>=${MEANINGFUL_MATCHED_JE} in evidence (Rule 23)`
+          );
+        }
+      } else if (item.status !== "FAIL") {
+        failures.push(`${BANK_ITEM} must be FAIL or PASS (not ${item.status})`);
+      }
     }
   }
 
   const mdPath = path.join(root, ACCT_MD);
   if (fs.existsSync(mdPath)) {
     const md = read(root, ACCT_MD);
-    const rowRe = new RegExp(`\\| \`${ACCT_ITEM}\` \\| \\*\\*FAIL\\*\\*`);
+    const acct = readJson(root, ACCT_MANIFEST);
+    const item = (acct.items || []).find((it) => it.id === ACCT_ITEM);
+    const want = item?.status === "PASS" ? "PASS" : "FAIL";
+    const rowRe = new RegExp(`\\| \`${ACCT_ITEM}\` \\| \\*\\*${want}\\*\\*`);
     if (!rowRe.test(md)) {
-      failures.push(`${ACCT_MD} must show ${ACCT_ITEM} as FAIL`);
+      failures.push(`${ACCT_MD} must show ${ACCT_ITEM} as ${want} (run verify-module-completion --write-md)`);
     }
   }
 
@@ -193,22 +212,34 @@ if (process.argv.includes("--selftest")) {
     copyTree(POSTER);
 
     const acct = readJson(temp, ACCT_MANIFEST);
-    acct.items.find((it) => it.id === ACCT_ITEM).status = "PASS";
+    const link06 = acct.items.find((it) => it.id === ACCT_ITEM);
+    link06.status = "PASS";
+    link06.evidence = "theater PASS with no density count — must fail guard";
     write(temp, ACCT_MANIFEST, JSON.stringify(acct, null, 2) + "\n");
-    if (!run(temp).some((f) => f.includes(`${ACCT_ITEM} must stay FAIL`))) {
-      throw new Error("flipped ACCT-LINK-06 to PASS was not detected");
+    if (!run(temp).some((f) => f.includes(`${ACCT_ITEM} PASS requires matched_je`))) {
+      throw new Error("theater ACCT-LINK-06 PASS without matched_je=N/M was not detected");
+    }
+
+    link06.evidence =
+      "LIVE matched_journal_entry_id=170/10830 (#3424 bulk categorize→GL); density meaningful";
+    write(temp, ACCT_MANIFEST, JSON.stringify(acct, null, 2) + "\n");
+    const after = run(temp);
+    if (after.some((f) => f.includes(`${ACCT_ITEM} PASS requires`))) {
+      throw new Error(`meaningful density PASS wrongly rejected: ${after.join("; ")}`);
     }
 
     console.log("verify-bankfeed-je-match --selftest OK");
   } finally {
     fs.rmSync(temp, { recursive: true, force: true });
   }
-} else {
+} else if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const failures = run();
   if (failures.length) {
     console.error("verify-bankfeed-je-match — FAILED");
     for (const failure of failures) console.error(`- ${failure}`);
     process.exit(1);
   }
-  console.log("verify-bankfeed-je-match — OK (ACCT-F05 wiring locked; density stays FAIL/ops backlog)");
+  console.log(
+    "verify-bankfeed-je-match — OK (ACCT-F05 wiring locked; PASS allowed only with meaningful matched_je=N/M)"
+  );
 }

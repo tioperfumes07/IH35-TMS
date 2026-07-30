@@ -2,8 +2,9 @@
 /**
  * BANK-ECON-02 / BANK-SURF-02 — honesty + keep-guards.
  *
- * Poster path (#3424 merged on main) must stay wired; manifest must stay FAIL with
- * honest ops-backlog framing — never invent density PASS while matched_je ≈ 3/10628.
+ * Poster path (#3424 merged on main) must stay wired. Manifest may be FAIL while
+ * density near-zero, or PASS when evidence cites matched_je=N/M with N >= 50
+ * (same floor as verify-bankfeed-je-match / ACCT-LINK-06).
  *
  * Pins: verify-banking-bulk-categorize-posts-je + verify-bank-feed-gl-posting + banking.json honesty.
  *
@@ -13,6 +14,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { run as bulkPosterRun } from "./verify-banking-bulk-categorize-posts-je.mjs";
+import { densityIsMeaningful } from "./lib/matched-je-density.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -52,7 +54,7 @@ export function run(root = ROOT) {
     failures.push("banking.ts must call POST /api/v1/banking/transactions/categorize-bulk");
   }
 
-  // 4. banking.json honesty — FAIL + ops backlog, never fake density PASS.
+  // 4. banking.json honesty — FAIL near-zero OR PASS with meaningful matched_je=N/M.
   let parsed;
   try {
     parsed = JSON.parse(read(FILES.bankingJson));
@@ -67,28 +69,38 @@ export function run(root = ROOT) {
   if (!econ02) {
     failures.push("banking.json must include BANK-ECON-02");
   } else {
-    if (econ02.status === "PASS") {
-      failures.push("BANK-ECON-02 must remain FAIL — do not invent density PASS (matched_je ≈ 3/10628 is ops backlog)");
-    }
     const ev = String(econ02.evidence || "");
-    if (!/ops backlog|not a broken poster|matched_je/i.test(ev)) {
-      failures.push("BANK-ECON-02 evidence must frame density as ops backlog / poster works when used");
-    }
     if (!/#3424/.test(ev + String(econ02.pr || ""))) {
       failures.push("BANK-ECON-02 must cite #3424 (poster merged on main)");
     }
     if (!/1480|verify-bank-econ-02-poster-path-wired/i.test(ev)) {
       failures.push("BANK-ECON-02 evidence must cite verify-step 1480 guard");
     }
+    if (econ02.status === "PASS") {
+      if (!densityIsMeaningful(ev)) {
+        failures.push(
+          "BANK-ECON-02 PASS requires matched_je=N/M with N>=50 in evidence (Rule 23 — no theater PASS)"
+        );
+      }
+    } else if (econ02.status === "FAIL") {
+      if (!/ops backlog|not a broken poster|matched_je/i.test(ev)) {
+        failures.push("BANK-ECON-02 FAIL evidence must frame density as ops backlog / poster works when used");
+      }
+      if (densityIsMeaningful(ev)) {
+        failures.push("BANK-ECON-02 evidence cites meaningful density but status is still FAIL — flip to PASS");
+      }
+    } else {
+      failures.push(`BANK-ECON-02 must be FAIL or PASS (got ${econ02.status})`);
+    }
   }
 
   if (!surf02) {
     failures.push("banking.json must include BANK-SURF-02");
-  } else if (surf02.status === "PASS") {
-    failures.push("BANK-SURF-02 must remain FAIL while BANK-ECON-02 density is ops backlog");
+  } else if (surf02.status === "PASS" && econ02 && !densityIsMeaningful(String(econ02.evidence || ""))) {
+    failures.push("BANK-SURF-02 must remain FAIL while BANK-ECON-02 density is near-zero / ops backlog");
   }
 
-  if (parsed.complete === true) {
+  if (parsed.complete === true && econ02?.status === "FAIL") {
     failures.push("banking complete:true is ILLEGAL while BANK-ECON-02 is FAIL");
   }
 
@@ -135,18 +147,38 @@ if (process.argv.includes("--selftest")) {
 
   if (run(tmp).length) throw new Error("expected PASS: " + run(tmp).join("; "));
 
-  // Fake PASS on ECON-02 must FAIL.
+  // Theater PASS on ECON-02 must FAIL.
   mk(
     FILES.bankingJson,
     JSON.stringify({
       complete: false,
       items: [
-        { id: "BANK-ECON-02", status: "PASS", evidence: "all matched", pr: "#3424" },
+        { id: "BANK-ECON-02", status: "PASS", evidence: "all matched #3424 verify-step 1480", pr: "#3424" },
         { id: "BANK-SURF-02", status: "FAIL", evidence: "x", pr: "#3424" },
       ],
     })
   );
-  if (!run(tmp).some((f) => f.includes("BANK-ECON-02"))) throw new Error("expected FAIL on fake PASS");
+  if (!run(tmp).some((f) => f.includes("BANK-ECON-02 PASS requires"))) {
+    throw new Error("expected FAIL on fake PASS");
+  }
+
+  // Meaningful density PASS must be accepted.
+  mk(
+    FILES.bankingJson,
+    JSON.stringify({
+      complete: false,
+      items: [
+        {
+          id: "BANK-ECON-02",
+          status: "PASS",
+          evidence: "LIVE matched_je=170/10830 (#3424). verify-step 1480.",
+          pr: "#3424",
+        },
+        { id: "BANK-SURF-02", status: "FAIL", evidence: "browser still open", pr: "#3424" },
+      ],
+    })
+  );
+  if (run(tmp).length) throw new Error("expected PASS on meaningful density: " + run(tmp).join("; "));
 
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log("verify-bank-econ-02-poster-path-wired --selftest OK");
@@ -156,5 +188,5 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-bank-econ-02-poster-path-wired FAIL:\n  - " + failures.join("\n  - "));
     process.exit(1);
   }
-  console.log("verify-bank-econ-02-poster-path-wired — OK (poster wired; density honestly FAIL)");
+  console.log("verify-bank-econ-02-poster-path-wired — OK (poster wired; density FAIL or meaningful PASS)");
 }
