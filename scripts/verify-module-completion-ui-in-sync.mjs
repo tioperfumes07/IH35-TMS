@@ -2,13 +2,10 @@
 /**
  * The in-app Module Completion scoreboard must show the same numbers CI does.
  *
- * apps/frontend/src/generated/module-completion.ts is generated from docs/module-completion/*.json.
- * If a manifest changes and the generated file is not regenerated, the product would display stale
- * counts — a screen confidently reporting progress that no longer matches the source of truth. That
- * is worse than showing nothing, because it is believed.
- *
- * Also asserts the FIRST_14 list matches the first 14 entries of SIDEBAR_ITEM_IDS, so "the first 14
- * modules" in the UI always means the first 14 in the actual nav, not a list that drifted.
+ * apps/frontend/src/generated/module-completion.ts is DERIVED from docs/module-completion/*.json
+ * and is gitignored (same thrash class as the .md scoreboards). This guard ALWAYS regenerates
+ * first, then asserts FIRST_14 matches the real sidebar — so CI never fails on "stale committed
+ * TS" and parallel PRs never conflict on the generated file.
  */
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -43,14 +40,14 @@ function generatedFirst14() {
 function main() {
   const failures = [];
 
-  // 1) Generated data must be byte-identical to a fresh generation.
+  // 1) Always regenerate from manifests (source of truth). File is gitignored — never "stale in git".
   try {
-    execFileSync(process.execPath, ["scripts/generate-module-completion-data.mjs", "--check"], {
+    execFileSync(process.execPath, ["scripts/generate-module-completion-data.mjs"], {
       stdio: "pipe",
     });
   } catch (err) {
     const out = `${err.stdout ?? ""}${err.stderr ?? ""}`.trim();
-    failures.push(out || "generated module-completion data is stale — run the generator");
+    failures.push(out || "generate-module-completion-data.mjs failed");
   }
 
   // 2) The UI's "first 14" must be the real first 14 of the sidebar.
@@ -81,7 +78,7 @@ function main() {
     process.exit(1);
   }
   console.log(
-    `verify-module-completion-ui-in-sync OK — generated data matches the manifests; ` +
+    `verify-module-completion-ui-in-sync OK — regenerated from manifests; ` +
       `FIRST_14 matches sidebar order (${sidebar14.join(", ")})`
   );
 }

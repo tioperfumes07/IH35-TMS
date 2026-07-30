@@ -34,6 +34,10 @@ Hook: `.cursor/hooks.json` → on **subagentStop**, injects follow-up to dispatc
 
 **Done:** squash merge SHA on `origin/main`, branch deleted, CI green.
 
+## Cursor rebase (no more hotfile conflicts)
+
+**Always** sync with `node scripts/agent-sync-main.mjs` (not bare `git rebase origin/main`). It registers `merge=json-union` drivers first — CLAIMED-NUMBERS + `docs/module-completion/*.json` keyed by item id. Generated `module-completion.ts` is gitignored; frontend `typecheck`/`build`/`dev` regenerate it.
+
 ## If coordinator looks stale
 
 Say: `agent is idle and stale` — or run `/loop 10m STATUS both lanes — abb queue, dispatch if idle`

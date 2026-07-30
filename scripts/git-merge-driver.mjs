@@ -8,8 +8,10 @@
  *   - docs/schema-parity-baseline.json        (pure derived cache of migration DDL)
  *   - db/migrations/.held-migrations.json     (append-only held-migration registry)
  *   - scripts/entity-isolation-allowlist.json (derived allowlist + append-only backlog)
- * Because they are single shared files, any migration PR that merges first makes EVERY other open
- * migration PR conflict on them — and hand-resolving them (union guesses) then fails CI because the
+ *   - docs/module-completion/*.json           (module N-of-M manifests — keyed by items[].id)
+ *   - scripts/verify-steps/CLAIMED-NUMBERS.json (collision-strict on claimed.*)
+ * Because they are single shared files, any PR that merges first makes EVERY other open
+ * PR conflict on them — and hand-resolving them (union guesses) then fails CI because the
  * baseline must EXACTLY match `verify-schema-parity.mjs --update`. That treadmill cost real money.
  *
  * These files have NO runtime consumer (CI-only). For two branches that each ADD columns / register a
@@ -103,11 +105,88 @@ function union(ours, theirs, strictRoot = null, keyPath = "") {
   return theirs === undefined ? ours : theirs;
 }
 
+/** Module-completion manifests: union by item id (never duplicate the same checklist row). */
+function isModuleCompletionManifest(p) {
+  return /^docs\/module-completion\/[^/]+\.json$/.test(p);
+}
+
+const STATUS_RANK = { PASS: 5, HOLD: 4, UNVERIFIED: 3, OPEN: 2, FAIL: 1 };
+
+function preferManifestItem(a, b) {
+  const ra = STATUS_RANK[a?.status] ?? 0;
+  const rb = STATUS_RANK[b?.status] ?? 0;
+  let winner = rb > ra ? b : ra > rb ? a : String(b?.evidence ?? "").length >= String(a?.evidence ?? "").length ? b : a;
+  if (a?.evidence && b?.evidence && a.evidence !== b.evidence) {
+    const evidence = a.evidence.includes(b.evidence)
+      ? a.evidence
+      : b.evidence.includes(a.evidence)
+        ? b.evidence
+        : `${a.evidence} | ${b.evidence}`;
+    const status = ra >= rb ? a.status : b.status;
+    winner = { ...winner, status, evidence };
+  }
+  return winner;
+}
+
+function unionKeyedArray(oursArr, theirsArr) {
+  const byId = new Map();
+  for (const it of [...(oursArr || []), ...(theirsArr || [])]) {
+    if (!it || typeof it !== "object") continue;
+    const id = it.id;
+    if (id == null || id === "") {
+      // no id — keep as structural unique (fallback)
+      const key = JSON.stringify(it);
+      if (![...byId.values()].some((x) => JSON.stringify(x) === key)) {
+        byId.set(`__anon_${byId.size}`, it);
+      }
+      continue;
+    }
+    const prev = byId.get(id);
+    byId.set(id, prev ? preferManifestItem(prev, it) : it);
+  }
+  return [...byId.values()];
+}
+
+function unionModuleManifest(ours, theirs) {
+  if (!ours) return theirs;
+  if (!theirs) return ours;
+  const out = { ...ours, ...theirs };
+  // Prefer conservative complete: both sides must already be true.
+  out.complete = Boolean(ours.complete) && Boolean(theirs.complete);
+  if (Array.isArray(ours.items) || Array.isArray(theirs.items)) {
+    out.items = unionKeyedArray(ours.items, theirs.items);
+  }
+  if (Array.isArray(ours.ranked_findings) || Array.isArray(theirs.ranked_findings)) {
+    out.ranked_findings = unionKeyedArray(ours.ranked_findings, theirs.ranked_findings);
+  }
+  // Scalars that are not status/evidence: keep theirs for timestamps/notes when both set.
+  for (const k of Object.keys(theirs)) {
+    if (k === "items" || k === "ranked_findings" || k === "complete") continue;
+    if (!(k in ours)) out[k] = theirs[k];
+    else if (typeof ours[k] === "object" && ours[k] && typeof theirs[k] === "object" && theirs[k] && !Array.isArray(ours[k])) {
+      out[k] = union(ours[k], theirs[k]);
+    } else if (ours[k] !== theirs[k] && theirs[k] !== undefined) {
+      // Prefer longer string (more evidence prose) else theirs.
+      if (typeof ours[k] === "string" && typeof theirs[k] === "string") {
+        out[k] = theirs[k].length >= String(ours[k]).length ? theirs[k] : ours[k];
+      } else {
+        out[k] = theirs[k];
+      }
+    }
+  }
+  return out;
+}
+
 try {
   const ours = readJson(oursFile);
   const theirs = readJson(theirsFile);
-  const strictRoot = COLLISION_STRICT.get(pathname) ?? null;
-  const merged = ours === undefined ? theirs : theirs === undefined ? ours : union(ours, theirs, strictRoot);
+  let merged;
+  if (isModuleCompletionManifest(pathname)) {
+    merged = unionModuleManifest(ours, theirs);
+  } else {
+    const strictRoot = COLLISION_STRICT.get(pathname) ?? null;
+    merged = ours === undefined ? theirs : theirs === undefined ? ours : union(ours, theirs, strictRoot);
+  }
   // Preserve trailing newline convention used by the --update generators.
   fs.writeFileSync(oursFile, JSON.stringify(merged, null, 2) + "\n");
   process.exit(0);

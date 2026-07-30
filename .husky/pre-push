@@ -3,4 +3,10 @@
 # `npm run branch:precheck-push`. Do NOT source repository `.env` here — a stale
 # DATABASE_URL string is not a database capability and must not override the parent
 # shell (Rule 18 / CURSOR-PIPELINE-REPAIR P0-1).
+
+# Same MERGE_DRIVERS_ALWAYS_ON as pre-commit — rebases before push need the driver.
+if command -v node >/dev/null 2>&1 && [ -f scripts/setup-git-merge-drivers.mjs ]; then
+  node scripts/setup-git-merge-drivers.mjs >/dev/null 2>&1 || true
+fi
+
 npm run branch:precheck-push

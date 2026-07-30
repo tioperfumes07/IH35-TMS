@@ -9,6 +9,12 @@ db/migrations/.held-migrations.json     merge=json-union
 scripts/verify-steps/CLAIMED-NUMBERS.json      merge=json-union
 scripts/entity-isolation-allowlist.json merge=json-union
 
+# MODULE-COMPLETION MANIFEST TREADMILL KILLER (2026-07-29): every Cursor money PR edits
+# docs/module-completion/{accounting,banking,lists}.json (evidence / status). Plain 3-way merge
+# conflicts every parallel PR; array-by-value union would DUPLICATE same-id items. Driver uses
+# keyed union on items[].id / ranked_findings[].id (see scripts/git-merge-driver.mjs).
+docs/module-completion/*.json           merge=json-union
+
 # CONFLICT-TREADMILL KILLER (2026-07-13): every guard/verify PR appends a `verify:*` script to
 # package.json and a run-step to locked-guards.yml at the SAME tail anchor, so whichever PR merges
 # first conflicts EVERY other open PR on these two files — the endless hand-resolve treadmill.
