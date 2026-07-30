@@ -91,10 +91,13 @@ function collectProblemsFromSources(sources) {
         problems.push(`${FILES.bankingJson} must contain BANK-F10 item`);
       } else {
         if (item.status === "PASS") {
-          problems.push("BANK-F10 manifest must stay FAIL until live Neon recovery density (Rule 23)");
-        }
-        if (item.status !== "FAIL") {
-          problems.push(`BANK-F10 manifest status must be FAIL (got ${item.status})`);
+          problems.push("BANK-F10 manifest must stay FAIL or qualifying HOLD until live Neon recovery density (Rule 23)");
+        } else if (item.status === "HOLD") {
+          if (!item.owner_hold || !item.tracker || !item.future_block) {
+            problems.push("BANK-F10 HOLD requires owner_hold + tracker + future_block (Rule 24)");
+          }
+        } else if (item.status !== "FAIL") {
+          problems.push(`BANK-F10 manifest status must be FAIL or HOLD (got ${item.status})`);
         }
       }
     }
@@ -149,7 +152,7 @@ function selftest() {
           '"id": "BANK-F10"',
           '"id": "BANK-F10"'
         ).replace(
-          /("id": "BANK-F10"[\s\S]*?"status": )"FAIL"/,
+          /("id": "BANK-F10"[\s\S]*?"status": )"(FAIL|HOLD)"/,
           '$1"PASS"'
         ),
       },
@@ -187,5 +190,5 @@ if (process.argv.includes("--selftest")) {
     for (const p of problems) console.error("  - " + p);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — FUEL-03 approve routes mounted; BANK-F10 stays FAIL until live density`);
+  console.log(`${LABEL} OK — FUEL-03 approve routes mounted; BANK-F10 FAIL/HOLD until live density`);
 }

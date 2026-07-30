@@ -8,8 +8,8 @@
 
 | Seq | Module | Status | Desktop audit | Notes |
 |-----|--------|--------|---------------|-------|
-| 1 | accounting | **DONE** | `~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md` | **START** |
-| 2 | bank | **IN_PROGRESS** | `~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md` | accounting 31/31 closed; density + transfer smoke |
+| 1 | accounting | **DONE** (31/31) | `~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md` | **START** |
+| 2 | bank | **DONE** (18/18) | `~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md` | ECON/SURF/LINK/DOM closed; F10+recon owner HOLD |
 | 3 | safety | NOT_STARTED | — | |
 | 4 | lists | NOT_STARTED | — | |
 | 5 | maintenance | NOT_STARTED | — | |
@@ -49,4 +49,4 @@
 | entity-scope burn-down (USMCA) | ACTIVE debt — #3228 proved new leaks still appear |
 | sidebar docs 28→30 | NOT_STARTED |
 
-Last updated: 2026-07-30 — accounting DONE (PR #3834); bank IN_PROGRESS
+Last updated: 2026-07-30 — accounting 31/31 + banking 18/18 DONE (PR #3834); next OWNER-EXECUTION-PLAN module

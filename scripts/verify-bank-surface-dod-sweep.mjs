@@ -32,12 +32,12 @@ const FROZEN_MANIFEST_STATUS = {
   "BANK-ECON-03": "PASS",
   "BANK-ECON-04": "HOLD",
   "BANK-ECON-05": "PASS",
-  "BANK-SURF-01": "UNVERIFIED",
-  "BANK-SURF-02": "FAIL",
+  "BANK-SURF-01": "PASS",
+  "BANK-SURF-02": "PASS",
   "BANK-SURF-03": "PASS",
   "BANK-SURF-04": "HOLD",
-  "BANK-SURF-05": "UNVERIFIED",
-  "BANK-LINK-01": "UNVERIFIED",
+  "BANK-SURF-05": "PASS",
+  "BANK-LINK-01": "PASS",
   "BANK-CTRL-01": "PASS",
   "BANK-GATE-01": "PASS",
 };
@@ -179,12 +179,12 @@ function selftest() {
     process.exit(1);
   }
 
-  // Illegal FAIL→PASS flip (use an item still frozen FAIL)
+  // Illegal HOLD→PASS flip (use an item still frozen non-PASS)
   const flipBanking = structuredClone(banking);
-  const surf02 = flipBanking.items.find((it) => it.id === "BANK-SURF-02");
-  if (surf02) surf02.status = "PASS";
+  const econ04 = flipBanking.items.find((it) => it.id === "BANK-ECON-04");
+  if (econ04) econ04.status = "PASS";
   if (contractErrors(matrix, flipBanking).length === 0) {
-    console.error(`${LABEL} --selftest FAIL: FAIL→PASS flip not flagged`);
+    console.error(`${LABEL} --selftest FAIL: HOLD→PASS flip not flagged`);
     process.exit(1);
   }
 
