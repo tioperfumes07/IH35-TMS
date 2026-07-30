@@ -57,6 +57,37 @@ export function behindOriginMainCount(root) {
   return Number(runGitOrThrow(["rev-list", "--count", "HEAD..origin/main"], { cwd: root }) || "0");
 }
 
+// Paths where correctness depends on GLOBAL allocation, not on file identity: two branches can touch
+// two DIFFERENT migration files and still collide, because the number is the shared resource. Overlap
+// by filename cannot see that, so these prefixes are coupled by prefix instead.
+export const COUPLED_ALLOCATION_PREFIXES = ["db/migrations/", "scripts/verify-steps/", "package-lock.json"];
+
+// The freshness decision, pure and therefore testable. Kept identical in SPIRIT to
+// scripts/verify-branch-fresh.mjs (CI): behind is fine, behind-and-overlapping is not.
+export function freshnessVerdict({ behind, mainFiles, branchFiles }) {
+  if (!(behind > 0)) return { ok: true, reason: "not behind" };
+  const branchSet = new Set(branchFiles);
+  const overlap = mainFiles.filter((f) => branchSet.has(f));
+  const coupled = COUPLED_ALLOCATION_PREFIXES.filter(
+    (prefix) => mainFiles.some((f) => f.startsWith(prefix)) && branchFiles.some((f) => f.startsWith(prefix))
+  );
+  if (overlap.length === 0 && coupled.length === 0) {
+    return { ok: true, reason: `behind ${behind} but no overlap with main` };
+  }
+  const why = [];
+  if (overlap.length) why.push(`shares ${overlap.length} changed file(s) with main: ${overlap.slice(0, 5).join(", ")}`);
+  for (const c of coupled) why.push(`both touch ${c} (globally allocated numbering)`);
+  return {
+    ok: false,
+    overlap,
+    coupled,
+    reason:
+      `local branch is ${behind} commit(s) behind origin/main AND overlaps it — ${why.join("; ")}. ` +
+      `Rebuild: \`git cherry-pick <sha>\` onto a fresh branch from origin/main, or ` +
+      `\`npm run branch:rebuild-linear -- --source <sha> --message "…"\`.`,
+  };
+}
+
 function runStep(command, label, root, env = process.env) {
   console.log(`[branch:precheck-push] RUN ${label}: ${command}`);
   const res = spawnSync(command, { cwd: root, shell: true, encoding: "utf8", env });
@@ -321,15 +352,35 @@ export function runPrecheckPush(options = {}) {
       };
     }
   }
+  // FRESHNESS BY OVERLAP, NOT BY DISTANCE — aligned with scripts/verify-branch-fresh.mjs (CI).
+  //
+  // This gate used to fail whenever the branch was ANY commits behind origin/main. CI stopped doing
+  // that (the overlap rule, docs/specs/BRANCH-TOOLING.md §N), but this local gate did not, so the two
+  // enforcement points disagreed: CI would happily merge a behind-but-non-overlapping branch that
+  // this hook refused to even push. With a busy queue that means a rebuild after every unrelated
+  // merge — the exact N^2 treadmill the overlap rule was written to kill. Measured on 2026-07-29: two
+  // full rebuilds of branches whose file sets did not intersect main's changes at all.
+  //
+  // Being behind is fine. Being behind ON THE SAME FILES is not, and neither is touching a path where
+  // the allocation is global (migration numbers, verify-step numbers, the lockfile).
   const behind = behindOriginMainCount(root);
   if (behind > 0) {
-    return {
-      ok: false,
-      category: GATE_RESULT_CATEGORIES.FRESHNESS,
-      reason:
-        `local branch is ${behind} commit(s) behind origin/main — prefer \`git cherry-pick <sha>\` onto a fresh branch from origin/main; or \`npm run branch:rebuild-linear -- --source <sha> --message "…"\` (commit-own patch only; never two-dot vs current main)`,
-      step: "branch-freshness",
-    };
+    const mergeBase = runGitOrThrow(["merge-base", "HEAD", "origin/main"], { cwd: root });
+    const mainFiles = runGitOrThrow(["diff", "--name-only", `${mergeBase}..origin/main`], { cwd: root })
+      .split("\n")
+      .filter(Boolean);
+    const branchFiles = runGitOrThrow(["diff", "--name-only", `${mergeBase}..HEAD`], { cwd: root })
+      .split("\n")
+      .filter(Boolean);
+    const verdict = freshnessVerdict({ behind, mainFiles, branchFiles });
+    if (!verdict.ok) {
+      return {
+        ok: false,
+        category: GATE_RESULT_CATEGORIES.FRESHNESS,
+        reason: verdict.reason,
+        step: "branch-freshness",
+      };
+    }
   }
 
   if (!env.GITHUB_BASE_SHA && !env.BRANCH_FRESH_BASE_SHA) {
