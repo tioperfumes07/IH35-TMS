@@ -434,7 +434,7 @@
       ],
       "spec": "ASC 606 earn-first · blueprint §18 · EXEMPLAR-DISP-01",
       "status": "PASS",
-      "evidence": "LIVE 2026-07-30: load L-20260624-0083 (57fe61a4-…) smoked assigned_not_dispatched→dispatched→in_transit→delivered_pending_docs→completed_docs_received via PATCH /transition. Neon lucia load_revenue_recognition_postings=2 (earn+bill, $15,000). Earn JE 7d459959 DR Unbilled 1240 / CR Freight 4100 balanced; Bill JE 020ad2e1 DR A/R QBO-45 / CR Unbilled 1240 balanced. ROOT CAUSE unblocked: escrow abandon trigger compared nonexistent enum labels (22P02) — fixed live + mig 202610290000 (::text cast) + guard 1832. REVENUE_RECOGNITION_POST_ENABLED ON TRANSP+USMCA.",
+      "evidence": "LIVE 2026-07-30: load L-20260624-0083 (57fe61a4-…) smoked assigned_not_dispatched→dispatched→in_transit→delivered_pending_docs→completed_docs_received via PATCH /transition. Neon lucia load_revenue_recognition_postings=2 (earn+bill, $15,000). Earn JE 7d459959 DR Unbilled 1240 / CR Freight 4100 balanced; Bill JE 020ad2e1 DR A/R QBO-45 / CR Unbilled 1240 balanced. ROOT CAUSE unblocked: escrow abandon trigger compared nonexistent enum labels (22P02) — fixed live + mig 202610291200 (::text cast) + guard 1832. REVENUE_RECOGNITION_POST_ENABLED ON TRANSP+USMCA.",
       "pr": "#PENDING-ACCT-CLOSE",
       "live_proof": "L-20260624-0083 latch earn+bill JEs balanced 1500000/1500000; status=completed_docs_received"
     },
