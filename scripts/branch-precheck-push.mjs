@@ -200,7 +200,6 @@ export function resolvePrecheckSteps(options = {}, root) {
 }
 
 export function buildPrecheckSteps(root) {
-  void root;
   // verify:static is owned once by block-ready (in-process proof). Do not duplicate here.
   // Rule 25: money/DoD fail-fast FIRST — seconds, not 15m of CI — before expensive builds.
   return [
@@ -216,6 +215,34 @@ export function buildPrecheckSteps(root) {
       requiredCapabilities: ["database"],
       serverRequiredCiEquivalent: "ci / build-typecheck",
     },
+    // TOOL-F05: a branch that ADDS A MIGRATION must have applied it to a real database before push.
+    // This is deliberately NOT done by making `block-ready` unskippable — that step additionally
+    // requires a registered .block-ready manifest, and coupling migrations to registry ceremony would
+    // trade one blocker for another. What was actually missing is narrower and exact: the SQL had
+    // never run anywhere. `verify:db:reset` replays every migration from scratch and needs only the
+    // database.
+    //
+    // No local database and the branch adds a migration -> this step FAILS (no CI equivalent named on
+    // purpose), because deferring it to CI is precisely what put three broken migrations into CI and
+    // one into production on 2026-07-30, where it blocked every deploy for ~5.5 hours.
+    // Deliberately NO requiredCapabilities: this step must not participate in the capability system at
+    // all. Declaring "database" would make the global capability decide it, and the moment that
+    // capability is true `block-ready` also starts running — which additionally demands a registered
+    // .block-ready manifest. Migration safety would then depend on registry ceremony, which is the
+    // "one blocker traded for another" this fix exists to avoid.
+    //
+    // Instead the command speaks for itself: verify-db-reset.mjs already refuses, loudly and safely,
+    // unless DATABASE_URL points at a local verify database (localhost + ih35_verify), and it prints
+    // exactly what to do. No database -> the push stops with actionable guidance; database up -> the
+    // full from-scratch replay runs. Either way the SQL is never pushed unapplied.
+    ...(branchAddsMigration(root)
+      ? [
+          {
+            label: "migration-db-replay",
+            command: "npm run verify:db:reset",
+          },
+        ]
+      : []),
   ];
 }
 
@@ -343,11 +370,42 @@ export function detectLocalCapabilities(env = process.env, options = {}) {
   return { database: false, databaseSource: null };
 }
 
-export function preflightStep(step, capabilities, policy) {
+/**
+ * TOOL-F05 — a branch that ADDS A MIGRATION may not skip the database-gated step.
+ *
+ * WHY. `block-ready` declares requiredCapabilities: ["database"] with a
+ * serverRequiredCiEquivalent of "ci / build-typecheck", so with no local database it SKIPS and defers
+ * to CI. For most changes that is a reasonable trade. For a MIGRATION it is how broken SQL reaches
+ * CI — and, on 2026-07-30, production: three migrations failed on their first CI run (a NOT NULL
+ * column omitted from an INSERT, an assertion that aborted on an empty database) and a fourth failed
+ * in Render's preDeploy and blocked EVERY deploy for ~5.5 hours, including another agent's.
+ *
+ * The database was provisionable the whole time: `npm run verify:db:start` (docker-compose.verify.yml,
+ * postgres:16-alpine on :54329, tmpfs). Running `verify:db:reset` locally replays every migration in
+ * about a minute. Each of those failures was a one-minute local check traded for a fifteen-minute CI
+ * round trip — and in one case a production outage.
+ *
+ * So: migrations lose the skip. Everything else keeps it.
+ */
+export function branchAddsMigration(root, baseRef = "origin/main") {
+  try {
+    const out = runGitOrThrow(
+      ["diff", "--name-only", "--diff-filter=A", `${baseRef}...HEAD`, "--", "db/migrations/"],
+      { cwd: root }
+    );
+    return out.split("\n").some((f) => f.trim().endsWith(".sql"));
+  } catch {
+    return false; // cannot tell -> do not invent a blocker
+  }
+}
+
+export function preflightStep(step, capabilities, policy, context = {}) {
   const missing = (step.requiredCapabilities ?? []).filter(
     (capability) => capabilities[capability] !== true
   );
   if (missing.length === 0) return { action: "run", missing: [] };
+
+
   if (!step.serverRequiredCiEquivalent) {
     return {
       action: "fail",
@@ -491,7 +549,9 @@ export function runPrecheckPush(options = {}) {
   const skippedCapabilities = [];
   let blockReadyRan = false;
   for (const step of steps) {
-    const preflight = preflightStep(step, capabilities, capabilityPolicy);
+    const preflight = preflightStep(step, capabilities, capabilityPolicy, {
+      addsMigration: branchAddsMigration(root),
+    });
     if (preflight.action === "fail") {
       return {
         ok: false,
