@@ -1071,7 +1071,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
   {
     "id": "lists",
     "total": 23,
-    "done": 18,
+    "done": 19,
     "items": [
       {
         "id": "LST-CAT-01",
@@ -1106,7 +1106,7 @@ export const MODULE_COMPLETION: ModuleCompletion[] = [
       {
         "id": "LST-CAT-06",
         "title": "dispatcher_error_reasons per-entity (load-derived entity)",
-        "status": "OPEN",
+        "status": "PASS",
         "pr": ""
       },
       {

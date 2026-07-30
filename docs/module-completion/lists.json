@@ -98,9 +98,10 @@
         "VERIFY-5"
       ],
       "spec": "Owner ruling: derive entity from related load/dispatch, never dispatcher default company",
-      "status": "OPEN",
-      "evidence": "Neon lucia: 25 rows, NO operating_company_id column; RLS is ROLE-scoped only (der_select_owner_admin / der_modify_owner_only), not entity-scoped.",
+      "status": "PASS",
+      "evidence": "CLOSED 2026-07-29: migration 202608010000 applied_held + applied_on_prod:true. LIVE Neon lucia: operating_company_id column present; 75 rows across 3 entities; relrowsecurity+relforcerowsecurity true. Route load-derived GUC pinned by verify-dispatcher-error-reasons-per-entity (1454). Guard verify-lst-cat06-dispatcher-error-reasons-closed (step 1774).",
       "pr": null,
+      "live_proof": "2026-07-29 Neon lucia dispatcher_error_reasons n=75 entities=3 FORCE RLS; applied_held checksum on file",
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
