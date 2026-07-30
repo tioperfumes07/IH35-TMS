@@ -665,6 +665,50 @@ export const CATALOG_PICKER_CONFIGS = {
     },
   },
 
+  // Internal fine reasons — InternalFinesPage used SelectCombobox sentinel + external Modal
+  // (not ReferenceSelect / CatalogQuickCreateDrawer). Options keyed by UUID (reason_uuid).
+  // default_amount is required (cents); inline create defaults to 100 ($1.00) — edit on Lists for
+  // the real default (same pattern as company_violation default_severity=1).
+  internal_fine_reason: {
+    key: "internal_fine_reason",
+    label: "fine reason",
+    backend: "catalog",
+    readTable: "catalogs.internal_fine_reasons",
+    writeTable: "catalogs.internal_fine_reasons",
+    readEndpoint: "/api/v1/catalogs/safety/internal-fine-reasons",
+    writeEndpoint: "/api/v1/catalogs/safety/internal-fine-reasons",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence:
+      "apps/backend/src/catalogs/safety/internal-fine-reasons.routes.ts SELECT+INSERT catalogs.internal_fine_reasons; InternalFinesPage catalogs-safety list consumer",
+    fields: CATALOG_FIELDS,
+    create: async (operatingCompanyId, values) => {
+      const reasonName = values.display_name.trim();
+      const reasonCode = deriveCatalogCode(reasonName, values.code);
+      const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+      const created = await apiRequest<{
+        id: string;
+        reason_code?: string;
+        reason_name?: string;
+        default_amount?: number;
+      }>(`/api/v1/catalogs/safety/internal-fine-reasons?${query.toString()}`, {
+        method: "POST",
+        body: {
+          reason_code: reasonCode,
+          reason_name: reasonName,
+          // API expects cents (converted to numeric dollars on INSERT).
+          default_amount: 100,
+          is_active: true,
+        },
+      });
+      return {
+        id: String(created.id),
+        label: created.reason_name ?? reasonName,
+        code: created.reason_code ?? reasonCode,
+      };
+    },
+  },
+
   // Dispatcher error reasons — UserDetail previously toasted "Add reason in catalog" (fake +Add).
   // Write path: generic factory POST /api/v1/catalogs/dispatch/dispatcher-error-reasons (entityScoped).
   // label column (not display_name); event_type+severity required — passed via createExtras from the form.
