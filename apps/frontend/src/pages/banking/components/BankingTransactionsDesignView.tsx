@@ -1022,6 +1022,10 @@ export function BankingTransactionsDesignView({
                   tx.categorization_load_id ||
                   tx.matched_load_id ||
                   tx.matched_settlement_id ||
+                  tx.matched_bill_id ||
+                  tx.matched_payment_id ||
+                  tx.matched_bill_payment_id ||
+                  tx.matched_transfer_id ||
                   tx.categorization_trailer_id) && (
                   <div
                     className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px]"
@@ -1057,6 +1061,33 @@ export function BankingTransactionsDesignView({
                     ) : null}
                     {tx.matched_settlement_id ? (
                       <EntityLink kind="settlement" id={tx.matched_settlement_id} label="Settlement" />
+                    ) : null}
+                    {tx.matched_bill_id ? (
+                      <EntityLink kind="bill" id={tx.matched_bill_id} label="Bill" data-testid="bank-txn-bill-link" />
+                    ) : null}
+                    {tx.matched_payment_id ? (
+                      <EntityLink
+                        kind="payment"
+                        id={tx.matched_payment_id}
+                        label="Payment"
+                        data-testid="bank-txn-payment-link"
+                      />
+                    ) : null}
+                    {tx.matched_bill_payment_id ? (
+                      <EntityLink
+                        kind="bill_payment"
+                        id={tx.matched_bill_payment_id}
+                        label="Bill payment"
+                        data-testid="bank-txn-bill-payment-link"
+                      />
+                    ) : null}
+                    {tx.matched_transfer_id ? (
+                      <EntityLink
+                        kind="transfer"
+                        id={tx.matched_transfer_id}
+                        label="Transfer"
+                        data-testid="bank-txn-transfer-link"
+                      />
                     ) : null}
                   </div>
                 )}

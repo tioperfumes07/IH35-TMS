@@ -305,6 +305,9 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.matched_bill_id,
           bt.matched_settlement_id,
           bt.matched_journal_entry_id::text AS matched_journal_entry_id,
+          bt.matched_payment_id::text AS matched_payment_id,
+          bt.matched_bill_payment_id::text AS matched_bill_payment_id,
+          bt.matched_transfer_id::text AS matched_transfer_id,
           bt.notes,
           bt.created_at
         FROM banking.bank_transactions bt
@@ -541,6 +544,9 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.matched_bill_id,
           bt.matched_settlement_id,
           bt.matched_journal_entry_id::text AS matched_journal_entry_id,
+          bt.matched_payment_id::text AS matched_payment_id,
+          bt.matched_bill_payment_id::text AS matched_bill_payment_id,
+          bt.matched_transfer_id::text AS matched_transfer_id,
           bt.notes,
           bt.created_at,
           bt.source,
@@ -571,6 +577,9 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
             WHEN bt.matched_load_id IS NOT NULL THEN 'load'
             WHEN bt.matched_settlement_id IS NOT NULL THEN 'settlement'
             WHEN bt.matched_bill_id IS NOT NULL THEN 'bill'
+            WHEN bt.matched_payment_id IS NOT NULL THEN 'payment'
+            WHEN bt.matched_bill_payment_id IS NOT NULL THEN 'bill_payment'
+            WHEN bt.matched_transfer_id IS NOT NULL THEN 'transfer'
             ELSE NULL
           END AS matched_kind,
           -- QBO-parity Relay register: expose diesel/reefer/DEF/fee lines already stored at ingest
