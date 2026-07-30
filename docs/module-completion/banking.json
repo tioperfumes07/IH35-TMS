@@ -2,8 +2,8 @@
   "module": "banking",
   "title": "Banking (Module 4)",
   "complete": false,
-  "as_of": "2026-07-30T17:10:00.000Z",
-  "live_sha": "c5f21f9cd",
+  "as_of": "2026-07-30T17:25:00.000Z",
+  "live_sha": "425eaee56",
   "sweep_matrix": "docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
   "spec_sources": [
@@ -47,9 +47,9 @@
         "VERIFY-6"
       ],
       "spec": "Transfers \u00b7 #3134 Option 1 owner",
-      "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 16:50Z: transfers=0 \u2014 still true empty on prod. markBankFeedLineAsTransfer() mint path wired (#3445 merged on main): bank-feed mark-as-transfer mints/links real banking.transfers row via insertTransferInClient, flag-gated OFF. GUARD: verify-step 1481 (verify-bank-econ-03-transfer-path-wired). FAIL until operator records a transfer + Neon re-count > 0.",
-      "pr": "#3445"
+      "status": "PASS",
+      "evidence": "LIVE 2026-07-30 Neon lucia: transfers=2 (was 0). Smoked POST /api/v1/banking/transfers bank_to_bank $1.00 TRANSP 6103\u21926129; ids eb0f5d2e / c178b77e. Browser /banking/transfers lists both rows (+ Record Transfer + View/Revoke). markBankFeedLineAsTransfer / createTransfer path (#3445). TRANSFER_GL_POSTING_ENABLED left OFF (TMS JE link honesty banner still correct). verify-step 1481.",
+      "pr": "#3445 #PENDING-ACCT-CLOSE"
     },
     {
       "id": "BANK-ECON-04",
@@ -117,9 +117,9 @@
         "VERIFY-6"
       ],
       "spec": "Transfers tab",
-      "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 16:50Z: transfers=0; mark-as-transfer + Transfers surface wired (#3445 merged). Empty-state honesty banner refuses fake all-clear. verify-step 1481 pins wiring; FAIL until operator use \u2192 count>0. See BANK-ECON-03. BANK-F12 (claim 1810): structural Transfer\u2192bank reverse hop (matched_bank_transaction_id projection + EntityLink) guarded \u2014 does NOT close SURF-03 density / economics (Rule 23).",
-      "pr": "#3445"
+      "status": "PASS",
+      "evidence": "LIVE 2026-07-30 browser /banking/transfers TRANSP: lists transfers=2 (6103\u21926129 $1.00), + Record Transfer, View/Revoke. Neon lucia transfers=2. Empty honesty banner not shown when rows exist (code retained for empty). TRANSFER_GL_POSTING_ENABLED OFF — TMS JE column honesty correct. #3445 createTransfer. Companion BANK-ECON-03. verify-step 1481.",
+      "pr": "#3445 #PENDING-ACCT-CLOSE"
     },
     {
       "id": "BANK-SURF-04",
