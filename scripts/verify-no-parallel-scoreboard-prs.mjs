@@ -4,8 +4,8 @@
  *
  * Draft PRs may wait in the serialize queue. Ready-for-review PRs must be sole.
  *
- * When GITHUB_TOKEN/GH_TOKEN is absent (local without gh auth), the guard SKIP-PASS
- * with an explicit notice — preflight still enforces locally when gh works.
+ * CI note: Actions exposes GITHUB_TOKEN; `gh` requires GH_TOKEN — we bridge them.
+ * Prefer GitHub REST when a token is present so CI does not depend on `gh` auth alone.
  */
 import { execSync } from "node:child_process";
 import { resolve, dirname } from "node:path";
@@ -21,8 +21,13 @@ export const HOTFILES = new Set([
   "scripts/verify-steps/CLAIMED-NUMBERS.json",
 ]);
 
-function sh(cmd) {
-  return execSync(cmd, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+function sh(cmd, env = process.env) {
+  return execSync(cmd, {
+    cwd: ROOT,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+    env,
+  }).trim();
 }
 
 /**
@@ -106,7 +111,88 @@ function changedVsMain() {
   }
 }
 
-function main() {
+function token() {
+  return process.env.GH_TOKEN || process.env.GITHUB_TOKEN || "";
+}
+
+function ghEnv() {
+  const t = token();
+  return { ...process.env, GH_TOKEN: t || process.env.GH_TOKEN, GITHUB_TOKEN: t || process.env.GITHUB_TOKEN };
+}
+
+function repoSlug() {
+  if (process.env.GITHUB_REPOSITORY) return process.env.GITHUB_REPOSITORY;
+  try {
+    const url = sh("git remote get-url origin");
+    const m = url.match(/github\.com[:/]([^/]+\/[^/.]+)(?:\.git)?$/i);
+    if (m) return m[1];
+  } catch {
+    /* fall through */
+  }
+  return "tioperfumes07/IH35-TMS";
+}
+
+async function listOpenPrsViaApi(tok) {
+  // Paginate open PRs; for each, fetch files (REST caps at 3000 files / PR).
+  const headers = {
+    Accept: "application/vnd.github+json",
+    Authorization: `Bearer ${tok}`,
+    "X-GitHub-Api-Version": "2022-11-28",
+    "User-Agent": "ih35-verify-no-parallel-scoreboard-prs",
+  };
+  const base = `https://api.github.com/repos/${repoSlug()}`;
+  const prs = [];
+  for (let page = 1; page <= 3; page++) {
+    const res = await fetch(`${base}/pulls?state=open&base=main&per_page=50&page=${page}`, { headers });
+    if (!res.ok) throw new Error(`GitHub API pulls ${res.status}: ${await res.text()}`);
+    const batch = await res.json();
+    if (!batch.length) break;
+    prs.push(...batch);
+    if (batch.length < 50) break;
+  }
+
+  const out = [];
+  for (const p of prs) {
+    const files = [];
+    for (let page = 1; page <= 2; page++) {
+      const fres = await fetch(`${base}/pulls/${p.number}/files?per_page=100&page=${page}`, { headers });
+      if (!fres.ok) throw new Error(`GitHub API files #${p.number} ${fres.status}`);
+      const fbatch = await fres.json();
+      for (const f of fbatch) files.push({ path: f.filename });
+      if (fbatch.length < 100) break;
+    }
+    out.push({
+      number: p.number,
+      headRefName: p.head?.ref,
+      isDraft: Boolean(p.draft),
+      files,
+    });
+  }
+  return out;
+}
+
+function listOpenPrsViaGh() {
+  const raw = sh(
+    "gh pr list --base main --state open --limit 80 --json number,headRefName,isDraft,files",
+    ghEnv(),
+  );
+  return JSON.parse(raw || "[]");
+}
+
+async function listOpenPrs() {
+  const tok = token();
+  if (tok) {
+    try {
+      return await listOpenPrsViaApi(tok);
+    } catch (e) {
+      // Fall through to gh with bridged token
+      console.error(`${LABEL}: API list failed (${e.message}); trying gh`);
+    }
+  }
+  return listOpenPrsViaGh();
+}
+
+async function main() {
   if (process.argv.includes("--selftest")) {
     selftest();
     return;
@@ -119,8 +205,8 @@ function main() {
     return;
   }
 
-  const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "";
-  if (!token && !process.env.CI) {
+  const tok = token();
+  if (!tok && !process.env.CI) {
     console.log(
       `${LABEL}: SKIP-PASS (no GITHUB_TOKEN) — hotfiles touched: ${touches.join(", ")}. ` +
         `Run scripts/ops/cursor-money-pr-preflight.mjs before push.`,
@@ -128,20 +214,19 @@ function main() {
     return;
   }
 
-  let raw;
+  let list;
   try {
-    raw = sh(
-      "gh pr list --base main --state open --limit 80 --json number,headRefName,isDraft,files",
-    );
+    list = await listOpenPrs();
   } catch (e) {
     if (!process.env.CI) {
-      console.log(`${LABEL}: SKIP-PASS (gh pr list failed locally)`);
+      console.log(`${LABEL}: SKIP-PASS (PR list failed locally: ${e.message})`);
       return;
     }
-    throw e;
+    // In CI without usable token, fail closed on hotfile PRs — serialize cannot be proven.
+    console.error(`${LABEL}: FAIL — cannot list open PRs in CI: ${e.message}`);
+    process.exit(1);
   }
 
-  const list = JSON.parse(raw || "[]");
   let branch = "";
   try {
     branch = sh("git rev-parse --abbrev-ref HEAD");
@@ -161,9 +246,7 @@ function main() {
   );
 }
 
-try {
-  main();
-} catch (err) {
+main().catch((err) => {
   console.error(`${LABEL}: FAIL`, err?.message ?? err);
   process.exit(1);
-}
+});
