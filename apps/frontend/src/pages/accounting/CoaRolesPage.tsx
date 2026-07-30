@@ -220,6 +220,46 @@ export function CoaRolesPage() {
         </div>
       ) : null}
 
+      {/*
+        POSTING FEATURE READINESS.
+        `valid` above counts REQUIRED roles only, so this screen printed "All required roles have active
+        mappings" while three posting features were unusable on every entity — their roles are classed
+        OPTIONAL. A poster resolves accounts through resolveRoleAccount(), which THROWS
+        CoaRoleResolutionError when the role is unbound; it does not degrade or warn. Green banner, dead
+        feature. This block is what makes that visible, and it is deliberately rendered AFTER the banner
+        so the two are read together.
+      */}
+      {!validateQuery.isLoading && !validateQuery.isError && (validateQuery.data?.posting_feature_readiness?.length ?? 0) > 0 ? (
+        <div className="rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800">
+          <div className="mb-1 font-semibold">
+            Posting features
+            {(validateQuery.data?.posting_features_blocked ?? 0) > 0
+              ? ` — ${validateQuery.data?.posting_features_blocked} blocked by an unbound account role`
+              : " — all ready"}
+          </div>
+          {/* Flat line, not an inner framed box — §7 forbids a nested frame (verify-no-nested-box). */}
+          {(validateQuery.data?.posting_features_armed_but_blocked ?? 0) > 0 ? (
+            <p className="mb-1 font-semibold text-[#dc2626]">
+              {validateQuery.data?.posting_features_armed_but_blocked} feature(s) are turned ON with an
+              unbound account role. Posting will fail the first time the feature is used. Bind the role
+              below, or turn the feature off.
+            </p>
+          ) : null}
+          <ul className="space-y-0.5">
+            {(validateQuery.data?.posting_feature_readiness ?? []).map((f) => (
+              <li key={f.flag_key} className="flex flex-wrap items-baseline gap-x-2">
+                <span className={f.armed_but_blocked ? "font-semibold text-[#dc2626]" : "font-medium"}>{f.label}</span>
+                <span className="text-slate-500">
+                  {f.ready
+                    ? "ready"
+                    : `needs ${f.missing_roles.join(", ")}${f.flag_enabled ? " — currently ON" : " — currently off"}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       {rowsQuery.isError ? (
         <ListErrorState
           title="Couldn't load CoA role mappings"
