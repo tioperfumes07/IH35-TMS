@@ -168,6 +168,13 @@ export async function sumAuthoritativeDepositoryCashCents(
 
         AND is_active = true
 
+        -- BANK-F14: a row can carry BOTH flags disagreeing. is_active alone counted three of
+        -- Transportation's Wells Fargo accounts as Trucking cash ($2,003.67 of $2,009.05 reported).
+        -- The CHECK constraint added in 202610280000 makes that state impossible; this second
+        -- condition is defence in depth so the cash total is right even if the constraint is ever
+        -- dropped or a row arrives from a path that bypasses it.
+        AND deactivated_at IS NULL
+
         AND plaid_item_id IS NOT NULL
 
       ${opts.hideFilterOnBankAccounts}
@@ -203,6 +210,9 @@ export async function sumAuthoritativeDepositoryCashCents(
         AND ba.account_class = 'depository'
 
         AND ba.is_active = true
+
+        -- BANK-F14: see above — both liveness flags, not one.
+        AND ba.deactivated_at IS NULL
 
         AND ba.plaid_item_id IS NULL
 
