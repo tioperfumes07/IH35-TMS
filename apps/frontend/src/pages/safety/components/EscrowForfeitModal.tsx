@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../../components/Button";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { Combobox } from "../../../components/Combobox";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { getLiabilitiesByDriver } from "../../../api/liabilities";
 import { driverDeductionTypesCatalogClient } from "../../../api/catalogs-driver";
@@ -14,6 +15,7 @@ import type { EscrowRecordRow } from "../../../api/driverFinance";
  *
  * Draw reason is a catalogs.driver_deduction_types row with may_draw_escrow=true (editable in Lists),
  * not free-text. Optional note appends to the catalog display name in the JE memo.
+ * LST-PICKER-01: ReferenceSelect first-row create → POST same table with may_draw_escrow=true.
  */
 
 type Props = {
@@ -33,6 +35,7 @@ type Props = {
 export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onClose, onConfirm }: Props) {
   // DOLLARS mode: the forfeit payload has always carried `amount` in dollars and the backend
   // reads it that way. MoneyInput's dollars seam keeps the stored number UNCHANGED (no x100).
+  const queryClient = useQueryClient();
   const [amountUsd, setAmountUsd] = useState<number | null>(null);
   const [reasonCode, setReasonCode] = useState<string | null>(null);
   const [reasonNote, setReasonNote] = useState("");
@@ -57,6 +60,7 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
         .map((r) => ({
           value: r.code,
           label: `${r.display_name} (${r.code})`,
+          type: r.code,
         })),
     [drawReasonsQuery.data]
   );
@@ -130,25 +134,32 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
         <label className="block text-xs">
           <span className="text-slate-600">Draw reason *</span>
           <div className="mt-1" data-testid="escrow-forfeit-reason">
-            <Combobox
-              options={drawReasonOptions}
+            {/*
+              LST-PICKER-01: Combobox had no inline create — operators had to leave for Lists.
+              ReferenceSelect createKind=escrow_draw_reason → POST catalogs.driver_deduction_types
+              with may_draw_escrow=true (same filtered table this picker reads).
+            */}
+            <ReferenceSelect
               value={reasonCode}
               onChange={setReasonCode}
+              options={drawReasonOptions}
+              createKind="escrow_draw_reason"
+              operatingCompanyId={operatingCompanyId}
+              createdValueField="code"
               placeholder={
                 drawReasonsQuery.isLoading
                   ? "Loading draw reasons…"
                   : drawReasonOptions.length === 0
-                    ? "No may_draw_escrow reasons — configure in Lists"
+                    ? "No draw reasons yet — + Add new below"
                     : "Select abandonment / damage / safety fine…"
               }
               loading={drawReasonsQuery.isLoading}
+              disabled={!operatingCompanyId || drawReasonsQuery.isLoading}
+              onOptionCreated={() => {
+                void queryClient.invalidateQueries({ queryKey: ["escrow-draw-reasons", operatingCompanyId] });
+              }}
             />
           </div>
-          {!drawReasonsQuery.isLoading && drawReasonOptions.length === 0 ? (
-            <span className="mt-1 block text-[11px] text-slate-500">
-              Add or enable draw reasons under Lists → Driver → Escrow Types (may_draw_escrow).
-            </span>
-          ) : null}
         </label>
 
         <label className="block text-xs">
