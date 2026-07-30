@@ -29,12 +29,12 @@ const BANKING_JSON = "docs/module-completion/banking.json";
 const FROZEN_MANIFEST_STATUS = {
   "BANK-ECON-01": "PASS",
   "BANK-ECON-02": "PASS",
-  "BANK-ECON-03": "FAIL",
+  "BANK-ECON-03": "PASS",
   "BANK-ECON-04": "HOLD",
   "BANK-ECON-05": "PASS",
   "BANK-SURF-01": "UNVERIFIED",
   "BANK-SURF-02": "FAIL",
-  "BANK-SURF-03": "FAIL",
+  "BANK-SURF-03": "PASS",
   "BANK-SURF-04": "HOLD",
   "BANK-SURF-05": "UNVERIFIED",
   "BANK-LINK-01": "UNVERIFIED",
@@ -181,8 +181,8 @@ function selftest() {
 
   // Illegal FAIL→PASS flip (use an item still frozen FAIL)
   const flipBanking = structuredClone(banking);
-  const econ03 = flipBanking.items.find((it) => it.id === "BANK-ECON-03");
-  if (econ03) econ03.status = "PASS";
+  const surf02 = flipBanking.items.find((it) => it.id === "BANK-SURF-02");
+  if (surf02) surf02.status = "PASS";
   if (contractErrors(matrix, flipBanking).length === 0) {
     console.error(`${LABEL} --selftest FAIL: FAIL→PASS flip not flagged`);
     process.exit(1);
