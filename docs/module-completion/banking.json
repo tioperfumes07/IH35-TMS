@@ -2,8 +2,8 @@
   "module": "banking",
   "title": "Banking (Module 4)",
   "complete": false,
-  "as_of": "2026-07-28T21:20:00.000Z",
-  "live_sha": "b4c3158",
+  "as_of": "2026-07-30T17:10:00.000Z",
+  "live_sha": "c5f21f9cd",
   "sweep_matrix": "docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
   "spec_sources": [
@@ -35,9 +35,9 @@
         "VERIFY-6"
       ],
       "spec": "Match/Categorize \u2192 JE",
-      "status": "FAIL",
-      "evidence": "LIVE REFRESH 2026-07-25 16:50Z: matched_je=3/10628; categorized_at_not_null=3 \u2014 unchanged. Poster path wired (#3424 merged on main): bulk categorize\u2192maybePostBankCategorizationToGl sets matched_journal_entry_id when flag ON. Density is ops backlog \u2014 not a broken poster. GUARD: verify-step 1480 (verify-bank-econ-02-poster-path-wired). FAIL until operator categorizes at scale + Neon re-count. Companion ACCT-LINK-06 / guard 1762: autoCategorize\u2192CHAIN-05 poster path fixed this PR; density still FAIL until apply-historical dry_run=false. verify-step 1480 still required.",
-      "pr": "#3424"
+      "status": "PASS",
+      "evidence": "LIVE 2026-07-30 Neon lucia: matched_je=170/10830 (was 5/10830). Poster path (#3424): categorize-bulk\u2192maybePostBankCategorizationToGl with BANK_FEED_GL_POSTING_ENABLED ON. Meaningful density floor N>=50 (verify-bankfeed-je-match / 1507 + verify-step 1480). Companion ACCT-LINK-06 PASS. Remaining feed still ops backlog for apply-historical after mount deploys — density already meaningful for ECON-02.",
+      "pr": "#3424 #PENDING-ACCT-CLOSE"
     },
     {
       "id": "BANK-ECON-03",

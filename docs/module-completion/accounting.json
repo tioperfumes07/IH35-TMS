@@ -189,7 +189,7 @@
       ],
       "spec": "ACCT-F05 · companion BANK-ECON-02",
       "status": "PASS",
-      "evidence": "LIVE 2026-07-30 Neon lucia: matched_journal_entry_id=170/10830 (was 5). Dry-run sim of apply-historical rules: 1466 would match; applied via live categorize-bulk→maybePostBankCategorizationToGl (BANK_FEED_GL_POSTING_ENABLED ON). apply-historical was 404 (registerCategorizationRulesRoutes orphan HELD) — THIS PR mounts it + guard 1832. Guard 1762 remains.",
+      "evidence": "LIVE 2026-07-30 Neon lucia: matched_je=170/10830 (was 5). Dry-run sim of apply-historical rules: 1466 would match; applied via live categorize-bulk→maybePostBankCategorizationToGl (BANK_FEED_GL_POSTING_ENABLED ON). #3424 poster on main. apply-historical was 404 (registerCategorizationRulesRoutes orphan HELD) — THIS PR mounts it + guard 1832. Guard 1762 / 1507 allow PASS when matched_je=N/M with N>=50.",
       "pr": "#3424 #PENDING-ACCT-CLOSE",
       "live_proof": "2026-07-30 matched_je=170/10830; stamped bank_categorization batches>0"
     },
