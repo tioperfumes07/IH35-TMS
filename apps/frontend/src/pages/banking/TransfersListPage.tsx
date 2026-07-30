@@ -138,6 +138,20 @@ export function TransfersListPage() {
           ),
       },
       {
+        key: "matched_bank_transaction_id",
+        label: "Bank",
+        render: (row) =>
+          row.matched_bank_transaction_id ? (
+            <EntityLink
+              kind="bank_transaction"
+              id={row.matched_bank_transaction_id}
+              label={row.matched_bank_transaction_id.slice(0, 8)}
+            />
+          ) : (
+            <span className="text-xs text-slate-500">—</span>
+          ),
+      },
+      {
         key: "intercompany_transfer_group_id",
         label: "Interco",
         render: (row) =>
@@ -199,7 +213,7 @@ export function TransfersListPage() {
                         Number(detail.transfer.amount_cents)
                       )}\nMemo: ${detail.transfer.memo || "-"}\nTMS JE: ${
                         detail.transfer.journal_entry_id || "none (TRANSFER_GL_POSTING_ENABLED off or not posted)"
-                      }\nQBO JE: ${detail.transfer.qbo_journal_entry_id || "pending"}`
+                      }\nBank txn: ${detail.transfer.matched_bank_transaction_id || "none"}\nQBO JE: ${detail.transfer.qbo_journal_entry_id || "pending"}`
                     );
                   })
                   .catch((error) => pushToast(String((error as Error).message || "Failed to load transfer detail"), "error"));

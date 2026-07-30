@@ -278,6 +278,8 @@ export type Transfer = {
   qbo_journal_entry_id: string | null;
   /** TMS GL journal entry when TRANSFER_GL_POSTING_ENABLED posted (via posting spine). */
   journal_entry_id?: string | null;
+  /** BANK-F12 — bank txn stamped via matched_transfer_id (Law §9 reverse). */
+  matched_bank_transaction_id?: string | null;
   /** BANK-DOM-05: joins initiator+counterparty legs when set. */
   intercompany_transfer_group_id?: string | null;
   counterparty_company_id?: string | null;
