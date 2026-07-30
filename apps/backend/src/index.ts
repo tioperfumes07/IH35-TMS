@@ -4,6 +4,7 @@ import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
 import rateLimit from "@fastify/rate-limit";
 import { CLOUDFLARE_IP_RANGES, resolveClientIp, type IpResolvable } from "./config/client-ip.js";
+import { installEmptyJsonBodyParser } from "./config/empty-json-body-parser.js";
 import cron from "node-cron";
 import { registerPhoneAuthRoutes } from "./auth/phone-routes.js";
 import { registerEmailAuthRoutes } from "./auth/email-routes.js";
@@ -522,6 +523,9 @@ const repoRoot = resolveMonorepoRoot(import.meta.url);
 // egress IPs (see config/client-ip.ts). `true` would be worse than nothing — it trusts any caller's
 // X-Forwarded-For, letting a client pick its own rate-limit bucket.
 const app = Fastify({ logger: true, trustProxy: [...CLOUDFLARE_IP_RANGES] });
+// Tolerate an empty application/json body on POST actions whose inputs are all in the URL/query (e.g.
+// categorization-rules/:id/apply-historical). Must run before routes are registered. See the helper.
+installEmptyJsonBodyParser(app);
 attachHttpErrorMonitor(app);
 let shuttingDown = false;
 
