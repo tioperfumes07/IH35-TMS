@@ -1,17 +1,20 @@
 #!/usr/bin/env node
 /**
- * ACCT-F03 guard — regression lock: catalogs.accounts.account_subtype stays TEXT by owner decision.
+ * ACCT-F03 / LINK-02 — post-WIRE regression lock.
  *
- * FAILs if any migration (or repo source outside an unlock-marked migration) introduces:
- *   - catalogs.accounts.detail_type_id column
- *   - inbound FK from catalogs.accounts → catalogs.detail_types
- *   - ALTER of account_subtype away from text/uuid-without-unlock
+ * Owner WIRED detail_type_id (migration 202608080000 + DETAIL_TYPES_FK_OWNER_UNLOCK).
+ * account_subtype stays TEXT display cache.
  *
- * PASSes while the owner lock is documented and ACCT-LINK-02 remains an honest owner HOLD.
+ * FAIL if:
+ *   - unlock migration missing / lacks DETAIL_TYPES_FK_OWNER_UNLOCK
+ *   - a different migration adds detail_type_id / FK without unlock marker
+ *   - any migration ALTERs account_subtype to uuid
+ *   - ACCT-LINK-02 is PASS without live detail_type_id evidence
  *
- * Unlock path: migration must contain DETAIL_TYPES_FK_OWNER_UNLOCK (written owner approval).
+ * PASS when unlock mig present and LINK-02 is HOLD (legacy) or PASS with evidence.
  *
- * --selftest mutates REAL migration text and accounting.json; one assertion per planted defect.
+ *   node scripts/verify-detail-types-owner-lock.mjs
+ *   node scripts/verify-detail-types-owner-lock.mjs --selftest
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -20,9 +23,9 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-detail-types-owner-lock";
 const UNLOCK_MARKER = "DETAIL_TYPES_FK_OWNER_UNLOCK";
+const UNLOCK_MIG = "202608080000_acct_link_02_accounts_detail_type_fk.sql";
 
 const LOCK_DOC = "docs/trackers/ACCT-F03-DETAIL-TYPES-OWNER-LOCK-2026-07-25.md";
-const WIRING_DOC = "docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md";
 const ACCOUNTING_JSON = "docs/module-completion/accounting.json";
 const MIGRATIONS_DIR = path.join(ROOT, "db/migrations");
 
@@ -40,7 +43,7 @@ const FORBIDDEN_IN_MIGRATION = [
   {
     id: "account_subtype_uuid",
     re: /ALTER TABLE\s+catalogs\.accounts[\s\S]{0,400}ALTER COLUMN\s+account_subtype\s+TYPE\s+uuid/i,
-    msg: "must not ALTER account_subtype to uuid without owner unlock",
+    msg: "must not ALTER account_subtype to uuid (TEXT display cache is permanent)",
   },
 ];
 
@@ -57,45 +60,59 @@ function loadMigrations() {
     .map((file) => ({ file, sql: fs.readFileSync(path.join(MIGRATIONS_DIR, file), "utf8") }));
 }
 
-/** Scan migrations; forbidden patterns allowed only when UNLOCK_MARKER is in the same file. */
 export function analyzeMigrations(migrations) {
   const failures = [];
+  const unlock = migrations.find((m) => m.file === UNLOCK_MIG);
+  if (!unlock) {
+    failures.push(`missing unlock migration ${UNLOCK_MIG}`);
+  } else if (!unlock.sql.includes(UNLOCK_MARKER)) {
+    failures.push(`${UNLOCK_MIG}: must contain ${UNLOCK_MARKER}`);
+  } else if (!/detail_type_id/i.test(unlock.sql)) {
+    failures.push(`${UNLOCK_MIG}: must define detail_type_id`);
+  }
+
   for (const { file, sql } of migrations) {
+    if (file === UNLOCK_MIG) continue;
     if (sql.includes(UNLOCK_MARKER)) continue;
     for (const rule of FORBIDDEN_IN_MIGRATION) {
       if (rule.re.test(sql)) {
-        failures.push(`${file}: ${rule.msg} (add ${UNLOCK_MARKER} to the same migration after written owner unlock)`);
+        failures.push(`${file}: ${rule.msg} (add ${UNLOCK_MARKER} after written owner unlock)`);
       }
+    }
+    // uuid subtype never allowed even with unlock on other files
+    if (FORBIDDEN_IN_MIGRATION[2].re.test(sql)) {
+      failures.push(`${file}: ${FORBIDDEN_IN_MIGRATION[2].msg}`);
     }
   }
   return failures;
 }
 
-/** Owner lock must be recorded in the tracker doc + wiring doc + module manifest. */
-export function analyzeOwnerLockDocs(sources) {
+function hasLiveDetailTypeEvidence(evidence) {
+  const ev = String(evidence || "");
+  return (
+    /detail_type_id/i.test(ev) &&
+    (/LIVE|Neon|lucia|col_exists|FK|ledger|202608080000/i.test(ev) ||
+      /with_dt\s*=\s*\d+|bound\s*=\s*\d+/i.test(ev))
+  );
+}
+
+export function analyzeOwnerLockDocs(sources = {}) {
   const failures = [];
   const lockDoc = sources[LOCK_DOC] ?? read(LOCK_DOC);
-  const wiringDoc = sources[WIRING_DOC] ?? read(WIRING_DOC);
   const accountingJson = sources[ACCOUNTING_JSON] ?? read(ACCOUNTING_JSON);
 
   if (!lockDoc) {
     failures.push(`missing ${LOCK_DOC}`);
   } else {
-    if (!/account_subtype stays TEXT|OWNER LOCK.*TEXT/i.test(lockDoc)) {
-      failures.push(`${LOCK_DOC}: must state account_subtype stays TEXT (owner lock)`);
-    }
     if (!/DETAIL_TYPES_FK_OWNER_UNLOCK/.test(lockDoc)) {
-      failures.push(`${LOCK_DOC}: must document the ${UNLOCK_MARKER} pre-condition`);
+      failures.push(`${LOCK_DOC}: must document ${UNLOCK_MARKER}`);
     }
-    if (!/no `detail_type_id` column|no detail_type_id column/i.test(lockDoc)) {
-      failures.push(`${LOCK_DOC}: must record that detail_type_id is forbidden without unlock`);
+    if (!/WIRE|WIRED|detail_type_id/i.test(lockDoc)) {
+      failures.push(`${LOCK_DOC}: must record WIRE / detail_type_id status`);
     }
-  }
-
-  if (!wiringDoc) {
-    failures.push(`missing ${WIRING_DOC}`);
-  } else if (!/detail_types[\s\S]{0,200}text subtype lock|Do NOT wire an\s+FK/i.test(wiringDoc)) {
-    failures.push(`${WIRING_DOC}: §A.1 must record detail_types TEXT subtype owner lock`);
+    if (!/account_subtype[\s\S]{0,80}TEXT|TEXT display cache/i.test(lockDoc)) {
+      failures.push(`${LOCK_DOC}: must keep account_subtype TEXT display-cache rule`);
+    }
   }
 
   if (!accountingJson) {
@@ -108,24 +125,24 @@ export function analyzeOwnerLockDocs(sources) {
       failures.push(`${ACCOUNTING_JSON}: invalid JSON`);
       return failures;
     }
-    const link02 = data.items?.find((it) => it.id === "ACCT-LINK-02");
-    if (!link02) {
-      failures.push(`${ACCOUNTING_JSON}: missing ACCT-LINK-02`);
-    } else {
-      if (link02.status === "PASS") {
-        failures.push(`${ACCOUNTING_JSON}: ACCT-LINK-02 must not be PASS — FK is owner-locked, not wired`);
+    for (const id of ["ACCT-LINK-02", "ACCT-SURF-06"]) {
+      const item = data.items?.find((it) => it.id === id);
+      if (!item) {
+        failures.push(`${ACCOUNTING_JSON}: missing ${id}`);
+        continue;
       }
-      if (link02.status !== "HOLD" || link02.owner_hold !== true) {
-        failures.push(`${ACCOUNTING_JSON}: ACCT-LINK-02 must be HOLD with owner_hold:true (owner lock recorded)`);
-      }
-      if (!/OWNER.?LOCK|owner lock|TEXT/i.test(link02.evidence || "")) {
-        failures.push(`${ACCOUNTING_JSON}: ACCT-LINK-02.evidence must cite the TEXT owner lock`);
-      }
-      if (!link02.tracker || !String(link02.tracker).includes("ACCT-F03")) {
-        failures.push(`${ACCOUNTING_JSON}: ACCT-LINK-02.tracker must point at ACCT-F03 owner-lock doc`);
-      }
-      if (!link02.future_block) {
-        failures.push(`${ACCOUNTING_JSON}: ACCT-LINK-02.future_block required for qualifying HOLD`);
+      if (item.status === "PASS") {
+        if (!hasLiveDetailTypeEvidence(item.evidence)) {
+          failures.push(
+            `${ACCOUNTING_JSON}: ${id} PASS requires evidence citing live detail_type_id / Neon / 202608080000`
+          );
+        }
+      } else if (item.status === "HOLD") {
+        if (!item.owner_hold || !item.tracker || !item.future_block) {
+          failures.push(`${ACCOUNTING_JSON}: ${id} HOLD requires owner_hold + tracker + future_block`);
+        }
+      } else if (item.status !== "FAIL" && item.status !== "UNVERIFIED") {
+        failures.push(`${ACCOUNTING_JSON}: ${id} status must be PASS|HOLD|FAIL|UNVERIFIED (got ${item.status})`);
       }
     }
   }
@@ -145,7 +162,6 @@ if (process.argv.includes("--selftest")) {
   const realSources = {
     migrations: realMigrations,
     [LOCK_DOC]: read(LOCK_DOC),
-    [WIRING_DOC]: read(WIRING_DOC),
     [ACCOUNTING_JSON]: read(ACCOUNTING_JSON),
   };
 
@@ -154,8 +170,7 @@ if (process.argv.includes("--selftest")) {
     failures.push(`real repo flagged when it should PASS: ${goodFailures.join(" | ")}`);
   }
 
-  // Case: forbidden FK in a migration without unlock marker — must flag.
-  const sample = realMigrations[0];
+  const sample = realMigrations.find((m) => m.file !== UNLOCK_MIG) || realMigrations[0];
   if (sample) {
     const badMigrations = realMigrations.map((m) =>
       m.file === sample.file
@@ -173,45 +188,25 @@ if (process.argv.includes("--selftest")) {
     }
   }
 
-  // Case: unlock-marked migration with FK — must NOT flag.
-  if (sample) {
-    const unlockedMigrations = realMigrations.map((m) =>
-      m.file === sample.file
-        ? {
-            ...m,
-            sql:
-              `${UNLOCK_MARKER}\n` +
-              m.sql +
-              "\nALTER TABLE catalogs.accounts ADD COLUMN detail_type_id uuid REFERENCES catalogs.detail_types(id);\n",
-          }
-        : m
-    );
-    const unlockedFailures = analyzeMigrations(unlockedMigrations);
-    if (unlockedFailures.some((f) => f.includes(sample.file) && f.includes("detail_type"))) {
-      failures.push("selftest: unlock-marked migration was incorrectly flagged");
-    }
-  }
-
-  // Case: ACCT-LINK-02 flipped to PASS — must flag.
+  // PASS without live evidence must flag
   const realJson = read(ACCOUNTING_JSON);
   if (realJson) {
-    const flippedJson = realJson.replace(
-      /("id":\s*"ACCT-LINK-02"[\s\S]{0,500}?"status":\s*)"HOLD"/,
-      '$1"PASS"'
-    );
-    const flippedFailures = analyzeOwnerLockDocs({ ...realSources, [ACCOUNTING_JSON]: flippedJson });
-    if (!flippedFailures.some((f) => f.includes("ACCT-LINK-02") && f.includes("PASS"))) {
-      failures.push("selftest: flipping ACCT-LINK-02 to PASS was NOT flagged");
+    const data = JSON.parse(realJson);
+    const link = data.items.find((i) => i.id === "ACCT-LINK-02");
+    if (link) {
+      link.status = "PASS";
+      link.evidence = "theater pass with no neon cite";
+      delete link.owner_hold;
+      delete link.tracker;
+      delete link.future_block;
     }
-  }
-
-  // Case: strip owner lock doc — must flag.
-  const strippedDoc = (read(LOCK_DOC) || "")
-    .replace(/OWNER LOCK/g, "maybe wire")
-    .replace(/account_subtype stays TEXT/gi, "wire FK now");
-  const strippedFailures = analyzeOwnerLockDocs({ ...realSources, [LOCK_DOC]: strippedDoc });
-  if (!strippedFailures.some((f) => f.includes(LOCK_DOC))) {
-    failures.push("selftest: stripped owner lock doc was NOT flagged");
+    const theaterFailures = analyzeOwnerLockDocs({
+      ...realSources,
+      [ACCOUNTING_JSON]: JSON.stringify(data),
+    });
+    if (!theaterFailures.some((f) => f.includes("ACCT-LINK-02") && f.includes("PASS"))) {
+      failures.push("selftest: theater PASS without detail_type_id evidence was NOT flagged");
+    }
   }
 
   if (failures.length) {
@@ -230,6 +225,6 @@ if (failures.length) {
   process.exit(1);
 }
 console.log(
-  `${LABEL}: PASS — account_subtype TEXT owner lock recorded; forbidden detail_types FK blocked without ${UNLOCK_MARKER}`
+  `${LABEL}: PASS — LINK-02 WIRE unlock (${UNLOCK_MIG}) recorded; account_subtype TEXT cache protected; no unauthorized detail_types FK`
 );
 process.exit(0);

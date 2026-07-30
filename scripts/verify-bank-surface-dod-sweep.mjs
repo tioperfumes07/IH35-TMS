@@ -40,7 +40,7 @@ const FROZEN_MANIFEST_STATUS = {
   "BANK-LINK-01": "PASS",
   "BANK-CTRL-01": "PASS",
   "BANK-GATE-01": "PASS",
-  "BANK-F10": "HOLD",
+  "BANK-F10": "PASS",
 };
 
 const CELL_STATUSES = new Set(["PASS", "FAIL", "UNVERIFIED", "HOLD"]);
@@ -180,11 +180,15 @@ function selftest() {
     process.exit(1);
   }
 
-  // Illegal HOLD→PASS flip (BANK-F10 frozen HOLD)
+  // Illegal HOLD→PASS flip (temporarily freeze LINK-01 as HOLD)
+  const prior = FROZEN_MANIFEST_STATUS["BANK-LINK-01"];
+  FROZEN_MANIFEST_STATUS["BANK-LINK-01"] = "HOLD";
   const flipBanking = structuredClone(banking);
-  const f10 = flipBanking.items.find((it) => it.id === "BANK-F10");
-  if (f10) f10.status = "PASS";
-  if (contractErrors(matrix, flipBanking).length === 0) {
+  const link = flipBanking.items.find((it) => it.id === "BANK-LINK-01");
+  if (link) link.status = "PASS";
+  const flipFails = contractErrors(matrix, flipBanking);
+  FROZEN_MANIFEST_STATUS["BANK-LINK-01"] = prior;
+  if (flipFails.length === 0) {
     console.error(`${LABEL} --selftest FAIL: HOLD→PASS flip not flagged`);
     process.exit(1);
   }

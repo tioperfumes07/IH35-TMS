@@ -1,34 +1,39 @@
-# ACCT-F03 — detail_types island · OWNER LOCK: account_subtype stays TEXT
+# ACCT-F03 / LINK-02 — detail_types · OWNER WIRE (unlocked)
 
-**FINDING:** F03 · **Lane:** FINANCIAL-HOLD · **Status:** RECORD ONLY — no schema change, no FK wire.
+**FINDING:** F03 / LINK-02 · **Lane:** FINANCIAL · **Status:** WIRED on Neon (2026-07-25 apply) · scoreboard PASS 2026-07-30
 
-## Owner lock (frozen 2026-07-25)
+## Owner ruling (final)
 
-`catalogs.accounts.account_subtype` remains **free TEXT** (QBO AccountSubType spelling). It is **NOT**
-wired to `catalogs.detail_types` via FK. This is a deliberate owner decision — not a linkage defect to
-auto-fix.
+| Decision | Source |
+|---|---|
+| **WIRE** real FK `catalogs.accounts.detail_type_id` → `catalogs.detail_types` | Owner 2026-07-25 + questionnaire LOCK `LINK-02 = WIRE` |
+| Unlock marker | `DETAIL_TYPES_FK_OWNER_UNLOCK` in `db/migrations/202608080000_acct_link_02_accounts_detail_type_fk.sql` |
+| `account_subtype` | Remains **TEXT display cache** (QBO spelling) — never drop / never coerce to uuid |
 
-| Object | Prod truth (lucia 2026-07-25) | Decision |
-|---|---|---|
-| `catalogs.detail_types` | 144 rows, all `operating_company_id` NULL, 0 inbound FKs | SHARED-CANONICAL island — excluded from per-entity scoping |
-| `catalogs.accounts.account_subtype` | `text` column, populated per entity | **OWNER-LOCKED TEXT** — no `detail_type_id` column |
+## Prod truth (Neon `br-fancy-credit-akjnd07a`, lucia 2026-07-30)
 
-## Pre-condition to wire the FK (do NOT build without all three)
+| Object | Truth |
+|---|---|
+| `catalogs.accounts.detail_type_id` | Column + FK `accounts_detail_type_id_fkey` present |
+| Ledger | `202608080000_acct_link_02_accounts_detail_type_fk.sql` in `_system._schema_migrations` |
+| Backfill density | 42 / 1238 live accounts bound (best-effort); NULL OK until operator re-save |
+| `account_subtype` | Still TEXT |
 
-1. **Written owner unlock** containing the marker `DETAIL_TYPES_FK_OWNER_UNLOCK` in the same PR/migration.
-2. **CPA review** of CoA subtype normalization impact (parallel books; no silent balance-sheet moves).
-3. **Additive migration only** — never delete the TEXT column history; backfill FK separately if approved.
+## Regression lock (post-WIRE)
 
-Until then: Lists/CoA pickers may **read** `catalogs.detail_types` for UX filtering, but persistence stays
-`account_subtype` TEXT.
+`scripts/verify-detail-types-owner-lock.mjs` + verify-step **1470**:
 
-## Regression lock
+1. Forbidden: any **new** migration adding `detail_type_id` / FK **without** `DETAIL_TYPES_FK_OWNER_UNLOCK`.
+2. Forbidden: `ALTER account_subtype TYPE uuid`.
+3. Required: unlock migration present; `ACCT-LINK-02` / `ACCT-SURF-06` may be **PASS** when evidence cites live `detail_type_id` column + ledger.
 
-`scripts/verify-detail-types-owner-lock.mjs` + verify-step **1470** — FAILs on forbidden FK /
-`detail_type_id` DDL without the unlock marker; PASSes while TEXT lock is recorded.
+## Companion
 
-## Companion pointers
+- `docs/trackers/NEON-APPLY-LINK-02-DETAIL-TYPE-FK-2026-07-25.md`
+- Prior TEXT-only lock language below is **superseded** by WIRE (kept for audit trail only).
 
-- `docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md` §A.1 FK islands
-- `docs/trackers/GLOBAL-BY-DESIGN-CATALOGS-2026-07-25.md` — detail_types explicitly NOT in GLOBAL set
-- `docs/module-completion/accounting.json` — `ACCT-LINK-02` owner HOLD
+---
+
+### Historical (superseded 2026-07-25 WIRE)
+
+Earlier draft locked TEXT-only with no FK. Owner unlocked with `DETAIL_TYPES_FK_OWNER_UNLOCK`. Do not re-lock.
