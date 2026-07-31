@@ -48,6 +48,8 @@ BEGIN
         'heavy_repair_expense',
         'prepaid_asset_default',
         'amortization_expense_default',
+        -- ACCT-R-24 live on prod (must keep)
+        'broker_customer_advance_liability',
         'rent_expense'
       ));
   END IF;
