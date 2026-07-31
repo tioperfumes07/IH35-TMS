@@ -822,6 +822,48 @@ export const CATALOG_PICKER_CONFIGS = {
     },
   },
 
+
+  // Driver termination reasons — DriverDetail + TerminateConfirmModal previously toasted
+  // "Add reason in catalog" or used a bare Combobox with no inline create.
+  // POST /api/v1/catalogs/driver-termination-reasons requires code, label, severity (owner-only).
+  driver_termination_reason: {
+    key: "driver_termination_reason",
+    label: "termination reason",
+    backend: "catalog",
+    readTable: "catalogs.driver_termination_reasons",
+    writeTable: "catalogs.driver_termination_reasons",
+    readEndpoint: "/api/v1/catalogs/driver-termination-reasons",
+    writeEndpoint: "/api/v1/catalogs/driver-termination-reasons",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence:
+      "apps/backend/src/mdata/driver-safety-events.routes.ts SELECT+INSERT catalogs.driver_termination_reasons; DriverDetail safety-event picker consumer",
+    fields: CATALOG_FIELDS,
+    create: async (operatingCompanyId, values) => {
+      const label = values.display_name.trim();
+      const code = deriveCatalogCode(label, values.code).replace(/-/g, "_");
+      const severity = (values.severity ?? "warning").trim();
+      const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+      const created = await apiRequest<{ id: string; code?: string; label?: string }>(
+        `/api/v1/catalogs/driver-termination-reasons?${query.toString()}`,
+        {
+          method: "POST",
+          body: {
+            code,
+            label,
+            severity,
+            description: values.description?.trim() || undefined,
+          },
+        }
+      );
+      return {
+        id: String(created.id),
+        label: created.label ?? label,
+        code: created.code ?? code,
+      };
+    },
+  },
+
 } as const satisfies Record<string, CatalogPickerConfig>;
 
 /** Every create kind <ReferenceSelect> accepts — derived from the config, never hand-maintained. */

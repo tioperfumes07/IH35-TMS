@@ -1,10 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { createSafetyEvent, listTerminationReasons } from "../../api/mdata";
 import { Button } from "../Button";
-import { Combobox } from "../Combobox";
 import { Modal } from "../Modal";
 import { DatePicker } from "../forms/DatePicker";
+import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { companyToday } from "../../lib/businessDate";
 
 function todayIso() {
@@ -15,11 +15,20 @@ type Props = {
   open: boolean;
   driverId: string;
   driverName: string;
+  operatingCompanyId: string;
   onClose: () => void;
   onTerminated?: () => void;
 };
 
-export function TerminateConfirmModal({ open, driverId, driverName, onClose, onTerminated }: Props) {
+export function TerminateConfirmModal({
+  open,
+  driverId,
+  driverName,
+  operatingCompanyId,
+  onClose,
+  onTerminated,
+}: Props) {
+  const queryClient = useQueryClient();
   const [terminationReasonId, setTerminationReasonId] = useState("");
   const [summary, setSummary] = useState("");
   const [eventDate, setEventDate] = useState(companyToday());
@@ -27,7 +36,7 @@ export function TerminateConfirmModal({ open, driverId, driverName, onClose, onT
   const [pending, setPending] = useState(false);
 
   const reasonsQ = useQuery({
-    queryKey: ["termination-reasons"],
+    queryKey: ["driver-termination-reasons"],
     queryFn: () => listTerminationReasons().then((result) => result.reasons),
     enabled: open,
   });
@@ -65,7 +74,11 @@ export function TerminateConfirmModal({ open, driverId, driverName, onClose, onT
   };
 
   const reasonOptions =
-    reasonsQ.data?.map((reason) => ({ value: reason.id, label: reason.label })) ?? [];
+    reasonsQ.data?.map((reason) => ({
+      value: reason.id,
+      label: reason.label,
+      type: reason.severity,
+    })) ?? [];
 
   return (
     <Modal open={open} onClose={onClose} title={`Terminate — ${driverName}`}>
@@ -75,11 +88,21 @@ export function TerminateConfirmModal({ open, driverId, driverName, onClose, onT
         </p>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Termination reason</label>
-          <Combobox
-            options={reasonOptions}
+          {/*
+            LST-PICKER-01: ReferenceSelect first-row create → POST catalogs.driver_termination_reasons.
+          */}
+          <ReferenceSelect
             value={terminationReasonId || null}
             onChange={(value) => setTerminationReasonId(value ?? "")}
-            placeholder="Select reason"
+            options={reasonOptions}
+            createKind="driver_termination_reason"
+            operatingCompanyId={operatingCompanyId}
+            createExtras={{ severity: selectedReason?.severity ?? "warning" }}
+            placeholder={reasonsQ.isLoading ? "Loading reasons…" : "Select reason"}
+            loading={reasonsQ.isLoading}
+            onOptionCreated={() => {
+              void queryClient.invalidateQueries({ queryKey: ["driver-termination-reasons"] });
+            }}
           />
         </div>
         <div className="flex flex-col gap-1">

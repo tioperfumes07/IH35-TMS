@@ -12,3 +12,4 @@
 - 2026-07-30 · guard 1820 · InternalFinesPage → `createKind=internal_fine_reason` · PR #3821
 - 2026-07-30 · guard 1830 · PayRunClosePanel → PaymentMethodPicker (catalogs.payment_methods inline create) · PR pending
 - 2026-07-30 · guard 1824 · HosViolationCreateModal → `createKind=dot_violation_type` · PR #3823
+- 2026-07-30 · guard 1838 · DriverDetail + TerminateConfirmModal → `createKind=driver_termination_reason` · PR pending
