@@ -21,7 +21,19 @@ export type CreateLeaseInput = {
   operatingCompanyId: string;
   lessorOperatingCompanyId: string;
   lesseeName: string;
+  /**
+   * EXACTLY ONE of these identifies the lessee, and the DB enforces it
+   * (ck_lease_contract_lessee_exactly_one). lesseeName remains the human label; it is NOT an identity,
+   * because free text cannot be joined, entity-scoped, or reverse-queried ("what does USMCA lease").
+   *
+   *  - lesseeCustomerId          -> mdata.customers, for an EXTERNAL lessee
+   *  - lesseeOperatingCompanyId  -> org.companies,   for an INTERCOMPANY lessee (TRK -> TRANSP/USMCA)
+   *
+   * lesseeCustomerId used to be the only option and was optional, so a contract could be created with
+   * no lessee identity at all. That is the gap LEASE-06 closes.
+   */
   lesseeCustomerId?: string | null;
+  lesseeOperatingCompanyId?: string | null;
   displayId?: string | null;
   election?: LeaseElection;
   commencementDate: string;
@@ -38,22 +50,44 @@ export type CreateLeaseInput = {
 /** Create a lessor lease + its classification (election defaults to OPERATING per the owner lock). */
 export async function createLeaseContract(input: CreateLeaseInput, actor: Actor): Promise<{ id: string }> {
   const election: LeaseElection = input.election ?? "operating";
+
+  // Fail here, in the application, rather than letting the DB CHECK reject it. The constraint is the
+  // backstop; this is the message a caller can act on. Both-set and neither-set are equally wrong:
+  // neither-set is how a lease ends up identified only by free-text lessee_name (no FK, no entity
+  // scoping, unanswerable in reverse), and both-set makes the counterparty ambiguous on a contract that
+  // drives intercompany rent and depreciation.
+  const lesseeCustomerId = input.lesseeCustomerId ?? null;
+  const lesseeOperatingCompanyId = input.lesseeOperatingCompanyId ?? null;
+  const lesseeIdentities = [lesseeCustomerId, lesseeOperatingCompanyId].filter(Boolean).length;
+  if (lesseeIdentities !== 1) {
+    throw new Error(
+      `createLeaseContract: exactly one lessee identity is required, got ${lesseeIdentities}. ` +
+        `Pass lesseeCustomerId (external lessee -> mdata.customers) OR lesseeOperatingCompanyId ` +
+        `(intercompany lessee -> org.companies). lesseeName is the display label, not an identity.`
+    );
+  }
+  if (lesseeOperatingCompanyId && lesseeOperatingCompanyId === input.lessorOperatingCompanyId) {
+    throw new Error("createLeaseContract: a company cannot lease to itself (lessee equals lessor).");
+  }
+
   return withCurrentUser(actor.userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
 
     const res = await client.query<{ id: string }>(
       `INSERT INTO accounting.lease_contract
-         (operating_company_id, lessor_operating_company_id, lessee_name, lessee_customer_id, display_id,
+         (operating_company_id, lessor_operating_company_id, lessee_name, lessee_customer_id,
+          lessee_operating_company_id, display_id,
           election, commencement_date, end_date, payment_amount_cents, payment_frequency, number_of_periods,
           total_lease_payments_cents, discount_rate_bps, residual_value_cents, contract_instance_id, status,
           created_by_user_id)
-       VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5,$6,$7::date,$8::date,$9,$10,$11,$12,$13,$14,$15::uuid,'draft',$16::uuid)
+       VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,$6,$7,$8::date,$9::date,$10,$11,$12,$13,$14,$15,$16::uuid,'draft',$17::uuid)
        RETURNING id::text`,
       [
         input.operatingCompanyId,
         input.lessorOperatingCompanyId,
         input.lesseeName,
-        input.lesseeCustomerId ?? null,
+        lesseeCustomerId,
+        lesseeOperatingCompanyId,
         input.displayId ?? null,
         election,
         input.commencementDate,
