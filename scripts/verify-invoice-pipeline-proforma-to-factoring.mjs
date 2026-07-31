@@ -88,8 +88,12 @@ function selftest() {
     fromLoad: `asProforma\n"proforma"`,
     convert: `convertProformaToOfficial\nstatus = 'draft'`,
     book: `asProforma: true\nINVOICE_PROFORMA_PIPELINE_ENABLED`,
-    loads: `convertProformaToOfficial\ndelivered_pending_docs`,
-    invoices: `invoice_is_proforma`,
+    // ACCT-R-24 (#3868) added the two sendDraftInvoice requirements to check() but did not update
+    // this fixture, so `good` was non-compliant and the selftest threw "compliant flagged" on every
+    // push from every clone. A compliant tree carries sendDraftInvoice on BOTH the POD-convert path
+    // (loads.routes.ts) and the invoice send route.
+    loads: `convertProformaToOfficial\ndelivered_pending_docs\nsendDraftInvoice`,
+    invoices: `invoice_is_proforma\nsendDraftInvoice`,
     held: `202609100090_nd_inv_01_proforma_invoice_pipeline.sql`,
   };
   const bad = {
@@ -101,8 +105,25 @@ function selftest() {
     invoices: `invoice_not_draft`,
     held: `[]`,
   };
-  if (check(good).length) throw new Error(`${LABEL} selftest: compliant flagged`);
+  // A tree that is compliant EXCEPT that ACCT-R-24 auto-send was removed. `bad` above fails for
+  // seven unrelated reasons, so it would still pass this selftest with the sendDraftInvoice checks
+  // deleted entirely — it cannot prove those checks have teeth. This one can: it isolates the
+  // single regression they exist to catch.
+  const missingAutoSend = { ...good, loads: `convertProformaToOfficial\ndelivered_pending_docs`, invoices: `invoice_is_proforma` };
+
+  const goodProblems = check(good);
+  if (goodProblems.length) {
+    throw new Error(`${LABEL} selftest: compliant flagged — ${goodProblems.join("; ")}`);
+  }
   if (!check(bad).length) throw new Error(`${LABEL} selftest: missing pipeline not caught`);
+
+  const autoSendProblems = check(missingAutoSend);
+  if (autoSendProblems.length !== 2 || !autoSendProblems.every((p) => /sendDraftInvoice/.test(p))) {
+    throw new Error(
+      `${LABEL} selftest: ACCT-R-24 auto-send removal not caught — expected exactly the 2 ` +
+        `sendDraftInvoice problems, got ${JSON.stringify(autoSendProblems)}`,
+    );
+  }
   console.log(`[${LABEL}] SELFTEST PASS`);
 }
 
