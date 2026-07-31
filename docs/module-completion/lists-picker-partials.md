@@ -18,3 +18,4 @@
 - 2026-07-30 · guard 1848 · ExpectedAdjustmentsCallout (Book Load) → `createKind=detention_reason` · PR pending
 - 2026-07-30 · guard 1850 · LaborTracker → `createKind=maintenance_labor_code` (fuel_card_type has no consumer) · PR pending
 - 2026-07-30 · guard 1850 · LaborTracker → `createKind=maintenance_labor_code` · PR #3877
+- 2026-07-31 · guard 1852 · VendorDetail Profile → `createKind=vendor_type` (catalogs.vendor_types; not labor — #3877 owns labor_code@1850) · PR pending

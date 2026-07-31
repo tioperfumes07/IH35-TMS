@@ -30,6 +30,7 @@ import { useCompanyContext } from "../contexts/CompanyContext";
 import { VENDOR_CATEGORY_VALUES, type VendorCategoryValue } from "../lib/vendorCategories";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { ReferenceSelect } from "../components/parity/ReferenceSelect";
+import { useCatalogQuery } from "../hooks/useCatalogQuery";
 import { emptyVendorProfileMeta, parseVendorNotes, serializeVendorNotes, type VendorProfileMeta } from "../lib/vendorProfileMeta";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateUS } from "../lib/formatDate";
@@ -152,6 +153,23 @@ export function VendorDetailPage() {
     queryFn: () => getVendorIntegrityHistory(id, companyId),
     enabled: Boolean(companyId && id),
   });
+
+  // LST-PICKER-01 (guard 1852) — vendor type is CATALOG-BACKED (catalogs.vendor_types), per entity,
+  // with an inline "+ Add new vendor type" row — same catalog VendorCreateModal already reads (LST-WIRE-04).
+  // #3877 owns maintenance_labor_code@1850; this slice is vendor_type only, not labor.
+  const vendorTypesQuery = useCatalogQuery({
+    catalogName: "vendors.vendor_types",
+    companyId,
+    enabled: Boolean(companyId),
+  });
+  const vendorTypeOptions = useMemo(
+    () =>
+      (vendorTypesQuery.data?.rows ?? []).map((row: Record<string, unknown>) => ({
+        value: String(row.display_name ?? ""),
+        label: String(row.display_name ?? ""),
+      })),
+    [vendorTypesQuery.data]
+  );
 
   // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
   const paymentTermsQuery = useQuery({
@@ -335,7 +353,9 @@ export function VendorDetailPage() {
       };
       return updateVendor(id, {
         name: profileForm.name.trim(),
-        vendor_type: profileForm.vendorType as "Fuel" | "Repair" | "Tires" | "Towing" | "Insurance" | "Permit" | "Toll" | "Other",
+        // LST-PICKER-01 (guard 1852) — vendor_type is catalog-backed free text (catalogs.vendor_types
+        // display_name), not the frozen 8-value union. See UpdateVendorInput in api/mdata.ts (string).
+        vendor_type: profileForm.vendorType,
         phone: profileForm.telephone.trim() || null,
         address: profileForm.address.trim() || null,
         email: profileForm.generalEmail.trim() || null,
@@ -562,18 +582,20 @@ export function VendorDetailPage() {
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Vendor Type</span>
-            <SelectCombobox
+            <ReferenceSelect
               value={profileForm.vendorType}
-              onChange={(event) => setProfileForm((current) => ({ ...current, vendorType: event.target.value }))}
+              onChange={(next) => setProfileForm((current) => ({ ...current, vendorType: next ?? "" }))}
+              options={vendorTypeOptions}
+              createKind="vendor_type"
+              operatingCompanyId={companyId}
               disabled={!profileEditMode}
-              className="h-8 w-full max-w-md text-xs"
-            >
-              {["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"].map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </SelectCombobox>
+              placeholder="Select vendor type…"
+              addNewLabel="+ Add new vendor type"
+              onOptionCreated={(opt) => {
+                setProfileForm((current) => ({ ...current, vendorType: opt.label }));
+                void vendorTypesQuery.refetch();
+              }}
+            />
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Vendor Code</span>
