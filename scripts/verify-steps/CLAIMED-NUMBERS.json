@@ -1171,7 +1171,6 @@
     "1804": "1804-verify-expense-bank-reverse-links.mjs",
     "1805": "1805-verify-data-migrations-rehearsed.mjs",
     "1806": "1806-verify-module-completion-autogen-precommit.mjs",
-    "1807": "1807-verify-audit-events-column-names.mjs",
     "1808": "1808-verify-je-bank-reverse-links.mjs",
     "1810": "1810-verify-transfer-bank-reverse-links.mjs",
     "1812": "1812-verify-lst-picker01-civil-fine-type-inline-create.mjs",
@@ -1188,6 +1187,7 @@
     "1832": "1832-verify-acct-close-categorization-rules-mounted.mjs",
     "1834": "1834-verify-relay-fuel-driver-match-fallbacks.mjs",
     "1835": "1835-verify-db249-index-optimization-3.mjs",
+    "1836": "1836-verify-flow6-auto-invoice-sending.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
@@ -1202,7 +1202,7 @@
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "_how_to_claim": "ODD/EVEN SPLIT (owner-locked 2026-07-28): Cursor = EVEN only; Claude = ODD only. Pick the next free number in YOUR band, add \"<number>\": \"<filename>\", commit it WITH the guard. Never claim the other coder's parity.",
   "generated_at": "2026-07-28T13:11:57Z",
-  "total_claimed": 902,
+  "total_claimed": 888,
   "known_duplicates_frozen": {
     "15": [
       "15-verify-accounting-autoload-coverage.mjs",
