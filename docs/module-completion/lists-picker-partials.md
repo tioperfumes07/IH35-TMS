@@ -39,3 +39,5 @@
 - 2026-07-31 · guard 1878 · CostBreakdownBox parts → `createKind=part` (`maintenance.parts_inventory`; was createKind=item) · PR #3900
 
 - 2026-07-31 · guard 1882 · DriverDetail Profile Class (TMS catalog) → `createKind=class` (`catalogs.classes`; was bare SelectCombobox) · PR pending
+
+- 2026-07-31 · guard 1884 · NewAccountDrawerForm parent account → `createKind=account` (`catalogs.accounts`; was bare `<select>`) · PR pending
