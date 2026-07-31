@@ -419,7 +419,6 @@
     "disputes",
     "dot-compliance",
     "dot-inspections",
-    "driver-files",
     "driver-scheduler",
     "driver-scoring",
     "drug-alcohol",
@@ -428,22 +427,17 @@
     "geofence-alerts",
     "hos",
     "hos-violations",
-    "idvr",
     "insurance",
     "insurance/*",
-    "integrity-reports",
     "internal-fines",
     "leave-balances",
     "loads",
     "loads/:id",
-    "permits",
     "profile",
-    "safety-events",
     "safety-meetings",
     "scheduler/pending-requests",
     "scheduler/requests/:id",
     "settings",
-    "trailer-interchanges",
     "vehicle-inspections"
   ],
   "sidebarItemIds": [
@@ -545,7 +539,7 @@
     "drivers": [
       "Drivers",
       "Profiles",
-      "Settlements ▾",
+      "Settlements \u25be",
       "Pre-settlements",
       "Cash advances",
       "Permits",
@@ -682,7 +676,7 @@
     ],
     "drivers": [
       "Drivers",
-      "Debt Alert · before any payment",
+      "Debt Alert \u00b7 before any payment",
       "Permit / Document Expirations",
       "Leave Overview",
       "Pay Rate Templates"
