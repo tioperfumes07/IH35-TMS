@@ -43,6 +43,7 @@ import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
+import { ReferenceSelect } from "../components/parity/ReferenceSelect";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { PageHeader } from "../components/forms/shared/PageHeader";
@@ -696,6 +697,15 @@ export function DriverDetailPage() {
   const authorizations = companyAuthQuery.data ?? [];
   const safetyEvents = safetyEventsQuery.data ?? [];
   const terminationReasons = terminationReasonsQuery.data ?? [];
+  const terminationReasonOptions = useMemo(
+    () =>
+      terminationReasons.map((reason) => ({
+        value: reason.id,
+        label: reason.label,
+        type: reason.severity,
+      })),
+    [terminationReasons]
+  );
   const equipmentTypeOptions =
     equipmentTypesQuery.data?.filter((type) => !qualifications.some((qualification) => qualification.equipment_type_id === type.id)) ?? [];
 
@@ -1685,12 +1695,11 @@ export function DriverDetailPage() {
             {safetyForm.event_type === "termination" ? (
               <div className="flex flex-col gap-1 md:col-span-2">
                 <label className="text-xs font-semibold text-gray-600">Termination reason</label>
-                <Combobox
-                  options={terminationReasons.map((reason) => ({
-                    value: reason.id,
-                    label: reason.label,
-                    sublabel: reason.severity,
-                  }))}
+                {/*
+                  LST-PICKER-01: ReferenceSelect first-row create → POST catalogs.driver_termination_reasons.
+                  Options keyed by UUID (termination_reason_id). Severity on create comes from the form row.
+                */}
+                <ReferenceSelect
                   value={safetyForm.termination_reason_id || null}
                   onChange={(nextValue) => {
                     const nextId = nextValue ?? "";
@@ -1701,16 +1710,15 @@ export function DriverDetailPage() {
                       severity: selectedReason?.severity ?? current.severity,
                     }));
                   }}
+                  options={terminationReasonOptions}
+                  createKind="driver_termination_reason"
+                  operatingCompanyId={String(driver?.operating_company_id ?? companyId)}
+                  createExtras={{ severity: safetyForm.severity }}
                   placeholder="Select reason"
                   loading={terminationReasonsQuery.isLoading}
-                  allowAddNew={
-                    isOwner
-                      ? {
-                          label: "Add reason in catalog",
-                          onAdd: (query) => pushToast(`Add "${query}" from termination reasons catalog`, "info"),
-                        }
-                      : undefined
-                  }
+                  onOptionCreated={() => {
+                    void queryClient.invalidateQueries({ queryKey: ["driver-termination-reasons"] });
+                  }}
                 />
               </div>
             ) : null}

@@ -91,6 +91,7 @@ export function ActionBar({
         open={terminateOpen}
         driverId={driverId}
         driverName={driverName}
+        operatingCompanyId={companyId}
         onClose={() => setTerminateOpen(false)}
         onTerminated={onActionComplete}
       />

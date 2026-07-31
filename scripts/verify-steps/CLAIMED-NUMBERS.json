@@ -1191,6 +1191,7 @@
     "1835": "1835-verify-db249-index-optimization-3.mjs",
     "1836": "1836-verify-flow6-auto-invoice-sending.mjs",
     "1837": "1837-verify-pm-countdown-requests-not-due.mjs",
+    "1838": "1838-verify-lst-picker01-termination-reason-inline-create.mjs",
     "1839": "1839-verify-page-header-subtitle-shrinks.mjs",
     "1841": "1841-verify-units-without-load-driver-nullif.mjs",
     "01": "01-ensure-database-url.mjs",
