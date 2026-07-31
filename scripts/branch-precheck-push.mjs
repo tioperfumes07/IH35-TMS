@@ -100,6 +100,9 @@ export const COUPLED_ALLOCATION_PREFIXES = ["package-lock.json"];
 const STEP_DIR = "scripts/verify-steps/";
 const CLAIMED_REGISTRY = "scripts/verify-steps/CLAIMED-NUMBERS.json";
 
+// Repo root — needed to read .gitattributes for the union-merge exemption below.
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
 // ── THE REBASE TREADMILL, KILLED AT THE ROOT (2026-07-31) ────────────────────────────────────────
 // A file with a UNION merge driver cannot produce a conflict — that is the entire point of declaring
 // it in .gitattributes. Yet this gate hardcoded a single exemption (CLAIMED_REGISTRY) while
@@ -581,8 +584,8 @@ export function runPrecheckPush(options = {}) {
       .split("\n")
       .filter(Boolean);
     const unionPatterns = unionMergedPatterns(
-      fs.existsSync(path.join(ROOT, ".gitattributes"))
-        ? fs.readFileSync(path.join(ROOT, ".gitattributes"), "utf8")
+      fs.existsSync(path.join(REPO_ROOT, ".gitattributes"))
+        ? fs.readFileSync(path.join(REPO_ROOT, ".gitattributes"), "utf8")
         : ""
     );
     const verdict = freshnessVerdict({ behind, mainFiles, branchFiles, unionPatterns });
