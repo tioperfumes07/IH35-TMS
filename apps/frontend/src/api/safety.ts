@@ -1179,13 +1179,10 @@ export function updatePermitRenewalReminder(
 //   GET /api/v1/safety/dot-inspections/clean-rate apps/backend/src/routes/safety/dot-inspections.ts:78
 // Both are entity-scoped server-side (assertCompanyMembership + app.operating_company_id).
 //
-// NOTE (deliberate omission): the backend ALSO registers
-// GET /api/v1/safety/reports/:report_id/export.xlsx, but `renderSafetyReportXlsx()` ignores both the
-// company and the report and writes a hardcoded ["safety.sample", 0] row
-// (safety-reports.routes.ts:29-36). That is a stub, not an export of this entity's data, so SAF-B31
-// deliberately does NOT wire an XLSX control to it — a control that downloads fabricated numbers on a
-// compliance screen is worse than no control. The ParityTable CSV export (real rendered rows) is used
-// instead. Wiring XLSX requires a BACKEND fix, which is out of scope for this frontend-only block.
+// NOTE: GET /api/v1/safety/reports/:report_id/export.xlsx now mirrors the scoped rollup query
+// (fetchSafetyReportRows in safety-reports.routes.ts). Empty companies get a header-only sheet.
+// SafetyReportsPage still uses ParityTable CSV for on-screen rows; XLSX export can be wired when
+// product wants a download control — the backend path is no longer a fabricated stub.
 
 export type SafetyReportRollupRow = { event_class: string; total: number };
 

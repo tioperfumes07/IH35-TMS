@@ -31,9 +31,12 @@ describe("XLSX exporter openability", () => {
   });
 
   it("opens safety report workbooks as genuine XLSX", async () => {
-    const workbook = await open(await renderSafetyReportXlsx());
+    const workbook = await open(
+      await renderSafetyReportXlsx([{ event_class: "safety.dot_inspection", total: 3 }])
+    );
     expect(workbook.getWorksheet("Safety Report")?.getCell("A1").value).toBe("event_class");
-    expect(workbook.getWorksheet("Safety Report")?.getCell("B2").value).toBe(0);
+    expect(workbook.getWorksheet("Safety Report")?.getCell("A2").value).toBe("safety.dot_inspection");
+    expect(workbook.getWorksheet("Safety Report")?.getCell("B2").value).toBe(3);
   });
 
   it("opens fleet HOS workbooks with the public sheet contract", async () => {
