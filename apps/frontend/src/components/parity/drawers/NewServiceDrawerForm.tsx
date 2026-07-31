@@ -11,11 +11,14 @@
  * account was a free-text box that was DROPPED at create — the item saved with no GL mapping.
  * LST-PICKER-01 (guard 1872): nested InlineCreateDrawer path now uses ReferenceSelect
  * createKind=account (same as ItemEditorModal) — bare Combobox had no "+ Add new account".
+ * LST-PICKER-01 (guard 1874): preferred vendor free-text → ReferenceSelect createKind=vendor
+ * + persist preferred_vendor_id / purchase_* (parity with ItemEditorModal; was dropped at create).
  */
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { itemsCatalogClient } from "../../../api/catalogs-accounting";
 import { getCoaAccounts } from "../../../api/banking";
+import { listVendors } from "../../../api/mdata";
 import { MoneyInput } from "../../forms/MoneyInput";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
@@ -52,7 +55,7 @@ type FormState = {
   buyEnabled: boolean;
   buyDescription: string;
   buyCost: number | null;
-  preferredVendor: string;
+  preferredVendorId: string | null;
   expenseAccountId: string | null;
 };
 
@@ -72,7 +75,7 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
     buyEnabled: false,
     buyDescription: "",
     buyCost: null,
-    preferredVendor: "",
+    preferredVendorId: null,
     expenseAccountId: null,
   });
 
@@ -82,6 +85,11 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
     queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId],
     queryFn: () => getCoaAccounts(operatingCompanyId),
     enabled: !!operatingCompanyId,
+  });
+  const vendorsQuery = useQuery({
+    queryKey: ["mdata", "vendors", "for-items", operatingCompanyId],
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: 200 }),
+    enabled: !!operatingCompanyId && form.buyEnabled,
   });
   const accounts = accountsQuery.data?.accounts ?? [];
   const incomeOptions: ReferenceOption[] = useMemo(
@@ -98,9 +106,19 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
         .map((a) => ({ value: a.id, label: a.account_name, type: a.account_number ?? undefined })),
     [accounts]
   );
+  const vendorOptions: ReferenceOption[] = useMemo(
+    () =>
+      (vendorsQuery.data?.vendors ?? [])
+        .filter((v) => !v.deactivated_at)
+        .map((v) => ({ value: v.id, label: v.name })),
+    [vendorsQuery.data]
+  );
 
   function refreshAccounts() {
     void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId] });
+  }
+  function refreshVendors() {
+    void queryClient.invalidateQueries({ queryKey: ["mdata", "vendors", "for-items", operatingCompanyId] });
   }
 
   // Carrier default: on a sellable item with nothing chosen, preselect "Sales of Service Income".
@@ -129,10 +147,10 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
     try {
       // M-1: sellPrice stays a DOLLAR number → unit_price_cents = round(price*100) unchanged (byte-for-byte).
       // QB-STD-5: canonical catalogs.items — survives reload.
-      // FIX-03: PERSIST the chosen GL accounts — default_income_account_id (sell) + default_expense_account_id
-      // (buy). The backend /catalogs/accounting/items maps these metadata keys straight to columns and
-      // validates account-type server-side. Buy-side desc/cost/vendor remain form-only (separate columns).
+      // FIX-03 + LST-PICKER-01 (1874): persist GL accounts + preferred_vendor_id + purchase_* —
+      // same metadata keys ItemEditorModal writes (catalogs.items columns).
       const priceCents = form.sellPrice != null ? Math.round(form.sellPrice * 100) : 0;
+      const purchaseCostCents = form.buyEnabled && form.buyCost != null ? Math.round(form.buyCost * 100) : null;
       const nameSlug = (form.sku.trim() || form.name.trim().replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 20) || "ITEM").slice(0, 120);
       const res = await itemsCatalogClient.create(operatingCompanyId, {
         code: nameSlug || "ITEM",
@@ -142,6 +160,9 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
           unit_price_cents: priceCents,
           default_income_account_id: form.sellEnabled ? form.incomeAccountId : null,
           default_expense_account_id: form.buyEnabled ? form.expenseAccountId : null,
+          purchase_description: form.buyEnabled ? form.buyDescription.trim() || null : null,
+          purchase_cost_cents: purchaseCostCents,
+          preferred_vendor_id: form.buyEnabled ? form.preferredVendorId : null,
         },
       });
       onCreated({ id: String(res.id), label: form.name.trim() });
@@ -269,7 +290,7 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
             </label>
             <label className="block">
               <span className="text-xs font-medium text-gray-700">Cost</span>
-              {/* M-1: dollars-mode QBO money entry. FIX-03 persists the expense ACCOUNT; cost/vendor stay form-only. */}
+              {/* M-1: dollars-mode → purchase_cost_cents on catalogs.items (ItemEditorModal parity). */}
               <MoneyInput
                 valueDollars={form.buyCost}
                 onChangeDollars={(d) => set("buyCost", d)}
@@ -277,13 +298,21 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
                 className="mt-1 w-full"
               />
             </label>
-            <label className="block">
+            <label className="block" data-testid="service-preferred-vendor-select">
               <span className="text-xs font-medium text-gray-700">Preferred vendor</span>
-              <input
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm"
-                value={form.preferredVendor}
-                onChange={(e) => set("preferredVendor", e.target.value)}
-              />
+              <div className="mt-1">
+                {/* LST-PICKER-01 (guard 1874): free-text → ReferenceSelect createKind=vendor + persist preferred_vendor_id */}
+                <ReferenceSelect
+                  options={vendorOptions}
+                  value={form.preferredVendorId}
+                  onChange={(v) => set("preferredVendorId", v)}
+                  createKind="vendor"
+                  operatingCompanyId={operatingCompanyId}
+                  placeholder="No preferred vendor"
+                  loading={vendorsQuery.isLoading}
+                  onOptionCreated={() => refreshVendors()}
+                />
+              </div>
             </label>
             <label className="block" data-testid="service-expense-account-select">
               <span className="text-xs font-medium text-gray-700">Expense account *</span>
