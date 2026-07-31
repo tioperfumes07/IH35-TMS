@@ -171,13 +171,18 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   const rows = useMemo(() => {
     return allRows.filter((row) => {
       if (typeFilter && row.event_type !== typeFilter) return false;
+      // SAF-F28: picker sets canonical id; keep name/number substring fallback for legacy typed text.
       if (driverFilter) {
-        const name = String(row.subject_driver_name ?? row.subject_driver_id ?? "").toLowerCase();
-        if (!name.includes(driverFilter.trim().toLowerCase())) return false;
+        const id = String(row.subject_driver_id ?? "");
+        const name = String(row.subject_driver_name ?? "").toLowerCase();
+        const needle = driverFilter.trim().toLowerCase();
+        if (id !== driverFilter && !name.includes(needle) && id.toLowerCase() !== needle) return false;
       }
       if (unitFilter) {
-        const unit = String(row.subject_unit_number ?? row.subject_unit_id ?? "").toLowerCase();
-        if (!unit.includes(unitFilter.trim().toLowerCase())) return false;
+        const id = String(row.subject_unit_id ?? "");
+        const num = String(row.subject_unit_number ?? "").toLowerCase();
+        const needle = unitFilter.trim().toLowerCase();
+        if (id !== unitFilter && !num.includes(needle) && id.toLowerCase() !== needle) return false;
       }
       const occurredDate = String(row.occurred_at ?? "").slice(0, 10);
       if (fromDate && occurredDate && occurredDate < fromDate) return false;
@@ -327,23 +332,35 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
               </option>
             ))}
           </select>
-          {/* S-08: driver + unit filters — search previously covered only title/description. */}
-          <input
-            aria-label="Filter by driver"
-            value={driverFilter}
-            onChange={(event) => setDriverFilter(event.target.value)}
-            placeholder="Filter by driver"
-            className="w-36 rounded-sm border border-gray-300 px-2 py-1 text-xs"
-            data-testid="safety-events-driver-filter"
-          />
-          <input
-            aria-label="Filter by unit"
-            value={unitFilter}
-            onChange={(event) => setUnitFilter(event.target.value)}
-            placeholder="Filter by unit"
-            className="w-32 rounded-sm border border-gray-300 px-2 py-1 text-xs"
-            data-testid="safety-events-unit-filter"
-          />
+          {/* SAF-F28: filters, not creators — allowCreate={false} (Idvr / Accidents law). */}
+          <label className="text-[11px] text-slate-600" aria-label="Filter by driver">
+            Driver
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={operatingCompanyId}
+              value={driverFilter || null}
+              onChange={(next) => setDriverFilter(next ?? "")}
+              allowCreate={false}
+              placeholder="All drivers"
+              className="mt-1 w-48"
+              dataField="safety-events-driver-filter"
+              dataTestId="safety-events-driver-filter"
+            />
+          </label>
+          <label className="text-[11px] text-slate-600" aria-label="Filter by unit">
+            Unit
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={operatingCompanyId}
+              value={unitFilter || null}
+              onChange={(next) => setUnitFilter(next ?? "")}
+              allowCreate={false}
+              placeholder="All units"
+              className="mt-1 w-40"
+              dataField="safety-events-unit-filter"
+              dataTestId="safety-events-unit-filter"
+            />
+          </label>
         </div>
 
         <div className="flex items-center gap-2">
