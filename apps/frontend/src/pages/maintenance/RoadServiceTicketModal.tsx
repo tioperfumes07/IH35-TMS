@@ -1,8 +1,10 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { listUnits } from "../../api/mdata";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { listUnits, listVendors } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useRoadServiceTickets, type RoadServiceType } from "../../hooks/useRoadServiceTickets";
 
@@ -23,6 +25,7 @@ const SERVICE_TYPES: Array<{ value: RoadServiceType; label: string }> = [
 
 export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Props) {
   const { createTicket } = useRoadServiceTickets();
+  const queryClient = useQueryClient();
   const unitsQuery = useQuery({
     queryKey: ["units", "road-service", operatingCompanyId],
     queryFn: () =>
@@ -32,7 +35,14 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
     enabled: open && Boolean(operatingCompanyId),
   });
 
+  const vendorsQuery = useQuery({
+    queryKey: ["mdata", "vendors", operatingCompanyId, "road-service"],
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: 200 }),
+    enabled: open && Boolean(operatingCompanyId),
+  });
+
   const [ticketNumber, setTicketNumber] = useState("");
+  const [vendorId, setVendorId] = useState("");
   const [vendorName, setVendorName] = useState("");
   const [unitId, setUnitId] = useState("");
   const [serviceType, setServiceType] = useState<RoadServiceType>("tire_change");
@@ -45,9 +55,14 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
     label: unit.display_id ?? unit.unit_number ?? unit.id,
   }));
 
+  const vendorOptions = useMemo(
+    () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption).sort((a, b) => a.label.localeCompare(b.label)),
+    [vendorsQuery.data?.vendors]
+  );
+
   async function handleSubmit() {
     setError(null);
-    if (!ticketNumber.trim() || !vendorName.trim() || !unitId) {
+    if (!ticketNumber.trim() || !vendorId || !vendorName.trim() || !unitId) {
       setError("Ticket #, vendor, and unit are required.");
       return;
     }
@@ -55,6 +70,7 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
       await createTicket.mutateAsync({
         ticket_number: ticketNumber.trim(),
         vendor_name: vendorName.trim(),
+        vendor_id: vendorId,
         unit_id: unitId,
         service_type: serviceType,
         location_address: locationAddress || undefined,
@@ -62,6 +78,7 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
       });
       onClose();
       setTicketNumber("");
+      setVendorId("");
       setVendorName("");
       setUnitId("");
       setLocationAddress("");
@@ -80,7 +97,32 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
         </label>
         <label className="block text-xs font-medium text-gray-700">
           Vendor
-          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" value={vendorName} onChange={(e) => setVendorName(e.target.value)} />
+          {/*
+            LST-PICKER-01 (guard 1866): free-text vendor_name alone cannot satisfy POST
+            (vendor_id required → mdata.vendors). ReferenceSelect createKind=vendor wires the
+            canonical AP vendor + keeps vendor_name for display/memo.
+          */}
+          <div className="mt-1" data-testid="road-service-vendor-select">
+            <ReferenceSelect
+              value={vendorId || null}
+              onChange={(next) => {
+                const id = next ?? "";
+                const opt = vendorOptions.find((o) => o.value === id);
+                setVendorId(id);
+                setVendorName(opt?.label ?? "");
+              }}
+              options={vendorOptions}
+              createKind="vendor"
+              operatingCompanyId={operatingCompanyId}
+              placeholder={vendorsQuery.isLoading ? "Loading vendors…" : "Select vendor…"}
+              loading={vendorsQuery.isLoading}
+              onOptionCreated={async (opt) => {
+                setVendorId(opt.value);
+                setVendorName(opt.label);
+                await queryClient.invalidateQueries({ queryKey: ["mdata", "vendors", operatingCompanyId, "road-service"] });
+              }}
+            />
+          </div>
         </label>
         <label className="block text-xs font-medium text-gray-700">
           Unit
