@@ -7,9 +7,9 @@
   "surface_map": "docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md",
   "desktop_clickthrough": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md",
   "module_progress": {
-    "N": 37,
-    "M": 38,
-    "note": "M=38 after ACCT-R-20 db249 composite indexes leaf (OPEN until Neon-apply)"
+    "N": 38,
+    "M": 39,
+    "note": "M=39 after ACCT-R-24 POD auto-send; ACCT-R-20 OPEN until Neon DDL"
   },
   "entities": [
     "TRANSP",
