@@ -532,6 +532,56 @@ export const CATALOG_PICKER_CONFIGS = {
   }),
 
 
+  // Fuel expensive states — ExpensiveStatesMultiselect read catalogs.expensive_states but sent operators
+  // to Lists-only; planner settings persist 2-letter state codes (fuel.planner.routes.ts max length 2).
+  fuel_expensive_state: {
+    key: "fuel_expensive_state",
+    label: "expensive state",
+    backend: "catalog",
+    readTable: "catalogs.expensive_states",
+    writeTable: "catalogs.expensive_states",
+    readEndpoint: "/api/v1/catalogs/fuel/expensive-states",
+    writeEndpoint: "/api/v1/catalogs/fuel/expensive-states",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence:
+      "apps/backend/src/catalogs/fuel/factory.ts:67 (SELECT) and :159 (INSERT) — both catalogs.expensive_states; ExpensiveStatesMultiselect expensiveStatesCatalogClient consumer",
+    fields: [
+      {
+        name: "code",
+        label: "State code",
+        required: true,
+        maxLength: 2,
+        placeholder: "e.g. TX",
+        help: "Two-letter US state abbreviation. Planner settings accept exactly two characters.",
+      },
+      { name: "display_name", label: "State name", required: true, maxLength: 160 },
+      { name: "description", label: "Description", maxLength: 500, multiline: true },
+    ],
+    create: async (operatingCompanyId, values) => {
+      const rawCode = (values.code ?? "").trim().toUpperCase();
+      const code = /^[A-Z]{2}$/.test(rawCode) ? rawCode : deriveCatalogCode(values.display_name, values.code).slice(0, 2);
+      if (!/^[A-Z]{2}$/.test(code)) {
+        throw new Error("State code must be exactly two letters (e.g. TX)");
+      }
+      const displayName = values.display_name.trim();
+      const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+      const created = await apiRequest<{ id: string; code?: string; display_name?: string }>(
+        `/api/v1/catalogs/fuel/expensive-states?${query.toString()}`,
+        {
+          method: "POST",
+          body: {
+            code,
+            display_name: displayName,
+            description: values.description?.trim() || undefined,
+          },
+        }
+      );
+      return { id: String(created.id), label: displayName, code: created.code ?? code };
+    },
+  },
+
+
 
   // Civil fine types — FineCreateModal previously used Combobox allowAddNew with an external mutate
   // (not ReferenceSelect / CatalogQuickCreateDrawer). POST body matches generic {code, display_name}.

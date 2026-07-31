@@ -1,7 +1,7 @@
-import { useMemo } from "react";
-import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { expensiveStatesCatalogClient } from "../../../api/catalogs-fuel";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 
 type Props = {
   companyId: string;
@@ -10,6 +10,9 @@ type Props = {
 };
 
 export function ExpensiveStatesMultiselect({ companyId, value, onChange }: Props) {
+  const queryClient = useQueryClient();
+  const [pickerValue, setPickerValue] = useState<string | null>(null);
+
   const query = useQuery({
     queryKey: ["catalogs", "fuel", "expensive-states", companyId],
     queryFn: () =>
@@ -30,8 +33,26 @@ export function ExpensiveStatesMultiselect({ companyId, value, onChange }: Props
   const catalogCodes = useMemo(() => new Set(rows.map((row) => row.code)), [rows]);
   const orphanCodes = useMemo(() => value.filter((code) => !catalogCodes.has(code)), [catalogCodes, value]);
 
+  const pickerOptions = useMemo(
+    () => rows.map((row) => ({ value: row.code, label: `${row.code} — ${row.display_name}` })),
+    [rows],
+  );
+
+  const addCode = (code: string) => {
+    const normalized = code.trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(normalized)) return;
+    if (!value.includes(normalized)) {
+      onChange([...value, normalized]);
+    }
+  };
+
   const toggleCode = (code: string) => {
     onChange(value.includes(code) ? value.filter((item) => item !== code) : [...value, code]);
+  };
+
+  const invalidateCatalog = () => {
+    void queryClient.invalidateQueries({ queryKey: ["catalogs", "fuel", "expensive-states", companyId] });
+    void query.refetch();
   };
 
   if (query.isLoading) {
@@ -50,7 +71,30 @@ export function ExpensiveStatesMultiselect({ companyId, value, onChange }: Props
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-testid="fuel-expensive-states-multiselect">
+      {/*
+        LST-PICKER-01: checkbox grid had Lists-only create — ReferenceSelect first-row create → POST
+        catalogs.expensive_states (same table expensiveStatesCatalogClient reads). Selection persists
+        planner settings as 2-letter codes (createdValueField=code).
+      */}
+      <ReferenceSelect
+        value={pickerValue}
+        onChange={(next) => {
+          setPickerValue(null);
+          if (next) addCode(next);
+        }}
+        options={pickerOptions}
+        createKind="fuel_expensive_state"
+        operatingCompanyId={companyId}
+        createdValueField="code"
+        placeholder="+ Create expensive state…"
+        loading={query.isLoading}
+        onOptionCreated={(opt) => {
+          addCode(opt.code ?? opt.value);
+          invalidateCatalog();
+          setPickerValue(null);
+        }}
+      />
       <div className="flex flex-wrap gap-2">
         {rows.map((row) => {
           const checked = value.includes(row.code);
@@ -74,9 +118,6 @@ export function ExpensiveStatesMultiselect({ companyId, value, onChange }: Props
           Saved codes not in catalog (kept until removed): {orphanCodes.join(", ")}
         </p>
       ) : null}
-      <Link to="/lists/fuel/expensive-states" className="inline-block text-xs font-semibold text-slate-700 underline">
-        Manage Expensive States catalog
-      </Link>
     </div>
   );
 }
