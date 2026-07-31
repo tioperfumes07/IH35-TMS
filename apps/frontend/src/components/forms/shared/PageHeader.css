@@ -71,11 +71,29 @@
   text-overflow: ellipsis;
 }
 
+/*
+ * The subtitle MUST be allowed to shrink. It was flex-shrink: 0 with white-space: nowrap, and
+ * .page-header-actions is also flex-shrink: 0 — so neither yielded. The title absorbs pressure first
+ * (flex: 1 1 auto; min-width: 0), but once it is fully collapsed there is nothing left to give and the
+ * subtitle rendered straight through the action buttons. Observed live on /maintenance, where a 62-char
+ * subtitle sits beside three "+ Create" buttons: the text overlapped the controls, making both
+ * unreadable and the buttons ambiguous to click.
+ *
+ * The subtitle is the least important element in the row — it is descriptive, never interactive — so it
+ * is the correct thing to truncate. min-width: 0 is required for the ellipsis: without it a flex item
+ * refuses to shrink below its content size and text-overflow never engages.
+ *
+ * .page-header-actions deliberately KEEPS flex-shrink: 0. Clipping an interactive control is worse than
+ * clipping prose: a half-rendered "+ Create Work Order" is a mis-click waiting to happen.
+ */
 .page-header-subtitle {
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .page-header-actions {
