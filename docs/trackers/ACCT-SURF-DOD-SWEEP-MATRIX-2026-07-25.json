@@ -9,7 +9,7 @@
   "module_progress": {
     "N": 38,
     "M": 39,
-    "note": "M=39 after ACCT-R-24 POD auto-send; ACCT-R-20 OPEN until Neon DDL"
+    "note": "M=39; ACCT-R-20 PASS Neon indexes; ACCT-R-24 UNVERIFIED until held mig 202609100090 + live POD fire; complete:false"
   },
   "entities": [
     "TRANSP",

@@ -583,7 +583,7 @@
         "VERIFY-6"
       ],
       "spec": "flow6-auto-invoice-sending · ACCT-R-24 · owner B2d",
-      "status": "PASS",
+      "status": "UNVERIFIED",
       "evidence": "CODE 2026-07-30: invoice-send.service.ts sendDraftInvoice shared by POST /send + loads.routes POD convert when INVOICE_PROFORMA_PIPELINE_ENABLED. Guard 1836. LIVE density UNVERIFIED — pipeline flag/mig held until owner Neon-apply of 202609100090.",
       "pr": null,
       "live_proof": "UNVERIFIED — INVOICE_PROFORMA_PIPELINE_ENABLED not on Neon flags yet; structural DoD closed"
