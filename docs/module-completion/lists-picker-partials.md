@@ -26,3 +26,5 @@
 - 2026-07-31 · guard 1864 · PolicyCreateModal + PolicyCreateWizard → `createKind=insurance_coverage_type` (`insurance.type_catalog`; TypeCatalogAdmin kept) · PR pending
 - 2026-07-31 · guard 1866 · RoadServiceTicketModal → `createKind=vendor` + required `vendor_id` (`mdata.vendors`; free-text-only was WILL-FAIL vs POST schema) · PR pending
 - 2026-07-31 · guard 1868 · CreateWOSectionIdentification roadside provider → `createKind=vendor` (`mdata.vendors`; was free-text UUID) · PR pending
+
+- 2026-07-31 · guard 1870 · CustomerProfileForm + CustomerDetail + NewCustomerDrawerForm parent picker → `createKind=customer` (`mdata.customers`; was bare Combobox/native select) · PR pending

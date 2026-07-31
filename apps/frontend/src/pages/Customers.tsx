@@ -683,6 +683,7 @@ export function CustomersPage() {
             paymentTermOptions={paymentTermsQuery.data ?? []}
             onPaymentTermCreated={() => void paymentTermsQuery.refetch()}
             parentCustomerOptions={parentCustomerOptions}
+            onParentCustomerCreated={() => void customersQuery.refetch()}
           />
           {createFieldErrors.mc_number ? (
             <span id="mc_number-error" className="block text-xs text-red-700">

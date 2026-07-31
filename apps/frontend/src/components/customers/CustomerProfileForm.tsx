@@ -421,10 +421,12 @@ type Props = {
   paymentTermOptions: PaymentTermOption[];
   onPaymentTermCreated?: (term: PaymentTermOption) => void;
   parentCustomerOptions?: ParentCustomerOption[];
+  /** LST-PICKER-01: refetch parent roster after inline "+ Add new customer". */
+  onParentCustomerCreated?: () => void;
   customerId?: string;
 };
 
-export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode, paymentTermOptions, onPaymentTermCreated, parentCustomerOptions, customerId }: Props) {
+export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode, paymentTermOptions, onPaymentTermCreated, onParentCustomerCreated, parentCustomerOptions, customerId }: Props) {
   const termOptions = useMemo(
     () => paymentTermOptions.map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` })),
     [paymentTermOptions]
@@ -488,22 +490,26 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
         </div>
       </section>
 
-      {/* D1-4: Sub-customer / parent hard link */}
+      {/* D1-4: Sub-customer / parent hard link — LST-PICKER-01: ReferenceSelect createKind=customer */}
       <section className="border-t border-gray-200 pt-3">
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Sub-customer</h3>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-          <div className="block text-sm md:col-span-2">
+          <div className="block text-sm md:col-span-2" data-testid="customer-parent-select">
             <span className="mb-1 block text-xs font-semibold text-gray-600">Parent customer</span>
-            <Combobox
-              options={parentOptions}
+            <ReferenceSelect
               value={values.parent_customer_id || null}
               onChange={(next) => onPatch({ parent_customer_id: next ?? "" })}
-              placeholder={parentOptions.length === 0 ? "No eligible parent customers" : "Select a parent (leave blank for a top-level customer)"}
-              disabled={parentOptions.length === 0}
+              options={parentOptions}
+              createKind="customer"
+              operatingCompanyId={operatingCompanyId}
+              placeholder={parentOptions.length === 0 ? "Select or + Add new parent customer" : "Select a parent (leave blank for a top-level customer)"}
+              addNewLabel="+ Add new parent customer"
+              onOptionCreated={() => onParentCustomerCreated?.()}
             />
             <p className="mt-1 text-xs text-gray-500">
               Link this customer as a sub-customer of an existing top-level customer. Leave blank for a top-level
-              customer. A parent must itself be top-level (no nesting beyond two levels).
+              customer. A parent must itself be top-level (no nesting beyond two levels). Inline create writes
+              mdata.customers (same table this picker lists).
             </p>
           </div>
         </div>

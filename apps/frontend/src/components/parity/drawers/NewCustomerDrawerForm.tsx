@@ -3,10 +3,11 @@
  * OPERATIONAL gate: customer create is non-financial.
  */
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createCustomer, listCustomers } from "../../../api/mdata";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
+import { ReferenceSelect } from "../ReferenceSelect";
 
 type Props = {
   operatingCompanyId: string;
@@ -36,6 +37,7 @@ type FormState = {
 
 export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }: Props) {
   const { pushToast } = useToast();
+  const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<FormState>({
     displayName: "", companyName: "", customerType: "", firstName: "", lastName: "",
@@ -60,7 +62,13 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
     staleTime: 60_000,
   });
   const parentOptions = useMemo(
-    () => (parentQuery.data ?? []).filter((c) => !c.parent_customer_id && c.status !== "inactive"),
+    () =>
+      (parentQuery.data ?? [])
+        .filter((c) => !c.parent_customer_id && c.status !== "inactive")
+        .map((c) => ({
+          value: c.id,
+          label: c.customer_code ? `${c.name} (${c.customer_code})` : c.name,
+        })),
     [parentQuery.data]
   );
 
@@ -168,22 +176,24 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
         Is a sub-customer
       </label>
       {form.isSubCustomer && (
-        <label className="block">
+        <label className="block" data-testid="customer-parent-select">
           <span className="text-xs font-medium text-gray-700">Parent customer *</span>
-          <select
-            name="parent_customer_id"
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm"
-            value={form.parentCustomerId}
-            aria-required
-            onChange={(e) => set("parentCustomerId", e.target.value)}
-          >
-            <option value="">{parentQuery.isLoading ? "Loading customers…" : "— Select parent —"}</option>
-            {parentOptions.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.customer_code ? `${c.name} (${c.customer_code})` : c.name}
-              </option>
-            ))}
-          </select>
+          {/* LST-PICKER-01: bare <select> → ReferenceSelect createKind=customer (mdata.customers). */}
+          <div className="mt-1">
+            <ReferenceSelect
+              value={form.parentCustomerId || null}
+              onChange={(next) => set("parentCustomerId", next ?? "")}
+              options={parentOptions}
+              createKind="customer"
+              operatingCompanyId={operatingCompanyId}
+              loading={parentQuery.isLoading}
+              placeholder={parentQuery.isLoading ? "Loading customers…" : "— Select parent —"}
+              addNewLabel="+ Add new parent customer"
+              onOptionCreated={() => {
+                void queryClient.invalidateQueries({ queryKey: ["customer-parent-options", operatingCompanyId] });
+              }}
+            />
+          </div>
         </label>
       )}
       <fieldset className="rounded-sm border border-gray-200 p-3">
