@@ -1214,6 +1214,7 @@
     "1874": "1874-verify-lst-picker01-service-preferred-vendor-inline-create.mjs",
     "1876": "1876-verify-lst-picker01-service-class-category-inline-create.mjs",
     "1878": "1878-verify-lst-picker01-cost-breakdown-part-createkind.mjs",
+    "1882": "1882-verify-lst-picker01-driver-class-inline-create.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",

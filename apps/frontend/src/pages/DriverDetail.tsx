@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../components/forms/DatePicker";
-import { FORM_INPUT_CLASS, FORM_SELECT_CLASS, FORM_TEXTAREA_CLASS } from "../components/forms/inputClass";
+import { FORM_INPUT_CLASS, FORM_TEXTAREA_CLASS } from "../components/forms/inputClass";
 import { companyToday } from "../lib/businessDate";
 import { History, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -55,7 +55,6 @@ import { MissingRequiredChip } from "../components/compliance/MissingRequiredChi
 import { useToast } from "../components/Toast";
 import { QboCombobox } from "../components/forms/QboCombobox";
 import { VendorLinkageModal } from "../components/qbo/VendorLinkageModal";
-import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { CertExpiryBadge } from "../components/safety/CertExpiryBadge";
 import { EldEditHistoryTimeline } from "../components/safety/EldEditHistoryTimeline";
 import { UnitDriverHistoryStrip } from "./units/UnitDriverHistoryStrip";
@@ -987,21 +986,30 @@ export function DriverDetailPage() {
                   />
                 ) : null}
               </div>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1" data-testid="driver-qbo-class-select">
                 <label className="text-xs font-semibold text-gray-600">Class (TMS catalog)</label>
-                <SelectCombobox
-                  className={FORM_SELECT_CLASS}
-                  value={qboClassTmsId}
-                  onChange={(e) => setQboClassTmsId(e.target.value)}
-                >
-                  <option value="">None</option>
-                  {(classesJeQuery.data?.classes ?? []).map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.class_code ? `${c.class_code} — ` : ""}
-                      {c.class_name}
-                    </option>
-                  ))}
-                </SelectCombobox>
+                {/*
+                  LST-PICKER-01: Profile class picker had no first-row +Create.
+                  ReferenceSelect createKind=class matches ManualJE / ItemEditor / NewServiceDrawerForm.
+                */}
+                {driver?.operating_company_id ? (
+                  <ReferenceSelect
+                    value={qboClassTmsId || null}
+                    onChange={(next) => setQboClassTmsId(next ?? "")}
+                    options={(classesJeQuery.data?.classes ?? []).map((c) => ({
+                      value: c.id,
+                      label: `${c.class_code ? `${c.class_code} — ` : ""}${c.class_name}`,
+                    }))}
+                    createKind="class"
+                    operatingCompanyId={String(driver.operating_company_id)}
+                    placeholder={classesJeQuery.isLoading ? "Loading classes…" : "None"}
+                    loading={classesJeQuery.isLoading}
+                    onOptionCreated={() => {
+                      void queryClient.invalidateQueries({ queryKey: ["list-classes-je"] });
+                      void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounting", "classes"] });
+                    }}
+                  />
+                ) : null}
               </div>
             </div>
             <div className="mt-2">
