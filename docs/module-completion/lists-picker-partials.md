@@ -30,3 +30,5 @@
 - 2026-07-31 · guard 1870 · CustomerProfileForm + CustomerDetail + NewCustomerDrawerForm parent picker → `createKind=customer` (`mdata.customers`; was bare Combobox/native select) · PR pending
 
 - 2026-07-31 · guard 1872 · NewServiceDrawerForm income/expense → `createKind=account` (parity with ItemEditorModal; was bare Combobox) · PR pending
+
+- 2026-07-31 · guard 1874 · NewServiceDrawerForm preferred vendor → `createKind=vendor` + persist `preferred_vendor_id` (parity ItemEditorModal; was free-text dropped) · PR pending
