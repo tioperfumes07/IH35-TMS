@@ -109,11 +109,26 @@ function walk(dir, acc = []) {
   return acc;
 }
 
+/**
+ * Strip SQL comments before analysis. A column named inside `-- …` or a block comment CANNOT cause
+ * 42703 — Postgres never sees it. Leaving them in made this guard flag its own fix notes: when
+ * MNT-PHANTOM-02/03 were repaired, the commit left comments explaining the defect
+ * ("this summed wl.amount joined on wl.work_order_id", "this matched on li.id"), and the guard kept
+ * reporting those very names as live phantoms on fixed code. That is worse than noise — it makes a
+ * fixed bug look unfixed, so the allowlist key can never be retired and the backlog never shrinks.
+ * `verify-form2290-units-scope` learned the same lesson; this guard had not.
+ */
+export function stripSqlComments(sql) {
+  return sql
+    .replace(/\/\*[\s\S]*?\*\//g, " ") // block comments
+    .replace(/--[^\n]*/g, " "); // line comments (template literals are multi-line)
+}
+
 function extractTemplateLiterals(src) {
   const out = [];
   const re = /`(?:[^`\\]|\\.)*`/gs;
   let m;
-  while ((m = re.exec(src))) out.push(m[0]);
+  while ((m = re.exec(src))) out.push(stripSqlComments(m[0]));
   return out;
 }
 

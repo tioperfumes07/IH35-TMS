@@ -75,34 +75,40 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error" });
 
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
-      const filters = ["operating_company_id = $1::uuid"];
+      const filters = ["t.operating_company_id = $1::uuid"];
       const values: unknown[] = [query.data.operating_company_id];
       if (query.data.status) {
         values.push(query.data.status);
-        filters.push(`status = $${values.length}`);
+        filters.push(`t.status = $${values.length}`);
       }
       if (query.data.unit_id) {
         values.push(query.data.unit_id);
-        filters.push(`unit_id = $${values.length}::uuid`);
+        filters.push(`t.unit_id = $${values.length}::uuid`);
       }
       if (query.data.date_from) {
         values.push(query.data.date_from);
-        filters.push(`created_at::date >= $${values.length}::date`);
+        filters.push(`t.created_at::date >= $${values.length}::date`);
       }
       if (query.data.date_to) {
         values.push(query.data.date_to);
-        filters.push(`created_at::date <= $${values.length}::date`);
+        filters.push(`t.created_at::date <= $${values.length}::date`);
       }
       values.push(query.data.limit, query.data.offset);
       const res = await client.query(
         `
           SELECT
             t.*,
-            u.display_id AS unit_display_id,
+            u.unit_number AS unit_display_id,
             d.first_name || ' ' || d.last_name AS driver_name
           FROM maintenance.road_service_tickets t
-          LEFT JOIN mdata.units u ON u.id = t.unit_id
-          LEFT JOIN mdata.drivers d ON d.id = t.driver_id
+          -- Entity-scope BOTH joins. mdata.units carries owner_company_id +
+          -- currently_leased_to_company_id (NOT operating_company_id) — the documented §4 landmine.
+          LEFT JOIN mdata.units u
+            ON u.id = t.unit_id
+           AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
+          LEFT JOIN mdata.drivers d
+            ON d.id = t.driver_id
+           AND d.operating_company_id = $1::uuid
           WHERE ${filters.join(" AND ")}
           ORDER BY t.created_at DESC
           LIMIT $${values.length - 1}
