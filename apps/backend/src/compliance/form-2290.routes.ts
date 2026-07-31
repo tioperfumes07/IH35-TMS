@@ -125,7 +125,8 @@ export async function registerForm2290Routes(app: FastifyInstance) {
           WHERE deactivated_at IS NULL
             AND status = 'InService'
             AND vin IS NOT NULL
-            -- mdata.units has NO operating_company_id (§4 landmine → 42703); scope by ownership/lease.
+            -- §4 landmine: mdata.units has no per-entity company column of the usual name (42703 → 500).
+            -- Units are entity-scoped by ownership or by active lease, so scope on those two instead.
             AND (owner_company_id = $1 OR currently_leased_to_company_id = $1)
           ORDER BY unit_number
         `,
