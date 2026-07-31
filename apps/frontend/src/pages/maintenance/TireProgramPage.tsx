@@ -19,6 +19,7 @@ import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { formatDateTimeUS } from "../../lib/formatDate";
 
 type MountDraft = {
@@ -367,25 +368,25 @@ export function TireProgramPage() {
           </label>
           <label className="block text-xs">
             Brand
-            <select
-              className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={mountDraft.brand_id}
-              onChange={(e) => {
-                const brand = (brandsQ.data?.rows ?? []).find((b) => b.id === e.target.value);
+            <ReferenceSelect
+              value={mountDraft.brand_id || null}
+              onChange={(value) => {
+                const brand = (brandsQ.data?.rows ?? []).find((b) => b.id === value);
                 setMountDraft((d) => ({
                   ...d,
-                  brand_id: e.target.value,
+                  brand_id: value ?? "",
                   brand_name: brand?.name ?? d.brand_name,
                 }));
               }}
-            >
-              <option value="">Select brand…</option>
-              {(brandsQ.data?.rows ?? []).map((brand) => (
-                <option key={brand.id} value={brand.id}>
-                  {brand.name}
-                </option>
-              ))}
-            </select>
+              options={(brandsQ.data?.rows ?? []).map((brand) => ({ value: brand.id, label: brand.name }))}
+              createKind="maintenance_tire_brand"
+              operatingCompanyId={companyId}
+              placeholder="Select brand…"
+              onOptionCreated={async (opt) => {
+                setMountDraft((d) => ({ ...d, brand_id: opt.value, brand_name: opt.label }));
+                await queryClient.invalidateQueries({ queryKey: ["maintenance", "tire-brands", companyId] });
+              }}
+            />
           </label>
           <label className="block text-xs">
             Serial number
