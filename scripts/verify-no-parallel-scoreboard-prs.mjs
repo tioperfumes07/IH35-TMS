@@ -18,7 +18,9 @@ export const HOTFILES = new Set([
   "docs/module-completion/accounting.json",
   "docs/module-completion/banking.json",
   "docs/trackers/ACCT-SURF-DOD-SWEEP-MATRIX-2026-07-25.json",
-  "scripts/verify-steps/CLAIMED-NUMBERS.json",
+  // CLAIMED-NUMBERS.json removed 2026-07-31 (TOOL-F03): feature PRs must not touch it;
+  // enforced by verify-no-claimed-numbers-edits (1906). Keeping it here forced serialize
+  // thrash for zero safety (GitHub cannot json-union).
 ]);
 
 function sh(cmd, env = process.env) {
@@ -72,7 +74,7 @@ function selftest() {
       files: [{ path: "docs/module-completion/banking.json" }],
     },
   ];
-  const plantedTouches = ["scripts/verify-steps/CLAIMED-NUMBERS.json"];
+  const plantedTouches = ["docs/module-completion/accounting.json"];
   const errs = assertSoleScoreboardPr({
     list: plantedList,
     branch: "fix/serialize-scoreboard-hotfiles",

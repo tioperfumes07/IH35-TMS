@@ -17,6 +17,10 @@
 
 > **★ CONSOLIDATED ARCHITECTURE GUARDRAIL (read this too):** [docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md](docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md) is the current consolidated guardrail — the **Law of the Land** total-connectivity rule, the driver **Bill + BillPayment** settlement model, the **Faro** exact factoring terms, the auto-provisioned **driver accounts**, the **posting flags**, and the **per-build-block linkage checklist**. **Every build block (especially financial) conforms to it.** See the checklist reproduced at the bottom of this file.
 
+## Verify-step claims (TOOL-F03 — 2026-07-31)
+
+Do **not** edit `scripts/verify-steps/CLAIMED-NUMBERS.json` in feature PRs. The `NNNN-*.mjs` filename is the claim (Cursor EVEN / Claude ODD). GitHub cannot run `merge=json-union` on that file — editing it is the conflict treadmill. Enforced by verify-step **1599** (uniqueness only) + **1906** (`verify-no-claimed-numbers-edits`).
+
 ## Dual lanes (always parallel when queue has work)
 
 | Lane | Path | Role |

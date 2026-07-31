@@ -14,6 +14,7 @@ When adding a new guard:
 1. Add `scripts/verify-<name>.mjs`
 2. Add `scripts/verify-steps/<NNN>-verify-<name>.mjs` that `export default { name, run(ctx) { … } }` and runs the guard via `ctx.run("node", ["scripts/verify-<name>.mjs"])`
 3. **Do NOT** edit `package.json`, `.github/workflows/locked-guards.yml`, or `.github/workflows/ci.yml`
+4. **Do NOT** edit `scripts/verify-steps/CLAIMED-NUMBERS.json` in feature PRs — the `NNNN-*.mjs` **filename is the claim** (TOOL-F03). Cursor = EVEN · Claude = ODD (`verify-verify-step-lane-band`). GitHub cannot run `merge=json-union`, so CLAIMED edits are a guaranteed conflict treadmill.
 
 `verify:pre-commit` auto-discovers verify-steps. `verify-guard-wired` treats CI-via-steps as fully wired; package.json is optional local convenience only.
 
