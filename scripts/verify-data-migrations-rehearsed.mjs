@@ -96,7 +96,18 @@ export function run(baseRef = "origin/main") {
   if (files.length === 0) return { ok: true, message: `${LABEL} OK — no new migrations` };
 
   const migrations = files.map((file) => ({ file, sql: readFileSync(file, "utf8") }));
-  const message = git(["log", "-1", "--format=%B"]);
+  // Scan EVERY commit message on the branch, not just the tip.
+  //
+  // `git log -1` was wrong in the one environment that matters. CI checks out refs/pull/N/merge, whose
+  // HEAD is a SYNTHETIC MERGE COMMIT created by GitHub — its message is boilerplate, not the author's.
+  // So the guard read a message the author never wrote, found no REHEARSED: line, and failed a PR whose
+  // rehearsal evidence was sitting one commit below. Locally it passed, because locally HEAD *is* the
+  // author's commit. A guard that gives opposite verdicts locally and in CI is worse than no guard: it
+  // trains you to dismiss its failures as flakiness, which is exactly how a real one gets waved through.
+  //
+  // The rehearsal evidence belongs to the BRANCH, so the range is the correct unit. This also means a
+  // rebase, an amend, or a follow-up fix commit can no longer silently drop the evidence off the tip.
+  const message = git(["log", `${baseRef}..HEAD`, "--format=%B"]);
   const { problems, dataMigrations } = analyse(migrations, message);
 
   if (problems.length > 0) return { ok: false, message: `${LABEL} FAILED:\n  - ${problems.join("\n  - ")}` };
@@ -131,6 +142,10 @@ function selftest() {
   t("INSERT ... SELECT needs evidence", analyse([INSSEL], "nothing").problems.length === 1);
   t("DELETE needs evidence", analyse([DEL], "nothing").problems.length === 1);
   t("an UPDATE mentioned only in a COMMENT is not DML", analyse([PROSE], "nothing").problems.length === 0);
+  // REGRESSION ARM: CI concatenates every branch commit message. Evidence in an EARLIER commit — not the
+  // tip — must still satisfy the guard. This is the exact shape that failed PR #3878 in CI while passing
+  // locally, because `git log -1` read GitHub's synthetic merge commit instead of the author's.
+  t("REHEARSED in an earlier branch commit still counts", analyse([UPD], "fix: follow-up\n\nREHEARSED: Neon branch br-x\n\nchore: tip commit with no evidence").problems.length === 0);
   t("failure names the offending file", analyse([UPD], "x").problems[0].includes("a.sql"));
   // Mutation arm: the detector must be capable of returning false, or every arm above is meaningless.
   t("mutation: a non-DML migration is not flagged", mutatesExistingRows(DDL.sql) === false);
@@ -144,7 +159,7 @@ const INVOKED_DIRECTLY = process.argv[1] && process.argv[1].endsWith("verify-dat
 if (INVOKED_DIRECTLY) {
   if (process.argv.includes("--selftest")) {
     const bad = selftest();
-    console.log(bad === 0 ? `${LABEL} SELFTEST PASS — 9 cases` : `${LABEL} SELFTEST FAILED (${bad})`);
+    console.log(bad === 0 ? `${LABEL} SELFTEST PASS — 10 cases` : `${LABEL} SELFTEST FAILED (${bad})`);
     process.exit(bad === 0 ? 0 : 1);
   }
   const res = run();
