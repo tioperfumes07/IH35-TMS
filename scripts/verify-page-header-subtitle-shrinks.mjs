@@ -37,8 +37,14 @@ export function analyse(css) {
     problems.push(`${CSS}: .page-header-subtitle rule not found — refusing to pass on a file I did not inspect.`);
     return problems;
   }
-  if (/flex-shrink:\s*0\b/.test(sub)) {
-    problems.push(".page-header-subtitle has flex-shrink: 0 — it will render through the action buttons when the row overflows.");
+  const shrink = sub.match(/flex-shrink:\s*(\d+)/);
+  if (!shrink || Number(shrink[1]) === 0) {
+    problems.push(".page-header-subtitle has flex-shrink: 0 (or none) — it will render through the action buttons when the row overflows.");
+  } else if (Number(shrink[1]) < 10) {
+    // PRIORITY, not proportion. At flex-shrink: 1 the subtitle and the title shrink TOGETHER, and
+    // /maintenance rendered "Main…" instead of "Maintenance" — verified live. The subtitle must carry a
+    // large weight so it absorbs effectively all overflow before the module name loses a pixel.
+    problems.push(`.page-header-subtitle has flex-shrink: ${shrink[1]} — too low. It shrinks in PROPORTION with .page-header-title (also shrinkable), so the TITLE truncates too ("Main…" for "Maintenance"). Use a large weight (e.g. 999) so the subtitle absorbs the overflow first.`);
   }
   if (!/min-width:\s*0\b/.test(sub)) {
     problems.push(".page-header-subtitle lacks min-width: 0 — a flex item will not shrink below its content size, so text-overflow: ellipsis never engages.");
@@ -67,17 +73,19 @@ export function run() {
 function selftest() {
   let bad = 0;
   const t = (n, c) => { if (!c) { console.error(`  SELFTEST FAIL: ${n}`); bad++; } };
-  const GOOD = ".page-header-subtitle { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; } .page-header-actions { flex-shrink: 0; }";
+  const GOOD = ".page-header-subtitle { flex-shrink: 999; min-width: 0; overflow: hidden; text-overflow: ellipsis; } .page-header-actions { flex-shrink: 0; }";
+  const LOW  = ".page-header-subtitle { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; } .page-header-actions { flex-shrink: 0; }";
   const OLD  = ".page-header-subtitle { flex-shrink: 0; white-space: nowrap; } .page-header-actions { flex-shrink: 0; }";
-  const NOMIN = ".page-header-subtitle { flex-shrink: 1; text-overflow: ellipsis; } .page-header-actions { flex-shrink: 0; }";
-  const ACTSHRINK = ".page-header-subtitle { flex-shrink: 1; min-width: 0; text-overflow: ellipsis; } .page-header-actions { flex-shrink: 1; }";
+  const NOMIN = ".page-header-subtitle { flex-shrink: 999; text-overflow: ellipsis; } .page-header-actions { flex-shrink: 0; }";
+  const ACTSHRINK = ".page-header-subtitle { flex-shrink: 999; min-width: 0; text-overflow: ellipsis; } .page-header-actions { flex-shrink: 1; }";
 
   t("the ORIGINAL overlapping CSS is caught", analyse(OLD).length >= 1);
   t("missing min-width:0 is caught", analyse(NOMIN).length === 1);
   t("actions allowed to shrink is caught", analyse(ACTSHRINK).length === 1);
   t("correct CSS passes", analyse(GOOD).length === 0);
+  t("REGRESSION: flex-shrink 1 truncates the TITLE and is caught", analyse(LOW).length === 1);
   t("missing rule FAILS CLOSED", analyse(".something-else{}").length === 1);
-  t("mutation: ruleBody finds the subtitle body", (ruleBody(GOOD, ".page-header-subtitle") || "").includes("flex-shrink: 1"));
+  t("mutation: ruleBody finds the subtitle body", (ruleBody(GOOD, ".page-header-subtitle") || "").includes("flex-shrink: 999"));
   t("mutation: ruleBody returns null when absent", ruleBody(".x{}", ".page-header-subtitle") === null);
   return bad;
 }
@@ -86,7 +94,7 @@ const DIRECT = process.argv[1] && process.argv[1].endsWith("verify-page-header-s
 if (DIRECT) {
   if (process.argv.includes("--selftest")) {
     const bad = selftest();
-    console.log(bad === 0 ? `${LABEL} SELFTEST PASS — 7 cases` : `${LABEL} SELFTEST FAILED (${bad})`);
+    console.log(bad === 0 ? `${LABEL} SELFTEST PASS — 8 cases` : `${LABEL} SELFTEST FAILED (${bad})`);
     process.exit(bad === 0 ? 0 : 1);
   }
   const r = run();
