@@ -1446,7 +1446,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             -- NULLIF is load-bearing: CONCAT_WS NEVER returns NULL. With every argument NULL it returns
             -- the EMPTY STRING (verified on prod: CONCAT_WS(' ',NULL,NULL) IS NULL -> false, = '' -> true).
             -- A unit with no driver therefore arrived as driver_name = '', which the client's
-            -- `driver_name ?? "—"` could not catch — ?? only fires on null/undefined — so the Unassigned
+            -- driver_name ?? "—" could not catch it — ?? only fires on null/undefined — so the Unassigned
             -- Units panel rendered "T171 · · Need load": two separators around an empty field. 50 units on
             -- prod have no assigned driver, so this was every row in the panel.
             NULLIF(CONCAT_WS(' ', ud.first_name, ud.last_name), '') AS driver_name,
