@@ -1,19 +1,27 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FixedAssetsPage } from "./FixedAssetsPage";
+import { FixedAssetsPage, parseOwnerPricesJson } from "./FixedAssetsPage";
 import * as faApi from "../../api/fixed-assets";
 import * as flagHook from "../../hooks/useFeatureFlag";
 
 vi.mock("../../contexts/CompanyContext", () => ({
-  useCompanyContext: () => ({ selectedCompanyId: "91e0bf0a-133f-4ce8-a734-2586cfa66d96" }),
+  useCompanyContext: () => ({
+    selectedCompanyId: "91e0bf0a-133f-4ce8-a734-2586cfa66d96",
+    companies: [{ id: "trk-id-1", code: "TRK", legal_name: "TRK Holdings", short_name: "TRK", company_type: "asset_holder", is_active: true, is_default: false }],
+  }),
+}));
+
+vi.mock("../../auth/useAuth", () => ({
+  useAuth: () => ({ user: { role: "Owner" }, isLoading: false, isUnauthenticated: false, refetch: vi.fn() }),
 }));
 
 vi.mock("../../api/fixed-assets", () => ({
   getFixedAssets: vi.fn(),
   getFixedAssetDetail: vi.fn(),
+  registerTrkOwnedUnits: vi.fn(),
 }));
 
 vi.mock("../../hooks/useFeatureFlag", () => ({
@@ -29,6 +37,22 @@ function wrap(ui: ReactElement) {
     </MemoryRouter>
   );
 }
+
+describe("parseOwnerPricesJson", () => {
+  it("rejects empty input", () => {
+    expect(parseOwnerPricesJson("").ok).toBe(false);
+  });
+
+  it("accepts a valid unit_number → cents map", () => {
+    const result = parseOwnerPricesJson('{"T169": 85000000}');
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.map.T169).toBe(85000000);
+  });
+
+  it("rejects non-positive cents", () => {
+    expect(parseOwnerPricesJson('{"T169": 0}').ok).toBe(false);
+  });
+});
 
 describe("FixedAssetsPage", () => {
   afterEach(cleanup);
@@ -64,5 +88,30 @@ describe("FixedAssetsPage", () => {
     expect(await screen.findByText("2022 Freightliner Cascadia")).toBeTruthy();
     expect(await screen.findByText("Tractors")).toBeTruthy();
     expect(await screen.findByText("TRK Holdings")).toBeTruthy();
+    expect(await screen.findByTestId("fa-density-honesty-banner")).toBeTruthy();
+  });
+
+  it("does not submit bulk register without owner prices", async () => {
+    vi.mocked(flagHook.useFeatureFlag).mockReturnValue({ enabled: true, loading: false, error: null });
+    vi.mocked(faApi.getFixedAssets).mockResolvedValue({ total: 0, limit: 50, offset: 0, items: [] });
+
+    render(wrap(<FixedAssetsPage />));
+    await waitFor(() => expect(faApi.getFixedAssets).toHaveBeenCalled());
+
+    fireEvent.click(await screen.findByTestId("fa-open-trk-register"));
+    const submit = await screen.findByTestId("fa-register-trk-submit");
+    expect(submit.hasAttribute("disabled")).toBe(true);
+
+    fireEvent.change(await screen.findByTestId("fa-prices-json"), { target: { value: '{"T169": 85000000}' } });
+    expect(submit.hasAttribute("disabled")).toBe(false);
+
+    fireEvent.click(submit);
+    await waitFor(() =>
+      expect(faApi.registerTrkOwnedUnits).toHaveBeenCalledWith({
+        operating_company_id: "trk-id-1",
+        owner_operating_company_id: "trk-id-1",
+        pricesByUnitNumber: { T169: 85000000 },
+      }),
+    );
   });
 });

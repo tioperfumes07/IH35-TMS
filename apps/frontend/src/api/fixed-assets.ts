@@ -60,6 +60,39 @@ export type FixedAssetDetail = FixedAssetListItem & {
 
 export type FixedAssetList = { total: number; limit: number; offset: number; items: FixedAssetListItem[] };
 
+export type RegisterFixedAssetUnitInput = {
+  operating_company_id: string;
+  owner_operating_company_id: string;
+  unit_uuid: string;
+  purchase_price_cents: number;
+  salvage_value_cents?: number;
+  purchase_date?: string;
+  in_service_date?: string;
+};
+
+export type RegisterFixedAssetUnitResult = {
+  created: boolean;
+  reason?: "already_registered" | "unit_not_found" | "class_missing" | "invalid_price";
+  fixed_asset_id?: string;
+  asset_number?: string | null;
+  schedule_periods?: number;
+  accum_depr_source?: string;
+};
+
+export type RegisterTrkUnitsInput = {
+  operating_company_id: string;
+  owner_operating_company_id: string;
+  pricesByUnitNumber: Record<string, number>;
+};
+
+export type RegisterTrkUnitsResult = {
+  registered: number;
+  skipped_already: number;
+  missing_price: string[];
+  errors: Array<{ unit_number: string; reason: string }>;
+  accum_depr_unresolved: string[];
+};
+
 export function getFixedAssets(input: {
   operating_company_id: string;
   status?: string;
@@ -78,4 +111,20 @@ export function getFixedAssets(input: {
 export function getFixedAssetDetail(id: string, operating_company_id: string) {
   const q = new URLSearchParams({ operating_company_id });
   return apiRequest<FixedAssetDetail>(`/api/v1/accounting/fixed-assets/${id}?${q}`);
+}
+
+/** ND-FA-01 — register one owned unit (purchase_price_cents required; no invented $). */
+export function registerFixedAssetUnit(body: RegisterFixedAssetUnitInput) {
+  return apiRequest<RegisterFixedAssetUnitResult>("/api/v1/accounting/fixed-assets/register-unit", {
+    method: "POST",
+    body,
+  });
+}
+
+/** ND-FA-01 — bulk register TRK-owned units; pricesByUnitNumber required (fail closed). */
+export function registerTrkOwnedUnits(body: RegisterTrkUnitsInput) {
+  return apiRequest<RegisterTrkUnitsResult>("/api/v1/accounting/fixed-assets/register-trk-units", {
+    method: "POST",
+    body,
+  });
 }

@@ -1196,6 +1196,7 @@
     "1840": "1840-verify-bank-f15-plaid-sync-actor.mjs",
     "1841": "1841-verify-units-without-load-driver-nullif.mjs",
     "1842": "1842-verify-lst-picker01-payment-term-inline-create.mjs",
+    "1844": "1844-verify-fa-register-ui-requires-owner-prices.mjs",
     "1846": "1846-verify-lst-picker01-equipment-type-inline-create.mjs",
     "1848": "1848-verify-lst-picker01-detention-reason-inline-create.mjs",
     "1850": "1850-verify-lst-picker01-maintenance-labor-code-inline-create.mjs",
