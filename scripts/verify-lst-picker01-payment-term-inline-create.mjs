@@ -39,9 +39,27 @@ function readRel(root, rel) {
   return fs.readFileSync(p, "utf8");
 }
 
+/** Extract `payment_term: { … },` by brace depth — must not assume it is the last registry key. */
 function paymentTermEntry(registry) {
-  const m = registry.match(/payment_term:\s*\{[\s\S]*?\n  \},\n(?=\n\} as const)/);
-  return m ? m[0] : null;
+  const start = registry.search(/payment_term:\s*\{/);
+  if (start < 0) return null;
+  const braceAt = registry.indexOf("{", start);
+  if (braceAt < 0) return null;
+  let depth = 0;
+  for (let i = braceAt; i < registry.length; i++) {
+    const ch = registry[i];
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        // include trailing comma if present
+        let end = i + 1;
+        if (registry[end] === ",") end++;
+        return registry.slice(start, end);
+      }
+    }
+  }
+  return null;
 }
 
 function collectRegistryProblems(registry, rootLabel = REGISTRY) {
@@ -129,11 +147,14 @@ if (process.argv.includes("--selftest")) {
   }
 
   const registry = readRel(ROOT, REGISTRY);
-  const stripped = registry.replace(
-    /(payment_term:[\s\S]*?fields:[\s\S]*?\],\n)\s*create:\s*async[\s\S]*?\n\s*\},\n(?=\n\} as const)/,
-    "$1  },\n"
-  );
-  if (stripped === registry) {
+  const block = paymentTermEntry(registry);
+  if (!block || !/create:\s*async/.test(block)) {
+    console.error(`${LABEL} SELFTEST FAIL: could not locate payment_term create() for planting`);
+    process.exit(1);
+  }
+  const strippedBlock = block.replace(/\n\s*create:\s*async[\s\S]*$/, "\n  }");
+  const stripped = registry.replace(block, strippedBlock);
+  if (stripped === registry || /create:\s*async/.test(paymentTermEntry(stripped) ?? "")) {
     console.error(`${LABEL} SELFTEST FAIL: could not plant stripped create() mutation`);
     process.exit(1);
   }

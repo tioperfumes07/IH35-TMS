@@ -812,6 +812,8 @@ export const CATALOG_PICKER_CONFIGS = {
 
 
 
+  // Customer quality event reasons — CustomerDetail Reason Combobox had no inline create at all.
+  // Same factory surface as LST-A-01 Lists hub: POST /api/v1/catalogs/customers/customer-quality-event-reasons.
   customer_quality_event_reason: {
     key: "customer_quality_event_reason",
     label: "quality reason",
@@ -851,6 +853,7 @@ export const CATALOG_PICKER_CONFIGS = {
       };
     },
   },
+
 
 
 
@@ -895,6 +898,7 @@ export const CATALOG_PICKER_CONFIGS = {
       };
     },
   },
+
 
 
 
@@ -955,8 +959,7 @@ export const CATALOG_PICKER_CONFIGS = {
 
 
 
-  // Customer quality event reasons — CustomerDetail Reason Combobox had no inline create at all.
-  // Same factory surface as LST-A-01 Lists hub: POST /api/v1/catalogs/customers/customer-quality-event-reasons.
+
   // Equipment types — DriverDetail Add Qualification used bare Combobox with Create disabled when
   // catalog empty. POST requires code, name, and line_items (min 1). Inline create seeds one
   // per_loaded_mile "Base rate" line — operator adds/edits more on Lists → Equipment Types.
@@ -1004,6 +1007,17 @@ export const CATALOG_PICKER_CONFIGS = {
       return { id: String(created.id), label: name, code: created.code ?? code };
     },
   },
+
+
+  // Maintenance labor codes — LaborTracker had bare SelectCombobox; WO time entries persist labor_code_id.
+  maintenance_labor_code: catalogEntry({
+    key: "maintenance_labor_code",
+    label: "labor code",
+    table: "catalogs.maintenance_labor_codes",
+    endpoint: "/api/v1/catalogs/maintenance/labor-codes",
+    evidence:
+      "apps/backend/src/catalogs/maintenance/factory.ts:83,159 + maintenance/index.ts:14 tableName maintenance_labor_codes; LaborTracker labor_code_id consumer",
+  }),
 
 } as const satisfies Record<string, CatalogPickerConfig>;
 
