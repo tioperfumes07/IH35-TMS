@@ -17,8 +17,7 @@
  * see the trailing note.
  */
 import { useMemo, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Combobox } from "../Combobox";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import type { CreateCustomerInput, Customer, PaymentTermOption, UpdateCustomerInput } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
@@ -427,6 +426,7 @@ type Props = {
 };
 
 export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode, paymentTermOptions, onPaymentTermCreated, onParentCustomerCreated, parentCustomerOptions, customerId }: Props) {
+  const queryClient = useQueryClient();
   const termOptions = useMemo(
     () => paymentTermOptions.map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` })),
     [paymentTermOptions]
@@ -570,13 +570,20 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               { value: "rmis_future", label: "RMIS (future)" },
             ]}
           />
-          <div className="block text-sm md:col-span-2">
+          <div className="block text-sm md:col-span-2" data-testid="customer-default-income-account">
             <span className="mb-1 block text-xs font-semibold text-gray-600">Default income account</span>
-            <Combobox
+            <ReferenceSelect
               options={incomeAccountOptions}
               value={values.default_income_account_id || null}
               onChange={(next) => onPatch({ default_income_account_id: next ?? "" })}
+              createKind="account"
+              operatingCompanyId={operatingCompanyId}
               placeholder="— None —"
+              onOptionCreated={() => {
+                void queryClient.invalidateQueries({
+                  queryKey: ["catalog-accounts", "income-for-customer-default", operatingCompanyId],
+                });
+              }}
             />
             <p className="mt-1 text-xs text-gray-500">
               Option-B recommendation only: pre-fills the income account when creating an invoice line for

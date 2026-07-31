@@ -7,7 +7,6 @@ import { listPaymentTermOptions } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { Modal } from "../Modal";
 import { ActionButton } from "../shared/ActionButton";
-import { Combobox } from "../Combobox";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { useCatalogQuery } from "../../hooks/useCatalogQuery";
 import { useToast } from "../Toast";
@@ -363,9 +362,21 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
                 onOptionCreated={() => void paymentTermsQuery.refetch()}
               />
             </label>
-            <label className="block text-sm">
+            <label className="block text-sm" data-testid="vendor-create-default-expense-account">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Default expense account</span>
-              <Combobox options={expenseAccountOptions} value={defaultExpenseAccountId} onChange={setDefaultExpenseAccountId} placeholder="— None —" />
+              <ReferenceSelect
+                value={defaultExpenseAccountId}
+                onChange={setDefaultExpenseAccountId}
+                options={expenseAccountOptions}
+                createKind="account"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="— None —"
+                onOptionCreated={() => {
+                  void queryClient.invalidateQueries({
+                    queryKey: ["catalog-accounts", "expense-for-vendor-default", operatingCompanyId],
+                  });
+                }}
+              />
               <p className="mt-1 text-xs text-gray-500">
                 Recommendation only: pre-fills the expense account on new bills for this vendor. Always
                 editable — never posted silently.
