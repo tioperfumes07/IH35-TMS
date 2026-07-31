@@ -20,6 +20,10 @@ const LABEL = "money-pr-local-gate";
 const STEPS = [
   ["verify-definition-of-done-evidence", "scripts/verify-definition-of-done-evidence.mjs"],
   ["verify-no-money-theater", "scripts/verify-no-money-theater.mjs"],
+  // Rule 26 — block parallel scoreboard-hotfile PRs before push (SKIP-PASS without gh token).
+  ["verify-no-parallel-scoreboard-prs", "scripts/verify-no-parallel-scoreboard-prs.mjs"],
+  // §7 palette — same failure class that red'd ACCT-R-16/17 build-typecheck after theater passed.
+  ["verify-section7-palette-financial", "scripts/verify-section7-palette-financial.mjs"],
 ];
 
 function runNode(rel) {
@@ -60,5 +64,7 @@ for (const [name, rel] of STEPS) {
   }
 }
 
-console.log(`${LABEL}: PASS — DoD + money-theater OK on branch range (fail-fast before CI)`);
+console.log(
+  `${LABEL}: PASS — DoD + money-theater + Rule 26 scoreboard serialize + §7 palette OK (fail-fast before CI)`,
+);
 process.exit(0);
