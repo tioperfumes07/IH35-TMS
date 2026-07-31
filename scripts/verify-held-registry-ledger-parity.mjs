@@ -142,7 +142,7 @@ export const EXPECTED_HELD = [
   // Neon-applied — unapplied by construction. Soft-binds TRANSP/USMCA rent_expense role to
   // "Leased Trucks from IH35 TRUCKING"; seeds USMCA account if missing. Leaves this list only after
   // owner Neon-apply + ledger-backfill and GUARD re-proves both ledger rows. QBO push stays OFF.
-  "202611031200_lease_bridge_rent_expense_coa_role.sql",
+  
 ];
 
 /**
