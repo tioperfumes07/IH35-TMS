@@ -782,6 +782,18 @@ export const CATALOG_PICKER_CONFIGS = {
 
   // Customer quality event reasons — CustomerDetail Reason Combobox had no inline create at all.
   // Same factory surface as LST-A-01 Lists hub: POST /api/v1/catalogs/customers/customer-quality-event-reasons.
+  // Maintenance labor codes — LaborTracker used SelectCombobox with Lists-only management.
+  // Read: GET /api/v1/maintenance/labor-codes (labor.routes.ts SELECT catalogs.maintenance_labor_codes).
+  // Write: POST /api/v1/catalogs/maintenance/labor-codes (maintenance/factory.ts INSERT same table).
+  maintenance_labor_code: catalogEntry({
+    key: "maintenance_labor_code",
+    label: "Labor code",
+    table: "catalogs.maintenance_labor_codes",
+    endpoint: "/api/v1/catalogs/maintenance/labor-codes",
+    evidence:
+      "apps/backend/src/catalogs/maintenance/factory.ts GET+POST catalogs.maintenance_labor_codes; apps/backend/src/maintenance/labor.routes.ts SELECT same table; LaborTracker labor_code_id consumer",
+  }),
+
   customer_quality_event_reason: {
     key: "customer_quality_event_reason",
     label: "quality reason",

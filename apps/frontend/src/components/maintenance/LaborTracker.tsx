@@ -15,6 +15,7 @@ import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useToast } from "../Toast";
 import { useAuth } from "../../auth/useAuth";
+import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { SelectCombobox } from "../shared/SelectCombobox";
 
 type Props = {
@@ -43,6 +44,10 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
     enabled: Boolean(operatingCompanyId),
   });
   const laborCodes = laborCodesQuery.data?.labor_codes ?? [];
+  const laborCodeOptions = laborCodes.map((row) => ({
+    value: row.id,
+    label: `${row.code} — ${row.display_name}`,
+  }));
 
   const entriesQuery = useQuery({
     queryKey: ["wo-time-entries", workOrderId, operatingCompanyId],
@@ -209,19 +214,21 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
         </label>
         <label className="text-xs text-slate-600">
           Labor code
-          <SelectCombobox
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-[13px]"
-            value={laborCodeId}
-            onChange={(e) => setLaborCodeId(e.target.value)}
-            data-testid="maint-labor-code-select"
-          >
-            <option value="">Select labor code</option>
-            {laborCodes.map((row) => (
-              <option key={row.id} value={row.id}>
-                {row.code} — {row.display_name}
-              </option>
-            ))}
-          </SelectCombobox>
+          <div className="mt-1" data-testid="maint-labor-code-select">
+            <ReferenceSelect
+              value={laborCodeId || null}
+              onChange={(next) => setLaborCodeId(next ?? "")}
+              options={laborCodeOptions}
+              createKind="maintenance_labor_code"
+              operatingCompanyId={operatingCompanyId}
+              placeholder={laborCodesQuery.isLoading ? "Loading labor codes…" : "Select labor code"}
+              loading={laborCodesQuery.isLoading}
+              onOptionCreated={(opt) => {
+                void queryClient.invalidateQueries({ queryKey: ["maintenance", "labor-codes", operatingCompanyId] });
+                setLaborCodeId(opt.value);
+              }}
+            />
+          </div>
         </label>
         <label className="text-xs text-slate-600">
           Labor rate (¢/hr)

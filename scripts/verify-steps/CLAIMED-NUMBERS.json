@@ -1193,6 +1193,7 @@
     "1837": "1837-verify-pm-countdown-requests-not-due.mjs",
     "1839": "1839-verify-page-header-subtitle-shrinks.mjs",
     "1841": "1841-verify-units-without-load-driver-nullif.mjs",
+    "1852": "1852-verify-lst-picker01-maintenance-labor-code-inline-create.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",

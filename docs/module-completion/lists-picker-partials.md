@@ -12,3 +12,4 @@
 - 2026-07-30 · guard 1820 · InternalFinesPage → `createKind=internal_fine_reason` · PR #3821
 - 2026-07-30 · guard 1830 · PayRunClosePanel → PaymentMethodPicker (catalogs.payment_methods inline create) · PR pending
 - 2026-07-30 · guard 1824 · HosViolationCreateModal → `createKind=dot_violation_type` · PR #3823
+- 2026-07-31 · guard 1852 · LaborTracker → `createKind=maintenance_labor_code` (`labor_code_id` FK on WO time entries) · PR pending
