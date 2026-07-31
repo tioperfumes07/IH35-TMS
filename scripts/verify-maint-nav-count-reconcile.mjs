@@ -51,7 +51,7 @@ function main() {
     masterData: 11,
     dashboardTabs: 10,
     operationLinks: 11,
-    listsCatalogs: 20,
+    listsCatalogs: 21,
   };
 
   if (navConfig.match(/MAINTENANCE_MODULE_NAV_LINKS[\s\S]*?\];/g)?.[0]?.match(/path:/g)?.length !== expected.moduleNav) {
