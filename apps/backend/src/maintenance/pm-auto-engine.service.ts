@@ -330,6 +330,11 @@ export async function runPmAutoEngineForTenant(
 
   let workOrdersCreated = 0;
   let alertsCreated = 0;
+  // MAINT-PM-ENGINE-01: a run that evaluated schedules and achieved nothing because every unit was
+  // missing its prerequisite is NOT a success. Prod carried 3,554 runs recorded status='completed',
+  // error_message NULL, 0 created — while 41,070 of 41,070 evaluations logged skipped_no_odometer.
+  // Counting the skips is what lets the finalize step below tell "nothing to do" from "did nothing".
+  let skippedNoOdometer = 0;
 
   try {
     for (const schedule of schedules) {
@@ -343,6 +348,7 @@ export async function runPmAutoEngineForTenant(
           action: "skipped_no_odometer",
           detail: { label: schedule.label },
         });
+        skippedNoOdometer += 1;
         continue;
       }
 
@@ -410,19 +416,43 @@ export async function runPmAutoEngineForTenant(
       }
     }
 
+    // MAINT-PM-ENGINE-01 — run-level honesty. A cron that produced nothing must not report
+    // 'completed' with a NULL error, because that is indistinguishable from a run with nothing to
+    // do. 'skipped' is an existing member of pm_schedule_runs_status_check
+    // ('running','completed','failed','skipped') and is already used for engine_paused, so this
+    // needs NO migration. The diagnostic names the missing prerequisite and the scope affected.
+    const noEffect = workOrdersCreated === 0 && alertsCreated === 0;
+    let runStatus = "completed";
+    let runDiagnostic: string | null = null;
+
+    if (schedules.length === 0) {
+      runStatus = "skipped";
+      runDiagnostic =
+        "no_active_pm_schedules: 0 active PM schedules for this entity — no unit is under " +
+        "preventive-maintenance coverage. This is a finding, not a quiet no-op.";
+    } else if (noEffect && skippedNoOdometer === schedules.length) {
+      runStatus = "skipped";
+      runDiagnostic =
+        `no_odometer_for_all_units: all ${schedules.length} evaluated schedule(s) across ` +
+        `${unitIds.length} unit(s) were skipped for a missing odometer reading in ` +
+        "telematics.vehicle_latest_position. Nothing was created. Check that the schedules point " +
+        "at real, telemetry-reporting units — not deactivated or demo units.";
+    }
+
     if (runId && (await relationExists(client, "maintenance.pm_schedule_runs"))) {
       await client.query(
         `
           UPDATE maintenance.pm_schedule_runs
           SET
-            status = 'completed',
+            status = $5,
             finished_at = now(),
             schedules_evaluated = $2,
             work_orders_created = $3,
-            alerts_created = $4
+            alerts_created = $4,
+            error_message = $6
           WHERE id = $1::uuid
         `,
-        [runId, schedules.length, workOrdersCreated, alertsCreated]
+        [runId, schedules.length, workOrdersCreated, alertsCreated, runStatus, runDiagnostic]
       );
     }
   } catch (error) {
