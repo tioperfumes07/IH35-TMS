@@ -280,17 +280,37 @@ export async function listEscrowRecords(companyId: string) {
   const { drivers } = await getEscrowDriverBalances(companyId);
   const forfeitAttempts: EscrowForfeitAttempt[] = [];
   const records: EscrowRecordRow[] = [];
+  // Collected, not swallowed. Surfaced on the return so the panel can say "history unavailable for N
+  // drivers" instead of silently presenting a partial audit as complete.
+  const timelineErrors: string[] = [];
 
   for (const driver of drivers) {
     const driverId = String(driver.driver_id ?? "");
     const driverName = String(driver.driver_name ?? "Unknown driver");
     if (!driverId) continue;
 
-    const [debt, timelinePayload] = await Promise.all([
+    // SAF-ORPH-03 (Rule 16 — no swallowed errors). This previously did
+    //   .catch(() => ({ timeline: [] }))
+    // which turned ANY failure into "this driver has no escrow history". That is precisely how the
+    // phantom-column bug survived: the endpoint raised Postgres 42703 on every single call because it
+    // ordered by a posted_at column driver_finance.escrow_ledger does not have, and the panel rendered a
+    // clean empty state instead of an error. The backend query is fixed now, but the swallow is the
+    // reason nobody noticed for so long — an empty forfeiture audit and a broken one looked identical.
+    //
+    // A forfeiture audit panel is legal-evidence surface: "no forfeitures on record" is a claim, and it
+    // must not be produced by a caught exception. On failure we now record the error and let the caller
+    // render it, rather than manufacturing a reassuring empty list.
+    const [debt, timelineResult] = await Promise.all([
       getDebtSummary(driverId, companyId).catch(() => null),
-      getEscrowDriverTimeline(companyId, driverId).catch(() => ({ timeline: [] as Array<Record<string, unknown>> })),
+      getEscrowDriverTimeline(companyId, driverId).then(
+        (payload) => ({ ok: true as const, payload }),
+        (err: unknown) => ({ ok: false as const, error: err instanceof Error ? err.message : String(err) })
+      ),
     ]);
-    const timeline = timelinePayload.timeline ?? [];
+    if (!timelineResult.ok) {
+      timelineErrors.push(`${driverName}: ${timelineResult.error}`);
+    }
+    const timeline = timelineResult.ok ? timelineResult.payload.timeline ?? [] : [];
     forfeitAttempts.push(...timelineToAttempts(driverName, timeline));
 
     const preClause = Number(debt?.escrow_pre_clause ?? 0);
@@ -317,7 +337,10 @@ export async function listEscrowRecords(companyId: string) {
   }
 
   forfeitAttempts.sort((a, b) => b.created_at.localeCompare(a.created_at));
-  return { records, forfeit_attempts: forfeitAttempts };
+  // timeline_errors is additive — existing consumers destructure records / forfeit_attempts and are
+  // unaffected. A non-empty array means the forfeiture audit shown is INCOMPLETE, which a legal-evidence
+  // surface must state rather than imply by omission.
+  return { records, forfeit_attempts: forfeitAttempts, timeline_errors: timelineErrors };
 }
 
 export function forfeitEscrow(
