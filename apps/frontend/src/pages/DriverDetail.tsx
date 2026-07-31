@@ -42,8 +42,8 @@ import { DriverSafetyReverseSection } from "../components/safety/DriverSafetyRev
 import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
-import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { ReferenceSelect } from "../components/parity/ReferenceSelect";
+import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { PageHeader } from "../components/forms/shared/PageHeader";
@@ -1230,7 +1230,7 @@ export function DriverDetailPage() {
                 </label>
               ) : null}
               {canManageRates ? (
-                <Button onClick={() => setAddQualificationOpen(true)} disabled={equipmentTypeOptions.length === 0}>
+                <Button onClick={() => setAddQualificationOpen(true)}>
                   + Create Equipment Qualification
                 </Button>
               ) : null}
@@ -1616,11 +1616,24 @@ export function DriverDetailPage() {
         >
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Equipment type</label>
-            <Combobox
-              options={equipmentTypeOptions.map((option) => ({ value: option.id, label: option.name }))}
+            {/*
+              LST-PICKER-01: ReferenceSelect first-row create → POST catalogs.equipment_types
+              (inline create seeds one per_loaded_mile Base rate line item). Options keyed by id.
+            */}
+            <ReferenceSelect
               value={newQualificationForm.equipment_type_id || null}
-              onChange={(nextValue) => setNewQualificationForm((current) => ({ ...current, equipment_type_id: nextValue ?? "" }))}
-              placeholder="Select equipment type"
+              onChange={(nextValue) =>
+                setNewQualificationForm((current) => ({ ...current, equipment_type_id: nextValue ?? "" }))
+              }
+              options={equipmentTypeOptions.map((option) => ({ value: option.id, label: option.name }))}
+              createKind="equipment_type"
+              operatingCompanyId={String(driver?.operating_company_id ?? companyId)}
+              placeholder={equipmentTypesQuery.isLoading ? "Loading equipment types…" : "Select equipment type"}
+              loading={equipmentTypesQuery.isLoading}
+              onOptionCreated={() => {
+                void queryClient.invalidateQueries({ queryKey: ["equipment-types-for-driver-detail"] });
+                void queryClient.invalidateQueries({ queryKey: ["catalogs", "equipment-types"] });
+              }}
             />
           </div>
           <div className="flex flex-col gap-1">
