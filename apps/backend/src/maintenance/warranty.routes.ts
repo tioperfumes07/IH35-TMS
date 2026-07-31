@@ -193,7 +193,7 @@ export async function detectWarrantyEligiblePartsFromWorkOrder(
     if (partUuid) {
       const byInventory = await client.query(
         `SELECT pw.id::text, pw.part_description, pw.vendor_id::text, pw.expires_at::text,
-                pw.warranty_months, pw.parts_inventory_id::text, v.display_name AS vendor_name
+                pw.warranty_months, pw.parts_inventory_id::text, v.vendor_name AS vendor_name
          FROM maintenance.parts_warranty pw
          LEFT JOIN mdata.vendors v ON v.id = pw.vendor_id
          WHERE pw.operating_company_id = $1
@@ -210,7 +210,7 @@ export async function detectWarrantyEligiblePartsFromWorkOrder(
     if (!warrantyRow) {
       const byWo = await client.query(
         `SELECT pw.id::text, pw.part_description, pw.vendor_id::text, pw.expires_at::text,
-                pw.warranty_months, pw.parts_inventory_id::text, v.display_name AS vendor_name
+                pw.warranty_months, pw.parts_inventory_id::text, v.vendor_name AS vendor_name
          FROM maintenance.parts_warranty pw
          LEFT JOIN mdata.vendors v ON v.id = pw.vendor_id
          WHERE pw.operating_company_id = $1
@@ -272,7 +272,7 @@ const PART_SELECT = `
     pw.parts_inventory_id::text,
     pw.part_description,
     pw.vendor_id::text,
-    v.display_name AS vendor_name,
+    v.vendor_name AS vendor_name,
     pw.warranty_months,
     pw.purchased_at::text,
     pw.expires_at::text,
@@ -294,7 +294,7 @@ const CLAIM_SELECT = `
     wc.parts_warranty_id::text,
     wc.work_order_id::text,
     wc.vendor_id::text,
-    v.display_name AS vendor_name,
+    v.vendor_name AS vendor_name,
     wc.claim_number,
     wc.status,
     wc.part_description,

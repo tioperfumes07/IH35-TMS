@@ -32,7 +32,6 @@
     "apps/backend/src/integrity/anomaly-detector.service.ts#mdata.drivers.active",
     "apps/backend/src/integrity/driver-metrics.service.ts#mdata.drivers.active",
     "apps/backend/src/kpi/canonical-kpis.ts#maintenance.work_orders.due_date",
-    "apps/backend/src/maintenance/warranty.routes.ts#mdata.vendors.display_name",
     "apps/backend/src/maintenance/work-orders.routes.ts#accounting.expenses.revoked_at",
     "apps/backend/src/mdata/equipment-aggregate.service.ts#mdata.loads.assigned_primary_unit_id",
     "apps/backend/src/notifications/dispatcher.ts#identity.users.uuid",
@@ -50,5 +49,5 @@
     "apps/backend/src/settlements/trip-link.engine.ts#mdata.loads.delivery_appointment_start",
     "apps/backend/src/settlements/trip-link.engine.ts#mdata.loads.pickup_appointment_start"
   ],
-  "total_entries": 48
+  "total_entries": 47
 }
