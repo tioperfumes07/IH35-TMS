@@ -106,7 +106,7 @@ function main() {
   // single row in any of them. They are now wired end-to-end, so the hub carries 18 tiles. The count
   // is raised to match reality, not relaxed: it is still an exact equality, so a tile silently
   // appearing or disappearing still fails.
-  const expectedListsCatalogs = 20;
+  const expectedListsCatalogs = 21;
   if (catalogCount !== expectedListsCatalogs) {
     failures.push(`AllCatalogsMap maintenance domain must have ${expectedListsCatalogs} catalogs (found ${catalogCount})`);
   }
