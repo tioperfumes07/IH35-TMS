@@ -149,8 +149,18 @@ const fineCreate = read("apps/frontend/src/pages/safety/components/FineCreateMod
 if (fineCreate.includes('placeholder="UUID"') || /Driver ID[\s\S]{0,200}<input/.test(fineCreate)) {
   failures.push("FineCreateModal must not use raw UUID driver input — use driver Combobox");
 }
-if (!fineCreate.includes("listDrivers") || !fineCreate.includes("CreateDriverModal")) {
-  failures.push("FineCreateModal must listDrivers + CreateDriverModal nested create");
+// LST-PICKER-01: EntityPicker kind=driver (+ onCreated) is the canonical nested create path.
+// Legacy listDrivers + CreateDriverModal side-channel is retired for this surface.
+const fineDriverEntityPicker =
+  fineCreate.includes("EntityPicker") &&
+  /kind=["']driver["']/.test(fineCreate) &&
+  fineCreate.includes("onCreated");
+const fineDriverLegacy =
+  fineCreate.includes("listDrivers") && fineCreate.includes("CreateDriverModal");
+if (!fineDriverEntityPicker && !fineDriverLegacy) {
+  failures.push(
+    "FineCreateModal must EntityPicker kind=driver + onCreated (or legacy listDrivers + CreateDriverModal)",
+  );
 }
 if (!fineCreate.includes("ParityDrawer")) {
   failures.push("FineCreateModal must use ParityDrawer");
