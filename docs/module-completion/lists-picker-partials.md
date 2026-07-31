@@ -28,3 +28,5 @@
 - 2026-07-31 · guard 1868 · CreateWOSectionIdentification roadside provider → `createKind=vendor` (`mdata.vendors`; was free-text UUID) · PR pending
 
 - 2026-07-31 · guard 1870 · CustomerProfileForm + CustomerDetail + NewCustomerDrawerForm parent picker → `createKind=customer` (`mdata.customers`; was bare Combobox/native select) · PR pending
+
+- 2026-07-31 · guard 1872 · NewServiceDrawerForm income/expense → `createKind=account` (parity with ItemEditorModal; was bare Combobox) · PR pending
