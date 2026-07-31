@@ -12,7 +12,7 @@
  */
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 import { chartOfAccountsCatalogClient } from "../../../api/catalogs-accounting";
 import { getCoaAccounts } from "../../../api/banking";
@@ -26,6 +26,7 @@ import {
   type CoaAccountType,
 } from "../../../api/coa-list";
 import { useToast } from "../../Toast";
+import { ReferenceSelect } from "../ReferenceSelect";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 
 const ACCOUNT_CREATE_GATED = false; // Owner GO 2026-07-22 — all companies
@@ -52,6 +53,7 @@ type Props = {
 
 export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }: Props) {
   const { pushToast } = useToast();
+  const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<FormState>({
     name: "",
@@ -263,34 +265,37 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
           </label>
 
           {form.isSubaccount && (
-            <label className="block">
+            <div className="block" data-testid="new-account-parent-select">
               <span className="text-xs font-medium text-gray-700">Parent account</span>
               {/*
-                Was a free-text box ("Parent account name or number"). parent_account_id is a uuid FK
-                into catalogs.accounts, so typed text could NEVER resolve to a parent — the field was
-                unpersistable by construction. Now a real entity-scoped picker off the same
-                catalogs.accounts the chart reads, so the value IS the FK.
+                LST-PICKER-01: parent_account_id is uuid FK → catalogs.accounts. Bare <select>
+                could pick but not create; wire ReferenceSelect createKind=account (parity
+                NewServiceDrawerForm income/expense).
               */}
-              <select
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
-                value={form.parentAccount}
-                onChange={(e) => set("parentAccount", e.target.value)}
-              >
-                <option value="">
-                  {parentAccountsQuery.isPending
-                    ? "Loading accounts…"
-                    : parentOptions.length === 0
-                      ? "No accounts available for this company"
-                      : "Select a parent account…"}
-                </option>
-                {parentOptions.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    
-                    {a.account_name}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <div className="mt-1">
+                <ReferenceSelect
+                  value={form.parentAccount || null}
+                  onChange={(v) => set("parentAccount", v ?? "")}
+                  options={parentOptions.map((a) => ({
+                    value: a.id,
+                    label: a.account_number ? `${a.account_number} — ${a.account_name}` : a.account_name,
+                  }))}
+                  createKind="account"
+                  operatingCompanyId={operatingCompanyId}
+                  placeholder={
+                    parentAccountsQuery.isPending
+                      ? "Loading accounts…"
+                      : parentOptions.length === 0
+                        ? "No accounts available for this company"
+                        : "Select a parent account…"
+                  }
+                  loading={parentAccountsQuery.isPending}
+                  onOptionCreated={() => {
+                    void queryClient.invalidateQueries({ queryKey: ["coa-accounts-parent-picker", operatingCompanyId] });
+                  }}
+                />
+              </div>
+            </div>
           )}
 
           <label className="block">
