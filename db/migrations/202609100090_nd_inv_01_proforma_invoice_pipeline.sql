@@ -3,6 +3,10 @@
 -- Pro Forma is NON-POSTING (status=proforma). Official invoice posts A/R only after POD convert.
 -- Broker/customer advance liability role admits designation; poster reuse only (no new GL math).
 -- Cursor band 20260910xxxx. Idempotent / fresh-DB-safe.
+--
+-- 2026-07-31 PROD APPLY NOTE: Neon already applied with RESET ROLE (session was forced to ih35_app).
+-- CoA CHECK must be TRUE SUPERSET of live prod — includes heavy_repair_expense,
+-- prepaid_asset_default, amortization_expense_default (were missing in first held file).
 
 BEGIN;
 
@@ -39,13 +43,13 @@ BEGIN
   END IF;
   ALTER TABLE accounting.invoices
     ADD COLUMN IF NOT EXISTS broker_advance_applied_cents bigint NOT NULL DEFAULT 0
-      CONSTRAINT invoices_broker_advance_applied_cents_check CHECK (broker_advance_applied_cents >= 0);
+    CONSTRAINT invoices_broker_advance_applied_cents_check CHECK (broker_advance_applied_cents >= 0);
   COMMENT ON COLUMN accounting.invoices.broker_advance_applied_cents IS
     'ND-INV-01: sum of broker/customer advances applied to this (proforma→official) invoice, in cents.';
 END
 $$;
 
--- §3 — CoA role for Broker/Customer Advance liability (TRUE SUPERSET of live + FA-ARCHIVE held)
+-- §3 — CoA role for Broker/Customer Advance liability (TRUE SUPERSET of live prod)
 DO $$
 BEGIN
   IF to_regclass('accounting.chart_of_accounts_roles') IS NULL THEN
@@ -77,8 +81,12 @@ BEGIN
       'insurance_expense',
       'unbilled_revenue',
       'fixed_asset_default','accum_depr_default','depr_expense_default',
+      -- LIVE on prod before ND-INV-01 (must keep — first held file omitted these)
+      'heavy_repair_expense','prepaid_asset_default','amortization_expense_default',
       -- ND-INV-01
-      'broker_customer_advance_liability'
+      'broker_customer_advance_liability',
+      -- LEASE-BRIDGE live on prod 2026-07-31 (must keep)
+      'rent_expense'
     ));
 END
 $$;
