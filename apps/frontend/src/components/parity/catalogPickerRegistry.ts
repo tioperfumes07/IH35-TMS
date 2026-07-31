@@ -975,7 +975,8 @@ export const CATALOG_PICKER_CONFIGS = {
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
       const name = values.display_name.trim();
-      const code = deriveEquipmentTypeCode(name, values.code);
+      // Equipment type codes are uppercase alnum/underscore (route factory); reuse catalog deriver.
+      const code = deriveCatalogCode(name, values.code).replace(/-/g, "_");
       const lineItemCode = `${code}_BASE`.slice(0, 40);
       const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
       const created = await apiRequest<{ id: string; code?: string; name?: string }>(

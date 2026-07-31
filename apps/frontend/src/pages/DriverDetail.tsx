@@ -44,7 +44,6 @@ import { ListErrorState } from "../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { ReferenceSelect } from "../components/parity/ReferenceSelect";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
-import { ReferenceSelect } from "../components/parity/ReferenceSelect";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { PageHeader } from "../components/forms/shared/PageHeader";
