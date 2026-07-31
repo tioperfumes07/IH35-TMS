@@ -3,17 +3,10 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
-import { enqueueEmail } from "../email/queue.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
 import { buildInvoiceFromLoad, findConflictingInvoiceForLoad } from "./from-load.js";
-import {
-  assertLoadRevenueHasSourceLoad,
-  assertRevenueLinesHaveIncomeAccount,
-  InvoiceLoadSourceRequiredError,
-  InvoiceLineIncomeAccountRequiredError,
-  type InvoiceLineGuardRow,
-} from "./invoice-linkage-guards.js";
+import { sendDraftInvoice } from "./invoice-send.service.js";
 import { createExpandedInvoice } from "./invoices.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, recomputeInvoiceTotals } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
@@ -734,157 +727,21 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const currentRes = await client.query(`SELECT * FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
-        params.data.id,
-        query.data.operating_company_id,
-      ]);
-      const current = currentRes.rows[0] ?? null;
-      if (!current) return { code: 404 as const, error: "invoice_not_found" };
-      if (String(current.status) === "proforma") {
-        return {
-          code: 409 as const,
-          error: "invoice_is_proforma",
-          message:
-            "Pro forma invoices are non-posting projections. Convert at POD (delivered) before send/A/R.",
-        };
-      }
-      if (String(current.status) !== "draft") return { code: 409 as const, error: "invoice_not_draft" };
-
-      // P-INVOICE P0 (#3177): fail closed before send — income account + load source_load_id.
-      // withCompanyScope client is `any` — do not pass query type args (TS2347).
-      const sendLinesRes = await client.query(
-        `
-          SELECT
-            id::text,
-            line_type::text,
-            line_total_cents::bigint AS line_total_cents,
-            account_id::text,
-            qbo_item_id
-          FROM accounting.invoice_lines
-          WHERE invoice_id = $1::uuid
-          ORDER BY display_order ASC, id ASC
-        `,
-        [params.data.id]
-      );
-      const sendLines = sendLinesRes.rows as InvoiceLineGuardRow[];
-      try {
-        assertLoadRevenueHasSourceLoad(
-          current.source_load_id ? String(current.source_load_id) : null,
-          sendLines
-        );
-        assertRevenueLinesHaveIncomeAccount(query.data.operating_company_id, sendLines);
-      } catch (guardErr) {
-        if (guardErr instanceof InvoiceLoadSourceRequiredError) {
-          return { code: 409 as const, error: "invoice_load_source_required", message: guardErr.message };
-        }
-        if (guardErr instanceof InvoiceLineIncomeAccountRequiredError) {
-          return { code: 422 as const, error: "invoice_line_income_account_required", message: guardErr.message };
-        }
-        throw guardErr;
-      }
-
-      // FACT-PAR-2: 422 guard — customer with active factor assignment requires NOA config on the factor
-      const invoiceDate = String(current.issue_date);
-      const noaCheck = await client.query(
-        `
-          SELECT
-            f.id::text AS factor_id,
-            f.name AS factor_name,
-            f.noa_stamp_text,
-            f.noa_remit_to_name
-          FROM factoring.customer_factor_assignment a
-          JOIN factoring.factor f ON f.id = a.factor_id
-          WHERE a.tenant_id = $1::uuid
-            AND a.customer_id = $2::uuid
-            AND a.effective_from <= $3::date
-            AND (a.effective_to IS NULL OR a.effective_to > $3::date)
-          ORDER BY a.effective_from DESC
-          LIMIT 1
-        `,
-        [query.data.operating_company_id, current.customer_id, invoiceDate]
-      );
-      const noaRow = noaCheck.rows[0] ?? null;
-      if (noaRow && !noaRow.noa_stamp_text && !noaRow.noa_remit_to_name) {
-        return {
-          code: 422 as const,
-          error: "noa_config_missing",
-          factor_id: String(noaRow.factor_id),
-          factor_name: String(noaRow.factor_name),
-        };
-      }
-
-      await recomputeInvoiceTotals(client, params.data.id);
-      await client.query(
-        `
-          UPDATE accounting.invoices
-          SET status = 'sent',
-              sent_at = now(),
-              updated_at = now(),
-              updated_by_user_id = $2
-          WHERE id = $1
-        `,
-        [params.data.id, user.uuid]
-      );
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "accounting.invoices.sent",
-        {
-          resource_type: "accounting.invoices",
-          resource_id: params.data.id,
-          operating_company_id: query.data.operating_company_id,
-        },
-        "info",
-        "P3-T11.20.2-INVOICE-FLOW"
-      );
-      await enqueueTmsInvoicePushRequested(client, {
-        operating_company_id: query.data.operating_company_id,
-        invoice_id: params.data.id,
-        operation: "update",
+      const sent = await sendDraftInvoice(client, {
+        invoiceId: params.data.id,
+        operatingCompanyId: query.data.operating_company_id,
+        userId: user.uuid,
       });
-      const detail = await enrichInvoice(client, params.data.id);
-      if (detail) {
-        const invoiceRow = detail as Record<string, unknown>;
-        const notifyRes = await client.query(
-          `
-            SELECT
-              COALESCE(
-                NULLIF(TRIM(c.ap_email), ''),
-                NULLIF(TRIM(c.billing_email), ''),
-                NULLIF(TRIM(c.ar_email), ''),
-                NULLIF(TRIM(i.ar_email_snapshot), '')
-              ) AS customer_email
-            FROM accounting.invoices i
-            JOIN mdata.customers c
-              ON c.id = i.customer_id
-             AND c.operating_company_id = i.operating_company_id
-             AND c.operating_company_id = $2
-            WHERE i.id = $1
-              AND i.operating_company_id = $2
-            LIMIT 1
-          `,
-          [params.data.id, query.data.operating_company_id]
-        );
-        const customerEmail = notifyRes.rows[0]?.customer_email ? String(notifyRes.rows[0].customer_email).trim() : "";
-        if (customerEmail) {
-          const total = (Number(invoiceRow.total_cents ?? 0) / 100).toFixed(2);
-          void enqueueEmail({
-            operatingCompanyId: query.data.operating_company_id,
-            toAddresses: [customerEmail],
-            subject: `Invoice ${invoiceRow.display_id} — IH 35 TMS`,
-            templateKey: "invoice-send",
-            templateVars: {
-              invoiceDisplayId: String(invoiceRow.display_id ?? ""),
-              customerName: String(invoiceRow.customer_name ?? "Customer"),
-              issueDate: String(invoiceRow.issue_date ?? ""),
-              currency: String(invoiceRow.currency_code ?? "USD"),
-              total,
-              memo: String(invoiceRow.customer_notes ?? invoiceRow.internal_notes ?? ""),
-            },
-            queuedByUserId: user.uuid,
-          }).catch(() => undefined);
-        }
+      if (!sent.ok) {
+        return {
+          code: sent.code,
+          error: sent.error,
+          message: sent.message,
+          factor_id: sent.factor_id,
+          factor_name: sent.factor_name,
+        };
       }
+      const detail = await enrichInvoice(client, params.data.id);
       return { code: 200 as const, data: detail };
     });
     if ("error" in result) {
