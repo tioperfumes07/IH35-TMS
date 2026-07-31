@@ -346,7 +346,12 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           {assignmentMode === "team" && secondaryDriverId ? (
             <DriverHosClocksBlock driverId={secondaryDriverId} operatingCompanyId={operatingCompanyId} heading="Team driver HOS" />
           ) : null}
-          <ExpectedAdjustmentsCallout register={register as never} />
+          <ExpectedAdjustmentsCallout
+            register={register as never}
+            operatingCompanyId={operatingCompanyId ?? ""}
+            watch={(watch ?? (() => undefined)) as never}
+            setValue={(setValue ?? (() => undefined)) as never}
+          />
         </div>
       </details>
       <div className="hidden">

@@ -104,6 +104,8 @@ type FormValues = BookLoadFormValues & {
   anticipated_chargeback_cents: number;
   anticipated_chargeback_reason: string;
   detention_expected_y_n: boolean;
+  /** catalogs.detention_reasons.code — picker wired LST-PICKER-01; load column persistence REMAINING. */
+  detention_reason_code: string;
   detention_expected_hours: number;
   detention_bill_customer_per_hour_cents: number;
   detention_driver_pay_per_hour_cents: number;
@@ -283,6 +285,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
       anticipated_chargeback_cents: 0,
       anticipated_chargeback_reason: "",
       detention_expected_y_n: false,
+      detention_reason_code: "",
       detention_expected_hours: 0,
       detention_bill_customer_per_hour_cents: 0,
       detention_driver_pay_per_hour_cents: 0,

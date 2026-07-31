@@ -1,10 +1,41 @@
-import type { UseFormRegister } from "react-hook-form";
+import { useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
+import { detentionReasonsCatalogClient } from "../../../../api/catalogs-dispatch";
+import { ReferenceSelect } from "../../../../components/parity/ReferenceSelect";
 
 type Props = {
   register: UseFormRegister<Record<string, unknown>>;
+  operatingCompanyId: string;
+  watch: UseFormWatch<Record<string, unknown>>;
+  setValue: UseFormSetValue<Record<string, unknown>>;
 };
 
-export function ExpectedAdjustmentsCallout({ register }: Props) {
+export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch, setValue }: Props) {
+  const queryClient = useQueryClient();
+  const detentionExpected = Boolean(watch("detention_expected_y_n"));
+  const detentionReasonCode = String(watch("detention_reason_code") ?? "");
+
+  const detentionReasonsQuery = useQuery({
+    queryKey: ["book-load", "detention-reasons", operatingCompanyId],
+    queryFn: () =>
+      detentionReasonsCatalogClient.list({
+        operating_company_id: operatingCompanyId,
+        is_active: "true",
+        limit: 200,
+      }),
+    enabled: Boolean(operatingCompanyId),
+  });
+
+  const detentionReasonOptions = useMemo(
+    () =>
+      (detentionReasonsQuery.data?.rows ?? []).map((row) => ({
+        value: row.code,
+        label: row.display_name,
+      })),
+    [detentionReasonsQuery.data?.rows]
+  );
+
   return (
     <div className="rounded-sm border border-slate-200 bg-[#FEF3C7] px-3 py-2 text-[11px] text-slate-700">
       <div className="mb-2 font-semibold uppercase tracking-wide">Expected adjustments</div>
@@ -31,6 +62,29 @@ export function ExpectedAdjustmentsCallout({ register }: Props) {
             <input type="checkbox" {...register("detention_expected_y_n")} />
             Yes
           </label>
+          {detentionExpected ? (
+            <div className="space-y-1">
+              <div className="text-[10px] font-semibold text-slate-700">Detention reason</div>
+              {/*
+                LST-PICKER-01: Book Load detention reason — ReferenceSelect first-row create → POST
+                catalogs.detention_reasons (same table Lists → Detention Reasons reads). Options keyed by code.
+              */}
+              <ReferenceSelect
+                value={detentionReasonCode || null}
+                onChange={(next) => setValue("detention_reason_code", next ?? "", { shouldDirty: true })}
+                options={detentionReasonOptions}
+                createKind="detention_reason"
+                operatingCompanyId={operatingCompanyId}
+                createdValueField="code"
+                loading={detentionReasonsQuery.isLoading}
+                placeholder="Select reason"
+                onOptionCreated={() => {
+                  void detentionReasonsQuery.refetch();
+                  void queryClient.invalidateQueries({ queryKey: ["book-load", "detention-reasons", operatingCompanyId] });
+                }}
+              />
+            </div>
+          ) : null}
           <input
             type="number"
             min={0}
