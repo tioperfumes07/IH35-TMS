@@ -1069,6 +1069,36 @@ export const CATALOG_PICKER_CONFIGS = {
       "apps/backend/src/catalogs/maintenance/factory.ts:83,159 + maintenance/index.ts:14 tableName maintenance_labor_codes; LaborTracker labor_code_id consumer",
   }),
 
+
+  // Tire brands — TireProgramPage's mount-tire Brand picker was a bare <select> with a SEPARATE
+  // "+ Create Brand" button OUTSIDE the dropdown (Universal Picker Law clause 1: "+ Add new" must be
+  // the FIRST ROW INSIDE the open dropdown, not an external button). The external button/modal is
+  // kept (Rule 07 never-delete-only-add) — this entry additionally wires the inline path.
+  // Not a generic-catalog-factory table: bespoke {name, manufacturer, tread_warranty_32nds} schema,
+  // so a custom `create()` (not `catalogEntry()`) posts only the fields this route accepts.
+  maintenance_tire_brand: {
+    key: "maintenance_tire_brand",
+    label: "tire brand",
+    backend: "catalog",
+    readTable: "maintenance.tire_brands",
+    writeTable: "maintenance.tire_brands",
+    readEndpoint: "/api/v1/maintenance/tires/brands",
+    writeEndpoint: "/api/v1/maintenance/tires/brands",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence:
+      "apps/backend/src/maintenance/tires.routes.ts:274 (SELECT) and :293 (INSERT) — both maintenance.tire_brands; TireProgramPage mount-tire brand picker consumer",
+    fields: [{ name: "display_name", label: "Brand name", required: true, maxLength: 120 }],
+    create: async (operatingCompanyId, values) => {
+      const name = values.display_name.trim();
+      const created = await apiRequest<{ id: string; name?: string }>("/api/v1/maintenance/tires/brands", {
+        method: "POST",
+        body: { operating_company_id: operatingCompanyId, name },
+      });
+      return { id: String(created.id), label: created.name ?? name };
+    },
+  },
+
 } as const satisfies Record<string, CatalogPickerConfig>;
 
 /** Every create kind <ReferenceSelect> accepts — derived from the config, never hand-maintained. */
