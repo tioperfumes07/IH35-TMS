@@ -50,6 +50,10 @@ describe("EscrowRecordTab (A23-8 + ND-ESC-01)", () => {
           has_signed_clause: true,
         },
       ],
+      // SAF-ORPH-03: timeline_errors is empty in the happy path. A NON-empty array means the forfeiture
+      // audit rendered is INCOMPLETE — previously that state was unrepresentable because failures were
+      // swallowed into an empty timeline and looked identical to "no forfeitures".
+      timeline_errors: [],
       forfeit_attempts: [
         {
           id: "attempt-1",
