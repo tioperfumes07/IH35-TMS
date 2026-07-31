@@ -226,6 +226,7 @@ export const CATALOG_PICKER_CONFIGS = {
   },
 
 
+
   customer: {
     key: "customer",
     label: "customer",
@@ -240,6 +241,7 @@ export const CATALOG_PICKER_CONFIGS = {
   },
 
 
+
   account: {
     key: "account",
     label: "account",
@@ -252,6 +254,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "legacy-bespoke-form",
     evidence: "apps/backend/src/catalogs/accounting/index.ts:17 (tableName catalogs.accounts) — create commit is FINANCIAL-GATED in NewAccountDrawerForm",
   },
+
 
 
   // NOTE: every legacy `label` is byte-identical to its key so `catalogAddNewLabel` reproduces the
@@ -270,6 +273,7 @@ export const CATALOG_PICKER_CONFIGS = {
   },
 
 
+
   item: {
     key: "item",
     label: "item",
@@ -282,6 +286,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "legacy-bespoke-form",
     evidence: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx:174-203 (QB-STD-5)",
   },
+
 
 
   category: {
@@ -298,6 +303,7 @@ export const CATALOG_PICKER_CONFIGS = {
   },
 
 
+
   class: {
     key: "class",
     label: "class",
@@ -312,6 +318,7 @@ export const CATALOG_PICKER_CONFIGS = {
   },
 
 
+
   part: {
     key: "part",
     label: "part",
@@ -324,6 +331,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "legacy-bespoke-form",
     evidence: "apps/backend/src/maintenance/parts-inventory.routes.ts:44 (SELECT) and :63 (INSERT) — both maintenance.parts_inventory",
   },
+
 
 
 
@@ -343,6 +351,7 @@ export const CATALOG_PICKER_CONFIGS = {
   }),
 
 
+
   load_type: catalogEntry({
     key: "load_type",
     label: "Load type",
@@ -350,6 +359,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/dispatch/load-types",
     evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
   }),
+
 
 
   detention_reason: catalogEntry({
@@ -361,6 +371,7 @@ export const CATALOG_PICKER_CONFIGS = {
   }),
 
 
+
   pickup_time_type: catalogEntry({
     key: "pickup_time_type",
     label: "Pickup time type",
@@ -370,6 +381,7 @@ export const CATALOG_PICKER_CONFIGS = {
   }),
 
 
+
   additional_charge: catalogEntry({
     key: "additional_charge",
     label: "Accessorial charge",
@@ -377,6 +389,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/dispatch/additional-charges",
     evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
   }),
+
 
 
 
@@ -431,6 +444,7 @@ export const CATALOG_PICKER_CONFIGS = {
 
 
 
+
   // Driver — apps/backend/src/catalogs/driver/factory.ts: SELECT :94 and INSERT :172 both
   // `catalogs.${config.tableName}`. escrow-types deliberately excluded (financial cluster).
   pay_rate_template: catalogEntry({
@@ -442,6 +456,7 @@ export const CATALOG_PICKER_CONFIGS = {
   }),
 
 
+
   driver_deduction_type: catalogEntry({
     key: "driver_deduction_type",
     label: "Driver deduction type",
@@ -449,6 +464,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/driver/deduction-types",
     evidence: "apps/backend/src/catalogs/driver/factory.ts:94,172 + driver/index.ts:14 tableName driver_deduction_types",
   }),
+
 
 
   // Escrow forfeit draw reasons — same table as driver_deduction_types, but create MUST set
@@ -493,6 +509,7 @@ export const CATALOG_PICKER_CONFIGS = {
   },
 
 
+
   driver_pay_type: catalogEntry({
     key: "driver_pay_type",
     label: "Driver pay type",
@@ -500,6 +517,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/driver/pay-types",
     evidence: "apps/backend/src/catalogs/driver/factory.ts:94,172 + driver/index.ts:22 tableName driver_pay_types",
   }),
+
 
 
 
@@ -514,6 +532,7 @@ export const CATALOG_PICKER_CONFIGS = {
   }),
 
 
+
   fuel_exception_type: catalogEntry({
     key: "fuel_exception_type",
     label: "Fuel exception type",
@@ -523,6 +542,7 @@ export const CATALOG_PICKER_CONFIGS = {
   }),
 
 
+
   fuel_station_brand: catalogEntry({
     key: "fuel_station_brand",
     label: "Fuel station brand",
@@ -530,6 +550,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/fuel/station-brands",
     evidence: "apps/backend/src/catalogs/fuel/factory.ts:83,159 + fuel/index.ts:22 tableName fuel_station_brands",
   }),
+
 
 
   // Fuel expensive states — ExpensiveStatesMultiselect read catalogs.expensive_states but sent operators
@@ -583,6 +604,7 @@ export const CATALOG_PICKER_CONFIGS = {
 
 
 
+
   // Civil fine types — FineCreateModal previously used Combobox allowAddNew with an external mutate
   // (not ReferenceSelect / CatalogQuickCreateDrawer). POST body matches generic {code, display_name}.
   civil_fine_type: catalogEntry({
@@ -593,6 +615,7 @@ export const CATALOG_PICKER_CONFIGS = {
     evidence:
       "apps/backend/src/catalogs/safety/civil-fine-types.routes.ts:28 (SELECT) and :110 (INSERT) — both catalogs.civil_fine_types; FineCreateModal catalogs-safety list consumer",
   }),
+
 
 
 
@@ -635,6 +658,7 @@ export const CATALOG_PICKER_CONFIGS = {
       };
     },
   },
+
 
 
 
@@ -684,6 +708,7 @@ export const CATALOG_PICKER_CONFIGS = {
 
 
 
+
   // Company violation types — CompanyViolationCreateModal used Combobox allowAddNew + external
   // mini-form (not ReferenceSelect first-row). POST uses type_code/type_name/default_severity.
   company_violation_type: {
@@ -724,6 +749,7 @@ export const CATALOG_PICKER_CONFIGS = {
       };
     },
   },
+
 
 
 
@@ -768,6 +794,7 @@ export const CATALOG_PICKER_CONFIGS = {
       };
     },
   },
+
 
 
 
@@ -817,6 +844,7 @@ export const CATALOG_PICKER_CONFIGS = {
 
 
 
+
   // Dispatcher error reasons — UserDetail previously toasted "Add reason in catalog" (fake +Add).
   // Write path: generic factory POST /api/v1/catalogs/dispatch/dispatcher-error-reasons (entityScoped).
   // label column (not display_name); event_type+severity required — passed via createExtras from the form.
@@ -859,6 +887,7 @@ export const CATALOG_PICKER_CONFIGS = {
       };
     },
   },
+
 
 
 
@@ -908,6 +937,7 @@ export const CATALOG_PICKER_CONFIGS = {
 
 
 
+
   // Driver termination reasons — DriverDetail + TerminateConfirmModal previously toasted
   // "Add reason in catalog" or used a bare Combobox with no inline create.
   // POST /api/v1/catalogs/driver-termination-reasons requires code, label, severity (owner-only).
@@ -948,6 +978,7 @@ export const CATALOG_PICKER_CONFIGS = {
       };
     },
   },
+
 
 
 
@@ -1010,6 +1041,7 @@ export const CATALOG_PICKER_CONFIGS = {
 
 
 
+
   // Equipment types — DriverDetail Add Qualification used bare Combobox with Create disabled when
   // catalog empty. POST requires code, name, and line_items (min 1). Inline create seeds one
   // per_loaded_mile "Base rate" line — operator adds/edits more on Lists → Equipment Types.
@@ -1059,6 +1091,7 @@ export const CATALOG_PICKER_CONFIGS = {
   },
 
 
+
   // Maintenance labor codes — LaborTracker had bare SelectCombobox; WO time entries persist labor_code_id.
   maintenance_labor_code: catalogEntry({
     key: "maintenance_labor_code",
@@ -1068,6 +1101,7 @@ export const CATALOG_PICKER_CONFIGS = {
     evidence:
       "apps/backend/src/catalogs/maintenance/factory.ts:83,159 + maintenance/index.ts:14 tableName maintenance_labor_codes; LaborTracker labor_code_id consumer",
   }),
+
 
 
   // Tire brands — TireProgramPage's mount-tire Brand picker was a bare <select> with a SEPARATE
@@ -1096,6 +1130,75 @@ export const CATALOG_PICKER_CONFIGS = {
         body: { operating_company_id: operatingCompanyId, name },
       });
       return { id: String(created.id), label: created.name ?? name };
+    },
+  },
+
+
+  // Insurance coverage types — PolicyCreateModal + PolicyCreateWizard used bare <select> against
+  // insurance.type_catalog with Lists/TypeCatalogAdmin-only create. Policy forms persist coverage_type
+  // CODE (not UUID); create requires a locked enum code from INSURANCE_COVERAGE_TYPES.
+  insurance_coverage_type: {
+    key: "insurance_coverage_type",
+    label: "coverage type",
+    backend: "catalog",
+    readTable: "insurance.type_catalog",
+    writeTable: "insurance.type_catalog",
+    readEndpoint: "/api/v1/insurance/type-catalog",
+    writeEndpoint: "/api/v1/insurance/type-catalog",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence:
+      "apps/backend/src/insurance/type-catalog.routes.ts:104 (SELECT) and :128 (INSERT) — both insurance.type_catalog; PolicyCreateModal + PolicyCreateWizard consumers",
+    fields: [
+      {
+        name: "code",
+        label: "Coverage code",
+        required: true,
+        maxLength: 40,
+        placeholder: "e.g. auto_liability",
+        help: "Must be one of the locked coverage codes (auto_liability, physical_damage, cargo, …).",
+      },
+      { name: "display_name", label: "Display name", required: true, maxLength: 120 },
+      { name: "description", label: "Description", maxLength: 500, multiline: true },
+    ],
+    create: async (operatingCompanyId, values) => {
+      const ALLOWED = new Set([
+        "auto_liability",
+        "physical_damage",
+        "cargo",
+        "general_liability",
+        "workers_comp",
+        "trailer_interchange",
+        "bobtail",
+        "non_trucking_liability",
+        "umbrella",
+        "excess_liability",
+        "occupational_accident",
+        "garage_keepers",
+        "reefer_breakdown",
+        "pollution",
+        "cyber_liability",
+      ]);
+      const code = (values.code ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+      if (!ALLOWED.has(code)) {
+        throw new Error(
+          "Coverage code must be a locked insurance coverage type (e.g. auto_liability, cargo, physical_damage)"
+        );
+      }
+      const name = values.display_name.trim();
+      const created = await apiRequest<{ id: string; code?: string; name?: string }>(
+        "/api/v1/insurance/type-catalog",
+        {
+          method: "POST",
+          body: {
+            operating_company_id: operatingCompanyId,
+            code,
+            name,
+            description: values.description?.trim() || undefined,
+          },
+        }
+      );
+      return { id: String(created.id), label: created.name ?? name, code: created.code ?? code };
     },
   },
 

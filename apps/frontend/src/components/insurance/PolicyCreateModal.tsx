@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, apiRequest } from "../../api/client";
 import { insurancePoliciesApi, listInsuranceTypeCatalog, type InsurancePolicyStatus } from "../../api/insurance";
 import { listUnits } from "../../api/mdata";
 import { ParityDrawer } from "../parity/ParityDrawer";
+import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
 
@@ -120,6 +121,7 @@ function mapApi4xxToFieldErrors(error: ApiError): {
 
 export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const { pushToast } = useToast();
+  const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState | "covered_units", string>>>({});
@@ -320,18 +322,24 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Type *</span>
-            <select
-              className="w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={form.coverage_type}
-              onChange={(event) => updateField("coverage_type", event.target.value)}
-            >
-              <option value="">Select type</option>
-              {(typesQuery.data ?? []).map((type) => (
-                <option key={type.id} value={type.code}>
-                  {type.name}
-                </option>
-              ))}
-            </select>
+            {/*
+              LST-PICKER-01 (guard 1864): bare <select> had zero inline create — operators had to leave
+              the policy form for TypeCatalogAdmin. ReferenceSelect createKind=insurance_coverage_type
+              posts insurance.type_catalog (same table the list reads). Value is CODE (not UUID).
+            */}
+            <ReferenceSelect
+              value={form.coverage_type || null}
+              onChange={(next) => updateField("coverage_type", next ?? "")}
+              options={(typesQuery.data ?? []).map((type) => ({ value: type.code, label: type.name }))}
+              createKind="insurance_coverage_type"
+              createdValueField="code"
+              operatingCompanyId={operatingCompanyId}
+              placeholder="Select type"
+              onOptionCreated={async (opt) => {
+                updateField("coverage_type", opt.value);
+                await queryClient.invalidateQueries({ queryKey: ["insurance", "type-catalog", operatingCompanyId] });
+              }}
+            />
             {fieldErrors.coverage_type ? <span className="text-xs text-red-700">{fieldErrors.coverage_type}</span> : null}
           </label>
 

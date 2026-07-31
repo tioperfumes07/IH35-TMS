@@ -23,3 +23,4 @@
 - 2026-07-31 · guard 1858 · WarrantyClaimsPage vendor picker FK-mismatch fix → `createKind=vendor` (`mdata.vendors`, matches `maintenance.warranty_claims.vendor_id` FK; was wrongly reading `catalogs.maintenance_vendors`) · PR pending
 - 2026-07-31 · guard 1860 · NewVendorDrawerForm + QuickCreateEntityModal → `createKind=vendor_type` (nested vendor create paths; guard 1852 wired VendorDetail/VendorCreateModal only) · PR pending
 - 2026-07-31 · guard 1862 · TireProgramPage mount-tire Brand picker → `createKind=maintenance_tire_brand` (`maintenance.tire_brands`; external "+ Create Brand" button kept per Rule 07) · PR pending
+- 2026-07-31 · guard 1864 · PolicyCreateModal + PolicyCreateWizard → `createKind=insurance_coverage_type` (`insurance.type_catalog`; TypeCatalogAdmin kept) · PR pending

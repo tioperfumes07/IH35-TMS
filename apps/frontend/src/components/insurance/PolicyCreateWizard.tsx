@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createPolicyWithBills,
   listInsuranceTypeCatalog,
@@ -10,6 +10,7 @@ import {
 import { listUnits } from "../../api/mdata";
 import { ListErrorState } from "../ListErrorState";
 import { ParityDrawer } from "../parity/ParityDrawer";
+import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { MoneyInput } from "../forms/MoneyInput";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useToast } from "../Toast";
@@ -128,6 +129,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
 
 export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const { pushToast } = useToast();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
   const [step1, setStep1] = useState<Step1>(INITIAL_STEP1);
   const [step1Errors, setStep1Errors] = useState<Partial<Record<keyof Step1, string>>>({});
@@ -341,18 +343,21 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
                   className="py-4"
                 />
               ) : (
-                <select
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
-                  value={step1.coverage_type}
-                  onChange={(e) => setStep1((s) => ({ ...s, coverage_type: e.target.value }))}
-                >
-                  <option value="">Select type</option>
-                  {(typesQuery.data ?? []).map((t) => (
-                    <option key={t.id} value={t.code}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
+                // LST-PICKER-01 (guard 1864): bare <select> → ReferenceSelect inline create.
+                // Value is coverage CODE (policies store coverage_type text, not type_catalog UUID).
+                <ReferenceSelect
+                  value={step1.coverage_type || null}
+                  onChange={(next) => setStep1((s) => ({ ...s, coverage_type: next ?? "" }))}
+                  options={(typesQuery.data ?? []).map((t) => ({ value: t.code, label: t.name }))}
+                  createKind="insurance_coverage_type"
+                  createdValueField="code"
+                  operatingCompanyId={operatingCompanyId}
+                  placeholder="Select type"
+                  onOptionCreated={async (opt) => {
+                    setStep1((s) => ({ ...s, coverage_type: opt.value }));
+                    await queryClient.invalidateQueries({ queryKey: ["insurance", "type-catalog", operatingCompanyId] });
+                  }}
+                />
               )}
             </Field>
             <Field label="Status">
