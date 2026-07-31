@@ -555,9 +555,9 @@
       ],
       "spec": "banking-b4-driver-vendor-account-mapping \u00b7 ACCT-R-18",
       "status": "PASS",
-      "evidence": "LIVE 2026-07-30 Neon lucia: mdata.drivers.default_expense_account_id uuid exists (mig 202607680000 applied_held); 180 drivers, 0 populated (mapping ready). API PATCH/GET/list project+write the column; BankingTransactionsDesignView DriverAutocomplete Option-B prefills accountId when empty (never auto-post). Guard 1509.",
+      "evidence": "LIVE 2026-07-30 Neon lucia: mdata.drivers.default_expense_account_id uuid exists (mig 202607680000 applied_held); 89 active drivers (Neon lucia), 0 populated (mapping ready). API PATCH/GET/list project+write the column; BankingTransactionsDesignView DriverAutocomplete Option-B prefills accountId when empty (never auto-post). Guard 1509.",
       "pr": null,
-      "live_proof": "Neon column present; verify-driver-default-expense-account-wired PASS; density 0/180 until owners set defaults"
+      "live_proof": "Neon column present; verify-driver-default-expense-account-wired PASS; density 0/89 active drivers (Neon lucia 2026-07-30) until owners set defaults"
     },
     {
       "id": "ACCT-R-20",

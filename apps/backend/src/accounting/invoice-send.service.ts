@@ -15,6 +15,11 @@ import {
 } from "./invoice-linkage-guards.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 
+/** Dispatch withCompanyScope exposes query-only; accounting scope passes PoolClient. */
+type SendClient = {
+  query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
+};
+
 export type SendDraftInvoiceOk = { ok: true };
 export type SendDraftInvoiceErr = {
   ok: false;
@@ -27,7 +32,7 @@ export type SendDraftInvoiceErr = {
 export type SendDraftInvoiceResult = SendDraftInvoiceOk | SendDraftInvoiceErr;
 
 export async function sendDraftInvoice(
-  client: PoolClient,
+  client: SendClient,
   input: { invoiceId: string; operatingCompanyId: string; userId: string }
 ): Promise<SendDraftInvoiceResult> {
   const currentRes = await client.query(
@@ -141,7 +146,8 @@ export async function sendDraftInvoice(
     "info",
     "P3-T11.20.2-INVOICE-FLOW"
   );
-  await enqueueTmsInvoicePushRequested(client, {
+  // Dispatch withCompanyScope is query-shaped; enqueue requires PoolClient (same runtime client).
+  await enqueueTmsInvoicePushRequested(client as PoolClient, {
     operating_company_id: input.operatingCompanyId,
     invoice_id: input.invoiceId,
     operation: "update",
