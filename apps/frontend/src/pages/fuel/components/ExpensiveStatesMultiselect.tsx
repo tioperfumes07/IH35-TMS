@@ -90,7 +90,7 @@ export function ExpensiveStatesMultiselect({ companyId, value, onChange }: Props
         placeholder="+ Create expensive state…"
         loading={query.isLoading}
         onOptionCreated={(opt) => {
-          addCode(opt.code ?? opt.value);
+          addCode(opt.value);
           invalidateCatalog();
           setPickerValue(null);
         }}
