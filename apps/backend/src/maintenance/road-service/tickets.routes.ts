@@ -98,7 +98,7 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
         `
           SELECT
             t.*,
-            u.display_id AS unit_display_id,
+            u.unit_number AS unit_display_id,
             d.first_name || ' ' || d.last_name AS driver_name
           FROM maintenance.road_service_tickets t
           LEFT JOIN mdata.units u ON u.id = t.unit_id

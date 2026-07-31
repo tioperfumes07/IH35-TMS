@@ -82,7 +82,7 @@ export async function internalLaborRoutes(app: FastifyInstance) {
       const { rows } = await client.query(`
         SELECT il.*,
                u.first_name || ' ' || u.last_name AS mechanic_name,
-               wo.wo_number
+               wo.display_id AS wo_number
         FROM maintenance.internal_labor_log il
         LEFT JOIN identity.users u ON u.id = il.mechanic_user_id
         LEFT JOIN maintenance.work_orders wo ON wo.id = il.work_order_id
