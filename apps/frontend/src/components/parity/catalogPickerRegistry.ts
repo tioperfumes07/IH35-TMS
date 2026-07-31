@@ -42,13 +42,15 @@ import { apiRequest } from "../../api/client";
 export type CatalogPickerBackend = "inline-drawer" | "quick-create-modal" | "catalog";
 
 export type CatalogCreateField = {
-  name: "display_name" | "code" | "description";
+  name: "display_name" | "code" | "description" | "days_until_due";
   label: string;
   required?: boolean;
   maxLength?: number;
   placeholder?: string;
   help?: string;
   multiline?: boolean;
+  /** When "number", CatalogQuickCreateDrawer renders <input type="number">. */
+  inputType?: "text" | "number";
 };
 
 export type CatalogCreateResult = {
@@ -94,6 +96,8 @@ export type CatalogCreateValues = {
   /** Optional extras for catalogs whose create requires more than name/code (e.g. event_type). */
   event_type?: string;
   severity?: string;
+  /** Payment terms (and similar) — days until due for Net-N style rows. */
+  days_until_due?: number | string;
 };
 
 /**
