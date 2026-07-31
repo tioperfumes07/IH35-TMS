@@ -52,8 +52,47 @@ export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, acti
           >
               <ArrowLeft className="h-4 w-4" />
           </button>
-          <h1 style={{ fontFamily: typography.fontSerif, fontSize: typography.pageHeading, color: colors.pageHeading, fontWeight: 600 }}>{title}</h1>
-          {subtitle ? <span style={{ fontSize: typography.pageSubtitle, color: colors.mutedText }}>{subtitle}</span> : null}
+          {/*
+            The title must NOT be squeezed by the subtitle. Observed live on /dispatch: the subtitle
+            "Loads, stops, assignments, geofencing" wrapped onto THREE lines beside the heading, because
+            it was a bare <span> with no wrap control inside a flex row — so it took width from the title
+            and stacked. whiteSpace: nowrap stops the stacking; flexShrink 0 on the title (with the
+            subtitle at 999) makes the SUBTITLE absorb the overflow, never the module name.
+
+            This is the SECOND PageHeader in the codebase — components/forms/shared/PageHeader has the
+            same role and the identical defect class, fixed separately. They are genuinely different
+            components (different files, different props, one CSS-class based and one inline-style
+            based), so the fix has to be made in both; there is no shared rule to change.
+          */}
+          <h1
+            style={{
+              fontFamily: typography.fontSerif,
+              fontSize: typography.pageHeading,
+              color: colors.pageHeading,
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
+            {title}
+          </h1>
+          {subtitle ? (
+            <span
+              style={{
+                fontSize: typography.pageSubtitle,
+                color: colors.mutedText,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                // minWidth: 0 is required for the ellipsis — without it a flex item refuses to shrink
+                // below its content width and text-overflow silently never engages.
+                minWidth: 0,
+                flexShrink: 999,
+              }}
+            >
+              {subtitle}
+            </span>
+          ) : null}
         </div>
         <div className="w-full sm:w-auto">{actions}</div>
       </div>
