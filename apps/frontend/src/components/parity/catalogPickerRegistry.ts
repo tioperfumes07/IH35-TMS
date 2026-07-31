@@ -960,8 +960,6 @@ export const CATALOG_PICKER_CONFIGS = {
 
 
 
-  // Customer quality event reasons — CustomerDetail Reason Combobox had no inline create at all.
-  // Same factory surface as LST-A-01 Lists hub: POST /api/v1/catalogs/customers/customer-quality-event-reasons.
   // Equipment types — DriverDetail Add Qualification used bare Combobox with Create disabled when
   // catalog empty. POST requires code, name, and line_items (min 1). Inline create seeds one
   // per_loaded_mile "Base rate" line — operator adds/edits more on Lists → Equipment Types.
