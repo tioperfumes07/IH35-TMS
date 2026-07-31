@@ -812,8 +812,6 @@ export const CATALOG_PICKER_CONFIGS = {
 
 
 
-  // Customer quality event reasons — CustomerDetail Reason Combobox had no inline create at all.
-  // Same factory surface as LST-A-01 Lists hub: POST /api/v1/catalogs/customers/customer-quality-event-reasons.
   customer_quality_event_reason: {
     key: "customer_quality_event_reason",
     label: "quality reason",
@@ -853,6 +851,7 @@ export const CATALOG_PICKER_CONFIGS = {
       };
     },
   },
+
 
 
 
@@ -896,6 +895,7 @@ export const CATALOG_PICKER_CONFIGS = {
       };
     },
   },
+
 
 
 
@@ -950,6 +950,57 @@ export const CATALOG_PICKER_CONFIGS = {
         id: String(created.id),
         label: `${name} (${days}d)`,
       };
+    },
+  },
+
+
+
+  // Customer quality event reasons — CustomerDetail Reason Combobox had no inline create at all.
+  // Same factory surface as LST-A-01 Lists hub: POST /api/v1/catalogs/customers/customer-quality-event-reasons.
+  // Equipment types — DriverDetail Add Qualification used bare Combobox with Create disabled when
+  // catalog empty. POST requires code, name, and line_items (min 1). Inline create seeds one
+  // per_loaded_mile "Base rate" line — operator adds/edits more on Lists → Equipment Types.
+  equipment_type: {
+    key: "equipment_type",
+    label: "equipment type",
+    backend: "catalog",
+    readTable: "catalogs.equipment_types",
+    writeTable: "catalogs.equipment_types",
+    readEndpoint: "/api/v1/catalogs/equipment-types",
+    writeEndpoint: "/api/v1/catalogs/equipment-types",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence:
+      "apps/backend/src/catalogs/equipment-types.routes.ts:134 (SELECT) and :258 (INSERT) — both catalogs.equipment_types; DriverDetail qualification picker consumer",
+    fields: CATALOG_FIELDS,
+    create: async (operatingCompanyId, values) => {
+      const name = values.display_name.trim();
+      const code = deriveEquipmentTypeCode(name, values.code);
+      const lineItemCode = `${code}_BASE`.slice(0, 40);
+      const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+      const created = await apiRequest<{ id: string; code?: string; name?: string }>(
+        `/api/v1/catalogs/equipment-types?${query.toString()}`,
+        {
+          method: "POST",
+          body: {
+            code,
+            name,
+            description: values.description?.trim() || undefined,
+            sort_order: 100,
+            line_items: [
+              {
+                code: lineItemCode,
+                name: "Base rate",
+                description: "Default pay line — add or edit line items on Lists → Equipment Types.",
+                unit: "per_loaded_mile",
+                sort_order: 10,
+                is_required: false,
+              },
+            ],
+          },
+        }
+      );
+      return { id: String(created.id), label: name, code: created.code ?? code };
     },
   },
 
