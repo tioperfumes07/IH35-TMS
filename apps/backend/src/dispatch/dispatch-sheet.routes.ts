@@ -51,13 +51,13 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
             d.first_name AS driver_first_name,
             d.last_name AS driver_last_name,
             d.cdl_state,
-            d.cdl_expiration_date,
+            d.cdl_expires_at AS cdl_expiration_date,
             d.identity_user_id AS primary_driver_identity_user_id,
-            u.display_id AS truck_display_id,
-            u.unit_type AS truck_unit_type,
+            u.unit_number AS truck_display_id,
+            u.vehicle_type AS truck_unit_type,
             u.make AS truck_make,
             u.model AS truck_model,
-            u.model_year AS truck_model_year
+            u.year AS truck_model_year
           FROM mdata.loads l
           JOIN mdata.customers c ON c.id = l.customer_id
           LEFT JOIN identity.users disp ON disp.id = l.dispatcher_user_id

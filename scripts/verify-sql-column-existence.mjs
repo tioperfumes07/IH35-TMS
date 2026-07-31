@@ -270,10 +270,18 @@ function analyzeSqlFragment(sql, schema) {
     const table = distinctTargets[0];
     const cols = schema.get(table);
     // Unambiguous column positions: `<col> IS [NOT] NULL`, `<col> <op> ...`, `<col> IN (`, `SET <col> =`.
+    // (?<!\.) — a column preceded by a dot is QUALIFIED, not unqualified. `\b` alone matches
+    // immediately after the dot, so `de.operating_company_id = $1` was read as a bare
+    // `operating_company_id` and attributed to whichever table the fragment's FROM/JOIN named. That
+    // is a pure false positive, and it produced one: detention.service.ts was recorded as referencing
+    // mdata.load_stops.operating_company_id, a column that file never mentions — the real reference is
+    // dispatch.detention_events.operating_company_id on the UPDATE target, whose alias the FROM/JOIN
+    // alias map does not collect. This tightens attribution ONLY; every genuinely unqualified column
+    // still matches, because a bare column has no preceding dot by definition.
     const patterns = [
-      /\b([a-z_][a-z0-9_]*)\s+is\s+(?:not\s+)?null\b/gi,
-      /\b([a-z_][a-z0-9_]*)\s*(?:=|<>|!=|>=|<=|>|<)\s*(?:\$\d+|'|\d|true|false|now\(\))/gi,
-      /\b([a-z_][a-z0-9_]*)\s+in\s*\(/gi,
+      /(?<!\.)\b([a-z_][a-z0-9_]*)\s+is\s+(?:not\s+)?null\b/gi,
+      /(?<!\.)\b([a-z_][a-z0-9_]*)\s*(?:=|<>|!=|>=|<=|>|<)\s*(?:\$\d+|'|\d|true|false|now\(\))/gi,
+      /(?<!\.)\b([a-z_][a-z0-9_]*)\s+in\s*\(/gi,
       /\bset\s+([a-z_][a-z0-9_]*)\s*=/gi,
     ];
     // ORDER BY / GROUP BY were NOT inspected before 2026-07-25. That blind spot is what let

@@ -22,16 +22,16 @@ export async function bindLoadToGeofences(
     `
       SELECT
         ls.id::text AS stop_id,
-        ls.lat::double precision AS lat,
-        ls.lng::double precision AS lng,
-        ls.sequence
+        ls.latitude::double precision AS lat,
+        ls.longitude::double precision AS lng,
+        ls.sequence_number AS sequence
       FROM mdata.load_stops ls
       JOIN mdata.loads l ON l.id = ls.load_id
       WHERE l.id = $1::uuid
         AND l.operating_company_id = $2::uuid
-        AND ls.lat IS NOT NULL
-        AND ls.lng IS NOT NULL
-      ORDER BY ls.sequence
+        AND ls.latitude IS NOT NULL
+        AND ls.longitude IS NOT NULL
+      ORDER BY ls.sequence_number
     `,
     [loadId, operatingCompanyId]
   );

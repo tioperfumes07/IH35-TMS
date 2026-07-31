@@ -85,7 +85,7 @@ const COMPLETED_STOPS_CTE = `
       WHERE p.load_id = l.id
         AND p.stop_type = 'pickup'
         AND del.stop_type = 'delivery'
-      ORDER BY p.stop_sequence ASC, del.stop_sequence DESC
+      ORDER BY p.sequence_number ASC, del.sequence_number DESC
       LIMIT 1
     ) lane ON true
     WHERE sa.operating_company_id = $1::uuid
