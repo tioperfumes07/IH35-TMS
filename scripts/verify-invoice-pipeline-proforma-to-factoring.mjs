@@ -53,13 +53,21 @@ export function check(sources) {
   }
 
   if (!loads) problems.push("missing loads.routes.ts");
-  else if (!/convertProformaToOfficial/.test(loads) || !/delivered_pending_docs/.test(loads)) {
-    problems.push("load transition to delivered_pending_docs must convert proforma");
+  else {
+    if (!/convertProformaToOfficial/.test(loads) || !/delivered_pending_docs/.test(loads)) {
+      problems.push("load transition to delivered_pending_docs must convert proforma");
+    }
+    // ACCT-R-24 / owner B2d — POD convert must auto-send via the SAME sendDraftInvoice path.
+    if (!/sendDraftInvoice/.test(loads)) {
+      problems.push("POD convert must call sendDraftInvoice (ACCT-R-24 auto-send; no silent draft park)");
+    }
   }
 
   if (!invoices) problems.push("missing invoices.routes.ts");
-  else if (!/invoice_is_proforma/.test(invoices)) {
-    problems.push("invoice send must refuse proforma (invoice_is_proforma)");
+  else if (!/sendDraftInvoice/.test(invoices) && !/invoice_is_proforma/.test(invoices)) {
+    problems.push("invoice send must use sendDraftInvoice (shared path) or refuse proforma");
+  } else if (!/sendDraftInvoice/.test(invoices)) {
+    problems.push("invoice POST /send must call sendDraftInvoice (shared with POD auto-send)");
   }
 
   if (!held) problems.push("missing .held-migrations.json");
