@@ -32,3 +32,5 @@
 - 2026-07-31 · guard 1872 · NewServiceDrawerForm income/expense → `createKind=account` (parity with ItemEditorModal; was bare Combobox) · PR pending
 
 - 2026-07-31 · guard 1874 · NewServiceDrawerForm preferred vendor → `createKind=vendor` + persist `preferred_vendor_id` (parity ItemEditorModal; was free-text dropped) · PR pending
+
+- 2026-07-31 · guard 1876 · NewServiceDrawerForm category (qbo_categories allowAddNew) + class `createKind=class` + persist category_id/default_class_id · PR pending
