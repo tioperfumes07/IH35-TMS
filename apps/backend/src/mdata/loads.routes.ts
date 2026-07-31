@@ -15,12 +15,16 @@ const loadStatusSchema = z.enum([
   "draft",
   "booked",
   "planned",
+  "unassigned",
   "assigned",
+  "assigned_not_dispatched",
   "dispatched",
   "at_pickup",
   "in_transit",
   "at_delivery",
   "delivered",
+  "delivered_pending_docs",
+  "completed_docs_received",
   "invoiced",
   "paid",
   "closed",
@@ -45,16 +49,19 @@ function normalizeLoadSort(value: unknown) {
   return normalized;
 }
 
+const statusFilterSchema = z
+  .preprocess((value) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === "string") return value.split(",").map((entry) => entry.trim()).filter(Boolean);
+    return undefined;
+  }, z.array(loadStatusSchema).max(20).optional())
+  .optional();
+
 const listLoadsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
-  status: z
-    .preprocess((value) => {
-      if (Array.isArray(value)) return value;
-      if (typeof value === "string") return value.split(",").map((entry) => entry.trim()).filter(Boolean);
-      return undefined;
-    }, z.array(loadStatusSchema).max(20).optional())
-    .optional(),
+  status: statusFilterSchema,
+  statuses: statusFilterSchema,
   customer_id: optionalUuidQueryFilter,
   driver_id: optionalUuidQueryFilter,
   operating_company_id: z
@@ -212,23 +219,29 @@ function toCompanyLoadToken(input: string | null | undefined): string {
 function statusToFlagCode(status: z.infer<typeof loadStatusSchema>): string {
   if (status === "cancelled") return "RED";
   if (status === "abandoned" || status === "driver_walkoff" || status === "driver_no_show") return "RED";
-  if (status === "closed" || status === "paid" || status === "invoiced") return "BLACK";
-  if (status === "delivered") return "GREEN";
+  if (status === "closed" || status === "paid" || status === "invoiced" || status === "completed_docs_received") {
+    return "BLACK";
+  }
+  if (status === "delivered" || status === "delivered_pending_docs") return "GREEN";
   if (status === "at_pickup" || status === "in_transit" || status === "at_delivery") return "BLUE";
-  if (status === "assigned" || status === "dispatched") return "YELLOW";
+  if (status === "assigned" || status === "assigned_not_dispatched" || status === "dispatched") return "YELLOW";
   return "GRAY";
 }
 
 const allowedStatusTransitions: Record<z.infer<typeof loadStatusSchema>, z.infer<typeof loadStatusSchema>[]> = {
-  draft: ["booked", "planned", "cancelled"],
-  booked: ["planned", "assigned", "driver_no_show", "cancelled"],
-  planned: ["assigned", "driver_no_show", "cancelled"],
-  assigned: ["dispatched", "driver_no_show", "cancelled"],
+  draft: ["booked", "planned", "unassigned", "cancelled"],
+  booked: ["planned", "unassigned", "assigned", "assigned_not_dispatched", "driver_no_show", "cancelled"],
+  planned: ["unassigned", "assigned", "assigned_not_dispatched", "driver_no_show", "cancelled"],
+  unassigned: ["booked", "planned", "assigned", "assigned_not_dispatched", "cancelled"],
+  assigned: ["assigned_not_dispatched", "dispatched", "driver_no_show", "cancelled"],
+  assigned_not_dispatched: ["dispatched", "driver_no_show", "cancelled"],
   dispatched: ["at_pickup", "driver_no_show", "driver_walkoff", "cancelled"],
   at_pickup: ["in_transit", "driver_walkoff", "cancelled"],
   in_transit: ["at_delivery", "abandoned", "driver_walkoff", "cancelled"],
-  at_delivery: ["delivered", "cancelled"],
-  delivered: ["invoiced", "cancelled"],
+  at_delivery: ["delivered", "delivered_pending_docs", "cancelled"],
+  delivered: ["delivered_pending_docs", "completed_docs_received", "invoiced", "cancelled"],
+  delivered_pending_docs: ["completed_docs_received", "invoiced", "cancelled"],
+  completed_docs_received: ["invoiced", "closed"],
   invoiced: ["paid", "closed"],
   paid: ["closed"],
   closed: [],
@@ -484,7 +497,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     const {
       limit,
       offset,
-      status,
+      status: statusParam,
+      statuses: statusesParam,
       customer_id,
       driver_id,
       operating_company_id,
@@ -498,6 +512,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       sort,
       include_progress,
     } = parsedQuery.data;
+    // DISP-FILTER-01: FE URL uses `statuses=` (plural); API historically only documented `status=`.
+    // Accept both and merge (dedupe) so pending-docs filters do not 400 or no-op.
+    const status = Array.from(new Set([...(statusParam ?? []), ...(statusesParam ?? [])]));
     const [sortField, sortDir] = sort.toLowerCase().split(":") as [string, "asc" | "desc"];
     const sortColumnMap: Record<string, string> = {
       created_at: "l.created_at",
