@@ -15,12 +15,16 @@ const loadStatusSchema = z.enum([
   "draft",
   "booked",
   "planned",
+  "unassigned",
   "assigned",
+  "assigned_not_dispatched",
   "dispatched",
   "at_pickup",
   "in_transit",
   "at_delivery",
   "delivered",
+  "delivered_pending_docs",
+  "completed_docs_received",
   "invoiced",
   "paid",
   "closed",
@@ -45,16 +49,19 @@ function normalizeLoadSort(value: unknown) {
   return normalized;
 }
 
+const statusFilterSchema = z
+  .preprocess((value) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === "string") return value.split(",").map((entry) => entry.trim()).filter(Boolean);
+    return undefined;
+  }, z.array(loadStatusSchema).max(20).optional())
+  .optional();
+
 const listLoadsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
-  status: z
-    .preprocess((value) => {
-      if (Array.isArray(value)) return value;
-      if (typeof value === "string") return value.split(",").map((entry) => entry.trim()).filter(Boolean);
-      return undefined;
-    }, z.array(loadStatusSchema).max(20).optional())
-    .optional(),
+  status: statusFilterSchema,
+  statuses: statusFilterSchema,
   customer_id: optionalUuidQueryFilter,
   driver_id: optionalUuidQueryFilter,
   operating_company_id: z
@@ -484,7 +491,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     const {
       limit,
       offset,
-      status,
+      status: statusParam,
+      statuses: statusesParam,
       customer_id,
       driver_id,
       operating_company_id,
@@ -498,6 +506,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       sort,
       include_progress,
     } = parsedQuery.data;
+    // DISP-FILTER-01: FE URL uses `statuses=` (plural); API historically only documented `status=`.
+    // Accept both and merge (dedupe) so pending-docs filters do not 400 or no-op.
+    const status = Array.from(new Set([...(statusParam ?? []), ...(statusesParam ?? [])]));
     const [sortField, sortDir] = sort.toLowerCase().split(":") as [string, "asc" | "desc"];
     const sortColumnMap: Record<string, string> = {
       created_at: "l.created_at",
