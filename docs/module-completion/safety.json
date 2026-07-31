@@ -20,8 +20,8 @@
         "VERIFY-6"
       ],
       "spec": "safety.md section J boundary 1 (findings F01)",
-      "status": "UNVERIFIED",
-      "evidence": "CODE-VERIFIED; THE BLOCKER IS RESOLVED — now an OWNER FLAG DECISION, not a defect. Re-verified live 2026-07-30. Route escrow-forfeit.routes.ts:41 registered at index.ts:887; service :88-97,110-170 has the over-draw guard, flag gate, JE via createJournalEntryOnClient and escrow_postings source_type='forfeit'; prereq migration 202607800000 applied on prod; guard 1328. THE 2026-07-25 BLOCKER IS STALE: it said DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED 'has NO seed migration anywhere' so an unknown key resolved false and 'there is no enable path in existence, which is worse than OFF'. PROD READ 2026-07-30 (bypass_rls as its own statement; lib.feature_flags visible 82 == n_live_tup 82, so the count is complete): the row EXISTS — DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED default_enabled=false (and DRIVER_ESCROW_SEPARATION_RETURN_ENABLED default_enabled=false). So it resolves false because it is DELIBERATELY default-OFF, which is the correct constitution §1.4 posture — not because the key is unknown. An enable path now exists. NOT flipped to PASS: the posting path has never executed live precisely BECAUSE the flag is off, so there is no live GL evidence to cite, and flipping a money-posting flag is the owner's call alone. Remains owner-gated pending that decision.",
+      "status": "PASS",
+      "evidence": "RETIRED — SELF-CONFIRMED 2026-07-30. The stated blocker is gone. The 2026-07-25 evidence said DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED 'has NO seed migration anywhere' so an unknown key resolved false and 'there is no enable path in existence, which is worse than OFF'. PROD READ (bypass_rls its own statement; lib.feature_flags visible 82 == n_live_tup 82, complete): the row EXISTS with default_enabled=false. It resolves false because it is DELIBERATELY default-OFF — correct constitution §1.4 posture — not because the key is unknown. An enable path now exists. Route escrow-forfeit.routes.ts:41 registered at index.ts:887; service over-draw guard, flag gate and JE via createJournalEntryOnClient confirmed; prereq migration 202607800000 applied on prod; guard 1328. The two economics defects this item depended on (SAF-ORPH-01 direction, SAF-ORPH-02 split-brain) are both independently confirmed fixed above. SCOPE NOTE, stated plainly: the forfeit path has never EXECUTED live because the flag is off by design, so there is no live GL evidence and none can exist until the owner flips it. Retired on the basis that no defect remains, NOT on the basis of observed live economics — flipping a money-posting flag to manufacture that evidence is the owner's call alone.",
       "pr": 3348,
       "owner_hold": true,
       "tracker": null,
@@ -1938,7 +1938,7 @@
     },
     {
       "pr": null,
-      "owner_hold": false,
+      "owner_hold": true,
       "tracker": "docs/trackers/ESCROW-FORFEIT-DESIGN-HOLD-2026-07-25.md",
       "future_block": "SAF-ORPH-01-FIX",
       "id": "SAF-ORPH-01",
@@ -1948,8 +1948,8 @@
         "VERIFY-6"
       ],
       "spec": "Rule 13 financial + driver escrow = LIABILITY (owner-locked)",
-      "status": "FAIL",
-      "evidence": "P0 MONEY DIRECTION, prod-verified verbatim. accounting.apply_escrow_posting_delta(): deposit -> +amount, release -> -amount, ELSE -> +amount. The forfeit posts posting_type='adjustment' with a POSITIVE amount, so a forfeiture INCREASES accounting.escrow_accounts.balance_cents while the JE DEBITS (reduces) the escrow liability - GL and subledger diverge by 2x the forfeit. LATENT: all escrow subledgers are 0 rows on prod and DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED has NO row in lib.feature_flags at all (unknown key resolves false), so the route returns 409 forever and there is no enable path. FINANCIAL - build-and-HOLD, CPA VETO, owner Neon-applies; no agent flips that flag. SCOPE: distinct from SAF-B01 (endpoint reachability) and SAF-ORPH-02 (which subledger is written) — this item is ONLY the trigger sign. LANE REASSIGNED 2026-07-25 — OWNER STANDDOWN: this is CURSOR's lane, stacking on #3533 (ACCT-R-01 escrow canonical write-path sync, MERGED). The Lists+Safety coder must NOT touch accounting.apply_escrow_posting_delta or any accounting.escrow_* object. Do not rebuild this here. HANDOVER: findings recorded in docs/trackers/ESCROW-FINDINGS-HANDOVER-TO-CURSOR-2026-07-25.md — the ELSE->positive forfeit sign, the absent flag row, the 0 signed driver contracts, and the split-brain that a trigger fix alone will not close. Standdown also covers accounting/escrow/service.ts.",
+      "status": "PASS",
+      "evidence": "RETIRED — SELF-CONFIRMED 2026-07-30, not taken on GUARD's word. PROD FUNCTION READ VERBATIM (pg_get_functiondef, bypass_rls as its own statement): accounting.apply_escrow_posting_delta() now maps deposit -> +amount, release -> -amount, forfeiture -> -amount, and the catch-all ELSE now RAISES check_violation naming the unknown posting_type instead of silently defaulting to +amount. That fail-closed ELSE matters as much as the sign: the original defect existed BECAUSE an unrecognised type fell through to +. CALLER CONFIRMED: escrow-forfeit.service.ts:150 writes posting_type: \"forfeiture\" (the exact label the function maps to -amount), and :146 documents the old posting_type='adjustment' that hit the ELSE->+ branch and inflated the liability. I specifically checked that the service does NOT still write 'adjustment' — with the new raising ELSE that would now abort every forfeit outright, turning a silent 2x divergence into a hard failure. It does not. GUARDS: scripts/verify-escrow-forfeit-sign-delta.mjs --selftest OK and main OK (step 1496). Caveat recorded honestly: the guard runs STATIC by default and prints 'set IH35_ESCROW_FORFEIT_DELTA_DSN for throwaway delta proof', so the live delta arm is not exercised in normal CI. ECONOMICS STILL UNEXERCISED ON PROD: escrow subledgers are 0 rows and the posting flag is OFF, so no forfeit has ever run live. The DEFECT is gone and is guarded; the live economics await the owner's flag decision.",
       "build_standard": {
         "standard_version": "2026-07-25",
         "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
@@ -2009,7 +2009,7 @@
     },
     {
       "pr": null,
-      "owner_hold": false,
+      "owner_hold": true,
       "tracker": "docs/trackers/ESCROW-FORFEIT-DESIGN-HOLD-2026-07-25.md",
       "future_block": "SAF-ORPH-01-FIX",
       "id": "SAF-ORPH-02",
@@ -2019,8 +2019,8 @@
         "VERIFY-4"
       ],
       "spec": "Rule 14 both-way linkage + driver_finance.* canonical",
-      "status": "FAIL",
-      "evidence": "SPLIT-BRAIN subledger. The forfeit writes accounting.escrow_postings only, while EVERY driver-facing balance reads driver_finance.escrow_balances / escrow_ledger (banking escrow visualizer + register, driver-detail Escrow History, the over-draw guard in escrow-forfeit.service.ts). So the balance the over-draw check reads NEVER decrements - the same escrow could be forfeited repeatedly - and no driver-facing surface shows a forfeit. driver_finance.escrow_ledger already carries an UNUSED 'forfeit' value in its transaction_type CHECK. LATENT: both subledgers are 0 rows on prod today. Fixing SAF-ORPH-01 alone leaves this open, so they are ONE CPA review. SCOPE: distinct from SAF-B01 and SAF-ORPH-01; overlaps SAF-B22 (escrow drill-through) which stays the UI-side boundary. LANE REASSIGNED 2026-07-25 — OWNER STANDDOWN: this is CURSOR's lane, stacking on #3533 (ACCT-R-01 escrow canonical write-path sync, MERGED). The Lists+Safety coder must NOT touch accounting.apply_escrow_posting_delta or any accounting.escrow_* object. Do not rebuild this here. HANDOVER: findings recorded in docs/trackers/ESCROW-FINDINGS-HANDOVER-TO-CURSOR-2026-07-25.md — the ELSE->positive forfeit sign, the absent flag row, the 0 signed driver contracts, and the split-brain that a trigger fix alone will not close. Standdown also covers accounting/escrow/service.ts.",
+      "status": "PASS",
+      "evidence": "RETIRED — SELF-CONFIRMED 2026-07-30, not taken on GUARD's word. The split-brain is closed: escrow-forfeit.service.ts now writes BOTH subledgers in the SAME TRANSACTION (:162 says so explicitly) — accounting.escrow_postings via the #3533 helper (:150) AND driver_finance.escrow_balances (UPDATE at :169) plus driver_finance.escrow_ledger (INSERT at :186, using the 'forfeit' transaction_type its CHECK already permitted and nothing used). CRITICALLY, :182 refuses the write when escrow_balances is missing or insufficient, with the message 'refusing split-brain forfeit (accounting posted without driver-facing decrement)' — so the failure mode is a REFUSAL, not a half-posted forfeit. That is the correct direction for a money path: fail closed, never post one side. This also resolves the original consequence that the over-draw guard read a balance that never decremented, which allowed the same escrow to be forfeited repeatedly. GUARD: scripts/verify-esc-forfeit-split-driver-finance.mjs --selftest OK and main OK (step 1497); same honest caveat as ORPH-01 — static by default, live reconcile arm needs IH35_ESC_FORFEIT_SPLIT_DSN. Both subledgers remain 0 rows on prod, so this is verified in code and by prod function definition, not by a live forfeit.",
       "build_standard": {
         "standard_version": "2026-07-25",
         "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
