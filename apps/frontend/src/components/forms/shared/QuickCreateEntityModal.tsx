@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { useCatalogQuery } from "../../../hooks/useCatalogQuery";
 import { createPartsInventoryPurchase } from "../../../api/maintenance";
@@ -85,6 +85,7 @@ export function QuickCreateEntityModal({
   onCreated,
 }: Props) {
   const { pushToast } = useToast();
+  const queryClient = useQueryClient();
   const vendorTypesQuery = useCatalogQuery({
     catalogName: "vendors.vendor_types",
     companyId: operatingCompanyId,
@@ -388,14 +389,17 @@ export function QuickCreateEntityModal({
               <label className="block">
                 <span className="text-xs font-medium text-gray-600">Payment terms</span>
                 <div className="mt-1">
-                  <Combobox
-                    options={paymentTermOptions}
+                  <ReferenceSelect
                     value={paymentTermsId}
                     onChange={setPaymentTermsId}
+                    options={paymentTermOptions}
+                    createKind="payment_term"
+                    operatingCompanyId={operatingCompanyId}
                     placeholder="Select terms"
                     loading={vendorPaymentTermsQuery.isLoading}
-                    allowClear
-                    dataField="quick-create-payment-terms"
+                    onOptionCreated={() =>
+                      void queryClient.invalidateQueries({ queryKey: ["payment-term-options"] })
+                    }
                   />
                 </div>
               </label>

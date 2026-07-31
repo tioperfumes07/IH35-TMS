@@ -42,13 +42,14 @@ import { apiRequest } from "../../api/client";
 export type CatalogPickerBackend = "inline-drawer" | "quick-create-modal" | "catalog";
 
 export type CatalogCreateField = {
-  name: "display_name" | "code" | "description";
+  name: "display_name" | "code" | "description" | "days_until_due";
   label: string;
   required?: boolean;
   maxLength?: number;
   placeholder?: string;
   help?: string;
   multiline?: boolean;
+  inputType?: "text" | "number";
 };
 
 export type CatalogCreateResult = {
@@ -94,6 +95,7 @@ export type CatalogCreateValues = {
   /** Optional extras for catalogs whose create requires more than name/code (e.g. event_type). */
   event_type?: string;
   severity?: string;
+  days_until_due?: number;
 };
 
 /**
@@ -818,6 +820,61 @@ export const CATALOG_PICKER_CONFIGS = {
         id: String(created.id),
         label: created.label ?? created.display_name ?? label,
         code: created.code ?? code,
+      };
+    },
+  },
+
+
+  // Payment terms — customer/vendor profile pickers used Combobox or SelectCombobox with no inline
+  // create (CustomerProfileForm had an external mini-form). POST body is terms_name + days_until_due
+  // on the healthy /api/v1/catalogs/payment-terms route (NOT accounting/payment-terms → 42701).
+  payment_term: {
+    key: "payment_term",
+    label: "payment term",
+    backend: "catalog",
+    readTable: "catalogs.payment_terms",
+    writeTable: "catalogs.payment_terms",
+    readEndpoint: "/api/v1/catalogs/payment-terms",
+    writeEndpoint: "/api/v1/catalogs/payment-terms",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence:
+      "apps/backend/src/catalogs/payment-terms.routes.ts:127 (SELECT) and :154 (INSERT) — both catalogs.payment_terms; mdata payment-term options consumer",
+    fields: [
+      { name: "display_name", label: "Terms name", required: true, maxLength: 200, placeholder: "Net 30" },
+      {
+        name: "days_until_due",
+        label: "Days until due",
+        required: true,
+        inputType: "number",
+        placeholder: "30",
+        help: "Number of days until payment is due (0 = due on receipt).",
+      },
+    ],
+    create: async (operatingCompanyId, values) => {
+      const termsName = values.display_name.trim();
+      const daysRaw = values.days_until_due ?? 30;
+      const daysUntilDue = Number(daysRaw);
+      if (Number.isNaN(daysUntilDue) || daysUntilDue < 0) {
+        throw new Error("Days until due must be a non-negative number.");
+      }
+      const created = await apiRequest<{
+        id: string;
+        terms_name?: string;
+        days_until_due?: number;
+      }>("/api/v1/catalogs/payment-terms", {
+        method: "POST",
+        body: {
+          operating_company_id: operatingCompanyId,
+          terms_name: termsName,
+          days_until_due: daysUntilDue,
+        },
+      });
+      const days = created.days_until_due ?? daysUntilDue;
+      const name = created.terms_name ?? termsName;
+      return {
+        id: String(created.id),
+        label: `${name} (${days}d)`,
       };
     },
   },

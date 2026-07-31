@@ -352,7 +352,16 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             <label className="block text-sm">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Payment terms</span>
-              <Combobox options={paymentTermOptions} value={paymentTermsId} onChange={setPaymentTermsId} placeholder="Select terms" />
+              <ReferenceSelect
+                value={paymentTermsId}
+                onChange={setPaymentTermsId}
+                options={paymentTermOptions}
+                createKind="payment_term"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Select terms"
+                loading={paymentTermsQuery.isLoading}
+                onOptionCreated={() => void paymentTermsQuery.refetch()}
+              />
             </label>
             <label className="block text-sm">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Default expense account</span>

@@ -60,6 +60,22 @@ export function CatalogQuickCreateDrawer({
       pushToast("Name is required.", "error");
       return;
     }
+    const daysField = fields.find((f) => f.name === "days_until_due");
+    let daysUntilDue: number | undefined;
+    if (daysField) {
+      const raw = (values.days_until_due ?? "").trim();
+      if (!raw && daysField.required) {
+        pushToast(`${daysField.label} is required.`, "error");
+        return;
+      }
+      if (raw) {
+        daysUntilDue = Number(raw);
+        if (Number.isNaN(daysUntilDue) || daysUntilDue < 0) {
+          pushToast(`${daysField.label} must be a non-negative number.`, "error");
+          return;
+        }
+      }
+    }
 
     setSaving(true);
     try {
@@ -69,6 +85,7 @@ export function CatalogQuickCreateDrawer({
         description: values.description?.trim() || undefined,
         event_type: createExtras?.event_type,
         severity: createExtras?.severity,
+        days_until_due: daysUntilDue,
       });
       pushToast("Created successfully", "success");
       setValues({});
@@ -108,6 +125,8 @@ export function CatalogQuickCreateDrawer({
               />
             ) : (
               <input
+                type={field.inputType === "number" ? "number" : "text"}
+                min={field.inputType === "number" ? 0 : undefined}
                 className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
                 maxLength={field.maxLength}
                 placeholder={field.placeholder}

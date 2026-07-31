@@ -29,6 +29,7 @@ import { VendorCategoryChip } from "../components/vendors/VendorCategoryChip";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { VENDOR_CATEGORY_VALUES, type VendorCategoryValue } from "../lib/vendorCategories";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
+import { ReferenceSelect } from "../components/parity/ReferenceSelect";
 import { emptyVendorProfileMeta, parseVendorNotes, serializeVendorNotes, type VendorProfileMeta } from "../lib/vendorProfileMeta";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateUS } from "../lib/formatDate";
@@ -160,7 +161,13 @@ export function VendorDetailPage() {
     staleTime: 5 * 60 * 1000,
   });
   const paymentTermOptions = useMemo(
-    () => (paymentTermsQuery.data?.payment_terms ?? []).map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` })),
+    () => [
+      { value: "", label: "— None —" },
+      ...(paymentTermsQuery.data?.payment_terms ?? []).map((t) => ({
+        value: t.id,
+        label: `${t.terms_name} (${t.days_until_due}d)`,
+      })),
+    ],
     [paymentTermsQuery.data]
   );
   // Option-B (vendor-customer-categorization-option-b): recommendation only, pre-fills bill lines.
@@ -620,19 +627,19 @@ export function VendorDetailPage() {
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Payment terms</span>
-            <SelectCombobox
+            <ReferenceSelect
               value={profileForm.paymentTermsId ?? ""}
-              onChange={(event) => setProfileForm((current) => ({ ...current, paymentTermsId: event.target.value || null }))}
+              onChange={(next) =>
+                setProfileForm((current) => ({ ...current, paymentTermsId: next ? next : null }))
+              }
+              options={paymentTermOptions}
+              createKind="payment_term"
+              operatingCompanyId={companyId}
+              placeholder="— None —"
               disabled={!profileEditMode}
-              className="h-8 w-full max-w-md text-xs"
-            >
-              <option value="">— None —</option>
-              {paymentTermOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </SelectCombobox>
+              loading={paymentTermsQuery.isLoading}
+              onOptionCreated={() => void paymentTermsQuery.refetch()}
+            />
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Default expense account</span>
