@@ -86,8 +86,17 @@
  * .page-header-actions deliberately KEEPS flex-shrink: 0. Clipping an interactive control is worse than
  * clipping prose: a half-rendered "+ Create Work Order" is a mis-click waiting to happen.
  */
+/*
+ * flex-shrink: 999 encodes PRIORITY, not proportion. With the subtitle at 1 the browser shrank it and
+ * the title TOGETHER — both had flex-shrink: 1, so pressure was shared and /maintenance rendered
+ * "Main…" instead of "Maintenance". Verified live after deploying the first version of this fix: the
+ * overlap was gone and the module name was truncated instead, which is a worse trade. flex-shrink is
+ * proportional, so a large weight makes the subtitle absorb effectively all the overflow before the
+ * title gives up a single pixel. The title keeps its own ellipsis as a last resort for a genuinely
+ * narrow viewport.
+ */
 .page-header-subtitle {
-  flex-shrink: 1;
+  flex-shrink: 999;
   min-width: 0;
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
