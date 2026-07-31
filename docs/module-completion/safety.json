@@ -2,7 +2,7 @@
   "module": "safety",
   "title": "Safety (Module 3)",
   "complete": false,
-  "as_of": "2026-07-25T15:30:00.000Z",
+  "as_of": "2026-07-31T02:15:00.000Z",
   "live_sha": "7875de6",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md",
   "spec_sources": [
@@ -10,7 +10,7 @@
     "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md",
     "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts"
   ],
-  "note": "SAF-F02/F03/F04 schema half Neon-proven 2026-07-25 (columns + ledger; applied_on_prod stamps). SAF-F08 closed by verify-schema-parity-from-prod (prod evidence, not migration parse). Remaining ~23 UNVERIFIED boundaries still have merged code without click-through / economics smoke — do NOT count toward N. Module NOT complete.",
+  "note": "SAF-ORPH-01/02 RETIRED 2026-07-30 per GUARD prod verify + Neon functiondef: forfeiture → -NEW.amount_cents; forfeitDriverEscrow updates driver_finance.escrow_balances same txn. Do NOT rebuild. Remaining FAIL/OPEN/UNVERIFIED leaves still block complete:true. Prior: SAF-F02/F03/F04 Neon-proven; SAF-F08 closed by verify-schema-parity-from-prod.",
   "items": [
     {
       "id": "SAF-B01",
@@ -1937,10 +1937,10 @@
       "future_block": null
     },
     {
-      "pr": null,
+      "pr": 3542,
       "owner_hold": false,
       "tracker": "docs/trackers/ESCROW-FORFEIT-DESIGN-HOLD-2026-07-25.md",
-      "future_block": "SAF-ORPH-01-FIX",
+      "future_block": null,
       "id": "SAF-ORPH-01",
       "title": "Escrow forfeiture moves the balance in the correct direction",
       "layers": [
@@ -1948,8 +1948,8 @@
         "VERIFY-6"
       ],
       "spec": "Rule 13 financial + driver escrow = LIABILITY (owner-locked)",
-      "status": "FAIL",
-      "evidence": "P0 MONEY DIRECTION, prod-verified verbatim. accounting.apply_escrow_posting_delta(): deposit -> +amount, release -> -amount, ELSE -> +amount. The forfeit posts posting_type='adjustment' with a POSITIVE amount, so a forfeiture INCREASES accounting.escrow_accounts.balance_cents while the JE DEBITS (reduces) the escrow liability - GL and subledger diverge by 2x the forfeit. LATENT: all escrow subledgers are 0 rows on prod and DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED has NO row in lib.feature_flags at all (unknown key resolves false), so the route returns 409 forever and there is no enable path. FINANCIAL - build-and-HOLD, CPA VETO, owner Neon-applies; no agent flips that flag. SCOPE: distinct from SAF-B01 (endpoint reachability) and SAF-ORPH-02 (which subledger is written) — this item is ONLY the trigger sign. LANE REASSIGNED 2026-07-25 — OWNER STANDDOWN: this is CURSOR's lane, stacking on #3533 (ACCT-R-01 escrow canonical write-path sync, MERGED). The Lists+Safety coder must NOT touch accounting.apply_escrow_posting_delta or any accounting.escrow_* object. Do not rebuild this here. HANDOVER: findings recorded in docs/trackers/ESCROW-FINDINGS-HANDOVER-TO-CURSOR-2026-07-25.md — the ELSE->positive forfeit sign, the absent flag row, the 0 signed driver contracts, and the split-brain that a trigger fix alone will not close. Standdown also covers accounting/escrow/service.ts.",
+      "status": "PASS",
+      "evidence": "VERIFIED PASS 2026-07-30 (GUARD prod + Neon lucia). STALE FAIL retired — do not re-execute. Live accounting.apply_escrow_posting_delta: deposit +, release −, forfeiture − (v_delta := -NEW.amount_cents for posting_type='forfeiture'); unknown types RAISE (no ELSE→+). Migration 202608070000 applied. Service posts posting_type='forfeiture' via recordEscrowPostingOnly (escrow-forfeit.service.ts). Flag DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED remains owner-gated OFF — enable policy, not a sign defect.",
       "build_standard": {
         "standard_version": "2026-07-25",
         "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
@@ -2005,13 +2005,13 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — CURSOR LANE (#3533 stack). Not this coder. Owner standdown 2026-07-25."
+      "gate": "RETIRED — GUARD-verified prod 2026-07-30; scoreboard catch-up only."
     },
     {
-      "pr": null,
+      "pr": 3545,
       "owner_hold": false,
       "tracker": "docs/trackers/ESCROW-FORFEIT-DESIGN-HOLD-2026-07-25.md",
-      "future_block": "SAF-ORPH-01-FIX",
+      "future_block": null,
       "id": "SAF-ORPH-02",
       "title": "Escrow forfeiture writes the canonical driver subledger",
       "layers": [
@@ -2019,8 +2019,8 @@
         "VERIFY-4"
       ],
       "spec": "Rule 14 both-way linkage + driver_finance.* canonical",
-      "status": "FAIL",
-      "evidence": "SPLIT-BRAIN subledger. The forfeit writes accounting.escrow_postings only, while EVERY driver-facing balance reads driver_finance.escrow_balances / escrow_ledger (banking escrow visualizer + register, driver-detail Escrow History, the over-draw guard in escrow-forfeit.service.ts). So the balance the over-draw check reads NEVER decrements - the same escrow could be forfeited repeatedly - and no driver-facing surface shows a forfeit. driver_finance.escrow_ledger already carries an UNUSED 'forfeit' value in its transaction_type CHECK. LATENT: both subledgers are 0 rows on prod today. Fixing SAF-ORPH-01 alone leaves this open, so they are ONE CPA review. SCOPE: distinct from SAF-B01 and SAF-ORPH-01; overlaps SAF-B22 (escrow drill-through) which stays the UI-side boundary. LANE REASSIGNED 2026-07-25 — OWNER STANDDOWN: this is CURSOR's lane, stacking on #3533 (ACCT-R-01 escrow canonical write-path sync, MERGED). The Lists+Safety coder must NOT touch accounting.apply_escrow_posting_delta or any accounting.escrow_* object. Do not rebuild this here. HANDOVER: findings recorded in docs/trackers/ESCROW-FINDINGS-HANDOVER-TO-CURSOR-2026-07-25.md — the ELSE->positive forfeit sign, the absent flag row, the 0 signed driver contracts, and the split-brain that a trigger fix alone will not close. Standdown also covers accounting/escrow/service.ts.",
+      "status": "PASS",
+      "evidence": "VERIFIED PASS 2026-07-30 (GUARD prod + code). STALE FAIL retired — do not re-execute. forfeitDriverEscrow same-txn: UPDATE driver_finance.escrow_balances (current_balance_cents -= amount) + INSERT escrow_ledger transaction_type='forfeit' after accounting.escrow_postings; refuses with E_ESCROW_BALANCES_MISSING if DF row missing (escrow-forfeit.service.ts ~162-197). Split-brain closed.",
       "build_standard": {
         "standard_version": "2026-07-25",
         "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
@@ -2076,7 +2076,7 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — CURSOR LANE (#3533 stack). Not this coder. Owner standdown 2026-07-25."
+      "gate": "RETIRED — GUARD-verified prod 2026-07-30; scoreboard catch-up only."
     },
     {
       "pr": null,

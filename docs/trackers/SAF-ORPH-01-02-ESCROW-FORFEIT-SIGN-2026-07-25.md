@@ -1,5 +1,10 @@
 # SAF-ORPH-01/02 — Escrow forfeit sign (stacks on ACCT-R-01 #3533)
 
+> **STATUS: RETIRED 2026-07-30** — GUARD-verified on prod. Forfeiture branch = `-NEW.amount_cents`;
+> `forfeitDriverEscrow` updates `driver_finance.escrow_balances` same txn (#3542 + #3545).
+> Scoreboard catch-up only — do NOT rebuild.
+
+
 **FINDING:** SAF-ORPH-01/02 · **Lane:** FINANCIAL-HOLD · **Module:** accounting / driver-finance escrow  
 **PR stack:** trigger half of escrow fix; write-path sync already merged as #3533.
 
