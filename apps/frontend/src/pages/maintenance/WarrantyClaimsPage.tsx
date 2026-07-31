@@ -5,10 +5,10 @@ import {
   createMaintenanceWarrantyClaim,
   detectMaintenanceWarrantyFromWorkOrder,
   fileMaintenanceWarrantyClaim,
-  listMaintenanceVendors,
   listMaintenanceWarrantyClaims,
   type MaintenanceWarrantyClaimRow,
 } from "../../api/maintenance";
+import { listVendors } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -16,6 +16,8 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 
 type ClaimDraft = {
   part_description: string;
@@ -50,15 +52,18 @@ export function WarrantyClaimsPage() {
     enabled: Boolean(companyId),
   });
 
+  // LST-PICKER-01/1858: maintenance.warranty_claims.vendor_id REFERENCES mdata.vendors(id) — the
+  // read side must list the SAME table the FK targets. This used to list catalogs.maintenance_vendors
+  // (a different table with different uuids), so every claim vendor_id 500'd on the FK constraint.
   const vendorsQ = useQuery({
-    queryKey: ["maintenance", "vendors", companyId, "warranty-claims"],
-    queryFn: () => listMaintenanceVendors(companyId),
+    queryKey: ["mdata", "vendors", companyId, "warranty-claims"],
+    queryFn: () => listVendors({ operating_company_id: companyId, status: "active", limit: 200 }),
     enabled: Boolean(companyId),
   });
 
-  const vendors = useMemo(
-    () => (vendorsQ.data?.rows ?? []) as Array<{ id: string; display_name?: string; name?: string }>,
-    [vendorsQ.data?.rows]
+  const vendorOptions = useMemo(
+    () => (vendorsQ.data?.vendors ?? []).map(vendorReferenceOption).sort((a, b) => a.label.localeCompare(b.label)),
+    [vendorsQ.data?.vendors]
   );
 
   const refresh = async () => {
@@ -209,19 +214,20 @@ export function WarrantyClaimsPage() {
           </label>
           <label className="block text-xs">
             Vendor
-            <select
-              className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={claimDraft.vendor_id}
-              onChange={(e) => setClaimDraft((d) => ({ ...d, vendor_id: e.target.value }))}
-              data-testid="warranty-vendor-select"
-            >
-              <option value="">Select vendor…</option>
-              {vendors.map((vendor) => (
-                <option key={vendor.id} value={vendor.id}>
-                  {vendor.display_name ?? vendor.name ?? vendor.id}
-                </option>
-              ))}
-            </select>
+            <div className="mt-1" data-testid="warranty-vendor-select">
+              <ReferenceSelect
+                value={claimDraft.vendor_id || null}
+                onChange={(next) => setClaimDraft((d) => ({ ...d, vendor_id: next ?? "" }))}
+                options={vendorOptions}
+                createKind="vendor"
+                operatingCompanyId={companyId}
+                placeholder="Select vendor…"
+                onOptionCreated={(opt) => {
+                  void queryClient.invalidateQueries({ queryKey: ["mdata", "vendors", companyId, "warranty-claims"] });
+                  setClaimDraft((d) => ({ ...d, vendor_id: opt.value }));
+                }}
+              />
+            </div>
           </label>
           <label className="block text-xs">
             Claim amount (USD)

@@ -6,7 +6,6 @@ import { MemoryRouter } from "react-router-dom";
 import { WarrantyClaimsPage } from "../WarrantyClaimsPage";
 
 const listMaintenanceWarrantyClaims = vi.fn();
-const listMaintenanceVendors = vi.fn();
 const createMaintenanceWarrantyClaim = vi.fn();
 const fileMaintenanceWarrantyClaim = vi.fn();
 const detectMaintenanceWarrantyFromWorkOrder = vi.fn();
@@ -14,14 +13,20 @@ const detectMaintenanceWarrantyFromWorkOrder = vi.fn();
 // maintenance.work_orders roster through this same module. The mock must provide it or the picker
 // has no roster to select from.
 const listWorkOrders = vi.fn();
+// LST-PICKER-01/1858: vendor options now come from the CANONICAL mdata.vendors roster (the same
+// table maintenance.warranty_claims.vendor_id FKs to), not catalogs.maintenance_vendors.
+const listVendors = vi.fn();
 
 vi.mock("../../../api/maintenance", () => ({
   listMaintenanceWarrantyClaims: (...args: unknown[]) => listMaintenanceWarrantyClaims(...args),
-  listMaintenanceVendors: (...args: unknown[]) => listMaintenanceVendors(...args),
   createMaintenanceWarrantyClaim: (...args: unknown[]) => createMaintenanceWarrantyClaim(...args),
   fileMaintenanceWarrantyClaim: (...args: unknown[]) => fileMaintenanceWarrantyClaim(...args),
   detectMaintenanceWarrantyFromWorkOrder: (...args: unknown[]) => detectMaintenanceWarrantyFromWorkOrder(...args),
   listWorkOrders: (...args: unknown[]) => listWorkOrders(...args),
+}));
+
+vi.mock("../../../api/mdata", () => ({
+  listVendors: (...args: unknown[]) => listVendors(...args),
 }));
 
 vi.mock("../../../contexts/CompanyContext", () => ({
@@ -33,6 +38,37 @@ vi.mock("../../../contexts/CompanyContext", () => ({
 
 vi.mock("../../../components/Toast", () => ({
   useToast: () => ({ pushToast: vi.fn() }),
+}));
+
+// LST-PICKER-01/1858: same shim convention as CreateBillModal.test.tsx — a plain <select> stands in
+// for the Combobox dropdown so the test can assert on the CANONICAL vendor options passed in, without
+// re-testing Combobox's own keyboard/mouse interaction.
+vi.mock("../../../components/parity/ReferenceSelect", () => ({
+  ReferenceSelect: ({
+    value,
+    onChange,
+    options,
+    placeholder,
+  }: {
+    value: string | null;
+    onChange: (v: string | null) => void;
+    options: Array<{ value: string; label: string }>;
+    placeholder?: string;
+  }) => (
+    <select
+      aria-label={placeholder ?? "Vendor"}
+      data-testid="warranty-vendor-reference-select"
+      value={value ?? ""}
+      onChange={(event) => onChange(event.target.value || null)}
+    >
+      <option value="">{placeholder ?? "Select…"}</option>
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  ),
 }));
 
 function renderPage() {
@@ -49,7 +85,7 @@ function renderPage() {
 describe("Maintenance WarrantyClaimsPage (B33)", () => {
   beforeEach(() => {
     listMaintenanceWarrantyClaims.mockReset();
-    listMaintenanceVendors.mockReset();
+    listVendors.mockReset();
     createMaintenanceWarrantyClaim.mockReset();
     fileMaintenanceWarrantyClaim.mockReset();
     detectMaintenanceWarrantyFromWorkOrder.mockReset();
@@ -59,8 +95,8 @@ describe("Maintenance WarrantyClaimsPage (B33)", () => {
       total_count: 1,
     });
 
-    listMaintenanceVendors.mockResolvedValue({
-      rows: [{ id: "vendor-1", display_name: "Fleet Parts Co" }],
+    listVendors.mockResolvedValue({
+      vendors: [{ id: "vendor-1", name: "Fleet Parts Co", vendor_type: "parts" }],
     });
     listMaintenanceWarrantyClaims.mockResolvedValue({
       rows: [
@@ -117,5 +153,33 @@ describe("Maintenance WarrantyClaimsPage (B33)", () => {
     renderPage();
     expect(await screen.findByPlaceholderText("Select work order")).toBeTruthy();
     expect(screen.queryByPlaceholderText("Work order UUID")).toBeNull();
+  });
+
+  // LST-PICKER-01/1858 — the defect this fixes: the Vendor field used to list catalogs.maintenance_vendors
+  // while maintenance.warranty_claims.vendor_id FKs to mdata.vendors, so every claim vendor_id 500'd on
+  // the FK constraint (two different tables, two different uuid spaces). This proves the picker now
+  // reads the canonical mdata.vendors roster (VERIFY-5 company-scoped) and the selected id round-trips
+  // into the create payload unchanged.
+  it("Vendor picker lists the canonical mdata.vendors roster and persists vendor_id on save", async () => {
+    createMaintenanceWarrantyClaim.mockResolvedValue({ id: "claim-2" });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: /\+ Create Claim/i }));
+
+    await screen.findByRole("option", { name: "Fleet Parts Co" });
+    expect(listVendors).toHaveBeenCalledWith(
+      expect.objectContaining({ operating_company_id: "11111111-1111-4111-8111-111111111111" })
+    );
+
+    await user.type(screen.getByLabelText("Part description"), "Alternator");
+    await user.selectOptions(screen.getByTestId("warranty-vendor-reference-select"), "vendor-1");
+
+    await user.click(screen.getByRole("button", { name: "Save claim" }));
+
+    await waitFor(() => expect(createMaintenanceWarrantyClaim).toHaveBeenCalledTimes(1));
+    expect(createMaintenanceWarrantyClaim).toHaveBeenCalledWith(
+      expect.objectContaining({ part_description: "Alternator", vendor_id: "vendor-1" })
+    );
   });
 });
