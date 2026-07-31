@@ -7,14 +7,33 @@ export type VendorBillFormLinePayload = {
   description?: string;
   section: "A" | "B";
   expense_category_uuid?: string;
+  category_kind?: string;
+  category_code?: string;
   service_item_uuid?: string;
 };
 
 /**
+ * Map catalogs.expense_categories.code → expense_category_account_map keys.
+ * Only codes with a real Neon map entry are translated. Unknown codes keep
+ * expense_category_uuid only (poster → uncategorized) — never invent a GL account.
+ */
+export function mapExpenseCatalogCodeToBillCategory(
+  catalogCode: string | undefined
+): { category_kind: string; category_code: string } | null {
+  const code = String(catalogCode ?? "")
+    .trim()
+    .toUpperCase();
+  if (code === "FUEL") return { category_kind: "fuel", category_code: "fuel" };
+  if (code === "REPAIR") return { category_kind: "maintenance", category_code: "maintenance" };
+  return null;
+}
+
+/**
  * Flatten TwoSectionLine editor rows into API line payloads.
- * Section A: CoA picker → account_id (expense_category_uuid).
- * Section B: item + optional part/labor sub-rows; account left unset (poster uncategorized tier) —
- * never invent a GL account id.
+ * Section A (WAVE-H1): catalogs.expense_categories id → expense_category_uuid;
+ * known codes also set category_kind/code for the B1 map. Never stamp a CoA account
+ * id into expense_category_uuid (same-entity FK).
+ * Section B: item + optional part/labor sub-rows; account left unset.
  */
 export function buildVendorBillLinePayloads(lines: TwoSectionLine[]): VendorBillFormLinePayload[] {
   const out: VendorBillFormLinePayload[] = [];
@@ -22,14 +41,14 @@ export function buildVendorBillLinePayloads(lines: TwoSectionLine[]): VendorBill
     if (line.section === "A") {
       const cents = Math.round(Number(line.amount || 0) * 100);
       if (cents <= 0) continue;
-      const accountId = String(line.expense_category_uuid ?? "").trim();
+      const categoryId = String(line.expense_category_uuid ?? "").trim();
+      const mapped = mapExpenseCatalogCodeToBillCategory(line.expense_category_code);
       out.push({
         section: "A",
         amount_cents: cents,
         description: line.description?.trim() || undefined,
-        ...(accountId
-          ? { account_id: accountId, expense_category_uuid: accountId }
-          : {}),
+        ...(categoryId ? { expense_category_uuid: categoryId } : {}),
+        ...(mapped ?? {}),
       });
       continue;
     }

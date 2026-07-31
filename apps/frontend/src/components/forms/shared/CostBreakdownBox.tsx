@@ -5,6 +5,8 @@ import { ReferenceSelect } from "../../parity/ReferenceSelect";
 export type CategoryLine = {
   id: string;
   expense_category_uuid?: string;
+  /** catalogs.expense_categories.code — used to set bill category_kind/code (WAVE-H1). */
+  expense_category_code?: string;
   description: string;
   quantity: number;
   unit_cost: number;
@@ -37,6 +39,7 @@ export type ItemLine = {
 export type CostContextOption = {
   id: string;
   label: string;
+  code?: string;
 };
 
 type Props = {
@@ -145,13 +148,20 @@ export function CostBreakdownBox({
                         {operatingCompanyId && !readOnly ? (
                           <ReferenceSelect
                             value={line.expense_category_uuid ?? null}
-                            onChange={(next) =>
+                            onChange={(next) => {
+                              const match = expenseCategoryOptions.find((o) => o.id === next);
                               onSectionAChange(
                                 sectionA.lines.map((entry) =>
-                                  entry.id === line.id ? { ...entry, expense_category_uuid: next ?? undefined } : entry
+                                  entry.id === line.id
+                                    ? {
+                                        ...entry,
+                                        expense_category_uuid: next ?? undefined,
+                                        expense_category_code: match?.code,
+                                      }
+                                    : entry
                                 )
-                              )
-                            }
+                              );
+                            }}
                             options={expenseCategoryOptions.map((option) => ({
                               value: option.id,
                               label: option.label,
@@ -163,7 +173,14 @@ export function CostBreakdownBox({
                             onOptionCreated={(opt) => {
                               onSectionAChange(
                                 sectionA.lines.map((entry) =>
-                                  entry.id === line.id ? { ...entry, expense_category_uuid: opt.value } : entry
+                                  entry.id === line.id
+                                    ? {
+                                        ...entry,
+                                        expense_category_uuid: opt.value,
+                                        // Inline create returns id+label; code lands after catalog refetch.
+                                        expense_category_code: undefined,
+                                      }
+                                    : entry
                                 )
                               );
                               onCategoryOptionCreated?.(line.id, { id: opt.value, label: opt.label });

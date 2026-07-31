@@ -91,3 +91,5 @@ export const payRateTemplatesCatalogClient = createDriverCatalogClient("pay-rate
 export const driverDeductionTypesCatalogClient = createDriverCatalogClient("deduction-types");
 export const driverPayTypesCatalogClient = createDriverCatalogClient("pay-types");
 export const escrowTypesCatalogClient = createDriverCatalogClient("escrow-types");
+/** WAVE-H1 — Create Advance purpose picker reads this catalog (UI-only; FK → WAVE-V-SETTLE). */
+export const cashAdvanceTypesCatalogClient = createDriverCatalogClient("cash-advance-types");
