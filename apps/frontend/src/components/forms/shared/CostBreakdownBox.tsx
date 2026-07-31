@@ -420,10 +420,9 @@ export function CostBreakdownBox({
                         {row.line_type === "parts" ? (
                           <div className="space-y-1">
                             <div className="flex items-center gap-1">
-                              {/* LST-PICKER-03: the part picker had the same external "+ Create" button
-                                  as the item picker above. Inline create belongs INSIDE the dropdown;
-                                  selecting a newly created part also carries its label into the row's
-                                  description, exactly as picking an existing part does. */}
+                              {/* LST-PICKER-01 (guard 1878): was createKind="item" with "+ Add new part"
+                                  label — wrote catalogs.items instead of maintenance.parts_inventory.
+                                  createKind=part → QuickCreateEntityModal part form → parts inventory. */}
                               {operatingCompanyId && !readOnly ? (
                                 <ReferenceSelect
                                   value={row.part_uuid ?? null}
@@ -450,7 +449,7 @@ export function CostBreakdownBox({
                                     )
                                   }
                                   options={partOptions.map((option) => ({ value: option.id, label: option.label }))}
-                                  createKind="item"
+                                  createKind="part"
                                   operatingCompanyId={operatingCompanyId}
                                   placeholder="Select part…"
                                   addNewLabel="+ Add new part"
