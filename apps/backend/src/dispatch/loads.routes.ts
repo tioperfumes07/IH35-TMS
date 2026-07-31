@@ -30,6 +30,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { evaluateDriverDrugAlcoholStatus } from "./driver-qualification.service.js";
 import type { PoolClient } from "pg";
 import { convertProformaToOfficial } from "../accounting/proforma-convert.service.js";
+import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { postLoadRevenueLatch } from "../accounting/revrec-delivery-posting/poster.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
@@ -1297,11 +1298,26 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         });
         if (pipelineOn) {
           try {
-            await convertProformaToOfficial(client, {
+            // ND-INV-01 + ACCT-R-24 / owner B2d: convert proforma → draft, then auto-send
+            // (same sendDraftInvoice path as POST /accounting/invoices/:id/send — never silent $0).
+            const converted = await convertProformaToOfficial(client, {
               operatingCompanyId,
               loadId: params.data.id,
               userId: authUser.uuid,
             });
+            if (converted.converted && converted.invoiceId) {
+              const sent = await sendDraftInvoice(client, {
+                invoiceId: converted.invoiceId,
+                operatingCompanyId,
+                userId: authUser.uuid,
+              });
+              if (!sent.ok) {
+                console.warn(
+                  { load_id: params.data.id, invoice_id: converted.invoiceId, error: sent.error },
+                  "acct_r24_auto_send_after_pod_failed"
+                );
+              }
+            }
           } catch (err) {
             console.warn({ err, load_id: params.data.id }, "nd_inv_01_proforma_convert_failed");
           }

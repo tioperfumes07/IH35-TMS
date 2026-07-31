@@ -2,7 +2,7 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": false,
-  "as_of": "2026-07-31T01:33:00.000Z",
+  "as_of": "2026-07-31T02:05:00.000Z",
   "live_sha": "efba811",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
@@ -572,9 +572,24 @@
       "evidence": "Migration 202610331200 authored (CREATE INDEX IF NOT EXISTS \u00d73). Neon Step-1 2026-07-31 lucia: composites ABSENT on all three tables (partial indexes only). Guard 1835 locks SQL. LIVE index presence UNVERIFIED until owner Neon-apply + ledger.",
       "pr": null,
       "live_proof": "UNVERIFIED \u2014 awaiting owner Neon-apply of 202610331200"
+    },
+    {
+      "id": "ACCT-R-24",
+      "title": "POD auto-send after proforma convert (shared sendDraftInvoice)",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "VERIFY-3",
+        "VERIFY-6"
+      ],
+      "spec": "flow6-auto-invoice-sending \u00b7 ACCT-R-24 \u00b7 owner B2d",
+      "status": "PASS",
+      "evidence": "CODE 2026-07-30: invoice-send.service.ts sendDraftInvoice shared by POST /send + loads.routes POD convert when INVOICE_PROFORMA_PIPELINE_ENABLED. Guard 1836. LIVE density UNVERIFIED \u2014 pipeline flag/mig held until owner Neon-apply of 202609100090.",
+      "pr": null,
+      "live_proof": "UNVERIFIED \u2014 INVOICE_PROFORMA_PIPELINE_ENABLED not on Neon flags yet; structural DoD closed"
     }
   ],
-  "pass_count": 37,
-  "total_count": 38,
-  "progress": "37 of 38"
+  "pass_count": 38,
+  "total_count": 39,
+  "progress": "38 of 39"
 }
