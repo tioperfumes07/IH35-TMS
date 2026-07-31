@@ -662,21 +662,26 @@ export function VendorDetailPage() {
               onOptionCreated={() => void paymentTermsQuery.refetch()}
             />
           </DataPanelRow>
-          <DataPanelRow>
+          <DataPanelRow data-testid="vendor-default-expense-account">
             <span className="text-xs font-semibold text-gray-600">Default expense account</span>
-            <SelectCombobox
-              value={profileForm.defaultExpenseAccountId ?? ""}
-              onChange={(event) => setProfileForm((current) => ({ ...current, defaultExpenseAccountId: event.target.value || null }))}
+            {/*
+              LST-PICKER-01: bare SelectCombobox → ReferenceSelect createKind=account
+              (parity QuickCreateEntityModal vendor path).
+            */}
+            <ReferenceSelect
+              value={profileForm.defaultExpenseAccountId ?? null}
+              onChange={(next) =>
+                setProfileForm((current) => ({ ...current, defaultExpenseAccountId: next ? next : null }))
+              }
+              options={expenseAccountOptions}
+              createKind="account"
+              operatingCompanyId={companyId}
+              placeholder="— None —"
               disabled={!profileEditMode}
-              className="h-8 w-full max-w-md text-xs"
-            >
-              <option value="">— None —</option>
-              {expenseAccountOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </SelectCombobox>
+              onOptionCreated={() => {
+                void queryClient.invalidateQueries({ queryKey: ["catalog-accounts", "expense-for-vendor-default", companyId] });
+              }}
+            />
             <p className="mt-1 text-xs text-gray-500">
               Option-B recommendation only: pre-fills the expense account on new bills for this vendor.
               Always editable — never posted silently.
