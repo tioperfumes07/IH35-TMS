@@ -48,3 +48,5 @@
 - 2026-07-31 · guard 1884 · NewAccountDrawerForm parent account → `createKind=account` (`catalogs.accounts`; was bare `<select>`) · PR pending
 
 - 2026-07-31 · guard 1892 · PostingTemplateModal default class → `createKind=class` (`catalogs.classes`; was bare SelectCombobox) · PR pending
+
+- 2026-07-31 · guard 1894 · WorkOrderCreateModal Section A/B → `createKind=account` + `createKind=item` (expense CoA + catalogs.items; was bare SelectCombobox) · PR pending

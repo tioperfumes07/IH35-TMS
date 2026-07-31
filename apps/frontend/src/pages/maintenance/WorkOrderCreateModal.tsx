@@ -1,10 +1,11 @@
 // @ModalNoX — inline WO cost panel embedded in CreateWorkOrderModal, not an overlay dialog
 /**
  * AUDIT-FIX-8 — WO create cost breakdown with live accounting category/item lookups.
- * SelectCombobox surfaces feed query results from /api/v1/accounting/categories and items-for-wo.
+ * LST-PICKER-01 (guard 1894): bare SelectCombobox → ReferenceSelect createKind=account|item
+ * so operators get first-row +Create without leaving WO intake for Lists.
  */
 import { useMemo, useState } from "react";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { useAccountingCategoriesQuery } from "../../hooks/useAccountingCategoriesQuery";
 import { useAccountingItemsQuery } from "../../hooks/useAccountingItemsQuery";
 
@@ -47,15 +48,16 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
   const categoryOptions = useMemo(
     () =>
       (categoriesQuery.data ?? []).map((row) => ({
-        id: String(row.id),
+        value: String(row.id),
         label: `${row.name}`.trim(),
+        type: row.account_type ?? undefined,
       })),
     [categoriesQuery.data]
   );
   const itemOptions = useMemo(
     () =>
       (itemsQuery.data ?? []).map((row) => ({
-        id: String(row.id),
+        value: String(row.id),
         label: row.name,
       })),
     [itemsQuery.data]
@@ -106,54 +108,53 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
       </div>
 
       {activeLine?.section === "A" ? (
-        <div className="space-y-2">
+        <div className="space-y-2" data-testid="wo-create-category-picker">
           <label className="text-xs font-medium text-slate-600">Category (expense CoA)</label>
-          <input
-            type="search"
-            className="mb-1 w-full rounded-sm border px-2 py-1 text-sm"
-            placeholder="Filter accounts…"
-            value={categorySearch}
-            onChange={(e) => setCategorySearch(e.target.value)}
-            onFocus={() => setCategoryFetchActive(true)}
+          {/*
+            LST-PICKER-01 (1894): /accounting/categories returns catalogs.accounts (expense) —
+            createKind=account (not createKind=category which writes qbo_categories).
+          */}
+          <ReferenceSelect
+            value={activeLine.category_id ?? null}
+            onChange={(next) => patchLine(activeLine.id, { category_id: next ?? undefined })}
+            options={categoryOptions}
+            createKind="account"
+            operatingCompanyId={operatingCompanyId}
+            placeholder={categoriesQuery.isLoading ? "Loading accounts…" : "Select category…"}
+            loading={categoriesQuery.isLoading}
+            onSearch={(q) => {
+              setCategorySearch(q);
+              setCategoryFetchActive(true);
+            }}
+            onOptionCreated={(opt) => {
+              patchLine(activeLine.id, { category_id: opt.value });
+              void categoriesQuery.refetch();
+            }}
           />
-          <SelectCombobox
-            value={activeLine.category_id ?? ""}
-            onChange={(event) => patchLine(activeLine.id, { category_id: event.target.value })}
-            className="w-full rounded-sm border px-2 py-1"
-          >
-            <option value="">{categoriesQuery.isLoading ? "Loading accounts…" : "Select category…"}</option>
-            {categoryOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </SelectCombobox>
         </div>
       ) : null}
 
       {activeLine?.section === "B" ? (
-        <div className="space-y-2">
+        <div className="space-y-2" data-testid="wo-create-item-picker">
           <label className="text-xs font-medium text-slate-600">Service item</label>
-          <input
-            type="search"
-            className="mb-1 w-full rounded-sm border px-2 py-1 text-sm"
-            placeholder="Filter items…"
-            value={itemSearch}
-            onChange={(e) => setItemSearch(e.target.value)}
-            onFocus={() => setItemFetchActive(true)}
+          <ReferenceSelect
+            value={activeLine.item_id ?? null}
+            onChange={(next) => patchLine(activeLine.id, { item_id: next ?? undefined })}
+            options={itemOptions}
+            createKind="item"
+            operatingCompanyId={operatingCompanyId}
+            placeholder={itemsQuery.isLoading ? "Loading items…" : "Select item…"}
+            loading={itemsQuery.isLoading}
+            addNewLabel="+ Add new item"
+            onSearch={(q) => {
+              setItemSearch(q);
+              setItemFetchActive(true);
+            }}
+            onOptionCreated={(opt) => {
+              patchLine(activeLine.id, { item_id: opt.value });
+              void itemsQuery.refetch();
+            }}
           />
-          <SelectCombobox
-            value={activeLine.item_id ?? ""}
-            onChange={(event) => patchLine(activeLine.id, { item_id: event.target.value })}
-            className="w-full rounded-sm border px-2 py-1"
-          >
-            <option value="">{itemsQuery.isLoading ? "Loading items…" : "Select item…"}</option>
-            {itemOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </SelectCombobox>
         </div>
       ) : null}
 

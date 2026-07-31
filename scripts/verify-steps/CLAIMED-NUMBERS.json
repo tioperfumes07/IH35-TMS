@@ -1221,6 +1221,7 @@
     "1888": "1888-verify-lst-picker01-default-account-inline-create.mjs",
     "1890": "1890-verify-lst-picker01-quickcreate-item-account-inline-create.mjs",
     "1892": "1892-verify-lst-picker01-posting-template-class-inline-create.mjs",
+    "1894": "1894-verify-lst-picker01-wo-create-category-item-inline-create.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
