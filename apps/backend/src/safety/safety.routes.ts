@@ -784,7 +784,10 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
 
-    const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    // SAF-F35 / CLS-SILENT-SUCCESS: previously audited + returned 200 with
+    // spawned_liability_id:null while the UI toasted success — no money object. Fail closed
+    // until owner FINANCIAL-HOLD unlocks real liability posting (do not invent GL math here).
+    await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       await appendCrudAudit(
         client,
         user.uuid,
@@ -793,13 +796,19 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           resource_type: "safety.accident_reports",
           resource_id: params.data.id,
           operating_company_id: query.data.operating_company_id,
+          outcome: "rejected_not_implemented",
         },
         "info",
         "BT-3-SAFETY-LIABILITIES-REBUILD"
       );
-      return { accident_id: params.data.id, spawned_liability_id: null };
     });
-    return payload;
+    return reply.code(422).send({
+      error: "spawn_liability_not_implemented",
+      message:
+        "Spawn Liability is not live — no payable/liability row is created yet (FINANCIAL-HOLD). Audit recorded the request.",
+      accident_id: params.data.id,
+      spawned_liability_id: null,
+    });
   });
 
   app.post("/api/v1/safety/accidents/:id/spawn-wo", async (req, reply) => {

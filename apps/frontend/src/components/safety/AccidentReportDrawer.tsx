@@ -442,11 +442,28 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
             disabled={!canMutate}
             onClick={() =>
               void spawnSafetyLiability(id, operatingCompanyId)
-                .then(() => {
-                  pushToast("Spawn liability requested", "success");
+                .then((payload) => {
+                  // SAF-F35: never toast success when no liability id was created.
+                  const liabilityId = payload?.spawned_liability_id;
+                  if (liabilityId == null || liabilityId === "") {
+                    pushToast(
+                      "Spawn Liability is not live yet (FINANCIAL-HOLD) — no payable was created.",
+                      "error",
+                    );
+                    return;
+                  }
+                  pushToast("Spawn liability created", "success");
                   onUpdated();
                 })
-                .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"))
+                .catch((error) =>
+                  pushToast(
+                    String(
+                      (error as Error).message ||
+                        "Spawn Liability is not live yet (FINANCIAL-HOLD) — no payable was created.",
+                    ),
+                    "error",
+                  ),
+                )
             }
           >
             Spawn Liability
