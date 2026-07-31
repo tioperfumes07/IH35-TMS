@@ -81,6 +81,12 @@
       "reason": "[HOLD-FOR-JORGE \u2014 FINANCIAL CLUSTER] ACCT-ECON-05 additive backfill RETIRE mdata.qbo_vendors \u2192 accounting.qbo_vendors for residual masters (\u0394\u224836). Idempotent; never DROP retire table; flags stay OFF. Owner Neon-applies then GUARD re-proves lucia counts.",
       "block": "ACCT-ECON-05",
       "added_at": "2026-07-28"
+    },
+    {
+      "file": "202611021200_vendors_vendor_type_check_relax.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 financial] LST-PICKER-01 companion to PR #3884 (guard 1852). Relaxes mdata.vendors_vendor_type_check from the closed 8-value ARRAY list to a length/non-blank CHECK (1\u2013100 chars) matching the widened Zod schema (z.string().trim().min(1).max(100)), so a catalog-created vendor type (catalogs.vendor_types, 202607420000, already applied) round-trips at the DB layer instead of 400/500-ing on save. Posts nothing; no data change; DROP CONSTRAINT IF EXISTS + ADD CONSTRAINT is idempotent. Validated apply-twice on local throwaway Postgres (ih35-tms-verify-db container, ih35_verify db, NOT prod \u2014 confirmed via current_database()/inet_server_addr()): second apply a clean no-op, existing 2 legacy 'Other' rows untouched, a non-legacy value ('Broker Services') round-trips inside a rolled-back transaction, blank and >100-char values correctly rejected. Owner Neon-applies, then GUARD re-verifies pg_get_constraintdef live and ledger-backfills.",
+      "block": "LST-PICKER-01 / #3884",
+      "added_at": "2026-07-31"
     }
   ],
   "_integrity_note": "Every entry appears EXACTLY ONCE (file is the key). applied_on_prod MUST agree with the pinned prod-ledger snapshot scripts/lib/prod-migration-ledger-checksums.json for any file inside its window (>= 202606010000). Enforced by scripts/verify-steps/1361-verify-held-registry-integrity.mjs. Repaired 2026-07-25: 119 entries collapsed to 110 (9 duplicates, 7 of them carrying contradictory applied_on_prod), and 79 entries that were already applied on prod were stamped. Before the repair, verify-schema-parity-from-prod (step 1437) derived held-unapplied columns from this file and therefore treated applied migrations as unapplied.",

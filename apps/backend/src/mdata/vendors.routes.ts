@@ -9,7 +9,13 @@ import { listActiveVendorClassifications } from "./classification-queries.js";
 import { isTestVendorFixtureName } from "./fixture-vendor-name-pattern.js";
 import { searchVendorsForAutocomplete } from "./vendor-autocomplete.shared.js";
 
-const vendorTypeSchema = z.enum(["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"]);
+// LST-PICKER-01 (guard 1852) — vendor_type is now CATALOG-BACKED (catalogs.vendor_types), per entity,
+// with an inline "+ Add new vendor type" row (VendorCreateModal / VendorDetail). This used to be a
+// frozen z.enum of the original 8 legacy values, which 400'd on PATCH/POST the moment an owner added a
+// new vendor type from the catalog picker — the catalog table had rows the API would reject outright.
+// The mdata.vendors.vendor_type column is `text` on prod (0008_mdata_init.sql), so a free-form string
+// is the correct app-layer shape.
+const vendorTypeSchema = z.string().trim().min(1).max(100);
 const QBO_ARCHIVE_PROJECTION_SOURCE_RE = /Projected from qbo_archive\.entities_snapshot[^\n]*/gi;
 
 // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD): the vendor row shape returned by every

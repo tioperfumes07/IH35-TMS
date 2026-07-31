@@ -1200,6 +1200,8 @@
     "1846": "1846-verify-lst-picker01-equipment-type-inline-create.mjs",
     "1848": "1848-verify-lst-picker01-detention-reason-inline-create.mjs",
     "1850": "1850-verify-lst-picker01-maintenance-labor-code-inline-create.mjs",
+    "1852": "1852-verify-lst-picker01-vendor-type-detail-inline-create.mjs",
+    "1854": "1854-verify-vendor-type-check-relaxed.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
