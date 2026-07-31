@@ -40,4 +40,6 @@
 
 - 2026-07-31 · guard 1882 · DriverDetail Profile Class (TMS catalog) → `createKind=class` (`catalogs.classes`; was bare SelectCombobox) · PR pending
 
-- 2026-07-31 · guard 1884 · NewAccountDrawerForm parent account → `createKind=account` (`catalogs.accounts`; was bare `<select>`) · PR pending
+- 2026-07-31 · guard 1884 · NewAccountDrawerForm parent account → `createKind=account` (`catalogs.accounts`; was bare `<select>`) · PR #3903
+
+- 2026-07-31 · guard 1886 · AccountDrawer parent account → `createKind=account` (`catalogs.accounts`; dual-path close vs 1884; was bare Combobox) · PR pending

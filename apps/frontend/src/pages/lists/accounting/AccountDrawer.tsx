@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { DatePicker } from "../../../components/forms/DatePicker";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createCatalogAccount,
   deactivateCatalogAccountById,
@@ -17,8 +17,9 @@ import {
 } from "../../../api/coa-list";
 import { getCoaAccounts } from "../../../api/banking";
 import { Button } from "../../../components/Button";
-import { Combobox, type ComboboxOption } from "../../../components/Combobox";
+import { type ComboboxOption } from "../../../components/Combobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 
 type Mode = "create" | "edit";
 
@@ -123,6 +124,7 @@ function FieldError({ msg }: { msg?: string }) {
 }
 
 export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose, onSaved }: Props) {
+  const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(emptyForm());
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [submitError, setSubmitError] = useState("");
@@ -465,10 +467,20 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                   <div className="mb-1 text-xs font-semibold text-gray-600">
                     Parent account<span className="ml-0.5 text-red-500">*</span>
                   </div>
-                  <Combobox
-                    options={parentOptions}
+                  {/*
+                    LST-PICKER-01: dual-path close vs NewAccountDrawerForm (guard 1884).
+                    Bare Combobox had no first-row +Create for catalogs.accounts parent FK.
+                  */}
+                  <ReferenceSelect
                     value={form.parent_account_id || null}
                     onChange={(v) => setField("parent_account_id", v ?? "")}
+                    options={parentOptions.map((o) => ({
+                      value: o.value,
+                      label: o.label,
+                      type: o.sublabel,
+                    }))}
+                    createKind="account"
+                    operatingCompanyId={operatingCompanyId}
                     placeholder={
                       parentOptions.length === 0 && !parentAccountsQuery.isLoading
                         ? `No other ${form.account_type} accounts to nest under`
@@ -476,9 +488,11 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
                     }
                     loading={parentAccountsQuery.isLoading}
                     disabled={readOnly}
-                    allowClear
-                    error={errors.parent_account_id}
+                    onOptionCreated={() => {
+                      void queryClient.invalidateQueries({ queryKey: ["coa-accounts-for-parent", operatingCompanyId] });
+                    }}
                   />
+                  <FieldError msg={errors.parent_account_id} />
                 </div>
               ) : null}
             </div>
