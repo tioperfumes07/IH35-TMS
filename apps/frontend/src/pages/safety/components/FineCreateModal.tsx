@@ -222,8 +222,8 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
               <div className="flex flex-col gap-1" data-testid="fine-create-driver-picker">
                 <label className="text-xs font-semibold text-gray-600">Driver *</label>
                 {/*
-                  LST-PICKER-01 (guard 1896): Combobox allowAddNew opened a side-channel CreateDriverModal.
-                  EntityPicker kind=driver — VERIFY-2 first-row create → same mdata.drivers roster.
+                  LST-PICKER-01 (guard 1896): side-channel driver create replaced by EntityPicker.
+                  kind=driver — VERIFY-2 first-row create → same mdata.drivers roster.
                 */}
                 <EntityPicker
                   kind="driver"

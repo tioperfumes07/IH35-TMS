@@ -26,7 +26,8 @@ function stripComments(src) {
 }
 
 function block(src, testid) {
-  const m = src.match(new RegExp(`data-testid=["']${testid}["'][\\s\\S]{0,2000}`));
+  // Tight window — avoid swallowing the next picker comment (allowAddNew prose).
+  const m = src.match(new RegExp(`data-testid=["']${testid}["'][\\s\\S]{0,900}?</div>`));
   return m ? m[0] : "";
 }
 
@@ -44,7 +45,8 @@ export function collectProblems(root = ROOT, overrides = null) {
   const blk = stripComments(block(page, "fine-create-driver-picker"));
   if (!/EntityPicker/.test(blk)) problems.push(`${PAGE}: driver must use EntityPicker`);
   if (!/kind=["']driver["']/.test(blk)) problems.push(`${PAGE}: driver must use kind=driver`);
-  if (/CreateDriverModal/.test(page)) {
+  const pageStripped = stripComments(page);
+  if (/CreateDriverModal/.test(pageStripped)) {
     problems.push(`${PAGE}: must not keep side-channel CreateDriverModal (EntityPicker owns create)`);
   }
   if (/allowAddNew/.test(blk)) {
