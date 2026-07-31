@@ -1,7 +1,12 @@
 #!/usr/bin/env node
+import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { unionMergedPatterns, isUnionMerged } from "./branch-precheck-push.mjs";
+
+// Repo root — needed to read .gitattributes for the union-merge exemption.
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const DEFAULT_MAX_COMMITS_BEHIND = 0;
 
@@ -197,11 +202,23 @@ export function verifyBranchFresh(cliArgs = process.argv.slice(2)) {
     // SAME number is. Excluded from plain overlap and judged by stepCollisions instead. (Keeping the
     // whole directory coupled made every guard PR block every other guard PR, which is the N^2
     // treadmill relocated rather than removed — and nearly every quality PR in this repo adds a guard.)
+    // Union-merged paths cannot conflict. This list is DERIVED from .gitattributes and shares its
+    // implementation with scripts/branch-precheck-push.mjs — the local gate and this CI gate must
+    // never disagree again. They already had: the local gate hardcoded one exemption while
+    // .gitattributes declared eleven, so ten conflict-proof files still forced rebases (2026-07-31:
+    // 15 CANCELLED ci runs vs 10 real failures over 60 runs). Importing rather than re-implementing is
+    // the durable fix — a new union path in .gitattributes now takes effect in BOTH gates at once.
+    const unionPatterns = unionMergedPatterns(
+      fs.existsSync(path.join(REPO_ROOT, ".gitattributes"))
+        ? fs.readFileSync(path.join(REPO_ROOT, ".gitattributes"), "utf8")
+        : ""
+    );
     const branchSet = new Set(branchFiles);
     const overlap = mainFiles.filter(
       (f) =>
         branchSet.has(f) &&
         f !== CLAIMED_REGISTRY &&
+        !isUnionMerged(f, unionPatterns) &&
         !/^scripts\/verify-steps\/\d+-/.test(f) &&
         !/^db\/migrations\/\d+_/.test(f)
     );

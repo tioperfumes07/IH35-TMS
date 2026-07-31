@@ -57,3 +57,9 @@ apps/frontend/src/components/parity/catalogPickerRegistry.ts  merge=catalog-pick
 # PARTIAL LST-PICKER evidence notes are APPEND-ONLY — never edit lists.json evidence for PARTIAL
 # slices (that file's evidence string is one in-place line → guaranteed conflict). Append here.
 docs/module-completion/lists-picker-partials.md merge=union
+
+# PHANTOM-COLUMN ALLOWLIST (2026-07-31): every phantom-column fix retires a key from this ratchet, so
+# two parallel fixes always both edit it — the same magnet-file shape as CLAIMED-NUMBERS.json. Without
+# a union driver they conflict on merge; with one they merge cleanly AND (via the .gitattributes-derived
+# exemption in branch-precheck-push.mjs / verify-branch-fresh.mjs) stop forcing rebases.
+scripts/verify-sql-column-existence.allowlist.json      merge=json-union

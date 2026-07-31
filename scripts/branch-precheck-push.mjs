@@ -100,6 +100,52 @@ export const COUPLED_ALLOCATION_PREFIXES = ["package-lock.json"];
 const STEP_DIR = "scripts/verify-steps/";
 const CLAIMED_REGISTRY = "scripts/verify-steps/CLAIMED-NUMBERS.json";
 
+// ── THE REBASE TREADMILL, KILLED AT THE ROOT (2026-07-31) ────────────────────────────────────────
+// A file with a UNION merge driver cannot produce a conflict — that is the entire point of declaring
+// it in .gitattributes. Yet this gate hardcoded a single exemption (CLAIMED_REGISTRY) while
+// .gitattributes declared ELEVEN union paths. The other ten still counted as "overlap", so any PR
+// touching one was forced to rebase every time another such PR merged — force-push, which CANCELS the
+// in-flight CI run, then a fresh run. Measured on 2026-07-31 over the last 60 `ci` runs: 15 CANCELLED
+// vs 10 genuine failures. docs/module-completion/lists-picker-partials.md alone appears in 26 of the
+// last 60 merges and is union-merged, so every LST-PICKER PR was rebuilding every other one.
+//
+// Deriving the exemption FROM .gitattributes keeps the two lists in agreement permanently: adding a
+// new union path to .gitattributes now automatically exempts it here. Hardcoding one filename is what
+// let them drift in the first place.
+//
+// This does NOT weaken the gate. Real semantic clashes are still caught by their own checks, which
+// union merging cannot resolve: same verify-step number (stepCollisions), same migration number
+// (migrationCollisions), and coupled allocations (package-lock.json). Only "both sides edited a file
+// that merges automatically" stops being treated as a conflict — because it never was one.
+export function unionMergedPatterns(gitattributesText) {
+  const patterns = [];
+  for (const raw of String(gitattributesText || "").split("\n")) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    if (!/\bmerge=\S*union\S*/.test(line)) continue;
+    const pattern = line.split(/\s+/)[0];
+    if (pattern) patterns.push(pattern);
+  }
+  return [...new Set(patterns)];
+}
+
+/** Minimal gitattributes glob: `*` matches within a path segment, `**` across segments. */
+export function matchesUnionPattern(file, pattern) {
+  if (!pattern.includes("*")) return file === pattern || file.endsWith("/" + pattern);
+  const rx = new RegExp(
+    "^" +
+      pattern
+        .split("**").map((seg) => seg.split("*").map((x) => x.replace(/[.+^${}()|[\]\\]/g, "\\$&")).join("[^/]*"))
+        .join(".*") +
+      "$"
+  );
+  return rx.test(file);
+}
+
+export function isUnionMerged(file, patterns) {
+  return patterns.some((p) => matchesUnionPattern(file, p));
+}
+
 export function stepNumbersIn(files) {
   const out = new Set();
   for (const f of files) {
@@ -122,7 +168,7 @@ export function migrationNumbersIn(files) {
 
 // The freshness decision, pure and therefore testable. Kept identical in SPIRIT to
 // scripts/verify-branch-fresh.mjs (CI): behind is fine, behind-and-overlapping is not.
-export function freshnessVerdict({ behind, mainFiles, branchFiles }) {
+export function freshnessVerdict({ behind, mainFiles, branchFiles, unionPatterns = [] }) {
   if (!(behind > 0)) return { ok: true, reason: "not behind" };
 
   const mainSteps = stepNumbersIn(mainFiles);
@@ -143,6 +189,8 @@ export function freshnessVerdict({ behind, mainFiles, branchFiles }) {
     (f) =>
       branchSet.has(f) &&
       f !== CLAIMED_REGISTRY &&
+      // union-merged paths cannot conflict — see the block above
+      !isUnionMerged(f, unionPatterns) &&
       !(f.startsWith(STEP_DIR) && stepNumbersIn([f]).size > 0) &&
       !(f.startsWith("db/migrations/") && migrationNumbersIn([f]).size > 0)
   );
@@ -532,7 +580,12 @@ export function runPrecheckPush(options = {}) {
     const branchFiles = runGitOrThrow(["diff", "--name-only", `${mergeBase}..HEAD`], { cwd: root })
       .split("\n")
       .filter(Boolean);
-    const verdict = freshnessVerdict({ behind, mainFiles, branchFiles });
+    const unionPatterns = unionMergedPatterns(
+      fs.existsSync(path.join(ROOT, ".gitattributes"))
+        ? fs.readFileSync(path.join(ROOT, ".gitattributes"), "utf8")
+        : ""
+    );
+    const verdict = freshnessVerdict({ behind, mainFiles, branchFiles, unionPatterns });
     if (!verdict.ok) {
       return {
         ok: false,
