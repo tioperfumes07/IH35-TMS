@@ -20,6 +20,14 @@ const CARD_TYPES: PmCardType[] = [
 ];
 
 function formatCountdown(row: MaintPmDueRow | undefined) {
+  // Three DIFFERENT states that must never be collapsed into one message, because each sends the
+  // operator somewhere different:
+  //   no row            -> the schedule genuinely does not exist    -> create one
+  //   row, no next-due  -> the schedule EXISTS and is active, but has no next-due odometer or date,
+  //                        so nothing can be counted down           -> set the next due, do NOT create
+  //   row with a value  -> a real countdown
+  // Saying "No active schedule" for the middle case pushed operators to create duplicates of
+  // schedules they already had. On a DOT-relevant surface a wrong instruction is worse than a blank.
   if (!row) return "No active schedule";
   const isOverdue = (row.days_remaining ?? 0) < 0 || (row.miles_remaining ?? 0) < 0;
   if (isOverdue) return "Overdue now";
@@ -29,7 +37,7 @@ function formatCountdown(row: MaintPmDueRow | undefined) {
   if (row.miles_remaining != null) {
     return `${Math.max(0, row.miles_remaining).toLocaleString()} mi left`;
   }
-  return "Countdown unavailable";
+  return "Active — next due not set";
 }
 
 export function MaintenancePmCountdownCards({ rows, loading = false, compact = false }: Props) {

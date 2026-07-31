@@ -167,8 +167,13 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
     enabled: Boolean(companyId),
   });
   const pmDueQuery = useQuery({
-    queryKey: ["maintenance", "maint-pm-due", companyId],
-    queryFn: () => listMaintPmDue(companyId),
+    // includeNotDue: this query feeds ONLY the PM Countdown cards (below), and a countdown is about
+    // schedules that have NOT come due yet. The endpoint filters to is_due by default, so on a fleet
+    // with nothing overdue the cards got an empty list and said "No active schedule" — for schedules
+    // that exist and are active. The key carries the flag so it cannot share a cache entry with a
+    // due-only fetch of the same company.
+    queryKey: ["maintenance", "maint-pm-due", companyId, "include-not-due"],
+    queryFn: () => listMaintPmDue(companyId, { includeNotDue: true }),
     enabled: Boolean(companyId),
     retry: false,
   });

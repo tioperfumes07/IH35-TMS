@@ -886,8 +886,19 @@ export function getWoCostContext(operatingCompanyId: string) {
   return apiRequest<WoCostContextPayload>(`/api/v1/maintenance/wo-cost-context?${q.toString()}`);
 }
 
-export function listMaintPmDue(operatingCompanyId: string) {
+/**
+ * PM schedules for a company.
+ *
+ * `includeNotDue` matters more than it looks. /api/v1/maint/pm/due defaults to returning ONLY rows
+ * where is_due is true. That is right for a "how many are due" counter and WRONG for a COUNTDOWN,
+ * which by definition is about schedules that are NOT yet due — "12,000 mi left" only exists before
+ * the PM comes due. Without it the PM Countdown cards received an empty list on a healthy fleet and
+ * rendered "No active schedule", telling the operator to create schedules that already existed.
+ * Pass true for countdown//forecast surfaces; leave it off for due-now counts.
+ */
+export function listMaintPmDue(operatingCompanyId: string, opts: { includeNotDue?: boolean } = {}) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (opts.includeNotDue) q.set("include_not_due", "true");
   return apiRequest<{ rows: MaintPmDueRow[] }>(`/api/v1/maint/pm/due?${q.toString()}`);
 }
 
