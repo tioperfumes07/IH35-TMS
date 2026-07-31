@@ -50,7 +50,7 @@ export async function registerPlaidAdminRoutes(app: FastifyInstance) {
     if (!account) return reply.code(404).send({ error: "bank_account_not_found" });
     if (!account.plaid_item_id) return reply.code(400).send({ error: "bank_account_not_linked_to_plaid_item" });
 
-    const result = await syncTransactions(account.plaid_item_id);
+    const result = await syncTransactions(account.plaid_item_id, { actorUserUuid: user.uuid });
 
     await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [account.operating_company_id]);

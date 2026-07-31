@@ -1193,6 +1193,7 @@
     "1837": "1837-verify-pm-countdown-requests-not-due.mjs",
     "1838": "1838-verify-lst-picker01-termination-reason-inline-create.mjs",
     "1839": "1839-verify-page-header-subtitle-shrinks.mjs",
+    "1840": "1840-verify-bank-f15-plaid-sync-actor.mjs",
     "1841": "1841-verify-units-without-load-driver-nullif.mjs",
     "1842": "1842-verify-lst-picker01-payment-term-inline-create.mjs",
     "1846": "1846-verify-lst-picker01-equipment-type-inline-create.mjs",
