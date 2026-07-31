@@ -6,6 +6,7 @@
 import { useMemo, useState } from "react";
 import { createVendor } from "../../../api/mdata";
 import { useCatalogQuery } from "../../../hooks/useCatalogQuery";
+import { ReferenceSelect } from "../ReferenceSelect";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 
@@ -43,8 +44,12 @@ export function NewVendorDrawerForm({ operatingCompanyId, onCreated, onClose }: 
     companyId: operatingCompanyId,
     enabled: Boolean(operatingCompanyId),
   });
-  const vendorTypeNames = useMemo(
-    () => (vendorTypesQuery.data?.rows ?? []).map((r: Record<string, unknown>) => String(r.display_name ?? "")).filter(Boolean),
+  const vendorTypeOptions = useMemo(
+    () =>
+      (vendorTypesQuery.data?.rows ?? []).map((r: Record<string, unknown>) => {
+        const label = String(r.display_name ?? "");
+        return { value: label, label };
+      }).filter((opt) => opt.label),
     [vendorTypesQuery.data]
   );
 
@@ -115,9 +120,26 @@ export function NewVendorDrawerForm({ operatingCompanyId, onCreated, onClose }: 
       </label>
       <label className="block">
         <span className="text-xs font-medium text-gray-700">Vendor type</span>
-        <select className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={form.vendorType} onChange={(e) => set("vendorType", e.target.value as VendorType)} aria-label="Vendor type">
-          {vendorTypeNames.map((t) => <option key={t} value={t}>{t}</option>)}
-        </select>
+        {/*
+          LST-PICKER-01 (guard 1860): InlineCreateDrawer nested vendor create had a bare <select>
+          with Lists-only type management. ReferenceSelect first-row create → POST catalogs.vendor_types
+          (same catalog VendorDetail@1852 and VendorCreateModal already read).
+        */}
+        <div className="mt-1">
+          <ReferenceSelect
+            value={form.vendorType}
+            onChange={(next) => set("vendorType", (next ?? "Other") as VendorType)}
+            options={vendorTypeOptions}
+            createKind="vendor_type"
+            operatingCompanyId={operatingCompanyId}
+            placeholder="Select vendor type…"
+            loading={vendorTypesQuery.isLoading}
+            onOptionCreated={(opt) => {
+              set("vendorType", opt.label);
+              void vendorTypesQuery.refetch();
+            }}
+          />
+        </div>
       </label>
       <label className="block">
         <span className="text-xs font-medium text-gray-700">Email</span>

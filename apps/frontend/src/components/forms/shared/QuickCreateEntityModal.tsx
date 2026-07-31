@@ -91,8 +91,12 @@ export function QuickCreateEntityModal({
     companyId: operatingCompanyId,
     enabled: open && kind === "vendor" && Boolean(operatingCompanyId),
   });
-  const vendorTypeNames = useMemo(
-    () => (vendorTypesQuery.data?.rows ?? []).map((r: Record<string, unknown>) => String(r.display_name ?? "")).filter(Boolean),
+  const vendorTypeOptions = useMemo(
+    () =>
+      (vendorTypesQuery.data?.rows ?? []).map((r: Record<string, unknown>) => {
+        const label = String(r.display_name ?? "");
+        return { value: label, label };
+      }).filter((opt) => opt.label),
     [vendorTypesQuery.data]
   );
   const [saving, setSaving] = useState(false);
@@ -120,6 +124,7 @@ export function QuickCreateEntityModal({
       detailType: "",
     },
   });
+  const vendorType = form.watch("vendorType") ?? "Other";
 
   // category: live COA Detail Type taxonomy — same source the Chart-of-Accounts page uses
   // (catalogs.account_types via fetchAccountTypeCatalog), filtered by the chosen account type.
@@ -343,11 +348,25 @@ export function QuickCreateEntityModal({
         {kind === "vendor" ? (
           <label className="block">
             <span className="text-xs font-medium text-gray-600">Vendor type</span>
-            <select className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" {...form.register("vendorType")} aria-label="Quick create vendor type">
-              {vendorTypeNames.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
+            {/*
+              LST-PICKER-01 (guard 1860): QuickCreateEntityModal vendor path had bare <select> with no
+              inline create. ReferenceSelect first-row create → POST catalogs.vendor_types.
+            */}
+            <div className="mt-1">
+              <ReferenceSelect
+                value={vendorType}
+                onChange={(next) => form.setValue("vendorType", next ?? "Other")}
+                options={vendorTypeOptions}
+                createKind="vendor_type"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Select vendor type…"
+                loading={vendorTypesQuery.isLoading}
+                onOptionCreated={(opt) => {
+                  form.setValue("vendorType", opt.label);
+                  void vendorTypesQuery.refetch();
+                }}
+              />
+            </div>
           </label>
         ) : null}
 
