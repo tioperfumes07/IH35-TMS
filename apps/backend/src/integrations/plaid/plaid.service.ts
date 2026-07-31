@@ -527,7 +527,7 @@ export async function autoCategorize(
   return matched;
 }
 
-export async function syncTransactions(itemId: string) {
+export async function syncTransactions(itemId: string, opts?: { actorUserUuid?: string }) {
   const plaid = getPlaidClient();
   const accountRows = await withLuciaBypass(async (client) => {
     const res = await client.query<{
@@ -688,11 +688,14 @@ export async function syncTransactions(itemId: string) {
               normalizedDescription,
             });
             counts.autoCategorizeTotal += 1;
-            const matched = await autoCategorize({
-              id: row.id,
-              operating_company_id: row.operating_company_id,
-              plaid_category: row.plaid_category ?? [],
-            });
+            const matched = await autoCategorize(
+              {
+                id: row.id,
+                operating_company_id: row.operating_company_id,
+                plaid_category: row.plaid_category ?? [],
+              },
+              { actorUserUuid: opts?.actorUserUuid }
+            );
             if (matched) counts.autoCategorizeMatched += 1;
             else counts.autoCategorizeUnmatched += 1;
           }

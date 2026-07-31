@@ -136,6 +136,8 @@ export async function processPlaidWebhookAsync(body: z.infer<typeof plaidWebhook
       webhookType === "TRANSACTIONS" &&
       ["DEFAULT_UPDATE", "INITIAL_UPDATE", "SYNC_UPDATES_AVAILABLE", "HISTORICAL_UPDATE"].includes(webhookCode)
     ) {
+      // BANK-F15: Plaid webhooks have no authenticated user — sync tags via CHAIN-05 rules only;
+      // maybePostBankCategorizationToGl is skipped (no invented system user). Admin manual sync passes actor.
       if (itemId) await syncTransactions(itemId);
       return;
     }
