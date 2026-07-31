@@ -1219,6 +1219,7 @@
     "1884": "1884-verify-lst-picker01-new-account-parent-inline-create.mjs",
     "1886": "1886-verify-lst-picker01-account-drawer-parent-inline-create.mjs",
     "1888": "1888-verify-lst-picker01-default-account-inline-create.mjs",
+    "1890": "1890-verify-lst-picker01-quickcreate-item-account-inline-create.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",

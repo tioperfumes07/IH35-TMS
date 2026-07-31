@@ -8,7 +8,7 @@ import { createVendor, createCustomer } from "../../../api/mdata";
 import { chartOfAccountsCatalogClient, classesCatalogClient, itemsCatalogClient } from "../../../api/catalogs-accounting";
 import { fetchAccountTypeCatalog, detailTypesForAccountType, ACCOUNT_TYPE_GROUPS } from "../../../api/coa-list";
 import { getCoaAccounts } from "../../../api/banking";
-import { Combobox, type ComboboxOption } from "../../../components/Combobox";
+import { type ComboboxOption } from "../../../components/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
@@ -460,20 +460,28 @@ export function QuickCreateEntityModal({
             </div>
             {/* FIX-03: income account is REQUIRED (a product/service maps to a sales income account in QBO);
             the picker is populated from catalogs.accounts and the id persists on the item. */}
-            <label className="block">
+            <label className="block" data-testid="quick-create-item-income-account">
               <span className="text-xs font-medium text-gray-600">
                 Income account *{" "}
                 <span className="font-normal text-gray-400">(carrier default: Service income)</span>
               </span>
               <div className="mt-1">
-                <Combobox
-                  options={incomeOptions}
+                {/*
+                  LST-PICKER-01: bare Combobox → ReferenceSelect createKind=account
+                  (parity ItemEditorModal / NewServiceDrawerForm).
+                */}
+                <ReferenceSelect
+                  options={incomeOptions.map((o) => ({ value: o.value, label: o.label, type: o.sublabel }))}
                   value={incomeAccountId}
                   onChange={setIncomeAccountId}
+                  createKind="account"
+                  operatingCompanyId={operatingCompanyId}
                   placeholder="Select income account"
                   loading={accountsQuery.isLoading}
-                  allowClear
-                  dataField="quick-create-income-account"
+                  onOptionCreated={() => {
+                    void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId] });
+                    void queryClient.invalidateQueries({ queryKey: ["catalog-accounts"] });
+                  }}
                 />
               </div>
             </label>
@@ -482,17 +490,21 @@ export function QuickCreateEntityModal({
               I purchase this product/service from a vendor
             </label>
             {buyEnabled ? (
-              <label className="block">
+              <label className="block" data-testid="quick-create-item-expense-account">
                 <span className="text-xs font-medium text-gray-600">Expense / COGS account *</span>
                 <div className="mt-1">
-                  <Combobox
-                    options={expenseOptions}
+                  <ReferenceSelect
+                    options={expenseOptions.map((o) => ({ value: o.value, label: o.label, type: o.sublabel }))}
                     value={expenseAccountId}
                     onChange={setExpenseAccountId}
+                    createKind="account"
+                    operatingCompanyId={operatingCompanyId}
                     placeholder="Select expense account"
                     loading={accountsQuery.isLoading}
-                    allowClear
-                    dataField="quick-create-expense-account"
+                    onOptionCreated={() => {
+                      void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId] });
+                      void queryClient.invalidateQueries({ queryKey: ["catalog-accounts"] });
+                    }}
                   />
                 </div>
               </label>
