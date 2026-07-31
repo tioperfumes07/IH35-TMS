@@ -293,8 +293,31 @@ export function CreateWOSectionIdentification({
               <input {...register("roadside_arrived_at")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
             )}
           </Field>
-          <Field label="Roadside Provider Vendor ID *">
-            <input {...register("roadside_provider_vendor_id")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+          <Field label="Roadside Provider Vendor *">
+            {/*
+              LST-PICKER-01 (guard 1868): free-text UUID for roadside_provider_vendor_id.
+              Backend joins mdata.vendors (work-orders.service.ts) and requires the id for
+              roadside WOs. ReferenceSelect createKind=vendor — same options as shop vendor above.
+            */}
+            {setValue && operatingCompanyId ? (
+              <div data-testid="wo-roadside-provider-vendor-select">
+                <ReferenceSelect
+                  value={watch("roadside_provider_vendor_id") || null}
+                  onChange={(next) => setValue("roadside_provider_vendor_id", next ?? "", { shouldDirty: true })}
+                  options={vendorOptions}
+                  createKind="vendor"
+                  operatingCompanyId={operatingCompanyId}
+                  placeholder={vendorsQuery.isLoading ? "Loading vendors…" : "Select roadside vendor…"}
+                  loading={vendorsQuery.isLoading}
+                  onOptionCreated={async (opt) => {
+                    setValue("roadside_provider_vendor_id", opt.value, { shouldDirty: true });
+                    await queryClient.invalidateQueries({ queryKey: ["maintenance", "vendors", operatingCompanyId, "create-wo-id"] });
+                  }}
+                />
+              </div>
+            ) : (
+              <input {...register("roadside_provider_vendor_id")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+            )}
           </Field>
           <Field label="Breakdown Load ID *">
             <input {...register("roadside_breakdown_load_id")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
