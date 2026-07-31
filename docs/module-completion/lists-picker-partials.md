@@ -21,3 +21,4 @@
 - 2026-07-31 · guard 1852 · VendorDetail Profile → `createKind=vendor_type` (catalogs.vendor_types; not labor — #3877 owns labor_code@1850) · PR pending
 - 2026-07-31 · guard 1856 · ExpensiveStatesMultiselect → `createKind=fuel_expensive_state` · PR pending
 - 2026-07-31 · guard 1858 · WarrantyClaimsPage vendor picker FK-mismatch fix → `createKind=vendor` (`mdata.vendors`, matches `maintenance.warranty_claims.vendor_id` FK; was wrongly reading `catalogs.maintenance_vendors`) · PR pending
+- 2026-07-31 · guard 1860 · NewVendorDrawerForm + QuickCreateEntityModal → `createKind=vendor_type` (nested vendor create paths; guard 1852 wired VendorDetail/VendorCreateModal only) · PR pending

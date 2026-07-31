@@ -1204,6 +1204,7 @@
     "1854": "1854-verify-vendor-type-check-relaxed.mjs",
     "1856": "1856-verify-lst-picker01-fuel-expensive-state-inline-create.mjs",
     "1858": "1858-verify-lst-picker01-warranty-vendor-fk-parity.mjs",
+    "1860": "1860-verify-lst-picker01-new-vendor-drawer-vendor-type-inline-create.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
