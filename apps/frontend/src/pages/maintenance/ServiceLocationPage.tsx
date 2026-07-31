@@ -100,7 +100,14 @@ export function ServiceLocationPage({ operatingCompanyId }: Props) {
           rows={rows}
           rowKey={(row) => `${row.service_location}-${row.bucket}`}
           loading={rowsQuery.isLoading}
-          emptyText="Active work orders grouped by service location will render here."
+          // "will render here" is BUILD-PLACEHOLDER language on a surface that is fully wired: this
+          // table has live queries, columns, export and pagination. It reads as "not implemented yet"
+          // when the truth is "implemented, nothing open right now" — the same defect class as the PM
+          // Countdown saying "No active schedule" for schedules that existed. Every other future-tense
+          // empty state in the app names a CONDITION ("once periods are created", "when a driver exceeds
+          // FMCSA limits"); that is what makes them informative rather than discouraging. This one had
+          // none, so it named no condition and implied absent functionality.
+          emptyText="No active work orders. Open work orders are grouped here by service location."
           storageKey="maint-service-location"
           exportFilename="service-location"
         />
