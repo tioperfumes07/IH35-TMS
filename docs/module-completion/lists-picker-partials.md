@@ -36,3 +36,6 @@
 - 2026-07-31 · guard 1876 · NewServiceDrawerForm category (qbo_categories allowAddNew) + class `createKind=class` + persist category_id/default_class_id · PR pending
 
 - 2026-07-31 · guard 1878 · CostBreakdownBox parts row: createKind=item→part (`maintenance.parts_inventory`; label was "+ Add new part" but wrote catalogs.items) · PR pending
+- 2026-07-31 · guard 1878 · CostBreakdownBox parts → `createKind=part` (`maintenance.parts_inventory`; was createKind=item) · PR #3900
+
+- 2026-07-31 · guard 1882 · DriverDetail Profile Class (TMS catalog) → `createKind=class` (`catalogs.classes`; was bare SelectCombobox) · PR pending
