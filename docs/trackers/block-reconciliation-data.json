@@ -1,6 +1,6 @@
 {
  "date": "2026-07-31",
- "generated_at_iso": "2026-07-31T10:29:10.833Z",
+ "generated_at_iso": "2026-07-31T22:32:16.410Z",
  "counts": {
   "PENDING": 19,
   "PENDING (GATED)": 28,
@@ -13478,6 +13478,246 @@
  ],
  "merged_prs": [
   {
+   "number": 3924,
+   "title": "Cursor- fix(ci): TOOL-F03 stop CLAIMED-NUMBERS conflict treadmill (1906)",
+   "mergedAt": "2026-07-31T22:31:12Z",
+   "branch": "fix/tool-f03-no-claimed-registry-require"
+  },
+  {
+   "number": 3921,
+   "title": "Claude- fix(maintenance): 2 phantom-column 500s + the guard flagged its own fix notes",
+   "mergedAt": "2026-07-31T22:24:07Z",
+   "branch": "claude/maint-phantom-columns-batch2"
+  },
+  {
+   "number": 3920,
+   "title": "Claude- docs(trackers): correct a bare count I got wrong, and open BOL-COMMODITY-01",
+   "mergedAt": "2026-07-31T21:43:41Z",
+   "branch": "claude/tracker-live-vs-total-counts"
+  },
+  {
+   "number": 3919,
+   "title": "Claude- fix(dispatch): 8 phantom-column 500s + the guard bug that inflated the backlog by 16",
+   "mergedAt": "2026-07-31T21:43:08Z",
+   "branch": "claude/dispatch-phantom-columns-batch1"
+  },
+  {
+   "number": 3918,
+   "title": "Cursor- fix(accounting): LEASE-BRIDGE CoA keep broker role + applied_held (1902)",
+   "mergedAt": "2026-07-31T22:31:19Z",
+   "branch": "fix/lease-bridge-coa-keep-broker-role"
+  },
+  {
+   "number": 3916,
+   "title": "Claude- fix(maintenance): PM auto-engine reported 3,554 clean successes and created nothing (MAINT-PM-ENGINE-01)",
+   "mergedAt": "2026-07-31T22:01:10Z",
+   "branch": "claude/maint-pm-engine-01-run-honesty"
+  },
+  {
+   "number": 3915,
+   "title": "Cursor- fix(dispatch): DISP-FILTER-01 mdata status contract (1898)",
+   "mergedAt": "2026-07-31T21:32:23Z",
+   "branch": "fix/disp-filter-01-mdata-status-contract"
+  },
+  {
+   "number": 3914,
+   "title": "Claude- docs: re-scope the 76 dispatch+maintenance items to the empty-state DoD (sweep blocked on data)",
+   "mergedAt": "2026-07-31T21:11:18Z",
+   "branch": "docs/disp-maint-surface-sweep-blocked-on-data"
+  },
+  {
+   "number": 3913,
+   "title": "Cursor- fix(accounting): ACCT-R-24 CoA CHECK live-role superset + Neon evidence (1900)",
+   "mergedAt": "2026-07-31T22:31:24Z",
+   "branch": "fix/acct-r24-coa-superset-scoreboard"
+  },
+  {
+   "number": 3912,
+   "title": "Claude- fix(ci): verify-step 1643 selftest was red on main, blocking every push",
+   "mergedAt": "2026-07-31T21:11:15Z",
+   "branch": "fix/verify-1643-selftest-stale-good-fixture"
+  },
+  {
+   "number": 3911,
+   "title": "Cursor- fix(lists): LST-PICKER-01 FineCreateModal driver EntityPicker (1896)",
+   "mergedAt": "2026-07-31T21:11:38Z",
+   "branch": "fix/lst-picker01-fine-create-driver-1896"
+  },
+  {
+   "number": 3910,
+   "title": "Claude- fix(maintenance): Parts grid hid the real part_number and clipped the Adjust Qty control",
+   "mergedAt": "2026-07-31T21:11:22Z",
+   "branch": "claude/parts-inventory-part-number-column"
+  },
+  {
+   "number": 3909,
+   "title": "fix(lists): LST-PICKER-01 WO create category/item createKind (1894)",
+   "mergedAt": "2026-07-31T17:48:13Z",
+   "branch": "fix/lst-picker01-wo-create-category-item-1894"
+  },
+  {
+   "number": 3908,
+   "title": "fix(lists): LST-PICKER-01 PostingTemplateModal class createKind (1892)",
+   "mergedAt": "2026-07-31T17:08:07Z",
+   "branch": "fix/lst-picker01-posting-template-class-1892"
+  },
+  {
+   "number": 3907,
+   "title": "fix(lists): LST-PICKER-01 QuickCreate item account createKind (1890)",
+   "mergedAt": "2026-07-31T16:52:12Z",
+   "branch": "fix/lst-picker01-quickcreate-item-account-1890"
+  },
+  {
+   "number": 3906,
+   "title": "Claude- fix(maintenance): Service/Location empty state read as unbuilt on a fully wired surface",
+   "mergedAt": "2026-07-31T17:56:26Z",
+   "branch": "claude/mnt-service-location-empty-copy"
+  },
+  {
+   "number": 3905,
+   "title": "fix(lists): LST-PICKER-01 vendor/customer default account createKind (1888)",
+   "mergedAt": "2026-07-31T16:35:46Z",
+   "branch": "fix/lst-picker01-default-account-1888"
+  },
+  {
+   "number": 3904,
+   "title": "fix(lists): LST-PICKER-01 AccountDrawer parent createKind (1886)",
+   "mergedAt": "2026-07-31T16:21:40Z",
+   "branch": "fix/lst-picker01-account-drawer-parent-1886"
+  },
+  {
+   "number": 3903,
+   "title": "fix(lists): LST-PICKER-01 NewAccountDrawer parent createKind (1884)",
+   "mergedAt": "2026-07-31T15:52:30Z",
+   "branch": "fix/lst-picker01-new-account-parent-1884"
+  },
+  {
+   "number": 3902,
+   "title": "fix(drivers): LST-PICKER-01 DriverDetail class createKind (1882)",
+   "mergedAt": "2026-07-31T15:37:41Z",
+   "branch": "fix/lst-picker01-driver-class-1882"
+  },
+  {
+   "number": 3901,
+   "title": "feat(accounting): LEASE-BRIDGE activate ASC 842 operating JEs (1880)",
+   "mergedAt": "2026-07-31T21:11:25Z",
+   "branch": "fix/lease-bridge-activate-operating-jes"
+  },
+  {
+   "number": 3900,
+   "title": "fix(maintenance): LST-PICKER-01 CostBreakdownBox part createKind (1878)",
+   "mergedAt": "2026-07-31T15:23:36Z",
+   "branch": "fix/lst-picker01-cost-part-kind-1878"
+  },
+  {
+   "number": 3899,
+   "title": "Claude- fix(pickers): 8 customer pickers capped at 200 while prod has 2,693 customers (SAF-B29)",
+   "mergedAt": "2026-07-31T16:11:30Z",
+   "branch": "claude/b29-customer-picker-200-cap"
+  },
+  {
+   "number": 3898,
+   "title": "CURSOR- fix(lists): LST-PICKER-01 NewServiceDrawerForm class + category (guard 1876)",
+   "mergedAt": "2026-07-31T15:10:25Z",
+   "branch": "fix/lst-picker01-service-class-1876"
+  },
+  {
+   "number": 3897,
+   "title": "Claude- fix(safety): the Forfeiture Audit swallowed every timeline failure into 'no forfeitures' (SAF-ORPH-03)",
+   "mergedAt": "2026-07-31T15:03:07Z",
+   "branch": "claude/orph03-escrow-timeline-no-swallow"
+  },
+  {
+   "number": 3896,
+   "title": "CURSOR- fix(lists): LST-PICKER-01 NewServiceDrawerForm preferred vendor (guard 1874)",
+   "mergedAt": "2026-07-31T14:58:00Z",
+   "branch": "fix/lst-picker01-service-vendor-1874"
+  },
+  {
+   "number": 3895,
+   "title": "Claude- docs(trackers): creating a truck lease in Legal writes NO accounting subledger (LEASE-BRIDGE)",
+   "mergedAt": "2026-07-31T15:03:14Z",
+   "branch": "claude/lease-bridge-gap-tracker"
+  },
+  {
+   "number": 3894,
+   "title": "CURSOR- fix(lists): LST-PICKER-01 NewServiceDrawerForm account inline create (guard 1872)",
+   "mergedAt": "2026-07-31T14:43:17Z",
+   "branch": "fix/lst-picker01-service-account-1872"
+  },
+  {
+   "number": 3893,
+   "title": "CURSOR- fix(customers): LST-PICKER-01 parent customer inline create (guard 1870)",
+   "mergedAt": "2026-07-31T14:25:14Z",
+   "branch": "fix/lst-picker01-parent-customer-1870"
+  },
+  {
+   "number": 3892,
+   "title": "CURSOR- fix(maintenance): LST-PICKER-01 Create WO roadside vendor inline create (guard 1868)",
+   "mergedAt": "2026-07-31T14:09:21Z",
+   "branch": "fix/lst-picker01-wo-roadside-vendor-1868"
+  },
+  {
+   "number": 3891,
+   "title": "CURSOR- fix(maintenance): LST-PICKER-01 road-service vendor_id + inline create (guard 1866)",
+   "mergedAt": "2026-07-31T13:52:21Z",
+   "branch": "fix/lst-picker01-road-service-vendor-1866"
+  },
+  {
+   "number": 3890,
+   "title": "CURSOR- fix(lists): LST-PICKER-01 insurance coverage type inline create (guard 1864)",
+   "mergedAt": "2026-07-31T13:33:26Z",
+   "branch": "fix/lst-picker01-insurance-coverage-type-1864"
+  },
+  {
+   "number": 3889,
+   "title": "CURSOR- fix(lists): LST-PICKER-01 tire brand inline create (guard 1862)",
+   "mergedAt": "2026-07-31T13:05:41Z",
+   "branch": "fix/lst-picker01-next-1862"
+  },
+  {
+   "number": 3888,
+   "title": "Claude- fix(ui): the SECOND PageHeader let its subtitle wrap and squeeze the title (/dispatch)",
+   "mergedAt": "2026-07-31T14:32:27Z",
+   "branch": "claude/layout-pageheader-title-squeeze"
+  },
+  {
+   "number": 3887,
+   "title": "CURSOR- fix(lists): LST-PICKER-01 nested vendor create vendor_type inline create (guard 1860)",
+   "mergedAt": "2026-07-31T12:26:34Z",
+   "branch": "fix/lst-picker01-next-1860"
+  },
+  {
+   "number": 3886,
+   "title": "CURSOR- fix(maintenance): LST-PICKER-01 warranty vendor FK-mismatch fix (guard 1858)",
+   "mergedAt": "2026-07-31T12:02:48Z",
+   "branch": "fix/lst-picker01-next-1858"
+  },
+  {
+   "number": 3885,
+   "title": "CURSOR- fix(lists): LST-PICKER-01 fuel expensive state inline create (guard 1856)",
+   "mergedAt": "2026-07-31T11:06:06Z",
+   "branch": "fix/lst-picker01-next-1856"
+  },
+  {
+   "number": 3884,
+   "title": "CURSOR- fix(lists): LST-PICKER-01 vendor_type on VendorDetail (guard 1852)",
+   "mergedAt": "2026-07-31T10:48:25Z",
+   "branch": "fix/lst-picker01-next-1852-v2"
+  },
+  {
+   "number": 3882,
+   "title": "Claude- fix(ui): my own overlap fix truncated the page TITLE — \"Main…\" instead of \"Maintenance\"",
+   "mergedAt": "2026-07-31T12:44:28Z",
+   "branch": "claude/pageheader-title-priority"
+  },
+  {
+   "number": 3881,
+   "title": "Claude- feat(compliance): surface per-unit Form 2290 due dates in the banner (completes SAF-ORPH-04)",
+   "mergedAt": "2026-07-31T12:27:58Z",
+   "branch": "claude/orph04-per-unit-banner-ui"
+  },
+  {
    "number": 3880,
    "title": "Claude- fix(dispatch): every Unassigned Units row rendered \"T171 · · Need load\" (CONCAT_WS returns '', not NULL)",
    "mergedAt": "2026-07-31T06:18:08Z",
@@ -13578,6 +13818,12 @@
    "title": "Claude- docs(safety): SAF-B05 and SAF-B23 FAILs are stale — both defects verified gone (safety 20→22 of 38)",
    "mergedAt": "2026-07-31T02:08:31Z",
    "branch": "claude/saf-b05-b23-stale-fail-flip"
+  },
+  {
+   "number": 3853,
+   "title": "Claude- fix(accounting): canonical lease model cannot hold an intercompany lessee or a trailer (ACCT-F54 / LEASE-06)",
+   "mergedAt": "2026-07-31T14:32:34Z",
+   "branch": "claude/lease06-canonical-extension"
   },
   {
    "number": 3852,
@@ -16830,252 +17076,6 @@
    "title": "fix(accounting): invoice create income CoA picker + load link (15/24)",
    "mergedAt": "2026-07-23T05:36:13Z",
    "branch": "fix/acct-invoice-create-coa"
-  },
-  {
-   "number": 3246,
-   "title": "fix(accounting): CC Bill Payment account picker +Create / QBO chrome (17/24)",
-   "mergedAt": "2026-07-23T10:46:19Z",
-   "branch": "fix/acct-cc-bill-payment-picker"
-  },
-  {
-   "number": 3245,
-   "title": "fix(accounting): Bill void UI wired to governed void (14/24)",
-   "mergedAt": "2026-07-23T03:29:38Z",
-   "branch": "fix/acct-bill-void-ui"
-  },
-  {
-   "number": 3244,
-   "title": "fix(accounting): Expense list JE/vendor reverse columns (18/24)",
-   "mergedAt": "2026-07-23T03:08:31Z",
-   "branch": "fix/acct-expense-list-reverse"
-  },
-  {
-   "number": 3243,
-   "title": "fix(accounting): Multiple Bills row parity with VendorBillForm (10/24)",
-   "mergedAt": "2026-07-23T10:46:12Z",
-   "branch": "fix/acct-multi-bills-parity"
-  },
-  {
-   "number": 3242,
-   "title": "fix(accounting): Templates tab in Accounting SUBNAV (16/24)",
-   "mergedAt": "2026-07-23T03:01:11Z",
-   "branch": "fix/acct-posting-templates-subnav"
-  },
-  {
-   "number": 3241,
-   "title": "fix(accounting): Bill Total equals line sum when tax display-only (13/24)",
-   "mergedAt": "2026-07-23T03:01:03Z",
-   "branch": "fix/acct-bill-total-tax-lie"
-  },
-  {
-   "number": 3240,
-   "title": "fix(catalogs): scope listCatalogAccounts on money-adjacent pickers (11/24)",
-   "mergedAt": "2026-07-23T03:00:58Z",
-   "branch": "fix/acct-catalog-scope"
-  },
-  {
-   "number": 3239,
-   "title": "fix(accounting): Recurring Bill wizard line CoA + generate bill_lines (9/24)",
-   "mergedAt": "2026-07-23T03:00:52Z",
-   "branch": "fix/acct-recurring-bill-wizard"
-  },
-  {
-   "number": 3238,
-   "title": "fix(accounting): Receive Payment deposit CoA picker (7/24)",
-   "mergedAt": "2026-07-23T03:00:45Z",
-   "branch": "fix/acct-receive-payment-deposit"
-  },
-  {
-   "number": 3237,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-23T02:35:17Z",
-   "branch": "chore/tracker-artifacts-sync-29952475747"
-  },
-  {
-   "number": 3236,
-   "title": "fix(accounting): A/P picker createKind=account (8/24)",
-   "mergedAt": "2026-07-23T03:00:11Z",
-   "branch": "fix/acct-ap-createkind-account"
-  },
-  {
-   "number": 3235,
-   "title": "fix(accounting): Pay Bill bank picker +Create / QBO chrome (6/24)",
-   "mergedAt": "2026-07-23T03:49:35Z",
-   "branch": "fix/acct-pay-bill-bank-picker"
-  },
-  {
-   "number": 3234,
-   "title": "fix(accounting): Vendor Bill/Expense QBO wizard + USMCA catalogs (5/24)",
-   "mergedAt": "2026-07-23T03:49:56Z",
-   "branch": "fix/acct-wizard-qbo-parity"
-  },
-  {
-   "number": 3233,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-22T19:22:39Z",
-   "branch": "chore/tracker-artifacts-sync-29949191374"
-  },
-  {
-   "number": 3232,
-   "title": "feat(accounting): Allocations page — list + SUBNAV (3/24)",
-   "mergedAt": "2026-07-23T02:57:25Z",
-   "branch": "fix/acct-allocations"
-  },
-  {
-   "number": 3231,
-   "title": "feat(accounting): Manual JE create on Accounting hub (4/6)",
-   "mergedAt": "2026-07-22T21:56:12Z",
-   "branch": "fix/acct-manual-je-hub"
-  },
-  {
-   "number": 3230,
-   "title": "fix(accounting): Bill Payment reverse — detail + register (2/6)",
-   "mergedAt": "2026-07-22T19:13:35Z",
-   "branch": "fix/acct-bill-payment-reverse"
-  },
-  {
-   "number": 3229,
-   "title": "fix(accounting): Bill detail reverse — lines + JE (1/6)",
-   "mergedAt": "2026-07-22T19:07:41Z",
-   "branch": "fix/acct-bill-detail-reverse"
-  },
-  {
-   "number": 3228,
-   "title": "fix(insurance): WIZARD-CLAIM-ECONOMICS-DEPTH slice 2 — fault/responsibility/trailer/deductible/recovery/books [HOLD / FINANCIAL]",
-   "mergedAt": "2026-07-22T19:01:07Z",
-   "branch": "fix/wizard-claim-economics-slice2-20260722"
-  },
-  {
-   "number": 3227,
-   "title": "fix(accounting): DUALPATH-08 — redirect recurring-transactions to Live RecurringBillList",
-   "mergedAt": "2026-07-22T16:53:14Z",
-   "branch": "fix/dualpath-08-recurring-transactions-redirect-20260722"
-  },
-  {
-   "number": 3226,
-   "title": "fix(security): rate limits were bucketing the whole internet into Cloudflare's egress IPs",
-   "mergedAt": "2026-07-22T16:50:48Z",
-   "branch": "fix/rate-limit-client-ip-behind-cloudflare"
-  },
-  {
-   "number": 3225,
-   "title": "fix(insurance): WIZARD-CLAIM-ECONOMICS-DEPTH slice 1 — claim↔load reverse filter + nested driver create",
-   "mergedAt": "2026-07-22T16:43:37Z",
-   "branch": "fix/claim-create-ops-fks-20260722"
-  },
-  {
-   "number": 3224,
-   "title": "fix(linkage): LAW OF THE LAND §9 — driver settlements domain reverse+forward drills",
-   "mergedAt": "2026-07-22T16:52:55Z",
-   "branch": "fix/law9-settlements-domain-driver-profile-linkage"
-  },
-  {
-   "number": 3223,
-   "title": "WIZARD-CASH-ADVANCE-CREATE-DEPTH — purpose→economics, recovery modes, bank/load/unit",
-   "mergedAt": "2026-07-22T17:10:08Z",
-   "branch": "fix/wizard-cash-advance-create-depth"
-  },
-  {
-   "number": 3222,
-   "title": "fix(fleet): DUALPATH-06/07 — remove dual-render of old Recent Activity widgets",
-   "mergedAt": "2026-07-22T15:59:24Z",
-   "branch": "fix/fleet-profile-dual-path-activity-20260722"
-  },
-  {
-   "number": 3221,
-   "title": "fix(legal): matter → lawsuit EntityLink reverse drill (Law §9 Claim-Legal path)",
-   "mergedAt": "2026-07-22T15:54:03Z",
-   "branch": "fix/law9-claim-legal-lawsuit-entitylink"
-  },
-  {
-   "number": 3220,
-   "title": "docs(audit): system-wide DUAL_PATH / OLD-vs-NEW design audit (2026-07-22)",
-   "mergedAt": "2026-07-22T18:40:25Z",
-   "branch": "docs/dual-path-old-vs-new-audit-20260722"
-  },
-  {
-   "number": 3219,
-   "title": "fix(ci): main is RED — two guards assert opposite values of CC_BILL_PAYMENT_GATED",
-   "mergedAt": "2026-07-22T15:13:53Z",
-   "branch": "fix/main-red-guard-gate-conflict"
-  },
-  {
-   "number": 3218,
-   "title": "fix(ui): PLUS-DRIVER-SYSTEM — CreateDriverModal nested +Create on all create-worthy pickers",
-   "mergedAt": "2026-07-22T16:17:57Z",
-   "branch": "fix/plus-driver-money-nested-create"
-  },
-  {
-   "number": 3217,
-   "title": "fix(ui): CHROME-14 — remaining money/ops Modal shells → ParityDrawer",
-   "mergedAt": "2026-07-22T14:50:35Z",
-   "branch": "fix/chrome-14-remaining-modal-shells"
-  },
-  {
-   "number": 3216,
-   "title": "fix(guards): add the missing --selftest to the CHROME-11 nested-create guard",
-   "mergedAt": "2026-07-22T14:47:58Z",
-   "branch": "fix/chrome-11-guard-selftest"
-  },
-  {
-   "number": 3215,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-22T14:45:05Z",
-   "branch": "chore/tracker-artifacts-sync-29928744696"
-  },
-  {
-   "number": 3214,
-   "title": "fix(ui-chrome): CHROME-06 — collapse remaining always-on filters on Maint/Fleet/Ops (WO tables, FleetTable, Road Service, Driver Reports, Maint KPI, Defects Inb",
-   "mergedAt": "2026-07-22T14:48:07Z",
-   "branch": "fix/chrome-06-maint-fleet-ops-filters"
-  },
-  {
-   "number": 3213,
-   "title": "fix(accounting): owner GO — ungate CC bill pay + account create; driver picker audit",
-   "mergedAt": "2026-07-22T14:47:56Z",
-   "branch": "fix/owner-ungate-cc-account-create-driver-audit"
-  },
-  {
-   "number": 3212,
-   "title": "fix(ui): CHROME-13-BILLPAY-UNIFY — sticky footer chrome across bill-payment drawers",
-   "mergedAt": "2026-07-22T14:40:13Z",
-   "branch": "fix/chrome-13-billpay-unify"
-  },
-  {
-   "number": 3211,
-   "title": "chore(deps): bump fast-uri from 3.1.3 to 3.1.4",
-   "mergedAt": "2026-07-22T14:40:02Z",
-   "branch": "dependabot/npm_and_yarn/fast-uri-3.1.4"
-  },
-  {
-   "number": 3210,
-   "title": "fix(ui): CHROME-12 — bank-transaction Split shell Modal→ParityDrawer",
-   "mergedAt": "2026-07-22T14:39:33Z",
-   "branch": "fix/chrome-12-money-modal-drawer"
-  },
-  {
-   "number": 3209,
-   "title": "fix(ui): CHROME-02 — migrate Dispatch FilterBar + SafetyDashboardFilter onto shared CollapsedListFilters",
-   "mergedAt": "2026-07-22T14:18:22Z",
-   "branch": "fix/chrome-02-qbo-filter-toolbar"
-  },
-  {
-   "number": 3208,
-   "title": "fix(ui): CHROME-11 — stop nested driver create Modal-on-drawer in Bill create",
-   "mergedAt": "2026-07-22T14:10:57Z",
-   "branch": "fix/chrome-11-nested-create-drawer"
-  },
-  {
-   "number": 3207,
-   "title": "fix(ui): CHROME-05 collapse planner UniversalFilterBar behind Filters popover",
-   "mergedAt": "2026-07-22T14:10:50Z",
-   "branch": "fix/chrome-05-universal-filterbar"
-  },
-  {
-   "number": 3206,
-   "title": "chore(deps): bump brace-expansion from 5.0.5 to 5.0.7 in /apps/driver-pwa in the npm_and_yarn group across 1 directory",
-   "mergedAt": "2026-07-22T14:10:33Z",
-   "branch": "dependabot/npm_and_yarn/apps/driver-pwa/npm_and_yarn-7429694490"
   }
  ],
  "merged_pr_total": 3000,
@@ -17096,6 +17096,12 @@
    "number": 3868,
    "title": "CURSOR- feat(accounting): ACCT-F24 POD auto-send (FINANCIAL-HOLD)",
    "mergedAt": "2026-07-31T05:11:12Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3853,
+   "title": "Claude- fix(accounting): canonical lease model cannot hold an intercompany lessee or a trailer (ACCT-F54 / LEASE-06)",
+   "mergedAt": "2026-07-31T14:32:34Z",
    "category": "HOLD"
   },
   {
