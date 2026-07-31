@@ -141,6 +141,14 @@ export type InTransitIssue = {
 export type PartsInventoryRow = {
   id: string;
   operating_company_id: string;
+  /**
+   * The real part number. maintenance.parts_inventory has carried a part_number column all along and the
+   * endpoint does SELECT *, so this was already on the wire — it simply was not typed, so nothing could
+   * render it. Meanwhile the SKU was being written INTO part_description as a bracketed prefix
+   * ("[MMY-VOLVO_TRUCK-VNR-2024-WHEEL-BEARING-SVC] VOLVO TRUCK VNR 2024 Wheel Bearing Service Kit"),
+   * which wrapped to eight lines and made the Part column unreadable.
+   */
+  part_number: string | null;
   part_description: string;
   vendor_id: string | null;
   last_purchase_invoice_number: string | null;

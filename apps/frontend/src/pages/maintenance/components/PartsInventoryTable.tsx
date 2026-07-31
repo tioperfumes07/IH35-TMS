@@ -101,7 +101,12 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
   }, [rows, search, vendorNameById]);
 
   const columns: Array<ParityColumn<PartsInventoryRow>> = [
-    { key: "part_description", label: "Part", sortable: true },
+    // Part # is its OWN column, matching how McLeod and NetSuite parts grids are laid out: a scannable
+    // identifier column beside a human description. The column already exists on
+    // maintenance.parts_inventory and the endpoint SELECT *s it — it was just never typed or rendered,
+    // so the SKU ended up embedded in part_description and wrapped across eight lines.
+    { key: "part_number", label: "Part #", sortable: true, render: (row) => row.part_number ?? "—" },
+    { key: "part_description", label: "Description", sortable: true },
     { key: "on_hand_qty", label: "On Hand", sortable: true },
     {
       key: "vendor_id",
@@ -119,7 +124,9 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
   ];
 
   const rowActions = (row: PartsInventoryRow) => (
-    <button className="text-slate-600 underline" onClick={() => setAdjustRow(row)} type="button">
+    // whitespace-nowrap: the actions column is narrow, so "Adjust Qty" wrapped to two lines and the
+    // second line was clipped by the table edge — the control rendered as "Adjus / Qty", cut off.
+    <button className="whitespace-nowrap text-slate-600 underline" onClick={() => setAdjustRow(row)} type="button">
       Adjust Qty
     </button>
   );
