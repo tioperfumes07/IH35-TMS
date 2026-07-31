@@ -9,15 +9,18 @@
  * account ids PERSIST onto catalogs.items.default_income_account_id / default_expense_account_id
  * (metadata keys the /catalogs/accounting/items backend maps straight to columns). Previously the
  * account was a free-text box that was DROPPED at create — the item saved with no GL mapping.
+ * LST-PICKER-01 (guard 1872): nested InlineCreateDrawer path now uses ReferenceSelect
+ * createKind=account (same as ItemEditorModal) — bare Combobox had no "+ Add new account".
  */
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { itemsCatalogClient } from "../../../api/catalogs-accounting";
 import { getCoaAccounts } from "../../../api/banking";
-import { Combobox, type ComboboxOption } from "../../Combobox";
 import { MoneyInput } from "../../forms/MoneyInput";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
+import { ReferenceSelect } from "../ReferenceSelect";
+import type { ReferenceOption } from "../ReferenceSelect";
 
 // FIX-03: mirror ItemEditorModal's account-type filters + carrier default so the two Product/Service
 // creators behave identically (QBO parity: an item's income account is a referenced record, not text).
@@ -55,6 +58,7 @@ type FormState = {
 
 export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }: Props) {
   const { pushToast } = useToast();
+  const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<FormState>({
     name: "",
@@ -80,20 +84,24 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
     enabled: !!operatingCompanyId,
   });
   const accounts = accountsQuery.data?.accounts ?? [];
-  const incomeOptions: ComboboxOption[] = useMemo(
+  const incomeOptions: ReferenceOption[] = useMemo(
     () =>
       accounts
         .filter((a) => a.account_type && INCOME_TYPES.includes(a.account_type))
-        .map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number })),
+        .map((a) => ({ value: a.id, label: a.account_name, type: a.account_number ?? undefined })),
     [accounts]
   );
-  const expenseOptions: ComboboxOption[] = useMemo(
+  const expenseOptions: ReferenceOption[] = useMemo(
     () =>
       accounts
         .filter((a) => a.account_type && EXPENSE_TYPES.includes(a.account_type))
-        .map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number })),
+        .map((a) => ({ value: a.id, label: a.account_name, type: a.account_number ?? undefined })),
     [accounts]
   );
+
+  function refreshAccounts() {
+    void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId] });
+  }
 
   // Carrier default: on a sellable item with nothing chosen, preselect "Sales of Service Income".
   useEffect(() => {
@@ -214,19 +222,22 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
                 className="mt-1 w-full"
               />
             </label>
-            <label className="block">
+            <label className="block" data-testid="service-income-account-select">
               <span className="text-xs font-medium text-gray-700">
                 Income account *{" "}
                 <span className="font-normal text-gray-400">(carrier: defaults to Service income)</span>
               </span>
               <div className="mt-1">
-                <Combobox
+                {/* LST-PICKER-01 (guard 1872): match ItemEditorModal — ReferenceSelect createKind=account */}
+                <ReferenceSelect
                   options={incomeOptions}
                   value={form.incomeAccountId}
                   onChange={(v) => set("incomeAccountId", v)}
+                  createKind="account"
+                  operatingCompanyId={operatingCompanyId}
                   placeholder="Select income account"
                   loading={accountsQuery.isLoading}
-                  allowClear
+                  onOptionCreated={() => refreshAccounts()}
                 />
               </div>
             </label>
@@ -274,16 +285,18 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
                 onChange={(e) => set("preferredVendor", e.target.value)}
               />
             </label>
-            <label className="block">
+            <label className="block" data-testid="service-expense-account-select">
               <span className="text-xs font-medium text-gray-700">Expense account *</span>
               <div className="mt-1">
-                <Combobox
+                <ReferenceSelect
                   options={expenseOptions}
                   value={form.expenseAccountId}
                   onChange={(v) => set("expenseAccountId", v)}
+                  createKind="account"
+                  operatingCompanyId={operatingCompanyId}
                   placeholder="Select expense account"
                   loading={accountsQuery.isLoading}
-                  allowClear
+                  onOptionCreated={() => refreshAccounts()}
                 />
               </div>
             </label>

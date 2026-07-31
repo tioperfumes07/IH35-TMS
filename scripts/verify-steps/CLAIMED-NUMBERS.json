@@ -1210,6 +1210,7 @@
     "1866": "1866-verify-lst-picker01-road-service-vendor-inline-create.mjs",
     "1868": "1868-verify-lst-picker01-wo-roadside-vendor-inline-create.mjs",
     "1870": "1870-verify-lst-picker01-parent-customer-inline-create.mjs",
+    "1872": "1872-verify-lst-picker01-service-account-inline-create.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
