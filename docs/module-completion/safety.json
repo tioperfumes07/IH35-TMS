@@ -191,8 +191,8 @@
         "DOD-E"
       ],
       "spec": "safety.md section J boundary 5 (findings F06,F32)",
-      "status": "FAIL",
-      "evidence": "VERIFIED FAIL 2026-07-25 on the F32 half. F06 IS satisfied: zero base-less fetch sites remain in apps/frontend/src, Permits.tsx:11 uses resolveApiUrl and :29,37 removed the fabricated fallback (guard 1323). F32 is NOT: Form2290Filings.tsx:108 still renders `due {deadline?.deadline ?? \"Aug 31\"}` — a fabricated literal — and form-2290-generator.ts:90-101 hardcodes Date.UTC(deadlineYear,7,31) with no per-unit first-use month and no weekend/holiday shift. CRITICAL: scripts/verify-form-2290-deadlines-current.mjs is NOT under scripts/verify-steps/, so it NEVER EXECUTES (only verify-steps files run), and it asserts only ISO shape and 0<=days<=366 anyway.",
+      "status": "PASS",
+      "evidence": "VERIFIED PASS 2026-07-30 (re-verified live; the 2026-07-25 FAIL is now STALE). F06 half unchanged and still satisfied. F32 half is FIXED: the fabricated `?? \"Aug 31\"` literal is gone — the only surviving `Aug 31` string in apps/frontend/src is a COMMENT at Permits.tsx:25 recording its own removal — and `Date.UTC(<year>, 7, 31)` no longer appears anywhere in apps/frontend/src or apps/backend/src. The 'guard never executes' half is ALSO stale: scripts/verify-steps/1500-verify-form-2290-due-date-irs-correct.mjs now exists UNDER verify-steps, so the runner enumerates it, and it spawns scripts/verify-form-2290-due-date-irs.mts via tsx. RAN THIS SESSION: 'OK — due date = last day of the month following first use, business-day shifted (weekends + federal holidays incl. observed); no invented date in the UI.' The assertions call the real functions on real dates, so a reimplementation that keeps the names and returns Aug 31 for everything still fails.",
       "pr": 3336,
       "owner_hold": false,
       "tracker": null,
@@ -1352,8 +1352,8 @@
         "VERIFY-2"
       ],
       "spec": "safety.md section J boundary 23 (findings F24)",
-      "status": "FAIL",
-      "evidence": "VERIFIED FAIL 2026-07-25. The NAMED scope is genuinely done: InternalFinesPage.tsx:102,214,227 puts the create sentinel as the FIRST ROW INSIDE the dropdown with createInternalFineReason and auto-select (guard 1333). But F24's acceptance is EVERY Safety picker, and ComplaintsTab.tsx:213-222 renders the complaint-type catalog as a bare SelectCombobox with no '+ Add new' row. No guard covers the picker SET, only single files.",
+      "status": "PASS",
+      "evidence": "VERIFIED PASS 2026-07-30 (re-verified live; the 2026-07-25 FAIL is now STALE). The NAMED scope was already done (guard 1333). The cited residual gap was ComplaintsTab rendering the complaint-type catalog as a bare SelectCombobox with no '+ Add new'. That is FIXED: ComplaintsTab.tsx:229-241 now renders ReferenceSelect with createKind=\"complaint_type\", createdValueField=\"code\", and onOptionCreated invalidating the catalog query — i.e. first-row inline create posting to catalogs.complaint_types (landed via LST-PICKER-01). The one SelectCombobox remaining in the file (line 243) is `severity`, a fixed low/medium/high enum; an inline '+ Add new' there would be WRONG because severity is not a catalog, so its absence is correct, not a gap.",
       "pr": 3360,
       "owner_hold": false,
       "tracker": null,
