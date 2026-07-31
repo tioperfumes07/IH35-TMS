@@ -54,6 +54,8 @@ type Props = {
   onQuickCreatePart?: (lineId: string, subId: string) => void;
   /** When set, Category uses ReferenceSelect with inline "+ Add new" (QBO) instead of external + Create. */
   operatingCompanyId?: string;
+  /** WAVE-H1: bill mode uses expense_category (catalogs.expense_categories); expense/WO keep category (CoA). */
+  categoryCreateKind?: "category" | "expense_category";
   onCategoryOptionCreated?: (lineId: string, opt: { id: string; label: string }) => void;
   partsLaborMode: "none" | "parts-only" | "parts-and-labor";
   onSectionAChange: (lines: CategoryLine[]) => void;
@@ -101,6 +103,7 @@ export function CostBreakdownBox({
   onQuickCreateItem,
   onQuickCreatePart,
   operatingCompanyId,
+  categoryCreateKind = "category",
   onCategoryOptionCreated,
   partsLaborMode,
   onSectionAChange,
@@ -166,7 +169,7 @@ export function CostBreakdownBox({
                               value: option.id,
                               label: option.label,
                             }))}
-                            createKind="category"
+                            createKind={categoryCreateKind}
                             operatingCompanyId={operatingCompanyId}
                             placeholder="Select category…"
                             addNewLabel="+ Add new category"

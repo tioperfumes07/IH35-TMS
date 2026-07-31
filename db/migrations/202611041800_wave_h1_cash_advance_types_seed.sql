@@ -1,17 +1,46 @@
--- WAVE-H1 (CLS-ECON-EMPTY): seed catalogs.cash_advance_types only.
--- Owner lock 2026-07-31: expense_categories / escrow_types / driver_deduction_types /
--- chart_of_accounts_seeds are already populated per-opco — do NOT re-seed them.
--- Parts catalog is OUT of H1. CoA roles bind on accounting.chart_of_accounts_roles (no seed here).
--- Idempotent via catalogs.__seed_company_catalog ON CONFLICT.
+-- WAVE-H1 (CLS-ECON-EMPTY) — RLS-safe seed of catalogs.cash_advance_types ONLY.
+-- Owner lock 2026-07-31: do NOT re-seed expense_categories / escrow_types / parts /
+-- chart_of_accounts_seeds. CoA roles bind on accounting.chart_of_accounts_roles (no seed here).
+-- ROOT CAUSE: 0062 __seed_company_catalog as migration owner never landed under FORCE RLS (0 rows).
+-- Pattern: LST-MAINT-01 — SET ROLE ih35_app + per-opco GUC + bypass + ON CONFLICT DO NOTHING.
 
-SELECT catalogs.__seed_company_catalog(
-  'cash_advance_types',
-  jsonb_build_array(
-    jsonb_build_object('code', 'ROUTE', 'display_name', 'Route advance', 'description', 'Route-related advance', 'metadata', '{}'::jsonb, 'sort_order', 10),
-    jsonb_build_object('code', 'FUEL', 'display_name', 'Fuel advance', 'description', 'Fuel cash advance', 'metadata', '{}'::jsonb, 'sort_order', 20),
-    jsonb_build_object('code', 'EMERGENCY', 'display_name', 'Emergency advance', 'description', 'Emergency / family advance', 'metadata', '{}'::jsonb, 'sort_order', 30),
-    jsonb_build_object('code', 'EQUIPMENT', 'display_name', 'Equipment advance', 'description', 'Equipment-related advance', 'metadata', '{}'::jsonb, 'sort_order', 40),
-    jsonb_build_object('code', 'MEDICAL', 'display_name', 'Medical advance', 'description', 'Medical emergency advance', 'metadata', '{}'::jsonb, 'sort_order', 50),
-    jsonb_build_object('code', 'OTHER', 'display_name', 'Other advance', 'description', 'Other cash advance', 'metadata', '{}'::jsonb, 'sort_order', 60)
-  )
-);
+DO $$
+DECLARE
+  rec RECORD;
+  v_role_ok boolean := false;
+BEGIN
+  BEGIN
+    EXECUTE 'SET LOCAL ROLE ih35_app';
+    v_role_ok := true;
+  EXCEPTION
+    WHEN undefined_object OR insufficient_privilege THEN
+      RAISE NOTICE 'WAVE-H1: cannot SET ROLE ih35_app — skip (apply as app/owner with RESET ROLE)';
+      RETURN;
+  END;
+
+  PERFORM set_config('app.bypass_rls', 'lucia', true);
+
+  FOR rec IN
+    SELECT c.id AS company_id, c.code
+    FROM org.companies c
+    WHERE c.deactivated_at IS NULL
+      AND c.code IN ('TRANSP', 'USMCA', 'TRK')
+  LOOP
+    PERFORM set_config('app.operating_company_id', rec.company_id::text, true);
+
+    INSERT INTO catalogs.cash_advance_types
+      (operating_company_id, code, display_name, description, metadata, is_active, sort_order)
+    VALUES
+      (rec.company_id, 'ROUTE', 'Route advance', 'Route-related advance', '{}'::jsonb, true, 10),
+      (rec.company_id, 'FUEL', 'Fuel advance', 'Fuel cash advance', '{}'::jsonb, true, 20),
+      (rec.company_id, 'EMERGENCY', 'Emergency advance', 'Emergency / family advance', '{}'::jsonb, true, 30),
+      (rec.company_id, 'EQUIPMENT', 'Equipment advance', 'Equipment-related advance', '{}'::jsonb, true, 40),
+      (rec.company_id, 'MEDICAL', 'Medical advance', 'Medical emergency advance', '{}'::jsonb, true, 50),
+      (rec.company_id, 'OTHER', 'Other advance', 'Other cash advance', '{}'::jsonb, true, 60)
+    ON CONFLICT (operating_company_id, code) DO NOTHING;
+  END LOOP;
+
+  IF v_role_ok THEN
+    RESET ROLE;
+  END IF;
+END $$;

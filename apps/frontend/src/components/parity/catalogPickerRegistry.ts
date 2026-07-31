@@ -302,7 +302,16 @@ export const CATALOG_PICKER_CONFIGS = {
     evidence: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx:204-225 (FIX-02)",
   },
 
-
+  // WAVE-H1 — Bill Section A +Create must write catalogs.expense_categories (same table the picker lists).
+  // `category` above remains CoA for expense/WO modes that still use full-account pickers.
+  expense_category: catalogEntry({
+    key: "expense_category",
+    label: "Expense category",
+    table: "catalogs.expense_categories",
+    endpoint: "/api/v1/catalogs/accounting/expense-categories",
+    evidence:
+      "apps/backend/src/catalogs/accounting/index.ts tableName expense_categories + WAVE-H1 Bill Section A",
+  }),
 
   class: {
     key: "class",

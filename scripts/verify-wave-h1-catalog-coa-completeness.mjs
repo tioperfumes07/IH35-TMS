@@ -88,6 +88,19 @@ export function staticChecks(sources = {}) {
   if (!/mode === "bill"/.test(editor) || !/expenseCategoriesQuery/.test(editor)) {
     problems.push("TwoSectionLineEditor bill mode must use expenseCategoriesQuery (not CoA-as-category)");
   }
+  if (!/categoryCreateKind=\{mode === "bill" \? "expense_category" : "category"\}/.test(editor)) {
+    problems.push('Bill mode +Create must use createKind expense_category (not CoA category)');
+  }
+  const registry = sources.registry ?? read("apps/frontend/src/components/parity/catalogPickerRegistry.ts");
+  if (!/expense_category:\s*catalogEntry/.test(registry) || !/catalogs\.expense_categories/.test(registry)) {
+    problems.push("catalogPickerRegistry must define expense_category → catalogs.expense_categories");
+  }
+  const coaApi = sources.coaApi ?? read("apps/frontend/src/api/accounting.ts");
+  for (const role of ["rent_expense", "fuel_overage_receivable", "broker_customer_advance_liability"]) {
+    if (!new RegExp(`"${role}"`).test(coaApi)) {
+      problems.push(`FE COA_ROLE_VALUES missing ${role}`);
+    }
+  }
   if (!/cashAdvanceTypesCatalogClient/.test(advance)) {
     problems.push("CreateAdvanceModal must read catalogs.cash_advance_types via cashAdvanceTypesCatalogClient");
   }

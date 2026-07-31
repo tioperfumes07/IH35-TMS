@@ -257,6 +257,7 @@ export function TwoSectionLineEditor({
         partOptions={partOptions}
         locationOptions={locationOptions}
         operatingCompanyId={operatingCompanyId || undefined}
+        categoryCreateKind={mode === "bill" ? "expense_category" : "category"}
         onCategoryOptionCreated={(_lineId, opt) => {
           setCreatedCategoryOptions((prev) => {
             if (prev.some((row) => row.id === opt.id)) return prev;

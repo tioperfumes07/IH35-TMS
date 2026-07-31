@@ -1435,6 +1435,10 @@ export const COA_ROLE_VALUES = [
   "depr_expense_default",
   "factor_wire_fee",
   "heavy_repair_expense",
+  // WAVE-H1 — DB CHECK / entity-required already include these; FE enum must designate them.
+  "rent_expense",
+  "fuel_overage_receivable",
+  "broker_customer_advance_liability",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
