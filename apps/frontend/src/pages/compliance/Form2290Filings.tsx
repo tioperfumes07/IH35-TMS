@@ -97,7 +97,21 @@ export function Form2290Filings() {
   }
 
   const filings = (filingsQ.data?.filings ?? []) as Filing[];
-  const deadline = deadlineQ.data as { deadline?: string; days_remaining?: number; current_draft?: Filing | null } | undefined;
+  const deadline = deadlineQ.data as
+    | {
+        deadline?: string;
+        days_remaining?: number;
+        current_draft?: Filing | null;
+        /* SAF-ORPH-04. The annual `deadline` above is the JULY-first-use case (Aug 31, business-day
+           shifted). Per IRS Form 2290 instructions the tax is due the LAST DAY OF THE MONTH FOLLOWING
+           the month of first use, so a truck placed in service in October is due Nov 30 — a date the
+           annual banner alone can never show. These two fields carry the exceptions. */
+        per_unit_deadlines?: Array<{ unit_id: string; unit_number: string; first_used_month: string; deadline: string }>;
+        units_missing_first_use?: string[];
+      }
+    | undefined;
+  const perUnit = deadline?.per_unit_deadlines ?? [];
+  const missingFirstUse = deadline?.units_missing_first_use ?? [];
 
   return (
     <div className="space-y-4 rounded-sm border border-gray-200 bg-white p-4">
@@ -114,6 +128,37 @@ export function Form2290Filings() {
               ? `due ${deadline.deadline} (${deadline.days_remaining} days remaining)`
               : "due date unavailable — could not load the filing deadline"}
           </p>
+          {/* SAF-ORPH-04 — the per-unit exceptions. Only vehicles whose own due date DIFFERS from the
+              annual one are listed; a July first use is already covered by the line above and repeating
+              it would bury the exceptions in noise. Without this the annual banner silently understated
+              the obligation for every vehicle first used after July. */}
+          {perUnit.length > 0 ? (
+            <p className="mt-1 text-xs text-slate-600">
+              <span className="font-semibold text-slate-900">
+                {perUnit.length} vehicle{perUnit.length === 1 ? "" : "s"} due on a different date
+              </span>{" "}
+              (first used outside July) ·{" "}
+              {perUnit
+                .slice()
+                .sort((a, b) => a.deadline.localeCompare(b.deadline))
+                .slice(0, 4)
+                .map((u) => `${u.unit_number} due ${u.deadline}`)
+                .join(" · ")}
+              {perUnit.length > 4 ? ` · +${perUnit.length - 4} more` : ""}
+            </p>
+          ) : null}
+          {/* A unit with no first-use date has an UNCOMPUTABLE federal filing date. That is surfaced, not
+              hidden behind a shorter list — an unknown obligation is a risk to raise, and silently
+              omitting these units is how one goes unfiled. */}
+          {missingFirstUse.length > 0 ? (
+            <p className="mt-1 text-xs text-slate-600">
+              <span className="font-semibold text-slate-900">
+                {missingFirstUse.length} vehicle{missingFirstUse.length === 1 ? "" : "s"} missing a first-use date
+              </span>{" "}
+              — due date cannot be computed · {missingFirstUse.slice(0, 6).join(", ")}
+              {missingFirstUse.length > 6 ? `, +${missingFirstUse.length - 6} more` : ""}
+            </p>
+          ) : null}
         </div>
         <button
           type="button"
