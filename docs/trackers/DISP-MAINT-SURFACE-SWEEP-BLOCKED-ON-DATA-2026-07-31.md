@@ -51,7 +51,7 @@ data cannot support, and flipping them to FAIL would be equally false.
 
 | table | rows |
 |---|---:|
-| `mdata.loads` | **10** (all TRANSP; TRK 0, USMCA 0) |
+| `mdata.loads` | **3 live / 10 total** (all TRANSP; TRK 0, USMCA 0) |
 | `dispatch.border_crossing_events` | 5 |
 | `dispatch.load_cancellations` | 1 |
 | load_assignment_history · detention_events/requests/evidence · intransit_issues | **0** |
@@ -61,6 +61,30 @@ data cannot support, and flipping them to FAIL would be equally false.
 
 `telematics.vehicle_locations` = 406,529 — live GPS **is** flowing. The gap is operational
 records, not telemetry.
+
+## 2b. CORRECTION 2026-07-31 — every count above is TOTAL rows; state live-vs-total or it misleads
+
+An earlier revision of this file reported `mdata.loads` as **10** with no qualifier. The **live**
+count is **3** — the other 7 carry `soft_deleted_at`. Re-verified:
+
+```
+count(*)                                = 10
+count(*) WHERE soft_deleted_at IS NULL  =  3
+n_live_tup                              = 10
+```
+
+This is exactly the error the 2026-07-31 handoff warns about — *"in a void-not-delete schema,
+deactivated rows are retained BY DESIGN. Count live rows, never total rows"* — and it was made while
+writing the file that cites that rule. It changes no conclusion here (3 and 10 are both "essentially
+no dispatch data"), but a bare number in a tracker gets quoted downstream, and this one was.
+
+It also explains a live disagreement: a parallel audit reported "loads = 15 live" the same day. Three
+different figures for one table (3 / 10 / 15) is what happens when the filter is omitted beside the
+count. **Standing rule adopted here: write counts as `N live / M total`, never a bare figure.**
+
+Every other count in §2 is a raw `count(*)` — i.e. TOTAL. For the tables reading **0** the
+distinction is moot. For the non-zero ones it is not: `maintenance.pm_schedules` is **0 active / 30
+total**, and `maintenance.work_orders` is 2 total with no soft-delete column at all.
 
 ## 3. Method correction — `n_live_tup` is an ESTIMATE, and a bypass can be defeated
 
