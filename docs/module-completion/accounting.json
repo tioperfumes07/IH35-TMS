@@ -1,8 +1,8 @@
 {
   "module": "accounting",
   "title": "Accounting (Module 3)",
-  "complete": true,
-  "as_of": "2026-07-30T23:06:46.000Z",
+  "complete": false,
+  "as_of": "2026-07-31T01:33:00.000Z",
   "live_sha": "efba811",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
@@ -558,9 +558,23 @@
       "evidence": "LIVE 2026-07-30 Neon lucia: mdata.drivers.default_expense_account_id uuid exists (mig 202607680000 applied_held); 180 drivers, 0 populated (mapping ready). API PATCH/GET/list project+write the column; BankingTransactionsDesignView DriverAutocomplete Option-B prefills accountId when empty (never auto-post). Guard 1509.",
       "pr": null,
       "live_proof": "Neon column present; verify-driver-default-expense-account-wired PASS; density 0/180 until owners set defaults"
+    },
+    {
+      "id": "ACCT-R-20",
+      "title": "db249 composite indexes on safety_events / invoices / work_orders",
+      "layers": [
+        "DOD-A",
+        "VERIFY-3",
+        "VERIFY-8"
+      ],
+      "spec": "db249-index-optimization-3 \u00b7 ACCT-R-20",
+      "status": "OPEN",
+      "evidence": "Migration 202610331200 authored (CREATE INDEX IF NOT EXISTS \u00d73). Neon Step-1 2026-07-31 lucia: composites ABSENT on all three tables (partial indexes only). Guard 1835 locks SQL. LIVE index presence UNVERIFIED until owner Neon-apply + ledger.",
+      "pr": null,
+      "live_proof": "UNVERIFIED \u2014 awaiting owner Neon-apply of 202610331200"
     }
   ],
-  "pass_count": 35,
-  "total_count": 35,
-  "progress": "35 of 35"
+  "pass_count": 37,
+  "total_count": 38,
+  "progress": "37 of 38"
 }
