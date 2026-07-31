@@ -4,8 +4,9 @@
  *
  * React Router first-match means `<Route path="driver-files" />` and
  * `<Route path="/safety/driver-files" />` as siblings under `path="/safety"`
- * register the SAME URL twice; the second is dead. Absolute-only children
- * (e.g. `/safety/reports`) are fine — they have no relative twin.
+ * register the SAME URL twice; the second is dead. Prefer the absolute
+ * `/safety/*` form (required by docs/locked-ui-surface.json). Absolute-only
+ * children (e.g. `/safety/reports`) are fine — they have no relative twin.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -32,7 +33,7 @@ export function findSafetyRelAbsTwins(source) {
     const rel = abs.slice("/safety/".length);
     if (rels.has(rel)) {
       problems.push(
-        `SAF-F27 twin: path="${rel}" and path="${abs}" both resolve to ${abs} — keep the relative child only`
+        `SAF-F27 twin: path="${rel}" and path="${abs}" both resolve to ${abs} — keep the absolute /safety/* mount (locked-ui-surface)`
       );
     }
   }
