@@ -541,6 +541,23 @@
       "evidence": "LIVE 2026-07-30 Neon lucia: lib.feature_flags MY_ACCOUNTANT_ENABLED default_enabled=false; overrides ON for TRANSP+TRK+USMCA. Migration 202607590000_my_accountant_flag_seed.sql + guard 1506 PASS. MyAccountantPage gates via useFeatureFlag.",
       "pr": null,
       "live_proof": "Neon feature_flags row + 3 opco overrides; verify-myaccountant-flag-seeded PASS"
+    },
+    {
+      "id": "ACCT-R-18",
+      "title": "Driver default_expense_account_id API + banking Option-B categorize prefill",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "VERIFY-2",
+        "VERIFY-3",
+        "VERIFY-6",
+        "VERIFY-8"
+      ],
+      "spec": "banking-b4-driver-vendor-account-mapping \u00b7 ACCT-R-18",
+      "status": "PASS",
+      "evidence": "LIVE 2026-07-30 Neon lucia: mdata.drivers.default_expense_account_id uuid exists (mig 202607680000 applied_held); 180 drivers, 0 populated (mapping ready). API PATCH/GET/list project+write the column; BankingTransactionsDesignView DriverAutocomplete Option-B prefills accountId when empty (never auto-post). Guard 1509.",
+      "pr": null,
+      "live_proof": "Neon column present; verify-driver-default-expense-account-wired PASS; density 0/180 until owners set defaults"
     }
   ],
   "pass_count": 35,

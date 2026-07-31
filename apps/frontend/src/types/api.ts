@@ -111,6 +111,8 @@ export type Driver = {
   qbo_vendor_linked_at: string | null;
   qbo_vendor_linked_by_user_id: string | null;
   qbo_class_id?: string | null;
+  /** ACCT-F18 / banking-b4 — Option-B RECOMMENDATION ONLY (pre-fill categorize; never auto-post). */
+  default_expense_account_id?: string | null;
   settlement_auto_pay_enabled?: boolean;
   status: DriverStatus;
   notes: string | null;
@@ -222,6 +224,7 @@ export type UpdateDriverInput = Partial<
     | "deactivated_at"
     | "qbo_vendor_id"
     | "qbo_class_id"
+    | "default_expense_account_id"
     | "settlement_auto_pay_enabled"
   >
 >;

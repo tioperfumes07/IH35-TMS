@@ -5,7 +5,11 @@ import { listDrivers } from "../../api/mdata";
 type Props = {
   companyId: string;
   value: string;
-  onChange: (driverId: string, driverName: string) => void;
+  onChange: (
+    driverId: string,
+    driverName: string,
+    meta?: { default_expense_account_id?: string | null },
+  ) => void;
   placeholder?: string;
   // Optional page size. Callers that must not miss active drivers past the newest 50 (the listDrivers
   // default cap) pass e.g. 200. Omitted → unchanged behavior for existing callers.
@@ -77,7 +81,9 @@ export function DriverAutocomplete({ companyId, value, onChange, placeholder = "
               type="button"
               className="block w-full px-2 py-1 text-left text-xs hover:bg-gray-50"
               onClick={() => {
-                onChange(driver.id, `${driver.first_name} ${driver.last_name}`.trim());
+                onChange(driver.id, `${driver.first_name} ${driver.last_name}`.trim(), {
+                  default_expense_account_id: driver.default_expense_account_id ?? null,
+                });
                 setSearch("");
                 setFocused(false);
               }}
