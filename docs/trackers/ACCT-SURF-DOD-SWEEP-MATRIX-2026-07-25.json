@@ -8,8 +8,8 @@
   "desktop_clickthrough": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting-surf-dod-2026-07-25.md",
   "module_progress": {
     "N": 37,
-    "M": 37,
-    "note": "M=37 after ACCT-R-18 driver default expense account wiring"
+    "M": 38,
+    "note": "M=38 after ACCT-R-20 db249 composite indexes leaf (OPEN until Neon-apply)"
   },
   "entities": [
     "TRANSP",
