@@ -138,7 +138,12 @@ export function InvoicesListPage() {
   // Customer picker options — pass limit:200 (endpoint defaults to 50, would silently truncate).
   const customersQuery = useQuery({
     queryKey: ["mdata", "customers", "invoice-filter", selectedCompanyId],
-    queryFn: () => listCustomers({ operating_company_id: selectedCompanyId!, limit: 200 }),
+    // SAF-B29: was limit 200. PROD HAS 2,693 CUSTOMERS, so this silently returned the first 200
+    // alphabetically and dropped 92% of them — with no empty state, no warning, nothing to
+    // indicate the list was cut. 5000 matches the convention already used by Customers.tsx,
+    // CustomerDetail.tsx and NewCustomerDrawerForm. Server-side type-ahead remains B29's target
+    // shape; this removes the live truncation now rather than leaving it until then.
+    queryFn: () => listCustomers({ operating_company_id: selectedCompanyId!, limit: 5000 }),
     enabled: Boolean(selectedCompanyId),
   });
   const customerOptions = customersQuery.data?.customers ?? [];

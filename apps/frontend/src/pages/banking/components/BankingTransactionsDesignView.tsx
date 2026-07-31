@@ -421,7 +421,7 @@ export function BankingTransactionsDesignView({
   });
   const customersQuery = useQuery({
     queryKey: ["banking", "tx-customers", companyId],
-    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 200 }).then((r) => r.customers ?? []),
+    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 5000 }).then((r) => r.customers ?? []),
     enabled: Boolean(companyId),
     staleTime: 120_000,
   });

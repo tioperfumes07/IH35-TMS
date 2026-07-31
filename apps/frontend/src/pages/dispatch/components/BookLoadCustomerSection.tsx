@@ -51,7 +51,7 @@ export function BookLoadCustomerSection({
 
   const customersQuery = useQuery({
     queryKey: ["book-load-customer-section", "customers", operatingCompanyId],
-    queryFn: () => listCustomers({ operating_company_id: String(operatingCompanyId), limit: 200 }),
+    queryFn: () => listCustomers({ operating_company_id: String(operatingCompanyId), limit: 5000 }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });

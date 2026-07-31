@@ -97,7 +97,12 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
 
   const customersQuery = useQuery({
     queryKey: ["invoice-type-modal", "customers", operatingCompanyId],
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 200 }),
+    // SAF-B29: was limit 200. PROD HAS 2,693 CUSTOMERS, so this silently returned the first 200
+    // alphabetically and dropped 92% of them — with no empty state, no warning, nothing to
+    // indicate the list was cut. 5000 matches the convention already used by Customers.tsx,
+    // CustomerDetail.tsx and NewCustomerDrawerForm. Server-side type-ahead remains B29's target
+    // shape; this removes the live truncation now rather than leaving it until then.
+    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 5000 }),
     enabled: Boolean(operatingCompanyId) && open,
     staleTime: 60_000,
   });

@@ -442,7 +442,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
 
   const customersQuery = useQuery({
     queryKey: ["book-load-v4-customers", operatingCompanyId],
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 200 }),
+    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 5000 }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });

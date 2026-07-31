@@ -79,7 +79,7 @@ export function CreateWOSectionIdentification({
   });
   const customersQuery = useQuery({
     queryKey: ["maintenance", "customers", operatingCompanyId, "create-wo-id"],
-    queryFn: () => listCustomers({ operating_company_id: String(operatingCompanyId), limit: 200 }),
+    queryFn: () => listCustomers({ operating_company_id: String(operatingCompanyId), limit: 5000 }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
