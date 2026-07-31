@@ -25,6 +25,8 @@ function assertInvoiceP0() {
   const guards = read("apps/backend/src/accounting/invoice-linkage-guards.ts");
   const routes = read("apps/backend/src/accounting/posting-engine.routes.ts");
   const invoices = read("apps/backend/src/accounting/invoices.routes.ts");
+  // ACCT-R-24: send fail-closed lives in shared sendDraftInvoice (POST /send + POD auto-send).
+  const invoiceSend = read("apps/backend/src/accounting/invoice-send.service.ts");
   const invoiceDetail = read("apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx");
   const jeDetail = read("apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx");
   const api = read("apps/frontend/src/api/accounting.ts");
@@ -50,8 +52,14 @@ function assertInvoiceP0() {
   if (!/invoice_load_source_required/.test(routes) || !/invoice_line_revenue_unresolved/.test(routes)) {
     errors.push("posting-engine.routes: must map load-source + income unresolved errors");
   }
-  if (!/assertLoadRevenueHasSourceLoad/.test(invoices) || !/assertRevenueLinesHaveIncomeAccount/.test(invoices)) {
-    errors.push("invoices.routes send: must fail closed on income + source_load_id");
+  if (!/sendDraftInvoice/.test(invoices)) {
+    errors.push("invoices.routes send: must call shared sendDraftInvoice");
+  }
+  if (
+    !/assertLoadRevenueHasSourceLoad/.test(invoiceSend) ||
+    !/assertRevenueLinesHaveIncomeAccount/.test(invoiceSend)
+  ) {
+    errors.push("invoice-send.service: sendDraftInvoice must fail closed on income + source_load_id");
   }
   if (!/getAccountingSourceLineage/.test(invoiceDetail)) {
     errors.push("InvoiceDetailPage: must call getAccountingSourceLineage for JE hop");
