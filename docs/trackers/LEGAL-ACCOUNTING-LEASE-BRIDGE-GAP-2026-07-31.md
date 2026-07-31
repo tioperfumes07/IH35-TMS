@@ -57,8 +57,25 @@ So the destination exists and is correctly constrained. What is missing is the *
 `accounting.lease_asset_line.fixed_asset_id` is NOT NULL until LEASE-06 applies, and even after it,
 a lease line is only meaningful when the leased asset exists in `accounting.fixed_assets`.
 
-**Prod holds exactly 1 fixed_asset row against 186 units and 182 trailers** (verified via Neon,
-`bypass_rls` issued as its own statement, `visible == n_live_tup` on every count).
+**Prod holds exactly 1 fixed_asset row against 122 LIVE assets** (verified via Neon, `bypass_rls`
+issued as its own statement).
+
+> **CORRECTION 2026-07-31 (owner-flagged).** An earlier draft of this file, and the LEASE-06 commit
+> messages, said **368 assets**. That was wrong: 368 is `units_total` (186) + `equipment_total` (182),
+> i.e. every row in those tables **including 136 deactivated units and 110 deactivated trailers**. The
+> owner said the fleet is "about 40 trucks and about 50-60 trailers and a few cars", which prompted the
+> re-count. The live figures:
+>
+> | | live | total rows |
+> |---|---:|---:|
+> | units (trucks) | **50** (37 InService, 13 OutOfService) | 186 |
+> | equipment (trailers) | **72** | 182 |
+> | **total** | **122** | 368 |
+>
+> 122 matches the Fleet roster exactly (Total Fleet 122 / Trucks 50 / Trailers 72). The cost-basis job
+> is therefore **~3x smaller** than stated. Counting total rows instead of live rows in a void-not-delete
+> schema is a mistake that will recur — deactivated rows are retained by design, so `count(*)` on any
+> `mdata` table overstates the operating fleet.
 
 Building the bridge now would therefore create lease contracts with **zero asset lines** — a header
 with no assets, which is worse than nothing because it would look done. The blocker is **cost basis**:
@@ -80,14 +97,32 @@ the tax position. A wrong number there is worse than an absent one, because it l
 ## Unblock path (either one is sufficient)
 
 1. Connect the **IH 35 Trucking** QuickBooks realm to the integration → the Fixed Asset list can be
-   pulled and mapped to the 368 assets directly.
+   pulled and mapped to the 122 live assets directly.
 2. Or export TRK's **Fixed Asset Listing** (Reports → Fixed Asset Listing → Excel) → same mapping.
 
-Required per asset: name, purchase price, purchase date, in-service date, class.
+Required per asset: name, purchase price, purchase date, in-service date, class. Scope is **122 live
+assets**, not 368.
+
+## Trailer categories are not usable for group pricing yet
+
+Live `mdata.equipment.equipment_type` on prod: **DryVan 70, Flatbed 1, StepDeck 1** — and **Reefer 0**,
+because the only reefer row was demo data that DATA-01 deactivated. `DryVan` is plainly the default
+everything defaulted into.
+
+This blocks the owner's uniform-allocation spec ("flatbeds - 10 selected, total $8,000/mo -> $800 each;
+reefers - 20, $15,000/mo -> $750 each"): allocation groups are keyed on trailer type, so with 70 of 72
+trailers typed `DryVan` the per-unit amounts would spread across the wrong groups and every line would
+be wrong while still summing to the right total — the worst kind of wrong, because the control total
+ties. The owner has said they will categorise trailers in the Fleet module; that must happen **before**
+any group-priced lease is generated.
+
+**Company vehicles ("a few cars") are not in `mdata.equipment`** — no such `equipment_type` exists among
+live rows. They are either inside the 50 `mdata.units` or not yet entered; the Fleet UI has a Company
+Vehicles tab, so the surface exists. Unconfirmed which, and not guessed here.
 
 ## Then, in order
 
-1. Import fixed assets for the 368 TRK-owned units/trailers.
+1. Import fixed assets for the 122 LIVE TRK-owned units/trailers (50 trucks + 72 trailers).
 2. Bridge: on truck-lease creation, also `createLeaseContract` (lessor TRK, lessee the operating
    company, election `operating` per the owner lock) + `addLeaseAsset` per selected unit/trailer +
    `generateScheduleForLease`, in one transaction, with `contract_instance_id` linking the ledger row
