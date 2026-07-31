@@ -53,7 +53,8 @@ export function collectProblems(root = ROOT, overrides = null) {
     if (!/qboCategoriesCatalogClient\.create/.test(drawer)) {
       problems.push(`${DRAWER}: category inline create must use qboCategoriesCatalogClient.create`);
     }
-    if (/createKind=["']category["']/.test(drawer)) {
+    // Ban createKind=category as a live JSX prop (comments may mention the CoA trap).
+    if (/createKind=["']category["']/.test(drawer.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, ""))) {
       problems.push(`${DRAWER}: must NOT use createKind=category (writes CoA accounts, wrong catalog)`);
     }
     if (!/default_class_id/.test(drawer) || !/category_id/.test(drawer)) {
