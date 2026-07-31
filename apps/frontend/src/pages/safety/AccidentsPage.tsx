@@ -9,6 +9,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { companyNow } from "../../lib/businessDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 
 type AccidentRow = Record<string, unknown>;
 
@@ -46,10 +47,8 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedAccident, setSelectedAccident] = useState<Record<string, unknown> | null>(null);
-  // S-08 / S-04: driver/unit/date filters — self-contained (local state, not the shared Safety
-  // layout context) so this page keeps working standalone in tests and any other host. The list
-  // API (safety.accident_reports) returns raw driver_id/unit_id only (no joined names), so these
-  // match on the id text itself rather than a resolved display name.
+  // S-08 / S-04 + SAF-F26: driver/unit filters are EntityPickers (allowCreate=false) — operators
+  // pick a real driver/unit; we match the selected id (plus name/number fallback for joined rows).
   const [driverFilter, setDriverFilter] = useState("");
   const [unitFilter, setUnitFilter] = useState("");
   const [fromDate, setFromDate] = useState("");
@@ -81,12 +80,19 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
 
   const rows = useMemo(() => {
     return allRows.filter((row) => {
-      // SAF-F26: filter on the joined NAME (what an operator types), falling back to the id. Before,
-      // these matched only the raw uuid, so the filters were unusable.
-      const driverText = String(row.driver_name ?? row.driver_id ?? "").toLowerCase();
-      const unitText = String(row.unit_number ?? row.unit_id ?? "").toLowerCase();
-      if (driverFilter && !driverText.includes(driverFilter.trim().toLowerCase())) return false;
-      if (unitFilter && !unitText.includes(unitFilter.trim().toLowerCase())) return false;
+      // SAF-F26: picker sets the canonical id; also accept name/number substring if typed legacy.
+      if (driverFilter) {
+        const id = String(row.driver_id ?? "");
+        const name = String(row.driver_name ?? "").toLowerCase();
+        const needle = driverFilter.trim().toLowerCase();
+        if (id !== driverFilter && !name.includes(needle) && id.toLowerCase() !== needle) return false;
+      }
+      if (unitFilter) {
+        const id = String(row.unit_id ?? "");
+        const num = String(row.unit_number ?? "").toLowerCase();
+        const needle = unitFilter.trim().toLowerCase();
+        if (id !== unitFilter && !num.includes(needle) && id.toLowerCase() !== needle) return false;
+      }
       const accidentDate = String(row.accident_at ?? "").slice(0, 10);
       if (fromDate && accidentDate && accidentDate < fromDate) return false;
       if (toDate && accidentDate && accidentDate > toDate) return false;
@@ -176,20 +182,35 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
         rowTestId={(row) => `accident-row-${String(row.id)}`}
         filterBar={
           <div className="flex flex-wrap items-center gap-2 text-[11px]">
-            <input
-              value={driverFilter}
-              onChange={(event) => setDriverFilter(event.target.value)}
-              placeholder="Filter by driver ID"
-              className="w-40 rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              data-testid="accidents-driver-filter"
-            />
-            <input
-              value={unitFilter}
-              onChange={(event) => setUnitFilter(event.target.value)}
-              placeholder="Filter by unit ID"
-              className="w-40 rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              data-testid="accidents-unit-filter"
-            />
+            {/* SAF-F26: filters, not creators — allowCreate={false} (same law as IdvrPage). */}
+            <label className="text-[11px] text-slate-600">
+              Driver
+              <EntityPicker
+                kind="driver"
+                operatingCompanyId={operatingCompanyId}
+                value={driverFilter || null}
+                onChange={(next) => setDriverFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All drivers"
+                className="mt-1 w-48"
+                dataField="accidents-driver-filter"
+                dataTestId="accidents-driver-filter"
+              />
+            </label>
+            <label className="text-[11px] text-slate-600">
+              Unit
+              <EntityPicker
+                kind="unit"
+                operatingCompanyId={operatingCompanyId}
+                value={unitFilter || null}
+                onChange={(next) => setUnitFilter(next ?? "")}
+                allowCreate={false}
+                placeholder="All units"
+                className="mt-1 w-48"
+                dataField="accidents-unit-filter"
+                dataTestId="accidents-unit-filter"
+              />
+            </label>
             <span className="font-semibold text-slate-500">From:</span>
             <DatePicker value={fromDate} onChange={setFromDate} className="w-32" max={toDate || undefined} data-testid="accidents-from-date" />
             <span className="font-semibold text-slate-500">To:</span>
