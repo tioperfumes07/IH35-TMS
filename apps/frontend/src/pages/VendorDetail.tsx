@@ -162,14 +162,14 @@ export function VendorDetailPage() {
     companyId,
     enabled: Boolean(companyId),
   });
-  const vendorTypeOptions = useMemo(
-    () =>
-      (vendorTypesQuery.data?.rows ?? []).map((row: Record<string, unknown>) => ({
-        value: String(row.display_name ?? ""),
-        label: String(row.display_name ?? ""),
-      })),
-    [vendorTypesQuery.data]
-  );
+  const vendorTypeOptions = useMemo(() => {
+    type CatalogRow = { display_name?: unknown };
+    const rows = (vendorTypesQuery.data?.rows ?? []) as CatalogRow[];
+    return rows.map((row) => ({
+      value: String(row.display_name ?? ""),
+      label: String(row.display_name ?? ""),
+    }));
+  }, [vendorTypesQuery.data]);
 
   // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
   const paymentTermsQuery = useQuery({
@@ -589,7 +589,6 @@ export function VendorDetailPage() {
               createKind="vendor_type"
               operatingCompanyId={companyId}
               disabled={!profileEditMode}
-              placeholder="Select vendor type…"
               addNewLabel="+ Add new vendor type"
               onOptionCreated={(opt) => {
                 setProfileForm((current) => ({ ...current, vendorType: opt.label }));
