@@ -144,13 +144,19 @@ describeIntegration("FIN-22 lease ASC 842 GL posting (real Postgres)", () => {
     const endIso = endDate.toISOString().slice(0, 10);
     await bypass(async () => {
       await db.query(
+        // LEASE-06: lessee_operating_company_id is REQUIRED — ck_lease_contract_lessee_exactly_one
+        // demands exactly one lessee identity, and lessee_name is a display label, not an identity.
+        // transpId (not trkId) is both the constraint-satisfying and the SEMANTICALLY correct choice:
+        // TRK is the lessor here, a company cannot lease to itself (ck_lease_contract_no_self_lease),
+        // and TRK -> TRANSP is the real intercompany equipment lease this suite models.
         `INSERT INTO accounting.lease_contract
-           (id, operating_company_id, lessor_operating_company_id, lessee_name, election, commencement_date,
+           (id, operating_company_id, lessor_operating_company_id, lessee_name, lessee_operating_company_id,
+            election, commencement_date,
             end_date, payment_amount_cents, payment_frequency, number_of_periods, total_lease_payments_cents,
             discount_rate_bps, status, created_by_user_id)
-         VALUES ($1::uuid,$2::uuid,$2::uuid,$3,$4,$5::date,$6::date,
+         VALUES ($1::uuid,$2::uuid,$2::uuid,$3,$13::uuid,$4,$5::date,$6::date,
                  $7,'monthly',$8,$9,$10,$11,$12::uuid)`,
-        [leaseId, trkId, `Lessee ${suffix}`, opts.election, commenceIso, endIso, opts.paymentCents, opts.periods, total, opts.discountBps, opts.status ?? "active", userId]
+        [leaseId, trkId, `Lessee ${suffix}`, opts.election, commenceIso, endIso, opts.paymentCents, opts.periods, total, opts.discountBps, opts.status ?? "active", userId, transpId]
       );
       await db.query(
         `INSERT INTO accounting.lease_classification (operating_company_id, lease_contract_id, election, created_by_user_id)
