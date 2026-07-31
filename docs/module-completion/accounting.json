@@ -1,7 +1,7 @@
 {
   "module": "accounting",
   "title": "Accounting (Module 3)",
-  "complete": true,
+  "complete": false,
   "as_of": "2026-07-31T03:15:00.000Z",
   "live_sha": "efba811",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
