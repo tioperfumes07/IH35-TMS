@@ -74,10 +74,14 @@ const CONDITIONAL = [
 ];
 
 function hasCreateMarker(src) {
+  // LST-PICKER-01: EntityPicker kind=driver owns nested create (CreateDriverModal inside EntityPicker).
+  const entityPickerDriver =
+    src.includes("EntityPicker") && /kind=["']driver["']/.test(src);
   return (
     src.includes("CreateDriverModal") ||
     src.includes("DriverPickerWithCreate") ||
-    src.includes("+ Create driver")
+    src.includes("+ Create driver") ||
+    entityPickerDriver
   );
 }
 

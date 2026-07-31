@@ -1,18 +1,18 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createSafetyFine } from "../../../api/safety";
-import { listDrivers, listUnits } from "../../../api/mdata";
+import { listUnits } from "../../../api/mdata";
 import { listCivilFineTypes } from "../../../api/catalogs-safety";
 import { confirmUpload, requestUploadUrl } from "../../../api/docs";
 import { listDispatchLoads } from "../../../api/dispatch";
 import { Button } from "../../../components/Button";
 import { Combobox } from "../../../components/Combobox";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
-import { CreateDriverModal } from "../../../components/drivers/CreateDriverModal";
 import { companyToday } from "../../../lib/businessDate";
 
 type Props = {
@@ -37,12 +37,8 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
   const [issuedDate, setIssuedDate] = useState(companyToday());
   const [amountUsd, setAmountUsd] = useState("");
   const [notes, setNotes] = useState("");
-  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const [sourceDocFile, setSourceDocFile] = useState<File | null>(null);
-  // SAF-B29: every picker below fetched limit:200 with NO server-side search, so past 200 drivers,
-  // units or loads the rest were unselectable and nothing said so — a silent truncation on a record
-  // that becomes a payable. The term goes to the server, which already supports `search`.
-  const [driverSearch, setDriverSearch] = useState("");
+  // SAF-B29: unit/load pickers fetch limit:200 with server-side search (EntityPicker owns driver roster).
   const [unitSearch, setUnitSearch] = useState("");
   const [loadSearch, setLoadSearch] = useState("");
   // SAF-F19: safety.civil_fines has carried related_load_id / related_unit_id / source_doc_id since
@@ -51,18 +47,6 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
   // specific load and truck was stored as if it belonged to nothing.
   const [relatedLoadId, setRelatedLoadId] = useState<string | null>(null);
   const [relatedUnitId, setRelatedUnitId] = useState<string | null>(null);
-
-  const driversQuery = useQuery({
-    queryKey: ["safety", "fine-create", "drivers", operatingCompanyId, driverSearch],
-    queryFn: () =>
-      listDrivers({
-        operating_company_id: operatingCompanyId,
-        status: "Active",
-        limit: 200,
-        search: driverSearch || undefined,
-      }),
-    enabled: open && Boolean(operatingCompanyId),
-  });
 
   const unitsQuery = useQuery({
     queryKey: ["safety", "fine-create", "units", operatingCompanyId, unitSearch],
@@ -128,15 +112,6 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
     // THIS ticket (mile marker, axle, reading) without losing the coded type.
     if (label && !violationDescription.trim()) setViolationDescription(label);
   }
-
-  const driverOptions = useMemo(
-    () =>
-      (driversQuery.data?.drivers ?? []).map((d) => ({
-        value: d.id,
-        label: `${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || d.id,
-      })),
-    [driversQuery.data]
-  );
 
   // SAF-B18: `safety.civil_fines.source_doc_id` FKs docs.files and has been accepted by the create
   // route since it was written (fines.routes.ts:37,205,224) — and NO UI ever collected it, so every
@@ -244,19 +219,22 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
               </SelectCombobox>
             </div>
             {subjectType === "driver" ? (
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1" data-testid="fine-create-driver-picker">
                 <label className="text-xs font-semibold text-gray-600">Driver *</label>
-                <Combobox
-                  options={driverOptions}
+                {/*
+                  LST-PICKER-01 (guard 1896): side-channel driver create replaced by EntityPicker.
+                  kind=driver — VERIFY-2 first-row create → same mdata.drivers roster.
+                */}
+                <EntityPicker
+                  kind="driver"
+                  operatingCompanyId={operatingCompanyId}
                   value={subjectDriverId}
                   onChange={setSubjectDriverId}
-                  onSearch={setDriverSearch}
                   placeholder="Select driver"
-                  loading={driversQuery.isLoading}
-                  allowAddNew={{
-                    label: "+ Create driver",
-                    onAdd: () => setDriverCreateOpen(true),
-                  }}
+                  enabled={open}
+                  nestedInDrawer
+                  dataTestId="fine-create-driver-entity-picker"
+                  onCreated={(id) => setSubjectDriverId(id)}
                 />
               </div>
             ) : null}
@@ -384,17 +362,6 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
           ) : null}
         </form>
       </ParityDrawer>
-
-      <CreateDriverModal
-        open={driverCreateOpen}
-        companyId={operatingCompanyId}
-        onClose={() => setDriverCreateOpen(false)}
-        onCreated={(driverId) => {
-          setSubjectDriverId(driverId);
-          setDriverCreateOpen(false);
-          void driversQuery.refetch();
-        }}
-      />
     </>
   );
 }
