@@ -507,6 +507,16 @@ export const CATALOG_PICKER_CONFIGS = {
     evidence: "apps/backend/src/catalogs/fuel/factory.ts:83,159 + fuel/index.ts:22 tableName fuel_station_brands",
   }),
 
+  // Maintenance labor codes — LaborTracker had bare SelectCombobox; WO time entries persist labor_code_id.
+  maintenance_labor_code: catalogEntry({
+    key: "maintenance_labor_code",
+    label: "labor code",
+    table: "catalogs.maintenance_labor_codes",
+    endpoint: "/api/v1/catalogs/maintenance/labor-codes",
+    evidence:
+      "apps/backend/src/catalogs/maintenance/factory.ts:83,159 + maintenance/index.ts:14 tableName maintenance_labor_codes; LaborTracker labor_code_id consumer",
+  }),
+
 
   // Civil fine types — FineCreateModal previously used Combobox allowAddNew with an external mutate
   // (not ReferenceSelect / CatalogQuickCreateDrawer). POST body matches generic {code, display_name}.
