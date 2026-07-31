@@ -1,20 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { useAuth } from "../../auth/useAuth";
 import { ApiError } from "../../api/client";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { CollapsedListFilters } from "../../components/table";
 import {
-  getFixedAssets, getFixedAssetDetail,
-  type FixedAssetListItem, type FixedAssetDetail,
+  getFixedAssets, getFixedAssetDetail, registerTrkOwnedUnits,
+  type FixedAssetListItem, type FixedAssetDetail, type RegisterTrkUnitsResult,
 } from "../../api/fixed-assets";
 
 const fmtCents = (c: number) => formatUsdCents(c);
@@ -27,6 +28,179 @@ const STATUS_COLOR: Record<string, string> = {
   disposed: "bg-slate-100 text-slate-700",
   voided: "bg-red-100 text-red-700",
 };
+
+const PRICES_JSON_EXAMPLE = `{
+  "T169": 85000000,
+  "T170": 92000000
+}`;
+
+type ParsedPrices =
+  | { ok: true; map: Record<string, number> }
+  | { ok: false; error: string };
+
+export function parseOwnerPricesJson(raw: string): ParsedPrices {
+  const trimmed = raw.trim();
+  if (!trimmed) return { ok: false, error: "Paste a JSON map of unit_number → purchase_price_cents." };
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch {
+    return { ok: false, error: "Invalid JSON — expected an object like { \"T169\": 85000000 }." };
+  }
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return { ok: false, error: "Expected a JSON object mapping unit_number → positive integer cents." };
+  }
+
+  const map: Record<string, number> = {};
+  for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+    const unitNumber = String(key).trim();
+    if (!unitNumber) continue;
+    const cents = typeof value === "number" ? value : Number(value);
+    if (!Number.isInteger(cents) || cents <= 0) {
+      return { ok: false, error: `Unit ${unitNumber}: price must be a positive integer (cents).` };
+    }
+    map[unitNumber] = cents;
+  }
+
+  if (Object.keys(map).length === 0) {
+    return { ok: false, error: "At least one unit price is required — the system never invents dollars." };
+  }
+
+  return { ok: true, map };
+}
+
+function RegisterResultSummary({ result }: { result: RegisterTrkUnitsResult }) {
+  return (
+    <div className="mt-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800 space-y-2" data-testid="fa-register-result">
+      <p><span className="font-semibold">Registered:</span> {result.registered}</p>
+      <p><span className="font-semibold">Skipped (already registered):</span> {result.skipped_already}</p>
+      {result.missing_price.length > 0 && (
+        <p><span className="font-semibold">Missing price:</span> {result.missing_price.join(", ")}</p>
+      )}
+      {result.accum_depr_unresolved.length > 0 && (
+        <p><span className="font-semibold">Accum. depr unresolved:</span> {result.accum_depr_unresolved.join(", ")}</p>
+      )}
+      {result.errors.length > 0 && (
+        <div>
+          <span className="font-semibold">Errors:</span>
+          <ul className="list-disc pl-4 mt-1">
+            {result.errors.map((e) => (
+              <li key={`${e.unit_number}-${e.reason}`}>{e.unit_number}: {e.reason}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TrkBulkRegisterPanel({
+  trkCompanyId,
+  onClose,
+  onSuccess,
+}: {
+  trkCompanyId: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [pricesText, setPricesText] = useState("");
+  const [parseError, setParseError] = useState<string | null>(null);
+  const [lastResult, setLastResult] = useState<RegisterTrkUnitsResult | null>(null);
+
+  const parsed = useMemo(() => parseOwnerPricesJson(pricesText), [pricesText]);
+  const pricesMap = parsed.ok ? parsed.map : {};
+
+  useEffect(() => {
+    setParseError(parsed.ok ? null : (pricesText.trim() ? parsed.error : null));
+  }, [parsed, pricesText]);
+
+  const registerMutation = useMutation({
+    mutationFn: () =>
+      registerTrkOwnedUnits({
+        operating_company_id: trkCompanyId,
+        owner_operating_company_id: trkCompanyId,
+        pricesByUnitNumber: pricesMap,
+      }),
+    onSuccess: (result) => {
+      setLastResult(result);
+      onSuccess();
+    },
+  });
+
+  const onFileChange = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    setPricesText(text);
+    event.target.value = "";
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+      <div
+        className="bg-white rounded-lg shadow-xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto"
+        onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
+        data-testid="fa-trk-bulk-register-panel"
+      >
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Register TRK-owned units</h2>
+            <p className="text-xs text-gray-500 mt-1">
+              Bulk register fixed assets on TRK books. Purchase prices are owner-provided only — units without an explicit cents value are skipped (missing_price).
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none ml-4" aria-label="Close">×</button>
+        </div>
+
+        <label className="block text-xs font-medium text-gray-700 mb-1" htmlFor="fa-prices-json">
+          Unit prices (JSON map: unit_number → cents)
+        </label>
+        <textarea
+          id="fa-prices-json"
+          data-testid="fa-prices-json"
+          value={pricesText}
+          onChange={(e) => setPricesText(e.target.value)}
+          rows={8}
+          placeholder={PRICES_JSON_EXAMPLE}
+          className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+        />
+        {parseError ? <p className="mt-1 text-xs text-red-600">{parseError}</p> : null}
+
+        <div className="mt-2">
+          <label className="text-xs text-slate-600">
+            Or upload JSON file
+            <input type="file" accept=".json,application/json" className="ml-2 text-xs" onChange={onFileChange} />
+          </label>
+        </div>
+
+        {registerMutation.isError && (
+          <p className="mt-2 text-xs text-red-600">
+            {(registerMutation.error as Error)?.message ?? "Registration failed."}
+          </p>
+        )}
+
+        {lastResult ? <RegisterResultSummary result={lastResult} /> : null}
+
+        <div className="mt-4 flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50">
+            Close
+          </button>
+          <button
+            type="button"
+            data-testid="fa-register-trk-submit"
+            disabled={registerMutation.isPending || Object.keys(pricesMap).length === 0 || !parsed.ok}
+            onClick={() => void registerMutation.mutate()}
+            className="rounded-sm bg-slate-800 text-white px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-slate-700"
+          >
+            {registerMutation.isPending ? "Registering…" : "Register with owner prices"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: () => void }) {
   const cost = detail.purchase_price_cents;
@@ -113,15 +287,24 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
 }
 
 export function FixedAssetsPage() {
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, companies } = useCompanyContext();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const operatingCompanyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag("FIXED_ASSETS_ENABLED", operatingCompanyId || undefined);
   const [searchParams, setSearchParams] = useSearchParams();
   const [statusFilter, setStatusFilter] = useState("");
   const [offset, setOffset] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(searchParams.get("asset_id"));
+  const [registerOpen, setRegisterOpen] = useState(false);
   const limit = 50;
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
+
+  const trkCompany = useMemo(
+    () => companies.find((c) => c.code === "TRK" || c.company_type === "asset_holder") ?? null,
+    [companies],
+  );
+  const canBulkRegister = (user?.role === "Owner" || user?.role === "Administrator") && Boolean(trkCompany);
 
   useEffect(() => {
     const assetId = searchParams.get("asset_id");
@@ -232,6 +415,16 @@ export function FixedAssetsPage() {
       <span className="text-xs text-gray-500">
         {total.toLocaleString()} asset{total !== 1 ? "s" : ""}
       </span>
+      {canBulkRegister ? (
+        <button
+          type="button"
+          data-testid="fa-open-trk-register"
+          onClick={() => setRegisterOpen(true)}
+          className="ml-auto rounded-sm border border-slate-300 px-3 py-1.5 text-sm text-slate-800 hover:bg-slate-50"
+        >
+          Register TRK units
+        </button>
+      ) : null}
     </div>
   );
 
@@ -248,6 +441,20 @@ export function FixedAssetsPage() {
 
   return (
     <AccountingSubNavWrapper title="Fixed Assets" subtitle="Asset register, depreciation schedule, and disposals (read-only; GL posting gated)">
+      <div className="mb-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900" data-testid="fa-density-honesty-banner">
+        Register density requires owner-provided purchase prices per unit (cents). Bulk registration never invents dollar amounts — units without an explicit price remain in <span className="font-medium">missing_price</span> until the owner supplies them.
+      </div>
+
+      {registerOpen && trkCompany ? (
+        <TrkBulkRegisterPanel
+          trkCompanyId={trkCompany.id}
+          onClose={() => setRegisterOpen(false)}
+          onSuccess={() => {
+            void queryClient.invalidateQueries({ queryKey: ["fixed-assets"] });
+          }}
+        />
+      ) : null}
+
       {detailId && detail && !detailLoading && (
         <DetailPanel detail={detail} onClose={closeDetail} />
       )}
@@ -270,7 +477,7 @@ export function FixedAssetsPage() {
         storageKey="fixed-assets-list"
         tableTestId="fixed-assets-table"
         initialPageSize={limit}
-        emptyText="No fixed assets found."
+        emptyText="No fixed assets found. Register density depends on owner-provided purchase prices — use Register TRK units when prices are ready."
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSortChange={onSortChange}

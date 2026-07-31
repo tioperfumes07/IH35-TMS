@@ -1188,6 +1188,7 @@
     "1832": "1832-verify-acct-close-categorization-rules-mounted.mjs",
     "1834": "1834-verify-relay-fuel-driver-match-fallbacks.mjs",
     "1835": "1835-verify-db249-index-optimization-3.mjs",
+    "1844": "1844-verify-fa-register-ui-requires-owner-prices.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
