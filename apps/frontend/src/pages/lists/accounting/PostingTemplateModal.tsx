@@ -99,6 +99,14 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
       })),
     [accountsQuery.data]
   );
+  const classOptions = useMemo(
+    () =>
+      (classesQuery.data?.rows ?? []).map((c) => ({
+        value: c.id,
+        label: c.display_name,
+      })),
+    [classesQuery.data]
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -245,20 +253,24 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
           {errors.creditAccount ? <div className="mt-1 text-[11px] text-red-700">{errors.creditAccount}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className="block text-xs font-semibold text-gray-600" data-testid="posting-template-default-class">
           Default class (optional)
-          <SelectCombobox
-            value={form.classId}
-            onChange={(event) => setForm((v) => ({ ...v, classId: event.target.value }))}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
-          >
-            <option value="">None</option>
-            {(classesQuery.data?.rows ?? []).map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.display_name}
-              </option>
-            ))}
-          </SelectCombobox>
+          {/*
+            LST-PICKER-01 (guard 1892): bare SelectCombobox over catalogs.classes had no first-row
+            +Create — operators left for Lists → Classes. Debit/credit already use createKind=account.
+          */}
+          <div className="mt-1">
+            <ReferenceSelect
+              createKind="class"
+              operatingCompanyId={operatingCompanyId}
+              value={form.classId || null}
+              onChange={(id) => setForm((v) => ({ ...v, classId: id ?? "" }))}
+              options={classOptions}
+              placeholder="None / no class"
+              loading={classesQuery.isLoading}
+              onOptionCreated={() => void classesQuery.refetch()}
+            />
+          </div>
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">

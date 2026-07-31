@@ -45,3 +45,6 @@
 - 2026-07-31 · guard 1886 · AccountDrawer parent account → `createKind=account` (`catalogs.accounts`; dual-path close vs 1884; was bare Combobox) · PR pending
 - 2026-07-31 · guard 1888 · VendorDetail + VendorCreateModal default expense + CustomerProfileForm default income → `createKind=account` (`catalogs.accounts`; was bare SelectCombobox/Combobox) · PR pending
 - 2026-07-31 · guard 1890 · QuickCreateEntityModal item income/expense → `createKind=account` (`catalogs.accounts`; was bare Combobox) · PR pending
+- 2026-07-31 · guard 1884 · NewAccountDrawerForm parent account → `createKind=account` (`catalogs.accounts`; was bare `<select>`) · PR pending
+
+- 2026-07-31 · guard 1892 · PostingTemplateModal default class → `createKind=class` (`catalogs.classes`; was bare SelectCombobox) · PR pending
