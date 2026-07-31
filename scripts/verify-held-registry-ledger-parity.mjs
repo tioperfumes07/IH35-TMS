@@ -138,6 +138,11 @@ export const EXPECTED_HELD = [
   // not run. Leaves this list only after the owner Neon-applies + ledger-backfills and GUARD re-proves
   // the constraint definition live.
   "202611021200_vendors_vendor_type_check_relax.sql",
+  // LEASE-BRIDGE rent_expense CoA soft-bind (#3901 / guard 1880). Authored 2026-07-31; NEVER
+  // Neon-applied — unapplied by construction. Soft-binds TRANSP/USMCA rent_expense role to
+  // "Leased Trucks from IH35 TRUCKING"; seeds USMCA account if missing. Leaves this list only after
+  // owner Neon-apply + ledger-backfill and GUARD re-proves both ledger rows. QBO push stays OFF.
+  "202611031200_lease_bridge_rent_expense_coa_role.sql",
 ];
 
 /**

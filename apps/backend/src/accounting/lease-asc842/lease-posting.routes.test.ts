@@ -17,7 +17,7 @@ const q = `?operating_company_id=${OPCO}`;
 
 const authState = { role: "Owner" as string | null, uuid: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" };
 
-const { rentalMock, saleMock, commenceMock, interestMock, createMock, addAssetMock, genSchedMock, activateMock } = vi.hoisted(() => ({
+const { rentalMock, saleMock, commenceMock, interestMock, createMock, addAssetMock, genSchedMock, activateMock, activationPostMock } = vi.hoisted(() => ({
   rentalMock: vi.fn(),
   saleMock: vi.fn(),
   commenceMock: vi.fn(),
@@ -26,6 +26,7 @@ const { rentalMock, saleMock, commenceMock, interestMock, createMock, addAssetMo
   addAssetMock: vi.fn(),
   genSchedMock: vi.fn(),
   activateMock: vi.fn(),
+  activationPostMock: vi.fn(),
 }));
 
 vi.mock("../shared.js", async (orig) => {
@@ -41,6 +42,7 @@ vi.mock("./lease-posting.service.js", () => ({
   postOperatingEndOfTermSale: saleMock,
   postSalesTypeCommencement: commenceMock,
   postSalesTypeInterestPeriod: interestMock,
+  postOperatingActivationEntries: activationPostMock,
 }));
 vi.mock("./lease.service.js", () => ({
   createLeaseContract: createMock,
@@ -146,6 +148,7 @@ describe("FIN-22 lease posting routes — wiring, gate, flag-OFF passthrough, er
       payload: {
         lessor_operating_company_id: OPCO,
         lessee_name: "IH 35 Transportation LLC",
+        lessee_operating_company_id: "44444444-4444-4444-8444-444444444444",
         commencement_date: "2026-07-05",
         end_date: "2027-07-05",
         payment_amount_cents: 250000,
@@ -157,5 +160,45 @@ describe("FIN-22 lease posting routes — wiring, gate, flag-OFF passthrough, er
     expect(res.statusCode).toBe(201);
     expect(res.json()).toMatchObject({ id: LEASE });
     expect(createMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("activate -> draft flip + period-1 operating activation posts", async () => {
+    activateMock.mockResolvedValue(undefined);
+    activationPostMock.mockResolvedValue({
+      period_number: 1,
+      lessor: {
+        result: "posted",
+        journal_entry_id: "33333333-3333-4333-8333-333333333333",
+        lease_contract_id: LEASE,
+        idempotency_key: "k",
+        debit_total_cents: 250000,
+        credit_total_cents: 250000,
+      },
+      lessee: {
+        result: "posted",
+        journal_entry_id: "55555555-5555-4555-8555-555555555555",
+        lease_contract_id: LEASE,
+        idempotency_key: "k2",
+        debit_total_cents: 250000,
+        credit_total_cents: 250000,
+      },
+    });
+    const app = await build();
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/accounting/lease-posting/leases/${LEASE}/activate${q}`,
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ status: "active", lease_contract_id: LEASE });
+    expect(activateMock).toHaveBeenCalledWith(
+      { operatingCompanyId: OPCO, leaseContractId: LEASE },
+      { userId: authState.uuid }
+    );
+    expect(activationPostMock).toHaveBeenCalledWith(
+      { operatingCompanyId: OPCO, leaseContractId: LEASE },
+      { userId: authState.uuid }
+    );
+    expect(res.json().activation.lessor.debit_total_cents).toBe(250000);
+    expect(res.json().activation.lessee.debit_total_cents).toBe(250000);
   });
 });

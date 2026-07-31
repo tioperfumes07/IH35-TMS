@@ -55,6 +55,9 @@ const LEASE_TRK: readonly CoaRole[] = [
   "gain_loss_on_disposal",
 ];
 
+/** Intercompany lessees (TRANSP/USMCA) — ASC 842 operating rent expense on activate. */
+const LEASE_LESSEE: readonly CoaRole[] = ["rent_expense"];
+
 const PROPERTY_TAX: readonly CoaRole[] = ["property_tax_expense", "property_tax_payable"];
 
 /**
@@ -86,10 +89,10 @@ export function requiredCoaRolesForCompanyCode(code: CompanyCode): readonly CoaR
     return uniq([...CORE, ...LEASE_TRK, ...PROPERTY_TAX]);
   }
   if (c === "USMCA") {
-    return uniq([...CORE, ...CARRIER_DRIVER, ...PROPERTY_TAX]);
+    return uniq([...CORE, ...CARRIER_DRIVER, ...PROPERTY_TAX, ...LEASE_LESSEE]);
   }
   // TRANSP + unknown codes → full carrier + factoring (fail closed toward operating carrier)
-  return uniq([...CORE, ...CARRIER_DRIVER, ...FACTORING_TRANSP, ...PROPERTY_TAX]);
+  return uniq([...CORE, ...CARRIER_DRIVER, ...FACTORING_TRANSP, ...PROPERTY_TAX, ...LEASE_LESSEE]);
 }
 
 export function assertRequiredSubsetOfCanonical(required: readonly CoaRole[]): void {

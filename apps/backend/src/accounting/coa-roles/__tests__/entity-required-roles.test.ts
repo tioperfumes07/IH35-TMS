@@ -42,6 +42,12 @@ describe("entity-required-roles (owner 2026-07-23)", () => {
     expect(req).not.toContain("advance_recovery");
   });
 
+  it("TRANSP/USMCA require rent_expense (LEASE-BRIDGE lessee); TRK does not", () => {
+    expect(requiredCoaRolesForCompanyCode("TRANSP")).toContain("rent_expense");
+    expect(requiredCoaRolesForCompanyCode("USMCA")).toContain("rent_expense");
+    expect(requiredCoaRolesForCompanyCode("TRK")).not.toContain("rent_expense");
+  });
+
   it("TRANSP requires factoring; USMCA does not", () => {
     expect(requiredCoaRolesForCompanyCode("TRANSP")).toContain("factoring_advance_liability");
     expect(requiredCoaRolesForCompanyCode("USMCA")).not.toContain("factoring_advance_liability");

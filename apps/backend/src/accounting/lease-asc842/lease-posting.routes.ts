@@ -28,6 +28,7 @@ import {
   postOperatingEndOfTermSale,
   postSalesTypeCommencement,
   postSalesTypeInterestPeriod,
+  postOperatingActivationEntries,
 } from "./lease-posting.service.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
@@ -68,6 +69,7 @@ const createLeaseBody = z.object({
   lessor_operating_company_id: z.string().uuid(),
   lessee_name: z.string().trim().min(1),
   lessee_customer_id: z.string().uuid().optional().nullable(),
+  lessee_operating_company_id: z.string().uuid().optional().nullable(),
   display_id: z.string().trim().min(1).optional().nullable(),
   election: election.optional(),
   commencement_date: isoDate,
@@ -109,6 +111,7 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
           lessorOperatingCompanyId: body.data.lessor_operating_company_id,
           lesseeName: body.data.lessee_name,
           lesseeCustomerId: body.data.lessee_customer_id ?? null,
+          lesseeOperatingCompanyId: body.data.lessee_operating_company_id ?? null,
           displayId: body.data.display_id ?? null,
           election: body.data.election,
           commencementDate: body.data.commencement_date,
@@ -189,7 +192,7 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
     }
   });
 
-  // Activate a lease (draft -> active) so it is postable.
+  // Activate a lease (draft -> active) and post period-1 ASC 842 operating entries when flag ON.
   app.post("/api/v1/accounting/lease-posting/leases/:lease_id/activate", async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
@@ -203,7 +206,15 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
         { operatingCompanyId: query.data.operating_company_id, leaseContractId: params.data.lease_id },
         { userId: user.uuid }
       );
-      return reply.code(200).send({ lease_contract_id: params.data.lease_id, status: "active" });
+      const activation = await postOperatingActivationEntries(
+        { operatingCompanyId: query.data.operating_company_id, leaseContractId: params.data.lease_id },
+        { userId: user.uuid }
+      );
+      return reply.code(200).send({
+        lease_contract_id: params.data.lease_id,
+        status: "active",
+        activation,
+      });
     } catch (error) {
       if (error instanceof LeasePostingError) {
         const m = mapError(error);

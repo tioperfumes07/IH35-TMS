@@ -123,6 +123,8 @@ Vehicles tab, so the surface exists. Unconfirmed which, and not guessed here.
 ## Then, in order
 
 1. Import fixed assets for the 122 LIVE TRK-owned units/trailers (50 trucks + 72 trailers).
+   **ND-FA-01 (2026-07-31):** register + Heavy Repair CoA exist; Neon still has **1** `fixed_assets`
+   row. Owner must supply capitalized purchase prices in-app — agents must **not invent** costs.
 2. Bridge: on truck-lease creation, also `createLeaseContract` (lessor TRK, lessee the operating
    company, election `operating` per the owner lock) + `addLeaseAsset` per selected unit/trailer +
    `generateScheduleForLease`, in one transaction, with `contract_instance_id` linking the ledger row
@@ -133,6 +135,18 @@ Vehicles tab, so the surface exists. Unconfirmed which, and not guessed here.
 4. Uniform allocation (owner spec): a total per group spread evenly across selected assets —
    e.g. flatbeds 10 @ $8,000/mo → $800 each; reefers 20 @ $15,000/mo → $750 each. Largest-remainder so
    the lines sum exactly to the group total.
+
+## Activate posting (LEASE-BRIDGE code — FINANCIAL-HOLD)
+
+As of this PR: `POST .../leases/:id/activate` flips draft→active **and** (when
+`LEASE_GL_POSTING_ENABLED` is ON) posts period-1 operating entries:
+
+- **TRK lessor:** Dr cash-like / Cr `rental_income` (existing `postOperatingRentalPeriod`)
+- **TRANSP/USMCA lessee:** Dr `rent_expense` / Cr `ap_control` (`postOperatingLesseeRentPeriod`)
+
+Schedule + CoA roles required. Asset lines optional for period rent (ND-FA density gap); retitle
+still required when asset lines exist. **QBO_JE_PUSH / QBO_ENTITY_PUSH stay OFF.** Legal→ledger
+create bridge remains blocked until owner FA prices land.
 
 ## What is NOT claimed here
 

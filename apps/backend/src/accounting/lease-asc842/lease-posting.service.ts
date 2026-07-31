@@ -72,6 +72,9 @@ type LeaseRow = {
   end_date: string;
   payment_amount_cents: string;
   number_of_periods: number;
+  lessor_operating_company_id: string;
+  lessee_operating_company_id: string | null;
+  lessee_customer_id: string | null;
 };
 
 type LeaseAssetRow = {
@@ -96,7 +99,8 @@ async function flagOn(client: DbClient, operatingCompanyId: string, userId: stri
 async function loadLease(client: DbClient, operatingCompanyId: string, leaseContractId: string): Promise<LeaseRow> {
   const res = await client.query<LeaseRow>(
     `SELECT id::text, election, status, display_id, commencement_date::text, end_date::text,
-            payment_amount_cents::text, number_of_periods
+            payment_amount_cents::text, number_of_periods,
+            lessor_operating_company_id::text, lessee_operating_company_id::text, lessee_customer_id::text
        FROM accounting.lease_contract
       WHERE operating_company_id = $1::uuid AND id = $2::uuid
       LIMIT 1 FOR UPDATE`,
@@ -335,7 +339,13 @@ export async function postOperatingRentalPeriod(
       throw new LeasePostingError("LEASE_NOT_OPERATING", `Lease ${lease.display_id ?? lease.id} is sales-type, not operating`);
     }
     const assets = await loadLeaseAssets(client, input.operatingCompanyId, input.leaseContractId);
-    const { subjectUnitId } = await assertRetitledToTrk(client, assets);
+    // Periodic rental income leaves the unit on TRK books (FIN-21 depreciation). Retitle is required
+    // when asset lines exist (owner lock). Schedule-only contracts (ND-FA density gap) may still post
+    // rent from the payment schedule — Legal→asset bridge remains blocked until owner capitalized prices land.
+    let subjectUnitId: string | null = null;
+    if (assets.length > 0) {
+      ({ subjectUnitId } = await assertRetitledToTrk(client, assets));
+    }
 
     const periodRes = await client.query<{ id: string; period_date: string; rental_income_cents: string; posted: boolean }>(
       `SELECT id::text, period_date::text, rental_income_cents::text, posted
@@ -394,6 +404,182 @@ export async function postOperatingRentalPeriod(
       credit_total_cents: posted.creditTotal,
     };
   });
+}
+
+/**
+ * OPERATING — lessee rent expense (TRANSP/USMCA books). Dr rent_expense / Cr ap_control.
+ * Amount from lease_schedule_period.payment_cents (same schedule as lessor rental). Reuses
+ * postLeaseJournalEntry + assertBalanced — NO new GL math. Flag-gated per lessee opco.
+ */
+export async function postOperatingLesseeRentPeriod(
+  input: {
+    lessorOperatingCompanyId: string;
+    leaseContractId: string;
+    periodNumber: number;
+    lesseeOperatingCompanyId: string;
+  },
+  actor: Actor
+): Promise<LeasePostResult> {
+  return withCurrentUser(actor.userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.lesseeOperatingCompanyId]);
+
+    if (!(await flagOn(client, input.lesseeOperatingCompanyId, actor.userId))) {
+      return { result: "skipped_flag_off", journal_entry_id: null, lease_contract_id: input.leaseContractId };
+    }
+
+    const idempotencyKey = buildLeaseIdempotencyKey(
+      input.lesseeOperatingCompanyId,
+      input.leaseContractId,
+      "rent_expense",
+      input.periodNumber
+    );
+    const existing = await findExistingPostedJe(client, input.lesseeOperatingCompanyId, idempotencyKey);
+    if (existing) return { result: "already_posted", journal_entry_id: existing, lease_contract_id: input.leaseContractId };
+
+    // Lease header lives on the lessor opco; read under lessor scope then switch back for JE insert.
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.lessorOperatingCompanyId]);
+    const lease = await loadLease(client, input.lessorOperatingCompanyId, input.leaseContractId);
+    if (lease.election !== "operating") {
+      throw new LeasePostingError("LEASE_NOT_OPERATING", `Lease ${lease.display_id ?? lease.id} is sales-type, not operating`);
+    }
+    if (
+      !lease.lessee_operating_company_id ||
+      lease.lessee_operating_company_id.toLowerCase() !== input.lesseeOperatingCompanyId.toLowerCase()
+    ) {
+      throw new LeasePostingError(
+        "LEASE_NOT_FOUND",
+        `Lease ${lease.display_id ?? lease.id} is not intercompany to lessee ${input.lesseeOperatingCompanyId}`
+      );
+    }
+
+    const periodRes = await client.query<{ id: string; period_date: string; payment_cents: string }>(
+      `SELECT id::text, period_date::text, payment_cents::text
+         FROM accounting.lease_schedule_period
+        WHERE operating_company_id = $1::uuid AND lease_contract_id = $2::uuid AND period_number = $3 AND is_active = true
+        LIMIT 1`,
+      [input.lessorOperatingCompanyId, input.leaseContractId, input.periodNumber]
+    );
+    const period = periodRes.rows[0];
+    if (!period) throw new LeasePostingError("SCHEDULE_PERIOD_NOT_FOUND", `Operating period ${input.periodNumber} not found`);
+
+    const amount = Number(period.payment_cents);
+    if (!(amount > 0)) {
+      throw new LeasePostingError("UNBALANCED_ENTRY", `Lessee rent period ${input.periodNumber} has non-positive payment_cents=${amount}`);
+    }
+
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.lesseeOperatingCompanyId]);
+    const rentExpenseAccount = await resolveRole(client, input.lesseeOperatingCompanyId, "rent_expense");
+    const apAccount = await resolveRole(client, input.lesseeOperatingCompanyId, "ap_control");
+
+    const label = `Lease ${lease.display_id ?? lease.id} rent expense period ${input.periodNumber}`;
+    const lines: PostingLine[] = [
+      {
+        account_id: rentExpenseAccount,
+        debit_or_credit: "debit",
+        amount_cents: amount,
+        description: `${label} rent expense`,
+        links: [{ type: "lease_schedule_period", id: period.id, role: "lease_period" }],
+      },
+      {
+        account_id: apAccount,
+        debit_or_credit: "credit",
+        amount_cents: amount,
+        description: `${label} AP (lessor)`,
+        links: [{ type: "lease_schedule_period", id: period.id, role: "lease_period" }],
+      },
+    ];
+
+    const posted = await postLeaseJournalEntry(client, {
+      operatingCompanyId: input.lesseeOperatingCompanyId,
+      leaseContractId: input.leaseContractId,
+      entryDate: period.period_date,
+      memo: `${label} posting`,
+      idempotencyKey,
+      sourceType: "lease_rental",
+      lines,
+      actorUserId: actor.userId,
+    });
+
+    await emitLeasePosted(client, {
+      operatingCompanyId: input.lesseeOperatingCompanyId,
+      actorUserId: actor.userId,
+      subjectUnitId: null,
+      leaseContractId: input.leaseContractId,
+      journalEntryId: posted.journalEntryId,
+      kind: "operating_rent_expense",
+      auditPayload: { period_number: input.periodNumber, payment_cents: amount, lessor_operating_company_id: input.lessorOperatingCompanyId },
+    });
+
+    return {
+      result: "posted",
+      journal_entry_id: posted.journalEntryId,
+      lease_contract_id: input.leaseContractId,
+      idempotency_key: idempotencyKey,
+      debit_total_cents: posted.debitTotal,
+      credit_total_cents: posted.creditTotal,
+    };
+  });
+}
+
+export type OperatingActivationResult = {
+  period_number: number;
+  lessor: LeasePostResult;
+  lessee: LeasePostResult | { result: "skipped_no_intercompany_lessee"; journal_entry_id: null; lease_contract_id: string };
+};
+
+/**
+ * LEASE-BRIDGE — on activate (draft→active), post period-1 ASC 842 operating entries:
+ *   TRK (lessor): Dr cash-like / Cr rental_income
+ *   TRANSP/USMCA (lessee opco): Dr rent_expense / Cr ap_control
+ * Guarded by LEASE_GL_POSTING_ENABLED per entity. Does NOT enable QBO push.
+ */
+export async function postOperatingActivationEntries(
+  input: { operatingCompanyId: string; leaseContractId: string; periodNumber?: number },
+  actor: Actor
+): Promise<OperatingActivationResult | { result: "skipped_not_operating"; lease_contract_id: string }> {
+  const periodNumber = input.periodNumber ?? 1;
+
+  const leaseMeta = await withCurrentUser(actor.userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
+    return loadLease(client, input.operatingCompanyId, input.leaseContractId);
+  });
+
+  if (leaseMeta.election !== "operating") {
+    return { result: "skipped_not_operating", lease_contract_id: input.leaseContractId };
+  }
+
+  const lessor = await postOperatingRentalPeriod(
+    {
+      operatingCompanyId: input.operatingCompanyId,
+      leaseContractId: input.leaseContractId,
+      periodNumber,
+    },
+    actor
+  );
+
+  if (!leaseMeta.lessee_operating_company_id) {
+    return {
+      period_number: periodNumber,
+      lessor,
+      lessee: {
+        result: "skipped_no_intercompany_lessee",
+        journal_entry_id: null,
+        lease_contract_id: input.leaseContractId,
+      },
+    };
+  }
+
+  const lessee = await postOperatingLesseeRentPeriod(
+    {
+      lessorOperatingCompanyId: input.operatingCompanyId,
+      leaseContractId: input.leaseContractId,
+      periodNumber,
+      lesseeOperatingCompanyId: leaseMeta.lessee_operating_company_id,
+    },
+    actor
+  );
+
+  return { period_number: periodNumber, lessor, lessee };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
