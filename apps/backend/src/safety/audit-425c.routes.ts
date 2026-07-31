@@ -33,10 +33,15 @@ export async function registerSafetyAudit425cRoutes(app: FastifyInstance) {
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          SELECT id, event_class, payload, emitted_at
+          -- SAF-425C phantom columns (fixed 2026-07-30): this selected id / emitted_at, neither of
+          -- which exists. audit.audit_events is (uuid, created_at, event_class, severity, payload,
+          -- actor_user_uuid, source) — verified on prod. Every call raised undefined_column, so the
+          -- 425C exhibit endpoint returned a 500 rather than an exhibit. Aliased back to the old field
+          -- names so any existing consumer keeps working; the COLUMNS are what were wrong, not the API.
+          SELECT uuid AS id, event_class, payload, created_at AS emitted_at
           FROM audit.audit_events
           WHERE payload->>'operating_company_id' = $1
-          ORDER BY emitted_at DESC
+          ORDER BY created_at DESC
           LIMIT 500
         `,
         [query.data.operating_company_id]
