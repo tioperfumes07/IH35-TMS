@@ -2,496 +2,497 @@
   "module": "dispatch",
   "title": "Dispatch — acceptance checklist",
   "complete": false,
-  "as_of": "2026-07-29",
+  "as_of": "2026-07-31",
   "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21).",
+  "note": "RE-SCOPED 2026-07-31 (owner decision). The prior bar — 'renders real entity-scoped data' — is UNSATISFIABLE on prod today and is why this module sat at 0 since the 2026-07-29 baseline: the backing tables are empty (maintenance work_order_lines/defects/inspections/dvir/road_service/all 5 tire tables/both brake tables/warranty_claims/pm_alerts = 0, work_orders = 2, pm_schedules 30 rows but 0 ACTIVE; dispatch assignment_history/detention x3/intransit_issues/equipment_transfers/ocr_queue/pod_documents/driver_layovers = 0, geo.geofences = 0, mdata.loads = 10 all TRANSP; TRK and USMCA hold zero dispatch and zero maintenance operational rows). Marking PASS on density would have asserted what the data cannot support; marking FAIL on a correct empty screen would be equally false. The bar is now renders + entity-scoped + honest empty state, which IS provable today on all three entities and is the bar McLeod/NetSuite hold an unseeded module to. This is a change of bar, NOT a lowering of standard: the seed dependency is tracked as its own block (DISP-MAINT-DATA-01) and is deliberately NOT a click-through gate. Evidence: docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. No item was flipped by this re-scope.\n\nORIGINAL BASELINE NOTE (kept, append-only): BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21).",
   "items": [
     {
       "id": "DISP-S01",
-      "title": "Surface /dispatch renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/Dispatch.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S02",
-      "title": "Surface /dispatch/alerts renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/alerts renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/DispatchAlertsPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S03",
-      "title": "Surface /dispatch/alerts/late-arrivals renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/alerts/late-arrivals renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S04",
-      "title": "Surface /dispatch/assignment-history renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/assignment-history renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S05",
-      "title": "Surface /dispatch/assignments renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/assignments renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/Dispatch.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S06",
-      "title": "Surface /dispatch/at-risk renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/at-risk renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S07",
-      "title": "Surface /dispatch/book-load renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/book-load renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/Dispatch.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S08",
-      "title": "Surface /dispatch/border-crossing renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/border-crossing renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/BorderCrossingWizardPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S09",
-      "title": "Surface /dispatch/border-crossing/history renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/border-crossing/history renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S10",
-      "title": "Surface /dispatch/borders/geofence-history renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/borders/geofence-history renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/borders/BorderCrossingHistory.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S11",
-      "title": "Surface /dispatch/chat renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/chat renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/chat/DispatchChatPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S12",
-      "title": "Surface /dispatch/detention renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/detention renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S13",
-      "title": "Surface /dispatch/equipment-transfers renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/equipment-transfers renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S14",
-      "title": "Surface /dispatch/factoring-packets renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/factoring-packets renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. This route is a deliberate REDIRECT to /accounting/factoring (verified in routes/manifest.tsx) — proof is that the redirect lands and the TARGET meets the bar; it is not a page of its own. PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S15",
-      "title": "Surface /dispatch/factoring-queue renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/factoring-queue renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S16",
-      "title": "Surface /dispatch/geofencing renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/geofencing renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/operations/GeofencesPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S17",
-      "title": "Surface /dispatch/in-transit-issues renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/in-transit-issues renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S18",
-      "title": "Surface /dispatch/incidents renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/incidents renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. This route is a deliberate REDIRECT to /dispatch/alerts (verified in routes/manifest.tsx) — proof is that the redirect lands and the TARGET meets the bar; it is not a page of its own. PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S19",
-      "title": "Surface /dispatch/layovers/driver/:driverId renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/layovers/driver/:driverId renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/drivers/DriverLayoverHistoryPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S20",
-      "title": "Surface /dispatch/loads renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/loads renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/Dispatch.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S21",
-      "title": "Surface /dispatch/loads/:id renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/loads/:id renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/Dispatch.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S22",
-      "title": "Surface /dispatch/loads/:id/banking renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/loads/:id/banking renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S23",
-      "title": "Surface /dispatch/map renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/map renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/MapView.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S24",
-      "title": "Surface /dispatch/notify-preferences renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/notify-preferences renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S25",
-      "title": "Surface /dispatch/ocr-queue renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/ocr-queue renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/OcrQueuePage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S26",
-      "title": "Surface /dispatch/planner renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/planner renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S27",
-      "title": "Surface /dispatch/planners renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/planners renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. This route is a deliberate REDIRECT to /dispatch/planners/timeline (verified in routes/manifest.tsx) — proof is that the redirect lands and the TARGET meets the bar; it is not a page of its own. PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S28",
-      "title": "Surface /dispatch/planners/driver renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/planners/driver renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/planners/DriverPlanner.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S29",
-      "title": "Surface /dispatch/planners/loads renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/planners/loads renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/planners/LoadsPlanner.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S30",
-      "title": "Surface /dispatch/planners/timeline renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/planners/timeline renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S31",
-      "title": "Surface /dispatch/planners/truck renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/planners/truck renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S32",
-      "title": "Surface /dispatch/pod-review renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/pod-review renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/PodReviewPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S33",
-      "title": "Surface /dispatch/pre-settlements renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/pre-settlements renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/Dispatch.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S34",
-      "title": "Surface /dispatch/settings renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/settings renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/DispatchSettingsPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S35",
-      "title": "Surface /dispatch/settlements renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/settlements renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/Dispatch.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S36",
-      "title": "Surface /dispatch/trip-pairing renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/trip-pairing renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component UNRESOLVED from the route manifest — resolve before verifying. PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     },
     {
       "id": "DISP-S37",
-      "title": "Surface /dispatch/trip-profitability renders real entity-scoped data with no dead end",
+      "title": "Surface /dispatch/trip-profitability renders, is entity-scoped, and shows an honest empty state",
       "layers": [
         "DOD-A",
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
+      "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/TripProfitability.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
       "pr": null
     }
   ],
-  "M": 37
+  "M": 37,
+  "rescoped_on": "2026-07-31"
 }
