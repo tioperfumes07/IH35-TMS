@@ -16,11 +16,11 @@
  * tracking (beyond the delivery-method choice) remains a flagged follow-up;
  * see the trailing note.
  */
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Combobox } from "../Combobox";
-import { Button } from "../Button";
-import { createPaymentTermOption, type CreateCustomerInput, type Customer, type PaymentTermOption, type UpdateCustomerInput } from "../../api/mdata";
+import { ReferenceSelect } from "../parity/ReferenceSelect";
+import type { CreateCustomerInput, Customer, PaymentTermOption, UpdateCustomerInput } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import type { CustomerType, MilesBasis } from "../../types/api";
 
@@ -425,17 +425,10 @@ type Props = {
 };
 
 export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode, paymentTermOptions, onPaymentTermCreated, parentCustomerOptions, customerId }: Props) {
-  const [localTerms, setLocalTerms] = useState<PaymentTermOption[]>([]);
-  const [addTermOpen, setAddTermOpen] = useState(false);
-  const [newTermName, setNewTermName] = useState("");
-  const [newTermDays, setNewTermDays] = useState("30");
-  const [savingTerm, setSavingTerm] = useState(false);
-  const [termError, setTermError] = useState("");
-
-  const termOptions = useMemo(() => {
-    const merged = [...paymentTermOptions, ...localTerms];
-    return merged.map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` }));
-  }, [paymentTermOptions, localTerms]);
+  const termOptions = useMemo(
+    () => paymentTermOptions.map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` })),
+    [paymentTermOptions]
+  );
 
   // D1-4: parent-customer options, excluding the row being edited (a customer can't be its own parent).
   const parentOptions = useMemo(
@@ -466,38 +459,6 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
       .filter((a) => a.account_type === "Income")
       .map((a) => ({ value: a.id, label: a.account_name }));
   }, [incomeAccountsQuery.data]);
-
-  async function saveNewTerm() {
-    const name = newTermName.trim();
-    const days = Number(newTermDays);
-    if (!name) {
-      setTermError("Name is required.");
-      return;
-    }
-    if (Number.isNaN(days) || days < 0) {
-      setTermError("Days must be a non-negative number.");
-      return;
-    }
-    setSavingTerm(true);
-    setTermError("");
-    try {
-      const created = await createPaymentTermOption({
-        operating_company_id: operatingCompanyId,
-        terms_name: name,
-        days_until_due: days,
-      });
-      setLocalTerms((prev) => [...prev, created]);
-      onPaymentTermCreated?.(created);
-      onPatch({ payment_terms_id: created.id });
-      setAddTermOpen(false);
-      setNewTermName("");
-      setNewTermDays("30");
-    } catch (err) {
-      setTermError(String((err as Error)?.message || "Could not create payment term."));
-    } finally {
-      setSavingTerm(false);
-    }
-  }
 
   return (
     <div className="space-y-3">
@@ -575,31 +536,21 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           <div className="block text-sm">
             <span className="mb-1 block text-xs font-semibold text-gray-600">Payment terms</span>
-            <Combobox
-              options={termOptions}
+            <ReferenceSelect
               value={values.payment_terms_id || null}
               onChange={(next) => onPatch({ payment_terms_id: next ?? "" })}
+              options={termOptions}
+              createKind="payment_term"
+              operatingCompanyId={operatingCompanyId}
               placeholder="Select terms"
-              allowAddNew={{ label: "+ Add new payment term", onAdd: () => setAddTermOpen(true) }}
+              onOptionCreated={(opt) => {
+                onPaymentTermCreated?.({
+                  id: opt.value,
+                  terms_name: opt.label.replace(/\s*\(\d+d\)$/, ""),
+                  days_until_due: 0,
+                });
+              }}
             />
-            {addTermOpen ? (
-              <div className="mt-2 rounded-sm border border-gray-300 bg-gray-50 p-2">
-                <p className="mb-2 text-xs font-semibold text-gray-600">New payment term</p>
-                {termError ? <p className="mb-2 text-xs text-red-700">{termError}</p> : null}
-                <div className="grid grid-cols-2 gap-2">
-                  <TextField label="Terms name" value={newTermName} onChange={setNewTermName} placeholder="Net 30" />
-                  <TextField label="Days until due" type="number" value={newTermDays} onChange={setNewTermDays} />
-                </div>
-                <div className="mt-2 flex justify-end gap-2">
-                  <Button type="button" variant="secondary" onClick={() => setAddTermOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="button" disabled={savingTerm} onClick={() => void saveNewTerm()}>
-                    {savingTerm ? "Saving…" : "Add term"}
-                  </Button>
-                </div>
-              </div>
-            ) : null}
           </div>
           <TextField label="Credit limit (USD)" type="number" value={values.credit_limit} onChange={(credit_limit) => onPatch({ credit_limit })} />
           <SelectField
