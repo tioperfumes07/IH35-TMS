@@ -2,6 +2,7 @@
  * ACCT-R-24 / ND-INV-01 B2d — shared draft→sent path for manual POST /send and
  * POD auto-send after proforma convert. No new GL math; reuses existing guards + email queue.
  */
+import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { enqueueEmail } from "../email/queue.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
@@ -13,11 +14,6 @@ import {
   type InvoiceLineGuardRow,
 } from "./invoice-linkage-guards.js";
 import { recomputeInvoiceTotals } from "./shared.js";
-
-type Queryable = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  query: (sql: string, values?: unknown[]) => Promise<{ rows: any[] }>;
-};
 
 export type SendDraftInvoiceOk = { ok: true };
 export type SendDraftInvoiceErr = {
@@ -31,7 +27,7 @@ export type SendDraftInvoiceErr = {
 export type SendDraftInvoiceResult = SendDraftInvoiceOk | SendDraftInvoiceErr;
 
 export async function sendDraftInvoice(
-  client: Queryable,
+  client: PoolClient,
   input: { invoiceId: string; operatingCompanyId: string; userId: string }
 ): Promise<SendDraftInvoiceResult> {
   const currentRes = await client.query(
