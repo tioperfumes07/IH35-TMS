@@ -1,12 +1,12 @@
 {
- "date": "2026-07-29",
- "generated_at_iso": "2026-07-29T21:45:44.421Z",
+ "date": "2026-07-31",
+ "generated_at_iso": "2026-07-31T10:29:10.833Z",
  "counts": {
   "PENDING": 19,
   "PENDING (GATED)": 28,
-  "NEEDS-VERIFY": 76,
+  "NEEDS-VERIFY": 78,
   "DONE": 685,
-  "AUDIT-NOTE": 414
+  "AUDIT-NOTE": 412
  },
  "universe": {
   "total_blocks_after_dedup": 1222,
@@ -943,6 +943,28 @@
    "pr": 2778
   },
   {
+   "id": "db249-finance-schema-naming-drift",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #3852 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 3852
+  },
+  {
+   "id": "db249-index-optimization-3",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #3852 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 3852
+  },
+  {
    "id": "DOC-15-QBO-TOKEN-AUTOREFRESH",
    "source": ".block-ready",
    "fin": true,
@@ -970,10 +992,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #3498 title-match only, unverified",
+   "evidence": "PR #3812 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 3498
+   "pr": 3812
   },
   {
    "id": "f-02-jump-to-tab-nonstandard",
@@ -981,10 +1003,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #3513 title-match only, unverified",
+   "evidence": "PR #3830 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 3513
+   "pr": 3830
   },
   {
    "id": "flow2-auto-deduction-trigger-from-customer-exp",
@@ -1479,7 +1501,7 @@
    "evidence": "[verified 2026-07-12] agent: parent-category creator not built (QboCategoriesListPage.tsx)",
    "name": "",
    "registered_on": null,
-   "pr": 501
+   "pr": null
   },
   {
    "id": "ps-a-item-editor-account-pickers-no-addnew",
@@ -4910,10 +4932,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #480 merged 2026-06-04",
+   "evidence": "PR #857 merged 2026-06-10",
    "name": "Reconcile 8 KPI drifts production vs app. All 8 canonical KPIs already fixed in main: canonical-kpis.ts, KPI_SOURCES_OF_",
    "registered_on": null,
-   "pr": 480
+   "pr": 857
   },
   {
    "id": "FIX-AUDIT-NESTED-MODALS",
@@ -4921,10 +4943,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #462 merged 2026-06-04",
+   "evidence": "PR #853 merged 2026-06-10",
    "name": "Fix nested-box modal pattern (double-frame headers). WorkOrderDetailModal + CustomerDrillModal already clean. Added doub",
    "registered_on": null,
-   "pr": 462
+   "pr": 853
   },
   {
    "id": "FIX-AUDIT-PROD-STUBS",
@@ -4932,10 +4954,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #471 merged 2026-06-04",
+   "evidence": "PR #855 merged 2026-06-10",
    "name": "Remove 13+ production stub strings. Fixed DriversTable.tsx '(stub)' toast. CI guard (verify-no-prod-stubs.mjs) already i",
    "registered_on": null,
-   "pr": 471
+   "pr": 855
   },
   {
    "id": "FIX-AUDIT-TEST-DATA-LEAK",
@@ -4943,10 +4965,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #469 merged 2026-06-04",
+   "evidence": "PR #854 merged 2026-06-10",
    "name": "Archive TEST/seed rows from prod listings. Infrastructure already in place (migrations 0320/0367/0369/0396, EXCLUDE_ARCH",
    "registered_on": null,
-   "pr": 469
+   "pr": 854
   },
   {
    "id": "FIX-AUDIT-TRIGGER-DRIFT",
@@ -5229,10 +5251,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #475 merged 2026-06-04",
+   "evidence": "PR #856 merged 2026-06-10",
    "name": "Samsara webhooks investigation + restoration. Route mounted at dual paths, HMAC-SHA256 signature verifier present, per-t",
    "registered_on": null,
-   "pr": 475
+   "pr": 856
   },
   {
    "id": "FIX-STEP3-POSTING-BALANCED-JE-PROOF",
@@ -12178,28 +12200,6 @@
    "pr": null
   },
   {
-   "id": "db249-finance-schema-naming-drift",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "db249-index-optimization-3",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "db5-resize-removal-directive-vs-current-lock",
    "source": ".block-ready",
    "fin": true,
@@ -13477,6 +13477,540 @@
   }
  ],
  "merged_prs": [
+  {
+   "number": 3880,
+   "title": "Claude- fix(dispatch): every Unassigned Units row rendered \"T171 · · Need load\" (CONCAT_WS returns '', not NULL)",
+   "mergedAt": "2026-07-31T06:18:08Z",
+   "branch": "claude/dispatch-empty-driver-separator"
+  },
+  {
+   "number": 3879,
+   "title": "Claude- fix(ui): PageHeader subtitle rendered through the action buttons (live on /maintenance)",
+   "mergedAt": "2026-07-31T06:05:49Z",
+   "branch": "claude/pageheader-subtitle-overlap"
+  },
+  {
+   "number": 3878,
+   "title": "Claude- fix(data): DEACTIVATE demo/test assets on prod — never delete (DATA-01)",
+   "mergedAt": "2026-07-31T06:56:37Z",
+   "branch": "claude/data01-deactivate-demo-assets"
+  },
+  {
+   "number": 3877,
+   "title": "CURSOR- fix(lists): LST-PICKER-01 maintenance_labor_code inline create + guard 1850",
+   "mergedAt": "2026-07-31T09:19:22Z",
+   "branch": "fix/lst-picker01-maintenance-labor-code-v2"
+  },
+  {
+   "number": 3876,
+   "title": "CURSOR- feat(accounting): ND-FA-01 Fixed Assets register UI requires owner prices (FINANCIAL-HOLD)",
+   "mergedAt": "2026-07-31T10:06:26Z",
+   "branch": "fix/nd-fa-register-ui-v2"
+  },
+  {
+   "number": 3875,
+   "title": "CURSOR- fix(banking): BANK-F15 Plaid admin sync passes actor for CHAIN-05 JE (FINANCIAL-HOLD)",
+   "mergedAt": "2026-07-31T09:35:05Z",
+   "branch": "fix/bank-f15-plaid-sync-actor-v2"
+  },
+  {
+   "number": 3874,
+   "title": "CURSOR- fix(lists): LST-PICKER-01 payment_term inline create + guard 1842",
+   "mergedAt": "2026-07-31T07:34:05Z",
+   "branch": "fix/lst-picker01-payment-term-v2"
+  },
+  {
+   "number": 3872,
+   "title": "CURSOR- fix(lists): LST-PICKER-01 driver termination reason inline create + guard 1838",
+   "mergedAt": "2026-07-31T07:13:44Z",
+   "branch": "fix/lst-picker01-termination-reason-v2"
+  },
+  {
+   "number": 3871,
+   "title": "Claude- fix(maintenance): PM Countdown said \"No active schedule\" for 30 active schedules on prod",
+   "mergedAt": "2026-07-31T05:45:12Z",
+   "branch": "claude/maint-pm-countdown-not-due"
+  },
+  {
+   "number": 3870,
+   "title": "CURSOR- LST-PICKER-01: Book Load detention_reason inline create (guard 1848)",
+   "mergedAt": "2026-07-31T08:08:04Z",
+   "branch": "fix/lst-picker01-detention-reason"
+  },
+  {
+   "number": 3869,
+   "title": "CURSOR- fix(lists): LST-PICKER-01 equipment_type inline create + guard 1846",
+   "mergedAt": "2026-07-31T07:53:14Z",
+   "branch": "fix/lst-picker01-equipment-type"
+  },
+  {
+   "number": 3868,
+   "title": "CURSOR- feat(accounting): ACCT-F24 POD auto-send (FINANCIAL-HOLD)",
+   "mergedAt": "2026-07-31T05:11:12Z",
+   "branch": "fix/acct-r24-pod-auto-send-v5"
+  },
+  {
+   "number": 3861,
+   "title": "Claude- fix(compliance): per-unit Form 2290 due date was correct, tested, and called by nothing (SAF-ORPH-04)",
+   "mergedAt": "2026-07-31T05:30:14Z",
+   "branch": "claude/orph04-per-unit-2290-wired"
+  },
+  {
+   "number": 3858,
+   "title": "Claude- docs(safety): retire SAF-ORPH-01/02 + B01 on self-confirmed evidence; B08 REFUSED (22→25 of 38)",
+   "mergedAt": "2026-07-31T04:28:00Z",
+   "branch": "claude/saf-orph-retire-self-confirmed"
+  },
+  {
+   "number": 3857,
+   "title": "Claude- fix(safety): SAF-425C — the 425C exhibit endpoint 500s on every call (phantom columns)",
+   "mergedAt": "2026-07-31T03:05:16Z",
+   "branch": "claude/saf-425c-phantom-columns"
+  },
+  {
+   "number": 3856,
+   "title": "Claude- docs(safety): SAF-B01 blocker resolved (flag exists, correctly OFF); SAF-B08 count moved but defect did not",
+   "mergedAt": "2026-07-31T03:05:05Z",
+   "branch": "claude/saf-b01-b08-live-escrow-status"
+  },
+  {
+   "number": 3854,
+   "title": "Claude- docs(safety): SAF-B05 and SAF-B23 FAILs are stale — both defects verified gone (safety 20→22 of 38)",
+   "mergedAt": "2026-07-31T02:08:31Z",
+   "branch": "claude/saf-b05-b23-stale-fail-flip"
+  },
+  {
+   "number": 3852,
+   "title": "CURSOR- feat(accounting): ACCT-F20 db249 composite indexes (FINANCIAL-HOLD)",
+   "mergedAt": "2026-07-31T01:58:23Z",
+   "branch": "fix/acct-r20-db249-composite-indexes"
+  },
+  {
+   "number": 3851,
+   "title": "Cursor- feat(accounting): ACCT-F18 driver default expense account API + banking prefill",
+   "mergedAt": "2026-07-31T01:29:06Z",
+   "branch": "fix/acct-r18-driver-default-expense-account"
+  },
+  {
+   "number": 3850,
+   "title": "Cursor- chore(governance): Rule 26 serialize scoreboard hotfiles",
+   "mergedAt": "2026-07-31T00:02:16Z",
+   "branch": "fix/serialize-scoreboard-hotfiles"
+  },
+  {
+   "number": 3848,
+   "title": "Cursor- feat(accounting): ACCT-F10 My Accountant flag scoreboard PASS",
+   "mergedAt": "2026-07-31T00:18:07Z",
+   "branch": "fix/acct-r10-myaccountant-scoreboard"
+  },
+  {
+   "number": 3847,
+   "title": "Cursor- feat(accounting): ACCT-R-15 Class cost-center variance",
+   "mergedAt": "2026-07-30T23:21:02Z",
+   "branch": "fix/acct-r15-cost-center-class-variance"
+  },
+  {
+   "number": 3846,
+   "title": "Cursor- feat(accounting): ACCT-R-14 sales-tax scoreboard PASS + FE guard",
+   "mergedAt": "2026-07-30T23:05:50Z",
+   "branch": "fix/acct-r14-sales-tax-return-automation"
+  },
+  {
+   "number": 3845,
+   "title": "Cursor- feat(accounting): ACCT-R-17 duplicate expense detection panel",
+   "mergedAt": "2026-07-30T22:53:11Z",
+   "branch": "fix/acct-r17-duplicate-expense-detection"
+  },
+  {
+   "number": 3844,
+   "title": "Cursor- feat(accounting): ACCT-R-16 ASC 606 revenue leakage / unbilled panel",
+   "mergedAt": "2026-07-30T22:38:25Z",
+   "branch": "fix/acct-r16-revenue-leakage"
+  },
+  {
+   "number": 3843,
+   "title": "Cursor- fix(fuel): Relay driver match phone/name unique fallbacks + rematch",
+   "mergedAt": "2026-07-30T21:34:45Z",
+   "branch": "fix/relay-fuel-driver-match-fallbacks"
+  },
+  {
+   "number": 3842,
+   "title": "Claude- fix(tooling): TOOL-F06 — my own TOOL-F05 reintroduced the coupling it was written to avoid",
+   "mergedAt": "2026-07-30T21:29:41Z",
+   "branch": "claude/toolf06-replay-self-contained"
+  },
+  {
+   "number": 3841,
+   "title": "Claude- docs(safety): SAF-B30 — half the finding is stale, the other half is a live silent no-op",
+   "mergedAt": "2026-07-30T21:20:55Z",
+   "branch": "claude/safb30-evidence-split"
+  },
+  {
+   "number": 3840,
+   "title": "Claude- fix(safety): SAF-B28 — the PATCH jsonb write was fixed, but the guard still could not see that path",
+   "mergedAt": "2026-07-30T21:11:47Z",
+   "branch": "claude/safb28-guard-patch-jsonb-blindspot"
+  },
+  {
+   "number": 3839,
+   "title": "Claude- fix(safety): SAF-B04 — the accident-wizard fix was real but UNGUARDED, so it could silently regress",
+   "mergedAt": "2026-07-30T20:48:03Z",
+   "branch": "claude/safb04-guard-enums-and-cost-lines"
+  },
+  {
+   "number": 3838,
+   "title": "Cursor- fix(accounting+banking): LINK-02 PASS + BANK-F10 live overage JE",
+   "mergedAt": "2026-07-30T21:10:44Z",
+   "branch": "fix/acct-link02-wire-pass-f10-honesty"
+  },
+  {
+   "number": 3837,
+   "title": "Claude- docs(lists): LST-LINK-02 — evidence was stale; three of its seven FK islands are already linked",
+   "mergedAt": "2026-07-30T20:49:11Z",
+   "branch": "claude/lst-link-02-evidence-refresh"
+  },
+  {
+   "number": 3836,
+   "title": "Claude- fix(tooling): TOOL-F05 — a migration could be pushed without ever touching a database",
+   "mergedAt": "2026-07-30T19:46:33Z",
+   "branch": "claude/toolf05-migrations-require-local-db"
+  },
+  {
+   "number": 3835,
+   "title": "Claude- fix(tooling): TOOL-F04 — CI passed the migration that took production down, because a fresh database has no rows",
+   "mergedAt": "2026-07-30T18:55:57Z",
+   "branch": "claude/toolf04-data-migration-rehearsal"
+  },
+  {
+   "number": 3834,
+   "title": "Cursor- fix(accounting+banking): close modules 31/31 + 18/18 — LINK/DISP/SURF + bank density/DOM",
+   "mergedAt": "2026-07-30T19:59:03Z",
+   "branch": "fix/acct-close-disp01-link05-06"
+  },
+  {
+   "number": 3832,
+   "title": "Claude- fix(drivers): LST-F29 HOTFIX — unblock production deploys (status must move with deactivated_at)",
+   "mergedAt": "2026-07-30T17:55:46Z",
+   "branch": "claude/lstf29-hotfix-status-constraint"
+  },
+  {
+   "number": 3831,
+   "title": "Claude- fix(tooling): TOOL-F03 — every guard PR had to edit one shared JSON, so any two of them conflicted",
+   "mergedAt": "2026-07-30T18:38:30Z",
+   "branch": "claude/toolf03-step-lane-band"
+  },
+  {
+   "number": 3830,
+   "title": "Claude- fix(tooling): TOOL-F02 — migration-directory coupling forced a rebase on every merge, and was never necessary",
+   "mergedAt": "2026-07-30T17:05:49Z",
+   "branch": "claude/toolf02-migration-coupling-by-number"
+  },
+  {
+   "number": 3829,
+   "title": "Claude- fix(banking): BANK-F14 — Trucking's reported cash was 99.7% Transportation's money",
+   "mergedAt": "2026-07-30T17:11:03Z",
+   "branch": "claude/bankf14-active-deactivated-contradiction"
+  },
+  {
+   "number": 3828,
+   "title": "Cursor- fix(lists): LST-PICKER-01 PayRunClosePanel payment method inline create + guard 1830",
+   "mergedAt": "2026-07-30T18:50:57Z",
+   "branch": "cursor/lst-picker01-payrun-payment-method-1830"
+  },
+  {
+   "number": 3827,
+   "title": "Claude- fix(banking): BANK-F13 — 48 superseded bank copies were categorizable, and would double-book the GL",
+   "mergedAt": "2026-07-30T16:49:46Z",
+   "branch": "claude/bankf13-superseded-duplicates"
+  },
+  {
+   "number": 3826,
+   "title": "Cursor- fix(lists): kill LST-PICKER conflict treadmill (drivers + serialize + 1828)",
+   "mergedAt": "2026-07-30T15:54:39Z",
+   "branch": "cursor/lst-picker-conflict-treadmill-kill"
+  },
+  {
+   "number": 3825,
+   "title": "Cursor- fix(lists): LST-PICKER-01 EscrowForfeitModal draw reason inline create + guard 1826",
+   "mergedAt": "2026-07-30T14:58:20Z",
+   "branch": "cursor/lst-picker01-escrow-draw-reason-1826"
+  },
+  {
+   "number": 3824,
+   "title": "Claude- fix(drivers): LST-F29 — 83 phantom drivers on USMCA, an entity that has never operated",
+   "mergedAt": "2026-07-30T15:34:18Z",
+   "branch": "claude/lstf29-usmca-phantom-drivers"
+  },
+  {
+   "number": 3823,
+   "title": "Cursor- fix(lists): LST-PICKER-01 HosViolationCreateModal DOT type inline create + guard 1824",
+   "mergedAt": "2026-07-30T18:17:24Z",
+   "branch": "cursor/lst-picker01-hos-create-modal-1824"
+  },
+  {
+   "number": 3822,
+   "title": "Cursor- fix(lists): LST-PICKER-01 CargoClaimIntakeSurface claim reason inline create + guard 1822",
+   "mergedAt": "2026-07-30T15:33:21Z",
+   "branch": "cursor/lst-picker01-cargo-claim-1822"
+  },
+  {
+   "number": 3821,
+   "title": "Cursor- fix(lists): LST-PICKER-01 InternalFinesPage reason inline create + guard 1820",
+   "mergedAt": "2026-07-30T16:21:59Z",
+   "branch": "cursor/lst-picker01-internal-fine-1820"
+  },
+  {
+   "number": 3820,
+   "title": "Claude- fix(accounting): ACCT-F18 — CoA Roles reported all-green while three posting features were dead",
+   "mergedAt": "2026-07-30T12:47:29Z",
+   "branch": "claude/acctf18-posting-flag-readiness"
+  },
+  {
+   "number": 3819,
+   "title": "Cursor- fix(lists): LST-PICKER-01 ComplaintsTab complaint type inline create + guard 1818",
+   "mergedAt": "2026-07-30T12:15:41Z",
+   "branch": "cursor/lst-picker01-complaint-type-1818"
+  },
+  {
+   "number": 3818,
+   "title": "Cursor- fix(lists): LST-PICKER-01 HOSViolationsTab DOT violation type + guard 1816",
+   "mergedAt": "2026-07-30T14:29:04Z",
+   "branch": "cursor/lst-picker01-dot-violation-1816"
+  },
+  {
+   "number": 3817,
+   "title": "Claude- fix(fleet): LST-F28 — retire the 81 duplicate trailers LST-F27 left visible in the fleet",
+   "mergedAt": "2026-07-30T07:29:09Z",
+   "branch": "claude/lstf28-deactivate-duplicate-trailers"
+  },
+  {
+   "number": 3816,
+   "title": "Cursor- fix(lists): LST-PICKER-01 CompanyViolation type inline create + guard 1814",
+   "mergedAt": "2026-07-30T14:43:52Z",
+   "branch": "cursor/lst-picker01-co-violation-1814"
+  },
+  {
+   "number": 3815,
+   "title": "Cursor- fix(lists): LST-PICKER-01 FineCreateModal civil fine type + guard 1812",
+   "mergedAt": "2026-07-30T07:25:04Z",
+   "branch": "cursor/lst-picker01-civil-fine-1812"
+  },
+  {
+   "number": 3814,
+   "title": "Cursor- fix(banking): BANK-F12 Transfer → bank reverse drill (claim 1810)",
+   "mergedAt": "2026-07-30T12:15:33Z",
+   "branch": "cursor/bank-f12-transfer-reverse-1810"
+  },
+  {
+   "number": 3813,
+   "title": "Claude- fix(fleet): LST-F27 — not one trailer is owned by Trucking; 87 self-leases and 91 phantom USMCA assets",
+   "mergedAt": "2026-07-30T06:09:56Z",
+   "branch": "claude/lstf27-trailer-ownership"
+  },
+  {
+   "number": 3812,
+   "title": "Claude- fix(tooling): TOOL-F01 — pre-push gate blocked branches CI would merge, and both gates coupled all of verify-steps",
+   "mergedAt": "2026-07-30T06:13:44Z",
+   "branch": "claude/precheck-freshness-overlap-v2"
+  },
+  {
+   "number": 3811,
+   "title": "Cursor- fix(accounting): ACCT-F18 JE → bank reverse drill",
+   "mergedAt": "2026-07-30T05:45:38Z",
+   "branch": "cursor/acct-f18-je-bank-reverse-1808"
+  },
+  {
+   "number": 3809,
+   "title": "Cursor- fix(tooling): stop module-completion / LIVE PROOF typecheck thrash",
+   "mergedAt": "2026-07-30T04:04:09Z",
+   "branch": "cursor/tool-module-completion-autogen-1806"
+  },
+  {
+   "number": 3808,
+   "title": "Cursor- fix(accounting): ACCT-F17 Expense → bank reverse drill",
+   "mergedAt": "2026-07-30T05:07:25Z",
+   "branch": "cursor/acct-f17-expense-bank-reverse-1804"
+  },
+  {
+   "number": 3807,
+   "title": "Claude- feat(flags): FLAG-PARITY-01 — the operating carrier had the FEWEST features enabled of three entities",
+   "mergedAt": "2026-07-30T05:43:16Z",
+   "branch": "claude/flag-parity-renumbered"
+  },
+  {
+   "number": 3806,
+   "title": "Cursor- fix(banking): BANK-F05 Relay wallet identity via CoA system_purpose",
+   "mergedAt": "2026-07-30T04:48:45Z",
+   "branch": "cursor/bank-surf05-relay-identity-1802"
+  },
+  {
+   "number": 3803,
+   "title": "Claude- fix(units): LST-F24b — 78 SOLD trucks were recorded as actively leased to Transportation",
+   "mergedAt": "2026-07-30T00:59:12Z",
+   "branch": "claude/lstf24b-lease-scope-correction"
+  },
+  {
+   "number": 3802,
+   "title": "Cursor- fix(accounting): ACCT-F16 Receive Payment → bank reverse drill",
+   "mergedAt": "2026-07-30T01:37:49Z",
+   "branch": "cursor/acct-f16-payment-bank-reverse-1798"
+  },
+  {
+   "number": 3801,
+   "title": "Cursor- fix(banking): BANK-F02 account detail + Record Transfer opener",
+   "mergedAt": "2026-07-30T01:15:19Z",
+   "branch": "cursor/bank-account-detail-record-transfer-1796"
+  },
+  {
+   "number": 3799,
+   "title": "Cursor- fix(banking): BANK-F11 Relay ON CONFLICT vs partial bank_tx dedup unique",
+   "mergedAt": "2026-07-30T00:59:36Z",
+   "branch": "cursor/bank-relay-onconflict-1794"
+  },
+  {
+   "number": 3798,
+   "title": "Cursor- fix(banking): BANK-F02 Record Transfer trigger on Banking Home + Transfers",
+   "mergedAt": "2026-07-30T01:16:37Z",
+   "branch": "cursor/bank-record-transfer-trigger-1792"
+  },
+  {
+   "number": 3797,
+   "title": "Claude- fix(ui): TOPBAR-01 — the entity switcher was physically unclickable; grid tracks could not shrink",
+   "mergedAt": "2026-07-30T00:58:52Z",
+   "branch": "claude/topbar-responsive-overlap-fix"
+  },
+  {
+   "number": 3796,
+   "title": "Claude- fix(units): LST-F24 — 99 units carried an owner the business model forbids",
+   "mergedAt": "2026-07-29T23:18:17Z",
+   "branch": "claude/lstf24-units-ownership-correction"
+  },
+  {
+   "number": 3795,
+   "title": "Cursor- fix(banking): BANK-F05 DOM-05 intercompany route+UI + guard 1790",
+   "mergedAt": "2026-07-30T01:32:21Z",
+   "branch": "cursor/bank-dom05-interco-1790"
+  },
+  {
+   "number": 3794,
+   "title": "Cursor- fix(accounting): ACCT-F09 SURF-09 reverse-drill + guard 1788",
+   "mergedAt": "2026-07-30T00:42:58Z",
+   "branch": "cursor/acct-surf09-rev-1788"
+  },
+  {
+   "number": 3793,
+   "title": "Claude- docs(governance): three files pointed agents at a \"Rule 20\" that has never existed",
+   "mergedAt": "2026-07-29T22:15:20Z",
+   "branch": "claude/governance-phantom-rule-20"
+  },
+  {
+   "number": 3792,
+   "title": "Claude- chore(tracker): regenerate the reconcile artifact against current main (supersedes #3625)",
+   "mergedAt": "2026-07-29T22:06:51Z",
+   "branch": "claude/tracker-artifact-refresh"
+  },
+  {
+   "number": 3791,
+   "title": "Claude- fix(lists): LST-F20d — US/Mexico States reachable, and deliberately not editable",
+   "mergedAt": "2026-07-29T22:22:20Z",
+   "branch": "claude/f20d-wire-states-catalogs"
+  },
+  {
+   "number": 3790,
+   "title": "Claude- docs(arch): three different tab counts for one module, none of them enforced",
+   "mergedAt": "2026-07-29T22:06:02Z",
+   "branch": "claude/archdesign-tabcount-drift"
+  },
+  {
+   "number": 3789,
+   "title": "Cursor- fix(lists): LST-PICKER-01 CustomerDetail quality reason + guard 1786",
+   "mergedAt": "2026-07-30T06:03:05Z",
+   "branch": "cursor/lst-picker01-cq-reason-1786"
+  },
+  {
+   "number": 3788,
+   "title": "Cursor- fix(lists): LST-PICKER-01 UserDetail dispatcher error inline create + 1784",
+   "mergedAt": "2026-07-30T05:23:18Z",
+   "branch": "cursor/lst-picker01-dispatcher-1784"
+  },
+  {
+   "number": 3787,
+   "title": "Claude- fix(lists): LST-F20c — the completeness gate skipped the UI legs for bespoke catalogs",
+   "mergedAt": "2026-07-29T22:03:02Z",
+   "branch": "claude/f20c-bespoke-catalogs-need-hub-tile"
+  },
+  {
+   "number": 3786,
+   "title": "Claude- docs(governance): finish removing the retired merge gate — Cursor was still ordered to ask for it",
+   "mergedAt": "2026-07-29T22:05:20Z",
+   "branch": "claude/governance-cursor-constitution-gate"
+  },
+  {
+   "number": 3785,
+   "title": "Cursor- fix(lists): LST-PICKER-01 CancelLoad inline create + guard 1782",
+   "mergedAt": "2026-07-30T05:04:59Z",
+   "branch": "cursor/lst-picker01-1782"
+  },
+  {
+   "number": 3784,
+   "title": "Cursor- evidence(lists): LST-RLS-01 PASS — global write-authz + guard 1780",
+   "mergedAt": "2026-07-30T04:48:21Z",
+   "branch": "cursor/lst-rls01-1780"
+  },
+  {
+   "number": 3783,
+   "title": "Cursor- fix(lists): LST-MAINT-01 RLS-safe reseed empty maintenance catalogs",
+   "mergedAt": "2026-07-29T23:39:29Z",
+   "branch": "cursor/lst-maint01-1778"
+  },
+  {
+   "number": 3782,
+   "title": "Cursor- evidence(lists): LST-ORPH-02 PASS — held registry truth + guard 1776",
+   "mergedAt": "2026-07-30T00:58:12Z",
+   "branch": "cursor/lst-orph02-1776"
+  },
+  {
+   "number": 3781,
+   "title": "Cursor- evidence(lists): LST-CAT-06 PASS — per-entity dispatcher reasons + guard 1774",
+   "mergedAt": "2026-07-30T00:14:36Z",
+   "branch": "cursor/lst-cat06-1774"
+  },
+  {
+   "number": 3780,
+   "title": "Cursor- evidence(lists): LST-A-01 PASS — hub reachability + guard 1772",
+   "mergedAt": "2026-07-30T00:00:13Z",
+   "branch": "cursor/lst-a01-1772"
+  },
+  {
+   "number": 3779,
+   "title": "Cursor- evidence(lists): LST-PICKER-02 PASS — canonical write=read + guard 1770",
+   "mergedAt": "2026-07-29T23:18:59Z",
+   "branch": "cursor/lst-picker02-1770"
+  },
+  {
+   "number": 3778,
+   "title": "Cursor- fix(banking): BANK-F10 Fuel card-overage queue UI + guard 1768",
+   "mergedAt": "2026-07-29T22:50:03Z",
+   "branch": "cursor/bank-f10-ui-1768"
+  },
+  {
+   "number": 3777,
+   "title": "Cursor- fix(accounting): DISP-01 pre-flip wiring — opco flags + RLS-safe unbilled bind",
+   "mergedAt": "2026-07-29T23:41:44Z",
+   "branch": "cursor/acct-disp01-1766"
+  },
+  {
+   "number": 3776,
+   "title": "Cursor- evidence(accounting): ACCT-SURF-08 live DoD PASS + guard 1764",
+   "mergedAt": "2026-07-29T22:31:59Z",
+   "branch": "cursor/acct-surf08-1764"
+  },
+  {
+   "number": 3775,
+   "title": "Cursor- fix(banking): ACCT-LINK-06 autoCategorize reaches CHAIN-05 poster",
+   "mergedAt": "2026-07-29T22:03:30Z",
+   "branch": "cursor/acct-link06-1762"
+  },
   {
    "number": 3774,
    "title": "Claude- fix(lists): LST-F20b — Dispatch Flag Colors was counted in a badge but openable from nowhere",
@@ -16542,544 +17076,34 @@
    "title": "chore(deps): bump brace-expansion from 5.0.5 to 5.0.7 in /apps/driver-pwa in the npm_and_yarn group across 1 directory",
    "mergedAt": "2026-07-22T14:10:33Z",
    "branch": "dependabot/npm_and_yarn/apps/driver-pwa/npm_and_yarn-7429694490"
-  },
-  {
-   "number": 3205,
-   "title": "fix(catalog): PLUS-01/02 wave2 — Unit picker nested +Create (VendorBillForm, RecordExpenseForm)",
-   "mergedAt": "2026-07-22T14:10:21Z",
-   "branch": "fix/plus-money-reference-select-wave2"
-  },
-  {
-   "number": 3204,
-   "title": "fix(ui): CHROME-04 — Customers/Vendors roster header filters collapse behind Filters popover",
-   "mergedAt": "2026-07-22T13:44:30Z",
-   "branch": "fix/chrome-04-customers-vendors-filters"
-  },
-  {
-   "number": 3203,
-   "title": "fix(ci): post-deploy verify passed green for merges that never deployed",
-   "mergedAt": "2026-07-22T13:45:02Z",
-   "branch": "fix/postdeploy-verify-fake-superseded"
-  },
-  {
-   "number": 3202,
-   "title": "docs(trackers): reconcile the merge-sequence contradiction I created",
-   "mergedAt": "2026-07-22T13:31:25Z",
-   "branch": "docs/merge-sequence-reconciliation-2026-07-22"
-  },
-  {
-   "number": 3201,
-   "title": "fix(ci): push gate no longer false-fails every push that follows a rebase",
-   "mergedAt": "2026-07-22T13:31:29Z",
-   "branch": "fix/push-gate-rebase-head-false-positive"
-  },
-  {
-   "number": 3200,
-   "title": "fix(ui): CHROME + PLUS catalog +Create burn-down (Safety filters, money/ops pickers)",
-   "mergedAt": "2026-07-22T13:18:25Z",
-   "branch": "fix/chrome-01-plus-01-creators"
-  },
-  {
-   "number": 3199,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-22T09:09:06Z",
-   "branch": "chore/tracker-artifacts-sync-29905843700"
-  },
-  {
-   "number": 3196,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-22T04:56:21Z",
-   "branch": "chore/tracker-artifacts-sync-29891616295"
-  },
-  {
-   "number": 3195,
-   "title": "fix(accounting): live Detail Types everywhere + catalog + Create audit",
-   "mergedAt": "2026-07-22T13:31:40Z",
-   "branch": "fix/detail-type-live-catalog-plus-create"
-  },
-  {
-   "number": 3194,
-   "title": "docs: agent GitHub identity + merge attribution (2026-07-22)",
-   "mergedAt": "2026-07-22T04:13:36Z",
-   "branch": "docs/agent-merge-attribution-20260722"
-  },
-  {
-   "number": 3193,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-22T04:25:39Z",
-   "branch": "chore/tracker-artifacts-sync-29889509282"
-  },
-  {
-   "number": 3191,
-   "title": "fix(accounting): P-INVOICE P0 Law §9 — income + source_load_id + JE EntityLink",
-   "mergedAt": "2026-07-22T13:18:17Z",
-   "branch": "fix/p-invoice-p0-linkage"
-  },
-  {
-   "number": 3190,
-   "title": "fix(drivers): active-path law — one Live mount, archive parallel trees",
-   "mergedAt": "2026-07-22T04:20:07Z",
-   "branch": "fix/drivers-active-path-law-20260721"
-  },
-  {
-   "number": 3188,
-   "title": "fix(accounting): invoice reverse drill-through (Law §9 P-INVOICE)",
-   "mergedAt": "2026-07-22T04:35:39Z",
-   "branch": "fix/invoice-reverse-drill-through"
-  },
-  {
-   "number": 3187,
-   "title": "fix(banking): lock active categorize path + legacy redirects",
-   "mergedAt": "2026-07-22T03:57:56Z",
-   "branch": "fix/banking-categorize-active-path-20260721"
-  },
-  {
-   "number": 3186,
-   "title": "fix(banking): bank categorization ↔ JE reverse drill (Law §9 / #3177 P0)",
-   "mergedAt": "2026-07-22T05:03:07Z",
-   "branch": "fix/bank-categorization-je-reverse"
-  },
-  {
-   "number": 3184,
-   "title": "fix(settlements): weekly-close bookended parity (contract terms + auto-deduct)",
-   "mergedAt": "2026-07-22T04:03:00Z",
-   "branch": "fix/weekly-close-contract-terms-parity"
-  },
-  {
-   "number": 3183,
-   "title": "fix(safety): V6.4 active-path law — no ComingSoon while Live tabs exist",
-   "mergedAt": "2026-07-22T03:55:12Z",
-   "branch": "fix/safety-active-path-law-20260721"
-  },
-  {
-   "number": 3182,
-   "title": "docs(law): TRUE connectivity master — economic + ops + dual-path (not STALE)",
-   "mergedAt": "2026-07-22T04:11:24Z",
-   "branch": "docs/true-connectivity-master-20260721"
-  },
-  {
-   "number": 3181,
-   "title": "docs(ops): Claude coder merge sequence 2026-07-21 (Law §9 permanent)",
-   "mergedAt": "2026-07-22T04:20:56Z",
-   "branch": "docs/claude-coder-merge-sequence-20260721"
-  },
-  {
-   "number": 3180,
-   "title": "fix(maintenance): WO auto bill/expense stamp unit_id (Law §9 / #3176 P0)",
-   "mergedAt": "2026-07-22T03:35:49Z",
-   "branch": "fix/wo-auto-bill-expense-unit-id-20260721205809"
-  },
-  {
-   "number": 3179,
-   "title": "fix(law): claim/legal UI linkage wiring (Law §9) — no money migrations",
-   "mergedAt": "2026-07-22T03:40:37Z",
-   "branch": "fix/law-claim-legal-ui-linkage-20260721"
-  },
-  {
-   "number": 3178,
-   "title": "docs(hold)[HOLD-FOR-JORGE]: fuel GL flush — designate diesel|def|reefer|oil|misc maps",
-   "mergedAt": "2026-07-22T04:38:53Z",
-   "branch": "hold/fuel-gl-map-codes-designate-20260721"
-  },
-  {
-   "number": 3177,
-   "title": "docs(audit): Law §9 E2E batch2 — Invoice/Factor/Fuel/Bank FAIL (deploy e64fc4c)",
-   "mergedAt": "2026-07-22T13:31:33Z",
-   "branch": "audit/law-e2e-batch2-2026-07-21"
-  },
-  {
-   "number": 3176,
-   "title": "docs(audit): Law §9 E2E batch3 — WO / fine / advance / escrow (DO NOT MERGE)",
-   "mergedAt": "2026-07-22T05:03:31Z",
-   "branch": "audit/law-e2e-batch3-money-ops-2026-07-21"
-  },
-  {
-   "number": 3175,
-   "title": "docs(audit): Law §9 E2E claim→legal→expense linkage FAIL (2026-07-21)",
-   "mergedAt": "2026-07-22T04:18:08Z",
-   "branch": "docs/law-e2e-claim-legal-expense-2026-07-21"
-  },
-  {
-   "number": 3173,
-   "title": "docs(audit): Law §9 FULL linkage master ledger — every money path vs deploy",
-   "mergedAt": "2026-07-22T04:17:51Z",
-   "branch": "docs/law-full-linkage-audit-master"
-  },
-  {
-   "number": 3172,
-   "title": "fix(accounting): persist bill_lines on vendor Bill create (LAW §9 / #3167)",
-   "mergedAt": "2026-07-22T03:35:03Z",
-   "branch": "fix/law-bill-lines-persist-20260721204112"
-  },
-  {
-   "number": 3171,
-   "title": "fix(settlements): wire pay-run preview/close FE (#3168)",
-   "mergedAt": "2026-07-22T04:02:52Z",
-   "branch": "law-fix/payrun-fe-wire-20260721"
-  },
-  {
-   "number": 3170,
-   "title": "fix(accounting): expense reverse drill-through (Law §9 E2E top-3)",
-   "mergedAt": "2026-07-22T13:33:07Z",
-   "branch": "fix/expense-e2e-linkage-reverse"
-  },
-  {
-   "number": 3169,
-   "title": "feat(guards): verify-no-dead-schema — CI enforcement for the §10a linkage law",
-   "mergedAt": "2026-07-22T03:31:37Z",
-   "branch": "fix/guard-no-dead-schema"
-  },
-  {
-   "number": 3167,
-   "title": "docs(audit): LAW-E2E Bill→BillPayment→JE linkage 2026-07-21",
-   "mergedAt": "2026-07-22T13:18:21Z",
-   "branch": "audit/law-e2e-bill-billpayment-2026-07-21"
-  },
-  {
-   "number": 3166,
-   "title": "audit: Law §9 Expense E2E linkage FAIL-honest (2026-07-21)",
-   "mergedAt": "2026-07-22T09:11:44Z",
-   "branch": "audit/law-e2e-expense-2026-07-21"
-  },
-  {
-   "number": 3165,
-   "title": "fix(accounting): ItemEditor + Add new account opens account create chrome (not category)",
-   "mergedAt": "2026-07-22T03:33:19Z",
-   "branch": "fix/item-editor-account-create-kind"
-  },
-  {
-   "number": 3163,
-   "title": "docs(accounting): WAVE 7 verify priority GAP batch vs origin/main — do not merge",
-   "mergedAt": "2026-07-22T09:10:46Z",
-   "branch": "docs/accounting-drain-wave7-2026-07-21"
-  },
-  {
-   "number": 3162,
-   "title": "fix(accounting): Expense Category Map account picker shows name, not uuid [DO NOT MERGE — builder]",
-   "mergedAt": "2026-07-22T09:09:58Z",
-   "branch": "fix/w7-expense-category-map-account-picker"
-  },
-  {
-   "number": 3161,
-   "title": "docs(accounting): WAVE 6 verify priority batch vs origin/main — do not merge",
-   "mergedAt": "2026-07-22T09:10:58Z",
-   "branch": "docs/accounting-drain-wave6-2026-07-21"
-  },
-  {
-   "number": 3159,
-   "title": "[HOLD-FOR-JORGE] docs(design): WAVE 5 HOLDs — gap3 vendor FK · DIP AP split · flow2 chargeback",
-   "mergedAt": "2026-07-22T05:03:54Z",
-   "branch": "design/acct-drain-w5-holds-2026-07-21"
-  },
-  {
-   "number": 3158,
-   "title": "docs(accounting): WAVE 5 verify final 8 NEEDS-OWNER residuals — do not merge",
-   "mergedAt": "2026-07-22T09:11:09Z",
-   "branch": "docs/accounting-drain-wave5-2026-07-21"
-  },
-  {
-   "number": 3156,
-   "title": "[HOLD-FOR-JORGE] docs(design): 0007 escrow split-brain — pick canonical store before first live posting",
-   "mergedAt": "2026-07-22T08:54:29Z",
-   "branch": "design/0007-escrow-split-brain-hold"
-  },
-  {
-   "number": 3155,
-   "title": "fix(accounting): Rule-17 wire CHAIN-04 bill-payment guards (verify-steps 1212/1213) [DO NOT MERGE — builder]",
-   "mergedAt": "2026-07-22T09:01:01Z",
-   "branch": "fix/chain-04-tieout-guards-verify-steps"
-  },
-  {
-   "number": 3154,
-   "title": "docs(accounting): WAVE 4 verify 12 residual NEEDS-OWNER/PROD items — do not merge",
-   "mergedAt": "2026-07-22T09:11:21Z",
-   "branch": "docs/accounting-drain-wave4-2026-07-21"
-  },
-  {
-   "number": 3153,
-   "title": "[HOLD-FOR-JORGE] docs(design): audit2 settlement approval mount — do not wire until G1-3",
-   "mergedAt": "2026-07-22T00:21:15Z",
-   "branch": "design/audit2-settlement-approval-mount-hold"
-  },
-  {
-   "number": 3151,
-   "title": "fix(dispatch): Dispatcher Home active loads show invoice status (gap-21 residual) [DO NOT MERGE — builder]",
-   "mergedAt": "2026-07-22T09:10:34Z",
-   "branch": "fix/dispatch-home-active-load-invoice-status"
-  },
-  {
-   "number": 3149,
-   "title": "[HOLD-FOR-JORGE] fix(settlements): pay-run close → CoA roles resolver (#3109 residual)",
-   "mergedAt": "2026-07-22T03:37:28Z",
-   "branch": "fix/payrun-close-coa-resolver"
-  },
-  {
-   "number": 3148,
-   "title": "fix(accounting): CoA Roles picker shows account name, not raw uuid (+ opt-in number toggle)",
-   "mergedAt": "2026-07-22T09:10:10Z",
-   "branch": "fix/coa-roles-show-account-name"
-  },
-  {
-   "number": 3147,
-   "title": "docs(accounting): drain verify-then-build verdicts 2026-07-21 [DO NOT MERGE — builder]",
-   "mergedAt": "2026-07-22T00:15:54Z",
-   "branch": "docs/accounting-drain-verdicts-2026-07-21"
-  },
-  {
-   "number": 3146,
-   "title": "fix(accounting): CI guard for child-line scope inheritance via enforced parent FK (0519-es1-58) [DO NOT MERGE — builder]",
-   "mergedAt": "2026-07-22T00:31:28Z",
-   "branch": "fix/accounting-line-scope-inheritance-guard"
-  },
-  {
-   "number": 3145,
-   "title": "fix(accounting): Period Comparison list → ParityTable (sort/resize/gear) [DO NOT MERGE — builder]",
-   "mergedAt": "2026-07-22T09:10:21Z",
-   "branch": "fix/period-comparison-paritytable-sort-resize"
-  },
-  {
-   "number": 3144,
-   "title": "[HOLD-FOR-JORGE] docs(design): parts inventory → accounting (GL valuation / COGS) linkage (0441-mod13-inventory-accounting-none)",
-   "mergedAt": "2026-07-22T00:15:50Z",
-   "branch": "design/mod13-parts-inventory-accounting-hold"
-  },
-  {
-   "number": 3143,
-   "title": "[HOLD-FOR-JORGE] docs(design): expense duplicate-detection + expense-policy enforcement (audit9-expense-validation-duplicate-detection)",
-   "mergedAt": "2026-07-22T00:15:45Z",
-   "branch": "design/audit9-expense-duplicate-detection-hold"
-  },
-  {
-   "number": 3142,
-   "title": "docs(banking) [HOLD-FOR-JORGE]: DESIGN HOLD — CONN-3 Relay internal bank, owner questions only",
-   "mergedAt": "2026-07-22T00:15:40Z",
-   "branch": "design/conn-3-relay-internal-bank-hold"
-  },
-  {
-   "number": 3141,
-   "title": "[HOLD-FOR-JORGE] fix(grants): revoke PUBLIC UPDATE/DELETE on audit trail + GL-run anchors",
-   "mergedAt": "2026-07-22T00:16:49Z",
-   "branch": "fix/revoke-public-write-append-only"
-  },
-  {
-   "number": 3140,
-   "title": "[HOLD-FOR-JORGE] docs(design): auto-apply customer payments (FIFO) + unapplied-payment alerts (flow6-auto-payment-application)",
-   "mergedAt": "2026-07-22T00:15:34Z",
-   "branch": "design/flow6-auto-payment-application-hold"
-  },
-  {
-   "number": 3139,
-   "title": "docs(banking): remaining disposition report — STALE/SKIP/HOLD map (9/24 pending pile items)",
-   "mergedAt": "2026-07-22T00:15:28Z",
-   "branch": "docs/banking-remaining-disposition-2026-07-21"
-  },
-  {
-   "number": 3138,
-   "title": "docs(accounting): WAVE 2 verify 10 priority financial GAPs vs origin/main (3 STALE · 1 COVERED · 3 DESIGN · 3 open) — do not merge",
-   "mergedAt": "2026-07-22T00:15:24Z",
-   "branch": "docs/accounting-drain-verify-wave2-2026-07-21"
-  },
-  {
-   "number": 3137,
-   "title": "docs(banking): STALE evidence — banking-grid-sort shipped+guarded (misfiled) + CONN-1 defer #3135",
-   "mergedAt": "2026-07-22T00:15:16Z",
-   "branch": "docs/banking-drain-gridsort-conn1-evidence-2026-07-21"
-  },
-  {
-   "number": 3136,
-   "title": "docs(banking): STALE evidence — 0441-mod8 plaid-sign + auto-match shipped+guarded",
-   "mergedAt": "2026-07-22T00:15:08Z",
-   "branch": "docs/banking-drain-sign-automatch-stale-2026-07-21"
-  },
-  {
-   "number": 3135,
-   "title": "docs(banking): DESIGN/EVIDENCE HOLD — CONN-1 plaid reconcile-commit is PENDING(GATED), not a code gap",
-   "mergedAt": "2026-07-22T00:18:02Z",
-   "branch": "design/conn-1-plaid-reconcile-commit-hold"
-  },
-  {
-   "number": 3134,
-   "title": "docs(banking): DESIGN HOLD — bank-feed 'transfer' categorization has no JE (0285-banking-transfer-gl-gap)",
-   "mergedAt": "2026-07-22T00:15:01Z",
-   "branch": "design/0285-banking-transfer-gl-hold"
-  },
-  {
-   "number": 3133,
-   "title": "docs(accounting)[HOLD-FOR-JORGE]: ItemEditor \"+ Add new account\" opens wrong create kind",
-   "mergedAt": "2026-07-22T13:32:27Z",
-   "branch": "design/item-editor-add-new-account-hold"
-  },
-  {
-   "number": 3132,
-   "title": "docs(accounting): verify 8 audited GAP blocks vs origin/main (7 STALE, 1 open)",
-   "mergedAt": "2026-07-22T00:03:39Z",
-   "branch": "docs/accounting-drain-verify-2026-07-21"
-  },
-  {
-   "number": 3131,
-   "title": "fix(banking): BANK-18 registry truth-up + Rule-17 verify-step for categorize-capable register",
-   "mergedAt": "2026-07-22T00:04:17Z",
-   "branch": "fix/bank18-registry-truth-categorize-guard"
-  },
-  {
-   "number": 3129,
-   "title": "[HOLD-FOR-JORGE] docs(design): load pre-invoice on book → official invoice on deliver (auto); TONU fee manual",
-   "mergedAt": "2026-07-22T08:54:15Z",
-   "branch": "docs/load-preinvoice-official-invoice-hold"
-  },
-  {
-   "number": 3128,
-   "title": "[HOLD-FOR-JORGE] design(audit2-internal-controls): safe mount of settlements/approval.routes.ts — DESIGN HOLD (docs-only; 6/9 handlers unscoped)",
-   "mergedAt": "2026-07-22T00:16:09Z",
-   "branch": "design/settlement-approval-safe-mount-hold"
-  },
-  {
-   "number": 3127,
-   "title": "[HOLD-FOR-JORGE] design(0091-m-lists-2): CoA true-merge accounts — DESIGN HOLD (docs-only; current 'Merge accounts' is deactivate-only)",
-   "mergedAt": "2026-07-22T00:16:04Z",
-   "branch": "design/coa-true-merge-accounts-hold"
-  },
-  {
-   "number": 3125,
-   "title": "[HOLD-FOR-JORGE] fix(db): 202607380000 settlement_lines line_type CHECK must be true live-superset (blocks Neon apply)",
-   "mergedAt": "2026-07-21T23:31:31Z",
-   "branch": "fix/hold-202607380000-line-type-superset"
-  },
-  {
-   "number": 3124,
-   "title": "[HOLD-FOR-JORGE] feat(banking): persist categorize-panel capture fields — check no./class/location/billable/tags (0441-mod8-tx-fields-captured-not-sent)",
-   "mergedAt": "2026-07-22T00:17:06Z",
-   "branch": "fix/bank-tx-capture-fields-persisted"
-  },
-  {
-   "number": 3123,
-   "title": "[HOLD-FOR-JORGE] banking-b4: mdata.drivers.default_expense_account_id — driver-keyed default-account mapping (held migration, recommendation-only)",
-   "mergedAt": "2026-07-22T08:54:42Z",
-   "branch": "hold/banking-b4-driver-default-expense-account"
-  },
-  {
-   "number": 3122,
-   "title": "[GOVERNANCE][HOLD-FOR-JORGE] docs: CHAIN-06 AR-subledger marked code-fixed (guards 920–922); stale OPEN claims corrected",
-   "mergedAt": "2026-07-21T23:29:03Z",
-   "branch": "docs/chain06-ar-subledger-code-fixed-2026-07-21"
-  },
-  {
-   "number": 3121,
-   "title": "docs(tracker): Top-10 builder evidence — verified BUILT vs HOLD map (2026-07-21) — do not merge",
-   "mergedAt": "2026-07-22T00:03:34Z",
-   "branch": "docs/top10-builder-evidence-2026-07-21"
-  },
-  {
-   "number": 3120,
-   "title": "chore(guards): CI-wire verify-no-accounting-qbo-writes (0008-g3) — builder, do not merge",
-   "mergedAt": "2026-07-22T09:11:33Z",
-   "branch": "chore/wire-accounting-qbo-writes-guard"
-  },
-  {
-   "number": 3119,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-22T00:03:31Z",
-   "branch": "chore/tracker-artifacts-sync-29876196859"
-  },
-  {
-   "number": 3118,
-   "title": "fix(boot): startup drift guard must exempt HELD migrations (latent prod-outage)",
-   "mergedAt": "2026-07-22T00:04:05Z",
-   "branch": "fix/startup-drift-guard-held-exemption"
-  },
-  {
-   "number": 3117,
-   "title": "docs(tracker): NEEDS-PROD Neon verdicts 2026-07-21 (10/10 resolved)",
-   "mergedAt": "2026-07-22T00:03:28Z",
-   "branch": "docs/needs-prod-neon-verdicts-2026-07-21"
-  },
-  {
-   "number": 3116,
-   "title": "fix(home): h-05 — Today/7d/30d/MTD/YTD range toggle on Home KPI row (both variants) — DO NOT MERGE",
-   "mergedAt": "2026-07-22T13:31:53Z",
-   "branch": "fix/h-05-home-kpi-range-toggle"
-  },
-  {
-   "number": 3115,
-   "title": "docs(tracker): NEEDS-OWNER adjudication 2026-07-21 (35 answered / 44 unanswered / 18 action-only / 9 stale)",
-   "mergedAt": "2026-07-22T00:14:53Z",
-   "branch": "docs/needs-owner-adjudication-2026-07-21"
-  },
-  {
-   "number": 3114,
-   "title": "[GOVERNANCE][HOLD-FOR-JORGE] Owner rulings 2026-07-21 (+ evening §20) — DO NOT MERGE",
-   "mergedAt": "2026-07-22T14:10:10Z",
-   "branch": "governance/owner-rulings-2026-07-21"
-  },
-  {
-   "number": 3113,
-   "title": "docs(ops): Neon-apply handoff CORRECTED 2026-07-21 evening — DO NOT MERGE",
-   "mergedAt": "2026-07-22T14:39:21Z",
-   "branch": "docs/neon-apply-handoff-2026-07-21"
-  },
-  {
-   "number": 3112,
-   "title": "docs(tracker): register 2 financial findings from the 2026-07-21 merge wave (WC-REIMB, NPF-DUP)",
-   "mergedAt": "2026-07-21T23:02:20Z",
-   "branch": "docs/defer-weekly-close-reimbursements-gap"
-  },
-  {
-   "number": 3111,
-   "title": "[HOLD][docs-only] Rev-rec delivery two-event latch — Step 4 verification: PARTIAL (poster missing, owner-gated)",
-   "mergedAt": "2026-07-21T22:59:25Z",
-   "branch": "docs/hold-rev-rec-delivery-latch-verify-2026-07-21"
-  },
-  {
-   "number": 3110,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-21T22:36:28Z",
-   "branch": "chore/tracker-artifacts-sync-29863551219"
-  },
-  {
-   "number": 3109,
-   "title": "[HOLD-FOR-JORGE] fix(accounting): settle CoA roles into chart_of_accounts_roles + resolver (no legacy seed)",
-   "mergedAt": "2026-07-21T23:09:17Z",
-   "branch": "fix/settlement-coa-roles-resolver-hold"
-  },
-  {
-   "number": 3107,
-   "title": "fix(driver-finance): wire weekly-close settlement totals through canonical deduction applier [HOLD]",
-   "mergedAt": "2026-07-21T16:09:45Z",
-   "branch": "fix/weekly-close-apply-deductions-hold"
-  },
-  {
-   "number": 3106,
-   "title": "fix(gate): hold-merge-gate false-positives on docs/*.json evidence prose [GOVERNANCE]",
-   "mergedAt": "2026-07-21T22:37:17Z",
-   "branch": "fix/hold-gate-docs-json-false-positive"
-  },
-  {
-   "number": 3105,
-   "title": "fix(verify): ctx.run() fails closed on non-zero — HOLD (Rule 18 pipeline truth)",
-   "mergedAt": "2026-07-21T15:54:38Z",
-   "branch": "fix/verify-step-ctx-run-throws"
-  },
-  {
-   "number": 3104,
-   "title": "guard(accounting): CoA-roles route reachability = ALREADY_MOUNTED (verdict + guard, DO NOT MERGE)",
-   "mergedAt": "2026-07-21T22:37:00Z",
-   "branch": "fix/coa-roles-routes-reachable"
-  },
-  {
-   "number": 3103,
-   "title": "[HOLD-FOR-JORGE] docs(design): TONU cancellation→A/R linkage + accessorial CoA (HOLD, do not merge)",
-   "mergedAt": "2026-07-21T22:36:53Z",
-   "branch": "design/tonu-ar-accessorial-coa-hold"
-  },
-  {
-   "number": 3101,
-   "title": "DESIGN HOLD — CPA Step 3 CORRECTED: CoA role designation + accessorial/TONU (docs-only, DO NOT MERGE)",
-   "mergedAt": "2026-07-21T22:36:34Z",
-   "branch": "design/cpa-step3-coa-role-map-hold"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 3876,
+   "title": "CURSOR- feat(accounting): ND-FA-01 Fixed Assets register UI requires owner prices (FINANCIAL-HOLD)",
+   "mergedAt": "2026-07-31T10:06:26Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3875,
+   "title": "CURSOR- fix(banking): BANK-F15 Plaid admin sync passes actor for CHAIN-05 JE (FINANCIAL-HOLD)",
+   "mergedAt": "2026-07-31T09:35:05Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3868,
+   "title": "CURSOR- feat(accounting): ACCT-F24 POD auto-send (FINANCIAL-HOLD)",
+   "mergedAt": "2026-07-31T05:11:12Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 3852,
+   "title": "CURSOR- feat(accounting): ACCT-F20 db249 composite indexes (FINANCIAL-HOLD)",
+   "mergedAt": "2026-07-31T01:58:23Z",
+   "category": "HOLD"
+  },
   {
    "number": 3717,
    "title": "[HOLD-FOR-JORGE · FINANCIAL] claude: fix(accounting): LST-PICKER-02 — the expense-category picker read the QBO mirror, not the GL ledger",
