@@ -13,12 +13,16 @@
  * createKind=account (same as ItemEditorModal) — bare Combobox had no "+ Add new account".
  * LST-PICKER-01 (guard 1874): preferred vendor free-text → ReferenceSelect createKind=vendor
  * + persist preferred_vendor_id / purchase_* (parity with ItemEditorModal; was dropped at create).
+ * LST-PICKER-01 (guard 1876): class + category dual-path closed — createKind=class and
+ * qbo_categories Combobox allowAddNew (NOT createKind=category — that writes CoA accounts).
  */
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { itemsCatalogClient } from "../../../api/catalogs-accounting";
+import { ApiError } from "../../../api/client";
+import { classesCatalogClient, itemsCatalogClient, qboCategoriesCatalogClient } from "../../../api/catalogs-accounting";
 import { getCoaAccounts } from "../../../api/banking";
 import { listVendors } from "../../../api/mdata";
+import { Combobox } from "../../Combobox";
 import { MoneyInput } from "../../forms/MoneyInput";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
@@ -47,7 +51,8 @@ type FormState = {
   name: string;
   itemType: string;
   sku: string;
-  category: string;
+  categoryId: string | null;
+  classId: string | null;
   sellEnabled: boolean;
   sellDescription: string;
   sellPrice: number | null;
@@ -63,11 +68,13 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const [creatingCategory, setCreatingCategory] = useState(false);
   const [form, setForm] = useState<FormState>({
     name: "",
     itemType: "Service",
     sku: "",
-    category: "",
+    categoryId: null,
+    classId: null,
     sellEnabled: true,
     sellDescription: "",
     sellPrice: null,
@@ -91,6 +98,16 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
     queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: 200 }),
     enabled: !!operatingCompanyId && form.buyEnabled,
   });
+  const categoriesQuery = useQuery({
+    queryKey: ["catalogs", "accounting", "qbo-categories", operatingCompanyId],
+    queryFn: () => qboCategoriesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    enabled: !!operatingCompanyId,
+  });
+  const classesQuery = useQuery({
+    queryKey: ["catalogs", "accounting", "classes", operatingCompanyId],
+    queryFn: () => classesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    enabled: !!operatingCompanyId,
+  });
   const accounts = accountsQuery.data?.accounts ?? [];
   const incomeOptions: ReferenceOption[] = useMemo(
     () =>
@@ -113,12 +130,45 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
         .map((v) => ({ value: v.id, label: v.name })),
     [vendorsQuery.data]
   );
+  const categoryOptions = useMemo(
+    () => (categoriesQuery.data?.rows ?? []).map((c) => ({ value: c.id, label: c.display_name })),
+    [categoriesQuery.data]
+  );
+  const classOptions: ReferenceOption[] = useMemo(
+    () => (classesQuery.data?.rows ?? []).map((c) => ({ value: c.id, label: c.display_name })),
+    [classesQuery.data]
+  );
 
   function refreshAccounts() {
     void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId] });
   }
   function refreshVendors() {
     void queryClient.invalidateQueries({ queryKey: ["mdata", "vendors", "for-items", operatingCompanyId] });
+  }
+
+  async function handleAddCategory(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed || creatingCategory) return;
+    setCreatingCategory(true);
+    try {
+      // Product & Service Categories — NOT QuickCreate createKind="category" (that writes CoA).
+      const created = await qboCategoriesCatalogClient.create(operatingCompanyId, {
+        code: trimmed.toUpperCase().replace(/[^A-Z0-9]+/g, "-").slice(0, 60) || "CAT",
+        display_name: trimmed,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["catalogs", "accounting", "qbo-categories", operatingCompanyId] });
+      set("categoryId", created.id);
+      pushToast("Category created", "success");
+    } catch (err) {
+      pushToast(
+        err instanceof ApiError
+          ? String((err.data as Record<string, unknown>)?.error ?? err.message)
+          : "Failed to create category.",
+        "error"
+      );
+    } finally {
+      setCreatingCategory(false);
+    }
   }
 
   // Carrier default: on a sellable item with nothing chosen, preselect "Sales of Service Income".
@@ -163,6 +213,8 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
           purchase_description: form.buyEnabled ? form.buyDescription.trim() || null : null,
           purchase_cost_cents: purchaseCostCents,
           preferred_vendor_id: form.buyEnabled ? form.preferredVendorId : null,
+          default_class_id: form.classId,
+          category_id: form.categoryId,
         },
       });
       onCreated({ id: String(res.id), label: form.name.trim() });
@@ -208,6 +260,41 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
             value={form.sku}
             onChange={(e) => set("sku", e.target.value)}
           />
+        </label>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <label className="block" data-testid="service-category-select">
+          <span className="text-xs font-medium text-gray-700">Category</span>
+          <div className="mt-1">
+            {/* LST-PICKER-01 (1876): Product & Service Categories (qbo_categories), NOT createKind=category (CoA). */}
+            <Combobox
+              options={categoryOptions}
+              value={form.categoryId}
+              onChange={(v) => set("categoryId", v)}
+              placeholder={creatingCategory ? "Creating…" : "Uncategorized"}
+              loading={categoriesQuery.isLoading || creatingCategory}
+              allowClear
+              allowAddNew={{ label: "+ Add new category", onAdd: (query) => void handleAddCategory(query) }}
+            />
+          </div>
+        </label>
+        <label className="block" data-testid="service-class-select">
+          <span className="text-xs font-medium text-gray-700">Class</span>
+          <div className="mt-1">
+            <ReferenceSelect
+              options={classOptions}
+              value={form.classId}
+              onChange={(v) => set("classId", v)}
+              createKind="class"
+              operatingCompanyId={operatingCompanyId}
+              placeholder="No class"
+              loading={classesQuery.isLoading}
+              onOptionCreated={() => {
+                void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounting", "classes", operatingCompanyId] });
+              }}
+            />
+          </div>
         </label>
       </div>
 
