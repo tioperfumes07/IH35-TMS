@@ -92,6 +92,7 @@ export function CustomerEditModal({ open, customer, operatingCompanyId, saving =
           paymentTermOptions={paymentTermOptions}
           onPaymentTermCreated={() => void paymentTermsQuery.refetch()}
           parentCustomerOptions={parentCustomerOptions}
+          onParentCustomerCreated={() => void parentCandidatesQuery.refetch()}
           customerId={customer.id}
         />
         <div className="flex justify-end gap-2 border-t border-gray-200 pt-3">

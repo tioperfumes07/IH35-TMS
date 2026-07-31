@@ -1137,15 +1137,21 @@ export function CustomerDetailPage() {
 
           {/* D1-4: Sub-customer / parent hard link + reverse drill-through */}
           <DataPanel title="Relationships">
-            <div className="mb-2 flex flex-col gap-1">
+            <div className="mb-2 flex flex-col gap-1" data-testid="customer-parent-select">
               <label className="text-xs font-semibold text-gray-600">Parent customer</label>
-              {editMode ? (
-                <Combobox
+              {editMode && operatingCompanyId ? (
+                <ReferenceSelect
                   options={parentCustomerOptions}
                   value={hydratedForm.parent_customer_id || null}
                   onChange={(nextValue) => setForm((current) => ({ ...current, parent_customer_id: nextValue ?? "" }))}
+                  createKind="customer"
+                  operatingCompanyId={operatingCompanyId}
                   loading={parentCandidatesQuery.isLoading}
                   placeholder="Top-level customer (no parent)"
+                  addNewLabel="+ Add new parent customer"
+                  onOptionCreated={() => {
+                    void parentCandidatesQuery.refetch();
+                  }}
                 />
               ) : customer.parent_customer_id ? (
                 <button
