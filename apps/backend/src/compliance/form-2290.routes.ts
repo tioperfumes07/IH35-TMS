@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
   computeForm2290Vehicles,
+  form2290DueDateForFirstUse,
   renderForm2290Pdf,
   upcomingForm2290Deadline,
   type Form2290VehicleInput,
@@ -107,7 +108,53 @@ export async function registerForm2290Routes(app: FastifyInstance) {
       return res.rows[0] ?? null;
     });
 
-    return { deadline, days_remaining: daysRemaining, current_draft: draft };
+    // SAF-ORPH-04 — PER-UNIT DUE DATES. `deadline` above is upcomingForm2290Deadline(), which is by its
+    // own docstring the JULY-first-use case: Aug 31, business-day shifted. Per IRS Form 2290 a vehicle is
+    // due the LAST DAY OF THE MONTH FOLLOWING its first use, so a truck placed in service in October is
+    // due Nov 30 — a date this banner could never surface. form2290DueDateForFirstUse() was written and
+    // fully unit-tested for exactly that, and then NOTHING CALLED IT: a correct function with no caller
+    // is still a live compliance gap, and it read as fixed because its guard was green. This wires it.
+    //
+    // Units with no acquired_date are NOT silently dropped. We cannot compute a first-use month for them,
+    // and an uncomputable federal filing date is a risk to raise, not to hide behind a shorter list.
+    const perUnit = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      const res = await client.query<{ id: string; unit_number: string; acquired_date: string | null }>(
+        `
+          SELECT id, unit_number, acquired_date
+          FROM mdata.units
+          WHERE deactivated_at IS NULL
+            AND status = 'InService'
+            AND vin IS NOT NULL
+            -- §4 landmine: mdata.units has no per-entity company column of the usual name (42703 → 500).
+            -- Units are entity-scoped by ownership or by active lease, so scope on those two instead.
+            AND (owner_company_id = $1 OR currently_leased_to_company_id = $1)
+          ORDER BY unit_number
+        `,
+        [company.data.operating_company_id]
+      );
+      return res.rows;
+    });
+
+    const unitsMissingFirstUse = perUnit.filter((u) => !u.acquired_date).map((u) => u.unit_number);
+    const perUnitDeadlines = perUnit
+      .filter((u) => u.acquired_date)
+      .map((u) => ({
+        unit_id: u.id,
+        unit_number: u.unit_number,
+        first_used_month: String(u.acquired_date).slice(0, 10),
+        deadline: form2290DueDateForFirstUse(String(u.acquired_date)),
+      }))
+      // Only the ones the annual banner would MISREPRESENT are worth surfacing; a July first use is
+      // already covered by `deadline`, so listing it again would bury the exceptions in noise.
+      .filter((u) => u.deadline !== deadline);
+
+    return {
+      deadline,
+      days_remaining: daysRemaining,
+      current_draft: draft,
+      per_unit_deadlines: perUnitDeadlines,
+      units_missing_first_use: unitsMissingFirstUse,
+    };
   });
 
   app.get("/api/v1/compliance/form-2290", async (req, reply) => {
