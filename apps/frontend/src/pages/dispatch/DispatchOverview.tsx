@@ -317,10 +317,14 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
             PanelEmpty("All units currently have active loads.")
           ) : (
             unitsWithoutLoad.slice(0, PANEL_ROW_LIMIT).map((unit: UnitsWithoutLoad) => (
+              // driver uses `||`, not `??`. CONCAT_WS never returns NULL — with all args NULL it returns
+              // the EMPTY STRING — so a driverless unit arrived as "" and ?? let it straight through,
+              // rendering "T171 · · Need load". The API now sends NULL, but `||` also absorbs "" if any
+              // other producer regresses.
               <PanelRow
                 key={unit.id}
                 unit={unit.unit_number}
-                driver={unit.driver_name ?? "—"}
+                driver={unit.driver_name || "—"}
                 loadCustomer="Need load"
               />
             ))
