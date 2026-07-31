@@ -16,6 +16,10 @@ export const COA_ROLE_VALUES = [
   "lease_receivable",
   "interest_income",
   "gain_loss_on_disposal",
+  // LEASE-BRIDGE — lessee operating rent expense (TRANSP/USMCA). Dr rent_expense / Cr ap_control.
+  // DELIBERATELY absent from ROLE_FALLBACKS — owner designates (soft-bound by migration to
+  // "Leased Trucks from IH35 TRUCKING" when present); fails closed until then.
+  "rent_expense",
   // CODER-34 factoring secured-borrowing roles (per-opco TRANSP) — migration
   // 202607013000_factoring_secured_borrowing_coa_roles.sql. factor_reserve_held is the canonical reserve
   // role (an ASSET; supersedes the code's old factor_reserve_default, which the shape-fallback mis-typed

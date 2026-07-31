@@ -1215,6 +1215,7 @@
     "1875": "1875-verify-customer-picker-not-capped-below-fleet.mjs",
     "1876": "1876-verify-lst-picker01-service-class-category-inline-create.mjs",
     "1878": "1878-verify-lst-picker01-cost-breakdown-part-createkind.mjs",
+    "1880": "1880-verify-lease-bridge-activate-operating-jes.mjs",
     "1882": "1882-verify-lst-picker01-driver-class-inline-create.mjs",
     "1884": "1884-verify-lst-picker01-new-account-parent-inline-create.mjs",
     "1886": "1886-verify-lst-picker01-account-drawer-parent-inline-create.mjs",

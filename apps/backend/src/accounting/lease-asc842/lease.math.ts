@@ -58,7 +58,7 @@ export function assertBalanced(lines: BalancedLine[]): void {
 export function buildLeaseIdempotencyKey(
   operatingCompanyId: string,
   leaseContractId: string,
-  kind: "rental" | "disposal" | "commencement" | "interest",
+  kind: "rental" | "disposal" | "commencement" | "interest" | "rent_expense",
   period: number | null
 ): string {
   return [
