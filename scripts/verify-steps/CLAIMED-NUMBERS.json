@@ -1196,6 +1196,7 @@
     "1841": "1841-verify-units-without-load-driver-nullif.mjs",
     "1842": "1842-verify-lst-picker01-payment-term-inline-create.mjs",
     "1846": "1846-verify-lst-picker01-equipment-type-inline-create.mjs",
+    "1848": "1848-verify-lst-picker01-detention-reason-inline-create.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",

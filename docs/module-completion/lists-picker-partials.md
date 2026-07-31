@@ -15,3 +15,4 @@
 - 2026-07-30 · guard 1838 · DriverDetail + TerminateConfirmModal → `createKind=driver_termination_reason` · PR pending
 - 2026-07-30 · guard 1842 · CustomerProfileForm · VendorCreateModal · VendorDetail · QuickCreateEntityModal → `createKind=payment_term` · PR pending
 - 2026-07-30 · guard 1846 · DriverDetail Add Qualification → `createKind=equipment_type` · PR pending
+- 2026-07-30 · guard 1848 · ExpectedAdjustmentsCallout (Book Load) → `createKind=detention_reason` · PR pending
