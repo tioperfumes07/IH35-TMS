@@ -219,23 +219,29 @@ function toCompanyLoadToken(input: string | null | undefined): string {
 function statusToFlagCode(status: z.infer<typeof loadStatusSchema>): string {
   if (status === "cancelled") return "RED";
   if (status === "abandoned" || status === "driver_walkoff" || status === "driver_no_show") return "RED";
-  if (status === "closed" || status === "paid" || status === "invoiced") return "BLACK";
-  if (status === "delivered") return "GREEN";
+  if (status === "closed" || status === "paid" || status === "invoiced" || status === "completed_docs_received") {
+    return "BLACK";
+  }
+  if (status === "delivered" || status === "delivered_pending_docs") return "GREEN";
   if (status === "at_pickup" || status === "in_transit" || status === "at_delivery") return "BLUE";
-  if (status === "assigned" || status === "dispatched") return "YELLOW";
+  if (status === "assigned" || status === "assigned_not_dispatched" || status === "dispatched") return "YELLOW";
   return "GRAY";
 }
 
 const allowedStatusTransitions: Record<z.infer<typeof loadStatusSchema>, z.infer<typeof loadStatusSchema>[]> = {
-  draft: ["booked", "planned", "cancelled"],
-  booked: ["planned", "assigned", "driver_no_show", "cancelled"],
-  planned: ["assigned", "driver_no_show", "cancelled"],
-  assigned: ["dispatched", "driver_no_show", "cancelled"],
+  draft: ["booked", "planned", "unassigned", "cancelled"],
+  booked: ["planned", "unassigned", "assigned", "assigned_not_dispatched", "driver_no_show", "cancelled"],
+  planned: ["unassigned", "assigned", "assigned_not_dispatched", "driver_no_show", "cancelled"],
+  unassigned: ["booked", "planned", "assigned", "assigned_not_dispatched", "cancelled"],
+  assigned: ["assigned_not_dispatched", "dispatched", "driver_no_show", "cancelled"],
+  assigned_not_dispatched: ["dispatched", "driver_no_show", "cancelled"],
   dispatched: ["at_pickup", "driver_no_show", "driver_walkoff", "cancelled"],
   at_pickup: ["in_transit", "driver_walkoff", "cancelled"],
   in_transit: ["at_delivery", "abandoned", "driver_walkoff", "cancelled"],
-  at_delivery: ["delivered", "cancelled"],
-  delivered: ["invoiced", "cancelled"],
+  at_delivery: ["delivered", "delivered_pending_docs", "cancelled"],
+  delivered: ["delivered_pending_docs", "completed_docs_received", "invoiced", "cancelled"],
+  delivered_pending_docs: ["completed_docs_received", "invoiced", "cancelled"],
+  completed_docs_received: ["invoiced", "closed"],
   invoiced: ["paid", "closed"],
   paid: ["closed"],
   closed: [],

@@ -22,4 +22,10 @@ if (missing.length) {
   console.error("FAIL verify-disp-filter-01-mdata-status-contract — missing:", missing.join(", "));
   process.exit(1);
 }
+for (const tok of ["unassigned:", "assigned_not_dispatched:", "delivered_pending_docs:", "completed_docs_received:"]) {
+  if (!src.includes(tok)) {
+    console.error("FAIL verify-disp-filter-01-mdata-status-contract — transitions missing", tok);
+    process.exit(1);
+  }
+}
 console.log("PASS verify-disp-filter-01-mdata-status-contract");
