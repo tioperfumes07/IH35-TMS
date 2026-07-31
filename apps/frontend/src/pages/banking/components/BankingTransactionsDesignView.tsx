@@ -1597,7 +1597,14 @@ export function BankingTransactionsDesignView({
                   value={draft.vendorId || null}
                   onChange={(vid) => {
                     const v = (vendorsQuery.data ?? []).find((x) => x.id === vid);
-                    setDraft(tx, { vendorId: vid ?? "", ...(v ? { payee: v.name } : {}) });
+                    const vendorAcct =
+                      typeof v?.default_expense_account_id === "string" ? v.default_expense_account_id : "";
+                    setDraft(tx, {
+                      vendorId: vid ?? "",
+                      ...(v ? { payee: v.name } : {}),
+                      // Option-B: pre-fill GL when empty (user can override before save).
+                      accountId: draft.accountId || vendorAcct || "",
+                    });
                   }}
                   options={(vendorsQuery.data ?? []).map((v) => ({ value: v.id, label: v.name }))}
                   createKind="vendor"
@@ -1816,7 +1823,18 @@ export function BankingTransactionsDesignView({
                   companyId={companyId}
                   value={draft.driverId}
                   limit={200}
-                  onChange={(driverId, driverName) => setDraft(tx, { driverId, driverName: driverName ?? "" })}
+                  onChange={(driverId, driverName, meta) => {
+                    const driverAcct =
+                      typeof meta?.default_expense_account_id === "string"
+                        ? meta.default_expense_account_id
+                        : "";
+                    setDraft(tx, {
+                      driverId,
+                      driverName: driverName ?? "",
+                      // ACCT-F18 Option-B: pre-fill categorize account when empty (never auto-post).
+                      accountId: draft.accountId || driverAcct || "",
+                    });
+                  }}
                   onRequestCreate={() => setDriverCreateForTx(tx)}
                 />
               </div>

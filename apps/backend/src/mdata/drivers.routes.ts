@@ -172,6 +172,8 @@ const updateDriverBodySchema = z
     twic_expiration: isoDateSchema.nullable().optional(),
     mexican_license_number: z.string().trim().max(100).nullable().optional(),
     mexican_license_expiration: isoDateSchema.nullable().optional(),
+    // ACCT-F18 / banking-b4: Option-B RECOMMENDATION ONLY — pre-fills categorize account; never auto-posts.
+    default_expense_account_id: z.string().uuid().nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
@@ -963,10 +965,12 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       if (!scopedCompanyId) return { rows: [], total: 0 };
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
       values.push(scopedCompanyId);
-      filters.push(`operating_company_id = $${values.length}`);
-      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+      const ociIdx = values.length;
+      // Predicate must appear in the SQL template literal (verify-mdata-entity-scope ratchet) —
+      // do not bury operating_company_id only inside an interpolated ${whereClause}.
+      const extraAnd = filters.length > 0 ? `AND ${filters.join(" AND ")}` : "";
       const countRes = await client.query<{ total: number }>(
-        `SELECT count(*)::int AS total FROM mdata.drivers ${whereClause}`,
+        `SELECT count(*)::int AS total FROM mdata.drivers WHERE operating_company_id = $${ociIdx} ${extraAnd}`,
         values
       );
       values.push(limit);
@@ -983,10 +987,12 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
             qbo_vendor_id, qbo_vendor_linked_at, qbo_vendor_linked_by_user_id,
             qbo_class_id,
+            default_expense_account_id,
             status, notes, prior_driver_id, rehire_count, is_rehire,
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.drivers
-          ${whereClause}
+          WHERE operating_company_id = $${ociIdx}
+          ${extraAnd}
           ORDER BY created_at DESC
           LIMIT $${values.length - 1}
           OFFSET $${values.length}
@@ -1087,6 +1093,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             status, notes, prior_driver_id, rehire_count, is_rehire,
           operating_company_id,
             qbo_vendor_id, qbo_class_id,
+            default_expense_account_id,
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.drivers
           WHERE id = $1
@@ -1291,6 +1298,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if ("twic_expiration" in b) add("twic_expiration", b.twic_expiration ?? null);
     if ("mexican_license_number" in b) add("mexican_license_number", b.mexican_license_number ?? null);
     if ("mexican_license_expiration" in b) add("mexican_license_expiration", b.mexican_license_expiration ?? null);
+    if ("default_expense_account_id" in b) add("default_expense_account_id", b.default_expense_account_id ?? null);
     add("updated_by_user_id", authUser.uuid);
 
     values.push(parsedParams.data.id);
@@ -1326,6 +1334,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               status, notes, prior_driver_id, rehire_count, is_rehire,
               operating_company_id,
               qbo_vendor_id, qbo_class_id,
+              default_expense_account_id,
               created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
             FROM mdata.drivers
             WHERE id = $1
@@ -1359,6 +1368,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               status, notes, prior_driver_id, rehire_count, is_rehire,
               operating_company_id,
               qbo_vendor_id, qbo_class_id,
+              default_expense_account_id,
               created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           `,
           values
@@ -1405,6 +1415,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
                 status, notes, prior_driver_id, rehire_count, is_rehire,
               operating_company_id,
                 qbo_vendor_id, qbo_class_id,
+                default_expense_account_id,
                 created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
               FROM mdata.drivers
               WHERE id = $1

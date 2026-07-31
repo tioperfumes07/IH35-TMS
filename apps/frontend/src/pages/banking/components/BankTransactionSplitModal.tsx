@@ -438,7 +438,18 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                         <DriverAutocomplete
                           companyId={companyId}
                           value={line.driver_id ?? ""}
-                          onChange={(driverId, driverName) => patchLine(line._key, { driver_id: driverId || undefined, _driverName: driverName ?? "" })}
+                          onChange={(driverId, driverName, meta) => {
+                            const driverAcct =
+                              typeof meta?.default_expense_account_id === "string"
+                                ? meta.default_expense_account_id
+                                : "";
+                            patchLine(line._key, {
+                              driver_id: driverId || undefined,
+                              _driverName: driverName ?? "",
+                              // ACCT-F18 Option-B: prefill split-line GL when empty.
+                              ...(driverAcct && !line.gl_account_id ? { gl_account_id: driverAcct } : {}),
+                            });
+                          }}
                           onRequestCreate={() => setDriverCreateForLineKey(line._key)}
                         />
                         {line.driver_id ? (

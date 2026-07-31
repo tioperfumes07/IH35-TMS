@@ -46,7 +46,11 @@ if (!/listQuerySchema[\s\S]*operating_company_id:\s*z\.string\(\)\.uuid\(\)\.opt
   fail("driver list query schema must include optional operating_company_id");
 }
 
-if (!/filters\.push\(`operating_company_id = \$\$\{values\.length\}`\)/.test(text)) {
+// Accept either the classic filters.push form OR the entity-scope-visible template form
+// (WHERE operating_company_id = $${ociIdx} in the SQL literal — required by verify-mdata-entity-scope).
+const listScopedViaFilters = /filters\.push\(`operating_company_id = \$\$\{values\.length\}`\)/.test(text);
+const listScopedViaTemplate = /WHERE operating_company_id = \$\$\{ociIdx\}/.test(text);
+if (!listScopedViaFilters && !listScopedViaTemplate) {
   fail("driver list route must apply operating_company_id filter when provided");
 }
 
