@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { type LoadDetail, updateLoad, useDispatchLoad, useLoad, useLoadAudit } from "../../api/loads";
-import { createInvoiceFromLoad, listInvoices } from "../../api/accounting";
+import { createInvoiceFromLoad, listLoadExpenses, listLoadInvoices } from "../../api/accounting";
 import { cancelDispatchLoad, distributeLoadInstructions, getDispatchAssignmentHistory, getRecentAutoStatusSwitches } from "../../api/dispatch";
 import { AutoStatusSwitchedBadge } from "./AutoStatusSwitchedBadge";
 import { resolveApiUrl } from "../../api/client";
@@ -29,6 +29,7 @@ import { SettlementProfitabilityCard } from "./tabs/SettlementProfitabilityCard"
 import { InsuranceClaimsReverseSection } from "../insurance/InsuranceClaimsReverseSection";
 import { BookLoadModalV4 } from "../../pages/dispatch/components/BookLoadModalV4";
 import { CargoSensorTimeline } from "../../pages/dispatch/cargo-sensors/CargoSensorTimeline";
+import { EntityLink } from "../shared/EntityLink";
 
 type Props = {
   loadId: string | null;
@@ -201,13 +202,19 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   });
   const loadInvoicesQuery = useQuery({
     queryKey: ["factoring-package", "load-invoices", load?.id, load?.operating_company_id],
-    queryFn: () => listInvoices(load!.operating_company_id, { customer_id: load!.customer_id }),
+    // WAVE-H2: server-side source_load_id filter (not customer_id + client filter).
+    queryFn: () => listLoadInvoices(load!.operating_company_id, load!.id, { limit: 50 }),
     enabled: Boolean(load?.id && load?.operating_company_id && activeTab === "Documents"),
+  });
+  const loadExpensesQuery = useQuery({
+    queryKey: ["load-expenses", load?.id, load?.operating_company_id],
+    queryFn: () => listLoadExpenses(load!.operating_company_id, load!.id, { limit: 50 }),
+    enabled: Boolean(load?.id && load?.operating_company_id && activeTab === "Overview"),
   });
   const linkedInvoice = useMemo(() => {
     const rows = loadInvoicesQuery.data?.invoices ?? [];
-    return rows.find((invoice) => invoice.source_load_id === load?.id) ?? null;
-  }, [load?.id, loadInvoicesQuery.data?.invoices]);
+    return rows[0] ?? null;
+  }, [loadInvoicesQuery.data?.invoices]);
   const invoiceDocsQuery = useQuery({
     queryKey: ["docs-files", "invoice-factoring-package", linkedInvoice?.id],
     queryFn: () => listFiles({ entity_type: "invoice", entity_id: linkedInvoice!.id, limit: 200, offset: 0 }).then((res) => res.files),
@@ -275,7 +282,10 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
         <header className="sticky top-0 border-b border-gray-200 bg-white p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Load {load?.load_number ?? loadId}</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Load{" "}
+                <EntityLink kind="load" id={load?.id ?? loadId} label={load?.load_number ?? loadId} />
+              </h2>
               <p className="text-xs text-gray-500">{routeSummary}</p>
             </div>
             <Button type="button" variant="secondary" size="sm" onClick={onClose}>
@@ -323,6 +333,29 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                     ]}
                   />
                   <p className="mt-1 text-[10px] text-gray-400">Single customer total. Linehaul / fuel / accessorial breakdown arrives with the charge line-items block.</p>
+                  <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600" data-testid="load-money-reverse-links">
+                    <span>
+                      Linked expenses:{" "}
+                      {loadExpensesQuery.isLoading
+                        ? "…"
+                        : loadExpensesQuery.isError
+                          ? "unavailable"
+                          : (loadExpensesQuery.data?.rows?.length ?? 0)}
+                    </span>
+                    {load.operating_company_id ? (
+                      <button
+                        type="button"
+                        className="text-slate-700 underline"
+                        onClick={() =>
+                          navigate(
+                            `/accounting/expenses?load_id=${encodeURIComponent(load.id)}&operating_company_id=${encodeURIComponent(load.operating_company_id)}`
+                          )
+                        }
+                      >
+                        Open expenses
+                      </button>
+                    ) : null}
+                  </div>
                 </OverviewWizardSection>
 
                 {/* §B — Equipment · Driver · Trailer. W-FIX-3a surfaces team-driver name (join) + trailer

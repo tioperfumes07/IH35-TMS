@@ -8,10 +8,14 @@
  *
  * source = 'other' until an additive migration expands the CHECK to include 'relay'
  * (HOLD / owner-applied). Identity is carried in source_row_hash + notes.
+ *
+ * WAVE-H2: resolve load_id / vendor_id when join keys exist (same helpers as card import).
+ * Do not hardcode NULL when merchant/unit/driver can match.
  */
 import { createHash } from "node:crypto";
 import type { DbClient } from "./db-client.type.js";
 import type { RelayFuelTransaction } from "./relay-client.js";
+import { resolveLoadId, resolveVendorId } from "../../fuel/fuel-transaction-import.js";
 
 function mapFuelType(raw: string | null | undefined): "diesel" | "def" | "gas" | "reefer_diesel" | "other" {
   const t = (raw ?? "").trim().toLowerCase();
@@ -64,10 +68,21 @@ export async function bridgeRelayFuelToCanonical(
   const totalPaid = dollarsToNumber(tx.total_amount_paid) ?? 0;
   const pricePerGallon = pricedGallons > 0 ? priceAccum / pricedGallons : gallons > 0 ? totalPaid / gallons : null;
   const sourceRowHash = createHash("sha256").update(`relay:${tx.transaction_id}`).digest("hex");
+  const vendorId = await resolveVendorId(client, operatingCompanyId, tx.merchant?.name ?? null);
+  const loadId = await resolveLoadId(
+    client,
+    operatingCompanyId,
+    matched.unit_id,
+    matched.driver_id,
+    tx.created_at
+  );
+  const loadExemptionReason = loadId ? null : "relay_ingest_no_load_link";
   const notes = [
     `relay_bridge=1`,
     `relay_txn=${tx.transaction_id}`,
     tx.merchant?.name ? `merchant=${tx.merchant.name}` : null,
+    !loadId ? "load_unresolved=1" : null,
+    tx.merchant?.name && !vendorId ? "vendor_unmatched=1" : null,
   ]
     .filter(Boolean)
     .join("; ");
@@ -99,15 +114,18 @@ export async function bridgeRelayFuelToCanonical(
         load_exemption_reason
       )
       VALUES (
-        $1, $2::timestamptz, $2::timestamptz, NULL, $3, $4, NULL, $5,
-        $6, $7, $8, $9, $10, $11, $12, $13, 'other', $14, $15, now(),
-        true, $16
+        $1, $2::timestamptz, $2::timestamptz, $3, $4, $5, $6, $7,
+        $8, $9, $10, $11, $12, $13, $14, $15, 'other', $16, $17, now(),
+        true, $18
       )
       ON CONFLICT (operating_company_id, source_row_hash) DO UPDATE SET
         transaction_at = EXCLUDED.transaction_at,
         purchased_at = EXCLUDED.purchased_at,
         driver_id = COALESCE(EXCLUDED.driver_id, fuel.fuel_transactions.driver_id),
         unit_id = COALESCE(EXCLUDED.unit_id, fuel.fuel_transactions.unit_id),
+        load_id = COALESCE(EXCLUDED.load_id, fuel.fuel_transactions.load_id),
+        vendor_id = COALESCE(EXCLUDED.vendor_id, fuel.fuel_transactions.vendor_id),
+        load_exemption_reason = COALESCE(EXCLUDED.load_exemption_reason, fuel.fuel_transactions.load_exemption_reason),
         gallons = EXCLUDED.gallons,
         price_per_gallon = EXCLUDED.price_per_gallon,
         total_cost = EXCLUDED.total_cost,
@@ -120,8 +138,10 @@ export async function bridgeRelayFuelToCanonical(
     [
       operatingCompanyId,
       tx.created_at,
+      loadId,
       matched.driver_id,
       matched.unit_id,
+      vendorId,
       fuelType,
       gallons > 0 ? gallons : null,
       pricePerGallon,
@@ -133,7 +153,7 @@ export async function bridgeRelayFuelToCanonical(
       tx.transaction_id,
       sourceRowHash,
       notes,
-      "relay_ingest_no_load_link",
+      loadExemptionReason,
     ]
   );
 
