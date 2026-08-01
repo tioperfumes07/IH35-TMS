@@ -1,6 +1,6 @@
 {
   "block_id": "insurance-2-breadcrumb-desync",
-  "status": "READY",
+  "status": "done",
   "classification": "NON_FINANCIAL",
   "phase": "OPS-FE",
   "branch": "fix/insurance-policy-pageheader",
@@ -21,7 +21,14 @@
   ],
   "acceptance": [
     {
+      "kind": "guard",
+      "script": "scripts/verify-insurance-pageheader-usage.mjs",
+      "wired_into": "scripts/verify-steps/1005-verify-insurance-pageheader-usage.mjs",
       "check": "PolicyDetail renders components/layout/PageHeader with backHref=/safety/insurance/policies, breadcrumb, subtitle, and Edit/Update; no bespoke Back to policies; scripts/verify-insurance-pageheader-usage.mjs PASS via verify-steps/1005."
+    },
+    {
+      "kind": "live",
+      "check": "VERIFIED 2026-08-01: node scripts/verify-insurance-pageheader-usage.mjs and --selftest both PASS against the current apps/frontend/src/pages/insurance/PolicyDetail.tsx source (imports PageHeader from ../../components/layout/PageHeader, backHref=/safety/insurance/policies at line 183)."
     }
   ],
   "note": "GATED-no pure FE chrome. No package.json / locked-guards / ci.yml (Rule 17)."
