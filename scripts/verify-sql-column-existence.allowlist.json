@@ -39,15 +39,11 @@
     "apps/backend/src/payroll-integration/tms-settlements-pull.ts#driver_finance.driver_settlements.net_pay_cents",
     "apps/backend/src/payroll-integration/tms-settlements-pull.ts#driver_finance.driver_settlements.total_deductions_cents",
     "apps/backend/src/qbo/sync-conflict-detection.routes.ts#mdata.qbo_customers.raw_payload",
-    "apps/backend/src/reports/form-425c/exhibits/exhibit-f-supporting-docs.ts#accounting.bills.soft_deleted_at",
-    "apps/backend/src/reports/form-425c/exhibits/exhibit-f-supporting-docs.ts#accounting.bills.total_cents",
-    "apps/backend/src/reports/form-425c/exhibits/exhibit-f-supporting-docs.ts#accounting.invoices.invoice_date",
-    "apps/backend/src/reports/form-425c/exhibits/exhibit-f-supporting-docs.ts#accounting.invoices.soft_deleted_at",
     "apps/backend/src/safety/events/safety-events.routes.ts#identity.users.name",
     "apps/backend/src/search/universal/indexer.service.ts#mdata.drivers.driver_code",
     "apps/backend/src/settlements/trip-link.engine.ts#mdata.loads.delivery_appointment_end",
     "apps/backend/src/settlements/trip-link.engine.ts#mdata.loads.delivery_appointment_start",
     "apps/backend/src/settlements/trip-link.engine.ts#mdata.loads.pickup_appointment_start"
   ],
-  "total_entries": 47
+  "total_entries": 43
 }

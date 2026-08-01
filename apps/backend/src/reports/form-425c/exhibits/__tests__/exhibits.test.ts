@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import Fastify from "fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { calculateUsTrusteeQuarterlyFeeCents } from "../exhibit-d-quarterly-fees.js";
+import { buildExhibitF } from "../exhibit-f-supporting-docs.js";
 import { buildAllExhibits, getBuiltExhibits } from "../exhibits-builder.service.js";
 import { registerForm425cExhibitsRoutes } from "../routes.js";
 
@@ -105,6 +106,88 @@ describe("form-425c exhibits", () => {
       expect(built.exhibits.e).toBeTruthy();
       expect(built.exhibits.f).toBeTruthy();
       expect(getBuiltExhibits(built.filing_uuid)).toEqual(built);
+    });
+  });
+
+  describe("buildExhibitF — court schedule must be complete and must fail loud", () => {
+    const period = {
+      operating_company_id: companyId,
+      period_start: "2023-08-01",
+      period_end: "2023-08-31",
+    };
+
+    it("returns every document for the period — no silent LIMIT cap", async () => {
+      // Prod 2026-07-31: 29 invoice-months and 22 bill-months exceeded the old LIMIT 200
+      // (worst 345 invoices / 342 bills). 250 rows per source reproduces a real breaching month.
+      const invoiceRows = Array.from({ length: 250 }, (_, i) => ({
+        id: `inv-${i}`,
+        display_id: `INV-${i}`,
+        total_cents: "1000",
+        invoice_date: "2023-08-15",
+      }));
+      const billRows = Array.from({ length: 250 }, (_, i) => ({
+        id: `bill-${i}`,
+        display_id: `BILL-${i}`,
+        total_cents: "2000",
+        bill_date: "2023-08-15",
+      }));
+      const client = {
+        query: vi.fn(async (sql: string) => {
+          // The independent completeness counts must agree with the materialised rows.
+          if (sql.includes("count(*)") && sql.includes("accounting.invoices"))
+            return { rows: [{ n: String(invoiceRows.length) }] };
+          if (sql.includes("count(*)") && sql.includes("accounting.bills"))
+            return { rows: [{ n: String(billRows.length) }] };
+          if (sql.includes("accounting.invoices")) return { rows: invoiceRows };
+          if (sql.includes("accounting.bills")) return { rows: billRows };
+          return { rows: [] };
+        }),
+      };
+
+      const exhibit = await buildExhibitF(client as any, period);
+
+      expect(exhibit.documents).toHaveLength(500);
+      // document_count must be the TRUE count, not a truncated length reported as fact.
+      expect(exhibit.document_count).toBe(500);
+      expect(exhibit.invoice_count).toBe(250);
+      expect(exhibit.bill_count).toBe(250);
+      expect(exhibit.documents.filter((d) => d.doc_type === "invoice")).toHaveLength(250);
+      expect(exhibit.documents.filter((d) => d.doc_type === "bill")).toHaveLength(250);
+      // The emitted SQL must carry no cap.
+      for (const call of client.query.mock.calls) {
+        expect(String(call[0])).not.toMatch(/\bLIMIT\s+\d+/i);
+      }
+    });
+
+    it("throws when fewer rows materialise than the database reports — document_count can never under-report", async () => {
+      // Simulates a cap/pagination being reintroduced: DB says 345, only 200 come back.
+      const capped = Array.from({ length: 200 }, (_, i) => ({
+        id: `inv-${i}`,
+        display_id: `INV-${i}`,
+        total_cents: "1000",
+        invoice_date: "2023-08-15",
+      }));
+      const client = {
+        query: vi.fn(async (sql: string) => {
+          if (sql.includes("count(*)") && sql.includes("accounting.invoices"))
+            return { rows: [{ n: "345" }] };
+          if (sql.includes("count(*)")) return { rows: [{ n: "0" }] };
+          if (sql.includes("accounting.invoices")) return { rows: capped };
+          return { rows: [] };
+        }),
+      };
+      await expect(buildExhibitF(client as any, period)).rejects.toThrow(
+        /INCOMPLETE[\s\S]*345 qualifying records but only 200/
+      );
+    });
+
+    it("throws when a query fails — never renders a blank court exhibit", async () => {
+      const client = {
+        query: vi.fn(async () => {
+          throw new Error('relation "accounting.invoices" does not exist');
+        }),
+      };
+      await expect(buildExhibitF(client as any, period)).rejects.toThrow(/does not exist/);
     });
   });
 
