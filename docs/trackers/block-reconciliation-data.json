@@ -1,6 +1,6 @@
 {
  "date": "2026-08-01",
- "generated_at_iso": "2026-08-01T16:38:45.613Z",
+ "generated_at_iso": "2026-08-01T17:43:41.386Z",
  "counts": {
   "PENDING": 19,
   "PENDING (GATED)": 28,
@@ -13478,6 +13478,24 @@
  ],
  "merged_prs": [
   {
+   "number": 3960,
+   "title": "Claude- fix(dispatch): the load state machine existed in 3 copies and the GPS writer consulted none of them",
+   "mergedAt": "2026-08-01T17:18:12Z",
+   "branch": "fix/load-state-machine-single-definition"
+  },
+  {
+   "number": 3958,
+   "title": "chore(tracker): refresh reconcile artifact + dated export (2026-08-01) — unblocks locked-guards repo-wide",
+   "mergedAt": "2026-08-01T16:57:23Z",
+   "branch": "chore/tracker-artifacts-refresh-2026-08-01"
+  },
+  {
+   "number": 3957,
+   "title": "Claude- fix(accounting): invoice A/R poster could double-recognize revenue over a load the revrec latch already earned",
+   "mergedAt": "2026-08-01T17:17:51Z",
+   "branch": "fix/acct-f59-revrec-invoice-double-recognition-interlock"
+  },
+  {
    "number": 3956,
    "title": "Claude- docs(finance): kill the stale-premise drift — flag is ON, Unbilled Revenue EXISTS, there is NO CPA",
    "mergedAt": "2026-08-01T16:33:51Z",
@@ -17058,24 +17076,6 @@
    "title": "fix(accounting): open balance must net vendor credits + cap credit applications [FINANCIAL / NEEDS JORGE-APPROVED]",
    "mergedAt": "2026-07-23T05:13:54Z",
    "branch": "fix/acct-open-balance-includes-vendor-credits"
-  },
-  {
-   "number": 3284,
-   "title": "fix(banking): Email Queue nav reachability (3/9)",
-   "mergedAt": "2026-07-23T10:49:32Z",
-   "branch": "fix/banking-2of9-email-queue-nav"
-  },
-  {
-   "number": 3283,
-   "title": "fix(banking): Cash GL setup reachability + sidebar flyout (1–2/9)",
-   "mergedAt": "2026-07-23T10:49:21Z",
-   "branch": "fix/banking-1of9-cash-gl-sidebar"
-  },
-  {
-   "number": 3282,
-   "title": "chore(db): record the HOLD-batch migration already applied to prod [FINANCIAL / NEEDS JORGE-APPROVED]",
-   "mergedAt": "2026-07-23T05:29:36Z",
-   "branch": "chore/record-applied-hold-migration"
   }
  ],
  "merged_pr_total": 3000,
