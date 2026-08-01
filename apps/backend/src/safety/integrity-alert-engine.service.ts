@@ -197,10 +197,16 @@ async function evaluateRuleMatches(
         SELECT
           b.id::text AS bill_id,
           b.vendor_id,
-          b.bill_date::text AS bill_date,
-          b.amount_cents,
-          b.status
+          -- SAF-F70: accounting.bills.vendor_id is TEXT holding the QBO vendor id ("2", "256",
+          -- "1093"), but safety.integrity_alerts.subject_vendor_id is UUID. Binding the raw value
+          -- threw "invalid input syntax for type uuid" and killed the whole engine run.
+          -- b.mdata_vendor_id is the uuid column, but it is NULL on all 16,246 bills, so it cannot
+          -- be swapped in — the QBO id has to be RESOLVED through the vendor master instead.
+          v.id::text AS vendor_uuid
         FROM accounting.bills b
+        LEFT JOIN mdata.vendors v
+          ON v.qbo_vendor_id = b.vendor_id
+         AND v.operating_company_id = b.operating_company_id
         WHERE b.operating_company_id = $1
           AND b.revoked_at IS NULL
           AND b.coa_account_id IS NULL
@@ -214,7 +220,10 @@ async function evaluateRuleMatches(
       subject_key: `bill:${String(row.bill_id)}`,
       subject_driver_id: null,
       subject_unit_id: null,
-      subject_vendor_id: row.vendor_id ? String(row.vendor_id) : null,
+      // Resolved uuid or NULL — never the raw QBO id. An unresolvable vendor still raises the alert
+      // (the finding is about a bill with no GL account, not about the vendor); the QBO id remains
+      // visible in detection_metric, so nothing is lost by leaving the FK null.
+      subject_vendor_id: row.vendor_uuid ? String(row.vendor_uuid) : null,
       detection_summary: `Bill ${String(row.bill_date)} has no GL account (coa_account_id IS NULL)`,
       detection_metric: row,
       source_view: rule.source_view,
