@@ -236,7 +236,31 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
       `,
       [input.operatingCompanyId, input.loadId]
     )
-    .catch(() => ({ rows: [] }));
+    // ACCT-F74 — was `.catch(() => ({ rows: [] }))`, a blanket swallow on the ACCESSORIAL query. Any
+    // error — a phantom column, an RLS refusal, a type mismatch — produced an empty result, and the
+    // invoice was then created WITHOUT its accessorial lines: a customer silently UNDER-BILLED for
+    // detention, layover and lumper, with no error anywhere. That is the false-empty pattern doc 06 §1
+    // names, sitting in the invoice-creation path.
+    //
+    // The swallow's only legitimate purpose was tolerating an environment where the table does not
+    // exist. That is now tested EXPLICITLY (to_regclass) and every other failure propagates: refusing
+    // to create the invoice is strictly better than issuing one that is quietly short.
+    .catch((err: unknown) => {
+      const missingRelation =
+        typeof err === "object" && err !== null && (err as { code?: string }).code === "42P01";
+      if (missingRelation)
+        return {
+          rows: [] as Array<{
+            uuid: string;
+            rate_type: string | null;
+            amount_cents: number | null;
+            description: string | null;
+            sequence_number: number | null;
+            stop_type: string | null;
+          }>,
+        };
+      throw err;
+    });
 
   if (stopExtraRatesRes.rows.length > 0) {
     const accessorialResolution = await resolveInvoiceLineRevenueAccountId(input.operatingCompanyId, {
