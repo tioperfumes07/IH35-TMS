@@ -1,6 +1,6 @@
 {
  "date": "2026-08-01",
- "generated_at_iso": "2026-08-01T17:43:41.386Z",
+ "generated_at_iso": "2026-08-01T18:42:14.397Z",
  "counts": {
   "PENDING": 19,
   "PENDING (GATED)": 28,
@@ -154,7 +154,7 @@
   {
    "id": "ITEM-03B-MDATA-LIST-ACTIVE-COMPANY",
    "status": "NEEDS-VERIFY",
-   "pr": null,
+   "pr": 3968,
    "registered_on": "2026-07-11",
    "title": ""
   },
@@ -1080,10 +1080,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #3116 title-match only, unverified",
+   "evidence": "PR #3963 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 3116
+   "pr": 3963
   },
   {
    "id": "home-2-open-loads-inflight-late-consistency-un",
@@ -1105,7 +1105,7 @@
    "evidence": "[verified 2026-07-11] merged #2365; awaiting post-deploy live list-filter proof",
    "name": "",
    "registered_on": "2026-07-11",
-   "pr": null
+   "pr": 3968
   },
   {
    "id": "maint2-open-wos-kpi-table-consistency",
@@ -13478,10 +13478,64 @@
  ],
  "merged_prs": [
   {
+   "number": 3968,
+   "title": "Cascade- chore: live-verify ITEM-03B active-company customer/vendor list scope",
+   "mergedAt": "2026-08-01T18:41:19Z",
+   "branch": "fix/Cascade-item-03b-live-verify"
+  },
+  {
+   "number": 3967,
+   "title": "Claude- fix(accounting): a reversed revenue latch still read as live — the load could never re-recognize",
+   "mergedAt": "2026-08-01T18:30:12Z",
+   "branch": "fix/acct-f66-revrec-latch-survives-reversal"
+  },
+  {
+   "number": 3966,
+   "title": "Claude- fix(health): a job that has NEVER succeeded reported identically to one running 12 minutes late",
+   "mergedAt": "2026-08-01T18:14:01Z",
+   "branch": "fix/ops-f65-never-succeeded-jobs-distinct-health-code"
+  },
+  {
+   "number": 3965,
+   "title": "Claude- fix(search): universal search has never indexed a driver — phantom d.driver_code",
+   "mergedAt": "2026-08-01T18:07:30Z",
+   "branch": "fix/srch-f64-universal-indexer-driver-phantom-column"
+  },
+  {
+   "number": 3964,
+   "title": "Claude- fix(qbo-sync): purchases projector could never parse, and the tick asked USMCA to sync a QuickBooks it does not have",
+   "mergedAt": "2026-08-01T18:14:05Z",
+   "branch": "fix/qbo-f63-sync-pull-steps-never-succeeded"
+  },
+  {
+   "number": 3963,
+   "title": "Cascade- h-05: wire HomeKpiRangeToggle into QboStyleHomePage",
+   "mergedAt": "2026-08-01T18:19:08Z",
+   "branch": "fix/Cascade-h05-qbo-home-kpi-toggle"
+  },
+  {
+   "number": 3962,
+   "title": "Claude- fix(safety): the DOT random drug/alcohol pool draw has NEVER run — a parse error, not a data gap",
+   "mergedAt": "2026-08-01T17:45:49Z",
+   "branch": "fix/saf-f62-da-random-pool-draw-never-succeeded"
+  },
+  {
+   "number": 3961,
+   "title": "Claude- fix(accounting): a customer invoice could be sent for a delivery the system cannot evidence",
+   "mergedAt": "2026-08-01T17:48:09Z",
+   "branch": "fix/acct-f61-invoice-send-requires-delivery-evidence"
+  },
+  {
    "number": 3960,
    "title": "Claude- fix(dispatch): the load state machine existed in 3 copies and the GPS writer consulted none of them",
    "mergedAt": "2026-08-01T17:18:12Z",
    "branch": "fix/load-state-machine-single-definition"
+  },
+  {
+   "number": 3959,
+   "title": "Cascade- guard(no-orphan-routes): remove stale allowlist entries for mounted routes",
+   "mergedAt": "2026-08-01T18:19:00Z",
+   "branch": "fix/Cascade-no-orphan-routes-allowlist-refresh"
   },
   {
    "number": 3958,
@@ -17022,60 +17076,6 @@
    "title": "fix(banking): Transfers empty-state honesty (12/econ)",
    "mergedAt": "2026-07-23T10:50:33Z",
    "branch": "fix/banking-12-transfers-empty-honesty"
-  },
-  {
-   "number": 3293,
-   "title": "fix(banking): Plaid Connections entry tab (11/econ)",
-   "mergedAt": "2026-07-23T10:50:28Z",
-   "branch": "fix/banking-11-plaid-connections-entry"
-  },
-  {
-   "number": 3292,
-   "title": "fix(banking): for-review Match/Categorize honesty (10/econ)",
-   "mergedAt": "2026-07-23T10:50:23Z",
-   "branch": "fix/banking-10-forreview-match-honesty"
-  },
-  {
-   "number": 3291,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-23T12:11:40Z",
-   "branch": "chore/tracker-artifacts-sync-29981184043"
-  },
-  {
-   "number": 3290,
-   "title": "fix(banking): Reconciliation empty-state honesty (9/9)",
-   "mergedAt": "2026-07-23T10:50:15Z",
-   "branch": "fix/banking-9of9-recon-empty-honesty"
-  },
-  {
-   "number": 3289,
-   "title": "fix(banking): arch-design ↔ Banking tabs guard (8/9)",
-   "mergedAt": "2026-07-23T10:50:11Z",
-   "branch": "fix/banking-8of9-arch-design-banking-tabs"
-  },
-  {
-   "number": 3288,
-   "title": "fix(banking): Statement Import entry tab (7/9)",
-   "mergedAt": "2026-07-23T10:50:06Z",
-   "branch": "fix/banking-7of9-statement-import-tab"
-  },
-  {
-   "number": 3287,
-   "title": "fix(banking): Settings entry tab (6/9)",
-   "mergedAt": "2026-07-23T10:49:42Z",
-   "branch": "fix/banking-6of9-settings-tab"
-  },
-  {
-   "number": 3286,
-   "title": "fix(banking): Factoring + Relay Card entry tabs (4–5/9)",
-   "mergedAt": "2026-07-23T10:49:37Z",
-   "branch": "fix/banking-4of9-factoring-relay-tabs"
-  },
-  {
-   "number": 3285,
-   "title": "fix(accounting): open balance must net vendor credits + cap credit applications [FINANCIAL / NEEDS JORGE-APPROVED]",
-   "mergedAt": "2026-07-23T05:13:54Z",
-   "branch": "fix/acct-open-balance-includes-vendor-credits"
   }
  ],
  "merged_pr_total": 3000,
@@ -20301,12 +20301,6 @@
    "title": "docs(dispatch): S5-A seam note + T7 HOLD dependency per dedupe audit",
    "mergedAt": "2026-06-06T23:50:51Z",
    "category": "HOLD"
-  },
-  {
-   "number": 605,
-   "title": "TIER 1 TRUST: 13-block dispatch spec",
-   "mergedAt": "2026-06-06T22:33:43Z",
-   "category": "TIER-1 financial"
   }
  ]
 }
