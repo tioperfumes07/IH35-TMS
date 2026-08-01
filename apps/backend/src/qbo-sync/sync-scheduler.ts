@@ -34,8 +34,34 @@ async function runStep(
   failures: SyncStepFailure[],
   log?: FastifyInstance["log"]
 ): Promise<void> {
+  // ACCT-F79 — a step that SUCCEEDS must record a successful run, not silence.
+  //
+  // This function previously recorded ONLY the catch path. `recordBackgroundJobRun(step, true)` was
+  // never called anywhere in the scheduler, so `_system.background_jobs` could represent a QBO sync
+  // step in exactly two states: FAILED, or ABSENT. A green step was structurally unrepresentable.
+  //
+  // Verified on prod 2026-08-01 — the scoreboard was inverted, and it read as catastrophe:
+  //   * 14 of the 20 scheduled steps had NO ROW AT ALL (the whole AR/AP chain: ap_bills_pull/project,
+  //     ap_bill_payments_*, ar_invoices_*, ar_payments_*, qbo_vendor_credits_*, plus all three
+  //     reconcilers). They were invisible PRECISELY BECAUSE THEY WERE WORKING.
+  //   * All 6 steps that did have a row showed last_successful_run_at = NULL — rows are only ever
+  //     created by a failure, so that column could never be non-null for any step.
+  //   * chart_of_accounts_pull stopped updating after 17:00Z, which read as "died". It had actually
+  //     stopped FAILING once the connection filter excluded USMCA, i.e. it began succeeding silently.
+  //   * run_count_today was therefore a FAILURE count wearing a run count's name.
+  //
+  // "8 jobs have never succeeded" was itself a measurement artifact of this defect. An observability
+  // surface that can only render red or nothing does not report health — it manufactures alarm and
+  // hides the real signal underneath it, which is the same failure mode as expected-state-recorded-
+  // as-failure, inverted.
+  //
+  // The success record is written OUTSIDE the try/catch. If it were inside, a throw from the recorder
+  // itself would be caught below and logged as a STEP failure — reporting a step that genuinely
+  // succeeded as broken, which is the exact class of dishonesty this fix exists to remove.
+  let succeeded = false;
   try {
     await fn();
+    succeeded = true;
   } catch (error) {
     const msg = String((error as Error)?.message ?? error);
     failures.push({ operating_company_id: operatingCompanyId, step, error: msg });
@@ -48,6 +74,7 @@ async function runStep(
     });
     await recordBackgroundJobRun(`qbo_sync.step.${step}`, false, `${operatingCompanyId}: ${msg}`);
   }
+  if (succeeded) await recordBackgroundJobRun(`qbo_sync.step.${step}`, true, null);
 }
 
 // Optional puller/reconciler modules (e.g. customers/vendors not yet deployed): a MISSING module is skipped
