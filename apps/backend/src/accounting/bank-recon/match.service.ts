@@ -265,14 +265,18 @@ async function fetchLedgerCandidates(
           b.id::text,
           (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0))::int AS amount_cents,
           b.bill_date::text AS event_date,
-          COALESCE(b.display_id, b.bill_number, b.memo)::text AS memo
+          -- BILL-DISPLAY-ID-01: bill_number FIRST. bills.display_id is NULL on every row on prod, so
+          -- the old display_id-first order only produced the right answer by accident; the moment a
+          -- display_id existed it would outrank the vendor's own reference, which is what a
+          -- reconciler actually matches a bank line against.
+          COALESCE(NULLIF(b.bill_number, ''), b.display_id, b.memo)::text AS memo
         FROM accounting.bills b
         WHERE b.operating_company_id = $1::uuid
           AND b.bill_date BETWEEN ($2::date - make_interval(days => $4)) AND ($2::date + make_interval(days => $4))
           AND b.revoked_at IS NULL
           AND b.status = ANY($3::text[])
           AND (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0)) > 0
-          AND ($5::text IS NULL OR lower(COALESCE(b.display_id, b.bill_number, b.memo, '')) LIKE $5)
+          AND ($5::text IS NULL OR lower(COALESCE(NULLIF(b.bill_number, ''), b.display_id, b.memo, '')) LIKE $5)
           AND NOT EXISTS (
             SELECT 1 FROM banking.reconciliation_matches m
             WHERE m.ledger_entry_kind = 'bill'
