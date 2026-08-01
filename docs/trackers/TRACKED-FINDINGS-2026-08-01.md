@@ -78,6 +78,40 @@ un-triggered revenue event.
 it — it only surfaces in the local static fallback. Same class as finding 2: a real guard that no
 workflow runs.
 
+**QUANTIFIED 2026-08-01 (prod `br-fancy-credit-akjnd07a`, bypass_rls=lucia, positive control
+`n_live_tup` = 20 so the read is complete):**
+
+| | |
+|---|---|
+| `mdata.load_stops` total | 20 |
+| rows with `actual_arrival_at` | **0** |
+| rows with `actual_departure_at` | **0** |
+| delivery stops | 10 — **0 with arrival** |
+
+So not a single arrival or departure timestamp exists anywhere in the system. Per blueprint §18 the
+revenue-recognition delivery event derives from *final active delivery-stop completion / actual
+departure* — that event currently has **no source data at all**.
+
+**Precise mechanism** — 12 files reference `actual_arrival_at`, but only 4 WRITE it, and they split
+into two paths:
+
+- **Automatic capture — DEAD.** `initializeGeofenceStateWatcher` is absent from
+  `apps/backend/src/index.ts` (0 occurrences on `origin/main`). The worker module exists; nothing
+  starts it.
+- **Manual capture — reachable but unused.** `loads.routes.ts` (5 inbound refs) and
+  `arrival-prompts.routes.ts` (1) can write arrival times and are wired. They have simply never been
+  exercised on these loads. `dispatch/driver-pwa/dispatch-view.routes.ts` also writes it and is
+  **not mounted** — but it is a DELIBERATE, recorded refusal, not an accidental orphan: the
+  refused-mount registry in `scripts/verify-route-manifest-parity.mjs` states *"References a
+  non-existent evidence table … Mounting it turns a 404 into a 500 on the driver PWA. Fix the schema
+  reference first."* So the driver-PWA arrival path is blocked behind a phantom-schema fix, which is
+  its own prerequisite — mounting it today would make things worse, not better.
+
+So the honest statement is not "the column can never populate" — it is: **the automatic path is dead,
+the manual paths are unused, and the net result on prod today is zero arrival data.** Scope caveat:
+prod currently holds 10 loads / 20 stops, so the blast radius is small today; the defect is
+structural and bites when volume and `REVENUE_RECOGNITION_POST_ENABLED` arrive.
+
 **Route:** dispatch/linkage wave. Not bundled.
 
 ---
