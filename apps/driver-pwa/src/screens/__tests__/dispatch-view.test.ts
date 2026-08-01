@@ -21,10 +21,15 @@ describe("DispatchView screen (GAP-34)", () => {
   it("PickupCard and DeliveryCard expose stop actions", () => {
     const pickup = readFileSync(pickupPath, "utf8");
     const delivery = readFileSync(deliveryPath, "utf8");
-    expect(pickup).toContain("Arrived");
-    expect(pickup).toContain("Upload doc");
-    expect(delivery).toContain("Departed");
-    expect(delivery).toContain("Open in maps");
+    // Reality: labels are i18n keys (not hard-coded English "Upload doc" / "Arrived").
+    expect(pickup).toContain("onArrived");
+    expect(pickup).toContain("onUploadDoc");
+    expect(pickup).toContain('t("dispatch.arrived_btn")');
+    expect(pickup).toContain('t("dispatch.upload_doc_btn")');
+    expect(pickup).toContain('t("dispatch.open_in_maps")');
+    expect(delivery).toContain("onDeparted");
+    expect(delivery).toContain('t("dispatch.departed_btn")');
+    expect(delivery).toContain('t("dispatch.open_in_maps")');
   });
 
   it("DocUploadDrawer opens camera/file capture", () => {
@@ -33,9 +38,13 @@ describe("DispatchView screen (GAP-34)", () => {
     expect(drawer).toContain('capture="environment"');
   });
 
-  it("App resolves /dispatch/:load_uuid route", () => {
+  it("App routes StopActionPage for stop actions; DispatchViewScreen is intentionally unrouted", () => {
     const app = readFileSync(appPath, "utf8");
-    expect(app).toContain('path="/dispatch/:load_uuid"');
-    expect(app).toContain("DispatchViewScreen");
+    // Path B (DispatchViewScreen via /dispatch/:load_uuid) is intentionally NOT mounted.
+    expect(app).not.toContain('path="/dispatch/:load_uuid"');
+    expect(app).not.toContain("DispatchViewScreen");
+    // Live path: StopActionPage on /loads/:id/stops/:stopId (App.tsx import + route).
+    expect(app).toContain("StopActionPage");
+    expect(app).toContain('path="/loads/:id/stops/:stopId"');
   });
 });
