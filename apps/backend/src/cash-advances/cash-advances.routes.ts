@@ -199,11 +199,28 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
       const res = await client
         .query(
           `
-            SELECT id, COALESCE(display_id, id::text) AS display_id, vendor_id, total_amount, status, due_date
-            FROM accounting.bills
-            WHERE operating_company_id = $1
-              AND status = 'unpaid'
-            ORDER BY due_date ASC NULLS LAST, created_at DESC
+            -- BILL-DISPLAY-ID-01: accounting.bills.display_id is NULL on every row on prod, so the
+            -- previous COALESCE(display_id, id::text) resolved to the RAW UUID for every option in
+            -- this picker — an operator linking an advance to a bill could not tell two bills apart
+            -- except by amount. A bill is a received vendor document: bill_number (the vendor's own
+            -- reference) is its correct human identifier, which is why accounting/transaction-register
+            -- already reads it first. Never surface display_id or id::text as a human label.
+            SELECT b.id,
+                   COALESCE(
+                     NULLIF(b.bill_number, ''),
+                     '— ' || COALESCE(NULLIF(qv.display_name, ''), 'vendor not recorded')
+                          || ', ' || COALESCE(b.bill_date::text, 'date not recorded')
+                          || ', ' || to_char(COALESCE(b.total_amount, 0), 'FM$999,999,990.00')
+                          || ' (no vendor bill number on file)'
+                   ) AS display_id,
+                   b.vendor_id, b.total_amount, b.status, b.due_date
+            FROM accounting.bills b
+            LEFT JOIN mdata.qbo_vendors qv
+              ON qv.qbo_id = b.vendor_id
+             AND qv.operating_company_id = b.operating_company_id
+            WHERE b.operating_company_id = $1
+              AND b.status = 'unpaid'
+            ORDER BY b.due_date ASC NULLS LAST, b.created_at DESC
             LIMIT 200
           `,
           [companyId]
