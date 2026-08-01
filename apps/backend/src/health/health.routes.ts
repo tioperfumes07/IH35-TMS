@@ -373,19 +373,36 @@ async function checkBackgroundJobStaleness(): Promise<void> {
       `SELECT job_name, last_successful_run_at FROM _system.background_jobs`
     );
 
-    const stale: string[] = [];
+    // OPS-F65 — a job that has NEVER succeeded is a different condition from one that is merely
+    // LATE, and collapsing both into one "stale_jobs" code is why eight never-succeeded jobs sat
+    // unnoticed on prod (2026-08-01: the DOT random-pool draw, four QBO sync steps, the universal
+    // search indexer). "Late" is routine and self-heals on the next tick; "never succeeded" means the
+    // code path has NEVER worked and never will without a fix. One shared code made a permanently
+    // broken job indistinguishable from a job that ran twelve minutes ago, and a signal that is
+    // always slightly red teaches everyone to stop reading it.
+    //
+    // Job NAMES stay out of the public payload — /healthz is unauthenticated and the names describe
+    // internal structure. They already reach the server log through HealthCheckError's detail, and
+    // that is where an operator should read them. What changes here is only WHICH bounded token an
+    // anonymous caller sees, so the distinction costs nothing in exposure.
+    const neverSucceeded: string[] = [];
+    const late: string[] = [];
     for (const row of res.rows) {
       const rule = backgroundJobRule(row.job_name, qboRealmConnected);
       if (!rule || !rule.enabled) continue;
       const mins = minutesSinceIso(row.last_successful_run_at);
-      if (mins === null || mins > rule.maxStaleMinutes) {
-        stale.push(`${row.job_name}:${mins === null ? "never" : `${mins.toFixed(1)}m`}`);
-      }
+      if (mins === null) neverSucceeded.push(`${row.job_name}:never`);
+      else if (mins > rule.maxStaleMinutes) late.push(`${row.job_name}:${mins.toFixed(1)}m`);
     }
 
-    if (stale.length > 0) {
-      // WHICH jobs are stale is operator detail — logged, never published to an anonymous caller.
-      throw new HealthCheckError("stale_jobs", stale.join("|"));
+    // Never-succeeded outranks late: report the more serious condition when both are present, and
+    // carry BOTH lists in the logged detail so nothing is hidden by the precedence.
+    const detail = [...neverSucceeded, ...late].join("|");
+    if (neverSucceeded.length > 0) {
+      throw new HealthCheckError("never_succeeded_jobs", detail);
+    }
+    if (late.length > 0) {
+      throw new HealthCheckError("stale_jobs", detail);
     }
   });
 }

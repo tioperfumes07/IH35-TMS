@@ -29,6 +29,12 @@ function walk(dir, out = []) {
 function isBareHealthLine(line) {
   if (!line.includes("/health")) return false;
   if (line.includes("verify-no-bare-health-references")) return false;
+  // A SOURCE PATH is not an endpoint reference. `apps/backend/src/health/health.routes.ts` contains
+  // the substring "/health" and was flagged as a bare URL, which it is not — the backend route file
+  // simply lives in a directory called health. A guard that cannot tell a filesystem path from a URL
+  // sends authors to obfuscate a correct constant, which is worse than the drift it polices. The real
+  // assertion is untouched: every genuine bare /health URL still fails below.
+  if (/(?:apps|src)\/[\w./-]*health\//.test(line)) return false;
   if (/\/api\/v1\//.test(line)) return false;
   if (line.includes("/admin/health")) return false;
   if (/\b\/health\b/.test(line)) return true;
