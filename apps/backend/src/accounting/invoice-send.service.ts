@@ -14,6 +14,40 @@ import {
   type InvoiceLineGuardRow,
 } from "./invoice-linkage-guards.js";
 import { recomputeInvoiceTotals } from "./shared.js";
+import { finalActiveDeliveryDepartureAt } from "./revrec-delivery-posting/poster.service.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+
+/**
+ * ACCT-F61 — an invoice must not bill a delivery the system cannot evidence.
+ *
+ * This file's own header says "POD auto-send after proforma convert" and its proforma refusal says
+ * "Convert at POD (delivered) before send/A/R." In the code, "POD" means only that
+ * `mdata.loads.status` reached delivered_pending_docs — a status three backend paths can set by
+ * validating a status graph without ever reading `mdata.load_stops`. So the stated intent (bill at
+ * proof of delivery) is not what is enforced (bill when someone clicked a status). Same defect class
+ * the revenue latch carried until #3955.
+ *
+ * Why this matters more than the GL side: the GL already refuses without evidence (#3955), but this
+ * path SENDS a real document to a customer, and IH35 factors receivables with Faro on a RECOURSE
+ * basis. A factor funds against the invoice plus a signed POD; an invoice with no delivery evidence
+ * behind it is the exact thing that comes back as a chargeback. Today the two halves are out of
+ * step: the customer can be invoiced while the ledger correctly declines to recognize the revenue.
+ *
+ * Verified on prod 2026-08-01: INVOICE_PROFORMA_PIPELINE_ENABLED = true for TRANSP and USMCA (so the
+ * office transition auto-converts and auto-sends at delivered_pending_docs), while all 20 load_stops
+ * carry 0 actual_departure_at.
+ *
+ * DEFAULT OFF, AND WARN-ONLY UNTIL FLIPPED — deliberately. Enforcing immediately would block
+ * invoicing entirely for a fleet whose drivers are not yet capturing departures through the PWA, and
+ * stopping the cash cycle to fix an evidence gap is the wrong trade to make unilaterally. While OFF
+ * it logs every send that lacks evidence, so the real exposure is measurable BEFORE it is enforced.
+ * `isEnabled` returns false for a flag_key that has no registry row, so this is genuinely inert until
+ * one is seeded — no migration in this PR.
+ *
+ * NOT a second copy of the evidence rule: it imports the same finalActiveDeliveryDepartureAt the
+ * revenue latch uses, so "final active delivery stop" cannot come to mean two different things.
+ */
+const DELIVERY_EVIDENCE_FLAG = "INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE";
 
 /** Dispatch withCompanyScope exposes query-only; accounting scope passes PoolClient. */
 type SendClient = {
@@ -88,6 +122,41 @@ export async function sendDraftInvoice(
       };
     }
     throw guardErr;
+  }
+
+  // ACCT-F61 — DELIVERY-EVIDENCE GATE. Inert until INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE is
+  // enabled per entity; when OFF it only WARNS, so the exposure is visible before it is enforced.
+  if (current.source_load_id) {
+    const departedAt = await finalActiveDeliveryDepartureAt(
+      client as never,
+      input.operatingCompanyId,
+      String(current.source_load_id)
+    );
+    if (!departedAt) {
+      const enforce = await isEnabled(client as never, DELIVERY_EVIDENCE_FLAG, {
+        operating_company_id: input.operatingCompanyId,
+      });
+      if (enforce) {
+        return {
+          ok: false,
+          code: 409,
+          error: "delivery_evidence_missing",
+          message:
+            `Load ${String(current.source_load_id)} has no actual_departure_at on its final active ` +
+            `delivery stop. This invoice bills a delivery the system cannot evidence — capture the ` +
+            `driver's departure, or send it manually after confirming delivery by another means.`,
+        };
+      }
+      console.warn(
+        {
+          invoice_id: input.invoiceId,
+          load_id: String(current.source_load_id),
+          operating_company_id: input.operatingCompanyId,
+          flag: DELIVERY_EVIDENCE_FLAG,
+        },
+        "acct_f61_invoice_sent_without_delivery_evidence"
+      );
+    }
   }
 
   const invoiceDate = String(current.issue_date);
