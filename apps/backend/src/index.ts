@@ -121,6 +121,7 @@ import { registerDispatchAlertsRoutes } from "./dispatch/alerts.routes.js";
 import { registerDispatchPlannerRoutes } from "./dispatch/planner.routes.js";
 import { registerDispatchDetentionRoutes } from "./dispatch/detention.routes.js";
 import { registerLayoverRoutes } from "./dispatch/layovers/routes.js";
+import { initializeLayoverDetectorWorker } from "./jobs/layover-detector-worker.js";
 import { registerEquipmentTransferRoutes } from "./dispatch/equipment-transfer/routes.js";
 import { registerLoadStopExtraRateRoutes } from "./dispatch/loads/multi-stop/extra-rate.routes.js";
 import { registerDispatchOcrIntakeRoutes } from "./dispatch/ocr-intake.routes.js";
@@ -1365,6 +1366,13 @@ async function main() {
     app.log.info("[STARTUP] vehicle-driver-pairing-worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] vehicle-driver-pairing-worker failed");
+  }
+
+  try {
+    initializeLayoverDetectorWorker(app);
+    app.log.info("[STARTUP] layover-detector-worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] layover-detector-worker failed");
   }
 
   try {

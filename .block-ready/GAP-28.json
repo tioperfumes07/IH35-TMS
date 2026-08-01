@@ -1,6 +1,7 @@
 {
   "block_id": "GAP-28",
-  "status": "READY",
+  "status": "done",
+  "classification": "NON-FINANCIAL",
   "branch": "feature/gap-28-layover-detection",
   "phase": "GAP-MEDIUM",
   "task": "Layover Time Computation (>8h Gap)",
@@ -13,11 +14,24 @@
     "apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx",
     "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
     "scripts/verify-layover-detection.mjs",
+    "scripts/verify-steps/1960-verify-layover-detection.mjs",
     "docs/specs/gap-28-layover-detection.md",
     "apps/backend/src/index.ts"
   ],
   "extra_gates": ["verify:layover-detection"],
   "runtime_path": "src",
   "db_required": true,
-  "guard_required": true
+  "guard_required": true,
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-layover-detection.mjs",
+      "wired_into": "scripts/verify-steps/1960-verify-layover-detection.mjs",
+      "check": "layover routes registered; layover worker initialized."
+    },
+    {
+      "kind": "live",
+      "check": "VERIFIED 2026-08-01: apps/backend/src/jobs/layover-detector-worker.ts (exports initializeLayoverDetectorWorker) was fully implemented but never imported/called in apps/backend/src/index.ts, so node scripts/verify-layover-detection.mjs FAILED on 'layover worker initialized'. Wired the import + startup call (mirroring the initializeVehicleDriverPairingWorker pattern) in apps/backend/src/index.ts. node scripts/verify-layover-detection.mjs -> 'GAP-28 layover detection guard: PASS'; npx tsc -p apps/backend/tsconfig.json --noEmit clean; npx vitest run apps/backend/src/dispatch/layovers/__tests__/layovers.test.ts -> 3/3 pass."
+    }
+  ]
 }

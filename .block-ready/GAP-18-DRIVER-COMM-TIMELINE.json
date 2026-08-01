@@ -1,6 +1,7 @@
 {
   "block_id": "GAP-18-DRIVER-COMM-TIMELINE",
-  "status": "READY",
+  "status": "done",
+  "classification": "NON-FINANCIAL",
   "spec": "docs/dispatch/batches/GAP-18-DRIVER-COMMUNICATION-LOG-MODULE-GO.md",
   "branch": "feature/gap-18-driver-comm-log",
   "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap18",
@@ -8,7 +9,7 @@
   "existing_table": "mdata.driver_profile_messages",
   "no_new_outbound_sending": true,
   "additive_only": true,
-  "files": [
+  "allowed_files": [
     ".block-ready/GAP-18-DRIVER-COMM-TIMELINE.json",
     "apps/backend/src/drivers/communications.service.ts",
     "apps/backend/src/drivers/communications.routes.ts",
@@ -22,5 +23,11 @@
   "channels_shown": ["sms", "email", "in_app"],
   "direction_shown": true,
   "pagination": true,
-  "twilio_outbound": false
+  "twilio_outbound": false,
+  "acceptance": [
+    {
+      "kind": "live",
+      "check": "VERIFIED 2026-08-01: apps/backend/src/drivers/communications.service.ts + communications.routes.ts exist; GET /api/v1/drivers/:id/communications registered at communications.routes.ts:25; registerDriverCommunicationsRoutes imported+mounted in apps/backend/src/index.ts:97,846. apps/frontend/src/pages/DriverDetail.tsx wires CommunicationsLogView (imported line 71, tab key 'communications-log' at line 101)."
+    }
+  ]
 }

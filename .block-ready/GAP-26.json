@@ -1,6 +1,7 @@
 {
   "block_id": "GAP-26",
-  "status": "READY",
+  "status": "done",
+  "classification": "NON-FINANCIAL",
   "branch": "feature/gap-26-border-geofences",
   "phase": "GAP-MEDIUM",
   "task": "Border 1000m Geofences + Customs Clearance Time",
@@ -24,5 +25,17 @@
   "extra_gates": ["verify:border-geofence-seed"],
   "runtime_path": "src",
   "db_required": true,
-  "guard_required": true
+  "guard_required": true,
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-border-geofence-seed.mjs",
+      "wired_into": "package.json",
+      "check": "border-crossing detector routes registered; border-crossing detector worker initialized."
+    },
+    {
+      "kind": "live",
+      "check": "VERIFIED 2026-08-01: node scripts/verify-border-geofence-seed.mjs -> 'GAP-26 border geofence guard: PASS' (routes registered + initializeBorderCrossingDetectorWorker wired in apps/backend/src/index.ts)."
+    }
+  ]
 }
