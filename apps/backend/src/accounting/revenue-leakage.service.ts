@@ -6,6 +6,7 @@
  * Matches QBO/NetSuite unbilled AR seriousness without inventing GL math.
  */
 import type { PoolClient } from "pg";
+import { standingLatchJePredicate } from "./revrec-delivery-posting/poster.service.js";
 
 const DELIVERED_LIKE = [
   "delivered",
@@ -61,6 +62,7 @@ export async function getRevenueLeakage(
         WHERE p.operating_company_id = $1::uuid
           AND p.event = 'earn'
           AND coalesce(p.is_active, true) = true
+          AND ${standingLatchJePredicate("p")}
           AND p.voided_at IS NULL
       ),
       bill AS (
@@ -69,6 +71,7 @@ export async function getRevenueLeakage(
         WHERE p.operating_company_id = $1::uuid
           AND p.event = 'bill'
           AND coalesce(p.is_active, true) = true
+          AND ${standingLatchJePredicate("p")}
           AND p.voided_at IS NULL
       )
       SELECT
@@ -114,6 +117,7 @@ export async function getRevenueLeakage(
               AND p.operating_company_id = l.operating_company_id
               AND p.event = 'earn'
               AND coalesce(p.is_active, true) = true
+          AND ${standingLatchJePredicate("p")}
               AND p.voided_at IS NULL
           )
       )
@@ -135,6 +139,7 @@ export async function getRevenueLeakage(
         WHERE e.operating_company_id = $1::uuid
           AND e.event = 'earn'
           AND coalesce(e.is_active, true) = true
+          AND ${standingLatchJePredicate("e")}
           AND e.voided_at IS NULL
           AND NOT EXISTS (
             SELECT 1
@@ -143,6 +148,7 @@ export async function getRevenueLeakage(
               AND b.operating_company_id = e.operating_company_id
               AND b.event = 'bill'
               AND coalesce(b.is_active, true) = true
+          AND ${standingLatchJePredicate("b")}
               AND b.voided_at IS NULL
           )
       )

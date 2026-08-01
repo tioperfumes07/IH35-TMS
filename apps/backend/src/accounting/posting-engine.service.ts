@@ -1,6 +1,7 @@
 import { withCurrentUser } from "../auth/db.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
+import { STANDING_LATCH_JE_PREDICATE } from "./revrec-delivery-posting/poster.service.js";
 import { resolveAccountForCategory } from "./expense-category-map/resolver.service.js";
 import { resolveBillLineDebitAccount, BillLineAccountError } from "./bill-account-resolver.js";
 import {
@@ -218,11 +219,12 @@ async function revrecLatchOwnsLoad(
 
   const res = await client.query<{ id: string }>(
     `
-      SELECT id::text
-      FROM accounting.load_revenue_recognition_postings
-      WHERE operating_company_id = $1::uuid
-        AND load_id = $2::uuid
-        AND is_active
+      SELECT p.id::text
+      FROM accounting.load_revenue_recognition_postings p
+      WHERE p.operating_company_id = $1::uuid
+        AND p.load_id = $2::uuid
+        AND p.is_active
+        AND ${STANDING_LATCH_JE_PREDICATE}
       LIMIT 1
     `,
     [operatingCompanyId, loadId]
