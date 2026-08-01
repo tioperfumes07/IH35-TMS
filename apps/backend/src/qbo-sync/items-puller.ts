@@ -114,6 +114,48 @@ async function upsertCatalogItem(client: PoolClient, operatingCompanyId: string,
   // AF-2 made catalogs.items per-entity: operating_company_id is NOT NULL and the single-col unique on
   // qbo_item_id was replaced by (operating_company_id, qbo_item_id). This write must carry
   // operating_company_id and conflict on the composite arbiter, or it 500s AND cross-entity clobbers.
+  // ACCT-F68 — ADOPT BEFORE INSERT.
+  //
+  // The upsert arbiter below is PARTIAL: (operating_company_id, qbo_item_id) WHERE qbo_item_id IS NOT
+  // NULL. A locally-created item has qbo_item_id NULL, so it can never match that arbiter — the
+  // statement falls through to a fresh INSERT, which then collides with uq_items_company_item_name
+  // (operating_company_id, item_name), a NON-partial unique index. That is the exact prod failure:
+  // qbo_sync.step.items_pull and .items_reconcile both showed last_successful_run_at = NULL with
+  // "duplicate key value violates unique constraint \"uq_items_company_item_name\"", so NO QBO item
+  // has ever reached catalogs.items for TRANSP. Live shape confirming the setup: 190 items, 180 with
+  // a qbo_item_id, 190 distinct names — the 10 rows without a qbo_item_id are the collision surface.
+  //
+  // ADOPT rather than rename-and-insert. The local row is the SAME product the operator already
+  // created by hand; QBO is simply now the system of record for it. Adoption keeps that row's id, so
+  // every existing FK stays valid — accounting.invoice_lines resolves revenue through
+  // catalogs.items.default_income_account_id, and inserting a twin would strand those lines on an
+  // orphaned item while the QBO-linked copy carried the account mapping. Renaming to dodge the
+  // constraint would also silently diverge the operator's catalogue from QuickBooks.
+  //
+  // Only an UNCLAIMED row is adoptable (qbo_item_id IS NULL). A row already bound to a different QBO
+  // item is never touched, so two QBO items sharing a name still surface as a real, visible error
+  // instead of silently stealing each other's binding.
+  const adopted = await client.query<{ id: string }>(
+    `
+      UPDATE catalogs.items
+         SET qbo_item_id = $3,
+             item_type = COALESCE($4, item_type),
+             unit_price_cents = COALESCE($5, unit_price_cents),
+             default_expense_account_id = COALESCE($6::uuid, default_expense_account_id),
+             deactivated_at = CASE WHEN $7::boolean THEN NULL ELSE COALESCE(deactivated_at, now()) END,
+             qbo_synced_at = now(),
+             qbo_sync_status = 'synced',
+             qbo_sync_error = NULL,
+             updated_at = now()
+       WHERE operating_company_id = $1
+         AND item_name = $2
+         AND qbo_item_id IS NULL
+      RETURNING id::text
+    `,
+    [operatingCompanyId, name, qboId, itemType, unitPrice, defaultExpenseAccountId, active]
+  );
+  if ((adopted.rowCount ?? 0) > 0) return;
+
   await client.query(
     `
       INSERT INTO catalogs.items (
