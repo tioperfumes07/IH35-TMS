@@ -103,7 +103,7 @@ surface; the auto-expense is Stage-2 posting behind the OFF flag. No posting unt
    connect-as-company (`RELAY-DEPOSIT-FUNDING-RECON-2026-07-12.md`).
 2. Confirm `1295 Relay Fuel Wallet` (Other Current Asset, per operating company) as the primitive — or a
    QBO Relay bank/asset account to mirror instead.
-3. Confirm loan-as-default for personal deposits (vs capital), pending CPA.
+3. Confirm loan-as-default for personal deposits (vs capital), pending owner.
 4. Approve the Stage-2 fuel + fee posting mapping (item → account) before any flag flips.
 
 **Nothing beyond the master-data seed builds until 1–4 are answered.**

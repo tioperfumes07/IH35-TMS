@@ -1,6 +1,6 @@
 # IH35-TMS locked accounting decisions — quick reference card
 
-Settled by owner + CPA. Build to these; do not re-derive. `✗ agent` = an agent must never do this (owner/CPA hand).
+Settled by owner. Build to these; do not re-derive. `✗ agent` = an agent must never do this (owner/CPA hand).
 Sanitized card only — no names, signatures, addresses, emails, personal-guaranty text, or executed-agreement text.
 
 | # | Decision | Locked value | Notes |
@@ -31,8 +31,8 @@ Sanitized card only — no names, signatures, addresses, emails, personal-guaran
 | Entities | Set | TRANSP (op), TRK (assets, 5yr SL deprec), USMCA (future, 0-bal, isolated) | Separate entity books |
 | Entities | Intercompany | **Reciprocal intercompany monitoring** | Retain read-only consolidated reporting additively |
 | Tax | Sales tax | **None on line-haul** (interstate freight exempt) | |
-| Gating | Money flags | **All OFF** until CPA sign-off + Neon tie-out | ✗ agent flips |
+| Gating | Money flags | **All OFF** until owner sign-off + Neon tie-out | ✗ agent flips |
 
 **The hard line:** an agent builds read-only engines, design docs, and flag-OFF scaffolding — it **never** posts
 an opening/financial entry to prod, moves money, writes GL-posting math solo, or flips a money flag. Those are
-the owner's hand with CPA sign-off (constitution §1.4/§1.6).
+**the owner's hand alone** — there is NO CPA (constitution §1.4/§1.6).

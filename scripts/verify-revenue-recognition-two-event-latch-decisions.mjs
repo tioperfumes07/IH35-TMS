@@ -9,7 +9,7 @@
  * Do NOT wire through package.json / locked-guards.yml / ci.yml.
  *
  * FAILS when either canonical decision doc:
- *   1. Is missing locked anchors (two-event latch, HARD Unbilled seed prerequisite,
+ *   1. Is missing locked anchors (two-event latch, LIVE flag/account state,
  *      reconciliation known-item, unbilled report, boundary, materiality, maker/checker,
  *      TRK exclusion, point-in-time-as-simplification honesty), OR
  *   2. Affirmatively describes a single combined POD+delivered recognition gate, OR
@@ -51,8 +51,17 @@ const REQUIRED_ANCHORS_BOTH = [
   "KNOWN reconciling item",
   "defensible practical simplification",
   "606-10-25-27",
-  "HARD PREREQUISITE",
-  "runtime 500",
+  // CORRECTED 2026-08-01. This guard previously REQUIRED the anchors "HARD PREREQUISITE" and
+  // "before `REVENUE_RECOGNITION_POST_ENABLED` may flip", which encoded the claim that the Unbilled
+  // Revenue account had to be seeded before the flag could flip and that flipping without it was a
+  // runtime 500. Verified read-only on prod br-fancy-credit-akjnd07a 2026-08-01, ALL OF THAT IS
+  // FALSE: the flag is already ON for TRANSP + USMCA via per-entity lib.feature_flag_overrides (set
+  // 2026-07-26, TRK OFF) and the account already EXISTS (TRANSP 1240, USMCA 1150) with its CoA roles
+  // bound. The guard was therefore holding a false premise IN PLACE and failing any PR that
+  // corrected it — which is why this drift kept resurfacing every session. The anchors below now pin
+  // the VERIFIED-TRUE state instead, so the correction is what cannot regress.
+  "lib.feature_flag_overrides",
+  "EXISTS and is postable",
   "Unbilled Revenue report",
   "mdata.loads",
   "SSP allocation",
@@ -63,7 +72,7 @@ const REQUIRED_ANCHORS_BOTH = [
 /** Extra anchors required only in the full additions lock. */
 const REQUIRED_ANCHORS_ADDITIONS_ONLY = [
   "Not claimed as the only correct method",
-  "before `REVENUE_RECOGNITION_POST_ENABLED` may flip",
+  "VERIFIED-FINANCIAL-STATE-OF-RECORD-2026-08-01.md",
 ];
 
 const COMBINED_GATE_PATTERNS = [
@@ -136,7 +145,7 @@ function loadRepositoryFixture() {
 function createBadFixture(goodFixture) {
   const stripAnchors = (source) =>
     (source ?? "")
-      .replaceAll("before `REVENUE_RECOGNITION_POST_ENABLED` may flip", "GATE_FLIP_REMOVED")
+      .replaceAll("VERIFIED-FINANCIAL-STATE-OF-RECORD-2026-08-01.md", "STATE_OF_RECORD_REMOVED")
       .replaceAll("Not claimed as the only correct method", "HONESTY_REMOVED")
       .replaceAll("DR Unbilled Revenue", "UNBILLED_REV_REMOVED")
       .replaceAll("CR Line-Haul Income", "LINE_HAUL_INCOME_REMOVED")
@@ -156,8 +165,8 @@ function createBadFixture(goodFixture) {
       .replaceAll("KNOWN reconciling item", "RECON_CLASS_REMOVED")
       .replaceAll("defensible practical simplification", "SIMPLIFICATION_REMOVED")
       .replaceAll("606-10-25-27", "ASC_REF_REMOVED")
-      .replaceAll("HARD PREREQUISITE", "HARD_GATE_REMOVED")
-      .replaceAll("runtime 500", "RUNTIME_REMOVED")
+      .replaceAll("lib.feature_flag_overrides", "OVERRIDE_TABLE_REMOVED")
+      .replaceAll("EXISTS and is postable", "ACCOUNT_STATE_REMOVED")
       .replaceAll("Unbilled Revenue report", "REPORT_REMOVED")
       .replaceAll("mdata.loads", "LOADS_LINK_REMOVED")
       .replaceAll("SSP allocation", "SSP_REMOVED")

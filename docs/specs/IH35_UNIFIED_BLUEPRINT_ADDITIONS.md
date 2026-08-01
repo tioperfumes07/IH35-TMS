@@ -1171,7 +1171,7 @@ The module that captures consent must NEVER post money. Authoritative detail:
   `journal_entry_postings` or imports a posting engine).
 - **Money flags** `SETTLEMENT_GL_POSTING_ENABLED` (FIN-18), `LEASE_GL_POSTING_ENABLED`
   (FIN-22), `AMORTIZATION_GL_POSTING_ENABLED` (FIN-21) flip ON only via a Tier-1 ceremony
-  after CPA sign-off + a Neon balanced-entry test. **FIN-18 and FIN-22 are REQUIRED, not
+  after owner sign-off + a Neon balanced-entry test. **FIN-18 and FIN-22 are REQUIRED, not
   optional** — Legal's link-and-consent handoff is not shipped to production money flow
   without the Finance engines committed, or the math is orphaned.
 
@@ -1767,7 +1767,7 @@ Status: LOCKED (non-financial guard/spec wiring plus behavior tests; relation-fa
 
 ## 18. Revenue Recognition — Delivery Two-Event Latch (LOCKED — OWNER, 2026-07-19)
 
-Owner decision (Jorge P. Munoz, 2026-07-19), sole owner call per the 2026-07-11 owner-authority ruling. No CPA sign-off this session; reviewable by a CPA/auditor later.
+Owner decision (Jorge P. Munoz, 2026-07-19), sole owner call per the 2026-07-11 owner-authority ruling. No owner sign-off this session; reviewable by a CPA/auditor later.
 
 This section refines, and does **not** contradict, the CPA Answers Integration Phase 1 lock ("TMS ACCRUAL recognition event = canonical load delivery"): the two-event latch below is the exact posting mechanics of that same delivery-recognition event, plus the invoice-time reclass, materiality, approval, entity-scope, reconciliation, reporting, and boundary controls around it. **Financial cluster → build-and-HOLD**; owner `JORGE-APPROVED` + owner Neon-apply required before any posting change ships. Reuse the existing poster — write no new GL math.
 
@@ -1784,12 +1784,12 @@ Freight revenue recognized **point-in-time at delivery** (control transfer) — 
 
 ### HARD PREREQUISITE (gate, not footnote)
 
-**Unbilled Revenue account does not exist on prod** (verified 2026-07-19: only Deferred Revenue exists, TRANSP). Seeding Unbilled Revenue for **TRANSP + USMCA** is a **REQUIRED finance-gated step** (`JORGE-APPROVED` + GUARD Neon proof) before `REVENUE_RECOGNITION_POST_ENABLED` may flip. Flipping without it = runtime 500. **No "done" without the account existing.**
+**CORRECTED 2026-08-01 — the 2026-07-19 statement below is STALE and false against prod.** ~~Unbilled Revenue account does not exist on prod... Flipping without it = runtime 500.~~ Verified read-only on Neon prod `br-fancy-credit-akjnd07a` 2026-08-01: the **Unbilled Revenue account EXISTS and is postable** (TRANSP `1240`, USMCA `1150`; TRK excluded by design), the CoA roles (`unbilled_revenue`, `revenue_default`, `ar_control`) are **bound and active** for TRANSP + USMCA, and `REVENUE_RECOGNITION_POST_ENABLED` is **already ON** for TRANSP + USMCA via per-entity `lib.feature_flag_overrides` (set 2026-07-26; TRK OFF). The global `default_enabled=false` does not decide this — the poster passes `operating_company_id` and `resolveFlagEnabled()` returns the per-entity override first. **Do NOT seed the account** (duplicate-account defect) and **do NOT describe the flag as OFF**. Canonical live state: `docs/trackers/VERIFIED-FINANCIAL-STATE-OF-RECORD-2026-08-01.md`.
 
 ### Entity scope
 
 - **TRANSP:** seed + enable first (live loads).
-- **USMCA:** seed Unbilled+Deferred, dormant until it has loads.
+- **USMCA:** Unbilled Revenue `1150` already exists and the flag is ON (verified prod 2026-08-01); dormant in practice only because USMCA has no loads yet. Do not re-seed.
 - **TRK: EXCLUDED** (lease lessor, 0 freight loads; lease income over term, `42000-LEASE`, separate mechanism). Do **not** seed freight Unbilled/Deferred for TRK and do **not** wire the delivery trigger to TRK.
 
 ### Materiality (closed-period corrections)

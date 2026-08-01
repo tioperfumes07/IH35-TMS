@@ -1,7 +1,7 @@
 # Factoring GL Poster — Design (R1–R4, secured-borrowing)
 
 **Status:** DESIGN ONLY — for CPA + bookkeeper review. **No posting code is authorized by this doc.**
-**Tier:** §1.4 financial cluster → NEVER self-merge the eventual poster; build-and-hold, CPA sign-off +
+**Tier:** §1.4 financial cluster → NEVER self-merge the eventual poster; build-and-hold, owner sign-off +
 Neon verification, `FACTORING_GL_POSTING_ENABLED` stays OFF until flipped per entity (TRANSP only).
 **Prepared:** 2026-07-02 (Claude), grounded in `FACTORING-ACCOUNTING-STRUCTURE.md`,
 `202607013000_factoring_secured_borrowing_coa_roles.sql` (CODER-34), and the CPA secured-borrowing ruling.

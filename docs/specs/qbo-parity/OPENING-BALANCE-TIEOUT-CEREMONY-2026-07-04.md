@@ -49,7 +49,7 @@ Accounting equation holds: Assets −8,295,183.95 = Liabilities −332,957.80 + 
    - One JE dated **2025-01-01**, **signed-actual** (not natural-side), one line per QBO BS leaf account → its
      `catalogs.accounts` mirror by `qbo_account_id`.
    - Balance the entry through **OBE → Retained Earnings** temp-clearing (BS-only opening; OBE nets to 0).
-   - **Keep the 2 "Unauthorized Expenses" as-is under A/R** (provisional — embezzlement reclass pending CPA;
+   - **Keep the 2 "Unauthorized Expenses" as-is under A/R** (provisional — embezzlement reclass pending owner;
      opening must be re-runnable/adjustable, void-not-delete).
    - Multicurrency: home-ccy + FX accounts where QBO carries foreign balances.
 3. **Tie out** — assert TMS trial balance as of 2025-01-01 == QBO 12/31/2024, **leaf-level, signed,

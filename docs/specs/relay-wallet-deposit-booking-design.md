@@ -57,7 +57,7 @@ wallet balance at any time — a reconciling control.
 For each settled fuel transaction: **Debit Fuel Expense** (by GL category, per the existing fuel
 expense-mapping) **/ Credit Relay Fuel Wallet**, plus the $2 Relay fee → **Debit Fuel Fees/Bank
 Charges / Credit Relay Fuel Wallet**. Every diesel/roadside expense must FK to a load (G18) — the
-matched_driver/unit/load linkage from the ingest carries this. **Flags OFF until CPA sign-off.**
+matched_driver/unit/load linkage from the ingest carries this. **Flags OFF until owner sign-off.**
 
 ### Stage 3 — bank reconciliation
 
@@ -83,7 +83,7 @@ Only the owner's identification moves it to loan/capital (personal) or to `compa
   Reconciles to Relay's reported balance; a divergence is a booking error to surface, not silence.
 - void-not-delete; append-only audit; UUIDv7 PKs; FORCE entity-RLS; `security_invoker` views.
 - Reuse existing posting/GL functions — write NO new GL math. Reuse fuel expense-mapping for stage 2.
-- All posting behind default-OFF flags until CPA sign-off + Neon tie-out (parallel-books architecture,
+- All posting behind default-OFF flags until owner sign-off + Neon tie-out (parallel-books architecture,
   QBO = system-of-record through 12/31/2025).
 - Opening balances / any prod posting = owner-entered only.
 
@@ -94,7 +94,7 @@ Only the owner's identification moves it to loan/capital (personal) or to `compa
 1. Name each of the six external cards → loan vs capital vs connect-as-company.
 2. Confirm "Relay Fuel Wallet" as an Other Current Asset account (per operating company) is the right
    primitive, or whether QBO already has a Relay bank/asset account to mirror instead.
-3. Confirm loan-as-default treatment for personal deposits (vs capital), pending CPA.
+3. Confirm loan-as-default treatment for personal deposits (vs capital), pending owner.
 4. Approve stage-2 fuel posting mapping + fee account before any flag flips.
 
 Nothing builds until 1–4 are answered.

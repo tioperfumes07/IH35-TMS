@@ -200,7 +200,7 @@ There is already a customer-invoice-from-load path; the TONU billing path **reus
 ### 3.3 Feature flag — OFF by default
 - A dedicated env flag, e.g. `TONU_CANCELLATION_BILLING_ENABLED` (default **OFF**, per-entity override only),
   gates the cancellation→invoice call in `cancellation.service.ts`. Flag OFF = today's behavior exactly
-  (charge captured, not billed). Flag ON (per entity, after CPA sign-off + tie-out) = TONU raises an invoice.
+  (charge captured, not billed). Flag ON (per entity, after owner sign-off + tie-out) = TONU raises an invoice.
 - The flag flip to ON is itself a HOLD event (hold-merge-gate detects `*_ENABLED → true`).
 
 ### 3.4 Entity scoping + atomicity

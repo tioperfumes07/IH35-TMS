@@ -1,6 +1,6 @@
 # DESIGN — Load Revenue Capture: auto-invoice on delivery + TONU billable-cancellation AR
 
-**Status:** DESIGN — owner + CPA approval required before any build. No code/migration in this doc.
+**Status:** DESIGN — owner approval required before any build. No code/migration in this doc.
 **Author:** GUARD (Claude), 2026-07-20. **Class:** FINANCIAL-CLUSTER (§1.4) — owner-gated.
 **Verified facts backing this design (live/repo, this session):**
 - `dispatch.load_cancellations.charge_id` **does NOT exist on prod** (verified via Neon, discriminator-gated) → billable cancellations create no AR.
@@ -35,7 +35,7 @@ Both are **direct revenue capture failures** — exactly what a CPA/auditor/lend
 
 ### 3c. Prerequisites (all owner/CPA-gated, from the locked rev-rec design)
 1. **Seed the Unbilled Revenue / Contract-Asset account** (TRANSP + USMCA; TRK excluded) — does not exist yet; owner-Neon migration.
-2. **CPA sign-off** on at-delivery point-in-time policy + materiality memo + contract-asset classification (per locked rev-rec doc).
+2. **owner sign-off** on at-delivery point-in-time policy + materiality memo + contract-asset classification (per locked rev-rec doc).
 3. **Flag wiring:** the revenue-post flag must be per-entity (register in `POSTING_FLAG_KEYS`, pass opco) — currently global-only; fix before enabling. Default OFF.
 4. Reconcile with the existing **deferral** rev-rec module (do NOT double-post): use the generic poster, not the deferral path (§9 drift noted in locked rev-rec memory).
 
@@ -50,7 +50,7 @@ Both are **direct revenue capture failures** — exactly what a CPA/auditor/lend
 | 1 | Approve auto-invoice-on-delivery + TONU-AR build | **GO** — highest-value revenue capture; matches McLeod/Alvys + locked policy |
 | 2 | `load_cancellations.charge_id` migration (owner Neon apply) | Approve SQL when drafted |
 | 3 | Seed Unbilled/Contract-Asset account (TRANSP+USMCA) | Approve migration when drafted |
-| 4 | CPA sign-off (materiality memo + contract-asset class) | Owner + Martin |
+| 4 | owner sign-off (materiality memo + contract-asset class) | Owner + Martin |
 | 5 | Flag enablement per entity after CPA + Neon tie-out | Keep OFF until tie-out |
 
 **Nothing is built until #1 is approved.** On GO, I draft the migration SQL + the poster wiring (reusing existing infra), show you `git diff --staged` + full SQL, and you apply/flip — I never self-merge financial.

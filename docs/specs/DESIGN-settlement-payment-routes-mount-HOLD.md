@@ -3,7 +3,7 @@
 - **Block:** `0441-mod10-payment-status-panel-404`
 - **Status:** DESIGN ONLY. **No money code. Do NOT open a code PR that mounts payment routes.** This document is the plan; the actual one-line mount + preconditions ship in a **separate owner-gated PR** after `JORGE-APPROVED`.
 - **Branch:** `design/settlement-payment-routes-mount-hold` (pinned to `origin/main` @ `cde575b64`)
-- **CPA posture (loaded `ih35-accounting-decisions`):** reuse the existing poster, **write NO new GL math**, all money-posting flags stay **default OFF**, per-entity override only. An agent never posts/moves money; the flip is the owner's hand + CPA sign-off.
+- **CPA posture (loaded `ih35-accounting-decisions`):** reuse the existing poster, **write NO new GL math**, all money-posting flags stay **default OFF**, per-entity override only. An agent never posts/moves money; the flip is the owner's hand + owner sign-off.
 - **Financial cluster → build-and-HOLD (Rule 13):** these are money endpoints; **never self-merge**, HOLD for owner merge even though the mount itself is schema-free.
 
 ---

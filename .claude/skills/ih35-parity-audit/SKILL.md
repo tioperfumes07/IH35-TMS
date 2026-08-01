@@ -40,7 +40,7 @@ For each module/feature, assign exactly one:
 - **Respect the locks.** Parity gaps are ADDITIVE (§7 product locks) — never propose deleting/reordering
   existing modules to "match" a reference. Archive, never delete.
 - **Financial gaps are design-docs, not solo builds.** A GAP in posting/GL/reconciliation becomes a design
-  block for owner+CPA, never agent-built posting logic (§1.4).
+  block for owner, never agent-built posting logic (§1.4).
 - **No silent caps.** If the audit sampled (top-N modules, one flow per module), SAY so — a partial sweep
   presented as complete is exactly the false-"covered everything" the mandate forbids.
 

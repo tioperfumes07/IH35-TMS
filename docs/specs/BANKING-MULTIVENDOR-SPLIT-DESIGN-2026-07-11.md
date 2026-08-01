@@ -117,7 +117,7 @@ per-vendor-bill path** (§7 additive-only).
 2. **Owner ruling on §4** (per-vendor-bill — recommended — vs add a single-JE mode).
 3. **"Split N ways by driver" helper** — verify present or build additively (currently UNVERIFIED / likely gap).
 4. **Owner ceremony** to flip `BANK_TX_SPLIT_ENABLED` + `BANK_TX_SPLIT_GL_POSTING_ENABLED` per entity —
-   **after** CPA sign-off + Neon tie-out (skill §6: money-posting flags stay OFF until CPA + tie-out).
+   **after** owner sign-off + Neon tie-out (skill §6: money-posting flags stay OFF until CPA + tie-out).
 
 **Coder does none of 1–4 unilaterally.** This doc is the design + hold record; the flags stay OFF.
 

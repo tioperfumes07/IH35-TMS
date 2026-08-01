@@ -14,13 +14,13 @@ identity resolver the CPA vetoed, and an unseeded data foundation.
 
 FACT-01 · P1 · FIN-HOLD · Factoring GL kill-switch is ENABLED in prod for ALL THREE entities — violates the flag's own contract
 PROD TRUTH [GUARD-VERIFIED-LIVE 2026-07-26]: lib.feature_flags 'FACTORING_GL_POSTING_ENABLED' has default_enabled=false,
-  description = "...Per-entity override (TRANSP only). Default OFF (kill switch) until CPA sign-off + Neon verification."
+  description = "...Per-entity override (TRANSP only). Default OFF (kill switch) until owner sign-off + Neon verification."
   lib.feature_flag_overrides has THREE rows enabled=true, expires_at=NULL: TRK (b49a737b), TRANSP (91e0bf0a), USMCA (5c854333).
   isEnabled() resolves company override OVER default ⇒ the flag is effectively ON for all three — including TRK and USMCA,
   which the flag's own description says must NEVER carry it ("TRANSP only"), and USMCA which is the isolated future carrier.
   Currently FAIL-CLOSED only by luck: the Faro agreement + customer bindings are unseeded (FACT-04), so every posting path
   throws missing_faro_agreement_binding. The instant an agreement row is seeded, live GL posting fires for TRANSP without the
-  documented precondition (CPA sign-off + Neon verification) ever being re-confirmed.
+  documented precondition (owner sign-off + Neon verification) ever being re-confirmed.
 CANONICAL: to_regclass('lib.feature_flag_overrides') = lib.feature_flag_overrides (not RETIRE).
 LINKAGE: flag → accounting.factoring_advances / journal_entries+postings; per-entity gate → org.companies (TRANSP/TRK/USMCA).
 STANDARD: NetSuite/QuickBooks change-management + our own FIN-HOLD rule — a financial-posting kill switch must stay OFF until
@@ -77,7 +77,7 @@ FIX (OWNER-SEED, RE-VERIFY): owner seeds the Faro agreement row + factoring.fact
   customers' factoring_company_vendor_id. SEQUENCE AFTER FACT-01 so seeding does not immediately arm live posting under an
   unverified sign-off. GUARD provides the seed paste-box on request; owner runs it.
 ACCEPTANCE: one effective FARO_FULL_RECOURSE_V1 agreement; ≥1 Faro customer bound; a $1,000 test advance posts a balanced JE on a
-  throwaway branch only (never prod without owner+CPA).
+  throwaway branch only (never prod without owner).
 
 FACT-05 · P3 · FIN-HOLD · ACH/wire fee collapsed into factor_fee_expense — no distinct bank-charges GL line
 PROD TRUTH [AGENT-VERIFIED @a51447b · RE-VERIFY LIVE]: poster.service.ts:961-964 books the ACH/wire leg to factor_fee_expense

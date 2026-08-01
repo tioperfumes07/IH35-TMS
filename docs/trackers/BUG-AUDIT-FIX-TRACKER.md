@@ -1,7 +1,7 @@
 # IH35-TMS — BUG AUDIT FIX TRACKER (single source of truth)
 
 Generated 2026-07-04 from the shared 130-finding read-only sweep (Cascade + Claude-Coder-2, byte-identical core).
-**APPEND-ONLY** — mark items DONE with date/time (Central); never delete a row. Financial = STOP-gate (owner+CPA before any merge).
+**APPEND-ONLY** — mark items DONE with date/time (Central); never delete a row. Financial = STOP-gate (owner before any merge).
 
 Parsed detailed findings: **130** · Financial (STOP-gate): **49** · Safe-to-fix: **81**
 
