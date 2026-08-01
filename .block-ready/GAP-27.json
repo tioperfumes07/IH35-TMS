@@ -1,6 +1,7 @@
 {
   "block_id": "GAP-27",
-  "status": "READY",
+  "status": "done",
+  "classification": "NON-FINANCIAL",
   "branch": "feature/gap-27-geofence-reconciliation",
   "phase": "GAP-MEDIUM",
   "task": "Daily Geofence Reconciliation Report",
@@ -18,5 +19,17 @@
   "extra_gates": ["verify:geofence-recon"],
   "runtime_path": "src",
   "db_required": true,
-  "guard_required": true
+  "guard_required": true,
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-geofence-recon.mjs",
+      "wired_into": "package.json",
+      "check": "geofence reconciliation routes registered; geofence reconciliation worker initialized."
+    },
+    {
+      "kind": "live",
+      "check": "VERIFIED 2026-08-01: node scripts/verify-geofence-recon.mjs -> 'GAP-27 geofence reconciliation guard: PASS' (routes registered + initializeGeofenceReconciliationWorker wired in apps/backend/src/index.ts)."
+    }
+  ]
 }
