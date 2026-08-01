@@ -1597,7 +1597,8 @@ export const ROUTES = React.Children.toArray(
               Claims" tab (Safety Events). Now lands on a dedicated aggregate-KPI home page. */}
           <Route index element={<Navigate to="/safety/home" replace />} />
           <Route path="home" element={<SafetyHomeTab />} />
-          <Route path="driver-files" element={<DriverFilesTab />} />
+          {/* SAF-F27: absolute /safety/* mounts kept (locked-ui-surface); relative twins
+              that resolve to the same URL removed (React Router first-match dead dupes). */}
           <Route path="/safety/driver-files" element={<DriverFilesTab />} />
           <Route path="drug-alcohol" element={<DrugAlcoholTab />} />
           <Route path="safety-meetings" element={<SafetyMeetingsTab />} />
@@ -1607,20 +1608,16 @@ export const ROUTES = React.Children.toArray(
           <Route path="/safety/eld/audit-trail" element={<EldAuditTrailViewer />} />
           <Route path="/safety/hos/exceptions" element={<HosExceptionsPage />} />
           <Route path="hos-violations" element={<HOSViolationsTab />} />
-          <Route path="idvr" element={<IDVRTab />} />
           <Route path="/safety/idvr" element={<IDVRTab />} />
-          <Route path="idvr/:id" element={<IdvrDetailPage />} />
           <Route path="/safety/idvr/:id" element={<IdvrDetailPage />} />
           <Route path="dot-inspections" element={<DOTInspectionsTab />} />
           <Route path="driver-scoring" element={<DriverScoringTab />} />
           <Route path="csa-score" element={<CSAScoreTab />} />
           <Route path="dot-compliance" element={<DOTComplianceTab />} />
           <Route path="cert-expiry" element={<ExpiryDashboard />} />
-          <Route path="safety-events" element={<SafetyEventsTab />} />
           <Route path="/safety/safety-events" element={<SafetyEventsTab />} />
           <Route path="accidents" element={<AccidentsIncidentsTab />} />
           <Route path="damage-reports" element={<DamageReportsTab />} />
-          <Route path="trailer-interchanges" element={<TrailerInterchangesTab />} />
           <Route path="/safety/trailer-interchanges" element={<TrailerInterchangesTab />} />
           <Route path="cargo-claims" element={<CargoClaimsTab />} />
           <Route path="internal-fines" element={<InternalFinesTab />} />
@@ -1630,9 +1627,7 @@ export const ROUTES = React.Children.toArray(
           <Route path="geofence-alerts" element={<GeofenceBreachesTab />} />
           <Route path="insurance" element={<InsuranceTab />} />
           <Route path="insurance/*" element={<InsuranceTab />} />
-          <Route path="permits" element={<PermitsTab />} />
           <Route path="/safety/permits" element={<PermitsTab />} />
-          <Route path="integrity-reports" element={<IntegrityReportsTab />} />
           <Route path="/safety/integrity-reports" element={<IntegrityReportsTab />} />
           <Route path="/safety/position-history" element={<PositionHistoryPage />} />
           <Route path="/safety/integrity-alerts" element={<IntegrityAlertsTab />} />
