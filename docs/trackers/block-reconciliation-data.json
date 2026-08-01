@@ -1,6 +1,6 @@
 {
- "date": "2026-07-31",
- "generated_at_iso": "2026-07-31T22:32:16.410Z",
+ "date": "2026-08-01",
+ "generated_at_iso": "2026-08-01T16:34:43.623Z",
  "counts": {
   "PENDING": 19,
   "PENDING (GATED)": 28,
@@ -392,7 +392,7 @@
    "evidence": "[verified 2026-07-12] agent: migration validates unrelated FKs, no safety_events/driver_status FK exists",
    "name": "",
    "registered_on": null,
-   "pr": 3677
+   "pr": 3950
   },
   {
    "id": "FOR-CURSOR-2-README-ACCOUNTING-BANKING",
@@ -13478,10 +13478,202 @@
  ],
  "merged_prs": [
   {
+   "number": 3956,
+   "title": "Claude- docs(finance): kill the stale-premise drift — flag is ON, Unbilled Revenue EXISTS, there is NO CPA",
+   "mergedAt": "2026-08-01T16:33:51Z",
+   "branch": "claude/correct-stale-financial-premises"
+  },
+  {
+   "number": 3955,
+   "title": "Claude- fix(revrec): Event 1 earned from load STATUS alone on a LIVE posting path — now requires the final active delivery stop's actual_departure_at",
+   "mergedAt": "2026-08-01T07:19:18Z",
+   "branch": "claude/revrec-evidence-driven-latch"
+  },
+  {
+   "number": 3954,
+   "title": "fix(driver-pwa): correct dispatch-view tests + CI vitest gate (1926)",
+   "mergedAt": "2026-08-01T06:49:00Z",
+   "branch": "fix/driver-pwa-vitest-ci-gate-1926"
+  },
+  {
+   "number": 3953,
+   "title": "Claude- docs(dispatch): status/stop-capture decoupling scoped; PWA walkthrough answered; my own load counts corrected",
+   "mergedAt": "2026-08-01T16:34:13Z",
+   "branch": "claude/dispatch-coupling-scope"
+  },
+  {
+   "number": 3952,
+   "title": "Claude- docs(dispatch): revenue-recognition SOURCE gap — measured scoping, 0 of 20 stops timestamped",
+   "mergedAt": "2026-08-01T06:12:02Z",
+   "branch": "claude/dispatch-linkage-scoping"
+  },
+  {
+   "number": 3951,
+   "title": "docs(trackers): park TRK accum_depr_default on ND-FA-01 (not H1)",
+   "mergedAt": "2026-08-01T06:47:51Z",
+   "branch": "docs/nd-fa-01-accum-depr-park"
+  },
+  {
+   "number": 3950,
+   "title": "fix(banking): WAVE-H3 acceptMatch reverse bank FKs (payment + bill_payment)",
+   "mergedAt": "2026-08-01T05:33:05Z",
+   "branch": "fix/wave-h3-bank-match-writepath-1924"
+  },
+  {
+   "number": 3949,
+   "title": "Claude- docs(trackers): quantify GEOFENCE-WATCHER-DEAD — 0 of 20 stops have an arrival timestamp",
+   "mergedAt": "2026-08-01T04:55:46Z",
+   "branch": "claude/geofence-finding-quantified"
+  },
+  {
+   "number": 3948,
+   "title": "Claude- fix(pickers): vendor pickers silently dropped 79% of vendors — 17 call sites capped below the fleet",
+   "mergedAt": "2026-08-01T04:25:57Z",
+   "branch": "claude/clause4-vendor-picker-cap"
+  },
+  {
+   "number": 3947,
+   "title": "fix(accounting): WAVE-H2 write-path live proof (expense.load_id + invoice.source_load_id)",
+   "mergedAt": "2026-08-01T04:33:49Z",
+   "branch": "fix/wave-h2-writepath-live-proof-1922"
+  },
+  {
+   "number": 3945,
+   "title": "Claude- fix(rls): drain the false-zero class — 39 tables across the remaining 16 schemas",
+   "mergedAt": "2026-08-01T04:00:32Z",
+   "branch": "claude/rls-bypass-driver-finance"
+  },
+  {
+   "number": 3944,
+   "title": "Claude- docs(trackers): H5 is an EMPTY wave — clause 3 has zero violations and is already guarded",
+   "mergedAt": "2026-08-01T03:54:59Z",
+   "branch": "claude/h5-corrected-picker-matrix"
+  },
+  {
+   "number": 3943,
+   "title": "Claude- fix(tests): make red mean red — verify:local-ci was permanently RED on main from 6 fixture units",
+   "mergedAt": "2026-08-01T03:01:02Z",
+   "branch": "claude/flt02-seed-drift"
+  },
+  {
+   "number": 3942,
+   "title": "Claude- fix(accounting): six accounting audit tables read as ZERO under the documented RLS bypass",
+   "mergedAt": "2026-08-01T03:40:40Z",
+   "branch": "claude/rls-bypass-accounting"
+  },
+  {
+   "number": 3941,
+   "title": "Claude- fix(qbo_archive): 1.83M archive rows read as ZERO under the documented RLS bypass",
+   "mergedAt": "2026-08-01T03:00:59Z",
+   "branch": "claude/rls-bypass-qbo-archive"
+  },
+  {
+   "number": 3940,
+   "title": "Claude- fix(accounting): repoint every human-facing bill reference to bill_number, and guard the class",
+   "mergedAt": "2026-08-01T03:50:37Z",
+   "branch": "claude/bill-display-id-class-repoint"
+  },
+  {
+   "number": 3939,
+   "title": "Claude- docs(trackers): four findings surfaced during the 425-C work, none bundled into it",
+   "mergedAt": "2026-08-01T01:42:55Z",
+   "branch": "claude/tracked-findings-2026-08-01"
+  },
+  {
+   "number": 3938,
+   "title": "Claude- fix(reports): Exhibit F labelled all 180 June bill rows \"Bill null\" with a raw uuid",
+   "mergedAt": "2026-08-01T01:23:16Z",
+   "branch": "claude/form425c-bill-number-labels"
+  },
+  {
+   "number": 3937,
+   "title": "Cursor- WAVE-H2 ops FK write-path + load reverse drill (1920)",
+   "mergedAt": "2026-08-01T03:16:32Z",
+   "branch": "fix/wave-h2-ops-fk-wire-1911"
+  },
+  {
+   "number": 3936,
+   "title": "Cursor- WAVE-H1 wire seeded catalogs + CoA completeness (1910)",
+   "mergedAt": "2026-08-01T02:51:41Z",
+   "branch": "fix/wave-h1-catalogs-coa-wire-1918"
+  },
+  {
+   "number": 3935,
+   "title": "Claude- fix(reports): the Form 425-C exhibits generator was never mounted — the page 404s on prod",
+   "mergedAt": "2026-08-01T00:48:50Z",
+   "branch": "claude/form425c-mount-exhibits-route"
+  },
+  {
+   "number": 3934,
+   "title": "Claude- fix(catalogs): opco-scoped catalogs tables read a FALSE ZERO under the documented RLS bypass",
+   "mergedAt": "2026-08-01T00:31:58Z",
+   "branch": "claude/catalogs-rls-bypass-branch"
+  },
+  {
+   "number": 3933,
+   "title": "Cursor- fix(safety): SAF-F32 Form 2290 deadline honesty guard (1917)",
+   "mergedAt": "2026-08-01T00:11:47Z",
+   "branch": "fix/saf-f32-permits-deadline-honesty-1917"
+  },
+  {
+   "number": 3932,
+   "title": "Cursor- fix(safety): SAF-F28 Safety Events EntityPicker filters (1916)",
+   "mergedAt": "2026-08-01T00:11:32Z",
+   "branch": "fix/saf-f28-safety-events-filter-pickers-1916"
+  },
+  {
+   "number": 3931,
+   "title": "Cursor- fix(safety): SAF-F26 accident list EntityPicker filters (1915)",
+   "mergedAt": "2026-07-31T23:56:11Z",
+   "branch": "fix/saf-f26-accident-filter-pickers-1915"
+  },
+  {
+   "number": 3930,
+   "title": "Cursor- fix(lists): LST-F13 hub orphans parts-catalog + abandonment-defaults (1913)",
+   "mergedAt": "2026-08-01T00:11:16Z",
+   "branch": "fix/lst-f13-orphan-catalog-hub-1913"
+  },
+  {
+   "number": 3929,
+   "title": "Cursor- fix(safety): SAF-F27 dedupe relative+absolute /safety route twins (1912)",
+   "mergedAt": "2026-08-01T00:10:21Z",
+   "branch": "fix/saf-f27-dedupe-safety-routes-1912"
+  },
+  {
+   "number": 3927,
+   "title": "Claude- docs(trackers): banking SILENT-SUCCESS triage — a false $0 cash balance and a swallowed write",
+   "mergedAt": "2026-07-31T23:05:01Z",
+   "branch": "claude/silent-success-banking-triage"
+  },
+  {
+   "number": 3926,
+   "title": "Claude- fix(reports): Form 425-C Exhibit F filed ZERO supporting docs against 28,213 real records",
+   "mergedAt": "2026-08-01T00:01:08Z",
+   "branch": "claude/form425c-exhibit-f-phantom-columns"
+  },
+  {
+   "number": 3925,
+   "title": "Cursor- fix(safety): SAF-F35 spawn-liability no silent success (1908)",
+   "mergedAt": "2026-07-31T22:50:12Z",
+   "branch": "fix/saf-b30-spawn-liability-honesty-1908"
+  },
+  {
    "number": 3924,
    "title": "Cursor- fix(ci): TOOL-F03 stop CLAIMED-NUMBERS conflict treadmill (1906)",
    "mergedAt": "2026-07-31T22:31:12Z",
    "branch": "fix/tool-f03-no-claimed-registry-require"
+  },
+  {
+   "number": 3923,
+   "title": "Claude- fix(ci): kill the rebase treadmill — freshness blocked files that CANNOT conflict",
+   "mergedAt": "2026-07-31T22:45:56Z",
+   "branch": "claude/kill-the-rebase-treadmill"
+  },
+  {
+   "number": 3922,
+   "title": "Cursor- fix(safety): SAF-B31 report XLSX export honesty (1904)",
+   "mergedAt": "2026-07-31T23:55:23Z",
+   "branch": "fix/saf-b31-report-export-honesty-1904"
   },
   {
    "number": 3921,
@@ -13506,6 +13698,12 @@
    "title": "Cursor- fix(accounting): LEASE-BRIDGE CoA keep broker role + applied_held (1902)",
    "mergedAt": "2026-07-31T22:31:19Z",
    "branch": "fix/lease-bridge-coa-keep-broker-role"
+  },
+  {
+   "number": 3917,
+   "title": "Claude- fix(maintenance): Warranty Claims 500s on prod — v.display_name does not exist on mdata.vendors",
+   "mergedAt": "2026-07-31T23:04:34Z",
+   "branch": "claude/maint-warranty-vendor-display-name-phantom"
   },
   {
    "number": 3916,
@@ -14064,6 +14262,12 @@
    "title": "Cursor- fix(accounting): ACCT-F18 JE → bank reverse drill",
    "mergedAt": "2026-07-30T05:45:38Z",
    "branch": "cursor/acct-f18-je-bank-reverse-1808"
+  },
+  {
+   "number": 3810,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-07-31T23:26:21Z",
+   "branch": "chore/tracker-artifacts-sync"
   },
   {
    "number": 3809,
@@ -16872,210 +17076,6 @@
    "title": "chore(db): record the HOLD-batch migration already applied to prod [FINANCIAL / NEEDS JORGE-APPROVED]",
    "mergedAt": "2026-07-23T05:29:36Z",
    "branch": "chore/record-applied-hold-migration"
-  },
-  {
-   "number": 3281,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-23T10:49:09Z",
-   "branch": "chore/tracker-artifacts-sync-29977929245"
-  },
-  {
-   "number": 3280,
-   "title": "fix(accounting): maintenance-shop hub under Accounting subnav (47/47)",
-   "mergedAt": "2026-07-23T03:48:50Z",
-   "branch": "acct-maintenance-shop-hub-20260722"
-  },
-  {
-   "number": 3279,
-   "title": "fix(accounting): abandonment queue settlement EntityLink reverse (46/46)",
-   "mergedAt": "2026-07-23T10:48:42Z",
-   "branch": "fix-acct-abandonment-settlement-link"
-  },
-  {
-   "number": 3278,
-   "title": "fix(accounting): QBO sync drift entity EntityLink reverse (45/46)",
-   "mergedAt": "2026-07-23T10:48:37Z",
-   "branch": "fix-acct-qbo-drift-entitylink"
-  },
-  {
-   "number": 3277,
-   "title": "fix(accounting): Integration transactions EntityLink reverse (44/46)",
-   "mergedAt": "2026-07-23T03:42:59Z",
-   "branch": "fix-acct-integration-txn-entitylink"
-  },
-  {
-   "number": 3276,
-   "title": "fix(accounting): Multi-entity consolidated account register drill (43/43)",
-   "mergedAt": "2026-07-23T10:48:30Z",
-   "branch": "fix/acct-multi-entity-leaf"
-  },
-  {
-   "number": 3275,
-   "title": "fix(accounting): Faro import preview invoice/customer EntityLink (42/43)",
-   "mergedAt": "2026-07-23T04:13:31Z",
-   "branch": "fix/acct-faro-import-linkage"
-  },
-  {
-   "number": 3274,
-   "title": "fix(accounting): Account Type Catalog +Create detail type (41/43)",
-   "mergedAt": "2026-07-23T04:11:39Z",
-   "branch": "fix/acct-account-type-create"
-  },
-  {
-   "number": 3273,
-   "title": "fix(accounting): revenue recognition source EntityLink reverse (40/40)",
-   "mergedAt": "2026-07-23T10:47:53Z",
-   "branch": "fix/acct-revenue-recognition-reverse"
-  },
-  {
-   "number": 3272,
-   "title": "fix(accounting): dispute queue driver EntityLink reverse (39/40)",
-   "mergedAt": "2026-07-23T03:47:03Z",
-   "branch": "fix/acct-dispute-queue-driver-entitylink"
-  },
-  {
-   "number": 3271,
-   "title": "fix(accounting): pre-settlements driver + settlement EntityLink reverse (38/40)",
-   "mergedAt": "2026-07-23T03:44:08Z",
-   "branch": "fix/acct-pre-settlements-reverse"
-  },
-  {
-   "number": 3270,
-   "title": "fix(accounting): escrow posting source EntityLink reverse (37/37)",
-   "mergedAt": "2026-07-23T05:11:33Z",
-   "branch": "fix/acct-escrow-posting-entitylink-reverse"
-  },
-  {
-   "number": 3269,
-   "title": "fix(accounting): fixed assets unit + JE reverse drill (36/37)",
-   "mergedAt": "2026-07-23T05:07:37Z",
-   "branch": "fix/acct-fixed-assets-entitylink-reverse"
-  },
-  {
-   "number": 3268,
-   "title": "fix(accounting): prepaid expenses JE EntityLink reverse (35/37)",
-   "mergedAt": "2026-07-23T11:12:10Z",
-   "branch": "fix/acct-prepaid-entitylink-reverse"
-  },
-  {
-   "number": 3267,
-   "title": "fix(accounting): payment methods catalog GL ReferenceSelect +Create (34/34)",
-   "mergedAt": "2026-07-23T10:47:38Z",
-   "branch": "fix/acct-payment-methods-catalog-create"
-  },
-  {
-   "number": 3266,
-   "title": "fix(accounting): sales tax EntityLink reverse + JE mapping (33/34)",
-   "mergedAt": "2026-07-23T10:47:31Z",
-   "branch": "fix/acct-sales-tax-entitylink-reverse"
-  },
-  {
-   "number": 3265,
-   "title": "fix(accounting): vendor credits UI + vendor reverse drill (32/34)",
-   "mergedAt": "2026-07-23T10:47:23Z",
-   "branch": "fix/acct-vendor-credits-ui"
-  },
-  {
-   "number": 3264,
-   "title": "fix(accounting): bill payments pay picker has_balance not unpaid (31/31)",
-   "mergedAt": "2026-07-23T03:51:23Z",
-   "branch": "fix/acct-bill-payments-has-balance"
-  },
-  {
-   "number": 3263,
-   "title": "fix(accounting): payment detail apply uses has_balance open AR (30/31)",
-   "mergedAt": "2026-07-23T05:10:04Z",
-   "branch": "fix/acct-payment-detail-has-balance"
-  },
-  {
-   "number": 3261,
-   "title": "fix(accounting): Collections customer EntityLink reverse (28/28)",
-   "mergedAt": "2026-07-23T04:12:34Z",
-   "branch": "fix/acct-collections-customer-link"
-  },
-  {
-   "number": 3260,
-   "title": "fix(accounting): CoA Roles / expense-map createKind=account (27/28)",
-   "mergedAt": "2026-07-23T04:26:52Z",
-   "branch": "fix/acct-coa-roles-createkind-account"
-  },
-  {
-   "number": 3259,
-   "title": "fix(accounting): Factor reconciliation ledger invoice EntityLink (26/28)",
-   "mergedAt": "2026-07-23T03:25:10Z",
-   "branch": "fix/acct-factor-recon-invoice-link"
-  },
-  {
-   "number": 3258,
-   "title": "fix(accounting): All Transactions + Register id-scoped reverse (25/28)",
-   "mergedAt": "2026-07-23T10:47:17Z",
-   "branch": "fix/acct-txn-register-detail-paths"
-  },
-  {
-   "number": 3257,
-   "title": "fix(accounting): New Account drawer silently discarded 4 collected fields [FINANCIAL / HOLD]",
-   "mergedAt": "2026-07-23T03:06:52Z",
-   "branch": "fix/acct-account-create-field-drop"
-  },
-  {
-   "number": 3256,
-   "title": "fix(accounting): Receipts reverse linkage + ParityDrawer (22/24)",
-   "mergedAt": "2026-07-23T03:14:28Z",
-   "branch": "fix/acct-receipts-reverse"
-  },
-  {
-   "number": 3255,
-   "title": "fix(accounting): A/P aging Open bills has_balance drill (21/24)",
-   "mergedAt": "2026-07-23T03:25:30Z",
-   "branch": "fix/acct-ap-aging-drill"
-  },
-  {
-   "number": 3254,
-   "title": "fix(accounting): month-close aging review acknowledge (24/24)",
-   "mergedAt": "2026-07-23T10:47:10Z",
-   "branch": "fix/acct-month-close-ack"
-  },
-  {
-   "number": 3253,
-   "title": "fix(accounting): period-close alias → month-close (20/24)",
-   "mergedAt": "2026-07-23T03:14:09Z",
-   "branch": "fix/acct-recurring-dualpath"
-  },
-  {
-   "number": 3252,
-   "title": "docs(accounting): live economics smoke evidence pack (23/24)",
-   "mergedAt": "2026-07-23T10:46:44Z",
-   "branch": "fix/acct-live-economics-evidence"
-  },
-  {
-   "number": 3251,
-   "title": "fix(accounting): Receipts payment proof + Undeposited Funds nav (19/24)",
-   "mergedAt": "2026-07-23T10:46:36Z",
-   "branch": "fix/acct-receipts-leaf"
-  },
-  {
-   "number": 3250,
-   "title": "HOLD(accounting): Claim→WO→Bill/Expense FK design (12/24) — Neon",
-   "mergedAt": "2026-07-23T05:04:44Z",
-   "branch": "fix/acct-claim-wo-bill-fk-hold"
-  },
-  {
-   "number": 3249,
-   "title": "HOLD(accounting): ensure Active drivers as vendors (5b/24)",
-   "mergedAt": "2026-07-23T05:43:45Z",
-   "branch": "fix/acct-ensure-driver-vendors-hold"
-  },
-  {
-   "number": 3248,
-   "title": "HOLD(accounting): soft-resolve legacy Receive Payment deposit (7b/24)",
-   "mergedAt": "2026-07-23T05:20:35Z",
-   "branch": "fix/acct-receive-payment-deposit-softresolve"
-  },
-  {
-   "number": 3247,
-   "title": "fix(accounting): invoice create income CoA picker + load link (15/24)",
-   "mergedAt": "2026-07-23T05:36:13Z",
-   "branch": "fix/acct-invoice-create-coa"
   }
  ],
  "merged_pr_total": 3000,
@@ -20307,12 +20307,6 @@
    "title": "TIER 1 TRUST: 13-block dispatch spec",
    "mergedAt": "2026-06-06T22:33:43Z",
    "category": "TIER-1 financial"
-  },
-  {
-   "number": 572,
-   "title": "chore(closure): dispatch CLOSURE-17 ON-HOLD triage (wave C-8 lane A)",
-   "mergedAt": "2026-06-05T16:24:30Z",
-   "category": "HOLD"
   }
  ]
 }
