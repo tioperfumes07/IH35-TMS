@@ -1,5 +1,5 @@
 {
-  "_comment": "REAL phantom-column bugs found by verify-sql-column-existence (SELECT references a column absent from the prod schema baseline → 500/42703 on that path; mocked tests hid them). Frozen here as a RATCHET backlog: the guard BLOCKS any NEW phantom column; these are tracked for correct per-case fixes. NEVER treat an entry as an 'accepted false positive' — every key is a live defect until removed. Extended 2026-07-27 when CTE coverage was restored (WITH queries no longer skipped): new keys are CTE-surfaced backlog, not waived defects. Remove a key here as its bug is fixed. | 2026-07-31 PARSER FIX: the unqualified-column patterns lacked a (?<!\\.) lookbehind, so a QUALIFIED reference (de.operating_company_id, p.origin_city, rows.length) matched as bare and was attributed to whatever table the fragment FROM/JOINed. 16 keys were pure artifacts of that bug and are removed here — verified individually (e.g. lane-profitability origin_city is a CTE output alias AS origin_city, never a mdata.loads column). The remaining entries were re-measured against an EMPTIED allowlist after the fix and are STILL flagged, i.e. still real. Count is now honest.",
+  "_comment": "REAL phantom-column bugs found by verify-sql-column-existence (SELECT references a column absent from the prod schema baseline → 500/42703 on that path; mocked tests hid them). Frozen here as a RATCHET backlog: the guard BLOCKS any NEW phantom column; these are tracked for correct per-case fixes. NEVER treat an entry as an 'accepted false positive' — every key is a live defect until removed. Extended 2026-07-27 when CTE coverage was restored (WITH queries no longer skipped): new keys are CTE-surfaced backlog, not waived defects. Remove a key here as its bug is fixed. | 2026-07-31 PARSER FIX: the unqualified-column patterns lacked a (?<!\\.) lookbehind, so a QUALIFIED reference (de.operating_company_id, p.origin_city, rows.length) matched as bare and was attributed to whatever table the fragment FROM/JOINed. 16 keys were pure artifacts of that bug and are removed here — verified individually (e.g. lane-profitability origin_city is a CTE output alias AS origin_city, never a mdata.loads column). The remaining entries were re-measured against an EMPTIED allowlist after the fix and are STILL flagged, i.e. still real. Count is now honest. | 2026-08-01 ACCT-F83: removed sync-conflict-detection.routes.ts#mdata.qbo_customers.raw_payload. It was never a defect — raw_payload EXISTS NOT NULL on all qbo_* mirrors in prod; the schema-parity DDL parser applied every DROP after every ADD, so migration 0213 drop-and-re-add erased it from the baseline. Fixed at source (parser + regenerated baseline), which is the ONLY correct resolution for a false positive under this file contract.",
   "entries": [
     "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts#accounting.journal_entries.reference_no",
     "apps/backend/src/accounting/payments/apply.service.ts#accounting.bills.customer_id",
@@ -38,12 +38,11 @@
     "apps/backend/src/payroll-integration/tms-settlements-pull.ts#driver_finance.driver_settlements.gross_pay_cents",
     "apps/backend/src/payroll-integration/tms-settlements-pull.ts#driver_finance.driver_settlements.net_pay_cents",
     "apps/backend/src/payroll-integration/tms-settlements-pull.ts#driver_finance.driver_settlements.total_deductions_cents",
-    "apps/backend/src/qbo/sync-conflict-detection.routes.ts#mdata.qbo_customers.raw_payload",
     "apps/backend/src/safety/events/safety-events.routes.ts#identity.users.name",
     "apps/backend/src/search/universal/indexer.service.ts#mdata.drivers.driver_code",
     "apps/backend/src/settlements/trip-link.engine.ts#mdata.loads.delivery_appointment_end",
     "apps/backend/src/settlements/trip-link.engine.ts#mdata.loads.delivery_appointment_start",
     "apps/backend/src/settlements/trip-link.engine.ts#mdata.loads.pickup_appointment_start"
   ],
-  "total_entries": 43
+  "total_entries": 42
 }
