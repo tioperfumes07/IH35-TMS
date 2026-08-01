@@ -18,6 +18,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import {
   formatBankAccountPickerLabel,
   type BankAccountPickerRow,
@@ -576,8 +577,13 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                   </SelectCombobox>
                   {selectedBill ? (
                     <p className="text-[11px] text-gray-500">
-                      Selected {String(selectedBill.display_id)} — amount auto-fills; recipient becomes vendor on
-                      disbursement.
+                      Selected{" "}
+                      <EntityLink
+                        kind="bill"
+                        id={String(selectedBill.id)}
+                        label={String(selectedBill.display_id ?? selectedBill.id)}
+                      />{" "}
+                      — amount auto-fills; recipient becomes vendor on disbursement.
                     </p>
                   ) : null}
                 </label>

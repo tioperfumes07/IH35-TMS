@@ -155,6 +155,13 @@ export function staticChecks(sources = {}) {
   if (!/cashAdvanceTypesCatalogClient/.test(advance)) {
     problems.push("CreateAdvanceModal must read catalogs.cash_advance_types via cashAdvanceTypesCatalogClient");
   }
+  // Permanent: naked String(selectedBill.display_id) regenerates entity-link-adoption drift (step 930).
+  if (!/EntityLink/.test(advance) || !/<EntityLink[\s\S]{0,120}kind=["']bill["']/.test(advance)) {
+    problems.push('CreateAdvanceModal selected-bill summary must use <EntityLink kind="bill" …>');
+  }
+  if (/Selected \{String\(selectedBill\.display_id\)\}/.test(advance)) {
+    problems.push("CreateAdvanceModal must not render naked Selected {String(selectedBill.display_id)}");
+  }
   if (/account_id: accountId, expense_category_uuid: accountId/.test(billLines)) {
     problems.push("vendorBillLines must not stamp CoA account id into expense_category_uuid");
   }
@@ -280,6 +287,18 @@ function selftest() {
   const redEvidence = staticChecks({ registry: brokenEvidence });
   if (!redEvidence.some((p) => /file:line|evidence must cite/.test(p))) {
     console.error(`${LABEL} SELFTEST FAIL: planted missing :line evidence not caught`);
+    process.exit(1);
+  }
+  const advance = read("apps/frontend/src/pages/cash-advances/components/CreateAdvanceModal.tsx");
+  const nakedBill = advance
+    .replace(/import\s*\{\s*EntityLink\s*\}\s*from\s*["'][^"']+["'];?\n?/, "")
+    .replace(
+      /Selected\s*<EntityLink[\s\S]*?\/>\s*—/,
+      "Selected {String(selectedBill.display_id)} —",
+    );
+  const redAdvance = staticChecks({ advance: nakedBill });
+  if (!redAdvance.some((p) => /EntityLink|naked Selected/.test(p))) {
+    console.error(`${LABEL} SELFTEST FAIL: planted naked selectedBill.display_id not caught`);
     process.exit(1);
   }
   const green = staticChecks();
