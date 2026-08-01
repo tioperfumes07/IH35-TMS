@@ -244,8 +244,32 @@ async function runScheduledSyncForCompany(
 export async function runQboSyncSchedulerTick(log?: FastifyInstance["log"]): Promise<SyncStepFailure[]> {
   const failures: SyncStepFailure[] = [];
   await withLuciaBypass(async (client) => {
+    // ACCT-F63 — only companies that actually HAVE a QuickBooks connection are QBO-syncable.
+    //
+    // This previously iterated every active company, so USMCA — which has NO QuickBooks realm BY
+    // DESIGN (it is TMS-authoritative from day one and was never part of the clone) — was asked to
+    // pull customers and the chart of accounts on every tick and failed every time with
+    // "QBO not authorized for this company. Please authorize via /admin/forensic-review."
+    // Verified on prod 2026-08-01: qbo_sync.step.customers_pull and .chart_of_accounts_pull both had
+    // last_successful_run_at = NULL with that error against 5c854333-… = USMCA, while
+    // integrations.qbo_connections shows LIVE unrevoked connections for TRANSP and TRK only.
+    //
+    // Absence of a connection is a designed state, not a failure. Recording it as a failed job run
+    // every tick is what buried the REAL never-succeeded jobs in the same "stale_jobs" bucket —
+    // permanent expected noise is how genuine signal gets ignored.
+    //
+    // Keyed on the connection, not on a hardcoded USMCA id: if USMCA is ever connected it starts
+    // syncing with no code change, and if TRANSP is ever revoked it stops erroring on every tick.
     const companies = await client.query<{ id: string }>(
-      `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
+      `SELECT c.id::text AS id
+       FROM org.companies c
+       JOIN integrations.qbo_connections q
+         ON q.operating_company_id = c.id
+        AND q.revoked_at IS NULL
+       WHERE c.is_active = true
+         AND c.deactivated_at IS NULL
+       GROUP BY c.id
+       ORDER BY c.id`
     );
     for (const company of companies.rows) {
       // B-A2 — per-COMPANY isolation: TRANSP failing must not block TRK. Every step is already isolated, so
