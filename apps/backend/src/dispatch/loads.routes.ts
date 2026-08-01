@@ -6,6 +6,12 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { bookLoad } from "./book-load.service.js";
 import {
+  dispatchStatusSchema,
+  fromMdataStatus,
+  toMdataStatus,
+  validateLoadStatusTransition,
+} from "./load-state-machine.js";
+import {
   updateDispatchLoad,
   LoadNotFoundError,
   LoadEditLockedError,
@@ -53,19 +59,6 @@ export const stopDatetimeish = z.preprocess(
   (v) => (v === "" || v == null ? undefined : v),
   z.string().datetime({ offset: true }).optional()
 );
-
-const dispatchStatusSchema = z.enum([
-  "unassigned",
-  "assigned_not_dispatched",
-  "dispatched",
-  "in_transit",
-  "delivered_pending_docs",
-  "completed_docs_received",
-  "cancelled",
-  "abandoned",
-  "driver_walkoff",
-  "driver_no_show",
-]);
 
 const listDispatchLoadsQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -364,51 +357,6 @@ async function withCompanyScope<T>(
     return fn(client);
   });
 }
-
-function fromMdataStatus(status: string): z.infer<typeof dispatchStatusSchema> {
-  if (status === "assigned") return "assigned_not_dispatched";
-  if (status === "at_pickup") return "dispatched";
-  if (status === "at_delivery") return "in_transit";
-  if (status === "delivered") return "delivered_pending_docs";
-  if (status === "invoiced" || status === "paid" || status === "closed") return "completed_docs_received";
-  if (status === "cancelled") return "cancelled";
-  if (status === "unassigned") return "unassigned";
-  if (status === "assigned_not_dispatched") return "assigned_not_dispatched";
-  if (status === "dispatched") return "dispatched";
-  if (status === "in_transit") return "in_transit";
-  if (status === "delivered_pending_docs") return "delivered_pending_docs";
-  if (status === "completed_docs_received") return "completed_docs_received";
-  if (status === "abandoned") return "abandoned";
-  if (status === "driver_walkoff") return "driver_walkoff";
-  if (status === "driver_no_show") return "driver_no_show";
-  return "unassigned";
-}
-
-function toMdataStatus(status: z.infer<typeof dispatchStatusSchema>): string {
-  if (status === "unassigned") return "draft";
-  if (status === "assigned_not_dispatched") return "assigned_not_dispatched";
-  if (status === "dispatched") return "dispatched";
-  if (status === "in_transit") return "in_transit";
-  if (status === "delivered_pending_docs") return "delivered_pending_docs";
-  if (status === "completed_docs_received") return "completed_docs_received";
-  if (status === "abandoned") return "abandoned";
-  if (status === "driver_walkoff") return "driver_walkoff";
-  if (status === "driver_no_show") return "driver_no_show";
-  return "cancelled";
-}
-
-const allowedTransitions: Record<z.infer<typeof dispatchStatusSchema>, z.infer<typeof dispatchStatusSchema>[]> = {
-  unassigned: ["assigned_not_dispatched", "cancelled"],
-  assigned_not_dispatched: ["dispatched", "driver_no_show", "cancelled"],
-  dispatched: ["in_transit", "driver_no_show", "driver_walkoff", "cancelled"],
-  in_transit: ["delivered_pending_docs", "abandoned", "driver_walkoff", "cancelled"],
-  delivered_pending_docs: ["completed_docs_received", "cancelled"],
-  completed_docs_received: [],
-  cancelled: [],
-  abandoned: [],
-  driver_walkoff: [],
-  driver_no_show: [],
-};
 
 export async function registerDispatchLoadRoutes(app: FastifyInstance) {
   app.post("/api/v1/dispatch/loads/reserve-id", async (req, reply) => {
@@ -1274,8 +1222,9 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       if (!current) return { error: "not_found" as const };
       const currentStatus = fromMdataStatus(current.status);
       const targetStatus = body.data.new_status;
-      if (!allowedTransitions[currentStatus].includes(targetStatus)) {
-        return { error: "invalid_transition" as const, from: currentStatus, to: targetStatus };
+      const transition = validateLoadStatusTransition(current.status, targetStatus);
+      if (!transition.ok) {
+        return { error: "invalid_transition" as const, from: transition.from, to: transition.to };
       }
 
       const mdataStatus = toMdataStatus(targetStatus);

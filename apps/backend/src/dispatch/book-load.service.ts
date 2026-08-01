@@ -14,18 +14,7 @@ import {
   consumeLoadNumberReservation,
   reserveNextLoadId,
 } from "./load-id-reservation.service.js";
-
-type DispatchStatus =
-  | "unassigned"
-  | "assigned_not_dispatched"
-  | "dispatched"
-  | "in_transit"
-  | "delivered_pending_docs"
-  | "completed_docs_received"
-  | "cancelled"
-  | "abandoned"
-  | "driver_walkoff"
-  | "driver_no_show";
+import { toMdataStatus, type DispatchStatus } from "./load-state-machine.js";
 
 type BookLoadStop = {
   stop_type: "pickup" | "delivery";
@@ -171,18 +160,6 @@ function isDrugDispatchBlocked(result: string | null | undefined) {
   return ["positive", "refusal", "adulterated", "substituted"].includes(String(result ?? "").toLowerCase());
 }
 
-function toMdataStatus(status: DispatchStatus): string {
-  if (status === "unassigned") return "draft";
-  if (status === "assigned_not_dispatched") return "assigned_not_dispatched";
-  if (status === "dispatched") return "dispatched";
-  if (status === "in_transit") return "in_transit";
-  if (status === "delivered_pending_docs") return "delivered_pending_docs";
-  if (status === "completed_docs_received") return "completed_docs_received";
-  if (status === "abandoned") return "abandoned";
-  if (status === "driver_walkoff") return "driver_walkoff";
-  if (status === "driver_no_show") return "driver_no_show";
-  return "cancelled";
-}
 
 async function relationExists(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
