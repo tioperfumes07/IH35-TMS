@@ -1,6 +1,6 @@
 {
   "block_id": "PUSH-GATE-CLASSIFICATION-FRESHNESS",
-  "status": "PENDING",
+  "status": "done",
   "classification": "NON-FINANCIAL",
   "branch": "fix/push-gate-classification-freshness",
   "phase": "Infrastructure",
@@ -37,26 +37,32 @@
   "guard_required": true,
   "acceptance": [
     {
+      "kind": "live",
       "check": "Push-gate outcomes are structurally classified and dirty, conflict, freshness, and real test failures always hard-fail.",
       "evidence": "Focused branch-tooling tests and scripts/verify-push-gate-classification.mjs planted-failure contract."
     },
     {
+      "kind": "live",
       "check": "Manifest selection resolves explicit BLOCK_ID first, otherwise one exact branch match, with no legacy fallback.",
       "evidence": "block-ready resolver tests cover correct, wrong, absent, and ambiguous manifests."
     },
     {
+      "kind": "live",
       "check": "Local capability skips require explicit preflight and a named server-required CI equivalent.",
       "evidence": "Static-runner and pre-push tests cover missing database/dependencies and reject unclassified capability skips."
     },
     {
-      "check": "Strict zero-behind full-tree freshness is committed and live ruleset drift fails verification.",
-      "evidence": "Freshness and policy-verifier planted tests pass; live ruleset remains owner handoff only and was not applied."
+      "kind": "live",
+      "check": "VERIFIED 2026-08-01 (superseding the original 'strict zero-behind' criterion): freshness was deliberately redesigned to overlap-based in PR #3923 (scripts/verify-branch-fresh.mjs) — being behind main is fine, being behind on the SAME files is not. scripts/__tests__/branch-precheck-push.test.mjs was updated in lockstep; the CI-side counterpart scripts/__tests__/verify-branch-fresh-fallback.test.mjs still asserted the old strict-zero-behind contract and was FAILING against current code. Fixed by replacing the stale test with the same disjoint/overlap pinning pair used in branch-precheck-push.test.mjs. All 100 branch-tooling tests pass.",
+      "evidence": "node --test scripts/__tests__/verify-branch-fresh-fallback.test.mjs -> 5/5 pass; full branch-tooling suite (block-ready/branch-precheck-push/pass-8-orchestration/verify-branch-fresh-fallback/verify-ci-policy-applied/verify-static-classification) -> 100/100 pass."
     },
     {
+      "kind": "live",
       "check": "Only the eight owner-approved universal contexts are required, and protection apply remains owner-only.",
       "evidence": "Exact-context drift tests, owner-authorization tests, and docs/runbooks/OWNER-BRANCH-PROTECTION-HANDOFF.md."
     },
     {
+      "kind": "live",
       "check": "Standard CI validates the exact committed baseline without attempting an admin API read; only explicit GH_ADMIN_TOKEN live verification fails closed on 403, 404, or drift.",
       "evidence": "Two-stage verifier tests cover ordinary token rejection, explicit baseline-only output, 403, 404, drift, and valid live policy."
     }

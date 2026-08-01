@@ -283,7 +283,8 @@ export function checkPushGateClassification(fixture) {
     );
   }
   requireMatch("staticTests", /DATABASE_URL text/, "DATABASE_URL false-classification test missing");
-  requireMatch("freshnessTests", /one behind commit anywhere/, "stale-branch planted test missing");
+  requireMatch("freshnessTests", /changed files are disjoint/, "freshness-allows-disjoint planted test missing");
+  requireMatch("freshnessTests", /AND the same file changed/, "freshness-overlap-refuses planted test missing");
   requireMatch("freshnessTests", /shell-like refs/, "unsafe-ref planted test missing");
   for (const plantedCase of [
     "ordinary GitHub tokens",
@@ -407,7 +408,7 @@ jobs:
     "authenticated live effective rule; wrong integration; missing gh executable; unauthenticated GitHub CLI; offline GitHub API; ruleset lookup timeout; malformed live ruleset JSON",
   pass8Tests:
     "absent generated artifact; producer failure; valid generated artifact; missing or unclassified PASS-8 CI equivalent; producer runs before consumer",
-  freshnessTests: "one behind commit anywhere; shell-like refs",
+  freshnessTests: "changed files are disjoint; AND the same file changed; shell-like refs",
   policyTests:
     "ordinary GitHub tokens; baseline-only result; GH_ADMIN_TOKEN 403; GH_ADMIN_TOKEN 404; valid live policy",
 };
