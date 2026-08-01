@@ -36,7 +36,7 @@ const run = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
  * learn to skip (see FLT-02-SEED-DRIFT in docs/trackers/TRACKED-FINDINGS-2026-08-01.md for what
  * that costs). Remaining schemas are REPORTED, not failed, so progress stays visible.
  */
-const REMEDIATED_SCHEMAS = ["catalogs", "qbo_archive"] as const;
+const REMEDIATED_SCHEMAS = ["catalogs", "qbo_archive", "accounting"] as const;
 
 /**
  * Tables in a schema that are RLS-enabled AND carry an operating_company_id column, but have NO
