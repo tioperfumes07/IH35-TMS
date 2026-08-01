@@ -3,6 +3,7 @@
  */
 import { appendCrudAudit } from "../../../audit/crud-audit.js";
 import { notifyDriverWebPush } from "../../../services/push-notification.service.js";
+import { validateLoadStopStatusWrite } from "../../../dispatch/load-state-machine.js";
 
 const SYSTEM_USER_ID = "00000000-0000-4000-8000-000000000001";
 
@@ -435,6 +436,19 @@ export async function applyAutoSwitch(
 
   const ctx = await fetchLoadGpsContext(client, operatingCompanyId, loadUuid);
   if (!ctx) return { applied: false, skipped: "missing_gps_context" };
+
+  // LOAD-SM-01 — a GPS reading is not authority to move a load's status. This writer previously went
+  // straight to UPDATE, so its ONLY protection was its own caller's SELECT filter
+  // (listActiveLoadsForAutoStatus, status IN ('at_pickup','in_transit')). That filter is correct
+  // today, which is exactly why the gap was invisible: widen the filter, add an enum member, or call
+  // applyAutoSwitch from anywhere else, and a telematics ping could move a terminal load — including
+  // one whose revenue has already been recognized. The state machine is the control; every writer
+  // consults it. Same validator the driver PWA stop handlers use, so at_pickup/at_delivery
+  // micro-states inside one lifecycle stage stay legal and today's behaviour is unchanged.
+  const transition = validateLoadStopStatusWrite(current.status, newStatus);
+  if (!transition.ok) {
+    return { applied: false, skipped: "invalid_load_state" };
+  }
 
   await client.query(`UPDATE mdata.loads SET status = $2, updated_at = now() WHERE id = $1::uuid`, [loadUuid, newStatus]);
 
