@@ -415,7 +415,7 @@ export function BankingTransactionsDesignView({
   // selectable. Payee→vendors, Customer/project→customers, Product/Service (Item)→Products & Services.
   const vendorsQuery = useQuery({
     queryKey: ["banking", "tx-vendors", companyId],
-    queryFn: () => listVendors({ operating_company_id: companyId, limit: 200 }).then((r) => r.vendors ?? []),
+    queryFn: () => listVendors({ operating_company_id: companyId, limit: 1000 }).then((r) => r.vendors ?? []),
     enabled: Boolean(companyId),
     staleTime: 120_000,
   });

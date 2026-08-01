@@ -39,7 +39,7 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
 
   const vendorsQuery = useQuery({
     queryKey: ["factoring-vendors", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 200 }).then((res) => res.vendors),
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 1000 }).then((res) => res.vendors),
     enabled: open && Boolean(operatingCompanyId),
   });
 

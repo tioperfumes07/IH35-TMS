@@ -45,7 +45,7 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
 
   const vendorsQuery = useQuery({
     queryKey: ["mdata", "vendors", companyId, "parts-inventory"],
-    queryFn: () => listVendors({ operating_company_id: companyId, status: "active", limit: 500 }),
+    queryFn: () => listVendors({ operating_company_id: companyId, status: "active", limit: 1000 }),
     enabled: Boolean(companyId),
   });
   const vendorOptions = useMemo(

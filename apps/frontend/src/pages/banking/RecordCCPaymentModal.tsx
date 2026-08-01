@@ -75,7 +75,7 @@ export function RecordCCPaymentModal({
   });
   const vendorsQuery = useQuery({
     queryKey: ["cc-payment", "vendors", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 200 }),
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 1000 }),
     enabled: open && Boolean(operatingCompanyId),
   });
   const accountsQuery = useQuery({

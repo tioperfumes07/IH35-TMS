@@ -63,7 +63,7 @@ export function VendorsPage() {
 
   const apVendorsQ = useQuery({
     queryKey: ["mdata", "vendors", "maint-vendor-link", companyId],
-    queryFn: () => listVendors({ operating_company_id: companyId, status: "active", limit: 200 }),
+    queryFn: () => listVendors({ operating_company_id: companyId, status: "active", limit: 1000 }),
     enabled: Boolean(companyId) && (createOpen || Boolean(editing)),
   });
 
