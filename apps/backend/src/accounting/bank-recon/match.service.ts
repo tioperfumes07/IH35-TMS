@@ -800,6 +800,34 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       );
     }
 
+    // WAVE-H3 (LINK-007/008): reverse stamp money → bank. Forward-only matched_* left payments /
+    // bill_payments.source_bank_transaction_id null forever (CLS-LINKAGE-ONEWAY). COALESCE keeps
+    // create/categorize provenance if already set. No mass backfill — new accepts only.
+    if (input.ledger_entry_kind === "payment") {
+      await client.query(
+        `UPDATE accounting.payments
+            SET source_bank_transaction_id = COALESCE(source_bank_transaction_id, $1::uuid)
+          WHERE id = $2::uuid
+            AND operating_company_id = $3::uuid`,
+        [input.bank_transaction_id, input.ledger_entry_id, input.operating_company_id]
+      );
+    } else if (input.ledger_entry_kind === "bill_payment") {
+      await client.query(
+        `UPDATE accounting.bill_payments
+            SET source_bank_transaction_id = COALESCE(source_bank_transaction_id, $1::uuid),
+                from_bank_account_id = COALESCE(from_bank_account_id, $4::uuid),
+                updated_at = now()
+          WHERE id = $2::uuid
+            AND operating_company_id = $3::uuid`,
+        [
+          input.bank_transaction_id,
+          input.ledger_entry_id,
+          input.operating_company_id,
+          txn.bank_account_id,
+        ]
+      );
+    }
+
     const cashBasisRevenueCents = computeCashBasisRevenueFromActualCashHit({
       bankAmountCents: txnAmountAbs,
       ledgerAmountCents: ledgerAmountAbs,
