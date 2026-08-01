@@ -80,6 +80,7 @@ export type PostingErrorCode =
   | "BILL_LINE_ACCOUNT_UNRESOLVED"
   | "INVOICE_LINE_REVENUE_UNRESOLVED"
   | "INVOICE_LOAD_SOURCE_REQUIRED"
+  | "INVOICE_REVREC_LATCH_OWNS_LOAD"
   | "EXPENSE_NOT_POSTING_ELIGIBLE"
   | "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE"
   | "TRANSFER_NOT_POSTING_ELIGIBLE"
@@ -140,6 +141,93 @@ export class InvoiceLoadSourceRequiredError extends PostingEngineError {
           "(create via from-load) — refusing orphan load revenue post."
     );
   }
+}
+
+/**
+ * ACCT-F59 — REVREC/INVOICE DOUBLE-RECOGNITION INTERLOCK.
+ *
+ * The DISP-01 two-event delivery latch and the invoice A/R poster BOTH credit revenue and BOTH debit
+ * A/R for the same load, so running both over one load double-states revenue AND A/R:
+ *   latch Event 1  DR Unbilled Revenue / CR Freight Revenue   ← revenue recognized
+ *   latch Event 2  DR A/R              / CR Unbilled Revenue  ← A/R established
+ *   invoice post   DR A/R              / CR income (per line) ← revenue + A/R recognized AGAIN
+ *
+ * revrec-delivery-posting/poster.service.ts already documents the incompatibility and instructs that
+ * INVOICE_AR_GL_POSTING_ENABLED be kept OFF for load-sourced invoices while the latch is ON. That is
+ * an instruction in a comment, not a control: on prod both flags are ON for TRANSP and USMCA
+ * (verified 2026-08-01, lib.feature_flag_overrides read with bypass, visible == n_live_tup). Nothing
+ * had double-posted yet only because zero of 11,977 invoices carried source_load_id — they are all
+ * QBO clone history. The ND-INV-01 proforma pipeline creates load-sourced invoices at
+ * delivered_pending_docs, so the first genuinely delivered load arms it. This makes the interlock a
+ * mechanism instead of a comment.
+ *
+ * KEYED ON THE LATCH ROW, NOT ON THE FLAG — deliberately. If the flag were consulted, turning
+ * REVENUE_RECOGNITION_POST_ENABLED off AFTER a load had already earned would reopen the hole: the
+ * Event 1 revenue is on the books whether or not the flag is still on. An active latch row is the
+ * durable fact that the load's revenue is already recognized. More protective reading wins.
+ *
+ * REFUSE, never silently skip. A refusal surfaces as a named posting error (and in the backfill
+ * sweep as a recorded failure with its message) — a visible, correctable exception. A silent skip
+ * would leave an invoice looking posted while its GL effect lived somewhere else.
+ *
+ * Releasing the interlock is the LATCH's job: `is_active` is the latch's own liveness flag, so
+ * deactivating the latch row when its journal entry is reversed both un-blocks this invoice and
+ * lets the load re-recognize. That reconciliation is tracked separately — today a reversal leaves
+ * the latch row active (proven on prod: load L-20260624-0083's two rows are still status='posted',
+ * is_active=true after their 2026-08-01 owner-authorized reversal).
+ */
+export class InvoiceRevrecLatchOwnsLoadError extends PostingEngineError {
+  source_load_id: string;
+
+  constructor(sourceLoadId: string, invoiceLabel: string, detail?: string) {
+    super(
+      "INVOICE_REVREC_LATCH_OWNS_LOAD",
+      detail ??
+        `invoice_revrec_latch_owns_load: ${invoiceLabel} is sourced from load ${sourceLoadId}, which ` +
+          `already carries an active accounting.load_revenue_recognition_postings row. That load's ` +
+          `revenue and A/R are recognized by the DISP-01 two-event delivery latch; posting this ` +
+          `invoice would credit revenue and debit A/R a second time. Refusing to post. If the latch ` +
+          `entry was reversed, deactivate its latch row (is_active=false) — do not post around it.`
+    );
+    this.source_load_id = sourceLoadId;
+  }
+}
+
+const REVREC_LATCH_REGCLASS = "accounting.load_revenue_recognition_postings";
+
+/**
+ * True when the load already has an active revenue-recognition latch row (either event).
+ *
+ * Event 1 duplicates the revenue credit; Event 2 duplicates the A/R debit — either one alone means
+ * the invoice would double-post, so ANY active row blocks.
+ *
+ * `to_regclass` first: on an environment where migration 202609290000 has not been applied the latch
+ * table does not exist, so no latch can have posted and there is nothing to double. Returning false
+ * there is the correct answer, not a fail-open — the poster itself refuses with `latch_table_missing`
+ * on that same environment, so the two are consistent.
+ */
+async function revrecLatchOwnsLoad(
+  client: DbClient,
+  operatingCompanyId: string,
+  loadId: string
+): Promise<boolean> {
+  const present = await client.query<{ ok: boolean }>(`SELECT to_regclass($1::text) IS NOT NULL AS ok`, [
+    REVREC_LATCH_REGCLASS,
+  ]);
+  if (!present.rows[0]?.ok) return false;
+
+  const res = await client.query<{ id: string }>(
+    `
+      SELECT id::text
+      FROM accounting.load_revenue_recognition_postings
+      WHERE operating_company_id = $1::uuid
+        AND load_id = $2::uuid
+        AND is_active
+      LIMIT 1
+    `,
+    [operatingCompanyId, loadId]
+  );
+  return Boolean(res.rows[0]?.id);
 }
 
 type PostingResult = {
@@ -559,6 +647,16 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
       `Invoice status ${invoice.status} is not posting-eligible`
     );
   }
+
+  // ACCT-F59 — refuse before resolving any account: if the DISP-01 latch already recognized this
+  // load, the invoice's A/R + revenue legs are already on the books and posting again doubles both.
+  if (invoice.source_load_id && (await revrecLatchOwnsLoad(client, operatingCompanyId, invoice.source_load_id))) {
+    throw new InvoiceRevrecLatchOwnsLoadError(
+      invoice.source_load_id,
+      invoice.display_id ? `Invoice ${invoice.display_id}` : `Invoice ${sourceId}`
+    );
+  }
+
   const arAccountId = await resolveArAccountForCompany(client, operatingCompanyId);
   if (!arAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AR account mapping is missing");
 
