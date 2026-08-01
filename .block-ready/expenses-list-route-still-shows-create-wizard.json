@@ -1,6 +1,6 @@
 {
   "block_id": "expenses-list-route-still-shows-create-wizard",
-  "status": "READY",
+  "status": "done",
   "classification": "NON-FINANCIAL",
   "phase": "tier3",
   "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
@@ -23,7 +23,14 @@
   ],
   "acceptance": [
     {
+      "kind": "guard",
+      "script": "scripts/verify-expenses-list-route.mjs",
+      "wired_into": "scripts/verify-steps/905-verify-expenses-list-route.mjs",
       "check": "/accounting/expenses/list renders ExpensesListPage and is every ID-less browse/view target; /accounting/expenses renders ExpenseCreatePage and is every canonical create target; /accounting/expenses/new remains a mounted route-only legacy alias absent from rendered and retained UI metadata; grouped subnav top-node count remains unchanged; verify-expenses-list-route normal + isolated planted regression selftests pass through auto-discovered verify-step 905; verify-maint-create-parity-drawer preserves maintenance drawer enforcement and validates the same route contract."
+    },
+    {
+      "kind": "live",
+      "check": "VERIFIED 2026-08-01: node scripts/verify-expenses-list-route.mjs and --selftest (20 isolated planted regressions caught) both PASS; node scripts/verify-maint-create-parity-drawer.mjs and --selftest both PASS — against the current apps/frontend/src/routes/manifest.tsx (path=/accounting/expenses/list -> ExpensesListPage; /accounting/expenses/new retained as route-only)."
     }
   ],
   "note": "Pure frontend/nonfinancial route correction — browse-first group navigation uses /list; creator hub stays at bare /accounting/expenses with QBO ParityDrawer chrome; /new is retained only as an additive legacy deep-link alias."
