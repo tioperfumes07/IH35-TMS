@@ -239,7 +239,7 @@ export type PostLoadRevenueLatchInput = {
  * pressure to type a fabricated delivery time to unblock billing, and a fabricated timestamp under a
  * revenue entry is far more dangerous than an unrecognized load.
  */
-async function finalActiveDeliveryDepartureAt(
+export async function finalActiveDeliveryDepartureAt(
   client: DbClient,
   operatingCompanyId: string,
   loadId: string
