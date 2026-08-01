@@ -59,6 +59,9 @@ const ROLE_LABELS: Record<CoaRole, string> = {
   depr_expense_default: "Depreciation expense default",
   factor_wire_fee: "Factor ACH/wire fee",
   heavy_repair_expense: "Heavy repair expense",
+  rent_expense: "Rent expense (ASC 842 lessee)",
+  fuel_overage_receivable: "Driver fuel-overage receivable",
+  broker_customer_advance_liability: "Broker customer advance liability",
 };
 
 export function CoaRolesPage() {

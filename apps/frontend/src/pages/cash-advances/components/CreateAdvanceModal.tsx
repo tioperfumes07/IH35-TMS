@@ -7,6 +7,7 @@ import {
   type CashAdvancePurpose,
   type CashAdvanceRecoveryMode,
 } from "../../../api/cashAdvances";
+import { cashAdvanceTypesCatalogClient } from "../../../api/catalogs-driver";
 import { getAllAccounts } from "../../../api/banking";
 import { listDrivers, listUnits } from "../../../api/mdata";
 import { listLoads, getLoad } from "../../../api/loads";
@@ -29,13 +30,34 @@ type Props = {
   onCreated: () => void;
 };
 
-const PURPOSE_OPTIONS: Array<{ value: CashAdvancePurpose; label: string; hint: string }> = [
-  { value: "family_emergency", label: "Personal / family", hint: "Driver-owed → deduct from settlements" },
+/** Catalog code → existing CashAdvancePurpose enum (UI-only; no FK on driver_advances yet). */
+function purposeFromCatalogCode(code: string): CashAdvancePurpose {
+  const c = code.trim().toUpperCase();
+  if (c === "FUEL") return "fuel_deposit";
+  if (c === "EMERGENCY") return "family_emergency";
+  return "other";
+}
+
+type PurposeOption = {
+  value: CashAdvancePurpose;
+  label: string;
+  hint: string;
+  /** Present when the option came from catalogs.cash_advance_types. */
+  catalogCode?: string;
+};
+
+/** Economics-only purposes not represented as catalog rows (lumper / border / vendor). */
+const ECONOMIC_PURPOSE_OPTIONS: PurposeOption[] = [
   { value: "lumper", label: "Lumper fee", hint: "Expense on load (not personal amortize)" },
-  { value: "fuel_deposit", label: "Fuel deposit", hint: "Trip cash advance — load + unit required" },
   { value: "border_fee", label: "Border fee", hint: "Driver settlement recovery" },
   { value: "vendor_payment", label: "Vendor payment", hint: "Optional bill linkage" },
+];
+
+const FALLBACK_PURPOSE_OPTIONS: PurposeOption[] = [
+  { value: "family_emergency", label: "Personal / family", hint: "Driver-owed → deduct from settlements" },
+  { value: "fuel_deposit", label: "Fuel deposit", hint: "Trip cash advance — load + unit required" },
   { value: "other", label: "Other", hint: "Driver settlement recovery" },
+  ...ECONOMIC_PURPOSE_OPTIONS,
 ];
 
 const METHOD_OPTIONS: Array<{ value: CashAdvanceMethod; label: string }> = [
@@ -61,7 +83,19 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
   const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const [amount, setAmount] = useState("300");
   const [purpose, setPurpose] = useState<CashAdvancePurpose>("family_emergency");
+  const [advanceTypeCode, setAdvanceTypeCode] = useState<string>("EMERGENCY");
   const [method, setMethod] = useState<CashAdvanceMethod>("direct_bank_transfer");
+
+  const advanceTypesQuery = useQuery({
+    queryKey: ["catalogs", "cash-advance-types", operatingCompanyId],
+    queryFn: () =>
+      cashAdvanceTypesCatalogClient.list({
+        operating_company_id: operatingCompanyId,
+        is_active: "true",
+        limit: 200,
+      }),
+    enabled: open && Boolean(operatingCompanyId),
+  });
   const [fromBankAccountId, setFromBankAccountId] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [linkedBillEnabled, setLinkedBillEnabled] = useState(false);
@@ -195,7 +229,32 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
     [billsQuery.data?.bills, linkedBillId]
   );
 
-  const purposeMeta = PURPOSE_OPTIONS.find((p) => p.value === purpose);
+  const purposeOptions = useMemo((): PurposeOption[] => {
+    const rows = advanceTypesQuery.data?.rows ?? [];
+    if (rows.length === 0) return FALLBACK_PURPOSE_OPTIONS;
+    const fromCatalog: PurposeOption[] = rows.map((row) => ({
+      value: purposeFromCatalogCode(row.code),
+      label: row.display_name,
+      hint: row.description?.trim() || `Catalog type ${row.code}`,
+      catalogCode: row.code,
+    }));
+    // Deduplicate by purpose value while keeping first catalog label; append economic extras.
+    const seen = new Set<string>();
+    const merged: PurposeOption[] = [];
+    for (const opt of fromCatalog) {
+      if (seen.has(opt.value)) continue;
+      seen.add(opt.value);
+      merged.push(opt);
+    }
+    for (const opt of ECONOMIC_PURPOSE_OPTIONS) {
+      if (seen.has(opt.value)) continue;
+      seen.add(opt.value);
+      merged.push(opt);
+    }
+    return merged;
+  }, [advanceTypesQuery.data?.rows]);
+
+  const purposeMeta = purposeOptions.find((p) => p.value === purpose);
   const showRecovery = isDriverOwedPurpose(purpose);
   const showOpsLinks = requiresLoad(purpose) || purpose === "border_fee" || purpose === "other" || Boolean(loadId);
 
@@ -347,15 +406,34 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
               <SelectCombobox
                 className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={purpose}
-                onChange={(e) => setPurpose(e.target.value as CashAdvancePurpose)}
+                onChange={(e) => {
+                  const next = e.target.value as CashAdvancePurpose;
+                  setPurpose(next);
+                  const match = purposeOptions.find((o) => o.value === next);
+                  if (match?.catalogCode) {
+                    setAdvanceTypeCode(match.catalogCode);
+                  }
+                }}
               >
-                {PURPOSE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
+                {purposeOptions.map((option) => (
+                  <option
+                    key={`${option.value}-${option.catalogCode ?? option.label}`}
+                    value={option.value}
+                  >
                     {option.label}
                   </option>
                 ))}
               </SelectCombobox>
               {purposeMeta ? <p className="text-[11px] text-gray-500">{purposeMeta.hint}</p> : null}
+              {advanceTypesQuery.isError ? (
+                <p className="text-[11px] text-slate-600">
+                  Could not load cash advance types — using built-in purposes until the catalog is reachable.
+                </p>
+              ) : null}
+              {/* UI-only taxonomy until WAVE-V-SETTLE adds cash_advance_type_id FK. */}
+              <span className="sr-only" data-testid="advance-type-code">
+                {advanceTypeCode}
+              </span>
             </label>
 
             <label className="space-y-1">

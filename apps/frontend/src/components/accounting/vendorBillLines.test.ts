@@ -1,9 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { buildVendorBillLinePayloads } from "./vendorBillLines";
+import { buildVendorBillLinePayloads, mapExpenseCatalogCodeToBillCategory } from "./vendorBillLines";
 import type { TwoSectionLine } from "../forms/TwoSectionLineEditor";
 
+describe("mapExpenseCatalogCodeToBillCategory", () => {
+  it("maps FUEL/REPAIR to existing expense_category_account_map keys", () => {
+    expect(mapExpenseCatalogCodeToBillCategory("FUEL")).toEqual({
+      category_kind: "fuel",
+      category_code: "fuel",
+    });
+    expect(mapExpenseCatalogCodeToBillCategory("REPAIR")).toEqual({
+      category_kind: "maintenance",
+      category_code: "maintenance",
+    });
+  });
+
+  it("does not invent a map for PERMIT / unknown", () => {
+    expect(mapExpenseCatalogCodeToBillCategory("PERMIT")).toBeNull();
+    expect(mapExpenseCatalogCodeToBillCategory("")).toBeNull();
+  });
+});
+
 describe("buildVendorBillLinePayloads", () => {
-  it("maps Section A CoA category to account_id + amount_cents", () => {
+  it("maps Section A catalog category to expense_category_uuid + map keys (not CoA as uuid)", () => {
     const lines: TwoSectionLine[] = [
       {
         id: "1",
@@ -13,6 +31,7 @@ describe("buildVendorBillLinePayloads", () => {
         unit_cost: 100,
         amount: 100,
         expense_category_uuid: "11111111-1111-4111-8111-111111111111",
+        expense_category_code: "FUEL",
       },
     ];
     expect(buildVendorBillLinePayloads(lines)).toEqual([
@@ -20,8 +39,9 @@ describe("buildVendorBillLinePayloads", () => {
         section: "A",
         amount_cents: 10000,
         description: "Diesel",
-        account_id: "11111111-1111-4111-8111-111111111111",
         expense_category_uuid: "11111111-1111-4111-8111-111111111111",
+        category_kind: "fuel",
+        category_code: "fuel",
       },
     ]);
   });
