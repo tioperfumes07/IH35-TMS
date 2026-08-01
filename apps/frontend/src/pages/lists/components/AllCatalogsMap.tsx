@@ -101,6 +101,9 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "Maintenance Failure Codes", description: "Failure code taxonomy for diagnostics", live: true, catalogKey: "failure-codes" },
       { name: "Maintenance Labor Codes", description: "Labor operation and billing codes", live: true, catalogKey: "labor-codes" },
       { name: "Maintenance Parts", description: "Parts master with optional SKU metadata", live: true, catalogKey: "parts" },
+      // LST-F13 — route-mounted at /lists/maintenance/parts-catalog but absent from DOMAIN_CONFIG,
+      // so unreachable from the hub / per-domain hub (only ListsSubNav deep-link).
+      { name: "Parts Catalog", description: "Inventory parts catalog surface (qty / SKU grid)", live: true, catalogKey: "parts-catalog" },
       { name: "OEM Parts Reference", description: "Universal OEM part templates by brand (not company inventory)", live: true, catalogKey: "oem-parts-reference" },
       { name: "Maintenance Priority Levels", description: "Priority/severity ladder for work orders", live: true, catalogKey: "priority-levels" },
       { name: "Maintenance Service Tasks", description: "Standard PM and repair task templates", live: true, catalogKey: "service-tasks" },
@@ -175,6 +178,8 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "Tax Codes", description: "Sales and use tax buckets (map to QBO as wired)", live: true, catalogKey: "tax-codes" },
       { name: "Currency Codes", description: "ISO currency list for multi-currency hints", live: true, catalogKey: "currency-codes" },
       { name: "Void/Cancel Reasons", description: "Financial void/cancel reason catalog (invoices, bills, payments, JEs, settlements, WO voids)", live: true, catalogKey: "void-cancel-reasons" },
+      // LST-F13 — route-mounted at /lists/accounting/abandonment-defaults but absent from DOMAIN_CONFIG.
+      { name: "Abandonment Defaults", description: "Company thresholds for auto-computed abandonment chargebacks", live: true, catalogKey: "abandonment-defaults" },
     ],
   },
   {

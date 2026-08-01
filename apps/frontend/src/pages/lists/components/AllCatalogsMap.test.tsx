@@ -72,6 +72,16 @@ describe("Lists reorg — buildCatalogPath (shared resolver)", () => {
     expect(buildCatalogPath("names_master", "brokers")).toBe("/lists/names/brokers");
     expect(buildCatalogPath("accounting", "chart-of-accounts")).toBe("/lists/accounting/chart-of-accounts");
     expect(buildCatalogPath("accounting", "_create")).toBe("/lists/accounting");
+    // LST-F13 — mounted orphans must resolve from DOMAIN_CONFIG keys.
+    expect(buildCatalogPath("maintenance", "parts-catalog")).toBe("/lists/maintenance/parts-catalog");
+    expect(buildCatalogPath("accounting", "abandonment-defaults")).toBe("/lists/accounting/abandonment-defaults");
+  });
+
+  it("DOMAIN_CONFIG includes LST-F13 hub orphans (parts-catalog + abandonment-defaults)", () => {
+    const maint = DOMAIN_CONFIG.find((d) => d.key === "maintenance");
+    const acct = DOMAIN_CONFIG.find((d) => d.key === "accounting");
+    expect(maint?.catalogs.some((c) => c.catalogKey === "parts-catalog" && c.live)).toBe(true);
+    expect(acct?.catalogs.some((c) => c.catalogKey === "abandonment-defaults" && c.live)).toBe(true);
   });
 });
 
