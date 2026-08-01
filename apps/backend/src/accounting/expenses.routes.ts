@@ -107,6 +107,8 @@ const createExpenseBodySchema = z.object({
   work_order_id: z.string().uuid().optional().nullable(),
   unit_id: z.string().uuid().optional().nullable(),
   insurance_claim_id: z.string().uuid().optional().nullable(),
+  // WAVE-H2: optional explicit load FK (TMS create). When set, stamped on INSERT; attribution only fills when absent.
+  load_id: z.string().uuid().optional().nullable(),
   location_lat: z.number().finite().optional(),
   location_lng: z.number().finite().optional(),
 });
@@ -124,6 +126,7 @@ const listExpensesQuerySchema = companyQuerySchema.extend({
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   load_id: z.string().uuid().optional(),
+  driver_id: z.string().uuid().optional(),
   vendor_uuid: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
@@ -136,6 +139,7 @@ export type ExpenseListFilters = {
   dateFrom?: string;
   dateTo?: string;
   loadId?: string;
+  driverId?: string;
   vendorUuid?: string;
   limit: number;
   offset: number;
@@ -208,6 +212,10 @@ export async function queryExpensesList(
   if (filters.loadId) {
     values.push(filters.loadId);
     where.push(`e.load_id = $${values.length}::uuid`);
+  }
+  if (filters.driverId) {
+    values.push(filters.driverId);
+    where.push(`e.driver_uuid = $${values.length}::uuid`);
   }
   if (filters.vendorUuid) {
     values.push(filters.vendorUuid);
@@ -298,6 +306,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         dateFrom: q.date_from,
         dateTo: q.date_to,
         loadId: q.load_id,
+        driverId: q.driver_id,
         vendorUuid: q.vendor_uuid,
         limit: q.limit,
         offset: q.offset,
@@ -552,6 +561,12 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           values.push(body.insurance_claim_id ?? null);
         }
 
+        // Explicit load_id from caller — do not silently drop (WAVE-H2 CLS-LINKAGE-ONEWAY).
+        if (hasLoadId && body.load_id) {
+          columns.push(`load_id`);
+          values.push(body.load_id);
+        }
+
         const placeholders = columns.map((_, i) => `$${i + 1}`).join(", ");
         const insertSql = `
           INSERT INTO accounting.expenses (${columns.join(", ")})
@@ -593,18 +608,19 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           );
         }
 
-        // Load attribution is driver-centric — a driverless general expense has no trip to attribute to.
-        const attribution = body.driver_id
-          ? await attributeExpenseToLoad(client, {
-              driverId: body.driver_id,
-              operatingCompanyId: body.operating_company_id,
-              expenseTimestamp: new Date(`${body.expense_date}T12:00:00.000Z`),
-              expenseLocation:
-                body.location_lat != null && body.location_lng != null
-                  ? { lat: body.location_lat, lng: body.location_lng }
-                  : undefined,
-            })
-          : null;
+        // Load attribution is driver-centric — skip when caller already stamped load_id (WAVE-H2).
+        const attribution =
+          !body.load_id && body.driver_id
+            ? await attributeExpenseToLoad(client, {
+                driverId: body.driver_id,
+                operatingCompanyId: body.operating_company_id,
+                expenseTimestamp: new Date(`${body.expense_date}T12:00:00.000Z`),
+                expenseLocation:
+                  body.location_lat != null && body.location_lng != null
+                    ? { lat: body.location_lat, lng: body.location_lng }
+                    : undefined,
+              })
+            : null;
 
         let expenseNumber: string | null = null;
 
@@ -659,6 +675,23 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           });
 
           await appendCrudAudit(client, user.uuid, "expense.created", { expense_id: expenseId, attributed: true }, "info", "P6-T11176");
+        } else if (body.load_id) {
+          // Explicit load stamped on INSERT — no attribution alert.
+          await emitOutbox(client, "expense.created", {
+            expense_id: expenseId,
+            operating_company_id: body.operating_company_id,
+            load_id: body.load_id,
+            explicit_load: true,
+            category_account_id: categoryAccountId,
+          });
+          await appendCrudAudit(
+            client,
+            user.uuid,
+            "expense.created",
+            { expense_id: expenseId, load_id: body.load_id, explicit_load: true },
+            "info",
+            "P6-T11176"
+          );
         } else if (body.driver_id) {
           await insertUnattributedAlert(client, body.operating_company_id, expenseId);
           await emitOutbox(client, "expense.created.unattributed", {

@@ -336,6 +336,7 @@ export function listInvoices(
     status?: string;
     search?: string;
     customer_id?: string;
+    source_load_id?: string;
     from_date?: string;
     to_date?: string;
     has_balance?: boolean;
@@ -347,6 +348,7 @@ export function listInvoices(
   if (params.status) query.set("status", params.status);
   if (params.search) query.set("search", params.search);
   if (params.customer_id) query.set("customer_id", params.customer_id);
+  if (params.source_load_id) query.set("source_load_id", params.source_load_id);
   if (params.from_date) query.set("from_date", params.from_date);
   if (params.to_date) query.set("to_date", params.to_date);
   if (params.has_balance) query.set("has_balance", "true");
@@ -360,6 +362,21 @@ export function listInvoices(
     offset?: number;
     has_more?: boolean;
   }>(withCompany(`/api/v1/accounting/invoices${qs ? `?${qs}` : ""}`, operatingCompanyId));
+}
+
+/** WAVE-H2 reverse drill — load → invoices. */
+export function listLoadInvoices(operatingCompanyId: string, loadId: string, params: { limit?: number; offset?: number } = {}) {
+  const query = new URLSearchParams();
+  if (params.limit !== undefined) query.set("limit", String(params.limit));
+  if (params.offset !== undefined) query.set("offset", String(params.offset));
+  const qs = query.toString();
+  return apiRequest<{
+    invoices: Invoice[];
+    total?: number;
+    limit?: number;
+    offset?: number;
+    has_more?: boolean;
+  }>(withCompany(`/api/v1/loads/${encodeURIComponent(loadId)}/invoices${qs ? `?${qs}` : ""}`, operatingCompanyId));
 }
 
 export function getInvoice(id: string, operatingCompanyId: string) {
@@ -563,6 +580,7 @@ export function listExpenses(
     date_to?: string;
     vendor_uuid?: string;
     load_id?: string;
+    driver_id?: string;
     limit?: number;
     offset?: number;
   } = {}
@@ -573,10 +591,22 @@ export function listExpenses(
   if (params.date_to) query.set("date_to", params.date_to);
   if (params.vendor_uuid) query.set("vendor_uuid", params.vendor_uuid);
   if (params.load_id) query.set("load_id", params.load_id);
+  if (params.driver_id) query.set("driver_id", params.driver_id);
   if (params.limit !== undefined) query.set("limit", String(params.limit));
   if (params.offset !== undefined) query.set("offset", String(params.offset));
   const qs = query.toString();
   return apiRequest<{ rows: ExpenseListRow[] }>(withCompany(`/api/v1/expenses${qs ? `?${qs}` : ""}`, operatingCompanyId));
+}
+
+/** WAVE-H2 reverse drill — load → expenses. */
+export function listLoadExpenses(operatingCompanyId: string, loadId: string, params: { limit?: number; offset?: number } = {}) {
+  const query = new URLSearchParams();
+  if (params.limit !== undefined) query.set("limit", String(params.limit));
+  if (params.offset !== undefined) query.set("offset", String(params.offset));
+  const qs = query.toString();
+  return apiRequest<{ rows: ExpenseListRow[] }>(
+    withCompany(`/api/v1/loads/${encodeURIComponent(loadId)}/expenses${qs ? `?${qs}` : ""}`, operatingCompanyId)
+  );
 }
 
 /** ACCT-R-17 — duplicate expense fingerprint groups (vendor + date + amount). */
@@ -838,6 +868,9 @@ export function createExpense(
     // HARD cross-module link (maintenance): real FK to the WO + unit, persisted server-side (not just memo).
     work_order_id?: string;
     unit_id?: string;
+    /** WAVE-H2 — optional ops load FK (not silently dropped server-side). */
+    load_id?: string;
+    driver_id?: string;
     attachment_draft_id?: string;
   }
 ) {

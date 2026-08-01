@@ -20,6 +20,8 @@ const listQuerySchema = companyQuerySchema.extend({
   status: z.string().trim().optional(),
   search: z.string().trim().optional(),
   customer_id: z.string().uuid().optional(),
+  // WAVE-H2 reverse drill: load → invoices
+  source_load_id: z.string().uuid().optional(),
   from_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   to_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   // Aging / open-AR drill: filter full entity set by open balance BEFORE LIMIT/OFFSET
@@ -196,6 +198,10 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       if (q.customer_id) {
         values.push(q.customer_id);
         extraWhere.push(`i.customer_id = $${values.length}`);
+      }
+      if (q.source_load_id) {
+        values.push(q.source_load_id);
+        extraWhere.push(`i.source_load_id = $${values.length}::uuid`);
       }
       if (q.search) {
         values.push(`%${q.search}%`);
@@ -889,6 +895,63 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       )
     );
     return result.data;
+  });
+
+  // WAVE-H2 reverse drill: load → invoices (same pattern as GET /api/v1/loads/:id/expenses).
+  const loadIdParamSchema = z.object({ id: z.string().uuid() });
+  const loadInvoicesQuerySchema = companyQuerySchema.extend({
+    limit: z.coerce.number().int().min(1).max(200).default(50),
+    offset: z.coerce.number().int().min(0).default(0),
+  });
+  app.get("/api/v1/loads/:id/invoices", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = loadIdParamSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = loadInvoicesQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const q = query.data;
+    const listed = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
+      const values: unknown[] = [q.operating_company_id, params.data.id];
+      const countRes = await client.query(
+        `
+          SELECT COUNT(*)::int AS total
+          FROM accounting.invoices i
+          WHERE i.operating_company_id = $1::uuid
+            AND i.source_load_id = $2::uuid
+        `,
+        values
+      );
+      const total = Number(countRes.rows[0]?.total ?? 0);
+      values.push(q.limit, q.offset);
+      const res = await client.query(
+        `
+          SELECT
+            i.*,
+            c.customer_name,
+            fa.display_id AS factoring_display_id
+          FROM accounting.invoices i
+          JOIN mdata.customers c
+            ON c.id = i.customer_id
+           AND c.operating_company_id = i.operating_company_id
+          LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
+          WHERE i.operating_company_id = $1::uuid
+            AND i.source_load_id = $2::uuid
+          ORDER BY i.issue_date DESC, i.created_at DESC
+          LIMIT $3
+          OFFSET $4
+        `,
+        values
+      );
+      return { invoices: res.rows, total };
+    });
+    return {
+      invoices: listed.invoices,
+      total: listed.total,
+      limit: q.limit,
+      offset: q.offset,
+      has_more: q.offset + listed.invoices.length < listed.total,
+    };
   });
 }
 

@@ -286,7 +286,8 @@ async function resolveDriverId(
   return res.rows[0]?.id ?? null;
 }
 
-async function resolveVendorId(
+/** Exported for Relay→canonical bridge (WAVE-H2 — stop hardcoding vendor_id NULL). */
+export async function resolveVendorId(
   client: DbClient,
   companyId: string,
   merchant: string | null
@@ -305,8 +306,9 @@ async function resolveVendorId(
  * G18 load resolution: the load assigned to the resolved unit (fallback driver)
  * whose stop window brackets the transaction timestamp. Best-available linkage —
  * returns null when nothing matches so the caller records an exemption reason.
+ * Exported for Relay→canonical bridge (WAVE-H2 — stop hardcoding load_id NULL).
  */
-async function resolveLoadId(
+export async function resolveLoadId(
   client: DbClient,
   companyId: string,
   unitId: string | null,
