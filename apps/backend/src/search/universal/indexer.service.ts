@@ -85,7 +85,12 @@ export async function indexDriversForCompany(client: DbClient, operatingCompanyI
     `
       SELECT d.id::text AS entity_uuid,
              COALESCE(NULLIF(CONCAT_WS(' ', d.first_name, d.last_name), ''), d.id::text) AS display_text,
-             COALESCE(d.driver_code, '') AS secondary_text
+             -- SRCH-F64: mdata.drivers has NO driver_code column, so this statement failed at parse
+             -- time and search.indexer_incremental had NEVER succeeded. The real display identifier
+             -- is employee_id_display. Deliberately NOT cdl_number / visa_number / passport_number /
+             -- ine_number / b1_visa_number — those exist on the table and would push government ID
+             -- numbers into a universal search index that any authorised user can query.
+             COALESCE(d.employee_id_display, '') AS secondary_text
       FROM mdata.drivers d
       WHERE d.operating_company_id = $1::uuid
         AND d.deactivated_at IS NULL
