@@ -26,7 +26,8 @@ import { useQuery } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, DollarSign, RefreshCw, AlertCircle, CheckCircle, X } from "lucide-react";
 import type { AuthMeResponse } from "../../types/api";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { fetchHomeCashPosition, fetchHomeTodayRevenue } from "../../api/home";
+import { fetchHomeCashPosition, fetchHomeTodayRevenue, type HomeKpiRange } from "../../api/home";
+import { HomeKpiRangeToggle, revenueKpiLabel } from "./HomeKpiRangeToggle";
 import { fetchAccountingRoleHome } from "../../api/accountingHome";
 import { getBankingTiles } from "../../api/banking";
 
@@ -88,6 +89,9 @@ export function QboStyleHomePage({ auth }: Props) {
   const cid = selectedCompanyId ?? "";
   const displayName = auth.email?.split("@")[0] ?? "there";
 
+  // h-05: KPI range preset — server resolves the window in company TZ (default: today).
+  const [kpiRange, setKpiRange] = useState<HomeKpiRange>("today");
+
   const [dismissedCards, setDismissedCards] = useState<Set<string>>(new Set());
 
   const bankTilesQuery = useQuery({
@@ -105,8 +109,8 @@ export function QboStyleHomePage({ auth }: Props) {
   });
 
   const revenueQuery = useQuery({
-    queryKey: ["home", "c6", "today-revenue", cid],
-    queryFn: () => fetchHomeTodayRevenue(cid),
+    queryKey: ["home", "c6", "today-revenue", cid, kpiRange],
+    queryFn: () => fetchHomeTodayRevenue(cid, kpiRange),
     enabled: Boolean(cid),
     staleTime: 60_000,
   });
@@ -136,7 +140,7 @@ export function QboStyleHomePage({ auth }: Props) {
     revenueCents: revenueQuery.data?.revenue_cents,
   });
   const deltaVsYesterday =
-    revenueDisplay.kind === "ok" ? revenueQuery.data?.delta_pct_vs_yesterday : undefined;
+    kpiRange === "today" && revenueDisplay.kind === "ok" ? revenueQuery.data?.delta_pct_vs_yesterday : undefined;
 
   const visibleFeed = BUSINESS_FEED_CARDS.filter((c) => !dismissedCards.has(c.id));
 
@@ -259,10 +263,15 @@ export function QboStyleHomePage({ auth }: Props) {
             )}
           </div>
 
+          {/* h-05: KPI date-range toggle — drives the revenue KPI window (7d/30d/MTD/YTD). */}
+          <div className="md:col-span-2 xl:col-span-1">
+            <HomeKpiRangeToggle value={kpiRange} onChange={setKpiRange} />
+          </div>
+
           {/* Profit & Loss */}
           <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Profit &amp; Loss</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{revenueKpiLabel(kpiRange)}</p>
               <Link to="/reports" className="text-xs text-slate-700 hover:underline">Analyze →</Link>
             </div>
             {revenueDisplay.kind === "loading" ? (
@@ -305,7 +314,7 @@ export function QboStyleHomePage({ auth }: Props) {
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-slate-600">Net revenue today (invoice basis, pre-tax)</p>
+                <p className="text-xs text-slate-600">{revenueKpiLabel(kpiRange)} (invoice basis, pre-tax)</p>
                 <div className="mt-3 space-y-1">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Income</span>

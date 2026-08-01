@@ -23,12 +23,13 @@ const LABEL = "verify-home-kpi-range-toggle";
 const TOGGLE = "apps/frontend/src/pages/home/HomeKpiRangeToggle.tsx";
 const OWNER_HOME = "apps/frontend/src/pages/home/OwnerHome.tsx";
 const DEFAULT_HOME = "apps/frontend/src/pages/home/roles/DefaultHome.tsx";
+const QBO_HOME = "apps/frontend/src/pages/home/QboStyleHomePage.tsx";
 const API_HOME = "apps/frontend/src/api/home.ts";
 const ROUTES = "apps/backend/src/home/home-widgets.routes.ts";
 const SERVICE = "apps/backend/src/home/revenue-gl-linkage.service.ts";
 
 /** Pure checks — takes text so --selftest can inject fixtures. */
-export function check({ toggle, ownerHome, defaultHome, apiHome, routes, service }) {
+export function check({ toggle, ownerHome, defaultHome, qboHome, apiHome, routes, service }) {
   const f = [];
 
   if (!toggle) {
@@ -47,6 +48,7 @@ export function check({ toggle, ownerHome, defaultHome, apiHome, routes, service
   for (const [rel, src] of [
     [OWNER_HOME, ownerHome],
     [DEFAULT_HOME, defaultHome],
+    [QBO_HOME, qboHome],
   ]) {
     if (!src) {
       f.push(`${rel}: missing`);
@@ -55,10 +57,13 @@ export function check({ toggle, ownerHome, defaultHome, apiHome, routes, service
     if (!/HomeKpiRangeToggle/.test(src)) {
       f.push(`${rel}: must render HomeKpiRangeToggle (h-05 range selector)`);
     }
+    if (rel === QBO_HOME && !/revenueKpiLabel\(\s*kpiRange\s*\)/.test(src)) {
+      f.push(`${rel}: revenue card label must reflect the selected range`);
+    }
     if (!/fetchHomeTodayRevenue\(\s*cid\s*,\s*kpiRange\s*\)/.test(src)) {
       f.push(`${rel}: must pass kpiRange into fetchHomeTodayRevenue`);
     }
-    if (!/\[\s*"home"\s*,\s*"today-revenue"\s*,\s*cid\s*,\s*kpiRange\s*\]/.test(src)) {
+    if (!/\[\s*"home"\s*,(?:\s*"[^"]+"\s*,)?\s*"today-revenue"\s*,\s*cid\s*,\s*kpiRange\s*\]/.test(src)) {
       f.push(`${rel}: queryKey must include kpiRange (stale-cache bug otherwise)`);
     }
     if (!/revenueKpiLabel\(\s*kpiRange\s*\)/.test(src)) {
@@ -109,6 +114,7 @@ export function run() {
     toggle: read(TOGGLE),
     ownerHome: read(OWNER_HOME),
     defaultHome: read(DEFAULT_HOME),
+    qboHome: read(QBO_HOME),
     apiHome: read(API_HOME),
     routes: read(ROUTES),
     service: read(SERVICE),
@@ -127,6 +133,12 @@ if (process.argv.includes("--selftest")) {
     label={revenueKpiLabel(kpiRange)}
     <HomeKpiRangeToggle value={kpiRange} onChange={setKpiRange} />
   `;
+  const goodQbo = `
+    queryKey: ["home", "c6", "today-revenue", cid, kpiRange],
+    queryFn: () => fetchHomeTodayRevenue(cid, kpiRange),
+    revenueKpiLabel(kpiRange)
+    <HomeKpiRangeToggle value={kpiRange} onChange={setKpiRange} />
+  `;
   const goodApi = `
     export const HOME_KPI_RANGES = ["today", "7d", "30d", "mtd", "ytd"] as const;
     export async function fetchHomeTodayRevenue(companyId: string, range: HomeKpiRange = "today") {}
@@ -142,6 +154,7 @@ if (process.argv.includes("--selftest")) {
     toggle: goodToggle,
     ownerHome: goodVariant,
     defaultHome: goodVariant,
+    qboHome: goodQbo,
     apiHome: goodApi,
     routes: goodRoutes,
     service: goodService,
