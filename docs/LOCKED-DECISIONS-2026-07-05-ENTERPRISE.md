@@ -28,7 +28,7 @@
 - **1099 + ALL tax docs (BLOCK-17/24):** drivers = 1099-NEC; build in-house per **IRS + US Treasury**; **Jorge/company transmits** (software never e-files); **every tax doc = PDF** for archive + mail + email. **Foreign-status caveat (from PR #2178):** a Mexican-B1 W-8BEN driver performing services in the US generally needs **1042-S + 30% NRA withholding**, not 1099-NEC — OPEN COMPLIANCE QUESTION for Jorge/CPA: is 30% withholding currently being done?
 - **Factoring (CONN-2):** build **Faro** poster now (secured borrowing, ASC 860); Faro→RTS = later config swap. **CHAIN-06 (PR #2188) confirmed** CODER-34 (#1770, flag OFF) already implements the directive: **A/R closes only when the customer pays Faro**, never at funding.
 - **1099/425c consolidation (STMT-3), Consolidation (BLOCK-25):** defer to the very end (BLOCK-25 needs all 3 entities live).
-- **AF-8 payroll-bridge:** stays DEFERRED (1099, no QBO write-back). **AF-2 qbo-drift:** detect only, write stays OFF. **AF-7 money-controls:** OFF until CPA tie-out.
+- **AF-8 payroll-bridge:** stays DEFERRED (1099, no QBO write-back). **AF-2 qbo-drift:** detect only, write stays OFF. **AF-7 money-controls:** OFF until owner tie-out.
 
 ## ⚠️ LATENT BUG TO FIX BEFORE FLIPPING FACTORING FLAG (CHAIN-06, PR #2188)
 `postFactoringCustomerPaymentEvent`/`postFactoringChargebackEvent` relieve GL `ar_control` but do **NOT** update `accounting.invoices.amount_paid_cents`/`status`. When `FACTORING_GL_POSTING_ENABLED` flips ON, **AR-Aging (invoice subledger) will diverge from the GL.** Fix belongs in the flag-on block, before enabling.

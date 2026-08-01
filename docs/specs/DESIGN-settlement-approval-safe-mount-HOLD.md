@@ -39,5 +39,5 @@ Mounting today would expose 6 handlers where any authenticated Manager/Payroll u
 ## 4. REMAINING / blocking questions for Jorge
 
 1. Approve the role matrix (§3.2) — separation of duties for line-approve vs settlement-approve vs finalize.
-2. CPA sign-off on the dormant escrow write becoming reachable (§3.7).
+2. owner sign-off on the dormant escrow write becoming reachable (§3.7).
 3. Greenlight order: scoping PR → mount PR (+allowlist row removal + guard) → approval UI block.

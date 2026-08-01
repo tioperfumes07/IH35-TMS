@@ -95,7 +95,7 @@ Money-posting GL flags ON for TRANSP+TRK is DELIBERATE: TMS posts in PARALLEL wi
 - **[accounting] 0473-2-5-trial-balance-002-cosmetic** — Trial balance shows $0.02 Dr/$0.02 Cr gross of the one posted+reversed test invoice (nets to $0, not an error) — _not-built_; missing: decide whether to void/purge the $0.01 test invoice's gross footprint before go-live, or leave it as documented test evidence
 - **[accounting] 0242-no-auto-customer-charge-on-cancellation** — Load cancellation should automatically create the customer charge/invoice when billable_to_customer is true, i — _needs-design_; missing: an auto-create-customer-charge step (new AR line / invoice adjustment) fired from cancelLoad() when billable_to_customer=true, gated by an e
 - **[accounting] 0490-critical-idempotency-posting-engine-vendor-bill-payment** — CRITICAL: raw GL posting-engine endpoints and /vendors/:id/bill-payments carry no idempotency — a double-click — _needs-design_; missing: an idempotency-key request-header contract + DB-level enforcement on POST /vendors/:id/bill-payments and any raw posting-engine HTTP endpoin
-- **[accounting] 0285-acct-gap3-manual-payment-application** — Accounting: customer payment application to invoices is fully manual — no auto-apply logic, risk of unapplied  — _needs-design_; missing: an auto-apply rule (e.g. oldest-invoice-first) — needs CPA sign-off given it affects AR
+- **[accounting] 0285-acct-gap3-manual-payment-application** — Accounting: customer payment application to invoices is fully manual — no auto-apply logic, risk of unapplied  — _needs-design_; missing: an auto-apply rule (e.g. oldest-invoice-first) — needs owner sign-off given it affects AR
 - **[accounting] ruling-4-embezzlement-reclass-off-ar-qbo-source** — Reclassify the two 'Unauthorized Expenses' (embezzlement, ~$407k) accounts off A/R at the QuickBooks source; C — _partial_; missing: QBO-side subtype reclassification (owner/CPA action inside QuickBooks, not a TMS code change) + a CPA ruling: write off as theft loss vs boo
 - **[accounting] factoring-asc860-cpa-control-test-open** — CPA must apply the ASC 860 three-part control-surrender test to the actual FARO agreement before the factoring — _needs-design_; missing: CPA written ruling on FARO agreement's control-surrender test result, to be encoded as per-factor config in the posting engine
 - **[accounting] 0473-2-4-ap-aging-undercounts-partials** — Bills stored 'partially_paid' but aging report reads 'partial' -- a value mismatch under-counts partially-paid — _not-built_; missing: align the status value read in ap-aging.routes.ts with the actual stored 'partially_paid' value; add a DB constraint preventing future drift
@@ -214,7 +214,7 @@ Money-posting GL flags ON for TRANSP+TRK is DELIBERATE: TMS posts in PARALLEL wi
 - **[dispatch] biz-flow-1-no-auto-termination-driver-walkoff** — Auto-terminate driver when a load status transitions to driver_walkoff — _not-built_; missing: no trigger call from the load-status-write path to a driver-termination writer
 - **[dispatch] d-01-new-load-overview-http-400** — New Load panel Overview tab returns HTTP 400 immediately on open (F1 missing grants) — _partial_; missing: Live confirmation the migration ran on prod and the panel no longer 400s.
 - **[dispatch] biz-flow-1-termination-not-linked-to-load** — Driver termination record must carry the load_id that caused it — _partial_; missing: WF-064-MDATA-002 payload still has no load_id field; the two termination mechanisms (workflow vs safety-event) are not unified
-- **[drivers] fk-escrow-termination-0289** — Critical FK gap #2: Escrow -> Termination, expected column driver_finance.escrow.termination_id — _partial_; missing: 202607111000 needs Jorge/CPA sign-off + a Neon-branch run before it addresses this gap live; currently HELD per its own header
+- **[drivers] fk-escrow-termination-0289** — Critical FK gap #2: Escrow -> Termination, expected column driver_finance.escrow.termination_id — _partial_; missing: 202607111000 needs Jorge/owner sign-off + a Neon-branch run before it addresses this gap live; currently HELD per its own header
 - **[drivers] 0243-h6-2-cash-advance-display-id-no-lock-no-unique** — cash-advances/display-id.ts computes MAX+1 with no advisory lock and no UNIQUE constraint on driver_advances.d — _not-built_; missing: wrap in pg_advisory_xact_lock + add UNIQUE(operating_company_id, display_id) migration
 - **[drivers] 0441-mod7-escrow-read-only** — Escrow 100% read-only — real open/deposit/release backend has zero frontend callers — _not-built_; missing: No UI affordance anywhere to open a new escrow account, deposit into one, or release funds — EscrowPage.tsx is view-only.
 - **[drivers] biz-flow-1-abandonment-separate-from-termination-workflow** — Abandonment chargeback flow does not trigger automatic driver termination — _partial_; missing: abandonment.service.ts has no call into a termination proposal/workflow
@@ -653,7 +653,7 @@ Money-posting GL flags ON for TRANSP+TRK is DELIBERATE: TMS posts in PARALLEL wi
     - evidence: Not independently checked in this pass; note driver escrow is a LIABILITY per locked decision (driver-escrow-is-liability memory) so any linkage fix must preserve that classificati
     - spec: NONE
 - `0285-acct-gap3-manual-payment-application` **needs-design** (tier-1) — Accounting: customer payment application to invoices is fully manual — no auto-apply logic, risk of unapplied 
-    - diff: an auto-apply rule (e.g. oldest-invoice-first) — needs CPA sign-off given it affects AR
+    - diff: an auto-apply rule (e.g. oldest-invoice-first) — needs owner sign-off given it affects AR
     - evidence: 0285's own inventory confirms payment-applications.routes.ts exposes explicit Apply/Unapply endpoints requiring payment_id+invoice_id+amount_cents — no auto-apply-by-oldest-invoice
     - spec: docs/lockdown/00_LOCKED_DECISIONS.md (AR rules governed here)
 - `0473-1-1-default-revenue-account-unmapped-line` **needs-design** (tier-1) — CPA ruling needed: unmapped invoice line should hard-fail (refuse to post) vs post to a catch-all 'Uncategoriz
@@ -1161,7 +1161,7 @@ Money-posting GL flags ON for TRANSP+TRK is DELIBERATE: TMS posts in PARALLEL wi
     - evidence: Read apps/frontend/src/pages/lists/accounting/ItemEditorModal.tsx lines 340-440 myself: the Income account Combobox (line ~361-367) and Expense account Combobox (line ~424-431) eac
     - spec: NONE
 - `ruling-3-driver-escrow-current-vs-long-term-reclass` **not-built** (tier-1) — Reclassify driver Damage Claim Escrow from OtherLongTermLiabilities to a current-liability subtype (60-90 day 
-    - diff: Reclass Damage Claim Escrow (QBO-1150040187) and year-dated variants from OtherLongTermLiabilities to a current-liability subtype, pending CPA confirmation.
+    - diff: Reclass Damage Claim Escrow (QBO-1150040187) and year-dated variants from OtherLongTermLiabilities to a current-liability subtype, pending owner confirmation.
     - evidence: Damage Claim Escrow accounts remain typed OtherLongTermLiabilities per doc Appendix A; no migration reclassifying to a current-liability subtype found (grep for 'OtherLongTermLiabi
     - spec: NONE
 - `s-04-no-from-to-date-range-safety-lists` **not-built** (tier-3) — No From/To date range picker on Safety list views - only 5-option window toggle
@@ -2545,7 +2545,7 @@ Money-posting GL flags ON for TRANSP+TRK is DELIBERATE: TMS posts in PARALLEL wi
     - evidence: No migration or cleanup script referencing 'DUMMY'/'Demo Garcia'/'Demo Lopez' etc. exists anywhere in apps/backend/src, apps/frontend/src, or db/migrations — a targeted grep for th
     - spec: NONE
 - `fk-escrow-termination-0289` **partial** (tier-1) — Critical FK gap #2: Escrow -> Termination, expected column driver_finance.escrow.termination_id
-    - diff: 202607111000 needs Jorge/CPA sign-off + a Neon-branch run before it addresses this gap live; currently HELD per its own header
+    - diff: 202607111000 needs Jorge/owner sign-off + a Neon-branch run before it addresses this gap live; currently HELD per its own header
     - evidence: There is no table literally named 'driver_finance.escrow' (escrow lives in accounting.escrow_accounts/escrow_postings per Block-23, plus driver_finance.escrow_deductions_pending/es
     - spec: docs/accounting/BLOCK-02-DRIVER-ESCROW-DESIGN.md
 - `hiredate-provenance-partial` **partial** (tier-2) — CODER-DIRECTIVE-HireDate-Provenance: hire_date_set_at + hire_date_set_by_user_id columns; driver_id-keyed CSV 

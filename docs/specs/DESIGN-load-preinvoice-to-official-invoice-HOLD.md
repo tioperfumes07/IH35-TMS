@@ -222,7 +222,7 @@ Proposed guards (future PR):
 
 - **`LOAD_OFFICIAL_INVOICE_ON_DELIVER_ENABLED`** — gates Event B auto-invoice. **Default OFF**, per-entity
   override only. OFF = today's behavior (no auto-invoice on deliver). ON (per entity) only after: Unbilled
-  Revenue account seeded (TRANSP/USMCA), CoA roles designated, CPA sign-off, Neon tie-out.
+  Revenue account seeded (TRANSP/USMCA), CoA roles designated, owner sign-off, Neon tie-out.
 - **`LOAD_PREINVOICE_PROJECTION_ENABLED`** — gates Event A pre-invoice projection generation. **Default OFF.**
   Because Event A posts nothing, its risk is display-only, but it stays OFF until the projection surface is
   wired and verified.

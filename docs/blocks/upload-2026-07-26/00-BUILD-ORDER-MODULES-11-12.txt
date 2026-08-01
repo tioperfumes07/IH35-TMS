@@ -6,7 +6,7 @@ math; flags default OFF; QBO reconcile-only, no write-back. You merge your own P
 ================================================================================
 
 WHAT GUARD VERIFIED WITH ITS OWN QUERIES (not just the agent read):
-- FACT-01: FACTORING_GL_POSTING_ENABLED override enabled=true for TRK + TRANSP + USMCA (flag says "TRANSP only, default OFF until CPA sign-off"). CONFIRMED.
+- FACT-01: FACTORING_GL_POSTING_ENABLED override enabled=true for TRK + TRANSP + USMCA (flag says "TRANSP only, default OFF until owner sign-off"). CONFIRMED.
 - SET-02: driver_payroll_clearing → "Driver Cash Advance" ASSET, QBO-149 — identical to advance_recovery; no net-pay clearing account exists. CONFIRMED.
 - escrow_liability_default → Liability QBO-250 (correct); advance_recovery → Asset QBO-149 (correct); driver_pay_expense → Cost of Labor–Mexico Drivers (correct). MEETS.
 - org.companies.min_net_settlement_pct = 50 for all 3 entities (SET-05 floor source).
@@ -29,7 +29,7 @@ MODULE 12 — SETTLEMENTS (do FIRST — highest money-safety risk):
              Guard: verify-netpay-floor-at-close.mjs.
   5. SET-03  Consolidate disputes to driver_settlement_disputes; retire the P6 writer to settlement_disputes.
              Guard: verify-single-dispute-subledger.mjs.
-  → THEN (owner + CPA) provision per-driver escrow/advance subs, then consider the flag flip.
+  → THEN (owner) provision per-driver escrow/advance subs, then consider the flag flip.
 
 MODULE 11 — FACTORING:
   1. FACT-01 Scope the kill-switch: delete TRK + USMCA overrides; confirm/So disable the TRANSP override per sign-off.

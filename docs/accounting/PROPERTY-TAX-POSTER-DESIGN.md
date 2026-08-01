@@ -3,7 +3,7 @@
 **Status: DESIGN + BUILD-AND-HOLD.** The poster code (`apps/backend/src/accounting/property-tax-posting/poster.service.ts`)
 is committed but **INERT** — it early-returns `{posted:false, reason:"flag_off"}` for every entity until
 `PROPERTY_TAX_GL_POSTING_ENABLED` is flipped per entity. **Tier: §1.4 financial cluster → NEVER self-merge
-the migration or flip the flag. Requires CPA sign-off + Neon verification. The flag stays OFF until Jorge
+the migration or flip the flag. Requires owner sign-off + Neon verification. The flag stays OFF until Jorge
 flips it per entity.** No posting is authorized by this doc.
 
 ## 1. What & why
@@ -64,7 +64,7 @@ The rendition also surfaces in the cross-module **Compliance & Filings** aggrega
 with drill-through to `/compliance/property-tax/:id`, and, when the current tax year has no rendition yet, a
 statutory April-15 reminder.
 
-## 5. Enablement (owner only, after CPA sign-off)
+## 5. Enablement (owner only, after owner sign-off)
 
 1. Apply `202607080300` then `202607080310` on a **Neon branch** (never prod db:migrate — both are HELD /
    DO-NOT-RUN and registered in `.held-migrations.json`).

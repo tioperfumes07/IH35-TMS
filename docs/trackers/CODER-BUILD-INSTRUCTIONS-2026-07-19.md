@@ -123,7 +123,7 @@ Totals: 49 findings — 31 STILL-OPEN / 15 ALREADY-FIXED / 3 UNVERIFIABLE. GATED
 - STATE: STILL-OPEN — `db/migrations/0313_border_crossing_wizard.sql:24-25` adds `commodity TEXT`/`commodity_value_cents BIGINT` (free text, no FK). No commodity→GL-account mapping table or code exists anywhere in accounting/catalogs/mdata.
 - ROOT CAUSE: Commodity is stored as free text for border paperwork only; no lookup ties a commodity type to a revenue/COGS account.
 - FILES: db/migrations/0313_border_crossing_wizard.sql; apps/backend/src/mdata/loads.routes.ts; new migration for a commodity-GL map table
-- FIX STEPS: 1) Get Jorge/CPA sign-off on whether commodity-level GL mapping is even wanted (may be redundant with existing customer/lane-level mapping — check `ih35-accounting-decisions` first). 2) If approved: gated migration for `catalogs.commodity_gl_map(commodity_code, revenue_account_id, is_active)` with FORCE RLS + grants. 3) Add a normalization step so free-text `commodity` maps to a controlled `commodity_code`. 4) Wire the mapping into the GL posting service that determines revenue account.
+- FIX STEPS: 1) Get Jorge/owner sign-off on whether commodity-level GL mapping is even wanted (may be redundant with existing customer/lane-level mapping — check `ih35-accounting-decisions` first). 2) If approved: gated migration for `catalogs.commodity_gl_map(commodity_code, revenue_account_id, is_active)` with FORCE RLS + grants. 3) Add a normalization step so free-text `commodity` maps to a controlled `commodity_code`. 4) Wire the mapping into the GL posting service that determines revenue account.
 - GUARD: N/A yet (nothing built) — once built: verify-commodity-gl-map-fk-integrity.mjs.
 
 ---
@@ -249,7 +249,7 @@ Totals: 49 findings — 31 STILL-OPEN / 15 ALREADY-FIXED / 3 UNVERIFIABLE. GATED
 - STATE: ALREADY-FIXED (code) / policy sign-off outstanding as claimed — `void.service.ts`'s `postVoidReversal` (line 181) + `readOriginalGlPostings` (line 131) pull every GL line for the whole source document and reverse them into one journal entry — confirmed whole-document-grain, unit-tested. No dedicated static guard pins this grain choice — `scripts/verify-je-void-reverses-not-voids.mjs` guards a different function.
 - ROOT CAUSE: Code-wise nothing missing; "guard-pinned" was overstated (it's test-pinned, not static-guard-pinned). CPA written confirmation of the grain choice is still outstanding (policy, not code).
 - FILES: apps/backend/src/accounting/void.service.ts; scripts/verify-je-void-reverses-not-voids.mjs (existing, different scope)
-- FIX STEPS: 1) (Optional hardening, non-financial) add `scripts/verify-void-reversal-whole-document-grain.mjs`. 2) Get the CPA sign-off on grain choice — paperwork, no code change proposed.
+- FIX STEPS: 1) (Optional hardening, non-financial) add `scripts/verify-void-reversal-whole-document-grain.mjs`. 2) Get the owner sign-off on grain choice — paperwork, no code change proposed.
 - GUARD: verify-void-reversal-whole-document-grain.mjs — static check that `postVoidReversal` inserts exactly one `journal_entries` row per call and reverses the full original-line set.
 
 ---
@@ -516,7 +516,7 @@ Counts: **STILL-OPEN 36 / ALREADY-FIXED 11 / UNVERIFIABLE 2** (total 49). **GATE
 - FILES: `docs/accounting/FACTORING-POSTER-DESIGN.md`
 - FIX STEPS:
   1. Draft a control-test section in the design doc: for each of ASC 860-10-40-5(a), (b), (c), cite the specific poster behavior/table that satisfies it.
-  2. Get CPA sign-off (name + date) appended to the doc.
+  2. Get owner sign-off (name + date) appended to the doc.
   3. No code change — this is a documentation/audit deliverable, not a build ticket.
 - GUARD: `verify-factoring-asc860-control-test-documented.mjs` — fails if the doc lacks a `## ASC 860 Control Test` section with a sign-off date field.
 
@@ -1658,7 +1658,7 @@ GATED: **25 yes** / **7 no** among the 32 still-open tickets (financial/mdata-wr
 - FILES: none to change in-repo for the reclass itself; `apps/backend/src/integrations/qbo/forensic-report.service.ts` (reference)
 - FIX STEPS:
   1. This ticket cannot be closed by a coder — surface to Jorge/CPA: reclassify the 2 QBO accounts + rule on theft-loss vs. recoverable treatment (see memory `qbo-balance-in-flux-embezzlement`).
-  2. The ONE buildable coder task: add a TMS-side tracking flag/note on the forensic report noting "pending CPA reclass ruling" so the balance is visibly flagged as provisional wherever it's displayed.
+  2. The ONE buildable coder task: add a TMS-side tracking flag/note on the forensic report noting "pending owner reclass ruling" so the balance is visibly flagged as provisional wherever it's displayed.
 - GUARD: none (owner/CPA action) beyond the existing forensic-report tests.
 
 ---
@@ -1943,7 +1943,7 @@ behind; verification used `git show origin/main:<path>` / `git grep <pat> origin
 
 ---
 
-### factoring-asc860-determination-memo  [factoring]  not code-gated (documentation/CPA sign-off)
+### factoring-asc860-determination-memo  [factoring]  not code-gated (documentation/owner sign-off)
 - STATE: STILL-OPEN
 - ROOT CAUSE: `docs/accounting/FACTORING-ASC860-DETERMINATION.md` does not exist; no ASC-860 memo anywhere in the repo (only `.block-ready` stub JSON files reference the id).
 - FILES: (new) `docs/accounting/FACTORING-ASC860-DETERMINATION.md`.
@@ -2228,7 +2228,7 @@ behind; verification used `git show origin/main:<path>` / `git grep <pat> origin
 
 ## GATED vs non-gated
 
-- **GATED** (touches `accounting.*`/`catalogs.*`/`mdata.*`/db migrations/posting/GL/flags — needs owner OK before merge): **19** — flow1-escrow-linked-to-termination-record; hiredate-provenance-partial; 0091-g10-h3 (escrow forfeit posting); 0091-g11-5; 0243-b1-2-factor-reserve-default-liability-fal; 0251-gap1/0251-gap4 (already-fixed, but schema-touching class); 0518-r18-schema-fragmentation-8-dup-pairs; fact-par-1-factoring-submission-gating; factoring-coder-directive-item-c-unconfirmed; owner-batch-s2-units-value-catalog; 0091-h5-1/0243-h5-1; 0519-dc2-maint-schema-144-rows-active-alongsid; 0010-f2-unscoped-financial-tables; 0010-f3-rls-missing-force; 0243-g2-2-operating-company-id-trusted-raw-ten; factoring-g3-debtor-credit-check-decision-note; factoring-asc860-determination-memo (CPA sign-off, not code, but financial-determination); 0091-h2-3/0243-h2-3-lucia (auth path, treated cautiously though not accounting.*).
+- **GATED** (touches `accounting.*`/`catalogs.*`/`mdata.*`/db migrations/posting/GL/flags — needs owner OK before merge): **19** — flow1-escrow-linked-to-termination-record; hiredate-provenance-partial; 0091-g10-h3 (escrow forfeit posting); 0091-g11-5; 0243-b1-2-factor-reserve-default-liability-fal; 0251-gap1/0251-gap4 (already-fixed, but schema-touching class); 0518-r18-schema-fragmentation-8-dup-pairs; fact-par-1-factoring-submission-gating; factoring-coder-directive-item-c-unconfirmed; owner-batch-s2-units-value-catalog; 0091-h5-1/0243-h5-1; 0519-dc2-maint-schema-144-rows-active-alongsid; 0010-f2-unscoped-financial-tables; 0010-f3-rls-missing-force; 0243-g2-2-operating-company-id-trusted-raw-ten; factoring-g3-debtor-credit-check-decision-note; factoring-asc860-determination-memo (owner sign-off, not code, but financial-determination); 0091-h2-3/0243-h2-3-lucia (auth path, treated cautiously though not accounting.*).
 - **Not gated** (safe to build+PR on green CI, no accounting/schema/GL/prod-migration touch): **remainder** — notif-b-android-block; s-08-no-driver-unit-type-date-filters-incident; 0441-mod13-inventory-part-to-unit-none; 0441-mod3-fuel-fraud-detector-cron-never-invok; 0441-mod12-legal-no-reverse-drill-through (frontend-only reverse links); fact-fix1-duplicate-vendors-banner; fact-par1-submissionqueue-unrouted; 0033-verify-fk-integrity-guard (CI tooling only); wo-cancellation-reasons-fold-into-void-cancel- (catalogs consolidation, non-financial data); plus all ALREADY-FIXED / UNVERIFIABLE items (no build needed).
 
 # bb_6 Build Tickets — Re-Verified Against Current `main`

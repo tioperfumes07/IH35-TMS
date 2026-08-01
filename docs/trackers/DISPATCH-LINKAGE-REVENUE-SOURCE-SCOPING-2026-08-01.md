@@ -3,6 +3,12 @@
 **Date:** 2026-08-01 · **Author:** Claude Coder · **Status:** SCOPING ONLY — nothing built, nothing
 mounted, no writes. Every number below read live on prod `br-fancy-credit-akjnd07a`.
 
+> **⚠ PARTIALLY SUPERSEDED — read `VERIFIED-FINANCIAL-STATE-OF-RECORD-2026-08-01.md` first.**
+> Two claims in this document were WRONG and are corrected there and inline below:
+> (1) the recognition flag is **ON** for TRANSP + USMCA (not OFF / not "doubly gated"), and the Unbilled
+> Revenue account **exists** (TRANSP `1240`, USMCA `1150`) — see item 3 in §3; (2) the load-status
+> distribution counted **soft-deleted** loads. The measured stop-timestamp gap itself (0 of 20) stands.
+
 ## Headline
 
 The two-event latch has **no timestamp source at all** — not a degraded one, none. And the cause is
@@ -125,8 +131,14 @@ timestamp exists, the join to the load is available.
 2. **Event 2 — bill at POD** (`completed_docs_received`) → DR A/R / CR Unbilled Revenue. One load is
    already in that status, so event 2's trigger exists while event 1's source does not — the latch
    would be asked to bill revenue it never earned.
-3. **Hard prerequisite unchanged:** an Unbilled Revenue account must be seeded for TRANSP + USMCA
-   before `REVENUE_RECOGNITION_POST_ENABLED` may flip; flipping without it is a runtime 500.
+3. **CORRECTED 2026-08-01 (was WRONG in the original text).** This doc originally said an Unbilled
+   Revenue account "must be seeded before the flag may flip; flipping without it is a runtime 500."
+   **That is false against prod.** Verified live on `br-fancy-credit-akjnd07a`:
+   `REVENUE_RECOGNITION_POST_ENABLED` is already **ON** for TRANSP + USMCA (per-entity overrides in
+   `lib.feature_flag_overrides`, set 2026-07-26; TRK OFF), the Unbilled Revenue account already
+   **EXISTS** (TRANSP `1240`, USMCA `1150`), and the CoA roles are bound and active. The latch has
+   already posted live. Do NOT seed the account (duplicate defect) and do NOT describe the flag as
+   OFF. Canonical: `VERIFIED-FINANCIAL-STATE-OF-RECORD-2026-08-01.md`.
 
 ---
 

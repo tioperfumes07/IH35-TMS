@@ -130,7 +130,7 @@ unchanged) once confirmed — a small, additive follow-up, not a rebuild.
 - Migration validated locally (idempotent — applied twice, second run a no-op); `has_table_privilege('ih35_app', 'driver_finance.driver_escrow_separations', 'DELETE')` is `false`.
 - `node scripts/verify-driver-escrow-separation-90day-gate.mjs` — static guard: the release function must
   check the flag before any write and must gate on `eligible_release_date`.
-- Flag `DRIVER_ESCROW_SEPARATION_RETURN_ENABLED` stays OFF until Jorge/CPA sign-off; this migration is
+- Flag `DRIVER_ESCROW_SEPARATION_RETURN_ENABLED` stays OFF until Jorge/owner sign-off; this migration is
   registered in `db/migrations/.held-migrations.json` and carries the `DO NOT RUN ON PROD` marker.
 
 ## 5. Explicitly out of scope (flagged, not silently skipped)

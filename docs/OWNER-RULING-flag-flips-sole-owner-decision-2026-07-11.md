@@ -30,17 +30,17 @@ CPA-decision notes, or trackers) that implied an external gate on enabling money
 
 ## What this changes for the coder/agent
 
-- **Do NOT** cite "CPA sign-off", "accountant approval", "external sign-off", or a "12/31/2025 cutover" as a
+- **Do NOT** cite `CPA sign-off`, "accountant approval", "external sign-off", or a "12/31/2025 cutover" as a
   precondition for any flag flip or money-posting enablement. Those gates do not exist.
 - **Still true (unchanged):** the coder/agent NEVER flips a money/GL flag or promotes a financial migration to
   prod on its own initiative (skill §1.4). Flags stay **default OFF**; the **owner** flips them. Build-and-hold
   + GUARD proof remain the technical pipeline; the owner's word is the only authorization to enable.
 - When surfacing a flag-flip decision, present: (a) GUARD's technical proof, (b) a recommendation, and (c)
-  "your call" — never "pending CPA."
+  "your call" — never `pending CPA`.
 
 ## Supersedes / reconciles
 
 - Retires the skill §6 phrases: *"QBO is the system-of-record through 12/31/2025"* and *"Money-posting env
-  flags stay OFF until CPA sign-off + Neon tie-out."* (Updated in this same change.)
+  flags stay OFF until owner sign-off + Neon tie-out."* (Updated in this same change.)
 - Any memory or tracker note (e.g. CPA-locked-decisions) that reads as an external gate on enablement is
   **informational history only** — this ruling controls. Trust proof continues; external sign-off does not gate.

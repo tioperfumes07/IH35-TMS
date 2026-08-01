@@ -1,28 +1,44 @@
 ---
 name: ih35-accounting-decisions
 description: >-
-  The CPA/owner-LOCKED accounting decisions for IH35-TMS — the parallel double-books architecture, the
+  The OWNER-LOCKED accounting decisions for IH35-TMS — the parallel double-books architecture, the
   opening-balance basis and cutover, factoring-as-secured-borrowing, driver escrow = liability, cash-basis
   mirroring, revenue recognition, the A/R and A/P account mapping, and the twice-daily reconciliation. Load
   this before building, reviewing, or reasoning about ANYTHING in accounting/finance (opening balances, GL
   posting, factoring, driver settlements, reconciliation, QBO import) so these settled decisions are treated
-  as non-negotiable context, never re-derived or re-litigated. These are OWNER/CPA rulings; an agent NEVER
+  as non-negotiable context, never re-derived or re-litigated. These are OWNER rulings — THERE IS NO CPA; the
+  owner is the sole financial authority. An agent NEVER
   posts opening/financial entries to prod and NEVER builds GL-posting math solo (design docs only).
 ---
 
-# IH35-TMS — Locked CPA / accounting decisions
+# IH35-TMS — Locked accounting decisions (owner authority)
 
-These are **settled** (owner + CPA). Do not re-derive or re-open them; build to them. When code disagrees
+> **READ FIRST — two standing corrections that keep resurfacing. Verify live; do NOT re-ask the owner.**
+> 1. **There is NO CPA.** The owner (Jorge) is the sole financial authority. Retire every `owner + CPA`,
+>    `CPA sign-off`, `CPA tie-out`, `pending CPA`, `with your accountant` gate in this skill and every other
+>    doc — the approval authority is the **owner, alone**.
+> 2. **Revenue-recognition posting is already LIVE — it is NOT off, and the account already EXISTS.**
+>    `REVENUE_RECOGNITION_POST_ENABLED` is **ON for TRANSP + USMCA** (per-entity overrides in
+>    `lib.feature_flag_overrides`, set 2026-07-26; TRK OFF). The **Unbilled Revenue account EXISTS**
+>    (TRANSP `1240`, USMCA `1150`) and the CoA roles are bound. The old "flag OFF / seed the account first /
+>    flipping = runtime 500" wording is **FALSE against prod** — do not repeat it and do not create the
+>    account (duplicate defect). Reading the global `default_enabled=false` and concluding "OFF" is a
+>    masked-scope error — read `lib.feature_flag_overrides` PER ENTITY. Canonical live state:
+>    `docs/trackers/VERIFIED-FINANCIAL-STATE-OF-RECORD-2026-08-01.md`.
+
+These are **settled** by the **owner** (there is **NO CPA**). Do not re-derive or re-open them; build to them. When code disagrees
 with a locked decision, the decision wins — fix the code. Bundled: `resources/locked-decisions-reference.md`
 (a scannable decision card). Deeper: `docs/lockdown/00_LOCKED_DECISIONS.md`, `docs/specs/ACCOUNTING-ARCHITECTURE.md`,
-`docs/specs/TMS-QBO-PARALLEL-BOOKS.md`, and the CPA Answers Integration Phase 1 section in
-`docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md`.
+`docs/specs/TMS-QBO-PARALLEL-BOOKS.md`, and the CPA Answers Integration
+Phase 1 section in `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` (that doc's section name is literal —
+the "no CPA" fact above still governs; the section is just where those answers were recorded).
 
 ## The one rule that governs all of this
 **An agent never posts a financial/opening entry to prod, never moves money, and never writes GL-posting
 math solo** (constitution §1.4/§1.6). Opening balances are **owner-entered**. You may build read-only engines,
-design docs, draft JE/SQL proofs, and flag-OFF scaffolding — the actual posting/flip is the owner's hand + CPA
-sign-off. Money-posting env flags stay **OFF** until CPA + Neon tie-out.
+design docs, draft JE/SQL proofs, and flag-OFF scaffolding — the actual posting/flip is **the owner's hand**
+(there is NO CPA — the owner is the sole financial authority). Money-posting env flags flip on the **owner's
+sign-off + Neon tie-out**.
 
 ## 1. Architecture — PARALLEL double-books (not a sync)
 Canonical **three-layer model** (must stay aligned with `TMS-QBO-PARALLEL-BOOKS.md`,
@@ -72,7 +88,7 @@ Opening-balance mechanics:
 Faro (current) → RTS (planned). Book as: **Factoring Advance** (liability) / **Factoring Reserves** (short-term
 asset) / **Factoring Recoursed Invoices**. ASC 860 control-test nuance applies; it is financing, not revenue.
 
-**Sanitized Faro commercial terms (owner/CPA verified; actual factor statements remain authoritative):**
+**Sanitized Faro commercial terms (owner-verified; actual factor statements remain authoritative):**
 - Revolving limit **$1,000,000**
 - Tier 1 fee **1.5% of Net at funding**; Tier 2 fee **2% of Net at funding**
 - Reserve **1.5%**
@@ -106,7 +122,7 @@ asset) / **Factoring Recoursed Invoices**. ASC 860 control-test nuance applies; 
   delivery recognition does **not** redefine cash recognition.
 - POD approval and invoice creation are **billing/factoring readiness** only — they do **not** move the
   accrual recognition event (stale “invoice-create recognition” wording is a defect).
-- **Two-event latch (LOCKED — OWNER, 2026-07-19):** point-in-time at delivery is a **defensible practical simplification** of ASC 606 over-transit (`606-10-25-27`), **not the only correct method**. Event 1 earn at `delivered`/`delivered_pending_docs` → **DR Unbilled Revenue / CR Line-Haul Income**; Event 2 bill at `completed_docs_received` (POD) → **DR A/R / CR Unbilled Revenue** — never one combined POD+delivered gate; reversible if status reverts. **HARD PREREQUISITE:** seed Unbilled Revenue for TRANSP+USMCA (`JORGE-APPROVED` + Neon proof) before `REVENUE_RECOGNITION_POST_ENABLED` may flip — flipping without the account = runtime 500; no "done" without the account existing. Entity scope: TRANSP seed+enable first; USMCA seed Unbilled+Deferred dormant until loads; **TRK: EXCLUDED** (`42000-LEASE`). Materiality per-entity/configurable/**no permissive default** (single-correction AND cumulative-for-period). Maker/checker: automated = system/SOD-A-exempt; closed-period corrections = Owner/Admin/Accountant second-user, reject→void. Reconciliation: TMS delivery vs QBO invoice gap is a **KNOWN reconciling item** ("TMS unbilled revenue not yet in QBO"), never an error. Reporting: Unbilled Revenue report (earned-not-billed by load, aged, clearing to A/R) linked to `mdata.loads`. Boundary: multi-obligation/bundled → NetSuite-grade + SSP allocation; long lanes / material cutoff → revisit over-transit. Flag default OFF; no QBO write-back. Full detail: `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` §18 "Revenue Recognition — Delivery Two-Event Latch (LOCKED — OWNER, 2026-07-19)".
+- **Two-event latch (LOCKED — OWNER, 2026-07-19):** point-in-time at delivery is a **defensible practical simplification** of ASC 606 over-transit (`606-10-25-27`), **not the only correct method**. Event 1 earn at `delivered`/`delivered_pending_docs` → **DR Unbilled Revenue / CR Line-Haul Income**; Event 2 bill at `completed_docs_received` (POD) → **DR A/R / CR Unbilled Revenue** — never one combined POD+delivered gate; reversible if status reverts. **LIVE STATE (verified prod `br-fancy-credit-akjnd07a` 2026-08-01 — this SUPERSEDES the old "seed the account first / flag OFF / flipping = 500" wording, which is stale):** the Unbilled Revenue account EXISTS and is postable (TRANSP `1240`, USMCA `1150`; **TRK EXCLUDED**, `42000-LEASE`); the CoA roles (`unbilled_revenue`, `revenue_default`, `ar_control`) are bound + active for TRANSP + USMCA; and `REVENUE_RECOGNITION_POST_ENABLED` is **ON for TRANSP + USMCA** via `lib.feature_flag_overrides` (set 2026-07-26; TRK OFF) — the global `default_enabled=false` is irrelevant because the poster passes `operating_company_id` and `resolveFlagEnabled()` returns the per-entity override first. Do NOT re-create/seed the account (duplicate defect); do NOT call the flag OFF (read `lib.feature_flag_overrides` per entity). The latch is built + smoke-tested live (2026-07-30, load L-20260624-0083, $15,000, both JEs balanced). **OPEN DEFECT:** the latch fires on load STATUS and its only caller is the office endpoint (`dispatch/loads.routes.ts:1330`) which reads no `load_stops`; the driver capture path never calls it, so it can post an earn with no delivery evidence — fix in progress (poster fail-closed on missing final-active-delivery-stop `actual_departure_at` + wire the capture path). Entity scope: TRANSP live; USMCA live (Unbilled 1150 present); **TRK: EXCLUDED** (`42000-LEASE`). Materiality per-entity/configurable/**no permissive default** (single-correction AND cumulative-for-period). Maker/checker: automated = system/SOD-A-exempt; closed-period corrections = Owner/Admin/Accountant second-user, reject→void. Reconciliation: TMS delivery vs QBO invoice gap is a **KNOWN reconciling item** ("TMS unbilled revenue not yet in QBO"), never an error. Reporting: Unbilled Revenue report (earned-not-billed by load, aged, clearing to A/R) linked to `mdata.loads`. Boundary: multi-obligation/bundled → NetSuite-grade + SSP allocation; long lanes / material cutoff → revisit over-transit. Flag is per-entity (ON for TRANSP + USMCA, OFF for TRK — see LIVE STATE above); no QBO write-back. Full detail: `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` §18 "Revenue Recognition — Delivery Two-Event Latch (LOCKED — OWNER, 2026-07-19)".
 - Uncategorized + daily cleanup remains the hygiene rule.
 
 ## 6. Chart of Accounts (additive structure — never delete/rename existing)
@@ -147,7 +163,8 @@ asset) / **Factoring Recoursed Invoices**. ASC 860 control-test nuance applies; 
 - Retain existing **read-only consolidated reporting** additively for future reporting needs — never delete
   the consolidated surface; do not treat it as the books of record for a legal entity.
 - **No sales tax on line-haul** — interstate/cross-border freight transportation is not TX-sales-taxable.
-- Laredo tax entities; Ch.11 confirmed. Money posting stays **OFF** until CPA + Neon tie-out.
+- Laredo tax entities; Ch.11 confirmed. Money posting flips on the **owner's** sign-off + Neon tie-out
+  (there is **NO CPA** — the owner is the sole financial authority).
 
 ---
 Cross-refs: [[accounting-architecture-parallel-clone-reconcile]], [[cpa-locked-decisions-2026-07-01]],

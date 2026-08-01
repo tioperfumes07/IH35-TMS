@@ -219,7 +219,7 @@ LIMIT 50;
 COMMIT;
 ```
 
-**Not run (owner-gated, would mutate live financial state — do NOT run without JORGE-APPROVED + CPA sign-off):** any `INSERT`/`UPDATE` into `accounting.chart_of_accounts_roles`, any flag flip in `lib.feature_flags` / `lib.feature_flag_overrides`, any backfill of the 16,198 header-only bills. These remain **UNVERIFIED-BY-DESIGN** — this audit deliberately did not attempt them.
+**Not run (owner-gated, would mutate live financial state — do NOT run without JORGE-APPROVED + owner sign-off):** any `INSERT`/`UPDATE` into `accounting.chart_of_accounts_roles`, any flag flip in `lib.feature_flags` / `lib.feature_flag_overrides`, any backfill of the 16,198 header-only bills. These remain **UNVERIFIED-BY-DESIGN** — this audit deliberately did not attempt them.
 
 ---
 

@@ -1,7 +1,7 @@
 # Financial / Accounting — Owner Unblock Packet
 
 **Purpose.** The accounting program is not blocked on more code — it is blocked on a short chain of
-owner/CPA actions that only Jorge can perform (prod DB access, CPA sign-off, flag flips). This packet
+owner/CPA actions that only Jorge can perform (prod DB access, owner sign-off, flag flips). This packet
 lists those exact steps so the whole downstream can be unblocked in one sitting. Everything else is
 built-and-held behind default-OFF flags, ready to flip the moment each gate clears.
 
@@ -14,7 +14,7 @@ See `docs/specs/ACCOUNTING-ARCHITECTURE.md` and `docs/lockdown/00_LOCKED_DECISIO
 ## The critical path (3 gates)
 
 ```
-GATE 1  Supervised Neon/QBO pull ──▶  GATE 2  CPA sign-off ──▶  GATE 3  Per-entity flag flips ──▶  LIVE
+GATE 1  Supervised Neon/QBO pull ──▶  GATE 2  owner sign-off ──▶  GATE 3  Per-entity flag flips ──▶  LIVE
 (opening TB + AR/AP aging)            (opening JE + rules)       (once tie-out proves TMS==QBO)
 ```
 
@@ -48,7 +48,7 @@ position, then keep AR/AP current for reconciliation.
 
 ---
 
-## GATE 2 — CPA sign-off (design done; needs the CPA's name on it)
+## GATE 2 — owner sign-off (design done; needs the CPA's name on it)
 
 Confirm the already-locked decisions and the opening entry. Nothing here is new design — it's ratification.
 

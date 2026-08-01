@@ -271,7 +271,7 @@ throws `ACCOUNT_MAPPING_MISSING`. No silent fallback to a wrong account.
 
 **Double-gating (per finance-flag convention):** the per-entity DB override AND the deploy-time env
 default both must be ON to post in prod (memory *Finance Screen Flag Enablement*). Money flags stay
-OFF until CPA sign-off + Neon verification (memory *Finance Engine Decisions LOCKED*).
+OFF until owner sign-off + Neon verification (memory *Finance Engine Decisions LOCKED*).
 
 ---
 

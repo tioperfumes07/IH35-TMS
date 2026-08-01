@@ -34,7 +34,7 @@ No selector is rendered on:
 
 Each accrual-only surface includes inline note text:
 
-`This report is always accrual basis per CPA sign-off.`
+`This report is always accrual basis per owner sign-off.`
 
 ## Guard + Tests
 
