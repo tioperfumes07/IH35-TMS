@@ -518,7 +518,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   });
   const vendorsQuery = useQuery({
     queryKey: ["maintenance", "vendors", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: 200 }),
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: 1000 }),
     enabled: open && Boolean(operatingCompanyId),
   });
   const vendorOptions = (vendorsQuery.data?.vendors ?? [])

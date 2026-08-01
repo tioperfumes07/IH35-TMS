@@ -73,7 +73,7 @@ export function CreateWOSectionIdentification({
   });
   const vendorsQuery = useQuery({
     queryKey: ["maintenance", "vendors", operatingCompanyId, "create-wo-id"],
-    queryFn: () => listVendors({ operating_company_id: String(operatingCompanyId), status: "active", limit: 200 }),
+    queryFn: () => listVendors({ operating_company_id: String(operatingCompanyId), status: "active", limit: 1000 }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });

@@ -59,7 +59,7 @@ export function VendorCreditsPage() {
 
   const vendorsQuery = useQuery({
     queryKey: ["vendors", "picker", companyId],
-    queryFn: () => listVendors({ operating_company_id: companyId, limit: 500 }),
+    queryFn: () => listVendors({ operating_company_id: companyId, limit: 1000 }),
     enabled: Boolean(companyId),
   });
   const vendorOptions = useMemo(

@@ -177,7 +177,7 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
         "Vendor inline create ALREADY exists and is already picker-law compliant: <ReferenceSelect createKind=\"vendor\"> routes to InlineCreateDrawer at ~42 call sites. C1's rule is to extend the #3550 mechanism, not duplicate it — a second vendor creator here would be exactly the fork this block forbids. Use ReferenceSelect when a vendor field needs create; use this picker when it only needs to SELECT (e.g. a list filter).",
     },
     async list(operatingCompanyId) {
-      const res = await listVendors({ operating_company_id: operatingCompanyId, limit: 500 });
+      const res = await listVendors({ operating_company_id: operatingCompanyId, limit: 1000 });
       return (res.vendors ?? []).map((v) => ({ value: v.id, label: v.name, sublabel: v.vendor_type }));
     },
   },

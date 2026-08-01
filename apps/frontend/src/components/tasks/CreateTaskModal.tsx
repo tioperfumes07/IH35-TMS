@@ -108,7 +108,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
   // Entity records for the selected kind (company-scoped, limit:200).
   const vendorsQuery = useQuery({
     queryKey: ["task-entity", "vendor", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 200 }),
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 1000 }),
     enabled: open && entityKind === "vendor" && Boolean(operatingCompanyId),
   });
   const customersQuery = useQuery({

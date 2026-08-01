@@ -106,7 +106,7 @@ export function CreateMultipleBillsPage() {
 
   const vendorsQuery = useQuery({
     queryKey: ["multi-bills", "vendors", companyId],
-    queryFn: () => listVendors({ operating_company_id: companyId, limit: 200 }),
+    queryFn: () => listVendors({ operating_company_id: companyId, limit: 1000 }),
     enabled: Boolean(companyId),
   });
 

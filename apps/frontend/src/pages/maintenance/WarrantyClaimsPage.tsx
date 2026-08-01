@@ -57,7 +57,7 @@ export function WarrantyClaimsPage() {
   // (a different table with different uuids), so every claim vendor_id 500'd on the FK constraint.
   const vendorsQ = useQuery({
     queryKey: ["mdata", "vendors", companyId, "warranty-claims"],
-    queryFn: () => listVendors({ operating_company_id: companyId, status: "active", limit: 200 }),
+    queryFn: () => listVendors({ operating_company_id: companyId, status: "active", limit: 1000 }),
     enabled: Boolean(companyId),
   });
 

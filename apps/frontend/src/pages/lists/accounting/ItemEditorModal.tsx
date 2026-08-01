@@ -120,7 +120,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
   const vendorsQuery = useQuery({
     // limit 200: the vendors endpoint defaults to 50 and would silently truncate the picker otherwise.
     queryKey: ["mdata", "vendors", "for-items", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: 200 }),
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: 1000 }),
     enabled: open && !!operatingCompanyId,
   });
 

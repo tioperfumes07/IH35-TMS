@@ -230,7 +230,7 @@ export function BillsPage() {
   // Vendor picker options — pass limit:200 (endpoint defaults to 50, would silently truncate).
   const vendorsQuery = useQuery({
     queryKey: ["mdata", "vendors", "bills-filter", companyId],
-    queryFn: () => listVendors({ operating_company_id: companyId, limit: 200 }),
+    queryFn: () => listVendors({ operating_company_id: companyId, limit: 1000 }),
     enabled: Boolean(companyId),
   });
   const vendorOptions = vendorsQuery.data?.vendors ?? [];

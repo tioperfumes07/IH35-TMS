@@ -37,7 +37,7 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
 
   const vendorsQuery = useQuery({
     queryKey: ["mdata", "vendors", operatingCompanyId, "road-service"],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: 200 }),
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: 1000 }),
     enabled: open && Boolean(operatingCompanyId),
   });
 
