@@ -529,7 +529,27 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       if (!stop) return { error: "forbidden" as const };
       if (!["arrived", "loaded", "unloaded"].includes(stop.status)) return { error: "invalid_stop_state" as const };
 
-      const nextLoadStatus = stop.stop_type === "delivery" ? "delivered_pending_docs" : "in_transit";
+      // MULTI-DROP FIX — only the FINAL ACTIVE delivery stop completes the load. The previous
+      // `stop.stop_type === "delivery"` test latched delivered_pending_docs on ANY delivery
+      // departure, so a multi-drop load would have earned the ENTIRE line-haul at the first drop.
+      // "Final active" = highest sequence_number among delivery stops that are neither cancelled
+      // nor soft-deleted. Single-drop loads are unaffected (the only stop IS the final one).
+      const finalDeliveryRes = await client.query<{ id: string }>(
+        `
+          SELECT s.id
+          FROM mdata.load_stops s
+          WHERE s.load_id = $1
+            AND s.stop_type::text = 'delivery'
+            AND s.status::text <> 'cancelled'
+            AND s.soft_deleted_at IS NULL
+          ORDER BY s.sequence_number DESC
+          LIMIT 1
+        `,
+        [params.data.id]
+      );
+      const isFinalActiveDeliveryStop =
+        stop.stop_type === "delivery" && finalDeliveryRes.rows[0]?.id === stop.id;
+      const nextLoadStatus = isFinalActiveDeliveryStop ? "delivered_pending_docs" : "in_transit";
       const transition = validateLoadStopStatusWrite(stop.load_status, nextLoadStatus);
       if (!transition.ok) return { error: "invalid_load_state" as const, from: transition.from, to: transition.to };
 

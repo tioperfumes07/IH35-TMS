@@ -48,6 +48,7 @@ export type RevrecPostResult = {
     | "load_not_found"
     | "earn_missing_for_bill"
     | "amount_mismatch"
+    | "missing_delivery_evidence"
     | "latch_table_missing";
   journal_entry_id?: string;
   event?: RevrecEvent;
@@ -214,6 +215,53 @@ export type PostLoadRevenueLatchInput = {
   actor_user_id: string;
 };
 
+/**
+ * EVIDENCE GATE (owner-approved Option B, 2026-08-01) — recognition is EVIDENCE-driven, never
+ * status-driven.
+ *
+ * Event 1 may only earn when the FINAL ACTIVE delivery stop carries a real `actual_departure_at`,
+ * which the CPA decision (§5 / blueprint §18) names as the recognition source. Load STATUS is
+ * deliberately NOT sufficient: `mdata.loads.status` is written from 8 separate code paths, three of
+ * which can reach `delivered_pending_docs`+ by validating only a status graph without ever reading
+ * `mdata.load_stops`. The inversion this closes is exact — the only path that CAPTURES delivery
+ * evidence (driver arrive/depart) never triggers this latch, and the only path that DOES trigger it
+ * (the office transition endpoint) captures no evidence.
+ *
+ * The gate lives HERE, in the poster, rather than in any caller, so it holds no matter which of the
+ * status writers fires the latch now or later.
+ *
+ * "Final active" = highest `sequence_number` among delivery stops that are neither `cancelled` nor
+ * soft-deleted. Ordering by sequence is what makes a multi-drop load earn at the LAST drop rather
+ * than the first. Returns the timestamp when the evidence exists, otherwise null.
+ *
+ * Deliberately NOT a hard block on the dispatch workflow: a load with no evidence simply does not
+ * recognize (a visible, correctable exception). Blocking the status transition instead would create
+ * pressure to type a fabricated delivery time to unblock billing, and a fabricated timestamp under a
+ * revenue entry is far more dangerous than an unrecognized load.
+ */
+async function finalActiveDeliveryDepartureAt(
+  client: DbClient,
+  operatingCompanyId: string,
+  loadId: string
+): Promise<string | null> {
+  const res = await client.query<{ actual_departure_at: string | null }>(
+    `
+      SELECT s.actual_departure_at::text AS actual_departure_at
+      FROM mdata.load_stops s
+      JOIN mdata.loads l ON l.id = s.load_id
+      WHERE s.load_id = $1::uuid
+        AND l.operating_company_id = $2::uuid
+        AND s.stop_type::text = 'delivery'
+        AND s.status::text <> 'cancelled'
+        AND s.soft_deleted_at IS NULL
+      ORDER BY s.sequence_number DESC
+      LIMIT 1
+    `,
+    [loadId, operatingCompanyId]
+  );
+  return res.rows[0]?.actual_departure_at ?? null;
+}
+
 function resolveEvent(targetStatus: string): RevrecEvent | null {
   // Dispatch machine uses delivered_pending_docs (not a separate "delivered") for earn.
   if (targetStatus === "delivered" || targetStatus === "delivered_pending_docs") return "earn";
@@ -245,6 +293,16 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
 
     if (await loadLatchExists(client, input.operating_company_id, input.load_id, event)) {
       return { gate: "already_posted" as const };
+    }
+
+    // Event 1 earns ONLY on real captured delivery evidence — never on status alone.
+    if (event === "earn") {
+      const departedAt = await finalActiveDeliveryDepartureAt(
+        client,
+        input.operating_company_id,
+        input.load_id
+      );
+      if (!departedAt) return { gate: "missing_delivery_evidence" as const };
     }
 
     let amount = load.rate_total_cents;
@@ -287,6 +345,7 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
   if (prepared.gate === "load_not_found") return { posted: false, reason: "load_not_found" };
   if (prepared.gate === "already_posted") return { posted: false, reason: "already_posted" };
   if (prepared.gate === "earn_missing_for_bill") return { posted: false, reason: "earn_missing_for_bill" };
+  if (prepared.gate === "missing_delivery_evidence") return { posted: false, reason: "missing_delivery_evidence" };
   if (prepared.gate === "zero_amount") return { posted: false, reason: "zero_amount" };
 
   const created = await createJournalEntry(
