@@ -1,9 +1,11 @@
 {
   "block": "I",
+  "block_id": "BLOCK-I-CI-DIST-FIX",
   "name": "CI-infra fix: verify:no-duplicate-routes dist/ availability",
   "model": "Sonnet",
   "category": "CI tooling",
-  "status": "ready",
+  "classification": "NON-FINANCIAL",
+  "status": "done",
   "changes": [
     {
       "file": "scripts/verify-no-duplicate-routes.mjs",
@@ -33,7 +35,15 @@
     "script_result": "verify:no-duplicate-routes OK (no dist/ required)"
   },
   "allowed_files": [
-    "scripts/verify-no-duplicate-routes.mjs"
+    "scripts/verify-no-duplicate-routes.mjs",
+    "scripts/__tests__/verify-no-duplicate-routes.test.mjs"
   ],
-  "evidence_note": "NV-29-CLOSE 2026-06-26: allowed_files backfilled with verified on-main artifacts (registry was blank; feature already built)."
+  "acceptance": [
+    {
+      "kind": "live",
+      "check": "VERIFIED 2026-08-01: the manifest's described src-based migration (distRoot->apps/backend/src, autoloadRoot->apps/backend/src/accounting, .routes.js/.js -> .routes.ts/.ts, --dist-root -> --src-root) had NEVER actually been applied to scripts/verify-no-duplicate-routes.mjs — it still defaulted to dist/ and required npm run build:backend first. The test fixtures at scripts/__tests__/fixtures/no-duplicate-routes/{positive,negative}/src already existed in TS form but scripts/__tests__/verify-no-duplicate-routes.test.mjs still pointed at nonexistent positive/dist + negative/dist, so the negative (duplicate-detection) test was silently finding 0 files and failing. Completed the migration: script now reads apps/backend/src directly (no dist/ build required), with a relative-to-root isExcludedFromBuild() check mirroring apps/backend/tsconfig.json's test excludes (.test.ts, .integration.test.ts, .deprecated.ts, __tests__/) so it never false-positives on route-like code in tests. node --test scripts/__tests__/verify-no-duplicate-routes.test.mjs -> 2/2 pass (positive AND negative fixtures both correctly resolved); node scripts/verify-no-duplicate-routes.mjs -> OK (no dist/ required) against the live apps/backend/src tree.",
+      "evidence": "node --test scripts/__tests__/verify-no-duplicate-routes.test.mjs -> 2 pass, 0 fail; node scripts/verify-no-duplicate-routes.mjs -> 'verify:no-duplicate-routes OK (no dist/ required)'."
+    }
+  ],
+  "evidence_note": "NV-29-CLOSE 2026-06-26: allowed_files backfilled with verified on-main artifacts (registry was blank; feature already built). 2026-08-01: 'already built' claim was FALSE — script still dist-based; migration actually completed this pass, see acceptance[0]."
 }
