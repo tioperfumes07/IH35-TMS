@@ -59,7 +59,7 @@ run("dire accident scenario — full linkage (real engine)", () => {
       await db.query(`INSERT INTO accounting.expense_category_account_map (operating_company_id,category_kind,category_code,account_id,posting_side,is_active) VALUES ($1::uuid,'maintenance',$2,$3::uuid,'debit',true)`, [companyId, `RPR-${s}`, id.repair]);
       // operational: Tio Perfumes customer, unit, driver, delivered load
       await db.query(`INSERT INTO mdata.customers (id,operating_company_id,customer_name) VALUES ($1::uuid,$2::uuid,'Tio Perfumes')`, [id.customer, companyId]);
-      await db.query(`INSERT INTO mdata.units (id,owner_company_id,unit_number,vin) VALUES ($1::uuid,$2::uuid,$3,$4)`, [id.unit, companyId, `TRK${s}`, `1DIRE${s}ACCIDENT01`]);
+      await db.query(`INSERT INTO mdata.units (id,owner_company_id,unit_number,vin, is_sample_data) VALUES ($1::uuid,$2::uuid,$3,$4, true)`, [id.unit, companyId, `TRK${s}`, `1DIRE${s}ACCIDENT01`]);
       await db.query(`INSERT INTO mdata.drivers (id,operating_company_id,first_name,last_name,phone) VALUES ($1::uuid,$2::uuid,'AtFault','Driver',$3)`, [id.driver, companyId, `95605${s.slice(0,5)}`]);
       await db.query(`INSERT INTO mdata.loads (id,operating_company_id,load_number,customer_id,dispatcher_user_id,status,assigned_primary_driver_id,assigned_unit_id) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,'delivered',$6::uuid,$7::uuid)`, [id.load, companyId, `LOAD-${s}`, id.customer, userId, id.driver, id.unit]);
       // insurance coverage type + policy

@@ -92,7 +92,7 @@ run("Tio Perfumes end-to-end money scenario (real engine)", () => {
       // Operational narrative — Tio Perfumes as CUSTOMER and VENDOR, a truck, a driver, a delivered load
       await db.query(`INSERT INTO mdata.customers (id,operating_company_id,customer_name) VALUES ($1::uuid,$2::uuid,'Tio Perfumes')`, [ids.customer, companyId]);
       await db.query(`INSERT INTO mdata.vendors (id,operating_company_id,vendor_name,vendor_type) VALUES ($1::uuid,$2::uuid,'Tio Perfumes','Other')`, [ids.vendor, companyId]);
-      await db.query(`INSERT INTO mdata.units (id,owner_company_id,unit_number,vin) VALUES ($1::uuid,$2::uuid,$3,$4)`, [ids.unit, companyId, `TRK${s}`, `1TIO${s}PERFUMES0001`]);
+      await db.query(`INSERT INTO mdata.units (id,owner_company_id,unit_number,vin, is_sample_data) VALUES ($1::uuid,$2::uuid,$3,$4, true)`, [ids.unit, companyId, `TRK${s}`, `1TIO${s}PERFUMES0001`]);
       await db.query(`INSERT INTO mdata.drivers (id,operating_company_id,first_name,last_name,phone) VALUES ($1::uuid,$2::uuid,'Tio','Driver',$3)`, [ids.driver, companyId, `95605${s.slice(0,5)}`]);
       await db.query(`INSERT INTO mdata.loads (id,operating_company_id,load_number,customer_id,dispatcher_user_id,status,assigned_primary_driver_id,assigned_unit_id) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,'delivered',$6::uuid,$7::uuid)`,
         [ids.load, companyId, `LOAD-${s}`, ids.customer, userId, ids.driver, ids.unit]);
