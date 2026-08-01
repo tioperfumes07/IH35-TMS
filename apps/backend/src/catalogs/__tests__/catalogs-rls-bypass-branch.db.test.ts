@@ -36,7 +36,11 @@ const run = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
  * learn to skip (see FLT-02-SEED-DRIFT in docs/trackers/TRACKED-FINDINGS-2026-08-01.md for what
  * that costs). Remaining schemas are REPORTED, not failed, so progress stays visible.
  */
-const REMEDIATED_SCHEMAS = ["catalogs", "qbo_archive", "accounting"] as const;
+const REMEDIATED_SCHEMAS = [
+  "catalogs", "qbo_archive", "accounting",
+  "alerts", "analytics", "bank", "brokerupdate", "customer", "driver_finance", "driveralert",
+  "forecast", "geofence", "maint", "maintenance", "mdata", "qbo", "safetydoc", "tasks", "utilization",
+] as const;
 
 /**
  * Tables in a schema that are RLS-enabled AND carry an operating_company_id column, but have NO
@@ -118,7 +122,12 @@ run("catalogs.* RLS — every opco-scoped table grants the lucia bypass in USING
               OR pg_get_expr(p.polqual, p.polrelid) ILIKE '%bypass_rls%'))
       GROUP BY 1 ORDER BY count(*) DESC, 1
     `);
-    const remaining = res.rows.filter((r) => !REMEDIATED_SCHEMAS.includes(r.sch as never));
+    // settlement.* is a RETIRE schema (canonical = driver_finance.*), so it is excluded from the
+    // invariant rather than remediated — see 202611070000.
+    const RETIRED = new Set(["settlement", "payroll"]);
+    const remaining = res.rows.filter(
+      (r) => !REMEDIATED_SCHEMAS.includes(r.sch as never) && !RETIRED.has(r.sch)
+    );
     // Intentionally not an assertion on the count — this prints the remaining work so it cannot be
     // quietly forgotten, while the ratchet above holds the ground already taken.
     // eslint-disable-next-line no-console
