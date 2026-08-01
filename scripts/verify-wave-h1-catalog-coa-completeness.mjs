@@ -289,15 +289,15 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL: planted missing :line evidence not caught`);
     process.exit(1);
   }
-  const advance = read("apps/frontend/src/pages/cash-advances/components/CreateAdvanceModal.tsx");
-  const nakedBill = advance
+  const advanceSrc = read("apps/frontend/src/pages/cash-advances/components/CreateAdvanceModal.tsx");
+  const nakedBill = advanceSrc
     .replace(/import\s*\{\s*EntityLink\s*\}\s*from\s*["'][^"']+["'];?\n?/, "")
     .replace(
-      /Selected\s*<EntityLink[\s\S]*?\/>\s*—/,
+      /Selected\{" "\}\s*<EntityLink[\s\S]*?\/>\{" "\}\s*—/,
       "Selected {String(selectedBill.display_id)} —",
     );
   const redAdvance = staticChecks({ advance: nakedBill });
-  if (!redAdvance.some((p) => /EntityLink|naked Selected/.test(p))) {
+  if (!redAdvance.some((p) => /selected-bill summary|naked Selected/.test(p))) {
     console.error(`${LABEL} SELFTEST FAIL: planted naked selectedBill.display_id not caught`);
     process.exit(1);
   }
