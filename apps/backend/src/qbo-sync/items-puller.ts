@@ -126,11 +126,35 @@ async function upsertCatalogItem(client: PoolClient, operatingCompanyId: string,
   // a qbo_item_id, 190 distinct names — the 10 rows without a qbo_item_id are the collision surface.
   //
   // ADOPT rather than rename-and-insert. The local row is the SAME product the operator already
-  // created by hand; QBO is simply now the system of record for it. Adoption keeps that row's id, so
-  // every existing FK stays valid — accounting.invoice_lines resolves revenue through
-  // catalogs.items.default_income_account_id, and inserting a twin would strand those lines on an
-  // orphaned item while the QBO-linked copy carried the account mapping. Renaming to dodge the
-  // constraint would also silently diverge the operator's catalogue from QuickBooks.
+  // created by hand; QBO is simply now the system of record for it.
+  //
+  // WHY ADOPTION IS THE CORRECT MOVE — stated from the VERIFIED linkage, not an assumed FK.
+  // accounting.invoice_lines has NO foreign key to catalogs.items and stores no item id at all. Its
+  // only item link is qbo_item_id (text); its account_id is the explicit GL revenue override and FKs
+  // to catalogs.accounts, NOT to an item. Verified on the prod branch 2026-08-01 via pg_constraint:
+  // invoice_lines_account_id_fkey FOREIGN KEY (account_id) REFERENCES catalogs.accounts(id).
+  // Revenue is resolved in posting-engine.service.ts by joining
+  //   catalogs.items it ON it.qbo_item_id = il.qbo_item_id
+  // and reading that row's default_income_account_id.
+  //
+  // Revenue therefore follows whichever row HOLDS the qbo_item_id — the row's id is irrelevant to
+  // invoice lines. Adoption puts the QBO id on the operator's existing row instead of minting a second
+  // row for the same product, and preserves whatever mapping that row already carries. Inserting a twin
+  // would instead hand the qbo_item_id to a brand-new row whose default_income_account_id is NULL (the
+  // INSERT below never sets that column), pointing every invoice line keyed to that item at an item
+  // with no income mapping. The posting engine fails closed with ACCOUNT_MAPPING_MISSING rather than
+  // defaulting, so that is a billing outage, not a cosmetic duplicate.
+  //
+  // The converse — why the twin check below makes adoption STAND DOWN rather than fight for the id —
+  // is the same argument run the other way, and prod data settles it. Where a '[QBO n]' twin already
+  // exists, the twin is the row QBO has been feeding: 'Fuel Surcharge [QBO 24]' and 'Layover Charge
+  // [QBO 26]' both carry an income account, while the identically-named local rows carry none (all 10
+  // unclaimed TRANSP rows have default_income_account_id NULL, verified on prod 2026-08-01). Adopting
+  // the unclaimed row would move the QBO id onto the WORSE-mapped of the two. The twin is already the
+  // correct carrier on accounting grounds, not merely on constraint grounds.
+  //
+  // Renaming to dodge the constraint would also silently diverge the operator's catalogue from
+  // QuickBooks.
   //
   // Only an UNCLAIMED row is adoptable (qbo_item_id IS NULL). A row already bound to a different QBO
   // item is never touched, so two QBO items sharing a name still surface as a real, visible error
