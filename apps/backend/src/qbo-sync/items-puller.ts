@@ -184,7 +184,24 @@ async function upsertCatalogItem(client: PoolClient, operatingCompanyId: string,
       VALUES ($1,$2,$3,$4,$5,$6,$7::uuid,$8,$9,now(),'synced',NULL)
       ON CONFLICT (operating_company_id, qbo_item_id) WHERE qbo_item_id IS NOT NULL
       DO UPDATE SET
-        item_name = EXCLUDED.item_name,
+        -- ACCT-F77 — item_name is DELIBERATELY NOT overwritten on update.
+        --
+        -- This single line was the whole defect. On update the upsert renamed the local twin to QBO's
+        -- bare short name ('Fuel Surcharge [QBO 24]' -> 'Fuel Surcharge'), colliding with a native row
+        -- of that name under uq_items_company_item_name — which is UNIQUE(operating_company_id,
+        -- item_name) and NOT partial. items_pull and items_reconcile therefore aborted on EVERY run and
+        -- had never once succeeded.
+        --
+        -- The '[QBO nn]' suffix is INTENTIONAL disambiguation, not drift: it is how a QBO-sourced row
+        -- coexists with a same-named local row. QBO owns the item's identity (qbo_item_id) and its
+        -- economics (price, type, income account) — all still synced below. It does not own the local
+        -- display name once that name is already taken.
+        --
+        -- Fixing this in code rather than by renaming/retiring catalogs rows is the correct call: it
+        -- makes the sync green with ZERO data mutation, is reversible, and does not presume a naming
+        -- convention the owner has not ruled on. A rename would also have been unsafe to ship blind —
+        -- non-enforced references (invoice/expense lines, jsonb item ids, ps_item_qbo_id) have not been
+        -- swept. item_name is still set on a genuine first INSERT of a never-seen qbo_item_id above.
         item_code = EXCLUDED.item_code,
         item_type = EXCLUDED.item_type,
         unit_price_cents = EXCLUDED.unit_price_cents,

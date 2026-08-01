@@ -29,7 +29,6 @@ import { join } from "node:path";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const PULLER = "apps/backend/src/qbo-sync/items-puller.ts";
-const DIR = "db/migrations";
 const LABEL = "verify-no-generic-seed-shadowing-qbo-items";
 
 function stripComments(src) {
@@ -58,30 +57,29 @@ export function auditAdopt(src) {
   return problems;
 }
 
-export function auditRetirementMigration(sql) {
+export function auditUpsertKeepsName(src) {
+  const code = stripComments(src);
   const problems = [];
-  if (!/item_name\s*=\s*item_name\s*\|\|/.test(sql)) {
+  const ins = /INSERT INTO catalogs\.items[\s\S]*?DO UPDATE SET([\s\S]*?)`/i.exec(code);
+  if (!ins) {
+    problems.push(`${PULLER}: no catalogs.items upsert found — cannot verify the item_name invariant.`);
+    return problems;
+  }
+  if (/item_name\s*=\s*EXCLUDED\.item_name/i.test(ins[1])) {
     problems.push(
-      `${DIR}: the generic-seed retirement does not RENAME. uq_items_company_item_name is NOT partial, ` +
-        `so deactivating alone leaves the name occupied and the QBO item sync still broken.`
+      `${PULLER}: the upsert's DO UPDATE overwrites item_name with EXCLUDED.item_name. That renames the ` +
+        `'<name> [QBO nn]' twin to QBO's bare short name and collides with a same-named native row under ` +
+        `uq_items_company_item_name — UNIQUE(operating_company_id, item_name), NOT partial. This is the ` +
+        `single line that made items_pull and items_reconcile abort on every run. QBO owns the item's ` +
+        `identity and economics, not its local display name once that name is taken.`
     );
-  }
-  if (!/deactivated_at/.test(sql)) {
-    problems.push(`${DIR}: the retirement does not set deactivated_at — void-not-delete requires the row stay present but inactive.`);
-  }
-  if (/DELETE\s+FROM\s+catalogs\.items/i.test(sql)) {
-    problems.push(`${DIR}: the retirement DELETEs from catalogs.items — void-not-delete forbids it.`);
-  }
-  if (!/invoice_lines/.test(sql)) {
-    problems.push(`${DIR}: the retirement does not exclude rows referenced by accounting.invoice_lines — it could retire an item in real use.`);
   }
   return problems;
 }
 
 function auditTree() {
   const problems = [...auditAdopt(readFileSync(join(ROOT, PULLER), "utf8"))];
-  const files = readdirSync(join(ROOT, DIR)).filter((f) => /retire_generic_seed_items\.sql$/.test(f));
-  for (const f of files) problems.push(...auditRetirementMigration(readFileSync(join(ROOT, DIR, f), "utf8")));
+  problems.push(...auditUpsertKeepsName(readFileSync(join(ROOT, PULLER), "utf8")));
   return problems;
 }
 
@@ -92,12 +90,11 @@ function selftest() {
     failures.push("case1 FAIL — adopt without a twin check was NOT caught");
   const good = `const adopted = await client.query(\`UPDATE catalogs.items SET qbo_item_id=$3 WHERE operating_company_id=$1 AND item_name=$2 AND qbo_item_id IS NULL AND NOT EXISTS (SELECT 1 FROM catalogs.items other WHERE other.qbo_item_id=$3) RETURNING id\`);`;
   if (auditAdopt(good).length !== 0) failures.push(`case2 FAIL — the guarded adopt was flagged: ${auditAdopt(good).join(" | ")}`);
-  const archiveOnly = `UPDATE catalogs.items SET deactivated_at = now() WHERE notes='Generic seeded item' AND NOT EXISTS (SELECT 1 FROM accounting.invoice_lines il WHERE il.account_id = catalogs.items.id);`;
-  if (!auditRetirementMigration(archiveOnly).some((p) => p.includes("does not RENAME")))
-    failures.push("case3 FAIL — an archive-only retirement was NOT caught");
-  const deletes = `DELETE FROM catalogs.items WHERE notes='Generic seeded item';`;
-  if (!auditRetirementMigration(deletes).some((p) => p.includes("void-not-delete forbids")))
-    failures.push("case4 FAIL — a DELETE was NOT caught");
+  const renaming = "const q = `INSERT INTO catalogs.items (a) VALUES ($1) ON CONFLICT (x) DO UPDATE SET item_name = EXCLUDED.item_name, item_code = EXCLUDED.item_code`;";
+  if (!auditUpsertKeepsName(renaming).some((p) => p.includes("overwrites item_name")))
+    failures.push("case3 FAIL — an upsert that renames the twin was NOT caught");
+  const keeps = "const q = `INSERT INTO catalogs.items (a) VALUES ($1) ON CONFLICT (x) DO UPDATE SET item_code = EXCLUDED.item_code, unit_price_cents = EXCLUDED.unit_price_cents`;";
+  if (auditUpsertKeepsName(keeps).length !== 0) failures.push("case4 FAIL — an upsert that keeps item_name was flagged");
   const tree = auditTree();
   if (tree.length !== 0) failures.push(`case5 FAIL — real sources flagged: ${tree.join(" | ")}`);
   if (failures.length) {
