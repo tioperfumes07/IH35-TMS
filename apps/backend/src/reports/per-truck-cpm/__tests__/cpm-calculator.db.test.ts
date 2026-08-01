@@ -66,7 +66,7 @@ describeIntegration("per-truck-cpm calculator (real Postgres schema)", () => {
       // scoped, NOT operating_company_id. Any valid company id satisfies it; the permits CTE links via
       // master_data.unit_permits.operating_company_id, not units.owner_company_id, so the value is inert here.
       await db.query(
-        `INSERT INTO mdata.units (id, unit_number, vin, status, owner_company_id) VALUES ($1::uuid, $2, $3, 'InService', $4::uuid)`,
+        `INSERT INTO mdata.units (id, unit_number, vin, status, owner_company_id, is_sample_data) VALUES ($1::uuid, $2, $3, 'InService', $4::uuid, true)`,
         [unitId, `CPM-${suffix.slice(0, 8)}`, `CPMVIN${suffix.replace(/-/g, "").slice(0, 11)}`, companyId]
       );
       await db.query(

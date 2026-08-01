@@ -57,8 +57,8 @@ describeIntegration("legal lease-to-own fleet picker (real Postgres schema)", ()
     // owner_company_id is NOT NULL (mig 0015); units are owner/lessee-scoped, not operating_company_id (§4).
     await withBypass(async () => {
       await db.query(
-        `INSERT INTO mdata.units (id, unit_number, vin, status, owner_company_id, vehicle_type)
-         VALUES ($1::uuid, $2, $3, 'InService', $4::uuid, 'tractor')`,
+        `INSERT INTO mdata.units (id, unit_number, vin, status, owner_company_id, vehicle_type, is_sample_data)
+         VALUES ($1::uuid, $2, $3, 'InService', $4::uuid, 'tractor', true)`,
         [unitId, `LTO-${suffix.slice(0, 8)}`, `LTOVIN${suffix.replace(/-/g, "").slice(0, 11)}`, companyId]
       );
     });
