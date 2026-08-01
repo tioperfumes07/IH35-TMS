@@ -389,10 +389,33 @@ async function checkBackgroundJobStaleness(): Promise<void> {
     const late: string[] = [];
     for (const row of res.rows) {
       const rule = backgroundJobRule(row.job_name, qboRealmConnected);
-      if (!rule || !rule.enabled) continue;
       const mins = minutesSinceIso(row.last_successful_run_at);
-      if (mins === null) neverSucceeded.push(`${row.job_name}:never`);
-      else if (mins > rule.maxStaleMinutes) late.push(`${row.job_name}:${mins.toFixed(1)}m`);
+
+      // OPS-F69 — NEVER-SUCCEEDED NEEDS NO RULE.
+      //
+      // Staleness is opt-in for a good reason: "late" only means something against a known cadence,
+      // and a weekly job measured on a daily threshold would alarm forever. But a registered job that
+      // has NEVER ONCE succeeded is a defect under ANY cadence — there is no threshold under which
+      // "it has never worked" is acceptable, so it needs no rule to be reportable.
+      //
+      // This is the gap that made OPS-F65 (#3966) ineffective in practice. Prod, 2026-08-01: 72 jobs
+      // registered, only 23 carry a rule, and ALL EIGHT never-succeeded jobs are among the 49 unruled
+      // — the DOT random-pool draw, five QBO sync steps, and the universal search indexer. Every one
+      // of them hit `if (!rule) continue` and was skipped BEFORE the never-vs-late test, so splitting
+      // those two codes improved a signal that never fired for them.
+      //
+      // That correlation is not coincidence: nobody writes a staleness rule for a job they are not
+      // thinking about, and a job nobody is thinking about is exactly the one that quietly never runs.
+      // An allowlist-shaped monitor cannot see its own blind spot. Never-succeeded is now measured
+      // against the JOB TABLE itself rather than against the list someone remembered to maintain.
+      if (mins === null) {
+        neverSucceeded.push(`${row.job_name}:never`);
+        continue;
+      }
+
+      // Late still requires an explicit cadence — without one there is no honest threshold.
+      if (!rule || !rule.enabled) continue;
+      if (mins > rule.maxStaleMinutes) late.push(`${row.job_name}:${mins.toFixed(1)}m`);
     }
 
     // Never-succeeded outranks late: report the more serious condition when both are present, and
