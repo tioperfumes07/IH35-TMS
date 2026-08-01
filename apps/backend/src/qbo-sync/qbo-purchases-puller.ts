@@ -469,7 +469,10 @@ export async function projectPurchasesToExpenses(operatingCompanyId: string): Pr
         -- metadata the posting engine reads forward — and only when exactly one active category in
         -- this entity claims the account. Ambiguous or unbound leaves the line uncategorized.
         LEFT JOIN LATERAL (
-          SELECT min(ec.id) AS id, count(*) AS matches
+          -- ACCT-F63: min(uuid) is not a Postgres aggregate, so this whole projector step failed at
+          -- parse time on every run and had NEVER succeeded. Only the matches=1 branch is ever
+          -- read, so any deterministic pick is equivalent; array_agg ORDER BY keeps it stable.
+          SELECT (array_agg(ec.id ORDER BY ec.id))[1] AS id, count(*) AS matches
           FROM catalogs.expense_categories ec
           WHERE ec.operating_company_id = s.operating_company_id
             AND ec.is_active
