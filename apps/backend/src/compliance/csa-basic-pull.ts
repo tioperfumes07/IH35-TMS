@@ -170,6 +170,13 @@ async function listCompaniesForPull(client: DbClient, onlyCompanyId?: string): P
       WHERE is_active = true
         AND deactivated_at IS NULL
         AND NULLIF(trim(COALESCE(usdot_number, '')), '') IS NOT NULL
+        -- COMP-F71: a USDOT number is numeric. org.companies also holds PLACEHOLDER values
+        -- ('PENDING-USMCA-DOT' on prod), which passed the not-null filter, were sent to the live
+        -- public SAFER lookup, and came back public_csa_basic_source_unavailable — recorded as a job
+        -- FAILURE on every run. A carrier that has not been issued a DOT number yet is a designed
+        -- state, not a failure, and the placeholder is precisely how that state is expressed.
+        -- Skipping it also stops a sentinel string being sent to an external regulator lookup.
+        AND trim(usdot_number) ~ '^[0-9]+$'
       ORDER BY id
     `
   );
