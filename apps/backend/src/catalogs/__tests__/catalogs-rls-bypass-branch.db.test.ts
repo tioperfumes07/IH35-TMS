@@ -29,20 +29,30 @@ import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 const run = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
 /**
- * Tables in `catalogs` that are RLS-enabled AND carry an operating_company_id column, but have NO
+ * Schemas whose false-zero has been remediated. This list RATCHETS: each wave of
+ * RLS-BYPASS-SCHEMA-WIDE adds its schema here, and the invariant is asserted at ZERO violations for
+ * every schema in it. It deliberately does NOT assert over all schemas at once — ~53 tables across
+ * 19 other schemas are still outstanding, and a guard that is red on day one is a guard people
+ * learn to skip (see FLT-02-SEED-DRIFT in docs/trackers/TRACKED-FINDINGS-2026-08-01.md for what
+ * that costs). Remaining schemas are REPORTED, not failed, so progress stays visible.
+ */
+const REMEDIATED_SCHEMAS = ["catalogs", "qbo_archive"] as const;
+
+/**
+ * Tables in a schema that are RLS-enabled AND carry an operating_company_id column, but have NO
  * permissive policy whose USING grants the bypass. Parameterised by schema so the negative
  * direction can be proven against a purpose-built fixture table.
  */
-const VIOLATION_SQL = `
+const violationSqlFor = (schema: string) => `
   SELECT c.relname
   FROM pg_class c
   JOIN pg_namespace n ON n.oid = c.relnamespace
-  WHERE n.nspname = 'catalogs'
+  WHERE n.nspname = '${schema}'
     AND c.relkind = 'r'
     AND c.relrowsecurity
     AND EXISTS (
       SELECT 1 FROM information_schema.columns col
-      WHERE col.table_schema = 'catalogs'
+      WHERE col.table_schema = '${schema}'
         AND col.table_name = c.relname
         AND col.column_name = 'operating_company_id'
     )
@@ -77,14 +87,50 @@ run("catalogs.* RLS — every opco-scoped table grants the lucia bypass in USING
     await db.end();
   });
 
-  it("has ZERO tables whose bypass is inert (the real invariant)", async () => {
-    const res = await db.query<{ relname: string }>(VIOLATION_SQL);
-    const offenders = res.rows.map((r) => r.relname);
-    expect(
-      offenders,
-      `These catalogs tables read a FALSE 0 under SET app.bypass_rls='lucia' — their USING has no ` +
-        `bypass branch, so every audit of them is silently wrong:\n  ${offenders.join("\n  ")}`
-    ).toEqual([]);
+  it.each(REMEDIATED_SCHEMAS)(
+    "%s has ZERO tables whose bypass is inert (the real invariant)",
+    async (schema) => {
+      const res = await db.query<{ relname: string }>(violationSqlFor(schema));
+      const offenders = res.rows.map((r) => r.relname);
+      expect(
+        offenders,
+        `These ${schema} tables read a FALSE 0 under SET app.bypass_rls='lucia' — their USING has no ` +
+          `bypass branch, so every audit of them is silently wrong:\n  ${offenders.join("\n  ")}`
+      ).toEqual([]);
+    }
+  );
+
+  it("reports how much of the schema-wide class is still outstanding (visibility, not a gate)", async () => {
+    const res = await db.query<{ sch: string; n: string }>(`
+      SELECT n.nspname AS sch, count(*)::text AS n
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE c.relkind = 'r' AND c.relrowsecurity
+        AND n.nspname NOT IN ('pg_catalog','information_schema')
+        AND EXISTS (
+          SELECT 1 FROM information_schema.columns col
+          WHERE col.table_schema = n.nspname AND col.table_name = c.relname
+            AND col.column_name = 'operating_company_id')
+        AND NOT EXISTS (
+          SELECT 1 FROM pg_policy p
+          WHERE p.polrelid = c.oid AND p.polpermissive AND p.polqual IS NOT NULL
+            AND (pg_get_expr(p.polqual, p.polrelid) ILIKE '%is_lucia_bypass%'
+              OR pg_get_expr(p.polqual, p.polrelid) ILIKE '%bypass_rls%'))
+      GROUP BY 1 ORDER BY count(*) DESC, 1
+    `);
+    const remaining = res.rows.filter((r) => !REMEDIATED_SCHEMAS.includes(r.sch as never));
+    // Intentionally not an assertion on the count — this prints the remaining work so it cannot be
+    // quietly forgotten, while the ratchet above holds the ground already taken.
+    // eslint-disable-next-line no-console
+    console.log(
+      `[RLS-BYPASS-SCHEMA-WIDE] remediated=[${REMEDIATED_SCHEMAS.join(", ")}]; still outstanding: ` +
+        (remaining.length === 0
+          ? "none — the class is drained, promote this to a global assertion"
+          : remaining.map((r) => `${r.sch}=${r.n}`).join(", "))
+    );
+    for (const s of REMEDIATED_SCHEMAS) {
+      expect(res.rows.some((r) => r.sch === s)).toBe(false);
+    }
   });
 
   it("DETECTS a table whose USING lacks the bypass branch (guard can actually fail)", async () => {
@@ -102,7 +148,7 @@ run("catalogs.* RLS — every opco-scoped table grants the lucia bypass in USING
         USING ((operating_company_id)::text = current_setting('app.operating_company_id', true))
     `);
 
-    const withDefect = await db.query<{ relname: string }>(VIOLATION_SQL);
+    const withDefect = await db.query<{ relname: string }>(violationSqlFor("catalogs"));
     expect(withDefect.rows.map((r) => r.relname)).toContain(fixture);
 
     // And once the branch is added, it must NOT be flagged — no false positive on the fixed shape.
@@ -116,7 +162,7 @@ run("catalogs.* RLS — every opco-scoped table grants the lucia bypass in USING
         )
     `);
 
-    const afterFix = await db.query<{ relname: string }>(VIOLATION_SQL);
+    const afterFix = await db.query<{ relname: string }>(violationSqlFor("catalogs"));
     expect(afterFix.rows.map((r) => r.relname)).not.toContain(fixture);
   });
 
@@ -135,7 +181,7 @@ run("catalogs.* RLS — every opco-scoped table grants the lucia bypass in USING
         USING (identity.is_lucia_bypass())
     `);
 
-    const res = await db.query<{ relname: string }>(VIOLATION_SQL);
+    const res = await db.query<{ relname: string }>(violationSqlFor("catalogs"));
     expect(res.rows.map((r) => r.relname)).not.toContain(fixture);
   });
 });
