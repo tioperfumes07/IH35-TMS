@@ -22,16 +22,35 @@ function walkFiles(dir) {
 }
 
 function parseArgs(argv) {
-  const args = { distRoot: path.resolve(ROOT, "dist"), autoloadRoot: path.resolve(ROOT, "dist/accounting") };
+  const args = {
+    srcRoot: path.resolve(ROOT, "apps/backend/src"),
+    autoloadRoot: path.resolve(ROOT, "apps/backend/src/accounting"),
+  };
   for (let i = 0; i < argv.length; i += 1) {
     const key = argv[i];
     const value = argv[i + 1];
     if (!key.startsWith("--") || !value || value.startsWith("--")) continue;
-    if (key === "--dist-root") args.distRoot = path.resolve(value);
+    if (key === "--src-root") args.srcRoot = path.resolve(value);
     if (key === "--autoload-root") args.autoloadRoot = path.resolve(value);
     i += 1;
   }
   return args;
+}
+
+// Mirrors apps/backend/tsconfig.json's build "exclude" list so this src-based scan sees exactly
+// the files that end up in the compiled dist/ output (test files never manually register routes
+// in production; scanning them would only produce false-positive duplicates). Tested against the
+// path RELATIVE TO srcRoot, never the absolute path — an absolute-path check would false-positive
+// on any srcRoot that happens to be nested under a "__tests__" directory itself (e.g. this guard's
+// own scripts/__tests__/fixtures/ test fixtures).
+function isExcludedFromBuild(filePath, srcRoot) {
+  const rel = path.relative(srcRoot, filePath);
+  return (
+    /\.test\.ts$/.test(rel) ||
+    /\.integration\.test\.ts$/.test(rel) ||
+    /\.deprecated\.ts$/.test(rel) ||
+    /(^|[\\/])__tests__[\\/]/.test(rel)
+  );
 }
 
 function extractBalancedBlock(source, openIndex) {
@@ -84,7 +103,9 @@ function parseRouteFunctionsInFile(filePath, source) {
 }
 
 function collectRouteFunctions(autoloadRoot) {
-  const files = walkFiles(autoloadRoot).filter((filePath) => filePath.endsWith(".routes.js"));
+  const files = walkFiles(autoloadRoot).filter(
+    (filePath) => filePath.endsWith(".routes.ts") && !isExcludedFromBuild(filePath, autoloadRoot)
+  );
   const functionRoutes = new Map();
   const autoloadRegistrations = [];
 
@@ -113,8 +134,11 @@ function collectRouteFunctions(autoloadRoot) {
   return { functionRoutes, autoloadRegistrations };
 }
 
-function collectManualRegistrations(distRoot, functionRoutes) {
-  const files = walkFiles(distRoot).filter((filePath) => filePath.endsWith(".js") && !filePath.endsWith(".routes.js"));
+function collectManualRegistrations(srcRoot, functionRoutes) {
+  const files = walkFiles(srcRoot).filter(
+    (filePath) =>
+      filePath.endsWith(".ts") && !filePath.endsWith(".routes.ts") && !isExcludedFromBuild(filePath, srcRoot)
+  );
   const registrations = [];
   for (const filePath of files) {
     const source = fs.readFileSync(filePath, "utf8");
@@ -134,9 +158,9 @@ function collectManualRegistrations(distRoot, functionRoutes) {
   return registrations;
 }
 
-export function findDuplicateRoutes({ distRoot, autoloadRoot }) {
+export function findDuplicateRoutes({ srcRoot, autoloadRoot }) {
   const { functionRoutes, autoloadRegistrations } = collectRouteFunctions(autoloadRoot);
-  const manualRegistrations = collectManualRegistrations(distRoot, functionRoutes);
+  const manualRegistrations = collectManualRegistrations(srcRoot, functionRoutes);
   const all = [...autoloadRegistrations, ...manualRegistrations];
 
   const byKey = new Map();
@@ -158,9 +182,9 @@ export function findDuplicateRoutes({ distRoot, autoloadRoot }) {
 }
 
 function main() {
-  const { distRoot, autoloadRoot } = parseArgs(process.argv.slice(2));
-  if (!fs.existsSync(distRoot)) {
-    console.error(`verify:no-duplicate-routes FAIL: dist root not found: ${path.relative(ROOT, distRoot)}`);
+  const { srcRoot, autoloadRoot } = parseArgs(process.argv.slice(2));
+  if (!fs.existsSync(srcRoot)) {
+    console.error(`verify:no-duplicate-routes FAIL: src root not found: ${path.relative(ROOT, srcRoot)}`);
     process.exit(1);
   }
   if (!fs.existsSync(autoloadRoot)) {
@@ -168,7 +192,7 @@ function main() {
     process.exit(1);
   }
 
-  const { duplicates } = findDuplicateRoutes({ distRoot, autoloadRoot });
+  const { duplicates } = findDuplicateRoutes({ srcRoot, autoloadRoot });
   if (duplicates.length > 0) {
     console.error("verify:no-duplicate-routes FAIL: duplicate (method, url) registrations detected");
     for (const dup of duplicates) {
@@ -180,7 +204,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log("verify:no-duplicate-routes OK");
+  console.log("verify:no-duplicate-routes OK (no dist/ required)");
 }
 
 const isDirect = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
