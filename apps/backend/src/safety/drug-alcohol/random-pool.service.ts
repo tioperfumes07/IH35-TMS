@@ -88,11 +88,16 @@ export async function listActiveEnrolledDrivers(
 ): Promise<string[]> {
   const res = await client.query<{ driver_uuid: string }>(
     `
-      SELECT DISTINCT e.driver_uuid::text
+      -- SAF-F62: ORDER BY must reference the SELECT-list expression, not the raw column. The select
+      -- list is the CAST (e.driver_uuid::text) while the ORDER BY was the uncast e.driver_uuid, so
+      -- Postgres rejected the statement at parse time: "for SELECT DISTINCT, ORDER BY expressions
+      -- must appear in select list". Reproduced verbatim against prod. Ordering by the output alias
+      -- keeps the deterministic ordering the draw's auditability depends on.
+      SELECT DISTINCT e.driver_uuid::text AS driver_uuid
       FROM safety.da_program_enrollments e
       WHERE e.operating_company_id = $1
         AND e.is_active = true
-      ORDER BY e.driver_uuid
+      ORDER BY driver_uuid
     `,
     [operatingCompanyId]
   );
