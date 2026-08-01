@@ -273,6 +273,132 @@ export function backgroundJobRule(
   qboRealmConnected: boolean
 ): { enabled: boolean; maxStaleMinutes: number } | null {
   switch (jobName) {
+    // ── OPS-F75 — cadences DERIVED from each job's own literal cron expression ─────────────────────
+    //
+    // 49 of 72 registered jobs had no rule, so `if (!rule) continue` skipped them entirely. OPS-F69
+    // (#3970) made "never succeeded" rule-independent; this adds the LATE-vs-ON-TIME layer.
+    //
+    // Threshold = max(interval * 2, 15): alarm only after TWO consecutive periods are missed, because
+    // a single skipped tick (deploy restart, slow upstream) is normal operational noise and an alarm
+    // that fires on normal noise is what trained everyone to ignore this check.
+    //
+    // ONLY UNAMBIGUOUS PAIRINGS ARE ADDED — one job name and one cron expression in the same file.
+    // My first extraction took the FIRST expression in a file and applied it to EVERY job declared
+    // there, which silently mis-paired the multi-job files and then "corrected" five perfectly good
+    // thresholds toward impossible values. An existing health test caught it. Excluded for that
+    // reason (their real cadences must be paired by hand, per job):
+    //   qbo.master_data_sync.{delta,full}          "0 2 * * *" + "*/15 * * * *"
+    //   samsara.cache_warmer.{tier3,tier4}         "*/5 * * * *" + "*/15 * * * *"
+    //   qbo.remote_count_collector.{delta,full}    "10 */6 * * *" + "20 2 * * *"
+    //   qbo.token_refresh_cron                     "0 * * * *" + "*/15 * * * *"
+    //   reconciliation.{cap15_identity,qbo_refdata,qbo_transactional,samsara_static}
+    //                                              four jobs, four different expressions
+    // Guessing which line belongs to which job would be exactly the invented window this avoids.
+    case "accounting.depreciation_autopost":
+      // "15 6 1 * *" = every 44640m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 89280 };
+    case "accounting.factoring_default_interest_cron":
+      // "30 5 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "ai.model_lifecycle_monitor":
+      // "30 8 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "border_crossing.cbp_wait_times_refresh":
+      // "*/5 * * * *" = every 5m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 15 };
+    case "compliance.csa_basic_pull_cron":
+      // "30 5 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "compliance.fmcsa_safer_verification_cron":
+      // "15 6 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "compliance.reminder_cron":
+      // "0 6 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "drivers.document_alert_engine_cron":
+      // "35 7 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "fuel.fraud_detector_worker":
+      // "*/15 * * * *" = every 15m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 30 };
+    case "idempotency.cleanup_cron":
+      // "30 3 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "integrations.auto_status_switch_worker":
+      // "*/5 * * * *" = every 5m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 15 };
+    case "maintenance.cap12_tire_tread.projections":
+      // "0 5 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "maintenance.cap13_brake_wear.projections":
+      // "0 5 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "maintenance.pm_auto_engine_cron":
+      // "5 * * * *" = every 60m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 120 };
+    case "maintenance.reefer_hours_poll_cron":
+      // "*/15 * * * *" = every 15m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 30 };
+    case "qbo_sync.drift_scheduler":
+      // "0 */4 * * *" = every 240m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 480 };
+    case "reports.deadhead_refresh_cron":
+      // "0 3 * * 1" = every 10080m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 20160 };
+    case "reports.lane_profitability_refresh_cron":
+      // "0 2 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "safety.cert_expiry_monitor":
+      // "0 6 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "safety.da_random_pool.quarterly_draw":
+      // "0 7 1 1,4,7,10 *" = every 44640m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 89280 };
+    case "safety.damage_continuity_worker":
+      // "0 * * * *" = every 60m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 120 };
+    case "safety.driver_leave_advance_reminder":
+      // "0 7 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "safety.driver_leave_balance_rollover":
+      // "30 0 1 1 *" = every 44640m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 89280 };
+    case "safety.driver_leave_pending_escalation":
+      // "30 7 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "safety.driver_scoring.weekly_aggregator":
+      // "0 3 * * 1" = every 10080m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 20160 };
+    case "safety.integrity_alert_engine_cron":
+      // "20 */6 * * *" = every 360m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 720 };
+    case "safety.reminders_cron":
+      // "15 6 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "samsara.hos_pull_cron":
+      // "15 * * * *" = every 60m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 120 };
+    case "samsara.master_sync_cron":
+      // "30 * * * *" = every 60m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 120 };
+    case "samsara.positions_cron":
+      // "*/5 * * * *" = every 5m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 15 };
+    case "samsara.remote_count_collector":
+      // "5 */12 * * *" = every 720m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 1440 };
+    case "samsara.vehicle_driver_pairing_sync":
+      // "0 * * * *" = every 60m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 120 };
+    case "samsara.webhook_projection_cron":
+      // "*/1 * * * *" = every 1m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 15 };
+    case "search.indexer_incremental":
+      // "0 3 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "tasks.alarm_cron":
+      // "*/15 * * * *" = every 15m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 30 };
     case "email.queue_processor":
       return { enabled: envEnabled("EMAIL_CRON_ENABLED"), maxStaleMinutes: 5 };
     case "qbo.sync_queue_runner":
