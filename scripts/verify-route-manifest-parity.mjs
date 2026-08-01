@@ -165,13 +165,11 @@ const REFUSED_MOUNTS = new Map([
       "assertCompanyMembership + app.operating_company_id. Driver-pay money data; §1.3 owner decision. " +
       "apps/frontend/src/hooks/usePayrollAggregate.ts calls it and gets a 404 today.",
   ],
-  [
-    "reports/form-425c/exhibits/routes.ts",
-    "HELD-FOR-OWNER (ready) — Chapter 11 court-filing exhibits built from banking/accounting sources, " +
-      "role-gated to Owner/Administrator/Accountant. A court exhibit is the highest-consequence " +
-      "artifact in the system; making it reachable is not a wiring decision. " +
-      "apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx calls it and gets a 404 today.",
-  ],
+  // reports/form-425c/exhibits/routes.ts was refused here as HELD-FOR-OWNER. The entry is removed
+  // because the route is now MOUNTED under explicit owner authorization: exposing the GENERATOR is
+  // what makes the exhibits reviewable at all, and rendering an exhibit is not filing one. The
+  // routes stay read-only and role-gated (currentAuthUser + 403 + withCompanyScope), pinned by
+  // scripts/verify-form425c-exhibits-route-mounted.mjs. This list may only shrink.
   [
     "driver-finance/settlement-payment.routes.ts",
     "HELD financial — marks settlement payments sent/cleared/bounced/paid. Money-moving. Reason " +

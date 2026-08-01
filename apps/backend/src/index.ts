@@ -181,7 +181,9 @@ import { registerSafetyBackgroundChecksRoutes } from "./safety/background-checks
 import { registerDriverSchedulerRoutes } from "./safety/driver-scheduler.routes.js";
 import { registerSafetyDriverDocumentsRoutes } from "./safety/driver-documents.routes.js";
 // Orphan-route mounts (batch 2, non-financial) — frontend calls these, never registered (404).
-// Verified uncalled + collision-free. (425C/IFTA exhibits + fuel-fraud held as financial-adjacent.)
+// Verified uncalled + collision-free. (IFTA exhibits + fuel-fraud remain held as financial-adjacent.
+// The 425-C exhibits generator is NO LONGER held — it is mounted below next to registerForm425CRoutes,
+// read-only and role-gated, so the exhibits can be rendered and reviewed. Rendering is not filing.)
 import { registerCap12TireTreadRoutes } from "./integrations/samsara/cap-12-tire-tread/routes.js";
 import { registerCap13BrakeWearRoutes } from "./integrations/samsara/cap-13-brake-wear/routes.js";
 import { registerReportCategoryCatalogRoutes } from "./reports/categories/routes.js";
@@ -312,6 +314,7 @@ import { registerDriverMetricsRoutes } from "./integrity/driver-metrics.routes.j
 import { registerAnomalyStatusRoutes } from "./integrity/anomaly-status.routes.js";
 import { runAnomalyDetectionForTenant } from "./integrity/anomaly-detector.service.js";
 import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
+import { registerForm425cExhibitsRoutes } from "./reports/form-425c/exhibits/routes.js";
 import { registerTaxDocumentRoutes } from "./tax-documents/tax-documents.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
 import { registerListsCountsRoutes } from "./lists/lists-counts.routes.js";
@@ -1076,6 +1079,13 @@ async function main() {
   await registerMaintPmRoutes(app);
   await registerMaintWoApRoutes(app);
   await registerForm425CRoutes(app);
+  // Form 425-C Exhibits A–F generator. Previously left unmounted (held as "financial-adjacent"),
+  // which made the mounted /reports/form-425c/exhibits page call a route that returned 404 — the
+  // exhibits could not be produced or reviewed at all. Mounting EXPOSES THE GENERATOR ONLY:
+  // rendering an exhibit is not filing one, and the routes are read-only (no write, no posting, no
+  // flag). Auth is unchanged and already enforced inside the handlers — currentAuthUser + a
+  // canAccess425cExhibits role check (403) + withCompanyScope entity scoping on every read.
+  await registerForm425cExhibitsRoutes(app);
   await registerTaxDocumentRoutes(app);
   await registerListsHubRoutes(app);
   await registerListsCountsRoutes(app);
