@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { expenseCategoriesCatalogClient } from "../../api/catalogs-accounting";
 import { tirePositionsCatalogClient } from "../../api/catalogs-fleet";
 import { getCoaAccounts } from "../../api/banking";
 import { getWoCostContext } from "../../api/maintenance";
@@ -29,6 +30,7 @@ export type TwoSectionLine = {
   unit_cost: number;
   amount: number;
   expense_category_uuid?: string;
+  expense_category_code?: string;
   service_item_uuid?: string;
   location_label?: string;
   sub_rows?: ItemSubRow[];
@@ -76,14 +78,24 @@ export function TwoSectionLineEditor({
     enabled: Boolean(operatingCompanyId),
     staleTime: 30_000,
   });
-  // LIVE-DEFECT fix (GUARD 2026-07-12): the Bill/Expense Section-A Category selector must surface the FULL
-  // Chart-of-Accounts — the SAME source the banking categorize screen uses (getCoaAccounts → /catalogs/accounts).
-  // The old /api/v1/accounting/categories source returned empty/filtered, forcing users to create duplicate COA
-  // accounts. Full COA is the primary source below; accounting-categories / cost-context stay as fallbacks.
+  // WAVE-H1: Bill Section A reads catalogs.expense_categories (entity-scoped Lists catalog).
+  // CoA-as-category stamped account ids into expense_category_uuid and broke the same-entity FK.
+  // Expense/WO modes keep full CoA until their consumers are rewired the same way.
+  const expenseCategoriesQuery = useQuery({
+    queryKey: ["catalogs", "expense-categories", "line-category", operatingCompanyId],
+    queryFn: () =>
+      expenseCategoriesCatalogClient.list({
+        operating_company_id: operatingCompanyId,
+        is_active: "true",
+        limit: 200,
+      }),
+    enabled: Boolean(operatingCompanyId) && mode === "bill",
+    staleTime: 30_000,
+  });
   const coaAccountsQuery = useQuery({
     queryKey: ["catalogs", "coa-accounts", "line-category", operatingCompanyId],
     queryFn: () => getCoaAccounts(operatingCompanyId),
-    enabled: Boolean(operatingCompanyId) && (mode === "bill" || categoryFetchActive),
+    enabled: Boolean(operatingCompanyId) && mode !== "bill" && (mode === "expense" || categoryFetchActive),
     staleTime: 30_000,
   });
   const tirePositionsQuery = useQuery({
@@ -106,7 +118,23 @@ export function TwoSectionLineEditor({
   const sectionA = useMemo(() => lines.filter((line) => line.section === "A"), [lines]) as CategoryLine[];
   const sectionB = useMemo(() => lines.filter((line) => line.section === "B"), [lines]) as ItemLine[];
   const expenseCategoryOptions = useMemo<CostContextOption[]>(() => {
-    // PRIMARY: the full Chart-of-Accounts (same as banking categorize) — searchable existing accounts.
+    if (mode === "bill") {
+      const fromCatalog = (expenseCategoriesQuery.data?.rows ?? []).map((row) => ({
+        id: String(row.id ?? ""),
+        label: `${row.display_name ?? row.code ?? ""}`.trim() || String(row.id ?? ""),
+        // Carry code so bill line payloads can set category_kind/code without a second lookup.
+        code: String(row.code ?? ""),
+      }));
+      const merged = new Map<string, CostContextOption>();
+      for (const row of fromCatalog) {
+        if (row.id) merged.set(row.id, row);
+      }
+      for (const row of createdCategoryOptions) {
+        if (row.id) merged.set(row.id, row);
+      }
+      return Array.from(merged.values());
+    }
+    // Expense/WO: full Chart-of-Accounts (banking categorize parity).
     const fromCoa = (coaAccountsQuery.data?.accounts ?? []).map((account) => ({
       id: String(account.id ?? ""),
       label: `${account.account_name ?? ""}`.trim(),
@@ -119,7 +147,6 @@ export function TwoSectionLineEditor({
       if (row.id) merged.set(row.id, row);
     }
     if (merged.size > 0) return Array.from(merged.values());
-    // FALLBACKS (only if the COA query hasn't resolved): accounting-categories, then cost-context.
     const fromAccounting = (accountingCategoriesQuery.data ?? []).map((entry) => ({
       id: String(entry.id ?? ""),
       label: `${entry.name ?? ""}`.trim() || String(entry.account_number ?? entry.qbo_id ?? ""),
@@ -130,6 +157,8 @@ export function TwoSectionLineEditor({
       label: String(entry.name ?? ""),
     }));
   }, [
+    mode,
+    expenseCategoriesQuery.data,
     coaAccountsQuery.data,
     accountingCategoriesQuery.data,
     costContextQuery.data?.expense_categories,
@@ -228,12 +257,14 @@ export function TwoSectionLineEditor({
         partOptions={partOptions}
         locationOptions={locationOptions}
         operatingCompanyId={operatingCompanyId || undefined}
+        categoryCreateKind={mode === "bill" ? "expense_category" : "category"}
         onCategoryOptionCreated={(_lineId, opt) => {
           setCreatedCategoryOptions((prev) => {
             if (prev.some((row) => row.id === opt.id)) return prev;
             return [...prev, { id: opt.id, label: opt.label }];
           });
-          void coaAccountsQuery.refetch();
+          if (mode === "bill") void expenseCategoriesQuery.refetch();
+          else void coaAccountsQuery.refetch();
         }}
         onQuickCreateCategory={(lineId) => setQuickCreateTarget({ kind: "category", lineId })}
         onQuickCreateItem={(lineId) => setQuickCreateTarget({ kind: "item", lineId })}

@@ -302,7 +302,7 @@ export function VendorBillForm({
       (line) => line.section === "A" && !line.account_id
     );
     if (sectionAMissingAccount) {
-      setFormError("Each Category (Section A) line needs a Chart of Accounts category.");
+      setFormError("Each Category (Section A) line needs an expense category.");
       return;
     }
 

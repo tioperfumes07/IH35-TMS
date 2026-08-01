@@ -1,0 +1,35 @@
+---
+description: ONE open PR per area at a time — kill rebase treadmill (owner 2026-07-31)
+alwaysApply: true
+---
+
+# RULE 27 — ONE OPEN PR PER AREA (2026-07-31)
+
+**Why:** Two accounting/money PRs open at once (#3936 + #3937) caused blocked merges, rebase thrash, and false "fix the other PR" loops. Failures looked like rebase noise; the real red was a required check on one PR while the other competed for the same area.
+
+## Law (non-negotiable)
+
+1. **ONE open PR per area at a time.** Areas include (non-exhaustive): `accounting` / money / CoA / GL, `banking`, `settlements` / driver finance, `dispatch` / loads, `safety`, `lists` / catalogs (when shared hotfiles), `migrations` (always serial — one migration author).
+2. **NEVER** open the next same-area PR until the current one is **squash-merged** to `main` and the branch deleted.
+3. **Serial by area**, not only "money." Two UI PRs in Safety are also forbidden if they touch the same module hotfiles.
+4. Cross-area parallel is OK only when scopes are disjoint (no shared hotfiles, no shared verify-step numbers, no shared migration band).
+5. If a second same-area PR already exists: **HOLD** it (comment + stop pushes). Finish and merge the first. Then rebase the held PR onto new `main` **once** and take it green.
+
+## Workflow
+
+| Step | Action |
+|------|--------|
+| 1 | Open / finish PR-A for the area |
+| 2 | CI green → squash merge → delete branch |
+| 3 | GUARD verifies on prod/Neon as required for that wave |
+| 4 | Only then: rebase PR-B onto `main` once → green → merge |
+
+## Forbidden
+
+- Two open PRs both titled/scoped WAVE-H* / accounting / banking money
+- "Parallel H1 + H2" while both target money linkage
+- Rebasing both in a loop instead of reading the **failing required check** on the focus PR
+
+## Tie-breaker
+
+Throughput < serial correctness · rebase noise < required-check root cause · two PRs < one green merge.
