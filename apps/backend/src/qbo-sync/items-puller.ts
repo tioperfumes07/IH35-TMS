@@ -150,6 +150,15 @@ async function upsertCatalogItem(client: PoolClient, operatingCompanyId: string,
        WHERE operating_company_id = $1
          AND item_name = $2
          AND qbo_item_id IS NULL
+         -- ACCT-F77: a hole in the first version of this adopt. If ANOTHER row already claims this
+         -- QBO id (the '<name> [QBO n]' twin created by an earlier import), stamping it here violates
+         -- uq_items_company_qbo_item_id and aborts the pull. In that case the twin is already the
+         -- correct carrier and the normal upsert below handles it — adoption must stand down.
+         AND NOT EXISTS (
+           SELECT 1 FROM catalogs.items other
+            WHERE other.operating_company_id = $1
+              AND other.qbo_item_id = $3
+         )
       RETURNING id::text
     `,
     [operatingCompanyId, name, qboId, itemType, unitPrice, defaultExpenseAccountId, active]
