@@ -74,6 +74,17 @@ export function staticChecks(sources = {}) {
   if (!/listLoadInvoices/.test(drawer) || !/listLoadExpenses/.test(drawer)) {
     problems.push("LoadDetailDrawer must call listLoadInvoices + listLoadExpenses");
   }
+  // Permanent: drawer title must EntityLink the load — naked `load?.load_number ?? loadId`
+  // regenerates entity-link-adoption drift (build-typecheck step 930) every time H2/drawer edits land.
+  if (!/import\s*\{\s*EntityLink\s*\}\s*from\s*["']\.\.\/shared\/EntityLink["']/.test(drawer)) {
+    problems.push("LoadDetailDrawer must import EntityLink from ../shared/EntityLink");
+  }
+  if (!/<EntityLink\s+kind=["']load["'][\s\S]{0,160}id=\{load\?\.id\s*\?\?\s*loadId\}/.test(drawer)) {
+    problems.push("LoadDetailDrawer title must use <EntityLink kind=\"load\" id={load?.id ?? loadId} …>");
+  }
+  if (/<h2[^>]*>\s*Load\s*\{load\?\.load_number\s*\?\?\s*loadId\}/.test(drawer)) {
+    problems.push("LoadDetailDrawer must not render naked Load {load?.load_number ?? loadId} in h2");
+  }
   if (!/export function listLoadInvoices/.test(feApi) || !/export function listLoadExpenses/.test(feApi)) {
     problems.push("FE accounting API must export listLoadInvoices + listLoadExpenses");
   }
@@ -91,6 +102,18 @@ function selftest() {
   const red = staticChecks({ bridge: broken });
   if (!red.some((p) => /resolve load_id\/vendor_id/.test(p))) {
     console.error(`${LABEL} SELFTEST FAIL: planted bridge regression not caught`);
+    process.exit(1);
+  }
+  const drawer = read("apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx");
+  const nakedTitle = drawer
+    .replace(/import\s*\{\s*EntityLink\s*\}\s*from\s*["']\.\.\/shared\/EntityLink["'];?\n?/, "")
+    .replace(
+      /<h2 className="text-lg font-semibold text-gray-900">\s*Load\s*<EntityLink[\s\S]*?<\/EntityLink>\s*<\/h2>/,
+      '<h2 className="text-lg font-semibold text-gray-900">Load {load?.load_number ?? loadId}</h2>',
+    );
+  const redDrawer = staticChecks({ drawer: nakedTitle });
+  if (!redDrawer.some((p) => /EntityLink|naked Load/.test(p))) {
+    console.error(`${LABEL} SELFTEST FAIL: planted naked load title regression not caught`);
     process.exit(1);
   }
   const green = staticChecks();

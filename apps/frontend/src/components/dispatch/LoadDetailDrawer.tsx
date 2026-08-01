@@ -29,6 +29,7 @@ import { SettlementProfitabilityCard } from "./tabs/SettlementProfitabilityCard"
 import { InsuranceClaimsReverseSection } from "../insurance/InsuranceClaimsReverseSection";
 import { BookLoadModalV4 } from "../../pages/dispatch/components/BookLoadModalV4";
 import { CargoSensorTimeline } from "../../pages/dispatch/cargo-sensors/CargoSensorTimeline";
+import { EntityLink } from "../shared/EntityLink";
 
 type Props = {
   loadId: string | null;
@@ -281,7 +282,10 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
         <header className="sticky top-0 border-b border-gray-200 bg-white p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Load {load?.load_number ?? loadId}</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Load{" "}
+                <EntityLink kind="load" id={load?.id ?? loadId} label={load?.load_number ?? loadId} />
+              </h2>
               <p className="text-xs text-gray-500">{routeSummary}</p>
             </div>
             <Button type="button" variant="secondary" size="sm" onClick={onClose}>
