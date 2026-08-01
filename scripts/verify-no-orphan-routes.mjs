@@ -32,8 +32,6 @@ const ALLOWLIST = new Map([
   ["registerBrokerUpdateRoutes", "dead code — no frontend caller"],
   ["registerDamageContinuityRoutes", "dead code — no frontend caller"],
   ["registerDispatchOverrideAuditRoutes", "dead code — no frontend caller"],
-  ["registerDriverAlertRoutes", "dead code — no frontend caller"],
-  ["registerSafetyDocRoutes", "dead code — no frontend caller"],
   ["registerSafetyDrugPoolRoutes", "dead code — no frontend caller"],
   ["registerSamsaraMasterSyncRoutes", "dead code / admin-only — no frontend caller"],
   ["registerScheduledReportsRoutes", "dead code — no frontend caller"],
@@ -72,8 +70,6 @@ const ALLOWLIST = new Map([
   // while apps/frontend/src/api/catalogs-maintenance.ts called them. Removed from this list because it
   // is now called; scripts/verify-route-manifest-parity.mjs pins it mounted so it cannot silently
   // regress.
-  ["registerActiveDriverSetRoutes", "backlog — samsara, unmounted; triage pending"],
-  ["registerForm425cExhibitsRoutes", "backlog — unmounted; triage pending"],
 ]);
 
 function walk(dir, out = []) {
