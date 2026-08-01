@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import Fastify from "fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { calculateUsTrusteeQuarterlyFeeCents } from "../exhibit-d-quarterly-fees.js";
-import { buildExhibitF } from "../exhibit-f-supporting-docs.js";
+import { billReference, buildExhibitF } from "../exhibit-f-supporting-docs.js";
 import { buildAllExhibits, getBuiltExhibits } from "../exhibits-builder.service.js";
 import { registerForm425cExhibitsRoutes } from "../routes.js";
 
@@ -109,6 +109,46 @@ describe("form-425c exhibits", () => {
     });
   });
 
+  describe("billReference — a court schedule must never label a document 'null' or a uuid", () => {
+    it("uses the vendor's bill_number when present", () => {
+      expect(
+        billReference({
+          bill_number: "13401-5723",
+          vendor_name: "Pilot Travel Centers",
+          total_cents: "60956",
+          bill_date: "2026-06-30",
+        })
+      ).toBe("13401-5723");
+    });
+
+    it("falls back to vendor + date + amount — never 'null', never a uuid", () => {
+      const ref = billReference({
+        bill_number: null,
+        vendor_name: "Pilot Travel Centers",
+        total_cents: "60956",
+        bill_date: "2026-06-30",
+      });
+      expect(ref).toContain("Pilot Travel Centers");
+      expect(ref).toContain("2026-06-30");
+      expect(ref).toContain("$609.56");
+      expect(ref).not.toMatch(/null|undefined/);
+      expect(ref).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/); // no uuid
+    });
+
+    it("stays honest when the vendor is missing too — no fabricated reference", () => {
+      const ref = billReference({
+        bill_number: "   ", // whitespace-only must not count as a real reference
+        vendor_name: null,
+        total_cents: "9500000",
+        bill_date: null,
+      });
+      expect(ref).toContain("vendor not recorded");
+      expect(ref).toContain("date not recorded");
+      expect(ref).toContain("$95,000.00");
+      expect(ref).not.toMatch(/null|undefined/);
+    });
+  });
+
   describe("buildExhibitF — court schedule must be complete and must fail loud", () => {
     const period = {
       operating_company_id: companyId,
@@ -127,7 +167,8 @@ describe("form-425c exhibits", () => {
       }));
       const billRows = Array.from({ length: 250 }, (_, i) => ({
         id: `bill-${i}`,
-        display_id: `BILL-${i}`,
+        bill_number: `13401-${i}`,
+        vendor_name: "Pilot Travel Centers",
         total_cents: "2000",
         bill_date: "2023-08-15",
       }));

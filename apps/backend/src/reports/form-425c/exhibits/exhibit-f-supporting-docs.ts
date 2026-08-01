@@ -87,6 +87,47 @@ function assertComplete(
   }
 }
 
+function formatUsd(cents: number): string {
+  return `$${(cents / 100).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+/**
+ * The human-facing reference for a bill row on a court supporting-documents schedule.
+ *
+ * `bill_number` is the SEMANTICALLY CORRECT field here, not a workaround for a null column: it is
+ * the vendor's own external reference (e.g. "13401-5723"), which is what a trustee, auditor or
+ * creditor matches the schedule against. `accounting.bills.display_id` — which this previously read
+ * — is NULL on all 16,236 bills on prod, so every bill row rendered as the literal string
+ * "Bill null" with a raw uuid as its reference. An exhibit that identifies 180 documents that way
+ * is not usable as evidence.
+ *
+ * When `bill_number` is absent (543 of 16,236 bills; 23 of the 180 in June 2026 TRANSP) the row is
+ * described from the fields the record DOES have — vendor, date, amount. That is honest and
+ * traceable: those three identify the document to anyone holding the vendor's records.
+ *
+ * What this must never emit, because each is a different way of lying on a court filing:
+ *   - a raw uuid (an internal key is not a document reference)
+ *   - the string "null" / "undefined"
+ *   - a fabricated or sequential number that looks like a real vendor reference
+ */
+export function billReference(row: {
+  bill_number: string | null;
+  vendor_name: string | null;
+  total_cents: string | number | null;
+  bill_date: string | null;
+}): string {
+  const billNumber = row.bill_number?.trim();
+  if (billNumber) return billNumber;
+
+  const vendor = row.vendor_name?.trim() || "vendor not recorded";
+  const date = row.bill_date ? String(row.bill_date) : "date not recorded";
+  const amount = formatUsd(Number(row.total_cents ?? 0));
+  return `— ${vendor}, ${date}, ${amount} (no vendor bill number on file)`;
+}
+
 export async function buildExhibitF(
   client: ExhibitQueryClient,
   input: ExhibitPeriod
@@ -144,13 +185,21 @@ export async function buildExhibitF(
 
   const billsRes = await client.query<{
     id: string;
-    display_id: string;
+    bill_number: string | null;
+    vendor_name: string | null;
     total_cents: string;
     bill_date: string;
   }>(
     `
-      SELECT b.id, b.display_id, b.amount_cents AS total_cents, b.bill_date::text
+      SELECT b.id,
+             b.bill_number,
+             qv.display_name AS vendor_name,
+             b.amount_cents AS total_cents,
+             b.bill_date::text
       FROM accounting.bills b
+      LEFT JOIN mdata.qbo_vendors qv
+        ON qv.qbo_id = b.vendor_id
+       AND qv.operating_company_id = b.operating_company_id
       WHERE b.operating_company_id = $1
         AND b.bill_date >= $2::date
         AND b.bill_date <= $3::date
@@ -176,11 +225,12 @@ export async function buildExhibitF(
   assertComplete("bills", billsRes.rows.length, Number(billCountRes.rows[0]?.n ?? 0), input);
 
   for (const row of billsRes.rows) {
+    const ref = billReference(row);
     documents.push({
       doc_type: "bill",
-      reference_id: String(row.display_id ?? row.id),
+      reference_id: ref,
       evidence_uuid: null,
-      label: `Bill ${row.display_id}`,
+      label: `Bill ${ref}`,
       amount_cents: Number(row.total_cents ?? 0),
       doc_date: row.bill_date ? String(row.bill_date) : null,
     });
