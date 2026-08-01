@@ -127,6 +127,39 @@ async function companyCode(client: DbClient, operatingCompanyId: string): Promis
   return res.rows[0]?.code ?? null;
 }
 
+/**
+ * ACCT-F66 — a latch row is only STANDING while the journal entry it recorded still stands.
+ *
+ * accounting.load_revenue_recognition_postings is INSERT-only in practice: nothing ever set
+ * is_active=false, even though the table was built with is_active / voided_at / voided_by_user_id and
+ * ih35_app holds UPDATE but NOT DELETE. So when the two 2026-08-01 owner-authorized reversals zeroed
+ * load L-20260624-0083's GL (net 0 across 1240 Unbilled, 4100 Freight Revenue and QBO-45 A/R), the
+ * subledger rows stayed is_active=true, status='posted'. Verified on prod: both rows still active,
+ * while their journal entries carry reversed_by_je_id = a5123c01-… and 363f13ae-….
+ *
+ * Consequences of treating a reversed latch as standing, all real:
+ *   - loadLatchExists() returns true, so the load can NEVER re-recognize. If the delivery is later
+ *     genuinely evidenced, Event 1 refuses with "already_posted" and the revenue is lost silently.
+ *   - earnAmountCents() would feed Event 2 an amount from a reversed Event 1.
+ *   - the ACCT-F59 invoice interlock would refuse that load's invoice forever.
+ *
+ * The reversal linkage is already modelled and populated (journal_entries.reversed_by_je_id /
+ * voided_at), so this is declarative — no hook on every reversal path that could be missed. ONE
+ * definition, exported, used by every caller: the repo has already shipped a load state machine in
+ * three copies and a revenue rule in two, and this is the same failure waiting to happen.
+ */
+export function standingLatchJePredicate(alias = "p"): string {
+  return `EXISTS (
+    SELECT 1 FROM accounting.journal_entries je
+    WHERE je.id = ${alias}.journal_entry_id
+      AND je.voided_at IS NULL
+      AND je.reversed_by_je_id IS NULL
+  )`;
+}
+
+/** Default-alias form for the common `... postings p` shape. */
+export const STANDING_LATCH_JE_PREDICATE = standingLatchJePredicate("p");
+
 async function loadLatchExists(
   client: DbClient,
   operatingCompanyId: string,
@@ -135,12 +168,13 @@ async function loadLatchExists(
 ): Promise<boolean> {
   const res = await client.query<{ id: string }>(
     `
-      SELECT id::text
-      FROM accounting.load_revenue_recognition_postings
-      WHERE operating_company_id = $1::uuid
-        AND load_id = $2::uuid
-        AND event = $3
-        AND is_active
+      SELECT p.id::text
+      FROM accounting.load_revenue_recognition_postings p
+      WHERE p.operating_company_id = $1::uuid
+        AND p.load_id = $2::uuid
+        AND p.event = $3
+        AND p.is_active
+        AND ${STANDING_LATCH_JE_PREDICATE}
       LIMIT 1
     `,
     [operatingCompanyId, loadId, event]
@@ -155,12 +189,13 @@ async function earnAmountCents(
 ): Promise<number | null> {
   const res = await client.query<{ amount_cents: string | number }>(
     `
-      SELECT amount_cents
-      FROM accounting.load_revenue_recognition_postings
-      WHERE operating_company_id = $1::uuid
-        AND load_id = $2::uuid
-        AND event = 'earn'
-        AND is_active
+      SELECT p.amount_cents
+      FROM accounting.load_revenue_recognition_postings p
+      WHERE p.operating_company_id = $1::uuid
+        AND p.load_id = $2::uuid
+        AND p.event = 'earn'
+        AND p.is_active
+        AND ${STANDING_LATCH_JE_PREDICATE}
       LIMIT 1
     `,
     [operatingCompanyId, loadId]
