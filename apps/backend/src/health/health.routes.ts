@@ -273,6 +273,49 @@ export function backgroundJobRule(
   qboRealmConnected: boolean
 ): { enabled: boolean; maxStaleMinutes: number } | null {
   switch (jobName) {
+    // ── OPS-F76 — the 8 jobs OPS-F75 deliberately skipped, now paired BY HAND ──────────────────────
+    //
+    // OPS-F75 added cadences only where a file declared ONE job and ONE cron expression, because a
+    // positional guess had already mis-paired the multi-job files once. These eight live in files that
+    // declare several of each, so each was resolved by reading which cron.schedule() call precedes
+    // which wrapBackgroundJobTick() name:
+    //   master-data-sync.cron.ts        "0 2 * * *"->full            "*/15 * * * *"->delta
+    //   cache-warmer.ts                 "*/5 * * * *"->tier3         "*/15 * * * *"->tier4
+    //   qbo-remote-count-collector      "10 */6 * * *"->delta        "20 2 * * *"->full
+    //   reconciliation-worker.cron.ts   "35 */6"->qbo_refdata  "45 * * * *"->qbo_transactional
+    //                                   "50 */12"->samsara_static  "55 * * * *"->cap15_identity
+    //
+    // qbo.master_data_sync.{delta,full} and qbo.token_refresh_cron already had rules and are NOT
+    // touched — delta's 30m against a 15m period is correct, and full returns null deliberately.
+    //
+    // THIS CONFIRMS THE OPS-F75 RETRACTION RATHER THAN REVERSING IT. On the earlier bad pairing I
+    // briefly "found" five thresholds shorter than their own period. With the correct pairings there
+    // are NONE: the reconciliation jobs had no rule at all, and every pre-existing rule is >= its
+    // period. The original thresholds were sound; only my extraction was wrong.
+    case "qbo.remote_count_collector.delta":
+      // "10 */6 * * *" = every 360m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 720 };
+    case "qbo.remote_count_collector.full":
+      // "20 2 * * *" = every 1440m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 2880 };
+    case "reconciliation.qbo_refdata":
+      // "35 */6 * * *" = every 360m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 720 };
+    case "reconciliation.qbo_transactional":
+      // "45 * * * *" = every 60m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 120 };
+    case "reconciliation.samsara_static":
+      // "50 */12 * * *" = every 720m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 1440 };
+    case "reconciliation.cap15_identity":
+      // "55 * * * *" = every 60m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 120 };
+    case "samsara.cache_warmer.tier3":
+      // "*/5 * * * *" = every 5m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 15 };
+    case "samsara.cache_warmer.tier4":
+      // "*/15 * * * *" = every 15m -> two missed periods
+      return { enabled: true, maxStaleMinutes: 30 };
     // ── OPS-F75 — cadences DERIVED from each job's own literal cron expression ─────────────────────
     //
     // 49 of 72 registered jobs had no rule, so `if (!rule) continue` skipped them entirely. OPS-F69
