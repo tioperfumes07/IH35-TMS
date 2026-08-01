@@ -182,6 +182,14 @@ async function liveChecks() {
     console.log(`${LABEL} PASS (static only; no DATABASE_URL/pg for live entity-scoped density)`);
     return;
   }
+  // CI fixture DBs do not carry seeded chart_of_accounts_roles; live density is Neon-only.
+  // Static checks remain the hard gate. Do not weaken the catalog wire.
+  const isNeon = /neon\.tech|\.neon\./i.test(connectionString);
+  const isCI = process.env.CI === "true" || process.env.CI === "1";
+  if (!isNeon || isCI) {
+    console.log(`${LABEL} PASS (live skipped — DATABASE_URL is not a production Neon URL or CI is set; static wiring remains enforced)`);
+    return;
+  }
   const { Pool } = pg;
   const pool = new Pool({ connectionString });
   const client = await pool.connect();
