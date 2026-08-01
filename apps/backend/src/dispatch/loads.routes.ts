@@ -100,6 +100,12 @@ const dispatchPreferenceBodySchema = z.object({
 const transitionBodySchema = z.object({
   new_status: dispatchStatusSchema,
   cancellation_reason_code: z.string().trim().max(80).optional(),
+  // ACCT-F81 — OFFICE-DELIVERS. When dispatch/accounting confirms a delivery, the operator may
+  // transcribe the REAL observed time off the POD document instead of accepting the confirmation
+  // instant. Optional: omitted means "I am confirming it now", which is itself a real, attributed
+  // observation (the audit trigger records who, via withCompanyScope). Supplying a fabricated past
+  // date is a human act we cannot prevent in code; inventing one automatically is not, so we don't.
+  delivered_at: z.string().datetime({ offset: true }).optional(),
 });
 
 const dispatchLoadReservationParamsSchema = z.object({
@@ -1237,6 +1243,63 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           load_id: params.data.id,
           load_status: mdataStatus,
         });
+      }
+
+      // ACCT-F81 — OFFICE-DELIVERS COUPLING. Delivery evidence must exist whether the DRIVER or the
+      // OFFICE confirmed the delivery. Owner ruling 2026-08-01: invoicing must NOT depend on the
+      // driver — dispatch/accounting confirming a delivery is an equally valid path.
+      //
+      // THE DEFECT THIS CLOSES. This endpoint validated only the status graph
+      // (validateLoadStatusTransition above) and never touched mdata.load_stops. So an office user
+      // could move a load to delivered_pending_docs — which fires the proforma → draft conversion
+      // directly below, unblocking send / A/R / factoring — while every stop stayed `pending` with
+      // actual_departure_at NULL. Verified on prod 2026-08-01: 20 stop rows, 0 with actual_arrival_at,
+      // 0 with actual_departure_at, and one LIVE load sitting at completed_docs_received (the terminal
+      // billing status) with both of its stops still pending. Meanwhile the recognition gate in
+      // revrec-delivery-posting/poster.service.ts reads exactly that timestamp off the final active
+      // delivery stop, so office-confirmed loads could bill while never being recognizable — the
+      // evidence the money path asks for was structurally unreachable by the office path.
+      //
+      // The coupling mirrors driver/loads.routes.ts (the one path that already derives status FROM the
+      // stop event) and writes in the SAME transaction as the load status, so the two can never
+      // disagree. Three deliberate constraints:
+      //
+      //   1. NEVER OVERWRITE. `AND s.actual_departure_at IS NULL` — if the driver already captured a
+      //      real departure, that observation wins. The office confirmation must not clobber first-hand
+      //      evidence with a later, weaker timestamp.
+      //   2. FINAL ACTIVE DELIVERY STOP ONLY — highest sequence_number among delivery stops that are
+      //      neither cancelled nor soft-deleted, identical to the driver handler and to the poster's
+      //      own evidence query. On a multi-drop load an earlier drop must not complete the load.
+      //   3. actual_arrival_at IS LEFT NULL. We have no evidence of when the truck arrived, and the
+      //      office is not asserting one. Stamping an arrival to make the row look complete would be
+      //      inventing an observation that never happened — the precise thing the scope doc forbids.
+      //      Departure is set because that IS what the office is attesting to.
+      //
+      // Attribution comes from withCompanyScope(authUser.uuid, …) via the audit trigger, so every
+      // office-stamped departure carries who asserted it. NOT a backfill: this fires only on a live
+      // office action, never over historical rows (see DISPATCH-STATUS-STOP-COUPLING-SCOPE §3 — loads
+      // already past the gate stay flagged and unrecognized until a human supplies real evidence).
+      if (targetStatus === "delivered_pending_docs" || targetStatus === "completed_docs_received") {
+        await client.query(
+          `
+            UPDATE mdata.load_stops s
+               SET actual_departure_at = COALESCE($2::timestamptz, now()),
+                   status = 'departed'::mdata.stop_status_enum,
+                   updated_at = now()
+             WHERE s.id = (
+                     SELECT s2.id
+                       FROM mdata.load_stops s2
+                      WHERE s2.load_id = $1
+                        AND s2.stop_type::text = 'delivery'
+                        AND s2.status::text <> 'cancelled'
+                        AND s2.soft_deleted_at IS NULL
+                      ORDER BY s2.sequence_number DESC
+                      LIMIT 1
+                   )
+               AND s.actual_departure_at IS NULL
+          `,
+          [params.data.id, body.data.delivered_at ?? null]
+        );
       }
 
       // ND-INV-01 — at POD (delivered_pending_docs), convert proforma → draft so send/A/R/factoring can proceed.
