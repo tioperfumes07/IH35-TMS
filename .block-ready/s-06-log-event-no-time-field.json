@@ -1,6 +1,6 @@
 {
   "block_id": "s-06-log-event-no-time-field",
-  "status": "READY",
+  "status": "done",
   "classification": "FE",
   "phase": "tier3",
   "branch": "fix/safety-fe-next",
@@ -19,7 +19,14 @@
   ],
   "acceptance": [
     {
+      "kind": "guard",
+      "script": "scripts/verify-safety-event-log-occurred-at.mjs",
+      "wired_into": "package.json",
       "check": "Log Safety Event modal exposes Time of occurrence (datetime-local) and POSTs occurred_at ISO to /api/v1/safety/events-log; guard verify:safety-event-log-occurred-at wired in CI + locked-guards."
+    },
+    {
+      "kind": "live",
+      "check": "VERIFIED 2026-08-01: merged via PR #2630. node scripts/verify-safety-event-log-occurred-at.mjs (+ --selftest) PASS against current apps/frontend/src/pages/safety/SafetyEventsPage.tsx (Time of occurrence datetime-local input at line 457-461, wired to draft.occurred_at, POSTed at line 150). Guard confirmed wired in .github/workflows/ci.yml:574 and locked-guards.yml:672-675."
     }
   ],
   "note": "Backend already accepts optional occurred_at (COALESCE with now()). FE-only wiring for 49 CFR 390.15 after-the-fact logging."
