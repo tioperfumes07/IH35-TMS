@@ -41,6 +41,22 @@ export function auditHealth(src) {
   if (!/mins\s*===\s*null/.test(code)) {
     problems.push(`${SVC}: the never-succeeded branch does not test a null last-success (mins === null).`);
   }
+  // OPS-F69: never-succeeded must be reachable WITHOUT a staleness rule. On prod all 8 never-succeeded
+  // jobs were unruled, so a `if (!rule) continue` placed ABOVE the null test skipped every one of them
+  // and made the distinct code useless in practice.
+  const loop = /for\s*\(const row of res\.rows\)\s*\{([\s\S]*?)\n    \}/.exec(code);
+  if (loop) {
+    const body = loop[1];
+    const iNull = body.search(/mins\s*===\s*null/);
+    const iRuleGate = body.search(/if\s*\(!rule[\s\S]{0,40}\)\s*continue/);
+    if (iRuleGate !== -1 && iNull !== -1 && iRuleGate < iNull) {
+      problems.push(
+        `${SVC}: the rule gate (\`if (!rule) continue\`) runs BEFORE the never-succeeded test, so a job ` +
+          `with no staleness rule can never be reported as never-succeeded. On prod all 8 never-succeeded ` +
+          `jobs were unruled — this ordering is what made the distinct code fire for none of them.`
+      );
+    }
+  }
   // Job names must never reach the public payload — they belong in the logged detail only.
   if (/HealthCheckError\(\s*`/.test(code) || /HealthCheckError\(\s*[a-zA-Z_$][\w$]*\s*[,)]/.test(code)) {
     problems.push(
