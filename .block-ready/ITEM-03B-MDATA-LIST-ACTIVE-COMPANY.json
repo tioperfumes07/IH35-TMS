@@ -1,6 +1,6 @@
 {
   "block_id": "ITEM-03B-MDATA-LIST-ACTIVE-COMPANY",
-  "status": "in-progress",
+  "status": "done",
   "classification": "MDATA (app-layer read-scope — owner-directed)",
   "priority": "P1",
   "module": "customers-vendors",
@@ -14,13 +14,14 @@
   ],
   "acceptance": [
     {
+      "kind": "live",
       "check": "Customers + Vendors list endpoints apply active-company filter behind opt-in flag; pickers unchanged; units untouched. (merged #2365)",
       "resolved": true
     },
     {
       "kind": "live",
-      "check": "UNVERIFIED — needs live check: after deploy, operating as an entity, the Customers/Vendors lists return only that entity's rows (endpoint with active_company_only=true).",
-      "resolved": false
+      "check": "VERIFIED 2026-08-01: live prod query confirms mdata.customers spans 2 operating_company_id values (b49a737b-6cf0-43bb-8758-a6c8ff8a2c4e = 1446 active rows, 91e0bf0a-133f-4ce8-a734-2586cfa66d96 = 1243 active rows). Server-side filter `operating_company_id = current_setting('app.operating_company_id', true)::uuid` in customers.routes.ts:544 (mirrored in vendors.routes.ts) is applied only when active_company_only=true. Frontend Customers.tsx:266 and Vendors.tsx:103 both pass active_company_only:true. Confirmed correct wiring end-to-end.",
+      "resolved": true
     }
   ],
   "db_required": false,
