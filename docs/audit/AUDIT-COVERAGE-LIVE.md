@@ -95,7 +95,7 @@ evidence, **per entity**. A `PASS` verdict is TRANSP-only unless the `Entity` co
 | Insurance | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Legal | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
 | Legal | B | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
-| Legal | C | TRANSP | UNVERIFIED | Not yet traced (claims/liabilities→GL) | 2026-08-02 | Cascade | | |
+| Legal | C | TRANSP | CONFIRMED STRUCTURAL GAP (honest-empty, 0 rows so not yet a live defect) | `legal.matters` is the real Legal-module table, cross-linked to `insurance.claim`/`insurance.lawsuit`/`safety.incidents` (the `insurance_claim_id`/`insurance_lawsuit_id`/`incident_id` FKs look like part of the same #4003 "wire a claim to the money side" fix). It carries real dollar fields (`financial_reserve_cents`, `amount_claimed_against_us`, `amount_we_seek`) but has NO FK/column to any liability, posting_batch, or journal_entry table, and a repo-wide grep for `financial_reserve_cents` finds it only in a schema dump — zero code ever reads or posts it. `legal.matters` = 0 rows company-wide, so this is not yet a live-dollar defect, but it is a genuine "silence on a link" per the owner's Layer-C rule: a legal reserve has no path to the GL at all if one is ever entered | 2026-08-02 | Cascade | | |
 | Legal | D | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Legal | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Cash Flow | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
