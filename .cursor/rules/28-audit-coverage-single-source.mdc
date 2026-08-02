@@ -3,7 +3,7 @@ description: HARD — AUDIT-COVERAGE-LIVE.md is the single source for FAIL+OPEN 
 alwaysApply: true
 ---
 
-# RULE 25 — AUDIT COVERAGE SINGLE SOURCE (2026-08-02)
+# RULE 28 — AUDIT COVERAGE SINGLE SOURCE (2026-08-02)
 
 Read `docs/audit/AUDIT-COVERAGE-LIVE.md` before ANY block.
 
