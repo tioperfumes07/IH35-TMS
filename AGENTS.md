@@ -9,6 +9,9 @@
 > (only `FIXED (PR #)`) · **only GUARD writes `VERIFIED`**. Append-only: never delete a row; supersede by adding
 > a new dated row and marking the old one `SUPERSEDED`. A row with no `Evidence` is not a finding.
 > Rows marked `Owner-gate? = YES` need an owner DECISION — a coder never self-answers one.
+> **`Module` must be a `SIDEBAR_ITEM_IDS` id** (optional ` · subtag`). **Scoreboard is generated** — after row edits run
+> `node scripts/audit-coverage-scoreboard.mjs --write`. Progress query: `node scripts/audit-coverage-scoreboard.mjs`
+> (CI: verify-step **2014** fails if Scoreboard ≠ Findings).
 
 > **★★★ THEN READ [docs/audit/GUARD-WORKORDERS.md](docs/audit/GUARD-WORKORDERS.md)** — the GUARD fix board: your lane's OPEN items, the fix
 > requirement + standard for each, and GUARD status. Pull the top OPEN item in your lane; do not idle.
