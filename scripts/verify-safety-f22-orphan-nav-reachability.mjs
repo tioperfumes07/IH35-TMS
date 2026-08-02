@@ -94,15 +94,33 @@ export function assertSafetyF22OrphanNavReachability(sources) {
     problems.push(`${DRIVER_SECTION}: no link to /safety/driver-profiles/:driverId — per-driver route has no inbound entry.`);
   }
 
+
+/** SAF-F27: absolute /safety/* literals OR relative leaves under path="/safety" both count as mounted. */
+function routeMountedInManifest(manifestRaw, fullRoute) {
+  if (manifestRaw.includes(fullRoute)) return true;
+  if (!fullRoute.startsWith("/safety/")) return false;
+  const leaf = fullRoute.slice("/safety/".length);
+  const safetyStart = manifestRaw.indexOf('path="/safety"');
+  if (safetyStart < 0) return false;
+  const safetyEnd = manifestRaw.indexOf('path="/liabilities"', safetyStart);
+  const block =
+    safetyEnd > safetyStart ? manifestRaw.slice(safetyStart, safetyEnd) : manifestRaw.slice(safetyStart);
+  return (
+    block.includes(`path="${leaf}"`) ||
+    block.includes(`path='${leaf}'`) ||
+    block.includes(`path={\`${leaf}\`}`)
+  );
+}
+
   // 7. Routes remain mounted in manifest (additive-only — never delete). Read raw — JSX comments
   // like `/safety/*` contain `*/` sequences that break naive block-comment stripping.
   const manifestRaw = sources?.[MANIFEST] ?? read(MANIFEST);
   for (const { route } of STATIC_ORPHAN_ROUTES) {
-    if (!manifestRaw.includes(route)) {
+    if (!routeMountedInManifest(manifestRaw, route)) {
       problems.push(`${MANIFEST}: ${route} not mounted — surface deleted instead of linked (Rule 07 violation).`);
     }
   }
-  if (!manifestRaw.includes("/safety/driver-profiles/:driverId")) {
+  if (!routeMountedInManifest(manifestRaw, "/safety/driver-profiles/:driverId")) {
     problems.push(`${MANIFEST}: /safety/driver-profiles/:driverId not mounted.`);
   }
 
