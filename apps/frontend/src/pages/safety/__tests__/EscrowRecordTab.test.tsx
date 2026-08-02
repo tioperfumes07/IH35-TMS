@@ -100,6 +100,15 @@ describe("EscrowRecordTab (A23-8 + ND-ESC-01)", () => {
     expect(driverFinanceApi.listEscrowRecords).toHaveBeenCalledWith(companyId);
   });
 
+  it("SAF-B08: surfaces server has_signed_clause on the list (On file / Missing)", async () => {
+    render(wrap(<EscrowRecordTab />));
+    await waitFor(() => {
+      expect(screen.getByTestId(`escrow-signed-clause-${driverId}`)).toBeTruthy();
+    });
+    expect(screen.getByTestId(`escrow-signed-clause-${driverId}`).textContent).toMatch(/On file/);
+    expect(screen.getByTestId("escrow-signed-clause-summary").textContent).toMatch(/1 of 1/);
+  });
+
   it("shows forfeiture audit history", async () => {
     render(wrap(<EscrowRecordTab />));
     await waitFor(() => {

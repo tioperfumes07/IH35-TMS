@@ -74,6 +74,9 @@ export function EscrowRecordTab() {
   // SAF-ORPH-03: surface per-driver timeline failures — silent catch left the Forfeiture Audit empty forever.
   const timelineErrors = escrowQuery.data?.timeline_errors ?? [];
   const totalForfeits = useMemo(() => attempts.filter((a) => a.status === "success").length, [attempts]);
+  // SAF-B08: has_signed_clause is server-derived from legal.contract_instances — surface it so
+  // operators see WHY Forfeit is blocked. Do not invent a signed row; count is from live records.
+  const signedClauseCount = useMemo(() => rows.filter((r) => r.has_signed_clause).length, [rows]);
 
   const columns = useMemo<ParityColumn<EscrowRecordRow>[]>(
     () => [
@@ -98,6 +101,19 @@ export function EscrowRecordTab() {
       { key: "current_balance", label: "Current Balance", sortable: true, render: (row) => `$${row.current_balance.toFixed(2)}` },
       { key: "pre_clause_total", label: "Pre-clause", sortable: true, render: (row) => `$${row.pre_clause_total.toFixed(2)}` },
       { key: "post_clause_total", label: "Post-clause", sortable: true, render: (row) => `$${row.post_clause_total.toFixed(2)}` },
+      {
+        key: "has_signed_clause",
+        label: "Signed clause",
+        sortable: true,
+        render: (row) => (
+          <span
+            data-testid={`escrow-signed-clause-${row.id}`}
+            className={row.has_signed_clause ? "font-semibold text-slate-700" : "text-slate-400"}
+          >
+            {row.has_signed_clause ? "On file" : "Missing"}
+          </span>
+        ),
+      },
       {
         // SAF-F09: NULL means no escrow target is configured for this entity/driver. It renders as
         // "Not configured", never as 0% or a number computed against an invented denominator — a
@@ -138,6 +154,13 @@ export function EscrowRecordTab() {
     <div className="space-y-3" data-testid="escrow-record-tab">
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-600">
         Escrow balances and events surface security-invoker data. Forfeiture attempts are auditable.
+        {rows.length > 0 ? (
+          <p className="mt-1 text-[11px] text-slate-500" data-testid="escrow-signed-clause-summary">
+            Signed escrow clause on file: {signedClauseCount} of {rows.length} drivers (from{" "}
+            <code className="text-[10px]">legal.contract_instances</code>
+            ). Forfeit stays blocked until the clause is signed.
+          </p>
+        ) : null}
       </div>
 
       {escrowQuery.isError ? (
