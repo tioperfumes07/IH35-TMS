@@ -1,0 +1,55 @@
+---
+description: Cursor must ship like Claude — full labelled commit + local gate before push; never --no-verify
+alwaysApply: true
+---
+
+# RULE 29 — CURSOR = CLAUDE SHIP PARITY (owner 2026-08-02)
+
+**Why:** Cursor PRs repeatedly failed `build-typecheck` while Claude's passed. Not bad luck. Cursor agents put Rule 16 in the **PR body**, used `git commit --no-verify`, skipped husky on bare/worktree clones, and learned lane bands / CLAIMED / EntityLink **after** CI burned 15–20 minutes. Claude writes **one complete commit** and runs the fail-fast gate **before** the first push.
+
+## Mechanical tooth
+
+`scripts/money-pr-local-gate.mjs` (first husky `branch:precheck-push` step) now runs **all** of:
+
+1. `verify-definition-of-done-evidence` (every branch commit — labelled Rule 16 lines)
+2. `verify-no-money-theater` (FINDING / LANE / DOD-A…E / VERIFY-1…8 / MODULE_PROGRESS / `MIGRATE:` when migrations touch)
+3. `verify-no-parallel-scoreboard-prs`
+4. `verify-section7-palette-financial`
+5. `verify-migration-lane-band` — Cursor migrations **HH 12–23 only** (never `…0000` morning)
+6. `verify-verify-step-lane-band` — Cursor verify-steps **EVEN only**
+7. `verify-no-claimed-numbers-edits` — **never** edit `CLAIMED-NUMBERS.json` on a feature PR (filename is the claim — TOOL-F03)
+8. `verify-data-migrations-rehearsed` — data-mutating migrations need a `REHEARSED:` line (TOOL-F04; Neon fork of prod)
+9. `verify-entity-link-adoption` — bare UUID renders / baseline drift on frontend TSX
+
+CI verify-steps **1324 + 1430 + 1702 + 1998** remain the remote backstop. Local gate is the **primary** time-saver.
+
+## HARD agent law (non-negotiable)
+
+| Always | Never |
+|--------|-------|
+| **One commit** over `origin/main` with the full labelled template in the **commit message** (not only the PR body) | Multi-commit "code then evidence" / prose-only first commit |
+| Run `node scripts/money-pr-local-gate.mjs` and require **PASS** before every push (even if husky is missing) | Assume husky ran; push then watch CI |
+| Keep git hooks enabled | `git commit --no-verify`, `git push --no-verify`, `HUSKY=0` |
+| Cursor: migration `YYYYMMDDHHMM` with **HH 12–23**; verify-step **EVEN**; no CLAIMED json edit | HH 00–11, odd step numbers, CLAIMED-NUMBERS thrash |
+| Fix EntityLink / regen baseline **in the same commit** when TSX changes fingerprint | Ignore `verify-entity-link-adoption` until CI fails |
+| **One push** after local PASS; wait for green or a real fail log | Rebase/force-push while `build-typecheck` is in_progress |
+
+## Commit message minimum (every app/db commit)
+
+```
+ROOT CAUSE: …
+FIX: …
+GUARD: scripts/verify-<name>.mjs + scripts/verify-steps/NNNN-verify-<name>.mjs
+LIVE PROOF: …   OR   UNVERIFIED — <blocker>
+REMAINING: …
+```
+
+Money paths also need FINDING / LANE / DOD-A…E / VERIFY-1…8 / MODULE_PROGRESS / MIGRATE (see Rule 23 / DoD §10).
+
+## Autoload / deletion
+
+Deleting this rule, shrinking `money-pr-local-gate` back to DoD-only, or removing verify-step **1998** fails CI.
+
+## Tie-breakers
+
+Busy < correct · PR body < commit message · husky hope < explicit local gate · another push < wait · memory < this file + `money-pr-local-gate`.

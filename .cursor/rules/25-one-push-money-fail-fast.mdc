@@ -9,9 +9,9 @@ alwaysApply: true
 
 ## Mechanical law (cannot be “remembered away”)
 
-1. **`scripts/money-pr-local-gate.mjs`** runs as the **first** `branch:precheck-push` step (husky pre-push). It runs `verify-definition-of-done-evidence` + `verify-no-money-theater` on `origin/main..HEAD` in **seconds**. Bad `FINDING` / `MODULE_PROGRESS` **never reaches GitHub**.
+1. **`scripts/money-pr-local-gate.mjs`** runs as the **first** `branch:precheck-push` step (husky pre-push). It runs DoD + money-theater **plus** migration lane band + verify-step lane band + no-CLAIMED-edits + EntityLink adoption (Rule **29**) on `origin/main..HEAD` in **seconds**. Bad commits **never reach GitHub**.
 2. **`scripts/check-commit-evidence.mjs`** classifies files from **staged OR HEAD** (amend / message-only rewrite). Empty `git diff --cached` must **not** skip money/DoD checks.
-3. CI verify-steps **1324 + 1430 + 1431** remain the remote backstop. Local gate is the **primary** time-saver.
+3. CI verify-steps **1324 + 1430 + 1431 + 1702 + 1998** remain the remote backstop. Local gate is the **primary** time-saver. Agents must run the gate **explicitly** — never rely on husky alone; never `--no-verify` (Rule 29).
 
 ## Agent behavior (HARD)
 

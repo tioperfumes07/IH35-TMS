@@ -47,6 +47,12 @@ function runNode(script) {
 
 const problems = [];
 
+// Rule 29 — always run the expanded fail-fast suite (not only money paths).
+// This is what Claude effectively does before push; Cursor must match.
+if (!runNode("scripts/money-pr-local-gate.mjs")) {
+  problems.push("money-pr-local-gate (Rule 25/29)");
+}
+
 const changed = sh("git diff --name-only origin/main...HEAD");
 const files =
   typeof changed === "string"
@@ -59,13 +65,6 @@ const touchesMoneyApps = files.some((f) =>
     f,
   ),
 );
-
-if (touchesMoneyApps || touchesHot) {
-  if (!runNode("scripts/verify-no-money-theater.mjs")) problems.push("verify-no-money-theater");
-  if (!runNode("scripts/verify-definition-of-done-evidence.mjs")) {
-    problems.push("verify-definition-of-done-evidence");
-  }
-}
 
 if (files.some((f) => f.startsWith("apps/frontend/src/pages/accounting/") || f.startsWith("apps/frontend/src/pages/banking/"))) {
   if (!runNode("scripts/verify-section7-palette-financial.mjs")) {

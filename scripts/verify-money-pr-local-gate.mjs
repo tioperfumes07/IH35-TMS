@@ -54,6 +54,18 @@ export function assertMoneyPrLocalGate(sources) {
     if (!gate.includes("verify-no-money-theater")) {
       problems.push(`${GATE}: must invoke verify-no-money-theater.`);
     }
+    // Rule 29 — Claude-parity suite (must not shrink back to DoD-only).
+    for (const needle of [
+      "verify-migration-lane-band",
+      "verify-verify-step-lane-band",
+      "verify-no-claimed-numbers-edits",
+      "verify-data-migrations-rehearsed",
+      "verify-entity-link-adoption",
+    ]) {
+      if (!gate.includes(needle)) {
+        problems.push(`${GATE}: must invoke ${needle} (Rule 29 Claude-parity fail-fast).`);
+      }
+    }
   }
 
   const precheck = get(PRECHECK);
