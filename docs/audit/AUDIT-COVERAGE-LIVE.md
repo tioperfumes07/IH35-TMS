@@ -45,10 +45,10 @@ matching `n_live_tup`) proving the zeros are real and not RLS-masked.
 | Metric | Value | As of |
 |---|---|---|
 | Modules certified full-PASS (all 5 layers) | **0 / 30** | 2026-08-02 |
-| Rows in this file | **422** | 2026-08-02 |
-| Rows `FAIL` (active, excl. SUPERSEDED/FIXED/CLOSED) | **20** | 2026-08-02 |
+| Rows in this file | **425** | 2026-08-02 |
+| Rows `FAIL` (active, excl. SUPERSEDED/FIXED/CLOSED) | **23** | 2026-08-02 |
 | — of which are entity-duplicate (same shared bug, separate entity row) | 4 (rows 347≡113, 364≡25, 380≡206, 399≡207) | 2026-08-02 |
-| — unique defects | **16** | 2026-08-02 |
+| — unique defects | **19** | 2026-08-02 |
 | Rows `Owner-gate? = YES` (active, not superseded) | **0** (rows 11 & 260 superseded by row 332) | 2026-08-02 |
 | Rows `VERIFIED` by GUARD | **0** | 2026-08-02 |
 | USMCA per-module coverage (A+B+C+D+E × 30 modules) | **150 / 150** | 2026-08-02 |
@@ -484,3 +484,6 @@ Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/
 | 420 | Program | D | TRANSP | N/A (internal tool) | Program board is an internal build tracker. No catalog pickers. §2-D N/A. | — | — | NO | 2026-08-02 | CASCADE |
 | 421 | System | D | TRANSP | N/A (admin dashboard) | System dashboard is owner-only admin. No catalog pickers. §2-D N/A. | — | — | NO | 2026-08-02 | CASCADE |
 | 422 | 425C | D | TRANSP | N/A (tax form — no picker +Create) | Form 425C is a form-fill surface with dropdowns (district, division) — static enums, not catalog pickers with +Create. §2-D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 423 | Background Jobs Health | B | ALL | FAIL — 4 jobs failing today, multiple stale errors | **82 background jobs registered.** 4 failed on 2026-08-02: (1) `safety.integrity_alert_engine_cron` — `integrity_alerts_alert_category_check` constraint violation (last success 2026-07-15, failing since). (2) `compliance.csa_basic_pull_cron` — `csa_basic_pull_partial_failure success=0 failures=2` (last success 2026-06-30). (3) `qbo_sync.step.items_reconcile` — `duplicate key violates uq_items_company_item_name` (TRANSP). (4) `qbo_sync.step.customers_pull` — **USMCA QBO not authorized** ("Please authorize via /admin/forensic-review"). Additional stale errors: `search.indexer_incremental` (column `d.driver_code` does not exist), `drivers.document_alert_engine_cron` (column `d.full_name` does not exist), `samsara.hos_pull_cron` (`duty_status_events_duty_status_check` constraint), `compliance.reminder_cron` (column `e.operating_company_id` does not exist). Jobs with `column X does not exist` errors indicate schema drift between deployed code and DB. | OPEN | — | NO | 2026-08-02 | CASCADE |
+| 424 | USMCA QBO Authorization | B | USMCA | FAIL — QBO not authorized for USMCA | `qbo_sync.step.customers_pull` and `qbo_sync.step.chart_of_accounts_pull` both fail for USMCA with **"QBO not authorized for this company. Please authorize via /admin/forensic-review."** This explains row 302 (0 QBO classes for USMCA) — the QBO sync cannot pull ANY data for USMCA because QBO authorization is missing. Until USMCA is authorized in QBO, no QBO class, customer, or chart-of-accounts sync can occur. This is a configuration gap, not a code defect. | OPEN | — | NO | 2026-08-02 | CASCADE |
+| 425 | Driver Duplicates | B | ALL | FAIL — duplicate driver records | (1) **CARLOS GALAVIZ**: 4 records total — 2 Active in TRANSP (`a10a4320`, `1b0af017`, both created 2026-05-31 same timestamp), 2 Inactive in USMCA (`31e0c899`, `2330ef4e`, both created 2026-07-04 same timestamp). The same-timestamp pairs indicate a double-import bug. (2) **JOSE MANUEL MEJIA OLMOS**: 2 Active in TRANSP (`641fc9f1` created 2026-07-16, `554acb4c` created 2026-07-27) — created 11 days apart, likely re-imported. These duplicates will cause problems in settlement posting (which driver gets the deduction?), KPI counts (driver count inflated), and picker selection (user sees duplicate names). | OPEN | — | NO | 2026-08-02 | CASCADE |
