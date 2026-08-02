@@ -1,6 +1,8 @@
 {
   "block_id": "ITEM-03B-MDATA-LIST-ACTIVE-COMPANY",
-  "status": "done",
+  "status": "superseded",
+  "superseded_by": "H5-EMPTY-WAVE per 08-BLOCK-BACKLOG-COUNT-CORRECTED-2026-08-01.md — catalog present; active-company list is a surface fix, not a dedicated H5 wave",
+  "notes": "Auditor EVAPORATE 2026-08-01: was COLLAPSE/H5; catalogs populated, 0 write≠read pickers, test-enforced. Work collapses into DESIGN/MISSING-CREATOR stream.",
   "classification": "MDATA (app-layer read-scope — owner-directed)",
   "priority": "P1",
   "module": "customers-vendors",

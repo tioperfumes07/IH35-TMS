@@ -1,6 +1,8 @@
 {
   "block_id": "ps-a-item-editor-account-pickers-no-addnew",
-  "status": "PENDING",
+  "status": "superseded",
+  "superseded_by": "H5-EMPTY-WAVE per 08-BLOCK-BACKLOG-COUNT-CORRECTED-2026-08-01.md — catalog present; quick-create UI is DESIGN/MISSING-CREATOR, not H5 wave",
+  "notes": "Auditor EVAPORATE 2026-08-01: ps-a-item-editor picker finding evaporated with H5 empty wave.",
   "classification": "FINANCIAL",
   "phase": "tier2",
   "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
