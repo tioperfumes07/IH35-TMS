@@ -174,8 +174,20 @@ export function auditUpsertKeepsName(src) {
   return problems;
 }
 
+/**
+ * ACCT-F83 — the puller's upsert SQL moved into items-write-sql.ts (one reviewed home for every
+ * QBO-sourced catalogs.items write, shared with the reconciler). This guard's item_name invariant is
+ * about the SQL, not about which file holds it, so it now reads BOTH and audits the pair.
+ *
+ * It failed CLOSED when the SQL moved ("no catalogs.items upsert found") rather than passing by
+ * absence, which is the correct behaviour and the reason this is a re-anchor and not a repair of a
+ * fail-open hole. Both files are required to exist: if either read throws, the guard errors instead of
+ * quietly auditing half the statement.
+ */
+const SQL_MODULE = "apps/backend/src/qbo-sync/items-write-sql.ts";
+
 function realSource() {
-  return readFileSync(join(ROOT, PULLER), "utf8");
+  return `${readFileSync(join(ROOT, PULLER), "utf8")}\n${readFileSync(join(ROOT, SQL_MODULE), "utf8")}`;
 }
 
 function auditTree(src = realSource()) {
