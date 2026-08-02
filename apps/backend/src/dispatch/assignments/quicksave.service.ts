@@ -38,15 +38,20 @@ async function assertUnitAvailable(client: PoolClient, unitId: string, operating
     display_id: string | null;
   }>(
     `
-      SELECT v.id::text,
+      -- DISP-F01 — same dead-stub view as the pre-dispatch validator, but this call site failed the
+      -- OTHER way: the INNER JOIN returned nothing, so 'if (!row) throw E_VALIDATION_UNIT_UNAVAILABLE'
+      -- fired for EVERY unit. Quicksave assignment could not succeed at all. Driving from mdata.units
+      -- with a LEFT JOIN fixes both directions at once — the row exists, is_oos comes from the
+      -- authority, and the view's advisory columns degrade to false when it is dead.
+      SELECT u.id::text,
              COALESCE(v.is_dispatch_blocked, false) AS is_dispatch_blocked,
              v.dispatch_block_reason,
              COALESCE(u.is_oos, false) AS is_oos,
-             COALESCE(u.unit_number, v.display_id, v.id::text) AS display_id
-      FROM views.units_with_dispatch_status v
-      JOIN mdata.units u ON u.id = v.id
-      WHERE v.id = $1::uuid
-        AND v.operating_company_id = $2::uuid
+             COALESCE(u.unit_number, v.display_id, u.id::text) AS display_id
+      FROM mdata.units u
+      LEFT JOIN views.units_with_dispatch_status v ON v.id = u.id
+      WHERE u.id = $1::uuid
+        AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
       LIMIT 1
     `,
     [unitId, operatingCompanyId]

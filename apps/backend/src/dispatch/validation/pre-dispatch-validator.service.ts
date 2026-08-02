@@ -327,17 +327,33 @@ async function checkUnitOos(
     is_oos: boolean;
   }>(
     `
+      -- DISP-F01 — this was FROM views.units_with_dispatch_status v JOIN mdata.units u, and that view
+      -- is a dead stub on prod: "SELECT NULL::uuid AS id, ... false AS is_dispatch_blocked ... WHERE
+      -- false" — it returns ZERO rows for every unit, always. The INNER JOIN therefore produced no
+      -- row, 'if (!unit) return []' fired, and this validator returned NO ITEMS AT ALL. Every gate it
+      -- owns — OOS, WF-050 dispatch-block, PM-due — was silently disabled. 13 active OOS units
+      -- (TRK-owned, leased to TRANSP) were dispatchable, verified on prod 2026-08-02.
+      --
+      -- The unit row now comes from mdata.units, which is the authority for is_oos, and the view is
+      -- LEFT JOINed for its advisory columns. A dead or missing view degrades those advisories to
+      -- false; it can no longer switch the OOS block off. quick-assign.service.ts already read is_oos
+      -- this way, which is the only reason ONE of the three dispatch paths still blocked OOS units.
+      --
+      -- Scoping is lease-aware on purpose. mdata.units has NO operating_company_id (§4): it carries
+      -- owner_company_id and currently_leased_to_company_id. The old filter v.operating_company_id
+      -- could never have matched a TRK-owned unit leased to TRANSP even had the view been alive —
+      -- which is exactly the population that is out of service.
       SELECT
-        v.display_id,
+        COALESCE(u.unit_number, v.display_id, u.id::text) AS display_id,
         COALESCE(v.is_dispatch_blocked, false) AS is_dispatch_blocked,
         v.dispatch_block_reason,
         COALESCE(v.has_open_pm_due_wo, false) AS has_open_pm_due_wo,
         COALESCE(v.open_wo_count, 0) AS open_wo_count,
         COALESCE(u.is_oos, false) AS is_oos
-      FROM views.units_with_dispatch_status v
-      JOIN mdata.units u ON u.id = v.id
-      WHERE v.id = $1::uuid
-        AND v.operating_company_id = $2::uuid
+      FROM mdata.units u
+      LEFT JOIN views.units_with_dispatch_status v ON v.id = u.id
+      WHERE u.id = $1::uuid
+        AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
       LIMIT 1
     `,
     [unitUuid, operatingCompanyId]
