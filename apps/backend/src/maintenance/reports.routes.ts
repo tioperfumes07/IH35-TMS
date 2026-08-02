@@ -104,9 +104,14 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
     case "top_vendors_by_spend":
       return (
         await client.query(
-          `SELECT COALESCE(v.display_name, w.external_vendor_id::text) AS vendor_name, COALESCE(SUM(w.total_actual_cost),0)::numeric(12,2) AS total_spend
+          // MNT-VENDOR-CANONICAL (2026-08-02): joined to the WRONG table. external_vendor_id FKs to
+          // mdata.vendors (fk_maintenance_wo_external_vendor), but this LEFT JOINed the RETIRE
+          // mdata.qbo_vendors mirror — matching a canonical vendor id against mirror ids, which
+          // essentially never resolves, so vendor_name silently fell through to the raw uuid via
+          // COALESCE and the "spend by vendor" report showed UUIDs instead of vendor names.
+          `SELECT COALESCE(v.vendor_name, w.external_vendor_id::text) AS vendor_name, COALESCE(SUM(w.total_actual_cost),0)::numeric(12,2) AS total_spend
            FROM maintenance.work_orders w
-           LEFT JOIN mdata.qbo_vendors v ON v.id = w.external_vendor_id
+           LEFT JOIN mdata.vendors v ON v.id = w.external_vendor_id
            WHERE w.operating_company_id = $1
            GROUP BY vendor_name
            ORDER BY total_spend DESC NULLS LAST
