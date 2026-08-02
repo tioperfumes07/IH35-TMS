@@ -193,11 +193,32 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
       const limitIdx = params.length - 1;
       const offsetIdx = params.length;
 
+      // SAF-C06: the cluster list resolved driver/unit to plain text with no EntityLink — operators
+      // could read a name but could not drill through to the driver profile, unit profile, load, or
+      // trailer. Join the display names server-side (entity-scoped) so the frontend labels links by
+      // name, never a truncated uuid.
       const res = await client.query(
         `
-          SELECT i.*, u.unit_number
+          SELECT i.*,
+                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+                 u.unit_number AS unit_number,
+                 eq.equipment_number AS trailer_number,
+                 l.load_number AS load_number
           FROM safety.incidents i
-          LEFT JOIN mdata.units u ON u.id = i.unit_id AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
+          LEFT JOIN mdata.drivers d
+            ON d.id = i.driver_id
+           AND d.operating_company_id = i.operating_company_id
+          LEFT JOIN mdata.units u
+            ON u.id = i.unit_id
+           AND (u.owner_company_id = i.operating_company_id
+                OR u.currently_leased_to_company_id = i.operating_company_id)
+          LEFT JOIN mdata.equipment eq
+            ON eq.id = i.trailer_id
+           AND (eq.owner_company_id = i.operating_company_id
+                OR eq.currently_leased_to_company_id = i.operating_company_id)
+          LEFT JOIN mdata.loads l
+            ON l.id = i.load_id
+           AND l.operating_company_id = i.operating_company_id
           WHERE ${filters.join("\n            AND ")}
           ORDER BY i.incident_at DESC
           LIMIT $${limitIdx} OFFSET $${offsetIdx}
@@ -221,10 +242,28 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
     const row = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          SELECT *
-          FROM safety.incidents
-          WHERE id = $1
-            AND operating_company_id = $2
+          SELECT i.*,
+                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+                 u.unit_number AS unit_number,
+                 eq.equipment_number AS trailer_number,
+                 l.load_number AS load_number
+          FROM safety.incidents i
+          LEFT JOIN mdata.drivers d
+            ON d.id = i.driver_id
+           AND d.operating_company_id = i.operating_company_id
+          LEFT JOIN mdata.units u
+            ON u.id = i.unit_id
+           AND (u.owner_company_id = i.operating_company_id
+                OR u.currently_leased_to_company_id = i.operating_company_id)
+          LEFT JOIN mdata.equipment eq
+            ON eq.id = i.trailer_id
+           AND (eq.owner_company_id = i.operating_company_id
+                OR eq.currently_leased_to_company_id = i.operating_company_id)
+          LEFT JOIN mdata.loads l
+            ON l.id = i.load_id
+           AND l.operating_company_id = i.operating_company_id
+          WHERE i.id = $1
+            AND i.operating_company_id = $2
           LIMIT 1
         `,
         [params.data.id, query.data.operating_company_id]
