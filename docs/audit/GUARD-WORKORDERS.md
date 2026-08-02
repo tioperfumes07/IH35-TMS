@@ -37,7 +37,7 @@ already has an owner here.
 | USMCA chart gaps (fuel/tolls/lumper/pay/escrow, 42xx revenue) | — | C | Claude Coder | Mirror TRANSP by purpose; entity-scoped (never FK a TRANSP acct); 4210/4220/4230/4240 + 6 revenue maps 1:1; fix NULL account_number on USMCA Insurance Expense | Task 3 | building |
 | Bills `mdata_vendor_id` NULL ×2 | 3 | C | Claude Coder | Backfill the 2 remaining to canonical vendor hub; additive | — | OPEN |
 | Fuel GL-dark / `load_id` NULL 1,547 | 1, 122 | B/C | Claude Coder | Categorize Relay fuel via the workflow (owner-adjacent); each diesel expense FKs a load (G18) | — | OPEN |
-| Banking all-accounts aggregate | 2 | E | Cursor | Reproduce the surface + filter that must equal per-account sum; fix the aggregate view | — | OPEN |
+| Banking all-accounts aggregate | 2 | E | Cursor | Reproduce the surface + filter that must equal per-account sum; fix the aggregate view | #4011 + residual double-/100 fix | **FIXED** — KPI dollars match tile sum; guard 1508/1973 |
 | Inventory category picker empty | 25 | D | Cursor | Seed `catalogs.parts` category source; picker renders + persists | — | OPEN |
 | ParityTable resize hit-target | 57 | A | Cursor | Discoverable resize affordance (grip/cursor); UX polish | — | OPEN (minor) |
 | 7 pickers "D UNVERIFIED" | 19–23,26,55 | D | Cascade re-test | EXERCISE the inline +Create live (fill→save→persist, no native GET); after FIX 2. Code-wired ≠ verified (see §2-D note) | — | UNVERIFIED |
