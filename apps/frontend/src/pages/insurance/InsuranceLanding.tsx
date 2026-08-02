@@ -32,7 +32,7 @@ function Card(props: CardProps) {
   return (
     <Link
       to={to}
-      className="block rounded-sm border border-red-300 bg-red-50 p-4"
+      className="block min-w-0 rounded-sm border border-red-300 bg-red-50 px-3 py-2"
       data-testid="insurance-kpi-alert"
       aria-label={`${label} — view records`}
     >
@@ -68,8 +68,8 @@ export function InsuranceLanding() {
   };
 
   return (
-    <div className="space-y-4">
-      <header className="rounded-sm border border-gray-200 bg-white p-4">
+    <div className="min-w-0 space-y-4 overflow-x-hidden">
+      <header className="min-w-0 rounded-sm border border-gray-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">Insurance Dashboard</h2>
         <p className="mt-1 text-xs text-slate-600">Operational snapshot across policies, COI requests, claims, and lawsuits.</p>
       </header>
@@ -80,7 +80,7 @@ export function InsuranceLanding() {
         <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">Failed to load insurance dashboard widgets.</div>
       ) : null}
 
-      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <section className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))] [&>*]:min-w-0">
         <Card label="Total active policies" value={n("total_active_policies")} to="/safety/insurance/policies" />
         <Card label="Policies expiring in 30 days" value={n("policies_expiring_30d")} to="/safety/insurance/policies" />
         <Card
