@@ -41,7 +41,7 @@ matching `n_live_tup`) proving the zeros are real and not RLS-masked.
 | Modules certified full-PASS (all 5 layers) | **0 / 30** | 2026-08-02 |
 | Modules with a confirmed live defect | **15 / 30** | 2026-08-02 |
 | Rows in this file | **57** | 2026-08-02 |
-| Rows `FAIL` + `OPEN` | **4** | 2026-08-02 |
+| Rows `FAIL` + `OPEN` | **6** | 2026-08-02 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **1** | 2026-08-02 |
 | Rows `VERIFIED` by GUARD | **0** | 2026-08-02 |
 
