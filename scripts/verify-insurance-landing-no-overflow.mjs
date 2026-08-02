@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// CI refresh: re-queue after stuck build-typecheck (2026-08-02).
 /**
  * verify-insurance-landing-no-overflow.mjs
  * Insurance landing must shrink inside the Safety tab at 1440px — root overflow guards +
