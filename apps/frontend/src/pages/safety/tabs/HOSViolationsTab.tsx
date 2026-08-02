@@ -10,6 +10,7 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type HosViolationRow = Record<string, unknown>;
 type Source = "samsara_auto" | "manual_office" | "dot_citation";
@@ -122,7 +123,9 @@ export function HOSViolationsTab() {
 
   const columns = useMemo<Array<ParityColumn<HosViolationRow>>>(
     () => [
-      { key: "driver_id", label: "Driver", sortable: true, render: (row) => String(row.driver_id ?? "—") },
+      { key: "driver_id", label: "Driver", sortable: true, render: (row) => (
+        <EntityLink kind="driver" id={row.driver_id as string | undefined} label={(row.driver_name as string | undefined) ?? undefined} />
+      ) },
       {
         key: "violation_type",
         label: "Violation Type",
