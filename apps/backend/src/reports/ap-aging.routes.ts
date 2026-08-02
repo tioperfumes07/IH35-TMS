@@ -63,7 +63,15 @@ function isHistorical(asOfDate: string): boolean {
 
 const num = (v: unknown): number => Number(v ?? 0);
 
-export async function registerApAgingRoutes(app: FastifyInstance) {
+// RPT-F03 — named registerReportsApAgingRoutes, not registerApAgingRoutes, because
+// apps/backend/src/accounting/ap-aging.routes.ts already exports the latter for a DIFFERENT path
+// (/api/v1/accounting/ap-aging). Two modules exporting one registrar name is genuinely ambiguous:
+// scripts/verify-no-duplicate-routes.mjs resolves manual mounts by function NAME, so it attributed
+// the accounting module's route to this module's mount and reported a duplicate that does not exist
+// at runtime. The same collision misled me while verifying this PR. Renaming removes the ambiguity
+// at its source rather than teaching the guard to tolerate it, and matches this directory's own
+// convention — registerReportsArAgingRoutes, registerReportsIftaRoutes, registerReportsScheduledCrudRoutes.
+export async function registerReportsApAgingRoutes(app: FastifyInstance) {
   app.get("/api/v1/reports/ap-aging", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
