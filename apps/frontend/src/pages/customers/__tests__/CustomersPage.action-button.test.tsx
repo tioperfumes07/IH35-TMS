@@ -31,10 +31,8 @@ vi.mock("../../../contexts/CompanyContext", () => ({
 
 function customer(p: Partial<Customer> & Pick<Customer, "id" | "name">): Customer {
   return {
-    id: p.id,
-    name: p.name,
-    customer_code: p.customer_code ?? null,
-    customer_type: p.customer_type ?? "broker",
+    customer_code: null,
+    customer_type: "broker",
     phone: null,
     email: null,
     billing_address: null,
