@@ -785,59 +785,59 @@ export function UsersPage() {
       </Modal>
 
       {isOwner ? (
-        <div className="mt-6 rounded-md border border-slate-200 bg-slate-50 p-4">
-          <h3 className="mb-1 text-sm font-semibold text-slate-700">Admin Tools</h3>
-          <p className="mb-3 text-xs text-slate-500">Owner-only maintenance actions.</p>
-          <div className="rounded-sm border border-slate-200 bg-white p-3">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-slate-700">Deactivate Probe Accounts</p>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  Deactivates CI/test fixture accounts still live in production. Idempotent — runs at most
-                  once per UTC day per requesting user.
-                </p>
-                {probeJobId && probeJobQuery.data ? (
-                  <p className="mt-1 text-xs text-slate-500">
-                    Job {probeJobId.slice(0, 8)}&hellip;{" "}
-                    <span
-                      className={
-                        probeJobQuery.data.status === "completed"
-                          ? "font-medium text-slate-700"
-                          : probeJobQuery.data.status === "failed"
-                            ? "font-medium text-red-600"
-                            : "text-slate-400"
-                      }
-                    >
-                      {probeJobQuery.data.status}
-                    </span>
-                    {probeJobQuery.data.completedAt
-                      ? ` — finished ${formatDateTimeUS(probeJobQuery.data.completedAt)}`
-                      : ""}
-                  </p>
-                ) : probeJobId && !probeJobQuery.data ? (
-                  <p className="mt-1 text-xs text-slate-400">Checking job status&hellip;</p>
-                ) : null}
-              </div>
-              <Button
-                type="button"
-                variant="secondary"
-                loading={
-                  probeMutation.isPending ||
-                  (!!probeJobId &&
-                    (probeJobQuery.data?.status === "queued" || probeJobQuery.data?.status === "running"))
-                }
-                disabled={
-                  probeMutation.isPending ||
-                  (!!probeJobId &&
-                    (probeJobQuery.data?.status === "queued" || probeJobQuery.data?.status === "running"))
-                }
-                onClick={() => probeMutation.mutate()}
-              >
-                Run
-              </Button>
-            </div>
+        <section className="mt-6 overflow-hidden rounded-sm border border-slate-200 bg-white">
+          <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+            <h3 className="mb-1 text-sm font-semibold text-slate-700">Admin Tools</h3>
+            <p className="text-xs text-slate-500">Owner-only maintenance actions.</p>
           </div>
-        </div>
+          <div className="flex items-start justify-between gap-4 px-4 py-3">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-slate-700">Deactivate Probe Accounts</p>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Deactivates CI/test fixture accounts still live in production. Idempotent — runs at most
+                once per UTC day per requesting user.
+              </p>
+              {probeJobId && probeJobQuery.data ? (
+                <p className="mt-1 text-xs text-slate-500">
+                  Job {probeJobId.slice(0, 8)}&hellip;{" "}
+                  <span
+                    className={
+                      probeJobQuery.data.status === "completed"
+                        ? "font-medium text-slate-700"
+                        : probeJobQuery.data.status === "failed"
+                          ? "font-medium text-red-600"
+                          : "text-slate-400"
+                    }
+                  >
+                    {probeJobQuery.data.status}
+                  </span>
+                  {probeJobQuery.data.completedAt
+                    ? ` — finished ${formatDateTimeUS(probeJobQuery.data.completedAt)}`
+                    : ""}
+                </p>
+              ) : probeJobId && !probeJobQuery.data ? (
+                <p className="mt-1 text-xs text-slate-400">Checking job status&hellip;</p>
+              ) : null}
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              loading={
+                probeMutation.isPending ||
+                (!!probeJobId &&
+                  (probeJobQuery.data?.status === "queued" || probeJobQuery.data?.status === "running"))
+              }
+              disabled={
+                probeMutation.isPending ||
+                (!!probeJobId &&
+                  (probeJobQuery.data?.status === "queued" || probeJobQuery.data?.status === "running"))
+              }
+              onClick={() => probeMutation.mutate()}
+            >
+              Run
+            </Button>
+          </div>
+        </section>
       ) : null}
     </div>
   );
