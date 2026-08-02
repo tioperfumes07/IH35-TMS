@@ -1,6 +1,7 @@
 import type { PoolClient } from "pg";
 import { qboCompanyContext, qboPaginateEntity } from "../integrations/qbo/qbo-client.js";
 import { withLuciaBypass } from "../auth/db.js";
+import { PULLER_UPSERT_ITEM_SQL } from "./items-write-sql.js";
 
 export type ItemsPullResult = {
   rowsPulled: number;
@@ -189,53 +190,7 @@ async function upsertCatalogItem(client: PoolClient, operatingCompanyId: string,
   );
   if ((adopted.rowCount ?? 0) > 0) return;
 
-  await client.query(
-    `
-      INSERT INTO catalogs.items (
-        operating_company_id,
-        item_name,
-        item_code,
-        item_type,
-        unit_price_cents,
-        qbo_item_id,
-        default_expense_account_id,
-        notes,
-        deactivated_at,
-        qbo_synced_at,
-        qbo_sync_status,
-        qbo_sync_error
-      )
-      VALUES ($1,$2,$3,$4,$5,$6,$7::uuid,$8,$9,now(),'synced',NULL)
-      ON CONFLICT (operating_company_id, qbo_item_id) WHERE qbo_item_id IS NOT NULL
-      DO UPDATE SET
-        -- ACCT-F77 — item_name is DELIBERATELY NOT overwritten on update.
-        --
-        -- This single line was the whole defect. On update the upsert renamed the local twin to QBO's
-        -- bare short name ('Fuel Surcharge [QBO 24]' -> 'Fuel Surcharge'), colliding with a native row
-        -- of that name under uq_items_company_item_name — which is UNIQUE(operating_company_id,
-        -- item_name) and NOT partial. items_pull and items_reconcile therefore aborted on EVERY run and
-        -- had never once succeeded.
-        --
-        -- The '[QBO nn]' suffix is INTENTIONAL disambiguation, not drift: it is how a QBO-sourced row
-        -- coexists with a same-named local row. QBO owns the item's identity (qbo_item_id) and its
-        -- economics (price, type, income account) — all still synced below. It does not own the local
-        -- display name once that name is already taken.
-        --
-        -- Fixing this in code rather than by renaming/retiring catalogs rows is the correct call: it
-        -- makes the sync green with ZERO data mutation, is reversible, and does not presume a naming
-        -- convention the owner has not ruled on. A rename would also have been unsafe to ship blind —
-        -- non-enforced references (invoice/expense lines, jsonb item ids, ps_item_qbo_id) have not been
-        -- swept. item_name is still set on a genuine first INSERT of a never-seen qbo_item_id above.
-        item_code = EXCLUDED.item_code,
-        item_type = EXCLUDED.item_type,
-        unit_price_cents = EXCLUDED.unit_price_cents,
-        default_expense_account_id = COALESCE(EXCLUDED.default_expense_account_id, catalogs.items.default_expense_account_id),
-        deactivated_at = CASE WHEN $10::boolean THEN NULL ELSE COALESCE(catalogs.items.deactivated_at, now()) END,
-        qbo_synced_at = now(),
-        qbo_sync_status = 'synced',
-        qbo_sync_error = NULL,
-        updated_at = now()
-    `,
+  await client.query(PULLER_UPSERT_ITEM_SQL,
     [
       operatingCompanyId,
       name,

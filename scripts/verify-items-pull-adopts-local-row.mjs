@@ -62,7 +62,24 @@ export function auditPuller(src) {
     problems.push(`${SVC}: the adopt UPDATE is not entity-scoped — it could adopt another company's item.`);
   }
   // Adoption must SHORT-CIRCUIT, or the insert still runs and still collides.
-  const after = code.slice(code.indexOf(adopt) + adopt.length, code.indexOf("INSERT INTO catalogs.items"));
+  //
+  // ACCT-F83 — this check was FAIL-OPEN for one commit and the fix is the anchor below. It located the
+  // insert with `code.indexOf("INSERT INTO catalogs.items")`. When ACCT-F83 moved that SQL into
+  // items-write-sql.ts, indexOf returned -1, `slice(start, -1)` silently became "everything after the
+  // adopt", and the `return` inside pullItemsFromQbo satisfied the test from anywhere in the file. The
+  // guard would have reported OK with the short-circuit deleted. A missing anchor must FAIL, never
+  // widen the search — that is the difference between a guard and a decoration.
+  const tail = code.slice(code.indexOf(adopt) + adopt.length);
+  const insertAnchor = /await\s+client\.query\(\s*PULLER_UPSERT_ITEM_SQL|INSERT\s+INTO\s+catalogs\.items/i.exec(tail);
+  if (!insertAnchor) {
+    problems.push(
+      `${SVC}: could not locate the insert that follows adoption (neither an inline INSERT INTO ` +
+        `catalogs.items nor a PULLER_UPSERT_ITEM_SQL call). The short-circuit check cannot run, so this ` +
+        `guard would be fail-open — re-anchor it to wherever the insert now lives.`
+    );
+    return problems;
+  }
+  const after = tail.slice(0, insertAnchor.index);
   if (!/return\b/.test(after)) {
     problems.push(`${SVC}: adoption does not short-circuit before the INSERT — the colliding insert would still run.`);
   }
@@ -92,6 +109,26 @@ function selftest() {
   `;
   if (!auditPuller(noShortCircuit).some((p) => p.includes("short-circuit")))
     failures.push("case3 FAIL — adoption without a short-circuit was NOT caught");
+
+  // ACCT-F83 case 3b — the same omission, expressed against the CURRENT shape where the insert lives
+  // behind PULLER_UPSERT_ITEM_SQL. Without this case, case3 alone would keep passing on a file that no
+  // longer contains a literal INSERT, which is precisely how this guard went fail-open.
+  const noShortCircuitConst = `
+    const adopted = await client.query(\`UPDATE catalogs.items SET qbo_item_id = $3 WHERE operating_company_id = $1 AND item_name = $2 AND qbo_item_id IS NULL RETURNING id\`);
+    await client.query(PULLER_UPSERT_ITEM_SQL, [operatingCompanyId]);
+  `;
+  if (!auditPuller(noShortCircuitConst).some((p) => p.includes("short-circuit")))
+    failures.push("case3b FAIL — missing short-circuit was NOT caught when the insert sits behind PULLER_UPSERT_ITEM_SQL");
+
+  // ACCT-F83 case 3c — if the insert anchor disappears entirely, the guard must SAY SO rather than
+  // silently widening its search window and passing.
+  const noAnchor = `
+    const adopted = await client.query(\`UPDATE catalogs.items SET qbo_item_id = $3 WHERE operating_company_id = $1 AND item_name = $2 AND qbo_item_id IS NULL RETURNING id\`);
+    if (adopted.rowCount) return;
+    await someOtherHelper();
+  `;
+  if (!auditPuller(noAnchor).some((p) => p.includes("fail-open")))
+    failures.push("case3c FAIL — a missing insert anchor did NOT raise the fail-open warning");
 
   const tree = auditTree();
   if (tree.length !== 0) failures.push(`case4 FAIL — real source flagged: ${tree.join(" | ")}`);

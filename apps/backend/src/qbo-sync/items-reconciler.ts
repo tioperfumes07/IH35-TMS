@@ -1,11 +1,24 @@
 import type { PoolClient } from "pg";
 import { withLuciaBypass } from "../auth/db.js";
+import {
+  COUNT_NAME_CONFLICTS_SQL,
+  CREATE_MISSING_ITEMS_SQL,
+  HEAL_ITEM_DRIFT_SQL,
+} from "./items-write-sql.js";
 
 export type ItemsReconcileResult = {
   driftDetected: number;
   createdFromQbo: number;
   healed: number;
   localOnly: number;
+  /**
+   * ACCT-F83 — rows whose QBO name is already held by a DIFFERENT row in the same entity, so the
+   * reconciler deliberately kept the local disambiguated name instead of renaming into a unique-index
+   * violation. Reported rather than silenced: a retained conflict is a real state the operator may want
+   * to resolve in QuickBooks, and a reconciler that hid it would be claiming a clean sync it has not
+   * achieved.
+   */
+  nameConflictsRetained: number;
   reconciledAt: string;
 };
 
@@ -34,85 +47,20 @@ async function markLocalOnlyDrift(client: PoolClient, operatingCompanyId: string
 }
 
 async function createMissingFromMirror(client: PoolClient, operatingCompanyId: string): Promise<number> {
-  const res = await client.query<{ c: string }>(
-    `
-      WITH inserted AS (
-        INSERT INTO catalogs.items (
-          operating_company_id,
-          item_name,
-          item_code,
-          item_type,
-          unit_price_cents,
-          qbo_item_id,
-          notes,
-          deactivated_at,
-          qbo_synced_at,
-          qbo_sync_status
-        )
-        SELECT
-          qi.operating_company_id,
-          qi.name,
-          COALESCE(qi.sku, CONCAT('QBO-', qi.qbo_id)),
-          CASE
-            WHEN lower(trim(coalesce(qi.item_type, ''))) = 'inventory' THEN 'Inventory'
-            WHEN lower(replace(trim(coalesce(qi.item_type, '')), ' ', '')) = 'noninventory' THEN 'NonInventory'
-            WHEN lower(trim(coalesce(qi.item_type, ''))) = 'bundle' THEN 'Bundle'
-            WHEN lower(trim(coalesce(qi.item_type, ''))) = 'discount' THEN 'Discount'
-            ELSE 'Service'
-          END,
-          qi.unit_price_cents,
-          qi.qbo_id,
-          $2,
-          CASE WHEN qi.active THEN NULL ELSE now() END,
-          now(),
-          'synced'
-        FROM mdata.qbo_items qi
-        WHERE qi.operating_company_id = $1::uuid
-          AND qi.qbo_id IS NOT NULL
-          AND NOT EXISTS (
-            -- dedup MUST be entity-scoped: the same qbo_id can legitimately exist in another entity's
-            -- catalogs.items; without ci.operating_company_id = qi.operating_company_id a colliding
-            -- qbo_id in a DIFFERENT entity would suppress this entity's insert.
-            SELECT 1 FROM catalogs.items ci
-            WHERE ci.qbo_item_id = qi.qbo_id
-              AND ci.operating_company_id = qi.operating_company_id
-          )
-        RETURNING 1
-      )
-      SELECT COUNT(*)::text AS c FROM inserted
-    `,
-    [operatingCompanyId, `Reconciled from QBO mirror (${operatingCompanyId})`]
-  );
+  const res = await client.query<{ c: string }>(CREATE_MISSING_ITEMS_SQL, [
+    operatingCompanyId,
+    `Reconciled from QBO mirror (${operatingCompanyId})`,
+  ]);
   return Number(res.rows[0]?.c ?? 0);
 }
 
 async function healFieldDrift(client: PoolClient, operatingCompanyId: string): Promise<number> {
-  const res = await client.query<{ c: string }>(
-    `
-      WITH healed AS (
-        UPDATE catalogs.items ci
-        SET
-          item_name = qi.name,
-          item_code = COALESCE(qi.sku, ci.item_code),
-          unit_price_cents = qi.unit_price_cents,
-          qbo_sync_status = 'synced',
-          qbo_sync_error = NULL,
-          qbo_synced_at = now(),
-          updated_at = now()
-        FROM mdata.qbo_items qi
-        WHERE qi.operating_company_id = $1::uuid
-          AND ci.operating_company_id = qi.operating_company_id
-          AND qi.qbo_id = ci.qbo_item_id
-          AND (
-            ci.item_name IS DISTINCT FROM qi.name
-            OR ci.unit_price_cents IS DISTINCT FROM qi.unit_price_cents
-          )
-        RETURNING 1
-      )
-      SELECT COUNT(*)::text AS c FROM healed
-    `,
-    [operatingCompanyId]
-  );
+  const res = await client.query<{ c: string }>(HEAL_ITEM_DRIFT_SQL, [operatingCompanyId]);
+  return Number(res.rows[0]?.c ?? 0);
+}
+
+async function countNameConflictsRetained(client: PoolClient, operatingCompanyId: string): Promise<number> {
+  const res = await client.query<{ c: string }>(COUNT_NAME_CONFLICTS_SQL, [operatingCompanyId]);
   return Number(res.rows[0]?.c ?? 0);
 }
 
@@ -130,15 +78,17 @@ export async function reconcileItems(operatingCompanyId: string): Promise<ItemsR
   let createdFromQbo = 0;
   let healed = 0;
   let localOnly = 0;
+  let nameConflictsRetained = 0;
 
   await withLuciaBypass(async (client) => {
     driftDetected = await markLocalOnlyDrift(client, operatingCompanyId);
     createdFromQbo = await createMissingFromMirror(client, operatingCompanyId);
     healed = await healFieldDrift(client, operatingCompanyId);
     localOnly = await countLocalOnly(client, operatingCompanyId);
+    nameConflictsRetained = await countNameConflictsRetained(client, operatingCompanyId);
   });
 
-  return { driftDetected, createdFromQbo, healed, localOnly, reconciledAt };
+  return { driftDetected, createdFromQbo, healed, localOnly, nameConflictsRetained, reconciledAt };
 }
 
 export type ItemsSyncStatus = {
