@@ -4,8 +4,12 @@ import {
   createSafetyIncident,
   getSafetyIncident,
   listSafetyIncidents,
+  setSafetyIncidentStatus,
+  updateSafetyIncident,
   uploadSafetyIncidentPhoto,
+  voidSafetyIncident,
 } from "../../../api/safety";
+import { useAuth } from "../../../auth/useAuth";
 import { listCargoClaimReasons } from "../../../api/catalogs-safety";
 import { listCustomers, listDrivers, listUnits } from "../../../api/mdata";
 import { listLoads } from "../../../api/loads";
@@ -59,6 +63,27 @@ const emptyForm = {
   description: "",
 };
 
+type EditForm = typeof emptyForm;
+
+function detailToEditForm(detail: Record<string, unknown>): EditForm {
+  const incidentAt = String(detail.incident_at ?? "").slice(0, 10);
+  const cents = Number(detail.damage_amount_cents ?? 0);
+  return {
+    incidentDate: incidentAt || todayISODate(),
+    loadId: detail.load_id ? String(detail.load_id) : "",
+    claimantCustomerId: detail.claimant_customer_id ? String(detail.claimant_customer_id) : "",
+    claimReasonCode: detail.claim_reason_code ? String(detail.claim_reason_code) : "",
+    amountCents: cents > 0 ? cents : null,
+    amountUndetermined: cents === 0,
+    claimFiledAt: detail.claim_filed_at ? String(detail.claim_filed_at).slice(0, 10) : "",
+    driverId: detail.driver_id ? String(detail.driver_id) : "",
+    unitId: detail.unit_id ? String(detail.unit_id) : "",
+    trailerId: detail.trailer_id ? String(detail.trailer_id) : "",
+    location: String(detail.location ?? ""),
+    description: String(detail.description ?? ""),
+  };
+}
+
 export function CargoClaimIntakeSurface({
   operatingCompanyId,
   pageTestId,
@@ -68,6 +93,7 @@ export function CargoClaimIntakeSurface({
   subtitle,
 }: Props) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [creating, setCreating] = useState(false);
   const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
@@ -75,8 +101,22 @@ export function CargoClaimIntakeSurface({
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  // SAF-F20 (cargo-claim leg): the Carmack intake surface was create-only — existing claims could
+  // never be corrected, status-changed, or voided even though safety.incidents already supported all
+  // three for incident_type=cargo_claim via the shared incidents routes.
+  const [editMode, setEditMode] = useState(false);
+  const [editForm, setEditForm] = useState<EditForm>({ ...emptyForm });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [statusTarget, setStatusTarget] = useState<"open" | "investigating" | "closed" | null>(null);
+  const [statusReason, setStatusReason] = useState("");
+  const [voidOpen, setVoidOpen] = useState(false);
+  const [voidReason, setVoidReason] = useState("");
+  const [voidError, setVoidError] = useState<string | null>(null);
+  const canVoid = user?.role === "Owner" || user?.role === "Administrator";
 
   const companyEnabled = Boolean(operatingCompanyId);
+  const pickersEnabled = companyEnabled && (creating || Boolean(selectedId));
 
   const listQuery = useQuery({
     queryKey: ["safety", "incidents", "cargo_claim", operatingCompanyId],
@@ -87,31 +127,31 @@ export function CargoClaimIntakeSurface({
   const reasonsQuery = useQuery({
     queryKey: ["catalogs", "cargo-claim-reasons", operatingCompanyId],
     queryFn: () => listCargoClaimReasons(operatingCompanyId, { is_active: "true", limit: PICKER_LIMIT }),
-    enabled: creating && companyEnabled,
+    enabled: pickersEnabled,
   });
 
   const customersQuery = useQuery({
     queryKey: ["mdata", "customers", "cargo-claim-picker", operatingCompanyId],
     queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: PICKER_LIMIT }),
-    enabled: creating && companyEnabled,
+    enabled: pickersEnabled,
   });
 
   const loadsQuery = useQuery({
     queryKey: ["mdata", "loads", "cargo-claim-picker", operatingCompanyId],
     queryFn: () => listLoads({ operating_company_id: [operatingCompanyId], limit: PICKER_LIMIT, sort: "-created_at" }),
-    enabled: creating && companyEnabled,
+    enabled: pickersEnabled,
   });
 
   const driversQuery = useQuery({
     queryKey: ["mdata", "drivers", "cargo-claim-picker", operatingCompanyId],
     queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: PICKER_LIMIT }),
-    enabled: creating && companyEnabled,
+    enabled: pickersEnabled,
   });
 
   const unitsQuery = useQuery({
     queryKey: ["mdata", "units", "cargo-claim-picker", operatingCompanyId],
     queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: PICKER_LIMIT, include: "trailers" }),
-    enabled: creating && companyEnabled,
+    enabled: pickersEnabled,
   });
 
   const detailQuery = useQuery({
@@ -224,6 +264,58 @@ export function CargoClaimIntakeSurface({
   const photoCount = Array.isArray(detail?.photo_keys) ? (detail?.photo_keys as unknown[]).length : 0;
 
   const set = (patch: Partial<typeof form>) => setForm((prev) => ({ ...prev, ...patch }));
+  const setEdit = (patch: Partial<EditForm>) => setEditForm((prev) => ({ ...prev, ...patch }));
+
+  const closeDetail = () => {
+    setSelectedId(null);
+    setEditMode(false);
+    setEditError(null);
+    setStatusTarget(null);
+    setStatusReason("");
+    setVoidOpen(false);
+    setVoidReason("");
+    setVoidError(null);
+  };
+
+  const beginEdit = () => {
+    if (!detail) return;
+    setEditForm(detailToEditForm(detail));
+    setEditMode(true);
+    setEditError(null);
+  };
+
+  const saveEdit = async () => {
+    if (!selectedId || !editForm.description.trim()) {
+      setEditError("Description is required.");
+      return;
+    }
+    setEditSaving(true);
+    setEditError(null);
+    try {
+      const incidentAtIso = new Date(`${editForm.incidentDate}T12:00:00`).toISOString();
+      const cents = editForm.amountUndetermined ? 0 : editForm.amountCents ?? 0;
+      await updateSafetyIncident(selectedId, operatingCompanyId, {
+        incident_at: incidentAtIso,
+        location: editForm.location,
+        description: editForm.description.trim(),
+        load_id: editForm.loadId || null,
+        claimant_customer_id: editForm.claimantCustomerId || null,
+        claim_reason_code: editForm.claimReasonCode || null,
+        claim_filed_at: editForm.claimFiledAt || null,
+        damage_amount_cents: cents,
+        driver_id: editForm.driverId || null,
+        unit_id: editForm.unitId || null,
+        trailer_id: editForm.trailerId || null,
+      });
+      setEditMode(false);
+      refresh();
+      void detailQuery.refetch();
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "Could not save changes.");
+    } finally {
+      setEditSaving(false);
+    }
+  };
 
   const resetCreate = () => {
     setForm({ ...emptyForm, incidentDate: todayISODate() });
@@ -515,28 +607,286 @@ export function CargoClaimIntakeSurface({
 
       {selectedId ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`${pageTestId}-detail`}>
-          <div className="mb-2 flex items-center justify-between">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <div className="text-sm font-semibold text-slate-800">{detailLabel}</div>
-            <button type="button" className="text-xs text-slate-500 underline" onClick={() => setSelectedId(null)}>
-              Close
-            </button>
-          </div>
-          <div className="space-y-1 text-xs text-slate-700">
-            <div>Date of loss: {detail ? formatDateUS(detail.incident_at) : "—"}</div>
-            <div>Reason: {String(detail?.claim_reason_code ?? "—")}</div>
-            <div>Claimed: {formatCents(detail?.damage_amount_cents)}</div>
-            <div>Filed: {detail?.claim_filed_at ? formatDateUS(detail.claim_filed_at) : "—"}</div>
-            <div>Description: {String(detail?.description ?? "—")}</div>
-            <div className="pt-1">
-              <div className="text-slate-600">Photos ({photoCount})</div>
-              <input
-                type="file"
-                accept="image/*"
-                data-testid={`${pageTestId}-photo-input`}
-                disabled={uploading}
-                onChange={(e) => void onPhotoSelected(e.target.files?.[0] ?? null)}
-              />
+            <div className="flex items-center gap-2">
+              {detail && !detail.voided_at && !editMode ? (
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-[#1f2a44] underline"
+                  data-testid={`${pageTestId}-edit-btn`}
+                  onClick={beginEdit}
+                >
+                  Edit
+                </button>
+              ) : null}
+              {editMode ? (
+                <>
+                  <Button size="sm" loading={editSaving} data-testid={`${pageTestId}-save-edit-btn`} onClick={() => void saveEdit()}>
+                    Save changes
+                  </Button>
+                  <button
+                    type="button"
+                    className="text-xs text-slate-500 underline"
+                    onClick={() => {
+                      setEditMode(false);
+                      setEditError(null);
+                    }}
+                  >
+                    Cancel edit
+                  </button>
+                </>
+              ) : null}
+              <button type="button" className="text-xs text-slate-500 underline" onClick={closeDetail}>
+                Close
+              </button>
             </div>
+          </div>
+
+          {editMode ? (
+            <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
+              <label className="block">
+                <span className={labelSpan}>Date of loss *</span>
+                <DatePicker className={inputClass} value={editForm.incidentDate} onChange={(next) => setEdit({ incidentDate: next })} />
+              </label>
+              <label className="block">
+                <span className={labelSpan}>Load (shipment)</span>
+                <select className={inputClass} value={editForm.loadId} onChange={(e) => setEdit({ loadId: e.target.value })}>
+                  <option value="">— Select load —</option>
+                  {loads.map((load) => (
+                    <option key={load.id} value={load.id}>
+                      {load.load_number}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className={labelSpan}>Claimant (customer)</span>
+                <div className="mt-1">
+                  <ReferenceSelect
+                    value={editForm.claimantCustomerId || null}
+                    onChange={(v) => setEdit({ claimantCustomerId: v ?? "" })}
+                    options={customerOptions}
+                    createKind="customer"
+                    operatingCompanyId={operatingCompanyId}
+                    placeholder="Select customer"
+                    disabled={!operatingCompanyId || customersQuery.isLoading}
+                  />
+                </div>
+              </label>
+              <label className="block">
+                <span className={labelSpan}>Claim reason</span>
+                <div className="mt-1">
+                  <ReferenceSelect
+                    value={editForm.claimReasonCode || null}
+                    onChange={(v) => setEdit({ claimReasonCode: v ?? "" })}
+                    options={reasonOptions}
+                    createKind="cargo_claim_reason"
+                    operatingCompanyId={operatingCompanyId}
+                    createdValueField="code"
+                    placeholder="Select reason"
+                    loading={reasonsQuery.isLoading}
+                    disabled={!operatingCompanyId || reasonsQuery.isLoading}
+                  />
+                </div>
+              </label>
+              <label className="block">
+                <span className={labelSpan}>Claimed amount</span>
+                <div className="mt-1">
+                  <MoneyInput
+                    ariaLabel="Claimed amount"
+                    valueCents={editForm.amountCents}
+                    onChangeCents={(c) => setEdit({ amountCents: c })}
+                    disabled={editForm.amountUndetermined}
+                  />
+                </div>
+              </label>
+              <label className="block">
+                <span className={labelSpan}>Claim filed date</span>
+                <DatePicker className={inputClass} value={editForm.claimFiledAt} onChange={(next) => setEdit({ claimFiledAt: next })} />
+              </label>
+              <label className="block md:col-span-2">
+                <span className={labelSpan}>Description *</span>
+                <textarea
+                  className={inputClass}
+                  rows={3}
+                  value={editForm.description}
+                  onChange={(e) => setEdit({ description: e.target.value })}
+                />
+              </label>
+              <label className="block md:col-span-2">
+                <span className={labelSpan}>Location</span>
+                <input className={inputClass} value={editForm.location} onChange={(e) => setEdit({ location: e.target.value })} />
+              </label>
+            </div>
+          ) : (
+            <div className="space-y-1 text-xs text-slate-700">
+              <div>
+                Status: <span className="font-semibold">{String(detail?.status ?? "open")}</span>
+              </div>
+              <div>Date of loss: {detail ? formatDateUS(detail.incident_at) : "—"}</div>
+              <div>
+                Claimant:{" "}
+                {detail?.claimant_customer_id ? (
+                  <EntityLink
+                    kind="customer"
+                    id={String(detail.claimant_customer_id)}
+                    label={customerNameById.get(String(detail.claimant_customer_id)) ?? undefined}
+                  />
+                ) : (
+                  "—"
+                )}
+              </div>
+              <div>
+                Load:{" "}
+                {detail?.load_id ? (
+                  <EntityLink
+                    kind="load"
+                    id={String(detail.load_id)}
+                    label={loadNumberById.get(String(detail.load_id)) ?? undefined}
+                  />
+                ) : (
+                  "—"
+                )}
+              </div>
+              <div>Reason: {String(detail?.claim_reason_code ?? "—")}</div>
+              <div>Claimed: {formatCents(detail?.damage_amount_cents)}</div>
+              <div>Filed: {detail?.claim_filed_at ? formatDateUS(detail.claim_filed_at) : "—"}</div>
+              <div>Description: {String(detail?.description ?? "—")}</div>
+            </div>
+          )}
+
+          {editError ? (
+            <div className="mt-2 text-[11px] text-red-600" data-testid={`${pageTestId}-edit-error`}>
+              {editError}
+            </div>
+          ) : null}
+
+          <div className="mt-2 space-y-2 text-xs">
+            <div className="text-slate-600">Photos ({photoCount})</div>
+            <input
+              type="file"
+              accept="image/*"
+              data-testid={`${pageTestId}-photo-input`}
+              disabled={uploading || Boolean(detail?.voided_at)}
+              onChange={(e) => void onPhotoSelected(e.target.files?.[0] ?? null)}
+            />
+
+            {!editMode && detail?.id && !detail.voided_at ? (
+              <div className="mt-2 space-y-2" data-testid={`${pageTestId}-lifecycle`}>
+                <div className="flex flex-wrap items-center gap-2">
+                  {(["open", "investigating", "closed"] as const)
+                    .filter((next) => next !== (String(detail?.status ?? "open")))
+                    .map((next) => (
+                      <button
+                        key={next}
+                        type="button"
+                        className={
+                          statusTarget === next
+                            ? "rounded-sm border border-[#1f2a44] px-2 py-1 font-semibold text-[#1f2a44]"
+                            : "rounded-sm border border-gray-300 px-2 py-1 text-slate-600"
+                        }
+                        data-testid={`${pageTestId}-status-${next}`}
+                        onClick={() => setStatusTarget((cur) => (cur === next ? null : next))}
+                      >
+                        {next === "open" ? "Reopen" : next === "closed" ? "Close" : "Investigate"}
+                      </button>
+                    ))}
+                </div>
+                {statusTarget ? (
+                  <div className="space-y-1">
+                    <input
+                      className={inputClass}
+                      placeholder="Reason (required)"
+                      value={statusReason}
+                      data-testid={`${pageTestId}-status-reason`}
+                      onChange={(e) => setStatusReason(e.target.value)}
+                    />
+                    <Button
+                      size="sm"
+                      disabled={statusReason.trim().length < 3}
+                      data-testid={`${pageTestId}-status-apply`}
+                      onClick={() => {
+                        if (!detail?.id || !statusTarget) return;
+                        void setSafetyIncidentStatus(
+                          String(detail.id),
+                          operatingCompanyId,
+                          statusTarget,
+                          statusReason.trim()
+                        ).then(async () => {
+                          setStatusTarget(null);
+                          setStatusReason("");
+                          refresh();
+                          await detailQuery.refetch();
+                        });
+                      }}
+                    >
+                      Apply status
+                    </Button>
+                  </div>
+                ) : null}
+
+                {canVoid ? (
+                  <div className="space-y-1 pt-2">
+                    <button
+                      type="button"
+                      className="rounded-sm border border-gray-300 px-2 py-1 text-[#dc2626]"
+                      data-testid={`${pageTestId}-void-btn`}
+                      onClick={() => {
+                        setVoidOpen((cur) => !cur);
+                        setVoidError(null);
+                      }}
+                    >
+                      Void cargo claim
+                    </button>
+                    {voidOpen ? (
+                      <div className="space-y-1">
+                        <input
+                          className={inputClass}
+                          placeholder="Void reason (required)"
+                          value={voidReason}
+                          data-testid={`${pageTestId}-void-reason`}
+                          onChange={(e) => setVoidReason(e.target.value)}
+                        />
+                        {voidError ? (
+                          <div className="text-[11px] text-[#dc2626]" data-testid={`${pageTestId}-void-error`}>
+                            {voidError}
+                          </div>
+                        ) : null}
+                        <Button
+                          size="sm"
+                          disabled={voidReason.trim().length < 3}
+                          data-testid={`${pageTestId}-void-apply`}
+                          onClick={() => {
+                            if (!detail?.id) return;
+                            setVoidError(null);
+                            void voidSafetyIncident(String(detail.id), operatingCompanyId, voidReason.trim())
+                              .then(async () => {
+                                setVoidOpen(false);
+                                setVoidReason("");
+                                closeDetail();
+                                refresh();
+                              })
+                              .catch((err: unknown) => {
+                                setVoidError(err instanceof Error ? err.message : "Void failed.");
+                              });
+                          }}
+                        >
+                          Confirm void
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {detail?.voided_at ? (
+              <div className="text-[11px] text-slate-500" data-testid={`${pageTestId}-voided-note`}>
+                Voided {formatDateUS(detail.voided_at)}
+                {detail.voided_reason ? ` · ${String(detail.voided_reason)}` : ""}
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}
