@@ -353,15 +353,16 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         </div>
       )}
 
-      {/* 7-Day Predicted-Net Strip — PUNCHLIST #194: full "$1,234.56" figures were overflowing the
-          narrow 1/7-width columns with no scroll fallback. Fixed with a whole-dollar compact format
-          (full precision still available via the `title` tooltip) plus a horizontal-scroll fallback
-          so a wide/negative value never clips on small viewports. */}
+      {/* 7-Day Predicted-Net Strip — ORPH-004 / AUD-F016: single outer section frame with flat
+          divide-x day cells (no nested rounded-lg tiles inside the bordered card). PUNCHLIST #194:
+          compact whole-dollar format + horizontal scroll so wide values never clip. */}
       {!isLoading && (data?.seven_day_strip?.length ?? 0) > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">7-Day Outlook</p>
+        <section className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+          <div className="border-b border-gray-100 bg-gray-50 px-4 py-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">7-Day Outlook</p>
+          </div>
           <div className="overflow-x-auto">
-            <div className="grid grid-cols-7 gap-1 min-w-[420px]">
+            <div className="grid min-w-[420px] grid-cols-7 divide-x divide-gray-100">
               {data?.seven_day_strip.map((entry: SevenDayEntry) => {
                 const isToday = entry.date === todayIso();
                 const isSelected = entry.date === date;
@@ -372,9 +373,9 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                     type="button"
                     onClick={() => setDate(entry.date)}
                     title={`${pos ? "+" : ""}${formatUsdCents(entry.predicted_net_cents)}`}
-                    className={`flex flex-col items-center rounded-lg py-2 transition-colors ${
-                      isSelected ? "ring-2 ring-[#1f2a44]" : "hover:bg-gray-50"
-                    } ${isToday ? "bg-slate-100" : ""}`}
+                    className={`flex flex-col items-center py-2 transition-colors ${
+                      isSelected ? "bg-slate-100" : isToday ? "bg-gray-50" : "hover:bg-gray-50"
+                    }`}
                   >
                     <span className="text-xs text-gray-500">
                       {new Date(entry.date + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "short" })}
@@ -390,7 +391,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
               })}
             </div>
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
