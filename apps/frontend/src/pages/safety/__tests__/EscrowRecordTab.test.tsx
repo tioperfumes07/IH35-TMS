@@ -109,6 +109,30 @@ describe("EscrowRecordTab (A23-8 + ND-ESC-01)", () => {
     expect(screen.getByText(/Separation/)).toBeTruthy();
   });
 
+  it("surfaces timeline_errors when escrow history is incomplete", async () => {
+    vi.mocked(driverFinanceApi.listEscrowRecords).mockResolvedValueOnce({
+      records: [
+        {
+          id: driverId,
+          driver_name: "Alex Driver",
+          current_balance: 500,
+          pre_clause_total: 0,
+          post_clause_total: 500,
+          accumulation_rate_pct: null,
+          forfeiture_history_count: 0,
+          has_signed_clause: false,
+        },
+      ],
+      forfeit_attempts: [],
+      timeline_errors: ["Alex Driver: escrow timeline unavailable"],
+    });
+    render(wrap(<EscrowRecordTab />));
+    await waitFor(() => {
+      expect(screen.getByTestId("escrow-forfeit-audit-errors")).toBeTruthy();
+    });
+    expect(screen.getByText(/forfeiture audit below may be incomplete/i)).toBeTruthy();
+  });
+
   it("submits forfeit through API from modal with reason_code", async () => {
     const user = userEvent.setup();
     render(wrap(<EscrowRecordTab />));
