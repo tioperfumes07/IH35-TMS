@@ -44,7 +44,7 @@ evidence, **per entity**. A `PASS` verdict is TRANSP-only unless the `Entity` co
 |---|---|---|---|---|---|---|---|---|
 | Home/Tasks | A | TRANSP | PASS | Live surface loads, dashboard renders | 2026-08-01 | Cascade | | |
 | Home/Tasks | B | TRANSP | FAIL | 2 confirmed: dual-path WO count mismatch; HOS>24h anomaly not flagged | 2026-08-01 | Cascade | | |
-| Home/Tasks | C | TRANSP | UNVERIFIED | Not yet traced to a financial primitive / GL | 2026-08-02 | Cascade | | |
+| Home/Tasks | C | TRANSP | N/A (confirmed) | Home/Tasks dashboard is backed by `ops.daily_tasks` (0 rows, ops-only, no financial columns) — genuinely no independent GL primitive. Side discovery: `accounting.ar_collection_tasks` has 286 real rows FK'd to `accounting.invoices`, but it is AR-collections workflow metadata (status/aging/assignment), not a GL-posting leg itself, and belongs conceptually to Accounting/Customers, not this module | 2026-08-02 | Cascade | | |
 | Home/Tasks | D | TRANSP | N/A | No pickers on this surface | 2026-08-01 | Cascade | | |
 | Home/Tasks | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Fuel | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
