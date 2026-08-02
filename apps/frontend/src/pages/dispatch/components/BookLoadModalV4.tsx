@@ -1337,6 +1337,24 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   trailerUuid={assignedTrailerUnitId || null}
                   customerId={watchedCustomerId || null}
                   onValidationChange={(canDispatch, hasBlockers) => setPreDispatch({ canDispatch, hasBlockers })}
+                  // OWNER-ALWAYS-OVERRIDE: these two props were NEVER passed. Both are optional, so
+                  // inside the panel `value={overrideReason ?? ""}` was permanently "" and onChange
+                  // optional-chained to a no-op — the override textarea could not receive a single
+                  // character. That, not role-gating and not the reservation re-render, is why the
+                  // override was a dead end. Wired to the SAME state the AuthGate override already
+                  // uses, so there is one reason string, one min-10 rule, one submitted value.
+                  overrideReason={overrideReason}
+                  onOverrideReasonChange={setOverrideReason}
+                  canOwnerOverride={canOverrideHardBlock}
+                  onOwnerOverride={() => {
+                    void form.handleSubmit(async (values) => {
+                      if (overrideReason.trim().length < 10) {
+                        pushToast("Override reason must be at least 10 characters", "error");
+                        return;
+                      }
+                      await submitLoad(values, "book_dispatch", { override: true });
+                    })();
+                  }}
                 />
                 {/* GAP-47 — dispatch authorization gates (workflow-level, e.g. active-driver / DVIR-major /
                     advisory registry checks), distinct from the physical-readiness checks above. */}

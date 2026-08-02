@@ -987,6 +987,70 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           isHazmat: isHazmatLoad,
         });
         if (block) {
+          // OWNER-ALWAYS-OVERRIDE (owner ruling 2026-08-02). Before this branch the driver-qualification
+          // gate was an ABSOLUTE 422 with no override path at all — unlike the sibling unit-block and OOS
+          // gates, which have carried an Owner override since BT-3. That left the Owner with a dead end:
+          // the UI offered an override reason box for these blockers and no action could ever consume it.
+          //
+          // The owner's rationale, recorded because it is what makes this defensible: the blocker may be
+          // WRONG — a credential that is valid in reality but stale, missing, or unreadable in the system
+          // (integration down, document not yet ingested, a data-entry gap). The Owner carries the
+          // liability for that call and is the only role that may make it. This is the standard
+          // McLeod/Alvys supervisor-override shape: not a silent bypass, an ATTESTATION on the record.
+          //
+          // Deliberately NOT weakened: the gate still evaluates and still blocks by default; only the
+          // Owner role can pass it; the reason is still >=10 chars; and the override is written to the
+          // append-only audit trail with WHO, WHEN, WHY and EXACTLY WHICH reasons were overridden, plus
+          // an outbox notice — so a DOT/FMCSA reviewer, insurer or court reads a deliberate, attributed
+          // decision rather than an absent control. Dispatcher/Manager roles are unchanged: still blocked.
+          const ownerOverridingQualification =
+            canOverrideUnitBlock(input.requestingUserRole) &&
+            typeof input.override_reason === "string" &&
+            input.override_reason.trim().length >= 10;
+
+          if (ownerOverridingQualification) {
+            await appendCrudAudit(
+              client,
+              input.requestingUserUuid,
+              "dispatch.driver_qualification_overridden_by_owner",
+              {
+                operating_company_id: input.operating_company_id,
+                driver_id: block.driverId,
+                driver_name: block.driverName,
+                block_code: "E_DRIVER_NOT_QUALIFIED",
+                overridden_reasons: block.reasons,
+                cdl_expires_at: block.cdlExpiresAt,
+                medical_expiry_date: block.medicalExpiryDate,
+                hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
+                override_reason: input.override_reason,
+                role: input.requestingUserRole,
+                severity_label: "critical",
+              },
+              "warning",
+              "BT-3-DISPATCH-AUTH-GATES"
+            );
+            await client.query(
+              `
+                INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
+                VALUES ($1,$2,$3,$4::jsonb)
+              `,
+              [
+                "dispatch.loads",
+                block.driverId,
+                "dispatch.wf064.override_notice",
+                JSON.stringify({
+                  override_type: "driver_qualification",
+                  notify_channels: ["email", "sms"],
+                  operating_company_id: input.operating_company_id,
+                  overridden_reasons: block.reasons,
+                  override_reason: input.override_reason,
+                  override_by_user_id: input.requestingUserUuid,
+                }),
+              ]
+            );
+            continue; // Owner attested — this driver passes; every other driver is still gated.
+          }
+
           await appendCrudAudit(
             client,
             input.requestingUserUuid,
@@ -999,6 +1063,8 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
               cdl_expires_at: block.cdlExpiresAt,
               medical_expiry_date: block.medicalExpiryDate,
               hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
+              override_available_to: "Owner",
+              override_attempted: Boolean(input.override_reason),
             },
             "warning",
             "BT-3-DISPATCH-AUTH-GATES"
@@ -1008,10 +1074,16 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
             status: 422,
             payload: {
               error: "E_DRIVER_NOT_QUALIFIED",
-              message: `Driver ${block.driverName ?? block.driverId} cannot be dispatched: ${block.reasons.join(", ")}.`,
+              message:
+                `Driver ${block.driverName ?? block.driverId} cannot be dispatched: ${block.reasons.join(", ")}. ` +
+                `An Owner may override with a reason of at least 10 characters; the override is written to the audit trail.`,
               details: {
                 driver_id: block.driverId,
                 reasons: block.reasons,
+                // Tells the UI a path EXISTS and who holds it — the old payload said only "blocked",
+                // which is what produced the "contact your owner" dead end for the owner themselves.
+                override_available_to: "Owner",
+                override_min_reason_chars: 10,
                 cdl_expires_at: block.cdlExpiresAt,
                 medical_expiry_date: block.medicalExpiryDate,
                 hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,

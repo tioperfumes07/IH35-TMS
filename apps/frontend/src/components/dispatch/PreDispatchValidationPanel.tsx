@@ -16,6 +16,10 @@ type Props = {
   /** Override reason collected by the parent (BookLoadModalV4). */
   overrideReason?: string;
   onOverrideReasonChange?: (reason: string) => void;
+  /** OWNER-ALWAYS-OVERRIDE: true only for the Owner role (BookLoadModalV4 canOverrideHardBlock). */
+  canOwnerOverride?: boolean;
+  /** Submits the booking with override=true. Present only when canOwnerOverride. */
+  onOwnerOverride?: () => void;
 };
 
 const EMPTY_RESULT: ValidationResult = {
@@ -47,6 +51,8 @@ export function PreDispatchValidationPanel({
   onValidationChange,
   overrideReason,
   onOverrideReasonChange,
+  canOwnerOverride = false,
+  onOwnerOverride,
 }: Props) {
   const [result, setResult] = useState<ValidationResult>(EMPTY_RESULT);
   const [loading, setLoading] = useState(false);
@@ -138,10 +144,34 @@ export function PreDispatchValidationPanel({
             rows={2}
             placeholder="Override reason (min 10 chars) — this creates an audit log entry"
           />
-          {hasUnackedBlockers && (
-            <div className="mt-1 text-[10px] text-red-600">
-              Dispatcher-level override requires owner approval. Contact your owner to proceed.
+          {/* OWNER-ALWAYS-OVERRIDE (owner ruling 2026-08-02): the Owner is never told to contact an
+              owner. Previously this line rendered for EVERY role, so the Owner — the only role that
+              can authorize — was sent to find themselves, with a textarea that could not be typed in.
+              The blocker may be WRONG (credential valid in reality but stale/missing/unreadable in the
+              system); the Owner carries that liability and attests on the record. The reason is
+              required at >=10 chars here AND re-enforced server-side, where the override is written to
+              the append-only audit trail with who/when/why/which-reasons. */}
+          {canOwnerOverride ? (
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <span className="text-[10px] text-red-700">
+                Owner override — this is recorded to the audit trail with your name, the time, and the
+                exact blockers overridden.
+              </span>
+              <button
+                type="button"
+                disabled={(overrideReason ?? "").trim().length < 10 || !onOwnerOverride}
+                onClick={() => onOwnerOverride?.()}
+                className="shrink-0 rounded-sm border border-red-300 bg-white px-2 py-1 text-[11px] font-semibold text-red-800 disabled:opacity-40 hover:bg-red-100"
+              >
+                Override &amp; dispatch
+              </button>
             </div>
+          ) : (
+            hasUnackedBlockers && (
+              <div className="mt-1 text-[10px] text-red-600">
+                Dispatcher-level override requires owner approval. Contact your owner to proceed.
+              </div>
+            )
           )}
         </div>
       )}
