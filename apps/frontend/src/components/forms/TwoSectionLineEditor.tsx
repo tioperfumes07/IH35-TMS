@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { expenseCategoriesCatalogClient } from "../../api/catalogs-accounting";
+// ACCT-F92: one shared definition of which accounts belong in which picker.
+import { isExpenseAccount } from "../../lib/account-picker-scope";
 import { tirePositionsCatalogClient } from "../../api/catalogs-fleet";
 import { getCoaAccounts } from "../../api/banking";
 import { getWoCostContext } from "../../api/maintenance";
@@ -134,8 +136,14 @@ export function TwoSectionLineEditor({
       }
       return Array.from(merged.values());
     }
-    // Expense/WO: full Chart-of-Accounts (banking categorize parity).
-    const fromCoa = (coaAccountsQuery.data?.accounts ?? []).map((account) => ({
+    // Expense/WO cost line: expense-side accounts ONLY.
+    // ACCT-F92 (live 2026-08-02): this mapped the FULL chart with no type filter, so the Work Order
+    // "Parts & Labor > Type" picker offered Detention / Layover / Lumper / TONU Income (4210-4240
+    // REVENUE), Driver Cash Advance (asset) and the Inter-company lease accounts as cost categories.
+    // A repair parts line could be booked to revenue or to an inter-company account — the entry would
+    // still balance, so nothing downstream would catch it. Every mode this editor serves (bill,
+    // expense, work order) is a COST line, so Income/asset/liability are never valid here.
+    const fromCoa = (coaAccountsQuery.data?.accounts ?? []).filter(isExpenseAccount).map((account) => ({
       id: String(account.id ?? ""),
       label: `${account.account_name ?? ""}`.trim(),
     }));

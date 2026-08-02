@@ -4,6 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { getWoCostContext } from "../../api/maintenance";
 import { ensureDriverVendors, listUnits, listVendors } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
+// ACCT-F92: one definition of which accounts may appear in which picker — see account-picker-scope.ts
+// for the live evidence (Accumulated Depreciation / Trucks / Prepaid / A/R are all account_type Asset).
+import { isExpenseAccount, isPaymentAccount } from "../../lib/account-picker-scope";
 import { Button } from "../Button";
 import { Combobox } from "../Combobox";
 import { CreateUnitModal } from "../fleet/CreateUnitModal";
@@ -131,11 +134,16 @@ export function RecordExpenseForm({
     [unitsQuery.data?.units]
   );
 
-  // Payment account = the cash/bank account the expense was paid FROM → postable Asset accounts.
+  // Payment account = the cash/bank account the expense was paid FROM.
+  // ACCT-F92: this previously filtered on `account_type === "Asset"`, which on prod also admits
+  // Accumulated Depreciation, Trucks & Tractors, Trailers, Prepaid Expenses, Inventory, A/R, Unbilled
+  // Revenue, Factoring Reserves, Driver Cash Advances and the Inter-company accounts — so an expense
+  // could be recorded as paid FROM depreciation. Now scoped to Bank/Credit-Card types and cash-like
+  // detail types, matching how QuickBooks scopes its Expense "Payment account" field.
   const paymentAccountOptions = useMemo(
     () =>
       (paymentAccountsQuery.data?.accounts ?? [])
-        .filter((acct) => acct.is_postable && acct.account_type === "Asset" && !acct.deactivated_at)
+        .filter(isPaymentAccount)
         .map((acct) => ({
           id: acct.id,
           label: acct.account_name,
@@ -146,10 +154,11 @@ export function RecordExpenseForm({
   // LIVE-DEFECT fix (2026-07-22): Category must list the entity CoA including freshly created accounts
   // that have no QBO bridge yet (parallel books). Previously filtered to qbo_account_id only → diesel
   // created via + Add new never appeared. Prefer Expense/COGS/OtherExpense; keep Income out of category.
-  const EXPENSE_TYPES = new Set(["Expense", "CostOfGoodsSold", "OtherExpense"]);
+  // ACCT-F92: this filter was already CORRECT — it is the model the payment picker now follows. Moved
+  // to the shared helper so the two cannot drift apart again.
   const categoryOptions = useMemo(() => {
     const fromCoa = (paymentAccountsQuery.data?.accounts ?? [])
-      .filter((acct) => acct.is_postable && !acct.deactivated_at && EXPENSE_TYPES.has(String(acct.account_type)))
+      .filter(isExpenseAccount)
       .map((acct) => ({
         id: String(acct.id),
         label: acct.account_name,
