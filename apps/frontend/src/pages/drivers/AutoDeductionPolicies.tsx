@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { listDrivers } from "../../api/mdata";
+import { driverDeductionTypesCatalogClient } from "../../api/catalogs-driver";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
@@ -20,15 +21,6 @@ type Props = {
    */
   driverId?: string;
 };
-
-const DEDUCTION_TYPES = [
-  { value: "damage", label: "Damage" },
-  { value: "cash_advance", label: "Cash advance" },
-  { value: "repair", label: "Repair" },
-  { value: "fine", label: "Fine" },
-  { value: "fuel_advance", label: "Fuel advance" },
-  { value: "other", label: "Other" },
-] as const;
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -52,18 +44,51 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
     queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: 200 }).then((res) => res.drivers), // full set (endpoint default 50 truncates)
     enabled: Boolean(operatingCompanyId),
   });
+  const deductionTypesQuery = useQuery({
+    queryKey: ["catalogs", "driver-deduction-types", operatingCompanyId],
+    queryFn: () =>
+      driverDeductionTypesCatalogClient.list({
+        operating_company_id: operatingCompanyId,
+        is_active: "true",
+        limit: 200,
+      }),
+    enabled: Boolean(operatingCompanyId),
+  });
 
   const [createOpen, setCreateOpen] = useState(false);
   const [driverId, setDriverId] = useState(lockedDriverId ?? "");
-  const [deductionType, setDeductionType] = useState<(typeof DEDUCTION_TYPES)[number]["value"]>("repair");
+  const [deductionType, setDeductionType] = useState("");
   const [totalOwed, setTotalOwed] = useState("500.00");
   const [maxPerSettlement, setMaxPerSettlement] = useState("100.00");
   const [memo, setMemo] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const deductionTypeOptions = useMemo(
+    () =>
+      (deductionTypesQuery.data?.rows ?? []).map((row) => ({
+        value: row.code,
+        label: row.display_name,
+      })),
+    [deductionTypesQuery.data]
+  );
+
+  const deductionTypeLabelByCode = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const row of deductionTypesQuery.data?.rows ?? []) {
+      map.set(row.code, row.display_name);
+    }
+    return map;
+  }, [deductionTypesQuery.data]);
+
   useEffect(() => {
     if (lockedDriverId) setDriverId(lockedDriverId);
   }, [lockedDriverId]);
+
+  useEffect(() => {
+    if (!deductionType && deductionTypeOptions.length > 0) {
+      setDeductionType(deductionTypeOptions[0].value);
+    }
+  }, [deductionType, deductionTypeOptions]);
 
   const grouped = useMemo(() => {
     const rows = policiesQuery.data?.rows ?? [];
@@ -86,6 +111,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
     const owed = Number(row.total_owed_cents ?? 0);
     const deducted = Number(row.deducted_so_far_cents ?? 0);
     const pct = owed > 0 ? Math.min(100, Math.round((deducted / owed) * 100)) : 0;
+    const typeLabel = deductionTypeLabelByCode.get(row.deduction_type) ?? row.deduction_type;
     return (
       <div key={row.id} className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -93,7 +119,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
             <div className="text-sm font-semibold text-gray-900">
               <EntityLink kind="driver" id={row.driver_id} label={driverNameById.get(row.driver_id) || row.driver_id} />
             </div>
-            <div className="text-xs text-gray-600">{row.deduction_type} · {money(deducted)} / {money(owed)}</div>
+            <div className="text-xs text-gray-600">{typeLabel} · {money(deducted)} / {money(owed)}</div>
           </div>
           <StatusBadge status={row.status} />
         </div>
@@ -156,6 +182,10 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
               setError("Select a driver.");
               return;
             }
+            if (!deductionType) {
+              setError("Select a deduction type.");
+              return;
+            }
             const totalCents = Math.round(Number(totalOwed) * 100);
             const maxCents = Math.round(Number(maxPerSettlement) * 100);
             if (totalCents <= 0 || maxCents <= 0) {
@@ -196,13 +226,29 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Type
-            <SelectCombobox className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" value={deductionType} onChange={(e) => setDeductionType(e.target.value as typeof deductionType)}>
-              {DEDUCTION_TYPES.map((type) => (
+            <SelectCombobox
+              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+              value={deductionType}
+              onChange={(e) => setDeductionType(e.target.value)}
+              aria-label="Deduction type"
+              disabled={deductionTypesQuery.isLoading || deductionTypeOptions.length === 0}
+            >
+              <option value="">
+                {deductionTypesQuery.isLoading
+                  ? "Loading deduction types…"
+                  : deductionTypeOptions.length === 0
+                    ? "No deduction types — add in Lists"
+                    : "Select deduction type…"}
+              </option>
+              {deductionTypeOptions.map((type) => (
                 <option key={type.value} value={type.value}>
                   {type.label}
                 </option>
               ))}
             </SelectCombobox>
+            {deductionTypesQuery.isError ? (
+              <span className="text-[10px] font-normal text-red-600">Could not load deduction types from catalog.</span>
+            ) : null}
           </label>
           <div className="grid grid-cols-2 gap-2">
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -223,7 +269,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
             <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
+            <Button type="submit" disabled={createMutation.isPending || !deductionType}>
               Create
             </Button>
           </div>

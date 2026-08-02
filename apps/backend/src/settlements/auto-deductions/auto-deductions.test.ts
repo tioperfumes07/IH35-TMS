@@ -58,7 +58,7 @@ describe("auto-deduction policies (CLOSURE-4)", () => {
             {
               id: "policy-1",
               driver_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-              deduction_type: "repair",
+              deduction_type: "MISC",
               total_owed_cents: 50000,
               deducted_so_far_cents: 0,
               max_per_settlement_cents: 10000,
@@ -75,7 +75,7 @@ describe("auto-deduction policies (CLOSURE-4)", () => {
       url: "/api/v1/auto-deductions/policies?operating_company_id=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       payload: {
         driver_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-        deduction_type: "repair",
+        deduction_type: "MISC",
         total_owed_cents: 50000,
         max_per_settlement_cents: 10000,
       },
@@ -153,7 +153,7 @@ describe("auto-deduction policies (CLOSURE-4)", () => {
   it("materializes a $100 tranche as a sub-ledger row (cents, policy-linked) — NO settlement_lines insert, NO totals patch", async () => {
     const policy: PolicyState = {
       id: "policy-1",
-      deduction_type: "repair",
+      deduction_type: "MISC",
       total_owed_cents: 50000,
       deducted_so_far_cents: 0,
       max_per_settlement_cents: 10000,
@@ -174,7 +174,7 @@ describe("auto-deduction policies (CLOSURE-4)", () => {
     // Sub-ledger row is cents, positive, policy-linked, with the reason format pinned.
     expect(subLedger).toHaveLength(1);
     expect(subLedger[0]).toMatchObject({ policy_id: "policy-1", amount_cents: 10000, open: true });
-    expect(subLedger[0]?.reason).toBe("Auto-deduction (repair): WO-22");
+    expect(subLedger[0]?.reason).toBe("Auto-deduction (MISC): WO-22");
     expect(subLedger[0]!.amount_cents).toBeGreaterThan(0);
 
     // Policy progress advanced at materialization.
@@ -188,7 +188,7 @@ describe("auto-deduction policies (CLOSURE-4)", () => {
   it("idempotent re-run: an existing OPEN tranche blocks a second materialization (no double-charge)", async () => {
     const policy: PolicyState = {
       id: "policy-1",
-      deduction_type: "cash_advance",
+      deduction_type: "ADVANCE-RECOVERY",
       total_owed_cents: 50000,
       deducted_so_far_cents: 0,
       max_per_settlement_cents: 10000,
@@ -223,7 +223,7 @@ describe("auto-deduction policies (CLOSURE-4)", () => {
   it("completes the policy at the final tranche (five $100 tranches on $500 owed)", async () => {
     const policy: PolicyState = {
       id: "policy-1",
-      deduction_type: "repair",
+      deduction_type: "MISC",
       total_owed_cents: 50000,
       deducted_so_far_cents: 0,
       max_per_settlement_cents: 10000,
@@ -253,7 +253,7 @@ describe("auto-deduction policies (CLOSURE-4)", () => {
     const { subLedger } = makeMaterializerMock([
       {
         id: "policy-1",
-        deduction_type: "repair",
+        deduction_type: "MISC",
         total_owed_cents: 50000,
         deducted_so_far_cents: 0,
         max_per_settlement_cents: 10000,

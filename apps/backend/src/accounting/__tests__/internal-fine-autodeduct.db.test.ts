@@ -37,6 +37,17 @@ run("internal fine auto-deducts from driver pay up to the per-settlement cap", (
       await db.query(`INSERT INTO identity.users (id,email,role,preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`, [userId, `intfine-${s}@test.local`]);
       await db.query(`INSERT INTO mdata.drivers (id,operating_company_id,first_name,last_name,phone) VALUES ($1::uuid,$2::uuid,'Fined','Driver',$3)`, [id.driver, companyId, `95605${s.slice(0,5)}`]);
       await db.query(`INSERT INTO driver_finance.driver_settlements (id,operating_company_id,display_id,driver_id,period_start,period_end,status,approval_status) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE-7,CURRENT_DATE,'open','needs_review')`, [id.settlement, companyId, `SET-${s}`, id.driver]);
+      // SETL-PICK-01: auto_deduction_policies.deduction_type FK → catalogs.driver_deduction_types (opco, code).
+      // Isolated companies are not covered by the one-time seed loop — plant the catalog row first.
+      await db.query(
+        `INSERT INTO catalogs.driver_deduction_types
+           (operating_company_id, code, display_name, description,
+            may_draw_escrow, default_recovery_rail, survives_separation, is_active)
+         VALUES ($1::uuid, 'fine', 'Internal fine', 'DOT/internal fine for auto-deduct tests',
+                 true, 'settlement', true, true)
+         ON CONFLICT (operating_company_id, code) DO NOTHING`,
+        [companyId],
+      );
       // an internal FINE of $0.10, capped at $0.05 per settlement (owner sets the cap = "how much to reduce")
       await db.query(`INSERT INTO driver_finance.auto_deduction_policies (id,operating_company_id,driver_id,deduction_type,total_owed_cents,deducted_so_far_cents,max_per_settlement_cents,status,created_by_user_id,memo) VALUES ($1::uuid,$2::uuid,$3::uuid,'fine',10,0,5,'active',$4::uuid,'DOT internal fine')`, [id.policy, companyId, id.driver, userId]);
     });
