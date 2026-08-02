@@ -1,6 +1,6 @@
 {
  "date": "2026-08-02",
- "generated_at_iso": "2026-08-02T19:05:44.886Z",
+ "generated_at_iso": "2026-08-02T19:39:01.048Z",
  "counts": {
   "PENDING": 14,
   "PENDING (GATED)": 27,
@@ -4975,10 +4975,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #667 merged 2026-06-07",
+   "evidence": "all 9 file(s) on main",
    "name": "G22 Driver PWA dispatch view (pickup/delivery cards + doc upload)",
    "registered_on": null,
-   "pr": 667
+   "pr": null
   },
   {
    "id": "gap-34-driver-pwa-dispatch",
@@ -5049,10 +5049,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #669 merged 2026-06-07",
+   "evidence": "all 9 file(s) on main",
    "name": "G17 Geofencing full backend state machine",
    "registered_on": null,
-   "pr": 669
+   "pr": 1157
   },
   {
    "id": "gap-39-geofence-state-machine",
@@ -12071,7 +12071,7 @@
    "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
    "name": "Wire UploadZone into expense create form (match bill/invoice attachment pattern)",
    "registered_on": null,
-   "pr": 666
+   "pr": null
   },
   {
    "id": "GAP-14-PRE-DISPATCH-VALIDATION",
@@ -12192,7 +12192,7 @@
    "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
    "name": "Late-arrival rate analytics per driver/customer/lane",
    "registered_on": null,
-   "pr": 665
+   "pr": null
   },
   {
    "id": "GAP-31",
@@ -13262,6 +13262,30 @@
  ],
  "merged_prs": [
   {
+   "number": 4024,
+   "title": "Claude- fix(parity): inline \"+ Add new\" saved nothing inside a wizard — a nested <form> the HTML parser deletes",
+   "mergedAt": "2026-08-02T19:14:30Z",
+   "branch": "claude/inline-create-nested-form-fix"
+  },
+  {
+   "number": 4023,
+   "title": "Cursor- docs(audit): GUARD-WORKORDERS.md + dual-lane idle dispatch",
+   "mergedAt": "2026-08-02T19:09:41Z",
+   "branch": "cursor/Cursor-guard-workorders-2026-08-02"
+  },
+  {
+   "number": 4022,
+   "title": "Cursor- fix(settlements): auto-deduction Type picker reads driver_deduction_types catalog",
+   "mergedAt": "2026-08-02T19:17:33Z",
+   "branch": "cursor/Cursor-setl-deduction-catalog-picker-2026-08-02"
+  },
+  {
+   "number": 4021,
+   "title": "Cursor- fix(factoring): SubmitFactoringModal rates from factoring.factor (#4010 sibling)",
+   "mergedAt": "2026-08-02T19:09:46Z",
+   "branch": "cursor/Cursor-factoring-submit-canonical-2026-08-02"
+  },
+  {
    "number": 4020,
    "title": "Cursor- fix(fuel): G18 load_id rematch via resolveLoadId (fill-null only)",
    "mergedAt": "2026-08-02T19:03:17Z",
@@ -13494,6 +13518,12 @@
    "title": "Claude- fix(compliance): seed the two real carriers' USDOT/MC numbers — DO NOT MERGE WITHOUT JORGE'S OK",
    "mergedAt": "2026-08-01T20:03:59Z",
    "branch": "claude/comp-f72-seed-carrier-usdot-mc-numbers"
+  },
+  {
+   "number": 3979,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-08-02T19:26:56Z",
+   "branch": "chore/tracker-artifacts-sync"
   },
   {
    "number": 3976,
@@ -16830,36 +16860,6 @@
    "title": "fix(safety): an internal fine could be imposed but never disputed or voided (SAF-F12)",
    "mergedAt": "2026-07-24T01:16:37Z",
    "branch": "fix/saf-f12-internal-fine-lifecycle"
-  },
-  {
-   "number": 3370,
-   "title": "fix(safety): 7 mounted-but-unreachable routes + 2 dead drill-throughs (SAF-F22/F35/F23)",
-   "mergedAt": "2026-07-24T00:26:44Z",
-   "branch": "fix/saf-f22-f35-f23-safety-reverse-and-orphans"
-  },
-  {
-   "number": 3369,
-   "title": "fix(accounting): hide CoA/QBO account numbers by default",
-   "mergedAt": "2026-07-24T00:26:38Z",
-   "branch": "fix/coa-hide-account-numbers"
-  },
-  {
-   "number": 3368,
-   "title": "fix(deploy): every backend deploy since 20:11 CT failed — migration checksum drift",
-   "mergedAt": "2026-07-23T22:22:11Z",
-   "branch": "fix/prod-deploy-checksum-override-202607770000"
-  },
-  {
-   "number": 3366,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-23T21:22:38Z",
-   "branch": "chore/tracker-artifacts-sync-30044844579"
-  },
-  {
-   "number": 3365,
-   "title": "fix(safety): unit + trailer profiles showed no accidents, DOT inspections or DVIRs (SAF-F17)",
-   "mergedAt": "2026-07-23T21:38:49Z",
-   "branch": "fix/saf-f17-asset-profile-safety-reverse"
   }
  ],
  "merged_pr_total": 3000,
