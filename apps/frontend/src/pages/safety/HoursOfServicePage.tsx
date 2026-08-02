@@ -61,8 +61,13 @@ export function computeHosDashboardMetrics(rows: FleetHosDriverRow[]) {
   return { onDuty, offDuty, approachingCap, nearViolations };
 }
 
-async function loadFleetHosRows(operatingCompanyId: string): Promise<FleetHosDriverRow[]> {
-  const { drivers } = await listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }); // full active set (endpoint default 50 truncates >50)
+async function loadFleetHosRows(operatingCompanyId: string, fleetSearch: string): Promise<FleetHosDriverRow[]> {
+  const { drivers } = await listDrivers({
+    operating_company_id: operatingCompanyId,
+    status: "Active",
+    limit: 200,
+    search: fleetSearch || undefined,
+  });
   return Promise.all(
     drivers.map(async (driver) => {
       const base: FleetHosDriverRow = {
@@ -95,10 +100,11 @@ type Props = {
 export function HoursOfServicePage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
+  const [fleetSearch, setFleetSearch] = useState("");
 
   const fleetQuery = useQuery({
-    queryKey: ["safety", "hos-dashboard", operatingCompanyId],
-    queryFn: () => loadFleetHosRows(operatingCompanyId),
+    queryKey: ["safety", "hos-dashboard", operatingCompanyId, fleetSearch],
+    queryFn: () => loadFleetHosRows(operatingCompanyId, fleetSearch),
     enabled: Boolean(operatingCompanyId),
     refetchInterval: 30_000,
   });
@@ -206,7 +212,17 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
 
       <div className="grid gap-3 lg:grid-cols-2">
         <section>
-          <div className="mb-1 text-xs font-semibold text-slate-800">Fleet duty status</div>
+          <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs font-semibold text-slate-800">Fleet duty status</div>
+            <input
+              type="search"
+              value={fleetSearch}
+              onChange={(event) => setFleetSearch(event.target.value)}
+              placeholder="Search drivers…"
+              className="h-8 w-48 rounded-sm border border-gray-300 px-2 text-xs"
+              data-testid="safety-hos-fleet-search"
+            />
+          </div>
           <ParityTable<FleetHosDriverRow>
             columns={fleetColumns}
             rows={rows}

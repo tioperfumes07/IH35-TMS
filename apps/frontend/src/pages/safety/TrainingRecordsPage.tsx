@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createSafetyTrainingRecord, getTrainingCompletions } from "../../api/safety";
-import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { Modal } from "../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { companyToday } from "../../lib/businessDate";
@@ -39,20 +39,6 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
     enabled: Boolean(operatingCompanyId),
   });
 
-  const driversQuery = useQuery({
-    queryKey: ["mdata", "drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }), // full active set (endpoint default 50 truncates >50)
-    enabled: Boolean(operatingCompanyId),
-  });
-
-  const driverNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const driver of driversQuery.data?.drivers ?? []) {
-      map.set(driver.id, `${driver.first_name ?? ""} ${driver.last_name ?? ""}`.trim() || driver.id);
-    }
-    return map;
-  }, [driversQuery.data?.drivers]);
-
   const createMutation = useMutation({
     mutationFn: () =>
       createSafetyTrainingRecord(operatingCompanyId, {
@@ -82,7 +68,11 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
     {
       key: "driver_id",
       label: "Driver",
-      render: (row) => driverNameById.get(String(row.driver_id ?? "")) ?? String(row.driver_id ?? "—"),
+      render: (row) => {
+        const id = String(row.driver_id ?? "").trim();
+        if (!id) return "—";
+        return <EntityLink kind="driver" id={id} />;
+      },
     },
     {
       key: "training_name",

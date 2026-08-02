@@ -53,6 +53,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
   const [passingGrade, setPassingGrade] = useState("");
   const [assignDriverIds, setAssignDriverIds] = useState<string[]>([]);
   const [driverCreateOpen, setDriverCreateOpen] = useState(false);
+  const [driverSearch, setDriverSearch] = useState("");
   const [sessionPrograms, setSessionPrograms] = useState<ProgramRow[]>([]);
 
   const completionsQuery = useQuery({
@@ -62,8 +63,14 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
   });
 
   const driversQuery = useQuery({
-    queryKey: ["mdata", "drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }), // full active set (endpoint default 50 truncates >50)
+    queryKey: ["mdata", "drivers", operatingCompanyId, driverSearch],
+    queryFn: () =>
+      listDrivers({
+        operating_company_id: operatingCompanyId,
+        status: "Active",
+        limit: 200,
+        search: driverSearch || undefined,
+      }),
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -287,6 +294,14 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
             </button>
           </div>
           <div className="max-h-48 space-y-1 overflow-y-auto rounded-sm border border-gray-200 p-2">
+            <input
+              type="search"
+              value={driverSearch}
+              onChange={(event) => setDriverSearch(event.target.value)}
+              placeholder="Search drivers…"
+              className="mb-2 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
+              data-testid="training-program-driver-search"
+            />
             {(driversQuery.data?.drivers ?? []).map((driver) => (
               <label key={driver.id} className="flex items-center gap-2 text-xs text-slate-700">
                 <input

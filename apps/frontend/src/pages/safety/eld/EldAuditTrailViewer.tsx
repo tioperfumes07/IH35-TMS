@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { ApiError, apiRequest, resolveApiUrl } from "../../../api/client";
-import { listDrivers } from "../../../api/mdata";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { EldEditHistoryTimeline, type EldEditHistoryEntry } from "../../../components/safety/EldEditHistoryTimeline";
 import { useToast } from "../../../components/Toast";
@@ -82,12 +82,6 @@ export function EldAuditTrailViewer() {
   const [to, setTo] = useState(defaultToDate);
   const [exporting, setExporting] = useState(false);
 
-  const driversQuery = useQuery({
-    queryKey: ["mdata", "drivers", companyId],
-    enabled: Boolean(companyId),
-    queryFn: () => listDrivers({ operating_company_id: companyId, limit: 200 }), // full active set (endpoint default 50 truncates >50)
-  });
-
   const historyQuery = useQuery({
     queryKey: ["safety", "eld-audit-trail", companyId, driverUuid, from, to],
     enabled: Boolean(companyId && driverUuid && from && to),
@@ -101,17 +95,6 @@ export function EldAuditTrailViewer() {
       return apiRequest<EldAuditTrailResponse>(`/api/safety/eld/audit-trail?${params.toString()}`);
     },
   });
-
-  const driverOptions = useMemo(
-    () =>
-      (driversQuery.data?.drivers ?? [])
-        .map((driver) => ({
-          value: driver.id,
-          label: `${driver.first_name} ${driver.last_name}`.trim() || driver.id,
-        }))
-        .sort((a, b) => a.label.localeCompare(b.label)),
-    [driversQuery.data?.drivers]
-  );
 
   const exportPdf = () => {
     if (!companyId || !driverUuid || !historyQuery.data?.edits?.length) return;
@@ -157,18 +140,15 @@ export function EldAuditTrailViewer() {
         <div className="grid gap-3 md:grid-cols-3">
           <label className="text-sm text-gray-700">
             Driver
-            <select
-              className="mt-1 w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
-              value={driverUuid}
-              onChange={(event) => setDriverUuid(event.target.value)}
-            >
-              <option value="">Select driver…</option>
-              {driverOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <div className="mt-1">
+              <DriverPickerWithCreate
+                operatingCompanyId={companyId}
+                value={driverUuid || null}
+                onChange={(next) => setDriverUuid(next ?? "")}
+                placeholder="Search driver…"
+                dataField="eld-audit-driver"
+              />
+            </div>
           </label>
           <label className="text-sm text-gray-700">
             From

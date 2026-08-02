@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as mdataApi from "../../../api/mdata";
 import * as safetyApi from "../../../api/safety";
+import { MemoryRouter } from "react-router-dom";
 import { ToastProvider } from "../../../components/Toast";
 import { SafetyMeetingsPage } from "../SafetyMeetingsPage";
 import { TrainingProgramsPage } from "../TrainingProgramsPage";
@@ -19,9 +20,11 @@ vi.mock("../../../contexts/CompanyContext", () => ({
 function wrap(ui: React.ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
-    <QueryClientProvider client={qc}>
-      <ToastProvider>{ui}</ToastProvider>
-    </QueryClientProvider>
+    <MemoryRouter>
+      <QueryClientProvider client={qc}>
+        <ToastProvider>{ui}</ToastProvider>
+      </QueryClientProvider>
+    </MemoryRouter>
   );
 }
 
