@@ -1,6 +1,6 @@
 {
   "block_id": "phase13-audit223-hospitality-na",
-  "status": "PENDING",
+  "status": "superseded",
   "classification": "FINANCIAL",
   "phase": "tier3",
   "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
@@ -10,8 +10,15 @@
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "kind": "design",
+      "spec": "docs/trackers/BLOCK-RECONCILIATION-2026-08-02.md"
+    },
+    {
+      "kind": "live",
+      "check": "EVAPORATED 2026-08-02: superseded per 07-BLOCK-REBUCKETING \u00a7EVAPORATE; not in active build backlog."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check.",
+  "superseded_by": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+  "notes": "Auditor EVAPORATE 2026-08-02: not in active build backlog (1138 evaporate pile)."
 }

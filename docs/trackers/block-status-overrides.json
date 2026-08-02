@@ -57,9 +57,51 @@
     },
     {
       "id": "AF-5-stub-catalogs",
-      "status": "PENDING (GATED)",
-      "evidence": "partial — catalog buildout ongoing, not confirmably complete",
-      "verified_on": "2026-07-03"
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — stale 34-stub estimate; expense categories + account subtypes real per AF-1-AF-5-DESIGN; remaining IN-PREP tiles not false-empty",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "C1-PICKER-LAW-replace-every-raw-UUID-input-with-the-canonica",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE H5-EMPTY-WAVE per 08-BLOCK-BACKLOG-COUNT-CORRECTED-2026-08-01.md — 23 catalog-backed pickers, 0 write≠read, test-enforced; not a buildable wave",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "BLOCKS-NEW-DECISIONS",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (OWNER-DECISIONS paste queue), not a product defect",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "FOR-CURSOR-2-README-ACCOUNTING-BANKING",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (class-sweep readme), not a product defect",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "PASTE-TO-CLAUDE-CODER",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (class-sweep paste target), not a product defect",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "PASTE-TO-CURSOR",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (class-sweep paste target), not a product defect",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase13-audit220-manufacturing-duplicate",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry audit block, no IH35 surface; hyphen-duplicate id cannot be file-retired",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase13-audit228-energy-duplicate",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry audit block, no IH35 surface; hyphen-duplicate id cannot be file-retired",
+      "verified_on": "2026-08-02"
     },
     {
       "id": "AF-7-money-controls",

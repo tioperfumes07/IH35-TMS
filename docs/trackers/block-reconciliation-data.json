@@ -1,17 +1,17 @@
 {
  "date": "2026-08-02",
- "generated_at_iso": "2026-08-02T15:57:11.480Z",
+ "generated_at_iso": "2026-08-02T16:28:25.450Z",
  "counts": {
-  "PENDING": 18,
+  "PENDING": 14,
   "PENDING (GATED)": 27,
-  "NEEDS-VERIFY": 76,
+  "NEEDS-VERIFY": 57,
   "DONE": 685,
-  "AUDIT-NOTE": 414
+  "AUDIT-NOTE": 420
  },
  "universe": {
-  "total_blocks_after_dedup": 1220,
+  "total_blocks_after_dedup": 1203,
   "by_source_after_dedup": {
-   ".block-ready": 1023,
+   ".block-ready": 1006,
    "program": 86,
    "enterprise-29": 29,
    "accounting": 25,
@@ -19,8 +19,8 @@
   },
   "raw_file_counts": {
    ".block-ready (*.json files)": 1378,
-   ".block-ready retired (dup/stale/superseded, excluded)": 350,
-   ".block-ready active (counted)": 1028
+   ".block-ready retired (dup/stale/superseded, excluded)": 367,
+   ".block-ready active (counted)": 1011
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -245,16 +245,6 @@
    "pr": null
   },
   {
-   "id": "BLOCKS-NEW-DECISIONS",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "PHASE-2 NEW-DECISION BLOCKS (from OWNER-DECISIONS-FINAL) · 2026-07-26",
-   "pr": null
-  },
-  {
    "id": "C2-CANONICAL-forbid-live-writes-to-RETIRE-schemas-repoint-th",
    "source": "program",
    "fin": false,
@@ -376,36 +366,6 @@
    "name": "",
    "registered_on": null,
    "pr": 3950
-  },
-  {
-   "id": "FOR-CURSOR-2-README-ACCOUNTING-BANKING",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "DESIGN first) · ACCT-DOM-02",
-   "pr": null
-  },
-  {
-   "id": "PASTE-TO-CLAUDE-CODER",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "PASTE → CLAUDE CODER  (UI / operational lane)",
-   "pr": null
-  },
-  {
-   "id": "PASTE-TO-CURSOR",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "PASTE → CURSOR  (financial / canonical / RLS lane)",
-   "pr": null
   },
   {
    "id": "AF-1-entity-coa-fix",
@@ -1081,160 +1041,6 @@
    "pr": 2645
   },
   {
-   "id": "phase13-audit216-banking-industry",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit217-insurance-industry",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit218-healthcare-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit219-pharmaceutical-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit220-manufacturing-duplicate",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit221-retail-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit222-restaurant-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit223-hospitality-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit224-transportation-dashboard-rout",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit225-logistics-warehousing",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit226-construction-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit228-energy-duplicate",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit229-mining-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit230-agriculture-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
    "id": "PHASE3_INVOICE-FK_unenforced-linkages_DISPATCH",
    "source": ".block-ready",
    "fin": true,
@@ -1257,62 +1063,7 @@
    "pr": 2385
   },
   {
-   "id": "phase3-audit56-iso9001-quality-mgmt",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
    "id": "phase3-audit57-process-audit-docs-workflow",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit58-six-sigma",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit59-lean",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit60-kaizen",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit61-tqm",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -11705,7 +11456,7 @@
    "fin": true,
    "tier": "2",
    "status": "AUDIT-NOTE",
-   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 re-tag: stale 34-stub estimate; expense categories +",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — stale 34-stub estimate; expense categor",
    "name": "STRUCTURAL / TASK 5 — 34 STUB catalogs build-out (additive-only)",
    "pr": null
   },
@@ -12037,6 +11788,16 @@
    "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
    "name": "",
    "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "BLOCKS-NEW-DECISIONS",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (OWNER-DECISION",
+   "name": "PHASE-2 NEW-DECISION BLOCKS (from OWNER-DECISIONS-FINAL) · 2026-07-26",
    "pr": null
   },
   {
@@ -12644,6 +12405,16 @@
    "pr": null
   },
   {
+   "id": "FOR-CURSOR-2-README-ACCOUNTING-BANKING",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (class-sweep re",
+   "name": "DESIGN first) · ACCT-DOM-02",
+   "pr": null
+  },
+  {
    "id": "gated-blocks-conn-plaid-relay-edi",
    "source": ".block-ready",
    "fin": true,
@@ -13040,6 +12811,26 @@
    "pr": null
   },
   {
+   "id": "PASTE-TO-CLAUDE-CODER",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (class-sweep pa",
+   "name": "PASTE → CLAUDE CODER  (UI / operational lane)",
+   "pr": null
+  },
+  {
+   "id": "PASTE-TO-CURSOR",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (class-sweep pa",
+   "name": "PASTE → CURSOR  (financial / canonical / RLS lane)",
+   "pr": null
+  },
+  {
    "id": "PHASE0_DEPLOY-DRIFT_prod-older-than-main_VERIFY",
    "source": ".block-ready",
    "fin": true,
@@ -13060,6 +12851,28 @@
    "name": "",
    "registered_on": null,
    "pr": null
+  },
+  {
+   "id": "phase13-audit220-manufacturing-duplicate",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry audit block, no IH35 s",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase13-audit228-energy-duplicate",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry audit block, no IH35 s",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
   },
   {
    "id": "phase14-audit-241",
