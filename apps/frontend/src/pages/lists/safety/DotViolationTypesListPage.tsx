@@ -73,35 +73,43 @@ export function DotViolationTypesListPage() {
         }
       />
 
-      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by code or name" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
-        <SelectCombobox value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
-          {STATUS_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </SelectCombobox>
-      </div>
+      {/* LST list chrome — single outer frame; filter row is border-b only (no nested card above DataTable). */}
+      <section
+        className="overflow-hidden rounded-sm border border-gray-200 bg-white"
+        data-testid="dot-violation-types-list-frame"
+      >
+        <div className="grid gap-2 border-b border-gray-200 bg-gray-50 p-3 md:grid-cols-3">
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by code or name" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
+          <SelectCombobox value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </SelectCombobox>
+        </div>
 
-      {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above
-          feed `rows`; row-click → edit modal preserved exactly. */}
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.id}
-        onRowClick={(row) => {
-          setSelectedRow(row);
-          setModalOpen(true);
-        }}
-        loading={query.isLoading}
-        tableKey="safety-dot-violation-types"
-        errorState={
-          query.isError
-            ? { status: 0, message: "Failed to load DOT violation types.", onRetry: () => { void query.refetch(); } }
-            : undefined
-        }
-      />
+        {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above
+            feed `rows`; row-click → edit modal preserved exactly. */}
+        <div className="[&>div]:rounded-none [&>div]:border-0">
+          <DataTable
+            columns={columns}
+            rows={rows}
+            rowKey={(row) => row.id}
+            onRowClick={(row) => {
+              setSelectedRow(row);
+              setModalOpen(true);
+            }}
+            loading={query.isLoading}
+            tableKey="safety-dot-violation-types"
+            errorState={
+              query.isError
+                ? { status: 0, message: "Failed to load DOT violation types.", onRetry: () => { void query.refetch(); } }
+                : undefined
+            }
+          />
+        </div>
+      </section>
 
       <DotViolationTypeModal
         open={modalOpen}
