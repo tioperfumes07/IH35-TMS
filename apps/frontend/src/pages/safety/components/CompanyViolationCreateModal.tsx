@@ -27,11 +27,14 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
   // had and nothing ever populated. The enum above is the DOT CATEGORY and is a different axis; both
   // are kept (additive), neither replaces the other.
   const [violationTypeUuid, setViolationTypeUuid] = useState<string | null>(null);
+  // SAF-B29 wave-4: catalog capped at 200 — typed term must reach listCompanyViolationTypes.
+  const [typeSearch, setTypeSearch] = useState("");
   const queryClient = useQueryClient();
 
   const typesQuery = useQuery({
-    queryKey: ["catalogs", "company-violation-types", operatingCompanyId],
-    queryFn: () => listCompanyViolationTypes(operatingCompanyId, { limit: 200 }),
+    queryKey: ["catalogs", "company-violation-types", operatingCompanyId, typeSearch],
+    queryFn: () =>
+      listCompanyViolationTypes(operatingCompanyId, { limit: 200, search: typeSearch || undefined }),
     enabled: open && Boolean(operatingCompanyId),
   });
 
@@ -93,6 +96,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
               operatingCompanyId={operatingCompanyId}
               placeholder="Select catalogued type"
               loading={typesQuery.isLoading}
+              onSearch={setTypeSearch}
               onOptionCreated={() => {
                 void queryClient.invalidateQueries({
                   queryKey: ["catalogs", "company-violation-types", operatingCompanyId],
