@@ -192,30 +192,72 @@ async function evaluateRuleMatches(
   // ── Accounting probe: orphan bill — no GL account assigned ─────────────────
   if (rule.rule_code === "orphan_bill_no_gl") {
     const lookbackDays = thresholdNumber(config, "lookback_days", 90);
+    // ACCT-F85 — three defects in this one rule, all verified on prod 2026-08-02 (read under
+    // is_lucia_bypass, visible == n_live_tup):
+    //
+    // 1. IT READ THE WRONG COLUMN. The GL account of a bill lives on its LINES, exactly as QBO,
+    //    NetSuite and McLeod model it — a header carries the vendor, the expense distribution is
+    //    per line. accounting.bill_lines has account_id on 155,160 of 155,270 lines covering ALL
+    //    16,246 bills, while the header accounting.bills.coa_account_id is populated on exactly
+    //    ONE. The old predicate `b.coa_account_id IS NULL` therefore matched 16,245 of 16,246
+    //    bills — an alert that fires on ~100% of the ledger is not a finding, it is noise, and
+    //    with the LIMIT below it silently reported 50 arbitrary bills forever. Read from the
+    //    lines and the TRUE count is 29 (all TRK, all of which do have lines, none with an
+    //    account). Those 29 are the real finding this rule exists to surface, and they were
+    //    buried under 16,245 false ones.
+    // 2. THE SUMMARY SAID "undefined". detection_summary interpolated row.bill_date, which the
+    //    SELECT never returned — every alert would have read "Bill undefined has no GL account".
+    //    Selected explicitly now, with the bill number, which is what an operator searches by.
+    // 3. THE CAP WAS SILENT. LIMIT 50 with no total is the Form 425-C shape: a truncated list
+    //    presented as the whole. The true matching count is carried out and named in the summary
+    //    when it exceeds what is shown.
+    //
+    // The vendor FK also now prefers the canonical column. SAF-F70 resolved the QBO id through the
+    // vendor master because "b.mdata_vendor_id ... is NULL on all 16,246 bills". That claim is
+    // false on prod: it is populated on 16,244 of 16,246 and disagrees with the qbo_vendor_id
+    // resolution on ZERO rows. The join is kept as a fallback (it costs nothing and covers the 2
+    // rows without the canonical value), but the canonical FK is read first.
+    const orphanBillLimit = 50;
     const res = await client.query<Record<string, unknown>>(
       `
+        WITH orphan AS (
+          SELECT
+            b.id,
+            b.vendor_id,
+            b.bill_number,
+            b.bill_date,
+            b.created_at,
+            COALESCE(b.mdata_vendor_id, v.id) AS vendor_uuid
+          FROM accounting.bills b
+          LEFT JOIN mdata.vendors v
+            ON v.qbo_vendor_id = b.vendor_id
+           AND v.operating_company_id = b.operating_company_id
+          WHERE b.operating_company_id = $1
+            AND b.revoked_at IS NULL
+            AND b.created_at > now() - ($2 || ' days')::interval
+            -- The GL lives on the LINES. A bill is a GL orphan when NO line carries an account.
+            AND NOT EXISTS (
+              SELECT 1
+              FROM accounting.bill_lines bl
+              WHERE bl.bill_id = b.id
+                AND bl.account_id IS NOT NULL
+            )
+        )
         SELECT
-          b.id::text AS bill_id,
-          b.vendor_id,
-          -- SAF-F70: accounting.bills.vendor_id is TEXT holding the QBO vendor id ("2", "256",
-          -- "1093"), but safety.integrity_alerts.subject_vendor_id is UUID. Binding the raw value
-          -- threw "invalid input syntax for type uuid" and killed the whole engine run.
-          -- b.mdata_vendor_id is the uuid column, but it is NULL on all 16,246 bills, so it cannot
-          -- be swapped in — the QBO id has to be RESOLVED through the vendor master instead.
-          v.id::text AS vendor_uuid
-        FROM accounting.bills b
-        LEFT JOIN mdata.vendors v
-          ON v.qbo_vendor_id = b.vendor_id
-         AND v.operating_company_id = b.operating_company_id
-        WHERE b.operating_company_id = $1
-          AND b.revoked_at IS NULL
-          AND b.coa_account_id IS NULL
-          AND b.created_at > now() - ($2 || ' days')::interval
-        ORDER BY b.created_at DESC
-        LIMIT 50
+          o.id::text AS bill_id,
+          o.vendor_id,
+          o.bill_number,
+          o.bill_date::text AS bill_date,
+          o.vendor_uuid::text AS vendor_uuid,
+          (SELECT COUNT(*) FROM orphan)::text AS total_matching
+        FROM orphan o
+        ORDER BY o.created_at DESC
+        LIMIT $3
       `,
-      [operatingCompanyId, lookbackDays]
+      [operatingCompanyId, lookbackDays, orphanBillLimit]
     );
+    const totalMatching = Number(res.rows[0]?.total_matching ?? res.rows.length);
+    const truncated = totalMatching > res.rows.length;
     return res.rows.map((row) => ({
       subject_key: `bill:${String(row.bill_id)}`,
       subject_driver_id: null,
@@ -224,7 +266,10 @@ async function evaluateRuleMatches(
       // (the finding is about a bill with no GL account, not about the vendor); the QBO id remains
       // visible in detection_metric, so nothing is lost by leaving the FK null.
       subject_vendor_id: row.vendor_uuid ? String(row.vendor_uuid) : null,
-      detection_summary: `Bill ${String(row.bill_date)} has no GL account (coa_account_id IS NULL)`,
+      detection_summary:
+        `Bill ${String(row.bill_number ?? row.bill_id)} dated ${String(row.bill_date)} has no GL ` +
+        `account on any line` +
+        (truncated ? ` (showing ${res.rows.length} of ${totalMatching} matching bills)` : ""),
       detection_metric: row,
       source_view: rule.source_view,
     }));
