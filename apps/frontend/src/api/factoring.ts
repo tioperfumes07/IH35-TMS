@@ -255,6 +255,7 @@ export type Factor = {
   noa_remit_to_name: string | null;
   noa_remit_to_addr: string | null;
   noa_remit_to_wire_ref: string | null;
+  notes: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -332,6 +333,7 @@ export function updateFactor(
     noa_remit_to_name: string | null;
     noa_remit_to_addr: string | null;
     noa_remit_to_wire_ref: string | null;
+    notes: string | null;
   }>
 ) {
   return apiRequest<Factor>(`/api/v1/factoring/factors/${encodeURIComponent(factorId)}`, {

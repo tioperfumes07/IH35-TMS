@@ -8,10 +8,12 @@ import {
   getFactoringRecoursePipeline,
   getFactoringStatementsSettings,
   getFactoringSummary,
+  listFactors,
+  updateFactor,
   type FactoringMonthlyFeeSummary,
   type FactoringSettingsRow,
 } from "../../api/factoring";
-import { listUnits, listVendors, updateVendor } from "../../api/mdata";
+import { listUnits, listVendors } from "../../api/mdata";
 import { listLoads } from "../../api/loads";
 import { Combobox } from "../../components/shared/Combobox";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
@@ -227,6 +229,11 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
     queryFn: () => listVendors({ operating_company_id: companyId, status: "active" }).then((res) => res.vendors),
     enabled: Boolean(companyId),
   });
+  const factorsQuery = useQuery({
+    queryKey: ["factoring", "factors", companyId, "active"],
+    queryFn: () => listFactors(companyId, { active_only: true }).then((res) => res.factors),
+    enabled: Boolean(companyId),
+  });
   const recourseQuery = useQuery({
     queryKey: ["factoring", "recourse", companyId],
     queryFn: () => getFactoringRecoursePipeline(companyId),
@@ -286,12 +293,20 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   }, [invoices]);
 
   const summary = summaryQuery.data;
-  const activeFactorVendor = useMemo(() => {
-    const vendors = vendorsQuery.data ?? [];
-    if (!summary?.active_factor_id) return null;
-    return vendors.find((vendor) => vendor.id === summary.active_factor_id) ?? null;
-  }, [summary?.active_factor_id, vendorsQuery.data]);
-  const factorParsed = useMemo(() => parseVendorNotes(activeFactorVendor?.notes), [activeFactorVendor?.notes]);
+  const hasActiveFactorIdentity = Boolean(summary?.active_factor_id || summary?.active_factor_name);
+  const activeFactor = useMemo(() => {
+    const factors = factorsQuery.data ?? [];
+    if (factors.length === 0) return null;
+    const targetName = summary?.active_factor_name?.trim();
+    if (targetName) {
+      const byName = factors.find((factor) => factor.name === targetName);
+      if (byName) return byName;
+    }
+    const activeFactors = factors.filter((factor) => factor.active);
+    if (activeFactors.length === 1) return activeFactors[0];
+    return activeFactors[0] ?? null;
+  }, [factorsQuery.data, summary?.active_factor_name]);
+  const factorParsed = useMemo(() => parseVendorNotes(activeFactor?.notes), [activeFactor?.notes]);
   const canDeactivate = user?.role === "Owner";
 
   return (
@@ -340,12 +355,16 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           <div className="mt-1 font-semibold text-gray-900">{Number(summary?.recourse_days ?? 95)}</div>
         </div>
       </div>
-      {activeFactorVendor ? (
+      {hasActiveFactorIdentity ? (
         <>
           <FactoringProfilePanel
             meta={factorParsed.meta}
             saving={savingFactorProfile}
             onSave={() => {
+              if (!activeFactor) {
+                pushToast("Active factor profile is still loading", "error");
+                return;
+              }
               setProfileEditForm({
                 telephone: factorParsed.meta.telephone ?? "",
                 address: factorParsed.meta.address ?? "",
@@ -446,19 +465,17 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                           advanceFee61To90Pct: profileEditForm.advanceFee61To90Pct,
                         },
                       };
+                      if (!activeFactor) return;
                       try {
                         setSavingFactorProfile(true);
-                        await updateVendor(activeFactorVendor.id, {
-                          phone: mergedMeta.telephone || null,
-                          address: mergedMeta.address || null,
-                          email: mergedMeta.generalEmail || null,
+                        await updateFactor(activeFactor.id, companyId, {
                           notes: serializeVendorNotes(mergedMeta, factorParsed.publicNotes),
                         });
                         pushToast("Factoring profile saved", "success");
                         setProfileEditOpen(false);
                         setProfileEditForm(null);
                         await queryClient.invalidateQueries({ queryKey: ["factoring"] });
-                        await queryClient.invalidateQueries({ queryKey: ["factoring", "vendors", companyId] });
+                        await queryClient.invalidateQueries({ queryKey: ["factoring", "factors", companyId] });
                       } catch (error) {
                         pushToast(String((error as Error).message || "Failed to save profile"), "error");
                       } finally {
@@ -846,7 +863,14 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           </div>
           {selectedLoanId ? (
             <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-              <div className="mb-2 font-medium text-gray-900">Selected loan ledger: {selectedLoanId}</div>
+              <div className="mb-2 font-medium text-gray-900">
+                Selected loan ledger:{" "}
+                {(equipmentLoansQuery.data?.rows ?? []).find((row) => String(row.id) === selectedLoanId)
+                  ?.equipment_number ||
+                  (equipmentLoansQuery.data?.rows ?? []).find((row) => String(row.id) === selectedLoanId)
+                    ?.equipment_id ||
+                  "loan"}
+              </div>
               <p>Attributions: {(selectedLoanLedgerQuery.data?.attributions ?? []).length}</p>
               <p>Payments: {(selectedLoanLedgerQuery.data?.payments ?? []).length}</p>
             </div>
