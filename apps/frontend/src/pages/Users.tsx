@@ -599,17 +599,8 @@ export function UsersPage() {
         hidePager
         batchActions={() => (
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled
-              title="Coming soon — deactivate users individually from the row menu"
-              className="rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-800 opacity-50"
-              onClick={() =>
-                pushToast("Bulk deactivate is not available yet — use the row menu to deactivate a user.", "info")
-              }
-            >
-              Deactivate
-            </button>
+            {/* Bulk deactivate is intentionally omitted — per-row Deactivate in Actions is the live path.
+                A disabled "Coming soon" bulk control fails verify:no-prod-stubs. */}
             <button
               type="button"
               className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
