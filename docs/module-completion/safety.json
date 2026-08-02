@@ -2161,7 +2161,7 @@
         "DOD-E"
       ],
       "spec": "Rule 15 research mandate — IRS Form 2290 instructions / FMCSA",
-      "status": "FIXED (PR pending)",
+      "status": "FIXED (PR #4070)",
       "evidence": "ROOT CAUSE: form2290DueDateForFirstUse() computed IRS per-unit due dates (last day of month following first use, business-day shifted) but the Safety Permits banner only rendered upcomingForm2290Deadline() — company-wide Aug 31 — so vehicles first used after July never surfaced (e.g. Oct first use due Nov 30). FIX: upcoming-deadline route returns per_unit_deadlines + units_missing_first_use; Permits.tsx and Form2290Filings.tsx render per-unit exceptions. Business-day shift already in form-2290-generator.ts (nextBusinessDay + usFederalHolidays). GUARD: verify-step 2064 (verify-saf-orph04-form2290-per-unit-deadline.mjs) + enhanced verify-saf-f32-permits-deadline-honesty.mjs. LIVE PROOF: UNVERIFIED — deploy SHA pending merge; local guard selftest PASS. REMAINING: live click-through on Safety → Permits after deploy.",
       "build_standard": {
         "standard_version": "2026-07-25",
