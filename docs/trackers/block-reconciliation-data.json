@@ -1,12 +1,12 @@
 {
  "date": "2026-08-02",
- "generated_at_iso": "2026-08-02T16:56:33.244Z",
+ "generated_at_iso": "2026-08-02T17:26:11.157Z",
  "counts": {
   "PENDING": 14,
   "PENDING (GATED)": 27,
-  "NEEDS-VERIFY": 57,
-  "DONE": 680,
-  "AUDIT-NOTE": 425
+  "NEEDS-VERIFY": 45,
+  "DONE": 671,
+  "AUDIT-NOTE": 446
  },
  "universe": {
   "total_blocks_after_dedup": 1203,
@@ -1074,138 +1074,6 @@
    "pr": 2385
   },
   {
-   "id": "phase3-audit62-spc",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit64-capa",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit65-preventive-action",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit66-supplier-quality",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit67-customer-satisfaction-csat-nps",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit68-service-quality-sla",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit69-product-quality",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit70-manufacturing-qc",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit71-laboratory",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit72-calibration",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit73-validation",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit75-document-control",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
    "id": "product-service-categories-rename-and-creator",
    "source": ".block-ready",
    "fin": true,
@@ -1260,83 +1128,6 @@
    "pr": 2342
   },
   {
-   "id": "0007-no-silent-noop-posting",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #2319 merged 2026-07-11",
-   "name": "Tier-1 0007: silent flag-gated no-op posting. A money-posting leg gated behind an OFF feature flag must never return suc",
-   "registered_on": null,
-   "pr": 2319
-  },
-  {
-   "id": "0007-pattern-8-reverse-drill-through",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #2725 merged 2026-07-19",
-   "name": "Enforce and auto-discover existing EntityLink reverse-drill guards",
-   "registered_on": null,
-   "pr": 2725
-  },
-  {
-   "id": "0091-c1-1-settlement-engine-canonical",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #2320 merged 2026-07-11",
-   "name": "Tier-1 0091-c1-1: two driver-settlement engines. DESIGN ONLY. Verified live (main) THREE settlement code paths: A postSe",
-   "registered_on": null,
-   "pr": 2320
-  },
-  {
-   "id": "0091-g6-1",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #2705 merged 2026-07-19",
-   "name": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-s",
-   "registered_on": null,
-   "pr": 2705
-  },
-  {
-   "id": "0091-g7-1",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #3068 merged 2026-07-21",
-   "name": "Phase 4 pre-work (0091-g7-1): transition-matrix pinning test for settlement-payment allowedTransitions. Test-only; pins ",
-   "registered_on": null,
-   "pr": 3068
-  },
-  {
-   "id": "0091-g9-h6",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #2711 merged 2026-07-19",
-   "name": "0091-g9-h6 remaining half: GET /api/v1/mdata/equipment list lacked truthful total/has_more/limit/offset (returned only {",
-   "registered_on": null,
-   "pr": 2711
-  },
-  {
-   "id": "0243-d1-3-new-vendor-drawer-parity-fields",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #2822 merged 2026-07-20",
-   "name": "Wire NewVendorDrawerForm createVendor() to send city/state/website/print_on_check_name/postal_code (backend already acce",
-   "registered_on": null,
-   "pr": 2822
-  },
-  {
    "id": "0243-d4-1-samsara-webhook-driver-pairing-equip",
    "source": ".block-ready",
    "fin": true,
@@ -1357,17 +1148,6 @@
    "name": "Eliminate confirmed N+1 unit×week deadhead load reads and lane-profitability per-row INSERT loops; preserve exact cache ",
    "registered_on": null,
    "pr": null
-  },
-  {
-   "id": "0243-g8-4-a11y-input-labels",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #2328 merged 2026-07-11",
-   "name": "0243-g8-4: placeholder-only filter/search inputs lack an accessible name; eslint-plugin-jsx-a11y 'not wired'. VERIFY-FIR",
-   "registered_on": null,
-   "pr": 2328
   },
   {
    "id": "0243-g8-5-accounting-query-errors-wave-b",
@@ -6188,10 +5968,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #649 merged 2026-06-07",
+   "evidence": "all 4 file(s) on main",
    "name": "DOT inspection clean-rate endpoint, score badge, and CI verify guard",
    "registered_on": null,
-   "pr": 649
+   "pr": null
   },
   {
    "id": "GAP-85-PERMIT-TOLL-TRACKING",
@@ -6359,10 +6139,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #651 merged 2026-06-07",
+   "evidence": "all 3 file(s) on main",
    "name": "Promote three post-merge feedback checks to required pre-merge CI gates (GAP-81 failure class)",
    "registered_on": null,
-   "pr": 651
+   "pr": null
   },
   {
    "id": "GLOBAL-SORT-RULE",
@@ -7784,17 +7564,6 @@
    "pr": null
   },
   {
-   "id": "STRUCTURAL-MANIFEST-SPLIT",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #650 merged 2026-06-07",
-   "name": "Each block writes its own .block-ready/<block-id>.json; zero manifest merge conflicts in parallel lanes",
-   "registered_on": null,
-   "pr": 650
-  },
-  {
    "id": "SWEEP-FIX-17-27",
    "source": ".block-ready",
    "fin": false,
@@ -8591,6 +8360,17 @@
    "pr": null
   },
   {
+   "id": "0007-no-silent-noop-posting",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "Tier-1 0007: silent flag-gated no-op posting. A money-posting leg gated behind an OFF feature flag must never return suc",
+   "registered_on": null,
+   "pr": 2319
+  },
+  {
    "id": "0007-pattern-1-unmounted-backend",
    "source": ".block-ready",
    "fin": true,
@@ -8622,6 +8402,17 @@
    "name": "",
    "registered_on": null,
    "pr": null
+  },
+  {
+   "id": "0007-pattern-8-reverse-drill-through",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "Enforce and auto-discover existing EntityLink reverse-drill guards",
+   "registered_on": null,
+   "pr": 2725
   },
   {
    "id": "0007-pattern-9-fake-persist-evidence-loss",
@@ -8756,6 +8547,17 @@
    "pr": null
   },
   {
+   "id": "0091-c1-1-settlement-engine-canonical",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "Tier-1 0091-c1-1: two driver-settlement engines. DESIGN ONLY. Verified live (main) THREE settlement code paths: A postSe",
+   "registered_on": null,
+   "pr": 2320
+  },
+  {
    "id": "0091-c1-1-two-settlement-engines_DISPATCH",
    "source": ".block-ready",
    "fin": true,
@@ -8855,6 +8657,28 @@
    "pr": null
   },
   {
+   "id": "0091-g6-1",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-s",
+   "registered_on": null,
+   "pr": 2705
+  },
+  {
+   "id": "0091-g7-1",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "Phase 4 pre-work (0091-g7-1): transition-matrix pinning test for settlement-payment allowedTransitions. Test-only; pins ",
+   "registered_on": null,
+   "pr": 3068
+  },
+  {
    "id": "0091-g7-1_DISPATCH",
    "source": ".block-ready",
    "fin": true,
@@ -8897,6 +8721,17 @@
    "name": "",
    "registered_on": null,
    "pr": null
+  },
+  {
+   "id": "0091-g9-h6",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "0091-g9-h6 remaining half: GET /api/v1/mdata/equipment list lacked truthful total/has_more/limit/offset (returned only {",
+   "registered_on": null,
+   "pr": 2711
   },
   {
    "id": "0091-h2-3",
@@ -9130,6 +8965,17 @@
    "pr": null
   },
   {
+   "id": "0243-d1-3-new-vendor-drawer-parity-fields",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "Wire NewVendorDrawerForm createVendor() to send city/state/website/print_on_check_name/postal_code (backend already acce",
+   "registered_on": null,
+   "pr": 2822
+  },
+  {
    "id": "0243-e1-3-two-scheduled-report-engines",
    "source": ".block-ready",
    "fin": true,
@@ -9348,6 +9194,17 @@
    "name": "",
    "registered_on": null,
    "pr": null
+  },
+  {
+   "id": "0243-g8-4-a11y-input-labels",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "0243-g8-4: placeholder-only filter/search inputs lack an accessible name; eslint-plugin-jsx-a11y 'not wired'. VERIFY-FIR",
+   "registered_on": null,
+   "pr": 2328
   },
   {
    "id": "0243-g9-h1-settlement-double-pay-race",
@@ -12919,6 +12776,138 @@
    "pr": null
   },
   {
+   "id": "phase3-audit62-spc",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit64-capa",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit65-preventive-action",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit66-supplier-quality",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit67-customer-satisfaction-csat-nps",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit68-service-quality-sla",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit69-product-quality",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit70-manufacturing-qc",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit71-laboratory",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit72-calibration",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit73-validation",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit75-document-control",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
    "id": "phase8-audit161-api-audit",
    "source": ".block-ready",
    "fin": true,
@@ -13058,6 +13047,17 @@
    "status": "AUDIT-NOTE",
    "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
    "name": "",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "STRUCTURAL-MANIFEST-SPLIT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Each block writes its own .block-ready/<block-id>.json; zero manifest merge conflicts in parallel lanes",
    "registered_on": null,
    "pr": null
   },
@@ -13261,6 +13261,24 @@
   }
  ],
  "merged_prs": [
+  {
+   "number": 4007,
+   "title": "measurability: PASS1b — 21 auditor-cited EVAPORATE overrides",
+   "mergedAt": "2026-08-02T17:16:48Z",
+   "branch": "cursor/measurability-pass1b-2026-08-02"
+  },
+  {
+   "number": 4006,
+   "title": "Claude- docs(audit): bootstrap docs/audit/AUDIT-COVERAGE-LIVE.md as the single-source work list",
+   "mergedAt": "2026-08-02T17:09:13Z",
+   "branch": "claude/audit-coverage-live-bootstrap"
+  },
+  {
+   "number": 4005,
+   "title": "docs(rules): Rule 25 — AUDIT-COVERAGE-LIVE single source",
+   "mergedAt": "2026-08-02T17:16:40Z",
+   "branch": "cursor/rule25-audit-coverage-2026-08-02"
+  },
   {
    "number": 4004,
    "title": "measurability: block reconcile H5 + 13 module-completion scaffolds",
@@ -16842,24 +16860,6 @@
    "title": "[HOLD-FOR-JORGE · FINANCIAL] SAF-F01 — escrow Forfeit route + damage_recovery account",
    "mergedAt": "2026-07-23T20:47:23Z",
    "branch": "fix/saf-f01-escrow-forfeit"
-  },
-  {
-   "number": 3347,
-   "title": "[HOLD-FOR-JORGE] feat(accounting): Cost of Labor seed TRANSP+USMCA draft (WO #4)",
-   "mergedAt": "2026-07-23T19:48:45Z",
-   "branch": "hold/cost-of-labor-seed-transp-usmca"
-  },
-  {
-   "number": 3346,
-   "title": "[HOLD-FOR-JORGE] fix(banking): cash-GL is_postable DB trigger (WO #6)",
-   "mergedAt": "2026-07-23T18:10:23Z",
-   "branch": "fix/banking-cash-gl-postable-trigger"
-  },
-  {
-   "number": 3345,
-   "title": "[HOLD-FOR-JORGE] fix(catalogs): drop global UNIQUE(role_key) on bindings (WO #5)",
-   "mergedAt": "2026-07-23T20:05:11Z",
-   "branch": "fix/drop-global-role-key-unique"
   }
  ],
  "merged_pr_total": 3000,

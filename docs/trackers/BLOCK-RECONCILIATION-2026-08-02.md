@@ -2,14 +2,14 @@
 
 **DONE** = verified on main (branch merged or all signature files present).  **NEEDS-VERIFY** = weak signal (title-match / partial files / self-report), not trusted until GUARD confirms.  **PENDING** = needs build.  **PENDING (GATED)** = financial/locked, needs Jorge's gate first.
 
-**Verified against `origin/main` (12496 files) + 3000 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
+**Verified against `origin/main` (12498 files) + 3000 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
 
 ## Counts
 - **PENDING**: 14
 - **PENDING (GATED)**: 27
-- **NEEDS-VERIFY**: 57
-- **DONE**: 680
-- **AUDIT-NOTE**: 425
+- **NEEDS-VERIFY**: 45
+- **DONE**: 671
+- **AUDIT-NOTE**: 446
 
 ## Universe — why 1203 blocks (the "456 vs 294 .block-ready" gap, explained)
 The reconciler spans **5 sources**, de-duped by **unique block_id** and **excluding retired duplicates** — the block count is the union, **not** the raw `.block-ready` file count.
@@ -134,33 +134,13 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | PHASE3_INVOICE-FK_unenforced-linkages_DISPATCH | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | [verified 2026-07-12] agent: not dispositioned in #2385; needs live FK check |
 | PHASE3_TRANSFER-MIGRATION-DRIFT_held-but-live_VERIFY | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | [verified 2026-07-12] agent: not dispositioned in #2385; needs live migration-drift check |
 | phase3-audit57-process-audit-docs-workflow | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | PR #2385 title-match only, unverified |
-| phase3-audit62-spc | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | PR #2385 title-match only, unverified |
-| phase3-audit64-capa | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | PR #2385 title-match only, unverified |
-| phase3-audit65-preventive-action | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | PR #2385 title-match only, unverified |
-| phase3-audit66-supplier-quality | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | PR #2385 title-match only, unverified |
-| phase3-audit67-customer-satisfaction-csat-nps | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | PR #2385 title-match only, unverified |
-| phase3-audit68-service-quality-sla | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | PR #2385 title-match only, unverified |
-| phase3-audit69-product-quality | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | PR #2385 title-match only, unverified |
-| phase3-audit70-manufacturing-qc | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | PR #2385 title-match only, unverified |
-| phase3-audit71-laboratory | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | PR #2385 title-match only, unverified |
-| phase3-audit72-calibration | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | PR #2385 title-match only, unverified |
-| phase3-audit73-validation | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | PR #2385 title-match only, unverified |
-| phase3-audit75-document-control | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | PR #2385 title-match only, unverified |
 | product-service-categories-rename-and-creator | NEEDS-VERIFY | 💰 |  |  | .block-ready | [verified 2026-07-12] agent: parent-category creator not built (QboCategoriesListPage.tsx) |
 | RECON-01 | NEEDS-VERIFY | 💰 |  | #1831 | .block-ready | PR #1831 title-match only, unverified |
 | s-07-log-event-missing-dot-fields | NEEDS-VERIFY | 💰 |  | #2650 | .block-ready | PR #2650 title-match only, unverified |
 | STMT-2-opening-balances | NEEDS-VERIFY | 💰 | T1 | #2227 | program | PR #2227 title-match only, unverified |
 | UI-03_INLINE-CREATE-AND-BANKING-SPLIT_DISPATCH | NEEDS-VERIFY | 💰 |  | #2342 | .block-ready | [verified 2026-07-12] agent: PR #2342 Part-A vocab only; Account/COA inline-create still deferred |
-| 0007-no-silent-noop-posting | DONE | 💰 |  | #2319 | .block-ready | PR #2319 merged 2026-07-11 |
-| 0007-pattern-8-reverse-drill-through | DONE | 💰 |  | #2725 | .block-ready | PR #2725 merged 2026-07-19 |
-| 0091-c1-1-settlement-engine-canonical | DONE | 💰 |  | #2320 | .block-ready | PR #2320 merged 2026-07-11 |
-| 0091-g6-1 | DONE | 💰 |  | #2705 | .block-ready | PR #2705 merged 2026-07-19 |
-| 0091-g7-1 | DONE | 💰 |  | #3068 | .block-ready | PR #3068 merged 2026-07-21 |
-| 0091-g9-h6 | DONE | 💰 |  | #2711 | .block-ready | PR #2711 merged 2026-07-19 |
-| 0243-d1-3-new-vendor-drawer-parity-fields | DONE |  |  | #2822 | .block-ready | PR #2822 merged 2026-07-20 |
 | 0243-d4-1-samsara-webhook-driver-pairing-equip | DONE | 💰 |  |  | .block-ready | all 3 file(s) on main |
 | 0243-g5-4-n-plus-1-report-loops-select-star | DONE | 💰 |  |  | .block-ready | all 4 file(s) on main |
-| 0243-g8-4-a11y-input-labels | DONE | 💰 |  | #2328 | .block-ready | PR #2328 merged 2026-07-11 |
 | 0243-g8-5-accounting-query-errors-wave-b | DONE | 💰 |  | #2699 | .block-ready | PR #2699 merged 2026-07-18 |
 | 0243-g8-5-accounting-query-errors-wave-c | DONE | 💰 |  | #2700 | .block-ready | PR #2700 merged 2026-07-18 |
 | 0243-g8-5-list-error-states | DONE | 💰 |  | #2329 | .block-ready | PR #2329 merged 2026-07-11 |
@@ -610,7 +590,7 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | GAP-82-MEDICAL-CARD-TRACKING | DONE |  |  |  | .block-ready | all 11 file(s) on main |
 | gap-83-eld-audit-trail | DONE |  |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-83-ELD-AUDIT-VIEWER | DONE |  |  |  | .block-ready | all 13 file(s) on main |
-| GAP-84-DOT-INSPECTION-GAP-CLOSE | DONE |  |  | #649 | .block-ready | PR #649 merged 2026-06-07 |
+| GAP-84-DOT-INSPECTION-GAP-CLOSE | DONE |  |  |  | .block-ready | all 4 file(s) on main |
 | GAP-85-PERMIT-TOLL-TRACKING | DONE |  |  | #655 | .block-ready | PR #655 merged 2026-06-07 |
 | gap-85-permits-toll-tags | DONE |  |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-86-INSURANCE-BILL-CREATOR | DONE |  |  | #687 | .block-ready | PR #687 merged 2026-06-07 |
@@ -626,7 +606,7 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | GAP-DOUBLE-ENTRY-DB-ENFORCEMENT | DONE |  |  | #708 | .block-ready | PR #708 merged 2026-06-07 |
 | GAP-E-PLANNER-TASKS-ROUTES | DONE |  |  | #885 | .block-ready | PR #885 merged 2026-06-12 |
 | GAP-IDEMP-KEYS | DONE |  |  | #737 | .block-ready | PR #737 merged 2026-06-08 |
-| GAP-PREMERGE-GATES-EXPAND | DONE |  |  | #651 | .block-ready | PR #651 merged 2026-06-07 |
+| GAP-PREMERGE-GATES-EXPAND | DONE |  |  |  | .block-ready | all 3 file(s) on main |
 | GLOBAL-SORT-RULE | DONE |  |  | #723 | .block-ready | PR #723 merged 2026-06-08 |
 | h-02-qbo-sync-stale-no-action | DONE | 💰 |  | #2674 | .block-ready | PR #2674 merged 2026-07-17 |
 | home-7-qbo-vendor-count-single-source | DONE | 💰 |  | #1722 | .block-ready | [verified 2026-07-12] agent: fixed PR #1668 (DefaultHome.tsx:168, OwnerHome.tsx:181) |
@@ -757,7 +737,6 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | SKILL-LINKAGE-permanent-autoload | DONE | 💰 |  | #2322 | .block-ready | PR #2322 merged 2026-07-11 |
 | SMOKE-TOKEN-AUTH | DONE |  |  | #860 | .block-ready | PR #860 merged 2026-06-10 |
 | STMT-1-balance-sheet-cash-flow | DONE | 💰 | T2 |  | program | [verified 2026-07-03] balance-sheet + cash-flow routes live read-only |
-| STRUCTURAL-MANIFEST-SPLIT | DONE |  |  | #650 | .block-ready | PR #650 merged 2026-06-07 |
 | SWEEP-FIX-17-27 | DONE |  |  | #1798 | .block-ready | PR #1798 merged 2026-07-02 |
 | systemic-pattern-column-drift-guard | DONE |  |  | #2839 | .block-ready | PR #2839 merged 2026-07-20 |
 | systemic-pattern-mandatory-error-states-dispatch-alerts | DONE |  |  | #2846 | .block-ready | PR #2846 merged 2026-07-20 |
@@ -831,9 +810,11 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | W4B-BROKER-AUTO-UPDATE | DONE | 💰 |  | #881 | .block-ready | PR #881 merged 2026-06-11 |
 | W5-TIME-UTILIZATION | DONE | 💰 |  | #883 | .block-ready | PR #883 merged 2026-06-11 |
 | WORKORDER-branch-rebuild-linear-URGENT | DONE |  |  |  | program | all 1 named artifact(s) on main |
+| 0007-no-silent-noop-posting | AUDIT-NOTE | 💰 |  | #2319 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
 | 0007-pattern-1-unmounted-backend | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0007-pattern-2-column-drift-500s | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0007-pattern-5-split-brain-engines | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
+| 0007-pattern-8-reverse-drill-through | AUDIT-NOTE | 💰 |  | #2725 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
 | 0007-pattern-9-fake-persist-evidence-loss | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0008-b-canonical-deduction-store | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0008-d-abandonment-pay-first-then-escr_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -846,6 +827,7 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0010-f3-rls-missing-force | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0033-verify-fk-integrity-guard | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0091-b1-3-bill-unit-allocation-delete-not-void_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
+| 0091-c1-1-settlement-engine-canonical | AUDIT-NOTE | 💰 |  | #2320 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
 | 0091-c1-1-two-settlement-engines_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0091-d1-2 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0091-e1-4 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -855,10 +837,13 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0091-g10-h3 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0091-g11-2 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0091-g11-5 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
+| 0091-g6-1 | AUDIT-NOTE | 💰 |  | #2705 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
+| 0091-g7-1 | AUDIT-NOTE | 💰 |  | #3068 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
 | 0091-g7-1_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0091-g9-h1 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0091-g9-h4 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0091-g9-h5 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
+| 0091-g9-h6 | AUDIT-NOTE | 💰 |  | #2711 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
 | 0091-h2-3 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0091-h5-1 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0091-info-b3-3 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -880,6 +865,7 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0243-c2-4-bypass-driver-reads-pk-only | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-d1-2-vendors-split-two-tables_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-d1-3-inline-drawers-drop-captured-fields | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
+| 0243-d1-3-new-vendor-drawer-parity-fields | AUDIT-NOTE |  |  | #2822 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
 | 0243-e1-3-two-scheduled-report-engines | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-e1-4-driver-settlements-four-schemas | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-e1-6-bank-geo-schema-stranded | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -900,6 +886,7 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | 0243-g5-2-qbo-txn-inside-db-transaction | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-g6-2-vendor-create-no-dedup-guard | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-g6-3-customer-dedup-case-sensitive-unscop | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
+| 0243-g8-4-a11y-input-labels | AUDIT-NOTE | 💰 |  | #2328 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
 | 0243-g9-h1-settlement-double-pay-race | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-g9-h4-load-status-advisory-not-enforced | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | 0243-g9-m-eight-workflow-status-defects | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -1225,6 +1212,18 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | PHASE2_CANCEL-TONU_billable-cancellation-no-charge_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | PHASE2_LOAD-INVOICE_no-auto-ar_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | PHASE2_RECON-COLLECTOR_frozen-feed_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
+| phase3-audit62-spc | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit64-capa | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit65-preventive-action | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit66-supplier-quality | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit67-customer-satisfaction-csat-nps | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit68-service-quality-sla | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit69-product-quality | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit70-manufacturing-qc | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit71-laboratory | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit72-calibration | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit73-validation | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit75-document-control | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
 | phase8-audit161-api-audit | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | public-audit-log-partitions-no-rls | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | qbo-parity-resizable-columns-everywhere | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -1238,6 +1237,7 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | safety-dot-fields-and-driver-create-fix | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | safety2-cert-expiry-nav-distinct-route | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | settlement-posting-design-doc-missing_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
+| STRUCTURAL-MANIFEST-SPLIT | AUDIT-NOTE |  |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | STRUCTURAL-MIGRATION-TIMESTAMPS | AUDIT-NOTE |  |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | sweep-fix-17-27-fixture-names-and-pager | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | sweep-g11-1-deduction-consent-template_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
