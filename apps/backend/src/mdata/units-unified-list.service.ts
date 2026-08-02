@@ -1,18 +1,12 @@
 import type { FleetTypeFilter } from "./fleet-type-filter.js";
 import { trailerTypeSqlFilter, truckTypeSqlFilter } from "./fleet-type-filter.js";
+// Demo/phantom hygiene (E1) now lives in ONE place so the roster and the maintenance fleet KPI cannot
+// drift apart again — see fleet-visibility.ts for the live divergence that caused the move.
+import { excludeDemoPhantomSql } from "./fleet-visibility.js";
 
 type PgClient = {
   query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
 };
-
-/**
- * Demo/phantom hygiene (E1): never surface seeded TEST/DEMO rows or the phantom
- * `SAM-*` Samsara dual-write rows in fleet dropdowns or the Fleet roster. Static
- * literal patterns (no user input) so they're safe to inline.
- */
-function excludeDemoPhantomSql(col: string): string {
-  return `(${col} NOT ILIKE 'SAM-%' AND ${col} NOT ILIKE 'TEST%' AND ${col} NOT ILIKE '%DEMO%')`;
-}
 
 export type UnifiedFleetRow = {
   id: string;
