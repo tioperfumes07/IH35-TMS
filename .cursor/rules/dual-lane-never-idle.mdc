@@ -18,6 +18,7 @@ Applies to **coordinator** sessions for IH35-TMS (Lane A + Lane B in parallel).
 
 ## Queue sources (strict order)
 
+0. **GUARD fix board (PRIMARY — 2026-08-02+):** `docs/audit/GUARD-WORKORDERS.md` — top `OPEN` item in **your lane** (Claude Coder = financial/migrations/posting; Cursor = frontend/UI/measurability/docs/non-financial backend). Read after `docs/audit/AUDIT-COVERAGE-LIVE.md`. Do not idle while OPEN items remain in your lane.
 1. **Phase 2 (Wave 11+):** `/Users/jorgemunoz/Downloads/final/00-MASTER-DISPATCH-INDEX-PHASE-2-FINAL-21-BLOCKS-mvp-100pct.txt` + `block-*.txt`
 2. **Phase 1 (MVP closure):** `/Users/jorgemunoz/Downloads/20 blocks/00-MASTER-DISPATCH-INDEX-FINAL-20-BLOCKS-mvp-closure.txt` + `block-*.txt`
 3. **AUDIT-FIX (17 blocks · PASS 1–6 consolidated · POST-PASS4):** `/Users/jorgemunoz/Downloads/JORGE-IH35TMS-POST-PASS4-PACKAGE-2026-06-05/dispatch-indices/00-MASTER-DISPATCH-INDEX-AUDIT-FIX-17-BLOCKS-FINAL.txt` + `block-AUDIT-FIX-*.txt` (blocks 1–15 under `audit pass 1 and 2/`, `pass-3/`, `PASS-4/`; blocks 16–17 in package `blocks-audit-fix/`)

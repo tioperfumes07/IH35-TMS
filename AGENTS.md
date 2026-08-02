@@ -10,6 +10,9 @@
 > a new dated row and marking the old one `SUPERSEDED`. A row with no `Evidence` is not a finding.
 > Rows marked `Owner-gate? = YES` need an owner DECISION — a coder never self-answers one.
 
+> **★★★ THEN READ [docs/audit/GUARD-WORKORDERS.md](docs/audit/GUARD-WORKORDERS.md)** — the GUARD fix board: your lane's OPEN items, the fix
+> requirement + standard for each, and GUARD status. Pull the top OPEN item in your lane; do not idle.
+
 > **Consolidated index:** docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md — the complete 24-rule + 18-key-gate map (source .cursor/rule wins on conflict).
 
 > **★ DEFINITION OF DONE (owner-agreed, BINDING — read before you call anything done):** [docs/specs/DEFINITION-OF-DONE.md](docs/specs/DEFINITION-OF-DONE.md) — five DONE layers (DOD-A…E) + evidence. **CI-green is the floor, not the verdict.**
@@ -44,9 +47,14 @@ Do **not** edit `scripts/verify-steps/CLAIMED-NUMBERS.json` in feature PRs. The 
 
 Cursor rule: `.cursor/rules/dual-lane-never-idle.mdc` (`alwaysApply: true`)
 
-Hook: `.cursor/hooks.json` → on **subagentStop**, injects follow-up to dispatch the next **abb** block per lane.
+Hook: `.cursor/hooks.json` → on **subagentStop**, injects follow-up to dispatch the top **OPEN** item in that
+coder's lane from [docs/audit/GUARD-WORKORDERS.md](docs/audit/GUARD-WORKORDERS.md)
+(Claude Coder = financial/migrations/posting; Cursor = frontend/UI/measurability). Fall back to abb only when
+the GUARD board has no OPEN item for that lane.
 
-**Queue:** `/Users/jorgemunoz/Downloads/abb/00-TIER-2-3-DISPATCH-INDEX.txt`
+**Primary queue:** `docs/audit/GUARD-WORKORDERS.md` (GUARD-maintained fix board)
+
+**Fallback queue:** `/Users/jorgemunoz/Downloads/abb/00-TIER-2-3-DISPATCH-INDEX.txt`
 
 **Done:** squash merge SHA on `origin/main`, branch deleted, CI green.
 
