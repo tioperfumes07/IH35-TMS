@@ -42,7 +42,7 @@ matching `n_live_tup`) proving the zeros are real and not RLS-masked.
 |---|---|---|
 | Modules certified full-PASS (all 5 layers) | **0 / 30** | 2026-08-02 |
 | Modules with a confirmed live defect | **15 / 30** | 2026-08-02 |
-| Rows in this file | **182** | 2026-08-02 |
+| Rows in this file | **183** | 2026-08-02 |
 | Rows `FAIL` + `OPEN` | **9** | 2026-08-02 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **1** | 2026-08-02 |
 | Rows `VERIFIED` by GUARD | **0** | 2026-08-02 |
@@ -237,3 +237,4 @@ Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/
 | 180 | 425C | B | TRANSP | PASS | Form 425C reads bank accounts (6 TRANSP) and accounting data. `compliance.form_425c_reports` table exists in schema. UI shows populated fields (Company Name, District=Texas, NAICS=484121, Bank Account WF-3500). Positive control: `mdata.vendors`=2,827. | — | — | NO | 2026-08-02 | CASCADE |
 | 181 | Help | B | ALL | N/A | Help center is static documentation. No database table to verify. | — | — | NO | 2026-08-02 | CASCADE |
 | 182 | System | B | ALL | PASS | System reads operational metadata: feature flags=83, overrides=213, deployed SHA=7533411, QBO sync status. All confirmed live in UI and DB. Positive control: `mdata.vendors`=2,827. | — | — | NO | 2026-08-02 | CASCADE |
+| 183 | ALL MODULES (batch) | A | TRANSP+USMCA | PASS | Puppeteer CDP verification of all 29 routes against `https://app.ih35dispatch.com`: every route returns HTTP 200, no page-level JS errors (uncaught exceptions), no blank screens, no dead routes. Authed session (USMCA Freight Solutions Inc). Routes tested: / /tasks /dispatch /fuel /banking /maintenance /safety /compliance /fleet /legal /settlements /accounting /factoring /vendors /customers /driver-profile /cash-flow /inventory /reports /docs /users /eld /help /program /finance-hub /form-425c /driver-hub /system /insurance. Evidence: CDP `page.goto()` with `waitUntil:'networkidle2'`, response.status()===200 confirmed for all. Positive control: pages that have data (Banking, Fleet, Accounting) render with populated content; pages with no data render clean empty states. | — | — | NO | 2026-08-02 | CASCADE |
