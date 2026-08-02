@@ -5,7 +5,7 @@
  * Locks:
  * - IdvrPage wires ParityTable onRowClick → /safety/idvr/:id
  * - IdvrDetailPage mounts getSafetyDvirDetail
- * - manifest registers /safety/idvr/:id (absolute-only; SAF-F27 dropped the relative twin)
+ * - manifest registers idvr/:id as a relative child under SafetyLayout (SAF-F27)
  *
  * Usage:
  *   node scripts/verify-idvr-row-clickable.mjs
@@ -46,10 +46,10 @@ function run() {
   assertContains(detail, "idvr-detail-page", DETAIL);
 
   assertContains(manifest, "IdvrDetailPage", MANIFEST);
-  assertContains(manifest, 'path="/safety/idvr/:id"', MANIFEST);
-  // SAF-F27: relative twin path="idvr/:id" is forbidden alongside the absolute mount.
-  if (manifest.includes('path="idvr/:id"')) {
-    throw new Error(`${LABEL}: relative path="idvr/:id" must not coexist with /safety/idvr/:id (SAF-F27)`);
+  assertContains(manifest, 'path="idvr/:id"', MANIFEST);
+  // SAF-F27: absolute twin path="/safety/idvr/:id" is forbidden alongside the relative mount.
+  if (manifest.includes('path="/safety/idvr/:id"')) {
+    throw new Error(`${LABEL}: absolute path="/safety/idvr/:id" must not coexist with idvr/:id (SAF-F27)`);
   }
 
   console.log(`${LABEL}: PASS`);

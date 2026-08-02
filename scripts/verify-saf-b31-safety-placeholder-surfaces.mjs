@@ -89,7 +89,7 @@ const SURFACES = [
 ];
 
 /** Routes that must stay registered at exactly these paths (ADDITIVE-ONLY, §7). */
-const LOCKED_ROUTES = ['path="/safety/audit-425c"', 'path="/safety/reports"'];
+const LOCKED_ROUTES = ['path="audit-425c"', 'path="reports"'];
 const LOCKED_TAB_ROUTES = ['route: "/safety/audit-425c"', 'route: "/safety/reports"'];
 
 /**
@@ -278,8 +278,8 @@ if (process.argv.includes("--selftest")) {
 
   // D. FAIL — route de-registered (additive-only).
   copyReal(FILES.reportsPage);
-  mk(FILES.manifest, fs.readFileSync(path.join(ROOT, FILES.manifest), "utf8").replace('path="/safety/reports"', 'path="/safety/reports-archived"'));
-  if (!run(tmp).some((f) => f.includes("ADDITIVE-ONLY"))) throw new Error("expected FAIL when /safety/reports is de-registered");
+  mk(FILES.manifest, fs.readFileSync(path.join(ROOT, FILES.manifest), "utf8").replace('path="reports"', 'path="reports-archived"'));
+  if (!run(tmp).some((f) => f.includes("ADDITIVE-ONLY"))) throw new Error("expected FAIL when reports route is de-registered");
 
   // E. FAIL — backend reader removed out from under the page.
   copyReal(FILES.manifest);

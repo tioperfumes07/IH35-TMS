@@ -1597,28 +1597,29 @@ export const ROUTES = React.Children.toArray(
               Claims" tab (Safety Events). Now lands on a dedicated aggregate-KPI home page. */}
           <Route index element={<Navigate to="/safety/home" replace />} />
           <Route path="home" element={<SafetyHomeTab />} />
-          {/* SAF-F27: absolute /safety/* mounts kept (locked-ui-surface); relative twins
-              that resolve to the same URL removed (React Router first-match dead dupes). */}
-          <Route path="/safety/driver-files" element={<DriverFilesTab />} />
+          {/* SAF-F27: relative children only under SafetyLayout (V6.4 canonical pattern).
+              Absolute /safety/* path= strings caused dual-registration drift with sibling
+              relative routes; URLs unchanged (/safety/home, /safety/idvr, …). */}
+          <Route path="driver-files" element={<DriverFilesTab />} />
           <Route path="drug-alcohol" element={<DrugAlcoholTab />} />
           <Route path="safety-meetings" element={<SafetyMeetingsTab />} />
-          <Route path="/safety/training/programs" element={<TrainingProgramsTab />} />
-          <Route path="/safety/training/records" element={<TrainingRecordsTab />} />
+          <Route path="training/programs" element={<TrainingProgramsTab />} />
+          <Route path="training/records" element={<TrainingRecordsTab />} />
           <Route path="hos" element={<HoursOfServiceTab />} />
-          <Route path="/safety/eld/audit-trail" element={<EldAuditTrailViewer />} />
-          <Route path="/safety/hos/exceptions" element={<HosExceptionsPage />} />
+          <Route path="eld/audit-trail" element={<EldAuditTrailViewer />} />
+          <Route path="hos/exceptions" element={<HosExceptionsPage />} />
           <Route path="hos-violations" element={<HOSViolationsTab />} />
-          <Route path="/safety/idvr" element={<IDVRTab />} />
-          <Route path="/safety/idvr/:id" element={<IdvrDetailPage />} />
+          <Route path="idvr" element={<IDVRTab />} />
+          <Route path="idvr/:id" element={<IdvrDetailPage />} />
           <Route path="dot-inspections" element={<DOTInspectionsTab />} />
           <Route path="driver-scoring" element={<DriverScoringTab />} />
           <Route path="csa-score" element={<CSAScoreTab />} />
           <Route path="dot-compliance" element={<DOTComplianceTab />} />
           <Route path="cert-expiry" element={<ExpiryDashboard />} />
-          <Route path="/safety/safety-events" element={<SafetyEventsTab />} />
+          <Route path="safety-events" element={<SafetyEventsTab />} />
           <Route path="accidents" element={<AccidentsIncidentsTab />} />
           <Route path="damage-reports" element={<DamageReportsTab />} />
-          <Route path="/safety/trailer-interchanges" element={<TrailerInterchangesTab />} />
+          <Route path="trailer-interchanges" element={<TrailerInterchangesTab />} />
           <Route path="cargo-claims" element={<CargoClaimsTab />} />
           <Route path="internal-fines" element={<InternalFinesTab />} />
           <Route path="external-fines" element={<ExternalFinesTab />} />
@@ -1627,18 +1628,18 @@ export const ROUTES = React.Children.toArray(
           <Route path="geofence-alerts" element={<GeofenceBreachesTab />} />
           <Route path="insurance" element={<InsuranceTab />} />
           <Route path="insurance/*" element={<InsuranceTab />} />
-          <Route path="/safety/permits" element={<PermitsTab />} />
-          <Route path="/safety/integrity-reports" element={<IntegrityReportsTab />} />
-          <Route path="/safety/position-history" element={<PositionHistoryPage />} />
-          <Route path="/safety/integrity-alerts" element={<IntegrityAlertsTab />} />
-          <Route path="/safety/csa-mitigation" element={<CSAMitigationQueuePage />} />
-          <Route path="/safety/csa-fmcsa-trend" element={<CSAFmcsaTrendPage />} />
-          <Route path="/safety/anomaly-alerts" element={<AnomalyAlertsPage />} />
-          <Route path="/safety/audit-425c" element={<Audit425cPage />} />
-          <Route path="/safety/photo-comparison" element={<PhotoComparisonPage />} />
-          <Route path="/safety/photo-comparison/:sessionUuid" element={<SessionDetailPage />} />
-          <Route path="/safety/reports" element={<SafetyReportsPage />} />
-          <Route path="/safety/driver-profiles/:driverId" element={<DriverSafetyProfileTab />} />
+          <Route path="permits" element={<PermitsTab />} />
+          <Route path="integrity-reports" element={<IntegrityReportsTab />} />
+          <Route path="position-history" element={<PositionHistoryPage />} />
+          <Route path="integrity-alerts" element={<IntegrityAlertsTab />} />
+          <Route path="csa-mitigation" element={<CSAMitigationQueuePage />} />
+          <Route path="csa-fmcsa-trend" element={<CSAFmcsaTrendPage />} />
+          <Route path="anomaly-alerts" element={<AnomalyAlertsPage />} />
+          <Route path="audit-425c" element={<Audit425cPage />} />
+          <Route path="photo-comparison" element={<PhotoComparisonPage />} />
+          <Route path="photo-comparison/:sessionUuid" element={<SessionDetailPage />} />
+          <Route path="reports" element={<SafetyReportsPage />} />
+          <Route path="driver-profiles/:driverId" element={<DriverSafetyProfileTab />} />
           {/* Block K (Driver Scheduler): canonical paths under /safety/* — see IH35_UNIFIED_BLUEPRINT_ADDITIONS.md §14 */}
           <Route path="driver-scheduler" element={<DriverSchedulerGridPage />} />
           <Route path="scheduler/pending-requests" element={<DriverSchedulerRequestInboxPage />} />
@@ -1652,11 +1653,11 @@ export const ROUTES = React.Children.toArray(
               Active-path law (2026-07-21): group bookmark URLs must Navigate to the first Live
               V6.4 tab in that group — never ComingSoon while real tabs exist (ARCHIVE-not-DELETE
               on legacy shells; stubs are not an allowed active mount). */}
-          <Route path="/safety/hours-of-service" element={<Navigate to="/safety/hos" replace />} />
-          <Route path="/safety/inspections" element={<Navigate to="/safety/dot-inspections" replace />} />
-          <Route path="/safety/fines-and-discipline" element={<Navigate to="/safety/internal-fines" replace />} />
-          <Route path="/safety/driver-financial-safety" element={<Navigate to="/safety/escrow-record" replace />} />
-          <Route path="/safety/workforce-planning" element={<Navigate to="/safety/driver-scheduler" replace />} />
+          <Route path="hours-of-service" element={<Navigate to="/safety/hos" replace />} />
+          <Route path="inspections" element={<Navigate to="/safety/dot-inspections" replace />} />
+          <Route path="fines-and-discipline" element={<Navigate to="/safety/internal-fines" replace />} />
+          <Route path="driver-financial-safety" element={<Navigate to="/safety/escrow-record" replace />} />
+          <Route path="workforce-planning" element={<Navigate to="/safety/driver-scheduler" replace />} />
         </Route>
         <Route
           path="/liabilities"

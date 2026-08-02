@@ -73,11 +73,11 @@ function main() {
   if (!manifest.includes('path="safety-meetings"') || !manifest.includes("<SafetyMeetingsTab")) {
     failures.push("manifest must route safety-meetings to SafetyMeetingsTab");
   }
-  if (!manifest.includes('path="/safety/training/programs"') || !manifest.includes("<TrainingProgramsTab")) {
-    failures.push("manifest must route /safety/training/programs to TrainingProgramsTab");
+  if (!manifest.includes('path="training/programs"') || !manifest.includes("<TrainingProgramsTab")) {
+    failures.push("manifest must route training/programs to TrainingProgramsTab under /safety");
   }
-  if (!manifest.includes('path="/safety/training/records"') || !manifest.includes("<TrainingRecordsTab")) {
-    failures.push("manifest must route /safety/training/records to TrainingRecordsTab");
+  if (!manifest.includes('path="training/records"') || !manifest.includes("<TrainingRecordsTab")) {
+    failures.push("manifest must route training/records to TrainingRecordsTab under /safety");
   }
 
   if (!meetingsTab.includes("SafetyMeetingsPage")) {
