@@ -7,9 +7,9 @@
 ## Counts
 - **PENDING**: 14
 - **PENDING (GATED)**: 27
-- **NEEDS-VERIFY**: 45
-- **DONE**: 671
-- **AUDIT-NOTE**: 446
+- **NEEDS-VERIFY**: 44
+- **DONE**: 658
+- **AUDIT-NOTE**: 460
 
 ## Universe — why 1203 blocks (the "456 vs 294 .block-ready" gap, explained)
 The reconciler spans **5 sources**, de-duped by **unique block_id** and **excluding retired duplicates** — the block count is the union, **not** the raw `.block-ready` file count.
@@ -131,9 +131,8 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | h-05-home-kpi-no-date-range-toggle | NEEDS-VERIFY | 💰 |  | #3963 | .block-ready | PR #3963 title-match only, unverified |
 | home-2-open-loads-inflight-late-consistency-un | NEEDS-VERIFY | 💰 |  | #2435 | .block-ready | PR #2435 title-match only, unverified |
 | maint2-open-wos-kpi-table-consistency | NEEDS-VERIFY | 💰 |  | #2645 | .block-ready | PR #2645 title-match only, unverified |
-| PHASE3_INVOICE-FK_unenforced-linkages_DISPATCH | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | [verified 2026-07-12] agent: not dispositioned in #2385; needs live FK check |
-| PHASE3_TRANSFER-MIGRATION-DRIFT_held-but-live_VERIFY | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | [verified 2026-07-12] agent: not dispositioned in #2385; needs live migration-drift check |
-| phase3-audit57-process-audit-docs-workflow | NEEDS-VERIFY | 💰 |  | #2385 | .block-ready | PR #2385 title-match only, unverified |
+| PHASE3_INVOICE-FK_unenforced-linkages_DISPATCH | NEEDS-VERIFY | 💰 |  | #4008 | .block-ready | [verified 2026-07-12] agent: not dispositioned in #2385; needs live FK check |
+| PHASE3_TRANSFER-MIGRATION-DRIFT_held-but-live_VERIFY | NEEDS-VERIFY | 💰 |  | #4008 | .block-ready | [verified 2026-07-12] agent: not dispositioned in #2385; needs live migration-drift check |
 | product-service-categories-rename-and-creator | NEEDS-VERIFY | 💰 |  |  | .block-ready | [verified 2026-07-12] agent: parent-category creator not built (QboCategoriesListPage.tsx) |
 | RECON-01 | NEEDS-VERIFY | 💰 |  | #1831 | .block-ready | PR #1831 title-match only, unverified |
 | s-07-log-event-missing-dot-fields | NEEDS-VERIFY | 💰 |  | #2650 | .block-ready | PR #2650 title-match only, unverified |
@@ -484,29 +483,16 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | G2-verify-block-acceptance | DONE | 💰 |  | #2317 | .block-ready | PR #2317 merged 2026-07-11 |
 | G3-verify-guard-wired | DONE | 💰 |  | #2318 | .block-ready | PR #2318 merged 2026-07-11 |
 | G4-verify-canonical-table-writes | DONE | 💰 |  | #2321 | .block-ready | PR #2321 merged 2026-07-11 |
-| GAP-10-DELTA-CANCELLATIONS-REPORT | DONE |  |  | #663 | .block-ready | PR #663 merged 2026-06-07 |
-| GAP-11-DELTA-UPLOAD-EXPENSE | DONE |  |  | #666 | .block-ready | PR #666 merged 2026-06-07 |
-| GAP-14-PRE-DISPATCH-VALIDATION | DONE |  |  | #1150 | .block-ready | all 6 file(s) on main |
 | gap-14-validation-pre-dispatch | DONE |  |  |  | gap-spec | all 6 named artifact(s) on main |
-| GAP-18-DRIVER-COMM-TIMELINE | DONE | 💰 |  | #682 | .block-ready | PR #682 merged 2026-06-07 |
-| GAP-19-DETENTION-INVOICE | DONE |  |  | #686 | .block-ready | PR #686 merged 2026-06-07 |
 | gap-20-recurring-bills | DONE |  |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-23 | DONE |  |  | #662 | .block-ready | [verified 2026-07-12] block own verify-*.mjs guard passes on main (built+wired) |
 | gap-23-samsara-cache-tiers | DONE |  |  |  | gap-spec | all 2 named artifact(s) on main |
-| GAP-24-FRESHNESS-INDICATOR | DONE |  |  | #685 | .block-ready | PR #685 merged 2026-06-07 |
-| GAP-25 | DONE |  |  | #707 | .block-ready | PR #707 merged 2026-06-08 |
 | gap-25-active-driver-set | DONE |  |  |  | gap-spec | all 3 named artifact(s) on main |
-| GAP-26 | DONE | 💰 |  | #722 | .block-ready | PR #722 merged 2026-06-08 |
 | gap-26-border-crossings | DONE |  |  |  | gap-spec | all 2 named artifact(s) on main |
-| GAP-27 | DONE | 💰 |  | #724 | .block-ready | PR #724 merged 2026-06-08 |
 | gap-27-geofence-reconciliation | DONE |  |  |  | gap-spec | all 2 named artifact(s) on main |
-| GAP-28 | DONE | 💰 |  | #3987 | .block-ready | all 9 file(s) on main |
 | gap-28-layover-detection | DONE |  |  |  | gap-spec | all 1 named artifact(s) on main |
-| GAP-29 | DONE | 💰 |  | #729 | .block-ready | all 7 file(s) on main |
 | gap-29-booking-gap-analytics | DONE |  |  |  | gap-spec | all 1 named artifact(s) on main |
-| GAP-30 | DONE |  |  | #665 | .block-ready | PR #665 merged 2026-06-07 |
 | gap-30-late-arrival-analytics | DONE |  |  |  | gap-spec | all 1 named artifact(s) on main |
-| GAP-31 | DONE |  |  | #761 | .block-ready | PR #761 merged 2026-06-08 |
 | gap-31-multi-stop-extra-rates | DONE |  |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-32 | DONE |  |  | #760 | .block-ready | PR #760 merged 2026-06-08 |
 | gap-32-customer-free-time-detention | DONE |  |  |  | gap-spec | all 1 named artifact(s) on main |
@@ -570,7 +556,7 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | gap-65-owner-todays-attention | DONE |  |  |  | gap-spec | all 10 named artifact(s) on main |
 | GAP-66-DISPATCHER-HOME | DONE |  |  |  | .block-ready | all 13 file(s) on main |
 | gap-66-dispatcher-home-view | DONE |  |  |  | gap-spec | all 4 named artifact(s) on main |
-| GAP-67-ACCOUNTING-HOME | DONE |  |  | #652 | .block-ready | PR #652 merged 2026-06-07 |
+| GAP-67-ACCOUNTING-HOME | DONE |  |  |  | .block-ready | all 12 file(s) on main |
 | gap-67-accounting-home-view | DONE |  |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-68-SAFETY-OFFICER-HOME | DONE |  |  | #653 | .block-ready | PR #653 merged 2026-06-07 |
 | gap-68-safety-officer-home-view | DONE |  |  |  | gap-spec | all 7 named artifact(s) on main |
@@ -1161,7 +1147,20 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | flow9-safety-event-auto-notifications | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | flow9-safety-event-no-auto-status-escrow-notif | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | FOR-CURSOR-2-README-ACCOUNTING-BANKING | AUDIT-NOTE |  |  |  | program | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (class-sweep re |
+| GAP-10-DELTA-CANCELLATIONS-REPORT | AUDIT-NOTE |  |  | #663 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
+| GAP-11-DELTA-UPLOAD-EXPENSE | AUDIT-NOTE |  |  | #666 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
+| GAP-14-PRE-DISPATCH-VALIDATION | AUDIT-NOTE |  |  | #1150 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
+| GAP-18-DRIVER-COMM-TIMELINE | AUDIT-NOTE | 💰 |  | #682 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
+| GAP-19-DETENTION-INVOICE | AUDIT-NOTE |  |  | #686 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
 | GAP-20 | AUDIT-NOTE |  |  | #704 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status = DONE; not in active |
+| GAP-24-FRESHNESS-INDICATOR | AUDIT-NOTE |  |  | #685 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
+| GAP-25 | AUDIT-NOTE |  |  | #707 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
+| GAP-26 | AUDIT-NOTE | 💰 |  | #722 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
+| GAP-27 | AUDIT-NOTE | 💰 |  | #724 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
+| GAP-28 | AUDIT-NOTE | 💰 |  | #3987 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
+| GAP-29 | AUDIT-NOTE | 💰 |  | #729 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
+| GAP-30 | AUDIT-NOTE |  |  | #665 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
+| GAP-31 | AUDIT-NOTE |  |  | #761 | .block-ready | [verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status |
 | GAP-71 | AUDIT-NOTE |  |  | #784 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status = DONE; not in active |
 | GAP-72 | AUDIT-NOTE |  |  | #782 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status = DONE; not in active |
 | GAP-76 | AUDIT-NOTE |  |  | #844 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status = DONE; not in active |
@@ -1207,23 +1206,24 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | phase12-audit210-energy | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | phase13-audit220-manufacturing-duplicate | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry audit block, no IH35 s |
 | phase13-audit228-energy-duplicate | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry audit block, no IH35 s |
-| phase14-audit-241 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
+| phase14-audit-241 | AUDIT-NOTE | 💰 |  |  | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry audit block, no IH35 s |
 | PHASE2_ACCESSORIAL-REVENUE_divergent-engine_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | PHASE2_CANCEL-TONU_billable-cancellation-no-charge_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | PHASE2_LOAD-INVOICE_no-auto-ar_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | PHASE2_RECON-COLLECTOR_frozen-feed_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
-| phase3-audit62-spc | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
-| phase3-audit64-capa | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
-| phase3-audit65-preventive-action | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
-| phase3-audit66-supplier-quality | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
-| phase3-audit67-customer-satisfaction-csat-nps | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
-| phase3-audit68-service-quality-sla | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
-| phase3-audit69-product-quality | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
-| phase3-audit70-manufacturing-qc | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
-| phase3-audit71-laboratory | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
-| phase3-audit72-calibration | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
-| phase3-audit73-validation | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
-| phase3-audit75-document-control | AUDIT-NOTE | 💰 |  | #2385 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit57-process-audit-docs-workflow | AUDIT-NOTE | 💰 |  | #4008 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic process/docs audit block, no IH |
+| phase3-audit62-spc | AUDIT-NOTE | 💰 |  | #4008 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit64-capa | AUDIT-NOTE | 💰 |  | #4008 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit65-preventive-action | AUDIT-NOTE | 💰 |  | #4008 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit66-supplier-quality | AUDIT-NOTE | 💰 |  | #4008 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit67-customer-satisfaction-csat-nps | AUDIT-NOTE | 💰 |  | #4008 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit68-service-quality-sla | AUDIT-NOTE | 💰 |  | #4008 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit69-product-quality | AUDIT-NOTE | 💰 |  | #4008 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit70-manufacturing-qc | AUDIT-NOTE | 💰 |  | #4008 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit71-laboratory | AUDIT-NOTE | 💰 |  | #4008 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit72-calibration | AUDIT-NOTE | 💰 |  | #4008 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit73-validation | AUDIT-NOTE | 💰 |  | #4008 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
+| phase3-audit75-document-control | AUDIT-NOTE | 💰 |  | #4008 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n |
 | phase8-audit161-api-audit | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | public-audit-log-partitions-no-rls | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | qbo-parity-resizable-columns-everywhere | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
