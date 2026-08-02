@@ -1198,6 +1198,7 @@
       "qbo_push_attempts",
       "qbo_sync_token",
       "qbo_updated_at",
+      "raw_payload",
       "sync_status",
       "updated_at"
     ],
@@ -1223,6 +1224,7 @@
       "qbo_push_attempts",
       "qbo_sync_token",
       "qbo_updated_at",
+      "raw_payload",
       "sync_status",
       "updated_at"
     ],
@@ -1267,6 +1269,7 @@
       "qbo_push_attempts",
       "qbo_sync_token",
       "qbo_updated_at",
+      "raw_payload",
       "sync_status",
       "updated_at"
     ],
@@ -7410,6 +7413,7 @@
       "qbo_push_attempts",
       "qbo_sync_token",
       "qbo_updated_at",
+      "raw_payload",
       "sync_status",
       "updated_at"
     ],
@@ -7536,6 +7540,7 @@
       "qbo_id",
       "qbo_sync_token",
       "qbo_updated_at",
+      "raw_payload",
       "updated_at"
     ],
     "mdata.qbo_customers": [
@@ -7560,6 +7565,7 @@
       "qbo_push_attempts",
       "qbo_sync_token",
       "qbo_updated_at",
+      "raw_payload",
       "sync_status",
       "updated_at"
     ],
@@ -7596,6 +7602,7 @@
       "qbo_id",
       "qbo_sync_token",
       "qbo_updated_at",
+      "raw_payload",
       "sku",
       "unit_price_cents",
       "updated_at"
@@ -7690,6 +7697,7 @@
       "qbo_push_attempts",
       "qbo_sync_token",
       "qbo_updated_at",
+      "raw_payload",
       "sync_status",
       "tax_id",
       "terms",

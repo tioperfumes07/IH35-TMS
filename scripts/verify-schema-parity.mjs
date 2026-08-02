@@ -228,9 +228,27 @@ export function parseMigrations(migrationsDir) {
       /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?([A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*)\b/gi;
     const addColFragRe =
       /\bADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?"?([A-Za-z_][A-Za-z0-9_]*)"?\s/gi;
+    const dropColFragRe =
+      /\bDROP\s+COLUMN\s+(?:IF\s+EXISTS\s+)?"?([A-Za-z_][A-Za-z0-9_]*)"?/gi;
     // Statement boundary: next top-level keyword that starts a new statement.
     const stmtBoundaryRe = /\b(?:ALTER|CREATE|DROP|INSERT|UPDATE|DELETE|GRANT|REVOKE|DO|BEGIN|COMMIT|ROLLBACK|END)\b/gi;
 
+    // ACCT-F83 — ADD and DROP are collected as ORDERED EVENTS and applied in source order below.
+    //
+    // They used to run as two separate passes: every ADD in the file, then every DROP. That makes a
+    // legitimate drop-and-re-add lose the column, because the later DROP pass deletes what the earlier
+    // ADD pass created — the reverse of what Postgres does. Migration 0213 does exactly that on the
+    // three QBO mirrors:
+    //     ALTER TABLE mdata.qbo_vendors DROP COLUMN IF EXISTS raw_payload, DROP COLUMN IF EXISTS last_seen_at;
+    //     ALTER TABLE mdata.qbo_vendors ADD  COLUMN IF NOT EXISTS raw_payload jsonb, ADD COLUMN IF NOT EXISTS last_seen_at timestamptz;
+    // so prod HAS both columns (verified NOT NULL on mdata.qbo_vendors / qbo_customers / qbo_accounts)
+    // while the baseline had neither — except it DID have last_seen_at, which exposed the second bug:
+    // the old DROP regex anchored on `ALTER TABLE <rel> DROP COLUMN <col>` and therefore matched only
+    // the FIRST column of a multi-column DROP. raw_payload (first) was deleted; last_seen_at (second)
+    // was never seen. Fixing only the multi-drop miss would have made this WORSE — it would have
+    // dropped both. Ordering is the real fix; the windowed scan below then handles multi-column
+    // correctly in both directions.
+    const columnEvents = [];
     while ((m = alterTableRe.exec(sql)) !== null) {
       const relation = m[1].toLowerCase();
       const [schemaName] = relation.split(".");
@@ -259,20 +277,29 @@ export function parseMigrations(migrationsDir) {
         const col = cm[1].toLowerCase();
         // Skip constraint keywords
         if (/^(primary|unique|check|constraint|foreign|set|drop|rename|enable|disable)$/i.test(col)) continue;
-        if (!schema.has(relation)) schema.set(relation, new Set());
-        schema.get(relation).add(col);
+        columnEvents.push({ pos: stmtStart + cm.index, kind: "add", relation, col });
+      }
+
+      // Scan the SAME window for DROP COLUMN occurrences, so a multi-column DROP is fully seen.
+      // `COLUMN` is required here: a bare `DROP` in an ALTER is DROP CONSTRAINT / DROP DEFAULT /
+      // DROP NOT NULL, none of which remove a column.
+      dropColFragRe.lastIndex = 0;
+      while ((cm = dropColFragRe.exec(window)) !== null) {
+        const col = cm[1].toLowerCase();
+        if (/^(primary|unique|check|constraint|foreign|set|add|rename|enable|disable|default|not)$/i.test(col)) continue;
+        columnEvents.push({ pos: stmtStart + cm.index, kind: "drop", relation, col });
       }
     }
 
-    // ── ALTER TABLE DROP COLUMN ─────────────────────────────────────────────
-    const dropColRe =
-      /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?([A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*)\s+DROP\s+COLUMN\s+(?:IF\s+EXISTS\s+)?"?([A-Za-z_][A-Za-z0-9_]*)"?/gi;
-    while ((m = dropColRe.exec(sql)) !== null) {
-      const relation = m[1].toLowerCase();
-      const col = m[2].toLowerCase();
-      const [schemaName] = relation.split(".");
-      if (EXCLUDED_SCHEMAS.has(schemaName)) continue;
-      if (schema.has(relation)) schema.get(relation).delete(col);
+    // Apply ADD/DROP in SOURCE ORDER — this is what makes drop-and-re-add behave like Postgres.
+    columnEvents.sort((a, b) => a.pos - b.pos);
+    for (const ev of columnEvents) {
+      if (ev.kind === "add") {
+        if (!schema.has(ev.relation)) schema.set(ev.relation, new Set());
+        schema.get(ev.relation).add(ev.col);
+      } else if (schema.has(ev.relation)) {
+        schema.get(ev.relation).delete(ev.col);
+      }
     }
 
     // ── ALTER TABLE RENAME COLUMN ───────────────────────────────────────────

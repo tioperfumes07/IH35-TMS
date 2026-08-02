@@ -363,8 +363,14 @@ function runGuard() {
   if (found.length) {
     console.error(
       "verify-sql-column-existence FAILED — SQL references column(s) that do NOT exist on the table " +
-        "(prod schema-parity baseline is the contract). Fix the column name, or if this is a verified " +
-        "false positive add its key to scripts/verify-sql-column-existence.allowlist.json with justification:"
+        "(the schema-parity baseline is the contract). Fix the column name.\n" +
+        "  If the column DOES exist in prod, this is a BASELINE defect — fix it AT SOURCE (the DDL parser " +
+        "in scripts/verify-schema-parity.mjs, then regenerate with --update). Do NOT allowlist it: the " +
+        "allowlist is a ratchet of REAL defects and its own contract states every key is a live defect " +
+        "until removed, so filing a verified-correct reference there mislabels working code as broken " +
+        "and hides the baseline drift. (ACCT-F83: this message previously told you to allowlist verified " +
+        "false positives, contradicting that contract; the contract is canonical.)\n" +
+        "  Offending reference(s):"
     );
     for (const v of found) console.error(`  - ${v.file}: ${v.table}.${v.column}  (${v.ctx})`);
     process.exit(1);
