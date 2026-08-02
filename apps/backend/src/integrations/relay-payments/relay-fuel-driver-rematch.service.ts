@@ -6,6 +6,10 @@
  */
 import type { DbClient } from "./db-client.type.js";
 import { resolveMatchedDriverId } from "./relay-fuel-driver-match.js";
+import {
+  rematchRelayFuelLoads,
+  type RelayFuelLoadRematchResult,
+} from "./relay-fuel-load-rematch.service.js";
 
 export type RelayFuelDriverRematchResult = {
   scanned: number;
@@ -13,6 +17,7 @@ export type RelayFuelDriverRematchResult = {
   relay_updated: number;
   fuel_updated: number;
   skipped_ambiguous_or_unmatched: number;
+  load_rematch?: RelayFuelLoadRematchResult;
 };
 
 type UnmatchedRelayRow = {
@@ -101,11 +106,20 @@ export async function rematchRelayFuelDrivers(
     fuelUpdated += fuelUp.rowCount ?? 0;
   }
 
+  let loadRematch: RelayFuelLoadRematchResult | undefined;
+  if (fuelUpdated > 0) {
+    loadRematch = await rematchRelayFuelLoads(client, {
+      operating_company_id: opts?.operating_company_id,
+      limit: opts?.limit,
+    });
+  }
+
   return {
     scanned: res.rows.length,
     matched,
     relay_updated: relayUpdated,
     fuel_updated: fuelUpdated,
     skipped_ambiguous_or_unmatched: skipped,
+    ...(loadRematch ? { load_rematch: loadRematch } : {}),
   };
 }
