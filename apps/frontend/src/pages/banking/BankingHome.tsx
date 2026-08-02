@@ -146,7 +146,20 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     () => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     []
   );
-  const cashPosting = Number(kpiQuery.data?.total_cash ?? 0);
+  // BANK-F01 — the headline Cash KPI was inflated exactly 100x: it rendered CENTS through a dollar
+  // formatter. GET /api/v1/banking/dashboard/kpis overrides total_cash with
+  // sumAuthoritativeDepositoryCashCents() — the name is literal, it returns
+  // COALESCE(SUM(current_balance_cents), 0)::bigint — while `money` is an Intl currency formatter
+  // that expects DOLLARS. TRANSP's 5 active accounts sum to 4,023,590 cents on prod, so the home
+  // screen showed $4,023,590.00 for $40,235.90. Cash Flow read the same authoritative total and
+  // divided correctly, which is why the two surfaces disagreed by exactly 100x.
+  //
+  // Converted at the selector, where the unit boundary actually is. The sibling KPIs are NOT cents
+  // and are deliberately left alone — verified, not assumed: factoring reserve_balance is already
+  // divided by 100 in SQL (factoring-virtual.routes.ts), and dip_operating / dip_payroll /
+  // driver_escrow come from views.banking_account_tiles.current_balance, a dollar-denominated
+  // numeric. total_cash is the only field on this page carrying cents.
+  const cashPosting = Number(kpiQuery.data?.total_cash ?? 0) / 100;
   const dipBalance = Number(kpiQuery.data?.dip_operating ?? 0) + Number(kpiQuery.data?.dip_payroll ?? 0);
   const uncategorizedCount = Number(kpiQuery.data?.total_uncategorized ?? 0);
   const reconAccounts = Number((reconciliationSessionsQuery.data?.open_sessions ?? []).length);
