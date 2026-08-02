@@ -36,11 +36,11 @@ const RETIRE = [
   { pat: "settlements\\.team_split_load_overrides", canonical: "driver_finance.team_settlement_splits" },
   { pat: "accounting\\.qbo_accounts", canonical: "mdata.qbo_accounts" },
   // CORRECTED 2026-07-28 (ACCT-ECON-05 / Rule 14 / Desktop): was INVERTED — treated
-  // accounting.qbo_vendors as RETIRE and mdata.qbo_vendors as canonical. Prod + linkage law:
-  //   accounting.qbo_vendors — CANONICAL AP QBO vendor masters
-  //   mdata.qbo_vendors      — RETIRE mirror (sync may still write mid-flight; shrink-only exempt)
+  // mdata.qbo_vendors as RETIRE and accounting.qbo_vendors as canonical. Prod + linkage law:
+  //   mdata.qbo_vendors — CANONICAL AP QBO vendor masters
+  //   accounting.qbo_vendors      — RETIRE mirror (sync may still write mid-flight; shrink-only exempt)
   // Customers/accounts inversion stays a follow-on wave (same defect class; not this FINDING).
-  { pat: "mdata\\.qbo_vendors", canonical: "accounting.qbo_vendors" },
+  { pat: "accounting\\.qbo_vendors", canonical: "mdata.qbo_vendors" },
   { pat: "accounting\\.qbo_customers", canonical: "mdata.qbo_customers" },
   { pat: "bank\\.\\w+", canonical: "banking.*" },
   { pat: "maint\\.part_position_assignment", canonical: "maintenance.part_position_assignment" },
@@ -171,8 +171,8 @@ if (process.argv.includes("--selftest")) {
     `INSERT INTO driver_finance.driver_settlements (id) VALUES ($1);`, // canonical — allowed
     `INSERT INTO payroll.tax_withholding (id) VALUES ($1);`, // wildcard payroll.* must catch (finding 3)
     `INSERT INTO settlements.settlement_disputes (id) VALUES ($1);`, // plural RETIRE — P4
-    `INSERT INTO mdata.qbo_vendors (id) VALUES ($1);`, // ACCT-ECON-05 RETIRE
-    `INSERT INTO accounting.qbo_vendors (id) VALUES ($1);`, // ACCT-ECON-05 CANONICAL — must NOT flag
+    `INSERT INTO accounting.qbo_vendors (id) VALUES ($1);`, // ACCT-ECON-05 RETIRE
+    `INSERT INTO mdata.qbo_vendors (id) VALUES ($1);`, // ACCT-ECON-05 CANONICAL — must NOT flag
   ].join("\n");
   const blanked = blankComments(injectSql, true);
   const found = [];
@@ -192,8 +192,8 @@ if (process.argv.includes("--selftest")) {
     ["payroll.* wildcard catches a non-enumerated payroll table (finding 3)", found.includes("payroll.tax_withholding")],
     ["INSERT INTO the CANONICAL table is NOT flagged", !found.includes("driver_finance.driver_settlements")],
     ["settlements.* plural RETIRE INSERT is flagged (P4)", found.includes("settlements.settlement_disputes")],
-    ["ACCT-ECON-05: INSERT mdata.qbo_vendors (RETIRE) is flagged", found.includes("mdata.qbo_vendors")],
-    ["ACCT-ECON-05: INSERT accounting.qbo_vendors (CANONICAL) is NOT flagged", !found.includes("accounting.qbo_vendors")],
+    ["ACCT-ECON-05: INSERT accounting.qbo_vendors (RETIRE) is flagged", found.includes("accounting.qbo_vendors")],
+    ["ACCT-ECON-05: INSERT mdata.qbo_vendors (CANONICAL) is NOT flagged", !found.includes("mdata.qbo_vendors")],
     ["count-ratchet: live==baseline passes (finding 2)", !overBase(liveA)],
     ["count-ratchet: a NEW same-file write (live>baseline) FAILS (finding 2)", overBase(liveB)],
   ];

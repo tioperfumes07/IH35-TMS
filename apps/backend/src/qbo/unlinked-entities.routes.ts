@@ -173,7 +173,7 @@ export async function registerQboUnlinkedEntitiesRoutes(app: FastifyInstance) {
             v.company_name,
             v.primary_phone,
             NULLIF(trim(v.payload_json->>'TaxIdentifier'), '') AS tax_id
-          FROM accounting.qbo_vendors v
+          FROM mdata.qbo_vendors v
           WHERE v.operating_company_id = $1::uuid
             AND v.active = true
           ORDER BY v.display_name ASC

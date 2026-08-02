@@ -110,7 +110,7 @@ async function deliverVendor(payload: QboMasterPushPayload, client: PoolClient) 
   const rowRes = await client.query(
     `
       SELECT *
-      FROM accounting.qbo_vendors
+      FROM mdata.qbo_vendors
       WHERE id = $1::uuid AND operating_company_id = $2::uuid
       LIMIT 1
     `,
@@ -142,7 +142,7 @@ async function deliverVendor(payload: QboMasterPushPayload, client: PoolClient) 
 
     await client.query(
       `
-        UPDATE accounting.qbo_vendors
+        UPDATE mdata.qbo_vendors
         SET qbo_id = $3,
             qbo_sync_token = $4,
             payload_json = $5::jsonb,
@@ -179,7 +179,7 @@ async function deliverVendor(payload: QboMasterPushPayload, client: PoolClient) 
   const nextToken = entity.SyncToken != null ? String(entity.SyncToken) : syncToken;
   await client.query(
     `
-      UPDATE accounting.qbo_vendors
+      UPDATE mdata.qbo_vendors
       SET qbo_sync_token = $4,
           payload_json = $5::jsonb,
           last_push_at = now(),

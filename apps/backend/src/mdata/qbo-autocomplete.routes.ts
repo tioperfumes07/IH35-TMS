@@ -37,7 +37,7 @@ async function assertCompanyAccess(
 
 export async function registerQboAutocompleteRoutes(app: FastifyInstance) {
   const factory =
-    (table: "accounting.qbo_vendors" | "mdata.qbo_customers" | "mdata.qbo_items" | "mdata.qbo_accounts") =>
+    (table: "mdata.qbo_vendors" | "mdata.qbo_customers" | "mdata.qbo_items" | "mdata.qbo_accounts") =>
     async (req: FastifyRequest, reply: FastifyReply) => {
       if (!requireAuth(req, reply)) return;
       const role = String(req.user?.role ?? "");
@@ -57,7 +57,7 @@ export async function registerQboAutocompleteRoutes(app: FastifyInstance) {
         const allowed = await assertCompanyAccess(client, userId, operating_company_id);
         if (!allowed) return null;
 
-        if (table === "accounting.qbo_vendors") {
+        if (table === "mdata.qbo_vendors") {
           return client.query(
             `
               SELECT
@@ -68,7 +68,7 @@ export async function registerQboAutocompleteRoutes(app: FastifyInstance) {
                 v.primary_email,
                 v.primary_phone,
                 v.active
-              FROM accounting.qbo_vendors v
+              FROM mdata.qbo_vendors v
               WHERE v.operating_company_id = $1::uuid
                 ${activeClause}
                 AND (
@@ -203,7 +203,7 @@ export async function registerQboAutocompleteRoutes(app: FastifyInstance) {
   // well above debounced human typing.
   const AUTOCOMPLETE_RATE_LIMIT = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } };
 
-  app.get("/api/v1/mdata/qbo/vendors", AUTOCOMPLETE_RATE_LIMIT, factory("accounting.qbo_vendors"));
+  app.get("/api/v1/mdata/qbo/vendors", AUTOCOMPLETE_RATE_LIMIT, factory("mdata.qbo_vendors"));
   app.get("/api/v1/mdata/qbo/customers", AUTOCOMPLETE_RATE_LIMIT, factory("mdata.qbo_customers"));
   app.get("/api/v1/mdata/qbo/items", AUTOCOMPLETE_RATE_LIMIT, factory("mdata.qbo_items"));
   app.get("/api/v1/mdata/qbo/accounts", AUTOCOMPLETE_RATE_LIMIT, factory("mdata.qbo_accounts"));

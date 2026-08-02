@@ -106,7 +106,7 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
         await client.query(
           `SELECT COALESCE(v.display_name, w.external_vendor_id::text) AS vendor_name, COALESCE(SUM(w.total_actual_cost),0)::numeric(12,2) AS total_spend
            FROM maintenance.work_orders w
-           LEFT JOIN accounting.qbo_vendors v ON v.id = w.external_vendor_id
+           LEFT JOIN mdata.qbo_vendors v ON v.id = w.external_vendor_id
            WHERE w.operating_company_id = $1
            GROUP BY vendor_name
            ORDER BY total_spend DESC NULLS LAST

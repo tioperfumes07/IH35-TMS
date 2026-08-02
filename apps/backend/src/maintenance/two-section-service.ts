@@ -18,7 +18,7 @@ export type TwoSectionHeader = {
   service_date?: string | null;
   repair_location: string;
   bucket?: "in_house" | "external" | "roadside";
-  /** UUID row id from accounting.qbo_vendors (canonical QBO vendor master). */
+  /** UUID row id from mdata.qbo_vendors (canonical QBO vendor master). */
   vendor_id?: string | null;
   vendor_qbo_id?: string | null;
   shop_name?: string | null;

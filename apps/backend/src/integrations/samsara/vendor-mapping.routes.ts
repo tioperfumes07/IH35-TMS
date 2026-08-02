@@ -85,7 +85,7 @@ export async function registerSamsaraVendorMappingIntegrityRoutes(app: FastifyIn
           SELECT
             to_regclass('integrations.samsara_drivers') IS NOT NULL AS samsara_ok,
             to_regclass('mdata.drivers') IS NOT NULL AS drivers_ok,
-            to_regclass('accounting.qbo_vendors') IS NOT NULL AS vendors_ok
+            to_regclass('mdata.qbo_vendors') IS NOT NULL AS vendors_ok
         `,
       )) as {
         rows: Array<{
@@ -133,7 +133,7 @@ export async function registerSamsaraVendorMappingIntegrityRoutes(app: FastifyIn
           LEFT JOIN mdata.drivers md
             ON md.id = sd.local_driver_id
             AND md.operating_company_id = $1::uuid
-          LEFT JOIN accounting.qbo_vendors qv
+          LEFT JOIN mdata.qbo_vendors qv
             ON qv.operating_company_id = $1::uuid
             AND (qv.id::text = md.qbo_vendor_id OR qv.qbo_id = md.qbo_vendor_id)
           WHERE sd.operating_company_id = $1::uuid
@@ -185,7 +185,7 @@ export async function registerSamsaraVendorMappingIntegrityRoutes(app: FastifyIn
           JOIN mdata.drivers md
             ON md.id = sd.local_driver_id
             AND md.operating_company_id = $1::uuid
-          JOIN accounting.qbo_vendors qv
+          JOIN mdata.qbo_vendors qv
             ON qv.operating_company_id = $1::uuid
             AND (qv.id::text = md.qbo_vendor_id OR qv.qbo_id = md.qbo_vendor_id)
           WHERE sd.operating_company_id = $1::uuid

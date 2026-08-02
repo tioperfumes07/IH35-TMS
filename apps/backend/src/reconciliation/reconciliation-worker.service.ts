@@ -40,7 +40,7 @@ const QBO_REFDATA_MIRRORS = [
   { table: "mdata.qbo_classes", remoteEntityType: "qbo_classes", threshold: 0 },
   { table: "mdata.qbo_items", remoteEntityType: "qbo_items", threshold: 0 },
   { table: "mdata.qbo_customers", remoteEntityType: "qbo_customers", threshold: 1 },
-  { table: "accounting.qbo_vendors", remoteEntityType: "qbo_vendors", threshold: 1 },
+  { table: "mdata.qbo_vendors", remoteEntityType: "qbo_vendors", threshold: 1 },
 ] as const;
 
 const QBO_TRANSACTIONAL_MIRRORS = [

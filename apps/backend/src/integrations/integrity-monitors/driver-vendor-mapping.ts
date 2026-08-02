@@ -67,7 +67,7 @@ export async function checkAllMappings(
     if (!vendorId) continue;
 
     const vendorRes = await client.query<{ id: string; display_name: string | null; company_name: string | null }>(
-      `SELECT id::text, display_name, company_name FROM accounting.qbo_vendors WHERE id = $1::uuid LIMIT 1`,
+      `SELECT id::text, display_name, company_name FROM mdata.qbo_vendors WHERE id = $1::uuid LIMIT 1`,
       [vendorId]
     );
     const vendor = vendorRes.rows[0];

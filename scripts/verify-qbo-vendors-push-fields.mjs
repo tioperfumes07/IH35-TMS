@@ -21,7 +21,7 @@ const pushText = fs.readFileSync(pushPath, "utf8");
 const pushServiceText = fs.readFileSync(pushServicePath, "utf8");
 
 for (const column of ["eligible_1099", "payment_terms_qbo_id", "default_ap_account_qbo_id"]) {
-  if (!migrationText.includes(column)) fail(`migration 0321 must add accounting.qbo_vendors.${column}`);
+  if (!migrationText.includes(column)) fail(`migration 0321 must add mdata.qbo_vendors.${column}`);
 }
 if (!pushText.includes("eligible_1099")) fail("vendors push scheduler must carry eligible_1099 through mirror payload");
 if (!pushText.includes("payment_terms_qbo_id")) fail("vendors push scheduler must carry payment_terms_qbo_id");

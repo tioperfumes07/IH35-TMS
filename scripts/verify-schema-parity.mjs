@@ -79,7 +79,7 @@ function parseCreateTableColumns(body) {
     if (/^(primary\s+key|unique|check|foreign\s+key|constraint\s+\w)/i.test(trimmed)) continue;
     // Skip a LIKE clause: `CREATE TABLE a (LIKE b INCLUDING DEFAULTS)` declares no column named
     // "like" — it copies b's columns. Taking the first token here invented a phantom column `like`
-    // on accounting.qbo_vendors / qbo_customers / qbo_accounts AND left those tables with no real
+    // on mdata.qbo_vendors / qbo_customers / qbo_accounts AND left those tables with no real
     // columns at all, so schema-parity could not have detected a removal on any of them. The
     // inherited columns are resolved in parseMigrations, which is where the source table is known.
     if (/^like\s/i.test(trimmed)) continue;
@@ -204,8 +204,8 @@ export function parseMigrations(migrationsDir) {
       // LIKE copies the source's columns AS THEY EXIST AT THIS POINT in migration order — later
       // ALTERs to the source are NOT propagated. So inherit immediately from the current snapshot when
       // the source is already known. Resolving against the source's FINAL state instead over-inherited
-      // 9 columns onto accounting.qbo_vendors (account_number, billing_*, tax_id, terms, track_*) that
-      // were added to mdata.qbo_vendors AFTER the LIKE and do not exist on the copy — the DB meta-guard
+      // 9 columns onto mdata.qbo_vendors (account_number, billing_*, tax_id, terms, track_*) that
+      // were added to accounting.qbo_vendors AFTER the LIKE and do not exist on the copy — the DB meta-guard
       // caught it. Only a source not yet seen is deferred to the post-pass.
       for (const src of ev.likeSources) {
         const snapshot = schema.get(src);

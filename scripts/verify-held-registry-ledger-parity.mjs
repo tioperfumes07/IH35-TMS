@@ -128,7 +128,7 @@ export const EXPECTED_HELD = [
   // DISP-01 (#3663) owner Neon-applied 202609290000 — moved to applied_held[]; not in EXPECTED_HELD.
   // ACCT-ECON-05 (#3712) — authored 2026-07-28; NEVER Neon-applied. Live cross-check
   // br-fancy-credit-akjnd07a 2026-07-28 lucia: filename absent from _system._schema_migrations;
-  // accounting.qbo_vendors=2744 / mdata.qbo_vendors=2780 (Δ≈36 residual). Leaves this list only
+  // mdata.qbo_vendors=2744 / accounting.qbo_vendors=2780 (Δ≈36 residual). Leaves this list only
   // after owner Neon-apply + ledger-backfill and GUARD re-proves both ledger rows.
   "202610121800_acct_econ_05_qbo_vendors_canonical_backfill.sql",
   // LST-PICKER-01 vendor_type CHECK relax (companion to PR #3884 / guard 1852). Authored on this

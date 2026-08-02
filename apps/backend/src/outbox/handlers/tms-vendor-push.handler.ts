@@ -81,7 +81,7 @@ async function upsertMirrorFromVendor(
     const byLinkedId = await ctx.client.query<MirrorRow>(
       `
         SELECT id::text AS mirror_row_id, qbo_id, qbo_sync_token
-        FROM accounting.qbo_vendors
+        FROM mdata.qbo_vendors
         WHERE operating_company_id = $1::uuid
           AND qbo_id = $2
         LIMIT 1
@@ -94,7 +94,7 @@ async function upsertMirrorFromVendor(
     const byEmail = await ctx.client.query<MirrorRow>(
       `
         SELECT id::text AS mirror_row_id, qbo_id, qbo_sync_token
-        FROM accounting.qbo_vendors
+        FROM mdata.qbo_vendors
         WHERE operating_company_id = $1::uuid
           AND qbo_id IS NOT NULL
           AND lower(trim(primary_email)) = lower(trim($2))
@@ -110,7 +110,7 @@ async function upsertMirrorFromVendor(
     const byName = await ctx.client.query<MirrorRow>(
       `
         SELECT id::text AS mirror_row_id, qbo_id, qbo_sync_token
-        FROM accounting.qbo_vendors
+        FROM mdata.qbo_vendors
         WHERE operating_company_id = $1::uuid
           AND qbo_id IS NOT NULL
           AND lower(trim(display_name)) = lower(trim($2))
@@ -125,7 +125,7 @@ async function upsertMirrorFromVendor(
   if (matchedMirror) {
     const updateRes = await ctx.client.query<{ id: string }>(
       `
-        UPDATE accounting.qbo_vendors
+        UPDATE mdata.qbo_vendors
         SET
           display_name = $3,
           company_name = $4,
@@ -166,7 +166,7 @@ async function upsertMirrorFromVendor(
 
   const inserted = await ctx.client.query<{ id: string }>(
     `
-      INSERT INTO accounting.qbo_vendors (
+      INSERT INTO mdata.qbo_vendors (
         operating_company_id,
         qbo_id,
         display_name,
@@ -207,7 +207,7 @@ async function syncBackLinkedQboId(
   const qboRes = await ctx.client.query<{ qbo_id: string | null }>(
     `
       SELECT qbo_id
-      FROM accounting.qbo_vendors
+      FROM mdata.qbo_vendors
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
       LIMIT 1

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * ACCT-F06 / ACCT-ECON-05 — product vendor readers (autocomplete, Samsara mapping, WO)
- * must SELECT canonical accounting.qbo_vendors, never RETIRE mdata.qbo_vendors.
+ * must SELECT canonical mdata.qbo_vendors, never RETIRE accounting.qbo_vendors.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -20,11 +20,11 @@ const TARGETS = [
 
 export function assertCanonicalReader(source, filename) {
   const problems = [];
-  if (source.includes("mdata.qbo_vendors")) {
-    problems.push(`${filename}: must not SELECT RETIRE mdata.qbo_vendors`);
+  if (source.includes("accounting.qbo_vendors")) {
+    problems.push(`${filename}: must not SELECT RETIRE accounting.qbo_vendors`);
   }
-  if (!source.includes("accounting.qbo_vendors")) {
-    problems.push(`${filename}: must SELECT canonical accounting.qbo_vendors`);
+  if (!source.includes("mdata.qbo_vendors")) {
+    problems.push(`${filename}: must SELECT canonical mdata.qbo_vendors`);
   }
   return problems;
 }
@@ -38,14 +38,14 @@ function main() {
     for (const problem of problems) console.error(`  ${problem}`);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — product vendor readers target accounting.qbo_vendors`);
+  console.log(`${LABEL} OK — product vendor readers target mdata.qbo_vendors`);
 }
 
 function selftest() {
   const failures = [];
-  const bad = assertCanonicalReader("FROM mdata.qbo_vendors v", "fixture.ts");
+  const bad = assertCanonicalReader("FROM accounting.qbo_vendors v", "fixture.ts");
   if (!bad.some((p) => p.includes("RETIRE"))) failures.push("did not catch RETIRE");
-  const ok = assertCanonicalReader("FROM accounting.qbo_vendors v", "fixture.ts");
+  const ok = assertCanonicalReader("FROM mdata.qbo_vendors v", "fixture.ts");
   if (ok.length) failures.push(`false positive: ${ok.join("; ")}`);
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED: ${failures.join("; ")}`);

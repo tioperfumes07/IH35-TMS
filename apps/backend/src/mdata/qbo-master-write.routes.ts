@@ -124,7 +124,7 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
       try {
         const inserted = await client.query<{ id: string }>(
           `
-            INSERT INTO accounting.qbo_vendors (
+            INSERT INTO mdata.qbo_vendors (
               operating_company_id,
               qbo_id,
               display_name,
@@ -205,7 +205,7 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
       try {
         const res = await client.query(
           `
-            UPDATE accounting.qbo_vendors
+            UPDATE mdata.qbo_vendors
             SET
               display_name = COALESCE($3, display_name),
               company_name = COALESCE($4, company_name),

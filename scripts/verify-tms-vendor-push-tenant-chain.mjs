@@ -51,11 +51,11 @@ if (!handler.includes(payloadReadMarker)) {
 if (!handler.includes("FROM mdata.vendors v") || !handler.includes("v.operating_company_id = $2::uuid")) {
   failures.push("apps/backend/src/outbox/handlers/tms-vendor-push.handler.ts:1 mdata.vendors query must enforce tenant scope");
 }
-if (!handler.includes("FROM accounting.qbo_vendors") || !handler.includes("operating_company_id = $1::uuid")) {
-  failures.push("apps/backend/src/outbox/handlers/tms-vendor-push.handler.ts:1 accounting.qbo_vendors queries must enforce tenant scope");
+if (!handler.includes("FROM mdata.qbo_vendors") || !handler.includes("operating_company_id = $1::uuid")) {
+  failures.push("apps/backend/src/outbox/handlers/tms-vendor-push.handler.ts:1 mdata.qbo_vendors queries must enforce tenant scope");
 }
-if (handler.includes("mdata.qbo_vendors")) {
-  failures.push("apps/backend/src/outbox/handlers/tms-vendor-push.handler.ts:1 must not write or read RETIRE mdata.qbo_vendors");
+if (handler.includes("accounting.qbo_vendors")) {
+  failures.push("apps/backend/src/outbox/handlers/tms-vendor-push.handler.ts:1 must not write or read RETIRE accounting.qbo_vendors");
 }
 
 if (failures.length > 0) {
