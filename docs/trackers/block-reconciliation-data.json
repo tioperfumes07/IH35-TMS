@@ -1,12 +1,12 @@
 {
  "date": "2026-08-02",
- "generated_at_iso": "2026-08-02T16:28:25.450Z",
+ "generated_at_iso": "2026-08-02T16:56:33.244Z",
  "counts": {
   "PENDING": 14,
   "PENDING (GATED)": 27,
   "NEEDS-VERIFY": 57,
-  "DONE": 685,
-  "AUDIT-NOTE": 420
+  "DONE": 680,
+  "AUDIT-NOTE": 425
  },
  "universe": {
   "total_blocks_after_dedup": 1203,
@@ -5134,17 +5134,6 @@
    "pr": 686
   },
   {
-   "id": "GAP-20",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #704 merged 2026-06-07",
-   "name": "",
-   "registered_on": null,
-   "pr": 704
-  },
-  {
    "id": "gap-20-recurring-bills",
    "source": "gap-spec",
    "fin": false,
@@ -6091,17 +6080,6 @@
    "pr": null
   },
   {
-   "id": "GAP-71",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #784 merged 2026-06-08",
-   "name": "Driver Retention Predictive Model",
-   "registered_on": null,
-   "pr": 784
-  },
-  {
    "id": "gap-71-driver-retention-model",
    "source": "gap-spec",
    "fin": false,
@@ -6112,17 +6090,6 @@
    "pr": null
   },
   {
-   "id": "GAP-72",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #782 merged 2026-06-08",
-   "name": "Customer Relationship Score + Health",
-   "registered_on": null,
-   "pr": 782
-  },
-  {
    "id": "gap-72-customer-relationship-score",
    "source": "gap-spec",
    "fin": false,
@@ -6131,17 +6098,6 @@
    "evidence": "all 7 named artifact(s) on main",
    "name": "gap-72-customer-relationship-score",
    "pr": null
-  },
-  {
-   "id": "GAP-76",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "all 7 file(s) on main",
-   "name": "Deadhead mile optimizer — ranked next-load suggestions",
-   "registered_on": null,
-   "pr": 844
   },
   {
    "id": "gap-76-deadhead-optimizer",
@@ -7837,17 +7793,6 @@
    "name": "Each block writes its own .block-ready/<block-id>.json; zero manifest merge conflicts in parallel lanes",
    "registered_on": null,
    "pr": 650
-  },
-  {
-   "id": "STRUCTURAL-MIGRATION-TIMESTAMPS",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #648 merged 2026-06-07",
-   "name": "New migrations use timestamp format (20260607_120000_name.sql) to eliminate parallel-lane sequence collisions",
-   "registered_on": null,
-   "pr": 648
   },
   {
    "id": "SWEEP-FIX-17-27",
@@ -12415,6 +12360,50 @@
    "pr": null
   },
   {
+   "id": "GAP-20",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status = DONE; not in active",
+   "name": "",
+   "registered_on": null,
+   "pr": 704
+  },
+  {
+   "id": "GAP-71",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status = DONE; not in active",
+   "name": "Driver Retention Predictive Model",
+   "registered_on": null,
+   "pr": 784
+  },
+  {
+   "id": "GAP-72",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status = DONE; not in active",
+   "name": "Customer Relationship Score + Health",
+   "registered_on": null,
+   "pr": 782
+  },
+  {
+   "id": "GAP-76",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status = DONE; not in active",
+   "name": "Deadhead mile optimizer — ranked next-load suggestions",
+   "registered_on": null,
+   "pr": 844
+  },
+  {
    "id": "gated-blocks-conn-plaid-relay-edi",
    "source": ".block-ready",
    "fin": true,
@@ -13073,6 +13062,17 @@
    "pr": null
   },
   {
+   "id": "STRUCTURAL-MIGRATION-TIMESTAMPS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "New migrations use timestamp format (20260607_120000_name.sql) to eliminate parallel-lane sequence collisions",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "sweep-fix-17-27-fixture-names-and-pager",
    "source": ".block-ready",
    "fin": true,
@@ -13261,6 +13261,12 @@
   }
  ],
  "merged_prs": [
+  {
+   "number": 4004,
+   "title": "measurability: block reconcile H5 + 13 module-completion scaffolds",
+   "mergedAt": "2026-08-02T16:52:52Z",
+   "branch": "cursor/measurability-2026-08-02"
+  },
   {
    "number": 4003,
    "title": "Claude- feat(insurance): wire a claim to the money side — vendor, bill, expense, lawsuit, deduction, liability",
@@ -16854,12 +16860,6 @@
    "title": "[HOLD-FOR-JORGE] fix(catalogs): drop global UNIQUE(role_key) on bindings (WO #5)",
    "mergedAt": "2026-07-23T20:05:11Z",
    "branch": "fix/drop-global-role-key-unique"
-  },
-  {
-   "number": 3344,
-   "title": "guard(accounting): pin settlement_lines line_type true supersets (WO #3)",
-   "mergedAt": "2026-07-23T18:10:02Z",
-   "branch": "fix/settlement-lines-line-type-superset-guard"
   }
  ],
  "merged_pr_total": 3000,
