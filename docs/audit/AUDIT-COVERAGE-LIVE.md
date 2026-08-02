@@ -15,16 +15,22 @@ No module is certified PASS until Layers A, B, C, D, and E each independently PA
 evidence, **per entity**. A `PASS` verdict is TRANSP-only unless the `Entity` column explicitly says
 `both` or there is a separate `USMCA` row for the same Module×Layer.
 
-## SCOREBOARD (updated each session — snapshot 2026-08-02, session start)
+## SCOREBOARD (updated each session — snapshot 2026-08-02, session end)
 - **Certified full-PASS modules (all 5 layers, both entities): 0 / 30**
-- **Modules with at least one confirmed live FAIL: 16 / 30** (Home/Tasks, Fuel, Dispatch, Maintenance,
-  Safety, Fleet, Settlements, Accounting, Banking, Factoring, Customers, Vendors, Inventory, Reports,
-  ParityTable — Vendors newly added 2026-08-02 via `CLS-SUBLEDGER-GL-DARK`)
-- **Layer C UNVERIFIED: 12 / 30** (Home/Tasks, Driver Hub, Safety, Compliance, Driver Profile, Fleet,
-  Legal, Cash Flow, Inventory, Docs, Users, ELD/Telematics) — audit order this session is Layer C
-  FIRST on exactly these 12.
+- **Layer C sweep: COMPLETE for TRANSP on all 30 modules** (the 12 originally-UNVERIFIED modules —
+  Home/Tasks, Driver Hub, Safety, Compliance, Driver Profile, Fleet, Legal, Cash Flow, Inventory, Docs,
+  Users, ELD/Telematics — were all closed this session, mostly PASS-honest-empty or N/A-confirmed, plus
+  one confirmed structural gap on Legal `financial_reserve_cents` and one real-but-unposted finding on
+  Inventory parts postings). **Layer C UNVERIFIED count is now 0 / 30 on TRANSP.**
+- **Modules with at least one confirmed live FAIL or structural gap: 17 / 30** (Home/Tasks, Fuel,
+  Dispatch, Maintenance, Safety, Fleet, Legal, Settlements, Accounting, Banking, Factoring, Customers,
+  Vendors, Inventory, Reports, ParityTable — Legal newly added 2026-08-02 for the unwired
+  `financial_reserve_cents` field)
 - **Layer E UNVERIFIED: 27 / 30** (only Banking, Customers, ParityTable have any Layer E verdict) —
-  Layer E runs LAST per owner order but stays in scope.
+  next priority per owner order (Layer E runs LAST but stays in scope; Layer B/A/D close-out is next).
+- **NEW audit-scope finding:** a THIRD operating company ("IH 35 Trucking LLC") was discovered during
+  Fleet Layer C with real, partially-posted GL activity — never covered by this audit to date. See
+  cross-cutting findings table below. Flagged for owner decision on scope.
 - **NEW upstream signal (2026-08-02, this session):** `git pull --ff-only origin main` on the `main`
   worktree pulled in a large batch of CODER-side commits including
   `scripts/verify-steps/1969-verify-bill-vendor-link-canonical-uuid.mjs`,
@@ -168,12 +174,12 @@ evidence, **per entity**. A `PASS` verdict is TRANSP-only unless the `Entity` co
 | Reports | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Docs | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
 | Docs | B | TRANSP | OPEN | 100% uncategorized/unlinked, real-gap vs software-gap undetermined | 2026-08-01 | Cascade | | |
-| Docs | C | TRANSP | UNVERIFIED | Not yet traced (attachments likely N/A for GL, needs confirmation) | 2026-08-02 | Cascade | | |
+| Docs | C | TRANSP | N/A (confirmed) | Docs module is document/attachment storage and linkage metadata only — no dollar columns, no FK to any liability/posting/journal_entry table anywhere in its schema. Confirmed genuinely no GL primitive, consistent with the pre-existing Layer B "100% uncategorized/unlinked" finding being a linkage-quality issue, not a financial one | 2026-08-02 | Cascade | | |
 | Docs | D | TRANSP | N/A | No pickers | 2026-08-01 | Cascade | | |
 | Docs | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Users | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
 | Users | B | TRANSP | PASS | Roster consistent | 2026-08-01 | Cascade | | |
-| Users | C | TRANSP | UNVERIFIED | No expected GL primitive; needs explicit N/A confirmation | 2026-08-02 | Cascade | | |
+| Users | C | TRANSP | N/A (confirmed) | `identity.users` is authN/authZ/roster data only — no dollar columns, no FK to any GL primitive. Confirmed genuinely N/A | 2026-08-02 | Cascade | | |
 | Users | D | TRANSP | N/A | No pickers | 2026-08-01 | Cascade | | |
 | Users | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Help | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
@@ -198,7 +204,7 @@ evidence, **per entity**. A `PASS` verdict is TRANSP-only unless the `Entity` co
 | ParityTable (shared chrome) | E | TRANSP | FAIL | 4-6px resize handle, no visible affordance | 2026-08-01 | Cascade | | |
 | ELD/Telematics | A | TRANSP | PASS | Real module, honest self-disclosing data-source citations | 2026-08-01 | Cascade | | |
 | ELD/Telematics | B | TRANSP | UNVERIFIED | Not yet Neon-cross-checked | 2026-08-01 | Cascade | | |
-| ELD/Telematics | C | TRANSP | UNVERIFIED | Not yet traced (HOS/mileage→IFTA/fuel-tax→GL) | 2026-08-02 | Cascade | | |
+| ELD/Telematics | C | TRANSP | N/A (confirmed) | Found `reports.ifta_filings` as the closest financial-adjacent table (fuel-tax quarterly filings) — but it stores its numbers in an opaque `filing_data` jsonb blob with no dollar columns and no FK to `journal_entries`/any liability table; it is a compliance-filing record, not a GL-posting mechanism (any actual IFTA tax liability would be booked as a bill/expense elsewhere, not from this table directly). 0 rows anyway. Confirmed no direct GL primitive for this module | 2026-08-02 | Cascade | | |
 | ELD/Telematics | D | TRANSP | N/A | No pickers found this pass | 2026-08-01 | Cascade | | |
 | ELD/Telematics | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 
