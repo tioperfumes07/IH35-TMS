@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DriverProfilePage } from "../../drivers/DriverProfilePage";
 import { DriversListPage } from "../../drivers/DriversListPage";
@@ -45,7 +46,17 @@ export function DriverFilesTab() {
           />
           <DriversListPage onOpenProfile={(nextDriverId) => setDriverId(nextDriverId)} />
           <div className="mt-4 space-y-2">
-            <h3 className="text-sm font-semibold text-slate-900">Training Completions</h3>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-slate-900">Training Completions</h3>
+              <span className="flex flex-wrap gap-3 text-xs">
+                <Link to="/safety/training/programs" className="font-semibold text-slate-700 underline">
+                  Training Programs
+                </Link>
+                <Link to="/safety/training/records" className="font-semibold text-slate-700 underline">
+                  Training Records
+                </Link>
+              </span>
+            </div>
             <TrainingTable rows={trainingQuery.data?.training_completions ?? []} />
           </div>
         </>
