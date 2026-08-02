@@ -374,6 +374,8 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
 
         let maintenanceCriticalOrOverdue = 0;
         if (await relationExists(client, "maintenance.work_orders")) {
+          // MAINT-VOID: void-not-delete keeps retracted WOs in the table; KPI counts must exclude them
+          // (same rule as Home wos-open-count + maintenance openWorkOrderPredicate — #3755).
           const hasOperatingCompany = await columnExists(client, "maintenance", "work_orders", "operating_company_id");
           const hasStatus = await columnExists(client, "maintenance", "work_orders", "status");
           const hasPriority = await columnExists(client, "maintenance", "work_orders", "priority");
@@ -392,7 +394,8 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
               `
                 SELECT count(*)::text AS total
                 FROM maintenance.work_orders
-                WHERE ${whereParts.join(" AND ")}
+                WHERE voided_at IS NULL
+                  AND ${whereParts.join(" AND ")}
               `,
             );
             maintenanceCriticalOrOverdue = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
@@ -568,6 +571,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
             SELECT lower(COALESCE(repair_location, '')) AS repair_location, count(*)::text AS total
             FROM maintenance.work_orders
             WHERE operating_company_id = $1
+              AND voided_at IS NULL
               AND status NOT IN ('complete', 'cancelled')
             GROUP BY lower(COALESCE(repair_location, ''))
           `,
