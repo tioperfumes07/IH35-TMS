@@ -19,6 +19,7 @@ export type AllocationListItem = {
   bill_date: string;
   bill_amount_cents: number;
   vendor_id: string | null;
+  mdata_vendor_id: string | null;
   vendor_name: string | null;
   asset_id: string;
   unit_code: string;
@@ -39,6 +40,7 @@ type AllocationRow = {
   bill_date: string;
   bill_amount_cents: string | number | null;
   bill_vendor_id: string | null;
+  bill_mdata_vendor_id: string | null;
   bill_vendor_uuid: string | null;
   asset_id: string;
   unit_code: string;
@@ -100,6 +102,9 @@ export async function listBillUnitAllocations(
           b.amount_cents AS bill_amount_cents,
           b.vendor_id AS bill_vendor_id,
           b.vendor_uuid AS bill_vendor_uuid,
+          -- ACCT-F84: the canonical vendor uuid. bill_vendor_id/_uuid are legacy TEXT QBO ids that do
+          -- not resolve to mdata.vendors, so the UI link built from them 404s.
+          b.mdata_vendor_id::text AS bill_mdata_vendor_id,
           a.asset_id::text AS asset_id,
           ast.unit_code,
           u.id::text AS unit_id,
@@ -143,6 +148,8 @@ export async function listBillUnitAllocations(
         bill_date: row.bill_date,
         bill_amount_cents: Number(row.bill_amount_cents ?? 0),
         vendor_id: vendorId,
+        // ACCT-F84 — canonical uuid for drill-through; vendor_id stays for display/filter only.
+        mdata_vendor_id: row.bill_mdata_vendor_id ?? null,
         vendor_name: vendorId ? vendorNames[vendorId] ?? vendorId : null,
         asset_id: row.asset_id,
         unit_code: row.unit_code,

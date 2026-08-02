@@ -116,6 +116,7 @@ function bill() {
     id: "bill-1",
     operating_company_id: COMPANY_ID,
     vendor_id: "vendor-1",
+    mdata_vendor_id: "11111111-2222-4333-8444-555555555555",
     vendor_name: "Vendor One",
     bill_number: "B-100",
     bill_date: "2026-07-01",

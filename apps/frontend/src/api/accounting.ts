@@ -218,7 +218,18 @@ export type BillPaymentMethod = "check" | "ach" | "wire" | "cash" | "credit_card
 export type VendorBill = {
   id: string;
   operating_company_id: string;
+  /**
+   * ACCT-F84 — legacy TEXT holding the QBO vendor id ("2", "256", "2244"). NOT a uuid and NOT a key
+   * into mdata.vendors: of 500 sampled prod rows exactly ONE resolved. Use it for the vendor FILTER
+   * and as a display fallback ONLY — never as an EntityLink id, which builds /vendors/:id.
+   */
   vendor_id: string | null;
+  /**
+   * ACCT-F84 — THE canonical vendor uuid for drill-through. Populated on 16,244 of 16,246 prod bills
+   * (2 orphans, both vendor_id '2244'), and it disagrees with the qbo_vendor_id resolution on ZERO
+   * rows. Null renders as plain text via EntityLink rather than a link that 404s.
+   */
+  mdata_vendor_id: string | null;
   vendor_name?: string | null;
   bill_number: string | null;
   bill_date: string;
@@ -267,7 +278,14 @@ export type BillPayment = {
   id: string;
   operating_company_id: string;
   bill_id: string;
+  /** ACCT-F84 — legacy TEXT QBO vendor id. 0 of 6,543 prod rows resolve as a uuid. Display only. */
   vendor_id: string | null;
+  /**
+   * ACCT-F84 — vendor uuid RESOLVED server-side through the vendor master, because
+   * accounting.bill_payments has no canonical vendor column of its own. 6,538 of 6,543 prod rows
+   * resolve; the other 5 stay null and render as plain text.
+   */
+  mdata_vendor_id: string | null;
   vendor_name?: string | null;
   bill_number?: string | null;
   payment_date: string;

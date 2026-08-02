@@ -81,7 +81,7 @@ export function BillPaymentDetailPage() {
         {payment.vendor_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Vendor</span>
-            <EntityLink kind="vendor" id={payment.vendor_id} label={payment.vendor_name ?? payment.vendor_id.slice(0, 8)} />
+            <EntityLink kind="vendor" id={payment.mdata_vendor_id} label={payment.vendor_name ?? payment.vendor_id.slice(0, 8)} />
           </DataPanelRow>
         ) : null}
         {payment.journal_entry_id ? (

@@ -133,7 +133,7 @@ export function BillPaymentsListPage() {
       { key: "amount_cents", label: "Amount", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_cents) },
       { key: "payment_method", label: "Method", sortable: true },
       { key: "bill_id", label: "Bill ID", sortable: true, render: (row) => <EntityLink kind="bill" id={row.bill_id} label={row.bill_id.slice(0, 8)} /> },
-      { key: "vendor_id", label: "Vendor ID", sortable: true, render: (row) => <EntityLink kind="vendor" id={row.vendor_id} /> },
+      { key: "vendor_id", label: "Vendor ID", sortable: true, render: (row) => <EntityLink kind="vendor" id={row.mdata_vendor_id} label={row.vendor_name ?? row.vendor_id} /> },
       { key: "reference_number", label: "Reference", sortable: true, sortValue: (row) => row.reference_number ?? row.check_number ?? "", render: (row) => row.reference_number ?? row.check_number ?? "-" },
       { key: "memo", label: "Memo", sortable: true, sortValue: (row) => row.memo ?? "", render: (row) => row.memo ?? "-" },
       {
