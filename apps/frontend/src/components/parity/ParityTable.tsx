@@ -874,6 +874,7 @@ export function ParityTable<T>({
                     column.label
                   )}
                   {enableColumnResize ? (
+                    // CUST-CHROME-03 / row 224: visible at rest (QBO-style column grip), not hover-only transparent 6px.
                     <span
                       role="separator"
                       aria-orientation="vertical"
@@ -884,7 +885,7 @@ export function ParityTable<T>({
                       onTouchStart={(e) => startResizeTouch(key, e)}
                       onKeyDown={(e) => onResizeKey(key, e)}
                       onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
-                      className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize touch-none select-none hover:bg-gray-300 focus:bg-gray-400 focus:outline-hidden"
+                      className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize touch-none select-none border-r border-gray-300 bg-gray-300/80 hover:bg-gray-400 focus:bg-gray-500 focus:outline-hidden"
                     />
                   ) : null}
                 </th>
