@@ -438,34 +438,9 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     (Math.round(woPartsDollars * 100) === Math.round((Number(invoicePartsInput) || 0) * 100) &&
       Math.round(woLaborDollars * 100) === Math.round((Number(invoiceLaborInput) || 0) * 100));
 
-  const checks = [
-    { label: "Unit active and class set", ok: Boolean(form.watch("unit_id")) },
-    {
-      label: "Driver and unit required for non-PM operational types",
-      ok: selectedType === "pm" || (Boolean(form.watch("driver_id")) && Boolean(form.watch("unit_id"))),
-    },
-    {
-      label: "Vendor invoice # or vendor WO # required",
-      ok:
-        Boolean(String(form.watch("vendor_invoice_number") ?? "").trim()) ||
-        Boolean(String(form.watch("external_vendor_invoice_number") ?? "").trim()) ||
-        Boolean(String(form.watch("external_vendor_wo_number") ?? "").trim()),
-    },
-    { label: "Vendor required for non in-house location", ok: form.watch("repair_location") === "in_house" || Boolean(form.watch("vendor_id")) },
-    {
-      label: "External WO fields required for ES/AC/ET/RT/RS",
-      ok:
-        !needsExternalVendor ||
-        ((Boolean(form.watch("external_vendor_id")) || Boolean(form.watch("vendor_id"))) &&
-          Boolean(form.watch("external_vendor_wo_number")) &&
-          Boolean(form.watch("external_vendor_invoice_number"))),
-    },
-    { label: "At least one cost line item", ok: (form.watch("line_items") ?? []).length > 0 },
-    ...(reconcileRequired
-      ? [{ label: "Vendor invoice reconciles — WO parts & labor tie to invoice", ok: reconcileOk }]
-      : []),
-  ];
-
+  // C1 (live 2026-08-02): hoisted ABOVE the pre-save checks so the cost-line rule can count the lines
+  // that are actually submitted. These are the exact arrays sent in the create payload, so the
+  // validator and the request can no longer disagree.
   const sectionALines = lines
     .filter((line) => line.section === "A")
     .map((line) => ({
@@ -496,6 +471,47 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       })),
     }))
     .filter((line) => line.service_item_uuid);
+
+
+  const checks = [
+    { label: "Unit active and class set", ok: Boolean(form.watch("unit_id")) },
+    {
+      label: "Driver and unit required for non-PM operational types",
+      ok: selectedType === "pm" || (Boolean(form.watch("driver_id")) && Boolean(form.watch("unit_id"))),
+    },
+    {
+      label: "Vendor invoice # or vendor WO # required",
+      ok:
+        Boolean(String(form.watch("vendor_invoice_number") ?? "").trim()) ||
+        Boolean(String(form.watch("external_vendor_invoice_number") ?? "").trim()) ||
+        Boolean(String(form.watch("external_vendor_wo_number") ?? "").trim()),
+    },
+    { label: "Vendor required for non in-house location", ok: form.watch("repair_location") === "in_house" || Boolean(form.watch("vendor_id")) },
+    {
+      label: "External WO fields required for ES/AC/ET/RT/RS",
+      ok:
+        !needsExternalVendor ||
+        ((Boolean(form.watch("external_vendor_id")) || Boolean(form.watch("vendor_id"))) &&
+          Boolean(form.watch("external_vendor_wo_number")) &&
+          Boolean(form.watch("external_vendor_invoice_number"))),
+    },
+    {
+      // C1 ROOT CAUSE (live 2026-08-02): this watched `line_items`, a form field initialised to [] and
+      // populated ONLY in EDIT mode. The Section A/B editor writes to the separate `lines` state
+      // (<TwoSectionLineEditor onChange={setLines} />), so in CREATE mode line_items was always empty
+      // and this rule was ALWAYS red — even with a priced Section-A line driving a correct WO Total.
+      // It blocked the POST from ever firing, which is why the USMCA Repair WO still could not be
+      // created after the vendor fix (#4048): that fix was necessary but not sufficient.
+      //
+      // Same class as ACCT-F93 (the vendor-bill validator read `account_id`, a field the builder never
+      // wrote). Count what is SUBMITTED: sectionALines + sectionBLines.
+      label: "At least one cost line item",
+      ok: sectionALines.length + sectionBLines.length > 0,
+    },
+    ...(reconcileRequired
+      ? [{ label: "Vendor invoice reconciles — WO parts & labor tie to invoice", ok: reconcileOk }]
+      : []),
+  ];
 
   const subtotal = lines.reduce((sum, line) => {
     if (line.section === "A") return sum + Number(line.amount || 0);
