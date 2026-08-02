@@ -31,6 +31,8 @@ import { readFileSync, existsSync } from "node:fs";
 
 const LABEL = "verify:owner-override-driver-qualification";
 const SERVICE = "apps/backend/src/dispatch/book-load.service.ts";
+const LOG_ROUTE = "apps/backend/src/dispatch/dispatch-refinements.routes.ts";
+const INDEX = "apps/backend/src/index.ts";
 const MODAL = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
 const PANEL = "apps/frontend/src/components/dispatch/PreDispatchValidationPanel.tsx";
 
@@ -60,17 +62,85 @@ function analyse(files) {
       Math.max(0, svc.indexOf("ownerOverridingQualification")),
       svc.indexOf(OVERRIDE_EVENT) + 200
     );
-    if (!/canOverrideUnitBlock\s*\(\s*input\.requestingUserRole\s*\)/.test(branch)) {
+    if (!/canOwnerOverrideQualification\s*\(\s*input\.requestingUserRole\s*\)/.test(branch)) {
       problems.push(
-        `${SERVICE}: the driver-qualification override is not gated on the Owner role ` +
-          `(canOverrideUnitBlock(input.requestingUserRole)). A non-Owner could self-authorize a ` +
-          `dispatch past a CDL / DOT-medical blocker.`
+        `${SERVICE}: the driver-qualification override is not gated on ` +
+          `canOwnerOverrideQualification(input.requestingUserRole). A non-Owner could self-authorize ` +
+          `a dispatch past a CDL / DOT-medical blocker.`
       );
     }
     if (!/override_reason[\s\S]{0,120}trim\(\)\.length\s*>=\s*10/.test(branch)) {
       problems.push(
         `${SERVICE}: the driver-qualification override no longer requires a >= 10 character reason. ` +
           `An unreasoned override is an unauditable one.`
+      );
+    }
+  }
+
+  // A1b — PIN THE HELPER ITSELF TO OWNER. Asserting only that the branch CALLS a helper is not
+  // enough: the helper's body is where a regression would actually land. canOwnerOverrideQualification
+  // exists separately from canOverrideUnitBlock precisely so a change aimed at unit-block/OOS
+  // overrides cannot silently widen the DOT driver-qualification stop. This is the single place a
+  // regression could put a non-Owner past a federal hard-stop, so it is asserted literally.
+  if (hasOverrideBranch && !/function canOwnerOverrideQualification\s*\([^)]*\)\s*\{\s*return\s+role\s*===\s*"Owner";\s*\}/.test(svc)) {
+    problems.push(
+      `${SERVICE}: canOwnerOverrideQualification is not pinned to \`role === "Owner"\`. Widening it — ` +
+        `or pointing the qualification gate at the shared canOverrideUnitBlock, which also serves ` +
+        `unit-block/OOS and could be widened for those — would put a non-Owner past a CDL / ` +
+        `DOT-medical hard-stop with this guard still green.`
+    );
+  }
+
+  // A2b — the attestation must name the DISPATCH, not just the driver.
+  if (hasOverrideBranch && !/load_context:\s*loadContext/.test(svc)) {
+    problems.push(
+      `${SERVICE}: the override audit row lost load_context. "Owner attested for driver X" does not ` +
+        `tie the attestation to the specific dispatch it authorized — a DOT reviewer, insurer or ` +
+        `court needs the load/lane/date it applied to.`
+    );
+  }
+
+  // A2 — the class tag and the per-dispatch scope must be on the audit row. These are what make the
+  // record queryable by an insurer/DOT/attorney and what proves the override was NOT a standing bypass.
+  if (hasOverrideBranch) {
+    if (!/override_class:\s*"DOT_QUALIFICATION"/.test(svc)) {
+      problems.push(
+        `${SERVICE}: the override audit row lost override_class: "DOT_QUALIFICATION". That literal is ` +
+          `the query key for the Owner-Override Log — without it these events cannot be pulled as a ` +
+          `class and the report goes blind.`
+      );
+    }
+    if (!/attestation_scope:\s*"single_dispatch"/.test(svc)) {
+      problems.push(
+        `${SERVICE}: the override audit row lost attestation_scope: "single_dispatch". The record must ` +
+          `state on its face that the Owner attested for THIS load only, never "CDL gate off".`
+      );
+    }
+  }
+
+  // A3 — PER-DISPATCH: nothing may persist the override so it suppresses the NEXT load's gate. The
+  // decision may live only in the request. A column/flag/cache that remembers it is a standing bypass.
+  if (/(qualification_override|driver_qualification_override)_(until|expires|active|enabled)/i.test(svc)) {
+    problems.push(
+      `${SERVICE}: something persists a driver-qualification override beyond this request. The ` +
+        `override must be PER-DISPATCH — each load requires a fresh owner attestation.`
+    );
+  }
+
+  // F — the Owner-Override Log must exist AND be mounted (a route file alone is not proof).
+  const logRoute = files[LOG_ROUTE];
+  const index = files[INDEX];
+  if (logRoute == null || !/owner-override-log/.test(logRoute)) {
+    problems.push(
+      `${LOG_ROUTE}: the /api/v1/dispatch/owner-override-log report is missing. An override that ` +
+        `cannot be reviewed as a list is not reviewable in practice.`
+    );
+  }
+  if (index != null && logRoute != null && /owner-override-log/.test(logRoute)) {
+    if (!/registerDispatchRefinementsRoutes\s*\(/.test(index)) {
+      problems.push(
+        `${INDEX}: registerDispatchRefinementsRoutes is not registered, so the Owner-Override Log ` +
+          `route is not mounted — it would 404. A file existing is not proof.`
       );
     }
   }
@@ -103,7 +173,7 @@ function analyse(files) {
 
 function readAll() {
   const out = {};
-  for (const f of [SERVICE, MODAL, PANEL]) out[f] = existsSync(f) ? readFileSync(f, "utf8") : null;
+  for (const f of [SERVICE, MODAL, PANEL, LOG_ROUTE, INDEX]) out[f] = existsSync(f) ? readFileSync(f, "utf8") : null;
   return out;
 }
 
@@ -114,25 +184,60 @@ function selftest() {
   };
 
   const goodSvc =
-    `const ownerOverridingQualification = canOverrideUnitBlock(input.requestingUserRole) && ` +
+    `function canOwnerOverrideQualification(role) { return role === "Owner"; }\n` +
+    `load_context: loadContext,\n` +
+    `const ownerOverridingQualification = canOwnerOverrideQualification(input.requestingUserRole) && ` +
     `typeof input.override_reason === "string" && input.override_reason.trim().length >= 10;\n` +
-    `await appendCrudAudit(client, u, "${OVERRIDE_EVENT}", {});\n` +
+    `await appendCrudAudit(client, u, "${OVERRIDE_EVENT}", { override_class: "DOT_QUALIFICATION", attestation_scope: "single_dispatch" });\n` +
     `error: "E_DRIVER_NOT_QUALIFIED",`;
   const goodModal = `overrideReason={overrideReason}\nonOverrideReasonChange={setOverrideReason}`;
   const goodPanel = `canOwnerOverride = false, onOwnerOverride,`;
 
-  t("wired + owner-gated + reasoned + audited passes", analyse({ [SERVICE]: goodSvc, [MODAL]: goodModal, [PANEL]: goodPanel }).length === 0);
+  const goodLog = `app.get("/api/v1/dispatch/owner-override-log", ...)`;
+  const goodIndex = `await registerDispatchRefinementsRoutes(app);`;
+  const base = { [LOG_ROUTE]: goodLog, [INDEX]: goodIndex };
+
+  t("wired + owner-gated + reasoned + audited + logged passes", analyse({ ...base, [SERVICE]: goodSvc, [MODAL]: goodModal, [PANEL]: goodPanel }).length === 0);
+  t(
+    "helper widened past Owner FAILS",
+    analyse({ ...base, [SERVICE]: goodSvc.replace('return role === "Owner";', 'return ["Owner","Manager"].includes(role);'), [MODAL]: goodModal, [PANEL]: goodPanel }).length === 1
+  );
+  t(
+    "missing load_context FAILS",
+    analyse({ ...base, [SERVICE]: goodSvc.replace("load_context: loadContext,\n", ""), [MODAL]: goodModal, [PANEL]: goodPanel }).length === 1
+  );
+  t(
+    "missing override_class FAILS",
+    analyse({ ...base, [SERVICE]: goodSvc.replace(' override_class: "DOT_QUALIFICATION",', ""), [MODAL]: goodModal, [PANEL]: goodPanel }).length === 1
+  );
+  t(
+    "missing attestation_scope (standing bypass risk) FAILS",
+    analyse({ ...base, [SERVICE]: goodSvc.replace(' attestation_scope: "single_dispatch"', ""), [MODAL]: goodModal, [PANEL]: goodPanel }).length === 1
+  );
+  t(
+    "persisted override flag (standing bypass) FAILS",
+    analyse({ ...base, [SERVICE]: goodSvc + "\nqualification_override_until = $1", [MODAL]: goodModal, [PANEL]: goodPanel }).length === 1
+  );
+  t(
+    "log route missing FAILS",
+    analyse({ ...base, [LOG_ROUTE]: "no report here", [SERVICE]: goodSvc, [MODAL]: goodModal, [PANEL]: goodPanel }).length === 1
+  );
+  t(
+    "log route present but NOT mounted FAILS",
+    analyse({ [LOG_ROUTE]: goodLog, [INDEX]: "nothing registered", [SERVICE]: goodSvc, [MODAL]: goodModal, [PANEL]: goodPanel }).length === 1
+  );
 
   // The REAL pre-fix backend: absolute 422, no override branch.
   t(
     "no override branch FAILS (the original dead end)",
-    analyse({ [SERVICE]: `error: "E_DRIVER_NOT_QUALIFIED",`, [MODAL]: goodModal, [PANEL]: goodPanel }).length === 1
+    analyse({ ...base, [SERVICE]: `error: "E_DRIVER_NOT_QUALIFIED",`, [MODAL]: goodModal, [PANEL]: goodPanel }).length === 1
   );
   // Role check dropped — a Dispatcher could self-authorize.
   t(
     "override without the Owner role check FAILS",
     analyse({
-      [SERVICE]: goodSvc.replace("canOverrideUnitBlock(input.requestingUserRole) && ", ""),
+      ...base,
+      [SERVICE]: goodSvc.replace("canOwnerOverrideQualification(input.requestingUserRole) && ", ""),
       [MODAL]: goodModal,
       [PANEL]: goodPanel,
     }).length === 1
@@ -141,6 +246,7 @@ function selftest() {
   t(
     "override without the >=10 char reason FAILS",
     analyse({
+      ...base,
       [SERVICE]: goodSvc.replace('input.override_reason.trim().length >= 10', "true"),
       [MODAL]: goodModal,
       [PANEL]: goodPanel,
@@ -149,16 +255,16 @@ function selftest() {
   // The gate itself removed — override must not replace the block.
   t(
     "gate removed entirely FAILS",
-    analyse({ [SERVICE]: goodSvc.replace(`error: "E_DRIVER_NOT_QUALIFIED",`, ""), [MODAL]: goodModal, [PANEL]: goodPanel }).length === 1
+    analyse({ ...base, [SERVICE]: goodSvc.replace(`error: "E_DRIVER_NOT_QUALIFIED",`, ""), [MODAL]: goodModal, [PANEL]: goodPanel }).length === 1
   );
   // The REAL pre-fix frontend: props never passed.
   t(
     "unwired modal FAILS (textarea inert)",
-    analyse({ [SERVICE]: goodSvc, [MODAL]: `onValidationChange={cb}`, [PANEL]: goodPanel }).length === 1
+    analyse({ ...base, [SERVICE]: goodSvc, [MODAL]: `onValidationChange={cb}`, [PANEL]: goodPanel }).length === 1
   );
   t(
     "panel affordance removed FAILS",
-    analyse({ [SERVICE]: goodSvc, [MODAL]: goodModal, [PANEL]: `const x = 1;` }).length === 1
+    analyse({ ...base, [SERVICE]: goodSvc, [MODAL]: goodModal, [PANEL]: `const x = 1;` }).length === 1
   );
 
   // Exit INSIDE selftest — verify-selftests-can-fail.mjs treats "collects failures but cannot exit
@@ -172,7 +278,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) {
   selftest();
-  console.log(`${LABEL} selftest OK — 7 cases (1 pass-shape, 6 fail-shapes incl. both real defects)`);
+  console.log(`${LABEL} selftest OK — 14 cases (1 pass-shape, 13 fail-shapes incl. both real defects, helper-widening, missing load context, standing-bypass, unmounted-report)`);
   process.exit(0);
 }
 

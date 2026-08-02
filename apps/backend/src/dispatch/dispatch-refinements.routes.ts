@@ -1,6 +1,8 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
+import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
 import {
   createLoadTemplate,
@@ -80,7 +82,75 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
   return req.user!;
 }
 
+const ownerOverrideLogQuery = z.object({
+  operating_company_id: z.string().uuid(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
 export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
+  // OWNER-OVERRIDE LOG (owner ruling 2026-08-02). Read-only report of every owner attestation that
+  // pushed a dispatch past a blocker: who, when, which load/driver, which blocker codes, and the
+  // reason given. Queried by the stable `override_class` tag rather than by prose, so an insurer,
+  // DOT/FMCSA reviewer or attorney can pull exactly this event class.
+  //
+  // Reads audit.audit_events, which is APPEND-ONLY (WORM) — this endpoint only SELECTs; there is no
+  // edit or delete path for an override record anywhere in the system, by design.
+  app.get("/api/v1/dispatch/owner-override-log", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const q = ownerOverrideLogQuery.safeParse(req.query ?? {});
+    if (!q.success) return sendZodValidation(reply, q.error);
+
+    // G2-2: the requested opco is CLIENT-SUPPLIED, so it must pass a membership check before it is
+    // bound as tenant scope — otherwise any authenticated user could read another entity's override
+    // log by passing its uuid. Caught by verify-money-dispatch-opco-resolver on the first run of this
+    // route; the guard was right.
+    // Throws a 403-tagged error (statusCode 403) when the user has no active membership — the same
+    // shape every other caller relies on, so Fastify's error handler renders it consistently.
+    await assertCompanyMembership(user.uuid, q.data.operating_company_id);
+
+    return withCurrentUser(user.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [
+        q.data.operating_company_id,
+      ]);
+      const res = await client.query(
+        `
+          SELECT
+            e.uuid::text            AS id,
+            e.created_at,
+            e.event_class,
+            e.actor_user_uuid::text AS actor_user_id,
+            e.payload->>'role'                 AS actor_role,
+            e.payload->>'override_class'       AS override_class,
+            e.payload->>'attestation_scope'    AS attestation_scope,
+            e.payload->>'override_reason'      AS override_reason,
+            e.payload->>'driver_id'            AS driver_id,
+            e.payload->>'driver_name'          AS driver_name,
+            e.payload->'overridden_reasons'    AS overridden_reasons,
+            e.payload->>'cdl_expires_at'       AS cdl_expires_at,
+            e.payload->>'medical_expiry_date'  AS medical_expiry_date
+          FROM audit.audit_events e
+          WHERE e.payload->>'operating_company_id' = $1
+            AND e.event_class LIKE 'dispatch.%overridden_by_owner'
+          ORDER BY e.created_at DESC
+          LIMIT $2 OFFSET $3
+        `,
+        [q.data.operating_company_id, q.data.limit, q.data.offset]
+      );
+      const countRes = await client.query<{ total: number }>(
+        `
+          SELECT count(*)::int AS total
+          FROM audit.audit_events e
+          WHERE e.payload->>'operating_company_id' = $1
+            AND e.event_class LIKE 'dispatch.%overridden_by_owner'
+        `,
+        [q.data.operating_company_id]
+      );
+      return { overrides: res.rows, total: countRes.rows[0]?.total ?? 0 };
+    });
+  });
+
   app.post("/api/v1/loads/:loadId/reassign", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
