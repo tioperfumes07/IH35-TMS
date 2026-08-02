@@ -28,13 +28,19 @@ const SELFTEST = process.argv.includes("--selftest");
 const FILES = [
   {
     rel: "apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx",
-    needs: ["DriverPickerWithCreate", "Combobox"],
+    needs: ["DriverPickerWithCreate", "Combobox", "CreateUnitModal"],
     testids: ["dot-inspection-driver-picker", "dot-inspection-unit-picker"],
+    unitInlineCreate: true,
   },
   {
     rel: "apps/frontend/src/pages/safety/tabs/HOSViolationsTab.tsx",
     needs: ["DriverPickerWithCreate"],
     testids: ["hos-violation-driver-picker"],
+  },
+  {
+    rel: "apps/frontend/src/pages/safety/components/HosViolationCreateModal.tsx",
+    needs: ["DriverPickerWithCreate"],
+    testids: ["hos-violation-create-modal"],
   },
 ];
 
@@ -45,7 +51,7 @@ const stripComments = (s) =>
 
 export function assertCreatorPickers(sources) {
   const problems = [];
-  for (const { rel, needs, testids } of FILES) {
+  for (const { rel, needs, testids, unitInlineCreate } of FILES) {
     const code = stripComments(sources?.[rel] ?? read(rel));
 
     for (const field of ["driver_id", "unit_id"]) {
@@ -61,6 +67,14 @@ export function assertCreatorPickers(sources) {
     for (const comp of needs) {
       if (!code.includes(comp)) {
         problems.push(`${rel}: does not use ${comp} — the reference field has no real catalog behind it.`);
+      }
+    }
+
+    if (unitInlineCreate) {
+      if (!/allowAddNew[\s\S]{0,120}\+ Create unit/.test(code)) {
+        problems.push(
+          `${rel}: unit picker missing inline "+ Create unit" (allowAddNew) — 7-clause picker law requires first-row create.`
+        );
       }
     }
 
@@ -120,6 +134,16 @@ if (SELFTEST) {
     'missing data-testid="dot-inspection-unit-picker"'
   );
 
+  // Case 4: unit inline create removed.
+  expectCaught(
+    "unit-inline-create-removed",
+    {
+      ...live,
+      [target]: live[target].replace('label: "+ Create unit",', 'label: "Add unit",'),
+    },
+    'unit picker missing inline "+ Create unit"'
+  );
+
   // Negative: a comment merely QUOTING the banned placeholder must not trip the rule.
   const commentOnly = assertCreatorPickers({
     ...live,
@@ -137,7 +161,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 3 planted defects caught, comment-only mention not flagged`);
+  console.log(`${LABEL} SELFTEST PASS — 4 planted defects caught, comment-only mention not flagged`);
   process.exit(0);
 }
 

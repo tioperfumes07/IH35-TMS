@@ -12,6 +12,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { InspectionScoreBadge } from "../../../components/safety/InspectionScoreBadge";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { Combobox } from "../../../components/Combobox";
+import { CreateUnitModal } from "../../../components/fleet/CreateUnitModal";
 import { listUnits } from "../../../api/mdata";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -143,6 +144,7 @@ export function DOTInspectionsTab() {
   // unselectable, with nothing on screen saying so — a DOT inspection could not be filed against the
   // truck it actually happened to. The typed term goes to the server, which already supports search.
   const [unitSearch, setUnitSearch] = useState("");
+  const [unitCreateOpen, setUnitCreateOpen] = useState(false);
   const unitsQuery = useQuery({
     queryKey: ["dot-inspection-units", companyId, unitSearch],
     queryFn: () => listUnits({ operating_company_id: companyId, limit: 200, search: unitSearch || undefined }),
@@ -184,6 +186,10 @@ export function DOTInspectionsTab() {
             placeholder="Search unit…"
             onSearch={setUnitSearch}
             loading={unitsQuery.isLoading}
+            allowAddNew={{
+              label: "+ Create unit",
+              onAdd: () => setUnitCreateOpen(true),
+            }}
             onChange={(next) => setForm((v) => ({ ...v, unit_id: next ?? "" }))}
           />
         </div>
@@ -266,6 +272,16 @@ export function DOTInspectionsTab() {
           if (!voidTargetId) return;
           await voidMutation.mutateAsync({ id: voidTargetId, reason });
           setVoidTargetId(null);
+        }}
+      />
+      <CreateUnitModal
+        open={unitCreateOpen}
+        operatingCompanyId={companyId}
+        onClose={() => setUnitCreateOpen(false)}
+        onCreated={(createdId) => {
+          setForm((v) => ({ ...v, unit_id: createdId }));
+          setUnitCreateOpen(false);
+          void unitsQuery.refetch();
         }}
       />
     </div>
