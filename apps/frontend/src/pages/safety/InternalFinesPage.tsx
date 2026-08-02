@@ -222,6 +222,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
               void queryClient.invalidateQueries({
                 queryKey: ["catalogs", "safety", "internal-fine-reasons", "picker", operatingCompanyId],
               });
+              void reasonsQuery.refetch();
             }}
           />
           {/* M-1 (GUARD inline FAIL): this is the inline-create fine AMOUNT (sent to createInternalFine as
