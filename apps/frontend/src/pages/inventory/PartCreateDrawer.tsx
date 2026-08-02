@@ -4,6 +4,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { Button } from "../../components/Button";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import {
+  PART_INVENTORY_CATEGORIES,
+  formatPartInventoryCategoryLabel,
+} from "./partInventoryCategories";
 
 interface PartCreateDrawerProps {
   isOpen: boolean;
@@ -114,13 +119,26 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium">Category</label>
-            <input
+            {/* INV-CAT-01: real SelectCombobox — not free-text with a picker-shaped placeholder.
+                Options = PART_INVENTORY_CATEGORIES (maintenance.parts_inventory.category taxonomy).
+                Do not seed/read deprecated catalogs.parts. */}
+            <label className="block text-sm font-medium" htmlFor="inv-part-category">
+              Category
+            </label>
+            <SelectCombobox
+              id="inv-part-category"
               className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              placeholder="Select or add category"
-            />
+              aria-label="Part category"
+            >
+              <option value="">Select category…</option>
+              {PART_INVENTORY_CATEGORIES.map((code) => (
+                <option key={code} value={code}>
+                  {formatPartInventoryCategoryLabel(code)}
+                </option>
+              ))}
+            </SelectCombobox>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
