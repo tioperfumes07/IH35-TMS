@@ -47,19 +47,31 @@ if (dispatch) {
 }
 
 // ---------------------------------------------------------------------------
-// 3. Settlements list — TableHeaderCell-driven ASC/DESC on every real data column + URL persistence.
+// 3. Settlements list — ParityTable + useUrlSort ASC/DESC on every real data column
+//    (migrated off TableHeaderCell; sortValue per ParityColumn replaces settlementSortValue).
 // ---------------------------------------------------------------------------
 const settlementsPath = "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx";
 const settlements = read(settlementsPath);
 if (settlements) {
   if (!/useUrlSort/.test(settlements)) failures.push(`${settlementsPath}: must wire useUrlSort (URL-persisted sort)`);
-  if (!/TableHeaderCell/.test(settlements)) failures.push(`${settlementsPath}: must render sortable headers via TableHeaderCell`);
+  if (!/ParityTable/.test(settlements)) {
+    failures.push(`${settlementsPath}: must render via ParityTable (sortable headers + resize)`);
+  }
+  if (/TableHeaderCell/.test(settlements)) {
+    failures.push(`${settlementsPath}: must not regress to TableHeaderCell after ParityTable migration`);
+  }
   for (const col of ["driver", "period", "gross", "deductions", "net_pay", "status", "debt_flag"]) {
     if (!new RegExp(`key:\\s*["']${col}["'][^}]*sortable:\\s*true`).test(settlements)) {
       failures.push(`${settlementsPath}: column "${col}" must be sortable: true`);
     }
   }
-  if (!/settlementSortValue/.test(settlements)) failures.push(`${settlementsPath}: must define settlementSortValue for client-side sort`);
+  // Per-column sortValue on ParityColumn is the client-side sort contract (was settlementSortValue).
+  if (!/sortValue:\s*\(row\)/.test(settlements)) {
+    failures.push(`${settlementsPath}: must define ParityColumn sortValue for client-side sort`);
+  }
+  if (!/onSortChange=\{onSortChange\}/.test(settlements)) {
+    failures.push(`${settlementsPath}: must wire ParityTable onSortChange from useUrlSort`);
+  }
 }
 
 // ---------------------------------------------------------------------------
