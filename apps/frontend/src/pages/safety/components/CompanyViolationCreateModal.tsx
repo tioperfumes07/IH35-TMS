@@ -45,20 +45,28 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
   );
 
   const mutation = useMutation({
-    mutationFn: () =>
-      createCompanyViolation(operatingCompanyId, {
+    mutationFn: () => {
+      // SAF-F15: catalogs.company_violation_types must be selected — free-text / enum-only creates
+      // left violation_type_uuid NULL so Lists catalog rows never joined.
+      if (!violationTypeUuid) {
+        throw new Error("Violation type (catalog) is required");
+      }
+      return createCompanyViolation(operatingCompanyId, {
         violation_type: violationType,
-        violation_type_uuid: violationTypeUuid || null,
+        violation_type_uuid: violationTypeUuid,
         violation_severity: severity,
         reported_date: reportedDate,
         description,
         corrective_action_plan: correctivePlan || null,
-      }),
+      });
+    },
     onSuccess: () => {
       onCreated();
       onClose();
     },
   });
+
+  const canSubmit = Boolean(violationTypeUuid) && description.trim().length > 0;
 
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title="Create Company Violation">
@@ -71,24 +79,8 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
         }}
       >
         <div className="grid gap-3 md:grid-cols-2">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Violation type</label>
-            <SelectCombobox
-              value={violationType}
-              onChange={(event) => setViolationType(event.target.value)}
-              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
-            >
-              <option value="FMCSA_audit">FMCSA audit</option>
-              <option value="DOT_inspection">DOT inspection</option>
-              <option value="CSA_intervention">CSA intervention</option>
-              <option value="state_audit">State audit</option>
-              <option value="IRP">IRP</option>
-              <option value="IFTA">IFTA</option>
-              <option value="other">Other</option>
-            </SelectCombobox>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Violation type (catalog)</label>
+          <div className="flex flex-col gap-1 md:col-span-2">
+            <label className="text-xs font-semibold text-gray-600">Violation type (catalog) *</label>
             {/*
               LST-PICKER-01: External Combobox mini-create is not VERIFY-2.
               ReferenceSelect first-row create → POST catalogs.company_violation_types.
@@ -109,7 +101,26 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
               }}
             />
             <span className="text-[11px] text-gray-500">
-              Carries the catalogued default fine amount. Without it the amount cannot resolve.
+              Required. Carries the catalogued default fine amount. Without it the amount cannot resolve.
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Source category</label>
+            <SelectCombobox
+              value={violationType}
+              onChange={(event) => setViolationType(event.target.value)}
+              className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+            >
+              <option value="FMCSA_audit">FMCSA audit</option>
+              <option value="DOT_inspection">DOT inspection</option>
+              <option value="CSA_intervention">CSA intervention</option>
+              <option value="state_audit">State audit</option>
+              <option value="IRP">IRP</option>
+              <option value="IFTA">IFTA</option>
+              <option value="other">Other</option>
+            </SelectCombobox>
+            <span className="text-[11px] text-gray-500">
+              DOT/FMCSA axis (not a substitute for the Lists catalog type above).
             </span>
           </div>
           <div className="flex flex-col gap-1">
@@ -157,7 +168,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" loading={mutation.isPending}>
+          <Button type="submit" loading={mutation.isPending} disabled={!canSubmit}>
             Save violation
           </Button>
         </div>
