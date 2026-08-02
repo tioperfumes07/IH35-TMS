@@ -77,7 +77,7 @@ evidence, **per entity**. A `PASS` verdict is TRANSP-only unless the `Entity` co
 | Compliance | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Driver Profile | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
 | Driver Profile | B | TRANSP | PASS/OPEN | Roster consistent; possible duplicate name OPEN | 2026-08-01 | Cascade | | |
-| Driver Profile | C | TRANSP | UNVERIFIED | Not yet traced (driver→settlement→GL) | 2026-08-02 | Cascade | | |
+| Driver Profile | C | TRANSP | PASS (honest-empty) | Same chain as Settlements Layer C, viewed from driver end: 98 real TRANSP drivers exist (`mdata.drivers`), but `driver_finance.driver_settlements`/`driver_advances`/`driver_reimbursements`/`deduction_schedule` are all 0 rows company-wide. Posters already code-verified sound in `LAYERC-settlements-GL-2026-08-02.md` — same finding, not re-derived | 2026-08-02 | Cascade | | |
 | Driver Profile | D | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Driver Profile | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Fleet | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
