@@ -56,6 +56,15 @@ export function extractSchemaReferences(src) {
     const lineStart = src.lastIndexOf("\n", idx) + 1;
     const linePrefix = src.slice(lineStart, idx);
     if (linePrefix.includes("//")) continue;
+    // ACCT-F84 — `IS DISTINCT FROM <alias>.<col>` is a comparison OPERATOR, not a table source. The
+    // scanner read the FROM of that operator as the start of a table reference and demanded a
+    // GRANT USAGE for a schema named after the alias. That is the origin of most of
+    // SQL_FALSE_SCHEMAS below: `qi`, `bp`, `agg`, `self_acct`, `twin_bt`… were each appended after a
+    // real PR went red, one alias at a time. Allowlisting an alias fixes one PR; the NEXT new alias
+    // in a DISTINCT-FROM comparison breaks the next one. Matching the operator is the root fix, so
+    // the list stops growing. (It is left in place — entries also cover other shapes, and pruning it
+    // here would be unrelated churn on a guard this change is only passing through.)
+    if (/\bDISTINCT\s+$/i.test(src.slice(Math.max(0, idx - 32), idx))) continue;
     schemas.add(m[2].toLowerCase());
   }
   return schemas;
@@ -121,6 +130,23 @@ function runSelfTest() {
   const commentSchemas = extractSchemaReferences(commentSrc);
   if (commentSchemas.has("r2")) {
     failures.push('FAIL: "// Downloaded from R2." was read as schema "r2" (line-comment not ignored)');
+  }
+
+  // 1b. ACCT-F84 — `IS DISTINCT FROM <alias>.<col>` is an operator, not a table source. Both
+  //     directions are asserted: the alias must NOT become a schema, and a REAL `FROM <schema>.` on
+  //     the same line must still be picked up, so the operator fix cannot blind the scanner.
+  const distinctFromSrc = "AND COALESCE(qi.sku, ci.item_code) IS DISTINCT FROM ci.item_code";
+  const distinctSchemas = extractSchemaReferences(distinctFromSrc);
+  if (distinctSchemas.has("ci")) {
+    failures.push('FAIL: "IS DISTINCT FROM ci.item_code" was read as schema "ci" (operator not excluded)');
+  }
+  const realFromSrc = "SELECT 1 FROM catalogs.items WHERE a IS DISTINCT FROM ci.item_code";
+  const realFromSchemas = extractSchemaReferences(realFromSrc);
+  if (!realFromSchemas.has("catalogs")) {
+    failures.push('FAIL: a real "FROM catalogs." was dropped — the DISTINCT-FROM exclusion is too broad');
+  }
+  if (realFromSchemas.has("ci")) {
+    failures.push('FAIL: "IS DISTINCT FROM ci." was still read as a schema alongside a real FROM');
   }
 
   // 2. Same prose inside a /* */ block comment must also be ignored.
