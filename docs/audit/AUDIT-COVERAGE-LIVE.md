@@ -54,9 +54,10 @@ evidence, **per entity**. A `PASS` verdict is TRANSP-only unless the `Entity` co
 | Fuel | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Dispatch | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
 | Dispatch | B | TRANSP | UNVERIFIED | Badge resolved; rest not re-checked | 2026-08-01 | Cascade | | |
-| Dispatch | C | TRANSP | FAIL | `units_with_dispatch_status` dead view disables 3 pre-dispatch safety gates | 2026-08-01 | Cascade | | |
+| Dispatch | C | TRANSP | FAIL | `units_with_dispatch_status` dead view disables 3 pre-dispatch safety gates. CODER fix pulled 2026-08-02: `scripts/verify-steps/1977-verify-dispatch-oos-gate-not-view-dependent.mjs`, `1979-verify-dispatch-status-view-not-stub.mjs` — NOT YET LIVE-RE-VERIFIED by Cascade; Status/Block/PR are CODER/GUARD-owned, left blank here by design | 2026-08-01 | Cascade | | |
 | Dispatch | C | TRANSP | SUPERSEDED (see below) — was wrongly marked PASS (load→invoice→AR→GL) off 1 hand-picked example | superseded by `CRITICAL-CORRECTION-invoice-bill-payment-GL-DARK-2026-08-02.md` | 2026-08-01 | Cascade | | |
-| Dispatch | C | TRANSP | FAIL | Retraction of above: 1 of 11,977 invoices ($40.7M) ever posted to GL company-wide; new class `CLS-SUBLEDGER-GL-DARK`. See `CRITICAL-CORRECTION-invoice-bill-payment-GL-DARK-2026-08-02.md` | 2026-08-02 | Cascade | | |
+| Dispatch | C | TRANSP | FAIL | SUPERSEDED (see 2026-08-02 row below) — retraction of above: 1 of 11,977 invoices ($40.7M) ever posted to GL company-wide; new class `CLS-SUBLEDGER-GL-DARK`. See `CRITICAL-CORRECTION-invoice-bill-payment-GL-DARK-2026-08-02.md` | 2026-08-02 | Cascade | | |
+| Dispatch | C | TRANSP | POSTING BEING ENABLED (owner decision 2026-08-02) — UNVERIFIABLE-UNTIL-FLAG-LIVE, not FAIL, not PASS | Reclassification: the un-journalized invoice population documented above was posting-flag-OFF-by-design, not a defect. Per owner decision 2026-08-02, all TMS posting flags are being turned ON (QBO write-back stays OFF separately). Pre-flip population counts stand as the honest baseline to re-check against post-flip. Real task: re-verify Layer C after flag flip via `verify-chain-06-invoice-ar-chain-proof` plus a fresh live population count, not a repeat of the pre-flip snapshot | 2026-08-02 | Cascade | | |
 | Dispatch | D | TRANSP | PASS | Load-cancellation-reason picker: `catalogs.load_cancellation_reasons`, 21 real rows, double-confirmed | 2026-08-01 | Cascade | | |
 | Dispatch | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Maintenance | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
@@ -66,7 +67,7 @@ evidence, **per entity**. A `PASS` verdict is TRANSP-only unless the `Entity` co
 | Maintenance | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Safety | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
 | Safety | B | TRANSP | FAIL | 3 dead-stub views: `safety_dashboard_kpis`, `safety_events_with_driver`, `liabilities_active_with_context` | 2026-08-01 | Cascade | | |
-| Safety | C | TRANSP | UNVERIFIED | Not yet traced (internal_fines/liabilities→GL) — next in Layer-C queue | 2026-08-02 | Cascade | | |
+| Safety | C | TRANSP | PASS (honest-empty) | Two parallel chains traced structurally: (1) `safety.internal_fines.driver_liability_id`→`driver_finance.driver_liabilities` — column exists but has NO enforced FK constraint (structural gap, minor); (2) `safety.civil_fines`→`accounting.civil_fine_postings.expense_je_id`→`accounting.journal_entries` — clean FK-enforced chain. BOTH chains are 0 rows across ALL companies in the entire DB (`safety.internal_fines`=0, `safety.civil_fines`=0, `driver_finance.driver_liabilities`=0, `accounting.civil_fine_postings`=0) — genuine data scarcity, not a defect | 2026-08-02 | Cascade | | |
 | Safety | D | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Safety | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Compliance | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
@@ -86,7 +87,8 @@ evidence, **per entity**. A `PASS` verdict is TRANSP-only unless the `Entity` co
 | Fleet | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Insurance | A | TRANSP | PASS | Claims crash FIXED (#3998), now unblocked | 2026-08-01 | Cascade | | |
 | Insurance | B | TRANSP | OPEN | 0 policies — confirmed genuine data gap, not code bug | 2026-08-01 | Cascade | | |
-| Insurance | C | TRANSP | PARTIAL (structural PASS, blocked-on-data) | `INSURANCE-claim-depth-bar-2026-08-02.md` — 6/9 hops live/code-complete; 2 confirmed structural gaps (claim→deductions no FK; claim→liability wired only to internal_fines); live data walk blocked on 0 policies | 2026-08-02 | Cascade | | |
+| Insurance | C | TRANSP | PARTIAL (structural PASS, blocked-on-data) | `INSURANCE-claim-depth-bar-2026-08-02.md` — 6/9 hops live/code-complete; 2 confirmed structural gaps (claim→deductions no FK; claim→liability wired only to internal_fines); live data walk blocked on 0 policies. CODER fix pulled 2026-08-02: commit `#4003 "wire a claim to the money side"`, `1983-verify-insurance-claim-linkage.mjs` — appears to directly target the 2 structural gaps above; NOT YET LIVE-RE-VERIFIED by Cascade; Status/Block/PR are CODER/GUARD-owned, left blank here by design | 2026-08-02 | Cascade | | |
+| Insurance | C | TRANSP | PARTIAL — schema-level corroboration of #4003 fix | Live schema re-check (during Safety Layer C sweep) confirms `insurance.claim` now HAS a real FK constraint `claim_liability_id_fkey` → `driver_finance.driver_liabilities(id)` (ON DELETE SET NULL) — this did not exist at the original 2026-08-02 structural walk. Confirms #4003 landed at the schema level. Still NOT live-re-walked with an actual claim row (0 policies/claims blocks that) — structural confirmation only, not a live-data PASS | 2026-08-02 | Cascade | | |
 | Insurance | D | TRANSP | PASS | Unit/Asset combobox verified real+working | 2026-08-02 | Cascade | | |
 | Insurance | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Legal | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
@@ -106,14 +108,15 @@ evidence, **per entity**. A `PASS` verdict is TRANSP-only unless the `Entity` co
 | Settlements | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Accounting | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
 | Accounting | B | TRANSP | PASS (caveat) | Trial Balance exact-to-penny GL match — only proves internal consistency of a 172-row GL, not that it reflects the true ~34,000-row AR/AP subledger. See `CRITICAL-CORRECTION-invoice-bill-payment-GL-DARK-2026-08-02.md` | 2026-08-02 | Cascade | | |
-| Accounting | C | TRANSP | FAIL | Bills→Vendor link wrong column, 404s (separate finding, still stands) | 2026-08-01 | Cascade | | |
+| Accounting | C | TRANSP | FAIL | Bills→Vendor link wrong column, 404s (separate finding, still stands, independent of the posting-flag reclassification below). CODER fix pulled 2026-08-02: `scripts/verify-steps/1969-verify-bill-vendor-link-canonical-uuid.mjs`, commit `#4003`/`#4002`-adjacent batch — NOT YET LIVE-RE-VERIFIED by Cascade; Status/Block/PR columns are CODER/GUARD-owned, left blank here by design | 2026-08-01 | Cascade | | |
 | Accounting | C | TRANSP | SUPERSEDED — was wrongly marked PASS (invoice→AR→GL posting engine live-verified, both entities) off 1 hand-picked example | superseded by `CRITICAL-CORRECTION-invoice-bill-payment-GL-DARK-2026-08-02.md` | 2026-08-01 | Cascade | | |
-| Accounting | C | TRANSP | FAIL — HIGHEST-DOLLAR FINDING OF AUDIT | `CRITICAL-CORRECTION-invoice-bill-payment-GL-DARK-2026-08-02.md`: 0 of 3,195 bills ($26.7M), 0 of 12,123 customer payments ($39.9M), 0 of 6,543 bill payments, 1 of 11,977 invoices ($40.7M) ever posted to GL despite flag ON. Root cause: invoice/bill create+send routes never call the posting engine; only manual per-row POST or never-scheduled backfill does. Class `CLS-SUBLEDGER-GL-DARK` | 2026-08-02 | Cascade | | |
+| Accounting | C | TRANSP | FAIL — HIGHEST-DOLLAR FINDING OF AUDIT | SUPERSEDED (see 2026-08-02 reclassification row below) — `CRITICAL-CORRECTION-invoice-bill-payment-GL-DARK-2026-08-02.md`: 0 of 3,195 bills ($26.7M), 0 of 12,123 customer payments ($39.9M), 0 of 6,543 bill payments, 1 of 11,977 invoices ($40.7M) ever posted to GL despite flag ON. Root cause: invoice/bill create+send routes never call the posting engine; only manual per-row POST or never-scheduled backfill does. Class `CLS-SUBLEDGER-GL-DARK` | 2026-08-02 | Cascade | | |
+| Accounting | C | TRANSP | POSTING BEING ENABLED (owner decision 2026-08-02) — UNVERIFIABLE-UNTIL-FLAG-LIVE, not FAIL, not PASS | Reclassification: un-journalized invoice/bill/payment population was posting-flag-OFF-by-design, not a defect. Per owner decision 2026-08-02, all TMS posting flags going ON (QBO write-back stays OFF). Pre-flip population counts ($40.7M invoices / $26.7M bills / $39.9M payments, 0 posted) stand as honest baseline. Real task: re-verify via `verify-chain-06-invoice-ar-chain-proof` + fresh population count post-flip, both entities | 2026-08-02 | Cascade | | |
 | Accounting | C | USMCA | PASS (single test row) | 1 real bill ($1.00) posted successfully — proves poster itself works; corroborates root cause is "nothing calls it," not a broken poster | 2026-08-02 | Cascade | | |
 | Accounting | D | TRANSP | PASS | JE-type (`catalogs.journal_entry_types`, 16 rows) / category (`catalogs.qbo_categories`, real writable) / Accounts-CoA (`catalogs.accounts`, 399 rows, create-gate confirmed OFF/live) | 2026-08-02 | Cascade | | |
 | Accounting | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Banking | A | TRANSP | PARTIAL | `LAYERA-E-banking-received-view-2026-08-02.md` — 1,255 real credits exist, paginate fully (no silent cap), but no single view ever shows all 1,255 at once (single-account-scoped, no aggregate; split 527/201/326/73/20/108 across 6 accounts × 3 review tabs) | 2026-08-02 | Cascade | | |
-| Banking | B | TRANSP | FAIL | P0 cash-KPI 100x scale bug + P1 1 dead-stub tile view | 2026-08-01 | Cascade | | |
+| Banking | B | TRANSP | FAIL | P0 cash-KPI 100x scale bug + P1 1 dead-stub tile view. CODER fix pulled 2026-08-02: `scripts/verify-steps/1973-verify-banking-cash-kpi-cents-unit.mjs` — NOT YET LIVE-RE-VERIFIED by Cascade; Status/Block/PR are CODER/GUARD-owned, left blank here by design | 2026-08-01 | Cascade | | |
 | Banking | B | USMCA | PASS | 100x-scale bug does NOT reproduce; fix holds cross-entity (USMCA Cash Posting $93.68 ≈ Home $94) | 2026-08-01 | Cascade | | |
 | Banking | C | TRANSP | PASS | `LAYERC-banking-GL-2026-08-02.md` — bank-categorization→JE 167/167, transfers→JE 3/3, zero gap, full population | 2026-08-02 | Cascade | | |
 | Banking | C | USMCA | PASS | Same chain 3/3 bank-categorization→JE, 1/1 transfers→JE, zero gap | 2026-08-02 | Cascade | | |
@@ -131,12 +134,14 @@ evidence, **per entity**. A `PASS` verdict is TRANSP-only unless the `Entity` co
 | Finance Hub | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Customers | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
 | Customers | B | TRANSP | PASS | Roster consistent | 2026-08-01 | Cascade | | |
-| Customers | C | TRANSP | FAIL | Same `CLS-SUBLEDGER-GL-DARK` chain traced via top customer "Unlimited Logistics" (538 invoices, 0 posted). `CRITICAL-CORRECTION-invoice-bill-payment-GL-DARK-2026-08-02.md` | 2026-08-02 | Cascade | | |
+| Customers | C | TRANSP | FAIL | SUPERSEDED (see 2026-08-02 reclassification row below) — same `CLS-SUBLEDGER-GL-DARK` chain traced via top customer "Unlimited Logistics" (538 invoices, 0 posted). `CRITICAL-CORRECTION-invoice-bill-payment-GL-DARK-2026-08-02.md` | 2026-08-02 | Cascade | | |
+| Customers | C | TRANSP | POSTING BEING ENABLED (owner decision 2026-08-02) — UNVERIFIABLE-UNTIL-FLAG-LIVE, not FAIL, not PASS | Same reclassification as Dispatch/Accounting — posting-flag-OFF-by-design, not a defect. Re-verify customer→invoice→AR→GL chain post-flip | 2026-08-02 | Cascade | | |
 | Customers | D | TRANSP | PASS | Payment-terms clauses 1/2/3/4/6/7 confirmed via shared-component architecture + Neon schema; clause 5 test-write inconclusive | 2026-08-01 | Cascade | | |
 | Customers | E | TRANSP | FAIL | Edit/New-transaction button chrome inconsistency | 2026-08-01 | Cascade | | |
 | Vendors | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
 | Vendors | B | TRANSP | PASS | Roster consistent | 2026-08-01 | Cascade | | |
-| Vendors | C | TRANSP | FAIL | Same `CLS-SUBLEDGER-GL-DARK` chain, AP side: 0 of 3,195 TRANSP bills ($26.7M) ever posted to GL. `CRITICAL-CORRECTION-invoice-bill-payment-GL-DARK-2026-08-02.md` | 2026-08-02 | Cascade | | |
+| Vendors | C | TRANSP | FAIL | SUPERSEDED (see 2026-08-02 reclassification row below) — same `CLS-SUBLEDGER-GL-DARK` chain, AP side: 0 of 3,195 TRANSP bills ($26.7M) ever posted to GL. `CRITICAL-CORRECTION-invoice-bill-payment-GL-DARK-2026-08-02.md` | 2026-08-02 | Cascade | | |
+| Vendors | C | TRANSP | POSTING BEING ENABLED (owner decision 2026-08-02) — UNVERIFIABLE-UNTIL-FLAG-LIVE, not FAIL, not PASS | Same reclassification, AP side — posting-flag-OFF-by-design, not a defect. Re-verify vendor→bill→AP→GL chain post-flip | 2026-08-02 | Cascade | | |
 | Vendors | D | TRANSP | PASS | Vendor quick-create: `mdata.vendors`, 950 real rows, `createVendor()`→`POST /api/v1/mdata/vendors` confirmed | 2026-08-01 | Cascade | | |
 | Vendors | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Inventory | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
@@ -155,7 +160,7 @@ evidence, **per entity**. A `PASS` verdict is TRANSP-only unless the `Entity` co
 | Lists | D | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Lists | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Reports | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
-| Reports | B | TRANSP | MIXED | 3 PASS exact-to-penny (Trial Balance, Balance Sheet, Company Overview); 2 CONFIRMED FAIL root-caused (A/P Aging 404 missing route; Fuel Reconciliation field-name mismatch, KPI tiles show $0 despite real data); 3 UNVERIFIED suspicious zero-row; 3 honest-empty; 3 unexecuted | 2026-08-01 | Cascade | | |
+| Reports | B | TRANSP | MIXED | 3 PASS exact-to-penny (Trial Balance, Balance Sheet, Company Overview); 2 CONFIRMED FAIL root-caused (A/P Aging 404 missing route; Fuel Reconciliation field-name mismatch, KPI tiles show $0 despite real data); 3 UNVERIFIED suspicious zero-row; 3 honest-empty; 3 unexecuted. CODER fix pulled 2026-08-02: commit `#4002 "mount the A/P aging route"`, `1981-verify-fuel-recon-totals-contract.mjs` — NOT YET LIVE-RE-VERIFIED by Cascade; Status/Block/PR are CODER/GUARD-owned, left blank here by design | 2026-08-01 | Cascade | | |
 | Reports | C | TRANSP | N/A | Reports are read-only compilations, no independent GL primitive | 2026-08-01 | Cascade | | |
 | Reports | D | TRANSP | N/A | No pickers | 2026-08-01 | Cascade | | |
 | Reports | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
