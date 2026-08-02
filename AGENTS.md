@@ -1,5 +1,15 @@
 # IH35-TMS — Agent coordination
 
+> **★★★ BEFORE ANY BLOCK — READ [docs/audit/AUDIT-COVERAGE-LIVE.md](docs/audit/AUDIT-COVERAGE-LIVE.md).**
+> It is the single source of truth for what is actually broken. **Your work list = its rows where
+> `Verdict = FAIL` and `Status = OPEN` in your lane.** Do not invent a work list, do not work from a stale
+> tracker, and do not re-audit what already has a row. `git pull --ff-only origin main` before you write to it.
+> **Column ownership is strict — never edit another role's column:** CASCADE owns Module/Layer/Entity/Verdict/
+> Evidence/Date/Auditor (appends new rows only) · CODER/CURSOR own Status + Block/PR on rows in their own lane
+> (only `FIXED (PR #)`) · **only GUARD writes `VERIFIED`**. Append-only: never delete a row; supersede by adding
+> a new dated row and marking the old one `SUPERSEDED`. A row with no `Evidence` is not a finding.
+> Rows marked `Owner-gate? = YES` need an owner DECISION — a coder never self-answers one.
+
 > **Consolidated index:** docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md — the complete 24-rule + 18-key-gate map (source .cursor/rule wins on conflict).
 
 > **★ DEFINITION OF DONE (owner-agreed, BINDING — read before you call anything done):** [docs/specs/DEFINITION-OF-DONE.md](docs/specs/DEFINITION-OF-DONE.md) — five DONE layers (DOD-A…E) + evidence. **CI-green is the floor, not the verdict.**
