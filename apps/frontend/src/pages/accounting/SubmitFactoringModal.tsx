@@ -2,17 +2,21 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listVendors } from "../../api/mdata";
 import { listFactoringCandidateInvoices, submitFactoringBatch } from "../../api/accounting";
-import { getFactoringSummary } from "../../api/factoring";
+import { getFactoringSummary, listFactors } from "../../api/factoring";
 import { Button } from "../../components/Button";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
-import { parseVendorNotes } from "../../lib/vendorProfileMeta";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+}
+
+function factorRateToPct(rate: number | null | undefined) {
+  if (rate == null || Number.isNaN(Number(rate))) return "";
+  return String(Number((Number(rate) * 100).toFixed(4)));
 }
 
 // CHROME-14: outer shell swapped from centered Modal to ParityDrawer size="wide" (QBO side-panel chrome),
@@ -53,6 +57,24 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
     queryFn: () => getFactoringSummary(operatingCompanyId),
     enabled: open && Boolean(operatingCompanyId),
   });
+  const factorsQuery = useQuery({
+    queryKey: ["factoring", "factors", operatingCompanyId, "active"],
+    queryFn: () => listFactors(operatingCompanyId, { active_only: true }).then((res) => res.factors),
+    enabled: open && Boolean(operatingCompanyId),
+  });
+
+  const activeFactor = useMemo(() => {
+    const factors = factorsQuery.data ?? [];
+    if (factors.length === 0) return null;
+    const targetName = factoringSummaryQuery.data?.active_factor_name?.trim();
+    if (targetName) {
+      const byName = factors.find((factor) => factor.name === targetName);
+      if (byName) return byName;
+    }
+    const activeFactors = factors.filter((factor) => factor.active);
+    if (activeFactors.length === 1) return activeFactors[0];
+    return activeFactors[0] ?? null;
+  }, [factorsQuery.data, factoringSummaryQuery.data?.active_factor_name]);
 
   const selectedInvoices = useMemo(() => {
     const rows = invoicesQuery.data ?? [];
@@ -70,13 +92,14 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
     if (!vendorId && factoringSummaryQuery.data?.active_factor_id) {
       setVendorId(factoringSummaryQuery.data.active_factor_id);
     }
-    const activeVendor = (vendorsQuery.data ?? []).find((vendor) => vendor.id === (factoringSummaryQuery.data?.active_factor_id ?? ""));
-    if (!activeVendor) return;
-    const parsed = parseVendorNotes(activeVendor.notes);
-    if (parsed.meta.factoring.advanceRate31To60Pct) setAdvanceRatePct(parsed.meta.factoring.advanceRate31To60Pct);
-    if (parsed.meta.factoring.factoringReservesPct) setReservePct(parsed.meta.factoring.factoringReservesPct);
-    if (parsed.meta.factoring.advanceFee31To60Pct) setFactorFeePct(parsed.meta.factoring.advanceFee31To60Pct);
-  }, [factoringSummaryQuery.data?.active_factor_id, open, vendorId, vendorsQuery.data]);
+    if (!activeFactor) return;
+    const advancePct = factorRateToPct(activeFactor.advance_rate);
+    const reservePctValue = factorRateToPct(activeFactor.reserve_rate);
+    const feePct = factorRateToPct(activeFactor.fee_rate);
+    if (advancePct) setAdvanceRatePct(advancePct);
+    if (reservePctValue) setReservePct(reservePctValue);
+    if (feePct) setFactorFeePct(feePct);
+  }, [activeFactor, factoringSummaryQuery.data?.active_factor_id, open, vendorId]);
 
   function toggleInvoice(invoiceId: string) {
     setSelectedInvoiceIds((current) => (current.includes(invoiceId) ? current.filter((id) => id !== invoiceId) : [...current, invoiceId]));
@@ -134,6 +157,12 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
           <ListErrorBanner
             message={`Failed to load factoring defaults: ${(factoringSummaryQuery.error as Error)?.message ?? "Request failed"}`}
             onRetry={() => void factoringSummaryQuery.refetch()}
+          />
+        ) : null}
+        {factorsQuery.isError ? (
+          <ListErrorBanner
+            message={`Failed to load factor rates: ${(factorsQuery.error as Error)?.message ?? "Request failed"}`}
+            onRetry={() => void factorsQuery.refetch()}
           />
         ) : null}
         <div className="grid gap-2 md:grid-cols-2">
