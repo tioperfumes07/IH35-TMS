@@ -136,7 +136,7 @@ export function CreateExpenseForm({ value, onChange, operatingCompanyId }: Props
             ))}
           </SelectCombobox>
         </Field>
-        <Field label="Payment Method">
+        <Field label="Payment Method *">
           <SelectCombobox
             className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.payment_method ?? "")}

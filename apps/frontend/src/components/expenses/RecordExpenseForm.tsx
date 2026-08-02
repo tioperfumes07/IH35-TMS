@@ -349,7 +349,7 @@ export function RecordExpenseForm({
       </label>
 
       <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("payment-method")}>
-        Payment method
+        Payment method *
         <div className="mt-1">
           <SelectCombobox
             id={fieldId("payment-method")}
