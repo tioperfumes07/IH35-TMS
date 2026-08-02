@@ -1,0 +1,71 @@
+{
+  "module": "system",
+  "title": "System (Owner)",
+  "complete": false,
+  "as_of": "2026-08-02",
+  "live_sha": null,
+  "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/program-system-help-2026-08-01.md",
+  "spec_sources": [
+    "docs/specs/DEFINITION-OF-DONE.md",
+    "apps/frontend/src/routes/manifest.tsx"
+  ],
+  "items": [
+    {
+      "id": "SYS-S01",
+      "title": "/system dashboard renders QBO reconciliation + sync status honestly",
+      "layers": ["DOD-A", "DOD-B"],
+      "spec": "SystemModulePage · program-system-help SYSTEM section",
+      "status": "OPEN",
+      "evidence": "scaffold — auditor PASS: 17 unresolved recon alerts, QBO CONNECTED pull-only honest",
+      "pr": null
+    },
+    {
+      "id": "SYS-S02",
+      "title": "Software/Build health reflects live probe results (not false green)",
+      "layers": ["DOD-B", "VERIFY-6"],
+      "spec": "System health DEGRADED when background_jobs.stale DOWN",
+      "status": "OPEN",
+      "evidence": "scaffold — auditor PASS honesty: DEGRADED due to background_jobs.stale DOWN Aug 1",
+      "pr": null
+    },
+    {
+      "id": "SYS-S03",
+      "title": "Program tracker mirror counts match /program board",
+      "layers": ["DOD-C"],
+      "spec": "System page Program Tracker subsection",
+      "status": "OPEN",
+      "evidence": "scaffold — auditor PASS: 1029/497/266 consistent with Program module",
+      "pr": null
+    },
+    {
+      "id": "SYS-S04",
+      "title": "Open Health & Deploys drill-in lists failing checks with reason",
+      "layers": ["DOD-B", "VERIFY-1"],
+      "spec": "Health & Deploys detail panel",
+      "status": "OPEN",
+      "evidence": "scaffold — auditor: postgres/redis OK; background_jobs.stale DOWN named",
+      "pr": null
+    },
+    {
+      "id": "SYS-S05",
+      "title": "QuickBooks Sync panel documents write-back OFF by design",
+      "layers": ["DOD-B"],
+      "spec": "Architecture docs · QBO pull-only law",
+      "status": "OPEN",
+      "evidence": "scaffold — auditor PASS: matches architecture",
+      "pr": null
+    },
+    {
+      "id": "SYS-VERIFY-01",
+      "title": "System module VERIFY-1..8 (Owner role)",
+      "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
+      "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
+      "status": "OPEN",
+      "evidence": "scaffold — infra alert surfaced honestly; app-layer fixes out of scope",
+      "pr": null
+    }
+  ],
+  "pass_count": 0,
+  "total_count": 6,
+  "progress": "0 of 6"
+}

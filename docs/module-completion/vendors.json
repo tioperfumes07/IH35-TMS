@@ -1,0 +1,81 @@
+{
+  "module": "vendors",
+  "title": "Vendors",
+  "complete": false,
+  "as_of": "2026-08-02",
+  "live_sha": null,
+  "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/factoring-deep-2026-08-01.md",
+  "spec_sources": [
+    "docs/specs/DEFINITION-OF-DONE.md",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+    "apps/frontend/src/routes/manifest.tsx"
+  ],
+  "items": [
+    {
+      "id": "VEND-S01",
+      "title": "/vendors roster active count matches Neon mdata.vendors",
+      "layers": ["DOD-A", "VERIFY-6"],
+      "spec": "Vendors list · ITEM-03B active_company_only",
+      "status": "OPEN",
+      "evidence": "scaffold — auditor PASS TRANSP: 563 active exact match",
+      "pr": null
+    },
+    {
+      "id": "VEND-S02",
+      "title": "Vendor detail factor schedule uses factoring.factor not notes parse",
+      "layers": ["DOD-C", "VERIFY-4"],
+      "spec": "DUAL-FACTOR-VENDOR-DETAIL · VendorDetail.tsx",
+      "status": "OPEN",
+      "evidence": "scaffold — FAIL: serializeVendorNotes/parseVendorNotes dual-path",
+      "pr": null
+    },
+    {
+      "id": "VEND-LINK-01",
+      "title": "Bills/allocations EntityLink uses vendor_uuid not legacy vendor_id text",
+      "layers": ["DOD-C", "VERIFY-4"],
+      "spec": "LINK-BILL-VENDOR-ID sibling sweep · ACC-bills-vendor-link",
+      "status": "OPEN",
+      "evidence": "scaffold — FAIL system-wide wrong-column linkage (accounting module)",
+      "pr": null
+    },
+    {
+      "id": "VEND-S03",
+      "title": "Vendor create dedup guard scoped per operating company",
+      "layers": ["DOD-D", "VERIFY-5"],
+      "spec": "0243-g6-2-vendor-create-no-dedup-guard",
+      "status": "OPEN",
+      "evidence": "scaffold — not proven",
+      "pr": null
+    },
+    {
+      "id": "VEND-S04",
+      "title": "Vendor types catalog-backed (catalogs.vendor_types populated)",
+      "layers": ["VERIFY-2", "VERIFY-6"],
+      "spec": "08-BLOCK catalog re-verification",
+      "status": "OPEN",
+      "evidence": "scaffold — Neon 24 rows (8/opco) per corrected backlog doc",
+      "pr": null
+    },
+    {
+      "id": "VEND-S05",
+      "title": "Inactive vendor filter excludes 387 inactive from default Active view",
+      "layers": ["DOD-B"],
+      "spec": "Vendors default filter",
+      "status": "OPEN",
+      "evidence": "scaffold — auditor PASS: inactive excluded consistently",
+      "pr": null
+    },
+    {
+      "id": "VEND-VERIFY-01",
+      "title": "Vendors module VERIFY-1..8 TRANSP + USMCA",
+      "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
+      "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
+      "status": "OPEN",
+      "evidence": "scaffold — roster PASS; detail/dual-path UNVERIFIED USMCA",
+      "pr": null
+    }
+  ],
+  "pass_count": 0,
+  "total_count": 7,
+  "progress": "0 of 7"
+}
