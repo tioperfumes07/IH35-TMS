@@ -16,6 +16,7 @@ import {
   profileValuesToCreatePayload,
   type CustomerProfileFormValues,
 } from "../components/customers/CustomerProfileForm";
+import { Button } from "../components/Button";
 import { ActionButton } from "../components/shared/ActionButton";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
@@ -549,9 +550,9 @@ export function CustomersPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <ActionButton onClick={() => navigate(`/customers/${selectedCustomer.id}`)}>Edit</ActionButton>
-                      <ActionButton className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1 text-white hover:bg-[#0f1729]" onClick={() => navigate(`/accounting/invoices?customer_id=${selectedCustomer.id}`)}>
+                      <Button type="button" onClick={() => navigate(`/accounting/invoices?customer_id=${selectedCustomer.id}`)}>
                         New transaction
-                      </ActionButton>
+                      </Button>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
