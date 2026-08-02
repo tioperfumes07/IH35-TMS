@@ -1,0 +1,108 @@
+{
+  "module": "factoring",
+  "title": "Factoring (FACT)",
+  "complete": false,
+  "as_of": "2026-08-02",
+  "live_sha": null,
+  "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/factoring-deep-2026-08-01.md",
+  "spec_sources": [
+    "docs/specs/DEFINITION-OF-DONE.md",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+    "apps/frontend/src/routes/manifest.tsx"
+  ],
+  "items": [
+    {
+      "id": "FACT-S01",
+      "title": "/factoring home KPI row matches factoring.factor canonical row",
+      "layers": ["DOD-A", "DOD-B", "VERIFY-6"],
+      "spec": "FactoringHome summary · Neon factoring.factor",
+      "status": "OPEN",
+      "evidence": "scaffold — KPI PASS per auditor (Active Factor + Recourse Days match Neon)",
+      "pr": null
+    },
+    {
+      "id": "FACT-DUAL-01",
+      "title": "Factor profile panel reads factoring.factor columns (not mdata.vendors notes parse)",
+      "layers": ["DOD-C", "VERIFY-4"],
+      "spec": "DUAL-FACTOR-HOME-NOTES · CLS-DUAL-PATH",
+      "status": "OPEN",
+      "evidence": "scaffold — FAIL: FactoringHome.tsx:289-294 vendor-notes path contradicts KPI row on same screen",
+      "pr": null
+    },
+    {
+      "id": "FACT-DUAL-02",
+      "title": "SubmitFactoringModal rates from factoring.factor (not parseVendorNotes)",
+      "layers": ["DOD-D", "VERIFY-2"],
+      "spec": "DUAL-FACTOR-SUBMIT-NOTES · SCHEMA-FINDINGS sibling sweep",
+      "status": "OPEN",
+      "evidence": "scaffold — FAIL retained from cascade sibling sweep",
+      "pr": null
+    },
+    {
+      "id": "FACT-DUAL-03",
+      "title": "factoring.routes active factor resolves canonical factoring.factor not mdata.vendors",
+      "layers": ["DOD-C", "VERIFY-4"],
+      "spec": "DUAL-FACTOR-RESOLVE-MDATA",
+      "status": "OPEN",
+      "evidence": "scaffold — FAIL: factoring.routes.ts:39-60 mdata path",
+      "pr": null
+    },
+    {
+      "id": "FACT-S02",
+      "title": "/factoring/submit submission queue wired and entity-scoped",
+      "layers": ["DOD-A", "DOD-B", "DOD-C"],
+      "spec": "Route manifest /factoring/submit",
+      "status": "OPEN",
+      "evidence": "scaffold — not proven",
+      "pr": null
+    },
+    {
+      "id": "FACT-S03",
+      "title": "/factoring/batches batch wizard + detail drill-through",
+      "layers": ["DOD-A", "DOD-C", "VERIFY-3"],
+      "spec": "BatchWizard · BatchDetail routes",
+      "status": "OPEN",
+      "evidence": "scaffold — not proven",
+      "pr": null
+    },
+    {
+      "id": "FACT-S04",
+      "title": "/factoring/reserves reserve dashboard economics honest",
+      "layers": ["DOD-D", "VERIFY-6"],
+      "spec": "ReserveDashboard · FACT-kpi-vs-profile",
+      "status": "OPEN",
+      "evidence": "scaffold — dual-path FAIL retained; reserve movement density UNVERIFIED",
+      "pr": null
+    },
+    {
+      "id": "FACT-S05",
+      "title": "Duplicate factor vendor banner excludes self-pairs",
+      "layers": ["DOD-B"],
+      "spec": "factoring-deep-2026-08-01 secondary finding",
+      "status": "OPEN",
+      "evidence": "scaffold — live proof: Faro Factoring ↔ Faro Factoring 100% similar false positive",
+      "pr": null
+    },
+    {
+      "id": "FACT-UNIT-01",
+      "title": "Banking factor virtual register amount displays cents/100 correctly",
+      "layers": ["DOD-B", "VERIFY-6"],
+      "spec": "UNIT-BANK-FACTOR-REGISTER · CLS-UNIT-SCALE sibling",
+      "status": "OPEN",
+      "evidence": "scaffold — FAIL: banking.routes.ts:308 advance_amount_cents without /100",
+      "pr": null
+    },
+    {
+      "id": "FACT-VERIFY-01",
+      "title": "Factoring module VERIFY-1..8 click-through TRANSP + USMCA",
+      "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
+      "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
+      "status": "OPEN",
+      "evidence": "scaffold — not proven",
+      "pr": null
+    }
+  ],
+  "pass_count": 0,
+  "total_count": 10,
+  "progress": "0 of 10"
+}

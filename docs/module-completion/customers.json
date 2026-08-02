@@ -1,0 +1,99 @@
+{
+  "module": "customers",
+  "title": "Customers",
+  "complete": false,
+  "as_of": "2026-08-02",
+  "live_sha": null,
+  "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/customers-deep-2026-08-01.md",
+  "spec_sources": [
+    "docs/specs/DEFINITION-OF-DONE.md",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+    "apps/frontend/src/routes/manifest.tsx"
+  ],
+  "items": [
+    {
+      "id": "CUST-S01",
+      "title": "/customers roster density matches Neon active customers",
+      "layers": ["DOD-A", "VERIFY-6"],
+      "spec": "Customers.tsx · mdata.customers",
+      "status": "OPEN",
+      "evidence": "scaffold — auditor PASS TRANSP: 1243 active exact match UI",
+      "pr": null
+    },
+    {
+      "id": "CUST-S02",
+      "title": "Customer detail Transaction List ties to accounting.invoices",
+      "layers": ["DOD-C", "VERIFY-4", "VERIFY-6"],
+      "spec": "customers-deep transaction list proof",
+      "status": "OPEN",
+      "evidence": "scaffold — auditor PASS sampled customer invoices match DOM",
+      "pr": null
+    },
+    {
+      "id": "CUST-S03",
+      "title": "Nine follow-up tabs render honest COMING_STATE_COPY (not silent empty)",
+      "layers": ["DOD-B", "VERIFY-1"],
+      "spec": "Customers.tsx:143-153 COMING_STATE_COPY",
+      "status": "OPEN",
+      "evidence": "scaffold — auditor PASS: explicit stub messages for 9 tabs",
+      "pr": null
+    },
+    {
+      "id": "CUST-CHROME-01",
+      "title": "Edit vs New transaction ActionButton visual parity on list header",
+      "layers": ["DOD-B"],
+      "spec": "CHROME-001 · CLS-CHROME-INCONSISTENCY",
+      "status": "OPEN",
+      "evidence": "scaffold — FAIL: 24×16px Edit vs 98×42px New transaction on same row",
+      "pr": null
+    },
+    {
+      "id": "CUST-CHROME-02",
+      "title": "Edit button treatment consistent list vs CustomerDetail header",
+      "layers": ["DOD-B"],
+      "spec": "CHROME-002",
+      "status": "OPEN",
+      "evidence": "scaffold — FAIL: two unrelated Edit visual treatments",
+      "pr": null
+    },
+    {
+      "id": "CUST-CHROME-03",
+      "title": "ParityTable column resize affordance discoverable",
+      "layers": ["DOD-B", "VERIFY-1"],
+      "spec": "CHROME-003 · ParityTable.tsx:876-887",
+      "status": "OPEN",
+      "evidence": "scaffold — resize works but 4-6px handle undiscoverable",
+      "pr": null
+    },
+    {
+      "id": "CUST-LINK-01",
+      "title": "Customer → invoice → invoice_lines chain (system-wide SS-005)",
+      "layers": ["DOD-C", "VERIFY-4"],
+      "spec": "ACC-invoice-lines · WAVE-H4",
+      "status": "OPEN",
+      "evidence": "scaffold — pre-existing: 11977 invoices / 1 invoice_line",
+      "pr": null
+    },
+    {
+      "id": "CUST-LINK-02",
+      "title": "COI Requests tab honest when insurance.coi_request=0",
+      "layers": ["DOD-B", "VERIFY-6"],
+      "spec": "COI tab empty honesty",
+      "status": "OPEN",
+      "evidence": "scaffold — auditor PASS: legitimately empty",
+      "pr": null
+    },
+    {
+      "id": "CUST-VERIFY-01",
+      "title": "Customers module VERIFY-1..8 TRANSP + USMCA",
+      "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
+      "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
+      "status": "OPEN",
+      "evidence": "scaffold — 12/12 tabs rendered TRANSP; USMCA UNVERIFIED this pass",
+      "pr": null
+    }
+  ],
+  "pass_count": 0,
+  "total_count": 9,
+  "progress": "0 of 9"
+}

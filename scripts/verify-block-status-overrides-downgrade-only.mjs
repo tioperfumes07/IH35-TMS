@@ -48,6 +48,8 @@ export const STATUS_RANK = {
   "PENDING (GATED)": 1,
   "NEEDS-VERIFY": 2,
   DONE: 3,
+  /** Evaporated / unmeasurable audit findings — not an upgrade path to DONE. */
+  "AUDIT-NOTE": 0,
 };
 
 /**

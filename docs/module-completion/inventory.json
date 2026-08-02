@@ -1,0 +1,82 @@
+{
+  "module": "inventory",
+  "title": "Inventory (Parts & Stock)",
+  "complete": false,
+  "as_of": "2026-08-02",
+  "live_sha": null,
+  "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/inventory-deep-2026-08-01.md",
+  "spec_sources": [
+    "docs/specs/DEFINITION-OF-DONE.md",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
+    "apps/frontend/src/routes/manifest.tsx"
+  ],
+  "items": [
+    {
+      "id": "INV-S01",
+      "title": "/inventory Parts & Stock roster count matches maintenance.parts_inventory",
+      "layers": ["DOD-A", "VERIFY-6"],
+      "spec": "inventory-deep-2026-08-01 roster",
+      "status": "OPEN",
+      "evidence": "scaffold — auditor PASS TRANSP: 144 rows exact UI match",
+      "pr": null
+    },
+    {
+      "id": "INV-CAT-01",
+      "title": "Category column populated or honestly N/A (not 100% blank)",
+      "layers": ["DOD-B", "VERIFY-6"],
+      "spec": "CLS-CATALOG-EMPTY field-level · 144/144 blank category",
+      "status": "OPEN",
+      "evidence": "scaffold — FAIL: category NULL/empty for all 144 TRANSP parts",
+      "pr": null
+    },
+    {
+      "id": "INV-S02",
+      "title": "/inventory/assignments entity-scoped and honest empty when unassigned",
+      "layers": ["DOD-A", "DOD-C"],
+      "spec": "sidebar flyout Assignments",
+      "status": "OPEN",
+      "evidence": "scaffold — not proven; creation flow UNVERIFIED",
+      "pr": null
+    },
+    {
+      "id": "INV-S03",
+      "title": "/inventory/purchases Purchase History tab wired",
+      "layers": ["DOD-A", "DOD-C"],
+      "spec": "sidebar flyout Purchase History",
+      "status": "OPEN",
+      "evidence": "scaffold — flagged UNVERIFIED in inventory-deep pass",
+      "pr": null
+    },
+    {
+      "id": "INV-PICK-01",
+      "title": "Parts picker canonical read is maintenance.parts_inventory not catalogs.parts",
+      "layers": ["VERIFY-2", "DOD-C"],
+      "spec": "08-BLOCK picker source correction",
+      "status": "OPEN",
+      "evidence": "scaffold — auditor: catalogs.parts=0 but parts_inventory=144 canonical",
+      "pr": null
+    },
+    {
+      "id": "INV-LINK-01",
+      "title": "Part → vendor linkage on create/edit (0441-mod13-inventory-part-to-vendor)",
+      "layers": ["DOD-C", "VERIFY-4"],
+      "spec": "Architectural inventory purchases chain",
+      "status": "OPEN",
+      "evidence": "scaffold — mod13 finding: part-to-vendor none",
+      "pr": null
+    },
+    {
+      "id": "INV-VERIFY-01",
+      "title": "Inventory module VERIFY-1..8 TRANSP + USMCA",
+      "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
+      "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
+      "status": "OPEN",
+      "evidence": "scaffold — roster PASS; assignments/purchases UNVERIFIED",
+      "pr": null
+    }
+  ],
+  "pass_count": 0,
+  "total_count": 7,
+  "progress": "0 of 7"
+}

@@ -1,6 +1,8 @@
 {
   "block_id": "ps-a-item-editor-account-pickers-no-addnew",
-  "status": "PENDING",
+  "status": "superseded",
+  "superseded_by": "H5-EMPTY-WAVE per 08-BLOCK-BACKLOG-COUNT-CORRECTED-2026-08-01.md — catalog present; quick-create UI is DESIGN/MISSING-CREATOR, not H5 wave",
+  "notes": "Auditor EVAPORATE 2026-08-01: ps-a-item-editor picker finding evaporated with H5 empty wave.",
   "classification": "FINANCIAL",
   "phase": "tier2",
   "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
@@ -10,7 +12,12 @@
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "kind": "design",
+      "spec": "docs/trackers/BLOCK-RECONCILIATION-2026-08-02.md"
+    },
+    {
+      "kind": "live",
+      "check": "EVAPORATED H5-EMPTY-WAVE 2026-08-02: superseded; catalog-backed pickers enforced; not a buildable wave."
     }
   ],
   "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."

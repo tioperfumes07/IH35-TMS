@@ -1,17 +1,17 @@
 {
- "date": "2026-08-01",
- "generated_at_iso": "2026-08-01T18:42:14.397Z",
+ "date": "2026-08-02",
+ "generated_at_iso": "2026-08-02T16:28:25.450Z",
  "counts": {
-  "PENDING": 19,
-  "PENDING (GATED)": 28,
-  "NEEDS-VERIFY": 78,
+  "PENDING": 14,
+  "PENDING (GATED)": 27,
+  "NEEDS-VERIFY": 57,
   "DONE": 685,
-  "AUDIT-NOTE": 412
+  "AUDIT-NOTE": 420
  },
  "universe": {
-  "total_blocks_after_dedup": 1222,
+  "total_blocks_after_dedup": 1203,
   "by_source_after_dedup": {
-   ".block-ready": 1025,
+   ".block-ready": 1006,
    "program": 86,
    "enterprise-29": 29,
    "accounting": 25,
@@ -19,8 +19,8 @@
   },
   "raw_file_counts": {
    ".block-ready (*.json files)": 1378,
-   ".block-ready retired (dup/stale/superseded, excluded)": 348,
-   ".block-ready active (counted)": 1030
+   ".block-ready retired (dup/stale/superseded, excluded)": 367,
+   ".block-ready active (counted)": 1011
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -152,13 +152,6 @@
    "title": ""
   },
   {
-   "id": "ITEM-03B-MDATA-LIST-ACTIVE-COMPANY",
-   "status": "NEEDS-VERIFY",
-   "pr": 3968,
-   "registered_on": "2026-07-11",
-   "title": ""
-  },
-  {
    "id": "ITEM-13-CEREMONY-VALIDATE-FKS",
    "status": "DONE",
    "pr": 2368,
@@ -249,26 +242,6 @@
    "status": "PENDING",
    "evidence": "[verified 2026-07-03] TMS->QBO payroll write-bridge unbuilt (deferred)",
    "name": "STRUCTURAL / TASK 8 — TMS → QBO Payroll bridge (Cycle 5, post-MVP) — LAST",
-   "pr": null
-  },
-  {
-   "id": "BLOCKS-NEW-DECISIONS",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "PHASE-2 NEW-DECISION BLOCKS (from OWNER-DECISIONS-FINAL) · 2026-07-26",
-   "pr": null
-  },
-  {
-   "id": "C1-PICKER-LAW-replace-every-raw-UUID-input-with-the-canonica",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "PICKER LAW: replace every raw-UUID input with the canonical EntityPicker",
    "pr": null
   },
   {
@@ -395,36 +368,6 @@
    "pr": 3950
   },
   {
-   "id": "FOR-CURSOR-2-README-ACCOUNTING-BANKING",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "DESIGN first) · ACCT-DOM-02",
-   "pr": null
-  },
-  {
-   "id": "PASTE-TO-CLAUDE-CODER",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "PASTE → CLAUDE CODER  (UI / operational lane)",
-   "pr": null
-  },
-  {
-   "id": "PASTE-TO-CURSOR",
-   "source": "program",
-   "fin": false,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "forward spec — 0 named artifacts on main",
-   "name": "PASTE → CURSOR  (financial / canonical / RLS lane)",
-   "pr": null
-  },
-  {
    "id": "AF-1-entity-coa-fix",
    "source": "program",
    "fin": true,
@@ -452,16 +395,6 @@
    "status": "PENDING (GATED)",
    "evidence": "[verified 2026-07-03] ~$1.18M A/P migration not executed (Tier-1 held)",
    "name": "STRUCTURAL / TASK 4 — A/P bills migration (≈$1.18M unmigrated, #1177)",
-   "pr": null
-  },
-  {
-   "id": "AF-5-stub-catalogs",
-   "source": "program",
-   "fin": true,
-   "tier": "2",
-   "status": "PENDING (GATED)",
-   "evidence": "[verified 2026-07-03] partial — catalog buildout ongoing, not confirmably complete",
-   "name": "STRUCTURAL / TASK 5 — 34 STUB catalogs build-out (additive-only)",
    "pr": null
   },
   {
@@ -1097,17 +1030,6 @@
    "pr": 2435
   },
   {
-   "id": "ITEM-03B-MDATA-LIST-ACTIVE-COMPANY",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "[verified 2026-07-11] merged #2365; awaiting post-deploy live list-filter proof",
-   "name": "",
-   "registered_on": "2026-07-11",
-   "pr": 3968
-  },
-  {
    "id": "maint2-open-wos-kpi-table-consistency",
    "source": ".block-ready",
    "fin": true,
@@ -1117,160 +1039,6 @@
    "name": "",
    "registered_on": null,
    "pr": 2645
-  },
-  {
-   "id": "phase13-audit216-banking-industry",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit217-insurance-industry",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit218-healthcare-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit219-pharmaceutical-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit220-manufacturing-duplicate",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit221-retail-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit222-restaurant-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit223-hospitality-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit224-transportation-dashboard-rout",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit225-logistics-warehousing",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit226-construction-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit228-energy-duplicate",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit229-mining-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase13-audit230-agriculture-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
   },
   {
    "id": "PHASE3_INVOICE-FK_unenforced-linkages_DISPATCH",
@@ -1295,62 +1063,7 @@
    "pr": 2385
   },
   {
-   "id": "phase3-audit56-iso9001-quality-mgmt",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
    "id": "phase3-audit57-process-audit-docs-workflow",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit58-six-sigma",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit59-lean",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit60-kaizen",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit61-tqm",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -1502,17 +1215,6 @@
    "name": "",
    "registered_on": null,
    "pr": null
-  },
-  {
-   "id": "ps-a-item-editor-account-pickers-no-addnew",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2653 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2653
   },
   {
    "id": "RECON-01",
@@ -3072,13 +2774,13 @@
   {
    "id": "BLOCK-I-CI-DIST-FIX",
    "source": ".block-ready",
-   "fin": false,
+   "fin": true,
    "tier": "",
    "status": "DONE",
    "evidence": "all 1 file(s) on main",
    "name": "",
    "registered_on": null,
-   "pr": null
+   "pr": 3976
   },
   {
    "id": "BLOCK-J-MASTER-DATA-GRANT",
@@ -5240,10 +4942,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #647 merged 2026-06-07",
+   "evidence": "all 1 file(s) on main",
    "name": "Restore SAFETY_CANONICAL_TAB_COUNT reference in HomePage after home router refactor",
    "registered_on": null,
-   "pr": 647
+   "pr": null
   },
   {
    "id": "FIX-SAMSARA-WEBHOOKS-INVESTIGATION",
@@ -5412,7 +5114,7 @@
   {
    "id": "GAP-18-DRIVER-COMM-TIMELINE",
    "source": ".block-ready",
-   "fin": false,
+   "fin": true,
    "tier": "",
    "status": "DONE",
    "evidence": "PR #682 merged 2026-06-07",
@@ -5508,7 +5210,7 @@
   {
    "id": "GAP-26",
    "source": ".block-ready",
-   "fin": false,
+   "fin": true,
    "tier": "",
    "status": "DONE",
    "evidence": "PR #722 merged 2026-06-08",
@@ -5529,7 +5231,7 @@
   {
    "id": "GAP-27",
    "source": ".block-ready",
-   "fin": false,
+   "fin": true,
    "tier": "",
    "status": "DONE",
    "evidence": "PR #724 merged 2026-06-08",
@@ -5550,13 +5252,13 @@
   {
    "id": "GAP-28",
    "source": ".block-ready",
-   "fin": false,
+   "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "all 8 file(s) on main",
+   "evidence": "all 9 file(s) on main",
    "name": "Layover Time Computation (>8h Gap)",
    "registered_on": null,
-   "pr": 726
+   "pr": 3987
   },
   {
    "id": "gap-28-layover-detection",
@@ -5571,7 +5273,7 @@
   {
    "id": "GAP-29",
    "source": ".block-ready",
-   "fin": false,
+   "fin": true,
    "tier": "",
    "status": "DONE",
    "evidence": "all 7 file(s) on main",
@@ -6268,10 +5970,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #645 merged 2026-06-07",
+   "evidence": "all 13 file(s) on main",
    "name": "Dispatcher Home role-specific view",
    "registered_on": null,
-   "pr": 645
+   "pr": null
   },
   {
    "id": "gap-66-dispatcher-home-view",
@@ -6498,10 +6200,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #640 merged 2026-06-07",
+   "evidence": "all 11 file(s) on main",
    "name": "Medical card + CDL expiry tracking and alerts",
    "registered_on": null,
-   "pr": 640
+   "pr": null
   },
   {
    "id": "gap-83-eld-audit-trail",
@@ -6519,10 +6221,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #644 merged 2026-06-07",
+   "evidence": "all 13 file(s) on main",
    "name": "ELD audit trail read-only viewer",
    "registered_on": null,
-   "pr": 644
+   "pr": null
   },
   {
    "id": "GAP-84-DOT-INSPECTION-GAP-CLOSE",
@@ -6765,10 +6467,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #643 merged 2026-06-07",
+   "evidence": "all 5 file(s) on main",
    "name": "Fix migration 0327 GRANT role (app_user → ih35_app) + TS18048 guards (GAP-81)",
    "registered_on": null,
-   "pr": 643
+   "pr": null
   },
   {
    "id": "IMPORT-0",
@@ -11749,6 +11451,16 @@
    "pr": null
   },
   {
+   "id": "AF-5-stub-catalogs",
+   "source": "program",
+   "fin": true,
+   "tier": "2",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — stale 34-stub estimate; expense categor",
+   "name": "STRUCTURAL / TASK 5 — 34 STUB catalogs build-out (additive-only)",
+   "pr": null
+  },
+  {
    "id": "audit-spine-a1-a9-emit-coverage-task",
    "source": ".block-ready",
    "fin": true,
@@ -12076,6 +11788,26 @@
    "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
    "name": "",
    "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "BLOCKS-NEW-DECISIONS",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (OWNER-DECISION",
+   "name": "PHASE-2 NEW-DECISION BLOCKS (from OWNER-DECISIONS-FINAL) · 2026-07-26",
+   "pr": null
+  },
+  {
+   "id": "C1-PICKER-LAW-replace-every-raw-UUID-input-with-the-canonica",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE H5-EMPTY-WAVE per 08-BLOCK-BACKLOG-COUNT-CORRECTED-2026-08-01.md — 23 catalog-backed pic",
+   "name": "PICKER LAW: replace every raw-UUID input with the canonical EntityPicker",
    "pr": null
   },
   {
@@ -12673,6 +12405,16 @@
    "pr": null
   },
   {
+   "id": "FOR-CURSOR-2-README-ACCOUNTING-BANKING",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (class-sweep re",
+   "name": "DESIGN first) · ACCT-DOM-02",
+   "pr": null
+  },
+  {
    "id": "gated-blocks-conn-plaid-relay-edi",
    "source": ".block-ready",
    "fin": true,
@@ -13069,6 +12811,26 @@
    "pr": null
   },
   {
+   "id": "PASTE-TO-CLAUDE-CODER",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (class-sweep pa",
+   "name": "PASTE → CLAUDE CODER  (UI / operational lane)",
+   "pr": null
+  },
+  {
+   "id": "PASTE-TO-CURSOR",
+   "source": "program",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (class-sweep pa",
+   "name": "PASTE → CURSOR  (financial / canonical / RLS lane)",
+   "pr": null
+  },
+  {
    "id": "PHASE0_DEPLOY-DRIFT_prod-older-than-main_VERIFY",
    "source": ".block-ready",
    "fin": true,
@@ -13089,6 +12851,28 @@
    "name": "",
    "registered_on": null,
    "pr": null
+  },
+  {
+   "id": "phase13-audit220-manufacturing-duplicate",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry audit block, no IH35 s",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase13-audit228-energy-duplicate",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry audit block, no IH35 s",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
   },
   {
    "id": "phase14-audit-241",
@@ -13478,6 +13262,192 @@
  ],
  "merged_prs": [
   {
+   "number": 4003,
+   "title": "Claude- feat(insurance): wire a claim to the money side — vendor, bill, expense, lawsuit, deduction, liability",
+   "mergedAt": "2026-08-02T15:47:46Z",
+   "branch": "claude/ins-f02-claim-full-linkage"
+  },
+  {
+   "number": 4002,
+   "title": "Claude- fix(reports): mount the A/P aging route — it existed, compiled, and 404'd for every caller",
+   "mergedAt": "2026-08-02T15:02:01Z",
+   "branch": "claude/rpt-f03-ap-aging-mount"
+  },
+  {
+   "number": 4001,
+   "title": "Claude- fix(reports): Fuel Reconciliation headline tiles rendered $0 over real data — totals used different key names than its own rows",
+   "mergedAt": "2026-08-02T07:21:58Z",
+   "branch": "claude/rpt-f02-fuel-recon-kpi-key-drift"
+  },
+  {
+   "number": 4000,
+   "title": "Claude- fix(dispatch): restore the dead-stub dispatch-status view — WF-050 DVIR and WF-044 PM gates have never fired",
+   "mergedAt": "2026-08-02T06:55:38Z",
+   "branch": "claude/disp-f02-restore-dispatch-status-view"
+  },
+  {
+   "number": 3999,
+   "title": "Claude- fix(dispatch): OOS/dispatch-block/PM gates were silently dead — 13 out-of-service trucks were dispatchable",
+   "mergedAt": "2026-08-02T04:37:02Z",
+   "branch": "claude/disp-f01-oos-gate-dead-view"
+  },
+  {
+   "number": 3998,
+   "title": "Claude- fix(insurance): the Claims tab crashed on any direct link or refresh — a hook ran after an early return",
+   "mergedAt": "2026-08-02T04:13:11Z",
+   "branch": "claude/ins-f01-claims-tab-hook-order"
+  },
+  {
+   "number": 3997,
+   "title": "Claude- fix(banking): the headline Cash KPI was inflated exactly 100x — cents rendered through a dollar formatter",
+   "mergedAt": "2026-08-02T03:57:25Z",
+   "branch": "claude/bank-f01-cash-kpi-cents-unit"
+  },
+  {
+   "number": 3996,
+   "title": "Claude- fix(safety): the orphan-bill GL alert read a vestigial header column — 16,245 false positives hiding 29 real ones",
+   "mergedAt": "2026-08-02T03:15:53Z",
+   "branch": "claude/acct-f85-integrity-alert-canonical-vendor-fk"
+  },
+  {
+   "number": 3995,
+   "title": "Claude- fix(accounting): every vendor link on bills/payments/allocations pointed at a legacy QBO id and 404'd — 16,246 bills, not 3,195",
+   "mergedAt": "2026-08-02T03:00:39Z",
+   "branch": "claude/acct-f84-bill-vendor-canonical-link"
+  },
+  {
+   "number": 3994,
+   "title": "Claude- fix(qbo-sync): items_reconcile had NEVER succeeded — a rename #3988 fixed in the puller was still live in its two siblings",
+   "mergedAt": "2026-08-02T02:47:16Z",
+   "branch": "claude/acct-f83-items-reconcile-name-collision"
+  },
+  {
+   "number": 3993,
+   "title": "Claude- fix(qbo-sync): vendors_pull wrote a RETIRE mirror with no matching unique index — repoint to canonical mdata.qbo_vendors",
+   "mergedAt": "2026-08-02T01:19:29Z",
+   "branch": "claude/acct-f82-qbo-vendors-canonical-repoint"
+  },
+  {
+   "number": 3992,
+   "title": "Claude- fix(schema-parity): the DDL parser applied every DROP after every ADD, so drop-and-re-add erased 8 real prod columns from the baseline",
+   "mergedAt": "2026-08-02T00:17:47Z",
+   "branch": "claude/acct-f83-schema-parity-parser-drops-readd-column"
+  },
+  {
+   "number": 3991,
+   "title": "Claude- fix(dispatch): the OFFICE could deliver a load without capturing any delivery evidence — invoicing must not depend on the driver",
+   "mergedAt": "2026-08-01T23:09:48Z",
+   "branch": "claude/acct-f81-office-delivers-stamps-stop-evidence"
+  },
+  {
+   "number": 3990,
+   "title": "Claude- fix(qbo-sync): a sync step that SUCCEEDS recorded nothing — the health scoreboard could only render red or absent",
+   "mergedAt": "2026-08-01T22:54:43Z",
+   "branch": "claude/acct-f79-qbo-sync-steps-record-success"
+  },
+  {
+   "number": 3989,
+   "title": "Claude- fix(qbo-sync): the ACCT-F77 guard was fail-open, and its rationale comment named the wrong linkage",
+   "mergedAt": "2026-08-01T22:20:53Z",
+   "branch": "fix/acct-f77b-guard-fail-open-and-false-rationale"
+  },
+  {
+   "number": 3988,
+   "title": "Claude- fix(qbo-sync): items_pull renamed its own twin into a unique-constraint collision — code fix, zero data mutation",
+   "mergedAt": "2026-08-01T21:49:47Z",
+   "branch": "claude/acct-f77-retire-generic-seed-items"
+  },
+  {
+   "number": 3987,
+   "title": "fix(dispatch): wire GAP-28 layover-detector worker into index.ts",
+   "mergedAt": "2026-08-01T20:43:05Z",
+   "branch": "fix/Cascade-gap28-layover-worker-wiring"
+  },
+  {
+   "number": 3986,
+   "title": "Claude- fix(health): pair the 8 remaining job cadences by hand — and confirm the OPS-F75 retraction",
+   "mergedAt": "2026-08-01T20:35:44Z",
+   "branch": "claude/ops-f76-pair-ambiguous-cron-cadences"
+  },
+  {
+   "number": 3985,
+   "title": "Claude- fix(health): 35 scheduled jobs had no cadence rule — derived from their own cron expressions",
+   "mergedAt": "2026-08-01T19:45:39Z",
+   "branch": "claude/ops-f75-derive-cron-cadences"
+  },
+  {
+   "number": 3984,
+   "title": "Cascade- chore: mark s-06-log-event-no-time-field done (already merged via PR #2630)",
+   "mergedAt": "2026-08-01T19:38:00Z",
+   "branch": "fix/Cascade-mark-s06-safety-log-time-done"
+  },
+  {
+   "number": 3983,
+   "title": "Claude- fix(accounting): load→invoice was completely broken — zero revenue category mappings existed",
+   "mergedAt": "2026-08-01T19:50:32Z",
+   "branch": "claude/acct-f74-seed-revenue-category-account-map"
+  },
+  {
+   "number": 3982,
+   "title": "Claude- fix(accounting): backfill bills.mdata_vendor_id — 16,244 of 16,246 resolvable, 2 named orphans left NULL",
+   "mergedAt": "2026-08-01T20:02:57Z",
+   "branch": "claude/acct-f73-backfill-bills-mdata-vendor-id"
+  },
+  {
+   "number": 3981,
+   "title": "Claude- fix(compliance): seed the two real carriers' USDOT/MC numbers — DO NOT MERGE WITHOUT JORGE'S OK",
+   "mergedAt": "2026-08-01T20:03:59Z",
+   "branch": "claude/comp-f72-seed-carrier-usdot-mc-numbers"
+  },
+  {
+   "number": 3976,
+   "title": "Cascade- fix(ci): complete verify-no-duplicate-routes src-based migration (BLOCK-I)",
+   "mergedAt": "2026-08-01T19:19:18Z",
+   "branch": "fix/Cascade-no-duplicate-routes-src-migration"
+  },
+  {
+   "number": 3975,
+   "title": "Claude- fix(compliance): CSA pull sent a placeholder DOT number to the live SAFER lookup and logged a failure every run",
+   "mergedAt": "2026-08-01T19:01:35Z",
+   "branch": "fix/comp-f71-csa-pull-skips-placeholder-usdot"
+  },
+  {
+   "number": 3974,
+   "title": "Cascade- chore: mark two already-implemented non-financial blocks done",
+   "mergedAt": "2026-08-01T19:13:01Z",
+   "branch": "fix/Cascade-mark-two-already-done-blocks"
+  },
+  {
+   "number": 3973,
+   "title": "Claude- fix(safety): one probe's type error killed the whole integrity-alert engine since 2026-07-15",
+   "mergedAt": "2026-08-01T18:56:17Z",
+   "branch": "fix/saf-f70-integrity-alert-vendor-uuid-type"
+  },
+  {
+   "number": 3972,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-08-01T18:58:41Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 3971,
+   "title": "Cascade- fix(ci): update stale freshness planted-test after PR #3923 overlap-rule change",
+   "mergedAt": "2026-08-01T19:12:54Z",
+   "branch": "fix/Cascade-verify-branch-fresh-fallback-stale-test"
+  },
+  {
+   "number": 3970,
+   "title": "Claude- fix(health): the never-succeeded signal I shipped in #3966 could not fire for ANY of the 8 jobs that motivated it",
+   "mergedAt": "2026-08-01T18:47:37Z",
+   "branch": "fix/ops-f69-never-succeeded-needs-no-rule"
+  },
+  {
+   "number": 3969,
+   "title": "Claude- fix(qbo-sync): items pull never succeeded — a QBO item collides with the operator's own row instead of adopting it",
+   "mergedAt": "2026-08-01T19:50:37Z",
+   "branch": "fix/acct-f68-items-pull-adopt-local-row"
+  },
+  {
    "number": 3968,
    "title": "Cascade- chore: live-verify ITEM-03B active-company customer/vendor list scope",
    "mergedAt": "2026-08-01T18:41:19Z",
@@ -13539,7 +13509,7 @@
   },
   {
    "number": 3958,
-   "title": "chore(tracker): refresh reconcile artifact + dated export (2026-08-01) — unblocks locked-guards repo-wide",
+   "title": "Claude- chore(tracker): refresh reconcile artifact + dated export (2026-08-01) — unblocks locked-guards repo-wide",
    "mergedAt": "2026-08-01T16:57:23Z",
    "branch": "chore/tracker-artifacts-refresh-2026-08-01"
   },
@@ -16890,192 +16860,6 @@
    "title": "guard(accounting): pin settlement_lines line_type true supersets (WO #3)",
    "mergedAt": "2026-07-23T18:10:02Z",
    "branch": "fix/settlement-lines-line-type-superset-guard"
-  },
-  {
-   "number": 3343,
-   "title": "[HOLD-FOR-JORGE] fix(accounting): cash_dip primary CoA role + DIP resolver",
-   "mergedAt": "2026-07-23T18:10:08Z",
-   "branch": "fix/accounting-cash-dip-coa-role"
-  },
-  {
-   "number": 3342,
-   "title": "fix(accounting): CoA Roles empty account picker (entity + postable)",
-   "mergedAt": "2026-07-23T18:09:48Z",
-   "branch": "fix/coa-roles-accounts-picker"
-  },
-  {
-   "number": 3341,
-   "title": "fix(safety): block reducing a fine already converted to a driver liability (Option B)",
-   "mergedAt": "2026-07-23T17:19:04Z",
-   "branch": "fix/fine-reduce-blocks-converted-liability"
-  },
-  {
-   "number": 3340,
-   "title": "fix(safety): DOT inspection + HOS violation creators asked for raw uuids (SAF-F14)",
-   "mergedAt": "2026-07-23T17:34:12Z",
-   "branch": "fix/safety-creator-pickers"
-  },
-  {
-   "number": 3339,
-   "title": "fix(safety): DOT inspection + complaint void recorded a placeholder reason (SAF-F11)",
-   "mergedAt": "2026-07-23T17:10:34Z",
-   "branch": "fix/safety-void-requires-reason"
-  },
-  {
-   "number": 3338,
-   "title": "fix(banking): cash-GL bind only postable accounts (lane defect E)",
-   "mergedAt": "2026-07-23T16:34:22Z",
-   "branch": "fix/banking-cash-gl-is-postable"
-  },
-  {
-   "number": 3337,
-   "title": "docs(law): canonical DEFINITION-OF-DONE + enforcing guard + Cursor/Claude lane split",
-   "mergedAt": "2026-07-23T16:34:10Z",
-   "branch": "docs/definition-of-done-canonical"
-  },
-  {
-   "number": 3336,
-   "title": "fix(frontend): base-less API fetches silently received index.html (SAF-F06)",
-   "mergedAt": "2026-07-23T16:12:22Z",
-   "branch": "fix/base-less-api-fetch-spa-fallback"
-  },
-  {
-   "number": 3335,
-   "title": "fix(dispatch): cancellation reports read the wrong reason catalog",
-   "mergedAt": "2026-07-23T15:39:48Z",
-   "branch": "fix/cancellation-reason-label-source"
-  },
-  {
-   "number": 3334,
-   "title": "fix(safety): dashboard KPI tiles were permanently 0 — wire them to real sources",
-   "mergedAt": "2026-07-23T15:39:43Z",
-   "branch": "fix/safety-dashboard-kpis-wired"
-  },
-  {
-   "number": 3333,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-23T15:39:37Z",
-   "branch": "chore/tracker-artifacts-sync-30016618118"
-  },
-  {
-   "number": 3332,
-   "title": "fix(banking): drain stack 22–31 onto main (replaces CONFLICTING #3324–#3331)",
-   "mergedAt": "2026-07-23T15:41:07Z",
-   "branch": "fix/banking-stack-drain-main"
-  },
-  {
-   "number": 3320,
-   "title": "fix(guards): my meta-guard was 87% false positives — name-agnostic classifier",
-   "mergedAt": "2026-07-23T15:39:27Z",
-   "branch": "fix/meta-guard-classifier-name-agnostic"
-  },
-  {
-   "number": 3319,
-   "title": "fix(guards): selftest-debt burndown batch 1 — 10 guards, 69→59",
-   "mergedAt": "2026-07-23T13:20:18Z",
-   "branch": "fix/selftest-debt-burndown-batch1"
-  },
-  {
-   "number": 3318,
-   "title": "fix(banking): Escrow ↔ settlement both-way linkage (31/linkage)",
-   "mergedAt": "2026-07-23T13:20:14Z",
-   "branch": "fix/banking-31-escrow-settlement"
-  },
-  {
-   "number": 3317,
-   "title": "fix(banking): Match drawer nested +Create vendor/CoA (29/picker)",
-   "mergedAt": "2026-07-23T13:20:09Z",
-   "branch": "fix/banking-29-match-drawer-create"
-  },
-  {
-   "number": 3316,
-   "title": "fix(banking): FAIL 28 categorize §4 pickers (28 of 37)",
-   "mergedAt": "2026-07-23T13:17:56Z",
-   "branch": "fix/banking-28-categorize-pickers"
-  },
-  {
-   "number": 3315,
-   "title": "fix(banking): FAIL 27 bank row attachments/notes honesty",
-   "mergedAt": "2026-07-23T13:17:14Z",
-   "branch": "fix/banking-27-attachments-notes-honesty"
-  },
-  {
-   "number": 3314,
-   "title": "fix(banking): bank-feed GL posting honesty + JE link (26 of 37)",
-   "mergedAt": "2026-07-23T13:17:09Z",
-   "branch": "fix/banking-26-bank-feed-gl-honesty"
-  },
-  {
-   "number": 3313,
-   "title": "fix(guards): collections selftest failed on its own fixture — unblocks local pre-push [P1]",
-   "mergedAt": "2026-07-23T12:13:03Z",
-   "branch": "fix/guards-collections-selftest-fixture"
-  },
-  {
-   "number": 3312,
-   "title": "fix(banking): Transfer ↔ TMS JE reverse + GL flag honesty (25/linkage)",
-   "mergedAt": "2026-07-23T13:17:04Z",
-   "branch": "fix/banking-25-transfer-je-reverse"
-  },
-  {
-   "number": 3311,
-   "title": "fix(banking): Match EntityLink bill/payment/transfer (24/linkage)",
-   "mergedAt": "2026-07-23T13:16:32Z",
-   "branch": "fix/banking-24-match-entitylink"
-  },
-  {
-   "number": 3310,
-   "title": "fix(banking): Relay Card tab gated on a phantom column — honesty guard + typed disclosure",
-   "mergedAt": "2026-07-23T12:15:54Z",
-   "branch": "fix/banking-relay-tab-phantom-field-honesty"
-  },
-  {
-   "number": 3309,
-   "title": "fix(banking): Cash GL unbound honesty + bind reachability (23/econ+wiring)",
-   "mergedAt": "2026-07-23T13:16:27Z",
-   "branch": "fix/banking-23-cash-gl-unbound"
-  },
-  {
-   "number": 3308,
-   "title": "fix(ci): stacked PRs skipped every real gate — run the 9 required contexts on any PR base",
-   "mergedAt": "2026-07-23T12:14:29Z",
-   "branch": "chore/ci-stacked-pr-gate-coverage"
-  },
-  {
-   "number": 3307,
-   "title": "fix(banking): wire by-linkage reverse panels (22/linkage)",
-   "mergedAt": "2026-07-23T13:16:21Z",
-   "branch": "fix/banking-22-by-linkage-reverse"
-  },
-  {
-   "number": 3306,
-   "title": "fix(guards): make two inert selftests real (caught by the new meta-guard)",
-   "mergedAt": "2026-07-23T11:59:03Z",
-   "branch": "fix/guards-real-selftests"
-  },
-  {
-   "number": 3304,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-23T11:12:41Z",
-   "branch": "chore/tracker-artifacts-sync-29992338373"
-  },
-  {
-   "number": 3303,
-   "title": "feat(guards): meta-guard — a --selftest must be capable of failing",
-   "mergedAt": "2026-07-23T11:12:26Z",
-   "branch": "chore/meta-guard-selftests-can-fail"
-  },
-  {
-   "number": 3295,
-   "title": "fix(banking): recon matches + reconcile-queue honesty (13/econ)",
-   "mergedAt": "2026-07-23T13:26:56Z",
-   "branch": "fix/banking-13-recon-matches-honesty"
-  },
-  {
-   "number": 3294,
-   "title": "fix(banking): Transfers empty-state honesty (12/econ)",
-   "mergedAt": "2026-07-23T10:50:33Z",
-   "branch": "fix/banking-12-transfers-empty-honesty"
   }
  ],
  "merged_pr_total": 3000,
@@ -20295,12 +20079,6 @@
    "title": "feat(trust-t5): TIER1 Block 5 — Double-entry DB enforcement guard + integration test + docs",
    "mergedAt": "2026-06-07T23:54:53Z",
    "category": "TIER-1 financial"
-  },
-  {
-   "number": 612,
-   "title": "docs(dispatch): S5-A seam note + T7 HOLD dependency per dedupe audit",
-   "mergedAt": "2026-06-06T23:50:51Z",
-   "category": "HOLD"
   }
  ]
 }

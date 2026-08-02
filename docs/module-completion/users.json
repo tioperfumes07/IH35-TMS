@@ -1,0 +1,73 @@
+{
+  "module": "users",
+  "title": "Users & Admin",
+  "complete": false,
+  "as_of": "2026-08-02",
+  "live_sha": null,
+  "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/users.md",
+  "spec_sources": [
+    "docs/specs/DEFINITION-OF-DONE.md",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
+    "apps/frontend/src/routes/manifest.tsx"
+  ],
+  "items": [
+    {
+      "id": "USER-S01",
+      "title": "/users roster renders role-scoped operator list",
+      "layers": ["DOD-A", "DOD-B", "VERIFY-5"],
+      "spec": "Users page · visibleRoles Owner/Admin/SuperAdmin",
+      "status": "OPEN",
+      "evidence": "scaffold — not proven",
+      "pr": null
+    },
+    {
+      "id": "USER-S02",
+      "title": "Change role ceremony requires approver when policy demands",
+      "layers": ["DOD-D", "VERIFY-3"],
+      "spec": "0441-mod11-users-changerole-no-approver-ui",
+      "status": "OPEN",
+      "evidence": "scaffold — mod11 finding tracked",
+      "pr": null
+    },
+    {
+      "id": "USER-S03",
+      "title": "/admin/activity and /admin/audit-log Owner/SuperAdmin reachability",
+      "layers": ["DOD-A", "VERIFY-1"],
+      "spec": "sidebar users flyout admin routes",
+      "status": "OPEN",
+      "evidence": "scaffold — routes in flyout; click-through UNVERIFIED",
+      "pr": null
+    },
+    {
+      "id": "USER-S04",
+      "title": "/onboarding Operator Onboarding wizard entity-scoped",
+      "layers": ["DOD-A", "DOD-C"],
+      "spec": "sidebar flyout Operator Onboarding",
+      "status": "OPEN",
+      "evidence": "scaffold — not proven",
+      "pr": null
+    },
+    {
+      "id": "USER-S05",
+      "title": "RLS / operating_company_id isolation on user-admin mutations",
+      "layers": ["DOD-E", "VERIFY-5"],
+      "spec": "ITEM-14-TXN-COMPANY-ISOLATION-GUARD pattern",
+      "status": "OPEN",
+      "evidence": "scaffold — not proven for users module specifically",
+      "pr": null
+    },
+    {
+      "id": "USER-VERIFY-01",
+      "title": "Users module VERIFY-1..8 TRANSP + USMCA",
+      "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
+      "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
+      "status": "OPEN",
+      "evidence": "scaffold — July-31 stub only",
+      "pr": null
+    }
+  ],
+  "pass_count": 0,
+  "total_count": 6,
+  "progress": "0 of 6"
+}
