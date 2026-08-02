@@ -20,6 +20,10 @@ import { registerLaneProfitabilityRoutes } from "./lane-profitability.routes.js"
 import { registerCashFlowReportRouteFix } from "./cash-flow/route-fix.js";
 import { registerPerTruckCpmRoutes } from "./per-truck-cpm/route.js";
 import { registerReportsIftaRoutes } from "./ifta/routes.js";
+// RPT-F03 — mounted under the owner ruling of 2026-08-02 (settled decision + live verification).
+// The module existed, compiled and was never wired, so GET /api/v1/reports/ap-aging 404'd while
+// apps/frontend/src/api/reports.ts called it and the Outstanding A/P KPI drilled into it.
+import { registerApAgingRoutes } from "./ap-aging.routes.js";
 
 export async function registerReportsRoutes(app: FastifyInstance) {
   await registerReportsLibraryRoutes(app);
@@ -32,6 +36,9 @@ export async function registerReportsRoutes(app: FastifyInstance) {
   await registerDriverPayHistoryRoutes(app);
   await registerMaintenanceCostPerUnitRoutes(app);
   await registerReportsArAgingRoutes(app);
+  // Mounted beside its A/R twin — the symmetry is exactly why the missing half was invisible.
+  // Distinct path from the accounting module's /api/v1/accounting/ap-aging, so no route collision.
+  await registerApAgingRoutes(app);
   await registerDispatchMarginRoutes(app);
   await registerFuelReconciliationRoutes(app);
   await registerFuelSavingsRoutes(app);

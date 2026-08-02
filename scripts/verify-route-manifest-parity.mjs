@@ -153,13 +153,6 @@ const REFUSED_MOUNTS = new Map([
   // settlement data surface newly reachable, and §1.3 reserves that to the owner. Listing them here
   // keeps them visible and cheap to action instead of quietly mounted or quietly forgotten.
   [
-    "reports/ap-aging.routes.ts",
-    "HELD-FOR-OWNER (ready) — READ-ONLY A/P aging over views.ap_aging / accounting.ap_aging_as_of. " +
-      "Auth-gated + company-scoped, no writes, distinct path from the mounted " +
-      "/api/v1/accounting/ap-aging. apps/frontend/src/api/reports.ts calls it and gets a 404 today. " +
-      "Newly exposing an accounting.* read is a §1.3 owner decision.",
-  ],
-  [
     "payroll-integration/aggregate.routes.ts",
     "HELD-FOR-OWNER (ready) — aggregates TMS settlements + QBO payroll. Auth-gated + " +
       "assertCompanyMembership + app.operating_company_id. Driver-pay money data; §1.3 owner decision. " +
