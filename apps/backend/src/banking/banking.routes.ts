@@ -14,7 +14,13 @@ import {
 } from "./bank-account-visibility.js";
 import { countDriverEscrowKpis } from "./driver-escrow-counts.js";
 import { countTotalBankTransactions, countUncategorizedTransactions } from "./pending-categorization.js";
-import { sumAuthoritativeDepositoryCashCents, withInternalWalletBalances, type BankAccountBalanceFields } from "./internal-wallet-balance.js";
+import {
+  sumAuthoritativeDepositoryCashCents,
+  withInternalWalletBalances,
+  withInternalWalletTileBalances,
+  type BankAccountBalanceFields,
+  type BankingTileBalanceFields,
+} from "./internal-wallet-balance.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -181,7 +187,9 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           driver_escrow: 0,
           total_uncategorized: 0,
         }),
-        total_cash: authoritativeTotalCash,
+        // BankingHome money.format expects dollars; sumAuthoritativeDepositoryCashCents is cents
+        // (same raw total as cash-flow opening_cash_cents — do not assign cents here).
+        total_cash: authoritativeTotalCash / 100,
         total_uncategorized: uncategorizedCount,
         total_transactions: totalTransactions,
         pending_bills: pendingBills,
@@ -202,11 +210,12 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       const hideOn = await isBankAccountHideEnabled(client, companyId);
       // BANK-SURF-05: views.banking_account_tiles.is_relay is PHANTOM (never written). Real Relay
       // identity is catalogs.accounts.system_purpose = 'relay_fuel_wallet' via bank_accounts.ledger_account_id.
-      const res = await client.query(
+      const res = await client.query<BankingTileBalanceFields>(
         `
           SELECT
             t.*,
             ba.ledger_account_id,
+            ba.plaid_item_id,
             ca.system_purpose,
             (ca.system_purpose = 'relay_fuel_wallet') AS is_relay_wallet
           FROM views.banking_account_tiles t
@@ -229,7 +238,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         `,
         [companyId]
       );
-      return res.rows;
+      return withInternalWalletTileBalances(client, companyId, res.rows);
     });
     return { tiles };
   });
