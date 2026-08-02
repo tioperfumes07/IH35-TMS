@@ -119,6 +119,9 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // INLINE-CREATE-NESTED-FORM: React events bubble through the REACT tree even across the
+    // ParityDrawer portal, so without this the parent wizard form's onSubmit fires too.
+    e.stopPropagation();
     if (ACCOUNT_CREATE_GATED) {
       pushToast("Account create is awaiting approval. Contact Jorge to enable.", "error");
       return;

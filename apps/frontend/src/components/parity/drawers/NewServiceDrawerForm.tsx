@@ -184,6 +184,9 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // INLINE-CREATE-NESTED-FORM: React events bubble through the REACT tree even across the
+    // ParityDrawer portal, so without this the parent wizard form's onSubmit fires too.
+    e.stopPropagation();
     if (!form.name.trim()) { pushToast("Item name is required.", "error"); return; }
     if (form.sellEnabled && !form.incomeAccountId) {
       pushToast("Income account is required when selling this item.", "error");

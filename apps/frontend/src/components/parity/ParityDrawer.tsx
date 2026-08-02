@@ -8,6 +8,7 @@
  * side panels). Create Vendor / Create Customer stay centered rich modals.
  */
 import { useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { PARITY_DRAWER_WIDTH, PARITY_DRAWER_WIDTH_WIDE } from "./sizing";
 
 export type ParityDrawerProps = {
@@ -42,7 +43,24 @@ export function ParityDrawer({
 
   if (!open) return null;
   const widthClass = size === "wide" ? PARITY_DRAWER_WIDTH_WIDE : PARITY_DRAWER_WIDTH;
-  return (
+
+  // INLINE-CREATE-NESTED-FORM (2026-08-02): rendered through a PORTAL to document.body, not inline.
+  //
+  // WHY THIS IS CORRECTNESS, NOT COSMETICS. Drawers host create FORMS, and drawers open from inside
+  // other forms — the Book Load wizard (BookLoadModalV4.tsx) wraps its whole body in <form>. Rendered
+  // inline, NewCustomerDrawerForm's <form> became a form nested inside a form, and the HTML5 parser
+  // DELETES a nested <form> start tag. The consequences, all observed live:
+  //   • the inner form element never exists, so its onSubmit (preventDefault + POST createCustomer)
+  //     NEVER RUNS — the record is never created;
+  //   • its <button type="submit"> re-associates with the OUTER wizard form and submits THAT, which
+  //     reads as a native GET (?customer_type=…) and closes the wizard as if it had succeeded.
+  // Standalone /customers create worked precisely because there is no outer form there.
+  //
+  // The portal moves the drawer out of the wizard's DOM subtree, so the inner <form> is a real
+  // element again. Positioning is unaffected: this root is `fixed inset-0`, which resolves against
+  // the viewport, not the parent. React events still bubble through the REACT tree even across a
+  // portal, so the drawer forms ALSO stopPropagation() on submit — the portal alone is not enough.
+  return createPortal(
     <div className="fixed inset-0 z-40">
       <div className="absolute inset-0 bg-black/30" aria-hidden="true" onClick={onClose} />
       <aside
@@ -69,6 +87,7 @@ export function ParityDrawer({
           <footer className="sticky bottom-0 border-t border-gray-200 bg-white px-4 py-3">{footer}</footer>
         ) : null}
       </aside>
-    </div>
+    </div>,
+    document.body
   );
 }
