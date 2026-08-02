@@ -5,6 +5,9 @@ alwaysApply: true
 
 # RULE 28 — AUDIT COVERAGE SINGLE SOURCE (2026-08-02)
 
+**★ READ `docs/audit/AUDIT-LAW-PERMANENT.md` FIRST — it is the binding audit method.**
+Order: C→B→A→D→E. A screenshot is NOT a Layer-E pass. "Complete" = 30/30 certified only.
+
 Read `docs/audit/AUDIT-COVERAGE-LIVE.md` before ANY block.
 
 Build ONLY rows where Verdict=FAIL and Status=OPEN in your lane.

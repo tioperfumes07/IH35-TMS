@@ -1,5 +1,9 @@
 # IH35-TMS — Agent coordination
 
+> **★★★★ BEFORE ANY AUDIT WORK — READ [docs/audit/AUDIT-LAW-PERMANENT.md](docs/audit/AUDIT-LAW-PERMANENT.md) FIRST.**
+> It defines the binding method, layer order (C→B→A→D→E), evidence requirements, and anti-patterns.
+> A screenshot is NOT a Layer-E pass. "Complete" = 30/30 certified only. GUARD is the only gate to VERIFIED.
+
 > **★★★ BEFORE ANY BLOCK — READ [docs/audit/AUDIT-COVERAGE-LIVE.md](docs/audit/AUDIT-COVERAGE-LIVE.md).**
 > It is the single source of truth for what is actually broken. **Your work list = its rows where
 > `Verdict = FAIL` and `Status = OPEN` in your lane.** Do not invent a work list, do not work from a stale
