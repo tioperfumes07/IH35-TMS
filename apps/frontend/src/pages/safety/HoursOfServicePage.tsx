@@ -219,7 +219,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
               value={fleetSearch}
               onChange={(event) => setFleetSearch(event.target.value)}
               placeholder="Search drivers…"
-              className="h-8 w-48 rounded-sm border border-gray-300 px-2 text-xs"
+              className="min-h-12 w-48 rounded-sm border border-gray-300 px-2 text-xs"
               data-testid="safety-hos-fleet-search"
             />
           </div>
