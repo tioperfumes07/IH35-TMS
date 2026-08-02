@@ -154,12 +154,23 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   // screen showed $4,023,590.00 for $40,235.90. Cash Flow read the same authoritative total and
   // divided correctly, which is why the two surfaces disagreed by exactly 100x.
   //
-  // Converted at the selector, where the unit boundary actually is. The sibling KPIs are NOT cents
-  // and are deliberately left alone — verified, not assumed: factoring reserve_balance is already
-  // divided by 100 in SQL (factoring-virtual.routes.ts), and dip_operating / dip_payroll /
-  // driver_escrow come from views.banking_account_tiles.current_balance, a dollar-denominated
-  // numeric. total_cash is the only field on this page carrying cents.
-  const cashPosting = Number(kpiQuery.data?.total_cash ?? 0) / 100;
+  // ⚠ THE COMMENT ABOVE IS NOW HISTORY — DO NOT RE-ADD THE DIVISION HERE.
+  // BANKING-CASH-DOUBLE-DIVISION (2026-08-02): the fix described above was applied a SECOND time, on
+  // the server, by PR #4011 — `banking.routes.ts` now returns `total_cash: authoritativeTotalCash /
+  // 100` and its own comment reads "BankingHome money.format expects dollars ... do not assign cents
+  // here". Two PRs fixed the same units bug from opposite ends, each leaving a confident comment
+  // asserting the opposite of the other, and the page went from 100x TOO HIGH to 100x TOO LOW.
+  //
+  // Measured on prod 2026-08-02 (positive control mdata.vendors=2,827), active accounts only:
+  //   TRANSP  4,023,590 cents = $40,235.90 true — the page was rendering $402.36
+  //   TRK             538 cents = $5.38   true — rendering $0.05
+  //   USMCA         9,368 cents = $93.68  true — rendering $0.94
+  //
+  // The API field is DOLLARS. `total_cash` carries no `_cents` suffix, and the server owns the
+  // conversion because it is the side that knows the column is `current_balance_cents`. The selector
+  // consumes dollars as-is. Guarded by scripts/verify-banking-cash-single-division.mjs so the
+  // division cannot be reintroduced on this side.
+  const cashPosting = Number(kpiQuery.data?.total_cash ?? 0);
   const dipBalance = Number(kpiQuery.data?.dip_operating ?? 0) + Number(kpiQuery.data?.dip_payroll ?? 0);
   const uncategorizedCount = Number(kpiQuery.data?.total_uncategorized ?? 0);
   const reconAccounts = Number((reconciliationSessionsQuery.data?.open_sessions ?? []).length);
