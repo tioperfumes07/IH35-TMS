@@ -10,7 +10,7 @@ import {
   listSafetyEventLog,
   type SafetyEventLogRow,
 } from "../../../api/safety";
-import { SAFETY_GROUPS } from "../../../components/safety/SAFETY_TABS_CONFIG";
+import { SAFETY_ALIAS_TABS, SAFETY_GROUPS } from "../../../components/safety/SAFETY_TABS_CONFIG";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { formatDateUS } from "../../../lib/formatDate";
 
@@ -306,6 +306,24 @@ export function SafetyHomeTab() {
               className="rounded-sm border border-gray-200 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
             >
               {group.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* SAF-F22: alias surfaces (Training Programs/Records, ELD Audit Trail, 425C, Reports, Photo Comparison, Cert Expiry)
+          were mounted with zero inbound nav — secondary Home quick-jumps so operators reach them without typing URLs. */}
+      <div className="rounded-sm border border-gray-200 bg-white p-4" data-testid="safety-home-alias-quick-jumps">
+        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Compliance &amp; audit tools</h4>
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
+          {SAFETY_ALIAS_TABS.map(({ tab }) => (
+            <Link
+              key={tab.id}
+              to={tab.route}
+              className="rounded-sm border border-gray-200 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              data-testid={`safety-home-alias-${tab.id}`}
+            >
+              {tab.label}
             </Link>
           ))}
         </div>
