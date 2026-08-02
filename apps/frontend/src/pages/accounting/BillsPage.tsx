@@ -352,7 +352,7 @@ export function BillsPage() {
 
   const columns = useMemo<ParityColumn<VendorBill>[]>(
     () => [
-      { key: "vendor_name", label: "Vendor", sortable: true, render: (bill) => <EntityLink kind="vendor" id={bill.vendor_id} label={bill.vendor_name || bill.vendor_id} /> },
+      { key: "vendor_name", label: "Vendor", sortable: true, render: (bill) => <EntityLink kind="vendor" id={bill.mdata_vendor_id} label={bill.vendor_name || bill.vendor_id} /> },
       { key: "bill_number", label: "Bill #", sortable: true, render: (bill) => <EntityLink kind="bill" id={bill.id} label={bill.bill_number || bill.id.slice(0, 8)} /> },
       { key: "bill_date", label: "Date", sortable: true, render: (bill) => formatDateUS(bill.bill_date) },
       { key: "amount_cents", label: "Original", sortable: true, className: "text-right", cellClass: "text-right", render: (bill) => money(bill.amount_cents) },

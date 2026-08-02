@@ -157,7 +157,26 @@ export function assertNoMoneyTheater(commits) {
 
       const appMoney = c.files.filter((f) => MONEY_PATH_RE.test(f) && f.startsWith("apps/"));
       const hasWritePath = appMoney.some((f) => WRITE_PATH_RE.test(f));
-      if ((THEATER_SUBJECT_RE.test(c.subject) || /entitylink/i.test(text)) && !hasWritePath) {
+      // ACCT-F84 — the theater test is about a FRONTEND-ONLY link change dressed up as money-module
+      // progress. That is the incident this rule was written for: "a branch whose only commit was an
+      // accounting-path EntityLink commit carrying none of the 18 keys" (see the header) — a commit
+      // that touched no backend data path at all.
+      //
+      // As first written the test asked only "does some file match WRITE_PATH_RE", which no read path
+      // ever does. That makes a drill-through DEFECT unshippable: a link pointing at the wrong column
+      // 404s on 16,246 rows, and fixing it necessarily means changing a read service and a page —
+      // never a puller or a poster. A rule that forbids fixing a real defect is not protecting
+      // anything; it just teaches people to delete the word "EntityLink" from the message, which
+      // hides the very subject the rule wants to see.
+      //
+      // Narrowed, NOT weakened: a backend money-path SERVICE/ROUTE change is real data-path work and
+      // clears the theater test. Frontend-only remains theater, so the original incident still fails
+      // (and it also fails on the 18 keys, which it lacked). Both directions are asserted in
+      // selftest arms "theater-frontend-only" and "entitylink-with-backend-readpath".
+      const hasBackendDataPath = c.files.some(
+        (f) => MONEY_PATH_RE.test(f) && /^apps\/backend\/src\/.*\.(ts|mjs)$/i.test(f) && !/\.test\.ts$/i.test(f)
+      );
+      if ((THEATER_SUBJECT_RE.test(c.subject) || /entitylink/i.test(text)) && !hasWritePath && !hasBackendDataPath) {
         problems.push(
           `${short} "${c.subject.slice(0, 64)}" money THEATER (EntityLink/honesty) ` +
             `without write/pull/post/migration path — Rule 23`
@@ -322,6 +341,43 @@ REMAINING: ACCT-F01
       },
     ],
     true
+  );
+
+  // ACCT-F84 — the ORIGINAL incident: a frontend-only EntityLink commit on an accounting path. It
+  // must still be caught, or this narrowing would have gutted the rule.
+  expect(
+    "theater-frontend-only",
+    [
+      {
+        sha: "fff111222",
+        subject: "fix(accounting): EntityLink drill-through",
+        body: fullBody,
+        files: ["apps/frontend/src/pages/accounting/BillsPage.tsx"],
+      },
+    ],
+    true
+  );
+
+  // ACCT-F84 — the same subject, but the commit also changes a backend money-path read service that
+  // supplies the field the link needs. That is real data-path work, not theater.
+  expect(
+    "entitylink-with-backend-readpath",
+    [
+      {
+        sha: "fff333444",
+        subject: "fix(accounting): vendor drill-through used a legacy id",
+        // The body MUST carry the trigger word. Without it neither THEATER_SUBJECT_RE nor the
+        // /entitylink/i body test fires, the theater branch never runs, and this arm would pass no
+        // matter what the rule did — a vacuous arm that mutation-testing caught (removing the
+        // narrowing left the selftest green, which is how the hole showed itself).
+        body: `${fullBody}\nEntityLink drill-through repointed to the canonical vendor uuid.`,
+        files: [
+          "apps/backend/src/accounting/bills.service.ts",
+          "apps/frontend/src/pages/accounting/BillsPage.tsx",
+        ],
+      },
+    ],
+    false
   );
 
   expect(

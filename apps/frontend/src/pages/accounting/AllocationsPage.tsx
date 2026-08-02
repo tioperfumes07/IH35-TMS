@@ -125,7 +125,7 @@ export function AllocationsPage() {
         key: "vendor_name",
         label: "Vendor",
         sortable: true,
-        render: (row) => <EntityLink kind="vendor" id={row.vendor_id} label={row.vendor_name ?? row.vendor_id ?? "—"} />,
+        render: (row) => <EntityLink kind="vendor" id={row.mdata_vendor_id} label={row.vendor_name ?? row.vendor_id ?? "—"} />,
       },
       {
         key: "unit_code",

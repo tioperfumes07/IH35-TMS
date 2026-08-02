@@ -244,7 +244,7 @@ export function BillDetailPage() {
         {bill.vendor_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Vendor</span>
-            <EntityLink kind="vendor" id={bill.vendor_id} label={bill.vendor_name ?? bill.vendor_id.slice(0, 8)} />
+            <EntityLink kind="vendor" id={bill.mdata_vendor_id} label={bill.vendor_name ?? bill.vendor_id.slice(0, 8)} />
           </DataPanelRow>
         ) : null}
         <DataPanelRow>

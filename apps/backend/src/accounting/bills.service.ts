@@ -108,8 +108,21 @@ type ListBillPaymentsOptions = {
 type BillRow = {
   id: string;
   operating_company_id: string;
+  /**
+   * ACCT-F84 — legacy TEXT holding the QBO vendor id ("2", "256", "2244"). NOT a uuid and NOT a key
+   * into mdata.vendors: of 500 sampled prod rows exactly ONE resolved as a vendor uuid. Kept for the
+   * vendor FILTER and as a display fallback; never feed it to a /vendors/:id route.
+   */
   vendor_id: string | null;
+  /** Legacy TEXT duplicate of the above. Non-canonical — do not introduce new readers. */
   vendor_uuid: string | null;
+  /**
+   * ACCT-F84 — THE canonical vendor FK (uuid). Already returned by `SELECT b.*`; it was simply never
+   * declared here, so every frontend consumer fell back to the legacy text id and built a link that
+   * 404s. Verified on prod 2026-08-02: populated on 16,244 of 16,246 bills, and it disagrees with the
+   * qbo_vendor_id resolution on ZERO rows.
+   */
+  mdata_vendor_id: string | null;
   bill_number: string | null;
   bill_date: string;
   due_date: string | null;
@@ -137,7 +150,15 @@ type BillPaymentRow = {
   id: string;
   operating_company_id: string;
   bill_id: string;
+  /** ACCT-F84 — legacy TEXT QBO vendor id. 0 of 6,543 prod rows resolve as a uuid. Display only. */
   vendor_id: string | null;
+  /**
+   * ACCT-F84 — resolved vendor uuid. Unlike accounting.bills, accounting.bill_payments has NO
+   * canonical vendor column at all, so it is resolved through the vendor master by qbo_vendor_id
+   * (entity-scoped). Verified on prod 2026-08-02: 6,538 of 6,543 resolve; the remaining 5 stay null
+   * and render as plain text rather than as a link that would 404.
+   */
+  mdata_vendor_id: string | null;
   payment_date: string;
   amount_cents: number | null;
   amount: number | null;
@@ -517,6 +538,13 @@ export async function listBillPaymentsForBill(userId: string, operatingCompanyId
     const res = await client.query<BillPaymentRow>(
       `
         SELECT bp.*,
+               -- ACCT-F84: entity-scoped resolve of the legacy TEXT vendor_id to the canonical
+               -- mdata.vendors uuid, so the UI can drill through instead of linking to a 404.
+               (SELECT v.id::text
+                  FROM mdata.vendors v
+                 WHERE v.qbo_vendor_id = bp.vendor_id
+                   AND v.operating_company_id = bp.operating_company_id
+                 LIMIT 1) AS mdata_vendor_id,
                ${BILL_PAYMENT_IS_RECONCILED_SQL} AS is_reconciled,
                ${BILL_PAYMENT_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id,
                ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
@@ -844,6 +872,13 @@ export async function listBillPayments(
     const res = await client.query<BillPaymentRow>(
       `
         SELECT bp.*,
+               -- ACCT-F84: entity-scoped resolve of the legacy TEXT vendor_id to the canonical
+               -- mdata.vendors uuid, so the UI can drill through instead of linking to a 404.
+               (SELECT v.id::text
+                  FROM mdata.vendors v
+                 WHERE v.qbo_vendor_id = bp.vendor_id
+                   AND v.operating_company_id = bp.operating_company_id
+                 LIMIT 1) AS mdata_vendor_id,
                ${BILL_PAYMENT_IS_RECONCILED_SQL} AS is_reconciled,
                ${BILL_PAYMENT_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id,
                ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
