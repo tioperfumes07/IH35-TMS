@@ -29,6 +29,18 @@ const ROUTES = [
   "apps/backend/src/routes/safety/complaints.ts",
 ];
 const CLIENT = "apps/frontend/src/api/safetyV64.ts";
+const TABS = [
+  {
+    rel: "apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx",
+    apiFn: "voidDotInspection",
+    label: "DOT Inspections",
+  },
+  {
+    rel: "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx",
+    apiFn: "voidComplaintV64",
+    label: "Complaints",
+  },
+];
 
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
@@ -81,11 +93,32 @@ export function assertVoidRequiresReason(sources) {
     }
   }
 
+  // Mirror HOSViolationsTab: void must prompt via VoidReasonModal before POST (client-side gate).
+  for (const tab of TABS) {
+    const code = stripComments(sources?.[tab.rel] ?? read(tab.rel));
+    if (!/VoidReasonModal/.test(code)) {
+      problems.push(`${tab.rel}: ${tab.label} void must prompt via VoidReasonModal (HOS pattern).`);
+      continue;
+    }
+    if (!/setVoidTargetId/.test(code)) {
+      problems.push(`${tab.rel}: void button must open VoidReasonModal via setVoidTargetId, not fire void directly.`);
+    }
+    if (
+      !/mutationFn:\s*\(\{\s*id,\s*reason\s*\}/.test(code) ||
+      !new RegExp(`${tab.apiFn}\\([^)]*reason`).test(code)
+    ) {
+      problems.push(`${tab.rel}: void mutation must pass user-supplied reason to ${tab.apiFn}.`);
+    }
+    if (!/<VoidReasonModal[\s\S]{0,800}onSubmit=\{async\s*\(reason\)/.test(code)) {
+      problems.push(`${tab.rel}: VoidReasonModal onSubmit must receive the operator reason before void POST.`);
+    }
+  }
+
   return problems;
 }
 
 if (SELFTEST) {
-  const live = Object.fromEntries([...ROUTES, CLIENT].map((f) => [f, read(f)]));
+  const live = Object.fromEntries([...ROUTES, CLIENT, ...TABS.map((t) => t.rel)].map((f) => [f, read(f)]));
   const failures = [];
   const target = ROUTES[0];
 
@@ -138,6 +171,16 @@ if (SELFTEST) {
     "does not send `void_reason`"
   );
 
+  // Case 5: the UI drops VoidReasonModal (direct void without reason capture).
+  expectCaught(
+    "ui-drops-modal",
+    {
+      ...live,
+      [TABS[0].rel]: live[TABS[0].rel].replace(/<VoidReasonModal[\s\S]*?\/>/, ""),
+    },
+    "VoidReasonModal"
+  );
+
   const liveProblems = assertVoidRequiresReason(live);
   if (liveProblems.length) failures.push(`live sources FAIL: ${liveProblems.join(" | ")}`);
 
@@ -146,7 +189,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 4 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 5 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
