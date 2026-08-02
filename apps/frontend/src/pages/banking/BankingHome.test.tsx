@@ -100,16 +100,12 @@ describe("BankingHomePage accounts summary", () => {
     expect(screen.queryByText("ONLINE PAYMENT - THANK YOU")).not.toBeInTheDocument();
   });
 
-  // BANK-F01 — the headline Cash KPI rendered CENTS through a dollar formatter, a clean 100x
-  // overstatement of the first number on the home screen. This asserts the exact prod figure:
-  // TRANSP's 5 active bank accounts sum to 4,023,590 cents, which must render as $40,235.90 and
-  // NEVER as $4,023,590.00. Written as a value assertion rather than a snapshot so the failure
-  // message names the wrong number outright.
-  it("renders the cash KPI in dollars, not the raw cents the API returns", async () => {
+  // BANK-F01 / AUDIT row 2 — Cash posting KPI renders API dollars and matches tile-scale balances.
+  // After #4011 the KPI payload is already dollars (authoritativeTotalCash / 100); do not expect cents.
+  it("renders the cash KPI in dollars from the API dollar payload", async () => {
     vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
-      // Exactly what GET /api/v1/banking/dashboard/kpis returns for TRANSP on prod:
-      // sumAuthoritativeDepositoryCashCents() = SUM(current_balance_cents) = 4_023_590.
-      total_cash: 4023590,
+      // TRANSP prod authoritative total (2026-08-02): −17,393,202 cents → −173,932.02 dollars.
+      total_cash: -173932.02,
       dip_operating: 0,
       dip_payroll: 0,
       total_uncategorized: 0,
@@ -124,9 +120,10 @@ describe("BankingHomePage accounts summary", () => {
 
     render(wrap(<BankingHomePage />));
 
-    expect(await screen.findByTitle("$40,235.90")).toBeInTheDocument();
-    // The pre-fix value must be absent. Without this the test would still pass if BOTH were rendered.
-    expect(screen.queryByTitle("$4,023,590.00")).not.toBeInTheDocument();
+    expect(await screen.findByTitle("-$173,932.02")).toBeInTheDocument();
+    // Stale #3997 double-convert would show −$1,739.32; cents-as-dollars would show −$17,393,202.00.
+    expect(screen.queryByTitle("-$1,739.32")).not.toBeInTheDocument();
+    expect(screen.queryByTitle("-$17,393,202.00")).not.toBeInTheDocument();
   });
 
   it("shows real bank accounts from plaid feed when tile list is empty", async () => {
