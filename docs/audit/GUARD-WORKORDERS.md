@@ -37,9 +37,10 @@ already has an owner here.
 | USMCA chart gaps (fuel/tolls/lumper/pay/escrow, 42xx revenue) | — | C | Claude Coder | Mirror TRANSP by purpose; entity-scoped (never FK a TRANSP acct); 4210/4220/4230/4240 + 6 revenue maps 1:1; fix NULL account_number on USMCA Insurance Expense | Task 3 | building |
 | Bills `mdata_vendor_id` NULL ×2 | 3 | C | Claude Coder | Backfill the 2 remaining to canonical vendor hub; additive | — | OPEN |
 | Fuel GL-dark / `load_id` NULL 1,547 | 1, 122 | B/C | Claude Coder | Categorize Relay fuel via the workflow (owner-adjacent); each diesel expense FKs a load (G18) | — | OPEN |
-| Banking all-accounts aggregate | 2 | E | Cursor | Reproduce the surface + filter that must equal per-account sum; fix the aggregate view | #4011 + residual double-/100 fix | **FIXED** — KPI dollars match tile sum; guard 1508/1973 |
-| Inventory category picker empty | 25 | D | Cursor | Seed `catalogs.parts` category source; picker renders + persists | — | OPEN |
-| ParityTable resize hit-target | 57 | A | Cursor | Discoverable resize affordance (grip/cursor); UX polish | — | OPEN (minor) |
+| Banking all-accounts aggregate | 2 | E | Cursor | Reproduce the surface + filter that must equal per-account sum; fix the aggregate view | #4011 + #4028 `15018936b` residual no double-/100 | **FIXED** — KPI dollars match tile sum; guards 1508/1973/2012 — await GUARD VERIFIED |
+| Inventory category picker empty | 25 | D | Cursor | SelectCombobox over PART_INVENTORY_CATEGORIES + backfill location→category | #4029 `944e7aa46` · Neon apply 202611161200 @ 20:07Z · cat_null 0/144 | **FIXED** — await GUARD VERIFIED |
+| ParityTable resize hit-target | 57 | A | Cursor | Discoverable resize affordance (grip visible at rest) | #4027 `6500c1d16` · step 2008 | **FIXED** — await GUARD VERIFIED |
+| Settlements + Users → ParityTable resize | 206–207 | A | Cursor | Primary lists use ParityTable enableColumnResize + URL sort | #4030 in flight · step 2010 | OPEN — CI babysit |
 | 7 pickers "D UNVERIFIED" | 19–23,26,55 | D | Cascade re-test | EXERCISE the inline +Create live (fill→save→persist, no native GET); after FIX 2. Code-wired ≠ verified (see §2-D note) | — | UNVERIFIED |
 | 28 E design-bar UNVERIFIED | 27–54 | E | Cascade | Interactive per module: resize works+discoverable, proportions, QBO filters, box-in-box, drawer-on-drawer; per entity | — | UNVERIFIED |
 | 11 modules UNVERIFIABLE-until-data | (C rows) | C | seed → GUARD | Become real PASS/FAIL once the seed battery posts transactions; GUARD verifies each JE | — | UNVERIFIED |
