@@ -153,7 +153,7 @@ export function ReportsHomePage() {
 
       <div className="grid gap-3 lg:grid-cols-[1.8fr_1fr]">
         <div className="space-y-3">
-          <section className="rounded-sm border border-slate-200 bg-white">
+          <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
             <div className="border-b border-slate-200 px-3 py-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-sm font-semibold text-slate-900">Accounting + financial reports</h3>
@@ -161,7 +161,8 @@ export function ReportsHomePage() {
               </div>
               <p className="text-xs text-slate-500">Core accounting statements plus operational finance views</p>
             </div>
-            <div className="grid gap-2 p-3 sm:grid-cols-2">
+            {/* Flat grid cells — no nested bordered tiles (Cascade row 205 box-in-box). */}
+            <div className="grid sm:grid-cols-2 sm:divide-x sm:divide-slate-100">
               {(
                 [
                   ["trial-balance", "Trial balance"],
@@ -181,12 +182,12 @@ export function ReportsHomePage() {
                 <button
                   key={id}
                   type="button"
-                  className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-left text-xs font-semibold text-slate-800 hover:border-[#1f2a44] hover:bg-white"
+                  className="border-t border-slate-100 px-3 py-2 text-left text-xs font-semibold text-slate-800 hover:bg-slate-50"
                   onClick={() => navigate(PHASE_6_REPORT_HREFS[id])}
                 >
                   <span className="flex items-center justify-between gap-2">
                     <span>{label}</span>
-                    <span className="rounded-full border border-slate-300 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
                       {basisForReport(id)}
                     </span>
                   </span>
@@ -194,12 +195,12 @@ export function ReportsHomePage() {
               ))}
             </div>
           </section>
-          <section className="rounded-sm border border-slate-200 bg-white">
+          <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
             <div className="border-b border-slate-200 px-3 py-2">
               <h3 className="text-sm font-semibold text-slate-900">Management reports</h3>
               <p className="text-xs text-slate-500">QBO-standard branded compilations — lender, insurance, and stakeholder ready</p>
             </div>
-            <div className="grid gap-2 p-3 sm:grid-cols-3">
+            <div className="grid sm:grid-cols-3 sm:divide-x sm:divide-slate-100">
               {(
                 [
                   ["company-overview", "Company Overview", "P&L + Balance Sheet"],
@@ -210,7 +211,7 @@ export function ReportsHomePage() {
                 <button
                   key={type}
                   type="button"
-                  className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-[#1f2a44] hover:bg-white"
+                  className="border-t border-slate-100 px-3 py-2 text-left hover:bg-slate-50"
                   onClick={() => navigate(`/reports/management?type=${type}`)}
                 >
                   <div className="text-xs font-semibold text-slate-800">{label}</div>
