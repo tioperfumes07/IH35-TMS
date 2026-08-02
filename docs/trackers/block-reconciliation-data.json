@@ -1,12 +1,12 @@
 {
  "date": "2026-08-02",
- "generated_at_iso": "2026-08-02T17:26:11.157Z",
+ "generated_at_iso": "2026-08-02T17:44:44.659Z",
  "counts": {
   "PENDING": 14,
   "PENDING (GATED)": 27,
-  "NEEDS-VERIFY": 45,
-  "DONE": 671,
-  "AUDIT-NOTE": 446
+  "NEEDS-VERIFY": 44,
+  "DONE": 658,
+  "AUDIT-NOTE": 460
  },
  "universe": {
   "total_blocks_after_dedup": 1203,
@@ -1049,7 +1049,7 @@
    "evidence": "[verified 2026-07-12] agent: not dispositioned in #2385; needs live FK check",
    "name": "",
    "registered_on": null,
-   "pr": 2385
+   "pr": 4008
   },
   {
    "id": "PHASE3_TRANSFER-MIGRATION-DRIFT_held-but-live_VERIFY",
@@ -1060,18 +1060,7 @@
    "evidence": "[verified 2026-07-12] agent: not dispositioned in #2385; needs live migration-drift check",
    "name": "",
    "registered_on": null,
-   "pr": 2385
-  },
-  {
-   "id": "phase3-audit57-process-audit-docs-workflow",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2385 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2385
+   "pr": 4008
   },
   {
    "id": "product-service-categories-rename-and-creator",
@@ -4849,39 +4838,6 @@
    "pr": 2321
   },
   {
-   "id": "GAP-10-DELTA-CANCELLATIONS-REPORT",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #663 merged 2026-06-07",
-   "name": "Load cancellations analytics report (group by reason, driver, customer, date)",
-   "registered_on": null,
-   "pr": 663
-  },
-  {
-   "id": "GAP-11-DELTA-UPLOAD-EXPENSE",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #666 merged 2026-06-07",
-   "name": "Wire UploadZone into expense create form (match bill/invoice attachment pattern)",
-   "registered_on": null,
-   "pr": 666
-  },
-  {
-   "id": "GAP-14-PRE-DISPATCH-VALIDATION",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "all 6 file(s) on main",
-   "name": "",
-   "registered_on": null,
-   "pr": 1150
-  },
-  {
    "id": "gap-14-validation-pre-dispatch",
    "source": "gap-spec",
    "fin": false,
@@ -4890,28 +4846,6 @@
    "evidence": "all 6 named artifact(s) on main",
    "name": "gap-14-validation-pre-dispatch",
    "pr": null
-  },
-  {
-   "id": "GAP-18-DRIVER-COMM-TIMELINE",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #682 merged 2026-06-07",
-   "name": "",
-   "registered_on": null,
-   "pr": 682
-  },
-  {
-   "id": "GAP-19-DETENTION-INVOICE",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #686 merged 2026-06-07",
-   "name": "GAP-19 Detention billable manager-approval gate — approve bridges detention into linehaul invoice (reuses bridgeDetentio",
-   "registered_on": null,
-   "pr": 686
   },
   {
    "id": "gap-20-recurring-bills",
@@ -4945,28 +4879,6 @@
    "pr": null
   },
   {
-   "id": "GAP-24-FRESHNESS-INDICATOR",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #685 merged 2026-06-07",
-   "name": "Samsara freshness indicator pill (L1-L4, green/amber/red)",
-   "registered_on": null,
-   "pr": 685
-  },
-  {
-   "id": "GAP-25",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #707 merged 2026-06-08",
-   "name": "Active Driver Set 15-min Recompute Cache",
-   "registered_on": null,
-   "pr": 707
-  },
-  {
    "id": "gap-25-active-driver-set",
    "source": "gap-spec",
    "fin": false,
@@ -4975,17 +4887,6 @@
    "evidence": "all 3 named artifact(s) on main",
    "name": "gap-25-active-driver-set",
    "pr": null
-  },
-  {
-   "id": "GAP-26",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #722 merged 2026-06-08",
-   "name": "Border 1000m Geofences + Customs Clearance Time",
-   "registered_on": null,
-   "pr": 722
   },
   {
    "id": "gap-26-border-crossings",
@@ -4998,17 +4899,6 @@
    "pr": null
   },
   {
-   "id": "GAP-27",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #724 merged 2026-06-08",
-   "name": "Daily Geofence Reconciliation Report",
-   "registered_on": null,
-   "pr": 724
-  },
-  {
    "id": "gap-27-geofence-reconciliation",
    "source": "gap-spec",
    "fin": false,
@@ -5017,17 +4907,6 @@
    "evidence": "all 2 named artifact(s) on main",
    "name": "gap-27-geofence-reconciliation",
    "pr": null
-  },
-  {
-   "id": "GAP-28",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "all 9 file(s) on main",
-   "name": "Layover Time Computation (>8h Gap)",
-   "registered_on": null,
-   "pr": 3987
   },
   {
    "id": "gap-28-layover-detection",
@@ -5040,17 +4919,6 @@
    "pr": null
   },
   {
-   "id": "GAP-29",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "all 7 file(s) on main",
-   "name": "Booking-Gap Time per Dispatcher Analytics",
-   "registered_on": null,
-   "pr": 729
-  },
-  {
    "id": "gap-29-booking-gap-analytics",
    "source": "gap-spec",
    "fin": false,
@@ -5061,17 +4929,6 @@
    "pr": null
   },
   {
-   "id": "GAP-30",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #665 merged 2026-06-07",
-   "name": "Late-arrival rate analytics per driver/customer/lane",
-   "registered_on": null,
-   "pr": 665
-  },
-  {
    "id": "gap-30-late-arrival-analytics",
    "source": "gap-spec",
    "fin": false,
@@ -5080,17 +4937,6 @@
    "evidence": "all 1 named artifact(s) on main",
    "name": "gap-30-late-arrival-analytics",
    "pr": null
-  },
-  {
-   "id": "GAP-31",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #761 merged 2026-06-08",
-   "name": "Multi-stop extra rate per stop (WF-053)",
-   "registered_on": null,
-   "pr": 761
   },
   {
    "id": "gap-31-multi-stop-extra-rates",
@@ -5760,10 +5606,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #652 merged 2026-06-07",
+   "evidence": "all 12 file(s) on main",
    "name": "Accounting Home role-specific view (read-only display)",
    "registered_on": null,
-   "pr": 652
+   "pr": null
   },
   {
    "id": "gap-67-accounting-home-view",
@@ -12217,6 +12063,61 @@
    "pr": null
   },
   {
+   "id": "GAP-10-DELTA-CANCELLATIONS-REPORT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "Load cancellations analytics report (group by reason, driver, customer, date)",
+   "registered_on": null,
+   "pr": 663
+  },
+  {
+   "id": "GAP-11-DELTA-UPLOAD-EXPENSE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "Wire UploadZone into expense create form (match bill/invoice attachment pattern)",
+   "registered_on": null,
+   "pr": 666
+  },
+  {
+   "id": "GAP-14-PRE-DISPATCH-VALIDATION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "",
+   "registered_on": null,
+   "pr": 1150
+  },
+  {
+   "id": "GAP-18-DRIVER-COMM-TIMELINE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "",
+   "registered_on": null,
+   "pr": 682
+  },
+  {
+   "id": "GAP-19-DETENTION-INVOICE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "GAP-19 Detention billable manager-approval gate — approve bridges detention into linehaul invoice (reuses bridgeDetentio",
+   "registered_on": null,
+   "pr": 686
+  },
+  {
    "id": "GAP-20",
    "source": ".block-ready",
    "fin": false,
@@ -12226,6 +12127,94 @@
    "name": "",
    "registered_on": null,
    "pr": 704
+  },
+  {
+   "id": "GAP-24-FRESHNESS-INDICATOR",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "Samsara freshness indicator pill (L1-L4, green/amber/red)",
+   "registered_on": null,
+   "pr": 685
+  },
+  {
+   "id": "GAP-25",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "Active Driver Set 15-min Recompute Cache",
+   "registered_on": null,
+   "pr": 707
+  },
+  {
+   "id": "GAP-26",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "Border 1000m Geofences + Customs Clearance Time",
+   "registered_on": null,
+   "pr": 722
+  },
+  {
+   "id": "GAP-27",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "Daily Geofence Reconciliation Report",
+   "registered_on": null,
+   "pr": 724
+  },
+  {
+   "id": "GAP-28",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "Layover Time Computation (>8h Gap)",
+   "registered_on": null,
+   "pr": 3987
+  },
+  {
+   "id": "GAP-29",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "Booking-Gap Time per Dispatcher Analytics",
+   "registered_on": null,
+   "pr": 729
+  },
+  {
+   "id": "GAP-30",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "Late-arrival rate analytics per driver/customer/lane",
+   "registered_on": null,
+   "pr": 665
+  },
+  {
+   "id": "GAP-31",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
+   "name": "Multi-stop extra rate per stop (WF-053)",
+   "registered_on": null,
+   "pr": 761
   },
   {
    "id": "GAP-71",
@@ -12726,7 +12715,7 @@
    "fin": true,
    "tier": "",
    "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry audit block, no IH35 s",
    "name": "",
    "registered_on": null,
    "pr": null
@@ -12776,6 +12765,17 @@
    "pr": null
   },
   {
+   "id": "phase3-audit57-process-audit-docs-workflow",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic process/docs audit block, no IH",
+   "name": "",
+   "registered_on": null,
+   "pr": 4008
+  },
+  {
    "id": "phase3-audit62-spc",
    "source": ".block-ready",
    "fin": true,
@@ -12784,7 +12784,7 @@
    "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
    "name": "",
    "registered_on": null,
-   "pr": 2385
+   "pr": 4008
   },
   {
    "id": "phase3-audit64-capa",
@@ -12795,7 +12795,7 @@
    "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
    "name": "",
    "registered_on": null,
-   "pr": 2385
+   "pr": 4008
   },
   {
    "id": "phase3-audit65-preventive-action",
@@ -12806,7 +12806,7 @@
    "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
    "name": "",
    "registered_on": null,
-   "pr": 2385
+   "pr": 4008
   },
   {
    "id": "phase3-audit66-supplier-quality",
@@ -12817,7 +12817,7 @@
    "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
    "name": "",
    "registered_on": null,
-   "pr": 2385
+   "pr": 4008
   },
   {
    "id": "phase3-audit67-customer-satisfaction-csat-nps",
@@ -12828,7 +12828,7 @@
    "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
    "name": "",
    "registered_on": null,
-   "pr": 2385
+   "pr": 4008
   },
   {
    "id": "phase3-audit68-service-quality-sla",
@@ -12839,7 +12839,7 @@
    "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
    "name": "",
    "registered_on": null,
-   "pr": 2385
+   "pr": 4008
   },
   {
    "id": "phase3-audit69-product-quality",
@@ -12850,7 +12850,7 @@
    "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
    "name": "",
    "registered_on": null,
-   "pr": 2385
+   "pr": 4008
   },
   {
    "id": "phase3-audit70-manufacturing-qc",
@@ -12861,7 +12861,7 @@
    "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
    "name": "",
    "registered_on": null,
-   "pr": 2385
+   "pr": 4008
   },
   {
    "id": "phase3-audit71-laboratory",
@@ -12872,7 +12872,7 @@
    "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
    "name": "",
    "registered_on": null,
-   "pr": 2385
+   "pr": 4008
   },
   {
    "id": "phase3-audit72-calibration",
@@ -12883,7 +12883,7 @@
    "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
    "name": "",
    "registered_on": null,
-   "pr": 2385
+   "pr": 4008
   },
   {
    "id": "phase3-audit73-validation",
@@ -12894,7 +12894,7 @@
    "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
    "name": "",
    "registered_on": null,
-   "pr": 2385
+   "pr": 4008
   },
   {
    "id": "phase3-audit75-document-control",
@@ -12905,7 +12905,7 @@
    "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry/quality audit block, n",
    "name": "",
    "registered_on": null,
-   "pr": 2385
+   "pr": 4008
   },
   {
    "id": "phase8-audit161-api-audit",
@@ -13261,6 +13261,12 @@
   }
  ],
  "merged_prs": [
+  {
+   "number": 4008,
+   "title": "measurability pass1b batch 2: 20 EVAPORATE overrides (phase3-audit62+)",
+   "mergedAt": "2026-08-02T17:42:44Z",
+   "branch": "cursor/measurability-pass1b-b2-2026-08-02"
+  },
   {
    "number": 4007,
    "title": "measurability: PASS1b — 21 auditor-cited EVAPORATE overrides",
@@ -16854,12 +16860,6 @@
    "title": "fix(ui): portal Combobox listbox (CoA Roles picker still empty after #3342)",
    "mergedAt": "2026-07-23T18:51:01Z",
    "branch": "fix/combobox-listbox-portal-paritytable"
-  },
-  {
-   "number": 3348,
-   "title": "[HOLD-FOR-JORGE · FINANCIAL] SAF-F01 — escrow Forfeit route + damage_recovery account",
-   "mergedAt": "2026-07-23T20:47:23Z",
-   "branch": "fix/saf-f01-escrow-forfeit"
   }
  ],
  "merged_pr_total": 3000,
