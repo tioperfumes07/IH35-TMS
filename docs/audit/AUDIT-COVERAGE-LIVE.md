@@ -42,7 +42,7 @@ matching `n_live_tup`) proving the zeros are real and not RLS-masked.
 |---|---|---|
 | Modules certified full-PASS (all 5 layers) | **0 / 30** | 2026-08-02 |
 | Modules with a confirmed live defect | **15 / 30** | 2026-08-02 |
-| Rows in this file | **302** | 2026-08-02 |
+| Rows in this file | **331** | 2026-08-02 |
 | Rows `FAIL` + `OPEN` (active, excl. SUPERSEDED/FIXED) | **14** | 2026-08-02 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **4** | 2026-08-02 |
 | Rows `VERIFIED` by GUARD | **0** | 2026-08-02 |
@@ -357,3 +357,32 @@ Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/
 | 300 | System | B | USMCA | PASS | System dashboard is shared (owner-only). QBO sync status, service health, and program counts are global. USMCA JE data: 6 journal entries, 12 postings — real GL foundation. | — | — | NO | 2026-08-02 | CASCADE |
 | 301 | Help | B | USMCA | N/A | Help center is static content (articles, categories, links). Not entity-scoped — same content for all entities. No data layer to verify. | — | — | NO | 2026-08-02 | CASCADE |
 | 302 | USMCA QBO Classes | B | USMCA | FAIL — 0 QBO classes | `mdata.qbo_classes` USMCA=0 vs TRANSP=172. QBO classes are used for cost-center tagging on JE postings (Fleet row 130 references `class_id`). USMCA has no QBO class hierarchy — any report or posting requiring class-level P&L will return empty for USMCA. This is a data provisioning gap: USMCA's QBO realm either has no classes defined or the class sync hasn't pulled them. | OPEN | — | NO | 2026-08-02 | CASCADE |
+| 303 | Accounting (Invoices) | C | USMCA | UNVERIFIABLE-until-data | `accounting.invoices` USMCA=0. No invoice→GL chain to walk. Posting engine proven on TRANSP (row 118) via shared code. Blocked on seed. | — | — | NO | 2026-08-02 | CASCADE |
+| 304 | Dispatch | C | USMCA | UNVERIFIABLE-until-data | `mdata.loads` USMCA=0. No load→invoice→GL chain to walk. Blocked on seed. | — | — | NO | 2026-08-02 | CASCADE |
+| 305 | Maintenance | C | USMCA | UNVERIFIABLE-until-data | `maintenance.work_orders` USMCA=0. No WO→bill→GL chain to walk. Blocked on seed. | — | — | NO | 2026-08-02 | CASCADE |
+| 306 | Safety | C | USMCA | UNVERIFIABLE-until-data | `safety.internal_fines` USMCA=0. No fine→liability→deduction→GL chain to walk. Blocked on seed. | — | — | NO | 2026-08-02 | CASCADE |
+| 307 | Fleet | C | USMCA | UNVERIFIABLE-until-data | `mdata.qbo_classes` USMCA=0 (row 302). No class-tagged JE postings possible. Fleet→GL class-tagging path cannot be exercised. Blocked on QBO class sync + seed. | — | — | NO | 2026-08-02 | CASCADE |
+| 308 | Settlements | C | USMCA | UNVERIFIABLE-until-data | `settlement.settlement` USMCA=0. No settlement→posting→GL chain to walk. Additionally, `damage_recovery` binding missing (row 260) — any USMCA damage deduction would fail. Blocked on seed + row 260 fix. | — | — | NO | 2026-08-02 | CASCADE |
+| 309 | Fuel | C | USMCA | UNVERIFIABLE-until-data | `fuel.fuel_transactions` USMCA=0. No fuel→GL chain to walk. Same class as TRANSP Fuel FAIL (row 122) — even if fuel txns existed, posting may not fire. Blocked on seed. | — | — | NO | 2026-08-02 | CASCADE |
+| 310 | Insurance | C | USMCA | UNVERIFIABLE-until-data | `insurance.claim` USMCA=0, `insurance.policy` USMCA=0. No claim→policy→GL chain to walk. Blocked on seed. | — | — | NO | 2026-08-02 | CASCADE |
+| 311 | Factoring | C | USMCA | UNVERIFIABLE-until-data | `accounting.factoring_advances` USMCA=0. No factoring→GL chain to walk. Blocked on seed. | — | — | NO | 2026-08-02 | CASCADE |
+| 312 | Vendors | C | USMCA | PASS (FK-linked) | `mdata.vendors` USMCA=3. Vendor→bill FK path: `accounting.bills.mdata_vendor_id` → `mdata.vendors.id`. The 1 USMCA bill (`996907d6`) has `mdata_vendor_id` set → resolves to "USMCA Audit Vendor". Forward: vendor→bills→GL is proven for the 1 test bill. Reverse: JE posting → bill → vendor resolves. Thin but bidirectional. | — | — | NO | 2026-08-02 | CASCADE |
+| 313 | Customers | C | USMCA | UNVERIFIABLE-until-data | `mdata.customers` USMCA=1 (TIO PERFUMES). No USMCA invoices exist to link customer→invoice→GL. The customer record exists but the revenue chain is empty. Blocked on seed. | — | — | NO | 2026-08-02 | CASCADE |
+| 314 | Driver Profile | C | USMCA | UNVERIFIABLE-until-data | `mdata.drivers` USMCA=85 but 0 settlements, 0 loads, 0 fines, 0 deductions. Driver records exist as master data but no financial transactions reference them. The driver→settlement→GL chain is empty. Blocked on seed. | — | — | NO | 2026-08-02 | CASCADE |
+| 315 | Legal | C | USMCA | UNVERIFIABLE-until-data | `legal.contract_instances` USMCA=0, `legal.matters` USMCA=0. No legal→financial chain to walk. Blocked on seed. | — | — | NO | 2026-08-02 | CASCADE |
+| 316 | Compliance | C | USMCA | UNVERIFIABLE-until-data | `samsara.hos_snapshots` USMCA=0. Compliance reads HOS data — no data means no violation→fine→GL path to walk. Blocked on Samsara config + seed. | — | — | NO | 2026-08-02 | CASCADE |
+| 317 | Lists (CoA) | C | USMCA | PASS | `catalogs.accounts` USMCA=67 active accounts. All 12 USMCA JE postings reference `account_id` that FK-resolves to USMCA accounts (100% integrity). Chart is the GL backbone — proven functional for USMCA's small posting volume. | — | — | NO | 2026-08-02 | CASCADE |
+| 318 | Cash Flow | C | USMCA | N/A (read-only) | Cash Flow reads `banking.bank_transactions` (158 USMCA) for actuals and bills/payments for projections. No write path to GL. Same verdict as TRANSP (row 132). | — | — | NO | 2026-08-02 | CASCADE |
+| 319 | Finance Hub | C | USMCA | N/A (gated) | Finance Hub "not enabled for this entity" (row 248). No data paths exercisable. 1 prepaid asset exists (GUARD test data) but the module gate prevents user access. | — | — | NO | 2026-08-02 | CASCADE |
+| 320 | Reports | C | USMCA | N/A (read-only) | Reports module reads GL/operational data. With USMCA having 12 JE postings and 67 accounts, basic reports can generate. No write path. Same class as TRANSP — reports consume, don't post. | — | — | NO | 2026-08-02 | CASCADE |
+| 321 | Home | C | USMCA | N/A (dashboard; read-only) | Home reads KPIs from loads/drivers/revenue. No write path. Dashboard is consumption-only. | — | — | NO | 2026-08-02 | CASCADE |
+| 322 | Driver Hub | C | USMCA | N/A (read-only inbox) | Driver Hub reads driver data and load updates. No write path to GL. | — | — | NO | 2026-08-02 | CASCADE |
+| 323 | Inventory | C | USMCA | N/A (no GL path) | `maintenance.parts_inventory` USMCA=0. Inventory module tracks parts stock — no direct GL posting path exists (parts costs flow through WO→Bills→GL, which is the Maintenance C path). | — | — | NO | 2026-08-02 | CASCADE |
+| 324 | Docs | C | USMCA | N/A (no GL path) | Document management has no GL posting path. Documents attach to entities but don't generate financial transactions. | — | — | NO | 2026-08-02 | CASCADE |
+| 325 | Tasks | C | USMCA | N/A (no GL path) | Task management has no GL posting path. Tasks are operational scheduling, not financial. | — | — | NO | 2026-08-02 | CASCADE |
+| 326 | Users | C | USMCA | N/A (no GL path) | User management has no GL posting path. | — | — | NO | 2026-08-02 | CASCADE |
+| 327 | ELD/Telematics | C | USMCA | N/A (no GL path; HOS data feeds Compliance) | ELD reads Samsara telemetry. No direct GL posting. HOS data flows to Compliance violations which MAY generate fines→GL, but that's the Safety/Compliance C path. | — | — | NO | 2026-08-02 | CASCADE |
+| 328 | Help | C | USMCA | N/A (static content) | Help center is static content. No data or GL path. | — | — | NO | 2026-08-02 | CASCADE |
+| 329 | Program | C | USMCA | N/A (internal tool) | Program board tracks development progress. No GL path. | — | — | NO | 2026-08-02 | CASCADE |
+| 330 | System | C | USMCA | PASS (GL foundation) | USMCA GL foundation: 6 journal entries, 12 postings. Entity balance DR=$6,451.10 = CR=$6,451.10 (net=0, row 116). System/QBO sync loaded opening balances. GL integrity confirmed. | — | — | NO | 2026-08-02 | CASCADE |
+| 331 | 425C | C | USMCA | N/A (tax form; no GL path) | Form 425C is a regulatory tax form that reads company profile data. No GL posting. | — | — | NO | 2026-08-02 | CASCADE |
