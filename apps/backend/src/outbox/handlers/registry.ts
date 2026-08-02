@@ -11,6 +11,9 @@ import { TmsBillPushHandler } from "./tms-bill-push.handler.js";
 import { buildTrailEventHandlers } from "./trail-events.handler.js";
 import { SamsaraMasterDataPushHandler } from "./samsara-master-data-push.handler.js";
 import { FmcsaCustomerVerifyHandler } from "./fmcsa-customer-verify.handler.js";
+// WF-064: dispatch.wf064.override_notice had NO consumer — processor.markFailedNow() meant every
+// owner-override notice failed permanently and silently. See the handler for the full account.
+import { DispatchOverrideNoticeHandler } from "./dispatch-override-notice.handler.js";
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./outbox-handler.types.js";
 
 // Re-export leaf types so existing handler imports from ./registry.js keep working
@@ -95,6 +98,7 @@ export function buildOutboxHandlerRegistry() {
     new TmsBillPushHandler(),
     new SamsaraMasterDataPushHandler(),
     new FmcsaCustomerVerifyHandler(),
+    new DispatchOverrideNoticeHandler(),
     new GeofenceBreachDetectedHandler(),
     new AuditPersistHandler(),
     new TestNoopHandler(),
