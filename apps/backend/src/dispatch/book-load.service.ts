@@ -147,6 +147,20 @@ function canOverrideUnitBlock(role: string) {
   return role === "Owner";
 }
 
+/**
+ * OWNER-ONLY override for the DRIVER-QUALIFICATION gate (CDL / DOT medical / hazmat endorsement).
+ *
+ * DELIBERATELY SEPARATE from canOverrideUnitBlock even though both read `role === "Owner"` today.
+ * That helper also gates unit-block and OOS overrides — business holds. A future change aimed at
+ * THOSE (say, letting a Manager clear an OOS unit) would silently widen the DOT hard-stop too, and
+ * every guard asserting only "the branch calls canOverrideUnitBlock" would stay green while a
+ * non-Owner walked past a federal driver-qualification stop. Different risk class, own gate.
+ * Pinned to Owner by scripts/verify-owner-override-driver-qualification.mjs.
+ */
+function canOwnerOverrideQualification(role: string) {
+  return role === "Owner";
+}
+
 function canOverrideHos(role: string) {
   return ["Owner", "Administrator", "Manager"].includes(role);
 }
@@ -1003,8 +1017,28 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           // append-only audit trail with WHO, WHEN, WHY and EXACTLY WHICH reasons were overridden, plus
           // an outbox notice — so a DOT/FMCSA reviewer, insurer or court reads a deliberate, attributed
           // decision rather than an absent control. Dispatcher/Manager roles are unchanged: still blocked.
+          // LOAD CONTEXT for the attestation (GUARD 2026-08-02). The load row is NOT inserted yet at
+          // this gate — it is pre-insert validation — so there is no load_id to record. We capture the
+          // request's load context instead, which is what makes the row defensible: "Owner attested for
+          // driver X on load N, Laredo -> Dallas, 08/02" rather than a bare driver id.
+          const pickupStop = input.stops?.find((st) => st.stop_type === "pickup") ?? null;
+          const deliveryStops = (input.stops ?? []).filter((st) => st.stop_type === "delivery");
+          const deliveryStop = deliveryStops.length ? deliveryStops[deliveryStops.length - 1] : null;
+          const loadContext = {
+            load_id: null as string | null, // not materialized pre-insert; see note above
+            load_number: input.live_load_number ?? null,
+            customer_id: input.customer_id ?? null,
+            assigned_unit_id: input.assigned_unit_id ?? null,
+            lane_origin: pickupStop ? [pickupStop.city, pickupStop.state].filter(Boolean).join(", ") || null : null,
+            lane_destination: deliveryStop
+              ? [deliveryStop.city, deliveryStop.state].filter(Boolean).join(", ") || null
+              : null,
+            pickup_scheduled_at: pickupStop?.scheduled_arrival_at ?? null,
+            save_mode: input.save_mode,
+          };
+
           const ownerOverridingQualification =
-            canOverrideUnitBlock(input.requestingUserRole) &&
+            canOwnerOverrideQualification(input.requestingUserRole) &&
             typeof input.override_reason === "string" &&
             input.override_reason.trim().length >= 10;
 
@@ -1024,6 +1058,18 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
                 hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
                 override_reason: input.override_reason,
                 role: input.requestingUserRole,
+                // GUARD requirement 2026-08-02: a stable class tag so an insurer, DOT/FMCSA reviewer
+                // or attorney can query EXACTLY this event class without pattern-matching prose.
+                // Keep this literal stable — it is the query key for the Owner-Override Log report.
+                override_class: "DOT_QUALIFICATION",
+                // The attestation must tie to the SPECIFIC dispatch it authorized, not just a driver.
+                load_context: loadContext,
+                // PER-DISPATCH ATTESTATION — this is the line that keeps the override defensible.
+                // The override lives ONLY in this request: the gate re-evaluates on every book-load
+                // call, nothing is written that suppresses it, and there is no cache, flag, column or
+                // token that carries the decision to the next load. The Owner attests for THIS load,
+                // never "CDL gate off". Recorded in the audit row so the record itself says so.
+                attestation_scope: "single_dispatch",
                 severity_label: "critical",
               },
               "warning",
@@ -1045,6 +1091,8 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
                   overridden_reasons: block.reasons,
                   override_reason: input.override_reason,
                   override_by_user_id: input.requestingUserUuid,
+                  override_class: "DOT_QUALIFICATION",
+                  load_context: loadContext,
                 }),
               ]
             );
