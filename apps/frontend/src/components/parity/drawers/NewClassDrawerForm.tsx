@@ -23,6 +23,9 @@ export function NewClassDrawerForm({ operatingCompanyId, onCreated, onClose }: P
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // INLINE-CREATE-NESTED-FORM: React events bubble through the REACT tree even across the
+    // ParityDrawer portal, so without this the parent wizard form's onSubmit fires too.
+    e.stopPropagation();
     if (!name.trim()) { pushToast("Class name is required.", "error"); return; }
     setSaving(true);
     try {

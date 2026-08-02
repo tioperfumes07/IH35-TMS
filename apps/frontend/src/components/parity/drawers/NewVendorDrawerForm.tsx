@@ -68,6 +68,9 @@ export function NewVendorDrawerForm({ operatingCompanyId, onCreated, onClose }: 
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // INLINE-CREATE-NESTED-FORM: React events bubble through the REACT tree even across the
+    // ParityDrawer portal, so without this the parent wizard form's onSubmit fires too.
+    e.stopPropagation();
     const displayName = form.displayName.trim() || `${form.firstName} ${form.lastName}`.trim() || form.companyName.trim();
     if (!displayName) { pushToast("Vendor display name is required.", "error"); return; }
     setSaving(true);
