@@ -72,7 +72,7 @@ evidence, **per entity**. A `PASS` verdict is TRANSP-only unless the `Entity` co
 | Safety | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Compliance | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
 | Compliance | B | TRANSP | PASS | Verified, methodology-corrected | 2026-08-01 | Cascade | | |
-| Compliance | C | TRANSP | UNVERIFIED | Not yet traced (violations/fees→GL) | 2026-08-02 | Cascade | | |
+| Compliance | C | TRANSP | PASS (honest-empty) | Chain traced: `safety.company_violations`→`safety.company_violation_fines`→`safety.civil_fines`→`accounting.civil_fine_postings.expense_je_id`→`accounting.journal_entries` (same GL leg confirmed sound under Safety Layer C). `safety.hos_violations` is a separate non-GL compliance-only table (no financial primitive expected). ALL of `company_violations`, `company_violation_fines`, `hos_violations` = 0 rows company-wide (all companies, not just TRANSP) — genuine data scarcity, not a defect | 2026-08-02 | Cascade | | |
 | Compliance | D | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Compliance | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Driver Profile | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
