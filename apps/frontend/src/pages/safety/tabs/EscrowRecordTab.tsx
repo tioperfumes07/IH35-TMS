@@ -71,6 +71,7 @@ export function EscrowRecordTab() {
     }
   }, [escrowDriverIdParam, rows, searchParams, setSearchParams]);
   const attempts = escrowQuery.data?.forfeit_attempts ?? [];
+  const ignoredTimelineErrors = escrowQuery.data?.timeline_errors ?? [];
   const totalForfeits = useMemo(() => attempts.filter((a) => a.status === "success").length, [attempts]);
 
   const columns = useMemo<ParityColumn<EscrowRecordRow>[]>(
@@ -153,6 +154,22 @@ export function EscrowRecordTab() {
         tableTestId="escrow-record-table"
         rowTestId={(row) => `escrow-record-row-${row.id}`}
       />
+
+      {timelineErrors.length > 0 ? (
+        <div
+          className="rounded-sm border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900"
+          data-testid="escrow-forfeit-audit-errors"
+        >
+          Escrow timeline unavailable for {timelineErrors.length} driver
+          {timelineErrors.length === 1 ? "" : "s"} — forfeiture audit below may be incomplete.
+          <ul className="mt-1 list-disc pl-4 text-[11px]">
+            {timelineErrors.slice(0, 3).map((entry) => (
+              <li key={entry}>{entry}</li>
+            ))}
+            {timelineErrors.length > 3 ? <li>…and {timelineErrors.length - 3} more</li> : null}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="escrow-forfeit-audit">
         <h4 className="text-xs font-semibold text-slate-700">Forfeiture Audit</h4>

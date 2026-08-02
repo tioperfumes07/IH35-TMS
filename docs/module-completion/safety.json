@@ -2090,8 +2090,8 @@
         "DOD-E"
       ],
       "spec": "Rule 04 no phantom columns + Rule 16 no swallowed errors",
-      "status": "OPEN",
-      "evidence": "PHANTOM COLUMN, prod-verified. driver_finance.escrow_ledger has 11 columns and NO posted_at, yet deductions.routes.ts:147 does ORDER BY posted_at -> 42703, swallowed by getEscrowDriverTimeline(...).catch(()=>({timeline:[]})). forfeiture_history_count is therefore always 0 and the Safety Forfeiture Audit panel is STRUCTURALLY incapable of ever showing a row. Non-financial, builder's lane: order by created_at (what sibling readers use) + a guard failing on ORDER BY of a column absent from the table.",
+      "status": "PASS",
+      "evidence": "FIXED 2026-08-02. ROOT: driver_finance.escrow_ledger has created_at not posted_at; timeline failures were returned as ok:true+empty (legal-evidence lie). FIX: deductions.routes.ts + escrow-visualizer.routes.ts ORDER BY created_at; listEscrowRecords returns ok:false on timeline failure; EscrowRecordTab surfaces timeline_errors banner. GUARD: scripts/verify-safety-orph03-forfeiture-audit-timeline.mjs (verify-step 2066) selftest plants posted_at resurrection + empty-success swallow. LIVE PROOF: guard PASS on ce164ad0a+fix branch; UNVERIFIED: prod forfeiture row click-through (zero forfeitures may be legitimate on TRANSP).",
       "build_standard": {
         "standard_version": "2026-07-25",
         "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
