@@ -5081,13 +5081,18 @@
       "amount_claimed_cents",
       "amount_paid_cents",
       "asset_id",
+      "bill_id",
       "claim_number",
       "created_at",
       "deductible_cents",
+      "deduction_id",
       "driver_id",
       "driver_responsible",
+      "expense_id",
       "fault",
       "id",
+      "lawsuit_id",
+      "liability_id",
       "load_id",
       "notes",
       "policy_id",
@@ -5096,7 +5101,8 @@
       "reported_date",
       "status",
       "tenant_id",
-      "trailer_id"
+      "trailer_id",
+      "vendor_id"
     ],
     "insurance.coi_request": [
       "created_at",
