@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { deriveInternalWalletBalanceCents, withInternalWalletBalances } from "./internal-wallet-balance.js";
+import {
+  deriveInternalWalletBalanceCents,
+  withInternalWalletBalances,
+  withInternalWalletTileBalances,
+} from "./internal-wallet-balance.js";
 
 const COMPANY_ID = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
 const WALLET_ID = "112629fa-05a3-499a-bdac-91d696a21b6b";
@@ -64,5 +68,33 @@ describe("internal-wallet-balance", () => {
     const result = await withInternalWalletBalances(client, COMPANY_ID, accounts);
     expect(result).toBe(accounts);
     expect(queries.length).toBe(0);
+  });
+
+  it("overrides only non-Plaid real tile balances to dollars for aggregate reconciliation", async () => {
+    const { client } = mockClient([{ bank_account_id: WALLET_ID, balance_cents: "-15393367" }]);
+    const tiles = [
+      {
+        id: WALLET_ID,
+        tile_kind: "real",
+        current_balance: 0,
+        plaid_item_id: null,
+      },
+      {
+        id: "00000000-0000-0000-0000-000000000059",
+        tile_kind: "virtual",
+        current_balance: 500,
+        plaid_item_id: null,
+      },
+      {
+        id: "40b01d57-c27c-4bf1-922a-246543fddd83",
+        tile_kind: "real",
+        current_balance: 5.38,
+        plaid_item_id: "plaid-item",
+      },
+    ];
+    const result = await withInternalWalletTileBalances(client, COMPANY_ID, tiles);
+    expect(result[0]?.current_balance).toBe(-153933.67);
+    expect(result[1]?.current_balance).toBe(500);
+    expect(result[2]?.current_balance).toBe(5.38);
   });
 });

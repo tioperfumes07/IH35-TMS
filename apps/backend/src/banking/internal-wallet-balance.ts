@@ -287,3 +287,53 @@ export async function deriveInternalWalletBalanceCents(
   return map.get(bankAccountId) ?? 0;
 
 }
+
+export type BankingTileBalanceFields = {
+
+  id: string;
+
+  tile_kind: string;
+
+  current_balance: unknown;
+
+  plaid_item_id?: string | null;
+
+};
+
+/** Account-tiles variant — views.banking_account_tiles.current_balance is dollars, but non-Plaid
+
+ *  internal wallets (Relay Fuel Wallet) read $0 from bank_account_balances while the KPI aggregate
+
+ *  includes their ledger-derived cents. Override only real tiles with plaid_item_id IS NULL. */
+
+export async function withInternalWalletTileBalances<T extends BankingTileBalanceFields>(
+
+  client: QueryClient,
+
+  operatingCompanyId: string,
+
+  tiles: T[]
+
+): Promise<T[]> {
+
+  const internalIds = tiles
+
+    .filter((t) => t.tile_kind === "real" && (t.plaid_item_id == null || t.plaid_item_id === ""))
+
+    .map((t) => t.id);
+
+  if (internalIds.length === 0) return tiles;
+
+  const balances = await sumLedgerBalanceCents(client, operatingCompanyId, internalIds);
+
+  return tiles.map((t) => {
+
+    if (t.tile_kind !== "real" || (t.plaid_item_id != null && t.plaid_item_id !== "")) return t;
+
+    const cents = balances.get(t.id) ?? 0;
+
+    return { ...t, current_balance: cents / 100 };
+
+  });
+
+}
