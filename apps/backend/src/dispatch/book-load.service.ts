@@ -537,10 +537,28 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       const unitRows = await optionalQuery(
         client,
         `
-          SELECT id, display_id, is_dispatch_blocked, dispatch_block_reason, has_open_pm_due_wo, open_wo_count
-          FROM views.units_with_dispatch_status
-          WHERE id = $1
-            AND operating_company_id = $2
+          -- DISP-F01 — views.units_with_dispatch_status is a dead stub on prod (WHERE false, 0 rows
+          -- for every unit). Read through optionalQuery this failed OPEN: unit was null, the
+          -- optional-chained unit?.is_dispatch_blocked / unit?.has_open_pm_due_wo were both falsy,
+          -- and booking proceeded with NO gate. This path also never checked is_oos at all, so 13
+          -- active OOS units (TRK-owned, leased to TRANSP, verified on prod 2026-08-02) could be
+          -- booked onto a load.
+          --
+          -- Driven from mdata.units now, with the view LEFT JOINed for its advisory columns only.
+          -- Scoping is lease-aware because mdata.units has NO operating_company_id (§4) — the old
+          -- operating_company_id filter could never match a TRK-owned unit leased to TRANSP, which is
+          -- precisely the out-of-service population.
+          SELECT u.id,
+                 COALESCE(u.unit_number, v.display_id, u.id::text) AS display_id,
+                 COALESCE(v.is_dispatch_blocked, false) AS is_dispatch_blocked,
+                 v.dispatch_block_reason,
+                 COALESCE(v.has_open_pm_due_wo, false) AS has_open_pm_due_wo,
+                 COALESCE(v.open_wo_count, 0) AS open_wo_count,
+                 COALESCE(u.is_oos, false) AS is_oos
+          FROM mdata.units u
+          LEFT JOIN views.units_with_dispatch_status v ON v.id = u.id
+          WHERE u.id = $1
+            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2
           LIMIT 1
         `,
         [input.assigned_unit_id, input.operating_company_id]
@@ -553,6 +571,16 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           open_wo_count: Number(unit.open_wo_count ?? 0),
           message: `Unit ${String(unit.display_id ?? "unit")} has open PM-due work order(s).`,
         });
+      }
+
+      // DISP-F01 — OOS is a hard block of the same severity class as WF-050 (0441-mod2), and this
+      // path had no OOS check whatsoever. Refused before the dispatch-block branch so an out-of-
+      // service unit can never be booked, override token or not: an OOS truck is a DOT/safety state,
+      // not a workflow warning an operator may wave through.
+      if (unit?.is_oos) {
+        throw new Error(
+          `E_UNIT_OOS:Unit ${String(unit.display_id ?? input.assigned_unit_id)} is out of service (OOS) and cannot be booked.`
+        );
       }
 
       if (unit?.is_dispatch_blocked) {

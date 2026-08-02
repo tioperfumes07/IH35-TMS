@@ -56,10 +56,21 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
         const unit = await client
           .query(
             `
-              SELECT id, display_id, is_dispatch_blocked, dispatch_block_reason, has_open_pm_due_wo
-              FROM views.units_with_dispatch_status
-              WHERE id = $1
-                AND operating_company_id = $2
+              -- DISP-F01 — this path already read is_oos straight from mdata.units (below), which is
+              -- the only reason quick-assign still blocked out-of-service units while the other three
+              -- dispatch paths did not. But WF-050 dispatch-block and WF-044 PM-due were read SOLELY
+              -- from views.units_with_dispatch_status, a dead stub on prod (WHERE false, 0 rows), so
+              -- those two gates were inert here too — a half-working gate, which is the hardest kind
+              -- to notice. Driven from mdata.units with the view LEFT JOINed for its advisory columns.
+              SELECT u.id,
+                     COALESCE(u.unit_number, v.display_id, u.id::text) AS display_id,
+                     COALESCE(v.is_dispatch_blocked, false) AS is_dispatch_blocked,
+                     v.dispatch_block_reason,
+                     COALESCE(v.has_open_pm_due_wo, false) AS has_open_pm_due_wo
+              FROM mdata.units u
+              LEFT JOIN views.units_with_dispatch_status v ON v.id = u.id
+              WHERE u.id = $1
+                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2
               LIMIT 1
             `,
             [input.unit_id, input.operating_company_id]
