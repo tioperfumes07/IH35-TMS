@@ -96,6 +96,7 @@ function selftest() {
  */
 const KPI_SOURCES = [
   "apps/backend/src/home/home-widgets.routes.ts",
+  "apps/backend/src/reports/library.routes.ts",
   "apps/backend/src/maintenance/dashboard.routes.ts",
   "apps/backend/src/kpi/canonical-kpis.ts",
 ];
