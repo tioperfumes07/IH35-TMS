@@ -157,11 +157,25 @@ export function run() {
  * condition.
  */
 function selftest() {
-  const SURFACE = join(ROOT, "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx");
+  // Every component that calls the void client must be planted together. Cargo claim
+  // (SAF-F20) also voids via voidSafetyIncident — planting only the incidents cluster
+  // left a surviving caller and the selftest falsely green-lit a broken reachability check.
+  const voidClientCallers = walk(FRONTEND).filter((f) => {
+    if (!/\.(tsx|ts)$/.test(f)) return false;
+    const src = readFileSync(f, "utf8");
+    // Client definition itself still exports the symbol — plant only call sites.
+    if (f.includes("/api/") || f.endsWith("safety-api.ts") || f.endsWith("safetyApi.ts")) return false;
+    return src.includes("voidSafetyIncident");
+  });
+  if (voidClientCallers.length === 0) {
+    console.error("SELFTEST FAIL: no frontend voidSafetyIncident callers to plant against.");
+    process.exit(1);
+  }
+
   const cases = [
     {
       name: "component no longer calls the void client",
-      file: SURFACE,
+      files: voidClientCallers,
       find: "voidSafetyIncident",
       replace: "__UNREACHABLE_VOID__",
       all: true,
@@ -169,28 +183,28 @@ function selftest() {
     },
     {
       name: "list stops excluding voided rows",
-      file: INCIDENTS,
+      files: [INCIDENTS],
       find: "if (!query.data.include_voided) filters.push(`i.voided_at IS NULL`);",
       replace: "// removed by selftest",
       expect: /list-excludes-voided/,
     },
     {
       name: "PATCH stops refusing a voided incident",
-      file: INCIDENTS,
+      files: [INCIDENTS],
       find: "WHERE id = $1 AND operating_company_id = $2 AND voided_at IS NULL\n          RETURNING *",
       replace: "WHERE id = $1 AND operating_company_id = $2\n          RETURNING *",
       expect: /edit-refuses-voided/,
     },
     {
       name: "status transition stops refusing a voided incident",
-      file: INCIDENTS,
+      files: [INCIDENTS],
       find: 'if (row.voided_at) return { kind: "voided" as const };',
       replace: "// removed by selftest",
       expect: /status-refuses-voided/,
     },
     {
       name: "photo upload stops refusing a voided incident",
-      file: INCIDENTS,
+      files: [INCIDENTS],
       find: "            -- SAF-B19: no new evidence onto a retracted record.\n            AND voided_at IS NULL",
       replace: "",
       expect: /photo-refuses-voided/,
@@ -204,23 +218,29 @@ function selftest() {
   }
 
   for (const c of cases) {
-    const original = readFileSync(c.file, "utf8");
-    if (!original.includes(c.find)) {
-      console.error(`SELFTEST FAIL: anchor for "${c.name}" not found — the mutation would be a no-op.`);
-      process.exit(1);
+    const originals = new Map();
+    for (const file of c.files) {
+      const original = readFileSync(file, "utf8");
+      if (!original.includes(c.find)) {
+        console.error(`SELFTEST FAIL: anchor for "${c.name}" not found in ${relative(ROOT, file)} — the mutation would be a no-op.`);
+        process.exit(1);
+      }
+      originals.set(file, original);
     }
     let caught;
     try {
-      writeFileSync(c.file, c.all ? original.replaceAll(c.find, c.replace) : original.replace(c.find, c.replace), "utf8");
+      for (const [file, original] of originals) {
+        writeFileSync(file, c.all ? original.replaceAll(c.find, c.replace) : original.replace(c.find, c.replace), "utf8");
+      }
       caught = run();
     } finally {
-      writeFileSync(c.file, original, "utf8");
+      for (const [file, original] of originals) writeFileSync(file, original, "utf8");
     }
     if (caught.ok || !c.expect.test(caught.message)) {
       console.error(`SELFTEST FAIL: "${c.name}" was NOT caught.\nGuard said: ${caught.message}`);
       process.exit(1);
     }
-    console.log(`  caught: ${c.name}`);
+    console.log(`  caught: ${c.name} (${c.files.length} file(s))`);
   }
 
   const after = run();

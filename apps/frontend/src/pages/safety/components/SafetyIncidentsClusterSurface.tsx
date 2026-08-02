@@ -25,6 +25,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatUsdCents } from "../../../lib/money";
 import { DamageReportDetail } from "../damage-reports/DamageReportDetail";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 // Declarative per-incident-type field keys. The COMMON set renders for every type;
 // `typedFields` on each config adds the type-specific inputs (root-fix: one surface,
@@ -392,14 +393,38 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         label: "Driver",
         sortable: true,
         render: (row) =>
-          row.driver_id ? driverNameById.get(String(row.driver_id)) || "—" : "—",
+          row.driver_id ? (
+            <EntityLink
+              kind="driver"
+              id={String(row.driver_id)}
+              label={
+                (row.driver_name as string | undefined) ??
+                driverNameById.get(String(row.driver_id)) ??
+                undefined
+              }
+            />
+          ) : (
+            "—"
+          ),
       },
       {
         key: "unit_id",
         label: "Unit",
         sortable: true,
         render: (row) =>
-          str(row.unit_number) || (row.unit_id ? unitNumberById.get(String(row.unit_id)) : "") || "—",
+          row.unit_id ? (
+            <EntityLink
+              kind="unit"
+              id={String(row.unit_id)}
+              label={
+                str(row.unit_number) ||
+                unitNumberById.get(String(row.unit_id)) ||
+                undefined
+              }
+            />
+          ) : (
+            "—"
+          ),
       },
       {
         key: "location",
@@ -630,10 +655,21 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                       placeholder="Select driver"
                     />
                   </div>
-                ) : (
-                  <div className="mt-1 text-slate-800">
-                    {(detail?.driver_id ? driverNameById.get(String(detail.driver_id)) : "") || "—"}
+                ) : detail?.driver_id ? (
+                  <div className="mt-1">
+                    <EntityLink
+                      kind="driver"
+                      id={String(detail.driver_id)}
+                      label={
+                        (detail.driver_name as string | undefined) ??
+                        driverNameById.get(String(detail.driver_id)) ??
+                        undefined
+                      }
+                      data-testid={`${config.pageTestId}-detail-driver-link`}
+                    />
                   </div>
+                ) : (
+                  <div className="mt-1 text-slate-800">—</div>
                 )}
               </label>
             ) : null}
@@ -655,12 +691,21 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                       </option>
                     ))}
                   </select>
-                ) : (
-                  <div className="mt-1 text-slate-800">
-                    {str(detail?.unit_number) ||
-                      (detail?.unit_id ? unitNumberById.get(String(detail.unit_id)) : "") ||
-                      "—"}
+                ) : detail?.unit_id ? (
+                  <div className="mt-1">
+                    <EntityLink
+                      kind="unit"
+                      id={String(detail.unit_id)}
+                      label={
+                        str(detail.unit_number) ||
+                        unitNumberById.get(String(detail.unit_id)) ||
+                        undefined
+                      }
+                      data-testid={`${config.pageTestId}-detail-unit-link`}
+                    />
                   </div>
+                ) : (
+                  <div className="mt-1 text-slate-800">—</div>
                 )}
               </label>
             ) : null}
@@ -684,10 +729,21 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                       </option>
                     ))}
                   </select>
-                ) : (
-                  <div className="mt-1 text-slate-800">
-                    {(detail?.trailer_id ? unitNumberById.get(String(detail.trailer_id)) : "") || "—"}
+                ) : detail?.trailer_id ? (
+                  <div className="mt-1">
+                    <EntityLink
+                      kind="trailer"
+                      id={String(detail.trailer_id)}
+                      label={
+                        (detail.trailer_number as string | undefined) ??
+                        unitNumberById.get(String(detail.trailer_id)) ??
+                        undefined
+                      }
+                      data-testid={`${config.pageTestId}-detail-trailer-link`}
+                    />
                   </div>
+                ) : (
+                  <div className="mt-1 text-slate-800">—</div>
                 )}
               </label>
             ) : null}
@@ -709,8 +765,17 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                       </option>
                     ))}
                   </select>
+                ) : detail?.load_id ? (
+                  <div className="mt-1">
+                    <EntityLink
+                      kind="load"
+                      id={String(detail.load_id)}
+                      label={(detail.load_number as string | undefined) ?? undefined}
+                      data-testid={`${config.pageTestId}-detail-load-link`}
+                    />
+                  </div>
                 ) : (
-                  <div className="mt-1 text-slate-800">{str(detail?.load_id) || "—"}</div>
+                  <div className="mt-1 text-slate-800">—</div>
                 )}
               </label>
             ) : null}

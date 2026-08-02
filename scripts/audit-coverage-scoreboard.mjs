@@ -27,6 +27,7 @@ const FINDINGS_HEADER = "\n## Findings";
 /** Legacy free-text Module → { id, sub? } — used only when normalizing (--write --normalize-modules). */
 export const MODULE_ALIASES = {
   // Direct lowercase matches
+  // Every SIDEBAR_ITEM_IDS id (and common Cascade spellings) → never exit(1) on known modules
   fuel: { id: "fuel" },
   banking: { id: "bank" },
   bank: { id: "bank" },
@@ -36,6 +37,7 @@ export const MODULE_ALIASES = {
   dispatch: { id: "dispatch" },
   fleet: { id: "fleet" },
   drivers: { id: "drivers" },
+  "driver profile": { id: "drivers" },
   safety: { id: "safety" },
   compliance: { id: "compliance" },
   insurance: { id: "insurance" },
@@ -45,6 +47,7 @@ export const MODULE_ALIASES = {
   inventory: { id: "inventory" },
   reports: { id: "reports" },
   docs: { id: "docs" },
+  documents: { id: "docs" },
   users: { id: "users" },
   help: { id: "help" },
   program: { id: "program" },
@@ -53,6 +56,15 @@ export const MODULE_ALIASES = {
   home: { id: "home" },
   factoring: { id: "factoring" },
   lists: { id: "lists" },
+  finance: { id: "finance" },
+  "cash-flow": { id: "cash-flow" },
+  cashflow: { id: "cash-flow" },
+  "driver-hub": { id: "driver-hub" },
+  eld: { id: "eld" },
+  telematics: { id: "eld" },
+  form_425: { id: "form_425" },
+  "form 425c": { id: "form_425" },
+  "form 425": { id: "form_425" },
 
   // Compound / sub-module names
   "bills / accounting": { id: "accounting", sub: "bills" },
@@ -132,27 +144,50 @@ export function loadSidebarIds(src = fs.readFileSync(SIDEBAR, "utf8")) {
   return ids;
 }
 
+export function canonicalModuleLabel(parsed) {
+  return parsed.sub ? `${parsed.id} · ${parsed.sub}` : parsed.id;
+}
+
 export function parseModuleCell(cell, sidebarIds) {
   const raw = cell.trim();
   const [head, ...rest] = raw.split("·").map((s) => s.trim());
-  const id = head;
-  const sub = rest.length ? rest.join(" · ") : null;
-  if (!sidebarIds.includes(id)) {
-    return { ok: false, id, sub, error: `Module "${raw}" is not a SIDEBAR_ITEM_IDS id (got "${id}")` };
+  const subFromDot = rest.length ? rest.join(" · ") : null;
+
+  if (sidebarIds.includes(head)) {
+    return { ok: true, id: head, sub: subFromDot, via: "sidebar" };
   }
-  return { ok: true, id, sub };
+
+  const alias = MODULE_ALIASES[raw.toLowerCase()];
+  if (alias && sidebarIds.includes(alias.id)) {
+    return { ok: true, id: alias.id, sub: alias.sub ?? null, via: "alias" };
+  }
+
+  return {
+    ok: false,
+    id: head,
+    sub: subFromDot,
+    error: `Module "${raw}" is not a SIDEBAR_ITEM_IDS id and has no MODULE_ALIASES entry (got "${head}")`,
+  };
 }
 
 function splitRow(line) {
-  // | # | Module | ... | — trim outer pipes
+  // | # | Module | ... | — trim outer pipes.
+  // Do not split on `|` inside `code` or **bold** spans (Owner-gate `**YES**` / markdown).
   const inner = line.replace(/^\|/, "").replace(/\|$/, "");
   const cells = [];
   let cur = "";
-  let depth = 0;
+  let inCode = false;
+  let inBold = false;
   for (let i = 0; i < inner.length; i++) {
     const ch = inner[i];
-    if (ch === "`") depth ^= 1;
-    if (ch === "|" && depth === 0) {
+    if (ch === "`") inCode = !inCode;
+    if (!inCode && ch === "*" && inner[i + 1] === "*") {
+      inBold = !inBold;
+      cur += "**";
+      i += 1;
+      continue;
+    }
+    if (ch === "|" && !inCode && !inBold) {
       cells.push(cur.trim());
       cur = "";
     } else cur += ch;
@@ -170,12 +205,12 @@ export function parseFindings(md) {
     if (!line.startsWith("|")) break;
     if (/^\|\s*#\s*\|/.test(line) || /^\|\s*-+\s*\|/.test(line)) continue;
     const cells = splitRow(line);
-    if (cells.length < 11) {
-      const maybeNum = cells[0] && cells[0].trim();
+    const maybeNum = cells[0] && cells[0].trim();
+    if (cells.length !== 11) {
       if (/^\d+$/.test(maybeNum)) {
         throw new Error(
           `Row ${maybeNum} has ${cells.length} cells (expected 11). ` +
-          `Likely an unescaped pipe in the Verdict/Evidence column. Fix the row, do not silently skip.`
+            `Likely an unescaped pipe in the Verdict/Evidence column. Fix the row, do not silently skip.`
         );
       }
       continue;
@@ -208,7 +243,29 @@ export function parseFindings(md) {
       auditor,
     });
   }
+  assertParsedRowCountMatchesMax(rows, md.slice(start));
   return rows;
+}
+
+/** Fail closed if any numbered Findings row was skipped (silent truncation forbidden). */
+export function assertParsedRowCountMatchesMax(rows, findingsChunk) {
+  const nums = [...findingsChunk.matchAll(/^\|\s*(\d+)\s*\|/gm)].map((m) => +m[1]);
+  if (!nums.length) return;
+  const maxNum = Math.max(...nums);
+  const got = new Set(rows.map((r) => r.num));
+  const missing = [...new Set(nums)].filter((n) => !got.has(n)).sort((a, b) => a - b);
+  const uniqueCount = new Set(nums).size;
+  if (rows.length !== uniqueCount || missing.length) {
+    throw new Error(
+      `Findings parse dropped rows: file has ${uniqueCount} numbered rows (max #${maxNum}), ` +
+        `parsed ${rows.length}. Missing: ${missing.slice(0, 20).join(", ") || "(count mismatch)"}. ` +
+        `Silent truncation is forbidden — fix splitRow / unescaped pipes.`
+    );
+  }
+  // Contiguous 1..N files must parse exactly max row #
+  if (uniqueCount === maxNum && Math.min(...nums) === 1 && rows.length !== maxNum) {
+    throw new Error(`Parsed ${rows.length} rows but max row # is ${maxNum}`);
+  }
 }
 
 function isSupersededRow(r) {
@@ -275,17 +332,30 @@ export function computeMetrics(rows, sidebarIds) {
     }
   }
 
-  // cells-covered / 150 per entity: unique (module, layer) among active rows for that entity
+  // cells covered = any active row; cells PASS = active PASS with no active FAIL (not the same!)
   const cellsByEntity = {};
+  const cellsPassByEntity = {};
   for (const e of ENTITIES) {
-    const set = new Set();
+    const covered = new Set();
+    const state = new Map();
     for (const r of active) {
       if (!entitiesFor(r.entity).includes(e)) continue;
       const p = parseModuleCell(r.module, sidebarIds);
       if (!p.ok || !LAYERS.includes(r.layer)) continue;
-      set.add(`${p.id}|${r.layer}`);
+      const key = `${p.id}|${r.layer}`;
+      covered.add(key);
+      const cur = state.get(key) || { pass: false, fail: false };
+      const cls = primaryVerdictClass(r.verdict);
+      if (cls === "PASS") cur.pass = true;
+      if (cls === "FAIL") cur.fail = true;
+      state.set(key, cur);
     }
-    cellsByEntity[e] = set.size;
+    cellsByEntity[e] = covered.size;
+    let passN = 0;
+    for (const cur of state.values()) {
+      if (cur.pass && !cur.fail) passN += 1;
+    }
+    cellsPassByEntity[e] = passN;
   }
 
   // Certified: module has PASS on all 5 layers for TRANSP (primary operating view)
@@ -314,15 +384,19 @@ export function computeMetrics(rows, sidebarIds) {
     certified,
     modulesTotal: sidebarIds.length,
     cellsByEntity,
+    cellsPassByEntity,
     cellsDenom: sidebarIds.length * LAYERS.length, // 150
     tally,
   };
 }
 
 export function renderScoreboard(m) {
-  const cellLine = ENTITIES.map((e) => `${e} **${m.cellsByEntity[e]} / ${m.cellsDenom}**`).join(
+  const cellCovered = ENTITIES.map((e) => `${e} **${m.cellsByEntity[e]} / ${m.cellsDenom}**`).join(
     " · "
   );
+  const cellPass = ENTITIES.map(
+    (e) => `${e} **${m.cellsPassByEntity[e]} / ${m.cellsDenom}**`
+  ).join(" · ");
   const tallyLine = Object.entries(m.tally)
     .filter(([, n]) => n > 0)
     .map(([k, n]) => `${k}=${n}`)
@@ -336,7 +410,8 @@ export function renderScoreboard(m) {
 |---|---|---|
 | Modules certified full-PASS (all 5 layers, TRANSP) | **${m.certified} / ${m.modulesTotal}** | ${m.asOf} |
 | Modules with a confirmed live defect (non-superseded FAIL) | **${m.defectModules} / ${m.modulesTotal}** | ${m.asOf} |
-| Cells covered (module×layer) per entity | ${cellLine} | ${m.asOf} |
+| Cells covered (any active row · module×layer) per entity | ${cellCovered} | ${m.asOf} |
+| Cells PASS (active PASS, no active FAIL · module×layer) per entity | ${cellPass} | ${m.asOf} |
 | Rows in this file | **${m.rowsTotal}** | ${m.asOf} |
 | Rows \`FAIL\` + \`OPEN\` | **${m.failOpen}** | ${m.asOf} |
 | Rows \`Owner-gate? = YES\` (blocked on a decision) | **${m.ownerGateYes}** | ${m.asOf} |
@@ -350,15 +425,12 @@ export function normalizeModulesInMd(md, sidebarIds) {
   const rows = parseFindings(md);
   let out = md;
   for (const r of rows) {
-    const key = r.module.trim().toLowerCase();
-    // Already canonical?
-    if (parseModuleCell(r.module, sidebarIds).ok) continue;
-    const alias = MODULE_ALIASES[key];
-    if (!alias) {
+    const parsed = parseModuleCell(r.module, sidebarIds);
+    if (!parsed.ok) {
       throw new Error(`No alias for Module "${r.module}" (row ${r.num}) — add MODULE_ALIASES`);
     }
-    const next = alias.sub ? `${alias.id} · ${alias.sub}` : alias.id;
-    // Replace only in the findings table row for this # — first Module cell after | n |
+    const next = canonicalModuleLabel(parsed);
+    if (r.module.trim() === next) continue;
     const re = new RegExp(`(\\|\\s*${r.num}\\s*\\|\\s*)${escapeRe(r.module)}(\\s*\\|)`);
     if (!re.test(out)) throw new Error(`Could not rewrite Module for row ${r.num}`);
     out = out.replace(re, `$1${next}$2`);
@@ -436,20 +508,38 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
 |---|---|---|---|---|---|---|---|---|---|---|
 | 1 | fuel | B | TRANSP | FAIL | e | OPEN | — | NO | 2026-08-02 | X |
 | 2 | bank | E | TRANSP | FAIL | e | FIXED (PR #1) | #1 | NO | 2026-08-02 | X |
-| 3 | settlements · damage_recovery | C | USMCA | FAIL | e | OPEN — HOLD | — | YES | 2026-08-02 | X |
+| 3 | settlements · damage_recovery | C | USMCA | FAIL | e | OPEN — HOLD | — | **YES** | 2026-08-02 | X |
 | 4 | accounting · bills | C | TRANSP+TRK | SUPERSEDED | e | SUPERSEDED | — | NO | 2026-08-02 | X |
+| 5 | fuel | A | TRANSP | PASS | e | OPEN | — | NO | 2026-08-02 | X |
 `;
   const rows = parseFindings(sample);
   const m = computeMetrics(rows, ids);
   if (m.failOpen !== 2) throw new Error(`failOpen ${m.failOpen}`);
   if (m.ownerGateYes !== 1) throw new Error(`ownerGate ${m.ownerGateYes}`);
-  const rows2 = parseFindings(sample + "| 5 | fuel | B | TRANSP | FAIL | e | OPEN | — | YES — resolved | 2026-08-02 | X |\n");
+  const rows2 = parseFindings(sample + "| 6 | fuel | B | TRANSP | FAIL | e | OPEN | — | YES — resolved | 2026-08-02 | X |\n");
   const m2 = computeMetrics(rows2, ids);
   if (m2.ownerGateYes !== 1) throw new Error(`resolved owner-gate should not count: ${m2.ownerGateYes}`);
   if (m.defectModules !== 3) throw new Error(`defectModules ${m.defectModules}`);
   if (m.cellsByEntity.TRANSP < 2) throw new Error("cells TRANSP");
-  if (parseModuleCell("Fuel", ids).ok) throw new Error("Fuel must fail until normalized");
+  // Covered ≠ PASS: fuel B has FAIL so not in PASS set; fuel A is PASS-only
+  if (m.cellsPassByEntity.TRANSP < 1) throw new Error("cellsPass TRANSP");
+  if (m.cellsPassByEntity.TRANSP >= m.cellsByEntity.TRANSP) {
+    throw new Error("PASS cells must be strictly less than covered when FAIL cells exist");
+  }
+  const fuelAlias = parseModuleCell("Fuel", ids);
+  if (!fuelAlias.ok || fuelAlias.id !== "fuel" || fuelAlias.via !== "alias") {
+    throw new Error("Fuel must resolve via MODULE_ALIASES");
+  }
   if (!parseModuleCell("fuel", ids).ok) throw new Error("fuel ok");
+  let loud = false;
+  try {
+    parseFindings(
+      sample + "| 99 | fuel | B | TRANSP | FAIL | bad|pipe | OPEN | — | NO | 2026-08-02 | X |\n"
+    );
+  } catch (e) {
+    loud = /silently skip|dropped rows|expected 11/i.test(String(e.message || e));
+  }
+  if (!loud) throw new Error("short/broken numbered row must throw loudly");
   console.log(`${LABEL} --selftest OK`);
   process.exit(0);
 }
@@ -492,6 +582,6 @@ if (IS_MAIN) {
     process.exit(1);
   }
   console.log(
-    `${LABEL}: PASS — certified ${check.metrics.certified}/30 · defects ${check.metrics.defectModules}/30 · FAIL+OPEN ${check.metrics.failOpen} · VERIFIED ${check.metrics.verifiedGuard} · cells TRANSP ${check.metrics.cellsByEntity.TRANSP}/150`
+    `${LABEL}: PASS — certified ${check.metrics.certified}/30 · defects ${check.metrics.defectModules}/30 · FAIL+OPEN ${check.metrics.failOpen} · VERIFIED ${check.metrics.verifiedGuard} · covered TRANSP ${check.metrics.cellsByEntity.TRANSP}/150 · PASS TRANSP ${check.metrics.cellsPassByEntity.TRANSP}/150 · rows ${check.metrics.rowsTotal}`
   );
 }

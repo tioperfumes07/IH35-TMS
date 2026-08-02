@@ -10,7 +10,7 @@
 |-----|--------|--------|---------------|-------|
 | 1 | accounting | **DONE** (31/31) | `~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md` | **START** |
 | 2 | bank | **DONE** (18/18) | `~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md` | ECON/SURF/LINK/DOM closed; F10+recon owner HOLD |
-| 3 | safety | NOT_STARTED | — | |
+| 3 | safety | **FIXING** | `~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md` + safety-REFRESH-2026-08-01.md | Owner 2026-08-02: vertical deep-audit ACTIVE; Cursor ranked OPEN: SAF-INC-LIFECYCLE, SAF-F27; SAF-FINE-CATALOG largely wired on main |
 | 4 | lists | NOT_STARTED | — | |
 | 5 | maintenance | NOT_STARTED | — | |
 | 6 | insurance | IN_PROGRESS | partial A2 | #3228 HOLD + entity-scope fix |
@@ -49,4 +49,4 @@
 | entity-scope burn-down (USMCA) | ACTIVE debt — #3228 proved new leaks still appear |
 | sidebar docs 28→30 | NOT_STARTED |
 
-Last updated: 2026-07-30 — accounting 31/31 + banking 18/18 DONE (PR #3834); next OWNER-EXECUTION-PLAN module
+Last updated: 2026-08-02 — owner locked B-primary vertical Safety FIXING; accounting/bank DONE per module-completion
