@@ -2,14 +2,14 @@
 
 **DONE** = verified on main (branch merged or all signature files present).  **NEEDS-VERIFY** = weak signal (title-match / partial files / self-report), not trusted until GUARD confirms.  **PENDING** = needs build.  **PENDING (GATED)** = financial/locked, needs Jorge's gate first.
 
-**Verified against `origin/main` (12468 files) + 3000 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
+**Verified against `origin/main` (12496 files) + 3000 merged PRs.** A block is **DONE only if its branch merged OR all its signature files are present on main** — those are the only evidence. Weak signals (PR-title token match, partial files, a doc's own "shipped/done" self-report, a prior hardcoded built-claim) are **NEEDS-VERIFY** — not trusted until GUARD confirms. Nothing reads as DONE that wasn't really verified.
 
 ## Counts
 - **PENDING**: 14
 - **PENDING (GATED)**: 27
 - **NEEDS-VERIFY**: 57
-- **DONE**: 685
-- **AUDIT-NOTE**: 420
+- **DONE**: 680
+- **AUDIT-NOTE**: 425
 
 ## Universe — why 1203 blocks (the "456 vs 294 .block-ready" gap, explained)
 The reconciler spans **5 sources**, de-duped by **unique block_id** and **excluding retired duplicates** — the block count is the union, **not** the raw `.block-ready` file count.
@@ -510,7 +510,6 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | gap-14-validation-pre-dispatch | DONE |  |  |  | gap-spec | all 6 named artifact(s) on main |
 | GAP-18-DRIVER-COMM-TIMELINE | DONE | 💰 |  | #682 | .block-ready | PR #682 merged 2026-06-07 |
 | GAP-19-DETENTION-INVOICE | DONE |  |  | #686 | .block-ready | PR #686 merged 2026-06-07 |
-| GAP-20 | DONE |  |  | #704 | .block-ready | PR #704 merged 2026-06-07 |
 | gap-20-recurring-bills | DONE |  |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-23 | DONE |  |  | #662 | .block-ready | [verified 2026-07-12] block own verify-*.mjs guard passes on main (built+wired) |
 | gap-23-samsara-cache-tiers | DONE |  |  |  | gap-spec | all 2 named artifact(s) on main |
@@ -601,11 +600,8 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | gap-7-severe-repair-oos-estimate | DONE |  |  |  | gap-spec | all 1 named artifact(s) on main |
 | GAP-70 | DONE |  |  | #691 | .block-ready | PR #691 merged 2026-06-07 |
 | gap-70-edi-foundation | DONE |  |  |  | gap-spec | all 2 named artifact(s) on main |
-| GAP-71 | DONE |  |  | #784 | .block-ready | PR #784 merged 2026-06-08 |
 | gap-71-driver-retention-model | DONE |  |  |  | gap-spec | all 2 named artifact(s) on main |
-| GAP-72 | DONE |  |  | #782 | .block-ready | PR #782 merged 2026-06-08 |
 | gap-72-customer-relationship-score | DONE |  |  |  | gap-spec | all 7 named artifact(s) on main |
-| GAP-76 | DONE |  |  | #844 | .block-ready | all 7 file(s) on main |
 | gap-76-deadhead-optimizer | DONE |  |  |  | gap-spec | all 2 named artifact(s) on main |
 | GAP-8 | DONE |  |  | #661 | .block-ready | PR #661 merged 2026-06-07 |
 | gap-8-assignments-quicksave | DONE |  |  |  | gap-spec | all 1 named artifact(s) on main |
@@ -762,7 +758,6 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | SMOKE-TOKEN-AUTH | DONE |  |  | #860 | .block-ready | PR #860 merged 2026-06-10 |
 | STMT-1-balance-sheet-cash-flow | DONE | 💰 | T2 |  | program | [verified 2026-07-03] balance-sheet + cash-flow routes live read-only |
 | STRUCTURAL-MANIFEST-SPLIT | DONE |  |  | #650 | .block-ready | PR #650 merged 2026-06-07 |
-| STRUCTURAL-MIGRATION-TIMESTAMPS | DONE |  |  | #648 | .block-ready | PR #648 merged 2026-06-07 |
 | SWEEP-FIX-17-27 | DONE |  |  | #1798 | .block-ready | PR #1798 merged 2026-07-02 |
 | systemic-pattern-column-drift-guard | DONE |  |  | #2839 | .block-ready | PR #2839 merged 2026-07-20 |
 | systemic-pattern-mandatory-error-states-dispatch-alerts | DONE |  |  | #2846 | .block-ready | PR #2846 merged 2026-07-20 |
@@ -1179,6 +1174,10 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | flow9-safety-event-auto-notifications | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | flow9-safety-event-no-auto-status-escrow-notif | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | FOR-CURSOR-2-README-ACCOUNTING-BANKING | AUDIT-NOTE |  |  |  | program | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (class-sweep re |
+| GAP-20 | AUDIT-NOTE |  |  | #704 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status = DONE; not in active |
+| GAP-71 | AUDIT-NOTE |  |  | #784 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status = DONE; not in active |
+| GAP-72 | AUDIT-NOTE |  |  | #782 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status = DONE; not in active |
+| GAP-76 | AUDIT-NOTE |  |  | #844 | .block-ready | [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status = DONE; not in active |
 | gated-blocks-conn-plaid-relay-edi | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | global-column-resize-sort-parity-table-phase-a | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | h-03-open-queue-navy-cta | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
@@ -1239,6 +1238,7 @@ Blocks whose `.block-ready` file carries `"added" >= 2026-06-16`. If empty, no n
 | safety-dot-fields-and-driver-create-fix | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | safety2-cert-expiry-nav-distinct-route | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | settlement-posting-design-doc-missing_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
+| STRUCTURAL-MIGRATION-TIMESTAMPS | AUDIT-NOTE |  |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | sweep-fix-17-27-fixture-names-and-pager | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | sweep-g11-1-deduction-consent-template_DISPATCH | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |
 | sweepfix1727-8 | AUDIT-NOTE | 💰 |  |  | .block-ready | no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter |

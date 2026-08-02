@@ -58,49 +58,49 @@
     {
       "id": "AF-5-stub-catalogs",
       "status": "AUDIT-NOTE",
-      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — stale 34-stub estimate; expense categories + account subtypes real per AF-1-AF-5-DESIGN; remaining IN-PREP tiles not false-empty",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 stale 34-stub estimate; expense categories + account subtypes real per AF-1-AF-5-DESIGN; remaining IN-PREP tiles not false-empty",
       "verified_on": "2026-08-02"
     },
     {
       "id": "C1-PICKER-LAW-replace-every-raw-UUID-input-with-the-canonica",
       "status": "AUDIT-NOTE",
-      "evidence": "EVAPORATE H5-EMPTY-WAVE per 08-BLOCK-BACKLOG-COUNT-CORRECTED-2026-08-01.md — 23 catalog-backed pickers, 0 write≠read, test-enforced; not a buildable wave",
+      "evidence": "EVAPORATE H5-EMPTY-WAVE per 08-BLOCK-BACKLOG-COUNT-CORRECTED-2026-08-01.md \u2014 23 catalog-backed pickers, 0 write\u2260read, test-enforced; not a buildable wave",
       "verified_on": "2026-08-02"
     },
     {
       "id": "BLOCKS-NEW-DECISIONS",
       "status": "AUDIT-NOTE",
-      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (OWNER-DECISIONS paste queue), not a product defect",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 process/dispatch helper (OWNER-DECISIONS paste queue), not a product defect",
       "verified_on": "2026-08-02"
     },
     {
       "id": "FOR-CURSOR-2-README-ACCOUNTING-BANKING",
       "status": "AUDIT-NOTE",
-      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (class-sweep readme), not a product defect",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 process/dispatch helper (class-sweep readme), not a product defect",
       "verified_on": "2026-08-02"
     },
     {
       "id": "PASTE-TO-CLAUDE-CODER",
       "status": "AUDIT-NOTE",
-      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (class-sweep paste target), not a product defect",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 process/dispatch helper (class-sweep paste target), not a product defect",
       "verified_on": "2026-08-02"
     },
     {
       "id": "PASTE-TO-CURSOR",
       "status": "AUDIT-NOTE",
-      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — process/dispatch helper (class-sweep paste target), not a product defect",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 process/dispatch helper (class-sweep paste target), not a product defect",
       "verified_on": "2026-08-02"
     },
     {
       "id": "phase13-audit220-manufacturing-duplicate",
       "status": "AUDIT-NOTE",
-      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry audit block, no IH35 surface; hyphen-duplicate id cannot be file-retired",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry audit block, no IH35 surface; hyphen-duplicate id cannot be file-retired",
       "verified_on": "2026-08-02"
     },
     {
       "id": "phase13-audit228-energy-duplicate",
       "status": "AUDIT-NOTE",
-      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry audit block, no IH35 surface; hyphen-duplicate id cannot be file-retired",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry audit block, no IH35 surface; hyphen-duplicate id cannot be file-retired",
       "verified_on": "2026-08-02"
     },
     {
@@ -112,7 +112,7 @@
     {
       "id": "AF-1-entity-coa-fix",
       "status": "PENDING (GATED)",
-      "evidence": "held Tier-1 DO-NOT-RUN migration; prod still global — not applied",
+      "evidence": "held Tier-1 DO-NOT-RUN migration; prod still global \u2014 not applied",
       "verified_on": "2026-07-03"
     },
     {
@@ -130,13 +130,13 @@
     {
       "id": "CHAIN-04-bill-payment-tieout",
       "status": "NEEDS-VERIFY",
-      "evidence": "code-guard passes + reuses the CHAIN-05-proven posting engine, but 0 open bills on TRANSP to exercise — live-proof deferred to first real bill payment (GUARD verifies then). No fake bill created.",
+      "evidence": "code-guard passes + reuses the CHAIN-05-proven posting engine, but 0 open bills on TRANSP to exercise \u2014 live-proof deferred to first real bill payment (GUARD verifies then). No fake bill created.",
       "verified_on": "2026-07-12"
     },
     {
       "id": "CHAIN-05-bank-feed-live-proof",
       "status": "DONE",
-      "evidence": "GUARD LIVE-VERIFIED on prod: categorized LOVES→Fuel Expense posted → accounting.journal_entries 8d622927-5c3d-4e91-8b14-b6c46f482c2d status=posted, BALANCED (Dr Fuel Expense 449.90 / Cr Business Platinum 449.90), qbo_sync_pending=true",
+      "evidence": "GUARD LIVE-VERIFIED on prod: categorized LOVES\u2192Fuel Expense posted \u2192 accounting.journal_entries 8d622927-5c3d-4e91-8b14-b6c46f482c2d status=posted, BALANCED (Dr Fuel Expense 449.90 / Cr Business Platinum 449.90), qbo_sync_pending=true",
       "verified_on": "2026-07-12"
     },
     {
@@ -274,7 +274,7 @@
     {
       "id": "UI-01-CALENDARS-AND-FLAT-BOXES",
       "status": "DONE",
-      "evidence": "PR #2337 merged 9baa803e0 — QuickBooks-format calendars everywhere + no-nested-box ratchet (2 guards); subject-matched on main",
+      "evidence": "PR #2337 merged 9baa803e0 \u2014 QuickBooks-format calendars everywhere + no-nested-box ratchet (2 guards); subject-matched on main",
       "verified_on": "2026-07-11"
     },
     {
@@ -298,7 +298,7 @@
     {
       "id": "UI-03-PARTA-INLINE-CREATE",
       "status": "DONE",
-      "evidence": "PR #2342 merged a1e520409 — inline '+ Create' vocab fix; scripts/verify-reference-dropdown-inline-create.mjs guard wired on main (banking-split PART B remains FIX-05 gated)",
+      "evidence": "PR #2342 merged a1e520409 \u2014 inline '+ Create' vocab fix; scripts/verify-reference-dropdown-inline-create.mjs guard wired on main (banking-split PART B remains FIX-05 gated)",
       "verified_on": "2026-07-11"
     },
     {
@@ -610,20 +610,146 @@
     {
       "id": "CONN-1-plaid-reconcile-commit",
       "status": "NEEDS-VERIFY",
-      "evidence": "code-guard passes + reuses the CHAIN-05-proven posting engine, but 0 reconciliation sessions on TRANSP to exercise — live-proof deferred to first real reconcile-commit. No fake session created.",
+      "evidence": "code-guard passes + reuses the CHAIN-05-proven posting engine, but 0 reconciliation sessions on TRANSP to exercise \u2014 live-proof deferred to first real reconcile-commit. No fake session created.",
       "verified_on": "2026-07-12"
     },
     {
       "id": "BLOCK-02-DRIVER-ESCROW-DESIGN",
       "status": "NEEDS-VERIFY",
-      "evidence": "NOT A VERDICT — anti-fake-green downgrade. Registering this block pointed allowed_files at canonical driver-finance files that all exist, so the code-presence classifier auto-promoted it to DONE. Escrow posting is UNVERIFIED against prod data. Awaiting GUARD live verification; GUARD replaces this row with the real verdict.",
+      "evidence": "NOT A VERDICT \u2014 anti-fake-green downgrade. Registering this block pointed allowed_files at canonical driver-finance files that all exist, so the code-presence classifier auto-promoted it to DONE. Escrow posting is UNVERIFIED against prod data. Awaiting GUARD live verification; GUARD replaces this row with the real verdict.",
       "verified_on": "2026-07-20"
     },
     {
       "id": "block-22-driver-settlement-engine",
       "status": "NEEDS-VERIFY",
-      "evidence": "NOT A VERDICT — anti-fake-green downgrade. Same cause: all signature files present on main auto-promoted this to DONE off code presence alone. driver_finance.driver_settlement_deductions population is UNVERIFIED against prod. Awaiting GUARD live verification.",
+      "evidence": "NOT A VERDICT \u2014 anti-fake-green downgrade. Same cause: all signature files present on main auto-promoted this to DONE off code presence alone. driver_finance.driver_settlement_deductions population is UNVERIFIED against prod. Awaiting GUARD live verification.",
       "verified_on": "2026-07-20"
+    },
+    {
+      "id": "phase13-audit216-banking-industry",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase13-audit217-insurance-industry",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase13-audit218-healthcare-na",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase13-audit219-pharmaceutical-na",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase13-audit221-retail-na",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase13-audit222-restaurant-na",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase13-audit223-hospitality-na",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase13-audit224-transportation-dashboard-rout",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase13-audit225-logistics-warehousing",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase13-audit226-construction-na",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase13-audit229-mining-na",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase13-audit230-agriculture-na",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase3-audit56-iso9001-quality-mgmt",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase3-audit58-six-sigma",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase3-audit59-lean",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase3-audit60-kaizen",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "phase3-audit61-tqm",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 generic industry/quality audit block, no IH35 surface; stale/test registration",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "GAP-20",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 reconciler status = DONE; not in active build backlog (1138 evaporate pile)",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "GAP-71",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 reconciler status = DONE; not in active build backlog (1138 evaporate pile)",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "GAP-72",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 reconciler status = DONE; not in active build backlog (1138 evaporate pile)",
+      "verified_on": "2026-08-02"
+    },
+    {
+      "id": "GAP-76",
+      "status": "AUDIT-NOTE",
+      "evidence": "EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 \u00a7EVAPORATE \u2014 reconciler status = DONE; not in active build backlog (1138 evaporate pile)",
+      "verified_on": "2026-08-02"
     }
   ]
 }
