@@ -101,6 +101,21 @@ function str(value: unknown): string {
   return value == null ? "" : String(value);
 }
 
+function isoToDateInput(iso: unknown): string {
+  const s = str(iso);
+  if (!s) return "";
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
+}
+
+function incidentRowToDraft(row: Record<string, unknown>): DraftState {
+  return {
+    ...row,
+    incident_date: isoToDateInput(row.incident_at ?? row.incident_date),
+  } as DraftState;
+}
+
 export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Props) {
   const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -174,7 +189,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const loadsQuery = useQuery({
     queryKey: ["safety", "incidents-loads", operatingCompanyId],
     queryFn: () => listLoads({ operating_company_id: [operatingCompanyId], limit: 200 }),
-    enabled: createMode && Boolean(operatingCompanyId),
+    enabled: formEditable && Boolean(operatingCompanyId),
   });
 
   const drivers = driversQuery.data?.drivers ?? [];
@@ -219,6 +234,12 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const detail = createMode ? selected : detailQuery.data?.incident ?? selected;
 
   const openRow = useCallback((row: DraftState) => {
+    setEditMode(false);
+    setStatusTarget(null);
+    setStatusReason("");
+    setVoidOpen(false);
+    setVoidReason("");
+    setVoidError(null);
     setSelected(row);
     setDrawerOpen(true);
     setSavedHint(false);
@@ -227,6 +248,12 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const closeDrawer = () => {
     setDrawerOpen(false);
     setSelected(null);
+    setEditMode(false);
+    setStatusTarget(null);
+    setStatusReason("");
+    setVoidOpen(false);
+    setVoidReason("");
+    setVoidError(null);
     setSavedHint(false);
   };
 
@@ -290,6 +317,45 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
       } else {
         closeDrawer();
       }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const beginEdit = () => {
+    const src = (detailQuery.data?.incident ?? selected) as Record<string, unknown> | null;
+    if (!src?.id || src.voided_at) return;
+    setSelected(incidentRowToDraft(src));
+    setEditMode(true);
+  };
+
+  const saveEdit = async () => {
+    if (!editMode || !selected?.id || saving) return;
+    const payload: Record<string, unknown> = {
+      location: str(selected.location).trim(),
+      description: str(selected.description).trim(),
+      driver_id: str(selected.driver_id) || null,
+      unit_id: str(selected.unit_id) || null,
+      trailer_id: str(selected.trailer_id) || null,
+      load_id: str(selected.load_id) || null,
+    };
+    const incidentAt = toIsoAtNoon(str(selected.incident_date));
+    if (incidentAt) payload.incident_at = incidentAt;
+    if (has("interchange_party")) {
+      payload.interchange_party = str(selected.interchange_party).slice(0, 200) || null;
+    }
+    if (has("damage_amount_cents")) {
+      const cents = selected.damage_amount_cents;
+      payload.damage_amount_cents =
+        typeof cents === "number" && Number.isFinite(cents) && cents > 0 ? cents : 0;
+    }
+
+    setSaving(true);
+    try {
+      await updateSafetyIncident(String(selected.id), operatingCompanyId, payload);
+      setEditMode(false);
+      refresh();
+      await detailQuery.refetch();
     } finally {
       setSaving(false);
     }
@@ -480,13 +546,50 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
 
       {drawerOpen ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`${config.pageTestId}-drawer`}>
-          <div className="mb-2 flex items-center justify-between">
+          <div className="mb-2 flex items-center justify-between gap-2">
             <div className="text-sm font-semibold text-slate-800">
-              {createMode ? config.createLabel : config.detailLabel}
+              {createMode ? config.createLabel : editMode ? `Edit ${config.detailLabel}` : config.detailLabel}
             </div>
-            <button type="button" className="text-xs text-slate-500 underline" onClick={closeDrawer}>
-              Close
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              {!createMode && !editMode && detail?.id && !detail?.voided_at ? (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  data-testid={`${config.pageTestId}-edit-btn`}
+                  onClick={beginEdit}
+                >
+                  Edit
+                </Button>
+              ) : null}
+              {editMode ? (
+                <>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    data-testid={`${config.pageTestId}-cancel-edit-btn`}
+                    disabled={saving}
+                    onClick={() => {
+                      const src = (detailQuery.data?.incident ?? selected) as Record<string, unknown> | null;
+                      if (src) setSelected(incidentRowToDraft(src));
+                      setEditMode(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={saving || !str(selected?.location).trim() || !str(selected?.description).trim()}
+                    data-testid={`${config.pageTestId}-save-edit-btn`}
+                    onClick={() => void saveEdit()}
+                  >
+                    {saving ? "Saving…" : "Save changes"}
+                  </Button>
+                </>
+              ) : null}
+              <button type="button" className="text-xs text-slate-500 underline" onClick={closeDrawer}>
+                Close
+              </button>
+            </div>
           </div>
 
           {savedHint ? (
@@ -655,7 +758,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                 <span className="text-slate-600">Location *</span>
                 <input
                   className={inputCls}
-                  value={str(detail?.location)}
+                  value={str(formEditable ? selected?.location : detail?.location)}
                   disabled={!formEditable}
                   data-testid={`${config.pageTestId}-field-location`}
                   onChange={(e) => setField("location", e.target.value)}
@@ -668,7 +771,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                 <textarea
                   className={inputCls}
                   rows={3}
-                  value={str(detail?.description)}
+                  value={str(formEditable ? selected?.description : detail?.description)}
                   disabled={!formEditable}
                   data-testid={`${config.pageTestId}-field-description`}
                   onChange={(e) => setField("description", e.target.value)}
@@ -746,6 +849,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                           setStatusTarget(null);
                           setStatusReason("");
                           await queryClient.invalidateQueries({ queryKey: ["safety", "incidents"] });
+                          await detailQuery.refetch();
                         });
                       }}
                     >
@@ -817,25 +921,6 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                     Voided {formatDateUS(str(detail.voided_at))}
                     {str(detail.voided_reason) ? ` · ${str(detail.voided_reason)}` : ""}
                   </div>
-                ) : null}
-                {editMode ? (
-                  <Button
-                    size="sm"
-                    data-testid={`${config.pageTestId}-save-edit-btn`}
-                    onClick={() => {
-                      if (!detail?.id) return;
-                      void updateSafetyIncident(String(detail.id), operatingCompanyId, {
-                        location: str(detail?.location),
-                        description: str(detail?.description),
-                        damage_amount_cents: Number(detail?.damage_amount_cents ?? 0),
-                      }).then(async () => {
-                        setEditMode(false);
-                        await queryClient.invalidateQueries({ queryKey: ["safety", "incidents"] });
-                      });
-                    }}
-                  >
-                    Save changes
-                  </Button>
                 ) : null}
               </div>
             ) : null}
