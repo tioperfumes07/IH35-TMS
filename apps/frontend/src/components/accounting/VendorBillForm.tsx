@@ -298,10 +298,25 @@ export function VendorBillForm({
       setFormError("Bill lines are required — amounts cannot be memo-only.");
       return;
     }
-    const sectionAMissingAccount = linePayloads.some(
-      (line) => line.section === "A" && !line.account_id
+    // ACCT-F93 (live 2026-08-02): this checked `!line.account_id`, but buildVendorBillLinePayloads
+    // NEVER assigns account_id — the field is declared on VendorBillFormLinePayload and written
+    // nowhere. So the test was unconditionally true and this error fired for EVERY Section-A line no
+    // matter which category was picked: no vendor bill with a category line could ever be saved.
+    //
+    // It was reported as "the combobox does not commit". It does — CostBreakdownBox binds the choice
+    // to expense_category_uuid correctly (which is why the identical picker works on a Work Order).
+    // The validator was simply reading a different field than the one the grid writes.
+    //
+    // expense_category_uuid is the RIGHT field to require here. In bill mode the options come from
+    // the catalogs.expense_categories CATALOG, so the id is a category uuid, not a GL account id; the
+    // poster resolves the account from expense_category_account_map. vendorBillLines.ts says so
+    // explicitly — "Unknown codes keep expense_category_uuid only (poster → uncategorized) — never
+    // invent a GL account" — so populating account_id client-side would be the wrong fix and would
+    // re-create the same-entity FK break that comment warns about.
+    const sectionAMissingCategory = linePayloads.some(
+      (line) => line.section === "A" && !String(line.expense_category_uuid ?? "").trim()
     );
-    if (sectionAMissingAccount) {
+    if (sectionAMissingCategory) {
       setFormError("Each Category (Section A) line needs an expense category.");
       return;
     }
