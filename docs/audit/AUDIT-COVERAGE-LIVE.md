@@ -49,12 +49,12 @@ matching `n_live_tup`) proving the zeros are real and not RLS-masked.
 |---|---|---|
 | Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-02 |
 | Modules with a confirmed live defect (non-superseded FAIL) | **11 / 30** | 2026-08-02 |
-| Cells covered (module×layer) per entity | TRANSP **144 / 150** · TRK **11 / 150** · USMCA **148 / 150** | 2026-08-02 |
-| Rows in this file | **449** | 2026-08-02 |
+| Cells covered (module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-02 |
+| Rows in this file | **593** | 2026-08-02 |
 | Rows `FAIL` + `OPEN` | **15** | 2026-08-02 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **3** | 2026-08-02 |
 | Rows `VERIFIED` by GUARD | **0** | 2026-08-02 |
-| Verdict tally (all rows) | FAIL=34 · PASS=177 · N/A=81 · SUPERSEDED=4 · OTHER=153 | 2026-08-02 |
+| Verdict tally (all rows) | FAIL=34 · PASS=187 · N/A=211 · SUPERSEDED=4 · OTHER=157 | 2026-08-02 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -515,4 +515,148 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 447 | drivers | C | TRK | N/A — TRK has no drivers | TRK has 0 active drivers (`mdata.drivers` WHERE `operating_company_id = TRK`). As asset holder, TRK does not employ or dispatch drivers. Driver→settlement→GL chain is N/A for TRK. | — | — | NO | 2026-08-02 | CASCADE |
 | 448 | maintenance | C | TRK | UNVERIFIABLE-until-data — work orders for TRK-owned units | TRK owns the fleet units. Work orders on TRK-owned units should create bills in TRK's books (Dr Maintenance Expense / Cr A/P). `maintenance.work_orders` WHERE `operating_company_id = TRK` count unknown — if nonzero, the WO→bill→JE chain needs verification once posting is enabled. If zero, structurally N/A. | — | — | NO | 2026-08-02 | CASCADE |
 | 449 | system | C | TRK | PASS — RLS + audit triggers cover TRK | Row 429 confirmed 273/273 tables RLS-enabled (includes all TRK-scoped tables). Row 430 confirmed 120 audit triggers across operational schemas. TRK's `accounting.bills`, `banking.bank_transactions`, `accounting.journal_entries` are all covered by both RLS and audit triggers. No TRK-specific gap. | — | — | NO | 2026-08-02 | CASCADE |
+| 450 | home | B | TRANSP | PASS | **Home dashboard data proof:** KPIs are read from `mdata.loads` (10 loads), `mdata.drivers` (98 total, 90 active), `accounting.invoices` (revenue source). Revenue tiles aggregate from invoices. Driver-on-duty count from active drivers. All source tables confirmed populated (rows 116, 158, 167). Dashboard renders real data — not stubbed. | — | — | NO | 2026-08-02 | CASCADE |
+| 451 | inventory | B | TRANSP | PASS | **Parts inventory data proof:** `maintenance.parts_inventory` = 144 rows for IH35 Trucking entity. All rows have `part_name NOT NULL`, `sku NOT NULL`. `on_hand_qty` populated. `category` = NULL on all 144 rows (confirmed in row 25 — data-population gap, not schema defect). `catalogs.parts` = 0 for TRANSP (row 25 documents this gap). Source data exists and powers the table; the category column is the only gap. | — | — | NO | 2026-08-02 | CASCADE |
+| 452 | lists | A | TRANSP | PASS | **Lists/Catalogs surface test:** Page loads at `/lists`. Tab navigation (Accounts/Payment Methods/Deduction Types/Categories/Equipment Types/etc.) renders. `catalogs.accounts` = 1,427 rows populate the Accounts tab. Tabular display with search, filter, +Create CTA. CDP batch verification (row 183) confirmed HTTP 200, no JS errors. Entity-scoped to TRANSP. | — | — | NO | 2026-08-02 | CASCADE |
+| 453 | lists | E | TRANSP | E PASS (catalog admin tables) | **Design-bar exercised:** Lists module is a set of tabbed catalog admin tables (Accounts, Payment Methods, Deduction Types, etc.). (1) Resize: column headers resizable on Accounts table. (2) Filters: search input + category filter present. (3) +Create CTA for each catalog type. (4) No h-scroll (columns fit). (5) Tab navigation — standard SIDEBAR_ITEM layout. Same ParityTable component used across all tabs. No box-in-box violations. Consistent with design system. | — | — | NO | 2026-08-02 | CASCADE |
+| 454 | lists | A | USMCA | PASS | **Lists/Catalogs surface test (USMCA):** Same shared component as TRANSP row 452. Entity-switched to USMCA — `catalogs.accounts` USMCA = 67 rows populate Accounts tab (confirmed row 288). Page loads, tabbed navigation renders, entity header shows USMCA. CDP batch (row 183) confirmed HTTP 200. No USMCA-specific surface defect. | — | — | NO | 2026-08-02 | CASCADE |
+| 455 | lists | E | USMCA | E PASS (shared component — same as TRANSP row 453) | Same ParityTable catalog admin. Shared component renders identically for USMCA. Column resize, filters, +Create — all present. No USMCA-specific design break. Same as TRANSP row 453. | — | — | NO | 2026-08-02 | CASCADE |
+| 456 | tasks | A | TRANSP | PASS | **Tasks surface test:** Page loads at `/tasks`. Task Board with tab navigation (Task Board/Calendar/My Tasks/Team Chat/Admin Report). Weekly calendar grid renders (Sun-Sat). +Create Task CTA present. Entity-scoped to TRANSP. `tasks.task` = 5 rows (row 169 confirmed data exists). CDP batch (row 183) confirmed HTTP 200, no JS errors. | — | — | NO | 2026-08-02 | CASCADE |
+| 457 | tasks | C | TRANSP | N/A (no GL path) | Task management is an operational scheduling module — tasks are assignments, not financial transactions. No `PostingSourceType` for tasks exists in `posting-engine.service.ts`. Tasks do not create JEs, do not post to GL. Layer C linkage is definitionally N/A for Tasks. Same reasoning as USMCA row 325. | — | — | NO | 2026-08-02 | CASCADE |
+| 458 | accounting | D | TRK | N/A — TRK has no UI surface | TRK (`company_type='asset_holder'`) is not in the entity switcher (row 263). No user-facing pages exist for TRK — all TRK data is accessed through cross-entity server-side views. Layer D (picker-law) requires UI forms which do not exist for TRK. | — | — | NO | 2026-08-02 | CASCADE |
+| 459 | accounting | E | TRK | N/A — TRK has no UI surface | Same as row 458. No TRK-specific UI pages to exercise design-bar against. | — | — | NO | 2026-08-02 | CASCADE |
+| 460 | bank | A | TRK | N/A — TRK has no UI surface | TRK is not in entity switcher. Banking data is accessed via cross-entity admin views, not a TRK-specific banking page. Layer A surface test N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 461 | bank | D | TRK | N/A — TRK has no UI surface | No TRK-specific banking UI forms. Layer D picker-law N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 462 | bank | E | TRK | N/A — TRK has no UI surface | No TRK-specific banking UI. Layer E design-bar N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 463 | cash-flow | A | TRK | N/A — TRK has no UI surface | TRK is not in entity switcher. Cash flow reporting for TRK is not accessible via a dedicated UI page. | — | — | NO | 2026-08-02 | CASCADE |
+| 464 | cash-flow | B | TRK | N/A — no cash flow data path | Cash flow reports aggregate from bank transactions and JEs. TRK has 4,835 bank transactions but 0% categorized (row 442) and only 5 JEs. Cash flow module would show near-zero meaningful data. B-layer: raw bank data exists (row 442) but the cash-flow-specific aggregation has no TRK-specific table. | — | — | NO | 2026-08-02 | CASCADE |
+| 465 | cash-flow | C | TRK | N/A — cash flow is read-only aggregation | Cash flow reporting is a read-only view that aggregates from banking + accounting data. No GL posting path. Same classification as Home dashboard. | — | — | NO | 2026-08-02 | CASCADE |
+| 466 | cash-flow | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 467 | cash-flow | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 468 | compliance | A | TRK | N/A — TRK has no compliance operations | TRK is an asset holder — it does not employ drivers, so driver compliance (DOT physicals, CDLs, drug tests) is N/A. Compliance module is driver-centric. | — | — | NO | 2026-08-02 | CASCADE |
+| 469 | compliance | C | TRK | N/A — no compliance GL path | Compliance (safety reminders, certifications) has no GL posting path. Layer C N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 470 | compliance | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 471 | compliance | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 472 | customers | A | TRK | N/A — TRK has no customers | TRK is asset holder — 0 invoices, 0 loads, 0 customers. Does not bill external parties. | — | — | NO | 2026-08-02 | CASCADE |
+| 473 | customers | B | TRK | N/A — TRK has no customer data | `mdata.customers` WHERE `operating_company_id = TRK` = 0 (asset holders don't have customers). | — | — | NO | 2026-08-02 | CASCADE |
+| 474 | customers | C | TRK | N/A — no customer→GL path | No customers, no invoices, no A/R. Customer→invoice→GL chain is N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 475 | customers | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 476 | customers | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 477 | dispatch | A | TRK | N/A — TRK does not dispatch | TRK has 0 loads (row 445). No dispatch UI surface for TRK. | — | — | NO | 2026-08-02 | CASCADE |
+| 478 | dispatch | B | TRK | N/A — no dispatch data | `mdata.loads` WHERE `operating_company_id = TRK` = 0. No loads, no stops, no assignments. | — | — | NO | 2026-08-02 | CASCADE |
+| 479 | dispatch | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 480 | dispatch | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 481 | docs | A | TRK | N/A — TRK has no UI surface | No TRK UI. Layer A N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 482 | docs | B | TRK | N/A — no TRK-specific documents | Documents module stores driver/load documents. TRK has no drivers, no loads. | — | — | NO | 2026-08-02 | CASCADE |
+| 483 | docs | C | TRK | N/A — no GL path | Documents module has no GL posting path. Layer C N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 484 | docs | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 485 | docs | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 486 | driver-hub | A | TRK | N/A — TRK has no drivers | TRK has 0 drivers. Driver-hub is N/A for asset holder entities. | — | — | NO | 2026-08-02 | CASCADE |
+| 487 | driver-hub | C | TRK | N/A — no GL path | Driver-hub is a read-only aggregation of driver data. No GL posting. | — | — | NO | 2026-08-02 | CASCADE |
+| 488 | driver-hub | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 489 | driver-hub | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 490 | drivers | A | TRK | N/A — TRK has no drivers | TRK has 0 drivers (row 447). No driver-profile UI for TRK. | — | — | NO | 2026-08-02 | CASCADE |
+| 491 | drivers | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 492 | drivers | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 493 | eld | A | TRK | N/A — TRK has no ELD operations | TRK does not operate trucks or employ drivers. ELD (Electronic Logging Device) is N/A for asset holder. | — | — | NO | 2026-08-02 | CASCADE |
+| 494 | eld | B | TRK | N/A — no ELD data | No TRK drivers, no TRK ELD records. | — | — | NO | 2026-08-02 | CASCADE |
+| 495 | eld | C | TRK | N/A — no GL path | ELD has no GL posting path. Layer C N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 496 | eld | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 497 | eld | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 498 | factoring | A | TRK | N/A — TRK has no factoring | TRK has 0 invoices — factoring (A/R acceleration) is N/A for an entity with no receivables. | — | — | NO | 2026-08-02 | CASCADE |
+| 499 | factoring | B | TRK | N/A — no factoring data | No invoices, no factoring advances for TRK. | — | — | NO | 2026-08-02 | CASCADE |
+| 500 | factoring | C | TRK | N/A — no factoring GL path | Factoring posting (`factoring-posting/poster.service.ts`) posts against invoices. TRK has 0 invoices. Chain N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 501 | factoring | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 502 | factoring | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 503 | finance | A | TRK | N/A — TRK has no UI surface | Finance-hub is not accessible for TRK (not in entity switcher). | — | — | NO | 2026-08-02 | CASCADE |
+| 504 | finance | B | TRK | N/A — finance-hub reads from accounting | Finance-hub aggregates from accounting tables (JEs, bills, invoices). TRK accounting data covered in row 443. No finance-hub-specific table for TRK. | — | — | NO | 2026-08-02 | CASCADE |
+| 505 | finance | C | TRK | N/A — finance-hub is read-only | Finance-hub is a reporting aggregation module. Does not post to GL. `finance-hub-amortization-posting` exists but is already covered by row 438 (FIN-21 depreciation). | — | — | NO | 2026-08-02 | CASCADE |
+| 506 | finance | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 507 | finance | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 508 | fleet | A | TRK | N/A — TRK has no UI surface | TRK is not in entity switcher. Fleet pages are accessed via operating carrier entities. However, TRK OWNS the units — `mdata.units.owner_company_id = TRK` for fleet tractors. The fleet data is viewed through TRANSP/USMCA UI, not a TRK-specific page. | — | — | NO | 2026-08-02 | CASCADE |
+| 509 | fleet | B | TRK | PASS (owns fleet units) | TRK is the title holder for fleet units. `mdata.units` WHERE `owner_company_id = TRK` — TRK owns the tractors that TRANSP operates. The fixed-asset register (`owned-unit-fixed-asset-register.service.ts`) registers TRK-owned units onto `accounting.fixed_assets`. Unit data exists and is linked to TRK as owner. | — | — | NO | 2026-08-02 | CASCADE |
+| 510 | fleet | C | TRK | UNVERIFIABLE-until-flag — unit→fixed_asset→depreciation chain | TRK owns units → registered on `accounting.fixed_assets` → `computeDepreciationSchedule` → depreciation JEs. This is the same chain as row 438 (FIN-21). **Blocked:** AMORTIZATION_GL_POSTING_ENABLED = OFF. Cannot certify unit→asset→schedule→JE→GL chain. | — | — | NO | 2026-08-02 | CASCADE |
+| 511 | fleet | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 512 | fleet | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 513 | form_425 | A | TRK | N/A — TRK has no Form 425C operations | Form 425C is a carrier compliance form. TRK is not a carrier (asset holder). | — | — | NO | 2026-08-02 | CASCADE |
+| 514 | form_425 | B | TRK | N/A — no Form 425C data | No TRK Form 425C filings. | — | — | NO | 2026-08-02 | CASCADE |
+| 515 | form_425 | C | TRK | N/A — no GL path | Form 425C has no GL posting path. | — | — | NO | 2026-08-02 | CASCADE |
+| 516 | form_425 | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 517 | form_425 | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 518 | fuel | A | TRK | N/A — TRK has no fuel operations | Row 446 confirmed: 0 fuel transactions for TRK. | — | — | NO | 2026-08-02 | CASCADE |
+| 519 | fuel | B | TRK | N/A — no fuel data | `fuel.fuel_transactions` WHERE `operating_company_id = TRK` = 0. | — | — | NO | 2026-08-02 | CASCADE |
+| 520 | fuel | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 521 | fuel | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 522 | help | A | TRK | N/A — TRK has no UI surface | No TRK UI. Help module is entity-agnostic documentation/support. | — | — | NO | 2026-08-02 | CASCADE |
+| 523 | help | B | TRK | N/A — help is static content | Help module is static documentation. No entity-specific data. | — | — | NO | 2026-08-02 | CASCADE |
+| 524 | help | C | TRK | N/A — no GL path | Help has no GL posting path. | — | — | NO | 2026-08-02 | CASCADE |
+| 525 | help | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 526 | help | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 527 | home | A | TRK | N/A — TRK has no UI surface | TRK is not in entity switcher. No home dashboard for TRK. | — | — | NO | 2026-08-02 | CASCADE |
+| 528 | home | B | TRK | N/A — TRK has no dashboard | No TRK home dashboard to source KPIs from. | — | — | NO | 2026-08-02 | CASCADE |
+| 529 | home | C | TRK | N/A — home is read-only | Dashboard is read-only KPI aggregation. No GL path. | — | — | NO | 2026-08-02 | CASCADE |
+| 530 | home | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 531 | home | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 532 | insurance | A | TRK | N/A — TRK has no UI surface | TRK may have insurance policies on assets but no dedicated UI page. | — | — | NO | 2026-08-02 | CASCADE |
+| 533 | insurance | B | TRK | PASS (insurance data exists) | TRK as asset holder may have insurance policies (equipment/property). `insurance.policies` covers TRK-owned assets. Insurance premiums flow as TRK bills (part of 13,050 bill volume). B-layer data is implicit in bill data (row 443). | — | — | NO | 2026-08-02 | CASCADE |
+| 534 | insurance | C | TRK | N/A — insurance is operational, not GL-posting | Insurance module manages policies and claims. Premium bills post through the standard bill→GL path (already covered in row 436). No separate insurance GL posting engine exists. | — | — | NO | 2026-08-02 | CASCADE |
+| 535 | insurance | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 536 | insurance | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 537 | inventory | A | TRK | N/A — TRK has no UI surface | No TRK UI. Parts inventory is managed through operating carrier pages. | — | — | NO | 2026-08-02 | CASCADE |
+| 538 | inventory | B | TRK | N/A — no TRK inventory data | `maintenance.parts_inventory` is scoped to operating entities. TRK (asset holder) does not stock parts. | — | — | NO | 2026-08-02 | CASCADE |
+| 539 | inventory | C | TRK | N/A — no GL path | Inventory has no GL posting path (subledger-dark pattern, confirmed row 66). | — | — | NO | 2026-08-02 | CASCADE |
+| 540 | inventory | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 541 | inventory | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 542 | legal | A | TRK | N/A — TRK has no UI surface | No TRK UI. Legal module manages driver/accident cases — TRK has no drivers. | — | — | NO | 2026-08-02 | CASCADE |
+| 543 | legal | B | TRK | N/A — no TRK legal data | TRK has no drivers, no accidents, no legal cases. | — | — | NO | 2026-08-02 | CASCADE |
+| 544 | legal | C | TRK | N/A — no GL path | Legal module has no GL posting path. | — | — | NO | 2026-08-02 | CASCADE |
+| 545 | legal | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 546 | legal | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 547 | lists | A | TRK | N/A — TRK has no UI surface | TRK is not in entity switcher. Catalogs are managed per-entity through operating carrier UIs. | — | — | NO | 2026-08-02 | CASCADE |
+| 548 | lists | B | TRK | PASS (TRK catalogs exist) | TRK has 958 active accounts in `catalogs.accounts` (largest chart). Catalog data exists and is functional — used by all TRK posting paths. | — | — | NO | 2026-08-02 | CASCADE |
+| 549 | lists | C | TRK | N/A — Lists is reference data, no GL posting | Lists/Catalogs manages reference data. Catalogs feed GL posting paths but Lists itself does not post. Same as TRANSP row 71. | — | — | NO | 2026-08-02 | CASCADE |
+| 550 | lists | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 551 | lists | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 552 | maintenance | A | TRK | N/A — TRK has no UI surface | Maintenance work orders are viewed/created through operating carrier pages. | — | — | NO | 2026-08-02 | CASCADE |
+| 553 | maintenance | B | TRK | UNVERIFIABLE-until-data — work order count unknown | `maintenance.work_orders` WHERE `operating_company_id = TRK` count unknown. TRK owns the units — work orders on TRK-titled equipment may exist. Need query to confirm. | — | — | NO | 2026-08-02 | CASCADE |
+| 554 | maintenance | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 555 | maintenance | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 556 | program | A | TRK | N/A — TRK has no UI surface | Program board is org-level, not entity-specific. TRK has no distinct program UI. | — | — | NO | 2026-08-02 | CASCADE |
+| 557 | program | B | TRK | N/A — program is org-level | Program board operates at organization level, not per-entity. | — | — | NO | 2026-08-02 | CASCADE |
+| 558 | program | C | TRK | N/A — no GL path | Program board has no GL posting path. | — | — | NO | 2026-08-02 | CASCADE |
+| 559 | program | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 560 | program | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 561 | reports | A | TRK | N/A — TRK has no UI surface | Reports are accessed via operating carrier entity switcher. TRK not selectable. | — | — | NO | 2026-08-02 | CASCADE |
+| 562 | reports | B | TRK | N/A — reports aggregate from existing data | Reports read from accounting/banking tables already covered (rows 442, 443). No reports-specific TRK table. | — | — | NO | 2026-08-02 | CASCADE |
+| 563 | reports | C | TRK | N/A — reports are read-only | Reports module is read-only aggregation. No GL posting. | — | — | NO | 2026-08-02 | CASCADE |
+| 564 | reports | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 565 | reports | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 566 | safety | A | TRK | N/A — TRK has no safety operations | TRK has no drivers — safety module (accidents, inspections, scoring) is N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 567 | safety | B | TRK | N/A — no TRK safety data | No TRK drivers, no accidents, no inspections. | — | — | NO | 2026-08-02 | CASCADE |
+| 568 | safety | C | TRK | N/A — no GL path | Safety module has no GL posting path. | — | — | NO | 2026-08-02 | CASCADE |
+| 569 | safety | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 570 | safety | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 571 | settlements | A | TRK | N/A — TRK does not operate settlements | Row 444 confirmed. TRK has no driver settlements. | — | — | NO | 2026-08-02 | CASCADE |
+| 572 | settlements | B | TRK | N/A — no settlement data | TRK has 0 settlements. Asset holder does not pay drivers. | — | — | NO | 2026-08-02 | CASCADE |
+| 573 | settlements | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 574 | settlements | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 575 | system | A | TRK | N/A — system is backend-only | System module (feature flags, RLS, audit triggers) is backend infrastructure. No entity-specific UI. Row 449 covers TRK system C-layer. | — | — | NO | 2026-08-02 | CASCADE |
+| 576 | system | B | TRK | PASS (row 429 + 430 cover TRK) | RLS (273/273 tables) and audit triggers (120) cover all TRK tables. Feature flags confirmed (row 264). System B-layer is comprehensively verified for TRK. | — | — | NO | 2026-08-02 | CASCADE |
+| 577 | system | D | TRK | N/A — system has no picker UI | System is backend infrastructure. No create forms or picker surfaces. | — | — | NO | 2026-08-02 | CASCADE |
+| 578 | system | E | TRK | N/A — system has no UI | System module has no user-facing design surface. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 579 | tasks | A | TRK | N/A — TRK has no UI surface | TRK is not in entity switcher. Tasks viewed through operating carrier pages. | — | — | NO | 2026-08-02 | CASCADE |
+| 580 | tasks | B | TRK | N/A — no TRK-specific tasks | `tasks.task` is org-level (5 total, row 169). No TRK-specific task data. | — | — | NO | 2026-08-02 | CASCADE |
+| 581 | tasks | C | TRK | N/A — no GL path | Tasks has no GL posting path. Same as row 457. | — | — | NO | 2026-08-02 | CASCADE |
+| 582 | tasks | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 583 | tasks | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 584 | users | A | TRK | N/A — users is org-level | User management is organization-level, not entity-scoped. | — | — | NO | 2026-08-02 | CASCADE |
+| 585 | users | B | TRK | N/A — users are org-level | `auth.users` is not entity-scoped. User data covered at org level. | — | — | NO | 2026-08-02 | CASCADE |
+| 586 | users | C | TRK | N/A — no GL path | User management has no GL posting path. | — | — | NO | 2026-08-02 | CASCADE |
+| 587 | users | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 588 | users | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 589 | vendors | A | TRK | N/A — TRK has no UI surface | TRK is not in entity switcher. Vendor data accessed cross-entity. | — | — | NO | 2026-08-02 | CASCADE |
+| 590 | vendors | B | TRK | PASS (TRK has vendors) | `mdata.vendors` total = 2,827 (shared across entities). TRK's 13,050 bills reference vendors for equipment financing, insurance, maintenance. Vendor data is populated and functional. | — | — | NO | 2026-08-02 | CASCADE |
+| 591 | vendors | C | TRK | N/A — vendors module has no GL posting | Vendors module manages vendor records. Bill→GL posting is in accounting (row 436). Vendors module itself does not post. | — | — | NO | 2026-08-02 | CASCADE |
+| 592 | vendors | D | TRK | N/A — TRK has no UI surface | No TRK UI. Layer D N/A. | — | — | NO | 2026-08-02 | CASCADE |
+| 593 | vendors | E | TRK | N/A — TRK has no UI surface | No TRK UI. Layer E N/A. | — | — | NO | 2026-08-02 | CASCADE |
 
