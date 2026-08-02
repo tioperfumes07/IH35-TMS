@@ -6,6 +6,9 @@ import { shouldUseDevFixturesForMaintenance, triageDevFixtures } from "./dev-fix
 import { listWorkOrdersByBucket } from "./work-orders.service.js";
 import { avgAgeYears } from "./fleet-age.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+// FLEET-KPI-PARITY: the fleet KPI must count exactly the rows the Fleet roster shows. Same helper the
+// roster uses (mdata/units-unified-list.service.ts) — never a second inline copy of the pattern.
+import { excludeDemoPhantomSql } from "../mdata/fleet-visibility.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -264,6 +267,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
           FROM mdata.units
           WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
             AND deactivated_at IS NULL
+            AND ${excludeDemoPhantomSql("unit_number")}
         `,
         [companyId]
       );
