@@ -283,13 +283,33 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
 
       return {
         period: { start: startDay, end: endDay },
+        // RPT-F02 — the totals block named its money fields differently from the by_truck rows in the
+        // SAME payload: rows carry card_amount_cents / wo_amount_cents, totals carried
+        // fuel_card_amount_cents / wo_fuel_amount_cents. The page read the row-shaped names for both,
+        // so the headline tiles resolved to undefined and rendered $0 while real data sat underneath —
+        // and the Delta tile worked, because delta_cents happened to match. A silent $0 next to a
+        // correct $60,159.10 is the worst version of this: it reads as a real figure, not an error.
+        //
+        // Fixed at the SOURCE by making totals use the payload's own row-level names, so one shape
+        // holds throughout. Not a frontend mapping — a mapping would leave two vocabularies alive and
+        // the next reader would have to learn both.
+        //
+        // ADDITIVE: the old keys are retained as aliases so any unknown consumer keeps working, and
+        // unmatched_card_count / unmatched_wo_count stay because they carry information the single
+        // unmatched_count cannot. unmatched_count is the SUM — the UI asked for one number and the
+        // server only ever offered two halves, which is why that tile could never have worked.
         totals: {
-          fuel_card_amount_cents: cardTotalCents,
-          wo_fuel_amount_cents: woFuelTotal,
+          card_amount_cents: cardTotalCents,
+          wo_amount_cents: woFuelTotal,
           delta_cents: cardTotalCents - woFuelTotal,
+          unmatched_count:
+            num(unmatched_full_card_res.rows[0]?.c) + num(unmatched_wo_full_res.rows[0]?.c),
           unmatched_card_count: num(unmatched_full_card_res.rows[0]?.c),
           unmatched_wo_count: num(unmatched_wo_full_res.rows[0]?.c),
           match_rate_pct,
+          // Retained aliases (additive-only, §7): older/unknown clients keep reading these.
+          fuel_card_amount_cents: cardTotalCents,
+          wo_fuel_amount_cents: woFuelTotal,
         },
         by_truck: byTruck,
         unmatched_card_transactions: unmatchedCards.rows.map((row: Record<string, unknown>) => ({
