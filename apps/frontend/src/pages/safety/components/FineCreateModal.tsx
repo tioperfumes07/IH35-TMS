@@ -149,8 +149,19 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
     return file_id;
   };
 
+  const canSubmit =
+    Boolean(civilFineTypeId) &&
+    Boolean(violationDescription.trim()) &&
+    Number(amountUsd || 0) > 0 &&
+    (subjectType === "company" || Boolean(subjectDriverId));
+
   const createMutation = useMutation({
     mutationFn: async () => {
+      // SAF-FINE-CATALOG: catalogs.civil_fine_types must be selected — free-text-only creates left
+      // civil_fine_type_id / violation_code null so Lists could not group or rename types safely.
+      if (!civilFineTypeId) {
+        throw new Error("Violation type (catalog) is required");
+      }
       const sourceDocId = await uploadSourceDoc();
       return createSafetyFine(operatingCompanyId, {
         subject_type: subjectType,
@@ -191,7 +202,12 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" form="safety-fine-create-form" loading={createMutation.isPending}>
+            <Button
+              type="submit"
+              form="safety-fine-create-form"
+              loading={createMutation.isPending}
+              disabled={!canSubmit}
+            >
               Create Fine
             </Button>
           </div>
@@ -255,7 +271,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
               />
             </div>
             <div className="flex flex-col gap-1 md:col-span-2">
-              <label className="text-xs font-semibold text-gray-600">Violation type</label>
+              <label className="text-xs font-semibold text-gray-600">Violation type (catalog) *</label>
               {/*
                 LST-PICKER-01: Combobox allowAddNew with a side-channel mutate is not VERIFY-2 —
                 inline create must be the FIRST ROW via ReferenceSelect → CatalogQuickCreateDrawer,
