@@ -52,6 +52,7 @@ docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 !.cursor/rules/24-module-completion-n-of-m.mdc
 !.cursor/rules/25-one-push-money-fail-fast.mdc
 !.cursor/rules/25-verify-step-odd-even-bands.mdc
+!.cursor/rules/25-audit-coverage-single-source.mdc
 !.cursor/rules/26-serialize-scoreboard-hotfiles.mdc
 !.cursor/rules/dual-lane-never-idle.mdc
 !.cursor/rules/06-live-ops-cadence.mdc

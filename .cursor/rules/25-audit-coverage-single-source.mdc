@@ -1,0 +1,23 @@
+---
+description: HARD — AUDIT-COVERAGE-LIVE.md is the single source for FAIL+OPEN findings; column ownership by role; never delete rows
+alwaysApply: true
+---
+
+# RULE 25 — AUDIT COVERAGE SINGLE SOURCE (2026-08-02)
+
+Read `docs/audit/AUDIT-COVERAGE-LIVE.md` before ANY block.
+
+Build ONLY rows where Verdict=FAIL and Status=OPEN in your lane.
+On merge, set that row's Status=`FIXED (PR #N)` and Block/PR=`#N`.
+
+This file is the single source of truth for audit findings — ignore stale per-module audit copies on Desktop / AUDITOR-RUN.
+
+Column ownership (never edit another role's columns):
+- CASCADE: Module, Layer, Entity, Verdict, Evidence, Date, Auditor (APPENDS new rows only)
+- CODER/CURSOR: Status, Block/PR only (Status=`FIXED (PR #N)` when fixed in your lane)
+- GUARD: Status → VERIFIED / REOPENED only
+
+Never delete a row. Supersede = add a new dated row; mark old Status=SUPERSEDED.
+A row with no Evidence is not a finding — it does not count.
+Never work a defect that is not a FAIL+OPEN row on this file; never skip a FAIL that is.
+`git pull --ff-only origin main` before editing AUDIT-COVERAGE-LIVE.md. Small docs-only commit + push.
