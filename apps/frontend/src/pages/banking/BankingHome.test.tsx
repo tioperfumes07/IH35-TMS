@@ -100,6 +100,35 @@ describe("BankingHomePage accounts summary", () => {
     expect(screen.queryByText("ONLINE PAYMENT - THANK YOU")).not.toBeInTheDocument();
   });
 
+  // BANK-F01 — the headline Cash KPI rendered CENTS through a dollar formatter, a clean 100x
+  // overstatement of the first number on the home screen. This asserts the exact prod figure:
+  // TRANSP's 5 active bank accounts sum to 4,023,590 cents, which must render as $40,235.90 and
+  // NEVER as $4,023,590.00. Written as a value assertion rather than a snapshot so the failure
+  // message names the wrong number outright.
+  it("renders the cash KPI in dollars, not the raw cents the API returns", async () => {
+    vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
+      // Exactly what GET /api/v1/banking/dashboard/kpis returns for TRANSP on prod:
+      // sumAuthoritativeDepositoryCashCents() = SUM(current_balance_cents) = 4_023_590.
+      total_cash: 4023590,
+      dip_operating: 0,
+      dip_payroll: 0,
+      total_uncategorized: 0,
+      factoring_reserve: 0,
+      driver_escrow: 0,
+    });
+    vi.mocked(bankingApi.getBankingTiles).mockResolvedValue({ tiles: [] });
+    vi.mocked(bankingApi.getBankingUncategorized).mockResolvedValue({ transactions: [], meta: { uncategorized_count: 0 } });
+    vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({ accounts: [] });
+    vi.mocked(bankingApi.getReconciliationSessions).mockResolvedValue({ open_sessions: [], completed_sessions: [] });
+    vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] });
+
+    render(wrap(<BankingHomePage />));
+
+    expect(await screen.findByTitle("$40,235.90")).toBeInTheDocument();
+    // The pre-fix value must be absent. Without this the test would still pass if BOTH were rendered.
+    expect(screen.queryByTitle("$4,023,590.00")).not.toBeInTheDocument();
+  });
+
   it("shows real bank accounts from plaid feed when tile list is empty", async () => {
     vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
       total_cash: 1000,
