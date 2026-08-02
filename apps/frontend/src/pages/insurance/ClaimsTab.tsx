@@ -93,14 +93,6 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
   // Empty message renders only once the claims query settles (no first-fetch flash).
   const listState = useListState(query, (query.data ?? []).length === 0);
 
-  if (!companyId) {
-    return (
-      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
-        Select an operating company to view claims.
-      </div>
-    );
-  }
-
   const rows = query.data ?? [];
   const graph = graphQuery.data;
 
@@ -218,6 +210,23 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
     ],
     [],
   );
+
+  // INS-F01 — React error #310, "rendered fewer hooks than expected". This guard used to sit ABOVE
+  // the `columns` useMemo. On a direct URL load or a refresh of /insurance?tab=claims the company
+  // context is not resolved on the first render, so companyId was "" and the component returned
+  // early having run 7 hooks; the next render (context resolved) ran 8. React compares hook counts
+  // between renders of the same component, so the mount crashed the whole tab — reachable only by
+  // deep link or refresh, which is why it survived normal tab-clicking.
+  //
+  // The guard is CORRECT and stays — rendering a claims grid with no entity would be worse. It just
+  // has to run after every hook. Hooks are unconditional above; only the RENDER is conditional.
+  if (!companyId) {
+    return (
+      <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+        Select an operating company to view claims.
+      </div>
+    );
+  }
 
   return (
     <DataPanel title="Claims">
