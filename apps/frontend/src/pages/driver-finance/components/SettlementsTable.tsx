@@ -1,18 +1,8 @@
+import { useMemo } from "react";
 import type { SettlementListRow } from "../../../api/driverFinance";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { TableHeaderCell } from "../../../components/table";
 import { useUrlSort } from "../../../hooks/useUrlSort";
-
-function compareSettlementValues(
-  a: string | number | null | undefined,
-  b: string | number | null | undefined,
-): number {
-  if (a == null && b == null) return 0;
-  if (a == null) return 1;
-  if (b == null) return -1;
-  if (typeof a === "number" && typeof b === "number") return a - b;
-  return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
-}
 
 type Props = {
   rows: SettlementListRow[];
@@ -27,108 +17,121 @@ function statusClass(status: SettlementListRow["status"]) {
   return "bg-gray-100 text-gray-700";
 }
 
-// "Action" is a pure action column — exempt from sort (GLOBAL-SORT-RULE carve-out).
-const SETTLEMENT_COLUMNS: Array<{ key: string; label: string; sortable: boolean }> = [
-  { key: "driver", label: "Driver", sortable: true },
-  { key: "period", label: "Period", sortable: true },
-  { key: "loads", label: "Loads", sortable: true },
-  { key: "gross", label: "Gross", sortable: true },
-  { key: "deductions", label: "Deductions", sortable: true },
-  { key: "net_pay", label: "Net Pay", sortable: true },
-  { key: "status", label: "Status", sortable: true },
-  // Multi-line on purpose: a single-line column literal here trips the CI hold-merge-gate's
-  // flag-flip heuristic (a money-posting-flag safeguard scanning for an underscore-FLAG-style
-  // identifier plus a truthy value on one diff line) — not an actual feature flag, just this
-  // column's UI key.
-  {
-    key: "debt_flag",
-    label: "Debt Flag",
-    sortable: true,
-  },
-  { key: "action", label: "Action", sortable: false },
-];
-
-function settlementSortValue(row: SettlementListRow, key: string): string | number | null {
-  switch (key) {
-    case "driver": return row.driver_full_name ?? null;
-    case "period": return row.period_start ?? null;
-    case "loads": return Number(row.load_count ?? 0);
-    case "gross": return Number(row.gross_pay ?? 0);
-    case "deductions": return Number(row.deductions_total ?? 0);
-    case "net_pay": return Number(row.net_pay ?? 0);
-    case "status": return row.status ?? null;
-    case "debt_flag": return row.live_debt_flag ?? null;
-    default: return null;
-  }
-}
-
 export function SettlementsTable({ rows, onOpen }: Props) {
   // BANK-SORT-ROLLOUT-OPS — ?sort=/?dir= URL persistence via the shared useUrlSort hook
   // (BANK-SORT-ROLLOUT-ACCT), same contract as the dispatch board and fleet/WO lists so a
   // shared/bookmarked settlements link preserves the chosen column sort.
-  const { sortKey: rawSortKey, sortDirection, toggleSort } = useUrlSort();
-  const sortKey = rawSortKey || null;
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
-  const sortedRows = sortKey
-    ? [...rows].sort((a, b) => {
-        const cmp = compareSettlementValues(settlementSortValue(a, sortKey), settlementSortValue(b, sortKey));
-        return sortDirection === "asc" ? cmp : -cmp;
-      })
-    : rows;
+  const columns = useMemo<Array<ParityColumn<SettlementListRow>>>(
+    () => [
+      {
+        key: "driver",
+        label: "Driver",
+        sortable: true,
+        sortValue: (row) => row.driver_full_name ?? null,
+        render: (row) => (
+          <>
+            <div className="font-semibold">{row.driver_full_name}</div>
+            <div className="text-[10px] text-gray-500">
+              <EntityLink kind="driver" id={row.driver_id} label={row.driver_display_id} />
+            </div>
+          </>
+        ),
+      },
+      {
+        key: "period",
+        label: "Period",
+        sortable: true,
+        sortValue: (row) => row.period_start ?? null,
+        render: (row) => (
+          <>
+            {row.period_start} → {row.period_end}
+          </>
+        ),
+      },
+      {
+        key: "loads",
+        label: "Loads",
+        sortable: true,
+        sortValue: (row) => Number(row.load_count ?? 0),
+        cellClass: "tabular-nums",
+        render: (row) => Number(row.load_count ?? 0),
+      },
+      {
+        key: "gross",
+        label: "Gross",
+        sortable: true,
+        sortValue: (row) => Number(row.gross_pay ?? 0),
+        render: (row) => `$${Number(row.gross_pay ?? 0).toFixed(2)}`,
+      },
+      {
+        key: "deductions",
+        label: "Deductions",
+        sortable: true,
+        sortValue: (row) => Number(row.deductions_total ?? 0),
+        render: (row) => `$${Number(row.deductions_total ?? 0).toFixed(2)}`,
+      },
+      {
+        key: "net_pay",
+        label: "Net Pay",
+        sortable: true,
+        sortValue: (row) => Number(row.net_pay ?? 0),
+        cellClass: "font-semibold text-slate-700",
+        render: (row) => `$${Number(row.net_pay ?? 0).toFixed(2)}`,
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        sortValue: (row) => row.status ?? null,
+        render: (row) => (
+          <span className={`rounded-full px-2 py-0.5 ${statusClass(row.status)}`}>{row.status}</span>
+        ),
+      },
+      {
+        // Multi-line on purpose: a single-line column literal here trips the CI hold-merge-gate's
+        // flag-flip heuristic (a money-posting-flag safeguard scanning for an underscore-FLAG-style
+        // identifier plus a truthy value on one diff line) — not an actual feature flag, just this
+        // column's UI key.
+        key: "debt_flag",
+        label: "Debt Flag",
+        sortable: true,
+        sortValue: (row) => row.live_debt_flag ?? null,
+        render: (row) =>
+          typeof row.live_debt_flag === "number" && row.live_debt_flag > 0 ? (
+            <span className="font-semibold text-red-700">${row.live_debt_flag.toFixed(2)}</span>
+          ) : (
+            <span className="text-gray-500">—</span>
+          ),
+      },
+      {
+        key: "action",
+        label: "Action",
+        sortable: false,
+        alwaysVisible: true,
+        render: (row) => (
+          <button type="button" className="text-slate-700 underline" onClick={() => onOpen(row.id)}>
+            Open →
+          </button>
+        ),
+      },
+    ],
+    [onOpen],
+  );
 
   return (
-    <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-      <table className="min-w-[1100px] w-full text-left text-xs">
-        <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
-          <tr>
-            {SETTLEMENT_COLUMNS.map((column) => (
-              <TableHeaderCell
-                key={column.key}
-                columnKey={column.key}
-                label={column.label}
-                sortable={column.sortable}
-                resizable={false}
-                sortKey={sortKey}
-                sortDir={sortDirection}
-                onToggleSort={toggleSort}
-              />
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {sortedRows.map((row) => (
-            <tr key={row.id} className="border-t border-gray-100 hover:bg-gray-50">
-              <td className="px-2 py-1">
-                <div className="font-semibold">{row.driver_full_name}</div>
-                <div className="text-[10px] text-gray-500"><EntityLink kind="driver" id={row.driver_id} label={row.driver_display_id} /></div>
-              </td>
-              <td className="px-2 py-1">{row.period_start} → {row.period_end}</td>
-              <td className="px-2 py-1 tabular-nums">{Number(row.load_count ?? 0)}</td>
-              <td className="px-2 py-1">${Number(row.gross_pay ?? 0).toFixed(2)}</td>
-              <td className="px-2 py-1">${Number(row.deductions_total ?? 0).toFixed(2)}</td>
-              <td className="px-2 py-1 font-semibold text-slate-700">${Number(row.net_pay ?? 0).toFixed(2)}</td>
-              <td className="px-2 py-1"><span className={`rounded-full px-2 py-0.5 ${statusClass(row.status)}`}>{row.status}</span></td>
-              <td className="px-2 py-1">
-                {typeof row.live_debt_flag === "number" && row.live_debt_flag > 0 ? (
-                  <span className="font-semibold text-red-700">${row.live_debt_flag.toFixed(2)}</span>
-                ) : (
-                  <span className="text-gray-500">—</span>
-                )}
-              </td>
-              <td className="px-2 py-1">
-                <button type="button" className="text-slate-700 underline" onClick={() => onOpen(row.id)}>
-                  Open →
-                </button>
-              </td>
-            </tr>
-          ))}
-          {sortedRows.length === 0 ? (
-            <tr>
-              <td colSpan={9} className="px-2 py-3 text-center text-gray-500">No settlements found.</td>
-            </tr>
-          ) : null}
-        </tbody>
-      </table>
-    </div>
+    <ParityTable<SettlementListRow>
+      columns={columns}
+      rows={rows}
+      rowKey={(row) => row.id}
+      storageKey="driver-finance-settlements-list"
+      tableTestId="driver-finance-settlements-table"
+      emptyText="No settlements found."
+      sortKey={sortKey}
+      sortDirection={sortDirection}
+      onSortChange={onSortChange}
+      enableColumnResize
+    />
   );
 }
