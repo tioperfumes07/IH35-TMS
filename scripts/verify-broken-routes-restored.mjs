@@ -58,8 +58,30 @@ function findExactRouteBlock(source, routePath) {
   return source.slice(match.index, end);
 }
 
+
+function findSafetyRelativeRouteBlock(source, routePath) {
+  if (!routePath.startsWith("/safety/")) return null;
+  const leaf = routePath.slice("/safety/".length);
+  const safetyStart = source.indexOf('path="/safety"');
+  if (safetyStart < 0) return null;
+  const safetyEnd = source.indexOf('path="/liabilities"', safetyStart);
+  const safetyBlock =
+    safetyEnd > safetyStart ? source.slice(safetyStart, safetyEnd) : source.slice(safetyStart);
+  const escaped = leaf.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = safetyBlock.match(new RegExp(`path="${escaped}"(?![\\w/-])`));
+  if (!match || match.index == null) return null;
+  const afterMatch = match.index + match[0].length;
+  const nextPathIdx = safetyBlock.indexOf('path="', afterMatch);
+  const end = nextPathIdx === -1 ? afterMatch + 400 : nextPathIdx;
+  return safetyBlock.slice(match.index, end);
+}
+
+function findRouteBlock(source, routePath) {
+  return findExactRouteBlock(source, routePath) ?? findSafetyRelativeRouteBlock(source, routePath);
+}
+
 for (const routePath of RESTORED_ROUTES) {
-  const block = findExactRouteBlock(manifest, routePath);
+  const block = findRouteBlock(manifest, routePath);
   if (!block) {
     failures.push(`${routePath} — route not registered (would fall through to catch-all → Home)`);
     continue;
