@@ -13,7 +13,7 @@
  * Read-only: this script prints SQL and never connects to a database.
  */
 import { build } from "esbuild";
-import { readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -39,10 +39,19 @@ if (!key) {
 }
 
 // items-write-sql.ts has NO runtime imports by design, so it bundles standalone.
-const out = join(tmpdir(), `items-reconcile-sql.${process.pid}.mjs`);
-await build({ entryPoints: [SRC], outfile: out, format: "esm", bundle: true, platform: "node", logLevel: "silent" });
-const mod = await import(`file://${out}`);
-rmSync(out, { force: true });
+// Same CodeQL js/insecure-temporary-file class as the guard: a predictable path in world-writable
+// /tmp is symlink-attackable, and this script IMPORTS what it writes. mkdtempSync gives a 0700
+// directory with an unpredictable suffix, so the write and the import stay inside a directory only
+// this process owns.
+const outDir = mkdtempSync(join(tmpdir(), "ih35-items-write-sql-dump-"));
+const out = join(outDir, "items-write-sql.mjs");
+let mod;
+try {
+  await build({ entryPoints: [SRC], outfile: out, format: "esm", bundle: true, platform: "node", logLevel: "silent" });
+  mod = await import(`file://${out}`);
+} finally {
+  rmSync(outDir, { force: true, recursive: true });
+}
 
 let sql = mod[key];
 if (typeof sql !== "string") {

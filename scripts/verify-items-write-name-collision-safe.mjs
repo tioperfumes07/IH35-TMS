@@ -43,7 +43,7 @@
  * this guard to cover it would force a rename convention onto hand-created items that no one has ruled on.
  */
 import { build } from "esbuild";
-import { readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -59,22 +59,25 @@ const WRITING_CONSTANTS = ["HEAL_ITEM_DRIFT_SQL", "CREATE_MISSING_ITEMS_SQL", "P
 const SET_BASED = ["HEAL_ITEM_DRIFT_SQL", "CREATE_MISSING_ITEMS_SQL"];
 
 async function expand(sourceText) {
-  const tmpTs = join(tmpdir(), `items-write-sql.${process.pid}.${Math.abs(hash(sourceText))}.ts`);
-  const tmpMjs = `${tmpTs}.mjs`;
+  // CodeQL js/insecure-temporary-file (high) — the first version built a PREDICTABLE path in the
+  // shared temp dir (`items-write-sql.<pid>.<hash>.ts`). On a multi-user host /tmp is world-writable,
+  // so another user can pre-create that exact name as a symlink and writeFileSync follows it — an
+  // arbitrary-file-write primitive, and the module this guard then imports could be attacker-chosen.
+  // A guard that can be made to import a hostile file is worse than no guard.
+  //
+  // mkdtempSync creates a fresh directory with 0700 permissions and a random suffix the caller cannot
+  // predict, so both the write and the subsequent import are confined to a directory only this
+  // process owns. The whole directory is removed in the finally.
+  const dir = mkdtempSync(join(tmpdir(), "ih35-items-write-sql-"));
+  const tmpTs = join(dir, "items-write-sql.ts");
+  const tmpMjs = join(dir, "items-write-sql.mjs");
   writeFileSync(tmpTs, sourceText);
   try {
     await build({ entryPoints: [tmpTs], outfile: tmpMjs, format: "esm", bundle: true, platform: "node", logLevel: "silent" });
     return await import(`file://${tmpMjs}`);
   } finally {
-    rmSync(tmpTs, { force: true });
-    rmSync(tmpMjs, { force: true });
+    rmSync(dir, { force: true, recursive: true });
   }
-}
-
-function hash(s) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return h;
 }
 
 /** Strip SQL line comments so a rationale mentioning `item_name = qi.name` is not read as code. */
