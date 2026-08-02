@@ -148,7 +148,7 @@ evidence, **per entity**. A `PASS` verdict is TRANSP-only unless the `Entity` co
 | Vendors | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Inventory | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
 | Inventory | B | TRANSP | PASS+FAIL | Roster PASS; Category column 100% blank, 144/144 | 2026-08-01 | Cascade | | |
-| Inventory | C | TRANSP | UNVERIFIED | Not yet traced (parts usage→COGS/WO→GL) | 2026-08-02 | Cascade | | |
+| Inventory | C | TRANSP | PARTIAL — clean structural chain, but 0 postings against 144 real parts | Chain: `maintenance.parts_inventory`→`accounting.parts_purchase_postings.bill_id`/`expense_je_id`→`accounting.bills`/`accounting.journal_entries` (clean FK-enforced both directions). 144 real `parts_inventory` rows exist (matches the earlier Layer B "144/144 blank Category" finding), but `accounting.parts_purchase_postings` = 0 rows. Unlike Settlements/Safety (genuinely 0 underlying activity), here there IS real inventory data with no corresponding GL posting — consistent with the same `CLS-SUBLEDGER-GL-DARK` pattern (bills are the intermediate leg, and bills posting is the reclassified "posting being enabled" state), not pure data scarcity | 2026-08-02 | Cascade | | |
 | Inventory | D | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | Inventory | E | TRANSP | UNVERIFIED | Not yet run | 2026-08-01 | Cascade | | |
 | 425C | A | TRANSP | PASS | Live surface loads | 2026-08-01 | Cascade | | |
