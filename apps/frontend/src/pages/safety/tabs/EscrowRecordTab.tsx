@@ -71,7 +71,8 @@ export function EscrowRecordTab() {
     }
   }, [escrowDriverIdParam, rows, searchParams, setSearchParams]);
   const attempts = escrowQuery.data?.forfeit_attempts ?? [];
-  const ignoredTimelineErrors = escrowQuery.data?.timeline_errors ?? [];
+  // SAF-ORPH-03: surface per-driver timeline failures — silent catch left the Forfeiture Audit empty forever.
+  const timelineErrors = escrowQuery.data?.timeline_errors ?? [];
   const totalForfeits = useMemo(() => attempts.filter((a) => a.status === "success").length, [attempts]);
 
   const columns = useMemo<ParityColumn<EscrowRecordRow>[]>(
