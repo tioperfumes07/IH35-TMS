@@ -653,7 +653,7 @@ export function UsersPage() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Password setup</label>
-            <div className="space-y-2 rounded-sm border border-gray-200 p-2 text-xs text-gray-700">
+            <div className="space-y-2 border-t border-gray-200 pt-2 text-xs text-gray-700">
               <label className="inline-flex items-center gap-2">
                 <input
                   type="radio"

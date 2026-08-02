@@ -1227,6 +1227,7 @@
     "1896": "1896-verify-lst-picker01-fine-create-driver-entity-picker.mjs",
     "1898": "1898-verify-disp-filter-01-mdata-status-contract.mjs",
     "1899": "1899-verify-freshness-union-exemption-parity.mjs",
+    "2030": "2030-verify-users-create-no-box-in-box.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
