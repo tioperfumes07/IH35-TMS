@@ -31,6 +31,7 @@ import { registerSamsaraWebhookRoutes } from "./integrations/samsara/samsara-web
 import { registerRelayFuelBackfillRoute } from "./integrations/relay-payments/relay-fuel-backfill.routes.js";
 import { registerRelayFuelCsvImportRoute } from "./integrations/relay-payments/relay-fuel-csv-import.routes.js";
 import { registerRelayFuelDriverRematchRoute } from "./integrations/relay-payments/relay-fuel-driver-rematch.routes.js";
+import { registerRelayFuelLoadRematchRoute } from "./integrations/relay-payments/relay-fuel-load-rematch.routes.js";
 import { registerRelayWalletBankFeedBackfillRoute } from "./integrations/relay-payments/relay-wallet-bank-feed-backfill.routes.js";
 import { registerRelayDepositReviewRoutes } from "./integrations/relay-payments/relay-deposit-review.routes.js";
 import { registerRelayHealthRoutes } from "./integrations/relay-payments/relay-health.routes.js";
@@ -695,6 +696,7 @@ async function main() {
   await registerRelayFuelBackfillRoute(app);
   await registerRelayFuelCsvImportRoute(app);
   await registerRelayFuelDriverRematchRoute(app);
+  await registerRelayFuelLoadRematchRoute(app);
   await registerRelayWalletBankFeedBackfillRoute(app);
   await registerRelayDepositReviewRoutes(app);
   await registerRelayHealthRoutes(app);
