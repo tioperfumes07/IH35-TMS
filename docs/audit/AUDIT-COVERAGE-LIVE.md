@@ -40,7 +40,7 @@ matching `n_live_tup`) proving the zeros are real and not RLS-masked.
 |---|---|---|
 | Modules certified full-PASS (all 5 layers) | **0 / 30** | 2026-08-02 |
 | Modules with a confirmed live defect | **15 / 30** | 2026-08-02 |
-| Rows in this file | **54** | 2026-08-02 |
+| Rows in this file | **57** | 2026-08-02 |
 | Rows `FAIL` + `OPEN` | **4** | 2026-08-02 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **1** | 2026-08-02 |
 | Rows `VERIFIED` by GUARD | **0** | 2026-08-02 |
@@ -107,3 +107,6 @@ Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/
 | 52 | System | E | TRANSP | PASS | CDP screenshot `/system`: Owner-only badge, tab navigation (Overview/QuickBooks Reconciliation/QuickBooks Sync/Program Tracker/Software & Build/Claude Coder), dual-panel layout: QBO Reconciliation (tie-out status, A/P tie-out PENDING PULL, Unresolved alerts=0) + QBO Sync (CONNECTED, pull-only, QBO write-back OFF by design), Program Tracker (1010 registered/478 built/239 in progress), Software/Build (DEGRADED badge, deployed SHA 7533411, deploy parity IN SYNC, service health RED). Honest real-time operational dashboard. | — | — | NO | 2026-08-02 | CASCADE |
 | 53 | Insurance | E | TRANSP | PASS | CDP screenshot `/insurance`: Nested under Safety > Compliance Docs & Monitoring, sub-tabs (Landing/Policies/Type Catalog/Coverage Gaps/Claims/Lawsuits), Insurance Dashboard with KPI tiles (Total Active Policies=0/Policies Expiring in 30 Days=0/Coverage Gap Count=1 RED/Recent COI Request Count=0/Open Claims Count=0/Open Lawsuits Count=0). Coverage Gap flagged in red — honest alerting. Clean layout. | — | — | NO | 2026-08-02 | CASCADE |
 | 54 | Tasks | E | TRANSP | PASS | CDP screenshot `/tasks`: Task Board with tab navigation (Task Board/Calendar/My Tasks/Team Chat/Admin Report), weekly calendar grid (Sun-Sat with dates), +Create Task CTA (×2), Filters button, "0 tasks / No tasks in this period" honest empty state. Clean calendar-style layout. | — | — | NO | 2026-08-02 | CASCADE |
+| 55 | Driver Profile | D | TRANSP | PASS | Auto Deduction Policies: deduction-type SelectCombobox (hardcoded enum of deduction types — acceptable as these are finite system-defined categories, not user-managed catalogs). Settlement Dispute modal: driver Combobox backed by `mdata.drivers` (98 TRANSP). Both real and entity-scoped. Positive control: `mdata.vendors`=2,827. | — | — | NO | 2026-08-02 | CASCADE |
+| 56 | Driver Hub | D | TRANSP | N/A | Driver Hub inbox is a read-only feed of driver requests (cash advances/load updates/repairs/complaints). No create forms or picker-consuming surfaces on this module — it receives but does not author records with picker fields. | — | — | NO | 2026-08-02 | CASCADE |
+| 57 | ParityTable (shared chrome) | A | TRANSP | FAIL (minor) | Previously noted: column resize hit-target is 4-6px with no visible affordance (no grip icon, no hover cursor change to col-resize until exactly on the boundary). Functionally the resize works once discovered, but the target is not discoverable without prior knowledge. This is a UX polish issue, not a functional defect. | — | — | NO | 2026-08-02 | CASCADE |
