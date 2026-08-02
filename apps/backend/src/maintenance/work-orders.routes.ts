@@ -583,8 +583,16 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       try {
         const result = await withCompany(user.uuid, body.header.operating_company_id, async (client) => {
           if (body.header.vendor_id) {
+            // MNT-VENDOR-CANONICAL (2026-08-02): validate against CANONICAL mdata.vendors, not the
+            // RETIRE mdata.qbo_vendors mirror. The mirror is EMPTY for any entity without a QuickBooks
+            // connection — USMCA has 4 vendors in mdata.vendors and 0 in the mirror — so this lookup
+            // returned nothing and every vendor work order in USMCA failed with bad_vendor, blocking
+            // the maintenance -> vendor -> A/P -> expense-GL chain entirely. LINKAGE LAW §10: vendors
+            // (AP truth) are mdata.vendors; the WO picker must stop using the mirror. The FK moved with
+            // it in migration 202611170000 — repointing this read alone would have traded a bad_vendor
+            // rejection for an FK violation on write.
             const vr = await client.query(
-              `SELECT 1 FROM mdata.qbo_vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+              `SELECT 1 FROM mdata.vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
               [body.header.vendor_id, body.header.operating_company_id]
             );
             if ((vr.rowCount ?? 0) === 0) {

@@ -18,7 +18,9 @@ export type TwoSectionHeader = {
   service_date?: string | null;
   repair_location: string;
   bucket?: "in_house" | "external" | "roadside";
-  /** UUID row id from mdata.qbo_vendors (canonical QBO vendor master). */
+  /** UUID row id from mdata.vendors (canonical AP vendor master). Repointed off the RETIRE
+   *  mdata.qbo_vendors mirror 2026-08-02 (MNT-VENDOR-CANONICAL) — the mirror is empty for any
+   *  entity without a QuickBooks connection, which made every USMCA vendor WO fail. */
   vendor_id?: string | null;
   vendor_qbo_id?: string | null;
   shop_name?: string | null;
