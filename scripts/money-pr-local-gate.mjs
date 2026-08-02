@@ -1,13 +1,19 @@
 #!/usr/bin/env node
 /**
- * money-pr-local-gate — FAIL-FAST before push (Rule 25).
+ * money-pr-local-gate — FAIL-FAST before push (Rule 25 + Rule 29).
  *
- * Runs the same DoD + money-theater assertions CI will run later, but in seconds
- * at husky pre-push / branch:precheck-push — so a bad FINDING / MODULE_PROGRESS
+ * Runs the same assertions CI will run later, but in seconds at husky
+ * pre-push / branch:precheck-push — so a bad FINDING / MODULE_PROGRESS /
+ * migration hour / verify-step parity / CLAIMED thrash / EntityLink baseline
  * never burns 15–20 minutes of build-typecheck.
  *
  * Wired as the FIRST step in scripts/branch-precheck-push.mjs buildPrecheckSteps.
- * Do not remove without updating verify-money-pr-local-gate.
+ * Do not remove without updating verify-money-pr-local-gate + Rule 29.
+ *
+ * Cursor agents MUST also run this explicitly before every push:
+ *   node scripts/money-pr-local-gate.mjs
+ * Never rely on husky alone (worktrees often lack prepared hooks).
+ * Never `git commit --no-verify` / `git push --no-verify` (Rule 29).
  */
 import fs from "node:fs";
 import { spawnSync } from "node:child_process";
@@ -17,6 +23,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "money-pr-local-gate";
 
+/** Ordered fail-fast suite — same classes that red'd Cursor #4009–#4011 vs Claude. */
 const STEPS = [
   ["verify-definition-of-done-evidence", "scripts/verify-definition-of-done-evidence.mjs"],
   ["verify-no-money-theater", "scripts/verify-no-money-theater.mjs"],
@@ -24,6 +31,16 @@ const STEPS = [
   ["verify-no-parallel-scoreboard-prs", "scripts/verify-no-parallel-scoreboard-prs.mjs"],
   // §7 palette — same failure class that red'd ACCT-R-16/17 build-typecheck after theater passed.
   ["verify-section7-palette-financial", "scripts/verify-section7-palette-financial.mjs"],
+  // Cursor HH 12–23 / Claude HH 00–11 — #4009 burned a full typecheck on HH=00.
+  ["verify-migration-lane-band", "scripts/verify-migration-lane-band.mjs"],
+  // Cursor EVEN / Claude ODD — #4010 claimed 1900 then 1985 (odd) before 1986.
+  ["verify-verify-step-lane-band", "scripts/verify-verify-step-lane-band.mjs"],
+  // TOOL-F03 — filename is the claim; feature PRs must not edit CLAIMED-NUMBERS.json (#4010).
+  ["verify-no-claimed-numbers-edits", "scripts/verify-no-claimed-numbers-edits.mjs"],
+  // TOOL-F04 — data-mutating migrations need REHEARSED: in a branch commit (#4009).
+  ["verify-data-migrations-rehearsed", "scripts/verify-data-migrations-rehearsed.mjs"],
+  // EntityLink adoption ratchet — #4010 FactoringHome AST shift + bare UUID (~1.5s).
+  ["verify-entity-link-adoption", "scripts/verify-entity-link-adoption.mjs"],
 ];
 
 function runNode(rel) {
@@ -56,15 +73,15 @@ for (const [name, rel] of STEPS) {
   if (code !== 0) {
     console.error(
       `\n${LABEL}: FAIL — ${name} rejected this branch BEFORE push.\n` +
-        `Fix the commit message / MODULE_PROGRESS / FINDING: ACCT-F## keys, then:\n` +
+        `Fix the commit message / MODULE_PROGRESS / FINDING / lane band / CLAIMED / EntityLink baseline, then:\n` +
         `  node scripts/money-pr-local-gate.mjs\n` +
-        `Then ONE push. Do not rebase while CI is running (Rule 25).\n`
+        `Then ONE push (hooks ON — never --no-verify). Do not rebase while CI is running (Rule 25 / Rule 29).\n`,
     );
     process.exit(code);
   }
 }
 
 console.log(
-  `${LABEL}: PASS — DoD + money-theater + Rule 26 scoreboard serialize + §7 palette OK (fail-fast before CI)`,
+  `${LABEL}: PASS — DoD + money-theater + scoreboard serialize + §7 palette + migration band + verify-step band + no-CLAIMED-edits + EntityLink adoption OK (fail-fast before CI)`,
 );
 process.exit(0);
