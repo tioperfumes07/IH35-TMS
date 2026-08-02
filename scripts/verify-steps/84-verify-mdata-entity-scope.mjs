@@ -31,6 +31,22 @@ const TARGET_RE =
 // An entity predicate = a scope column used in a comparison/IN (not merely selected).
 const PREDICATE_RE =
   /\b(operating_company_id|owner_company_id|currently_leased_to_company_id)\b\s*(?:::[a-z_]+)?\s*(=|<>|!=|>=|<=|>|<|IN\b)/i;
+// DISP-F01 — the lease-aware form. mdata.units is scoped by a PAIR of columns, so the correct
+// predicate for a unit is COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2 — a
+// TRK-owned unit leased to TRANSP must be visible to TRANSP, and no single-column comparison can
+// express that. The regex above requires the column to be followed immediately by an operator, so a
+// closing paren defeated it and this properly-scoped query was reported as UNSCOPED.
+//
+// This is a false-NEGATIVE fix, not a loosening: the alternative below still demands a real
+// comparison against the COALESCE result, so merely SELECTing the columns does not satisfy it. The
+// wrong resolution here would have been UPDATE_ENTITY_SCOPE_BASELINE=1, which freezes a scoped query
+// into the accepted-unscoped list and quietly spends the ratchet on a query that never needed it.
+function hasEntityPredicate(text) {
+  return PREDICATE_RE.test(text) || COALESCE_PREDICATE_RE.test(text);
+}
+
+const COALESCE_PREDICATE_RE =
+  /COALESCE\s*\([^()]*\b(operating_company_id|owner_company_id|currently_leased_to_company_id)\b[^()]*\)\s*(?:::[a-z_]+)?\s*(=|<>|!=|>=|<=|>|<|IN\b)/i;
 
 function walk(dir, acc = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -62,7 +78,7 @@ function collectUnscopedLiterals() {
     const src = fs.readFileSync(file, "utf8");
     for (const lit of extractTemplateLiterals(src)) {
       if (!TARGET_RE.test(lit)) continue;
-      if (PREDICATE_RE.test(lit)) continue;
+      if (hasEntityPredicate(lit)) continue;
       const norm = normalize(lit);
       const hash = crypto.createHash("sha1").update(norm).digest("hex");
       const key = `${rel}#${hash}`;
