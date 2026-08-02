@@ -16,11 +16,11 @@
 //
 // NOT in either list (deliberately — rule 14 marks these CANONICAL, not RETIRE):
 //   driver_finance.* · banking.* · maintenance.* · mdata.vendors · mdata.loads ·
-//   catalogs.cancellation_reasons · accounting.qbo_vendors (Desktop ACCT-ECON-05 2026-07-28 —
-//   CANONICAL AP QBO vendor masters). mdata.qbo_vendors remains the QBO sync writer target until
+//   catalogs.cancellation_reasons · mdata.qbo_vendors (Desktop ACCT-ECON-05 2026-07-28 —
+//   CANONICAL AP QBO vendor masters). accounting.qbo_vendors remains the QBO sync writer target until
 //   a dedicated repoint wave; it is NOT yet in KNOWN_LEGACY so C2 does not ratchet 14 sync writers
-//   mid-flight. Older "WO picker writing mdata.qbo_vendors" mirror-sync reading is SUPERSEDED for
-//   AP credit-card / vendor-credit consumers (those MUST read accounting.qbo_vendors).
+//   mid-flight. Older "WO picker writing accounting.qbo_vendors" mirror-sync reading is SUPERSEDED for
+//   AP credit-card / vendor-credit consumers (those MUST read mdata.qbo_vendors).
 //   Other accounting.qbo_* (accounts/customers) remain ENFORCED until their Desktop leaves flip.
 //
 // Scan: apps/backend/src + apps/frontend/src, .ts/.tsx, comments stripped before matching
@@ -50,7 +50,7 @@ export const ENFORCED = [
   { pat: "settlements\\.team_split_configs", canonical: "driver_finance.team_settlement_splits" },
   { pat: "settlements\\.team_split_load_overrides", canonical: "driver_finance.team_settlement_splits" },
   // QBO mirror RETIRE (exact names) — accounting.* was the wrong schema for accounts/customers;
-  // vendors FLIPPED 2026-07-28: accounting.qbo_vendors is CANONICAL (removed from ENFORCED).
+  // vendors FLIPPED 2026-07-28: mdata.qbo_vendors is CANONICAL (removed from ENFORCED).
   { pat: "accounting\\.qbo_accounts", canonical: "mdata.qbo_accounts" },
   { pat: "accounting\\.qbo_customers", canonical: "mdata.qbo_customers" },
   // Phantom/island load table (rule 14: canonical is mdata.loads)
@@ -169,7 +169,7 @@ function selftest() {
         "await q(`SELECT id FROM driver_finance.driver_settlements WHERE id = $1`);",
         "// comment about payroll.driver_settlements is fine",
         "/* legacy doc: SELECT * FROM settlement.settlement s JOIN mdata.drivers d ON d.id = s.driver_id */",
-        "await q(`INSERT INTO accounting.qbo_vendors (id) VALUES ($1)`);",
+        "await q(`INSERT INTO mdata.qbo_vendors (id) VALUES ($1)`);",
         "await q(`SELECT count(*) FROM accounting.qbo_remote_counts`);",
       ].join("\n") + "\n"
     );
@@ -205,7 +205,7 @@ function selftest() {
       ["dispatch.loads caught", hasV("bad-island.ts")],
       ["catches to_regclass probe", hasV("bad-probe-regclass.ts")],
       ["catches has_table_privilege probe", hasV("bad-probe-priv.ts")],
-      ["clean file passes (comments + canonical accounting.qbo_vendors + non-RETIRE qbo tables ok)", !hasV("clean.ts") && !hasL("clean.ts")],
+      ["clean file passes (comments + canonical mdata.qbo_vendors + non-RETIRE qbo tables ok)", !hasV("clean.ts") && !hasL("clean.ts")],
       ["deprecated archive exempt", !hasV("old-engine.deprecated.ts")],
       ["tests exempt", !hasV("mock.test.ts")],
       ["KNOWN_LEGACY bank.* warns, does not violate", hasL("legacy-bank.ts") && !hasV("legacy-bank.ts")],

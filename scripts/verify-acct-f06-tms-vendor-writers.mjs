@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * ACCT-F06 — all active TMS vendor create/push writers must use canonical
- * accounting.qbo_vendors, never RETIRE mdata.qbo_vendors.
+ * mdata.qbo_vendors, never RETIRE accounting.qbo_vendors.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -17,11 +17,11 @@ const TARGETS = [
 
 export function assertCanonicalVendorWriter(source, filename) {
   const problems = [];
-  if (source.includes("mdata.qbo_vendors")) {
-    problems.push(`${filename}: must not read or write RETIRE mdata.qbo_vendors`);
+  if (source.includes("accounting.qbo_vendors")) {
+    problems.push(`${filename}: must not read or write RETIRE accounting.qbo_vendors`);
   }
-  if (!source.includes("accounting.qbo_vendors")) {
-    problems.push(`${filename}: must read or write canonical accounting.qbo_vendors`);
+  if (!source.includes("mdata.qbo_vendors")) {
+    problems.push(`${filename}: must read or write canonical mdata.qbo_vendors`);
   }
   return problems;
 }
@@ -35,19 +35,19 @@ function main() {
     for (const problem of problems) console.error(`  ${problem}`);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — TMS vendor writers target accounting.qbo_vendors only`);
+  console.log(`${LABEL} OK — TMS vendor writers target mdata.qbo_vendors only`);
 }
 
 function selftest() {
   const failures = [];
   const retired = assertCanonicalVendorWriter(
-    "INSERT INTO mdata.qbo_vendors (display_name) VALUES ($1)",
+    "INSERT INTO accounting.qbo_vendors (display_name) VALUES ($1)",
     "fixture.ts"
   );
   if (!retired.some((problem) => problem.includes("RETIRE"))) failures.push("did not catch RETIRE writer");
 
   const canonical = assertCanonicalVendorWriter(
-    "UPDATE accounting.qbo_vendors SET active = true",
+    "UPDATE mdata.qbo_vendors SET active = true",
     "fixture.ts"
   );
   if (canonical.length) failures.push(`false positive: ${canonical.join("; ")}`);

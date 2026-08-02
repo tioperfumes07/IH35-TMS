@@ -25,8 +25,8 @@ const MIRROR_TABLES = [
   "mdata.qbo_accounts",
   "mdata.qbo_items",
   "mdata.qbo_customers",
-  "mdata.qbo_vendors",
   "accounting.qbo_vendors",
+  "mdata.qbo_vendors",
 ];
 
 /** Pure comparison so the selftest runs with no database. */
@@ -40,7 +40,7 @@ async function main() {
   // LIVE-DATA GUARD, opt-in — following the established shape of verify-no-test-units-in-prod.
   //
   // The invariant is about PRODUCTION data. Run against CI's database it fails on legitimate test
-  // FIXTURES: tms-vendor-push-tenant-isolation.test.ts deliberately inserts an mdata.qbo_vendors row
+  // FIXTURES: tms-vendor-push-tenant-isolation.test.ts deliberately inserts an accounting.qbo_vendors row
   // for a company with no connection, because that is the isolation it is testing. A guard that trips
   // on a correct fixture will be allowlisted within a week, and then it protects nothing.
   //

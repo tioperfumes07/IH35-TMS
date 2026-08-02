@@ -59,7 +59,7 @@ async function ensureCanonicalVendorRow(client: PoolClient, row: QboVendorPushRo
   const payload = vendorPayloadJson(row);
   await client.query(
     `
-      INSERT INTO accounting.qbo_vendors (
+      INSERT INTO mdata.qbo_vendors (
         id,
         operating_company_id,
         qbo_id,
@@ -162,7 +162,7 @@ async function auditQboPushAttempt(
 async function markPushSuccess(client: PoolClient, row: QboVendorPushRow, qboId: string, syncToken: string | null) {
   await client.query(
     `
-      UPDATE accounting.qbo_vendors
+      UPDATE mdata.qbo_vendors
       SET
         qbo_id = $3,
         qbo_sync_token = $4,
@@ -177,7 +177,7 @@ async function markPushSuccess(client: PoolClient, row: QboVendorPushRow, qboId:
   );
   await client.query(
     `
-      UPDATE accounting.qbo_vendors
+      UPDATE mdata.qbo_vendors
       SET
         qbo_id = $3,
         qbo_sync_token = $4,
@@ -195,7 +195,7 @@ async function markPushFailure(client: PoolClient, row: QboVendorPushRow, errorM
   const nextAttempts = row.qbo_push_attempts + 1;
   await client.query(
     `
-      UPDATE accounting.qbo_vendors
+      UPDATE mdata.qbo_vendors
       SET
         sync_status = 'failed',
         qbo_push_attempts = $3,
@@ -212,11 +212,11 @@ async function markPushFailure(client: PoolClient, row: QboVendorPushRow, errorM
 export async function claimQboVendorsPushBatch(client: PoolClient, batchSize: number): Promise<QboVendorPushRow[]> {
   const res = await client.query<QboVendorPushRow>(
     `
-      UPDATE accounting.qbo_vendors
+      UPDATE mdata.qbo_vendors
       SET sync_status = 'pushing', updated_at = now()
       WHERE id IN (
         SELECT id
-        FROM accounting.qbo_vendors
+        FROM mdata.qbo_vendors
         WHERE qbo_id IS NULL
           AND sync_status IN ('unsynced', 'failed')
           AND qbo_push_attempts < $2
@@ -254,7 +254,7 @@ export async function pushSingleQboVendor(
   if (!canPushWithinMasterRateLimit(nowMs)) {
     await client.query(
       `
-        UPDATE accounting.qbo_vendors
+        UPDATE mdata.qbo_vendors
         SET sync_status = 'unsynced', updated_at = now()
         WHERE id = $1::uuid AND operating_company_id = $2::uuid AND sync_status = 'pushing'
       `,
@@ -284,7 +284,7 @@ export async function pushSingleQboVendor(
     const qboRes = await client.query<{ qbo_id: string | null; qbo_sync_token: string | null }>(
       `
         SELECT qbo_id, qbo_sync_token
-        FROM accounting.qbo_vendors
+        FROM mdata.qbo_vendors
         WHERE id = $1::uuid AND operating_company_id = $2::uuid
         LIMIT 1
       `,

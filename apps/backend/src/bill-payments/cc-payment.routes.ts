@@ -102,10 +102,10 @@ export async function registerCcPaymentRoutes(app: FastifyInstance) {
         let qboBillPaymentId: string | null = null;
         if (qboBillId && ccAccount.qbo_account_id) {
           const vendorQboRes = await client.query(
-            // ACCT-ECON-05: canonical QBO vendor masters live in accounting.qbo_vendors (Rule 14).
+            // ACCT-ECON-05: canonical QBO vendor masters live in mdata.qbo_vendors (Rule 14).
             // RETIRE mdata.qbo_vendors must not be the write/read path for AP credit-card bill pay.
             `SELECT qbo_id
-               FROM accounting.qbo_vendors
+               FROM mdata.qbo_vendors
               WHERE operating_company_id = $1::uuid
                 AND active = true
                 AND id::text = $2

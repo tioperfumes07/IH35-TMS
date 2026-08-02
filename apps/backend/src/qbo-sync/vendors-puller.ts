@@ -50,7 +50,7 @@ async function upsertMirror(client: PoolClient, operatingCompanyId: string, row:
 
   await client.query(
     `
-      INSERT INTO accounting.qbo_vendors (
+      INSERT INTO mdata.qbo_vendors (
         operating_company_id,
         qbo_id,
         qbo_sync_token,
@@ -61,9 +61,11 @@ async function upsertMirror(client: PoolClient, operatingCompanyId: string, row:
         active,
         qbo_updated_at,
         mirrored_at,
-        payload_json
+        payload_json,
+        raw_payload,
+        last_seen_at
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now(),$10::jsonb)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now(),$10::jsonb,$10::jsonb,now())
       ON CONFLICT (operating_company_id, qbo_id)
       DO UPDATE SET
         qbo_sync_token = EXCLUDED.qbo_sync_token,
@@ -74,7 +76,9 @@ async function upsertMirror(client: PoolClient, operatingCompanyId: string, row:
         active = EXCLUDED.active,
         qbo_updated_at = EXCLUDED.qbo_updated_at,
         mirrored_at = now(),
-        payload_json = EXCLUDED.payload_json
+        payload_json = EXCLUDED.payload_json,
+        raw_payload = EXCLUDED.raw_payload,
+        last_seen_at = now()
     `,
     [operatingCompanyId, id, syncToken, name, companyName, primaryEmail, primaryPhone, active, updated, JSON.stringify(row)]
   );

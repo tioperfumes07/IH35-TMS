@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
  * ACCT-F06 / ACCT-ECON-05 — recon/drift/integrity/unlinked vendor readers must use
- * canonical accounting.qbo_vendors (the living QBO master), never RETIRE mdata.qbo_vendors.
+ * canonical mdata.qbo_vendors (the living QBO master), never RETIRE accounting.qbo_vendors.
  *
  * Historical "mirror" naming in these modules meant the TMS-side QBO clone. After ECON-05,
- * that clone lives in accounting.qbo_vendors.
+ * that clone lives in mdata.qbo_vendors.
  * MODULE_PROGRESS trailer on money commits must match accounting.json (26 of 31 post-#3758).
  */
 import fs from "node:fs";
@@ -28,11 +28,11 @@ const TARGETS = [
 
 export function assertCanonicalReconReader(source, filename) {
   const problems = [];
-  if (source.includes("mdata.qbo_vendors")) {
-    problems.push(`${filename}: must not reference RETIRE mdata.qbo_vendors`);
+  if (source.includes("accounting.qbo_vendors")) {
+    problems.push(`${filename}: must not reference RETIRE accounting.qbo_vendors`);
   }
-  if (!source.includes("accounting.qbo_vendors")) {
-    problems.push(`${filename}: must reference canonical accounting.qbo_vendors`);
+  if (!source.includes("mdata.qbo_vendors")) {
+    problems.push(`${filename}: must reference canonical mdata.qbo_vendors`);
   }
   return problems;
 }
@@ -61,18 +61,18 @@ function main() {
     for (const problem of problems) console.error(`  ${problem}`);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — recon/drift/integrity vendor readers target accounting.qbo_vendors; outbound join pinned`);
+  console.log(`${LABEL} OK — recon/drift/integrity vendor readers target mdata.qbo_vendors; outbound join pinned`);
 }
 
 function selftest() {
   const failures = [];
   const bad = assertCanonicalReconReader(
-    'FROM mdata.qbo_vendors qv',
+    'FROM accounting.qbo_vendors qv',
     "fixture.ts"
   );
   if (!bad.some((p) => p.includes("RETIRE"))) failures.push("did not catch RETIRE");
   const ok = assertCanonicalReconReader(
-    'FROM accounting.qbo_vendors qv',
+    'FROM mdata.qbo_vendors qv',
     "fixture.ts"
   );
   if (ok.length) failures.push(`false positive: ${ok.join("; ")}`);

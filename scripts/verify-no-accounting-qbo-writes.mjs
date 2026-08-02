@@ -3,10 +3,10 @@
  * Guard: live (non-test) code must not INSERT/UPDATE RETIRE QBO master mirrors.
  *
  * ACCT-ECON-05 / Rule 14 (2026-07-28):
- *   vendors   — CANONICAL = accounting.qbo_vendors; RETIRE = mdata.qbo_vendors
- *               → forbid INSERT/UPDATE mdata.qbo_vendors in live src for *new* primary writers
+ *   vendors   — CANONICAL = mdata.qbo_vendors; RETIRE = accounting.qbo_vendors
+ *               → forbid INSERT/UPDATE accounting.qbo_vendors in live src for *new* primary writers
  *                 is handled by verify-canonical-table-writes shrink-only + ECON-05 inbound guard (1718).
- *               → this guard MUST NOT forbid accounting.qbo_vendors (was inverted; blocked #3723).
+ *               → this guard MUST NOT forbid mdata.qbo_vendors (was inverted; blocked #3723).
  *   accounts/customers — still mid-flight; keep forbidding accounting.qbo_{accounts,customers}
  *               until their dedicated map-flip waves (same defect class as pre-ECON-05 vendors).
  *
@@ -24,8 +24,8 @@ const WRITE_RE = new RegExp(
   String.raw`(?:INSERT\s+INTO|UPDATE)\s+accounting\.qbo_(?:${ACCOUNTING_RETIRE_STILL.join("|")})\b`,
   "i"
 );
-/** Vendors flipped — writing accounting.qbo_vendors is CANONICAL and must NOT trip this guard. */
-const VENDOR_CANONICAL_RE = /(?:INSERT\s+INTO|UPDATE)\s+accounting\.qbo_vendors\b/i;
+/** Vendors flipped — writing mdata.qbo_vendors is CANONICAL and must NOT trip this guard. */
+const VENDOR_CANONICAL_RE = /(?:INSERT\s+INTO|UPDATE)\s+mdata\.qbo_vendors\b/i;
 const SKIP_DIR = new Set(["node_modules", "dist", "coverage", ".git", "__tests__", "tests"]);
 const SKIP_FILE_RE = /\.(test|spec)\.(ts|tsx|js|mjs)$|README|\.md$/i;
 
@@ -47,7 +47,7 @@ export function findWrites(files, read = (f) => fs.readFileSync(f, "utf8")) {
     lines.forEach((line, i) => {
       const trimmed = line.trim();
       if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*")) return;
-      if (VENDOR_CANONICAL_RE.test(line)) return; // accounting.qbo_vendors is canonical
+      if (VENDOR_CANONICAL_RE.test(line)) return; // mdata.qbo_vendors is canonical
       if (WRITE_RE.test(line)) hits.push(`${path.relative(ROOT, f)}:${i + 1}: ${trimmed.slice(0, 120)}`);
     });
   }
@@ -55,8 +55,8 @@ export function findWrites(files, read = (f) => fs.readFileSync(f, "utf8")) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const allowVendor = findWrites(["x.ts"], () => `INSERT INTO accounting.qbo_vendors (id) VALUES ($1)`);
-  const allowMdataVendor = findWrites(["x.ts"], () => `UPDATE mdata.qbo_vendors SET sync_status = 'ok'`);
+  const allowVendor = findWrites(["x.ts"], () => `INSERT INTO mdata.qbo_vendors (id) VALUES ($1)`);
+  const allowMdataVendor = findWrites(["x.ts"], () => `UPDATE accounting.qbo_vendors SET sync_status = 'ok'`);
   const goodAcct = findWrites(["x.ts"], () => `UPDATE mdata.qbo_accounts SET sync_status = 'ok'`);
   const badAcct = findWrites(["x.ts"], () => `UPDATE accounting.qbo_accounts SET sync_status = 'ok'`);
   const badCust = findWrites(["x.ts"], () => `INSERT INTO accounting.qbo_customers (id) VALUES ($1)`);
@@ -84,11 +84,11 @@ const srcRoot = path.join(ROOT, "apps/backend/src");
 const hits = findWrites(walk(srcRoot));
 if (hits.length) {
   console.error(
-    `${LABEL} — FAILED (accounting.qbo_{accounts,customers} writes still present; vendors may write accounting.qbo_vendors):`
+    `${LABEL} — FAILED (accounting.qbo_{accounts,customers} writes still present; vendors may write mdata.qbo_vendors):`
   );
   for (const h of hits) console.error(" - " + h);
   process.exit(1);
 }
 console.log(
-  `${LABEL} — OK (no INSERT/UPDATE to accounting.qbo_{accounts,customers}; accounting.qbo_vendors allowed as canonical)`
+  `${LABEL} — OK (no INSERT/UPDATE to accounting.qbo_{accounts,customers}; mdata.qbo_vendors allowed as canonical)`
 );

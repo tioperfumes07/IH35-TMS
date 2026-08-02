@@ -17,7 +17,7 @@ describe("checkAllMappings", () => {
         if (sql.includes("FROM mdata.drivers")) {
           return { rows: [{ id: "d1", display_name: "John Smith", qbo_vendor_id: "v-missing", samsara_driver_id: null }] };
         }
-        if (sql.includes("accounting.qbo_vendors")) return { rows: [] };
+        if (sql.includes("mdata.qbo_vendors")) return { rows: [] };
         return { rows: [] };
       },
     };

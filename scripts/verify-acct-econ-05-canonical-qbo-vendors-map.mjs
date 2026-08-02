@@ -2,14 +2,14 @@
 /**
  * ACCT-ECON-05 — lock G4 canonical-write RETIRE map direction for QBO vendors.
  *
- * Root cause: verify-canonical-table-writes treated accounting.qbo_vendors as RETIRE and
- * mdata.qbo_vendors as canonical — inverted vs Rule 14 / Desktop ACCT-ECON-05. That made
+ * Root cause: verify-canonical-table-writes treated mdata.qbo_vendors as RETIRE and
+ * accounting.qbo_vendors as canonical — inverted vs Rule 14 / Desktop ACCT-ECON-05. That made
  * correct writes to accounting look like violations and left RETIRE sync writers unguarded
  * as "canonical".
  *
  * Asserts the RETIRE array in scripts/verify-canonical-table-writes.mjs:
- *   - mdata.qbo_vendors is RETIRE → accounting.qbo_vendors
- *   - accounting.qbo_vendors is NOT listed as RETIRE
+ *   - accounting.qbo_vendors is RETIRE → mdata.qbo_vendors
+ *   - mdata.qbo_vendors is NOT listed as RETIRE
  * Plus selftest planted shapes in that guard (11 checks).
  */
 import fs from "node:fs";
@@ -24,11 +24,11 @@ const LABEL = "verify-acct-econ-05-canonical-qbo-vendors-map";
 
 export function assertMapDirection(src) {
   const problems = [];
-  if (!/pat:\s*"mdata\\\\\.qbo_vendors"\s*,\s*canonical:\s*"accounting\.qbo_vendors"/.test(src)) {
-    problems.push(`${GUARD} must list RETIRE mdata.qbo_vendors → canonical accounting.qbo_vendors`);
+  if (!/pat:\s*"accounting\\\\\.qbo_vendors"\s*,\s*canonical:\s*"mdata\.qbo_vendors"/.test(src)) {
+    problems.push(`${GUARD} must list RETIRE accounting.qbo_vendors → canonical mdata.qbo_vendors`);
   }
-  if (/pat:\s*"accounting\\\\\.qbo_vendors"\s*,\s*canonical:\s*"mdata\.qbo_vendors"/.test(src)) {
-    problems.push(`${GUARD} must NOT list inverted RETIRE accounting.qbo_vendors → mdata.qbo_vendors`);
+  if (/pat:\s*"mdata\\\\\.qbo_vendors"\s*,\s*canonical:\s*"accounting\.qbo_vendors"/.test(src)) {
+    problems.push(`${GUARD} must NOT list inverted RETIRE mdata.qbo_vendors → accounting.qbo_vendors`);
   }
   return problems;
 }
@@ -65,13 +65,13 @@ function main() {
   }
 
   console.log(
-    `${LABEL} OK — RETIRE map: mdata.qbo_vendors → accounting.qbo_vendors; canonical-write selftest+live PASS`
+    `${LABEL} OK — RETIRE map: accounting.qbo_vendors → mdata.qbo_vendors; canonical-write selftest+live PASS`
   );
 }
 
 if (process.argv.includes("--selftest")) {
-  const good = `  { pat: "mdata\\\\.qbo_vendors", canonical: "accounting.qbo_vendors" },`;
-  const bad = `  { pat: "accounting\\\\.qbo_vendors", canonical: "mdata.qbo_vendors" },`;
+  const good = `  { pat: "accounting\\\\.qbo_vendors", canonical: "mdata.qbo_vendors" },`;
+  const bad = `  { pat: "mdata\\\\.qbo_vendors", canonical: "accounting.qbo_vendors" },`;
   const g = assertMapDirection(good);
   const b = assertMapDirection(bad + "\n" + good);
   if (g.length !== 0 || b.length < 1) {

@@ -1,6 +1,6 @@
 // Vendor autocomplete over the CANONICAL master table (mdata.vendors), mirroring
 // searchCustomersForAutocomplete. The QBO picker (QboCombobox) previously read the
-// accounting.qbo_vendors (canonical; was mdata mirror), but the drawer writers (#2273) write mdata.vendors — so a
+// mdata.qbo_vendors (canonical; was mdata mirror), but the drawer writers (#2273) write mdata.vendors — so a
 // newly-created vendor was invisible in every transaction-editor picker ("create → disappears").
 // Reading the real table here (and carrying qbo_vendor_id so QBO linkage survives on select)
 // closes that read/write split. Non-financial: a read/list path, no posting.
