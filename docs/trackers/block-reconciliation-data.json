@@ -1,12 +1,12 @@
 {
  "date": "2026-08-02",
- "generated_at_iso": "2026-08-02T17:44:44.659Z",
+ "generated_at_iso": "2026-08-02T19:05:44.886Z",
  "counts": {
   "PENDING": 14,
   "PENDING (GATED)": 27,
   "NEEDS-VERIFY": 44,
-  "DONE": 658,
-  "AUDIT-NOTE": 460
+  "DONE": 657,
+  "AUDIT-NOTE": 461
  },
  "universe": {
   "total_blocks_after_dedup": 1203,
@@ -4866,7 +4866,7 @@
    "evidence": "[verified 2026-07-12] block own verify-*.mjs guard passes on main (built+wired)",
    "name": "4-tier Samsara cache hierarchy with scheduled warmer",
    "registered_on": null,
-   "pr": 662
+   "pr": null
   },
   {
    "id": "gap-23-samsara-cache-tiers",
@@ -5627,10 +5627,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #653 merged 2026-06-07",
+   "evidence": "all 12 file(s) on main",
    "name": "Safety Officer home role-specific view",
    "registered_on": null,
-   "pr": 653
+   "pr": null
   },
   {
    "id": "gap-68-safety-officer-home-view",
@@ -5648,10 +5648,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #654 merged 2026-06-07",
+   "evidence": "all 7 file(s) on main",
    "name": "Driver Manager home role-specific view",
    "registered_on": null,
-   "pr": 654
+   "pr": null
   },
   {
    "id": "gap-69-driver-manager-home-view",
@@ -5662,17 +5662,6 @@
    "evidence": "all 7 named artifact(s) on main",
    "name": "gap-69-driver-manager-home-view",
    "pr": null
-  },
-  {
-   "id": "GAP-7",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #660 merged 2026-06-07",
-   "name": "",
-   "registered_on": null,
-   "pr": 660
   },
   {
    "id": "gap-7-severe-repair-oos-estimate",
@@ -5741,10 +5730,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #661 merged 2026-06-07",
+   "evidence": "all 11 file(s) on main",
    "name": "G26 assignments inline quicksave (unit/trailer/driver)",
    "registered_on": null,
-   "pr": 661
+   "pr": null
   },
   {
    "id": "gap-8-assignments-quicksave",
@@ -5825,10 +5814,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #655 merged 2026-06-07",
+   "evidence": "all 11 file(s) on main",
    "name": "Permit + toll tag tracking per unit with expiry alerts",
    "registered_on": null,
-   "pr": 655
+   "pr": null
   },
   {
    "id": "gap-85-permits-toll-tags",
@@ -5898,10 +5887,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #657 merged 2026-06-07",
+   "evidence": "all 13 file(s) on main",
    "name": "Universal Cmd-K quick switcher search",
    "registered_on": null,
-   "pr": 657
+   "pr": null
   },
   {
    "id": "GAP-91-MOBILE-RESPONSIVE-AUDIT",
@@ -5909,10 +5898,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #658 merged 2026-06-07",
+   "evidence": "all 8 file(s) on main",
    "name": "Mobile responsive audit + PWA touch UI polish",
    "registered_on": null,
-   "pr": 658
+   "pr": null
   },
   {
    "id": "GAP-92-FEATURE-FLAG-SYSTEM",
@@ -5920,10 +5909,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #659 merged 2026-06-07",
+   "evidence": "all 9 file(s) on main",
    "name": "Per-tenant and per-user feature flag system",
    "registered_on": null,
-   "pr": 659
+   "pr": null
   },
   {
    "id": "gap-92-feature-flags",
@@ -12071,7 +12060,7 @@
    "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
    "name": "Load cancellations analytics report (group by reason, driver, customer, date)",
    "registered_on": null,
-   "pr": 663
+   "pr": 1156
   },
   {
    "id": "GAP-11-DELTA-UPLOAD-EXPENSE",
@@ -12215,6 +12204,17 @@
    "name": "Multi-stop extra rate per stop (WF-053)",
    "registered_on": null,
    "pr": 761
+  },
+  {
+   "id": "GAP-7",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "",
+   "registered_on": null,
+   "pr": null
   },
   {
    "id": "GAP-71",
@@ -13261,6 +13261,72 @@
   }
  ],
  "merged_prs": [
+  {
+   "number": 4020,
+   "title": "Cursor- fix(fuel): G18 load_id rematch via resolveLoadId (fill-null only)",
+   "mergedAt": "2026-08-02T19:03:17Z",
+   "branch": "cursor/Cursor-fuel-g18-load-rematch-2026-08-02"
+  },
+  {
+   "number": 4019,
+   "title": "Claude- fix(drivers): UI and API disagreed on the default driver status — UI-created drivers were silently unassignable",
+   "mergedAt": "2026-08-02T19:01:42Z",
+   "branch": "claude/driver-default-status-parity"
+  },
+  {
+   "number": 4018,
+   "title": "Cursor- docs(audit): row 2 Banking → FIXED (PR #4011)",
+   "mergedAt": "2026-08-02T19:03:14Z",
+   "branch": "cursor/Cursor-audit-coverage-status-2026-08-02"
+  },
+  {
+   "number": 4017,
+   "title": "Cursor- chore(ci): Rule 29 Claude-parity ship gate — stop Cursor CI thrash",
+   "mergedAt": "2026-08-02T18:40:43Z",
+   "branch": "cursor/Cursor-pr-ship-gate-2026-08-02"
+  },
+  {
+   "number": 4016,
+   "title": "Claude- fix(fleet): the fleet KPI counted units the Fleet roster hides — one visibility definition now",
+   "mergedAt": "2026-08-02T18:35:04Z",
+   "branch": "claude/fleet-kpi-roster-filter-parity"
+  },
+  {
+   "number": 4015,
+   "title": "Claude- feat(coa): designate the 4 unbound recovery/expense roles — closes a live WARRANTY_REIMBURSE 500",
+   "mergedAt": "2026-08-02T18:24:11Z",
+   "branch": "claude/coa-recovery-parts-accounts-and-roles"
+  },
+  {
+   "number": 4013,
+   "title": "Cursor- measurability pass1b batch 3: 15 EVAPORATE overrides",
+   "mergedAt": "2026-08-02T18:08:31Z",
+   "branch": "cursor/measurability-pass1b-b3-2026-08-02"
+  },
+  {
+   "number": 4012,
+   "title": "Cursor- fix(reports): library WO counts exclude voided rows",
+   "mergedAt": "2026-08-02T18:08:27Z",
+   "branch": "cursor/Cursor-home-wo-voided-at-2026-08-02"
+  },
+  {
+   "number": 4011,
+   "title": "Cursor- fix(banking): cash posting aggregate reconciles to per-account sum",
+   "mergedAt": "2026-08-02T18:41:09Z",
+   "branch": "cursor/Cursor-banking-aggregate-2026-08-02"
+  },
+  {
+   "number": 4010,
+   "title": "Cursor- factoring home: kill dual-path vendor-notes vs factoring.factor",
+   "mergedAt": "2026-08-02T18:41:00Z",
+   "branch": "cursor/Cursor-factoring-dual-path-2026-08-02"
+  },
+  {
+   "number": 4009,
+   "title": "Cursor- fix(acct): backfill 2 bills mdata_vendor_id — QBO vendor 2244 now in hub",
+   "mergedAt": "2026-08-02T18:40:52Z",
+   "branch": "fix/bills-vendor2244-linkage-2026-08-02"
+  },
   {
    "number": 4008,
    "title": "measurability pass1b batch 2: 20 EVAPORATE overrides (phase3-audit62+)",
@@ -16794,72 +16860,6 @@
    "title": "fix(safety): unit + trailer profiles showed no accidents, DOT inspections or DVIRs (SAF-F17)",
    "mergedAt": "2026-07-23T21:38:49Z",
    "branch": "fix/saf-f17-asset-profile-safety-reverse"
-  },
-  {
-   "number": 3363,
-   "title": "fix(safety): driver profile showed no fines, complaints or D&A tests (SAF-F16)",
-   "mergedAt": "2026-07-23T21:10:09Z",
-   "branch": "fix/saf-f16-driver-profile-safety-reverse"
-  },
-  {
-   "number": 3362,
-   "title": "docs(handoff): next-Claude-coder handoff — laws, lanes, linkage audit, traps",
-   "mergedAt": "2026-07-23T21:38:59Z",
-   "branch": "docs/handoff-claude-coder"
-  },
-  {
-   "number": 3360,
-   "title": "fix(safety): internal-fine reason create was an external link, not inline (SAF-F24)",
-   "mergedAt": "2026-07-23T20:51:38Z",
-   "branch": "fix/saf-f24-internal-fine-reason-inline-create"
-  },
-  {
-   "number": 3358,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-23T20:11:57Z",
-   "branch": "chore/tracker-artifacts-sync-30039498613"
-  },
-  {
-   "number": 3357,
-   "title": "fix(safety): safety records were undrillable — add reverse EntityLink linkage (SAF-F33)",
-   "mergedAt": "2026-07-23T20:11:40Z",
-   "branch": "fix/saf-f33-safety-entitylink-reverse"
-  },
-  {
-   "number": 3356,
-   "title": "fix(safety): accidents list showed raw driver/unit uuids + swallowed errors (SAF-F26)",
-   "mergedAt": "2026-07-23T19:47:10Z",
-   "branch": "fix/saf-f26-accidents-names-pickers"
-  },
-  {
-   "number": 3355,
-   "title": "fix(accounting): scope CC bill-payment CoA picker to operating company",
-   "mergedAt": "2026-07-23T19:48:36Z",
-   "branch": "fix/cc-payment-accounts-entity-scoped"
-  },
-  {
-   "number": 3354,
-   "title": "fix(safety): external fines showed a raw driver uuid, not a name (SAF-F18)",
-   "mergedAt": "2026-07-23T19:31:50Z",
-   "branch": "fix/saf-f18-fines-driver-name"
-  },
-  {
-   "number": 3353,
-   "title": "[HOLD-FOR-JORGE] fix(safety): accident wizard discarded 7 evidence fields on save (SAF-F05)",
-   "mergedAt": "2026-07-23T21:06:12Z",
-   "branch": "fix/saf-f05-accident-wizard-fields"
-  },
-  {
-   "number": 3352,
-   "title": "docs(lane): reserve per-lane migration-number ranges (collision prevention)",
-   "mergedAt": "2026-07-23T19:01:47Z",
-   "branch": "docs/lane-migration-number-ranges"
-  },
-  {
-   "number": 3351,
-   "title": "fix(ui): portal Combobox listbox (CoA Roles picker still empty after #3342)",
-   "mergedAt": "2026-07-23T18:51:01Z",
-   "branch": "fix/combobox-listbox-portal-paritytable"
   }
  ],
  "merged_pr_total": 3000,
