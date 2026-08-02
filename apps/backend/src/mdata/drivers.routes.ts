@@ -110,7 +110,16 @@ const createDriverBodySchema = z.object({
   emergency_contact_address: z.string().trim().max(300).optional(),
   emergency_contact_notes: z.string().trim().max(2000).optional(),
   preferred_language: preferredLanguageSchema.optional(),
-  status: driverStatusSchema.default("Active"),
+  // DRIVER-DEFAULT-PARITY (owner ruling 2026-08-02): a newly created driver defaults to Probation,
+  // NOT Active. A brand-new driver must not be instantly dispatchable — the dispatch picker requires
+  // status='Active' (driver-optimizer.service.ts, dispatch-refinements.service.ts) and that gate is
+  // correct and deliberately unchanged.
+  //
+  // This line previously defaulted to "Active" while CreateDriverModal.tsx defaulted to "Probation",
+  // so the SAME action produced a DIFFERENT status depending on whether it came from the UI or the
+  // API: a UI-created driver was silently unassignable, an API/seed-created one was dispatchable
+  // immediately. The divergence was the defect, not the gate. Both ends now say Probation.
+  status: driverStatusSchema.default("Probation"),
   notes: z.string().trim().max(2000).optional(),
   override_returning_warning: z.boolean().optional().default(false),
   prior_driver_id: z.string().uuid().optional(),
