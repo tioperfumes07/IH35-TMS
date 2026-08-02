@@ -307,13 +307,37 @@ function extractRoutesFromContent(content: string): string[] {
   return unique(out).sort();
 }
 
+/**
+ * SAF-F27: SafetyLayout children use relative path= under path="/safety".
+ * Arch-design expects absolute /safety/* URLs — expand relatives so relative-only
+ * registration still proves the live URL surface exists (no dual absolute siblings).
+ */
+function expandSafetyRelativeRoutes(manifestContent: string): string[] {
+  const start = manifestContent.indexOf('path="/safety"');
+  if (start < 0) return [];
+  const end = manifestContent.indexOf('path="/liabilities"', start);
+  const block = end >= 0 ? manifestContent.slice(start, end) : manifestContent.slice(start);
+  const out: string[] = [];
+  const relRegex = /<Route\b[^>]*\bpath=(?:"([^"]+)"|'([^']+)')/g;
+  let m: RegExpExecArray | null;
+  while ((m = relRegex.exec(block)) !== null) {
+    const p = m[1] ?? m[2];
+    if (!p || p.startsWith("/") || p === "*") continue;
+    out.push(`/safety/${p}`);
+  }
+  return out;
+}
+
 function extractRoutesFromApp(): string[] {
   const appContent = readRequired(APP_PATH);
   const manifestContent = fs.existsSync(ROUTES_MANIFEST_PATH)
     ? readRequired(ROUTES_MANIFEST_PATH)
     : "";
   const content = `${appContent}\n${manifestContent}`;
-  return extractRoutesFromContent(content);
+  return unique([
+    ...extractRoutesFromContent(content),
+    ...expandSafetyRelativeRoutes(manifestContent),
+  ]).sort();
 }
 
 function extractSidebarItemIds(): string[] {
