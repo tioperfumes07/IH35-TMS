@@ -3,7 +3,8 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../../accounting/shared.js";
 
-const deductionTypeSchema = z.enum(["damage", "cash_advance", "repair", "fine", "fuel_advance", "other"]);
+/** catalogs.driver_deduction_types.code — validated by DB FK after SETL-PICK-01 migration. */
+const deductionTypeSchema = z.string().trim().min(1).max(128);
 const statusSchema = z.enum(["active", "paused", "completed"]);
 
 const createPolicySchema = z.object({

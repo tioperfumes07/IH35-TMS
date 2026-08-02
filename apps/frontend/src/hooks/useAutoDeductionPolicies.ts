@@ -1,13 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../api/client";
 
-export type AutoDeductionDeductionType =
-  | "damage"
-  | "cash_advance"
-  | "repair"
-  | "fine"
-  | "fuel_advance"
-  | "other";
+/** catalogs.driver_deduction_types.code */
+export type AutoDeductionDeductionType = string;
 
 export type AutoDeductionPolicyStatus = "active" | "paused" | "completed";
 
