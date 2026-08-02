@@ -807,8 +807,8 @@ export const CATALOG_PICKER_CONFIGS = {
 
 
 
-  // Internal fine reasons — InternalFinesPage used SelectCombobox sentinel + external Modal
-  // (not ReferenceSelect / CatalogQuickCreateDrawer). Options keyed by UUID (reason_uuid).
+  // Internal fine reasons — SAF-F24 / LST-PICKER-01: InternalFinesPage ReferenceSelect first-row
+  // createKind=internal_fine_reason → CatalogQuickCreateDrawer (same table read/write). Options keyed by UUID (reason_uuid).
   // default_amount is required (cents); inline create defaults to 100 ($1.00) — edit on Lists for
   // the real default (same pattern as company_violation default_severity=1).
   internal_fine_reason: {
