@@ -205,6 +205,23 @@ export function assertDoDEvidence(commits, opts = {}) {
 /** Set by collectBranchCommits so the PASS line can state WHAT was checked, never a bare "OK". */
 let RANGE_NOTE = "";
 
+/**
+ * Parse a commit message the same way the commit-msg hook does (first LINE = subject, rest = body
+ * with newlines preserved) — NOT git's `%s`/`%b`.
+ *
+ * Git treats the first *paragraph* (everything before the first blank line) as the subject and
+ * collapses internal newlines to spaces in `%s`. Cursor/agents often put FINDING + DOD-A…E +
+ * Rule 16 on consecutive lines with NO blank line after the subject. `%s` then becomes one giant
+ * line; labelled `^ROOT CAUSE:` checks fail even though the raw message has correct newlines.
+ * That local-hook-green / CI-red drift burned #4211 (2026-08-03). Always read `%B`.
+ */
+export function splitCommitMessage(fullMessage) {
+  const lines = String(fullMessage ?? "").replace(/\r\n/g, "\n").split("\n");
+  const subject = (lines[0] ?? "").trimEnd();
+  const body = lines.slice(1).join("\n").replace(/^\n+/, "").trimEnd();
+  return { subject, body };
+}
+
 function collectBranchCommits() {
   const facts = collectGitFacts(ROOT);
   const shas = rangeCommitShas(facts, ROOT);
@@ -214,12 +231,16 @@ function collectBranchCommits() {
     process.exit(1);
   }
   RANGE_NOTE = `${verdict.note} [${verdict.code}]`;
-  return shas.map((sha) => ({
-    sha,
-    subject: sh(`git log -1 --format=%s ${sha}`),
-    body: sh(`git log -1 --format=%b ${sha}`),
-    files: sh(`git diff-tree --no-commit-id --name-only -r ${sha}`).split("\n").filter(Boolean),
-  }));
+  return shas.map((sha) => {
+    const full = sh(`git log -1 --format=%B ${sha}`);
+    const { subject, body } = splitCommitMessage(full);
+    return {
+      sha,
+      subject,
+      body,
+      files: sh(`git diff-tree --no-commit-id --name-only -r ${sha}`).split("\n").filter(Boolean),
+    };
+  });
 }
 
 if (SELFTEST) {
@@ -359,6 +380,32 @@ if (SELFTEST) {
     { sha: "b".repeat(40), subject: "docs: notes", body: "", files: ["docs/x.md"] },
   ]);
   if (docsOnly.length) failures.push(`false-positive on a docs-only commit: ${docsOnly.join(" | ")}`);
+
+  // #4211 class: FINDING + Rule 16 on consecutive lines with NO blank line after subject.
+  // splitCommitMessage must keep labelled lines; git %s would flatten and falsely fail.
+  const noBlankFull =
+    "FINDING: X\nLANE: NON-FINANCIAL\n" +
+    "ROOT CAUSE: y\nFIX: z\nGUARD: scripts/verify-x.mjs\nLIVE PROOF: neon count 1\nREMAINING: none";
+  const split = splitCommitMessage(noBlankFull);
+  const noBlankProblems = assertDoDEvidence([
+    { sha: "c".repeat(40), subject: split.subject, body: split.body, files: ["apps/frontend/src/x.tsx"] },
+  ]);
+  if (noBlankProblems.length) {
+    failures.push(`#4211 no-blank-line false-positive: ${noBlankProblems.join(" | ")}`);
+  }
+  // Flattened %s shape (spaces, no newlines) must still FAIL — labels are not line-anchored.
+  expect(
+    "flattened-percent-s-subject",
+    [
+      {
+        sha: "d".repeat(40),
+        subject: noBlankFull.replace(/\n/g, " "),
+        body: "Co-authored-by: Cursor <cursoragent@cursor.com>",
+        files: ["apps/frontend/src/x.tsx"],
+      },
+    ],
+    "omits the Rule 16 evidence block"
+  );
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
