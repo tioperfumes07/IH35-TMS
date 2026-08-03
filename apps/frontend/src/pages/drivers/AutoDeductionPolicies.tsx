@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { listDrivers } from "../../api/mdata";
 import { driverDeductionTypesCatalogClient } from "../../api/catalogs-driver";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -40,11 +39,6 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
   const queryClient = useQueryClient();
   const policiesQuery = useAutoDeductionPolicies(operatingCompanyId, lockedDriverId);
   const { createMutation, patchMutation, cancelMutation } = useAutoDeductionPolicyMutations(operatingCompanyId);
-  const driversQuery = useQuery({
-    queryKey: ["drivers", "auto-deductions", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: 200 }).then((res) => res.drivers), // full set (endpoint default 50 truncates)
-    enabled: Boolean(operatingCompanyId),
-  });
   // LST-PICKER-01: catalog read already entity-scoped (SETL-PICK-01); Type must inline-create same table.
   const deductionTypesQuery = useQuery({
     queryKey: ["catalogs", "driver-deduction-types", operatingCompanyId],
@@ -101,14 +95,6 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
     };
   }, [policiesQuery.data?.rows]);
 
-  const driverNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const driver of driversQuery.data ?? []) {
-      map.set(driver.id, `${driver.first_name} ${driver.last_name}`);
-    }
-    return map;
-  }, [driversQuery.data]);
-
   function renderPolicyRow(row: (typeof grouped.active)[number]) {
     const owed = Number(row.total_owed_cents ?? 0);
     const deducted = Number(row.deducted_so_far_cents ?? 0);
@@ -119,7 +105,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="text-sm font-semibold text-gray-900">
-              <EntityLink kind="driver" id={row.driver_id} label={driverNameById.get(row.driver_id) || row.driver_id} />
+              <EntityLink kind="driver" id={row.driver_id} />
             </div>
             <div className="text-xs text-gray-600">{typeLabel} · {money(deducted)} / {money(owed)}</div>
           </div>
