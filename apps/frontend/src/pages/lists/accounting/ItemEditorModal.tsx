@@ -101,6 +101,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
   const [submitError, setSubmitError] = useState("");
   const [saving, setSaving] = useState(false);
   const [creatingCategory, setCreatingCategory] = useState(false);
+  const [vendorSearch, setVendorSearch] = useState("");
 
   const accountsQuery = useQuery({
     queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId],
@@ -118,9 +119,16 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
     enabled: open && !!operatingCompanyId,
   });
   const vendorsQuery = useQuery({
-    // limit 200: the vendors endpoint defaults to 50 and would silently truncate the picker otherwise.
-    queryKey: ["mdata", "vendors", "for-items", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: 1000 }),
+    // SAF-B29 / LST-PICKER-01: server search — limit:1000 without search still truncates large
+    // rosters; type-ahead re-queries so preferred vendors past page 1 stay selectable.
+    queryKey: ["mdata", "vendors", "for-items", operatingCompanyId, vendorSearch],
+    queryFn: () =>
+      listVendors({
+        operating_company_id: operatingCompanyId,
+        status: "active",
+        limit: vendorSearch ? 200 : 1000,
+        search: vendorSearch || undefined,
+      }),
     enabled: open && !!operatingCompanyId,
   });
 
@@ -425,6 +433,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
                     operatingCompanyId={operatingCompanyId}
                     placeholder="No preferred vendor"
                     disabled={vendorsQuery.isLoading || !operatingCompanyId}
+                    onSearch={setVendorSearch}
                     onOptionCreated={() =>
                       void queryClient.invalidateQueries({ queryKey: ["mdata", "vendors", "for-items", operatingCompanyId] })
                     }
