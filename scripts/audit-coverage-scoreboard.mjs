@@ -602,7 +602,13 @@ function ledgerGitOr(fmt, fb) {
  * Preserves Cascade-authored prod/chain/guard/V1–V8 from the prior JSON; refreshes meta + A–E
  * from the ledger. Never invents PASS for unmodeled VERIFY gates.
  */
-export function emitProgramJson(rows, metrics, sidebarIds) {
+/**
+ * Build the Program scoreboard payload from the ledger + prior JSON seed.
+ * @param {{ write?: boolean }} [opts] — when write:false, return the object without touching disk
+ *   (used by the live /program API). Default write:true keeps the gen:program-scoreboard contract.
+ */
+export function emitProgramJson(rows, metrics, sidebarIds, opts = {}) {
+  const write = opts.write !== false;
   let prev;
   try {
     prev = JSON.parse(fs.readFileSync(PROGRAM_JSON, "utf8"));
@@ -698,9 +704,11 @@ export function emitProgramJson(rows, metrics, sidebarIds) {
   // Write-stable: skip rewrite when payload is byte-identical.
   // generatedAt/sourceSha are ledger-commit-derived (deterministic) so re-emit does not drift.
   if (JSON.stringify(prev) === JSON.stringify(out)) {
-    console.log(`${LABEL}: program-scoreboard.json unchanged (skip write)`);
+    if (write) console.log(`${LABEL}: program-scoreboard.json unchanged (skip write)`);
     return prev;
   }
+
+  if (!write) return out;
 
   // Atomic replace — avoids CodeQL js/file-system-race-condition (exists/check then write).
   const payload = JSON.stringify(out, null, 2) + "\n";
@@ -708,6 +716,31 @@ export function emitProgramJson(rows, metrics, sidebarIds) {
   fs.writeFileSync(tmp, payload);
   fs.renameSync(tmp, PROGRAM_JSON);
   return out;
+}
+
+/**
+ * Request-time board: parse AUDIT-COVERAGE-LIVE.md → scoreboard object (no disk write).
+ * Used by apps/backend program audit-scoreboard routes (ledger_live source).
+ */
+export function buildProgramScoreboardLive() {
+  const md = fs.readFileSync(COVERAGE, "utf8");
+  const ids = loadSidebarIds();
+  const rows = parseFindings(md);
+  const metrics = computeMetrics(rows, ids);
+  if (metrics.problems.length) {
+    throw new Error(`${LABEL}: ledger metrics problems: ${metrics.problems.join("; ")}`);
+  }
+  const data = emitProgramJson(rows, metrics, ids, { write: false });
+  return {
+    ...data,
+    meta: {
+      ...(data.meta ?? {}),
+      source: "ledger_live",
+      ledgerRows: metrics.rowsTotal,
+      failOpen: metrics.failOpen,
+      defects: metrics.defectModules,
+    },
+  };
 }
 
 const IS_MAIN = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
