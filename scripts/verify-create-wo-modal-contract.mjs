@@ -32,8 +32,11 @@ function main() {
     }
   }
 
-  // Vehicle picker still sources from the maintenance catalog.
-  if (!identification.includes("listMaintenanceVehicles")) {
+  // Vehicle picker: accept maintenance catalog list OR EntityPicker kind=unit (server search +
+  // canonical mdata.units — same upgrade path as DriverPickerWithCreate for drivers).
+  const hasMaintenanceVehicleQuery = identification.includes("listMaintenanceVehicles");
+  const hasEntityPickerUnit = /EntityPicker[\s\S]*?kind=["']unit["']/.test(identification);
+  if (!hasMaintenanceVehicleQuery && !hasEntityPickerUnit) {
     failures.push("missing_catalog_picker_queries:vehicles");
   }
   // Driver picker: accept EITHER the original maintenance-scoped query OR the shared

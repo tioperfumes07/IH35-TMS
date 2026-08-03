@@ -1,11 +1,11 @@
 import type { JSX } from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
-import { listMaintenanceVehicles } from "../../../api/maintenance";
-import { listCustomers, listDrivers, listVendors } from "../../../api/mdata";
+import { getDriver, getUnit, listCustomers, listVendors } from "../../../api/mdata";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { Combobox } from "../../../components/shared/Combobox";
@@ -87,46 +87,51 @@ export function CreateWOSectionIdentification({
   const showExemptionReason = requireLoadForExpense && !selectedLoadId;
   const unitId = watch("unit_id");
   const driverId = watch("driver_id");
-  const vehiclesQuery = useQuery({
-    queryKey: ["maintenance", "master-data", "vehicles", operatingCompanyId, "create-wo"],
-    queryFn: () => listMaintenanceVehicles(String(operatingCompanyId), {}),
-    enabled: Boolean(operatingCompanyId),
+  // SAF-B29 / picker law: never silent 500/1000-cap pages. Unit → EntityPicker; vendor/customer → search.
+  const [vendorSearch, setVendorSearch] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
+  const selectedUnitQuery = useQuery({
+    queryKey: ["maintenance", "master-data", "unit", unitId],
+    queryFn: () => getUnit(String(unitId)),
+    enabled: Boolean(unitId),
     staleTime: 60_000,
   });
-  const driversQuery = useQuery({
-    queryKey: ["maintenance", "master-data", "drivers", operatingCompanyId, "create-wo-class-hint"],
+  const selectedDriverQuery = useQuery({
+    queryKey: ["maintenance", "master-data", "driver", operatingCompanyId, driverId],
+    queryFn: () => getDriver(String(driverId), String(operatingCompanyId)),
+    enabled: Boolean(operatingCompanyId) && Boolean(driverId),
+    staleTime: 60_000,
+  });
+  const vendorsQuery = useQuery({
+    queryKey: ["maintenance", "vendors", operatingCompanyId, "create-wo-id", vendorSearch],
     queryFn: () =>
-      listDrivers({
+      listVendors({
         operating_company_id: String(operatingCompanyId),
-        status: "Active",
-        limit: 500,
+        status: "active",
+        limit: 200,
+        search: vendorSearch || undefined,
       }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
-  const vendorsQuery = useQuery({
-    queryKey: ["maintenance", "vendors", operatingCompanyId, "create-wo-id"],
-    queryFn: () => listVendors({ operating_company_id: String(operatingCompanyId), status: "active", limit: 1000 }),
-    enabled: Boolean(operatingCompanyId),
-    staleTime: 60_000,
-  });
   const customersQuery = useQuery({
-    queryKey: ["maintenance", "customers", operatingCompanyId, "create-wo-id"],
-    queryFn: () => listCustomers({ operating_company_id: String(operatingCompanyId), limit: 5000 }),
+    queryKey: ["maintenance", "customers", operatingCompanyId, "create-wo-id", customerSearch],
+    queryFn: () =>
+      listCustomers({
+        operating_company_id: String(operatingCompanyId),
+        limit: 200,
+        search: customerSearch || undefined,
+      }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
-  const vehicleOptions = (vehiclesQuery.data?.rows ?? [])
-    .map((row) => ({ value: row.id, label: row.unit_display_id || row.id }))
-    .sort((a, b) => a.label.localeCompare(b.label));
 
   useEffect(() => {
     if (!setValue) return;
-    const unitRow = (vehiclesQuery.data?.rows ?? []).find((row) => row.id === unitId);
-    const driverRow = (driversQuery.data?.drivers ?? []).find((row) => row.id === driverId);
+    const unitDisplay = selectedUnitQuery.data?.unit_number;
     const next = deriveWoClassHintLabel({
-      unitDisplayId: unitRow?.unit_display_id,
-      driverLastName: driverRow?.last_name,
+      unitDisplayId: unitDisplay,
+      driverLastName: selectedDriverQuery.data?.last_name,
       hasUnit: Boolean(unitId),
       hasDriver: Boolean(driverId),
     });
@@ -134,7 +139,7 @@ export function CreateWOSectionIdentification({
     if (current !== next) {
       setValue("class_hint", next, { shouldDirty: false });
     }
-  }, [setValue, getValues, unitId, driverId, vehiclesQuery.data?.rows, driversQuery.data?.drivers]);
+  }, [setValue, getValues, unitId, driverId, selectedUnitQuery.data, selectedDriverQuery.data]);
   const vendorOptions = (vendorsQuery.data?.vendors ?? [])
     .filter((v) => !v.deactivated_at)
     .map((v) => ({ value: v.id, label: v.name }))
@@ -163,11 +168,14 @@ export function CreateWOSectionIdentification({
           {operatingCompanyId && setValue ? (
             <>
               <input type="hidden" {...register("unit_id", { required: true })} />
-              <Combobox
-                options={vehicleOptions}
+              <EntityPicker
+                kind="unit"
+                operatingCompanyId={operatingCompanyId}
                 value={watch("unit_id") || null}
-                placeholder={vehiclesQuery.isLoading ? "Loading units..." : "Select unit"}
                 onChange={(value) => setValue("unit_id", value ?? "", { shouldDirty: true })}
+                placeholder="Select unit"
+                dataField="unit_id"
+                className="h-8 w-full text-sm"
               />
             </>
           ) : (
@@ -261,6 +269,8 @@ export function CreateWOSectionIdentification({
                 createKind="vendor"
                 operatingCompanyId={operatingCompanyId}
                 placeholder="Search vendors…"
+                onSearch={setVendorSearch}
+                loading={vendorsQuery.isLoading}
                 onOptionCreated={(opt) => {
                   void queryClient.invalidateQueries({ queryKey: ["maintenance", "vendors"] });
                   setValue("vendor_display_name", opt.label, { shouldDirty: true });
@@ -298,6 +308,8 @@ export function CreateWOSectionIdentification({
                 createKind="customer"
                 operatingCompanyId={operatingCompanyId}
                 placeholder="Search customers…"
+                onSearch={setCustomerSearch}
+                loading={customersQuery.isLoading}
                 onOptionCreated={(opt) => {
                   void queryClient.invalidateQueries({ queryKey: ["maintenance", "customers"] });
                   setValue("customer_display_name", opt.label, { shouldDirty: true });
@@ -364,6 +376,7 @@ export function CreateWOSectionIdentification({
                   operatingCompanyId={operatingCompanyId}
                   placeholder={vendorsQuery.isLoading ? "Loading vendors…" : "Select roadside vendor…"}
                   loading={vendorsQuery.isLoading}
+                  onSearch={setVendorSearch}
                   onOptionCreated={async (opt) => {
                     setValue("roadside_provider_vendor_id", opt.value, { shouldDirty: true });
                     await queryClient.invalidateQueries({ queryKey: ["maintenance", "vendors", operatingCompanyId, "create-wo-id"] });

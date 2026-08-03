@@ -17,8 +17,11 @@ export function run() {
   const checks = [
     ["helper-exported", /export function deriveWoClassHintLabel/.test(id)],
     ["sets-class-hint", /setValue\("class_hint", next/.test(id)],
-    ["uses-unit-display", /unitDisplayId:\s*unitRow\?\.unit_display_id/.test(id)],
-    ["uses-driver-last", /driverLastName:\s*driverRow\?\.last_name/.test(id)],
+    ["uses-unit-display", /unitDisplayId:\s*(unitRow\?\.unit_display_id|unitDisplay)/.test(id)],
+    [
+      "uses-driver-last",
+      /driverLastName:\s*(driverRow\?\.last_name|selectedDriverQuery\.data\?\.last_name)/.test(id),
+    ],
     ["testid", /data-testid="wo-class-auto-derive"/.test(id)],
     [
       "no-uuid-fallback-modal",
