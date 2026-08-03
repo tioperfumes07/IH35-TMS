@@ -79,8 +79,8 @@
       "title": "COI Requests tab honest when insurance.coi_request=0",
       "layers": ["DOD-B", "VERIFY-6"],
       "spec": "COI tab empty honesty",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS: legitimately empty",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: Neon prod br-fancy-credit-akjnd07a SET app.bypass_rls=lucia → insurance.coi_request count=0 AND n_live_tup=0 (true empty). CoiTab emptyText=\"No COI requests yet…\" + Create COI retained. Guard verify-cust-link-02-coi-honest-empty + step 2230.",
       "pr": null
     },
     {

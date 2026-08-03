@@ -1,12 +1,12 @@
 # Module completion — Customers
 
-**PROGRESS: 4 of 9** · complete: `false` · as_of: 2026-08-02 · live_sha: `—`
+**PROGRESS: 5 of 9** · complete: `false` · as_of: 2026-08-02 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 4 |
+| PASS | 5 |
 | HOLD | 0 |
-| OPEN | 5 |
+| OPEN | 4 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -19,7 +19,7 @@
 | `CUST-CHROME-02` | **PASS** | Edit button treatment consistent list vs CustomerDetail header | 2026-08-03 Cursor: Customer details tab Edit (data-testid=customer-details-edit) uses the same Button variant=secondary chrome as list-header Edit — no ActionButton dual path. CustomerDetail page Edit remains primary Button for inline edit-mode (different action). | — |
 | `CUST-CHROME-03` | **PASS** | ParityTable column resize affordance discoverable | 2026-08-03 Cursor: ParityTable col-resize is w-2 opaque slate-200/90 + grip + title tooltip + data-testid=parity-table-col-resize (was ~w-1.5 gray-300/80 hard to see). Guard verify-parity-table-resize-affordance + step 2226. | — |
 | `CUST-LINK-01` | **OPEN** | Customer → invoice → invoice_lines chain (system-wide SS-005) | scaffold — pre-existing: 11977 invoices / 1 invoice_line | — |
-| `CUST-LINK-02` | **OPEN** | COI Requests tab honest when insurance.coi_request=0 | scaffold — auditor PASS: legitimately empty | — |
+| `CUST-LINK-02` | **PASS** | COI Requests tab honest when insurance.coi_request=0 | 2026-08-03 Cursor: Neon prod br-fancy-credit-akjnd07a SET app.bypass_rls=lucia → insurance.coi_request count=0 AND n_live_tup=0 (true empty). CoiTab emptyText="No COI requests yet…" + Create COI retained. Guard verify-cust-link-02-coi-honest-empty + step 2230. | — |
 | `CUST-VERIFY-01` | **OPEN** | Customers module VERIFY-1..8 TRANSP + USMCA | scaffold — 12/12 tabs rendered TRANSP; USMCA UNVERIFIED this pass | — |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/customers-deep-2026-08-01.md
