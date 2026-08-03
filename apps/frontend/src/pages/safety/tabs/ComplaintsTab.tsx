@@ -7,7 +7,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
 import { createComplaintV64, listComplaints, patchComplaintV64, voidComplaintV64 } from "../../../api/safetyV64";
 import { listComplaintTypes } from "../../../api/catalogs-safety";
-import { listDrivers } from "../../../api/mdata";
 import { useAuth } from "../../../auth/useAuth";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
@@ -21,16 +20,6 @@ function isPrivacyGateError(error: unknown) {
   if (!(error instanceof ApiError)) return false;
   if (error.status !== 403) return false;
   return String((error.data as { error?: string })?.error ?? "") === "E_COMPLAINT_PRIVACY_GATED";
-}
-
-// "LAST, First" display for a driver row (mdata.drivers has first_name/last_name, never full_name).
-function driverLabel(first?: string | null, last?: string | null) {
-  const f = (first ?? "").trim();
-  const l = (last ?? "").trim();
-  if (l && f) return `${l.toUpperCase()}, ${f}`;
-  if (l) return l.toUpperCase();
-  if (f) return f;
-  return "";
 }
 
 export function ComplaintsTab() {
@@ -55,14 +44,6 @@ export function ComplaintsTab() {
     retry: false,
   });
 
-  // Company-scoped driver roster for list labels (create form uses DriverPickerWithCreate).
-  const driversQuery = useQuery({
-    queryKey: ["safety-v64", "complaints-driver-roster", companyId],
-    queryFn: () => listDrivers({ operating_company_id: companyId, limit: 200 }),
-    enabled: Boolean(companyId),
-    retry: false,
-  });
-
   // Complaint-types catalog (catalogs.complaint_types) — the same source as /lists/safety/complaint-types.
   // We store the stable type_code into the v6.4 complaint_type field.
   const complaintTypesQuery = useQuery({
@@ -71,14 +52,6 @@ export function ComplaintsTab() {
     enabled: Boolean(companyId),
     retry: false,
   });
-
-  const driverById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const d of driversQuery.data?.drivers ?? []) {
-      map.set(String(d.id), driverLabel(d.first_name, d.last_name) || String(d.id));
-    }
-    return map;
-  }, [driversQuery.data]);
 
   const complaintTypeByCode = useMemo(() => {
     const map = new Map<string, string>();
@@ -146,9 +119,7 @@ export function ComplaintsTab() {
   function resolveRespondent(row: Record<string, unknown>) {
     const driverId = row.respondent_driver_id ? String(row.respondent_driver_id) : "";
     if (driverId) {
-      const name = driverById.get(driverId);
-      if (name) return <span>{name}</span>;
-      return <EntityLink kind="driver" id={driverId} label={driverId.slice(0, 8) + "…"} />;
+      return <EntityLink kind="driver" id={driverId} />;
     }
     if (row.respondent_user_id) return <span>{String(row.respondent_user_id)}</span>;
     return <span>—</span>;

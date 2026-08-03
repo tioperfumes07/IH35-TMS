@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDrivers } from "../../../api/mdata";
 import { companyToday } from "../../../lib/businessDate";
@@ -17,7 +18,6 @@ import {
   listRandomPoolEntries,
   type RtdCase,
 } from "../../../api/safety";
-import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { DrugAlcoholTable } from "../components/DrugAlcoholTable";
 import { DrugAlcoholDashboard } from "../DrugAlcoholDashboard";
 import { RandomTestingPool } from "../RandomTestingPool";
@@ -90,10 +90,13 @@ export function DrugAlcoholTab() {
   const [filterFrom, setFilterFrom] = useState("");
   const [filterTo, setFilterTo] = useState("");
 
-  const driversQ = useQuery({
-    queryKey: ["drivers", "drug-ui", companyId],
+  const activeDriverTotalQ = useQuery({
+    queryKey: ["drivers", "drug-ui-active-total", companyId],
     enabled: Boolean(companyId),
-    queryFn: () => listDrivers({ operating_company_id: companyId, status: "active", limit: 200 }).then((r) => r.drivers), // full active set (endpoint default 50 truncates >50)
+    queryFn: () =>
+      listDrivers({ operating_company_id: companyId, status: "active", limit: 1 }).then(
+        (r) => r.total ?? r.drivers.length
+      ),
   });
 
   const testsQ = useQuery({
@@ -132,11 +135,6 @@ export function DrugAlcoholTab() {
     queryFn: () => getDriverDispatchEligibility(driverId, companyId),
   });
 
-  const selectedDriver = useMemo(
-    () => (driversQ.data ?? []).find((driver) => driver.id === driverId) ?? null,
-    [driversQ.data, driverId]
-  );
-
   const createTestMutation = useMutation({
     mutationFn: () =>
       createDrugProgramTest(companyId, {
@@ -161,7 +159,7 @@ export function DrugAlcoholTab() {
     },
   });
 
-  const activeDriverCount = (driversQ.data ?? []).length;
+  const activeDriverCount = activeDriverTotalQ.data ?? 0;
 
   function handleBulkEnroll() {
     const name = consortiumName.trim();
@@ -235,12 +233,9 @@ export function DrugAlcoholTab() {
               />
             </div>
           </label>
-          {selectedDriver ? (
+          {driverId ? (
             <div className="text-xs text-slate-600">
-              Selected:{" "}
-              <span className="font-medium text-slate-900">
-                {[selectedDriver.first_name, selectedDriver.last_name].filter(Boolean).join(" ")}
-              </span>
+              Selected: <EntityLink kind="driver" id={driverId} />
             </div>
           ) : null}
         </div>

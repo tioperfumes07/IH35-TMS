@@ -3,7 +3,7 @@
  * FD3 regression guard — the Safety > Complaints creator (ComplaintsTab.tsx) must not regress to the
  * three shipped defects it fixes:
  *   1. RESPONDENT was a raw text <input placeholder="Respondent driver_id"> expecting a hand-typed UUID.
- *      → must be a company-scoped listDrivers picker (never a placeholder matching /driver_id/i).
+ *      → must use DriverPickerWithCreate server-search picker (never a placeholder matching /driver_id/i).
  *   2. TYPE was a free-text <input> while catalogs.complaint_types exists.
  *      → must be driven by the complaint-types catalog (listComplaintTypes) as a combobox.
  *   3. The disabled "+ Create" button gave no reason (silent dead control — locked-rule violation).
@@ -35,16 +35,12 @@ if (DRIVER_ID_INPUT_RE.test(src)) {
   failures.push('respondent is still a raw text <input> with a "driver_id" placeholder — use the listDrivers driver picker.');
 }
 
-// (2a) Driver picker must be wired from the company-scoped listDrivers API.
-if (!/\blistDrivers\b/.test(src)) {
-  failures.push("missing listDrivers import/usage — the respondent picker must resolve the company driver roster.");
+// (2a) Respondent must use the shared server-search driver picker (SAF-B29 — no bulk listDrivers roster in-tab).
+if (!/\bDriverPickerWithCreate\b/.test(src)) {
+  failures.push("missing DriverPickerWithCreate — respondent must use company-scoped server-search driver picker, not raw UUID input.");
 }
-// (2b) …and passed operating_company_id + limit:200 so the roster is not truncated (driver-picker 50-cap).
-if (!/listDrivers\(\s*\{[^}]*operating_company_id[^}]*\}/.test(src)) {
-  failures.push("listDrivers must be called with operating_company_id (company-scoped roster).");
-}
-if (!/limit:\s*200/.test(src)) {
-  failures.push("listDrivers must pass limit:200 (avoid the driver-picker 50-cap truncation).");
+if (!/respondent_driver_id/.test(src)) {
+  failures.push("respondent_driver_id form field not wired to the driver picker.");
 }
 
 // (3) Complaint TYPE must be catalog-driven (listComplaintTypes) and rendered as a combobox.
