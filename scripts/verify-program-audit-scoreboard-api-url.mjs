@@ -78,6 +78,12 @@ export function assertScoreboardContract(sources) {
     problems.push(`${PAGE}: comment/code must not contain fetch("/api/…") literal (raw-fetch guard)`);
   }
 
+  const routeRel = "apps/backend/src/program/audit-scoreboard.routes.ts";
+  const route = sources?.[routeRel] ?? (fs.existsSync(path.join(ROOT, routeRel)) ? read(routeRel) : "");
+  if (route && !/rateLimit\s*:\s*\{\s*max\s*:/.test(route)) {
+    problems.push(`${routeRel}: GET audit-scoreboard must set config.rateLimit (CodeQL missing-rate-limiting)`);
+  }
+
   return problems;
 }
 

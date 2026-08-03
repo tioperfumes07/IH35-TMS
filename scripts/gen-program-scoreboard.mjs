@@ -26,18 +26,14 @@ function fail(msg) {
   process.exit(1);
 }
 
-if (!fs.existsSync(SRC)) {
-  fail(
-    `missing ${path.relative(ROOT, SRC)} — the audit machine check must emit it first ` +
-      `(node scripts/audit-coverage-scoreboard.mjs --emit-program-json). Refusing to fabricate a board.`,
-  );
-}
-
 let data;
 try {
   data = JSON.parse(fs.readFileSync(SRC, "utf8"));
 } catch (e) {
-  fail(`could not parse ${path.relative(ROOT, SRC)}: ${e.message}`);
+  fail(
+    `missing/unreadable ${path.relative(ROOT, SRC)} — the audit machine check must emit it first ` +
+      `(node scripts/audit-coverage-scoreboard.mjs --emit-program-json). Refusing to fabricate a board. (${e.message})`,
+  );
 }
 
 // Validate the contract so a malformed source can't silently ship a wrong board.
@@ -73,9 +69,16 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = ${JSON.stringify(data, null
 `;
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
-if (fs.existsSync(OUT) && fs.readFileSync(OUT, "utf8") === header) {
-  console.log(`gen-program-scoreboard: ${path.relative(ROOT, OUT)} unchanged (skip write)`);
-  process.exit(0);
+try {
+  if (fs.readFileSync(OUT, "utf8") === header) {
+    console.log(`gen-program-scoreboard: ${path.relative(ROOT, OUT)} unchanged (skip write)`);
+    process.exit(0);
+  }
+} catch {
+  /* OUT missing — write below */
 }
-fs.writeFileSync(OUT, header);
+// Atomic replace — avoids CodeQL js/file-system-race-condition (exists/check then write).
+const tmp = `${OUT}.tmp`;
+fs.writeFileSync(tmp, header);
+fs.renameSync(tmp, OUT);
 console.log(`gen-program-scoreboard: wrote ${path.relative(ROOT, OUT)} (${data.modules.length} modules)`);

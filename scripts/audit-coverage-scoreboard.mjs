@@ -589,12 +589,14 @@ function gitShortSha() {
  * from the ledger. Never invents PASS for unmodeled VERIFY gates.
  */
 export function emitProgramJson(rows, metrics, sidebarIds) {
-  if (!fs.existsSync(PROGRAM_JSON)) {
+  let prev;
+  try {
+    prev = JSON.parse(fs.readFileSync(PROGRAM_JSON, "utf8"));
+  } catch {
     throw new Error(
       `${path.relative(ROOT, PROGRAM_JSON)} missing — commit the seed JSON first; refuse to fabricate a board`
     );
   }
-  const prev = JSON.parse(fs.readFileSync(PROGRAM_JSON, "utf8"));
   for (const k of ["meta", "modules", "prod", "chain", "chainMoney", "chainReverse", "guard"]) {
     if (!(k in prev)) throw new Error(`prior program-scoreboard.json missing key: ${k}`);
   }
@@ -662,13 +664,16 @@ export function emitProgramJson(rows, metrics, sidebarIds) {
 
 
   // Guard contract: text (markdown emphasis), never HTML tags / html key.
+  // CodeQL js/incomplete-multi-character-sanitization: strip tags to a fixed point, then drop residue.
   out.guard = (out.guard || []).map((g) => {
-    const raw = g.text ?? g.html ?? "";
-    const text = String(raw)
+    let text = String(g.text ?? g.html ?? "")
       .replace(/<\/?b>/gi, "**")
       .replace(/<\/?code>/gi, "`")
-      .replace(/&amp;/g, "&")
-      .replace(/<[^>]+>/g, "");
+      .replace(/&amp;/g, "&");
+    for (let i = 0; i < 20 && /<[^>]*>/.test(text); i++) {
+      text = text.replace(/<[^>]*>/g, "");
+    }
+    if (/[<>]/.test(text)) text = text.replace(/[<>]/g, "");
     const { html: _drop, ...rest } = g;
     return { ...rest, text };
   });
@@ -691,7 +696,11 @@ export function emitProgramJson(rows, metrics, sidebarIds) {
     return prev;
   }
 
-  fs.writeFileSync(PROGRAM_JSON, JSON.stringify(out, null, 2) + "\n");
+  // Atomic replace — avoids CodeQL js/file-system-race-condition (exists/check then write).
+  const payload = JSON.stringify(out, null, 2) + "\n";
+  const tmp = `${PROGRAM_JSON}.tmp`;
+  fs.writeFileSync(tmp, payload);
+  fs.renameSync(tmp, PROGRAM_JSON);
   return out;
 }
 

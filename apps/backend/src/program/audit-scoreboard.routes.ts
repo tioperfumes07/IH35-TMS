@@ -26,17 +26,22 @@ const REPO_ROOT = (() => {
 const SCOREBOARD_JSON = path.join(REPO_ROOT, "docs/audit/program-scoreboard.json");
 
 export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
-  app.get("/api/v1/program/audit-scoreboard", async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
-    try {
-      const raw = await readFile(SCOREBOARD_JSON, "utf8");
-      const data = JSON.parse(raw) as unknown;
-      reply.header("cache-control", "public, max-age=300");
-      return reply.send(data);
-    } catch {
-      // Missing/unreadable file → 204 so the frontend falls back to its committed seed data,
-      // rather than erroring the page. Honest: absence is not a fake board.
-      return reply.code(204).send();
-    }
-  });
+  // CodeQL js/missing-rate-limiting: auth + filesystem read must be rate-limited (cf. safety-reports).
+  app.get(
+    "/api/v1/program/audit-scoreboard",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      if (!requireAuth(req, reply)) return;
+      try {
+        const raw = await readFile(SCOREBOARD_JSON, "utf8");
+        const data = JSON.parse(raw) as unknown;
+        reply.header("cache-control", "public, max-age=300");
+        return reply.send(data);
+      } catch {
+        // Missing/unreadable file → 204 so the frontend falls back to its committed seed data,
+        // rather than erroring the page. Honest: absence is not a fake board.
+        return reply.code(204).send();
+      }
+    },
+  );
 }

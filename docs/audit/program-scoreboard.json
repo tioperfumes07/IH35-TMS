@@ -1,11 +1,11 @@
 {
   "meta": {
-    "generatedAt": "2026-08-03T04:33:04.248Z",
-    "sourceSha": "485bcc3dc",
+    "generatedAt": "2026-08-03T05:10:36.786Z",
+    "sourceSha": "cfb3b17d2",
     "deployedSha": "308bc66",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 631,
-    "failOpen": 20,
+    "ledgerRows": 638,
+    "failOpen": 21,
     "defects": 11
   },
   "modules": [
@@ -310,7 +310,7 @@
       "cells": [
         "AUDIT",
         "FAIL",
-        "AUDIT",
+        "FIX",
         "AUDIT",
         "FIX",
         "AUDIT",
