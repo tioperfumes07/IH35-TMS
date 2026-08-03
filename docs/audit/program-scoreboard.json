@@ -1,11 +1,11 @@
 {
   "meta": {
-    "generatedAt": "2026-08-03T01:20:33-05:00",
-    "sourceSha": "c986ae88d",
+    "generatedAt": "2026-08-03T10:28:47-05:00",
+    "sourceSha": "ddb0b72eb",
     "deployedSha": "308bc66",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 664,
-    "failOpen": 16,
+    "ledgerRows": 666,
+    "failOpen": 17,
     "defects": 11
   },
   "modules": [
