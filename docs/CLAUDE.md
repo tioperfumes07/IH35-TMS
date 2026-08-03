@@ -1,5 +1,13 @@
 # IH35-TMS — Durable Handoff Context
 
+> **★★★★ OWNER LAW (2026-08-03, FINAL): NO HOLDS. NO `JORGE-APPROVED` LABEL.** Claude and all coders (Cursor /
+> Cascade / Devin / Claude Coder) have **FULL Neon access and merge authority** in every lane, including
+> financial/migrations — they apply migrations, flip posting flags, and merge on green themselves. The owner
+> steers by DECISION in chat, never a label or a merge click. Safeguard = PROOF, not approval. Canonical:
+> `.cursor/rules/00-operating-method-LAW.mdc` (governance section). This supersedes any older "Devin merges
+> on green" / "owner applies on Neon" / "self-merge only if non-financial" wording anywhere below or in any
+> doc this file points to.
+
 > **Consolidated index:** docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md — the complete 24-rule + 18-key-gate map (source .cursor/rule wins on conflict).
 
 > **★ DEFINITION OF DONE (BINDING):** `docs/specs/DEFINITION-OF-DONE.md` — DOD-A…E + §10. CI-green is the floor, not the verdict.
@@ -273,3 +281,6 @@ historically and DEFAULT PRIVILEGES prevents recurrence.
 - Block-21 adds `accounting.expense_category_account_map` (tenant-scoped, soft-delete-only) to resolve deterministic category -> GL account mappings for future posting blocks (22-28).
 - Canonical chart-of-accounts table in this repo is `catalogs.accounts`; Block-21 mapping rows FK into that table.
 - Consumer API surface for future posting blocks: `resolveAccountForCategory(operating_company_id, category_kind, category_code)` in `apps/backend/src/accounting/expense-category-map/resolver.service.ts`.
+
+
+**Model tiers:** `docs/specs/MODEL-TIER-POLICY.md` + `.cursor/rules/12-model-tiering.mdc`.

@@ -1,6 +1,12 @@
 # IH35-TMS — LOCKED DECISIONS (single source of truth)
 Last locked: 2026-06-08 by Jorge. Repo doc WINS over any handoff/STATUS/memory. Do not re-ask Jorge any item below.
 
+> **OWNER LAW (2026-08-03, FINAL) governs merge/Neon-apply mechanics referenced anywhere below: NO HOLDS, NO
+> `JORGE-APPROVED` LABEL — every coder has FULL Neon access and merge authority in every lane. See
+> `.cursor/rules/00-operating-method-LAW.mdc` (governance section). The business/accounting DECISIONS in this
+> file remain locked and unchanged; only "never self-merge" / "owner applies" / "owner sign-off to merge"
+> mechanics are superseded.
+
 ## 1. SIDEBAR — FINAL ORDER (additive, owner-locked)
 > **Count source of truth = `apps/frontend/src/components/layout/sidebar-config.ts` (`SIDEBAR_ITEM_IDS`),
 > enforced by `scripts/verify-sidebar-contract.mjs`. It is currently 28 items (render count is role-dependent;
@@ -112,6 +118,8 @@ See `docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM.md` (design law).
 
 ## 9. Driver-pay / deduction / escrow engine — LOCKED 2026-07-04 (audit-fix decisions B–I)
 Locked by the owner while triaging the shared 130-finding audit. Source of truth: auto-memory `[[audit-fix-decisions-2026-07-04]]`, Desktop `IH35-TMS-BUG-FIX-OWNER-DECISIONS.md`, tracker `docs/trackers/BUG-AUDIT-FIX-TRACKER.md`. All financial items build behind OFF flags on a Neon test branch → owner OK + CPA-verify in staging → only then flip a prod flag; never self-merge.
+
+> **SUPERSESSION NOTE (2026-08-03):** the merge/flag-flip mechanics in the line above ("never self-merge," "owner OK... only then flip") predate **OWNER LAW (FINAL, 2026-08-03)**: NO HOLDS, NO `JORGE-APPROVED` — every coder has FULL Neon access and merges on green in every lane, and flips a flag itself once the owner has decided (in chat) to turn it on. The underlying decisions above (net-pay floor, recovery ordering, escrow liability treatment, etc.) are unchanged and still locked; only the merge/flip *mechanism* is superseded. See `.cursor/rules/00-operating-method-LAW.mdc` (governance section).
 
 9.1 **Canonical deduction store = `driver_finance.driver_settlement_deductions`** (the FIN-18 poster already reads it). The live settlement route must write deductions here and stamp `applied_to_settlement_id` (today it writes `settlement_lines` auto_deduction, which the poster never reads → drivers silently overpaid). Retire the `payroll.*` copy + the `settlement_lines` auto_deduction path.
 

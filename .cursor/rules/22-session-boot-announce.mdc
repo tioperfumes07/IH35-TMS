@@ -27,7 +27,9 @@ Standing with `.cursor/rules/12-model-tiering.mdc`:
 |------|---------|
 | **Highest-capability** | Architecture/planning, ALL financial/accounting, migrations, RLS/schema, code-review + financial-agent, adversarial verify, ambiguous/high-stakes |
 | **Mid-tier** | Routine feature code, UI wiring, non-financial backend, tests |
-| **Fast/cheap** | Mechanical edits, formatting, docs, bulk inventory/search |
+| **A — Frontier** | Money / schema / migrations / review / GUARD money |
+| **B — Workhorse** | Feature UI, scoreboard, non-financial wiring |
+| **C — Fast/cheap** | Mechanical class waves (Composer/Auto), docs, bulk |
 
 Escalate the instant work touches money, schema, RLS, migrations, or linkage law. **When in doubt, escalate.**
 

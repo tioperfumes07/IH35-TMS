@@ -33,29 +33,38 @@ Everything is verified against live evidence — no guessing, ever.
 ---
 
 ## §1. Permissions & guardrails — override every other instruction
-- Merge to `main` = ship to prod; no second gate; green CI ≠ approval.
-- **Self-merge OK:** pure frontend/docs/CI-action bumps + non-financial backend touching none of the financial
-  cluster / migrations / `accounting.*` / `catalogs.*` / `mdata.*`.
-- **Financial cluster / migration / schema / `accounting.*`·`catalogs.*`·`mdata.*` / runtime dep bump: BUILD it,
-  never merge it yourself — Devin merges on green** (owner ruling 2026-07-29). **The `JORGE-APPROVED` label is
-  NOT a merge gate** (owner 2026-07-26 + 2026-07-29; `verify-hold-merge-gate.mjs` has treated it as optional
-  since 07-26). The owner does not review PRs — asking for the label at merge time is itself a violation, and a
-  gate nobody operates is a control deficiency, not a control. The controls that DO operate: builder≠merger,
-  independent reviewer≠builder (Rule 11), `ih35_app` cannot run DDL (owner applies on Neon), posting flags
-  default OFF per entity, 18-key evidence block (CI 1324/1430/1431). **Owner questions are settled BEFORE
-  implementation, never at merge** (`PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26`).
-- **Financial cluster** = `accounting.*` OR `catalogs.accounts`, any `db/migrations/*.sql`, posting/GL/ledger/
-  balances/periods/reconcile-commit/reclassify-apply/role-GRANT/opening-balances. Branch → typecheck + run
-  migration locally on a THROWAWAY PG → show diff + full SQL → WAIT for OK → merge. Reuse the poster; no new GL math.
-- Prod DB access gated — ask every connection; `ih35_app` CANNOT run DDL (owner applies on Neon; GUARD re-proves live).
-- **Prohibited outright** (direct owner to do it): moving money/posting to prod without per-action OK, entering
-  credentials, changing access controls, permanently deleting data, submitting to any external financial system.
-- **Cursor builds; Claude merges; Cursor never merges. Builder never reviews/verifies its own work.**
-- When unsure, STOP and ask — do not decide the scope of your own authority.
+**OWNER LAW (2026-08-03, FINAL — supersedes every earlier merge/approval clause): NO HOLDS. NO `JORGE-APPROVED`
+LABEL. Claude and all coders (Cursor / Cascade / Devin / Claude Coder) have FULL Neon access and merge authority.**
+All owner questions are asked-and-answered up front (`PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26`); there is nothing
+to wait for at merge time. Asking for approval, a label, or an "OK to merge" at merge time is itself a violation.
+The owner steers by DECISION in chat (canonical picks, "turn the flag on", legal calls) — never by a keystroke or a
+label. The `JORGE-APPROVED` label is deleted, not optional.
+
+- Merge to `main` = ship to prod; green CI ≠ *done* (deploy + live proof close it), but green CI IS mergeable.
+- **Coders MERGE ON GREEN — every lane, including financial/migration/`accounting.*`·`catalogs.*`·`mdata.*`.** No
+  owner gate. The only thing that stops a PR is *it's wrong*, and the fix for wrong is correct-and-reopen, never a
+  hold.
+- **FULL NEON ACCESS.** Claude and the coders apply migrations and flip posting flags **themselves** on Neon
+  (LOCKED 2026-08-02: "the coder has full access; the owner does not turn on anything in Neon"). Do NOT tell the
+  owner to hand-apply or to run Neon.
+- **The safeguard is PROOF, not approval.** For any financial/migration change: additive/idempotent migration + its
+  own CI guard + tests → verify every premise live BEFORE apply → **apply on Neon yourself** → post the migration
+  SHA → **GUARD verifies live AFTER** (independent Neon read, positive-controlled; a `0` is not proof). Reuse the
+  existing poster; write NO new GL math. Posting flags default OFF per entity until the owner says "turn it on" in
+  chat (a decision, not a label).
+- **Retained SAFETY controls (these are proof/integrity, NOT approval holds — keep them):** WORM / void-not-delete;
+  no TMS→QBO write-back ever; opening balances owner-entered; the hold-merge-gate **migration firewall** (a
+  migration cannot ride to prod without the runtime firewall in `scripts/db-migrate.mjs`); the 18-key evidence
+  block; GUARD's independent live verify-after (integrity check, runs AFTER merge — never a pre-merge hold).
+- **Prohibited outright** (direct owner to do it): moving money / sending payments / submitting to any EXTERNAL
+  financial or factoring system; entering credentials into forms; permanently deleting data (archive, never delete).
+- When genuinely blocked because a fact can't be verified, say **"UNVERIFIED — needs live check"** and get the
+  fact — never stop to ask for permission you already have.
 
 ## §2. Migration & schema invariants
-NEVER self-merge a migration. Numbers strictly above `main`'s current max (re-checked at push; ledger max is
-tracked on prod); never reuse/collide a number; idempotent (`DO` + `IF NOT EXISTS`/`ON CONFLICT`).
+Coders apply migrations on Neon themselves and merge on green (§1 OWNER LAW — full access, no hold). Numbers
+strictly above `main`'s current max (re-checked at push; ledger max is tracked on prod); never reuse/collide a
+number; idempotent (`DO` + `IF NOT EXISTS`/`ON CONFLICT`).
 void-not-delete (`voided_at`/`archived_at`/`deactivated_at`, never DELETE); append-only WORM audit
 (`audit.row_changes`/`audit_events`/`events.event_log`). Schema is `accounting.*` (never `finance.*`). Reuse
 existing posting/GL functions — write NO new GL math. UUIDv7 PKs; `security_invoker=true` on every view;
@@ -123,11 +132,11 @@ never create/import/reclassify/merge/deactivate (Rule 19).**
 ---
 
 ## §11. THE 32 `.cursor/rules` FILES — COMPLETE GOVERNING INDEX (all always-apply; source rule wins on conflict)
-- **00 always-read-first** · **01 spec-sources** (MASTER_BLUEPRINT_v3 + UNIFIED_ADDITIONS + ARCHITECTURAL_DESIGN) · **02 respond-before-code** (post spec-review acknowledgment BEFORE code) · **03 display-ids** (server-generated) · **04 locked-invariants** (RLS/security_invoker/lockstep/append-only-audit/void-not-delete/idempotent/WF-012·017·038·044·050·053·064/425C-exclusion/+Create) · **05 architectural-design-is-law** (tab count = design; `verify:arch-design`) · **06 quality-hardline** (trust>speed; false-empty) · **07 never-delete-only-add** (= §F.24) · **10 verification-and-neon-rls** (prod wins; lucia re-run; ledgered≠effective) · **11 multi-agent-orchestration** (planner→builder→independent code-review→financial-agent VETO→GUARD; builder never self-reviews) · **12 model-tiering** (highest model for money/schema/RLS/migration/review; escalate when in doubt) · **13 financial-and-accounting-law** (build-and-HOLD; reuse poster; parallel books; QBO never written; flags OFF; ASC 470-60/606/842) · **14 linkage-law-enforcement** (§10) · **15 research-mandate** (cite the standard) · **16 fix-not-patch-evidence-law** (ROOT CAUSE/FIX/GUARD/LIVE PROOF/REMAINING) · **17 no-guard-hotfile-thrash** (verify-steps only) · **18 pipeline-truth-and-throughput** (fail-closed runner; single-domain PRs; law = governance-only PR) · **19 owner-manual-reserve-accounts** · **21 full-system-no-partial-amnesia** (M grows; wave-slice ≠ module) · **22 session-boot-announce** (`NEW SESSION · rules autoloaded · tiered model in force`) · **23 no-money-theater-prs** (18-key gate; CI 1430; Cursor builds/Claude merges) · **24 module-completion-n-of-m** (manifest N of M; CI 1431) · **25 one-push-money-fail-fast** (`money-pr-local-gate` first in pre-push; amend hole closed; CI 1702; no CI cancel thrash) · **29 cursor-claude-parity-ship** (expanded local gate: migration HH band + EVEN steps + no CLAIMED edit + EntityLink; never `--no-verify`; CI 1998) · **30 claude-green-evidence-format** (FINDING-first body/commit; `LIVE PROOF: … exit 0`; never stack/soft-reset; `cursor-pr-body-gate` before `gh pr create`; CI 2088) · **dual-lane-never-idle** (Lane A Lists/Safety/Drivers, Lane B Dispatch/Maintenance).
+- **00 always-read-first** · **01 spec-sources** (MASTER_BLUEPRINT_v3 + UNIFIED_ADDITIONS + ARCHITECTURAL_DESIGN) · **02 respond-before-code** (post spec-review acknowledgment BEFORE code) · **03 display-ids** (server-generated) · **04 locked-invariants** (RLS/security_invoker/lockstep/append-only-audit/void-not-delete/idempotent/WF-012·017·038·044·050·053·064/425C-exclusion/+Create) · **05 architectural-design-is-law** (tab count = design; `verify:arch-design`) · **06 quality-hardline** (trust>speed; false-empty) · **07 never-delete-only-add** (= §F.24) · **10 verification-and-neon-rls** (prod wins; lucia re-run; ledgered≠effective) · **11 multi-agent-orchestration** (planner→builder→independent code-review→financial-agent VETO→GUARD; builder never self-reviews) · **12 model-tiering** (highest model for money/schema/RLS/migration/review; escalate when in doubt) · **13 financial-and-accounting-law** (financial cluster = merge on green, no owner gate — OWNER LAW 2026-08-03; reuse poster; parallel books; QBO never written; flags OFF until owner chat-decision to flip) · **14 linkage-law-enforcement** (§10) · **15 research-mandate** (cite the standard) · **16 fix-not-patch-evidence-law** (ROOT CAUSE/FIX/GUARD/LIVE PROOF/REMAINING) · **17 no-guard-hotfile-thrash** (verify-steps only) · **18 pipeline-truth-and-throughput** (fail-closed runner; single-domain PRs; law = governance-only PR) · **19 owner-manual-reserve-accounts** · **21 full-system-no-partial-amnesia** (M grows; wave-slice ≠ module) · **22 session-boot-announce** (`NEW SESSION · rules autoloaded · tiered model in force`) · **23 no-money-theater-prs** (18-key gate; CI 1430; every coder builds AND merges on green — OWNER LAW 2026-08-03) · **24 module-completion-n-of-m** (manifest N of M; CI 1431) · **25 one-push-money-fail-fast** (`money-pr-local-gate` first in pre-push; amend hole closed; CI 1702; no CI cancel thrash) · **29 cursor-claude-parity-ship** (expanded local gate: migration HH band + EVEN steps + no CLAIMED edit + EntityLink; never `--no-verify`; CI 1998) · **30 claude-green-evidence-format** (FINDING-first body/commit; `LIVE PROOF: … exit 0`; never stack/soft-reset; `cursor-pr-body-gate` before `gh pr create`; CI 2088) · **dual-lane-never-idle** (Lane A Lists/Safety/Drivers, Lane B Dispatch/Maintenance).
 · **26 serialize-scoreboard-hotfiles** (at most ONE ready PR may edit `docs/module-completion/*.json`, the ACCT surface matrix, or `CLAIMED-NUMBERS.json`; `gh pr list` BEFORE opening) · **27 one-open-pr-per-area** (ONE open PR per area — accounting/money, banking, settlements, dispatch, safety, lists, migrations; NEVER open the next same-area PR until the current is squash-merged and the branch deleted; cross-area parallel only when scopes are disjoint) · **28 audit-coverage-single-source** (`docs/audit/AUDIT-COVERAGE-LIVE.md` is THE source; build only Verdict=FAIL + Status=OPEN rows in your lane; column ownership — CASCADE owns Module/Layer/Entity/Verdict/Evidence and APPENDS rows, CODER owns Status + Block/PR only, GUARD owns VERIFIED/REOPENED; never delete a row, supersede instead; `git pull --ff-only` before editing).
 
 **COUNT THE FILES, NOT THE NUMBERS — three numbers are used TWICE and the second file is easy to miss:**
-`21-full-system-no-partial-amnesia` **and** `21-session-operating-decree` (roles: Jorge answers questions before code · Cursor applies Neon · Devin merges on green · Claude plans/CPA/inventories; `JORGE-APPROVED` label NOT required) ·
+`21-full-system-no-partial-amnesia` **and** `21-session-operating-decree` (roles: Jorge answers questions before code · every coder applies Neon + merges on green themselves (OWNER LAW 2026-08-03 supersedes the old "Cursor applies Neon · Devin merges" split) · Claude plans/CPA/inventories; `JORGE-APPROVED` label DELETED) ·
 `23-no-money-theater-prs` **and** `23-per-pr-checklist` ·
 `25-one-push-money-fail-fast` **and** `25-verify-step-odd-even-bands` (Claude = ODD verify-step numbers, Cursor = EVEN).
 **COUNTED 2026-08-03: 32 files** — 31 numbered (00–30, with **21, 23 and 25 each used TWICE**) plus `dual-lane-never-idle`. No rules 08/09/20 exist.
@@ -143,9 +152,9 @@ Full text: `docs/specs/DEFINITION-OF-DONE.md` + `docs/specs/EVERY-PR-AUDIT-CHECK
 
 ---
 
-## Quick gate check (run in your head before every merge)
-1. Touches `accounting.*`/`catalogs.accounts`/`db/migrations/*`/posting/GL/balances/grants/RLS/money? → **financial → STOP, owner approval (§1).**
-2. Other migration/`catalogs.*`/`mdata.*` schema-or-data, or runtime dep bump? → **STOP, owner approval.**
-3. Prod DB access of any kind? → **ask first, every time.**
-4. Writing/FK-ing a RETIRE table, or shipping a block with no linkage declaration, or touching a reserve account? → **STOP (§10/Rule 19).**
-5. Otherwise non-financial + green CI? → auto-PR, fix CI, resolve conflicts, squash-merge, verify deploy.
+## Quick gate check (run in your head before every merge — OWNER LAW 2026-08-03: no owner-approval gate anywhere below)
+1. Touches `accounting.*`/`catalogs.accounts`/`db/migrations/*`/posting/GL/balances/grants/RLS/money? → **financial cluster — proof gate, not approval: independent code-review + financial-agent pass, 18-key evidence block, migration firewall, then merge on green yourself.**
+2. Other migration/`catalogs.*`/`mdata.*` schema-or-data, or runtime dep bump? → **same proof gate as #1 — build, verify live, merge on green yourself.**
+3. Prod DB access of any kind? → **verify the branch/connection every time (§0); this is a safety check, not a permission ask.**
+4. Writing/FK-ing a RETIRE table, or shipping a block with no linkage declaration, or touching a reserve account? → **STOP and fix the linkage/target — this is a correctness gate (§10/Rule 19), not an owner-approval gate.**
+5. Green CI + independent review pass (+ financial-agent pass if money)? → auto-PR, fix CI, resolve conflicts, squash-merge yourself, verify deploy, GUARD re-proves live after.

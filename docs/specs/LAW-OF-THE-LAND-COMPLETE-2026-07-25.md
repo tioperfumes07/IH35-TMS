@@ -22,23 +22,31 @@ owner ruling.
 
 ---
 
-## §1 — PERMISSIONS & MERGE GATES (override everything)
-Merge to `main` = ship to prod; no second gate; green CI ≠ approval. **Self-merge OK:** pure frontend/docs/CI-
-action bumps + non-financial backend touching none of the financial cluster / migrations / `accounting.*` /
-`catalogs.*` / `mdata.*`. **Financial cluster: the builder never merges its own work — Devin merges on green**
-(owner ruling 2026-07-29). **The `JORGE-APPROVED` label is NOT a merge gate** (owner rulings 2026-07-26 and
-2026-07-29; `21-session-operating-decree`, `PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26`, and
-`verify-hold-merge-gate.mjs` which has treated it as optional since 07-26). The owner does not review PRs;
-asking for the label at merge time is itself a violation. A gate nobody operates is a control deficiency —
-it records an approval that never ran. The controls that DO operate: builder≠merger, Rule 11's independent
-reviewer≠builder, `ih35_app` cannot run DDL (owner applies on Neon), posting flags default OFF per entity,
-and the 18-key evidence block (CI 1324/1430/1431). **Owner questions are settled BEFORE implementation,
-never at merge.**
-Prod DB access gated — ask every time; `ih35_app` CANNOT run DDL (owner applies on Neon; GUARD re-proves).
-Prohibited outright (direct owner to do it): moving money/posting to prod without per-action OK, entering
-credentials, changing access controls, permanently deleting data, submitting to any external financial system.
-**Cursor builds; Claude merges; Cursor never merges (Rule 23). Builder never reviews/verifies its own work
-(Rule 11).**
+## §1 — PERMISSIONS & MERGE GATES — OWNER LAW (2026-08-03, FINAL; supersedes every earlier wording below)
+
+> **NO HOLDS. NO `JORGE-APPROVED` LABEL. Claude and all coders (Cursor / Cascade / Devin / Claude Coder)
+> have FULL Neon access and merge authority.** Coders merge on green in every lane and apply migrations +
+> flip posting flags on Neon themselves. Owner steers by decision in chat. Safeguard = PROOF, not approval.
+> Canonical: `.cursor/rules/00-operating-method-LAW.mdc` (governance section).
+
+Merge to `main` = ship to prod; no second gate — including no owner-approval gate; green CI IS mergeable.
+**Every coder merges on green itself, in every lane** — non-financial AND the financial cluster /
+migrations / `accounting.*` / `catalogs.*` / `mdata.*`. The 2026-07-29 "builder never merges its own work —
+Devin merges" role split is superseded: Devin is one of several coders who merge, not the exclusive one.
+**The `JORGE-APPROVED` label is DELETED, not merely "not a gate"** (owner rulings 2026-07-26, 2026-07-29,
+FINAL 2026-08-03; `21-session-operating-decree`, `PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26`). The owner does
+not review PRs; asking for the label at merge time is itself a violation. The controls that DO operate:
+Rule 11's independent reviewer ≠ builder; `ih35_app` cannot run DDL (a Postgres grant fact — the coder
+applies migrations on Neon themselves, FULL access); posting flags default OFF per entity until the owner's
+chat decision to flip; and the 18-key evidence block (CI 1324/1430/1431). **Owner questions are settled
+BEFORE implementation, never at merge.**
+Prod DB access verified every time (right branch, `current_database()`) — a correctness check, not a
+permission ask. `ih35_app` CANNOT run DDL; the coder applies on Neon themselves and GUARD re-proves live after.
+Prohibited outright (direct owner to do it): moving money / submitting to any EXTERNAL financial or
+factoring system, entering credentials, changing access controls, permanently deleting data.
+**Every coder both builds and merges its own non-fake work on green (OWNER LAW 2026-08-03 supersedes Rule
+23's old "Cursor builds; Claude merges" split). Builder never reviews/verifies its own work (Rule 11) —
+that independence is about review quality, not about who is allowed to click merge.**
 
 ---
 
@@ -51,10 +59,10 @@ credentials, changing access controls, permanently deleting data, submitting to 
 - **05 architectural-design-is-law** — tab count/name/purpose = `IH35_ARCHITECTURAL_DESIGN.md`; `verify:arch-design` CI gate; update design in the SAME commit if a tab changes; never invent/drop a tab.
 - **06 quality-hardline-and-law** — trust>speed, correct>easy, verify>guess, protect-the-company; match/surpass QBO/NetSuite/McLeod/Alvys; false-empty rule; no fake-green; no "done" without proof.
 - **07 never-delete-only-add (= §F.24)** — NEVER delete modules/tabs/surfaces/catalogs/columns/tables; archive/hide-flag/soft-delete only; additive migrations; retire = stop-write + REVOKE + deprecated comment, never DROP.
-- **10 verification-and-neon-rls** — prod branch wins; RLS 0-count re-run under lucia; ledgered≠effective; deploy verified by SHA ancestry; owner applies DDL; GUARD re-proves with acceptance[] evidence.
-- **11 multi-agent-orchestration** — planner → builder (one bounded change; ONE builder per migration lane) → **independent code-review agent** (different agent than builder; unresolved high-severity blocks the PR) → **financial/accounting agent VETO** on money → **GUARD** live-verify. ≥1 independent verifier per financial finding; loop-until-dry; builder never self-reviews.
+- **10 verification-and-neon-rls** — prod branch wins; RLS 0-count re-run under lucia; ledgered≠effective; deploy verified by SHA ancestry; coder applies DDL themselves (FULL access, OWNER LAW 2026-08-03); GUARD re-proves with acceptance[] evidence after merge.
+- **11 multi-agent-orchestration** — planner → builder (one bounded change; ONE builder per migration lane) → **independent code-review agent** (different agent than builder; unresolved high-severity blocks the PR) → **financial/accounting agent VETO** on money (informs the merge, does not gate the owner) → **GUARD** live-verify after merge. ≥1 independent verifier per financial finding; loop-until-dry; builder never self-reviews.
 - **12 model-tiering** — highest-capability model for money/schema/RLS/migration/linkage/review; mid for routine; fast for docs/bulk. Escalate the instant money/schema is touched; when in doubt, escalate.
-- **13 financial-and-accounting-law** — financial cluster = build, **builder never merges its own — Devin merges on green** (owner 2026-07-29); the `JORGE-APPROVED` label is NOT a merge gate; owner Neon-apply for DDL; reuse the poster (no new GL math); parallel double-books, **QBO NEVER written** (reconcile-only, clone-once); flags default OFF until owner sign-off + Neon tie-out; US GAAP/FASB ASC — Ch.11 = ASC 470-60 (NOT 852 fresh-start), 606 revenue, 842 leases; factoring = secured borrowing; cutover 04/01/2026, OB as-of 03/31 owner-entered.
+- **13 financial-and-accounting-law** — financial cluster = build + apply on Neon + merge on green, **every coder merges its own work, no owner gate** (OWNER LAW 2026-08-03 supersedes the 2026-07-29 "Devin merges" ruling); the `JORGE-APPROVED` label is DELETED; reuse the poster (no new GL math); parallel double-books, **QBO NEVER written** (reconcile-only, clone-once); flags default OFF until the owner's chat decision to flip + Neon tie-out proof; US GAAP/FASB ASC — Ch.11 = ASC 470-60 (NOT 852 fresh-start), 606 revenue, 842 leases; factoring = secured borrowing; cutover 04/01/2026, OB as-of 03/31 owner-entered.
 - **14 linkage-law-enforcement (§10)** — declare per block: canonical target (`to_regclass`, never a RETIRE table) · hub matrix (org.companies, identity.users, mdata.drivers/units/loads/customers/vendors, catalogs.accounts, maintenance.work_orders, accounting.journal_entries) · both-way (forward+reverse) · entity scope (opco + FORCED RLS; cross-entity FK = defect) · deployed-SHA vs origin/main. A block with no linkage declaration is a defect. Guards G1–G4 (registry-complete, block-acceptance, guard-wired, canonical-table-writes).
 - **15 research-mandate** — cite the standard a material recommendation matches (QBO/NetSuite/McLeod/Alvys; GAAP/ASC; FMCSA USDOT/HOS/DQ/Clearinghouse/IFTA/2290/425C; RLS/WORM/security_invoker/least-privilege).
 - **16 fix-not-patch-evidence-law** — fix root cause; never patch/defer without owner-written tracker + future-block id; every bug fix ships a guard; reply shape ROOT CAUSE / FIX / GUARD / LIVE PROOF|UNVERIFIED / REMAINING.
@@ -63,7 +71,7 @@ credentials, changing access controls, permanently deleting data, submitting to 
 - **19 owner-manual-reserve-accounts** — factoring reserve/holdback/retainage accounts in `catalogs.accounts` are OWNER-created manually in-app ONLY; no agent/migration/seed may create/import/reclassify/merge/deactivate them; leave the 11 QBO-clone reserve accounts exactly as-is.
 - **21 full-system-no-partial-amnesia** — real OS-of-record bar; every module/tab links both ways; every money event economically complete; kill DUAL_PATH_OLD_ACTIVE; finish the MODULE under Full Audit Law before the next; M grows, never freeze to hide leaves; wave-slice ≠ module; chrome ≠ linkage.
 - **22 session-boot-announce** — first reply of a new session opens with `NEW SESSION · rules autoloaded · tiered model in force`; tiered model (Rule 12) always in force.
-- **23 no-money-theater-prs** — money PRs may not be EntityLink-only / banner-only / fake N-of-M; every money commit carries the 18 keys (§3); CI 1430 `verify-no-money-theater`; Cursor builds, Claude merges.
+- **23 no-money-theater-prs** — money PRs may not be EntityLink-only / banner-only / fake N-of-M; every money commit carries the 18 keys (§3); CI 1430 `verify-no-money-theater`; every coder builds AND merges on green (OWNER LAW 2026-08-03).
 - **24 module-completion-n-of-m** — module COMPLETE only when `docs/module-completion/<module>.json` has N of M with `complete:true`; CI 1431; never claim complete from PR volume; `MODULE_PROGRESS: <module> N of M` on every money commit.
 - **dual-lane-never-idle** — Lane A (Lists/Safety/Drivers) + Lane B (Dispatch/Maintenance) in parallel; single-domain; rebase on origin/main before PR; check migration tail for duplicate numbers; never idle/stale.
 
