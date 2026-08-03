@@ -161,6 +161,20 @@ export function assertScoreboardContract(sources) {
     if (!/formatCt/.test(route) || !/lastSyncedCt/.test(route)) {
       problems.push(`${routeRel}: must compute lastSyncedCt via formatCt(meta.generatedAt)`);
     }
+    if (!/GITHUB_LEDGER_COMMITS_URL|loadLedgerCommitMetaFromGitHub/.test(route)) {
+      problems.push(
+        `${routeRel}: must resolve ledger generatedAt/sourceSha via GitHub commits API (shallow deploy clones lie)`,
+      );
+    }
+    // Shallow clones: must prefer GH ledger meta over local git log (not only on 1970 fallback).
+    if (
+      /gen\.startsWith\("1970-01-01"\)/.test(route) &&
+      !/Prefer GitHub ledger-commit meta ALWAYS|shallow/.test(route)
+    ) {
+      problems.push(
+        `${routeRel}: must not gate GitHub ledger meta on 1970-only — shallow clones return HEAD as ledger sha`,
+      );
+    }
     if (!/TRACKER_BOT_TOKEN|GITHUB_TOKEN|GH_TOKEN/.test(route)) {
       problems.push(`${routeRel}: must prefer authenticated GitHub token (TRACKER_BOT_TOKEN/GITHUB_TOKEN/GH_TOKEN)`);
     }
