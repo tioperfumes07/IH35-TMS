@@ -12,6 +12,8 @@ const CATEGORY_ORDER: HelpCategory[] = [
   "Account & Billing",
   // Audit gap #18 — content exists in helpCenterContent; must stay in render order.
   "Module Guides",
+  // HELP-S01 — 8th category (auditor 2026-08-01): Driver App was folded under Module Guides.
+  "Driver App",
 ];
 
 export function HelpCenterPage() {

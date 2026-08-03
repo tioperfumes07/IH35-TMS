@@ -16,8 +16,8 @@
       "title": "/help center index lists 8 categories",
       "layers": ["DOD-A", "DOD-B"],
       "spec": "HelpCenterPage · program-system-help breadth pass",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor Layer A PASS: 8 categories present",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: CATEGORY_ORDER + HelpCategory include 8th Driver App (was folded under Module Guides). Matches auditor list. Guard verify-help-center-eight-categories + step 2240.",
       "pr": null
     },
     {
@@ -25,8 +25,8 @@
       "title": "/help/overview reachable from flyout",
       "layers": ["DOD-A", "VERIFY-1"],
       "spec": "sidebar help flyout Overview",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: sidebar-config Overview → /help/overview; manifest mounts HelpPage. Guard step 2240.",
       "pr": null
     },
     {
@@ -34,8 +34,8 @@
       "title": "/help/runbooks index wired",
       "layers": ["DOD-A"],
       "spec": "RunbooksIndex route",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: /help/runbooks → RunbooksIndex data-testid=runbooks-index + RUNBOOKS.map; flyout link present. Guard step 2240.",
       "pr": null
     },
     {
