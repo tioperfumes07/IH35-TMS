@@ -119,13 +119,17 @@ export function assertScoreboardContract(sources) {
     );
   }
   if (route) {
-    if (!/api\.github\.com\/repos\/tioperfumes07\/IH35-TMS\/pulls/.test(route)) {
+    // Use includes() (not unanchored RegExp) — CodeQL js/regex/missing-regexp-anchor flags
+    // /api\.github\.com\/…\/pulls/ when used as a URL-host check.
+    const GITHUB_PULLS_MARK =
+      "https://api.github.com/repos/tioperfumes07/IH35-TMS/pulls";
+    if (!route.includes(GITHUB_PULLS_MARK)) {
       problems.push(`${routeRel}: recentActivity must fetch live from GitHub pulls API`);
     }
     if (!/loadRecentActivityFromGitHub|GITHUB_PULLS_URL/.test(route)) {
       problems.push(`${routeRel}: must expose loadRecentActivityFromGitHub (live heartbeat)`);
     }
-    if (/block-reconciliation-data\.json/.test(route) && !/api\.github\.com/.test(route)) {
+    if (route.includes("block-reconciliation-data.json") && !route.includes("https://api.github.com/")) {
       problems.push(`${routeRel}: must not rely only on stale recon for recentActivity`);
     }
     if (!/RECENT_CACHE_MS\s*=\s*60_000|60_000/.test(route)) {
