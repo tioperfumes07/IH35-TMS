@@ -164,7 +164,7 @@ export function AuditScoreboardPage() {
 
       {/* MODULE TABLE */}
       <h2>By module <span className="sub">DoD A·B·C·D·E + VERIFY 1–8 — 13 gates, provenance-honest</span></h2>
-      <div className="scroll">
+      <div className="scroll overflow-x-auto">
         <table>
           <thead>
             <tr>

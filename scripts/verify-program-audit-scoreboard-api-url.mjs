@@ -84,6 +84,22 @@ export function assertScoreboardContract(sources) {
     problems.push(`${routeRel}: GET audit-scoreboard must set config.rateLimit (CodeQL missing-rate-limiting)`);
   }
 
+  const emitRel = "scripts/audit-coverage-scoreboard.mjs";
+  const emit = sources?.[emitRel] ?? read(emitRel);
+  if (/generatedAt:\s*new Date\(\)\.toISOString\(\)/.test(emit)) {
+    problems.push(
+      `${emitRel}: generatedAt must not use wall clock — derive from ledger git log %cI (byte-stable emit)`
+    );
+  }
+  if (!/ledgerGitOr\s*\(\s*["']%cI["']/.test(emit) || !/ledgerGitOr\s*\(\s*["']%h["']/.test(emit)) {
+    problems.push(
+      `${emitRel}: emit meta must call ledgerGitOr("%cI") and ledgerGitOr("%h") for generatedAt/sourceSha`
+    );
+  }
+  if (!/AUDIT-COVERAGE-LIVE\.md/.test(emit)) {
+    problems.push(`${emitRel}: ledger path AUDIT-COVERAGE-LIVE.md must drive deterministic meta`);
+  }
+
   return problems;
 }
 

@@ -582,6 +582,20 @@ function gitShortSha() {
   }
 }
 
+/** Ledger-commit meta — byte-stable across re-emits (CI HEAD / wall clock must not dirty the tree). */
+const LEDGER_REL = "docs/audit/AUDIT-COVERAGE-LIVE.md";
+function ledgerGitOr(fmt, fb) {
+  try {
+    const out = execSync(`git log -1 --format=${fmt} -- ${LEDGER_REL}`, {
+      cwd: ROOT,
+      encoding: "utf8",
+    }).trim();
+    return out || fb;
+  } catch {
+    return fb;
+  }
+}
+
 /**
  * Emit docs/audit/program-scoreboard.json for the Program Audit Scoreboard page.
  * Shape = PROGRAM_SCOREBOARD (meta, modules[], prod[], chain[], chainMoney, chainReverse, guard[]).
@@ -614,6 +628,8 @@ export function emitProgramJson(rows, metrics, sidebarIds) {
   }
 
   const sha = gitShortSha();
+  const ledgerGeneratedAt = ledgerGitOr("%cI", "1970-01-01T00:00:00Z");
+  const ledgerSourceSha = ledgerGitOr("%h", "unknown");
   const modules = prev.modules.map((m) => {
     const cells = Array.isArray(m.cells) ? [...m.cells] : Array(13).fill("UNV");
     while (cells.length < 13) cells.push("UNV");
@@ -651,8 +667,9 @@ export function emitProgramJson(rows, metrics, sidebarIds) {
     ...prev,
     meta: {
       ...prev.meta,
-      generatedAt: new Date().toISOString(),
-      sourceSha: sha,
+      // Deterministic from the ledger's own last commit — not wall clock / CI HEAD.
+      generatedAt: ledgerGeneratedAt,
+      sourceSha: ledgerSourceSha,
       deployedSha: String(prev.meta.deployedSha || sha).slice(0, 9),
       // prodReadAt stays from Cascade live-read snapshot — CI must not pretend it re-read prod
       ledgerRows: metrics.rowsTotal,
@@ -678,20 +695,9 @@ export function emitProgramJson(rows, metrics, sidebarIds) {
     return { ...rest, text };
   });
 
-  // Write-stable: skip rewrite when only meta.generatedAt would change.
-  // Otherwise frontend build/typecheck dirties the tree and security-audit's
-  // `git checkout $BASE` fails mid-job (observed on PR #4141).
-  const normalize = (obj) => {
-    const clone = JSON.parse(JSON.stringify(obj));
-    if (clone.meta) {
-      // CI HEAD sha / clock must not dirty the tree during frontend build or security-audit
-      // `git checkout $BASE` (PR #4141 failure mode).
-      delete clone.meta.generatedAt;
-      delete clone.meta.sourceSha;
-    }
-    return JSON.stringify(clone);
-  };
-  if (normalize(prev) === normalize(out)) {
+  // Write-stable: skip rewrite when payload is byte-identical.
+  // generatedAt/sourceSha are ledger-commit-derived (deterministic) so re-emit does not drift.
+  if (JSON.stringify(prev) === JSON.stringify(out)) {
     console.log(`${LABEL}: program-scoreboard.json unchanged (skip write)`);
     return prev;
   }
