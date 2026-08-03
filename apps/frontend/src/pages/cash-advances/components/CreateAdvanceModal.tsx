@@ -14,6 +14,7 @@ import { listLoads, getLoad } from "../../../api/loads";
 import { Button } from "../../../components/Button";
 import { Combobox } from "../../../components/Combobox";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
@@ -152,10 +153,20 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
     enabled: open && Boolean(loadId),
   });
 
-  const fleetQuery = useQuery({
-    queryKey: ["cash-advances", "fleet", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, include: "trailers", limit: 500 }),
-    enabled: open && Boolean(operatingCompanyId) && (requiresLoad(purpose) || Boolean(loadId)),
+  const [trailerSearch, setTrailerSearch] = useState("");
+  const trailersQuery = useQuery({
+    queryKey: ["cash-advances", "trailers", operatingCompanyId, trailerSearch],
+    queryFn: () =>
+      listUnits({
+        operating_company_id: operatingCompanyId,
+        include: "trailers",
+        limit: 200,
+        search: trailerSearch || undefined,
+      }),
+    enabled:
+      open &&
+      Boolean(operatingCompanyId) &&
+      (requiresLoad(purpose) || purpose === "border_fee" || purpose === "other" || Boolean(loadId)),
   });
 
   useEffect(() => {
@@ -189,25 +200,15 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
     [loadsQuery.data]
   );
 
-  const unitOptions = useMemo(() => {
-    const rows = (fleetQuery.data?.units ?? []) as Array<Record<string, unknown>>;
-    return rows
-      .filter((u) => String(u.kind ?? "truck") === "truck" || !u.kind)
-      .map((u) => ({
-        value: String(u.id),
-        label: String(u.unit_number ?? u.display_id ?? u.id),
-      }));
-  }, [fleetQuery.data]);
-
   const trailerOptions = useMemo(() => {
-    const rows = (fleetQuery.data?.units ?? []) as Array<Record<string, unknown>>;
+    const rows = (trailersQuery.data?.units ?? []) as Array<Record<string, unknown>>;
     return rows
       .filter((u) => String(u.kind ?? "") === "trailer")
       .map((u) => ({
         value: String(u.id),
         label: String(u.equipment_number ?? u.unit_number ?? u.display_id ?? u.id),
       }));
-  }, [fleetQuery.data]);
+  }, [trailersQuery.data]);
 
   const selectedBill = useMemo(
     () => billsQuery.data?.bills?.find((row) => String(row.id) === linkedBillId) ?? null,
@@ -500,13 +501,15 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                     <span className="font-medium text-gray-700">
                       Unit / truck{purpose === "fuel_deposit" ? " *" : ""}
                     </span>
-                    <Combobox
-                      options={unitOptions}
+                    <EntityPicker
+                      kind="unit"
+                      operatingCompanyId={operatingCompanyId}
                       value={unitId}
                       onChange={setUnitId}
+                      enabled={open}
+                      nestedInDrawer
                       placeholder="Select unit"
-                      loading={fleetQuery.isLoading}
-                      allowClear
+                      dataField="unit_id"
                     />
                   </label>
                   <label className="space-y-1" data-field="trailer_id">
@@ -515,8 +518,9 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                       options={trailerOptions}
                       value={trailerId}
                       onChange={setTrailerId}
+                      onSearch={setTrailerSearch}
                       placeholder="Select trailer"
-                      loading={fleetQuery.isLoading}
+                      loading={trailersQuery.isLoading}
                       allowClear
                     />
                   </label>

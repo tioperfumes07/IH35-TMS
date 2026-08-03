@@ -30,11 +30,20 @@ export function collectProblems(root = ROOT) {
   if (!/DriverPickerWithCreate/.test(code)) {
     problems.push(`${FILE}: must use DriverPickerWithCreate for driver`);
   }
+  if (!/EntityPicker[\s\S]*?kind=["']unit["']/.test(code)) {
+    problems.push(`${FILE}: unit must use EntityPicker kind=unit`);
+  }
+  if (!/trailerSearch/.test(code) || !/onSearch=\{setTrailerSearch\}/.test(code)) {
+    problems.push(`${FILE}: trailer must wire trailerSearch → onSearch`);
+  }
   if (/listDrivers\s*\(/.test(code)) {
     problems.push(`${FILE}: must not call listDrivers (capped roster)`);
   }
   if (/search:\s*""/.test(code)) {
     problems.push(`${FILE}: must not hardcode search:""`);
+  }
+  if (/limit:\s*500/.test(code)) {
+    problems.push(`${FILE}: must not fetch silent limit:500 fleet page`);
   }
   if (/driverOptions/.test(code) && /Combobox[\s\S]{0,80}driverOptions/.test(code)) {
     problems.push(`${FILE}: must not keep Combobox dual path over driverOptions`);
