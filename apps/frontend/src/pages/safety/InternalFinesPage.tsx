@@ -9,6 +9,7 @@ import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { listInternalFineReasons } from "../../api/catalogs-safety";
 import { listDispatchLoads, type DispatchStatus } from "../../api/dispatch";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
+import { Combobox } from "../../components/Combobox";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { companyToday } from "../../lib/businessDate";
@@ -49,6 +50,8 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
     status: "pending",
     notes: "",
   });
+  // SAF-B29: related-load picker must search server-side — limit:200 silently hid loads past the cap.
+  const [loadSearch, setLoadSearch] = useState("");
 
   const query = useQuery({
     queryKey: ["safety", "internal-fines", operatingCompanyId],
@@ -65,7 +68,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
 
   // FIX 1 — optional related-load picker (same list source as the dispatch board).
   const loadsQuery = useQuery({
-    queryKey: ["dispatch", "loads", "internal-fine-picker", operatingCompanyId],
+    queryKey: ["dispatch", "loads", "internal-fine-picker", operatingCompanyId, loadSearch],
     queryFn: () =>
       listDispatchLoads({
         operating_company_id: operatingCompanyId,
@@ -73,6 +76,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
         limit: 200,
         offset: 0,
         status: ALL_DISPATCH_STATUSES,
+        search: loadSearch || undefined,
       }),
     enabled: Boolean(operatingCompanyId),
   });
@@ -90,6 +94,15 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   );
 
   const loads = loadsQuery.data?.loads ?? [];
+
+  const loadOptions = useMemo(
+    () =>
+      loads.map((l) => ({
+        value: String(l.id ?? ""),
+        label: String(l.load_number ?? l.id ?? ""),
+      })),
+    [loads]
+  );
 
   const createMutation = useMutation({
     mutationFn: () => {
@@ -234,20 +247,16 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
           </SelectCombobox>
-          <SelectCombobox
-            value={form.related_load_uuid}
-            onChange={(e) => setForm((v) => ({ ...v, related_load_uuid: e.target.value }))}
+          <Combobox
+            options={loadOptions}
+            value={form.related_load_uuid || null}
+            onChange={(next) => setForm((v) => ({ ...v, related_load_uuid: next ?? "" }))}
+            onSearch={setLoadSearch}
+            placeholder="Related load (optional)"
+            loading={loadsQuery.isLoading}
+            allowClear
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-          >
-            <option value="" disabled>
-              Related load (optional)
-            </option>
-            {loads.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.load_number}
-              </option>
-            ))}
-          </SelectCombobox>
+          />
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <button

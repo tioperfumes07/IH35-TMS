@@ -16,7 +16,10 @@ import { listDrivers, listUnits } from "../../../api/mdata";
 import { listLoads } from "../../../api/loads";
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
+import { Combobox } from "../../../components/Combobox";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { companyToday } from "../../../lib/businessDate";
@@ -25,7 +28,6 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatUsdCents } from "../../../lib/money";
 import { DamageReportDetail } from "../damage-reports/DamageReportDetail";
-import { EntityLink } from "../../../components/shared/EntityLink";
 
 // Declarative per-incident-type field keys. The COMMON set renders for every type;
 // `typedFields` on each config adds the type-specific inputs (root-fix: one surface,
@@ -175,21 +177,35 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const { user } = useAuth();
   const canVoid = user?.role === "Owner" || user?.role === "Administrator";
 
-  // Drivers + fleet feed BOTH the create pickers AND the list Driver/Unit columns, so they
-  // load whenever a company is selected. limit:200 avoids the 50-cap picker landmine.
+  // SAF-B29: unit/load drawer pickers and fleet labels must not silently truncate past 200 rows.
+  const [unitSearch, setUnitSearch] = useState("");
+  const [loadSearch, setLoadSearch] = useState("");
+
+  // Drivers + fleet feed list Driver/Unit column labels (filters use EntityPicker server search).
   const driversQuery = useQuery({
     queryKey: ["safety", "incidents-drivers", operatingCompanyId],
     queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: 200 }),
     enabled: Boolean(operatingCompanyId),
   });
   const fleetQuery = useQuery({
-    queryKey: ["safety", "incidents-fleet", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 200, include: "trailers" }),
+    queryKey: ["safety", "incidents-fleet", operatingCompanyId, unitSearch],
+    queryFn: () =>
+      listUnits({
+        operating_company_id: operatingCompanyId,
+        limit: 200,
+        include: "trailers",
+        search: unitSearch || undefined,
+      }),
     enabled: Boolean(operatingCompanyId),
   });
   const loadsQuery = useQuery({
-    queryKey: ["safety", "incidents-loads", operatingCompanyId],
-    queryFn: () => listLoads({ operating_company_id: [operatingCompanyId], limit: 200 }),
+    queryKey: ["safety", "incidents-loads", operatingCompanyId, loadSearch],
+    queryFn: () =>
+      listLoads({
+        operating_company_id: [operatingCompanyId],
+        limit: 200,
+        search: loadSearch || undefined,
+      }),
     enabled: formEditable && Boolean(operatingCompanyId),
   });
 
@@ -198,6 +214,31 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const unitOptions = fleetRows.filter((r) => str(r.kind) !== "trailer");
   const trailerOptions = fleetRows.filter((r) => str(r.kind) === "trailer");
   const loadOptions = loadsQuery.data?.loads ?? [];
+
+  const unitComboboxOptions = useMemo(
+    () =>
+      unitOptions.map((u) => ({
+        value: String(u.id ?? ""),
+        label: str(u.unit_number) || String(u.id ?? ""),
+      })),
+    [unitOptions]
+  );
+  const trailerComboboxOptions = useMemo(
+    () =>
+      trailerOptions.map((t) => ({
+        value: String(t.id ?? ""),
+        label: str(t.unit_number) || String(t.id ?? ""),
+      })),
+    [trailerOptions]
+  );
+  const loadComboboxOptions = useMemo(
+    () =>
+      (loadOptions as Array<Record<string, unknown>>).map((l) => ({
+        value: String(l.id ?? ""),
+        label: str(l.load_number) || String(l.id ?? ""),
+      })),
+    [loadOptions]
+  );
 
   const driverNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -392,7 +433,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         key: "driver_id",
         label: "Driver",
         sortable: true,
-        render: (row) =>
+                render: (row) =>
           row.driver_id ? (
             <EntityLink
               kind="driver"
@@ -411,7 +452,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         key: "unit_id",
         label: "Unit",
         sortable: true,
-        render: (row) =>
+                render: (row) =>
           row.unit_id ? (
             <EntityLink
               kind="unit"
@@ -479,37 +520,29 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
       >
         <label className="text-[11px] text-slate-600">
           Driver
-          <select
-            className="mt-1 block min-h-12 min-w-[10rem] rounded-sm border border-gray-200 px-2 text-xs"
-            value={driverFilter}
-            onChange={(event) => setDriverFilter(event.target.value)}
-            data-testid={`${config.pageTestId}-filter-driver`}
-            aria-label="Filter by driver"
-          >
-            <option value="">All drivers</option>
-            {drivers.map((d) => (
-              <option key={String(d.id)} value={String(d.id)}>
-                {`${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || "Driver"}
-              </option>
-            ))}
-          </select>
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={operatingCompanyId}
+            value={driverFilter || null}
+            onChange={(next) => setDriverFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All drivers"
+            className="mt-1 block min-w-[10rem]"
+            dataTestId={`${config.pageTestId}-filter-driver`}
+          />
         </label>
         <label className="text-[11px] text-slate-600">
           Unit
-          <select
-            className="mt-1 block min-h-12 min-w-[8rem] rounded-sm border border-gray-200 px-2 text-xs"
-            value={unitFilter}
-            onChange={(event) => setUnitFilter(event.target.value)}
-            data-testid={`${config.pageTestId}-filter-unit`}
-            aria-label="Filter by unit"
-          >
-            <option value="">All units</option>
-            {unitOptions.map((u) => (
-              <option key={str(u.id)} value={str(u.id)}>
-                {str(u.unit_number) || "Unit"}
-              </option>
-            ))}
-          </select>
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={operatingCompanyId}
+            value={unitFilter || null}
+            onChange={(next) => setUnitFilter(next ?? "")}
+            allowCreate={false}
+            placeholder="All units"
+            className="mt-1 block min-w-[8rem]"
+            dataTestId={`${config.pageTestId}-filter-unit`}
+          />
         </label>
         <label className="text-[11px] text-slate-600">
           From
@@ -655,21 +688,10 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                       placeholder="Select driver"
                     />
                   </div>
-                ) : detail?.driver_id ? (
-                  <div className="mt-1">
-                    <EntityLink
-                      kind="driver"
-                      id={String(detail.driver_id)}
-                      label={
-                        (detail.driver_name as string | undefined) ??
-                        driverNameById.get(String(detail.driver_id)) ??
-                        undefined
-                      }
-                      data-testid={`${config.pageTestId}-detail-driver-link`}
-                    />
-                  </div>
                 ) : (
-                  <div className="mt-1 text-slate-800">—</div>
+                  <div className="mt-1 text-slate-800">
+                    {(detail?.driver_id ? driverNameById.get(String(detail.driver_id)) : "") || "—"}
+                  </div>
                 )}
               </label>
             ) : null}
@@ -678,34 +700,23 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
               <label className="block">
                 <span className="text-slate-600">Unit</span>
                 {formEditable ? (
-                  <select
-                    className={inputCls}
-                    value={str(selected?.unit_id)}
-                    data-testid={`${config.pageTestId}-field-unit_id`}
-                    onChange={(e) => setField("unit_id", e.target.value)}
-                  >
-                    <option value="">—</option>
-                    {unitOptions.map((u) => (
-                      <option key={String(u.id)} value={String(u.id)}>
-                        {str(u.unit_number) || "Unit"}
-                      </option>
-                    ))}
-                  </select>
-                ) : detail?.unit_id ? (
-                  <div className="mt-1">
-                    <EntityLink
-                      kind="unit"
-                      id={String(detail.unit_id)}
-                      label={
-                        str(detail.unit_number) ||
-                        unitNumberById.get(String(detail.unit_id)) ||
-                        undefined
-                      }
-                      data-testid={`${config.pageTestId}-detail-unit-link`}
+                  <div className="mt-1" data-testid={`${config.pageTestId}-field-unit_id`}>
+                    <Combobox
+                      options={unitComboboxOptions}
+                      value={str(selected?.unit_id) || null}
+                      onChange={(next) => setField("unit_id", next ?? "")}
+                      onSearch={setUnitSearch}
+                      placeholder="Select unit"
+                      loading={fleetQuery.isLoading}
+                      allowClear
                     />
                   </div>
                 ) : (
-                  <div className="mt-1 text-slate-800">—</div>
+                  <div className="mt-1 text-slate-800">
+                    {str(detail?.unit_number) ||
+                      (detail?.unit_id ? unitNumberById.get(String(detail.unit_id)) : "") ||
+                      "—"}
+                  </div>
                 )}
               </label>
             ) : null}
@@ -716,19 +727,17 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                   Trailer{config.requiredExtraFields.includes("trailer_id") ? " *" : ""}
                 </span>
                 {formEditable ? (
-                  <select
-                    className={inputCls}
-                    value={str(selected?.trailer_id)}
-                    data-testid={`${config.pageTestId}-field-trailer_id`}
-                    onChange={(e) => setField("trailer_id", e.target.value)}
-                  >
-                    <option value="">—</option>
-                    {trailerOptions.map((t) => (
-                      <option key={String(t.id)} value={String(t.id)}>
-                        {str(t.unit_number) || String(t.id)}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="mt-1" data-testid={`${config.pageTestId}-field-trailer_id`}>
+                    <Combobox
+                      options={trailerComboboxOptions}
+                      value={str(selected?.trailer_id) || null}
+                      onChange={(next) => setField("trailer_id", next ?? "")}
+                      onSearch={setUnitSearch}
+                      placeholder="Select trailer"
+                      loading={fleetQuery.isLoading}
+                      allowClear
+                    />
+                  </div>
                 ) : detail?.trailer_id ? (
                   <div className="mt-1">
                     <EntityLink
@@ -752,19 +761,17 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
               <label className="block">
                 <span className="text-slate-600">Load</span>
                 {formEditable ? (
-                  <select
-                    className={inputCls}
-                    value={str(selected?.load_id)}
-                    data-testid={`${config.pageTestId}-field-load_id`}
-                    onChange={(e) => setField("load_id", e.target.value)}
-                  >
-                    <option value="">—</option>
-                    {loadOptions.map((l) => (
-                      <option key={String(l.id)} value={String(l.id)}>
-                        {str(l.load_number) || String(l.id)}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="mt-1" data-testid={`${config.pageTestId}-field-load_id`}>
+                    <Combobox
+                      options={loadComboboxOptions}
+                      value={str(selected?.load_id) || null}
+                      onChange={(next) => setField("load_id", next ?? "")}
+                      onSearch={setLoadSearch}
+                      placeholder="Select load"
+                      loading={loadsQuery.isLoading}
+                      allowClear
+                    />
+                  </div>
                 ) : detail?.load_id ? (
                   <div className="mt-1">
                     <EntityLink
