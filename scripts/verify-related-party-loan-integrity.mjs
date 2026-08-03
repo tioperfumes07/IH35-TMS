@@ -27,6 +27,7 @@ import { readFileSync, existsSync } from "node:fs";
 const LABEL = "verify:related-party-loan-integrity";
 const POSTER = "apps/backend/src/accounting/related-party-loan-posting/poster.service.ts";
 const ROUTES = "apps/backend/src/accounting/related-party-loan-posting/routes.ts";
+const ACCRUAL = "apps/backend/src/accounting/related-party-loan-posting/interest-accrual.service.ts";
 
 export function stripComments(src) {
   return String(src)
@@ -115,6 +116,61 @@ export function analyse(files) {
     }
   }
 
+  // 4. INTEREST ACCRUAL MUST NOT REUSE THE FACTORING ROLE (LOAN-07).
+  //
+  // This is the specific misposting this lane exists to prevent, and it is one identifier away at all
+  // times. Verified on prod 2026-08-03: `default_interest_expense` resolves to 6830 Factoring Default
+  // Interest on BOTH TRANSP and USMCA. Factoring default interest is a penalty on receivables sold;
+  // owner-loan interest is the cost of insider money. ASC 850 requires the second to be separately
+  // disclosable, and once both land in 6830 no query can pull them apart again — the amounts are
+  // commingled in a single account with no distinguishing column. There is no later fix, only a restated
+  // period. So the accrual must resolve `related_party_interest_expense` and must never NAME the other.
+  const accrual = files[ACCRUAL];
+  if (accrual == null) {
+    problems.push(`${ACCRUAL} is missing — nothing accrues interest on related-party loans.`);
+  } else {
+    const acc = stripComments(accrual);
+    if (!/related_party_interest_expense/.test(acc)) {
+      problems.push(
+        `${ACCRUAL}: no longer resolves related_party_interest_expense. Without its own role the accrual ` +
+          `has nowhere correct to post and will be pointed at whatever interest account is nearest.`
+      );
+    }
+    if (/default_interest_expense/.test(acc)) {
+      problems.push(
+        `${ACCRUAL}: references default_interest_expense, which is bound to 6830 Factoring Default ` +
+          `Interest on TRANSP and USMCA. Related-party interest posted there is commingled with a ` +
+          `financing penalty and cannot be separated afterwards — ASC 850 disclosure becomes impossible.`
+      );
+    }
+    // Both accrual directions must balance, counted in the builder scope only — same scoping discipline
+    // as check 1, and for the same reason: the Posting type declaration matches the leg pattern.
+    const aStart = acc.indexOf("function buildInterestAccrualPostings");
+    if (aStart === -1) {
+      problems.push(`${ACCRUAL}: buildInterestAccrualPostings is gone — nothing constructs the accrual legs.`);
+    } else {
+      const rest = acc.slice(aStart);
+      const nextExport = rest.indexOf("\nexport ", 1);
+      const aScope = nextExport === -1 ? rest : rest.slice(0, nextExport);
+      const aDr = (aScope.match(/debit_or_credit:\s*"debit"/g) || []).length;
+      const aCr = (aScope.match(/debit_or_credit:\s*"credit"/g) || []).length;
+      if (aDr !== aCr || aDr < 2) {
+        problems.push(
+          `${ACCRUAL}: expected balanced accrual legs across both directions (got ${aDr} debit / ${aCr} ` +
+            `credit). A reversed or unbalanced accrual misstates income and expense by the same amount, ` +
+            `which nets to zero on the trial balance and therefore passes every totals check.`
+        );
+      }
+    }
+    // The accrual writes nothing while the flag is off; losing that gate would post to a live ledger.
+    if (!/RELATED_PARTY_LOAN_GL_POSTING_FLAG|accrualEnabled/.test(acc)) {
+      problems.push(
+        `${ACCRUAL}: the posting flag gate is gone. Posting flags are OFF per entity until a balanced ` +
+          `tie-out is proven; an ungated accrual would begin writing to the live ledger on deploy.`
+      );
+    }
+  }
+
   // The register must stay entity-scoped and must not resurrect reversed rows into the balance.
   if (routes != null) {
     const r = stripComments(routes);
@@ -134,7 +190,7 @@ export function analyse(files) {
 
 function readAll() {
   const out = {};
-  for (const f of [POSTER, ROUTES]) out[f] = existsSync(f) ? readFileSync(f, "utf8") : null;
+  for (const f of [POSTER, ROUTES, ACCRUAL]) out[f] = existsSync(f) ? readFileSync(f, "utf8") : null;
   return out;
 }
 
@@ -158,21 +214,44 @@ function selftest() {
     }
   `;
   const goodRoutes = `filters.push("e.operating_company_id = $1"); filters.push("e.reversed_at IS NULL");`;
+  const goodAccrual = `
+    export type Posting = { debit_or_credit: "debit" | "credit"; };
+    export function buildInterestAccrualPostings(direction, i, c, amountCents, memo) {
+      if (direction === "out") return [
+        { account_id: c, debit_or_credit: "debit", amount_cents: amountCents },
+        { account_id: i, debit_or_credit: "credit", amount_cents: amountCents }];
+      return [
+        { account_id: i, debit_or_credit: "debit", amount_cents: amountCents },
+        { account_id: c, debit_or_credit: "credit", amount_cents: amountCents }];
+    }
+    const r = resolveRoleAccount(client, id, "related_party_interest_expense");
+    export async function accrualEnabled(){ return isEnabled(RELATED_PARTY_LOAN_GL_POSTING_FLAG); }
+  `;
+  const ok = { [POSTER]: goodPoster, [ROUTES]: goodRoutes, [ACCRUAL]: goodAccrual };
 
-  t("the real shape passes", analyse({ [POSTER]: goodPoster, [ROUTES]: goodRoutes }).length === 0);
-  t("a missing poster FAILS", analyse({ [POSTER]: null, [ROUTES]: goodRoutes }).length === 1);
+  t("the real shape passes", analyse(ok).length === 0);
+
+  // THE MISPOSTING THIS LANE EXISTS TO PREVENT — one identifier away, verified on prod.
+  t("reusing default_interest_expense in the accrual FAILS",
+    analyse({ ...ok, [ACCRUAL]: goodAccrual.replace("related_party_interest_expense", "default_interest_expense") }).length >= 1);
+  t("a missing accrual service FAILS", analyse({ ...ok, [ACCRUAL]: null }).length === 1);
+  t("unbalanced accrual legs FAIL",
+    analyse({ ...ok, [ACCRUAL]: goodAccrual.replace(/debit_or_credit: "credit"/, 'debit_or_credit: "debit"') }).length >= 1);
+  t("dropping the accrual posting-flag gate FAILS",
+    analyse({ ...ok, [ACCRUAL]: goodAccrual.replace("RELATED_PARTY_LOAN_GL_POSTING_FLAG", "true").replace("accrualEnabled", "always") }).length >= 1);
+  t("a missing poster FAILS", analyse({ [POSTER]: null, [ROUTES]: goodRoutes, [ACCRUAL]: goodAccrual }).length === 1);
   t("unbalanced legs FAIL",
     analyse({ [POSTER]: goodPoster.replace(/debit_or_credit: "credit"/, 'debit_or_credit: "debit"'), [ROUTES]: goodRoutes }).length >= 1);
   t("removing the refusal path FAILS",
     analyse({ [POSTER]: goodPoster.replace('{ ok: false, missingRole: "cash_clearing" }', "{ ok: true, accountId: 'suspense' }"), [ROUTES]: goodRoutes }).length >= 1);
   t("a QBO push reference FAILS",
-    analyse({ [POSTER]: goodPoster + "\nconst f = QBO_JE_PUSH_ENABLED;", [ROUTES]: goodRoutes }).length >= 1);
+    analyse({ [POSTER]: goodPoster + "\nconst f = QBO_JE_PUSH_ENABLED;", [ROUTES]: goodRoutes, [ACCRUAL]: goodAccrual }).length >= 1);
   t("losing entity scope in the register FAILS",
-    analyse({ [POSTER]: goodPoster, [ROUTES]: 'filters.push("e.reversed_at IS NULL");' }).length === 1);
+    analyse({ [POSTER]: goodPoster, [ROUTES]: 'filters.push("e.reversed_at IS NULL");', [ACCRUAL]: goodAccrual }).length === 1);
   t("counting reversed rows in the register FAILS",
-    analyse({ [POSTER]: goodPoster, [ROUTES]: 'filters.push("e.operating_company_id = $1");' }).length === 1);
+    analyse({ [POSTER]: goodPoster, [ROUTES]: 'filters.push("e.operating_company_id = $1");', [ACCRUAL]: goodAccrual }).length === 1);
   t("a COMMENT mentioning a QBO flag does not trip it",
-    analyse({ [POSTER]: goodPoster + "\n// never set QBO_JE_PUSH_ENABLED here", [ROUTES]: goodRoutes }).length === 0);
+    analyse({ [POSTER]: goodPoster + "\n// never set QBO_JE_PUSH_ENABLED here", [ROUTES]: goodRoutes, [ACCRUAL]: goodAccrual }).length === 0);
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
@@ -182,7 +261,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) {
   selftest();
-  console.log(`${LABEL} selftest OK — 8 cases (2 pass-shapes incl. the type-declaration miscount that fooled the first version, 6 fail-shapes)`);
+  console.log(`${LABEL} selftest OK — 13 cases (2 pass-shapes incl. the type-declaration miscount that fooled the first version, 11 fail-shapes incl. the default_interest_expense misposting)`);
   process.exit(0);
 }
 
@@ -191,4 +270,4 @@ if (problems.length) {
   console.error(`${LABEL} FAILED:\n  - ${problems.join("\n  - ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — balanced legs both directions, refusal path intact, no QBO push, register entity-scoped`);
+console.log(`${LABEL} OK — balanced legs both directions, refusal path intact, no QBO push, register entity-scoped, accrual on its own role + flag-gated`);

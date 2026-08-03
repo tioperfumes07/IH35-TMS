@@ -24,6 +24,7 @@ import { z } from "zod";
 import { currentAuthUser, validationError, withCompanyScope } from "../shared.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { buildLoanSchedule } from "./schedule.service.js";
+import { prepareInterestAccrual } from "./interest-accrual.service.js";
 
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -225,7 +226,111 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
     }
   );
 
+  // ── INTEREST ACCRUAL PREVIEW (LOAN-07) — computes the entry, writes NOTHING. ─────────────────────
+  // A DRY RUN IS THE POINT, not a limitation. RELATED_PARTY_LOAN_GL_POSTING_ENABLED is OFF on every
+  // entity and stays OFF until a balanced tie-out is proven per entity — but "prove the tie-out" needs
+  // an instrument that shows the exact accounts and amounts the poster WOULD use, on real rows, without
+  // touching the ledger. This is that instrument. It exercises the same resolver and the same builder as
+  // the live path, so a green preview is evidence about the live path and not about a parallel mock.
+  //
+  // It also surfaces the refusal. If related_party_interest_expense (or 1260) is unbound for the entity,
+  // this returns 200 with can_post:false and the missing role NAMED — visible before the flag flips,
+  // rather than as a 500 the first time real interest accrues.
+  app.get(
+    "/api/v1/accounting/related-party-loans/:id/interest-accrual/preview",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return;
+      const params = idParamSchema.safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+      if (!q.success) return validationError(reply, q.error);
 
+      const result = await withCompanyScope(authUser.uuid, q.data.operating_company_id, async (client) => {
+        const loan = (await client.query(
+          `SELECT e.id::text, e.direction, e.account_id::text AS account_id, e.counterparty_name,
+                  e.interest_rate_bps, e.reversed_at
+             FROM accounting.related_party_loan_entries e
+            WHERE e.id = $1::uuid AND e.operating_company_id = $2::uuid AND e.deleted_at IS NULL
+            LIMIT 1`,
+          [params.data.id, q.data.operating_company_id]
+        )) as {
+          rows: Array<{
+            id: string;
+            direction: "in" | "out";
+            account_id: string;
+            counterparty_name: string | null;
+            interest_rate_bps: number;
+            reversed_at: string | null;
+          }>;
+        };
+        const row = loan.rows[0];
+        if (!row) return { notFound: true as const };
+        // A reversed loan accrues nothing. Interest on an entry that was voided would be interest on a
+        // debt that no longer exists.
+        if (row.reversed_at) return { reversed: true as const };
+
+        // The NEXT unposted schedule row — accrual follows the schedule the counterparty was given,
+        // rather than re-deriving interest and drifting from that document.
+        const next = (await client.query(
+          `SELECT payment_number, due_date::text AS due_date, interest_cents
+             FROM accounting.related_party_loan_schedule
+            WHERE loan_id = $1::uuid AND operating_company_id = $2::uuid
+              AND is_active AND NOT posted
+            ORDER BY payment_number
+            LIMIT 1`,
+          [params.data.id, q.data.operating_company_id]
+        )) as { rows: Array<{ payment_number: number; due_date: string; interest_cents: number }> };
+        const due = next.rows[0];
+        if (!due) return { nothingDue: true as const };
+
+        const prepared = await prepareInterestAccrual(client as never, {
+          operating_company_id: q.data.operating_company_id,
+          direction: row.direction,
+          loan_account_id: row.account_id,
+          interest_cents: due.interest_cents,
+          payment_number: due.payment_number,
+          counterparty_label: row.counterparty_name ?? "related party",
+        });
+
+        return { loan: row, due, prepared };
+      });
+
+      if ("notFound" in result) return reply.code(404).send({ error: "related_party_loan_not_found" });
+      if ("reversed" in result) {
+        return { can_post: false, reason: "loan_reversed", postings: [] };
+      }
+      if ("nothingDue" in result) {
+        return { can_post: false, reason: "no_unposted_schedule_row", postings: [] };
+      }
+
+      const { prepared, due, loan } = result;
+      if (!prepared.ok) {
+        return {
+          can_post: false,
+          reason: prepared.reason,
+          // Named, not swallowed — the whole reason a preview exists.
+          missing_role: prepared.missing_role ?? null,
+          payment_number: due.payment_number,
+          interest_cents: due.interest_cents,
+          postings: [],
+        };
+      }
+      return {
+        can_post: true,
+        direction: loan.direction,
+        payment_number: due.payment_number,
+        due_date: due.due_date,
+        interest_cents: prepared.amount_cents,
+        memo: prepared.memo,
+        postings: prepared.postings,
+        // Restated on every response so a caller reading this can never mistake it for a posted entry.
+        posted: false,
+        note: "preview only — no journal entry was written",
+      };
+    }
+  );
 
   // ── CREATE — entry + schedule in ONE transaction. ────────────────────────────────────────────────
   app.post(
