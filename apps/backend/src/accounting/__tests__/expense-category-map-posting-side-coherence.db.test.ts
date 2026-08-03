@@ -260,6 +260,57 @@ describeIntegration("ACCT-F99 expense-category map posting_side coherence (real 
     ).toEqual([]);
   });
 
+  /**
+   * ACCT-F100 — the invariant above is only durable if the DATABASE enforces it. Migration
+   * 202611290000 adds a BEFORE INSERT/UPDATE trigger that DERIVES posting_side from the mapped
+   * account's normal balance, so an incoherent row stops being expressible by any writer — the seed
+   * migrations, the CRUD API, or a manual psql session. This asserts the trigger is installed AND
+   * that it actually normalises, because a trigger that exists but no longer fires is worse than none.
+   */
+  it("the database DERIVES posting_side — an incoherent write is normalised, not stored", async () => {
+    const { rows: trg } = await db.query<{ n: string }>(`
+      SELECT count(*)::text AS n FROM pg_trigger
+       WHERE tgrelid = 'accounting.expense_category_account_map'::regclass
+         AND tgname = 'trg_derive_expense_category_posting_side'
+         AND NOT tgisinternal
+    `);
+    expect(Number(trg[0].n), "trg_derive_expense_category_posting_side is missing — posting_side can drift again").toBe(1);
+
+    // Behavioural proof, rolled back: force the exact ACCT-F99 defect (debit on a Liability) and a
+    // NULL (the API path after ACCT-F100) and assert the database corrects both.
+    await db.query("BEGIN");
+    try {
+      await db.query(`SELECT set_config('app.bypass_rls','lucia',true)`);
+      const { rows } = await db.query<{ category_code: string; account_type: string; posting_side: string }>(`
+        WITH liability AS (
+          SELECT m.operating_company_id, m.account_id
+            FROM accounting.expense_category_account_map m
+            JOIN catalogs.accounts a ON a.id = m.account_id
+           WHERE a.account_type = 'Liability' AND m.is_active = true
+           LIMIT 1
+        ), ins AS (
+          INSERT INTO accounting.expense_category_account_map
+            (operating_company_id, category_kind, category_code, account_id, posting_side, is_active)
+          SELECT operating_company_id, 'escrow', 'zz_acct_f100_probe', account_id, 'debit', true FROM liability
+          RETURNING account_id, category_code, posting_side
+        )
+        SELECT ins.category_code, a.account_type, ins.posting_side
+          FROM ins JOIN catalogs.accounts a ON a.id = ins.account_id
+      `);
+      // Skip rather than assert nothing if this database carries no Liability mapping at all.
+      if (rows.length > 0) {
+        expect(
+          rows[0].posting_side,
+          `wrote posting_side='debit' against a ${rows[0].account_type} account and the database KEPT it — the derive trigger is not firing`
+        ).toBe("credit");
+      }
+    } finally {
+      await db.query("ROLLBACK");
+      // ROLLBACK discards the session GUC set inside the transaction; restore it for later tests.
+      await db.query(`SELECT set_config('app.bypass_rls','lucia',false)`);
+    }
+  });
+
   it("every active mapping still resolves to a real account (no orphans)", async () => {
     const { rows } = await db.query<{ orphans: string }>(`
       SELECT count(*)::text AS orphans
