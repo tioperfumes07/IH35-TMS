@@ -13,7 +13,32 @@ import { resolveReversalDate, todayIso } from "./void.service.js";
 // CHAIN-05 (BLOCK-03) adds "bank_categorization" (a categorized bank-feed line → direction-aware balanced
 // JE; built by buildBankCategorizationLines). NOTE: kept on ONE line — verify-posting-engine-mvp-contract
 // prefix-matches the leading four MVP types on a single line.
-export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment" | "cash_advance" | "driver_advance" | "expense" | "bank_categorization" | "driver_reimbursement" | "transfer";
+/**
+ * The posting source types, as ONE list.
+ *
+ * This used to be a hand-written union PLUS a hand-written array inside assertKnownSourceType() — two
+ * copies of the same truth, which is a drift waiting to happen: adding a type to the union without the
+ * array compiles fine and then throws UNKNOWN_SOURCE_TYPE at runtime, and adding it to the array
+ * without the union fails to typecheck at every call site. The union is now DERIVED from the array, so
+ * a new source type is a one-line change that cannot be half-applied.
+ */
+export const POSTING_SOURCE_TYPES = [
+  "invoice",
+  "bill",
+  "customer_payment",
+  "bill_payment",
+  "cash_advance",
+  "driver_advance",
+  "expense",
+  "bank_categorization",
+  "driver_reimbursement",
+  "transfer",
+  // LOAN-02: related-party lending (owner/spouse/employee/driver, both directions). Posts through the
+  // shared poster onto accounting.journal_entries — no new GL math, no second ledger.
+  "related_party_loan",
+] as const;
+
+export type PostingSourceType = (typeof POSTING_SOURCE_TYPES)[number];
 export type PostingPurpose = "initial_post" | "reversal";
 type BatchStatus = "queued" | "in_progress" | "posted" | "reversed" | "failed";
 
@@ -249,20 +274,9 @@ const INVOICE_ELIGIBLE_STATUSES = new Set(["sent", "partial", "paid", "factored"
 const PERIOD_LOCKED_TOKEN = "IH35_CLOSED_PERIOD";
 
 function assertKnownSourceType(value: string): asserts value is PostingSourceType {
-  if (
-    ![
-      "invoice",
-      "bill",
-      "customer_payment",
-      "bill_payment",
-      "cash_advance",
-      "driver_advance",
-      "expense",
-      "bank_categorization",
-      "driver_reimbursement",
-      "transfer",
-    ].includes(value)
-  ) {
+  // Reads the SAME array the type is derived from — the runtime check and the compile-time type can no
+  // longer disagree.
+  if (!(POSTING_SOURCE_TYPES as readonly string[]).includes(value)) {
     throw new PostingEngineError("UNKNOWN_SOURCE_TYPE", `Unknown source_transaction_type: ${value}`);
   }
 }
