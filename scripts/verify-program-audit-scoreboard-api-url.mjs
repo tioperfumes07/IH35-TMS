@@ -115,18 +115,35 @@ export function assertScoreboardContract(sources) {
   }
   if (/"recentActivity"\s*:/.test(data) || /recentActivity:\s*\[/.test(data)) {
     problems.push(
-      `${DATA}: recentActivity must NOT live in the typecheck-gated seed — serve it from the read-only API / recon`
+      `${DATA}: recentActivity must NOT live in the typecheck-gated seed — serve it live from the API`
     );
   }
   if (route) {
-    if (!/block-reconciliation-data\.json/.test(route) && !/loadRecentActivity/.test(route)) {
-      problems.push(`${routeRel}: must load recent PRs from tracker recon (block-reconciliation-data.json)`);
+    // Require the exact const assignment (anchored capture) — CodeQL rejects bare URL includes()
+    // and unanchored host regexes as incomplete sanitization / missing anchors.
+    const pullsConst = route.match(
+      /const\s+GITHUB_PULLS_URL\s*=\s*"(https:\/\/api\.github\.com\/repos\/tioperfumes07\/IH35-TMS\/pulls\?[^"]*)"/
+    );
+    if (!pullsConst) {
+      problems.push(`${routeRel}: recentActivity must define GITHUB_PULLS_URL to the GitHub pulls API`);
+    }
+    if (!/loadRecentActivityFromGitHub|GITHUB_PULLS_URL/.test(route)) {
+      problems.push(`${routeRel}: must expose loadRecentActivityFromGitHub (live heartbeat)`);
+    }
+    if (
+      /block-reconciliation-data\.json/.test(route) &&
+      !/const\s+GITHUB_PULLS_URL\s*=/.test(route)
+    ) {
+      problems.push(`${routeRel}: must not rely only on stale recon for recentActivity`);
+    }
+    if (!/RECENT_CACHE_MS\s*=\s*60_000|60_000/.test(route)) {
+      problems.push(`${routeRel}: must short-cache recentActivity (~60s)`);
     }
     if (!/formatCt/.test(route) || !/lastSyncedCt/.test(route)) {
       problems.push(`${routeRel}: must compute lastSyncedCt via formatCt(meta.generatedAt)`);
     }
-    if (!/America\/Chicago/.test(route) && !/formatCt/.test(route)) {
-      problems.push(`${routeRel}: timestamps must be America/Chicago via formatCt`);
+    if (!/TRACKER_BOT_TOKEN|GITHUB_TOKEN|GH_TOKEN/.test(route)) {
+      problems.push(`${routeRel}: must prefer authenticated GitHub token (TRACKER_BOT_TOKEN/GITHUB_TOKEN/GH_TOKEN)`);
     }
   }
 
