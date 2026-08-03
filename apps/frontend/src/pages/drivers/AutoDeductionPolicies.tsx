@@ -3,13 +3,13 @@ import { useSearchParams } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { listDrivers } from "../../api/mdata";
 import { driverDeductionTypesCatalogClient } from "../../api/catalogs-driver";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Modal } from "../../components/Modal";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useAutoDeductionPolicies, useAutoDeductionPolicyMutations } from "../../hooks/useAutoDeductionPolicies";
 
@@ -37,6 +37,7 @@ export function AutoDeductionPoliciesPanel() {
 }
 
 export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriverId }: Props) {
+  const queryClient = useQueryClient();
   const policiesQuery = useAutoDeductionPolicies(operatingCompanyId, lockedDriverId);
   const { createMutation, patchMutation, cancelMutation } = useAutoDeductionPolicyMutations(operatingCompanyId);
   const driversQuery = useQuery({
@@ -44,6 +45,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
     queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: 200 }).then((res) => res.drivers), // full set (endpoint default 50 truncates)
     enabled: Boolean(operatingCompanyId),
   });
+  // LST-PICKER-01: catalog read already entity-scoped (SETL-PICK-01); Type must inline-create same table.
   const deductionTypesQuery = useQuery({
     queryKey: ["catalogs", "driver-deduction-types", operatingCompanyId],
     queryFn: () =>
@@ -226,26 +228,32 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Type
-            <SelectCombobox
-              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-              value={deductionType}
-              onChange={(e) => setDeductionType(e.target.value)}
-              aria-label="Deduction type"
-              disabled={deductionTypesQuery.isLoading || deductionTypeOptions.length === 0}
-            >
-              <option value="">
-                {deductionTypesQuery.isLoading
+            {/*
+              LST-PICKER-01: bare SelectCombobox forced Lists-only create. ReferenceSelect
+              createKind=driver_deduction_type → POST catalogs.driver_deduction_types (code FK).
+            */}
+            <ReferenceSelect
+              value={deductionType || null}
+              onChange={(next) => setDeductionType(next ?? "")}
+              options={deductionTypeOptions}
+              createKind="driver_deduction_type"
+              operatingCompanyId={operatingCompanyId}
+              createdValueField="code"
+              placeholder={
+                deductionTypesQuery.isLoading
                   ? "Loading deduction types…"
                   : deductionTypeOptions.length === 0
-                    ? "No deduction types — add in Lists"
-                    : "Select deduction type…"}
-              </option>
-              {deductionTypeOptions.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </SelectCombobox>
+                    ? "No deduction types yet — + Add new below"
+                    : "Select deduction type…"
+              }
+              loading={deductionTypesQuery.isLoading}
+              disabled={!operatingCompanyId || deductionTypesQuery.isLoading}
+              onOptionCreated={() => {
+                void queryClient.invalidateQueries({
+                  queryKey: ["catalogs", "driver-deduction-types", operatingCompanyId],
+                });
+              }}
+            />
             {deductionTypesQuery.isError ? (
               <span className="text-[10px] font-normal text-red-600">Could not load deduction types from catalog.</span>
             ) : null}
