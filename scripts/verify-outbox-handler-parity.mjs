@@ -192,6 +192,23 @@ function collectEmitters(filePath) {
     ) {
       const evaluated = evaluateExpression(node.arguments[1], constMap);
       if (!evaluated || evaluated.size === 0) {
+        // HONOUR THE ANNOTATION HERE TOO — corrected 2026-08-03. This branch used to reject any
+        // non-literal event type outright while the failure message told the author to "Add comment
+        // above call". That advice was unfollowable: only the raw-INSERT branch below read the
+        // annotation, so the comment changed nothing and the guard stayed red no matter what the author
+        // did. A guard whose remedy does not work is worse than one with no remedy — it sends people
+        // looking for a mistake they did not make, and the usual escape is to weaken the guard.
+        // The annotation is an explicit, greppable declaration of the emitted types (it is already
+        // trusted in the INSERT branch), so honouring it here closes the contradiction without opening
+        // a hole: an annotated type still has to have a registered handler, checked downstream.
+        const stmt = findStatementForNode(node);
+        const annotation = parseAnnotationFromStatement(sf, stmt);
+        if (annotation && annotation.length > 0) {
+          for (const eventType of annotation) {
+            emitters.push({ filePath, line: lineOf(sf, node), eventType, viaAnnotation: true });
+          }
+          return ts.forEachChild(node, visit);
+        }
         dynamicFailures.push({
           filePath,
           line: lineOf(sf, node),
