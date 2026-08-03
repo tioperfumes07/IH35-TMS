@@ -10,7 +10,6 @@ import {
   type OnboardingSession,
 } from "../../api/onboarding";
 import { confirmUpload, requestUploadUrl } from "../../api/docs";
-import { listUnits } from "../../api/mdata";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { OnboardingStepCdlUpload } from "./onboarding/OnboardingStepCdlUpload";
@@ -60,11 +59,6 @@ export function OnboardingWizardPage() {
     queryFn: () => getOnboardingSession(sessionId!, companyId),
   });
 
-  const unitsQ = useQuery({
-    queryKey: ["onboarding-units", companyId],
-    enabled: Boolean(companyId),
-    queryFn: () => listUnits({ operating_company_id: companyId, limit: 500 }).then((r) => r.units),
-  });
 
   const session = sessionQ.data?.session;
   const driverId = session?.driver_id ?? null;
@@ -123,14 +117,6 @@ export function OnboardingWizardPage() {
     [driverId, uploadForStep]
   );
 
-  const unitOptions = useMemo(
-    () =>
-      (unitsQ.data ?? []).map((unit) => {
-        const row = unit as { id: string; unit_number?: string };
-        return { id: row.id, label: row.unit_number ?? row.id };
-      }),
-    [unitsQ.data]
-  );
 
   const identity = stepDataFor(session, "identity") as Record<string, string>;
   const cdl = stepDataFor(session, "cdl_upload") as { file_id?: string; file_name?: string };
@@ -300,7 +286,7 @@ export function OnboardingWizardPage() {
         {activeStep === 6 ? (
           <OnboardingStepVehicleAssignment
             unitId={vehicle.unit_id ?? ""}
-            unitOptions={unitOptions}
+            operatingCompanyId={companyId}
             disabled={completed}
             onChange={(unit_id) => uploadForStep(7, { unit_id })}
           />
