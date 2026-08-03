@@ -44,12 +44,33 @@ if (delegatesDriverPicker) {
     fail(`${SHARED_DRIVER_PICKER} no longer calls listDrivers — the driver catalog is dead through the shared picker`);
   }
 }
-for (const fn of ["listUnits", "listVendors"]) {
-  if (!src.includes(fn)) fail(`${DRAWER} no longer imports/uses ${fn} — the ${fn} catalog is dead again`);
+// Unit catalog: direct listUnits OR EntityPicker kind="unit" (listUnits inside entityPickerRegistry).
+const delegatesUnitPicker = /EntityPicker[\s\S]*?kind=["']unit["']/.test(src) || /kind=["']unit["']/.test(src);
+if (!src.includes("listUnits") && !delegatesUnitPicker) {
+  fail(`${DRAWER} no longer imports/uses listUnits — the listUnits catalog is dead again`);
 }
-// Load picker uses the dispatch loads list.
-if (!src.includes("listDispatchLoads")) {
-  fail(`${DRAWER} no longer uses listDispatchLoads — the Load catalog is dead again`);
+if (delegatesUnitPicker) {
+  const REG = "apps/frontend/src/components/parity/entityPickerRegistry.ts";
+  let reg = "";
+  try { reg = fs.readFileSync(path.join(process.cwd(), REG), "utf8"); } catch { reg = ""; }
+  if (!reg) fail(`${REG} missing but ${DRAWER} delegates unit catalog to EntityPicker`);
+  else if (!/kind:\s*"unit"[\s\S]*?listUnits\(/.test(reg) && !reg.includes("listUnits")) {
+    fail(`${REG} no longer calls listUnits for kind=unit — unit catalog dead through EntityPicker`);
+  }
+}
+if (!src.includes("listVendors")) fail(`${DRAWER} no longer imports/uses listVendors — the listVendors catalog is dead again`);
+// Load catalog: listDispatchLoads OR EntityPicker kind="load" (listLoads in registry).
+const delegatesLoadPicker = /kind=["']load["']/.test(src);
+if (!src.includes("listDispatchLoads") && !delegatesLoadPicker) {
+  fail(`${DRAWER} no longer uses listDispatchLoads / EntityPicker load — the Load catalog is dead again`);
+}
+if (delegatesLoadPicker) {
+  const REG = "apps/frontend/src/components/parity/entityPickerRegistry.ts";
+  let reg = "";
+  try { reg = fs.readFileSync(path.join(process.cwd(), REG), "utf8"); } catch { reg = ""; }
+  if (!reg || !reg.includes("listLoads")) {
+    fail(`entityPickerRegistry no longer calls listLoads for kind=load — load catalog dead through EntityPicker`);
+  }
 }
 
 // 2) Each of the four fields must render through a real picker (data-testid marker present).
