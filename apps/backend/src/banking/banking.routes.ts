@@ -14,6 +14,7 @@ import {
 } from "./bank-account-visibility.js";
 import { countDriverEscrowKpis } from "./driver-escrow-counts.js";
 import { countTotalBankTransactions, countUncategorizedTransactions } from "./pending-categorization.js";
+import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
 import {
   sumAuthoritativeDepositoryCashCents,
   withInternalWalletBalances,
@@ -465,7 +466,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     return { suggestions };
   });
 
-  app.post("/api/v1/banking/transactions/:id/split", async (req, reply) => {
+  app.post("/api/v1/banking/transactions/:id/split", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = transactionIdParamsSchema.safeParse(req.params ?? {});
@@ -489,7 +490,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     });
   });
 
-  app.post("/api/v1/banking/transactions/:id/undo-categorization", async (req, reply) => {
+  app.post("/api/v1/banking/transactions/:id/undo-categorization", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = transactionIdParamsSchema.safeParse(req.params ?? {});
@@ -499,11 +500,53 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const ok = await withCompanyScope(user.uuid, companyId, async (client) => {
+      // BANK-F01 — undoing a categorization MUST reverse the journal entry it posted.
+      //
+      // THE DEFECT THIS CLOSES. This handler used to clear the categorization fields and leave
+      // `matched_journal_entry_id` set. Two things followed, and neither was visible to anyone:
+      //   1. the JE posted under the OLD (wrong) account stayed in the ledger, unreversed; and
+      //   2. bank-feed-gl-posting.service.ts:160 refuses to post a row that already carries
+      //      `matched_journal_entry_id` (`already_posted`), so the CORRECTED categorization could
+      //      never post either.
+      // Net effect: re-categorising was a silent no-op against the general ledger. The operator saw
+      // the correction, the books kept the error, and nothing surfaced the divergence — a
+      // SILENT-SUCCESS defect, and for an auditor worse than a duplicate, because the operational
+      // record and the ledger disagree permanently with no signal.
+      //
+      // Verified on prod 2026-08-03 (banking.bank_transactions 10975/10975 visible, n_tup_del 46):
+      // ZERO rows were stranded, i.e. the trap had not yet been sprung. It is closed here before it is.
+      //
+      // FAIL-CLOSED. The reversal runs on this same transaction client, so if it throws — closed
+      // period, non-posted JE, an integrity conflict — the whole undo rolls back and the caller gets
+      // an error. Refusing the undo is correct: silently leaving a stale GL line is the outcome this
+      // exists to prevent. Reuses the EXISTING reverseJournalEntryNoFlip (idempotent, linkage-aware);
+      // NO new GL math is written here.
+      const posted = await client.query<{ matched_journal_entry_id: string | null }>(
+        `SELECT matched_journal_entry_id::text
+           FROM banking.bank_transactions
+          WHERE id = $1 AND operating_company_id = $2
+          LIMIT 1
+          FOR UPDATE`,
+        [params.data.id, companyId]
+      );
+      const priorJournalEntryId = posted.rows[0]?.matched_journal_entry_id ?? null;
+      if (priorJournalEntryId) {
+        await reverseJournalEntryNoFlip(client, {
+          operatingCompanyId: companyId,
+          journalEntryId: priorJournalEntryId,
+          reason: `undo-categorization of bank transaction ${params.data.id}`,
+          actorUserId: user.uuid,
+        });
+      }
+
       const res = await client.query(
         `
           UPDATE banking.bank_transactions
           SET
             status = 'pending_categorization',
+            -- Cleared with the reversal above: leaving it set is what made the corrected
+            -- categorization unpostable (already_posted) while the wrong JE stood.
+            matched_journal_entry_id = NULL,
             category = NULL,
             category_kind = NULL,
             linked_entity_id = NULL,
@@ -536,6 +579,10 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           resource_type: "banking.bank_transactions",
           resource_id: params.data.id,
           operating_company_id: companyId,
+          // BANK-F01 — name the JE that was reversed. Without it the audit trail records that a
+          // categorization was undone but not that the ledger was corrected, which is the half a
+          // reviewer actually needs.
+          reversed_journal_entry_id: priorJournalEntryId,
         },
         "info",
         "BT-3-BANKING-REBUILD"
