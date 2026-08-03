@@ -72,6 +72,37 @@
       "hotfiles": [
         "apps/backend/src/accounting/posting-engine.service.ts"
       ]
+    },
+    {
+      "id": "CLS-FUEL-DOUBLE-POST",
+      "root_cause": "Relay fuel-card swipes (imported to fuel.fuel_transactions via Relay API) are posted to GL by the fuel_event poster. The SAME purchases also appear as bank debits (RELAY*/Love's ACH settlements) in banking.bank_transactions, which are then categorized to the same fuel expense GL accounts (6100 Fuel Expense, QBO-155 Fuel-Def, QBO-92 Fuel-Reefer-Diesel). Both paths debit fuel expense → GL fuel is overstated by the bank-categorized amount. Settlement-level matching confirms: Relay settles per-charge to the checking account, so each bank debit corresponds to one or more fuel card swipes already posted by the fuel poster.",
+      "lane": "money",
+      "layer": "C",
+      "modules": ["accounting", "fuel"],
+      "instances": [
+        {
+          "path": "18 RELAY/Love's bank debits (Mar 3–Jul 29) categorized to fuel GL accounts: 1cec0017 ($379.72, 2026-03-03 RELAY*CIRCLEK), 36e22210 ($15.00, 2026-03-13 LOVE'S#0762), 334cbea0 ($418.64, 2026-05-24 LOVES), 62d38392 ($1475.93, 2026-05-24 LOVES), 7580af09 ($1475.93, 2026-05-25 LOVE'S#0860), 3d5c603b ($418.64, 2026-05-25 LOVE'S#0860), 104ef43d ($613.19, 2026-06-01 LOVE'S#0304), 26fac3ec ($40.00, 2026-06-11 Love's#0762), 1912c534 ($145.26, 2026-06-11 LOVE'S#0706), cad733a1 ($323.29, 2026-06-24 LOVE'S TIRE CARE), 2d9f0cab ($544.51, 2026-06-29 LOVE'S TIRE CARE), 2d56bbe0 ($449.90, 2026-07-11 LOVES), 0bfc0c2c ($449.90, 2026-07-11 LOVE'S TIRE CARE#04), cc4d1e00 ($562.21, 2026-07-15 Love's Tire), 7fccb6c3 ($562.21, 2026-07-16 LOVE'S TIRE CARE), 43fbf611 ($405.74, 2026-07-26 LOVES), d0e0cc44 ($405.74, 2026-07-27 LOVE'S TIRE CARE#07), 0894576b ($530.68, 2026-07-29 Love's Tire)",
+          "entity": "TRANSP",
+          "note": "Total double-posted: $9,216.49 (18 bank txns). Each corresponds to Relay fuel-card swipes already in fuel.fuel_transactions and posted by the fuel_event poster to the same GL accounts."
+        },
+        {
+          "path": "50 OTHER_FUEL bank debits (FUEL AMERICA, ExxonMobil, Laredo Bridge, Pilot, Road Ranger, Murphy Express) totaling $3,615.76 — these are NON-Relay fuel purchases NOT present in fuel.fuel_transactions. They are legitimate bank-only fuel GL entries (no overlap with fuel poster). NOT double-counted.",
+          "entity": "TRANSP",
+          "note": "These 50 represent corporate-card or cash fuel purchases outside the Relay/Love's fleet card. Correctly categorized to fuel GL. No remediation needed."
+        }
+      ],
+      "completeness": "lucia-bypass Neon prod 2026-08-03: fuel.fuel_transactions sum=$625,546.39 (1,547 txns, ALL source=other, ALL relay_bridge=1, ALL merchant=Love's). GL fuel debit from fuel_event poster=$625,546.39 (1,547 JE posting lines). GL fuel debit from bank_categorization=$48,028.41 (165 lines across all periods). Total GL fuel expense=$673,574.80 vs actual fuel card spend=$625,546.39 → overstated by $48,028.41. Breakdown: $34,887.16 (98 txns) pre-Mar-3 bank-only (legit, no fuel poster existed yet); $9,216.49 (18 txns) overlap RELAY/Love's = TRUE DOUBLE; $3,615.76 (50 txns) overlap non-Love's = legit bank-only. NET DOUBLE-COUNT: $9,216.49.",
+      "guard": "scripts/verify-fuel-gl-no-double-post.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "Bank txn 334cbea0 ($418.64, 2026-05-24 'LOVES') categorized to 6100 Fuel Expense → JE posting via bank_categorization source. Fuel card swipe 4b0d268c ($418.01, 2026-05-21 relay_txn=txn_DARy2XMoohzYdk merchant=Love's) → JE posting via fuel_event source to same account 6100. Same economic event (Relay Love's card charge) posted twice: once as fuel-card import, once as bank settlement categorization. Delta $0.63 is Relay fee/rounding.",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/accounting/posting-engine.service.ts",
+        "apps/backend/src/banking/categorize-transaction.service.ts"
+      ]
     }
   ]
 }
