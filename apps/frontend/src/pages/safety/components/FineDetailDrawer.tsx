@@ -105,7 +105,7 @@ export function FineDetailDrawer({
               <EntityLink
                 kind="unit"
                 id={String(fine.related_unit_id)}
-                label={(fine.related_unit_number as string | undefined) ?? String(fine.related_unit_id).slice(0, 8)}
+                label={(fine.related_unit_number as string | undefined)?.trim() || "Unit"}
                 data-testid="fine-related-unit-link"
               />
             ) : (
@@ -118,7 +118,7 @@ export function FineDetailDrawer({
               <EntityLink
                 kind="load"
                 id={String(fine.related_load_id)}
-                label={(fine.related_load_number as string | undefined) ?? String(fine.related_load_id).slice(0, 8)}
+                label={(fine.related_load_number as string | undefined)?.trim() || "Load"}
                 data-testid="fine-related-load-link"
               />
             ) : (
@@ -133,7 +133,7 @@ export function FineDetailDrawer({
               <EntityLink
                 kind="liability"
                 id={String(fine.converted_to_liability_id)}
-                label={String(fine.converted_to_liability_id).slice(0, 8)}
+                label="Liability"
               />
             ) : (
               "No"
