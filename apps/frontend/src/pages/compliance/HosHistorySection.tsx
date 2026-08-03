@@ -26,10 +26,18 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
   const [driverId, setDriverId] = useState<string | null>(null);
   const [fromDate, setFromDate] = useState(addDaysIso(today, -7));
   const [toDate, setToDate] = useState(today);
+  // SAF-B29: never silent listDrivers(limit:500) — type-ahead re-queries (HosViewer parity).
+  const [driverSearch, setDriverSearch] = useState("");
 
   const driversQ = useQuery({
-    queryKey: ["hos-history", "drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 500 }),
+    queryKey: ["hos-history", "drivers", operatingCompanyId, driverSearch],
+    queryFn: () =>
+      listDrivers({
+        operating_company_id: operatingCompanyId,
+        status: "Active",
+        limit: 200,
+        search: driverSearch || undefined,
+      }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 5 * 60 * 1000,
   });
@@ -80,6 +88,7 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
             options={options}
             value={driverId}
             onChange={setDriverId}
+            onSearch={setDriverSearch}
             placeholder={driversQ.isLoading ? "Loading drivers…" : "Search a driver…"}
             loading={driversQ.isLoading}
             filterMode="contains"
