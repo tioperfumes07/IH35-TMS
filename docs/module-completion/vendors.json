@@ -43,8 +43,8 @@
       "title": "Vendor create dedup guard scoped per operating company",
       "layers": ["DOD-D", "VERIFY-5"],
       "spec": "0243-g6-2-vendor-create-no-dedup-guard",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: vendors.routes resolves operating_company BEFORE dedup; match is lower(btrim(vendor_name))+opco+deactivated_at IS NULL (G6-2). Guard verify-vend-s03-s04-dedup-and-types + step 2238.",
       "pr": null
     },
     {
@@ -52,8 +52,8 @@
       "title": "Vendor types catalog-backed (catalogs.vendor_types populated)",
       "layers": ["VERIFY-2", "VERIFY-6"],
       "spec": "08-BLOCK catalog re-verification",
-      "status": "OPEN",
-      "evidence": "scaffold — Neon 24 rows (8/opco) per corrected backlog doc",
+      "status": "PASS",
+      "evidence": "2026-08-03 Neon lucia: catalogs.vendor_types 8/TRANSP · 8/TRK · 8/USMCA. VendorCreateModal + NewVendorDrawerForm createKind=vendor_type → catalogs.vendor_types. Guard step 2238.",
       "pr": null
     },
     {
@@ -61,8 +61,8 @@
       "title": "Inactive vendor filter excludes 387 inactive from default Active view",
       "layers": ["DOD-B"],
       "spec": "Vendors default filter",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS: inactive excluded consistently",
+      "status": "PASS",
+      "evidence": "2026-08-03 Neon lucia TRANSP inactive=387 exact. Vendors.tsx default listStatus=\"active\" filters deactivated_at==null; data-list-status-filter=vendors. Guard verify-vend-s01-roster-active-filter + step 2236.",
       "pr": null
     },
     {
