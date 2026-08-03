@@ -47,15 +47,15 @@ matching `n_live_tup`) proving the zeros are real and not RLS-masked.
 
 | Metric | Value | As of |
 |---|---|---|
-| Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-02 |
-| Modules with a confirmed live defect (non-superseded FAIL) | **11 / 30** | 2026-08-02 |
-| Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-02 |
-| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **66 / 150** · TRK **9 / 150** · USMCA **63 / 150** | 2026-08-02 |
-| Rows in this file | **612** | 2026-08-02 |
-| Rows `FAIL` + `OPEN` | **20** | 2026-08-02 |
-| Rows `Owner-gate? = YES` (blocked on a decision) | **5** | 2026-08-02 |
-| Rows `VERIFIED` by GUARD | **0** | 2026-08-02 |
-| Verdict tally (all rows) | FAIL=47 · PASS=191 · N/A=211 · SUPERSEDED=4 · OTHER=159 | 2026-08-02 |
+| Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-03 |
+| Modules with a confirmed live defect (non-superseded FAIL) | **11 / 30** | 2026-08-03 |
+| Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-03 |
+| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **66 / 150** · TRK **9 / 150** · USMCA **63 / 150** | 2026-08-03 |
+| Rows in this file | **616** | 2026-08-03 |
+| Rows `FAIL` + `OPEN` | **22** | 2026-08-03 |
+| Rows `Owner-gate? = YES` (blocked on a decision) | **6** | 2026-08-03 |
+| Rows `VERIFIED` by GUARD | **0** | 2026-08-03 |
+| Verdict tally (all rows) | FAIL=49 · PASS=191 · N/A=211 · SUPERSEDED=4 · OTHER=161 | 2026-08-03 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -679,4 +679,8 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 610 | dispatch · wf064_override_notice | C | ALL | FAIL — `wf064.override_notice` produced ×3, consumed nowhere → owner gets no notice (P1) | `dispatch-load-dispatched.handler.ts` emits `dispatch.wf064.override_notice` outbox event when an owner override fires. Three instances confirmed produced. But no consumer/handler reads this event type — the owner notification never arrives. The override fires silently with no audit trail beyond the DB row. | OPEN | — | NO | 2026-08-02 | GUARD |
 | 611 | maintenance · class_auto_derive | E | USMCA | FAIL — Class auto-derive renders `{unit_uuid}-{driver_uuid}` not `{UNIT}-{LASTNAME}` (D, P2) | When auto-deriving a QBO Class for a WO, the display renders raw UUIDs (`a1b2...–c3d4...`) instead of human-readable `{UNIT_NUMBER}-{DRIVER_LAST_NAME}`. User cannot distinguish classes. Related to row 601 (class UUID picker). | OPEN | — | NO | 2026-08-02 | GUARD |
 | 612 | accounting · expense_posting | C | USMCA | PASS — GUARD-VERIFIED: expense posts balanced JE (`b927818f`, `ff286e60`) | GUARD live proof on USMCA: manual expense created balanced JE. Posting batch `b927818f`, JE `ff286e60`. DR expense / CR bank confirmed balanced. Entity-scoped, RLS-verified. Closes the USMCA expense→GL chain. | — | — | NO | 2026-08-02 | GUARD |
+| 613 | maintenance · wo_create | C | ALL | FAIL — POST /maintenance/work-orders → 500 42703 "column display_id does not exist" (P1) | `POST /maintenance/work-orders` returns HTTP 500, Postgres error 42703: `column display_id does not exist`. The `next_wo_display_id` function prod signature does not match the expected `RETURNS TABLE(display_id, sequence)`. Migration `202607051000` is not effective on prod (Neon branch). Entity-independent — affects TRANSP, USMCA, TRK. No work order can be created via the UI or API until migration is applied. Blocks the entire WO→Bill→GL chain from the create step. | OPEN | — | **YES** | 2026-08-03 | GUARD |
+| 614 | maintenance · wo_create | D | ALL | FAIL — empty Section-A line description → 400 with misleading header-field errors (P2) | When a Section-A cost line has an empty description, the route validation (`V5→flat schema`) returns 400 with error messages that reference header-level fields instead of the cost-line description field. User sees confusing validation errors unrelated to their actual mistake. The validator falls through from the V5 line schema to the flat top-level schema, surfacing wrong field names. | OPEN | — | NO | 2026-08-03 | GUARD |
+| 615 | accounting · bills | C | USMCA | CONFIRMED — money-gate: USMCA bill saves 201 status:"open", no JE posted | GUARD live-confirmed: USMCA vendor bill creation returns HTTP 201 with `status:"open"`. No journal entry is posted. The posting engine is not called on bill save. This confirms the `CLS-SUBLEDGER-GL-DARK` pattern (rows 598, 608) extends to bills. Seed-battery C rows remain UNVERIFIABLE-until-data until the money-gate ships and the posting engine is wired into the save/finalize flow. | — | — | NO | 2026-08-03 | GUARD |
+| 616 | dispatch · owner_override_notice | D | USMCA | CODE-VERIFIED — live exercise pending (GUARD) | PR #4073 wired `dispatch.wf064.override_notice` → `dispatch-override-notice.handler.ts` consumer → in-app notification bell. GUARD attempted verification: bell is empty after USMCA override. Notification not showing. Needs a fresh DOT override event for GUARD to re-verify the consumer fires and the bell populates. Keep as CODE-VERIFIED until next live override test. | OPEN | #4073 | NO | 2026-08-03 | GUARD |
 
