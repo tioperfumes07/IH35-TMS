@@ -63,21 +63,34 @@ export function assertCargoParityAndPickerSearch(sources) {
     problems.push(`${COMBOBOX}: server-filtered options are still filtered locally — a server match whose label lacks the typed text (unit by VIN, load by customer) would be dropped before it renders.`);
   }
 
-  // F31 — the safety pickers actually pass it, and the term reaches the request.
-  for (const [state, what] of [
-    ["unitSearch", "units"],
-    ["loadSearch", "loads"],
-    ["vendorSearch", "vendors"],
-  ]) {
-    if (!src[DRAWER].includes(state)) {
-      problems.push(`${DRAWER}: no ${state} state — the ${what} picker cannot search server-side and stays capped at 200.`);
+  // F31 — unit/load: EntityPicker (registry server search) OR legacy Combobox+*Search state.
+  // EntityPicker supersedes local unitSearch/loadSearch; vendor remains Combobox+vendorSearch.
+  const unitViaEntityPicker = /EntityPicker[\s\S]*?kind=["']unit["']/.test(src[DRAWER]);
+  const loadViaEntityPicker = /EntityPicker[\s\S]*?kind=["']load["']/.test(src[DRAWER]);
+  if (!unitViaEntityPicker) {
+    if (!src[DRAWER].includes("unitSearch")) {
+      problems.push(`${DRAWER}: no unitSearch state — the units picker cannot search server-side and stays capped at 200.`);
+    } else if (!/search: unitSearch \|\| undefined/.test(src[DRAWER])) {
+      problems.push(`${DRAWER}: units query does not send \`search\` — the state exists but never reaches the server.`);
+    } else if (!/queryKey: \[[^\]]*unitSearch\]/.test(src[DRAWER])) {
+      problems.push(`${DRAWER}: units queryKey omits unitSearch — react-query would serve the first page from cache and never refetch on a new term.`);
     }
-    if (!new RegExp(`search: ${state} \\|\\| undefined`).test(src[DRAWER])) {
-      problems.push(`${DRAWER}: ${what} query does not send \`search\` — the state exists but never reaches the server.`);
+  }
+  if (!loadViaEntityPicker) {
+    if (!src[DRAWER].includes("loadSearch")) {
+      problems.push(`${DRAWER}: no loadSearch state — the loads picker cannot search server-side and stays capped at 200.`);
+    } else if (!/search: loadSearch \|\| undefined/.test(src[DRAWER])) {
+      problems.push(`${DRAWER}: loads query does not send \`search\` — the state exists but never reaches the server.`);
+    } else if (!/queryKey: \[[^\]]*loadSearch\]/.test(src[DRAWER])) {
+      problems.push(`${DRAWER}: loads queryKey omits loadSearch — react-query would serve the first page from cache and never refetch on a new term.`);
     }
-    if (!new RegExp(`queryKey: \\[[^\\]]*${state}\\]`).test(src[DRAWER])) {
-      problems.push(`${DRAWER}: ${what} queryKey omits ${state} — react-query would serve the first page from cache and never refetch on a new term.`);
-    }
+  }
+  if (!src[DRAWER].includes("vendorSearch")) {
+    problems.push(`${DRAWER}: no vendorSearch state — the vendors picker cannot search server-side and stays capped at 200.`);
+  } else if (!/search: vendorSearch \|\| undefined/.test(src[DRAWER])) {
+    problems.push(`${DRAWER}: vendors query does not send \`search\` — the state exists but never reaches the server.`);
+  } else if (!/queryKey: \[[^\]]*vendorSearch\]/.test(src[DRAWER])) {
+    problems.push(`${DRAWER}: vendors queryKey omits vendorSearch — react-query would serve the first page from cache and never refetch on a new term.`);
   }
 
   return problems;
@@ -107,12 +120,34 @@ if (SELFTEST) {
   expectCaught("double-filtering-returns",
     { ...live, [COMBOBOX]: live[COMBOBOX].replace("if (onSearch) return sourceOptions.slice(0, MAX_VISIBLE_OPTIONS);", "") },
     "still filtered locally");
-  expectCaught("search-term-never-sent",
-    { ...live, [DRAWER]: live[DRAWER].replace("search: unitSearch || undefined", "limit: 200") },
-    "units query does not send `search`");
-  expectCaught("querykey-forgets-the-term",
-    { ...live, [DRAWER]: live[DRAWER].replace('queryKey: ["accident", "loads", operatingCompanyId, loadSearch]', 'queryKey: ["accident", "loads", operatingCompanyId]') },
-    "loads queryKey omits loadSearch");
+  // When EntityPicker owns unit/load, plant defects on vendorSearch (still Combobox) + EntityPicker removal.
+  if (/EntityPicker[\s\S]*?kind=["']unit["']/.test(live[DRAWER])) {
+    expectCaught(
+      "entity-picker-unit-dropped",
+      { ...live, [DRAWER]: live[DRAWER].replace(/kind=["']unit["']/g, 'kind="driver"') },
+      "no unitSearch state"
+    );
+  } else {
+    expectCaught("search-term-never-sent",
+      { ...live, [DRAWER]: live[DRAWER].replace("search: unitSearch || undefined", "limit: 200") },
+      "units query does not send `search`");
+  }
+  if (/EntityPicker[\s\S]*?kind=["']load["']/.test(live[DRAWER])) {
+    expectCaught(
+      "entity-picker-load-dropped",
+      { ...live, [DRAWER]: live[DRAWER].replace(/kind=["']load["']/g, 'kind="driver"') },
+      "no loadSearch state"
+    );
+  } else {
+    expectCaught("querykey-forgets-the-term",
+      { ...live, [DRAWER]: live[DRAWER].replace('queryKey: ["accident", "loads", operatingCompanyId, loadSearch]', 'queryKey: ["accident", "loads", operatingCompanyId]') },
+      "loads queryKey omits loadSearch");
+  }
+  expectCaught(
+    "vendor-search-never-sent",
+    { ...live, [DRAWER]: live[DRAWER].replace("search: vendorSearch || undefined", "limit: 200") },
+    "vendors query does not send `search`"
+  );
 
   const liveProblems = assertCargoParityAndPickerSearch(live);
   if (liveProblems.length) failures.push(`live sources FAIL (false positive): ${liveProblems.join(" | ")}`);
@@ -122,7 +157,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 6 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — planted defects caught, live sources clean`);
   process.exit(0);
 }
 

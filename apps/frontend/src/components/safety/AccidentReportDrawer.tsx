@@ -10,8 +10,7 @@ import {
   spawnSafetyWo,
   type AccidentFault,
 } from "../../api/safety";
-import { listUnits, listVendors } from "../../api/mdata";
-import { listDispatchLoads } from "../../api/dispatch";
+import { listVendors } from "../../api/mdata";
 import { Button } from "../Button";
 import { EntityLink } from "../shared/EntityLink";
 import { ParityDrawer } from "../parity/ParityDrawer";
@@ -19,6 +18,7 @@ import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
 import { TotalsStack } from "../forms/shared/TotalsStack";
 import { Combobox } from "../shared/Combobox";
+import { EntityPicker } from "../parity/EntityPicker";
 import { ReferenceSelect, type ReferenceOption } from "../parity/ReferenceSelect";
 import { useToast } from "../Toast";
 import { companyToday } from "../../lib/businessDate";
@@ -33,22 +33,10 @@ type Props = {
   onUpdated: () => void;
 };
 
-function textField(source: Record<string, unknown>, keys: string[]): string {
-  for (const key of keys) {
-    const value = source[key];
-    if (typeof value === "string" && value.trim()) return value.trim();
-  }
-  return "";
-}
-
 export function AccidentReportDrawer({ open, operatingCompanyId, accident, createMode = false, onClose, onUpdated }: Props) {
   const { pushToast } = useToast();
   const [uploading, setUploading] = useState(false);
-  // SAF-F31: these pickers fetch limit:200 with no server-side search, so with more than 200 units
-  // (or loads, or vendors) the rest were unselectable and nothing said so — a silent truncation on
-  // an evidence record. The term is sent to the server, which already supports `search`.
-  const [unitSearch, setUnitSearch] = useState("");
-  const [loadSearch, setLoadSearch] = useState("");
+  // SAF-F31: load/vendor pickers send search to the server (EntityPicker owns unit roster + search).
   const [vendorSearch, setVendorSearch] = useState("");
   // SAF-B30 / F35: list of AC WOs linked by description token — survives reload (not React-only).
   const [spawnedWorkOrders, setSpawnedWorkOrders] = useState<Array<{ id: string; display_id: string }>>([]);
@@ -148,39 +136,15 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     );
   }, [detailQuery.data]);
 
-  const unitsQuery = useQuery({
-    queryKey: ["accident", "units", operatingCompanyId, unitSearch],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 200, search: unitSearch || undefined }),
-    enabled: scopeReady,
-  });
   const vendorsQuery = useQuery({
     queryKey: ["accident", "vendors", operatingCompanyId, vendorSearch],
     queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 200, search: vendorSearch || undefined }),
     enabled: scopeReady,
   });
-  const loadsQuery = useQuery({
-    queryKey: ["accident", "loads", operatingCompanyId, loadSearch],
-    queryFn: () => listDispatchLoads({ operating_company_id: operatingCompanyId, view: "loads", status: [], limit: 200, offset: 0, search: loadSearch || undefined }),
-    enabled: scopeReady,
-  });
 
-  const unitOptions = useMemo(
-    () =>
-      (unitsQuery.data?.units ?? []).map((row, index) => {
-        const rec = (row ?? {}) as Record<string, unknown>;
-        const id = typeof rec.id === "string" ? rec.id : `unit-${index}`;
-        const label = textField(rec, ["unit_number", "truck_number", "number"]) || id.slice(0, 8);
-        return { value: id, label };
-      }),
-    [unitsQuery.data?.units]
-  );
   const vendorOptions: ReferenceOption[] = useMemo(
     () => (vendorsQuery.data?.vendors ?? []).map((row) => ({ value: String(row.id), label: row.name || String(row.id).slice(0, 8) })),
     [vendorsQuery.data?.vendors]
-  );
-  const loadOptions = useMemo(
-    () => (loadsQuery.data?.loads ?? []).map((row) => ({ value: String(row.id), label: row.load_number || String(row.id).slice(0, 8) })),
-    [loadsQuery.data?.loads]
   );
 
   if (!open || !accident) return null;
@@ -314,12 +278,18 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
             </Field>
             <Field label="Unit">
               <div data-testid="accident-unit-picker">
-                <Combobox
-                  options={unitOptions}
+                <EntityPicker
+                  kind="unit"
+                  operatingCompanyId={operatingCompanyId}
                   value={unitId || null}
-                  placeholder="Search unit…"
                   onChange={(next) => setUnitId(next ?? "")}
-                  onSearch={setUnitSearch}
+                  allowCreate
+                  nestedInDrawer
+                  enabled={open && scopeReady}
+                  placeholder="Search unit…"
+                  className="w-full"
+                  dataField="accident-unit"
+                  dataTestId="accident-unit"
                 />
               </div>
             </Field>
@@ -339,12 +309,18 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
             </Field>
             <Field label="Load">
               <div data-testid="accident-load-picker">
-                <Combobox
-                  options={loadOptions}
+                <EntityPicker
+                  kind="load"
+                  operatingCompanyId={operatingCompanyId}
                   value={loadId || null}
-                  placeholder="Search load…"
                   onChange={(next) => setLoadId(next ?? "")}
-                  onSearch={setLoadSearch}
+                  allowCreate={false}
+                  nestedInDrawer
+                  enabled={open && scopeReady}
+                  placeholder="Search load…"
+                  className="w-full"
+                  dataField="accident-load"
+                  dataTestId="accident-load"
                 />
               </div>
             </Field>
