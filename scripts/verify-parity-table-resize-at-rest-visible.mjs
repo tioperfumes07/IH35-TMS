@@ -58,10 +58,15 @@ const IS_MAIN = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPa
 
 if (IS_MAIN && process.argv.includes("--selftest")) {
   const real = readSrc();
+  // Plant hover-only handle on the CURRENT grip markup (w-2 slate), not the retired w-1.5 string.
   const broken = real.replace(
-    /className="absolute right-0 top-0 h-full w-1\.5[^"]*"/,
-    'className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize touch-none select-none hover:bg-gray-300 focus:bg-gray-400 focus:outline-hidden"'
+    /className="absolute right-0 top-0 flex h-full w-2[^"]*"/,
+    'className="absolute right-0 top-0 flex h-full w-2 cursor-col-resize touch-none select-none hover:bg-gray-300 focus:bg-gray-400 focus:outline-hidden"',
   );
+  if (broken === real) {
+    console.error(`${LABEL} --selftest FAIL: could not plant hover-only className on current resize handle`);
+    process.exit(1);
+  }
   if (collectProblems(broken).length === 0) {
     console.error(`${LABEL} --selftest FAIL: pre-fix hover-only handle not flagged`);
     process.exit(1);
