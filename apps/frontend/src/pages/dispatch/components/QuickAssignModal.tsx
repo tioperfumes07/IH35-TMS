@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { listUnits } from "../../../api/mdata";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { Combobox } from "../../../components/Combobox";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 
 type Props = {
   open: boolean;
@@ -35,29 +36,29 @@ export function QuickAssignModal({ open, operatingCompanyId, loadNumber, hardWar
   const [trailerId, setTrailerId] = useState("");
   const [ackAll, setAckAll] = useState(false);
   const [loading, setLoading] = useState(false);
+  // SAF-B29: trailer has no EntityPicker kind — Combobox + server search (BookLoad parity).
+  // Never a silent SelectCombobox over listUnits(limit:500).
+  const [trailerSearch, setTrailerSearch] = useState("");
 
-  // Unified fleet: trucks (mdata.units) + trailers (mdata.equipment), kind-tagged + active-filtered.
-  const unitsQuery = useQuery({
-    queryKey: ["quick-assign-units", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, include: "trailers", limit: 500 }),
+  const trailersQuery = useQuery({
+    queryKey: ["quick-assign-trailers", operatingCompanyId, trailerSearch],
+    queryFn: () =>
+      listUnits({
+        operating_company_id: operatingCompanyId,
+        include: "trailers",
+        limit: 200,
+        search: trailerSearch || undefined,
+      }),
     enabled: open && Boolean(operatingCompanyId),
   });
 
-  const fleet = (unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>;
-  const truckOptions = useMemo(
-    () =>
-      fleet
-        .filter((row) => row.kind !== "trailer")
-        .map((row) => ({ value: String(row.id ?? ""), label: fleetLabel(row) })),
-    [fleet]
-  );
-  const trailerOptions = useMemo(
-    () =>
-      fleet
-        .filter((row) => row.kind === "trailer")
-        .map((row) => ({ value: String(row.id ?? ""), label: fleetLabel(row) })),
-    [fleet]
-  );
+  const trailerOptions = useMemo(() => {
+    const fleet = (trailersQuery.data?.units ?? []) as Array<Record<string, unknown>>;
+    return fleet
+      .filter((row) => row.kind === "trailer")
+      .map((row) => ({ value: String(row.id ?? ""), label: fleetLabel(row) }))
+      .filter((opt) => opt.value);
+  }, [trailersQuery.data?.units]);
 
   return (
     <Modal open={open} onClose={onClose} title={`Quick Assign · ${loadNumber}`}>
@@ -97,25 +98,32 @@ export function QuickAssignModal({ open, operatingCompanyId, loadNumber, hardWar
         </label>
         <label className="block text-xs font-semibold text-gray-600">
           Unit
-          <SelectCombobox value={unitId} onChange={(event) => setUnitId(event.target.value)} className="mt-0.5 h-9 w-full text-sm">
-            <option value="">{unitsQuery.isLoading ? "Loading units…" : "Select unit (optional)…"}</option>
-            {truckOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </SelectCombobox>
+          <div className="mt-0.5" data-testid="quick-assign-unit">
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={operatingCompanyId}
+              value={unitId || null}
+              onChange={(next) => setUnitId(next ?? "")}
+              enabled={open}
+              placeholder="Select unit (optional)…"
+              className="h-9 w-full text-sm"
+            />
+          </div>
         </label>
         <label className="block text-xs font-semibold text-gray-600">
           Trailer
-          <SelectCombobox value={trailerId} onChange={(event) => setTrailerId(event.target.value)} className="mt-0.5 h-9 w-full text-sm">
-            <option value="">{unitsQuery.isLoading ? "Loading trailers…" : "Select trailer (optional)…"}</option>
-            {trailerOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </SelectCombobox>
+          <div className="mt-0.5" data-testid="quick-assign-trailer">
+            <Combobox
+              options={trailerOptions}
+              value={trailerId || null}
+              onChange={(next) => setTrailerId(next ?? "")}
+              onSearch={setTrailerSearch}
+              placeholder={trailersQuery.isLoading ? "Loading trailers…" : "Select trailer (optional)…"}
+              loading={trailersQuery.isLoading}
+              allowClear
+              className="h-9 w-full text-sm"
+            />
+          </div>
         </label>
         {hardWarnings.length > 0 ? (
           <label className="flex items-center gap-2 text-xs text-red-700">
@@ -128,7 +136,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadNumber, hardWar
             Close
           </Button>
           <Button type="submit" size="sm" loading={loading} disabled={!driverId}>
-            Quick Assign
+            Assign
           </Button>
         </div>
       </form>
