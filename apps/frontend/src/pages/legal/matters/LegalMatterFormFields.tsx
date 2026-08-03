@@ -1,10 +1,10 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listInsuranceClaims, listInsuranceLawsuits } from "../../../api/insurance";
-import { listUnits } from "../../../api/mdata";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 export type LegalMatterFormState = {
@@ -178,16 +178,6 @@ export function LegalMatterFormFields({ form, setForm, mode, operatingCompanyId 
     enabled: Boolean(operatingCompanyId),
     queryFn: () => listInsuranceLawsuits({ operating_company_id: operatingCompanyId }).then((r) => r.lawsuits),
   });
-  const unitsQuery = useQuery({
-    queryKey: ["legal-matter-form", "units", operatingCompanyId],
-    enabled: Boolean(operatingCompanyId),
-    queryFn: async () => {
-      const result = await listUnits({ operating_company_id: operatingCompanyId, limit: 500 });
-      return (result.units as Array<{ id: string; unit_code?: string | null; unit_number?: string | null }>).filter(
-        (u) => Boolean(u.id),
-      );
-    },
-  });
 
   return (
     <div className="grid gap-2 md:grid-cols-2" data-testid="legal-matter-form-fields">
@@ -337,18 +327,19 @@ export function LegalMatterFormFields({ form, setForm, mode, operatingCompanyId 
       </label>
       <label className="text-xs text-gray-600" data-testid="legal-matter-unit-picker">
         Unit
-        <SelectCombobox
-          className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-          value={form.unit_id}
-          onChange={(e) => setForm((f) => ({ ...f, unit_id: e.target.value }))}
-        >
-          <option value="">None</option>
-          {(unitsQuery.data ?? []).map((unit) => (
-            <option key={unit.id} value={unit.id}>
-              {unit.unit_code || unit.unit_number || unit.id.slice(0, 8)}
-            </option>
-          ))}
-        </SelectCombobox>
+        <div className="mt-1">
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={operatingCompanyId}
+            value={form.unit_id || null}
+            onChange={(next) => setForm((f) => ({ ...f, unit_id: next ?? "" }))}
+            allowCreate={false}
+            placeholder="None"
+            className="w-full"
+            dataField="legal-matter-unit"
+            dataTestId="legal-matter-unit"
+          />
+        </div>
       </label>
 
       <label className="text-xs text-gray-600">
