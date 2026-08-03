@@ -251,6 +251,11 @@ export type Factor = {
   reserve_rate: number;
   recourse_days: number;
   active: boolean;
+  /** Canonical structured profile (not vendor notes). Optional until all clients hydrate. */
+  fee_schedule?: Array<{ from_day: number; to_day: number | null; fee_rate: number }> | null;
+  reserve_schedule?: Array<{ from_day: number; to_day: number | null; reserve_rate: number }> | null;
+  fee_application_mode?: string;
+  remittance_details?: Record<string, unknown> | null;
   noa_stamp_text: string | null;
   noa_remit_to_name: string | null;
   noa_remit_to_addr: string | null;
@@ -329,6 +334,10 @@ export function updateFactor(
     reserve_rate: number;
     recourse_days: number;
     active: boolean;
+    fee_schedule: Array<{ from_day: number; to_day: number | null; fee_rate: number }> | null;
+    reserve_schedule: Array<{ from_day: number; to_day: number | null; reserve_rate: number }> | null;
+    fee_application_mode: string;
+    remittance_details: Record<string, unknown> | null;
     noa_stamp_text: string | null;
     noa_remit_to_name: string | null;
     noa_remit_to_addr: string | null;
