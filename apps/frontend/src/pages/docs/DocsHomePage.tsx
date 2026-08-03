@@ -10,8 +10,27 @@ import { CollapsedListFilters } from "../../components/table";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { UploadModal } from "../../components/documents/UploadModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 
 type DocsEntityTabId = FileEntityType | "all";
+
+/** Map docs.file_links.entity_type → EntityLink kind (equipment has no kind — show plain label). */
+function docsLinkToEntityKind(entityType: FileEntityType): EntityKind | null {
+  switch (entityType) {
+    case "driver":
+    case "customer":
+    case "vendor":
+    case "unit":
+    case "load":
+    case "settlement":
+    case "invoice":
+      return entityType;
+    case "equipment":
+      return "unit";
+    default:
+      return null;
+  }
+}
 
 const ENTITY_TABS: Array<{ id: DocsEntityTabId; label: string }> = [
   { id: "all", label: "All Entities" },
@@ -47,10 +66,30 @@ const DOCS_COLUMNS: Array<ParityColumn<DocsFoundationRow>> = [
     },
     render: (row) => {
       const firstLink = row.links?.[0];
+      if (!firstLink) {
+        return (
+          <span className="truncate text-gray-400" data-testid="docs-entity-unlinked">
+            —
+          </span>
+        );
+      }
+      const kind = docsLinkToEntityKind(firstLink.entity_type);
+      if (!kind) {
+        return (
+          <span className="truncate" data-testid="docs-entity-plain">
+            {firstLink.entity_type}
+          </span>
+        );
+      }
+      // DOCS-LINK-01: never show a raw UUID prefix — EntityLink drills both ways when links exist.
       return (
-        <span className="truncate">
-          {firstLink ? `${firstLink.entity_type}:${firstLink.entity_id.slice(0, 8)}` : "—"}
-        </span>
+        <EntityLink
+          kind={kind}
+          id={firstLink.entity_id}
+          label={`${firstLink.entity_type}`}
+          className="truncate"
+          data-testid="docs-entity-link"
+        />
       );
     },
   },
