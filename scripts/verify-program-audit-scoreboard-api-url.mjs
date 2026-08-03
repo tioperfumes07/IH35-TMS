@@ -119,17 +119,21 @@ export function assertScoreboardContract(sources) {
     );
   }
   if (route) {
-    // Use includes() (not unanchored RegExp) — CodeQL js/regex/missing-regexp-anchor flags
-    // /api\.github\.com\/…\/pulls/ when used as a URL-host check.
-    const GITHUB_PULLS_MARK =
-      "https://api.github.com/repos/tioperfumes07/IH35-TMS/pulls";
-    if (!route.includes(GITHUB_PULLS_MARK)) {
-      problems.push(`${routeRel}: recentActivity must fetch live from GitHub pulls API`);
+    // Require the exact const assignment (anchored capture) — CodeQL rejects bare URL includes()
+    // and unanchored host regexes as incomplete sanitization / missing anchors.
+    const pullsConst = route.match(
+      /const\s+GITHUB_PULLS_URL\s*=\s*"(https:\/\/api\.github\.com\/repos\/tioperfumes07\/IH35-TMS\/pulls\?[^"]*)"/
+    );
+    if (!pullsConst) {
+      problems.push(`${routeRel}: recentActivity must define GITHUB_PULLS_URL to the GitHub pulls API`);
     }
     if (!/loadRecentActivityFromGitHub|GITHUB_PULLS_URL/.test(route)) {
       problems.push(`${routeRel}: must expose loadRecentActivityFromGitHub (live heartbeat)`);
     }
-    if (route.includes("block-reconciliation-data.json") && !route.includes("https://api.github.com/")) {
+    if (
+      /block-reconciliation-data\.json/.test(route) &&
+      !/const\s+GITHUB_PULLS_URL\s*=/.test(route)
+    ) {
       problems.push(`${routeRel}: must not rely only on stale recon for recentActivity`);
     }
     if (!/RECENT_CACHE_MS\s*=\s*60_000|60_000/.test(route)) {
