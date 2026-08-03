@@ -121,11 +121,16 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
     const tests = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          SELECT *
-          FROM safety.drug_test
-          WHERE operating_company_id = $1
-            AND voided_at IS NULL
-          ORDER BY test_date DESC, created_at DESC
+          SELECT
+            t.*,
+            NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name
+          FROM safety.drug_test t
+          LEFT JOIN mdata.drivers d
+            ON d.id = t.driver_id
+           AND d.operating_company_id = t.operating_company_id
+          WHERE t.operating_company_id = $1
+            AND t.voided_at IS NULL
+          ORDER BY t.test_date DESC, t.created_at DESC
           LIMIT 500
         `,
         [company.data.operating_company_id]
@@ -301,11 +306,16 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
     const rows = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          SELECT *
-          FROM safety.random_pool
-          WHERE operating_company_id = $1
-            AND voided_at IS NULL
-          ORDER BY selected_at DESC, created_at DESC
+          SELECT
+            p.*,
+            NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name
+          FROM safety.random_pool p
+          LEFT JOIN mdata.drivers d
+            ON d.id = p.driver_id
+           AND d.operating_company_id = p.operating_company_id
+          WHERE p.operating_company_id = $1
+            AND p.voided_at IS NULL
+          ORDER BY p.selected_at DESC, p.created_at DESC
           LIMIT 500
         `,
         [company.data.operating_company_id]
@@ -376,11 +386,16 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
     const rows = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
-          SELECT *
-          FROM safety.clearinghouse_query
-          WHERE operating_company_id = $1
-            AND voided_at IS NULL
-          ORDER BY queried_at DESC
+          SELECT
+            q.*,
+            NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name
+          FROM safety.clearinghouse_query q
+          LEFT JOIN mdata.drivers d
+            ON d.id = q.driver_id
+           AND d.operating_company_id = q.operating_company_id
+          WHERE q.operating_company_id = $1
+            AND q.voided_at IS NULL
+          ORDER BY q.queried_at DESC
           LIMIT 500
         `,
         [company.data.operating_company_id]

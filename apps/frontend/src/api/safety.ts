@@ -498,6 +498,7 @@ export type DaEnrollment = {
   uuid: string;
   operating_company_id: string;
   driver_uuid: string;
+  driver_name?: string | null;
   consortium_name: string;
   enrolled_at: string;
   is_active: boolean;

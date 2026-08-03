@@ -23,6 +23,7 @@ export type DaEnrollment = {
   uuid: string;
   operating_company_id: string;
   driver_uuid: string;
+  driver_name: string | null;
   consortium_name: string;
   enrolled_at: string;
   is_active: boolean;
@@ -33,6 +34,7 @@ export type DaTestRecord = {
   uuid: string;
   operating_company_id: string;
   driver_uuid: string;
+  driver_name: string | null;
   test_type: TestType;
   test_kind: TestKind;
   scheduled_at: string | null;
@@ -81,17 +83,21 @@ export async function listEnrollments(
   const res = await client.query<DaEnrollment>(
     `
       SELECT
-        uuid::text,
-        operating_company_id,
-        driver_uuid::text,
-        consortium_name,
-        enrolled_at::text,
-        is_active,
-        created_at::text
-      FROM safety.da_program_enrollments
-      WHERE operating_company_id = $1
-        AND ($2 = false OR is_active = true)
-      ORDER BY enrolled_at DESC, created_at DESC
+        e.uuid::text,
+        e.operating_company_id,
+        e.driver_uuid::text,
+        NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+        e.consortium_name,
+        e.enrolled_at::text,
+        e.is_active,
+        e.created_at::text
+      FROM safety.da_program_enrollments e
+      LEFT JOIN mdata.drivers d
+        ON d.id = e.driver_uuid
+       AND d.operating_company_id = e.operating_company_id
+      WHERE e.operating_company_id = $1
+        AND ($2 = false OR e.is_active = true)
+      ORDER BY e.enrolled_at DESC, e.created_at DESC
     `,
     [operatingCompanyId, activeOnly]
   );
@@ -157,17 +163,17 @@ export async function listTestRecords(
   operatingCompanyId: string,
   options: { driverUuid?: string; result?: TestResult; limit?: number } = {}
 ): Promise<DaTestRecord[]> {
-  const conditions: string[] = ["operating_company_id = $1"];
+  const conditions: string[] = ["t.operating_company_id = $1"];
   const values: unknown[] = [operatingCompanyId];
   let idx = 2;
 
   if (options.driverUuid) {
-    conditions.push(`driver_uuid = $${idx}::uuid`);
+    conditions.push(`t.driver_uuid = $${idx}::uuid`);
     values.push(options.driverUuid);
     idx += 1;
   }
   if (options.result) {
-    conditions.push(`result = $${idx}`);
+    conditions.push(`t.result = $${idx}`);
     values.push(options.result);
     idx += 1;
   }
@@ -178,20 +184,24 @@ export async function listTestRecords(
   const res = await client.query<DaTestRecord>(
     `
       SELECT
-        uuid::text,
-        operating_company_id,
-        driver_uuid::text,
-        test_type,
-        test_kind,
-        scheduled_at::text,
-        collected_at::text,
-        result,
-        chain_of_custody_id,
-        sap_referral_uuid::text,
-        created_at::text
-      FROM safety.da_test_records
+        t.uuid::text,
+        t.operating_company_id,
+        t.driver_uuid::text,
+        NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+        t.test_type,
+        t.test_kind,
+        t.scheduled_at::text,
+        t.collected_at::text,
+        t.result,
+        t.chain_of_custody_id,
+        t.sap_referral_uuid::text,
+        t.created_at::text
+      FROM safety.da_test_records t
+      LEFT JOIN mdata.drivers d
+        ON d.id = t.driver_uuid
+       AND d.operating_company_id = t.operating_company_id
       WHERE ${where}
-      ORDER BY created_at DESC
+      ORDER BY t.created_at DESC
       ${limitClause}
     `,
     values
