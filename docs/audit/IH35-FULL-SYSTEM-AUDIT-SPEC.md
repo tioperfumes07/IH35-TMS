@@ -1,8 +1,3 @@
----
-trigger: always_on
-description: IH35 full-system audit harness — DoD A–E + VERIFY 1–8 until PROD-VERIFIED
----
-
 # IH35-TMS — FULL SYSTEM AUDIT: MASTER INSTRUCTIONS FOR CASCADE
 ### (auto-loads every session · runs until fully PROD-VERIFIED · the anti-bullshit spec)
 
