@@ -353,7 +353,16 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
               </div>
             </Field>
             <Field label="Class">
-              <input className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2" readOnly value="Auto class" />
+              {/* SAF-F05 honesty: was a fake read-only "Auto class" string with no column and no
+                  formula — operators treated it as a stored classification. Until a real CSA/DOT
+                  class is modeled + persisted, show undetermined rather than invent a value. */}
+              <input
+                data-testid="accident-class"
+                className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 text-slate-600"
+                readOnly
+                value="Not classified"
+                title="No accident class is stored yet — value is not auto-computed"
+              />
             </Field>
             <div />
 
