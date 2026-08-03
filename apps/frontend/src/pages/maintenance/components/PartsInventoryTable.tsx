@@ -38,14 +38,21 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
   const queryClient = useQueryClient();
   const [openPurchase, setOpenPurchase] = useState(false);
   const [search, setSearch] = useState("");
+  const [vendorSearch, setVendorSearch] = useState("");
   const [form, setForm] = useState<PurchaseForm>(EMPTY_PURCHASE);
   const [adjustRow, setAdjustRow] = useState<PartsInventoryRow | null>(null);
   const [deltaQty, setDeltaQty] = useState(0);
   const [reason, setReason] = useState<"used" | "discarded" | "shrinkage" | "recount">("recount");
 
   const vendorsQuery = useQuery({
-    queryKey: ["mdata", "vendors", companyId, "parts-inventory"],
-    queryFn: () => listVendors({ operating_company_id: companyId, status: "active", limit: 1000 }),
+    queryKey: ["mdata", "vendors", companyId, "parts-inventory", vendorSearch],
+    queryFn: () =>
+      listVendors({
+        operating_company_id: companyId,
+        status: "active",
+        limit: 200,
+        search: vendorSearch || undefined,
+      }),
     enabled: Boolean(companyId),
   });
   const vendorOptions = useMemo(
@@ -174,6 +181,8 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
                 createKind="vendor"
                 operatingCompanyId={companyId}
                 placeholder="Select vendor…"
+                loading={vendorsQuery.isLoading}
+                onSearch={setVendorSearch}
                 onOptionCreated={(opt) => {
                   setForm((v) => ({ ...v, vendor_id: opt.value }));
                   void vendorsQuery.refetch();
