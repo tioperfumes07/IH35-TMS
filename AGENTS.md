@@ -1,5 +1,7 @@
 # IH35-TMS — Agent coordination
 
+> **★★★ FULL SYSTEM AUDIT LAW (owner 2026-08-03 v3 — MANDATORY):** [docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md](docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md) — **"Complete" is NOT five layers.** Complete = **DoD A–E + VERIFY 1–8** PROD-VERIFIED per entity (live V2 picker+creator · V3 wiring · V4 deep linkage F+R). Cascade Always-On: `.windsurf/rules/ih35-deep-linkage-audit.md`. Cursor: Rule **31** (`.cursor/rules/31-full-system-audit-mandatory.mdc`). Ledger: [AUDIT-COVERAGE-LIVE.md](docs/audit/AUDIT-COVERAGE-LIVE.md) · run-log: [AUDIT-RUN-LOG.md](docs/audit/AUDIT-RUN-LOG.md). A code trace / count / CI-green is NOT proof. A guess is a defect.
+
 > **★★★ BEFORE ANY BLOCK — READ [docs/audit/AUDIT-COVERAGE-LIVE.md](docs/audit/AUDIT-COVERAGE-LIVE.md).**
 > It is the single source of truth for what is actually broken. **Your work list = its rows where
 > `Verdict = FAIL` and `Status = OPEN` in your lane.** Do not invent a work list, do not work from a stale

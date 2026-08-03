@@ -1,0 +1,34 @@
+---
+description: IH35 full-system audit law — DoD A–E + VERIFY 1–8 until PROD-VERIFIED (owner 2026-08-03 v3)
+alwaysApply: true
+---
+
+# RULE 31 — FULL SYSTEM AUDIT (MANDATORY · owner 2026-08-03 v3)
+
+**Canonical full text:** `docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md`  
+**Cascade Always-On:** `.windsurf/rules/ih35-deep-linkage-audit.md`  
+**Ledger:** `docs/audit/AUDIT-COVERAGE-LIVE.md` · **Run log:** `docs/audit/AUDIT-RUN-LOG.md`
+
+## Complete is NOT five layers
+
+A module / row is complete only when **DoD A–E + VERIFY 1–8** are **PROD-VERIFIED** per entity (TRANSP & USMCA; TRK where relevant). That bar **includes**:
+
+- **V2** — universal picker + creator law (live click: `+ Add new` first row → wizard → canonical R=W → appears + selected + survives reload)
+- **V3** — connectivity / wiring (live click every link / CoA / Lists card → correct LIVE target; register→source→report reconciles)
+- **V4** — deep linkage forward + reverse on live data (insurance model)
+
+A code trace / route string / CI-green / count is **NOT** proof.
+
+## Three tiers only
+
+`PROD-VERIFIED` · `[AUDIT — RE-VERIFY LIVE]` · `UNVERIFIED — <blocker>`
+
+## Hard companions
+
+- A **COUNT never upgrades a row's tier** (spec Rule 10).
+- Re-baseline FAILs every session (Rule 11).
+- `0` is not a verdict until app-path re-run (`bypass_rls=lucia` + opco), TRANSP and USMCA.
+- No `--admin`, no fake green, additive ledger only.
+- A guess is a defect.
+
+Cursor agents building fixes for audit FAILs must keep this bar; Cascade owns the audit loop. Read the full spec before claiming any audit row or module CERTIFIED / COMPLETE.

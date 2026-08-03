@@ -1,4 +1,4 @@
-Method is governed by AUDIT-LAW-PERMANENT.md — read it first. Order C→B→A→D→E; a screenshot is not a Layer-E pass; "complete" = 30/30 certified only.
+Method is governed by **`docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md` (v3 · 2026-08-03)** — DoD A–E + VERIFY 1–8, live-exercised. Companion: `AUDIT-LAW-PERMANENT.md`. **"Complete" is NOT five layers** and is NOT a screenshot / route string / count — it is all applicable 13 gates PROD-VERIFIED per entity (V2 picker+creator, V3 wiring, V4 deep linkage F+R mandatory). Order C→B→A→D→E for record DoD; VERIFY V1–V8 per §B8/§B12 of the full-system spec.
 
 # AUDIT COVERAGE — LIVE (single source of truth)
 
