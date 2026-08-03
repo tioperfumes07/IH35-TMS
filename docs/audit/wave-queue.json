@@ -3,10 +3,10 @@
   "waves": [
     {
       "id": "CLS-CATEGORY-MAP-COHERENCE",
-      "root_cause": "expense_category_account_map incomplete or posting_side incoherent — a TMS-native bill whose category code has no row in the map fails with BILL_LINE_ACCOUNT_UNRESOLVED / CATEGORY_MAPPING_MISSING, blocking GL posting silently until the map is seeded. Guard ACCT-F98 already names this incident.",
+      "root_cause": "expense_category_account_map incomplete, posting_side incoherent, OR spend miscategorized into the wrong GL expense account (e.g. tires/tolls into Fuel). A TMS-native bill whose category code has no map row fails with BILL_LINE_ACCOUNT_UNRESOLVED / CATEGORY_MAPPING_MISSING; a scope-mismatched Fuel GL overage that is NOT a double-post is usually this class.",
       "lane": "money",
       "layer": "C",
-      "modules": ["accounting", "maintenance"],
+      "modules": ["accounting", "maintenance", "fuel"],
       "instances": [
         {
           "path": "expense_category_account_map missing row for maintenance/misc (USMCA) — bill 77f2659f failed CATEGORY_MAPPING_MISSING",
@@ -17,20 +17,26 @@
           "path": "expense_category_account_map posting_side coherence — any new expense category added without a map row will silently fail GL",
           "entity": "ALL",
           "note": "Guard ACCT-F98 (verify-entity-expense-category-map-complete.mjs) catches at CI time."
+        },
+        {
+          "path": "~$4,594 tires/tolls miscategorized into Fuel GL (TRANSP) — residual after CLS-FUEL-DOUBLE-POST false premise retracted",
+          "entity": "TRANSP",
+          "note": "Owner/Claude 2026-08-03: $47.7K Fuel gap was Relay-card-only vs all-sources GL (scope mismatch), not double-post. Real defect is miscategorization into Fuel. Claude Coder owns the mapping fix. Scoreboard row 673."
         }
       ],
-      "completeness": "lucia-bypass Neon prod: expense_category_account_map count=27 (seeded 2026-08-03). All 5 TMS-native bills carry balanced JEs (0 CATEGORY_MAPPING_MISSING remaining). Positive control: posting_batches status=posted > 180.",
+      "completeness": "lucia-bypass Neon prod: expense_category_account_map count=27 (seeded 2026-08-03). All 5 TMS-native bills carry balanced JEs (0 CATEGORY_MAPPING_MISSING remaining). Fuel density: fuel_transactions=1547 / fuel-posting batches=1547. Positive control: posting_batches status=posted > 180. Tires/tolls $4,594 instance still OPEN for Claude mapping fix.",
       "guard": "scripts/verify-entity-expense-category-map-complete.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "bill 77f2659f (USMCA-RB-002, $1.00) → JE 84d8285c DR=CR=100c 2026-08-03T16:08:28Z — previously failed CATEGORY_MAPPING_MISSING, now posted after map seed",
+        "guard_sample": "bill 77f2659f (USMCA-RB-002, $1.00) → JE 84d8285c DR=CR=100c 2026-08-03T16:08:28Z — previously failed CATEGORY_MAPPING_MISSING, now posted after map seed; tires/tolls~$4594 Fuel miscategorization still OPEN",
         "money_critical": true
       },
       "status": "open",
       "hotfiles": [
         "apps/backend/src/accounting/posting-engine.service.ts",
         "apps/backend/src/accounting/coa-roles/resolver.service.ts",
-        "scripts/verify-entity-expense-category-map-complete.mjs"
+        "scripts/verify-entity-expense-category-map-complete.mjs",
+        "apps/frontend/src/pages/fuel"
       ]
     },
     {
@@ -75,33 +81,33 @@
     },
     {
       "id": "CLS-FUEL-DOUBLE-POST",
-      "root_cause": "Relay fuel-card swipes (imported to fuel.fuel_transactions via Relay API) are posted to GL by the fuel_event poster. The SAME purchases also appear as bank debits (RELAY*/Love's ACH settlements) in banking.bank_transactions, which are then categorized to the same fuel expense GL accounts (6100 Fuel Expense, QBO-155 Fuel-Def, QBO-92 Fuel-Reefer-Diesel). Both paths debit fuel expense → GL fuel is overstated by the bank-categorized amount. Settlement-level matching confirms: Relay settles per-charge to the checking account, so each bank debit corresponds to one or more fuel card swipes already posted by the fuel poster.",
+      "root_cause": "FALSE PREMISE (2026-08-03 owner/Claude) — same class as row 666. #4218 published CLS-FUEL-DOUBLE-POST claiming $9,216.49 / $47.7K dual debit (fuel_event + bank_categorization). Claude prod proof (completeness discriminator 3517/3517): 0 of 67 amount+date matches — nothing booked twice. The gap is a SCOPE MISMATCH (Relay-card-only subledger vs all-sources Fuel GL). CLASS N/A. Real residual (~$4,594 tires/tolls into Fuel) is CLS-CATEGORY-MAP-COHERENCE (Claude money).",
       "lane": "money",
       "layer": "C",
-      "modules": ["accounting", "fuel"],
+      "modules": ["fuel", "accounting"],
       "instances": [
         {
-          "path": "18 RELAY/Love's bank debits (Mar 3–Jul 29) categorized to fuel GL accounts: 1cec0017 ($379.72, 2026-03-03 RELAY*CIRCLEK), 36e22210 ($15.00, 2026-03-13 LOVE'S#0762), 334cbea0 ($418.64, 2026-05-24 LOVES), 62d38392 ($1475.93, 2026-05-24 LOVES), 7580af09 ($1475.93, 2026-05-25 LOVE'S#0860), 3d5c603b ($418.64, 2026-05-25 LOVE'S#0860), 104ef43d ($613.19, 2026-06-01 LOVE'S#0304), 26fac3ec ($40.00, 2026-06-11 Love's#0762), 1912c534 ($145.26, 2026-06-11 LOVE'S#0706), cad733a1 ($323.29, 2026-06-24 LOVE'S TIRE CARE), 2d9f0cab ($544.51, 2026-06-29 LOVE'S TIRE CARE), 2d56bbe0 ($449.90, 2026-07-11 LOVES), 0bfc0c2c ($449.90, 2026-07-11 LOVE'S TIRE CARE#04), cc4d1e00 ($562.21, 2026-07-15 Love's Tire), 7fccb6c3 ($562.21, 2026-07-16 LOVE'S TIRE CARE), 43fbf611 ($405.74, 2026-07-26 LOVES), d0e0cc44 ($405.74, 2026-07-27 LOVE'S TIRE CARE#07), 0894576b ($530.68, 2026-07-29 Love's Tire)",
+          "path": "Relay-card-only fuel.fuel_transactions vs all-sources Fuel GL — $47.7K/$9.2K gap mislabeled double-post (scoreboard row 599 → 673; supersedes #4218 open card)",
           "entity": "TRANSP",
-          "note": "Total double-posted: $9,216.49 (18 bank txns). Each corresponds to Relay fuel-card swipes already in fuel.fuel_transactions and posted by the fuel_event poster to the same GL accounts."
+          "note": "SCOPE MISMATCH, not dual write. Method law: never publish CLS-*-DOUBLE-POST from a source-specific vs all-sources comparison."
         },
         {
-          "path": "50 OTHER_FUEL bank debits (FUEL AMERICA, ExxonMobil, Laredo Bridge, Pilot, Road Ranger, Murphy Express) totaling $3,615.76 — these are NON-Relay fuel purchases NOT present in fuel.fuel_transactions. They are legitimate bank-only fuel GL entries (no overlap with fuel poster). NOT double-counted.",
+          "path": "amount+date match probe: 0 of 67 matches @ completeness discriminator 3517/3517",
           "entity": "TRANSP",
-          "note": "These 50 represent corporate-card or cash fuel purchases outside the Relay/Love's fleet card. Correctly categorized to fuel GL. No remediation needed."
+          "note": "Claude Coder prod proof 2026-08-03. Positive control on same tables; no overlapping booked pairs. Refutes #4218 'TRUE DOUBLE' settlement narrative."
         }
       ],
-      "completeness": "lucia-bypass Neon prod 2026-08-03: fuel.fuel_transactions sum=$625,546.39 (1,547 txns, ALL source=other, ALL relay_bridge=1, ALL merchant=Love's). GL fuel debit from fuel_event poster=$625,546.39 (1,547 JE posting lines). GL fuel debit from bank_categorization=$48,028.41 (165 lines across all periods). Total GL fuel expense=$673,574.80 vs actual fuel card spend=$625,546.39 → overstated by $48,028.41. Breakdown: $34,887.16 (98 txns) pre-Mar-3 bank-only (legit, no fuel poster existed yet); $9,216.49 (18 txns) overlap RELAY/Love's = TRUE DOUBLE; $3,615.76 (50 txns) overlap non-Love's = legit bank-only. NET DOUBLE-COUNT: $9,216.49.",
-      "guard": "scripts/verify-fuel-gl-no-double-post.mjs",
+      "completeness": "Owner/Claude prod proof 2026-08-03: discriminator 3517/3517; 0/67 amount+date matches. Cascade lucia re-check: fuel_transactions=1547; fuel-posting batches ih35:fuel-posting:v1:%=1547 (GL-dark density closed via row 667 reflush). Positive control: posting_batches status=posted > 180.",
+      "guard": "scripts/verify-zero-count-completeness-discriminator.mjs",
       "drain_proof": {
-        "guard_green": false,
-        "guard_sample": "Bank txn 334cbea0 ($418.64, 2026-05-24 'LOVES') categorized to 6100 Fuel Expense → JE posting via bank_categorization source. Fuel card swipe 4b0d268c ($418.01, 2026-05-21 relay_txn=txn_DARy2XMoohzYdk merchant=Love's) → JE posting via fuel_event source to same account 6100. Same economic event (Relay Love's card charge) posted twice: once as fuel-card import, once as bank settlement categorization. Delta $0.63 is Relay fee/rounding.",
+        "guard_green": true,
+        "guard_sample": "0 of 67 amount+date matches @ discriminator 3517/3517 — no double-post; $47.7K scope mismatch → re-point ~$4594 tires/tolls to CLS-CATEGORY-MAP-COHERENCE (row 673)",
         "money_critical": true
       },
-      "status": "open",
+      "status": "drained",
       "hotfiles": [
-        "apps/backend/src/accounting/posting-engine.service.ts",
-        "apps/backend/src/banking/categorize-transaction.service.ts"
+        "docs/audit/AUDIT-COVERAGE-LIVE.md",
+        "docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md"
       ]
     }
   ]
