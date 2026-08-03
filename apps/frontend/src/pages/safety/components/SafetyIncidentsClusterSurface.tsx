@@ -13,7 +13,6 @@ import {
   type SafetyIncidentType,
 } from "../../../api/safety";
 import { listUnits } from "../../../api/mdata";
-import { listLoads } from "../../../api/loads";
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { Combobox } from "../../../components/Combobox";
@@ -177,11 +176,10 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const { user } = useAuth();
   const canVoid = user?.role === "Owner" || user?.role === "Administrator";
 
-  // SAF-B29: unit/load drawer pickers and fleet labels must not silently truncate past 200 rows.
+  // SAF-B29: unit/trailer drawer pickers and fleet labels must not silently truncate past 200 rows.
   // Driver roster: filters + create use EntityPicker / DriverPickerWithCreate (server search).
   // Do NOT bulk listDrivers(limit:200) for labels — list/detail APIs already JOIN driver_name.
   const [unitSearch, setUnitSearch] = useState("");
-  const [loadSearch, setLoadSearch] = useState("");
 
   const fleetQuery = useQuery({
     queryKey: ["safety", "incidents-fleet", operatingCompanyId, unitSearch],
@@ -194,30 +192,10 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
       }),
     enabled: Boolean(operatingCompanyId),
   });
-  const loadsQuery = useQuery({
-    queryKey: ["safety", "incidents-loads", operatingCompanyId, loadSearch],
-    queryFn: () =>
-      listLoads({
-        operating_company_id: [operatingCompanyId],
-        limit: 200,
-        search: loadSearch || undefined,
-      }),
-    enabled: formEditable && Boolean(operatingCompanyId),
-  });
 
   const fleetRows = (fleetQuery.data?.units ?? []) as Array<Record<string, unknown>>;
-  const unitOptions = fleetRows.filter((r) => str(r.kind) !== "trailer");
   const trailerOptions = fleetRows.filter((r) => str(r.kind) === "trailer");
-  const loadOptions = loadsQuery.data?.loads ?? [];
 
-  const unitComboboxOptions = useMemo(
-    () =>
-      unitOptions.map((u) => ({
-        value: String(u.id ?? ""),
-        label: str(u.unit_number) || String(u.id ?? ""),
-      })),
-    [unitOptions]
-  );
   const trailerComboboxOptions = useMemo(
     () =>
       trailerOptions.map((t) => ({
@@ -225,14 +203,6 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         label: str(t.unit_number) || String(t.id ?? ""),
       })),
     [trailerOptions]
-  );
-  const loadComboboxOptions = useMemo(
-    () =>
-      (loadOptions as Array<Record<string, unknown>>).map((l) => ({
-        value: String(l.id ?? ""),
-        label: str(l.load_number) || String(l.id ?? ""),
-      })),
-    [loadOptions]
   );
 
   const unitNumberById = useMemo(() => {
@@ -695,13 +665,18 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                 <span className="text-slate-600">Unit</span>
                 {formEditable ? (
                   <div className="mt-1" data-testid={`${config.pageTestId}-field-unit_id`}>
-                    <Combobox
-                      options={unitComboboxOptions}
+                    <EntityPicker
+                      kind="unit"
+                      operatingCompanyId={operatingCompanyId}
                       value={str(selected?.unit_id) || null}
                       onChange={(next) => setField("unit_id", next ?? "")}
-                      onSearch={setUnitSearch}
+                      allowCreate
+                      nestedInDrawer
+                      enabled={drawerOpen && formEditable}
                       placeholder="Select unit"
-                      loading={fleetQuery.isLoading}
+                      className="w-full"
+                      dataField={`${config.pageTestId}-unit`}
+                      dataTestId={`${config.pageTestId}-unit`}
                       allowClear
                     />
                   </div>
@@ -756,13 +731,18 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                 <span className="text-slate-600">Load</span>
                 {formEditable ? (
                   <div className="mt-1" data-testid={`${config.pageTestId}-field-load_id`}>
-                    <Combobox
-                      options={loadComboboxOptions}
+                    <EntityPicker
+                      kind="load"
+                      operatingCompanyId={operatingCompanyId}
                       value={str(selected?.load_id) || null}
                       onChange={(next) => setField("load_id", next ?? "")}
-                      onSearch={setLoadSearch}
+                      allowCreate={false}
+                      nestedInDrawer
+                      enabled={drawerOpen && formEditable}
                       placeholder="Select load"
-                      loading={loadsQuery.isLoading}
+                      className="w-full"
+                      dataField={`${config.pageTestId}-load`}
+                      dataTestId={`${config.pageTestId}-load`}
                       allowClear
                     />
                   </div>
