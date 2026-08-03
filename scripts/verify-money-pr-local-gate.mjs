@@ -61,9 +61,11 @@ export function assertMoneyPrLocalGate(sources) {
       "verify-no-claimed-numbers-edits",
       "verify-data-migrations-rehearsed",
       "verify-entity-link-adoption",
+      "verify-no-guard-file-deletion",
+      "verify-claude-green-evidence-shape",
     ]) {
       if (!gate.includes(needle)) {
-        problems.push(`${GATE}: must invoke ${needle} (Rule 29 Claude-parity fail-fast).`);
+        problems.push(`${GATE}: must invoke ${needle} (Rule 29/30 Claude-parity fail-fast).`);
       }
     }
   }

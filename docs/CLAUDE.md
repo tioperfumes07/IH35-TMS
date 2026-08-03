@@ -9,6 +9,8 @@
 > **★ Rule 25 — ONE PUSH / FAIL-FAST (permanent):** `.cursor/rules/25-one-push-money-fail-fast.mdc` — `scripts/money-pr-local-gate.mjs` is first in husky `branch:precheck-push` (DoD + money-theater in seconds). Amend cannot skip empty-staged checks. One push after local PASS; never rebase while `build-typecheck` runs. CI verify-step **1702**.
 >
 > **★ Rule 29 — CURSOR = CLAUDE SHIP PARITY (permanent):** `.cursor/rules/29-cursor-claude-parity-ship.mdc` — run `node scripts/money-pr-local-gate.mjs` before every push (expanded suite: lane bands + no CLAIMED thrash + EntityLink). Never `--no-verify`. CI verify-step **1998**.
+>
+> **★ Rule 30 — CLAUDE-GREEN EVIDENCE FORMAT (permanent):** `.cursor/rules/30-claude-green-evidence-format.mdc` — FINDING-first body/commit (`docs/templates/CLAUDE-GREEN-PR-BODY.md`); `LIVE PROOF: … exit 0`; one commit on `origin/main`; `node scripts/cursor-pr-body-gate.mjs --body-file …` before `gh pr create|edit`. CI verify-step **2088**.
 > **★★ PER-PR CHECKLIST (read FIRST, every PR):** `docs/specs/PER-PR-CHECKLIST.md` — the consolidated list of everything audited and fixed in **every** PR (5 DONE layers · 8 audit layers · evidence block · guard rules · verification traps · merge gates · migration rules). Enforced in CI on the PR body and the commits.
 
 > **SESSION LAW (auto-loaded every Cursor session):** `docs/specs/CURSOR-OPERATING-CONSTITUTION.md` + Rule #0 `docs/specs/QUALITY-STANDARD-LOCKED.md` + Law of the Land `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` + always-apply `.cursor/rules/00`–`07` + `10`–`15`. Trust over speed. Verify live. No guess / patch / defer. Never delete modules — only add. Multi-agent review required on non-trivial/financial work.

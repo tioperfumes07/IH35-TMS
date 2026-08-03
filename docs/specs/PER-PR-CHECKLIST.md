@@ -69,17 +69,26 @@ auto-loaded entry point, and why §3/§4 below are **machine-enforced** rather t
 
 ## 3 · The evidence block — REQUIRED in the PR body *and* the squash message
 
+**Rule 30 (Claude-green — permanent):** use `docs/templates/CLAUDE-GREEN-PR-BODY.md`. Start with
+`FINDING:` (no `## Summary` preamble). Identical labelled block in the **commit** and **PR body**.
+Before `gh pr create|edit`: `node scripts/cursor-pr-body-gate.mjs --body-file …`. Never stack on
+another open branch; never `git reset --soft origin/main` after main advanced.
+
 ```
+FINDING:     ranked id
+LANE:        NON-FINANCIAL | FINANCIAL-HOLD | …
 ROOT CAUSE:  the actual mechanism, not the symptom
 FIX:         what changed and why this is the root fix, not a patch
+… DOD-A…E · VERIFY-1…8 · MODULE_PROGRESS · ITEMS_TOUCHED · MIGRATE …
 GUARD:       scripts/verify-*.mjs + scripts/verify-steps/NNNN-*.mjs
-LIVE PROOF:  endpoint / health sha / DB row / browser — or UNVERIFIED + named blocker
+LIVE PROOF:  command exit 0 / health sha / endpoint / row — or UNVERIFIED: <named blocker>
 REMAINING:   what is still open, explicitly. "nothing" is a claim you must defend
 ```
 
 A PR that changes app code and omits this block is **not reviewable and is not done**.
 `LIVE PROOF` must name a real artifact — a sha, an endpoint, a row count, a screenshot path — or say
-`UNVERIFIED` and name the blocker. **The word "verified" on its own is not proof.**
+`UNVERIFIED: <blocker>`. Forbidden theater: bare `LIVE PROOF: UNVERIFIED browser`.
+**The word "verified" on its own is not proof.**
 
 ## 4 · Guard rules — how a fix is made un-regressable
 

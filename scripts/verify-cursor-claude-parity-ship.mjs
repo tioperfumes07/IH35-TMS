@@ -16,7 +16,10 @@ const LABEL = "verify-cursor-claude-parity-ship";
 const SELFTEST = process.argv.includes("--selftest");
 
 const RULE29 = ".cursor/rules/29-cursor-claude-parity-ship.mdc";
+const RULE30 = ".cursor/rules/30-claude-green-evidence-format.mdc";
 const GATE = "scripts/money-pr-local-gate.mjs";
+const TEMPLATE = "docs/templates/CLAUDE-GREEN-PR-BODY.md";
+const BODY_GATE = "scripts/cursor-pr-body-gate.mjs";
 const ENTRY_POINTS = [
   "AGENTS.md",
   "docs/CLAUDE.md",
@@ -32,6 +35,8 @@ const REQUIRED_IN_GATE = [
   "verify-no-claimed-numbers-edits",
   "verify-data-migrations-rehearsed",
   "verify-entity-link-adoption",
+  "verify-no-guard-file-deletion",
+  "verify-claude-green-evidence-shape",
 ];
 
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -76,13 +81,31 @@ export function assertCursorClaudeParityShip(sources) {
         `${rel}: must reference Rule 29 / cursor-claude-parity / 1998 so the law autoloads.`,
       );
     }
+    if (!/Rule 30|claude-green-evidence|CLAUDE-GREEN-PR-BODY/i.test(src)) {
+      problems.push(
+        `${rel}: must reference Rule 30 / claude-green-evidence / CLAUDE-GREEN-PR-BODY (2026-08-02 permanent).`,
+      );
+    }
+  }
+
+  if (!get(RULE30)) {
+    problems.push(`${RULE30}: missing — Rule 30 Claude-green evidence format is permanent law.`);
+  } else if (!/FINDING|soft-reset|cursor-pr-body-gate/i.test(get(RULE30))) {
+    problems.push(`${RULE30}: must name FINDING-first / soft-reset ban / cursor-pr-body-gate.`);
+  }
+
+  if (!get(TEMPLATE)) {
+    problems.push(`${TEMPLATE}: missing — copy-paste Claude-green body required.`);
+  }
+  if (!get(BODY_GATE)) {
+    problems.push(`${BODY_GATE}: missing — local PR-body gate before gh pr create required.`);
   }
 
   return problems;
 }
 
 if (SELFTEST) {
-  const files = [RULE29, GATE, ...ENTRY_POINTS];
+  const files = [RULE29, RULE30, GATE, TEMPLATE, BODY_GATE, ...ENTRY_POINTS];
   const live = Object.fromEntries(
     files.map((rel) => {
       try {
@@ -101,6 +124,7 @@ if (SELFTEST) {
   };
 
   expectCaught("rule29-deleted", { ...live, [RULE29]: "" }, RULE29);
+  expectCaught("rule30-deleted", { ...live, [RULE30]: "" }, RULE30);
   expectCaught(
     "gate-no-migration-band",
     {
@@ -117,7 +141,16 @@ if (SELFTEST) {
     },
     "verify-entity-link-adoption",
   );
+  expectCaught(
+    "gate-no-rule30-deletion-check",
+    {
+      ...live,
+      [GATE]: live[GATE].replace(/verify-no-guard-file-deletion/g, "verify-something-else"),
+    },
+    "verify-no-guard-file-deletion",
+  );
   expectCaught("agents-omit", { ...live, "AGENTS.md": "# no pointer\n" }, "AGENTS.md");
+  expectCaught("template-missing", { ...live, [TEMPLATE]: "" }, TEMPLATE);
 
   const liveProblems = assertCursorClaudeParityShip();
   if (liveProblems.length) failures.push(`live FAIL: ${liveProblems.join(" | ")}`);

@@ -20,8 +20,10 @@ alwaysApply: true
 7. `verify-no-claimed-numbers-edits` — **never** edit `CLAIMED-NUMBERS.json` on a feature PR (filename is the claim — TOOL-F03)
 8. `verify-data-migrations-rehearsed` — data-mutating migrations need a `REHEARSED:` line (TOOL-F04; Neon fork of prod)
 9. `verify-entity-link-adoption` — bare UUID renders / baseline drift on frontend TSX
+10. `verify-no-guard-file-deletion` — **Rule 30** — never soft-reset onto newer main (deletes others' verify-steps)
+11. `verify-claude-green-evidence-shape` — **Rule 30** — tip LIVE PROOF is Claude-green (`exit 0` / sha), not `UNVERIFIED browser`
 
-CI verify-steps **1324 + 1430 + 1702 + 1998** remain the remote backstop. Local gate is the **primary** time-saver.
+CI verify-steps **1324 + 1430 + 1702 + 1998 + 2088** remain the remote backstop. Local gate is the **primary** time-saver. Also: `node scripts/cursor-pr-body-gate.mjs --body-file …` before every `gh pr create|edit` (Rule 30).
 
 ## HARD agent law (non-negotiable)
 
