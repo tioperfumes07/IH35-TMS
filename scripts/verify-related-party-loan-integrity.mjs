@@ -28,6 +28,7 @@ const LABEL = "verify:related-party-loan-integrity";
 const POSTER = "apps/backend/src/accounting/related-party-loan-posting/poster.service.ts";
 const ROUTES = "apps/backend/src/accounting/related-party-loan-posting/routes.ts";
 const ACCRUAL = "apps/backend/src/accounting/related-party-loan-posting/interest-accrual.service.ts";
+const DEDUCT = "apps/backend/src/settlements/auto-deductions/apply.ts";
 
 export function stripComments(src) {
   return String(src)
@@ -171,6 +172,33 @@ export function analyse(files) {
     }
   }
 
+  // 5. AUTO-DEDUCT MUST REPAY ON THE SCHEDULE, NOT THE FLAT CAP (LOAN-08).
+  //
+  // max_per_settlement_cents is a loss-recovery model: take what you can each settlement until the
+  // balance is gone. A loan is the opposite — the borrower signed an amortization schedule, and each
+  // row's payment_cents is a specific principal + interest split. Repaying on the cap instead would
+  // deduct amounts the borrower never agreed to and would never reconcile against the schedule they
+  // hold. The regression is silent: the money still moves, the balance still falls, and only a borrower
+  // comparing their settlement to their own schedule would ever notice.
+  const deduct = files[DEDUCT];
+  if (deduct == null) {
+    problems.push(`${DEDUCT} is missing — nothing materializes settlement deductions.`);
+  } else {
+    const d = stripComments(deduct);
+    if (!/related_party_loan_id/.test(d)) {
+      problems.push(
+        `${DEDUCT}: no longer reads related_party_loan_id, so a loan policy is indistinguishable from a ` +
+          `loss-recovery policy and will be repaid on the flat per-settlement cap.`
+      );
+    }
+    if (!/next_scheduled_payment_cents/.test(d)) {
+      problems.push(
+        `${DEDUCT}: the scheduled-payment source is gone. A loan would repay on max_per_settlement_cents ` +
+          `— an amount the borrower never agreed to, that cannot be split into principal and interest.`
+      );
+    }
+  }
+
   // The register must stay entity-scoped and must not resurrect reversed rows into the balance.
   if (routes != null) {
     const r = stripComments(routes);
@@ -190,7 +218,7 @@ export function analyse(files) {
 
 function readAll() {
   const out = {};
-  for (const f of [POSTER, ROUTES, ACCRUAL]) out[f] = existsSync(f) ? readFileSync(f, "utf8") : null;
+  for (const f of [POSTER, ROUTES, ACCRUAL, DEDUCT]) out[f] = existsSync(f) ? readFileSync(f, "utf8") : null;
   return out;
 }
 
@@ -227,7 +255,17 @@ function selftest() {
     const r = resolveRoleAccount(client, id, "related_party_interest_expense");
     export async function accrualEnabled(){ return isEnabled(RELATED_PARTY_LOAN_GL_POSTING_FLAG); }
   `;
-  const ok = { [POSTER]: goodPoster, [ROUTES]: goodRoutes, [ACCRUAL]: goodAccrual };
+  const goodDeduct = `
+    const q = "SELECT related_party_loan_id::text, (SELECT s.payment_cents ...) AS next_scheduled_payment_cents";
+    if (policy.related_party_loan_id) { t = Math.min(Number(policy.next_scheduled_payment_cents), cap); }
+  `;
+  const ok = { [POSTER]: goodPoster, [ROUTES]: goodRoutes, [ACCRUAL]: goodAccrual, [DEDUCT]: goodDeduct };
+
+  t("dropping the loan branch from auto-deduct FAILS",
+    analyse({ ...ok, [DEDUCT]: goodDeduct.replace(/related_party_loan_id/g, "source_ref") }).length >= 1);
+  t("dropping the scheduled-payment source FAILS",
+    analyse({ ...ok, [DEDUCT]: goodDeduct.replace(/next_scheduled_payment_cents/g, "max_per_settlement_cents") }).length >= 1);
+  t("a missing auto-deduct engine FAILS", analyse({ ...ok, [DEDUCT]: null }).length === 1);
 
   t("the real shape passes", analyse(ok).length === 0);
 
@@ -239,19 +277,19 @@ function selftest() {
     analyse({ ...ok, [ACCRUAL]: goodAccrual.replace(/debit_or_credit: "credit"/, 'debit_or_credit: "debit"') }).length >= 1);
   t("dropping the accrual posting-flag gate FAILS",
     analyse({ ...ok, [ACCRUAL]: goodAccrual.replace("RELATED_PARTY_LOAN_GL_POSTING_FLAG", "true").replace("accrualEnabled", "always") }).length >= 1);
-  t("a missing poster FAILS", analyse({ [POSTER]: null, [ROUTES]: goodRoutes, [ACCRUAL]: goodAccrual }).length === 1);
+  t("a missing poster FAILS", analyse({ [POSTER]: null, [ROUTES]: goodRoutes, [ACCRUAL]: goodAccrual, [DEDUCT]: goodDeduct }).length === 1);
   t("unbalanced legs FAIL",
     analyse({ [POSTER]: goodPoster.replace(/debit_or_credit: "credit"/, 'debit_or_credit: "debit"'), [ROUTES]: goodRoutes }).length >= 1);
   t("removing the refusal path FAILS",
     analyse({ [POSTER]: goodPoster.replace('{ ok: false, missingRole: "cash_clearing" }', "{ ok: true, accountId: 'suspense' }"), [ROUTES]: goodRoutes }).length >= 1);
   t("a QBO push reference FAILS",
-    analyse({ [POSTER]: goodPoster + "\nconst f = QBO_JE_PUSH_ENABLED;", [ROUTES]: goodRoutes, [ACCRUAL]: goodAccrual }).length >= 1);
+    analyse({ [POSTER]: goodPoster + "\nconst f = QBO_JE_PUSH_ENABLED;", [ROUTES]: goodRoutes, [ACCRUAL]: goodAccrual, [DEDUCT]: goodDeduct }).length >= 1);
   t("losing entity scope in the register FAILS",
-    analyse({ [POSTER]: goodPoster, [ROUTES]: 'filters.push("e.reversed_at IS NULL");', [ACCRUAL]: goodAccrual }).length === 1);
+    analyse({ [POSTER]: goodPoster, [ROUTES]: 'filters.push("e.reversed_at IS NULL");', [ACCRUAL]: goodAccrual, [DEDUCT]: goodDeduct }).length === 1);
   t("counting reversed rows in the register FAILS",
-    analyse({ [POSTER]: goodPoster, [ROUTES]: 'filters.push("e.operating_company_id = $1");', [ACCRUAL]: goodAccrual }).length === 1);
+    analyse({ [POSTER]: goodPoster, [ROUTES]: 'filters.push("e.operating_company_id = $1");', [ACCRUAL]: goodAccrual, [DEDUCT]: goodDeduct }).length === 1);
   t("a COMMENT mentioning a QBO flag does not trip it",
-    analyse({ [POSTER]: goodPoster + "\n// never set QBO_JE_PUSH_ENABLED here", [ROUTES]: goodRoutes, [ACCRUAL]: goodAccrual }).length === 0);
+    analyse({ [POSTER]: goodPoster + "\n// never set QBO_JE_PUSH_ENABLED here", [ROUTES]: goodRoutes, [ACCRUAL]: goodAccrual, [DEDUCT]: goodDeduct }).length === 0);
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
@@ -261,7 +299,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) {
   selftest();
-  console.log(`${LABEL} selftest OK — 13 cases (2 pass-shapes incl. the type-declaration miscount that fooled the first version, 11 fail-shapes incl. the default_interest_expense misposting)`);
+  console.log(`${LABEL} selftest OK — 16 cases (2 pass-shapes incl. the type-declaration miscount that fooled the first version, 14 fail-shapes incl. the default_interest_expense misposting and the cap-instead-of-schedule regression)`);
   process.exit(0);
 }
 
@@ -270,4 +308,4 @@ if (problems.length) {
   console.error(`${LABEL} FAILED:\n  - ${problems.join("\n  - ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — balanced legs both directions, refusal path intact, no QBO push, register entity-scoped, accrual on its own role + flag-gated`);
+console.log(`${LABEL} OK — balanced legs both directions, refusal path intact, no QBO push, register entity-scoped, accrual on its own role + flag-gated, loan auto-deduct on its schedule`);

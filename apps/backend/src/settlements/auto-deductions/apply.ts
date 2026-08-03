@@ -68,6 +68,8 @@ export async function applyAutoDeductionsToSettlement(
     deducted_so_far_cents: number;
     max_per_settlement_cents: number;
     memo: string | null;
+    related_party_loan_id: string | null;
+    next_scheduled_payment_cents: number | null;
   }>(
     `
       SELECT
@@ -76,14 +78,27 @@ export async function applyAutoDeductionsToSettlement(
         total_owed_cents::bigint,
         deducted_so_far_cents::bigint,
         max_per_settlement_cents::bigint,
-        memo
-      FROM driver_finance.auto_deduction_policies
+        memo,
+        -- LOAN-08: a related-party loan policy takes its tranche from the loan SCHEDULE, not from
+        -- max_per_settlement_cents. See the tranche calculation below for why.
+        related_party_loan_id::text,
+        (
+          SELECT s.payment_cents
+          FROM accounting.related_party_loan_schedule s
+          WHERE s.loan_id = p.related_party_loan_id
+            AND s.operating_company_id = p.operating_company_id
+            AND s.is_active
+            AND NOT s.posted
+          ORDER BY s.payment_number
+          LIMIT 1
+        )::bigint AS next_scheduled_payment_cents
+      FROM driver_finance.auto_deduction_policies p
       WHERE operating_company_id = $1::uuid
         AND driver_id = $2::uuid
         AND status = 'active'
         AND deducted_so_far_cents < total_owed_cents
       ORDER BY created_at ASC
-      FOR UPDATE
+      FOR UPDATE OF p
     `,
     [input.operatingCompanyId, input.driverId]
   );
@@ -94,7 +109,27 @@ export async function applyAutoDeductionsToSettlement(
   for (const policy of policies.rows) {
     const remaining = Number(policy.total_owed_cents) - Number(policy.deducted_so_far_cents);
     if (remaining <= 0) continue;
-    const trancheCents = Math.min(Number(policy.max_per_settlement_cents), remaining);
+    // LOAN-08 — a related-party loan repays on ITS OWN SCHEDULE, not on a flat per-settlement cap.
+    //
+    // max_per_settlement_cents is the right model for recovering a loss (a damage claim, a safety
+    // fine): take what you can each week until the balance is gone. A loan is the opposite — the
+    // borrower signed a schedule with a specific payment covering specific principal and interest, and
+    // that schedule is the document they hold. Deducting a flat cap instead would repay the loan on a
+    // timetable the borrower never agreed to and would never reconcile against the amortization rows.
+    //
+    // The cap is still honoured as a CEILING: if the scheduled payment exceeds what the policy allows
+    // to come out of a single settlement, the smaller amount is taken and the rest rolls forward, the
+    // same way an over-cap tranche already rolls. A loan policy whose schedule is exhausted (no
+    // unposted row) materializes nothing rather than falling back to the cap — with no scheduled row
+    // there is no principal/interest split, and a deduction that cannot be split cannot be posted.
+    let trancheCents: number;
+    if (policy.related_party_loan_id) {
+      const scheduled = Number(policy.next_scheduled_payment_cents ?? 0);
+      if (scheduled <= 0) continue;
+      trancheCents = Math.min(scheduled, Number(policy.max_per_settlement_cents), remaining);
+    } else {
+      trancheCents = Math.min(Number(policy.max_per_settlement_cents), remaining);
+    }
     if (trancheCents <= 0) continue;
 
     const reason = `Auto-deduction (${policy.deduction_type})${policy.memo ? `: ${policy.memo}` : ""}`;

@@ -3643,6 +3643,7 @@
       "max_per_settlement_cents",
       "memo",
       "operating_company_id",
+      "related_party_loan_id",
       "source_ref",
       "status",
       "total_owed_cents",
