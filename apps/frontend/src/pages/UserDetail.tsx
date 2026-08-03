@@ -13,7 +13,7 @@ import {
   type DispatcherErrorReason,
   type DispatcherSafetyEvent,
 } from "../api/identity";
-import { listCustomers, listDrivers } from "../api/mdata";
+import { listCustomers } from "../api/mdata";
 import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
 import { Button } from "../components/Button";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
@@ -125,15 +125,17 @@ export function UserDetailPage() {
     queryFn: () => listDispatcherErrorReasons().then((result) => result.reasons),
   });
 
+  // SAF-B29: related-customer must not silent-fetch the full customer list.
+  const [customerSearch, setCustomerSearch] = useState("");
   const customersQuery = useQuery({
-    queryKey: ["customers", "for-dispatcher-safety"],
-    queryFn: () => listCustomers().then((result) => result.customers),
-  });
-
-  const driversQuery = useQuery({
-    queryKey: ["drivers", "for-dispatcher-safety", selectedCompanyId],
+    queryKey: ["customers", "for-dispatcher-safety", selectedCompanyId, customerSearch],
     enabled: Boolean(selectedCompanyId),
-    queryFn: () => listDrivers({ operating_company_id: selectedCompanyId, limit: 200 }).then((result) => result.drivers), // full active set (endpoint default 50 truncates >50)
+    queryFn: () =>
+      listCustomers({
+        operating_company_id: selectedCompanyId,
+        limit: customerSearch ? 200 : 500,
+        search: customerSearch || undefined,
+      }).then((result) => result.customers),
   });
 
   const safetyEventsQuery = useQuery({
@@ -166,16 +168,6 @@ export function UserDetailPage() {
         sublabel: customer.mc_number ?? customer.dot_number ?? "",
       })),
     [customersQuery.data]
-  );
-
-  const driverOptions = useMemo<ComboboxOption[]>(
-    () =>
-      (driversQuery.data ?? []).map((driver) => ({
-        value: driver.id,
-        label: `${driver.first_name} ${driver.last_name}`,
-        sublabel: driver.cdl_number ?? "",
-      })),
-    [driversQuery.data]
   );
 
   const costSummary = useMemo(() => {
@@ -607,7 +599,20 @@ export function UserDetailPage() {
             </label>
             {enableRelated ? (
               <div className="mt-2 space-y-2">
-                <Combobox options={customerOptions} value={relatedCustomerId} onChange={setRelatedCustomerId} placeholder="Related customer" loading={customersQuery.isLoading} />
+                {selectedCompanyId ? (
+                  <ReferenceSelect
+                    value={relatedCustomerId}
+                    onChange={setRelatedCustomerId}
+                    options={customerOptions.map((o) => ({ value: o.value, label: o.label, type: o.sublabel }))}
+                    createKind="customer"
+                    operatingCompanyId={selectedCompanyId}
+                    placeholder="Related customer"
+                    onSearch={setCustomerSearch}
+                    loading={customersQuery.isLoading}
+                  />
+                ) : (
+                  <Combobox options={customerOptions} value={relatedCustomerId} onChange={setRelatedCustomerId} placeholder="Select company first" disabled />
+                )}
                 {selectedCompanyId ? (
                   <DriverPickerWithCreate
                     operatingCompanyId={selectedCompanyId}
@@ -618,7 +623,7 @@ export function UserDetailPage() {
                     dataField="dispatcher-safety-related-driver"
                   />
                 ) : (
-                  <Combobox options={driverOptions} value={relatedDriverId} onChange={setRelatedDriverId} placeholder="Related driver" loading={driversQuery.isLoading} disabled />
+                  <Combobox options={[]} value={relatedDriverId} onChange={setRelatedDriverId} placeholder="Select company first" disabled />
                 )}
                 <div className="text-xs text-gray-500">Related load: optional until dispatch load linking is enabled.</div>
               </div>
