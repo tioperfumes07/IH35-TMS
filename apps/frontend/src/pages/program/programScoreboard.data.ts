@@ -11,7 +11,19 @@ export interface ProdMetric { n: string; label: string; detail: string; tone?: "
 export interface ChainNode { title: string; table: string; fk: string; chip: string; chipTone: "prod" | "unv" | "fix" | "fail"; hub?: boolean; branch?: boolean; }
 export interface GuardItem { badge: string; tone: "ver" | "pend" | "flag" | "fail"; text: string; }
 export interface ProgramScoreboard {
-  meta: { generatedAt: string; sourceSha: string; deployedSha: string; prodReadAt: string; ledgerRows: number; failOpen: number; defects: number; };
+  meta: {
+    generatedAt: string;
+    sourceSha: string;
+    deployedSha: string;
+    prodReadAt: string;
+    ledgerRows: number;
+    failOpen: number;
+    defects: number;
+    gateTally?: Record<string, { pass: number; applicable: number; fail: number; unverified: number }>;
+    prodReadSource?: "neon_now" | "request_time" | "committed_fallback";
+    lastSyncedCt?: string | null;
+    source?: string;
+  };
   modules: ModuleRow[]; prod: ProdMetric[]; chain: ChainNode[]; chainMoney: string; chainReverse: string; guard: GuardItem[];
 }
 

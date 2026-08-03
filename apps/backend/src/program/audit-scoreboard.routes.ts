@@ -6,13 +6,15 @@
 // request time (~60s cache) — same freshness model as recentActivity from GitHub.
 // FALLBACK: committed docs/audit/program-scoreboard.json if the live parse fails.
 //
-// NON-FINANCIAL, READ-ONLY, NO DB. Never query accounting.*.
+// NON-FINANCIAL. Light Neon `SELECT now()` stamps meta.prodReadAt (honest "live prod
+// read"). Never query accounting.*.
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { requireAuth } from "../auth/session-middleware.js";
+import { withCurrentUser } from "../auth/db.js";
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
 import { formatCt } from "./program-board.service.js";
 
@@ -223,8 +225,52 @@ export async function loadScoreboardPayload(): Promise<{
   }
 }
 
+async function stampProdReadAt(
+  req: FastifyRequest,
+): Promise<{ prodReadAt: string; prodReadSource: "neon_now" | "request_time" }> {
+  const uuid = req.user?.uuid;
+  if (uuid) {
+    try {
+      const t = await withCurrentUser(uuid, async (client) => {
+        const r = await client.query<{ t: Date }>("SELECT now() AS t");
+        return r.rows[0]?.t ?? null;
+      });
+      const label = formatCt(t);
+      if (label) return { prodReadAt: label, prodReadSource: "neon_now" };
+    } catch {
+      /* fall through — never 500 the board for a stamp failure */
+    }
+  }
+  return { prodReadAt: formatCt(new Date()) || "—", prodReadSource: "request_time" };
+}
+
+function ensureGateTally(data: ScoreboardPayload): Record<string, unknown> {
+  const existing = data.meta?.gateTally;
+  if (existing && typeof existing === "object") return existing as Record<string, unknown>;
+  // Fallback path: compute from modules if the live script didn't attach gateTally.
+  const modules = Array.isArray(data.modules) ? (data.modules as { cells?: string[] }[]) : [];
+  const gates = ["A", "B", "C", "D", "E", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8"];
+  const out: Record<string, { pass: number; applicable: number; fail: number; unverified: number }> = {};
+  for (let i = 0; i < gates.length; i++) {
+    let pass = 0;
+    let applicable = 0;
+    let fail = 0;
+    let unverified = 0;
+    for (const m of modules) {
+      const c = (m.cells?.[i] as string) || "UNV";
+      if (c === "NA") continue;
+      applicable += 1;
+      if (c === "PASS") pass += 1;
+      else if (c === "FAIL") fail += 1;
+      else if (c === "UNV") unverified += 1;
+    }
+    out[gates[i]] = { pass, applicable, fail, unverified };
+  }
+  return out;
+}
+
 export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
-  // CodeQL js/missing-rate-limiting: auth + filesystem/GitHub read must be rate-limited.
+  // CodeQL js/missing-rate-limiting: auth + filesystem/GitHub/Neon stamp must be rate-limited.
   app.get(
     "/api/v1/program/audit-scoreboard",
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
@@ -235,6 +281,8 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
         const generatedAt = typeof data.meta?.generatedAt === "string" ? data.meta.generatedAt : null;
         // Last synced = ledger commit time (meta.generatedAt), never wall clock.
         const lastSyncedCt = formatCt(generatedAt) || null;
+        const { prodReadAt, prodReadSource } = await stampProdReadAt(req);
+        const gateTally = ensureGateTally(data);
         const recentActivity = await loadRecentActivityFromGitHub(10);
         reply.header("cache-control", "public, max-age=60");
         return reply.send({
@@ -243,6 +291,9 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
             ...(data.meta ?? {}),
             source,
             lastSyncedCt,
+            prodReadAt,
+            prodReadSource,
+            gateTally,
           },
           recentActivity,
         });
