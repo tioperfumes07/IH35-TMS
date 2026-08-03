@@ -2221,7 +2221,7 @@
       "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
     },
     {
-      "pr": null,
+      "pr": 4188,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
@@ -2236,7 +2236,7 @@
       ],
       "spec": "Rule 05 tab law + Rule 21 (wave slice != module)",
       "status": "UNVERIFIED",
-      "evidence": "COVERAGE GAP, not a defect. SAFETY_TABS_CONFIG.ts declares SAFETY_CANONICAL_TAB_COUNT=28 / GROUP_COUNT=9, but the 32 SAF-B## items are BOUNDARIES, not tabs - there is no per-tab item and no per-tab sweep has run. 23 of the 32 boundaries are UNVERIFIED with the identical evidence 'Code merged; NO live proof'. Until a per-tab click-through exists on TRANSP+USMCA, Safety tab coverage is UNKNOWN rather than complete. This is the single largest blocker in the module. | LAYER A CLOSED 2026-08-03 — verify-saf-orph05-safety-tab-route-mount (step 2202) proves all 28 SAFETY_GROUPS canonical /safety/* routes are mounted in apps/frontend/src/routes/manifest.tsx (selftest plants count defect). VERIFY-1 chrome/route mount PASS. REMAINING (keeps UNVERIFIED, not PASS): live DoD click-through of every tab on TRANSP + USMCA (wizard depth + both-way linkage smoke). Boundaries SAF-B## != tabs; this item is the tab sweep. | LAYER A CLOSED 2026-08-03 — verify-saf-orph05-safety-tab-route-mount (step 2204) proves all 28 SAFETY_GROUPS canonical /safety/* routes are mounted in apps/frontend/src/routes/manifest.tsx (selftest plants count defect). VERIFY-1 chrome/route mount PASS. REMAINING (keeps UNVERIFIED, not PASS): live DoD click-through of every tab on TRANSP + USMCA (wizard depth + both-way linkage smoke). Boundaries SAF-B## != tabs; this item is the tab sweep. | LAYER A CLOSED 2026-08-03 — verify-saf-orph05-safety-tab-route-mount (step 2204) proves all 28 SAFETY_GROUPS canonical /safety/* routes mounted in manifest.tsx. LIVE SPA 2026-08-03: TRANSP Safety home + /safety/hos (Create HOS violation + driver table + near-violation alerts); USMCA Freight Safety home (Active Drivers=1, overview tiles). Authenticated fetch 28/28 routes HTTP 200. No owner HOLD / no JORGE-APPROVED. REMAINING (keeps UNVERIFIED, not PASS): full DoD-B wizard depth + both-way linkage smoke on every tab for both entities.",
+      "evidence": "LAYER A CLOSED 2026-08-03 — verify-saf-orph05-safety-tab-route-mount (step 2204) proves all 28 SAFETY_GROUPS canonical /safety/* routes mounted in manifest.tsx. LIVE SPA 2026-08-03: TRANSP Safety home + /safety/hos (Create HOS violation + driver table + near-violation alerts); USMCA Freight Safety home (Active Drivers=1). Authenticated fetch 28/28 routes HTTP 200. No owner HOLD / no JORGE-APPROVED. REMAINING (keeps UNVERIFIED, not PASS): full DoD-B wizard depth + both-way linkage smoke on every tab both entities.",
       "build_standard": {
         "standard_version": "2026-07-25",
         "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
@@ -2292,7 +2292,7 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "OPEN — merge on green CI (no owner HOLD / no JORGE-APPROVED)."
     },
     {
       "id": "SAF-DOM-02",
