@@ -57,9 +57,22 @@ export function stripComments(src) {
     .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 }
 
+/**
+ * Escape EVERY regex metacharacter, backslash included.
+ *
+ * The first version used `ORPHAN_TABLE.replace(".", "\\.")`, which CodeQL correctly flagged as
+ * js/incomplete-sanitization (high): a string first argument replaces only the FIRST occurrence, and
+ * a backslash in the input is not escaped at all. It happened to work only because
+ * "outbox.outbox_queue" contains exactly one dot — precisely the kind of accident that breaks the
+ * moment a constant changes. Escaping properly is both the security fix and the correctness fix.
+ */
+function escapeRegExp(literal) {
+  return String(literal).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 /** True when the file writes the orphaned table (comments stripped, so prose never counts). */
 export function writesOrphanTable(src) {
-  return new RegExp(`INSERT\\s+INTO\\s+${ORPHAN_TABLE.replace(".", "\\.")}`, "i").test(stripComments(src));
+  return new RegExp(`INSERT\\s+INTO\\s+${escapeRegExp(ORPHAN_TABLE)}`, "i").test(stripComments(src));
 }
 
 /**
@@ -69,7 +82,7 @@ export function writesOrphanTable(src) {
 export function writesOverrideNoticeToOrphan(src) {
   const body = stripComments(src);
   const re = new RegExp(
-    `INSERT\\s+INTO\\s+${ORPHAN_TABLE.replace(".", "\\.")}[\\s\\S]{0,600}?${OVERRIDE_EVENT.replace(/\./g, "\\.")}`,
+    `INSERT\\s+INTO\\s+${escapeRegExp(ORPHAN_TABLE)}[\\s\\S]{0,600}?${escapeRegExp(OVERRIDE_EVENT)}`,
     "i"
   );
   return re.test(body);
