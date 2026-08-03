@@ -1,14 +1,34 @@
 import type { JSX } from "react";
+import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { listMaintenanceVehicles } from "../../../api/maintenance";
-import { listCustomers, listVendors } from "../../../api/mdata";
+import { listCustomers, listDrivers, listVendors } from "../../../api/mdata";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { Combobox } from "../../../components/shared/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+
+/** AUDIT-611 / backend deriveClassHint — {UNIT_DISPLAY}-{DRIVER_LAST} never raw UUIDs. */
+export function deriveWoClassHintLabel(opts: {
+  unitDisplayId?: string | null;
+  driverLastName?: string | null;
+  hasUnit: boolean;
+  hasDriver: boolean;
+}): string {
+  const unitPart = String(opts.unitDisplayId ?? "").trim() || (opts.hasUnit ? "UNIT" : "UNIT");
+  const driverPart = String(opts.driverLastName ?? "")
+    .trim()
+    .toUpperCase() || (opts.hasDriver ? "DRIVER" : "UNASSIGNED");
+  // Never emit UUID-shaped segments (8-4-4-4-12) — that was the live defect.
+  const looksUuid = (s: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+  const safeUnit = looksUuid(unitPart) ? "UNIT" : unitPart;
+  const safeDriver = looksUuid(driverPart) ? "UNASSIGNED" : driverPart;
+  return `${safeUnit}-${safeDriver}`;
+}
 
 type Props = {
   register: UseFormRegister<CreateWOFormValues>;
@@ -65,9 +85,22 @@ export function CreateWOSectionIdentification({
   const requireLoad = requireDriverAndLoad || requireLoadForExpense;
   const requireExternalFields = ["ES", "AC", "ET", "RT", "RS"].includes(sourceType);
   const showExemptionReason = requireLoadForExpense && !selectedLoadId;
+  const unitId = watch("unit_id");
+  const driverId = watch("driver_id");
   const vehiclesQuery = useQuery({
     queryKey: ["maintenance", "master-data", "vehicles", operatingCompanyId, "create-wo"],
     queryFn: () => listMaintenanceVehicles(String(operatingCompanyId), {}),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
+  const driversQuery = useQuery({
+    queryKey: ["maintenance", "master-data", "drivers", operatingCompanyId, "create-wo-class-hint"],
+    queryFn: () =>
+      listDrivers({
+        operating_company_id: String(operatingCompanyId),
+        status: "Active",
+        limit: 500,
+      }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
@@ -86,6 +119,22 @@ export function CreateWOSectionIdentification({
   const vehicleOptions = (vehiclesQuery.data?.rows ?? [])
     .map((row) => ({ value: row.id, label: row.unit_display_id || row.id }))
     .sort((a, b) => a.label.localeCompare(b.label));
+
+  useEffect(() => {
+    if (!setValue) return;
+    const unitRow = (vehiclesQuery.data?.rows ?? []).find((row) => row.id === unitId);
+    const driverRow = (driversQuery.data?.drivers ?? []).find((row) => row.id === driverId);
+    const next = deriveWoClassHintLabel({
+      unitDisplayId: unitRow?.unit_display_id,
+      driverLastName: driverRow?.last_name,
+      hasUnit: Boolean(unitId),
+      hasDriver: Boolean(driverId),
+    });
+    const current = getValues?.("class_hint") ?? "";
+    if (current !== next) {
+      setValue("class_hint", next, { shouldDirty: false });
+    }
+  }, [setValue, getValues, unitId, driverId, vehiclesQuery.data?.rows, driversQuery.data?.drivers]);
   const vendorOptions = (vendorsQuery.data?.vendors ?? [])
     .filter((v) => !v.deactivated_at)
     .map((v) => ({ value: v.id, label: v.name }))
@@ -141,7 +190,13 @@ export function CreateWOSectionIdentification({
           )}
         </Field>
         <Field label="Class (auto)">
-          <input {...register("class_hint")} readOnly className="h-8 w-full rounded-sm border border-emerald-200 bg-emerald-50 px-2 text-sm font-semibold text-emerald-900" />
+          <input
+            {...register("class_hint")}
+            readOnly
+            data-testid="wo-class-auto-derive"
+            aria-label="Class auto-derive"
+            className="h-8 w-full rounded-sm border border-emerald-200 bg-emerald-50 px-2 text-sm font-semibold text-emerald-900"
+          />
         </Field>
         <Field label="Load # auto — unit on active trip">
           <input {...register("load_id", { required: requireLoad })} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />

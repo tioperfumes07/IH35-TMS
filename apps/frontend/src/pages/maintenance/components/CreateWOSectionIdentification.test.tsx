@@ -142,6 +142,24 @@ describe("CreateWOSectionIdentification", () => {
     });
   });
 
+  it("AUDIT-611: Class (auto) shows T169-DRIVER not raw UUIDs", async () => {
+    renderSection();
+
+    const unitPicker = await screen.findByPlaceholderText("Select unit");
+    fireEvent.focus(unitPicker);
+    fireEvent.click(await screen.findByRole("option", { name: "T169" }));
+
+    const driverPicker = await screen.findByPlaceholderText("Select driver");
+    fireEvent.focus(driverPicker);
+    fireEvent.click(await screen.findByRole("option", { name: "Alex Driver" }));
+
+    await waitFor(() => {
+      const classInput = screen.getByTestId("wo-class-auto-derive") as HTMLInputElement;
+      expect(classInput.value).toBe("T169-DRIVER");
+      expect(classInput.value).not.toMatch(/unit-1|driver-1|[0-9a-f]{8}-[0-9a-f]{4}/i);
+    });
+  });
+
   it("mirrors canonical vendor into external vendor id", async () => {
     renderSection();
 

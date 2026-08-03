@@ -52,7 +52,7 @@ matching `n_live_tup`) proving the zeros are real and not RLS-masked.
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-03 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **66 / 150** · TRK **9 / 150** · USMCA **63 / 150** | 2026-08-03 |
 | Rows in this file | **612** | 2026-08-03 |
-| Rows `FAIL` + `OPEN` | **18** | 2026-08-03 |
+| Rows `FAIL` + `OPEN` | **17** | 2026-08-03 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **5** | 2026-08-03 |
 | Rows `VERIFIED` by GUARD | **0** | 2026-08-03 |
 | Verdict tally (all rows) | FAIL=47 · PASS=191 · N/A=211 · SUPERSEDED=4 · OTHER=159 | 2026-08-03 |
@@ -677,6 +677,6 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 608 | accounting · invoice_no_post | C | USMCA | FAIL — manual invoice creates draft, posts no JE | Invoice creation (`POST /invoices`) and send (`/:id/send`) NEVER call the posting engine. Fix requirement: post on Finalize/Post or Send. Same class as `CLS-SUBLEDGER-GL-DARK` (row 598). USMCA's 1 test bill DID post correctly — proves poster works, nothing in the live flow calls it. | OPEN | — | NO | 2026-08-02 | GUARD |
 | 609 | dispatch · owner_override | A | USMCA | PASS — GUARD-VERIFIED LIVE: owner override dispatched load past DOT gate | PR #4036 fixed the override textarea (nested `<form>` swallowed keystrokes). GUARD independently exercised on USMCA: load dispatched past DOT-hours blocker with typed override reason. #4041 deploys the audit log (separate PR, pending). | — | #4036 | NO | 2026-08-02 | GUARD |
 | 610 | dispatch · wf064_override_notice | C | ALL | FAIL — `wf064.override_notice` produced ×3, consumed nowhere → owner gets no notice (P1) | `dispatch-load-dispatched.handler.ts` emits `dispatch.wf064.override_notice` outbox event when an owner override fires. Three instances confirmed produced. But no consumer/handler reads this event type — the owner notification never arrives. The override fires silently with no audit trail beyond the DB row. | OPEN | — | NO | 2026-08-02 | GUARD |
-| 611 | maintenance · class_auto_derive | E | USMCA | FAIL — Class auto-derive renders `{unit_uuid}-{driver_uuid}` not `{UNIT}-{LASTNAME}` (D, P2) | When auto-deriving a QBO Class for a WO, the display renders raw UUIDs (`a1b2...–c3d4...`) instead of human-readable `{UNIT_NUMBER}-{DRIVER_LAST_NAME}`. User cannot distinguish classes. Related to row 601 (class UUID picker). | OPEN | — | NO | 2026-08-02 | GUARD |
+| 611 | maintenance · class_auto_derive | E | USMCA | FAIL — Class auto-derive renders `{unit_uuid}-{driver_uuid}` not `{UNIT}-{LASTNAME}` (D, P2) | When auto-deriving a QBO Class for a WO, the display renders raw UUIDs (`a1b2...–c3d4...`) instead of human-readable `{UNIT_NUMBER}-{DRIVER_LAST_NAME}`. User cannot distinguish classes. Related to row 601 (class UUID picker). | FIXED (PR #4090) | #4090 | NO | 2026-08-02 | GUARD |
 | 612 | accounting · expense_posting | C | USMCA | PASS — GUARD-VERIFIED: expense posts balanced JE (`b927818f`, `ff286e60`) | GUARD live proof on USMCA: manual expense created balanced JE. Posting batch `b927818f`, JE `ff286e60`. DR expense / CR bank confirmed balanced. Entity-scoped, RLS-verified. Closes the USMCA expense→GL chain. | — | — | NO | 2026-08-02 | GUARD |
 

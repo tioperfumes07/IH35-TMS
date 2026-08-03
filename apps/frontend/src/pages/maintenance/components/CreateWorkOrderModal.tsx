@@ -703,7 +703,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     }
   }, [form, outsideVendor, repairedBy]);
 
-  const classHint = form.watch("class_hint") || `${form.watch("unit_id") || "UNIT"}-${form.watch("driver_id") || "DRIVER"}`;
+  // AUDIT-611: never fall back to unit_id/driver_id UUIDs — Identification writes {UNIT}-{LASTNAME}.
+  const classHint = form.watch("class_hint") || "UNIT-UNASSIGNED";
 
   // ── Edit-mode save: EXISTING updateWorkOrder PATCH (header) + EXISTING line-item endpoints (cost) ──
   const patchEditHeader = (patch: Partial<UpdateWorkOrderPayload>) => setEditHeader((h) => ({ ...h, ...patch }));
