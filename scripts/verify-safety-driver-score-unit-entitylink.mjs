@@ -40,10 +40,11 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL live:`, liveProblems);
     process.exit(1);
   }
-  const planted = assert({
-    [FE]: live[FE].replace(/EntityLink[\s\S]*?\/>/, '{event.unit_number ?? "N/A"}'),
-  });
-  if (!planted.length) {
+  const plantedSrc =
+    live[FE].replace(/import \{ EntityLink \} from[^;]+;\n/, "") +
+    '\n<span>Unit {event.unit_number ?? "N/A"} · lat</span>\n';
+  const planted = assert({ [FE]: plantedSrc });
+  if (!planted.some((p) => p.includes("EntityLink") || p.includes("unit_id"))) {
     console.error(`${LABEL} SELFTEST FAIL: planted plain unit not caught`, planted);
     process.exit(1);
   }
