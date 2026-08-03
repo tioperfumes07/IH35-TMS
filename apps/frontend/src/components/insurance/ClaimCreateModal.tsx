@@ -15,8 +15,8 @@ import { listUnits } from "../../api/mdata";
 import { getSafetyAccidents } from "../../api/safety";
 import { Combobox } from "../Combobox";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
-import { CreateUnitModal } from "../fleet/CreateUnitModal";
 import { CreateTrailerModal } from "../fleet/CreateTrailerModal";
+import { EntityPicker } from "../parity/EntityPicker";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
@@ -58,13 +58,6 @@ type FormState = {
   repair_books_treatment: InsuranceClaimRepairBooksTreatment;
 };
 
-type UnitOption = {
-  id: string;
-  unit_code?: string | null;
-  unit_number?: string | null;
-  status?: string | null;
-};
-
 type TrailerOption = {
   id: string;
   kind?: "truck" | "trailer";
@@ -93,10 +86,6 @@ const INITIAL_FORM: FormState = {
   recovery_rail: "ask",
   repair_books_treatment: "ask",
 };
-
-function unitLabel(unit: UnitOption) {
-  return unit.unit_code || unit.unit_number || unit.id.slice(0, 8);
-}
 
 function parseCurrencyToCents(raw: string) {
   if (!raw.trim()) return undefined;
@@ -137,8 +126,10 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [formError, setFormError] = useState("");
   const [serverError, setServerError] = useState("");
-  const [unitCreateOpen, setUnitCreateOpen] = useState(false);
   const [trailerCreateOpen, setTrailerCreateOpen] = useState(false);
+  // SAF-B29: load + trailer silent pages — server search. Unit → EntityPicker (server search + create).
+  const [loadSearch, setLoadSearch] = useState("");
+  const [trailerSearch, setTrailerSearch] = useState("");
 
   const policiesQuery = useQuery({
     queryKey: ["insurance", "claim-create", "policies", operatingCompanyId],
@@ -146,20 +137,15 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     queryFn: () => listInsurancePolicies({ operating_company_id: operatingCompanyId }).then((result) => result.policies),
   });
 
-  const unitsQuery = useQuery({
-    queryKey: ["insurance", "claim-create", "units", operatingCompanyId],
-    enabled: open && Boolean(operatingCompanyId),
-    queryFn: async () => {
-      const result = await listUnits({ operating_company_id: operatingCompanyId, limit: 500 });
-      return (result.units as UnitOption[]).filter((unit) => Boolean(unit.id));
-    },
-  });
-
   const loadsQuery = useQuery({
-    queryKey: ["insurance", "claim-create", "loads", operatingCompanyId],
+    queryKey: ["insurance", "claim-create", "loads", operatingCompanyId, loadSearch],
     enabled: open && Boolean(operatingCompanyId),
     queryFn: () =>
-      listLoads({ operating_company_id: [operatingCompanyId], limit: 200 }).then((r) => r.loads ?? []),
+      listLoads({
+        operating_company_id: [operatingCompanyId],
+        limit: 200,
+        search: loadSearch || undefined,
+      }).then((r) => r.loads ?? []),
   });
 
   const accidentsQuery = useQuery({
@@ -168,22 +154,21 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     queryFn: () => getSafetyAccidents(operatingCompanyId).then((r) => r.accidents ?? []),
   });
 
-  // Trailer hub: unified fleet list (mdata.units trucks + mdata.equipment trailers), filtered to
-  // kind === "trailer" (Rule 03: trailers live in mdata.equipment, never mdata.units).
+  // Trailer hub: unified fleet list filtered to kind === "trailer" (Rule 03).
   const trailersQuery = useQuery({
-    queryKey: ["insurance", "claim-create", "trailers", operatingCompanyId],
+    queryKey: ["insurance", "claim-create", "trailers", operatingCompanyId, trailerSearch],
     enabled: open && Boolean(operatingCompanyId),
     queryFn: async () => {
-      const result = await listUnits({ operating_company_id: operatingCompanyId, limit: 500, include: "trailers" });
+      const result = await listUnits({
+        operating_company_id: operatingCompanyId,
+        limit: 200,
+        include: "trailers",
+        search: trailerSearch || undefined,
+      });
       return (result.units as TrailerOption[]).filter((row) => row.kind === "trailer" && Boolean(row.id));
     },
   });
 
-  const units = useMemo(() => unitsQuery.data ?? [], [unitsQuery.data]);
-  const unitOptions = useMemo(
-    () => units.map((unit) => ({ value: unit.id, label: unitLabel(unit) })),
-    [units]
-  );
   const loads = useMemo(() => loadsQuery.data ?? [], [loadsQuery.data]);
   const loadOptions = useMemo(
     () =>
@@ -206,8 +191,9 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     setFieldErrors({});
     setFormError("");
     setServerError("");
-    setUnitCreateOpen(false);
     setTrailerCreateOpen(false);
+    setLoadSearch("");
+    setTrailerSearch("");
   }, [open]);
 
   const createMutation = useMutation({
@@ -351,17 +337,14 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Unit / Asset</span>
-            <Combobox
-              options={unitOptions}
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={operatingCompanyId}
               value={form.asset_id || null}
               onChange={(next) => updateField("asset_id", next ?? "")}
+              enabled={open}
               placeholder="Unassigned"
-              loading={unitsQuery.isLoading}
-              allowClear
-              allowAddNew={{
-                label: "+ Create unit",
-                onAdd: () => setUnitCreateOpen(true),
-              }}
+              nestedInDrawer
             />
           </label>
 
@@ -383,6 +366,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
               options={loadOptions}
               value={form.load_id || null}
               onChange={(next) => updateField("load_id", next ?? "")}
+              onSearch={setLoadSearch}
               placeholder="Unassigned"
               loading={loadsQuery.isLoading}
               allowClear
@@ -395,6 +379,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
               options={trailerOptions}
               value={form.trailer_id || null}
               onChange={(next) => updateField("trailer_id", next ?? "")}
+              onSearch={setTrailerSearch}
               placeholder="Unassigned"
               loading={trailersQuery.isLoading}
               allowClear
@@ -608,16 +593,6 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
         </div>
       </form>
     </ParityDrawer>
-    <CreateUnitModal
-      open={unitCreateOpen}
-      operatingCompanyId={operatingCompanyId}
-      onClose={() => setUnitCreateOpen(false)}
-      onCreated={(createdId) => {
-        updateField("asset_id", createdId);
-        setUnitCreateOpen(false);
-        void unitsQuery.refetch();
-      }}
-    />
     <CreateTrailerModal
       open={trailerCreateOpen}
       operatingCompanyId={operatingCompanyId}
