@@ -28,10 +28,15 @@ export type ClaimRecoveryPostResult = {
     | "zero_amount"
     | "already_posted"
     | "claim_not_found"
-    | "no_delta";
+    | "no_delta"
+    | "capped_at_recorded_loss"
+    | "no_recorded_loss";
   journal_entry_id?: string;
   amount_cents?: number;
   memo?: string;
+  /** ASC 450-30/610-30: recovery in excess of the recorded loss is a GAIN CONTINGENCY, not posted. */
+  unposted_gain_contingency_cents?: number;
+  recorded_loss_cents?: number;
 };
 
 const FLAG_OFF: ClaimRecoveryPostResult = { posted: false, reason: "flag_off" };
@@ -85,15 +90,39 @@ export async function postInsuranceClaimRecovery(
     ]);
     if (!(await postingEnabled(client, input.operating_company_id))) return { gate: "flag_off" as const };
 
+    // ASC 450-30 / 610-30 — THE RECORDED LOSS is the cap. Preference order, most concrete first:
+    //   1. the actual cost booked against this claim (the linked expense, then the linked bill —
+    //      insurance.claim.expense_id / bill_id, added in #4003);
+    //   2. failing any linkage, amount_claimed_cents (what we asserted the loss was).
+    // A claim with neither is NOT capped blind — it is refused below, because posting an uncapped
+    // recovery is precisely the defect this guards.
     const claim = await client.query<{
       id: string;
       claim_number: string | null;
       amount_paid_cents: number;
+      recorded_loss_cents: number | null;
     }>(
-      `SELECT id::text, claim_number, amount_paid_cents::bigint AS amount_paid_cents
-       FROM insurance.claim
-       WHERE (operating_company_id = $1::uuid OR tenant_id = $1::uuid)
-         AND id = $2::uuid
+      `SELECT c.id::text,
+              c.claim_number,
+              c.amount_paid_cents::bigint AS amount_paid_cents,
+              -- Column names verified against prod, NOT assumed: the two tables spell the amount
+              -- differently, and a first pass that assumed they matched was caught by
+              -- verify-sql-column-existence before it could ship — the same defect class as the
+              -- mdata.units display-id crash fixed in #4091. Do not "tidy" these into one name.
+              -- (Deliberately not naming the wrong column here: verify-sql-read-targets scans
+              -- comment text too, so a phantom identifier written in prose fails the build.)
+              COALESCE(
+                e.total_amount_cents,
+                b.amount_cents,
+                NULLIF(c.amount_claimed_cents, 0)
+              )::bigint AS recorded_loss_cents
+       FROM insurance.claim c
+       LEFT JOIN accounting.expenses e
+         ON e.id = c.expense_id AND e.operating_company_id = $1::uuid
+       LEFT JOIN accounting.bills b
+         ON b.id = c.bill_id AND b.operating_company_id = $1::uuid
+       WHERE (c.operating_company_id = $1::uuid OR c.tenant_id = $1::uuid)
+         AND c.id = $2::uuid
        LIMIT 1`,
       [input.operating_company_id, input.claim_id]
     );
@@ -110,9 +139,29 @@ export async function postInsuranceClaimRecovery(
       [input.operating_company_id, input.claim_id]
     );
     const already = Number(posted.rows[0]?.sum_cents ?? 0);
-    const delta = Math.round(paidTotal) - already;
-    if (delta <= 0) {
+    const rawDelta = Math.round(paidTotal) - already;
+    if (rawDelta <= 0) {
       return { gate: "no_delta" as const, already };
+    }
+
+    // ── CAP AT THE RECORDED LOSS (ASC 450-30 / 610-30) ──────────────────────────────────────────
+    // Before this, the poster credited the FULL delta of amount_paid_cents with no reference to the
+    // loss at all. An insurer paying more than the repair cost would drive the contra-expense account
+    // NEGATIVE and overstate income — a recovery recognised as if it were revenue. Under ASC a loss
+    // recovery is recognised only when probable and only UP TO the recorded loss; anything beyond is a
+    // GAIN CONTINGENCY and must not be recognised until realised.
+    //
+    // Fail CLOSED when there is no loss to cap against: an uncapped recovery is exactly the defect.
+    const recordedLoss = Number(row.recorded_loss_cents ?? 0);
+    if (!Number.isFinite(recordedLoss) || recordedLoss <= 0) {
+      return { gate: "no_recorded_loss" as const };
+    }
+    const remainingRoom = Math.max(0, recordedLoss - already);
+    const delta = Math.min(rawDelta, remainingRoom);
+    const excess = rawDelta - delta;
+    if (delta <= 0) {
+      // Already recovered the whole recorded loss; the rest is a gain contingency.
+      return { gate: "capped" as const, already, recordedLoss, excess: rawDelta };
     }
 
     const cashAccountId = await resolveRoleAccount(client, input.operating_company_id, "cash_clearing");
@@ -130,12 +179,34 @@ export async function postInsuranceClaimRecovery(
       amount: delta,
       entryDate,
       memo,
+      // Carried so the success return can report BOTH what posted and what was withheld. Without
+      // these the caller cannot tell a full recovery from one trimmed to the recorded loss — and a
+      // silently trimmed amount is the same class of defect as a silently uncapped one.
+      recordedLoss,
+      excess,
       postings: buildClaimRecoveryPostings(cashAccountId, recoveryAccountId, delta, memo),
     };
   });
 
   if (prepared.gate === "flag_off") return FLAG_OFF;
   if (prepared.gate === "claim_not_found") return { posted: false, reason: "claim_not_found" };
+  if (prepared.gate === "no_recorded_loss") {
+    // No linked expense/bill and no amount_claimed — nothing to cap against. Refuse rather than post
+    // an uncapped recovery. Reported under its OWN reason: reusing "claim_not_found" here would send
+    // whoever reads it hunting for a missing claim instead of the missing LOSS, which is the actual
+    // problem and is fixed by linking the repair expense/bill to the claim (insurance.claim.expense_id
+    // / bill_id, #4003).
+    return { posted: false, reason: "no_recorded_loss" };
+  }
+  if (prepared.gate === "capped") {
+    return {
+      posted: false,
+      reason: "capped_at_recorded_loss",
+      amount_cents: prepared.already,
+      recorded_loss_cents: prepared.recordedLoss,
+      unposted_gain_contingency_cents: prepared.excess,
+    };
+  }
   if (prepared.gate === "no_delta") {
     return { posted: false, reason: "already_posted", amount_cents: prepared.already };
   }
@@ -193,5 +264,9 @@ export async function postInsuranceClaimRecovery(
     journal_entry_id: created.id,
     amount_cents: prepared.amount,
     memo: prepared.memo,
+    recorded_loss_cents: prepared.recordedLoss,
+    // > 0 when the insurer paid MORE than the recorded loss: the excess is deliberately unposted and
+    // reported so a human can recognise the gain when it is realised.
+    unposted_gain_contingency_cents: prepared.excess,
   };
 }
