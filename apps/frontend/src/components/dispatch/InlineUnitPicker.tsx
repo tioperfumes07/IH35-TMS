@@ -18,10 +18,17 @@ type Props = {
 export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLabel, onAssigned, onRollback }: Props) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // SAF-B29: never silent listUnits(limit:500) — type-ahead re-queries so units past page 1 stay assignable.
+  const [unitSearch, setUnitSearch] = useState("");
 
   const unitsQuery = useQuery({
-    queryKey: ["dispatch", "inline-units", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 500 }),
+    queryKey: ["dispatch", "inline-units", operatingCompanyId, unitSearch],
+    queryFn: () =>
+      listUnits({
+        operating_company_id: operatingCompanyId,
+        limit: 200,
+        search: unitSearch || undefined,
+      }),
     enabled: open && Boolean(operatingCompanyId),
   });
 
@@ -64,7 +71,8 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
       <Combobox
         options={options}
         value={unitId}
-        placeholder="Type unit…"
+        placeholder={unitsQuery.isLoading ? "Loading units…" : "Type unit…"}
+        onSearch={setUnitSearch}
         onChange={async (next) => {
           if (!next) return;
           const label = options.find((opt) => opt.value === next)?.label ?? next.slice(0, 8);
