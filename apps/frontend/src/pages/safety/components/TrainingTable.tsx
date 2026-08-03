@@ -1,4 +1,5 @@
 import { DataTable } from "../../../components/DataTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { formatDateUS } from "../../../lib/formatDate";
 
 // AUTO-15 — migrated onto the shared DataTable (sort/resize/paging/search/gear). Same 4 columns,
@@ -16,7 +17,18 @@ export function TrainingTable({ rows }: Props) {
       tableKey="safety-training"
       columns={[
         { key: "completed_at", label: "Date", sortable: true, render: (row) => formatDateUS(row.completed_at ?? row.due_at) },
-        { key: "driver_id", label: "Driver", sortable: true, render: (row) => String(row.driver_id ?? "—") },
+        {
+          key: "driver_id",
+          label: "Driver",
+          sortable: true,
+          render: (row) => (
+            <EntityLink
+              kind="driver"
+              id={row.driver_id ? String(row.driver_id) : undefined}
+              label={(row.driver_name as string | undefined) ?? undefined}
+            />
+          ),
+        },
         { key: "training_type", label: "Training", sortable: true, render: (row) => String(row.training_type ?? row.name ?? "Training") },
         { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "complete") },
       ]}
