@@ -1,12 +1,12 @@
 {
  "date": "2026-08-03",
- "generated_at_iso": "2026-08-03T10:09:26.271Z",
+ "generated_at_iso": "2026-08-03T15:21:19.301Z",
  "counts": {
   "PENDING": 15,
   "PENDING (GATED)": 27,
-  "NEEDS-VERIFY": 53,
-  "DONE": 639,
-  "AUDIT-NOTE": 469
+  "NEEDS-VERIFY": 56,
+  "DONE": 635,
+  "AUDIT-NOTE": 470
  },
  "universe": {
   "total_blocks_after_dedup": 1203,
@@ -783,6 +783,17 @@
    "pr": 2905
   },
   {
+   "id": "BLOCK-10-TIER2-RLS-TEST-GATE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1224 title-match only, unverified",
+   "name": "Cross-tenant RLS gate verification script with fixture generation",
+   "registered_on": null,
+   "pr": 1224
+  },
+  {
    "id": "block-22-driver-settlement-engine",
    "source": ".block-ready",
    "fin": true,
@@ -875,6 +886,28 @@
    "status": "NEEDS-VERIFY",
    "evidence": "[verified 2026-07-12] code-guard passes + reuses the CHAIN-05-proven posting engine, but 0 open bills on TRANSP to exerc",
    "name": "ACCOUNTING-CHAIN / TASK 4 — Bill Payment tie-out (pay an open bill, prove GL)",
+   "pr": null
+  },
+  {
+   "id": "CLOSURE-10-MAINT-PARTS-CATALOG",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #834 title-match only, unverified",
+   "name": "Maintenance parts master catalog by brand for owned fleet",
+   "registered_on": null,
+   "pr": 834
+  },
+  {
+   "id": "CLOSURE-11-MAINT-SERVICES-CATALOG",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "5/6 signature file(s) on main — partial, unverified",
+   "name": "Maintenance services catalog + ETA defaults from Samsara",
+   "registered_on": null,
    "pr": null
   },
   {
@@ -2052,10 +2085,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #800 merged 2026-06-08",
+   "evidence": "all 8 file(s) on main",
    "name": "Circuit breakers on external dependencies (QBO, Samsara, Plaid, OpenAI, etc.)",
    "registered_on": null,
-   "pr": 800
+   "pr": 1742
   },
   {
    "id": "BLOCK-06-of-29-TIER2-OUTBOX-DLQ",
@@ -2114,10 +2147,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #802 merged 2026-06-09",
+   "evidence": "all 2 file(s) on main",
    "name": "Playwright E2E tests for 10 critical user paths",
    "registered_on": null,
-   "pr": 802
+   "pr": null
   },
   {
    "id": "block-10-account-balances",
@@ -2148,17 +2181,6 @@
    "evidence": "all 1 named artifact(s) on main",
    "name": "BLOCK-10-of-29-TIER2-RLS-TEST-GATE",
    "pr": null
-  },
-  {
-   "id": "BLOCK-10-TIER2-RLS-TEST-GATE",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #801 merged 2026-06-09",
-   "name": "Cross-tenant RLS gate verification script with fixture generation",
-   "registered_on": null,
-   "pr": 801
   },
   {
    "id": "BLOCK-11-of-29-TIER2-AUDIT-COVERAGE",
@@ -2970,28 +2992,6 @@
    "name": "Make no-op schema-parity baseline regeneration deterministic and guard against volatile metadata regressions.",
    "registered_on": null,
    "pr": 2693
-  },
-  {
-   "id": "CLOSURE-10-MAINT-PARTS-CATALOG",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #798 merged 2026-06-09",
-   "name": "Maintenance parts master catalog by brand for owned fleet",
-   "registered_on": null,
-   "pr": 798
-  },
-  {
-   "id": "CLOSURE-11-MAINT-SERVICES-CATALOG",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #799 merged 2026-06-08",
-   "name": "Maintenance services catalog + ETA defaults from Samsara",
-   "registered_on": null,
-   "pr": 799
   },
   {
    "id": "CLOSURE-12-CYCLE5-PAYROLL-INTEGRATION",
@@ -7392,10 +7392,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #804 merged 2026-06-08",
+   "evidence": "all 3 file(s) on main",
    "name": "Block 14 — Mexico Operations Module: cross-border loads, mx_permits, mx_tolls_ledger, B1 drivers",
    "registered_on": null,
-   "pr": 804
+   "pr": null
   },
   {
    "id": "TIER15-MECHANIC-SHOP",
@@ -7403,21 +7403,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #805 merged 2026-06-08",
+   "evidence": "all 2 file(s) on main",
    "name": "Block 15 — Internal Mechanic Shop: internal_labor_log, parts decrement, JE posting",
    "registered_on": null,
-   "pr": 805
-  },
-  {
-   "id": "TIER20-SECRETS-ROTATION",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #806 merged 2026-06-08",
-   "name": "Block 20 — Secrets Rotation: runbook covering all 10+ secrets with rotation procedures",
-   "registered_on": null,
-   "pr": 806
+   "pr": null
   },
   {
    "id": "TIER21-DR-DRILL",
@@ -13161,6 +13150,17 @@
    "pr": null
   },
   {
+   "id": "TIER20-SECRETS-ROTATION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Block 20 — Secrets Rotation: runbook covering all 10+ secrets with rotation procedures",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "users-invited-status-distinct-from-active",
    "source": ".block-ready",
    "fin": true,
@@ -13262,6 +13262,48 @@
  ],
  "merged_prs": [
   {
+   "number": 4163,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-08-03T15:08:04Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 4162,
+   "title": "Cursor- fix(safety): Position History unit label (2194)",
+   "mergedAt": "2026-08-03T14:54:02Z",
+   "branch": "cursor/Cursor-safety-position-history-unit-label-2194-2026-08-03"
+  },
+  {
+   "number": 4161,
+   "title": "Claude- docs(skill): the standards skill indexed 25 rules; the repo has 32",
+   "mergedAt": "2026-08-03T14:58:07Z",
+   "branch": "docs/skill-rules-index-drift"
+  },
+  {
+   "number": 4160,
+   "title": "Cursor- fix(safety): fine convert confirm driver label (2192)",
+   "mergedAt": "2026-08-03T15:15:48Z",
+   "branch": "cursor/Cursor-safety-fine-convert-driver-label-2192-2026-08-03"
+  },
+  {
+   "number": 4159,
+   "title": "Cursor- fix(safety): Permits Form 2290 unit EntityLink (2190)",
+   "mergedAt": "2026-08-03T14:54:05Z",
+   "branch": "cursor/Cursor-safety-permits-unit-entitylink-2190-2026-08-03"
+  },
+  {
+   "number": 4158,
+   "title": "Cursor- fix(safety): driver score unit EntityLink (2188)",
+   "mergedAt": "2026-08-03T14:54:09Z",
+   "branch": "cursor/Cursor-safety-driver-score-unit-entitylink-2188-2026-08-03"
+  },
+  {
+   "number": 4157,
+   "title": "Cursor- fix(safety): accident/damage label honesty (2186)",
+   "mergedAt": "2026-08-03T15:15:45Z",
+   "branch": "cursor/Cursor-safety-damage-evidence-label-2186-2026-08-03"
+  },
+  {
    "number": 4156,
    "title": "Cursor- fix(safety): cargo claim EntityLink labels (2184)",
    "mergedAt": "2026-08-03T07:20:49Z",
@@ -13308,6 +13350,12 @@
    "title": "Cursor- fix(safety): HOS/Training/DrugAlcohol driver EntityLink (2170)",
    "mergedAt": "2026-08-03T06:07:16Z",
    "branch": "cursor/Cursor-safety-hos-driver-entitylink-2170-2026-08-03"
+  },
+  {
+   "number": 4148,
+   "title": "chore(program): auto-refresh audit scoreboard from ledger",
+   "mergedAt": "2026-08-03T15:20:26Z",
+   "branch": "chore/program-scoreboard-sync"
   },
   {
    "number": 4147,
@@ -16812,54 +16860,6 @@
    "title": "docs(module-completion): manifest truth pass — M grows 18/32 → 23/38, 11 orphan findings admitted",
    "mergedAt": "2026-07-26T00:52:27Z",
    "branch": "docs/manifest-truth-pass-lists-safety"
-  },
-  {
-   "number": 3518,
-   "title": "docs(trackers): purge Acct+Bank pile duplicates / wrong-module / BUILT",
-   "mergedAt": "2026-07-25T19:01:48Z",
-   "branch": "docs/acct-bank-pile-purge-20260725"
-  },
-  {
-   "number": 3517,
-   "title": "ACCT-F05 [HOLD]: bank feed JE match honesty guard + scoreboard FAIL",
-   "mergedAt": "2026-07-25T18:34:17Z",
-   "branch": "hold/acct-f05-bankfeed-je-honesty-keep"
-  },
-  {
-   "number": 3515,
-   "title": "migrations: held-registry applied_on_prod refresh (Neon ledger truth)",
-   "mergedAt": "2026-07-25T22:57:54Z",
-   "branch": "hold/held-registry-applied-held-split-2026-07-25"
-  },
-  {
-   "number": 3514,
-   "title": "guard(banking): BANK-ECON-04 recon RLS — Neon-applied 202608030000 (schema-live)",
-   "mergedAt": "2026-07-25T19:43:53Z",
-   "branch": "hold/bank-econ-04-honesty-keep-20260725"
-  },
-  {
-   "number": 3513,
-   "title": "ACCT-F02: JE-type picker — Neon-applied 202607960000 (schema-live)",
-   "mergedAt": "2026-07-25T19:05:48Z",
-   "branch": "hold/acct-f02-je-type-fk-honesty-20260725"
-  },
-  {
-   "number": 3512,
-   "title": "[HOLD] BANK-LINK-01: bank_transactions counterparty vendor/customer FK",
-   "mergedAt": "2026-07-25T17:35:46Z",
-   "branch": "hold/bank-link-01-counterparty-fk-20260725"
-  },
-  {
-   "number": 3511,
-   "title": "ACCT-F07+F08: LINK-04/05 — Neon-applied (schema-live, not PASS)",
-   "mergedAt": "2026-07-25T19:08:38Z",
-   "branch": "hold/acct-f07-f08-merged-not-applied-honesty-20260725"
-  },
-  {
-   "number": 3510,
-   "title": "docs(accounting): ACCT-CoA-ASYMMETRY read-only grouped diff report",
-   "mergedAt": "2026-07-25T19:43:44Z",
-   "branch": "hold/acct-coa-asymmetry-report-20260725"
   }
  ],
  "merged_pr_total": 3000,
