@@ -44,11 +44,10 @@ if (!bodyFile || !fs.existsSync(bodyFile)) {
   process.exit(2);
 }
 
-// Worktrees use a .git *file* — never mkdir ROOT/.git. Use OS temp.
-const filesFile = path.join(
-  os.tmpdir(),
-  `ih35-cursor-pr-body-gate-files-${process.pid}.txt`,
-);
+// Worktrees use a .git *file* — never mkdir ROOT/.git.
+// Use a private mkdtemp dir (not a predictable /tmp path — CodeQL js/insecure-temporary-file).
+const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ih35-cursor-pr-body-"));
+const filesFile = path.join(tmpDir, "files.txt");
 fs.writeFileSync(filesFile, "apps/frontend/src/x.ts\n", "utf8");
 
 const ci = spawnSync(
