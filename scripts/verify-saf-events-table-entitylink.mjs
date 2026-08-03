@@ -22,6 +22,9 @@ function assert(table, page) {
   if (/subject_driver_name \|\| row\.subject_driver_id/.test(page)) {
     problems.push(`${PAGE}: must not fall back driver label to raw UUID`);
   }
+  if (/subject_unit_number \|\| row\.subject_unit_id/.test(page)) {
+    problems.push(`${PAGE}: must not fall back unit label to raw UUID`);
+  }
   return problems;
 }
 
