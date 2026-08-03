@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PermitsPage } from "./PermitsPage";
 import { Form2290Filings } from "../compliance/Form2290Filings";
 import { resolveApiUrl } from "../../api/client";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type Props = {
   operatingCompanyId: string;
@@ -65,8 +66,12 @@ export function Permits({ operatingCompanyId }: Props) {
               .slice()
               .sort((a, b) => a.deadline.localeCompare(b.deadline))
               .slice(0, 4)
-              .map((u) => `${u.unit_number} due ${u.deadline}`)
-              .join(" · ")}
+              .map((u, idx) => (
+                <span key={u.unit_id}>
+                  {idx > 0 ? " · " : null}
+                  <EntityLink kind="unit" id={u.unit_id} label={u.unit_number?.trim() || "Unit"} /> due {u.deadline}
+                </span>
+              ))}
             {perUnit.length > 4 ? ` · +${perUnit.length - 4} more` : ""}
           </div>
         ) : null}
