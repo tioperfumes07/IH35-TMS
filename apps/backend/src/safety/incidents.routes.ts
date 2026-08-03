@@ -21,6 +21,8 @@ const listQuerySchema = companyQuerySchema.extend({
   // incident type that is ABOUT a trailer, so having no trailer filter made them unreachable
   // from the trailer they concern.
   trailer_id: z.string().uuid().optional(),
+  // SAF-C01 — load-detail reverse: filter in SQL (LIMIT capped — never client-filter past page).
+  load_id: z.string().uuid().optional(),
   // YYYY-MM-DD inclusive bounds on incident_at (date portion).
   date_from: z
     .string()
@@ -174,6 +176,10 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
       if (query.data.trailer_id) {
         params.push(query.data.trailer_id);
         filters.push(`i.trailer_id = $${params.length}`);
+      }
+      if (query.data.load_id) {
+        params.push(query.data.load_id);
+        filters.push(`i.load_id = $${params.length}`);
       }
       if (query.data.date_from) {
         params.push(query.data.date_from);

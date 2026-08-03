@@ -14,8 +14,10 @@ const companyQuerySchema = z.object({
 });
 
 // SAF-F17 — unit-profile reverse view. Optional; absent = the existing company-wide list.
+// SAF-C01 — load-detail reverse view: filter by load_id in SQL (LIMIT 500 — never client-filter).
 const accidentsQuerySchema = companyQuerySchema.extend({
   unit_id: z.string().uuid().optional(),
+  load_id: z.string().uuid().optional(),
 });
 
 const eventsQuerySchema = z.object({
@@ -390,10 +392,14 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       // `.catch(() => [])` swallow is removed — a failed accidents query must surface, not render as an
       // empty "no accidents" all-clear on a safety screen (the same fake-green class as SAF-F06).
       const values: unknown[] = [query.data.operating_company_id];
-      let unitFilter = "";
+      const scopeFilters: string[] = [];
       if (query.data.unit_id) {
         values.push(query.data.unit_id);
-        unitFilter = `AND ar.unit_id = $${values.length}`;
+        scopeFilters.push(`AND ar.unit_id = $${values.length}`);
+      }
+      if (query.data.load_id) {
+        values.push(query.data.load_id);
+        scopeFilters.push(`AND ar.load_id = $${values.length}`);
       }
       const res = await client.query(
         `
@@ -425,7 +431,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             ON v.id = ar.vendor_id
            AND v.operating_company_id = ar.operating_company_id
           WHERE ar.operating_company_id = $1
-          ${unitFilter}
+          ${scopeFilters.join("\n          ")}
           ORDER BY ar.accident_at DESC
           LIMIT 500
         `,
