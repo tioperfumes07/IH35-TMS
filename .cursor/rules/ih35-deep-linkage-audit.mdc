@@ -1,0 +1,238 @@
+---
+description: IH35-TMS full system audit — DoD A-E + VERIFY 1-8, exercised live
+alwaysApply: true
+---
+
+# IH35-TMS — FULL SYSTEM AUDIT: MASTER INSTRUCTIONS FOR CASCADE
+### (auto-loads every session · runs until fully PROD-VERIFIED · the anti-bullshit spec)
+
+**To: Cascade.** This one document is (A) the session boot harness that runs the audit automatically each session
+until it is fully performed, and (B) the full spec. **"Complete" is NOT five layers.** A module is complete only
+when the repo's committed bar — **DoD A–E + VERIFY 1–8** — is PROD-VERIFIED per entity (TRANSP & USMCA; TRK where
+relevant). That bar explicitly includes **connectivity & wiring (V3)**, the **universal picker + creator law (V2)**,
+and **deep cross-module linkage forward+reverse (V4)** — not just "the table exists." The owner lifted the approval
+holds for verification (no JORGE-APPROVED gate, no asking). The owner did NOT lift honesty. A guess is a defect.
+
+**Placement (auto-load every session):** commit as an Always-On Cascade rule at
+`.windsurf/rules/ih35-deep-linkage-audit.md`, and in the repo at `docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md`, next to
+the ledger `docs/audit/AUDIT-COVERAGE-LIVE.md`. The loop ends by the COMPLETION CONDITION, not by deleting the file.
+
+> **CHANGE LOG**
+> **v3 (2026-08-03):** "Complete" corrected from 5 layers (A–E) to the committed **DoD A–E + VERIFY 1–8**. Connectivity
+> & wiring (V3), universal picker+creator law incl. Lists (V2), and deep linkage F+R (V4) are mandatory, not extras.
+> Added §B12 spelling out the exact live click-throughs: every picker `+Add new`→creator wizard→canonical→appears/
+> selected/survives-reload; every link navigates to the correct LIVE target; Lists→correct list→correct wizard;
+> CoA→register→correct report→source drill. A code trace / route string is NOT proof — it must be exercised live.
+> **v2:** Rule 10 (a count never upgrades a row's tier), Rule 11 (re-baseline FAILs), COUNTS-vs-LINKAGE read split
+> (§B6), scoreboard integrity (§B10). Owner-role/full-bypass reads prove existence, never app-visibility.
+
+---
+---
+
+# PART A — THE HARNESS (runs automatically, every session)
+
+## A0. HARD RULES (never violated)
+
+1. **Verify against PROD + current `origin/main`. Never a stale clone, never memory.** Sync first, every session.
+2. **Three tiers only:** `PROD-VERIFIED` · `[AUDIT — RE-VERIFY LIVE]` (code-read = a to-do, not a pass) · `UNVERIFIED — <blocker>`.
+3. **A number is a PROD fact.** No count/dollar without a live Neon query result in the evidence cell.
+4. **A reverse link, a picker, a navigation link — proven only by EXECUTING it live** (click-through, endpoint, or app-path SQL that returns the row). A route string / component existing in code is NEVER proof.
+5. **`0` is not a verdict until re-run under the app path** (`SET LOCAL app.bypass_rls='lucia'` + `app.operating_company_id`), TRANSP and USMCA.
+6. **Canonical target first:** `to_regclass('<schema.table>')` non-null and NOT a RETIRE table. Fix the writer onto canonical; never FK a doomed table.
+7. **Every real FAIL gets a mutation-proven guard** (`verify-steps/NNN`) that fails pre-fix, passes post-fix, `--selftest` on real source.
+8. **No `--admin`, no fake green.** CI is the gate. Additive only — supersede rows, never delete.
+9. **A guess is a defect.** Cannot verify → `UNVERIFIED — <blocker> · Step-1 reproduce`. Never a plausible sentence.
+10. **A COUNT NEVER UPGRADES A ROW'S TIER.** A live number fills the number cell only. The row stays tier-2 until its DoD + VERIFY gates are exercised live (§B8).
+11. **Re-baseline FAILs every session.** Main merges fixes under you. Re-read the fixing file on current main + check the deployed SHA before a row stays `FAIL`.
+12. **Complete = DoD A–E + VERIFY 1–8, per entity.** Never certify on a subset. A green record with a dead picker (V2), a link that 404s (V3), or an unwalked reverse chain (V4) is NOT complete.
+
+## A1. SESSION BOOT SEQUENCE (exact order)
+
+1. `git fetch origin && git checkout main && git pull --ff-only` → record `SHA = git rev-parse HEAD`.
+2. Re-read PART B — §B3, §B5, §B6, §B8, §B11, **§B12 (the wiring checks)**.
+3. Open `docs/audit/AUDIT-COVERAGE-LIVE.md` and the run-log `docs/audit/AUDIT-RUN-LOG.md` (create if absent).
+4. Confirm prod verification is available (`healthz/shallow` version; a read-only prod query succeeds) AND a live app
+   session is reachable for click-throughs (V2/V3). If either is down, advance only tier-2 code facts; mark nothing PROD-VERIFIED.
+5. Re-baseline pass (Rule 11): downgrade `FAIL → FIX` where the fix merged.
+
+## A2. THE RESUME LOOP (repeat until COMPLETION CONDITION)
+
+```
+WORKLIST = every ledger row tier-2 [AUDIT — RE-VERIFY LIVE]
+         + every UNVERIFIED row whose blocker is now resolvable
+         + every FAIL row whose fix merged since last session (Rule 11).
+
+for each row (highest live-risk first: open FAILs → financial chains → the rest):
+    Run the full gate set for the record/module (§B8): DoD A–E + VERIFY 1–8, per entity.
+    - V2 picker: open the combobox, confirm +Add new is the FIRST row, click it, the correct creator wizard opens,
+      save, the new row APPEARS + is SELECTED + SURVIVES RELOAD, written to the SAME canonical table the picker reads.
+    - V3 wiring: click the link/CoA account/List card — it must land on the correct LIVE target with correct data;
+      register→source drills; report figures reconcile. A 404 / wrong target / empty tab = FAIL.
+    - V4 linkage: walk the cross-module web forward AND reverse on live data (insurance model, §B9).
+    - V6: balanced JE where a money terminus exists.
+    Set tier: all applicable gates proven live → PROD-VERIFIED (evidence per gate).
+              blocked by 0 data/undeployed → UNVERIFIED — <blocker> · Step-1 reproduce (TERMINAL — don't re-loop).
+    Real FAIL → ensure its mutation-proven guard exists (§B7). Update the row additively.
+
+After the pass: run the machine check (§B10); recompute the scoreboard; append one AUDIT-RUN-LOG.md line.
+```
+
+**Anti-churn:** a terminal `UNVERIFIED — 0 rows / not deployed` row is not re-attempted unless its blocker changed.
+
+## A3. COMPLETION CONDITION (honest, not "all green")
+
+Fully performed when the ledger has **zero rows still tagged `[AUDIT — RE-VERIFY LIVE]`** — every row is either
+**PROD-VERIFIED** across all applicable DoD + VERIFY gates, or **terminal UNVERIFIED** (named blocker + Step-1
+reproduce). Then write `AUDIT COMPLETE @ SHA <sha> — tier-2 count = 0` atop the run-log and stop. Never claim
+complete while any tier-2 row or any un-exercised V2/V3/V4 gate remains.
+
+---
+---
+
+# PART B — THE SPEC
+
+## B0. WHY THE LAST 50 AUDITS WERE BULLSHIT
+
+1. Read a stale local clone, called it truth. 2. Counted a code clone, printed it as a prod number (2,827 vs live
+2,828). 3. Called a code-read "VERIFIED" — exists+wired is not correct. 4. Proved a reverse link / picker / nav by a
+route string; a route that renders an empty tab is a dead link that looks alive. 5. Declared `0` without the app-path
+re-run. 6. No mutation-proven guard. 7. Force-merged / faked green. 8. Wrote toward a RETIRE table. 9. Silence on a
+missing link (must be `N/A(reason)` + owning block). 10. Passed a live COUNT off as a proven CHAIN. **11. Audited a
+shallow SUBSET — "linkage, picker, design" — and called a system with dead `+Add new` buttons, 404 links, and
+unwalked reverse chains "complete." Complete = DoD A–E + VERIFY 1–8, exercised live (§B8/§B12).**
+
+## B1. THREE SOURCES OF TRUTH
+
+| Fact | Source | How |
+|---|---|---|
+| Schema (tables/cols/enums/RLS/grants) | Neon PROD `information_schema`/`pg_catalog` | RLS-immune; never a migration file/memory |
+| Counts/dollars/"0 rows" — EXISTENCE | Neon PROD live query | full-bypass OK; fills NUMBER CELL only (Rule 10) |
+| App-visibility, linkage, picker, nav | Neon PROD **as `ih35_app`** (app-path GUC) **or the live app/endpoint** | click it / call it; returns the row |
+| Code (routes/services/components/FKs) | current `origin/main` (pull --ff-only first) | read at a named SHA; record SHA |
+| "Wired live / deployed" | deployed SHA | `healthz/shallow` version == merge sha; then exercise |
+
+## B2. PROVENANCE — three tiers, no claim without evidence
+
+**PROD-VERIFIED** (live row/endpoint/click-through/guard) is the only "done." **`[AUDIT — RE-VERIFY LIVE]`** =
+code-read at a SHA, a to-do. **`UNVERIFIED — <blocker>`** = named blocker + Step-1 reproduce. A live count on a
+tier-2 row keeps it tier-2 (Rule 10).
+
+## B3. THE CHAIN-WALK — forward AND reverse
+
+For each hop: name the FK column + canonical target (`to_regclass`, non-RETIRE); prove populated on real prod rows
+(app path). Reverse hop proven ONLY by executing the reverse query/endpoint and returning the row. 0 parent rows →
+`UNVERIFIED — 0 rows in <table>; Step-1 create via <wizard>, re-run`. Money terminus → balanced JE from the existing
+poster (`postSourceTransaction`), reuse it, no new GL math.
+
+## B4. IH35 CANONICAL TARGETS
+
+`driver_finance.*` (RETIRE `payroll.*`,`settlement.*`) · `mdata.qbo_*` (RETIRE `accounting.qbo_*`) · `banking.*`
+(RETIRE `bank.*`) · `maintenance.*` (RETIRE `maint.*`) · vendors `mdata.vendors` (WO picker must stop writing
+`mdata.qbo_vendors`) · loads `mdata.loads` · units `mdata.units` (`owner_company_id`/`currently_leased_to_company_id`,
+NO `operating_company_id`, NO `display_id`) · cancellation `catalogs.cancellation_reasons`. Hubs: `org.companies`,
+`identity.users`, `mdata.drivers`, `mdata.units`, `mdata.loads`, `catalogs.accounts`, `mdata.customers`,
+`maintenance.work_orders`, `mdata.vendors`, `accounting.journal_entries`, `mdata.equipment`, `docs.files`. Near-twin → STOP, ask.
+
+## B5. PER-ROW SCHEMA (fill every cell)
+
+```
+| row | module · scope | tier | verdict
+| DoD: A <..> B <..> C <..> D <..> E <..>
+| VERIFY: V1 <..> V2 <..> V3 <..> V4 <..> V5 <..> V6 <..> V7 <..> V8 <..>   (each PASS|N/A(reason)|FAIL|UNVERIFIED—why)
+| forward chain · reverse chain (executed) · money terminus (balanced JE or N/A)
+| evidence (query+result / url+status+body / click-through screenshot / file:line@sha / guard+exit)
+| canonical? | guard | SHA | date | agent |
+```
+
+## B6. DB READS — COUNTS vs LINKAGE
+
+EXISTENCE counts: full-bypass read OK, fills the NUMBER CELL ONLY, never changes tier (Rule 10). APP-VISIBILITY /
+linkage / picker / nav: query **as `ih35_app`** (app-path GUC) or hit the live app/endpoint — NOT `neondb_owner`.
+Owner bypass proves the row is physically there; it does NOT prove the app's RLS lets `ih35_app` see it, or that the
+button/link works. Those need the live exercise.
+
+## B7. THE GUARD
+
+`scripts/verify-<name>.mjs` + `scripts/verify-steps/NNN-verify-<name>.mjs`. FAIL on pre-fix, PASS on fix; `--selftest`
+mutates real source, pins legitimate look-alikes. Never edit `package.json`/`ci.yml`/locked guards.
+
+## B8. DEFINITION OF DONE — the FULL committed bar (DoD A–E + VERIFY 1–8), per entity
+
+**DoD (record-level):**
+- **A — Active path:** route registered + component mounted + reachable nav leaf; no dead/ComingSoon twin.
+- **B — Wizard depth:** every rendered field controlled AND in the submit payload.
+- **C — Linkage F+R:** canonical FKs both ways (memo / uuid-in-name / jsonb-ids = FAIL).
+- **D — Purpose→economics:** purpose picks the money object; no silent default.
+- **E — Evidence:** live proof or `UNVERIFIED` + named blocker.
+
+**VERIFY (system-level — the part the shallow audits skipped):**
+- **V1 — Visual/QBO chrome:** ParityDrawer, calendar, Due auto, box-in-box, `+Create`/`+Book`, drawer-on-drawer.
+- **V2 — UNIVERSAL PICKER + CREATOR LAW (7 clauses, exercised live):** every combobox has (1) a catalog behind it ·
+  (2) inline **`+ Add new` as the FIRST ROW** · (3) clicking it opens the correct **creator wizard** · (4) the wizard
+  writes the SAME canonical table the picker reads (R=W) · (5) the new row **appears** in the picker · (6) is
+  **auto-selected** and **survives reload** · (7) entity-scoped. Applies to Lists too (§B12).
+- **V3 — CONNECTIVITY / WIRING (exercised live):** nav→route→UI→API→CANONICAL Neon table (never RETIRE)→same R/W→
+  entity-scoped→flags honest. Every link/CoA account/List card, when CLICKED, lands on the correct LIVE target with
+  correct data; register→source drills through; report figures reconcile. A 404 / wrong target / empty tab = FAIL.
+- **V4 — DEEP LINKAGE CHAINS F+R:** the full cross-module web (insurance model, §B9), forward and reverse, on live data.
+- **V5 — Catalogs/entity scope:** TRANSP AND USMCA; drivers-as-vendors; units by owner/lease; no cross-entity leak.
+- **V6 — Economics audit-grade:** header+lines; balanced JE when flag ON; control roles; NO TMS→QBO write-back.
+- **V7 — Tab/design law:** every approved leaf; no silent-missing; no invented tabs.
+- **V8 — Security/RLS:** FORCE RLS; correct GUC; `security_invoker`; grants.
+
+**Complete/certified = every applicable DoD key AND every applicable VERIFY key PROD-VERIFIED, per entity.** CI-green
+is NOT done. "Merged" is NOT done. A code trace is NOT a live click. A count is NOT a chain.
+
+## B9. WORKED EXAMPLE — insurance claim (the model for V4)
+
+Claim links to EVERYTHING, both ways: `claim.policy_id→insurance.policy` · `.driver_id→mdata.drivers` ·
+`.asset_id→mdata.units` · `.accident_report_id→safety.accident_reports` · `.load_id→mdata.loads` ·
+`legal.matters.insurance_claim_id→claim` · `maintenance.work_orders.insurance_claim_id→claim` (repair) ·
+`driver_finance.driver_liabilities` (deductible) · `driver_finance.driver_settlement_deductions` (deduction) ·
+`accounting.bills`→`postSourceTransaction`→balanced JE→GL. Reverse: `GET /claims/:id/graph` returns work_orders[],
+bills[], legal_matters[], populated. **0 claims on prod ⇒ `UNVERIFIED — 0 rows in insurance.claim; Step-1: create a
+claim via ClaimCreateModal, re-run graph, post the settlement, paste the balanced JE.`** Only then PROD-VERIFIED.
+
+## B10. SCOREBOARD / MACHINE-CHECK INTEGRITY
+
+The ledger is validated by `scripts/audit-coverage-scoreboard.mjs`. If it hangs/errors, that is a FAIL to fix — never
+substitute a hand-grepped count and report the ledger validated. Run with a hard time budget / on Linux/CI.
+
+## B11. THE CERTIFICATION MODEL (13 gates) — how the scoreboard reads
+
+Per module, per entity, the scoreboard shows **A B C D E** (DoD) and **V1 V2 V3 V4 V5 V6 V7 V8** (VERIFY). Green only
+where PROD-VERIFIED live. A module is CERTIFIED only when all 13 applicable gates are green in BOTH entities. V2/V3/V4
+are the gates the shallow audits skipped: picker+creator, connectivity/wiring, deep linkage. A module with green
+A–E but amber V2/V3/V4 is **not complete** — it has records but unproven wiring.
+
+## B12. THE WIRING CHECKS, SPELLED OUT (the owner's explicit list — all live, not code-read)
+
+1. **Every picker/combobox (V2):** open it → a catalog is behind it → `+ Add new` is the FIRST row → click it → the
+   correct **creator wizard** opens (the same one Lists uses) → fill + save → it writes the canonical table the picker
+   reads → the new item **appears in the dropdown, is selected, and is still there after a reload**. If the item/vendor/
+   customer/category/product isn't in the catalog, the `+` is the path that creates it. Any break = V2 FAIL for that picker.
+2. **Lists module (V2+V3):** clicking a Lists catalog card → navigates to the **correct list page** → the list shows
+   the **correct data from the canonical table** → `+ Create` opens the **correct creator wizard** → wizard is wired
+   end-to-end (form→POST→canonical) → the created row appears in the list. Wrong list / wrong wizard / not-wired = FAIL.
+3. **Chart of Accounts → Register → Report (V3):** every CoA account, when clicked → Balance-Sheet accounts open their
+   **register** with the correct transactions; P&L accounts open the **correct report** → each register row drills
+   through to its **source document** → the register/report **figures reconcile** to Trial Balance / P&L / Balance
+   Sheet. A wrong route, empty register, or figure mismatch = FAIL.
+4. **Every cross-module link (V3+V4):** clicking any `EntityLink` lands on the correct LIVE target (bill→vendor→vendor
+   detail→back to bill), forward AND reverse. A route string in `EntityLink.tsx` is NOT proof — the click must work live.
+
+---
+
+## ONE-PARAGRAPH PASTE (session start)
+
+> Boot the IH35-TMS full system audit per `.windsurf/rules/ih35-deep-linkage-audit.md`. `git pull --ff-only` main,
+> record the SHA, re-baseline every FAIL. Read PART B, especially §B8 (DoD A–E + VERIFY 1–8) and §B12 (wiring checks).
+> "Complete" is NOT 5 layers — it is all 13 gates PROD-VERIFIED per entity. For every tier-2 row, exercise it LIVE:
+> V2 — open each picker, confirm `+Add new` is the first row, click it, the creator wizard opens, saves to the
+> canonical table, the row appears+selected+survives reload; V3 — click every link/CoA account/List card and confirm
+> it lands on the correct live target with correct data, register→source→report reconciles; V4 — walk the cross-module
+> web forward AND reverse on live data (insurance model). A code trace / route string is NOT proof. Counts fill the
+> number cell only and never upgrade a tier; app-visibility and every click use the `ih35_app` app path or the live
+> app, never the owner role. Set each row PROD-VERIFIED with per-gate evidence, or terminal UNVERIFIED with a named
+> blocker + Step-1 reproduce. Run the machine check (never hand-grep it). No `--admin`, no fake green, additive only.
+> Append a run-log line. Repeat until zero tier-2 rows remain, then write AUDIT COMPLETE. A guess is a defect.
