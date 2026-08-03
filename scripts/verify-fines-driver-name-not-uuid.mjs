@@ -96,8 +96,19 @@ if (SELFTEST) {
   // 3. the drawer reverts to the raw uuid label.
   expectCaught(
     "drawer-raw-uuid",
-    { ...live, [DRAWER]: live[DRAWER].replace(/driverLabel=\{String\(fine\.subject_driver_name \?\? fine\.subject_driver_id \?\? "driver"\)\}/, 'driverLabel={String(fine.subject_driver_id ?? "driver")}') },
-    "raw subject_driver_id uuid"
+    {
+      ...live,
+      [DRAWER]: live[DRAWER]
+        .replace(
+          /driverLabel=\{\(fine\.subject_driver_name as string \| undefined\)\?\.trim\(\) \|\| "driver"\}/,
+          'driverLabel={String(fine.subject_driver_id ?? "driver")}',
+        )
+        .replace(
+          /driverLabel=\{String\(fine\.subject_driver_name \?\? fine\.subject_driver_id \?\? "driver"\)\}/,
+          'driverLabel={String(fine.subject_driver_id ?? "driver")}',
+        ),
+    },
+    "raw subject_driver_id uuid",
   );
 
   const liveProblems = assertFinesDriverName(live);
