@@ -8,6 +8,7 @@ import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
 import { enqueueEmail } from "../email/queue.service.js";
 import { findReturningDriverMatches } from "./driver-returning-detection.routes.js";
+import { findRosterDuplicates } from "./driver-roster-duplicate.service.js";
 import { buildDriverAggregate } from "./driver-aggregate.service.js";
 import { registerDriverDefaultTruckRoutes } from "./driver-default-truck.routes.js";
 import { registerDriverMessagesRoutes } from "./driver-messages.routes.js";
@@ -22,6 +23,9 @@ import { registerDriverTrainingRoutes } from "./driver-training.routes.js";
 import { registerDriverW8benRoutes } from "./driver-w8ben.routes.js";
 import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "./driver-pseudo-user.js";
 import { EXCLUDE_ARCHIVED_DRIVERS_SQL } from "./test-seed-archive.js";
+import { ensureDriverAppAccess } from "./driver-app-access.service.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
+import { isWhatsappChannelConfigured } from "../outbox/handlers/twilio-channel-config.js";
 
 const DRIVER_STATUS_VALUES = ["Active", "Probation", "Inactive", "Terminated", "OnLeave"] as const;
 export const driverStatusSchema = z.enum(DRIVER_STATUS_VALUES);
@@ -58,6 +62,12 @@ const listQuerySchema = z.object({
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
+/** dry_run defaults TRUE — a bulk outward action must be previewed before it messages real drivers. */
+const bulkInviteBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  driver_ids: z.array(z.string().uuid()).optional(),
+  dry_run: z.boolean().default(true),
+});
 
 const driverAggregateQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -122,6 +132,12 @@ const createDriverBodySchema = z.object({
   status: driverStatusSchema.default("Probation"),
   notes: z.string().trim().max(2000).optional(),
   override_returning_warning: z.boolean().optional().default(false),
+  /**
+   * Explicitly acknowledge that an ACTIVE driver already on this entity's roster matches. Separate
+   * from override_returning_warning: that one answers "we employed this person before", this one
+   * answers "this person is on the roster right now".
+   */
+  override_duplicate_warning: z.boolean().optional(),
   prior_driver_id: z.string().uuid().optional(),
   is_rehire: z.boolean().optional().default(false),
 });
@@ -307,6 +323,38 @@ export async function createDriverCanonical(
     const created = await withCurrentUser(authUser.uuid, async (client) => {
       if (b.prior_driver_id && !b.override_returning_warning) {
         return { error: "override_required_for_rehire" as const };
+      }
+
+      // ROSTER duplicate check — asks "is this person already active on this roster?", which the
+      // returning-driver check below does NOT ask (it matches event snapshots, so a first-time entry
+      // has nothing to match). On prod this is how three ACTIVE same-name pairs reached TRANSP,
+      // including one with a byte-identical CDL.
+      if (b.operating_company_id && b.override_duplicate_warning !== true) {
+        const rosterDuplicates = await findRosterDuplicates(client, {
+          operating_company_id: b.operating_company_id,
+          first_name: b.first_name,
+          last_name: b.last_name,
+          cdl_number: b.cdl_number,
+          cdl_state: b.cdl_state,
+          curp: b.curp,
+        });
+        if (rosterDuplicates.length > 0) {
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "mdata.drivers.roster_duplicate_detected",
+            {
+              resource_type: "mdata.drivers",
+              operating_company_id: b.operating_company_id,
+              attempted_name: [b.first_name, b.last_name].filter(Boolean).join(" "),
+              match_count: rosterDuplicates.length,
+              matches: rosterDuplicates,
+            },
+            "warning",
+            "BT-1-DRIVER-SAFETY-FILE"
+          );
+          return { error: "roster_duplicate_detected" as const, duplicates: rosterDuplicates };
+        }
       }
 
       const returningDetection = await findReturningDriverMatches(client, {
@@ -893,6 +941,12 @@ export async function createDriverCanonical(
         invite_operating_company_id: resolvedOperatingCompanyId,
       };
     });
+    // 409 CONFLICT, not 400: the request is well-formed — an ACTIVE driver already on this roster
+    // matches. The caller gets the matching rows so an operator can decide, and re-submits with
+    // override_duplicate_warning when the two really are different people.
+    if (created && typeof created === "object" && "error" in created && created.error === "roster_duplicate_detected") {
+      return { status: 409, body: { error: "roster_duplicate_detected", duplicates: created.duplicates } };
+    }
     if (created && typeof created === "object" && "error" in created && created.error === "returning_driver_detected") {
       return { status: 409, body: { error: "returning_driver_detected", ...created.detection } };
     }
@@ -1130,6 +1184,219 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     return row;
   });
 
+  /**
+   * BULK INVITE — grant app access to drivers who have none.
+   *
+   * WHY THIS EXISTS: 86 of 88 active drivers on prod have no identity_user_id (verified 2026-08-03,
+   * positive control mdata.vendors=2,828). Inviting them one at a time through the single-driver
+   * endpoint is 86 deliberate clicks, which in practice means it never happens and the driver PWA,
+   * every dispatch notification and every driver-targeted alert stay dark.
+   *
+   * DRY RUN IS THE DEFAULT, DELIBERATELY. This sends real WhatsApp messages to real people. An
+   * Owner must ask for `dry_run: false` explicitly; a mistyped company id or an unintended filter
+   * should cost a preview, never 86 messages. The preview returns exactly what the live run would do,
+   * driver by driver, so the decision is made on the actual list rather than on a count.
+   *
+   * PARTIAL FAILURE IS REPORTED, NOT SWALLOWED. Each driver is attempted independently and its own
+   * outcome recorded; one driver with conflicting credentials must not abort the other 85, and must
+   * not be silently dropped from the result either.
+   */
+  // Rate-limited hard: this is the one endpoint that can message the entire roster in a single call.
+  app.post(
+    "/api/v1/mdata/drivers/bulk-invite",
+    { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isOwnerOrAdmin(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+
+    const parsedBody = bulkInviteBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const b = parsedBody.data;
+
+    // Read once: a bulk run must not report some drivers as invited and others as skipped purely
+    // because the environment changed mid-loop.
+    const whatsappReady = isWhatsappChannelConfigured();
+
+    const outcome = await withCurrentUser(authUser.uuid, async (client) => {
+      const targetsRes = await client.query<{
+        id: string;
+        first_name: string | null;
+        last_name: string | null;
+        email: string | null;
+        phone: string | null;
+      }>(
+        `
+          SELECT d.id::text AS id, d.first_name, d.last_name, d.email, d.phone
+            FROM mdata.drivers d
+           WHERE d.operating_company_id = $1::uuid
+             AND d.identity_user_id IS NULL
+             AND d.deactivated_at IS NULL
+             AND d.archived_at IS NULL
+             AND ($2::uuid[] IS NULL OR d.id = ANY($2::uuid[]))
+           ORDER BY d.last_name NULLS LAST, d.first_name NULLS LAST
+        `,
+        [b.operating_company_id, b.driver_ids && b.driver_ids.length > 0 ? b.driver_ids : null]
+      );
+
+      const results: Array<{
+        driver_id: string;
+        name: string;
+        channel: "whatsapp" | "email" | null;
+        status: "would_invite" | "invited" | "skipped";
+        reason?: string;
+      }> = [];
+      const pendingEmails: Array<{
+        driverId: string;
+        name: string;
+        to: string;
+        inviteUrl: string;
+        identityUserId: string;
+        operatingCompanyId: string;
+      }> = [];
+
+      for (const d of targetsRes.rows) {
+        const name = [d.first_name, d.last_name].filter(Boolean).join(" ").trim() || d.id;
+        const email = (d.email ?? "").trim();
+        const phone = (d.phone ?? "").trim();
+        if (!email && !phone) {
+          results.push({ driver_id: d.id, name, channel: null, status: "skipped", reason: "driver_no_contact_method" });
+          continue;
+        }
+        const channel: "whatsapp" | "email" = email ? "email" : "whatsapp";
+        if (channel === "whatsapp" && !whatsappReady) {
+          results.push({
+            driver_id: d.id,
+            name,
+            channel,
+            status: "skipped",
+            reason: "whatsapp_channel_not_configured",
+          });
+          continue;
+        }
+
+        if (b.dry_run) {
+          results.push({ driver_id: d.id, name, channel, status: "would_invite" });
+          continue;
+        }
+
+        const access = await ensureDriverAppAccess(client, d.id, authUser.uuid);
+        if (!access.ok) {
+          results.push({ driver_id: d.id, name, channel, status: "skipped", reason: access.error });
+          continue;
+        }
+
+        const inviteToken = randomBytes(32).toString("hex");
+        const inviteUrl = `${driverInviteBaseUrl}/invite?token=${inviteToken}`;
+        await client.query(
+          `
+            INSERT INTO identity.driver_invites (
+              operating_company_id, driver_id, identity_user_id, token, phone, expires_at, created_by_user_id
+            )
+            VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5, now() + interval '72 hours', $6::uuid)
+          `,
+          [access.operatingCompanyId, access.driverId, access.identityUserId, inviteToken, access.phone, authUser.uuid]
+        );
+
+        if (channel === "whatsapp") {
+          await enqueueOutboxEvent(
+            client,
+            "twilio.whatsapp.send",
+            { aggregate_type: "mdata.drivers", aggregate_id: access.driverId },
+            {
+              to: access.phone,
+              template: "driver_invite",
+              operating_company_id: access.operatingCompanyId,
+              variables: {
+                driver_first_name: access.firstName ?? "Driver",
+                company_name: "",
+                invite_url: inviteUrl,
+                expires_hours: 72,
+              },
+            }
+          );
+        }
+
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "email.driver_invite.resent",
+          {
+            resource_id: access.driverId,
+            resource_type: "identity.driver_invites",
+            driver_id: access.driverId,
+            identity_user_id: access.identityUserId,
+            invite_url: inviteUrl,
+            channel,
+            bulk: true,
+            created_identity_user: access.createdUser,
+            linked_driver: access.linkedDriver,
+          },
+          "info",
+          "BT-3-DRIVER-ONBOARDING"
+        );
+
+        if (channel === "email") {
+          // Queued AFTER the transaction, like the single-driver path — the email service is not
+          // transactional, so sending inside would risk a message about an invite that rolled back.
+          // Status is decided by whether the send succeeds, not by having created the invite row.
+          pendingEmails.push({
+            driverId: d.id,
+            name,
+            to: access.email as string,
+            inviteUrl,
+            identityUserId: access.identityUserId,
+            operatingCompanyId: access.operatingCompanyId,
+          });
+          continue;
+        }
+
+        results.push({ driver_id: d.id, name, channel, status: "invited" });
+      }
+
+      return { results, pendingEmails };
+    });
+
+    // Email sends happen outside the transaction; each driver's status reflects its OWN outcome, so a
+    // single bounce is never reported as success and never hides the other drivers' results.
+    for (const pending of outcome.pendingEmails) {
+      try {
+        await sendDriverInvite({
+          to: pending.to,
+          driverName: pending.name,
+          loginUrl: pending.inviteUrl,
+          actorUserId: authUser.uuid,
+          recipientUserUuid: pending.identityUserId,
+          operatingCompanyId: pending.operatingCompanyId,
+        });
+        outcome.results.push({ driver_id: pending.driverId, name: pending.name, channel: "email", status: "invited" });
+      } catch (err) {
+        outcome.results.push({
+          driver_id: pending.driverId,
+          name: pending.name,
+          channel: "email",
+          status: "skipped",
+          reason: `email_send_failed: ${String((err as Error)?.message ?? err)}`,
+        });
+      }
+    }
+
+    const invited = outcome.results.filter((r) => r.status === "invited").length;
+    const wouldInvite = outcome.results.filter((r) => r.status === "would_invite").length;
+    const skipped = outcome.results.filter((r) => r.status === "skipped").length;
+
+    return reply.code(200).send({
+      dry_run: b.dry_run,
+      eligible: outcome.results.length,
+      invited,
+      would_invite: wouldInvite,
+      skipped,
+      results: outcome.results,
+    });
+    }
+  );
+
+
   app.post("/api/v1/mdata/drivers/:id/resend-invite", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
@@ -1166,8 +1433,15 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       );
       const row = driverRes.rows[0] ?? null;
       if (!row) return { error: "mdata_driver_not_found" as const };
-      if (!row.identity_user_id || !row.operating_company_id) return { error: "driver_not_linked" as const };
-      if (!row.email) return { error: "driver_email_missing" as const };
+
+      // BOOTSTRAP, don't reject. Previously this returned `driver_not_linked` whenever
+      // identity_user_id was null, which is the state of 86 of 88 active drivers on prod — every
+      // driver imported rather than typed into the onboarding form was permanently unreachable, with
+      // no path in any UI to give them access. ensureDriverAppAccess creates/reuses the identity user,
+      // links the driver and grants company access, reusing the exact logic the create-driver route
+      // uses so the two paths cannot drift apart again.
+      const access = await ensureDriverAppAccess(client, parsedParams.data.id, authUser.uuid);
+      if (!access.ok) return { error: access.error };
 
       const inviteToken = randomBytes(32).toString("hex");
       const inviteUrl = `${driverInviteBaseUrl}/invite?token=${inviteToken}`;
@@ -1182,33 +1456,57 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             expires_at,
             created_by_user_id
           )
-          SELECT
-            $1,
-            d.id,
-            d.identity_user_id,
-            $2,
-            d.phone,
-            now() + interval '72 hours',
-            $3
-          FROM mdata.drivers d
-          WHERE d.id = $4
+          VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5, now() + interval '72 hours', $6::uuid)
           RETURNING expires_at
         `,
-        [row.operating_company_id, inviteToken, authUser.uuid, row.id]
+        [access.operatingCompanyId, access.driverId, access.identityUserId, inviteToken, access.phone, authUser.uuid]
       );
       const inviteExpiresAt = inviteRes.rows[0]?.expires_at ?? null;
+
+      // CHANNEL: WhatsApp when there is no email. ZERO of the 86 active unlinked drivers have an
+      // email — they are B1 contract drivers reached on WhatsApp, which is what the CREATE path
+      // already uses. Requiring email here rejected the entire active fleet.
+      const useWhatsapp = !access.email && Boolean(access.phone);
+      // WhatsApp is NOT active yet (owner, 2026-08-03). Refuse rather than queue: the processor marks
+      // an event whose handler is unavailable as DELIVERED, so enqueuing here would tell the Owner the
+      // driver was invited when nothing was sent. The identity user and company access created above
+      // are kept — they are real and correct — so the invite succeeds the moment the channel is on.
+      if (useWhatsapp && !isWhatsappChannelConfigured()) {
+        return { error: "whatsapp_channel_not_configured" as const };
+      }
+      if (useWhatsapp) {
+        await enqueueOutboxEvent(
+          client,
+          "twilio.whatsapp.send",
+          { aggregate_type: "mdata.drivers", aggregate_id: access.driverId },
+          {
+            to: access.phone,
+            template: "driver_invite",
+            operating_company_id: access.operatingCompanyId,
+            variables: {
+              driver_first_name: access.firstName ?? "Driver",
+              company_name: row.operating_company_name ?? "",
+              invite_url: inviteUrl,
+              expires_hours: 72,
+            },
+          }
+        );
+      }
 
       await appendCrudAudit(
         client,
         authUser.uuid,
         "email.driver_invite.resent",
         {
-          resource_id: row.id,
+          resource_id: access.driverId,
           resource_type: "identity.driver_invites",
-          driver_id: row.id,
-          identity_user_id: row.identity_user_id,
+          driver_id: access.driverId,
+          identity_user_id: access.identityUserId,
           invite_url: inviteUrl,
           invite_expires_at: inviteExpiresAt,
+          channel: useWhatsapp ? "whatsapp" : "email",
+          created_identity_user: access.createdUser,
+          linked_driver: access.linkedDriver,
         },
         "info",
         "BT-3-DRIVER-ONBOARDING"
@@ -1216,30 +1514,53 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
       return {
         row,
+        access,
         inviteUrl,
+        channel: useWhatsapp ? ("whatsapp" as const) : ("email" as const),
       };
     });
 
     if ("error" in result) {
       if (result.error === "mdata_driver_not_found") return reply.code(404).send({ error: result.error });
-      if (result.error === "driver_email_missing") return reply.code(400).send({ error: result.error });
+      if (result.error === "whatsapp_channel_not_configured") {
+        // 503, not 400: the request is valid and the driver is now linked — the CHANNEL is unavailable.
+        return reply.code(503).send({
+          error: result.error,
+          detail:
+            "The driver has no email and WhatsApp is not configured, so no invite could be delivered. " +
+            "The driver's login and company access were created and the invite will send once the channel is enabled.",
+        });
+      }
       return reply.code(400).send({ error: result.error });
     }
 
-    const recipientEmail = result.row.email as string;
-    const operatingCompanyId = result.row.operating_company_id ? String(result.row.operating_company_id) : "";
-    if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_missing" });
+    // WhatsApp was already enqueued inside the transaction (outbox.events, delivered by the
+    // registered TwilioWhatsappHandler). Nothing further to do on this path.
+    if (result.channel === "whatsapp") {
+      return reply.code(200).send({
+        sent_to: result.access.phone,
+        channel: "whatsapp",
+        created_identity_user: result.access.createdUser,
+        linked_driver: result.access.linkedDriver,
+      });
+    }
 
     const emailResult = await sendDriverInvite({
-      to: recipientEmail,
+      to: result.access.email as string,
       driverName: `${result.row.first_name} ${result.row.last_name}`.trim() || "Driver",
       loginUrl: result.inviteUrl,
       actorUserId: authUser.uuid,
-      recipientUserUuid: result.row.identity_user_id,
-      operatingCompanyId,
+      recipientUserUuid: result.access.identityUserId,
+      operatingCompanyId: result.access.operatingCompanyId,
     });
 
-    return reply.code(200).send({ sent_to: recipientEmail, queue_id: emailResult.id });
+    return reply.code(200).send({
+      sent_to: result.access.email,
+      channel: "email",
+      queue_id: emailResult.id,
+      created_identity_user: result.access.createdUser,
+      linked_driver: result.access.linkedDriver,
+    });
   });
 
   app.patch("/api/v1/mdata/drivers/:id", async (req, reply) => {

@@ -16,6 +16,24 @@ const REGISTRY_PATH = path.resolve(
   registryArgIdx >= 0 && cliArgs[registryArgIdx + 1] ? cliArgs[registryArgIdx + 1] : "apps/backend/src/outbox/handlers/registry.ts"
 );
 const INSERT_PATTERN = /INSERT\s+INTO\s+outbox\.events/i;
+
+/**
+ * The canonical enqueue helper. Its own INSERT takes eventType as a parameter, so it is a dynamic
+ * emitter by construction — annotating it with a hand-maintained list would go stale the first time
+ * someone added an event and forgot. Instead the helper file is exempt and every CALL SITE is checked
+ * for a literal event type, which keeps per-emitter verification intact through the indirection.
+ */
+const HELPER_FILE_SUFFIX = "outbox/enqueue-outbox-event.ts";
+const HELPER_FN = "enqueueOutboxEvent";
+
+/**
+ * Local per-file enqueue wrappers, verified the SAME way: exempt the wrapper's own INSERT, check every
+ * call site for a literal event type. accounting/expenses.routes.ts previously used the
+ * `literal-types=[...]` annotation instead, and it went stale — two call sites emitted an event type
+ * absent from the list and with no handler, failing in the outbox on prod. A hand-maintained list
+ * blanket-approves every future call; call-site checking cannot.
+ */
+const LOCAL_WRAPPERS = [{ fileSuffix: "accounting/expenses.routes.ts", fn: "emitOutbox" }];
 const ANNOTATION_PATTERN = /outbox-handler-parity:\s*literal-types=\[([^\]]*)\]/i;
 
 function walkTsFiles(dir) {
@@ -129,7 +147,10 @@ function readHandlerTypes() {
   const out = new Set();
   for (const filePath of handlerFiles) {
     const text = sourceText(filePath);
-    const matches = text.matchAll(/eventType\s*=\s*["'`]([^"'`]+)["'`]/g);
+    // `eventType = "x"` (a handler class) OR `eventType: "x"` (an entry in a routing table). The
+    // second form was added when seven consumers moved into operational-notice.routes.ts; without it
+    // the guard would report those events as unhandled while they are, in fact, registered.
+    const matches = text.matchAll(/eventType\s*[:=]\s*["'`]([^"'`]+)["'`]/g);
     for (const match of matches) {
       if (match[1]) out.add(match[1]);
     }
@@ -141,6 +162,10 @@ function readHandlerTypes() {
   return out;
 }
 
+function rel(p) {
+  return path.relative(ROOT, p).split(path.sep).join("/");
+}
+
 function findStatementForNode(node) {
   let cur = node;
   while (cur && !ts.isStatement(cur)) cur = cur.parent;
@@ -148,12 +173,37 @@ function findStatementForNode(node) {
 }
 
 function collectEmitters(filePath) {
+  const isHelper =
+    rel(filePath).endsWith(HELPER_FILE_SUFFIX) ||
+    LOCAL_WRAPPERS.some((w) => rel(filePath).endsWith(w.fileSuffix));
   const sf = parseSource(filePath);
   const constMap = buildConstStringMap(sf);
   const emitters = [];
   const dynamicFailures = [];
 
   function visit(node) {
+    // enqueueOutboxEvent(client, "<event type>", ...) / a local wrapper — the literal lives in arg 2.
+    const wrapperFns = [HELPER_FN, ...LOCAL_WRAPPERS.filter((w) => rel(filePath).endsWith(w.fileSuffix)).map((w) => w.fn)];
+    if (
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      wrapperFns.includes(node.expression.text) &&
+      node.arguments.length >= 2
+    ) {
+      const evaluated = evaluateExpression(node.arguments[1], constMap);
+      if (!evaluated || evaluated.size === 0) {
+        dynamicFailures.push({
+          filePath,
+          line: lineOf(sf, node),
+          reason: `${HELPER_FN}() called with a non-literal event type`,
+        });
+      } else {
+        for (const eventType of evaluated) {
+          emitters.push({ filePath, line: lineOf(sf, node), eventType, viaAnnotation: false });
+        }
+      }
+    }
+
     if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === "query") {
       const [sqlArg, valuesArg] = node.arguments;
       if (!sqlArg || !valuesArg) return ts.forEachChild(node, visit);
@@ -165,6 +215,8 @@ function collectEmitters(filePath) {
       const evaluated = evaluateExpression(eventExpr, constMap);
       const stmt = findStatementForNode(node);
       if (!evaluated || evaluated.size === 0) {
+        // The helper's own INSERT is exempt — its call sites are verified above instead.
+        if (isHelper) return ts.forEachChild(node, visit);
         const annotation = parseAnnotationFromStatement(sf, stmt);
         if (!annotation || annotation.length === 0) {
           dynamicFailures.push({
@@ -188,10 +240,6 @@ function collectEmitters(filePath) {
 
   visit(sf);
   return { emitters, dynamicFailures };
-}
-
-function rel(p) {
-  return path.relative(ROOT, p).split(path.sep).join("/");
 }
 
 const handlers = readHandlerTypes();

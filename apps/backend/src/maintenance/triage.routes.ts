@@ -6,6 +6,8 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const issueParamsSchema = z.object({ issue_id: z.string().uuid() });
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
+
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 const convertToWoBodySchema = z.object({
   wo_type: z.enum(["pm", "repair", "tire", "accident"]).default("repair"),
@@ -131,16 +133,19 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
 
       await client.query(`UPDATE dispatch.intransit_issues SET promoted_to_wo_id = $2 WHERE id = $1`, [params.data.issue_id, workOrderId]);
 
-      const notifications = ["dispatcher", "safety", "owner"];
-      for (const target of notifications) {
-        await client.query(
-          `
-            INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-            VALUES ($1,$2,$3,$4::jsonb)
-          `,
-          ["dispatch.intransit_issues", params.data.issue_id, "maintenance.triage.converted_to_wo", JSON.stringify({ issue_id: params.data.issue_id, work_order_id: workOrderId, notify_target: target })]
-        );
-      }
+      // ONE event, not one per recipient. The previous code emitted three near-identical events
+      // differing only by notify_target; the consumer resolves the audience by role, so fanning out
+      // here would deliver every notification three times to every recipient.
+      await enqueueOutboxEvent(
+        client,
+        "maintenance.triage.converted_to_wo",
+        { aggregate_type: "dispatch.intransit_issues", aggregate_id: params.data.issue_id },
+        {
+          issue_id: params.data.issue_id,
+          work_order_id: workOrderId,
+          operating_company_id: query.data.operating_company_id,
+        }
+      );
 
       await appendCrudAudit(
         client,
@@ -233,21 +238,17 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
         damageReportId,
       ]);
 
-      const notifications = ["dispatcher", "safety", "owner"];
-      for (const target of notifications) {
-        await client.query(
-          `
-            INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-            VALUES ($1,$2,$3,$4::jsonb)
-          `,
-          [
-            "dispatch.intransit_issues",
-            params.data.issue_id,
-            "maintenance.triage.converted_to_damage",
-            JSON.stringify({ issue_id: params.data.issue_id, damage_report_id: damageReportId, notify_target: target }),
-          ]
-        );
-      }
+      // ONE event, not one per recipient — see the converted_to_wo path above.
+      await enqueueOutboxEvent(
+        client,
+        "maintenance.triage.converted_to_damage",
+        { aggregate_type: "dispatch.intransit_issues", aggregate_id: params.data.issue_id },
+        {
+          issue_id: params.data.issue_id,
+          damage_report_id: damageReportId,
+          operating_company_id: query.data.operating_company_id,
+        }
+      );
 
       await appendCrudAudit(
         client,

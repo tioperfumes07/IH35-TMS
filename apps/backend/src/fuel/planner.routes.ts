@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { recommendFuelStopsForRecommendation } from "../telematics/fuel-stop-planner.service.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -235,22 +236,16 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
       const recommendation = recRes.rows[0] ?? null;
       if (!recommendation) return null;
 
-      await client.query(
-        `
-          INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-          VALUES ($1, $2, $3, $4::jsonb)
-        `,
-        [
-          "fuel.route_recommendations",
-          params.data.id,
-          "fuel.recommendation_sent_to_driver",
-          JSON.stringify({
-            recommendation_id: params.data.id,
-            operating_company_id: companyId,
-            driver_id: recommendation.driver_id,
-            load_id: recommendation.load_id,
-          }),
-        ]
+      await enqueueOutboxEvent(
+        client,
+        "fuel.recommendation_sent_to_driver",
+        { aggregate_type: "fuel.route_recommendations", aggregate_id: params.data.id },
+        {
+          recommendation_id: params.data.id,
+          operating_company_id: companyId,
+          driver_id: recommendation.driver_id,
+          load_id: recommendation.load_id,
+        }
       );
 
       await appendCrudAudit(
