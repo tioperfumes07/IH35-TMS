@@ -119,7 +119,12 @@ async function columnExists(client: DbClient, tableName: string, columnName: str
   return Boolean(res.rows[0]?.ok);
 }
 
-async function deriveClassHint(client: DbClient, unitId: string, driverId?: string | null) {
+async function deriveClassHint(
+  client: DbClient,
+  unitId: string,
+  driverId: string | null | undefined,
+  operatingCompanyId: string
+) {
   // WO-CREATE-42703 (live prod, all entities, 2026-08-03): this selected a PHANTOM column —
   // `mdata.units` has NO `display_id` (verified on prod: information_schema says false; the table
   // carries `unit_number`). Postgres threw 42703 "column \"display_id\" does not exist", which
@@ -134,9 +139,18 @@ async function deriveClassHint(client: DbClient, unitId: string, driverId?: stri
   //
   // unit_number was already the fallback on the next line, so the phantom column contributed nothing
   // but the crash.
+  // ENTITY-SCOPED (verify-mdata-entity-scope): mdata.units has no operating_company_id — a unit's
+  // entity is owner_company_id (TRK owns) OR currently_leased_to_company_id (the operating carrier
+  // leases). Fetching by id ALONE would let a work order in one entity derive its Class from another
+  // entity's unit. The guard flagged this the moment the query changed, and it is right: the previous
+  // version was equally unscoped, it was simply grandfathered in the baseline.
   const unitRes = await client.query<{ unit_number: string | null }>(
-    `SELECT unit_number FROM mdata.units WHERE id = $1 LIMIT 1`,
-    [unitId]
+    `SELECT unit_number
+       FROM mdata.units
+      WHERE id = $1
+        AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+      LIMIT 1`,
+    [unitId, operatingCompanyId]
   );
   const unitPart = String(unitRes.rows[0]?.unit_number ?? "UNIT").trim();
   let driverPart = "UNASSIGNED";
@@ -159,7 +173,7 @@ export async function createWorkOrderWithLines(
     [header.unit_id, header.source_type, header.service_date ?? null, header.operating_company_id]
   );
   const display = displayIdRes.rows[0];
-  const classHint = await deriveClassHint(client, header.unit_id, header.driver_id);
+  const classHint = await deriveClassHint(client, header.unit_id, header.driver_id, header.operating_company_id);
 
   const sectionATotal = sectionALines.reduce((sum, line) => sum + asNumber(line.amount) * Math.max(1, asNumber(line.quantity)), 0);
   const sectionBTotal = sectionBLines.reduce((sum, line) => {
