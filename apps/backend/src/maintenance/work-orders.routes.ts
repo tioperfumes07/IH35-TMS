@@ -558,6 +558,20 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     const user = authed(req, reply);
     if (!user) return;
     const v5Parsed = createWorkOrderV5Schema.safeParse(req.body ?? {});
+
+    // SHAPE-DISCRIMINATE BEFORE FALLING BACK. This endpoint accepts two body shapes: the two-section
+    // V5 payload the Create WO modal sends, and a legacy flat one. Previously a V5 payload that failed
+    // V5 validation — a missing Section-A line description, say — silently fell through to the LEGACY
+    // schema, which then failed on fields the client never sent. The caller was told "wo_type is
+    // required" for a body that had wo_type nested under `header`, so the real error was unreachable
+    // and the WO could not be created without guessing. A body carrying V5's own keys is a V5 body,
+    // and its errors are the ones worth reporting.
+    const raw = (req.body ?? {}) as Record<string, unknown>;
+    const looksLikeV5 = ["header", "sectionA", "sectionB"].some((k) => k in raw);
+    if (!v5Parsed.success && looksLikeV5) {
+      return validationError(reply, v5Parsed.error);
+    }
+
     if (v5Parsed.success) {
       const body = v5Parsed.data;
       const role = user.role;

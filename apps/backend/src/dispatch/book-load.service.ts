@@ -9,6 +9,8 @@ import { bookLoadRateTotalCents } from "./book-load-accessorial.js";
 import { assertDriverQualifiedForLoad } from "./driver-qualification.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { enqueueOverrideNotice } from "../outbox/enqueue-override-notice.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import {
   claimReservation,
   consumeLoadNumberReservation,
@@ -655,24 +657,13 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           "warning",
           "BT-3-DISPATCH-AUTH-GATES"
         );
-        await client.query(
-          `
-            INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-            VALUES ($1,$2,$3,$4::jsonb)
-          `,
-          [
-            "dispatch.loads",
-            input.assigned_unit_id,
-            "dispatch.wf064.override_notice",
-            JSON.stringify({
-              override_type: "unit_block",
-              notify_channels: ["email", "sms"],
-              operating_company_id: input.operating_company_id,
-              override_reason: input.override_reason,
-              override_by_user_id: input.requestingUserUuid,
-            }),
-          ]
-        );
+        await enqueueOverrideNotice(client, input.assigned_unit_id, {
+          override_type: "unit_block",
+          notify_channels: ["email", "sms"],
+          operating_company_id: input.operating_company_id,
+          override_reason: input.override_reason,
+          override_by_user_id: input.requestingUserUuid,
+        });
       }
 
       // 0441-mod2: hard-block OOS units (same severity class as WF-050 / is_dispatch_blocked).
@@ -900,24 +891,13 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           "warning",
           "BT-3-DISPATCH-AUTH-GATES"
         );
-        await client.query(
-          `
-            INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-            VALUES ($1,$2,$3,$4::jsonb)
-          `,
-          [
-            "dispatch.loads",
-            input.assigned_primary_driver_id,
-            "dispatch.wf064.override_notice",
-            JSON.stringify({
-              override_type: "hos_violation",
-              notify_channels: ["email"],
-              operating_company_id: input.operating_company_id,
-              override_reason: input.override_reason,
-              override_by_user_id: input.requestingUserUuid,
-            }),
-          ]
-        );
+        await enqueueOverrideNotice(client, input.assigned_primary_driver_id, {
+          override_type: "hos_violation",
+          notify_channels: ["email"],
+          operating_company_id: input.operating_company_id,
+          override_reason: input.override_reason,
+          override_by_user_id: input.requestingUserUuid,
+        });
       }
     }
 
@@ -1075,27 +1055,16 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
               "warning",
               "BT-3-DISPATCH-AUTH-GATES"
             );
-            await client.query(
-              `
-                INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-                VALUES ($1,$2,$3,$4::jsonb)
-              `,
-              [
-                "dispatch.loads",
-                block.driverId,
-                "dispatch.wf064.override_notice",
-                JSON.stringify({
-                  override_type: "driver_qualification",
-                  notify_channels: ["email", "sms"],
-                  operating_company_id: input.operating_company_id,
-                  overridden_reasons: block.reasons,
-                  override_reason: input.override_reason,
-                  override_by_user_id: input.requestingUserUuid,
-                  override_class: "DOT_QUALIFICATION",
-                  load_context: loadContext,
-                }),
-              ]
-            );
+            await enqueueOverrideNotice(client, block.driverId, {
+              override_type: "driver_qualification",
+              notify_channels: ["email", "sms"],
+              operating_company_id: input.operating_company_id,
+              overridden_reasons: block.reasons,
+              override_reason: input.override_reason,
+              override_by_user_id: input.requestingUserUuid,
+              override_class: "DOT_QUALIFICATION",
+              load_context: loadContext,
+            });
             continue; // Owner attested — this driver passes; every other driver is still gated.
           }
 
@@ -1563,55 +1532,34 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         "BT-3-DISPATCH-AUTH-GATES"
       );
 
-      const outboxEvents = [
-        "dispatch.load.created",
-        "dispatch.driver_sms",
-        "dispatch.qbo_invoice",
-        "dispatch.qbo_bill",
-        "dispatch.fuel_planner",
-        "dispatch.factoring_packet",
-        "dispatch.load_notification",
-      ];
-      for (const eventType of outboxEvents) {
-        await client.query(
-          `
-            INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-            VALUES ($1,$2,$3,$4::jsonb)
-          `,
-          [
-            "dispatch.loads",
-            load.id,
-            eventType,
-            JSON.stringify(
-              eventType === "dispatch.load.created"
-                ? {
-                    load,
-                    stops: input.stops,
-                    operating_company_id: load.operating_company_id,
-                    actor_user_id: input.requestingUserUuid,
-                    save_mode: input.save_mode,
-                    load_number: loadNumber,
-                  }
-                : { load_id: load.id, operating_company_id: load.operating_company_id }
-            ),
-          ]
-        );
-      }
-      await client.query(
-        `
-          INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-          VALUES ($1,$2,$3,$4::jsonb)
-        `,
-        [
-          "dispatch.load",
-          load.id,
-          "dispatch.load.dispatched",
-          JSON.stringify({
-            load_id: load.id,
-            operating_company_id: load.operating_company_id,
-            actor_user_id: input.requestingUserUuid,
-          }),
-        ]
+      // SPECULATIVE FAN-OUT REMOVED 2026-08-03 — it was never wired, and every business outcome it
+      // named is now delivered by a real, consumed path. The loop emitted seven placeholder events on
+      // every load creation into outbox.outbox_queue, a table nothing reads (prod: 49 rows, attempts=0,
+      // oldest 2026-06-16). None had a handler. Building consumers for them would have DOUBLE-notified,
+      // because each duplicates a path that now works:
+      //   dispatch.driver_sms         -> twilio.whatsapp.send            (load-distribution.service.ts)
+      //   dispatch.load_notification  -> dispatch.load.dispatched chain  (distributeLoadInstructions)
+      //   dispatch.factoring_packet   -> dispatch.factoring_packet_assembled (packet-assemble.service.ts)
+      //   dispatch.fuel_planner       -> fuel.recommendation_sent_to_driver  (fuel/planner.routes.ts)
+      //   dispatch.load.created       -> the audit event appended immediately above carries the same
+      //                                  facts (load, stops, actor, save_mode) to a surface that IS read
+      //   dispatch.qbo_invoice/_bill  -> QuickBooks write-back, which is OFF by owner ruling
+      // Nothing functional is lost: the emissions were inert by construction. Removing them is the fix;
+      // leaving writes aimed at a dead table would be the patch.
+      // This is the head of the driver-notification chain: the handler calls
+      // distributeLoadInstructions(), which enqueues the WhatsApp message to the driver. Both links
+      // pointed at the orphaned outbox table, so no driver has ever received a dispatch message.
+      await enqueueOutboxEvent(
+        client,
+        "dispatch.load.dispatched",
+        // `load` is a loosely-typed row here, so coerce rather than assert — the aggregate id is
+        // traceability metadata and must not be the reason a dispatch throws.
+        { aggregate_type: "dispatch.load", aggregate_id: load.id == null ? null : String(load.id) },
+        {
+          load_id: load.id,
+          operating_company_id: load.operating_company_id,
+          actor_user_id: input.requestingUserUuid,
+        }
       );
     }
 

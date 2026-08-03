@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 // A10 — GET list read-model for the frontend FuelTransactionsTable
 // (apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx), which takes a `rows: FuelTransactionRow[]`
@@ -18,9 +19,27 @@ const listFuelTransactionsQuerySchema = z.object({
   driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
   load_id: z.string().uuid().optional(),
+  /** G18 worklist: only transactions with NO load attributed. */
+  unlinked: z.coerce.boolean().optional(),
   from: z.string().date().optional(),
   to: z.string().date().optional(),
 });
+
+const idParamSchema = z.object({ id: z.string().uuid() });
+/**
+ * `load_id: null` DETACHES, and then an exemption_reason is REQUIRED — an unattributed fuel expense
+ * with no stated reason is exactly the silent gap G18 exists to prevent.
+ */
+const assignLoadBodySchema = z
+  .object({
+    operating_company_id: z.string().uuid(),
+    load_id: z.string().uuid().nullable(),
+    exemption_reason: z.string().trim().min(3).max(200).optional(),
+  })
+  .refine((v) => v.load_id !== null || Boolean(v.exemption_reason), {
+    message: "exemption_reason is required when detaching a fuel transaction from its load",
+    path: ["exemption_reason"],
+  });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -68,6 +87,11 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
       if (q.load_id) {
         values.push(q.load_id);
         filters.push(`ft.load_id = $${values.length}`);
+      }
+      // The G18 worklist. Without this the 1,547 unattributed transactions ($625,546.39 on prod
+      // 2026-08-03) are individually visible but cannot be listed AS the backlog they are.
+      if (q.unlinked) {
+        filters.push("ft.load_id IS NULL");
       }
       if (q.from) {
         values.push(q.from);
@@ -169,4 +193,95 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
       has_more: q.offset + q.limit < result.total,
     };
   });
+  /**
+   * G18 — attribute a fuel transaction to a load, or detach it with a recorded reason.
+   *
+   * WHY THIS EXISTS: G18 requires every diesel/roadside expense to reach a load. The ONLY linkage
+   * path was automatic (resolveLoadId: the load whose stop window brackets the purchase, matched on
+   * unit or driver). On prod 2026-08-03 that matched 0 of 1,547 transactions — $625,546.39 entirely
+   * unattributed — and every row carries the importer's own blanket exemption
+   * `relay_ingest_no_load_link`. With no manual path, a human could not correct a single one: the
+   * control was unsatisfiable by construction, not merely unsatisfied.
+   *
+   * The auto-matcher is not at fault and is left alone — TRANSP holds 4 loads against 5 months of
+   * fuel, so there is frequently nothing correct to match. That is an operational data gap. What was
+   * missing is the human fallback for when the machine cannot know.
+   *
+   * AN ASSIGNED LOAD CLEARS THE EXEMPTION. Leaving `relay_ingest_no_load_link` on an attributed row
+   * would keep asserting the transaction is exempt from a rule it now satisfies — a stale exemption
+   * is worse than none, because it silently suppresses the row from every future compliance sweep.
+   */
+  app.patch(
+    "/api/v1/fuel/transactions/:id/load",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    const params = idParamSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const body = assignLoadBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    const b = body.data;
+
+    const result = await withCompanyScope(authUser.uuid, b.operating_company_id, async (client) => {
+      const txRes = (await client.query(
+        `SELECT id::text AS id, load_id::text AS load_id
+           FROM fuel.fuel_transactions
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND archived_at IS NULL
+          LIMIT 1`,
+        [params.data.id, b.operating_company_id]
+      )) as { rows: Array<{ id: string; load_id: string | null }> };
+      const tx = txRes.rows[0] ?? null;
+      if (!tx) return { error: "fuel_transaction_not_found" as const };
+
+      if (b.load_id) {
+        // The load must belong to the SAME entity. A fuel cost attributed across companies would
+        // move real money between books.
+        const loadRes = (await client.query(
+          `SELECT id::text AS id FROM mdata.loads
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL
+            LIMIT 1`,
+          [b.load_id, b.operating_company_id]
+        )) as { rows: Array<{ id: string }> };
+        if (!loadRes.rows[0]) return { error: "load_not_found_for_company" as const };
+      }
+
+      const updated = (await client.query(
+        `UPDATE fuel.fuel_transactions
+            SET load_id = $3::uuid,
+                load_exemption_reason = CASE WHEN $3::uuid IS NOT NULL THEN NULL ELSE $4 END,
+                updated_at = now(),
+                updated_by_user_id = $5::uuid
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND archived_at IS NULL
+          RETURNING id::text AS id, load_id::text AS load_id, load_exemption_reason`,
+        [params.data.id, b.operating_company_id, b.load_id ?? null, b.exemption_reason ?? null, authUser.uuid]
+      )) as { rows: Array<{ id: string; load_id: string | null; load_exemption_reason: string | null }> };
+
+      await appendCrudAudit(
+        client,
+        authUser.uuid,
+        "fuel.transaction.load_attributed",
+        {
+          resource_type: "fuel.fuel_transactions",
+          resource_id: params.data.id,
+          operating_company_id: b.operating_company_id,
+          previous_load_id: tx.load_id,
+          load_id: b.load_id ?? null,
+          exemption_reason: b.load_id ? null : b.exemption_reason ?? null,
+        },
+        "info",
+        "G18-FUEL-LOAD-ATTRIBUTION"
+      );
+
+      return { row: updated.rows[0] ?? null };
+    });
+
+    if ("error" in result) {
+      if (result.error === "fuel_transaction_not_found") return reply.code(404).send({ error: result.error });
+      return reply.code(400).send({ error: result.error });
+    }
+    return reply.code(200).send(result.row);
+    }
+  );
+
 }

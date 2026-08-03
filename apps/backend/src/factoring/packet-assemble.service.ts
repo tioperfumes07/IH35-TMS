@@ -17,6 +17,7 @@
  *   - Modifies factoring_status (that stays on invoice, controlled by accounting routes)
  */
 import { withCurrentUser } from "../auth/db.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 
 const PACKET_PREFIX = "IH35_FACTORING_PACKAGE_V1::";
 
@@ -213,29 +214,21 @@ export async function assembleFactoringPacket(
     );
 
     // ── 6. emit outbox event ───────────────────────────────────────────────
-    await client
-      .query(
-        `
-        INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-        VALUES ($1, $2, $3, $4::jsonb)
-        `,
-        [
-          "mdata.loads",
-          input.loadId,
-          "dispatch.factoring_packet_assembled",
-          JSON.stringify({
-            load_id: input.loadId,
-            load_number: load.load_number,
-            operating_company_id: input.operatingCompanyId,
-            invoice_id: invoiceId,
-            assembled_at: nextMeta.generated_at,
-            assembled_by_user_id: input.userId,
-          }),
-        ],
-      )
-      .catch(() => {
-        // outbox emission is best-effort; packet assembly succeeds regardless
-      });
+    await enqueueOutboxEvent(
+      client,
+      "dispatch.factoring_packet_assembled",
+      { aggregate_type: "mdata.loads", aggregate_id: input.loadId },
+      {
+        load_id: input.loadId,
+        load_number: load.load_number,
+        operating_company_id: input.operatingCompanyId,
+        invoice_id: invoiceId,
+        assembled_at: nextMeta.generated_at,
+        assembled_by_user_id: input.userId,
+      },
+    ).catch(() => {
+      // outbox emission stays best-effort: packet assembly must succeed regardless.
+    });
 
     return { ok: true, already_assembled: false, invoice_id: invoiceId };
   });

@@ -3,10 +3,17 @@
  *
  * THE DEFECT (found 2026-08-02): `dispatch.wf064.override_notice` is PRODUCED in three places in
  * book-load.service.ts — the unit dispatch-block override, the OOS override, and the driver-
- * qualification (CDL / DOT-medical) override — and was CONSUMED NOWHERE. It is not merely that the
- * `notify_channels: ["email","sms"]` in the payload sent nothing: processor.ts calls markFailedNow()
- * for an unregistered event_type, so every override notice has been PERMANENTLY FAILING in the outbox
- * since the first override path shipped. Nobody was told, and the failure itself was invisible.
+ * qualification (CDL / DOT-medical) override — and was CONSUMED NOWHERE.
+ *
+ * CORRECTION 2026-08-03, measured on prod (positive control mdata.vendors = 2,828). This header
+ * previously said the notices had been "PERMANENTLY FAILING" because processor.ts calls markFailedNow()
+ * for an unregistered event_type. That was WRONG, and the real cause was worse. This handler IS
+ * registered (handlers/registry.ts) and the processor is healthy — outbox.events holds 31,622 rows with
+ * 31,618 delivered and 0 undelivered. The producers were writing to a DIFFERENT table,
+ * outbox.outbox_queue, which nothing in the backend reads: 49 rows, every one still PENDING with
+ * attempts = 0, the oldest from 2026-06-16. Nothing failed, because nothing was ever attempted.
+ * Fixed by routing the three producers through enqueueOverrideNotice() onto outbox.events, guarded by
+ * scripts/verify-outbox-canonical-table.mjs.
  *
  * That is the worst shape a control can take. An Owner pushing a dispatch past a federal
  * driver-qualification stop is exactly the event another Owner, an insurer or a DOT reviewer would

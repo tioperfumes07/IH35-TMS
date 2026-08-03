@@ -41,8 +41,15 @@ async function columnExists(client: any, schema: string, table: string, column: 
   return Boolean(res.rows[0]?.ok);
 }
 
+/**
+ * NO literal-types ANNOTATION HERE, deliberately. This function used to carry
+ * `outbox-handler-parity: literal-types=[...]` listing three event types by hand — and it went stale
+ * exactly as that mechanism always does: two call sites emitted bare "expense.created", which was not
+ * in the list and has no handler, so every explicit-load and every driverless expense FAILED in the
+ * outbox (proven on prod 2026-08-03). The annotation told the guard the file was fine. Per-CALL-SITE
+ * verification replaces it, so a new event type cannot inherit a blanket approval.
+ */
 async function emitOutbox(client: any, eventType: string, payload: Record<string, unknown>) {
-  /* outbox-handler-parity: literal-types=["expense.created.attributed","expense.created.unattributed","expense.reattributed"] */
   await client.query(`INSERT INTO outbox.events (event_type, payload, next_retry_at) VALUES ($1, $2::jsonb, now())`, [
     eventType,
     JSON.stringify(payload),
@@ -676,8 +683,12 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
 
           await appendCrudAudit(client, user.uuid, "expense.created", { expense_id: expenseId, attributed: true }, "info", "P6-T11176");
         } else if (body.load_id) {
-          // Explicit load stamped on INSERT — no attribution alert.
-          await emitOutbox(client, "expense.created", {
+          // Explicit load stamped on INSERT — no attribution ALERT, but the expense IS attributed to
+          // a load, so it is a `.attributed` event. It previously emitted bare "expense.created",
+          // which has no registered handler and therefore FAILED in the outbox on every explicit-load
+          // expense (2 such failures on prod 2026-08-03). `explicit_load` in the payload preserves the
+          // distinction between auto-attributed and hand-stamped.
+          await emitOutbox(client, "expense.created.attributed", {
             expense_id: expenseId,
             operating_company_id: body.operating_company_id,
             load_id: body.load_id,
@@ -701,8 +712,11 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           });
           await appendCrudAudit(client, user.uuid, "expense.created", { expense_id: expenseId, attributed: false }, "warning", "P6-T11176");
         } else {
-          // Driverless general expense — categorized cash-out, no load attribution expected (not an alert).
-          await emitOutbox(client, "expense.created", {
+          // Driverless general expense — categorized cash-out, no load attribution expected (not an
+          // alert). Still `.unattributed`: no load is linked. It previously emitted bare
+          // "expense.created", which has no registered handler and failed in the outbox. `driverless`
+          // in the payload keeps this distinguishable from a driver expense missing its load.
+          await emitOutbox(client, "expense.created.unattributed", {
             expense_id: expenseId,
             operating_company_id: body.operating_company_id,
             driverless: true,

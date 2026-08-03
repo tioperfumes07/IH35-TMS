@@ -160,6 +160,17 @@ export class OutboxProcessor {
     }
 
     if (!handler.canHandle()) {
+      // A handler that declares requiresDelivery must NOT be marked delivered when it cannot send.
+      // Reporting "delivered" for an event a person is waiting on is the silent-success class this
+      // codebase has been removing; failing loudly keeps it visible and retryable once the channel
+      // (credentials, provider, config) is restored.
+      if (handler.requiresDelivery) {
+        await this.markFailedNow(
+          event,
+          `handler for event_type=${event.event_type} is unavailable in this environment and this event requires delivery`
+        );
+        return;
+      }
       await this.markDelivered(event, `skipped ${event.event_type} (handler unavailable in this environment)`, true);
       return;
     }
