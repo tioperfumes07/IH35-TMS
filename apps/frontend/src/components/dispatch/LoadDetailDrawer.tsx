@@ -27,6 +27,7 @@ import { FactoringTab } from "./tabs/FactoringTab";
 import { FinesDeductionsCard } from "./tabs/FinesDeductionsCard";
 import { SettlementProfitabilityCard } from "./tabs/SettlementProfitabilityCard";
 import { InsuranceClaimsReverseSection } from "../insurance/InsuranceClaimsReverseSection";
+import { LoadSafetyReverseSection } from "../safety/LoadSafetyReverseSection";
 import { BookLoadModalV4 } from "../../pages/dispatch/components/BookLoadModalV4";
 import { CargoSensorTimeline } from "../../pages/dispatch/cargo-sensors/CargoSensorTimeline";
 import { EntityLink } from "../shared/EntityLink";
@@ -481,6 +482,13 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                     filter={{ load_id: load.id }}
                     contextLabel="this load"
                     data-testid="load-detail-insurance-claims"
+                  />
+                ) : null}
+                {load.operating_company_id ? (
+                  <LoadSafetyReverseSection
+                    operatingCompanyId={load.operating_company_id}
+                    loadId={load.id}
+                    data-testid="load-detail-safety-records"
                   />
                 ) : null}
               </div>

@@ -210,10 +210,11 @@ export function getSafetyDvirDetail(id: string, companyId: string) {
   );
 }
 
-export function getSafetyAccidents(companyId: string, params: { unit_id?: string } = {}) {
+export function getSafetyAccidents(companyId: string, params: { unit_id?: string; load_id?: string } = {}) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
-  // SAF-F17: server-side unit scoping (the route caps at LIMIT 500).
+  // SAF-F17 / SAF-C01: server-side unit/load scoping (the route caps at LIMIT 500).
   if (params.unit_id) qs.set("unit_id", params.unit_id);
+  if (params.load_id) qs.set("load_id", params.load_id);
   return apiRequest<{ accidents: Array<Record<string, unknown>> }>(`/api/v1/safety/accidents?${qs.toString()}`);
 }
 
@@ -1009,6 +1010,8 @@ export type SafetyIncidentListFilters = {
   unit_id?: string;
   /** SAF-F17 — trailer profile reverse view (safety.incidents.trailer_id FKs mdata.equipment). */
   trailer_id?: string;
+  /** SAF-C01 — load-detail reverse view (safety.incidents.load_id). */
+  load_id?: string;
   date_from?: string;
   date_to?: string;
 };
@@ -1023,6 +1026,7 @@ export function listSafetyIncidents(
   if (filters.driver_id) qs.set("driver_id", filters.driver_id);
   if (filters.unit_id) qs.set("unit_id", filters.unit_id);
   if (filters.trailer_id) qs.set("trailer_id", filters.trailer_id);
+  if (filters.load_id) qs.set("load_id", filters.load_id);
   if (filters.date_from) qs.set("date_from", filters.date_from);
   if (filters.date_to) qs.set("date_to", filters.date_to);
   const extra = qs.toString();

@@ -115,6 +115,9 @@ vi.mock("../documents/DocumentsTab", () => ({
 vi.mock("../insurance/InsuranceClaimsReverseSection", () => ({
   InsuranceClaimsReverseSection: () => null,
 }));
+vi.mock("../safety/LoadSafetyReverseSection", () => ({
+  LoadSafetyReverseSection: () => null,
+}));
 
 function mockLoadDetail(overrides: Partial<LoadDetail> = {}): LoadDetail {
   return {
