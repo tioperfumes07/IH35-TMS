@@ -1606,7 +1606,8 @@
     "1445": [
       "1445-verify-acct-surfaces-structural.mjs",
       "1445-verify-expense-category-picker-canonical.mjs"
-    ]
+    ],
+    "1447": "1447-verify-invoice-send-date-cast.mjs"
   },
   "_band": {
     "cursor": "even",
