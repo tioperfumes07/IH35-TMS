@@ -1607,7 +1607,8 @@
       "1445-verify-acct-surfaces-structural.mjs",
       "1445-verify-expense-category-picker-canonical.mjs"
     ],
-    "1447": "1447-verify-invoice-send-date-cast.mjs"
+    "1447": "1447-verify-invoice-send-date-cast.mjs",
+    "1449": "1449-verify-invoice-qbo-origin-guard.mjs"
   },
   "_band": {
     "cursor": "even",
