@@ -23,14 +23,17 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "money-pr-local-gate";
 
-/** Ordered fail-fast suite — same classes that red'd Cursor #4009–#4011 vs Claude. */
+/** Ordered fail-fast suite — same classes that red'd Cursor #4009–#4011 / #4198 vs Claude. */
 const STEPS = [
   ["verify-definition-of-done-evidence", "scripts/verify-definition-of-done-evidence.mjs"],
   ["verify-no-money-theater", "scripts/verify-no-money-theater.mjs"],
   // Rule 26 — block parallel scoreboard-hotfile PRs before push (SKIP-PASS without gh token).
   ["verify-no-parallel-scoreboard-prs", "scripts/verify-no-parallel-scoreboard-prs.mjs"],
-  // §7 palette — same failure class that red'd ACCT-R-16/17 build-typecheck after theater passed.
+  // §7 palette — financial + nonfinancial (Cursor #4198 burned build-typecheck on amber banner).
   ["verify-section7-palette-financial", "scripts/verify-section7-palette-financial.mjs"],
+  ["verify-section7-palette-nonfinancial", "scripts/verify-section7-palette-nonfinancial.mjs"],
+  // CodeQL js/missing-rate-limiting on new auth routes (Cursor #4198).
+  ["verify-new-auth-routes-rate-limited", "scripts/verify-new-auth-routes-rate-limited.mjs"],
   // Cursor HH 12–23 / Claude HH 00–11 — #4009 burned a full typecheck on HH=00.
   ["verify-migration-lane-band", "scripts/verify-migration-lane-band.mjs"],
   // Cursor EVEN / Claude ODD — #4010 claimed 1900 then 1985 (odd) before 1986.
@@ -86,6 +89,6 @@ for (const [name, rel] of STEPS) {
 }
 
 console.log(
-  `${LABEL}: PASS — DoD + money-theater + scoreboard serialize + §7 palette + migration band + verify-step band + no-CLAIMED-edits + EntityLink + Rule 30 (no guard deletion + Claude-green LIVE PROOF) OK (fail-fast before CI)`,
+  `${LABEL}: PASS — DoD + money-theater + scoreboard serialize + §7 palette (fin+nonfin) + auth rateLimit + migration band + verify-step band + no-CLAIMED-edits + EntityLink + Rule 30 (no guard deletion + Claude-green LIVE PROOF) OK (fail-fast before CI)`,
 );
 process.exit(0);

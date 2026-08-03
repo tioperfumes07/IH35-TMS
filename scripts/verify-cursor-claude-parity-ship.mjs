@@ -30,6 +30,9 @@ const ENTRY_POINTS = [
 const REQUIRED_IN_GATE = [
   "verify-definition-of-done-evidence",
   "verify-no-money-theater",
+  "verify-section7-palette-financial",
+  "verify-section7-palette-nonfinancial",
+  "verify-new-auth-routes-rate-limited",
   "verify-migration-lane-band",
   "verify-verify-step-lane-band",
   "verify-no-claimed-numbers-edits",
@@ -60,6 +63,15 @@ export function assertCursorClaudeParityShip(sources) {
     }
     if (!/EVEN/i.test(rule)) {
       problems.push(`${RULE29}: must name Cursor EVEN verify-step band.`);
+    }
+    if (!/nonfinancial|palette-nonfinancial|§7 nonfinancial/i.test(rule)) {
+      problems.push(`${RULE29}: must name §7 nonfinancial palette (Cursor #4198 thrash class).`);
+    }
+    if (!/rateLimit|rate-limit|missing-rate-limiting/i.test(rule)) {
+      problems.push(`${RULE29}: must name auth route rateLimit / CodeQL missing-rate-limiting.`);
+    }
+    if (!/cursor-ship-preflight/i.test(rule)) {
+      problems.push(`${RULE29}: must name scripts/ops/cursor-ship-preflight.mjs before gh pr create.`);
     }
   }
 
