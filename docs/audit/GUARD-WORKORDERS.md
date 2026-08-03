@@ -54,8 +54,8 @@ already has an owner here.
 | Inventory category picker empty | 25 | D | Cursor | SelectCombobox over PART_INVENTORY_CATEGORIES + backfill location→category | #4029 `944e7aa46` · Neon apply 202611161200 @ 20:07Z · cat_null 0/144 | **FIXED** — await GUARD VERIFIED |
 | ParityTable resize hit-target | 57 / 224 | A/E | Cursor | Discoverable resize affordance (grip visible at rest) | #4027 `6500c1d16` · step 2008 | **FIXED** — await GUARD VERIFIED |
 | Settlements + Users → ParityTable resize | 206–207 | A | Cursor | Primary lists use ParityTable enableColumnResize + URL sort | #4030 `a381c8ed5` · step 2010 | **FIXED** — await GUARD VERIFIED |
-| 7 pickers "D UNVERIFIED" | 19–23,26,55 | D | Cascade re-test | EXERCISE the inline +Create live (fill→save→persist, no native GET); after FIX 2. Code-wired ≠ verified (see §2-D note) | — | UNVERIFIED |
-| 28 E design-bar UNVERIFIED | 27–54 | E | Cascade | Interactive per module: resize works+discoverable, proportions, QBO filters, box-in-box, drawer-on-drawer; per entity | — | UNVERIFIED |
+| 7 pickers "D CODE-VERIFIED" | 19–23,26,55 | D | GUARD live exercise | EXERCISE the inline +Create live (fill→save→persist, no native GET); after FIX 2. Code-wired ≠ verified (see §2-D note). **Test list:** `docs/audit/GUARD-DE-TEST-LIST.md` §D — exact surface, picker, canonical table, PASS criteria per row. | — | UNVERIFIED |
+| 28 E design-bar CODE-VERIFIED | 27–54 | E | GUARD live exercise | Interactive per module: resize works+discoverable, proportions, QBO filters, box-in-box, drawer-on-drawer; per entity. **Test list:** `docs/audit/GUARD-DE-TEST-LIST.md` §E — resize/filter/proportion test per module. | — | UNVERIFIED |
 | 11 modules UNVERIFIABLE-until-data | (C rows) | C | seed → GUARD | Become real PASS/FAIL once the seed battery posts transactions; GUARD verifies each JE | — | UNVERIFIED |
 
 ---
