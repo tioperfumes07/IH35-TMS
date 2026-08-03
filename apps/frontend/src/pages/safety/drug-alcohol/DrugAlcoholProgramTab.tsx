@@ -19,6 +19,7 @@ import { resolveApiUrl } from "../../../api/client";
 type Enrollment = {
   uuid: string;
   driver_uuid: string;
+  driver_name: string | null;
   consortium_name: string;
   enrolled_at: string;
   is_active: boolean;
@@ -27,6 +28,7 @@ type Enrollment = {
 type TestRecord = {
   uuid: string;
   driver_uuid: string;
+  driver_name: string | null;
   test_type: string;
   test_kind: string;
   result: string | null;
@@ -86,7 +88,7 @@ export function DrugAlcoholProgramTab() {
           <EntityLink
             kind="driver"
             id={enrollment.driver_uuid}
-            label={enrollment.driver_uuid.slice(0, 8) + "…"}
+            label={enrollment.driver_name?.trim() || "Driver"}
           />
         ),
       },
@@ -103,7 +105,7 @@ export function DrugAlcoholProgramTab() {
         label: "Driver",
         sortable: true,
         render: (test) => (
-          <EntityLink kind="driver" id={test.driver_uuid} label={test.driver_uuid.slice(0, 8) + "…"} />
+          <EntityLink kind="driver" id={test.driver_uuid} label={test.driver_name?.trim() || "Driver"} />
         ),
       },
       {

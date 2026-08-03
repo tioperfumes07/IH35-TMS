@@ -463,7 +463,11 @@ export function DrugAlcoholTab() {
           <ul className="mt-2 space-y-1">
             {(poolQ.data ?? []).slice(0, 8).map((entry) => (
               <li key={String(entry.id)} className="flex justify-between border-b border-gray-100 py-1">
-                <EntityLink kind="driver" id={entry.driver_id ? String(entry.driver_id) : undefined} label={entry.driver_id ? String(entry.driver_id).slice(0, 8) + "…" : undefined} />
+                <EntityLink
+                  kind="driver"
+                  id={entry.driver_id ? String(entry.driver_id) : undefined}
+                  label={typeof entry.driver_name === "string" && entry.driver_name.trim() ? entry.driver_name : "Driver"}
+                />
                 <span>{String(entry.status ?? "selected")}</span>
               </li>
             ))}
@@ -475,7 +479,11 @@ export function DrugAlcoholTab() {
           <ul className="mt-2 space-y-1">
             {(clearinghouseQ.data ?? []).slice(0, 8).map((entry) => (
               <li key={String(entry.id)} className="flex justify-between border-b border-gray-100 py-1">
-                <EntityLink kind="driver" id={entry.driver_id ? String(entry.driver_id) : undefined} label={entry.driver_id ? String(entry.driver_id).slice(0, 8) + "…" : undefined} />
+                <EntityLink
+                  kind="driver"
+                  id={entry.driver_id ? String(entry.driver_id) : undefined}
+                  label={typeof entry.driver_name === "string" && entry.driver_name.trim() ? entry.driver_name : "Driver"}
+                />
                 <span>{String(entry.query_status ?? "pending")}</span>
               </li>
             ))}
