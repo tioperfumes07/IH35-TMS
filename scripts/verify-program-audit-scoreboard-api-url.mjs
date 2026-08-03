@@ -100,6 +100,36 @@ export function assertScoreboardContract(sources) {
     problems.push(`${emitRel}: ledger path AUDIT-COVERAGE-LIVE.md must drive deterministic meta`);
   }
 
+  // Last synced + recent activity (SCOREBOARD-LASTSYNCED-AND-RECENT-PRS).
+  if (!/Last synced/.test(page) || !/data-testid="program-scoreboard-last-synced"/.test(page)) {
+    problems.push(`${PAGE}: header must surface Last synced with data-testid program-scoreboard-last-synced`);
+  }
+  if (!/formatLedgerCt|lastSyncedCt/.test(page)) {
+    problems.push(`${PAGE}: Last synced must derive from ledger generatedAt / lastSyncedCt (not wall clock)`);
+  }
+  if (/Last synced[\s\S]{0,80}new Date\(\)/.test(page) || /Date\.now\(\)/.test(page)) {
+    problems.push(`${PAGE}: Last synced must not use wall-clock Date.now()/new Date() as the source`);
+  }
+  if (!/data-testid="program-scoreboard-recent-activity"/.test(page)) {
+    problems.push(`${PAGE}: must render Recent activity panel (last 10 PRs)`);
+  }
+  if (/"recentActivity"\s*:/.test(data) || /recentActivity:\s*\[/.test(data)) {
+    problems.push(
+      `${DATA}: recentActivity must NOT live in the typecheck-gated seed — serve it from the read-only API / recon`
+    );
+  }
+  if (route) {
+    if (!/block-reconciliation-data\.json/.test(route) && !/loadRecentActivity/.test(route)) {
+      problems.push(`${routeRel}: must load recent PRs from tracker recon (block-reconciliation-data.json)`);
+    }
+    if (!/formatCt/.test(route) || !/lastSyncedCt/.test(route)) {
+      problems.push(`${routeRel}: must compute lastSyncedCt via formatCt(meta.generatedAt)`);
+    }
+    if (!/America\/Chicago/.test(route) && !/formatCt/.test(route)) {
+      problems.push(`${routeRel}: timestamps must be America/Chicago via formatCt`);
+    }
+  }
+
   return problems;
 }
 
