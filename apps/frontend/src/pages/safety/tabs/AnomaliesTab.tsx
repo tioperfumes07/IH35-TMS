@@ -5,9 +5,25 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AnomalyDetailDrawer } from "./AnomalyDetailDrawer";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../../components/table";
+import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 
 const SEVERITY_FILTERS: Array<SafetyAnomalySeverity | "all"> = ["all", "low", "medium", "high", "critical"];
 const STATUS_FILTERS: Array<SafetyAnomalyStatus | "all"> = ["all", "new", "acknowledged", "resolved", "dismissed"];
+
+function subjectEntityKind(subjectType: SafetyAnomaly["subject_type"]): EntityKind | null {
+  if (subjectType === "driver" || subjectType === "unit" || subjectType === "customer" || subjectType === "invoice") {
+    return subjectType;
+  }
+  return null;
+}
+
+function subjectLabel(subjectType: SafetyAnomaly["subject_type"]): string {
+  if (subjectType === "driver") return "Driver";
+  if (subjectType === "unit") return "Unit";
+  if (subjectType === "customer") return "Customer";
+  if (subjectType === "invoice") return "Invoice";
+  return "Subject";
+}
 
 function severityBadgeClass(severity: SafetyAnomalySeverity) {
   if (severity === "critical") return "bg-red-100 text-red-800";
@@ -46,11 +62,19 @@ export function AnomaliesTab() {
       {
         key: "subject",
         label: "Subject",
-        render: (row) => (
-          <>
-            {row.subject_type} · {row.subject_id.slice(0, 8)}
-          </>
-        ),
+        render: (row) => {
+          const kind = subjectEntityKind(row.subject_type);
+          if (!kind) {
+            return <span>{row.subject_type}</span>;
+          }
+          return (
+            <span className="inline-flex items-center gap-1">
+              <span>{row.subject_type}</span>
+              <span>·</span>
+              <EntityLink kind={kind} id={row.subject_id} label={subjectLabel(row.subject_type)} />
+            </span>
+          );
+        },
       },
       {
         key: "detected_at",
