@@ -46,9 +46,16 @@ export function ComplaintsTab() {
 
   // Complaint-types catalog (catalogs.complaint_types) — the same source as /lists/safety/complaint-types.
   // We store the stable type_code into the v6.4 complaint_type field.
+  // SAF-B29 wave-5: typed term must reach listComplaintTypes (query key includes search).
+  const [complaintTypeSearch, setComplaintTypeSearch] = useState("");
   const complaintTypesQuery = useQuery({
-    queryKey: ["safety-v64", "complaint-types", companyId],
-    queryFn: () => listComplaintTypes(companyId, { is_active: "true", limit: 200 }),
+    queryKey: ["safety-v64", "complaint-types", companyId, complaintTypeSearch],
+    queryFn: () =>
+      listComplaintTypes(companyId, {
+        is_active: "true",
+        limit: 200,
+        search: complaintTypeSearch || undefined,
+      }),
     enabled: Boolean(companyId),
     retry: false,
   });
@@ -206,6 +213,7 @@ export function ComplaintsTab() {
               createdValueField="code"
               placeholder={complaintTypesQuery.isLoading ? "Loading types…" : "Type"}
               loading={complaintTypesQuery.isLoading}
+              onSearch={setComplaintTypeSearch}
               onOptionCreated={() => {
                 void queryClient.invalidateQueries({ queryKey: ["safety-v64", "complaint-types", companyId] });
               }}

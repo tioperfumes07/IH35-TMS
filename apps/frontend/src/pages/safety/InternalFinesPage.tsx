@@ -7,11 +7,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createInternalFine, disputeInternalFine, getInternalFines, voidInternalFine } from "../../api/safety";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { listInternalFineReasons } from "../../api/catalogs-safety";
-import { listDispatchLoads, type DispatchStatus } from "../../api/dispatch";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
-import { Combobox } from "../../components/Combobox";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { companyToday } from "../../lib/businessDate";
 import { useAuth } from "../../auth/useAuth";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -21,20 +20,6 @@ type InternalFineRow = Record<string, unknown>;
 type Props = {
   operatingCompanyId: string;
 };
-
-// FD1: related-load picker lists every load regardless of lifecycle state (a fine can reference any load).
-const ALL_DISPATCH_STATUSES: DispatchStatus[] = [
-  "unassigned",
-  "assigned_not_dispatched",
-  "dispatched",
-  "in_transit",
-  "delivered_pending_docs",
-  "completed_docs_received",
-  "cancelled",
-  "abandoned",
-  "driver_walkoff",
-  "driver_no_show",
-];
 
 export function InternalFinesPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
@@ -50,8 +35,6 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
     status: "pending",
     notes: "",
   });
-  // SAF-B29: related-load picker must search server-side — limit:200 silently hid loads past the cap.
-  const [loadSearch, setLoadSearch] = useState("");
 
   const query = useQuery({
     queryKey: ["safety", "internal-fines", operatingCompanyId],
@@ -60,23 +43,15 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   });
 
   // FIX 1 — reason picker: owner-managed internal-fine-reasons catalog (active only).
+  // SAF-B29 wave-5: server search — catalog can exceed a silent 200-cap page.
+  const [reasonSearch, setReasonSearch] = useState("");
   const reasonsQuery = useQuery({
-    queryKey: ["catalogs", "safety", "internal-fine-reasons", "picker", operatingCompanyId],
-    queryFn: () => listInternalFineReasons(operatingCompanyId, { is_active: "true", limit: 200 }),
-    enabled: Boolean(operatingCompanyId),
-  });
-
-  // FIX 1 — optional related-load picker (same list source as the dispatch board).
-  const loadsQuery = useQuery({
-    queryKey: ["dispatch", "loads", "internal-fine-picker", operatingCompanyId, loadSearch],
+    queryKey: ["catalogs", "safety", "internal-fine-reasons", "picker", operatingCompanyId, reasonSearch],
     queryFn: () =>
-      listDispatchLoads({
-        operating_company_id: operatingCompanyId,
-        view: "loads",
+      listInternalFineReasons(operatingCompanyId, {
+        is_active: "true",
         limit: 200,
-        offset: 0,
-        status: ALL_DISPATCH_STATUSES,
-        search: loadSearch || undefined,
+        search: reasonSearch || undefined,
       }),
     enabled: Boolean(operatingCompanyId),
   });
@@ -91,17 +66,6 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
         type: String(r.reason_code),
       })),
     [reasons]
-  );
-
-  const loads = loadsQuery.data?.loads ?? [];
-
-  const loadOptions = useMemo(
-    () =>
-      loads.map((l) => ({
-        value: String(l.id ?? ""),
-        label: String(l.load_number ?? l.id ?? ""),
-      })),
-    [loads]
   );
 
   const createMutation = useMutation({
@@ -231,6 +195,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
             operatingCompanyId={operatingCompanyId}
             placeholder={reasonsQuery.isLoading ? "Loading reasons…" : "Select a reason"}
             loading={reasonsQuery.isLoading}
+            onSearch={setReasonSearch}
             onOptionCreated={() => {
               void queryClient.invalidateQueries({
                 queryKey: ["catalogs", "safety", "internal-fine-reasons", "picker", operatingCompanyId],
@@ -247,15 +212,17 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
           </SelectCombobox>
-          <Combobox
-            options={loadOptions}
+          {/* SAF-B29: native <select> of limit:200 dispatch loads truncated silently. EntityPicker
+              server-searches mdata.loads (allowCreate=false — a load is a transaction). */}
+          <EntityPicker
+            kind="load"
+            operatingCompanyId={operatingCompanyId}
             value={form.related_load_uuid || null}
             onChange={(next) => setForm((v) => ({ ...v, related_load_uuid: next ?? "" }))}
-            onSearch={setLoadSearch}
+            allowCreate={false}
             placeholder="Related load (optional)"
-            loading={loadsQuery.isLoading}
-            allowClear
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            dataTestId="internal-fine-related-load"
           />
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-3">

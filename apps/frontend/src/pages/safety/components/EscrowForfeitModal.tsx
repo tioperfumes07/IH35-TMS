@@ -41,14 +41,17 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
   const [reasonNote, setReasonNote] = useState("");
   const [linkedLiabilityId, setLinkedLiabilityId] = useState<string | null>(null);
 
+  // SAF-B29 wave-5: draw-reason catalog capped at 200 — typed term must reach the server.
+  const [drawReasonSearch, setDrawReasonSearch] = useState("");
   const drawReasonsQuery = useQuery({
-    queryKey: ["escrow-draw-reasons", operatingCompanyId],
+    queryKey: ["escrow-draw-reasons", operatingCompanyId, drawReasonSearch],
     queryFn: () =>
       driverDeductionTypesCatalogClient.list({
         operating_company_id: operatingCompanyId,
         is_active: "true",
         limit: 200,
         offset: 0,
+        search: drawReasonSearch || undefined,
       }),
     enabled: open && Boolean(operatingCompanyId),
   });
@@ -155,6 +158,7 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
               }
               loading={drawReasonsQuery.isLoading}
               disabled={!operatingCompanyId || drawReasonsQuery.isLoading}
+              onSearch={setDrawReasonSearch}
               onOptionCreated={() => {
                 void queryClient.invalidateQueries({ queryKey: ["escrow-draw-reasons", operatingCompanyId] });
               }}
