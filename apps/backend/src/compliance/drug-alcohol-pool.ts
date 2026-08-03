@@ -4,6 +4,7 @@ import { dispatchNotification, listCompanyUserIdsByRoles } from "../notification
 
 export type PoolMember = {
   driver_id: string;
+  driver_name: string | null;
   added_at: string;
   removed_at: string | null;
 };
@@ -100,11 +101,18 @@ export async function syncPoolFromCdlDrivers(client: PoolClient, operatingCompan
 export async function listActivePoolMembers(client: PoolClient, operatingCompanyId: string): Promise<PoolMember[]> {
   const res = await client.query<PoolMember>(
     `
-      SELECT driver_id::text, added_at::text, removed_at::text
-      FROM compliance.drug_alcohol_pool_members
-      WHERE operating_company_id = $1::uuid
-        AND removed_at IS NULL
-      ORDER BY added_at DESC
+      SELECT
+        pm.driver_id::text,
+        NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+        pm.added_at::text,
+        pm.removed_at::text
+      FROM compliance.drug_alcohol_pool_members pm
+      LEFT JOIN mdata.drivers d
+        ON d.id = pm.driver_id
+       AND d.operating_company_id = pm.operating_company_id
+      WHERE pm.operating_company_id = $1::uuid
+        AND pm.removed_at IS NULL
+      ORDER BY pm.added_at DESC
     `,
     [operatingCompanyId]
   );

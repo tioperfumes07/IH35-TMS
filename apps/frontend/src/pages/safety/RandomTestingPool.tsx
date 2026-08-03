@@ -42,7 +42,11 @@ export function RandomTestingPool() {
         <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto">
           {members.map((member) => (
             <li key={String(member.driver_id)} className="flex justify-between border-b border-gray-100 py-1">
-              <EntityLink kind="driver" id={member.driver_id ? String(member.driver_id) : undefined} label={member.driver_id ? String(member.driver_id).slice(0, 8) + "…" : undefined} />
+              <EntityLink
+                kind="driver"
+                id={member.driver_id ? String(member.driver_id) : undefined}
+                label={(member.driver_name as string | undefined) || undefined}
+              />
               <span>{formatDateUS(member.added_at)}</span>
             </li>
           ))}
@@ -63,7 +67,11 @@ export function RandomTestingPool() {
         <ul className="mt-3 max-h-40 space-y-1 overflow-y-auto">
           {selections.slice(0, 12).map((sel) => (
             <li key={String(sel.id)} className="flex justify-between border-b border-gray-50 py-0.5">
-              <EntityLink kind="driver" id={sel.driver_id ? String(sel.driver_id) : undefined} label={sel.driver_id ? String(sel.driver_id).slice(0, 8) + "…" : undefined} />
+              <EntityLink
+                kind="driver"
+                id={sel.driver_id ? String(sel.driver_id) : undefined}
+                label={(sel.driver_name as string | undefined) || undefined}
+              />
               <span>{String(sel.test_type)}</span>
             </li>
           ))}

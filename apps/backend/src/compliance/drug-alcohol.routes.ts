@@ -112,9 +112,19 @@ export async function registerDrugAlcoholComplianceRoutes(app: FastifyInstance) 
       );
       const selections = await client.query(
         `
-          SELECT s.id::text, s.draw_id::text, s.driver_id::text, s.test_type, s.notified_at::text, s.completed_at::text
+          SELECT
+            s.id::text,
+            s.draw_id::text,
+            s.driver_id::text,
+            NULLIF(TRIM(COALESCE(dr.first_name, '') || ' ' || COALESCE(dr.last_name, '')), '') AS driver_name,
+            s.test_type,
+            s.notified_at::text,
+            s.completed_at::text
           FROM compliance.drug_alcohol_random_selections s
           JOIN compliance.drug_alcohol_random_draws d ON d.id = s.draw_id
+          LEFT JOIN mdata.drivers dr
+            ON dr.id = s.driver_id
+           AND dr.operating_company_id = d.operating_company_id
           WHERE d.operating_company_id = $1::uuid
           ORDER BY s.created_at DESC
           LIMIT 100
@@ -163,11 +173,16 @@ export async function registerDrugAlcoholComplianceRoutes(app: FastifyInstance) 
       const res = await client.query(
         `
           SELECT
-            id::text, driver_id::text, test_date::text, test_type, test_reason, result,
-            lab_id, mro_verified_at::text, clearinghouse_reported_at::text, clearinghouse_pending, notes
-          FROM compliance.drug_alcohol_test_results
-          WHERE operating_company_id = $1::uuid
-          ORDER BY test_date DESC, created_at DESC
+            t.id::text, t.driver_id::text,
+            NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+            t.test_date::text, t.test_type, t.test_reason, t.result,
+            t.lab_id, t.mro_verified_at::text, t.clearinghouse_reported_at::text, t.clearinghouse_pending, t.notes
+          FROM compliance.drug_alcohol_test_results t
+          LEFT JOIN mdata.drivers d
+            ON d.id = t.driver_id
+           AND d.operating_company_id = t.operating_company_id
+          WHERE t.operating_company_id = $1::uuid
+          ORDER BY t.test_date DESC, t.created_at DESC
           LIMIT 200
         `,
         [parsed.data.operating_company_id]
