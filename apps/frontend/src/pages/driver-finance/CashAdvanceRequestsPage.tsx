@@ -1,11 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { cashAdvanceRequestsOfficeApi, type CashAdvanceRequestRow } from "../../api/cashAdvanceRequests";
-import { listDrivers } from "../../api/mdata";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
-import { Combobox } from "../../components/Combobox";
-import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
+import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -38,7 +36,6 @@ export function CashAdvanceRequestsPage() {
   const [ownerUrlById, setOwnerUrlById] = useState<Record<string, string>>({});
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const [newDriverId, setNewDriverId] = useState<string | null>(null);
   const [newAmountCents, setNewAmountCents] = useState<number | null>(null);
   const [newReason, setNewReason] = useState("");
@@ -47,20 +44,6 @@ export function CashAdvanceRequestsPage() {
   const currentUserId = String(user?.uuid ?? "");
   const canEscalateToOwner = ["Owner", "Administrator", "Manager"].includes(role);
   const isOwnerOrAdmin = role === "Owner" || role === "Administrator";
-
-  const driversQuery = useQuery({
-    queryKey: ["mdata", "drivers", "for-cash-advance-create", companyId],
-    queryFn: () => listDrivers({ operating_company_id: companyId, status: "Active", limit: 500 }),
-    enabled: createOpen && Boolean(companyId),
-  });
-  const driverOptions = useMemo(
-    () =>
-      (driversQuery.data?.drivers ?? []).map((d) => ({
-        value: d.id,
-        label: `${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || d.id,
-      })),
-    [driversQuery.data]
-  );
 
   const createMut = useMutation({
     mutationFn: () => {
@@ -163,19 +146,15 @@ export function CashAdvanceRequestsPage() {
           </p>
           <div className="grid gap-3 md:grid-cols-3">
             <label className="block">
-              {/* Nested driver create via canonical CreateDriverModal (Blueprint 4.2.2.1). */}
+              {/* Nested +Create via DriverPickerWithCreate (Blueprint 4.2.2.1 / CreateAdvance parity). */}
               <span className="text-xs font-medium text-gray-600">Driver *</span>
               <div className="mt-1">
-                <Combobox
-                  options={driverOptions}
+                <DriverPickerWithCreate
+                  operatingCompanyId={companyId}
                   value={newDriverId}
                   onChange={setNewDriverId}
-                  placeholder="Select driver"
-                  loading={driversQuery.isLoading}
-                  allowAddNew={{
-                    label: "+ Create driver",
-                    onAdd: () => setDriverCreateOpen(true),
-                  }}
+                  placeholder="Search driver…"
+                  allowClear
                 />
               </div>
             </label>
@@ -358,19 +337,6 @@ export function CashAdvanceRequestsPage() {
             </div>
           </div>
         </div>
-      ) : null}
-
-      {companyId ? (
-        <CreateDriverModal
-          open={driverCreateOpen}
-          companyId={companyId}
-          onClose={() => setDriverCreateOpen(false)}
-          onCreated={(driverId) => {
-            setNewDriverId(driverId);
-            setDriverCreateOpen(false);
-            void driversQuery.refetch();
-          }}
-        />
       ) : null}
     </div>
   );
