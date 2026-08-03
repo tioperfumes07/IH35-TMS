@@ -36,6 +36,12 @@ export function collectProblems(root = ROOT) {
   if (!/trailerSearch/.test(code) || !/onSearch=\{setTrailerSearch\}/.test(code)) {
     problems.push(`${FILE}: trailer must wire trailerSearch → onSearch`);
   }
+  if (!/loadSearch/.test(code) || !/onSearch=\{setLoadSearch\}/.test(code)) {
+    problems.push(`${FILE}: load Combobox must wire loadSearch → onSearch`);
+  }
+  if (!/search:\s*loadSearch\s*\|\|\s*undefined/.test(code)) {
+    problems.push(`${FILE}: listLoads must send search: loadSearch`);
+  }
   if (/listDrivers\s*\(/.test(code)) {
     problems.push(`${FILE}: must not call listDrivers (capped roster)`);
   }

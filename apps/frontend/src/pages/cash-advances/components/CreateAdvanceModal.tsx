@@ -134,8 +134,9 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
     enabled: open && Boolean(operatingCompanyId) && method === "direct_bank_transfer",
   });
 
+  const [loadSearch, setLoadSearch] = useState("");
   const loadsQuery = useQuery({
-    queryKey: ["cash-advances", "loads", operatingCompanyId, driverId],
+    queryKey: ["cash-advances", "loads", operatingCompanyId, driverId, loadSearch],
     queryFn: () =>
       listLoads({
         operating_company_id: [operatingCompanyId],
@@ -143,6 +144,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
         status: ["assigned", "dispatched", "at_pickup", "in_transit", "at_delivery", "booked", "planned"],
         limit: 50,
         sort: "created_at_desc",
+        search: loadSearch || undefined,
       }),
     enabled: open && Boolean(operatingCompanyId) && Boolean(driverId),
   });
@@ -489,6 +491,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                   options={loadOptions}
                   value={loadId}
                   onChange={setLoadId}
+                  onSearch={setLoadSearch}
                   placeholder={driverId ? "Select load" : "Select driver first"}
                   loading={loadsQuery.isLoading}
                   disabled={!driverId}
