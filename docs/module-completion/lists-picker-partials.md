@@ -54,3 +54,4 @@
 - 2026-07-31 · guard 1896 · FineCreateModal Driver → `EntityPicker kind=driver` (`mdata.drivers`; was Combobox allowAddNew + side-channel CreateDriverModal) · PR pending
 
 - 2026-08-03 · guard 2094 · AutoDeductionPolicies → `createKind=driver_deduction_type` (`catalogs.driver_deduction_types` by code; was Lists-only SelectCombobox) · PR pending
+- 2026-08-03 · guard 2098 · BookLoadModalV4 Factoring company → `createKind=vendor` (`mdata.vendors`; was bare SelectCombobox) · PR pending
