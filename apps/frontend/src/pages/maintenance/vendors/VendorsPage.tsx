@@ -14,7 +14,7 @@ import { listVendors } from "../../../api/mdata";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { Combobox } from "../../../components/shared/Combobox";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 
@@ -54,6 +54,8 @@ export function VendorsPage() {
   const [draft, setDraft] = useState<VendorDraft>(EMPTY_DRAFT);
   const [editing, setEditing] = useState<MaintenanceVendorRow | null>(null);
   const [csvFile, setCsvFile] = useState<File | null>(null);
+  // SAF-B29 / LST-PICKER-01: AP link must server-search — silent limit:1000 dropped vendors past page 1.
+  const [apVendorSearch, setApVendorSearch] = useState("");
 
   const listQ = useQuery({
     queryKey: ["maintenance", "vendors", companyId, search],
@@ -62,8 +64,14 @@ export function VendorsPage() {
   });
 
   const apVendorsQ = useQuery({
-    queryKey: ["mdata", "vendors", "maint-vendor-link", companyId],
-    queryFn: () => listVendors({ operating_company_id: companyId, status: "active", limit: 1000 }),
+    queryKey: ["mdata", "vendors", "maint-vendor-link", companyId, apVendorSearch],
+    queryFn: () =>
+      listVendors({
+        operating_company_id: companyId,
+        status: "active",
+        limit: apVendorSearch ? 200 : 1000,
+        search: apVendorSearch || undefined,
+      }),
     enabled: Boolean(companyId) && (createOpen || Boolean(editing)),
   });
 
@@ -258,11 +266,19 @@ export function VendorsPage() {
           <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Code (optional)" value={draft.code} onChange={(e) => setDraft((p) => ({ ...p, code: e.target.value.toUpperCase() }))} />
           <div className="space-y-1">
             <label className="text-[11px] font-semibold text-gray-600">AP Vendor (mdata.vendors)</label>
-            <Combobox
+            <ReferenceSelect
               options={apVendorOptions}
               value={draft.mdata_vendor_id}
               placeholder={apVendorsQ.isLoading ? "Loading AP vendors…" : "Link to AP vendor (optional)"}
               onChange={(value) => setDraft((p) => ({ ...p, mdata_vendor_id: value }))}
+              createKind="vendor"
+              operatingCompanyId={companyId}
+              onSearch={setApVendorSearch}
+              loading={apVendorsQ.isLoading}
+              onOptionCreated={(opt) => {
+                void queryClient.invalidateQueries({ queryKey: ["mdata", "vendors", "maint-vendor-link", companyId] });
+                setDraft((p) => ({ ...p, mdata_vendor_id: opt.value }));
+              }}
             />
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -283,11 +299,19 @@ export function VendorsPage() {
             <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={editing.display_name} onChange={(e) => setEditing((p) => (p ? { ...p, display_name: e.target.value } : p))} />
             <div className="space-y-1">
               <label className="text-[11px] font-semibold text-gray-600">AP Vendor (mdata.vendors)</label>
-              <Combobox
+              <ReferenceSelect
                 options={apVendorOptions}
                 value={editing.mdata_vendor_id}
                 placeholder={apVendorsQ.isLoading ? "Loading AP vendors…" : "Link to AP vendor (optional)"}
                 onChange={(value) => setEditing((p) => (p ? { ...p, mdata_vendor_id: value } : p))}
+                createKind="vendor"
+                operatingCompanyId={companyId}
+                onSearch={setApVendorSearch}
+                loading={apVendorsQ.isLoading}
+                onOptionCreated={(opt) => {
+                  void queryClient.invalidateQueries({ queryKey: ["mdata", "vendors", "maint-vendor-link", companyId] });
+                  setEditing((p) => (p ? { ...p, mdata_vendor_id: opt.value } : p));
+                }}
               />
             </div>
             <div className="grid grid-cols-2 gap-2">
