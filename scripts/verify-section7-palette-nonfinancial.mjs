@@ -40,7 +40,7 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 493; // lowered 2026-07-20 (fact-fix1 DuplicateVendorsBanner + related §7 slate cleanup) — ratchet only downward; previously 495
+const BASELINE = 492; // lowered 2026-08-03 (method-guards preflight measured 492) — ratchet only downward; previously 493
 
 function walk(dir) {
   let out = [];
