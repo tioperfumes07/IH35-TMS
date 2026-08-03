@@ -2221,7 +2221,7 @@
       "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
     },
     {
-      "pr": 4188,
+      "pr": 4198,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
@@ -2236,7 +2236,7 @@
       ],
       "spec": "Rule 05 tab law + Rule 21 (wave slice != module)",
       "status": "UNVERIFIED",
-      "evidence": "LAYER A CLOSED 2026-08-03 — verify-saf-orph05-safety-tab-route-mount (step 2204) proves all 28 SAFETY_GROUPS canonical /safety/* routes mounted in manifest.tsx. LIVE SPA 2026-08-03: TRANSP Safety home + /safety/hos (Create HOS violation + driver table + near-violation alerts); USMCA Freight Safety home (Active Drivers=1). Authenticated fetch 28/28 routes HTTP 200. No owner HOLD / no JORGE-APPROVED. REMAINING (keeps UNVERIFIED, not PASS): full DoD-B wizard depth + both-way linkage smoke on every tab both entities.",
+      "evidence": "LAYER A CLOSED 2026-08-03 — verify-saf-orph05-safety-tab-route-mount (step 2204) proves all 28 SAFETY_GROUPS canonical /safety/* routes mounted in manifest.tsx. LIVE SPA 2026-08-03: TRANSP Safety home + /safety/hos (Create HOS violation + driver table + near-violation alerts); USMCA Freight Safety home (Active Drivers=1). Authenticated fetch 28/28 routes HTTP 200. No owner HOLD / no JORGE-APPROVED. REMAINING (keeps UNVERIFIED, not PASS): full DoD-B wizard depth + both-way linkage smoke on every tab both entities. | LAYER B PROGRESS 2026-08-03 — Leave Balances tab no longer policy-only: GET /api/v1/safety/scheduler/balances (rateLimit) + DriverLeaveBalancesPage lists catalogs.driver_leave_balances with EntityLink drivers (verify-saf-leave-balances-driver-list / step 2206). Still UNVERIFIED for full 28-tab DoD-B both entities.",
       "build_standard": {
         "standard_version": "2026-07-25",
         "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
