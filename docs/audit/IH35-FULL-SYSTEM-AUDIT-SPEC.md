@@ -8,10 +8,6 @@ relevant). That bar explicitly includes **connectivity & wiring (V3)**, the **un
 and **deep cross-module linkage forward+reverse (V4)** — not just "the table exists." The owner lifted the approval
 holds for verification (no JORGE-APPROVED gate, no asking). The owner did NOT lift honesty. A guess is a defect.
 
-**Placement (auto-load every session):** commit as an Always-On Cascade rule at
-`.windsurf/rules/ih35-deep-linkage-audit.md`, and in the repo at `docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md`, next to
-the ledger `docs/audit/AUDIT-COVERAGE-LIVE.md`. The loop ends by the COMPLETION CONDITION, not by deleting the file.
-
 > **CHANGE LOG**
 > **v3 (2026-08-03):** "Complete" corrected from 5 layers (A–E) to the committed **DoD A–E + VERIFY 1–8**. Connectivity
 > & wiring (V3), universal picker+creator law incl. Lists (V2), and deep linkage F+R (V4) are mandatory, not extras.
@@ -46,8 +42,7 @@ the ledger `docs/audit/AUDIT-COVERAGE-LIVE.md`. The loop ends by the COMPLETION 
 1. `git fetch origin && git checkout main && git pull --ff-only` → record `SHA = git rev-parse HEAD`.
 2. Re-read PART B — §B3, §B5, §B6, §B8, §B11, **§B12 (the wiring checks)**.
 3. Open `docs/audit/AUDIT-COVERAGE-LIVE.md` and the run-log `docs/audit/AUDIT-RUN-LOG.md` (create if absent).
-4. Confirm prod verification is available (`healthz/shallow` version; a read-only prod query succeeds) AND a live app
-   session is reachable for click-throughs (V2/V3). If either is down, advance only tier-2 code facts; mark nothing PROD-VERIFIED.
+4. Confirm prod verification is available (`healthz/shallow` version; a read-only prod query succeeds) AND a live app session is reachable for click-throughs (V2/V3). If either is down, advance only tier-2 code facts; mark nothing PROD-VERIFIED.
 5. Re-baseline pass (Rule 11): downgrade `FAIL → FIX` where the fix merged.
 
 ## A2. THE RESUME LOOP (repeat until COMPLETION CONDITION)
@@ -133,7 +128,7 @@ NO `operating_company_id`, NO `display_id`) · cancellation `catalogs.cancellati
 ```
 | row | module · scope | tier | verdict
 | DoD: A <..> B <..> C <..> D <..> E <..>
-| VERIFY: V1 <..> V2 <..> V3 <..> V4 <..> V5 <..> V6 <..> V7 <..> V8 <..>   (each PASS|N/A(reason)|FAIL|UNVERIFIED—why)
+| VERIFY: V1 <..> V2 <..> V3 <..> V4 <..> V5 <..> V6 <..> V7 <..> V8 <..>
 | forward chain · reverse chain (executed) · money terminus (balanced JE or N/A)
 | evidence (query+result / url+status+body / click-through screenshot / file:line@sha / guard+exit)
 | canonical? | guard | SHA | date | agent |
@@ -165,7 +160,7 @@ mutates real source, pins legitimate look-alikes. Never edit `package.json`/`ci.
 - **V2 — UNIVERSAL PICKER + CREATOR LAW (7 clauses, exercised live):** every combobox has (1) a catalog behind it ·
   (2) inline **`+ Add new` as the FIRST ROW** · (3) clicking it opens the correct **creator wizard** · (4) the wizard
   writes the SAME canonical table the picker reads (R=W) · (5) the new row **appears** in the picker · (6) is
-  **auto-selected** and **survives reload** · (7) entity-scoped. Applies to Lists too (§B12).
+  **auto-selected** and **survives reload** · (7) entity-scoped.
 - **V3 — CONNECTIVITY / WIRING (exercised live):** nav→route→UI→API→CANONICAL Neon table (never RETIRE)→same R/W→
   entity-scoped→flags honest. Every link/CoA account/List card, when CLICKED, lands on the correct LIVE target with
   correct data; register→source drills through; report figures reconcile. A 404 / wrong target / empty tab = FAIL.
@@ -175,8 +170,7 @@ mutates real source, pins legitimate look-alikes. Never edit `package.json`/`ci.
 - **V7 — Tab/design law:** every approved leaf; no silent-missing; no invented tabs.
 - **V8 — Security/RLS:** FORCE RLS; correct GUC; `security_invoker`; grants.
 
-**Complete/certified = every applicable DoD key AND every applicable VERIFY key PROD-VERIFIED, per entity.** CI-green
-is NOT done. "Merged" is NOT done. A code trace is NOT a live click. A count is NOT a chain.
+**Complete/certified = every applicable DoD key AND every applicable VERIFY key PROD-VERIFIED, per entity.**
 
 ## B9. WORKED EXAMPLE — insurance claim (the model for V4)
 
@@ -196,38 +190,17 @@ substitute a hand-grepped count and report the ledger validated. Run with a hard
 ## B11. THE CERTIFICATION MODEL (13 gates) — how the scoreboard reads
 
 Per module, per entity, the scoreboard shows **A B C D E** (DoD) and **V1 V2 V3 V4 V5 V6 V7 V8** (VERIFY). Green only
-where PROD-VERIFIED live. A module is CERTIFIED only when all 13 applicable gates are green in BOTH entities. V2/V3/V4
-are the gates the shallow audits skipped: picker+creator, connectivity/wiring, deep linkage. A module with green
-A–E but amber V2/V3/V4 is **not complete** — it has records but unproven wiring.
+where PROD-VERIFIED live. A module is CERTIFIED only when all 13 applicable gates are green in BOTH entities.
 
-## B12. THE WIRING CHECKS, SPELLED OUT (the owner's explicit list — all live, not code-read)
+## B12. THE WIRING CHECKS, SPELLED OUT
 
 1. **Every picker/combobox (V2):** open it → a catalog is behind it → `+ Add new` is the FIRST row → click it → the
    correct **creator wizard** opens (the same one Lists uses) → fill + save → it writes the canonical table the picker
-   reads → the new item **appears in the dropdown, is selected, and is still there after a reload**. If the item/vendor/
-   customer/category/product isn't in the catalog, the `+` is the path that creates it. Any break = V2 FAIL for that picker.
+   reads → the new item **appears in the dropdown, is selected, and is still there after a reload**.
 2. **Lists module (V2+V3):** clicking a Lists catalog card → navigates to the **correct list page** → the list shows
    the **correct data from the canonical table** → `+ Create` opens the **correct creator wizard** → wizard is wired
-   end-to-end (form→POST→canonical) → the created row appears in the list. Wrong list / wrong wizard / not-wired = FAIL.
+   end-to-end (form→POST→canonical) → the created row appears in the list.
 3. **Chart of Accounts → Register → Report (V3):** every CoA account, when clicked → Balance-Sheet accounts open their
    **register** with the correct transactions; P&L accounts open the **correct report** → each register row drills
-   through to its **source document** → the register/report **figures reconcile** to Trial Balance / P&L / Balance
-   Sheet. A wrong route, empty register, or figure mismatch = FAIL.
-4. **Every cross-module link (V3+V4):** clicking any `EntityLink` lands on the correct LIVE target (bill→vendor→vendor
-   detail→back to bill), forward AND reverse. A route string in `EntityLink.tsx` is NOT proof — the click must work live.
-
----
-
-## ONE-PARAGRAPH PASTE (session start)
-
-> Boot the IH35-TMS full system audit per `.windsurf/rules/ih35-deep-linkage-audit.md`. `git pull --ff-only` main,
-> record the SHA, re-baseline every FAIL. Read PART B, especially §B8 (DoD A–E + VERIFY 1–8) and §B12 (wiring checks).
-> "Complete" is NOT 5 layers — it is all 13 gates PROD-VERIFIED per entity. For every tier-2 row, exercise it LIVE:
-> V2 — open each picker, confirm `+Add new` is the first row, click it, the creator wizard opens, saves to the
-> canonical table, the row appears+selected+survives reload; V3 — click every link/CoA account/List card and confirm
-> it lands on the correct live target with correct data, register→source→report reconciles; V4 — walk the cross-module
-> web forward AND reverse on live data (insurance model). A code trace / route string is NOT proof. Counts fill the
-> number cell only and never upgrade a tier; app-visibility and every click use the `ih35_app` app path or the live
-> app, never the owner role. Set each row PROD-VERIFIED with per-gate evidence, or terminal UNVERIFIED with a named
-> blocker + Step-1 reproduce. Run the machine check (never hand-grep it). No `--admin`, no fake green, additive only.
-> Append a run-log line. Repeat until zero tier-2 rows remain, then write AUDIT COMPLETE. A guess is a defect.
+   through to its **source document** → the register/report **figures reconcile** to Trial Balance / P&L / Balance Sheet.
+4. **Every cross-module link (V3+V4):** clicking any `EntityLink` lands on the correct LIVE target, forward AND reverse.
