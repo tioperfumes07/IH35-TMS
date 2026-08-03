@@ -25,9 +25,9 @@
       "title": "Vendor detail factor schedule uses factoring.factor not notes parse",
       "layers": ["DOD-C", "VERIFY-4"],
       "spec": "DUAL-FACTOR-VENDOR-DETAIL · VendorDetail.tsx",
-      "status": "OPEN",
-      "evidence": "scaffold — FAIL: serializeVendorNotes/parseVendorNotes dual-path",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor #4211: FactoringHome profile PATCH advance_rate/fee_rate/reserve_rate + remittance_details on factoring.factor; VendorDetail strips factoring notes block + relocates schedule UI to /factoring. Guard verify-fact-dual-canonical-profile step 2242. Neon Faro TRANSP flat rates 0.97/0.015/0.015.",
+      "pr": 4211
     },
     {
       "id": "VEND-LINK-01",
