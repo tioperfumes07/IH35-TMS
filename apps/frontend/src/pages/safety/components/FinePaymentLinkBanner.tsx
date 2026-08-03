@@ -12,7 +12,7 @@ export function FinePaymentLinkBanner({ bankTransactionId, paidDate, paidAmountC
   return (
     <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
       Linked bank payment:{" "}
-      <EntityLink kind="bank_transaction" id={bankTransactionId} label={bankTransactionId.slice(0, 8)} /> · Paid{" "}
+      <EntityLink kind="bank_transaction" id={bankTransactionId} label="Bank payment" /> · Paid{" "}
       {paidDate ? formatDateUS(paidDate) : "—"} · Amount ${((paidAmountCents ?? 0) / 100).toFixed(2)}
     </div>
   );
