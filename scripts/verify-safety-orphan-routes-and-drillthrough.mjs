@@ -73,7 +73,16 @@ export function assertSafetyOrphansAndDrillthrough(sources) {
   }
 
   // 4. Spawned WO drills through instead of printing a dead string.
-  if (!/kind="work_order"/.test(src[ACCIDENT_DRAWER]) || !/setSpawnedWoId\(/.test(src[ACCIDENT_DRAWER])) {
+  // SAF-B30: list may be hydrated from GET detail (setSpawnedWorkOrders) — still requires EntityLink
+  // kind="work_order" with a real uuid id (wo.id / spawned_wo_id), not a display-id-only string.
+  const drawer = src[ACCIDENT_DRAWER];
+  const hasWoLink = /kind="work_order"/.test(drawer);
+  const keepsUuid =
+    /setSpawnedWorkOrders\(/.test(drawer) ||
+    /setSpawnedWoId\(/.test(drawer) ||
+    /id=\{wo\.id\}/.test(drawer) ||
+    /id=\{spawnedWoId\}/.test(drawer);
+  if (!hasWoLink || !keepsUuid) {
     problems.push(`${ACCIDENT_DRAWER}: the spawned work order is not an EntityLink kind="work_order" carrying spawned_wo_id — the API returns the uuid and it is being discarded.`);
   }
 
