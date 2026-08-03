@@ -1,3 +1,5 @@
+> **Model tiers (permanent):** [docs/specs/MODEL-TIER-POLICY.md](docs/specs/MODEL-TIER-POLICY.md) — Cursor mechanical=C, feature/scoreboard=B; money=A.
+
 # IH35-TMS — Agent coordination
 
 > **★★★★ OWNER LAW (2026-08-03, FINAL — reads above every other pointer in this file): NO HOLDS. NO

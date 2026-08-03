@@ -281,3 +281,6 @@ historically and DEFAULT PRIVILEGES prevents recurrence.
 - Block-21 adds `accounting.expense_category_account_map` (tenant-scoped, soft-delete-only) to resolve deterministic category -> GL account mappings for future posting blocks (22-28).
 - Canonical chart-of-accounts table in this repo is `catalogs.accounts`; Block-21 mapping rows FK into that table.
 - Consumer API surface for future posting blocks: `resolveAccountForCategory(operating_company_id, category_kind, category_code)` in `apps/backend/src/accounting/expense-category-map/resolver.service.ts`.
+
+
+**Model tiers:** `docs/specs/MODEL-TIER-POLICY.md` + `.cursor/rules/12-model-tiering.mdc`.
