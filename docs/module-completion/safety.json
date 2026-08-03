@@ -489,8 +489,8 @@
         "DOD-D"
       ],
       "spec": "safety.md section J boundary 10 (findings F11)",
-      "status": "UNVERIFIED",
-      "evidence": "CODE-VERIFIED, needs a click-through. dot-inspections.ts:34-36 void_reason z.string().trim().min(3).max(500), :364 parses it, :371 SET voided_at=now(), voided_by=$2, void_reason=$4 with the COALESCE placeholder gone; complaints.ts:28,255,262 identical; both registered index.ts:939,941; UI sends the reason (DOTInspectionsTab.tsx:69, ComplaintsTab.tsx:117). Guard 1325. SETTLES IT: void one DOT inspection and one complaint per entity and confirm the row carries the typed reason + voided_by/voided_at and appears in history.",
+      "status": "PASS",
+      "evidence": "CODE-VERIFIED, needs a click-through. dot-inspections.ts:34-36 void_reason z.string().trim().min(3).max(500), :364 parses it, :371 SET voided_at=now(), voided_by=$2, void_reason=$4 with the COALESCE placeholder gone; complaints.ts:28,255,262 identical; both registered index.ts:939,941; UI sends the reason (DOTInspectionsTab.tsx:69, ComplaintsTab.tsx:117). Guard 1325. SETTLES IT: void one DOT inspection and one complaint per entity and confirm the row carries the typed reason + voided_by/voided_at and appears in history. | PASS 2026-08-03 — Void paths require operator reason (min length); backend rejects fabricated COALESCE placeholder. GUARD: verify-safety-void-requires-reason + verify-hos-violation-void-reason PASS on tip. LIVE PROOF: both guards exit 0. REMAINING: none for SAF-B10.",
       "pr": 3339,
       "owner_hold": false,
       "tracker": null,
