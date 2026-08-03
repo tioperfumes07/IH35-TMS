@@ -50,11 +50,12 @@ const CHECKS = [
   },
   {
     file: "apps/frontend/src/pages/safety/InternalFinesPage.tsx",
-    describe: "internal fines load picker sends loadSearch",
+    // Wave-5: EntityPicker kind=load (server search) supersedes Combobox+listDispatchLoads+loadSearch.
+    describe: "internal fines related-load uses EntityPicker kind=load",
     test: (s) =>
-      /queryKey:\s*\["dispatch",\s*"loads",\s*"internal-fine-picker",\s*operatingCompanyId,\s*loadSearch\]/.test(s) &&
-      /listDispatchLoads\([\s\S]*?search:\s*loadSearch\s*\|\|\s*undefined/.test(s) &&
-      /onSearch=\{setLoadSearch\}/.test(s),
+      /EntityPicker[\s\S]*?kind=["']load["']/.test(s) &&
+      /related_load_uuid/.test(s) &&
+      !/<select[\s\S]*?related_load/.test(s),
   },
   {
     file: "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx",
@@ -128,10 +129,10 @@ if (SELFTEST) {
     "fleet query sends unitSearch"
   );
   expectFail(
-    "internal-fines-no-onsearch",
+    "internal-fines-no-entitypicker-load",
     CHECKS[5].file,
-    (s) => s.replace("onSearch={setLoadSearch}", ""),
-    "load picker sends loadSearch"
+    (s) => s.replace(/kind=["']load["']/g, 'kind="driver"'),
+    "related-load uses EntityPicker kind=load"
   );
   expectFail(
     "cargo-native-select",
