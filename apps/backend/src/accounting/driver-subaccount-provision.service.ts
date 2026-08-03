@@ -162,11 +162,19 @@ export async function ensureDriverEscrowParent(
         account_number, account_name, account_type, account_subtype, parent_account_id,
         qbo_account_id, is_postable, currency_code,
         notes, created_by_user_id, updated_by_user_id, operating_company_id
-      ) VALUES (
-        NULL, $1, 'Liability', NULL, $2::uuid,
+      )
+      SELECT
+        -- ROW-259: the escrow SUB-PARENT header is numbered from its grandparent too. It is
+        -- is_postable=false, so nothing posts here — but an unnumbered header sorts to the top of the
+        -- chart and cannot be referenced by number, which is exactly the reconciliation complaint that
+        -- opened ROW 259. Header suffix '-00' keeps it above its own numbered leaves.
+        COALESCE(g.account_number || '-00', NULL),
+        $1, 'Liability', g.account_subtype, g.id,
         NULL, false, 'USD',
         $3, $4::uuid, $4::uuid, $5::uuid
-      )
+      FROM catalogs.accounts g
+      -- Entity-pinned for the same reason as the leaf inserts above.
+      WHERE g.id = $2::uuid AND g.operating_company_id = $5::uuid
       RETURNING id::text
     `,
     [
@@ -257,8 +265,21 @@ export function driverEscrowSubAccountName(driverName: string, hireDate?: string
 /**
  * Create the per-driver ASSET sub-account "Driver Cash Advance- <Name>" nested under the canonical
  * "Driver Cash Advance" parent. Idempotent + portable. Returns a result (does NOT throw for a missing
- * parent — that's a graceful no-op for charts without it). account_number/qbo_account_id are left NULL
- * (assigned when the account syncs to QBO). is_postable=true (per the live precedent).
+ * parent — that's a graceful no-op for charts without it). is_postable=true (per the live precedent).
+ *
+ * ROW-259 (2026-08-03): account_number and account_subtype are NO LONGER left NULL.
+ *
+ * They used to be, with the comment "assigned when the account syncs to QBO". That assumption is FALSE
+ * for any entity without a QuickBooks connection — USMCA has none, so its per-driver accounts could
+ * NEVER receive a number and every new hire minted another NULL. (Same false premise that broke the WO
+ * vendor lookup in #4048: code assuming a QBO mirror exists for a non-QBO entity. Under parallel books
+ * TMS is authoritative and must number its own accounts.)
+ *
+ * A NULL account_number breaks reconciliation and sorting; a NULL account_subtype makes the account
+ * match no subtype-based filter. Both are now derived locally:
+ *   number  = "<parent account_number>-<zero-padded sequence>"  (owner-approved scheme)
+ *   subtype = inherited from the parent
+ * qbo_account_id stays NULL — that genuinely IS assigned by QBO, for entities that have it.
  */
 export async function provisionDriverAdvanceSubAccount(
   client: DbClient,
@@ -282,11 +303,27 @@ export async function provisionDriverAdvanceSubAccount(
         account_number, account_name, account_type, account_subtype, parent_account_id,
         qbo_account_id, is_postable, currency_code,
         notes, created_by_user_id, updated_by_user_id, operating_company_id
-      ) VALUES (
-        NULL, $1, 'Asset', NULL, $2::uuid,
+      )
+      SELECT
+        -- ROW-259: derive locally. Sequence is computed from siblings under THIS parent inside the
+        -- same statement, so two concurrent hires cannot mint the same number.
+        p.account_number || '-' || lpad((
+          COALESCE((
+            SELECT MAX(NULLIF(regexp_replace(sib.account_number, '^' || p.account_number || '-', ''), '')::int)
+            FROM catalogs.accounts sib
+            WHERE sib.operating_company_id = $5::uuid
+              AND sib.parent_account_id = p.id
+              AND sib.account_number ~ ('^' || p.account_number || '-[0-9]+$')
+          ), 0) + 1
+        )::text, 3, '0'),
+        $1, 'Asset', p.account_subtype, p.id,
         NULL, true, 'USD',
         $3, $4::uuid, $4::uuid, $5::uuid
-      )
+      FROM catalogs.accounts p
+      -- Entity-pinned: this runs on the is_lucia_bypass() path where catalogs.accounts RLS is
+      -- DEFEATED, so resolving the parent by id ALONE could inherit another entity's subtype and
+      -- number prefix into this entity's chart. Both sides must name the same company.
+      WHERE p.id = $2::uuid AND p.operating_company_id = $5::uuid
       RETURNING id::text
     `,
     [name, parentId, `Auto-provisioned driver advance sub-account (driver ${input.driverId})`, input.actorUserId, input.operatingCompanyId]
@@ -348,11 +385,31 @@ export async function provisionDriverEscrowSubAccount(
         account_number, account_name, account_type, account_subtype, parent_account_id,
         qbo_account_id, is_postable, currency_code,
         notes, created_by_user_id, updated_by_user_id, operating_company_id
-      ) VALUES (
-        NULL, $1, 'Liability', NULL, $2::uuid,
+      )
+      SELECT
+        -- ROW-259: same local derivation as the advance leaf. My first pass fixed only the ASSET
+        -- sub-account and left this LIABILITY one still inserting NULL — caught by
+        -- verify-entity-expense-category-map-complete before it shipped. Escrow is a driver's money
+        -- held in trust, so an unnumbered, unsortable escrow account is the worse of the two.
+        -- The sub-parent is a header and may itself be unnumbered; fall back to the parent NAME-derived
+        -- prefix only when it has a number, else leave the sequence bare rather than invent a prefix.
+        COALESCE(p.account_number || '-', '') || lpad((
+          COALESCE((
+            SELECT MAX(NULLIF(regexp_replace(sib.account_number, '^' || COALESCE(p.account_number || '-', ''), ''), '')::int)
+            FROM catalogs.accounts sib
+            WHERE sib.operating_company_id = $5::uuid
+              AND sib.parent_account_id = p.id
+              AND sib.account_number ~ ('^' || COALESCE(p.account_number || '-', '') || '[0-9]+$')
+          ), 0) + 1
+        )::text, 3, '0'),
+        $1, 'Liability', p.account_subtype, p.id,
         NULL, true, 'USD',
         $3, $4::uuid, $4::uuid, $5::uuid
-      )
+      FROM catalogs.accounts p
+      -- Entity-pinned: this runs on the is_lucia_bypass() path where catalogs.accounts RLS is
+      -- DEFEATED, so resolving the parent by id ALONE could inherit another entity's subtype and
+      -- number prefix into this entity's chart. Both sides must name the same company.
+      WHERE p.id = $2::uuid AND p.operating_company_id = $5::uuid
       RETURNING id::text
     `,
     [name, parentId, `Auto-provisioned driver escrow sub-account (driver ${input.driverId})`, input.actorUserId, input.operatingCompanyId]

@@ -39,7 +39,14 @@ describe("driver advance sub-account provisioning", () => {
     expect(insert.params[1]).toBe("parent-149");
     expect(insert.sql).toContain("'Asset'");
     expect(insert.sql).toContain("true"); // is_postable
-    expect(insert.sql).toContain("NULL, $1"); // account_number NULL
+    // ROW-259 (2026-08-03): this used to assert `NULL, $1` — i.e. it PINNED the defect. The provisioner
+    // hardcoded account_number NULL on the premise that "QBO assigns it", which is false for any entity
+    // without a QuickBooks connection (USMCA), so those accounts could never be numbered. The test
+    // asserting the NULL made the bug look like the contract. Now assert the CORRECTED contract:
+    // the number is derived locally from the parent, and the subtype is inherited.
+    expect(insert.sql).not.toContain("NULL, $1"); // account_number must NOT be hardcoded NULL
+    expect(insert.sql).toContain("lpad("); // zero-padded sequence derived from the parent
+    expect(insert.sql).toContain("p.account_subtype"); // subtype inherited, not NULL
     // parent resolved by NAME + type, not a hardcoded uuid
     const parentLookup = sqls[0].sql;
     expect(parentLookup).toContain("account_name = $1");
