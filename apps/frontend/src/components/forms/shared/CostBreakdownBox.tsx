@@ -137,7 +137,10 @@ export function CostBreakdownBox({
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-2 py-1 text-left">{col.category}</th>
-                    <th className="px-2 py-1 text-left">{col.description}</th>
+                    <th className="px-2 py-1 text-left">
+                      {col.description}
+                      {variant === "wo" ? <span className="ml-0.5 text-red-600" aria-hidden="true">*</span> : null}
+                    </th>
                     <th className="px-2 py-1 text-left">{col.qty}</th>
                     <th className="px-2 py-1 text-left">{col.cost}</th>
                     <th className="px-2 py-1 text-left">{col.total}</th>
@@ -227,11 +230,20 @@ export function CostBreakdownBox({
                       <td className="px-2 py-1">
                         <input
                           disabled={readOnly}
+                          required={variant === "wo"}
+                          aria-required={variant === "wo" ? true : undefined}
+                          aria-label={variant === "wo" ? "Part # / Task" : "Description"}
+                          data-testid={variant === "wo" ? "wo-section-a-part-task" : undefined}
+                          placeholder={variant === "wo" ? "Part # / Task (required)" : undefined}
                           value={line.description}
                           onChange={(event) =>
                             onSectionAChange(sectionA.lines.map((entry) => (entry.id === line.id ? { ...entry, description: event.target.value } : entry)))
                           }
-                          className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                          className={`w-full rounded-sm border px-2 py-1 ${
+                            variant === "wo" && !String(line.description ?? "").trim()
+                              ? "border-red-400"
+                              : "border-gray-300"
+                          }`}
                         />
                       </td>
                       <td className="px-2 py-1">

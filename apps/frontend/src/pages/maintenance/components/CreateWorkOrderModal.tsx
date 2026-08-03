@@ -444,7 +444,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const sectionALines = lines
     .filter((line) => line.section === "A")
     .map((line) => ({
-      description: line.description,
+      description: String(line.description ?? "").trim(),
       quantity: Number(line.quantity || 0),
       amount: Number(line.unit_cost || 0),
       expense_category_uuid: line.expense_category_uuid || "",
@@ -454,14 +454,14 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const sectionBLines = lines
     .filter((line) => line.section === "B")
     .map((line) => ({
-      description: line.description,
+      description: String(line.description ?? "").trim(),
       quantity: Number(line.quantity || 0),
       unit_cost: Number(line.unit_cost || 0),
       amount: Number(line.amount || 0),
       service_item_uuid: line.service_item_uuid || "",
       sub_rows: (line.sub_rows ?? []).map((row) => ({
         line_type: row.line_type,
-        description: row.description,
+        description: String(row.description ?? "").trim(),
         quantity: Number(row.quantity || 0),
         unit_cost: Number(row.unit_cost || 0),
         amount: Number(row.amount || 0),
@@ -471,6 +471,15 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       })),
     }))
     .filter((line) => line.service_item_uuid);
+
+  // Backend sectionALineSchema requires description.min(1). A blank "Part # / Task" used to reach
+  // POST and 400 with a misleading header-level Zod dump. Gate it here with a named check.
+  const sectionAPartTaskOk = sectionALines.every((line) => line.description.length > 0);
+  const sectionBDescriptionsOk = sectionBLines.every(
+    (line) =>
+      line.description.length > 0 &&
+      (line.sub_rows ?? []).every((row) => row.description.length > 0),
+  );
 
 
   const checks = [
@@ -508,10 +517,21 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       label: "At least one cost line item",
       ok: sectionALines.length + sectionBLines.length > 0,
     },
+    {
+      // AUDIT-COVERAGE rows 597/606 + GUARD P1/P2 (2026-08-03): Section A "Part # / Task" is required
+      // by backend sectionALineSchema (description.min(1)). Blank description must never reach POST.
+      label: "Part # / Task required on every Section A cost line",
+      ok: sectionALines.length === 0 || sectionAPartTaskOk,
+    },
+    {
+      label: "Description required on every Section B cost line",
+      ok: sectionBLines.length === 0 || sectionBDescriptionsOk,
+    },
     ...(reconcileRequired
       ? [{ label: "Vendor invoice reconciles — WO parts & labor tie to invoice", ok: reconcileOk }]
       : []),
   ];
+  const preSaveChecksOk = checks.every((check) => check.ok);
 
   const subtotal = lines.reduce((sum, line) => {
     if (line.section === "A") return sum + Number(line.amount || 0);
@@ -554,6 +574,11 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     const values = form.getValues();
     if (mode === "wo_only" && values.payment_timing !== "in_house") {
       pushToast("Save WO Only is only available for in-house timing", "error");
+      return;
+    }
+    if (!preSaveChecksOk) {
+      const firstFail = checks.find((check) => !check.ok);
+      pushToast(firstFail?.label ?? "Complete required work-order fields before submit", "error");
       return;
     }
     if (mode === "full" && requiresLoadForG18 && !values.load_id) {
@@ -1160,11 +1185,12 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           <div className="text-[11px] text-[#475569]">Completing a PM recalculates next-due → PM Countdown</div>
           <div className="flex-1" />
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button type="button" variant="secondary" disabled={paymentTiming !== "in_house"} onClick={() => void submit("wo_only")}>Save draft</Button>
+          <Button type="button" variant="secondary" disabled={paymentTiming !== "in_house" || !preSaveChecksOk} onClick={() => void submit("wo_only")}>Save draft</Button>
           <button
             type="button"
             data-testid="wo-create-btn"
             disabled={
+              !preSaveChecksOk ||
               (requiresLoadForG18 && !Boolean(form.watch("load_id")) && form.watch("load_exemption_reason").trim().length < 20) ||
               !reconcileOk
             }
