@@ -65,7 +65,11 @@ const flat = (s) => s.replace(/\s+/g, " ");
 {
   const f = read("accounting/driver-subaccount-provision.service.ts");
   if (f) {
-    const inserts = [...f.matchAll(/INSERT INTO catalogs\.accounts\s*\(([\s\S]*?)\)\s*VALUES/gi)];
+    // Accepts INSERT ... VALUES *and* INSERT ... SELECT. The provisioner moved to SELECT form when the
+    // account_number/subtype started being derived from the parent row (ROW-259); asserting the VALUES
+    // SYNTAX rather than the entity-scope INVARIANT made this guard fail on a change that actually
+    // TIGHTENED scoping. Track the invariant, not the shape.
+    const inserts = [...f.matchAll(/INSERT INTO catalogs\.accounts\s*\(([\s\S]*?)\)\s*(?:VALUES|SELECT)/gi)];
     if (inserts.length < 2) {
       errs.push(`driver-subaccount-provision.service.ts: expected 2 INSERT INTO catalogs.accounts, found ${inserts.length}`);
     }
