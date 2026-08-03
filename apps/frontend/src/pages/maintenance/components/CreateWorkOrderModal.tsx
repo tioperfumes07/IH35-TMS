@@ -418,6 +418,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const selectedLoad = form.watch("load_id");
   const [backendLoadError, setBackendLoadError] = useState<string | null>(null);
   const [suggestionPinned, setSuggestionPinned] = useState(false);
+  const [vendorSearch, setVendorSearch] = useState("");
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
   useEffect(() => {
     if (!open) return;
@@ -553,8 +554,14 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     enabled: Boolean(operatingCompanyId && serviceDate && (driverId || unitId)),
   });
   const vendorsQuery = useQuery({
-    queryKey: ["maintenance", "vendors", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: 1000 }),
+    queryKey: ["maintenance", "vendors", operatingCompanyId, vendorSearch],
+    queryFn: () =>
+      listVendors({
+        operating_company_id: operatingCompanyId,
+        status: "active",
+        limit: vendorSearch ? 200 : 1000,
+        search: vendorSearch || undefined,
+      }),
     enabled: open && Boolean(operatingCompanyId),
   });
   const vendorOptions = (vendorsQuery.data?.vendors ?? [])
@@ -791,13 +798,17 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   };
 
   if (isEdit && editWorkOrder) {
-    const woLabel = editWorkOrder.display_id ?? editWorkOrder.id.slice(0, 8);
     return (
       <Modal open={open} onClose={onClose} title="Edit Work Order" sizePreset="lg" wide>
         <div data-testid="edit-wo-modal" className="space-y-2.5 text-[12.5px] text-sidebar-bg">
           <div className="flex flex-wrap items-center gap-2 rounded-sm bg-[#243352] px-3 py-1.5 text-[10.5px] text-[#cdd6e6]">
             <span>WO #</span>
-            <span className="rounded-sm border border-[#34466a] bg-[#0f1a30] px-2 py-0.5 font-semibold text-white">{woLabel}</span>
+            <EntityLink
+              kind="work_order"
+              id={editWorkOrder.id}
+              label={editWorkOrder.display_id ?? undefined}
+              className="rounded-sm border border-[#34466a] bg-[#0f1a30] px-2 py-0.5 font-semibold text-white hover:underline"
+            />
             <span>·</span>
             <span className="capitalize">{String(editWorkOrder.status ?? "—")}</span>
             <span className="ml-auto text-[#8aa0c4]">All changes timestamped &amp; audited</span>
@@ -1045,6 +1056,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                     createKind="vendor"
                     operatingCompanyId={operatingCompanyId}
                     placeholder="Search vendor…"
+                    onSearch={setVendorSearch}
+                    loading={vendorsQuery.isLoading}
                     onOptionCreated={(opt) => {
                       void vendorsQuery.refetch();
                       form.setValue("vendor_display_name", opt.label, { shouldDirty: true });
