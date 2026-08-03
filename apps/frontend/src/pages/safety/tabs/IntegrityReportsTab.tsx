@@ -1,5 +1,5 @@
 import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import {
@@ -14,10 +14,26 @@ import { IntegrityAlertsPage } from "../IntegrityAlertsPage";
 import { DriverVendorMappingTab } from "../integrity-reports/DriverVendorMappingTab";
 import { AnomaliesTab } from "./AnomaliesTab";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type IntegrityRow = Record<string, unknown> & { _rowKey: string };
 
 type SubTab = "wo-cost" | "fuel-mpg" | "driver-dwell" | "hos-pattern" | "driver-vendor" | "active-alerts" | "anomalies";
+
+function IntegrityEntityCell({ row }: { row: IntegrityRow }) {
+  const driverId = String(row.driver_id ?? row.subject_driver_id ?? "").trim();
+  const unitId = String(row.unit_id ?? row.subject_unit_id ?? "").trim();
+  const vendorId = String(row.vendor_id ?? row.subject_vendor_id ?? "").trim();
+  const links: ReactNode[] = [];
+  if (driverId) links.push(<EntityLink key="d" kind="driver" id={driverId} />);
+  if (unitId) links.push(<EntityLink key="u" kind="unit" id={unitId} />);
+  if (vendorId) links.push(<EntityLink key="v" kind="vendor" id={vendorId} />);
+  if (!links.length) {
+    const fallback = String(row.subject_id ?? "").trim();
+    return <>{fallback || "—"}</>;
+  }
+  return <span className="inline-flex flex-wrap items-center gap-2">{links}</span>;
+}
 
 export function IntegrityReportsTab() {
   const { selectedCompanyId } = useCompanyContext();
@@ -99,7 +115,7 @@ export function IntegrityReportsTab() {
       {
         key: "entity",
         label: "Entity",
-        render: (row) => String(row.unit_id ?? row.driver_id ?? row.vendor_id ?? row.subject_id ?? "—"),
+        render: (row) => <IntegrityEntityCell row={row} />,
       },
       {
         key: "metric",
