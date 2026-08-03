@@ -16,8 +16,8 @@
       "title": "/vendors roster active count matches Neon mdata.vendors",
       "layers": ["DOD-A", "VERIFY-6"],
       "spec": "Vendors list · ITEM-03B active_company_only",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS TRANSP: 563 active exact match",
+      "status": "PASS",
+      "evidence": "2026-08-03 Neon lucia br-fancy-credit-akjnd07a: TRANSP active=564 inactive=387 · TRK=1873 · USMCA=4 (deactivated_at IS NULL). Vendors.tsx listVendors + default Active filter. Guard verify-vend-s01-roster-active-filter + step 2236. (Auditor 563 was prior snapshot; live lucia now 564.)",
       "pr": null
     },
     {

@@ -1,18 +1,18 @@
 # Module completion — Vendors
 
-**PROGRESS: 0 of 7** · complete: `false` · as_of: 2026-08-02 · live_sha: `—`
+**PROGRESS: 1 of 7** · complete: `false` · as_of: 2026-08-02 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 0 |
+| PASS | 1 |
 | HOLD | 0 |
-| OPEN | 7 |
+| OPEN | 6 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
-| `VEND-S01` | **OPEN** | /vendors roster active count matches Neon mdata.vendors | scaffold — auditor PASS TRANSP: 563 active exact match | — |
+| `VEND-S01` | **PASS** | /vendors roster active count matches Neon mdata.vendors | 2026-08-03 Neon lucia br-fancy-credit-akjnd07a: TRANSP active=564 inactive=387 · TRK=1873 · USMCA=4 (deactivated_at IS NULL). Vendors.tsx listVendors + default Active filter. Guard verify-vend-s01-roster-active-filter + step 2236. (Auditor 563 was prior snapshot; live lucia now 564.) | — |
 | `VEND-S02` | **OPEN** | Vendor detail factor schedule uses factoring.factor not notes parse | scaffold — FAIL: serializeVendorNotes/parseVendorNotes dual-path | — |
 | `VEND-LINK-01` | **OPEN** | Bills/allocations EntityLink uses vendor_uuid not legacy vendor_id text | scaffold — FAIL system-wide wrong-column linkage (accounting module) | — |
 | `VEND-S03` | **OPEN** | Vendor create dedup guard scoped per operating company | scaffold — not proven | — |
