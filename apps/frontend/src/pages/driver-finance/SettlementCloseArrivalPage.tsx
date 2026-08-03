@@ -7,7 +7,6 @@ import {
   settleAndPay,
   type PreSettlementLine,
 } from "../../api/driverFinance";
-import { listDrivers } from "../../api/mdata";
 import { getCoaAccounts } from "../../api/banking";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
@@ -60,25 +59,17 @@ export function SettlementCloseArrivalPage() {
     enabled: Boolean(companyId),
   });
 
-  const driversQuery = useQuery({
-    queryKey: ["mdata", "drivers", "for-settlement-close", companyId],
-    queryFn: () => listDrivers({ operating_company_id: companyId, status: "Active", limit: 500 }),
-    enabled: Boolean(companyId),
-  });
-  const driverNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const d of driversQuery.data?.drivers ?? []) map.set(d.id, `${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || d.id);
-    return map;
-  }, [driversQuery.data]);
-
   const openOptions = useMemo(
     () =>
-      (openQuery.data?.pre_settlements ?? []).map((row) => ({
-        value: row.driver_id,
-        label: `${driverNameById.get(row.driver_id) ?? row.driver_id} — ${row.settlement_number ?? row.settlement_id.slice(0, 8)}`,
-        sublabel: `Net ${formatUsd(row.net_pay)} · ${row.status}`,
-      })),
-    [openQuery.data, driverNameById]
+      (openQuery.data?.pre_settlements ?? []).map((row) => {
+        const name = (row.driver_name ?? "").trim() || row.driver_id.slice(0, 8);
+        return {
+          value: row.driver_id,
+          label: `${name} — ${row.settlement_number ?? row.settlement_id.slice(0, 8)}`,
+          sublabel: `Net ${formatUsd(row.net_pay)} · ${row.status}`,
+        };
+      }),
+    [openQuery.data]
   );
 
   const detailQuery = useQuery({
@@ -169,7 +160,7 @@ export function SettlementCloseArrivalPage() {
                 options={openOptions}
                 value={selectedDriverId}
                 onChange={setSelectedDriverId}
-                placeholder="Select driver"
+                placeholder="Select driver with open pre-settlement"
                 loading={openQuery.isLoading}
                 allowClear
                 allowAddNew={{
@@ -179,9 +170,8 @@ export function SettlementCloseArrivalPage() {
               />
             </div>
             <p className="mt-1 text-[11px] text-slate-600">
-              This picker lists drivers with an open pre-settlement. A newly created driver has no
-              pre-settlement yet — create them here, then they appear once dispatch/settlement
-              generates their first pre-settlement.
+              Open pre-settlements only (names from open-by-driver join). Nested +Create driver stays
+              wired for picker law; a new driver appears here after their first pre-settlement exists.
             </p>
           </label>
 
@@ -193,7 +183,9 @@ export function SettlementCloseArrivalPage() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <div className="text-sm font-semibold text-gray-900">
-                    {driverNameById.get(settlement.driver_id) ?? settlement.driver_id} — {settlement.display_id ?? settlement.id.slice(0, 8)}
+                    {(openQuery.data?.pre_settlements ?? []).find((r) => r.driver_id === settlement.driver_id)?.driver_name?.trim() ||
+                      settlement.driver_id.slice(0, 8)}{" "}
+                    — {settlement.display_id ?? settlement.id.slice(0, 8)}
                   </div>
                   <div className="text-xs text-gray-600">
                     {settlement.first_load_number ?? "—"} → {settlement.last_load_number ?? "—"} · status: {settlement.status}
@@ -392,10 +384,7 @@ export function SettlementCloseArrivalPage() {
         onCreated={(createdId) => {
           setSelectedDriverId(createdId);
           setDriverCreateOpen(false);
-          void driversQuery.refetch();
         }}
-        // Full-page surface (not nested inside another drawer/modal) — default centered
-        // shell="modal" is the correct chrome here.
       />
     </div>
   );

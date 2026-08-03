@@ -452,6 +452,8 @@ export type OpenPreSettlement = {
   settlement_id: string;
   settlement_number: string | null;
   driver_id: string;
+  /** Joined from mdata.drivers on open-by-driver (picker labels; never silent listDrivers 500). */
+  driver_name?: string | null;
   first_load_id: string | null;
   first_load_number: string | null;
   last_load_id: string | null;

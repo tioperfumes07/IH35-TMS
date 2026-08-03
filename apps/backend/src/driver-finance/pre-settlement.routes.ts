@@ -64,6 +64,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
             s.id            AS settlement_id,
             s.display_id    AS settlement_number,
             s.driver_id,
+            trim(both from concat_ws(' ', d.first_name, d.last_name)) AS driver_name,
             s.first_load_id,
             s.first_load_number,
             s.last_load_id,
@@ -75,6 +76,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
             s.trip_started_at,
             s.period_start
           FROM driver_finance.driver_settlements s
+          LEFT JOIN mdata.drivers d ON d.id = s.driver_id
           WHERE s.operating_company_id = $1
             AND s.settlement_model = 'load_bookended'
             AND s.trip_closed_at IS NULL
