@@ -120,11 +120,25 @@ async function columnExists(client: DbClient, tableName: string, columnName: str
 }
 
 async function deriveClassHint(client: DbClient, unitId: string, driverId?: string | null) {
-  const unitRes = await client.query<{ unit_number: string | null; display_id: string | null }>(
-    `SELECT unit_number, display_id FROM mdata.units WHERE id = $1 LIMIT 1`,
+  // WO-CREATE-42703 (live prod, all entities, 2026-08-03): this selected a PHANTOM column —
+  // `mdata.units` has NO `display_id` (verified on prod: information_schema says false; the table
+  // carries `unit_number`). Postgres threw 42703 "column \"display_id\" does not exist", which
+  // surfaced as HTTP 500 on EVERY work-order create, in every entity. Standards §4 / Doc 03 §7 list
+  // this exact column as a known phantom.
+  //
+  // It was first diagnosed as the next_wo_display_id() function having a stale RETURNS shape, with a
+  // DROP FUNCTION + recreate proposed. Prod says otherwise — the function already returns
+  // TABLE(display_id text, sequence integer), i.e. the fixed shape. Dropping it would have destroyed a
+  // WORKING object and left WO-create dead, because the throw is this plain SELECT, which runs AFTER
+  // the function call succeeds.
+  //
+  // unit_number was already the fallback on the next line, so the phantom column contributed nothing
+  // but the crash.
+  const unitRes = await client.query<{ unit_number: string | null }>(
+    `SELECT unit_number FROM mdata.units WHERE id = $1 LIMIT 1`,
     [unitId]
   );
-  const unitPart = String(unitRes.rows[0]?.display_id ?? unitRes.rows[0]?.unit_number ?? "UNIT").trim();
+  const unitPart = String(unitRes.rows[0]?.unit_number ?? "UNIT").trim();
   let driverPart = "UNASSIGNED";
   if (driverId) {
     const driverRes = await client.query<{ last_name: string | null }>(`SELECT last_name FROM mdata.drivers WHERE id = $1 LIMIT 1`, [driverId]);
