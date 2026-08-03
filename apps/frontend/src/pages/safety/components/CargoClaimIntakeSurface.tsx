@@ -242,7 +242,7 @@ export function CargoClaimIntakeSurface({
             <EntityLink
               kind="customer"
               id={String(row.claimant_customer_id)}
-              label={customerNameById.get(String(row.claimant_customer_id)) ?? String(row.claimant_customer_id).slice(0, 8)}
+              label={customerNameById.get(String(row.claimant_customer_id)) ?? "Customer"}
             />
           ) : (
             "—"
@@ -256,7 +256,7 @@ export function CargoClaimIntakeSurface({
             <EntityLink
               kind="load"
               id={String(row.load_id)}
-              label={loadNumberById.get(String(row.load_id)) ?? String(row.load_id).slice(0, 8)}
+              label={loadNumberById.get(String(row.load_id)) ?? "Load"}
             />
           ) : (
             "—"
