@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   addAccidentPhoto,
   createSafetyAccident,
+  getSafetyAccidentDetail,
   patchSafetyAccident,
   spawnSafetyLiability,
   spawnSafetyWo,
@@ -43,16 +44,14 @@ function textField(source: Record<string, unknown>, keys: string[]): string {
 export function AccidentReportDrawer({ open, operatingCompanyId, accident, createMode = false, onClose, onUpdated }: Props) {
   const { pushToast } = useToast();
   const [uploading, setUploading] = useState(false);
-  const [spawnedWoDisplayId, setSpawnedWoDisplayId] = useState<string | null>(null);
   // SAF-F31: these pickers fetch limit:200 with no server-side search, so with more than 200 units
   // (or loads, or vendors) the rest were unselectable and nothing said so — a silent truncation on
   // an evidence record. The term is sent to the server, which already supports `search`.
   const [unitSearch, setUnitSearch] = useState("");
   const [loadSearch, setLoadSearch] = useState("");
   const [vendorSearch, setVendorSearch] = useState("");
-  // SAF-F35: the spawn response already returns the WO's uuid; only the display id was kept, so the
-  // spawned work order was a dead-end string. Keeping the id makes it a real drill-through.
-  const [spawnedWoId, setSpawnedWoId] = useState<string | null>(null);
+  // SAF-B30 / F35: list of AC WOs linked by description token — survives reload (not React-only).
+  const [spawnedWorkOrders, setSpawnedWorkOrders] = useState<Array<{ id: string; display_id: string }>>([]);
   const [costLines, setCostLines] = useState<TwoSectionLine[]>([]);
   const [taxRate, setTaxRate] = useState(8.25);
 
@@ -125,6 +124,29 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   }, [accidentId, initialDriverId, initialUnitId, initialVendorId, initialLoadId, initialIncidentDate, initialMemo, initialAtFault, initialPreventable]);
 
   const scopeReady = open && Boolean(operatingCompanyId);
+  const detailReady = scopeReady && !createMode && Boolean(accidentId) && accidentId !== "__create__";
+
+  // Hydrate previously spawned WOs from GET detail (server lists by description token).
+  const detailQuery = useQuery({
+    queryKey: ["safety", "accident-detail", operatingCompanyId, accidentId],
+    queryFn: () => getSafetyAccidentDetail(accidentId, operatingCompanyId),
+    enabled: detailReady,
+  });
+
+  useEffect(() => {
+    const rows = detailQuery.data?.spawned_work_orders;
+    if (!Array.isArray(rows)) return;
+    setSpawnedWorkOrders(
+      rows
+        .map((row) => {
+          const rec = row as { id?: unknown; display_id?: unknown };
+          const id = typeof rec.id === "string" ? rec.id : "";
+          const display_id = typeof rec.display_id === "string" ? rec.display_id : id.slice(0, 8);
+          return id ? { id, display_id } : null;
+        })
+        .filter((r): r is { id: string; display_id: string } => r != null)
+    );
+  }, [detailQuery.data]);
 
   const unitsQuery = useQuery({
     queryKey: ["accident", "units", operatingCompanyId, unitSearch],
@@ -476,9 +498,31 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
               void spawnSafetyWo(id, operatingCompanyId)
                 .then((payload) => {
                   const displayId = String(payload.spawned_wo_display_id ?? "");
-                  setSpawnedWoDisplayId(displayId || null);
-                  setSpawnedWoId(String(payload.spawned_wo_id ?? "") || null);
-                  pushToast(displayId ? `Spawn WO created (${displayId})` : "Spawn WO requested", "success");
+                  const woId = String(payload.spawned_wo_id ?? "");
+                  const reused = Boolean(payload.reused);
+                  const list = Array.isArray(payload.spawned_work_orders)
+                    ? (payload.spawned_work_orders as Array<{ id?: unknown; display_id?: unknown }>)
+                        .map((row) => {
+                          const rid = typeof row.id === "string" ? row.id : "";
+                          const d = typeof row.display_id === "string" ? row.display_id : rid.slice(0, 8);
+                          return rid ? { id: rid, display_id: d } : null;
+                        })
+                        .filter((r): r is { id: string; display_id: string } => r != null)
+                    : woId
+                      ? [{ id: woId, display_id: displayId || woId.slice(0, 8) }]
+                      : [];
+                  if (list.length) setSpawnedWorkOrders(list);
+                  pushToast(
+                    reused
+                      ? displayId
+                        ? `Existing AC work order reused (${displayId})`
+                        : "Existing AC work order reused"
+                      : displayId
+                        ? `Spawn WO created (${displayId})`
+                        : "Spawn WO requested",
+                    "success"
+                  );
+                  void detailQuery.refetch();
                   onUpdated();
                 })
                 .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"))
@@ -517,19 +561,25 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
             Save the report first to attach photos.
           </div>
         ) : null}
-        {spawnedWoDisplayId ? (
+        {spawnedWorkOrders.length > 0 ? (
           <div
             className="mt-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] text-slate-700"
             data-testid="accident-spawned-wo"
           >
-            New WO (source type AC):{" "}
-            <EntityLink
-              kind="work_order"
-              id={spawnedWoId}
-              label={spawnedWoDisplayId}
-              className="font-semibold text-slate-700 underline"
-              data-testid="accident-spawned-wo-link"
-            />
+            <div className="font-semibold text-slate-600">Linked AC work orders</div>
+            <ul className="mt-1 space-y-0.5">
+              {spawnedWorkOrders.map((wo) => (
+                <li key={wo.id}>
+                  <EntityLink
+                    kind="work_order"
+                    id={wo.id}
+                    label={wo.display_id}
+                    className="font-semibold text-slate-700 underline"
+                    data-testid={`accident-spawned-wo-link-${wo.id}`}
+                  />
+                </li>
+              ))}
+            </ul>
           </div>
         ) : null}
         <div className="mt-3">

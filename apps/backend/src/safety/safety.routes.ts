@@ -132,6 +132,36 @@ function isSafetyMutationAllowed(role: string) {
   return ["Owner", "Administrator", "Manager", "Safety"].includes(role);
 }
 
+/** Durable token embedded in WO.description so spawn-wo can find prior AC WOs without a FK column. */
+function accidentSpawnDescription(accidentId: string): string {
+  return `Auto-created from accident report ${accidentId}. Fill external vendor WO/invoice fields before completion.`;
+}
+
+type SpawnedWoRow = { id: string; display_id: string | null };
+
+async function listAccidentSpawnedWorkOrders(
+  client: {
+    query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
+  },
+  operatingCompanyId: string,
+  accidentId: string
+): Promise<SpawnedWoRow[]> {
+  // Match the full token OR a bare accident uuid (covers any prior wording that still carried the id).
+  const res = await client.query<SpawnedWoRow>(
+    `
+      SELECT id::text AS id, display_id
+      FROM maintenance.work_orders
+      WHERE operating_company_id = $1
+        AND source_type = 'AC'
+        AND voided_at IS NULL
+        AND description ILIKE '%' || $2 || '%'
+      ORDER BY opened_at ASC NULLS LAST, created_at ASC
+    `,
+    [operatingCompanyId, accidentId]
+  );
+  return res.rows;
+}
+
 export async function registerSafetyRoutes(app: FastifyInstance) {
   app.get("/api/v1/safety/dashboard/kpis", async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -462,7 +492,12 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           [params.data.id, query.data.operating_company_id]
         )
         .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-      return res.rows[0] ?? null;
+      const accident = res.rows[0] ?? null;
+      if (!accident) return null;
+      // SAF-B30 / F35: previously spawned AC work orders survived only in React state. Reload them
+      // from maintenance.work_orders by the durable description token (no back-link column on prod yet).
+      const wos = await listAccidentSpawnedWorkOrders(client, query.data.operating_company_id, params.data.id);
+      return { ...accident, spawned_work_orders: wos };
     });
     if (!row) return reply.code(404).send({ error: "accident_not_found" });
     return row;
@@ -840,6 +875,36 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       const accident = accidentRes.rows[0];
       if (!accident) return null;
 
+      // SAF-B30 / F35: double-click / re-open used to mint a second AC work order with no durable
+      // back-link. Reuse the first non-voided WO whose description carries this accident id.
+      const existing = await listAccidentSpawnedWorkOrders(client, query.data.operating_company_id, params.data.id);
+      if (existing.length > 0) {
+        const first = existing[0];
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "safety.accident.spawn_wo",
+          {
+            resource_type: "safety.accident_reports",
+            resource_id: params.data.id,
+            spawned_wo_id: first.id,
+            spawned_wo_display_id: first.display_id,
+            reused_was_true: true,
+            operating_company_id: query.data.operating_company_id,
+          },
+          "info",
+          "BT-3-SAFETY-LIABILITIES-REBUILD"
+        );
+        return {
+          accident_id: params.data.id,
+          spawned_wo_id: first.id,
+          spawned_wo_display_id: first.display_id,
+          reused: true,
+          spawned_work_orders: existing,
+        };
+      }
+
+      const accidentToken = accidentSpawnDescription(params.data.id);
       const displayRes = await client.query<{ display_id: string; sequence: number }>(
         `
           SELECT display_id, sequence
@@ -883,7 +948,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           query.data.operating_company_id,
           accident.unit_id,
           accident.driver_id ?? null,
-          `Auto-created from accident report ${params.data.id}. Fill external vendor WO/invoice fields before completion.`,
+          accidentToken,
           display?.display_id ?? null,
           Number(display?.sequence ?? 0) || null,
         ]
@@ -913,12 +978,19 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           resource_id: params.data.id,
           spawned_wo_id: wo.id,
           spawned_wo_display_id: wo.display_id,
+          reused: false,
           operating_company_id: query.data.operating_company_id,
         },
         "info",
         "BT-3-SAFETY-LIABILITIES-REBUILD"
       );
-      return { accident_id: params.data.id, spawned_wo_id: wo.id, spawned_wo_display_id: wo.display_id };
+      return {
+        accident_id: params.data.id,
+        spawned_wo_id: wo.id,
+        spawned_wo_display_id: wo.display_id,
+        reused: false,
+        spawned_work_orders: [{ id: wo.id, display_id: wo.display_id }],
+      };
     });
     if (!payload) return reply.code(404).send({ error: "accident_not_found" });
     return payload;

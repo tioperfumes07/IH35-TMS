@@ -1,0 +1,110 @@
+#!/usr/bin/env node
+/**
+ * SAF-B30 / F35 — accident spawn-wo must be idempotent and reloadable.
+ *
+ * Defect: POST spawn-wo always INSERTed a new maintenance.work_orders row. A double-click minted
+ * two AC WOs; after reload the drawer forgot every prior WO because the id lived only in React
+ * state (no durable reverse list on GET).
+ *
+ * Locked here (no migration — prod has no accident↔WO FK yet):
+ *   1. spawn-wo looks up existing non-voided AC WOs whose description contains the accident id
+ *   2. GET :id returns spawned_work_orders from that same lookup
+ *   3. the drawer hydrates from detail + EntityLink-drills each WO
+ */
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+
+const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
+const ROUTES = join(ROOT, "apps/backend/src/safety/safety.routes.ts");
+const DRAWER = join(ROOT, "apps/frontend/src/components/safety/AccidentReportDrawer.tsx");
+
+const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
+
+const CHECKS = [
+  {
+    id: "helper-list",
+    file: ROUTES,
+    describe: "listAccidentSpawnedWorkOrders must query AC WOs by accident id in description",
+    test: (s) =>
+      /function listAccidentSpawnedWorkOrders/.test(s) &&
+      /source_type = 'AC'/.test(s) &&
+      /description ILIKE/.test(s) &&
+      /voided_at IS NULL/.test(s),
+  },
+  {
+    id: "spawn-reuses",
+    file: ROUTES,
+    describe: "spawn-wo must reuse an existing WO (reused: true) before INSERT",
+    test: (s) =>
+      /listAccidentSpawnedWorkOrders\(client/.test(s) &&
+      /reused:\s*true/.test(s) &&
+      /existing\.length > 0/.test(s),
+  },
+  {
+    id: "get-returns-list",
+    file: ROUTES,
+    describe: "GET accident detail must attach spawned_work_orders",
+    test: (s) => /spawned_work_orders:\s*wos/.test(s) || /spawned_work_orders:\s*await listAccidentSpawnedWorkOrders/.test(s),
+  },
+  {
+    id: "drawer-hydrates",
+    file: DRAWER,
+    describe: "drawer must hydrate spawned WOs from getSafetyAccidentDetail",
+    test: (s) =>
+      /getSafetyAccidentDetail/.test(s) &&
+      /spawned_work_orders/.test(s) &&
+      /setSpawnedWorkOrders/.test(s) &&
+      /kind="work_order"/.test(s),
+  },
+];
+
+export function run() {
+  const failed = [];
+  for (const c of CHECKS) {
+    const src = strip(readFileSync(c.file, "utf8"));
+    if (!c.test(src)) failed.push(c);
+  }
+  const ok = failed.length === 0;
+  return {
+    ok,
+    message: ok
+      ? `PASS: all ${CHECKS.length} of ${CHECKS.length} accident spawn-wo idempotency locks hold.`
+      : `FAIL (${failed.length} of ${CHECKS.length}):\n  - ${failed.map((f) => `${f.describe} (${f.id})`).join("\n  - ")}`,
+  };
+}
+
+function selftest() {
+  const original = readFileSync(ROUTES, "utf8");
+  const baseline = run();
+  if (!baseline.ok) {
+    console.error(`SELFTEST FAIL: repository already red.\n${baseline.message}`);
+    process.exit(1);
+  }
+  // Both the early-return payload and the audit payload carry `reused: true` — plant all of them.
+  const planted = original.replaceAll("reused: true", "reused_was_true");
+  try {
+    writeFileSync(ROUTES, planted, "utf8");
+    const caught = run();
+    if (caught.ok || !/spawn-reuses/.test(caught.message)) {
+      console.error(`SELFTEST FAIL: spawn-reuses plant not caught.\n${caught.message}`);
+      process.exit(1);
+    }
+    console.log("  caught: spawn-reuses plant");
+  } finally {
+    writeFileSync(ROUTES, original, "utf8");
+  }
+  const after = run();
+  if (!after.ok) {
+    console.error(`SELFTEST FAIL: restore left repository red.\n${after.message}`);
+    process.exit(1);
+  }
+  console.log("SELFTEST PASS: planted defect caught and repository restored green.");
+}
+
+if (process.argv.includes("--selftest")) {
+  selftest();
+} else {
+  const result = run();
+  console.log(result.message);
+  if (!result.ok) process.exit(1);
+}
