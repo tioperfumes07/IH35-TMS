@@ -167,11 +167,16 @@ if (!fineCreate.includes("ParityDrawer")) {
 }
 
 const cashAdv = read("apps/frontend/src/pages/driver-finance/CashAdvanceRequestsPage.tsx");
-if (!cashAdv.includes("CreateDriverModal")) {
-  failures.push("CashAdvanceRequestsPage must mount CreateDriverModal for nested driver create");
-}
-if (!cashAdv.includes("Create driver") && !cashAdv.includes("+ Create driver")) {
-  failures.push("CashAdvanceRequestsPage driver Combobox must expose Create driver affordance");
+// CreateAdvance parity: DriverPickerWithCreate owns Combobox + CreateDriverModal nested create.
+// Legacy Combobox + side-channel CreateDriverModal still accepted.
+const cashAdvNestedDriverCreate =
+  cashAdv.includes("DriverPickerWithCreate") ||
+  (cashAdv.includes("CreateDriverModal") &&
+    (cashAdv.includes("Create driver") || cashAdv.includes("+ Create driver")));
+if (!cashAdvNestedDriverCreate) {
+  failures.push(
+    "CashAdvanceRequestsPage must nest driver create via DriverPickerWithCreate (or CreateDriverModal + Create driver affordance)"
+  );
 }
 
 const woId = read("apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx");
