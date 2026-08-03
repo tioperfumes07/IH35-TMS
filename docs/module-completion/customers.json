@@ -33,9 +33,9 @@
       "id": "CUST-S03",
       "title": "Nine follow-up tabs render honest COMING_STATE_COPY (not silent empty)",
       "layers": ["DOD-B", "VERIFY-1"],
-      "spec": "Customers.tsx:143-153 COMING_STATE_COPY",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS: explicit stub messages for 9 tabs",
+      "spec": "Customers.tsx COMING_STATE_COPY",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: COMING_STATE_COPY has 9 keys (activity_feed…conversations) each naming missing endpoint/source + follow-up; CustomerTabComingState renders copy. Guard verify-cust-s03-coming-state-copy + step 2228. Auditor scaffold already PASS; ratchet locks it.",
       "pr": null
     },
     {
