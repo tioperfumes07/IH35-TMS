@@ -1,8 +1,11 @@
 import type { JSX } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { listDriverTeams, listUnits } from "../../../api/mdata";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { Combobox } from "../../../components/Combobox";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { OptimalDriversPanel } from "../../../components/dispatch/OptimalDriversPanel";
 import { DriverHosClocksBlock } from "../../../components/dispatch/hos/DriverHosClocks";
@@ -66,10 +69,19 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
     optimizerLoadId ||
     reservationUuid ||
     "00000000-0000-4000-8000-000000000000";
-  const unitsQuery = useQuery({
-    queryKey: ["book-load-units", operatingCompanyId],
-    // Unified fleet: trucks (mdata.units) + trailers (mdata.equipment), kind-tagged + active-filtered.
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, include: "trailers", limit: 500 }),
+  // SAF-B29 / picker law: truck uses EntityPicker kind=unit (server search). Trailer has no
+  // EntityPicker kind yet (unit roster deliberately excludes trailers) — Combobox + search over
+  // include:trailers filtered to kind=trailer. Never a silent 500-row SelectCombobox.
+  const [trailerSearch, setTrailerSearch] = useState("");
+  const trailersQuery = useQuery({
+    queryKey: ["book-load-trailers", operatingCompanyId, trailerSearch],
+    queryFn: () =>
+      listUnits({
+        operating_company_id: operatingCompanyId,
+        include: "trailers",
+        limit: 200,
+        search: trailerSearch || undefined,
+      }),
     enabled: Boolean(operatingCompanyId),
   });
   const teamsQuery = useQuery({
@@ -77,14 +89,13 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
     queryFn: () => listDriverTeams(String(operatingCompanyId)),
     enabled: Boolean(operatingCompanyId),
   });
-  const fleet = unitsQuery.data?.units ?? [];
-  // Bug #5: Truck dropdown shows ONLY trucks (mdata.units); Trailer dropdown ONLY trailers (mdata.equipment).
-  const trucks = fleet
-    .filter((row) => (row as { kind?: string }).kind !== "trailer")
-    .map((row, index) => toUnitOption(row, index));
-  const trailers = fleet
-    .filter((row) => (row as { kind?: string }).kind === "trailer")
-    .map((row, index) => toUnitOption(row, index));
+  const trailerOptions = useMemo(() => {
+    const fleet = trailersQuery.data?.units ?? [];
+    return fleet
+      .filter((row) => (row as { kind?: string }).kind === "trailer")
+      .map((row, index) => toUnitOption(row, index))
+      .map((u) => ({ value: u.id, label: u.label }));
+  }, [trailersQuery.data?.units]);
   // C9: all six equipment requirement chips persist on mdata.loads (requires_tarps historically;
   // the other five via HOLD migration 202609170000).
   const toggles = [
@@ -117,27 +128,33 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
         <Field
           label="Truck unit"
           input={
-            <SelectCombobox {...register("assigned_unit_id")} className="h-7 w-full text-xs">
-              <option value="">{unitsQuery.isLoading ? "Loading units..." : "Select truck unit"}</option>
-              {trucks.map((unit) => (
-                <option key={unit.id} value={unit.id}>
-                  {unit.label}
-                </option>
-              ))}
-            </SelectCombobox>
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={operatingCompanyId ?? ""}
+              value={assignedUnitId || null}
+              onChange={(next) => setValue?.("assigned_unit_id", next ?? "", { shouldDirty: true })}
+              className="h-7 w-full text-xs"
+              placeholder={operatingCompanyId ? "Select truck unit" : "Select company first"}
+              dataField="assigned_unit_id"
+              disabled={!operatingCompanyId}
+            />
           }
         />
         <Field
           label="Trailer unit"
           input={
-            <SelectCombobox {...register("assigned_trailer_unit_id")} className="h-7 w-full text-xs">
-              <option value="">{unitsQuery.isLoading ? "Loading units..." : "Select trailer unit"}</option>
-              {trailers.map((unit) => (
-                <option key={`trailer-${unit.id}`} value={unit.id}>
-                  {unit.label}
-                </option>
-              ))}
-            </SelectCombobox>
+            <Combobox
+              options={trailerOptions}
+              value={watch ? String(watch("assigned_trailer_unit_id") ?? "") || null : null}
+              onChange={(next) => setValue?.("assigned_trailer_unit_id", next ?? "", { shouldDirty: true })}
+              onSearch={setTrailerSearch}
+              placeholder={trailersQuery.isLoading ? "Loading trailers…" : "Select trailer unit"}
+              loading={trailersQuery.isLoading}
+              allowClear
+              className="h-7 w-full text-xs"
+              dataField="assigned_trailer_unit_id"
+              disabled={!operatingCompanyId}
+            />
           }
         />
       </div>
