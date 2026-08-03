@@ -54,7 +54,10 @@ spec and fixed the defect. Neither proves the change is correct. The review targ
    query that isn't scoped.
 6. **Financial boundary breach.** A PR labelled/treated "non-financial" that actually touches `accounting.*`
    write, posting/GL math, `catalogs.accounts`, a migration, or a money-control flag — that PR is financial
-   (§1.4) and must NOT have self-merged. Flag it loudly; it should have been owner-gated.
+   and must have gone through the financial-cluster proof gate (independent code-review + financial-agent
+   pass + 18-key evidence block), not the plain non-financial path. Flag it loudly regardless of who merged it
+   — this is a missed proof-gate finding, not a missing owner approval (OWNER LAW 2026-08-03: there is no
+   owner merge gate to have skipped).
 7. **Guard integrity.** The subtle one: a guard whose baseline was **RAISED** (weakened to absorb a new
    violation) instead of lowered, or a guard edited to *pass* rather than to *enforce*, or a "fix" that deleted
    the failing assertion. A weakened guard is worse than the original bug — it hides all future regressions.
@@ -80,8 +83,10 @@ spec and fixed the defect. Neither proves the change is correct. The review targ
   fix — before it's live.
 - **Post-hoc audit:** review a batch already on `main` (e.g. a session's merged PRs). CONFIRMED findings become
   immediate follow-up fix PRs. Use when work merged faster than it could be gated.
-- Either way, financial/migration findings are **owner-gated** — a reviewer never builds the fix for posting/GL;
-  it surfaces the finding for owner + the financial-migration flow.
+- Either way, financial/migration findings go through the **financial-agent proof gate**, not an owner
+  approval — a reviewer never builds the fix for posting/GL; it surfaces the finding for the
+  financial-migration flow (`ih35-accounting-decisions`), which the coder then builds, proves live, and
+  merges on green itself (OWNER LAW 2026-08-03 — no owner gate).
 
 ## Output (decision-shaping, ranked, honest)
 - A single ranked list, **most severe first.** Each finding: **PR#**, `file:line`, the defect in one sentence, a

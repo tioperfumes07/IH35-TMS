@@ -1,14 +1,21 @@
 ---
-description: Financial cluster = build-and-HOLD; reuse the poster; ASC/GAAP; parallel books; QBO never written
+description: Financial cluster = build + merge on green (OWNER LAW 2026-08-03, no holds); reuse the poster; ASC/GAAP; parallel books; QBO never written
 globs: ["**/accounting/**","**/driver-finance/**","**/banking/**","db/migrations/**","**/*posting*","**/settlements/**","**/factoring/**"]
 alwaysApply: true
 ---
-# Financial law (owner-gated, CPA-grade)
-- Anything touching `accounting.*`/`catalogs.accounts`/`db/migrations/*`/posting/GL/ledger/balances/periods/grants/RLS/money = **financial cluster**. **Builders never merge their own financial work — Devin merges on green (owner ruling 2026-07-29).** Owner Neon-apply still required for DDL. Never build finance/posting logic solo (design docs only) — **reuse the existing poster, write no new GL math**.
-- **The `JORGE-APPROVED` label is NOT a merge gate and must never be treated as one** (owner rulings 2026-07-26 and 2026-07-29; `21-session-operating-decree`, `docs/specs/PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26.md`). The owner does not review PRs. A gate nobody operates is a control deficiency, not a control: it records an approval step that never ran, which is worse to a CPA/auditor/lender/court than having no step. Asking for the label at merge time is itself a violation.
-- **The controls that actually operate, and therefore ARE the financial controls:** (1) the builder never merges its own financial work — Devin does, and Rule 11's independent reviewer must be a different agent than the builder; (2) `ih35_app` **cannot run DDL** — the database itself refuses, and the owner applies migrations on Neon; (3) money-posting flags default **OFF** per entity; (4) the 18-key evidence block on every money commit, CI-enforced at verify-steps 1324/1430/1431. These are enforced by machine or by the owner's own hand, so they leave real evidence.
-- **Unanswered owner questions are settled BEFORE implementation, never at merge** (`PRE-BLOCK-OWNER-QUESTIONS-LAW`). "May we merge this PR?" is not an owner question.
-- Parallel double-books; **QBO is NEVER written to** (reconcile-only, clone-once). Money-posting env flags default **OFF**, per-entity override only, until CPA sign-off + Neon tie-out.
+# Financial law (proof-gated, CPA-grade — NOT owner-approval-gated)
+
+**OWNER LAW (2026-08-03, FINAL): NO HOLDS. NO `JORGE-APPROVED` LABEL.** Claude and all coders (Cursor /
+Cascade / Devin / Claude Coder) have **FULL Neon access and merge authority**, including the financial
+cluster. See `.cursor/rules/00-operating-method-LAW.mdc` (governance) — this rule's controls below are the
+proof discipline that replaced the old approval gate, not a re-statement of it.
+
+- Anything touching `accounting.*`/`catalogs.accounts`/`db/migrations/*`/posting/GL/ledger/balances/periods/grants/RLS/money = **financial cluster**. **Coders MERGE ON GREEN in the financial cluster — no owner gate.** Coders apply migrations + flip posting flags themselves on Neon (FULL access; do not tell the owner to hand-apply). Never build finance/posting logic solo (design docs only) — **reuse the existing poster, write no new GL math**.
+- **The `JORGE-APPROVED` label is DELETED, not optional** (owner rulings 2026-07-26, 2026-07-29, and FINAL 2026-08-03; `21-session-operating-decree`, `docs/specs/PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26.md`). The owner does not review PRs. Asking for a label or an "OK to merge" at merge time is itself a violation.
+- **The controls that actually operate, and therefore ARE the financial controls:** (1) Rule 11's independent code-review + financial-agent review is never the builder itself; (2) `ih35_app` (the runtime role) **cannot run DDL** — a Postgres grant fact, not an approval step — the coder applies migrations on Neon themselves; (3) money-posting flags default **OFF** per entity until the owner's DECISION in chat to turn one on; (4) the 18-key evidence block on every money commit, CI-enforced at verify-steps 1324/1430/1431; (5) GUARD's independent live verify-AFTER-merge (never a pre-merge hold). These leave real, checkable evidence — a label nobody clicked never did.
+- **Unanswered owner questions are settled BEFORE implementation, never at merge** (`PRE-BLOCK-OWNER-QUESTIONS-LAW`). "May we merge this PR?" is not an owner question and never was.
+- Parallel double-books; **QBO is NEVER written to** (reconcile-only, clone-once). Money-posting env flags default **OFF**, per-entity override only, until the owner says "turn it on" in chat — then the coder flips it and proves it live.
 - Standards: US GAAP / FASB ASC. Chapter 11 = **ASC 470-60 debt restructuring (NOT ASC 852 fresh-start)**. ASC 606 revenue; ASC 842 for TRK↔USMCA truck leases. Factoring = secured borrowing (recourse), not a sale.
-- Cutover 04/01/2026; opening balances as-of 03/31/2026 (owner-entered only). Balanced opening JE, OBE plug.
-- The Financial/Accounting Agent must pass (GL correct, debits=credits, right accounts, flags OFF, entity-scoped) before any money PR merges.
+- Cutover 04/01/2026; opening balances as-of 03/31/2026 (**owner-entered only** — this one figure-entry control is retained; it is a data-accuracy control, not a merge-approval gate). Balanced opening JE, OBE plug.
+- The Financial/Accounting Agent must pass (GL correct, debits=credits, right accounts, flags OFF/flip-with-proof, entity-scoped) before any money PR merges — this is an independent-review gate, not an owner-approval gate.
+- **Retained (these are safety/integrity controls, NOT approval holds):** WORM/void-not-delete; no TMS→QBO write-back ever; the hold-merge-gate **migration firewall** in `scripts/db-migrate.mjs`; never moving money / submitting to an EXTERNAL financial or factoring system without the owner doing it directly.

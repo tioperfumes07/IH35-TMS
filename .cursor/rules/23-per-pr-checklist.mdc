@@ -31,8 +31,10 @@ any of them — **on conflict the MORE PROTECTIVE reading wins.**
    is not success (check content-type) · grep is not a systemic check · pipes mask exit codes ·
    baseline before blaming your change · deploy verified by ancestry
 6. **Merge gates** — merge to `main` IS the deploy; financial cluster / migrations /
-   `accounting.*`/`catalogs.*`/`mdata.*` / dependency bumps = **STOP for the owner**; prod DB access
-   gated per connection; flag flips are the owner's sole decision
+   `accounting.*`/`catalogs.*`/`mdata.*` / dependency bumps = **coder merges on green, no owner gate**
+   (OWNER LAW 2026-08-03 — NO HOLDS, NO `JORGE-APPROVED`; see `00-operating-method-LAW.mdc`); prod DB
+   access still gated per connection (ask/verify branch every time); flag flips are the owner's DECISION
+   in chat (turn it on), executed and proven live by the coder — never a label or a merge click
 7. **Migration PRs** — number above main's max · idempotent · dynamic `org.companies` (never a
    hardcoded UUID) · seed carries `deactivated_at` · `UNIQUE(opco, code)` · FORCE RLS · REVOKE DELETE
    · validate on a local throwaway DB · **never edit an applied migration** (override in the same PR,

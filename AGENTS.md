@@ -1,5 +1,14 @@
 # IH35-TMS — Agent coordination
 
+> **★★★★ OWNER LAW (2026-08-03, FINAL — reads above every other pointer in this file): NO HOLDS. NO
+> `JORGE-APPROVED` LABEL.** Claude and all coders (Cursor / Cascade / Devin / Claude Coder) have **FULL Neon
+> access and merge authority** — they merge on green in every lane, including financial/migrations, and
+> apply migrations + flip posting flags themselves on Neon. The owner steers by **DECISION in chat**, never
+> by a label or a merge click. Safeguard = **PROOF, not approval**. Canonical:
+> `.cursor/rules/00-operating-method-LAW.mdc` (CI: `verify-no-approval-holds` / step 2218) (governance section) + `.windsurf/rules/00-operating-method-LAW.md`.
+> Any older text below referencing `JORGE-APPROVED`, "Devin merges on green" as an exclusive role, "owner
+> applies on Neon," or "STOP for owner approval" is **SUPERSEDED** by this line.
+
 > **★★★ FULL SYSTEM AUDIT LAW (owner 2026-08-03 v3 — MANDATORY):** [docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md](docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md) — **"Complete" is NOT five layers.** Complete = **DoD A–E + VERIFY 1–8** PROD-VERIFIED per entity (live V2 picker+creator · V3 wiring · V4 deep linkage F+R). Cascade Always-On: `.windsurf/rules/ih35-deep-linkage-audit.md`. Cursor: Rule **31** (`.cursor/rules/31-full-system-audit-mandatory.mdc`). Ledger: [AUDIT-COVERAGE-LIVE.md](docs/audit/AUDIT-COVERAGE-LIVE.md) · run-log: [AUDIT-RUN-LOG.md](docs/audit/AUDIT-RUN-LOG.md). A code trace / count / CI-green is NOT proof. A guess is a defect.
 
 > **★★★ BEFORE ANY BLOCK — READ [docs/audit/AUDIT-COVERAGE-LIVE.md](docs/audit/AUDIT-COVERAGE-LIVE.md).**

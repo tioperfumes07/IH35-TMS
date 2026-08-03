@@ -15,4 +15,4 @@ alwaysApply: true
 - A migration can be **ledgered but ineffective** (its precondition/`WHERE NOT EXISTS` skipped). Verify the EFFECT (row/column/policy exists), not just the ledger entry.
 - CI-green ≠ done. Merged ≠ done. Deployed ≠ live until `/api/v1/healthz/shallow` `version` == merge SHA.
 - Definition of done = `acceptance[]` resolves on live evidence (file + route mounted + migration on prod + column populated 0-NULL + guard wired + planted-failure proof + browser/endpoint confirm). Cannot verify → say "UNVERIFIED", never guess.
-- `ih35_app` CANNOT run DDL. Build+validate migrations on a throwaway Postgres (apply-twice, idempotent); the OWNER applies on Neon + ledger-backfills; GUARD re-proves live with the RLS bypass.
+- `ih35_app` (the runtime role) CANNOT run DDL — that is a Postgres grant fact, not an approval gate. Build+validate migrations on a throwaway Postgres (apply-twice, idempotent); **the coder applies on Neon themselves** (OWNER LAW 2026-08-03 — FULL Neon access, no owner hand-apply, no waiting) + ledger-backfills; GUARD re-proves live with the RLS bypass AFTER merge (integrity check, not a pre-merge hold).

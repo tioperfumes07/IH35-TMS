@@ -7,8 +7,11 @@ description: >-
   this before building, reviewing, or reasoning about ANYTHING in accounting/finance (opening balances, GL
   posting, factoring, driver settlements, reconciliation, QBO import) so these settled decisions are treated
   as non-negotiable context, never re-derived or re-litigated. These are OWNER rulings — THERE IS NO CPA; the
-  owner is the sole financial authority. An agent NEVER
-  posts opening/financial entries to prod and NEVER builds GL-posting math solo (design docs only).
+  owner is the sole financial-DECISION authority (treatment, mapping, when to turn a flag on). OWNER LAW
+  (2026-08-03, FINAL): coders have FULL Neon access and merge on green, financial cluster included — the
+  owner does not gate merges or flip flags by hand. Retained controls: an agent NEVER writes new GL-posting
+  math solo (reuse the existing poster), NEVER enters the opening-balance figures (owner-entered), and NEVER
+  moves money / submits to an EXTERNAL financial or factoring system.
 ---
 
 # IH35-TMS — Locked accounting decisions (owner authority)
@@ -34,11 +37,13 @@ Phase 1 section in `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` (that doc's 
 the "no CPA" fact above still governs; the section is just where those answers were recorded).
 
 ## The one rule that governs all of this
-**An agent never posts a financial/opening entry to prod, never moves money, and never writes GL-posting
-math solo** (constitution §1.4/§1.6). Opening balances are **owner-entered**. You may build read-only engines,
-design docs, draft JE/SQL proofs, and flag-OFF scaffolding — the actual posting/flip is **the owner's hand**
-(there is NO CPA — the owner is the sole financial authority). Money-posting env flags flip on the **owner's
-sign-off + Neon tie-out**.
+**OWNER LAW (2026-08-03, FINAL — supersedes the old "owner's hand alone" wording): coders have FULL Neon
+access and merge authority. A coder builds the poster, applies the migration, flips a money-posting flag
+(after the owner's DECISION in chat to turn it on), and merges on green — themselves, with proof.** What
+stays an agent-never, permanently: never write new GL-posting math solo (**reuse the existing poster**),
+never enter the **opening-balance** figures (those stay owner-entered — a data-accuracy control, not a
+merge gate), and never move money or submit to an EXTERNAL financial/factoring system (there is NO CPA —
+the owner is the sole authority on *treatment* and *when*, not on *who clicks merge or flip*).
 
 ## 1. Architecture — PARALLEL double-books (not a sync)
 Canonical **three-layer model** (must stay aligned with `TMS-QBO-PARALLEL-BOOKS.md`,
@@ -163,10 +168,12 @@ asset) / **Factoring Recoursed Invoices**. ASC 860 control-test nuance applies; 
 - Retain existing **read-only consolidated reporting** additively for future reporting needs — never delete
   the consolidated surface; do not treat it as the books of record for a legal entity.
 - **No sales tax on line-haul** — interstate/cross-border freight transportation is not TX-sales-taxable.
-- Laredo tax entities; Ch.11 confirmed. Money posting flips on the **owner's** sign-off + Neon tie-out
-  (there is **NO CPA** — the owner is the sole financial authority).
+- Laredo tax entities; Ch.11 confirmed. Money posting flags flip after the **owner's DECISION in chat**
+  ("turn it on") + Neon tie-out proof — the coder executes and proves it live (there is **NO CPA** — the
+  owner is the sole authority on the accounting *treatment* and *timing decision*, not a merge/flip gate).
 
 ---
 Cross-refs: [[accounting-architecture-parallel-clone-reconcile]], [[cpa-locked-decisions-2026-07-01]],
 [[opening-balance-and-recon-decisions-2026-07-02]], [[driver-escrow-is-liability]],
-[[finance-engine-decisions-locked]], [[expense-gl-cash-basis-decision]]. Build engines/design docs; never post solo.
+[[finance-engine-decisions-locked]], [[expense-gl-cash-basis-decision]]. Build engines/design docs; reuse the
+poster for any actual posting — never invent new GL math solo. Coders merge and apply on green (OWNER LAW 2026-08-03).
