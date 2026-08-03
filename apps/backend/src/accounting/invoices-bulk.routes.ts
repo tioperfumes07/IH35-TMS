@@ -2,13 +2,47 @@ import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import type { PoolClient } from "pg";
 import { z } from "zod";
-import { buildPatchChanges } from "../audit/crud-audit.js";
+import { buildPatchChanges, appendCrudAudit } from "../audit/crud-audit.js";
+import { postInvoiceGlIfEnabled } from "./invoice-gl.service.js";
 import { appendBulkCrudAudit, registerBulkRoute } from "../bulk/bulk-update.factory.js";
 import type { BulkPerEntityContext, BulkPerEntityResult } from "../bulk/bulk.types.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 
 const invoiceStatusSchema = z.enum(["draft", "sent", "paid", "void", "factored"]);
+
+/** Statuses that represent a real A/R obligation. 'draft' is not one yet; 'void' never is. */
+const POSTABLE_INVOICE_STATUSES = new Set(["sent", "paid", "factored"]);
+
+/**
+ * ACCT-F100: post the invoice's DR ar_control / CR revenue JE and record a LOUD audit row if the
+ * poster refuses. Never throws into the caller — an invoice that has already been issued must not be
+ * rolled back because its GL leg could not resolve an account; that is retriable, and silence is not.
+ */
+async function postInvoiceGlAndAudit(
+  client: Parameters<typeof appendCrudAudit>[0],
+  args: { invoiceId: string; operatingCompanyId: string; actorUserId: string }
+): Promise<void> {
+  const res = await postInvoiceGlIfEnabled(args.operatingCompanyId, args.invoiceId, {
+    userId: args.actorUserId,
+  });
+  if (!res.posted && res.reason === "post_failed") {
+    await appendCrudAudit(
+      client,
+      args.actorUserId,
+      "accounting.invoice.gl_post_failed",
+      {
+        resource_type: "accounting.invoices",
+        resource_id: args.invoiceId,
+        operating_company_id: args.operatingCompanyId,
+        code: res.code,
+        message: res.message,
+      },
+      "warning",
+      "ACCT-F100-INVOICE-AR-GL"
+    );
+  }
+}
 
 const setStatusPayloadSchema = z.object({
   status: invoiceStatusSchema,
@@ -90,6 +124,19 @@ async function handleInvoiceBulk(ctx: BulkPerEntityContext<InvoiceBulkPayload>):
       return { ok: false, code: "E_UPDATE_FAILED", message: "Invoice status update failed" };
     }
     auditPayload.changes = buildPatchChanges({ status: statusPayload.status }, oldRow, updateRes.rows[0] as Record<string, unknown>);
+    // ACCT-F100 — post on the FIRST transition into a real A/R state. Owner ruling 2026-08-03:
+    // Finalize/Post OR Send, whichever comes first. Deliberately NOT on 'draft' (not yet an
+    // obligation) and NOT on 'void' (posting a void would be the opposite of the intent). 'paid' and
+    // 'factored' can only be reached from a sent invoice, but they are included because a status jump
+    // straight to them must not leave A/R unrecorded — the poster's idempotency key makes the
+    // already-posted case a no-op rather than a double-post.
+    if (POSTABLE_INVOICE_STATUSES.has(String(statusPayload.status))) {
+      await postInvoiceGlAndAudit(client, {
+        invoiceId: id,
+        operatingCompanyId,
+        actorUserId,
+      });
+    }
     await enqueueTmsInvoicePushRequested(pushClient, {
       operating_company_id: operatingCompanyId,
       invoice_id: id,
@@ -113,6 +160,10 @@ async function handleInvoiceBulk(ctx: BulkPerEntityContext<InvoiceBulkPayload>):
       `,
       [id, operatingCompanyId, (payload as z.infer<typeof markSentPayloadSchema>).sent_at ?? null, actorUserId]
     );
+    // ACCT-F100 — the SEND arm of the same ruling. Same idempotent poster as the single-invoice send
+    // path (invoice-send.service.ts), so a bulk mark-sent of already-finalized invoices posts each
+    // exactly once.
+    await postInvoiceGlAndAudit(client, { invoiceId: id, operatingCompanyId, actorUserId });
     if (updateRes.rows.length === 0) {
       return { ok: false, code: "E_UPDATE_FAILED", message: "Invoice mark sent failed" };
     }
