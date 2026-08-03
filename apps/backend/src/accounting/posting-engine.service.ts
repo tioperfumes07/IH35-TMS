@@ -88,7 +88,8 @@ export type PostingErrorCode =
   | "QBO_BILL_POST_GL_REFUSED"
   | "QBO_BILL_PAYMENT_POST_GL_REFUSED"
   | "EXPENSE_POST_GL_REFUSED"
-  | "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED";
+  | "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED"
+  | "QBO_INVOICE_POST_GL_REFUSED";
 
 export class PostingEngineError extends Error {
   code: PostingErrorCode;
@@ -623,6 +624,7 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
     tax_cents: number;
     display_id: string | null;
     source_load_id: string | null;
+    source_system: string | null;
   }>(
     `
       SELECT
@@ -632,7 +634,8 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
         total_cents::bigint AS total_cents,
         tax_cents::bigint AS tax_cents,
         display_id,
-        source_load_id::text
+        source_load_id::text,
+        source_system::text
       FROM accounting.invoices
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -643,6 +646,14 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
   );
   const invoice = invoiceRes.rows[0];
   if (!invoice) throw new PostingEngineError("SOURCE_NOT_FOUND", "Invoice not found");
+  // Parallel books: QBO-origin invoices already have A/R + revenue in QBO. Posting them here would
+  // create duplicate journal entries. Mirror the bill/payment refuse pattern.
+  if ((invoice.source_system ?? "").toLowerCase() === "qbo") {
+    throw new PostingEngineError(
+      "QBO_INVOICE_POST_GL_REFUSED",
+      "Refusing Invoice\u2192GL post for source_system=qbo \u2014 parallel books; QBO already holds this A/R + revenue. Do not invent a second TMS journal entry."
+    );
+  }
   if (!INVOICE_ELIGIBLE_STATUSES.has(invoice.status)) {
     throw new PostingEngineError(
       "INVOICE_NOT_POSTING_ELIGIBLE",
