@@ -147,27 +147,23 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
   });
 
   const unitsQuery = useQuery({
-    queryKey: ["insurance", "wizard", "units", operatingCompanyId],
+    queryKey: ["insurance", "wizard", "units", operatingCompanyId, unitSearchQuery],
     enabled: open && Boolean(operatingCompanyId),
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 500 }).then((r) => r.units as UnitRow[]),
+    queryFn: () =>
+      listUnits({
+        operating_company_id: operatingCompanyId,
+        limit: 200,
+        search: unitSearchQuery.trim() || undefined,
+      }).then((r) => r.units as UnitRow[]),
   });
 
   const allUnits = useMemo(() => (unitsQuery.data ?? []).filter((u) => Boolean(u.id)), [unitsQuery.data]);
 
+  // Chip filter stays client-side on the current server page; search is server-side (no silent 500).
   const filteredUnits = useMemo(() => {
-    let rows = allUnits;
-    if (activeChip !== "All") rows = rows.filter((u) => unitMatchesChip(u, activeChip));
-    if (unitSearchQuery.trim()) {
-      const q = unitSearchQuery.toLowerCase();
-      rows = rows.filter(
-        (u) =>
-          (u.unit_code ?? "").toLowerCase().includes(q) ||
-          (u.unit_number ?? "").toLowerCase().includes(q) ||
-          (u.vin ?? "").toLowerCase().includes(q)
-      );
-    }
-    return rows;
-  }, [allUnits, activeChip, unitSearchQuery]);
+    if (activeChip === "All") return allUnits;
+    return allUnits.filter((u) => unitMatchesChip(u, activeChip));
+  }, [allUnits, activeChip]);
 
   useEffect(() => {
     if (!open) return;
@@ -407,7 +403,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-700">Select Vehicles *</span>
               <span className="text-xs font-medium text-slate-600">
-                {selectedUnitIds.length} of {allUnits.length} selected
+                {selectedUnitIds.length} selected
               </span>
             </div>
             <input
