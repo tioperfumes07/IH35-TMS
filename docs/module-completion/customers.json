@@ -43,8 +43,8 @@
       "title": "Edit vs New transaction ActionButton visual parity on list header",
       "layers": ["DOD-B"],
       "spec": "CHROME-001 · CLS-CHROME-INCONSISTENCY",
-      "status": "OPEN",
-      "evidence": "scaffold — FAIL: 24×16px Edit vs 98×42px New transaction on same row",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: Customers master-detail header Edit is Button variant=secondary className=h-8 beside primary New transaction (was ActionButton text-link). Vendors sibling same. Guard verify-cust-chrome-header-action-parity + step 2224. data-testid customer-header-edit / customer-header-new-transaction.",
       "pr": null
     },
     {
@@ -52,8 +52,8 @@
       "title": "Edit button treatment consistent list vs CustomerDetail header",
       "layers": ["DOD-B"],
       "spec": "CHROME-002",
-      "status": "OPEN",
-      "evidence": "scaffold — FAIL: two unrelated Edit visual treatments",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: Customer details tab Edit (data-testid=customer-details-edit) uses the same Button variant=secondary chrome as list-header Edit — no ActionButton dual path. CustomerDetail page Edit remains primary Button for inline edit-mode (different action).",
       "pr": null
     },
     {
