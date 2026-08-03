@@ -124,15 +124,29 @@ export function CargoClaimIntakeSurface({
     enabled: companyEnabled,
   });
 
+  // SAF-B29: claimant + reason were silent limit:200 — search must be state + queryKey + server param.
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [reasonSearch, setReasonSearch] = useState("");
+
   const reasonsQuery = useQuery({
-    queryKey: ["catalogs", "cargo-claim-reasons", operatingCompanyId],
-    queryFn: () => listCargoClaimReasons(operatingCompanyId, { is_active: "true", limit: PICKER_LIMIT }),
+    queryKey: ["catalogs", "cargo-claim-reasons", operatingCompanyId, reasonSearch],
+    queryFn: () =>
+      listCargoClaimReasons(operatingCompanyId, {
+        is_active: "true",
+        limit: PICKER_LIMIT,
+        search: reasonSearch || undefined,
+      }),
     enabled: pickersEnabled,
   });
 
   const customersQuery = useQuery({
-    queryKey: ["mdata", "customers", "cargo-claim-picker", operatingCompanyId],
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: PICKER_LIMIT }),
+    queryKey: ["mdata", "customers", "cargo-claim-picker", operatingCompanyId, customerSearch],
+    queryFn: () =>
+      listCustomers({
+        operating_company_id: operatingCompanyId,
+        limit: PICKER_LIMIT,
+        search: customerSearch || undefined,
+      }),
     enabled: pickersEnabled,
   });
 
@@ -462,6 +476,8 @@ export function CargoClaimIntakeSurface({
                   operatingCompanyId={operatingCompanyId}
                   placeholder="Select customer"
                   disabled={!operatingCompanyId || customersQuery.isLoading}
+                  onSearch={setCustomerSearch}
+                  loading={customersQuery.isLoading}
                 />
               </div>
             </label>
@@ -482,6 +498,7 @@ export function CargoClaimIntakeSurface({
                   placeholder={reasonsQuery.isLoading ? "Loading reasons…" : "Select reason"}
                   loading={reasonsQuery.isLoading}
                   disabled={!operatingCompanyId || reasonsQuery.isLoading}
+                  onSearch={setReasonSearch}
                   onOptionCreated={() => {
                     void queryClient.invalidateQueries({
                       queryKey: ["catalogs", "cargo-claim-reasons", operatingCompanyId],
@@ -671,6 +688,8 @@ export function CargoClaimIntakeSurface({
                     operatingCompanyId={operatingCompanyId}
                     placeholder="Select customer"
                     disabled={!operatingCompanyId || customersQuery.isLoading}
+                    onSearch={setCustomerSearch}
+                    loading={customersQuery.isLoading}
                   />
                 </div>
               </label>
@@ -687,6 +706,7 @@ export function CargoClaimIntakeSurface({
                     placeholder="Select reason"
                     loading={reasonsQuery.isLoading}
                     disabled={!operatingCompanyId || reasonsQuery.isLoading}
+                    onSearch={setReasonSearch}
                   />
                 </div>
               </label>
