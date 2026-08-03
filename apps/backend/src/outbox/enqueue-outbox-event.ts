@@ -36,25 +36,54 @@ export type OutboxAggregate = {
  *
  * `next_retry_at` is set to now() so the processor picks the event up on its next pass — matching
  * every existing outbox.events writer in the tree.
+ *
+ * `dedupeKey` (optional) writes outbox.events.dedupe_key, which carries a LIFETIME partial unique
+ * index (ux_outbox_events_dedupe_key, migration 0212 — verified on prod 2026-08-03). Passing one makes
+ * the enqueue exactly-once for that identity: a second call with the same key inserts nothing and
+ * returns { enqueued: false } instead of raising. That is the correct primitive for anything a
+ * recurring scan re-discovers on every pass — a daily reminder sweep re-finds the same upcoming
+ * payment every single day, and without a key it would notify the same human every day until the due
+ * date, which trains people to ignore the channel. Deduping in the database rather than with a
+ * "already_sent" flag also means a crash between "send" and "mark sent" cannot double-notify.
+ *
+ * Do NOT pass a dedupeKey for events that must legitimately recur for the same subject unless the type
+ * is listed in OUTBOX_REUSABLE_DEDUPE_EVENT_TYPES (see reusable-dedupe.ts) — otherwise the key blocks
+ * the second occurrence forever.
  */
 export async function enqueueOutboxEvent(
   client: Queryable,
   eventType: string,
   aggregate: OutboxAggregate,
-  payload: Record<string, unknown>
-): Promise<void> {
-  await client.query(
+  payload: Record<string, unknown>,
+  dedupeKey?: string | null
+): Promise<{ enqueued: boolean }> {
+  const body = JSON.stringify({
+    aggregate_type: aggregate.aggregate_type,
+    aggregate_id: aggregate.aggregate_id,
+    ...payload,
+  });
+
+  if (!dedupeKey) {
+    await client.query(
+      `
+        INSERT INTO outbox.events (event_type, payload, next_retry_at)
+        VALUES ($1, $2::jsonb, now())
+      `,
+      [eventType, body]
+    );
+    return { enqueued: true };
+  }
+
+  // The index is partial (WHERE dedupe_key IS NOT NULL), so the conflict target must name the same
+  // predicate for Postgres to use it as the arbiter.
+  const res = await client.query<{ id: string }>(
     `
-      INSERT INTO outbox.events (event_type, payload, next_retry_at)
-      VALUES ($1, $2::jsonb, now())
+      INSERT INTO outbox.events (event_type, payload, next_retry_at, dedupe_key)
+      VALUES ($1, $2::jsonb, now(), $3)
+      ON CONFLICT (dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING
+      RETURNING id::text AS id
     `,
-    [
-      eventType,
-      JSON.stringify({
-        aggregate_type: aggregate.aggregate_type,
-        aggregate_id: aggregate.aggregate_id,
-        ...payload,
-      }),
-    ]
+    [eventType, body, dedupeKey]
   );
+  return { enqueued: res.rows.length > 0 };
 }

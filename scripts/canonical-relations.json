@@ -66,6 +66,8 @@
     "accounting.recurring_bill_generation_log",
     "accounting.recurring_bill_templates",
     "accounting.recurring_templates",
+    "accounting.related_party_loan_entries",
+    "accounting.related_party_loan_schedule",
     "accounting.revenue_contracts",
     "accounting.revenue_obligations",
     "accounting.revenue_recognition_rows",
