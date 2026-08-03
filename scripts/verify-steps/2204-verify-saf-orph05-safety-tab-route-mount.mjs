@@ -1,4 +1,4 @@
-// 2202-verify-saf-orph05-safety-tab-route-mount — SAF-ORPH-05 layer A (Cursor EVEN band).
+// 2204-verify-saf-orph05-safety-tab-route-mount — SAF-ORPH-05 layer A (Cursor EVEN band).
 //
 // Closes chrome/route mount: every SAFETY_GROUPS canonical /safety/* route is registered in
 // manifest.tsx. Does NOT claim live TRANSP+USMCA DoD click-through (that remains UNVERIFIED).
