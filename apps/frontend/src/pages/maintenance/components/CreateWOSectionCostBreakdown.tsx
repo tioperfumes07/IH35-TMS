@@ -1,3 +1,23 @@
+/**
+ * @archived-form-owner  superseded-by: components/forms/TwoSectionLineEditor.tsx
+ *
+ * ARCHIVED (Rule 07 — archive, never delete), 2026-08-03. This is the old Work Order "Section C —
+ * Cost Breakdown" editor. It OWNS the `line_items` field array, but it is imported by NOTHING:
+ * CreateWorkOrderModal renders <TwoSectionLineEditor onChange={setLines} /> instead, which writes a
+ * separate `lines` React state.
+ *
+ * WHY THAT MATTERED (ACCT-F94 / C1): because this component is never mounted, `line_items` is
+ * PERMANENTLY EMPTY in create mode. The modal's pre-save rule "At least one cost line item" watched
+ * that field, so it was ALWAYS red and the POST never fired — no Repair work order could be created
+ * at all. The rule now counts the arrays actually submitted.
+ *
+ * An orphaned component that still owns a form field is the dangerous shape here: its own
+ * useFieldArray/watch pair is internally coherent, so it reads as healthy code, while any LIVE
+ * validator that trusts its field is silently testing a constant. Kept for reference, annotated so
+ * the guard can tell a KNOWN archived owner from a NEW accidental orphan.
+ *
+ * Enforced by scripts/verify-no-orphaned-form-owners.mjs.
+ */
 import { useFieldArray, Controller, type Control, type UseFormRegister, type UseFormWatch } from "react-hook-form";
 import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
