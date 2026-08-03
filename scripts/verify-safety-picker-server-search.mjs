@@ -28,15 +28,19 @@ const CHECKS = [
   },
   {
     file: "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx",
-    describe: "incidents cluster loads query sends loadSearch",
+    // Wave-6: drawer load uses EntityPicker kind=load (server search in registry) — supersedes listLoads+loadSearch.
+    describe: "incidents cluster drawer load uses EntityPicker kind=load",
     test: (s) =>
-      /queryKey:\s*\["safety",\s*"incidents-loads",\s*operatingCompanyId,\s*loadSearch\]/.test(s) &&
-      /listLoads\([\s\S]*?search:\s*loadSearch\s*\|\|\s*undefined/.test(s),
+      /field-load_id[\s\S]*?EntityPicker[\s\S]*?kind=["']load["']/.test(s) ||
+      (/EntityPicker[\s\S]*?kind=["']load["']/.test(s) && /field-load_id/.test(s)),
   },
   {
     file: "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx",
-    describe: "incidents cluster drawer pickers wire onSearch",
-    test: (s) => /onSearch=\{setUnitSearch\}/.test(s) && /onSearch=\{setLoadSearch\}/.test(s),
+    // Trailer stays Combobox+onSearch; unit/load are EntityPicker (internal server search).
+    describe: "incidents cluster drawer unit EntityPicker + trailer onSearch",
+    test: (s) =>
+      (/field-unit_id[\s\S]*?EntityPicker[\s\S]*?kind=["']unit["']/.test(s) || /kind=["']unit["']/.test(s)) &&
+      /onSearch=\{setUnitSearch\}/.test(s),
   },
   {
     file: "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx",
