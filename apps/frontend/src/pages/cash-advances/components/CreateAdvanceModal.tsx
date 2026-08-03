@@ -9,11 +9,11 @@ import {
 } from "../../../api/cashAdvances";
 import { cashAdvanceTypesCatalogClient } from "../../../api/catalogs-driver";
 import { getAllAccounts } from "../../../api/banking";
-import { listDrivers, listUnits } from "../../../api/mdata";
+import { listUnits } from "../../../api/mdata";
 import { listLoads, getLoad } from "../../../api/loads";
 import { Button } from "../../../components/Button";
 import { Combobox } from "../../../components/Combobox";
-import { CreateDriverModal } from "../../../components/drivers/CreateDriverModal";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
@@ -81,7 +81,6 @@ function requiresLoad(purpose: CashAdvancePurpose) {
 export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const { pushToast } = useToast();
   const [driverId, setDriverId] = useState<string | null>(null);
-  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const [amount, setAmount] = useState("300");
   const [purpose, setPurpose] = useState<CashAdvancePurpose>("family_emergency");
   const [advanceTypeCode, setAdvanceTypeCode] = useState<string>("EMERGENCY");
@@ -121,12 +120,6 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
       setLinkedBillEnabled(false);
     }
   }, [purpose]);
-
-  const driversQuery = useQuery({
-    queryKey: ["cash-advances", "drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", search: "", limit: 200 }),
-    enabled: open && Boolean(operatingCompanyId),
-  });
 
   const billsQuery = useQuery({
     queryKey: ["cash-advances", "unpaid-bills", operatingCompanyId],
@@ -170,15 +163,6 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
     const assignedUnit = loadDetailQuery.data.assigned_unit_id;
     if (assignedUnit) setUnitId(String(assignedUnit));
   }, [loadDetailQuery.data]);
-
-  const driverOptions = useMemo(
-    () =>
-      (driversQuery.data?.drivers ?? []).map((d) => ({
-        value: d.id,
-        label: `${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || d.id,
-      })),
-    [driversQuery.data]
-  );
 
   const bankAccounts = useMemo(() => {
     const rows = (bankAccountsQuery.data?.accounts ?? []).map(
@@ -370,19 +354,21 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           <div className="grid gap-3 md:grid-cols-2">
             <label className="space-y-1 md:col-span-2">
               <span className="font-medium text-gray-700">Driver</span>
-              <Combobox
-                options={driverOptions}
+              {/*
+                SAF-B29: Combobox over listDrivers(search:"", limit:200) silently hid drivers past the
+                first page. DriverPickerWithCreate owns server search + inline create (drawer chrome).
+              */}
+              <DriverPickerWithCreate
+                operatingCompanyId={operatingCompanyId}
                 value={driverId}
-                onChange={(v) => {
-                  setDriverId(v);
+                onChange={(next) => {
+                  setDriverId(next);
                   setLoadId(null);
                 }}
+                open={open}
+                shell="drawer"
                 placeholder="Select driver"
-                loading={driversQuery.isLoading}
-                allowAddNew={{
-                  label: "+ Create driver",
-                  onAdd: () => setDriverCreateOpen(true),
-                }}
+                dataField="cash-advance-driver"
               />
             </label>
 
@@ -682,19 +668,6 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           ) : null}
         </div>
       </ParityDrawer>
-
-      {operatingCompanyId ? (
-        <CreateDriverModal
-          open={driverCreateOpen}
-          companyId={operatingCompanyId}
-          onClose={() => setDriverCreateOpen(false)}
-          onCreated={(id) => {
-            setDriverId(id);
-            setDriverCreateOpen(false);
-            void driversQuery.refetch();
-          }}
-        />
-      ) : null}
     </>
   );
 }
