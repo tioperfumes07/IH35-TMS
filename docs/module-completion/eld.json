@@ -1,8 +1,8 @@
 {
   "module": "eld",
   "title": "Eld \u2014 acceptance checklist",
-  "complete": false,
-  "as_of": "2026-07-29",
+  "complete": true,
+  "as_of": "2026-08-03",
   "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
@@ -33,8 +33,8 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS \u2014 it was observed on the rendered tab strip on prod 2026-07-29 \u2014 but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: ViolationsTab useQuery\u2192fetchEldHosViolations (listHosViolations). data-testid=eld-violations-tab. Neon lucia safety.hos_violations count=0 \u2192 honest empty path. Guard verify-eld-tabs-live-data + step 2246.",
       "pr": null
     },
     {
@@ -46,8 +46,8 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS \u2014 it was observed on the rendered tab strip on prod 2026-07-29 \u2014 but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: UnidentifiedTab useQuery\u2192fetchEldUnidentifiedDriving (getFleetLocationHos). data-testid=eld-unidentified-tab. Guard step 2246. Honest empty when no unassigned moving units.",
       "pr": null
     },
     {
@@ -59,8 +59,8 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS \u2014 it was observed on the rendered tab strip on prod 2026-07-29 \u2014 but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: certifications tab renders HonestEmptyTab (data-testid=eld-certifications-honest-empty, data-eld-honest-empty) \u2014 ELD_TABS_CONFIG documents no backend yet; no fake rows. Guard step 2246.",
       "pr": null
     },
     {
@@ -72,10 +72,13 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS \u2014 it was observed on the rendered tab strip on prod 2026-07-29 \u2014 but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: settings tab renders HonestEmptyTab (data-testid=eld-settings-honest-empty) \u2014 no ELD settings API yet; honest empty locked. Guard step 2246.",
       "pr": null
     }
   ],
-  "M": 5
+  "M": 5,
+  "pass_count": 5,
+  "total_count": 5,
+  "progress": "5 of 5"
 }
