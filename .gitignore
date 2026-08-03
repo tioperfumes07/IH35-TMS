@@ -58,6 +58,7 @@ docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 !.cursor/rules/29-cursor-claude-parity-ship.mdc
 !.cursor/rules/30-claude-green-evidence-format.mdc
 !.cursor/rules/31-full-system-audit-mandatory.mdc
+!.cursor/rules/ih35-deep-linkage-audit.mdc
 !.cursor/rules/dual-lane-never-idle.mdc
 !.cursor/rules/06-live-ops-cadence.mdc
 
