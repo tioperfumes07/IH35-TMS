@@ -1,18 +1,18 @@
 # Module completion — Inventory (Parts & Stock)
 
-**PROGRESS: 0 of 7** · complete: `false` · as_of: 2026-08-02 · live_sha: `—`
+**PROGRESS: 1 of 7** · complete: `false` · as_of: 2026-08-03 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 0 |
+| PASS | 1 |
 | HOLD | 0 |
-| OPEN | 7 |
+| OPEN | 6 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
-| `INV-S01` | **OPEN** | /inventory Parts & Stock roster count matches maintenance.parts_inventory | scaffold — auditor PASS TRANSP: 144 rows exact UI match | — |
+| `INV-S01` | **PASS** | /inventory Parts & Stock roster count matches maintenance.parts_inventory | 2026-08-03 Neon lucia br-fancy-credit-akjnd07a: maintenance.parts_inventory TRANSP ≈144 (non-void active rows). InventoryPartsStockPage → listMaintenanceParts → GET /api/v1/maintenance/parts → FROM maintenance.parts_inventory (not catalogs.parts=0). Guard verify-inv-s01-parts-roster-density step 2256. Auditor 144-row UI match confirmed. | — |
 | `INV-CAT-01` | **OPEN** | Category column populated or honestly N/A (not 100% blank) | scaffold — FAIL: category NULL/empty for all 144 TRANSP parts | — |
 | `INV-S02` | **OPEN** | /inventory/assignments entity-scoped and honest empty when unassigned | scaffold — not proven; creation flow UNVERIFIED | — |
 | `INV-S03` | **OPEN** | /inventory/purchases Purchase History tab wired | scaffold — flagged UNVERIFIED in inventory-deep pass | — |

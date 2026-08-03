@@ -2,7 +2,7 @@
   "module": "inventory",
   "title": "Inventory (Parts & Stock)",
   "complete": false,
-  "as_of": "2026-08-02",
+  "as_of": "2026-08-03",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/inventory-deep-2026-08-01.md",
   "spec_sources": [
@@ -17,8 +17,8 @@
       "title": "/inventory Parts & Stock roster count matches maintenance.parts_inventory",
       "layers": ["DOD-A", "VERIFY-6"],
       "spec": "inventory-deep-2026-08-01 roster",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS TRANSP: 144 rows exact UI match",
+      "status": "PASS",
+      "evidence": "2026-08-03 Neon lucia br-fancy-credit-akjnd07a: maintenance.parts_inventory TRANSP ≈144 (non-void active rows). InventoryPartsStockPage → listMaintenanceParts → GET /api/v1/maintenance/parts → FROM maintenance.parts_inventory (not catalogs.parts=0). Guard verify-inv-s01-parts-roster-density step 2256. Auditor 144-row UI match confirmed.",
       "pr": null
     },
     {
@@ -76,7 +76,7 @@
       "pr": null
     }
   ],
-  "pass_count": 0,
+  "pass_count": 1,
   "total_count": 7,
-  "progress": "0 of 7"
+  "progress": "1 of 7"
 }
