@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { listUnits, listVendors } from "../../api/mdata";
+import { listVendors } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -26,18 +27,16 @@ const SERVICE_TYPES: Array<{ value: RoadServiceType; label: string }> = [
 export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Props) {
   const { createTicket } = useRoadServiceTickets();
   const queryClient = useQueryClient();
-  const unitsQuery = useQuery({
-    queryKey: ["units", "road-service", operatingCompanyId],
-    queryFn: () =>
-      listUnits({ operating_company_id: operatingCompanyId }).then((res) =>
-        (res.units as Array<{ id: string; display_id?: string | null; unit_number?: string | null }>)
-      ),
-    enabled: open && Boolean(operatingCompanyId),
-  });
-
+  const [vendorSearch, setVendorSearch] = useState("");
   const vendorsQuery = useQuery({
-    queryKey: ["mdata", "vendors", operatingCompanyId, "road-service"],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: 1000 }),
+    queryKey: ["mdata", "vendors", operatingCompanyId, "road-service", vendorSearch],
+    queryFn: () =>
+      listVendors({
+        operating_company_id: operatingCompanyId,
+        status: "active",
+        limit: 200,
+        search: vendorSearch || undefined,
+      }),
     enabled: open && Boolean(operatingCompanyId),
   });
 
@@ -49,11 +48,6 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
   const [locationAddress, setLocationAddress] = useState("");
   const [initialComplaint, setInitialComplaint] = useState("");
   const [error, setError] = useState<string | null>(null);
-
-  const unitOptions = (unitsQuery.data ?? []).map((unit) => ({
-    value: unit.id,
-    label: unit.display_id ?? unit.unit_number ?? unit.id,
-  }));
 
   const vendorOptions = useMemo(
     () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption).sort((a, b) => a.label.localeCompare(b.label)),
@@ -116,6 +110,7 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
               operatingCompanyId={operatingCompanyId}
               placeholder={vendorsQuery.isLoading ? "Loading vendors…" : "Select vendor…"}
               loading={vendorsQuery.isLoading}
+              onSearch={setVendorSearch}
               onOptionCreated={async (opt) => {
                 setVendorId(opt.value);
                 setVendorName(opt.label);
@@ -126,18 +121,17 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
         </label>
         <label className="block text-xs font-medium text-gray-700">
           Unit
-          <SelectCombobox
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-[13px]"
-            value={unitId}
-            onChange={(e) => setUnitId(e.target.value)}
-          >
-            <option value="">Select unit…</option>
-            {unitOptions.map((unit) => (
-              <option key={unit.value} value={unit.value}>
-                {unit.label}
-              </option>
-            ))}
-          </SelectCombobox>
+          <div className="mt-1">
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={operatingCompanyId}
+              value={unitId || null}
+              onChange={(next) => setUnitId(next ?? "")}
+              enabled={open}
+              placeholder="Select unit…"
+              dataField="road-service-unit"
+            />
+          </div>
         </label>
         <label className="block text-xs font-medium text-gray-700">
           Service type
