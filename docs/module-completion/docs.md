@@ -1,20 +1,20 @@
 # Module completion — Documents (DOCS)
 
-**PROGRESS: 0 of 5** · complete: `false` · as_of: 2026-08-02 · live_sha: `—`
+**PROGRESS: 1 of 5** · complete: `false` · as_of: 2026-08-03 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 0 |
+| PASS | 1 |
 | HOLD | 0 |
-| OPEN | 5 |
+| OPEN | 4 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
-| `DOCS-S01` | **OPEN** | /docs home renders document index with honest KPIs | scaffold — auditor: Total Docs=3, Missing Required=3 (100%) | — |
+| `DOCS-S01` | **PASS** | /docs home renders document index with honest KPIs | 2026-08-03 Cursor: DocsHomePage KPIs (Total/Expiring/Missing/Recent) + list + Upload. Neon lucia docs.files=24. Entity column EntityLink when links exist; honest — when unlinked. Guard verify-docs-entity-column-entitylink + step 2250. | — |
 | `DOCS-ECON-01` | **OPEN** | Entity-linked classified documents (not generic test PDFs only) | scaffold — OPEN: 3 uncategorized test PDFs; real driver/unit docs may live elsewhere | — |
-| `DOCS-LINK-01` | **OPEN** | Document rows link to entity (driver/unit/customer) forward+reverse | scaffold — Entity=— on all 3 rows; linkage unproven | — |
+| `DOCS-LINK-01` | **OPEN** | Document rows link to entity (driver/unit/customer) forward+reverse | 2026-08-03 PARTIAL: EntityLink wired on DocsHome (no UUID slice). Neon lucia docs.file_links=0 — density still blocks PASS until classified entity links exist (DOCS-ECON-01 sibling). | — |
 | `DOCS-S02` | **OPEN** | Required document types catalog populated per opco | scaffold — 100% missing required may be data gap not bug; needs source-of-truth check | — |
 | `DOCS-VERIFY-01` | **OPEN** | Docs module VERIFY-1..8 TRANSP + USMCA | scaffold — functionally empty of classified data; follow-up vs attachment tables | — |
 
