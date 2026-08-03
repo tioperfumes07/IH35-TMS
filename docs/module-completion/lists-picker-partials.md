@@ -57,3 +57,4 @@
 - 2026-08-03 · guard 2098 · BookLoadModalV4 Factoring company → `createKind=vendor` (`mdata.vendors`; was bare SelectCombobox) · PR pending
 
 - 2026-08-03 · guard 2114 · Maintenance VendorsPage AP link → `createKind=vendor` + apVendorSearch (was bare Combobox limit:1000) · PR pending
+- 2026-08-03 · guard 2118 · BookLoadCustomerSection → customerSearch on ReferenceSelect createKind=customer (was silent limit:5000) · PR pending

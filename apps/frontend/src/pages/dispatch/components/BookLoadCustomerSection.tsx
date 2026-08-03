@@ -1,4 +1,4 @@
-import { useMemo, type JSX } from "react";
+import { useMemo, useState, type JSX } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { listCustomers } from "../../../api/mdata";
@@ -42,6 +42,9 @@ export function BookLoadCustomerSection({
   showOptionalFields = true,
 }: Props) {
   const queryClient = useQueryClient();
+  // SAF-B29 / LST-PICKER-01: prod ~2.7k customers — silent limit:5000 without search still truncates
+  // and freezes the drawer; type-ahead re-queries so customers past page 1 stay selectable.
+  const [customerSearch, setCustomerSearch] = useState("");
   const dollarsToCents = (value: unknown) => {
     if (value === null || value === undefined || value === "") return 0;
     const numeric = Number(value);
@@ -50,8 +53,13 @@ export function BookLoadCustomerSection({
   };
 
   const customersQuery = useQuery({
-    queryKey: ["book-load-customer-section", "customers", operatingCompanyId],
-    queryFn: () => listCustomers({ operating_company_id: String(operatingCompanyId), limit: 5000 }),
+    queryKey: ["book-load-customer-section", "customers", operatingCompanyId, customerSearch],
+    queryFn: () =>
+      listCustomers({
+        operating_company_id: String(operatingCompanyId),
+        limit: customerSearch ? 200 : 500,
+        search: customerSearch || undefined,
+      }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
@@ -82,6 +90,8 @@ export function BookLoadCustomerSection({
               createKind="customer"
               operatingCompanyId={operatingCompanyId}
               placeholder="Search customers…"
+              onSearch={setCustomerSearch}
+              loading={customersQuery.isLoading}
               onOptionCreated={(opt) => {
                 void queryClient.invalidateQueries({ queryKey: ["book-load-customer-section", "customers"] });
                 setValue("customer_id", opt.value, { shouldDirty: true, shouldValidate: true });
@@ -112,6 +122,8 @@ export function BookLoadCustomerSection({
                 createKind="customer"
                 operatingCompanyId={operatingCompanyId}
                 placeholder="Search customers to add a reference…"
+                onSearch={setCustomerSearch}
+                loading={customersQuery.isLoading}
                 onOptionCreated={(opt) => {
                   void queryClient.invalidateQueries({ queryKey: ["book-load-customer-section", "customers"] });
                   const prev = String(getValues("notes") ?? "");
