@@ -191,21 +191,20 @@ export async function loadScoreboardPayload(): Promise<{
       buildProgramScoreboardLive: () => ScoreboardPayload;
     };
     let data = mod.buildProgramScoreboardLive();
-    const gen = typeof data.meta?.generatedAt === "string" ? data.meta.generatedAt : "";
-    // Deploy trees often lack .git — upgrade epoch/unknown meta from GitHub commits API.
-    if (!gen || gen.startsWith("1970-01-01")) {
-      const gh = await loadLedgerCommitMetaFromGitHub();
-      if (gh) {
-        data = {
-          ...data,
-          meta: {
-            ...(data.meta ?? {}),
-            generatedAt: gh.generatedAt,
-            sourceSha: gh.sourceSha,
-            source: "ledger_live",
-          },
-        };
-      }
+    // Prefer GitHub ledger-commit meta ALWAYS when available.
+    // Render/deploy trees are shallow: `git log -1 -- AUDIT-COVERAGE-LIVE.md` returns HEAD
+    // (not the real ledger author commit), which made Last synced show the deploy SHA/time.
+    const gh = await loadLedgerCommitMetaFromGitHub();
+    if (gh) {
+      data = {
+        ...data,
+        meta: {
+          ...(data.meta ?? {}),
+          generatedAt: gh.generatedAt,
+          sourceSha: gh.sourceSha,
+          source: "ledger_live",
+        },
+      };
     } else {
       data = {
         ...data,
