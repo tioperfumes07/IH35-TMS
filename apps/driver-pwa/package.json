@@ -15,11 +15,11 @@
     "@tanstack/react-query": "^5.101.4",
     "i18next": "^26.3.6",
     "i18next-browser-languagedetector": "^8.2.1",
-    "lucide-react": "^1.27.0",
+    "lucide-react": "^1.28.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-i18next": "^17.0.11",
-    "react-router-dom": "^7.18.1"
+    "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
