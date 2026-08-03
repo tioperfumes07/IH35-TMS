@@ -41,6 +41,8 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
   // SAF-B29: unit/load pickers fetch limit:200 with server-side search (EntityPicker owns driver roster).
   const [unitSearch, setUnitSearch] = useState("");
   const [loadSearch, setLoadSearch] = useState("");
+  // SAF-B29 wave-4: civil_fine_types also caps at 200 — type-ahead must hit the server.
+  const [civilFineTypeSearch, setCivilFineTypeSearch] = useState("");
   // SAF-F19: safety.civil_fines has carried related_load_id / related_unit_id / source_doc_id since
   // migration 0050, and the CREATE ROUTE already accepts all three — the creator simply never asked
   // for them, so every fine landed with those FKs null. An overweight ticket that belongs to a
@@ -87,8 +89,13 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
   );
 
   const civilFineTypesQuery = useQuery({
-    queryKey: ["safety", "fine-create", "civil-fine-types", operatingCompanyId],
-    queryFn: () => listCivilFineTypes(operatingCompanyId, { limit: 200, is_active: "true" }),
+    queryKey: ["safety", "fine-create", "civil-fine-types", operatingCompanyId, civilFineTypeSearch],
+    queryFn: () =>
+      listCivilFineTypes(operatingCompanyId, {
+        limit: 200,
+        is_active: "true",
+        search: civilFineTypeSearch || undefined,
+      }),
     enabled: open && Boolean(operatingCompanyId),
   });
 
@@ -285,6 +292,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                 operatingCompanyId={operatingCompanyId}
                 placeholder="Select a violation type"
                 loading={civilFineTypesQuery.isLoading}
+                onSearch={setCivilFineTypeSearch}
                 onOptionCreated={(opt) => {
                   applyFineType(opt.value, opt.label);
                   void civilFineTypesQuery.refetch();

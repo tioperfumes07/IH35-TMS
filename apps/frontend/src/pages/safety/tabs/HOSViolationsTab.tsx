@@ -51,13 +51,16 @@ export function HOSViolationsTab() {
   // "11 hour" and "11-hour rule" produced two different violations to FMCSA reporting — and because
   // nothing ever sent csa_points, EVERY HOS violation was stored with 0 severity even though the
   // route has always accepted the field. The catalog's severity_weight is that number.
+  // SAF-B29 wave-4: typed term reaches listDotViolationTypes (query key includes search).
+  const [violationTypeSearch, setViolationTypeSearch] = useState("");
   const violationTypesQuery = useQuery({
-    queryKey: ["catalogs", "dot-violation-types", "hos", companyId],
+    queryKey: ["catalogs", "dot-violation-types", "hos", companyId, violationTypeSearch],
     queryFn: () =>
       listDotViolationTypes(companyId, {
         limit: 200,
         is_active: "true",
         basic_category: "hours_of_service",
+        search: violationTypeSearch || undefined,
       }),
     enabled: Boolean(companyId),
   });
@@ -191,6 +194,7 @@ export function HOSViolationsTab() {
           createdValueField="code"
           placeholder="Violation type"
           loading={violationTypesQuery.isLoading}
+          onSearch={setViolationTypeSearch}
           onOptionCreated={() => {
             void queryClient.invalidateQueries({ queryKey: ["catalogs", "dot-violation-types", "hos", companyId] });
             void violationTypesQuery.refetch();

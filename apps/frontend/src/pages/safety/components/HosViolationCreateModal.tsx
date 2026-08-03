@@ -49,13 +49,16 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
 
   // DUAL_PATH_OLD_ACTIVE: HoursOfServicePage drawer still took free-text violation_type while
   // HOSViolationsTab already catalogs via ReferenceSelect. Same catalog + FK + CSA weight.
+  // SAF-B29 wave-4: server search — 213 DOT types exceed a silent 200-cap page.
+  const [violationTypeSearch, setViolationTypeSearch] = useState("");
   const violationTypesQuery = useQuery({
-    queryKey: ["catalogs", "dot-violation-types", "hos", operatingCompanyId],
+    queryKey: ["catalogs", "dot-violation-types", "hos", operatingCompanyId, violationTypeSearch],
     queryFn: () =>
       listDotViolationTypes(operatingCompanyId, {
         limit: 200,
         is_active: "true",
         basic_category: "hours_of_service",
+        search: violationTypeSearch || undefined,
       }),
     enabled: open && Boolean(operatingCompanyId),
   });
@@ -150,6 +153,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
               placeholder={violationTypesQuery.isLoading ? "Loading types…" : "Select violation type"}
               loading={violationTypesQuery.isLoading}
               disabled={!operatingCompanyId || violationTypesQuery.isLoading}
+              onSearch={setViolationTypeSearch}
               onOptionCreated={() => {
                 void queryClient.invalidateQueries({
                   queryKey: ["catalogs", "dot-violation-types", "hos", operatingCompanyId],
