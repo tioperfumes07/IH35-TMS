@@ -3,9 +3,11 @@ description: Cursor must ship like Claude — full labelled commit + local gate 
 alwaysApply: true
 ---
 
-# RULE 29 — CURSOR = CLAUDE SHIP PARITY (owner 2026-08-02)
+# RULE 29 — CURSOR = CLAUDE SHIP PARITY (owner 2026-08-02; extended 2026-08-03)
 
-**Why:** Cursor PRs repeatedly failed `build-typecheck` while Claude's passed. Not bad luck. Cursor agents put Rule 16 in the **PR body**, used `git commit --no-verify`, skipped husky on bare/worktree clones, and learned lane bands / CLAIMED / EntityLink **after** CI burned 15–20 minutes. Claude writes **one complete commit** and runs the fail-fast gate **before** the first push.
+**Why:** Cursor PRs repeatedly failed `build-typecheck` / CodeQL while Claude's passed. Not bad luck. Cursor agents put Rule 16 in the **PR body**, used `git commit --no-verify`, skipped husky on bare/worktree clones, and learned lane bands / CLAIMED / EntityLink / **§7 nonfinancial palette** / **auth rateLimit** **after** CI burned 15–20 minutes. Claude writes **one complete commit** and runs the fail-fast gate **before** the first push.
+
+**Owner 2026-08-03:** stop babysitting CI. Build → run local gate → push once. If CI fails, Jorge will say so.
 
 ## Mechanical tooth
 
@@ -15,26 +17,35 @@ alwaysApply: true
 2. `verify-no-money-theater` (FINDING / LANE / DOD-A…E / VERIFY-1…8 / MODULE_PROGRESS / `MIGRATE:` when migrations touch)
 3. `verify-no-parallel-scoreboard-prs`
 4. `verify-section7-palette-financial`
-5. `verify-migration-lane-band` — Cursor migrations **HH 12–23 only** (never `…0000` morning)
-6. `verify-verify-step-lane-band` — Cursor verify-steps **EVEN only**
-7. `verify-no-claimed-numbers-edits` — **never** edit `CLAIMED-NUMBERS.json` on a feature PR (filename is the claim — TOOL-F03)
-8. `verify-data-migrations-rehearsed` — data-mutating migrations need a `REHEARSED:` line (TOOL-F04; Neon fork of prod)
-9. `verify-entity-link-adoption` — bare UUID renders / baseline drift on frontend TSX
-10. `verify-no-guard-file-deletion` — **Rule 30** — never soft-reset onto newer main (deletes others' verify-steps)
-11. `verify-claude-green-evidence-shape` — **Rule 30** — tip LIVE PROOF is Claude-green (`exit 0` / sha), not `UNVERIFIED browser`
+5. `verify-section7-palette-nonfinancial` — **Cursor #4198** amber/emerald thrash
+6. `verify-new-auth-routes-rate-limited` — **Cursor #4198** CodeQL `js/missing-rate-limiting`
+7. `verify-migration-lane-band` — Cursor migrations **HH 12–23 only** (never `…0000` morning)
+8. `verify-verify-step-lane-band` — Cursor verify-steps **EVEN only**
+9. `verify-no-claimed-numbers-edits` — **never** edit `CLAIMED-NUMBERS.json` on a feature PR
+10. `verify-data-migrations-rehearsed` — data-mutating migrations need a `REHEARSED:` line
+11. `verify-entity-link-adoption` — bare UUID renders / baseline drift on frontend TSX
+12. `verify-no-guard-file-deletion` — **Rule 30** — never soft-reset onto newer main
+13. `verify-claude-green-evidence-shape` — **Rule 30** — tip LIVE PROOF is Claude-green
 
-CI verify-steps **1324 + 1430 + 1702 + 1998 + 2088** remain the remote backstop. Local gate is the **primary** time-saver. Also: `node scripts/cursor-pr-body-gate.mjs --body-file …` before every `gh pr create|edit` (Rule 30).
+CI verify-steps **1324 + 1430 + 1702 + 1998 + 2088 + 2214** remain the remote backstop. Local gate is the **primary** time-saver.
+
+**Before every `gh pr create`:**  
+`node scripts/ops/cursor-ship-preflight.mjs --body-file /tmp/pr-body.txt`  
+(runs money-pr-local-gate + cursor-pr-body-gate — Claude's model).
 
 ## HARD agent law (non-negotiable)
 
 | Always | Never |
 |--------|-------|
-| **One commit** over `origin/main` with the full labelled template in the **commit message** (not only the PR body) | Multi-commit "code then evidence" / prose-only first commit |
-| Run `node scripts/money-pr-local-gate.mjs` and require **PASS** before every push (even if husky is missing) | Assume husky ran; push then watch CI |
+| **One commit** over `origin/main` with the full labelled template in the **commit message** | Multi-commit "code then evidence" / prose-only first commit |
+| Run `node scripts/money-pr-local-gate.mjs` and require **PASS** before every push | Assume husky ran; push then watch CI |
+| Run `cursor-ship-preflight` (or body-gate) before `gh pr create` | Open a PR then fix Rule 16 / CodeQL / palette from CI logs |
 | Keep git hooks enabled | `git commit --no-verify`, `git push --no-verify`, `HUSKY=0` |
 | Cursor: migration `YYYYMMDDHHMM` with **HH 12–23**; verify-step **EVEN**; no CLAIMED json edit | HH 00–11, odd step numbers, CLAIMED-NUMBERS thrash |
-| Fix EntityLink / regen baseline **in the same commit** when TSX changes fingerprint | Ignore `verify-entity-link-adoption` until CI fails |
-| **One push** after local PASS; wait for green or a real fail log | Rebase/force-push while `build-typecheck` is in_progress |
+| New/changed auth Fastify routes: `{ config: { rateLimit: { max, timeWindow } } }` | Auth route without rateLimit (CodeQL high) |
+| Nonfinancial UI: §7 slate tokens only (no net-new amber/emerald/yellow status classes) | Palette ratchet surprise on build-typecheck |
+| Fix EntityLink / regen baseline **in the same commit** when TSX changes fingerprint | Ignore until CI fails |
+| **One push** after local PASS; stop. Jorge reports CI fails | Babysit / poll / rebase while CI runs |
 
 ## Commit message minimum (every app/db commit)
 
@@ -50,8 +61,8 @@ Money paths also need FINDING / LANE / DOD-A…E / VERIFY-1…8 / MODULE_PROGRES
 
 ## Autoload / deletion
 
-Deleting this rule, shrinking `money-pr-local-gate` back to DoD-only, or removing verify-step **1998** fails CI.
+Deleting this rule, shrinking `money-pr-local-gate` (dropping nonfinancial palette or auth rateLimit), or removing verify-steps **1998 / 2214** fails CI.
 
 ## Tie-breakers
 
-Busy < correct · PR body < commit message · husky hope < explicit local gate · another push < wait · memory < this file + `money-pr-local-gate`.
+Busy < correct · PR body < commit message · husky hope < explicit local gate · babysit CI < fix local gate · memory < this file + `money-pr-local-gate`.
