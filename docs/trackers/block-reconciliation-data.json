@@ -1,12 +1,12 @@
 {
  "date": "2026-08-03",
- "generated_at_iso": "2026-08-03T17:21:15.476Z",
+ "generated_at_iso": "2026-08-03T20:02:38.275Z",
  "counts": {
   "PENDING": 15,
   "PENDING (GATED)": 27,
   "NEEDS-VERIFY": 56,
-  "DONE": 629,
-  "AUDIT-NOTE": 476
+  "DONE": 628,
+  "AUDIT-NOTE": 477
  },
  "universe": {
   "total_blocks_after_dedup": 1203,
@@ -894,10 +894,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #834 title-match only, unverified",
+   "evidence": "5/6 signature file(s) on main — partial, unverified",
    "name": "Maintenance parts master catalog by brand for owned fleet",
    "registered_on": null,
-   "pr": 834
+   "pr": null
   },
   {
    "id": "CLOSURE-11-MAINT-SERVICES-CATALOG",
@@ -3584,17 +3584,6 @@
    "pr": 953
   },
   {
-   "id": "DOCS-QBO-PARITY-CAPTURE-V2",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #826 merged 2026-06-09",
-   "name": "Capture master progress report + QBO-parity v2/v3 specs + Visuals-First specs to repo (docs-only) so nothing is lost.",
-   "registered_on": null,
-   "pr": 826
-  },
-  {
    "id": "DOCS-RECON-TRACKER-ESCROW-RESEARCH-0614",
    "source": ".block-ready",
    "fin": false,
@@ -4073,10 +4062,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #825 merged 2026-06-09",
+   "evidence": "all 2 file(s) on main",
    "name": "A3 — sizing tokens + ParityDrawer (~576px right-drawer shell for create/edit). Additive new files; no existing files tou",
    "registered_on": null,
-   "pr": 825
+   "pr": null
   },
   {
    "id": "FEAT-REEFER-HOURS-POLL-CRON",
@@ -4183,10 +4172,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #827 merged 2026-06-09",
+   "evidence": "all 2 file(s) on main",
    "name": "V0 (partial) — add DRIVER HUB sidebar entry adjacent to DRIVERS (additive insert; cash-flow nav deferred to Sidebar-V2).",
    "registered_on": null,
-   "pr": 827
+   "pr": null
   },
   {
    "id": "FEAT-V2-A2-REFERENCE-SELECT",
@@ -4194,10 +4183,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #828 merged 2026-06-09",
+   "evidence": "all 1 file(s) on main",
    "name": "A2 keystone — ReferenceSelect: Combobox + always-visible '+ Add new' -> QuickCreateEntityModal (nested-create-returns-se",
    "registered_on": null,
-   "pr": 828
+   "pr": null
   },
   {
    "id": "FEAT-VOID-EVERYWHERE-PR1",
@@ -11547,6 +11536,17 @@
    "pr": null
   },
   {
+   "id": "DOCS-QBO-PARITY-CAPTURE-V2",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Capture master progress report + QBO-parity v2/v3 specs + Visuals-First specs to repo (docs-only) so nothing is lost.",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "DOCS-ROLE-BINDINGS-WORKSHEET",
    "source": ".block-ready",
    "fin": false,
@@ -12170,7 +12170,7 @@
    "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status = DONE; not in active",
    "name": "Deadhead mile optimizer — ranked next-load suggestions",
    "registered_on": null,
-   "pr": 844
+   "pr": null
   },
   {
    "id": "gated-blocks-conn-plaid-relay-edi",
@@ -13262,16 +13262,112 @@
  ],
  "merged_prs": [
   {
+   "number": 4201,
+   "title": "Cursor- fix(safety): Safety Events table EntityLink for driver/unit",
+   "mergedAt": "2026-08-03T19:24:35Z",
+   "branch": "cursor/Cursor-safety-events-entitylink-2026-08-03"
+  },
+  {
+   "number": 4200,
+   "title": "Cursor- fix(safety): Geofence Alerts customer EntityLink",
+   "mergedAt": "2026-08-03T18:48:54Z",
+   "branch": "cursor/Cursor-safety-geofence-customer-link-2026-08-03"
+  },
+  {
+   "number": 4199,
+   "title": "Cursor- fix(safety): Integrity Reports EntityLink (no raw UUID entity cell)",
+   "mergedAt": "2026-08-03T18:48:47Z",
+   "branch": "cursor/Cursor-safety-integrity-entitylink-2026-08-03"
+  },
+  {
+   "number": 4197,
+   "title": "Cursor- fix(program): ledger Last synced from GitHub (shallow-clone HEAD lie)",
+   "mergedAt": "2026-08-03T18:26:12Z",
+   "branch": "cursor/program-scoreboard-ledger-meta-sha-2026-08-03"
+  },
+  {
+   "number": 4196,
+   "title": "Cursor- fix(program): live ledger scoreboard (end stale bot-PR snapshot)",
+   "mergedAt": "2026-08-03T18:02:44Z",
+   "branch": "cursor/Cursor-program-scoreboard-ledger-live-2026-08-03"
+  },
+  {
+   "number": 4195,
+   "title": "docs(audit): add rows 667-670 — go-forward proof + QBO refusal architecture",
+   "mergedAt": "2026-08-03T19:06:35Z",
+   "branch": "Cascade-audit-doc-rows-667-670"
+  },
+  {
+   "number": 4194,
+   "title": "fix(accounting): invoice-send date cast + QBO-origin invoice guard",
+   "mergedAt": "2026-08-03T18:29:24Z",
+   "branch": "Cascade-invoice-fixes-0803"
+  },
+  {
+   "number": 4193,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-08-03T18:29:17Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 4190,
    "title": "Claude- fix(safety): my own alert_category fix was incomplete — the accounting watchdog still cannot record itself",
    "mergedAt": "2026-08-03T17:18:01Z",
    "branch": "claude/integrity-alerts-subject-type"
   },
   {
+   "number": 4189,
+   "title": "Cursor- chore(program): refresh scoreboard artifact from ledger (unstick stale snapshot)",
+   "mergedAt": "2026-08-03T18:00:11Z",
+   "branch": "chore/program-scoreboard-sync"
+  },
+  {
+   "number": 4188,
+   "title": "Cursor- fix(safety): SAF-ORPH-05 layer A — 28 tab routes mounted (UNVERIFIED live)",
+   "mergedAt": "2026-08-03T18:16:54Z",
+   "branch": "cursor/Cursor-safety-orph05-tab-dod-inventory-2026-08-03"
+  },
+  {
+   "number": 4187,
+   "title": "Cursor- fix(safety): SAF-B11 internal-fine lifecycle PASS",
+   "mergedAt": "2026-08-03T18:16:44Z",
+   "branch": "cursor/Cursor-safety-b11-internal-fine-lifecycle-2026-08-03"
+  },
+  {
+   "number": 4186,
+   "title": "Cursor- fix(safety): SAF-B09 escrow forfeit drawer PASS",
+   "mergedAt": "2026-08-03T18:16:37Z",
+   "branch": "cursor/Cursor-safety-b09-escrow-forfeit-pass-2026-08-03"
+  },
+  {
+   "number": 4185,
+   "title": "Cursor- fix(safety): SAF-B31 no placeholder surfaces PASS",
+   "mergedAt": "2026-08-03T18:16:22Z",
+   "branch": "cursor/Cursor-safety-b31-placeholders-pass-2026-08-03"
+  },
+  {
+   "number": 4184,
+   "title": "Cursor- fix(safety): SAF-B10 void-reason governance PASS",
+   "mergedAt": "2026-08-03T18:15:30Z",
+   "branch": "cursor/Cursor-safety-b10-void-reason-pass-2026-08-03"
+  },
+  {
+   "number": 4183,
+   "title": "Cursor- fix(safety): SAF-B13 DOT/HOS creator pickers PASS",
+   "mergedAt": "2026-08-03T18:15:23Z",
+   "branch": "cursor/Cursor-safety-b13-creator-pickers-pass-2026-08-03"
+  },
+  {
    "number": 4182,
    "title": "Cursor- fix(safety): SAF-B06 D&A RTD dispatch gate PASS",
    "mergedAt": "2026-08-03T16:57:57Z",
    "branch": "cursor/Cursor-safety-b06-da-rtd-gate-2026-08-03"
+  },
+  {
+   "number": 4181,
+   "title": "Claude- fix(governance): the table that decides whether the GL posts had NO audit trail",
+   "mergedAt": "2026-08-03T17:21:50Z",
+   "branch": "claude/audit-posting-flag-changes"
   },
   {
    "number": 4180,
@@ -16764,102 +16860,6 @@
    "title": "feat(guards): SWEEP-C6 guard-first — money INSERT requires JE poster",
    "mergedAt": "2026-07-26T00:22:28Z",
    "branch": "fix/sweep-c6-money-je-guard"
-  },
-  {
-   "number": 3554,
-   "title": "[HOLD-FOR-JORGE · FINANCIAL] LINK-02: accounts.detail_type_id FK wire",
-   "mergedAt": "2026-07-26T01:08:36Z",
-   "branch": "fix/link-02-accounts-detail-type-fk"
-  },
-  {
-   "number": 3553,
-   "title": "fix(catalogs): LIVE INCIDENT — SQL comment swallows RETURNING columns, every fleet catalog create 500s",
-   "mergedAt": "2026-07-25T23:14:45Z",
-   "branch": "fix/fleet-catalog-create-500-trailing-comma"
-  },
-  {
-   "number": 3551,
-   "title": "[HOLD-FOR-JORGE] fix(safety): company-paid civil fine reached NO ledger — build the missing expense hop (SAFETY FINE-GL HOP)",
-   "mergedAt": "2026-07-26T02:50:04Z",
-   "branch": "hold/safety-fine-gl-expense-hop"
-  },
-  {
-   "number": 3550,
-   "title": "fix(lists): LST-PICKER-01/03 — the shared picker was never config-driven, so 68 of 75 catalogs could not have inline create",
-   "mergedAt": "2026-07-25T21:54:07Z",
-   "branch": "feat/lst-picker-shared-inline-create"
-  },
-  {
-   "number": 3549,
-   "title": "[HOLD-FOR-JORGE] fix(lists): LST-RLS-01 — two global catalogs had RLS OFF and DELETE granted; a Dispatcher could rewrite the QBO account-type taxonomy",
-   "mergedAt": "2026-07-26T01:37:25Z",
-   "branch": "hold/lst-rls-01-write-authz"
-  },
-  {
-   "number": 3548,
-   "title": "ACCT-R-02: live-Neon schema manifest tool (0033-audit-schema-manifest-tool)",
-   "mergedAt": "2026-07-25T21:08:42Z",
-   "branch": "acct-r02-audit-schema-manifest"
-  },
-  {
-   "number": 3547,
-   "title": "fix(safety): SAF-B12 — four external-fine lifecycle routes had ZERO frontend callers",
-   "mergedAt": "2026-07-25T20:59:37Z",
-   "branch": "fix/saf-b12-external-fine-row-actions"
-  },
-  {
-   "number": 3546,
-   "title": "chore(law): rename the CPA skill to ih35-accounting-decisions and end the CPA-as-gate framing",
-   "mergedAt": "2026-07-25T21:55:00Z",
-   "branch": "chore/rename-cpa-skill-owner-decides"
-  },
-  {
-   "number": 3545,
-   "title": "[HOLD-FOR-JORGE] ESC-FORFEIT-SPLIT: forfeit must move driver_finance escrow store",
-   "mergedAt": "2026-07-25T21:19:08Z",
-   "branch": "fix/esc-forfeit-split-driver-finance"
-  },
-  {
-   "number": 3544,
-   "title": "fix(ci): pr-evidence-block diff must be merge-base-aware (three-dot)",
-   "mergedAt": "2026-07-25T20:44:23Z",
-   "branch": "fix-evidence-block-diff-scope"
-  },
-  {
-   "number": 3543,
-   "title": "docs(blocks): commit all 86 Lists+Safety block docs to the repo — CPA stripped as an approver",
-   "mergedAt": "2026-07-25T21:03:58Z",
-   "branch": "docs/commit-lists-safety-block-docs"
-  },
-  {
-   "number": 3542,
-   "title": "[HOLD-FOR-JORGE] SAF-ORPH: escrow forfeit sign (forfeiture −) + flag seed",
-   "mergedAt": "2026-07-25T20:45:01Z",
-   "branch": "fix/acct-r01-escrow-forfeit-sign-trigger"
-  },
-  {
-   "number": 3541,
-   "title": "fix(accounting): LIVE INCIDENT — item picker 500s on phantom catalogs.items.active",
-   "mergedAt": "2026-07-25T20:10:16Z",
-   "branch": "fix/lst-picker-02-items-phantom-active"
-  },
-  {
-   "number": 3540,
-   "title": "fix(compliance): SAF-F32 — Form 2290 due date was Aug 31 for every vehicle, and its guard never ran",
-   "mergedAt": "2026-07-25T20:09:03Z",
-   "branch": "fix/saf-f32-form-2290-due-date"
-  },
-  {
-   "number": 3539,
-   "title": "fix(driver-finance): escrow ledger 500s on phantom ORDER BY posted_at (+ guard was blind to the whole clause)",
-   "mergedAt": "2026-07-25T20:51:24Z",
-   "branch": "fix/escrow-ledger-phantom-posted-at"
-  },
-  {
-   "number": 3538,
-   "title": "docs(governance): Acct+Bank remaining packet + ECON-05/F08/F09 + applied-mig rewrites",
-   "mergedAt": "2026-07-26T03:00:55Z",
-   "branch": "docs/acct-bank-packet-governance-20260725"
   }
  ],
  "merged_pr_total": 3000,
