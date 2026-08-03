@@ -14,7 +14,9 @@ import {
   type TaskType,
 } from "../../api/tasks";
 import { listAssignableUsers } from "../../api/identity";
-import { listVendors, listCustomers, listDrivers, listUnits } from "../../api/mdata";
+import { listCustomers } from "../../api/mdata";
+import { EntityPicker } from "../parity/EntityPicker";
+import { ReferenceSelect } from "../parity/ReferenceSelect";
 import type { IdentityUser } from "../../types/api";
 import { companyToday } from "../../lib/businessDate";
 
@@ -85,6 +87,8 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
   const [anticipatedCategory, setAnticipatedCategory] = useState("");
   const [entityKind, setEntityKind] = useState<TaskTargetType | "">("");
   const [entityId, setEntityId] = useState("");
+  // SAF-B29: customer is not on EntityPicker yet — ReferenceSelect + server search (prod ~2.7k).
+  const [customerSearch, setCustomerSearch] = useState("");
   const [showAddProfile, setShowAddProfile] = useState(false);
   const [newProfileName, setNewProfileName] = useState("");
 
@@ -105,47 +109,21 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
   });
   const profiles = profilesQuery.data?.types ?? [];
 
-  // Entity records for the selected kind (company-scoped, limit:200).
-  const vendorsQuery = useQuery({
-    queryKey: ["task-entity", "vendor", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 1000 }),
-    enabled: open && entityKind === "vendor" && Boolean(operatingCompanyId),
-  });
+  // Customer link: server search (EntityPicker has no customer kind; ReferenceSelect createKind=customer).
   const customersQuery = useQuery({
-    queryKey: ["task-entity", "customer", operatingCompanyId],
-    // SAF-B29: was limit 200. PROD HAS 2,693 CUSTOMERS, so this silently returned the first 200
-    // alphabetically and dropped 92% of them — with no empty state, no warning, nothing to
-    // indicate the list was cut. 5000 matches the convention already used by Customers.tsx,
-    // CustomerDetail.tsx and NewCustomerDrawerForm. Server-side type-ahead remains B29's target
-    // shape; this removes the live truncation now rather than leaving it until then.
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 5000 }),
+    queryKey: ["task-entity", "customer", operatingCompanyId, customerSearch],
+    queryFn: () =>
+      listCustomers({
+        operating_company_id: operatingCompanyId,
+        limit: customerSearch ? 200 : 500,
+        search: customerSearch || undefined,
+      }),
     enabled: open && entityKind === "customer" && Boolean(operatingCompanyId),
   });
-  const driversQuery = useQuery({
-    queryKey: ["task-entity", "driver", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: 200 }),
-    enabled: open && entityKind === "driver" && Boolean(operatingCompanyId),
-  });
-  const unitsQuery = useQuery({
-    queryKey: ["task-entity", "unit", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 200 }),
-    enabled: open && entityKind === "unit" && Boolean(operatingCompanyId),
-  });
-
-  const entityOptions = useMemo<{ id: string; label: string }[]>(() => {
-    if (entityKind === "vendor") return (vendorsQuery.data?.vendors ?? []).map((v) => ({ id: v.id, label: v.name }));
-    if (entityKind === "customer") return (customersQuery.data?.customers ?? []).map((c) => ({ id: c.id, label: c.name }));
-    if (entityKind === "driver")
-      return (driversQuery.data?.drivers ?? []).map((d) => ({
-        id: d.id,
-        label: [d.first_name, d.last_name].filter(Boolean).join(" ").trim() || d.id,
-      }));
-    if (entityKind === "unit")
-      return ((unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>)
-        .filter((u) => Boolean(u.id))
-        .map((u) => ({ id: String(u.id), label: String(u.unit_number ?? u.id) }));
-    return [];
-  }, [entityKind, vendorsQuery.data, customersQuery.data, driversQuery.data, unitsQuery.data]);
+  const customerOptions = useMemo(
+    () => (customersQuery.data?.customers ?? []).map((c) => ({ value: c.id, label: c.name })),
+    [customersQuery.data?.customers]
+  );
 
   // When a profile is chosen, adopt its category and suggest an alarm from its lead days + due date.
   const applyProfile = (p: TaskType | undefined) => {
@@ -172,6 +150,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
     setAnticipatedCategory("");
     setEntityKind("");
     setEntityId("");
+    setCustomerSearch("");
     setShowAddProfile(false);
     setNewProfileName("");
   };
@@ -369,6 +348,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
                 onChange={(e) => {
                   setEntityKind(e.target.value as TaskTargetType | "");
                   setEntityId("");
+                  setCustomerSearch("");
                 }}
               >
                 <option value="">None</option>
@@ -379,18 +359,38 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
             </div>
             <div>
               <label className={labelCls} htmlFor="create-task-entity-id">Record</label>
-              <select
-                id="create-task-entity-id"
-                className={inputCls}
-                value={entityId}
-                onChange={(e) => setEntityId(e.target.value)}
-                disabled={!entityKind}
-              >
-                <option value="">{entityKind ? "Select…" : "Pick a type first"}</option>
-                {entityOptions.map((o) => (
-                  <option key={o.id} value={o.id}>{o.label}</option>
-                ))}
-              </select>
+              <div className="mt-0" data-testid="create-task-entity-picker">
+                {!entityKind ? (
+                  <select id="create-task-entity-id" className={inputCls} disabled value="">
+                    <option value="">Pick a type first</option>
+                  </select>
+                ) : entityKind === "customer" ? (
+                  <ReferenceSelect
+                    value={entityId || null}
+                    onChange={(next) => setEntityId(next ?? "")}
+                    options={customerOptions}
+                    createKind="customer"
+                    operatingCompanyId={operatingCompanyId}
+                    placeholder="Select customer…"
+                    onSearch={setCustomerSearch}
+                    loading={customersQuery.isLoading}
+                    onOptionCreated={(opt) => {
+                      void queryClient.invalidateQueries({ queryKey: ["task-entity", "customer", operatingCompanyId] });
+                      setEntityId(opt.value);
+                    }}
+                  />
+                ) : (
+                  <EntityPicker
+                    kind={entityKind as "vendor" | "driver" | "unit"}
+                    operatingCompanyId={operatingCompanyId}
+                    value={entityId || null}
+                    onChange={(next) => setEntityId(next ?? "")}
+                    enabled={open}
+                    placeholder={`Select ${entityKind}…`}
+                    dataTestId={`create-task-entity-${entityKind}`}
+                  />
+                )}
+              </div>
             </div>
           </div>
         ) : null}

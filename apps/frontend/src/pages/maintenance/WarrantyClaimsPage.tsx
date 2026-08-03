@@ -55,9 +55,18 @@ export function WarrantyClaimsPage() {
   // LST-PICKER-01/1858: maintenance.warranty_claims.vendor_id REFERENCES mdata.vendors(id) — the
   // read side must list the SAME table the FK targets. This used to list catalogs.maintenance_vendors
   // (a different table with different uuids), so every claim vendor_id 500'd on the FK constraint.
+  // SAF-B29: server search — limit:1000 without search still truncates large rosters; type-ahead
+  // re-queries so vendors past page 1 stay selectable.
+  const [vendorSearch, setVendorSearch] = useState("");
   const vendorsQ = useQuery({
-    queryKey: ["mdata", "vendors", companyId, "warranty-claims"],
-    queryFn: () => listVendors({ operating_company_id: companyId, status: "active", limit: 1000 }),
+    queryKey: ["mdata", "vendors", companyId, "warranty-claims", vendorSearch],
+    queryFn: () =>
+      listVendors({
+        operating_company_id: companyId,
+        status: "active",
+        limit: vendorSearch ? 200 : 1000,
+        search: vendorSearch || undefined,
+      }),
     enabled: Boolean(companyId),
   });
 
@@ -222,6 +231,8 @@ export function WarrantyClaimsPage() {
                 createKind="vendor"
                 operatingCompanyId={companyId}
                 placeholder="Select vendor…"
+                onSearch={setVendorSearch}
+                loading={vendorsQ.isLoading}
                 onOptionCreated={(opt) => {
                   void queryClient.invalidateQueries({ queryKey: ["mdata", "vendors", companyId, "warranty-claims"] });
                   setClaimDraft((d) => ({ ...d, vendor_id: opt.value }));
