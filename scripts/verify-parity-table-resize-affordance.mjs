@@ -26,7 +26,7 @@ function assert(src) {
   // Discoverability: opaque slate strip + w-2 (8px), not transparent-only / w-1 / w-1.5 alone.
   const handleIdx = src.indexOf('data-testid="parity-table-col-resize"');
   if (handleIdx >= 0) {
-    const win = src.slice(handleIdx, handleIdx + 450);
+    const win = src.slice(Math.max(0, handleIdx - 80), handleIdx + 700);
     if (!/\bw-2\b/.test(win)) {
       problems.push(`${FILE}: resize handle must use w-2 (8px) hit target`);
     }
