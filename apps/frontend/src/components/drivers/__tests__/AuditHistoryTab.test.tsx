@@ -65,4 +65,35 @@ describe("AuditHistoryTab (A24-6)", () => {
     render(wrap(<AuditHistoryTab driverId={driverId} operatingCompanyId={companyId} />));
     expect(await screen.findByTestId("driver-audit-empty")).toBeInTheDocument();
   });
+
+  it("sends actor/status/source/voids to the server (SAF-B29 — not chrome-only)", async () => {
+    const spy = vi.spyOn(auditApi, "listDriverAuditEvents").mockResolvedValue({
+      events: [],
+      total_count: 0,
+      limit: 200,
+      offset: 0,
+    });
+    render(wrap(<AuditHistoryTab driverId={driverId} operatingCompanyId={companyId} />));
+    await screen.findByTestId("driver-audit-filter-actor");
+    fireEvent.change(screen.getByTestId("driver-audit-filter-actor"), {
+      target: { value: "office@ih35.local" },
+    });
+    fireEvent.change(screen.getByTestId("driver-audit-filter-status"), {
+      target: { value: "void" },
+    });
+    fireEvent.change(screen.getByTestId("driver-audit-filter-source"), {
+      target: { value: "safety" },
+    });
+    fireEvent.click(screen.getByTestId("driver-audit-filter-voids"));
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          actor: "office@ih35.local",
+          status: "void",
+          source: "safety",
+          voidsOnly: true,
+        })
+      );
+    });
+  });
 });
