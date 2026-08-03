@@ -134,11 +134,17 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
     queryFn: () => listInsuranceTypeCatalog({ operating_company_id: operatingCompanyId }).then((result) => result.types),
   });
 
+  // SAF-B29: never silent listUnits(limit:500) — covered-units multi-select must re-query on type-ahead.
+  const [unitSearch, setUnitSearch] = useState("");
   const unitsQuery = useQuery({
-    queryKey: ["insurance", "policy-create", "units", operatingCompanyId],
+    queryKey: ["insurance", "policy-create", "units", operatingCompanyId, unitSearch],
     enabled: open && Boolean(operatingCompanyId),
     queryFn: async () => {
-      const result = await listUnits({ operating_company_id: operatingCompanyId, limit: 500 });
+      const result = await listUnits({
+        operating_company_id: operatingCompanyId,
+        limit: 200,
+        search: unitSearch || undefined,
+      });
       return (result.units as UnitOption[]).filter((unit) => Boolean(unit.id));
     },
   });
@@ -149,6 +155,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
     if (!open) return;
     setForm(INITIAL_FORM);
     setSelectedUnitIds([]);
+    setUnitSearch("");
     setFieldErrors({});
     setFormError("");
     setServerError("");
@@ -476,6 +483,14 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
             <span className="text-xs font-semibold text-slate-700">Covered Units *</span>
             <span className="text-xs text-slate-500">{selectedUnitIds.length} selected</span>
           </div>
+          <input
+            type="search"
+            className="mb-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            placeholder="Search units…"
+            value={unitSearch}
+            onChange={(event) => setUnitSearch(event.target.value)}
+            data-testid="policy-create-unit-search"
+          />
           <div className="max-h-40 overflow-y-auto rounded-sm border border-gray-200 p-2">
             {unitsQuery.isLoading ? <p className="text-xs text-slate-500">Loading units...</p> : null}
             {units.map((unit) => (
