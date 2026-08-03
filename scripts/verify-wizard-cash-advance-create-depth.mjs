@@ -38,7 +38,11 @@ function checkModal(source, failures, label = "CreateAdvanceModal") {
     `${label}: must have bank account select for transfer`,
     failures
   );
-  assert(/CreateDriverModal/.test(source), `${label}: must keep nested CreateDriverModal +Create`, failures);
+  assert(
+    /CreateDriverModal/.test(source) || /DriverPickerWithCreate/.test(source),
+    `${label}: must keep nested driver +Create (CreateDriverModal or DriverPickerWithCreate)`,
+    failures
+  );
   assert(/lumper/i.test(source), `${label}: must include lumper purpose → load expense path`, failures);
   // Nested boxes-in-boxes anti-pattern: slate bordered panel wrappers for bill/repayment
   assert(

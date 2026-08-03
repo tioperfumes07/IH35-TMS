@@ -9,11 +9,12 @@ import {
 } from "../../../api/cashAdvances";
 import { cashAdvanceTypesCatalogClient } from "../../../api/catalogs-driver";
 import { getAllAccounts } from "../../../api/banking";
-import { listDrivers, listUnits } from "../../../api/mdata";
+import { listUnits } from "../../../api/mdata";
 import { listLoads, getLoad } from "../../../api/loads";
 import { Button } from "../../../components/Button";
 import { Combobox } from "../../../components/Combobox";
-import { CreateDriverModal } from "../../../components/drivers/CreateDriverModal";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
@@ -81,7 +82,6 @@ function requiresLoad(purpose: CashAdvancePurpose) {
 export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const { pushToast } = useToast();
   const [driverId, setDriverId] = useState<string | null>(null);
-  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const [amount, setAmount] = useState("300");
   const [purpose, setPurpose] = useState<CashAdvancePurpose>("family_emergency");
   const [advanceTypeCode, setAdvanceTypeCode] = useState<string>("EMERGENCY");
@@ -122,12 +122,6 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
     }
   }, [purpose]);
 
-  const driversQuery = useQuery({
-    queryKey: ["cash-advances", "drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", search: "", limit: 200 }),
-    enabled: open && Boolean(operatingCompanyId),
-  });
-
   const billsQuery = useQuery({
     queryKey: ["cash-advances", "unpaid-bills", operatingCompanyId],
     queryFn: () => listUnpaidBills(operatingCompanyId),
@@ -140,8 +134,9 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
     enabled: open && Boolean(operatingCompanyId) && method === "direct_bank_transfer",
   });
 
+  const [loadSearch, setLoadSearch] = useState("");
   const loadsQuery = useQuery({
-    queryKey: ["cash-advances", "loads", operatingCompanyId, driverId],
+    queryKey: ["cash-advances", "loads", operatingCompanyId, driverId, loadSearch],
     queryFn: () =>
       listLoads({
         operating_company_id: [operatingCompanyId],
@@ -149,6 +144,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
         status: ["assigned", "dispatched", "at_pickup", "in_transit", "at_delivery", "booked", "planned"],
         limit: 50,
         sort: "created_at_desc",
+        search: loadSearch || undefined,
       }),
     enabled: open && Boolean(operatingCompanyId) && Boolean(driverId),
   });
@@ -159,10 +155,20 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
     enabled: open && Boolean(loadId),
   });
 
-  const fleetQuery = useQuery({
-    queryKey: ["cash-advances", "fleet", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, include: "trailers", limit: 500 }),
-    enabled: open && Boolean(operatingCompanyId) && (requiresLoad(purpose) || Boolean(loadId)),
+  const [trailerSearch, setTrailerSearch] = useState("");
+  const trailersQuery = useQuery({
+    queryKey: ["cash-advances", "trailers", operatingCompanyId, trailerSearch],
+    queryFn: () =>
+      listUnits({
+        operating_company_id: operatingCompanyId,
+        include: "trailers",
+        limit: 200,
+        search: trailerSearch || undefined,
+      }),
+    enabled:
+      open &&
+      Boolean(operatingCompanyId) &&
+      (requiresLoad(purpose) || purpose === "border_fee" || purpose === "other" || Boolean(loadId)),
   });
 
   useEffect(() => {
@@ -170,15 +176,6 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
     const assignedUnit = loadDetailQuery.data.assigned_unit_id;
     if (assignedUnit) setUnitId(String(assignedUnit));
   }, [loadDetailQuery.data]);
-
-  const driverOptions = useMemo(
-    () =>
-      (driversQuery.data?.drivers ?? []).map((d) => ({
-        value: d.id,
-        label: `${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || d.id,
-      })),
-    [driversQuery.data]
-  );
 
   const bankAccounts = useMemo(() => {
     const rows = (bankAccountsQuery.data?.accounts ?? []).map(
@@ -205,25 +202,15 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
     [loadsQuery.data]
   );
 
-  const unitOptions = useMemo(() => {
-    const rows = (fleetQuery.data?.units ?? []) as Array<Record<string, unknown>>;
-    return rows
-      .filter((u) => String(u.kind ?? "truck") === "truck" || !u.kind)
-      .map((u) => ({
-        value: String(u.id),
-        label: String(u.unit_number ?? u.display_id ?? u.id),
-      }));
-  }, [fleetQuery.data]);
-
   const trailerOptions = useMemo(() => {
-    const rows = (fleetQuery.data?.units ?? []) as Array<Record<string, unknown>>;
+    const rows = (trailersQuery.data?.units ?? []) as Array<Record<string, unknown>>;
     return rows
       .filter((u) => String(u.kind ?? "") === "trailer")
       .map((u) => ({
         value: String(u.id),
         label: String(u.equipment_number ?? u.unit_number ?? u.display_id ?? u.id),
       }));
-  }, [fleetQuery.data]);
+  }, [trailersQuery.data]);
 
   const selectedBill = useMemo(
     () => billsQuery.data?.bills?.find((row) => String(row.id) === linkedBillId) ?? null,
@@ -370,19 +357,21 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           <div className="grid gap-3 md:grid-cols-2">
             <label className="space-y-1 md:col-span-2">
               <span className="font-medium text-gray-700">Driver</span>
-              <Combobox
-                options={driverOptions}
+              {/*
+                SAF-B29: Combobox over listDrivers(search:"", limit:200) silently hid drivers past the
+                first page. DriverPickerWithCreate owns server search + inline create (drawer chrome).
+              */}
+              <DriverPickerWithCreate
+                operatingCompanyId={operatingCompanyId}
                 value={driverId}
-                onChange={(v) => {
-                  setDriverId(v);
+                onChange={(next) => {
+                  setDriverId(next);
                   setLoadId(null);
                 }}
+                open={open}
+                shell="drawer"
                 placeholder="Select driver"
-                loading={driversQuery.isLoading}
-                allowAddNew={{
-                  label: "+ Create driver",
-                  onAdd: () => setDriverCreateOpen(true),
-                }}
+                dataField="cash-advance-driver"
               />
             </label>
 
@@ -502,6 +491,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                   options={loadOptions}
                   value={loadId}
                   onChange={setLoadId}
+                  onSearch={setLoadSearch}
                   placeholder={driverId ? "Select load" : "Select driver first"}
                   loading={loadsQuery.isLoading}
                   disabled={!driverId}
@@ -514,13 +504,15 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                     <span className="font-medium text-gray-700">
                       Unit / truck{purpose === "fuel_deposit" ? " *" : ""}
                     </span>
-                    <Combobox
-                      options={unitOptions}
+                    <EntityPicker
+                      kind="unit"
+                      operatingCompanyId={operatingCompanyId}
                       value={unitId}
                       onChange={setUnitId}
+                      enabled={open}
+                      nestedInDrawer
                       placeholder="Select unit"
-                      loading={fleetQuery.isLoading}
-                      allowClear
+                      dataField="unit_id"
                     />
                   </label>
                   <label className="space-y-1" data-field="trailer_id">
@@ -529,8 +521,9 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                       options={trailerOptions}
                       value={trailerId}
                       onChange={setTrailerId}
+                      onSearch={setTrailerSearch}
                       placeholder="Select trailer"
-                      loading={fleetQuery.isLoading}
+                      loading={trailersQuery.isLoading}
                       allowClear
                     />
                   </label>
@@ -682,19 +675,6 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           ) : null}
         </div>
       </ParityDrawer>
-
-      {operatingCompanyId ? (
-        <CreateDriverModal
-          open={driverCreateOpen}
-          companyId={operatingCompanyId}
-          onClose={() => setDriverCreateOpen(false)}
-          onCreated={(id) => {
-            setDriverId(id);
-            setDriverCreateOpen(false);
-            void driversQuery.refetch();
-          }}
-        />
-      ) : null}
     </>
   );
 }
