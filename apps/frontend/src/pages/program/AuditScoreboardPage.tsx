@@ -25,6 +25,7 @@ const letter = (c: GateState) =>
 type RecentPrRow = {
   number: number;
   title: string;
+  state?: string;
   mergedAtCt: string;
   url: string;
 };
@@ -152,10 +153,13 @@ export function AuditScoreboardPage() {
       <section className="recent" data-testid="program-scoreboard-recent-activity">
         <h2>
           Recent activity — last 10 PRs{" "}
-          <span className="sub">live from recon · times in CT (America/Chicago)</span>
+          <span className="sub">live from GitHub · times in CT (America/Chicago)</span>
         </h2>
         {recentRows.length === 0 ? (
-          <p className="recent-empty">No recent merged PRs in the recon artifact yet — panel fills after tracker sync / API deploy.</p>
+          <p className="recent-empty">
+            No recent PRs returned yet — panel fills from the live GitHub heartbeat on the next API
+            response (empty on error; never blocks the board).
+          </p>
         ) : (
           <ul className="recent-list">
             {recentRows.map((row) => (
@@ -163,7 +167,10 @@ export function AuditScoreboardPage() {
                 <a href={row.url} target="_blank" rel="noreferrer">
                   #{row.number}
                 </a>
-                <span className="recent-title">{row.title}</span>
+                <span className="recent-title">
+                  {row.state ? <span className="recent-state">{row.state}</span> : null}
+                  {row.title}
+                </span>
                 <span className="recent-when">{row.mergedAtCt}</span>
               </li>
             ))}
@@ -382,6 +389,7 @@ const CSS = `
 .ih35sb .recent-list a{font-weight:700;color:var(--navy);text-decoration:none}
 .ih35sb .recent-list a:hover{text-decoration:underline}
 .ih35sb .recent-title{color:var(--slate);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ih35sb .recent-state{display:inline-block;margin-right:6px;padding:1px 5px;border-radius:3px;background:var(--gray-bg);color:var(--slate);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
 .ih35sb .recent-when{color:var(--slate-lt);white-space:nowrap}
 .ih35sb .metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:16px 0}
 .ih35sb .metric{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 13px}
