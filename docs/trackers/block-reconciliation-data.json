@@ -1,12 +1,12 @@
 {
  "date": "2026-08-03",
- "generated_at_iso": "2026-08-03T15:21:19.301Z",
+ "generated_at_iso": "2026-08-03T17:21:15.476Z",
  "counts": {
   "PENDING": 15,
   "PENDING (GATED)": 27,
   "NEEDS-VERIFY": 56,
-  "DONE": 635,
-  "AUDIT-NOTE": 470
+  "DONE": 629,
+  "AUDIT-NOTE": 476
  },
  "universe": {
   "total_blocks_after_dedup": 1203,
@@ -1705,10 +1705,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #814 merged 2026-06-09",
+   "evidence": "all 1 file(s) on main",
    "name": "Accounting Periods Init — ops seed for Jan–Jun 2026 periods for TRANSP (IH 35 Transportation LLC). Adds unique index on ",
    "registered_on": null,
-   "pr": 814
+   "pr": null
   },
   {
    "id": "ACCT-CASHFLOW-COMPANY-TZ",
@@ -1771,10 +1771,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #816 merged 2026-06-09",
+   "evidence": "all 5 file(s) on main",
    "name": "Accounting integrity: verify and extend 4 items (period lock CI, bank-recon cron, accounting probes, CoA role bindings s",
    "registered_on": null,
-   "pr": 816
+   "pr": null
   },
   {
    "id": "ACCT-LINK-04-EXPENSE-CATEGORY-FK",
@@ -1826,10 +1826,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #815 merged 2026-06-08",
+   "evidence": "all 6 file(s) on main",
    "name": "CA-04: New/Edit Account drawer with is_locked flag, opening_balance_as_of, nullable account_number. Migration 2026060802",
    "registered_on": null,
-   "pr": 815
+   "pr": null
   },
   {
    "id": "ACCT-R-03-COA-MERGE-REPOINT",
@@ -3875,10 +3875,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #822 merged 2026-06-09",
+   "evidence": "all 1 file(s) on main",
    "name": "P5a — wire existing DriverHubPage to /driver-hub route (additive; mirrors /cash-flow)",
    "registered_on": null,
-   "pr": 822
+   "pr": null
   },
   {
    "id": "FEAT-DRIVER-INBOX-REPORTING",
@@ -4062,10 +4062,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #824 merged 2026-06-09",
+   "evidence": "all 1 file(s) on main",
    "name": "A1 — shared ParityTable grammar (density + gear column-toggle + advanced pager + select/batch). Additive new component; ",
    "registered_on": null,
-   "pr": 824
+   "pr": null
   },
   {
    "id": "FEAT-QBO-PARITY-A3-SIZING",
@@ -4077,17 +4077,6 @@
    "name": "A3 — sizing tokens + ParityDrawer (~576px right-drawer shell for create/edit). Additive new files; no existing files tou",
    "registered_on": null,
    "pr": 825
-  },
-  {
-   "id": "FEAT-QBO-PARITY-DOCS",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #823 merged 2026-06-09",
-   "name": "QBO-PARITY-UI-SYSTEM (PART D) — design-law spec + architecture/blueprint/locked-decisions docs (docs-only)",
-   "registered_on": null,
-   "pr": 823
   },
   {
    "id": "FEAT-REEFER-HOURS-POLL-CRON",
@@ -4359,10 +4348,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #820 merged 2026-06-08",
+   "evidence": "all 1 file(s) on main",
    "name": "at-risk-loads 500 (Postgres 42703) — project city/state in the sd delivery-stop lateral + projection-drift regression gu",
    "registered_on": null,
-   "pr": 820
+   "pr": null
   },
   {
    "id": "FIX-AUDIT-KPI-DRIFTS",
@@ -4502,10 +4491,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #818 merged 2026-06-08",
+   "evidence": "all 4 file(s) on main",
    "name": "Block V — wire 5 dispatch secondary tabs to distinct routes",
    "registered_on": null,
-   "pr": 818
+   "pr": null
   },
   {
    "id": "FIX-DOUBLE-STRINGIFY-SWEEP-NONMONEY",
@@ -4546,10 +4535,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #817 merged 2026-06-08",
+   "evidence": "all 4 file(s) on main",
    "name": "Block U — wire 8 fuel sub-nav tabs to distinct routes",
    "registered_on": null,
-   "pr": 817
+   "pr": null
   },
   {
    "id": "FIX-GUARD-M2-FK-DETECTION",
@@ -4733,10 +4722,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #819 merged 2026-06-08",
+   "evidence": "all 1 file(s) on main",
    "name": "Block H — underscore URL redirect to hyphen canonical paths",
    "registered_on": null,
-   "pr": 819
+   "pr": null
   },
   {
    "id": "G1-verify-block-registry-complete",
@@ -7409,70 +7398,15 @@
    "pr": null
   },
   {
-   "id": "TIER21-DR-DRILL",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #807 merged 2026-06-08",
-   "name": "Block 21 — DR Restore Drill: first drill completed, RTO 25min, RPO <30sec, quarterly calendar set",
-   "registered_on": null,
-   "pr": 807
-  },
-  {
-   "id": "TIER23-DEGRADATION",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #808 merged 2026-06-08",
-   "name": "Block 23 — Degradation Matrix: all 10 deps documented, 3 simulated failures drilled",
-   "registered_on": null,
-   "pr": 808
-  },
-  {
    "id": "TIER26-PARTITION",
    "source": ".block-ready",
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #809 merged 2026-06-09",
+   "evidence": "all 1 file(s) on main",
    "name": "Block 26 — Partition Hot Tables: audit_log partitioned by month, maintenance cron, archival function",
    "registered_on": null,
-   "pr": 809
-  },
-  {
-   "id": "TIER27-CANARY",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #810 merged 2026-06-08",
-   "name": "Block 27 — Canary Deploy: runbook + canary-smoke.yml CI workflow + rollback trigger documented",
-   "registered_on": null,
-   "pr": 810
-  },
-  {
-   "id": "TIER28-VENDOR-LOCKIN",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #811 merged 2026-06-08",
-   "name": "Block 28 — Vendor Lock-in Analysis: 11 vendors documented with severity scoring",
-   "registered_on": null,
-   "pr": 811
-  },
-  {
-   "id": "TIER29-KNOWN-LIMITATIONS",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #813 merged 2026-06-08",
-   "name": "Block 29 — Known Limitations Doc: 51 limitations documented across 8 categories",
-   "registered_on": null,
-   "pr": 813
+   "pr": null
   },
   {
    "id": "TIER3-LIST-ERROR-STATES",
@@ -11767,6 +11701,17 @@
    "pr": null
   },
   {
+   "id": "FEAT-QBO-PARITY-DOCS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "QBO-PARITY-UI-SYSTEM (PART D) — design-law spec + architecture/blueprint/locked-decisions docs (docs-only)",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "fh-unit-allocation-ui-view-missing",
    "source": ".block-ready",
    "fin": true,
@@ -13161,6 +13106,61 @@
    "pr": null
   },
   {
+   "id": "TIER21-DR-DRILL",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Block 21 — DR Restore Drill: first drill completed, RTO 25min, RPO <30sec, quarterly calendar set",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "TIER23-DEGRADATION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Block 23 — Degradation Matrix: all 10 deps documented, 3 simulated failures drilled",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "TIER27-CANARY",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Block 27 — Canary Deploy: runbook + canary-smoke.yml CI workflow + rollback trigger documented",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "TIER28-VENDOR-LOCKIN",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Block 28 — Vendor Lock-in Analysis: 11 vendors documented with severity scoring",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "TIER29-KNOWN-LIMITATIONS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Block 29 — Known Limitations Doc: 51 limitations documented across 8 categories",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "users-invited-status-distinct-from-active",
    "source": ".block-ready",
    "fin": true,
@@ -13261,6 +13261,96 @@
   }
  ],
  "merged_prs": [
+  {
+   "number": 4190,
+   "title": "Claude- fix(safety): my own alert_category fix was incomplete — the accounting watchdog still cannot record itself",
+   "mergedAt": "2026-08-03T17:18:01Z",
+   "branch": "claude/integrity-alerts-subject-type"
+  },
+  {
+   "number": 4182,
+   "title": "Cursor- fix(safety): SAF-B06 D&A RTD dispatch gate PASS",
+   "mergedAt": "2026-08-03T16:57:57Z",
+   "branch": "cursor/Cursor-safety-b06-da-rtd-gate-2026-08-03"
+  },
+  {
+   "number": 4180,
+   "title": "Cursor- chore(rules): Rule 32 continuous mode — no pause/idle",
+   "mergedAt": "2026-08-03T16:57:53Z",
+   "branch": "cursor/Cursor-rule-32-continuous-mode-2026-08-03"
+  },
+  {
+   "number": 4179,
+   "title": "Claude- fix(audit): a \"0\" was being certified by a method that cannot prove absence",
+   "mergedAt": "2026-08-03T16:18:48Z",
+   "branch": "docs/completeness-discriminator-standard"
+  },
+  {
+   "number": 4178,
+   "title": "Cursor- fix(safety): SAF-DOM-02 Neon-applied auto-fine join-table (PASS)",
+   "mergedAt": "2026-08-03T17:20:09Z",
+   "branch": "cursor/Cursor-safety-dom02-neon-applied-2026-08-03"
+  },
+  {
+   "number": 4177,
+   "title": "Cursor- fix(safety): SAF-B30 EntityLink+spawn PASS after #4169",
+   "mergedAt": "2026-08-03T16:10:30Z",
+   "branch": "cursor/Cursor-safety-b30-spawn-close-2026-08-03"
+  },
+  {
+   "number": 4176,
+   "title": "Cursor- fix(safety): SAF-ORPH-04 Form 2290 per-unit deadline PASS",
+   "mergedAt": "2026-08-03T16:10:23Z",
+   "branch": "cursor/Cursor-safety-orph04-form2290-pass-2026-08-03"
+  },
+  {
+   "number": 4175,
+   "title": "Cursor- fix(safety): SAF-B29 typeahead inventory guard closes FAIL",
+   "mergedAt": "2026-08-03T16:10:16Z",
+   "branch": "cursor/Cursor-safety-b29-inventory-guard-2026-08-03"
+  },
+  {
+   "number": 4174,
+   "title": "Cursor- feat(program): live GitHub last-10 PRs on Scoreboard",
+   "mergedAt": "2026-08-03T16:57:49Z",
+   "branch": "cursor/Cursor-program-scoreboard-live-recent-prs-2026-08-03"
+  },
+  {
+   "number": 4173,
+   "title": "chore(program): auto-refresh audit scoreboard from ledger",
+   "mergedAt": "2026-08-03T15:53:06Z",
+   "branch": "chore/program-scoreboard-sync"
+  },
+  {
+   "number": 4172,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-08-03T15:38:46Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 4171,
+   "title": "Cursor- feat(program): Scoreboard Last synced + last-10 PRs in CT",
+   "mergedAt": "2026-08-03T15:22:30Z",
+   "branch": "cursor/Cursor-program-scoreboard-visibility-2026-08-03"
+  },
+  {
+   "number": 4170,
+   "title": "Claude- docs(audit): rows 436/654 count CLONED QBO history as a TMS posting gap",
+   "mergedAt": "2026-08-03T15:28:47Z",
+   "branch": "docs/audit-clone-vs-native-posting"
+  },
+  {
+   "number": 4169,
+   "title": "Cursor- fix(safety): accident spawn-liability creates driver liability (2196)",
+   "mergedAt": "2026-08-03T15:50:43Z",
+   "branch": "cursor/Cursor-safety-accident-spawn-liability-2196-2026-08-03"
+  },
+  {
+   "number": 4164,
+   "title": "chore(ci): bump github/codeql-action from 4 to 4.37.4",
+   "mergedAt": "2026-08-03T15:38:27Z",
+   "branch": "dependabot/github_actions/github/codeql-action-4.37.4"
+  },
   {
    "number": 4163,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
@@ -13386,6 +13476,12 @@
    "title": "Cursor- guard: AccidentsPage list filter EntityPickers (2160)",
    "mergedAt": "2026-08-03T04:41:51Z",
    "branch": "cursor/Cursor-accidents-list-filters-2160-2026-08-03"
+  },
+  {
+   "number": 4142,
+   "title": "Claude- fix(dispatch): no driver has ever received a dispatch message — the whole chain wrote to a dead table",
+   "mergedAt": "2026-08-03T15:38:21Z",
+   "branch": "claude/outbox-driver-notification-chain"
   },
   {
    "number": 4141,
@@ -16764,102 +16860,6 @@
    "title": "docs(governance): Acct+Bank remaining packet + ECON-05/F08/F09 + applied-mig rewrites",
    "mergedAt": "2026-07-26T03:00:55Z",
    "branch": "docs/acct-bank-packet-governance-20260725"
-  },
-  {
-   "number": 3537,
-   "title": "fix(safety): SAF-B31 — two Safety pages promised features and rendered prose; both now query real entity-scoped readers",
-   "mergedAt": "2026-07-25T20:02:12Z",
-   "branch": "fix/saf-b31-safety-placeholder-surfaces"
-  },
-  {
-   "number": 3536,
-   "title": "feat(accounting): ACCT-R-07 wire WO status-count widget to accounting.bills/expenses join",
-   "mergedAt": "2026-07-25T19:43:39Z",
-   "branch": "feat/acct-r07-0280-42-wo-to-expense-flow"
-  },
-  {
-   "number": 3535,
-   "title": "fix(lists): LST-F10 — Driver Teams was a prose placeholder over a 545-line backend nobody called",
-   "mergedAt": "2026-07-25T20:01:36Z",
-   "branch": "fix/lst-f10-driver-teams-surface"
-  },
-  {
-   "number": 3534,
-   "title": "ACCT-R-25: migrate Factoring Queue to ParityTable (Phase A)",
-   "mergedAt": "2026-07-25T19:45:47Z",
-   "branch": "fix/acct-r25-paritytable-factoring-queue"
-  },
-  {
-   "number": 3533,
-   "title": "[HOLD] FINANCIAL: ACCT-R-01 escrow canonical write-path sync (driver_finance→accounting.escrow_postings)",
-   "mergedAt": "2026-07-25T19:44:59Z",
-   "branch": "fix/acct-r01-escrow-canonical-sync"
-  },
-  {
-   "number": 3532,
-   "title": "docs(law): record the fixture carve-out so NEVER-DELETE and the demo purge stop contradicting",
-   "mergedAt": "2026-07-25T19:27:44Z",
-   "branch": "docs/never-delete-fixture-carveout"
-  },
-  {
-   "number": 3531,
-   "title": "fix(banking): Drivers roster grid migrates to shared ParityTable (BANK-R-01)",
-   "mergedAt": "2026-07-25T19:27:08Z",
-   "branch": "feat/bank-r01-qbo-parity-resizable-columns-everywhere"
-  },
-  {
-   "number": 3529,
-   "title": "fix(banking): ACCT-R-11 categorize capture fields sent to API",
-   "mergedAt": "2026-07-25T21:13:35Z",
-   "branch": "fix/acct-r11-tx-fields-sent"
-  },
-  {
-   "number": 3528,
-   "title": "ACCT-R-04: wire G4 deploy smoke env keys in render.yaml",
-   "mergedAt": "2026-07-25T20:08:27Z",
-   "branch": "fix/acct-r04-g4-deploy-smoke-env"
-  },
-  {
-   "number": 3527,
-   "title": "fix(accounting): ES1 unscoped-table scope-proof CI guard (0519-es1-58 / ACCT-R-12)",
-   "mergedAt": "2026-07-25T21:41:40Z",
-   "branch": "fix/acct-r12-es1-unscoped-scope-proof"
-  },
-  {
-   "number": 3526,
-   "title": "[HOLD] ACCT-R-03: real CoA account merge (merge_records + Owner-only)",
-   "mergedAt": "2026-07-26T02:24:04Z",
-   "branch": "hold/acct-r03-coa-merge-20260725"
-  },
-  {
-   "number": 3523,
-   "title": "fix(guard): extend migration number-collision guard to the timestamp scheme",
-   "mergedAt": "2026-07-25T19:06:19Z",
-   "branch": "fix/migration-timestamp-number-collision-guard"
-  },
-  {
-   "number": 3522,
-   "title": "fix(routes): remove two unreachable duplicate route registrations (+ guard)",
-   "mergedAt": "2026-07-25T19:26:34Z",
-   "branch": "fix/duplicate-route-registrations"
-  },
-  {
-   "number": 3521,
-   "title": "[HOLD] fix(settlements): ACCT-R-13 mount settlement approval routes + close entity-scope IDOR",
-   "mergedAt": "2026-07-25T20:20:45Z",
-   "branch": "fix/acct-r13-settlement-approval-mount"
-  },
-  {
-   "number": 3520,
-   "title": "docs(accounting): ACCT-R-09/10/14/22/26 BUILT honesty round-2",
-   "mergedAt": "2026-07-25T20:20:55Z",
-   "branch": "hold/acct-r09-r26-honesty-round2"
-  },
-  {
-   "number": 3519,
-   "title": "docs(module-completion): manifest truth pass — M grows 18/32 → 23/38, 11 orphan findings admitted",
-   "mergedAt": "2026-07-26T00:52:27Z",
-   "branch": "docs/manifest-truth-pass-lists-safety"
   }
  ],
  "merged_pr_total": 3000,
