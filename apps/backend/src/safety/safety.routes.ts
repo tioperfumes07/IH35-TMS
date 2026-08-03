@@ -8,6 +8,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { INTERNAL_CSA_SOURCE_METADATA } from "../routes/safety/csa-scores.js";
 import { EXCLUDE_ARCHIVED_DRIVERS_SQL } from "../mdata/test-seed-archive.js";
 import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "../mdata/driver-pseudo-user.js";
+import { createSettlementDeduction } from "../driver-finance/deductions.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -825,31 +826,170 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
 
-    // SAF-F35 / CLS-SILENT-SUCCESS: previously audited + returned 200 with
-    // spawned_liability_id:null while the UI toasted success — no money object. Fail closed
-    // until owner FINANCIAL-HOLD unlocks real liability posting (do not invent GL math here).
-    await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "safety.accident.spawn_liability",
-        {
-          resource_type: "safety.accident_reports",
-          resource_id: params.data.id,
-          operating_company_id: query.data.operating_company_id,
-          outcome: "rejected_not_implemented",
-        },
-        "info",
-        "BT-3-SAFETY-LIABILITIES-REBUILD"
-      );
+    // SAF-F35 / SAF-B30: create a real driver_finance.driver_liabilities row (same pattern as
+    // civil-fine convert). Amount = SUM(accident_cost_lines.amount_cents). Idempotent on
+    // origin='safety_accident' + origin_id. Seeds settlement deduction via existing service
+    // (apply stays behind SETTLEMENT_DEDUCTION_APPLY_ENABLED — no new GL math).
+    const outcome = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      await client.query("BEGIN");
+      try {
+        const accidentRes = await client.query(
+          `
+            SELECT id, driver_id, description, load_id, unit_id
+            FROM safety.accident_reports
+            WHERE id = $1
+              AND operating_company_id = $2
+            LIMIT 1
+            FOR UPDATE
+          `,
+          [params.data.id, query.data.operating_company_id]
+        );
+        const accident = accidentRes.rows[0] as
+          | {
+              id: string;
+              driver_id: string | null;
+              description: string | null;
+              load_id: string | null;
+              unit_id: string | null;
+            }
+          | undefined;
+        if (!accident) {
+          await client.query("ROLLBACK");
+          return { kind: "not_found" as const };
+        }
+        if (!accident.driver_id) {
+          await client.query("ROLLBACK");
+          return { kind: "no_driver" as const };
+        }
+
+        const existingRes = await client.query(
+          `
+            SELECT id::text
+            FROM driver_finance.driver_liabilities
+            WHERE operating_company_id = $1
+              AND origin = 'safety_accident'
+              AND origin_id = $2
+            ORDER BY created_at ASC
+            LIMIT 1
+          `,
+          [query.data.operating_company_id, accident.id]
+        );
+        const existingId = (existingRes.rows[0] as { id?: string } | undefined)?.id;
+        if (existingId) {
+          await client.query("COMMIT");
+          return { kind: "reused" as const, liabilityId: existingId };
+        }
+
+        const sumRes = await client.query(
+          `
+            SELECT COALESCE(SUM(amount_cents), 0)::bigint AS total_cents
+            FROM safety.accident_cost_lines
+            WHERE accident_id = $1
+              AND operating_company_id = $2
+          `,
+          [accident.id, query.data.operating_company_id]
+        );
+        const amountCents = Number((sumRes.rows[0] as { total_cents?: string | number })?.total_cents ?? 0);
+        if (!Number.isFinite(amountCents) || amountCents <= 0) {
+          await client.query("ROLLBACK");
+          return { kind: "no_amount" as const };
+        }
+
+        const driverRes = await client.query(
+          `SELECT id, status FROM mdata.drivers WHERE id = $1 LIMIT 1`,
+          [accident.driver_id]
+        );
+        const driver = driverRes.rows[0] as { id?: string; status?: string } | undefined;
+        if (!driver || String(driver.status ?? "").toLowerCase() !== "active") {
+          await client.query("ROLLBACK");
+          return { kind: "driver_inactive" as const };
+        }
+
+        const desc =
+          `Accident damage recovery: ${String(accident.description ?? "").trim() || accident.id}`.slice(0, 500);
+        const liabilityRes = await client.query(
+          `
+            INSERT INTO driver_finance.driver_liabilities (
+              operating_company_id,
+              driver_id,
+              type,
+              source_description,
+              original_amount,
+              current_balance,
+              paid_to_date,
+              requires_acknowledgment,
+              origin,
+              origin_id,
+              status
+            ) VALUES (
+              $1,$2,'accident_damage',$3,$4,$4,0,true,'safety_accident',$5,'pending_recovery'
+            )
+            RETURNING id::text
+          `,
+          [query.data.operating_company_id, accident.driver_id, desc, amountCents, accident.id]
+        );
+        const liabilityId = (liabilityRes.rows[0] as { id?: string } | undefined)?.id;
+        if (!liabilityId) throw new Error("liability_create_failed");
+
+        const deduction = await createSettlementDeduction(client, {
+          driverId: String(accident.driver_id),
+          operatingCompanyId: query.data.operating_company_id,
+          amountCents,
+          reason: desc,
+          sourceType: "damage",
+          loadId: accident.load_id ? String(accident.load_id) : null,
+          createdByUserId: user.uuid,
+        });
+
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "safety.accident.spawn_liability",
+          {
+            resource_type: "safety.accident_reports",
+            resource_id: params.data.id,
+            operating_company_id: query.data.operating_company_id,
+            spawned_liability_id: liabilityId,
+            amount_cents: amountCents,
+            settlement_deduction_id: deduction.id,
+            outcome: "created",
+          },
+          "info",
+          "BT-3-SAFETY-LIABILITIES-REBUILD"
+        );
+
+        await client.query("COMMIT");
+        return { kind: "created" as const, liabilityId, amountCents, deductionId: deduction.id };
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      }
     });
-    return reply.code(422).send({
-      error: "spawn_liability_not_implemented",
-      message:
-        "Spawn Liability is not live — no payable/liability row is created yet (FINANCIAL-HOLD). Audit recorded the request.",
+
+    if (outcome.kind === "not_found") return reply.code(404).send({ error: "accident_not_found" });
+    if (outcome.kind === "no_driver") {
+      return reply.code(422).send({
+        error: "accident_missing_driver",
+        message: "Assign a driver on the accident before spawning a liability.",
+      });
+    }
+    if (outcome.kind === "no_amount") {
+      return reply.code(422).send({
+        error: "accident_cost_lines_required",
+        message: "Add estimator cost lines (section A/B) with a positive total before spawning a liability.",
+      });
+    }
+    if (outcome.kind === "driver_inactive") {
+      return reply.code(422).send({ error: "driver_not_active" });
+    }
+
+    return {
       accident_id: params.data.id,
-      spawned_liability_id: null,
-    });
+      spawned_liability_id: outcome.liabilityId,
+      reused: outcome.kind === "reused",
+      amount_cents: outcome.kind === "created" ? outcome.amountCents : undefined,
+      settlement_deduction_id: outcome.kind === "created" ? outcome.deductionId : undefined,
+    };
   });
 
   app.post("/api/v1/safety/accidents/:id/spawn-wo", async (req, reply) => {
