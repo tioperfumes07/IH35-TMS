@@ -5,6 +5,7 @@
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { enqueueEmail } from "../email/queue.service.js";
+import { postInvoiceGlIfEnabled } from "./invoice-gl.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import {
   assertLoadRevenueHasSourceLoad,
@@ -203,6 +204,38 @@ export async function sendDraftInvoice(
     `,
     [input.invoiceId, input.userId, input.operatingCompanyId]
   );
+  // ACCT-F100 — OWNER RULING 2026-08-03: an invoice posts to the GL on Finalize/Post OR Send,
+  // whichever comes FIRST. This is the SEND arm. Idempotent at the poster's posting-batch key, so if
+  // the invoice was already finalized-and-posted this is a no-op rather than a double-post — which is
+  // what makes "whichever comes first" implementable without inventing our own posted flag.
+  //
+  // Measured before this existed: 11,979 invoices on prod against 2 posting batches of type 'invoice',
+  // both from 2026-05-19 and both posted by hand. The engine handled 'invoice' the whole time; nothing
+  // ever called it on the lifecycle.
+  //
+  // A post failure is SURFACED, never swallowed, and never rolls back an invoice the customer has
+  // already been sent — the send is a business act that stands on its own. Retriable via the existing
+  // manual post endpoint.
+  const invoiceGl = await postInvoiceGlIfEnabled(input.operatingCompanyId, input.invoiceId, {
+    userId: input.userId,
+  });
+  if (!invoiceGl.posted && invoiceGl.reason === "post_failed") {
+    await appendCrudAudit(
+      client,
+      input.userId,
+      "accounting.invoice.gl_post_failed",
+      {
+        resource_type: "accounting.invoices",
+        resource_id: input.invoiceId,
+        operating_company_id: input.operatingCompanyId,
+        code: invoiceGl.code,
+        message: invoiceGl.message,
+      },
+      "warning",
+      "ACCT-F100-INVOICE-AR-GL"
+    );
+  }
+
   await appendCrudAudit(
     client,
     input.userId,
