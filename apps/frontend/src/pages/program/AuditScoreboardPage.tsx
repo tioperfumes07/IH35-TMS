@@ -31,7 +31,11 @@ type RecentPrRow = {
 };
 
 type LiveScoreboard = ProgramScoreboard & {
-  meta: ProgramScoreboard["meta"] & { lastSyncedCt?: string | null };
+  meta: ProgramScoreboard["meta"] & {
+    lastSyncedCt?: string | null;
+    prodReadSource?: "neon_now" | "request_time" | "committed_fallback";
+    gateTally?: Record<string, { pass: number; applicable: number; fail: number; unverified: number }>;
+  };
   recentActivity?: RecentPrRow[];
 };
 
@@ -98,6 +102,13 @@ export function AuditScoreboardPage() {
   const sb = useScoreboard();
   // Alias *At fields — verify-no-native-datetime-input flags camelCase names ending in At as date fields.
   const prodReadSnapshot = sb.meta.prodReadAt;
+  const prodReadSource = sb.meta.prodReadSource ?? "committed_fallback";
+  const prodReadLabel =
+    prodReadSource === "neon_now"
+      ? "live prod read (Neon now)"
+      : prodReadSource === "request_time"
+        ? "request time (Neon stamp unavailable)"
+        : "seeded snapshot (first paint)";
   const generatedOn = sb.meta.generatedAt.slice(0, 10);
   // Last synced = ledger git commit (meta.generatedAt / lastSyncedCt), America/Chicago CT — not wall clock.
   const lastSyncedLabel = sb.meta.lastSyncedCt || formatLedgerCt(sb.meta.generatedAt);
@@ -124,6 +135,28 @@ export function AuditScoreboardPage() {
     return { prod, audit, fix, fail, unv, certified, vprod, vopen };
   }, [sb]);
 
+  const gateTally = useMemo(() => {
+    const fromMeta = sb.meta.gateTally;
+    if (fromMeta && GATE_LABELS.every((g) => fromMeta[g])) return fromMeta;
+    const computed: Record<string, { pass: number; applicable: number; fail: number; unverified: number }> = {};
+    for (let i = 0; i < GATE_LABELS.length; i++) {
+      let pass = 0;
+      let applicable = 0;
+      let fail = 0;
+      let unverified = 0;
+      for (const m of sb.modules) {
+        const c = m.cells[i] || "UNV";
+        if (c === "NA") continue;
+        applicable += 1;
+        if (c === "PASS") pass += 1;
+        else if (c === "FAIL") fail += 1;
+        else if (c === "UNV") unverified += 1;
+      }
+      computed[GATE_LABELS[i]] = { pass, applicable, fail, unverified };
+    }
+    return computed;
+  }, [sb]);
+
   return (
     <div className="ih35sb">
       <style>{CSS}</style>
@@ -140,7 +173,7 @@ export function AuditScoreboardPage() {
         <div className="t">Deep-Linkage Certification Scoreboard</div>
         <div className="s">
           ledger <code>AUDIT-COVERAGE-LIVE.md</code> · main @ <b>{sb.meta.sourceSha}</b> · deployed @ <b>{sb.meta.deployedSha}</b> ·
-          live prod read <b>{prodReadSnapshot}</b> · generated {generatedOn}.
+          {prodReadLabel} <b>{prodReadSnapshot}</b> · generated {generatedOn}.
           <b> Complete = DoD A–E + VERIFY 1–8, PROD-VERIFIED per entity</b> — not five layers. Green = proven live only;
           amber = traced in code, must be exercised live. A code trace or route string is not proof; it must be clicked/called live.
         </div>
@@ -177,6 +210,25 @@ export function AuditScoreboardPage() {
           </ul>
         )}
       </section>
+
+      <div className="gate-tally" data-testid="program-scoreboard-gate-tally">
+        <div className="gate-tally-hd">13-gate tally <span className="sub">pass / applicable · weakest column = next wave</span></div>
+        <div className="gate-tally-row">
+          {GATE_LABELS.map((g) => {
+            const t = gateTally[g] ?? { pass: 0, applicable: 0, fail: 0, unverified: 0 };
+            const ratio = t.applicable > 0 ? t.pass / t.applicable : 0;
+            const tone = t.applicable === 0 ? "na" : ratio >= 0.85 ? "strong" : ratio >= 0.4 ? "mid" : "weak";
+            return (
+              <div key={g} className={`gate-cell ${tone}`} data-testid={`program-scoreboard-gate-${g}`}>
+                <div className="gate-name">{g}</div>
+                <div className="gate-ratio">
+                  {t.pass}/{t.applicable}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="metrics">
         <Metric cls="big" n={`${metrics.certified} / 30`} l="Modules certified (all 13 gates per entity)" />
@@ -235,7 +287,7 @@ export function AuditScoreboardPage() {
       </div>
 
       {/* LIVE PROD READ */}
-      <h2>Live prod read <span className="sub">{prodReadSnapshot} · read-only · all entities</span></h2>
+      <h2>Live prod read <span className="sub">{prodReadLabel} · {prodReadSnapshot} · all entities</span></h2>
       <div className="prodpanel">
         {sb.prod.map((p, i) => (
           <div className={`pc ${p.tone ?? ""}`} key={i}>
@@ -391,6 +443,18 @@ const CSS = `
 .ih35sb .recent-title{color:var(--slate);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ih35sb .recent-state{display:inline-block;margin-right:6px;padding:1px 5px;border-radius:3px;background:var(--gray-bg);color:var(--slate);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
 .ih35sb .recent-when{color:var(--slate-lt);white-space:nowrap}
+.ih35sb .gate-tally{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:16px 0 0}
+.ih35sb .gate-tally-hd{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--slate);margin-bottom:10px}
+.ih35sb .gate-tally-hd .sub{text-transform:none;letter-spacing:0;font-weight:400;color:var(--slate-lt);margin-left:8px}
+.ih35sb .gate-tally-row{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:6px}
+.ih35sb .gate-cell{border-radius:8px;padding:8px 4px;text-align:center;border:1px solid var(--line);background:var(--gray-bg)}
+.ih35sb .gate-cell.strong{background:var(--navy);border-color:var(--navy);color:#fff}
+.ih35sb .gate-cell.mid{background:var(--accent-bg);border-color:#c5d0e3;color:var(--navy)}
+.ih35sb .gate-cell.weak{background:#fff;border-color:#cbd5e1;color:var(--slate)}
+.ih35sb .gate-cell.na{opacity:.55}
+.ih35sb .gate-name{font-size:10px;font-weight:800;letter-spacing:.02em}
+.ih35sb .gate-cell.strong .gate-name{color:#cbd5e1}
+.ih35sb .gate-ratio{font-size:12px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}
 .ih35sb .metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:16px 0}
 .ih35sb .metric{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 13px}
 .ih35sb .metric .n{font-size:22px;font-weight:800;line-height:1}

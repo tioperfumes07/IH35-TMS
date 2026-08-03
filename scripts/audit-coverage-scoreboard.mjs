@@ -25,7 +25,36 @@ const LABEL = "audit-coverage-scoreboard";
 const LAYERS = ["A", "B", "C", "D", "E"];
 const ENTITIES = ["TRANSP", "TRK", "USMCA"];
 const GATE_OK = new Set(["PASS", "AUDIT", "FIX", "FAIL", "UNV", "NA"]);
+/** DoD A–E + VERIFY V1–V8 — 13 gates (Program scoreboard + meta.gateTally). */
+export const GATE_LABELS_13 = ["A", "B", "C", "D", "E", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8"];
 const SCOREBOARD_START = "## Scoreboard";
+
+/**
+ * Per-gate tally across all module rows (both entities folded into cells).
+ * applicable = non-NA cells; pass = PASS; fail = FAIL; unverified = UNV.
+ * AUDIT/FIX count toward applicable only (weakest-column signal still honest).
+ */
+export function computeGateTally(modules) {
+  const out = {};
+  for (let i = 0; i < GATE_LABELS_13.length; i++) {
+    const gate = GATE_LABELS_13[i];
+    let pass = 0;
+    let applicable = 0;
+    let fail = 0;
+    let unverified = 0;
+    for (const m of modules || []) {
+      const cells = Array.isArray(m.cells) ? m.cells : [];
+      const c = cells[i] || "UNV";
+      if (c === "NA") continue;
+      applicable += 1;
+      if (c === "PASS") pass += 1;
+      else if (c === "FAIL") fail += 1;
+      else if (c === "UNV") unverified += 1;
+    }
+    out[gate] = { pass, applicable, fail, unverified };
+  }
+  return out;
+}
 // End marker: first `---` after Scoreboard that precedes ## Findings (Deployed SHA / help lines may sit between).
 const FINDINGS_HEADER = "\n## Findings";
 
@@ -731,6 +760,7 @@ export function buildProgramScoreboardLive() {
     throw new Error(`${LABEL}: ledger metrics problems: ${metrics.problems.join("; ")}`);
   }
   const data = emitProgramJson(rows, metrics, ids, { write: false });
+  const gateTally = computeGateTally(data.modules || []);
   return {
     ...data,
     meta: {
@@ -739,6 +769,7 @@ export function buildProgramScoreboardLive() {
       ledgerRows: metrics.rowsTotal,
       failOpen: metrics.failOpen,
       defects: metrics.defectModules,
+      gateTally,
     },
   };
 }
@@ -770,6 +801,14 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
   if (m.cellsPassByEntity.TRANSP >= m.cellsByEntity.TRANSP) {
     throw new Error("PASS cells must be strictly less than covered when FAIL cells exist");
   }
+  const tallyProbe = computeGateTally([
+    { cells: ["PASS", "FAIL", "UNV", "NA", "AUDIT", "PASS", "UNV", "FAIL", "NA", "NA", "NA", "NA", "NA"] },
+    { cells: ["PASS", "PASS", "PASS", "PASS", "PASS", "AUDIT", "AUDIT", "AUDIT", "AUDIT", "AUDIT", "AUDIT", "AUDIT", "AUDIT"] },
+  ]);
+  if (tallyProbe.A.pass !== 2 || tallyProbe.A.applicable !== 2) throw new Error("gateTally A");
+  if (tallyProbe.B.fail !== 1 || tallyProbe.B.pass !== 1) throw new Error("gateTally B");
+  if (tallyProbe.C.unverified !== 1) throw new Error("gateTally C");
+  if (tallyProbe.D.applicable !== 1) throw new Error("gateTally D applicable excludes NA from first row only — expect 1");
   const fuelAlias = parseModuleCell("Fuel", ids);
   if (!fuelAlias.ok || fuelAlias.id !== "fuel" || fuelAlias.via !== "alias") {
     throw new Error("Fuel must resolve via MODULE_ALIASES");
