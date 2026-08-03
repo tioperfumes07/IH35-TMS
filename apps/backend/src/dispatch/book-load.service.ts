@@ -9,6 +9,7 @@ import { bookLoadRateTotalCents } from "./book-load-accessorial.js";
 import { assertDriverQualifiedForLoad } from "./driver-qualification.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { enqueueOverrideNotice } from "../outbox/enqueue-override-notice.js";
 import {
   claimReservation,
   consumeLoadNumberReservation,
@@ -655,24 +656,13 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           "warning",
           "BT-3-DISPATCH-AUTH-GATES"
         );
-        await client.query(
-          `
-            INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-            VALUES ($1,$2,$3,$4::jsonb)
-          `,
-          [
-            "dispatch.loads",
-            input.assigned_unit_id,
-            "dispatch.wf064.override_notice",
-            JSON.stringify({
-              override_type: "unit_block",
-              notify_channels: ["email", "sms"],
-              operating_company_id: input.operating_company_id,
-              override_reason: input.override_reason,
-              override_by_user_id: input.requestingUserUuid,
-            }),
-          ]
-        );
+        await enqueueOverrideNotice(client, input.assigned_unit_id, {
+          override_type: "unit_block",
+          notify_channels: ["email", "sms"],
+          operating_company_id: input.operating_company_id,
+          override_reason: input.override_reason,
+          override_by_user_id: input.requestingUserUuid,
+        });
       }
 
       // 0441-mod2: hard-block OOS units (same severity class as WF-050 / is_dispatch_blocked).
@@ -900,24 +890,13 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           "warning",
           "BT-3-DISPATCH-AUTH-GATES"
         );
-        await client.query(
-          `
-            INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-            VALUES ($1,$2,$3,$4::jsonb)
-          `,
-          [
-            "dispatch.loads",
-            input.assigned_primary_driver_id,
-            "dispatch.wf064.override_notice",
-            JSON.stringify({
-              override_type: "hos_violation",
-              notify_channels: ["email"],
-              operating_company_id: input.operating_company_id,
-              override_reason: input.override_reason,
-              override_by_user_id: input.requestingUserUuid,
-            }),
-          ]
-        );
+        await enqueueOverrideNotice(client, input.assigned_primary_driver_id, {
+          override_type: "hos_violation",
+          notify_channels: ["email"],
+          operating_company_id: input.operating_company_id,
+          override_reason: input.override_reason,
+          override_by_user_id: input.requestingUserUuid,
+        });
       }
     }
 
@@ -1075,27 +1054,16 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
               "warning",
               "BT-3-DISPATCH-AUTH-GATES"
             );
-            await client.query(
-              `
-                INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-                VALUES ($1,$2,$3,$4::jsonb)
-              `,
-              [
-                "dispatch.loads",
-                block.driverId,
-                "dispatch.wf064.override_notice",
-                JSON.stringify({
-                  override_type: "driver_qualification",
-                  notify_channels: ["email", "sms"],
-                  operating_company_id: input.operating_company_id,
-                  overridden_reasons: block.reasons,
-                  override_reason: input.override_reason,
-                  override_by_user_id: input.requestingUserUuid,
-                  override_class: "DOT_QUALIFICATION",
-                  load_context: loadContext,
-                }),
-              ]
-            );
+            await enqueueOverrideNotice(client, block.driverId, {
+              override_type: "driver_qualification",
+              notify_channels: ["email", "sms"],
+              operating_company_id: input.operating_company_id,
+              overridden_reasons: block.reasons,
+              override_reason: input.override_reason,
+              override_by_user_id: input.requestingUserUuid,
+              override_class: "DOT_QUALIFICATION",
+              load_context: loadContext,
+            });
             continue; // Owner attested — this driver passes; every other driver is still gated.
           }
 
