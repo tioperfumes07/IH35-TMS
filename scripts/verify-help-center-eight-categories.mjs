@@ -46,7 +46,7 @@ function assert(files) {
       problems.push(`${CENTER}: CATEGORY_ORDER missing "${cat}"`);
     }
   }
-  const orderBlock = center.match(/CATEGORY_ORDER[\s\S]*?\]/);
+  const orderBlock = center.match(/const CATEGORY_ORDER[\s\S]*?\n\];/);
   if (orderBlock) {
     const count = REQUIRED_CATS.filter((c) => orderBlock[0].includes(`"${c}"`)).length;
     if (count !== 8) {
