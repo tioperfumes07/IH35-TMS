@@ -1,4 +1,77 @@
 {
-  "waves": [],
-  "_README": "Cascade publishes CLS-* class wave cards here (schema: docs/audit/wave-queue.SCHEMA.json). Legacy per-module rows in AUDIT-COVERAGE-LIVE.md are WORM history and are NOT rewritten by this artifact. Cursor drains mechanical cards; Claude Coder drains money cards. verify-wave-card-format + verify-no-false-green-certify enforce the method in CI."
+  "_README": "Cascade publishes CLS-* class wave cards here (schema: docs/audit/wave-queue.SCHEMA.json). Legacy per-module rows in AUDIT-COVERAGE-LIVE.md are WORM history and are NOT rewritten by this artifact. Cursor drains mechanical cards; Claude Coder drains money cards. verify-wave-card-format + verify-no-false-green-certify enforce the method in CI.",
+  "waves": [
+    {
+      "id": "CLS-CATEGORY-MAP-COHERENCE",
+      "root_cause": "expense_category_account_map incomplete or posting_side incoherent — a TMS-native bill whose category code has no row in the map fails with BILL_LINE_ACCOUNT_UNRESOLVED / CATEGORY_MAPPING_MISSING, blocking GL posting silently until the map is seeded. Guard ACCT-F98 already names this incident.",
+      "lane": "money",
+      "layer": "C",
+      "modules": ["accounting", "maintenance"],
+      "instances": [
+        {
+          "path": "expense_category_account_map missing row for maintenance/misc (USMCA) — bill 77f2659f failed CATEGORY_MAPPING_MISSING",
+          "entity": "USMCA",
+          "note": "Resolved by seeding 27 rows across 3 entities. Real defect: map was incomplete at TMS-native bill creation time."
+        },
+        {
+          "path": "expense_category_account_map posting_side coherence — any new expense category added without a map row will silently fail GL",
+          "entity": "ALL",
+          "note": "Guard ACCT-F98 (verify-entity-expense-category-map-complete.mjs) catches at CI time."
+        }
+      ],
+      "completeness": "lucia-bypass Neon prod: expense_category_account_map count=27 (seeded 2026-08-03). All 5 TMS-native bills carry balanced JEs (0 CATEGORY_MAPPING_MISSING remaining). Positive control: posting_batches status=posted > 180.",
+      "guard": "scripts/verify-entity-expense-category-map-complete.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "bill 77f2659f (USMCA-RB-002, $1.00) → JE 84d8285c DR=CR=100c 2026-08-03T16:08:28Z — previously failed CATEGORY_MAPPING_MISSING, now posted after map seed",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/accounting/posting-engine.service.ts",
+        "apps/backend/src/accounting/coa-roles/resolver.service.ts",
+        "scripts/verify-entity-expense-category-map-complete.mjs"
+      ]
+    },
+    {
+      "id": "CLS-GL-DARK",
+      "root_cause": "CORRECTED 2026-08-03: Original claim $107M+ unposted was the row-665 trap. QBO-origin ($39.9M cust_pmt + $25.1M bill_pmt = $65M) CORRECTLY REFUSED (parallel books, no write-back). TMS-NATIVE: cust_pmt=1/$5 POSTED, bill_pmt=1/$5 POSTED, bills=5/$32.05 ALL POSTED, invoices=6/$12.01 (1 posted, 4 draft pending send = CLS-CALENDAR-DATE). ZERO TMS-native payment GL gaps. CLASS N/A — not a build target.",
+      "lane": "money",
+      "layer": "C",
+      "modules": ["accounting"],
+      "instances": [
+        {
+          "path": "accounting.payments: 12124 total, 12123 QBO-origin (refused), 1 TMS-native ($5.00, POSTED batch 1cb8b565 JE e2171e0a)",
+          "entity": "TRANSP",
+          "note": "QBO-origin $39,940,285.99 refused by design. TMS-native $5.00 already has balanced JE."
+        },
+        {
+          "path": "accounting.bill_payments: 6544 total, 6543 QBO-origin (refused), 1 TMS-native ($5.00, POSTED batch 4d922331 JE dcbe5700)",
+          "entity": "TRANSP",
+          "note": "QBO-origin $25,090,873.77 refused by design. TMS-native $5.00 already has balanced JE."
+        },
+        {
+          "path": "accounting.bills: 16250 total, 16245 QBO-origin, 5 TMS-native ($32.05, ALL POSTED)",
+          "entity": "ALL",
+          "note": "All 5 TMS-native bills carry balanced JEs. Failed batch (77f2659f) retried and posted."
+        },
+        {
+          "path": "accounting.invoices: 6 TMS-native, 1 posted, 4 draft+void (pending send = CLS-CALENDAR-DATE)",
+          "entity": "ALL",
+          "note": "Draft invoices cannot post until sent. Send-path date-cast fix deployed (PR #4194). Tracked under CLS-CALENDAR-DATE."
+        }
+      ],
+      "completeness": "lucia-bypass Neon prod 2026-08-03: payments n_live_tup=12124; bill_payments n_live_tup=6544; bills n_live_tup=16250. source_system split per-row (qbo_payment_id, qbo_bill_payment_id, qbo_bill_id). Positive control: posting_batches posted > 180.",
+      "guard": "scripts/verify-gl-posting-coverage.mjs",
+      "drain_proof": {
+        "guard_green": true,
+        "guard_sample": "cust_pmt b5ef0cd4 (TRANSP $5) JE e2171e0a DR=CR=500c; bill_pmt 402b2bb3 (TRANSP $5) JE dcbe5700 DR=CR=500c",
+        "money_critical": true
+      },
+      "status": "drained",
+      "hotfiles": [
+        "apps/backend/src/accounting/posting-engine.service.ts"
+      ]
+    }
+  ]
 }
