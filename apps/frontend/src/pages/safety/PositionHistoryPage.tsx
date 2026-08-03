@@ -10,6 +10,7 @@ import { useSearchParams } from "react-router-dom";
 import { listPositionHistory, type PositionHistoryRecord } from "../../api/position-history";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 
@@ -160,13 +161,23 @@ export default function PositionHistoryPage() {
 
       <div className="flex flex-wrap gap-4 rounded-lg border border-gray-200 bg-white p-4">
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-gray-700">Unit ID:</label>
-          <input
-            type="text"
-            value={unitFilter}
-            onChange={(e) => setUnitFilter(e.target.value)}
-            placeholder="Filter by unit"
-            className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:border-slate-300 focus:outline-hidden"
+          <label className="text-sm font-medium text-gray-700" htmlFor="position-history-unit-filter">
+            Unit:
+          </label>
+          {/* SAF-F14 / picker law: never a raw unit UUID text box — EntityPicker (filter, no +Create). */}
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={companyId}
+            value={unitFilter || null}
+            onChange={(next) => {
+              setUnitFilter(next ?? "");
+              setOffset(0);
+            }}
+            allowCreate={false}
+            placeholder="All units"
+            className="w-56"
+            dataField="position-history-unit-filter"
+            dataTestId="position-history-unit-filter"
           />
         </div>
 
