@@ -139,6 +139,25 @@ export function assertScoreboardContract(sources) {
     if (!/RECENT_CACHE_MS\s*=\s*60_000|60_000/.test(route)) {
       problems.push(`${routeRel}: must short-cache recentActivity (~60s)`);
     }
+    if (!/SCOREBOARD_CACHE_MS\s*=\s*60_000/.test(route)) {
+      problems.push(`${routeRel}: must short-cache scoreboard payload (~60s) like recentActivity`);
+    }
+    if (!/buildProgramScoreboardLive|loadScoreboardPayload/.test(route)) {
+      problems.push(`${routeRel}: must compute scoreboard from ledger live (buildProgramScoreboardLive / loadScoreboardPayload)`);
+    }
+    if (!/ledger_live/.test(route) || !/committed_fallback/.test(route)) {
+      problems.push(`${routeRel}: must label source ledger_live with committed_fallback`);
+    }
+    if (!/AUDIT-COVERAGE-LIVE\.md/.test(route)) {
+      problems.push(`${routeRel}: live scoreboard must read AUDIT-COVERAGE-LIVE.md`);
+    }
+    // Primary must not be "only read the committed JSON" — allow fallback after live attempt.
+    if (
+      /readFile\(\s*SCOREBOARD_JSON/.test(route) &&
+      !/buildProgramScoreboardLive|loadScoreboardPayload/.test(route)
+    ) {
+      problems.push(`${routeRel}: committed JSON must not be the only path — compute from ledger first`);
+    }
     if (!/formatCt/.test(route) || !/lastSyncedCt/.test(route)) {
       problems.push(`${routeRel}: must compute lastSyncedCt via formatCt(meta.generatedAt)`);
     }
