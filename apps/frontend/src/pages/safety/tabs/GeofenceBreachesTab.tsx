@@ -66,8 +66,13 @@ export function GeofenceBreachesTab() {
               <span className="text-xs text-slate-500">{formatDateTimeUS(event.event_at)} CT</span>
             </div>
             <div className="mt-1 text-xs text-slate-600">
-              Geofence: {event.geofence_label ?? event.geofence_id} · Customer: {event.customer_name ?? "N/A"} · Position:{" "}
-              {Number(event.position_lat).toFixed(5)}, {Number(event.position_lng).toFixed(5)}
+              Geofence: {event.geofence_label ?? event.geofence_id} · Customer:{" "}
+              {event.customer_id ? (
+                <EntityLink kind="customer" id={event.customer_id} label={event.customer_name ?? undefined} />
+              ) : (
+                event.customer_name ?? "N/A"
+              )}{" "}
+              · Position: {Number(event.position_lat).toFixed(5)}, {Number(event.position_lng).toFixed(5)}
             </div>
             <div className="mt-2 flex items-center gap-2">
               {event.acknowledged_at ? (
