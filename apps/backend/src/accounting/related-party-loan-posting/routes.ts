@@ -185,7 +185,10 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
   );
 
   // ── DETAIL — entry + its schedule (the reverse half of the linkage). ─────────────────────────────
-  app.get("/api/v1/accounting/related-party-loans/:id", async (req, reply) => {
+  app.get(
+    "/api/v1/accounting/related-party-loans/:id",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const params = idParamSchema.safeParse(req.params ?? {});
@@ -219,7 +222,10 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
 
     if ("notFound" in result) return reply.code(404).send({ error: "related_party_loan_not_found" });
     return result;
-  });
+    }
+  );
+
+
 
   // ── CREATE — entry + schedule in ONE transaction. ────────────────────────────────────────────────
   app.post(
