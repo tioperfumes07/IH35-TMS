@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * CHROME-001 — Customers list-detail "New transaction" must use primary Button
- * (same as Vendors), not ActionButton with a solid className pile-on.
- * Edit stays ActionButton (text-link). Prevents disproportion regression.
+ * CHROME-001 / CUST-CHROME-01 — Customers list-detail actions:
+ * - "New transaction" = primary Button (Vendors sibling)
+ * - "Edit" = Button variant="secondary" h-8 (same chrome family as primary — not ActionButton text-link)
+ * Prevents disproportion regression (ActionButton 24×16 beside primary Button).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -25,6 +26,33 @@ function stripComments(src) {
     .join("\n");
 }
 
+function newTransactionHost(src) {
+  const idx = src.indexOf("New transaction");
+  if (idx < 0) return null;
+  const before = src.slice(Math.max(0, idx - 280), idx);
+  const after = src.slice(idx, idx + 80);
+  if (/<\/Button>\s*$/m.test(after) || after.includes("</Button>")) {
+    if (/<Button\b[\s\S]*$/.test(before)) return "Button";
+  }
+  if (after.includes("</ActionButton>") && /<ActionButton\b[\s\S]*$/.test(before)) return "ActionButton";
+  const openBtn = before.lastIndexOf("<Button");
+  const openAct = before.lastIndexOf("<ActionButton");
+  if (openBtn > openAct && openBtn >= 0) return "Button";
+  if (openAct > openBtn && openAct >= 0) return "ActionButton";
+  return null;
+}
+
+function editIsSecondaryButton(src, testId) {
+  // Attr order varies; window must cover onClick={() => navigate(`/…/${id}`)} between variant and testid.
+  const re = new RegExp(
+    `variant="secondary"[\\s\\S]{0,400}data-testid="${testId}"[\\s\\S]{0,80}>\\s*Edit\\s*<\\/Button>`,
+  );
+  const reRev = new RegExp(
+    `data-testid="${testId}"[\\s\\S]{0,400}variant="secondary"[\\s\\S]{0,80}>\\s*Edit\\s*<\\/Button>`,
+  );
+  return re.test(src) || reRev.test(src);
+}
+
 export function collectProblems(sources = { customers: read(CUSTOMERS), vendors: read(VENDORS) }) {
   const problems = [];
   const c = stripComments(sources.customers);
@@ -33,44 +61,27 @@ export function collectProblems(sources = { customers: read(CUSTOMERS), vendors:
   if (!/import\s*\{\s*Button\s*\}\s*from\s*["']\.\.\/components\/Button["']/.test(sources.customers)) {
     problems.push(`${CUSTOMERS}: must import Button from ../components/Button`);
   }
-  if (!/import\s*\{\s*ActionButton\s*\}/.test(sources.customers)) {
-    problems.push(`${CUSTOMERS}: must keep ActionButton for Edit`);
-  }
-
-  // New transaction must be <Button …>…New transaction…</Button> (not ActionButton).
-  // Note: attrs contain `=>` so do not use [^>]* for the open tag.
-  function newTransactionHost(src) {
-    const idx = src.indexOf("New transaction");
-    if (idx < 0) return null;
-    const before = src.slice(Math.max(0, idx - 280), idx);
-    const after = src.slice(idx, idx + 80);
-    if (/<\/Button>\s*$/m.test(after) || after.includes("</Button>")) {
-      if (/<Button\b[\s\S]*$/.test(before)) return "Button";
-    }
-    if (after.includes("</ActionButton>") && /<ActionButton\b[\s\S]*$/.test(before)) return "ActionButton";
-    // Fallback: nearest open tag before the label
-    const openBtn = before.lastIndexOf("<Button");
-    const openAct = before.lastIndexOf("<ActionButton");
-    if (openBtn > openAct && openBtn >= 0) return "Button";
-    if (openAct > openBtn && openAct >= 0) return "ActionButton";
-    return null;
-  }
 
   const cHost = newTransactionHost(c);
   if (cHost !== "Button") {
     problems.push(`${CUSTOMERS}: New transaction must render via <Button> (Vendors parity); got ${cHost ?? "none"}`);
   }
 
-  // Edit remains ActionButton
-  const editIdx = c.indexOf(">Edit</ActionButton>");
-  if (editIdx < 0 && !/<ActionButton\b[\s\S]{0,120}>\s*Edit\s*<\/ActionButton>/.test(c)) {
-    problems.push(`${CUSTOMERS}: Edit must remain ActionButton`);
+  if (!editIsSecondaryButton(c, "customer-header-edit")) {
+    problems.push(
+      `${CUSTOMERS}: Edit must be Button variant="secondary" (data-testid=customer-header-edit) — not ActionButton text-link`,
+    );
+  }
+  if (/data-testid="customer-header-edit"[\s\S]{0,200}<\/ActionButton>/.test(c)) {
+    problems.push(`${CUSTOMERS}: Edit must not use ActionButton`);
   }
 
-  // Sibling law: Vendors already correct — fail closed if Vendors regresses
   const vHost = newTransactionHost(v);
   if (vHost !== "Button") {
     problems.push(`${VENDORS}: New transaction must stay on <Button> (sibling baseline); got ${vHost ?? "none"}`);
+  }
+  if (!editIsSecondaryButton(v, "vendor-header-edit")) {
+    problems.push(`${VENDORS}: Edit must stay Button variant="secondary" (sibling baseline)`);
   }
 
   return problems;
@@ -85,10 +96,8 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
     customers: real.customers
       .replace(/import \{ Button \} from "\.\.\/components\/Button";\n?/, "")
       .replace(
-        /<Button type="button" onClick=\{\(\) => navigate\(`\/accounting\/invoices\?customer_id=\$\{selectedCustomer\.id\}`\)\}>\s*New transaction\s*<\/Button>/,
-        `<ActionButton className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1 text-white" onClick={() => navigate(\`/accounting/invoices?customer_id=\${selectedCustomer.id}\`)}>
-                        New transaction
-                      </ActionButton>`
+        /data-testid="customer-header-edit"[\s\S]*?<\/Button>/,
+        `data-testid="customer-header-edit"><ActionButton onClick={() => setEditOpen(true)}>Edit</ActionButton>`,
       ),
   };
   if (collectProblems(broken).length === 0) {
@@ -111,5 +120,7 @@ if (IS_MAIN) {
     for (const p of problems) console.error(`  - ${p}`);
     process.exit(1);
   }
-  console.log(`${LABEL} PASS — Customers New transaction uses Button; Edit stays ActionButton (Vendors parity)`);
+  console.log(
+    `${LABEL} PASS — Customers/Vendors New transaction=Button; Edit=Button secondary (CUST-CHROME-01)`,
+  );
 }

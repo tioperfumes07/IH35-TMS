@@ -105,7 +105,10 @@ function CustomerDetailsTab({
     <div className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-900">Customer details</h3>
-        <ActionButton onClick={onEdit}>Edit</ActionButton>
+        {/* CUST-CHROME-02: same Button secondary chrome as list-header Edit (not ActionButton link). */}
+        <Button type="button" variant="secondary" className="h-8" onClick={onEdit} data-testid="customer-details-edit">
+          Edit
+        </Button>
       </div>
       <div className="grid grid-cols-1 gap-x-6 gap-y-1 md:grid-cols-2">
         <div>
@@ -548,9 +551,25 @@ export function CustomersPage() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <ActionButton onClick={() => navigate(`/customers/${selectedCustomer.id}`)}>Edit</ActionButton>
-                      <Button type="button" onClick={() => navigate(`/accounting/invoices?customer_id=${selectedCustomer.id}`)}>
+                    <div className="flex items-center gap-2" data-testid="customer-header-actions">
+                      {/*
+                        CUST-CHROME-01: ActionButton was a 24×16 text-link beside primary Button
+                        (~98×42). Same-row actions must share Button chrome (secondary + primary).
+                      */}
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="h-8"
+                        onClick={() => navigate(`/customers/${selectedCustomer.id}`)}
+                        data-testid="customer-header-edit"
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => navigate(`/accounting/invoices?customer_id=${selectedCustomer.id}`)}
+                        data-testid="customer-header-new-transaction"
+                      >
                         New transaction
                       </Button>
                     </div>

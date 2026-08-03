@@ -874,19 +874,24 @@ export function ParityTable<T>({
                     column.label
                   )}
                   {enableColumnResize ? (
-                    // CUST-CHROME-03 / row 224: visible at rest (QBO-style column grip), not hover-only transparent 6px.
+                    // CUST-CHROME-03: discoverable QBO-style column grip — opaque slate strip +
+                    // 8px hit target (was 4–6px near-transparent). Keyboard ←/→ still works.
                     <span
                       role="separator"
                       aria-orientation="vertical"
                       aria-label={`Resize ${column.label}`}
+                      title={`Drag to resize ${column.label}`}
                       aria-valuenow={w ? Math.round(w) : undefined}
                       tabIndex={0}
+                      data-testid="parity-table-col-resize"
                       onMouseDown={(e) => startResize(key, e)}
                       onTouchStart={(e) => startResizeTouch(key, e)}
                       onKeyDown={(e) => onResizeKey(key, e)}
                       onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
-                      className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize touch-none select-none border-r border-gray-300 bg-gray-300/80 hover:bg-gray-400 focus:bg-gray-500 focus:outline-hidden"
-                    />
+                      className="absolute right-0 top-0 flex h-full w-2 cursor-col-resize touch-none select-none items-center justify-center border-r border-slate-400 bg-slate-200/90 hover:bg-slate-300 focus:bg-slate-400 focus:outline-hidden"
+                    >
+                      <span aria-hidden className="block h-3 w-px bg-slate-500" />
+                    </span>
                   ) : null}
                 </th>
               );
