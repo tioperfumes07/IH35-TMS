@@ -20,12 +20,18 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
   const [error, setError] = useState<string | null>(null);
   const [driverCreateOpen, setDriverCreateOpen] = useState(false);
 
+  // SAF-B29: never silent listDrivers(limit:200) — type-ahead re-queries so drivers past page 1 stay assignable.
+  const [driverSearch, setDriverSearch] = useState("");
+
   const driversQuery = useQuery({
-    queryKey: ["dispatch", "inline-drivers", operatingCompanyId],
-    // limit:200 = full active set. The endpoint defaults to 50 (ORDER BY created_at DESC); with >50 active
-    // drivers this picker silently dropped everyone past the newest 50 — a real active driver missing from
-    // Book Load (e.g. Mecor). It filters client-side with no network-on-type, so it MUST load the complete roster.
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }),
+    queryKey: ["dispatch", "inline-drivers", operatingCompanyId, driverSearch],
+    queryFn: () =>
+      listDrivers({
+        operating_company_id: operatingCompanyId,
+        status: "Active",
+        limit: 200,
+        search: driverSearch || undefined,
+      }),
     enabled: open && Boolean(operatingCompanyId),
   });
 
@@ -82,8 +88,9 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
       <Combobox
         options={options}
         value={driverId}
-        placeholder="Type driver…"
+        placeholder={driversQuery.isLoading ? "Loading drivers…" : "Type driver…"}
         loading={driversQuery.isLoading}
+        onSearch={setDriverSearch}
         allowAddNew={{
           label: "+ Create driver",
           onAdd: () => setDriverCreateOpen(true),
