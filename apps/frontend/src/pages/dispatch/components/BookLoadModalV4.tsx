@@ -1233,18 +1233,35 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Factoring company
-                      <SelectCombobox
-                        value={factoringCompanyVendorId}
-                        onChange={(event) => form.setValue("factoring_company_vendor_id", event.target.value, { shouldDirty: true })}
-                        className="mt-0.5 h-7 w-full text-xs"
-                      >
-                        <option value="">{factoringVendorsQuery.isLoading ? "Loading factoring companies..." : "Select factoring company"}</option>
-                        {factoringVendorOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </SelectCombobox>
+                      {/*
+                        LST-PICKER-01: bare SelectCombobox had no inline +Create — operators left for Lists/Vendors.
+                        ReferenceSelect createKind=vendor → POST mdata.vendors (same table this picker reads).
+                        Options stay factor-filtered; newly created vendors still appear via invalidate + select.
+                      */}
+                      <div className="mt-0.5">
+                        <ReferenceSelect
+                          value={factoringCompanyVendorId || null}
+                          onChange={(next) =>
+                            form.setValue("factoring_company_vendor_id", next ?? "", { shouldDirty: true })
+                          }
+                          options={factoringVendorOptions}
+                          createKind="vendor"
+                          operatingCompanyId={operatingCompanyId}
+                          placeholder={
+                            factoringVendorsQuery.isLoading
+                              ? "Loading factoring companies…"
+                              : factoringVendorOptions.length === 0
+                                ? "No factoring companies yet — + Add new below"
+                                : "Select factoring company"
+                          }
+                          loading={factoringVendorsQuery.isLoading}
+                          disabled={!operatingCompanyId || factoringVendorsQuery.isLoading}
+                          onOptionCreated={(opt) => {
+                            void queryClient.invalidateQueries({ queryKey: ["book-load-factoring-vendors", operatingCompanyId] });
+                            form.setValue("factoring_company_vendor_id", opt.value, { shouldDirty: true });
+                          }}
+                        />
+                      </div>
                     </label>
                   </div>
 
