@@ -30,7 +30,7 @@ if (resolvedManifest.manifest) {
 }
 const stepsDir = path.join(__dirname, "verify-steps");
 const stepFiles = readdirSync(stepsDir).filter((f) => f.endsWith(".mjs") && !f.startsWith("_")).sort();
-const steps = await Promise.all(stepFiles.map(async (file) => (await import(pathToFileURL(path.join(stepsDir, file)).href)).default));
+const steps = (await Promise.all(stepFiles.map(async (file) => (await import(pathToFileURL(path.join(stepsDir, file)).href)).default))).filter(Boolean);
 const resolvedSteps = steps.map((step) => {
   if (step.name !== "backend-vitest") {
     return step;

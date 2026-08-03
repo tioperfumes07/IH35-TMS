@@ -160,7 +160,9 @@ export async function sendDraftInvoice(
     }
   }
 
-  const invoiceDate = String(current.issue_date);
+  const invoiceDate = current.issue_date instanceof Date
+    ? current.issue_date.toISOString().slice(0, 10)
+    : String(current.issue_date).slice(0, 10);
   const noaCheck = await client.query(
     `
       SELECT
