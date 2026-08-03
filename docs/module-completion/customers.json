@@ -16,8 +16,8 @@
       "title": "/customers roster density matches Neon active customers",
       "layers": ["DOD-A", "VERIFY-6"],
       "spec": "Customers.tsx · mdata.customers",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS TRANSP: 1243 active exact match UI",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor Neon lucia (br-fancy-credit-akjnd07a): active deactivated_at IS NULL → TRANSP 1243 · TRK 1446 · USMCA 1 (matches auditor TRANSP 1243). Backend customers.routes status=active filters deactivated_at IS NULL. Guard verify-cust-s01-roster-density-filter + step 2232.",
       "pr": null
     },
     {

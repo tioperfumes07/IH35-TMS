@@ -1,18 +1,18 @@
 # Module completion — Customers
 
-**PROGRESS: 5 of 9** · complete: `false` · as_of: 2026-08-02 · live_sha: `—`
+**PROGRESS: 6 of 9** · complete: `false` · as_of: 2026-08-02 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 5 |
+| PASS | 6 |
 | HOLD | 0 |
-| OPEN | 4 |
+| OPEN | 3 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
-| `CUST-S01` | **OPEN** | /customers roster density matches Neon active customers | scaffold — auditor PASS TRANSP: 1243 active exact match UI | — |
+| `CUST-S01` | **PASS** | /customers roster density matches Neon active customers | 2026-08-03 Cursor Neon lucia (br-fancy-credit-akjnd07a): active deactivated_at IS NULL → TRANSP 1243 · TRK 1446 · USMCA 1 (matches auditor TRANSP 1243). Backend customers.routes status=active filters deactivated_at IS NULL. Guard verify-cust-s01-roster-density-filter + step 2232. | — |
 | `CUST-S02` | **OPEN** | Customer detail Transaction List ties to accounting.invoices | scaffold — auditor PASS sampled customer invoices match DOM | — |
 | `CUST-S03` | **PASS** | Nine follow-up tabs render honest COMING_STATE_COPY (not silent empty) | 2026-08-03 Cursor: COMING_STATE_COPY has 9 keys (activity_feed…conversations) each naming missing endpoint/source + follow-up; CustomerTabComingState renders copy. Guard verify-cust-s03-coming-state-copy + step 2228. Auditor scaffold already PASS; ratchet locks it. | — |
 | `CUST-CHROME-01` | **PASS** | Edit vs New transaction ActionButton visual parity on list header | 2026-08-03 Cursor: Customers master-detail header Edit is Button variant=secondary className=h-8 beside primary New transaction (was ActionButton text-link). Vendors sibling same. Guard verify-cust-chrome-header-action-parity + step 2224. data-testid customer-header-edit / customer-header-new-transaction. | — |
