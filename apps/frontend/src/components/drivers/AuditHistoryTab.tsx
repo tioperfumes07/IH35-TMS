@@ -62,7 +62,22 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
   const toIso = toDate ? new Date(`${toDate}T23:59:59`).toISOString() : undefined;
 
   const auditQuery = useQuery({
-    queryKey: ["driver-audit-events", driverId, operatingCompanyId, eventTypeFilter, fromIso, toIso, actorFilter, statusFilter, sourceFilter, voidsOnly],
+    // SAF-B29: every filter that can shrink the result MUST be in the queryKey AND the request —
+    // chrome previously put actor/status/source/voids in the key only, so React Query refetched
+    // while the server still returned the unfiltered first 200 rows (and the UI never even
+    // client-filtered). Matching history past that cap stayed invisible.
+    queryKey: [
+      "driver-audit-events",
+      driverId,
+      operatingCompanyId,
+      eventTypeFilter,
+      fromIso,
+      toIso,
+      actorFilter,
+      statusFilter,
+      sourceFilter,
+      voidsOnly,
+    ],
     queryFn: () =>
       listDriverAuditEvents({
         operatingCompanyId,
@@ -70,6 +85,10 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
         eventType: eventTypeFilter.trim() || undefined,
         from: fromIso,
         to: toIso,
+        actor: actorFilter.trim() || undefined,
+        status: statusFilter.trim() || undefined,
+        source: sourceFilter.trim() || undefined,
+        voidsOnly: voidsOnly || undefined,
         limit: 200,
       }),
     enabled: Boolean(driverId) && Boolean(operatingCompanyId),

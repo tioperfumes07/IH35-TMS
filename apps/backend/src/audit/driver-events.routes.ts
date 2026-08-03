@@ -10,6 +10,11 @@ const querySchema = z.object({
   event_type: z.string().trim().min(1).max(200).optional(),
   from: z.string().datetime({ offset: true }).optional(),
   to: z.string().datetime({ offset: true }).optional(),
+  // SAF-B29 — AuditHistoryTab chrome sent these nowhere; events past LIMIT were invisible under filter.
+  actor: z.string().trim().min(1).max(300).optional(),
+  status: z.string().trim().min(1).max(100).optional(),
+  source: z.string().trim().min(1).max(100).optional(),
+  voids_only: z.enum(["true", "false"]).optional().transform((v) => v === "true"),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -40,6 +45,10 @@ export async function registerDriverAuditEventsRoutes(app: FastifyInstance) {
       event_type: parsed.data.event_type,
       from: parsed.data.from,
       to: parsed.data.to,
+      actor: parsed.data.actor,
+      status: parsed.data.status,
+      source: parsed.data.source,
+      voids_only: parsed.data.voids_only,
       limit: parsed.data.limit,
       offset: parsed.data.offset,
     });

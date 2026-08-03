@@ -80,6 +80,25 @@ describe("driver audit events routes (A24-6)", () => {
     expect(res.statusCode).toBe(400);
   });
 
+  it("forwards SAF-B29 server filters (actor/status/source/voids)", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url:
+        `/api/v1/audit/events?operating_company_id=${COMPANY}&entity_type=driver&entity_id=${DRIVER}` +
+        `&actor=office%40ih35.local&status=void&source=safety&voids_only=true`,
+    });
+    expect(res.statusCode).toBe(200);
+    expect(mockListDriverAuditEvents).toHaveBeenCalledWith(
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      expect.objectContaining({
+        actor: "office@ih35.local",
+        status: "void",
+        source: "safety",
+        voids_only: true,
+      })
+    );
+  });
+
   it("forbids unauthorized roles", async () => {
     const forbidden = Fastify({ logger: false });
     forbidden.decorateRequest("user", null);

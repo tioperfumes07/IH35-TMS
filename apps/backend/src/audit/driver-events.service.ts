@@ -10,6 +10,11 @@ export type ListDriverAuditEventsInput = {
   event_type?: string;
   from?: string;
   to?: string;
+  /** SAF-B29 — server-side filters (UI had these; 200-cap made client filter a silent lie). */
+  actor?: string;
+  status?: string;
+  source?: string;
+  voids_only?: boolean;
   limit: number;
   offset: number;
 };
@@ -76,6 +81,23 @@ export function buildDriverAuditEventsQuery(input: ListDriverAuditEventsInput): 
   if (input.to) {
     values.push(input.to);
     filters.push(`e.created_at <= $${values.length}::timestamptz`);
+  }
+  if (input.actor) {
+    values.push(`%${input.actor}%`);
+    filters.push(`(u.email ILIKE $${values.length} OR e.actor_user_uuid::text ILIKE $${values.length})`);
+  }
+  if (input.status) {
+    values.push(input.status);
+    filters.push(`e.payload->>'status' = $${values.length}`);
+  }
+  if (input.source) {
+    values.push(input.source);
+    filters.push(`e.source = $${values.length}`);
+  }
+  if (input.voids_only) {
+    filters.push(
+      `(e.event_class ILIKE '%void%' OR e.event_class ILIKE '%reverse%' OR e.event_class ILIKE '%delete%')`
+    );
   }
 
   values.push(normalizeLimit(input.limit));

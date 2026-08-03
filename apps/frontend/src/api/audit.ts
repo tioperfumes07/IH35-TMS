@@ -18,6 +18,11 @@ export type ListDriverAuditEventsParams = {
   eventType?: string;
   from?: string;
   to?: string;
+  /** SAF-B29 — must reach SQL; client filter after limit:200 silently drops matching history. */
+  actor?: string;
+  status?: string;
+  source?: string;
+  voidsOnly?: boolean;
   limit?: number;
   offset?: number;
 };
@@ -31,6 +36,10 @@ export async function listDriverAuditEvents(params: ListDriverAuditEventsParams)
   if (params.eventType) search.set("event_type", params.eventType);
   if (params.from) search.set("from", params.from);
   if (params.to) search.set("to", params.to);
+  if (params.actor) search.set("actor", params.actor);
+  if (params.status) search.set("status", params.status);
+  if (params.source) search.set("source", params.source);
+  if (params.voidsOnly) search.set("voids_only", "true");
   if (params.limit != null) search.set("limit", String(params.limit));
   if (params.offset != null) search.set("offset", String(params.offset));
   return apiRequest<{
