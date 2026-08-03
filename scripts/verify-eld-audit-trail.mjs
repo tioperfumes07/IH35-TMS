@@ -79,7 +79,11 @@ contains("apps/frontend/src/pages/DriverDetail.tsx", driverDetail, [
 const manifestRoutes = read("apps/frontend/src/routes/manifest.tsx");
 contains("apps/frontend/src/routes/manifest.tsx", manifestRoutes, [
   { pattern: /EldAuditTrailViewer/, label: "audit trail route component" },
-  { pattern: /\/safety\/eld\/audit-trail/, label: "audit trail route path" },
+  // SAF-F27: relative-only under path="/safety" → path="eld/audit-trail" (absolute still accepted).
+  {
+    pattern: /path=["'](?:\/safety\/)?eld\/audit-trail["']/,
+    label: "audit trail route path",
+  },
 ]);
 
 const docs = read("docs/specs/gap-83-eld-audit-trail.md");

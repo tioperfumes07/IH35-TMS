@@ -15,7 +15,11 @@ export function verifyNoOrphanRouteAliases() {
     throw new Error("missing canonical integrity reports route");
   }
 
-  const hasAliasPath = text.includes('path="/safety/integrity-alerts"');
+  // SAF-F27: alias may be relative-only under path="/safety" (path="integrity-alerts").
+  // Absolute path="/safety/integrity-alerts" remains accepted for older dual-registration.
+  const hasAliasPath =
+    text.includes('path="/safety/integrity-alerts"') ||
+    /<Route\b[^>]*\bpath=["']integrity-alerts["']/.test(text);
   const hasAliasRedirect = text.includes('<Navigate to="/safety/integrity-reports" replace />');
   const hasCanonicalPage = text.includes("<IntegrityAlertsTab />") || text.includes("<IntegrityAlertsPage");
   if (!hasAliasPath || (!hasAliasRedirect && !hasCanonicalPage)) {
