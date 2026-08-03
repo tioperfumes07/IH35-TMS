@@ -18,9 +18,18 @@ export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, dis
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // SAF-B29: never silent listUnits(limit:500) — type-ahead re-queries so trailers past page 1 stay assignable.
+  const [trailerSearch, setTrailerSearch] = useState("");
+
   const trailersQuery = useQuery({
-    queryKey: ["dispatch", "inline-trailers", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 500 }),
+    queryKey: ["dispatch", "inline-trailers", operatingCompanyId, trailerSearch],
+    queryFn: () =>
+      listUnits({
+        operating_company_id: operatingCompanyId,
+        limit: 200,
+        include: "trailers",
+        search: trailerSearch || undefined,
+      }),
     enabled: open && Boolean(operatingCompanyId),
   });
 
@@ -60,7 +69,8 @@ export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, dis
       <Combobox
         options={options}
         value={trailerId}
-        placeholder="Type trailer…"
+        placeholder={trailersQuery.isLoading ? "Loading trailers…" : "Type trailer…"}
+        onSearch={setTrailerSearch}
         onChange={async (next) => {
           if (!next) return;
           const label = options.find((opt) => opt.value === next)?.label ?? next.slice(0, 8);
