@@ -76,7 +76,12 @@ export type EntityPickerConfig = {
   evidence: string;
   /** Master data → inline create. Transactions → picker only, with the reason recorded. */
   inlineCreate: { available: true } | { available: false; reason: string };
-  list: (operatingCompanyId: string) => Promise<EntityPickerOption[]>;
+  /**
+   * SAF-B29: when true, EntityPicker wires Combobox.onSearch → list({ search }) and puts the term
+   * in the react-query key. When false, Combobox keeps client-side filter (API has no search yet).
+   */
+  serverSearch: boolean;
+  list: (operatingCompanyId: string, opts?: { search?: string }) => Promise<EntityPickerOption[]>;
 };
 
 function nonEmpty(...parts: Array<string | null | undefined>): string {
@@ -97,10 +102,18 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
     entityScoped: true,
     evidence: "apps/backend/src/mdata/drivers.routes.ts:351 (SELECT) / :614 (INSERT)",
     inlineCreate: { available: true },
-    async list(operatingCompanyId) {
-      // limit:200 = the full active roster. The endpoint defaults to 50 (ORDER BY created_at DESC),
-      // which silently hid every driver past the newest 50 from every picker that omitted a limit.
-      const res = await listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 });
+    serverSearch: true,
+    async list(operatingCompanyId, opts) {
+      // SAF-B29: limit:200 WITHOUT search silently dropped every driver past page 1. The shared
+      // EntityPicker is used across Safety (accidents filters, fines, escrow, …) — one silent
+      // truncation reproduced on every call site. Typed term → server `search`; empty term still
+      // pages the newest 200 (endpoint default is 50).
+      const res = await listDrivers({
+        operating_company_id: operatingCompanyId,
+        status: "Active",
+        limit: 200,
+        search: opts?.search || undefined,
+      });
       return (res.drivers ?? []).map((d) => ({
         value: d.id,
         label: nonEmpty(d.first_name, d.last_name) || String(d.id),
@@ -118,7 +131,8 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
     entityScoped: true,
     evidence: "apps/backend/src/mdata/units.routes.ts:216 (SELECT) / :251 (INSERT)",
     inlineCreate: { available: true },
-    async list(operatingCompanyId) {
+    serverSearch: true,
+    async list(operatingCompanyId, opts) {
       // DELIBERATELY NOT `include: "trailers"`. That flag makes the endpoint return a UNION of
       // mdata.units (trucks) AND mdata.equipment (trailers) — see
       // apps/backend/src/mdata/units-unified-list.service.ts:134,:157 — so the option list would
@@ -127,7 +141,12 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
       // mdata.unit_border_crossings.unit_id -> mdata.units(id) and
       // safety.safety_events.subject_unit_id -> mdata.units(id) with a 23503 at save time, and the
       // declared readTable would be a lie. A picker MUST read exactly the table it declares.
-      const res = await listUnits({ operating_company_id: operatingCompanyId, limit: 500 });
+      // SAF-B29: pass search so fleets > page size remain selectable by unit number.
+      const res = await listUnits({
+        operating_company_id: operatingCompanyId,
+        limit: 500,
+        search: opts?.search || undefined,
+      });
       return (res.units ?? []).map((row) => {
         const u = row as { id: string; unit_number?: string | null; display_id?: string | null };
         return {
@@ -152,8 +171,14 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
       reason:
         "A load is a transaction, not master data. Book Load is an owner-ratified multi-step wide wizard with money, stops, status and audit consequences; McLeod, Alvys, NetSuite and QBO all refuse to bury a document of that weight inside a reference dropdown. Pick an existing load here; book a new one from Dispatch.",
     },
-    async list(operatingCompanyId) {
-      const res = await listLoads({ operating_company_id: [operatingCompanyId], limit: 200, sort: "-created_at" });
+    serverSearch: true,
+    async list(operatingCompanyId, opts) {
+      const res = await listLoads({
+        operating_company_id: [operatingCompanyId],
+        limit: 200,
+        sort: "-created_at",
+        search: opts?.search || undefined,
+      });
       return (res.loads ?? []).map((l) => ({
         value: l.id,
         label: l.load_number,
@@ -176,8 +201,15 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
       reason:
         "Vendor inline create ALREADY exists and is already picker-law compliant: <ReferenceSelect createKind=\"vendor\"> routes to InlineCreateDrawer at ~42 call sites. C1's rule is to extend the #3550 mechanism, not duplicate it — a second vendor creator here would be exactly the fork this block forbids. Use ReferenceSelect when a vendor field needs create; use this picker when it only needs to SELECT (e.g. a list filter).",
     },
-    async list(operatingCompanyId) {
-      const res = await listVendors({ operating_company_id: operatingCompanyId, limit: 1000 });
+    serverSearch: true,
+    async list(operatingCompanyId, opts) {
+      // Prod TRANSP vendors ~950: with search, a 200 page is correct; without search keep 1000 so
+      // verify-entity-picker-not-capped still holds for empty-term opens.
+      const res = await listVendors({
+        operating_company_id: operatingCompanyId,
+        limit: opts?.search ? 200 : 1000,
+        search: opts?.search || undefined,
+      });
       return (res.vendors ?? []).map((v) => ({ value: v.id, label: v.name, sublabel: v.vendor_type }));
     },
   },
@@ -196,6 +228,8 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
       reason:
         "A work order is a transaction, not master data, and Create Work Order is the second owner-ratified wide wizard (C7). Its display id encodes unit, source type and date, so it cannot be conjured from a dropdown; the only C1 call site is a LOOKUP anyway ('detect warranty from work order').",
     },
+    // listWorkOrders has no search param yet — Combobox local filter remains.
+    serverSearch: false,
     async list(operatingCompanyId) {
       const res = await listWorkOrders(operatingCompanyId);
       return (res.work_orders ?? []).map((w) => ({
@@ -216,6 +250,8 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
     entityScoped: true,
     evidence: "apps/backend/src/insurance/policy.routes.ts:196 (SELECT) / :266 (INSERT)",
     inlineCreate: { available: true },
+    // listInsurancePolicies has no search param yet — Combobox local filter remains.
+    serverSearch: false,
     async list(operatingCompanyId) {
       const res = await listInsurancePolicies({ operating_company_id: operatingCompanyId });
       return (res.policies ?? []).map((p) => ({
@@ -240,8 +276,12 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
       reason:
         "A factoring advance is a money document: it carries advance rate, reserve, factor fee and a GL consequence, and creating one is a submission to the factor. C1 is a frontend-only UI sweep and must never open a money-creating surface from a dropdown; the batch is created in Factoring and selected here.",
     },
-    async list(operatingCompanyId) {
-      const res = await listFactoringAdvances(operatingCompanyId, { limit: 200 });
+    serverSearch: true,
+    async list(operatingCompanyId, opts) {
+      const res = await listFactoringAdvances(operatingCompanyId, {
+        limit: 200,
+        search: opts?.search || undefined,
+      });
       return (res.rows ?? []).map((r) => ({
         value: r.id,
         label: r.display_id,

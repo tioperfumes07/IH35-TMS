@@ -96,12 +96,16 @@ export function EntityPicker({
   const config = getEntityPickerConfig(kind);
   const [createOpen, setCreateOpen] = useState(false);
   const [created, setCreated] = useState<EntityPickerOption[]>([]);
+  // SAF-B29: without this, EntityPicker fetched limit:200 once and Combobox only filtered that page
+  // — drivers/units/loads past page 1 were unselectable on every Safety (and product-wide) call site.
+  const [rosterSearch, setRosterSearch] = useState("");
 
   const queryEnabled = enabled && Boolean(operatingCompanyId);
 
   const rosterQuery = useQuery({
-    queryKey: ["entity-picker", kind, operatingCompanyId],
-    queryFn: () => config.list(operatingCompanyId),
+    queryKey: ["entity-picker", kind, operatingCompanyId, config.serverSearch ? rosterSearch : ""],
+    queryFn: () =>
+      config.list(operatingCompanyId, config.serverSearch ? { search: rosterSearch || undefined } : undefined),
     enabled: queryEnabled,
   });
 
@@ -137,6 +141,7 @@ export function EntityPicker({
         options={options}
         value={value}
         onChange={onChange}
+        onSearch={config.serverSearch ? setRosterSearch : undefined}
         placeholder={placeholder ?? `Select ${config.label}`}
         loading={rosterQuery.isLoading}
         error={rosterQuery.isError ? `Couldn't load ${config.label} list` : undefined}

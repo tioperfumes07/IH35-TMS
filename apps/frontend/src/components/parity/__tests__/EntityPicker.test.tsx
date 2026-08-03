@@ -71,6 +71,21 @@ describe("EntityPicker (C1 picker law)", () => {
     );
   });
 
+  it("SAF-B29: typing sends search to the server and is part of the query path", async () => {
+    const user = userEvent.setup();
+    wrap(<EntityPicker kind="driver" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} />);
+    await waitFor(() => expect(listDrivers).toHaveBeenCalled());
+    listDrivers.mockClear();
+    const input = await screen.findByPlaceholderText("Select driver");
+    await user.click(input);
+    await user.type(input, "Mec");
+    await waitFor(() =>
+      expect(listDrivers).toHaveBeenCalledWith(
+        expect.objectContaining({ operating_company_id: COMPANY, search: expect.stringMatching(/Mec/) })
+      )
+    );
+  });
+
   it('puts inline "+ Create driver" as the FIRST ROW inside the dropdown, before any keystroke', async () => {
     const user = userEvent.setup();
     wrap(<EntityPicker kind="driver" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} />);
