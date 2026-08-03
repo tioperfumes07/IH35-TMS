@@ -136,12 +136,20 @@ function CredentialRow({ label, expiresAt, days }: { label: string; expiresAt: s
 export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsChange, onOpenProfile }: Props) {
   const [sort, setSort] = useState<CardSort>("risk");
   const [riskFilter, setRiskFilter] = useState<RiskFilter>("all");
+  // SAF-B29: this is a card roster, not a dropdown — but limit:200 still silently dropped every
+  // driver past page 1. Server search lets Safety find them; empty search keeps the first page.
+  const [rosterSearch, setRosterSearch] = useState("");
 
   const driversQ = useQuery({
-    queryKey: ["safety-cards", "drivers", companyId],
+    queryKey: ["safety-cards", "drivers", companyId, rosterSearch],
     enabled: Boolean(companyId),
-    // Driver Picker 50-cap rule: always pass a real limit so the full active roster is loaded.
-    queryFn: () => listDrivers({ operating_company_id: companyId, status: "Active", limit: 200 }),
+    queryFn: () =>
+      listDrivers({
+        operating_company_id: companyId,
+        status: "Active",
+        limit: 200,
+        search: rosterSearch || undefined,
+      }),
   });
 
   const eventsQ = useQuery({
@@ -296,21 +304,34 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
             Credential standing at a glance — CDL, visa, DOT medical, open incidents, D&amp;A pool.
           </p>
         </div>
-        <label className="flex items-center gap-1.5 text-[11px] text-slate-500">
-          Sort
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as CardSort)}
-            data-testid="driver-cards-sort"
-            className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700"
-          >
-            {sortOptions.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-1.5 text-[11px] text-slate-500">
+            Find driver
+            <input
+              type="search"
+              value={rosterSearch}
+              onChange={(e) => setRosterSearch(e.target.value)}
+              placeholder="Name…"
+              data-testid="driver-cards-search"
+              className="w-40 rounded-sm border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700"
+            />
+          </label>
+          <label className="flex items-center gap-1.5 text-[11px] text-slate-500">
+            Sort
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as CardSort)}
+              data-testid="driver-cards-sort"
+              className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700"
+            >
+              {sortOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
       <div className="mb-2 flex flex-wrap items-center gap-1.5">
