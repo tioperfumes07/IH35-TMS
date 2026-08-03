@@ -41,6 +41,10 @@ const STEPS = [
   ["verify-data-migrations-rehearsed", "scripts/verify-data-migrations-rehearsed.mjs"],
   // EntityLink adoption ratchet — #4010 FactoringHome AST shift + bare UUID (~1.5s).
   ["verify-entity-link-adoption", "scripts/verify-entity-link-adoption.mjs"],
+  // Rule 30 — soft-reset onto newer main deleted other PRs' verify-steps (2026-08-02).
+  ["verify-no-guard-file-deletion", "scripts/verify-no-guard-file-deletion.mjs"],
+  // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).
+  ["verify-claude-green-evidence-shape", "scripts/verify-claude-green-evidence-shape.mjs"],
 ];
 
 function runNode(rel) {
@@ -82,6 +86,6 @@ for (const [name, rel] of STEPS) {
 }
 
 console.log(
-  `${LABEL}: PASS — DoD + money-theater + scoreboard serialize + §7 palette + migration band + verify-step band + no-CLAIMED-edits + EntityLink adoption OK (fail-fast before CI)`,
+  `${LABEL}: PASS — DoD + money-theater + scoreboard serialize + §7 palette + migration band + verify-step band + no-CLAIMED-edits + EntityLink + Rule 30 (no guard deletion + Claude-green LIVE PROOF) OK (fail-fast before CI)`,
 );
 process.exit(0);

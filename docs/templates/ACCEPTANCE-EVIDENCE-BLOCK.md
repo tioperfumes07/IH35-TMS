@@ -1,22 +1,41 @@
 # Acceptance evidence block (required before "done")
 
-Copy into PR description or handoff. **Incomplete block = not done.**
+**Prefer the Claude-green labelled-line form** (Rule 30) — same text in the **commit message** and **PR body**:
 
-## ROOT CAUSE
+See **[CLAUDE-GREEN-PR-BODY.md](./CLAUDE-GREEN-PR-BODY.md)** for the copy-paste template.
+
+```
+FINDING: …
+LANE: …
+ROOT CAUSE: …
+FIX: …
+… DOD / VERIFY / MODULE_PROGRESS / MIGRATE …
+GUARD: scripts/verify-….mjs + scripts/verify-steps/NNNN-….mjs
+LIVE PROOF: node scripts/verify-….mjs --selftest exit 0; …
+REMAINING: …
+```
+
+## Heading form (also accepted by CI)
+
+### ROOT CAUSE
 <!-- One sentence. Name the actual failure (constraint, pg_code, HTTP status, log class). -->
 
-## FIX
+### FIX
 <!-- What changed at root — not symptom-only. List files. -->
 
-## GUARD
-<!-- scripts/verify-*.mjs and/or vitest name. Must fail on bug, pass on fix. -->
+### GUARD
+<!-- scripts/verify-*.mjs and/or vitest name. Must fail on bug, pass on the fix. -->
 
-## LIVE PROOF
-<!-- Deploy sha + endpoint / Neon query result / Render log line / browser path. -->
-<!-- If blocked: UNVERIFIED — [what blocks proof and what was verified instead] -->
+### LIVE PROOF
+<!-- Deploy sha + endpoint / Neon query / command exit 0 — or UNVERIFIED: <named blocker> -->
+<!-- Forbidden theater: "LIVE PROOF: UNVERIFIED browser" (no colon/emdash blocker) -->
 
-## REMAINING
-<!-- `none` OR explicit owner-approved deferral: tracker file + future block id -->
+### REMAINING
+<!-- `none` OR explicit open work. Never claim module done while N of M incomplete -->
 
-## LINKAGE (financial / cross-module only)
-<!-- Canonical tables, forward + reverse drill, audit on mutation -->
+## Local gates
+
+```bash
+node scripts/money-pr-local-gate.mjs
+node scripts/cursor-pr-body-gate.mjs --body-file /tmp/pr-body.txt
+```

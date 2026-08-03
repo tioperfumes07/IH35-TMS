@@ -1,65 +1,47 @@
-# Pull Request
+FINDING: <!-- e.g. SAF-C01 / ACCT-F95 — REQUIRED labelled line -->
+LANE: <!-- NON-FINANCIAL | FINANCIAL-HOLD | HOLD -->
+
+ROOT CAUSE: <!-- mechanism, not symptom — REQUIRED labelled line -->
+
+FIX: <!-- root fix + files — REQUIRED labelled line -->
+
+DOD-A: <!-- PASS | N/A -->
+DOD-B: <!-- PASS | N/A -->
+DOD-C: <!-- PASS | N/A -->
+DOD-D: <!-- PASS | N/A -->
+DOD-E: <!-- PASS | N/A -->
+VERIFY-1: <!-- PASS | N/A -->
+VERIFY-2: <!-- PASS | N/A -->
+VERIFY-3: <!-- PASS | N/A -->
+VERIFY-4: <!-- PASS | N/A -->
+VERIFY-5: <!-- PASS | N/A -->
+VERIFY-6: <!-- PASS | N/A -->
+VERIFY-7: <!-- PASS | N/A -->
+VERIFY-8: <!-- PASS | N/A -->
+MODULE_PROGRESS: <!-- module N of M — must match docs/module-completion/*.json -->
+ITEMS_TOUCHED: <!-- finding id -->
+MIGRATE: <!-- N/A | filename -->
+
+GUARD: <!-- scripts/verify-<name>.mjs + scripts/verify-steps/NNNN-verify-<name>.mjs -->
+LIVE PROOF: <!-- node scripts/verify-<name>.mjs --selftest exit 0; … OR UNVERIFIED: <named blocker> -->
+REMAINING: <!-- honest open work — never claim module done while N of M incomplete -->
+
+---
+
+## Spec / checklist (after the evidence block)
+
+- [ ] **Rule 30** — body is FINDING-first Claude-green (`docs/templates/CLAUDE-GREEN-PR-BODY.md`); ran `node scripts/cursor-pr-body-gate.mjs --body-file …` before open/edit
+- [ ] **Rule 29** — `node scripts/money-pr-local-gate.mjs` PASS before push; one commit on `origin/main` (no stack / no soft-reset)
+- [ ] Worked `docs/specs/PER-PR-CHECKLIST.md`
+- [ ] Architectural design + approved screens reviewed if UI
+- [ ] No `+ New` / `+ Add` — only `+ Create` / `+ Book`
+- [ ] Production never serves fake data
 
 ## Block ID
 <!-- e.g. P3-T11.6.1 -->
 
-## Mandatory spec-review checklist (REQUIRED — PR cannot merge if any are unchecked)
-
-- [ ] **I worked `docs/specs/PER-PR-CHECKLIST.md`** — the consolidated per-PR standard (5 DONE layers · 8 audit layers · evidence block · guard rules · verification traps · merge gates · migration rules). The evidence block below is **CI-enforced on this PR body** by `.github/workflows/pr-evidence-block.yml`: each section must be its own labelled line, and LIVE PROOF must name a real artifact (sha / endpoint / row count / screenshot) or say `UNVERIFIED: <blocker>`.
-- [ ] I read `docs/specs/CURSOR-PERMANENT-RULES.md`
-- [ ] I read the relevant section of `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md`
-- [ ] I read all relevant entries in `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md`
-- [ ] I checked the relevant module entry in `docs/specs/IH35_ARCHITECTURAL_DESIGN.md`
-- [ ] I reviewed the relevant approved screen PNG in `docs/approved-screens/`
-- [ ] If I added/removed/renamed a sub-nav tab, I updated `docs/specs/IH35_ARCHITECTURAL_DESIGN.md` in this same PR
-- [ ] If I introduced a new spec decision from chat, I updated `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` in this same PR
-- [ ] All locked invariants enforced (RLS, security_invoker, audit, append-only, idempotent migrations, etc.)
-- [ ] Display IDs server-generated only (no frontend composition)
-- [ ] No `+ New` or `+ Add` button text — only `+ Create` or `+ Book`
-- [ ] Production never serves fake data (env-gated fixtures)
-- [ ] `npm run typecheck` passes
-- [ ] `npm run build` passes
-- [ ] `npm run verify:arch-design` passes (CI gate confirms)
-- [ ] All `db:verify:*` pass (only known pre-existing failures acceptable)
-- [ ] **Rule 16:** I filled `docs/templates/ACCEPTANCE-EVIDENCE-BLOCK.md` below (ROOT CAUSE / FIX / GUARD / LIVE PROOF / REMAINING)
-
-## Acceptance evidence (Rule 16 — required before merge claim)
-
-<!-- Copy from docs/templates/ACCEPTANCE-EVIDENCE-BLOCK.md -->
-
-### ROOT CAUSE
-
-### FIX
-
-### GUARD
-
-### LIVE PROOF
-
-### REMAINING
-
-## Spec sources reviewed
-<!-- List the specific sections / files / PNGs you read. Be precise: section numbers, file paths, PNG names. -->
-
-## New deviations from spec
-<!-- If none, write "None". If any, list with rationale and link to where it's tracked. -->
-
 ## Tab additions / removals / renames
-<!-- If this PR changes any module's tab count or names, list:
-     - Module name
-     - Tab name added/removed/renamed
-     - Updated count vs architectural design
-     - Confirmation that IH35_ARCHITECTURAL_DESIGN.md was updated in this PR
--->
-
-## Audit events added
-<!-- List any new audit event types this PR introduces -->
+<!-- If any: module, tab, design updated in same commit -->
 
 ## Migration notes
-<!-- If this PR includes a migration:
-     - Migration number + filename
-     - Idempotent confirmation (DO + IF NOT EXISTS)
-     - Backfill row counts (or "N/A — schema only")
--->
-
-## Smoke test results
-<!-- List the smoke tests run + outcome. If blocked locally, note why and confirm production traffic will validate. -->
+<!-- If any: number, idempotent, never edit applied-on-prod -->

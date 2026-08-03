@@ -1,0 +1,82 @@
+---
+description: Cursor PRs/commits must use Claude's green evidence format — FINDING-first body, LIVE PROOF artifacts, one commit on main, never soft-reset
+alwaysApply: true
+---
+
+# RULE 30 — CLAUDE-GREEN EVIDENCE FORMAT (owner 2026-08-02)
+
+**Why:** Cursor PRs kept failing Rule 16 / DoD while Claude's went green. Not bad luck. Cursor wrote
+`## Summary` fluff, put evidence only in the PR body, used weak `LIVE PROOF: UNVERIFIED browser`,
+**stacked** on other open branches (inherited `fix(...)` commits with no `scripts/verify-*.mjs`),
+and `git reset --soft origin/main` after main advanced (silently **deleted** other PRs' guards).
+
+Claude's green shape is the law. Copy it. Do not invent a shorter Cursor variant.
+
+## Canonical body + commit (identical labelled block)
+
+Start at column 0 with `FINDING:` — **no** `## Summary` preamble. Same block in the **commit message**
+and the **PR body** (squash will carry the commit):
+
+```
+FINDING: <id>
+LANE: NON-FINANCIAL | FINANCIAL-HOLD | HOLD
+
+ROOT CAUSE: <mechanism — not the symptom>
+
+FIX: <root fix + files/guards>
+
+DOD-A: PASS|N/A
+DOD-B: PASS|N/A
+DOD-C: PASS|N/A
+DOD-D: PASS|N/A
+DOD-E: PASS|N/A
+VERIFY-1: PASS|N/A
+VERIFY-2: PASS|N/A
+VERIFY-3: PASS|N/A
+VERIFY-4: PASS|N/A
+VERIFY-5: PASS|N/A
+VERIFY-6: PASS|N/A
+VERIFY-7: PASS|N/A
+VERIFY-8: PASS|N/A
+MODULE_PROGRESS: <module> N of M
+ITEMS_TOUCHED: <id>
+MIGRATE: N/A | <filename>
+
+GUARD: scripts/verify-<name>.mjs + scripts/verify-steps/NNNN-verify-<name>.mjs
+LIVE PROOF: node scripts/verify-<name>.mjs --selftest exit 0; live run exit 0; verify-definition-of-done-evidence OK.
+REMAINING: <what is still open — never claim module done>
+```
+
+`LIVE PROOF` must name a **command exit / sha / endpoint / count**. Gaps go in `REMAINING`, not as a
+bare `LIVE PROOF: UNVERIFIED browser`. If truly unverified: `LIVE PROOF: UNVERIFIED: <named blocker>`.
+
+Template: `docs/templates/CLAUDE-GREEN-PR-BODY.md`
+
+## Ship procedure (HARD)
+
+1. **One commit** on top of **current** `origin/main` (cherry-pick onto main — never stack on another open PR).
+2. `node scripts/money-pr-local-gate.mjs` → must PASS (includes DoD + no-guard-deletion + evidence shape).
+3. `node scripts/cursor-pr-body-gate.mjs --body-file /tmp/pr-body.txt` → must PASS before `gh pr create` / `gh pr edit`.
+4. **One push.** Wait for CI. Never soft-reset onto a newer main to "refresh" evidence.
+
+## Forbidden (these are the recurring reds)
+
+| Forbidden | Why it fails |
+|-----------|----------------|
+| Stack PR on another open branch | `origin/main..HEAD` includes their `fix` commits without guards → DoD 1324 red |
+| `git reset --soft origin/main` after main moved | Stages **deletes** of other merges' verify-steps → catastrophic |
+| Empty `chore:` "refresh PR body" commits | Noise; use `gh pr edit` + labelled body |
+| Evidence only in PR body, not commit | Squash/CI DoD reads **commits** |
+| `LIVE PROOF: UNVERIFIED browser` (no `:` / `—` blocker) | CI proof substantiation rejects / is theater |
+| `## Summary` replacing the labelled block | Agents omit `ROOT CAUSE:` as its own labelled line |
+
+## Mechanical teeth
+
+- `scripts/verify-no-guard-file-deletion.mjs` — branch must not delete `scripts/verify-*.mjs` / `verify-steps/` present on `origin/main` (unless `INTENTIONAL_GUARD_RETIRE:` in tip commit).
+- `scripts/verify-claude-green-evidence-shape.mjs` — tip commit LIVE PROOF shape.
+- `scripts/cursor-pr-body-gate.mjs` — local PR-body gate (same assertions as CI `check-pr-evidence-body`).
+- Wired into `scripts/money-pr-local-gate.mjs` (Rule 29 suite). CI verify-step **2088**.
+
+## Tie-breakers
+
+PR fluff < Claude labelled block · stacked convenience < cherry-pick onto main · soft-reset < cherry-pick · memory < this file + local gate PASS.
