@@ -1,12 +1,12 @@
 {
- "date": "2026-08-02",
- "generated_at_iso": "2026-08-02T19:39:01.048Z",
+ "date": "2026-08-03",
+ "generated_at_iso": "2026-08-03T04:00:18.854Z",
  "counts": {
   "PENDING": 14,
   "PENDING (GATED)": 27,
-  "NEEDS-VERIFY": 44,
-  "DONE": 657,
-  "AUDIT-NOTE": 461
+  "NEEDS-VERIFY": 52,
+  "DONE": 642,
+  "AUDIT-NOTE": 468
  },
  "universe": {
   "total_blocks_after_dedup": 1203,
@@ -783,6 +783,39 @@
    "pr": 2905
   },
   {
+   "id": "BLOCK-C-DEDUCTION-CAP",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "2/3 signature file(s) on main — partial, unverified",
+   "name": "Settlement deduction cap — net floor (50% gross + absolute cents) with all-or-nothing roll-over of pending deductions at",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "BLOCK-C-MIGRATION-RENAME",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "1/2 signature file(s) on main — partial, unverified",
+   "name": "Rename Block C migration to 12-digit runner-compatible filename so db:migrate applies min_net_settlement columns in prod",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "BLOCK-F-INSURANCE-CANCELLATION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #1176 title-match only, unverified",
+   "name": "Insurance policy cancellation + unearned-premium refund with Decision C hardened soft-skip. POST /api/v1/insurance/polic",
+   "registered_on": null,
+   "pr": 1176
+  },
+  {
    "id": "BLOCKS-FUEL",
    "source": "program",
    "fin": false,
@@ -898,6 +931,28 @@
    "pr": 3852
   },
   {
+   "id": "DISP-DRAWER-WIRE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "9/12 signature file(s) on main — partial, unverified",
+   "name": "Block 12 — Wire every dispatch surface to LoadDetailDrawer via ?load_id= + mount 4 stub tabs",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "DISP-FINES-DEDUCT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "1/2 signature file(s) on main — partial, unverified",
+   "name": "Block 13 — Driver fines → auto-deduction policies + drawer confirm/defer card",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "DOC-15-QBO-TOKEN-AUTOREFRESH",
    "source": ".block-ready",
    "fin": true,
@@ -940,6 +995,17 @@
    "name": "",
    "registered_on": null,
    "pr": 3830
+  },
+  {
+   "id": "FEAT-DISP-DRAWER-WIRE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "9/12 signature file(s) on main — partial, unverified",
+   "name": "Block 12 — Wire every dispatch surface to LoadDetailDrawer via ?load_id= + mount 4 stub tabs",
+   "registered_on": null,
+   "pr": null
   },
   {
    "id": "flow2-auto-deduction-trigger-from-customer-exp",
@@ -995,6 +1061,28 @@
    "name": "",
    "registered_on": null,
    "pr": 2086
+  },
+  {
+   "id": "GAP-86-POLICY-WIZARD",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "27/29 signature file(s) on main — partial, unverified",
+   "name": "Insurance policy create wizard: 4-step wizard (Policy Details → Units → Schedule Preview → Confirm), additive PolicyCrea",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "GAP-IDEMP-KEYS",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "29/31 signature file(s) on main — partial, unverified",
+   "name": "Insurance policy create wizard (GAP-86) + HTTP idempotency keys (GAP-IDEMP): combined scope for insurance wizard PR whic",
+   "registered_on": null,
+   "pr": null
   },
   {
    "id": "h-01-entity-badge-conflict",
@@ -1551,10 +1639,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #709 merged 2026-06-08",
+   "evidence": "all 3 file(s) on main",
    "name": "Block 10/44 — Account Balances View. Adds accounting.fn_account_balances_as_of(p_company_id, p_as_of_date, p_from_date) ",
    "registered_on": null,
-   "pr": 709
+   "pr": null
   },
   {
    "id": "ACCT-BLOCK-11-PERIODS-INIT",
@@ -1584,10 +1672,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #715 merged 2026-06-08",
+   "evidence": "all 3 file(s) on main",
    "name": "Establish catalogs.accounts as the canonical posting COA: reconcile against the accounting.qbo_accounts TRANSP slice, ad",
    "registered_on": null,
-   "pr": 715
+   "pr": null
   },
   {
    "id": "ACCT-F05-BANKFEED-JE-MATCH",
@@ -1645,17 +1733,6 @@
    "pr": 3446
   },
   {
-   "id": "ACCT-QBOPAR-00-DESIGN-LOCK",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #703 merged 2026-06-07",
-   "name": "CA-00 Design lock: commit QBO-parity COA spec, account-type/detail-type catalog, and two interactive HTML design-law pre",
-   "registered_on": null,
-   "pr": 703
-  },
-  {
    "id": "ACCT-QBOPAR-01-CATALOG-BACKEND",
    "source": ".block-ready",
    "fin": false,
@@ -1672,10 +1749,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #710 merged 2026-06-07",
+   "evidence": "all 17 file(s) on main",
    "name": "Shared ListView component (universal list behaviors): reusable table with sort, filter, gear, pagination, drag-reorder, ",
    "registered_on": null,
-   "pr": 710
+   "pr": null
   },
   {
    "id": "ACCT-QBOPAR-03",
@@ -1683,10 +1760,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #740 merged 2026-06-08",
+   "evidence": "all 6 file(s) on main",
    "name": "Chart of Accounts list on ListView: QBO-parity columns, balances, hierarchy, batch archive/merge, gear/filter/export.",
    "registered_on": null,
-   "pr": 740
+   "pr": null
   },
   {
    "id": "ACCT-QBOPAR-04",
@@ -2026,9 +2103,9 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "branch feat/acct-block-10-account-balances → PR #709 merged 2026-06-08",
+   "evidence": "all 3 named artifact(s) on main",
    "name": "block-10-account-balances",
-   "pr": 709
+   "pr": null
   },
   {
    "id": "BLOCK-10-driver-inactivity",
@@ -2128,10 +2205,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #701 merged 2026-06-07",
+   "evidence": "all 20 file(s) on main",
    "name": "COMPLIANCE-DASHBOARD",
    "registered_on": null,
-   "pr": 701
+   "pr": null
   },
   {
    "id": "BLOCK-16-of-29-TIER2.5-FUEL-CARD",
@@ -2444,28 +2521,6 @@
    "pr": null
   },
   {
-   "id": "BLOCK-C-DEDUCTION-CAP",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #692 merged 2026-06-07",
-   "name": "Settlement deduction cap — net floor (50% gross + absolute cents) with all-or-nothing roll-over of pending deductions at",
-   "registered_on": null,
-   "pr": 692
-  },
-  {
-   "id": "BLOCK-C-MIGRATION-RENAME",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #698 merged 2026-06-07",
-   "name": "Rename Block C migration to 12-digit runner-compatible filename so db:migrate applies min_net_settlement columns in prod",
-   "registered_on": null,
-   "pr": 698
-  },
-  {
    "id": "block-cf-cash-forecast",
    "source": "accounting",
    "fin": true,
@@ -2491,10 +2546,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #699 merged 2026-06-07",
+   "evidence": "all 2 file(s) on main",
    "name": "Insurance policy renewal (clone-forward). POST /api/v1/insurance/policies/:id/renew clones the source policy (tenant_id,",
    "registered_on": null,
-   "pr": 699
+   "pr": null
   },
   {
    "id": "BLOCK-E-INSURANCE-FLEET",
@@ -2502,21 +2557,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #702 merged 2026-06-07",
+   "evidence": "all 3 file(s) on main",
    "name": "Insurance Fleet Add/Remove — add/remove trucks/trailers from an active policy mid-term. POST /insurance/policies/:id/uni",
    "registered_on": null,
-   "pr": 702
-  },
-  {
-   "id": "BLOCK-F-INSURANCE-CANCELLATION",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #700 merged 2026-06-07",
-   "name": "Insurance policy cancellation + unearned-premium refund with Decision C hardened soft-skip. POST /api/v1/insurance/polic",
-   "registered_on": null,
-   "pr": 700
+   "pr": 1289
   },
   {
    "id": "BLOCK-G-COI-PDF",
@@ -2527,7 +2571,7 @@
    "evidence": "all 4 file(s) on main",
    "name": "Certificate of Insurance PDF — GET /api/v1/insurance/policies/:id/coi returns Puppeteer-rendered PDF; frontend Download ",
    "registered_on": null,
-   "pr": 696
+   "pr": null
   },
   {
    "id": "BLOCK-H-DETENTION-NOTIFY",
@@ -2535,10 +2579,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #693 merged 2026-06-07",
+   "evidence": "all 2 file(s) on main",
    "name": "Block H — On detention request approval (PATCH /api/v1/dispatch/detention/requests/:id/approve), after the billing bridg",
    "registered_on": null,
-   "pr": 693
+   "pr": 1066
   },
   {
    "id": "BLOCK-I-CI-DIST-FIX",
@@ -2578,10 +2622,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #695 merged 2026-06-07",
+   "evidence": "all 5 file(s) on main",
    "name": "Forward-fix for the #687 double-bill vulnerability: require Idempotency-Key on /insurance/policies, partial-UNIQUE bill_",
    "registered_on": null,
-   "pr": 695
+   "pr": null
   },
   {
    "id": "BLOCK7-DRIVER-HUB-REQUESTS",
@@ -2589,10 +2633,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #694 merged 2026-06-07",
+   "evidence": "all 5 file(s) on main",
    "name": "Driver Hub Requests — Manager/Owner approve/deny cash advance requests; approve creates a settlement deduction via creat",
    "registered_on": null,
-   "pr": 694
+   "pr": null
   },
   {
    "id": "BLOCKS-ACCOUNTING",
@@ -3180,37 +3224,15 @@
    "pr": 898
   },
   {
-   "id": "DISP-DRAWER-WIRE",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #746 merged 2026-06-08",
-   "name": "Block 12 — Wire every dispatch surface to LoadDetailDrawer via ?load_id= + mount 4 stub tabs",
-   "registered_on": null,
-   "pr": 746
-  },
-  {
    "id": "DISP-FACTORING-PACKET",
    "source": ".block-ready",
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #750 merged 2026-06-08",
+   "evidence": "all 6 file(s) on main",
    "name": "DISP-FACTORING-PACKET — Factoring queue + FARO Reserve Tracker + FactoringTab drawer child (LANE B Block 7)",
    "registered_on": null,
-   "pr": 750
-  },
-  {
-   "id": "DISP-FINES-DEDUCT",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #762 merged 2026-06-08",
-   "name": "Block 13 — Driver fines → auto-deduction policies + drawer confirm/defer card",
-   "registered_on": null,
-   "pr": 762
+   "pr": null
   },
   {
    "id": "DISP-KANBAN-dispatch-kanban-board",
@@ -3228,10 +3250,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #751 merged 2026-06-08",
+   "evidence": "all 1 file(s) on main",
    "name": "Block 3 — True Kanban operational states (7 columns + Completed/Cancelled terminal)",
    "registered_on": null,
-   "pr": 751
+   "pr": null
   },
   {
    "id": "DISP-LIST-TABLE-ASSIGN",
@@ -3239,10 +3261,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #758 merged 2026-06-08",
+   "evidence": "all 1 file(s) on main",
    "name": "Block 5 — List(simple+risk) vs Table(detailed) + Assignment bands with unassigned-on-top",
    "registered_on": null,
-   "pr": 758
+   "pr": null
   },
   {
    "id": "DISP-OVERVIEW",
@@ -3250,10 +3272,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #752 merged 2026-06-08",
+   "evidence": "all 2 file(s) on main",
    "name": "Block 1 — Dispatch Overview command center (default view)",
    "registered_on": null,
-   "pr": 752
+   "pr": null
   },
   {
    "id": "DISP-OVERVIEW-dispatch-overview",
@@ -3292,10 +3314,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #743 merged 2026-06-08",
+   "evidence": "all 6 file(s) on main",
    "name": "Trip Profitability view + SettlementProfitabilityCard drawer child + loadProfit util",
    "registered_on": null,
-   "pr": 743
+   "pr": null
   },
   {
    "id": "DISP-QUEUES-NAV",
@@ -3303,10 +3325,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #753 merged 2026-06-08",
+   "evidence": "all 2 file(s) on main",
    "name": "DISP-QUEUES-NAV Block 2 — top-bar queue navigation with live count badges and Dispatch › view breadcrumb.",
    "registered_on": null,
-   "pr": 753
+   "pr": null
   },
   {
    "id": "DISP-ROUNDTRIPS",
@@ -3314,10 +3336,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #756 merged 2026-06-08",
+   "evidence": "all 3 file(s) on main",
    "name": "Block 4 — Round Trips view + OOS strip pinned bottom of every dispatch view",
    "registered_on": null,
-   "pr": 756
+   "pr": null
   },
   {
    "id": "DISPATCH-LIVE-ETA",
@@ -3325,10 +3347,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #688 merged 2026-06-07",
+   "evidence": "all 7 file(s) on main",
    "name": "Dispatch live ETA columns — driver status, Samsara ETA, on-time prediction",
    "registered_on": null,
-   "pr": 688
+   "pr": null
   },
   {
    "id": "dispatch-sweep-gap-25",
@@ -3395,28 +3417,6 @@
    "name": "Docs-only design spec for the gated B9 driver-escrow-deduction build (Section D #1). Captures Jorge's 9 LOCKED rules ($2",
    "registered_on": null,
    "pr": 948
-  },
-  {
-   "id": "DOCS-DISPATCH-LANE-ENFORCEMENT-V2",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #742 merged 2026-06-08",
-   "name": "Lock dispatch lane enforcement document — allowed_files per block, disjoint-lane rules, stop-the-line gate policy.",
-   "registered_on": null,
-   "pr": 742
-  },
-  {
-   "id": "DOCS-FACTORING-ACCOUNTING-STRUCTURE",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #738 merged 2026-06-08",
-   "name": "Factoring accounting structure proposal + bookkeeper worksheet v1.1 update (cash_dip WF, factor_advances_receivable FARO",
-   "registered_on": null,
-   "pr": 738
   },
   {
    "id": "DOCS-FH1-FIXED-ASSETS-DEPRECIATION",
@@ -3540,17 +3540,6 @@
    "pr": 968
   },
   {
-   "id": "DOCS-GEOFENCE-INSURANCE-SPEC",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #719 merged 2026-06-08",
-   "name": "Lock dispatch geofence timing model (WF-043) + insurance blueprint + CI guard spec — no app code changed.",
-   "registered_on": null,
-   "pr": 719
-  },
-  {
    "id": "DOCS-MILEAGE-LIFECYCLE-CORRECTION",
    "source": ".block-ready",
    "fin": false,
@@ -3637,17 +3626,6 @@
    "name": "Safe-additive Block 9 — RLS coverage audit (docs-only, GUARD #33 / Wave-5 Block N). docs/specs/RLS-COVERAGE-AUDIT.md: re",
    "registered_on": null,
    "pr": 947
-  },
-  {
-   "id": "DOCS-ROLE-BINDINGS-WORKSHEET",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #716 merged 2026-06-08",
-   "name": "Bookkeeper approval worksheet for chart-of-accounts role bindings used by the IH35-TMS posting engine.",
-   "registered_on": null,
-   "pr": 716
   },
   {
    "id": "DOCS-VOID-EVERYWHERE-DESIGN",
@@ -3853,21 +3831,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #744 merged 2026-06-08",
+   "evidence": "all 1 file(s) on main",
    "name": "DISP-CASHFLOW-LINK — verify factoring advances, settlement payouts, detention revenue, and factoring fees are represente",
    "registered_on": null,
-   "pr": 744
-  },
-  {
-   "id": "FEAT-DISP-DRAWER-WIRE",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #746 merged 2026-06-08",
-   "name": "Block 12 — Wire every dispatch surface to LoadDetailDrawer via ?load_id= + mount 4 stub tabs",
-   "registered_on": null,
-   "pr": 746
+   "pr": null
   },
   {
    "id": "FEAT-DISPATCH-PLANNERS-SPLIT-NAV",
@@ -4062,10 +4029,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #737 merged 2026-06-08",
+   "evidence": "all 12 file(s) on main",
    "name": "Insurance policy create wizard: 4-step wizard (Policy Details → Units → Schedule Preview → Confirm), additive PolicyCrea",
    "registered_on": null,
-   "pr": 737
+   "pr": null
   },
   {
    "id": "FEAT-INVENTORY-PARTS-404-FIX",
@@ -4689,10 +4656,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #714 merged 2026-06-08",
+   "evidence": "all 1 file(s) on main",
    "name": "Accounting audit security fix: enable + force RLS with company-isolation policies on accounting.bill_lines, accounting.e",
    "registered_on": null,
-   "pr": 714
+   "pr": null
   },
   {
    "id": "FIX-SAFETY-HOME-KPI-DRILLTHROUGH",
@@ -4770,17 +4737,6 @@
    "name": "Block H — underscore URL redirect to hyphen canonical paths",
    "registered_on": null,
    "pr": 819
-  },
-  {
-   "id": "FOLLOWUP-SPECS-2026-06-07",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #689 merged 2026-06-07",
-   "name": "Follow-up block specs from June 6-7 sprint: insurance renewals, deduction cap, detention notifications, CI fixes, and Dr",
-   "registered_on": null,
-   "pr": 689
   },
   {
    "id": "G1-verify-block-registry-complete",
@@ -4954,10 +4910,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #760 merged 2026-06-08",
+   "evidence": "all 7 file(s) on main",
    "name": "Customer free-time detention catalog",
    "registered_on": null,
-   "pr": 760
+   "pr": null
   },
   {
    "id": "gap-32-customer-free-time-detention",
@@ -4996,10 +4952,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #759 merged 2026-06-08",
+   "evidence": "all 12 file(s) on main",
    "name": "Driver PWA full incident reporting (WF-048)",
    "registered_on": null,
-   "pr": 759
+   "pr": null
   },
   {
    "id": "gap-36-driver-pwa-incident-full",
@@ -5017,10 +4973,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #765 merged 2026-06-08",
+   "evidence": "all 12 file(s) on main",
    "name": "G14 Equipment dual-confirm transfer (WF-047)",
    "registered_on": null,
-   "pr": 765
+   "pr": null
   },
   {
    "id": "gap-37-equipment-dual-confirm-transfer",
@@ -5038,10 +4994,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #671 merged 2026-06-07",
+   "evidence": "all 7 file(s) on main",
    "name": "Damage report continuity chain + WF-027 insurance auto-claim linkage (additive; UI on locked shared surface deferred for",
    "registered_on": null,
-   "pr": 671
+   "pr": null
   },
   {
    "id": "GAP-39",
@@ -5070,10 +5026,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #673 merged 2026-06-07",
+   "evidence": "all 11 file(s) on main",
    "name": "Damage photo EXIF chain-of-custody (WF-058)",
    "registered_on": null,
-   "pr": 673
+   "pr": null
   },
   {
    "id": "gap-40-damage-photo-exif-chain",
@@ -5091,10 +5047,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #672 merged 2026-06-07",
+   "evidence": "all 17 file(s) on main",
    "name": "9 Reports Hub categories with hover-dropdown WF-061",
    "registered_on": null,
-   "pr": 672
+   "pr": null
   },
   {
    "id": "gap-41-reports-hub-9-categories",
@@ -5112,10 +5068,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #767 merged 2026-06-08",
+   "evidence": "all 15 file(s) on main",
    "name": "IFTA 4-step quarterly preparer + Owner-only WF-064",
    "registered_on": null,
-   "pr": 767
+   "pr": null
   },
   {
    "id": "gap-42-ifta-quarterly-preparer",
@@ -5133,10 +5089,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #768 merged 2026-06-08",
+   "evidence": "all 12 file(s) on main",
    "name": "6 scheduled reports auto-emailed per Q8",
    "registered_on": null,
-   "pr": 768
+   "pr": null
   },
   {
    "id": "gap-43-scheduled-reports",
@@ -5154,10 +5110,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #674 merged 2026-06-07",
+   "evidence": "all 14 file(s) on main",
    "name": "Form 425C Exhibits A-F auto-build for TRANSP monthly DIP filings",
    "registered_on": null,
-   "pr": 674
+   "pr": null
   },
   {
    "id": "gap-44-form-425c-exhibits",
@@ -5175,10 +5131,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #763 merged 2026-06-08",
+   "evidence": "all 8 file(s) on main",
    "name": "Cash flow + per-truck CPM route fix (P6-C1)",
    "registered_on": null,
-   "pr": 763
+   "pr": null
   },
   {
    "id": "gap-45-cash-flow-cpm-routes",
@@ -5238,10 +5194,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #676 merged 2026-06-07",
+   "evidence": "all 31 file(s) on main",
    "name": "GAP-48 Driver Operations Depth — 12 read-only operational sub-views on a new Operations tab",
    "registered_on": null,
-   "pr": 676
+   "pr": 771
   },
   {
    "id": "gap-48-driver-operations-depth",
@@ -5259,10 +5215,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #675 merged 2026-06-07",
+   "evidence": "all 13 file(s) on main",
    "name": "Maintenance Pre-Flight DVIR Severity Tagging (major vs minor vs observation) — WF-050 / 49 CFR §396.11",
    "registered_on": null,
-   "pr": 675
+   "pr": null
   },
   {
    "id": "gap-49-dvir-severity-tagging",
@@ -5280,10 +5236,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #677 merged 2026-06-07",
+   "evidence": "all 13 file(s) on main",
    "name": "AI Photo Comparison Pre/Post Trip Damage Detection",
    "registered_on": null,
-   "pr": 677
+   "pr": null
   },
   {
    "id": "gap-50-ai-photo-comparison",
@@ -5501,10 +5457,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #681 merged 2026-06-07",
+   "evidence": "all 13 file(s) on main",
    "name": "CAP-11 Fuel card real-time fraud alerts",
    "registered_on": null,
-   "pr": 681
+   "pr": null
   },
   {
    "id": "gap-61-cap-11-fuel-fraud-alerts",
@@ -5522,10 +5478,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #679 merged 2026-06-07",
+   "evidence": "all 12 file(s) on main",
    "name": "CAP-12 tire tread wear tracking and replacement projections",
    "registered_on": null,
-   "pr": 679
+   "pr": null
   },
   {
    "id": "GAP-63",
@@ -5533,10 +5489,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #678 merged 2026-06-07",
+   "evidence": "all 11 file(s) on main",
    "name": "CAP-13 Brake Wear Predictive Maintenance — lining thickness tracking + replacement projections",
    "registered_on": null,
-   "pr": 678
+   "pr": null
   },
   {
    "id": "gap-63-cap-13-brake-wear",
@@ -5679,10 +5635,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #691 merged 2026-06-07",
+   "evidence": "all 12 file(s) on main",
    "name": "EDI Integration Foundation (204/214/210/990)",
    "registered_on": null,
-   "pr": 691
+   "pr": null
   },
   {
    "id": "gap-70-edi-foundation",
@@ -5835,10 +5791,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #687 merged 2026-06-07",
+   "evidence": "all 6 file(s) on main",
    "name": "Insurance multi-vehicle policy creator + bill schedule write via createBill()",
    "registered_on": null,
-   "pr": 687
+   "pr": null
   },
   {
    "id": "gap-86-insurance-module",
@@ -5849,17 +5805,6 @@
    "evidence": "all 3 named artifact(s) on main",
    "name": "gap-86-insurance-module",
    "pr": null
-  },
-  {
-   "id": "GAP-86-POLICY-WIZARD",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #737 merged 2026-06-08",
-   "name": "Insurance policy create wizard: 4-step wizard (Policy Details → Units → Schedule Preview → Confirm), additive PolicyCrea",
-   "registered_on": null,
-   "pr": 737
   },
   {
    "id": "gap-87-audit-log-viewer",
@@ -5941,10 +5886,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #708 merged 2026-06-07",
+   "evidence": "all 2 file(s) on main",
    "name": "Double-entry DB enforcement guard: CI script asserting balance trigger exists + DB integration test + existing-data veri",
    "registered_on": null,
-   "pr": 708
+   "pr": null
   },
   {
    "id": "GAP-E-PLANNER-TASKS-ROUTES",
@@ -5956,17 +5901,6 @@
    "name": "Fix two dead routes: add /dispatch/planners index redirect to /loads; remove stale /tasks ComingSoonPage stub so real Ta",
    "registered_on": null,
    "pr": 885
-  },
-  {
-   "id": "GAP-IDEMP-KEYS",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #737 merged 2026-06-08",
-   "name": "Insurance policy create wizard (GAP-86) + HTTP idempotency keys (GAP-IDEMP): combined scope for insurance wizard PR whic",
-   "registered_on": null,
-   "pr": 737
   },
   {
    "id": "GAP-PREMERGE-GATES-EXPAND",
@@ -5985,10 +5919,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #723 merged 2026-06-08",
+   "evidence": "all 1 file(s) on main",
    "name": "Lock Global Sort Rule as a UI contract (docs/specs/GLOBAL-SORT-RULE.md) and wire CI guard (scripts/verify-global-sort-ru",
    "registered_on": null,
-   "pr": 723
+   "pr": null
   },
   {
    "id": "h-02-qbo-sync-stale-no-action",
@@ -6158,10 +6092,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #755 merged 2026-06-08",
+   "evidence": "all 3 file(s) on main",
    "name": "Anti-regression CI guards — sidebar 23-target additive check, cash-flow module pending gate, insurance atomic financial ",
    "registered_on": null,
-   "pr": 755
+   "pr": null
   },
   {
    "id": "m-01-wo-create-duplicate-header-fields",
@@ -6321,10 +6255,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #731 merged 2026-06-08",
+   "evidence": "all 8 file(s) on main",
    "name": "Driver per-load history tab: surface dispatch.load_assignment_history in DriverDetailPage via new LoadHistoryTab compone",
    "registered_on": null,
-   "pr": 731
+   "pr": null
   },
   {
    "id": "P1-BILL-GL-create-bill-auto-gl-post",
@@ -6522,7 +6456,7 @@
    "evidence": "all 1 file(s) on main",
    "name": "",
    "registered_on": null,
-   "pr": 684
+   "pr": null
   },
   {
    "id": "PREREQ-B-SETTLEMENT-DEDUCTION-SVC",
@@ -6530,10 +6464,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #683 merged 2026-06-07",
+   "evidence": "all 2 file(s) on main",
    "name": "createSettlementDeduction() service — unblocks Driver Hub Requests approve→deduction (Block 7)",
    "registered_on": null,
-   "pr": 683
+   "pr": null
   },
   {
    "id": "PUSH-GATE-CLASSIFICATION-FRESHNESS",
@@ -7345,26 +7279,15 @@
    "pr": 2697
   },
   {
-   "id": "SIDEBAR-DRIVER-HUB",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #680 merged 2026-06-07",
-   "name": "",
-   "registered_on": null,
-   "pr": 680
-  },
-  {
    "id": "SIDEBAR-INSURANCE",
    "source": ".block-ready",
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #717 merged 2026-06-08",
+   "evidence": "all 2 file(s) on main",
    "name": "Add Insurance sidebar entry after Drivers in sidebar-config.ts; add /insurance redirect route; bump PASS-8 module count ",
    "registered_on": null,
-   "pr": 717
+   "pr": null
   },
   {
    "id": "SKILL-LINKAGE-permanent-autoload",
@@ -11088,6 +11011,17 @@
    "pr": null
   },
   {
+   "id": "ACCT-QBOPAR-00-DESIGN-LOCK",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "CA-00 Design lock: commit QBO-parity COA spec, account-type/detail-type catalog, and two interactive HTML design-law pre",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "AF-5-stub-catalogs",
    "source": "program",
    "fin": true,
@@ -11657,6 +11591,50 @@
    "pr": null
   },
   {
+   "id": "DOCS-DISPATCH-LANE-ENFORCEMENT-V2",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Lock dispatch lane enforcement document — allowed_files per block, disjoint-lane rules, stop-the-line gate policy.",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "DOCS-FACTORING-ACCOUNTING-STRUCTURE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Factoring accounting structure proposal + bookkeeper worksheet v1.1 update (cash_dip WF, factor_advances_receivable FARO",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "DOCS-GEOFENCE-INSURANCE-SPEC",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Lock dispatch geofence timing model (WF-043) + insurance blueprint + CI guard spec — no app code changed.",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "DOCS-ROLE-BINDINGS-WORKSHEET",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Bookkeeper approval worksheet for chart-of-accounts role bindings used by the IH35-TMS posting engine.",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "dp-03-cdl-expires-blank",
    "source": ".block-ready",
    "fin": true,
@@ -12042,6 +12020,17 @@
    "pr": null
   },
   {
+   "id": "FOLLOWUP-SPECS-2026-06-07",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Follow-up block specs from June 6-7 sprint: insurance renewals, deduction cap, detention notifications, CI fixes, and Dr",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "FOR-CURSOR-2-README-ACCOUNTING-BANKING",
    "source": "program",
    "fin": false,
@@ -12093,7 +12082,7 @@
    "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
    "name": "",
    "registered_on": null,
-   "pr": 682
+   "pr": null
   },
   {
    "id": "GAP-19-DETENTION-INVOICE",
@@ -12104,7 +12093,7 @@
    "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
    "name": "GAP-19 Detention billable manager-approval gate — approve bridges detention into linehaul invoice (reuses bridgeDetentio",
    "registered_on": null,
-   "pr": 686
+   "pr": null
   },
   {
    "id": "GAP-20",
@@ -12115,7 +12104,7 @@
    "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status = DONE; not in active",
    "name": "",
    "registered_on": null,
-   "pr": 704
+   "pr": null
   },
   {
    "id": "GAP-24-FRESHNESS-INDICATOR",
@@ -12126,7 +12115,7 @@
    "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
    "name": "Samsara freshness indicator pill (L1-L4, green/amber/red)",
    "registered_on": null,
-   "pr": 685
+   "pr": 2400
   },
   {
    "id": "GAP-25",
@@ -12137,7 +12126,7 @@
    "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
    "name": "Active Driver Set 15-min Recompute Cache",
    "registered_on": null,
-   "pr": 707
+   "pr": 2812
   },
   {
    "id": "GAP-26",
@@ -12148,7 +12137,7 @@
    "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
    "name": "Border 1000m Geofences + Customs Clearance Time",
    "registered_on": null,
-   "pr": 722
+   "pr": null
   },
   {
    "id": "GAP-27",
@@ -12159,7 +12148,7 @@
    "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
    "name": "Daily Geofence Reconciliation Report",
    "registered_on": null,
-   "pr": 724
+   "pr": null
   },
   {
    "id": "GAP-28",
@@ -12181,7 +12170,7 @@
    "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
    "name": "Booking-Gap Time per Dispatcher Analytics",
    "registered_on": null,
-   "pr": 729
+   "pr": null
   },
   {
    "id": "GAP-30",
@@ -12203,7 +12192,7 @@
    "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
    "name": "Multi-stop extra rate per stop (WF-053)",
    "registered_on": null,
-   "pr": 761
+   "pr": 1368
   },
   {
    "id": "GAP-7",
@@ -13051,6 +13040,17 @@
    "pr": null
   },
   {
+   "id": "SIDEBAR-DRIVER-HUB",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "STRUCTURAL-MANIFEST-SPLIT",
    "source": ".block-ready",
    "fin": false,
@@ -13261,6 +13261,558 @@
   }
  ],
  "merged_prs": [
+  {
+   "number": 4124,
+   "title": "Claude- test(accounting): 8 auto-poster builders were posting real money with zero balance coverage",
+   "mergedAt": "2026-08-03T03:59:41Z",
+   "branch": "claude/poster-balance-invariant-coverage"
+  },
+  {
+   "number": 4123,
+   "title": "Cursor- fix(insurance): PolicyCreateWizard unit server search (2140)",
+   "mergedAt": "2026-08-03T03:46:46Z",
+   "branch": "cursor/Cursor-insurance-policy-picker-2140-2026-08-03"
+  },
+  {
+   "number": 4122,
+   "title": "Cascade- audit: deep-linkage rows 618-631 — live Neon lucia-bypass chain walks (2 PROD-VERIFIED, 0 tier-2)",
+   "mergedAt": "2026-08-03T03:40:33Z",
+   "branch": "Cascade-audit-deep-linkage-prodverify-0803"
+  },
+  {
+   "number": 4121,
+   "title": "Claude- chore(ci): pay down 94 stale sql-read-targets debt entries so the ratchet can bite again",
+   "mergedAt": "2026-08-03T03:29:27Z",
+   "branch": "chore/shrink-sql-read-targets-debt"
+  },
+  {
+   "number": 4120,
+   "title": "Cursor- fix(drivers): AutoDeduction drop silent listDrivers (2138)",
+   "mergedAt": "2026-08-03T03:46:43Z",
+   "branch": "cursor/Cursor-auto-deduction-no-silent-drivers-2138-2026-08-03"
+  },
+  {
+   "number": 4119,
+   "title": "Cursor- fix(driver-finance): settlement close driver_name join (2136)",
+   "mergedAt": "2026-08-03T03:49:07Z",
+   "branch": "cursor/Cursor-settlement-close-driver-search-2136-2026-08-03"
+  },
+  {
+   "number": 4118,
+   "title": "Cursor- fix(driver-finance): CashAdvanceRequests DriverPickerWithCreate (2134)",
+   "mergedAt": "2026-08-03T03:46:57Z",
+   "branch": "cursor/Cursor-cash-advance-driver-search-2134-2026-08-03"
+  },
+  {
+   "number": 4117,
+   "title": "Cursor- fix(compliance): HosHistory driver server search (2132)",
+   "mergedAt": "2026-08-03T03:18:46Z",
+   "branch": "cursor/Cursor-hos-history-driver-search-2132-2026-08-03"
+  },
+  {
+   "number": 4116,
+   "title": "Cursor- fix(legal): LegalMatter unit EntityPicker (2130)",
+   "mergedAt": "2026-08-03T03:18:44Z",
+   "branch": "cursor/Cursor-legal-matter-unit-picker-2130-2026-08-03"
+  },
+  {
+   "number": 4115,
+   "title": "Claude- fix(insurance): claim recovery had no cap — an insurer overpayment would have posted as income",
+   "mergedAt": "2026-08-03T03:57:54Z",
+   "branch": "claude/insurance-recovery-cap-at-loss"
+  },
+  {
+   "number": 4114,
+   "title": "Cursor- fix(drivers): onboarding vehicle EntityPicker unit (2128)",
+   "mergedAt": "2026-08-03T03:46:40Z",
+   "branch": "cursor/Cursor-onboarding-unit-search-2128-2026-08-03"
+  },
+  {
+   "number": 4113,
+   "title": "Cursor- fix(safety): PositionHistory unit filter EntityPicker (2126)",
+   "mergedAt": "2026-08-03T03:15:58Z",
+   "branch": "cursor/Cursor-position-history-unit-picker-2126-2026-08-03"
+  },
+  {
+   "number": 4112,
+   "title": "Cursor- fix(compliance): HosViewer driver server search (2124)",
+   "mergedAt": "2026-08-03T03:13:30Z",
+   "branch": "cursor/Cursor-hos-viewer-driver-search-2124-2026-08-03"
+  },
+  {
+   "number": 4111,
+   "title": "Cursor- fix(insurance): ClaimCreate EntityPicker + load/trailer search (2122)",
+   "mergedAt": "2026-08-03T03:13:26Z",
+   "branch": "cursor/Cursor-claim-create-picker-search-2122-2026-08-03"
+  },
+  {
+   "number": 4110,
+   "title": "Cursor- fix(dispatch): InlineUnitPicker server search (2120)",
+   "mergedAt": "2026-08-03T03:46:37Z",
+   "branch": "cursor/Cursor-inline-unit-picker-search-2120-2026-08-03"
+  },
+  {
+   "number": 4109,
+   "title": "Cursor- fix(dispatch): BookLoad customer server search (2118)",
+   "mergedAt": "2026-08-03T03:46:33Z",
+   "branch": "cursor/Cursor-bookload-customer-search-2118-2026-08-03"
+  },
+  {
+   "number": 4108,
+   "title": "Cursor- fix(dispatch): QuickAssign EntityPicker + trailer search (2116)",
+   "mergedAt": "2026-08-03T02:59:59Z",
+   "branch": "cursor/Cursor-quick-assign-entitypicker-2116-2026-08-03"
+  },
+  {
+   "number": 4107,
+   "title": "Cursor- fix(maintenance): VendorsPage AP link ReferenceSelect + search (2114)",
+   "mergedAt": "2026-08-03T03:02:14Z",
+   "branch": "cursor/Cursor-maint-vendors-mdata-link-search-2114-2026-08-03"
+  },
+  {
+   "number": 4106,
+   "title": "Cursor- fix(maintenance): CreateWO outside-vendor server search (2112)",
+   "mergedAt": "2026-08-03T03:13:24Z",
+   "branch": "cursor/Cursor-createwo-modal-vendor-search-2112-2026-08-03"
+  },
+  {
+   "number": 4105,
+   "title": "Cursor- fix(lists): preferred-vendor server search on NewService + ItemEditor (2110)",
+   "mergedAt": "2026-08-03T03:13:21Z",
+   "branch": "cursor/Cursor-service-item-vendor-search-2110-2026-08-03"
+  },
+  {
+   "number": 4104,
+   "title": "Cursor- fix(tasks/maintenance): CreateTask EntityPicker + WarrantyClaims vendor search (2108)",
+   "mergedAt": "2026-08-03T02:50:29Z",
+   "branch": "cursor/Cursor-task-warranty-vendor-search-2108-2026-08-03"
+  },
+  {
+   "number": 4102,
+   "title": "Cursor- fix(maintenance): RoadService + PartsInventory vendor search + unit EntityPicker + guard 2106",
+   "mergedAt": "2026-08-03T02:45:12Z",
+   "branch": "cursor/Cursor-maint-vendor-picker-search-2106-2026-08-03"
+  },
+  {
+   "number": 4101,
+   "title": "Cursor- fix(maintenance): CreateWO identification EntityPicker + vendor/customer search + guard 2104",
+   "mergedAt": "2026-08-03T03:00:01Z",
+   "branch": "cursor/Cursor-createwo-identification-picker-search-2104-2026-08-03"
+  },
+  {
+   "number": 4100,
+   "title": "Cursor- fix(cash-advances): CreateAdvance DriverPickerWithCreate server search + guard 2102",
+   "mergedAt": "2026-08-03T02:43:12Z",
+   "branch": "cursor/Cursor-cash-advance-driver-search-2102-2026-08-03"
+  },
+  {
+   "number": 4099,
+   "title": "Cursor- fix(dispatch): BookLoad truck EntityPicker + trailer server search + guard 2100",
+   "mergedAt": "2026-08-03T02:33:52Z",
+   "branch": "cursor/Cursor-bookload-equipment-entitypicker-2100-2026-08-03"
+  },
+  {
+   "number": 4098,
+   "title": "Cursor- fix(lists): LST-PICKER-01 BookLoad factoring company vendor inline create + guard 2098",
+   "mergedAt": "2026-08-03T02:40:31Z",
+   "branch": "cursor/Cursor-lst-picker01-bookload-factoring-vendor-2098-2026-08-03"
+  },
+  {
+   "number": 4097,
+   "title": "Claude- feat(accounting): invoices never posted to the GL — 11,979 invoices, 2 posting batches",
+   "mergedAt": "2026-08-03T03:02:00Z",
+   "branch": "claude/invoice-gl-post-on-finalize-or-send"
+  },
+  {
+   "number": 4096,
+   "title": "Cursor- fix(safety): incidents cluster drop bulk driver roster (SAF-B29 wave-6) + guard 2096",
+   "mergedAt": "2026-08-03T02:20:14Z",
+   "branch": "cursor/Cursor-safety-b29-incidents-no-bulk-drivers-2096-2026-08-03"
+  },
+  {
+   "number": 4095,
+   "title": "Cursor- fix(lists): LST-PICKER-01 AutoDeductionPolicies deduction type inline create + guard 2094",
+   "mergedAt": "2026-08-03T02:20:09Z",
+   "branch": "cursor/Cursor-lst-picker01-auto-deduction-type-2094-2026-08-03"
+  },
+  {
+   "number": 4094,
+   "title": "audit: combined D/E CODE-VERIFIED + GUARD findings 613-617 + bills PASS",
+   "mergedAt": "2026-08-03T02:09:25Z",
+   "branch": "Cascade-audit-combined-0803"
+  },
+  {
+   "number": 4091,
+   "title": "Claude- fix(maintenance): work-order create was dead on prod — a phantom column, not the function",
+   "mergedAt": "2026-08-03T03:01:48Z",
+   "branch": "claude/wo-create-units-display-id-phantom"
+  },
+  {
+   "number": 4090,
+   "title": "Cursor- fix(maintenance): WO Class auto-derive UNIT-LASTNAME (AUDIT-611, step 2092)",
+   "mergedAt": "2026-08-03T01:49:25Z",
+   "branch": "cursor/Cursor-wo-class-auto-derive-label-2026-08-03"
+  },
+  {
+   "number": 4089,
+   "title": "Claude- fix(usmca): every USMCA bill failed to post — the entity had zero expense-category mappings",
+   "mergedAt": "2026-08-03T03:20:24Z",
+   "branch": "claude/usmca-expense-category-map"
+  },
+  {
+   "number": 4088,
+   "title": "Cursor- fix(maintenance): require WO Part # / Task before submit (FE, step 2090)",
+   "mergedAt": "2026-08-03T01:31:42Z",
+   "branch": "cursor/Cursor-wo-create-part-task-required-2026-08-03"
+  },
+  {
+   "number": 4086,
+   "title": "Cursor- Rule 30 — Claude-green evidence format permanent",
+   "mergedAt": "2026-08-03T01:17:37Z",
+   "branch": "cursor/Cursor-permanent-claude-evidence-format-2026-08-02"
+  },
+  {
+   "number": 4085,
+   "title": "Claude- fix(forms): an orphaned component still owned the field a live WO validator trusted",
+   "mergedAt": "2026-08-03T03:01:37Z",
+   "branch": "claude/orphaned-form-owner-sweep"
+  },
+  {
+   "number": 4083,
+   "title": "Cursor- fix(safety): SAF-B29 cargo claimant+reason typeahead (step 2086)",
+   "mergedAt": "2026-08-03T00:52:22Z",
+   "branch": "cursor/Cursor-safety-b29-cargo-customer-reason-2026-08-02"
+  },
+  {
+   "number": 4082,
+   "title": "Cursor- fix(safety): SAF-B29 AuditHistory server filters (step 2084)",
+   "mergedAt": "2026-08-03T00:52:43Z",
+   "branch": "cursor/Cursor-safety-b29-audit-history-search-2026-08-02"
+  },
+  {
+   "number": 4081,
+   "title": "Cursor- fix(safety): load detail reverse accidents+incidents (SAF-C01, step 2082)",
+   "mergedAt": "2026-08-03T00:52:40Z",
+   "branch": "cursor/Cursor-safety-load-accident-reverse-2026-08-02"
+  },
+  {
+   "number": 4080,
+   "title": "Cursor- fix(safety): SAF-B29 Driver Safety Cards roster server-search (step 2080)",
+   "mergedAt": "2026-08-03T01:07:26Z",
+   "branch": "cursor/Cursor-safety-b29-driver-cards-search-2026-08-02"
+  },
+  {
+   "number": 4079,
+   "title": "Cursor- fix(safety): SAF-B29 wave-5 complaints/internal-fines/escrow typeahead (step 2078)",
+   "mergedAt": "2026-08-03T02:17:10Z",
+   "branch": "cursor/Cursor-safety-b29-wave5-complaints-internal-escrow-2026-08-02"
+  },
+  {
+   "number": 4078,
+   "title": "Cursor- fix(safety): SAF-B29 wave-4 catalog typeahead (civil/company/DOT-HOS, step 2076)",
+   "mergedAt": "2026-08-03T01:22:46Z",
+   "branch": "cursor/Cursor-safety-b29-catalog-search-wave4-2026-08-02"
+  },
+  {
+   "number": 4077,
+   "title": "Claude- fix(safety): the accounting watchdog could never raise an alert — its category was rejected by a CHECK",
+   "mergedAt": "2026-08-03T01:06:07Z",
+   "branch": "claude/integrity-alert-accounting-category"
+  },
+  {
+   "number": 4076,
+   "title": "Cursor- fix(safety): accident spawn-WO idempotent + reloadable linked WOs (SAF-B30, step 2072)",
+   "mergedAt": "2026-08-03T01:52:10Z",
+   "branch": "cursor/Cursor-safety-b30-spawn-wo-idempotent-2026-08-02"
+  },
+  {
+   "number": 4075,
+   "title": "Cursor- fix(safety): surface escrow signed-clause gate on Escrow Record (SAF-B08, step 2074)",
+   "mergedAt": "2026-08-03T01:07:36Z",
+   "branch": "cursor/Cursor-safety-b08-signed-clause-surface-2026-08-02"
+  },
+  {
+   "number": 4074,
+   "title": "Cursor- fix(safety): EntityPicker server-side search for capped kinds (SAF-B29, step 2070)",
+   "mergedAt": "2026-08-03T01:52:46Z",
+   "branch": "cursor/Cursor-safety-entitypicker-server-search-2026-08-02"
+  },
+  {
+   "number": 4073,
+   "title": "Claude- fix(dispatch): owner overrides of a DOT stop notified nobody — the wf064 event had no consumer at all",
+   "mergedAt": "2026-08-02T23:35:28Z",
+   "branch": "claude/wf064-override-notice-handler"
+  },
+  {
+   "number": 4072,
+   "title": "Cursor- fix(safety): SAF-ORPH-03 forfeiture audit timeline guard + error banner (verify-step 2066)",
+   "mergedAt": "2026-08-02T23:15:56Z",
+   "branch": "cursor/safety-orph03-forfeiture-audit-guard-2026-08-02"
+  },
+  {
+   "number": 4071,
+   "title": "Claude- fix(maintenance): the WO cost-line check was always red in create mode — it watched state the editor never writes",
+   "mergedAt": "2026-08-02T23:35:16Z",
+   "branch": "claude/wo-cost-line-validator-section-a"
+  },
+  {
+   "number": 4070,
+   "title": "Cursor- fix(safety): per-unit Form 2290 deadlines on Permits banner (SAF-ORPH-04)",
+   "mergedAt": "2026-08-02T23:25:15Z",
+   "branch": "cursor/safety-orph04-2290-per-unit-deadline"
+  },
+  {
+   "number": 4069,
+   "title": "Cursor- fix(safety): SAF-B29 wave-3 server-side driver roster search (verify-step 2062)",
+   "mergedAt": "2026-08-03T00:28:24Z",
+   "branch": "cursor/safety-b29-typeahead-remaining"
+  },
+  {
+   "number": 4068,
+   "title": "Cursor- fix(safety): SAF-B29 wave-2 server-side picker search (verify-step 2062)",
+   "mergedAt": "2026-08-03T01:50:44Z",
+   "branch": "cursor/safety-b29-picker-server-search-2026-08-02"
+  },
+  {
+   "number": 4067,
+   "title": "Cascade- docs(audit): transcribe GUARD live-battery findings + seed-battery spec",
+   "mergedAt": "2026-08-02T23:34:17Z",
+   "branch": "Cascade-guard-findings-transcribe"
+  },
+  {
+   "number": 4065,
+   "title": "Cursor- fix(safety): incident cluster EntityLink drill-through (SAF-C06)",
+   "mergedAt": "2026-08-02T23:15:46Z",
+   "branch": "cursor/safety-c06-incident-entitylinks-2026-08-02"
+  },
+  {
+   "number": 4064,
+   "title": "Cursor- fix(safety): wire cargo claim edit/status/void lifecycle (SAF-F20)",
+   "mergedAt": "2026-08-02T23:19:34Z",
+   "branch": "cursor/safety-cargo-claim-lifecycle-2026-08-02"
+  },
+  {
+   "number": 4063,
+   "title": "Cursor-SAF-F24: internal-fine reason picker inline create (verify-step 2054)",
+   "mergedAt": "2026-08-02T22:51:04Z",
+   "branch": "cursor/safety-f24-internal-fine-reason-inline-2026-08-02"
+  },
+  {
+   "number": 4062,
+   "title": "Claude- fix(accounting): no vendor bill with a category line could EVER save — the validator read a field nothing writes",
+   "mergedAt": "2026-08-02T23:35:02Z",
+   "branch": "claude/bill-category-combobox-commit"
+  },
+  {
+   "number": 4061,
+   "title": "Cursor- fix(safety): require civil_fine_types catalog on External Fine create (SAF-FINE-CATALOG)",
+   "mergedAt": "2026-08-02T23:19:29Z",
+   "branch": "cursor/Cursor-safety-fine-civil-catalog-guard-2026-08-02"
+  },
+  {
+   "number": 4060,
+   "title": "Cursor- fix(safety): wire orphan-mounted routes into nav + Home quick-jumps (SAF-F22)",
+   "mergedAt": "2026-08-02T22:51:46Z",
+   "branch": "cursor/safety-f22-orphan-nav-2026-08-02"
+  },
+  {
+   "number": 4059,
+   "title": "Cursor- fix(safety): SAF-F11 DOT/complaint void requires operator reason (verify-step 2046)",
+   "mergedAt": "2026-08-02T22:50:41Z",
+   "branch": "cursor/Cursor-safety-f11-void-reason-2026-08-02"
+  },
+  {
+   "number": 4058,
+   "title": "Cursor- fix(safety): SAF-F27 relative-only SafetyLayout child routes (2038)",
+   "mergedAt": "2026-08-03T00:28:21Z",
+   "branch": "cursor/safety-f27-route-registration-2026-08-02"
+  },
+  {
+   "number": 4057,
+   "title": "Cursor- fix(safety): SAF-F14 DOT/HOS creators use entity pickers not raw UUIDs",
+   "mergedAt": "2026-08-02T22:50:38Z",
+   "branch": "cursor/safety-saf-f14-dot-hos-entity-pickers-2026-08-02"
+  },
+  {
+   "number": 4056,
+   "title": "Cursor- fix(safety): HOS Violations list driver EntityLink",
+   "mergedAt": "2026-08-02T22:50:36Z",
+   "branch": "cursor/Cursor-safety-hos-driver-entitylink-2026-08-02"
+  },
+  {
+   "number": 4055,
+   "title": "Cursor- fix(safety): require company violation catalog type (SAF-F15)",
+   "mergedAt": "2026-08-02T22:50:33Z",
+   "branch": "cursor/Cursor-safety-company-violation-catalog-required-2026-08-02"
+  },
+  {
+   "number": 4054,
+   "title": "Cursor- fix(safety): wire incident detail Edit→Save lifecycle (SAF-INC-LIFECYCLE)",
+   "mergedAt": "2026-08-02T22:48:42Z",
+   "branch": "cursor/safety-inc-lifecycle-edit-path-2026-08-02"
+  },
+  {
+   "number": 4053,
+   "title": "Claude- fix(accounting): an expense could be recorded as paid FROM Accumulated Depreciation",
+   "mergedAt": "2026-08-02T23:34:48Z",
+   "branch": "claude/account-picker-type-scoping"
+  },
+  {
+   "number": 4052,
+   "title": "Cascade- docs(audit): full 150/150 coverage sweep — 593 rows, all entities complete",
+   "mergedAt": "2026-08-02T22:36:23Z",
+   "branch": "Cascade-audit-full-coverage-sweep"
+  },
+  {
+   "number": 4051,
+   "title": "Cursor- fix(lists): flatten DOT Violation Types list chrome (no box-in-box)",
+   "mergedAt": "2026-08-02T22:39:48Z",
+   "branch": "cursor/lst-dot-violation-types-list-chrome"
+  },
+  {
+   "number": 4050,
+   "title": "Cursor- fix(users): flatten Create User Password setup radios (no box-in-box)",
+   "mergedAt": "2026-08-02T22:14:57Z",
+   "branch": "cursor/users-create-no-box-in-box"
+  },
+  {
+   "number": 4049,
+   "title": "Cursor- fix(lists): flatten Complaint Types list chrome (no box-in-box)",
+   "mergedAt": "2026-08-02T22:14:54Z",
+   "branch": "cursor/Cursor-lst-complaint-types-list-chrome-2026-08-02"
+  },
+  {
+   "number": 4048,
+   "title": "Claude- fix(maintenance): every vendor work order failed in USMCA — the route checked a mirror that is empty by design",
+   "mergedAt": "2026-08-02T23:34:35Z",
+   "branch": "claude/wo-vendor-canonical-repoint"
+  },
+  {
+   "number": 4047,
+   "title": "Cascade- docs(audit): TRK C-first sweep — 14 rows (436-449)",
+   "mergedAt": "2026-08-02T21:30:30Z",
+   "branch": "Cascade-trk-c-first-sweep"
+  },
+  {
+   "number": 4046,
+   "title": "Cursor- fix(users): flatten Admin Tools owner strip (no box-in-box)",
+   "mergedAt": "2026-08-02T22:14:52Z",
+   "branch": "cursor/Cursor-users-admin-tools-no-box-in-box-2026-08-02"
+  },
+  {
+   "number": 4045,
+   "title": "Cursor- fix(reports): flatten home catalog strips (no box-in-box)",
+   "mergedAt": "2026-08-02T22:14:49Z",
+   "branch": "cursor/Cursor-reports-home-no-box-in-box-2026-08-02"
+  },
+  {
+   "number": 4044,
+   "title": "Cursor- fix(expenses): mark Payment method required (*)",
+   "mergedAt": "2026-08-02T22:45:50Z",
+   "branch": "cursor/Cursor-expense-payment-method-required-star-2026-08-02"
+  },
+  {
+   "number": 4043,
+   "title": "Cursor- fix(cash-flow): flatten 7-Day Outlook chrome (no box-in-box)",
+   "mergedAt": "2026-08-02T22:14:46Z",
+   "branch": "cursor/Cursor-cashflow-outlook-no-box-in-box-2026-08-02"
+  },
+  {
+   "number": 4042,
+   "title": "Cascade- docs(audit): merge 435-row audit + fix silent row-drop parser bug",
+   "mergedAt": "2026-08-02T21:09:29Z",
+   "branch": "Cascade-audit-435-scoreboard-merge"
+  },
+  {
+   "number": 4041,
+   "title": "Claude- feat(dispatch): tie the owner override to its dispatch, pin the role helper, add the Owner-Override Log",
+   "mergedAt": "2026-08-02T22:55:52Z",
+   "branch": "claude/owner-override-load-context"
+  },
+  {
+   "number": 4039,
+   "title": "Cursor- fix(insurance): shrink-safe landing grid at 1440px (no horizontal overflow)",
+   "mergedAt": "2026-08-02T22:14:43Z",
+   "branch": "cursor/Cursor-insurance-landing-overflow-2026-08-02"
+  },
+  {
+   "number": 4038,
+   "title": "Cursor- measurability: loud row-drop + Cells PASS vs covered + aliases",
+   "mergedAt": "2026-08-02T23:15:36Z",
+   "branch": "cursor/Cursor-audit-scoreboard-aliases-pass-cells-2026-08-02"
+  },
+  {
+   "number": 4037,
+   "title": "Cursor- fix(maintenance): flatten PM Countdown non-compact chrome (no box-in-box)",
+   "mergedAt": "2026-08-02T20:42:26Z",
+   "branch": "cursor/Cursor-mnt-pm-countdown-unbox-2026-08-02"
+  },
+  {
+   "number": 4036,
+   "title": "Claude- feat(dispatch): Owner can override any pre-dispatch blocker — the override box could not take a keystroke",
+   "mergedAt": "2026-08-02T20:44:49Z",
+   "branch": "claude/owner-override-driver-qualification"
+  },
+  {
+   "number": 4035,
+   "title": "Cursor- fix(customers): New transaction primary Button (Vendors chrome parity)",
+   "mergedAt": "2026-08-02T20:35:17Z",
+   "branch": "cursor/Cursor-customers-chrome-action-parity-2026-08-02"
+  },
+  {
+   "number": 4034,
+   "title": "Cursor- docs(audit): mark board FIXED for #4027/#4028/#4029 + Neon INV proof",
+   "mergedAt": "2026-08-02T20:25:44Z",
+   "branch": "cursor/Cursor-audit-status-fixed-2026-08-02"
+  },
+  {
+   "number": 4032,
+   "title": "Cursor- measurability: AUDIT-COVERAGE Module=SIDEBAR ids + generated scoreboard",
+   "mergedAt": "2026-08-02T20:08:24Z",
+   "branch": "cursor/Cursor-audit-coverage-measurability-2026-08-02"
+  },
+  {
+   "number": 4031,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-08-02T20:44:42Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 4030,
+   "title": "Cursor- feat(lists): Settlements + Users primary lists → ParityTable resize",
+   "mergedAt": "2026-08-02T20:48:42Z",
+   "branch": "cursor/Cursor-setl-users-paritytable-2026-08-02"
+  },
+  {
+   "number": 4029,
+   "title": "Cursor- fix(inventory): Category SelectCombobox + backfill from mis-mapped location",
+   "mergedAt": "2026-08-02T20:03:12Z",
+   "branch": "cursor/Cursor-inv-cat01-category-picker-2026-08-02"
+  },
+  {
+   "number": 4028,
+   "title": "Cursor- fix(banking): Cash KPI no double /100 — aggregate matches tile sum",
+   "mergedAt": "2026-08-02T20:03:09Z",
+   "branch": "cursor/Cursor-banking-aggregate-surface-2026-08-02"
+  },
+  {
+   "number": 4027,
+   "title": "Cursor- fix(parity): ParityTable resize grip visible at rest (QBO-style)",
+   "mergedAt": "2026-08-02T20:02:36Z",
+   "branch": "cursor/Cursor-parity-resize-at-rest-2026-08-02"
+  },
+  {
+   "number": 4026,
+   "title": "Claude- docs(audit): close row 11 and record the five defects found + fixed today",
+   "mergedAt": "2026-08-02T19:40:49Z",
+   "branch": "claude/audit-rows-refresh-0802"
+  },
+  {
+   "number": 4025,
+   "title": "Claude- feat(usmca): complete the USMCA chart — revenue maps, accessorial accounts, damage contra off COGS",
+   "mergedAt": "2026-08-02T19:40:37Z",
+   "branch": "claude/usmca-chart-completion"
+  },
   {
    "number": 4024,
    "title": "Claude- fix(parity): inline \"+ Add new\" saved nothing inside a wizard — a nested <form> the HTML parser deletes",
@@ -16308,558 +16860,6 @@
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-07-25T08:45:38Z",
    "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 3480,
-   "title": "fix(entity-scope): LST-F05 — lowest-UUID hijack was live in 5 places, not the 3 audited",
-   "mergedAt": "2026-07-25T07:44:57Z",
-   "branch": "fix/lst-f05-lowest-uuid-entity-hijack-sweep"
-  },
-  {
-   "number": 3479,
-   "title": "docs(lists): LST-RLS-01 — catalog scoping decided by opco VALUES + policy, not column presence",
-   "mergedAt": "2026-07-25T07:28:04Z",
-   "branch": "feat/block14-catalog-scoping-classification"
-  },
-  {
-   "number": 3478,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-25T08:05:40Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 3477,
-   "title": "[HOLD] ACCT-08: freeze SURF-01…09 map + SURF-01 Bills deep DoD guard",
-   "mergedAt": "2026-07-25T07:43:23Z",
-   "branch": "hold/acct-surf-01-bills-dod-20260725"
-  },
-  {
-   "number": 3476,
-   "title": "fix(lists): LST-SEED-01 — a test harness wrote 259 rows into live catalogs.complaint_types",
-   "mergedAt": "2026-07-25T05:20:22Z",
-   "branch": "fix/lst-seed-01-leak-test-pollution-guard"
-  },
-  {
-   "number": 3474,
-   "title": "[HOLD] docs(acct/lists): CoA is_postable asymmetry OWNER-EYES",
-   "mergedAt": "2026-07-25T07:24:41Z",
-   "branch": "hold/coa-postable-asymmetry-owner-eyes-20260725"
-  },
-  {
-   "number": 3473,
-   "title": "[HOLD] docs(lists)+guard: GLOBAL-BY-DESIGN catalog registry",
-   "mergedAt": "2026-07-25T07:24:32Z",
-   "branch": "hold/lst-global-by-design-registry-20260725"
-  },
-  {
-   "number": 3472,
-   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(lists): LST-CAT-06 — dispatcher_error_reasons per-entity",
-   "mergedAt": "2026-07-25T07:43:16Z",
-   "branch": "hold/lst-cat-06-dispatcher-error-reasons-20260725"
-  },
-  {
-   "number": 3471,
-   "title": "[HOLD] fix(lists): LST-A-01 — Driver Load Statuses on Lists hub",
-   "mergedAt": "2026-07-25T07:22:08Z",
-   "branch": "hold/lst-a01-driver-load-statuses-hub-20260725"
-  },
-  {
-   "number": 3470,
-   "title": "[HOLD] fix(lists): LST-F05 — FMCSA stops lowest-UUID entity hijack",
-   "mergedAt": "2026-07-25T07:24:06Z",
-   "branch": "hold/lst-f05-no-lowest-uuid-20260725"
-  },
-  {
-   "number": 3469,
-   "title": "[HOLD] docs(lists)+guard: LST-PICKER-01 inventory + universal picker law",
-   "mergedAt": "2026-07-25T07:22:02Z",
-   "branch": "hold/lst-picker-01-inventory-guard-20260725"
-  },
-  {
-   "number": 3468,
-   "title": "[HOLD] fix(lists): LST-F02b — fleet factory requires explicit companyScoped",
-   "mergedAt": "2026-07-25T07:02:28Z",
-   "branch": "hold/lst-f02-fleet-factory-explicit-scope-20260725"
-  },
-  {
-   "number": 3467,
-   "title": "[HOLD] fix(lists): LST-F01/COUNT — hub inventory from count-spec not QBO view",
-   "mergedAt": "2026-07-25T07:02:21Z",
-   "branch": "hold/lst-f01-count-hub-canonical-20260725"
-  },
-  {
-   "number": 3466,
-   "title": "[HOLD] fix(lists): LST-F06 — expense-category pickers read catalogs.accounts",
-   "mergedAt": "2026-07-25T07:01:57Z",
-   "branch": "hold/lst-f06-expense-category-canonical-20260725"
-  },
-  {
-   "number": 3465,
-   "title": "[HOLD] docs+guards(accounting): ACCT-06/08 SURF structural DoD + creator matrix",
-   "mergedAt": "2026-07-25T07:16:58Z",
-   "branch": "hold/acct-06-08-surf-dod-20260725"
-  },
-  {
-   "number": 3463,
-   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(lists): LST-F03 payment_terms + posting_templates per-entity",
-   "mergedAt": "2026-07-25T08:07:07Z",
-   "branch": "hold/lst-f03-payment-terms-posting-templates-20260725"
-  },
-  {
-   "number": 3461,
-   "title": "docs(accounting): ACCT-F09 reconcile architectural design to grouped PNG nav",
-   "mergedAt": "2026-07-25T05:11:35Z",
-   "branch": "docs/acct-05-tab-design-reconcile-20260725"
-  },
-  {
-   "number": 3460,
-   "title": "[HOLD] fix(accounting): ACCT-F04 reverse density — unit/claim/WO drill + create stamp",
-   "mergedAt": "2026-07-25T06:56:39Z",
-   "branch": "hold/acct-03-reverse-density-20260725"
-  },
-  {
-   "number": 3459,
-   "title": "[HOLD] fix(banking): BANK-04/05 structural DoD guards (SURF+LINK+cashbind)",
-   "mergedAt": "2026-07-25T07:21:29Z",
-   "branch": "hold/bank-04-surf-structural-guards-20260725"
-  },
-  {
-   "number": 3458,
-   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(lists): LST-F09 — account_role_bindings entity-scope finish (USMCA blocker)",
-   "mergedAt": "2026-07-25T08:30:31Z",
-   "branch": "hold/lst-f09-role-bindings-entity-scope-20260725"
-  },
-  {
-   "number": 3457,
-   "title": "[HOLD] SAF-F08: schema-parity from prod evidence (held false-PASS)",
-   "mergedAt": "2026-07-25T07:21:54Z",
-   "branch": "pkt6/pkt6-safety-20260724"
-  },
-  {
-   "number": 3456,
-   "title": "[HOLD] fix(lists): LST-F14 posting account pickers request postable_only",
-   "mergedAt": "2026-07-25T06:57:07Z",
-   "branch": "hold/lst-f14-account-pickers-postable-only"
-  },
-  {
-   "number": 3455,
-   "title": "docs(banking): BANK-00 publish ranked BANK-F## FAIL list (M=10)",
-   "mergedAt": "2026-07-25T07:24:14Z",
-   "branch": "pkt6/bank-00-ranked-fail-list"
-  },
-  {
-   "number": 3454,
-   "title": "[HOLD] fix(banking): BANK-ECON-04/BANK-SURF-04 root cause — bank_accounts RLS blocks every reconciliation start",
-   "mergedAt": "2026-07-25T06:52:59Z",
-   "branch": "hold/bank-econ-04-recon-session-live-path-20260725"
-  },
-  {
-   "number": 3453,
-   "title": "[HOLD] fix(accounting): vendor credit apply resolves QBO-keyed bills (ACCT-ECON-05)",
-   "mergedAt": "2026-07-25T06:49:17Z",
-   "branch": "hold/acct-econ-05-vendor-credit-live-path-20260725"
-  },
-  {
-   "number": 3451,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-25T04:41:29Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 3450,
-   "title": "docs(module-completion): live refresh evidence — sha + open-PR linkage, no flips",
-   "mergedAt": "2026-07-25T04:33:27Z",
-   "branch": "docs/module-completion-live-refresh-20260725-v2"
-  },
-  {
-   "number": 3449,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-25T03:58:06Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 3448,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-25T03:32:07Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 3447,
-   "title": "chore(deps): bump brace-expansion from 5.0.7 to 5.0.8 in /apps/driver-pwa in the npm_and_yarn group across 1 directory",
-   "mergedAt": "2026-07-25T03:17:06Z",
-   "branch": "dependabot/npm_and_yarn/apps/driver-pwa/npm_and_yarn-aa0c14d59f"
-  },
-  {
-   "number": 3446,
-   "title": "[HOLD] ACCT-LINK-04 — same-entity FK from expense lines to catalogs.expense_categories",
-   "mergedAt": "2026-07-25T06:37:23Z",
-   "branch": "hold/acct-link-04-expense-category-fk-20260724"
-  },
-  {
-   "number": 3445,
-   "title": "[HOLD] fix(banking): mark-as-transfer mints/links a real banking.transfers row (BANK-ECON-03 / BANK-SURF-03)",
-   "mergedAt": "2026-07-25T03:57:41Z",
-   "branch": "fix/bank-feed-mark-transfer-writes-transfers-20260724"
-  },
-  {
-   "number": 3444,
-   "title": "[HOLD] ACCT-LINK-05: posting_batches -> catalogs.posting_templates consumer stamp",
-   "mergedAt": "2026-07-25T04:13:27Z",
-   "branch": "hold/acct-link-05-posting-template-consumers-20260724"
-  },
-  {
-   "number": 3443,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-25T03:09:41Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 3442,
-   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(lists): LST-PICKER-02 — item picker read the QBO mirror while create wrote the canonical catalog",
-   "mergedAt": "2026-07-25T03:09:19Z",
-   "branch": "fix/lst-picker-02-item-canonical-table"
-  },
-  {
-   "number": 3441,
-   "title": "fix(lists): count spec missed 9 live catalogs + a hardcoded 3 — badges understated TRANSP by 548 rows",
-   "mergedAt": "2026-07-25T02:14:36Z",
-   "branch": "fix/lists-count-spec-completion"
-  },
-  {
-   "number": 3440,
-   "title": "[HOLD] ACCT-LINK-01: journal_entries → journal_entry_types FK",
-   "mergedAt": "2026-07-25T03:57:23Z",
-   "branch": "hold/acct-je-type-fk-20260724"
-  },
-  {
-   "number": 3439,
-   "title": "fix(guards): canonical-write map had cancellation reasons INVERTED — legacy writes passed silently",
-   "mergedAt": "2026-07-25T02:06:54Z",
-   "branch": "fix/canonical-write-guard-inverted-cancellation-reasons"
-  },
-  {
-   "number": 3438,
-   "title": "[HOLD] fix(banking): legacy /bulk-categorize must call bank-feed GL poster",
-   "mergedAt": "2026-07-25T01:50:46Z",
-   "branch": "hold/bank-bulk-categorize-gl-parity-20260724"
-  },
-  {
-   "number": 3437,
-   "title": "[HOLD] fix(accounting): Stage-1 QBO pull flag-OFF writes cancelled sync_run",
-   "mergedAt": "2026-07-25T01:50:38Z",
-   "branch": "hold/qbo-flag-off-sync-run-20260724"
-  },
-  {
-   "number": 3436,
-   "title": "[HOLD-FOR-JORGE · FINANCIAL] fix(dispatch): LST-F04 cancel-load wrote a reason FK'd to the RETIRE catalog",
-   "mergedAt": "2026-07-25T02:07:10Z",
-   "branch": "fix/lst-f04-cancel-load-canonical-reason-fk"
-  },
-  {
-   "number": 3435,
-   "title": "feat(module-completion): safety + lists manifests — 0 of 30 and 5 of 14, prod-evidenced",
-   "mergedAt": "2026-07-25T03:09:09Z",
-   "branch": "feat/module-completion-safety-lists"
-  },
-  {
-   "number": 3434,
-   "title": "docs(module-completion): refresh accounting/banking N-of-M from Neon truth",
-   "mergedAt": "2026-07-25T00:50:26Z",
-   "branch": "feat/acct-banking-scoreboard-truth-20260724"
-  },
-  {
-   "number": 3433,
-   "title": "[HOLD] fix(accounting): set-based QBO expenses+AR projection (idle_in_transaction FATAL)",
-   "mergedAt": "2026-07-25T01:50:02Z",
-   "branch": "hold/qbo-projection-idle-tx-20260724"
-  },
-  {
-   "number": 3430,
-   "title": "fix(ci): money PRs must confirm DoD A–E + VERIFY 1–8 or FAIL (autoload)",
-   "mergedAt": "2026-07-24T23:53:59Z",
-   "branch": "hold/no-money-theater-gate-20260724"
-  },
-  {
-   "number": 3429,
-   "title": "[HOLD] fix(accounting): QBO AR puller reuses customer-payment deposit resolver",
-   "mergedAt": "2026-07-24T23:43:24Z",
-   "branch": "hold/qbo-ar-deposit-bridge-20260724"
-  },
-  {
-   "number": 3428,
-   "title": "[HOLD] fix(accounting): expense list WO reverse EntityLink column",
-   "mergedAt": "2026-07-24T23:43:22Z",
-   "branch": "hold/acct-expense-list-wo-reverse-20260724"
-  },
-  {
-   "number": 3427,
-   "title": "[HOLD] fix(accounting): Bill payments list JE/bank reverse links",
-   "mergedAt": "2026-07-24T23:43:19Z",
-   "branch": "fix/banking-bill-payment-list-reverse-20260724"
-  },
-  {
-   "number": 3426,
-   "title": "[HOLD] fix(accounting): vendor credit apply/void UI + bill reverse drill",
-   "mergedAt": "2026-07-24T23:43:38Z",
-   "branch": "hold/accounting-vendor-credit-active-path"
-  },
-  {
-   "number": 3425,
-   "title": "[HOLD] fix(accounting): wire Claim→Bill/Expense/WO insurance_claim_id (col-gated)",
-   "mergedAt": "2026-07-25T01:49:55Z",
-   "branch": "hold/acct-claim-wo-bill-wire-20260724"
-  },
-  {
-   "number": 3424,
-   "title": "[HOLD] fix(banking): bulk categorize must call bank-feed GL poster",
-   "mergedAt": "2026-07-24T23:50:23Z",
-   "branch": "hold/banking-match-je-density-20260724"
-  },
-  {
-   "number": 3423,
-   "title": "[HOLD] fix(accounting): Payment detail deposit EntityLink uses CoA account",
-   "mergedAt": "2026-07-24T23:43:17Z",
-   "branch": "hold/acct-payment-deposit-entitylink-20260724"
-  },
-  {
-   "number": 3422,
-   "title": "chore(deps): bump find-my-way from 9.6.0 to 9.7.0",
-   "mergedAt": "2026-07-25T02:31:36Z",
-   "branch": "dependabot/npm_and_yarn/find-my-way-9.7.0"
-  },
-  {
-   "number": 3421,
-   "title": "chore(deps-dev): bump postcss from 8.5.16 to 8.5.23 in /apps/driver-pwa in the npm_and_yarn group across 1 directory",
-   "mergedAt": "2026-07-25T03:01:31Z",
-   "branch": "dependabot/npm_and_yarn/apps/driver-pwa/npm_and_yarn-6b7f7a8c69"
-  },
-  {
-   "number": 3420,
-   "title": "fix(ci): tracker-sync uses ONE reusable PR (stop the CONFLICTING tracker-PR wall)",
-   "mergedAt": "2026-07-24T19:31:23Z",
-   "branch": "fix/ci-tracker-sync-single-reusable-pr"
-  },
-  {
-   "number": 3418,
-   "title": "feat(ci): prod-ledger checksum-parity guard — close the post-apply-edit gap (owner rule 2)",
-   "mergedAt": "2026-07-24T19:31:04Z",
-   "branch": "feat/ci-prod-ledger-checksum-parity-guard"
-  },
-  {
-   "number": 3417,
-   "title": "[HOLD] fix(banking): require zero-difference reconciliation closure",
-   "mergedAt": "2026-07-24T19:06:43Z",
-   "branch": "fix/banking-recon-zero-variance-20260724"
-  },
-  {
-   "number": 3416,
-   "title": "fix(deploy): checksum-override for applied 870/890 edited post-apply — unblocks ALL deploys",
-   "mergedAt": "2026-07-24T19:07:46Z",
-   "branch": "fix/deploy-unblock-870-890-checksum-override"
-  },
-  {
-   "number": 3413,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-24T19:07:34Z",
-   "branch": "chore/tracker-artifacts-sync-30116119476"
-  },
-  {
-   "number": 3411,
-   "title": "[HOLD] feat(accounting): QBO Receive Payment (AR) -> accounting.payments projection, flags OFF",
-   "mergedAt": "2026-07-24T19:07:25Z",
-   "branch": "fix/qbo-ar-payments-projection"
-  },
-  {
-   "number": 3410,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-24T18:14:03Z",
-   "branch": "chore/tracker-artifacts-sync-30110446230"
-  },
-  {
-   "number": 3409,
-   "title": "[HOLD] feat(lists): per-entity customer_quality_event_reasons (owner ruling 2026-07-24)",
-   "mergedAt": "2026-07-24T18:13:58Z",
-   "branch": "feat/lst-customer-quality-reasons-per-entity"
-  },
-  {
-   "number": 3408,
-   "title": "[HOLD] feat(lists): per-entity driver_termination_reasons (owner ruling 2026-07-24)",
-   "mergedAt": "2026-07-24T17:37:57Z",
-   "branch": "feat/lst-driver-termination-reasons-per-entity"
-  },
-  {
-   "number": 3405,
-   "title": "[HOLD] feat(lists): per-entity equipment_types + line-item templates (stacked on #3397)",
-   "mergedAt": "2026-07-24T18:34:58Z",
-   "branch": "feat/lst-equipment-types-per-entity"
-  },
-  {
-   "number": 3403,
-   "title": "[HOLD] feat(lists): per-entity driver_load_statuses (owner ruling 2026-07-24)",
-   "mergedAt": "2026-07-24T16:47:38Z",
-   "branch": "feat/lst-driver-load-statuses-per-entity"
-  },
-  {
-   "number": 3401,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-24T15:39:06Z",
-   "branch": "chore/tracker-artifacts-sync-30100297113"
-  },
-  {
-   "number": 3400,
-   "title": "[HOLD] fix(accounting): CoA roles RLS accepts app.bypass_rls=lucia",
-   "mergedAt": "2026-07-24T14:37:16Z",
-   "branch": "fix/coa-roles-rls-bypass-lucia"
-  },
-  {
-   "number": 3399,
-   "title": "[HOLD] feat(accounting): project QBO Purchase → accounting.expenses (subledger only)",
-   "mergedAt": "2026-07-24T15:38:38Z",
-   "branch": "fix/qbo-expenses-projection"
-  },
-  {
-   "number": 3398,
-   "title": "[HOLD] feat(accounting): project QBO BillPayment → bill_payments (subledger only)",
-   "mergedAt": "2026-07-24T15:18:46Z",
-   "branch": "fix/qbo-bill-payments-projection"
-  },
-  {
-   "number": 3397,
-   "title": "[HOLD] feat(lists): per-entity fleet/asset catalogs — 8 tables (owner ruling 2026-07-24)",
-   "mergedAt": "2026-07-24T15:01:01Z",
-   "branch": "feat/lst-fleet-catalogs-per-entity"
-  },
-  {
-   "number": 3396,
-   "title": "fix(accounting): bank/cash pickers use createKind=account (+ Add new account)",
-   "mergedAt": "2026-07-24T13:10:40Z",
-   "branch": "fix/receive-payment-deposit-banking"
-  },
-  {
-   "number": 3395,
-   "title": "fix(ops): unblock Render — checksum override for 202607820000",
-   "mergedAt": "2026-07-24T12:53:13Z",
-   "branch": "hotfix/predeploy-checksum-202607820000"
-  },
-  {
-   "number": 3394,
-   "title": "fix(lists): the /api/v1/catalogs/items route returned 0 items under RLS (LST)",
-   "mergedAt": "2026-07-24T14:19:11Z",
-   "branch": "fix/lst-items-route-rls-scope"
-  },
-  {
-   "number": 3393,
-   "title": "[HOLD] fix(accounting): QBO bill Pay Bill records subledger only",
-   "mergedAt": "2026-07-24T14:18:57Z",
-   "branch": "fix/qbo-bill-payment-subledger-only"
-  },
-  {
-   "number": 3389,
-   "title": "fix(lists): cancellation-reason catalogs hijacked the default entity to USMCA (LST-F05)",
-   "mergedAt": "2026-07-24T06:44:22Z",
-   "branch": "fix/lst-catalog-default-entity-hijack"
-  },
-  {
-   "number": 3388,
-   "title": "[HOLD] fix(accounting): map QBO Item ExpenseAccountRef → CoA",
-   "mergedAt": "2026-07-24T12:20:13Z",
-   "branch": "fix/qbo-item-expense-account-map"
-  },
-  {
-   "number": 3387,
-   "title": "fix(lists): fleet catalog accepted a metadata field no fleet table can store (LST)",
-   "mergedAt": "2026-07-24T06:44:16Z",
-   "branch": "fix/lst-fleet-catalog-metadata-phantom"
-  },
-  {
-   "number": 3386,
-   "title": "[HOLD] fix(accounting): refuse Bill→GL post for QBO-origin bills",
-   "mergedAt": "2026-07-24T12:20:03Z",
-   "branch": "fix/refuse-qbo-bill-post-gl"
-  },
-  {
-   "number": 3385,
-   "title": "[HOLD-FOR-JORGE] fix(safety): schema-wide DELETE hardening — 48 evidence tables + narrow the arwd default (Part B)",
-   "mergedAt": "2026-07-24T06:50:53Z",
-   "branch": "fix/saf-schema-wide-delete-hardening"
-  },
-  {
-   "number": 3384,
-   "title": "fix(safety): guards that certified broken code + a stale doc (SAF-F30/F08/F28)",
-   "mergedAt": "2026-07-24T06:21:14Z",
-   "branch": "fix/saf-f30-f08-f28-guards-and-docs"
-  },
-  {
-   "number": 3383,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-07-24T12:19:55Z",
-   "branch": "chore/tracker-artifacts-sync-30065138652"
-  },
-  {
-   "number": 3382,
-   "title": "fix(accounting): project QBO AP Bill Line[] into bill_lines",
-   "mergedAt": "2026-07-24T12:19:46Z",
-   "branch": "fix/qbo-ap-bill-lines-projection"
-  },
-  {
-   "number": 3381,
-   "title": "fix(safety): a money action asked operators to type a raw uuid; three drawer implementations (SAF-F10/F25)",
-   "mergedAt": "2026-07-24T06:08:28Z",
-   "branch": "fix/saf-f10-f25-money-chrome"
-  },
-  {
-   "number": 3380,
-   "title": "[HOLD-FOR-JORGE] feat(safety): gated batch — F29 join tables, incident void, F34 ask-rail, Clearinghouse query_type, F09 escrow target",
-   "mergedAt": "2026-07-24T07:09:16Z",
-   "branch": "feat/saf-gated-batch-f09-f29-f34-void-clearinghouse"
-  },
-  {
-   "number": 3379,
-   "title": "fix(safety): cargo claims off the shared grid; safety pickers truncated at 200 (SAF-F21/F31)",
-   "mergedAt": "2026-07-24T02:34:54Z",
-   "branch": "fix/saf-f21-f31-cargo-claims-and-picker-search"
-  },
-  {
-   "number": 3378,
-   "title": "fix(accounting): CoA optional recoveries + QBO create/list UX",
-   "mergedAt": "2026-07-24T02:06:43Z",
-   "branch": "fix/coa-optional-unused-recoveries"
-  },
-  {
-   "number": 3377,
-   "title": "fix(safety): damage reports, interchanges and cargo claims were create-only (SAF-F20)",
-   "mergedAt": "2026-07-24T02:06:34Z",
-   "branch": "fix/saf-f20-incident-lifecycle"
-  },
-  {
-   "number": 3376,
-   "title": "fix(safety): fines lost their load/unit links; violations never carried the catalog FK (SAF-F19/F15)",
-   "mergedAt": "2026-07-24T02:06:30Z",
-   "branch": "fix/saf-f19-f15-fine-links-and-catalogs"
-  },
-  {
-   "number": 3375,
-   "title": "fix(safety): FMCSA Clearinghouse prohibition never blocked dispatch (SAF-F07-CH)",
-   "mergedAt": "2026-07-24T00:56:50Z",
-   "branch": "feat/saf-clearinghouse-queries"
-  },
-  {
-   "number": 3373,
-   "title": "[HOLD-FOR-JORGE] fix(accounting,banking): entity CoA validate + WF Plaid mask ownership",
-   "mergedAt": "2026-07-24T00:27:28Z",
-   "branch": "fix/acct-banking-audit-wiring"
-  },
-  {
-   "number": 3372,
-   "title": "docs(law): the Definition of Done is referenced by every auto-loaded coder entry point",
-   "mergedAt": "2026-07-24T00:27:08Z",
-   "branch": "docs/definition-of-done-is-auto-loaded"
-  },
-  {
-   "number": 3371,
-   "title": "fix(safety): an internal fine could be imposed but never disputed or voided (SAF-F12)",
-   "mergedAt": "2026-07-24T01:16:37Z",
-   "branch": "fix/saf-f12-internal-fine-lifecycle"
   }
  ],
  "merged_pr_total": 3000,
@@ -20073,12 +20073,6 @@
    "title": "chore(closure): CLOSURE-17 ON-HOLD triage decision docs",
    "mergedAt": "2026-06-08T14:19:54Z",
    "category": "HOLD"
-  },
-  {
-   "number": 708,
-   "title": "feat(trust-t5): TIER1 Block 5 — Double-entry DB enforcement guard + integration test + docs",
-   "mergedAt": "2026-06-07T23:54:53Z",
-   "category": "TIER-1 financial"
   }
  ]
 }
