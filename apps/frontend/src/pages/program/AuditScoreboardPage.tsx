@@ -22,10 +22,48 @@ const VIDX = [5, 6, 7, 8, 9, 10, 11, 12];
 const letter = (c: GateState) =>
   c === "NA" ? "—" : c === "PASS" ? "P" : c === "AUDIT" ? "A" : c === "FIX" ? "F" : c === "FAIL" ? "X" : "U";
 
-function useScoreboard(): ProgramScoreboard {
+type RecentPrRow = {
+  number: number;
+  title: string;
+  mergedAtCt: string;
+  url: string;
+};
+
+type LiveScoreboard = ProgramScoreboard & {
+  meta: ProgramScoreboard["meta"] & { lastSyncedCt?: string | null };
+  recentActivity?: RecentPrRow[];
+};
+
+/** Format an ISO / ledger %cI stamp in America/Chicago, labeled CT — never wall clock. */
+function formatLedgerCt(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("month")}/${get("day")}/${get("year")} ${get("hour")}:${get("minute")} ${get("dayPeriod")} CT`;
+}
+
+function useScoreboard(): LiveScoreboard {
   // Progressive enhancement: if the read-only live endpoint is present, prefer it;
   // otherwise render the checked-in generated snapshot. Never blocks first paint.
-  const [data, setData] = useState<ProgramScoreboard>(PROGRAM_SCOREBOARD);
+  const [data, setData] = useState<LiveScoreboard>(() => ({
+    ...PROGRAM_SCOREBOARD,
+    meta: {
+      ...PROGRAM_SCOREBOARD.meta,
+      // Deterministic Last synced from ledger commit ISO (meta.generatedAt = git log %cI).
+      lastSyncedCt: formatLedgerCt(PROGRAM_SCOREBOARD.meta.generatedAt),
+    },
+    recentActivity: [],
+  }));
   useEffect(() => {
     let alive = true;
     // Prefer resolveApiUrl so the call hits the API origin, not the SPA catch-all.
@@ -35,7 +73,15 @@ function useScoreboard(): ProgramScoreboard {
         return r.json();
       })
       .then((json) => {
-        if (alive && json && Array.isArray(json.modules)) setData(json as ProgramScoreboard);
+        if (!alive || !json || !Array.isArray(json.modules)) return;
+        const live = json as LiveScoreboard;
+        const lastSyncedCt =
+          live.meta?.lastSyncedCt || formatLedgerCt(live.meta?.generatedAt);
+        setData({
+          ...live,
+          meta: { ...live.meta, lastSyncedCt },
+          recentActivity: Array.isArray(live.recentActivity) ? live.recentActivity : [],
+        });
       })
       .catch(() => {
         /* offline / not wired yet → keep the generated snapshot */
@@ -52,6 +98,9 @@ export function AuditScoreboardPage() {
   // Alias *At fields — verify-no-native-datetime-input flags camelCase names ending in At as date fields.
   const prodReadSnapshot = sb.meta.prodReadAt;
   const generatedOn = sb.meta.generatedAt.slice(0, 10);
+  // Last synced = ledger git commit (meta.generatedAt / lastSyncedCt), America/Chicago CT — not wall clock.
+  const lastSyncedLabel = sb.meta.lastSyncedCt || formatLedgerCt(sb.meta.generatedAt);
+  const recentRows = sb.recentActivity ?? [];
 
   const metrics = useMemo(() => {
     let prod = 0, audit = 0, fix = 0, fail = 0, unv = 0, certified = 0, vprod = 0, vopen = 0;
@@ -86,7 +135,7 @@ export function AuditScoreboardPage() {
         <Link className="tab" to="/program/final-additions">Final additions</Link>
       </nav>
 
-      <header className="hd">
+      <header className="hd" data-testid="program-scoreboard-header">
         <div className="t">Deep-Linkage Certification Scoreboard</div>
         <div className="s">
           ledger <code>AUDIT-COVERAGE-LIVE.md</code> · main @ <b>{sb.meta.sourceSha}</b> · deployed @ <b>{sb.meta.deployedSha}</b> ·
@@ -94,7 +143,33 @@ export function AuditScoreboardPage() {
           <b> Complete = DoD A–E + VERIFY 1–8, PROD-VERIFIED per entity</b> — not five layers. Green = proven live only;
           amber = traced in code, must be exercised live. A code trace or route string is not proof; it must be clicked/called live.
         </div>
+        <div className="synced" data-testid="program-scoreboard-last-synced">
+          Last synced: <b>{lastSyncedLabel}</b>
+          <span className="synced-note"> · from ledger git commit (not wall clock)</span>
+        </div>
       </header>
+
+      <section className="recent" data-testid="program-scoreboard-recent-activity">
+        <h2>
+          Recent activity — last 10 PRs{" "}
+          <span className="sub">live from recon · times in CT (America/Chicago)</span>
+        </h2>
+        {recentRows.length === 0 ? (
+          <p className="recent-empty">No recent merged PRs in the recon artifact yet — panel fills after tracker sync / API deploy.</p>
+        ) : (
+          <ul className="recent-list">
+            {recentRows.map((row) => (
+              <li key={row.number} data-testid={`program-scoreboard-recent-pr-${row.number}`}>
+                <a href={row.url} target="_blank" rel="noreferrer">
+                  #{row.number}
+                </a>
+                <span className="recent-title">{row.title}</span>
+                <span className="recent-when">{row.mergedAtCt}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <div className="metrics">
         <Metric cls="big" n={`${metrics.certified} / 30`} l="Modules certified (all 13 gates per entity)" />
@@ -295,6 +370,19 @@ const CSS = `
 .ih35sb .hd{background:var(--navy);color:#fff;padding:16px 20px;border-radius:10px}
 .ih35sb .hd .t{font-size:18px;font-weight:700}
 .ih35sb .hd .s{color:#94a3b8;font-size:12px;margin-top:6px;line-height:1.55}
+.ih35sb .hd .synced{margin-top:10px;font-size:12px;color:#e2e8f0}
+.ih35sb .hd .synced b{color:#fff}
+.ih35sb .hd .synced-note{color:#94a3b8;font-weight:400}
+.ih35sb .recent{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:14px 0 0}
+.ih35sb .recent h2{margin:0 0 10px;border:none;padding:0}
+.ih35sb .recent-empty{margin:0;font-size:12px;color:var(--slate-lt)}
+.ih35sb .recent-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ih35sb .recent-list li{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:baseline;font-size:12px;padding:6px 0;border-top:1px dashed var(--line)}
+.ih35sb .recent-list li:first-child{border-top:none}
+.ih35sb .recent-list a{font-weight:700;color:var(--navy);text-decoration:none}
+.ih35sb .recent-list a:hover{text-decoration:underline}
+.ih35sb .recent-title{color:var(--slate);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ih35sb .recent-when{color:var(--slate-lt);white-space:nowrap}
 .ih35sb .metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:16px 0}
 .ih35sb .metric{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 13px}
 .ih35sb .metric .n{font-size:22px;font-weight:800;line-height:1}
