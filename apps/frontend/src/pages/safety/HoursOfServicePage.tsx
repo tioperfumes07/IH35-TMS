@@ -5,7 +5,9 @@ import { getDriverHosDetail } from "../../api/hos";
 import { listDrivers } from "../../api/mdata";
 import { listHosViolations } from "../../api/safetyV64";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { HosViolationCreateModal } from "./components/HosViolationCreateModal";
+import { formatDateUS } from "../../lib/formatDate";
 
 const ON_DUTY_STATUSES = new Set(["driving", "on_duty_not_driving", "yard_moves"]);
 const NEAR_CAP_MINUTES = 30;
@@ -121,7 +123,14 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
 
   const fleetColumns = useMemo<Array<ParityColumn<FleetHosDriverRow>>>(
     () => [
-      { key: "driverName", label: "Driver", sortable: true, cellClass: "font-medium", render: (row) => row.driverName },
+      {
+        key: "driverName",
+        label: "Driver",
+        sortable: true,
+        cellClass: "font-medium",
+        // SAF-F14 / linkage: name-only text blocked drill-through to the driver record.
+        render: (row) => <EntityLink kind="driver" id={row.driverId} label={row.driverName} />,
+      },
       {
         key: "currentDutyStatus",
         label: "Duty",
@@ -143,6 +152,12 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
     ],
     [],
   );
+
+  const driverNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const r of rows) m.set(r.driverId, r.driverName);
+    return m;
+  }, [rows]);
 
   return (
     <div className="space-y-3" data-testid="safety-hos-dashboard-page">
@@ -252,7 +267,16 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
                   <li key={String(row.id)} className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1">
                     <div className="font-semibold">{String(row.violation_type ?? "Violation")}</div>
                     <div className="text-slate-600">
-                      Driver {String(row.driver_id ?? "—")} · {String(row.occurred_at ?? "—")}
+                      Driver{" "}
+                      <EntityLink
+                        kind="driver"
+                        id={row.driver_id ? String(row.driver_id) : undefined}
+                        label={
+                          (row.driver_name as string | undefined) ??
+                          (row.driver_id ? driverNameById.get(String(row.driver_id)) : undefined)
+                        }
+                      />{" "}
+                      · {formatDateUS(row.occurred_at) || String(row.occurred_at ?? "—")}
                     </div>
                   </li>
                 ))}
