@@ -101,6 +101,13 @@ export function CargoClaimIntakeSurface({
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [driverSearch, setDriverSearch] = useState("");
+  const [unitSearch, setUnitSearch] = useState("");
+  const [loadSearch, setLoadSearch] = useState("");
+  // SAF-B29: claimant + reason were silent limit:200 — search must be state + queryKey + server param.
+  // Keep alongside wave-2 driver/unit/load search (do not drop when rebasing wave-2 onto cargo PR).
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [reasonSearch, setReasonSearch] = useState("");
   // SAF-F20 (cargo-claim leg): the Carmack intake surface was create-only — existing claims could
   // never be corrected, status-changed, or voided even though safety.incidents already supported all
   // three for incident_type=cargo_claim via the shared incidents routes.
@@ -123,10 +130,6 @@ export function CargoClaimIntakeSurface({
     queryFn: () => listSafetyIncidents(operatingCompanyId, "cargo_claim"),
     enabled: companyEnabled,
   });
-
-  // SAF-B29: claimant + reason were silent limit:200 — search must be state + queryKey + server param.
-  const [customerSearch, setCustomerSearch] = useState("");
-  const [reasonSearch, setReasonSearch] = useState("");
 
   const reasonsQuery = useQuery({
     queryKey: ["catalogs", "cargo-claim-reasons", operatingCompanyId, reasonSearch],
@@ -151,20 +154,20 @@ export function CargoClaimIntakeSurface({
   });
 
   const loadsQuery = useQuery({
-    queryKey: ["mdata", "loads", "cargo-claim-picker", operatingCompanyId],
-    queryFn: () => listLoads({ operating_company_id: [operatingCompanyId], limit: PICKER_LIMIT, sort: "-created_at" }),
+    queryKey: ["mdata", "loads", "cargo-claim-picker", operatingCompanyId, loadSearch],
+    queryFn: () => listLoads({ operating_company_id: [operatingCompanyId], limit: PICKER_LIMIT, sort: "-created_at", search: loadSearch || undefined }),
     enabled: pickersEnabled,
   });
 
   const driversQuery = useQuery({
-    queryKey: ["mdata", "drivers", "cargo-claim-picker", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: PICKER_LIMIT }),
+    queryKey: ["mdata", "drivers", "cargo-claim-picker", operatingCompanyId, driverSearch],
+    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: PICKER_LIMIT, search: driverSearch || undefined }),
     enabled: pickersEnabled,
   });
 
   const unitsQuery = useQuery({
-    queryKey: ["mdata", "units", "cargo-claim-picker", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: PICKER_LIMIT, include: "trailers" }),
+    queryKey: ["mdata", "units", "cargo-claim-picker", operatingCompanyId, unitSearch],
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: PICKER_LIMIT, include: "trailers", search: unitSearch || undefined }),
     enabled: pickersEnabled,
   });
 
@@ -450,20 +453,17 @@ export function CargoClaimIntakeSurface({
             </label>
             <label className="block">
               <span className={labelSpan}>Load (shipment)</span>
-              <select
-                className={inputClass}
-                data-testid={`${pageTestId}-load`}
-                value={form.loadId}
-                onChange={(e) => set({ loadId: e.target.value })}
-              >
-                <option value="">— Select load —</option>
-                {loads.map((load) => (
-                  <option key={load.id} value={load.id}>
-                    {load.load_number}
-                    {load.customer_name ? ` · ${load.customer_name}` : ""}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-1">
+                <Combobox
+                  options={loads.map((load) => ({ value: String(load.id), label: `${load.load_number}${load.customer_name ? ` · ${load.customer_name}` : ""}` }))}
+                  value={form.loadId || null}
+                  onChange={(v) => set({ loadId: v ?? "" })}
+                  onSearch={setLoadSearch}
+                  placeholder="Select load"
+                  loading={loadsQuery.isLoading}
+                  allowClear
+                />
+              </div>
             </label>
             <label className="block">
               <span className={labelSpan}>Claimant (customer)</span>
@@ -477,7 +477,6 @@ export function CargoClaimIntakeSurface({
                   placeholder="Select customer"
                   disabled={!operatingCompanyId || customersQuery.isLoading}
                   onSearch={setCustomerSearch}
-                  loading={customersQuery.isLoading}
                 />
               </div>
             </label>
@@ -543,6 +542,7 @@ export function CargoClaimIntakeSurface({
                   options={driverOptions}
                   value={form.driverId || null}
                   onChange={(v) => set({ driverId: v ?? "" })}
+                  onSearch={setDriverSearch}
                   placeholder="Select driver"
                   loading={driversQuery.isLoading}
                   allowAddNew={{
@@ -554,25 +554,31 @@ export function CargoClaimIntakeSurface({
             </label>
             <label className="block">
               <span className={labelSpan}>Unit (truck)</span>
-              <select className={inputClass} value={form.unitId} onChange={(e) => set({ unitId: e.target.value })}>
-                <option value="">— Select unit —</option>
-                {trucks.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.unit_number ?? u.id}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-1">
+                <Combobox
+                  options={trucks.map((u) => ({ value: String(u.id), label: String(u.unit_number ?? u.id) }))}
+                  value={form.unitId || null}
+                  onChange={(v) => set({ unitId: v ?? "" })}
+                  onSearch={setUnitSearch}
+                  placeholder="Select unit"
+                  loading={unitsQuery.isLoading}
+                  allowClear
+                />
+              </div>
             </label>
             <label className="block">
               <span className={labelSpan}>Trailer</span>
-              <select className={inputClass} value={form.trailerId} onChange={(e) => set({ trailerId: e.target.value })}>
-                <option value="">— Select trailer —</option>
-                {trailers.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.unit_number ?? u.id}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-1">
+                <Combobox
+                  options={trailers.map((u) => ({ value: String(u.id), label: String(u.unit_number ?? u.id) }))}
+                  value={form.trailerId || null}
+                  onChange={(v) => set({ trailerId: v ?? "" })}
+                  onSearch={setUnitSearch}
+                  placeholder="Select trailer"
+                  loading={unitsQuery.isLoading}
+                  allowClear
+                />
+              </div>
             </label>
             <label className="block">
               <span className={labelSpan}>Location</span>
@@ -668,14 +674,17 @@ export function CargoClaimIntakeSurface({
               </label>
               <label className="block">
                 <span className={labelSpan}>Load (shipment)</span>
-                <select className={inputClass} value={editForm.loadId} onChange={(e) => setEdit({ loadId: e.target.value })}>
-                  <option value="">— Select load —</option>
-                  {loads.map((load) => (
-                    <option key={load.id} value={load.id}>
-                      {load.load_number}
-                    </option>
-                  ))}
-                </select>
+                <div className="mt-1">
+                  <Combobox
+                    options={loads.map((load) => ({ value: String(load.id), label: String(load.load_number) }))}
+                    value={editForm.loadId || null}
+                    onChange={(v) => setEdit({ loadId: v ?? "" })}
+                    onSearch={setLoadSearch}
+                    placeholder="Select load"
+                    loading={loadsQuery.isLoading}
+                    allowClear
+                  />
+                </div>
               </label>
               <label className="block">
                 <span className={labelSpan}>Claimant (customer)</span>
@@ -689,7 +698,6 @@ export function CargoClaimIntakeSurface({
                     placeholder="Select customer"
                     disabled={!operatingCompanyId || customersQuery.isLoading}
                     onSearch={setCustomerSearch}
-                    loading={customersQuery.isLoading}
                   />
                 </div>
               </label>
