@@ -60,9 +60,9 @@
       "id": "CUST-CHROME-03",
       "title": "ParityTable column resize affordance discoverable",
       "layers": ["DOD-B", "VERIFY-1"],
-      "spec": "CHROME-003 · ParityTable.tsx:876-887",
-      "status": "OPEN",
-      "evidence": "scaffold — resize works but 4-6px handle undiscoverable",
+      "spec": "CHROME-003 · ParityTable.tsx resize handle",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: ParityTable col-resize is w-2 opaque slate-200/90 + grip + title tooltip + data-testid=parity-table-col-resize (was ~w-1.5 gray-300/80 hard to see). Guard verify-parity-table-resize-affordance + step 2226.",
       "pr": null
     },
     {
