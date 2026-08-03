@@ -89,7 +89,7 @@ export default function PositionHistoryPage() {
             <EntityLink
               kind="unit"
               id={row.unit_id}
-              label={row.unit_number ?? row.unit_id}
+              label={row.unit_number?.trim() || "Unit"}
             />
             {row.unit_license_plate ? <div className="text-xs text-gray-500">{row.unit_license_plate}</div> : null}
           </div>
