@@ -65,6 +65,18 @@ export function assertScoreboardContract(sources) {
       `${FE_PKG}: build must not run gen:program-scoreboard (dirties tree → security-audit checkout fails)`
     );
   }
+  // §7 palette + datetime false-positive locks (pre-push verify-static on #4141).
+  if (/#2563eb|#7c3aed/.test(page)) {
+    problems.push(`${PAGE}: §7 forbids blue/purple accent hex (#2563eb / #7c3aed) — use navy/slate tokens`);
+  }
+  if (/\{sb\.meta\.prodReadAt\}/.test(page)) {
+    problems.push(
+      `${PAGE}: do not render {sb.meta.prodReadAt} — alias to a non-*At local (datetime guard false positive)`
+    );
+  }
+  if (/fetch\(\s*[`'"]\/api\//.test(page)) {
+    problems.push(`${PAGE}: comment/code must not contain fetch("/api/…") literal (raw-fetch guard)`);
+  }
 
   return problems;
 }
