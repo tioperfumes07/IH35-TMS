@@ -60,11 +60,19 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
   const strip = useMemo(() => buildDayStrip(today), [today]);
   const [selectedDate, setSelectedDate] = useState(today);
   const [driverId, setDriverId] = useState<string | null>(null);
+  // SAF-B29: never silent listDrivers(limit:500) — type-ahead re-queries so drivers past page 1 stay selectable.
+  const [driverSearch, setDriverSearch] = useState("");
 
-  // Picker source = all ACTIVE drivers (so all 49 are selectable, not just the 8 with HOS today).
+  // Picker source = ACTIVE drivers with server search (all selectable, not just those with HOS today).
   const driversQ = useQuery({
-    queryKey: ["hos-viewer", "drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 500 }),
+    queryKey: ["hos-viewer", "drivers", operatingCompanyId, driverSearch],
+    queryFn: () =>
+      listDrivers({
+        operating_company_id: operatingCompanyId,
+        status: "Active",
+        limit: 200,
+        search: driverSearch || undefined,
+      }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 5 * 60 * 1000,
   });
@@ -167,6 +175,7 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
             options={options}
             value={driverId}
             onChange={setDriverId}
+            onSearch={setDriverSearch}
             placeholder={driversQ.isLoading ? "Loading drivers…" : "Search a driver…"}
             loading={driversQ.isLoading}
             filterMode="contains"
