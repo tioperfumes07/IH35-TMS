@@ -197,8 +197,10 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
       rows.map((row) => ({
         id: row.id,
         event_at: row.occurred_at,
-        driver_full_name: row.subject_type === "driver" ? row.subject_driver_name || row.subject_driver_id || "" : "",
-        unit_display_id: row.subject_type === "unit" ? row.subject_unit_number || row.subject_unit_id || "" : undefined,
+        driver_id: row.subject_driver_id || null,
+        driver_full_name: row.subject_driver_name || "",
+        unit_id: row.subject_unit_id || null,
+        unit_display_id: row.subject_unit_number || "",
         event_type: row.event_type,
         severity: row.severity,
         status: row.status,

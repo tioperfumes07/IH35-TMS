@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { formatDateUS } from "../../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { useToast } from "../../../components/Toast";
 
 type SafetyEventRow = Record<string, unknown>;
@@ -57,8 +58,27 @@ export function SafetyEventsTable({ rows, onOpenAccident, loading }: Props) {
   const columns: Array<ParityColumn<SafetyEventRow>> = useMemo(
     () => [
       { key: "event_at", label: "Date", sortable: true, render: (row) => formatDateUS(row.event_at) },
-      { key: "driver_full_name", label: "Driver", sortable: true, render: (row) => String(row.driver_full_name ?? "") },
-      { key: "unit_display_id", label: "Unit", render: (row) => String(row.unit_display_id ?? "—") },
+      {
+        key: "driver_full_name",
+        label: "Driver",
+        sortable: true,
+        render: (row) => {
+          const id = String(row.driver_id ?? "").trim();
+          const label = String(row.driver_full_name ?? "").trim() || undefined;
+          if (!id) return label || "—";
+          return <EntityLink kind="driver" id={id} label={label} />;
+        },
+      },
+      {
+        key: "unit_display_id",
+        label: "Unit",
+        render: (row) => {
+          const id = String(row.unit_id ?? "").trim();
+          const label = String(row.unit_display_id ?? "").trim() || undefined;
+          if (!id) return label || "—";
+          return <EntityLink kind="unit" id={id} label={label} />;
+        },
+      },
       {
         key: "event_type",
         label: "Type",
