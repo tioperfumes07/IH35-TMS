@@ -54,7 +54,7 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
           body: {
             part_number: data.sku.trim() || undefined,
             name: data.name.trim(),
-            category: data.category.trim() || undefined,
+            category: data.category.trim(),
             qty_on_hand: Number(data.on_hand_qty) || 0,
             reorder_threshold: Number(data.reorder_point) || 0,
             unit_cost: Number(data.unit_cost) || 0,
@@ -95,6 +95,7 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            if (!formData.category.trim()) return;
             createMutation.mutate(formData);
           }}
           className="space-y-4 p-4"
@@ -123,10 +124,11 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
                 Options = PART_INVENTORY_CATEGORIES (maintenance.parts_inventory.category taxonomy).
                 Do not seed/read deprecated catalogs.parts. */}
             <label className="block text-sm font-medium" htmlFor="inv-part-category">
-              Category
+              Category *
             </label>
             <SelectCombobox
               id="inv-part-category"
+              required
               className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}

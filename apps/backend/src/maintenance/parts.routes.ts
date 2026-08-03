@@ -5,6 +5,9 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { PART_INVENTORY_CATEGORY_VALUES } from "./part-inventory-categories.js";
+
+const partCategorySchema = z.enum(PART_INVENTORY_CATEGORY_VALUES);
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -24,8 +27,8 @@ const createSchema = z.object({
   qty_on_hand: z.number().int().nonnegative().default(0),
   reorder_threshold: z.number().int().nonnegative().default(0),
   location: z.string().trim().max(120).optional(),
-  // INV-1: previously collected by the create drawer but silently dropped by Zod — now persisted.
-  category: z.string().trim().max(120).optional(),
+  // INV-CAT-01: category required on create — must be a known taxonomy token (no blank/null).
+  category: partCategorySchema,
   notes: z.string().trim().max(2000).optional(),
   // forward-compat: the drawer also posts is_active; accept + ignore so it is not a validation_error.
   is_active: z.boolean().optional(),
@@ -41,7 +44,8 @@ const updateSchema = z
     reorder_threshold: z.number().int().nonnegative().optional(),
     location: z.string().trim().max(120).nullable().optional(),
     // INV-1: category + notes are now editable + persisted.
-    category: z.string().trim().max(120).nullable().optional(),
+    // INV-CAT-01: when category is sent on update it must be a valid taxonomy token (not null/blank).
+    category: partCategorySchema.optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
