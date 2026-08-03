@@ -161,6 +161,7 @@ export async function listOpenRtdProcesses(client: PoolClient, operatingCompanyI
       SELECT
         r.id::text,
         r.driver_id::text,
+        NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
         r.test_result_id::text,
         r.started_at::text,
         r.sap_assigned,
@@ -168,6 +169,9 @@ export async function listOpenRtdProcesses(client: PoolClient, operatingCompanyI
         r.status,
         r.completed_at::text
       FROM compliance.return_to_duty_processes r
+      LEFT JOIN mdata.drivers d
+        ON d.id = r.driver_id
+       AND d.operating_company_id = r.operating_company_id
       WHERE r.operating_company_id = $1::uuid
         AND r.status IN ('open', 'in_progress')
       ORDER BY r.started_at DESC
