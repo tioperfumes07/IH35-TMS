@@ -11,8 +11,8 @@
  *
  * Picker law (verify layer 2): every reference field has a real entity-scoped catalog behind it,
  * with inline create where the entity is create-worthy. DriverPickerWithCreate is the canonical
- * driver picker (Combobox + CreateDriverModal); units use Combobox over listUnits, which scopes by
- * owner/lessee — mdata.units has NO operating_company_id.
+ * driver picker (Combobox + CreateDriverModal); DOT Inspections unit uses EntityPicker kind="unit"
+ * (server search + inline CreateUnitModal via allowCreate).
  *
  * Comments are stripped before matching, so a guard can never trip on prose that merely QUOTES the
  * banned placeholder (this file and the fixed sources both mention it in explanatory comments).
@@ -28,9 +28,9 @@ const SELFTEST = process.argv.includes("--selftest");
 const FILES = [
   {
     rel: "apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx",
-    needs: ["DriverPickerWithCreate", "Combobox", "CreateUnitModal"],
+    needs: ["DriverPickerWithCreate", "EntityPicker"],
     testids: ["dot-inspection-driver-picker", "dot-inspection-unit-picker"],
-    unitInlineCreate: true,
+    unitEntityPicker: true,
   },
   {
     rel: "apps/frontend/src/pages/safety/tabs/HOSViolationsTab.tsx",
@@ -51,7 +51,7 @@ const stripComments = (s) =>
 
 export function assertCreatorPickers(sources) {
   const problems = [];
-  for (const { rel, needs, testids, unitInlineCreate } of FILES) {
+  for (const { rel, needs, testids, unitInlineCreate, unitEntityPicker } of FILES) {
     const code = stripComments(sources?.[rel] ?? read(rel));
 
     for (const field of ["driver_id", "unit_id"]) {
@@ -70,7 +70,21 @@ export function assertCreatorPickers(sources) {
       }
     }
 
-    if (unitInlineCreate) {
+    if (unitEntityPicker) {
+      if (!/EntityPicker[\s\S]*?kind=["']unit["']/.test(code)) {
+        problems.push(`${rel}: unit field must use EntityPicker kind="unit" — not Combobox+listUnits.`);
+      }
+      if (/listUnits\(/.test(code)) {
+        problems.push(`${rel}: must not call listUnits directly — EntityPicker owns server search.`);
+      }
+      const unitBlock =
+        code.match(/data-testid="dot-inspection-unit-picker"[\s\S]{0,400}/)?.[0] ??
+        code.match(/EntityPicker[\s\S]*?kind=["']unit["'][\s\S]{0,200}/)?.[0] ??
+        "";
+      if (unitBlock && /allowCreate=\{false\}/.test(unitBlock)) {
+        problems.push(`${rel}: unit EntityPicker must allow inline create (allowCreate not false).`);
+      }
+    } else if (unitInlineCreate) {
       if (!/allowAddNew[\s\S]{0,120}\+ Create unit/.test(code)) {
         problems.push(
           `${rel}: unit picker missing inline "+ Create unit" (allowAddNew) — 7-clause picker law requires first-row create.`
@@ -134,14 +148,17 @@ if (SELFTEST) {
     'missing data-testid="dot-inspection-unit-picker"'
   );
 
-  // Case 4: unit inline create removed.
+  // Case 4: unit EntityPicker inline create disabled.
   expectCaught(
     "unit-inline-create-removed",
     {
       ...live,
-      [target]: live[target].replace('label: "+ Create unit",', 'label: "Add unit",'),
+      [target]: live[target].replace(
+        /(<EntityPicker[\s\S]*?kind="unit"[\s\S]*?)\ballowCreate\b/,
+        "$1allowCreate={false}"
+      ),
     },
-    'unit picker missing inline "+ Create unit"'
+    "unit EntityPicker must allow inline create"
   );
 
   // Negative: a comment merely QUOTING the banned placeholder must not trip the rule.

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { formatDateUS } from "../../../lib/formatDate";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,9 +11,7 @@ import { useListState } from "../../../components/list-state";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { InspectionScoreBadge } from "../../../components/safety/InspectionScoreBadge";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
-import { Combobox } from "../../../components/Combobox";
-import { CreateUnitModal } from "../../../components/fleet/CreateUnitModal";
-import { listUnits } from "../../../api/mdata";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
@@ -137,31 +135,8 @@ export function DOTInspectionsTab() {
     },
   });
 
-  // SAF-F14: the creator asked operators to type raw uuids into `placeholder="driver_id"` /
-  // `"unit_id"` text boxes. Picker law requires a real entity-scoped catalog behind every reference
-  // field, with inline create. Units are scoped by owner/lessee inside listUnits.
-  // SAF-B29: limit:200 with no server-side search meant a fleet larger than 200 units left the rest
-  // unselectable, with nothing on screen saying so — a DOT inspection could not be filed against the
-  // truck it actually happened to. The typed term goes to the server, which already supports search.
-  const [unitSearch, setUnitSearch] = useState("");
-  const [unitCreateOpen, setUnitCreateOpen] = useState(false);
-  const unitsQuery = useQuery({
-    queryKey: ["dot-inspection-units", companyId, unitSearch],
-    queryFn: () => listUnits({ operating_company_id: companyId, limit: 200, search: unitSearch || undefined }),
-    enabled: Boolean(companyId),
-  });
-  const unitOptions = useMemo(
-    () =>
-      (unitsQuery.data?.units ?? []).map((row, index) => {
-        const rec = (row ?? {}) as Record<string, unknown>;
-        const id = typeof rec.id === "string" ? rec.id : `unit-${index}`;
-        const label =
-          [rec.unit_number, rec.truck_number, rec.number].find((v) => typeof v === "string" && v) ??
-          id.slice(0, 8);
-        return { value: id, label: String(label) };
-      }),
-    [unitsQuery.data?.units]
-  );
+  // SAF-F14 / S-A10: driver uses DriverPickerWithCreate; unit uses EntityPicker kind="unit" with
+  // inline "+ Create unit" via EntityPicker allowCreate (server search — no silent limit:200 roster).
 
   return (
     <div className="space-y-3">
@@ -180,17 +155,13 @@ export function DOTInspectionsTab() {
           />
         </div>
         <div data-testid="dot-inspection-unit-picker">
-          <Combobox
-            options={unitOptions}
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={companyId}
             value={form.unit_id || null}
-            placeholder="Search unit…"
-            onSearch={setUnitSearch}
-            loading={unitsQuery.isLoading}
-            allowAddNew={{
-              label: "+ Create unit",
-              onAdd: () => setUnitCreateOpen(true),
-            }}
             onChange={(next) => setForm((v) => ({ ...v, unit_id: next ?? "" }))}
+            placeholder="Search unit…"
+            allowCreate
           />
         </div>
         <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Inspector" value={form.inspector_name} onChange={(e) => setForm((v) => ({ ...v, inspector_name: e.target.value }))} />
@@ -272,16 +243,6 @@ export function DOTInspectionsTab() {
           if (!voidTargetId) return;
           await voidMutation.mutateAsync({ id: voidTargetId, reason });
           setVoidTargetId(null);
-        }}
-      />
-      <CreateUnitModal
-        open={unitCreateOpen}
-        operatingCompanyId={companyId}
-        onClose={() => setUnitCreateOpen(false)}
-        onCreated={(createdId) => {
-          setForm((v) => ({ ...v, unit_id: createdId }));
-          setUnitCreateOpen(false);
-          void unitsQuery.refetch();
         }}
       />
     </div>
