@@ -17,6 +17,12 @@ Everything is verified against live evidence — no guessing, ever.
   NULL (shared-canonical: `opco IS NULL OR = GUC` → excluded from per-entity scoping). Read the rows, not just the schema.
 - **RLS 0-count landmine:** `catalogs.*`/`mdata.*`/`accounting.*`/`banking.*`/`lib.*` are FORCED-RLS; a `0` is
   not a verdict — re-run in the same txn after `SELECT set_config('app.bypass_rls','lucia',true)`.
+- **THE BYPASS IS NOT PROOF (2026-08-03).** `app.bypass_rls='lucia'` is **INERT on AND-gated policies** — it
+  returns `0` silently, so a positive control on a DIFFERENT table proves nothing. A `0` is a verdict only with
+  the **completeness discriminator on the SAME table**: `visible == n_live_tup`, `n_tup_del = 0`, `current_user`
+  asserted in the same statement (the MCP role alternates `ih35_app` / `neondb_owner`), and the positive control
+  on that same table. Prefer per-entity `SET app.operating_company_id` when scoping is the question. Rule 10 +
+  `verify-zero-count-completeness-discriminator` (step 2039).
 - Built/wired → read the file + confirm route registered / component mounted / guard wired. A file existing is
   NOT proof. Ledgered ≠ effective. CI-green ≠ done. Merged ≠ done. Deployed ≠ live until `/healthz/shallow`
   version == merge SHA.

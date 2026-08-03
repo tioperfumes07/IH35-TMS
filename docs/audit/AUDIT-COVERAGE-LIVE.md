@@ -35,9 +35,17 @@ Established 2026-08-02 · **APPEND-ONLY** · one file, many writers.
 **Layers:** `A` chrome/parity · `B` module close (confirmed FAIL / UNVERIFIED) · `C` deep linkage + GL ·
 `D` picker law · `E` UI/design. No module is a certified PASS until all five pass independently, with live evidence.
 
-**Read discipline (doc 06):** a `0`/empty is not proof. Every count below was read on Neon prod branch
-`br-fancy-credit-akjnd07a` with `app.bypass_rls='lucia'` and a **positive control** (`mdata.vendors = 2,827`,
-matching `n_live_tup`) proving the zeros are real and not RLS-masked.
+**Read discipline (doc 06 + Rule 10):** a `0`/empty is not proof. Counts are read on Neon prod branch
+`br-fancy-credit-akjnd07a`, and a `0` is a verdict ONLY when the **completeness discriminator** holds on the
+SAME table: `visible == n_live_tup` (`pg_stat_all_tables`), `n_tup_del = 0` (genuinely live, not
+inserted-then-deleted), `current_user` asserted **in the same statement**, and the positive control on that
+same table.
+
+**Do NOT rely on `app.bypass_rls='lucia'` plus a positive control on a different table.** That was the
+method used for earlier rows here and it is unsound: the bypass is **INERT on AND-gated policies** and returns
+`0` silently, so a control proving the bypass worked on `mdata.vendors` proves nothing about the table being
+read. Rows below written before 2026-08-03 carry that weaker method — re-verify with the discriminator before
+citing one as absence.
 
 ---
 
