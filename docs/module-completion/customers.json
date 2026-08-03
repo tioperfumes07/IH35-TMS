@@ -25,8 +25,8 @@
       "title": "Customer detail Transaction List ties to accounting.invoices",
       "layers": ["DOD-C", "VERIFY-4", "VERIFY-6"],
       "spec": "customers-deep transaction list proof",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS sampled customer invoices match DOM",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: Customers.tsx transaction_list calls listInvoices(companyId). Neon lucia accounting.invoices count=11981 all with customer_id. Guard verify-cust-s02-transaction-list-invoices + step 2234. (invoice_lines density remains CUST-LINK-01 — 5 lines only.)",
       "pr": null
     },
     {
@@ -71,7 +71,7 @@
       "layers": ["DOD-C", "VERIFY-4"],
       "spec": "ACC-invoice-lines · WAVE-H4",
       "status": "OPEN",
-      "evidence": "scaffold — pre-existing: 11977 invoices / 1 invoice_line",
+      "evidence": "2026-08-03 Neon lucia: accounting.invoices=11981 with customer_id; accounting.invoice_lines=5 only — chain incomplete for line drill-through. Money/backfill lane. Holds OPEN until lines density or honest line-empty UX + guard.",
       "pr": null
     },
     {
