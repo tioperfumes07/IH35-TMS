@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listDriverSafetyTrend, listDriverScoreEvents, type DriverSafetyScoreRow } from "../../../api/safety";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { HarshEventDetail } from "../HarshEventDetail";
 
 type Props = {
@@ -207,7 +208,12 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span>
                   {String(event.event_at).slice(0, 19).replace("T", " ")} · {event.event_kind} · {event.severity} · Unit{" "}
-                  {event.unit_number ?? "N/A"} · lat/lng {event.latitude ?? "—"}/{event.longitude ?? "—"}
+                  {event.unit_id ? (
+                    <EntityLink kind="unit" id={String(event.unit_id)} label={event.unit_number?.trim() || "Unit"} />
+                  ) : (
+                    event.unit_number ?? "N/A"
+                  )}{" "}
+                  · lat/lng {event.latitude ?? "—"}/{event.longitude ?? "—"}
                 </span>
                 <button
                   type="button"
