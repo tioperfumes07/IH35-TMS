@@ -1131,7 +1131,7 @@
     "@axe-core/cli": "^4.10.2",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/luxon": "^3.7.1",
-    "@types/node": "^26.1.1",
+    "@types/node": "^26.1.2",
     "@types/opossum": "^8.1.9",
     "@types/pg": "^8.20.0",
     "@types/supertest": "^7.2.1",
