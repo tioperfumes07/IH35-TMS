@@ -19,6 +19,7 @@
     "board:sync": "node scripts/sync-program-board.mjs",
     "board:sync:r2": "node scripts/sync-program-board.mjs --to-r2",
     "board:import": "node scripts/sync-program-board.mjs --import-xlsx",
+    "gen:program-scoreboard": "node scripts/audit-coverage-scoreboard.mjs --emit-program-json && node scripts/gen-program-scoreboard.mjs",
     "verify:program-board-no-autocommit": "node scripts/verify-program-board-no-autocommit.mjs",
     "verify:tracker-artifacts-fresh": "node scripts/verify-tracker-artifacts-fresh.mjs",
     "branch:rebuild-linear": "node scripts/branch-rebuild-linear.mjs",

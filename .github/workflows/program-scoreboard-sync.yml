@@ -1,0 +1,102 @@
+name: program-scoreboard-sync
+
+# Refresh the Program Audit Scoreboard artifacts when Cascade updates the ledger.
+# NON-FINANCIAL, reporting only. Cadence = CI/deploy (not real-time).
+#
+# Pipeline:
+#   docs/audit/AUDIT-COVERAGE-LIVE.md
+#     → npm run gen:program-scoreboard
+#       → docs/audit/program-scoreboard.json
+#       → apps/frontend/src/pages/program/programScoreboard.data.ts
+#
+# Lands via ONE reusable PR (same pattern as program-tracker-artifacts-sync) so
+# required checks run and auto-merge can fire. Never direct-push to main.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/audit/AUDIT-COVERAGE-LIVE.md"
+      - "scripts/audit-coverage-scoreboard.mjs"
+      - "scripts/gen-program-scoreboard.mjs"
+  workflow_dispatch: {}
+
+concurrency:
+  group: program-scoreboard-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22.x"
+
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+
+      - name: Regenerate program scoreboard from ledger
+        run: npm run gen:program-scoreboard
+
+      - name: Preflight — require a PR-capable token
+        env:
+          TRACKER_BOT_TOKEN: ${{ secrets.TRACKER_BOT_TOKEN }}
+        run: |
+          if [ -z "$TRACKER_BOT_TOKEN" ]; then
+            echo "::error title=TRACKER_BOT_TOKEN missing::Cannot land scoreboard refresh via PR."
+            echo "Reuse TRACKER_BOT_TOKEN (same as program-tracker-artifacts-sync)."
+            exit 1
+          fi
+          echo "TRACKER_BOT_TOKEN present — PR-based landing enabled."
+
+      - name: Land regenerated scoreboard via ONE reusable PR
+        env:
+          GH_TOKEN: ${{ secrets.TRACKER_BOT_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add docs/audit/program-scoreboard.json apps/frontend/src/pages/program/programScoreboard.data.ts
+          if git diff --cached --quiet; then
+            echo "[program-scoreboard-sync] no changes — scoreboard already fresh"
+            exit 0
+          fi
+
+          BRANCH="chore/program-scoreboard-sync"
+          git commit --no-verify -m "chore(program): auto-refresh audit scoreboard from ledger"
+
+          git push --no-verify --force \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:$BRANCH"
+
+          EXISTING=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            echo "reused existing PR #$EXISTING (force-push refreshed its diff)"
+            gh pr merge --auto --squash "$EXISTING" || true
+          else
+            PR_URL=$(gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "chore(program): auto-refresh audit scoreboard from ledger" \
+              --body "Automated refresh of the Program Audit Scoreboard artifacts from \`docs/audit/AUDIT-COVERAGE-LIVE.md\` via \`npm run gen:program-scoreboard\`.
+
+          NON-FINANCIAL. Board updates at CI/deploy cadence — not real-time. Green still means PROD-VERIFIED in the ledger; this page renders truth and cannot manufacture it.
+
+          SINGLE REUSABLE PR: each sync force-updates this one branch (always rebased on current main).")
+            echo "opened: $PR_URL"
+            gh pr merge --auto --squash "$PR_URL"
+          fi
+          echo "auto-merge armed (squash, gated on required checks)"
