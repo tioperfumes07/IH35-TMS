@@ -9,6 +9,7 @@ import { legalContractsApi, type LegalContractLanguage, type LegalSignerType } f
 import { legalTemplatesApi, type LegalTemplateSummary } from "../../../api/legal-templates";
 import { listCustomers, listDrivers } from "../../../api/mdata";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useListState } from "../../../components/list-state";
 
 // Unified bilingual contract creator (Lease / NDA / Policy / any active category).
@@ -106,10 +107,17 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
   });
   const fields = detailQuery.data?.variable_schema?.fields ?? {};
 
+  // SAF-B29: never silent listCustomers without search — type-ahead re-queries past page 1.
+  const [customerSearch, setCustomerSearch] = useState("");
   const customersQuery = useQuery({
-    queryKey: ["legal", "party", "customers", operatingCompanyId],
+    queryKey: ["legal", "party", "customers", operatingCompanyId, customerSearch],
     enabled: open && signerType === "customer" && Boolean(operatingCompanyId),
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId }),
+    queryFn: () =>
+      listCustomers({
+        operating_company_id: operatingCompanyId,
+        limit: customerSearch ? 200 : 500,
+        search: customerSearch || undefined,
+      }),
   });
   const driversQuery = useQuery({
     queryKey: ["legal", "party", "drivers", operatingCompanyId],
@@ -491,27 +499,28 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                     }}
                   />
                 ) : (
-                  <SelectCombobox
-                    value={signerEntityId}
-                    onChange={(e) => {
-                      const id = e.target.value;
-                      setSignerEntityId(id);
-                      const p = customerPartyOptions.find((x) => x.id === id);
+                  <ReferenceSelect
+                    value={signerEntityId || null}
+                    onChange={(id) => {
+                      setSignerEntityId(id ?? "");
+                      const p = customerPartyOptions.find((x) => x.id === (id ?? ""));
                       if (p) {
                         setSignerName(p.label);
                         setSignerEmail(p.email ?? "");
                         setSignerPhone(p.phone ?? "");
+                      } else if (!id) {
+                        setSignerName("");
+                        setSignerEmail("");
+                        setSignerPhone("");
                       }
                     }}
-                    className="w-full"
-                  >
-                    <option value="">Select…</option>
-                    {customerPartyOptions.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.label}
-                      </option>
-                    ))}
-                  </SelectCombobox>
+                    options={customerPartyOptions.map((p) => ({ value: p.id, label: p.label, type: p.id }))}
+                    createKind="customer"
+                    operatingCompanyId={operatingCompanyId}
+                    placeholder="Search customer…"
+                    onSearch={setCustomerSearch}
+                    loading={customersQuery.isLoading}
+                  />
                 )}
               </label>
             )}
