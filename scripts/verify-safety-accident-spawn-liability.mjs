@@ -38,6 +38,13 @@ function assert(sources) {
   if (!/INSERT INTO driver_finance\.driver_liabilities/.test(handler)) {
     problems.push(`${ROUTE}: must INSERT driver_finance.driver_liabilities`);
   }
+  // Permanent C6 posture (Claude SWEEP-C6): liability seed is EXEMPT — JE on settlement apply.
+  // Without this, build-typecheck fails as a NEW C6 gap on every spawn-liability change.
+  if (!/C6-MONEY-JE-EXEMPT:/.test(handler) && !/C6-MONEY-JE-EXEMPT:/.test(route)) {
+    problems.push(
+      `${ROUTE}: spawn-liability must carry C6-MONEY-JE-EXEMPT (recovery subledger; JE on settlement apply)`
+    );
+  }
   if (!/createSettlementDeduction/.test(handler) && !/createSettlementDeduction/.test(route)) {
     problems.push(`${ROUTE}: must reuse createSettlementDeduction (no new GL math)`);
   }

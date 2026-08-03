@@ -907,6 +907,10 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
 
         const desc =
           `Accident damage recovery: ${String(accident.description ?? "").trim() || accident.id}`.slice(0, 500);
+        // C6-MONEY-JE-EXEMPT: accident spawn-liability seeds driver_finance.driver_liabilities +
+        // createSettlementDeduction only (recovery subledger). Balanced JE posts later on settlement
+        // apply behind SETTLEMENT_DEDUCTION_APPLY_ENABLED — same posture as internal-fine convert
+        // (safety-v5) and civil-fine convert-to-liability. Do NOT invent a solo GL poster here.
         const liabilityRes = await client.query(
           `
             INSERT INTO driver_finance.driver_liabilities (
