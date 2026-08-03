@@ -5,6 +5,7 @@
  * Usage:
  *   node scripts/audit-coverage-scoreboard.mjs            # print metrics + verify file matches
  *   node scripts/audit-coverage-scoreboard.mjs --write    # rewrite ## Scoreboard section
+ *   node scripts/audit-coverage-scoreboard.mjs --emit-program-json  # docs/audit/program-scoreboard.json
  *   node scripts/audit-coverage-scoreboard.mjs --selftest
  *
  * Module column law: canonical SIDEBAR_ITEM_IDS id, optional " · subtag" for sub-module rows.
@@ -12,14 +13,18 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const COVERAGE = path.join(ROOT, "docs/audit/AUDIT-COVERAGE-LIVE.md");
 const SIDEBAR = path.join(ROOT, "apps/frontend/src/components/layout/sidebar-config.ts");
+const PROGRAM_JSON = path.join(ROOT, "docs/audit/program-scoreboard.json");
+const MODULE_COMPLETION_DIR = path.join(ROOT, "docs/module-completion");
 const LABEL = "audit-coverage-scoreboard";
 const LAYERS = ["A", "B", "C", "D", "E"];
 const ENTITIES = ["TRANSP", "TRK", "USMCA"];
+const GATE_OK = new Set(["PASS", "AUDIT", "FIX", "FAIL", "UNV", "NA"]);
 const SCOREBOARD_START = "## Scoreboard";
 // End marker: first `---` after Scoreboard that precedes ## Findings (Deployed SHA / help lines may sit between).
 const FINDINGS_HEADER = "\n## Findings";
@@ -499,6 +504,212 @@ export function assertScoreboardMatches(md, sidebarIds = loadSidebarIds()) {
   return { metrics, problems, expected };
 }
 
+/**
+ * Map one DoD layer (A–E) for a module from TRANSP ledger rows → board gate.
+ * Honesty: PASS only when GUARD Status is VERIFIED (PROD-VERIFIED). Counts never upgrade to PASS.
+ * CODE-VERIFIED / PASS-without-VERIFIED → AUDIT. No row → null (caller keeps prior / UNV).
+ */
+function gateFromLayerRows(layerRows) {
+  if (!layerRows.length) return null;
+  let hasFailOpen = false;
+  let hasFailFixed = false;
+  let hasUnv = false;
+  let hasNa = false;
+  let hasAuditTrace = false;
+  let hasProdPass = false;
+  for (const r of layerRows) {
+    const cls = primaryVerdictClass(r.verdict);
+    const status = r.status.replace(/\*\*/g, "").trim();
+    const guardVerified = /^VERIFIED\b/i.test(status) && !/^VERIFIED-CORRECT\b/i.test(status);
+    if (cls === "FAIL") {
+      if (/^FIXED\b/i.test(status) || /\bFIXED\b/i.test(status)) hasFailFixed = true;
+      else hasFailOpen = true;
+      continue;
+    }
+    if (cls === "UNVERIFIED") {
+      hasUnv = true;
+      continue;
+    }
+    if (cls === "N/A") {
+      hasNa = true;
+      continue;
+    }
+    if (cls === "PASS") {
+      if (guardVerified) hasProdPass = true;
+      else hasAuditTrace = true;
+      continue;
+    }
+    // CODE-VERIFIED, OTHER, etc. — traced, not PROD-VERIFIED
+    hasAuditTrace = true;
+  }
+  if (hasFailOpen) return "FAIL";
+  if (hasFailFixed) return "FIX";
+  if (hasUnv) return "UNV";
+  if (hasProdPass) return "PASS";
+  if (hasAuditTrace) return "AUDIT";
+  if (hasNa) return "NA";
+  return "AUDIT";
+}
+
+function loadBuildFraction(moduleId) {
+  // banking.json uses id "banking"; board module "banking" / sidebar "bank"
+  const candidates = [moduleId];
+  if (moduleId === "bank") candidates.push("banking");
+  if (moduleId === "banking") candidates.push("bank");
+  for (const id of candidates) {
+    const p = path.join(MODULE_COMPLETION_DIR, `${id}.json`);
+    if (!fs.existsSync(p)) continue;
+    try {
+      const j = JSON.parse(fs.readFileSync(p, "utf8"));
+      const items = Array.isArray(j.items) ? j.items : [];
+      if (!items.length) continue;
+      const pass = items.filter(
+        (it) => it.status === "PASS" || (it.status === "HOLD" && it.owner_hold && it.tracker && it.future_block)
+      ).length;
+      return `${pass}/${items.length}`;
+    } catch {
+      /* keep prior */
+    }
+  }
+  return null;
+}
+
+function gitShortSha() {
+  try {
+    return execSync("git rev-parse --short HEAD", { cwd: ROOT, encoding: "utf8" }).trim();
+  } catch {
+    return "unknown";
+  }
+}
+
+/** Ledger-commit meta — byte-stable across re-emits (CI HEAD / wall clock must not dirty the tree). */
+const LEDGER_REL = "docs/audit/AUDIT-COVERAGE-LIVE.md";
+function ledgerGitOr(fmt, fb) {
+  try {
+    const out = execSync(`git log -1 --format=${fmt} -- ${LEDGER_REL}`, {
+      cwd: ROOT,
+      encoding: "utf8",
+    }).trim();
+    return out || fb;
+  } catch {
+    return fb;
+  }
+}
+
+/**
+ * Emit docs/audit/program-scoreboard.json for the Program Audit Scoreboard page.
+ * Shape = PROGRAM_SCOREBOARD (meta, modules[], prod[], chain[], chainMoney, chainReverse, guard[]).
+ * Preserves Cascade-authored prod/chain/guard/V1–V8 from the prior JSON; refreshes meta + A–E
+ * from the ledger. Never invents PASS for unmodeled VERIFY gates.
+ */
+export function emitProgramJson(rows, metrics, sidebarIds) {
+  let prev;
+  try {
+    prev = JSON.parse(fs.readFileSync(PROGRAM_JSON, "utf8"));
+  } catch {
+    throw new Error(
+      `${path.relative(ROOT, PROGRAM_JSON)} missing — commit the seed JSON first; refuse to fabricate a board`
+    );
+  }
+  for (const k of ["meta", "modules", "prod", "chain", "chainMoney", "chainReverse", "guard"]) {
+    if (!(k in prev)) throw new Error(`prior program-scoreboard.json missing key: ${k}`);
+  }
+
+  const active = rows.filter((r) => !isSupersededRow(r));
+  const byModLayer = new Map(); // `${id}|${layer}` → rows[]
+  for (const r of active) {
+    if (!entitiesFor(r.entity).includes("TRANSP")) continue;
+    if (!LAYERS.includes(r.layer)) continue;
+    const p = parseModuleCell(r.module, sidebarIds);
+    if (!p.ok) continue;
+    const key = `${p.id}|${r.layer}`;
+    if (!byModLayer.has(key)) byModLayer.set(key, []);
+    byModLayer.get(key).push(r);
+  }
+
+  const sha = gitShortSha();
+  const ledgerGeneratedAt = ledgerGitOr("%cI", "1970-01-01T00:00:00Z");
+  const ledgerSourceSha = ledgerGitOr("%h", "unknown");
+  const modules = prev.modules.map((m) => {
+    const cells = Array.isArray(m.cells) ? [...m.cells] : Array(13).fill("UNV");
+    while (cells.length < 13) cells.push("UNV");
+    for (let i = 0; i < 5; i++) {
+      const L = LAYERS[i];
+      const layerRows = byModLayer.get(`${m.module}|${L}`) || [];
+      // Also accept sidebar alias bank↔banking
+      const alt =
+        m.module === "banking"
+          ? byModLayer.get(`bank|${L}`) || []
+          : m.module === "bank"
+            ? byModLayer.get(`banking|${L}`) || []
+            : [];
+      const merged = layerRows.length ? layerRows : alt;
+      const next = gateFromLayerRows(merged);
+      if (next != null) {
+        // Never upgrade prior non-PASS → PASS unless ledger says GUARD VERIFIED (gateFromLayerRows already enforces)
+        // Never downgrade a prior FAIL/FIX to PASS via empty merge — only apply when rows exist
+        cells[i] = next;
+      } else if (!GATE_OK.has(cells[i]) || cells[i] === "PASS") {
+        // No ledger row: refuse to keep an unearned PASS — demote to UNV
+        if (cells[i] === "PASS") cells[i] = "UNV";
+      }
+    }
+    // V1–V8 (indices 5–12): not modeled as Layer column in the ledger — keep prior; never invent PASS
+    for (let i = 5; i < 13; i++) {
+      if (!GATE_OK.has(cells[i])) cells[i] = "UNV";
+      // Counts must never invent PASS — if somehow PASS without prior Cascade seed, leave only if already in prev
+    }
+    const build = loadBuildFraction(m.module) || m.build;
+    return { ...m, build, cells };
+  });
+
+  const out = {
+    ...prev,
+    meta: {
+      ...prev.meta,
+      // Deterministic from the ledger's own last commit — not wall clock / CI HEAD.
+      generatedAt: ledgerGeneratedAt,
+      sourceSha: ledgerSourceSha,
+      deployedSha: String(prev.meta.deployedSha || sha).slice(0, 9),
+      // prodReadAt stays from Cascade live-read snapshot — CI must not pretend it re-read prod
+      ledgerRows: metrics.rowsTotal,
+      failOpen: metrics.failOpen,
+      defects: metrics.defectModules,
+    },
+    modules,
+  };
+
+
+  // Guard contract: text (markdown emphasis), never HTML tags / html key.
+  // CodeQL js/incomplete-multi-character-sanitization: strip tags to a fixed point, then drop residue.
+  out.guard = (out.guard || []).map((g) => {
+    let text = String(g.text ?? g.html ?? "")
+      .replace(/<\/?b>/gi, "**")
+      .replace(/<\/?code>/gi, "`")
+      .replace(/&amp;/g, "&");
+    for (let i = 0; i < 20 && /<[^>]*>/.test(text); i++) {
+      text = text.replace(/<[^>]*>/g, "");
+    }
+    if (/[<>]/.test(text)) text = text.replace(/[<>]/g, "");
+    const { html: _drop, ...rest } = g;
+    return { ...rest, text };
+  });
+
+  // Write-stable: skip rewrite when payload is byte-identical.
+  // generatedAt/sourceSha are ledger-commit-derived (deterministic) so re-emit does not drift.
+  if (JSON.stringify(prev) === JSON.stringify(out)) {
+    console.log(`${LABEL}: program-scoreboard.json unchanged (skip write)`);
+    return prev;
+  }
+
+  // Atomic replace — avoids CodeQL js/file-system-race-condition (exists/check then write).
+  const payload = JSON.stringify(out, null, 2) + "\n";
+  const tmp = `${PROGRAM_JSON}.tmp`;
+  fs.writeFileSync(tmp, payload);
+  fs.renameSync(tmp, PROGRAM_JSON);
+  return out;
+}
+
 const IS_MAIN = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (IS_MAIN && process.argv.includes("--selftest")) {
@@ -547,6 +758,7 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
 if (IS_MAIN) {
   const write = process.argv.includes("--write");
   const normalize = process.argv.includes("--normalize-modules");
+  const emitProgram = process.argv.includes("--emit-program-json");
   let md = fs.readFileSync(COVERAGE, "utf8");
   const ids = loadSidebarIds();
   if (normalize) {
@@ -576,12 +788,26 @@ if (IS_MAIN) {
     fs.writeFileSync(COVERAGE, md);
     console.log(`${LABEL}: wrote Scoreboard (rows=${metrics.rowsTotal} failOpen=${metrics.failOpen} defects=${metrics.defectModules})`);
   }
-  const check = assertScoreboardMatches(fs.readFileSync(COVERAGE, "utf8"), ids);
-  if (check.problems.length) {
-    console.error(`${LABEL}: FAIL\n${check.problems.map((p) => `  - ${p}`).join("\n")}`);
-    process.exit(1);
+  if (emitProgram) {
+    const emitted = emitProgramJson(parseFindings(fs.readFileSync(COVERAGE, "utf8")), metrics, ids);
+    console.log(
+      `${LABEL}: emitted program-scoreboard.json (modules=${emitted.modules.length} rows=${emitted.meta.ledgerRows} failOpen=${emitted.meta.failOpen})`
+    );
   }
-  console.log(
-    `${LABEL}: PASS — certified ${check.metrics.certified}/30 · defects ${check.metrics.defectModules}/30 · FAIL+OPEN ${check.metrics.failOpen} · VERIFIED ${check.metrics.verifiedGuard} · covered TRANSP ${check.metrics.cellsByEntity.TRANSP}/150 · PASS TRANSP ${check.metrics.cellsPassByEntity.TRANSP}/150 · rows ${check.metrics.rowsTotal}`
-  );
+  // When only emitting program JSON (gen pipeline), skip md scoreboard equality gate —
+  // that gate still runs on plain / --write invocations.
+  if (!emitProgram || write || normalize) {
+    const check = assertScoreboardMatches(fs.readFileSync(COVERAGE, "utf8"), ids);
+    if (check.problems.length) {
+      console.error(`${LABEL}: FAIL\n${check.problems.map((p) => `  - ${p}`).join("\n")}`);
+      process.exit(1);
+    }
+    console.log(
+      `${LABEL}: PASS — certified ${check.metrics.certified}/30 · defects ${check.metrics.defectModules}/30 · FAIL+OPEN ${check.metrics.failOpen} · VERIFIED ${check.metrics.verifiedGuard} · covered TRANSP ${check.metrics.cellsByEntity.TRANSP}/150 · PASS TRANSP ${check.metrics.cellsPassByEntity.TRANSP}/150 · rows ${check.metrics.rowsTotal}`
+    );
+  } else {
+    console.log(
+      `${LABEL}: emit-only OK — certified ${metrics.certified}/30 · defects ${metrics.defectModules}/30 · FAIL+OPEN ${metrics.failOpen} · rows ${metrics.rowsTotal}`
+    );
+  }
 }

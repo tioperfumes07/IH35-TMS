@@ -15,6 +15,9 @@ const ProgramBoardPage = React.lazy(() => import("../pages/program/ProgramBoardP
 const FinalAdditionsPage = React.lazy(() => import("../pages/program/FinalAdditionsPage").then((m) => ({ default: m.FinalAdditionsPage })));
 const ProgramTrackerPage = React.lazy(() => import("../pages/program/ProgramTrackerPage").then((m) => ({ default: m.ProgramTrackerPage })));
 const ModuleCompletionPage = React.lazy(() => import("../pages/program/ModuleCompletionPage").then((m) => ({ default: m.ModuleCompletionPage })));
+const AuditScoreboardPage = React.lazy(() =>
+  import("../pages/program/AuditScoreboardPage").then((m) => ({ default: m.AuditScoreboardPage }))
+);
 const SystemModulePage = React.lazy(() => import("../pages/system/SystemModulePage").then((m) => ({ default: m.SystemModulePage })));
 const DomainCatalogHubPage = React.lazy(() => import("../pages/lists/DomainCatalogHubPage").then((m) => ({ default: m.DomainCatalogHubPage })));
 // CATALOG-2 — factory-backed generic catalog CRUD (registry-driven, additive to the hand-rolled
@@ -760,12 +763,12 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
-        {/* FIX-10: /program now defaults to the clean Program Tracker (was the old 68KB audit board). */}
+        {/* Program Audit Scoreboard is the main /program page (owner 2026-08). Tracker kept at /program/tracker. */}
         <Route
           path="/program"
           element={
             <ProtectedRoute>
-              <ProgramTrackerPage />
+              <AuditScoreboardPage />
             </ProtectedRoute>
           }
         />
@@ -780,7 +783,7 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
-        {/* /program/tracker kept as an alias so saved links still resolve. */}
+        {/* Tracker remains reachable — additive; no longer the /program index. */}
         <Route
           path="/program/tracker"
           element={
