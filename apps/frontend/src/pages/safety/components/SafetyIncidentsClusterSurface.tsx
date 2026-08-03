@@ -12,7 +12,7 @@ import {
   uploadSafetyIncidentPhoto,
   type SafetyIncidentType,
 } from "../../../api/safety";
-import { listDrivers, listUnits } from "../../../api/mdata";
+import { listUnits } from "../../../api/mdata";
 import { listLoads } from "../../../api/loads";
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
@@ -178,15 +178,11 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const canVoid = user?.role === "Owner" || user?.role === "Administrator";
 
   // SAF-B29: unit/load drawer pickers and fleet labels must not silently truncate past 200 rows.
+  // Driver roster: filters + create use EntityPicker / DriverPickerWithCreate (server search).
+  // Do NOT bulk listDrivers(limit:200) for labels — list/detail APIs already JOIN driver_name.
   const [unitSearch, setUnitSearch] = useState("");
   const [loadSearch, setLoadSearch] = useState("");
 
-  // Drivers + fleet feed list Driver/Unit column labels (filters use EntityPicker server search).
-  const driversQuery = useQuery({
-    queryKey: ["safety", "incidents-drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: 200 }),
-    enabled: Boolean(operatingCompanyId),
-  });
   const fleetQuery = useQuery({
     queryKey: ["safety", "incidents-fleet", operatingCompanyId, unitSearch],
     queryFn: () =>
@@ -209,7 +205,6 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
     enabled: formEditable && Boolean(operatingCompanyId),
   });
 
-  const drivers = driversQuery.data?.drivers ?? [];
   const fleetRows = (fleetQuery.data?.units ?? []) as Array<Record<string, unknown>>;
   const unitOptions = fleetRows.filter((r) => str(r.kind) !== "trailer");
   const trailerOptions = fleetRows.filter((r) => str(r.kind) === "trailer");
@@ -240,11 +235,6 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
     [loadOptions]
   );
 
-  const driverNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const d of drivers) map.set(String(d.id), `${d.first_name ?? ""} ${d.last_name ?? ""}`.trim());
-    return map;
-  }, [drivers]);
   const unitNumberById = useMemo(() => {
     const map = new Map<string, string>();
     for (const r of fleetRows) map.set(String(r.id), str(r.unit_number));
@@ -439,9 +429,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
               kind="driver"
               id={String(row.driver_id)}
               label={
-                (row.driver_name as string | undefined) ??
-                driverNameById.get(String(row.driver_id)) ??
-                undefined
+                (row.driver_name as string | undefined) || undefined
               }
             />
           ) : (
@@ -489,7 +477,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         ),
       },
     ],
-    [config.detailLabel, driverNameById, openRow, unitNumberById]
+    [config.detailLabel, openRow, unitNumberById]
   );
 
   const inputCls = "mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs";
@@ -688,10 +676,16 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                       placeholder="Select driver"
                     />
                   </div>
-                ) : (
-                  <div className="mt-1 text-slate-800">
-                    {(detail?.driver_id ? driverNameById.get(String(detail.driver_id)) : "") || "—"}
+                ) : detail?.driver_id ? (
+                  <div className="mt-1">
+                    <EntityLink
+                      kind="driver"
+                      id={String(detail.driver_id)}
+                      label={(detail.driver_name as string | undefined) || undefined}
+                    />
                   </div>
+                ) : (
+                  <div className="mt-1 text-slate-800">—</div>
                 )}
               </label>
             ) : null}
