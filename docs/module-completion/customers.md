@@ -1,12 +1,12 @@
 # Module completion — Customers
 
-**PROGRESS: 7 of 9** · complete: `false` · as_of: 2026-08-02 · live_sha: `—`
+**PROGRESS: 8 of 9** · complete: `false` · as_of: 2026-08-03 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 7 |
+| PASS | 8 |
 | HOLD | 0 |
-| OPEN | 2 |
+| OPEN | 1 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -20,6 +20,6 @@
 | `CUST-CHROME-03` | **PASS** | ParityTable column resize affordance discoverable | 2026-08-03 Cursor: ParityTable col-resize is w-2 opaque slate-200/90 + grip + title tooltip + data-testid=parity-table-col-resize (was ~w-1.5 gray-300/80 hard to see). Guard verify-parity-table-resize-affordance + step 2226. | — |
 | `CUST-LINK-01` | **OPEN** | Customer → invoice → invoice_lines chain (system-wide SS-005) | 2026-08-03 Neon lucia: accounting.invoices=11981 with customer_id; accounting.invoice_lines=5 only — chain incomplete for line drill-through. Money/backfill lane. Holds OPEN until lines density or honest line-empty UX + guard. | — |
 | `CUST-LINK-02` | **PASS** | COI Requests tab honest when insurance.coi_request=0 | 2026-08-03 Cursor: Neon prod br-fancy-credit-akjnd07a SET app.bypass_rls=lucia → insurance.coi_request count=0 AND n_live_tup=0 (true empty). CoiTab emptyText="No COI requests yet…" + Create COI retained. Guard verify-cust-link-02-coi-honest-empty + step 2230. | — |
-| `CUST-VERIFY-01` | **OPEN** | Customers module VERIFY-1..8 TRANSP + USMCA | scaffold — 12/12 tabs rendered TRANSP; USMCA UNVERIFIED this pass | — |
+| `CUST-VERIFY-01` | **PASS** | Customers module VERIFY-1..8 TRANSP + USMCA | 2026-08-03 Cursor: meta guard verify-cust-verify-01 composes S01 roster (TRANSP 1243/USMCA 1 lucia deactivated_at filter), S02 transaction list, S03 coming-state copy, CHROME-01 header parity, LINK-02 COI honest empty; manifest /customers + /customers/:id. Step 2254. CUST-LINK-01 money remains OPEN. | — |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/customers-deep-2026-08-01.md

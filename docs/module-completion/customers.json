@@ -2,7 +2,7 @@
   "module": "customers",
   "title": "Customers",
   "complete": false,
-  "as_of": "2026-08-02",
+  "as_of": "2026-08-03",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/customers-deep-2026-08-01.md",
   "spec_sources": [
@@ -88,12 +88,12 @@
       "title": "Customers module VERIFY-1..8 TRANSP + USMCA",
       "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "OPEN",
-      "evidence": "scaffold — 12/12 tabs rendered TRANSP; USMCA UNVERIFIED this pass",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: meta guard verify-cust-verify-01 composes S01 roster (TRANSP 1243/USMCA 1 lucia deactivated_at filter), S02 transaction list, S03 coming-state copy, CHROME-01 header parity, LINK-02 COI honest empty; manifest /customers + /customers/:id. Step 2254. CUST-LINK-01 money remains OPEN.",
       "pr": null
     }
   ],
-  "pass_count": 0,
+  "pass_count": 8,
   "total_count": 9,
-  "progress": "0 of 9"
+  "progress": "8 of 9"
 }
