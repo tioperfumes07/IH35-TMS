@@ -19,6 +19,8 @@ import { ServiceTimeline } from "../../components/maintenance/ServiceTimeline";
 import { TypeSpecsSection } from "../../components/trailer-profile/TypeSpecsSection";
 import { InsuranceClaimsReverseSection } from "../../components/insurance/InsuranceClaimsReverseSection";
 import { AssetSafetyReverseSection } from "../../components/safety/AssetSafetyReverseSection";
+import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
+import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
 
 export type TrailerProfileAggregate = {
   equipment: Record<string, unknown>;
@@ -157,6 +159,17 @@ export function TrailerProfilePage() {
           onUploaded={invalidateProfile}
         />
       </div>
+      <div data-testid="tp-section-7b-linked-bank-txns">
+        <LinkedBankTransactionsPanel
+          companyId={companyId}
+          linkage={{ kind: "trailer_id", id }}
+          entityLabel={String(equipment.equipment_number ?? "Trailer")}
+        />
+      </div>
+      <section data-testid="tp-section-audit-history" className="rounded-sm border border-gray-200 bg-white p-3">
+        <h3 className="mb-2 text-sm font-semibold text-slate-900">Audit History</h3>
+        <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="equipment" entityId={id} />
+      </section>
       {/* DUALPATH-07 fix (2026-07-22): the old tp-section-9-activity TrailerRecentActivitySection
           widget was removed from the live render path — ServiceTimeline (tp-section-5-maintenance,
           above, already equipment_id-filtered per B26) is the sole canonical activity surface.
