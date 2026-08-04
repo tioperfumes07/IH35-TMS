@@ -1,6 +1,6 @@
 # Module completion — Vendors
 
-**PROGRESS: 7 of 7** · complete: `false` · as_of: 2026-08-04 · live_sha: `—`
+**PROGRESS: 7 of 7** · complete: `true` · as_of: 2026-08-04 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
