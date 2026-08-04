@@ -1,15 +1,19 @@
 # IH35 — FULL DELIVERY PLAN (NOW → LAUNCH)
 
 **Status:** LOCKED hybrid — DORA/WIP + walking skeleton + Owner module certify  
-**Date:** 2026-08-04 (rev **B** — Claude Coder corrections applied)  
+**Date:** 2026-08-04 (rev **C** — coder collision law + Claude Coder callouts)  
+**Authority:** This committed file wins over any chat summary, agent memory, or stale paste.  
 **Supersedes as primary queue:** 400+ block pile, breadth-first 30×13 certify-everything, multi-agent sprawl  
 **Does not supersede:** Law of the Land · Rule 16/21/23/24 · `00-operating-method-LAW.mdc` (OWNER LAW 2026-08-03) · parallel books (no TMS→QBO write-back)
 
 **Remind every session:**  
-`Execute docs/specs/DELIVERY-METHOD-LOCKED.md — vertical money skeleton → certify modules under WIP≤3 — do not invent a fourth method.`
+`Execute docs/specs/DELIVERY-METHOD-LOCKED.md — vertical money skeleton → certify modules under WIP≤3 — do not invent a fourth method. Obey §9 coder instructions exactly.`
 
 Companion: `docs/trackers/OWNER-EXECUTION-PLAN-2026-07-22.md` (module order + audit depth).  
-Governance: `.cursor/rules/00-operating-method-LAW.mdc` — **NO HOLDS. NO `JORGE-APPROVED`. Merge on green with proof.**
+Governance: `.cursor/rules/00-operating-method-LAW.mdc` — **NO HOLDS. NO `JORGE-APPROVED`. Merge on green with proof.**  
+Sidebar / modules: **30** (`SIDEBAR_ITEM_IDS` + 30 module-completion files). Not 28.
+
+**One writer for this file: Cursor.** Claude Coder / Cascade / GUARD execute; they do **not** author competing delivery methods.
 
 ---
 
@@ -23,6 +27,7 @@ Governance: `.cursor/rules/00-operating-method-LAW.mdc` — **NO HOLDS. NO `JORG
 | Constraint | **WIP + finishing**, not “more discovery” |
 | Push blockers (thrash / lists N/M / step 2360) | Cleared via #4305 |
 | Ledger | ~680 rows = **read-only reference**, not a work queue |
+| Branch inventory (Phase 0 shape) | ~539 merged → delete safe; ~2,366 unmerged → **tag-archive only**; ~196 recent → hand triage |
 
 **Unit of progress (only these count):**
 
@@ -48,6 +53,8 @@ Governance: `.cursor/rules/00-operating-method-LAW.mdc` — **NO HOLDS. NO `JORG
 | O8 | **OWNER LAW 2026-08-03:** NO HOLDS. NO `JORGE-APPROVED` label. Coders have **FULL Neon access** and **merge on green** in every lane (including money). Safeguard = **PROOF** (18-key evidence · independent review · additive migration · GUARD verify-after) — not a merge label. Owner steers by **decision in chat** only (e.g. “turn posting flag ON”). |
 | O9 | No new breadth-audit inventory except defects found **while** finishing the active skeleton hop or active module. The 680-row ledger is **read-only reference**, not a queue. |
 | O10 | PR titles Cursor lane: must start with `Cursor-` |
+| O11 | **Committed plan file beats chat summary.** If a summary says `JORGE-APPROVED` and this file says merge-on-green — **this file wins**. |
+| O12 | **No CPA merge gate.** There is no CPA sign-off path. Jorge is the sole financial-decision authority (chat only). Proof agents inform; they do not withhold merges. |
 
 ---
 
@@ -80,7 +87,9 @@ Make the factory capable of finishing work **without destroying unshipped work**
 - [ ] ≤ 3 active feature branches (WIP counter)  
 - [ ] Merged-branch cleanup done; stale unmerged are archived (recoverable), not obliterated  
 - [ ] Zero shared-clone collisions in the last work day  
-- [ ] This file (rev B) on `main` and Desktop-copied  
+- [ ] This file (rev C+) on `main` and Desktop-copied  
+
+**Owner of Phase 0 branch hygiene: Claude Coder** (safe half only). Cursor does not race it.
 
 ---
 
@@ -162,7 +171,7 @@ Skeleton-first prevents Rule 21 “certified but money-empty” amnesia.
 Audit → rank FAILs → fix under WIP → guards → Neon proof → `complete:true` → **only then** next module.
 
 ### Exit criteria
-- [ ] All 30: `complete:true` **or** owner-written HOLD in chat with tracker + future block id  
+- [ ] All 30: `complete:true` **or** owner-written **DEFER** in chat with tracker + future block id (not a merge label; not a CPA gate)  
 - [ ] Desktop scoreboard matches  
 - [ ] No theater complete  
 
@@ -178,13 +187,15 @@ Ledger stays reference unless a leftover maps to an active defect.
 
 ## PHASE 4 — Launch gates (cannot skip)
 
-- All 30 DONE or owner DEFER/HOLD with future block id  
-- Law §9 money paths PASS or named HOLD  
+**There is no CPA. There is no CPA HOLD path.** Jorge alone decides financial policy in chat. Proof agents (code-review + financial-agent skills) **inform** correctness; they **never** withhold a merge for owner/CPA sign-off. Merge = green + proof gate (O8).
+
+- All **30** modules DONE, or Jorge DEFER in chat with tracker + future block id  
+- Law §9 money paths PASS, or Jorge-named UNVERIFIED/DEFER (chat) — **not** a retired CPA gate  
 - Held migrations reconciled  
 - USMCA / entity isolation to threshold  
 - Reverse-drill guard live  
-- Sidebar 30 = config  
-- Posting flags policy (owner chat)  
+- Sidebar **30** = `SIDEBAR_ITEM_IDS` / config (not 28)  
+- Posting flags policy (owner chat only)  
 - Parallel books; no TMS→QBO write-back  
 - OB/cutover locked files only  
 - 425C virtual banks excluded  
@@ -193,15 +204,17 @@ Ledger stays reference unless a leftover maps to an active defect.
 
 ---
 
-## 3. Agent map
+## 3. Agent map (summary)
 
 | Role | Owns |
 |------|------|
-| **Cursor** | Skeleton FE/ops, non-financial, guards, Cursor ledger Status, WIP enforcement |
-| **Claude Coder** | Financial cluster code + Neon apply + **merge on green when proof gate passes** (no `JORGE-APPROVED` wait) |
-| **Cascade** | Audit evidence on **active** slice/module only; class cards; **does not treat 680-row ledger as a queue** |
-| **GUARD** | Independent live verify **AFTER** merge |
-| **Jorge** | Decisions in chat (flags, Hop 0 go-ahead, launch); kill WIP when > 3; does **not** review PRs for a label |
+| **Cursor** | Sole author of this plan file; skeleton FE/ops; non-financial; guards; Cursor ledger Status; WIP enforcement |
+| **Claude Coder** | Phase 0 branch hygiene (safe half); financial cluster code + Neon apply + **merge on green when proof gate passes** |
+| **Cascade** | Audit evidence on **active** slice/module only; class cards; ledger = reference |
+| **GUARD** | Independent live verify **AFTER** merge only |
+| **Jorge** | Decisions in chat (flags, Hop 0, launch, DEFER); kill WIP when > 3; does **not** review PRs for a label |
+
+Full collision law → **§9**.
 
 ---
 
@@ -229,7 +242,7 @@ Ignore: PR volume, “agents working,” cells covered.
 | Launch DONE | Phase 4 + Jorge LAUNCH-READY in chat |
 
 CI green ≠ hop done ≠ module done ≠ launch ready.  
-Proof gate ≠ `JORGE-APPROVED` label.
+Proof gate ≠ `JORGE-APPROVED` label ≠ CPA sign-off.
 
 ---
 
@@ -238,21 +251,24 @@ Proof gate ≠ `JORGE-APPROVED` label.
 - Restarting the 400+ block index as primary queue  
 - Breadth-certifying 30×13 before skeleton exit  
 - Waiting on deleted `JORGE-APPROVED` label  
+- Reintroducing a CPA / owner-label merge gate  
 - Blind-deleting unmerged branches to hit “dozens”  
 - Treating the 680-row ledger as the work queue  
 - 4+ agents / shared clone  
 - Babysit loops instead of fixing reds  
 - EntityLink / honesty theater while economics empty  
 - Inventing a fourth methodology mid-flight  
+- Two coders editing the same hop / same module FAIL / same hot files  
+- Claude Coder or Cascade rewriting this delivery plan  
 
 ---
 
 ## 7. Immediate next actions
 
-1. Land this file rev B on `main` + Desktop.  
-2. **Phase 0 safe half:** delete merged-into-main heads; tag-archive stale unmerged; report real active count.  
-3. Jorge: **Hop 0 go-ahead** (create one real going-forward load).  
-4. Phase 1 hops 1–9 under WIP ≤ 3.  
+1. Land this file **rev C** on `main` + Desktop.  
+2. **Phase 0 safe half (Claude Coder, on Jorge go):** delete ~539 merged-into-main heads; tag-archive stale unmerged as `archive/<name>`; report real active count. Do not destroy unmerged.  
+3. Jorge: **Hop 0 go-ahead** (create one real going-forward load) — separate decision.  
+4. Phase 1 hops 1–9 under WIP ≤ 3 (Cursor FE/ops + Claude money as split in §9).  
 5. After Phase 1 exit → accounting certify.
 
 ---
@@ -263,9 +279,144 @@ Proof gate ≠ `JORGE-APPROVED` label.
 |------|------|
 | 2026-08-04 | Plan from three-coder synthesis + Owner Plan + DORA/WIP + walking skeleton |
 | 2026-08-04 | #4305 cleared push blockers |
-| 2026-08-04 | **Rev B** — Claude Coder defects accepted: (1) NO JORGE-APPROVED / merge-on-green+proof per OWNER LAW 2026-08-03; (2) safe branch archive not blind prune; (3) single WIP≤3 counter; (4) Phase 1 Hop 0 = create going-forward load; ledger = read-only reference |
+| 2026-08-04 | **Rev B** — Claude Coder defects: NO JORGE-APPROVED; safe archive prune; WIP≤3 one counter; Hop 0; ledger reference |
+| 2026-08-04 | Claude Coder verified Rev B in diff (all four present). Sidebar = **30** (Coder corrected own “28”). File beats chat summary. |
+| 2026-08-04 | **Rev C** — Phase 4: no CPA HOLD path; Jorge sole financial decision authority; §9 strict per-coder instructions |
 
 ---
 
-**End of full plan (rev B).**  
-Amend only with Jorge in writing.
+## 9. STRICT CODER INSTRUCTIONS (collision law — do not deviate)
+
+**Hard rule:** If your next action is not listed under your role below, **stop**. Ask Jorge in chat. Do not invent a parallel method.
+
+### 9.0 Shared laws (every coder, every turn)
+
+1. Read this file first. Obey current phase only (P0 → P1 → P2… in order).  
+2. **WIP ≤ 3** total active feature branches (all agents). Before opening a branch: count open non-Dependabot feature PRs/branches; if already 3, finish or park one first.  
+3. **One worktree per agent.** Never share a clone. Never force-push another agent’s branch.  
+4. **One hop OR one ranked FAIL per PR.** No grab-bags.  
+5. **No babysit loops.** Fix reds or one-shot re-run flake; do not sleep-poll CI.  
+6. **Merge on green + proof** (OWNER LAW). Never wait for `JORGE-APPROVED`. Never invent a CPA gate.  
+7. Money commits: FINDING · LANE · DOD-A…E · VERIFY-1…8 · MODULE_PROGRESS · Rule 16 · MIGRATE if needed (verify-steps 1324/1430/1431).  
+8. Same-commit ledger Status update when a row is FIXED.  
+9. Rule 17: do **not** thrash `package.json` / locked CI workflows for new guards — verify-steps only.  
+10. PR title prefixes: Cursor → `Cursor-` · Claude Coder → `Claude-` (or agreed lane prefix) · Cascade docs → `Cascade-`.  
+11. When chat summary contradicts this file → **this file wins**.  
+12. Stop after ~3 stuck iterations; hand off with evidence.
+
+### 9.1 Jorge (owner)
+
+**MUST**
+- Decide in chat: Phase 0 go · Hop 0 go · posting flags ON · DEFER with tracker+block · LAUNCH-READY  
+- Kill WIP when > 3  
+- Be sole financial-decision authority  
+
+**MUST NOT**
+- Review PRs for a merge label  
+- Be asked to click `JORGE-APPROVED`  
+- Be treated as a CPA bottleneck  
+
+### 9.2 Cursor (builder — FE / ops / guards / this plan)
+
+**MUST**
+- Own **this file** (sole methodology author)  
+- Phase 1: hops that are FE/ops/wiring/guards (dispatch chrome, pickers, `actual_departure`, POD/BOL UI, scoreboard, verify-steps)  
+- Enforce WIP ≤ 3 in STATUS replies  
+- Desktop-copy this plan after every rev land  
+- Coordinate handoff to Claude when hop enters money/GL/migration  
+
+**MUST NOT**
+- Race Claude on Phase 0 branch deletes/archives  
+- Open money/GL/migration PRs while Claude owns that hop (wait for handoff or empty WIP slot + explicit split)  
+- Author a second delivery method  
+- Restart 400+ block pile as primary queue  
+- Touch another agent’s worktree or force-push their branch  
+- Blind-delete unmerged branches  
+
+**Worktree:** dedicated Cursor worktree only (e.g. cleanup / main-check — never Claude’s).
+
+### 9.3 Claude Coder (builder — money / Neon / Phase 0 hygiene)
+
+**MUST**
+- On Jorge **Phase 0 go:** delete merged-into-main heads only; tag-archive stale unmerged (`archive/<name>`); leave ~recent set; report active count  
+- Own financial cluster: `accounting.*` / CoA / posting reuse / migrations / Neon apply / money merge-on-green+proof  
+- Phase 1: hops 6–9 (revrec · invoice evidence · GL/JE · bank path) once wiring exists; earlier hops only if Cursor hands off money defect  
+- Independent code-review + financial-agent pass on money PRs **before** merge (inform correctness; do not wait on owner label)  
+- After merge: leave for GUARD verify-after  
+
+**MUST NOT**
+- Destroy unmerged branches (archive only)  
+- Author / fork `DELIVERY-METHOD-LOCKED.md` or a competing method  
+- Wait on `JORGE-APPROVED` or invent CPA HOLD  
+- Edit Cursor FE hops without declared handoff  
+- Start Phase 1 skeleton hops before Jorge Hop 0 go-ahead  
+- Treat the 680-row ledger as a build queue  
+
+**Worktree:** dedicated Claude worktree only.
+
+### 9.4 Cascade (auditor — evidence only on active slice)
+
+**MUST**
+- Produce evidence / class cards / Desktop audit rows for the **active** skeleton hop or **active** Phase 2 module only  
+- Mark honest FAIL / PASS / UNVERIFIED with proof pointers  
+- Keep 680-row ledger **read-only reference**  
+
+**MUST NOT**
+- Open feature PRs that expand WIP beyond builders’ slots  
+- Breadth-inventory all 30 modules while Phase 1 unfinished  
+- Rewrite delivery method  
+- Merge money without being the assigned builder  
+
+### 9.5 GUARD (verifier — after merge only)
+
+**MUST**
+- Live-prove AFTER merge (Neon lucia + app/health as required)  
+- Fail closed on false-empty / missing effect  
+
+**MUST NOT**
+- Build product features in the same slot as verify  
+- Block merges with owner-label waits  
+- Pre-empt builders by opening competing fix PRs without Jorge assignment  
+
+### 9.6 Collision matrix (who may touch what)
+
+| Surface | Cursor | Claude Coder | Cascade | GUARD |
+|---------|:------:|:------------:|:-------:|:-----:|
+| `DELIVERY-METHOD-LOCKED.md` | **WRITE** | read | read | read |
+| Phase 0 branch hygiene | no | **OWN** | no | no |
+| Skeleton hops 1–5 (ops/FE) | **OWN** | handoff only | evidence | verify-after |
+| Skeleton hops 6–9 (money) | handoff only | **OWN** | evidence | verify-after |
+| `db/migrations/*` money | no* | **OWN** | no | no |
+| Non-money guards / verify-steps | **OWN** | ok if money-guard | no | may add fail-closed |
+| Module certify (Phase 2 active) | FE FAIL | money FAIL | audit | verify-after |
+| 680-row ledger | Status FIXED col | Status FIXED col | reference | — |
+| Posting flag ON | never alone | never alone | never | never — **Jorge chat only** |
+
+\*Cursor may land non-money schema only with Jorge chat if it unblocks a named hop — still WIP-counted; prefer Claude for any accounting/banking migration.
+
+### 9.7 Daily handoff line (every coder reply)
+
+```text
+PHASE: P0|P1|P2(module)|P3|P4
+HOP_OR_FAIL: <id>
+WIP: <n>/3  BRANCHES: <list>
+ROLE: Cursor|Claude|Cascade|GUARD
+NEXT: <one sentence>
+BLOCKER: none | <exact>
+```
+
+### 9.8 Deviation = stop
+
+Any of these → **STOP and ask Jorge** before continuing:
+- Opening a 4th active feature branch  
+- Editing another role’s OWN surface from §9.6  
+- Waiting on `JORGE-APPROVED` / CPA  
+- Starting Phase 1 without Hop 0 go  
+- Deleting an unmerged branch without `archive/` tag  
+- Inventing a fourth delivery method  
+- Treating ledger rows as the sprint backlog  
+
+---
+
+**End of full plan (rev C).**  
+Amend only with Jorge in writing. Cursor is sole editor of this file.
