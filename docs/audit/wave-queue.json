@@ -240,7 +240,7 @@
       "root_cause": "A nav/leaf renders but has no back-link, no detail, or points to the wrong system of record. 5 surfaces across bills, accounting, vendors, cash flow, and general empty states.",
       "lane": "mechanical",
       "layer": "A",
-      "modules": ["accounting", "cash-flow"],
+      "modules": ["accounting", "cash-flow", "vendors"],
       "instances": [
         { "path": "/accounting/bills: row not clickable, no vendor drill, no back button (ORPH-001)", "entity": "ALL", "note": "AUD-F001." },
         { "path": "Accounting > More dropdown: CoA not reachable, dropdown not alphabetical (ORPH-002)", "entity": "ALL", "note": "AUD-F008." },
