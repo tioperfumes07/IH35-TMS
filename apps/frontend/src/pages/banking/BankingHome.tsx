@@ -183,6 +183,19 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         }),
     [tiles, factoringReserve],
   );
+  const realBankTiles = useMemo(
+    () => sortedBankTiles.filter((t) => String(t.tile_kind) === "real"),
+    [sortedBankTiles],
+  );
+  const virtualBankTiles = useMemo(
+    () => sortedBankTiles.filter((t) => String(t.tile_kind) === "virtual"),
+    [sortedBankTiles],
+  );
+  const showVirtualTilesEmptyHonesty =
+    tilesQuery.isSuccess &&
+    realBankTiles.length === 0 &&
+    virtualBankTiles.length === 0 &&
+    (allAccountsQuery.isSuccess ? (allAccountsQuery.data?.accounts ?? []).length === 0 : false);
   // BANK-SURF-05 — resolve Relay via CoA system_purpose (never phantom is_relay).
   const relayWalletTiles = useMemo(
     () => sortedBankTiles.filter((t) => t.is_relay_wallet === true || t.system_purpose === "relay_fuel_wallet"),
@@ -368,6 +381,41 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             uncategorizedCount={uncategorizedCount}
             pendingSyncCount={pendingSyncCount}
           />
+          {showVirtualTilesEmptyHonesty ? (
+            <div
+              className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+              data-testid="banking-virtual-tiles-empty-honesty-banner"
+            >
+              <p className="font-semibold">Banking account tiles are empty — not a silent healthy $0.</p>
+              <p className="mt-1">
+                DIP, Factoring reserve, and Driver Escrow KPIs normally come from{" "}
+                <code className="text-[10px]">views.banking_account_tiles</code>. When that feed returns no rows,
+                zeros here are unproven. Connect Plaid / map Cash GL accounts, or open Factoring and Driver Escrow
+                tabs for canonical virtual-bank truth.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <ActionButton onClick={() => setActiveTab("factoring")}>Factoring entry</ActionButton>
+                <ActionButton onClick={() => setActiveTab("driver_escrow")}>Driver Escrow</ActionButton>
+                <Link to="/banking/cash-gl-setup" className="text-xs font-medium text-slate-800 underline">
+                  Cash GL setup
+                </Link>
+              </div>
+            </div>
+          ) : null}
+          {tilesQuery.isSuccess &&
+          sortedBankTiles.length > 0 &&
+          virtualBankTiles.length === 0 &&
+          factoringReserve === 0 &&
+          escrowFeed === 0 &&
+          dipBalance === 0 ? (
+            <div
+              className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600"
+              data-testid="banking-dip-factoring-escrow-zero-density-banner"
+            >
+              Real bank tiles are wired; DIP / Factoring / Escrow virtual pools read $0 on live density — honest empty
+              until settlements, Faro advances, or escrow postings populate.
+            </div>
+          ) : null}
           {allAccountsQuery.isSuccess &&
           (() => {
             const accts = allAccountsQuery.data?.accounts ?? [];
