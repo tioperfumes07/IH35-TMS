@@ -59,7 +59,7 @@ describe("PodReviewPage (B21-D10)", () => {
     wrap(<PodReviewPage />);
     expect(await screen.findByTestId("dispatch-pod-review-page")).toBeTruthy();
     expect(screen.getByTestId("pod-review-panel")).toBeTruthy();
-    expect(screen.getByTestId("pod-status-filter")).toBeTruthy();
+    expect(screen.getByTestId("pod-filters-toggle")).toBeTruthy();
     expect(screen.getByText("POD review + BOL")).toBeTruthy();
   });
 
@@ -73,6 +73,7 @@ describe("PodReviewPage (B21-D10)", () => {
   it("shows BOL generate and download controls when a load is selected", async () => {
     const user = userEvent.setup();
     wrap(<PodReviewPage />);
+    await user.click(await screen.findByTestId("pod-filters-toggle"));
     const filter = await screen.findByTestId("pod-load-filter");
     await screen.findByRole("option", { name: "L-500" });
     await user.selectOptions(filter, "load-1");
