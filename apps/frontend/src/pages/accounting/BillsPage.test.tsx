@@ -70,7 +70,6 @@ describe("BillsPage", () => {
           operating_company_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
           bill_id: "bill-partial-1",
           vendor_id: "v-1",
-          vendor_uuid: "11111111-2222-4333-8444-555555555555",
           mdata_vendor_id: "11111111-2222-4333-8444-555555555555",
           payment_date: "2026-04-15",
           amount_cents: 4000,
