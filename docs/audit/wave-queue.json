@@ -244,9 +244,9 @@
       "instances": [
         { "path": "/accounting/bills: row not clickable, no vendor drill, no back button (ORPH-001)", "entity": "ALL", "note": "AUD-F001." },
         { "path": "Accounting > More dropdown: CoA not reachable, dropdown not alphabetical (ORPH-002)", "entity": "ALL", "note": "AUD-F008." },
-        { "path": "/accounting/vendors detail tab: empty (no email/phone/address/ACH) (ORPH-003)", "entity": "ALL", "note": "AUD-F010." },
+        { "path": "/accounting/vendors detail tab: empty (no email/phone/address/ACH) (ORPH-003)", "entity": "ALL", "note": "AUD-F010. Route /accounting/vendors redirects to /vendors (manifest.tsx:3593). Rendered page is VendorDetailPage at /vendors/:id — vendors module." },
         { "path": "/cash-flow: 7-day calendar box-in-box, projected income $0 with no drill (ORPH-004)", "entity": "ALL", "note": "P1-005." },
-        { "path": "home, tasks, customers, vendors, docs, users: empty No data states (ORPH-005)", "entity": "ALL", "note": "Correlates with 0-row canonical tables. P1-007." }
+        { "path": "home, tasks, customers, vendors, docs, users: empty No data states (ORPH-005)", "entity": "ALL", "note": "Correlates with 0-row canonical tables. P1-007. 'vendors' listed explicitly." }
       ],
       "completeness": "Live-confirmed via browser exercise 2026-07-22..2026-08-02. Bills row-click FAIL confirmed on both TRANSP and USMCA. Cash-flow $0 confirmed live. Vendor detail empty on USMCA audit vendor. Positive control: bill grid renders real data (16K rows).",
       "guard": "scripts/verify-orphan-surface-drill.mjs",
