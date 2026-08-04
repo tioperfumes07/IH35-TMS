@@ -18,10 +18,11 @@
         "DOD-A",
         "DOD-B"
       ],
-      "spec": "DocsHomePage \u00b7 reports-docs-maintenance DOCS section",
+      "spec": "DocsHomePage · reports-docs-maintenance DOCS section",
       "status": "PASS",
-      "evidence": "2026-08-03 Cursor: DocsHomePage KPIs (Total/Expiring/Missing/Recent) + list + Upload. Neon lucia docs.files=24. Entity column EntityLink when links exist; honest \u2014 when unlinked. Guard verify-docs-entity-column-entitylink + step 2250.",
-      "pr": null
+      "evidence": "2026-08-03 Cursor: DocsHomePage KPIs (Total/Expiring/Missing/Recent) + list + Upload. Neon lucia docs.files=24. Entity column EntityLink when links exist; honest — when unlinked. Guard verify-docs-entity-column-entitylink + step 2250.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DOCS-ECON-01",
@@ -30,10 +31,11 @@
         "DOD-D",
         "VERIFY-6"
       ],
-      "spec": "docs.file_links \u00b7 expiration tracking law",
+      "spec": "docs.file_links · expiration tracking law",
       "status": "OPEN",
-      "evidence": "scaffold \u2014 OPEN: 3 uncategorized test PDFs; real driver/unit docs may live elsewhere",
-      "pr": null
+      "evidence": "scaffold — OPEN: 3 uncategorized test PDFs; real driver/unit docs may live elsewhere",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DOCS-LINK-01",
@@ -44,8 +46,9 @@
       ],
       "spec": "0441-mod12-docs-lowest-uuid-company-bug",
       "status": "OPEN",
-      "evidence": "2026-08-03 PARTIAL: EntityLink wired on DocsHome (no UUID slice). Neon lucia docs.file_links=0 \u2014 density still blocks PASS until classified entity links exist (DOCS-ECON-01 sibling).",
-      "pr": null
+      "evidence": "2026-08-03 PARTIAL: EntityLink wired on DocsHome (no UUID slice). Neon lucia docs.file_links=0 — density still blocks PASS until classified entity links exist (DOCS-ECON-01 sibling).",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DOCS-S02",
@@ -56,8 +59,9 @@
       ],
       "spec": "Missing Required KPI honesty",
       "status": "OPEN",
-      "evidence": "scaffold \u2014 100% missing required may be data gap not bug; needs source-of-truth check",
-      "pr": null
+      "evidence": "scaffold — 100% missing required may be data gap not bug; needs source-of-truth check",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DOCS-VERIFY-01",
@@ -74,11 +78,12 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "OPEN",
-      "evidence": "scaffold \u2014 functionally empty of classified data; follow-up vs attachment tables",
-      "pr": null
+      "evidence": "scaffold — functionally empty of classified data; follow-up vs attachment tables",
+      "pr": null,
+      "prod_verified": false
     }
   ],
-  "pass_count": 0,
+  "pass_count": 1,
   "total_count": 5,
-  "progress": "0 of 5"
+  "progress": "1 of 5"
 }

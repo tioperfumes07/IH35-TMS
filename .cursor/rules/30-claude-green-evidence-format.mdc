@@ -52,7 +52,23 @@ bare `LIVE PROOF: UNVERIFIED browser`. If truly unverified: `LIVE PROOF: UNVERIF
 
 Template: `docs/templates/CLAUDE-GREEN-PR-BODY.md`
 
-## Ship procedure (HARD)
+## Ship procedure (HARD) — do this BEFORE every push / PR create
+
+```bash
+# 1. Write FINDING-first body (copy template — never ## Summary first)
+cp docs/templates/CLAUDE-GREEN-PR-BODY.md /tmp/pr-body.txt
+# edit /tmp/pr-body.txt
+
+# 2. One local gate — must PASS (includes tip Claude-green + PR body)
+node scripts/ops/cursor-ship-preflight.mjs --body-file /tmp/pr-body.txt
+
+# 3. One push. Then: gh pr create --body-file /tmp/pr-body.txt
+#    (or gh pr edit N --body-file /tmp/pr-body.txt). NEVER soft-reset.
+```
+
+**Mechanical:** tip commit AND PR body must start with `FINDING:` (column 0). `verify-claude-green-evidence-shape` FAILS otherwise. Empty `chore:` refreshes and `## Summary`-first bodies are forbidden forever.
+
+## Ship procedure (HARD) — legacy checklist
 
 1. **One commit** on top of **current** `origin/main` (cherry-pick onto main — never stack on another open PR).
 2. `node scripts/money-pr-local-gate.mjs` → must PASS (includes DoD + no-guard-deletion + evidence shape).

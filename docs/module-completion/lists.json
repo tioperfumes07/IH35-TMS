@@ -26,7 +26,8 @@
       "pr": 3397,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "LST-CAT-02",
@@ -42,7 +43,8 @@
       "pr": 3405,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "LST-CAT-03",
@@ -57,7 +59,8 @@
       "pr": 3403,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "LST-CAT-04",
@@ -72,7 +75,8 @@
       "pr": 3408,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "LST-CAT-05",
@@ -87,7 +91,8 @@
       "pr": 3409,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "LST-CAT-06",
@@ -160,7 +165,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "LST-LINK-01",
@@ -232,7 +238,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "LST-COUNT-01",
@@ -303,7 +310,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "LST-COUNT-02",
@@ -373,7 +381,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "LST-A-01",
@@ -445,7 +454,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "LST-CAT-07",
@@ -516,7 +526,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
+      "prod_verified": false
     },
     {
       "id": "LST-SEED-01",
@@ -531,7 +542,8 @@
       "pr": null,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "LST-RLS-01",
@@ -602,7 +614,8 @@
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
       "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
-      "live_proof": "2026-07-29 Neon account_types+wo_cancellation_reasons FORCE RLS policies=3 delete_pols=0 ih35_app INSERT,SELECT,UPDATE"
+      "live_proof": "2026-07-29 Neon account_types+wo_cancellation_reasons FORCE RLS policies=3 delete_pols=0 ih35_app INSERT,SELECT,UPDATE",
+      "prod_verified": false
     },
     {
       "id": "LST-LINK-02",
@@ -673,7 +686,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
+      "prod_verified": false
     },
     {
       "id": "LST-MAINT-01",
@@ -745,7 +759,8 @@
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
       "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
-      "live_proof": "2026-07-29 Neon lucia TRANSP/USMCA/TRK wo_st=pri=labor=fail=tasks=shops=5"
+      "live_proof": "2026-07-29 Neon lucia TRANSP/USMCA/TRK wo_st=pri=labor=fail=tasks=shops=5",
+      "prod_verified": false
     },
     {
       "id": "LST-PICKER-01",
@@ -815,7 +830,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "LST-PICKER-02",
@@ -887,7 +903,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "LST-PICKER-03",
@@ -958,7 +975,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "pr": 3491,
@@ -973,7 +991,8 @@
       ],
       "spec": "Rule 10 verification discipline + Rule 07 never-delete",
       "status": "PASS",
-      "evidence": "ROOT CAUSE of LST-SEED-01. verify-no-cross-carrier-data-leak.mjs had NO prod refusal (dotenv resolves .env's prod DATABASE_DIRECT_URL) and wrote 259 'USMCA-1 leak test' rows into live catalogs.complaint_types; its DELETE cleanup threw permission-denied under SET ROLE ih35_app on EVERY run and was swallowed by .catch(()=>{}). Fixed: shared prod-target refusal (#3476) hardened to a union+allowlist that also catches Neon's options=endpoint SNI form and localhost tunnels (#3491); harness rebuilt to rollback-only fixtures. LIVE PROOF: matrix - prod direct/SNI/both env overrides/unknown host all REFUSED, localhost+socket ALLOWED; harness 3/3 PASS with 0 residue. Guard verify-steps/1353, 13 planted defects."
+      "evidence": "ROOT CAUSE of LST-SEED-01. verify-no-cross-carrier-data-leak.mjs had NO prod refusal (dotenv resolves .env's prod DATABASE_DIRECT_URL) and wrote 259 'USMCA-1 leak test' rows into live catalogs.complaint_types; its DELETE cleanup threw permission-denied under SET ROLE ih35_app on EVERY run and was swallowed by .catch(()=>{}). Fixed: shared prod-target refusal (#3476) hardened to a union+allowlist that also catches Neon's options=endpoint SNI form and localhost tunnels (#3491); harness rebuilt to rollback-only fixtures. LIVE PROOF: matrix - prod direct/SNI/both env overrides/unknown host all REFUSED, localhost+socket ALLOWED; harness 3/3 PASS with 0 residue. Guard verify-steps/1353, 13 planted defects.",
+      "prod_verified": false
     },
     {
       "pr": "#3515",
@@ -1045,7 +1064,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "pr": 3496,
@@ -1117,7 +1137,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "pr": null,
@@ -1187,7 +1208,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "pr": null,
@@ -1259,11 +1281,12 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     }
   ],
   "M": 18,
-  "pass_count": 16,
+  "pass_count": 21,
   "total_count": 23,
-  "progress": "16 of 23"
+  "progress": "21 of 23"
 }

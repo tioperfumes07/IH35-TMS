@@ -1,6 +1,6 @@
 {
   "module": "insurance",
-  "title": "Insurance \u2014 acceptance checklist",
+  "title": "Insurance — acceptance checklist",
   "complete": false,
   "as_of": "2026-07-29",
   "live_sha": null,
@@ -9,7 +9,7 @@
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 1 -> 6 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 5 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close.",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 1 -> 6 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 5 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close.",
   "items": [
     {
       "id": "INS-S01",
@@ -22,7 +22,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
       "evidence": "VERIFIED LIVE on prod 2026-07-29 in BOTH entities. /insurance resolves to /safety/insurance and renders the Insurance Dashboard with 6 tabs (Landing, Policies, Type Catalog, Coverage Gaps, Claims, Lawsuits). TRANSP: 84 active drivers, coverage gap count 50 with a 'View gap list' drill-through. USMCA: 77 active drivers, all insurance counters 0. Entity scoping proven by the differing driver counts and gap counts.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "INS-T01",
@@ -34,8 +35,9 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS \u2014 it was observed on the rendered tab strip on prod 2026-07-29 \u2014 but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
-      "pr": null
+      "evidence": "NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "INS-T02",
@@ -47,8 +49,9 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS \u2014 it was observed on the rendered tab strip on prod 2026-07-29 \u2014 but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
-      "pr": null
+      "evidence": "NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "INS-T03",
@@ -60,8 +63,9 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS \u2014 it was observed on the rendered tab strip on prod 2026-07-29 \u2014 but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
-      "pr": null
+      "evidence": "NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "INS-T04",
@@ -73,8 +77,9 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS \u2014 it was observed on the rendered tab strip on prod 2026-07-29 \u2014 but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
-      "pr": null
+      "evidence": "NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "INS-T05",
@@ -86,9 +91,13 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS \u2014 it was observed on the rendered tab strip on prod 2026-07-29 \u2014 but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
-      "pr": null
+      "evidence": "NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
+      "pr": null,
+      "prod_verified": false
     }
   ],
-  "M": 6
+  "M": 6,
+  "pass_count": 1,
+  "total_count": 6,
+  "progress": "1 of 6"
 }
