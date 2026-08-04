@@ -12,8 +12,9 @@
 > applies on Neon," or "STOP for owner approval" is **SUPERSEDED** by this line.
 
 > **★★ SESSION BOOT:** [docs/specs/STANDING-SESSION-DIRECTIVE.md](docs/specs/STANDING-SESSION-DIRECTIVE.md) (§0–§7 · **§6 SEARCH BEFORE YOU ASK** · **§7 TEST WITH PLACEHOLDER NUMBERS**) +
+> [docs/specs/OWNER-QUALITY-COMPACT.md](docs/specs/OWNER-QUALITY-COMPACT.md) (**ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED** · Desktop `Claude.docx` permanized as `OWNER-QUALITY-COMPACT-Claude.docx`) +
 > [docs/specs/DELIVERY-METHOD-LOCKED.md](docs/specs/DELIVERY-METHOD-LOCKED.md) — load every session.
-> Presence ratchet: `verify-standing-directive-present` (step **2374**).
+> Presence ratchet: `verify-standing-directive-present` (step **2374**) · `verify-owner-quality-compact-present` (step **2375**).
 
 > **★★★ FULL SYSTEM AUDIT LAW (owner 2026-08-03 v3 — MANDATORY):** [docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md](docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md) — **"Complete" is NOT five layers.** Complete = **DoD A–E + VERIFY 1–8** PROD-VERIFIED per entity (live V2 picker+creator · V3 wiring · V4 deep linkage F+R). Cascade Always-On: `.windsurf/rules/ih35-deep-linkage-audit.md`. Cursor: Rule **31** (`.cursor/rules/31-full-system-audit-mandatory.mdc`). Ledger: [AUDIT-COVERAGE-LIVE.md](docs/audit/AUDIT-COVERAGE-LIVE.md) · run-log: [AUDIT-RUN-LOG.md](docs/audit/AUDIT-RUN-LOG.md). A code trace / count / CI-green is NOT proof. A guess is a defect.
 

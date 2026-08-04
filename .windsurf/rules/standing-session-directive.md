@@ -8,7 +8,8 @@ alwaysApply: true
 **Every session, before other work, load:**
 
 1. `docs/specs/STANDING-SESSION-DIRECTIVE.md` — §0–§7 including **§6 SEARCH BEFORE YOU ASK** and **§7 TEST WITH PLACEHOLDER NUMBERS**
-2. `docs/specs/DELIVERY-METHOD-LOCKED.md`
+2. `docs/specs/OWNER-QUALITY-COMPACT.md` — **ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED** (Claude.docx permanized)
+3. `docs/specs/DELIVERY-METHOD-LOCKED.md`
 
 Cascade = auditor on active slice only. Claude Coder = money/Neon. Cursor = screens/janitor.  
 NO holds · NO `JORGE-APPROVED` · merge on green with proof.

@@ -53,6 +53,8 @@ Quality means: correct accounting · honest financial reporting · traceable num
 This software protects money, trucks, drivers, customers, insurance, taxes, settlements, QuickBooks accounting, compliance, and company reputation. Build it correctly, with integrity, from the foundation up — until it can stand at the level of QuickBooks, NetSuite, McLeod, Alvys, and surpass them where possible.
 
 ## 6. SEARCH BEFORE YOU ASK (the owner is not your search index)
+**ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED.** Every material decision already lives in the repo, git history, architecture, blueprint, questionnaire, locked decisions, accounting skill, approved UI, and live Neon. See `docs/specs/OWNER-QUALITY-COMPACT.md` (and the permanized Desktop artifact `OWNER-QUALITY-COMPACT-Claude.docx`).
+
 Before escalating ANY question to the owner, **exhaustively search the system first** — the answer is almost always already there:
 - The **blueprint** (`IH35_MASTER_BLUEPRINT_v3_FULL.md`, `IH35_UNIFIED_BLUEPRINT_ADDITIONS.md`) and the **questionnaire** (`IH35_PRE_BUILD_QUESTIONNAIRE`) — every requirement is source-tagged `[Q]/[UI]/[v2]/[legacy]/[infer]/[new]`.
 - The **locked decisions** (`docs/lockdown/00_LOCKED_DECISIONS.md`, `docs/specs/02_BUSINESS_RULES.md`), the **accounting skill**, and the answers/context docs (there is **NO CPA** — "owner + CPA" reads as **owner only**).
@@ -65,4 +67,4 @@ Only escalate a question that is **genuinely absent from ALL of those AND is a t
 To exercise a skeleton hop before real operational values exist, use a **clearly-fake placeholder** (e.g. **$1,200** flat, `$1.20/mi`, or `$0.05` for accessorials per the test battery) and **label it test data**. A labeled placeholder in a test run is **not** a guess — a fabricated number presented as **real production data** is. Never stall a test waiting on a real rate/figure; the real figures are entered later (owner-entered where they are operational truth — pay rates, opening balances) **before the production posting flag flips**.
 
 ---
-*Permanent. Loaded at every session boot alongside `DELIVERY-METHOD-LOCKED.md` and `ih35-tms-standards`. The `verify-no-approval-holds` guard protects §4; `verify-standing-directive-present` protects the presence of this file in the always-read set.*
+*Permanent. Loaded at every session boot alongside `DELIVERY-METHOD-LOCKED.md`, `OWNER-QUALITY-COMPACT.md`, and `ih35-tms-standards`. The `verify-no-approval-holds` guard protects §4; `verify-standing-directive-present` + `verify-owner-quality-compact-present` protect the always-read set.*

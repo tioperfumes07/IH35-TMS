@@ -42,6 +42,7 @@ const REQUIRED_DOCS = [
   "docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md",
   "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
   "docs/specs/STANDING-SESSION-DIRECTIVE.md",
+  "docs/specs/OWNER-QUALITY-COMPACT.md",
   "docs/specs/DELIVERY-METHOD-LOCKED.md",
   "docs/templates/ACCEPTANCE-EVIDENCE-BLOCK.md",
   ".claude/skills/ih35-evidence-before-done/SKILL.md",
