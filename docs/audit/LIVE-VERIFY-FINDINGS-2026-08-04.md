@@ -259,3 +259,25 @@ membership-scoped session.
 - LANE:      n/a — evidence for GUARD toward accounting prod_verified
 - neon-check: origin split 16,245 qbo / 5 tms
 - status:    OPEN
+
+## LV-016  LV-014 is NOT a Bills-page quirk — the raw-key fallback is a shared accounting-list pattern that degrades on TMS-NATIVE rows
+- module:    accounting · bill_payments (and bills — see LV-014)
+- entity:    TRANSP (real volume) + USMCA
+- surface:   `/accounting/bill-payments` Vendor ID column
+- expected:  A vendor reference renders as something an operator/auditor can read, on every row, regardless of where the row came from.
+- observed:  TRANSP Bill Payments renders **$243,897.73** across real check rows with QBO-style memos. Vendor ID shows short readable QBO ids on the imported rows (**2210, 2232, 1544, 2174, 2118, 2244, 1347, 2231**) — but the **one TMS-native row** (`AUDIT-GL-PROOF-001`) falls back to a raw UUID **`f62e8ffb-f898-465b-9f7d-ff6c9c0101ec`**. This is the SAME class as LV-014 but **inverted**, and that inversion is the finding: it is not a Bills-page bug, it is a **shared render pattern across accounting lists**, and it degrades specifically on **TMS-native** rows while QBO-imported rows look fine. **Scope warning for the fixer: fixing only `/accounting/bills` would leave this live on bill-payments (and likely other lists).** Direction of travel matters — as the TMS becomes system of record and native rows grow, the proportion of rows showing a raw key INCREASES. Today it is 1 row in a list of imported history; post-cutover it is the default.
+- also observed (NOT a defect):  every bill-payment row reads `JE —` and `Reconciled: Unmatched` except the single AUDIT-GL-PROOF row (`JE dcbe5700`). Consistent with imported history being unposted under parallel books (QBO is SoR) — explicitly NOT reported as GL-dark. It does mean the bill-payment -> GL chain currently has exactly ONE live proof point.
+- severity:  major (scope correction to LV-014; same fix, wider surface)
+- LANE:      CURSOR (shared list render) + CLAUDE-CODER-1 (vendor-id resolution/backfill)
+- neon-check: none — pure render observation, cross-checked against LV-014's Neon evidence
+- status:    OPEN
+
+## LV-017  accounting SURF-02/03 live-verified PASS (both entities where data exists)
+- module:    accounting
+- entity:    TRANSP + USMCA
+- surface:   `/accounting/expenses`, `/accounting/bill-payments`
+- observed:  **PASS.** Expenses (USMCA): 2 rows, both `Posted` with real JE ids (`ff286e60`, `b927818f`) and GL Posted — the expense->JE->GL chain is genuinely wired and drillable; absent Load/WO/Vendor render as honest em-dashes. Bill payments (USMCA): honest empty "No bill payments found" with full ledger chrome and an Unpaid-bill selector — correct, since all 6,544 bill_payments are TRANSP/TRK. Bill payments (TRANSP): real ledger, $243,897.73 total, per-row Void action, memos tying to bill numbers and check numbers. **Correction to my own earlier read:** I first saw `/accounting/bill-payments` render blank and nearly filed it; a reload showed a fully working page — it was slow first paint, not a broken route. Verified canonical in `manifest.tsx` and the subnav before concluding either way.
+- severity:  minor (informational PASS)
+- LANE:      n/a — evidence toward accounting prod_verified
+- neon-check: bill_payments 6,544 total; USMCA share 0
+- status:    OPEN
