@@ -4367,6 +4367,7 @@
       "max_retries",
       "next_retry_at",
       "operating_company_id",
+      "provider",
       "provider_message_id",
       "queued_by_user_id",
       "retry_count",
@@ -4376,8 +4377,7 @@
       "template_key",
       "template_vars",
       "to_addresses",
-      "updated_at",
-      "provider"
+      "updated_at"
     ],
     "events.event_log": [
       "actor_id",
