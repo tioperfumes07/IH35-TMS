@@ -1,12 +1,15 @@
-import { useState } from "react";
-import { listMaintenanceParts } from "../../api/maintenance";
+import { useMemo, useState } from "react";
+import { listMaintenanceParts, type MaintenancePartRow } from "../../api/maintenance";
+import { listVendors } from "../../api/mdata";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { InventoryModuleTabs } from "./InventoryModuleTabs";
 import { PartCreateDrawer } from "./PartCreateDrawer";
+import { PartEditDrawer } from "./PartEditDrawer";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { partNeedsReorder } from "../maintenance/parts-low-stock";
 import { displayPartInventoryCategory } from "./partInventoryCategories";
@@ -58,6 +61,16 @@ const columns: ParityColumn<InventoryPartRow>[] = [
   },
   { key: "location", label: "Location/Bin" },
   {
+    key: "vendor_id",
+    label: "Vendor",
+    render: (row) =>
+      row.vendor_id ? (
+        <EntityLink kind="vendor" id={row.vendor_id} label={row.vendor_label ?? row.vendor_id.slice(0, 8)} />
+      ) : (
+        <span className="text-gray-400">—</span>
+      ),
+  },
+  {
     key: "status",
     label: "Status",
     render: (row) => (
@@ -71,18 +84,6 @@ const columns: ParityColumn<InventoryPartRow>[] = [
 // B1: the inventory "Parts & Stock" page reads the real maintenance.parts_inventory table via
 // /api/v1/maintenance/parts (the only parts backend — there is no /api/v1/inventory/parts route).
 // Map that endpoint's row shape onto the columns this page renders. Pure fn, unit-tested.
-export type MaintenancePartRow = {
-  id: string;
-  part_number: string | null;
-  name: string | null;
-  category: string | null;
-  notes: string | null;
-  unit_cost: number | null;
-  qty_on_hand: number | null;
-  reorder_threshold?: number | null;
-  location: string | null;
-  voided_at: string | null;
-};
 export type InventoryPartRow = {
   id: string;
   name: string | null;
@@ -93,13 +94,19 @@ export type InventoryPartRow = {
   reorder_threshold: number;
   unit_cost: number | null;
   location: string | null;
+  vendor_id: string | null;
+  vendor_label: string | null;
   status: string;
   voided_at: string | null;
 };
-export function mapMaintenancePartsToInventoryRows(rows: MaintenancePartRow[]): InventoryPartRow[] {
+export function mapMaintenancePartsToInventoryRows(
+  rows: MaintenancePartRow[],
+  vendorNameById: Map<string, string> = new Map(),
+): InventoryPartRow[] {
   return (rows ?? []).map((r) => {
     const qty = Number(r.qty_on_hand ?? 0);
     const reorderThreshold = Number(r.reorder_threshold ?? 0);
+    const vendorId = r.vendor_id ?? null;
     return {
       id: r.id,
       name: r.name,
@@ -111,6 +118,8 @@ export function mapMaintenancePartsToInventoryRows(rows: MaintenancePartRow[]): 
       reorder_threshold: reorderThreshold,
       unit_cost: r.unit_cost,
       location: r.location,
+      vendor_id: vendorId,
+      vendor_label: vendorId ? vendorNameById.get(vendorId) ?? null : null,
       status: r.voided_at ? "Voided" : qty <= 0 ? "Out of stock" : "In stock",
       voided_at: r.voided_at,
     };
@@ -121,22 +130,40 @@ export function InventoryPartsStockPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingPart, setEditingPart] = useState<MaintenancePartRow | null>(null);
+
+  const vendorsQuery = useQuery({
+    queryKey: ["mdata", "vendors", operatingCompanyId, "inventory-parts-stock"],
+    queryFn: () =>
+      listVendors({
+        operating_company_id: operatingCompanyId,
+        status: "active",
+        limit: 1000,
+      }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const vendorNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const v of vendorsQuery.data?.vendors ?? []) {
+      map.set(v.id, v.name);
+    }
+    return map;
+  }, [vendorsQuery.data?.vendors]);
 
   const partsQuery = useQuery({
     queryKey: ["inventory", "parts", operatingCompanyId],
     enabled: Boolean(operatingCompanyId),
     queryFn: async () => {
-      // 0441-mod13: route read through listMaintenanceParts (apiRequest) — avoids uncredentialed cross-origin fetch.
-      // api/maintenance.ts's MaintenancePartRow is a structural superset of this file's (adds
-      // vendor_default/reorder_threshold/source/voided_reason) — no cast needed, TS allows it directly.
       const data = await listMaintenanceParts(operatingCompanyId);
-      return {
-        parts: mapMaintenancePartsToInventoryRows(data.rows ?? []),
-      };
+      return { rawParts: data.rows ?? [] };
     },
   });
 
-  const rows = partsQuery.data?.parts ?? [];
+  const rawParts = partsQuery.data?.rawParts ?? [];
+  const rows = useMemo(
+    () => mapMaintenancePartsToInventoryRows(rawParts, vendorNameById),
+    [rawParts, vendorNameById],
+  );
 
   return (
     <div className="space-y-4">
@@ -159,10 +186,27 @@ export function InventoryPartsStockPage() {
         loading={partsQuery.isLoading}
         emptyText="No parts found. Create your first part to get started."
         rowKey={(row: { id: string }) => row.id}
+        rowActions={(row) => (
+          <button
+            type="button"
+            className="text-slate-600 underline text-xs"
+            onClick={() => {
+              const raw = rawParts.find((p) => p.id === row.id) ?? null;
+              setEditingPart(raw);
+            }}
+          >
+            Edit
+          </button>
+        )}
       />
       <PartCreateDrawer
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
+        operatingCompanyId={operatingCompanyId}
+      />
+      <PartEditDrawer
+        part={editingPart}
+        onClose={() => setEditingPart(null)}
         operatingCompanyId={operatingCompanyId}
       />
     </div>

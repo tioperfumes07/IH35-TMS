@@ -1584,6 +1584,7 @@ export type MaintenancePartRow = {
   // this type had drifted stale (missing both), which broke the inventory read-path cast (TS2352).
   category: string | null;
   notes: string | null;
+  vendor_id: string | null;
   vendor_default: string | null;
   unit_cost: number | null;
   qty_on_hand: number;
@@ -1739,6 +1740,7 @@ export function createMaintenancePart(
   body: {
     part_number: string;
     name: string;
+    vendor_id?: string;
     vendor_default?: string;
     unit_cost?: number;
     qty_on_hand: number;
