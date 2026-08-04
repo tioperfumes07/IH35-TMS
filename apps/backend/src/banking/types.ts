@@ -52,6 +52,13 @@ export type TransactionCategoryRule = {
   id: string;
   operating_company_id: string;
   plaid_category_pattern: string;
+  /**
+   * BANK-F02 — QuickBooks "Bank text contains" / NetSuite memo+payee parity. When set, the rule
+   * matches on the transaction DESCRIPTION and outranks any category match (specificity tier 3).
+   * It is the only signal that can correct a WRONG Plaid label, e.g. LOVE'S TIRE CARE, which Plaid
+   * reports as TRANSPORTATION_GAS because it resolves the merchant brand, not the purchase.
+   */
+  description_pattern: string | null;
   coa_account_id: string | null;
   priority: number;
   is_active: boolean;

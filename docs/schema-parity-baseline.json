@@ -2061,6 +2061,7 @@
     "banking.transaction_categories": [
       "coa_account_id",
       "created_at",
+      "description_pattern",
       "id",
       "is_active",
       "operating_company_id",
