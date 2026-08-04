@@ -435,6 +435,230 @@
       "hotfiles": [
         "apps/frontend/src/components/fleet/EditVehicleModal.tsx"
       ]
+    },
+    {
+      "id": "CLS-DISP-WIRE-01",
+      "root_cause": "Book → Invoice auto-generation. bookLoad() calls buildInvoiceFromLoad() which creates a proforma invoice at booking time when INVOICE_PROFORMA_PIPELINE_ENABLED is ON. Wire exists and is functional.",
+      "lane": "money",
+      "layer": "C",
+      "modules": ["dispatch"],
+      "instances": [
+        { "path": "apps/backend/src/dispatch/book-load.service.ts:10 imports buildInvoiceFromLoad from accounting/from-load.ts — proforma invoice created at book time (WIRE-01)", "entity": "ALL", "note": "Wire exists. Proforma status=non-posting. Converts to draft at POD via WIRE-04." }
+      ],
+      "completeness": "Code-verified: book-load.service.ts line 10 imports buildInvoiceFromLoad. from-load.ts buildInvoiceFromLoad creates accounting.invoices row with status=proforma when asProforma=true. INVOICE_PROFORMA_PIPELINE_ENABLED ON for TRANSP+USMCA (prod verified 2026-08-01).",
+      "guard": "scripts/verify-disp-wire-01-book-invoice.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "WIRE-01 book→invoice: proforma invoice created at booking via buildInvoiceFromLoad. accounting.invoices status=proforma. INVOICE_PROFORMA_PIPELINE_ENABLED=ON for TRANSP+USMCA.",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/dispatch/book-load.service.ts",
+        "apps/backend/src/accounting/from-load.ts"
+      ]
+    },
+    {
+      "id": "CLS-DISP-WIRE-02",
+      "root_cause": "Assign → Driver Bill auto-generation. bookLoad() calls createDriverBillArtifacts() which creates a driver_finance.driver_bills row. Handles solo driver AND team splits (primary/secondary percentages).",
+      "lane": "money",
+      "layer": "C",
+      "modules": ["dispatch"],
+      "instances": [
+        { "path": "apps/backend/src/dispatch/book-load.service.ts:324-531 createDriverBillArtifacts — solo + team split driver bills (WIRE-02)", "entity": "ALL", "note": "Wire exists. Creates bills with miles_basis, rate_per_mile_cents, team split. driver_finance.driver_bills = 0 rows on prod (no loads fully booked+assigned yet)." }
+      ],
+      "completeness": "Code-verified: book-load.service.ts createDriverBillArtifacts creates driver_finance.driver_bills with gross_amount_cents, miles_basis, team split logic. Relation-guarded via relationExists('driver_finance.driver_bills').",
+      "guard": "scripts/verify-disp-wire-02-driver-bill.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "WIRE-02 assign→driver-bill: createDriverBillArtifacts creates driver_finance.driver_bills with gross_amount_cents. driver_bills = 0 rows on prod (pre-operational).",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/dispatch/book-load.service.ts"
+      ]
+    },
+    {
+      "id": "CLS-DISP-WIRE-03",
+      "root_cause": "Deliver → POD capture (driver PWA). Driver captures signature + photo at delivery stop via /api/v1/driver/loads/:loadId/stops/:stopId/pod. Validates delivery stop type, uploads to R2, inserts into dispatch.pod_documents. 0 rows on prod — no driver has captured a POD yet.",
+      "lane": "mechanical",
+      "layer": "A",
+      "modules": ["dispatch"],
+      "instances": [
+        { "path": "apps/backend/src/dispatch/pod.routes.ts:78-168 POST /api/v1/driver/loads/:loadId/stops/:stopId/pod — driver PWA POD capture (WIRE-03)", "entity": "ALL", "note": "Wire exists but untested on live. dispatch.pod_documents = 0 rows on prod. R2 storage configured." }
+      ],
+      "completeness": "Code-verified: pod.routes.ts validates delivery stop (isDeliveryStop), uploads photo+signature to R2, inserts dispatch.pod_documents with status=pending_review. Review path exists at POST /pod-documents/:id/review. Live verification blocked on driver PWA adoption.",
+      "guard": "scripts/verify-disp-wire-03-pod-capture.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "",
+        "money_critical": false
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/dispatch/pod.routes.ts",
+        "apps/frontend/src/pages/dispatch/PodReviewPage.tsx"
+      ]
+    },
+    {
+      "id": "CLS-DISP-WIRE-04",
+      "root_cause": "POD → Invoice send: delivery-evidence gap. At delivered_pending_docs, proforma converts to draft and auto-sends via email. But the send path does NOT enforce delivery evidence. INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE flag is defined (invoice-send.service.ts:51) but has NO registry row → defaults OFF. Invoices can be sent without proof of delivery. MONEY SAFETY GAP: IH35 factors receivables with Faro on RECOURSE basis — an invoice without delivery evidence is a chargeback risk.",
+      "lane": "money",
+      "layer": "C",
+      "modules": ["dispatch", "accounting"],
+      "instances": [
+        { "path": "apps/backend/src/accounting/invoice-send.service.ts:51 INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE — flag defined, NO registry row, defaults OFF (WIRE-04)", "entity": "ALL", "note": "ACCT-F61. Revenue latch (#3955) requires evidence; invoice send does NOT. Customer gets invoiced while GL correctly declines to recognize revenue. Two halves out of step." },
+        { "path": "apps/backend/src/dispatch/loads.routes.ts:1306-1337 — POD auto-send fires on STATUS transition, not on actual delivery evidence (WIRE-04b)", "entity": "ALL", "note": "convertProformaToOfficial + sendDraftInvoice called when status=delivered_pending_docs, regardless of actual_departure_at." }
+      ],
+      "completeness": "Code-verified: invoice-send.service.ts imports finalActiveDeliveryDepartureAt but the gate is behind INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE which has no lib.feature_flag_overrides row. isEnabled returns false for missing flag_key. Prod verified 2026-08-01: INVOICE_PROFORMA_PIPELINE_ENABLED=true for TRANSP+USMCA, all 20 load_stops carry 0 actual_departure_at.",
+      "guard": "scripts/verify-disp-wire-04-invoice-evidence.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "WIRE-04 invoice-send evidence gap: INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE has NO registry row → OFF. Invoices auto-sent without delivery evidence. Faro recourse chargeback risk on invoices lacking POD.",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/accounting/invoice-send.service.ts",
+        "apps/backend/src/dispatch/loads.routes.ts"
+      ]
+    },
+    {
+      "id": "CLS-DISP-WIRE-05",
+      "root_cause": "Deliver → Revenue recognition (2-event latch). REVENUE_RECOGNITION_POST_ENABLED is ON per-entity for all 3 operating companies (verified on prod). Event 1 (earn at delivered_pending_docs) requires finalActiveDeliveryDepartureAt — all 20 load_stops have actual_departure_at=NULL. Revenue recognition is INERT because of the WIRE-07 evidence gap, not the flag.",
+      "lane": "money",
+      "layer": "C",
+      "modules": ["dispatch", "accounting"],
+      "instances": [
+        { "path": "apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts:334-340 — Event 1 earn requires finalActiveDeliveryDepartureAt, returns missing_delivery_evidence when NULL (WIRE-05)", "entity": "ALL", "note": "Flag ON. Poster correctly refuses without evidence. Root blocker is WIRE-07 (actual_departure_at NULL on all stops)." },
+        { "path": "apps/backend/src/dispatch/loads.routes.ts:1340-1352 — postLoadRevenueLatch called at delivered_pending_docs + completed_docs_received (WIRE-05b)", "entity": "ALL", "note": "Trigger fires but poster returns {posted:false, reason:'missing_delivery_evidence'} every time." }
+      ],
+      "completeness": "Code-verified: poster.service.ts Event 1 calls finalActiveDeliveryDepartureAt (line 335). If null, returns gate=missing_delivery_evidence (line 340). REVENUE_RECOGNITION_POST_ENABLED is ON per-entity for TRANSP+USMCA+TRK (lib.feature_flag_overrides, verified prod). Latch table accounting.load_revenue_recognition_postings exists. Blocked by WIRE-07.",
+      "guard": "scripts/verify-disp-wire-05-revrec-latch.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "WIRE-05 revrec inert: REVENUE_RECOGNITION_POST_ENABLED=ON per-entity (all 3 opcos). Poster returns {posted:false, reason:'missing_delivery_evidence'} because actual_departure_at=NULL on all 20 load_stops (WIRE-07 root blocker).",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts",
+        "apps/backend/src/dispatch/loads.routes.ts"
+      ]
+    },
+    {
+      "id": "CLS-DISP-WIRE-06",
+      "root_cause": "Load → Expense/Fuel linkage. expense_attribution.expense_load_links and fuel.fuel_transactions.load_id connect costs to loads for per-load margin. N/A-PRE-OPERATIONAL per owner ruling 2026-08-04: historical fuel is legitimately load-null (pre-dispatch imports). Going-forward only.",
+      "lane": "money",
+      "layer": "C",
+      "modules": ["dispatch", "fuel"],
+      "instances": [
+        { "path": "fuel.fuel_transactions.load_id — 1,548 rows with load_id=NULL, all pre-TMS-dispatch QBO imports (WIRE-06)", "entity": "ALL", "note": "N/A-PRE-OPERATIONAL per FINDING-LOAD-LINKAGE-SCOPE-RULING. Going-forward linkage only. Claude Coder: backfill load_required=false + load_exemption_reason='PRE_TMS_DISPATCH_IMPORT'." }
+      ],
+      "completeness": "Owner ruling 2026-08-04: 1,548 fuel_transactions with load_id=NULL are pre-dispatch imports — expected state, not broken wiring. FINDING-LOAD-LINKAGE-SCOPE-RULING recorded in wave-queue.json findings array. Going-forward guard needed for TMS-native loads.",
+      "guard": "scripts/verify-disp-wire-06-load-expense-link.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "WIRE-06 load-expense linkage: 1,548 fuel_transactions.load_id=NULL — all pre-TMS-dispatch QBO imports. N/A-PRE-OPERATIONAL per FINDING-LOAD-LINKAGE-SCOPE-RULING. Going-forward guard needed.",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/fuel"
+      ]
+    },
+    {
+      "id": "CLS-DISP-WIRE-07",
+      "root_cause": "CRITICAL-PATH ROOT BLOCKER. Load stops → actual_departure_at (driver PWA evidence). The driver PWA should write actual_departure_at on mdata.load_stops when the driver departs a stop. All 20 load_stops on prod have actual_departure_at=NULL. This is the single root cause that blocks revenue recognition (WIRE-05) and delivery-evidence invoice gating (WIRE-04). loads.routes.ts:1285-1303 writes actual_departure_at on the final delivery stop at delivered_pending_docs, but reads body.data.delivered_at from the request — if the client doesn't send it, it's NULL.",
+      "lane": "mechanical",
+      "layer": "C",
+      "modules": ["dispatch"],
+      "instances": [
+        { "path": "apps/backend/src/dispatch/loads.routes.ts:1285-1303 — actual_departure_at write depends on body.data.delivered_at from client (WIRE-07a)", "entity": "ALL", "note": "CRITICAL PATH. If client omits delivered_at, actual_departure_at stays NULL. All 20 load_stops on prod = NULL." },
+        { "path": "apps/frontend/src/pages/dispatch — office status transition may not send delivered_at in request body (WIRE-07b)", "entity": "ALL", "note": "Frontend dispatch board status change needs to include delivered_at timestamp." },
+        { "path": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts — driver PWA departure capture (WIRE-07c)", "entity": "ALL", "note": "Driver PWA must capture actual departure at each stop. Without this, no delivery evidence flows to revenue recognition or invoice send." }
+      ],
+      "completeness": "Code-verified: loads.routes.ts line 1285 UPDATE mdata.load_stops SET actual_departure_at = $2 WHERE load_id = $1 AND stop_type = 'delivery' AND sequence_number = (max). Value comes from body.data.delivered_at which is optional. Prod: all 20 load_stops actual_departure_at=NULL (verified 2026-08-01). This single gap blocks WIRE-04 + WIRE-05.",
+      "guard": "scripts/verify-disp-wire-07-departure-evidence.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "",
+        "money_critical": false
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/dispatch/loads.routes.ts",
+        "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts",
+        "apps/frontend/src/pages/dispatch"
+      ]
+    },
+    {
+      "id": "CLS-DISP-WIRE-08",
+      "root_cause": "Settlement ping on load event. On status change, pingSettlementOnLoadEvent fires to update driver settlement state. Wired (try/catch, warn-only on failure). driver_finance.driver_settlements = 0 rows on prod — untested end to end.",
+      "lane": "money",
+      "layer": "C",
+      "modules": ["dispatch", "settlements"],
+      "instances": [
+        { "path": "apps/backend/src/dispatch/loads.routes.ts:1354-1363 — pingSettlementOnLoadEvent on status change (WIRE-08)", "entity": "ALL", "note": "Wire exists. try/catch warn-only. driver_finance.driver_settlements = 0 rows. Untested end to end." }
+      ],
+      "completeness": "Code-verified: loads.routes.ts lines 1354-1363 call pingSettlementOnLoadEvent in try/catch. Import from driver-finance. Settlement tables empty on prod.",
+      "guard": "scripts/verify-disp-wire-08-settlement-ping.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "WIRE-08 settlement ping: pingSettlementOnLoadEvent fires on status change (try/catch warn-only). driver_finance.driver_settlements = 0 rows. Untested end-to-end money path.",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/dispatch/loads.routes.ts",
+        "apps/backend/src/driver-finance"
+      ]
+    },
+    {
+      "id": "CLS-DISP-WIRE-09",
+      "root_cause": "BOL generation. Bill of Lading PDF generation and storage in R2. Office dispatchers generate BOL for a load via POST /dispatch/loads/:loadId/bol/generate. Wire exists, needs live verification.",
+      "lane": "mechanical",
+      "layer": "A",
+      "modules": ["dispatch"],
+      "instances": [
+        { "path": "apps/backend/src/dispatch/pod.routes.ts:309-329 POST /dispatch/loads/:loadId/bol/generate → bol-generator.service.ts (WIRE-09)", "entity": "ALL", "note": "Wire exists. dispatch.bol_documents needs live verification. R2 configured." }
+      ],
+      "completeness": "Code-verified: pod.routes.ts registerDispatchPodBolRoutes includes BOL generate + download routes. bol-generator.service.ts generateAndStoreBol + generateBolPdf exist. PDF render + R2 upload path present.",
+      "guard": "scripts/verify-disp-wire-09-bol-generate.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "",
+        "money_critical": false
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/dispatch/pod.routes.ts",
+        "apps/backend/src/dispatch/bol-generator.service.ts"
+      ]
+    },
+    {
+      "id": "CLS-DISP-WIRE-10",
+      "root_cause": "Cancellation / Abandonment economics. Load cancellation and abandonment should reverse/void any proforma invoice, cancel the driver bill, and void any GL postings. cancellation.service.ts and cancel-load.routes.ts exist. Spine events emitted. Unverified whether proforma is voided on cancel and driver bill is cancelled.",
+      "lane": "money",
+      "layer": "C",
+      "modules": ["dispatch", "accounting"],
+      "instances": [
+        { "path": "apps/backend/src/dispatch/cancellation.service.ts — load cancellation service (WIRE-10a)", "entity": "ALL", "note": "Service exists. Needs verification: does cancel void proforma invoice? Does it cancel driver bill?" },
+        { "path": "apps/backend/src/dispatch/cancel-load.routes.ts — cancel load route (WIRE-10b)", "entity": "ALL", "note": "Route exists. Spine event emitted. Economics reversal unverified." }
+      ],
+      "completeness": "Code-verified: cancellation.service.ts and cancel-load.routes.ts exist. Spine events emitted on cancellation. Whether proforma invoice is voided and driver bill is cancelled on load cancel is UNVERIFIED — needs code read of cancellation service economics path.",
+      "guard": "scripts/verify-disp-wire-10-cancel-economics.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "WIRE-10 cancel economics: cancellation.service.ts + cancel-load.routes.ts exist. Whether proforma is voided and driver bill cancelled on load cancel is UNVERIFIED. Spine events emitted.",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/dispatch/cancellation.service.ts",
+        "apps/backend/src/dispatch/cancel-load.routes.ts"
+      ]
     }
   ],
   "vertical_close_notes": [
