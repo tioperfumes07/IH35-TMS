@@ -236,12 +236,38 @@ export async function maybePostBankCategorizationToGl(input: MaybePostBankCatego
   // direction, enforces the closed-period gate + assertBalanced + idempotency (posting_batches unique key).
   let posted;
   try {
+    // BANK-F05 — a categorization that has been reversed must RE-post, not silently return the
+    // original batch.
+    //
+    // The revision is the number of journal entries for THIS source that have already been reversed.
+    // That count is the only discriminator that is stable across a double-submit: it rises when
+    // someone reverses, never when someone posts. Counting posting_batches instead would increment on
+    // the repost itself, so a retried request would mint a SECOND corrected entry — a double-post.
+    // reverseJournalEntryNoFlip stamps reversed_by_je_id on the original JE, which is what makes this
+    // countable (it does not touch posting_batches at all — only postVoidReversal does).
+    const reversedCountRows = await withCompanyScope(input.actorUserUuid, input.companyId, async (client) => {
+      const r = await client.query(
+        `SELECT COUNT(DISTINCT je.id)::text AS n
+           FROM accounting.journal_entries je
+           JOIN accounting.journal_entry_postings p ON p.journal_entry_uuid = je.id
+          WHERE je.operating_company_id = $1::uuid
+            AND p.source_transaction_type = 'bank_categorization'
+            AND p.source_transaction_id::text = $2
+            AND je.reversed_by_je_id IS NOT NULL`,
+        [input.companyId, input.bankTransactionId]
+      );
+      return r.rows as Array<{ n: string }>;
+    });
+    const reversedCount = Number(reversedCountRows[0]?.n ?? 0);
+
     posted = await postSourceTransaction(
       {
         operating_company_id: input.companyId,
         source_transaction_type: "bank_categorization",
         source_transaction_id: input.bankTransactionId,
-        posting_purpose: "initial_post",
+        ...(reversedCount > 0
+          ? { posting_purpose: "repost" as const, repost_revision: reversedCount }
+          : { posting_purpose: "initial_post" as const }),
       },
       { userId: input.actorUserUuid }
     );
