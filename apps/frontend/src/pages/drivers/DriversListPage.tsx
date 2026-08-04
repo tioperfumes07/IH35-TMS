@@ -10,6 +10,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { KpiStrip } from "../../components/layout/KpiStrip";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useToast } from "../../components/Toast";
 import { colors } from "../../design/tokens";
 import { type DqfComplianceLevel, driverDisplayName, summarizeDriverDqf } from "../../lib/driverDqf";
 import { formatDateUS } from "../../lib/formatDate";
@@ -31,6 +32,7 @@ type DqfFocus = Exclude<DqfComplianceLevel, "unknown"> | null;
 export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -111,11 +113,50 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
   const [exporting, setExporting] = useState(false);
   // Export the FULL driver roster (not just the current page) to CSV for offline review — names + hire/term
   // dates + pay basis + status + CDL. Reads through the authenticated session (correct per-entity RLS).
+  //
+  // CLS-SILENT-CAP — this asked for limit:500 in ONE call. The backend clamps limit to max(200)
+  // (drivers.routes.ts listQuerySchema), so that request did not truncate at 500 — it failed zod
+  // validation and 400'd. With no catch, the rejection was swallowed and `exporting` simply reset:
+  // clicking "Export profiles (CSV)" produced no file and no error. A silent FAILURE reading as a
+  // no-op is worse than the silent cap the card described.
+  //
+  // Now pages at the backend's real maximum and keeps going until the server's own `total` is
+  // satisfied, then refuses to hand over a file it knows is short. An export that quietly omits
+  // drivers is the thing to prevent — a roster CSV is used offline, where nobody can see what is
+  // missing.
   async function handleExportCsv() {
     if (!companyId || exporting) return;
     setExporting(true);
     try {
-      const all = await listDrivers({ operating_company_id: companyId, status: "All", limit: 500, offset: 0 });
+      const PAGE = 200; // backend listQuerySchema caps limit at 200; asking for more is a 400.
+      const first = await listDrivers({ operating_company_id: companyId, status: "All", limit: PAGE, offset: 0 });
+      const expected = first.total ?? first.drivers.length;
+      const collected = [...first.drivers];
+      // Walk OFFSETS, not collected-row counts: listDrivers filters system rows out client-side
+      // while `total` is the server's unfiltered count, so comparing lengths would under-count on
+      // every roster that has a system driver and refuse to export at all. Covering every offset up
+      // to `total` is the condition that actually proves nothing was skipped.
+      let covered = PAGE;
+      const maxPages = 200; // bound so a server that never advances cannot spin forever
+      for (let pageIndex = 1; covered < expected && pageIndex < maxPages; pageIndex += 1) {
+        const next = await listDrivers({
+          operating_company_id: companyId,
+          status: "All",
+          limit: PAGE,
+          offset: pageIndex * PAGE,
+        });
+        collected.push(...next.drivers);
+        covered += PAGE;
+      }
+      if (covered < expected) {
+        pushToast(
+          `Export covered only ${covered} of ${expected} driver records — the file was NOT downloaded ` +
+            `because it would have been incomplete. Please retry.`,
+          "error"
+        );
+        return;
+      }
+      const all = { drivers: collected };
       const esc = (value: unknown) => {
         const s = value == null ? "" : String(value);
         return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -134,6 +175,10 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
       anchor.download = `IH35-driver-profiles-${new Date().toISOString().slice(0, 10)}.csv`;
       anchor.click();
       URL.revokeObjectURL(href);
+    } catch (err) {
+      // Previously absent: the 400 from the over-limit request rejected into nothing, so a broken
+      // export was indistinguishable from a working one.
+      pushToast(err instanceof Error ? err.message : "Failed to export driver profiles", "error");
     } finally {
       setExporting(false);
     }
