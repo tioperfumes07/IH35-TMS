@@ -70,11 +70,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **22 / 30** | 2026-08-04 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-04 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **64 / 150** · TRK **9 / 150** · USMCA **62 / 150** | 2026-08-04 |
-| Rows in this file | **772** | 2026-08-04 |
+| Rows in this file | **773** | 2026-08-04 |
 | Rows `FAIL` + `OPEN` | **44** | 2026-08-04 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **11** | 2026-08-04 |
 | Rows `VERIFIED` by GUARD | **0** | 2026-08-04 |
-| Verdict tally (all rows) | FAIL=96 · PASS=235 · N/A=219 · UNVERIFIED=28 · SUPERSEDED=7 · OTHER=187 | 2026-08-04 |
+| Verdict tally (all rows) | FAIL=96 · PASS=236 · N/A=219 · UNVERIFIED=28 · SUPERSEDED=7 · OTHER=187 | 2026-08-04 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -858,4 +858,5 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 770 | program · solo audit — writes to RETIRE tables | C | ALL | FAIL | Static scan for active writes to RETIRE schemas per `docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md`. **Active violation:** `apps/backend/src/payroll/driver-settlement.service.deprecated.ts:645` still `UPDATE payroll.driver_settlements`; `payroll.*` is RETIRE → `driver_finance.*`. **No violations found** for `settlement.*`, `maint.*`, or `bank.*` write sites; `banking.*` and `mdata.vendors` are canonical; `mdata.loads` is canonical (writes OK). `dispatch.loads` RETIRE was not found as a write target. Recorded as solo-audit finding; not fixed. | OPEN | — | NO | 2026-08-04 | CASCADE |
 | 771 | program · solo audit — ledger self-consistency, WORM, ACCT-F64 table | E | ALL | PASS | Automated checks on `docs/audit/AUDIT-COVERAGE-LIVE.md`: 768 row references, 768 unique row numbers, max 768, no missing numbers 1-768, no duplicate row numbers. Six SUPERSEDED rows (92,93,94,95,348,696) all reference successor rows. Static scan of `apps/backend/src` and `apps/backend/migrations`: zero `UPDATE audit.*` / `DELETE FROM audit.*` / `TRUNCATE audit.*` found → WORM not broken by code/migrations. ACCT-F64 exact PUBLIC-writable audit table confirmed: `audit.scenario_status` (row 746); `audit.audit_events` is SELECT-only on prod per GUARD. The revoke-PUBLIC fix lives on branch `origin/claude/home-scenario-status-store`, not yet merged/applied to main. | — | — | NO | 2026-08-04 | CASCADE |
 | 772 | program · coverage-gap report — 30 modules × 5 layers | E | ALL | AUDIT | Derived from `docs/audit/program-scoreboard.json`. **No module×layer cell has zero evidence** (covered 150/150). **Layer-C UNVERIFIED cells with no PASS evidence (money-order):** settlements.C, factoring.C, customers.C, driver-hub.C, fleet.C, cash-flow.C, finance.C, tasks.C, docs.C, compliance.C. Remaining non-PASS cells are AUDIT/FIX/NA. **No module is certified** (0/30); defects 22/30; FAIL+OPEN 43; VERIFIED 0. This is the backlog to burn down once reactive appends resume on green main. | — | — | NO | 2026-08-04 | CASCADE |
+| 773 | safety · structural guard batch for routes/tabs/reports/RLS/HOS/incidents/meetings | C | ALL | PASS | Proactive structural guard run. All exit 0 on current tree: `verify-safety-route-coverage.mjs` (30 modules wired); `verify-safety-tab-coverage.mjs` (28 tabs / 9 groups); `verify-safety-reports-coverage.mjs` exit 0; `verify-safety-rls-coverage.mjs` exit 0; `verify-safety-hos-dashboard-wire.mjs` exit 0; `verify-safety-incidents-cluster-wire.mjs` exit 0; `verify-safety-meetings-training-wire.mjs` exit 0. Adds evidence to safety module coverage row (245 from earlier backfill rows). | — | — | NO | 2026-08-04 | CASCADE |
 
