@@ -19,6 +19,7 @@ const SIBLINGS = [
   "scripts/verify-vend-s01-roster-active-filter.mjs",
   "scripts/verify-vend-s03-s04-dedup-and-types.mjs",
   "scripts/verify-fact-dual-canonical-profile.mjs",
+  "scripts/verify-vend-link-01-vendor-uuid-entitylink.mjs",
 ];
 
 function read(rel) {
@@ -96,5 +97,5 @@ if (IS_MAIN) {
     for (const p of problems) console.error(`  - ${p}`);
     process.exit(1);
   }
-  console.log(`${LABEL} PASS — Vendors VERIFY-1..8 surfaces locked (6 of 7; VEND-LINK-01 money OPEN)`);
+  console.log(`${LABEL} PASS — Vendors VERIFY-1..8 surfaces locked (7 of 7; module complete)`);
 }

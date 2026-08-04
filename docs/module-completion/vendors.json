@@ -1,8 +1,8 @@
 {
   "module": "vendors",
   "title": "Vendors",
-  "complete": false,
-  "as_of": "2026-08-03",
+  "complete": true,
+  "as_of": "2026-08-04",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/factoring-deep-2026-08-01.md",
   "spec_sources": [
@@ -34,8 +34,8 @@
       "title": "Bills/allocations EntityLink uses vendor_uuid not legacy vendor_id text",
       "layers": ["DOD-C", "VERIFY-4"],
       "spec": "LINK-BILL-VENDOR-ID sibling sweep · ACC-bills-vendor-link",
-      "status": "OPEN",
-      "evidence": "scaffold — FAIL system-wide wrong-column linkage (accounting module)",
+      "status": "PASS",
+      "evidence": "2026-08-04 Cursor: BillsPage, BillDetailPage, BillPaymentsListPage, BillPaymentDetailPage, AllocationsPage EntityLink kind=vendor id=mdata_vendor_id (label may fall back to legacy vendor_id text). Backend bills.service + allocations.service expose mdata_vendor_id. Guard verify-vend-link-01-vendor-uuid-entitylink composes verify-bill-vendor-link-canonical-uuid step 1969. Step 2356.",
       "pr": null
     },
     {
@@ -71,11 +71,11 @@
       "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "2026-08-03 Cursor: meta guard verify-vend-verify-01 composes S01 roster (TRANSP 564/USMCA 4 lucia), S03/S04 dedup+types, S02 fact-dual canonical profile; manifest /vendors + /vendors/:id; VendorDetail vendor-factor-schedule-relocated + emptyFactoringProfileMeta. Step 2252. VEND-LINK-01 money remains OPEN.",
+      "evidence": "2026-08-04 Cursor: meta guard verify-vend-verify-01 composes S01 roster (TRANSP 564/USMCA 4 lucia), S03/S04 dedup+types, S02 fact-dual canonical profile, VEND-LINK-01 bill/allocation vendor uuid EntityLink; manifest /vendors + /vendors/:id; VendorDetail vendor-factor-schedule-relocated + emptyFactoringProfileMeta. Steps 2252 + 2356.",
       "pr": null
     }
   ],
-  "pass_count": 6,
+  "pass_count": 7,
   "total_count": 7,
-  "progress": "6 of 7"
+  "progress": "7 of 7"
 }
