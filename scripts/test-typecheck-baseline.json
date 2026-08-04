@@ -1,0 +1,19 @@
+{
+  "gated_code": "TS2339",
+  "keys": [
+    "apps/backend/src/accounting/amortization-posting/__tests__/prepaid-purchase-posting.db.test.ts::amount_cents::never",
+    "apps/backend/src/accounting/amortization-posting/__tests__/prepaid-purchase-posting.db.test.ts::journal_entry_id::never",
+    "apps/backend/src/accounting/amortization-posting/__tests__/prepaid-purchase-posting.db.test.ts::result::never",
+    "apps/backend/src/auth/__tests__/office-login-enumeration-timing.test.ts::json::void & Promise<Response> & Chain",
+    "apps/backend/src/auth/__tests__/office-login-enumeration-timing.test.ts::statusCode::void & Promise<Response> & Chain",
+    "apps/backend/src/driver-finance/__tests__/escrow-forfeit.routes.test.ts::json::void & Promise<Response> & Chain",
+    "apps/backend/src/driver-finance/__tests__/escrow-forfeit.routes.test.ts::statusCode::void & Promise<Response> & Chain",
+    "apps/backend/src/driver-finance/__tests__/settlement-payment-double-pay.test.ts::values::{ sql: string; }",
+    "apps/backend/src/reports/scheduled/__tests__/scheduled.test.ts::mock::(input: EnqueueEmailInput) => Promise<{ queueId: string; }>",
+    "apps/backend/src/sms/sender.test.ts::body::never",
+    "apps/backend/src/sms/sender.test.ts::headers::never",
+    "apps/backend/src/sms/sender.test.ts::method::never",
+    "apps/backend/src/whatsapp/sender.test.ts::body::never",
+    "apps/backend/src/whatsapp/sender.test.ts::method::never"
+  ]
+}
