@@ -62,8 +62,12 @@ function assertMigrated(src) {
   if (!src.includes("Previous") || !src.includes("Next")) {
     errors.push(`${PAGE}: must keep server-side Previous/Next pagination`);
   }
-  if (!src.includes('label="Missing Required"') || !src.includes('label="Recent Uploads"')) {
-    errors.push(`${PAGE}: must keep Missing Required + Recent Uploads KPI cards`);
+  // DOCS-S02: Incomplete Uploads is the honest label for the missing_required KPI predicate.
+  if (!src.includes('label="Incomplete Uploads"') || !src.includes('label="Recent Uploads"')) {
+    errors.push(`${PAGE}: must keep Incomplete Uploads + Recent Uploads KPI cards`);
+  }
+  if (!src.includes('label="Required Types"')) {
+    errors.push(`${PAGE}: must keep Required Types KPI card (DOCS-S02 catalog density)`);
   }
   return errors;
 }
@@ -81,7 +85,8 @@ function selftest() {
       { key: "expiration_date", label: "Expires" },
       { key: "created_at", label: "Uploaded" },
     ];
-    <KpiCard label="Missing Required" onClick={() => {}} />
+    <KpiCard label="Incomplete Uploads" onClick={() => {}} />
+    <KpiCard label="Required Types" onClick={() => {}} />
     <KpiCard label="Recent Uploads" onClick={() => {}} />
     + Upload Document
     <UploadModal operatingCompanyId={companyId} />

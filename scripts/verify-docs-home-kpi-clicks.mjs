@@ -116,7 +116,8 @@ export function assertGuard({ routes, api, page }) {
   }
 
   const byLabel = (label) => tags.find((t) => t.includes(`label="${label}"`) || t.includes(`label={'${label}'}`));
-  for (const label of ["Missing Required", "Recent Uploads"]) {
+  // DOCS-S02: UI label is Incomplete Uploads; API/query key remains missing_required (lockstep).
+  for (const label of ["Incomplete Uploads", "Recent Uploads"]) {
     const tag = byLabel(label);
     if (!tag) {
       errors.push(`${PAGE}: <KpiCard label="${label}"> not found (never delete KPI cards)`);
@@ -150,11 +151,11 @@ function selftest() {
     if (filters.recent_uploads === true) query.set("recent_uploads", "true");
   `;
   const goodPage = `
-    <KpiCard label="Missing Required" value="1" onClick={() => setKpiFilter("missing_required")} />
+    <KpiCard label="Incomplete Uploads" value="1" onClick={() => setKpiFilter("missing_required")} />
     <KpiCard label="Recent Uploads" value="2" onClick={() => setKpiFilter("recent_uploads")} />
   `;
   const deadPage = `
-    <KpiCard label="Missing Required" value="1" />
+    <KpiCard label="Incomplete Uploads" value="1" />
     <KpiCard label="Recent Uploads" value="2" />
   `;
 
@@ -186,7 +187,7 @@ function main() {
     for (const e of errors) console.error(`  - ${e}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] OK — Docs Home Missing Required / Recent Uploads KPIs are clickable; list filters lockstep with KPI SQL`);
+  console.log(`[${LABEL}] OK — Docs Home Incomplete Uploads / Recent Uploads KPIs are clickable; list filters lockstep with KPI SQL`);
 }
 
 main();
