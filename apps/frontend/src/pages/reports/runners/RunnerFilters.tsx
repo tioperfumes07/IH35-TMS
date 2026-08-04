@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import type { RunnerFilter } from "./runner-config";
 import { listDrivers, listUnits } from "../../../api/mdata";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { Combobox, type ComboboxOption } from "../../../components/Combobox";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { CollapsedListFilters } from "../../../components/table";
 
@@ -33,11 +34,25 @@ export function defaultFilterValues(filters: RunnerFilter[]) {
 
 export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: Props) {
   const { selectedCompanyId, companies } = useCompanyContext();
+  // SAF-B29 / CLS-SILENT-CAP: never listDrivers(search:"", limit:200) — type-ahead re-queries past page 1.
+  const [driverSearch, setDriverSearch] = useState("");
   const driversQuery = useQuery({
-    queryKey: ["runner-filters", "drivers", selectedCompanyId ?? ""],
-    queryFn: () => listDrivers({ status: "Active", search: "", operating_company_id: selectedCompanyId ?? null, limit: 200 }), // full active set (endpoint default 50 truncates >50)
+    queryKey: ["runner-filters", "drivers", selectedCompanyId ?? "", driverSearch],
+    queryFn: () =>
+      listDrivers({
+        status: "Active",
+        search: driverSearch || undefined,
+        operating_company_id: selectedCompanyId ?? null,
+        limit: 200,
+      }),
     enabled: filters.some((f) => f.type === "driver_select") && Boolean(selectedCompanyId),
   });
+  const driverOptions = useMemo<ComboboxOption[]>(() => {
+    return (driversQuery.data?.drivers ?? []).map((driver) => ({
+      value: driver.id,
+      label: `${driver.first_name ?? ""} ${driver.last_name ?? ""}`.trim() || driver.id,
+    }));
+  }, [driversQuery.data?.drivers]);
   const unitsQuery = useQuery({
     queryKey: ["runner-filters", "units", selectedCompanyId ?? ""],
     queryFn: () => listUnits({ status: "active", operating_company_id: selectedCompanyId }),
@@ -101,18 +116,22 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
               );
             }
             if (filter.type === "driver_select") {
-              const drivers = driversQuery.data?.drivers ?? [];
+              const selectedDriverId = String(values[filter.key] ?? "");
               return (
                 <label key={filter.key} className="block">
                   <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-                  <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
-                    <option value="">Select driver</option>
-                    {drivers.map((driver) => (
-                      <option key={driver.id} value={driver.id}>
-                        {`${driver.first_name} ${driver.last_name}`}
-                      </option>
-                    ))}
-                  </SelectCombobox>
+                  <Combobox
+                    options={driverOptions}
+                    value={selectedDriverId || null}
+                    onChange={(next) => onChange(filter.key, next ?? "")}
+                    onSearch={setDriverSearch}
+                    placeholder={driversQuery.isLoading ? "Loading drivers…" : "Search driver…"}
+                    loading={driversQuery.isLoading}
+                    allowClear
+                    filterMode="contains"
+                    className="h-9 w-full rounded-sm border border-slate-300 text-sm focus:border-[#1f2a44] focus:ring-1 focus:ring-[#1f2a44]"
+                    dataField={`runner-filter-${filter.key}`}
+                  />
                 </label>
               );
             }
