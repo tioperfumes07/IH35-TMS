@@ -488,11 +488,11 @@
       "instances": [
         { "path": "apps/backend/src/dispatch/pod.routes.ts:78-168 POST /api/v1/driver/loads/:loadId/stops/:stopId/pod — driver PWA POD capture (WIRE-03)", "entity": "ALL", "note": "Wire exists but untested on live. dispatch.pod_documents = 0 rows on prod. R2 storage configured." }
       ],
-      "completeness": "Code-verified: pod.routes.ts validates delivery stop (isDeliveryStop), uploads photo+signature to R2, inserts dispatch.pod_documents with status=pending_review. Review path exists at POST /pod-documents/:id/review. Live verification blocked on driver PWA adoption (0 in-motion loads).",
+      "completeness": "Code-verified: pod.routes.ts validates delivery stop (isDeliveryStop), uploads photo+signature to R2, inserts dispatch.pod_documents with status=pending_review. Review path exists at POST /pod-documents/:id/review. Live verification blocked on driver PWA adoption.",
       "guard": "scripts/verify-disp-wire-03-pod-capture.mjs",
       "drain_proof": {
-        "guard_green": true,
-        "guard_sample": "node scripts/verify-disp-wire-03-pod-capture.mjs OK — StopAction→PodCapture→POST pod→INSERT; Neon density still 0 until a load is dispatched",
+        "guard_green": false,
+        "guard_sample": "",
         "money_critical": false
       },
       "status": "open",
