@@ -7,7 +7,7 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useToast } from "../../../components/Toast";
 import { legalContractsApi, type LegalContractLanguage, type LegalSignerType } from "../../../api/legal-contracts";
 import { legalTemplatesApi, type LegalTemplateSummary } from "../../../api/legal-templates";
-import { listCustomers, listDrivers } from "../../../api/mdata";
+import { getDriver, listCustomers } from "../../../api/mdata";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useListState } from "../../../components/list-state";
@@ -118,11 +118,6 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
         limit: customerSearch ? 200 : 500,
         search: customerSearch || undefined,
       }),
-  });
-  const driversQuery = useQuery({
-    queryKey: ["legal", "party", "drivers", operatingCompanyId],
-    enabled: open && signerType === "driver" && Boolean(operatingCompanyId),
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: 200 }),
   });
   const unitsQuery = useQuery({
     queryKey: ["legal", "party", "units", operatingCompanyId],
@@ -482,20 +477,18 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                         setSignerPhone("");
                         return;
                       }
-                      const applyDriver = (d: { first_name?: string | null; last_name?: string | null; email?: string | null; phone?: string | null }) => {
-                        setSignerName(`${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || id);
-                        setSignerEmail(d.email ?? "");
-                        setSignerPhone(d.phone ?? "");
-                      };
-                      const cached = driversQuery.data?.drivers?.find((row) => String(row.id) === id);
-                      if (cached) {
-                        applyDriver(cached as { first_name?: string | null; last_name?: string | null; email?: string | null; phone?: string | null });
-                        return;
-                      }
-                      void driversQuery.refetch().then((result) => {
-                        const d = result.data?.drivers?.find((row) => String(row.id) === id);
-                        if (d) applyDriver(d as { first_name?: string | null; last_name?: string | null; email?: string | null; phone?: string | null });
-                      });
+                      // SAF-B29 / CLS-SILENT-CAP: hydrate signer fields via getDriver — never a silent
+                      // listDrivers(limit:200) roster that hides drivers past page 1 (DriverPickerWithCreate
+                      // already server-searches the picker; this lookup must not reintroduce the cap).
+                      void getDriver(id, operatingCompanyId)
+                        .then((d) => {
+                          setSignerName(`${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || id);
+                          setSignerEmail(d.email ?? "");
+                          setSignerPhone(d.phone ?? "");
+                        })
+                        .catch(() => {
+                          /* Picker validated the id; leave contact fields for manual entry if fetch fails. */
+                        });
                     }}
                   />
                 ) : (
