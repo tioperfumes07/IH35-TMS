@@ -73,12 +73,12 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "OPEN",
-      "evidence": "scaffold \u2014 functionally empty of classified data; follow-up vs attachment tables",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 PASS \u2014 meta guard verify-docs-verify-01 (step 2266) composes EntityLink column, DOCS-S02 required-types KPI honesty, KPI clicks, ParityTable home, tenant scope + /docs route. DOCS-ECON-01 / DOCS-LINK-01 remain OPEN (file_links=0 density).",
+      "pr": "#pending"
     }
   ],
-  "pass_count": 2,
+  "pass_count": 3,
   "total_count": 5,
-  "progress": "2 of 5"
+  "progress": "3 of 5"
 }

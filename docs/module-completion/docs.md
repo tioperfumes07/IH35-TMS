@@ -1,12 +1,12 @@
 # Module completion — Documents (DOCS)
 
-**PROGRESS: 2 of 5** · complete: `false` · as_of: 2026-08-03 · live_sha: `—`
+**PROGRESS: 3 of 5** · complete: `false` · as_of: 2026-08-03 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 2 |
+| PASS | 3 |
 | HOLD | 0 |
-| OPEN | 3 |
+| OPEN | 2 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -16,6 +16,6 @@
 | `DOCS-ECON-01` | **OPEN** | Entity-linked classified documents (not generic test PDFs only) | scaffold — OPEN: 3 uncategorized test PDFs; real driver/unit docs may live elsewhere | — |
 | `DOCS-LINK-01` | **OPEN** | Document rows link to entity (driver/unit/customer) forward+reverse | 2026-08-03 PARTIAL: EntityLink wired on DocsHome (no UUID slice). Neon lucia docs.file_links=0 — density still blocks PASS until classified entity links exist (DOCS-ECON-01 sibling). | — |
 | `DOCS-S02` | **PASS** | Required document types catalog populated per opco | 2026-08-03 Neon lucia: compliance.required_document_types=54 (18/opco). Docs KPIs: Incomplete Uploads (honest rename of missing_required predicate) + Required Types count from required_document_types. Guard verify-docs-s02-required-types-kpi step 2262. DOC-REQ-2b entity-gap chip still deferred. | #pending |
-| `DOCS-VERIFY-01` | **OPEN** | Docs module VERIFY-1..8 TRANSP + USMCA | scaffold — functionally empty of classified data; follow-up vs attachment tables | — |
+| `DOCS-VERIFY-01` | **PASS** | Docs module VERIFY-1..8 TRANSP + USMCA | 2026-08-03 PASS — meta guard verify-docs-verify-01 (step 2266) composes EntityLink column, DOCS-S02 required-types KPI honesty, KPI clicks, ParityTable home, tenant scope + /docs route. DOCS-ECON-01 / DOCS-LINK-01 remain OPEN (file_links=0 density). | #pending |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/reports-docs-maintenance-2026-08-01.md
