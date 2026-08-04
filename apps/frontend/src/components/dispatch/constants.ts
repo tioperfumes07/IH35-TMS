@@ -18,17 +18,23 @@ export const STATUS_LABEL: Record<LoadStatus, string> = {
   draft: "Draft",
   booked: "Booked",
   planned: "Planned",
+  unassigned: "Unassigned",
   assigned: "Assigned",
+  assigned_not_dispatched: "Assigned (not dispatched)",
   dispatched: "Dispatched",
   at_pickup: "At Pickup",
   in_transit: "In Transit",
   at_delivery: "At Delivery",
   delivered: "Delivered",
+  delivered_pending_docs: "Delivered (pending docs)",
+  completed_docs_received: "Docs received",
   invoiced: "Invoiced",
   paid: "Paid",
   closed: "Closed",
   cancelled: "Cancelled",
   abandoned: "Abandoned",
+  driver_walkoff: "Driver walk-off",
+  driver_no_show: "Driver no-show",
 };
 
 // §7 palette: the load `flag_code` used to render as a color-emoji circle (green/blue/yellow/orange/
