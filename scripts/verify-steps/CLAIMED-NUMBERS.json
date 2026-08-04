@@ -1233,6 +1233,7 @@
     "2382": "2382-verify-homepage-scenario-tracker-staleness.mjs",
     "2384": "2384-verify-bookload-documents-chrome-honesty.mjs",
     "2386": "2386-verify-create-wo-load-entity-picker.mjs",
+    "2388": "2388-verify-fine-create-unit-load-entity-picker.mjs",
     "2400": "2400-verify-verify-step-claimed-on-main.mjs",
     "2401": "2401-verify-no-extract-over-date-difference.mjs",
     "2402": "2402-verify-claude-settings-hard-deny.mjs",
