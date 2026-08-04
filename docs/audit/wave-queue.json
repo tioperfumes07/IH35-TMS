@@ -240,7 +240,7 @@
       "root_cause": "A nav/leaf renders but has no back-link, no detail, or points to the wrong system of record. 5 surfaces across bills, accounting, vendors, cash flow, and general empty states.",
       "lane": "mechanical",
       "layer": "A",
-      "modules": ["accounting", "vendors", "cash-flow"],
+      "modules": ["accounting", "cash-flow"],
       "instances": [
         { "path": "/accounting/bills: row not clickable, no vendor drill, no back button (ORPH-001)", "entity": "ALL", "note": "AUD-F001." },
         { "path": "Accounting > More dropdown: CoA not reachable, dropdown not alphabetical (ORPH-002)", "entity": "ALL", "note": "AUD-F008." },
@@ -457,6 +457,13 @@
       "description": "verify-module-completion and verify-no-false-green-certify are in tension when a module has all its own items PASS but open shared CLS-* class cards list it in modules[]. verify-module-completion requires complete:false ↔ N<M, verify-no-false-green-certify requires complete:false when open classes touch the module. The reconciliation requires adding a synthetic OPEN item to the module manifest to make N<M consistent. This works but is a modeling gap — the guards should natively understand cross-cutting classes without requiring a synthetic item.",
       "lane": "fixer (Claude-Coder or Cursor)",
       "disposition": "OPEN — fixer lane should add native shared-class awareness to verify-module-completion so that a module with all its own items PASS but open shared classes referencing it is automatically treated as incomplete, without needing a synthetic BANK-CLS-SHARED item.",
+      "date": "2026-08-04"
+    },
+    {
+      "id": "FINDING-LOAD-LINKAGE-SCOPE-RULING",
+      "description": "Owner ruling 2026-08-04: Historical/QBO-imported fuel & expenses are legitimately load-null because the TMS has not dispatched loads yet. Load linkage is going-forward only. NEVER invent a load FK. The 1,548 fuel_transactions with load_id=NULL are pre-TMS-dispatch imports — expected state, not broken wiring. Claude Coder task: backfill load_required=false + load_exemption_reason='PRE_TMS_DISPATCH_IMPORT' on the historical cohort (additive/idempotent). Guard: prove TMS-native loads link correctly. No CLS card created (FROZEN). Any card that flags '1,548 fuel rows have no load' is N/A-PRE-OPERATIONAL per this ruling.",
+      "lane": "Claude-Coder (money lane — small backfill + going-forward guard)",
+      "disposition": "RULING — not a defect. Claude Coder executes the two honest tasks (exempt backfill + going-forward guard). No card inflation.",
       "date": "2026-08-04"
     }
   ]
