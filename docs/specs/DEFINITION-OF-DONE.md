@@ -2,7 +2,7 @@
 
 **Status: BINDING. Owner-agreed. This file is the single canonical statement of "done."**
 
-**OWNER LAW (2026-08-03, FINAL) governs §6 Merge gates below: NO HOLDS, NO owner-approval merge label — every
+**OWNER LAW (2026-08-03, FINAL) governs §6 Merge gates below: NO HOLDS, NO `JORGE-APPROVED` LABEL — every
 coder merges on green in every lane, including financial. See `.cursor/rules/00-operating-method-LAW.mdc`.**
 
 Before this file existed the standard was real but scattered across
@@ -158,7 +158,7 @@ A PR that changes app code and omits this block is not reviewable and is not don
 
 - Merging to `main` **is** the production-deploy decision. There is no second gate — including no owner
   approval gate.
-- **NO HOLDS. NO owner-approval merge label.** Every coder (Cursor, Claude, Devin, Cascade) merges on green in
+- **NO HOLDS. NO `JORGE-APPROVED` LABEL.** Every coder (Cursor, Claude, Devin, Cascade) merges on green in
   **every** lane, including the financial cluster, migrations, and `accounting.*`/`catalogs.*`/`mdata.*`.
 - **Financial cluster still has a proof gate, not an approval gate:** independent code-review + financial-
   agent pass, the 18-key evidence block, the migration firewall, and (for a migration) applying it on Neon

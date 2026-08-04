@@ -46,7 +46,7 @@
     {
       "check": "prod inbound FK count on catalogs.expense_categories",
       "status": "UNVERIFIED — still 0",
-      "evidence": "Neon br-fancy-credit-akjnd07a 2026-07-24: 0 inbound FKs. Blocked on coder Neon-apply; ih35_app cannot run DDL. ACCT-LINK-04 stays FAIL."
+      "evidence": "Neon br-fancy-credit-akjnd07a 2026-07-24: 0 inbound FKs. Blocked on owner Neon-apply; ih35_app cannot run DDL. ACCT-LINK-04 stays FAIL."
     },
     {
       "check": "category density on accounting.expense_lines",
@@ -54,5 +54,5 @@
       "evidence": "accounting.expenses=0 and accounting.expense_lines=0 on prod; catalogs.expense_categories metadata={} on all 9 rows so no category->account binding exists yet. Density needs the owner's Lists-hub bindings."
     }
   ],
-  "note": "HOLD — financial cluster. Coder merges on green with proof; no owner-approval label + coder Neon-apply."
+  "note": "HOLD — financial cluster. Do NOT merge without JORGE-APPROVED + owner Neon-apply."
 }

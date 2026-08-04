@@ -7,7 +7,7 @@ alwaysApply: true
 
 Applies to **coordinator** sessions for IH35-TMS (Lane A + Lane B in parallel).
 
-**Merge law (2026-08-03 OWNER LAW):** both lanes merge on green themselves — no owner-approval merge label, no
+**Merge law (2026-08-03 OWNER LAW):** both lanes merge on green themselves — no `JORGE-APPROVED` label, no
 owner merge gate, no waiting on Devin exclusively. See `.cursor/rules/00-operating-method-LAW.mdc`
 (governance). "Jorge ON HOLD" below refers only to the owner pausing a *lane's dispatch* by decision in
 chat — it is not an approval-hold on merging a ready PR.

@@ -1,11 +1,11 @@
 # IH35-TMS — Durable Handoff Context
 
-> **★★★★ OWNER LAW (2026-08-03, FINAL): NO HOLDS. NO owner-approval merge label.** Claude and all coders (Cursor /
+> **★★★★ OWNER LAW (2026-08-03, FINAL): NO HOLDS. NO `JORGE-APPROVED` LABEL.** Claude and all coders (Cursor /
 > Cascade / Devin / Claude Coder) have **FULL Neon access and merge authority** in every lane, including
 > financial/migrations — they apply migrations, flip posting flags, and merge on green themselves. The owner
 > steers by DECISION in chat, never a label or a merge click. Safeguard = PROOF, not approval. Canonical:
 > `.cursor/rules/00-operating-method-LAW.mdc` (governance section). This supersedes any older "Devin merges
-> on green" / "coder applies on Neon" / "self-merge only if non-financial" wording anywhere below or in any
+> on green" / "owner applies on Neon" / "self-merge only if non-financial" wording anywhere below or in any
 > doc this file points to.
 
 > **Consolidated index:** docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md — the complete 24-rule + 18-key-gate map (source .cursor/rule wins on conflict).

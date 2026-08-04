@@ -39,7 +39,7 @@
   "runtime_path": "src",
   "db_required": true,
   "guard_required": true,
-  "extra_gates": ["hold-merge-gate (migration firewall only; no owner-approval label)"],
+  "extra_gates": ["hold-merge-gate (JORGE-APPROVED required)"],
   "flag": "QBO_JE_PUSH_ENABLED",
   "flag_default": "OFF",
   "depends_on": [],

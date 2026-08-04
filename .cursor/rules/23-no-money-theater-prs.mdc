@@ -42,7 +42,7 @@ Commit + PR body MUST include (git fails otherwise — verify-step 1430):
 
 Refuse merge of theater. **Every coder (Cursor, Claude, Devin, Cascade) builds AND merges on green** — no
 role split, no owner gate (OWNER LAW 2026-08-03 supersedes the 2026-07-29 "Devin merges" ruling; see
-`00-operating-method-LAW.mdc`). The owner-approval merge label is **DELETED** — see `13-financial-and-accounting-law`. Volume ≠ Done. Proof (the 18-key block + live density) is the gate, not a merge role or a label.
+`00-operating-method-LAW.mdc`). The `JORGE-APPROVED` label is **DELETED** — see `13-financial-and-accounting-law`. Volume ≠ Done. Proof (the 18-key block + live density) is the gate, not a merge role or a label.
 
 ## CI teeth (mechanical — not memory)
 

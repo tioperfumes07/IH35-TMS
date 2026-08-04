@@ -5,7 +5,7 @@
   "tier": 2,
   "status": "BUILD",
   "branch": "feat/factoring-submission-workflow",
-  "hold_reason": "Touches factoring batch submission path and factoring_status on accounting.invoices. No migration, no GL write, no env-flag flip. Tier 2: parked for owner chat decision + owner-chat-decision-only label before merge.",
+  "hold_reason": "Touches factoring batch submission path and factoring_status on accounting.invoices. No migration, no GL write, no env-flag flip. Tier 2: HOLD for Jorge review + JORGE-APPROVED label before merge.",
   "gates": {
     "doc_gate": "POD (dispatch.pod_documents.status=approved) + Rate Confirmation (docs.file_links + catalogs.file_categories.code=rate_confirmation) required before is_submittable=true",
     "role_gate": "submit-batch: Owner/Administrator/Manager/Accountant only",

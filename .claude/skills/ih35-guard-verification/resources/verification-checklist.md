@@ -15,7 +15,7 @@ Run this before claiming done / fixed / merged / works. Every unchecked box is a
 - [ ] Financial / migration / `accounting.*` / `catalogs.*` / `mdata.*` / dep-bump? → same merge-on-green
       rule, PLUS: independent code-review + financial-agent pass, 18-key evidence block, migrations
       validated on a LOCAL DB (proved `current_database()` ≠ prod), applied on Neon by the coder themselves.
-      No owner-approval merge label — the label is DELETED.
+      No `JORGE-APPROVED` — the label is DELETED.
 - [ ] `hold-merge-gate` red on a PR is CORRECT only when the migration firewall check itself fails — a
       missing label is never the reason (there is no label check anymore).
 

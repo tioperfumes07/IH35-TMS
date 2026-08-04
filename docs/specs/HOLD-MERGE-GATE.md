@@ -2,7 +2,7 @@
 
 ## OWNER LAW (2026-08-03, FINAL — supersedes the 2026-07-26 "no longer required" wording)
 
-**The owner-approval merge label is DELETED, not merely optional. It does not exist as a concept in this repo's
+**The `JORGE-APPROVED` label is DELETED, not merely optional. It does not exist as a concept in this repo's
 merge process.** Every coder (Cursor, Claude, Devin, Cascade) has FULL Neon access and merge authority and
 merges on green itself, in every lane, including financial/migrations. See
 `.cursor/rules/00-operating-method-LAW.mdc` (governance section).
@@ -18,7 +18,7 @@ Every coder merges its own work when CI is green — no role split. Agents never
 
 ## What it no longer does
 
-- Does **not** require owner-approval merge label
+- Does **not** require `JORGE-APPROVED`
 - Does **not** block merge of financial/HOLD PRs for missing owner label
 
 ## Workflow

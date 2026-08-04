@@ -13,5 +13,5 @@
       "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
     }
   ],
-  "note": "Branch fix/safety-log-event-dot-fields: migration 202607582000 adds prod-matched DOT columns to safety.safety_events; UI+POST wired; guard verify:safety-log-event-dot-fields. occurred_at deferred to s-06 PR #2630. hazmat_release omitted (absent on prod safety.accidents). Coder applies Neon migration (FULL access); merge on green with proof."
+  "note": "Branch fix/safety-log-event-dot-fields: migration 202607582000 adds prod-matched DOT columns to safety.safety_events; UI+POST wired; guard verify:safety-log-event-dot-fields. occurred_at deferred to s-06 PR #2630. hazmat_release omitted (absent on prod safety.accidents). HOLD: owner Neon-apply migration before merge."
 }

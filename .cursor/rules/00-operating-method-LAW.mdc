@@ -55,11 +55,11 @@ the Doctrine is satisfied at the drain.
 6. **One truth = the ledger.** The scoreboard renders the ledger; the 13-gate tally names the weakest column = the
    next wave. If the scoreboard and the wave queue disagree, the scoreboard is stale — fix the ledger row, not the story.
 7. **Governance PR is speed infrastructure — land it before any Wave-2 product work.** Until the holds /
-   owner-approval merge label are purged and the always-read set is identical for all agents, every session burns time
+   `JORGE-APPROVED` are purged and the always-read set is identical for all agents, every session burns time
    re-litigating merge law.
 
 ## Governance (already owner-locked 2026-08-03 — no confusion)
-NO HOLDS. NO owner-approval merge label. Claude and all coders have **FULL Neon access** and **merge on green** in every lane;
+NO HOLDS. NO `JORGE-APPROVED`. Claude and all coders have **FULL Neon access** and **merge on green** in every lane;
 they apply migrations + flip flags themselves. Owner steers by **decision in chat** only. Safeguard = **PROOF, not
 approval**: additive/idempotent + guard + tests → verify live → apply on Neon → **GUARD verifies live AFTER**. WORM /
 void-not-delete · no TMS→QBO write-back · posting flags OFF until the owner says "turn it on" in chat.

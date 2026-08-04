@@ -24,7 +24,7 @@ owner ruling.
 
 ## §1 — PERMISSIONS & MERGE GATES — OWNER LAW (2026-08-03, FINAL; supersedes every earlier wording below)
 
-> **NO HOLDS. NO owner-approval merge label. Claude and all coders (Cursor / Cascade / Devin / Claude Coder)
+> **NO HOLDS. NO `JORGE-APPROVED` LABEL. Claude and all coders (Cursor / Cascade / Devin / Claude Coder)
 > have FULL Neon access and merge authority.** Coders merge on green in every lane and apply migrations +
 > flip posting flags on Neon themselves. Owner steers by decision in chat. Safeguard = PROOF, not approval.
 > Canonical: `.cursor/rules/00-operating-method-LAW.mdc` (governance section).
@@ -33,7 +33,7 @@ Merge to `main` = ship to prod; no second gate — including no owner-approval g
 **Every coder merges on green itself, in every lane** — non-financial AND the financial cluster /
 migrations / `accounting.*` / `catalogs.*` / `mdata.*`. The 2026-07-29 "builder never merges its own work —
 Devin merges" role split is superseded: Devin is one of several coders who merge, not the exclusive one.
-**The owner-approval merge label is DELETED, not merely "not a gate"** (owner rulings 2026-07-26, 2026-07-29,
+**The `JORGE-APPROVED` label is DELETED, not merely "not a gate"** (owner rulings 2026-07-26, 2026-07-29,
 FINAL 2026-08-03; `21-session-operating-decree`, `PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26`). The owner does
 not review PRs; asking for the label at merge time is itself a violation. The controls that DO operate:
 Rule 11's independent reviewer ≠ builder; `ih35_app` cannot run DDL (a Postgres grant fact — the coder
@@ -62,7 +62,7 @@ that independence is about review quality, not about who is allowed to click mer
 - **10 verification-and-neon-rls** — prod branch wins; RLS 0-count re-run under lucia; ledgered≠effective; deploy verified by SHA ancestry; coder applies DDL themselves (FULL access, OWNER LAW 2026-08-03); GUARD re-proves with acceptance[] evidence after merge.
 - **11 multi-agent-orchestration** — planner → builder (one bounded change; ONE builder per migration lane) → **independent code-review agent** (different agent than builder; unresolved high-severity blocks the PR) → **financial/accounting agent VETO** on money (informs the merge, does not gate the owner) → **GUARD** live-verify after merge. ≥1 independent verifier per financial finding; loop-until-dry; builder never self-reviews.
 - **12 model-tiering** — highest-capability model for money/schema/RLS/migration/linkage/review; mid for routine; fast for docs/bulk. Escalate the instant money/schema is touched; when in doubt, escalate.
-- **13 financial-and-accounting-law** — financial cluster = build + apply on Neon + merge on green, **every coder merges its own work, no owner gate** (OWNER LAW 2026-08-03 supersedes the 2026-07-29 "Devin merges" ruling); the owner-approval merge label is DELETED; reuse the poster (no new GL math); parallel double-books, **QBO NEVER written** (reconcile-only, clone-once); flags default OFF until the owner's chat decision to flip + Neon tie-out proof; US GAAP/FASB ASC — Ch.11 = ASC 470-60 (NOT 852 fresh-start), 606 revenue, 842 leases; factoring = secured borrowing; cutover 04/01/2026, OB as-of 03/31 owner-entered.
+- **13 financial-and-accounting-law** — financial cluster = build + apply on Neon + merge on green, **every coder merges its own work, no owner gate** (OWNER LAW 2026-08-03 supersedes the 2026-07-29 "Devin merges" ruling); the `JORGE-APPROVED` label is DELETED; reuse the poster (no new GL math); parallel double-books, **QBO NEVER written** (reconcile-only, clone-once); flags default OFF until the owner's chat decision to flip + Neon tie-out proof; US GAAP/FASB ASC — Ch.11 = ASC 470-60 (NOT 852 fresh-start), 606 revenue, 842 leases; factoring = secured borrowing; cutover 04/01/2026, OB as-of 03/31 owner-entered.
 - **14 linkage-law-enforcement (§10)** — declare per block: canonical target (`to_regclass`, never a RETIRE table) · hub matrix (org.companies, identity.users, mdata.drivers/units/loads/customers/vendors, catalogs.accounts, maintenance.work_orders, accounting.journal_entries) · both-way (forward+reverse) · entity scope (opco + FORCED RLS; cross-entity FK = defect) · deployed-SHA vs origin/main. A block with no linkage declaration is a defect. Guards G1–G4 (registry-complete, block-acceptance, guard-wired, canonical-table-writes).
 - **15 research-mandate** — cite the standard a material recommendation matches (QBO/NetSuite/McLeod/Alvys; GAAP/ASC; FMCSA USDOT/HOS/DQ/Clearinghouse/IFTA/2290/425C; RLS/WORM/security_invoker/least-privilege).
 - **16 fix-not-patch-evidence-law** — fix root cause; never patch/defer without owner-written tracker + future-block id; every bug fix ships a guard; reply shape ROOT CAUSE / FIX / GUARD / LIVE PROOF|UNVERIFIED / REMAINING.

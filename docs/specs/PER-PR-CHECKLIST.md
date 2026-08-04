@@ -121,7 +121,7 @@ A PR that changes app code and omits this block is **not reviewable and is not d
 - [ ] **Establish the baseline before blaming your change** — run the suite on `main` and compare
 - [ ] **Deploy is verified by ancestry**, not string equality (`git merge-base --is-ancestor`)
 
-## 6 · Merge gates — OWNER LAW (2026-08-03, FINAL): NO HOLDS, NO owner-approval merge label
+## 6 · Merge gates — OWNER LAW (2026-08-03, FINAL): NO HOLDS, NO `JORGE-APPROVED`
 
 - [ ] Merging to `main` **IS** the production-deploy decision. There is no second gate — including no
       owner-approval gate
