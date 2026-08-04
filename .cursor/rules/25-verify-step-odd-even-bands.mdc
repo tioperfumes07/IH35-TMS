@@ -1,31 +1,49 @@
 ---
-description: Verify-step number bands — Cursor claims EVEN, Claude claims ODD (owner 2026-07-28)
+description: Verify-step bands — Cursor EVEN; CC-1 ≡1 (mod 4); CC-2 ≡3 (mod 4); claim-before-write (owner 2026-08-04)
 alwaysApply: true
 ---
 
-# RULE 25 — VERIFY-STEP ODD/EVEN BANDS (owner 2026-07-28)
+# RULE 25 — VERIFY-STEP BANDS + CLAIM-BEFORE-WRITE (owner 2026-08-04)
 
-## Standing split (non-negotiable)
+Supersedes the 2026-07-28 odd/even-only split. Credit: **CC-2 analysis** (two Claude lanes both drawing ODD → second merge collides). Renaming after a collision is a symptom; this rule + guards kill the class.
 
-| Coder | Verify-step numbers |
+## Standing split (non-negotiable) — mod-4
+
+| Coder | Band | Examples |
+|---|---|---|
+| **Cursor** | **EVEN** (`n % 2 === 0`) | 2400, 2402, 2404… |
+| **Claude Coder 1 (CC-1)** | **≡ 1 (mod 4)** | 2401, 2405, 2409… |
+| **Claude Coder 2 (CC-2)** | **≡ 3 (mod 4)** | 2403, 2407, 2411… |
+
+Branch prefixes (enforced by `scripts/verify-verify-step-lane-band.mjs`):
+
+| Prefix | Lane |
 |---|---|
-| **Cursor** | **EVEN** only (`…1750, 1752, 1754, 1756…`) |
-| **Claude** | **ODD** only (`…1751, 1753, 1755…`) |
+| `cursor/`, `cursoragent/` (+ Cursor chore/feat/fix when clearly Cursor) | Cursor EVEN |
+| `claude/`, `cc-1/`, `cc1/` | CC-1 ≡1 |
+| `cc-2/`, `cc2/` | CC-2 ≡3 |
 
-## How to claim (TOOL-F03 — filename is the claim)
+`claude/` maps to **CC-1** (≡1). CC-2 **must** use `cc-2/` (or `cc2/`) — never share `claude/` with CC-1 for new steps.
 
-1. List `scripts/verify-steps/NNNN-*.mjs` on `origin/main` + your branch; pick the next free number in **your** parity band
-2. Add **only** `scripts/verify-<name>.mjs` + `scripts/verify-steps/NNNN-verify-<name>.mjs` in the same commit
-3. **Do NOT** edit `scripts/verify-steps/CLAIMED-NUMBERS.json` on a feature PR — `verify-no-claimed-numbers-edits` fails CI (registry regen is `chore/claimed-regen*` or commit subject `CLAIMED-REGEN` only)
-4. Never edit `package.json` / locked-guards / ci.yml (Rule 17)
+## Claim-before-write (atomic reservation)
+
+1. **Reserve first:** open a claim-only PR that edits **only** `scripts/verify-steps/CLAIMED-NUMBERS.json` (branch `chore/claim-reserve*` / `chore/claimed-regen*` **or** commit subject contains `CLAIM-RESERVE` / `CLAIMED-REGEN`). Merge it to `main`.
+2. **Then author the guard:** on a feature branch, add `scripts/verify-<name>.mjs` + `scripts/verify-steps/NNNN-verify-<name>.mjs` using the **already-claimed** number.
+3. **CI fails closed** if a PR adds a new `verify-steps/NNNN-*.mjs` whose `NNNN` is **not** already present in `CLAIMED-NUMBERS.json` on `origin/main` (`scripts/verify-verify-step-claimed-on-main.mjs`).
+
+Do **not** claim and author in the same feature PR. Do **not** renumber after a collision — reserve the next free number in **your** mod-4 band.
 
 ## Forbidden
 
-- Cursor claiming an odd step number (Claude's band)
-- Claude claiming an even step number (Cursor's band)
-- "Next free overall" without checking parity — that is how collisions return
-- Feature-PR edits to `CLAIMED-NUMBERS.json` (hotfile thrash — #4010)
+- Cursor claiming odd / ≡1 / ≡3
+- CC-1 claiming even or ≡3
+- CC-2 claiming even or ≡1
+- CC-2 using `claude/` prefix for new steps (collides with CC-1)
+- Authoring a verify-step file before its number is on `main`'s CLAIMED registry
+- "Next free overall" without checking mod-4 band
+- Feature-PR edits to `CLAIMED-NUMBERS.json` (except allowlisted claim-reserve / CLAIMED-REGEN)
+- Spending turns on `gh pr checks --watch` / CI babysit instead of reading the failing log line and fixing the root cause
 
 ## Why
 
-Odd/even keeps concurrent claims on different keys. The step **filename** is the authoritative claim; the JSON registry is regenerated on an allowlisted chore branch so sibling PRs do not serialize on that hotfile.
+Odd/even alone left two Claude coders on the same residue class. Mod-4 splits Claude; claim-before-write makes reservation merge before file authorship so two agents cannot "discover" the same free number in parallel.
