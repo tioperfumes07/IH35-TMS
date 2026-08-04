@@ -2,6 +2,12 @@
 /**
  * GUARD: module-completion manifest arithmetic cannot contradict itself.
  *
+ * SOURCE OF TRUTH = items[] only. Stored pass_count / total_count / progress are
+ * derived mirrors that MUST match scoreManifest(items). The silent-drift hole was
+ * UI/CI reading stored "0 of 5" while items[] were all PASS — this guard never
+ * trusts stored fields as authoritative; it scores N/M from items[] and FAILS any
+ * stored disagreement.
+ *
  * For every docs/module-completion/*.json FAIL when:
  *   (a) progress string ≠ `${pass_count} of ${total_count}` OR those counts ≠ scored N/M from items[]
  *   (b) complete:true while any item is not PASS / qualifying HOLD

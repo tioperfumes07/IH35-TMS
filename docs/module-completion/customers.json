@@ -1,7 +1,7 @@
 {
   "module": "customers",
   "title": "Customers",
-  "complete": true,
+  "complete": false,
   "as_of": "2026-08-04",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/customers-deep-2026-08-01.md",
@@ -129,12 +129,27 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "2026-08-04 Cursor: meta guard verify-cust-verify-01 composes S01 roster (TRANSP 1243/USMCA 1 lucia deactivated_at filter), S02 transaction list, S03 coming-state copy, CHROME-01 header parity, LINK-01 honest invoice line-empty, LINK-02 COI honest empty; manifest /customers + /customers/:id. Step 2254. Module 9 of 9 complete.",
+      "evidence": "2026-08-04 Cursor: meta guard verify-cust-verify-01 composes S01 roster (TRANSP 1243/USMCA 1 lucia deactivated_at filter), S02 transaction list, S03 coming-state copy, CHROME-01 header parity, LINK-01 honest invoice line-empty, LINK-02 COI honest empty; manifest /customers + /customers/:id. Step 2254. Was 9 of 9 until LV-001 Relationship Health FAIL opened M to 10.",
+      "pr": null,
+      "prod_verified": false
+    },
+    {
+      "id": "LV-001",
+      "title": "Relationship Health 500s on every customer — PG 42883, scores never written",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "VERIFY-1",
+        "VERIFY-6"
+      ],
+      "spec": "Customer detail Relationship Health · catalogs/customer quality scores",
+      "status": "FAIL",
+      "evidence": "2026-08-04 GUARD/live: Relationship Health tab 500s on every customer (Postgres 42883 — function/operator missing); quality scores never written. Honest M grows 9→10; module cannot stay complete:true.",
       "pr": null,
       "prod_verified": false
     }
   ],
   "pass_count": 9,
-  "total_count": 9,
-  "progress": "9 of 9"
+  "total_count": 10,
+  "progress": "9 of 10"
 }

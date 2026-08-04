@@ -36,18 +36,34 @@ function formatRelative(iso: string | null) {
 }
 
 // Decision #5 (parallel-books lock): TMS holds its own CLONE of QBO and reconciles daily — there is NO
-// two-way sync. Retire the "Synced X of Y" parallel counter; show the clone total + open exceptions +
+// two-way sync. Retire the "Synced X of Y" parallel counter; show QBO-sourced count + open exceptions +
 // last-reconciled instead. Empty-state marker "Not cloned yet" is pinned by the status-endpoint guard.
+//
+// LV-002 companion: never label TMS-only rows (USMCA / local_only) as "Cloned from QBO".
 function renderStatusLine(status: VendorsSyncStatus) {
-  if (status.total_local === 0 && !status.last_pull_at) {
+  const exceptions = status.drift_detected + status.sync_error;
+  const exceptionBit = exceptions > 0 ? ` · ${exceptions} exception${exceptions === 1 ? "" : "s"}` : "";
+  const lastBit = ` · Last reconciled: ${formatRelative(status.last_reconcile_at ?? status.last_pull_at)}`;
+  const qboSourced = status.synced + status.drift_detected;
+
+  if (status.total_local === 0 && !status.last_pull_at && qboSourced === 0) {
     return "Not cloned yet — click Refresh from QBO to clone the current vendors";
   }
-  const exceptions = status.drift_detected + status.sync_error;
+  if (qboSourced === 0) {
+    return (
+      <>
+        TMS vendors: {status.total_local} (no QBO provenance)
+        {exceptionBit}
+        {lastBit}
+      </>
+    );
+  }
   return (
     <>
-      Cloned from QBO: {status.total_local}
-      {exceptions > 0 ? ` · ${exceptions} exception${exceptions === 1 ? "" : "s"}` : ""}
-      {" · "}Last reconciled: {formatRelative(status.last_reconcile_at ?? status.last_pull_at)}
+      Cloned from QBO: {status.synced}
+      {status.local_only > 0 ? ` · ${status.local_only} TMS-only` : ""}
+      {exceptionBit}
+      {lastBit}
     </>
   );
 }

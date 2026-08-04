@@ -2,7 +2,7 @@
   "module": "help",
   "title": "Help Center",
   "complete": true,
-  "as_of": "2026-08-03",
+  "as_of": "2026-08-04",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/program-system-help-2026-08-01.md",
   "spec_sources": [
@@ -22,7 +22,7 @@
       "status": "PASS",
       "evidence": "2026-08-03 Cursor: CATEGORY_ORDER + HelpCategory include 8th Driver App (was folded under Module Guides). Matches auditor list. Guard verify-help-center-eight-categories + step 2240.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "HELP-S02",
@@ -35,7 +35,7 @@
       "status": "PASS",
       "evidence": "2026-08-03 Cursor: sidebar-config Overview → /help/overview; manifest mounts HelpPage. Guard step 2240.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "HELP-S03",
@@ -47,7 +47,7 @@
       "status": "PASS",
       "evidence": "2026-08-03 Cursor: /help/runbooks → RunbooksIndex data-testid=runbooks-index + RUNBOOKS.map; flyout link present. Guard step 2240.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "HELP-S04",
@@ -60,7 +60,7 @@
       "status": "PASS",
       "evidence": "2026-08-03 Cursor: expanded 12 Phase-7 seed stubs (≥12 non-empty lines, seed footer removed); factoring article documents canonical factoring.factor profile path. Guard verify-help-article-content-floor + step 2244.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "HELP-VERIFY-01",
@@ -79,7 +79,7 @@
       "status": "PASS",
       "evidence": "2026-08-03 Cursor: HELP-S01..S04 PASS on main; verify-help-verify-01 composes eight-categories + article-content-floor + sidebar/manifest mounts (/help, /help/overview, /help/runbooks, /help/:slug) + Driver App category. Step 2248. Browser click-through named UNVERIFIED only for screenshots — structural VERIFY 1–8 locked in CI.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     }
   ],
   "pass_count": 5,
