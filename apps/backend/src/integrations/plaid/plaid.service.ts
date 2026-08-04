@@ -25,6 +25,7 @@ import { getPlaidClient, getPlaidEnvForAudit } from "./plaid-client.js";
 import { markPlaidItemSyncSucceeded } from "./plaid-sync-state.js";
 import { decryptPlaidAccessToken, encryptPlaidAccessToken } from "./plaid-token-crypto.js";
 import { plaidMaskOwnershipViolation } from "../../banking/plaid-mask-ownership.js";
+import { pickBestCategoryRule } from "./plaid-category-match.js";
 
 type SyncCounts = {
   added: number;
@@ -114,36 +115,6 @@ async function loadCategoryRules(operatingCompanyId: string) {
     );
     return res.rows;
   });
-}
-
-function normalizeCategoryToken(input: string) {
-  return input
-    .trim()
-    .toUpperCase()
-    .replace(/[.\s/-]+/g, "_")
-    .replace(/[^A-Z0-9_*]/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_|_$/g, "");
-}
-
-function compileWildcardPattern(pattern: string) {
-  const escaped = pattern
-    .split("*")
-    .map((segment) => segment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-    .join(".*");
-  return new RegExp(`^${escaped}$`, "i");
-}
-
-function matchesRule(patternRaw: string, categories: string[]) {
-  const normalizedPattern = normalizeCategoryToken(patternRaw);
-  if (!normalizedPattern) return false;
-  const normalizedCategories = categories.map((category) => normalizeCategoryToken(category)).filter(Boolean);
-  if (normalizedCategories.length === 0) return false;
-  if (normalizedPattern.includes("*")) {
-    const matcher = compileWildcardPattern(normalizedPattern);
-    return normalizedCategories.some((category) => matcher.test(category));
-  }
-  return normalizedCategories.some((category) => category === normalizedPattern || category.includes(normalizedPattern));
 }
 
 export async function createLinkToken(
@@ -465,9 +436,8 @@ export async function autoCategorize(
   if (rules.length === 0) return null;
 
   const categories = transaction.plaid_category ?? [];
-  const matched = rules.find(
-    (rule) => Boolean(rule.coa_account_id) && matchesRule(rule.plaid_category_pattern, categories)
-  );
+  // Leaf beats parent (exact > longer pattern > non-parent > priority ASC) — not first-match alone.
+  const matched = pickBestCategoryRule(rules, categories);
   if (!matched?.coa_account_id) return null;
   if (opts?.dryRun) return matched;
 
