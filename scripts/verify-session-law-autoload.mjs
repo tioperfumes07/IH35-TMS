@@ -53,6 +53,7 @@ const GITIGNORE_UNIGNORES = [
   "!.cursor/rules/10-verification-and-neon-rls.mdc",
   "!.cursor/rules/15-research-mandate.mdc",
   "!.cursor/rules/16-fix-not-patch-evidence-law.mdc",
+  "!.cursor/rules/33-standing-session-directive.mdc",
 ];
 
 const failures = [];
