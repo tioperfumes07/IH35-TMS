@@ -34,3 +34,13 @@ export function formatPartInventoryCategoryLabel(code: string): string {
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 }
+
+/** INV-CAT-01: honest display for legacy null/blank category — never an empty table cell. */
+export function displayPartInventoryCategory(value: string | null | undefined): string {
+  const trimmed = value?.trim();
+  if (!trimmed) return "N/A";
+  if ((PART_INVENTORY_CATEGORIES as readonly string[]).includes(trimmed)) {
+    return formatPartInventoryCategoryLabel(trimmed);
+  }
+  return trimmed;
+}

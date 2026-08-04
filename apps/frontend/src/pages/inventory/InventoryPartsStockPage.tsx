@@ -9,6 +9,7 @@ import { InventoryModuleTabs } from "./InventoryModuleTabs";
 import { PartCreateDrawer } from "./PartCreateDrawer";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { partNeedsReorder } from "../maintenance/parts-low-stock";
+import { displayPartInventoryCategory } from "./partInventoryCategories";
 
 // ParityColumn only honors key/label/render/className/sortable — the earlier align/format/badge keys
 // were silently ignored (columns is a variable, so no excess-property check), so unit-cost formatting
@@ -16,8 +17,19 @@ import { partNeedsReorder } from "../maintenance/parts-low-stock";
 const columns: ParityColumn<InventoryPartRow>[] = [
   { key: "name", label: "Part Name", sortable: true },
   { key: "sku", label: "SKU", sortable: true },
-  // INV-1: category is now a persisted column — surface it so the saved value is visible.
-  { key: "category", label: "Category", sortable: true },
+  // INV-CAT-01: category is persisted; legacy blanks render honest N/A (not an empty cell).
+  {
+    key: "category",
+    label: "Category",
+    sortable: true,
+    render: (row) => {
+      const label = displayPartInventoryCategory(row.category);
+      if (label === "N/A") {
+        return <span className="text-gray-400">N/A</span>;
+      }
+      return label;
+    },
+  },
   { key: "on_hand_qty", label: "On Hand Qty", className: "text-right", sortable: true },
   {
     key: "reorder_threshold",

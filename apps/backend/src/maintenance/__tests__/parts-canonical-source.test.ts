@@ -58,6 +58,13 @@ describe("maintenance parts canonical source (B23)", () => {
       expect(createSchema![0]).toMatch(/notes:/);
     });
 
+    it("INV-CAT-01: create requires category from PART_INVENTORY_CATEGORY_VALUES (not optional blank)", () => {
+      const createSchema = source.match(/const createSchema = z\.object\(\{[\s\S]*?\}\);/);
+      expect(createSchema).toBeTruthy();
+      expect(createSchema![0]).toMatch(/category:\s*partCategorySchema/);
+      expect(source).toMatch(/PART_INVENTORY_CATEGORY_VALUES/);
+    });
+
     it("generates a stable PART- SKU when the user leaves it blank", () => {
       expect(source).toMatch(/'PART-' \|\| upper\(substr\(replace\(gen_random_uuid\(\)::text/);
     });
