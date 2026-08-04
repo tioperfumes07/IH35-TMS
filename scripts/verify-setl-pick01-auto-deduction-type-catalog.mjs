@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PANEL = "apps/frontend/src/pages/drivers/AutoDeductionPolicies.tsx";
+const HOOK = "apps/frontend/src/hooks/useDriverDeductionTypeCatalog.ts";
 const ROUTES = "apps/backend/src/settlements/auto-deductions/policy.routes.ts";
 const MIGRATION = "db/migrations/202611151200_auto_deduction_policy_deduction_type_catalog_fk.sql";
 const LABEL = "verify-setl-pick01-auto-deduction-type-catalog";
@@ -28,19 +29,37 @@ function stripComments(src) {
     .join("\n");
 }
 
-export function collectProblems(sources = { panel: read(PANEL), routes: read(ROUTES), migration: read(MIGRATION) }) {
+export function collectProblems(
+  sources = {
+    panel: read(PANEL),
+    hook: fs.existsSync(path.join(ROOT, HOOK)) ? read(HOOK) : "",
+    routes: read(ROUTES),
+    migration: read(MIGRATION),
+  }
+) {
   const problems = [];
   const panel = stripComments(sources.panel);
+  const hook = stripComments(sources.hook || "");
   const routes = stripComments(sources.routes);
+  const readSurface = `${sources.panel}\n${sources.hook || ""}`;
 
   const legacyHits = LEGACY.filter((v) => panel.includes(`"${v}"`));
   if (legacyHits.length >= 3) {
     problems.push(`${PANEL}: hardcoded legacy deduction type literals remain (${legacyHits.join(", ")})`);
   }
-  if (!/driverDeductionTypesCatalogClient/.test(sources.panel)) {
-    problems.push(`${PANEL}: must load options via driverDeductionTypesCatalogClient (catalogs.driver_deduction_types)`);
+  // Direct client in panel OR shared hook that wraps driverDeductionTypesCatalogClient (SETL-PICK-01 helper).
+  const panelUsesClient = /driverDeductionTypesCatalogClient/.test(sources.panel);
+  const panelUsesHook = /useDriverDeductionTypeCatalog/.test(sources.panel);
+  const hookUsesClient = /driverDeductionTypesCatalogClient\.list/.test(hook);
+  if (!panelUsesClient && !(panelUsesHook && hookUsesClient)) {
+    problems.push(
+      `${PANEL}: must load options via driverDeductionTypesCatalogClient or useDriverDeductionTypeCatalog (catalogs.driver_deduction_types)`
+    );
   }
-  if (!/\/api\/v1\/catalogs\/driver\/deduction-types/.test(sources.panel) && !/driverDeductionTypesCatalogClient\.list/.test(sources.panel)) {
+  if (
+    !/\/api\/v1\/catalogs\/driver\/deduction-types/.test(readSurface) &&
+    !/driverDeductionTypesCatalogClient\.list/.test(readSurface)
+  ) {
     problems.push(`${PANEL}: must call the canonical deduction-types catalog list API`);
   }
   if (/DEDUCTION_TYPES\s*=/.test(panel)) {
@@ -62,10 +81,16 @@ export function collectProblems(sources = { panel: read(PANEL), routes: read(ROU
 const IS_MAIN = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (IS_MAIN && process.argv.includes("--selftest")) {
-  const real = { panel: read(PANEL), routes: read(ROUTES), migration: read(MIGRATION) };
+  const real = {
+    panel: read(PANEL),
+    hook: fs.existsSync(path.join(ROOT, HOOK)) ? read(HOOK) : "",
+    routes: read(ROUTES),
+    migration: read(MIGRATION),
+  };
   const broken = {
     ...real,
     panel: `const DEDUCTION_TYPES = ["damage", "cash_advance", "repair", "fine", "fuel_advance", "other"];`,
+    hook: "",
     routes: real.routes.replace(/z\.string\(\)/, 'z.enum(["damage", "cash_advance", "repair", "fine", "fuel_advance", "other"])'),
   };
   if (collectProblems(broken).length === 0) {
