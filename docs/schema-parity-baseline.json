@@ -4376,7 +4376,8 @@
       "template_key",
       "template_vars",
       "to_addresses",
-      "updated_at"
+      "updated_at",
+      "provider"
     ],
     "events.event_log": [
       "actor_id",
