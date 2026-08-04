@@ -258,6 +258,32 @@ const APPLIED_VENDOR_CREDITS_SQL = `COALESCE((
 /** Open balance net of payments AND non-voided vendor credits. */
 const BILL_OPEN_BALANCE_SQL = `(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0) - ${APPLIED_VENDOR_CREDITS_SQL})`;
 
+/** ACCT-F603 — resolve bill → mdata.vendors via canonical uuid columns, never legacy QBO vendor_id text. */
+const BILL_VENDOR_UUID_PATTERN = `'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'`;
+
+const BILL_VENDOR_RESOLVE_JOIN_SQL = `
+  LEFT JOIN mdata.vendors v
+    ON v.operating_company_id = b.operating_company_id
+   AND v.id = COALESCE(
+     b.mdata_vendor_id,
+     CASE
+       WHEN b.vendor_uuid ~* ${BILL_VENDOR_UUID_PATTERN}
+       THEN b.vendor_uuid::uuid
+       ELSE NULL
+     END
+   )
+`;
+
+const BILL_PAYMENT_MDATA_VENDOR_ID_SQL = `
+  (
+    SELECT v.id::text
+      FROM mdata.vendors v
+     WHERE v.operating_company_id = bp.operating_company_id
+       AND v.qbo_vendor_id = bp.vendor_id
+     LIMIT 1
+  )
+`;
+
 const BILL_IS_RECONCILED_SQL = `
   EXISTS (
     SELECT 1
@@ -915,16 +941,7 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
             LIMIT 1
           ) AS journal_entry_id
         FROM accounting.bills b
-        -- v.id is uuid; b.vendor_id / b.vendor_uuid are BOTH text (verified on the Neon prod branch
-        -- br-fancy-credit-akjnd07a, 2026-07-22). Comparing them directly raises
-        -- "operator does not exist: uuid = text" and 500s EVERY bill-detail request, including the
-        -- unknown-bill 404 path, since the error fires before the not-found check. Reproduced
-        -- against prod, not inferred. Cast the uuid side to text rather than the text side to uuid:
-        -- vendor_id is free-form text and a non-uuid value there would make ::uuid raise instead of
-        -- simply not matching.
-        LEFT JOIN mdata.vendors v
-          ON v.id::text = COALESCE(b.vendor_id, b.vendor_uuid)
-         AND v.operating_company_id = b.operating_company_id
+        ${BILL_VENDOR_RESOLVE_JOIN_SQL}
         WHERE b.id = $1
           AND b.operating_company_id = $2
         LIMIT 1
@@ -1077,6 +1094,7 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
       `
         SELECT
           bp.*,
+          ${BILL_PAYMENT_MDATA_VENDOR_ID_SQL} AS mdata_vendor_id,
           v.vendor_name,
           b.bill_number,
           (
@@ -1084,15 +1102,14 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
           ) AS journal_entry_id,
           ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
         FROM accounting.bill_payments bp
-        -- v.id is uuid; accounting.bill_payments.vendor_id is text (verified on the Neon prod
-        -- branch br-fancy-credit-akjnd07a, 2026-07-22). Comparing them directly raises
-        -- "operator does not exist: uuid = text" and 500s every bill-payment detail request,
-        -- including the 404 path, because the error fires before the not-found check. Same class as
-        -- the bills.vendor_id join in getBillDetail. Cast the uuid side to text, never
-        -- bp.vendor_id::uuid — vendor_id is free-form text and a non-uuid value would RAISE instead
-        -- of simply not matching.
         LEFT JOIN mdata.vendors v
-          ON v.id::text = bp.vendor_id
+          ON v.id = (
+            SELECT v2.id
+              FROM mdata.vendors v2
+             WHERE v2.operating_company_id = bp.operating_company_id
+               AND v2.qbo_vendor_id = bp.vendor_id
+             LIMIT 1
+          )
          AND v.operating_company_id = bp.operating_company_id
         LEFT JOIN accounting.bills b
           ON b.id = bp.bill_id
@@ -1157,6 +1174,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
           operating_company_id,
           vendor_id,
           vendor_uuid,
+          mdata_vendor_id,
           bill_number,
           bill_date,
           due_date,
@@ -1175,7 +1193,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
           created_at,
           updated_at
         )
-        VALUES ($1,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$14,$10,now(),now())
+        VALUES ($1,$2,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$14,$10,now(),now())
         RETURNING *
       `
         : hasInsuranceClaimId
@@ -1184,6 +1202,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
           operating_company_id,
           vendor_id,
           vendor_uuid,
+          mdata_vendor_id,
           bill_number,
           bill_date,
           due_date,
@@ -1201,7 +1220,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
           created_at,
           updated_at
         )
-        VALUES ($1,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$10,now(),now())
+        VALUES ($1,$2,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$10,now(),now())
         RETURNING *
       `
         : hasClassId
@@ -1210,6 +1229,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
           operating_company_id,
           vendor_id,
           vendor_uuid,
+          mdata_vendor_id,
           bill_number,
           bill_date,
           due_date,
@@ -1227,7 +1247,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
           created_at,
           updated_at
         )
-        VALUES ($1,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$10,now(),now())
+        VALUES ($1,$2,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$10,now(),now())
         RETURNING *
       `
         : `
@@ -1235,6 +1255,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
           operating_company_id,
           vendor_id,
           vendor_uuid,
+          mdata_vendor_id,
           bill_number,
           bill_date,
           due_date,
@@ -1251,7 +1272,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
           created_at,
           updated_at
         )
-        VALUES ($1,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$10,now(),now())
+        VALUES ($1,$2,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$10,now(),now())
         RETURNING *
       `,
       hasInsuranceClaimId && hasClassId
