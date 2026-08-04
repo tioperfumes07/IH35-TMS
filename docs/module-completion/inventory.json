@@ -44,8 +44,8 @@
         "DOD-C"
       ],
       "spec": "sidebar flyout Assignments",
-      "status": "OPEN",
-      "evidence": "scaffold \u2014 not proven; creation flow UNVERIFIED",
+      "status": "PASS",
+      "evidence": "2026-08-03 PASS \u2014 /inventory/assignments \u2192 listPartsAssignments \u2192 GET parts-invoice-links filtered by operating_company_id; ParityTable honest empty when no WO part links. Guard verify-inv-s02-s03-pick-01 step 2264.",
       "pr": null
     },
     {
@@ -56,8 +56,8 @@
         "DOD-C"
       ],
       "spec": "sidebar flyout Purchase History",
-      "status": "OPEN",
-      "evidence": "scaffold \u2014 flagged UNVERIFIED in inventory-deep pass",
+      "status": "PASS",
+      "evidence": "2026-08-03 PASS \u2014 /inventory/purchases tab wired with honest empty (data-testid inventory-purchases-honest-empty); cites HOLD-INVENTORY-PURCHASE-HISTORY-SOR (no stock twin as history). Guard step 2264.",
       "pr": null
     },
     {
@@ -68,8 +68,8 @@
         "DOD-C"
       ],
       "spec": "08-BLOCK picker source correction",
-      "status": "OPEN",
-      "evidence": "scaffold \u2014 auditor: catalogs.parts=0 but parts_inventory=144 canonical",
+      "status": "PASS",
+      "evidence": "2026-08-03 PASS \u2014 Parts & Stock + create path read maintenance.parts_inventory / PART_INVENTORY_CATEGORIES; no catalogs.parts SoR. Guard verify-inv-s02-s03-pick-01 + parts-canonical-source tests.",
       "pr": null
     },
     {
@@ -98,12 +98,12 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "OPEN",
-      "evidence": "scaffold \u2014 roster PASS; assignments/purchases UNVERIFIED",
+      "status": "PASS",
+      "evidence": "2026-08-03 PASS \u2014 meta verify-inv-verify-01 (step 2268) composes S01 roster, CAT-01 category honesty, S02/S03/PICK locks + three /inventory routes. INV-LINK-01 (part\u2192vendor) remains OPEN.",
       "pr": null
     }
   ],
-  "pass_count": 2,
+  "pass_count": 6,
   "total_count": 7,
-  "progress": "2 of 7"
+  "progress": "6 of 7"
 }
