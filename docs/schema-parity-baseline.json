@@ -1830,6 +1830,7 @@
       "id",
       "institution_name",
       "is_active",
+      "is_dip",
       "last_synced_at",
       "ledger_account_id",
       "operating_company_id",
@@ -1837,7 +1838,9 @@
       "plaid_account_id",
       "plaid_item_id",
       "sync_status",
-      "updated_at"
+      "tag",
+      "updated_at",
+      "visible"
     ],
     "banking.bank_transaction_splits": [
       "amount_cents",

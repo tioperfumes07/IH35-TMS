@@ -113,7 +113,7 @@ function virtualKind(accountId: string) {
 }
 
 export async function registerBankingRoutes(app: FastifyInstance) {
-  app.get("/api/v1/banking/dashboard/kpis", async (req, reply) => {
+  app.get("/api/v1/banking/dashboard/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -124,31 +124,36 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       // BANK-ACCOUNT-HIDE: per-entity hidden accounts (flag OFF by default) must be excluded from every
       // cash/KPI surface — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md.
       const hideOn = await isBankAccountHideEnabled(client, companyId);
+      // BANK-F06 — read the AUTHORITATIVE table, not views.banking_account_tiles.
+      //
+      // That view is a dead stub (`SELECT NULL::uuid AS id, ... WHERE false`) and can never return a
+      // row, so kpiRes.rows[0] was always undefined and the fallback below supplied 0 for
+      // total_dip_cash, dip_operating, dip_payroll, factoring_reserve and driver_escrow. Banking Home
+      // reported $0 DIP cash while the entity held real balances — a silent zero on a money surface,
+      // and DIP cash is Chapter 11 reporting-relevant. total_cash escaped only because it is
+      // overridden further down by sumAuthoritativeDepositoryCashCents.
+      //
+      // The buckets now aggregate banking.bank_accounts directly, using the SAME filters as that
+      // authoritative cash sum (depository + active + not deactivated + Plaid-linked + hide-filter), so
+      // the parts cannot disagree with the total. Amounts stay in CENTS here and are converted once,
+      // beside total_cash, so no bucket can drift into a units mismatch.
       const kpiRes = await client.query(
         `
-          WITH tiles AS (
-            SELECT t.*
-            FROM views.banking_account_tiles t
-            WHERE t.operating_company_id = $1
-              AND (
-                t.tile_kind <> 'real'
-                OR EXISTS (
-                  SELECT 1 FROM banking.bank_accounts b
-                  WHERE b.id = t.id AND b.is_active = true
-                  ${bankAccountHiddenFilterSql(hideOn, "b")}
-                )
-              )
-          )
           SELECT
             $1::uuid AS operating_company_id,
-            COALESCE(SUM(CASE WHEN tile_kind = 'real' THEN current_balance ELSE 0 END), 0) AS total_cash,
-            COALESCE(SUM(CASE WHEN tag IN ('DIP Operating','DIP Payroll','DIP Other') THEN current_balance ELSE 0 END), 0) AS total_dip_cash,
-            COALESCE(SUM(CASE WHEN tag = 'DIP Operating' THEN current_balance ELSE 0 END), 0) AS dip_operating,
-            COALESCE(SUM(CASE WHEN tag = 'DIP Payroll' THEN current_balance ELSE 0 END), 0) AS dip_payroll,
-            COALESCE(SUM(CASE WHEN tag = 'Factoring' THEN current_balance ELSE 0 END), 0) AS factoring_reserve,
-            COALESCE(SUM(CASE WHEN tag = 'Escrow' THEN current_balance ELSE 0 END), 0) AS driver_escrow,
-            COALESCE(SUM(uncategorized_count), 0) AS total_uncategorized
-          FROM tiles
+            COALESCE(SUM(CASE WHEN b.is_dip OR b.tag IN ('DIP Operating','DIP Payroll','DIP Other')
+                              THEN b.current_balance_cents ELSE 0 END), 0) AS total_dip_cash_cents,
+            COALESCE(SUM(CASE WHEN b.tag = 'DIP Operating' THEN b.current_balance_cents ELSE 0 END), 0) AS dip_operating_cents,
+            COALESCE(SUM(CASE WHEN b.tag = 'DIP Payroll'   THEN b.current_balance_cents ELSE 0 END), 0) AS dip_payroll_cents,
+            COALESCE(SUM(CASE WHEN b.tag = 'Factoring'     THEN b.current_balance_cents ELSE 0 END), 0) AS factoring_reserve_cents,
+            COALESCE(SUM(CASE WHEN b.tag = 'Escrow'        THEN b.current_balance_cents ELSE 0 END), 0) AS driver_escrow_cents
+          FROM banking.bank_accounts b
+          WHERE b.operating_company_id = $1
+            AND b.account_class = 'depository'
+            AND b.is_active = true
+            AND b.deactivated_at IS NULL
+            AND b.plaid_item_id IS NOT NULL
+            ${bankAccountHiddenFilterSql(hideOn, "b")}
         `,
         [companyId]
       );
@@ -178,20 +183,21 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       // in status 'synced' (that queue counts pushed-to-QBO entities of ANY type, not bank transactions,
       // and previously showed "Transactions: 0" for companies with hundreds of un-pushed transactions).
       const totalTransactions = await countTotalBankTransactions(client, companyId).catch(() => 0);
+      // BANK-F06: every bucket is summed in CENTS above and converted here, in one place, next to
+      // total_cash. A missing row can no longer masquerade as $0 — the query aggregates a real table,
+      // so an empty result means genuinely no matching accounts, not a dead view.
+      const k = (kpiRes.rows[0] ?? {}) as Record<string, unknown>;
+      const cents = (v: unknown) => Number(v ?? 0) / 100;
       return {
-        ...(kpiRes.rows[0] ?? {
-          operating_company_id: companyId,
-          total_cash: 0,
-          total_dip_cash: 0,
-          dip_operating: 0,
-          dip_payroll: 0,
-          factoring_reserve: 0,
-          driver_escrow: 0,
-          total_uncategorized: 0,
-        }),
+        operating_company_id: companyId,
         // BankingHome money.format expects dollars; sumAuthoritativeDepositoryCashCents is cents
         // (same raw total as cash-flow opening_cash_cents — do not assign cents here).
         total_cash: authoritativeTotalCash / 100,
+        total_dip_cash: cents(k.total_dip_cash_cents),
+        dip_operating: cents(k.dip_operating_cents),
+        dip_payroll: cents(k.dip_payroll_cents),
+        factoring_reserve: cents(k.factoring_reserve_cents),
+        driver_escrow: cents(k.driver_escrow_cents),
         total_uncategorized: uncategorizedCount,
         total_transactions: totalTransactions,
         pending_bills: pendingBills,
