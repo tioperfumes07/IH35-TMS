@@ -1,15 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
-  downloadBolDocument,
-  generateLoadBol,
-  getLoadPodBolSummary,
   getPodDocuments,
   listDispatchLoads,
   reviewPodDocument,
-  type BolDocumentSummary,
   type PodDocumentSummary,
 } from "../../api/dispatch";
+import { LoadBolPanel } from "../../components/dispatch/LoadBolPanel";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
@@ -55,72 +52,6 @@ function PodRowActions({
       >
         Reject
       </button>
-    </div>
-  );
-}
-
-function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId: string }) {
-  const queryClient = useQueryClient();
-  const summaryQuery = useQuery({
-    queryKey: ["pod-bol-summary", companyId, loadId],
-    queryFn: () => getLoadPodBolSummary(loadId, companyId),
-    enabled: Boolean(companyId && loadId),
-  });
-
-  const generateMutation = useMutation({
-    mutationFn: () => generateLoadBol(loadId, companyId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["pod-bol-summary", companyId, loadId] });
-    },
-  });
-
-  const bols = summaryQuery.data?.bols ?? [];
-  const pods = summaryQuery.data?.pods ?? [];
-
-  return (
-    <div className="rounded-sm border p-4" data-testid="load-pod-bol-panel">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold">Load POD + BOL</h3>
-        <div className="flex gap-2">
-          <a
-            className="rounded-sm border px-3 py-1 text-sm"
-            href={`/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/bol.pdf?operating_company_id=${encodeURIComponent(companyId)}`}
-            data-testid="bol-download-link"
-          >
-            Download BOL PDF
-          </a>
-          <button
-            type="button"
-            className="rounded-sm bg-slate-900 px-3 py-1 text-sm text-white"
-            data-testid="bol-generate-button"
-            disabled={generateMutation.isPending}
-            onClick={() => generateMutation.mutate()}
-          >
-            {generateMutation.isPending ? "Generating…" : "Generate BOL"}
-          </button>
-        </div>
-      </div>
-      <p className="mb-2 text-xs text-slate-600">
-        {pods.length} POD(s) · {bols.length} generated BOL(s)
-      </p>
-      {bols.length > 0 ? (
-        <ul className="space-y-1 text-sm">
-          {bols.map((bol: BolDocumentSummary) => (
-            <li key={bol.id} className="flex items-center justify-between gap-2">
-              <span>{new Date(bol.generated_at).toLocaleString()} · {bol.template_version}</span>
-              <button
-                type="button"
-                className="text-xs underline"
-                onClick={() => void downloadBolDocument(bol.id, companyId).then((res) => window.open(res.download_url, "_blank"))}
-              >
-                Download stored copy
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-sm text-slate-600">No stored BOL yet — generate from load data.</p>
-      )}
     </div>
   );
 }
