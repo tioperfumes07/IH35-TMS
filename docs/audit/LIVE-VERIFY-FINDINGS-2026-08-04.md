@@ -281,3 +281,32 @@ membership-scoped session.
 - LANE:      n/a — evidence toward accounting prod_verified
 - neon-check: bill_payments 6,544 total; USMCA share 0
 - status:    OPEN
+
+## LV-018  Payments header total is a PAGE subtotal presented as the ledger total — understates by 99%
+- module:    accounting · payments
+- entity:    TRANSP
+- surface:   `/accounting/payments` — header "Amount / Applied / Unapplied"
+- expected:  A money total on a ledger surface either covers the query, or is unambiguously labelled as a page/filter subtotal.
+- observed:  Header reads **"Amount: $398,850.00 · Applied: $398,845.00 · Unapplied: $5.00"** with **no row count, no page qualifier, no filter chip**. Proven on prod that this is the FIRST PAGE ONLY: the sum of the **100 newest** TRANSP payments is **exactly $398,850.00** — a byte-for-byte match to the header. The real TRANSP ledger is **$39,940,290.99 across 12,124 payments** (`accounting.payments`, voided excluded; complete: 12,124 visible == n_live_tup 12,124). **The surface understates customer payments by ~$39.5M, i.e. 99%.** The figure is not false as a page subtotal — it is UNLABELLED, which makes it false in context. Same defect CLASS as ledger row 2 (bank all-accounts aggregate not reconciling to the per-account sum): a header computed over the fetched page instead of the query.
+- why this is the most severe finding of the sweep:  it is a money number on an A/R surface that a CPA, auditor, lender or factor could read directly, and its internal arithmetic RECONCILES ($398,850 − $398,845 = $5), which is precisely what makes it look trustworthy. A wrong number that self-checks is more dangerous than one that obviously breaks.
+- severity:  blocker
+- LANE:      CLAUDE-CODER-1 (money surface totals)
+- neon-check: sum of 100 newest TRANSP payments = 398850.00 == header; full ledger 39,940,290.99 / 12,124 rows
+- status:    OPEN
+
+## LV-019  SCOPE CORRECTION to LV-016 — customer references resolve correctly; only the VENDOR path falls back to a raw key
+- module:    accounting
+- entity:    TRANSP
+- surface:   `/accounting/payments` vs `/accounting/bills` + `/accounting/bill-payments`
+- observed:  **My LV-016 scope was too wide and I am narrowing it before anyone builds to it.** `/accounting/payments` resolves **customer** references correctly on every row — ACORN EXPRESS, ES Logistics International LLC, Rehmann Transportation Corp., EGRO TRANSPORT LLC, Hummingbird Logistix LLC — with **no raw UUIDs anywhere**, including on the TMS-native row (`GL-PROOF-CPAY-001`, correctly shown UNAPPLIED $5.00). So the raw-key fallback is **NOT** a universal accounting-list pattern as LV-016 implied; it is specific to the **vendor** reference on bills / bill-payments (LV-014, LV-016). Fix scope is therefore the vendor resolution path, not every list — materially cheaper and lower-risk than my earlier wording suggested.
+- severity:  minor (correction to my own finding; prevents an over-scoped fix)
+- LANE:      CURSOR + CLAUDE-CODER-1 (same owners as LV-014/016)
+- neon-check: none — render comparison across sibling surfaces
+- status:    OPEN
+
+## LV-020  ACCT-SURF-04 Receive Payment — surface PASS apart from LV-018
+- module:    accounting · entity: TRANSP
+- observed:  Payments list renders real A/R: 12,124 payments on the ledger, per-row Applied / Unapplied / Status (`FULLY APPLIED` vs a single honest `UNAPPLIED`), Method, Reference, Bank txn column, `+ Record Payment` and `Invoices` actions. Customer names resolve. Application-status honesty is correct per row. **The surface itself works; the defect is the header aggregate (LV-018).** I nearly recorded this as a clean PASS because the header arithmetic self-reconciles — noting that explicitly so the next reader does not repeat it.
+- severity:  minor (informational)
+- LANE:      n/a — evidence toward accounting prod_verified
+- status:    OPEN
