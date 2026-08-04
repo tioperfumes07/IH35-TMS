@@ -1,7 +1,7 @@
 {
   "module": "banking",
   "title": "Banking (Module 4)",
-  "complete": true,
+  "complete": false,
   "as_of": "2026-07-30T20:53:54.032Z",
   "live_sha": "146fd27f9",
   "sweep_matrix": "docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json",
@@ -265,6 +265,15 @@
       "evidence": "LIVE 2026-07-30 Neon lucia: events=1 posted=1. POST /fuel/card-overage-events/09a5eb03…/approve → JE 35b0cdd0 (Dr 1250 receivable Cr fuel expense $143.74). Contract 047df339 signed_electronically (driver hire Antonio); fuel txn 1f016625 driver-linked; GL+engine ON; diesel expense map seeded. UI /fuel/card-overage mounted. Guards 1716/1768.",
       "pr": "#3838",
       "live_proof": "2026-07-30 events=1 posted=1 je=35b0cdd0 overage_cents=14374"
+    },
+    {
+      "id": "BANK-CLS-SHARED",
+      "title": "Shared cross-cutting class cards (CLS-LINKAGE-ONEWAY, CLS-SILENT-SUCCESS, CLS-UNIT-SCALE, CLS-SILENT-CAP) drained",
+      "layers": ["DOD-C", "VERIFY-6"],
+      "spec": "wave-queue.json shared classes listing banking in modules[]",
+      "status": "OPEN",
+      "evidence": "4 open CLS-* cards in docs/audit/wave-queue.json list banking in modules[]. Banking module-level completion cannot be true while these classes have open banking instances. Added 2026-08-04 per class sweep.",
+      "pr": null
     }
   ],
   "ranked_fail_registry": {
@@ -391,5 +400,5 @@
     ]
   },
   "pass_count": 18,
-  "total_count": 18
+  "total_count": 19
 }
