@@ -51,6 +51,36 @@ async function insertEmailAlert(
 }
 
 /**
+ * Per-entity From address.
+ *
+ * EMAIL_FROM_BY_COMPANY is a JSON map of operating_company_id -> address, e.g.
+ *   {"91e0bf0a-133f-4ce8-a734-2586cfa66d96":"dispatch@ih35trucking.net"}
+ * Unmapped entities fall back to the provider's configured default rather than failing the send —
+ * a missing map entry must not silently stop a customer being billed. Parsed once per process.
+ */
+let senderMap: Record<string, string> | null = null;
+function senderForCompany(operatingCompanyId: string): string | undefined {
+  if (senderMap === null) {
+    const raw = process.env.EMAIL_FROM_BY_COMPANY?.trim();
+    if (!raw) {
+      senderMap = {};
+    } else {
+      try {
+        const parsed = JSON.parse(raw) as Record<string, string>;
+        senderMap = Object.fromEntries(
+          Object.entries(parsed).map(([id, addr]) => [id.trim(), String(addr).trim()])
+        );
+      } catch {
+        // Loud, and non-fatal: fall back to the default sender rather than halting the queue.
+        console.error({}, "[email-cron] EMAIL_FROM_BY_COMPANY is not valid JSON — using default sender");
+        senderMap = {};
+      }
+    }
+  }
+  return senderMap[operatingCompanyId] || undefined;
+}
+
+/**
  * LV-010 — a message that only reached the console is NOT delivered mail.
  *
  * EMAIL_PROVIDER defaults to "console" (email/factory.ts), and on prod every one of the 232 queue rows
@@ -66,7 +96,7 @@ async function finalizeSuccess(
   client: pg.PoolClient,
   id: string,
   messageId: string,
-  providerKind: "console" | "ses" | "postmark"
+  providerKind: "console" | "ses" | "postmark" | "google"
 ) {
   const terminalStatus = providerKind === "console" ? "logged_only" : "sent";
   await client.query(
@@ -211,6 +241,10 @@ export async function processEmailQueueTick(logger?: Pick<FastifyBaseLogger, "in
 
     try {
       const sent = await provider.send({
+        // Multi-entity sender: TRANSP/TRK bill from the ih35trucking.net mailbox, USMCA from its own.
+        // Sending every entity's invoices from one address would misrepresent who is billing the
+        // customer — on a factored A/R that is a real dispute risk, not cosmetics.
+        from: senderForCompany(operatingCompanyId),
         to: toAddresses,
         cc: ccAddresses,
         bcc: bccAddresses,
