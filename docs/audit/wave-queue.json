@@ -109,6 +109,355 @@
         "docs/audit/AUDIT-COVERAGE-LIVE.md",
         "docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md"
       ]
+    },
+    {
+      "id": "CLS-ECON-EMPTY",
+      "root_cause": "Chrome exists but the canonical money/ops catalog is empty or the poster produces no rows. SPLIT BY DISPOSITION: (A) broken wiring = real defect, stays open; (B) empty state = no data entered yet, NOT a defect; (C) blocked on owner/flag = belongs to CLS-MONEY-HOLD. Only broken-wiring instances are actionable.",
+      "lane": "money",
+      "layer": "C",
+      "modules": ["fuel", "accounting"],
+      "instances": [
+        { "path": "driver_finance.driver_settlements = 0 (ECON-001)", "entity": "ALL", "note": "DISPOSITION: (C) owner-hold — poster code exists, no pay-run executed. Tracked under CLS-MONEY-HOLD (HOLD-001). NOT actionable here." },
+        { "path": "driver_finance.driver_advances = 0; catalogs.cash_advance_types = 18 seeded (ECON-002)", "entity": "ALL", "note": "DISPOSITION: (B) empty state — no advances created by owner. Catalog seeded. NOT a defect." },
+        { "path": "driver_finance.escrow_ledger = 0; catalogs.escrow_types = 3 seeded (ECON-003)", "entity": "ALL", "note": "DISPOSITION: (B) empty state — no escrow postings. Catalog seeded. NOT a defect." },
+        { "path": "driver_finance.driver_settlements = 0 on driver profile (ECON-004)", "entity": "ALL", "note": "DISPOSITION: (C) owner-hold — same root as ECON-001/HOLD-001. NOT actionable here." },
+        { "path": "fuel.fuel_transactions.overage_deduction_id = 0 (ECON-005)", "entity": "ALL", "note": "DISPOSITION: (A) BROKEN WIRING — overage recovery FK column exists but no code path ever writes it. deduction_id is always NULL on all 1,547 txns. Real defect: fuel overage → driver deduction link is dead code." },
+        { "path": "insurance.claim = 0; insurance.policy = 0 (ECON-006)", "entity": "ALL", "note": "DISPOSITION: (B) empty state — no claims or policies created by owner. NOT a defect." },
+        { "path": "safety.accidents = 0; safety.citations = 0 (ECON-007)", "entity": "ALL", "note": "DISPOSITION: (B) empty state — no safety events recorded by owner. NOT a defect." },
+        { "path": "legal.matters = 0; legal.contract_instances = 1 (ECON-008)", "entity": "ALL", "note": "DISPOSITION: (B) empty state — no legal matters created. NOT a defect." },
+        { "path": "factoring.reserve_movement = 0; factoring.batch = 0 (ECON-009)", "entity": "ALL", "note": "DISPOSITION: (C) owner-hold — factoring not configured. Tracked under CLS-MONEY-HOLD (HOLD-002). NOT actionable here." },
+        { "path": "compliance.form_425c_reports = 0; compliance.form_2290_filings = 0 (ECON-010)", "entity": "ALL", "note": "DISPOSITION: (B) empty state — no compliance filings submitted. NOT a defect." },
+        { "path": "maintenance.work_orders = 2; catalogs.parts = 0 (ECON-011)", "entity": "ALL", "note": "DISPOSITION: (B) empty state — parts catalog not populated (inventory exists at 144 rows, catalog is cosmetic). NOT a defect." },
+        { "path": "catalogs.expense_categories = 9 (3/opco) — picker may read wrong source (ECON-012)", "entity": "ALL", "note": "DISPOSITION: (A) BROKEN WIRING — picker alignment unverified. If picker reads catalogs.expense_categories instead of expense_category_account_map, it offers 9 rows vs 27 seeded map rows. Real defect." },
+        { "path": "catalogs.parts = 0; canonical is maintenance.parts_inventory = 144 (ECON-013)", "entity": "TRANSP", "note": "DISPOSITION: (B) empty state — catalogs.parts is deprecated/unused. Real inventory at 144 rows. NOT a defect." },
+        { "path": "catalogs.cash_advance_types = 18, escrow_types = 3, deduction_types = 21 — consumer tables lack FK (ECON-014)", "entity": "ALL", "note": "DISPOSITION: (A) BROKEN WIRING — catalogs are seeded but consumer services use hardcoded enums instead of FK'ing the catalog. Real defect: catalog exists but is not consumed." },
+        { "path": "accounting.chart_of_accounts_roles = 114 — legacy catalogs.account_role_bindings = 0 (ECON-015)", "entity": "ALL", "note": "DISPOSITION: (A) BROKEN WIRING — if any resolver references catalogs.account_role_bindings (the empty table) instead of accounting.chart_of_accounts_roles (114 rows), role lookup silently returns NULL. Real defect." },
+        { "path": "mdata.loads = 10 for 16K bills / 12K invoices (ECON-016)", "entity": "ALL", "note": "DISPOSITION: (B) empty state — QBO-origin bills/invoices have no loads (parallel books). TMS-native load count is genuinely low (pre-dispatch). NOT a defect." }
+      ],
+      "completeness": "SPLIT COMPLETE. Broken-wiring instances (ECON-005, ECON-012, ECON-014, ECON-015) remain OPEN — real code defects where FK/catalog plumbing is dead or mispointed. Empty-state instances (ECON-002/003/006/007/008/010/011/013/016) are NOT defects — just no owner data yet. Owner-hold instances (ECON-001/004/009) tracked under CLS-MONEY-HOLD. lucia-bypass Neon prod 2026-08-01.",
+      "guard": "scripts/verify-econ-empty-density.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "ECON-005 fuel.fuel_transactions.overage_deduction_id ALL: 0/1547, dead FK — code never writes it; ECON-014 catalogs.cash_advance_types=18 seeded but driver_finance.driver_advances has no FK to it; ECON-015 catalogs.account_role_bindings=0 (resolver may use wrong table)",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/fuel",
+        "apps/backend/src/driver-finance",
+        "apps/backend/src/accounting/coa-roles"
+      ]
+    },
+    {
+      "id": "CLS-LINKAGE-ONEWAY",
+      "root_cause": "Money and ops objects carry header links, but the critical forward operational FKs (load/unit/WO/claim) and reverse drills are null or unimplemented. 9 surfaces across bills, invoices, expenses, fuel, banking, payments, bill_payments, fleet.",
+      "lane": "money",
+      "layer": "C",
+      "modules": ["accounting", "fuel", "banking", "fleet"],
+      "instances": [
+        { "path": "accounting.bills: unit_id 1.8%, linked_work_order_uuid 0%, insurance_claim_id 0% (LINK-001)", "entity": "ALL", "note": "Bill has no drill to vendor/unit/WO. AUD-F001/F002." },
+        { "path": "accounting.invoices: source_load_id 0%, invoice_lines = 1 (LINK-002)", "entity": "ALL", "note": "Invoice has no line items and no load drill. AUD-F004." },
+        { "path": "accounting.expense_lines: load_id 0%, billable_customer_uuid 0%, expense_category_uuid 0% (LINK-003)", "entity": "ALL", "note": "Expense lines have no ops linkage. AUD-F003." },
+        { "path": "accounting.expenses: driver_uuid 0%, load_id 0%, payment_account_uuid 0%, unit_id 0% (LINK-004)", "entity": "ALL", "note": "Expense headers have no ops FKs. AUD-F003." },
+        { "path": "fuel.fuel_transactions: load_id 0%, vendor_id 0% (LINK-005)", "entity": "ALL", "note": "No load/vendor link on fuel. AUD-F017." },
+        { "path": "banking.bank_transactions: matched_bill_id 0%, matched_payment_id 0% (LINK-006)", "entity": "ALL", "note": "Bank txns not matched. AUD-F005." },
+        { "path": "accounting.payments: source_bank_transaction_id 0% (LINK-007)", "entity": "ALL", "note": "Payment not linked to bank. AUD-F018." },
+        { "path": "accounting.bill_payments: from_bank_account_id 0%, source_bank_transaction_id 0% (LINK-008)", "entity": "ALL", "note": "Bill payment not linked to bank. AUD-F018." },
+        { "path": "mdata.units: currently_leased_to_company_id null 73% (LINK-009)", "entity": "ALL", "note": "Fleet lease data incomplete. P1-006." }
+      ],
+      "completeness": "lucia-bypass Neon prod 2026-07-31: FK population percentages computed per-column via COUNT(*) FILTER (WHERE col IS NOT NULL) / COUNT(*). Positive control: bills.mdata_vendor_id = 99.99% populated (confirms non-zero baseline). invoice_lines n_live_tup=1 confirmed.",
+      "guard": "scripts/verify-money-ops-fk-density.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "LINK-001 accounting.bills ALL: unit_id 1.8% (290/16248), linked_work_order_uuid 0%, $26.7M affected; LINK-006 banking.bank_transactions ALL: matched_bill_id 0%, matched_payment_id 0%, 10970 txns; LINK-005 fuel.fuel_transactions TRANSP: load_id 0/1547, vendor_id 0/1547, $625K",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/accounting/bills",
+        "apps/backend/src/accounting/invoices",
+        "apps/backend/src/accounting/expenses",
+        "apps/backend/src/fuel",
+        "apps/backend/src/banking"
+      ]
+    },
+    {
+      "id": "CLS-BANK-MATCH-DENSITY",
+      "root_cause": "98.4% of bank transactions (10,800 of 10,970) are stuck in for_review with no categorization or bill/payment match. The auto-categorization rule engine exists but covers <2% of volume. The remaining SS-001/002/004/005 instances were QBO-origin parallel-books behavior (correctly not posted) and are now N/A.",
+      "lane": "money",
+      "layer": "C",
+      "modules": ["banking"],
+      "instances": [
+        { "path": "accounting.expenses: all have qbo_purchase_id but journal_entry_id = 0, posting_status='posted' = 0 (SS-001)", "entity": "ALL", "note": "N/A — QBO-origin, correctly not posted (parallel books). Go-forward poster works for TMS-native (row 639)." },
+        { "path": "accounting.journal_entries: 187 JEs pending QBO sync, qbo_journal_entry_id = 0 (SS-002)", "entity": "ALL", "note": "N/A — QBO-origin, correctly not posted (parallel books). QBO write-back OFF by owner ruling (9 flags confirmed OFF row 667)." },
+        { "path": "banking.bank_transactions: 10800 stuck for_review — 98.4% unmatched (SS-003)", "entity": "ALL", "note": "OPEN — real defect. Auto-categorization rule engine matches only 170/10970 (1.5%). PR #4232 improved rule specificity but did not expand coverage. Owner operational backlog + rule expansion needed." },
+        { "path": "lib.feature_flag_overrides: 37 GL/posting flags enabled 2026-07-26 with 0 posting output (SS-004)", "entity": "ALL", "note": "N/A — RESOLVED. Row 667 reflush posted 1,547 fuel txns. Go-forward proof (row 668) posted bill/expense/payment. All flags functional." },
+        { "path": "accounting.invoice_lines = 1 for 11977 QBO-synced invoices (SS-005)", "entity": "ALL", "note": "N/A — QBO-origin, correctly not posted (parallel books). QBO-synced invoices have no TMS line items by design." }
+      ],
+      "completeness": "SS-001/002/005 are QBO-origin parallel-books behavior — not a defect (row 665/670). SS-004 resolved by row 667 reflush + row 668 go-forward proof. Only SS-003 (bank matching density 1.5%) remains as actionable open work. lucia-bypass Neon prod 2026-08-03: bank_transactions n_live_tup=10970, categorized_at NOT NULL=170.",
+      "guard": "scripts/verify-silent-success-posting-output.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "SS-003 banking.bank_transactions ALL: 170/10970 categorized (1.5%). Rule engine covers only merchant-text exact-match patterns. PR #4232 fixed rule specificity (least-specific won) but did not expand coverage.",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/banking/categorization.service.ts",
+        "apps/backend/src/banking/categorization.routes.ts",
+        "apps/backend/src/banking/banking.routes.ts"
+      ]
+    },
+    {
+      "id": "CLS-DUAL-PATH",
+      "root_cause": "N/A (by-design, parallel books). QBO and TMS canonical tables coexist under RECONCILE-ONLY architecture — QBO is system of record. The clone gaps are expected. DO NOT backfill/re-post the QBO-only gaps — that double-counts (row 665). The only work here is a reconciliation report, not a poster.",
+      "lane": "money",
+      "layer": "C",
+      "modules": ["accounting"],
+      "instances": [
+        { "path": "QBO AP bills 16564 vs TMS bills 16236 — 329 QBO-only (DP-001)", "entity": "ALL", "note": "N/A — QBO is system of record. Clone gap is expected. DO NOT build a poster for these." },
+        { "path": "QBO AR invoices 12028 vs TMS invoices 11977 — 52 QBO-only (DP-002)", "entity": "ALL", "note": "N/A — same. A TMS JE for a QBO-only invoice would double the A/R." },
+        { "path": "QBO AR payments 23830 vs TMS payments 12123 — 11707 QBO-only (DP-003)", "entity": "ALL", "note": "N/A — same. Posting these would double $39.9M of cash receipts." },
+        { "path": "QBO purchases 28280 vs TMS expenses 26837 — 1443 QBO-only (DP-004)", "entity": "ALL", "note": "N/A — same. QBO already holds the GL for these purchases." },
+        { "path": "QBO accounts 1654 vs TMS catalogs.accounts 1415 — 239 QBO-only (DP-005)", "entity": "ALL", "note": "N/A — QBO chart is superset. Extra QBO accounts don't need TMS mirrors unless TMS-native txns use them." },
+        { "path": "TMS journal_entries.qbo_journal_entry_id = 0; qbo_sync_pending = 186/187 (DP-006)", "entity": "ALL", "note": "N/A — QBO write-back OFF by owner ruling. 9 QBO push flags confirmed OFF (row 667). These JEs live in TMS only." }
+      ],
+      "completeness": "RECONCILE-ONLY. QBO is system of record. DO NOT backfill/re-post the QBO-only gaps — that double-counts (row 665). The only work here is a reconciliation report, not a poster. lucia-bypass Neon prod 2026-07-31: QBO mirror table counts from qbo_archive.* n_live_tup. TMS canonical counts from accounting.* n_live_tup.",
+      "guard": "scripts/verify-qbo-canonical-recon.mjs",
+      "drain_proof": {
+        "guard_green": true,
+        "guard_sample": "DRAINED — parallel-books architecture confirmed (row 665/670). QBO-origin correctly refused by posting engine. All QBO write-back flags OFF. Clone gaps are expected state, not a defect. A reconciliation REPORT (not poster) is the only future work.",
+        "money_critical": true
+      },
+      "status": "drained",
+      "hotfiles": [
+        "apps/backend/src/accounting",
+        "apps/backend/src/integrations/quickbooks"
+      ]
+    },
+    {
+      "id": "CLS-ORPHAN-SURFACE",
+      "root_cause": "A nav/leaf renders but has no back-link, no detail, or points to the wrong system of record. 5 surfaces across bills, accounting, vendors, cash flow, and general empty states.",
+      "lane": "mechanical",
+      "layer": "A",
+      "modules": ["accounting", "vendors", "cash-flow"],
+      "instances": [
+        { "path": "/accounting/bills: row not clickable, no vendor drill, no back button (ORPH-001)", "entity": "ALL", "note": "AUD-F001." },
+        { "path": "Accounting > More dropdown: CoA not reachable, dropdown not alphabetical (ORPH-002)", "entity": "ALL", "note": "AUD-F008." },
+        { "path": "/accounting/vendors detail tab: empty (no email/phone/address/ACH) (ORPH-003)", "entity": "ALL", "note": "AUD-F010." },
+        { "path": "/cash-flow: 7-day calendar box-in-box, projected income $0 with no drill (ORPH-004)", "entity": "ALL", "note": "P1-005." },
+        { "path": "home, tasks, customers, vendors, docs, users: empty No data states (ORPH-005)", "entity": "ALL", "note": "Correlates with 0-row canonical tables. P1-007." }
+      ],
+      "completeness": "Live-confirmed via browser exercise 2026-07-22..2026-08-02. Bills row-click FAIL confirmed on both TRANSP and USMCA. Cash-flow $0 confirmed live. Vendor detail empty on USMCA audit vendor. Positive control: bill grid renders real data (16K rows).",
+      "guard": "scripts/verify-orphan-surface-drill.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "",
+        "money_critical": false
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/frontend/src/pages/accounting",
+        "apps/frontend/src/pages/cash-flow",
+        "apps/frontend/src/pages/vendors"
+      ]
+    },
+    {
+      "id": "CLS-MONEY-HOLD",
+      "root_cause": "The correct money design is blocked on owner/Neon/flag; this is a financial hold, not a chrome PR. 3 surfaces: settlement pay-run, factoring reserve, insurance claims.",
+      "lane": "money",
+      "layer": "C",
+      "modules": ["settlements", "factoring", "insurance"],
+      "instances": [
+        { "path": "/settlements pay-run: driver_settlements = 0, flags ON but no posting output (HOLD-001)", "entity": "ALL", "note": "driver_settlement_gl_bills = 0, driver_settlement_gl_runs = 0. AUD-F006." },
+        { "path": "/factoring: factor agreement exists, 0 reserve movement / invoice factoring (HOLD-002)", "entity": "ALL", "note": "factoring.reserve_movement = 0. AUD-F015." },
+        { "path": "/insurance/claims: no claim table populated, fault/economics not decided (HOLD-003)", "entity": "ALL", "note": "insurance.claim = 0. AUD-F015." }
+      ],
+      "completeness": "lucia-bypass Neon prod 2026-07-31: driver_settlements n_live_tup=0, factoring.reserve_movement n_live_tup=0, insurance.claim n_live_tup=0. Positive control: factoring.company_factor_assignments n_live_tup > 0 (agreement exists).",
+      "guard": "scripts/verify-money-hold-surfaces.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "HOLD-001 /settlements pay-run TRANSP: driver_finance.driver_settlements=0 rows, $0 — poster code exists but no pay-run ever executed; HOLD-002 factoring.reserve_movement=0/$0; HOLD-003 insurance.claim=0/$0",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/driver-finance",
+        "apps/backend/src/factoring",
+        "apps/backend/src/insurance"
+      ]
+    },
+    {
+      "id": "CLS-UNIT-SCALE",
+      "root_cause": "A cents integer is exposed as a dollar field (or vice versa) to money.format / $Number.toFixed(2), causing 100x display errors on money values. 3 surfaces in banking.",
+      "lane": "mechanical",
+      "layer": "B",
+      "modules": ["banking", "factoring"],
+      "instances": [
+        { "path": "banking.routes.ts:184 — Banking Home KPI cents-as-dollars (UNIT-001)", "entity": "ALL", "note": "AUD-F020. Cash KPI 100x scale bug." },
+        { "path": "banking.routes.ts:308 — Factoring virtual register cents-as-dollars (UNIT-002)", "entity": "ALL", "note": "AUD-F024." },
+        { "path": "banking.routes.ts:426 — Categorize suggestions cents-as-dollars (UNIT-003)", "entity": "ALL", "note": "AUD-F024." }
+      ],
+      "completeness": "Code-verified: banking.routes.ts lines 184, 308, 426 pass amount_cents directly to formatUsd (dollar formatter). Live confirmed: Banking Home KPI showed $9,368.00 when correct value was $93.68 (TRANSP). Positive control: USMCA Cash Posting $93.68 correct after fix.",
+      "guard": "scripts/verify-cents-dollar-scale.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "Banking Home KPI TRANSP: displayed $9,368.00, correct = $93.68 (100x). USMCA confirmed correct after fix.",
+        "money_critical": false
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/banking/banking.routes.ts"
+      ]
+    },
+    {
+      "id": "CLS-HOOKS-ORDER",
+      "root_cause": "Conditional early return before React hooks causes React error #310 (hooks called in different order) on cold load. Structural React violation.",
+      "lane": "mechanical",
+      "layer": "A",
+      "modules": ["insurance"],
+      "instances": [
+        { "path": "apps/frontend/src/pages/insurance/ClaimsTab.tsx: early return before useMemo (HOOK-001)", "entity": "ALL", "note": "AUD-F023. Claims crash FIXED by PR #3998." }
+      ],
+      "completeness": "Code-verified: ClaimsTab.tsx had conditional return before useMemo hook. PR #3998 merged and deployed. Live re-verification: claims tab loads without crash. Positive control: Insurance module Layer A now PASS.",
+      "guard": "scripts/verify-hooks-before-return.mjs",
+      "drain_proof": {
+        "guard_green": true,
+        "guard_sample": "ClaimsTab.tsx hooks reordered in PR #3998. Insurance Layer A confirmed PASS post-fix.",
+        "money_critical": false
+      },
+      "status": "drained",
+      "hotfiles": [
+        "apps/frontend/src/pages/insurance/ClaimsTab.tsx"
+      ]
+    },
+    {
+      "id": "CLS-REVERSE-LINKAGE-MISSING",
+      "root_cause": "Reverse section/panel component EXISTS but is not embedded on a profile page where a FK points to that entity. The forward FK is wired, the reverse React component is built, but the import/render is absent. Cross-module: legal, drivers, fleet.",
+      "lane": "mechanical",
+      "layer": "C",
+      "modules": ["legal", "drivers", "fleet"],
+      "instances": [
+        { "path": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx — LegalMattersReverseSection NOT imported (related_driver_id FK exists in legal.matters)", "entity": "ALL", "note": "Component exists at components/legal/LegalMattersReverseSection.tsx; embedded on VehicleProfilePage but not DriverProfilePage. Verifiable absence: grep for LegalMattersReverseSection in DriverProfilePage = 0 hits." },
+        { "path": "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx — LegalMattersReverseSection NOT imported (legal matters can link to trailer equipment)", "entity": "ALL", "note": "VehicleProfilePage has it (line 304); TrailerProfilePage does not import it." },
+        { "path": "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx — LinkedBankTransactionsPanel NOT rendered (UnitAutocomplete used in banking categorization)", "entity": "ALL", "note": "DriverProfilePage has LinkedBankTransactionsPanel (line 339-344); VehicleProfilePage does not. Banking categorizes by unit but no reverse surface." },
+        { "path": "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx — LinkedBankTransactionsPanel NOT rendered (TrailerAutocomplete used in banking categorization)", "entity": "ALL", "note": "Same gap as unit: banking categorization links trailers but no reverse bank-txn surface." },
+        { "path": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx — no InsuranceClaimsReverseSection (insurance.claim.driver_id FK exists)", "entity": "ALL", "note": "VehicleProfilePage has InsuranceClaimsReverseSection (line 312-317); DriverProfilePage does not." },
+        { "path": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx — no fines reverse section (safety.internal_fines.subject_driver_id FK exists, safety.civil_fines.subject_driver_id FK exists)", "entity": "ALL", "note": "12 ops views exist in DriverDetail but none for fines. SAF-F16 finding." },
+        { "path": "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx — no EntityAuditHistoryTab (VehicleProfilePage has it at line 346)", "entity": "ALL", "note": "Trailer has no audit trail surface." }
+      ],
+      "completeness": "Code-verified via grep: each instance confirmed by absence of import/render in the target file + presence in the sibling profile page. LegalMattersReverseSection import count: VehicleProfilePage=1, DriverProfilePage=0, TrailerProfilePage=0. LinkedBankTransactionsPanel: DriverProfilePage=1, VehicleProfilePage=0, TrailerProfilePage=0. InsuranceClaimsReverseSection: VehicleProfilePage=1, TrailerProfilePage=1, DriverProfilePage=0.",
+      "guard": "scripts/verify-reverse-linkage-embedded.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "",
+        "money_critical": false
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
+        "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
+        "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx",
+        "apps/frontend/src/components/legal/LegalMattersReverseSection.tsx",
+        "apps/frontend/src/components/insurance/InsuranceClaimsReverseSection.tsx"
+      ]
+    },
+    {
+      "id": "CLS-SILENT-CAP",
+      "root_cause": "List query ships a hard LIMIT with no pagination, silently truncating results beyond the cap. Users see a full-looking list that is missing rows. Cross-module pattern.",
+      "lane": "mechanical",
+      "layer": "B",
+      "modules": ["legal", "drivers", "banking"],
+      "instances": [
+        { "path": "apps/backend/src/legal/matters.service.ts — listMatters LIMIT 500 with no pagination / no total count", "entity": "ALL", "note": "Silent cap: 500 matters max returned. No UI indication of truncation." },
+        { "path": "apps/frontend/src/pages/drivers/DriversListPage.tsx:118 — CSV export listDrivers limit:500, offset:0 with no pagination loop", "entity": "ALL", "note": "Roster > 500 drivers silently truncated in CSV export." },
+        { "path": "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx — vendors limit:1000, customers limit:5000", "entity": "ALL", "note": "DRAINED by PR #4234: now uses server-side onSearch + limit:200. Banking categorization picker data fetches no longer have silent caps." }
+      ],
+      "completeness": "Code-verified: exact limit values confirmed by reading source. matters.service.ts line ~140: `.limit(500)`. DriversListPage.tsx line 118: `limit: 500`. BankingTransactionsDesignView.tsx lines ~380,390: `limit: 1000` / `limit: 5000`. Positive control: DriversListPage paginated list uses limit:25 with real total count (correct pattern).",
+      "guard": "scripts/verify-no-silent-list-cap.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "",
+        "money_critical": false
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/legal/matters.service.ts",
+        "apps/frontend/src/pages/drivers/DriversListPage.tsx",
+        "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx"
+      ]
+    },
+    {
+      "id": "CLS-UUID-LABEL",
+      "root_cause": "EntityLink, picker option, or bare <Link> renders a truncated UUID or raw UUID instead of a human-readable name. User cannot identify what they are looking at or selecting.",
+      "lane": "mechanical",
+      "layer": "D",
+      "modules": ["legal", "accounting", "fleet"],
+      "instances": [
+        { "path": "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx — EntityLink for driver shows truncated driver UUID instead of driver name", "entity": "ALL", "note": "EntityLink label prop receives driver.id.slice(0,8) when driver name unavailable." },
+        { "path": "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx — EntityLink for unit shows truncated unit UUID instead of unit number", "entity": "ALL", "note": "Same pattern: unit_id sliced as label." },
+        { "path": "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx — EntityLink for insurance_claim shows truncated UUID", "entity": "ALL", "note": "Claim has no display name resolver in matter detail." },
+        { "path": "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx — incident link is a bare <Link> to /safety/accidents (list, not detail) with no entity resolution", "entity": "ALL", "note": "Links to the accident list, not to the specific incident. No drill-through." },
+        { "path": "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx:370-377 — QBO class picker renders class_name which may contain a UUID (data defect in mdata.qbo_classes)", "entity": "ALL", "note": "If class_name column stores a UUID, the picker dropdown shows UUIDs. Row 601 / row 611 related." }
+      ],
+      "completeness": "Code-verified: LegalMatterDetailPage.tsx EntityLink components read FK id as label prop when no name join is performed. VehicleProfilePage class picker renders class_name verbatim from query data. Row 611 (class auto-derive) fixed the derive path but not the underlying class_name data. UPDATE 2026-08-04: Instance 5 partially mitigated by PR #4234 (CHECK constraint bans UUID class_name + 'Unnamed class' fallback label). 4 Legal EntityLink instances remain open.",
+      "guard": "scripts/verify-no-uuid-labels.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "",
+        "money_critical": false
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx",
+        "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
+        "apps/frontend/src/components/shared/EntityLink.tsx"
+      ]
+    },
+    {
+      "id": "CLS-RAW-UUID-INPUT",
+      "root_cause": "A foreign-key field is rendered as a plain text input requiring the user to type a raw UUID, instead of a picker/combobox with human-readable options. Violates picker law clause 2 (catalog-backed selection).",
+      "lane": "mechanical",
+      "layer": "D",
+      "modules": ["fleet"],
+      "instances": [
+        { "path": "apps/frontend/src/components/fleet/EditVehicleModal.tsx — owner_company_id rendered as plain <input type='text'>", "entity": "ALL", "note": "User must paste a UUID to set vehicle owner company. Should be a company picker." },
+        { "path": "apps/frontend/src/components/fleet/EditVehicleModal.tsx — currently_leased_to_company_id rendered as plain <input type='text'>", "entity": "ALL", "note": "User must paste a UUID to set lease-to company. Should be a company picker." }
+      ],
+      "completeness": "Code-verified: EditVehicleModal.tsx renders both fields as unadorned <input> elements with no autocomplete/combobox. Confirmed by reading lines 58-59. Positive control: other FK fields in the same app use ReferenceSelect/Combobox/Autocomplete.",
+      "guard": "scripts/verify-no-raw-uuid-inputs.mjs",
+      "drain_proof": {
+        "guard_green": true,
+        "guard_sample": "PR #4234 (origin/main 0869e3f6b): EditVehicleModal.tsx now imports Combobox, type:'company' fields render listMyCompanies picker. Confirmed: git show origin/main:apps/frontend/src/components/fleet/EditVehicleModal.tsx lines 11,65-66,273-285.",
+        "money_critical": false
+      },
+      "status": "drained",
+      "hotfiles": [
+        "apps/frontend/src/components/fleet/EditVehicleModal.tsx"
+      ]
+    }
+  ],
+  "vertical_close_notes": [
+    {
+      "module": "legal",
+      "gap": "No GL terminus for legal reserves/claims. Legal module explicitly self-documents NO financial posting (FIN-21 law). signed-finance-handoff.service.ts:12-16 states Finance owns all posting; CI guard verify-legal-no-gl-posting.mjs enforces the boundary. Any future legal-reserve GL path must be authored by the Finance/money lane, not Legal.",
+      "disposition": "Architectural by design. Note for module close — not a wave card. When legal claims/reserves need GL representation, Finance lane builds the poster and Legal hands off via signed-finance-handoff.",
+      "date": "2026-08-04"
+    },
+    {
+      "module": "fleet",
+      "gap": "No P&L / profit-loss view on TrailerProfilePage. VehicleProfilePage also has no financial summary tab. Fleet profile pages show operational data (specs, maintenance, inspections) but no revenue/cost/margin rollup per asset.",
+      "disposition": "Architectural gap — trailers and units have no per-asset economics surface. Note for module close — not a wave card. When per-asset P&L is built, it will be a new feature (vertical), not a defect fix (horizontal).",
+      "date": "2026-08-04"
+    }
+  ],
+  "findings": [
+    {
+      "id": "FINDING-GUARD-TENSION-MODULE-VS-CLASS",
+      "description": "verify-module-completion and verify-no-false-green-certify are in tension when a module has all its own items PASS but open shared CLS-* class cards list it in modules[]. verify-module-completion requires complete:false ↔ N<M, verify-no-false-green-certify requires complete:false when open classes touch the module. The reconciliation requires adding a synthetic OPEN item to the module manifest to make N<M consistent. This works but is a modeling gap — the guards should natively understand cross-cutting classes without requiring a synthetic item.",
+      "lane": "fixer (Claude-Coder or Cursor)",
+      "disposition": "OPEN — fixer lane should add native shared-class awareness to verify-module-completion so that a module with all its own items PASS but open shared classes referencing it is automatically treated as incomplete, without needing a synthetic BANK-CLS-SHARED item.",
+      "date": "2026-08-04"
     }
   ]
 }
