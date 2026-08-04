@@ -71,7 +71,8 @@ describe("Lists reorg — buildCatalogPath (shared resolver)", () => {
     expect(buildCatalogPath("drivers", "pay-types")).toBe("/lists/driver/pay-types"); // normalized + default
     expect(buildCatalogPath("names_master", "brokers")).toBe("/lists/names/brokers");
     expect(buildCatalogPath("accounting", "chart-of-accounts")).toBe("/lists/accounting/chart-of-accounts");
-    expect(buildCatalogPath("accounting", "_create")).toBe("/lists/accounting");
+    expect(buildCatalogPath("accounting", "_create")).toBe("/lists/hub/accounting");
+    expect(buildCatalogPath("drivers", "_create")).toBe("/lists/hub/drivers");
     // LST-F13 — mounted orphans must resolve from DOMAIN_CONFIG keys.
     expect(buildCatalogPath("maintenance", "parts-catalog")).toBe("/lists/maintenance/parts-catalog");
     expect(buildCatalogPath("accounting", "abandonment-defaults")).toBe("/lists/accounting/abandonment-defaults");
