@@ -69,12 +69,12 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-04 |
 | Modules with a confirmed live defect (non-superseded FAIL) | **22 / 30** | 2026-08-04 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-04 |
-| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **62 / 150** · TRK **9 / 150** · USMCA **62 / 150** | 2026-08-04 |
-| Rows in this file | **739** | 2026-08-04 |
+| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **63 / 150** · TRK **9 / 150** · USMCA **62 / 150** | 2026-08-04 |
+| Rows in this file | **744** | 2026-08-04 |
 | Rows `FAIL` + `OPEN` | **39** | 2026-08-04 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **11** | 2026-08-04 |
 | Rows `VERIFIED` by GUARD | **0** | 2026-08-04 |
-| Verdict tally (all rows) | FAIL=91 · PASS=209 · N/A=219 · UNVERIFIED=28 · SUPERSEDED=7 · OTHER=185 | 2026-08-04 |
+| Verdict tally (all rows) | FAIL=91 · PASS=214 · N/A=219 · UNVERIFIED=28 · SUPERSEDED=7 · OTHER=185 | 2026-08-04 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -825,4 +825,9 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 737 | settlements · module coverage sweep | C | ALL | UNVERIFIED | Proactive module audit. `docs/module-completion/settlements.json` is 1/9 (only SETL-PICK-01 auto-deduction Type picker catalog PASS). Surfaces (`/driver-finance/settlements`, `/cash-advances`, `/accounting/escrow`) and VERIFY-1..8 click-throughs remain scaffolded/unproven because `driver_settlements`/`driver_advances`/`escrow` tables are empty. No new code defect found in verified picker wiring. | — | — | NO | 2026-08-04 | CASCADE |
 | 738 | drivers · module coverage sweep | C | ALL | UNVERIFIED | Proactive module audit. `docs/module-completion/drivers.json` is 0/20; all route-manifest surfaces (roster, profile, status, recruiting, safety score, retention, settlements, team-splits, etc.) are scaffolded but not live-exercised. The driver roster itself has real data; individual leaf verification pending. No structural guard run in this pass. | — | — | NO | 2026-08-04 | CASCADE |
 | 739 | dispatch · module coverage sweep | C | ALL | UNVERIFIED | Proactive module audit. `docs/module-completion/dispatch.json` is 0/37 after 2026-07-31 re-scope to honest empty-state bar; all route-manifest surfaces (loads, kanban, board, planners, pod-review, settlements, settings, trip-pairing, trip-profitability, etc.) are scaffolded but not live-exercised. Module already has many WIRE findings rows (wire_06-10). No new code defect found in this pass beyond those. | — | — | NO | 2026-08-04 | CASCADE |
+| 740 | users · user detail Activity tab wired to audit spine | C | ALL | PASS | Proactive structural guard run. `verify-user-detail-activity-tab.mjs` exit 0 — User detail Activity tab is wired to the audit spine. Does not close VERIFY-1..8 click-throughs; adds evidence to the users module coverage row (716). | — | — | NO | 2026-08-04 | CASCADE |
+| 741 | drivers · driver detail uses ParityTable + ListErrorState | C | ALL | PASS | Proactive structural guard run. `verify-driver-detail-uses-paritytable.mjs` exit 0 — `apps/frontend/src/pages/DriverDetail.tsx` uses ParityTable with preserved columns and ListErrorState. Surface still needs live entity-scoped exercise; adds evidence to drivers module coverage row (738). | — | — | NO | 2026-08-04 | CASCADE |
+| 742 | bank · banking categorize dropdowns keep inline create canonical | C | ALL | PASS | Proactive structural guard run. `verify-banking-inline-create.mjs` exit 0 — Banking categorize dropdowns (vendor/category/customer/item/class) keep inline "+ Add new" writing the canonical TMS catalog; class create branch is wired; location stays intentional free-text per Phase-B design. Adds evidence to bank module coverage row (732). | — | — | NO | 2026-08-04 | CASCADE |
+| 743 | maintenance · create work-order modal contract wired | C | ALL | PASS | Proactive structural guard run. `verify-create-wo-modal-contract.mjs` exit 0 — Create work-order modal contract is wired. Adds evidence to maintenance module coverage row (736). | — | — | NO | 2026-08-04 | CASCADE |
+| 744 | accounting · Claim→WO→Bill/Expense FK design held + registered | C | ALL | PASS | Proactive structural guard run. `verify-claim-wo-bill-expense-fk-design.mjs` exit 0 — Claim→WorkOrder→Bill/Expense FK design is held and registered (12/22 fields); honest gap remains documented pending Neon-apply. Adds evidence to accounting module coverage row (731). | — | — | NO | 2026-08-04 | CASCADE |
 
