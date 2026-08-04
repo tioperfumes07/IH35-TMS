@@ -15,6 +15,7 @@ import {
 import { countDriverEscrowKpis } from "./driver-escrow-counts.js";
 import { countTotalBankTransactions, countUncategorizedTransactions } from "./pending-categorization.js";
 import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
+import { POSTING_ENGINE_SUPPORTS_REPOST } from "../accounting/posting-engine.service.js";
 import {
   sumAuthoritativeDepositoryCashCents,
   withInternalWalletBalances,
@@ -530,6 +531,27 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         [params.data.id, companyId]
       );
       const priorJournalEntryId = posted.rows[0]?.matched_journal_entry_id ?? null;
+
+      // BANK-F03 — FAIL LOUD rather than reverse into a dead end.
+      //
+      // BANK-F01 (PR #4225) made this handler reverse the posted JE, which fixed a stale-ledger defect
+      // but introduced a WORSE one that I did not catch before merging: the canonical poster cannot
+      // RE-POST a source transaction after a reversal (its batch idempotency key ends in
+      // posting_purpose, which has only initial_post|reversal — see POSTING_ENGINE_SUPPORTS_REPOST).
+      // So the sequence became: reverse the entry, clear the link, then have the corrected
+      // categorization silently return the ORIGINAL batch. Net effect: the expense disappears from the
+      // books entirely. Proven on a prod fork — 20 rows, fuel down $4,593.94, target accounts zero lines.
+      //
+      // Until the poster gains a real repost capability, refusing is the only honest outcome: a wrong
+      // account on the books is recoverable, an expense silently deleted from the ledger is not. This
+      // check runs BEFORE the reversal, so nothing is undone when nothing can be re-posted.
+      if (priorJournalEntryId && !POSTING_ENGINE_SUPPORTS_REPOST) {
+        return {
+          status: "repost_unsupported" as const,
+          journalEntryId: priorJournalEntryId,
+        };
+      }
+
       if (priorJournalEntryId) {
         await reverseJournalEntryNoFlip(client, {
           operatingCompanyId: companyId,
@@ -589,6 +611,16 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       );
       return true;
     });
+    if (ok && typeof ok === "object" && "status" in ok && ok.status === "repost_unsupported") {
+      return reply.code(409).send({
+        error: "repost_unsupported",
+        message:
+          "This transaction has a posted journal entry, and the posting engine cannot yet re-post a " +
+          "corrected categorization after a reversal. Undoing now would reverse the entry and leave the " +
+          "expense unrecorded. Refused deliberately (BANK-F03).",
+        journal_entry_id: ok.journalEntryId,
+      });
+    }
     if (!ok) return reply.code(404).send({ error: "transaction_not_found" });
     return { ok: true };
   });
