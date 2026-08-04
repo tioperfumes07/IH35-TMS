@@ -63,6 +63,26 @@ mustInclude(
   "board-bulk"
 );
 
+// Kanban Delivered column must drop to delivered_pending_docs (stamp path), never bare "delivered".
+mustInclude(
+  "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
+  ['dropStatus: "delivered_pending_docs"'],
+  "kanban-delivered-drop"
+);
+{
+  const kanban = read("apps/frontend/src/components/dispatch/DispatchKanban.tsx");
+  // Delivered column definition must not regress to dropStatus: "delivered"
+  if (
+    /key:\s*"delivered"[\s\S]{0,200}?dropStatus:\s*"delivered"\s*[,}]/.test(kanban) &&
+    !/key:\s*"delivered"[\s\S]{0,200}?dropStatus:\s*"delivered_pending_docs"/.test(kanban)
+  ) {
+    console.error(
+      'FAIL kanban-delivered-drop: Delivered column still uses dropStatus: "delivered" (skips WIRE-07 stamp)'
+    );
+    process.exit(1);
+  }
+}
+
 // Dual-path kill: no second inline UPDATE that bypasses the helper in bulk/mdata.
 for (const rel of [
   "apps/backend/src/dispatch/loads-bulk.routes.ts",
@@ -76,8 +96,17 @@ for (const rel of [
 }
 
 if (process.argv.includes("--selftest")) {
+  // Planted Kanban regression: bare delivered drop must fail the kanban check.
+  const planted =
+    'const KANBAN_STATUS_GROUPS = [\n  { key: "delivered", title: "Delivered", statuses: ["delivered"], dropStatus: "delivered" },\n];\n';
+  if (!/key:\s*"delivered"[\s\S]{0,200}?dropStatus:\s*"delivered"\s*[,}]/.test(planted)) {
+    console.error("verify-wire-07-actual-departure-stamp SELFTEST FAIL — planted kanban pattern not matched");
+    process.exit(1);
+  }
   console.log("verify-wire-07-actual-departure-stamp: selftest OK");
   process.exit(0);
 }
 
-console.log("verify-wire-07-actual-departure-stamp: OK — shared stamp on transition + bulk + mdata");
+console.log(
+  "verify-wire-07-actual-departure-stamp: OK — shared stamp on transition + bulk + mdata + kanban delivered_pending_docs drop"
+);
