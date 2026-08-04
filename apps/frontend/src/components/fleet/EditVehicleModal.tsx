@@ -9,6 +9,7 @@ import { FieldSet } from "../forms/FieldSet";
 import { FormField } from "../forms/FormField";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Combobox } from "../Combobox";
+import { EntityPicker } from "../parity/EntityPicker";
 import { listMyCompanies, type MyCompany } from "../../api/org";
 import type { FleetRow } from "../FleetTable";
 
@@ -33,7 +34,7 @@ type TabId = (typeof EDIT_VEHICLE_MODAL_TABS)[number];
 type FieldDef = {
   key: string;
   label: string;
-  type: "text" | "number" | "date" | "textarea" | "select" | "boolean" | "company";
+  type: "text" | "number" | "date" | "textarea" | "select" | "boolean" | "company" | "driver";
   options?: Array<{ value: string; label: string }>;
   ownerOnly?: boolean;
   tab: TabId;
@@ -107,7 +108,7 @@ const FIELD_DEFS: FieldDef[] = [
   { key: "quick_availability", label: "Quick Availability", type: "select", tab: "Quick-availability", options: [
     { value: "available", label: "Available" }, { value: "booked", label: "Booked" }, { value: "holding", label: "Holding" },
   ]},
-  { key: "assigned_driver_id", label: "Default Driver ID", type: "text", tab: "Quick-availability" },
+  { key: "assigned_driver_id", label: "Default Driver", type: "driver", tab: "Quick-availability" },
   { key: "status_change_reason", label: "Status Change Reason", type: "textarea", tab: "Quick-availability" },
   { key: "is_dispatch_blocked", label: "Dispatch Blocked", type: "boolean", tab: "Quick-availability" },
   { key: "dispatch_block_reason", label: "Dispatch Block Reason", type: "textarea", tab: "Quick-availability" },
@@ -286,6 +287,24 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
             loading={companiesQuery.isLoading}
             allowClear
             dataField={def.key}
+          />
+        </div>
+      );
+    }
+    if (def.type === "driver") {
+      const selected = String(value ?? "");
+      return (
+        <div data-testid={`edit-vehicle-${def.key}`}>
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={operatingCompanyId}
+            value={selected || null}
+            onChange={(v) => setField(def.key, v ?? "")}
+            placeholder="Select driver"
+            enabled={open}
+            allowClear
+            dataField={def.key}
+            dataTestId={`edit-vehicle-${def.key}-picker`}
           />
         </div>
       );
