@@ -411,19 +411,32 @@ export function BankingTransactionsDesignView({
     staleTime: 120_000,
   });
 
-  // Catalog-linkage pickers (QBO parity). limit:200 dodges the endpoint 50-caps so the FULL roster is
-  // selectable. Payee→vendors, Customer/project→customers, Product/Service (Item)→Products & Services.
+  // Catalog-linkage pickers (QBO parity). Server-side search + page size 200 — never load 1000/5000
+  // into the browser and pretend the roster is complete. Typing refetches; empty query loads first page.
+  const [vendorSearch, setVendorSearch] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
+  const PICKER_PAGE = 200;
   const vendorsQuery = useQuery({
-    queryKey: ["banking", "tx-vendors", companyId],
-    queryFn: () => listVendors({ operating_company_id: companyId, limit: 1000 }).then((r) => r.vendors ?? []),
+    queryKey: ["banking", "tx-vendors", companyId, vendorSearch],
+    queryFn: () =>
+      listVendors({
+        operating_company_id: companyId,
+        limit: PICKER_PAGE,
+        search: vendorSearch.trim() || undefined,
+      }).then((r) => r.vendors ?? []),
     enabled: Boolean(companyId),
-    staleTime: 120_000,
+    staleTime: 30_000,
   });
   const customersQuery = useQuery({
-    queryKey: ["banking", "tx-customers", companyId],
-    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 5000 }).then((r) => r.customers ?? []),
+    queryKey: ["banking", "tx-customers", companyId, customerSearch],
+    queryFn: () =>
+      listCustomers({
+        operating_company_id: companyId,
+        limit: PICKER_PAGE,
+        search: customerSearch.trim() || undefined,
+      }).then((r) => r.customers ?? []),
     enabled: Boolean(companyId),
-    staleTime: 120_000,
+    staleTime: 30_000,
   });
   const itemsQuery = useQuery({
     queryKey: ["banking", "tx-items", companyId],
@@ -1609,7 +1622,9 @@ export function BankingTransactionsDesignView({
                   options={(vendorsQuery.data ?? []).map((v) => ({ value: v.id, label: v.name }))}
                   createKind="vendor"
                   operatingCompanyId={companyId}
-                  placeholder="Select payee (vendor)"
+                  placeholder="Search payee (vendor)"
+                  onSearch={setVendorSearch}
+                  loading={vendorsQuery.isFetching}
                   onOptionCreated={(opt) => {
                     void vendorsQuery.refetch();
                     setDraft(tx, { payee: opt.label });
@@ -1728,12 +1743,17 @@ export function BankingTransactionsDesignView({
                   value={draft.classId || null}
                   onChange={(cid) => {
                     const c = (classesQuery.data ?? []).find((x) => x.id === cid);
-                    setDraft(tx, { classId: cid ?? "", ...(c ? { className: c.display_name } : {}) });
+                    const label = String(c?.display_name ?? "").trim();
+                    setDraft(tx, { classId: cid ?? "", ...(label ? { className: label } : {}) });
                   }}
-                  options={(classesQuery.data ?? []).map((c: AccountingCatalogRow) => ({
-                    value: c.id,
-                    label: c.display_name,
-                  }))}
+                  options={(classesQuery.data ?? []).map((c: AccountingCatalogRow) => {
+                    const label = String(c.display_name ?? "").trim();
+                    // Never surface the row UUID as the human label (row 601 / picker law).
+                    return {
+                      value: c.id,
+                      label: label && label !== c.id ? label : "Unnamed class",
+                    };
+                  })}
                   createKind="class"
                   addNewLabel="+ Add new class"
                   operatingCompanyId={companyId}
@@ -1798,7 +1818,9 @@ export function BankingTransactionsDesignView({
                   options={(customersQuery.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
                   createKind="customer"
                   operatingCompanyId={companyId}
-                  placeholder="Select customer"
+                  placeholder="Search customer"
+                  onSearch={setCustomerSearch}
+                  loading={customersQuery.isFetching}
                   onOptionCreated={(opt) => {
                     void customersQuery.refetch();
                     setDraft(tx, { customerProject: opt.label });

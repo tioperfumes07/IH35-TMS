@@ -17,6 +17,15 @@ vi.mock("../../../api/mdata", () => ({
   patchUnit: vi.fn(),
 }));
 
+vi.mock("../../../api/org", () => ({
+  listMyCompanies: vi.fn().mockResolvedValue({
+    companies: [
+      { id: "company-1", code: "TRANSP", legal_name: "Transport", short_name: "TRANSP", company_type: "operating_carrier", is_active: true, is_default: true },
+      { id: "company-2", code: "TRK", legal_name: "Trucking", short_name: "TRK", company_type: "asset_holder", is_active: true, is_default: false },
+    ],
+  }),
+}));
+
 import { apiRequest } from "../../../api/client";
 
 const mockedApiRequest = vi.mocked(apiRequest);
@@ -73,5 +82,13 @@ describe("EditVehicleModal", () => {
     const saveBtn = screen.getByRole("button", { name: /Save Changes \(0 fields modified\)/ });
     expect(saveBtn).toBeTruthy();
     expect(EDIT_VEHICLE_MODAL_FIELD_COUNT).toBeGreaterThanOrEqual(50);
+  });
+
+  it("uses company Combobox for owner / leased-to (not raw UUID text)", async () => {
+    renderModal();
+    await screen.findByText("Edit Vehicle · TRK-1");
+    expect(screen.getByTestId("edit-vehicle-owner_company_id")).toBeTruthy();
+    expect(screen.getByTestId("edit-vehicle-currently_leased_to_company_id")).toBeTruthy();
+    expect(screen.queryByLabelText(/Owner Company ID/i)).toBeNull();
   });
 });
