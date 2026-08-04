@@ -1227,6 +1227,11 @@
     "1896": "1896-verify-lst-picker01-fine-create-driver-entity-picker.mjs",
     "1898": "1898-verify-disp-filter-01-mdata-status-contract.mjs",
     "1899": "1899-verify-freshness-union-exemption-parity.mjs",
+    "2371": "2371-verify-test-typecheck-ratchet.mjs",
+    "2373": "2373-verify-disp-wire-01-book-invoice.mjs",
+    "2400": "2400-verify-verify-step-claimed-on-main.mjs",
+    "2401": "2401-verify-no-extract-over-date-difference.mjs",
+    "2402": "2402-verify-claude-settings-hard-deny.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
@@ -1235,13 +1240,11 @@
     "06": "06-verify-scheduler-tenant-context.mjs",
     "07": "07-verify-canonical-schema-names.mjs",
     "08": "08-verify-outbox-handler-parity.mjs",
-    "09": "09-verify-migration-application-consistency.mjs",
-    "2371": "2371-verify-test-typecheck-ratchet.mjs",
-    "2401": "2401-verify-no-extract-over-date-difference.mjs"
+    "09": "09-verify-migration-application-consistency.mjs"
   },
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
-  "_how_to_claim": "ODD/EVEN SPLIT (owner-locked 2026-07-28): Cursor = EVEN only; Claude = ODD only. Pick the next free number in YOUR band, add \"<number>\": \"<filename>\", commit it WITH the guard. Never claim the other coder's parity.",
+  "_how_to_claim": "MOD-4 BANDS + CLAIM-BEFORE-WRITE (owner-locked 2026-08-04; credit CC-2): Cursor = EVEN; CC-1 = ≡1 (mod 4) via claude|/cc-1|/cc1; CC-2 = ≡3 (mod 4) via cc-2|/cc2. Reserve first: merge a claim-only PR (chore/claim-reserve* or chore/claimed-regen* with CLAIM-RESERVE/CLAIMED-REGEN) that adds only the number here; THEN author scripts/verify-steps/NNNN-*.mjs on a feature PR. CI fails if a new step file is not already claimed on origin/main (except one-time 2400 self-bootstrap). Never claim another lane's residue. Never renumber after collisions.",
   "generated_at": "2026-07-28T13:11:57Z",
   "total_claimed": 945,
   "known_duplicates_frozen": {
@@ -1611,9 +1614,11 @@
     ]
   },
   "_band": {
-    "cursor": "even",
-    "claude": "odd",
-    "locked": "2026-07-28",
-    "note": "Cursor even; Claude odd"
+    "cursor": "even (n%2===0)",
+    "cc-1": "n%4===1",
+    "cc-2": "n%4===3",
+    "locked": "2026-08-04",
+    "note": "Supersedes 2026-07-28 odd/even-only. Claim-before-write required.",
+    "credit": "CC-2 analysis"
   }
 }
