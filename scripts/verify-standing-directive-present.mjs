@@ -22,11 +22,11 @@ const DELIVERY = "docs/specs/DELIVERY-METHOD-LOCKED.md";
 const POINTERS = [
   {
     rel: ".cursor/rules/33-standing-session-directive.mdc",
-    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "DELIVERY-METHOD-LOCKED.md", "alwaysApply"],
+    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "DELIVERY-METHOD-LOCKED.md", "alwaysApply", "SEARCH BEFORE YOU ASK"],
   },
   {
     rel: ".windsurf/rules/standing-session-directive.md",
-    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "DELIVERY-METHOD-LOCKED.md"],
+    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "DELIVERY-METHOD-LOCKED.md", "SEARCH BEFORE YOU ASK"],
   },
   {
     rel: ".claude/skills/ih35-tms-standards/SKILL.md",
@@ -35,6 +35,10 @@ const POINTERS = [
   {
     rel: ".cursor/rules/00-always-read-first.mdc",
     mustInclude: ["STANDING-SESSION-DIRECTIVE.md"],
+  },
+  {
+    rel: "AGENTS.md",
+    mustInclude: ["STANDING-SESSION-DIRECTIVE.md", "SEARCH BEFORE YOU ASK"],
   },
 ];
 
@@ -61,6 +65,13 @@ export function assertStandingDirectivePresent(root = ROOT) {
     }
     if (!/DELIVERY-METHOD-LOCKED/i.test(body)) {
       problems.push(`${DIRECTIVE}: must point at DELIVERY-METHOD-LOCKED.md`);
+    }
+    // Canonical §6 / §7 (owner 2026-08-04) — search-before-ask + labeled placeholders.
+    if (!/SEARCH BEFORE YOU ASK/i.test(body)) {
+      problems.push(`${DIRECTIVE}: must include §6 SEARCH BEFORE YOU ASK`);
+    }
+    if (!/PLACEHOLDER/i.test(body) || !/TEST DATA|test data/i.test(body)) {
+      problems.push(`${DIRECTIVE}: must include §7 TEST WITH PLACEHOLDER NUMBERS (labeled test data)`);
     }
   }
 
@@ -92,7 +103,7 @@ if (SELFTEST) {
     fs.mkdirSync(path.join(tmpRoot, ".cursor", "rules"), { recursive: true });
     fs.mkdirSync(path.join(tmpRoot, ".windsurf", "rules"), { recursive: true });
     fs.mkdirSync(path.join(tmpRoot, ".claude", "skills", "ih35-tms-standards"), { recursive: true });
-    fs.writeFileSync(path.join(tmpRoot, DIRECTIVE), "# stub\nNO holds. NO JORGE-APPROVED.\nCursor SCREENS + JANITOR\nDELIVERY-METHOD-LOCKED\n");
+    fs.writeFileSync(path.join(tmpRoot, DIRECTIVE), "# stub\nNO holds. NO JORGE-APPROVED.\nCursor SCREENS + JANITOR\nDELIVERY-METHOD-LOCKED\n## 6. SEARCH BEFORE YOU ASK\n## 7. PLACEHOLDER test data\n");
     fs.writeFileSync(path.join(tmpRoot, DELIVERY), "# delivery stub\n");
     // Broken pointer — missing STANDING reference
     fs.writeFileSync(
@@ -102,8 +113,9 @@ if (SELFTEST) {
     fs.writeFileSync(path.join(tmpRoot, ".windsurf", "rules", "standing-session-directive.md"), "DELIVERY-METHOD-LOCKED.md\n");
     fs.writeFileSync(path.join(tmpRoot, ".claude", "skills", "ih35-tms-standards", "SKILL.md"), "# no standing\n");
     fs.writeFileSync(path.join(tmpRoot, ".cursor", "rules", "00-always-read-first.mdc"), "---\nalwaysApply: true\n---\n# no standing\n");
+    fs.writeFileSync(path.join(tmpRoot, "AGENTS.md"), "# no standing\n");
     const planted = assertStandingDirectivePresent(tmpRoot);
-    if (planted.length < 3) {
+    if (planted.length < 4) {
       console.error(`${LABEL} SELFTEST FAIL — planted missing refs not caught (${planted.length})`);
       for (const p of planted) console.error(`  - ${p}`);
       process.exit(1);

@@ -1,5 +1,5 @@
 ---
-description: ALWAYS LOAD — Standing Session Directive + Delivery Method (Cursor screens/janitor lane)
+description: ALWAYS LOAD — Standing Session Directive (§0–§7) + Delivery Method (Cursor screens/janitor lane)
 alwaysApply: true
 ---
 
@@ -7,12 +7,16 @@ alwaysApply: true
 
 **Every session, before other work, load:**
 
-1. `docs/specs/STANDING-SESSION-DIRECTIVE.md` — roles, governance, Cursor auto-mode, never-guess
+1. `docs/specs/STANDING-SESSION-DIRECTIVE.md` — §0–§7 (owner compact · auto mode · tiered model · never guess · governance · quality hardline · **§6 SEARCH BEFORE YOU ASK** · **§7 TEST WITH PLACEHOLDER NUMBERS**)
 2. `docs/specs/DELIVERY-METHOD-LOCKED.md` — P0→P4 delivery sequencing + §9 coder collision law
 
 Cursor = SCREENS + JANITOR (FE screens, guards, scoreboard, cleanup).  
 Do **not** write GL money math (Claude Coder). Do **not** append audit Verdict rows (Cascade).
 
 Governance: NO holds · NO `JORGE-APPROVED` · merge on green with proof · coders apply Neon.
+
+**§6:** Search blueprint / questionnaire / locked decisions / accounting skill / approved UI / repo / Neon **before** escalating to the owner. Asking what the files already answer is a defect.
+
+**§7:** Skeleton hops may use labeled TEST DATA placeholders ($1,200 flat, $1.20/mi, $0.05 accessorial). Never present fabricated numbers as live production truth; never block a test on a missing real figure.
 
 Presence enforced by `scripts/verify-standing-directive-present.mjs` (verify-step 2374).

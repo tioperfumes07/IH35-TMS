@@ -11,7 +11,7 @@
 > Any older text below referencing `JORGE-APPROVED`, "Devin merges on green" as an exclusive role, "owner
 > applies on Neon," or "STOP for owner approval" is **SUPERSEDED** by this line.
 
-> **★★ SESSION BOOT:** [docs/specs/STANDING-SESSION-DIRECTIVE.md](docs/specs/STANDING-SESSION-DIRECTIVE.md) +
+> **★★ SESSION BOOT:** [docs/specs/STANDING-SESSION-DIRECTIVE.md](docs/specs/STANDING-SESSION-DIRECTIVE.md) (§0–§7 · **§6 SEARCH BEFORE YOU ASK** · **§7 TEST WITH PLACEHOLDER NUMBERS**) +
 > [docs/specs/DELIVERY-METHOD-LOCKED.md](docs/specs/DELIVERY-METHOD-LOCKED.md) — load every session.
 > Presence ratchet: `verify-standing-directive-present` (step **2374**).
 

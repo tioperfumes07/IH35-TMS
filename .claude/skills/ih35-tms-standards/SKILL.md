@@ -5,7 +5,7 @@ description: The durable operating standards for the IH35-TMS repository — per
 
 # IH35-TMS — Operating Standards
 
-**★★ SESSION BOOT (every agent):** load `docs/specs/STANDING-SESSION-DIRECTIVE.md` then
+**★★ SESSION BOOT (every agent):** load `docs/specs/STANDING-SESSION-DIRECTIVE.md` (§0–§7 · §6 SEARCH BEFORE YOU ASK · §7 TEST WITH PLACEHOLDER NUMBERS) then
 `docs/specs/DELIVERY-METHOD-LOCKED.md` before other work. Cursor = screens/janitor; Claude Coder = money/Neon;
 Cascade = active-slice auditor. Presence ratchet: `scripts/verify-standing-directive-present.mjs` (step 2374).
 
