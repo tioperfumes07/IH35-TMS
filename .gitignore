@@ -60,6 +60,7 @@ docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 !.cursor/rules/31-cursor-never-idle-wave-drain.mdc
 !.cursor/rules/31-full-system-audit-mandatory.mdc
 !.cursor/rules/32-continuous-mode-no-idle.mdc
+!.cursor/rules/32-load-linkage-pre-operational.mdc
 !.cursor/rules/ih35-deep-linkage-audit.mdc
 !.cursor/rules/dual-lane-never-idle.mdc
 !.cursor/rules/06-live-ops-cadence.mdc
