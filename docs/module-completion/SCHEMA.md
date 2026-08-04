@@ -12,7 +12,7 @@
 | `scripts/verify-module-completion.mjs` | Fail closed if COMPLETE while open items remain; validate schema; print `N of M` |
 | `scripts/verify-module-manifest-integrity.mjs` | Fail closed if `progress` ≠ scored `pass_count`/`total_count`, or `complete:true` while N < M / non-PASS items |
 | verify-step **1431** | CI teeth — Rule 24 completion guard |
-| verify-step **2362** | CI teeth — manifest arithmetic integrity (mutation-tested) |
+| verify-step **2364** | CI teeth — manifest arithmetic integrity (mutation-tested) |
 | Rule **24** | alwaysApply — module DONE ≠ PR volume |
 
 ## Item status
