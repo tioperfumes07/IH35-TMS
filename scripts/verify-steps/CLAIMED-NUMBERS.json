@@ -1231,6 +1231,7 @@
     "2373": "2373-verify-disp-wire-01-book-invoice.mjs",
     "2400": "2400-verify-verify-step-claimed-on-main.mjs",
     "2401": "2401-verify-no-extract-over-date-difference.mjs",
+    "2402": "2402-verify-claude-settings-hard-deny.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",

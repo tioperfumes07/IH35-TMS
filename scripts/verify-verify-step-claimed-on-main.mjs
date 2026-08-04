@@ -59,6 +59,8 @@ export function analyseClaimedOnMain(claimedOnMain, steps, opts = {}) {
   const problems = [];
   const claimedOnHead = opts.claimedOnHead ?? claimedOnMain;
   const basename = (f) => f.split("/").pop();
+  /** chore/claimed-regen* may land claim+file atomically (registry tooling only). */
+  const regenSamePr = opts.regenSamePr === true;
   for (const s of steps) {
     if (claimedOnMain.has(s.number)) continue;
     if (
@@ -67,6 +69,9 @@ export function analyseClaimedOnMain(claimedOnMain, steps, opts = {}) {
       s.number === "2400"
     ) {
       continue; // self-bootstrap only for 2400 claim-before-write landing
+    }
+    if (regenSamePr && claimedOnHead.has(s.number)) {
+      continue;
     }
     problems.push(
       `${s.file}: number ${s.number} is NOT in origin/main ${REGISTRY_REL}. ` +
@@ -85,7 +90,14 @@ export function run(baseRef = "origin/main", cwd = ROOT) {
   const claimed = claimedNumbersOnRef(baseRef, cwd);
   const headText = fs.readFileSync(path.join(cwd, REGISTRY_REL), "utf8");
   const claimedOnHead = claimedNumbersFromJson(headText);
-  const problems = analyseClaimedOnMain(claimed, steps, { claimedOnHead });
+  let branch = "";
+  try {
+    branch = git(["rev-parse", "--abbrev-ref", "HEAD"], cwd);
+  } catch {
+    branch = "";
+  }
+  const regenSamePr = branch.startsWith("chore/claimed-regen");
+  const problems = analyseClaimedOnMain(claimed, steps, { claimedOnHead, regenSamePr });
   return problems.length === 0
     ? { ok: true, message: `${LABEL} OK — ${steps.length} new step(s) already claimed on ${baseRef}` }
     : { ok: false, message: `${LABEL} FAILED (${problems.length}):\n  - ${problems.join("\n  - ")}` };

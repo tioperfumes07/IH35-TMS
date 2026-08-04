@@ -76,10 +76,12 @@ docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 # The canonical generated file has no space; working copies do. Never commit working copies.
 docs/trackers/exports/* *
 
-# Claude Code local state — ignore everything under .claude EXCEPT committed skills.
+# Claude Code local state — ignore everything under .claude EXCEPT committed skills
+# and the hard-deny floor in settings.json (owner 2026-08-04; deny outranks bypass).
 # .claude/worktrees/ (agent worktrees) and settings.local.json must never be committed.
 .claude/*
 !.claude/skills/
+!.claude/settings.json
 
 # docs/module-completion/*.md is generated from the .json beside it by
 # scripts/verify-module-completion.mjs (verify-step 1431). Committing a derived file made every
