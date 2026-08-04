@@ -79,9 +79,12 @@ export function AmortizationPage() {
   if (!enabled)
     return (
       <div className="p-6"><FinanceModuleTabs />{header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-          Amortization is not yet enabled for this company. (Feature flag <code>{FINANCE_HUB_AMORTIZATION_FLAG}</code> is off.)
-        </div>
+        <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
+          <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">Amortization unavailable</div>
+          <p className="px-4 py-3 text-sm text-slate-600">
+            Amortization is not yet enabled for this company. (Feature flag <code>{FINANCE_HUB_AMORTIZATION_FLAG}</code> is off.)
+          </p>
+        </section>
       </div>
     );
 
@@ -93,53 +96,61 @@ export function AmortizationPage() {
 
   return (
     <div className="p-6"><FinanceModuleTabs />{header}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="rounded-sm border border-slate-200 bg-white p-4">
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">New loan</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {field("Name", "name")}{field("Lender", "lender")}
-            {field("Principal ($)", "principal", "number")}{field("Rate (%)", "ratePct", "number")}
-            {field("Term (months)", "termMonths", "number")}{field("First payment", "firstPaymentDate", "date")}
+      <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
+        <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x lg:divide-slate-100">
+          <div className="min-w-0">
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">New loan</div>
+            <div className="px-4 py-3">
+              <div className="grid grid-cols-2 gap-3">
+                {field("Name", "name")}{field("Lender", "lender")}
+                {field("Principal ($)", "principal", "number")}{field("Rate (%)", "ratePct", "number")}
+                {field("Term (months)", "termMonths", "number")}{field("First payment", "firstPaymentDate", "date")}
+              </div>
+              <button onClick={onCreate} disabled={busy || !companyId} className="mt-4 rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+                {busy ? "Generating…" : "Create + generate schedule"}
+              </button>
+              {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+            </div>
           </div>
-          <button onClick={onCreate} disabled={busy || !companyId} className="mt-4 rounded-sm bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
-            {busy ? "Generating…" : "Create + generate schedule"}
-          </button>
-          {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-        </div>
 
-        <div className="rounded-sm border border-slate-200 bg-white p-4">
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">Loans</h2>
-          {loans.length === 0 ? <p className="text-sm text-slate-500">No loans yet.</p> : (
-            <ul className="space-y-1 text-sm">
-              {loans.map((l) => (
-                <li key={l.id}>
-                  <button onClick={() => openSchedule(l.id)} className={`w-full text-left rounded-sm px-2 py-1 ${selected === l.id ? "bg-slate-100" : "hover:bg-slate-50"}`}>
-                    <span className="font-medium text-slate-700">{l.name}</span>
-                    <span className="block text-xs text-slate-500">{dollars(l.original_principal_cents)} @ {(l.interest_rate_bps / 100).toFixed(2)}% × {l.term_months}mo · {l.loan_type === "note_payable" ? "Note Payable" : "Loan Payable"}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+          <div className="min-w-0 border-t border-slate-100 lg:border-t-0">
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">Loans</div>
+            <div className="px-4 py-3">
+              {loans.length === 0 ? <p className="text-sm text-slate-500">No loans yet.</p> : (
+                <ul className="space-y-1 text-sm">
+                  {loans.map((l) => (
+                    <li key={l.id}>
+                      <button onClick={() => openSchedule(l.id)} className={`w-full text-left rounded-sm px-2 py-1 ${selected === l.id ? "bg-slate-100" : "hover:bg-slate-50"}`}>
+                        <span className="font-medium text-slate-700">{l.name}</span>
+                        <span className="block text-xs text-slate-500">{dollars(l.original_principal_cents)} @ {(l.interest_rate_bps / 100).toFixed(2)}% × {l.term_months}mo · {l.loan_type === "note_payable" ? "Note Payable" : "Loan Payable"}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
 
-        <div className="rounded-sm border border-slate-200 bg-white p-4 lg:col-span-1">
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">Schedule</h2>
-          {schedule.length === 0 ? <p className="text-sm text-slate-500">Select a loan to view its schedule.</p> : (
-            <ParityTable<AmortRow>
-              columns={SCHEDULE_COLUMNS}
-              rows={schedule}
-              rowKey={(r) => String(r.payment_number)}
-              storageKey="finance-amortization-schedule"
-              tableTestId="amortization-schedule-table"
-              density="compact"
-              initialPageSize={12}
-              pageSizeOptions={[12, 60, 120, 360]}
-              emptyText="Select a loan to view its schedule."
-            />
-          )}
+          <div className="min-w-0 border-t border-slate-100 lg:border-t-0">
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">Schedule</div>
+            <div className="px-4 py-3">
+              {schedule.length === 0 ? <p className="text-sm text-slate-500">Select a loan to view its schedule.</p> : (
+                <ParityTable<AmortRow>
+                  columns={SCHEDULE_COLUMNS}
+                  rows={schedule}
+                  rowKey={(r) => String(r.payment_number)}
+                  storageKey="finance-amortization-schedule"
+                  tableTestId="amortization-schedule-table"
+                  density="compact"
+                  initialPageSize={12}
+                  pageSizeOptions={[12, 60, 120, 360]}
+                  emptyText="Select a loan to view its schedule."
+                />
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
