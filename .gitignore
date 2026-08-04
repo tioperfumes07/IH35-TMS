@@ -57,6 +57,7 @@ docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 !.cursor/rules/27-one-open-pr-per-area.mdc
 !.cursor/rules/29-cursor-claude-parity-ship.mdc
 !.cursor/rules/30-claude-green-evidence-format.mdc
+!.cursor/rules/31-cursor-never-idle-wave-drain.mdc
 !.cursor/rules/31-full-system-audit-mandatory.mdc
 !.cursor/rules/32-continuous-mode-no-idle.mdc
 !.cursor/rules/ih35-deep-linkage-audit.mdc
