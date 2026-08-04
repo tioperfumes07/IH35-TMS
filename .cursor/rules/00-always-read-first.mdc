@@ -18,7 +18,7 @@ label or a merge click. Safeguard = PROOF, not approval.** See `.cursor/rules/00
 
 **★★ STANDING SESSION LOAD (every agent, every turn):**  
 `docs/specs/STANDING-SESSION-DIRECTIVE.md` + `docs/specs/OWNER-QUALITY-COMPACT.md` (**ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED**) + `docs/specs/DELIVERY-METHOD-LOCKED.md`  
-(Cursor rule `33-standing-session-directive.mdc` · Windsurf `standing-session-directive.md` · CI steps **2374** / **2375**).
+(Cursor rule `33-standing-session-directive.mdc` · Windsurf `standing-session-directive.md` · CI steps **2374** / **2380**).
 
 These are standing law. They load via always-apply Cursor rules AND must be treated as already in force:
 
