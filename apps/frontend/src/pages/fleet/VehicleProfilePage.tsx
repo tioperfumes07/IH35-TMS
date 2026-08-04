@@ -38,7 +38,6 @@ import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistory
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 import { InsuranceClaimsReverseSection } from "../../components/insurance/InsuranceClaimsReverseSection";
 import { AssetSafetyReverseSection } from "../../components/safety/AssetSafetyReverseSection";
-import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 
 export type UnitProfileAggregate = {
   unit: Record<string, unknown>;
@@ -341,13 +340,6 @@ export function VehicleProfilePage() {
                 View Permits, Toll Tags, Tasks, Brakes, Tires, Finance Linkage
               </Link>
             </div>
-          </div>
-          <div data-testid="vp-section-11b-linked-bank-txns">
-            <LinkedBankTransactionsPanel
-              companyId={companyId}
-              linkage={{ kind: "unit_id", id }}
-              entityLabel={`Unit ${unitNumber}`}
-            />
           </div>
           <div data-testid="vp-section-12-audit-history" className="rounded-sm border border-gray-200 bg-white p-4">
             <h3 className="mb-2 text-sm font-semibold text-slate-900">Audit History</h3>

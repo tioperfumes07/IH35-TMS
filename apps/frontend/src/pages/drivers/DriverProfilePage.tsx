@@ -23,9 +23,6 @@ import { W8BenSection } from "../../components/driver-profile/W8BenSection";
 import { AddTrainingModal } from "../../components/drivers/AddTrainingModal";
 import { DriverCommunicationsTab } from "../../components/drivers/DriverCommunicationsTab";
 import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
-import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
-import { InsuranceClaimsReverseSection } from "../../components/insurance/InsuranceClaimsReverseSection";
-import { DriverSafetyReverseSection } from "../../components/safety/DriverSafetyReverseSection";
 import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
@@ -500,30 +497,6 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         onClose={closeAssignTruck}
         onAssigned={refreshDriver}
       />
-
-      <div data-testid="dp-section-legal-matters">
-        <LegalMattersReverseSection
-          operatingCompanyId={companyId}
-          filter={{ related_driver_id: id }}
-          contextLabel="this driver"
-          data-testid="driver-profile-legal-matters"
-        />
-      </div>
-      <div data-testid="dp-section-insurance-claims">
-        <InsuranceClaimsReverseSection
-          operatingCompanyId={companyId}
-          filter={{ driver_id: id }}
-          contextLabel="this driver"
-          data-testid="driver-profile-insurance-claims"
-        />
-      </div>
-      <div data-testid="dp-section-safety-reverse">
-        <DriverSafetyReverseSection
-          operatingCompanyId={companyId}
-          driverId={id}
-          data-testid="driver-profile-safety-reverse"
-        />
-      </div>
 
       <section data-testid="dp-section-audit-history" className="rounded-sm border border-gray-200 bg-white p-3">
         <h2 className="mb-3 text-sm font-semibold text-slate-900">Audit History</h2>
