@@ -70,11 +70,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **22 / 30** | 2026-08-04 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-04 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **63 / 150** · TRK **9 / 150** · USMCA **62 / 150** | 2026-08-04 |
-| Rows in this file | **744** | 2026-08-04 |
-| Rows `FAIL` + `OPEN` | **39** | 2026-08-04 |
+| Rows in this file | **746** | 2026-08-04 |
+| Rows `FAIL` + `OPEN` | **41** | 2026-08-04 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **11** | 2026-08-04 |
 | Rows `VERIFIED` by GUARD | **0** | 2026-08-04 |
-| Verdict tally (all rows) | FAIL=91 · PASS=214 · N/A=219 · UNVERIFIED=28 · SUPERSEDED=7 · OTHER=185 | 2026-08-04 |
+| Verdict tally (all rows) | FAIL=93 · PASS=214 · N/A=219 · UNVERIFIED=28 · SUPERSEDED=7 · OTHER=185 | 2026-08-04 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -830,4 +830,6 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 742 | bank · banking categorize dropdowns keep inline create canonical | C | ALL | PASS | Proactive structural guard run. `verify-banking-inline-create.mjs` exit 0 — Banking categorize dropdowns (vendor/category/customer/item/class) keep inline "+ Add new" writing the canonical TMS catalog; class create branch is wired; location stays intentional free-text per Phase-B design. Adds evidence to bank module coverage row (732). | — | — | NO | 2026-08-04 | CASCADE |
 | 743 | maintenance · create work-order modal contract wired | C | ALL | PASS | Proactive structural guard run. `verify-create-wo-modal-contract.mjs` exit 0 — Create work-order modal contract is wired. Adds evidence to maintenance module coverage row (736). | — | — | NO | 2026-08-04 | CASCADE |
 | 744 | accounting · Claim→WO→Bill/Expense FK design held + registered | C | ALL | PASS | Proactive structural guard run. `verify-claim-wo-bill-expense-fk-design.mjs` exit 0 — Claim→WorkOrder→Bill/Expense FK design is held and registered (12/22 fields); honest gap remains documented pending Neon-apply. Adds evidence to accounting module coverage row (731). | — | — | NO | 2026-08-04 | CASCADE |
+| 745 | dispatch · ACCT-F63 driver bills priced at 100% of customer rate | E | TRANSP | FAIL | Branch `origin/claude/wire-02-driver-bill-no-customer-rate`. Live prod proof: all 3 `driver_finance.driver_bills` rows (`B-20260802-0258`, `B-20260627-0036`, `B-20260616-0120`) have `gross_amount_cents` exactly equal to their load's `rate_total_cents` ($1.00/$1.00, $4,900/$4,900, $5,800/$5,800). Root cause: `createDriverBillArtifacts` in `apps/backend/src/dispatch/book-load.service.ts` used `bookLoadRateTotalCents(input.charges)` (the customer rate) for driver base pay. Violates the locked driver model (1099 contractors paid per-mile/per-load, not a percentage of revenue). Fix branch adds `driver_finance.driver_pay_rates` migration, `resolveDriverBasePayCents()` that prices on shortest miles, and guard `verify-disp-wire-02-driver-bill.mjs`. Not yet merged to `origin/main`; existing 3 bad bills still need void-and-reissue. | OPEN | origin/claude/wire-02-driver-bill-no-customer-rate | NO | 2026-08-04 | CASCADE |
+| 746 | program · ACCT-F64 new audit tables default PUBLIC writable, defeating WORM | E | ALL | FAIL | Branch `origin/claude/home-scenario-status-store` / `origin/claude/audit-coverage-backfill-0804`. Root cause: audit schema DEFAULT PRIVILEGES grant PUBLIC `arw` on every new table (`=arw/neondb_owner`). Proven on prod: direct INSERT as `ih35_app` succeeded on new `audit.scenario_status` despite role grant showing SELECT only, because PUBLIC carried the write. The migration for `audit.scenario_status` (202612050000) now REVOKEs from PUBLIC and wraps writes in SECURITY DEFINER `audit.set_scenario_status()`. However the schema-wide DEFAULT PRIVILEGES drift is still latent for any future audit table created without an explicit revoke, so WORM is not guaranteed by construction. Flagged for GUARD/Cascade to decide on a schema-wide default fix; not unilaterally changed. | OPEN | origin/claude/home-scenario-status-store | NO | 2026-08-04 | CASCADE |
 
