@@ -9,8 +9,8 @@ Last locked: 2026-06-08 by Jorge. Repo doc WINS over any handoff/STATUS/memory. 
 
 ## 1. SIDEBAR — FINAL ORDER (additive, owner-locked)
 > **Count source of truth = `apps/frontend/src/components/layout/sidebar-config.ts` (`SIDEBAR_ITEM_IDS`),
-> enforced by `scripts/verify-sidebar-contract.mjs`. It is currently 28 items (render count is role-dependent;
-> `eld` is a hidden stub). The historical list below is kept for record; the live array (now 28) is
+> enforced by `scripts/verify-sidebar-contract.mjs`. Live count is **30** (render count is role-dependent;
+> `eld` is a hidden stub). The historical list below is kept for record; the live array is
 > authoritative — do not trust a hardcoded number here.**
 
 Historical id order (left rail, top→bottom):

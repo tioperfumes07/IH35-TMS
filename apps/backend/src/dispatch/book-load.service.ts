@@ -1256,6 +1256,39 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
             loadId: String(load.id),
             asProforma: true,
           });
+        } else {
+          // WIRE-01 — this branch used to be an empty `if`, so when the column was absent the
+          // proforma was skipped with NO log, NO error and NO record, directly contradicting the
+          // comment above it ("Failures are loud so booking never silently skips the projection
+          // document the owner expects"). The flag being ON is an explicit instruction to produce
+          // that document; producing nothing and saying nothing is the silent-failure class.
+          //
+          // It does NOT throw: an accounting projection must never block dispatch from booking a
+          // real load. Instead the skip becomes COUNTABLE — a durable append-only audit row written
+          // on the same client as the booking, so it commits with the load or not at all and can be
+          // queried later. Same treatment as the ACCT-F61 evidence gate.
+          await appendCrudAudit(
+            client,
+            input.requestingUserUuid,
+            "accounting.invoice.proforma_skipped_missing_column",
+            {
+              load_id: String(load.id),
+              operating_company_id: input.operating_company_id,
+              flag: "INVOICE_PROFORMA_PIPELINE_ENABLED",
+              missing_column: "accounting.invoices.broker_advance_applied_cents",
+              migration: "202609100090",
+            },
+            "warning",
+            "WIRE-01"
+          );
+          console.error(
+            {
+              load_id: String(load.id),
+              operating_company_id: input.operating_company_id,
+              missing_column: "accounting.invoices.broker_advance_applied_cents",
+            },
+            "wire_01_proforma_skipped_missing_column"
+          );
         }
       }
     }

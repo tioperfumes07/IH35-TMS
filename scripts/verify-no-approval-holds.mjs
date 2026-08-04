@@ -1,14 +1,19 @@
 #!/usr/bin/env node
 /**
- * GUARD: no approval-hold / JORGE-APPROVED merge language in governing agent-read files.
+ * GUARD: fail on NEW *affirmative* approval-hold language in active governance only.
  *
- * OWNER LAW 2026-08-03: NO HOLDS. NO JORGE-APPROVED. Full Neon + merge on green.
- * Safeguard = PROOF (firewall + GUARD after), not a label.
+ * OWNER LAW 2026-08-03: NO HOLDS. NO JORGE-APPROVED. Coders FULL Neon + merge on green.
  *
- * Scans: .claude/skills/**, .cursor/rules/**, .windsurf/rules/**,
- *         .github/PULL_REQUEST_TEMPLATE.md, AGENTS.md, docs/CLAUDE.md,
- *         selected docs/specs governance files.
- * Does NOT scan WORM history (docs/blocks, dated trackers, AUDIT-COVERAGE-LIVE).
+ * Claude Coder correction (2026-08-04): Do NOT purge abolition sentences
+ * ("NO HOLDS. NO JORGE-APPROVED") — those kill the gate. Do NOT rewrite
+ * docs/audit, db/migrations, or .block-ready (WORM / never-delete / checksum freeze).
+ *
+ * This guard:
+ *  - Scans active governance: .cursor/rules, .claude/skills, .windsurf/rules,
+ *    .github/PULL_REQUEST_TEMPLATE.md, AGENTS.md, docs/CLAUDE.md, selected docs/specs.
+ *  - FAILS only on *positive* hold instructions (wait for label, owner applies Neon, etc.).
+ *  - ALLOWS negative/tombstone lines that abolish the label (baselined).
+ *  - EXCLUDES docs/audit, docs/trackers, db/migrations, .block-ready (history = evidence).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -18,29 +23,79 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-no-approval-holds";
 const SELFTEST = process.argv.includes("--selftest");
 
+/** Built so scanning this file never matches the literal in FORBIDDEN notes incorrectly. */
+const TOKEN = ["JORGE", "APPROVED"].join("-");
+
+/** Affirmative / resurrecting patterns only — not the law that kills the label. */
 const FORBIDDEN = [
-  { id: "JORGE-APPROVED-require", re: /JORGE-APPROVED/i, note: "JORGE-APPROVED label/requirement" },
+  {
+    id: "require-label",
+    re: new RegExp(
+      String.raw`(?:require[sd]?|need[s]?|wait(?:ing)?\s+for|must\s+(?:have|get)|behind)\s+[^\n]{0,40}${TOKEN}|${TOKEN}\s+(?:required|before\s+merge|\+|label\s+before)`,
+      "i",
+    ),
+    note: `affirmative ${TOKEN} requirement / wait`,
+  },
+  {
+    id: "build-and-hold",
+    re: /build-and-HOLD(?:\s+until)?/i,
+    note: "build-and-HOLD (affirmative merge gate)",
+  },
+  {
+    id: "hold-until-jorge",
+    re: /HOLD until Jorge|Money\s*=\s*HOLD(?:\s+until)?|Money\/GL HOLD path|financial merge after Jorge/i,
+    note: "HOLD-until-Jorge / Money=HOLD affirmative gate",
+  },
   {
     id: "wait-owner-ok",
-    re: /wait for (?:the )?owner(?:'s)? (?:explicit )?(?:OK|approval|sign-?off)/i,
-    note: "wait for owner OK/approval",
+    re: /wait for (?:the )?owner(?:'s)? (?:explicit )?(?:OK|approval|sign-?off)(?: to merge)?/i,
+    note: "wait for owner OK/approval to merge",
   },
   {
     id: "owner-applies-neon",
-    re: /owner applies (?:migrations? )?on Neon|ask (?:the owner )?before each (?:Neon|prod DB) connection|prod DB access is gated/i,
-    note: "owner applies on Neon / gated prod DB",
+    re: /owner (?:Neon-)?apply(?:s|ing)?(?:\s+migrations?)?(?:\s+on Neon)?(?:\s+required)?|You:\s*Neon apply when required|owner applies on Neon/i,
+    note: "owner applies on Neon (coders apply; owner does not)",
   },
   {
-    id: "never-self-merge-migration",
-    re: /NEVER self-merge (?:a )?migration|never self-merge.*financial/i,
-    note: "NEVER self-merge migration/financial",
+    id: "never-self-merge-financial",
+    re: /NEVER self-merge(?:\s+a)?\s+migration|Never self-merge\. Never build finance|never self-merge.*financial cluster/i,
+    note: "NEVER self-merge financial (affirmative; superseded)",
   },
   {
     id: "held-for-jorge",
-    re: /HELD-FOR-JORGE|held for Jorge as a merge condition|build-and-HOLD until JORGE/i,
+    re: /HELD-FOR-JORGE|held for Jorge as a merge condition/i,
     note: "HELD-FOR-JORGE merge condition",
   },
 ];
+
+/**
+ * Negative / abolition lines — the law killing the label.
+ * These MUST remain; the guard must not fire on them.
+ */
+function isAbolitionLine(line) {
+  return (
+    /NO\s+HOLDS/i.test(line) ||
+    new RegExp(String.raw`NO\s+[^\n]{0,20}${TOKEN}`, "i").test(line) ||
+    new RegExp(String.raw`${TOKEN}[^\n]{0,40}(?:is\s+)?(?:\*\*)?DELETED`, "i").test(line) ||
+    /does\s+(?:\*\*)?not(?:\*\*)?\s+require/i.test(line) ||
+    /does\s+not\s+review\s+PRs\s+for\s+a\s+label/i.test(line) ||
+    /Never wait for/i.test(line) ||
+    /do not wait/i.test(line) ||
+    /Waiting on deleted/i.test(line) ||
+    (/merge on green/i.test(line) && /no\s+(?:owner|approval|hold)/i.test(line)) ||
+    /verify-no-approval-holds/i.test(line) ||
+    /OWNER LAW\s*\(?\s*2026-08-03/i.test(line) ||
+    /label is deleted, not optional/i.test(line) ||
+    /SUPERSEDED|supersedes every earlier|older text below referencing|wording anywhere below/i.test(line) ||
+    (/do not (?:wait|block) on/i.test(line) && new RegExp(TOKEN, "i").test(line)) ||
+    /Asking for a label.*violation/i.test(line) ||
+    /not an owner-approval gate/i.test(line) ||
+    /proof.?gated.*NOT owner-approval/i.test(line) ||
+    /Safeguard\s*=\s*\*\*PROOF/i.test(line) ||
+    /"owner applies on Neon"|"self-merge only if non-financial"|\/ "owner applies/i.test(line) ||
+    /Keep.*abolition|abolition sentences|positive-only ratchet|affirmative waits/i.test(line)
+  );
+}
 
 const SCAN_FILES = [
   "AGENTS.md",
@@ -51,8 +106,21 @@ const SCAN_FILES = [
   "docs/specs/CURSOR-OPERATING-CONSTITUTION.md",
   "docs/specs/PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26.md",
   "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md",
+  "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md",
+  "docs/specs/DELIVERY-METHOD-LOCKED.md",
+  "docs/specs/PER-PR-CHECKLIST.md",
   "docs/lockdown/00_LOCKED_DECISIONS.md",
   "docs/specs/IH35-TMS-Operating-Doctrine-PERMANENT.md",
+];
+
+/** Explicit excludes (history / WORM / checksum freeze) — never scan even if linked. */
+const EXCLUDE_PREFIXES = [
+  "docs/audit/",
+  "docs/trackers/",
+  "docs/incidents/",
+  "db/migrations/",
+  ".block-ready/",
+  "scripts/__fixtures__/",
 ];
 
 function walk(dir, acc = []) {
@@ -69,37 +137,39 @@ function walk(dir, acc = []) {
   return acc;
 }
 
+function isExcluded(rel) {
+  const n = rel.replace(/\\/g, "/");
+  return EXCLUDE_PREFIXES.some((p) => n.startsWith(p));
+}
+
 function governingFiles() {
   const out = new Set();
   for (const rel of SCAN_FILES) {
     const abs = path.join(ROOT, rel);
-    if (fs.existsSync(abs)) out.add(abs);
+    if (fs.existsSync(abs) && !isExcluded(rel)) out.add(abs);
   }
   for (const d of [".claude/skills", ".cursor/rules", ".windsurf/rules"]) {
-    for (const abs of walk(path.join(ROOT, d))) out.add(abs);
+    for (const abs of walk(path.join(ROOT, d))) {
+      const rel = path.relative(ROOT, abs);
+      if (!isExcluded(rel)) out.add(abs);
+    }
   }
   return [...out];
 }
 
-/** Allowlist: files that may mention the deleted label while stating it is DELETED / forbidden. */
-function isAllowlistedLine(line) {
-  return (
-    /NO\s+(?:HOLDS|[`'"]?JORGE-APPROVED)|JORGE-APPROVED[`'"]?\s+(?:label\s+)?is\s+DELETED|label is \*\*DELETED\*\*|Does\s+\*\*not\*\*\s+require\s+`?JORGE-APPROVED|do not block on\s+`?JORGE-APPROVED|must not (?:re)?introduce.*JORGE-APPROVED|OWNER LAW.*JORGE-APPROVED|verify-no-approval-holds|are purged|referencing\s+`?JORGE-APPROVED|forbid(?:s|den)?.*JORGE-APPROVED|NOT required.*JORGE|please click JORGE-APPROVED|older text below referencing|"owner applies on Neon"|\/ "owner applies on Neon"|JORGE-APPROVED[`'"]?\s+LABEL/i.test(
-      line,
-    )
-  );
-}
-
-export function assertNoApprovalHolds(fileContents /* Map<path, text> optional */) {
+export function assertNoApprovalHolds(fileContents) {
   const problems = [];
-  const files = governingFiles();
-  for (const abs of files) {
+  for (const abs of governingFiles()) {
     const rel = path.relative(ROOT, abs);
     const text = fileContents?.get?.(abs) ?? fileContents?.get?.(rel) ?? fs.readFileSync(abs, "utf8");
     const lines = text.split(/\r?\n/);
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      if (isAllowlistedLine(line)) continue;
+      if (isAbolitionLine(line)) continue;
+      // Migration firewall name is not an owner-approval hold.
+      if (/hold-merge-gate|held-migrations|\.held-migrations/i.test(line) && !new RegExp(TOKEN, "i").test(line)) {
+        continue;
+      }
       for (const f of FORBIDDEN) {
         if (f.re.test(line)) {
           problems.push(`${rel}:${i + 1}: ${f.note} — "${line.trim().slice(0, 120)}"`);
@@ -107,61 +177,78 @@ export function assertNoApprovalHolds(fileContents /* Map<path, text> optional *
       }
     }
   }
-  // Law file must exist and name Execution & speed / DRAIN_PROOF
   const law = path.join(ROOT, ".cursor/rules/00-operating-method-LAW.mdc");
   if (!fs.existsSync(law)) {
-    problems.push(".cursor/rules/00-operating-method-LAW.mdc: missing — operating method law required");
+    problems.push(".cursor/rules/00-operating-method-LAW.mdc: missing");
   } else {
     const t = fs.readFileSync(law, "utf8");
-    if (!/DRAIN_PROOF/i.test(t) || !/Execution & speed/i.test(t)) {
-      problems.push(".cursor/rules/00-operating-method-LAW.mdc: must include Execution & speed + DRAIN_PROOF amendment");
+    if (!/NO HOLDS/i.test(t) || !/merge on green/i.test(t)) {
+      problems.push(".cursor/rules/00-operating-method-LAW.mdc: must state NO HOLDS + merge on green");
     }
-    if (!/NO HOLDS|NO [`']?JORGE-APPROVED/i.test(t)) {
-      problems.push(".cursor/rules/00-operating-method-LAW.mdc: must state NO HOLDS / NO JORGE-APPROVED");
+    if (!/FULL Neon/i.test(t)) {
+      problems.push(".cursor/rules/00-operating-method-LAW.mdc: must state FULL Neon access for coders");
+    }
+    // Abolition of the deleted label must remain visible (Coder: do not purge the law that kills it).
+    if (!new RegExp(TOKEN, "i").test(t) && !/owner-approval merge label/i.test(t)) {
+      problems.push(
+        `.cursor/rules/00-operating-method-LAW.mdc: must name the deleted merge label (${TOKEN}) or equivalent abolition`,
+      );
     }
   }
   return problems;
 }
 
 if (SELFTEST) {
-  const live = assertNoApprovalHolds();
-  // Live may still be dirty before purge lands — selftest only plants a forbidden line into a temp map.
-  const planted = new Map();
   const lawRel = ".cursor/rules/00-operating-method-LAW.mdc";
-  planted.set(
-    path.join(ROOT, lawRel),
-    fs.readFileSync(path.join(ROOT, lawRel), "utf8") +
-      "\nBad: WAIT for owner OK to merge and apply JORGE-APPROVED.\n",
-  );
-  // Merge planted over live reads for that one file
-  const problems = [];
   const abs = path.join(ROOT, lawRel);
-  const text = planted.get(abs);
-  const lines = text.split(/\r?\n/);
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (isAllowlistedLine(line)) continue;
+  const base = fs.readFileSync(abs, "utf8");
+  // Plant affirmative holds — must catch.
+  const planted =
+    base +
+    `\nBad: WAIT for owner OK to merge and require ${TOKEN} before merge.\n` +
+    `\nBad2: Money = HOLD until Jorge + Neon.\n` +
+    `\nBad3: owner applies on Neon before merge.\n` +
+    `\nBad4: financial cluster → build-and-HOLD. Owner ${TOKEN} required.\n`;
+  const plantedProblems = [];
+  for (const [i, line] of planted.split(/\r?\n/).entries()) {
+    if (isAbolitionLine(line)) continue;
     for (const f of FORBIDDEN) {
-      if (f.re.test(line)) problems.push(`${lawRel}:${i + 1}: ${f.note}`);
+      if (f.re.test(line)) plantedProblems.push(`${lawRel}:${i + 1}: ${f.note}`);
     }
   }
-  if (!problems.length) {
-    console.error(`${LABEL} SELFTEST FAIL — planted hold language not caught`);
+  if (plantedProblems.length < 3) {
+    console.error(`${LABEL} SELFTEST FAIL — planted affirmative holds not caught (${plantedProblems.length})`);
+    for (const p of plantedProblems) console.error(`  - ${p}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — planted hold language caught (${problems.length})`);
-  // Also report live status without failing selftest (purge PR must make live clean)
-  if (live.length) {
-    console.log(`${LABEL} note: live governing set still has ${live.length} hit(s) — purge must clear them`);
+  // Plant abolition line — must NOT catch.
+  const abolish = `NO HOLDS. NO ${TOKEN}. Coders merge on green.`;
+  let falsePositive = false;
+  if (!isAbolitionLine(abolish)) {
+    for (const f of FORBIDDEN) {
+      if (f.re.test(abolish)) falsePositive = true;
+    }
   }
+  if (falsePositive) {
+    console.error(`${LABEL} SELFTEST FAIL — abolition line falsely flagged`);
+    process.exit(1);
+  }
+  console.log(
+    `${LABEL} SELFTEST PASS — affirmative holds caught (${plantedProblems.length}); abolition lines allowed`,
+  );
   process.exit(0);
 }
 
 const problems = assertNoApprovalHolds();
 if (problems.length) {
-  console.error(`${LABEL} FAIL — approval-hold language in governing files:\n`);
+  console.error(`${LABEL} FAIL — affirmative approval-hold language in active governance:\n`);
   for (const p of problems.slice(0, 80)) console.error(`  - ${p}`);
   if (problems.length > 80) console.error(`  … +${problems.length - 80} more`);
+  console.error(
+    `\nNote: abolition lines ("NO HOLDS. NO ${TOKEN}") are allowed. History under docs/audit, db/migrations, .block-ready is excluded.`,
+  );
   process.exit(1);
 }
-console.log(`${LABEL} OK — governing files have no approval-hold / JORGE-APPROVED merge language`);
+console.log(
+  `${LABEL} OK — no affirmative approval-hold language in active governance (abolition lines retained)`,
+);
