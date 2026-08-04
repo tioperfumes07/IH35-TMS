@@ -61,6 +61,8 @@ docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 !.cursor/rules/31-full-system-audit-mandatory.mdc
 !.cursor/rules/32-continuous-mode-no-idle.mdc
 !.cursor/rules/32-load-linkage-pre-operational.mdc
+!.cursor/rules/33-standing-session-directive.mdc
+!.cursor/rules/00-operating-method-LAW.mdc
 !.cursor/rules/ih35-deep-linkage-audit.mdc
 !.cursor/rules/dual-lane-never-idle.mdc
 !.cursor/rules/06-live-ops-cadence.mdc

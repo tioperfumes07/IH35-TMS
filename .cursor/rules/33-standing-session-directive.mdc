@@ -1,0 +1,18 @@
+---
+description: ALWAYS LOAD — Standing Session Directive + Delivery Method (Cursor screens/janitor lane)
+alwaysApply: true
+---
+
+# Standing Session Directive (autoload)
+
+**Every session, before other work, load:**
+
+1. `docs/specs/STANDING-SESSION-DIRECTIVE.md` — roles, governance, Cursor auto-mode, never-guess
+2. `docs/specs/DELIVERY-METHOD-LOCKED.md` — P0→P4 delivery sequencing + §9 coder collision law
+
+Cursor = SCREENS + JANITOR (FE screens, guards, scoreboard, cleanup).  
+Do **not** write GL money math (Claude Coder). Do **not** append audit Verdict rows (Cascade).
+
+Governance: NO holds · NO `JORGE-APPROVED` · merge on green with proof · coders apply Neon.
+
+Presence enforced by `scripts/verify-standing-directive-present.mjs` (verify-step 2374).
