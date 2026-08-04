@@ -63,16 +63,31 @@ describeIntegration("LV-001 relationship-score query executes (real Postgres)", 
 
       // An OPEN invoice inside the 120-day window: this is what forces the date-difference
       // arithmetic to actually evaluate. Without it the subscore short-circuits on open_cents<=0.
+      // amount_open_cents is GENERATED ALWAYS AS (total_cents - amount_paid_cents) — it must NOT
+      // appear in the column list. total_cents 100000 with amount_paid_cents 0 yields an open
+      // balance of 100000, which is what keeps the subscore from short-circuiting.
       await db.query(
         `INSERT INTO accounting.invoices
            (operating_company_id, customer_id, display_id, status,
             issue_date, due_date, subtotal_cents, tax_cents, total_cents,
-            amount_paid_cents, amount_open_cents)
+            amount_paid_cents)
          VALUES ($1::uuid, $2::uuid, $3, 'sent',
                  current_date - 30, current_date + 5, 100000, 0, 100000,
-                 0, 100000)`,
+                 0)`,
         [companyId, customerId, `LV001-INV-${suffix}`],
       );
+
+      // Fail loudly if the seed did not actually produce an OPEN invoice — otherwise the test
+      // would pass vacuously by short-circuiting before the date arithmetic it exists to exercise.
+      const seeded = await db.query<{ amount_open_cents: string }>(
+        `SELECT amount_open_cents::text FROM accounting.invoices WHERE display_id = $1`,
+        [`LV001-INV-${suffix}`],
+      );
+      if (Number(seeded.rows[0]?.amount_open_cents ?? 0) <= 0) {
+        throw new Error(
+          `LV-001 seed invalid: amount_open_cents=${seeded.rows[0]?.amount_open_cents} — the payment-behavior subscore would short-circuit and the test would not exercise the date subtraction`,
+        );
+      }
     });
   });
 
