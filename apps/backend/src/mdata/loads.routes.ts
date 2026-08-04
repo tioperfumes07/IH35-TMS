@@ -10,6 +10,10 @@ import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { companyBusinessDateCompact } from "../lib/company-business-date.js";
 import { writeLoadCancellationRecord } from "../dispatch/cancellation.service.js";
+import {
+  loadStatusRequiresDeliveryDepartureStamp,
+  stampFinalActiveDeliveryDeparture,
+} from "../dispatch/stamp-final-delivery-departure.js";
 
 const loadStatusSchema = z.enum([
   "draft",
@@ -920,6 +924,12 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       );
       const row = updateRes.rows[0] ?? null;
       if (!row) return { error: "mdata_load_not_found" as const };
+
+      // CLS-DISP-WIRE-07 — dual-path kill: this route used to flip status with zero stop evidence.
+      // Same stamp as dispatch transition + bulk set_status (never overwrite driver departure).
+      if (loadStatusRequiresDeliveryDepartureStamp(String(row.status))) {
+        await stampFinalActiveDeliveryDeparture(client, row.id, null);
+      }
 
       await appendCrudAudit(
         client,
