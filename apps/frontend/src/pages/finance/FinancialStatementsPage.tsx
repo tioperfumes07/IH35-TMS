@@ -409,12 +409,12 @@ export function FinancialStatementsPage() {
                   footerRows={[{ label: "Section total", value: money(section.total) }]}
                 />
               ))}
-              <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
-                <div className="flex items-center justify-between text-sm font-semibold">
+              <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
+                <div className="flex items-center justify-between px-3 py-2 text-sm font-semibold">
                   <span>Net income</span>
                   <span className={plQuery.data.net_income < 0 ? "text-rose-700" : "text-slate-700"}>{money(plQuery.data.net_income)}</span>
                 </div>
-              </div>
+              </section>
             </>
           ) : null}
         </div>
@@ -499,8 +499,10 @@ export function FinancialStatementsPage() {
               />
             </div>
           ) : null}
-          <div>
+          <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
+            <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">Trial balance</div>
             <ParityTable
+              embedded
               columns={TRIAL_BALANCE_COLUMNS}
               rows={tbRows}
               rowKey={(row) => row.account_id}
@@ -511,13 +513,13 @@ export function FinancialStatementsPage() {
               initialPageSize={300}
             />
             {tbQuery.data?.summary ? (
-              <div className="mt-1 flex items-center justify-end gap-6 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
+              <div className="flex items-center justify-end gap-6 border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
                 <span>Grand total</span>
                 <span>Debits {money(tbQuery.data.summary.grand_total_debits)}</span>
                 <span>Credits {money(tbQuery.data.summary.grand_total_credits)}</span>
               </div>
             ) : null}
-          </div>
+          </section>
         </div>
       ) : null}
     </div>
@@ -561,9 +563,10 @@ function StatementSection({
 }) {
   const columns = useMemo(() => statementColumns(showType), [showType]);
   return (
-    <div>
-      <div className="rounded-t-sm border border-b-0 border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold">{title}</div>
+    <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
+      <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">{title}</div>
       <ParityTable
+        embedded
         columns={columns}
         rows={lines}
         rowKey={(line) => `${line.account_code}-${line.account_name}`}
@@ -575,12 +578,12 @@ function StatementSection({
       {footerRows.map((row) => (
         <div
           key={row.label}
-          className="mt-1 flex items-center justify-end gap-6 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700"
+          className="flex items-center justify-end gap-6 border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700"
         >
           <span>{row.label}</span>
           <span>{row.value}</span>
         </div>
       ))}
-    </div>
+    </section>
   );
 }
