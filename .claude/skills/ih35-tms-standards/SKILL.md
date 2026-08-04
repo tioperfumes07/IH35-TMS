@@ -5,6 +5,13 @@ description: The durable operating standards for the IH35-TMS repository — per
 
 # IH35-TMS — Operating Standards
 
+**★★ SESSION BOOT (every agent):** load `docs/specs/STANDING-SESSION-DIRECTIVE.md` (§0–§7 · §6 SEARCH BEFORE YOU ASK · §7 TEST WITH PLACEHOLDER NUMBERS),
+`docs/specs/OWNER-QUALITY-COMPACT.md` (ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED · Claude.docx permanized), then
+`docs/specs/DELIVERY-METHOD-LOCKED.md` before other work. Cursor = screens/janitor; Claude Coder = money/Neon;
+Cascade = active-slice auditor. **Every Cursor PR title MUST begin with `Cursor-`** (rule 34 · verify-step 2377).
+Presence ratchet: `scripts/verify-standing-directive-present.mjs` (2374) ·
+`scripts/verify-owner-quality-compact-present.mjs` (2380) · `scripts/verify-cursor-pr-title-prefix.mjs` (2377).
+
 This system holds **live financial and legal-evidence data** for a real operating carrier (IH35 Dispatch /
 IH35 Trucking, Laredo TX ↔ Mexico). Treat every change as production-affecting. **§1 (permissions) overrides
 everything. When unsure, STOP and ask.**
