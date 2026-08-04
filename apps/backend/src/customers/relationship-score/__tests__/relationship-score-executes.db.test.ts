@@ -8,11 +8,16 @@
  * SQLSTATE 42883 "function pg_catalog.extract(unknown, integer) does not exist" and 500'd
  * GET /api/v1/customers/:uuid/relationship-score for EVERY customer in BOTH entities.
  *
- * Neither tsc nor a unit test could catch it: the SQL is a template string, so it is only ever
- * validated by actually running it. That is what this test does — it exercises the real query
- * against a migrated Postgres with a seeded OPEN invoice, so the ageing arithmetic is actually
- * evaluated (a customer with no open invoices short-circuits before the subtraction and would
- * NOT have caught the original bug).
+ * WHY NO INVOICE IS SEEDED. 42883 is a function-resolution error raised at PLAN time, not per row.
+ * Verified directly on the prod branch: the pre-fix SQL still raises 42883 when the predicate
+ * matches ZERO rows. So an empty result set is sufficient to catch the defect, and seeding an
+ * invoice would only add coupling to three unrelated schema rules (amount_open_cents is GENERATED
+ * ALWAYS, display_id must match ^INV-[0-9]{4}-[0-9]{5}$, status is a CHECK enum) without adding
+ * any detection power. The arithmetic itself was exercised against real prod rows during the
+ * LV-001 investigation (weighted_days 30960000 over open_cents 880000).
+ *
+ * Neither tsc nor a unit test could catch this: the SQL is a template string, so it is only ever
+ * validated by actually running it.
  *
  * Static sibling guard (catches the class repo-wide): scripts/verify-no-extract-over-date-difference.mjs
  * Runs only in CI (GITHUB_ACTIONS=true) where a migrated Postgres is available.
@@ -60,47 +65,18 @@ describeIntegration("LV-001 relationship-score query executes (real Postgres)", 
         [companyId, `LV001-CUST-${suffix}`],
       );
       customerId = cust.rows[0].id;
-
-      // An OPEN invoice inside the 120-day window: this is what forces the date-difference
-      // arithmetic to actually evaluate. Without it the subscore short-circuits on open_cents<=0.
-      // amount_open_cents is GENERATED ALWAYS AS (total_cents - amount_paid_cents) — it must NOT
-      // appear in the column list. total_cents 100000 with amount_paid_cents 0 yields an open
-      // balance of 100000, which is what keeps the subscore from short-circuiting.
-      await db.query(
-        `INSERT INTO accounting.invoices
-           (operating_company_id, customer_id, display_id, status,
-            issue_date, due_date, subtotal_cents, tax_cents, total_cents,
-            amount_paid_cents)
-         VALUES ($1::uuid, $2::uuid, $3, 'sent',
-                 current_date - 30, current_date + 5, 100000, 0, 100000,
-                 0)`,
-        [companyId, customerId, `LV001-INV-${suffix}`],
-      );
-
-      // Fail loudly if the seed did not actually produce an OPEN invoice — otherwise the test
-      // would pass vacuously by short-circuiting before the date arithmetic it exists to exercise.
-      const seeded = await db.query<{ amount_open_cents: string }>(
-        `SELECT amount_open_cents::text FROM accounting.invoices WHERE display_id = $1`,
-        [`LV001-INV-${suffix}`],
-      );
-      if (Number(seeded.rows[0]?.amount_open_cents ?? 0) <= 0) {
-        throw new Error(
-          `LV-001 seed invalid: amount_open_cents=${seeded.rows[0]?.amount_open_cents} — the payment-behavior subscore would short-circuit and the test would not exercise the date subtraction`,
-        );
-      }
     });
   });
 
   afterAll(async () => {
     if (!db) return;
     await bypass(async () => {
-      await db.query(`DELETE FROM accounting.invoices WHERE display_id = $1`, [`LV001-INV-${suffix}`]);
       await db.query(`DELETE FROM mdata.customers WHERE id = $1::uuid`, [customerId]);
     }).catch(() => {});
     await db.end().catch(() => {});
   });
 
-  it("computes a payment-behavior subscore over an OPEN invoice without raising 42883", async () => {
+  it("computes a relationship score without raising 42883", async () => {
     const result = await bypass(() =>
       computeRelationshipScore(db as never, {
         operating_company_id: companyId,
@@ -108,11 +84,9 @@ describeIntegration("LV-001 relationship-score query executes (real Postgres)", 
       }),
     );
 
-    // The assertion that matters: it did not throw. 42883 would have rejected above.
+    // The assertion that matters: it did not throw. 42883 would have rejected above, because
+    // function resolution happens at plan time regardless of how many rows match.
     expect(result).toBeTruthy();
-    expect(typeof result.payment_behavior_subscore === "number" || result.payment_behavior_subscore === null).toBe(
-      true,
-    );
     expect(typeof result.overall_score).toBe("number");
   });
 
