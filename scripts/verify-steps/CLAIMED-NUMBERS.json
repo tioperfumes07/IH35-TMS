@@ -1229,6 +1229,7 @@
     "1899": "1899-verify-freshness-union-exemption-parity.mjs",
     "2371": "2371-verify-test-typecheck-ratchet.mjs",
     "2373": "2373-verify-disp-wire-01-book-invoice.mjs",
+    "2382": "2382-verify-homepage-scenario-tracker-staleness.mjs",
     "2400": "2400-verify-verify-step-claimed-on-main.mjs",
     "2401": "2401-verify-no-extract-over-date-difference.mjs",
     "2402": "2402-verify-claude-settings-hard-deny.mjs",
