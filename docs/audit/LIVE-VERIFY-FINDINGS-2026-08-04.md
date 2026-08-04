@@ -309,4 +309,16 @@ membership-scoped session.
 - observed:  Payments list renders real A/R: 12,124 payments on the ledger, per-row Applied / Unapplied / Status (`FULLY APPLIED` vs a single honest `UNAPPLIED`), Method, Reference, Bank txn column, `+ Record Payment` and `Invoices` actions. Customer names resolve. Application-status honesty is correct per row. **The surface itself works; the defect is the header aggregate (LV-018).** I nearly recorded this as a clean PASS because the header arithmetic self-reconciles — noting that explicitly so the next reader does not repeat it.
 - severity:  minor (informational)
 - LANE:      n/a — evidence toward accounting prod_verified
+## LV-021  journal_entry_type is never stamped by the AUTO posting engine — LINK-01 passes its "not island" bar while JE-type reporting is blind
+- module:    accounting
+- entity:    ALL
+- surface:   `accounting.journal_entries.journal_entry_type_id` -> `catalogs.journal_entry_types` (acceptance item ACCT-LINK-01)
+- expected:  ACCT-LINK-01 asserts "journal_entry_types inbound FK from journal_entries (not island)". The catalog exists so GL entries can be classified by source/purpose and reported on.
+- observed:  **The FK is not an island — 11 rows reference it — so LINK-01 technically PASSES. But the catalog is unusable in practice.** Split by source: `manual` JEs are **2 of 2 typed (100%)** — the manual path stamps it correctly every time. `auto` JEs are **9 of 1,783 typed (0.5%)**. And of the **1,598 JEs created since 2026-08-01, ZERO are typed**. So the automatic posting engine — which writes essentially every JE in the system — never stamps `journal_entry_type_id`. **Consequence: any GL report or filter keyed on entry type is blind to 99.5% of the ledger, including 100% of everything posted this month.**
+- why I am recording it despite the item passing:  this is a case where the acceptance wording ("not island") is satisfied while the property the catalog exists to provide does not hold. A non-zero FK count is not the same as a usable classification. Flagging so the distinction is decided deliberately rather than inherited from a green checkmark.
+- what I did NOT conclude:  I am not asserting the auto poster is *required* to stamp a type — that is a design decision I cannot read off the data, and the manual path working proves the column and catalog are wired correctly. CC-1 should confirm intent: either the auto poster should classify (and this is a real gap), or entry-type is manual-only by design (and ACCT-LINK-01's wording should say so, because today it reads as a general guarantee).
+- also measured (LINK layer, live, for the record):  `catalogs.accounts.detail_type_id` populated on **48 of 1,441** accounts; `accounting.bills.unit_id` on **300** bills; `bills.linked_work_order_uuid` on **1**; `banking.bank_transactions.matched_journal_entry_id` on **170**. Bank-match density is consistent with ledger row 2's categorized count (167) and is NOT reported as a defect — imported history is legitimately unmatched under parallel books.
+- severity:  major (reporting integrity, not data loss)
+- LANE:      CLAUDE-CODER-1 (posting engine) — confirm intent first
+- neon-check: manual 2/2 typed; auto 9/1783 typed; JEs since 2026-08-01 = 1,598 with 0 typed
 - status:    OPEN
