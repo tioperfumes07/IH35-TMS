@@ -70,35 +70,35 @@ jobs:
           fi
 
           git commit --no-verify -m "$(cat <<'EOF'
-FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC
-LANE: NON-FINANCIAL
+          FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC
+          LANE: NON-FINANCIAL
 
-ROOT CAUSE: Ledger advanced; committed program-scoreboard.json is only the API fallback seed and must stay near the ledger.
+          ROOT CAUSE: Ledger advanced; committed program-scoreboard.json is only the API fallback seed and must stay near the ledger.
 
-FIX: Regenerated fallback JSON + typed seed via npm run gen:program-scoreboard; direct-push to main (scoped artifact path). Live /program reads the ledger at request time (ledger_live).
+          FIX: Regenerated fallback JSON + typed seed via npm run gen:program-scoreboard; direct-push to main (scoped artifact path). Live /program reads the ledger at request time (ledger_live).
 
-DOD-A: PASS
-DOD-B: N/A
-DOD-C: N/A
-DOD-D: N/A
-DOD-E: PASS
-VERIFY-1: PASS
-VERIFY-2: N/A
-VERIFY-3: PASS
-VERIFY-4: N/A
-VERIFY-5: N/A
-VERIFY-6: N/A
-VERIFY-7: N/A
-VERIFY-8: N/A
-MODULE_PROGRESS: program 0 of 6
-ITEMS_TOUCHED: PROGRAM-SCOREBOARD-FALLBACK-SYNC
-MIGRATE: N/A
+          DOD-A: PASS
+          DOD-B: N/A
+          DOD-C: N/A
+          DOD-D: N/A
+          DOD-E: PASS
+          VERIFY-1: PASS
+          VERIFY-2: N/A
+          VERIFY-3: PASS
+          VERIFY-4: N/A
+          VERIFY-5: N/A
+          VERIFY-6: N/A
+          VERIFY-7: N/A
+          VERIFY-8: N/A
+          MODULE_PROGRESS: program 0 of 6
+          ITEMS_TOUCHED: PROGRAM-SCOREBOARD-FALLBACK-SYNC
+          MIGRATE: N/A
 
-GUARD: scripts/verify-program-audit-scoreboard-api-url.mjs
-LIVE PROOF: gen:program-scoreboard exit 0; commit lands on main without a stranded bot PR
-REMAINING: none — live endpoint is primary; this is fallback hygiene only
-EOF
-)"
+          GUARD: scripts/verify-program-audit-scoreboard-api-url.mjs
+          LIVE PROOF: gen:program-scoreboard exit 0; commit lands on main without a stranded bot PR
+          REMAINING: none — live endpoint is primary; this is fallback hygiene only
+          EOF
+          )"
 
           git push --no-verify \
             "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
