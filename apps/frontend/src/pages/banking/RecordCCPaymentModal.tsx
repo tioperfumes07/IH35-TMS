@@ -56,6 +56,7 @@ export function RecordCCPaymentModal({
   const [memo, setMemo] = useState("");
   const [statementPeriod, setStatementPeriod] = useState("");
   const [saving, setSaving] = useState(false);
+  const [vendorSearch, setVendorSearch] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -66,6 +67,7 @@ export function RecordCCPaymentModal({
     setAmount(prefillAmountCents != null && prefillAmountCents > 0 ? prefillAmountCents / 100 : null);
     setMemo(prefillMemo ?? "");
     setStatementPeriod("");
+    setVendorSearch("");
   }, [open, prefillAmountCents, prefillDate, prefillFromBankId, prefillMemo]);
 
   const bankAccountsQuery = useQuery({
@@ -74,8 +76,13 @@ export function RecordCCPaymentModal({
     enabled: open && Boolean(operatingCompanyId),
   });
   const vendorsQuery = useQuery({
-    queryKey: ["cc-payment", "vendors", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 1000 }),
+    queryKey: ["cc-payment", "vendors", operatingCompanyId, vendorSearch],
+    queryFn: () =>
+      listVendors({
+        operating_company_id: operatingCompanyId,
+        limit: 200,
+        search: vendorSearch.trim() || undefined,
+      }),
     enabled: open && Boolean(operatingCompanyId),
   });
   const accountsQuery = useQuery({
@@ -190,7 +197,9 @@ export function RecordCCPaymentModal({
               options={vendorOptions}
               createKind="vendor"
               operatingCompanyId={operatingCompanyId}
-              placeholder="Select vendor…"
+              placeholder="Search vendor…"
+              onSearch={setVendorSearch}
+              loading={vendorsQuery.isFetching}
               disabled={!operatingCompanyId}
             />
           </div>
