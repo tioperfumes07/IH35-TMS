@@ -40,6 +40,28 @@ export const POSTING_SOURCE_TYPES = [
 
 export type PostingSourceType = (typeof POSTING_SOURCE_TYPES)[number];
 export type PostingPurpose = "initial_post" | "reversal";
+
+/**
+ * BANK-F03 — does the canonical poster support RE-POSTING a source transaction after its original
+ * posting was reversed?
+ *
+ * TODAY IT DOES NOT, and that is a hard capability limit, not an oversight to be worked around. The
+ * batch idempotency key is
+ *     ih35:posting-mvp:v1:<opco>:<type>:<source_id>:<line_id>:<posting_purpose>
+ * and PostingPurpose has exactly two members. So for any source transaction there can be exactly ONE
+ * `initial_post` batch, ever. Calling the poster again after a reversal returns the EXISTING batch and
+ * reports success — it does not create a corrected entry.
+ *
+ * PROVEN, not assumed (prod fork br-falling-dew-aksttr2j, 2026-08-03): 20 bank categorizations were
+ * reversed and re-posted; the poster returned `posted: true` with the ORIGINAL journal-entry id for
+ * every one, fuel expense fell by exactly $4,593.94, and the target accounts received ZERO lines. The
+ * expense did not move — it vanished.
+ *
+ * Consumers that reverse a posting MUST consult this flag and REFUSE the operation while it is false,
+ * rather than reversing and hoping the re-post lands. Flipping it to true is only legitimate together
+ * with a real repost capability (a third purpose or a revision counter in the key above).
+ */
+export const POSTING_ENGINE_SUPPORTS_REPOST = false;
 type BatchStatus = "queued" | "in_progress" | "posted" | "reversed" | "failed";
 
 type DbClient = {
