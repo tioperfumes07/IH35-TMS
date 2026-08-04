@@ -37,6 +37,8 @@ export const legalMattersApi = {
       related_driver_id?: string;
       /** Filter legal.matters.unit_id (fleet reverse drill-through). */
       unit_id?: string;
+      /** Filter legal.matters.equipment_id (trailer reverse drill-through - equipment, not units). */
+      equipment_id?: string;
       /** Filter legal.matters.insurance_claim_id (insurance reverse drill-through). */
       insurance_claim_id?: string;
     } = {}
@@ -47,6 +49,7 @@ export const legalMattersApi = {
     if (filters.type) params.type = filters.type;
     if (filters.related_driver_id) params.related_driver_id = filters.related_driver_id;
     if (filters.unit_id) params.unit_id = filters.unit_id;
+    if (filters.equipment_id) params.equipment_id = filters.equipment_id;
     if (filters.insurance_claim_id) params.insurance_claim_id = filters.insurance_claim_id;
     return apiRequest<{ matters: LegalMatterRow[] }>(withCompany("/api/v1/legal/matters", operatingCompanyId, params));
   },

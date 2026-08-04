@@ -5830,6 +5830,7 @@
       "created_at",
       "created_by_user_id",
       "description",
+      "equipment_id",
       "financial_reserve_cents",
       "id",
       "incident_id",

@@ -57,6 +57,8 @@ export const matterCreateSchema = z.object({
   insurance_lawsuit_id: z.string().uuid().optional().nullable(),
   incident_id: z.string().uuid().optional().nullable(),
   unit_id: z.string().uuid().optional().nullable(),
+  // Trailers live in mdata.equipment, NOT mdata.units - a separate key space, so a separate column.
+  equipment_id: z.string().uuid().optional().nullable(),
 });
 
 export const matterUpdateSchema = matterCreateSchema
@@ -169,6 +171,7 @@ export async function listMatters(
     type?: string | undefined;
     related_driver_id?: string | undefined;
     unit_id?: string | undefined;
+    equipment_id?: string | undefined;
     insurance_claim_id?: string | undefined;
     requesterUserId: string;
     requesterRole: string;
@@ -200,6 +203,10 @@ export async function listMatters(
   if (args.unit_id) {
     values.push(args.unit_id);
     where.push(`m.unit_id = $${values.length}`);
+  }
+  if (args.equipment_id) {
+    values.push(args.equipment_id);
+    where.push(`m.equipment_id = $${values.length}`);
   }
   if (args.insurance_claim_id) {
     values.push(args.insurance_claim_id);
@@ -433,6 +440,7 @@ export async function updateMatter(
   if (input.insurance_lawsuit_id !== undefined) push("insurance_lawsuit_id", input.insurance_lawsuit_id);
   if (input.incident_id !== undefined) push("incident_id", input.incident_id);
   if (input.unit_id !== undefined) push("unit_id", input.unit_id);
+  if (input.equipment_id !== undefined) push("equipment_id", input.equipment_id);
   if (fields.length === 0) {
     const cur = await client.query(`SELECT * FROM legal.matters WHERE id = $1 AND operating_company_id = $2`, [
       args.matterId,

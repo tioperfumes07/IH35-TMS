@@ -35,6 +35,7 @@ const listQuerySchema = operatingCompanyQuerySchema.extend({
   type: z.string().trim().optional(),
   related_driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
+  equipment_id: z.string().uuid().optional(),
   insurance_claim_id: z.string().uuid().optional(),
 });
 
@@ -92,7 +93,10 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     return summary;
   });
 
-  app.get("/api/v1/legal/matters", async (req, reply) => {
+  app.get(
+    "/api/v1/legal/matters",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_READ_ROLES)) return;
@@ -106,13 +110,15 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
         type: parsed.data.type,
         related_driver_id: parsed.data.related_driver_id,
         unit_id: parsed.data.unit_id,
+        equipment_id: parsed.data.equipment_id,
         insurance_claim_id: parsed.data.insurance_claim_id,
         requesterUserId: authUser.uuid,
         requesterRole: String(authUser.role ?? ""),
       })
     );
     return { matters: rows };
-  });
+    }
+  );
 
   app.get("/api/v1/legal/matters/:id", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
