@@ -86,8 +86,13 @@ describeIntegration("LV-001 relationship-score query executes (real Postgres)", 
 
     // The assertion that matters: it did not throw. 42883 would have rejected above, because
     // function resolution happens at plan time regardless of how many rows match.
+    // Shape is asserted against the REAL RelationshipScoreResult interface
+    // (scorer.service.ts:15-21) — overall_health_score / health_tier, not an invented field name.
     expect(result).toBeTruthy();
-    expect(typeof result.overall_score).toBe("number");
+    expect(typeof result.overall_health_score).toBe("number");
+    expect(["thriving", "healthy", "watch", "at_risk"]).toContain(result.health_tier);
+    expect(result.customer_uuid).toBe(customerId);
+    expect(result.operating_company_id).toBe(companyId);
   });
 
   it("re-running the exact pre-fix SQL still raises 42883 (proves the fix is what changed it)", async () => {
