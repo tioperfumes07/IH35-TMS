@@ -15,7 +15,7 @@
  *   node scripts/verify-no-false-green-certify.mjs --selftest
  */
 import { readFileSync, existsSync, readdirSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { openWavesByModule } from "./lib/open-wave-modules.mjs";
@@ -25,6 +25,8 @@ const MC_DIR = join(ROOT, "docs/module-completion");
 const QUEUE = join(ROOT, "docs/audit/wave-queue.json");
 const LABEL = "verify-no-false-green-certify";
 const SELFTEST = process.argv.includes("--selftest");
+const isMain =
+  Boolean(process.argv[1]) && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 export function assertNoFalseGreen(queuePath, mcDir) {
   const errs = [];
@@ -58,7 +60,11 @@ export function assertNoFalseGreen(queuePath, mcDir) {
   return errs;
 }
 
-if (SELFTEST) {
+const isMain =
+  process.argv[1] &&
+  fileURLToPath(import.meta.url) === join(process.argv[1]);
+
+if (isMain && SELFTEST) {
   const dir = mkdtempSync(join(tmpdir(), "ih35-false-green-"));
   try {
     const q = join(dir, "wave-queue.json");
@@ -121,16 +127,18 @@ if (SELFTEST) {
   }
 }
 
-if (!existsSync(QUEUE) || !existsSync(MC_DIR)) {
-  console.log(`${LABEL}: queue or module-completion dir absent — nothing to check (pass).`);
+if (isMain) {
+  if (!existsSync(QUEUE) || !existsSync(MC_DIR)) {
+    console.log(`${LABEL}: queue or module-completion dir absent — nothing to check (pass).`);
+    process.exit(0);
+  }
+
+  const errs = assertNoFalseGreen(QUEUE, MC_DIR);
+  if (errs.length) {
+    console.error(`${LABEL} FAIL: ${errs.length} false-green certification(s):`);
+    for (const e of errs) console.error("  - " + e);
+    process.exit(1);
+  }
+  console.log(`${LABEL}: OK — no module certified while a shared class it touches is open.`);
   process.exit(0);
 }
-
-const errs = assertNoFalseGreen(QUEUE, MC_DIR);
-if (errs.length) {
-  console.error(`${LABEL} FAIL: ${errs.length} false-green certification(s):`);
-  for (const e of errs) console.error("  - " + e);
-  process.exit(1);
-}
-console.log(`${LABEL}: OK — no module certified while a shared class it touches is open.`);
-process.exit(0);
