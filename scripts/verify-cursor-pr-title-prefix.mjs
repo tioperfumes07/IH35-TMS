@@ -45,12 +45,15 @@ export function assertCursorPrTitlePrefix({ title, branch } = {}) {
   const t = title ?? titleFromEnvOrEvent();
   const b = branch ?? process.env.GATE_HEAD_REF ?? process.env.GITHUB_HEAD_REF ?? currentBranch();
 
-  // Always enforce when a PR title is available, or when the branch is a Cursor lane branch in CI.
-  const mustCheck = Boolean(String(t).trim()) || (isCursorBranch(b) && Boolean(process.env.CI));
-  if (!mustCheck) return problems;
+  // Owner law: Cursor PRs only. Claude/Cascade branches are out of scope.
+  if (!isCursorBranch(b)) return problems;
 
   const titleToCheck = String(t).trim();
   if (!titleToCheck) {
+    // Local commits on cursor/* without a PR event: presence/wiring still checked separately.
+    if (!process.env.CI && !process.env.GATE_PR_TITLE && !process.env.GITHUB_EVENT_PATH) {
+      return problems;
+    }
     problems.push("PR title empty on Cursor PR — title must start with Cursor-");
     return problems;
   }
