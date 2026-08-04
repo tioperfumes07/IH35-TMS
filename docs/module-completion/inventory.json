@@ -87,7 +87,8 @@
       "spec": "Architectural inventory purchases chain",
       "status": "PASS",
       "evidence": "2026-08-04 PASS — PartCreateDrawer + PartEditDrawer wire ReferenceSelect createKind=vendor posting vendor_id; parts.routes persists vendor_id on maintenance.parts_inventory INSERT/PATCH/SELECT; InventoryPartsStockPage renders EntityLink kind=vendor. Guard verify-inv-link-01-part-vendor.mjs step 2354 --selftest exit 0. | scaffold — mod13 finding: part-to-vendor none",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "INV-VERIFY-01",
@@ -105,10 +106,11 @@
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
       "evidence": "2026-08-04 PASS — meta verify-inv-verify-01 (step 2268) composes S01 roster, CAT-01 category honesty, S02/S03/PICK locks, INV-LINK-01 part→vendor + three /inventory routes. Inventory module 7/7 complete. | 2026-08-03 PASS — meta verify-inv-verify-01 (step 2268) composes S01 roster, CAT-01 category honesty, S02/S03/PICK locks + three /inventory routes. INV-LINK-01 (part→vendor) remains OPEN.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     }
   ],
-  "pass_count": 6,
+  "pass_count": 7,
   "total_count": 7,
-  "progress": "6 of 7"
+  "progress": "7 of 7"
 }
