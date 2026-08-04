@@ -41,7 +41,9 @@ import { isEnabled } from "../lib/feature-flags/service.js";
  * DEFAULT OFF, AND WARN-ONLY UNTIL FLIPPED — deliberately. Enforcing immediately would block
  * invoicing entirely for a fleet whose drivers are not yet capturing departures through the PWA, and
  * stopping the cash cycle to fix an evidence gap is the wrong trade to make unilaterally. While OFF
- * it logs every send that lacks evidence, so the real exposure is measurable BEFORE it is enforced.
+ * every unevidenced send appends a durable, append-only row to audit.audit_events
+ * (`accounting.invoice.sent_without_delivery_evidence`) atomically with the send, so the real
+ * exposure is COUNTABLE — not merely logged — BEFORE anyone decides to enforce it.
  * `isEnabled` returns false for a flag_key that has no registry row, so this is genuinely inert until
  * one is seeded — no migration in this PR.
  *
@@ -148,6 +150,27 @@ export async function sendDraftInvoice(
             `driver's departure, or send it manually after confirming delivery by another means.`,
         };
       }
+      // WIRE-04 — the exposure has to be COUNTABLE, not just tailable. A console.warn on Render is
+      // ephemeral: it cannot be queried, aggregated, or tied out, so "measure before enforcing" was
+      // not actually satisfied by logging alone — the decision to flip the flag would rest on no
+      // number. Written through appendCrudAudit on the SAME client as the send, so the row commits
+      // with the invoice or not at all. That atomicity is the point: the count of unevidenced sends
+      // is exact by construction and cannot silently under-report, which is what a factoring
+      // recourse-risk figure has to be before anyone relies on it.
+      await appendCrudAudit(
+        client as never,
+        input.userId,
+        "accounting.invoice.sent_without_delivery_evidence",
+        {
+          invoice_id: input.invoiceId,
+          load_id: String(current.source_load_id),
+          operating_company_id: input.operatingCompanyId,
+          flag: DELIVERY_EVIDENCE_FLAG,
+          enforcement: "warn_only",
+        },
+        "warning",
+        "ACCT-F61-WIRE-04"
+      );
       console.warn(
         {
           invoice_id: input.invoiceId,
