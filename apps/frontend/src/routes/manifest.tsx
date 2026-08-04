@@ -173,6 +173,9 @@ const NotificationCenterPage = React.lazy(() => import("../pages/notifications/N
 const EquipmentTypesPage = React.lazy(() => import("../pages/EquipmentTypesPage").then((m) => ({ default: m.EquipmentTypesPage })));
 const HomePage = React.lazy(() => import("../pages/Home").then((m) => ({ default: m.HomePage })));
 const OwnerHome = React.lazy(() => import("../pages/home/OwnerHome").then((m) => ({ default: m.OwnerHome })));
+const ScenarioTrackerHome = React.lazy(() =>
+  import("../pages/home/scenario-tracker/ScenarioTrackerHome").then((m) => ({ default: m.ScenarioTrackerHome })),
+);
 // QBO-style home stays mounted at /app/homepage (bookmarks + never-delete). Sidebar HOME → /home.
 const QboStyleHomePage = React.lazy(() => import("../pages/home/QboStyleHomePage").then((m) => ({ default: m.QboStyleHomePage })));
 const LoginPage = React.lazy(() => import("../pages/Login").then((m) => ({ default: m.LoginPage })));
@@ -577,6 +580,15 @@ function OwnerOnlyRoute({ children }: { children: ReactNode }) {
 function HomeRoute() {
   const auth = useAuth();
   if (!auth.user) return null;
+  // /home stays role homes until GUARD verifies live GET /api/v1/home/scenario-tracker
+  // (staleness heartbeat + entity chips). Tracker is mounted additively at /home/scenario-tracker.
+  if (auth.user.role === "Owner") return <OwnerHome auth={auth.user} />;
+  return <HomePage auth={auth.user} />;
+}
+
+function HomeOpsRoute() {
+  const auth = useAuth();
+  if (!auth.user) return null;
   if (auth.user.role === "Owner") return <OwnerHome auth={auth.user} />;
   return <HomePage auth={auth.user} />;
 }
@@ -765,6 +777,24 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <HomeRoute />
+            </ProtectedRoute>
+          }
+        />
+        {/* Additive Scenario Tracker FE — parked until CC-1 endpoint + GUARD live proof. */}
+        <Route
+          path="/home/scenario-tracker"
+          element={
+            <ProtectedRoute>
+              <ScenarioTrackerHome />
+            </ProtectedRoute>
+          }
+        />
+        {/* Additive: role dashboards also kept at /home/ops (never-delete). */}
+        <Route
+          path="/home/ops"
+          element={
+            <ProtectedRoute>
+              <HomeOpsRoute />
             </ProtectedRoute>
           }
         />
