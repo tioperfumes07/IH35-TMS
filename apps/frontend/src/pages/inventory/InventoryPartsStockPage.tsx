@@ -138,7 +138,7 @@ export function InventoryPartsStockPage() {
       listVendors({
         operating_company_id: operatingCompanyId,
         status: "active",
-        limit: 500,
+        limit: 1000,
       }),
     enabled: Boolean(operatingCompanyId),
   });
