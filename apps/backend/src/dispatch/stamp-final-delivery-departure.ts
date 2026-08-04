@@ -8,7 +8,16 @@
  * NEVER OVERWRITE an existing driver-captured departure.
  * actual_arrival_at is left NULL (office is not asserting arrival).
  */
-import type { PoolClient } from "pg";
+/**
+ * Accept PoolClient OR the thinner `{ query }` wrappers used by route tx helpers.
+ * Requiring full PoolClient caused TS2345 on loads.routes / loads-bulk.routes (CI red).
+ */
+type Queryable = {
+  query: (
+    sql: string,
+    values?: unknown[]
+  ) => Promise<{ rows: unknown[]; rowCount?: number | null }>;
+};
 
 const DELIVERY_EVIDENCE_STATUSES = new Set([
   "delivered_pending_docs",
@@ -23,7 +32,7 @@ export function loadStatusRequiresDeliveryDepartureStamp(status: string): boolea
  * @returns number of stop rows updated (0 or 1)
  */
 export async function stampFinalActiveDeliveryDeparture(
-  client: PoolClient,
+  client: Queryable,
   loadId: string,
   deliveredAt: string | Date | null | undefined = null
 ): Promise<number> {
