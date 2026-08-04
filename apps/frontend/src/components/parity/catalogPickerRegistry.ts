@@ -83,6 +83,11 @@ export type CatalogPickerConfig = {
   readWriteParity: "same-endpoint-verified" | "legacy-bespoke-form";
   /** Backend file:line proving the read table equals the write table. Never a bare assertion. */
   evidence: string;
+  /**
+   * Primary consuming picker surface(s). When set, verify-lst-picker01-consumer-adoption (2358) requires
+   * each path to pass createKind="{key}" on a ReferenceSelect — the ratchet that closes LST-PICKER-01.
+   */
+  consumerPath?: string | readonly string[];
   /** Only for backend "catalog": the fields the generic drawer renders. */
   fields?: readonly CatalogCreateField[];
   /** Only for backend "catalog": the POST. Entity id is always the first argument. */
@@ -166,6 +171,7 @@ function catalogEntry(entry: {
   table: string;
   endpoint: string;
   evidence: string;
+  consumerPath?: string | readonly string[];
 }): CatalogPickerConfig {
   // Read table === write table and read endpoint === write endpoint, expressed ONCE so the two can
   // never drift apart in a later edit. This is VERIFY-2 clause 5 enforced structurally.
@@ -180,6 +186,7 @@ function catalogEntry(entry: {
     entityScoped: true,
     readWriteParity: "same-endpoint-verified",
     evidence: entry.evidence,
+    consumerPath: entry.consumerPath,
     fields: CATALOG_FIELDS,
     create: catalogCreate(entry.endpoint),
   };
@@ -357,6 +364,11 @@ export const CATALOG_PICKER_CONFIGS = {
     table: "catalogs.vendor_types",
     endpoint: "/api/v1/catalogs/vendors/vendor-types",
     evidence: "apps/backend/src/catalogs/generic-catalog.factory.ts:143 (SELECT) and :188 (INSERT) — both catalogs.${config.tableName} from vendorTypesCatalogConfig",
+    consumerPath: [
+      "apps/frontend/src/pages/VendorDetail.tsx",
+      "apps/frontend/src/components/vendors/VendorCreateModal.tsx",
+      "apps/frontend/src/components/parity/drawers/NewVendorDrawerForm.tsx",
+    ],
   }),
 
 
@@ -377,6 +389,7 @@ export const CATALOG_PICKER_CONFIGS = {
     table: "catalogs.detention_reasons",
     endpoint: "/api/v1/catalogs/dispatch/detention-reasons",
     evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
+    consumerPath: "apps/frontend/src/pages/dispatch/components/book-load-v4/ExpectedAdjustmentsCallout.tsx",
   }),
 
 
@@ -397,6 +410,7 @@ export const CATALOG_PICKER_CONFIGS = {
     table: "catalogs.additional_charges",
     endpoint: "/api/v1/catalogs/dispatch/additional-charges",
     evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
+    consumerPath: "apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
   }),
 
 
@@ -418,6 +432,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "same-endpoint-verified",
     evidence:
       "apps/backend/src/catalogs/load-cancellation-reasons.routes.ts:112 (SELECT) and :135 (INSERT) — both catalogs.load_cancellation_reasons; cancel picker list at dispatch/cancellation.service.ts:224",
+    consumerPath: "apps/frontend/src/components/dispatch/CancelLoadModal.tsx",
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
       const displayName = values.display_name.trim();
@@ -472,6 +487,7 @@ export const CATALOG_PICKER_CONFIGS = {
     table: "catalogs.driver_deduction_types",
     endpoint: "/api/v1/catalogs/driver/deduction-types",
     evidence: "apps/backend/src/catalogs/driver/factory.ts:94,172 + driver/index.ts:14 tableName driver_deduction_types",
+    consumerPath: "apps/frontend/src/pages/drivers/AutoDeductionPolicies.tsx",
   }),
 
 
@@ -490,6 +506,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "same-endpoint-verified",
     evidence:
       "apps/backend/src/catalogs/driver/factory.ts SELECT+INSERT catalogs.driver_deduction_types (optionalBooleans may_draw_escrow); EscrowForfeitModal filtered consumer",
+    consumerPath: "apps/frontend/src/pages/safety/components/EscrowForfeitModal.tsx",
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
       const displayName = values.display_name.trim();
@@ -576,6 +593,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "same-endpoint-verified",
     evidence:
       "apps/backend/src/catalogs/fuel/factory.ts:67 (SELECT) and :159 (INSERT) — both catalogs.expensive_states; ExpensiveStatesMultiselect expensiveStatesCatalogClient consumer",
+    consumerPath: "apps/frontend/src/pages/fuel/components/ExpensiveStatesMultiselect.tsx",
     fields: [
       {
         name: "code",
@@ -623,6 +641,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/safety/civil-fine-types",
     evidence:
       "apps/backend/src/catalogs/safety/civil-fine-types.routes.ts:28 (SELECT) and :110 (INSERT) — both catalogs.civil_fine_types; FineCreateModal catalogs-safety list consumer",
+    consumerPath: "apps/frontend/src/pages/safety/components/FineCreateModal.tsx",
   }),
 
 
@@ -642,6 +661,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "same-endpoint-verified",
     evidence:
       "apps/backend/src/catalogs/safety/complaint-types.routes.ts SELECT+INSERT catalogs.complaint_types; ComplaintsTab catalogs-safety list consumer",
+    consumerPath: "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx",
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
       const typeName = values.display_name.trim();
@@ -686,6 +706,10 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "same-endpoint-verified",
     evidence:
       "apps/backend/src/catalogs/safety/dot-violation-types.routes.ts SELECT+INSERT catalogs.dot_violation_types; HOSViolationsTab + HosViolationCreateModal catalogs-safety list consumers",
+    consumerPath: [
+      "apps/frontend/src/pages/safety/tabs/HOSViolationsTab.tsx",
+      "apps/frontend/src/pages/safety/components/HosViolationCreateModal.tsx",
+    ],
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
       const displayName = values.display_name.trim();
@@ -732,6 +756,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "same-endpoint-verified",
     evidence:
       "apps/backend/src/catalogs/safety/company-violation-types.routes.ts:26 (SELECT) and :110 (INSERT) — both catalogs.company_violation_types",
+    consumerPath: "apps/frontend/src/pages/safety/components/CompanyViolationCreateModal.tsx",
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
       const typeName = values.display_name.trim();
@@ -776,6 +801,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "same-endpoint-verified",
     evidence:
       "apps/backend/src/catalogs/safety/cargo-claim-reasons.routes.ts SELECT+INSERT catalogs.cargo_claim_reasons; CargoClaimIntakeSurface catalogs-safety list consumer",
+    consumerPath: "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx",
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
       const displayName = values.display_name.trim();
@@ -823,6 +849,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "same-endpoint-verified",
     evidence:
       "apps/backend/src/catalogs/safety/internal-fine-reasons.routes.ts SELECT+INSERT catalogs.internal_fine_reasons; InternalFinesPage catalogs-safety list consumer",
+    consumerPath: "apps/frontend/src/pages/safety/InternalFinesPage.tsx",
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
       const reasonName = values.display_name.trim();
@@ -869,6 +896,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "same-endpoint-verified",
     evidence:
       "apps/backend/src/catalogs/generic-catalog.factory.ts entityScoped INSERT + routes.ts dispatchErrorReasonsCatalogConfig; picker list apps/backend/src/mdata/dispatcher-safety-events.routes.ts GET catalogs/dispatcher-error-reasons",
+    consumerPath: "apps/frontend/src/pages/UserDetail.tsx",
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
       const label = values.display_name.trim();
@@ -914,6 +942,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "same-endpoint-verified",
     evidence:
       "apps/backend/src/catalogs/generic-catalog.factory.ts entityScoped INSERT + routes.ts customerQualityEventReasonsCatalogConfig",
+    consumerPath: "apps/frontend/src/pages/CustomerDetail.tsx",
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
       const label = values.display_name.trim();
@@ -962,6 +991,10 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "same-endpoint-verified",
     evidence:
       "apps/backend/src/mdata/driver-safety-events.routes.ts SELECT+INSERT catalogs.driver_termination_reasons; DriverDetail safety-event picker consumer",
+    consumerPath: [
+      "apps/frontend/src/pages/DriverDetail.tsx",
+      "apps/frontend/src/components/drivers/TerminateConfirmModal.tsx",
+    ],
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
       const label = values.display_name.trim();
@@ -1008,6 +1041,10 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "same-endpoint-verified",
     evidence:
       "apps/backend/src/catalogs/payment-terms.routes.ts:127 (SELECT) and :154 (INSERT) — both catalogs.payment_terms; mdata payment-term options consumer",
+    consumerPath: [
+      "apps/frontend/src/components/customers/CustomerProfileForm.tsx",
+      "apps/frontend/src/pages/VendorDetail.tsx",
+    ],
     fields: [
       { name: "display_name", label: "Terms name", required: true, maxLength: 200, placeholder: "Net 30" },
       {
@@ -1066,6 +1103,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "same-endpoint-verified",
     evidence:
       "apps/backend/src/catalogs/equipment-types.routes.ts:134 (SELECT) and :258 (INSERT) — both catalogs.equipment_types; DriverDetail qualification picker consumer",
+    consumerPath: "apps/frontend/src/pages/DriverDetail.tsx",
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
       const name = values.display_name.trim();
@@ -1109,6 +1147,7 @@ export const CATALOG_PICKER_CONFIGS = {
     endpoint: "/api/v1/catalogs/maintenance/labor-codes",
     evidence:
       "apps/backend/src/catalogs/maintenance/factory.ts:83,159 + maintenance/index.ts:14 tableName maintenance_labor_codes; LaborTracker labor_code_id consumer",
+    consumerPath: "apps/frontend/src/components/maintenance/LaborTracker.tsx",
   }),
 
 
@@ -1131,6 +1170,7 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "same-endpoint-verified",
     evidence:
       "apps/backend/src/maintenance/tires.routes.ts:274 (SELECT) and :293 (INSERT) — both maintenance.tire_brands; TireProgramPage mount-tire brand picker consumer",
+    consumerPath: "apps/frontend/src/pages/maintenance/TireProgramPage.tsx",
     fields: [{ name: "display_name", label: "Brand name", required: true, maxLength: 120 }],
     create: async (operatingCompanyId, values) => {
       const name = values.display_name.trim();
@@ -1158,6 +1198,10 @@ export const CATALOG_PICKER_CONFIGS = {
     readWriteParity: "same-endpoint-verified",
     evidence:
       "apps/backend/src/insurance/type-catalog.routes.ts:104 (SELECT) and :128 (INSERT) — both insurance.type_catalog; PolicyCreateModal + PolicyCreateWizard consumers",
+    consumerPath: [
+      "apps/frontend/src/components/insurance/PolicyCreateModal.tsx",
+      "apps/frontend/src/components/insurance/PolicyCreateWizard.tsx",
+    ],
     fields: [
       {
         name: "code",
