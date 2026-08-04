@@ -4111,7 +4111,7 @@ export const ROUTES = React.Children.toArray(
           path="/catalogs/accounts"
           element={
             <ProtectedRoute>
-              <Navigate to="/coming-soon?feature=Chart%20of%20Accounts&phase=5&eta=After%20accounting%20cutover" replace />
+              <Navigate to="/lists/accounting/chart-of-accounts" replace />
             </ProtectedRoute>
           }
         />
@@ -4127,7 +4127,7 @@ export const ROUTES = React.Children.toArray(
           path="/catalogs/items"
           element={
             <ProtectedRoute>
-              <Navigate to="/coming-soon?feature=Items&phase=5&eta=After%20accounting%20cutover" replace />
+              <Navigate to="/lists/accounting/items" replace />
             </ProtectedRoute>
           }
         />
