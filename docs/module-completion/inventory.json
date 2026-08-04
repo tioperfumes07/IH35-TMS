@@ -98,12 +98,12 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "OPEN",
-      "evidence": "scaffold \u2014 roster PASS; assignments/purchases UNVERIFIED",
+      "status": "PASS",
+      "evidence": "2026-08-03 PASS \u2014 meta verify-inv-verify-01 (step 2268) composes S01 roster, CAT-01 category honesty, S02/S03/PICK locks + three /inventory routes. INV-LINK-01 (part\u2192vendor) remains OPEN.",
       "pr": null
     }
   ],
-  "pass_count": 5,
+  "pass_count": 6,
   "total_count": 7,
-  "progress": "5 of 7"
+  "progress": "6 of 7"
 }
