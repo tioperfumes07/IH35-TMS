@@ -25,6 +25,7 @@ import { DriverCommunicationsTab } from "../../components/drivers/DriverCommunic
 import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 import { InsuranceClaimsReverseSection } from "../../components/insurance/InsuranceClaimsReverseSection";
+import { DriverFinesReverseSection } from "../../components/safety/DriverFinesReverseSection";
 import { DriverSafetyReverseSection } from "../../components/safety/DriverSafetyReverseSection";
 import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
@@ -515,6 +516,16 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           filter={{ driver_id: id }}
           contextLabel="this driver"
           data-testid="driver-profile-insurance-claims"
+        />
+      </div>
+      {/* SAF-F16 — fines had no reverse surface on the driver they were imposed on. Reads BOTH
+          safety.civil_fines (subject_driver_id) and safety.internal_fines (driver_id); either one
+          alone would under-report. */}
+      <div data-testid="dp-section-fines-reverse">
+        <DriverFinesReverseSection
+          operatingCompanyId={companyId}
+          driverId={id}
+          data-testid="driver-profile-fines-reverse"
         />
       </div>
       <div data-testid="dp-section-safety-reverse">
