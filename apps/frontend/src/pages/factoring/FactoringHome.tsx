@@ -41,7 +41,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { factorToProfileForm, profileFormToFactorPatch, type FactorProfileForm } from "../../lib/factorProfile";
+import { factorToProfileForm, profileFormToFactorPatch, resolveActiveFactorFromSummary, type FactorProfileForm } from "../../lib/factorProfile";
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { ChargebacksTable } from "./ChargebacksTable";
 import { RecoursePipelineTable } from "./RecoursePipelineTable";
@@ -223,8 +223,8 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
     enabled: Boolean(companyId),
   });
   const factorsQuery = useQuery({
-    queryKey: ["factoring", "factors", companyId, "active"],
-    queryFn: () => listFactors(companyId, { active_only: true }).then((res) => res.factors),
+    queryKey: ["factoring", "factors", companyId],
+    queryFn: () => listFactors(companyId).then((res) => res.factors),
     enabled: Boolean(companyId),
   });
   const recourseQuery = useQuery({
@@ -286,21 +286,10 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   }, [invoices]);
 
   const summary = summaryQuery.data;
-  const activeFactor = useMemo(() => {
-    const factors = factorsQuery.data ?? [];
-    if (factors.length === 0) return null;
-    if (summary?.active_factor_id) {
-      const byId = factors.find((factor) => factor.id === summary.active_factor_id);
-      if (byId) return byId;
-    }
-    const targetName = summary?.active_factor_name?.trim();
-    if (targetName) {
-      const byName = factors.find((factor) => factor.name === targetName);
-      if (byName) return byName;
-    }
-    const activeFactors = factors.filter((factor) => factor.active);
-    return activeFactors[0] ?? null;
-  }, [factorsQuery.data, summary?.active_factor_id, summary?.active_factor_name]);
+  const activeFactor = useMemo(
+    () => resolveActiveFactorFromSummary(summary, factorsQuery.data ?? []),
+    [summary, factorsQuery.data]
+  );
   const canDeactivate = user?.role === "Owner";
 
   return (
@@ -490,7 +479,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
         </>
       ) : (
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500" data-testid="factoring-profile-empty">
-          {summary?.active_factor_name || summary?.active_factor_id
+          {summary?.active_factor_profile_id || summary?.active_factor_name || summary?.active_factor_id
             ? "Active factor row is still loading…"
             : "No factor configured. Activate a factor to manage its profile."}
         </div>

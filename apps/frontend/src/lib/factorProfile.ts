@@ -115,6 +115,41 @@ function tierReservePct(schedule: unknown, fromDay: number, toDay: number | null
   return rateToPctString(Number(asRecord(hit).reserve_rate));
 }
 
+/** Resolve factoring.factor row for profile panel — prefer canonical profile id from summary KPI. */
+export function resolveActiveFactorFromSummary(
+  summary:
+    | {
+        active_factor_profile_id?: string | null;
+        active_factor_id?: string | null;
+        active_factor_name?: string | null;
+      }
+    | undefined
+    | null,
+  factors: Factor[]
+): Factor | null {
+  if (factors.length === 0) return null;
+  const profileId = summary?.active_factor_profile_id?.trim();
+  if (profileId) {
+    const byProfile = factors.find((factor) => factor.id === profileId);
+    if (byProfile) return byProfile;
+  }
+  const vendorId = summary?.active_factor_id?.trim();
+  if (vendorId) {
+    const byVendorId = factors.find((factor) => factor.id === vendorId);
+    if (byVendorId) return byVendorId;
+  }
+  const targetName = summary?.active_factor_name?.trim();
+  if (targetName) {
+    const exact = factors.find((factor) => factor.name === targetName);
+    if (exact) return exact;
+    const lower = targetName.toLowerCase();
+    const fuzzy = factors.find((factor) => factor.name.toLowerCase().includes(lower) || lower.includes(factor.name.toLowerCase()));
+    if (fuzzy) return fuzzy;
+  }
+  const activeFactors = factors.filter((factor) => factor.active);
+  return activeFactors[0] ?? null;
+}
+
 export function factorToProfileForm(factor: Factor): FactorProfileForm {
   const remit = parseRemittanceDetails(factor.remittance_details);
   return {
