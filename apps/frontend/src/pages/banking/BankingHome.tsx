@@ -41,6 +41,7 @@ import { BankingTransactionsDesignView } from "./components/BankingTransactionsD
 import { StatementUpload } from "../../components/banking/StatementUpload";
 import { BANKING_TAB_PATH, bankingTabFromPath } from "../../router/route-manifest";
 import { BANKING_MODULE_TABS, type BankingModuleTabId } from "./BANKING_NAV_CONFIG";
+import { formatUsd } from "../../lib/money";
 
 const BANKING_TABS = BANKING_MODULE_TABS;
 
@@ -453,7 +454,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] transition hover:bg-gray-50"
             >
               <div className="truncate text-[10px] uppercase text-gray-500">Cash posting</div>
-              <div className="truncate font-semibold" title={money.format(cashPosting)}>{money.format(cashPosting)}</div>
+              <div className="truncate font-semibold" title={formatUsd(cashPosting)}>{formatUsd(cashPosting)}</div>
             </button>
             <button
               type="button"
