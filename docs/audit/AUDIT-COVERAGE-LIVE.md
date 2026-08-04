@@ -70,11 +70,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **18 / 30** | 2026-08-04 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-04 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **63 / 150** · TRK **9 / 150** · USMCA **62 / 150** | 2026-08-04 |
-| Rows in this file | **700** | 2026-08-04 |
+| Rows in this file | **701** | 2026-08-04 |
 | Rows `FAIL` + `OPEN` | **28** | 2026-08-04 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **11** | 2026-08-04 |
 | Rows `VERIFIED` by GUARD | **0** | 2026-08-04 |
-| Verdict tally (all rows) | FAIL=80 · PASS=198 · N/A=219 · UNVERIFIED=11 · SUPERSEDED=7 · OTHER=185 | 2026-08-04 |
+| Verdict tally (all rows) | FAIL=80 · PASS=199 · N/A=219 · UNVERIFIED=11 · SUPERSEDED=7 · OTHER=185 | 2026-08-04 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -786,4 +786,5 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 698 | help | E | TRANSP+USMCA+TRK | FAIL | LV-003: help module manifest-integrity defect — stored progress shows "0 of 5" while all 5 items[] status are PASS, so the stored count disagrees with the item array. Live module rendered; the manifest metadata is stale/wrong. Lane: Cursor. | OPEN | — | NO | 2026-08-04 | CASCADE |
 | 699 | home | E | TRANSP+USMCA+TRK | FAIL | LV-004: home module manifest-integrity defect — manifest omits `pass_count`, `total_count`, `progress`, and carries a stale `live_sha`. Live module rendered; the manifest metadata is incomplete/out-of-date. Lane: Cursor. | OPEN | — | NO | 2026-08-04 | CASCADE |
 | 700 | program · `origin/main` static guard failures — SUPERSEDES row 680 | C | ALL | PASS | The three pre-push static guard failures from row 680 are now resolved: (1) `scripts/verify-lst-picker-no-lists-json-partial-thrash.mjs` selftest fixed to exercise the FAIL branch with a synthetic LST-PICKER-01 status. (2) `scripts/verify-module-manifest-integrity.mjs --write` resynced `docs/module-completion/lists.json` derived counts with items[]. (3) Duplicate step number 2360 resolved by renaming `scripts/verify-steps/2360-verify-wire-07-actual-departure-stamp.mjs` to `2370-verify-wire-07-actual-departure-stamp.mjs` and updating its internal comment. All three guards now exit 0. | — | — | NO | 2026-08-04 | CASCADE |
+| 701 | program · `origin/main` static guard failures — SUPERSEDES row 700 correction | C | ALL | PASS | Correction to row 700 evidence after rebase on `origin/main`: `origin/main` already contained its own fixes for (1) `verify-lst-picker-no-lists-json-partial-thrash.mjs` selftest and (3) renaming `2360-verify-wire-07-actual-departure-stamp.mjs` to `2372-verify-wire-07-actual-departure-stamp.mjs`. My branch additionally resolved a NEW duplicate step number `2361` by renaming `scripts/verify-steps/2361-verify-no-extract-over-date-difference.mjs` to `2373-verify-no-extract-over-date-difference.mjs`, and ran `verify-module-manifest-integrity.mjs --write` to resync `lists.json`. All three guards exit 0. | — | — | NO | 2026-08-04 | CASCADE |
 
