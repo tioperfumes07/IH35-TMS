@@ -82,6 +82,32 @@ export function analyseClaimedOnMain(claimedOnMain, steps, opts = {}) {
   return problems;
 }
 
+/** CI often runs detached HEAD — prefer GITHUB_HEAD_REF / CLAIMED-REGEN subjects. */
+export function resolveRegenSamePr(cwd = ROOT, baseRef = "origin/main") {
+  const envBranch = (process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || "").trim();
+  let branch = envBranch;
+  if (!branch || branch === "HEAD" || branch === "main" || branch === "refs/heads/main") {
+    try {
+      const b = git(["rev-parse", "--abbrev-ref", "HEAD"], cwd);
+      if (b && b !== "HEAD") branch = b;
+    } catch {
+      /* ignore */
+    }
+  }
+  if (branch.startsWith("chore/claimed-regen") || branch.startsWith("chore/claim-reserve")) {
+    return true;
+  }
+  try {
+    const subjects = git(["log", "--format=%s", `${baseRef}..HEAD`], cwd)
+      .split("\n")
+      .filter(Boolean);
+    if (subjects.some((s) => /\bCLAIMED-REGEN\b|\bCLAIM-RESERVE\b/.test(s))) return true;
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
 export function run(baseRef = "origin/main", cwd = ROOT) {
   const steps = newStepNumbers(baseRef, cwd);
   if (steps.length === 0) {
@@ -90,13 +116,7 @@ export function run(baseRef = "origin/main", cwd = ROOT) {
   const claimed = claimedNumbersOnRef(baseRef, cwd);
   const headText = fs.readFileSync(path.join(cwd, REGISTRY_REL), "utf8");
   const claimedOnHead = claimedNumbersFromJson(headText);
-  let branch = "";
-  try {
-    branch = git(["rev-parse", "--abbrev-ref", "HEAD"], cwd);
-  } catch {
-    branch = "";
-  }
-  const regenSamePr = branch.startsWith("chore/claimed-regen");
+  const regenSamePr = resolveRegenSamePr(cwd, baseRef);
   const problems = analyseClaimedOnMain(claimed, steps, { claimedOnHead, regenSamePr });
   return problems.length === 0
     ? { ok: true, message: `${LABEL} OK — ${steps.length} new step(s) already claimed on ${baseRef}` }
@@ -134,6 +154,20 @@ function selftest() {
     "bootstrap does not cover other numbers",
     analyseClaimedOnMain(new Set(), [{ file: "scripts/verify-steps/2402-x.mjs", number: "2402" }], {
       claimedOnHead: new Set(["2402"]),
+    }).length === 1,
+  );
+  t(
+    "claimed-regen same-PR allows claimed-on-head",
+    analyseClaimedOnMain(new Set(), [{ file: "scripts/verify-steps/2402-x.mjs", number: "2402" }], {
+      claimedOnHead: new Set(["2402"]),
+      regenSamePr: true,
+    }).length === 0,
+  );
+  t(
+    "feature PR still needs main claim",
+    analyseClaimedOnMain(new Set(), [{ file: "scripts/verify-steps/2402-x.mjs", number: "2402" }], {
+      claimedOnHead: new Set(["2402"]),
+      regenSamePr: false,
     }).length === 1,
   );
   const parsed = claimedNumbersFromJson(JSON.stringify({ claimed: { "10": "10-x.mjs" } }));
