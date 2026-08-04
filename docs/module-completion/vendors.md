@@ -1,6 +1,6 @@
 # Module completion — Vendors
 
-**PROGRESS: 7 of 7** · complete: `true` · as_of: 2026-08-04 · live_sha: `—`
+**PROGRESS: 7 of 7** · complete: `false` · as_of: 2026-08-04 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
@@ -18,6 +18,6 @@
 | `VEND-S03` | **PASS** | Vendor create dedup guard scoped per operating company | 2026-08-03 Cursor: vendors.routes resolves operating_company BEFORE dedup; match is lower(btrim(vendor_name))+opco+deactivated_at IS NULL (G6-2). Guard verify-vend-s03-s04-dedup-and-types + step 2238. | — |
 | `VEND-S04` | **PASS** | Vendor types catalog-backed (catalogs.vendor_types populated) | 2026-08-03 Neon lucia: catalogs.vendor_types 8/TRANSP · 8/TRK · 8/USMCA. VendorCreateModal + NewVendorDrawerForm createKind=vendor_type → catalogs.vendor_types. Guard step 2238. | — |
 | `VEND-S05` | **PASS** | Inactive vendor filter excludes 387 inactive from default Active view | 2026-08-03 Neon lucia TRANSP inactive=387 exact. Vendors.tsx default listStatus="active" filters deactivated_at==null; data-list-status-filter=vendors. Guard verify-vend-s01-roster-active-filter + step 2236. | — |
-| `VEND-VERIFY-01` | **PASS** | Vendors module VERIFY-1..8 TRANSP + USMCA | 2026-08-04 Cursor: meta guard verify-vend-verify-01 composes S01 roster (TRANSP 564/USMCA 4 lucia), S03/S04 dedup+types, S02 fact-dual canonical profile, VEND-LINK-01 bill/allocation vendor uuid EntityLink; manifest /vendors + /vendors/:id; VendorDetail vendor-factor-schedule-relocated + emptyFactoringProfileMeta. Steps 2252 + 2356. | — |
+| `VEND-VERIFY-01` | **PASS** | Vendors module VERIFY-1..8 TRANSP + USMCA | 2026-08-04 Cursor: meta guard verify-vend-verify-01 composes S01 roster (TRANSP 564/USMCA 4 lucia), S03/S04 dedup+types, S02 fact-dual canonical profile, VEND-LINK-01 bill/allocation vendor uuid EntityLink; manifest /vendors + /vendors/:id; VendorDetail vendor-factor-schedule-relocated + emptyFactoringProfileMeta. Steps 2252 + 2356. Module checklist 7/7 PASS but complete=false while open wave CLS-ORPHAN-SURFACE still lists vendors (verify-no-false-green-certify / verify-module-completion) — premature complete:true from #4280 reverted. | — |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/factoring-deep-2026-08-01.md

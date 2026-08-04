@@ -14,6 +14,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { auditSurface, auditBackend } from "./verify-bill-vendor-link-canonical-uuid.mjs";
+import { openWaveIdsForModule } from "./lib/open-wave-modules.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-vend-link-01-vendor-uuid-entitylink";
@@ -63,8 +64,23 @@ export function collectProblems(overrides = {}) {
   }
 
   if (overrides.checkComplete !== false) {
-    if (manifest.complete !== true) {
-      problems.push(`${MANIFEST}: complete must be true when VEND-LINK-01 closes the module`);
+    // Checklist may be 7/7 PASS with complete:false while a shared-class wave still lists
+    // vendors (CLS-ORPHAN-SURFACE). Align with verify-no-false-green-certify — never force
+    // complete:true under an open shared class.
+    const openWaves =
+      overrides.openWaveIds !== undefined
+        ? overrides.openWaveIds
+        : openWaveIdsForModule("vendors");
+    if (openWaves.length) {
+      if (manifest.complete === true) {
+        problems.push(
+          `${MANIFEST}: complete:true ILLEGAL while open wave(s) list vendors: ${openWaves.join(", ")}`
+        );
+      }
+    } else if (manifest.complete !== true) {
+      problems.push(
+        `${MANIFEST}: complete must be true when VEND-LINK-01 closes the module and no shared-class waves list vendors`
+      );
     }
     if (manifest.pass_count !== manifest.total_count) {
       problems.push(
@@ -122,6 +138,34 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
   });
   if (!manifestProblems.some((p) => /VEND-LINK-01 must be PASS/.test(p))) {
     failures.push("OPEN VEND-LINK-01 manifest row not caught");
+  }
+
+  const falseGreen = collectProblems({
+    manifest: JSON.stringify({
+      complete: true,
+      pass_count: 7,
+      total_count: 7,
+      items: [{ id: "VEND-LINK-01", status: "PASS" }],
+    }),
+    openWaveIds: ["CLS-ORPHAN-SURFACE"],
+    runSibling: false,
+  });
+  if (!falseGreen.some((p) => /complete:true ILLEGAL/.test(p))) {
+    failures.push("complete:true under open shared-class wave not caught");
+  }
+
+  const honestHold = collectProblems({
+    manifest: JSON.stringify({
+      complete: false,
+      pass_count: 7,
+      total_count: 7,
+      items: [{ id: "VEND-LINK-01", status: "PASS" }],
+    }),
+    openWaveIds: ["CLS-ORPHAN-SURFACE"],
+    runSibling: false,
+  });
+  if (honestHold.length) {
+    failures.push(`honest complete:false under open wave wrongly flagged: ${honestHold.join(" | ")}`);
   }
 
   const sibling = spawnSync(

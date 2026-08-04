@@ -97,5 +97,5 @@ if (IS_MAIN) {
     for (const p of problems) console.error(`  - ${p}`);
     process.exit(1);
   }
-  console.log(`${LABEL} PASS — Vendors VERIFY-1..8 surfaces locked (7 of 7; module complete)`);
+  console.log(`${LABEL} PASS — Vendors VERIFY-1..8 surfaces locked (7 of 7 checklist; complete_flag per false-green law)`);
 }

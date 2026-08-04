@@ -1,7 +1,7 @@
 {
   "module": "vendors",
   "title": "Vendors",
-  "complete": true,
+  "complete": false,
   "as_of": "2026-08-04",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/factoring-deep-2026-08-01.md",
@@ -71,11 +71,11 @@
       "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "2026-08-04 Cursor: meta guard verify-vend-verify-01 composes S01 roster (TRANSP 564/USMCA 4 lucia), S03/S04 dedup+types, S02 fact-dual canonical profile, VEND-LINK-01 bill/allocation vendor uuid EntityLink; manifest /vendors + /vendors/:id; VendorDetail vendor-factor-schedule-relocated + emptyFactoringProfileMeta. Steps 2252 + 2356.",
+      "evidence": "2026-08-04 Cursor: meta guard verify-vend-verify-01 composes S01 roster (TRANSP 564/USMCA 4 lucia), S03/S04 dedup+types, S02 fact-dual canonical profile, VEND-LINK-01 bill/allocation vendor uuid EntityLink; manifest /vendors + /vendors/:id; VendorDetail vendor-factor-schedule-relocated + emptyFactoringProfileMeta. Steps 2252 + 2356. Module checklist 7/7 PASS but complete=false while open wave CLS-ORPHAN-SURFACE still lists vendors (verify-no-false-green-certify / verify-module-completion) — premature complete:true from #4280 reverted.",
       "pr": null
     }
   ],
   "pass_count": 7,
   "total_count": 7,
-  "progress": "7 of 7"
+  "progress": "7 of 7 (complete=false — CLS-ORPHAN-SURFACE open)"
 }
