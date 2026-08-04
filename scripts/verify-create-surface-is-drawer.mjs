@@ -301,17 +301,18 @@ export function contractErrors(src) {
     if (!/justify-end/.test(modal)) {
       errors.push(`PRIMITIVE-RIGHT: ${MODAL_FILE} drawer variant is not right-anchored (no \`justify-end\` overlay).`);
     }
-    // VERIFY-1: nested create = drawer-on-drawer. ParityDrawer (the money side-panel) sits at z-40,
-    // so a create drawer opened FROM one must portal to document.body and out-stack it at z-50 —
-    // otherwise the nested create renders *behind* the money panel it was launched from.
+    // VERIFY-1: nested create = drawer-on-drawer. ParityDrawer (money / inline create) sits at
+    // z-[60] above page wizards (z-50). This Modal overlay must stay at z-[70] so a create drawer
+    // opened FROM a ParityDrawer (or from Book Load) stacks ABOVE that parent — otherwise Save
+    // clicks hit the parent backdrop and the create never POSTs (VERIFY-1 / Book Load live 2026-08-04).
     if (!/createPortal\(/.test(modal)) {
       errors.push(
         `NESTED-STACKING: ${MODAL_FILE} must render through \`createPortal\` into document.body, or a create drawer opened from a money panel is trapped inside that panel's stacking context.`
       );
     }
-    if (!/z-50/.test(modal)) {
+    if (!/z-\[70\]/.test(modal)) {
       errors.push(
-        `NESTED-STACKING: ${MODAL_FILE} overlay must stay at \`z-50\` — components/parity/ParityDrawer.tsx is z-40, and a nested create drawer has to stack ABOVE the money drawer that opened it (VERIFY-1).`
+        `NESTED-STACKING: ${MODAL_FILE} overlay must stay at \`z-[70]\` — components/parity/ParityDrawer.tsx is z-[60], and a nested create drawer has to stack ABOVE the money/wizard shell that opened it (VERIFY-1).`
       );
     }
     // a11y + unsaved guard must be shared, never gated on the variant.
@@ -413,7 +414,7 @@ function selftest() {
     "  useEscapeKey(attemptClose, open);",
     '  useEffect(() => { const onKeyDown = (event) => { if (event.key !== "Tab") return; }; }, [open]);',
     '  const isDrawer = variant === "drawer";',
-    "  const overlay = isDrawer ? `fixed inset-0 z-50 flex justify-end bg-black/50` : `fixed inset-0 z-50 flex items-center justify-center`;",
+    "  const overlay = isDrawer ? `fixed inset-0 z-[70] flex justify-end bg-black/50` : `fixed inset-0 z-[70] flex items-center justify-center`;",
     "  const panel = isDrawer ? `h-full ${PARITY_CREATE_DRAWER_WIDTH}` : `max-w-[42rem]`;",
     "  return createPortal(<><div className={overlay}>{children}</div><ConfirmDiscardDialog /></>, document.body);",
     "}",
@@ -596,8 +597,8 @@ function selftest() {
     ],
     [
       "the overlay is demoted below the ParityDrawer money panel",
-      { ...good, modal: goodModal.replace(/z-50/g, "z-30") },
-      /NESTED-STACKING: .*z-50/,
+      { ...good, modal: goodModal.replace(/z-\[70\]/g, "z-30") },
+      /NESTED-STACKING: .*z-\[70\]/,
     ],
     ["the shared shell file disappears", { ...good, modal: MISSING }, /PRIMITIVE: missing file/],
     ["the sizing token file disappears", { ...good, sizing: MISSING }, /PRIMITIVE-480: missing file/],

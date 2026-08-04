@@ -453,6 +453,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
       className="grid grid-cols-1 gap-3 md:grid-cols-2"
       onSubmit={(event) => {
         event.preventDefault();
+        // INLINE-CREATE-NESTED-FORM: React bubbles across portal into Book Load's outer <form>.
+        event.stopPropagation();
       }}
     >
           <div className="col-span-full">
