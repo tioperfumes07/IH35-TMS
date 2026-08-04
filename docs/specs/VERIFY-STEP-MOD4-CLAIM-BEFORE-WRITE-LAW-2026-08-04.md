@@ -1,7 +1,7 @@
 # Verify-step collision law — mod-4 + claim-before-write (2026-08-04)
 
 **Status:** LOCKED · owner-authorized · credit **CC-2 analysis**  
-**Rules:** `.cursor/rules/25-verify-step-odd-even-bands.mdc`, `.cursor/rules/26-fix-failures-no-ci-babysit.mdc`  
+**Rules:** `.cursor/rules/25-verify-step-odd-even-bands.mdc`, `.cursor/rules/35-fix-failures-no-ci-babysit.mdc`  
 **Guards:** `scripts/verify-verify-step-lane-band.mjs` · `scripts/verify-verify-step-claimed-on-main.mjs` (step **2400**)
 
 ## Problem class
