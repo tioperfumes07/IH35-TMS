@@ -321,6 +321,85 @@ async function collectAssignedDriverIdsForDrugGate(
   return Array.from(ids);
 }
 
+/**
+ * WIRE-02 / ACCT-F63 — resolve the driver's base pay for a load.
+ *
+ * Returns cents when a driver pay rate is configured, or `null` when none exists.
+ *
+ * Today it always returns `null`, and that is the honest answer rather than a stub: verified on the
+ * prod branch, the schema has NOWHERE to store a driver money rate. `mdata.drivers.pay_basis` is the
+ * `miles_basis` enum (short_miles / practical_miles) — it says how to MEASURE miles, not what a mile
+ * is worth — and `driver_finance.driver_pay_rates` / `driver_pay_basis` do not exist (to_regclass
+ * NULL for both). The previous implementation filled that hole with the customer rate, which is the
+ * defect this replaces.
+ *
+ * When the owner decides the pay structure (rate-per-mile and/or flat-per-load, per driver or per
+ * contract), this is the single seam that resolves it — the callers, the extras, the team split and
+ * the INSERTs all stay exactly as they are. Deliberately NOT given a default: a default here is an
+ * invented wage.
+ */
+/** Set by resolveDriverBasePayCents so the created bill can label a §7 placeholder rate. */
+let lastResolvedRateWasTestData = false;
+
+async function resolveDriverBasePayCents(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  operatingCompanyId: string,
+  driverId: string | null | undefined,
+  load: Record<string, unknown>
+): Promise<number | null> {
+  if (!driverId) return null;
+
+  const rateRes = await client.query<{
+    basis_type: string;
+    rate_per_mile_cents: string | null;
+    flat_per_load_cents: string | null;
+    miles_basis: string;
+    is_test_data: boolean;
+  }>(
+    `
+      SELECT basis_type, rate_per_mile_cents::text, flat_per_load_cents::text, miles_basis,
+             is_test_data
+        FROM driver_finance.driver_pay_rates
+       WHERE operating_company_id = $1::uuid
+         AND driver_id = $2::uuid
+         AND is_active
+         AND effective_to IS NULL
+       ORDER BY effective_from DESC
+       LIMIT 1
+    `,
+    [operatingCompanyId, driverId]
+  );
+  const rate = rateRes.rows[0];
+  if (!rate) return null;
+  if (rate.is_test_data) {
+    // §7 placeholder rates exist so the skeleton can be exercised before real per-driver rates are
+    // entered. Pricing from one is allowed, but it must never pass silently as operational truth —
+    // the bill says so in its own notes below.
+    lastResolvedRateWasTestData = true;
+  } else {
+    lastResolvedRateWasTestData = false;
+  }
+
+  if (rate.basis_type === "per_load_pay") {
+    const flat = Number(rate.flat_per_load_cents ?? 0);
+    return Number.isFinite(flat) && flat > 0 ? Math.round(flat) : null;
+  }
+
+  // per_mile_pay — SHORTEST miles by default, because the approved Load Wizard prototype states
+  // shortest miles are what a driver is paid on; practical miles drive fuel and ETA, not pay.
+  const miles =
+    rate.miles_basis === "practical_miles"
+      ? Number(load.miles_practical ?? Number.NaN)
+      : Number(load.miles_shortest ?? Number.NaN);
+  // Fail closed rather than assume zero: a load whose mileage has not been captured yet cannot be
+  // priced, and a 0-mile bill would look like a settled $0 rather than an unpriced load.
+  if (!Number.isFinite(miles) || miles <= 0) return null;
+
+  const perMile = Number(rate.rate_per_mile_cents ?? 0);
+  if (!Number.isFinite(perMile) || perMile <= 0) return null;
+  return Math.round(perMile * miles);
+}
+
 export async function createDriverBillArtifacts(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   input: BookLoadInput,
@@ -339,7 +418,55 @@ export async function createDriverBillArtifacts(
     if (!stop.lumper_required) return sum;
     return stop.lumper_paid_by === "carrier" ? sum + Number(stop.lumper_amount_cents ?? 0) : sum;
   }, 0);
-  const basePayCents = bookLoadRateTotalCents(input.charges);
+  // WIRE-02 / ACCT-F63 — driver base pay must NOT come from the customer rate.
+  //
+  // This line used to read `bookLoadRateTotalCents(input.charges)` — the IDENTICAL call that
+  // populates mdata.loads.rate_total_cents, i.e. the GROSS CUSTOMER RATE. The driver was therefore
+  // billed 100% of the customer's linehaul plus every accessorial, guaranteeing a non-positive
+  // gross margin on every load and a materially overstated payable feeding settlements. Proven on
+  // prod: all three existing driver_bills have gross_amount_cents EXACTLY equal to their load's
+  // rate_total_cents ($1.00/$1.00, $4,900/$4,900, $5,800/$5,800 — difference 0 in every case).
+  //
+  // It also violates the LOCKED driver model: drivers are hired Mexican-B1 1099 contractors paid a
+  // wage/fee, NEVER a percentage of the customer linehaul (linehaul is company revenue). 100% is
+  // not even a percentage — it is the whole thing.
+  //
+  // There is no configured rate to substitute: mdata.drivers.pay_basis is the MILES-measurement
+  // enum (short_miles / practical_miles), not a money rate, and driver_finance.driver_pay_rates /
+  // driver_pay_basis do not exist (verified on prod). Inventing a rate here would be fabricating
+  // financial data, so this refuses to mint a payable it cannot source. Dispatch still books the
+  // load; the missing bill is recorded durably below so it is countable, not silent.
+  const primaryDriverForPay = input.assigned_primary_driver_id ?? null;
+  const basePayCents = await resolveDriverBasePayCents(
+    client,
+    input.operating_company_id,
+    primaryDriverForPay,
+    load
+  );
+  if (basePayCents === null) {
+    await appendCrudAudit(
+      client,
+      input.requestingUserUuid,
+      "driver_finance.driver_bill.skipped_no_pay_rate",
+      {
+        load_id: String(load.id),
+        load_number: String(load.load_number ?? loadNumber),
+        operating_company_id: input.operating_company_id,
+        reason:
+          "no active driver_finance.driver_pay_rates row for this driver/entity, or the load has no " +
+          "miles captured yet for a per-mile basis. Refusing to derive driver pay from the customer " +
+          "rate (locked driver model: wage/fee, never a % of linehaul).",
+        driver_id: primaryDriverForPay,
+        miles_shortest: load.miles_shortest ?? null,
+        extra_stop_bonus_cents: extraStopBonusCents,
+        tarp_pay_cents: tarpPayCents,
+        driver_lumper_cents: driverLumperCents,
+      },
+      "warning",
+      "WIRE-02"
+    );
+    return;
+  }
   const totalBillCents = basePayCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
 
   const resolvedLoadNumber = String(load.load_number ?? loadNumber);
@@ -502,7 +629,7 @@ export async function createDriverBillArtifacts(
       milesBasis,
       milesBasisType,
       ratePerMileCents,
-      `Auto-created from load ${resolvedLoadNumber}`,
+      `Auto-created from load ${resolvedLoadNumber}${lastResolvedRateWasTestData ? " — priced from a TEST pay rate (§7 placeholder), not an owner-entered rate" : ""}`,
       input.requestingUserUuid,
     ]
   );
