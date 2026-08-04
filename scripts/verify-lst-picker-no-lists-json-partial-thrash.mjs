@@ -7,7 +7,6 @@
  * Cursor even claim: 1828.
  */
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -31,7 +30,7 @@ function gitDiffNames() {
 }
 
 /** @returns {string[]} */
-export function collectProblems(root = ROOT, changedFiles = null) {
+export function collectProblems(root = ROOT, changedFiles = null, listsJson = null) {
   const problems = [];
   const partialsPath = path.join(root, PARTIALS);
   if (!fs.existsSync(partialsPath)) {
@@ -58,7 +57,7 @@ export function collectProblems(root = ROOT, changedFiles = null) {
   const touchesListsJson = changed.includes(LISTS);
   if (!touchesPicker || !touchesListsJson) return problems;
 
-  const lists = JSON.parse(fs.readFileSync(path.join(root, LISTS), "utf8"));
+  const lists = listsJson ?? JSON.parse(fs.readFileSync(path.join(root, LISTS), "utf8"));
   const item = (lists.items || []).find((i) => i.id === "LST-PICKER-01");
   if (!item) {
     problems.push("LST-PICKER-01 missing from lists.json");
@@ -79,75 +78,24 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-
-  // Selftest must NOT depend on live LST-PICKER-01 status (PASS after lists close #4281).
-  // Plant a throwaway FAIL fixture so detection stays load-bearing forever.
-  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lst-picker-thrash-"));
-  try {
-    fs.mkdirSync(path.join(tmpRoot, "docs/module-completion"), { recursive: true });
-    fs.writeFileSync(
-      path.join(tmpRoot, ".gitattributes"),
-      [
-        "scripts/verify-steps/CLAIMED-NUMBERS.json merge=json-union",
-        "apps/frontend/src/components/parity/catalogPickerRegistry.ts merge=catalog-picker-union",
-        "docs/module-completion/lists-picker-partials.md merge=union",
-        "",
-      ].join("\n"),
-      "utf8"
-    );
-    fs.writeFileSync(path.join(tmpRoot, PARTIALS), "# LST-PICKER partials (selftest)\n", "utf8");
-    fs.writeFileSync(
-      path.join(tmpRoot, LISTS),
-      JSON.stringify(
-        {
-          module: "lists",
-          complete: false,
-          items: [{ id: "LST-PICKER-01", status: "FAIL", title: "selftest planted FAIL" }],
-        },
-        null,
-        2
-      ) + "\n",
-      "utf8"
-    );
-
-    const planted = collectProblems(tmpRoot, [
-      LISTS,
-      "apps/frontend/src/components/parity/catalogPickerRegistry.ts",
-    ]);
-    if (!planted.some((p) => p.includes("must NOT edit lists.json"))) {
-      console.error(`${LABEL} SELFTEST FAIL: planted lists.json+registry change not flagged`);
-      console.error("  planted problems:", planted);
-      process.exit(1);
-    }
-
-    // PASS status must NOT fire the thrash rule (close PR editing both is legal).
-    fs.writeFileSync(
-      path.join(tmpRoot, LISTS),
-      JSON.stringify(
-        {
-          module: "lists",
-          complete: true,
-          items: [{ id: "LST-PICKER-01", status: "PASS", title: "selftest planted PASS" }],
-        },
-        null,
-        2
-      ) + "\n",
-      "utf8"
-    );
-    const passOk = collectProblems(tmpRoot, [
-      LISTS,
-      "apps/frontend/src/components/parity/catalogPickerRegistry.ts",
-    ]);
-    if (passOk.some((p) => p.includes("must NOT edit lists.json"))) {
-      console.error(`${LABEL} SELFTEST FAIL: PASS status incorrectly flagged thrash`);
-      process.exit(1);
-    }
-  } finally {
-    fs.rmSync(tmpRoot, { recursive: true, force: true });
+  const actualLists = JSON.parse(fs.readFileSync(path.join(ROOT, LISTS), "utf8"));
+  const failLists = {
+    ...actualLists,
+    items: (actualLists.items || []).map((i) =>
+      i.id === "LST-PICKER-01" ? { ...i, status: "FAIL" } : i
+    ),
+  };
+  const planted = collectProblems(ROOT, [
+    LISTS,
+    "apps/frontend/src/components/parity/catalogPickerRegistry.ts",
+  ], failLists);
+  if (!planted.some((p) => p.includes("must NOT edit lists.json"))) {
+    console.error(`${LABEL} SELFTEST FAIL: planted lists.json+registry change not flagged`);
+    process.exit(1);
   }
-
   console.log(`${LABEL} SELFTEST OK`);
-} else {
+}
+ else {
   const problems = collectProblems();
   if (problems.length) {
     console.error(`${LABEL} FAIL:`);

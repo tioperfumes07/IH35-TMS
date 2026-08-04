@@ -67,25 +67,14 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Metric | Value | As of |
 |---|---|---|
 | Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-04 |
-<<<<<<< HEAD
-| Modules with a confirmed live defect (non-superseded FAIL) | **14 / 30** | 2026-08-04 |
-| Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-04 |
-| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **65 / 150** · TRK **9 / 150** · USMCA **63 / 150** | 2026-08-04 |
-| Rows in this file | **680** | 2026-08-04 |
-| Rows `FAIL` + `OPEN` | **15** | 2026-08-04 |
-| Rows `Owner-gate? = YES` (blocked on a decision) | **11** | 2026-08-04 |
-| Rows `VERIFIED` by GUARD | **0** | 2026-08-04 |
-| Verdict tally (all rows) | FAIL=67 · PASS=193 · N/A=217 · UNVERIFIED=11 · SUPERSEDED=7 · OTHER=185 | 2026-08-04 |
-=======
-| Modules with a confirmed live defect (non-superseded FAIL) | **15 / 30** | 2026-08-04 |
+| Modules with a confirmed live defect (non-superseded FAIL) | **18 / 30** | 2026-08-04 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-04 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **63 / 150** · TRK **9 / 150** · USMCA **62 / 150** | 2026-08-04 |
-| Rows in this file | **692** | 2026-08-04 |
-| Rows `FAIL` + `OPEN` | **25** | 2026-08-04 |
-| Rows `Owner-gate? = YES` (blocked on a decision) | **10** | 2026-08-04 |
+| Rows in this file | **700** | 2026-08-04 |
+| Rows `FAIL` + `OPEN` | **28** | 2026-08-04 |
+| Rows `Owner-gate? = YES` (blocked on a decision) | **11** | 2026-08-04 |
 | Rows `VERIFIED` by GUARD | **0** | 2026-08-04 |
-| Verdict tally (all rows) | FAIL=74 · PASS=197 · N/A=218 · UNVERIFIED=11 · SUPERSEDED=7 · OTHER=185 | 2026-08-04 |
->>>>>>> be57d978b (FINDING: AUDIT-COVERAGE-LIVE 2026-08-04 ledger append — CC-2 V7 pass + LV-001/002/003/004 + load-linkage ruling + CLS-ORPHAN-SURFACE + full DISP-WIRE verdicts)
+| Verdict tally (all rows) | FAIL=80 · PASS=198 · N/A=219 · UNVERIFIED=11 · SUPERSEDED=7 · OTHER=185 | 2026-08-04 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
