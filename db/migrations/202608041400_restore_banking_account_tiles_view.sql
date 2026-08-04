@@ -18,6 +18,7 @@ BEGIN;
 DO $$
 DECLARE
   hidden_filter text := '';
+  voided_filter text := '';
   factoring_union text := '';
   escrow_union text := '';
   advance_union text := '';
@@ -35,6 +36,17 @@ BEGIN
       AND column_name = 'hidden_at'
   ) THEN
     hidden_filter := ' AND a.hidden_at IS NULL';
+  END IF;
+
+  -- voided_at arrives in 202609010050 (F9-01); this migration runs earlier on fresh CI db:reset.
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'banking'
+      AND table_name = 'bank_transactions'
+      AND column_name = 'voided_at'
+  ) THEN
+    voided_filter := ' AND bt.voided_at IS NULL';
   END IF;
 
   IF to_regclass('views.factoring_balance_invoice_linkage') IS NOT NULL THEN
@@ -149,14 +161,14 @@ BEGIN
         WHERE bt.bank_account_id = a.id
           AND bt.operating_company_id = a.operating_company_id
           AND bt.status IN ('uncategorized', 'pending_categorization')
-          AND bt.voided_at IS NULL
+          %s
       ) AS uncategorized_count,
       (
         SELECT MAX(bt.transaction_date)
         FROM banking.bank_transactions bt
         WHERE bt.bank_account_id = a.id
           AND bt.operating_company_id = a.operating_company_id
-          AND bt.voided_at IS NULL
+          %s
       ) AS last_txn_date
     FROM banking.bank_accounts a
     LEFT JOIN catalogs.accounts ca
@@ -169,7 +181,7 @@ BEGIN
     %s
     %s
     ORDER BY display_order, account_type, display_name
-  $VIEW$, hidden_filter, factoring_union, escrow_union, advance_union);
+  $VIEW$, hidden_filter, voided_filter, voided_filter, factoring_union, escrow_union, advance_union);
 END
 $$;
 
