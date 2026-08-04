@@ -1799,6 +1799,19 @@
       "table_name",
       "tenant_id"
     ],
+    "audit.scenario_status": [
+      "evidence",
+      "id",
+      "is_current",
+      "is_test_data",
+      "operating_company_id",
+      "scenario_key",
+      "stage",
+      "state",
+      "superseded_by",
+      "verified_at",
+      "verified_by"
+    ],
     "bank.reconciliation_matches": [
       "bank_transaction_id",
       "created_at",
