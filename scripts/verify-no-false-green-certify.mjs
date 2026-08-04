@@ -60,10 +60,6 @@ export function assertNoFalseGreen(queuePath, mcDir) {
   return errs;
 }
 
-const isMain =
-  process.argv[1] &&
-  fileURLToPath(import.meta.url) === join(process.argv[1]);
-
 if (isMain && SELFTEST) {
   const dir = mkdtempSync(join(tmpdir(), "ih35-false-green-"));
   try {
