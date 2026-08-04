@@ -181,7 +181,15 @@ BEGIN
     %s
     %s
     ORDER BY display_order, account_type, display_name
-  $VIEW$, hidden_filter, voided_filter, voided_filter, factoring_union, escrow_union, advance_union);
+  $VIEW$, voided_filter, voided_filter, hidden_filter, factoring_union, escrow_union, advance_union);
+  -- DEPLOY-F01 argument order: format() fills %s IN ORDER OF APPEARANCE. The first two placeholders sit
+  -- inside correlated sub-selects over banking.bank_transactions bt (uncategorized_count, last_txn_date)
+  -- and therefore need voided_filter, which references bt. The THIRD sits in the OUTER query's WHERE,
+  -- where bt is NOT in scope, and must receive hidden_filter (which references a). The original order
+  -- (hidden, voided, voided) pushed "AND bt.voided_at IS NULL" into that outer WHERE, so the view body
+  -- failed to parse with: missing FROM-clause entry for table "bt".
+  -- db:migrate is the FIRST link of Render's preDeploy chain, so this aborted every production deploy —
+  -- prod sat 33 commits behind at de40811 while each new deploy died here.
 END
 $$;
 
