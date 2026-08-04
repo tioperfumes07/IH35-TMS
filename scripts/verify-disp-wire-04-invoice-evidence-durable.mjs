@@ -52,7 +52,9 @@ function check(rawSrc) {
 
   // Atomicity: the call must pass the same `client` the send uses, not open its own connection.
   if (hasCall) {
-    const call = code.slice(callIdx, callIdx + 400);
+    // Window widened: the LV-012 payload (reason codes, null-safe load_id) made this call longer than
+    // the original 400-char slice, which silently pushed the severity argument out of view.
+    const call = code.slice(callIdx, callIdx + 1200);
     if (!/appendCrudAudit\(\s*client\b/.test(call)) {
       errors.push(
         "appendCrudAudit is not called with the send's own `client` — a separate connection would " +
@@ -62,6 +64,30 @@ function check(rawSrc) {
     if (!/"warning"/.test(call)) {
       errors.push('the durable row is not severity "warning" — an unevidenced billable send is not info.');
     }
+  }
+
+  // LV-012: the gate must NOT be nested inside a source_load_id check. An invoice with no load has
+  // zero delivery evidence by definition — 11,981 of 11,982 prod invoices are in exactly that state,
+  // so nesting made the control blind to all but one of them.
+  if (/if\s*\(\s*current\.source_load_id\s*\)\s*\{/.test(code)) {
+    errors.push(
+      "the evidence gate is nested inside `if (current.source_load_id)` — an invoice with NO load " +
+        "skips the check entirely, which is the weakest-evidence case, not an exemption (LV-012)"
+    );
+  }
+  if (!/no_source_load/.test(code)) {
+    errors.push("the no-load case has no distinct reason code — the two exposure shapes cannot be split");
+  }
+
+  // LV-013: a send that transmits nothing must be recorded, not silent.
+  if (!/sent_without_transmission/.test(code)) {
+    errors.push(
+      "an invoice stamped 'sent' with no deliverable email records nothing — the ledger would assert " +
+        "a customer was billed when nothing was produced (LV-013)"
+    );
+  }
+  if (/void\s+enqueueEmail\s*\(/.test(code)) {
+    errors.push("enqueueEmail is fire-and-forget (`void`) — a transmission failure would be swallowed");
   }
 
   // The gate itself must still be present and must still reuse the revenue latch's evidence rule.
@@ -91,6 +117,10 @@ function selftest() {
     ["event_class renamed", (s) => s.split(EVENT_CLASS).join("accounting.invoice.something_else")],
     ["import dropped", (s) => s.replace(/import \{ appendCrudAudit \}.*\n/, "")],
     ["evidence rule forked", (s) => s.split("finalActiveDeliveryDepartureAt").join("someLocalCopy")],
+    ["gate re-nested under source_load_id", (s) => s.replace("if (evidenceReason) {", "if (current.source_load_id) {")],
+    ["no-load reason removed", (s) => s.split("no_source_load").join("something_else")],
+    ["transmission silence restored", (s) => s.split("sent_without_transmission").join("nothing_recorded")],
+    ["enqueue back to fire-and-forget", (s) => s.replace("await enqueueEmail({", "void enqueueEmail({")],
     ["flag constant removed", (s) => s.split("INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE").join("X_GONE")],
   ];
 
