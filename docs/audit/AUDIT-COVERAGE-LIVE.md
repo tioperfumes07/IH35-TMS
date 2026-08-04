@@ -70,11 +70,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **22 / 30** | 2026-08-04 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-04 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **64 / 150** · TRK **9 / 150** · USMCA **62 / 150** | 2026-08-04 |
-| Rows in this file | **759** | 2026-08-04 |
-| Rows `FAIL` + `OPEN` | **42** | 2026-08-04 |
+| Rows in this file | **761** | 2026-08-04 |
+| Rows `FAIL` + `OPEN` | **43** | 2026-08-04 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **11** | 2026-08-04 |
 | Rows `VERIFIED` by GUARD | **0** | 2026-08-04 |
-| Verdict tally (all rows) | FAIL=94 · PASS=226 · N/A=219 · UNVERIFIED=28 · SUPERSEDED=7 · OTHER=185 | 2026-08-04 |
+| Verdict tally (all rows) | FAIL=95 · PASS=227 · N/A=219 · UNVERIFIED=28 · SUPERSEDED=7 · OTHER=185 | 2026-08-04 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -845,4 +845,6 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 757 | fuel · structural guard batch for GL/posting/surface wiring | C | ALL | PASS | Proactive structural guard run. All exit 0 on current tree: `verify-fuel-history-import-wired.mjs` (history tab fetches real fuel transactions, import button opens real flow); `verify-fuel-home-dashboard-wired.mjs` (Fuel Home dashboard KPIs wired); `verify-fuel-kpi-money-format.mjs` (MTD Spend/Avg $/gal/MTD Savings share a single formatter using `toLocaleString`/`Intl.NumberFormat` grouping); `verify-fuel-match-tenant-scope.mjs` (tenant scope present); `verify-fuel-posting-uses-resolver.mjs` (posting uses resolver); `verify-fuel-gl-poster-callers.mjs` (production callers + `EXPENSE_GL_POSTING_ENABLED` gate present); `verify-fuel-gl-no-double-post.mjs` (leaf-beats-parent, undo-reverses, repost-capable interlocks wired). Adds evidence to fuel module coverage row (735). | — | — | NO | 2026-08-04 | CASCADE |
 | 758 | drivers · driver scheduler crons and balance/PWA routes registered | C | ALL | PASS | Proactive structural guard run. `verify-driver-scheduler-crons-registered.mjs` exit 0 — 3 crons registered, default-OFF gated, driver balance route + PWA wrapper present. Adds evidence to drivers module coverage row (738). | — | — | NO | 2026-08-04 | CASCADE |
 | 759 | settlements · settlement approval service wired to canonical driver_finance store | C | ALL | PASS | Proactive structural guard run. `verify-settlement-approval-canonical.mjs` exit 0 — `approval.service.ts` is wired to the canonical `driver_finance.*` store. Adds evidence to settlements module coverage row (737). | — | — | NO | 2026-08-04 | CASCADE |
+| 760 | dispatch · structural guard batch for auth/catalog/board/triage wiring | C | ALL | PASS | Proactive structural guard run. All exit 0 on current tree: `verify-dispatch-auth-gates-wired.mjs` (dispatch auth gates wired); `verify-dispatch-catalog-list-uses-paritytable.mjs` (catalog list uses ParityTable + ListErrorState, columns preserved); `verify-dispatch-board-sections-and-columns.mjs` (board sections and columns wired); `verify-dispatch-coming-soon-triage.mjs` (coming-soon triage wired). Adds evidence to dispatch module coverage row (739). | — | — | NO | 2026-08-04 | CASCADE |
+| 761 | dispatch · live ETA columns missing from DispatchList and load routes | C | ALL | FAIL | Proactive structural guard run. `verify-dispatch-eta-columns.mjs` exit 1. Missing in `apps/frontend/src/components/dispatch/DispatchList.tsx`: `DriverStatusColumn`, `SamsaraEtaColumn`, `OnTimePredictionColumn`, `LiveEtaFreshnessColumn` imports/usage and their headers ("Driver Status", "Samsara ETA", "On-time", "Freshness"). Forbidden per-row `InTransitEtaChip` present. Missing `include_live_eta` filter in `apps/frontend/src/api/loads.ts` and board query in `apps/frontend/src/pages/Dispatch.tsx`. Missing `include_live_eta` query param and `enrichLoadsLiveEta` enrichment in `apps/backend/src/mdata/loads.routes.ts`. Also missing npm script and CI workflow step. Adds a concrete defect to dispatch module coverage row (739). | OPEN | — | NO | 2026-08-04 | CASCADE |
 
