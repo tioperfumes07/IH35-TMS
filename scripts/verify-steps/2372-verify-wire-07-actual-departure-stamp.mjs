@@ -1,4 +1,4 @@
-// CLS-DISP-WIRE-07 — office/bulk/mdata delivery must stamp actual_departure_at (step 2360).
+// CLS-DISP-WIRE-07 — office/bulk/mdata delivery must stamp actual_departure_at (step 2372).
 export default {
   name: "verify:wire-07-actual-departure-stamp",
   async run(ctx) {
