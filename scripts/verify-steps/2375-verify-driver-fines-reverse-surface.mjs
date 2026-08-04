@@ -1,5 +1,5 @@
 // CLS-REVERSE-LINKAGE-MISSING / SAF-F16 — driver fines reverse surface, both fines tables
-// (verify-step 2361 · Claude ODD band).
+// (verify-step 2375 — renumbered off a duplicate 2361 · Claude ODD band).
 export default {
   name: "driver-fines-reverse-surface",
   run(ctx) {
