@@ -10,21 +10,25 @@
 | `docs/module-completion/<module>.json` | Machine source of truth — CI reads this |
 | `docs/module-completion/<module>.md` | Human scoreboard regenerated / maintained beside JSON |
 | `scripts/verify-module-completion.mjs` | Fail closed if COMPLETE while open items remain; validate schema; print `N of M` |
-| verify-step **1431** | CI teeth — same guard on every PR |
+| `scripts/verify-module-manifest-integrity.mjs` | Fail closed if `progress` ≠ scored `pass_count`/`total_count`, or `complete:true` while N < M / non-PASS items |
+| verify-step **1431** | CI teeth — Rule 24 completion guard |
+| verify-step **2362** | CI teeth — manifest arithmetic integrity (mutation-tested) |
 | Rule **24** | alwaysApply — module DONE ≠ PR volume |
 
 ## Item status
 
 | Status | Counts toward N? | Meaning |
 |---|---|---|
-| `PASS` | **yes** | Live proof + repo proof; hostile reviewer can confirm |
+| `PASS` | **yes** | Code/CI acceptance met; **not** the same as live-proven |
 | `HOLD` | **yes** only if `owner_hold: true` + `tracker` + `future_block` | Jorge deferred in writing |
 | `OPEN` | no | Not built / not proven |
 | `FAIL` | no | Proven broken |
 | `UNVERIFIED` | no | Claimed but no live proof |
 
 **N of M** = count(`PASS` + qualifying `HOLD`) / count(all items).  
-**COMPLETE** = N === M and `complete: true` in JSON (guard sets/validates).
+**`progress` / `pass_count` / `total_count`** MUST equal that scored N/M — never a stale or suffix string.  
+**COMPLETE** = N === M and `complete: true` in JSON (guard sets/validates).  
+**CERTIFIED (scoreboard)** = every item `prod_verified: true`. `complete:true` alone renders as **code-verified**, never certified.
 
 ## Required fields per item
 
@@ -37,11 +41,14 @@
   "status": "OPEN",
   "evidence": "Neon lucia: COUNT(*) FROM accounting.bill_payments = 0 (2026-07-24)",
   "pr": null,
+  "prod_verified": false,
   "owner_hold": false,
   "tracker": null,
   "future_block": null
 }
 ```
+
+`prod_verified` defaults **false**. Only GUARD may set `true` after a live prod click + Neon evidence. Agents must not flip it.
 
 ## Every work reply / PR
 

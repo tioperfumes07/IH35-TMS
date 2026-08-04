@@ -1,8 +1,8 @@
 {
   "module": "inventory",
   "title": "Inventory (Parts & Stock)",
-  "complete": true,
-  "as_of": "2026-08-04",
+  "complete": false,
+  "as_of": "2026-08-03",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/inventory-deep-2026-08-01.md",
   "spec_sources": [
@@ -21,8 +21,9 @@
       ],
       "spec": "inventory-deep-2026-08-01 roster",
       "status": "PASS",
-      "evidence": "2026-08-03 Neon lucia br-fancy-credit-akjnd07a: maintenance.parts_inventory TRANSP \u2248144 (non-void active rows). InventoryPartsStockPage \u2192 listMaintenanceParts \u2192 GET /api/v1/maintenance/parts \u2192 FROM maintenance.parts_inventory (not catalogs.parts=0). Guard verify-inv-s01-parts-roster-density step 2256. Auditor 144-row UI match confirmed.",
-      "pr": null
+      "evidence": "2026-08-03 Neon lucia br-fancy-credit-akjnd07a: maintenance.parts_inventory TRANSP ≈144 (non-void active rows). InventoryPartsStockPage → listMaintenanceParts → GET /api/v1/maintenance/parts → FROM maintenance.parts_inventory (not catalogs.parts=0). Guard verify-inv-s01-parts-roster-density step 2256. Auditor 144-row UI match confirmed.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "INV-CAT-01",
@@ -31,10 +32,11 @@
         "DOD-B",
         "VERIFY-6"
       ],
-      "spec": "CLS-CATALOG-EMPTY field-level \u00b7 144/144 blank category",
+      "spec": "CLS-CATALOG-EMPTY field-level · 144/144 blank category",
       "status": "PASS",
-      "evidence": "2026-08-03 PASS \u2014 legacy null/blank category renders N/A in Parts & Stock table; PartCreateDrawer requires PART_INVENTORY_CATEGORIES; backend create rejects blank category; guard verify-inv-cat-01-category-honesty.mjs (step 2260). Does not invent categories for existing 144 rows.",
-      "pr": "#4223"
+      "evidence": "2026-08-03 PASS — legacy null/blank category renders N/A in Parts & Stock table; PartCreateDrawer requires PART_INVENTORY_CATEGORIES; backend create rejects blank category; guard verify-inv-cat-01-category-honesty.mjs (step 2260). Does not invent categories for existing 144 rows.",
+      "pr": "#4223",
+      "prod_verified": false
     },
     {
       "id": "INV-S02",
@@ -45,8 +47,9 @@
       ],
       "spec": "sidebar flyout Assignments",
       "status": "PASS",
-      "evidence": "2026-08-03 PASS \u2014 /inventory/assignments \u2192 listPartsAssignments \u2192 GET parts-invoice-links filtered by operating_company_id; ParityTable honest empty when no WO part links. Guard verify-inv-s02-s03-pick-01 step 2264.",
-      "pr": null
+      "evidence": "2026-08-03 PASS — /inventory/assignments → listPartsAssignments → GET parts-invoice-links filtered by operating_company_id; ParityTable honest empty when no WO part links. Guard verify-inv-s02-s03-pick-01 step 2264.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "INV-S03",
@@ -57,8 +60,9 @@
       ],
       "spec": "sidebar flyout Purchase History",
       "status": "PASS",
-      "evidence": "2026-08-03 PASS \u2014 /inventory/purchases tab wired with honest empty (data-testid inventory-purchases-honest-empty); cites HOLD-INVENTORY-PURCHASE-HISTORY-SOR (no stock twin as history). Guard step 2264.",
-      "pr": null
+      "evidence": "2026-08-03 PASS — /inventory/purchases tab wired with honest empty (data-testid inventory-purchases-honest-empty); cites HOLD-INVENTORY-PURCHASE-HISTORY-SOR (no stock twin as history). Guard step 2264.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "INV-PICK-01",
@@ -69,19 +73,20 @@
       ],
       "spec": "08-BLOCK picker source correction",
       "status": "PASS",
-      "evidence": "2026-08-03 PASS \u2014 Parts & Stock + create path read maintenance.parts_inventory / PART_INVENTORY_CATEGORIES; no catalogs.parts SoR. Guard verify-inv-s02-s03-pick-01 + parts-canonical-source tests.",
-      "pr": null
+      "evidence": "2026-08-03 PASS — Parts & Stock + create path read maintenance.parts_inventory / PART_INVENTORY_CATEGORIES; no catalogs.parts SoR. Guard verify-inv-s02-s03-pick-01 + parts-canonical-source tests.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "INV-LINK-01",
-      "title": "Part \u2192 vendor linkage on create/edit (0441-mod13-inventory-part-to-vendor)",
+      "title": "Part → vendor linkage on create/edit (0441-mod13-inventory-part-to-vendor)",
       "layers": [
         "DOD-C",
         "VERIFY-4"
       ],
       "spec": "Architectural inventory purchases chain",
       "status": "PASS",
-      "evidence": "2026-08-04 PASS \u2014 PartCreateDrawer + PartEditDrawer wire ReferenceSelect createKind=vendor posting vendor_id; parts.routes persists vendor_id on maintenance.parts_inventory INSERT/PATCH/SELECT; InventoryPartsStockPage renders EntityLink kind=vendor. Guard verify-inv-link-01-part-vendor.mjs step 2354 --selftest exit 0.",
+      "evidence": "2026-08-04 PASS — PartCreateDrawer + PartEditDrawer wire ReferenceSelect createKind=vendor posting vendor_id; parts.routes persists vendor_id on maintenance.parts_inventory INSERT/PATCH/SELECT; InventoryPartsStockPage renders EntityLink kind=vendor. Guard verify-inv-link-01-part-vendor.mjs step 2354 --selftest exit 0. | scaffold — mod13 finding: part-to-vendor none",
       "pr": null
     },
     {
@@ -99,11 +104,11 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "2026-08-04 PASS \u2014 meta verify-inv-verify-01 (step 2268) composes S01 roster, CAT-01 category honesty, S02/S03/PICK locks, INV-LINK-01 part\u2192vendor + three /inventory routes. Inventory module 7/7 complete.",
+      "evidence": "2026-08-04 PASS — meta verify-inv-verify-01 (step 2268) composes S01 roster, CAT-01 category honesty, S02/S03/PICK locks, INV-LINK-01 part→vendor + three /inventory routes. Inventory module 7/7 complete. | 2026-08-03 PASS — meta verify-inv-verify-01 (step 2268) composes S01 roster, CAT-01 category honesty, S02/S03/PICK locks + three /inventory routes. INV-LINK-01 (part→vendor) remains OPEN.",
       "pr": null
     }
   ],
-  "pass_count": 7,
+  "pass_count": 6,
   "total_count": 7,
-  "progress": "7 of 7"
+  "progress": "6 of 7"
 }

@@ -6,6 +6,7 @@ import {
   MODULE_COMPLETION,
   FIRST_14_MODULE_IDS,
   type ModuleCompletionItem,
+  type ModuleCompletionProof,
 } from "../../generated/module-completion";
 import { SIDEBAR_ITEM_IDS } from "../../components/layout/sidebar-config";
 
@@ -19,6 +20,10 @@ import { SIDEBAR_ITEM_IDS } from "../../components/layout/sidebar-config";
 //
 // Additive: a new route under the existing Program module. No sidebar item is added, so the locked
 // sidebar count is untouched.
+//
+// Proof law (2026-08-04): complete:true / all-PASS is CODE-VERIFIED only. CERTIFIED (navy solid)
+// requires every item prod_verified:true after a live GUARD click. Never paint complete:true as
+// certified — that was the false-green scoreboard defect.
 
 type ModuleRow = {
   id: string;
@@ -26,6 +31,9 @@ type ModuleRow = {
   done: number;
   total: number;
   defined: boolean;
+  complete: boolean;
+  prodVerifiedCount: number;
+  proof: ModuleCompletionProof | "undefined";
   items: ModuleCompletionItem[];
 };
 
@@ -35,6 +43,11 @@ const MODULE_LABELS: Record<string, string> = {
   eld: "ELD",
   form_425: "Form 425",
 };
+
+/** §7 navy — never blue. */
+const NAVY = "#1f2a44";
+const SLATE = "#64748b";
+const AMBER = "#92400e";
 
 function labelFor(id: string): string {
   if (MODULE_LABELS[id]) return MODULE_LABELS[id];
@@ -53,12 +66,60 @@ function buildRows(ids: readonly string[]): ModuleRow[] {
       done: m?.done ?? 0,
       total: m?.total ?? 0,
       defined: Boolean(m),
+      complete: m?.complete === true,
+      prodVerifiedCount: m?.prod_verified_count ?? 0,
+      proof: m ? m.proof : "undefined",
       items: m?.items ?? [],
     };
   });
 }
 
-function ProgressBar({ done, total, defined }: { done: number; total: number; defined: boolean }) {
+function ProofBadge({ proof }: { proof: ModuleRow["proof"] }) {
+  if (proof === "undefined") {
+    return <span className="text-xs italic text-[#64748b]">not yet defined</span>;
+  }
+  if (proof === "certified") {
+    return (
+      <span
+        className="inline-block rounded-sm px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white"
+        style={{ backgroundColor: NAVY }}
+        title="Every acceptance item is prod_verified after a live GUARD click"
+      >
+        Certified
+      </span>
+    );
+  }
+  if (proof === "code_verified") {
+    return (
+      <span
+        className="inline-block rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+        style={{ borderColor: AMBER, color: AMBER, backgroundColor: "#fffbeb" }}
+        title="Checklist PASS by code/CI — not yet live-proven on prod (prod_verified still false)"
+      >
+        Code-verified
+      </span>
+    );
+  }
+  return (
+    <span className="text-xs font-semibold tabular-nums" style={{ color: SLATE }}>
+      In progress
+    </span>
+  );
+}
+
+function ProgressBar({
+  done,
+  total,
+  defined,
+  proof,
+  prodVerifiedCount,
+}: {
+  done: number;
+  total: number;
+  defined: boolean;
+  proof: ModuleRow["proof"];
+  prodVerifiedCount: number;
+}) {
   if (!defined) {
     // An undefined module is NOT drawn as an empty bar. An empty bar reads as "0% built", which is a
     // different and false claim: these modules have working screens, they just have no agreed list of
@@ -66,13 +127,22 @@ function ProgressBar({ done, total, defined }: { done: number; total: number; de
     return <span className="text-xs italic text-[#64748b]">not yet defined</span>;
   }
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+  // Certified = solid navy fill. Code-verified = slate fill (never the same as certified navy solid).
+  // In-progress = navy partial (acceptance progress), with prod line called out separately.
+  const fill =
+    proof === "certified" ? NAVY : proof === "code_verified" ? SLATE : NAVY;
   return (
-    <div className="flex items-center gap-2">
-      <div className="h-2 w-32 overflow-hidden rounded-sm bg-gray-200">
-        <div className="h-full bg-[#1f2a44]" style={{ width: `${pct}%` }} />
+    <div className="flex flex-col gap-0.5">
+      <div className="flex items-center gap-2">
+        <div className="h-2 w-32 overflow-hidden rounded-sm bg-gray-200">
+          <div className="h-full" style={{ width: `${pct}%`, backgroundColor: fill }} />
+        </div>
+        <span className="tabular-nums text-xs text-[#334155]">
+          {done} of {total}
+        </span>
       </div>
-      <span className="tabular-nums text-xs text-[#334155]">
-        {done} of {total}
+      <span className="tabular-nums text-[10px] text-[#64748b]">
+        live-proven {prodVerifiedCount} of {total}
       </span>
     </div>
   );
@@ -89,10 +159,16 @@ export function ModuleCompletionPage() {
 
   const defined = rows.filter((r) => r.defined);
   const totals = defined.reduce(
-    (acc, r) => ({ done: acc.done + r.done, total: acc.total + r.total }),
-    { done: 0, total: 0 }
+    (acc, r) => ({
+      done: acc.done + r.done,
+      total: acc.total + r.total,
+      prod: acc.prod + r.prodVerifiedCount,
+    }),
+    { done: 0, total: 0, prod: 0 }
   );
   const undefinedCount = rows.length - defined.length;
+  const certifiedCount = defined.filter((r) => r.proof === "certified").length;
+  const codeVerifiedCount = defined.filter((r) => r.proof === "code_verified").length;
 
   const columns = useMemo<Array<ParityColumn<ModuleRow>>>(
     () => [
@@ -103,9 +179,23 @@ export function ModuleCompletionPage() {
         render: (row) => <span className="font-medium text-[#1f2a44]">{row.label}</span>,
       },
       {
+        key: "proof",
+        label: "Proof",
+        sortable: true,
+        render: (row) => <ProofBadge proof={row.proof} />,
+      },
+      {
         key: "progress",
-        label: "Acceptance items passing",
-        render: (row) => <ProgressBar done={row.done} total={row.total} defined={row.defined} />,
+        label: "Acceptance items",
+        render: (row) => (
+          <ProgressBar
+            done={row.done}
+            total={row.total}
+            defined={row.defined}
+            proof={row.proof}
+            prodVerifiedCount={row.prodVerifiedCount}
+          />
+        ),
       },
       {
         key: "open",
@@ -117,13 +207,13 @@ export function ModuleCompletionPage() {
         key: "detail",
         label: "",
         render: (row) =>
-          row.defined && row.total > row.done ? (
+          row.defined ? (
             <button
               type="button"
               className="text-xs text-[#1f2a44] underline"
               onClick={() => setExpanded((cur) => (cur === row.id ? null : row.id))}
             >
-              {expanded === row.id ? "Hide open items" : "Show open items"}
+              {expanded === row.id ? "Hide items" : "Show items"}
             </button>
           ) : null,
       },
@@ -132,7 +222,7 @@ export function ModuleCompletionPage() {
   );
 
   const expandedRow = rows.find((r) => r.id === expanded);
-  const openItems = (expandedRow?.items ?? []).filter((i) => i.status !== "PASS");
+  const detailItems = expandedRow?.items ?? [];
 
   return (
     <div className="space-y-3">
@@ -166,6 +256,17 @@ export function ModuleCompletionPage() {
         </span>{" "}
         acceptance items passing across {defined.length} module
         {defined.length === 1 ? "" : "s"} with a defined scope.
+        {" "}
+        <span className="font-semibold text-[#1f2a44]">{totals.prod} of {totals.total}</span>{" "}
+        live-proven (<code className="text-[10px]">prod_verified</code>).
+        {" "}
+        <span className="font-semibold" style={{ color: NAVY }}>
+          {certifiedCount} certified
+        </span>
+        {" · "}
+        <span className="font-semibold" style={{ color: AMBER }}>
+          {codeVerifiedCount} code-verified only
+        </span>
         {undefinedCount > 0 ? (
           <>
             {" "}
@@ -186,23 +287,46 @@ export function ModuleCompletionPage() {
         exportFilename="module-completion"
       />
 
-      {expandedRow && openItems.length > 0 ? (
+      {expandedRow && detailItems.length > 0 ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 text-xs font-semibold text-[#1f2a44]">
-            {expandedRow.label} — {openItems.length} open item
-            {openItems.length === 1 ? "" : "s"}
+            {expandedRow.label} — {detailItems.length} item
+            {detailItems.length === 1 ? "" : "s"}
           </div>
           <ul className="space-y-1">
-            {openItems.map((item) => (
-              <li key={item.id} className="flex gap-2 text-xs text-[#334155]">
+            {detailItems.map((item) => (
+              <li key={item.id} className="flex flex-wrap gap-2 text-xs text-[#334155]">
                 <span className="w-28 shrink-0 font-mono text-[#64748b]">{item.id}</span>
                 <span
                   className={`w-24 shrink-0 font-semibold ${
-                    item.status === "FAIL" ? "text-[#dc2626]" : "text-[#64748b]"
+                    item.status === "FAIL"
+                      ? "text-[#dc2626]"
+                      : item.status === "PASS"
+                        ? "text-[#1f2a44]"
+                        : "text-[#64748b]"
                   }`}
                 >
                   {item.status}
                 </span>
+                {item.status === "PASS" || item.status === "HOLD" ? (
+                  item.prod_verified ? (
+                    <span
+                      className="w-28 shrink-0 text-[10px] font-bold uppercase"
+                      style={{ color: NAVY }}
+                    >
+                      prod-verified
+                    </span>
+                  ) : (
+                    <span
+                      className="w-28 shrink-0 text-[10px] font-bold uppercase"
+                      style={{ color: AMBER }}
+                    >
+                      code only
+                    </span>
+                  )
+                ) : (
+                  <span className="w-28 shrink-0 text-[10px] text-[#64748b]">—</span>
+                )}
                 <span>{item.title}</span>
               </li>
             ))}

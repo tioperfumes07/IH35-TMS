@@ -14,74 +14,111 @@
     {
       "id": "RPT-S01",
       "title": "/reports catalog hub lists 15+ reports across categories honestly",
-      "layers": ["DOD-A", "DOD-B"],
+      "layers": [
+        "DOD-A",
+        "DOD-B"
+      ],
       "spec": "ReportsHome · reports-docs-maintenance breadth pass",
       "status": "OPEN",
       "evidence": "scaffold — auditor Layer A PASS: 15 available across 8 categories",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "RPT-S02",
       "title": "Trial Balance / P&L / Balance Sheet run output ties Neon (Layer B)",
-      "layers": ["DOD-D", "VERIFY-6"],
+      "layers": [
+        "DOD-D",
+        "VERIFY-6"
+      ],
       "spec": "Financial report runner · VERIFY-6 economics",
       "status": "OPEN",
       "evidence": "scaffold — individual reports UNVERIFIED (not run to Neon tie-out)",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "RPT-S03",
       "title": "Settlement Summary report entity-scoped",
-      "layers": ["DOD-C", "VERIFY-6"],
+      "layers": [
+        "DOD-C",
+        "VERIFY-6"
+      ],
       "spec": "SettlementSummaryPage · VSETTLE",
       "status": "OPEN",
       "evidence": "scaffold — not proven",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "RPT-S04",
       "title": "Fuel Reconciliation report ties fuel.fuel_transactions",
-      "layers": ["DOD-D", "VERIFY-6"],
+      "layers": [
+        "DOD-D",
+        "VERIFY-6"
+      ],
       "spec": "FuelReconciliationPage · VFUEL",
       "status": "OPEN",
       "evidence": "scaffold — not proven",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "RPT-S05",
       "title": "IFTA preparer Q3 due banner honest",
-      "layers": ["DOD-B"],
+      "layers": [
+        "DOD-B"
+      ],
       "spec": "IFTAPreparer · reports execution pass",
       "status": "OPEN",
       "evidence": "scaffold — auditor noted IFTA Q3 due in 91d",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "RPT-S06",
       "title": "Scheduled reports count honest when zero",
-      "layers": ["DOD-B", "VERIFY-6"],
+      "layers": [
+        "DOD-B",
+        "VERIFY-6"
+      ],
       "spec": "SubscriptionManager · 0243-e1-3 two engines",
       "status": "OPEN",
       "evidence": "scaffold — auditor: Scheduled=0, Run-last-7-days=0",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "RPT-S07",
       "title": "Audit reports section (activity, financial change log, deduction trail)",
-      "layers": ["DOD-A", "DOD-C"],
+      "layers": [
+        "DOD-A",
+        "DOD-C"
+      ],
       "spec": "A8-AUDIT-REPORTS-SECTION · audit/* report routes",
       "status": "OPEN",
       "evidence": "scaffold — routes exist; output UNVERIFIED",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "RPT-VERIFY-01",
       "title": "Reports module VERIFY-1..8 TRANSP + USMCA",
-      "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
+      "layers": [
+        "VERIFY-1",
+        "VERIFY-2",
+        "VERIFY-3",
+        "VERIFY-4",
+        "VERIFY-5",
+        "VERIFY-6",
+        "VERIFY-7",
+        "VERIFY-8"
+      ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "OPEN",
       "evidence": "scaffold — catalog PASS; per-report Layer B UNVERIFIED",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     }
   ],
   "pass_count": 0,
