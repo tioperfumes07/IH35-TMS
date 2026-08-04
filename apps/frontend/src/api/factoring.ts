@@ -15,7 +15,10 @@ function query(params: Record<string, string | undefined>) {
 
 export type FactoringSummary = {
   operating_company_id: string;
+  /** mdata.vendors id — KPI / linkage identity */
   active_factor_id: string | null;
+  /** factoring.factor id — profile panel canonical row (FACT-kpi-vs-profile) */
+  active_factor_profile_id?: string | null;
   active_factor_name: string;
   recourse_days: number;
   reserve_balance: number;
