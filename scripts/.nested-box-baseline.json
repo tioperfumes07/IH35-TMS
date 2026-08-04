@@ -88,7 +88,7 @@
   "apps/frontend/src/pages/lists/components/RecentActivityCard.tsx": 1,
   "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx": 1,
   "apps/frontend/src/pages/maintenance/MaintenanceSettingsPage.tsx": 4,
-  "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx": 7,
+  "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx": 2,
   "apps/frontend/src/pages/maintenance/components/ArrivingSoonFilterBar.tsx": 1,
   "apps/frontend/src/pages/maintenance/components/ConvertIssueToWOModal.tsx": 1,
   "apps/frontend/src/pages/maintenance/components/CreateBillModal.tsx": 1,

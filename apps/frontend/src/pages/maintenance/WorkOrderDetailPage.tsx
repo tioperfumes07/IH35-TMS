@@ -681,21 +681,28 @@ export function WorkOrderDetailPage() {
         </div>
 
         <div className="space-y-3">
-          <div className="rounded-sm border border-gray-200 bg-white p-4">
-            <div className="mb-2 text-sm font-semibold text-gray-900">Posting Preview</div>
-            {previewQ.isLoading ? <div className="text-xs text-gray-500">Loading posting preview...</div> : null}
+          <section
+            className="overflow-hidden rounded-sm border border-slate-200 bg-white"
+            data-testid="wo-detail-posting-preview-section"
+          >
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-900">
+              Posting Preview
+            </div>
+            {previewQ.isLoading ? (
+              <div className="px-4 py-2 text-xs text-slate-500">Loading posting preview...</div>
+            ) : null}
             {previewQ.isError ? (
-              <div className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+              <div className="border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-800">
                 Posting preview unavailable in this backend build. MAINT-11 contract fallback is active.
               </div>
             ) : null}
             {!previewQ.isLoading && !previewQ.isError && previewQ.data == null ? (
-              <div className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+              <div className="border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-800">
                 Posting preview endpoint not deployed yet for this environment.
               </div>
             ) : null}
             {previewQ.data ? (
-              <div className="space-y-2 text-xs text-gray-700">
+              <div className="space-y-2 border-t border-slate-200 px-4 py-3 text-xs text-slate-700">
                 <FlatFieldGrid
                   columns={3}
                   fields={[
@@ -716,7 +723,7 @@ export function WorkOrderDetailPage() {
                 />
               </div>
             ) : null}
-          </div>
+          </section>
 
           <UploadZone
             operatingCompanyId={companyId}
