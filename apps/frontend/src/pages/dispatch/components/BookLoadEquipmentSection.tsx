@@ -1,11 +1,9 @@
 import type { JSX } from "react";
-import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
-import { listDriverTeams, listUnits } from "../../../api/mdata";
+import { listDriverTeams } from "../../../api/mdata";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
-import { Combobox } from "../../../components/Combobox";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { OptimalDriversPanel } from "../../../components/dispatch/OptimalDriversPanel";
 import { DriverHosClocksBlock } from "../../../components/dispatch/hos/DriverHosClocks";
@@ -25,28 +23,6 @@ type Props = {
   deadheadDropCity?: string;
   deadheadDropState?: string;
 };
-
-type Option = { id: string; label: string };
-
-function getTextValue(source: Record<string, unknown>, keys: string[]) {
-  for (const key of keys) {
-    const value = source[key];
-    if (typeof value === "string" && value.trim()) return value.trim();
-  }
-  return "";
-}
-
-function toUnitOption(row: unknown, index: number): Option {
-  if (!row || typeof row !== "object") return { id: `unit-${index}`, label: `Unit ${index + 1}` };
-  const rec = row as Record<string, unknown>;
-  const id = typeof rec.id === "string" ? rec.id : `unit-${index}`;
-  const unitNumber = getTextValue(rec, ["unit_number", "truck_number", "number"]);
-  const trailerNumber = getTextValue(rec, ["trailer_number", "trailer_unit", "trailer"]);
-  const make = getTextValue(rec, ["make", "manufacturer"]);
-  const model = getTextValue(rec, ["model"]);
-  const title = [unitNumber || trailerNumber, [make, model].filter(Boolean).join(" ")].filter(Boolean).join(" · ");
-  return { id, label: title || `Unit ${index + 1}` };
-}
 
 export function BookLoadEquipmentSection({ register, watch, setValue, operatingCompanyId, optimizerLoadId, deadheadAfterAt, deadheadDropCity, deadheadDropState }: Props) {
   const assignmentMode = watch ? watch("assignment_mode") : "solo";
@@ -69,33 +45,11 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
     optimizerLoadId ||
     reservationUuid ||
     "00000000-0000-4000-8000-000000000000";
-  // SAF-B29 / picker law: truck uses EntityPicker kind=unit (server search). Trailer has no
-  // EntityPicker kind yet (unit roster deliberately excludes trailers) — Combobox + search over
-  // include:trailers filtered to kind=trailer. Never a silent 500-row SelectCombobox.
-  const [trailerSearch, setTrailerSearch] = useState("");
-  const trailersQuery = useQuery({
-    queryKey: ["book-load-trailers", operatingCompanyId, trailerSearch],
-    queryFn: () =>
-      listUnits({
-        operating_company_id: operatingCompanyId,
-        include: "trailers",
-        limit: 200,
-        search: trailerSearch || undefined,
-      }),
-    enabled: Boolean(operatingCompanyId),
-  });
   const teamsQuery = useQuery({
     queryKey: ["book-load-driver-teams", operatingCompanyId],
     queryFn: () => listDriverTeams(String(operatingCompanyId)),
     enabled: Boolean(operatingCompanyId),
   });
-  const trailerOptions = useMemo(() => {
-    const fleet = trailersQuery.data?.units ?? [];
-    return fleet
-      .filter((row) => (row as { kind?: string }).kind === "trailer")
-      .map((row, index) => toUnitOption(row, index))
-      .map((u) => ({ value: u.id, label: u.label }));
-  }, [trailersQuery.data?.units]);
   // C9: all six equipment requirement chips persist on mdata.loads (requires_tarps historically;
   // the other five via HOLD migration 202609170000).
   const toggles = [
@@ -143,15 +97,13 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
         <Field
           label="Trailer unit"
           input={
-            <Combobox
-              options={trailerOptions}
+            <EntityPicker
+              kind="trailer"
+              operatingCompanyId={operatingCompanyId ?? ""}
               value={watch ? String(watch("assigned_trailer_unit_id") ?? "") || null : null}
               onChange={(next) => setValue?.("assigned_trailer_unit_id", next ?? "", { shouldDirty: true })}
-              onSearch={setTrailerSearch}
-              placeholder={trailersQuery.isLoading ? "Loading trailers…" : "Select trailer unit"}
-              loading={trailersQuery.isLoading}
-              allowClear
               className="h-7 w-full text-xs"
+              placeholder={operatingCompanyId ? "Select trailer unit" : "Select company first"}
               dataField="assigned_trailer_unit_id"
               disabled={!operatingCompanyId}
             />

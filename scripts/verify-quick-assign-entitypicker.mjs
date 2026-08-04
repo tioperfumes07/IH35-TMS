@@ -29,8 +29,8 @@ export function collectProblems(root = ROOT) {
   if (!/EntityPicker[\s\S]*?kind=["']unit["']/.test(code)) {
     problems.push(`${FILE}: unit must use EntityPicker kind=unit`);
   }
-  if (!/trailerSearch/.test(code) || !/onSearch=\{setTrailerSearch\}/.test(code)) {
-    problems.push(`${FILE}: trailer must wire trailerSearch + onSearch`);
+  if (!/EntityPicker[\s\S]*?kind=["']trailer["']/.test(code)) {
+    problems.push(`${FILE}: trailer must use EntityPicker kind=trailer`);
   }
   if (/SelectCombobox/.test(code)) {
     problems.push(`${FILE}: must not use SelectCombobox for unit/trailer`);
