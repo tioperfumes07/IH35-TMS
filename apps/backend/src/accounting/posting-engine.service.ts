@@ -39,29 +39,38 @@ export const POSTING_SOURCE_TYPES = [
 ] as const;
 
 export type PostingSourceType = (typeof POSTING_SOURCE_TYPES)[number];
-export type PostingPurpose = "initial_post" | "reversal";
+export type PostingPurpose = "initial_post" | "reversal" | "repost";
 
 /**
- * BANK-F03 — does the canonical poster support RE-POSTING a source transaction after its original
- * posting was reversed?
+ * BANK-F04 — the canonical poster CAN now re-post a source transaction whose previous posting was
+ * reversed. This is the capability BANK-F03 declared missing.
  *
- * TODAY IT DOES NOT, and that is a hard capability limit, not an oversight to be worked around. The
- * batch idempotency key is
+ * WHY IT COULD NOT BEFORE. The batch idempotency key is
  *     ih35:posting-mvp:v1:<opco>:<type>:<source_id>:<line_id>:<posting_purpose>
- * and PostingPurpose has exactly two members. So for any source transaction there can be exactly ONE
- * `initial_post` batch, ever. Calling the poster again after a reversal returns the EXISTING batch and
- * reports success — it does not create a corrected entry.
+ * and PostingPurpose had two members, so exactly ONE `initial_post` batch could ever exist per source
+ * transaction. Calling the poster after a reversal returned the EXISTING batch and reported success.
+ * Proven on a prod fork: 20 reversed bank categorizations, fuel down exactly $4,593.94, target
+ * accounts ZERO lines, `posted: true` carrying the ORIGINAL journal-entry id. The expense did not move
+ * to the right account — it vanished.
  *
- * PROVEN, not assumed (prod fork br-falling-dew-aksttr2j, 2026-08-03): 20 bank categorizations were
- * reversed and re-posted; the poster returned `posted: true` with the ORIGINAL journal-entry id for
- * every one, fuel expense fell by exactly $4,593.94, and the target accounts received ZERO lines. The
- * expense did not move — it vanished.
+ * HOW IT WORKS NOW. A corrected posting uses purpose `repost` and carries an explicit
+ * `repost_revision` (1 for the first correction, 2 for a correction of that correction, ...). The
+ * revision is appended to the idempotency key, so each successive correction gets a DISTINCT key and
+ * posts a NEW balanced batch, while a genuine double-submit of the SAME correction repeats the SAME
+ * revision, hits the SAME key, and still dedups exactly as before.
  *
- * Consumers that reverse a posting MUST consult this flag and REFUSE the operation while it is false,
- * rather than reversing and hoping the re-post lands. Flipping it to true is only legitimate together
- * with a real repost capability (a third purpose or a revision counter in the key above).
+ * WHY THE REVISION IS EXPLICIT RATHER THAN INFERRED. The obvious design is to derive it from how many
+ * batches are already reversed. That is silently wrong here: the reversal path this actually serves
+ * (reverseJournalEntryNoFlip) does NOT touch accounting.posting_batches at all — only postVoidReversal
+ * marks batch_status='reversed' (line ~2211). An inferred revision would therefore compute 0 on the
+ * live path and collide with the original key, reproducing the very defect this closes. Explicit beats
+ * inferred when the inference is silently wrong.
+ *
+ * ADDITIVE BY CONSTRUCTION: the revision segment is appended ONLY for `repost`, so `initial_post` and
+ * `reversal` keys are byte-identical to every key already stored in accounting.posting_batches. No
+ * existing caller, and no already-posted batch, changes behaviour.
  */
-export const POSTING_ENGINE_SUPPORTS_REPOST = false;
+export const POSTING_ENGINE_SUPPORTS_REPOST = true;
 type BatchStatus = "queued" | "in_progress" | "posted" | "reversed" | "failed";
 
 type DbClient = {
@@ -90,6 +99,12 @@ type PostSourceInput = {
   source_transaction_id: string;
   source_transaction_line_id?: string | null;
   posting_purpose?: PostingPurpose;
+  /**
+   * Required when posting_purpose === "repost": which correction this is (1-based). Appended to the
+   * idempotency key so successive corrections are distinct while a double-submit of the same
+   * correction still dedups. Ignored for initial_post / reversal.
+   */
+  repost_revision?: number;
   // Optional credit (cash/bank) account for cash_advance postings. When omitted, the
   // company-default cash-like account is used (same fallback as bill_payment). B5's approve
   // path passes the operator-chosen source account here. Ignored by other source types.
@@ -356,7 +371,10 @@ export function buildPostingMvpIdempotencyKey(input: {
   source_transaction_id: string;
   source_transaction_line_id: string | null;
   posting_purpose: PostingPurpose;
+  repost_revision?: number | null;
 }) {
+  // ADDITIVE: appended ONLY for `repost`, so initial_post/reversal keys are byte-identical to before.
+  const revisionSuffix = input.posting_purpose === "repost" ? [String(input.repost_revision ?? 1)] : [];
   return [
     "ih35:posting-mvp:v1",
     input.operating_company_id.toLowerCase(),
@@ -364,6 +382,7 @@ export function buildPostingMvpIdempotencyKey(input: {
     input.source_transaction_id,
     input.source_transaction_line_id ?? "-",
     input.posting_purpose,
+    ...revisionSuffix,
   ].join(":");
 }
 
@@ -1905,6 +1924,8 @@ function buildPostingExecCtx(input: PostSourceInput, actor: Actor): PostingExecC
     source_transaction_id: sourceId,
     source_transaction_line_id: idempotencyLinePart,
     posting_purpose: postingPurpose,
+    // Only consumed for `repost`; ignored otherwise, so existing keys are unchanged.
+    repost_revision: input.repost_revision ?? null,
   });
   return { input, actor, sourceType, sourceId, postingPurpose, idempotencyKey };
 }
