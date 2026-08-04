@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f *)",
+      "Bash(git push * --delete*)",
+      "Bash(git push * :*)",
+      "Bash(git branch -D *)",
+      "Bash(dropdb*)",
+      "Bash(psql*DROP *)",
+      "Bash(psql*TRUNCATE *)"
+    ]
+  }
+}

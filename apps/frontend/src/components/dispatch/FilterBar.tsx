@@ -48,16 +48,23 @@ const ALL_LOAD_STATUSES: LoadStatus[] = [
   "draft",
   "booked",
   "planned",
+  "unassigned",
   "assigned",
+  "assigned_not_dispatched",
   "dispatched",
   "at_pickup",
   "in_transit",
   "at_delivery",
   "delivered",
+  "delivered_pending_docs",
+  "completed_docs_received",
   "invoiced",
   "paid",
   "closed",
   "cancelled",
+  "abandoned",
+  "driver_walkoff",
+  "driver_no_show",
 ];
 
 export function FilterBar({

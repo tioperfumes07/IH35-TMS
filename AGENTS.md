@@ -11,6 +11,11 @@
 > Any older text below referencing `JORGE-APPROVED`, "Devin merges on green" as an exclusive role, "owner
 > applies on Neon," or "STOP for owner approval" is **SUPERSEDED** by this line.
 
+> **★★ SESSION BOOT:** [docs/specs/STANDING-SESSION-DIRECTIVE.md](docs/specs/STANDING-SESSION-DIRECTIVE.md) (§0–§7 · **§6 SEARCH BEFORE YOU ASK** · **§7 TEST WITH PLACEHOLDER NUMBERS**) +
+> [docs/specs/OWNER-QUALITY-COMPACT.md](docs/specs/OWNER-QUALITY-COMPACT.md) (**ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED** · Desktop `Claude.docx` permanized as `OWNER-QUALITY-COMPACT-Claude.docx`) +
+> [docs/specs/DELIVERY-METHOD-LOCKED.md](docs/specs/DELIVERY-METHOD-LOCKED.md) — load every session.
+> Presence ratchet: `verify-standing-directive-present` (step **2374**) · `verify-owner-quality-compact-present` (step **2380**) · `verify-cursor-pr-title-prefix` (step **2377** — every Cursor PR title **MUST** begin with `Cursor-`).
+
 > **★★★ FULL SYSTEM AUDIT LAW (owner 2026-08-03 v3 — MANDATORY):** [docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md](docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md) — **"Complete" is NOT five layers.** Complete = **DoD A–E + VERIFY 1–8** PROD-VERIFIED per entity (live V2 picker+creator · V3 wiring · V4 deep linkage F+R). Cascade Always-On: `.windsurf/rules/ih35-deep-linkage-audit.md`. Cursor: Rule **31** (`.cursor/rules/31-full-system-audit-mandatory.mdc`). Ledger: [AUDIT-COVERAGE-LIVE.md](docs/audit/AUDIT-COVERAGE-LIVE.md) · run-log: [AUDIT-RUN-LOG.md](docs/audit/AUDIT-RUN-LOG.md). A code trace / count / CI-green is NOT proof. A guess is a defect.
 
 > **★★★ BEFORE ANY BLOCK — READ [docs/audit/AUDIT-COVERAGE-LIVE.md](docs/audit/AUDIT-COVERAGE-LIVE.md).**
@@ -52,7 +57,7 @@
 
 ## Verify-step claims (TOOL-F03 — 2026-07-31)
 
-Do **not** edit `scripts/verify-steps/CLAIMED-NUMBERS.json` in feature PRs. The `NNNN-*.mjs` filename is the claim (Cursor EVEN / Claude ODD). GitHub cannot run `merge=json-union` on that file — editing it is the conflict treadmill. Enforced by verify-step **1599** (uniqueness only) + **1906** (`verify-no-claimed-numbers-edits`).
+Verify-step law (2026-08-04): **mod-4** Cursor EVEN · CC-1 ≡1 · CC-2 ≡3 + **claim-before-write** — reserve on `chore/claim-reserve*` / `CLAIMED-REGEN` **before** authoring `NNNN-*.mjs` (Rule 25 bands file + step **2400**). Feature PRs must **not** edit `CLAIMED-NUMBERS.json` except allowlisted claim PRs. Do not renumber after collisions. Law: `docs/specs/VERIFY-STEP-MOD4-CLAIM-BEFORE-WRITE-LAW-2026-08-04.md`. Enforced by **1803** (lane-band) + **2400** (claimed-on-main) + **1906** (no feature CLAIMED edits).
 
 ## Dual lanes (always parallel when queue has work)
 
@@ -66,6 +71,8 @@ Do **not** edit `scripts/verify-steps/CLAIMED-NUMBERS.json` in feature PRs. The 
 Cursor rule: `.cursor/rules/dual-lane-never-idle.mdc` (`alwaysApply: true`)
 
 **Continuous mode (Rule 32):** `.cursor/rules/32-continuous-mode-no-idle.mdc` (`alwaysApply: true`) — never pause/idle after merge/PR/Neon/CI; always keep writing the next ranked FAIL.
+
+> **★ DELIVERY METHOD (LOCKED 2026-08-04):** [docs/specs/DELIVERY-METHOD-LOCKED.md](docs/specs/DELIVERY-METHOD-LOCKED.md) — vertical money skeleton → certify modules under WIP≤3. Do not invent a fourth method. Do not restart the block pile as primary queue.
 
 Hook: `.cursor/hooks.json` → on **subagentStop**, injects follow-up to dispatch the top **OPEN** item in that
 coder's lane from [docs/audit/GUARD-WORKORDERS.md](docs/audit/GUARD-WORKORDERS.md)

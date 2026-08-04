@@ -125,3 +125,85 @@ membership-scoped session.
   sparse-lines copy in TRANSP), LINK-02 (COI true-empty: `insurance.coi_request` count 0, n_live_tup 0,
   n_tup_ins 0). Universal picker law 7/7 on the Create Customer drawer + Payment terms picker
   ("+ Create payment term" is the FIRST row).
+
+---
+
+## LV-005  Relationship Health FIXED — customers.json still records it as FAIL
+- module:    customers
+- entity:    TRANSP + USMCA
+- surface:   `/customers/:id` "Relationship Health" panel
+- expected:  Manifest reflects prod reality.
+- observed:  **LV-001 is fixed and live-proven on deployed `2c10550`**, but `docs/module-completion/customers.json` still carries LV-001 `status: FAIL` with evidence "500s on every customer… scores never written" — now false. Fix `01d2dfca7` is a confirmed ancestor of the deployed SHA. LIVE: TRANSP EGRO TRANSPORT LLC renders **56.0/100 "Watch"**, Payment subscore **41.4**, beside real AR aging (1–30 $4,200 · 31–60 $4,600 · 90+ $680) — a graded score only possible if the date arithmetic that threw 42883 actually computed. USMCA TIO PERFUMES renders **100.0 "Thriving"**. API 200 ×5 (TRANSP 3, USMCA 2); USMCA ids return 404 while session is TRANSP (isolation). Neon: `master_data.customer_relationship_scores` n_tup_ins **0 → 2,709**, n_live_tup 2,692 — the batch scorer also began succeeding after never inserting once.
+- severity:  major (module under-reported 9 of 10; should be 10 of 10)
+- LANE:      GUARD-REVIEW (manifest status is GUARD's column)
+- neon-check: master_data.customer_relationship_scores n_tup_ins=2709
+- status:    OPEN
+
+## LV-006  Banking TRANSP — live tie-out clean
+- module:    banking
+- entity:    TRANSP
+- surface:   `/banking` Accounts
+- expected:  Header counts tie to `banking.bank_transactions`.
+- observed:  PASS. "Transactions: **6,004**" == Neon TRANSP 6,004. "Uncategorized: 5,837" == 6004−167 categorized (arithmetically consistent). 3 accounts $3,834.49 / $346.11 / $536.78; Amex + Wells Fargo Plaid **Healthy**. Table complete: all_visible 10,999 == n_live_tup 10,999.
+- severity:  minor (informational PASS)
+- LANE:      n/a
+- neon-check: none
+- status:    OPEN
+
+## LV-007  Banking USMCA — live tie-out clean
+- module:    banking
+- entity:    USMCA
+- surface:   `/banking` Accounts
+- expected:  Header counts tie to Neon; balance ties to Home tile.
+- observed:  PASS. "Transactions: **160**" == Neon USMCA 160. Account balance **$93.68** ties the Home cash-position tile ($94). BoA Plaid Healthy, last sync 08:45. Honest note present: DIP/Factoring/Escrow pools read $0 "honest empty until settlements, Faro advances, or escrow postings populate."
+- severity:  minor (informational PASS)
+- LANE:      n/a
+- neon-check: none
+- status:    OPEN
+
+## LV-008  Banking USMCA header mixes counter scopes
+- module:    banking
+- entity:    USMCA
+- surface:   `/banking` QBO Sync status line
+- expected:  Adjacent counters share a scope, or are labelled with their scope.
+- observed:  Header reads `Transactions: 160` (ALL accounts) beside `Uncategorized: 109` (ACTIVE account only). A reader computes 160−109 = 51 categorized; truth is 3. Neon: USMCA has **two** accounts both named "USMCA FREIGHT" — active (112 txns / 109 uncat) and **disconnected** (48 txns / 48 uncat). TRANSP masks the issue because its numbers happen to reconcile (6004−167=5837). NOT a categorization audit — this is counter-scope consistency only.
+- severity:  minor
+- LANE:      CURSOR
+- neon-check: none
+- status:    OPEN
+
+## LV-009  Vendors TRANSP — roster ties out; banner shows the CORRECT provenance pattern
+- module:    vendors
+- entity:    TRANSP
+- surface:   `/vendors`
+- expected:  Roster ties to `mdata.vendors`; provenance labelled honestly.
+- observed:  PASS. UI "1-50 of **564**" == Neon TRANSP active 564 (951 total, deactivated filtered). Table complete: all_visible 2,828 == n_live_tup 2,828. Banner decomposes provenance correctly — "Cloned from QBO: **524** · **40 exceptions**" where 524+40 = 564. **This is the pattern LV-002 was missing on customers**; the correct implementation already existed in the sibling module.
+- severity:  minor (informational PASS + reference implementation)
+- LANE:      n/a
+- neon-check: none
+- status:    OPEN
+
+## LV-010  Production email is a silent no-op — every "sent" is a false green
+- module:    accounting (crosses all notification paths)
+- entity:    TRANSP + USMCA (system-wide)
+- surface:   `email.email_queue` / `apps/backend/src/email/factory.ts`
+- expected:  `status='sent'` means a message was delivered to a provider.
+- observed:  **CONFIRMED (GUARD).** All **232 of 232** rows in `email.email_queue` carry `provider_message_id` matching `console-email-…`, spanning `1779199800031` → `1785865680029` (latest 2026-08-04 17:47Z). **Zero** SES or Postmark ids in the table's entire history. Cause: `factory.ts:7` reads `process.env.EMAIL_PROVIDER ?? "console"` and prod does not set it, so `createConsoleEmailProvider()` is selected — it logs and reports success. Table complete: 232 visible == n_live_tup 232. Effect: every invoice send, alert and notification the system recorded as delivered went to an ephemeral Render log. `status='sent'` on 232 rows is a false green. For a carrier factoring receivables on RECOURSE, "invoice sent" meaning "printed to a log" is a material trust defect.
+- severity:  blocker
+- LANE:      CLAUDE-CODER-1 (money/notification path)
+- neon-check: email.email_queue provider_message_id LIKE 'console-email-%' = 232/232
+- status:    CONFIRMED
+
+## LV-011  Invoice SEND hangs on prod — no status flip, no audit row, no queued email
+- module:    accounting
+- entity:    USMCA (reproduced); TRANSP untested — send path is shared
+- surface:   `POST /api/v1/accounting/invoices/:id/send` · invoice detail "Send" button
+- expected:  Send flips `draft → sent`, stamps `sent_at`, queues email, and (unevidenced) writes the WIRE-04 audit row.
+- observed:  **Send neither succeeds nor fails — it HANGS, and nothing commits.** Reproduced twice on deployed `2c10550`: (1) UI Send button spun **16s+** with status unchanged; (2) a well-formed direct API call **timed out at 45s** and froze the renderer. Authoritative Neon read after both attempts shows ZERO side effects — invoice `53b8ddb3-5597-4975-a893-3d4cde90c6b6` still `status='draft'`, `sent_at` NULL, `sent_without_delivery_evidence` audit rows **0** (baseline 0), `email_queue` **232** (baseline 232). Corroborating: `max(sent_at)` across ALL invoices is **2026-05-19** — ~11 weeks with zero successful sends. **Consequence: invoices cannot be sent from the TMS at all.** This also BLOCKS WIRE-04 — its counter cannot fire because nothing downstream of Send executes; the counter is not defective, the send path is.
+- repro:     draft invoice, no load. `POST …/invoices/<id>/send?operating_company_id=<opco>` with header `Idempotency-Key: <valid UUID>` and body `{}`. NOTE the contract (read from `invoices.routes.ts:728`, not guessed): Idempotency-Key must be a **valid UUID**, and `operating_company_id` is a **query** param, not body — three earlier 400s were malformed calls; **the hang occurs only on the VALID path**.
+- severity:  blocker
+- LANE:      CLAUDE-CODER-1 (money)
+- neon-check: invoice 53b8ddb3-5597-4975-a893-3d4cde90c6b6 remains draft / sent_at NULL
+- status:    OPEN
+
+**TEST ARTIFACT LEFT IN PLACE ON PURPOSE (not litter):** `INV-2026-00003` (`53b8ddb3-5597-4975-a893-3d4cde90c6b6`, USMCA, draft, $1,200, line labeled "TEST DATA — WIRE-04 …") is the live reproduction for LV-011. Delete it together with `GUARD-TEST-customers-name-USMCA` (`0f65bf5e…`) and `GUARD-TEST-customers-name-TRANSP` (`df25eb7a…`) under the fixture carve-out AFTER CC-1 reproduces — destroying it now would remove the evidence.

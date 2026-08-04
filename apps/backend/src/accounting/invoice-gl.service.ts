@@ -27,8 +27,14 @@
 // Flag OFF does NOT block sending: issuing an invoice is a business act; the send still succeeds and
 // the caller receives an explicit unposted status, never a silent success.
 
-import { postSourceTransaction, PostingEngineError } from "./posting-engine.service.js";
-import { withCurrentUser } from "../auth/db.js";
+import {
+  postSourceTransaction,
+  postSourceTransactionInClientTx,
+  PostingEngineError,
+} from "./posting-engine.service.js";
+
+/** The caller's open transaction — posting must never open a second connection (LV-011). */
+type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 import { isEnabled } from "../lib/feature-flags/service.js";
 
 export const INVOICE_AR_GL_POSTING_FLAG_KEY = "INVOICE_AR_GL_POSTING_ENABLED";
@@ -46,13 +52,24 @@ export type InvoiceGlPostOutcome =
  * because the caller is already authenticated and entity-scoped and this flag read needs no membership
  * re-assertion.
  */
-export async function isInvoiceGlPostingEnabled(operatingCompanyId: string, userId: string): Promise<boolean> {
-  return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    return isEnabled(client, INVOICE_AR_GL_POSTING_FLAG_KEY, {
-      operating_company_id: operatingCompanyId,
-      user_uuid: userId,
-    });
+/**
+ * LV-011 — reads the flag ON THE CALLER'S CLIENT.
+ *
+ * This used to open its own connection via withCurrentUser. Every caller is already inside a
+ * transaction that has just UPDATEd the invoice row, so a second connection touching that row waited
+ * on a lock the caller could not release until this call returned — a hang, not a deadlock Postgres
+ * could detect and abort (the outer session sits idle-in-transaction, so there is no cycle in the
+ * lock graph). Same client = same transaction = no second lock holder.
+ */
+export async function isInvoiceGlPostingEnabled(
+  client: DbClient,
+  operatingCompanyId: string,
+  userId: string
+): Promise<boolean> {
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+  return isEnabled(client, INVOICE_AR_GL_POSTING_FLAG_KEY, {
+    operating_company_id: operatingCompanyId,
+    user_uuid: userId,
   });
 }
 
@@ -68,15 +85,21 @@ export async function isInvoiceGlPostingEnabled(operatingCompanyId: string, user
  * sent. It is retriable through the existing manual post endpoint. Any other error propagates.
  */
 export async function postInvoiceGlIfEnabled(
+  client: DbClient,
   operatingCompanyId: string,
   invoiceId: string,
   actor: { userId: string }
 ): Promise<InvoiceGlPostOutcome> {
-  const enabled = await isInvoiceGlPostingEnabled(operatingCompanyId, actor.userId);
+  const enabled = await isInvoiceGlPostingEnabled(client, operatingCompanyId, actor.userId);
   if (!enabled) return { posted: false, reason: "posting_disabled" };
 
   try {
-    const result = await postSourceTransaction(
+    // LV-011: post INSIDE the caller's transaction (postSourceTransactionInClientTx) instead of
+    // postSourceTransaction, which opens its own connection via withCurrentUser and therefore blocked
+    // forever on the invoice row this very transaction had just locked. Same poster, same GL math —
+    // only the connection ownership changes.
+    const result = await postSourceTransactionInClientTx(
+      client,
       {
         operating_company_id: operatingCompanyId,
         source_transaction_type: "invoice",
