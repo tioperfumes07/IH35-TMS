@@ -50,11 +50,30 @@ async function insertEmailAlert(
   );
 }
 
-async function finalizeSuccess(client: pg.PoolClient, id: string, messageId: string) {
+/**
+ * LV-010 — a message that only reached the console is NOT delivered mail.
+ *
+ * EMAIL_PROVIDER defaults to "console" (email/factory.ts), and on prod every one of the 232 queue rows
+ * carried a 'console-email-' message id while reading status='sent'. 'sent' is the word an operator, a
+ * customer dispute, a collections workflow and an auditor all read as "we delivered this" — so an
+ * invoice whose only destination was stdout was indistinguishable from one a customer received.
+ *
+ * The transport now decides the terminal status: a console provider terminates at 'logged_only', and
+ * only a real ESP may write 'sent'. The provider is recorded alongside it so the row states which
+ * transport handled it instead of leaving everyone to infer it from a message-id prefix.
+ */
+async function finalizeSuccess(
+  client: pg.PoolClient,
+  id: string,
+  messageId: string,
+  providerKind: "console" | "ses" | "postmark"
+) {
+  const terminalStatus = providerKind === "console" ? "logged_only" : "sent";
   await client.query(
     `
       UPDATE email.email_queue
-      SET status = 'sent',
+      SET status = $3,
+          provider = $4,
           sent_at = now(),
           provider_message_id = $2,
           error_code = NULL,
@@ -63,7 +82,7 @@ async function finalizeSuccess(client: pg.PoolClient, id: string, messageId: str
           updated_at = now()
       WHERE id = $1::uuid
     `,
-    [id, messageId]
+    [id, messageId, terminalStatus, providerKind]
   );
 }
 
@@ -205,7 +224,7 @@ export async function processEmailQueueTick(logger?: Pick<FastifyBaseLogger, "in
       // back up after 5m and, worst case, re-send once — far better than the tick crashing mid-batch.
       try {
         await withLuciaBypass(async (client) => {
-          await finalizeSuccess(client, id, sent.messageId);
+          await finalizeSuccess(client, id, sent.messageId, provider.kind);
         });
       } catch (persistError) {
         logger?.error?.(
