@@ -67,6 +67,8 @@ Cursor rule: `.cursor/rules/dual-lane-never-idle.mdc` (`alwaysApply: true`)
 
 **Continuous mode (Rule 32):** `.cursor/rules/32-continuous-mode-no-idle.mdc` (`alwaysApply: true`) — never pause/idle after merge/PR/Neon/CI; always keep writing the next ranked FAIL.
 
+> **★ DELIVERY METHOD (LOCKED 2026-08-04):** [docs/specs/DELIVERY-METHOD-LOCKED.md](docs/specs/DELIVERY-METHOD-LOCKED.md) — vertical money skeleton → certify modules under WIP≤3. Do not invent a fourth method. Do not restart the block pile as primary queue.
+
 Hook: `.cursor/hooks.json` → on **subagentStop**, injects follow-up to dispatch the top **OPEN** item in that
 coder's lane from [docs/audit/GUARD-WORKORDERS.md](docs/audit/GUARD-WORKORDERS.md)
 (Claude Coder = financial/migrations/posting; Cursor = frontend/UI/measurability). Fall back to abb only when
