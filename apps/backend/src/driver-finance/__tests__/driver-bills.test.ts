@@ -47,9 +47,24 @@ describe("driver bills schema separation (P6-T11172)", () => {
         if (sql.includes("to_regclass")) {
           return { rows: [{ exists: true }] as T[] };
         }
+        // ACCT-F63: driver pay resolves from the rate card, never from the customer charges.
+        if (sql.includes("driver_finance.driver_pay_rates")) {
+          return {
+            rows: [
+              {
+                basis_type: "per_mile_pay",
+                rate_per_mile_cents: "48",
+                flat_per_load_cents: null,
+                miles_basis: "short_miles",
+              },
+            ] as T[],
+          };
+        }
         if (sql.includes("INSERT INTO driver_finance.driver_bills")) {
           expect(values?.[3]).toBe("B-20260513-0999");
-          expect(values?.[6]).toBe(12500);
+          // 48c/mi x miles_shortest 500 = 24,000c. NOT the 12,500c customer charge on this load —
+          // that equality was the ACCT-F63 defect this test used to enshrine.
+          expect(values?.[6]).toBe(24000);
           return { rows: [{ id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" }] as T[] };
         }
         return { rows: [] };
@@ -82,6 +97,54 @@ describe("driver bills schema separation (P6-T11172)", () => {
     expect(statements.some((s) => s.includes("INSERT INTO driver_finance.driver_bills"))).toBe(true);
     expect(statements.some((s) => s.includes("INSERT INTO accounting.bills"))).toBe(false);
     expect(statements.some((s) => s.includes("INSERT INTO accounting.bill_lines"))).toBe(false);
+  });
+
+  it("ACCT-F63: refuses to mint a driver bill when no pay rate resolves, and records the skip", async () => {
+    const statements: string[] = [];
+    const client = {
+      async query<T = Record<string, unknown>>(sql: string): Promise<{ rows: T[] }> {
+        statements.push(sql);
+        if (sql.includes("to_regclass")) return { rows: [{ exists: true }] as T[] };
+        // No driver_pay_rates row -> pay cannot be sourced.
+        return { rows: [] };
+      },
+    };
+
+    await createDriverBillArtifacts(
+      client,
+      {
+        requestingUserUuid: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        requestingUserRole: "Owner",
+        operating_company_id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        customer_id: "dddddddd-dddd-dddd-dddd-dddddddddddd",
+        status: "dispatched",
+        charges: [{ code: "LH", amount_cents: 12500 }],
+        stops: [],
+        save_mode: "book_dispatch",
+        assigned_primary_driver_id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+      },
+      {
+        id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+        load_number: "L-20260513-0998",
+        miles_shortest: 500,
+        miles_practical: null,
+      },
+      "L-20260513-0998",
+      []
+    );
+
+    // The whole point: an unpriceable bill is NOT written at the customer rate (or at all)...
+    expect(statements.some((s) => s.includes("INSERT INTO driver_finance.driver_bills"))).toBe(false);
+    // ...and the refusal is countable rather than silent (appendCrudAudit is mocked in this suite,
+    // so assert the call itself rather than its SQL text).
+    expect(vi.mocked(appendCrudAudit)).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.any(String),
+      "driver_finance.driver_bill.skipped_no_pay_rate",
+      expect.objectContaining({ load_number: "L-20260513-0998" }),
+      "warning",
+      "WIRE-02"
+    );
   });
 
   it("aggregates settlement-period bills with UNION dedupe against migrated legacy rows", async () => {
