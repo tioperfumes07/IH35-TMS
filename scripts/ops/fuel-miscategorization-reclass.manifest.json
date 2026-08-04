@@ -1,0 +1,27 @@
+{
+  "_comment": "CLS-CATEGORY-MAP-COHERENCE — TRANSP bank txns miscategorized to Fuel Expense that must reclass. Neon lucia 2026-08-03 br-fancy-credit-akjnd07a. Owner bag ≈$4,593.94; pinned Neon sum of these IDs = $4,398.24 (tires $3,378.54 + Laredo Bridge/tolls $1,019.70 incl. −$309 credit). $80 Uber out of scope. Relay-wallet = owner decision (not in this list).",
+  "operating_company_code": "TRANSP",
+  "from_account_id": "58c6e304-ab3e-4714-9c35-623ec51ae7cf",
+  "expected_net_cents": 439824,
+  "items": [
+    { "bank_transaction_id": "0894576b-f6ee-452b-9208-6237f7eba463", "target_account_id": "27c4a09a-0d34-4908-9da1-44b6174b5bce", "kind": "tire", "amount_cents": 53068 },
+    { "bank_transaction_id": "d0e0cc44-ed36-4157-9023-da8ecacb0b11", "target_account_id": "27c4a09a-0d34-4908-9da1-44b6174b5bce", "kind": "tire", "amount_cents": 40574 },
+    { "bank_transaction_id": "7fccb6c3-19bc-47e7-8478-b0b98f57f315", "target_account_id": "27c4a09a-0d34-4908-9da1-44b6174b5bce", "kind": "tire", "amount_cents": 56221 },
+    { "bank_transaction_id": "cc4d1e00-b166-4460-a0a7-f6a54f4d78bd", "target_account_id": "27c4a09a-0d34-4908-9da1-44b6174b5bce", "kind": "tire", "amount_cents": 56221 },
+    { "bank_transaction_id": "0bfc0c2c-0ac6-4275-b384-73f11adf85d3", "target_account_id": "27c4a09a-0d34-4908-9da1-44b6174b5bce", "kind": "tire", "amount_cents": 44990 },
+    { "bank_transaction_id": "2d9f0cab-ee2d-4799-97c0-23c1c1d42d28", "target_account_id": "27c4a09a-0d34-4908-9da1-44b6174b5bce", "kind": "tire", "amount_cents": 54451 },
+    { "bank_transaction_id": "cad733a1-3449-4efc-b29a-bfd9ea061dd9", "target_account_id": "27c4a09a-0d34-4908-9da1-44b6174b5bce", "kind": "tire", "amount_cents": 32329 },
+    { "bank_transaction_id": "7b28bf13-80c2-43ae-b297-b98589878c43", "target_account_id": "7d795152-0883-41ef-80ee-91de1f97f9bb", "kind": "toll", "amount_cents": 5150 },
+    { "bank_transaction_id": "010f7af5-9831-4f09-9c51-f2775d288726", "target_account_id": "7d795152-0883-41ef-80ee-91de1f97f9bb", "kind": "toll", "amount_cents": 15450 },
+    { "bank_transaction_id": "6f906756-b3ef-4f8a-afaf-78e3aefc3450", "target_account_id": "7d795152-0883-41ef-80ee-91de1f97f9bb", "kind": "toll", "amount_cents": 15450 },
+    { "bank_transaction_id": "76b6f9be-da0b-4e8f-a63e-abe5c1a22b20", "target_account_id": "7d795152-0883-41ef-80ee-91de1f97f9bb", "kind": "toll", "amount_cents": 10300 },
+    { "bank_transaction_id": "628deb2b-0262-46b1-ba9e-b614c24a7569", "target_account_id": "7d795152-0883-41ef-80ee-91de1f97f9bb", "kind": "toll", "amount_cents": 4120 },
+    { "bank_transaction_id": "5219db2f-835c-4c5e-ad80-aa3f9d51068f", "target_account_id": "7d795152-0883-41ef-80ee-91de1f97f9bb", "kind": "toll", "amount_cents": 10300 },
+    { "bank_transaction_id": "6ba14a5a-77fb-4594-9d3e-4abf5e6b38f9", "target_account_id": "7d795152-0883-41ef-80ee-91de1f97f9bb", "kind": "toll", "amount_cents": 10300 },
+    { "bank_transaction_id": "375f986f-c3a4-41fb-8edf-8b0908c47796", "target_account_id": "7d795152-0883-41ef-80ee-91de1f97f9bb", "kind": "toll", "amount_cents": 20600 },
+    { "bank_transaction_id": "7798cdd4-2e3b-4111-ad1f-1e59a1a5d190", "target_account_id": "7d795152-0883-41ef-80ee-91de1f97f9bb", "kind": "toll", "amount_cents": -30900 },
+    { "bank_transaction_id": "22032eae-9409-406b-a462-fcaef1081e3c", "target_account_id": "7d795152-0883-41ef-80ee-91de1f97f9bb", "kind": "toll", "amount_cents": 20600 },
+    { "bank_transaction_id": "0f3f8682-51f5-4d37-8181-2fa0fadd5945", "target_account_id": "7d795152-0883-41ef-80ee-91de1f97f9bb", "kind": "toll", "amount_cents": 10300 },
+    { "bank_transaction_id": "61869c8a-4c84-4387-96d9-645dbd91ed28", "target_account_id": "7d795152-0883-41ef-80ee-91de1f97f9bb", "kind": "toll", "amount_cents": 10300 }
+  ]
+}
