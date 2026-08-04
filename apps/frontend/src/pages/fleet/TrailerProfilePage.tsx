@@ -21,6 +21,7 @@ import { InsuranceClaimsReverseSection } from "../../components/insurance/Insura
 import { AssetSafetyReverseSection } from "../../components/safety/AssetSafetyReverseSection";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
+import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 
 export type TrailerProfileAggregate = {
   equipment: Record<string, unknown>;
@@ -164,6 +165,18 @@ export function TrailerProfilePage() {
           companyId={companyId}
           linkage={{ kind: "trailer_id", id }}
           entityLabel={String(equipment.equipment_number ?? "Trailer")}
+        />
+      </div>
+      <div data-testid="tp-section-7c-legal-matters">
+        {/* CLS-REVERSE-LINKAGE-MISSING — reverse drill-through to legal.matters for THIS trailer.
+            Filtered on equipment_id, not unit_id: trailers are mdata.equipment rows and units are
+            mdata.units rows, so reusing unit_id here would have queried the wrong key space and
+            shown an empty panel forever. */}
+        <LegalMattersReverseSection
+          operatingCompanyId={companyId}
+          filter={{ equipment_id: id }}
+          contextLabel="this trailer"
+          data-testid="trailer-profile-legal-matters"
         />
       </div>
       <section data-testid="tp-section-audit-history" className="rounded-sm border border-gray-200 bg-white p-3">
