@@ -1,8 +1,8 @@
 {
   "module": "customers",
   "title": "Customers",
-  "complete": false,
-  "as_of": "2026-08-03",
+  "complete": true,
+  "as_of": "2026-08-04",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/customers-deep-2026-08-01.md",
   "spec_sources": [
@@ -26,7 +26,7 @@
       "layers": ["DOD-C", "VERIFY-4", "VERIFY-6"],
       "spec": "customers-deep transaction list proof",
       "status": "PASS",
-      "evidence": "2026-08-03 Cursor: Customers.tsx transaction_list calls listInvoices(companyId). Neon lucia accounting.invoices count=11981 all with customer_id. Guard verify-cust-s02-transaction-list-invoices + step 2234. (invoice_lines density remains CUST-LINK-01 — 5 lines only.)",
+      "evidence": "2026-08-03 Cursor: Customers.tsx transaction_list calls listInvoices(companyId). Neon lucia accounting.invoices count=11981 all with customer_id. Guard verify-cust-s02-transaction-list-invoices + step 2234.",
       "pr": null
     },
     {
@@ -70,8 +70,8 @@
       "title": "Customer → invoice → invoice_lines chain (system-wide SS-005)",
       "layers": ["DOD-C", "VERIFY-4"],
       "spec": "ACC-invoice-lines · WAVE-H4",
-      "status": "OPEN",
-      "evidence": "2026-08-03 Neon lucia: accounting.invoices=11981 with customer_id; accounting.invoice_lines=5 only — chain incomplete for line drill-through. Money/backfill lane. Holds OPEN until lines density or honest line-empty UX + guard.",
+      "status": "PASS",
+      "evidence": "2026-08-04 Cursor: Neon lucia invoices=11981 · invoice_lines=5 (sparse — no backfill this PR). Customers.tsx transaction_list EntityLink kind=invoice + onRowClick → /accounting/invoices/:id; InvoiceDetailPage getInvoice + data-testid=invoice-lines-honest-empty names sparse invoice_lines when lineCount=0; draft retains + Create Line. Guard verify-cust-link-01-invoice-lines-honest + step 2352.",
       "pr": null
     },
     {
@@ -89,11 +89,11 @@
       "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "2026-08-03 Cursor: meta guard verify-cust-verify-01 composes S01 roster (TRANSP 1243/USMCA 1 lucia deactivated_at filter), S02 transaction list, S03 coming-state copy, CHROME-01 header parity, LINK-02 COI honest empty; manifest /customers + /customers/:id. Step 2254. CUST-LINK-01 money remains OPEN.",
+      "evidence": "2026-08-04 Cursor: meta guard verify-cust-verify-01 composes S01 roster (TRANSP 1243/USMCA 1 lucia deactivated_at filter), S02 transaction list, S03 coming-state copy, CHROME-01 header parity, LINK-01 honest invoice line-empty, LINK-02 COI honest empty; manifest /customers + /customers/:id. Step 2254. Module 9 of 9 complete.",
       "pr": null
     }
   ],
-  "pass_count": 8,
+  "pass_count": 9,
   "total_count": 9,
-  "progress": "8 of 9"
+  "progress": "9 of 9"
 }
