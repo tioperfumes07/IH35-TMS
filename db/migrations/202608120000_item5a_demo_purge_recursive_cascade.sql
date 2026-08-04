@@ -1,7 +1,31 @@
 -- 202608120000_item5a_demo_purge_recursive_cascade.sql
 --
 -- ============================================================================================
--- DO NOT RUN ON PROD  —  HELD FOR JORGE
+-- DO NOT RUN ON PROD  —  HELD (marker intentionally retained; see below)
+--
+-- APPLIED ON PROD 2026-08-04 by Claude Coder on br-fancy-credit-akjnd07a (neondb_owner, one transaction),
+-- and recorded in .held-migrations.json under `applied_held` + both migration ledgers.
+--
+-- The marker above STAYS. It is not stale — it is the mechanism that keeps db:migrate skipping this file
+-- so a purge that DELETES rows can never re-run inside an automated deploy. Registered-but-applied is
+-- exactly what `applied_held` means, and verify-hold-migrations-registered requires the marker to remain
+-- on disk for such an entry.
+--
+-- What IS superseded is the old "Owner Neon-applies by hand" line: under OWNER LAW (2026-08-03) coders
+-- hold full Neon access and apply with proof; the owner does not hand-apply.
+--
+-- PROOF OF THIS APPLY (prod, RLS bypass set in-transaction, before/after captured independently):
+--   guards — 17 roots seeded (>0, so the RLS-masked no-op abort did NOT hide an empty run); the
+--   financial/authoritative-schema abort did NOT fire; the 50,000-row cap was not reached.
+--   closure — 7,888 rows across 8 tables, depth 2:
+--     maintenance.pm_auto_wo_log 7,854 · maintenance.pm_schedules 6 · maintenance.work_orders 2 ·
+--     maintenance.severe_repair_estimates 1 · mdata.load_stops 10 · mdata.loads 5 · mdata.units 6 ·
+--     mdata.drivers 4.  Plus 176 mis-flagged REAL rows corrected (drivers 83, units 93).
+--   real data UNCHANGED — accounting.bills 16,250 · expenses 27,072 · invoices 11,981 ·
+--     journal_entries 1,784 · journal_entry_postings 3,597 · banking.bank_transactions 10,999 ·
+--     bank_accounts 16 · fuel.fuel_transactions 1,548 · driver_finance.settlement_lines 0 ·
+--     driver_settlements 0 · mdata.customers 2,694 · mdata.vendors 2,828.
+--   0 DEMO remnants in units / loads / work_orders / vendors / customers.
 -- Registered in db/migrations/.held-migrations.json. db:migrate HELD-SKIPs this on prod; the owner
 -- applies it by hand on Neon and ledger-backfills. No agent applies it.
 -- ============================================================================================
