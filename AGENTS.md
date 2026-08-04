@@ -57,7 +57,7 @@
 
 ## Verify-step claims (TOOL-F03 — 2026-07-31)
 
-Do **not** edit `scripts/verify-steps/CLAIMED-NUMBERS.json` in feature PRs. The `NNNN-*.mjs` filename is the claim (Cursor EVEN / Claude ODD). GitHub cannot run `merge=json-union` on that file — editing it is the conflict treadmill. Enforced by verify-step **1599** (uniqueness only) + **1906** (`verify-no-claimed-numbers-edits`).
+Verify-step law (2026-08-04): **mod-4** Cursor EVEN · CC-1 ≡1 · CC-2 ≡3 + **claim-before-write** — reserve on `chore/claim-reserve*` / `CLAIMED-REGEN` **before** authoring `NNNN-*.mjs` (Rule 25 bands file + step **2400**). Feature PRs must **not** edit `CLAIMED-NUMBERS.json` except allowlisted claim PRs. Do not renumber after collisions. Law: `docs/specs/VERIFY-STEP-MOD4-CLAIM-BEFORE-WRITE-LAW-2026-08-04.md`. Enforced by **1803** (lane-band) + **2400** (claimed-on-main) + **1906** (no feature CLAIMED edits).
 
 ## Dual lanes (always parallel when queue has work)
 

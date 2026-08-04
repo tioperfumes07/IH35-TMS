@@ -12,7 +12,7 @@ Odd/even alone put **two Claude lanes on the same ODD residue**. Parallel merges
 
 1. **Mod-4 bands:** Cursor EVEN · CC-1 ≡1 · CC-2 ≡3 (branch prefixes enforced).
 2. **Claim-before-write:** number must exist on `origin/main` `CLAIMED-NUMBERS.json` **before** `scripts/verify-steps/NNNN-*.mjs` is authored. Claim-only PRs: `chore/claim-reserve*` / `chore/claimed-regen*` or subject `CLAIM-RESERVE` / `CLAIMED-REGEN`.
-3. **No CI babysit:** read the failing log line, fix root cause, push (Rule 26).
+3. **No CI babysit:** read the failing log line, fix root cause, push (Rule 35).
 
 ## One-time bootstrap
 
