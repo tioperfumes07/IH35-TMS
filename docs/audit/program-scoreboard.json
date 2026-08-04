@@ -1,11 +1,11 @@
 {
   "meta": {
-    "generatedAt": "2026-08-04T16:44:36-05:00",
-    "sourceSha": "7f7290a5b",
+    "generatedAt": "2026-08-04T16:49:45-05:00",
+    "sourceSha": "3a656ed52",
     "deployedSha": "308bc66",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 739,
-    "failOpen": 39,
+    "ledgerRows": 752,
+    "failOpen": 42,
     "defects": 22
   },
   "modules": [
@@ -186,7 +186,7 @@
         "AUDIT",
         "FAIL",
         "FIX",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "FIX",
         "AUDIT",
@@ -564,7 +564,7 @@
         "AUDIT",
         "FAIL",
         "NA",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "NA",
         "AUDIT",
