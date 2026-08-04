@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import { useAuth } from "../auth/useAuth";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { Shell } from "../components/Shell";
+import { resolveListsDomainHubKey } from "../pages/lists/components/AllCatalogsMap";
 const CustomersPage = React.lazy(() => import("../pages/Customers").then((m) => ({ default: m.CustomersPage })));
 const CustomerDetailPage = React.lazy(() => import("../pages/CustomerDetail").then((m) => ({ default: m.CustomerDetailPage })));
 const ListsHubPage = React.lazy(() => import("../pages/lists/ListsHubPage").then((m) => ({ default: m.ListsHubPage })));
@@ -708,6 +709,10 @@ function ListsDomainRoute() {
     const redirectPath = resolveUnderscoreRedirectPath(`/lists/${domain}`);
     if (redirectPath) {
       return <Navigate to={`${redirectPath}${location.search}${location.hash}`} replace />;
+    }
+    const hubKey = resolveListsDomainHubKey(domain);
+    if (hubKey) {
+      return <Navigate to={`/lists/hub/${hubKey}${location.search}${location.hash}`} replace />;
     }
   }
   return <ComingSoonPage />;
