@@ -264,13 +264,13 @@ const BILL_VENDOR_UUID_PATTERN = `'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89
 const BILL_VENDOR_RESOLVE_JOIN_SQL = `
   LEFT JOIN mdata.vendors v
     ON v.operating_company_id = b.operating_company_id
-   AND v.id = COALESCE(
-     b.mdata_vendor_id,
-     CASE
-       WHEN b.vendor_uuid ~* ${BILL_VENDOR_UUID_PATTERN}
-       THEN b.vendor_uuid::uuid
-       ELSE NULL
-     END
+   AND (
+     v.id = b.mdata_vendor_id
+     OR (
+       b.vendor_uuid ~* ${BILL_VENDOR_UUID_PATTERN}
+       AND v.id::text = b.vendor_uuid
+     )
+     OR (b.vendor_id IS NOT NULL AND v.qbo_vendor_id = b.vendor_id)
    )
 `;
 
@@ -298,6 +298,43 @@ const BILL_IS_RECONCILED_SQL = `
       AND rm.match_state IN ('auto_matched', 'user_matched')
   )
 `;
+
+type BillVendorWriteColumns = {
+  vendorIdText: string;
+  vendorUuidText: string | null;
+  mdataVendorId: string | null;
+};
+
+/** ACCT-F603 — write vendor_id (QBO text), vendor_uuid (mdata uuid text), mdata_vendor_id (uuid FK). */
+async function resolveBillVendorWriteColumns(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string; qbo_vendor_id: string | null }> }> },
+  operatingCompanyId: string,
+  vendorId: string
+): Promise<BillVendorWriteColumns> {
+  const trimmed = vendorId.trim();
+  const res = await client.query(
+    `SELECT v.id::text, v.qbo_vendor_id
+       FROM mdata.vendors v
+      WHERE v.operating_company_id = $1::uuid
+        AND (v.id::text = $2::text OR v.qbo_vendor_id = $2::text)
+      LIMIT 1`,
+    [operatingCompanyId, trimmed]
+  );
+  const row = res.rows[0];
+  if (row) {
+    return {
+      vendorIdText: row.qbo_vendor_id ?? trimmed,
+      vendorUuidText: row.id,
+      mdataVendorId: row.id,
+    };
+  }
+  const isUuid = new RegExp(BILL_VENDOR_UUID_PATTERN.slice(1, -1), "i").test(trimmed);
+  return {
+    vendorIdText: trimmed,
+    vendorUuidText: isUuid ? trimmed : null,
+    mdataVendorId: isUuid ? trimmed : null,
+  };
+}
 
 function hashPayload(payload: Record<string, unknown>) {
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
@@ -1166,6 +1203,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
     );
     const hasClassId = (classCol.rowCount ?? 0) > 0;
     const classId = hasClassId ? (input.classId ?? null) : null;
+    const vendorCols = await resolveBillVendorWriteColumns(client, input.operatingCompanyId, input.vendorId);
 
     const res = await client.query<BillRow>(
       hasInsuranceClaimId && hasClassId
@@ -1193,7 +1231,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
           created_at,
           updated_at
         )
-        VALUES ($1,$2::text,($2::text)::uuid,($2::text)::uuid,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$14,$10,now(),now())
+        VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15,$16,$12,now(),now())
         RETURNING *
       `
         : hasInsuranceClaimId
@@ -1220,7 +1258,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
           created_at,
           updated_at
         )
-        VALUES ($1,$2::text,($2::text)::uuid,($2::text)::uuid,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$10,now(),now())
+        VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15,$12,now(),now())
         RETURNING *
       `
         : hasClassId
@@ -1247,7 +1285,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
           created_at,
           updated_at
         )
-        VALUES ($1,$2::text,($2::text)::uuid,($2::text)::uuid,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$10,now(),now())
+        VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15,$12,now(),now())
         RETURNING *
       `
         : `
@@ -1272,13 +1310,15 @@ export async function createBill(input: CreateBillInput, userId: string) {
           created_at,
           updated_at
         )
-        VALUES ($1,$2::text,($2::text)::uuid,($2::text)::uuid,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$10,now(),now())
+        VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$12,now(),now())
         RETURNING *
       `,
       hasInsuranceClaimId && hasClassId
         ? [
             input.operatingCompanyId,
-            input.vendorId,
+            vendorCols.vendorIdText,
+            vendorCols.vendorUuidText,
+            vendorCols.mdataVendorId,
             input.billNumber ?? null,
             input.billDate,
             input.dueDate ?? null,
@@ -1295,7 +1335,9 @@ export async function createBill(input: CreateBillInput, userId: string) {
         : hasInsuranceClaimId
         ? [
             input.operatingCompanyId,
-            input.vendorId,
+            vendorCols.vendorIdText,
+            vendorCols.vendorUuidText,
+            vendorCols.mdataVendorId,
             input.billNumber ?? null,
             input.billDate,
             input.dueDate ?? null,
@@ -1311,7 +1353,9 @@ export async function createBill(input: CreateBillInput, userId: string) {
         : hasClassId
           ? [
               input.operatingCompanyId,
-              input.vendorId,
+              vendorCols.vendorIdText,
+              vendorCols.vendorUuidText,
+              vendorCols.mdataVendorId,
               input.billNumber ?? null,
               input.billDate,
               input.dueDate ?? null,
@@ -1326,7 +1370,9 @@ export async function createBill(input: CreateBillInput, userId: string) {
             ]
         : [
             input.operatingCompanyId,
-            input.vendorId,
+            vendorCols.vendorIdText,
+            vendorCols.vendorUuidText,
+            vendorCols.mdataVendorId,
             input.billNumber ?? null,
             input.billDate,
             input.dueDate ?? null,
