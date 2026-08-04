@@ -1193,7 +1193,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
           created_at,
           updated_at
         )
-        VALUES ($1,$2,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$14,$10,now(),now())
+        VALUES ($1,$2::text,($2::text)::uuid,($2::text)::uuid,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$14,$10,now(),now())
         RETURNING *
       `
         : hasInsuranceClaimId
@@ -1220,7 +1220,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
           created_at,
           updated_at
         )
-        VALUES ($1,$2,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$10,now(),now())
+        VALUES ($1,$2::text,($2::text)::uuid,($2::text)::uuid,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$10,now(),now())
         RETURNING *
       `
         : hasClassId
@@ -1247,7 +1247,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
           created_at,
           updated_at
         )
-        VALUES ($1,$2,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$10,now(),now())
+        VALUES ($1,$2::text,($2::text)::uuid,($2::text)::uuid,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$13,$10,now(),now())
         RETURNING *
       `
         : `
@@ -1272,7 +1272,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
           created_at,
           updated_at
         )
-        VALUES ($1,$2,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$10,now(),now())
+        VALUES ($1,$2::text,($2::text)::uuid,($2::text)::uuid,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$10,now(),now())
         RETURNING *
       `,
       hasInsuranceClaimId && hasClassId
