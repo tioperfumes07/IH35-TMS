@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { driverDeductionTypesCatalogClient } from "../../api/catalogs-driver";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  driverDeductionTypeQueryKey,
+  useDriverDeductionTypeCatalog,
+} from "../../hooks/useDriverDeductionTypeCatalog";
 import { Button } from "../../components/Button";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -39,17 +42,12 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
   const queryClient = useQueryClient();
   const policiesQuery = useAutoDeductionPolicies(operatingCompanyId, lockedDriverId);
   const { createMutation, patchMutation, cancelMutation } = useAutoDeductionPolicyMutations(operatingCompanyId);
-  // LST-PICKER-01: catalog read already entity-scoped (SETL-PICK-01); Type must inline-create same table.
-  const deductionTypesQuery = useQuery({
-    queryKey: ["catalogs", "driver-deduction-types", operatingCompanyId],
-    queryFn: () =>
-      driverDeductionTypesCatalogClient.list({
-        operating_company_id: operatingCompanyId,
-        is_active: "true",
-        limit: 200,
-      }),
-    enabled: Boolean(operatingCompanyId),
-  });
+  // SETL-PICK-01: entity-scoped catalogs.driver_deduction_types via shared hook + ReferenceSelect inline create.
+  const {
+    query: deductionTypesQuery,
+    options: deductionTypeOptions,
+    labelByCode: deductionTypeLabelByCode,
+  } = useDriverDeductionTypeCatalog({ operatingCompanyId });
 
   const [createOpen, setCreateOpen] = useState(false);
   const [driverId, setDriverId] = useState(lockedDriverId ?? "");
@@ -58,23 +56,6 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
   const [maxPerSettlement, setMaxPerSettlement] = useState("100.00");
   const [memo, setMemo] = useState("");
   const [error, setError] = useState<string | null>(null);
-
-  const deductionTypeOptions = useMemo(
-    () =>
-      (deductionTypesQuery.data?.rows ?? []).map((row) => ({
-        value: row.code,
-        label: row.display_name,
-      })),
-    [deductionTypesQuery.data]
-  );
-
-  const deductionTypeLabelByCode = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const row of deductionTypesQuery.data?.rows ?? []) {
-      map.set(row.code, row.display_name);
-    }
-    return map;
-  }, [deductionTypesQuery.data]);
 
   useEffect(() => {
     if (lockedDriverId) setDriverId(lockedDriverId);
@@ -236,7 +217,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
               disabled={!operatingCompanyId || deductionTypesQuery.isLoading}
               onOptionCreated={() => {
                 void queryClient.invalidateQueries({
-                  queryKey: ["catalogs", "driver-deduction-types", operatingCompanyId],
+                  queryKey: driverDeductionTypeQueryKey(operatingCompanyId),
                 });
               }}
             />
