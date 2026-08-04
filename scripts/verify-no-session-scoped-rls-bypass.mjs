@@ -31,7 +31,7 @@
  * using transaction-local GUCs (is_local=true inside an explicit BEGIN), or going through the
  * backend's withLuciaBypass helper.
  */
-import { readdirSync, readFileSync, existsSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 const LABEL = "verify:no-session-scoped-rls-bypass";
@@ -90,14 +90,17 @@ export function analyse(files) {
   return problems;
 }
 
+// readdirSync(withFileTypes) returns the entry TYPE from the same directory read, so there is no
+// stat()-then-read() gap for the filesystem to change under us (CodeQL js/file-system-race, high).
+// The earlier version called statSync and then readFileSync on the same path — a genuine TOCTOU that
+// this project's own scanner caught on the PR that introduced it.
 function walk(dir, out) {
-  for (const entry of readdirSync(dir)) {
-    const p = join(dir, entry);
-    const st = statSync(p);
-    if (st.isDirectory()) {
-      if (entry === "node_modules") continue;
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === "node_modules") continue;
       walk(p, out);
-    } else if (/\.(mjs|mts|ts|js)$/.test(entry)) {
+    } else if (entry.isFile() && /\.(mjs|mts|ts|js)$/.test(entry.name)) {
       out[p] = readFileSync(p, "utf8");
     }
   }
