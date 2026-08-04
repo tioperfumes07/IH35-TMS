@@ -847,10 +847,15 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
           ) : null}
 
           {isEditMode ? (
-            <div className="mx-3 mt-2 rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
-              Editing the persisted load details. <span className="font-semibold">Commodity, weight, trailer/trip
-              type, hazmat and reefer settings</span> aren&apos;t stored for edit yet — they show blank here and
-              will <span className="font-semibold">not</span> be changed by saving. Only fields you edit are saved.
+            <div
+              className="mx-3 mt-2 rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700"
+              data-testid="book-load-edit-honesty"
+            >
+              Editing persisted load details. Only fields you change are saved (partial PATCH — untouched
+              columns stay). <span className="font-semibold">Commodity, weight, trip type, and reefer/tarp
+              settings</span> round-trip on edit. <span className="font-semibold">Hazmat</span> is owner-locked
+              out of edit (create-path only). <span className="font-semibold">Load type / trailer type</span>{" "}
+              are not edit-PATCH columns yet.
             </div>
           ) : null}
 
