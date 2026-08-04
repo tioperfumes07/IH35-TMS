@@ -17,7 +17,7 @@ This is **everything that applies to every money PR** — Cursor and Claude same
 - `git fetch` + checkout/pull `main` ff-only — local lags routinely  
 - Fresh branch per block; **never** `git add -A`  
 - Read the spec / approved screen first — never build from a defect list alone  
-- Classify the lane: financial cluster → proof gate (independent review + financial-agent pass + 18-key evidence), then merge on green yourself — OWNER LAW 2026-08-03, no hold, no `JORGE-APPROVED`  
+- Classify the lane: financial cluster → proof gate (independent review + financial-agent pass + 18-key evidence), then merge on green yourself — OWNER LAW 2026-08-03, no hold, no owner-approval merge label  
 
 **Git key:** `LANE: HOLD | FINANCIAL-HOLD | NON-FINANCIAL | DOCS`
 
@@ -97,7 +97,7 @@ Also: **FINDING:** `ACCT-F##` / `BANK-F##` / `LST-F##` from Desktop module audit
 
 ---
 
-## 7 · Merge gates — OWNER LAW (2026-08-03, FINAL): NO HOLDS, NO `JORGE-APPROVED`
+## 7 · Merge gates — OWNER LAW (2026-08-03, FINAL): NO HOLDS, NO owner-approval merge label
 
 - Merge = deploy · financial / migration / catalogs / mdata → **coder's own proof gate** (independent
   review + financial-agent pass + 18-key evidence), then merge on green yourself — no owner OK to wait for  

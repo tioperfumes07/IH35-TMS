@@ -28,7 +28,7 @@ so honestly. Report outcomes faithfully: if a step was skipped or a check failed
    (migration firewall only — the label it used to also check is DELETED, OWNER LAW 2026-08-03).
    A green *individual* check is not enough; the gate is the whole required set.
 4. **Merged per the rules** — every lane, including financial/migration, merges on green by the coder itself;
-   no `JORGE-APPROVED` label (deleted), no owner hold.
+   no owner-approval merge label (deleted), no owner hold.
 5. **Deploy verified LIVE** — poll `GET /api/v1/healthz/shallow` until `version` == your merge short-sha;
    confirm deep `/api/v1/healthz` green; for UI, confirm in the browser.
 

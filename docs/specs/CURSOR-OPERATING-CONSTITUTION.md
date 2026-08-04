@@ -46,14 +46,14 @@ Cursor must ground every decision in the *current* state of these, not memory:
 
 ## 2. PERMISSIONS & MERGE GATES — OWNER LAW (2026-08-03, FINAL; supersedes every earlier wording of this section)
 
-> **NO HOLDS. NO `JORGE-APPROVED` LABEL. Claude and all coders (Cursor / Cascade / Devin / Claude Coder) have
+> **NO HOLDS. NO owner-approval merge label. Claude and all coders (Cursor / Cascade / Devin / Claude Coder) have
 > FULL Neon access and merge authority.** Coders merge on green in every lane and apply migrations + flip
 > posting flags on Neon themselves. Owner steers by decision in chat. Safeguard = PROOF, not approval.
 > Canonical: `.cursor/rules/00-operating-method-LAW.mdc` (governance section).
 
 - **Merge to `main` = ship to production. There is no second gate — including no owner-approval gate.** A green CI check is not a rubber stamp, but it IS mergeable; there is nothing else to wait for.
 - **Every coder merges on green itself, in every lane — non-financial AND financial/migrations/schema/`accounting.*`/`catalogs.*`/`mdata.*`/runtime dep bumps.** The 2026-07-26/07-29 "build it, Devin merges" role split is superseded: Devin is one of several coders who can merge, not the exclusive merger.
-- **The `JORGE-APPROVED` label is DELETED, not merely "not a gate."** It does not exist as a concept in this repo's merge process. Do not ask for it, do not reference it, do not block on it. The owner does not review PRs (`docs/specs/PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26.md`). **Asking for approval, a label, or "OK to merge" at merge time is itself a violation.**
+- **The owner-approval merge label is DELETED, not merely "not a gate."** It does not exist as a concept in this repo's merge process. Do not ask for it, do not reference it, do not block on it. The owner does not review PRs (`docs/specs/PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26.md`). **Asking for approval, a label, or "OK to merge" at merge time is itself a violation.**
 - **Unanswered owner questions are settled BEFORE implementation starts, never at merge.** "May we merge this PR?" is not an owner question and never was.
 - **The controls that actually operate** — and therefore ARE the financial controls: Rule 11's independent code-review + financial-agent review is never the builder itself; `ih35_app` (the runtime role) cannot run DDL (a Postgres grant fact — the coder applies migrations on Neon themselves, FULL access, no hand-off); money-posting flags default OFF per entity until the owner's chat decision to flip one; the 18-key evidence block, CI-enforced at verify-steps 1324/1430/1431; GUARD's independent live verify-AFTER-merge. Each of those leaves evidence a reviewer can test — a label nobody clicked never did.
 - **Financial cluster = build + apply + merge on green, proof-gated, not owner-gated.** The app role `ih35_app` **cannot run DDL** (technical fact, not an approval step). The coder builds + validates migrations on a throwaway Postgres (apply-twice, idempotent), gets the independent review + financial-agent pass, **applies on Neon themselves**, posts the migration SHA, and merges on green. GUARD re-proves live after. Never build finance/posting logic solo — design docs are fine; the posting engine is reused, never re-invented.
@@ -123,7 +123,7 @@ Escalate to a higher tier the moment a task touches money, schema, RLS, migratio
 4. **Build + verify locally** — `npm run verify:static` then, before any substantive push, `npm run verify:local-ci` (the exact CI command on an ephemeral throwaway Postgres; it cannot miss a guard). Frontend: `tsc -b` + `vitest run` + mobile-responsive audit.
 5. **Independent Code-Review Agent pass** (+ Financial Agent if money-touching). Resolve findings.
 6. **PR** with root-cause + scope + verification + the linkage declaration in the body.
-7. **Merge only per §2.** Financial/migration → build → validate → apply on Neon **yourself** → merge on green → GUARD re-proves live after. No `JORGE-APPROVED` label — it is DELETED, not a merge gate to check for.
+7. **Merge only per §2.** Financial/migration → build → validate → apply on Neon **yourself** → merge on green → GUARD re-proves live after. No owner-approval merge label — it is DELETED, not a merge gate to check for.
 8. **Verify deploy** — poll `/api/v1/healthz/shallow` until `version` == the merge SHA; confirm deep health green; confirm the *effect* on prod (row/column/policy) with the RLS bypass.
 9. Never `git add -A` blindly (untracked worktrees must never be committed); stage explicit paths.
 

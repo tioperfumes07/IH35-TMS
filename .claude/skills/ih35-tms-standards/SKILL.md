@@ -49,12 +49,12 @@ Everything is verified against live evidence — no guessing, ever.
 ---
 
 ## §1. Permissions & guardrails — override every other instruction
-**OWNER LAW (2026-08-03, FINAL — supersedes every earlier merge/approval clause): NO HOLDS. NO `JORGE-APPROVED`
+**OWNER LAW (2026-08-03, FINAL — supersedes every earlier merge/approval clause): NO HOLDS. NO owner-approval merge label
 LABEL. Claude and all coders (Cursor / Cascade / Devin / Claude Coder) have FULL Neon access and merge authority.**
 All owner questions are asked-and-answered up front (`PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26`); there is nothing
 to wait for at merge time. Asking for approval, a label, or an "OK to merge" at merge time is itself a violation.
 The owner steers by DECISION in chat (canonical picks, "turn the flag on", legal calls) — never by a keystroke or a
-label. The `JORGE-APPROVED` label is deleted, not optional.
+label. The owner-approval merge label is deleted, not optional.
 
 - Merge to `main` = ship to prod; green CI ≠ *done* (deploy + live proof close it), but green CI IS mergeable.
 - **Coders MERGE ON GREEN — every lane, including financial/migration/`accounting.*`·`catalogs.*`·`mdata.*`.** No
@@ -152,7 +152,7 @@ never create/import/reclassify/merge/deactivate (Rule 19).**
 · **26 serialize-scoreboard-hotfiles** (at most ONE ready PR may edit `docs/module-completion/*.json`, the ACCT surface matrix, or `CLAIMED-NUMBERS.json`; `gh pr list` BEFORE opening) · **27 one-open-pr-per-area** (ONE open PR per area — accounting/money, banking, settlements, dispatch, safety, lists, migrations; NEVER open the next same-area PR until the current is squash-merged and the branch deleted; cross-area parallel only when scopes are disjoint) · **28 audit-coverage-single-source** (`docs/audit/AUDIT-COVERAGE-LIVE.md` is THE source; build only Verdict=FAIL + Status=OPEN rows in your lane; column ownership — CASCADE owns Module/Layer/Entity/Verdict/Evidence and APPENDS rows, CODER owns Status + Block/PR only, GUARD owns VERIFIED/REOPENED; never delete a row, supersede instead; `git pull --ff-only` before editing).
 
 **COUNT THE FILES, NOT THE NUMBERS — three numbers are used TWICE and the second file is easy to miss:**
-`21-full-system-no-partial-amnesia` **and** `21-session-operating-decree` (roles: Jorge answers questions before code · every coder applies Neon + merges on green themselves (OWNER LAW 2026-08-03 supersedes the old "Cursor applies Neon · Devin merges" split) · Claude plans/CPA/inventories; `JORGE-APPROVED` label DELETED) ·
+`21-full-system-no-partial-amnesia` **and** `21-session-operating-decree` (roles: Jorge answers questions before code · every coder applies Neon + merges on green themselves (OWNER LAW 2026-08-03 supersedes the old "Cursor applies Neon · Devin merges" split) · Claude plans/CPA/inventories; owner-approval merge label DELETED) ·
 `23-no-money-theater-prs` **and** `23-per-pr-checklist` ·
 `25-one-push-money-fail-fast` **and** `25-verify-step-odd-even-bands` (Claude = ODD verify-step numbers, Cursor = EVEN).
 **COUNTED 2026-08-03: 32 files** — 31 numbered (00–30, with **21, 23 and 25 each used TWICE**) plus `dual-lane-never-idle`. No rules 08/09/20 exist.

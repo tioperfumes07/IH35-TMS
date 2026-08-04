@@ -6,7 +6,7 @@ alwaysApply: true
 # RULE 21 — SESSION OPERATING DECREE (2026-07-26; merge/Neon roles SUPERSEDED 2026-08-03)
 
 **SUPERSESSION NOTE (2026-08-03):** the roles table and STOP list below predate **OWNER LAW (FINAL,
-2026-08-03)**: NO HOLDS, NO `JORGE-APPROVED`, every coder (Cursor / Cascade / Devin / Claude Coder) has FULL
+2026-08-03)**: NO HOLDS, NO owner-approval merge label, every coder (Cursor / Cascade / Devin / Claude Coder) has FULL
 Neon access and merges on green in every lane, including financial. Where this file says "Devin merges" or
 "Neon prepare+apply when ordered," read it as **any coder merges on green / applies on Neon themselves,
 standing order, no waiting.** Canonical: `.cursor/rules/00-operating-method-LAW.mdc` (governance section).
@@ -28,7 +28,7 @@ standing order, no waiting.** Canonical: `.cursor/rules/00-operating-method-LAW.
 
 ## Owner 2026-08-03 (FINAL)
 
-- **`JORGE-APPROVED` label is DELETED**, not merely "not required." Jorge does not review PRs.
+- **owner-approval merge label is DELETED**, not merely "not required." Jorge does not review PRs.
 - Ask all unanswered questions at **block invent / module inventory** — then code, then merge on green.
 - `hold-merge-gate` only hard-fails if held migration lacks db-migrate firewall (the one safeguard that stays).
 

@@ -36,7 +36,7 @@
       "evidence": "scripts/verify-report-refresh-no-nplus1.mjs + scripts/verify-steps/910-verify-report-refresh-no-nplus1.mjs."
     },
     {
-      "check": "Financial cluster — build-and-HOLD; no merge/deploy/prod DB without Jorge approval. QBO tests untouched.",
+      "check": "Financial cluster — merge on green with proof; coder applies Neon. QBO tests untouched.",
       "evidence": "Owner GO for durability closeout push; merge forbidden."
     }
   ],

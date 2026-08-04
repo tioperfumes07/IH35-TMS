@@ -1,7 +1,7 @@
 # IH35 — FULL DELIVERY PLAN (NOW → LAUNCH)
 
 **Status:** LOCKED hybrid — DORA/WIP + walking skeleton + Owner module certify  
-**Date:** 2026-08-04 (rev **C** — coder collision law + Claude Coder callouts)  
+**Date:** 2026-08-04 (rev **D** — governance purge + GOVERNANCE block; Claude Agent Phase-0)  
 **Authority:** This committed file wins over any chat summary, agent memory, or stale paste.  
 **Supersedes as primary queue:** 400+ block pile, breadth-first 30×13 certify-everything, multi-agent sprawl  
 **Does not supersede:** Law of the Land · Rule 16/21/23/24 · `00-operating-method-LAW.mdc` (OWNER LAW 2026-08-03) · parallel books (no TMS→QBO write-back)
@@ -10,10 +10,22 @@
 `Execute docs/specs/DELIVERY-METHOD-LOCKED.md — vertical money skeleton → certify modules under WIP≤3 — do not invent a fourth method. Obey §9 coder instructions exactly.`
 
 Companion: `docs/trackers/OWNER-EXECUTION-PLAN-2026-07-22.md` (module order + audit depth).  
-Governance: `.cursor/rules/00-operating-method-LAW.mdc` — **NO HOLDS. NO `JORGE-APPROVED`. Merge on green with proof.**  
-Sidebar / modules: **30** (`SIDEBAR_ITEM_IDS` + 30 module-completion files). Not 28.
+Sidebar / modules: **30** (`SIDEBAR_ITEM_IDS` + 30 module-completion files). Not 28.  
+Ratchet: `scripts/verify-no-approval-holds.mjs` (verify-step **2218**) — FAILS if deleted merge-label / approval-hold language returns in living law.
 
 **One writer for this file: Cursor.** Claude Coder / Cascade / GUARD execute; they do **not** author competing delivery methods.
+
+---
+
+## GOVERNANCE (OWNER LAW 2026-08-03 — FINAL — replaces every Jorge/Neon approval line)
+
+- **Money PRs:** the coder **MERGES ON GREEN with proof**. No approval gate. No owner-approval merge label. No hold.
+- **Neon:** the coder **APPLIES migrations** and **flips posting flags** on Neon themselves. The owner does **NOT** apply on Neon.
+- **Owner's only money role:** the **DECISION of WHEN** to turn a posting flag ON (chat), and entering **opening-balance figures**. Nothing else.
+- **Safety = PROOF, not approval:** additive/idempotent + guard + tests → coder applies on Neon → **GUARD verifies live AFTER**.
+- **Agent map:** Claude Coder = money/GL/migrations — builds, applies on Neon, merges on green with proof. Owner = decisions + launch sign-off. Owner does **not** apply Neon.
+
+Canonical: `.cursor/rules/00-operating-method-LAW.mdc`.
 
 ---
 
@@ -50,11 +62,12 @@ Sidebar / modules: **30** (`SIDEBAR_ITEM_IDS` + 30 module-completion files). Not
 | O5 | **One ranked FAIL (or one skeleton hop) per PR** |
 | O6 | Every land: `AUDIT-COVERAGE-LIVE.md` → `Status = FIXED (PR #n)` **same commit** (Coder/Cursor columns only) |
 | O7 | **Done = Neon (`bypass_rls=lucia`) + live app proof** — CI green is floor, not verdict |
-| O8 | **OWNER LAW 2026-08-03:** NO HOLDS. NO `JORGE-APPROVED` label. Coders have **FULL Neon access** and **merge on green** in every lane (including money). Safeguard = **PROOF** (18-key evidence · independent review · additive migration · GUARD verify-after) — not a merge label. Owner steers by **decision in chat** only (e.g. “turn posting flag ON”). |
+| O8 | **See GOVERNANCE block above.** NO HOLDS. Coders **FULL Neon** + **merge on green with proof** (every lane, including money). Owner steers by **decision in chat** only (e.g. “turn posting flag ON”). |
 | O9 | No new breadth-audit inventory except defects found **while** finishing the active skeleton hop or active module. The 680-row ledger is **read-only reference**, not a queue. |
 | O10 | PR titles Cursor lane: must start with `Cursor-` |
-| O11 | **Committed plan file beats chat summary.** If a summary says `JORGE-APPROVED` and this file says merge-on-green — **this file wins**. |
-| O12 | **No CPA merge gate.** There is no CPA sign-off path. Jorge is the sole financial-decision authority (chat only). Proof agents inform; they do not withhold merges. |
+| O11 | **Committed plan file beats chat summary.** |
+| O12 | **No CPA merge gate.** Jorge is the sole financial-decision authority (chat only). Proof agents inform; they do not withhold merges. |
+| O13 | Living law must stay clean under `verify-no-approval-holds` (step 2218). Do not reintroduce deleted merge-label tokens. |
 
 ---
 
@@ -209,10 +222,10 @@ Ledger stays reference unless a leftover maps to an active defect.
 | Role | Owns |
 |------|------|
 | **Cursor** | Sole author of this plan file; skeleton FE/ops; non-financial; guards; Cursor ledger Status; WIP enforcement |
-| **Claude Coder** | Phase 0 branch hygiene (safe half); financial cluster code + Neon apply + **merge on green when proof gate passes** |
+| **Claude Coder** | Phase 0 branch hygiene (safe half); money/GL/migrations — **builds, applies on Neon, merges on green with proof** |
 | **Cascade** | Audit evidence on **active** slice/module only; class cards; ledger = reference |
 | **GUARD** | Independent live verify **AFTER** merge only |
-| **Jorge** | Decisions in chat (flags, Hop 0, launch, DEFER); kill WIP when > 3; does **not** review PRs for a label |
+| **Jorge** | Decisions in chat (flags, Hop 0, launch, DEFER, OB figures); kill WIP when > 3; does **not** apply Neon; does **not** review PRs for a label |
 
 Full collision law → **§9**.
 
@@ -242,7 +255,7 @@ Ignore: PR volume, “agents working,” cells covered.
 | Launch DONE | Phase 4 + Jorge LAUNCH-READY in chat |
 
 CI green ≠ hop done ≠ module done ≠ launch ready.  
-Proof gate ≠ `JORGE-APPROVED` label ≠ CPA sign-off.
+Proof gate ≠ owner-approval merge label ≠ CPA sign-off.
 
 ---
 
@@ -250,7 +263,7 @@ Proof gate ≠ `JORGE-APPROVED` label ≠ CPA sign-off.
 
 - Restarting the 400+ block index as primary queue  
 - Breadth-certifying 30×13 before skeleton exit  
-- Waiting on deleted `JORGE-APPROVED` label  
+- Waiting on deleted owner-approval merge label  
 - Reintroducing a CPA / owner-label merge gate  
 - Blind-deleting unmerged branches to hit “dozens”  
 - Treating the 680-row ledger as the work queue  
@@ -279,9 +292,10 @@ Proof gate ≠ `JORGE-APPROVED` label ≠ CPA sign-off.
 |------|------|
 | 2026-08-04 | Plan from three-coder synthesis + Owner Plan + DORA/WIP + walking skeleton |
 | 2026-08-04 | #4305 cleared push blockers |
-| 2026-08-04 | **Rev B** — Claude Coder defects: NO JORGE-APPROVED; safe archive prune; WIP≤3 one counter; Hop 0; ledger reference |
+| 2026-08-04 | **Rev B** — Claude Coder defects: NO owner-approval merge label; safe archive prune; WIP≤3 one counter; Hop 0; ledger reference |
 | 2026-08-04 | Claude Coder verified Rev B in diff (all four present). Sidebar = **30** (Coder corrected own “28”). File beats chat summary. |
-| 2026-08-04 | **Rev C** — Phase 4: no CPA HOLD path; Jorge sole financial decision authority; §9 strict per-coder instructions |
+| 2026-08-04 | **Rev C** — Phase 4: no CPA path; Jorge sole financial decision authority; §9 strict per-coder instructions |
+| 2026-08-04 | **Rev D** — Claude Agent: GOVERNANCE block (coder Neon+merge); purge deleted-label token from living law; strengthen verify-no-approval-holds (2218) |
 
 ---
 
@@ -296,7 +310,7 @@ Proof gate ≠ `JORGE-APPROVED` label ≠ CPA sign-off.
 3. **One worktree per agent.** Never share a clone. Never force-push another agent’s branch.  
 4. **One hop OR one ranked FAIL per PR.** No grab-bags.  
 5. **No babysit loops.** Fix reds or one-shot re-run flake; do not sleep-poll CI.  
-6. **Merge on green + proof** (OWNER LAW). Never wait for `JORGE-APPROVED`. Never invent a CPA gate.  
+6. **Merge on green + proof** (OWNER LAW). Never wait for owner-approval merge label. Never invent a CPA gate.  
 7. Money commits: FINDING · LANE · DOD-A…E · VERIFY-1…8 · MODULE_PROGRESS · Rule 16 · MIGRATE if needed (verify-steps 1324/1430/1431).  
 8. Same-commit ledger Status update when a row is FIXED.  
 9. Rule 17: do **not** thrash `package.json` / locked CI workflows for new guards — verify-steps only.  
@@ -313,7 +327,7 @@ Proof gate ≠ `JORGE-APPROVED` label ≠ CPA sign-off.
 
 **MUST NOT**
 - Review PRs for a merge label  
-- Be asked to click `JORGE-APPROVED`  
+- Be asked to click owner-approval merge label  
 - Be treated as a CPA bottleneck  
 
 ### 9.2 Cursor (builder — FE / ops / guards / this plan)
@@ -347,7 +361,7 @@ Proof gate ≠ `JORGE-APPROVED` label ≠ CPA sign-off.
 **MUST NOT**
 - Destroy unmerged branches (archive only)  
 - Author / fork `DELIVERY-METHOD-LOCKED.md` or a competing method  
-- Wait on `JORGE-APPROVED` or invent CPA HOLD  
+- Wait on owner-approval merge label or invent CPA HOLD  
 - Edit Cursor FE hops without declared handoff  
 - Start Phase 1 skeleton hops before Jorge Hop 0 go-ahead  
 - Treat the 680-row ledger as a build queue  
@@ -410,7 +424,7 @@ BLOCKER: none | <exact>
 Any of these → **STOP and ask Jorge** before continuing:
 - Opening a 4th active feature branch  
 - Editing another role’s OWN surface from §9.6  
-- Waiting on `JORGE-APPROVED` / CPA  
+- Waiting on owner-approval merge label / CPA  
 - Starting Phase 1 without Hop 0 go  
 - Deleting an unmerged branch without `archive/` tag  
 - Inventing a fourth delivery method  
@@ -418,5 +432,5 @@ Any of these → **STOP and ask Jorge** before continuing:
 
 ---
 
-**End of full plan (rev C).**  
+**End of full plan (rev D).**  
 Amend only with Jorge in writing. Cursor is sole editor of this file.

@@ -6,7 +6,7 @@ until it is fully performed, and (B) the full spec. **"Complete" is NOT five lay
 when the repo's committed bar — **DoD A–E + VERIFY 1–8** — is PROD-VERIFIED per entity (TRANSP & USMCA; TRK where
 relevant). That bar explicitly includes **connectivity & wiring (V3)**, the **universal picker + creator law (V2)**,
 and **deep cross-module linkage forward+reverse (V4)** — not just "the table exists." The owner lifted the approval
-holds for verification (no JORGE-APPROVED gate, no asking). The owner did NOT lift honesty. A guess is a defect.
+holds for verification (no owner-approval merge label gate, no asking). The owner did NOT lift honesty. A guess is a defect.
 
 > **CHANGE LOG**
 > **v3 (2026-08-03):** "Complete" corrected from 5 layers (A–E) to the committed **DoD A–E + VERIFY 1–8**. Connectivity

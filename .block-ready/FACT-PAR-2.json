@@ -5,5 +5,5 @@
   "branch": "feat/factoring-noa-remit-enforcement",
   "title": "NOA Stamp + Remit-To Enforcement + Letter-of-Release Lifecycle",
   "migration": "db/migrations/202607160000_fact_par2_noa_remit_to.sql",
-  "guard_notes": "Migration adds 4 additive columns to factoring.factor + new factoring.letter_of_release table. No GL, no posting flags. NEVER self-merge — wait for JORGE-APPROVED label."
+  "guard_notes": "Migration adds 4 additive columns to factoring.factor + new factoring.letter_of_release table. No GL, no posting flags. Coder merges on green with proof."
 }

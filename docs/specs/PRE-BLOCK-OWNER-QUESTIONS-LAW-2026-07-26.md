@@ -2,7 +2,7 @@
 
 **Owner:** Jorge · **Binding for Cursor · Claude · Devin · Cascade**
 
-**OWNER LAW (2026-08-03, FINAL):** NO HOLDS, NO `JORGE-APPROVED` label — every coder has FULL Neon access
+**OWNER LAW (2026-08-03, FINAL):** NO HOLDS, NO owner-approval merge label — every coder has FULL Neon access
 and merge authority in every lane. See `.cursor/rules/00-operating-method-LAW.mdc` (governance section).
 §5 below is updated to match; the rest of this file (front-load questions, never re-ask at merge) is unchanged.
 
@@ -17,7 +17,7 @@ All unanswered owner questions must be settled **before** implementation starts.
 |---|---|---|
 | **Block invent / packet inventory** | Claude or Cursor (planner) | Scan module for NEW SPEC / open decisions |
 | **Before first code commit** | Builder | If any unanswered → STOP and ask Jorge once |
-| **During PR / merge** | Nobody | Do not re-ask locked decisions; do not block on `JORGE-APPROVED` |
+| **During PR / merge** | Nobody | Do not re-ask locked decisions; do not block on owner-approval merge label |
 
 ---
 
@@ -48,7 +48,7 @@ Run this as a **batch** per module (all ACCT-DOM / all BANK-DOM / all Safety) �
 - Entity which books what (TRANSP/TRK/USMCA) when not already in entity-facts  
 - Soft-delete vs void policy when not locked  
 
-**Not** unanswered: “may we merge this PR?” / “please click JORGE-APPROVED.”
+**Not** unanswered: “may we merge this PR?” / “please click owner-approval merge label.”
 
 ---
 

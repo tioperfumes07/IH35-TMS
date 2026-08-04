@@ -34,5 +34,5 @@
       "evidence": "selftest removes stamp + flips ACCT-LINK-06 to PASS — both detected"
     }
   ],
-  "note": "HOLD — FINANCIAL-HOLD honesty/keep. Do NOT merge without JORGE-APPROVED. No density theater."
+  "note": "HOLD — FINANCIAL-HOLD honesty/keep. Coder merges on green with proof; no owner-approval label. No density theater."
 }

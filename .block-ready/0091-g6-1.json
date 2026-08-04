@@ -92,12 +92,12 @@
   "linkage": "Existing entity-scoped paths only: driver_finance.driver_settlements -> driver_settlement_gl_runs -> driver_settlement_gl_bills -> driver_bills/accounting.bills/accounting.bill_payments; driver_settlement_deductions -> driver_deduction_buckets -> driver_deduction_bucket_events; accounting.journal_entries -> accounting.journal_entry_postings. Existing transaction-aware bank-account mutation is reused. No new table, FK, route, display ID, or cross-entity linkage is introduced.",
   "schema": "No schema or migration change. No DDL, backfill, RLS policy, grant, enum, column, index, or held migration is added or applied.",
   "flags": "No feature flag or posting flag is added, enabled, disabled, or otherwise changed.",
-  "hold": "TIER-1 FINANCIAL BUILD-AND-HOLD. PR #2705 must remain draft and unmerged. Prior approval cannot authorize these material corrections; a fresh JORGE-APPROVED decision after independent CPA/code review and green CI is required. No Neon apply is part of this branch.",
+  "hold": "TIER-1 FINANCIAL. Independent review + proof required. Coder merges on green and applies Neon. OWNER LAW 2026-08-03.",
   "owner_live_gates": [
     "Independent CPA/accounting re-review passes the corrected SHA.",
     "Independent code review passes the corrected SHA with no unresolved high-severity finding.",
     "All required GitHub checks pass on the corrected SHA.",
-    "Owner supplies fresh JORGE-APPROVED after those reviews; the branch is not self-merged.",
+    "Coder merges on green after independent review + proof; no owner-approval label.",
     "Any requested Neon/live proof is owner-authorized and performed separately; current live status remains UNVERIFIED."
   ],
   "deferred": [],
