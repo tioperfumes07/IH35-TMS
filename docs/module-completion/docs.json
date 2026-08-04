@@ -55,9 +55,9 @@
         "VERIFY-6"
       ],
       "spec": "Missing Required KPI honesty",
-      "status": "OPEN",
-      "evidence": "scaffold \u2014 100% missing required may be data gap not bug; needs source-of-truth check",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Neon lucia: compliance.required_document_types=54 (18/opco). Docs KPIs: Incomplete Uploads (honest rename of missing_required predicate) + Required Types count from required_document_types. Guard verify-docs-s02-required-types-kpi step 2262. DOC-REQ-2b entity-gap chip still deferred.",
+      "pr": "#pending"
     },
     {
       "id": "DOCS-VERIFY-01",
@@ -78,7 +78,7 @@
       "pr": null
     }
   ],
-  "pass_count": 0,
+  "pass_count": 2,
   "total_count": 5,
-  "progress": "0 of 5"
+  "progress": "2 of 5"
 }

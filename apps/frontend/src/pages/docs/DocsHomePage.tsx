@@ -225,7 +225,7 @@ export function DocsHomePage() {
           {kpiFilter !== "none" ? (
             <span className="pb-2 text-xs font-semibold text-gray-600">
               {kpiFilter === "missing_required"
-                ? "Missing required (no category or incomplete upload)"
+                ? "Incomplete uploads (no category or incomplete upload)"
                 : "Recent uploads (last 7 days)"}
             </span>
           ) : null}
@@ -272,8 +272,9 @@ export function DocsHomePage() {
         />
       ) : null}
 
-      {/* All four KPIs drill into the list via real filters (server predicates lockstep with /docs/kpis). */}
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+      {/* KPIs drill into the list via real filters (server predicates lockstep with /docs/kpis).
+          DOCS-S02: "Incomplete uploads" is honest for missing_required; "Required types" = catalog density. */}
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-5" data-testid="docs-kpi-strip">
         <KpiCard label="Total Docs" value={String(kpisQuery.data?.total_docs ?? 0)} onClick={clearListFilters} />
         <KpiCard
           label="Expiring 30 Days"
@@ -286,13 +287,18 @@ export function DocsHomePage() {
           }}
         />
         <KpiCard
-          label="Missing Required"
+          label="Incomplete Uploads"
           value={String(kpisQuery.data?.missing_required ?? 0)}
           onClick={() => {
             setExpiresBefore("");
             setKpiFilter("missing_required");
             setPage(1);
           }}
+        />
+        <KpiCard
+          label="Required Types"
+          value={String(kpisQuery.data?.required_types_count ?? 0)}
+          onClick={clearListFilters}
         />
         <KpiCard
           label="Recent Uploads"

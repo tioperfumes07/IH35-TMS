@@ -47,6 +47,9 @@ export async function registerDocsFoundationRoutes(app: FastifyInstance) {
     );
     if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
+    // DOCS-S02: `missing_required` is Incomplete uploads (no category OR upload incomplete) —
+    // NOT entity-gap vs compliance.required_document_types (that is DOC-REQ-2b). Also return
+    // required_types_count so the UI can show the populated catalog honestly.
     const kpis = await withCurrentUser(authUser.uuid, async (client) => {
       const res = await client.query(
         `
@@ -67,7 +70,13 @@ export async function registerDocsFoundationRoutes(app: FastifyInstance) {
             )::int AS missing_required,
             COUNT(*) FILTER (
               WHERE created_at >= (NOW() - INTERVAL '7 days')
-            )::int AS recent_uploads
+            )::int AS recent_uploads,
+            (
+              SELECT COUNT(*)::int
+              FROM compliance.required_document_types rdt
+              WHERE rdt.operating_company_id = $1
+                AND rdt.is_active = true
+            ) AS required_types_count
           FROM scoped_files
         `,
         [operatingCompanyId]
@@ -77,6 +86,7 @@ export async function registerDocsFoundationRoutes(app: FastifyInstance) {
         expiring_30_days: 0,
         missing_required: 0,
         recent_uploads: 0,
+        required_types_count: 0,
       };
     });
 
@@ -85,6 +95,7 @@ export async function registerDocsFoundationRoutes(app: FastifyInstance) {
       expiring_30_days: Number(kpis.expiring_30_days ?? 0),
       missing_required: Number(kpis.missing_required ?? 0),
       recent_uploads: Number(kpis.recent_uploads ?? 0),
+      required_types_count: Number(kpis.required_types_count ?? 0),
     };
   });
 
@@ -134,7 +145,7 @@ export async function registerDocsFoundationRoutes(app: FastifyInstance) {
         whereClauses.push(`f.expiration_date IS NOT NULL AND f.expiration_date <= $${idx}::date`);
       }
 
-      // Lockstep with kpis.missing_required: category_id IS NULL OR upload_completed_at IS NULL
+      // Lockstep with kpis.missing_required (= Incomplete uploads): category_id IS NULL OR upload incomplete
       if (query.missing_required === "true") {
         whereClauses.push(`(f.category_id IS NULL OR f.upload_completed_at IS NULL)`);
       }

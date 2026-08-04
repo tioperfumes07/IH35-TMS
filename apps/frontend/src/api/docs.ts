@@ -60,8 +60,11 @@ export type DocsFile = {
 export type DocsFoundationKpis = {
   total_docs: number;
   expiring_30_days: number;
+  /** Incomplete uploads (no category or upload incomplete) — NOT entity-gap vs required types. */
   missing_required: number;
   recent_uploads: number;
+  /** Active compliance.required_document_types for the opco (DOCS-S02). */
+  required_types_count: number;
 };
 
 export type DocsFoundationRow = {
