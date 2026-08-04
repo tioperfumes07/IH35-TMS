@@ -88,10 +88,37 @@ function walk(dir, out = []) {
   return out;
 }
 
+/**
+ * A test that PROVES the defect still throws must be allowed to contain the defective SQL as a
+ * negative control. That exemption is deliberately narrow and needs BOTH conditions, so it can
+ * never quietly cover product code:
+ *   1. the file is a test file (__tests__/ or *.test.ts), AND
+ *   2. the offending line (or the line above it) carries the explicit marker below.
+ * A marker in a product file does NOT suppress the finding — asserted in the selftest.
+ */
+const NEGATIVE_CONTROL_MARKER = "guard-allow:extract-date-diff-negative-control";
+
+function isTestPath(rel) {
+  return /(^|\/)__tests__\//.test(rel) || /\.test\.[cm]?tsx?$/.test(rel);
+}
+
+const MARKER_LOOKBACK_LINES = 8;
+
+function isExemptOccurrence(rel, text, index) {
+  if (!isTestPath(rel)) return false;
+  const lineNo = text.slice(0, index).split("\n").length; // 1-based line of the occurrence
+  const all = text.split("\n");
+  const from = Math.max(0, lineNo - 1 - MARKER_LOOKBACK_LINES);
+  return all
+    .slice(from, lineNo)
+    .some((l) => l.includes(NEGATIVE_CONTROL_MARKER));
+}
+
 function assertText(rel, text) {
   const problems = [];
   for (const span of extractSpans(text)) {
     if (DATE_MINUS_DATE.test(span.operand)) {
+      if (isExemptOccurrence(rel, text, span.index)) continue;
       const line = text.slice(0, span.index).split("\n").length;
       problems.push(
         `${rel}:${line}: EXTRACT() wraps a DATE-minus-DATE subtraction — that operand is INTEGER, ` +
@@ -147,6 +174,22 @@ if (SELFTEST) {
   const realSrc = readFileSync(path.join(ROOT, FIXED_FILE), "utf8");
   if (assertText(FIXED_FILE, realSrc).length) {
     failures.push(`${FIXED_FILE} still contains the defect`);
+  }
+
+  // 5. Negative-control exemption must be NARROW: test file + explicit marker only.
+  const defect = `EXTRACT(DAY FROM (current_date - i.issue_date))`;
+  const markered = `// ${NEGATIVE_CONTROL_MARKER}\n${defect}`;
+  // 5a. marker in a TEST file suppresses (that is the whole point)
+  if (assertText("apps/backend/src/x/__tests__/a.db.test.ts", markered).length) {
+    failures.push("marker in a test file failed to exempt the negative control");
+  }
+  // 5b. marker in a PRODUCT file must NOT suppress — the exemption must never cover product SQL
+  if (!assertText("apps/backend/src/x/scorer.service.ts", markered).length) {
+    failures.push("marker wrongly suppressed the defect in a PRODUCT file — exemption is too wide");
+  }
+  // 5c. a test file WITHOUT the marker is still flagged (no blanket test-directory blind spot)
+  if (!assertText("apps/backend/src/x/__tests__/a.db.test.ts", defect).length) {
+    failures.push("unmarked defect in a test file was not flagged — test dirs must not be a blind spot");
   }
 
   if (failures.length) {
