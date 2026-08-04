@@ -709,7 +709,15 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
 
     await withHeartbeat(batchId, { phase: "attachments:transactions" }, async () => {
       for (const tx of txRows.rows) {
-      const whereClause = `TxnDate >= '${sinceDate}' AND AttachableRef.EntityRef.value = '${tx.qbo_txn_id}'`;
+      // QBO-F01: Attachable has NO TxnDate property. Filtering on it made QBO reject EVERY attachment
+      // query with 400 ValidationFault code 4001 ("Property TxnDate not found for Entity Attachable"),
+      // so the forensic import fetched zero attachments while logging one failure per transaction.
+      //
+      // The predicate was also redundant: the transaction rows this loop iterates were already selected
+      // WHERE txn_date >= $3 above, so the date window is enforced by WHICH transactions we ask about.
+      // Attachments are located by their entity reference, which is the documented way to find the
+      // attachments of a transaction.
+      const whereClause = `AttachableRef.EntityRef.value = '${tx.qbo_txn_id}'`;
       let pageStart = 1;
       try {
         for await (const page of qboPaginateEntity<Record<string, unknown>>(qboContext, "Attachable", whereClause)) {
