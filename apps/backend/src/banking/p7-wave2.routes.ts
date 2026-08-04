@@ -42,7 +42,8 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
       await appendCrudAudit(client, user.uuid, "banking.txn_review_list", { operating_company_id: q.operating_company_id }, "info", "P7-W2-BANK");
 
       const rulesRes = await client.query(
-        `SELECT priority, description_contains, description_regex, amount_min_cents, amount_max_cents,
+        `SELECT priority, description_contains, description_regex, merchant_contains,
+                amount_min_cents, amount_max_cents,
                 bank_account_filter_id, then_vendor_id, then_account_id, then_class_id
          FROM accounting.banking_rules
          WHERE operating_company_id = $1 AND is_active = true`,
@@ -96,6 +97,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
           mergeSuggestionPreferHigher(
             suggestionFromRules(rules, {
               description_normalized: row.description_normalized as string | null,
+              merchant_name: (row.merchant_name as string | null) ?? null,
               amount_cents: Number(row.amount_cents),
               bank_account_id: String(row.bank_account_id),
             }),
@@ -199,6 +201,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
         priority: z.coerce.number().int().optional().default(0),
         description_contains: z.string().optional(),
         description_regex: z.string().optional(),
+        merchant_contains: z.string().optional(),
         amount_min_cents: z.coerce.number().int().optional(),
         amount_max_cents: z.coerce.number().int().optional(),
         bank_account_filter_id: z.string().uuid().optional(),
@@ -219,12 +222,12 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
       const ins = await client.query(
         `
           INSERT INTO accounting.banking_rules (
-            operating_company_id, priority, description_contains, description_regex,
+            operating_company_id, priority, description_contains, description_regex, merchant_contains,
             amount_min_cents, amount_max_cents, bank_account_filter_id,
             then_vendor_id, then_account_id, then_class_id, then_memo_template,
             created_by_user_id
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::uuid)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::uuid)
           RETURNING id
         `,
         [
@@ -232,6 +235,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
           body.data.priority,
           body.data.description_contains ?? null,
           body.data.description_regex ?? null,
+          body.data.merchant_contains ?? null,
           body.data.amount_min_cents ?? null,
           body.data.amount_max_cents ?? null,
           body.data.bank_account_filter_id ?? null,
@@ -316,7 +320,8 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
         return;
       }
       const rulesRes = await client.query(
-        `SELECT priority, description_contains, description_regex, amount_min_cents, amount_max_cents,
+        `SELECT priority, description_contains, description_regex, merchant_contains,
+                amount_min_cents, amount_max_cents,
                 bank_account_filter_id, then_vendor_id, then_account_id, then_class_id
          FROM accounting.banking_rules
          WHERE operating_company_id = $1 AND is_active = true`,
@@ -324,6 +329,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
       );
       const sug = suggestionFromRules(rulesRes.rows as BankingRuleRow[], {
         description_normalized: row.description_normalized as string | null,
+        merchant_name: (row.merchant_name as string | null) ?? null,
         amount_cents: Number(row.amount_cents),
         bank_account_id: String(row.bank_account_id),
       });

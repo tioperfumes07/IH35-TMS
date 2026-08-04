@@ -7,7 +7,10 @@ import {
   mergeManualBankTransactionStub,
   normalizeBankTransactionDescription,
 } from "../../banking/bank-tx-dedup.js";
-import { applyBankingRulesForTransaction } from "../../banking/banking-rules.engine.js";
+import {
+  applyBankingRulesForTransaction,
+  autoCategorizeFromBankingRules,
+} from "../../banking/banking-rules.engine.js";
 import { maybePostBankCategorizationToGl } from "../../banking/bank-feed-gl-posting.service.js";
 import { dispatchNotification, listCompanyUserIdsByRoles } from "../../notifications/dispatcher.js";
 import { sendEmail } from "../../notifications/email.service.js";
@@ -688,14 +691,22 @@ export async function syncTransactions(itemId: string, opts?: { actorUserUuid?: 
               normalizedDescription,
             });
             counts.autoCategorizeTotal += 1;
-            const matched = await autoCategorize(
-              {
-                id: row.id,
-                operating_company_id: row.operating_company_id,
-                plaid_category: row.plaid_category ?? [],
-              },
+            // Merchant/description banking_rules win BEFORE Plaid parent/leaf category patterns
+            // so FUEL AMERICA stays Fuel when TRANSPORTATION parent matching is later narrowed.
+            const ruleMatched = await autoCategorizeFromBankingRules(
+              { id: row.id, operating_company_id: row.operating_company_id },
               { actorUserUuid: opts?.actorUserUuid }
             );
+            const matched =
+              ruleMatched ??
+              (await autoCategorize(
+                {
+                  id: row.id,
+                  operating_company_id: row.operating_company_id,
+                  plaid_category: row.plaid_category ?? [],
+                },
+                { actorUserUuid: opts?.actorUserUuid }
+              ));
             if (matched) counts.autoCategorizeMatched += 1;
             else counts.autoCategorizeUnmatched += 1;
           }

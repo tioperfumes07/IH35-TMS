@@ -6,6 +6,7 @@ export type BankingRuleRow = {
   priority: number;
   description_contains: string | null;
   description_regex: string | null;
+  merchant_contains?: string | null;
   amount_min_cents: number | null;
   amount_max_cents: number | null;
   bank_account_filter_id: string | null;
@@ -27,18 +28,33 @@ export function suggestionFromRules(
   rules: BankingRuleRow[],
   ctx: {
     description_normalized: string | null;
+    merchant_name?: string | null;
     amount_cents: number;
     bank_account_id: string;
   }
 ): SuggestionResult | null {
   const sorted = [...rules].sort((a, b) => b.priority - a.priority);
   const desc = (ctx.description_normalized ?? "").toLowerCase();
+  const normalize = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[''`´ʼ]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
   for (const r of sorted) {
     if (r.bank_account_filter_id && r.bank_account_filter_id !== ctx.bank_account_id) continue;
     if (r.amount_min_cents !== null && ctx.amount_cents < r.amount_min_cents) continue;
     if (r.amount_max_cents !== null && ctx.amount_cents > r.amount_max_cents) continue;
+    const hasText = Boolean(
+      r.merchant_contains?.trim() || r.description_contains?.trim() || r.description_regex?.trim()
+    );
+    if (!hasText) continue;
+    if (r.merchant_contains?.trim()) {
+      const hay = normalize(`${ctx.merchant_name ?? ""} ${ctx.description_normalized ?? ""}`);
+      if (!hay.includes(normalize(r.merchant_contains))) continue;
+    }
     if (r.description_contains) {
-      if (!desc.includes(r.description_contains.toLowerCase())) continue;
+      if (!normalize(desc).includes(normalize(r.description_contains))) continue;
     }
     if (r.description_regex) {
       try {
