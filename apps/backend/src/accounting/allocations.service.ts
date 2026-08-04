@@ -148,8 +148,9 @@ export async function listBillUnitAllocations(
         bill_date: row.bill_date,
         bill_amount_cents: Number(row.bill_amount_cents ?? 0),
         vendor_id: vendorId,
-        // ACCT-F84 — canonical uuid for drill-through; vendor_id stays for display/filter only.
-        mdata_vendor_id: row.bill_mdata_vendor_id ?? null,
+        vendor_uuid: row.bill_vendor_uuid ?? null,
+        // ACCT-F603 — prefer vendor_uuid; mdata_vendor_id is the backfilled FK column.
+        mdata_vendor_id: row.bill_mdata_vendor_id ?? row.bill_vendor_uuid ?? null,
         vendor_name: vendorId ? vendorNames[vendorId] ?? vendorId : null,
         asset_id: row.asset_id,
         unit_code: row.unit_code,

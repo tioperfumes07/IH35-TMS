@@ -54,8 +54,15 @@ export function assertBillDetail({ service, detailPage, api, manifest, entityLin
       "backend: do not cast COALESCE(b.vendor_id, b.vendor_uuid) to ::uuid — vendor_id is free-form text and a non-uuid value raises instead of not matching. Cast v.id::text instead"
     );
   }
-  if (!/v\.id::text\s*=\s*COALESCE\(b\.vendor_id, b\.vendor_uuid\)/.test(service)) {
-    errors.push("backend: the vendor join must be v.id::text = COALESCE(b.vendor_id, b.vendor_uuid)");
+  const hasLegacyTextJoin = /v\.id::text\s*=\s*COALESCE\(b\.vendor_id, b\.vendor_uuid\)/.test(service);
+  const hasCanonicalJoin =
+    /BILL_VENDOR_RESOLVE_JOIN_SQL/.test(service) &&
+    /b\.mdata_vendor_id/.test(service) &&
+    /v\.qbo_vendor_id = b\.vendor_id/.test(service);
+  if (!hasLegacyTextJoin && !hasCanonicalJoin) {
+    errors.push(
+      "backend: vendor join must use v.id::text = COALESCE(b.vendor_id, b.vendor_uuid) or BILL_VENDOR_RESOLVE_JOIN_SQL (mdata_vendor_id + qbo_vendor_id bridge)"
+    );
   }
 
   if (!/path=["']\/accounting\/bills\/:id["']/.test(manifest)) {
