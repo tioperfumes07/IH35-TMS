@@ -27,6 +27,22 @@ Everything is verified against live evidence — no guessing, ever.
   NOT proof. Ledgered ≠ effective. CI-green ≠ done. Merged ≠ done. Deployed ≠ live until `/healthz/shallow`
   version == merge SHA.
 - Cannot verify → say **"UNVERIFIED — needs live check"**, never a guess.
+- **★★ CLASSIFY ROW ORIGIN BEFORE CALLING ANY GAP A DEFECT (owner ruling 2026-08-04 —
+  `docs/lockdown/LOAD-LINKAGE-SCOPE-RULING-2026-08-04.md`).** Imported rows are legitimately unlinked /
+  unposted; that is **EXPECTED STATE, not a defect**, and "fixing" it means **inventing** financial data.
+  Same shape, twice, both verified on prod: ledger **row 665** — 16,245 of 16,250 `accounting.bills` are
+  QBO clones, so "no journal entry" is CORRECT under parallel books (a backfill would DOUBLE the books);
+  **LINK-F01** — all 1,548 `fuel.fuel_transactions` are `relay_ingest`, so `load_id IS NULL` is CORRECT
+  because the TMS has not dispatched loads yet. **Load linkage is going-forward ONLY. NEVER invent a
+  load FK.** Mark the historical cohort exempt (`load_required=false`,
+  `load_exemption_reason='PRE_TMS_DISPATCH_IMPORT'`) and guard only that NEW TMS-native records link.
+  **Mandatory before reporting any gap:** (1) what fraction of rows are import-origin (`qbo_*_id`,
+  `notes ILIKE '%relay_bridge=1%'`, `source_system`, import-cohort dates)? (2) could the TMS ever have
+  produced the "missing" thing for those rows? (3) if no → say EXPECTED STATE, open no card, and build no
+  guard that reddens on it. **Guards scope to TMS-native records, never the whole table** — a guard red on
+  expected state is the `expected-state-recorded-as-failure` anti-pattern. Getting this right once does
+  not count; apply the origin test every time. Also: `mdata.loads` is a **RETIRE table** (§10) — its row
+  count is NOT authoritative evidence; canonical emptiness lives in `dispatch.*` / `expense_attribution.*`.
 - **Precedence:** FACTS (schema/canonical/prod state) → CI guard > this skill (prod-verified) > repo > memory;
   **DECISIONS** (approvals, canonical picks, merges, flag intent) → the **OWNER** wins — a doc never overrides an owner ruling.
 
