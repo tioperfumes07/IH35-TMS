@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import type { MaintenancePartRow } from "../../api/maintenance";
 import partsStockPage from "./InventoryPartsStockPage.tsx?raw";
-import { mapMaintenancePartsToInventoryRows, type MaintenancePartRow } from "./InventoryPartsStockPage";
+import { mapMaintenancePartsToInventoryRows } from "./InventoryPartsStockPage";
 
 // B1: the inventory Parts & Stock page reads /api/v1/maintenance/parts (the real backend) and maps
 // its row shape onto the page's columns. This locks the field mapping + status derivation.
@@ -12,11 +13,14 @@ const base: MaintenancePartRow = {
   category: "Brakes",
   notes: "OEM only",
   vendor_id: "v-11111111-1111-1111-1111-111111111111",
+  vendor_default: null,
   unit_cost: 42.5,
   qty_on_hand: 7,
   reorder_threshold: 4,
   location: "A-12",
+  source: "manual",
   voided_at: null,
+  voided_reason: null,
 };
 
 describe("InventoryPartsStockPage read path", () => {
@@ -73,12 +77,17 @@ describe("mapMaintenancePartsToInventoryRows", () => {
   });
 
   it("defaults missing reorder_threshold to 0", () => {
-    const [row] = mapMaintenancePartsToInventoryRows([{ ...base, reorder_threshold: undefined }]);
+    const [row] = mapMaintenancePartsToInventoryRows([
+      { ...base, reorder_threshold: undefined } as unknown as MaintenancePartRow,
+    ]);
     expect(row.reorder_threshold).toBe(0);
   });
 
   it("treats null qty as 0 and tolerates an empty list", () => {
-    expect(mapMaintenancePartsToInventoryRows([{ ...base, qty_on_hand: null }])[0].on_hand_qty).toBe(0);
+    expect(
+      mapMaintenancePartsToInventoryRows([{ ...base, qty_on_hand: null } as unknown as MaintenancePartRow])[0]
+        .on_hand_qty,
+    ).toBe(0);
     expect(mapMaintenancePartsToInventoryRows([])).toEqual([]);
   });
 });

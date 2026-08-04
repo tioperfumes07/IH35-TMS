@@ -84,18 +84,6 @@ const columns: ParityColumn<InventoryPartRow>[] = [
 // B1: the inventory "Parts & Stock" page reads the real maintenance.parts_inventory table via
 // /api/v1/maintenance/parts (the only parts backend — there is no /api/v1/inventory/parts route).
 // Map that endpoint's row shape onto the columns this page renders. Pure fn, unit-tested.
-export type MaintenancePartRow = {
-  id: string;
-  part_number: string | null;
-  name: string | null;
-  category: string | null;
-  notes: string | null;
-  unit_cost: number | null;
-  qty_on_hand: number | null;
-  reorder_threshold?: number | null;
-  location: string | null;
-  voided_at: string | null;
-};
 export type InventoryPartRow = {
   id: string;
   name: string | null;
