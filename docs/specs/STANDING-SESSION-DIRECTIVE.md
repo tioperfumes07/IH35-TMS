@@ -11,6 +11,7 @@ The owner **will follow your recommendation** when it is honest, verified, resea
 - **Fix your own red PRs first**, then continue.
 - **Kill rule:** if stuck after ~3 real tries, hand off with written evidence and pick up the next item — do **not** babysit a red CI, and do **not** stop working.
 - Always working, always moving the active load slice or the current module forward.
+- **Cursor PR titles (permanent):** every Pull Request Cursor opens **MUST** begin with `Cursor-` (e.g. `Cursor- fix: …`). Enforced by `.cursor/rules/34-cursor-pr-title-prefix.mdc` + `verify-cursor-pr-title-prefix` (step **2377**).
 
 ## 2. TIERED MODEL — no wasted tokens
 Use the **lowest model tier that does the task correctly**:

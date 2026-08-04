@@ -1,0 +1,21 @@
+---
+description: ALWAYS — Every Cursor PR title MUST begin with "Cursor-"
+alwaysApply: true
+---
+
+# Cursor PR title prefix (permanent — owner 2026-08-04)
+
+**Every Pull Request opened by Cursor MUST begin with `Cursor-`.**
+
+Examples:
+- `Cursor- fix: …`
+- `Cursor- docs: …`
+- `Cursor- chore: …`
+
+Forbidden:
+- Titles without the `Cursor-` prefix
+- Soft variants (`cursor:`, `[Cursor]`, `CURSOR -`)
+
+Enforced by `scripts/verify-cursor-pr-title-prefix.mjs` (verify-step **2377**) when `GATE_PR_TITLE` is set (PR CI) or when the branch name starts with `cursor/`.
+
+Companion: `docs/specs/STANDING-SESSION-DIRECTIVE.md` · `docs/specs/OWNER-QUALITY-COMPACT.md`.
