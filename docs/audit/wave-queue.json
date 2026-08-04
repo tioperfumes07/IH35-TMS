@@ -21,7 +21,7 @@
         {
           "path": "~$4,594 tires/tolls miscategorized into Fuel GL (TRANSP) — residual after CLS-FUEL-DOUBLE-POST false premise retracted",
           "entity": "TRANSP",
-          "note": "Owner/Claude 2026-08-03: $47.7K Fuel gap was Relay-card-only vs all-sources GL (scope mismatch), not double-post. Real defect is miscategorization into Fuel. Claude Coder owns the mapping fix. Scoreboard row 673."
+          "note": "Tooling shipped 2026-08-03 (#4229 merchant seeds, #4230 leaf>parent, #4231 dry-run reclass manifest net $4,398.24 Neon-pinned, #4232 real fuel guards). Instance remains OPEN until owner Neon-applies banking_rules migration + runs reclass --apply. Scoreboard row 673."
         }
       ],
       "completeness": "lucia-bypass Neon prod: expense_category_account_map count=27 (seeded 2026-08-03). All 5 TMS-native bills carry balanced JEs (0 CATEGORY_MAPPING_MISSING remaining). Fuel density: fuel_transactions=1547 / fuel-posting batches=1547. Positive control: posting_batches status=posted > 180. Tires/tolls $4,594 instance still OPEN for Claude mapping fix.",
