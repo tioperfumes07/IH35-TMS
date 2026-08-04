@@ -241,7 +241,7 @@ export async function sendDraftInvoice(
   // A post failure is SURFACED, never swallowed, and never rolls back an invoice the customer has
   // already been sent — the send is a business act that stands on its own. Retriable via the existing
   // manual post endpoint.
-  const invoiceGl = await postInvoiceGlIfEnabled(input.operatingCompanyId, input.invoiceId, {
+  const invoiceGl = await postInvoiceGlIfEnabled(client as never, input.operatingCompanyId, input.invoiceId, {
     userId: input.userId,
   });
   if (!invoiceGl.posted && invoiceGl.reason === "post_failed") {
