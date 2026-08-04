@@ -5,6 +5,10 @@ description: The durable operating standards for the IH35-TMS repository — per
 
 # IH35-TMS — Operating Standards
 
+**★★ SESSION BOOT (every agent):** load `docs/specs/STANDING-SESSION-DIRECTIVE.md` then
+`docs/specs/DELIVERY-METHOD-LOCKED.md` before other work. Cursor = screens/janitor; Claude Coder = money/Neon;
+Cascade = active-slice auditor. Presence ratchet: `scripts/verify-standing-directive-present.mjs` (step 2374).
+
 This system holds **live financial and legal-evidence data** for a real operating carrier (IH35 Dispatch /
 IH35 Trucking, Laredo TX ↔ Mexico). Treat every change as production-affecting. **§1 (permissions) overrides
 everything. When unsure, STOP and ask.**

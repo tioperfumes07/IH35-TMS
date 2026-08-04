@@ -16,6 +16,10 @@ apply migrations + flip posting flags themselves on Neon. Owner steers by DECISI
 label or a merge click. Safeguard = PROOF, not approval.** See `.cursor/rules/00-operating-method-LAW.mdc`
 (governance section) for the canonical statement; on conflict with any other file in this list, OWNER LAW wins.
 
+**★★ STANDING SESSION LOAD (every agent, every turn):**  
+`docs/specs/STANDING-SESSION-DIRECTIVE.md` + `docs/specs/DELIVERY-METHOD-LOCKED.md`  
+(Cursor rule `33-standing-session-directive.mdc` · Windsurf `standing-session-directive.md` · CI step **2374**).
+
 These are standing law. They load via always-apply Cursor rules AND must be treated as already in force:
 
 1. **`docs/specs/CURSOR-OPERATING-CONSTITUTION.md`** — Cursor's permanent operating charter (hardline, permissions, verification, linkage, multi-agent, research). Applies to every task/session/agent. Does not expire. When instructions conflict, the **more conservative / more protective** reading wins.
