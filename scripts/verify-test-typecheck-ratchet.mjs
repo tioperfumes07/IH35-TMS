@@ -39,7 +39,10 @@ const WRITE = process.argv.includes("--write");
 const SELFTEST = process.argv.includes("--selftest");
 
 const GATED_CODE = "TS2339";
-const TEST_PATH = /(^|\/)__tests__\/|\.test\.[cm]?tsx?$/;
+// Each alternative is explicitly grouped so the `$` anchor binds only to the filename branch.
+// Un-grouped (`a|b$`) the precedence is ambiguous and CodeQL flags it (js/regex/missing-regexp-anchor)
+// — correctly: a reader cannot tell whether `$` applies to the whole pattern or just the last branch.
+const TEST_PATH = /(?:(?:^|\/)__tests__\/)|(?:\.test\.[cm]?tsx?$)/;
 
 /** `file(line,col): error TS2339: Property 'x' does not exist on type 'Y'.` -> stable key */
 export function parseTscLine(line) {
