@@ -1205,7 +1205,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.patch("/api/v1/dispatch/loads/:id/transition", async (req, reply) => {
+  app.patch("/api/v1/dispatch/loads/:id/transition", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const params = dispatchLoadIdParamsSchema.safeParse(req.params ?? {});
