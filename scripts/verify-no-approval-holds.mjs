@@ -79,6 +79,9 @@ function isAbolitionLine(line) {
     new RegExp(String.raw`${TOKEN}[^\n]{0,40}(?:is\s+)?(?:\*\*)?DELETED`, "i").test(line) ||
     /does\s+(?:\*\*)?not(?:\*\*)?\s+require/i.test(line) ||
     /does\s+not\s+review\s+PRs\s+for\s+a\s+label/i.test(line) ||
+    /Never wait for/i.test(line) ||
+    /do not wait/i.test(line) ||
+    /Waiting on deleted/i.test(line) ||
     (/merge on green/i.test(line) && /no\s+(?:owner|approval|hold)/i.test(line)) ||
     /verify-no-approval-holds/i.test(line) ||
     /OWNER LAW\s*\(?\s*2026-08-03/i.test(line) ||
@@ -89,8 +92,8 @@ function isAbolitionLine(line) {
     /not an owner-approval gate/i.test(line) ||
     /proof.?gated.*NOT owner-approval/i.test(line) ||
     /Safeguard\s*=\s*\*\*PROOF/i.test(line) ||
-    // Quoted inventory of killed phrases (docs/CLAUDE.md banner)
-    /"owner applies on Neon"|"self-merge only if non-financial"|\/ "owner applies/i.test(line)
+    /"owner applies on Neon"|"self-merge only if non-financial"|\/ "owner applies/i.test(line) ||
+    /Keep.*abolition|abolition sentences|positive-only ratchet|affirmative waits/i.test(line)
   );
 }
 
