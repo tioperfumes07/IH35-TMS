@@ -207,7 +207,23 @@ export function CreateWOSectionIdentification({
           />
         </Field>
         <Field label="Load # auto — unit on active trip">
-          <input {...register("load_id", { required: requireLoad })} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+          {/* M-18: G18 load FK must be EntityPicker kind=load — never raw UUID text. */}
+          {operatingCompanyId && setValue ? (
+            <div data-testid="wo-load-entity-picker">
+              <input type="hidden" {...register("load_id", { required: requireLoad })} />
+              <EntityPicker
+                kind="load"
+                operatingCompanyId={operatingCompanyId}
+                value={watch("load_id") || null}
+                onChange={(value) => setValue("load_id", value ?? "", { shouldDirty: true })}
+                placeholder="Search load…"
+                dataField="load_id"
+                className="h-8 w-full text-sm"
+              />
+            </div>
+          ) : (
+            <input {...register("load_id", { required: requireLoad })} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+          )}
         </Field>
       </div>
       <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
@@ -387,8 +403,23 @@ export function CreateWOSectionIdentification({
               <input {...register("roadside_provider_vendor_id")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
             )}
           </Field>
-          <Field label="Breakdown Load ID *">
-            <input {...register("roadside_breakdown_load_id")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+          <Field label="Breakdown Load *">
+            {operatingCompanyId && setValue ? (
+              <div data-testid="wo-breakdown-load-entity-picker">
+                <input type="hidden" {...register("roadside_breakdown_load_id")} />
+                <EntityPicker
+                  kind="load"
+                  operatingCompanyId={operatingCompanyId}
+                  value={watch("roadside_breakdown_load_id") || null}
+                  onChange={(value) => setValue("roadside_breakdown_load_id", value ?? "", { shouldDirty: true })}
+                  placeholder="Search breakdown load…"
+                  dataField="roadside_breakdown_load_id"
+                  className="h-8 w-full text-sm"
+                />
+              </div>
+            ) : (
+              <input {...register("roadside_breakdown_load_id")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+            )}
           </Field>
           <div className="md:col-span-4">
             <Field label="Roadside Location (min 10 chars) *">
