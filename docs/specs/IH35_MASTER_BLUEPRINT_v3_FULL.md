@@ -1290,7 +1290,15 @@ DR  Driver Receivable          (entity = driver-vendor, class = unit)      $X
 
 **WF mapping:** WF-035, WF-036.
 
-**MUST 3.13.3.3.A** — A driver-liable expense MUST require the driver's signed acknowledgment per WF-036 BEFORE the deduction schedule is auto-applied to settlements. Until acknowledgment, the deduction is `pending_acknowledgment` and does not auto-deduct.
+**MUST 3.13.3.3.A** — ~~A driver-liable expense MUST require the driver's signed acknowledgment per WF-036 BEFORE the deduction schedule is auto-applied to settlements. Until acknowledgment, the deduction is `pending_acknowledgment` and does not auto-deduct.~~
+
+> **⛔ SUPERSEDED — OWNER RULING 2026-08-05.** There is **NO per-charge driver acknowledgment gate.**
+> Driver deductions are authorized by the **signed HIRE POLICY** at hire, and the **company decides the
+> deduction at settlement preparation**. A `pending_acknowledgment` state that blocks auto-deduction
+> must **not** be built or re-introduced. Owner decision wins over spec (§0 precedence: DECISIONS →
+> the owner). Recorded in `docs/lockdown/00_LOCKED_DECISIONS.md` §9.5,
+> `.claude/skills/ih35-tms-standards/SKILL.md` §6, and `docs/CLAUDE.md`.
+> **Do not re-add this gate.** The signed hire policy is the authorization of record.
 
 #### 3.13.3.4 Internal company fine (policy violation) [WF-035]
 
@@ -1307,7 +1315,14 @@ DR  Driver Receivable          (entity = driver-vendor, class = unit)      $X
 
 **WF mapping:** WF-035, WF-036.
 
-**MUST 3.13.3.4.A** — Internal fines MUST also require signed acknowledgment per WF-036 before deducting.
+**MUST 3.13.3.4.A** — ~~Internal fines MUST also require signed acknowledgment per WF-036 before deducting.~~
+
+> **⛔ SUPERSEDED — same OWNER RULING 2026-08-05** as MUST 3.13.3.3.A above. This MUST is the SAME
+> acknowledgment gate applied to internal fines; the ruling names 3.13.3.3.A explicitly, and this
+> sibling is annotated with it because leaving it live would let the gate be re-added here on the
+> next read — the exact re-introduction the owner ruled out. **Flagged for owner confirmation:** if
+> internal fines are meant to KEEP a per-charge acknowledgment while other driver-liable expenses do
+> not, say so and this annotation is reverted. Absent that, hire-policy authorization governs both.
 
 #### 3.13.3.5 Accident damage — driver at fault, full responsibility [WF-035, WF-007]
 

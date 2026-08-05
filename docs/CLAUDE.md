@@ -46,6 +46,15 @@
   verify-step but not `verify:arch-design`, and PRs kept going red. Requires a local Postgres SERVER binary
   (Postgres.app or `brew install postgresql@16`); takes ~6-10 min. Run it before every substantive push.
 
+> **★ DRIVER DEDUCTION AUTHORIZATION — OWNER RULING 2026-08-05 (binding, supersedes the blueprint):**
+> Driver deductions are authorized by the **signed HIRE POLICY** at hire and **decided by the company at
+> settlement preparation**. There is **NO per-expense / per-charge driver acknowledgment** before
+> auto-deduction and no `pending_acknowledgment` blocking state. This **SUPERSEDES blueprint
+> `MUST 3.13.3.3.A`** and its sibling `MUST 3.13.3.4.A` (internal fines), which are struck through and
+> annotated in `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md`. **Do not re-add the acknowledgment gate.**
+> Owner decision wins over spec (§0 precedence). Canonical: `docs/lockdown/00_LOCKED_DECISIONS.md` §9.5 +
+> `.claude/skills/ih35-tms-standards/SKILL.md` §6.
+
 ## 1a) LINKAGE LAW + CANONICAL WIRING (read before any block)
 
 The LINKAGE law + canonical table map now lives in the **auto-loaded** skill

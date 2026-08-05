@@ -130,6 +130,12 @@ session boot; **verified live on prod `br-fancy-credit-akjnd07a` 2026-08-05** (`
 USMCA true / 22 / 0. Flag-key DEFAULTS remain OFF; the per-entity overrides above drive the ON state, and only
 the owner decides in chat when a flag flips.
 Factoring = secured borrowing/recourse; drivers Mexican-B1 1099 (wage/fee, never % of linehaul).
+**DEDUCTION AUTHORIZATION — OWNER RULING 2026-08-05 (supersedes blueprint MUST 3.13.3.3.A / 3.13.3.4.A):**
+driver deductions are authorized by the **signed HIRE POLICY** at hire and **decided by the company at
+settlement preparation**. There is **NO per-charge / per-expense driver acknowledgment gate** — do not build
+`pending_acknowledgment`, a driver e-sign step, or any "acknowledge before auto-deduct" block, and do not
+re-add one from the blueprint (the MUSTs there are struck through and annotated). Owner decision wins over
+spec (§0 precedence: DECISIONS → the owner). Also in `00_LOCKED_DECISIONS.md` §9.5 and `docs/CLAUDE.md`.
 US GAAP/ASC — Ch.11 = ASC 470-60 (NOT 852), 606 revenue, 842 leases; cutover 04/01/2026, OB 03/31 owner-entered.
 
 ## §7. Product & design locks (additive-only — never silently redesign)
