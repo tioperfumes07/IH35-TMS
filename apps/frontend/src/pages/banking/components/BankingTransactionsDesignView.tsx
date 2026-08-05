@@ -35,8 +35,7 @@ import { useToast } from "../../../components/Toast";
 import { formatUsdCents } from "../../../lib/money";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
-import { TrailerAutocomplete } from "../../../components/banking/TrailerAutocomplete";
-import { LoadAutocomplete } from "../../../components/banking/LoadAutocomplete";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { listVendors, listCustomers } from "../../../api/mdata";
 import { classesCatalogClient, itemsCatalogClient, type AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import { BankTransactionSplitModal } from "./BankTransactionSplitModal";
@@ -1895,10 +1894,13 @@ export function BankingTransactionsDesignView({
             <div className="text-xs text-gray-600">
               Trailer
               <div className="mt-0.5">
-                <TrailerAutocomplete
-                  companyId={companyId}
-                  value={draft.trailerId}
-                  onChange={(trailerId, trailerName) => setDraft(tx, { trailerId, trailerName })}
+                <EntityPicker
+                  kind="trailer"
+                  operatingCompanyId={companyId}
+                  value={draft.trailerId || null}
+                  onChange={(trailerId) => setDraft(tx, { trailerId: trailerId ?? "", trailerName: "" })}
+                  placeholder="Search trailer (optional)"
+                  allowClear
                 />
               </div>
               {draft.trailerId ? (
@@ -1917,10 +1919,13 @@ export function BankingTransactionsDesignView({
             <div className="text-xs text-gray-600">
               Trip (load)
               <div className="mt-0.5">
-                <LoadAutocomplete
-                  companyId={companyId}
-                  value={draft.loadId}
-                  onChange={(loadId, loadName) => setDraft(tx, { loadId, loadName })}
+                <EntityPicker
+                  kind="load"
+                  operatingCompanyId={companyId}
+                  value={draft.loadId || null}
+                  onChange={(loadId) => setDraft(tx, { loadId: loadId ?? "", loadName: "" })}
+                  placeholder="Search trip / load (optional)"
+                  allowClear
                 />
               </div>
               {draft.loadId ? (

@@ -27,8 +27,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useToast } from "../../../components/Toast";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
-import { TrailerAutocomplete } from "../../../components/banking/TrailerAutocomplete";
-import { LoadAutocomplete } from "../../../components/banking/LoadAutocomplete";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { listVendors } from "../../../api/mdata";
 import { getCoaAccounts } from "../../../api/banking";
 import { itemsCatalogClient } from "../../../api/catalogs-accounting";
@@ -471,18 +470,30 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                       </div>
                       <div>
                         <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Trailer</span>
-                        <TrailerAutocomplete
-                          companyId={companyId}
-                          value={line.trailer_id ?? ""}
-                          onChange={(trailerId, trailerName) => patchLine(line._key, { trailer_id: trailerId || undefined, _trailerName: trailerName })}
+                        <EntityPicker
+                          kind="trailer"
+                          operatingCompanyId={companyId}
+                          value={line.trailer_id ?? null}
+                          onChange={(trailerId) =>
+                            patchLine(line._key, { trailer_id: trailerId || undefined, _trailerName: undefined })
+                          }
+                          nestedInDrawer
+                          placeholder="Search trailer (optional)"
+                          allowClear
                         />
                       </div>
                       <div>
                         <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Trip (load)</span>
-                        <LoadAutocomplete
-                          companyId={companyId}
-                          value={line.load_id ?? ""}
-                          onChange={(loadId, loadName) => patchLine(line._key, { load_id: loadId || undefined, _loadName: loadName })}
+                        <EntityPicker
+                          kind="load"
+                          operatingCompanyId={companyId}
+                          value={line.load_id ?? null}
+                          onChange={(loadId) =>
+                            patchLine(line._key, { load_id: loadId || undefined, _loadName: undefined })
+                          }
+                          nestedInDrawer
+                          placeholder="Search trip / load (optional)"
+                          allowClear
                         />
                       </div>
                     </div>
