@@ -7,8 +7,9 @@
 // Standard: complete = DoD A–E + VERIFY 1–8, PROD-VERIFIED per entity. Green = live only.
 // Palette-locked, no emojis, top-nav tabs. Additive — does not remove the Tracker/Modules pages.
 
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useMemo, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
 import {
   PROGRAM_SCOREBOARD,
@@ -57,10 +58,22 @@ function formatLedgerCt(iso: string | null | undefined): string {
   return `${get("month")}/${get("day")}/${get("year")} ${get("hour")}:${get("minute")} ${get("dayPeriod")} CT`;
 }
 
-function useScoreboard(): LiveScoreboard {
-  // Progressive enhancement: if the read-only live endpoint is present, prefer it;
-  // otherwise render the checked-in generated snapshot. Never blocks first paint.
-  const [data, setData] = useState<LiveScoreboard>(() => ({
+/**
+ * WIRE-LIVE Layer 1 — the board refreshes itself; no human reload.
+ *
+ * The backend was never the frozen half: stampProdReadAt() in program/audit-scoreboard.routes.ts
+ * does a real Neon `SELECT now()` per request and labels it neon_now vs request_time honestly.
+ * THIS hook was the freeze — it fetched ONCE in a `useEffect(..., [])` with a raw fetch and never
+ * asked again, so "live prod read <time>" sat at whatever second the tab was opened.
+ *
+ * Now a TanStack Query on a 3s interval, refetchIntervalInBackground so a board left open on a wall
+ * display keeps moving. The committed snapshot stays as placeholderData, so first paint is instant
+ * and an unwired/offline endpoint degrades to the snapshot exactly as before.
+ */
+const SCOREBOARD_POLL_MS = 3000;
+
+function snapshotFallback(): LiveScoreboard {
+  return {
     ...PROGRAM_SCOREBOARD,
     meta: {
       ...PROGRAM_SCOREBOARD.meta,
@@ -68,34 +81,34 @@ function useScoreboard(): LiveScoreboard {
       lastSyncedCt: formatLedgerCt(PROGRAM_SCOREBOARD.meta.generatedAt),
     },
     recentActivity: [],
-  }));
-  useEffect(() => {
-    let alive = true;
-    // Prefer resolveApiUrl so the call hits the API origin, not the SPA catch-all.
-    fetch(resolveApiUrl("/api/v1/program/audit-scoreboard"), { credentials: "include" })
-      .then((r) => {
-        if (!r.ok || r.status === 204) return null;
-        return r.json();
-      })
-      .then((json) => {
-        if (!alive || !json || !Array.isArray(json.modules)) return;
-        const live = json as LiveScoreboard;
-        const lastSyncedCt =
-          live.meta?.lastSyncedCt || formatLedgerCt(live.meta?.generatedAt);
-        setData({
-          ...live,
-          meta: { ...live.meta, lastSyncedCt },
-          recentActivity: Array.isArray(live.recentActivity) ? live.recentActivity : [],
-        });
-      })
-      .catch(() => {
-        /* offline / not wired yet → keep the generated snapshot */
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
-  return data;
+  };
+}
+
+async function fetchScoreboard(): Promise<LiveScoreboard | null> {
+  const r = await fetch(resolveApiUrl("/api/v1/program/audit-scoreboard"), { credentials: "include" });
+  if (!r.ok || r.status === 204) return null;
+  const json = await r.json();
+  if (!json || !Array.isArray(json.modules)) return null;
+  const live = json as LiveScoreboard;
+  return {
+    ...live,
+    meta: { ...live.meta, lastSyncedCt: live.meta?.lastSyncedCt || formatLedgerCt(live.meta?.generatedAt) },
+    recentActivity: Array.isArray(live.recentActivity) ? live.recentActivity : [],
+  };
+}
+
+function useScoreboard(): LiveScoreboard {
+  const { data } = useQuery({
+    queryKey: ["program", "audit-scoreboard"],
+    queryFn: fetchScoreboard,
+    refetchInterval: SCOREBOARD_POLL_MS,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    placeholderData: (prev) => prev ?? snapshotFallback(),
+    // Never blank a rendered board on a transient blip — keep the last good payload.
+    retry: 1,
+  });
+  return data ?? snapshotFallback();
 }
 
 export function AuditScoreboardPage() {
