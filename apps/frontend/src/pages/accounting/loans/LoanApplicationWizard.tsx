@@ -31,6 +31,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { PARITY_MODAL_WIDTH } from "../../../components/parity/sizing";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 
 type Props = {
   open: boolean;
@@ -249,13 +250,10 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                 ))}
               </select>
 
-              <label className="block text-[12px] font-medium text-slate-700">Target record id (optional)</label>
-              <input
-                className={FORM_INPUT_CLASS}
-                value={form.target_id}
-                onChange={(e) => set("target_id", e.target.value)}
-                placeholder="UUID of the bill / settlement / expense this funds"
-              />
+              {/* PICKER-LAW: the funded document (bill / settlement / expense) needs a typed picker
+                  per target_type, not a pasted UUID. Until that picker exists the field is NOT
+                  rendered — an unrendered field cannot be a rendered-but-unsent field, and a UUID
+                  textbox no operator can use is worse than deferring the link. Tracked in REMAINING. */}
             </>
           )}
 
@@ -287,13 +285,34 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                 ))}
               </select>
 
-              <label className="block text-[12px] font-medium text-slate-700">Counterparty id (optional)</label>
-              <input
-                className={FORM_INPUT_CLASS}
-                value={form.counterparty_id}
-                onChange={(e) => set("counterparty_id", e.target.value)}
-                placeholder="UUID of the user / driver / vendor"
-              />
+              {/* PICKER-LAW: never ask an operator to paste a UUID. The counterparty is chosen with
+                  the real picker for its kind — driver picker for drivers, ReferenceSelect (with
+                  inline "+ Add new") for vendors. Kinds without a picker (user / company / other) are
+                  identified by name only; the id stays empty rather than typed by hand. */}
+              {form.counterparty_kind === "driver" && (
+                <>
+                  <label className="block text-[12px] font-medium text-slate-700">Driver</label>
+                  <DriverPickerWithCreate
+                    operatingCompanyId={operatingCompanyId}
+                    value={form.counterparty_id || null}
+                    onChange={(v) => set("counterparty_id", v ?? "")}
+                    shell="modal"
+                  />
+                </>
+              )}
+              {form.counterparty_kind === "vendor" && (
+                <>
+                  <label className="block text-[12px] font-medium text-slate-700">Vendor</label>
+                  <ReferenceSelect
+                    value={form.counterparty_id || null}
+                    onChange={(v) => set("counterparty_id", v ?? "")}
+                    options={[]}
+                    createKind="vendor"
+                    operatingCompanyId={operatingCompanyId}
+                    placeholder="Select vendor"
+                  />
+                </>
+              )}
 
               <label className="block text-[12px] font-medium text-slate-700">Counterparty name</label>
               <input
