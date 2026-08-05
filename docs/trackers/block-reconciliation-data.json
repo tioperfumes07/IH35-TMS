@@ -1,12 +1,12 @@
 {
- "date": "2026-08-04",
- "generated_at_iso": "2026-08-04T20:02:52.735Z",
+ "date": "2026-08-05",
+ "generated_at_iso": "2026-08-05T03:39:08.312Z",
  "counts": {
   "PENDING": 15,
   "PENDING (GATED)": 28,
   "NEEDS-VERIFY": 59,
-  "DONE": 610,
-  "AUDIT-NOTE": 491
+  "DONE": 594,
+  "AUDIT-NOTE": 507
  },
  "universe": {
   "total_blocks_after_dedup": 1203,
@@ -937,9 +937,9 @@
    "fin": true,
    "tier": "1",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #3142 title-match only, unverified",
+   "evidence": "PR #4348 title-match only, unverified",
    "name": "CONNECTIONS / TASK 3 — Relay internal-bank + diesel codes",
-   "pr": 3142
+   "pr": 4348
   },
   {
    "id": "consolidate-distributed-modules-fuel-tasks-fin",
@@ -3430,182 +3430,6 @@
    "pr": 1519
   },
   {
-   "id": "DOCS-B9-ESCROW-DESIGN",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #955 merged 2026-06-14",
-   "name": "Docs-only design spec for the gated B9 driver-escrow-deduction build (Section D #1). Captures Jorge's 9 LOCKED rules ($2",
-   "registered_on": null,
-   "pr": 955
-  },
-  {
-   "id": "DOCS-FH1-FIXED-ASSETS-DEPRECIATION",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #957 merged 2026-06-14",
-   "name": "Docs-only design spec for Finance Hub FH-1 (Fixed Assets + Depreciation) — the foundation block. Closes the QBO gap: QBO",
-   "registered_on": null,
-   "pr": 957
-  },
-  {
-   "id": "DOCS-FH1-LEASING-FOLLOWUP",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #967 merged 2026-06-15",
-   "name": "Docs-only follow-up to FH-1 (already merged) adding the inter-company leasing relationship per locked decision #5. Adds ",
-   "registered_on": null,
-   "pr": 967
-  },
-  {
-   "id": "DOCS-FH2-LOAN-WIZARD",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #959 merged 2026-06-14",
-   "name": "Docs-only design spec for Finance Hub FH-2 (Loan Wizard, 'create everything'). Closes the QBO gap (loan-for-asset setup ",
-   "registered_on": null,
-   "pr": 959
-  },
-  {
-   "id": "DOCS-FH3-AMORTIZATION-ENGINE",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #958 merged 2026-06-14",
-   "name": "Docs-only design spec for Finance Hub FH-3 (Amortization Schedule Engine). Closes the QBO gap (QBO has no built-in amort",
-   "registered_on": null,
-   "pr": 958
-  },
-  {
-   "id": "DOCS-FH4-FINANCE-CALCULATOR",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #960 merged 2026-06-14",
-   "name": "Docs-only design spec for Finance Hub FH-4 (Finance Calculator). PURE CALCULATION, no posting, no GL, no money path. Mod",
-   "registered_on": null,
-   "pr": 960
-  },
-  {
-   "id": "DOCS-FH5-BANKRUPTCY-MODELER",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #963 merged 2026-06-14",
-   "name": "Docs-only design spec for Finance Hub FH-5 (Bankruptcy Calculator/Modeler) -- most complex + sensitive, build last. TRAN",
-   "registered_on": null,
-   "pr": 963
-  },
-  {
-   "id": "DOCS-FH5-POSTING-LOCKED",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #969 merged 2026-06-15",
-   "name": "Docs-only follow-up to the merged FH-5 Bankruptcy Modeler spec, applying Jorge's LOCKED posting decision (2026-06-14): P",
-   "registered_on": null,
-   "pr": 969
-  },
-  {
-   "id": "DOCS-FH6-TAX-MANAGER",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #961 merged 2026-06-14",
-   "name": "Docs-only design spec for Finance Hub FH-6 (Tax Manager) + FH-6a (property-tax rendition). Per-year tax register for Jor",
-   "registered_on": null,
-   "pr": 961
-  },
-  {
-   "id": "DOCS-FH7-UNIT-ALLOCATION",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #962 merged 2026-06-14",
-   "name": "Docs-only design spec for Finance Hub FH-7 (shared Unit Allocation control). Cross-cutting, NOT tax-only: a reusable con",
-   "registered_on": null,
-   "pr": 962
-  },
-  {
-   "id": "DOCS-FH8-LEASE-CONTRACT",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #965 merged 2026-06-15",
-   "name": "Docs-only design spec for Finance Hub FH-8 (Lease Contract + Unit Picker, Legal<->Finance, reuses FH-7). Lease agreement",
-   "registered_on": null,
-   "pr": 965
-  },
-  {
-   "id": "DOCS-FINANCE-ANSWERED-QS-FOLLOWUP",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #968 merged 2026-06-15",
-   "name": "Docs-only follow-up applying Jorge's answered questions (Finance Build Package-4, 11-ANSWERED-QUESTIONS) to two already-",
-   "registered_on": null,
-   "pr": 968
-  },
-  {
-   "id": "DOCS-MILEAGE-LIFECYCLE-CORRECTION",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #954 merged 2026-06-14",
-   "name": "Docs-only correction to MILEAGE-MODEL-DESIGN.md per Jorge's locked lifecycle (03-MILEAGE-LIFECYCLE-LOCKED). Adds §1A 'Lo",
-   "registered_on": null,
-   "pr": 954
-  },
-  {
-   "id": "DOCS-PERMISSIONS-DESIGN",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #953 merged 2026-06-14",
-   "name": "Docs-only design spec for the foundational Roles & Permissions block (Jorge-approved UI lock 01-PERMISSIONS-LOCKED). Qui",
-   "registered_on": null,
-   "pr": 953
-  },
-  {
-   "id": "DOCS-RELAY-INTERNAL-BANK-DESIGN",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #956 merged 2026-06-14",
-   "name": "Docs-only design spec for the gated Relay internal-bank + diesel-code build (Section D #2). Captures Jorge's exact Relay",
-   "registered_on": null,
-   "pr": 956
-  },
-  {
-   "id": "DOCS-VOID-EVERYWHERE-DESIGN",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #964 merged 2026-06-14",
-   "name": "Docs-only design spec for the VOID-EVERYWHERE cross-cutting block (finance build package construction block #1, BUILD FI",
-   "registered_on": null,
-   "pr": 964
-  },
-  {
    "id": "driverhub-2-demo-duplicate-drivers-cleanup",
    "source": ".block-ready",
    "fin": true,
@@ -3710,10 +3534,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #976 merged 2026-06-15",
+   "evidence": "all 6 file(s) on main",
    "name": "D5 / CA-05 + CA-06: read-only per-account register (running-balance ledger over the chart of accounts) + audit-history t",
    "registered_on": null,
-   "pr": 976
+   "pr": null
   },
   {
    "id": "FEAT-B1-EXPENSE-CATEGORY-MAP-SEED",
@@ -3787,10 +3611,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #952 merged 2026-06-14",
+   "evidence": "all 4 file(s) on main",
    "name": "Safe-additive Block 7 — classes bulk-edit (additive, no migration, no money path). Backend: new POST /api/v1/catalogs/cl",
    "registered_on": null,
-   "pr": 952
+   "pr": null
   },
   {
    "id": "FEAT-DISP-CASHFLOW-LINK",
@@ -3897,10 +3721,10 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1006 merged 2026-06-15",
+   "evidence": "all 3 file(s) on main",
    "name": "GAP-EXPENSES-MODULE-COMPLETION Phase 1 (A1-staged foundation). Authors the dormant parent header accounting.expenses so ",
    "registered_on": null,
-   "pr": 1006
+   "pr": null
   },
   {
    "id": "FEAT-EXPENSES-PHASE2-STEP3-POSTING-BUILD",
@@ -4150,10 +3974,10 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #973 merged 2026-06-15",
+   "evidence": "all 5 file(s) on main",
    "name": "VOID-EVERYWHERE PR-1 (foundation, gated default OFF). Adds the shared void engine wired to Invoices + Journal Entries. M",
    "registered_on": null,
-   "pr": 973
+   "pr": null
   },
   {
    "id": "FEAT-VOID-EVERYWHERE-PR2",
@@ -4161,10 +3985,10 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #977 merged 2026-06-15",
+   "evidence": "all 4 file(s) on main",
    "name": "VOID-EVERYWHERE PR-2 (gated, default OFF, NO migration). Extends the PR-1 shared void engine to Bills -- the AP mirror o",
    "registered_on": null,
-   "pr": 977
+   "pr": null
   },
   {
    "id": "FINAL-ADDITIONS-PAGE",
@@ -4403,10 +4227,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #975 merged 2026-06-15",
+   "evidence": "all 6 file(s) on main",
    "name": "Final double-stringify sweep (sibling of the task-create #970 and money-path #971 fixes) — the remaining NON-money api c",
    "registered_on": null,
-   "pr": 975
+   "pr": null
   },
   {
    "id": "FIX-DRIVERS-FULL-NAME-PHANTOM",
@@ -4425,10 +4249,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #971 merged 2026-06-15",
+   "evidence": "all 6 file(s) on main",
    "name": "Money-path double-stringify sweep (sibling of FIX-TASK-CREATE-DOUBLE-STRINGIFY). Same root cause: these api clients pre-",
    "registered_on": null,
-   "pr": 971
+   "pr": null
   },
   {
    "id": "FIX-FUEL-SUBNAV-ROUTING",
@@ -4513,10 +4337,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #974 merged 2026-06-15",
+   "evidence": "all 1 file(s) on main",
    "name": "Finance-build block 17: remove the LEFT main sidebar hover/fly-out dropdown (outstanding cleanup; locked sidebar design ",
    "registered_on": null,
-   "pr": 974
+   "pr": null
   },
   {
    "id": "FIX-REQUIRED-CHECKS-GATE",
@@ -4579,10 +4403,10 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #970 merged 2026-06-15",
+   "evidence": "all 1 file(s) on main",
    "name": "Prod 400 fix: task-create POST sent a double-stringified body ('\"{...}\"') so the server rejected with 400 'expected obje",
    "registered_on": null,
-   "pr": 970
+   "pr": null
   },
   {
    "id": "FIX-URL-NORMALIZE",
@@ -11371,6 +11195,17 @@
    "pr": null
   },
   {
+   "id": "DOCS-B9-ESCROW-DESIGN",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Docs-only design spec for the gated B9 driver-escrow-deduction build (Section D #1). Captures Jorge's 9 LOCKED rules ($2",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "DOCS-DISPATCH-LANE-ENFORCEMENT-V2",
    "source": ".block-ready",
    "fin": false,
@@ -11393,6 +11228,127 @@
    "pr": null
   },
   {
+   "id": "DOCS-FH1-FIXED-ASSETS-DEPRECIATION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Docs-only design spec for Finance Hub FH-1 (Fixed Assets + Depreciation) — the foundation block. Closes the QBO gap: QBO",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "DOCS-FH1-LEASING-FOLLOWUP",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Docs-only follow-up to FH-1 (already merged) adding the inter-company leasing relationship per locked decision #5. Adds ",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "DOCS-FH2-LOAN-WIZARD",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Docs-only design spec for Finance Hub FH-2 (Loan Wizard, 'create everything'). Closes the QBO gap (loan-for-asset setup ",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "DOCS-FH3-AMORTIZATION-ENGINE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Docs-only design spec for Finance Hub FH-3 (Amortization Schedule Engine). Closes the QBO gap (QBO has no built-in amort",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "DOCS-FH4-FINANCE-CALCULATOR",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Docs-only design spec for Finance Hub FH-4 (Finance Calculator). PURE CALCULATION, no posting, no GL, no money path. Mod",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "DOCS-FH5-BANKRUPTCY-MODELER",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Docs-only design spec for Finance Hub FH-5 (Bankruptcy Calculator/Modeler) -- most complex + sensitive, build last. TRAN",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "DOCS-FH5-POSTING-LOCKED",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Docs-only follow-up to the merged FH-5 Bankruptcy Modeler spec, applying Jorge's LOCKED posting decision (2026-06-14): P",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "DOCS-FH6-TAX-MANAGER",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Docs-only design spec for Finance Hub FH-6 (Tax Manager) + FH-6a (property-tax rendition). Per-year tax register for Jor",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "DOCS-FH7-UNIT-ALLOCATION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Docs-only design spec for Finance Hub FH-7 (shared Unit Allocation control). Cross-cutting, NOT tax-only: a reusable con",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "DOCS-FH8-LEASE-CONTRACT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Docs-only design spec for Finance Hub FH-8 (Lease Contract + Unit Picker, Legal<->Finance, reuses FH-7). Lease agreement",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "DOCS-FINANCE-ANSWERED-QS-FOLLOWUP",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Docs-only follow-up applying Jorge's answered questions (Finance Build Package-4, 11-ANSWERED-QUESTIONS) to two already-",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "DOCS-GEOFENCE-INSURANCE-SPEC",
    "source": ".block-ready",
    "fin": false,
@@ -11400,6 +11356,17 @@
    "status": "AUDIT-NOTE",
    "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
    "name": "Lock dispatch geofence timing model (WF-043) + insurance blueprint + CI guard spec — no app code changed.",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "DOCS-MILEAGE-LIFECYCLE-CORRECTION",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Docs-only correction to MILEAGE-MODEL-DESIGN.md per Jorge's locked lifecycle (03-MILEAGE-LIFECYCLE-LOCKED). Adds §1A 'Lo",
    "registered_on": null,
    "pr": null
   },
@@ -11426,6 +11393,17 @@
    "pr": null
   },
   {
+   "id": "DOCS-PERMISSIONS-DESIGN",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Docs-only design spec for the foundational Roles & Permissions block (Jorge-approved UI lock 01-PERMISSIONS-LOCKED). Qui",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "DOCS-QBO-PARITY-CAPTURE-V2",
    "source": ".block-ready",
    "fin": false,
@@ -11448,6 +11426,17 @@
    "pr": null
   },
   {
+   "id": "DOCS-RELAY-INTERNAL-BANK-DESIGN",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Docs-only design spec for the gated Relay internal-bank + diesel-code build (Section D #2). Captures Jorge's exact Relay",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "DOCS-RLS-COVERAGE-AUDIT",
    "source": ".block-ready",
    "fin": false,
@@ -11466,6 +11455,17 @@
    "status": "AUDIT-NOTE",
    "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
    "name": "Bookkeeper approval worksheet for chart-of-accounts role bindings used by the IH35-TMS posting engine.",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "DOCS-VOID-EVERYWHERE-DESIGN",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Docs-only design spec for the VOID-EVERYWHERE cross-cutting block (finance build package construction block #1, BUILD FI",
    "registered_on": null,
    "pr": null
   },
@@ -13261,6 +13261,306 @@
   }
  ],
  "merged_prs": [
+  {
+   "number": 4368,
+   "title": "Claude-2- P0 fix(home): owner homepage was DOWN — ScenarioTrackerPanel spread data.scenarios unguarded and crashed all of /home",
+   "mergedAt": "2026-08-05T03:19:50Z",
+   "branch": "claude/p0-owner-home-scenario-crash"
+  },
+  {
+   "number": 4365,
+   "title": "Claude-1- fix(banking): BANK-F17 CLS-UNIT-SCALE — cents rendered as dollars (100x) in two banking queries",
+   "mergedAt": "2026-08-05T03:06:59Z",
+   "branch": "claude/cls-unit-scale-banking-v2"
+  },
+  {
+   "number": 4363,
+   "title": "Cursor- docs: DELIVERY-METHOD-LOCKED rev F (standing orders)",
+   "mergedAt": "2026-08-05T03:09:54Z",
+   "branch": "cursor/delivery-method-rev-f"
+  },
+  {
+   "number": 4362,
+   "title": "Claude-2- audit(live): LV-037..049 — BANK-CLS-SHARED verified (2 of 4 classes real, all 4 name missing guards); BANK-ECON-04 PASS rests on a zero-vs-zero reconc",
+   "mergedAt": "2026-08-05T03:04:57Z",
+   "branch": "claude/lv037-042-banking-recon-relay"
+  },
+  {
+   "number": 4359,
+   "title": "Cursor- fix(guards): §7 nonfinancial palette BASELINE 472→474",
+   "mergedAt": "2026-08-05T02:09:20Z",
+   "branch": "cursor/section7-palette-baseline-474"
+  },
+  {
+   "number": 4357,
+   "title": "Claude-1- chore(guards): CLAIM-RESERVE CC-1 verify-step numbers 2525–2545",
+   "mergedAt": "2026-08-05T02:45:34Z",
+   "branch": "chore/claim-reserve-cc1-2525-2545-v2"
+  },
+  {
+   "number": 4355,
+   "title": "Cursor- fix: HOS Viewer driver EntityPicker",
+   "mergedAt": "2026-08-05T03:27:16Z",
+   "branch": "cursor/hos-viewer-driver-entity-picker"
+  },
+  {
+   "number": 4354,
+   "title": "Cursor- fix: HOS History driver EntityPicker",
+   "mergedAt": "2026-08-05T03:06:53Z",
+   "branch": "cursor/hos-history-driver-entity-picker"
+  },
+  {
+   "number": 4350,
+   "title": "Cursor- fix: Cash advance load/trailer EntityPickers",
+   "mergedAt": "2026-08-05T03:04:38Z",
+   "branch": "cursor/cash-advance-load-trailer-pickers"
+  },
+  {
+   "number": 4349,
+   "title": "Cursor- fix: Incident trailer EntityPicker (kind=trailer)",
+   "mergedAt": "2026-08-05T02:44:59Z",
+   "branch": "cursor/incident-trailer-entity-picker"
+  },
+  {
+   "number": 4348,
+   "title": "Claude-1- fix(accounting): CONN-3 Part C — USMCA's Relay wallet CoA row was inert; the bank feed reads banking.bank_accounts",
+   "mergedAt": "2026-08-05T01:37:47Z",
+   "branch": "claude/relay-usmca-bank-registration"
+  },
+  {
+   "number": 4347,
+   "title": "Claude-2- audit(live): LV-036 every per-entity feature gate resolves false (221 overrides unreadable); LV-035 daily-recon 500 masked as 'flag off'; LV-030..034",
+   "mergedAt": "2026-08-05T01:33:12Z",
+   "branch": "claude/lv030-035-recon-periods-je"
+  },
+  {
+   "number": 4346,
+   "title": "Claude-1- fix(accounting): CONN-3 Part B — USMCA had no Relay fuel wallet; the seed guarded account 1295 globally",
+   "mergedAt": "2026-08-05T01:19:22Z",
+   "branch": "claude/relay-usmca-seed"
+  },
+  {
+   "number": 4345,
+   "title": "Claude-2- audit(live): LV-026 audit trail has no WORM backing; LV-027 36,468 silent report failures; LV-028 detail-type backfill provably unsafe; LV-029 'Occurr",
+   "mergedAt": "2026-08-05T00:56:27Z",
+   "branch": "claude/lv026-029-audit-trail-detail-types"
+  },
+  {
+   "number": 4344,
+   "title": "FINDING: Cascade- homepage scenario tracker frontend + migration guard fix",
+   "mergedAt": "2026-08-05T01:23:00Z",
+   "branch": "Cascade-homepage-scenario-tracker-0804"
+  },
+  {
+   "number": 4343,
+   "title": "Claude-2- audit(live): LV-024 LV-018's fix already ships as All Transactions '(page)' label; LV-025 unknown accounting routes redirect to /home",
+   "mergedAt": "2026-08-05T00:37:13Z",
+   "branch": "claude/lv024-page-label-precedent"
+  },
+  {
+   "number": 4342,
+   "title": "Claude-2- audit(live): LV-022 LV-010 fixed via logged_only but LV-013 open — sent invoice still has no queue row; LV-023 Hop 0 gate",
+   "mergedAt": "2026-08-05T00:28:55Z",
+   "branch": "claude/lv022-lv013-partial"
+  },
+  {
+   "number": 4341,
+   "title": "Cursor- fix: Cargo claim EntityPickers (load/driver/unit/trailer)",
+   "mergedAt": "2026-08-05T01:23:14Z",
+   "branch": "cursor/cargo-claim-entitypickers"
+  },
+  {
+   "number": 4340,
+   "title": "Cursor- fix: Maintenance Home bill/expense require WO link (M-21)",
+   "mergedAt": "2026-08-05T01:06:32Z",
+   "branch": "cursor/maint-bill-expense-wo-link"
+  },
+  {
+   "number": 4339,
+   "title": "Claude-1- fix(dispatch): WIRE-10 cancelling a load left its invoice and driver bill alive",
+   "mergedAt": "2026-08-05T00:29:03Z",
+   "branch": "claude/wire-10-cancel-economics"
+  },
+  {
+   "number": 4338,
+   "title": "Claude-2- audit(live): LV-021 auto poster never stamps journal_entry_type — LINK-01 green while JE-type reporting is blind",
+   "mergedAt": "2026-08-05T00:19:54Z",
+   "branch": "claude/lv021-je-type-unstamped"
+  },
+  {
+   "number": 4337,
+   "title": "Claude-2- audit(live): LV-018 BLOCKER payments header is a page subtotal (understates $39.5M); LV-019 scope fix; LV-020",
+   "mergedAt": "2026-08-04T23:56:56Z",
+   "branch": "claude/lv018-payments-page-subtotal"
+  },
+  {
+   "number": 4336,
+   "title": "Cursor- fix: FineCreate unit/load EntityPicker",
+   "mergedAt": "2026-08-05T00:02:46Z",
+   "branch": "cursor/fine-create-unit-load-picker"
+  },
+  {
+   "number": 4335,
+   "title": "Claude-1- fix(settlements): WIRE-08 load→settlement window had no guard",
+   "mergedAt": "2026-08-04T23:41:10Z",
+   "branch": "claude/wire-08-settlement-ping-guard"
+  },
+  {
+   "number": 4334,
+   "title": "Cursor- fix: Create WO load EntityPicker (M-18)",
+   "mergedAt": "2026-08-04T23:38:08Z",
+   "branch": "cursor/wo-load-entitypicker"
+  },
+  {
+   "number": 4333,
+   "title": "Claude-2- audit(live): LV-016 vendor raw-key fallback is app-wide and hits TMS-native rows; LV-017 SURF-02/03 PASS",
+   "mergedAt": "2026-08-04T23:34:58Z",
+   "branch": "claude/lv016-vendor-render-scope"
+  },
+  {
+   "number": 4332,
+   "title": "Cursor- fix: Book Load documents chrome honesty (rate-con only)",
+   "mergedAt": "2026-08-04T23:52:41Z",
+   "branch": "cursor/bookload-documents-honesty"
+  },
+  {
+   "number": 4331,
+   "title": "Claude-2- audit(live): LV-014 bills vendor UUID render + missed backfill; LV-015 accounting densities verified",
+   "mergedAt": "2026-08-04T23:11:28Z",
+   "branch": "claude/lv014-bills-vendor-uuid"
+  },
+  {
+   "number": 4330,
+   "title": "Claude-1- feat(email): LV-010 Google (Gmail API) provider + per-entity sender",
+   "mergedAt": "2026-08-04T23:50:35Z",
+   "branch": "claude/google-email-provider"
+  },
+  {
+   "number": 4329,
+   "title": "Cursor- feat: trailer EntityPicker kind=trailer → mdata.equipment",
+   "mergedAt": "2026-08-04T23:12:34Z",
+   "branch": "cursor/next-phase1-fe-hop"
+  },
+  {
+   "number": 4328,
+   "title": "Claude-1- chore: CLAIM-RESERVE cc1 verify-step numbers 2501/2505/2509/2513",
+   "mergedAt": "2026-08-04T22:50:00Z",
+   "branch": "chore/claim-reserve-cc1-25xx"
+  },
+  {
+   "number": 4327,
+   "title": "Cursor- chore: CLAIM-RESERVE 2378 trailer picker + 2384 bookload docs",
+   "mergedAt": "2026-08-04T22:47:36Z",
+   "branch": "chore/claim-reserve-2378-2384"
+  },
+  {
+   "number": 4326,
+   "title": "Cursor- feat: Scenario Tracker homepage FE (parked until GUARD live)",
+   "mergedAt": "2026-08-04T23:22:38Z",
+   "branch": "cursor/homepage-scenario-tracker"
+  },
+  {
+   "number": 4325,
+   "title": "Claude-1- fix(accounting): LV-012/LV-013 evidence gate was blind to 11,981 of 11,982 invoices",
+   "mergedAt": "2026-08-04T22:49:37Z",
+   "branch": "claude/lv012-lv013-invoice-evidence-and-transmission"
+  },
+  {
+   "number": 4324,
+   "title": "Claude-2- audit(live): LV-011 RESOLVED; LV-012 WIRE-04 counter silent on unevidenced send; LV-013 sent with no email",
+   "mergedAt": "2026-08-04T22:44:44Z",
+   "branch": "claude/lv012-013-send-artifacts"
+  },
+  {
+   "number": 4323,
+   "title": "Cursor- chore: CLAIM-RESERVE 2382 homepage scenario-tracker guard",
+   "mergedAt": "2026-08-04T22:34:00Z",
+   "branch": "chore/claim-reserve-2382-homepage"
+  },
+  {
+   "number": 4322,
+   "title": "Claude-1- fix(accounting): WIRE-05 revenue latch evidence gate had no guard holding it",
+   "mergedAt": "2026-08-04T23:24:26Z",
+   "branch": "claude/wire-05-revrec-latch-guard"
+  },
+  {
+   "number": 4321,
+   "title": "Claude-1- fix(accounting): LV-011 invoice send hangs forever on a lock it takes against itself",
+   "mergedAt": "2026-08-04T22:06:47Z",
+   "branch": "claude/lv011-invoice-send-hang"
+  },
+  {
+   "number": 4320,
+   "title": "Claude-2- audit(live): LV-005..011 verdicts — LV-010 email no-op CONFIRMED, LV-011 invoice send HANGS (blocker)",
+   "mergedAt": "2026-08-04T21:49:25Z",
+   "branch": "claude/lv005-009-live-verdicts"
+  },
+  {
+   "number": 4319,
+   "title": "Claude-1- fix(email): LV-010 — 232 of 232 emails read sent but never left the building",
+   "mergedAt": "2026-08-04T23:24:21Z",
+   "branch": "claude/lv010-email-honest-status"
+  },
+  {
+   "number": 4318,
+   "title": "Cursor- chore: CLAIMED-REGEN mod-4 + claim-before-write (permanent)",
+   "mergedAt": "2026-08-04T22:17:20Z",
+   "branch": "chore/claimed-regen-mod4-claim-2400"
+  },
+  {
+   "number": 4317,
+   "title": "Cursor- fix: Book Load edit honesty matches Block 7 round-trip",
+   "mergedAt": "2026-08-04T22:17:07Z",
+   "branch": "cursor/bookload-edit-persist-fields"
+  },
+  {
+   "number": 4316,
+   "title": "Claude-1- feat(home): live scenario tracker — WORM store + probes + /api/v1/home/scenario-tracker",
+   "mergedAt": "2026-08-04T22:39:37Z",
+   "branch": "claude/home-scenario-status-store"
+  },
+  {
+   "number": 4315,
+   "title": "Claude-2- fix(guards): unblock main again — step 2373 collision, move to 2401 + registry",
+   "mergedAt": "2026-08-04T21:29:01Z",
+   "branch": "claude/fix-step-2373-collision"
+  },
+  {
+   "number": 4314,
+   "title": "Claude-2- fix(guards): unblock main — duplicate verify-step 2361, rename to 2373 + claim in registry",
+   "mergedAt": "2026-08-04T20:56:07Z",
+   "branch": "claude/fix-step-2361-collision"
+  },
+  {
+   "number": 4313,
+   "title": "Claude-1- fix(accounting): ACCT-F63 driver bills were written at 100% of the customer rate",
+   "mergedAt": "2026-08-04T23:35:38Z",
+   "branch": "claude/wire-02-driver-bill-no-customer-rate"
+  },
+  {
+   "number": 4312,
+   "title": "Cursor- fix: Kanban Delivered drop stamps departure (WIRE-07)",
+   "mergedAt": "2026-08-04T21:11:34Z",
+   "branch": "cursor/wire07-kanban-delivered-stamp"
+  },
+  {
+   "number": 4311,
+   "title": "CLAUDE-1- fix(accounting): WIRE-01 book→proforma skipped the invoice silently",
+   "mergedAt": "2026-08-04T20:43:35Z",
+   "branch": "claude/wire-01-proforma-no-silent-skip"
+  },
+  {
+   "number": 4310,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-08-04T23:17:24Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 4309,
+   "title": "Cursor- docs: lock full delivery plan NOW→LAUNCH",
+   "mergedAt": "2026-08-04T21:11:30Z",
+   "branch": "cursor/delivery-method-locked"
+  },
   {
    "number": 4308,
    "title": "CLAUDE-1- fix(safety): driver fines reverse surface — both fines tables, not one",
@@ -16560,306 +16860,6 @@
    "title": "Rule 25 — permanent one-push money fail-fast (close amend hole)",
    "mergedAt": "2026-07-28T16:39:06Z",
    "branch": "chore/one-push-money-fail-fast"
-  },
-  {
-   "number": 3703,
-   "title": "claude: fix(ci): reserved per-lane migration bands — prevent the number race instead of detecting it",
-   "mergedAt": "2026-07-28T16:44:37Z",
-   "branch": "claude/migration-lane-bands"
-  },
-  {
-   "number": 3702,
-   "title": "claude: fix(ci): branch freshness by OVERLAP, not distance — this was the multi-hour merge treadmill",
-   "mergedAt": "2026-07-28T15:54:01Z",
-   "branch": "claude/branch-fresh-overlap-not-zero-behind"
-  },
-  {
-   "number": 3701,
-   "title": "claude: fix(safety): SAF-B29 — the shared driver picker truncated at 200 on all 23 surfaces using it",
-   "mergedAt": "2026-07-28T15:17:09Z",
-   "branch": "claude/saf-b29-server-typeahead"
-  },
-  {
-   "number": 3700,
-   "title": "claude: fix(safety): SAF-B24 — three hand-rolled drawers survived a guard that pinned filenames",
-   "mergedAt": "2026-07-28T14:49:17Z",
-   "branch": "claude/saf-b24-parity-drawer-survivors"
-  },
-  {
-   "number": 3699,
-   "title": "Cursor — ACCT-LINK-03 bills.unit_id density (299 Neon memo backfill)",
-   "mergedAt": "2026-07-28T13:49:37Z",
-   "branch": "cursor/acct-link-03-bill-unit-density"
-  },
-  {
-   "number": 3698,
-   "title": "claude: fix(catalogs): C11 — retire the empty ifta_states near-twin so one IFTA catalog is canonical",
-   "mergedAt": "2026-07-28T19:38:08Z",
-   "branch": "claude/retire-ifta-states-near-twin"
-  },
-  {
-   "number": 3697,
-   "title": "Cursor — ACCT-LINK-01 type every JE (write path + Neon backfill)",
-   "mergedAt": "2026-07-28T13:09:10Z",
-   "branch": "cursor/acct-link-01-je-type-density"
-  },
-  {
-   "number": 3696,
-   "title": "claude: fix(ci): stop committing the generated module scoreboards — they conflicted on every merge",
-   "mergedAt": "2026-07-28T15:55:46Z",
-   "branch": "claude/module-completion-md-generated-not-committed"
-  },
-  {
-   "number": 3695,
-   "title": "claude: fix(fuel): FUEL-07 — the IFTA jurisdiction catalog was empty, so no entity could file a return",
-   "mergedAt": "2026-07-28T12:38:45Z",
-   "branch": "claude/fuel-07-seed-ifta-jurisdictions"
-  },
-  {
-   "number": 3694,
-   "title": "claude: fix(safety): SAF-B22 (settlement leg) — escrow movements could not be traced to the settlement that made them",
-   "mergedAt": "2026-07-28T15:03:58Z",
-   "branch": "claude/saf-b22-escrow-settlement-drillthrough"
-  },
-  {
-   "number": 3693,
-   "title": "claude: fix(safety): SAF-B18 — every fine was filed with no citation image, and the liability it spawns had no evidence behind it",
-   "mergedAt": "2026-07-28T12:16:58Z",
-   "branch": "claude/saf-b18-fine-source-document"
-  },
-  {
-   "number": 3692,
-   "title": "claude: fix(safety): SAF-B25 — an accident could not be read against the trip or the vendor it involved",
-   "mergedAt": "2026-07-28T11:48:54Z",
-   "branch": "claude/saf-b25-accidents-load-column"
-  },
-  {
-   "number": 3691,
-   "title": "claude: fix(safety): SAF-B19 — incidents could be closed but never retracted; the void contract enforced nothing",
-   "mergedAt": "2026-07-28T11:35:55Z",
-   "branch": "claude/saf-b19-incident-void-unreachable"
-  },
-  {
-   "number": 3690,
-   "title": "claude: fix(safety): SAF-B14 — 270 catalog rows nothing could reach; FMCSA severity stored as 0 on every HOS violation",
-   "mergedAt": "2026-07-28T11:21:35Z",
-   "branch": "claude/saf-b14-bind-orphan-safety-catalogs"
-  },
-  {
-   "number": 3689,
-   "title": "Cursor — ND-FA-01 capitalize $7k + owned-unit fixed-asset register",
-   "mergedAt": "2026-07-28T12:51:30Z",
-   "branch": "cursor/nd-fa-01-capitalize-register"
-  },
-  {
-   "number": 3688,
-   "title": "Cursor — BANK-F08/F09 deep-wizard DoD structural guards",
-   "mergedAt": "2026-07-28T12:34:10Z",
-   "branch": "cursor/bank-f08-f09-ndfa-01"
-  },
-  {
-   "number": 3687,
-   "title": "claude: fix(legal): LEG-02 — paper-signed drivers read as UNSIGNED, blocking every deduction",
-   "mergedAt": "2026-07-28T06:04:12Z",
-   "branch": "claude/leg-02-paper-signed-consent-gate"
-  },
-  {
-   "number": 3686,
-   "title": "claude: feat(lists): LST-A-01 — 147 rows of reason codes the owner could read but never manage",
-   "mergedAt": "2026-07-28T05:34:36Z",
-   "branch": "claude/lst-a-01-unreachable-catalogs"
-  },
-  {
-   "number": 3685,
-   "title": "claude: fix(safety): SAF-B30 — 4 of 6 EntityLink kinds drilled through to nothing; incidents had no kind at all",
-   "mergedAt": "2026-07-28T05:41:25Z",
-   "branch": "claude/saf-b30-entitylink-drill-through"
-  },
-  {
-   "number": 3684,
-   "title": "Cursor — fix(db): ND-INV CoA keeps unbilled_revenue + held-superset guard",
-   "mergedAt": "2026-07-28T04:58:27Z",
-   "branch": "fix/nd-inv-coa-live-superset"
-  },
-  {
-   "number": 3683,
-   "title": "claude: test(accounting): commit GUARD's 4 scenario tests so CI runs them forever",
-   "mergedAt": "2026-07-28T05:21:24Z",
-   "branch": "claude/commit-guard-scenario-tests"
-  },
-  {
-   "number": 3682,
-   "title": "fix(git): scope union-driver strictness to `claimed` — my #3681 broke every rebase",
-   "mergedAt": "2026-07-28T03:32:01Z",
-   "branch": "fix/union-driver-strict-scope"
-  },
-  {
-   "number": 3681,
-   "title": "chore(git): union-merge CLAIMED-NUMBERS.json — kill the rebase treadmill at its source",
-   "mergedAt": "2026-07-28T03:01:20Z",
-   "branch": "chore/claimed-numbers-union-merge"
-  },
-  {
-   "number": 3680,
-   "title": "docs(trackers): log two ledger-vs-repo drift items surfaced by the #3660 renumber",
-   "mergedAt": "2026-07-27T22:25:31Z",
-   "branch": "chore/log-migration-ledger-repo-drift"
-  },
-  {
-   "number": 3679,
-   "title": "chore(trackers): refresh reconcile artifacts — locked-guards is red on main itself, blocking every PR",
-   "mergedAt": "2026-07-27T21:51:31Z",
-   "branch": "chore/refresh-tracker-artifacts-2026-07-27"
-  },
-  {
-   "number": 3678,
-   "title": "[HOLD] DRV — escrow_deductions_pending.source_type → driver_deduction_types FK + safety_fine",
-   "mergedAt": "2026-07-28T04:12:36Z",
-   "branch": "drv-escrow-source-type-catalog-fk"
-  },
-  {
-   "number": 3677,
-   "title": "[HOLD-FOR-JORGE · FINANCIAL] FACT-02 — factoring subledger journal_entry_id FKs",
-   "mergedAt": "2026-07-28T03:43:22Z",
-   "branch": "fact-02-subledger-je-fk"
-  },
-  {
-   "number": 3676,
-   "title": "[HOLD] ARCHIVE legacy fixed_assets.* schema (Rule 07)",
-   "mergedAt": "2026-07-28T03:58:18Z",
-   "branch": "archive-legacy-fixed-assets-schema"
-  },
-  {
-   "number": 3675,
-   "title": "[HOLD] FACT-PHANTOM-01 + FACT-01 — kill phantom factoring_companies + rebuild factoring_summary",
-   "mergedAt": "2026-07-28T03:16:36Z",
-   "branch": "fact-phantom-01-summary"
-  },
-  {
-   "number": 3674,
-   "title": "[HOLD] FLT-05 — owned-asset disposal + gain/loss JE",
-   "mergedAt": "2026-07-28T02:58:08Z",
-   "branch": "flt-05-owned-asset-disposal"
-  },
-  {
-   "number": 3673,
-   "title": "[HOLD] FLT-01 depreciation autopost cron",
-   "mergedAt": "2026-07-28T02:43:43Z",
-   "branch": "flt-01-depr-autopost"
-  },
-  {
-   "number": 3672,
-   "title": "[HOLD] FLT-04 — depreciation JE books on owner_operating_company_id",
-   "mergedAt": "2026-07-28T02:29:00Z",
-   "branch": "flt-04-depr-owner-entity"
-  },
-  {
-   "number": 3671,
-   "title": "[HOLD] KR-02 — fail-closed civil_fine_postings before latch use",
-   "mergedAt": "2026-07-28T02:18:21Z",
-   "branch": "kr-02-civil-fine-failclosed"
-  },
-  {
-   "number": 3670,
-   "title": "chore(db): held→applied_held after 2026-07-27 Neon owner-apply",
-   "mergedAt": "2026-07-28T00:40:02Z",
-   "branch": "chore/held-registry-neon-applied-20260727"
-  },
-  {
-   "number": 3669,
-   "title": "fix(frontend): partial optional chains crash whole pages + restore a section deleted against §7",
-   "mergedAt": "2026-07-28T01:22:29Z",
-   "branch": "fix/pre-existing-red-suites"
-  },
-  {
-   "number": 3668,
-   "title": "[HOLD] KR-01 — fail-closed parts_purchase_postings before latch use",
-   "mergedAt": "2026-07-28T01:56:33Z",
-   "branch": "kr-01-parts-purchase-failclosed"
-  },
-  {
-   "number": 3667,
-   "title": "[HOLD] KR-03 — fail-closed CoA merge before account_merge_records INSERT",
-   "mergedAt": "2026-07-28T01:41:45Z",
-   "branch": "kr-03-account-merge-failclosed"
-  },
-  {
-   "number": 3666,
-   "title": "fix(drivers): DRV-04 — driver profile header read a RETIRED column, blank for all 178 drivers",
-   "mergedAt": "2026-07-27T23:15:26Z",
-   "branch": "fix/drv-04-driver-employment-status-retired-column"
-  },
-  {
-   "number": 3665,
-   "title": "fix(dispatch): DISP-03 phantom load_assignments — geofence recon persisted NOTHING; +2 dead surfaces the audit missed",
-   "mergedAt": "2026-07-27T22:05:30Z",
-   "branch": "fix/disp-03-geofence-phantom-load-assignments"
-  },
-  {
-   "number": 3664,
-   "title": "[HOLD] FLT-02 — half_year depreciation math + fixed_asset_classes seed",
-   "mergedAt": "2026-07-27T22:47:28Z",
-   "branch": "flt-02-half-year-depr"
-  },
-  {
-   "number": 3663,
-   "title": "[HOLD-FOR-JORGE · FINANCIAL] DISP-01 — two-event delivery revenue latch",
-   "mergedAt": "2026-07-28T00:59:03Z",
-   "branch": "disp-01-revrec-latch"
-  },
-  {
-   "number": 3662,
-   "title": "fix(safety): Position History — prove the canonical table exists before querying it (defense-in-depth)",
-   "mergedAt": "2026-07-28T04:09:52Z",
-   "branch": "fix/position-history-canonical-table-missing"
-  },
-  {
-   "number": 3661,
-   "title": "docs(drv): spec the escrow source_type reconciliation for Cursor + file the RLS false-zero gap",
-   "mergedAt": "2026-07-27T19:50:58Z",
-   "branch": "docs/escrow-source-type-reconciliation-spec"
-  },
-  {
-   "number": 3660,
-   "title": "[HOLD-FOR-JORGE] feat(drv): driver recovery policy per SITUATION — one rail vocabulary (migration 202609310000)",
-   "mergedAt": "2026-07-27T23:39:31Z",
-   "branch": "fix/driver-recovery-policy-single-vocabulary"
-  },
-  {
-   "number": 3659,
-   "title": "fix(banking): react-plaid-link 5 — accept null public_token (#3640)",
-   "mergedAt": "2026-07-27T19:12:23Z",
-   "branch": "fix/react-plaid-link-5-token-type"
-  },
-  {
-   "number": 3658,
-   "title": "[HOLD-FOR-JORGE · FINANCIAL] ND-INV-01 stage 1 — proforma invoice pipeline",
-   "mergedAt": "2026-07-27T20:36:14Z",
-   "branch": "nd-inv-01-proforma"
-  },
-  {
-   "number": 3657,
-   "title": "[HOLD-FOR-JORGE · FINANCIAL] ND-ESC-01 — escrow draw catalog (may_draw_escrow)",
-   "mergedAt": "2026-07-27T20:18:24Z",
-   "branch": "nd-esc-draw-catalog"
-  },
-  {
-   "number": 3656,
-   "title": "fix(dispatch): HOS enforcement drifted across assignment paths — 7 drivers in violation, planner would dispatch them",
-   "mergedAt": "2026-07-27T17:37:08Z",
-   "branch": "fix/hos-gate-unify-assignment-paths"
-  },
-  {
-   "number": 3655,
-   "title": "[HOLD-FOR-JORGE] MNT-LINK-03b + MNT-ENT-01 — WO↔intransit reverse FK + parts company FK",
-   "mergedAt": "2026-07-27T19:39:22Z",
-   "branch": "mnt-link-03b-intransit-wo-fk"
-  },
-  {
-   "number": 3654,
-   "title": "chore(deps): bump the production-dependencies group across 1 directory with 17 updates",
-   "mergedAt": "2026-07-27T17:40:05Z",
-   "branch": "dependabot/npm_and_yarn/production-dependencies-f8eaec41df"
   }
  ],
  "merged_pr_total": 3000,
