@@ -924,3 +924,23 @@ membership-scoped session.
 - LANE:      none — GUARD attestation. Hop 0 go/no-go is the owner's chat decision.
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `email.email_queue` 234 rows (was 232), status `logged_only` 232 / `sent` 2, provider `console` 232 / `google` 2, newest 2026-08-05T01:17:20.525Z; both sent rows quoted above with provider message ids. `accounting.invoices` INV-2026-00740 as tabulated. Recent invoice batches all `posted`: `1e30e7e4` (53b8ddb3 = INV-2026-00003), `9852e0d8` (e4d2ebdd = INV-2026-00001), `f1ffc3a4` (25b208fb = INV-2026-00740). `driver_finance.driver_pay_rates`: 93 rows, 91 `is_test_data=true`, the 2 real ones as listed.
 - status:    OPEN (informational — LV-013 marked RESOLVED)
+
+## LV-059  GUARD pass 9 — go-forward invoice posting is 100% correct: 4 of 4 ELIGIBLE TMS-native invoices posted, and all 3 "unposted" ones are correctly unposted (proforma, draft, $0.00). Two items for the owner: a $0.00 invoice marked `sent`, and the $1,200 WIRE-04 test invoice has now posted to the USMCA ledger.
+- module:    accounting (GUARD live-verify-after-merge, pass 9)
+- entity:    TRANSP + USMCA
+- surface:   `accounting.invoices` (`source_system='tms'`) → `accounting.posting_batches`
+- observed:  **The origin split is exact and confirms the parallel-books model numerically.** Unvoided invoices: **11,983 total = 7 TMS-native + 11,976 QBO-origin**, zero with a null `source_system`. The QBO figure is **identical** to the 11,976 refused posting batches of LV-053 — one refusal per imported invoice, no duplicates and no omissions. Bills mirror it: **16,250 total = 5 TMS-native + 16,245 QBO-cloned**, matching audit ledger row 665 exactly on a dataset that has since grown.
+  **Scoped to the only population where posting is expected, the result is clean.** Of the 7 TMS-native invoices, 3 have no posted batch — and each is *correctly* unposted:
+  | invoice | entity | amount | status | why unposted |
+  |---|---|---|---|---|
+  | INV-2026-00002 `cf3f7203` | USMCA | $1.00 | **proforma** | a proforma is a non-posting projection by design |
+  | INV-2026-00741 `0ce56005` | TRANSP | $0.05 | **draft** | not issued |
+  | INV-2026-00004 `f280b52a` | USMCA | **$0.00** | sent | zero total — nothing to post |
+  The remaining **4 of 4 eligible** invoices all posted: INV-2026-00001 `06c7af5d` (TRANSP $0.01), INV-2026-00001 `e4d2ebdd` (USMCA $1.00), INV-2026-00740 `25b208fb` (TRANSP $5.00), INV-2026-00003 `53b8ddb3` (USMCA $1,200.00). **There is no unexplained posting gap in the go-forward path.** Stating that plainly because the raw "3 unposted" count would read as a defect and is not one — the same shape as the imported-history trap, one layer in.
+  **Two items I am surfacing for the owner rather than filing as defects:**
+  1. **INV-2026-00004 carries `total_cents = 0` and `status='sent'`.** A zero-dollar invoice that has been marked sent is odd on its own terms — it is either a test artifact or a line-less invoice that reached send. It posts nothing, so there is no GL consequence, but it is the kind of row that later reads as a real receivable of $0.00 in a customer's history.
+  2. **INV-2026-00003 (`53b8ddb3`, USMCA, $1,200.00) has now POSTED to the ledger.** This is the WIRE-04 test invoice on my pending-cleanup list, and it is no longer only a subledger row — batch `1e30e7e4` is `posted`. Cleanup is still owner-held and I have touched nothing, but the cleanup decision is now a GL decision (a posted batch would need reversing, not deleting), which it was not when the item was first parked.
+- severity:  informational — a PASS, plus two owner-facing notes
+- LANE:      none for the posting result. The two notes are owner decisions; if INV-2026-00004's `sent` status is a defect it routes to CC-1.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `accounting.invoices` unvoided: 11,983 total / 7 `source_system='tms'` / 11,976 `'qbo'` / 0 null. `accounting.bills` unvoided: 16,250 / 16,245 with `qbo_bill_id` / 5 without. TMS-native invoices without a posted batch: **3**, each enumerated above with status and amount; the 4 posted ones listed with ids and entities.
+- status:    OPEN (informational)
