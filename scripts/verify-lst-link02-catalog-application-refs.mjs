@@ -14,7 +14,6 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import os from "node:os";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -95,21 +94,19 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
   const broken = collectProblems();
   // Pre-fix would fail wo cancel — if still failing after fix, selftest uses real
   if (broken.length === 0) {
-    // Mutate: strip wo cancel validation
-    const wo = read("apps/backend/src/work-orders/work-orders.routes.ts");
-    if (/catalogs\.wo_cancellation_reasons/.test(wo)) {
-      const fake = wo.replace(/catalogs\.wo_cancellation_reasons/g, "catalogs.REMOVED");
-      // JANITOR: this wrote .tmp-selftest-wo.ts into the REPO ROOT and never removed it, so every
-      // --selftest run left an untracked file behind and the next coder's pre-push hook failed on a
-      // dirty tree. The probe only ever needed the mutated text in memory — it is never read back
-      // from disk — so write it to the OS temp dir and delete it in a finally.
-      const tmpFile = path.join(os.tmpdir(), `ih35-lst-link02-selftest-${process.pid}.ts`);
-      try {
-        fs.writeFileSync(tmpFile, fake);
-      } finally {
-        fs.rmSync(tmpFile, { force: true });
-      }
-    }
+    // JANITOR (2026-08-05): this block used to build a mutated copy of work-orders.routes.ts and
+    // write it to `.tmp-selftest-wo.ts` in the REPO ROOT, with no cleanup — so every --selftest run
+    // left an untracked file behind and the next lane's pre-push hook failed on a dirty tree.
+    //
+    // The write was also DEAD: `collectProblems()` reads the real repo files, so the mutated copy was
+    // never read back by anything. Moving it to os.tmpdir() traded one defect for another (CodeQL
+    // js/insecure-temporary-file — predictable filename), so the write is removed outright.
+    //
+    // HONESTY: removing a no-op changes no assertion, and it does NOT make this selftest stronger.
+    // The mutation never reached the code path being checked, so the "pre-fix would fail" probe below
+    // has always been vacuous. That pre-existing weakness is called out in this PR's REMAINING rather
+    // than papered over — fixing it means giving collectProblems() a root argument, which is a change
+    // to another guard's contract and belongs in its own PR.
   }
   const realAfterFix = collectProblems();
   if (realAfterFix.length) {
