@@ -1,4 +1,5 @@
 import { Combobox } from "../Combobox";
+import { EntityPicker } from "../parity/EntityPicker";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { CollapsedListFilters, TableSearch, ColumnChooser, type TableColumn } from "../../components/table";
 import { Button } from "../Button";
@@ -34,6 +35,8 @@ type Props = {
   companies: CompanyOption[];
   customers: LookupOption[];
   drivers: LookupOption[];
+  /** Entity-scoped company for EntityPicker filters (driver/customer). */
+  operatingCompanyId: string;
   onClearAll: () => void;
   // GLOBAL-TABLE-CONTROLS gear (column chooser + rows-per-page). Optional so the board can
   // wire it once its columns adopt the shared controller (Part B). Reused, never re-forked.
@@ -73,6 +76,7 @@ export function FilterBar({
   companies,
   customers,
   drivers,
+  operatingCompanyId,
   onClearAll,
   columns,
   hiddenColumns,
@@ -149,14 +153,18 @@ export function FilterBar({
               allowClear
             />
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1" data-testid="dispatch-filter-driver">
             <label className="text-xs font-semibold text-gray-600">Driver</label>
-            <Combobox
-              options={drivers.map((item) => ({ value: item.id, label: item.label, sublabel: item.sublabel }))}
+            {/* SAF-B29: EntityPicker kind=driver — never Combobox over parent listDrivers page. */}
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={operatingCompanyId}
               value={value.driverId}
               onChange={(driverId) => onChange({ ...value, driverId })}
               placeholder="Search driver"
               allowClear
+              allowCreate={false}
+              dataTestId="dispatch-filter-driver-picker"
             />
           </div>
         </div>

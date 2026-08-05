@@ -388,6 +388,7 @@ export function DispatchPage({
           shortName: company.short_name,
         }))}
         customers={customers}
+        operatingCompanyId={selectedCompanyId ?? ""}
         drivers={drivers}
         onClearAll={() =>
           setFilterState({
