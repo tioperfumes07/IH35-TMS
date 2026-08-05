@@ -1359,3 +1359,24 @@ membership-scoped session.
 - LANE:      none — GUARD attestation for all lanes
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` set to TRANSP, exit 0. Single UNION query over four tables returning total, import-origin count and percentage per type as tabulated; totals 56,857 records with 56,843 import-origin = 99.98%, leaving 14 TMS-native.
 - status:    OPEN (informational — permanent reference)
+
+## LV-082  GO-FORWARD VERDICT on the 14 native records: **11 posted, 3 correctly declined, 1 wrongly accepted.** The poster is fully observable at this size — and it already demonstrates the LV-064 denylist defect exactly once.
+- module:    accounting (GUARD — go-forward engine verdict)
+- entity:    TRANSP + USMCA
+- surface:   the 14 TMS-native records from LV-081 vs `accounting.posting_batches`
+- observed:  LV-081 established that only **14** financial records in the system were created by this TMS. That is small enough to audit **exhaustively** rather than statistically — every native record's posting outcome can be checked individually, which is not possible for the 56,843 imported ones. Doing so:
+  | type | native | posted | not posted |
+  |---|---|---|---|
+  | invoices | 7 | **4** | 3 |
+  | bills | 5 | **5** | 0 |
+  | expenses | 2 | **2** | 0 |
+  | **total** | **14** | **11** | **3** |
+  **All 3 non-postings are correct** (LV-059): INV-2026-00002 is `proforma` (a non-posting projection by design), INV-2026-00741 is `draft` (not issued), INV-2026-00004 has `total_cents = 0` (nothing to post). So the engine declined exactly the documents it should decline.
+  **One of the 11 postings is wrong, and it is the LV-060 draft bill.** Bill `f8f8e5a4` ($25.00) was created `draft`, never left draft, and posted to the general ledger three minutes later. So across the complete native population the poster is **13 of 14 correct**: it refuses draft *invoices* and accepts draft *bills*, which is precisely the allowlist-versus-denylist asymmetry LV-064 enumerates across 4 of the 5 posters.
+  **Why this is the strongest available evidence for LV-064.** The defect is not inferred from reading code alone — it is observable in the live outcome of the entire go-forward corpus. With 14 records, one incorrect posting is a **7% error rate on native documents**, and it is the *only* error. At $25 on test data it is a curiosity; the same code path at real dispatch volume produces a stream of prematurely recognised liabilities from un-issued documents, and by then the population is too large to audit exhaustively the way I just did.
+  **This is the cheapest moment in the system's life to fix it.** The native corpus is 14 records, there is no posted history to unwind, and the correct pattern (`INVOICE_ELIGIBLE_STATUSES`) already exists in the same file. Every additional day of real volume raises the cost.
+  **Method note:** this verdict is only meaningful *because* of the origin census. Run against all 56,857 records the same query returns "11 of 56,857 posted", which reads as catastrophic and is meaningless. Scoping to the 14 native records turns an uninterpretable ratio into an exhaustive audit with a single defect.
+- severity:  major (confirms LV-064 empirically on the complete native corpus; 1 incorrect posting of 14)
+- LANE:      CC-1 (money) — LV-064 remains the fix: replace the 4 denylists with allowlists mirroring `INVOICE_ELIGIBLE_STATUSES`
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` TRANSP, exit 0. TMS-native records with a `posted` batch: invoices **4** of 7 (`source_system='tms'`), bills **5** of 5 (`qbo_bill_id IS NULL`), expenses **2** of 2 (`qbo_purchase_id IS NULL`) — 11 of 14. The 3 unposted invoices and their statuses per LV-059; the incorrectly posted draft bill `f8f8e5a4-8c66-4d16-a4c9-44beff6b79e2` per LV-060.
+- status:    OPEN
