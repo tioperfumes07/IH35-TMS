@@ -766,6 +766,15 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
         AND itm.operating_company_id = $2::uuid
         AND itm.deactivated_at IS NULL
         AND itm.is_postable = true
+        -- REVENUE MUST CREDIT AN INCOME ACCOUNT. catalogs.items.default_income_account_id is not
+        -- type-constrained, and on prod at least one TRANSP item ("Driver Deduction-Escrow for
+        -- Claims") points it at a LIABILITY (2026-Damage Claim Escrow). For a driver DEDUCTION that
+        -- credit is correct — escrow is a liability — but this is the INVOICE revenue resolver, so if
+        -- that item ever lands on a customer invoice the poster would credit a liability as revenue:
+        -- income understated, liabilities overstated, and nothing raised. Restricting the join makes
+        -- the account unresolvable instead, which routes to the existing fail-closed error naming the
+        -- line — a refusal a human can act on, rather than a silent misclassification.
+        AND itm.account_type IN ('Income', 'Revenue', 'OtherIncome')
       WHERE il.invoice_id = $1::uuid
       ORDER BY il.display_order ASC, il.id ASC
     `,
