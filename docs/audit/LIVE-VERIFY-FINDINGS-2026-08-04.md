@@ -2185,3 +2185,51 @@ consistent with the entity model, not a defect.
              `n_tup_ins` **3,582**; postings without a link **30**, all `source='manual'`; links pointing at a
              missing posting **0**; `journal_entry`/`reversal_of` links **44** matching the 44 reversal lines.
 - status:    PASS (supersedes the traceability claim of LV-092)
+
+## LV-105  REVREC LATCH (Phase-1 hop 6 / WIRE-05) — **PASS on all three layers**: the GL shape is correct ASC 606, the status-driven firing defect is CLOSED, and ACCT-F66's stale-latch fix is proven by DIFFERENTIAL on the real prod rows (old predicate latches 2, new latches 0)
+- module:    accounting · dispatch (GUARD — Phase-1 money hop verification)
+- entity:    TRANSP
+- surface:   `accounting/revrec-delivery-posting/poster.service.ts` · `accounting.load_revenue_recognition_postings` · `accounting.journal_entries`
+- observed:  This is the only Phase-1 money hop with real GL evidence behind it, so I verified all three layers
+  rather than the one that was asked about.
+  **(1) The double entry is textbook ASC 606 — verified from the posted lines, not from the design doc.**
+  | event | debit | credit | amount |
+  |---|---|---|---|
+  | Event 1 *earn* | `1240 Unbilled Revenue` [**Asset**] | `4100 Freight Revenue` [**Income**] | $15,000.00 |
+  | Event 2 *bill* | `QBO-45 Accounts Receivable` [**Asset**] | `1240 Unbilled Revenue` [**Asset**] | $15,000.00 |
+  Earn recognises revenue against a contract asset; bill reclassifies the contract asset to A/R. Net effect
+  DR A/R / CR Revenue. Both entries balance (part of the 1,787 in LV-089) and every account carries the
+  correct type — revenue is not booked to an asset, and the unbilled leg is not booked to income.
+  **(2) The defect that caused these two entries to be reversed is CLOSED.** The owner-authorised reversal
+  memo recorded that revrec had *"posted off load status with zero delivery evidence… no POD exists and none
+  will be fabricated."* The current poster refuses that: Event 1 may only earn when the **final active
+  delivery stop carries a real `actual_departure_at`**, with an explicit `missing_delivery_evidence` refusal.
+  The reasoning in the source is exactly right and worth preserving here — `mdata.loads.status` is written
+  from **8 separate code paths, three of which reach `delivered_pending_docs`+ by validating only a status
+  graph without ever reading `mdata.load_stops`**; the only path that *captures* delivery evidence never
+  triggered the latch, and the only path that *triggered* it captured no evidence. Gating on evidence rather
+  than on status closes the inversion regardless of which status writer fires.
+  **(3) ACCT-F66's stale-latch fix — PROVEN BY EFFECT, not by reading it.** The residual documented in the
+  source is real and still visible on prod: both subledger rows (`earn`, `bill`) remain `is_active = true`,
+  `status = 'posted'`, `voided_at = NULL`, even though their journal entries carry `reversed_by_je_id`.
+  Nothing ever set `is_active = false`. Under a naive `is_active`-only check that load could **never**
+  re-recognise: Event 1 would refuse with `already_posted`, the revenue would be **lost silently**, and the
+  ACCT-F59 invoice interlock would refuse that load's invoice forever.
+  I ran the shipped predicate against those exact rows. **Differential result:**
+  | predicate | rows that latch |
+  |---|---|
+  | old, naive (`p.is_active` alone) | **2** |
+  | ACCT-F66 `STANDING_LATCH_JE_PREDICATE` (`is_active` AND `je.voided_at IS NULL` AND `je.reversed_by_je_id IS NULL`) | **0** |
+  Per row, both `earn` and `bill` return `naive = true` / `standing = false`. **The fix demonstrably works on
+  the live data it was written for**, and load `L-20260624-0083` is not blocked.
+  **Why the declarative approach is the right one and worth recording.** ACCT-F66 derives "is this latch
+  standing?" from the journal entry's own reversal state instead of requiring every reversal path to remember
+  to flip a subledger flag. There is no hook to forget. Given LV-099 — where a migration's effect never
+  landed because a step was assumed to have run — a design with no step to miss is the stronger pattern.
+- severity:  none — verify-after PASS on all three layers
+- LANE:      n/a (verification of CC-1 work)
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             Revrec JE lines and account types joined through `catalogs.accounts`. Latch rows: 2, both
+             `is_active` true with `reversed_by_je_id` non-null on their JEs. Differential predicate counts
+             **2** (naive) vs **0** (ACCT-F66) executed as SQL against those rows.
+- status:    PASS
