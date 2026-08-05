@@ -8,6 +8,10 @@
  * cannot invent the same "free" number in parallel.
  *
  * Does not apply to claim-only PRs (no new verify-step files).
+ *
+ * Rule 37 (2026-08-05): claim-reserve / CLAIM-RESERVE no longer bypass this gate.
+ * Atomic claim+file is claimed-regen / CLAIMED-REGEN only. Editing CLAIMED + adding
+ * a new verify-step in the same PR fails closed.
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -82,7 +86,12 @@ export function analyseClaimedOnMain(claimedOnMain, steps, opts = {}) {
   return problems;
 }
 
-/** CI often runs detached HEAD — prefer GITHUB_HEAD_REF / CLAIMED-REGEN subjects. */
+/**
+ * Atomic claim+file is allowed ONLY for claimed-regen registry tooling.
+ * Rule 37 (2026-08-05): chore/claim-reserve* + CLAIM-RESERVE must be claim-ONLY.
+ * They must NOT bypass "number already on origin/main" when authoring step files.
+ * CI often runs detached HEAD — prefer GITHUB_HEAD_REF / CLAIMED-REGEN subjects.
+ */
 export function resolveRegenSamePr(cwd = ROOT, baseRef = "origin/main") {
   const envBranch = (process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || "").trim();
   let branch = envBranch;
@@ -94,30 +103,60 @@ export function resolveRegenSamePr(cwd = ROOT, baseRef = "origin/main") {
       /* ignore */
     }
   }
-  if (branch.startsWith("chore/claimed-regen") || branch.startsWith("chore/claim-reserve")) {
+  if (branch.startsWith("chore/claimed-regen")) {
     return true;
   }
   try {
     const subjects = git(["log", "--format=%s", `${baseRef}..HEAD`], cwd)
       .split("\n")
       .filter(Boolean);
-    if (subjects.some((s) => /\bCLAIMED-REGEN\b|\bCLAIM-RESERVE\b/.test(s))) return true;
+    if (subjects.some((s) => /\bCLAIMED-REGEN\b/.test(s))) return true;
   } catch {
     /* ignore */
   }
   return false;
 }
 
+/** Rule 37: never edit CLAIMED-NUMBERS.json and add verify-steps/NNNN-*.mjs in the same PR. */
+export function claimAndAuthorSamePrProblems(changedFiles, newSteps, opts = {}) {
+  const problems = [];
+  if (!newSteps?.length) return problems;
+  if (opts.regenSamePr === true) return problems; // claimed-regen tooling only
+  if (changedFiles?.includes(REGISTRY_REL)) {
+    problems.push(
+      `${LABEL}: Rule 37 — this PR edits ${REGISTRY_REL} AND adds new verify-step file(s). ` +
+        `FORBIDDEN: claim-only PR first (CLAIMED only) → merge to main → THEN author the step file. ` +
+        `Only chore/claimed-regen* / CLAIMED-REGEN may land claim+file atomically.`,
+    );
+  }
+  return problems;
+}
+
+export function changedFilesVsBase(baseRef = "origin/main", cwd = ROOT) {
+  return git(["diff", "--name-only", `${baseRef}...HEAD`], cwd)
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 export function run(baseRef = "origin/main", cwd = ROOT) {
   const steps = newStepNumbers(baseRef, cwd);
+  const changed = changedFilesVsBase(baseRef, cwd);
+  const regenSamePr = resolveRegenSamePr(cwd, baseRef);
+  const samePr = claimAndAuthorSamePrProblems(changed, steps, { regenSamePr });
   if (steps.length === 0) {
+    if (samePr.length) {
+      return { ok: false, message: `${LABEL} FAILED (${samePr.length}):\n  - ${samePr.join("\n  - ")}` };
+    }
     return { ok: true, message: `${LABEL} OK — no new verify-step files` };
   }
   const claimed = claimedNumbersOnRef(baseRef, cwd);
   const headText = fs.readFileSync(path.join(cwd, REGISTRY_REL), "utf8");
   const claimedOnHead = claimedNumbersFromJson(headText);
-  const regenSamePr = resolveRegenSamePr(cwd, baseRef);
-  const problems = analyseClaimedOnMain(claimed, steps, { claimedOnHead, regenSamePr });
+  const problems = [
+    ...samePr,
+    ...analyseClaimedOnMain(claimed, steps, { claimedOnHead, regenSamePr }),
+  ];
   return problems.length === 0
     ? { ok: true, message: `${LABEL} OK — ${steps.length} new step(s) already claimed on ${baseRef}` }
     : { ok: false, message: `${LABEL} FAILED (${problems.length}):\n  - ${problems.join("\n  - ")}` };
@@ -169,6 +208,22 @@ function selftest() {
       claimedOnHead: new Set(["2402"]),
       regenSamePr: false,
     }).length === 1,
+  );
+  t(
+    "Rule 37 claim+author same PR fails",
+    claimAndAuthorSamePrProblems(
+      [REGISTRY_REL, "scripts/verify-steps/2402-x.mjs"],
+      [{ file: "scripts/verify-steps/2402-x.mjs", number: "2402" }],
+      { regenSamePr: false },
+    ).length === 1,
+  );
+  t(
+    "claimed-regen may claim+author atomically",
+    claimAndAuthorSamePrProblems(
+      [REGISTRY_REL, "scripts/verify-steps/2402-x.mjs"],
+      [{ file: "scripts/verify-steps/2402-x.mjs", number: "2402" }],
+      { regenSamePr: true },
+    ).length === 0,
   );
   const parsed = claimedNumbersFromJson(JSON.stringify({ claimed: { "10": "10-x.mjs" } }));
   t("parse claimed", parsed.has("10") && parsed.size === 1);

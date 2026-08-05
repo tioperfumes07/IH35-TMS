@@ -1,7 +1,7 @@
 # IH35 — FULL DELIVERY PLAN (NOW → LAUNCH)
 
 **Status:** LOCKED hybrid — DORA/WIP + walking skeleton + Owner module certify  
-**Date:** 2026-08-05 (rev **G** — §9.0 item 17 Systemic sweep > per-site patch · Claude serial ship · tip-main · max 1 CLAIMED PR)  
+**Date:** 2026-08-05 (rev **H** — Rule 37 claim→merge→author hardline · close claim-reserve same-PR bypass · §9.0 item 17 + Claude serial)  
 **Authority:** This committed file wins over any chat summary, agent memory, or stale paste.  
 **Supersedes as primary queue:** 400+ block pile, breadth-first 30×13 certify-everything, multi-agent sprawl  
 **Does not supersede:** Law of the Land · Rule 16/21/23/24 · `00-operating-method-LAW.mdc` (OWNER LAW 2026-08-03) · parallel books (no TMS→QBO write-back)
@@ -311,6 +311,7 @@ Proof gate ≠ owner-approval merge label ≠ CPA sign-off.
 | 2026-08-04 | **Rev E** — Claude Coder measured: Agent “1178 lines” wrong; restore abolition language; revert `.block-ready` history edits; positive-only ratchet; **full Cascade §9.4** |
 | 2026-08-05 | **Rev F** — Owner ruling: **P0 main-unblock override** (no WIP count) · locked lane map (Cursor / CC-1 / CC-2 / Cascade) · **WIRE+TEST FIRST, RECONCILE LATER** (Faro/QBO/factoring/$40,882 frozen until Jorge says "reconcile") · migrations land via merged PR then Neon apply |
 | 2026-08-05 | **Rev G** — Cursor = **Claude serial ship** (Rule 36): tip-main before every push · max 1 CLAIMED/verify-step PR · Claude title/body shape · preflight fails if behind `origin/main` |
+| 2026-08-05 | **Rev H** — Rule **37** claim→merge→author: number must be on `origin/main` before authoring `verify-steps/NNNN-*.mjs`; claim-reserve is claim-ONLY (no claim+guard same PR); `money-pr-local-gate` runs `verify-verify-step-claimed-on-main`; `regenSamePr` only for `claimed-regen` |
 
 ---
 
@@ -388,7 +389,7 @@ Proof gate ≠ owner-approval merge label ≠ CPA sign-off.
 Claude’s measured method → Cursor law (Rule **36** / `.cursor/rules/36-claude-serial-ship-sequence.mdc`):
 
 1. `git fetch origin main` → `git checkout -B cursor/<slug> origin/main` (never stack on another open tip).  
-2. One ranked FAIL: code + **sibling guards** + new guard + CLAIMED-REGEN (union; never drop main keys).  
+2. One ranked FAIL: code + **sibling guards** + new guard. **Rule 37:** claim number on `origin/main` FIRST (claim-only PR); feature PR must NOT edit CLAIMED. (CLAIMED-REGEN = registry tooling only.)  
 3. Title: `Cursor- fix(<module>): <FINDING> — <defect>`. Body: FINDING-first Claude-green (no `## Summary` / no draft theater).  
 4. `node scripts/ops/cursor-ship-preflight.mjs --body-file /tmp/pr-body.txt` → PASS.  
 5. Fetch again; if behind, `git rebase origin/main` → re-preflight → **one** push (`--force-with-lease` only after rebase).  

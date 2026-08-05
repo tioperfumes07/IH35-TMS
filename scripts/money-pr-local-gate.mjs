@@ -40,6 +40,9 @@ const STEPS = [
   ["verify-verify-step-lane-band", "scripts/verify-verify-step-lane-band.mjs"],
   // TOOL-F03 — filename is the claim; feature PRs must not edit CLAIMED-NUMBERS.json (#4010).
   ["verify-no-claimed-numbers-edits", "scripts/verify-no-claimed-numbers-edits.mjs"],
+  // Rule 25/37 — number must already be on origin/main before authoring verify-steps/NNNN-*.mjs
+  // (#4421–#4455 class: opened feature PRs before claim-reserve merged).
+  ["verify-verify-step-claimed-on-main", "scripts/verify-verify-step-claimed-on-main.mjs"],
   // TOOL-F04 — data-mutating migrations need REHEARSED: in a branch commit (#4009).
   ["verify-data-migrations-rehearsed", "scripts/verify-data-migrations-rehearsed.mjs"],
   // EntityLink adoption ratchet — #4010 FactoringHome AST shift + bare UUID (~1.5s).

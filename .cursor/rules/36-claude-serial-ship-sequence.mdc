@@ -66,6 +66,8 @@ Run in order. Skipping a step is a trust defect.
 ## Forbidden forever
 
 - Parallel Cursor PRs that both edit `scripts/verify-steps/CLAIMED-NUMBERS.json`
+- Opening feature PRs that add `verify-steps/NNNN-*.mjs` before `NNNN` is on `origin/main` (Rule 37)
+- Combining claim + guard on `chore/claim-reserve-*` (claim-only vs feature — two PRs)
 - Force-pushing an unrelated squash/merge SHA onto a feature branch tip
 - `git reset --soft origin/main` (Rule 30 — deletes other guards)
 - Opening draft “for WIP accounting” when the work is finished
@@ -76,8 +78,9 @@ Run in order. Skipping a step is a trust defect.
 ## Mechanical teeth
 
 - `scripts/ops/cursor-ship-preflight.mjs` — fails closed if `origin/main` is not an ancestor of HEAD
-- Rules 29 + 30 + 33 sibling-guard law + Rule 34 `Cursor-` title prefix
-- Delivery plan §9.0 item 17 (SYSTEMIC SWEEP) + §9.2.1 (rev G+)
+- Rules 29 + 30 + 33 sibling-guard law + Rule 34 `Cursor-` title prefix + **Rule 37** claim→merge→author
+- `scripts/money-pr-local-gate.mjs` includes `verify-verify-step-claimed-on-main`
+- Delivery plan §9.0 item 17 (SYSTEMIC SWEEP) + §9.2.1 (rev H+)
 
 ## Tie-breakers
 
