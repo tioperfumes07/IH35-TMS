@@ -486,11 +486,11 @@
       "instances": [
         { "path": "apps/backend/src/dispatch/book-load.service.ts:10 imports buildInvoiceFromLoad from accounting/from-load.ts — proforma invoice created at book time (WIRE-01)", "entity": "ALL", "note": "Wire exists. Proforma status=non-posting. Converts to draft at POD via WIRE-04." }
       ],
-      "completeness": "Code-verified: book-load.service.ts line 10 imports buildInvoiceFromLoad. from-load.ts buildInvoiceFromLoad creates accounting.invoices row with status=proforma when asProforma=true. INVOICE_PROFORMA_PIPELINE_ENABLED ON for TRANSP+USMCA (prod verified 2026-08-01).",
+      "completeness": "Code-verified + live 2026-08-04: book-load.service.ts line 10 imports buildInvoiceFromLoad. from-load.ts buildInvoiceFromLoad creates accounting.invoices row with status=proforma when asProforma=true. INVOICE_PROFORMA_PIPELINE_ENABLED ON for all 3 opcos. Live count: accounting.invoices total=11984, status='proforma'=1, mdata.loads=6 — confirms the wire fires when enabled.",
       "guard": "scripts/verify-disp-wire-01-book-invoice.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "WIRE-01 book→invoice: proforma invoice created at booking via buildInvoiceFromLoad. accounting.invoices status=proforma. INVOICE_PROFORMA_PIPELINE_ENABLED=ON for TRANSP+USMCA.",
+        "guard_sample": "WIRE-01 book→invoice: proforma invoice created at booking via buildInvoiceFromLoad. accounting.invoices total=11984, status='proforma'=1, mdata.loads=6. INVOICE_PROFORMA_PIPELINE_ENABLED=ON for all 3 opcos.",
         "money_critical": true
       },
       "status": "open",
@@ -506,13 +506,13 @@
       "layer": "C",
       "modules": ["dispatch"],
       "instances": [
-        { "path": "apps/backend/src/dispatch/book-load.service.ts:324-531 createDriverBillArtifacts — solo + team split driver bills (WIRE-02)", "entity": "ALL", "note": "Wire exists. Creates bills with miles_basis, rate_per_mile_cents, team split. driver_finance.driver_bills = 0 rows on prod (no loads fully booked+assigned yet)." }
+        { "path": "apps/backend/src/dispatch/book-load.service.ts:324-531 createDriverBillArtifacts — solo + team split driver bills (WIRE-02)", "entity": "ALL", "note": "Wire exists. Creates bills with miles_basis, rate_per_mile_cents, team split. Live 2026-08-04: driver_finance.driver_bills=6 vs mdata.loads=6." }
       ],
-      "completeness": "Code-verified: book-load.service.ts createDriverBillArtifacts creates driver_finance.driver_bills with gross_amount_cents, miles_basis, team split logic. Relation-guarded via relationExists('driver_finance.driver_bills').",
+      "completeness": "Code-verified + live 2026-08-04: book-load.service.ts createDriverBillArtifacts creates driver_finance.driver_bills with gross_amount_cents, miles_basis, team split logic. Relation-guarded via relationExists('driver_finance.driver_bills'). Live count: driver_finance.driver_bills=6 vs mdata.loads=6 — wire is functional.",
       "guard": "scripts/verify-disp-wire-02-driver-bill.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "WIRE-02 assign→driver-bill: createDriverBillArtifacts creates driver_finance.driver_bills with gross_amount_cents. driver_bills = 0 rows on prod (pre-operational).",
+        "guard_sample": "WIRE-02 assign→driver-bill: createDriverBillArtifacts creates driver_finance.driver_bills with gross_amount_cents. Live 2026-08-04: driver_bills=6 vs mdata.loads=6 — wire is functional.",
         "money_critical": true
       },
       "status": "open",
@@ -527,9 +527,9 @@
       "layer": "A",
       "modules": ["dispatch"],
       "instances": [
-        { "path": "apps/backend/src/dispatch/pod.routes.ts:78-168 POST /api/v1/driver/loads/:loadId/stops/:stopId/pod — driver PWA POD capture (WIRE-03)", "entity": "ALL", "note": "Wire exists but untested on live. dispatch.pod_documents = 0 rows on prod. R2 storage configured." }
+        { "path": "apps/backend/src/dispatch/pod.routes.ts:78-168 POST /api/v1/driver/loads/:loadId/stops/:stopId/pod — driver PWA POD capture (WIRE-03)", "entity": "ALL", "note": "Wire exists but untested on live. Live 2026-08-04: dispatch.pod_documents=0 vs mdata.loads=6. R2 storage configured." }
       ],
-      "completeness": "Code-verified: pod.routes.ts validates delivery stop (isDeliveryStop), uploads photo+signature to R2, inserts dispatch.pod_documents with status=pending_review. Review path exists at POST /pod-documents/:id/review. Live verification blocked on driver PWA adoption.",
+      "completeness": "Code-verified + live 2026-08-04: pod.routes.ts validates delivery stop (isDeliveryStop), uploads photo+signature to R2, inserts dispatch.pod_documents with status=pending_review. Review path exists at POST /pod-documents/:id/review. Live count: dispatch.pod_documents=0 vs mdata.loads=6 — wire exists but no driver has captured a POD yet.",
       "guard": "scripts/verify-disp-wire-03-pod-capture.mjs",
       "drain_proof": {
         "guard_green": false,
@@ -641,13 +641,13 @@
       "layer": "C",
       "modules": ["dispatch", "settlements"],
       "instances": [
-        { "path": "apps/backend/src/dispatch/loads.routes.ts:1354-1363 — pingSettlementOnLoadEvent on status change (WIRE-08)", "entity": "ALL", "note": "Wire exists. try/catch warn-only. driver_finance.driver_settlements = 0 rows. Untested end to end." }
+        { "path": "apps/backend/src/dispatch/loads.routes.ts:1354-1363 — pingSettlementOnLoadEvent on status change (WIRE-08)", "entity": "ALL", "note": "Wire exists. try/catch warn-only. Live 2026-08-04: driver_finance.driver_settlements=0 vs driver_bills=6/loads=6. Ping fires but no settlements produced yet." }
       ],
-      "completeness": "Code-verified: loads.routes.ts lines 1354-1363 call pingSettlementOnLoadEvent in try/catch. Import from driver-finance. Settlement tables empty on prod.",
+      "completeness": "Code-verified + live 2026-08-04: loads.routes.ts lines 1354-1363 call pingSettlementOnLoadEvent in try/catch. Import from driver-finance. Live count: driver_finance.driver_settlements=0 vs mdata.loads=6 and driver_finance.driver_bills=6 — ping fires but no settlements produced yet; untested end-to-end.",
       "guard": "scripts/verify-disp-wire-08-settlement-ping.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "WIRE-08 settlement ping: pingSettlementOnLoadEvent fires on status change (try/catch warn-only). driver_finance.driver_settlements = 0 rows. Untested end-to-end money path.",
+        "guard_sample": "WIRE-08 settlement ping: pingSettlementOnLoadEvent fires on status change (try/catch warn-only). Live 2026-08-04: driver_finance.driver_settlements=0 vs driver_bills=6/loads=6. Untested end-to-end money path.",
         "money_critical": true
       },
       "status": "open",
