@@ -465,6 +465,7 @@
       "insurance_claim_id",
       "is_active",
       "journal_entry_id",
+      "legal_matter_id",
       "linked_work_order_uuid",
       "load_id",
       "memo",
@@ -5851,6 +5852,7 @@
       "operating_company_id"
     ],
     "legal.matters": [
+      "accident_report_id",
       "amount_claimed_against_us",
       "amount_we_seek",
       "attorney_email",
@@ -5871,6 +5873,7 @@
       "insurance_claim_id",
       "insurance_lawsuit_id",
       "internal_notes",
+      "load_id",
       "matter_number",
       "next_hearing_date",
       "operating_company_id",

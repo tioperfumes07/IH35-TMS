@@ -2040,8 +2040,9 @@ export async function listLegalMatterLinkedCosts(
   legalMatterId: string
 ): Promise<{
   bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null }>;
+  expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null }>;
   total_cost_cents: number;
-  columns_present: { bills: boolean };
+  columns_present: { bills: boolean; expenses: boolean };
 }> {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
@@ -2050,7 +2051,14 @@ export async function listLegalMatterLinkedCosts(
         WHERE table_schema='accounting' AND table_name='bills' AND column_name='legal_matter_id'`
     );
     const hasCol = (colRes.rowCount ?? 0) > 0;
-    if (!hasCol) return { bills: [], total_cost_cents: 0, columns_present: { bills: false } };
+    const expColRes = await client.query(
+      `SELECT 1 FROM information_schema.columns
+        WHERE table_schema='accounting' AND table_name='expenses' AND column_name='legal_matter_id'`
+    );
+    const hasExpCol = (expColRes.rowCount ?? 0) > 0;
+    if (!hasCol && !hasExpCol) {
+      return { bills: [], expenses: [], total_cost_cents: 0, columns_present: { bills: false, expenses: false } };
+    }
 
     const res = await client.query(
       `SELECT b.id::text AS id, b.bill_number, b.bill_date::text AS bill_date,
@@ -2062,17 +2070,41 @@ export async function listLegalMatterLinkedCosts(
         ORDER BY b.bill_date DESC NULLS LAST, b.created_at DESC`,
       [operatingCompanyId, legalMatterId]
     );
-    const bills = res.rows.map((r: Record<string, unknown>) => ({
+    const bills = hasCol ? res.rows.map((r: Record<string, unknown>) => ({
       id: String(r.id),
       bill_number: (r.bill_number as string) ?? null,
       bill_date: (r.bill_date as string) ?? null,
       amount_cents: Number(r.amount_cents ?? 0),
       status: (r.status as string) ?? null,
       memo: (r.memo as string) ?? null,
-    }));
+    })) : [];
+
+    // Card-paid court fees and filing costs are EXPENSES, not vendor bills. Counting only bills would
+    // under-report what a matter cost by exactly the amount nobody invoiced us for.
+    let expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null }> = [];
+    if (hasExpCol) {
+      const eres = await client.query(
+        `SELECT e.id::text AS id, e.transaction_date::text AS transaction_date,
+                COALESCE(e.total_amount_cents,0)::bigint AS total_amount_cents, e.status
+           FROM accounting.expenses e
+          WHERE e.operating_company_id = $1
+            AND e.legal_matter_id = $2
+          ORDER BY e.transaction_date DESC NULLS LAST`,
+        [operatingCompanyId, legalMatterId]
+      );
+      expenses = eres.rows.map((r: Record<string, unknown>) => ({
+        id: String(r.id),
+        transaction_date: (r.transaction_date as string) ?? null,
+        total_amount_cents: Number(r.total_amount_cents ?? 0),
+        status: (r.status as string) ?? null,
+      }));
+    }
+
     // Voided bills are excluded above (revoked_at IS NULL), so the total is what the matter has
     // actually cost — not what was ever entered against it.
-    const total = bills.reduce((sum, b) => sum + b.amount_cents, 0);
-    return { bills, total_cost_cents: total, columns_present: { bills: true } };
+    const total =
+      bills.reduce((sum, b) => sum + b.amount_cents, 0) +
+      expenses.reduce((sum, e) => sum + e.total_amount_cents, 0);
+    return { bills, expenses, total_cost_cents: total, columns_present: { bills: hasCol, expenses: hasExpCol } };
   });
 }
