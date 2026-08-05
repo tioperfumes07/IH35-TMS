@@ -1600,3 +1600,43 @@ whatever CC-1 holds those IDs to mean. Flagged, not claimed — CC-1 owns reconc
              `reversal_of_line_id` non-null = **0** of 44 reversal lines and 0 of 3,603 overall;
              `posting_batch_id` non-null = 3,510 across 1,755 batches.
 - status:    OPEN
+
+### LV-088 ADDENDUM — second-entity corroboration: the leak also manufactures a **FALSE REGRESSION** on USMCA
+Verified live after the original write-up, by switching company context to **USMCA Freight** (`5c854333-…`)
+in the same authenticated session. The board header correctly reads `scope: 5c854333-…`, and the cert half
+is again the ALL row (`19:35:00.055212+00` sweep — a later sweep than the first observation, same defect):
+
+| hop | live (USMCA, correct) | cert shown (ALL, wrong) | badge |
+|---|---|---|---|
+| `hop.book` | 1 load booked | **3 loads** | PASSED |
+| `hop.assign` | 1 driver bill | **3 driver bills** | PASSED |
+| `hop.dispatch` | **0** dispatched | **1 dispatched** | **FIX (red)** |
+
+**The dispatch row is the important one, and it inverts the severity of this finding.** The UI printed
+`DOWNGRADED: certification says passed but the live predicate no longer holds` and painted the slice **FIX** —
+the colour reserved for a *regression*. On prod, USMCA's **own** cert row for `hop.dispatch` is
+`stage='built'`, `state='go'`, evidence `0 load(s) dispatched or beyond` — i.e. **correctly "not yet"**.
+USMCA has never dispatched a load, so there is nothing to regress. The FIX badge exists **only** because the
+read path took TRANSP's dispatched load (via the ALL row, `stage='passed'`) and measured it against USMCA's
+live `0`.
+
+So the same one-line predicate produces **two opposite failures** depending on which entity is selected:
+- on **TRANSP** it **overstates** evidence (3/5/1765 instead of 2/2/1747) — a false green;
+- on **USMCA** it **fabricates a regression** on a hop that was never passed — a false red.
+
+A false red is the more corrosive of the two: it trains operators to disregard the board, and it would send a
+builder to "fix" a hop whose only defect is that another entity's row was read. Under `06-quality-hardline`
+(false-empty / false-green) and §0, both directions are the same root cause and the same one-line fix.
+
+**Credit where due — the downgrade logic itself is correct and is what exposed this.** The read path
+genuinely re-checks the live predicate against the certification instead of trusting the cert, which is why
+the contradiction surfaced at all rather than sitting silently green. The defect is strictly the scope
+predicate feeding it, not the downgrade mechanism.
+
+- neon-check: prod `br-fancy-credit-akjnd07a`, bypass in its own statement, exit 0.
+  `audit.scenario_status WHERE is_current AND scenario_key='hop.dispatch'` — ALL: `passed`/`done`/"1 load(s)
+  dispatched or beyond"; USMCA `5c854333`: **`built`/`go`/"0 load(s) dispatched or beyond"**;
+  TRANSP `91e0bf0a`: `passed`/`done`/"1 load(s)"; TRK `b49a737b`: `built`/`go`/"0 load(s)". All four rows
+  share `verified_at = 2026-08-05T19:35:00.055Z` — `distinct_ts = 1`, so the tie persists across sweeps.
+- status:    OPEN (same fix as LV-088; the guard must assert BOTH directions — no false green on the
+             larger entity AND no false FIX on the smaller one)
