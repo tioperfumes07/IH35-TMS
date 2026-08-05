@@ -3,7 +3,6 @@ import { useMemo, useState } from "react";
 import {
   createInsuranceCoiRequest,
   listInsuranceCoiRequests,
-  listInsurancePolicies,
   updateInsuranceCoiRequest,
   type CoiRequestStatus,
   type InsuranceCoiRequest,
@@ -76,11 +75,8 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
     enabled: Boolean(operatingCompanyId),
   });
 
-  const policiesQuery = useQuery({
-    queryKey: ["insurance-policies", operatingCompanyId ?? "none"],
-    queryFn: () => listInsurancePolicies({ operating_company_id: operatingCompanyId! }).then((result) => result.policies),
-    enabled: Boolean(operatingCompanyId) && isFullPage && requestOpen,
-  });
+  // Policies load via EntityPicker kind=insurance_policy (no local listInsurancePolicies query).
+
 
   function resetCreateForm() {
     setRequestNotes("");

@@ -4,7 +4,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
 import {
   insuranceClaimsApi,
-  listInsurancePolicies,
   type InsuranceClaimFault,
   type InsuranceClaimRecoveryRail,
   type InsuranceClaimRepairBooksTreatment,
@@ -119,11 +118,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
   const [serverError, setServerError] = useState("");
   // SAF-B29 / picker law: load + trailer → EntityPicker (server search + nested create).
 
-  const policiesQuery = useQuery({
-    queryKey: ["insurance", "claim-create", "policies", operatingCompanyId],
-    enabled: open && Boolean(operatingCompanyId),
-    queryFn: () => listInsurancePolicies({ operating_company_id: operatingCompanyId }).then((result) => result.policies),
-  });
+  // Policies load via EntityPicker kind=insurance_policy (no local listInsurancePolicies query).
 
 
   const accidentsQuery = useQuery({
