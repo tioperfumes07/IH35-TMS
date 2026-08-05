@@ -1306,7 +1306,9 @@
     "2625": "2625-verify-migration-checksum-collision.mjs",
     "2626": "2626-verify-no-stale-approval-gate.mjs",
     "2628": "2628-verify-scenario-tracker-reachable.mjs",
+    "2629": "2629-verify-load-status-enum-abandonment-values.mjs",
     "2630": "2630-verify-loan-wizard-payload-complete.mjs",
+    "2632": "2632-verify-local-gate-covers-fe-ratchets.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
@@ -1315,8 +1317,7 @@
     "06": "06-verify-scheduler-tenant-context.mjs",
     "07": "07-verify-canonical-schema-names.mjs",
     "08": "08-verify-outbox-handler-parity.mjs",
-    "09": "09-verify-migration-application-consistency.mjs",
-    "2629": "2629-verify-load-status-enum-abandonment-values.mjs"
+    "09": "09-verify-migration-application-consistency.mjs"
   },
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
