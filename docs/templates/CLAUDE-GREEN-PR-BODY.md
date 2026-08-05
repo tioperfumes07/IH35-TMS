@@ -2,12 +2,19 @@
 
 **Use this for every Cursor PR.** Same text in the commit message and `gh pr create --body`.
 Do **not** wrap it in `## Summary`. Start with `FINDING:`.
+No “Made with Cursor”. No “DRAFT — WIP”. Title must match Rule 36:
+
+```
+Cursor- fix(<module>): <FINDING-ID> — <one-line defect>
+```
+
+## PR / commit body
 
 ```
 FINDING: SAF-C01
 LANE: NON-FINANCIAL
 
-ROOT CAUSE: <one or more paragraphs naming the mechanism>
+ROOT CAUSE: <one or more paragraphs naming the mechanism — measure on prod/code, not vibes>
 
 FIX: <what changed at root; name guard + verify-step>
 
@@ -33,18 +40,18 @@ LIVE PROOF: node scripts/verify-<name>.mjs --selftest exit 0; live run exit 0; v
 REMAINING: <honest open work — never "module done" while N of M incomplete>
 ```
 
-## Local gate before create/edit
+## Local gate before create/edit (Rule 36 — Claude serial)
 
 ```bash
-# Preferred one-shot (Rule 29):
+git fetch origin main
+git rebase origin/main          # ALWAYS before push — tip-main
+# Preferred one-shot (Rule 29 + Rule 36 tip-main fail):
 node scripts/ops/cursor-ship-preflight.mjs --body-file /tmp/pr-body.txt
 
-# Equivalent:
-node scripts/money-pr-local-gate.mjs
-node scripts/cursor-pr-body-gate.mjs --body-file /tmp/pr-body.txt
-gh pr create --body-file /tmp/pr-body.txt   # or: gh pr edit N --body-file /tmp/pr-body.txt
+gh pr create --title "Cursor- fix(<module>): <FINDING> — <defect>" --body-file /tmp/pr-body.txt
+# never --draft for finished work
 ```
 
 ## Reference green PR
 
-Merged Claude example: #4073 (FINDING-first, LIVE PROOF with `tsc 0` / `verify-static OK`, gaps in REMAINING).
+Merged Claude examples: #4365 / #4339 / #4073 — title `Claude-1- fix(scope): ID — defect`, FINDING-first body, LIVE PROOF with command exits / prod counts, one commit on tip main, no parallel CLAIMED thrash.

@@ -1,7 +1,7 @@
 # IH35 — FULL DELIVERY PLAN (NOW → LAUNCH)
 
 **Status:** LOCKED hybrid — DORA/WIP + walking skeleton + Owner module certify  
-**Date:** 2026-08-05 (rev **F** — P0-blocker override · locked lane map · wire+test first / reconcile later)  
+**Date:** 2026-08-05 (rev **G** — Claude serial ship sequence for Cursor · tip-main preflight · one CLAIMED PR)  
 **Authority:** This committed file wins over any chat summary, agent memory, or stale paste.  
 **Supersedes as primary queue:** 400+ block pile, breadth-first 30×13 certify-everything, multi-agent sprawl  
 **Does not supersede:** Law of the Land · Rule 16/21/23/24 · `00-operating-method-LAW.mdc` (OWNER LAW 2026-08-03) · parallel books (no TMS→QBO write-back)
@@ -310,6 +310,7 @@ Proof gate ≠ owner-approval merge label ≠ CPA sign-off.
 | 2026-08-04 | **Rev D** — Agent GOVERNANCE block + over-broad token purge (partially wrong mechanism) |
 | 2026-08-04 | **Rev E** — Claude Coder measured: Agent “1178 lines” wrong; restore abolition language; revert `.block-ready` history edits; positive-only ratchet; **full Cascade §9.4** |
 | 2026-08-05 | **Rev F** — Owner ruling: **P0 main-unblock override** (no WIP count) · locked lane map (Cursor / CC-1 / CC-2 / Cascade) · **WIRE+TEST FIRST, RECONCILE LATER** (Faro/QBO/factoring/$40,882 frozen until Jorge says "reconcile") · migrations land via merged PR then Neon apply |
+| 2026-08-05 | **Rev G** — Owner fury: Cursor rebase thrash. **Claude serial ship** locked as Rule **36** + tip-main fail in `cursor-ship-preflight` · Cursor title shape `fix(module): FINDING — defect` · **≤1 open Cursor PR** may touch `CLAIMED-NUMBERS.json` |
 
 ---
 
@@ -358,6 +359,14 @@ Proof gate ≠ owner-approval merge label ≠ CPA sign-off.
 - Desktop-copy this plan after every rev land  
 - Hand a hop to **CC-1** the moment it touches money/GL/migration  
 - Take P0 main-unblock immediately when free (§9.0 item 14)  
+- **Claude serial ship (Rule 36) — every PR, no exceptions:**  
+  1. `git fetch origin main` → branch from **tip** `origin/main` (never stack)  
+  2. **≤1 open Cursor PR** may edit `scripts/verify-steps/CLAIMED-NUMBERS.json` — merge/close it before opening the next CLAIMED-touching PR  
+  3. Title: `Cursor- fix(<module>): <FINDING> — <one-line defect>` (Claude shape)  
+  4. Body = `docs/templates/CLAUDE-GREEN-PR-BODY.md` (FINDING-first; no `## Summary`; no “Made with Cursor”; no DRAFT for finished work)  
+  5. `git rebase origin/main` **immediately before** push  
+  6. `node scripts/ops/cursor-ship-preflight.mjs --body-file /tmp/pr-body.txt` → **PASS** (fails if behind main)  
+  7. **One** push → stop. No CI babysit. If CONFLICTING later: rebase same turn  
 
 **MUST NOT**
 - Race Claude on Phase 0 branch deletes/archives  
@@ -367,6 +376,7 @@ Proof gate ≠ owner-approval merge label ≠ CPA sign-off.
 - Touch another agent’s worktree or force-push their branch  
 - Blind-delete unmerged branches  
 - Touch Faro/QBO/factoring/$40,882/transaction reconcile (§9.0 item 15)  
+- Push while behind `origin/main`, open parallel CLAIMED-thrash PRs, or leave finished work as draft  
 
 **Worktree:** dedicated Cursor worktree only (e.g. cleanup / main-check — never Claude’s).
 

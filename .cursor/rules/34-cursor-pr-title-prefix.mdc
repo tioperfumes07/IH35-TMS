@@ -7,14 +7,16 @@ alwaysApply: true
 
 **Every Pull Request opened by Cursor MUST begin with `Cursor-`.**
 
-Examples:
-- `Cursor- fix: …`
-- `Cursor- docs: …`
-- `Cursor- chore: …`
+Examples (Claude shape — Rule 36):
+- `Cursor- fix(safety): SAF-MEET-TRAIN-DRIVER-PICKER — meetings/training used limit:200 roster`
+- `Cursor- fix(insurance): INS-CLAIM-LOAD-TRAILER-PICKER — ClaimCreate still Combobox+listLoads`
+- `Cursor- docs(delivery): DELIVERY-METHOD-LOCKED rev G — Claude serial ship sequence`
+- `Cursor- chore(guards): CLAIM-RESERVE 24xx even band`
 
 Forbidden:
 - Titles without the `Cursor-` prefix
 - Soft variants (`cursor:`, `[Cursor]`, `CURSOR -`)
+- Thin titles missing `fix(module): FINDING — defect` (Claude never ships those; they hide the hop)
 
 Enforced by `scripts/verify-cursor-pr-title-prefix.mjs` (verify-step **2377**) when `GATE_PR_TITLE` is set (PR CI) or when the branch name starts with `cursor/`.
 
