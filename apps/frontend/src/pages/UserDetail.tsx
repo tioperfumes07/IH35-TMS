@@ -18,7 +18,7 @@ import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
 import { Button } from "../components/Button";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { ReferenceSelect } from "../components/parity/ReferenceSelect";
-import { DriverPickerWithCreate } from "../components/drivers/DriverPickerWithCreate";
+import { EntityPicker } from "../components/parity/EntityPicker";
 import { MoneyInput } from "../components/forms/MoneyInput";
 import { DatePicker } from "../components/forms/DatePicker";
 import { companyToday } from "../lib/businessDate";
@@ -614,11 +614,11 @@ export function UserDetailPage() {
                   <Combobox options={customerOptions} value={relatedCustomerId} onChange={setRelatedCustomerId} placeholder="Select company first" disabled />
                 )}
                 {selectedCompanyId ? (
-                  <DriverPickerWithCreate
+                  <EntityPicker kind="driver"
                     operatingCompanyId={selectedCompanyId}
                     value={relatedDriverId}
                     onChange={setRelatedDriverId}
-                    open={addEventOpen && enableRelated}
+                    enabled={addEventOpen && enableRelated}
                     placeholder="Related driver"
                     dataField="dispatcher-safety-related-driver"
                   />
