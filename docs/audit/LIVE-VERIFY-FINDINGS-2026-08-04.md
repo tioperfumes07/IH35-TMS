@@ -1194,3 +1194,28 @@ membership-scoped session.
 - LANE:      none — GUARD attestation. Note for CC-1: run control-account tie-outs **per entity**, never aggregated.
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. Journal entries joined to postings grouped by `operating_company_id`: TRANSP 1,769/3,566/0¢, USMCA 12/24/0¢, TRK 6/13/0¢. Unvoided invoices by entity with `source_system` split, unvoided bills by entity with `qbo_bill_id` split, unvoided `banking.bank_transactions` by entity, and `catalogs.accounts` by entity — all as tabulated. Totals reconcile: bills 3,196+13,051+3 = 16,250; invoices 11,979+4 = 11,983; accounts 404+958+80 = 1,442.
 - status:    OPEN (informational)
+
+## LV-074  GUARD — locked invariants verified at 100%: `security_invoker=true` on 40 of 40 views, FORCED RLS on every money-schema table (190 of 190). The 4 `catalogs` tables without RLS are shared-canonical reference data — EXPECTED STATE, not a defect.
+- module:    accounting / catalogs / platform (GUARD live-verify-after-merge)
+- entity:    ALL
+- surface:   `pg_class` view options and RLS flags across the money schemas
+- observed:  Two §2 locked invariants, both verified live rather than assumed from the spec.
+  **`security_invoker=true` on every view — 40 of 40 PASS.** `views` schema **39 of 39**, `accounting` **1 of 1**. No view runs with definer rights, so none can silently bypass the RLS of the caller reading through it. *(Method note: my first query searched the view **definition text** for `security_invoker` and returned 0 — the wrong place. The option lives in `pg_class.reloptions`, not the SQL body. Running both is what caught it; a single query would have produced a false "0 of 40 compliant" alarm.)*
+  **FORCED RLS on the money schemas — 190 of 190 PASS:**
+  | schema | tables | RLS on | FORCED |
+  |---|---|---|---|
+  | accounting | 85 | **85** | **85** |
+  | mdata | 50 | **50** | **50** |
+  | driver_finance | 37 | **37** | **37** |
+  | banking | 12 | **12** | **12** |
+  | fuel | 5 | **5** | **5** |
+  | hos | 1 | **1** | **1** |
+  | catalogs | 115 | 111 | 111 |
+  | lib | 2 | 2 | **1** |
+  Every table in `accounting`, `mdata`, `banking`, `driver_finance`, `fuel` and `hos` has row-level security **enabled and FORCED** — forced matters because without it the table owner bypasses the policy entirely.
+  **The 4 `catalogs` tables without RLS are correctly excluded, and I classified before filing.** §0 requires scoping to be judged by opco values and policy rather than column presence. **None of the four has an `operating_company_id` column at all**: `audit_event_types` (13 rows, event-type enum), `cancellation_reasons` (9 rows — the **legacy** table §10 rules must be archived and never dropped, superseded by `catalogs.load_cancellation_reasons`), `equipment_types_dedup_ledger_0318` (2 rows, a migration dedup artifact), `tax_form_thresholds` (8 rows, statutory thresholds). These are shared-canonical reference data with no per-entity dimension — RLS would have nothing to scope on, and adding it would be meaningless. **Reporting "4 catalogs tables missing RLS" would have been a false finding**; the classification rule is what prevented it.
+  **One genuine asymmetry, recorded not filed:** `lib` has 2 RLS-enabled tables but only **1 FORCED** — `lib.feature_flags` is `relforcerowsecurity=false` while `lib.feature_flag_overrides` is forced. That is consistent with what LV-036 measured (the flag row is visible to the runtime role while the override row is not) and is not itself the LV-036 defect, which lives in the check route's missing entity GUC.
+- severity:  informational — two locked invariants at 100%; no defect
+- LANE:      none — GUARD attestation
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. Views by schema with `reloptions ILIKE '%security_invoker=true%'`: `views` 39/39, `accounting` 1/1. `pg_class.relrowsecurity` / `relforcerowsecurity` by schema exactly as tabulated. Money-schema tables (`accounting`,`catalogs`,`mdata`,`banking`) without RLS = **4**, all in `catalogs`, each confirmed to have **0** `operating_company_id` columns via `information_schema.columns`.
+- status:    OPEN (informational)
