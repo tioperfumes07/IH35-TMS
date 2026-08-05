@@ -38,16 +38,18 @@ export function collectProblems(sources) {
     const code = stripComments(sources?.[rel] ?? read(rel));
 
     if (new RegExp(`placeholder=["']driver_id["']`).test(code)) {
-      problems.push(`${rel}: raw placeholder="driver_id" text input — use DriverPickerWithCreate.`);
+      problems.push(`${rel}: raw placeholder="driver_id" text input — use EntityPicker kind=driver.`);
     }
 
-    if (!code.includes("DriverPickerWithCreate")) {
-      problems.push(`${rel}: must use DriverPickerWithCreate for the driver reference field.`);
+    const hasEp = /EntityPicker/.test(code) && /kind=["']driver["']/.test(code);
+    const hasPwc = code.includes("DriverPickerWithCreate");
+    if (!hasEp && !hasPwc) {
+      problems.push(`${rel}: must use EntityPicker kind=driver (or DriverPickerWithCreate) for the driver reference field.`);
     }
 
-    const pickerBlock = code.match(/<DriverPickerWithCreate[\s\S]*?\/>/)?.[0] ?? "";
+    const pickerBlock = code.match(/<EntityPicker[\s\S]*?\/>/)?.[0] ?? code.match(/<DriverPickerWithCreate[\s\S]*?\/>/)?.[0] ?? "";
     if (!pickerBlock.includes("operatingCompanyId=")) {
-      problems.push(`${rel}: DriverPickerWithCreate must pass operatingCompanyId for entity scope.`);
+      problems.push(`${rel}: EntityPicker must pass operatingCompanyId for entity scope.`);
     }
 
     if (!code.includes(`data-testid="${pickerTestId}"`)) {
@@ -59,7 +61,7 @@ export function collectProblems(sources) {
       /<input\b[^>]*\bvalue=\{form\.driver_id\b/.test(code) ||
       /<input\b[^>]*\bonChange=\{[^}]*driver_id/.test(code)
     ) {
-      problems.push(`${rel}: driver_id is still bound to a raw <input> — use DriverPickerWithCreate.`);
+      problems.push(`${rel}: driver_id is still bound to a raw <input> — use EntityPicker kind=driver.`);
     }
   }
 
@@ -98,8 +100,14 @@ if (SELFTEST) {
   );
   expectCaught(
     "picker-removed",
-    { ...live, [tab]: live[tab].replace(/DriverPickerWithCreate/g, "PlainSelect") },
-    "must use DriverPickerWithCreate"
+    {
+      ...live,
+      [tab]: live[tab]
+        .replace(/EntityPicker/g, "PlainSelect")
+        .replace(/kind=["']driver["']/g, 'kind="unit"')
+        .replace(/DriverPickerWithCreate/g, "PlainSelect"),
+    },
+    "must use EntityPicker kind=driver (or DriverPickerWithCreate)",
   );
   expectCaught(
     "scope-removed",

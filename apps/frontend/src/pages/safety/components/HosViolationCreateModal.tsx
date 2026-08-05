@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createHosViolation } from "../../../api/safetyV64";
 import { listDotViolationTypes } from "../../../api/catalogs-safety";
 import { Button } from "../../../components/Button";
-import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { Modal } from "../../../components/Modal";
 import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -126,13 +126,16 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
             <label className="text-xs font-semibold text-gray-600" htmlFor="hos-vio-driver-id">
               Driver <span className="text-red-600">*</span>
             </label>
-            <DriverPickerWithCreate
+            <EntityPicker
+              kind="driver"
               operatingCompanyId={operatingCompanyId}
               value={form.driver_id || null}
               onChange={(next) => setForm((v) => ({ ...v, driver_id: next ?? "" }))}
-              open={open}
+              enabled={open}
               placeholder="Select driver…"
               dataField="hos-vio-driver-id"
+              allowClear={false}
+              dataTestId="hos-vio-driver-picker"
             />
           </div>
           <div className="flex flex-col gap-1" data-testid="hos-vio-type">
