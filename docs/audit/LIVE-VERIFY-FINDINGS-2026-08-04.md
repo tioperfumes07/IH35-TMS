@@ -1240,3 +1240,26 @@ membership-scoped session.
 - LANE:      CC-1 (platform) — `GRANT INSERT ON audit.scenario_status TO ih35_app` (plus DEFAULT PRIVILEGES if the certifier also updates/supersedes rows). Verify afterwards that a certifier run actually persists a row; the grant alone is necessary, not sufficient.
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `has_table_privilege('ih35_app', …)` per table exactly as tabulated. `has_schema_privilege('ih35_app','audit','USAGE')` **true**, `('events','USAGE')` **true**. `information_schema.role_table_grants` for `audit.scenario_status` and `audit.audit_events` both show grantee `ih35_app` with `SELECT` only — direct grants, which is why they disagree with the effective-privilege result.
 - status:    OPEN
+
+## LV-076  Seven tables deny INSERT to the runtime role — three are correct WORM/reference protection, but **`catalogs.ifta_states` (0 rows) and `driver_finance.settlement_disputes` (0 rows) are empty AND unwritable**, so those features cannot ever populate
+- module:    platform / catalogs / driver_finance (GUARD live-verify-after-merge)
+- entity:    ALL
+- surface:   effective `INSERT` privilege for `ih35_app` across 20 schemas
+- observed:  Extending LV-075 from 2 schemas to **20**, exactly **7** tables deny INSERT to the runtime role. They split into three distinct classes, and only one class is a defect:
+  | table | rows | verdict |
+  |---|---|---|
+  | `events.event_log` | **1,361** | **CORRECT** — append-only WORM, written by a privileged path; newest row `2026-08-05T11:00:00Z`, so it is actively being written |
+  | `reference.ifta_tax_rates` | 96 | **CORRECT** — seeded statutory reference data, app must not mutate |
+  | `reference.non_ifta_jurisdictions` | 3 | **CORRECT** — same class |
+  | `catalogs.tax_form_thresholds` | 8 | **CORRECT** — seeded statutory thresholds |
+  | **`audit.scenario_status`** | **0** | **DEFECT** — LV-075; the certifier cannot write, so the Scenario Tracker is permanently empty |
+  | **`catalogs.ifta_states`** | **0** | **DEFECT (new)** — empty *and* unwritable |
+  | **`driver_finance.settlement_disputes`** | **0** | **DEFECT (new)** — empty *and* unwritable |
+  **The discriminator is rows-versus-writability, and it is what separates protection from paralysis.** A table that is unwritable *and populated* is deliberate protection: the data was seeded by a privileged path and the application is correctly barred from altering it — that is `events.event_log` (still receiving rows today), the two `reference.*` IFTA tables, and `tax_form_thresholds`. A table that is unwritable *and empty* is a feature that can never start: nothing seeded it and the app cannot seed it either.
+  **`catalogs.ifta_states` is the one with real consequence.** IFTA state registration underpins interstate fuel-tax reporting for a Laredo↔Mexico carrier; the system already holds 1,548 fuel transactions, 96 IFTA tax-rate rows, 3 non-IFTA jurisdictions, and an IFTA line in the Month-close wizard. The rate table is populated and readable, but the **states** table is empty and the app cannot add to it — so IFTA setup cannot be completed through the product. This compounds LV-071's finding that `ifta_license_number` is NULL on all three companies: the licence number is missing *and* the states table it would pair with is unwritable.
+  **`driver_finance.settlement_disputes` is latent.** Settlements have never run (0 rows, LV-047), so nothing has needed a dispute yet. But when one is raised, the write will fail — a silent-failure path armed and waiting rather than an active fault.
+  **Method — the same check produces both a PASS and a FAIL, and only the row count separates them.** Reporting "7 tables deny INSERT" as a defect would have been wrong for 4 of the 7; reporting none would have missed 3. The origin/intent test applies to privileges exactly as §0 applies it to data.
+- severity:  major (two features cannot ever populate; one is statutory fuel-tax setup)
+- LANE:      CC-1 (platform) — grant INSERT on `catalogs.ifta_states` and `driver_finance.settlement_disputes` alongside the `audit.scenario_status` grant from LV-075, and confirm each then persists a row. Leave the four populated tables denied — that denial is the control.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. Across 20 schemas, tables where `has_table_privilege('ih35_app', …, 'INSERT')` is false = **7**, enumerated above with live row counts. `catalogs.ifta_states` count **0**; `driver_finance.settlement_disputes` count **0**; `events.event_log` count **1,361** with newest `created_at` **2026-08-05T11:00:00.006Z**; `reference.ifta_tax_rates` 96; `reference.non_ifta_jurisdictions` 3; `catalogs.tax_form_thresholds` 8; `audit.scenario_status` 0.
+- status:    OPEN
