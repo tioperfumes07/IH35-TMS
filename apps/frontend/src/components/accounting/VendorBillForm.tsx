@@ -2,7 +2,7 @@ import type { JSX } from "react";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ensureDriverVendors, listDrivers, listUnits, listVendors } from "../../api/mdata";
+import { ensureDriverVendors, listUnits, listVendors } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { classesCatalogClient } from "../../api/catalogs-accounting";
 import { DatePicker } from "../forms/DatePicker";
@@ -10,9 +10,9 @@ import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLi
 import { TotalsStack } from "../forms/shared/TotalsStack";
 import { BILL_TYPE_TABS, TypeTabBar, type BillTypeId } from "../forms/shared/TypeTabBar";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
+import { EntityPicker } from "../parity/EntityPicker";
 import { vendorReferenceOption } from "../parity/referenceOptionLabels";
 import { Combobox } from "../Combobox";
-import { CreateDriverModal } from "../drivers/CreateDriverModal";
 import { CreateUnitModal } from "../fleet/CreateUnitModal";
 import { UploadZone } from "../UploadZone";
 import { EntityLink } from "../shared/EntityLink";
@@ -139,7 +139,6 @@ export function VendorBillForm({
   const [loadNumber, setLoadNumber] = useState("");
   const [driverId, setDriverId] = useState("");
   const [unitId, setUnitId] = useState(linkedUnitId ?? "");
-  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const [unitCreateOpen, setUnitCreateOpen] = useState(false);
   const [classId, setClassId] = useState<string | null>(null);
   const [className, setClassName] = useState("");
@@ -178,11 +177,6 @@ export function VendorBillForm({
     },
     enabled: Boolean(operatingCompanyId),
   });
-  const driversQuery = useQuery({
-    queryKey: ["vendor-bill-form", "drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ status: "Active", operating_company_id: operatingCompanyId, limit: 200 }), // full active set (endpoint default 50 truncates >50)
-    enabled: Boolean(operatingCompanyId),
-  });
   const unitsQuery = useQuery({
     queryKey: ["vendor-bill-form", "units", operatingCompanyId],
     // NO status filter on purpose. "Active" was an invalid enum the backend silently swallowed
@@ -217,16 +211,7 @@ export function VendorBillForm({
     [vendorsQuery.data?.vendors]
   );
 
-  const driverOptions = useMemo(
-    () =>
-      (driversQuery.data?.drivers ?? []).map((driver) => ({
-        value: driver.id,
-        label: [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || driver.id,
-      })),
-    [driversQuery.data?.drivers]
-  );
-
-  // Unit picker — same "Combobox + canonical CreateUnitModal" pattern as Driver above (no
+  // Unit picker — Combobox + canonical CreateUnitModal (unit kind-sweep lands separately).
   // createKind="unit" on ReferenceSelect yet; CreateUnitModal is the single canonical fleet-roster
   // unit creator — writes mdata.units, same table unitsQuery reads, so a created unit selects +
   // survives reload).
@@ -487,17 +472,13 @@ export function VendorBillForm({
 
         <div className="md:col-span-6 h-2" />
         <Field label="Driver">
-          <Combobox
-            options={driverOptions}
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={operatingCompanyId}
             value={driverId || null}
             onChange={(next) => setDriverId(next ?? "")}
             placeholder="Select driver..."
-            loading={driversQuery.isLoading}
-            allowClear
-            allowAddNew={{
-              label: "+ Create driver",
-              onAdd: () => setDriverCreateOpen(true),
-            }}
+            nestedInDrawer={Boolean(linkedWoId)}
           />
         </Field>
         <Field label="Unit">
@@ -581,20 +562,6 @@ export function VendorBillForm({
         </button>
       </div>
     </form>
-    <CreateDriverModal
-      open={driverCreateOpen}
-      companyId={operatingCompanyId}
-      onClose={() => setDriverCreateOpen(false)}
-      onCreated={(createdId) => {
-        setDriverId(createdId);
-        setDriverCreateOpen(false);
-        void driversQuery.refetch();
-      }}
-      // CHROME-11: VendorBillForm renders inside the Bill ParityDrawer (VendorBillCreatePage /
-      // CreateBillModal) — the nested driver creator must stack as a ParityDrawer, never a
-      // centered Modal on top of the already-open Bill drawer.
-      shell="drawer"
-    />
     <CreateUnitModal
       open={unitCreateOpen}
       operatingCompanyId={operatingCompanyId}

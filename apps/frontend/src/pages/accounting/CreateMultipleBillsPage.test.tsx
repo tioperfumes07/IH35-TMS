@@ -19,6 +19,7 @@ vi.mock("../../api/mdata", () => ({
   listDrivers: vi.fn().mockResolvedValue({
     drivers: [{ id: "drv-1", first_name: "Jane", last_name: "Driver" }],
   }),
+  getDriver: vi.fn().mockResolvedValue({ id: "drv-1", first_name: "Jane", last_name: "Driver" }),
   listUnits: vi.fn().mockResolvedValue({
     units: [{ id: "unit-1", unit_number: "T169" }],
   }),
@@ -77,6 +78,27 @@ vi.mock("../../components/parity/ReferenceSelect", () => ({
   ),
 }));
 
+vi.mock("../../components/parity/EntityPicker", () => ({
+  EntityPicker: ({
+    value,
+    onChange,
+    placeholder,
+  }: {
+    value: string | null;
+    onChange: (v: string | null) => void;
+    placeholder?: string;
+  }) => (
+    <select
+      aria-label={placeholder ?? "entity-picker"}
+      value={value ?? ""}
+      onChange={(event) => onChange(event.target.value || null)}
+    >
+      <option value="">{placeholder ?? "Select…"}</option>
+      <option value="drv-1">Jane Driver</option>
+    </select>
+  ),
+}));
+
 vi.mock("../../components/Combobox", () => ({
   Combobox: ({
     value,
@@ -102,10 +124,6 @@ vi.mock("../../components/Combobox", () => ({
       ))}
     </select>
   ),
-}));
-
-vi.mock("../../components/drivers/CreateDriverModal", () => ({
-  CreateDriverModal: () => null,
 }));
 
 vi.mock("../../components/fleet/CreateUnitModal", () => ({

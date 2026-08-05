@@ -34,7 +34,6 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useToast } from "../../../components/Toast";
 import { formatUsdCents } from "../../../lib/money";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
-import { CreateDriverModal } from "../../../components/drivers/CreateDriverModal";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
 import { TrailerAutocomplete } from "../../../components/banking/TrailerAutocomplete";
 import { LoadAutocomplete } from "../../../components/banking/LoadAutocomplete";
@@ -291,7 +290,6 @@ export function BankingTransactionsDesignView({
   const [transferModalTx, setTransferModalTx] = useState<PlaidBankTransaction | null>(null);
   const [ccPaymentModalTx, setCcPaymentModalTx] = useState<PlaidBankTransaction | null>(null);
   // PLUS-DRIVER-MONEY: nested "+ Create driver" from the categorization row's Driver picker.
-  const [driverCreateForTx, setDriverCreateForTx] = useState<PlaidBankTransaction | null>(null);
   // Bulk categorize-to-account (QBO parity): the operator multi-selects for-review rows, picks ONE GL
   // account, and the real POST /banking/transactions/categorize-bulk applies it. No new GL math — the
   // chosen COA account IS the category, exactly like the single-row Post.
@@ -1844,7 +1842,6 @@ export function BankingTransactionsDesignView({
                 <DriverAutocomplete
                   companyId={companyId}
                   value={draft.driverId}
-                  limit={200}
                   onChange={(driverId, driverName, meta) => {
                     const driverAcct =
                       typeof meta?.default_expense_account_id === "string"
@@ -1857,7 +1854,7 @@ export function BankingTransactionsDesignView({
                       accountId: draft.accountId || driverAcct || "",
                     });
                   }}
-                  onRequestCreate={() => setDriverCreateForTx(tx)}
+                  onRequestCreate={() => {}}
                 />
               </div>
               {draft.driverId ? (
@@ -2814,17 +2811,6 @@ export function BankingTransactionsDesignView({
           setCcPaymentModalTx(null);
           onDataChanged();
         }}
-      />
-      <CreateDriverModal
-        open={Boolean(driverCreateForTx)}
-        companyId={companyId}
-        onClose={() => setDriverCreateForTx(null)}
-        onCreated={(createdId) => {
-          if (driverCreateForTx) setDraft(driverCreateForTx, { driverId: createdId });
-          setDriverCreateForTx(null);
-        }}
-        // Full-page banking view (not nested inside another drawer/modal) — default centered
-        // shell="modal" is the correct chrome here.
       />
     </div>
   );

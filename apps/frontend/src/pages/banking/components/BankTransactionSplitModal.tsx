@@ -26,7 +26,6 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useToast } from "../../../components/Toast";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
-import { CreateDriverModal } from "../../../components/drivers/CreateDriverModal";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
 import { TrailerAutocomplete } from "../../../components/banking/TrailerAutocomplete";
 import { LoadAutocomplete } from "../../../components/banking/LoadAutocomplete";
@@ -79,8 +78,6 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
   // out of proportion" / table crammed 7 columns).
   const [expandedLinks, setExpandedLinks] = useState<Record<string, boolean>>({});
   // PLUS-DRIVER-MONEY: nested "+ Create driver" from a split line's Driver picker.
-  const [driverCreateForLineKey, setDriverCreateForLineKey] = useState<string | null>(null);
-
   const txnId = transaction?.id ?? "";
   const totalCents = Math.abs(transaction?.amount_cents ?? 0);
 
@@ -438,6 +435,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                         <DriverAutocomplete
                           companyId={companyId}
                           value={line.driver_id ?? ""}
+                          nestedInDrawer
                           onChange={(driverId, driverName, meta) => {
                             const driverAcct =
                               typeof meta?.default_expense_account_id === "string"
@@ -450,7 +448,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                               ...(driverAcct && !line.gl_account_id ? { gl_account_id: driverAcct } : {}),
                             });
                           }}
-                          onRequestCreate={() => setDriverCreateForLineKey(line._key)}
+                          onRequestCreate={() => {}}
                         />
                         {line.driver_id ? (
                           <label className="mt-1 flex items-center gap-1 text-[10px] text-gray-600">
@@ -517,18 +515,6 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
         </div>
       )}
     </ParityDrawer>
-    <CreateDriverModal
-      open={Boolean(driverCreateForLineKey)}
-      companyId={companyId}
-      shell="drawer"
-      onClose={() => setDriverCreateForLineKey(null)}
-      onCreated={(createdId) => {
-        if (driverCreateForLineKey) {
-          patchLine(driverCreateForLineKey, { driver_id: createdId });
-        }
-        setDriverCreateForLineKey(null);
-      }}
-    />
     </>
   );
 }
