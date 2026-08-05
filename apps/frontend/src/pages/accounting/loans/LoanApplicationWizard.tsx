@@ -30,6 +30,7 @@ import { FORM_INPUT_CLASS, FORM_SELECT_CLASS, FORM_TEXTAREA_CLASS } from "../../
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { PARITY_MODAL_WIDTH } from "../../../components/parity/sizing";
+import { companyToday } from "../../../lib/businessDate";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 
@@ -82,8 +83,13 @@ const FREQUENCIES: LoanPaymentFrequency[] = [
 ];
 const INTEREST_METHODS: LoanInterestMethod[] = ["none", "simple", "amortized"];
 
+/**
+ * Company business date, never UTC. `new Date().toISOString()` rolls over at 00:00 UTC — 6pm CT —
+ * so a loan entered on a Texas evening would default to TOMORROW's date and post to the wrong day.
+ * verify:acct-utc-today-defaults enforces this across accounting; it caught exactly that here.
+ */
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 const EMPTY: FormState = {
