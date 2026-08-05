@@ -5,6 +5,8 @@
 
 **Reserve-before-start (every class/finding):** `git pull --ff-only origin main` → scan for an active `RESERVED` row whose class-id/finding-id matches or whose files overlap yours → overlap = STOP, pick something else → clear = append your row, commit (docs-only, atomic), push, self-merge on green → push rejected (non-ff) = re-pull, re-scan, back off if now taken.
 
+**P0-CLAIM (amendment 2026-08-05 — DELIVERY-METHOD-LOCKED.md §9.0 item 14):** the P0-BLOCKER OVERRIDE (main red for all lanes) stays no-ask, cross-lane, immediate. The first agent to START the fix appends a `P0-CLAIM` row (`Class-id / Finding-id` column = `P0-CLAIM`) **before writing any code**. Any other agent seeing an active `P0-CLAIM` on overlapping files **STANDS DOWN** — no competing fix; offer a diff/comment instead. Release with a superseding `RELEASED` row. Kills the duplicate-fix pattern (4x in one session: ACCT-F117 clash, deduction-ack dup, cert-leak dup, orphaned-tracker-test P0) without slowing the override down.
+
 ---
 
 ## CLAIM-BLOCKS (Rule 37 verify-step numbers — per-agent, non-overlapping, no shared counter)

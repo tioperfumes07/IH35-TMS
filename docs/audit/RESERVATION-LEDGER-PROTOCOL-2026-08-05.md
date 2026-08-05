@@ -40,6 +40,16 @@ Release is a **new** dated row (never edit in place — supersede):
 - Release when your PR merges or you abandon the work. A class with no active `RESERVED` row is free.
 - GUARD/verify-after (read-only) does **not** reserve files — it writes only docs-only evidence and never collides on product code.
 
+**Mechanism 1b — P0-CLAIM (amendment 2026-08-05, DELIVERY-METHOD-LOCKED.md §9.0 item 14):** the P0-BLOCKER OVERRIDE (main red for all lanes) stays **no-ask, cross-lane, immediate** — that speed is not slowed down. What changes: the **first agent to start the fix** appends a `P0-CLAIM` row to this ledger **before writing any code**:
+```
+| <ISO-ts CST> | <agent> | P0-CLAIM | <files: comma-separated paths> | RESERVED | — |
+```
+Any other agent who sees an **active** `P0-CLAIM` covering the same files **STANDS DOWN** — no competing fix; offer a diff/comment if you spot a gap instead. Release with a superseding row (never edit in place):
+```
+| <ISO-ts CST> | <agent> | P0-CLAIM | — | RELEASED | <merged PR #> |
+```
+Root cause this closes: 4 duplicate-fix collisions in one session on P0/urgent paths (ACCT-F117 ID clash, deduction-ack dup, cert-leak dup, and a second same-day orphaned-tracker-test P0) — all four were "everyone races to fix the blocker, nobody checked who else already started." Mechanical lane ownership (CC-3 owns routine mechanical/FE day-to-day) is unchanged — P0-CLAIM only governs the override path used when the whole crew is frozen.
+
 ---
 
 ## Mechanism 2 — BATCH CLAIM BLOCKS (Rule 37 verify-step numbers)
