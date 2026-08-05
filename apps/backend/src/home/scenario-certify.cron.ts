@@ -1,3 +1,8 @@
+// @cron-tenant-agnostic: the certifier deliberately evaluates EVERY entity in one pass and must NOT
+// set app.operating_company_id. Measured on prod: setting that GUC alongside the lucia bypass drops
+// visibility to zero, so asserting a single tenant context here would blind the probes and certify a
+// false all-red board. Entity scoping is carried by each probe's $1 parameter instead, which is why
+// there is no per-tenant scheduler context to assert (DD-7 / B-017 does not apply).
 /**
  * Scenario-tracker certifier cron (spec §4) — every 5 minutes, America/Chicago.
  *

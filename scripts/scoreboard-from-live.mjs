@@ -29,7 +29,7 @@
  * live. The freshness guarantee comes from the check failing, not from a write nobody can see.
  */
 import pg from "pg";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
 const OUT = "docs/audit/program-scoreboard.json";
@@ -48,8 +48,17 @@ const MODULE_DIR = "docs/module-completion";
  */
 function writeModuleLiveBlock(module, block) {
   const path = `${MODULE_DIR}/${module}.json`;
-  if (!existsSync(path)) return false;
-  const doc = JSON.parse(readFileSync(path, "utf8"));
+  // Read first and treat ENOENT as "no such module", rather than existsSync-then-read. The two-step
+  // form is a time-of-check/time-of-use race (CodeQL js/file-system-race) and it also reads worse: the
+  // read itself already tells us whether the file is there.
+  let raw;
+  try {
+    raw = readFileSync(path, "utf8");
+  } catch (error) {
+    if (error && typeof error === "object" && error.code === "ENOENT") return false;
+    throw error;
+  }
+  const doc = JSON.parse(raw);
   doc.live_scenario_probe = block;
   writeFileSync(path, JSON.stringify(doc, null, 2) + "\n");
   return true;
@@ -167,7 +176,12 @@ async function main() {
     const board = await computeScoreboard(client, registry);
     const next = JSON.stringify(board, null, 2) + "\n";
     if (check) {
-      const prev = existsSync(OUT) ? readFileSync(OUT, "utf8") : "";
+      let prev = "";
+      try {
+        prev = readFileSync(OUT, "utf8");
+      } catch (error) {
+        if (!(error && typeof error === "object" && error.code === "ENOENT")) throw error;
+      }
       const prevModules = prev ? JSON.stringify(JSON.parse(prev).modules ?? {}) : "";
       if (prevModules !== JSON.stringify(board.modules)) {
         console.error(`scoreboard-from-live --check: ${OUT} is STALE vs live. Re-run without --check.`);
