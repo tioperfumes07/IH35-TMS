@@ -310,3 +310,25 @@ membership-scoped session.
 - severity:  minor (informational)
 - LANE:      n/a — evidence toward accounting prod_verified
 - status:    OPEN
+
+## LV-024  The correct fix for LV-018 already ships two clicks away — All Transactions labels its aggregate "(page)"
+- module:    accounting
+- entity:    TRANSP
+- surface:   `/accounting/all-transactions` (renders at `/accounting/transactions`) vs `/accounting/payments`
+- observed:  All Transactions renders **22,728 transactions** with the header **"In (page): $27,221.96 · Out (page): $366,358.48"** — the scope qualifier **"(page)"** is stated explicitly, so the reader cannot mistake a page subtotal for a ledger total. **This is the exact pattern `/accounting/payments` is missing (LV-018)**, where an unqualified "Amount: $398,850.00" is in fact the sum of the 100 newest rows against a real ledger of $39,940,290.99.
+- why this matters for the fix:  LV-018 is therefore **not** an unsolved design question or a missing capability — the honest pattern already exists in the same module, on a bigger surface, shipped. The fix is to apply the existing convention, not invent one. That makes it cheap, low-risk, and removes any argument about intent.
+- surface verdict (ACCT-SURF-07):  **PASS.** 22,728 transactions across bank/fuel/invoice/bill/settlement in one register. Vendors resolve to real names — SOLO-TRUCKING INSURANCE, Premco Financial Corp Inc, Reliance Ins-First Insurance Funding, Ado Transportation Inc — with **no raw UUIDs**, further confirming LV-019's narrowing that the raw-key fallback is confined to the vendor path on bills / bill-payments. Type classified (`Bill (AP)`), Status honest (`unpaid`), In/Out correctly separated, and every row carries a working LINK -> Open reverse drill-through.
+- severity:  minor (evidence that materially de-risks the LV-018 fix)
+- LANE:      CLAUDE-CODER-1 (same owner as LV-018)
+- neon-check: none — cross-surface render comparison; LV-018 carries the Neon arithmetic
+- status:    OPEN
+
+## LV-025  Unknown `/accounting/*` routes silently redirect to /home instead of surfacing a not-found
+- module:    accounting
+- entity:    TRANSP
+- surface:   any unregistered `/accounting/<slug>` path
+- observed:  Navigating to `/accounting/chart-of-accounts` (not a registered route) silently lands on **`/home`** with no message. The canonical routes are `/accounting/account-register`, `/accounting/account-type-catalog`, `/accounting/all-transactions`, etc. Low severity on its own, but worth recording because it makes route verification actively misleading: a mistyped or renamed money route renders a normal-looking dashboard rather than an error, so a link that has silently died looks like a working page. I hit this myself twice this session and had to check `manifest.tsx` to tell a broken route from a bad guess.
+- severity:  minor
+- LANE:      CURSOR (routing)
+- neon-check: none
+- status:    OPEN
