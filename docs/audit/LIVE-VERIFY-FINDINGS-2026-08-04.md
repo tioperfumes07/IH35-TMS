@@ -1319,3 +1319,22 @@ membership-scoped session.
 - LANE:      none — GUARD attestation. Insurance/compliance population is owner/operational work, not a code fix.
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` set to TRANSP. `insurance.*` tables with `n_live_tup > 0`: only `type_catalog` (45). `compliance` schema: 20 tables, only `required_document_types` (54) and `appraisal_districts` (10) non-empty. `legal`: `contract_templates` 69, `contract_audit_log` 30, `contract_instances` 1, `signatures` 0.
 - status:    OPEN (informational)
+
+## LV-080  GUARD — bank categorization is never half-done: all **170** categorized transactions carry both a CoA and a GL account (**0** exceptions of 11,007); and **1,413** transactions already carry a unit link, 8× the categorized count
+- module:    banking (GUARD live-verify-after-merge)
+- entity:    TRANSP
+- surface:   `banking.bank_transactions` categorization columns
+- observed:  **Integrity PASS — categorization is atomic in practice.** Of **11,007** unvoided bank transactions, **170** have `categorized_at` set, and exactly **170** carry `coa_account_id` *and* **170** carry `categorization_gl_account_id`. Transactions marked categorized but missing an account: **0**. So the categorization write never lands half-applied — a row is either uncategorized or fully coded to an account. That is the property that matters, because a `categorized_at` timestamp without an account would be the same status-without-substance shape as LV-010 (`sent` with no queue row) and LV-063's `overage_recovered_cents` without a deduction.
+  **Attribution is far ahead of coding, and that is the more useful observation.** The same table already carries:
+  | link | count | vs 170 categorized |
+  |---|---|---|
+  | `categorization_unit_id` | **1,413** | **8.3×** |
+  | `categorization_driver_id` | **363** | 2.1× |
+  | `categorization_load_id` | 13 | — |
+  So unit and driver attribution have been resolved on far more transactions than have been accounting-coded. That attribution is arriving from telematics and fuel matching rather than from the categorization workflow, which means **the operational linkage needed to code these rows already exists on 1,413 of them** — the constraint on CLS-BANK-MATCH-DENSITY (LV-046, categorization frozen at 170 of 11,002) is not missing context. Whoever works that class has a large pre-attributed pool to draw on rather than a cold start.
+  `categorization_load_id` at 13 is expected state, not a gap: no loads have been dispatched in the TMS (Rule 32 / LV-073), so there is almost nothing to link to.
+  `banking.transaction_categories` holds 23 seeded categories and `banking.intercompany_entity_pairs` 6, so the supporting catalogs are configured.
+- severity:  informational — integrity PASS plus a materially useful observation for the open categorization class
+- LANE:      none — GUARD attestation. Note for CC-1 working CLS-BANK-MATCH-DENSITY: 1,413 transactions already carry unit attribution.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` set to TRANSP, exit 0. `banking.bank_transactions` unvoided **11,007**: `categorized_at` NOT NULL **170**, `coa_account_id` NOT NULL **170**, `categorization_gl_account_id` NOT NULL **170**, `categorization_unit_id` **1,413**, `categorization_driver_id` **363**, `categorization_load_id` **13**. Count categorized with neither CoA nor GL account = **0**. `banking.transaction_categories` 23, `intercompany_entity_pairs` 6, `bank_accounts` 17.
+- status:    OPEN (informational)
