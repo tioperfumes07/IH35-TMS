@@ -28,7 +28,6 @@ import { useToast } from "../../../components/Toast";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
 import { CreateDriverModal } from "../../../components/drivers/CreateDriverModal";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
-import { TrailerAutocomplete } from "../../../components/banking/TrailerAutocomplete";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { listVendors } from "../../../api/mdata";
 import { getCoaAccounts } from "../../../api/banking";
@@ -473,10 +472,16 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                       </div>
                       <div>
                         <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Trailer</span>
-                        <TrailerAutocomplete
-                          companyId={companyId}
-                          value={line.trailer_id ?? ""}
-                          onChange={(trailerId, trailerName) => patchLine(line._key, { trailer_id: trailerId || undefined, _trailerName: trailerName })}
+                        <EntityPicker
+                          kind="trailer"
+                          operatingCompanyId={companyId}
+                          value={line.trailer_id ?? null}
+                          onChange={(trailerId) =>
+                            patchLine(line._key, { trailer_id: trailerId || undefined, _trailerName: undefined })
+                          }
+                          nestedInDrawer
+                          placeholder="Search trailer (optional)"
+                          allowClear
                         />
                       </div>
                       <div>

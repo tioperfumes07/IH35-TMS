@@ -36,7 +36,6 @@ import { formatUsdCents } from "../../../lib/money";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
 import { CreateDriverModal } from "../../../components/drivers/CreateDriverModal";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
-import { TrailerAutocomplete } from "../../../components/banking/TrailerAutocomplete";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { listVendors, listCustomers } from "../../../api/mdata";
 import { classesCatalogClient, itemsCatalogClient, type AccountingCatalogRow } from "../../../api/catalogs-accounting";
@@ -1898,10 +1897,13 @@ export function BankingTransactionsDesignView({
             <div className="text-xs text-gray-600">
               Trailer
               <div className="mt-0.5">
-                <TrailerAutocomplete
-                  companyId={companyId}
-                  value={draft.trailerId}
-                  onChange={(trailerId, trailerName) => setDraft(tx, { trailerId, trailerName })}
+                <EntityPicker
+                  kind="trailer"
+                  operatingCompanyId={companyId}
+                  value={draft.trailerId || null}
+                  onChange={(trailerId) => setDraft(tx, { trailerId: trailerId ?? "", trailerName: "" })}
+                  placeholder="Search trailer (optional)"
+                  allowClear
                 />
               </div>
               {draft.trailerId ? (
