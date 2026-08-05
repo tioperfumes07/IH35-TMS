@@ -10,7 +10,12 @@
  * Green cannot outlive the truth.
  */
 import type { PoolClient } from "pg";
-import { SCENARIO_REGISTRY, ALL_SOURCES, type ScenarioDefinition } from "./scenario-registry.js";
+import {
+  SCENARIO_REGISTRY,
+  ALL_SOURCES,
+  probeHolds,
+  type ScenarioDefinition,
+} from "./scenario-registry.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 
 export type ScenarioStage = "spec" | "built" | "merged" | "proof" | "passed" | "complete";
@@ -91,79 +96,48 @@ async function currentCert(
  * The LIVE data predicate per hop — what must be true in the data for "Passed" to survive.
  * Returns null when the hop has no data predicate yet (then Passed cannot be reached on data alone).
  */
-async function livePassedPredicate(
+/**
+ * The live predicate for one slice.
+ *
+ * Count-based slices delegate to the SHARED probe carried on the registry definition, so the certifier
+ * (scripts/scenario-certify.mjs) and this read path execute byte-identical SQL. Keeping two copies is
+ * how a board starts claiming green from a query nobody re-reads — the exact stale-snapshot failure
+ * this tracker replaces.
+ *
+ * hop.revenue is the only hand-implemented case: its truth is a feature flag, not a row count, and it
+ * must be read through isEnabled() so the per-entity override, the user override and the posting-OFF
+ * short-circuit all apply. A raw SELECT on the overrides table would light a dot green for a flag the
+ * poster would still refuse to honour.
+ *
+ * Returns null when a slice has no live predicate at all — the caller caps that at "merged" rather
+ * than letting a certification alone paint it green.
+ */
+export async function livePassedPredicate(
   client: QueryClient,
   def: ScenarioDefinition,
   entity: string | null
 ): Promise<{ ok: boolean; evidence: string } | null> {
-  switch (def.key) {
-    case "hop.assign": {
-      // A driver bill priced from the RATE CARD, never equal to the customer rate (ACCT-F63).
-      const res = await client.query<{ n: string }>(
-        `
-          SELECT count(*)::text AS n
-            FROM driver_finance.driver_bills b
-            JOIN mdata.loads l ON l.id = b.load_id
-           WHERE b.status <> 'void'
-             AND b.rate_per_mile_cents IS NOT NULL
-             AND b.gross_amount_cents <> l.rate_total_cents
-             AND ($1::uuid IS NULL OR b.operating_company_id = $1::uuid)
-        `,
-        [entity]
-      );
-      const n = Number(res.rows[0]?.n ?? 0);
-      return { ok: n > 0, evidence: `${n} driver bill(s) priced from the rate card, not the customer rate` };
-    }
-    case "hop.revenue": {
-      // Read the flag through isEnabled, never by querying the overrides table directly: the shared
-      // resolver applies the per-entity override, the user override and the posting-OFF short-circuit.
-      // A raw SELECT here would report a dot green that the poster would actually refuse to post.
-      const enabled = entity
-        ? await isEnabled(client as never, "REVENUE_RECOGNITION_POST_ENABLED", {
-            operating_company_id: entity,
-          })
-        : false;
-      return {
-        ok: enabled,
-        evidence: entity
-          ? enabled
-            ? "REVENUE_RECOGNITION_POST_ENABLED is ON for this entity"
-            : "REVENUE_RECOGNITION_POST_ENABLED is OFF for this entity"
-          : "per-entity flag — select an entity to resolve",
-      };
-    }
-    case "hop.gl": {
-      // Balanced double entry is the only acceptable proof the GL hop works.
-      const res = await client.query<{ n: string }>(
-        `
-          SELECT count(*)::text AS n
-            FROM accounting.journal_entries je
-           WHERE je.reversed_by_je_id IS NULL
-             AND ($1::uuid IS NULL OR je.operating_company_id = $1::uuid)
-        `,
-        [entity]
-      );
-      const n = Number(res.rows[0]?.n ?? 0);
-      return { ok: n > 0, evidence: `${n} live journal entr(ies)` };
-    }
-    case "hop.deliver": {
-      const res = await client.query<{ n: string }>(
-        `
-          SELECT count(*)::text AS n
-            FROM mdata.load_stops s
-            JOIN mdata.loads l ON l.id = s.load_id
-           WHERE s.actual_departure_at IS NOT NULL
-             AND s.stop_type::text = 'delivery'
-             AND ($1::uuid IS NULL OR l.operating_company_id = $1::uuid)
-        `,
-        [entity]
-      );
-      const n = Number(res.rows[0]?.n ?? 0);
-      return { ok: n > 0, evidence: `${n} delivery stop(s) with captured departure` };
-    }
-    default:
-      return null;
+  if (def.key === "hop.revenue") {
+    const enabled = entity
+      ? await isEnabled(client as never, "REVENUE_RECOGNITION_POST_ENABLED", {
+          operating_company_id: entity,
+        })
+      : false;
+    return {
+      ok: enabled,
+      evidence: entity
+        ? enabled
+          ? "REVENUE_RECOGNITION_POST_ENABLED is ON for this entity"
+          : "REVENUE_RECOGNITION_POST_ENABLED is OFF for this entity"
+        : "per-entity flag — select an entity to resolve",
+    };
   }
+
+  if (!def.probe) return null;
+
+  const res = await client.query<{ n: string }>(def.probe.sql, [entity]);
+  const n = Number(res.rows[0]?.n ?? 0);
+  return { ok: probeHolds(n), evidence: def.probe.describe(n) };
 }
 
 /** Merged = the primitive this hop needs actually exists on prod right now. */
