@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-/** SettlementDisputeModal — EntityPicker kind=driver (not DriverPickerWithCreate / silent listDrivers). Claim 2152. */
+/** CLS-SETTLE-DISPUTE-DRIVER-EP — EntityPicker kind=driver. Cursor even claim: 2472. */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const LABEL = "verify-settlement-dispute-driver-picker";
+const LABEL = "verify-settlement-dispute-driver-entity-picker";
 const FILE = "apps/frontend/src/pages/drivers/SettlementDisputeModal.tsx";
 function readRel(root, rel) {
   const p = path.join(root, rel);
@@ -15,20 +15,19 @@ export function collectProblems(root = ROOT) {
   const src = readRel(root, FILE);
   if (!src) return [`missing ${FILE}`];
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (!/EntityPicker[\s\S]*?kind=["]driver["]/.test(code)) problems.push(`${FILE}: must use EntityPicker kind=driver`);
+  if (!/EntityPicker[\s\S]*?kind=["']driver["']/.test(code)) problems.push(`${FILE}: must use EntityPicker kind=driver`);
   if (/DriverPickerWithCreate/.test(code)) problems.push(`${FILE}: must not use DriverPickerWithCreate`);
-  if (/listDrivers\(/.test(code)) problems.push(`${FILE}: must not call listDrivers`);
-  if (/limit:\s*200/.test(code) && /listDrivers/.test(src)) problems.push(`${FILE}: silent listDrivers limit:200`);
+  if (/listDrivers\s*\(/.test(code)) problems.push(`${FILE}: must not call listDrivers`);
   return problems;
 }
 if (process.argv.includes("--selftest")) {
   const baseline = collectProblems();
   if (baseline.length) { console.error(LABEL, baseline); process.exit(1); }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-dispute-drv-"));
+  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-settlement-dispute-driver-entity-picker-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/drivers");
+    const dir = path.join(stubRoot, path.dirname(FILE));
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, "SettlementDisputeModal.tsx"), `<DriverPickerWithCreate />\nlistDrivers({ limit: 200 })\n`);
+    fs.writeFileSync(path.join(stubRoot, FILE), `<DriverPickerWithCreate />\nlistDrivers({ limit: 200 })`);
     if (!collectProblems(stubRoot).length) { console.error("plant miss"); process.exit(1); }
   } finally { fs.rmSync(stubRoot, { recursive: true, force: true }); }
   console.log(LABEL, "SELFTEST OK");

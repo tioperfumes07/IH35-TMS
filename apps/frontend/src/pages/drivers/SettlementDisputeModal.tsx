@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { resolveApiUrl } from "../../api/client";
 import { useQuery } from "@tanstack/react-query";
 import { listSettlements } from "../../api/driverFinance";
-import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { Modal } from "../../components/Modal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Button } from "../../components/Button";
@@ -106,16 +106,18 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
       <div className="space-y-3 text-sm" data-testid="settlement-dispute-modal">
         <label className="block space-y-1">
           <span className="font-medium">Driver</span>
-          <DriverPickerWithCreate
+          <EntityPicker
+            kind="driver"
             operatingCompanyId={companyId}
             value={driverId || null}
             onChange={(next) => {
               setDriverId(next ?? "");
               setSettlementId("");
             }}
-            open={open}
+            enabled={open}
             placeholder="Select driver"
             dataField="settlement-dispute-driver"
+            allowClear
           />
         </label>
 
