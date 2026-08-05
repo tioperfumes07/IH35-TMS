@@ -36,6 +36,7 @@ const ACTIVE_LAW_GLOBS = [
   "docs/CLAUDE.md",
   "docs/specs/DELIVERY-METHOD-LOCKED.md",
   "docs/specs/STANDING-SESSION-DIRECTIVE.md",
+  "docs/lockdown/00_LOCKED_DECISIONS.md",
 ];
 
 /** History / evidence — never rewritten (WORM, checksum freeze, never-delete). */
@@ -52,6 +53,12 @@ const FORBIDDEN = [
   /\bgated\b[^.\n]{0,30}\buntil\b[^.\n]{0,20}\b(?:CPA|accountant)\b/i,
   /\b(?:await|awaiting|pending|wait for)\s+CPA\b/i,
   /CPA\s+(?:sign-?off|tie-?out|approval)\s+(?:required|needed|before)/i,
+  // Owner 2026-08-05 "there is no CPA, no JORGE-APPROVED, no hold": these phrasings slipped past the
+  // patterns above because they never say "until CPA". 00_LOCKED_DECISIONS.md:120 read
+  // "owner OK + CPA-verify in staging -> only then flip a prod flag; never self-merge".
+  /CPA-?verify/i,
+  /never self-?merge/i,
+  /only then flip[^.\n]{0,30}\bflag\b/i,
 ];
 
 /**
@@ -63,13 +70,23 @@ const FORBIDDEN = [
 const ABOLITION =
   /(?:there is no cpa|no cpa\b|not a cpa gate|retire every|supersed|no longer|\bstale\b|was wrong|abolish|retired)/i;
 
-/** A phrase inside backticks is a quoted token in a "retire these" list, not an instruction. */
-function matchIsBackticked(line, matchText) {
+/**
+ * A phrase wrapped in backticks or quotes is a CITED token — "retire every `pending CPA` gate",
+ * or a supersession note listing the mechanics it kills ("never self-merge" / "owner applies").
+ * Citing a dead gate is how the law records what it abolished; only an UNQUOTED instruction is live.
+ * The quote may close on a later line (the note at 00_LOCKED_DECISIONS.md:7 wraps), so an opening
+ * delimiter before the match with no closing one after it still counts as quoted.
+ */
+function matchIsQuoted(line, matchText) {
   const idx = line.indexOf(matchText);
   if (idx < 0) return false;
   const before = line.slice(0, idx);
   const after = line.slice(idx + matchText.length);
-  return /`[^`]*$/.test(before) && /^[^`]*`/.test(after);
+  for (const d of ["`", '"', "“", "”"]) {
+    const opensBefore = (before.split(d).length - 1) % 2 === 1;
+    if (opensBefore) return true;
+  }
+  return /^[^`"“”]*[`"“”]/.test(after) && /[`"“”]/.test(before);
 }
 
 export function auditText(text, file = "<mem>") {
@@ -83,7 +100,7 @@ export function auditText(text, file = "<mem>") {
       // An abolition/correction sentence is the law, not the drift — keep it.
       if (ABOLITION.test(line)) continue;
       // A backticked phrase inside a "retire these gates" enumeration is not a live gate.
-      if (matchIsBackticked(line, m[0])) continue;
+      if (matchIsQuoted(line, m[0])) continue;
       problems.push(
         `${file}:${i + 1}: stale CPA/posting-flag gate — "${line.trim().slice(0, 120)}". ` +
           `Posting flags are ON for all three entities; only QBO write-back is OFF. There is no CPA gate. ` +
@@ -143,6 +160,24 @@ function selftest() {
   // Other affirmative shapes.
   if (auditText("Money posting stays gated until CPA tie-out completes.").length === 0)
     failures.push("case6 FAIL — an affirmative 'until CPA tie-out' gate was NOT caught");
+
+  // The exact pre-fix clause from 00_LOCKED_DECISIONS.md:120 — unquoted, so it is a LIVE instruction.
+  // It never says "until CPA", which is why the first pattern set missed it entirely.
+  if (
+    auditText(
+      "All financial items build behind OFF flags on a Neon test branch → owner OK + CPA-verify in staging → only then flip a prod flag; never self-merge."
+    ).length === 0
+  )
+    failures.push("case8 FAIL — the real pre-fix 00_LOCKED_DECISIONS.md:120 clause was NOT caught");
+
+  // The supersession note at :7 CITES the dead mechanics in quotes. It is the law that kills them
+  // and must survive — purging it is the Rev-D mistake.
+  if (
+    auditText(
+      'file remain locked and unchanged; only "never self-merge" / "owner applies" / "owner sign-off to merge"'
+    ).length !== 0
+  )
+    failures.push("case9 FAIL — a quoted supersession citation was flagged (purging it restores the gate)");
 
   const tree = auditTree();
   if (tree.length !== 0) failures.push(`case7 FAIL — real active law flagged: ${tree.join(" | ")}`);
