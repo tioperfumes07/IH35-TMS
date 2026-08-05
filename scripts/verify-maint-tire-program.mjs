@@ -77,6 +77,13 @@ function main() {
   if (!page.includes("Rotate")) failures.push("TireProgramPage must expose rotation quick action");
   if (!page.includes("Tread audit")) failures.push("TireProgramPage must expose tread audit action");
   if (!page.includes("tire-program-history")) failures.push("TireProgramPage must expose history table");
+  // SAF-B29: vehicle filter is EntityPicker kind=unit (not silent <select>+listUnits).
+  if (!/EntityPicker[\s\S]*kind=["']unit["']/.test(page)) {
+    failures.push("TireProgramPage must use EntityPicker kind=unit for vehicle filter");
+  }
+  if (/listUnits\s*\(/.test(page)) {
+    failures.push("TireProgramPage must not call listUnits for the vehicle filter — use EntityPicker");
+  }
   if ((pageTest.match(/\bit\(/g) ?? []).length < 3) {
     failures.push("TireProgramPage.test must include at least 3 vitest cases");
   }

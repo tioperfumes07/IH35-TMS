@@ -13,11 +13,11 @@ import {
   type MaintenanceTireEventRow,
   type MaintenanceTireRecordRow,
 } from "../../api/maintenance";
-import { listUnits } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { formatDateTimeUS } from "../../lib/formatDate";
@@ -55,12 +55,6 @@ export function TireProgramPage() {
   const [toPosition, setToPosition] = useState("");
   const [treadDepth, setTreadDepth] = useState("");
 
-  const unitsQ = useQuery({
-    queryKey: ["mdata", "units", companyId, "tire-program"],
-    queryFn: () => listUnits({ operating_company_id: companyId, status: "Active" }),
-    enabled: Boolean(companyId),
-  });
-
   const brandsQ = useQuery({
     queryKey: ["maintenance", "tire-brands", companyId],
     queryFn: () => listMaintenanceTireBrands(companyId),
@@ -84,11 +78,6 @@ export function TireProgramPage() {
     queryFn: () => listMaintenanceTireAlerts(companyId),
     enabled: Boolean(companyId),
   });
-
-  const units = useMemo(
-    () => (unitsQ.data?.units ?? []) as Array<{ id: string; unit_number?: string }>,
-    [unitsQ.data?.units]
-  );
 
   const refresh = async () => {
     await Promise.all([
@@ -304,22 +293,20 @@ export function TireProgramPage() {
       </div>
 
       <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-[1fr_auto]">
-        <label className="text-xs text-gray-700">
+        <div className="text-xs text-gray-700" data-testid="tire-program-unit-select">
           Vehicle
-          <select
-            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={unitId}
-            onChange={(e) => setUnitId(e.target.value)}
-            data-testid="tire-program-unit-select"
-          >
-            <option value="">Select unit…</option>
-            {units.map((unit) => (
-              <option key={unit.id} value={unit.id}>
-                {unit.unit_number ?? unit.id}
-              </option>
-            ))}
-          </select>
-        </label>
+          {/* SAF-B29: EntityPicker kind=unit — never silent <select> over listUnits Active page. */}
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={companyId}
+            value={unitId || null}
+            enabled={Boolean(companyId)}
+            placeholder="Select unit…"
+            allowClear
+            className="mt-1 w-full text-sm"
+            onChange={(next) => setUnitId(next ?? "")}
+          />
+        </div>
         <div className="self-end text-xs text-gray-600" data-testid="tire-program-alert-count">
           Low tread alerts: {alertsQ.data?.count ?? 0}
         </div>

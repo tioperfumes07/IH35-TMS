@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { TireProgramPage } from "../TireProgramPage";
 
-const listUnits = vi.fn();
 const listMaintenanceTireBrands = vi.fn();
 const getMaintenanceTireLayout = vi.fn();
 const listMaintenanceTireEvents = vi.fn();
@@ -28,8 +27,26 @@ vi.mock("../../../api/maintenance", () => ({
   auditMaintenanceTireTread: (...args: unknown[]) => auditMaintenanceTireTread(...args),
 }));
 
-vi.mock("../../../api/mdata", () => ({
-  listUnits: (...args: unknown[]) => listUnits(...args),
+vi.mock("../../../components/parity/EntityPicker", () => ({
+  EntityPicker: ({
+    value,
+    onChange,
+    placeholder,
+  }: {
+    value: string | null;
+    onChange: (next: string | null) => void;
+    placeholder?: string;
+  }) => (
+    <select
+      data-testid="mock-tire-unit-picker"
+      aria-label={placeholder ?? "unit"}
+      value={value ?? ""}
+      onChange={(e) => onChange(e.target.value || null)}
+    >
+      <option value="">Select unit…</option>
+      <option value="unit-1">T-101</option>
+    </select>
+  ),
 }));
 
 vi.mock("../../../contexts/CompanyContext", () => ({
@@ -56,7 +73,6 @@ function renderPage() {
 
 describe("Maintenance TireProgramPage (B32)", () => {
   beforeEach(() => {
-    listUnits.mockReset();
     listMaintenanceTireBrands.mockReset();
     getMaintenanceTireLayout.mockReset();
     listMaintenanceTireEvents.mockReset();
@@ -67,7 +83,6 @@ describe("Maintenance TireProgramPage (B32)", () => {
     replaceMaintenanceTire.mockReset();
     auditMaintenanceTireTread.mockReset();
 
-    listUnits.mockResolvedValue({ units: [{ id: "unit-1", unit_number: "T-101" }] });
     listMaintenanceTireBrands.mockResolvedValue({ rows: [{ id: "brand-1", name: "Michelin X Line" }] });
     listMaintenanceTireAlerts.mockResolvedValue({ rows: [], count: 0 });
     listMaintenanceTireEvents.mockResolvedValue({ rows: [] });
@@ -103,8 +118,7 @@ describe("Maintenance TireProgramPage (B32)", () => {
   it("loads steer/drive layout after unit selection", async () => {
     const user = userEvent.setup();
     renderPage();
-    const select = await screen.findByTestId("tire-program-unit-select");
-    await screen.findByRole("option", { name: "T-101" });
+    const select = await screen.findByTestId("mock-tire-unit-picker");
     await user.selectOptions(select, "unit-1");
     expect(await screen.findByTestId("tire-layout-steer")).toBeInTheDocument();
     expect(screen.getByText("Michelin X Line")).toBeInTheDocument();
