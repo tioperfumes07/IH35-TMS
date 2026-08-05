@@ -2531,3 +2531,52 @@ consistent with the entity model, not a defect.
 - LANE:      n/a (verification of CC-3 work) · CASCADE tracks the live baseline count on the board
 - neon-check: none required — static ratchet; guard logic read from the PR diff, not from `main`.
 - status:    HELD — not stamped; re-verify and stamp when #4501 merges
+
+## LV-114  ABANDONMENT CHAIN re-probe after ACCT-F121 — **both known blockers are now FIXED ON PROD, and the chain is STILL UNPROVEN: it has never run once**
+- module:    dispatch · driver_finance (GUARD — Phase-1 money hop, verify-after)
+- entity:    ALL
+- surface:   `dispatch.auto_propose_escrow_on_abandonment()` · `driver_finance.escrow_deductions_pending` · `dispatch.load_abandonments` · `driver_finance.abandonment_chargebacks`
+- observed:  LV-099 found blocker one (missing enum labels). LV-110 confirmed those were restored but
+  deliberately recorded the hop as **"unblocked, not proven working."** ACCT-F121 then found blocker two —
+  and its own write-up states the enum fix *"moved the failure one layer down rather than clearing it."*
+  **That is exactly why LV-110 withheld the stronger claim, and it is the pattern worth naming: each fix in
+  this chain has revealed the next blocker rather than completing the path.**
+  **(1) Blocker two, verified FIXED on prod — effect, not merge status.** ACCT-F121's diagnosis: the trigger
+  ended with `ON CONFLICT (operating_company_id, source_type, source_id) DO NOTHING`, while the only matching
+  index is **partial**, so PostgreSQL finds no arbiter and raises **42P10** unconditionally on every fire.
+  On prod now (`current_user = ih35_app` asserted in the same statement):
+  - `dispatch.auto_propose_escrow_on_abandonment()` **does** contain `WHERE source_id IS NOT NULL` — the
+    predicate is restated, so the partial index can serve as arbiter.
+  - The index is confirmed partial: `CREATE UNIQUE INDEX idx_escrow_pending_source … WHERE (source_id IS NOT NULL)`.
+  **The fix reached the database, not merely `main`** — which is the distinction LV-099 exists to enforce.
+  **(2) And the chain has STILL never executed. Every counter is zero, and never was anything else:**
+  | table | rows | `n_tup_ins` (ever) |
+  |---|---|---|
+  | `mdata.loads` in an abandonment status | **0** | — |
+  | `dispatch.load_abandonments` | **0** | **0** |
+  | `driver_finance.escrow_deductions_pending` | **0** | **0** |
+  | `driver_finance.abandonment_chargebacks` | **0** | **0** |
+  `n_tup_ins = 0` is the load-bearing column: not "empty now" but **never once inserted** in the lifetime of
+  any of the three tables. No escrow has been forfeited and no chargeback booked.
+  **Role note — the reading is stronger, not weaker, for being unasserted.** This probe returned
+  `current_user = neondb_owner`. For a *zero* result that **increases** confidence: the table owner bypasses
+  RLS and therefore sees strictly MORE than `ih35_app` would, so a privileged zero cannot be an RLS artifact.
+  `n_tup_ins` is a `pg_stat` counter and is role-independent regardless. The `ih35_app` assertion **was**
+  obtained for the function/index probe in (1). I am stating which probe carried which role rather than
+  implying a uniform assertion.
+  **VERDICT — the hop stays RED. "Unblocked at both known layers" is not "working."** Two blockers have been
+  found and fixed in this chain, each surfacing only after the previous one cleared, and **each was invisible
+  to code review** — F121's author notes it *"would not have found this by reading code; it surfaced on the
+  first live run."* There is no basis to assume layer three does not exist. The hop closes when a real load
+  moves to an abandonment status on prod and the chain **actually forfeits escrow and books the chargeback** —
+  measured as `load_abandonments`, `escrow_deductions_pending` and `abandonment_chargebacks` all moving off
+  zero, with the resulting journal entries balanced DR=CR and their source links resolving.
+  **I did not attempt that run.** Creating a load and abandoning it is a write, outside GUARD's read-only
+  lane. It belongs to the lane that owns the hop; I will verify it the moment it happens.
+- severity:  none for the fixes (both verified live) · the **hop remains UNPROVEN**
+- LANE:      CC-1 (money) — execute one real end-to-end abandonment on prod. Until then no module claim may
+             count this hop as closed, and neither the enum fix nor the arbiter fix should be read as closing it.
+- neon-check: prod `br-fancy-credit-akjnd07a`, bypass in its own statement. Function definition inspected via
+             `pg_get_functiondef` (`current_user=ih35_app` asserted); index definition from `pg_indexes`;
+             all four zero counts with `n_tup_ins` from `pg_stat_user_tables`.
+- status:    OPEN — chain unproven (both known blockers fixed; zero executions)
