@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { listInsuranceClaims, listInsuranceLawsuits } from "../../../api/insurance";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
-import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
@@ -316,12 +315,14 @@ export function LegalMatterFormFields({ form, setForm, mode, operatingCompanyId 
       <label className="text-xs text-gray-600" data-testid="legal-matter-related-driver-picker">
         Related driver
         <div className="mt-1">
-          <DriverPickerWithCreate
+          <EntityPicker
+            kind="driver"
             operatingCompanyId={operatingCompanyId}
             value={form.related_driver_id || null}
             onChange={(next) => setForm((f) => ({ ...f, related_driver_id: next ?? "" }))}
             placeholder="None"
             allowClear
+            dataTestId="legal-matter-driver-picker"
           />
         </div>
       </label>
