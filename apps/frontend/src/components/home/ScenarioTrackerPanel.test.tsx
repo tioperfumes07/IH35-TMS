@@ -80,4 +80,27 @@ describe("ScenarioTrackerPanel", () => {
       expect(screen.getByText(/STALE/)).toBeInTheDocument();
     });
   });
+
+  // P0 REGRESSION GUARD (2026-08-05): `[...data.hops, ...data.scenarios]` was spread unguarded.
+  // audit.scenario_status is empty on prod (0 is_current rows), so the payload arrived without these
+  // arrays, the spread threw `TypeError: i.scenarios is not iterable`, and because this panel mounts
+  // unconditionally in OwnerHome the throw escaped to the page error boundary and took the ENTIRE
+  // owner homepage down in production. A missing slice must degrade this panel to empty, never crash.
+  it("renders without throwing when the payload omits hops/scenarios (P0: owner homepage crash)", async () => {
+    vi.spyOn(homeApi, "fetchHomeScenarioTracker").mockResolvedValue({
+      ...mockTrackerResponse,
+      hops: undefined,
+      scenarios: undefined,
+    } as unknown as homeApi.HomeScenarioTrackerResult);
+
+    render(<ScenarioTrackerPanel companyId="91e0bf0a-133f-4ce8-a734-2586cfa66d96" />, {
+      wrapper: createWrapper(),
+    });
+
+    // The assertion is that rendering settles at all — an unguarded spread throws during useMemo and
+    // fails this test before any query below it can run.
+    await waitFor(() => {
+      expect(screen.queryByText(/Scenario/i)).toBeTruthy();
+    });
+  });
 });
