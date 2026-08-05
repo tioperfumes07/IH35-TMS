@@ -9,19 +9,24 @@
   --st-muted: #64748b;
   --st-green: #15803d;
   --st-green-bg: #dcfce7;
-  /* Tokens restored to SCENARIO-TRACKER-LOCKED-DESIGN.html :root (owner-delivered pixel spec,
-     2026-08-05: "it is the pixel spec, do not redesign it"). An earlier pass had overridden the
-     Screens-lane blue to navy citing §7; that collapsed the Money/Screens lane distinction the design
-     depends on — both pills rendered identically. Scoped to .st-wrap only, and no palette guard is
-     affected: all three verify-section7-palette-* guards match Tailwind class names, never raw hex. */
-  --st-blue: #1d4ed8;
-  --st-blue-bg: #dbeafe;
+  /* §7 GOVERNS — navy, NOT the locked design HTML's blue accent.
+     I briefly restored the design's blue, having checked only the two palette guards that match
+     Tailwind CLASS names and concluded no guard covered raw hex. That was wrong:
+     verify-section7-palette-maintenance scans for non-§7 accent HEX and rejected it. So the drift
+     between CLAUDE.md §7 ("no blue") and the locked design resolves in §7's favour, and the guard is
+     the tie-breaker rather than my reading of it. Do not reintroduce the hex here, even in a comment —
+     that guard reads raw text.
+     The Money/Screens lane distinction is preserved through the pill BACKGROUND (green vs slate),
+     not hue, so no information is lost. */
+  --st-blue: #1f2a44;
+  --st-blue-bg: #e2e8f0;
   --st-amber: #b45309;
   --st-amber-bg: #fef3c7;
   --st-red: #b91c1c;
   --st-red-bg: #fee2e2;
-  --st-purple: #6d28d9;
-  --st-purple-bg: #ede9fe;
+  /* §7: no purple — risk cards use slate. */
+  --st-purple: #334155;
+  --st-purple-bg: #e2e8f0;
   max-width: 900px;
   margin: 0 auto;
   padding: 16px;
