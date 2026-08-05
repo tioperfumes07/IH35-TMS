@@ -780,15 +780,12 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
-        {/* Additive Scenario Tracker FE — parked until CC-1 endpoint + GUARD live proof. */}
-        <Route
-          path="/home/scenario-tracker"
-          element={
-            <ProtectedRoute>
-              <ScenarioTrackerHome />
-            </ProtectedRoute>
-          }
-        />
+        {/* PROG-NAV-01 (owner 2026-08-05): the Scenario Tracker belongs in PROGRAM, next to the
+            Scoreboard — not under /home. Canonical route is now /program/scenario-tracker (below).
+            This legacy path is KEPT and redirected (additive-only: never delete a route; same
+            pattern as the retained /safety/vehicle-inspections redirect) so existing links and
+            bookmarks keep working. */}
+        <Route path="/home/scenario-tracker" element={<Navigate to="/program/scenario-tracker" replace />} />
         {/* Additive: role dashboards also kept at /home/ops (never-delete). */}
         <Route
           path="/home/ops"
@@ -815,6 +812,16 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ModuleCompletionPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Scenario Tracker — CANONICAL home (owner 2026-08-05): it lives in PROGRAM alongside the
+            Scoreboard, both fed live from prod. /home/scenario-tracker redirects here. */}
+        <Route
+          path="/program/scenario-tracker"
+          element={
+            <ProtectedRoute>
+              <ScenarioTrackerHome />
             </ProtectedRoute>
           }
         />

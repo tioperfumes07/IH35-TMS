@@ -203,7 +203,7 @@ export function ScenarioTrackerPanel({ companyId }: Props) {
               owner meets the tracker on the page he lands on, so without this link the full
               24-slice board stayed URL-only. */}
           <Link
-            to="/home/scenario-tracker"
+            to="/program/scenario-tracker"
             className="text-[11px] font-medium text-slate-600 hover:text-slate-900"
           >
             Open full board

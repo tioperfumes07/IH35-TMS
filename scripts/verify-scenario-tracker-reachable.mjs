@@ -16,9 +16,16 @@
  * ("ALL nav on the TOP horizontal bar; the navy rail is the only left panel — never a left tree")
  * sub-navigation belongs on a module's top-bar tab row, which is where the door was added.
  *
- * WHAT THIS ASSERTS: for each surface below, the route is still registered AND at least one
- * rendered file still carries an in-app link to it. Either half missing = FAIL, because either
- * half missing reproduces the defect: a route nobody can click, or a link to nowhere.
+ * WHERE IT LIVES (owner ruling 2026-08-05): the board belongs in PROGRAM, beside the Scoreboard —
+ * both are program-status surfaces fed live from prod. The canonical route is
+ * /program/scenario-tracker; the original /home/scenario-tracker path is KEPT as a redirect
+ * (additive-only: never delete a route) and is guarded here with requireDoor:false so it can never
+ * be quietly dropped and start 404ing old links.
+ *
+ * WHAT THIS ASSERTS: for each surface below, the route is still registered AND (when a door is
+ * required) at least one rendered file still carries an in-app link to it. Either half missing =
+ * FAIL, because either half missing reproduces the defect: a route nobody can click, or a link to
+ * nowhere.
  */
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -35,12 +42,22 @@ const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
  */
 const SURFACES = [
   {
-    route: "/home/scenario-tracker",
-    what: "live 24-slice Scenario Tracker board",
+    route: "/program/scenario-tracker",
+    what: "live 24-slice Scenario Tracker board (canonical — lives in PROGRAM beside the Scoreboard)",
+    requireDoor: true,
     linkSources: [
       "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
       "apps/frontend/src/components/home/ScenarioTrackerPanel.tsx",
     ],
+  },
+  {
+    // Owner moved the board to PROGRAM on 2026-08-05. The old path stays routed as a redirect —
+    // additive-only law: never delete a route, and bookmarks/links to it must keep resolving.
+    // No door is required for a redirect; only that it still exists.
+    route: "/home/scenario-tracker",
+    what: "legacy path — must remain routed as a redirect to the canonical PROGRAM route",
+    requireDoor: false,
+    linkSources: [],
   },
 ];
 
@@ -58,7 +75,7 @@ export function countInboundLinks(sources, route) {
   return n;
 }
 
-export function auditSurface({ manifestSrc, route, what, sources }) {
+export function auditSurface({ manifestSrc, route, what, sources, requireDoor = true }) {
   const problems = [];
   if (!routeIsRegistered(manifestSrc, route)) {
     problems.push(
@@ -66,7 +83,7 @@ export function auditSurface({ manifestSrc, route, what, sources }) {
         `Removing the route silently breaks every link to it.`
     );
   }
-  if (countInboundLinks(sources, route) === 0) {
+  if (requireDoor && countInboundLinks(sources, route) === 0) {
     problems.push(
       `${route} (${what}): routed but NO inbound in-app link remains. A surface with no door is ` +
         `not shipped — it is reachable only by typing the URL, which is the PROG-NAV-01 defect. ` +
@@ -93,14 +110,22 @@ function auditTree() {
       }
       sources.push(readFileSync(abs, "utf8"));
     }
-    problems.push(...auditSurface({ manifestSrc, route: surface.route, what: surface.what, sources }));
+    problems.push(
+      ...auditSurface({
+        manifestSrc,
+        route: surface.route,
+        what: surface.what,
+        sources,
+        requireDoor: surface.requireDoor !== false,
+      })
+    );
   }
   return problems;
 }
 
 function selftest() {
   const failures = [];
-  const route = "/home/scenario-tracker";
+  const route = "/program/scenario-tracker";
   const manifestOk = `<Route path="${route}" element={<X />} />`;
 
   // MUTATION 1 — route present, every door removed. This is the exact pre-fix state on
@@ -129,9 +154,16 @@ function selftest() {
   if (auditSurface({ manifestSrc: manifestOk, route, what: "t", sources: [`href="${route}"`] }).length !== 0)
     failures.push("case5 FAIL — an href door was rejected");
 
+  // A redirect-only surface (requireDoor false) must pass with zero doors, but still fail if the
+  // route itself is deleted — that is what keeps old links from silently 404ing.
+  if (auditSurface({ manifestSrc: manifestOk, route, what: "t", sources: [], requireDoor: false }).length !== 0)
+    failures.push("case7 FAIL — a routed redirect with no door was flagged");
+  if (auditSurface({ manifestSrc: "<Route path='/other' />", route, what: "t", sources: [], requireDoor: false }).length === 0)
+    failures.push("case8 FAIL — a DELETED legacy route was NOT caught");
+
   // The real tree must be clean.
   const tree = auditTree();
-  if (tree.length !== 0) failures.push(`case6 FAIL — real source flagged: ${tree.join(" | ")}`);
+  if (tree.length !== 0) failures.push(`case9 FAIL — real source flagged: ${tree.join(" | ")}`);
 
   if (failures.length) {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);

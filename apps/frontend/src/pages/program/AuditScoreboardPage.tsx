@@ -170,7 +170,7 @@ export function AuditScoreboardPage() {
             home link. It was reachable only by typing the URL. Added here rather than as a 31st
             sidebar id: the locked 30-item contract + the 30-file Rule 24 module manifest would both
             have to move for a surface that is a view of the Program board, not a module. */}
-        <Link className="tab" to="/home/scenario-tracker">Scenario tracker</Link>
+        <Link className="tab" to="/program/scenario-tracker">Scenario tracker</Link>
         <Link className="tab" to="/program/tracker">Tracker</Link>
         <Link className="tab" to="/program/modules">Module completion</Link>
         <Link className="tab" to="/program/final-additions">Final additions</Link>
