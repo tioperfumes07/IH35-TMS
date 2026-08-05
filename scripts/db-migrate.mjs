@@ -490,6 +490,50 @@ try {
       `Held (NOT applied on prod): ${heldSkipped.length} migration(s) — ${heldSkipped.join(", ")}`
     );
   }
+  // ACCT-F117 — POST-APPLY EFFECT ASSERTION. Verify what the database actually CONTAINS, not what
+  // the ledger claims was run.
+  //
+  // Migration 0094 added these three enum labels, is recorded applied in BOTH ledgers, and the
+  // labels are not on prod. Nothing noticed for months: the ledger row was treated as proof. The
+  // cost was real — 202610291200 had to rewrite the abandonment trigger to compare status::text
+  // because casting the missing literals raised 22P02 and aborted EVERY load status UPDATE on
+  // mdata.loads, and driver-finance/abandonment.service.ts still throws on its uncast write.
+  //
+  // So after applying, we ASK THE DATABASE. This runs on the prod preDeploy, which is the only
+  // place the question can be answered honestly — CI's ephemeral database is built from these same
+  // migrations and would agree with itself no matter what.
+  //
+  // Deliberately a hard failure, not a warning: a deploy that silently loses a schema change is the
+  // exact defect being closed, and a warning is how it stayed invisible the first time.
+  const REQUIRED_ENUM_LABELS = [
+    { schema: "mdata", type: "load_status_enum", labels: ["abandoned", "driver_walkoff", "driver_no_show"] },
+  ];
+  for (const req of REQUIRED_ENUM_LABELS) {
+    const present = await client.query(
+      `SELECT e.enumlabel::text AS label
+         FROM pg_enum e
+         JOIN pg_type t ON t.oid = e.enumtypid
+         JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = $1 AND t.typname = $2`,
+      [req.schema, req.type]
+    );
+    // A missing TYPE is not this check's business — a database that has not reached the migration
+    // creating it (a fresh partial run) must not be failed by an assertion about its contents.
+    if (present.rowCount === 0) continue;
+    const have = new Set(present.rows.map((r) => r.label));
+    const missing = req.labels.filter((l) => !have.has(l));
+    if (missing.length > 0) {
+      throw new Error(
+        `POST-APPLY CHECK FAILED: ${req.schema}.${req.type} is missing ${missing.length} required ` +
+          `label(s): ${missing.join(", ")}. Migrations reported success and the ledger will say ` +
+          `"applied", but the type does not contain them — which is precisely how 0094 was lost. ` +
+          `Do NOT re-run and do NOT edit an applied migration; add a NEW migration containing ONLY ` +
+          `the ALTER TYPE ... ADD VALUE statements, so nothing else in its transaction can roll ` +
+          `them back.`
+      );
+    }
+  }
+
   console.log("Migrations applied successfully.");
 } catch (error) {
   console.error("Migration failed:", error.message);
