@@ -11,6 +11,9 @@
  *
  * Allowlist: branch chore/claimed-regen* or chore/claim-reserve*, OR commit subject contains
  * CLAIMED-REGEN or CLAIM-RESERVE.
+ *
+ * CI note: Actions often checks out a detached HEAD, so `git rev-parse --abbrev-ref HEAD`
+ * returns "HEAD". Prefer GITHUB_HEAD_REF / GITHUB_REF_NAME when present (PR head branch).
  */
 import { execSync } from "node:child_process";
 import { resolve, dirname } from "node:path";
@@ -22,6 +25,20 @@ const TARGET = "scripts/verify-steps/CLAIMED-NUMBERS.json";
 
 function sh(cmd) {
   return execSync(cmd, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+}
+
+/** Resolve PR/feature branch name even under detached CI checkouts. */
+export function resolveBranchName(env = process.env, gitAbbrev = "") {
+  const headRef = (env.GITHUB_HEAD_REF || "").trim();
+  if (headRef) return headRef;
+  const refName = (env.GITHUB_REF_NAME || "").trim();
+  if (refName && refName !== "main" && !refName.startsWith("refs/")) {
+    // pull_request workflows set GITHUB_HEAD_REF; push/merge_group may set REF_NAME to branch
+    if (!/^\d+$/.test(refName)) return refName;
+  }
+  const abbrev = (gitAbbrev || "").trim();
+  if (abbrev && abbrev !== "HEAD") return abbrev;
+  return abbrev || "";
 }
 
 export function assertNoClaimedEdits({ changedFiles, branch, commitSubjects }) {
@@ -95,6 +112,24 @@ function selftest() {
     console.error(`${LABEL}: selftest FAIL — no CLAIMED touch must pass`);
     process.exit(1);
   }
+  // Detached CI: GITHUB_HEAD_REF must win over abbrev=HEAD
+  const fromCi = resolveBranchName(
+    { GITHUB_HEAD_REF: "chore/claim-reserve-2540-ep-unit-sweep" },
+    "HEAD",
+  );
+  if (fromCi !== "chore/claim-reserve-2540-ep-unit-sweep") {
+    console.error(`${LABEL}: selftest FAIL — GITHUB_HEAD_REF must resolve under detached HEAD`);
+    process.exit(1);
+  }
+  const detachedOk = assertNoClaimedEdits({
+    changedFiles: [TARGET],
+    branch: fromCi,
+    commitSubjects: ["FINDING: EP-UNIT-KIND-SWEEP"],
+  });
+  if (detachedOk.length) {
+    console.error(`${LABEL}: selftest FAIL — claim-reserve via GITHUB_HEAD_REF must pass`);
+    process.exit(1);
+  }
   console.log(`${LABEL}: selftest PASS`);
 }
 
@@ -109,12 +144,13 @@ function main() {
   } catch {
     changed = sh("git diff --name-only main...HEAD").split("\n").filter(Boolean);
   }
-  let branch = "";
+  let gitAbbrev = "";
   try {
-    branch = sh("git rev-parse --abbrev-ref HEAD");
+    gitAbbrev = sh("git rev-parse --abbrev-ref HEAD");
   } catch {
-    branch = "";
+    gitAbbrev = "";
   }
+  const branch = resolveBranchName(process.env, gitAbbrev);
   let subjects = [];
   try {
     subjects = sh("git log --format=%s origin/main..HEAD").split("\n").filter(Boolean);
