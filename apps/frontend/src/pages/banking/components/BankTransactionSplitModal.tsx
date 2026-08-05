@@ -29,7 +29,7 @@ import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomp
 import { CreateDriverModal } from "../../../components/drivers/CreateDriverModal";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
 import { TrailerAutocomplete } from "../../../components/banking/TrailerAutocomplete";
-import { LoadAutocomplete } from "../../../components/banking/LoadAutocomplete";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { listVendors } from "../../../api/mdata";
 import { getCoaAccounts } from "../../../api/banking";
 import { itemsCatalogClient } from "../../../api/catalogs-accounting";
@@ -481,10 +481,16 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                       </div>
                       <div>
                         <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Trip (load)</span>
-                        <LoadAutocomplete
-                          companyId={companyId}
-                          value={line.load_id ?? ""}
-                          onChange={(loadId, loadName) => patchLine(line._key, { load_id: loadId || undefined, _loadName: loadName })}
+                        <EntityPicker
+                          kind="load"
+                          operatingCompanyId={companyId}
+                          value={line.load_id ?? null}
+                          onChange={(loadId) =>
+                            patchLine(line._key, { load_id: loadId || undefined, _loadName: undefined })
+                          }
+                          nestedInDrawer
+                          placeholder="Search trip / load (optional)"
+                          allowClear
                         />
                       </div>
                     </div>
