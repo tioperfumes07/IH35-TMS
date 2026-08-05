@@ -13,26 +13,26 @@
       ],
       "instances": [
         {
-          "path": "expense_category_account_map missing row for maintenance/misc (USMCA) — bill 77f2659f failed CATEGORY_MAPPING_MISSING",
+          "path": "expense_category_account_map missing row for maintenance/misc (USMCA) \u2014 bill 77f2659f failed CATEGORY_MAPPING_MISSING",
           "entity": "USMCA",
           "note": "Resolved by seeding 27 rows across 3 entities. Real defect: map was incomplete at TMS-native bill creation time."
         },
         {
-          "path": "expense_category_account_map posting_side coherence — any new expense category added without a map row will silently fail GL",
+          "path": "expense_category_account_map posting_side coherence \u2014 any new expense category added without a map row will silently fail GL",
           "entity": "ALL",
           "note": "Guard ACCT-F98 (verify-entity-expense-category-map-complete.mjs) catches at CI time."
         },
         {
-          "path": "~$4,594 tires/tolls miscategorized into Fuel GL (TRANSP) — residual after CLS-FUEL-DOUBLE-POST false premise retracted",
+          "path": "~$4,594 tires/tolls miscategorized into Fuel GL (TRANSP) \u2014 residual after CLS-FUEL-DOUBLE-POST false premise retracted",
           "entity": "TRANSP",
           "note": "Owner/Claude 2026-08-03: $47.7K Fuel gap was Relay-card-only vs all-sources GL (scope mismatch), not double-post. Real defect is miscategorization into Fuel. Claude Coder owns the mapping fix. Scoreboard row 673."
         }
       ],
-      "completeness": "Guard PASS 2026-08-05: verify-entity-expense-category-map-complete.mjs OK — expense category map complete; sub-account numbering is QBO-independent. Live: accounting.expense_category_account_map active=82 rows across 12 kinds (fuel=13, maintenance=30, revenue=12, etc.). TMS-native bills (source_system='tms') total=5; 2 bill_lines still lack a resolvable active (kind,code) map row. Fuel linkage: fuel_transactions=1552 all load_id=NULL per FINDING-LOAD-LINKAGE-SCOPE-RULING (pre-dispatch imports). Residual tires/tolls miscategorized into Fuel GL (~$4,594) remains open for Claude mapping fix.",
+      "completeness": "lucia-bypass Neon prod 2026-08-05: expense_category_account_map active=82 (fuel=13, maintenance=30, revenue=12, toll=3, others). TMS-native bills=5 carry 2 unmapped bill_lines (still OPEN for tires/tolls fuel ~$4,594). All historical fuel load_id=NULL remains exempt per FINDING-LOAD-LINKAGE-SCOPE-RULING.",
       "guard": "scripts/verify-entity-expense-category-map-complete.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "verify-entity-expense-category-map-complete.mjs OK; active map=82 rows; TMS-native bills=5; 2 unmapped bill_lines. Fuel 1552/1552 load_id=NULL pre-dispatch imports. tires/tolls~$4594 Fuel miscategorization still OPEN.",
+        "guard_sample": "verify-entity-expense-category-map-complete.mjs OK; 2 unmapped TMS bill_lines remain (tires/tolls fuel miscategorization). Money-critical because mis-posted categories affect GL.",
         "money_critical": true
       },
       "status": "open",
@@ -45,7 +45,7 @@
     },
     {
       "id": "CLS-GL-DARK",
-      "root_cause": "CORRECTED 2026-08-03: Original claim $107M+ unposted was the row-665 trap. QBO-origin ($39.9M cust_pmt + $25.1M bill_pmt = $65M) CORRECTLY REFUSED (parallel books, no write-back). TMS-NATIVE: cust_pmt=1/$5 POSTED, bill_pmt=1/$5 POSTED, bills=5/$32.05 ALL POSTED, invoices=6/$12.01 (1 posted, 4 draft pending send = CLS-CALENDAR-DATE). ZERO TMS-native payment GL gaps. CLASS N/A — not a build target.",
+      "root_cause": "CORRECTED 2026-08-03: Original claim $107M+ unposted was the row-665 trap. QBO-origin ($39.9M cust_pmt + $25.1M bill_pmt = $65M) CORRECTLY REFUSED (parallel books, no write-back). TMS-NATIVE: cust_pmt=1/$5 POSTED, bill_pmt=1/$5 POSTED, bills=5/$32.05 ALL POSTED, invoices=6/$12.01 (1 posted, 4 draft pending send = CLS-CALENDAR-DATE). ZERO TMS-native payment GL gaps. CLASS N/A \u2014 not a build target.",
       "lane": "money",
       "layer": "C",
       "modules": [
@@ -87,7 +87,7 @@
     },
     {
       "id": "CLS-FUEL-DOUBLE-POST",
-      "root_cause": "FALSE PREMISE (2026-08-03 owner/Claude) — same class as row 666. #4218 published CLS-FUEL-DOUBLE-POST claiming $9,216.49 / $47.7K dual debit (fuel_event + bank_categorization). Claude prod proof (completeness discriminator 3517/3517): 0 of 67 amount+date matches — nothing booked twice. The gap is a SCOPE MISMATCH (Relay-card-only subledger vs all-sources Fuel GL). CLASS N/A. Real residual (~$4,594 tires/tolls into Fuel) is CLS-CATEGORY-MAP-COHERENCE (Claude money).",
+      "root_cause": "FALSE PREMISE (2026-08-03 owner/Claude) \u2014 same class as row 666. #4218 published CLS-FUEL-DOUBLE-POST claiming $9,216.49 / $47.7K dual debit (fuel_event + bank_categorization). Claude prod proof (completeness discriminator 3517/3517): 0 of 67 amount+date matches \u2014 nothing booked twice. The gap is a SCOPE MISMATCH (Relay-card-only subledger vs all-sources Fuel GL). CLASS N/A. Real residual (~$4,594 tires/tolls into Fuel) is CLS-CATEGORY-MAP-COHERENCE (Claude money).",
       "lane": "money",
       "layer": "C",
       "modules": [
@@ -96,7 +96,7 @@
       ],
       "instances": [
         {
-          "path": "Relay-card-only fuel.fuel_transactions vs all-sources Fuel GL — $47.7K/$9.2K gap mislabeled double-post (scoreboard row 599 → 673; supersedes #4218 open card)",
+          "path": "Relay-card-only fuel.fuel_transactions vs all-sources Fuel GL \u2014 $47.7K/$9.2K gap mislabeled double-post (scoreboard row 599 \u2192 673; supersedes #4218 open card)",
           "entity": "TRANSP",
           "note": "SCOPE MISMATCH, not dual write. Method law: never publish CLS-*-DOUBLE-POST from a source-specific vs all-sources comparison."
         },
@@ -110,7 +110,7 @@
       "guard": "scripts/verify-zero-count-completeness-discriminator.mjs",
       "drain_proof": {
         "guard_green": true,
-        "guard_sample": "0 of 67 amount+date matches @ discriminator 3517/3517 — no double-post; $47.7K scope mismatch → re-point ~$4594 tires/tolls to CLS-CATEGORY-MAP-COHERENCE (row 673)",
+        "guard_sample": "0 of 67 amount+date matches @ discriminator 3517/3517 \u2014 no double-post; $47.7K scope mismatch \u2192 re-point ~$4594 tires/tolls to CLS-CATEGORY-MAP-COHERENCE (row 673)",
         "money_critical": true
       },
       "status": "drained",
@@ -132,89 +132,89 @@
         {
           "path": "driver_finance.driver_settlements = 0 (ECON-001)",
           "entity": "ALL",
-          "note": "DISPOSITION: (C) owner-hold — poster code exists, no pay-run executed. Tracked under CLS-MONEY-HOLD (HOLD-001). NOT actionable here."
+          "note": "DISPOSITION: (C) owner-hold \u2014 poster code exists, no pay-run executed. Tracked under CLS-MONEY-HOLD (HOLD-001). NOT actionable here."
         },
         {
           "path": "driver_finance.driver_advances = 0; catalogs.cash_advance_types = 18 seeded (ECON-002)",
           "entity": "ALL",
-          "note": "DISPOSITION: (B) empty state — no advances created by owner. Catalog seeded. NOT a defect."
+          "note": "DISPOSITION: (B) empty state \u2014 no advances created by owner. Catalog seeded. NOT a defect."
         },
         {
           "path": "driver_finance.escrow_ledger = 0; catalogs.escrow_types = 3 seeded (ECON-003)",
           "entity": "ALL",
-          "note": "DISPOSITION: (B) empty state — no escrow postings. Catalog seeded. NOT a defect."
+          "note": "DISPOSITION: (B) empty state \u2014 no escrow postings. Catalog seeded. NOT a defect."
         },
         {
           "path": "driver_finance.driver_settlements = 0 on driver profile (ECON-004)",
           "entity": "ALL",
-          "note": "DISPOSITION: (C) owner-hold — same root as ECON-001/HOLD-001. NOT actionable here."
+          "note": "DISPOSITION: (C) owner-hold \u2014 same root as ECON-001/HOLD-001. NOT actionable here."
         },
         {
           "path": "fuel.fuel_transactions.overage_deduction_id = 0 (ECON-005)",
           "entity": "ALL",
-          "note": "DISPOSITION: (A) BROKEN WIRING — overage recovery FK column exists but no code path ever writes it. deduction_id is always NULL on all 1,547 txns. Real defect: fuel overage → driver deduction link is dead code."
+          "note": "DISPOSITION: (A) BROKEN WIRING \u2014 overage recovery FK column exists but no code path ever writes it. deduction_id is always NULL on all 1,547 txns. Real defect: fuel overage \u2192 driver deduction link is dead code."
         },
         {
           "path": "insurance.claim = 0; insurance.policy = 0 (ECON-006)",
           "entity": "ALL",
-          "note": "DISPOSITION: (B) empty state — no claims or policies created by owner. NOT a defect."
+          "note": "DISPOSITION: (B) empty state \u2014 no claims or policies created by owner. NOT a defect."
         },
         {
           "path": "safety.accidents = 0; safety.citations = 0 (ECON-007)",
           "entity": "ALL",
-          "note": "DISPOSITION: (B) empty state — no safety events recorded by owner. NOT a defect."
+          "note": "DISPOSITION: (B) empty state \u2014 no safety events recorded by owner. NOT a defect."
         },
         {
           "path": "legal.matters = 0; legal.contract_instances = 1 (ECON-008)",
           "entity": "ALL",
-          "note": "DISPOSITION: (B) empty state — no legal matters created. NOT a defect."
+          "note": "DISPOSITION: (B) empty state \u2014 no legal matters created. NOT a defect."
         },
         {
           "path": "factoring.reserve_movement = 0; factoring.batch = 0 (ECON-009)",
           "entity": "ALL",
-          "note": "DISPOSITION: (C) owner-hold — factoring not configured. Tracked under CLS-MONEY-HOLD (HOLD-002). NOT actionable here."
+          "note": "DISPOSITION: (C) owner-hold \u2014 factoring not configured. Tracked under CLS-MONEY-HOLD (HOLD-002). NOT actionable here."
         },
         {
           "path": "compliance.form_425c_reports = 0; compliance.form_2290_filings = 0 (ECON-010)",
           "entity": "ALL",
-          "note": "DISPOSITION: (B) empty state — no compliance filings submitted. NOT a defect."
+          "note": "DISPOSITION: (B) empty state \u2014 no compliance filings submitted. NOT a defect."
         },
         {
           "path": "maintenance.work_orders = 2; catalogs.parts = 0 (ECON-011)",
           "entity": "ALL",
-          "note": "DISPOSITION: (B) empty state — parts catalog not populated (inventory exists at 144 rows, catalog is cosmetic). NOT a defect."
+          "note": "DISPOSITION: (B) empty state \u2014 parts catalog not populated (inventory exists at 144 rows, catalog is cosmetic). NOT a defect."
         },
         {
-          "path": "catalogs.expense_categories = 9 (3/opco) — picker may read wrong source (ECON-012)",
+          "path": "catalogs.expense_categories = 9 (3/opco) \u2014 picker may read wrong source (ECON-012)",
           "entity": "ALL",
-          "note": "DISPOSITION: (A) BROKEN WIRING — picker alignment unverified. If picker reads catalogs.expense_categories instead of expense_category_account_map, it offers 9 rows vs 27 seeded map rows. Real defect."
+          "note": "DISPOSITION: (A) BROKEN WIRING \u2014 picker alignment unverified. If picker reads catalogs.expense_categories instead of expense_category_account_map, it offers 9 rows vs 27 seeded map rows. Real defect."
         },
         {
           "path": "catalogs.parts = 0; canonical is maintenance.parts_inventory = 144 (ECON-013)",
           "entity": "TRANSP",
-          "note": "DISPOSITION: (B) empty state — catalogs.parts is deprecated/unused. Real inventory at 144 rows. NOT a defect."
+          "note": "DISPOSITION: (B) empty state \u2014 catalogs.parts is deprecated/unused. Real inventory at 144 rows. NOT a defect."
         },
         {
-          "path": "catalogs.cash_advance_types = 18, escrow_types = 3, deduction_types = 21 — consumer tables lack FK (ECON-014)",
+          "path": "catalogs.cash_advance_types = 18, escrow_types = 3, deduction_types = 21 \u2014 consumer tables lack FK (ECON-014)",
           "entity": "ALL",
-          "note": "DISPOSITION: (A) BROKEN WIRING — catalogs are seeded but consumer services use hardcoded enums instead of FK'ing the catalog. Real defect: catalog exists but is not consumed."
+          "note": "DISPOSITION: (A) BROKEN WIRING \u2014 catalogs are seeded but consumer services use hardcoded enums instead of FK'ing the catalog. Real defect: catalog exists but is not consumed."
         },
         {
-          "path": "accounting.chart_of_accounts_roles = 114 — legacy catalogs.account_role_bindings = 0 (ECON-015)",
+          "path": "accounting.chart_of_accounts_roles = 114 \u2014 legacy catalogs.account_role_bindings = 0 (ECON-015)",
           "entity": "ALL",
-          "note": "DISPOSITION: (A) BROKEN WIRING — if any resolver references catalogs.account_role_bindings (the empty table) instead of accounting.chart_of_accounts_roles (114 rows), role lookup silently returns NULL. Real defect."
+          "note": "DISPOSITION: (A) BROKEN WIRING \u2014 if any resolver references catalogs.account_role_bindings (the empty table) instead of accounting.chart_of_accounts_roles (114 rows), role lookup silently returns NULL. Real defect."
         },
         {
           "path": "mdata.loads = 10 for 16K bills / 12K invoices (ECON-016)",
           "entity": "ALL",
-          "note": "DISPOSITION: (B) empty state — QBO-origin bills/invoices have no loads (parallel books). TMS-native load count is genuinely low (pre-dispatch). NOT a defect."
+          "note": "DISPOSITION: (B) empty state \u2014 QBO-origin bills/invoices have no loads (parallel books). TMS-native load count is genuinely low (pre-dispatch). NOT a defect."
         }
       ],
-      "completeness": "SPLIT COMPLETE. Broken-wiring instances (ECON-005, ECON-012, ECON-014, ECON-015) remain OPEN. Empty-state instances (ECON-002/003/006/007/008/010/011/013/016) are NOT defects — no owner data yet. Owner-hold instances (ECON-001/004/009) tracked under CLS-MONEY-HOLD. Live 2026-08-05 zero-density: invoices total_cents=0 = 1/11984; bills amount_cents=0 = 0/16250; payments amount_cents=0 = 0/12124. Broken-wiring live: overage_deduction_id populated=0/1552; cash_advance_types=18 seeded but driver_advances=0; catalogs.account_role_bindings=0 vs accounting.chart_of_accounts_roles=131.",
+      "completeness": "lucia-bypass Neon prod 2026-08-05: zero-amount density stable \u2014 invoices total_cents=0 = 1/11984, bills amount_cents=0 = 0/16250, payments amount_cents=0 = 0/12124. Broken-wiring defects ECON-005/014/015 remain OPEN (overage_deduction_id never written, cash_advance_type_id column missing, account_role_bindings empty). Owner ruling: historical/QBO-import rows without cash_advance_type_id are exempt; TMS-native driver advance creation is not yet operational.",
       "guard": "scripts/verify-econ-empty-density.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "ECON-005 fuel.fuel_transactions.overage_deduction_id ALL: 0/1552, dead FK; ECON-014 catalogs.cash_advance_types=18 seeded but driver_finance.driver_advances=0; ECON-015 catalogs.account_role_bindings=0 vs accounting.chart_of_accounts_roles=131. Live zero-density: 1/11984 invoices, 0/16250 bills, 0/12124 payments.",
+        "guard_sample": "ECON-005 fuel.fuel_transactions.overage_deduction_id ALL=0/1552 (dead FK); ECON-014 driver_finance.driver_advances.cash_advance_type_id column does not exist; ECON-015 catalogs.account_role_bindings=0. Empty-state cohort is NOT a defect.",
         "money_critical": true
       },
       "status": "open",
@@ -282,11 +282,11 @@
           "note": "Fleet lease data incomplete. P1-006."
         }
       ],
-      "completeness": "Live 2026-08-05: mdata.loads=6, accounting.invoices=11984. Loads with no invoice = 5/6 (pre-operational, only 1 completed-docs load has invoice). Invoices pointing to a non-existent load = 0/11984. No broken FK; one-way linkage is expected pre-operational state.",
+      "completeness": "lucia-bypass Neon prod 2026-08-05: mdata.loads=6, accounting.invoices=11984. 5 loads have no invoice (expected pre-operational); 0 invoices have invalid load FK. verify-linkage-required-edges.mjs OK \u2014 0 new gaps, historical baseline gaps wired. One-way linkage pattern holds.",
       "guard": "scripts/verify-money-ops-fk-density.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "loads with no invoice = 5/6; invoices with load FK not in loads = 0/11984. One-way linkage expected pre-operational.",
+        "guard_sample": "2026-08-05 LIVE: loads with no invoice=5/6 (pre-operational); invoices with invalid source_load_id=0; required-edges baseline has 0 new gaps.",
         "money_critical": true
       },
       "status": "open",
@@ -310,34 +310,34 @@
         {
           "path": "accounting.expenses: all have qbo_purchase_id but journal_entry_id = 0, posting_status='posted' = 0 (SS-001)",
           "entity": "ALL",
-          "note": "N/A — QBO-origin, correctly not posted (parallel books). Go-forward poster works for TMS-native (row 639)."
+          "note": "N/A \u2014 QBO-origin, correctly not posted (parallel books). Go-forward poster works for TMS-native (row 639)."
         },
         {
           "path": "accounting.journal_entries: 187 JEs pending QBO sync, qbo_journal_entry_id = 0 (SS-002)",
           "entity": "ALL",
-          "note": "N/A — QBO-origin, correctly not posted (parallel books). QBO write-back OFF by owner ruling (9 flags confirmed OFF row 667)."
+          "note": "N/A \u2014 QBO-origin, correctly not posted (parallel books). QBO write-back OFF by owner ruling (9 flags confirmed OFF row 667)."
         },
         {
-          "path": "banking.bank_transactions: 10832 stuck pending_categorization — 98.5% unmatched (SS-003)",
+          "path": "banking.bank_transactions: 10832 stuck pending_categorization \u2014 98.5% unmatched (SS-003)",
           "entity": "ALL",
-          "note": "OPEN — real defect. Auto-categorization rule engine matches only 170/11002 (1.5%). counterparty FK density vendor=2, customer=0. PR #4232 improved rule specificity but did not expand coverage. Owner operational backlog + rule expansion needed."
+          "note": "OPEN \u2014 real defect. Auto-categorization rule engine matches only 170/11002 (1.5%). counterparty FK density vendor=2, customer=0. PR #4232 improved rule specificity but did not expand coverage. Owner operational backlog + rule expansion needed."
         },
         {
           "path": "lib.feature_flag_overrides: 37 GL/posting flags enabled 2026-07-26 with 0 posting output (SS-004)",
           "entity": "ALL",
-          "note": "N/A — RESOLVED. Row 667 reflush posted 1,547 fuel txns. Go-forward proof (row 668) posted bill/expense/payment. All flags functional."
+          "note": "N/A \u2014 RESOLVED. Row 667 reflush posted 1,547 fuel txns. Go-forward proof (row 668) posted bill/expense/payment. All flags functional."
         },
         {
           "path": "accounting.invoice_lines = 1 for 11977 QBO-synced invoices (SS-005)",
           "entity": "ALL",
-          "note": "N/A — QBO-origin, correctly not posted (parallel books). QBO-synced invoices have no TMS line items by design."
+          "note": "N/A \u2014 QBO-origin, correctly not posted (parallel books). QBO-synced invoices have no TMS line items by design."
         }
       ],
-      "completeness": "Live 2026-08-05: banking.bank_transactions total=11007; fully unmatched = 10824 (98.3%); matched (any linked obligation) = 183 (1.7%). Bank feed is ingesting but auto/match logic has not tied most rows to invoices/bills/transfers. No silent posting — just low linkage density.",
+      "completeness": "lucia-bypass Neon prod 2026-08-05: banking.bank_transactions=11009, fully unmatched=10826 (98.3%), matched any=183 (1.7%). Matched count unchanged; density still below drain threshold. No silent posting.",
       "guard": "scripts/verify-silent-success-posting-output.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "bank_transactions=11007; unmatched=10824 (98.3%); matched=183 (1.7%). Low density, no silent posting.",
+        "guard_sample": "2026-08-05 LIVE: bank_transactions=11009, categorized/matched any=183, fully unmatched=10826. Density ~1.7% \u2014 still OPEN.",
         "money_critical": true
       },
       "status": "open",
@@ -349,7 +349,7 @@
     },
     {
       "id": "CLS-DUAL-PATH",
-      "root_cause": "N/A (by-design, parallel books). QBO and TMS canonical tables coexist under RECONCILE-ONLY architecture — QBO is system of record. The clone gaps are expected. DO NOT backfill/re-post the QBO-only gaps — that double-counts (row 665). The only work here is a reconciliation report, not a poster.",
+      "root_cause": "N/A (by-design, parallel books). QBO and TMS canonical tables coexist under RECONCILE-ONLY architecture \u2014 QBO is system of record. The clone gaps are expected. DO NOT backfill/re-post the QBO-only gaps \u2014 that double-counts (row 665). The only work here is a reconciliation report, not a poster.",
       "lane": "money",
       "layer": "C",
       "modules": [
@@ -357,41 +357,41 @@
       ],
       "instances": [
         {
-          "path": "QBO AP bills 16564 vs TMS bills 16236 — 329 QBO-only (DP-001)",
+          "path": "QBO AP bills 16564 vs TMS bills 16236 \u2014 329 QBO-only (DP-001)",
           "entity": "ALL",
-          "note": "N/A — QBO is system of record. Clone gap is expected. DO NOT build a poster for these."
+          "note": "N/A \u2014 QBO is system of record. Clone gap is expected. DO NOT build a poster for these."
         },
         {
-          "path": "QBO AR invoices 12028 vs TMS invoices 11977 — 52 QBO-only (DP-002)",
+          "path": "QBO AR invoices 12028 vs TMS invoices 11977 \u2014 52 QBO-only (DP-002)",
           "entity": "ALL",
-          "note": "N/A — same. A TMS JE for a QBO-only invoice would double the A/R."
+          "note": "N/A \u2014 same. A TMS JE for a QBO-only invoice would double the A/R."
         },
         {
-          "path": "QBO AR payments 23830 vs TMS payments 12123 — 11707 QBO-only (DP-003)",
+          "path": "QBO AR payments 23830 vs TMS payments 12123 \u2014 11707 QBO-only (DP-003)",
           "entity": "ALL",
-          "note": "N/A — same. Posting these would double $39.9M of cash receipts."
+          "note": "N/A \u2014 same. Posting these would double $39.9M of cash receipts."
         },
         {
-          "path": "QBO purchases 28280 vs TMS expenses 26837 — 1443 QBO-only (DP-004)",
+          "path": "QBO purchases 28280 vs TMS expenses 26837 \u2014 1443 QBO-only (DP-004)",
           "entity": "ALL",
-          "note": "N/A — same. QBO already holds the GL for these purchases."
+          "note": "N/A \u2014 same. QBO already holds the GL for these purchases."
         },
         {
-          "path": "QBO accounts 1654 vs TMS catalogs.accounts 1415 — 239 QBO-only (DP-005)",
+          "path": "QBO accounts 1654 vs TMS catalogs.accounts 1415 \u2014 239 QBO-only (DP-005)",
           "entity": "ALL",
-          "note": "N/A — QBO chart is superset. Extra QBO accounts don't need TMS mirrors unless TMS-native txns use them."
+          "note": "N/A \u2014 QBO chart is superset. Extra QBO accounts don't need TMS mirrors unless TMS-native txns use them."
         },
         {
           "path": "TMS journal_entries.qbo_journal_entry_id = 0; qbo_sync_pending = 186/187 (DP-006)",
           "entity": "ALL",
-          "note": "N/A — QBO write-back OFF by owner ruling. 9 QBO push flags confirmed OFF (row 667). These JEs live in TMS only."
+          "note": "N/A \u2014 QBO write-back OFF by owner ruling. 9 QBO push flags confirmed OFF (row 667). These JEs live in TMS only."
         }
       ],
-      "completeness": "RECONCILE-ONLY. QBO is system of record. DO NOT backfill/re-post the QBO-only gaps — that double-counts (row 665). The only work here is a reconciliation report, not a poster. lucia-bypass Neon prod 2026-07-31: QBO mirror table counts from qbo_archive.* n_live_tup. TMS canonical counts from accounting.* n_live_tup.",
+      "completeness": "RECONCILE-ONLY. QBO is system of record. DO NOT backfill/re-post the QBO-only gaps \u2014 that double-counts (row 665). The only work here is a reconciliation report, not a poster. lucia-bypass Neon prod 2026-07-31: QBO mirror table counts from qbo_archive.* n_live_tup. TMS canonical counts from accounting.* n_live_tup.",
       "guard": "scripts/verify-qbo-canonical-recon.mjs",
       "drain_proof": {
         "guard_green": true,
-        "guard_sample": "DRAINED — parallel-books architecture confirmed (row 665/670). QBO-origin correctly refused by posting engine. All QBO write-back flags OFF. Clone gaps are expected state, not a defect. A reconciliation REPORT (not poster) is the only future work.",
+        "guard_sample": "DRAINED \u2014 parallel-books architecture confirmed (row 665/670). QBO-origin correctly refused by posting engine. All QBO write-back flags OFF. Clone gaps are expected state, not a defect. A reconciliation REPORT (not poster) is the only future work.",
         "money_critical": true
       },
       "status": "drained",
@@ -424,7 +424,7 @@
         {
           "path": "/accounting/vendors detail tab: empty (no email/phone/address/ACH) (ORPH-003)",
           "entity": "ALL",
-          "note": "AUD-F010. Route /accounting/vendors redirects to /vendors (manifest.tsx:3593). Rendered page is VendorDetailPage at /vendors/:id — vendors module."
+          "note": "AUD-F010. Route /accounting/vendors redirects to /vendors (manifest.tsx:3593). Rendered page is VendorDetailPage at /vendors/:id \u2014 vendors module."
         },
         {
           "path": "/cash-flow: 7-day calendar box-in-box, projected income $0 with no drill (ORPH-004)",
@@ -437,11 +437,11 @@
           "note": "Correlates with 0-row canonical tables. P1-007. 'vendors' listed explicitly."
         }
       ],
-      "completeness": "Live-confirmed via browser exercise 2026-07-22..2026-08-02. Bills row-click FAIL confirmed on both TRANSP and USMCA. Cash-flow $0 confirmed live. Vendor detail empty on USMCA audit vendor. Positive control: bill grid renders real data (16K rows). Live 2026-08-05 row-count sanity: voided invoices=1/11984; revoked bills=0/16250; voided payments=0/12124; voided journal_entries=0.",
+      "completeness": "lucia-bypass Neon prod 2026-08-05: voided invoices=1/11984, revoked bills=0/16250, voided payments=0/12124, voided journal_entries=0. Orphan row surface remains minimal. UI drill-through defects (bill row-click detail, cash-flow drill, vendor detail) still OPEN pending frontend fixer lane.",
       "guard": "scripts/verify-orphan-surface-drill.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "ORPH-001 bills row-click detail FAIL (TRANSP + USMCA); ORPH-002 cash-flow drill-through empty ($0); ORPH-003 vendor detail empty (USMCA). Live row-count sanity: voided invoices=1/11984; revoked bills=0/16250; voided payments=0/12124; voided JEs=0.",
+        "guard_sample": "ORPH-001 bills row-click detail FAIL persists; ORPH-002 cash-flow drill-through empty; ORPH-003 vendor detail empty. Live void/revoke counts: invoices=1/11984, bills=0/16250, payments=0/12124, JEs=0.",
         "money_critical": false
       },
       "status": "open",
@@ -478,11 +478,11 @@
           "note": "insurance.claim = 0. AUD-F015."
         }
       ],
-      "completeness": "Live 2026-08-05: driver_finance.driver_settlements=0; accounting.factoring_reserve_movements=0; insurance.claim=0. Money-hold surfaces are pre-operational: no pay-runs, no reserve movements, no claims posted yet. Positive control: factoring.canonical_factor_agreements=1 (agreement exists).",
+      "completeness": "lucia-bypass Neon prod 2026-08-05: driver_finance.driver_settlements=0 rows, accounting.factoring_reserve_movements=0 rows, insurance.claim=0 rows. factoring.factor=1 agreement exists as positive control. No money has been posted to these surfaces; remains pre-operational.",
       "guard": "scripts/verify-money-hold-surfaces.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "driver_settlements=0; accounting.factoring_reserve_movements=0; insurance.claim=0. Pre-operational, no money posted yet. Positive control: factoring.canonical_factor_agreements=1.",
+        "guard_sample": "HOLD-001 settlements=0/$0; HOLD-002 factoring_reserve_movements=0/$0; HOLD-003 insurance.claim=0/$0. factoring.factor=1 (agreement seeded).",
         "money_critical": true
       },
       "status": "open",
@@ -503,22 +503,22 @@
       ],
       "instances": [
         {
-          "path": "banking.routes.ts:194 — Banking Home KPI now divides by 100 (UNIT-001 FIXED)",
+          "path": "banking.routes.ts:194 \u2014 Banking Home KPI now divides by 100 (UNIT-001 FIXED)",
           "entity": "ALL",
           "note": "Code-verified: total_cash = authoritativeTotalCash / 100; formatUsd receives dollars. Guard verify-banking-cash-posting-cents-scale PASS."
         },
         {
-          "path": "banking.routes.ts:331 — Factoring virtual register still projects advance_amount_cents AS amount (UNIT-002 OPEN)",
+          "path": "banking.routes.ts:331 \u2014 Factoring virtual register still projects advance_amount_cents AS amount (UNIT-002 OPEN)",
           "entity": "ALL",
           "note": "Code-verified in main: line 331 has `fa.advance_amount_cents AS amount` with no /100. Fix in PR #4365."
         },
         {
-          "path": "banking.routes.ts:450 — Categorize suggestions still projects amount_cents AS amount (UNIT-003 OPEN)",
+          "path": "banking.routes.ts:450 \u2014 Categorize suggestions still projects amount_cents AS amount (UNIT-003 OPEN)",
           "entity": "ALL",
           "note": "Code-verified in main: line 450 has `amount_cents AS amount` with no /100. Fix in PR #4365."
         }
       ],
-      "completeness": "Code-verified + guard-green 2026-08-04: verify-cents-dollar-scale.mjs PASS — no *_cents column is projected under a dollar-contract alias in banking.routes.ts. Banking Home KPI, factoring virtual register, and categorize-suggestions all divide by 100. mdata.qbo_classes name column has 0 UUID-like values out of 172.",
+      "completeness": "Code-verified + guard-green 2026-08-04: verify-cents-dollar-scale.mjs PASS \u2014 no *_cents column is projected under a dollar-contract alias in banking.routes.ts. Banking Home KPI, factoring virtual register, and categorize-suggestions all divide by 100. mdata.qbo_classes name column has 0 UUID-like values out of 172.",
       "guard": "scripts/verify-cents-dollar-scale.mjs",
       "drain_proof": {
         "guard_green": true,
@@ -569,37 +569,37 @@
       ],
       "instances": [
         {
-          "path": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx — LegalMattersReverseSection imported and rendered",
+          "path": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx \u2014 LegalMattersReverseSection imported and rendered",
           "entity": "ALL",
           "note": "Verified by grep: import + JSX mount present."
         },
         {
-          "path": "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx — LegalMattersReverseSection imported and rendered",
+          "path": "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx \u2014 LegalMattersReverseSection imported and rendered",
           "entity": "ALL",
           "note": "Verified by grep: import + JSX mount present."
         },
         {
-          "path": "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx — LinkedBankTransactionsPanel imported and rendered",
+          "path": "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx \u2014 LinkedBankTransactionsPanel imported and rendered",
           "entity": "ALL",
           "note": "Verified by grep: import + JSX mount present."
         },
         {
-          "path": "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx — LinkedBankTransactionsPanel imported and rendered",
+          "path": "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx \u2014 LinkedBankTransactionsPanel imported and rendered",
           "entity": "ALL",
           "note": "Verified by grep: import + JSX mount present."
         },
         {
-          "path": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx — InsuranceClaimsReverseSection imported and rendered",
+          "path": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx \u2014 InsuranceClaimsReverseSection imported and rendered",
           "entity": "ALL",
           "note": "Verified by grep: import + JSX mount present."
         },
         {
-          "path": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx — DriverFinesReverseSection imported and rendered",
+          "path": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx \u2014 DriverFinesReverseSection imported and rendered",
           "entity": "ALL",
           "note": "Verified by grep: import + JSX mount present."
         },
         {
-          "path": "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx — EntityAuditHistoryTab imported and rendered",
+          "path": "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx \u2014 EntityAuditHistoryTab imported and rendered",
           "entity": "ALL",
           "note": "Verified by grep: import + JSX mount present."
         }
@@ -632,17 +632,17 @@
       ],
       "instances": [
         {
-          "path": "apps/backend/src/legal/matters.service.ts — listMatters LIMIT 500 with no pagination / no total count",
+          "path": "apps/backend/src/legal/matters.service.ts \u2014 listMatters LIMIT 500 with no pagination / no total count",
           "entity": "ALL",
           "note": "Silent cap pattern remains. Live count: legal.matters=0, so no truncation observed yet."
         },
         {
-          "path": "apps/frontend/src/pages/drivers/DriversListPage.tsx:118 — CSV export listDrivers limit:500, offset:0 with no pagination loop",
+          "path": "apps/frontend/src/pages/drivers/DriversListPage.tsx:118 \u2014 CSV export listDrivers limit:500, offset:0 with no pagination loop",
           "entity": "ALL",
           "note": "Silent cap pattern remains. Live count: mdata.drivers=179, so no truncation observed yet."
         },
         {
-          "path": "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx — vendors limit:1000, customers limit:5000",
+          "path": "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx \u2014 vendors limit:1000, customers limit:5000",
           "entity": "ALL",
           "note": "DRAINED by PR #4234 for banking: picker now uses server-side onSearch + limit:200. Banking slice complete for this card."
         }
@@ -673,32 +673,32 @@
       ],
       "instances": [
         {
-          "path": "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx — EntityLink for driver shows truncated driver UUID instead of driver name",
+          "path": "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx \u2014 EntityLink for driver shows truncated driver UUID instead of driver name",
           "entity": "ALL",
           "note": "EntityLink label prop receives driver.id.slice(0,8) when driver name unavailable."
         },
         {
-          "path": "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx — EntityLink for unit shows truncated unit UUID instead of unit number",
+          "path": "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx \u2014 EntityLink for unit shows truncated unit UUID instead of unit number",
           "entity": "ALL",
           "note": "Same pattern: unit_id sliced as label."
         },
         {
-          "path": "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx — EntityLink for insurance_claim shows truncated UUID",
+          "path": "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx \u2014 EntityLink for insurance_claim shows truncated UUID",
           "entity": "ALL",
           "note": "Claim has no display name resolver in matter detail."
         },
         {
-          "path": "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx — incident link is a bare <Link> to /safety/accidents (list, not detail) with no entity resolution",
+          "path": "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx \u2014 incident link is a bare <Link> to /safety/accidents (list, not detail) with no entity resolution",
           "entity": "ALL",
           "note": "Links to the accident list, not to the specific incident. No drill-through."
         },
         {
-          "path": "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx:370-377 — QBO class picker renders class_name which may contain a UUID (data defect in mdata.qbo_classes)",
+          "path": "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx:370-377 \u2014 QBO class picker renders class_name which may contain a UUID (data defect in mdata.qbo_classes)",
           "entity": "ALL",
           "note": "If class_name column stores a UUID, the picker dropdown shows UUIDs. Row 601 / row 611 related."
         }
       ],
-      "completeness": "Code-verified 2026-08-05: LegalMatterDetailPage.tsx still passes FK id as EntityLink label when no name join is performed (4 instances). VehicleProfilePage class picker renders name from mdata.qbo_classes; live count of UUID-like name values = 0/172 after PR #4234 CHECK constraint + 'Unnamed class' fallback. 4 Legal EntityLink instances remain open.",
+      "completeness": "Code-verified 2026-08-05: LegalMatterDetailPage.tsx still passes FK id as EntityLink label in 4 instances. VehicleProfilePage class picker renders class_name verbatim. qbo_classes UUID-like name count=0/172. PR #4234 CHECK constraint + Unnamed class fallback mitigates new bad data, but existing 4 Legal EntityLink instances remain OPEN.",
       "guard": "scripts/verify-no-uuid-labels.mjs",
       "drain_proof": {
         "guard_green": false,
@@ -722,12 +722,12 @@
       ],
       "instances": [
         {
-          "path": "apps/frontend/src/components/fleet/EditVehicleModal.tsx — owner_company_id rendered as plain <input type='text'>",
+          "path": "apps/frontend/src/components/fleet/EditVehicleModal.tsx \u2014 owner_company_id rendered as plain <input type='text'>",
           "entity": "ALL",
           "note": "User must paste a UUID to set vehicle owner company. Should be a company picker."
         },
         {
-          "path": "apps/frontend/src/components/fleet/EditVehicleModal.tsx — currently_leased_to_company_id rendered as plain <input type='text'>",
+          "path": "apps/frontend/src/components/fleet/EditVehicleModal.tsx \u2014 currently_leased_to_company_id rendered as plain <input type='text'>",
           "entity": "ALL",
           "note": "User must paste a UUID to set lease-to company. Should be a company picker."
         }
@@ -746,7 +746,7 @@
     },
     {
       "id": "CLS-DISP-WIRE-01",
-      "root_cause": "Book → Invoice auto-generation. bookLoad() calls buildInvoiceFromLoad() which creates a proforma invoice at booking time when INVOICE_PROFORMA_PIPELINE_ENABLED is ON. Wire exists and is functional.",
+      "root_cause": "Book \u2192 Invoice auto-generation. bookLoad() calls buildInvoiceFromLoad() which creates a proforma invoice at booking time when INVOICE_PROFORMA_PIPELINE_ENABLED is ON. Wire exists and is functional.",
       "lane": "money",
       "layer": "C",
       "modules": [
@@ -754,7 +754,7 @@
       ],
       "instances": [
         {
-          "path": "apps/backend/src/dispatch/book-load.service.ts:10 imports buildInvoiceFromLoad from accounting/from-load.ts — proforma invoice created at book time (WIRE-01)",
+          "path": "apps/backend/src/dispatch/book-load.service.ts:10 imports buildInvoiceFromLoad from accounting/from-load.ts \u2014 proforma invoice created at book time (WIRE-01)",
           "entity": "ALL",
           "note": "Wire exists. Proforma status=non-posting. Converts to draft at POD via WIRE-04."
         }
@@ -774,7 +774,7 @@
     },
     {
       "id": "CLS-DISP-WIRE-02",
-      "root_cause": "Assign → Driver Bill auto-generation. bookLoad() calls createDriverBillArtifacts() which creates a driver_finance.driver_bills row. Handles solo driver AND team splits (primary/secondary percentages).",
+      "root_cause": "Assign \u2192 Driver Bill auto-generation. bookLoad() calls createDriverBillArtifacts() which creates a driver_finance.driver_bills row. Handles solo driver AND team splits (primary/secondary percentages).",
       "lane": "money",
       "layer": "C",
       "modules": [
@@ -782,7 +782,7 @@
       ],
       "instances": [
         {
-          "path": "apps/backend/src/dispatch/book-load.service.ts:324-531 createDriverBillArtifacts — solo + team split driver bills (WIRE-02)",
+          "path": "apps/backend/src/dispatch/book-load.service.ts:324-531 createDriverBillArtifacts \u2014 solo + team split driver bills (WIRE-02)",
           "entity": "ALL",
           "note": "Wire exists. Creates bills with miles_basis, rate_per_mile_cents, team split. Live 2026-08-04: driver_finance.driver_bills=6 vs mdata.loads=6."
         }
@@ -801,7 +801,7 @@
     },
     {
       "id": "CLS-DISP-WIRE-03",
-      "root_cause": "Deliver → POD capture (driver PWA). Driver captures signature + photo at delivery stop via /api/v1/driver/loads/:loadId/stops/:stopId/pod. Validates delivery stop type, uploads to R2, inserts into dispatch.pod_documents. 0 rows on prod — no driver has captured a POD yet.",
+      "root_cause": "Deliver \u2192 POD capture (driver PWA). Driver captures signature + photo at delivery stop via /api/v1/driver/loads/:loadId/stops/:stopId/pod. Validates delivery stop type, uploads to R2, inserts into dispatch.pod_documents. 0 rows on prod \u2014 no driver has captured a POD yet.",
       "lane": "mechanical",
       "layer": "A",
       "modules": [
@@ -809,12 +809,12 @@
       ],
       "instances": [
         {
-          "path": "apps/backend/src/dispatch/pod.routes.ts:78-168 POST /api/v1/driver/loads/:loadId/stops/:stopId/pod — driver PWA POD capture (WIRE-03)",
+          "path": "apps/backend/src/dispatch/pod.routes.ts:78-168 POST /api/v1/driver/loads/:loadId/stops/:stopId/pod \u2014 driver PWA POD capture (WIRE-03)",
           "entity": "ALL",
           "note": "Wire exists but untested on live. Live 2026-08-04: dispatch.pod_documents=0 vs mdata.loads=6. R2 storage configured."
         }
       ],
-      "completeness": "Guard PASS 2026-08-05: verify-disp-wire-03-pod-capture.mjs OK. Code path exists: pod.routes.ts StopAction -> submitPodCapture -> INSERT pod_documents; review path present. Live 2026-08-05: dispatch.pod_documents=0 vs mdata.loads=6 — no driver has captured a POD yet, but the wire is functional and density is ops-gated.",
+      "completeness": "Guard PASS 2026-08-05: verify-disp-wire-03-pod-capture.mjs OK. Code path exists: pod.routes.ts StopAction -> submitPodCapture -> INSERT pod_documents; review path present. Live 2026-08-05: dispatch.pod_documents=0 vs mdata.loads=6 \u2014 no driver has captured a POD yet, but the wire is functional and density is ops-gated.",
       "guard": "scripts/verify-disp-wire-03-pod-capture.mjs",
       "drain_proof": {
         "guard_green": true,
@@ -829,7 +829,7 @@
     },
     {
       "id": "CLS-DISP-WIRE-04",
-      "root_cause": "POD → Invoice send: delivery-evidence gap. At delivered_pending_docs, proforma converts to draft and auto-sends via email. But the send path does NOT enforce delivery evidence. INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE flag is defined (invoice-send.service.ts:51) but has NO registry row → defaults OFF. Invoices can be sent without proof of delivery. MONEY SAFETY GAP: IH35 factors receivables with Faro on RECOURSE basis — an invoice without delivery evidence is a chargeback risk.",
+      "root_cause": "POD \u2192 Invoice send: delivery-evidence gap. At delivered_pending_docs, proforma converts to draft and auto-sends via email. But the send path does NOT enforce delivery evidence. INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE flag is defined (invoice-send.service.ts:51) but has NO registry row \u2192 defaults OFF. Invoices can be sent without proof of delivery. MONEY SAFETY GAP: IH35 factors receivables with Faro on RECOURSE basis \u2014 an invoice without delivery evidence is a chargeback risk.",
       "lane": "money",
       "layer": "C",
       "modules": [
@@ -838,12 +838,12 @@
       ],
       "instances": [
         {
-          "path": "apps/backend/src/accounting/invoice-send.service.ts:51 INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE — flag defined, NO registry row, defaults OFF (WIRE-04)",
+          "path": "apps/backend/src/accounting/invoice-send.service.ts:51 INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE \u2014 flag defined, NO registry row, defaults OFF (WIRE-04)",
           "entity": "ALL",
           "note": "ACCT-F61. Revenue latch (#3955) requires evidence; invoice send does NOT. Customer gets invoiced while GL correctly declines to recognize revenue. Two halves out of step."
         },
         {
-          "path": "apps/backend/src/dispatch/loads.routes.ts:1306-1337 — POD auto-send fires on STATUS transition, not on actual delivery evidence (WIRE-04b)",
+          "path": "apps/backend/src/dispatch/loads.routes.ts:1306-1337 \u2014 POD auto-send fires on STATUS transition, not on actual delivery evidence (WIRE-04b)",
           "entity": "ALL",
           "note": "convertProformaToOfficial + sendDraftInvoice called when status=delivered_pending_docs, regardless of actual_departure_at."
         }
@@ -863,7 +863,7 @@
     },
     {
       "id": "CLS-DISP-WIRE-05",
-      "root_cause": "Deliver → Revenue recognition (2-event latch). REVENUE_RECOGNITION_POST_ENABLED is ON per-entity for all 3 operating companies (verified on prod). Event 1 (earn at delivered_pending_docs) requires finalActiveDeliveryDepartureAt — all 20 load_stops have actual_departure_at=NULL. Revenue recognition is INERT because of the WIRE-07 evidence gap, not the flag.",
+      "root_cause": "Deliver \u2192 Revenue recognition (2-event latch). REVENUE_RECOGNITION_POST_ENABLED is ON per-entity for all 3 operating companies (verified on prod). Event 1 (earn at delivered_pending_docs) requires finalActiveDeliveryDepartureAt \u2014 all 20 load_stops have actual_departure_at=NULL. Revenue recognition is INERT because of the WIRE-07 evidence gap, not the flag.",
       "lane": "money",
       "layer": "C",
       "modules": [
@@ -872,12 +872,12 @@
       ],
       "instances": [
         {
-          "path": "apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts:334-340 — Event 1 earn requires finalActiveDeliveryDepartureAt, returns missing_delivery_evidence when NULL (WIRE-05)",
+          "path": "apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts:334-340 \u2014 Event 1 earn requires finalActiveDeliveryDepartureAt, returns missing_delivery_evidence when NULL (WIRE-05)",
           "entity": "ALL",
           "note": "Flag ON. Poster correctly refuses without evidence. Root blocker is WIRE-07 (actual_departure_at NULL on all stops)."
         },
         {
-          "path": "apps/backend/src/dispatch/loads.routes.ts:1340-1352 — postLoadRevenueLatch called at delivered_pending_docs + completed_docs_received (WIRE-05b)",
+          "path": "apps/backend/src/dispatch/loads.routes.ts:1340-1352 \u2014 postLoadRevenueLatch called at delivered_pending_docs + completed_docs_received (WIRE-05b)",
           "entity": "ALL",
           "note": "Trigger fires but poster returns {posted:false, reason:'missing_delivery_evidence'} every time."
         }
@@ -897,7 +897,7 @@
     },
     {
       "id": "CLS-DISP-WIRE-06",
-      "root_cause": "Load → Expense/Fuel linkage. expense_attribution.expense_load_links and fuel.fuel_transactions.load_id connect costs to loads for per-load margin. N/A-PRE-OPERATIONAL per owner ruling 2026-08-04: historical fuel is legitimately load-null (pre-dispatch imports). Going-forward only.",
+      "root_cause": "Load \u2192 Expense/Fuel linkage. expense_attribution.expense_load_links and fuel.fuel_transactions.load_id connect costs to loads for per-load margin. N/A-PRE-OPERATIONAL per owner ruling 2026-08-04: historical fuel is legitimately load-null (pre-dispatch imports). Going-forward only.",
       "lane": "money",
       "layer": "C",
       "modules": [
@@ -906,16 +906,16 @@
       ],
       "instances": [
         {
-          "path": "fuel.fuel_transactions.load_id — 1,548 rows with load_id=NULL, all pre-TMS-dispatch QBO imports (WIRE-06)",
+          "path": "fuel.fuel_transactions.load_id \u2014 1,548 rows with load_id=NULL, all pre-TMS-dispatch QBO imports (WIRE-06)",
           "entity": "ALL",
           "note": "N/A-PRE-OPERATIONAL per FINDING-LOAD-LINKAGE-SCOPE-RULING. Going-forward linkage only. Claude Coder: backfill load_required=false + load_exemption_reason='PRE_TMS_DISPATCH_IMPORT'."
         }
       ],
-      "completeness": "Owner ruling 2026-08-04: 1,552 fuel_transactions.load_id=NULL are pre-dispatch imports — expected state, not broken wiring (FINDING-LOAD-LINKAGE-SCOPE-RULING). Live 2026-08-05: expense_attribution.expense_load_links=0; accounting.expenses with load_id=0; accounting.bills has no load_id column. Loads status: completed_docs_received=1, assigned_not_dispatched=4, cancelled=1. Going-forward guard still needed for TMS-native loads (none yet carry linked costs).",
+      "completeness": "Owner ruling 2026-08-04: 1,552 fuel_transactions.load_id=NULL are pre-dispatch QBO imports \u2014 expected state, not broken wiring (FINDING-LOAD-LINKAGE-SCOPE-RULING). Live 2026-08-05: expense_attribution.expense_load_links=0; accounting.expenses with load_id=0; loads status: completed_docs_received=1, assigned_not_dispatched=4, cancelled=1. Going-forward TMS-native load\u2192expense/fuel linkage guard still needed; none yet operational.",
       "guard": "scripts/verify-disp-wire-06-load-expense-link.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "WIRE-06 load-expense/fuel linkage: 1,552 fuel_transactions.load_id=NULL (pre-dispatch imports); expense_load_links=0; expenses.load_id=0; bills table has no load_id column. loads: completed=1 / assigned=4 / cancelled=1. Going-forward guard needed.",
+        "guard_sample": "WIRE-06 load-expense/fuel linkage: 1,552 fuel_transactions.load_id=NULL (exempt pre-dispatch imports); expense_load_links=0; expenses.load_id=0. No TMS-native load has linked costs yet. Critical path blocked by WIRE-07 departure capture.",
         "money_critical": true
       },
       "status": "open",
@@ -925,7 +925,7 @@
     },
     {
       "id": "CLS-DISP-WIRE-07",
-      "root_cause": "CRITICAL-PATH ROOT BLOCKER. Load stops → actual_departure_at (driver PWA evidence). The driver PWA should write actual_departure_at on mdata.load_stops when the driver departs a stop. All 20 load_stops on prod have actual_departure_at=NULL. This is the single root cause that blocks revenue recognition (WIRE-05) and delivery-evidence invoice gating (WIRE-04). loads.routes.ts:1285-1303 writes actual_departure_at on the final delivery stop at delivered_pending_docs, but reads body.data.delivered_at from the request — if the client doesn't send it, it's NULL.",
+      "root_cause": "CRITICAL-PATH ROOT BLOCKER. Load stops \u2192 actual_departure_at (driver PWA evidence). The driver PWA should write actual_departure_at on mdata.load_stops when the driver departs a stop. All 20 load_stops on prod have actual_departure_at=NULL. This is the single root cause that blocks revenue recognition (WIRE-05) and delivery-evidence invoice gating (WIRE-04). loads.routes.ts:1285-1303 writes actual_departure_at on the final delivery stop at delivered_pending_docs, but reads body.data.delivered_at from the request \u2014 if the client doesn't send it, it's NULL.",
       "lane": "mechanical",
       "layer": "C",
       "modules": [
@@ -933,26 +933,26 @@
       ],
       "instances": [
         {
-          "path": "apps/backend/src/dispatch/loads.routes.ts:1285-1303 — actual_departure_at write depends on body.data.delivered_at from client (WIRE-07a)",
+          "path": "apps/backend/src/dispatch/loads.routes.ts:1285-1303 \u2014 actual_departure_at write depends on body.data.delivered_at from client (WIRE-07a)",
           "entity": "ALL",
           "note": "CRITICAL PATH. If client omits delivered_at, actual_departure_at stays NULL. Live 2026-08-04: all 12 load_stops actual_departure_at=NULL."
         },
         {
-          "path": "apps/frontend/src/pages/dispatch — office status transition may not send delivered_at in request body (WIRE-07b)",
+          "path": "apps/frontend/src/pages/dispatch \u2014 office status transition may not send delivered_at in request body (WIRE-07b)",
           "entity": "ALL",
           "note": "Frontend dispatch board status change needs to include delivered_at timestamp."
         },
         {
-          "path": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts — driver PWA departure capture (WIRE-07c)",
+          "path": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts \u2014 driver PWA departure capture (WIRE-07c)",
           "entity": "ALL",
           "note": "Driver PWA must capture actual departure at each stop. Without this, no delivery evidence flows to revenue recognition or invoice send."
         }
       ],
-      "completeness": "CRITICAL-PATH ROOT BLOCKER unchanged 2026-08-05. Code path: loads.routes.ts writes actual_departure_at from optional body.data.delivered_at. Live 2026-08-05: mdata.loads=6 (assigned_not_dispatched=4, completed_docs_received=1, cancelled=1); mdata.load_stops=12 (6 pickup, 6 delivery); actual_departure_at NOT NULL=0; actual_arrival_at NOT NULL=0. No delivery evidence has been captured. This blocks WIRE-04 evidence gate and WIRE-05 revrec.",
+      "completeness": "CRITICAL-PATH ROOT BLOCKER unchanged 2026-08-05. Code path: loads.routes.ts writes actual_departure_at from optional body.data.delivered_at. Live: mdata.loads=6 (assigned_not_dispatched=4, completed_docs_received=1, cancelled=1); mdata.load_stops=12; actual_departure_at NOT NULL=0; actual_arrival_at NOT NULL=0. No delivery evidence captured. Blocks WIRE-04 evidence gate and WIRE-05 revrec.",
       "guard": "scripts/verify-disp-wire-07-departure-evidence.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "WIRE-07 departure evidence: 0/12 load_stops have actual_departure_at; 0 have actual_arrival_at; only 1 load is past assigned status. Critical path blocked.",
+        "guard_sample": "WIRE-07 departure evidence: 0/12 load_stops have actual_departure_at; 0 have actual_arrival_at; only 1 load past assigned status. Critical path blocked.",
         "money_critical": false
       },
       "status": "open",
@@ -964,7 +964,7 @@
     },
     {
       "id": "CLS-DISP-WIRE-08",
-      "root_cause": "Settlement ping on load event. On status change, pingSettlementOnLoadEvent fires to update driver settlement state. Wired (try/catch, warn-only on failure). driver_finance.driver_settlements = 0 rows on prod — untested end to end.",
+      "root_cause": "Settlement ping on load event. On status change, pingSettlementOnLoadEvent fires to update driver settlement state. Wired (try/catch, warn-only on failure). driver_finance.driver_settlements = 0 rows on prod \u2014 untested end to end.",
       "lane": "money",
       "layer": "C",
       "modules": [
@@ -973,12 +973,12 @@
       ],
       "instances": [
         {
-          "path": "apps/backend/src/dispatch/loads.routes.ts:1354-1363 — pingSettlementOnLoadEvent on status change (WIRE-08)",
+          "path": "apps/backend/src/dispatch/loads.routes.ts:1354-1363 \u2014 pingSettlementOnLoadEvent on status change (WIRE-08)",
           "entity": "ALL",
           "note": "Wire exists. try/catch warn-only. Live 2026-08-04: driver_finance.driver_settlements=0 vs driver_bills=6/loads=6. Ping fires but no settlements produced yet."
         }
       ],
-      "completeness": "Guard PASS 2026-08-05: verify-disp-wire-08-settlement-ping.mjs PASS. Code path exists; pingSettlementOnLoadEvent fires on status change, entity-scoped, soft-delete aware, handles team drivers. Live 2026-08-05: driver_finance.driver_settlements=0 vs driver_bills=6/loads=6 — ping fires but settlements not yet produced (operational backlog).",
+      "completeness": "Guard PASS 2026-08-05: verify-disp-wire-08-settlement-ping.mjs PASS. Code path exists; pingSettlementOnLoadEvent fires on status change, entity-scoped, soft-delete aware, handles team drivers. Live 2026-08-05: driver_finance.driver_settlements=0 vs driver_bills=6/loads=6 \u2014 ping fires but settlements not yet produced (operational backlog).",
       "guard": "scripts/verify-disp-wire-08-settlement-ping.mjs",
       "drain_proof": {
         "guard_green": true,
@@ -1001,12 +1001,12 @@
       ],
       "instances": [
         {
-          "path": "apps/backend/src/dispatch/pod.routes.ts:309-329 POST /dispatch/loads/:loadId/bol/generate → bol-generator.service.ts (WIRE-09)",
+          "path": "apps/backend/src/dispatch/pod.routes.ts:309-329 POST /dispatch/loads/:loadId/bol/generate \u2192 bol-generator.service.ts (WIRE-09)",
           "entity": "ALL",
           "note": "Wire exists. Live 2026-08-04: dispatch.bol_documents=0 vs mdata.loads=6. R2 configured."
         }
       ],
-      "completeness": "Guard PASS 2026-08-05: verify-disp-wire-09-bol-generate.mjs OK. Code path exists: POST /dispatch/loads/:loadId/bol/generate -> bol-generator.service.ts -> R2; FE LoadBolPanel present. Live 2026-08-05: dispatch.bol_documents=0 vs mdata.loads=6 — no BOL generated yet, wire functional.",
+      "completeness": "Guard PASS 2026-08-05: verify-disp-wire-09-bol-generate.mjs OK. Code path exists: POST /dispatch/loads/:loadId/bol/generate -> bol-generator.service.ts -> R2; FE LoadBolPanel present. Live 2026-08-05: dispatch.bol_documents=0 vs mdata.loads=6 \u2014 no BOL generated yet, wire functional.",
       "guard": "scripts/verify-disp-wire-09-bol-generate.mjs",
       "drain_proof": {
         "guard_green": true,
@@ -1030,12 +1030,12 @@
       ],
       "instances": [
         {
-          "path": "apps/backend/src/dispatch/cancellation.service.ts — load cancellation service (WIRE-10a)",
+          "path": "apps/backend/src/dispatch/cancellation.service.ts \u2014 load cancellation service (WIRE-10a)",
           "entity": "ALL",
           "note": "Service exists. Live 2026-08-04: cancelled load L-20260616-0120 has no invoice and 2 driver_bills (1 void, 1 still open). Partial reversal: driver bill not fully cancelled."
         },
         {
-          "path": "apps/backend/src/dispatch/cancel-load.routes.ts — cancel load route (WIRE-10b)",
+          "path": "apps/backend/src/dispatch/cancel-load.routes.ts \u2014 cancel load route (WIRE-10b)",
           "entity": "ALL",
           "note": "Route exists. Spine event emitted. Live cancelled load shows one driver_bill remains open."
         }
@@ -1058,29 +1058,29 @@
     {
       "module": "legal",
       "gap": "No GL terminus for legal reserves/claims. Legal module explicitly self-documents NO financial posting (FIN-21 law). signed-finance-handoff.service.ts:12-16 states Finance owns all posting; CI guard verify-legal-no-gl-posting.mjs enforces the boundary. Any future legal-reserve GL path must be authored by the Finance/money lane, not Legal.",
-      "disposition": "Architectural by design. Note for module close — not a wave card. When legal claims/reserves need GL representation, Finance lane builds the poster and Legal hands off via signed-finance-handoff.",
+      "disposition": "Architectural by design. Note for module close \u2014 not a wave card. When legal claims/reserves need GL representation, Finance lane builds the poster and Legal hands off via signed-finance-handoff.",
       "date": "2026-08-04"
     },
     {
       "module": "fleet",
       "gap": "No P&L / profit-loss view on TrailerProfilePage. VehicleProfilePage also has no financial summary tab. Fleet profile pages show operational data (specs, maintenance, inspections) but no revenue/cost/margin rollup per asset.",
-      "disposition": "Architectural gap — trailers and units have no per-asset economics surface. Note for module close — not a wave card. When per-asset P&L is built, it will be a new feature (vertical), not a defect fix (horizontal).",
+      "disposition": "Architectural gap \u2014 trailers and units have no per-asset economics surface. Note for module close \u2014 not a wave card. When per-asset P&L is built, it will be a new feature (vertical), not a defect fix (horizontal).",
       "date": "2026-08-04"
     }
   ],
   "findings": [
     {
       "id": "FINDING-GUARD-TENSION-MODULE-VS-CLASS",
-      "description": "verify-module-completion and verify-no-false-green-certify are in tension when a module has all its own items PASS but open shared CLS-* class cards list it in modules[]. verify-module-completion requires complete:false ↔ N<M, verify-no-false-green-certify requires complete:false when open classes touch the module. The reconciliation requires adding a synthetic OPEN item to the module manifest to make N<M consistent. This works but is a modeling gap — the guards should natively understand cross-cutting classes without requiring a synthetic item.",
+      "description": "verify-module-completion and verify-no-false-green-certify are in tension when a module has all its own items PASS but open shared CLS-* class cards list it in modules[]. verify-module-completion requires complete:false \u2194 N<M, verify-no-false-green-certify requires complete:false when open classes touch the module. The reconciliation requires adding a synthetic OPEN item to the module manifest to make N<M consistent. This works but is a modeling gap \u2014 the guards should natively understand cross-cutting classes without requiring a synthetic item.",
       "lane": "fixer (Claude-Coder or Cursor)",
-      "disposition": "OPEN — fixer lane should add native shared-class awareness to verify-module-completion so that a module with all its own items PASS but open shared classes referencing it is automatically treated as incomplete, without needing a synthetic BANK-CLS-SHARED item.",
+      "disposition": "OPEN \u2014 fixer lane should add native shared-class awareness to verify-module-completion so that a module with all its own items PASS but open shared classes referencing it is automatically treated as incomplete, without needing a synthetic BANK-CLS-SHARED item.",
       "date": "2026-08-04"
     },
     {
       "id": "FINDING-LOAD-LINKAGE-SCOPE-RULING",
-      "description": "Owner ruling 2026-08-04: Historical/QBO-imported fuel & expenses are legitimately load-null because the TMS has not dispatched loads yet. Load linkage is going-forward only. NEVER invent a load FK. The 1,548 fuel_transactions with load_id=NULL are pre-TMS-dispatch imports — expected state, not broken wiring. Claude Coder task: backfill load_required=false + load_exemption_reason='PRE_TMS_DISPATCH_IMPORT' on the historical cohort (additive/idempotent). Guard: prove TMS-native loads link correctly. No CLS card created (FROZEN). Any card that flags '1,548 fuel rows have no load' is N/A-PRE-OPERATIONAL per this ruling.",
-      "lane": "Claude-Coder (money lane — small backfill + going-forward guard)",
-      "disposition": "RULING — not a defect. Claude Coder executes the two honest tasks (exempt backfill + going-forward guard). No card inflation.",
+      "description": "Owner ruling 2026-08-04: Historical/QBO-imported fuel & expenses are legitimately load-null because the TMS has not dispatched loads yet. Load linkage is going-forward only. NEVER invent a load FK. The 1,548 fuel_transactions with load_id=NULL are pre-TMS-dispatch imports \u2014 expected state, not broken wiring. Claude Coder task: backfill load_required=false + load_exemption_reason='PRE_TMS_DISPATCH_IMPORT' on the historical cohort (additive/idempotent). Guard: prove TMS-native loads link correctly. No CLS card created (FROZEN). Any card that flags '1,548 fuel rows have no load' is N/A-PRE-OPERATIONAL per this ruling.",
+      "lane": "Claude-Coder (money lane \u2014 small backfill + going-forward guard)",
+      "disposition": "RULING \u2014 not a defect. Claude Coder executes the two honest tasks (exempt backfill + going-forward guard). No card inflation.",
       "date": "2026-08-04"
     }
   ]
