@@ -1773,3 +1773,45 @@ predicate feeding it, not the downgrade mechanism.
 - neon-check: none required — this is a static-guard efficacy test executed locally against
              `origin/main` code; exit codes read WITHOUT a pipe (0 / 0 clean, 1 with plant).
 - status:    PASS
+
+## LV-097  POSTING-FLAG SWEEP — 75 of 78 (flag × entity) combinations are ON as the law states; the 3 exceptions are all **IH 35 Trucking**, and one of them is **silently EXPIRED while its row still reads `enabled = true`**
+- module:    accounting · lib (GUARD — posting-flag state vs owner law)
+- entity:    ALL (TRANSP · USMCA · TRK)
+- surface:   `lib.feature_flags` × `lib.feature_flag_overrides` × `org.companies`
+- observed:  Owner law is that GL posting is ON for all three entities. I verified that against prod rather
+  than assuming it. **26** posting flags × **3** entities = **78** combinations; **75 are effectively ON**.
+  All **3** exceptions belong to **IH 35 Trucking LLC** (`b49a737b`), and they are three *different* causes —
+  which is why a single "is it on?" glance would misread them:
+  | flag | stored | effective | cause |
+  |---|---|---|---|
+  | `FACTORING_GL_POSTING_ENABLED` | **`enabled = true`** | **OFF** | override **EXPIRED 2026-07-27** (9 days ago; today 2026-08-05) → falls back to `default_enabled = false` |
+  | `RELATED_PARTY_LOAN_GL_POSTING_ENABLED` | *no row* | OFF | no override exists for TRK → `default_enabled = false` |
+  | `REVENUE_RECOGNITION_POST_ENABLED` | `enabled = false` | OFF | explicit OFF |
+  **The factoring one is the finding.** Its row says `enabled = true`. Anyone reading the overrides table —
+  or a dashboard that renders `enabled` — concludes factoring GL posting is ON for TRK. It is OFF, and has
+  been for 9 days, because `expires_at` silently returned it to the default. Stored state and effective state
+  disagree, and the stored state is the reassuring one. That is the shape of defect that survives review.
+  **I sized the class rather than implying an epidemic.** Of **242** total overrides, exactly **1** carries an
+  `expires_at` at all — this one — and it is expired, and it says `enabled = true`. So this is **singular, not
+  systemic**. It is arguably *more* likely to be forgotten precisely because it is the only expiring override
+  in the system: no one is watching a mechanism that is used once.
+  **The third row is probably CORRECT and I am not filing it as a defect.** TRK is the **asset holder**, not
+  an operating carrier (`ih35-entity-facts`); freight revenue recognition belongs to the operating entity, so
+  `REVENUE_RECOGNITION_POST_ENABLED = false` on TRK is consistent with the entity model. Calling it a defect
+  would be the same error as flagging import-origin rows. **Recorded as owner-confirm, not as a fault.**
+  **The second row deserves an owner decision, not a fix.** `RELATED_PARTY_LOAN_GL_POSTING_ENABLED` is off on
+  TRK only — and TRK, as the asset holder, is the entity most likely to *have* related-party loans. Whether
+  that is deliberate or an oversight is a decision, not a fact I can derive. **UNVERIFIED — intent.**
+- severity:  major (factoring: stored `enabled = true` while effectively OFF on a money-posting path) ·
+             informational (the other two)
+- LANE:      CC-1 (money) — decide TRK's factoring posting intent and either renew/remove the `expires_at` or
+             set the override explicitly OFF so stored and effective state agree. Guard suggestion: fail
+             closed on any `lib.feature_flag_overrides` row where `expires_at < now()` AND `enabled = true` —
+             a one-predicate check that makes this class impossible to miss again. **Owner decision needed**
+             on `RELATED_PARTY_LOAN_GL_POSTING_ENABLED` for TRK.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             26 posting flags × 3 entities enumerated by CROSS JOIN so absent overrides surface as rows
+             rather than vanishing from the result — the join shape is what makes the "no row" case visible.
+             Override census: **242** total, **1** with `expires_at`, **1** expired, **1** expired-but-enabled.
+             `now()::date` asserted as 2026-08-05 in the same transaction.
+- status:    OPEN
