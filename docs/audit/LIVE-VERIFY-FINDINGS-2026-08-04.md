@@ -1338,3 +1338,24 @@ membership-scoped session.
 - LANE:      none — GUARD attestation. Note for CC-1 working CLS-BANK-MATCH-DENSITY: 1,413 transactions already carry unit attribution.
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` set to TRANSP, exit 0. `banking.bank_transactions` unvoided **11,007**: `categorized_at` NOT NULL **170**, `coa_account_id` NOT NULL **170**, `categorization_gl_account_id` NOT NULL **170**, `categorization_unit_id` **1,413**, `categorization_driver_id` **363**, `categorization_load_id` **13**. Count categorized with neither CoA nor GL account = **0**. `banking.transaction_categories` 23, `intercompany_entity_pairs` 6, `bank_accounts` 17.
 - status:    OPEN (informational)
+
+## LV-081  ★ ORIGIN CENSUS — **99.98% of every financial record is a QuickBooks/Relay import. TMS-native total: 14 records out of 56,857.** Consult this before calling ANY gap a defect.
+- module:    cross-module (GUARD — canonical origin reference)
+- entity:    ALL
+- surface:   `accounting.invoices` · `accounting.bills` · `accounting.expenses` · `fuel.fuel_transactions`
+- observed:  The owner has had to restate the same fact repeatedly: *"all transactions are synced from QuickBooks, we have not begun creating invoices, dispatch, loads etc, we are only testing."* This finding exists so the fact is **measured** rather than remembered, and so any future reader can settle an origin question in one lookup instead of re-deriving it or asking again.
+  | record type | total | import-origin | % imported | TMS-native |
+  |---|---|---|---|---|
+  | invoices (`source_system='qbo'`) | 11,983 | 11,976 | **99.94%** | **7** |
+  | bills (`qbo_bill_id`) | 16,250 | 16,245 | **99.97%** | **5** |
+  | expenses (`qbo_purchase_id`) | 27,072 | 27,070 | **99.99%** | **2** |
+  | fuel transactions (`imported_at`) | 1,552 | 1,552 | **100.00%** | **0** |
+  | **TOTAL** | **56,857** | **56,843** | **99.98%** | **14** |
+  **Fourteen records.** That is the entire TMS-native financial footprint of this system, and every one of them is a test artifact created during verification — the $5.00 and $1.00 invoices, the $1,200 WIRE-04 test invoice, the $25 draft bill, the two proof expenses. Loads stand at 6 (4 live, all test, LV-073); dispatched loads at 0; settlements at 0; work orders at 1.
+  **The operational consequence, stated once so it need not be inferred again:** for any query over these tables, the answer describes **QuickBooks history**, not this product's behaviour. An empty link, an unposted document, a null `load_id`, an uncategorized bank row — on 56,843 of 56,857 records these are the **correct** state under parallel double-books, because QBO is the system of record and the TMS has not transacted. A defect can only exist in (a) the **14 native records**, (b) the **code path** that will handle the fifteenth, or (c) a **control that misreports** either. Everything else is history being carried, and "fixing" it means inventing financial data.
+  **This is not theoretical — I violated it during this very sweep.** LV-063 filed $316.34 of fuel-card overage as never recovered; the origin test showed all three rows were Relay imports with no settlement to deduct from, and I retracted it. The census exists so the next agent runs the lookup instead of the retraction.
+  **Live import still active:** fuel transactions moved 1,548 → **1,552** during this session, so the import cohort is growing in real time and any "missing" count taken against it is stale within hours.
+- severity:  informational — canonical reference; prevents the most repeated class of false finding in this file
+- LANE:      none — GUARD attestation for all lanes
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` set to TRANSP, exit 0. Single UNION query over four tables returning total, import-origin count and percentage per type as tabulated; totals 56,857 records with 56,843 import-origin = 99.98%, leaving 14 TMS-native.
+- status:    OPEN (informational — permanent reference)
