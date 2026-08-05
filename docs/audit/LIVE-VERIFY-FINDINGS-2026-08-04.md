@@ -1929,3 +1929,60 @@ consistent with the entity model, not a defect.
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
              TRK factoring footprint counts as tabulated above.
 - status:    SUPERSEDED-BY-OWNER-RULING (factoring row) · LV-097's other two rows unchanged
+
+## LV-099  **LEDGER SAYS APPLIED — EFFECT MISSING.** Migration `0094` is recorded applied in BOTH ledgers, yet all three of its enum labels are absent from prod, and that makes the entire abandonment → escrow-forfeit chain **structurally unreachable**
+- module:    dispatch · driver_finance (GUARD — migration effect verification, FAIL CLOSED)
+- entity:    ALL
+- surface:   `mdata.load_status_enum` · `db/migrations/0094_p5_e1_auto_deduct_escrow_load_abandonment.sql` · `_system._schema_migrations` · `ih35_migrations.applied_migrations`
+- expected:  `0094` runs `ALTER TYPE mdata.load_status_enum ADD VALUE IF NOT EXISTS` for **`abandoned`**,
+             **`driver_walkoff`**, **`driver_no_show`**. Recorded-applied should mean those labels exist.
+- observed:  **All three labels are ABSENT from prod, while both ledgers say the migration was applied.**
+  | ledger | row for `0094…abandonment.sql` | applied_at | applied_by |
+  |---|---|---|---|
+  | `_system._schema_migrations` | **present** | 2026-05-12 01:42:05 | `neondb_owner` |
+  | `ih35_migrations.applied_migrations` | **present** | 2026-05-23 16:10:16 | **`claude-backfill-2026-05-23`** |
+  `mdata.load_status_enum` carries **17** labels and none is one of the three. Verified schema-qualified —
+  it is the only `%load_status%` type on prod with any labels at all (`catalogs.driver_load_statuses` and the
+  array types have 0), so this is not a wrong-type mix-up.
+  **The two ledgers also disagree with each other** (applied 11 days apart; 876 vs 883 total rows), and the
+  second entry's `applied_by` is a **backfill**. That is the most probable mechanism: the ledger row was
+  *inserted to mark the migration applied* rather than produced by executing it. **A ledger row is an
+  assertion, not evidence.**
+  **PROOF THE EFFECT IS MISSING — read-only, no write performed.** Casting the literal is enough:
+  `SELECT 'abandoned'::mdata.load_status_enum` → **`ERROR: invalid input value for enum
+  mdata.load_status_enum: "abandoned"`**. Positive control in the same session:
+  `SELECT 'cancelled'::mdata.load_status_enum` → returns `cancelled`. So the cast mechanism works and
+  **only these labels are missing**.
+  **THE CONSEQUENCE IS THE FINDING: the abandonment write path CANNOT SUCCEED — not "has not yet", CANNOT.**
+  The escrow machinery is fully wired: trigger **`trg_auto_propose_escrow_on_abandon` exists on
+  `mdata.loads`**, `dispatch.load_abandonments` exists, `abandonment_chargebacks` has its audit trigger. But a
+  load can never *enter* the status that fires the trigger, because `UPDATE mdata.loads SET status =
+  'abandoned'` throws on the enum before any trigger runs. Confirmed by the counters:
+  `dispatch.load_abandonments` **0 rows with `n_tup_ins = 0`** (never inserted in the table's lifetime), and
+  `mdata.loads` in an abandon status **0**. The `n_tup_ins = 0` is what turns "empty" into "never once".
+  **The team already knew, and worked around the symptom instead of the cause.** Migration
+  `202610291200_disp01_escrow_abandon_trigger_text_cast.sql` (applied 2026-07-30) states in its own header:
+  *"literals abandoned/driver_walkoff/driver_no_show that do NOT exist on prod mdata.load_status_enum …
+  FIX: compare as ::text"*. That change stopped the **trigger definition** from erroring — it did **not**
+  make the path reachable, because the blocking cast is on the `UPDATE`, not inside the trigger body. The
+  workaround is why this has stayed invisible: nothing errors any more, and nothing works either.
+  **Answering the assigned question directly: I could NOT confirm the abandonment path end-to-end, because
+  end-to-end success is impossible in the current prod state.** I did not attempt a write — GUARD is
+  read-only, and the enum cast proves the outcome without one.
+  **Status of CC-1's expected enum migration: NOT YET LANDED.** Latest `origin/main` is `07daa0f6b`; no new
+  migration adds these labels. This finding is the **baseline**. When CC-1's migration deploys, re-run exactly
+  this check — the three-label `EXISTS` probe plus the `::mdata.load_status_enum` cast — and the ledger row
+  must NOT be accepted as proof.
+- severity:  **critical** (a merged, twice-recorded migration never took effect; an entire money path —
+             escrow forfeit / abandonment chargeback — is unreachable and silently so)
+- LANE:      CC-1 (money/migrations) — add the three labels via a NEW forward migration (never re-run or
+             renumber `0094`; §2 + LV-087). `ALTER TYPE … ADD VALUE` cannot run inside a transaction block in
+             older PG, which is the most likely reason the original silently did not take — `0094` wraps its
+             body in `BEGIN;`. **Guard must assert the three labels EXIST on prod**, not that the migration is
+             ledgered — a ledger-based guard would have passed throughout.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement.
+             Three-label presence probe → `false`/`false`/`false`. Cast probe → error 22P02 as quoted;
+             positive control `'cancelled'` → success. `mdata.load_status_enum` label count **17**.
+             Ledger rows as tabulated. `dispatch.load_abandonments` 0 rows / `n_tup_ins` **0**.
+             Trigger `trg_auto_propose_escrow_on_abandon` confirmed present on `loads` via `pg_trigger`.
+- status:    OPEN
