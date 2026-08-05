@@ -35,6 +35,10 @@ const DATABASE_URL = process.env.DATABASE_URL;
 /** Load the registry from the compiled backend so the SQL is literally the same text. */
 async function loadRegistry() {
   const candidates = [
+    // Repo-root dist/ is the real tsc outDir (tsconfig.json "outDir": "dist"). The
+    // apps/backend/dist path was wrong: the registry never loaded, so this job would have thrown
+    // "build the backend first" on every cron tick and certified nothing.
+    "../dist/home/scenario-registry.js",
     "../apps/backend/dist/home/scenario-registry.js",
     "../apps/backend/src/home/scenario-registry.ts",
   ];
@@ -136,7 +140,7 @@ async function assertNotMasked(client) {
  */
 export async function certifyOnce(client, registry) {
   const mod = await import(
-    new URL("../apps/backend/dist/home/scenario-certify.service.js", import.meta.url).href
+    new URL("../dist/home/scenario-certify.service.js", import.meta.url).href
   );
   await client.query(`SELECT set_config('app.bypass_rls','lucia',false)`);
   return mod.certifyAllScenarios(client);

@@ -295,5 +295,19 @@
   "M": 20,
   "pass_count": 0,
   "total_count": 20,
-  "progress": "0 of 20"
+  "progress": "0 of 20",
+  "live_scenario_probe": {
+    "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
+    "pass_count": 1,
+    "total_count": 1,
+    "progress": 100,
+    "prod_verified": true,
+    "slices": [
+      {
+        "key": "scenario.driver_onboarding",
+        "holds": true,
+        "evidence": "179 driver(s) on file"
+      }
+    ]
+  }
 }

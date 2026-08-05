@@ -423,5 +423,24 @@
   },
   "pass_count": 18,
   "total_count": 19,
-  "progress": "18 of 19"
+  "progress": "18 of 19",
+  "live_scenario_probe": {
+    "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
+    "pass_count": 1,
+    "total_count": 2,
+    "progress": 50,
+    "prod_verified": false,
+    "slices": [
+      {
+        "key": "hop.bank",
+        "holds": false,
+        "evidence": "0 customer payment(s) matched to an invoice"
+      },
+      {
+        "key": "scenario.banking",
+        "holds": true,
+        "evidence": "170 categorized bank transaction(s)"
+      }
+    ]
+  }
 }

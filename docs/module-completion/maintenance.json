@@ -562,5 +562,19 @@
   "rescoped_on": "2026-07-31",
   "pass_count": 0,
   "total_count": 39,
-  "progress": "0 of 39"
+  "progress": "0 of 39",
+  "live_scenario_probe": {
+    "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
+    "pass_count": 1,
+    "total_count": 1,
+    "progress": 100,
+    "prod_verified": true,
+    "slices": [
+      {
+        "key": "scenario.maintenance",
+        "holds": true,
+        "evidence": "1 work order(s)"
+      }
+    ]
+  }
 }
