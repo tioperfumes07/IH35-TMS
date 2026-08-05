@@ -61,15 +61,25 @@ const SURFACES = [
   },
 ];
 
+/**
+ * Escape EVERY regex metacharacter, not just `/` and `-`.
+ * The first version escaped only those two, which CodeQL correctly flagged as
+ * js/incomplete-sanitization: any route containing `.`, `+`, `?`, `(`, `[` etc. would have been
+ * interpolated as live regex syntax and could match a path that is not the route (or throw).
+ */
+export function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\/-]/g, "\\$&");
+}
+
 /** A route is registered when the manifest declares `path="<route>"`. */
 export function routeIsRegistered(manifestSrc, route) {
-  const re = new RegExp(`path=["']${route.replace(/[/\-]/g, "\\$&")}["']`);
+  const re = new RegExp(`path=["']${escapeRegExp(route)}["']`);
   return re.test(manifestSrc);
 }
 
 /** An inbound link is `to="<route>"` or `href="<route>"` in a rendered source file. */
 export function countInboundLinks(sources, route) {
-  const re = new RegExp(`(?:to|href)=["']${route.replace(/[/\-]/g, "\\$&")}["']`, "g");
+  const re = new RegExp(`(?:to|href)=["']${escapeRegExp(route)}["']`, "g");
   let n = 0;
   for (const src of sources) n += (src.match(re) || []).length;
   return n;
@@ -160,6 +170,13 @@ function selftest() {
     failures.push("case7 FAIL — a routed redirect with no door was flagged");
   if (auditSurface({ manifestSrc: "<Route path='/other' />", route, what: "t", sources: [], requireDoor: false }).length === 0)
     failures.push("case8 FAIL — a DELETED legacy route was NOT caught");
+
+  // Regex metacharacters in a route must be escaped, not interpolated as syntax (CodeQL
+  // js/incomplete-sanitization). A route containing "." must not match any-character.
+  if (escapeRegExp("/a.b+c?") !== "\\/a\\.b\\+c\\?")
+    failures.push(`case10 FAIL — escapeRegExp left metacharacters live: ${escapeRegExp("/a.b+c?")}`);
+  if (auditSurface({ manifestSrc: '<Route path="/aXb" />', route: "/a.b", what: "t", sources: [`to="/a.b"`] }).length === 0)
+    failures.push("case11 FAIL — '.' in a route matched a different path (unescaped metacharacter)");
 
   // The real tree must be clean.
   const tree = auditTree();
