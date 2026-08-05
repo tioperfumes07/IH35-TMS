@@ -99,5 +99,19 @@
   "M": 6,
   "pass_count": 1,
   "total_count": 6,
-  "progress": "1 of 6"
+  "progress": "1 of 6",
+  "live_scenario_probe": {
+    "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
+    "pass_count": 0,
+    "total_count": 1,
+    "progress": 0,
+    "prod_verified": false,
+    "slices": [
+      {
+        "key": "scenario.insurance",
+        "holds": false,
+        "evidence": "0 insurance claim(s)"
+      }
+    ]
+  }
 }

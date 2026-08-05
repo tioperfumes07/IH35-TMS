@@ -116,6 +116,10 @@ function assertNotPooler(connectionString) {
 
 async function loadRegistry() {
   for (const rel of [
+    // Repo-root dist/ is the real tsc outDir (tsconfig.json "outDir": "dist"). The
+    // apps/backend/dist path was wrong: the registry never loaded, so this job would have thrown
+    // "build the backend first" on every cron tick and certified nothing.
+    "../dist/home/scenario-registry.js",
     "../apps/backend/dist/home/scenario-registry.js",
     "../apps/backend/src/home/scenario-registry.ts",
   ]) {
@@ -197,7 +201,6 @@ async function main() {
   const client = await pool.connect();
   try {
     const board = await computeScoreboard(client, registry);
-    const next = JSON.stringify(board, null, 2) + "\n";
     if (check) {
       let prev = "";
       try {
@@ -205,7 +208,12 @@ async function main() {
       } catch (error) {
         if (!(error && typeof error === "object" && error.code === "ENOENT")) throw error;
       }
-      const prevModules = prev ? JSON.stringify(JSON.parse(prev).modules ?? {}) : "";
+      let prevModules = "";
+      try {
+        prevModules = prev ? JSON.stringify(JSON.parse(prev).live_scenario_probe?.modules ?? {}) : "";
+      } catch {
+        prevModules = "";
+      }
       if (prevModules !== JSON.stringify(board.modules)) {
         console.error(`scoreboard-from-live --check: ${OUT} is STALE vs live. Re-run without --check.`);
         process.exit(1);
@@ -213,7 +221,19 @@ async function main() {
       console.log("scoreboard-from-live --check: committed scoreboard matches live.");
       process.exit(0);
     }
-    writeFileSync(OUT, next);
+    // ADDITIVE into program-scoreboard.json. That file is NOT ours: it carries a richer curated
+    // schema (meta.sourceSha / deployedSha / ledgerRows / failOpen, plus a tiered modules array
+    // summarising the 680-row audit ledger) maintained by the auditor lane. An earlier version of this
+    // script replaced it wholesale and deleted 730 lines of that work to publish a percentage —
+    // trading something irreplaceable for something recomputable.
+    let existing = {};
+    try {
+      existing = JSON.parse(readFileSync(OUT, "utf8"));
+    } catch (error) {
+      if (!(error && typeof error === "object" && error.code === "ENOENT")) throw error;
+    }
+    existing.live_scenario_probe = board;
+    writeFileSync(OUT, JSON.stringify(existing, null, 2) + "\n");
     // Additive per-module live block. Modules with no matching file are skipped, not created — this
     // job reports on the module set that exists, it does not invent modules.
     let wrote = 0;

@@ -183,5 +183,19 @@
   "M": 12,
   "pass_count": 0,
   "total_count": 12,
-  "progress": "0 of 12"
+  "progress": "0 of 12",
+  "live_scenario_probe": {
+    "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
+    "pass_count": 0,
+    "total_count": 1,
+    "progress": 0,
+    "prod_verified": false,
+    "slices": [
+      {
+        "key": "scenario.legal",
+        "holds": false,
+        "evidence": "0 legal matter(s)"
+      }
+    ]
+  }
 }
