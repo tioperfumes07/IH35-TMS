@@ -31,7 +31,8 @@ const ROUTES = "apps/backend/src/accounting/related-party-loan-posting/routes.ts
  * key each one lands in, so a rename on either side still fails this guard.
  */
 const DERIVED = {
-  principal_dollars: "principal_cents",
+  // principal is now held in CENTS directly (MoneyInput cents mode), so it needs no derivation —
+  // the hand-rolled dollars parser was removed in favour of MoneyInput's parseToCents.
   interest_rate_pct: "interest_rate_bps",
 };
 
@@ -159,12 +160,12 @@ export function buildPayload(form, id) {
 }
 export function other() {}
 `;
-  const goodWizard = `set("direction", x); set("principal_dollars", x); set("funding_source_note", x);\n${good}`;
+  const goodWizard = `set("direction", x); set("principal_cents", x); set("funding_source_note", x);\n${good}`;
   if (audit({ wizardSrc: goodWizard, routesSrc: routes }).length !== 0)
     failures.push(`case1 FAIL — a complete wizard was flagged: ${audit({ wizardSrc: goodWizard, routesSrc: routes }).join(" | ")}`);
 
   // A control that never reaches the payload — the real defect.
-  const dropped = `set("direction", x); set("principal_dollars", x); set("funding_source_note", x); set("interest_rate_pct", x);\n${good}`;
+  const dropped = `set("direction", x); set("principal_cents", x); set("funding_source_note", x); set("interest_rate_pct", x);\n${good}`;
   if (audit({ wizardSrc: dropped, routesSrc: routes }).length === 0)
     failures.push("case2 FAIL — a rendered-but-unsent control was NOT caught");
 

@@ -27,6 +27,8 @@ import {
   type LoanTargetType,
 } from "../../../api/related-party-loans";
 import { FORM_INPUT_CLASS, FORM_SELECT_CLASS, FORM_TEXTAREA_CLASS } from "../../../components/forms/inputClass";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { PARITY_MODAL_WIDTH } from "../../../components/parity/sizing";
 
 type Props = {
@@ -45,7 +47,7 @@ type FormState = {
   account_id: string;
   target_type: LoanTargetType;
   target_id: string;
-  principal_dollars: string;
+  principal_cents: number | null;
   entry_date: string;
   interest_rate_pct: string;
   interest_method: LoanInterestMethod;
@@ -91,7 +93,7 @@ const EMPTY: FormState = {
   account_id: "",
   target_type: "bill",
   target_id: "",
-  principal_dollars: "",
+  principal_cents: null,
   entry_date: todayIso(),
   interest_rate_pct: "0",
   interest_method: "none",
@@ -100,14 +102,6 @@ const EMPTY: FormState = {
   first_payment_date: "",
   funding_source_note: "",
 };
-
-/** Dollars -> integer cents without float drift (2 decimals max, validated by the caller). */
-export function dollarsToCents(input: string): number | null {
-  const trimmed = input.trim().replace(/[$,]/g, "");
-  if (!trimmed || !/^\d+(\.\d{1,2})?$/.test(trimmed)) return null;
-  const [whole, frac = ""] = trimmed.split(".");
-  return Number(whole) * 100 + Number(frac.padEnd(2, "0"));
-}
 
 /** Percent -> basis points (1.25% -> 125 bps). */
 export function pctToBps(input: string): number | null {
@@ -119,7 +113,8 @@ export function pctToBps(input: string): number | null {
 
 /** Serialise the form into the backend contract. Optional fields are omitted, never sent empty. */
 export function buildPayload(form: FormState, operatingCompanyId: string): CreateRelatedPartyLoanRequest | null {
-  const principal_cents = dollarsToCents(form.principal_dollars);
+  // MoneyInput already parsed dollars -> integer cents (parseToCents); no second parser here.
+  const principal_cents = form.principal_cents;
   const interest_rate_bps = pctToBps(form.interest_rate_pct);
   if (principal_cents === null || principal_cents <= 0) return null;
   if (interest_rate_bps === null) return null;
@@ -303,21 +298,19 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
           {step === 2 && (
             <>
               <label className="block text-[12px] font-medium text-slate-700">Principal (USD)</label>
-              <input
-                className={FORM_INPUT_CLASS}
-                value={form.principal_dollars}
-                onChange={(e) => set("principal_dollars", e.target.value)}
+              {/* Money fields use the shared MoneyInput (verify:money-fields-use-moneyinput) — a raw
+                  <input> for a currency amount is exactly how inconsistent parsing/rounding gets in. */}
+              <MoneyInput
+                valueCents={form.principal_cents}
+                onChangeCents={(v) => set("principal_cents", v)}
                 placeholder="1200.00"
-                inputMode="decimal"
+                ariaLabel="Principal in USD"
               />
 
               <label className="block text-[12px] font-medium text-slate-700">Loan date</label>
-              <input
-                type="date"
-                className={FORM_INPUT_CLASS}
-                value={form.entry_date}
-                onChange={(e) => set("entry_date", e.target.value)}
-              />
+              {/* Shared DatePicker, never a native <input type="date"> (verify:no-raw-date-input):
+                  the native box is locale-dependent and does not match the locked US date grammar. */}
+              <DatePicker value={form.entry_date} onChange={(v) => set("entry_date", v)} />
 
               <label className="block text-[12px] font-medium text-slate-700">
                 Account {form.direction === "in" ? "(liability)" : "(receivable)"}
@@ -398,11 +391,9 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
               />
 
               <label className="block text-[12px] font-medium text-slate-700">First payment date</label>
-              <input
-                type="date"
-                className={FORM_INPUT_CLASS}
+              <DatePicker
                 value={form.first_payment_date}
-                onChange={(e) => set("first_payment_date", e.target.value)}
+                onChange={(v) => set("first_payment_date", v)}
               />
             </>
           )}

@@ -24,6 +24,7 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { formatDateUS } from "../../../lib/formatDate";
 import { FORM_SELECT_CLASS } from "../../../components/forms/inputClass";
 import { LoanApplicationWizard } from "./LoanApplicationWizard";
 
@@ -181,7 +182,9 @@ export function LoansAdvancesPage() {
               )}
               {rows.map((r) => (
                 <tr key={r.id} className="border-b border-slate-100">
-                  <td className="px-3 py-2">{r.entry_date}</td>
+                  {/* US date grammar via formatDateUS — a bare ISO string in JSX is locale-ambiguous
+                      (verify:no-native-datetime-input C3). */}
+                  <td className="px-3 py-2">{formatDateUS(r.entry_date)}</td>
                   <td className="px-3 py-2">{r.direction === "in" ? "To company" : "From company"}</td>
                   <td className="px-3 py-2">{r.counterparty_name ?? r.counterparty_id ?? "—"}</td>
                   <td className="px-3 py-2">{r.relationship}</td>
