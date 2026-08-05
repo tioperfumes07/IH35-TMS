@@ -153,23 +153,64 @@
       "root_cause": "Money and ops objects carry header links, but the critical forward operational FKs (load/unit/WO/claim) and reverse drills are null or unimplemented. 9 surfaces across bills, invoices, expenses, fuel, banking, payments, bill_payments, fleet.",
       "lane": "money",
       "layer": "C",
-      "modules": ["accounting", "fuel", "banking", "fleet"],
-      "instances": [
-        { "path": "accounting.bills: unit_id 1.8%, linked_work_order_uuid 0%, insurance_claim_id 0% (LINK-001)", "entity": "ALL", "note": "Bill has no drill to vendor/unit/WO. AUD-F001/F002." },
-        { "path": "accounting.invoices: source_load_id 0%, invoice_lines = 1 (LINK-002)", "entity": "ALL", "note": "Invoice has no line items and no load drill. AUD-F004." },
-        { "path": "accounting.expense_lines: load_id 0%, billable_customer_uuid 0%, expense_category_uuid 0% (LINK-003)", "entity": "ALL", "note": "Expense lines have no ops linkage. AUD-F003." },
-        { "path": "accounting.expenses: driver_uuid 0%, load_id 0%, payment_account_uuid 0%, unit_id 0% (LINK-004)", "entity": "ALL", "note": "Expense headers have no ops FKs. AUD-F003." },
-        { "path": "fuel.fuel_transactions: load_id 0%, vendor_id 0% (LINK-005)", "entity": "ALL", "note": "No load/vendor link on fuel. AUD-F017." },
-        { "path": "banking.bank_transactions: matched_bill_id 0%, matched_payment_id 0% (LINK-006)", "entity": "ALL", "note": "Bank txns not matched. AUD-F005." },
-        { "path": "accounting.payments: source_bank_transaction_id 0% (LINK-007)", "entity": "ALL", "note": "Payment not linked to bank. AUD-F018." },
-        { "path": "accounting.bill_payments: from_bank_account_id 0%, source_bank_transaction_id 0% (LINK-008)", "entity": "ALL", "note": "Bill payment not linked to bank. AUD-F018." },
-        { "path": "mdata.units: currently_leased_to_company_id null 73% (LINK-009)", "entity": "ALL", "note": "Fleet lease data incomplete. P1-006." }
+      "modules": [
+        "accounting",
+        "fuel",
+        "banking",
+        "fleet"
       ],
-      "completeness": "lucia-bypass Neon prod 2026-07-31: FK population percentages computed per-column via COUNT(*) FILTER (WHERE col IS NOT NULL) / COUNT(*). Positive control: bills.mdata_vendor_id = 99.99% populated (confirms non-zero baseline). invoice_lines n_live_tup=1 confirmed.",
+      "instances": [
+        {
+          "path": "accounting.bills: unit_id 1.8% (300/16250), linked_work_order_uuid 0.01% (1/16250), insurance_claim_id 0% (LINK-001)",
+          "entity": "ALL",
+          "note": "Bill has almost no drill to unit/WO/claim. AUD-F001/F002."
+        },
+        {
+          "path": "accounting.invoices: source_load_id 0.01% (1/11984), invoice_lines = 1 (LINK-002)",
+          "entity": "ALL",
+          "note": "Invoice has no line items and almost no load drill. AUD-F004."
+        },
+        {
+          "path": "accounting.expense_lines: load_id 0%, billable_customer_uuid 0%, expense_category_uuid 0% (LINK-003)",
+          "entity": "ALL",
+          "note": "Expense lines have no ops linkage. AUD-F003."
+        },
+        {
+          "path": "accounting.expenses: driver_uuid 0%, load_id 0%, payment_account_uuid 0.004% (1/27072), unit_id 0% (LINK-004)",
+          "entity": "ALL",
+          "note": "Expense headers have no ops FKs. AUD-F003."
+        },
+        {
+          "path": "fuel.fuel_transactions: load_id 0% (0/1548), vendor_id 0% (LINK-005)",
+          "entity": "ALL",
+          "note": "N/A-PRE-OPERATIONAL: all 1,548 fuel txns are QBO-origin pre-TMS-dispatch imports; load FK must not be invented (FINDING-LOAD-LINKAGE-SCOPE-RULING)."
+        },
+        {
+          "path": "banking.bank_transactions: matched_bill_id 0%, matched_payment_id 0% (LINK-006)",
+          "entity": "ALL",
+          "note": "Bank txns not matched. AUD-F005."
+        },
+        {
+          "path": "accounting.payments: source_bank_transaction_id 0% (0/12124) (LINK-007)",
+          "entity": "ALL",
+          "note": "Payment not linked to bank. AUD-F018."
+        },
+        {
+          "path": "accounting.bill_payments: from_bank_account_id 0%, source_bank_transaction_id 0% (0/6544) (LINK-008)",
+          "entity": "ALL",
+          "note": "Bill payment not linked to bank. AUD-F018."
+        },
+        {
+          "path": "mdata.units: currently_leased_to_company_id null 71.4% (130/182) (LINK-009)",
+          "entity": "ALL",
+          "note": "Fleet lease data incomplete. P1-006."
+        }
+      ],
+      "completeness": "lucia-bypass Neon prod 2026-08-04: FK population percentages computed per-column via COUNT(*) FILTER. Positive control: bills.mdata_vendor_id remains ~99.99% populated. Historical QBO-origin cohorts are correctly unlinked (load_required=false). invoice_lines n_live_tup=1 confirmed.",
       "guard": "scripts/verify-money-ops-fk-density.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "LINK-001 accounting.bills ALL: unit_id 1.8% (290/16248), linked_work_order_uuid 0%, $26.7M affected; LINK-006 banking.bank_transactions ALL: matched_bill_id 0%, matched_payment_id 0%, 10970 txns; LINK-005 fuel.fuel_transactions TRANSP: load_id 0/1547, vendor_id 0/1547, $625K",
+        "guard_sample": "2026-08-04 LIVE: bills unit_id 1.8%, WO 0.01%, claim 0%; invoices load 0.01%; expenses payment_account 0.004%; payments bank 0%; bill_payments bank 0%; fuel load 0% (pre-op exempt); unit lease null 71.4%.",
         "money_critical": true
       },
       "status": "open",
