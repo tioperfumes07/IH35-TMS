@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * ClaimCreateModal — EntityPicker unit + load/trailer server search (not silent limit:500).
- * Cursor even claim: 2122.
+ * ClaimCreateModal — EntityPicker unit/load/trailer (server search via registry, not silent Combobox pages).
+ * Cursor even claim: 2122 (updated by 2414 EntityPicker ratchet).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -29,14 +29,23 @@ export function collectProblems(root = ROOT) {
   if (!/EntityPicker[\s\S]*?kind=["']unit["']/.test(code)) {
     problems.push(`${FILE}: unit/asset must use EntityPicker kind=unit`);
   }
-  if (!/loadSearch/.test(code) || !/onSearch=\{setLoadSearch\}/.test(code)) {
-    problems.push(`${FILE}: load Combobox must wire loadSearch`);
+  if (!/EntityPicker[\s\S]*?kind=["']load["']/.test(code)) {
+    problems.push(`${FILE}: load field must use EntityPicker kind=load`);
   }
-  if (!/trailerSearch/.test(code) || !/onSearch=\{setTrailerSearch\}/.test(code)) {
-    problems.push(`${FILE}: trailer Combobox must wire trailerSearch`);
+  if (!/EntityPicker[\s\S]*?kind=["']trailer["']/.test(code)) {
+    problems.push(`${FILE}: trailer field must use EntityPicker kind=trailer (mdata.equipment FK)`);
+  }
+  if (/from ["'].*Combobox["']/.test(src) || /<Combobox[\s>]/.test(code)) {
+    problems.push(`${FILE}: must not use Combobox for entity fields — use EntityPicker`);
+  }
+  if (/listLoads\(/.test(code) || /listUnits\(/.test(code)) {
+    problems.push(`${FILE}: must not local-fetch load/trailer rosters — EntityPicker owns server search`);
   }
   if (/limit:\s*500/.test(code)) {
     problems.push(`${FILE}: must not fetch silent limit:500 fleet/load pages`);
+  }
+  if (/include:\s*["']trailers["']/.test(code)) {
+    problems.push(`${FILE}: trailer must use EntityPicker kind=trailer (mdata.equipment), not listUnits(include:trailers)`);
   }
   return problems;
 }
@@ -54,9 +63,12 @@ if (process.argv.includes("--selftest")) {
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(
       path.join(dir, "ClaimCreateModal.tsx"),
-      `listUnits({ operating_company_id: id, limit: 500 })
+      `import { Combobox } from "../Combobox";
+listUnits({ operating_company_id: id, limit: 500, include: "trailers" })
 listLoads({ operating_company_id: [id], limit: 200 })
-<Combobox options={unitOptions} />
+<Combobox options={loadOptions} onSearch={setLoadSearch} />
+<Combobox options={trailerOptions} onSearch={setTrailerSearch} />
+<EntityPicker kind="unit" />
 `
     );
     const planted = collectProblems(stubRoot);
@@ -75,5 +87,5 @@ listLoads({ operating_company_id: [id], limit: 200 })
     for (const p of problems) console.error("  - " + p);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — ClaimCreate picker search`);
+  console.log(`${LABEL} OK — ClaimCreate EntityPicker unit/load/trailer`);
 }

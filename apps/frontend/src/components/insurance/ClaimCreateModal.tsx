@@ -10,12 +10,8 @@ import {
   type InsuranceClaimRepairBooksTreatment,
   type InsuranceClaimStatus,
 } from "../../api/insurance";
-import { listLoads } from "../../api/loads";
-import { listUnits } from "../../api/mdata";
 import { getSafetyAccidents } from "../../api/safety";
-import { Combobox } from "../Combobox";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
-import { CreateTrailerModal } from "../fleet/CreateTrailerModal";
 import { EntityPicker } from "../parity/EntityPicker";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { MoneyInput } from "../forms/MoneyInput";
@@ -56,12 +52,6 @@ type FormState = {
   recovery_rail: InsuranceClaimRecoveryRail;
   /** Owner lock #2 (Choice Z) — ALWAYS ASK; no $ threshold anywhere. */
   repair_books_treatment: InsuranceClaimRepairBooksTreatment;
-};
-
-type TrailerOption = {
-  id: string;
-  kind?: "truck" | "trailer";
-  unit_number?: string | null;
 };
 
 const INITIAL_FORM: FormState = {
@@ -126,26 +116,11 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [formError, setFormError] = useState("");
   const [serverError, setServerError] = useState("");
-  const [trailerCreateOpen, setTrailerCreateOpen] = useState(false);
-  // SAF-B29: load + trailer silent pages — server search. Unit → EntityPicker (server search + create).
-  const [loadSearch, setLoadSearch] = useState("");
-  const [trailerSearch, setTrailerSearch] = useState("");
 
   const policiesQuery = useQuery({
     queryKey: ["insurance", "claim-create", "policies", operatingCompanyId],
     enabled: open && Boolean(operatingCompanyId),
     queryFn: () => listInsurancePolicies({ operating_company_id: operatingCompanyId }).then((result) => result.policies),
-  });
-
-  const loadsQuery = useQuery({
-    queryKey: ["insurance", "claim-create", "loads", operatingCompanyId, loadSearch],
-    enabled: open && Boolean(operatingCompanyId),
-    queryFn: () =>
-      listLoads({
-        operating_company_id: [operatingCompanyId],
-        limit: 200,
-        search: loadSearch || undefined,
-      }).then((r) => r.loads ?? []),
   });
 
   const accidentsQuery = useQuery({
@@ -154,36 +129,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     queryFn: () => getSafetyAccidents(operatingCompanyId).then((r) => r.accidents ?? []),
   });
 
-  // Trailer hub: unified fleet list filtered to kind === "trailer" (Rule 03).
-  const trailersQuery = useQuery({
-    queryKey: ["insurance", "claim-create", "trailers", operatingCompanyId, trailerSearch],
-    enabled: open && Boolean(operatingCompanyId),
-    queryFn: async () => {
-      const result = await listUnits({
-        operating_company_id: operatingCompanyId,
-        limit: 200,
-        include: "trailers",
-        search: trailerSearch || undefined,
-      });
-      return (result.units as TrailerOption[]).filter((row) => row.kind === "trailer" && Boolean(row.id));
-    },
-  });
-
-  const loads = useMemo(() => loadsQuery.data ?? [], [loadsQuery.data]);
-  const loadOptions = useMemo(
-    () =>
-      loads.map((load) => ({
-        value: load.id,
-        label: load.load_number || load.id.slice(0, 8),
-      })),
-    [loads]
-  );
   const accidents = useMemo(() => accidentsQuery.data ?? [], [accidentsQuery.data]);
-  const trailers = useMemo(() => trailersQuery.data ?? [], [trailersQuery.data]);
-  const trailerOptions = useMemo(
-    () => trailers.map((trailer) => ({ value: trailer.id, label: trailer.unit_number ?? trailer.id.slice(0, 8) })),
-    [trailers]
-  );
 
   useEffect(() => {
     if (!open) return;
@@ -191,9 +137,6 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     setFieldErrors({});
     setFormError("");
     setServerError("");
-    setTrailerCreateOpen(false);
-    setLoadSearch("");
-    setTrailerSearch("");
   }, [open]);
 
   const createMutation = useMutation({
@@ -282,7 +225,6 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
   };
 
   return (
-    <>
     <ParityDrawer open={open} onClose={onClose} title="Create Claim" size="wide">
       <form
         className="space-y-4 text-sm"
@@ -362,31 +304,28 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
 
           <label className="space-y-1" data-testid="claim-create-load-field">
             <span className="text-xs font-semibold text-slate-700">Load</span>
-            <Combobox
-              options={loadOptions}
+            <EntityPicker
+              kind="load"
+              operatingCompanyId={operatingCompanyId}
               value={form.load_id || null}
               onChange={(next) => updateField("load_id", next ?? "")}
-              onSearch={setLoadSearch}
+              enabled={open}
               placeholder="Unassigned"
-              loading={loadsQuery.isLoading}
-              allowClear
+              nestedInDrawer
+              allowCreate={false}
             />
           </label>
 
           <label className="space-y-1" data-testid="claim-create-trailer-field">
             <span className="text-xs font-semibold text-slate-700">Trailer</span>
-            <Combobox
-              options={trailerOptions}
+            <EntityPicker
+              kind="trailer"
+              operatingCompanyId={operatingCompanyId}
               value={form.trailer_id || null}
               onChange={(next) => updateField("trailer_id", next ?? "")}
-              onSearch={setTrailerSearch}
+              enabled={open}
               placeholder="Unassigned"
-              loading={trailersQuery.isLoading}
-              allowClear
-              allowAddNew={{
-                label: "+ Create trailer",
-                onAdd: () => setTrailerCreateOpen(true),
-              }}
+              nestedInDrawer
             />
           </label>
 
@@ -593,16 +532,5 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
         </div>
       </form>
     </ParityDrawer>
-    <CreateTrailerModal
-      open={trailerCreateOpen}
-      operatingCompanyId={operatingCompanyId}
-      onClose={() => setTrailerCreateOpen(false)}
-      onCreated={(createdId) => {
-        updateField("trailer_id", createdId);
-        setTrailerCreateOpen(false);
-        void trailersQuery.refetch();
-      }}
-    />
-    </>
   );
 }

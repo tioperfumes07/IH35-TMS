@@ -34,8 +34,9 @@ vi.mock("../../api/mdata", async () => {
   const actual = await vi.importActual<typeof import("../../api/mdata")>("../../api/mdata");
   return {
     ...actual,
-    listUnits: vi.fn().mockResolvedValue({
-      units: [{ id: "trailer-1", unit_number: "TRL-1", kind: "trailer" }],
+    listUnits: vi.fn().mockResolvedValue({ units: [] }),
+    listEquipment: vi.fn().mockResolvedValue({
+      equipment: [{ id: "trailer-1", equipment_number: "TRL-1" }],
     }),
     listDrivers: vi.fn().mockResolvedValue({ drivers: [] }),
   };
