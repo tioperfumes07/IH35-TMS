@@ -1,18 +1,18 @@
 {
   "meta": {
-    "generatedAt": "2026-08-03T11:18:48-05:00",
-    "sourceSha": "69ee1d546",
+    "generatedAt": "2026-08-04T22:08:00-05:00",
+    "sourceSha": "a4c6b619b",
     "deployedSha": "308bc66",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 666,
-    "failOpen": 17,
-    "defects": 11
+    "ledgerRows": 680,
+    "failOpen": 15,
+    "defects": 14
   },
   "modules": [
     {
       "tier": "0",
       "module": "banking",
-      "build": "18/18",
+      "build": "18/19",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -54,7 +54,7 @@
     {
       "tier": "0",
       "module": "lists",
-      "build": "21/23",
+      "build": "23/23",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -96,7 +96,7 @@
     {
       "tier": "1",
       "module": "vendors",
-      "build": "0/7",
+      "build": "7/7",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -138,7 +138,7 @@
     {
       "tier": "1",
       "module": "settlements",
-      "build": "0/9",
+      "build": "1/9",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -205,7 +205,7 @@
       "cells": [
         "AUDIT",
         "FAIL",
-        "FIX",
+        "FAIL",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -243,11 +243,11 @@
     {
       "tier": "2",
       "module": "safety",
-      "build": "31/38",
+      "build": "36/38",
       "cells": [
         "AUDIT",
         "AUDIT",
-        "UNV",
+        "FAIL",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -268,7 +268,7 @@
       "cells": [
         "AUDIT",
         "AUDIT",
-        "UNV",
+        "FIX",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -327,7 +327,7 @@
     {
       "tier": "3",
       "module": "customers",
-      "build": "0/9",
+      "build": "9/10",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -369,7 +369,7 @@
     {
       "tier": "3",
       "module": "inventory",
-      "build": "0/7",
+      "build": "7/7",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -495,7 +495,7 @@
     {
       "tier": "3",
       "module": "eld",
-      "build": "1/5",
+      "build": "5/5",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -562,7 +562,7 @@
       "cells": [
         "AUDIT",
         "AUDIT",
-        "NA",
+        "FAIL",
         "NA",
         "AUDIT",
         "AUDIT",
@@ -600,7 +600,7 @@
     {
       "tier": "3",
       "module": "docs",
-      "build": "0/5",
+      "build": "1/5",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -621,7 +621,7 @@
     {
       "tier": "3",
       "module": "help",
-      "build": "0/5",
+      "build": "5/5",
       "cells": [
         "AUDIT",
         "NA",

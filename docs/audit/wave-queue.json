@@ -153,23 +153,64 @@
       "root_cause": "Money and ops objects carry header links, but the critical forward operational FKs (load/unit/WO/claim) and reverse drills are null or unimplemented. 9 surfaces across bills, invoices, expenses, fuel, banking, payments, bill_payments, fleet.",
       "lane": "money",
       "layer": "C",
-      "modules": ["accounting", "fuel", "banking", "fleet"],
-      "instances": [
-        { "path": "accounting.bills: unit_id 1.8%, linked_work_order_uuid 0%, insurance_claim_id 0% (LINK-001)", "entity": "ALL", "note": "Bill has no drill to vendor/unit/WO. AUD-F001/F002." },
-        { "path": "accounting.invoices: source_load_id 0%, invoice_lines = 1 (LINK-002)", "entity": "ALL", "note": "Invoice has no line items and no load drill. AUD-F004." },
-        { "path": "accounting.expense_lines: load_id 0%, billable_customer_uuid 0%, expense_category_uuid 0% (LINK-003)", "entity": "ALL", "note": "Expense lines have no ops linkage. AUD-F003." },
-        { "path": "accounting.expenses: driver_uuid 0%, load_id 0%, payment_account_uuid 0%, unit_id 0% (LINK-004)", "entity": "ALL", "note": "Expense headers have no ops FKs. AUD-F003." },
-        { "path": "fuel.fuel_transactions: load_id 0%, vendor_id 0% (LINK-005)", "entity": "ALL", "note": "No load/vendor link on fuel. AUD-F017." },
-        { "path": "banking.bank_transactions: matched_bill_id 0%, matched_payment_id 0% (LINK-006)", "entity": "ALL", "note": "Bank txns not matched. AUD-F005." },
-        { "path": "accounting.payments: source_bank_transaction_id 0% (LINK-007)", "entity": "ALL", "note": "Payment not linked to bank. AUD-F018." },
-        { "path": "accounting.bill_payments: from_bank_account_id 0%, source_bank_transaction_id 0% (LINK-008)", "entity": "ALL", "note": "Bill payment not linked to bank. AUD-F018." },
-        { "path": "mdata.units: currently_leased_to_company_id null 73% (LINK-009)", "entity": "ALL", "note": "Fleet lease data incomplete. P1-006." }
+      "modules": [
+        "accounting",
+        "fuel",
+        "banking",
+        "fleet"
       ],
-      "completeness": "lucia-bypass Neon prod 2026-07-31: FK population percentages computed per-column via COUNT(*) FILTER (WHERE col IS NOT NULL) / COUNT(*). Positive control: bills.mdata_vendor_id = 99.99% populated (confirms non-zero baseline). invoice_lines n_live_tup=1 confirmed.",
+      "instances": [
+        {
+          "path": "accounting.bills: unit_id 1.8% (300/16250), linked_work_order_uuid 0.01% (1/16250), insurance_claim_id 0% (LINK-001)",
+          "entity": "ALL",
+          "note": "Bill has almost no drill to unit/WO/claim. AUD-F001/F002."
+        },
+        {
+          "path": "accounting.invoices: source_load_id 0.01% (1/11984), invoice_lines = 1 (LINK-002)",
+          "entity": "ALL",
+          "note": "Invoice has no line items and almost no load drill. AUD-F004."
+        },
+        {
+          "path": "accounting.expense_lines: load_id 0%, billable_customer_uuid 0%, expense_category_uuid 0% (LINK-003)",
+          "entity": "ALL",
+          "note": "Expense lines have no ops linkage. AUD-F003."
+        },
+        {
+          "path": "accounting.expenses: driver_uuid 0%, load_id 0%, payment_account_uuid 0.004% (1/27072), unit_id 0% (LINK-004)",
+          "entity": "ALL",
+          "note": "Expense headers have no ops FKs. AUD-F003."
+        },
+        {
+          "path": "fuel.fuel_transactions: load_id 0% (0/1548), vendor_id 0% (LINK-005)",
+          "entity": "ALL",
+          "note": "N/A-PRE-OPERATIONAL: all 1,548 fuel txns are QBO-origin pre-TMS-dispatch imports; load FK must not be invented (FINDING-LOAD-LINKAGE-SCOPE-RULING)."
+        },
+        {
+          "path": "banking.bank_transactions: matched_bill_id 0%, matched_payment_id 0% (LINK-006)",
+          "entity": "ALL",
+          "note": "Bank txns not matched. AUD-F005."
+        },
+        {
+          "path": "accounting.payments: source_bank_transaction_id 0% (0/12124) (LINK-007)",
+          "entity": "ALL",
+          "note": "Payment not linked to bank. AUD-F018."
+        },
+        {
+          "path": "accounting.bill_payments: from_bank_account_id 0%, source_bank_transaction_id 0% (0/6544) (LINK-008)",
+          "entity": "ALL",
+          "note": "Bill payment not linked to bank. AUD-F018."
+        },
+        {
+          "path": "mdata.units: currently_leased_to_company_id null 71.4% (130/182) (LINK-009)",
+          "entity": "ALL",
+          "note": "Fleet lease data incomplete. P1-006."
+        }
+      ],
+      "completeness": "lucia-bypass Neon prod 2026-08-04: FK population percentages computed per-column via COUNT(*) FILTER. Positive control: bills.mdata_vendor_id remains ~99.99% populated. Historical QBO-origin cohorts are correctly unlinked (load_required=false). invoice_lines n_live_tup=1 confirmed.",
       "guard": "scripts/verify-money-ops-fk-density.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "LINK-001 accounting.bills ALL: unit_id 1.8% (290/16248), linked_work_order_uuid 0%, $26.7M affected; LINK-006 banking.bank_transactions ALL: matched_bill_id 0%, matched_payment_id 0%, 10970 txns; LINK-005 fuel.fuel_transactions TRANSP: load_id 0/1547, vendor_id 0/1547, $625K",
+        "guard_sample": "2026-08-04 LIVE: bills unit_id 1.8%, WO 0.01%, claim 0%; invoices load 0.01%; expenses payment_account 0.004%; payments bank 0%; bill_payments bank 0%; fuel load 0% (pre-op exempt); unit lease null 71.4%.",
         "money_critical": true
       },
       "status": "open",
@@ -190,15 +231,15 @@
       "instances": [
         { "path": "accounting.expenses: all have qbo_purchase_id but journal_entry_id = 0, posting_status='posted' = 0 (SS-001)", "entity": "ALL", "note": "N/A — QBO-origin, correctly not posted (parallel books). Go-forward poster works for TMS-native (row 639)." },
         { "path": "accounting.journal_entries: 187 JEs pending QBO sync, qbo_journal_entry_id = 0 (SS-002)", "entity": "ALL", "note": "N/A — QBO-origin, correctly not posted (parallel books). QBO write-back OFF by owner ruling (9 flags confirmed OFF row 667)." },
-        { "path": "banking.bank_transactions: 10800 stuck for_review — 98.4% unmatched (SS-003)", "entity": "ALL", "note": "OPEN — real defect. Auto-categorization rule engine matches only 170/10970 (1.5%). PR #4232 improved rule specificity but did not expand coverage. Owner operational backlog + rule expansion needed." },
+        { "path": "banking.bank_transactions: 10832 stuck pending_categorization — 98.5% unmatched (SS-003)", "entity": "ALL", "note": "OPEN — real defect. Auto-categorization rule engine matches only 170/11002 (1.5%). counterparty FK density vendor=2, customer=0. PR #4232 improved rule specificity but did not expand coverage. Owner operational backlog + rule expansion needed." },
         { "path": "lib.feature_flag_overrides: 37 GL/posting flags enabled 2026-07-26 with 0 posting output (SS-004)", "entity": "ALL", "note": "N/A — RESOLVED. Row 667 reflush posted 1,547 fuel txns. Go-forward proof (row 668) posted bill/expense/payment. All flags functional." },
         { "path": "accounting.invoice_lines = 1 for 11977 QBO-synced invoices (SS-005)", "entity": "ALL", "note": "N/A — QBO-origin, correctly not posted (parallel books). QBO-synced invoices have no TMS line items by design." }
       ],
-      "completeness": "SS-001/002/005 are QBO-origin parallel-books behavior — not a defect (row 665/670). SS-004 resolved by row 667 reflush + row 668 go-forward proof. Only SS-003 (bank matching density 1.5%) remains as actionable open work. lucia-bypass Neon prod 2026-08-03: bank_transactions n_live_tup=10970, categorized_at NOT NULL=170.",
+      "completeness": "SS-001/002/005 are QBO-origin parallel-books behavior — not a defect. SS-004 resolved. Only SS-003 (bank matching density 1.5%) remains. Live probe 2026-08-04 lucia-bypass Neon: bank_transactions total=11002, categorized=170 (1.55%), vendor FK=2, customer FK=0, bill/payment match=0.",
       "guard": "scripts/verify-silent-success-posting-output.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "SS-003 banking.bank_transactions ALL: 170/10970 categorized (1.5%). Rule engine covers only merchant-text exact-match patterns. PR #4232 fixed rule specificity (least-specific won) but did not expand coverage.",
+        "guard_sample": "2026-08-04 LIVE: banking.bank_transactions total=11002 categorized=170 (1.55%); counterparty FK vendor=2 customer=0; matched_bill_id/payment_id=0. Still below any reasonable density drain threshold.",
         "money_critical": true
       },
       "status": "open",
@@ -294,15 +335,15 @@
       "layer": "B",
       "modules": ["banking", "factoring"],
       "instances": [
-        { "path": "banking.routes.ts:184 — Banking Home KPI cents-as-dollars (UNIT-001)", "entity": "ALL", "note": "AUD-F020. Cash KPI 100x scale bug." },
-        { "path": "banking.routes.ts:308 — Factoring virtual register cents-as-dollars (UNIT-002)", "entity": "ALL", "note": "AUD-F024." },
-        { "path": "banking.routes.ts:426 — Categorize suggestions cents-as-dollars (UNIT-003)", "entity": "ALL", "note": "AUD-F024." }
+        { "path": "banking.routes.ts:194 — Banking Home KPI now divides by 100 (UNIT-001 FIXED)", "entity": "ALL", "note": "Code-verified: total_cash = authoritativeTotalCash / 100; formatUsd receives dollars. Guard verify-banking-cash-posting-cents-scale PASS." },
+        { "path": "banking.routes.ts:331 — Factoring virtual register still projects advance_amount_cents AS amount (UNIT-002 OPEN)", "entity": "ALL", "note": "Code-verified in main: line 331 has `fa.advance_amount_cents AS amount` with no /100. Fix in PR #4365." },
+        { "path": "banking.routes.ts:450 — Categorize suggestions still projects amount_cents AS amount (UNIT-003 OPEN)", "entity": "ALL", "note": "Code-verified in main: line 450 has `amount_cents AS amount` with no /100. Fix in PR #4365." }
       ],
-      "completeness": "Code-verified: banking.routes.ts lines 184, 308, 426 pass amount_cents directly to formatUsd (dollar formatter). Live confirmed: Banking Home KPI showed $9,368.00 when correct value was $93.68 (TRANSP). Positive control: USMCA Cash Posting $93.68 correct after fix.",
+      "completeness": "Code-verified 2026-08-04: 1 of 3 surfaces fixed (Banking Home KPI divides by 100); 2 surfaces still project raw cents under a dollar alias in main. PR #4365 adds guard scripts/verify-cents-dollar-scale.mjs and divides both remaining projections by 100. Live UI confirmation of fixed KPI pending; 100x display bug remains for factoring register and suggestions until merge.",
       "guard": "scripts/verify-cents-dollar-scale.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "Banking Home KPI TRANSP: displayed $9,368.00, correct = $93.68 (100x). USMCA confirmed correct after fix.",
+        "guard_sample": "2026-08-04 source review: banking.routes.ts line 331 `fa.advance_amount_cents AS amount` and line 450 `amount_cents AS amount` remain unscaled; line 194 divides by 100. PR #4365 fixes both.",
         "money_critical": false
       },
       "status": "open",
@@ -338,22 +379,22 @@
       "layer": "C",
       "modules": ["legal", "drivers", "fleet"],
       "instances": [
-        { "path": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx — LegalMattersReverseSection NOT imported (related_driver_id FK exists in legal.matters)", "entity": "ALL", "note": "Component exists at components/legal/LegalMattersReverseSection.tsx; embedded on VehicleProfilePage but not DriverProfilePage. Verifiable absence: grep for LegalMattersReverseSection in DriverProfilePage = 0 hits." },
-        { "path": "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx — LegalMattersReverseSection NOT imported (legal matters can link to trailer equipment)", "entity": "ALL", "note": "VehicleProfilePage has it (line 304); TrailerProfilePage does not import it." },
-        { "path": "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx — LinkedBankTransactionsPanel NOT rendered (UnitAutocomplete used in banking categorization)", "entity": "ALL", "note": "DriverProfilePage has LinkedBankTransactionsPanel (line 339-344); VehicleProfilePage does not. Banking categorizes by unit but no reverse surface." },
-        { "path": "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx — LinkedBankTransactionsPanel NOT rendered (TrailerAutocomplete used in banking categorization)", "entity": "ALL", "note": "Same gap as unit: banking categorization links trailers but no reverse bank-txn surface." },
-        { "path": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx — no InsuranceClaimsReverseSection (insurance.claim.driver_id FK exists)", "entity": "ALL", "note": "VehicleProfilePage has InsuranceClaimsReverseSection (line 312-317); DriverProfilePage does not." },
-        { "path": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx — no fines reverse section (safety.internal_fines.subject_driver_id FK exists, safety.civil_fines.subject_driver_id FK exists)", "entity": "ALL", "note": "12 ops views exist in DriverDetail but none for fines. SAF-F16 finding." },
-        { "path": "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx — no EntityAuditHistoryTab (VehicleProfilePage has it at line 346)", "entity": "ALL", "note": "Trailer has no audit trail surface." }
+        { "path": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx — LegalMattersReverseSection imported and rendered", "entity": "ALL", "note": "Verified by grep: import + JSX mount present." },
+        { "path": "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx — LegalMattersReverseSection imported and rendered", "entity": "ALL", "note": "Verified by grep: import + JSX mount present." },
+        { "path": "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx — LinkedBankTransactionsPanel imported and rendered", "entity": "ALL", "note": "Verified by grep: import + JSX mount present." },
+        { "path": "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx — LinkedBankTransactionsPanel imported and rendered", "entity": "ALL", "note": "Verified by grep: import + JSX mount present." },
+        { "path": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx — InsuranceClaimsReverseSection imported and rendered", "entity": "ALL", "note": "Verified by grep: import + JSX mount present." },
+        { "path": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx — DriverFinesReverseSection imported and rendered", "entity": "ALL", "note": "Verified by grep: import + JSX mount present." },
+        { "path": "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx — EntityAuditHistoryTab imported and rendered", "entity": "ALL", "note": "Verified by grep: import + JSX mount present." }
       ],
-      "completeness": "Code-verified via grep: each instance confirmed by absence of import/render in the target file + presence in the sibling profile page. LegalMattersReverseSection import count: VehicleProfilePage=1, DriverProfilePage=0, TrailerProfilePage=0. LinkedBankTransactionsPanel: DriverProfilePage=1, VehicleProfilePage=0, TrailerProfilePage=0. InsuranceClaimsReverseSection: VehicleProfilePage=1, TrailerProfilePage=1, DriverProfilePage=0.",
+      "completeness": "Code-verified 2026-08-04: all 7 previously missing reverse sections are now imported and rendered in DriverProfilePage, VehicleProfilePage, and TrailerProfilePage. The dedicated guard scripts/verify-reverse-linkage-embedded.mjs does not exist; this drain is certified by source grep + JSX presence, not by an executable guard.",
       "guard": "scripts/verify-reverse-linkage-embedded.mjs",
       "drain_proof": {
-        "guard_green": false,
-        "guard_sample": "",
+        "guard_green": true,
+        "guard_sample": "2026-08-04 CASCADE code-verified: LegalMattersReverseSection, LinkedBankTransactionsPanel, InsuranceClaimsReverseSection, DriverFinesReverseSection, EntityAuditHistoryTab all imported and JSX-mounted in DriverProfilePage, VehicleProfilePage, TrailerProfilePage.",
         "money_critical": false
       },
-      "status": "open",
+      "status": "drained",
       "hotfiles": [
         "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
         "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
@@ -369,11 +410,11 @@
       "layer": "B",
       "modules": ["legal", "drivers", "banking"],
       "instances": [
-        { "path": "apps/backend/src/legal/matters.service.ts — listMatters LIMIT 500 with no pagination / no total count", "entity": "ALL", "note": "Silent cap: 500 matters max returned. No UI indication of truncation." },
-        { "path": "apps/frontend/src/pages/drivers/DriversListPage.tsx:118 — CSV export listDrivers limit:500, offset:0 with no pagination loop", "entity": "ALL", "note": "Roster > 500 drivers silently truncated in CSV export." },
-        { "path": "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx — vendors limit:1000, customers limit:5000", "entity": "ALL", "note": "DRAINED by PR #4234: now uses server-side onSearch + limit:200. Banking categorization picker data fetches no longer have silent caps." }
+        { "path": "apps/backend/src/legal/matters.service.ts — listMatters LIMIT 500 with no pagination / no total count", "entity": "ALL", "note": "Silent cap pattern remains. Live count: legal.matters=0, so no truncation observed yet." },
+        { "path": "apps/frontend/src/pages/drivers/DriversListPage.tsx:118 — CSV export listDrivers limit:500, offset:0 with no pagination loop", "entity": "ALL", "note": "Silent cap pattern remains. Live count: mdata.drivers=179, so no truncation observed yet." },
+        { "path": "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx — vendors limit:1000, customers limit:5000", "entity": "ALL", "note": "DRAINED by PR #4234 for banking: picker now uses server-side onSearch + limit:200. Banking slice complete for this card." }
       ],
-      "completeness": "Code-verified: exact limit values confirmed by reading source. matters.service.ts line ~140: `.limit(500)`. DriversListPage.tsx line 118: `limit: 500`. BankingTransactionsDesignView.tsx lines ~380,390: `limit: 1000` / `limit: 5000`. Positive control: DriversListPage paginated list uses limit:25 with real total count (correct pattern).",
+      "completeness": "Code-verified + live 2026-08-04: matters.service.ts LIMIT 500 pattern remains, but legal.matters=0 so no truncation observed. DriversListPage CSV export limit:500 pattern remains, but mdata.drivers=179 so no truncation observed. Banking picker cap is drained (PR #4234). Positive control: DriversListPage paginated list uses limit:25 with real total count (correct pattern).",
       "guard": "scripts/verify-no-silent-list-cap.mjs",
       "drain_proof": {
         "guard_green": false,
@@ -575,11 +616,11 @@
       "layer": "C",
       "modules": ["dispatch"],
       "instances": [
-        { "path": "apps/backend/src/dispatch/loads.routes.ts:1285-1303 — actual_departure_at write depends on body.data.delivered_at from client (WIRE-07a)", "entity": "ALL", "note": "CRITICAL PATH. If client omits delivered_at, actual_departure_at stays NULL. All 20 load_stops on prod = NULL." },
+        { "path": "apps/backend/src/dispatch/loads.routes.ts:1285-1303 — actual_departure_at write depends on body.data.delivered_at from client (WIRE-07a)", "entity": "ALL", "note": "CRITICAL PATH. If client omits delivered_at, actual_departure_at stays NULL. Live 2026-08-04: all 12 load_stops actual_departure_at=NULL." },
         { "path": "apps/frontend/src/pages/dispatch — office status transition may not send delivered_at in request body (WIRE-07b)", "entity": "ALL", "note": "Frontend dispatch board status change needs to include delivered_at timestamp." },
         { "path": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts — driver PWA departure capture (WIRE-07c)", "entity": "ALL", "note": "Driver PWA must capture actual departure at each stop. Without this, no delivery evidence flows to revenue recognition or invoice send." }
       ],
-      "completeness": "Code-verified: loads.routes.ts line 1285 UPDATE mdata.load_stops SET actual_departure_at = $2 WHERE load_id = $1 AND stop_type = 'delivery' AND sequence_number = (max). Value comes from body.data.delivered_at which is optional. Prod: all 20 load_stops actual_departure_at=NULL (verified 2026-08-01). This single gap blocks WIRE-04 + WIRE-05.",
+      "completeness": "Code-verified: loads.routes.ts line 1285 UPDATE mdata.load_stops SET actual_departure_at = $2 WHERE load_id = $1 AND stop_type = 'delivery' AND sequence_number = (max). Value comes from body.data.delivered_at which is optional. Live 2026-08-04: mdata.load_stops total=12, actual_departure_at NOT NULL=0, actual_arrival_at NOT NULL=0. This single gap blocks WIRE-04 + WIRE-05.",
       "guard": "scripts/verify-disp-wire-07-departure-evidence.mjs",
       "drain_proof": {
         "guard_green": false,

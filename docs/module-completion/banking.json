@@ -286,14 +286,14 @@
     },
     {
       "id": "BANK-CLS-SHARED",
-      "title": "Shared cross-cutting class cards (CLS-LINKAGE-ONEWAY, CLS-SILENT-SUCCESS, CLS-UNIT-SCALE, CLS-SILENT-CAP) drained",
+      "title": "Shared cross-cutting class cards (CLS-LINKAGE-ONEWAY, CLS-BANK-MATCH-DENSITY, CLS-UNIT-SCALE, CLS-SILENT-CAP) drained",
       "layers": [
         "DOD-C",
         "VERIFY-6"
       ],
       "spec": "wave-queue.json shared classes listing banking in modules[]",
       "status": "OPEN",
-      "evidence": "4 open CLS-* cards in docs/audit/wave-queue.json list banking in modules[]. Banking module-level completion cannot be true while these classes have open banking instances. Added 2026-08-04 per class sweep.",
+      "evidence": "Live probe 2026-08-04 lucia-bypass Neon: CLS-BANK-MATCH-DENSITY still open (bank_transactions total=11002, categorized=170 1.55%, counterparty FK vendor=2 customer=0). CLS-LINKAGE-ONEWAY refreshed: bills unit_id 1.8% (300/16250), WO 0.01%, claim 0%; invoices source_load_id 0.01%; expenses payment_account 0.004%; payments/bill_payments bank FK 0%; fuel load_id 0% (pre-op exempt); units lease null 71.4%. CLS-UNIT-SCALE source review: 1/3 fixed (Banking Home KPI /100); 2/3 remain unscaled in main (lines 331, 450 banking.routes.ts), fix in PR #4365. CLS-SILENT-CAP banking instance drained by PR #4234 (picker uses server-side onSearch + limit:200). Banking module-level completion stays OPEN until CLS-BANK-MATCH-DENSITY, CLS-LINKAGE-ONEWAY, CLS-UNIT-SCALE drain.",
       "pr": null,
       "prod_verified": false
     }
