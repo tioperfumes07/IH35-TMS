@@ -2,12 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   getPodDocuments,
-  listDispatchLoads,
   reviewPodDocument,
   type PodDocumentSummary,
 } from "../../api/dispatch";
 import { LoadBolPanel } from "../../components/dispatch/LoadBolPanel";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -63,19 +63,6 @@ export function PodReviewPage() {
   const [loadId, setLoadId] = useState("");
   const [statusFilter, setStatusFilter] = useState<"pending_review" | "approved" | "rejected" | "">("pending_review");
 
-  const loadsQuery = useQuery({
-    queryKey: ["loads-pod-review", companyId],
-    queryFn: () =>
-      listDispatchLoads({
-        operating_company_id: companyId,
-        view: "loads",
-        limit: 50,
-        offset: 0,
-        status: [],
-      }),
-    enabled: Boolean(companyId),
-  });
-
   const podsQuery = useQuery({
     queryKey: ["pod-documents", companyId, statusFilter, loadId],
     queryFn: () =>
@@ -85,8 +72,6 @@ export function PodReviewPage() {
       }),
     enabled: Boolean(companyId),
   });
-
-  const loadOptions = useMemo(() => loadsQuery.data?.loads ?? [], [loadsQuery.data]);
 
   const documents = podsQuery.data?.documents ?? [];
 
@@ -145,19 +130,20 @@ export function PodReviewPage() {
       <div className="flex flex-wrap items-center gap-3">
         <label className="text-sm">
           Filter by load
-          <select
-            value={loadId}
-            onChange={(event) => setLoadId(event.target.value)}
-            className="mt-1 h-10 w-full rounded-sm border px-2"
-            data-testid="pod-load-filter"
-          >
-            <option value="">All loads</option>
-            {loadOptions.map((load) => (
-              <option key={load.id} value={load.id}>
-                {load.load_number ?? load.id}
-              </option>
-            ))}
-          </select>
+          {/* SAF-B29: EntityPicker kind=load — never silent listDispatchLoads(limit:50) <select>. */}
+          <div className="mt-1" data-testid="pod-load-filter">
+            <EntityPicker
+              kind="load"
+              operatingCompanyId={companyId}
+              value={loadId || null}
+              onChange={(next) => setLoadId(next ?? "")}
+              placeholder="All loads"
+              allowClear
+              allowCreate={false}
+              className="h-10 w-full text-sm"
+              dataTestId="pod-load-filter-picker"
+            />
+          </div>
         </label>
         <label className="text-sm">
           POD status
