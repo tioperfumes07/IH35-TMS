@@ -7,11 +7,11 @@ import {
   type TrainingProgramCategory,
   type TrainingProgramFrequency,
 } from "../../api/safety";
-import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
-import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 import { Modal } from "../../components/Modal";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type Props = {
   operatingCompanyId: string;
@@ -52,8 +52,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
   const [recertifyMonths, setRecertifyMonths] = useState("12");
   const [passingGrade, setPassingGrade] = useState("");
   const [assignDriverIds, setAssignDriverIds] = useState<string[]>([]);
-  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
-  const [driverSearch, setDriverSearch] = useState("");
+  const [assignPick, setAssignPick] = useState<string | null>(null);
   const [sessionPrograms, setSessionPrograms] = useState<ProgramRow[]>([]);
 
   const completionsQuery = useQuery({
@@ -62,17 +61,14 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
     enabled: Boolean(operatingCompanyId),
   });
 
-  const driversQuery = useQuery({
-    queryKey: ["mdata", "drivers", operatingCompanyId, driverSearch],
-    queryFn: () =>
-      listDrivers({
-        operating_company_id: operatingCompanyId,
-        status: "Active",
-        limit: 200,
-        search: driverSearch || undefined,
-      }),
-    enabled: Boolean(operatingCompanyId),
-  });
+  const addAssignDriver = (driverId: string | null) => {
+    if (!driverId) {
+      setAssignPick(null);
+      return;
+    }
+    setAssignDriverIds((current) => (current.includes(driverId) ? current : [...current, driverId]));
+    setAssignPick(null);
+  };
 
   const programs = useMemo(() => {
     const derived = deriveProgramsFromCompletions(completionsQuery.data?.training_completions ?? []);
@@ -134,6 +130,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
     onSuccess: () => {
       setAssignOpen(false);
       setAssignDriverIds([]);
+      setAssignPick(null);
       setSelectedProgram(null);
       void queryClient.invalidateQueries({ queryKey: ["safety"] });
     },
@@ -282,42 +279,42 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
           <div className="text-xs text-slate-600">
             Program: <span className="font-semibold text-slate-800">{selectedProgram?.name ?? "—"}</span>
           </div>
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-xs font-semibold text-slate-600">Drivers</div>
-            <button
-              type="button"
-              className="text-xs font-semibold text-slate-700 underline"
-              data-testid="training-program-create-driver"
-              onClick={() => setDriverCreateOpen(true)}
-            >
-              + Create driver
-            </button>
-          </div>
-          <div className="max-h-48 space-y-1 overflow-y-auto rounded-sm border border-gray-200 p-2">
-            <input
-              type="search"
-              value={driverSearch}
-              onChange={(event) => setDriverSearch(event.target.value)}
+          <div className="text-xs font-semibold text-slate-600">Drivers</div>
+          {/* Picker law: EntityPicker kind=driver — server search; nested create. */}
+          <div data-testid="training-program-driver-search">
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={operatingCompanyId}
+              value={assignPick}
+              onChange={addAssignDriver}
+              nestedInDrawer
+              enabled={assignOpen}
               placeholder="Search drivers…"
-              className="mb-2 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
-              data-testid="training-program-driver-search"
+              dataTestId="training-program-driver-picker"
             />
-            {(driversQuery.data?.drivers ?? []).map((driver) => (
-              <label key={driver.id} className="flex items-center gap-2 text-xs text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={assignDriverIds.includes(driver.id)}
-                  data-testid={`training-program-assign-driver-${driver.id}`}
-                  onChange={() =>
-                    setAssignDriverIds((current) =>
-                      current.includes(driver.id) ? current.filter((id) => id !== driver.id) : [...current, driver.id]
-                    )
-                  }
-                />
-                {`${driver.first_name ?? ""} ${driver.last_name ?? ""}`.trim() || driver.id}
-              </label>
-            ))}
           </div>
+          {assignDriverIds.length > 0 ? (
+            <ul className="max-h-48 space-y-1 overflow-y-auto rounded-sm border border-gray-200 p-2">
+              {assignDriverIds.map((driverId) => (
+                <li
+                  key={driverId}
+                  className="flex items-center justify-between gap-2 text-xs text-slate-700"
+                  data-testid={`training-program-assign-driver-${driverId}`}
+                >
+                  <EntityLink kind="driver" id={driverId} />
+                  <button
+                    type="button"
+                    className="text-slate-600 underline"
+                    onClick={() =>
+                      setAssignDriverIds((current) => current.filter((id) => id !== driverId))
+                    }
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" size="sm" onClick={() => setAssignOpen(false)}>
               Cancel
@@ -334,16 +331,6 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
           </div>
         </form>
       </Modal>
-      <CreateDriverModal
-        open={driverCreateOpen}
-        companyId={operatingCompanyId}
-        onClose={() => setDriverCreateOpen(false)}
-        onCreated={(createdId) => {
-          setAssignDriverIds((current) => (current.includes(createdId) ? current : [...current, createdId]));
-          setDriverCreateOpen(false);
-          void driversQuery.refetch();
-        }}
-      />
     </div>
   );
 }
