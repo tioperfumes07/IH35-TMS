@@ -84,7 +84,17 @@ async function currentCert(
        WHERE is_current
          AND scenario_key = $1
          AND (operating_company_id IS NULL OR $2::uuid IS NULL OR operating_company_id = $2::uuid)
-       ORDER BY verified_at DESC
+       -- LV-088 CERT LEAK: the WHERE above intentionally matches BOTH the entity's own cert and the
+       -- ALL-scope (operating_company_id IS NULL) cert. Ordering by verified_at alone then let
+       -- whichever was stamped LAST win, so an ALL-scope cert -- computed across every entity,
+       -- USMCA included -- was credited to a TRANSP-scoped board on all 23 keys. Precedence, not
+       -- recency, decides: the row scoped to the REQUESTED scope wins, and the other scope is only
+       -- a fallback. Asking for one entity prefers that entity's cert; asking for ALL prefers the
+       -- ALL cert and never promotes a single entity's cert to represent everyone.
+       ORDER BY (CASE WHEN $2::uuid IS NULL
+                      THEN (operating_company_id IS NOT NULL)::int
+                      ELSE (operating_company_id IS NULL)::int END) ASC,
+                verified_at DESC
        LIMIT 1
     `,
     [scenarioKey, entity]
