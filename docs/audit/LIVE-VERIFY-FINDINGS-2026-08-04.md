@@ -1219,3 +1219,24 @@ membership-scoped session.
 - LANE:      none — GUARD attestation
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. Views by schema with `reloptions ILIKE '%security_invoker=true%'`: `views` 39/39, `accounting` 1/1. `pg_class.relrowsecurity` / `relforcerowsecurity` by schema exactly as tabulated. Money-schema tables (`accounting`,`catalogs`,`mdata`,`banking`) without RLS = **4**, all in `catalogs`, each confirmed to have **0** `operating_company_id` columns via `information_schema.columns`.
 - status:    OPEN (informational)
+
+## LV-075  ROOT CAUSE of the empty Scenario Tracker (and therefore of the P0 homepage crash): **`ih35_app` has no INSERT privilege on `audit.scenario_status`.** The certifier cannot write it — it is not that it never ran. Also: WORM is enforced by GRANT, not merely observed.
+- module:    accounting / platform (GUARD live-verify-after-merge)
+- entity:    ALL
+- surface:   table privileges on `audit.*` and `events.*`
+- observed:  LV-056 recorded that `audit.scenario_status` is empty (0 rows, lifetime 1 insert / 1 delete) and that the empty payload crashed `/home` via an unguarded spread. I attributed the emptiness to the certifier never having run. **That was incomplete — the runtime role is not permitted to write the table at all.**
+  **Effective privileges for `ih35_app`:**
+  | table | SELECT | INSERT | UPDATE | DELETE |
+  |---|---|---|---|---|
+  | `audit.audit_events` | ✓ | ✓ | **✗** | **✗** |
+  | `audit.row_changes` | ✓ | ✓ | **✗** | **✗** |
+  | **`audit.scenario_status`** | ✓ | **✗** | ✗ | ✗ |
+  | `events.event_log` | ✓ | **✗** | ✗ | ✗ |
+  Schema `USAGE` is granted on both `audit` and `events`, so this is a table-level grant gap, not a schema-level one — which is exactly the failure §2 warns about: *"new schema → add GRANTs … or it 500s at runtime."* Here it does not 500; it fails silently, leaving an empty table that reads as "not yet certified".
+  **So the causal chain behind the P0 is one link longer than I first recorded:** missing INSERT grant → certifier cannot persist → `audit.scenario_status` empty → tracker payload omits `scenarios` → unguarded spread in `ScenarioTrackerPanel` → `TypeError` → entire owner homepage down. The panel fix (PR #4368) correctly stops the crash, but **the tracker will stay permanently empty until this grant is added**, so LV-056's remaining half is now precisely actionable rather than "CC-1 to investigate".
+  **Method note — two privilege views disagree, and only one is authoritative.** `information_schema.role_table_grants` reports `ih35_app` holding **only SELECT** on *both* `scenario_status` and `audit_events`, which would wrongly suggest the audit tables are unwritable too. `has_table_privilege()` returns **INSERT true for `audit_events`** and **false for `scenario_status`**. The difference is that `role_table_grants` lists only *direct* grants while `has_table_privilege` resolves *effective* privilege including role inheritance. **Effective privilege is what the runtime actually experiences**, so it is the one to test; reading the grants view alone would have produced a false finding that the audit log is unwritable.
+  **The same check yields a genuine PASS worth stating: WORM is enforced, not merely observed.** `audit.audit_events` and `audit.row_changes` both grant INSERT but **explicitly deny UPDATE and DELETE** to the runtime role. LV-054 measured `n_tup_upd = 0` and `n_tup_del = 0` across 4.5M rows; this shows that is not luck or discipline — **the runtime role is structurally incapable of mutating those rows**. `events.event_log` is even stricter (SELECT only), consistent with its 1,354 rows and 0 deletes.
+- severity:  major (identifies the actionable root cause behind a P0; the Scenario Tracker cannot function until fixed)
+- LANE:      CC-1 (platform) — `GRANT INSERT ON audit.scenario_status TO ih35_app` (plus DEFAULT PRIVILEGES if the certifier also updates/supersedes rows). Verify afterwards that a certifier run actually persists a row; the grant alone is necessary, not sufficient.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `has_table_privilege('ih35_app', …)` per table exactly as tabulated. `has_schema_privilege('ih35_app','audit','USAGE')` **true**, `('events','USAGE')` **true**. `information_schema.role_table_grants` for `audit.scenario_status` and `audit.audit_events` both show grantee `ih35_app` with `SELECT` only — direct grants, which is why they disagree with the effective-privilege result.
+- status:    OPEN
