@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
-import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { Modal } from "../../components/Modal";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useTeamSplits } from "../../hooks/useTeamSplits";
@@ -99,26 +99,30 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
           <label className="block text-xs font-medium text-gray-700">
             Primary driver
             <div className="mt-1">
-              <DriverPickerWithCreate
+              <EntityPicker
+                kind="driver"
                 operatingCompanyId={operatingCompanyId}
                 value={primaryDriverId || null}
                 onChange={(next) => setPrimaryDriverId(next ?? "")}
-                open={createOpen}
+                enabled={createOpen}
                 placeholder="Select driver…"
                 dataField="team-split-primary-driver"
+                allowClear
               />
             </div>
           </label>
           <label className="block text-xs font-medium text-gray-700">
             Secondary driver
             <div className="mt-1">
-              <DriverPickerWithCreate
+              <EntityPicker
+                kind="driver"
                 operatingCompanyId={operatingCompanyId}
                 value={secondaryDriverId || null}
                 onChange={(next) => setSecondaryDriverId(next ?? "")}
-                open={createOpen}
+                enabled={createOpen}
                 placeholder="Select driver…"
                 dataField="team-split-secondary-driver"
+                allowClear
               />
             </div>
           </label>
