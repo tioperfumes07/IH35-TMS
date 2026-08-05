@@ -983,3 +983,26 @@ membership-scoped session.
 - LANE:      none — GUARD attestation. Confirms a Hop 0 precondition rather than raising a defect.
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `driver_finance.driver_bills` 6 rows enumerated above with `bill_number`, `status`, `gross_amount_cents`, `miles_basis`, `miles_basis_type`, `rate_per_mile_cents`, driver name and `operating_company_id`. Rate-card cross-check: bills whose `rate_per_mile_cents` differs from the driver's active `driver_pay_rates.rate_per_mile_cents` = **0**. Arithmetic recomputed independently per row.
 - status:    OPEN (informational)
+
+## LV-062  Two OPEN driver bills totalling $2,016.00 are payable against loads that no longer exist operationally — one CANCELLED, one SOFT-DELETED three weeks ago. Also: the voided originals prove driver pay was being set to the CUSTOMER LINEHAIL, which the driver model forbids.
+- module:    dispatch ↔ driver_finance (GUARD live-verify-after-merge, pass 12)
+- entity:    TRANSP
+- surface:   `driver_finance.driver_bills` ↔ `mdata.loads`
+- observed:  **Linkage itself is excellent** — `bills_orphan_load` = **0** (no bill points at a non-existent load), bill numbers mirror load numbers (`B-20260616-0120` ↔ `L-20260616-0120`), and `l.assigned_primary_driver_id = db.driver_id` is **true on all 6 bills**. Forward and reverse both resolve.
+  **The defect is lifecycle, not linkage. Two `open` bills sit on dead loads:**
+  | bill | amount | load | load state |
+  |---|---|---|---|
+  | `B-20260616-0120-R1` | **$960.00** | L-20260616-0120 | **`cancelled`** |
+  | `B-20260627-0036-R1` | **$1,056.00** | L-20260627-0036 | **soft-deleted 2026-07-13T21:45:26.921Z** |
+  Combined exposure **$2,016.00**, and neither carries a `settled_in_settlement_id` — both are live, unsettled payables. This is precisely the class ACCT-F70 / WIRE-10 (PR #4339, *"cancelling a load left its invoice and driver bill alive"*) was merged to close. Its presence here means either that fix does not remediate rows that pre-date it, or the **soft-delete** path is not covered by it at all — only the explicit `cancelled` status is. The soft-deleted case is the more serious of the two: that load disappeared from operations three weeks ago and a $1,056.00 driver payable outlived it, invisible to anyone browsing loads.
+  **Separately — and this is the stronger corroboration — the three VOIDED originals prove the defect the driver model exists to prevent.** Each was priced at *exactly* the customer linehaul on its load:
+  | voided bill | gross | load `rate_total_cents` | identical? |
+  |---|---|---|---|
+  | B-20260616-0120 | 580,000¢ | 580,000¢ | **yes** |
+  | B-20260627-0036 | 490,000¢ | 490,000¢ | **yes** |
+  | B-20260802-0258 | 100¢ | 100¢ | **yes** |
+  Driver pay was being set equal to the gross customer rate. The locked driver model is explicit that drivers are hired Mexican-B1 1099 contractors, so driver pay is a wage/fee and **never** a share of the customer linehaul, which is company revenue. The `-R1` reissues correct this to 48¢ × short miles (LV-061). So the original defect and its remediation are now both independently proven on live data, which is what makes the remaining lifecycle gap worth fixing rather than assuming closed.
+- severity:  major ($2,016.00 of live unsettled driver payables attached to a cancelled and a deleted load; a merged fix does not cover this case)
+- LANE:      CC-1 (money) — extend the ACCT-F70 / WIRE-10 cancellation cascade to cover `soft_deleted_at` as well as `status='cancelled'`, and decide whether it should remediate pre-existing rows or only new ones. Voiding these two bills is a money action and is not mine to take.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `driver_bills` joined to `mdata.loads`: orphan load references **0**; `driver_matches` true on all 6; open bills on cancelled-or-soft-deleted loads **2**, summed exposure **201,600¢**, both with `settled_in_settlement_id` NULL. Voided originals' `gross_amount_cents` compared against their load's `rate_total_cents`: identical on all three. `mdata.loads` totals: 6 rows, 4 live, statuses `assigned_not_dispatched` 2 / `cancelled` 1 / `completed_docs_received` 1 — all test loads, consistent with nothing operational having been created in the TMS.
+- status:    OPEN
