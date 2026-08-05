@@ -293,7 +293,7 @@
       ],
       "spec": "wave-queue.json shared classes listing banking in modules[]",
       "status": "OPEN",
-      "evidence": "Live probe 2026-08-04 lucia-bypass Neon: CLS-BANK-MATCH-DENSITY still open (bank_transactions total=11002, categorized=170 1.55%, counterparty FK vendor=2 customer=0). CLS-LINKAGE-ONEWAY/CLS-UNIT-SCALE/CLS-SILENT-CAP still open per wave-queue.json. Banking module-level completion stays OPEN until these class cards drain.",
+      "evidence": "Live probe 2026-08-04 lucia-bypass Neon: CLS-BANK-MATCH-DENSITY still open (bank_transactions total=11002, categorized=170 1.55%, counterparty FK vendor=2 customer=0). CLS-LINKAGE-ONEWAY refreshed: bills unit_id 1.8% (300/16250), WO 0.01%, claim 0%; invoices source_load_id 0.01%; expenses payment_account 0.004%; payments/bill_payments bank FK 0%; fuel load_id 0% (pre-op exempt); units lease null 71.4%. CLS-UNIT-SCALE/CLS-SILENT-CAP still open. Banking module-level completion stays OPEN until these class cards drain.",
       "pr": null,
       "prod_verified": false
     }
