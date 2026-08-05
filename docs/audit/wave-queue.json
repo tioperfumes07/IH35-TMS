@@ -616,11 +616,11 @@
       "layer": "C",
       "modules": ["dispatch"],
       "instances": [
-        { "path": "apps/backend/src/dispatch/loads.routes.ts:1285-1303 — actual_departure_at write depends on body.data.delivered_at from client (WIRE-07a)", "entity": "ALL", "note": "CRITICAL PATH. If client omits delivered_at, actual_departure_at stays NULL. All 20 load_stops on prod = NULL." },
+        { "path": "apps/backend/src/dispatch/loads.routes.ts:1285-1303 — actual_departure_at write depends on body.data.delivered_at from client (WIRE-07a)", "entity": "ALL", "note": "CRITICAL PATH. If client omits delivered_at, actual_departure_at stays NULL. Live 2026-08-04: all 12 load_stops actual_departure_at=NULL." },
         { "path": "apps/frontend/src/pages/dispatch — office status transition may not send delivered_at in request body (WIRE-07b)", "entity": "ALL", "note": "Frontend dispatch board status change needs to include delivered_at timestamp." },
         { "path": "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts — driver PWA departure capture (WIRE-07c)", "entity": "ALL", "note": "Driver PWA must capture actual departure at each stop. Without this, no delivery evidence flows to revenue recognition or invoice send." }
       ],
-      "completeness": "Code-verified: loads.routes.ts line 1285 UPDATE mdata.load_stops SET actual_departure_at = $2 WHERE load_id = $1 AND stop_type = 'delivery' AND sequence_number = (max). Value comes from body.data.delivered_at which is optional. Prod: all 20 load_stops actual_departure_at=NULL (verified 2026-08-01). This single gap blocks WIRE-04 + WIRE-05.",
+      "completeness": "Code-verified: loads.routes.ts line 1285 UPDATE mdata.load_stops SET actual_departure_at = $2 WHERE load_id = $1 AND stop_type = 'delivery' AND sequence_number = (max). Value comes from body.data.delivered_at which is optional. Live 2026-08-04: mdata.load_stops total=12, actual_departure_at NOT NULL=0, actual_arrival_at NOT NULL=0. This single gap blocks WIRE-04 + WIRE-05.",
       "guard": "scripts/verify-disp-wire-07-departure-evidence.mjs",
       "drain_proof": {
         "guard_green": false,
