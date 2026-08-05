@@ -1815,3 +1815,30 @@ predicate feeding it, not the downgrade mechanism.
              Override census: **242** total, **1** with `expires_at`, **1** expired, **1** expired-but-enabled.
              `now()::date` asserted as 2026-08-05 in the same transaction.
 - status:    OPEN
+
+### LV-091 ADDENDUM — the unmounted-route half is now proven LIVE against prod, with both controls
+The original finding established by static analysis that `registerPayrollIntegrationRoutes` is referenced
+nowhere outside its own file and that no autoload covers it. That is inference. This is the measurement.
+
+Probed prod (`api.ih35dispatch.com`) with the **404-vs-401 discriminator**: an unmounted route returns 404,
+a mounted route that merely rejects an unauthenticated caller returns 401. No credentials needed, so this
+proves mounting without touching auth.
+
+| request | result | meaning |
+|---|---|---|
+| `GET /api/v1/payroll-integration/aggregate` | **404** | declared at `aggregate.routes.ts:40` — **not mounted** |
+| `GET /api/v1/payroll-integration/aggregate/refresh` | **404** | declared at `:95` — **not mounted** |
+| `GET /api/v1/customers` *(positive control)* | **401** | mounted; a live route rejects auth, it does not 404 |
+| `GET /api/v1/definitely-not-a-route` *(negative control)* | **404** | the signature of a route that does not exist |
+
+The payroll endpoints return **exactly** the nonexistent-route code and **not** the mounted-route code. Both
+controls were run in the same probe, so the 404 cannot be explained by a global auth filter or by the API
+being down. **The routes are declared in shipped code and are unreachable in production.**
+
+This closes the reachability half of LV-091 as CONFIRMED. The phantom-table half was already confirmed
+(`to_regclass('accounting.qbo_payroll_links')` → NULL with a non-null control on the same query). Both halves
+now rest on measurement rather than reading. The severity stands: fixing only the mount would ship a
+guaranteed `42P01` on first call, because the table the handler selects from does not exist.
+- neon-check: n/a for this addendum — HTTP probe against prod `api.ih35dispatch.com`; deploy confirmed
+  earlier this session at `/api/v1/healthz/shallow` version `94c520a`.
+- status:    OPEN (unchanged — CC-1 owns the canonical-target decision)
