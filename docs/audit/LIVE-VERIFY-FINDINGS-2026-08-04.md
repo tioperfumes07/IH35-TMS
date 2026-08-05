@@ -880,3 +880,25 @@ membership-scoped session.
 - status:    OPEN — **P0**
 
   **RESOLVED 2026-08-05 by PR #4368** — one-line nullish-coalesce at `ScenarioTrackerPanel.tsx:164` plus a mutation-verified regression test. The panel now degrades to empty instead of taking `/home` down. The underlying cause (certifier never populates `audit.scenario_status`) is UNCHANGED and stays routed to CC-1, as does the fact that `verify-no-false-green-certify` and `verify-homepage-scenario-tracker-staleness` both stayed green (exit 0) throughout the outage.
+
+## LV-057  GUARD pass 8 — the WORM audit records journal-entry HEADERS but not their LINES: `journal_entries` 1,837 audit rows, `journal_entry_postings` 0, `posting_batches` 0, `payments` 0 of 12,124, and the entire `driver_finance` schema 0
+- module:    accounting / driver_finance (GUARD live-verify-after-merge, pass 8)
+- entity:    ALL
+- surface:   `audit.row_changes` coverage vs the money tables
+- observed:  LV-026 reported that `audit.row_changes` holds no rows for `journal_entry_postings`. That was true but I framed it too narrowly, as if the WORM store were generally unused. It is not: `audit.row_changes` holds **2,280,887 rows** and covers accounting heavily. The real shape is **selective coverage**, and the selection is the problem.
+  **What IS audited** (2% `TABLESAMPLE`, extrapolated): `accounting` ~1.7M rows — `bills` (20,416 in sample), `bill_payments` (7,467), `bill_lines` (3,011), `invoices` (2,402), `qbo_accounts` (45), **`journal_entries` (36 in sample; exact count 1,837)**. Also `mdata` ~590K, `banking` ~9.5K, `qbo` ~1K.
+  **What is NOT audited — exact counts, not sampled:**
+  | table | rows on prod | audit rows |
+  |---|---|---|
+  | `accounting.journal_entry_postings` | 3,603 | **0** |
+  | `accounting.posting_batches` | 13,732 | **0** |
+  | `accounting.payments` | 12,124 | **0** |
+  | `driver_finance.*` (whole schema) | — | **0** |
+  **The header/line split is the finding.** `journal_entries` — the header carrying date, memo and source — is audited 1,837 times. `journal_entry_postings` — the lines carrying **the account, the amount, and the debit/credit direction** — is audited **zero** times. So the audit trail can prove that a journal entry was touched, and cannot prove what any of its money lines were before or after. For an auditor reconstructing a disputed entry that is the wrong half: the header is metadata, the lines are the money.
+  **Why the coverage is selective — mechanism, not accident.** There are **0 triggers on any `accounting` table** whose definition references `row_change`. The audit is therefore **application-level**: rows appear only where application code explicitly calls the audit writer. Coverage tracks which code paths were instrumented, not which tables are financially material — which is exactly how the posting engine, the batch writer, the payments path and all of driver_finance came to be silent while the bills path is exhaustively logged.
+  **Corroborating instance found this pass.** `driver_finance.driver_settlements` shows lifetime `n_tup_ins` 11 / `n_tup_del` **7** / 0 live — seven settlement rows were **hard-deleted** — and `audit.row_changes` holds **0** rows for that table, so nothing records who deleted them or what they contained. The table also carries no `voided_at`/`archived_at` column (only `status`, `approval_status`), so void-not-delete is not structurally available on it. Settlements are driver pay; deleting them unlogged is the highest-exposure instance of this gap. Settlement volume is otherwise 0, consistent with nothing operational having been created yet, so no live money is affected today.
+  **Relationship to LV-026:** LV-026's conclusion stands and strengthens. The Audit Trail page reads the mutable ledger rather than a WORM store, *and* the WORM store would not have covered the posting lines even if it did.
+- severity:  major (auditability — the money lines of every journal entry are unlogged; a money table was hard-deleted with no audit record)
+- LANE:      CC-1 (accounting) — instrument `journal_entry_postings`, `posting_batches`, `payments` and `driver_finance.*`; a trigger-based writer would close the class rather than the instances
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. Exact counts: `row_changes` where `table_name` = `journal_entry_postings` **0**, `posting_batches` **0**, `payments` **0**, `journal_entries` **1,837**; `schema_name='driver_finance'` **0**. Schema distribution via `TABLESAMPLE SYSTEM (2)`. Triggers on `accounting.*` referencing `row_change`: **0**. `driver_finance.driver_settlements` `n_tup_ins` 11, `n_tup_del` 7, `n_live_tup` 0; columns include `status`, `approval_status`, no void/archive column.
+- status:    OPEN
