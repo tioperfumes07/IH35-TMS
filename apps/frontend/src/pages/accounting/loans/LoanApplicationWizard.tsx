@@ -30,6 +30,7 @@ import { FORM_INPUT_CLASS, FORM_SELECT_CLASS, FORM_TEXTAREA_CLASS } from "../../
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { PARITY_MODAL_WIDTH } from "../../../components/parity/sizing";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 
 type Props = {
   open: boolean;
@@ -158,6 +159,15 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
   });
 
   const accounts = accountsQuery.data?.accounts ?? [];
+  const accountOptions = useMemo(
+    () =>
+      accounts.map((a) => ({
+        value: a.id,
+        label: a.account_number ? `${a.account_number} · ${a.account_name}` : a.account_name,
+        type: a.account_type ?? undefined,
+      })),
+    [accounts]
+  );
   const payload = useMemo(() => buildPayload(form, operatingCompanyId), [form, operatingCompanyId]);
 
   if (!open) return null;
@@ -315,19 +325,19 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
               <label className="block text-[12px] font-medium text-slate-700">
                 Account {form.direction === "in" ? "(liability)" : "(receivable)"}
               </label>
-              <select
-                className={FORM_SELECT_CLASS}
-                value={form.account_id}
-                onChange={(e) => set("account_id", e.target.value)}
-              >
-                <option value="">Select an account</option>
-                {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.account_number ? `${a.account_number} · ` : ""}
-                    {a.account_name}
-                  </option>
-                ))}
-              </select>
+              {/* ReferenceSelect, not a plain <select> (verify:referenceselect-coverage-ratchet):
+                  every accounting-entity dropdown carries the QBO-parity inline "+ Add new ___"
+                  create (§7.3) so the operator never has to leave the wizard to add an account. */}
+              <ReferenceSelect
+                value={form.account_id || null}
+                onChange={(v) => set("account_id", v ?? "")}
+                options={accountOptions}
+                createKind="account"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Select an account"
+                loading={accountsQuery.isLoading}
+                onOptionCreated={() => void accountsQuery.refetch()}
+              />
               <p className="text-[12px] text-slate-500">
                 No default is applied. The account must be chosen explicitly — an unmapped loan refuses rather
                 than posting to a guessed account.
