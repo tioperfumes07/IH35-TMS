@@ -10,6 +10,7 @@
 import { Fragment, useMemo, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { ScenarioTrackerHome } from "./scenario-tracker/ScenarioTrackerHome";
 import { resolveApiUrl } from "../../api/client";
 import {
   PROGRAM_SCOREBOARD,
@@ -411,6 +412,11 @@ function ChainCard({ n }: { n: ProgramScoreboard["chain"][number] }) {
       <div className="nt"><span>{n.title}</span><span className={`chip c-${n.chipTone}`}>{n.chip}</span></div>
       <div className="tbl">{n.table}</div>
       <div className="fk">{n.fk}</div>
+      {/* OWNER DECISION 2026-08-05: the Scenario Tracker lives ONLY on Program, never on Home.
+          Mounted here under the scoreboard so /program shows the certification scoreboard AND the
+          live end-to-end pipeline together. The dedicated /program/scenario-tracker route stays as
+          the full-page view (tab above). */}
+      <ScenarioTrackerHome />
     </div>
   );
 }

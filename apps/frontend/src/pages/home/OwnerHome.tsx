@@ -44,7 +44,6 @@ import { RevenueDiscrepancyDrill } from "../../components/home/RevenueDiscrepanc
 import { HomeFleetRestoreCard } from "./HomeFleetRestoreCard";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AttentionList } from "./AttentionList";
-import { ScenarioTrackerPanel } from "../../components/home/ScenarioTrackerPanel";
 import { FleetUtilizationGauge } from "./charts/FleetUtilizationGauge";
 import { WeeklyRevenueChart } from "./charts/WeeklyRevenueChart";
 import { WOStatusPieChart } from "./charts/WOStatusPieChart";
@@ -57,7 +56,6 @@ import "./home-print.css";
 type Props = {
   auth: AuthMeResponse["user"];
 };
-
 
 /**
  * An entity with no factoring contract is NOT an unverifiable balance — it is a balance that does not
@@ -238,9 +236,6 @@ export function OwnerHome({ auth }: Props) {
           </div>
         }
       />
-
-      {/* HOMEPAGE LIVE SCENARIO TRACKER §8 — live pipeline, auto-refreshes every 20s */}
-      <ScenarioTrackerPanel companyId={selectedCompanyId} />
 
       {/* GAP-65: Today's Attention Top-5 — ranked priority queue at top of Owner home */}
       {selectedCompanyId ? (
