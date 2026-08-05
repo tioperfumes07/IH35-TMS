@@ -1986,3 +1986,76 @@ consistent with the entity model, not a defect.
              Ledger rows as tabulated. `dispatch.load_abandonments` 0 rows / `n_tup_ins` **0**.
              Trigger `trg_auto_propose_escrow_on_abandon` confirmed present on `loads` via `pg_trigger`.
 - status:    OPEN
+
+## LV-100  GUARD VERIFY-AFTER of **ACCT-F115** (#4478, `c8b6a3cbb`) and **ACCT-F116** (#4479, `07daa0f6b`) — **both PASS**; every factual claim in both PRs independently re-verified on prod
+- module:    accounting · insurance · driver_finance (GUARD — post-merge verification)
+- entity:    ALL
+- surface:   `insurance.claim` · `accounting.insurance_claim_recovery_postings` · `accounting.escrow_postings` · `accounting.chart_of_accounts_roles` → `catalogs.accounts`
+- observed:  Both PRs add executable proof for a money hop and change **no production code**. That makes the
+  PR body itself the load-bearing artifact, so I re-derived every number rather than reading them.
+  **ACCT-F115 (insurer claim recovery) — all claims hold.**
+  | claim | verified |
+  |---|---|
+  | `insurance.claim` = 0 rows | **0**, `n_tup_ins` **0**, `n_tup_del` **0** |
+  | `accounting.insurance_claim_recovery_postings` = 0 | **0**, `n_tup_ins` **0**, `n_tup_del` **0** |
+  | `insurance_recovery` → 6155 [OtherExpense] on all three | **confirmed**, active, all 3 entities |
+  | `INSURANCE_CLAIM_RECOVERY_GL_POSTING_ENABLED` true ×3 | **confirmed** — independently, in LV-097's sweep |
+  The `n_tup_ins = 0` on both tables is stronger than the PR's own `n_live_tup 0 / n_tup_del 0`: it shows the
+  rows were never there rather than merely absent now.
+  **ACCT-F116 (new-hire driver escrow) — all claims hold, including the one that matters.**
+  `accounting.escrow_postings` **0** with `n_tup_ins` **0**; `accounting.escrow_accounts` **0**. The critical
+  property — escrow is money **held in trust**, a liability owed back to the driver — is correct in all three:
+  | entity | account | type |
+  |---|---|---|
+  | IH 35 Transportation | QBO-250 "2025-Damage Claim Escrow" | **Liability** |
+  | IH 35 Trucking | QBO-1150040187 "Damage Claim Escrow" | **Liability** |
+  | USMCA Freight | 2100 "Driver Escrow - Held in Trust" | **Liability** |
+  Not one resolves to Income or to a contra-expense, so the failure the PR names — booking a driver's own
+  money as company earnings — is not present.
+  **One thing the PRs did not mention, which I checked and cleared.** USMCA carries **two** rows for
+  `escrow_liability_default`, one `is_active = false` and one `true`. That is the LV-088 shape — two candidate
+  rows and a resolver picking one — so I did not assume it was benign. System-wide: **131** role rows across
+  **114** distinct (entity, role) pairs, so 17 extras exist; and **pairs with more than one ACTIVE row = 0**.
+  Every pair resolves to exactly one active binding. The extras are deactivated history (11 of the 14
+  multi-row pairs point at a genuinely *different* account, i.e. the role was re-pointed over time and the old
+  binding was retired rather than deleted) — correct void-not-delete behaviour under rule 07, **not a defect**.
+  Recording it so the next agent who finds duplicate role rows does not file it as one.
+- severity:  none — both verify-after PASS
+- LANE:      n/a (verification of CC-1/CC-3 work)
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             All counts as tabulated; role bindings joined through `catalogs.accounts` for `account_type`.
+- status:    PASS
+
+## LV-101  **26 posting flags are ON, but only 11 source types have ever produced a journal line** — most of the enabled money surface has zero live execution evidence
+- module:    accounting (GUARD — coverage of the money surface)
+- entity:    ALL (3 entities carry journal entries)
+- surface:   `lib.feature_flags` (`%POST%`) vs `accounting.journal_entry_postings.source_transaction_type`
+- observed:  Verifying F115 and F116 exposed a pattern larger than either. Both describe a hop that is
+  **built, wired and flag-enabled but has never executed**, and that is not two isolated cases.
+  **26** posting flags are defined and (per LV-097) effectively ON across the entities, with 3 known TRK
+  exceptions. Against that, **11** distinct `source_transaction_type` values have *ever* written a posting
+  line: `fuel_event` (3,094), `bank_categorization` (380), `bill` (10), `invoice` (10), `transfer` (8),
+  `prepaid_purchase` (4), `fixed_asset_depreciation` (4), `expense` (4), `loan_payment` (3), `bill_payment` (2),
+  `customer_payment` (2).
+  **I am stating this as a coverage measurement, not a defect, and the distinction matters.** Flags do not map
+  one-to-one onto `source_transaction_type`, so "26 minus 11" is **not** a count of broken paths and I am not
+  presenting it as one. What is exactly true: the great majority of GL volume is two paths (`fuel_event` and
+  `bank_categorization` are **3,474 of 3,603** lines, **96%**), and most enabled posting capabilities have
+  produced **no** live evidence at all.
+  **Why this is worth a finding rather than a shrug.** A flag that is ON is an assertion that the path is
+  ready. For most of these the only thing standing behind that assertion is code review — and LV-099 is the
+  proof of what that is worth: a migration recorded applied in **both** ledgers whose effect never reached
+  prod, sitting under a money path (escrow forfeit on abandonment) that **cannot execute at all**. That defect
+  was invisible for ~3 months precisely because nothing had ever run it.
+  **So ACCT-F115/F116 are the correct response to this, not a formality.** An executable scenario test is the
+  only mechanism that exercises a path with no production data, and it catches exactly the properties that
+  only fail under real data — F116's Liability-type binding and over-draw guard, F115's ASC 450-30 / 610-30
+  recovery cap. **The right conclusion is to continue that pattern across the remaining enabled paths**,
+  prioritising the ones with zero postings, rather than to treat flag-ON as evidence of readiness.
+- severity:  informational (coverage measurement; no defect asserted)
+- LANE:      CC-1 (money) — extend the F115/F116 executable-scenario pattern to the enabled posting paths that
+             have never executed; treat LV-099 as the worked example of what zero-execution conceals
+- neon-check: prod `br-fancy-credit-akjnd07a`, bypass in its own statement, exit 0. Posting flags defined
+             **26**; distinct non-null `source_transaction_type` ever posted **11**; entities with journal
+             entries **3**; per-type line counts as listed (totalling the 3,603 lines of LV-092).
+- status:    OPEN (informational)
