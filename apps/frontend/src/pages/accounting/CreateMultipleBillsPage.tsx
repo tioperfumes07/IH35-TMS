@@ -3,16 +3,16 @@ import { useLocation } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createVendorBill } from "../../api/accounting";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
-import { listDrivers, listUnits, listVendors } from "../../api/mdata";
+import { getDriver, listUnits, listVendors } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { Combobox } from "../../components/Combobox";
-import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 import { CreateUnitModal } from "../../components/fleet/CreateUnitModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -101,7 +101,6 @@ export function CreateMultipleBillsPage() {
   const seeds = ((location.state as { seeds?: SeedDraft[] } | null)?.seeds ?? []).filter(Boolean);
   const [rows, setRows] = useState<BillDraftRow[]>(() => (seeds.length > 0 ? seeds.map(rowFromSeed) : [emptyRow()]));
   const [lastResult, setLastResult] = useState<CreateResult | null>(null);
-  const [driverCreateRowId, setDriverCreateRowId] = useState<string | null>(null);
   const [unitCreateRowId, setUnitCreateRowId] = useState<string | null>(null);
 
   const vendorsQuery = useQuery({
@@ -127,12 +126,6 @@ export function CreateMultipleBillsPage() {
     enabled: Boolean(companyId),
   });
 
-  const driversQuery = useQuery({
-    queryKey: ["multi-bills", "drivers", companyId],
-    queryFn: () => listDrivers({ status: "Active", operating_company_id: companyId, limit: 200 }),
-    enabled: Boolean(companyId),
-  });
-
   const vendorOptions = useMemo(
     () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
     [vendorsQuery.data?.vendors]
@@ -145,15 +138,6 @@ export function CreateMultipleBillsPage() {
         label: String(unit.unit_number ?? unit.display_id ?? unit.id ?? ""),
       })),
     [unitsQuery.data?.units]
-  );
-
-  const driverOptions = useMemo(
-    () =>
-      (driversQuery.data?.drivers ?? []).map((driver) => ({
-        value: driver.id,
-        label: [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || driver.id,
-      })),
-    [driversQuery.data?.drivers]
   );
 
   // Bill HEADER A/P account (accounting.bills.coa_account_id) — the credit side of the bill.
@@ -221,8 +205,15 @@ export function CreateMultipleBillsPage() {
         }
         const memoParts = [row.memo.trim()];
         if (row.driver_id) {
-          const driverLabel = driverOptions.find((d) => d.value === row.driver_id)?.label;
-          memoParts.push(`driver:${driverLabel || row.driver_id}`);
+          let driverLabel = row.driver_id;
+          try {
+            const driver = await getDriver(row.driver_id, companyId);
+            driverLabel =
+              [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || row.driver_id;
+          } catch {
+            /* memo falls back to id */
+          }
+          memoParts.push(`driver:${driverLabel}`);
         }
         if (row.terms) memoParts.push(`terms:${row.terms}`);
         try {
@@ -300,12 +291,6 @@ export function CreateMultipleBillsPage() {
         <ListErrorBanner
           message={`Failed to load A/P accounts for bill rows: ${(coaQuery.error as Error)?.message ?? "Request failed"}`}
           onRetry={() => void coaQuery.refetch()}
-        />
-      ) : null}
-      {driversQuery.isError ? (
-        <ListErrorBanner
-          message={`Failed to load drivers for bill rows: ${(driversQuery.error as Error)?.message ?? "Request failed"}`}
-          onRetry={() => void driversQuery.refetch()}
         />
       ) : null}
       {unitsQuery.isError ? (
@@ -450,17 +435,13 @@ export function CreateMultipleBillsPage() {
                 </td>
                 <td className="px-2 py-1.5">
                   <div className="min-w-[140px]">
-                    <Combobox
-                      options={driverOptions}
+                    <EntityPicker
+                      kind="driver"
+                      operatingCompanyId={companyId}
                       value={row.driver_id || null}
                       onChange={(next) => updateRow(row.id, { driver_id: next ?? "" })}
                       placeholder="Select driver…"
-                      loading={driversQuery.isLoading}
                       allowClear
-                      allowAddNew={{
-                        label: "+ Create driver",
-                        onAdd: () => setDriverCreateRowId(row.id),
-                      }}
                     />
                   </div>
                 </td>
@@ -504,16 +485,6 @@ export function CreateMultipleBillsPage() {
         </div>
       ) : null}
 
-      <CreateDriverModal
-        open={driverCreateRowId !== null}
-        companyId={companyId}
-        onClose={() => setDriverCreateRowId(null)}
-        onCreated={(createdId) => {
-          if (driverCreateRowId) updateRow(driverCreateRowId, { driver_id: createdId });
-          setDriverCreateRowId(null);
-          void driversQuery.refetch();
-        }}
-      />
       <CreateUnitModal
         open={unitCreateRowId !== null}
         operatingCompanyId={companyId}

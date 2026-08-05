@@ -63,13 +63,24 @@ export function collectProblems(sources) {
     }
   }
 
-  // Shared picker must keep server search so rosters >200 remain reachable (SAF-B29).
+  // Shared picker delegates server search to EntityPicker + registry (EP-DRIVER-KIND-SWEEP §9.0 item 17).
   const sharedRel = "apps/frontend/src/components/drivers/DriverPickerWithCreate.tsx";
   const shared = stripComments(sources?.[sharedRel] ?? read(sharedRel));
-  if (!/driverSearch/.test(shared) || !/search:\s*driverSearch/.test(shared)) {
+  const registry = stripComments(
+    sources?.["apps/frontend/src/components/parity/entityPickerRegistry.ts"] ??
+      read("apps/frontend/src/components/parity/entityPickerRegistry.ts")
+  );
+  const wrapperDelegatesEntityPicker = /EntityPicker[\s\S]{0,200}kind=["']driver["']/.test(shared);
+  if (wrapperDelegatesEntityPicker) {
+    if (!/kind:\s*"driver"[\s\S]{0,800}serverSearch:\s*true/.test(registry)) {
+      problems.push(`${sharedRel}: driver kind must declare serverSearch in entityPickerRegistry.`);
+    }
+    if (!/search:\s*opts\?\.search/.test(registry)) {
+      problems.push(`entityPickerRegistry.ts: driver list must pass search opt to listDrivers.`);
+    }
+  } else if (!/driverSearch/.test(shared) || !/search:\s*driverSearch/.test(shared)) {
     problems.push(`${sharedRel}: must pass search: driverSearch to listDrivers (server search).`);
-  }
-  if (!/onSearch=\{setDriverSearch\}/.test(shared)) {
+  } else if (!/onSearch=\{setDriverSearch\}/.test(shared)) {
     problems.push(`${sharedRel}: Combobox must wire onSearch={setDriverSearch}.`);
   }
 
@@ -80,6 +91,9 @@ if (SELFTEST) {
   const live = Object.fromEntries(SURFACES.map((s) => [s.rel, read(s.rel)]));
   live["apps/frontend/src/components/drivers/DriverPickerWithCreate.tsx"] = read(
     "apps/frontend/src/components/drivers/DriverPickerWithCreate.tsx"
+  );
+  live["apps/frontend/src/components/parity/entityPickerRegistry.ts"] = read(
+    "apps/frontend/src/components/parity/entityPickerRegistry.ts"
   );
   const failures = [];
 
@@ -116,11 +130,15 @@ if (SELFTEST) {
     "server-search-removed",
     {
       ...live,
-      "apps/frontend/src/components/drivers/DriverPickerWithCreate.tsx": live[
-        "apps/frontend/src/components/drivers/DriverPickerWithCreate.tsx"
-      ].replace(/search:\s*driverSearch \|\| undefined/g, "limit: 200"),
+      "apps/frontend/src/components/parity/entityPickerRegistry.ts": live[
+        "apps/frontend/src/components/parity/entityPickerRegistry.ts"
+      ]?.replace(/serverSearch:\s*true/g, "serverSearch: false") ??
+        read("apps/frontend/src/components/parity/entityPickerRegistry.ts").replace(
+          /serverSearch:\s*true/g,
+          "serverSearch: false"
+        ),
     },
-    "search: driverSearch"
+    "serverSearch"
   );
 
   const liveProblems = collectProblems(live);
