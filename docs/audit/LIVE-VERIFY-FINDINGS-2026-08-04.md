@@ -2274,3 +2274,49 @@ consistent with the entity model, not a defect.
              `matched_journal_entry_id` set **170**, dangling **0**; distinct bank txns appearing as a
              posting source **170**; `matched_invoice_id` **0**; `reconciliation_cleared` **0**; `voided_at` **0**.
 - status:    PASS (wiring) · density named, not a defect
+
+## LV-107  GUARD VERIFY-AFTER of **ACCT-F119** (#4486, `ae0782836`) — **PASS**: all 4 writers verified on `origin/main`, the owner lock quoted verbatim is real, and the retained legacy read is intact
+- module:    driver_finance · safety · legal (GUARD — post-merge verification)
+- entity:    ALL
+- surface:   the 4 production writers of `driver_finance.driver_liabilities` · `legal/signed-finance-handoff.service.ts`
+- observed:  Same 4-writer surface as ACCT-F114 (LV-095), so the completeness test applies again and I re-ran
+  it rather than reusing the earlier result.
+  **(1) All four writers now insert `requires_acknowledgment = false` — read from `origin/main`:**
+  | writer | inserted value |
+  |---|---|
+  | `safety/safety.routes.ts` (accident spawn) | `…,false,'safety_accident',…` |
+  | `safety/fines.routes.ts` (civil-fine convert) | `false` |
+  | `safety/safety-v5.routes.ts` (internal-fine convert) | `…,false,'internal_fine',…` |
+  | `cash-advances/cash-advance-create.ts` (4th, always correct) | `VALUES ($1,…,0,false)` |
+  **Three fixed, one already right — and no fifth writer**, consistent with the independent enumeration in
+  LV-095.
+  **(2) The owner lock the PR quotes is real, not paraphrased.** `legal/signed-finance-handoff.service.ts`
+  carries it verbatim at lines 29–39: *"NO separate driver-facing deduction-authorization e-sign … the
+  PRIMARY authorizing document is the signed HIRE CONTRACT … do NOT build a separate driver e-sign flow."*
+  So the diagnosis holds: the three sites gated recovery on a signature the company never collects, which
+  could not open, stalling every at-fault recovery and fine before settlement.
+  **(3) The deliberate NON-removal is confirmed present, which is the part most likely to be over-corrected.**
+  The column survives and so does its read — `safety/safety.routes.ts:251` still carries
+  `AND requires_acknowledgment = true` for the `pending_acknowledgments` KPI. That is correct: the lock
+  retains legacy template codes so a pre-existing signed instance still satisfies the gate, and the KPI must
+  keep counting any legacy row. **Deleting the column would have destroyed that.** Ripping out a gate is easy;
+  ripping out only the wrong half of it is the harder and correct move, and it was done.
+  **(4) The stale comment was corrected, not left behind.** `safety-v5.routes.ts` previously asserted *"the
+  existing insert already sets requires_acknowledgment = true"*. On `origin/main` that string is **gone**
+  (0 occurrences) and is replaced by one stating the insert now sets FALSE and that the FD1 approver check is
+  therefore the **only** acknowledgment control on that path. A comment left claiming the opposite of the code
+  is exactly how the next reader re-introduces the defect.
+  **(5) Nothing to restate on prod.** `driver_finance.driver_liabilities` is **0 rows with `n_tup_ins = 0`**
+  (LV-095) — the table has never held a row, so no charge is currently stalled in
+  `pending_acknowledgment` and there is no backfill.
+  **Method note on my own process, recorded because it nearly produced a false finding.** My first pass read
+  these files from the working tree, which sat on an older base, and showed the *pre-fix* values — the stale
+  comment and `true`. I re-read every one through `git show origin/main:<path>` before concluding.
+  **A verification is only as good as the ref it reads**; for post-merge checks the ref must be `origin/main`,
+  never the local checkout.
+- severity:  none — verify-after PASS
+- LANE:      n/a (verification of CC-1 work)
+- neon-check: prod `br-fancy-credit-akjnd07a` — `driver_finance.driver_liabilities` 0 rows / `n_tup_ins` 0
+             (per LV-095), so no stalled acknowledgment rows exist. Code verified against `origin/main`
+             @ `ae0782836`.
+- status:    PASS
