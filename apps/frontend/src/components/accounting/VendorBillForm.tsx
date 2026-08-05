@@ -2,18 +2,18 @@ import type { JSX } from "react";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ensureDriverVendors, listDrivers, listUnits, listVendors } from "../../api/mdata";
+import { ensureDriverVendors, listDrivers, listVendors } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { classesCatalogClient } from "../../api/catalogs-accounting";
 import { DatePicker } from "../forms/DatePicker";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
 import { TotalsStack } from "../forms/shared/TotalsStack";
 import { BILL_TYPE_TABS, TypeTabBar, type BillTypeId } from "../forms/shared/TypeTabBar";
+import { EntityPicker } from "../parity/EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { vendorReferenceOption } from "../parity/referenceOptionLabels";
 import { Combobox } from "../Combobox";
 import { CreateDriverModal } from "../drivers/CreateDriverModal";
-import { CreateUnitModal } from "../fleet/CreateUnitModal";
 import { UploadZone } from "../UploadZone";
 import { EntityLink } from "../shared/EntityLink";
 import { companyToday } from "../../lib/businessDate";
@@ -140,7 +140,6 @@ export function VendorBillForm({
   const [driverId, setDriverId] = useState("");
   const [unitId, setUnitId] = useState(linkedUnitId ?? "");
   const [driverCreateOpen, setDriverCreateOpen] = useState(false);
-  const [unitCreateOpen, setUnitCreateOpen] = useState(false);
   const [classId, setClassId] = useState<string | null>(null);
   const [className, setClassName] = useState("");
   const [accountId, setAccountId] = useState<string | null>(null);
@@ -183,17 +182,6 @@ export function VendorBillForm({
     queryFn: () => listDrivers({ status: "Active", operating_company_id: operatingCompanyId, limit: 200 }), // full active set (endpoint default 50 truncates >50)
     enabled: Boolean(operatingCompanyId),
   });
-  const unitsQuery = useQuery({
-    queryKey: ["vendor-bill-form", "units", operatingCompanyId],
-    // NO status filter on purpose. "Active" was an invalid enum the backend silently swallowed
-    // (unitStatusSchema...catch(undefined)), so the picker really returned ALL non-deactivated units.
-    // Pinning "InService" turned that into a HARD filter and dropped InMaintenance / OutOfService /
-    // Damaged units — i.e. exactly the units a repair bill is written for. A truck in the shop would
-    // vanish from the Unit dropdown and the bill would save with no unit_id, breaking WO-bill-unit
-    // linkage on the maintenance case this form exists for.
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 500 }),
-    enabled: Boolean(operatingCompanyId),
-  });
   const accountsQuery = useQuery({
     queryKey: ["vendor-bill-form", "ap-accounts", operatingCompanyId],
     // Entity-scoped CoA (never the user's default-company chart). listCatalogAccounts (not
@@ -224,19 +212,6 @@ export function VendorBillForm({
         label: [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || driver.id,
       })),
     [driversQuery.data?.drivers]
-  );
-
-  // Unit picker — same "Combobox + canonical CreateUnitModal" pattern as Driver above (no
-  // createKind="unit" on ReferenceSelect yet; CreateUnitModal is the single canonical fleet-roster
-  // unit creator — writes mdata.units, same table unitsQuery reads, so a created unit selects +
-  // survives reload).
-  const unitOptions = useMemo(
-    () =>
-      ((unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>).map((unit) => ({
-        value: String(unit.id ?? ""),
-        label: String(unit.unit_number ?? unit.id ?? ""),
-      })),
-    [unitsQuery.data?.units]
   );
 
   // A/P account picker — Liability / AccountsPayable postable accounts (canonical catalogs.accounts).
@@ -501,17 +476,17 @@ export function VendorBillForm({
           />
         </Field>
         <Field label="Unit">
-          <Combobox
-            options={unitOptions}
+          {/* SAF-B29: EntityPicker kind=unit — never Combobox over listUnits(limit:500). */}
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={operatingCompanyId}
             value={unitId || null}
             onChange={(next) => setUnitId(next ?? "")}
             placeholder="Select unit..."
-            loading={unitsQuery.isLoading}
             allowClear
-            allowAddNew={{
-              label: "+ Create unit",
-              onAdd: () => setUnitCreateOpen(true),
-            }}
+            nestedInDrawer
+            dataTestId="vendor-bill-unit"
+            dataField="vendor-bill-unit"
           />
         </Field>
         <div className="md:col-span-3" />
@@ -594,16 +569,6 @@ export function VendorBillForm({
       // CreateBillModal) — the nested driver creator must stack as a ParityDrawer, never a
       // centered Modal on top of the already-open Bill drawer.
       shell="drawer"
-    />
-    <CreateUnitModal
-      open={unitCreateOpen}
-      operatingCompanyId={operatingCompanyId}
-      onClose={() => setUnitCreateOpen(false)}
-      onCreated={(createdId) => {
-        setUnitId(createdId);
-        setUnitCreateOpen(false);
-        void unitsQuery.refetch();
-      }}
     />
     </>
   );
