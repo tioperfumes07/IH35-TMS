@@ -478,11 +478,11 @@
           "note": "insurance.claim = 0. AUD-F015."
         }
       ],
-      "completeness": "lucia-bypass Neon prod 2026-08-05: driver_finance.driver_settlements=0 rows, accounting.factoring_reserve_movements=0 rows, insurance.claim=0 rows. factoring.factor=1 agreement exists as positive control. No money has been posted to these surfaces; remains pre-operational.",
+      "completeness": "lucia-bypass Neon prod 2026-08-05 (FULL 24-slice scenario-tracker probe, docs/specs/scenario-tracker/IH35-SCENARIO-TRACKER-BUILD-SPEC-2026-08-05.md, all backend registry entries now wired per GAP-A/B closure): driver_finance.driver_settlements=0, driver_finance.driver_advances=0, driver_finance.driver_settlement_deductions=0, driver_finance.escrow_ledger=0, accounting.factoring_advances=0, insurance.claim=0, legal.matters=0, safety.accident_reports=0, hop.bank (banking.bank_transactions.matched_invoice_id NOT NULL AND is_credit)=0. \u00a79.0.17 CONSOLIDATED: 8 empty money-lane subledgers/hops share ONE root cause \u2014 no TMS-native settlement/advance/deduction/escrow/factoring/insurance/legal/accident event has ever been RUN end-to-end in this environment (not individually broken code paths per se; each table's own writer exists and is reachable, but zero real business events have exercised any of them). Separately CONFIRMED: 7 of 8 TMS-native accounting.invoices rows carry source_load_id=NULL (ids: 0ce56005,f280b52a,53b8ddb3,25b208fb,8e5c5146,e4d2ebdd,06c7af5d) \u2014 only 1 (cf3f7203) was created from a load; ALL 8 have bank_matches=0. hop.bank=0 is explained end-to-end: no invoice has ever been matched to a bank transaction, consistent with the settlement/AR chain never having been walked to cash. factoring.factor=1 agreement exists as positive control (unchanged).",
       "guard": "scripts/verify-money-hold-surfaces.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "HOLD-001 settlements=0/$0; HOLD-002 factoring_reserve_movements=0/$0; HOLD-003 insurance.claim=0/$0. factoring.factor=1 (agreement seeded).",
+        "guard_sample": "24-slice live probe 2026-08-05: money-lane empty sites (8) = scenario.settlement, scenario.advance, scenario.deductions, scenario.escrow, scenario.factoring, scenario.insurance, scenario.legal, hop.bank. scenario.accident (screens-lane) also 0 \u2014 routed separately to CC-3 (see CLS-DISP-WIRE-07 sibling note). factoring.factor=1 (agreement seeded).",
         "money_critical": true
       },
       "status": "open",
@@ -948,11 +948,11 @@
           "note": "Driver PWA must capture actual departure at each stop. Without this, no delivery evidence flows to revenue recognition or invoice send."
         }
       ],
-      "completeness": "CRITICAL-PATH ROOT BLOCKER unchanged 2026-08-05. Code path: loads.routes.ts writes actual_departure_at from optional body.data.delivered_at. Live: mdata.loads=6 (assigned_not_dispatched=4, completed_docs_received=1, cancelled=1); mdata.load_stops=12; actual_departure_at NOT NULL=0; actual_arrival_at NOT NULL=0. No delivery evidence captured. Blocks WIRE-04 evidence gate and WIRE-05 revrec.",
+      "completeness": "CRITICAL-PATH ROOT BLOCKER unchanged 2026-08-05, now confirmed against the FULL 24-slice scenario-tracker probe (docs/specs/scenario-tracker/IH35-SCENARIO-TRACKER-BUILD-SPEC-2026-08-05.md \u00a72/\u00a73, GAP-A/B closed \u2014 backend registry now has all 24 predicates implemented, so these are LIVE reads, not missing wiring). Code path: loads.routes.ts writes actual_departure_at from optional body.data.delivered_at. Live: mdata.loads(customer_id+rate_total_cents+not-deleted)=3 booked, dispatched-or-beyond=1; hop.deliver (load_stops.actual_departure_at NOT NULL AND stop_type='delivery')=0; hop.pod_bol (docs.file_links\u22c8docs.files\u22c8mdata.loads, entity_type='load')=0 \u2014 ZERO POD/BOL documents linked to any load. \u00a79.0.17 CONSOLIDATED (screens/CC-3 lane, 3 sites sharing root cause 'no driver-facing capture flow has been exercised yet'): hop.deliver=0, hop.pod_bol=0, scenario.accident (safety.accident_reports)=0. No delivery evidence, no POD/BOL evidence, no accident chain has ever been walked end-to-end in this environment. Blocks WIRE-04 evidence gate, WIRE-05 revrec (flag is ON for TRANSP+TRK but produces 0 output because this upstream gate is empty \u2014 confirmed NOT a landmine: 0 'unbilled revenue' JEs exist, consistent with 0 upstream evidence, not a silent-fail poster).",
       "guard": "scripts/verify-disp-wire-07-departure-evidence.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "WIRE-07 departure evidence: 0/12 load_stops have actual_departure_at; 0 have actual_arrival_at; only 1 load past assigned status. Critical path blocked.",
+        "guard_sample": "24-slice live probe 2026-08-05: hop.deliver=0, hop.pod_bol=0 (0 file_links joined to any load), scenario.accident=0. screens-lane empty sites (3) routed to CC-3. hop.revenue flag ON for 2/3 entities but 0 unbilled-revenue JEs (expected given 0 upstream evidence, not a defect).",
         "money_critical": false
       },
       "status": "open",
