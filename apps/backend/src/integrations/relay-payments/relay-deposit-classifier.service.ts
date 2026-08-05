@@ -19,6 +19,13 @@
  */
 import type { DbClient } from "./db-client.type.js";
 import { upsertRelayWalletDepositFeedRow } from "./relay-wallet-bank-feed.service.js";
+import {
+  materialiseRelayDepositAsTransfer,
+  type Stage1TransferResult,
+} from "./relay-deposit-stage1-transfer.service.js";
+
+/** System actor for the ingest path (mirrors relay-wallet-bank-feed.service.ts). */
+const SYSTEM_ACTOR_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-4000-8000-000000000001";
 
 export type RelayDepositIngestSource = "daily_pull" | "webhook" | "csv_import";
 
@@ -38,6 +45,8 @@ export type RelayDepositResult = {
   deposit_id: string;
   funding_card_last4: string | null;
   classification: RelayDepositClassification;
+  /** CONN-3 stage 1 outcome — created, or the reason it was deliberately not materialised. */
+  stage1?: Stage1TransferResult | { created: false; reason: "error"; detail: string };
 };
 
 /** Parse the funding card's last-4 from a deposit Note. Relay writes e.g. "9104. Card deposit." — the
@@ -92,7 +101,8 @@ export async function upsertRelayDeposit(
   operatingCompanyId: string,
   deposit: RelayDepositInput,
   companyCards: Set<string>,
-  ingestSource: RelayDepositIngestSource
+  ingestSource: RelayDepositIngestSource,
+  actorUserId?: string
 ): Promise<RelayDepositResult> {
   const fundingCardLast4 = parseFundingCardLast4(deposit.note);
   const classification = classifyDeposit(deposit.status, fundingCardLast4, companyCards);
@@ -157,5 +167,35 @@ export async function upsertRelayDeposit(
     funding_card_last4: fundingCardLast4,
   });
 
-  return { relay_deposit_id: relayDepositId, deposit_id: deposit.deposit_id, funding_card_last4: fundingCardLast4, classification };
+  // CONN-3 STAGE 1 — materialise this funding as a banking.transfers row (funding account → Relay
+  // wallet) so the EXISTING transfer poster can book it. Going-forward only: this fires on ingest, and
+  // nothing sweeps history. It writes no GL itself; TRANSFER_GL_POSTING_ENABLED still decides whether
+  // the transfer posts.
+  //
+  // Deliberately non-fatal. A deposit that cannot be materialised (unmapped card, unclassified,
+  // canceled) must still be STORED and visible in the review queue — refusing to record the deposit
+  // because we cannot yet book it would hide money from the owner, which is the opposite of the goal.
+  let stage1: Stage1TransferResult | { created: false; reason: "error"; detail: string } = {
+    created: false,
+    reason: "error",
+    detail: "not attempted",
+  };
+  try {
+    stage1 = await materialiseRelayDepositAsTransfer(
+      client,
+      operatingCompanyId,
+      deposit.deposit_id,
+      actorUserId ?? SYSTEM_ACTOR_ID
+    );
+  } catch (error) {
+    stage1 = { created: false, reason: "error", detail: error instanceof Error ? error.message : String(error) };
+  }
+
+  return {
+    relay_deposit_id: relayDepositId,
+    deposit_id: deposit.deposit_id,
+    funding_card_last4: fundingCardLast4,
+    classification,
+    stage1,
+  };
 }
