@@ -161,7 +161,12 @@ export function ScenarioTrackerPanel({ companyId }: Props) {
 
   const allRows = useMemo(() => {
     if (!data) return [];
-    return [...data.hops, ...data.scenarios];
+    // P0 2026-08-05: spreading these unguarded threw `TypeError: i.scenarios is not iterable` and,
+    // because this panel is mounted unconditionally in OwnerHome, the throw escaped to the page error
+    // boundary and took the ENTIRE owner homepage down in production. The payload legitimately omits
+    // these arrays when audit.scenario_status has no is_current rows (it is empty on prod: 0 rows).
+    // An absent slice must degrade this panel to empty, never crash the page that hosts it.
+    return [...(data.hops ?? []), ...(data.scenarios ?? [])];
   }, [data]);
 
   if (isLoading && !data) {
