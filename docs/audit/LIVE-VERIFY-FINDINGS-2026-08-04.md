@@ -1277,3 +1277,26 @@ membership-scoped session.
 - LANE:      CC-1 (accounting) for JE-type stamping — note LV-021 flagged that intent must be confirmed first, since entry-type may be manual-only by design; CURSOR/CC-1 for seeding classes on TRK and USMCA
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `catalogs.journal_entry_types` 16 total / 16 active. `accounting.journal_entries` with `journal_entry_type_id IS NOT NULL` = **11** of **1,787** (0.6%). `catalogs.classes` 177 total, TRANSP 177, non-TRANSP **0**. `catalogs.items` 241 total — TRANSP 190, TRK 46, USMCA 5. `catalogs.detail_types` 144. Tables denying SELECT to `ih35_app` across 20 schemas = **0**.
 - status:    OPEN
+
+## LV-078  PM automation has run **3,914 times** and written **33,216 auto-WO log rows** while only **4 of 182 units** have a schedule and **0 of 24 schedules are active** — high-volume machinery driving one work order. Plus a real landmine: an empty `app.operating_company_id` makes maintenance RLS **throw**, not return zero.
+- module:    maintenance / fleet (GUARD live-verify-after-merge)
+- entity:    TRANSP
+- surface:   `maintenance.pm_schedules` · `pm_schedule_runs` · `pm_auto_wo_log` · `work_orders` · `mdata.units`
+- observed:  **The automation is busy; the configuration is empty.**
+  | measure | value |
+  |---|---|
+  | `pm_schedule_runs` | **3,914** |
+  | `pm_auto_wo_log` rows | **33,216** (7,854 historical deletes) |
+  | `pm_schedules` total | 24 |
+  | `pm_schedules` **active** | **0** |
+  | distinct units with any schedule | **4** of **182** |
+  | `work_orders` produced | **1** (with unit and vendor set) |
+  | `work_order_lines` | 1 |
+  So the preventive-maintenance engine has executed nearly four thousand times and written thirty-three thousand log rows, against a configuration where **no schedule is active** and **178 of 182 units are uncovered**. Whatever those 33,216 rows record, they are not producing work: exactly one work order exists in the entire system.
+  **I am deliberately NOT calling the empty configuration a defect.** Per §0's origin rule and the owner's standing statement that nothing operational has been created in the TMS — no loads, no dispatch, no maintenance beyond test — an unconfigured PM programme is expected state. A prior finding recorded the fleet as having *zero* PM schedules; there are now 24, so the direction is forward.
+  **What is worth flagging is the ratio, not the emptiness.** A scheduler that runs 3,914 times and logs 33,216 rows while 0 schedules are active is doing sustained work with no possible output. That is either a loop that should short-circuit when no active schedule exists, or a log that records evaluations rather than actions. Either way it is 33,216 rows of storage and 3,914 executions bought for one work order, and it will look identical whether the programme is switched on correctly later or stays broken — the same "expected-state-recorded-as-failure" ambiguity as LV-027 and LV-053. **UNVERIFIED — whether the log records evaluations or attempted actions**; I did not read the scheduler, and the answer decides whether this is benign idling or wasted work.
+  **Separately — a genuine RLS landmine, found by tripping it.** After an earlier test set `app.operating_company_id` to the empty string, every query against `maintenance.*` failed with **`invalid input syntax for type uuid: ""`**. The policy casts the GUC to `uuid` without a `NULLIF` guard, so an **empty** GUC **throws** instead of returning zero rows. That matters because it is the opposite of the documented RLS-0 landmine: an unset GUC silently yields 0 (a false-empty), while an *empty-string* GUC produces a hard error. Any code path that clears rather than unsets the GUC will 500 on maintenance rather than degrade quietly. The canonical FORCED-RLS pattern in §2 uses `current_setting('app.operating_company_id', true)` with a `NULLIF`-style guard elsewhere; these maintenance policies appear not to.
+- severity:  major (33,216 log rows and 3,914 runs producing 1 WO; plus an RLS pattern that throws on an empty GUC)
+- LANE:      CC-1 / CURSOR (maintenance) — short-circuit the scheduler when no active schedule exists, and add the `NULLIF` guard to the maintenance RLS cast so an empty GUC degrades instead of erroring
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` set to TRANSP. `maintenance.pm_schedule_runs` **3,914**; `pm_auto_wo_log` **33,216**; `pm_schedules` 24 total with **0** `is_active` and **4** distinct `unit_id`; `mdata.units` without any PM schedule **178** of 182; `maintenance.work_orders` **1** (unit and vendor both set); `work_order_lines` **1**. Landmine reproduced: with `app.operating_company_id = ''`, `SELECT count(*) FROM maintenance.pm_schedule_runs` raises `invalid input syntax for type uuid: ""`; setting the GUC to a valid uuid makes the identical query succeed.
+- status:    OPEN
