@@ -53,6 +53,7 @@ export type BankFeedGlSkipReason =
   | "account_cross_entity"
   | "account_not_postable"
   | "bank_account_ledger_unlinked"
+  | "bank_ledger_account_class_mismatch"
   | "bank_account_hidden"
   | "zero_amount"
   | "post_failed";
@@ -113,6 +114,10 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
           bt.destination_bank_account_id::text         AS destination_bank_account_id,
           bt.matched_transfer_id::text                 AS matched_transfer_id,
           ba.ledger_account_id::text                   AS bank_ledger_account_id,
+          ba.account_class::text                        AS bank_account_class,
+          led.account_type::text                        AS bank_ledger_account_type,
+          led.account_subtype::text                     AS bank_ledger_account_subtype,
+          led.account_name::text                        AS bank_ledger_account_name,
           ba.hidden_at                                  AS bank_account_hidden_at,
           ca.id::text                                  AS cat_account_id,
           ca.operating_company_id::text                AS cat_account_opco,
@@ -124,6 +129,8 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
           AND ba.operating_company_id = bt.operating_company_id
         LEFT JOIN catalogs.accounts ca
           ON ca.id = bt.categorization_gl_account_id
+        LEFT JOIN catalogs.accounts led
+          ON led.id = ba.ledger_account_id
         WHERE bt.id = $1::uuid
           AND bt.operating_company_id = $2::uuid
         LIMIT 1
@@ -144,6 +151,10 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
           destination_bank_account_id: string | null;
           matched_transfer_id: string | null;
           bank_ledger_account_id: string | null;
+          bank_account_class: string | null;
+          bank_ledger_account_type: string | null;
+          bank_ledger_account_subtype: string | null;
+          bank_ledger_account_name: string | null;
           bank_account_hidden_at: string | null;
           cat_account_id: string | null;
           cat_account_opco: string | null;
@@ -200,6 +211,32 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
 
     // Fail-closed bank cash-GL bridge (the direction-appropriate bank leg).
     if (!txn.bank_ledger_account_id) return { ok: false, reason: "bank_account_ledger_unlinked" };
+
+    // The bridge being PRESENT is not the same as it being RIGHT, and a wrong bridge posts silently.
+    // Measured on prod 2026-08-04: the "Business Platinum Card®" bank account (account_class='credit')
+    // has ledger_account_id pointing at "Faro Factoring Reserves" — an Asset/Savings account. Because
+    // this function trusted ledger_account_id verbatim, 120 categorized card purchases CREDITED
+    // $41,191.86 to the factoring reserve between 2026-07-04 and 2026-08-04, where a card purchase must
+    // instead CREDIT a card liability. Nothing errored; the books simply drifted.
+    //
+    // So validate the bridge's SHAPE, not just its presence: a credit-class account must bridge to a
+    // Liability, a depository account to an Asset. A mismatch is a mapping defect that only a human can
+    // resolve (which GL account represents this card), so refuse to post and say why. Refusing leaves
+    // the line categorized and unposted — recoverable. Posting it wrong is not.
+    const bankClass = (txn.bank_account_class ?? "").trim().toLowerCase();
+    const ledgerType = (txn.bank_ledger_account_type ?? "").trim().toLowerCase();
+    const expectedType = bankClass === "credit" ? "liability" : bankClass === "depository" ? "asset" : null;
+    if (expectedType && ledgerType && ledgerType !== expectedType) {
+      return {
+        ok: false,
+        reason: "bank_ledger_account_class_mismatch",
+        message:
+          `bank account class '${bankClass}' must bridge to a ${expectedType} GL account, but ` +
+          `ledger_account_id points at '${txn.bank_ledger_account_name ?? "?"}' ` +
+          `(${txn.bank_ledger_account_type}/${txn.bank_ledger_account_subtype}). ` +
+          `Fix the bank account's ledger_account_id before posting.`,
+      };
+    }
 
     // BANK-ACCOUNT-HIDE: an account hidden for THIS entity can never receive a NEW GL posting (flag OFF
     // by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
