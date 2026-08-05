@@ -77,11 +77,14 @@ function checkMultiBillsParity(files) {
   if (deactivatedGuards.length < 2) {
     violations.push("CreateMultipleBillsPage A/P and expense pickers must both filter out deactivated_at");
   }
-  // Drivers via EntityPicker kind=driver (EP-DRIVER-KIND-SWEEP §9.0 item 17).
+  // Drivers may still be listDrivers or EntityPicker kind=driver (driver kind-sweep).
   if (!page.includes("listDrivers") && !/kind=["']driver["']/.test(page)) {
     violations.push("CreateMultipleBillsPage must load entity-scoped drivers (listDrivers or EntityPicker kind=driver)");
   }
-  if (!page.includes("listUnits")) violations.push("CreateMultipleBillsPage must load entity-scoped units");
+  // EP-UNIT-KIND-SWEEP: units via EntityPicker kind=unit (no local listUnits roster).
+  if (!page.includes("listUnits") && !/kind=["']unit["']/.test(page)) {
+    violations.push("CreateMultipleBillsPage must load entity-scoped units (listUnits or EntityPicker kind=unit)");
+  }
   if (!page.includes("unit_id")) violations.push("CreateMultipleBillsPage must pass unit_id to createVendorBill");
   if (!page.includes('data-testid="create-multiple-bills-page"')) {
     violations.push("CreateMultipleBillsPage missing data-testid");
@@ -126,7 +129,7 @@ const goodFixture = [
       `if (acct.deactivated_at) return false;`,
       `coa_account_id: row.coa_account_id`,
       `account_id: row.expense_account_id`,
-      `kind="driver"`,
+      `listDrivers`,
       `listUnits`,
       `unit_id`,
       `data-testid="create-multiple-bills-page"`,

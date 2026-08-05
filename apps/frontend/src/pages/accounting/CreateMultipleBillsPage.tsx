@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createVendorBill } from "../../api/accounting";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
-import { getDriver, listUnits, listVendors } from "../../api/mdata";
+import { getDriver, listVendors } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
@@ -12,8 +12,6 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
-import { Combobox } from "../../components/Combobox";
-import { CreateUnitModal } from "../../components/fleet/CreateUnitModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { dueDateFromBillTerms } from "../../components/accounting/vendorBillDueDate";
@@ -101,7 +99,6 @@ export function CreateMultipleBillsPage() {
   const seeds = ((location.state as { seeds?: SeedDraft[] } | null)?.seeds ?? []).filter(Boolean);
   const [rows, setRows] = useState<BillDraftRow[]>(() => (seeds.length > 0 ? seeds.map(rowFromSeed) : [emptyRow()]));
   const [lastResult, setLastResult] = useState<CreateResult | null>(null);
-  const [unitCreateRowId, setUnitCreateRowId] = useState<string | null>(null);
 
   const vendorsQuery = useQuery({
     queryKey: ["multi-bills", "vendors", companyId],
@@ -120,25 +117,12 @@ export function CreateMultipleBillsPage() {
     enabled: Boolean(companyId),
   });
 
-  const unitsQuery = useQuery({
-    queryKey: ["multi-bills", "units", companyId],
-    queryFn: () => listUnits({ status: "Active", operating_company_id: companyId, limit: 500 }),
-    enabled: Boolean(companyId),
-  });
 
   const vendorOptions = useMemo(
     () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
     [vendorsQuery.data?.vendors]
   );
 
-  const unitOptions = useMemo(
-    () =>
-      ((unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>).map((unit) => ({
-        value: String(unit.id ?? ""),
-        label: String(unit.unit_number ?? unit.display_id ?? unit.id ?? ""),
-      })),
-    [unitsQuery.data?.units]
-  );
 
   // Bill HEADER A/P account (accounting.bills.coa_account_id) — the credit side of the bill.
   // is_postable is REQUIRED: without it a non-postable Liability HEADER (e.g. the "Driver Escrow"
@@ -293,13 +277,6 @@ export function CreateMultipleBillsPage() {
           onRetry={() => void coaQuery.refetch()}
         />
       ) : null}
-      {unitsQuery.isError ? (
-        <ListErrorBanner
-          message={`Failed to load units for bill rows: ${(unitsQuery.error as Error)?.message ?? "Request failed"}`}
-          onRetry={() => void unitsQuery.refetch()}
-        />
-      ) : null}
-
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
         <span className="font-medium text-gray-800">Rows: {rows.length}</span>
         <span className="text-gray-700">Total draft amount: ${totalUsd.toFixed(2)}</span>
@@ -419,17 +396,13 @@ export function CreateMultipleBillsPage() {
                 </td>
                 <td className="px-2 py-1.5">
                   <div className="min-w-[120px]">
-                    <Combobox
-                      options={unitOptions}
+                    <EntityPicker
+                      kind="unit"
+                      operatingCompanyId={companyId}
                       value={row.unit_id || null}
                       onChange={(next) => updateRow(row.id, { unit_id: next ?? "" })}
                       placeholder="Select unit…"
-                      loading={unitsQuery.isLoading}
-                      allowClear
-                      allowAddNew={{
-                        label: "+ Create unit",
-                        onAdd: () => setUnitCreateRowId(row.id),
-                      }}
+                      disabled={!companyId}
                     />
                   </div>
                 </td>
@@ -485,16 +458,6 @@ export function CreateMultipleBillsPage() {
         </div>
       ) : null}
 
-      <CreateUnitModal
-        open={unitCreateRowId !== null}
-        operatingCompanyId={companyId}
-        onClose={() => setUnitCreateRowId(null)}
-        onCreated={(createdId) => {
-          if (unitCreateRowId) updateRow(unitCreateRowId, { unit_id: createdId });
-          setUnitCreateRowId(null);
-          void unitsQuery.refetch();
-        }}
-      />
     </div>
   );
 }

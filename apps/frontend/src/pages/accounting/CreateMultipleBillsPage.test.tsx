@@ -87,48 +87,21 @@ vi.mock("../../components/parity/EntityPicker", () => ({
     value: string | null;
     onChange: (v: string | null) => void;
     placeholder?: string;
-  }) => (
-    <select
-      aria-label={placeholder ?? "entity-picker"}
-      value={value ?? ""}
-      onChange={(event) => onChange(event.target.value || null)}
-    >
-      <option value="">{placeholder ?? "Select…"}</option>
-      <option value="drv-1">Jane Driver</option>
-    </select>
-  ),
+  }) => {
+    const isUnit = (placeholder ?? "").toLowerCase().includes("unit");
+    return (
+      <select
+        aria-label={placeholder ?? "entity-picker"}
+        value={value ?? ""}
+        onChange={(event) => onChange(event.target.value || null)}
+      >
+        <option value="">{placeholder ?? "Select…"}</option>
+        {isUnit ? <option value="unit-1">T169</option> : <option value="drv-1">Jane Driver</option>}
+      </select>
+    );
+  },
 }));
 
-vi.mock("../../components/Combobox", () => ({
-  Combobox: ({
-    value,
-    onChange,
-    options,
-    placeholder,
-  }: {
-    value: string | null;
-    onChange: (v: string | null) => void;
-    options: Array<{ value: string; label: string }>;
-    placeholder?: string;
-  }) => (
-    <select
-      aria-label={placeholder ?? "combobox"}
-      value={value ?? ""}
-      onChange={(event) => onChange(event.target.value || null)}
-    >
-      <option value="">{placeholder ?? "Select…"}</option>
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-  ),
-}));
-
-vi.mock("../../components/fleet/CreateUnitModal", () => ({
-  CreateUnitModal: () => null,
-}));
 
 function wrap(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });

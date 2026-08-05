@@ -61,8 +61,8 @@ function main() {
   if (/>\s*\+\s*New\s*</.test(page) || />\s*\+\s*Add\s*</.test(page)) {
     failures.push("PmSchedulePage must not use + New or + Add vocabulary");
   }
-  if (!page.includes("listUnits")) {
-    failures.push("PmSchedulePage must load units via listUnits for the create picker");
+  if (!page.includes("EntityPicker") || !/kind=["']unit["']/.test(page)) {
+    failures.push("PmSchedulePage create form must use EntityPicker kind=\"unit\" for unit_id");
   }
   if (!page.includes("createMaintenancePmSchedule")) {
     failures.push("PmSchedulePage must call createMaintenancePmSchedule");
