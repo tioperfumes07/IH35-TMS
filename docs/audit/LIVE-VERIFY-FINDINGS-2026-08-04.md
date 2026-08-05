@@ -1883,3 +1883,49 @@ guaranteed `42P01` on first call, because the table the handler selects from doe
              `catalogs.detail_types` **144** total / **144** NULL-opco; cross-entity posting→account
              mismatches **0**. Code census by grep over `apps/backend/src/**/*.ts` excluding tests.
 - status:    OPEN
+
+### LV-097 CORRECTION — **OWNER RULING 2026-08-05: "trucking does not have factoring."** Severity downgraded major → informational; my original reading was wrong
+**Owner decisions outrank my analysis (§0 precedence: FACTS resolve prod > guard > repo > memory, but
+DECISIONS are the owner's).** I filed TRK's expired `FACTORING_GL_POSTING_ENABLED` as **major** on the
+reasoning that a money-posting flag was silently OFF. That reasoning assumed TRK factors invoices. It does
+not. **IH 35 Trucking is the asset holder and has no factoring**, so factoring GL posting being effectively
+OFF for TRK is the **correct end state**, not a defect. I am correcting this rather than leaving a wrong
+severity standing in the record.
+
+**Corroborated on prod before accepting it** — the ruling and the data agree:
+| check (TRK `b49a737b`) | result |
+|---|---|
+| invoices with `factoring_advance_id` or `factor_profile_id` | **0** |
+| invoices with `factoring_status` other than `none` | **0** |
+| `factoring.factoring_advances` (all entities) | **0** rows |
+| `factoring.factoring_reserve_movements` / `letter_of_release` / `customer_factor_assignment` | **0** rows each |
+TRK has **no factoring footprint whatsoever**. Nothing was being under-posted, because there is nothing to post.
+
+**What was wrong in my original write-up:** I treated "flag effectively OFF" as inherently a risk without
+first asking whether the entity should ever post that flag. That is the same error as flagging import-origin
+rows as unlinked — judging a state against a generic expectation instead of against what the entity actually
+does. I applied the origin test rigorously to rows (LV-092) and then failed to apply the equivalent
+entity-model test to a flag.
+
+**What survives, narrowed and de-escalated.** One point remains true and is worth keeping only as hygiene:
+the override row reads **`enabled = true`** while being effectively OFF. Stored state still disagrees with
+effective state. But since the effective state is now known to be **correct**, this is a **record-tidiness
+issue, not a money risk** — nobody will be misled into thinking posting is on for a path that should never
+post anyway.
+**The recommendation therefore INVERTS.** My original advice was to renew or remove the `expires_at`. Renewing
+it would be actively wrong — it would turn ON posting for a capability TRK does not have. The correct action
+is to **delete the override row or set `enabled = false`**, so the stored record states the owner's actual
+intent instead of relying on a lapsed timestamp to produce the right answer by accident.
+**The proposed guard still stands and is unaffected** (`expires_at < now() AND enabled = true` → fail closed):
+its value is surfacing stored-vs-effective divergence, which was real here regardless of which direction is
+correct. It would have surfaced this row for an owner decision months earlier.
+
+**Unchanged by this ruling:** `RELATED_PARTY_LOAN_GL_POSTING_ENABLED` on TRK remains **UNVERIFIED — intent**
+(owner decision outstanding), and `REVENUE_RECOGNITION_POST_ENABLED = false` on TRK remains recorded as
+consistent with the entity model, not a defect.
+- severity:  **informational** (superseded from *major* by owner ruling 2026-08-05)
+- LANE:      CC-1 (money) — remove the override row or set it explicitly `enabled = false`; **do NOT renew
+             the expiry**
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             TRK factoring footprint counts as tabulated above.
+- status:    SUPERSEDED-BY-OWNER-RULING (factoring row) · LV-097's other two rows unchanged
