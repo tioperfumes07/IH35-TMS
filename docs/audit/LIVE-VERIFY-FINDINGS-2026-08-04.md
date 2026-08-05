@@ -1115,3 +1115,82 @@ membership-scoped session.
 - LANE:      none — GUARD attestation
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `mdata.units`: total **182**, `owner_company_id IS NOT NULL` **182**, `currently_leased_to_company_id IS NOT NULL` **52**, rows where `currently_leased_to_company_id = owner_company_id` **0**. `mdata.drivers`: total **179**, active **88**.
 - status:    OPEN (informational)
+
+## LV-071  GUARD passes 23–40 — 18 further passes across every remaining schema. Referential integrity holds at 155K+ scale; USDOT gap CLOSED; three new gaps found: IFTA/SCAC missing on all 3 entities, 24 documents with no link or category, and a "signed" contract with neither PDF nor signature record
+- module:    cross-module (GUARD live-verify-after-merge, passes 23–40)
+- entity:    ALL
+- surface:   `banking` · `accounting` · `mdata` · `docs` · `org` · `identity` · `legal` · `insurance` · `maintenance` · `events` · `integrations`
+- observed:  Eighteen passes completing the sweep to 40. **Referential integrity is clean everywhere it was tested, including at real scale.**
+  | # | pass | result |
+  |---|---|---|
+  | 23 | bank account ↔ ledger bind | 17 accounts, **0** live unbound, **0** orphan binds |
+  | 24 | invoice lines → invoices | 7 lines, **0** orphans |
+  | 25 | bill lines → bills | **155,274** lines, **0** orphans |
+  | 26 | payments → customers | **12,124** payments, **0** orphan customers |
+  | 27 | QBO sync queue | 9 rows: 7 `synced`, **2 `dead_letter`** |
+  | 28 | insurance | `type_catalog` 45; `policy_unit`/`coi_request`/`payment_schedule` all 0 — configured, unused |
+  | 29 | legal | `contract_templates` 69, `contract_audit_log` 30, `contract_instances` 1, **`signatures` 0** |
+  | 30 | maintenance | `pm_auto_wo_log` 33,216 (7,854 del), `pm_schedule_runs` 3,890, `parts_inventory` 144, `pm_schedules` 24 (12 del) |
+  | 31 | load stops → loads | 12 stops, **0** orphans |
+  | 32 | events | `events.event_log` 1,354, **`n_tup_del` 0** — append-only holds |
+  | 33 | identity | 25 users, 15 active |
+  | 34 | org structure | 3 companies: USMCA Freight, IH 35 Transportation, IH 35 Trucking |
+  | 35 | access control | 13 grants, 11 users, 3 companies, all active, **0 orphans** |
+  | 36 | USDOT registration | **0 missing — a previously recorded owner data gap is now CLOSED** |
+  | 37 | fixed-asset depreciation | 4 postings, nets 0¢ (LV-065) |
+  | 38 | compliance identifiers | **1 missing MC, 3 missing IFTA, 3 missing SCAC** |
+  | 39 | document store | 24 files, all uploads complete, **16 of 24 hashed**, **0 linked to a load, 0 categorised** |
+  | 40 | document integrity | **0** orphan load references |
+  **CLOSED — USDOT.** All three operating companies now carry a `usdot_number`. This was on record as an owner data gap blocking a module; it is resolved and I am recording the closure with evidence so nobody re-opens it.
+  **NEW GAP 1 — IFTA and SCAC missing on every entity.** `ifta_license_number` is NULL on **all 3** companies and `scac_code` is NULL on **all 3**; `mc_number` is NULL on 1. For a carrier running Laredo↔Mexico, the IFTA licence is not cosmetic — it is the registration under which interstate fuel tax is reported, and the system already holds 1,548 fuel transactions and a fuel-tax filing checklist item in the month-close wizard. SCAC is required for EDI and customer onboarding. These are **owner data-entry items, not code defects**.
+  **NEW GAP 2 — 24 documents are unlinked and uncategorised.** `docs.files` holds 24 rows, all with `upload_completed_at` set, but **`dispatch_load_id` NULL on all 24** and **`category_id` NULL on all 24**; `docs.file_links` has never been written (`n_tup_ins` 0). So every uploaded document floats free of any load, entity record or category. **0 carry a dangling load reference**, so nothing is broken — they are simply attached to nothing, which for an evidence store (POD/BOL, insurance certificates, driver files) means the documents exist but cannot be found from the records they belong to. Also **only 16 of 24 carry a `sha256_hash`**, so a third of the store lacks the integrity digest that makes a document defensible as evidence.
+  **NEW GAP 3 — the one "signed" contract has no signature record either.** LV-049 found `legal.contract_instances` holding a single row marked `signed_electronically` with `signed_pdf_attachment_id` NULL. Pass 29 adds that **`legal.signatures` is entirely empty (0 rows)**. So that contract has a status asserting execution, no signed PDF, and no signature record — three independent places where the evidence should exist and does not. This strengthens LV-049 from "missing artifact" to "no execution evidence of any kind", on the control that gates escrow forfeiture.
+  **Also noted, not filed:** 2 `dead_letter` rows in the QBO sync queue (small, but they are failures parked with no alerting — same family as LV-027/LV-053); and `maintenance.pm_auto_wo_log` carries 7,854 deletes against 33,216 live rows, which is log churn on a non-financial table rather than a void-not-delete violation.
+- severity:  major (three concrete gaps: statutory identifiers, an unlinked evidence store, and a contract with no execution evidence) — all other passes clean
+- LANE:      OWNER for IFTA/SCAC/MC data entry · CURSOR/CC-1 for document linking + hashing · CC-1 for the legal signature chain
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. Counts exactly as tabulated. `org.companies` 3 with `usdot_number` NULL **0**, `mc_number` NULL 1, `ifta_license_number` NULL 3, `scac_code` NULL 3. `docs.files` 24 total / 24 live / 24 `upload_completed_at` / 16 `sha256_hash` / 0 `dispatch_load_id` / 0 `category_id`; `docs.file_links` `n_tup_ins` 0; orphan load refs 0. `legal.signatures` 0. `org.user_company_access` 13 rows, 0 orphaned against `identity.users` or `org.companies`.
+- status:    OPEN
+
+## LV-072  GOVERNANCE DRIFT — the standards skill indexes 32 `.cursor/rules` files; there are **41**. Nine are undocumented, including Rule 32 (continuous mode) and Rule 35 (no CI babysit) — two rules I was actively violating because they were not in the index I had read.
+- module:    governance / session-boot
+- entity:    N/A
+- surface:   `.claude/skills/ih35-tms-standards` §11 vs `.cursor/rules/*.mdc`
+- observed:  §11 of the standards skill states **"COUNTED 2026-08-03: 32 files"** and instructs, in the same paragraph, **"Never trust this count: run `ls .cursor/rules/*.mdc | wc -l` and reconcile against this list at session start."** I ran it. The actual count is **41**.
+  **Nine files are absent from the index:** `00-operating-method-LAW`, `31-cursor-never-idle-wave-drain`, `31-full-system-audit-mandatory`, `32-continuous-mode-no-idle`, `32-load-linkage-pre-operational`, `33-standing-session-directive`, `34-cursor-pr-title-prefix`, `35-fix-failures-no-ci-babysit`, `ih35-deep-linkage-audit`.
+  **This is not academic — I was violating two of them.** The skill's own §11 predicts precisely this: *"That is exactly how an agent violates a live rule while believing it had read them all."*
+  - **Rule 35 — FIX FAILURES, DO NOT BABYSIT CI** hard-bans `gh pr checks --watch`, long watch loops, and multi-turn "waiting for green" as a primary activity. I had been running merge-on-green polling loops on every PR this session. Killed on discovery.
+  - **Rule 32 — CONTINUOUS MODE** forbids ending a turn on "waiting for CI" and requires the next action to start in the same turn. I had repeatedly closed turns on PR status.
+  Both were invisible to me because I had read the index rather than the directory. The index is a *summary of the law*, and the skill says outright: **"A summary of the law is not the law."**
+  **Two of the nine also matter to work already recorded in this file.** `32-load-linkage-pre-operational` is the codified owner ruling that imported fuel/expense rows are legitimately `load_id`-null — the exact law under which I retracted LV-063. `31-full-system-audit-mandatory` sets the completion bar at DoD A–E + VERIFY 1–8 **PROD-VERIFIED per entity**, which is the standard the 40 GUARD passes in this file are measured against.
+  **The numbering also repeats more than §11 records.** §11 documents 21, 23 and 25 as duplicated numbers; the directory shows **31 and 32 are duplicated as well** (`31-cursor-never-idle-wave-drain` / `31-full-system-audit-mandatory`, and `32-continuous-mode-no-idle` / `32-load-linkage-pre-operational`). Counting by number rather than by file therefore under-counts by more than the index admits.
+- severity:  major (governance — an agent reading only the index will violate live, always-apply rules, as I did)
+- LANE:      whoever owns `.claude/skills/ih35-tms-standards` — the skill lives in the sibling clone `/Users/jorgemunoz/IH35-TMS-clean`, outside my working tree, so I am **not** editing it. Routing the correction rather than making it.
+- neon-check: none — repository-level governance finding. `ls .cursor/rules/*.mdc | wc -l` → **41** at main `272a59bf6`; full filename list enumerated above; both Rule 32 and Rule 35 read in full and confirmed `alwaysApply: true`.
+- status:    OPEN
+
+## LV-073  Rule 31 per-entity verification — all 3 entities balance independently (0¢ each), and the per-entity split sharpens LV-051: **TRK holds 13,051 of 16,250 bills (80%) against a 13-posting ledger**, and issues ZERO invoices
+- module:    accounting (GUARD — Rule 31 per-entity bar)
+- entity:    TRANSP · TRK · USMCA
+- surface:   `accounting.journal_entries` · `accounting.invoices` · `accounting.bills` · `banking.bank_transactions` · `catalogs.accounts`
+- observed:  Rule 31 sets completion at **PROD-VERIFIED per entity**, and my earlier passes were TRANSP-weighted. Decomposing every prior aggregate by entity:
+  **Ledger balance — each entity balances on its own, not merely in aggregate:**
+  | entity | entries | postings | net |
+  |---|---|---|---|
+  | TRANSP | 1,769 | 3,566 | **0¢** |
+  | USMCA | 12 | 24 | **0¢** |
+  | TRK | 6 | 13 | **0¢** |
+  This is a stronger result than LV-050's whole-ledger proof: a cross-entity imbalance could in principle cancel in aggregate, and it does not — each entity's books close independently.
+  **Document population by entity:**
+  | entity | invoices (QBO / TMS) | bills (of which QBO-cloned) | bank txns | CoA accounts |
+  |---|---|---|---|---|
+  | TRANSP | 11,979 (11,976 / 3) | 3,196 (3,195) | 6,012 | 404 |
+  | **TRK** | **0** | **13,051 (13,050)** | 4,835 | **958** |
+  | USMCA | 4 (0 / 4) | 3 (0) | 160 | 80 |
+  **Two findings fall out of the split.**
+  1. **TRK carries 80% of all accounts payable** — 13,051 of 16,250 bills — against a ledger holding **6 journal entries and 13 postings**, and it holds the **largest chart of accounts** (958, more than double TRANSP's 404) despite the least GL activity. That is coherent for an asset holder absorbing a large imported QuickBooks history, but it means **LV-051's A/P tie-out was measured across mixed entities**: the $4.27M gap between GL `ap_control` and the bills subledger is overwhelmingly TRK's imported payables sitting against a near-empty TRK ledger, not a TRANSP condition. The conclusion of LV-051 is unchanged — the gap is expected under parallel books — but its **location** is now precise, and any future tie-out must be run per entity or it will keep reporting a number that belongs to a different company.
+  2. **TRK issues zero invoices.** Not a small number — none at all. That is exactly correct for an entity that owns and leases equipment rather than hauling freight, and it independently corroborates the standing ruling that TRK does not factor and leases equipment only. Recording it as a **PASS**, since a single TRK customer invoice would contradict the entity model.
+  **USMCA is entirely TMS-native**: all 4 invoices and all 3 bills carry no QBO origin. So the test entity is the one place where the go-forward path is exercised without imported history mixed in — which is why the invoice→GL→email chain proved out there and on TRANSP (LV-058) rather than on TRK.
+- severity:  informational — per-entity PASS; sharpens LV-051's scope
+- LANE:      none — GUARD attestation. Note for CC-1: run control-account tie-outs **per entity**, never aggregated.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. Journal entries joined to postings grouped by `operating_company_id`: TRANSP 1,769/3,566/0¢, USMCA 12/24/0¢, TRK 6/13/0¢. Unvoided invoices by entity with `source_system` split, unvoided bills by entity with `qbo_bill_id` split, unvoided `banking.bank_transactions` by entity, and `catalogs.accounts` by entity — all as tabulated. Totals reconcile: bills 3,196+13,051+3 = 16,250; invoices 11,979+4 = 11,983; accounts 404+958+80 = 1,442.
+- status:    OPEN (informational)
