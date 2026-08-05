@@ -289,7 +289,13 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/arrival", async (req, reply) => {
+  app.post(
+    "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/arrival",
+    // CLS-DISP-WIRE-07 — these driver capture endpoints authorize and write, so CodeQL
+    // (js/missing-rate-limiting) requires an explicit limit. 60/min matches the other authorized
+    // write routes and is far above a real driver's arrive/depart cadence.
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const params = stopParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
@@ -354,7 +360,13 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.post("/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/departure", async (req, reply) => {
+  app.post(
+    "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/departure",
+    // CLS-DISP-WIRE-07 — these driver capture endpoints authorize and write, so CodeQL
+    // (js/missing-rate-limiting) requires an explicit limit. 60/min matches the other authorized
+    // write routes and is far above a real driver's arrive/depart cadence.
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const params = stopParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
