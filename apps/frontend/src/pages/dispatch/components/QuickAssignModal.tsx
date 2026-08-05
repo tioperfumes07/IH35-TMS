@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
-import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 
 type Props = {
@@ -49,15 +48,16 @@ export function QuickAssignModal({ open, operatingCompanyId, loadNumber, hardWar
         <label className="block text-xs font-semibold text-gray-600">
           Driver <span className="text-red-500">*</span>
           <div className="mt-0.5">
-            <DriverPickerWithCreate
+            <EntityPicker
+              kind="driver"
               operatingCompanyId={operatingCompanyId}
               value={driverId || null}
               onChange={(next) => setDriverId(next ?? "")}
-              open={open}
+              enabled={open}
               placeholder="Select driver…"
               className="h-9 w-full text-sm"
               allowClear={false}
-              // Standalone Modal chrome → default shell="modal".
+              dataTestId="dispatch-quick-assign-driver"
             />
           </div>
         </label>
