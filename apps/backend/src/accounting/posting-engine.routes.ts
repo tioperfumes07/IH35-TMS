@@ -211,7 +211,13 @@ export async function registerPostingEngineRoutes(app: FastifyInstance) {
   // hand-written journal entry. Flag-gated DEFAULT OFF and a strict no-op while the bridge is still
   // mismatched. `dry_run` is the default: correcting live ledger history is opt-in per call, never
   // something a stray POST does by accident.
-  app.post("/api/v1/accounting/posting-engine-mvp/remediate-bank-ledger-repoint", async (req, reply) => {
+  app.post(
+    "/api/v1/accounting/posting-engine-mvp/remediate-bank-ledger-repoint",
+    // Deliberately tight: each call can drive hundreds of reverse+repost pairs against posted ledger
+    // history. CodeQL (js/missing-rate-limiting) flags the authorization without a limit, and here the
+    // limit is substantive rather than box-ticking.
+    { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -228,8 +234,9 @@ export async function registerPostingEngineRoutes(app: FastifyInstance) {
       dryRun: body.data.dry_run !== false,
       limit: body.data.limit,
     });
-    return reply.code(200).send(result);
-  });
+      return reply.code(200).send(result);
+    }
+  );
 }
 
 
