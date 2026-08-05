@@ -6,11 +6,11 @@ import {
   listMaintenancePmSchedules,
   type PmScheduleRow,
 } from "../../../api/maintenance";
-import { listUnits } from "../../../api/mdata";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 const NIL_UUID = "00000000-0000-0000-0000-000000000000";
@@ -61,12 +61,6 @@ export function PmSchedulePage() {
     enabled: Boolean(companyId),
   });
 
-  const unitsQ = useQuery({
-    queryKey: ["mdata", "units", companyId, "pm-schedule-create"],
-    queryFn: () => listUnits({ operating_company_id: companyId, status: "Active" }),
-    enabled: Boolean(companyId) && formOpen,
-  });
-
   const createM = useMutation({
     mutationFn: (body: {
       operating_company_id: string;
@@ -91,10 +85,6 @@ export function PmSchedulePage() {
   });
 
   const rows = listQ.data?.rows ?? [];
-  const units = useMemo(
-    () => (unitsQ.data?.units ?? []) as Array<{ id: string; unit_number?: string }>,
-    [unitsQ.data?.units]
-  );
 
   const columns = useMemo<ParityColumn<PmScheduleRow>[]>(
     () => [
@@ -199,22 +189,20 @@ export function PmSchedulePage() {
         }}
       >
         <div className="space-y-3 text-sm" data-testid="pm-schedule-create-form">
-          <label className="block">
+          <div className="block" data-testid="pm-schedule-unit">
             <span className="text-xs text-gray-600">Unit</span>
-            <select
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={draft.unit_id}
-              onChange={(e) => setDraft((d) => ({ ...d, unit_id: e.target.value }))}
-              data-testid="pm-schedule-unit"
-            >
-              <option value="">Select unit</option>
-              {units.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.unit_number ?? u.id}
-                </option>
-              ))}
-            </select>
-          </label>
+            {/* SAF-B29: EntityPicker kind=unit — never silent <select> over listUnits Active page. */}
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={companyId}
+              value={draft.unit_id || null}
+              enabled={formOpen && Boolean(companyId)}
+              placeholder="Select unit…"
+              allowClear={false}
+              className="mt-1 w-full text-sm"
+              onChange={(next) => setDraft((d) => ({ ...d, unit_id: next ?? "" }))}
+            />
+          </div>
 
           <label className="block">
             <span className="text-xs text-gray-600">PM type</span>

@@ -61,8 +61,12 @@ function main() {
   if (/>\s*\+\s*New\s*</.test(page) || />\s*\+\s*Add\s*</.test(page)) {
     failures.push("PmSchedulePage must not use + New or + Add vocabulary");
   }
-  if (!page.includes("listUnits")) {
-    failures.push("PmSchedulePage must load units via listUnits for the create picker");
+  // SAF-B29: EntityPicker kind=unit (server search). Legacy listUnits+<select> is forbidden.
+  if (!/EntityPicker[\s\S]*kind=["']unit["']/.test(page)) {
+    failures.push("PmSchedulePage must use EntityPicker kind=unit for the create picker");
+  }
+  if (/listUnits\s*\(/.test(page)) {
+    failures.push("PmSchedulePage must not call listUnits for the create picker — use EntityPicker");
   }
   if (!page.includes("createMaintenancePmSchedule")) {
     failures.push("PmSchedulePage must call createMaintenancePmSchedule");
