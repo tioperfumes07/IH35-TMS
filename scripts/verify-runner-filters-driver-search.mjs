@@ -26,23 +26,33 @@ export function collectProblems(root = ROOT) {
     return problems;
   }
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (!/driverSearch/.test(code)) {
-    problems.push(`${FILE}: must declare driverSearch state for server type-ahead`);
-  }
-  if (/search:\s*""/.test(code)) {
-    problems.push(`${FILE}: must not hardcode search:"" with limit:200 (silent cap)`);
-  }
-  if (!/search:\s*driverSearch/.test(code)) {
-    problems.push(`${FILE}: listDrivers must pass search: driverSearch || undefined`);
-  }
-  if (!/onSearch=\{setDriverSearch\}/.test(src)) {
-    problems.push(`${FILE}: driver Combobox must wire onSearch={setDriverSearch}`);
-  }
-  if (!/queryKey:[\s\S]*driverSearch/.test(code)) {
-    problems.push(`${FILE}: driversQuery queryKey must include driverSearch`);
-  }
-  if (/driver_select[\s\S]{0,800}SelectCombobox/.test(src)) {
-    problems.push(`${FILE}: driver_select must use Combobox with onSearch, not SelectCombobox`);
+  const hasEntityPicker =
+    /EntityPicker/.test(src) &&
+    (/kind=["']driver["']/.test(src) || /kind=\{\s*["']driver["']\s*\}/.test(src));
+  if (hasEntityPicker) {
+    // EntityPicker kind=driver owns server search — silent-cap class closed.
+    if (/listDrivers\([\s\S]*limit:\s*500/.test(code)) {
+      problems.push(`${FILE}: must not keep silent listDrivers limit:500 alongside EntityPicker`);
+    }
+  } else {
+    if (!/driverSearch/.test(code)) {
+      problems.push(`${FILE}: must declare driverSearch state for server type-ahead`);
+    }
+    if (/search:\s*""/.test(code)) {
+      problems.push(`${FILE}: must not hardcode search:"" with limit:200 (silent cap)`);
+    }
+    if (!/search:\s*driverSearch/.test(code)) {
+      problems.push(`${FILE}: listDrivers must pass search: driverSearch || undefined`);
+    }
+    if (!/onSearch=\{setDriverSearch\}/.test(src)) {
+      problems.push(`${FILE}: driver Combobox must wire onSearch={setDriverSearch}`);
+    }
+    if (!/queryKey:[\s\S]*driverSearch/.test(code)) {
+      problems.push(`${FILE}: driversQuery queryKey must include driverSearch`);
+    }
+    if (/driver_select[\s\S]{0,800}SelectCombobox/.test(src)) {
+      problems.push(`${FILE}: driver_select must use Combobox with onSearch, not SelectCombobox`);
+    }
   }
   return problems;
 }
