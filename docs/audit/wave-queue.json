@@ -552,7 +552,7 @@
         { "path": "apps/backend/src/accounting/invoice-send.service.ts:51 INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE — flag defined, NO registry row, defaults OFF (WIRE-04)", "entity": "ALL", "note": "ACCT-F61. Revenue latch (#3955) requires evidence; invoice send does NOT. Customer gets invoiced while GL correctly declines to recognize revenue. Two halves out of step." },
         { "path": "apps/backend/src/dispatch/loads.routes.ts:1306-1337 — POD auto-send fires on STATUS transition, not on actual delivery evidence (WIRE-04b)", "entity": "ALL", "note": "convertProformaToOfficial + sendDraftInvoice called when status=delivered_pending_docs, regardless of actual_departure_at." }
       ],
-      "completeness": "Code-verified: invoice-send.service.ts imports finalActiveDeliveryDepartureAt but the gate is behind INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE which has no lib.feature_flag_overrides row. isEnabled returns false for missing flag_key. Prod verified 2026-08-01: INVOICE_PROFORMA_PIPELINE_ENABLED=true for TRANSP+USMCA, all 20 load_stops carry 0 actual_departure_at.",
+      "completeness": "Code-verified + live 2026-08-04: invoice-send.service.ts imports finalActiveDeliveryDepartureAt but the gate is behind INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE. Live lucia-bypass Neon: zero rows in lib.feature_flag_overrides for this flag → flag is OFF. Invoices already sent without delivery evidence: status='sent'=239, status='paid'=11687. INVOICE_PROFORMA_PIPELINE_ENABLED is ON for all 3 opcos. all 12 load_stops actual_departure_at=NULL (WIRE-07 root blocker).",
       "guard": "scripts/verify-disp-wire-04-invoice-evidence.mjs",
       "drain_proof": {
         "guard_green": false,
@@ -575,11 +575,11 @@
         { "path": "apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts:334-340 — Event 1 earn requires finalActiveDeliveryDepartureAt, returns missing_delivery_evidence when NULL (WIRE-05)", "entity": "ALL", "note": "Flag ON. Poster correctly refuses without evidence. Root blocker is WIRE-07 (actual_departure_at NULL on all stops)." },
         { "path": "apps/backend/src/dispatch/loads.routes.ts:1340-1352 — postLoadRevenueLatch called at delivered_pending_docs + completed_docs_received (WIRE-05b)", "entity": "ALL", "note": "Trigger fires but poster returns {posted:false, reason:'missing_delivery_evidence'} every time." }
       ],
-      "completeness": "Code-verified: poster.service.ts Event 1 calls finalActiveDeliveryDepartureAt (line 335). If null, returns gate=missing_delivery_evidence (line 340). REVENUE_RECOGNITION_POST_ENABLED is ON per-entity for TRANSP+USMCA+TRK (lib.feature_flag_overrides, verified prod). Latch table accounting.load_revenue_recognition_postings exists. Blocked by WIRE-07.",
+      "completeness": "Code-verified + live 2026-08-04: poster.service.ts Event 1 calls finalActiveDeliveryDepartureAt (line 335). If null, returns gate=missing_delivery_evidence (line 340). REVENUE_RECOGNITION_POST_ENABLED is ON per-entity for TRANSP+USMCA+TRK (lib.feature_flag_overrides rows present, verified Neon). accounting.load_revenue_recognition_postings total=2 active=2 voided=0 (very low vs 12 stops, consistent with poster rejecting due to missing evidence). Blocked by WIRE-07.",
       "guard": "scripts/verify-disp-wire-05-revrec-latch.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "WIRE-05 revrec inert: REVENUE_RECOGNITION_POST_ENABLED=ON per-entity (all 3 opcos). Poster returns {posted:false, reason:'missing_delivery_evidence'} because actual_departure_at=NULL on all 20 load_stops (WIRE-07 root blocker).",
+        "guard_sample": "WIRE-05 revrec inert: REVENUE_RECOGNITION_POST_ENABLED=ON per-entity (all 3 opcos). Poster returns {posted:false, reason:'missing_delivery_evidence'} because actual_departure_at=NULL on all 12 load_stops (WIRE-07 root blocker). load_revenue_recognition_postings total=2 active=2.",
         "money_critical": true
       },
       "status": "open",
