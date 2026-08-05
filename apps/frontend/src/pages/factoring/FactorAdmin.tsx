@@ -19,6 +19,7 @@ import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -248,6 +249,16 @@ export function FactorAdmin() {
     [customersQuery.data, detailCustomerId]
   );
 
+  const customerOptions = useMemo(
+    () =>
+      (customersQuery.data ?? []).map((customer) => ({
+        value: customer.id,
+        label: customer.name,
+        type: customer.customer_code ?? undefined,
+      })),
+    [customersQuery.data]
+  );
+
   const factorRows = factorsQuery.data ?? [];
   const assignmentRows = useMemo(
     () => (customerFactorDetailQuery.data?.assignments ?? []).filter((row) => row.factor_id === selectedFactor?.id),
@@ -375,24 +386,20 @@ export function FactorAdmin() {
             </div>
           ) : null}
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <input
-              value={customerSearch}
-              onChange={(event) => setCustomerSearch(event.target.value)}
-              placeholder="Search customer"
-              className="w-56 rounded-sm border border-gray-300 px-2 py-1"
-            />
-            <select
-              value={detailCustomerId}
-              onChange={(event) => setDetailCustomerId(event.target.value)}
-              className="w-80 rounded-sm border border-gray-300 px-2 py-1"
-            >
-              <option value="">Select customer for detail view</option>
-              {(customersQuery.data ?? []).map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.name} ({customer.customer_code || customer.id.slice(0, 8)})
-                </option>
-              ))}
-            </select>
+            {/* CLS-CUST-BARE-SELECT: ReferenceSelect createKind=customer (EntityPicker has no customer kind). */}
+            <div className="w-80">
+              <ReferenceSelect
+                value={detailCustomerId || null}
+                onChange={(next) => setDetailCustomerId(next ?? "")}
+                options={customerOptions}
+                createKind="customer"
+                operatingCompanyId={companyId}
+                placeholder="Select customer for detail view"
+                disabled={!companyId}
+                loading={customersQuery.isLoading}
+                onSearch={setCustomerSearch}
+              />
+            </div>
           </div>
 
           {detailCustomerId ? (
@@ -523,28 +530,18 @@ export function FactorAdmin() {
             <div className="mb-3 text-sm font-semibold text-gray-900">Assign Customer to Factor</div>
             <div className="space-y-2 text-xs">
               <label className="block">
-                <div className="mb-1">Customer search</div>
-                <input
-                  value={customerSearch}
-                  onChange={(event) => setCustomerSearch(event.target.value)}
-                  placeholder="Type customer name"
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
-                />
-              </label>
-              <label className="block">
                 <div className="mb-1">Customer</div>
-                <select
-                  value={assignCustomerId}
-                  onChange={(event) => setAssignCustomerId(event.target.value)}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
-                >
-                  <option value="">Select customer</option>
-                  {(customersQuery.data ?? []).map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </option>
-                  ))}
-                </select>
+                <ReferenceSelect
+                  value={assignCustomerId || null}
+                  onChange={(next) => setAssignCustomerId(next ?? "")}
+                  options={customerOptions}
+                  createKind="customer"
+                  operatingCompanyId={companyId}
+                  placeholder="Select customer"
+                  disabled={!companyId}
+                  loading={customersQuery.isLoading}
+                  onSearch={setCustomerSearch}
+                />
               </label>
               <label className="block">
                 <div className="mb-1">Factor</div>
