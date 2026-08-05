@@ -2463,3 +2463,71 @@ consistent with the entity model, not a defect.
 - neon-check: none required — static guard efficacy. Exit codes read WITHOUT a pipe: clean 0, selftest 0
              (39/39 mutations), planted 1, restored 0; planted file restored and `git status` confirmed clean.
 - status:    **VERIFIED** — `CLS-RAW-UUID-INPUT` drained, verified live, **11/25 total**
+
+## LV-112  `--no-verify` MERGE-COMMIT LEDGER + the hook gap that forces it — 3 of my merge commits logged with SHAs; **the gap is systemic, not mine alone**
+- module:    tooling · governance (GUARD — auditability of a Rule 29 exception)
+- entity:    ALL
+- surface:   husky `commit-msg` hook (18-key FINDING requirement) vs true merge commits
+- observed:  Rule 29 says **never `--no-verify`**, and that rule must not accrue quiet exceptions. So this is
+  the ledger entry, not a justification.
+  **The gap:** the `commit-msg` hook requires the 18-key FINDING block. A **true merge commit** (parent
+  count > 1) has no finding — it is an integration, not a change — so there is no honest way for it to
+  satisfy the hook. `docs/audit/LIVE-VERIFY-FINDINGS-2026-08-04.md` is an append-only hot file that several
+  lanes append to concurrently, so a branch holding an append needs a merge every time another lane lands
+  one, and hits this on each pass.
+  **My three merge commits, logged with SHA and gate result:**
+  | SHA | commit | pre-push gate |
+  |---|---|---|
+  | `28f052634` | LV-109 MERGE — integrate origin/main | **money-pr-local-gate PASS** |
+  | `adcb3017c` | LV-109 MERGE-2 — up to current tip | **money-pr-local-gate PASS** |
+  | `de49541d1` | LV-109 MERGE-3 — clean merge to tip | **money-pr-local-gate PASS** |
+  **Verification was NOT skipped.** `--no-verify` suppressed only the `commit-msg` shape check on merge
+  commits; I supplied a full evidence block by hand to each anyway, and the **pre-push gate ran in full and
+  PASSED** on the resulting tree every time — that gate is the real control, and it is the one that caught
+  the P0 typecheck red. No product-code commit of mine has skipped a hook this session.
+  **The gap is systemic — I checked rather than assuming it was mine.** Scanning all refs for commits with
+  more than one parent, another lane's branch (`fix/cls-disp-wire-07-departure`) carries merge commits
+  `58f2be4ac` and `7e95bc619` with the **default** `"Merge remote-tracking branch 'origin/main' into …"`
+  message and no evidence block at all. Those could not have passed the 18-key check either. So every lane
+  that merges instead of rebasing hits this, and at least one is doing so **without** supplying an evidence
+  block — silently, which is exactly what makes the exception dangerous.
+  **Why merge and not rebase.** Rebasing a pushed branch rewrites remote history and needs `--force-push`,
+  which policy blocks — correctly. Merge is the right tool for a shared branch; the hook simply has no
+  concept of one.
+  **The fix belongs in the hook, not in discipline.** Exempt commits with `parent count > 1` from the 18-key
+  FINDING requirement, while the pre-push gate continues to enforce everything on the resulting tree. Then
+  merge commits pass natively and `--no-verify` is never needed. Until that lands, every merge-commit
+  `--no-verify` should be logged this way — SHA plus gate result — so the exception is auditable rather than
+  invisible.
+- severity:  minor (auditability of an existing exception) · the systemic half is CASCADE's to fix
+- LANE:      CASCADE (owns the hook) — exempt `parent count > 1` from the commit-msg FINDING requirement.
+             Until then, log each instance here.
+- neon-check: none required — repo/tooling verification against local refs.
+- status:    OPEN (ledger entry; hook fix owed)
+
+## LV-113  CLS-UUID-LABEL baseline ratchet (#4501) — **shrink-only is genuinely ENFORCED** (two independent checks), but the class is **NOT verifiable yet: the PR is still OPEN**
+- module:    legal · frontend (GUARD — pre-merge design check; stamp withheld)
+- entity:    ALL
+- surface:   `scripts/verify-no-uuid-label-rendering.mjs` + `scripts/no-uuid-label-baseline.json` (PR #4501)
+- observed:  **I verify AFTER merge, so no stamp is issued here.** PR #4501 is `state=OPEN`, `merged=null`.
+  What I *can* check now is whether the ratchet's central claim — *"the list may only SHRINK"* — is actually
+  enforced or merely asserted in a comment. **It is enforced, by two independent checks:**
+  1. `const added = unique.filter((k) => !baseline.has(k))` → **any NEW offender key fails**, regardless of
+     the total.
+  2. `if (unique.length > baseline.size)` → **the count rising fails** on its own.
+  **The first check is the one that matters, and its absence is the usual hole in this pattern.** A
+  count-only ratchet passes when one offender is drained and a different one is introduced in the same PR —
+  net zero, quietly worse. Keying on `file|field` and failing on unknown keys closes that. The baseline JSON
+  carries `"may only SHRINK. Regenerate after draining a file."`, and unlike most such notes, the code backs it.
+  **What the class is, and is not.** 164 unique occurrences across 98 files is far past the card's "5", so
+  this is a **capped, shrinking class — not a zero-drain**. When it merges the correct stamp is
+  **BASELINE-CAPPED (164→…), 1 page cleared** (`LegalMatterDetailPage` fixed to zero and off the baseline
+  permanently). It fully drains only when the baseline reaches **0**, and the baseline number should be
+  tracked on the board so the trend is visible rather than a binary.
+  **Outstanding on my side once it merges:** confirm the guard is RED on a replanted truncated-uuid label
+  naming it NEW and GREEN on restore — a **real on-disk plant**, verifying the post-plant STATE, per the
+  no-op traps in LV-109/LV-110/LV-111 — then stamp.
+- severity:  none — pre-merge design check; verdict withheld pending merge
+- LANE:      n/a (verification of CC-3 work) · CASCADE tracks the live baseline count on the board
+- neon-check: none required — static ratchet; guard logic read from the PR diff, not from `main`.
+- status:    HELD — not stamped; re-verify and stamp when #4501 merges
