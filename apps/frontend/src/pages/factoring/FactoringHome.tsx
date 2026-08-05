@@ -14,8 +14,8 @@ import {
   type FactoringSettingsRow,
 } from "../../api/factoring";
 import { listUnits, listVendors } from "../../api/mdata";
-import { listLoads } from "../../api/loads";
 import { Combobox } from "../../components/shared/Combobox";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import {
   createDriverVendorMerge,
@@ -267,12 +267,6 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
     queryFn: () => listUnits({ operating_company_id: companyId }).then((r) => r.units as { id: string; unit_number: string | null }[]),
     enabled: Boolean(companyId) && tab === "equipment_loans",
   });
-  const attributionLoadsQuery = useQuery({
-    queryKey: ["mdata", "loads", "attribution", companyId],
-    queryFn: () => listLoads({ operating_company_id: [companyId], limit: 200 }).then((r) => r.loads),
-    enabled: Boolean(companyId) && loanAction?.kind === "attribution",
-  });
-
   const invoices = recourseQuery.data?.invoices ?? [];
   const recourseTotals = useMemo(() => {
     return invoices.reduce(
@@ -973,16 +967,18 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           {loanAction?.kind === "attribution" ? (
             <label className="block">
               Load
-              <Combobox
-                options={(attributionLoadsQuery.data ?? []).map((l) => ({
-                  value: l.id,
-                  label: `${l.load_number}${l.customer_name ? ` — ${l.customer_name}` : ""}`,
-                }))}
-                value={loanActionLoadId || null}
-                onChange={(v) => setLoanActionLoadId(v ?? "")}
-                placeholder="Select load"
-                className="mt-1"
-              />
+              {/* SAF-B29: EntityPicker kind=load — never Combobox over listLoads(limit:200). */}
+              <div className="mt-1">
+                <EntityPicker
+                  kind="load"
+                  operatingCompanyId={companyId}
+                  value={loanActionLoadId || null}
+                  onChange={(v) => setLoanActionLoadId(v ?? "")}
+                  placeholder="Select load"
+                  allowCreate={false}
+                  dataTestId="factoring-loan-attribution-load"
+                />
+              </div>
             </label>
           ) : null}
           <label className="block">
