@@ -12,6 +12,7 @@ import {
   listBills,
   listWorkOrderLinkedFinancials,
   listClaimLinkedFinancials,
+  listLegalMatterLinkedCosts,
   listUnitLinkedFinancials,
   listVendorBalances,
   payBill,
@@ -186,6 +187,28 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       params.data.id
     );
   });
+
+  // Reverse drill-through for Legal Matter → cost (Stage 3 scenario 1). legal.matters carries only
+  // CLAIM amounts, so without this the system cannot answer "what has this case cost us" — the first
+  // number an attorney, trustee or court asks for.
+  app.get(
+    "/api/v1/accounting/legal-matters/:id/linked-costs",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+      const params = idParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const query = companyQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return validationError(reply, query.error);
+      return listLegalMatterLinkedCosts(
+        String(user.uuid),
+        query.data.operating_company_id,
+        params.data.id
+      );
+    }
+  );
 
   // Reverse drill-through for Unit→Bill/Expense (ACCT-F04 / ACCT-LINK-03).
   app.get(

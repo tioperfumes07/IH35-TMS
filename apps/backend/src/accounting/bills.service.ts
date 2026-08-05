@@ -2020,3 +2020,59 @@ export async function voidBillPayment(operatingCompanyId: string, paymentId: str
 
   return voided;
 }
+
+/**
+ * Reverse drill-through for Legal Matter → cost (Stage 3 scenario 1, §10.3).
+ *
+ * `legal.matters` carries only CLAIM amounts — what is being fought over — so before this the system
+ * could not answer "what has this case cost us". The law firm's bill posted correctly all along
+ * (DR Legal & Professional Fees / CR A/P, via the existing bill poster — no new GL math), but nothing
+ * tied that cost back to the matter. For a company in Chapter 11 with live litigation, legal spend per
+ * matter is the first number an attorney, a trustee or a court asks for.
+ *
+ * Column-gated like listClaimLinkedFinancials: on a database where the migration has not been applied
+ * yet this returns an empty list and says so via columns_present, rather than 500-ing. A drill-through
+ * that errors before deploy teaches everyone to distrust it.
+ */
+export async function listLegalMatterLinkedCosts(
+  userId: string,
+  operatingCompanyId: string,
+  legalMatterId: string
+): Promise<{
+  bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null }>;
+  total_cost_cents: number;
+  columns_present: { bills: boolean };
+}> {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const colRes = await client.query(
+      `SELECT 1 FROM information_schema.columns
+        WHERE table_schema='accounting' AND table_name='bills' AND column_name='legal_matter_id'`
+    );
+    const hasCol = (colRes.rowCount ?? 0) > 0;
+    if (!hasCol) return { bills: [], total_cost_cents: 0, columns_present: { bills: false } };
+
+    const res = await client.query(
+      `SELECT b.id::text AS id, b.bill_number, b.bill_date::text AS bill_date,
+              COALESCE(b.amount_cents, 0)::bigint AS amount_cents, b.status, b.memo
+         FROM accounting.bills b
+        WHERE b.operating_company_id = $1
+          AND b.legal_matter_id = $2
+          AND b.revoked_at IS NULL
+        ORDER BY b.bill_date DESC NULLS LAST, b.created_at DESC`,
+      [operatingCompanyId, legalMatterId]
+    );
+    const bills = res.rows.map((r: Record<string, unknown>) => ({
+      id: String(r.id),
+      bill_number: (r.bill_number as string) ?? null,
+      bill_date: (r.bill_date as string) ?? null,
+      amount_cents: Number(r.amount_cents ?? 0),
+      status: (r.status as string) ?? null,
+      memo: (r.memo as string) ?? null,
+    }));
+    // Voided bills are excluded above (revoked_at IS NULL), so the total is what the matter has
+    // actually cost — not what was ever entered against it.
+    const total = bills.reduce((sum, b) => sum + b.amount_cents, 0);
+    return { bills, total_cost_cents: total, columns_present: { bills: true } };
+  });
+}

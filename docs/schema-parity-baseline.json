@@ -229,6 +229,7 @@
       "id",
       "insurance_claim_id",
       "last_qbo_synced_at",
+      "legal_matter_id",
       "linked_work_order_uuid",
       "mdata_vendor_id",
       "memo",
