@@ -1,7 +1,7 @@
 # IH35 — FULL DELIVERY PLAN (NOW → LAUNCH)
 
 **Status:** LOCKED hybrid — DORA/WIP + walking skeleton + Owner module certify  
-**Date:** 2026-08-05 (rev **G** — Cursor = Claude serial ship sequence · tip-main before every push · max 1 CLAIMED PR)  
+**Date:** 2026-08-05 (rev **G** — §9.0 item 17 Systemic sweep > per-site patch · Claude serial ship · tip-main · max 1 CLAIMED PR)  
 **Authority:** This committed file wins over any chat summary, agent memory, or stale paste.  
 **Supersedes as primary queue:** 400+ block pile, breadth-first 30×13 certify-everything, multi-agent sprawl  
 **Does not supersede:** Law of the Land · Rule 16/21/23/24 · `00-operating-method-LAW.mdc` (OWNER LAW 2026-08-03) · parallel books (no TMS→QBO write-back)
@@ -335,7 +335,15 @@ Proof gate ≠ owner-approval merge label ≠ CPA sign-off.
 13. **Do not purge** abolition law. **Do not rewrite** audit/migration/`.block-ready` history to erase old label mentions.  
 14. **P0-BLOCKER OVERRIDE (owner 2026-08-05):** When **main is red for all lanes** (shared gate / shared guard floor — e.g. §7 palette baseline stale), the **first free lane** lands the **smallest fix immediately**. Cross-lane allowed. **No park, no ask.** That PR **does not count against WIP ≤ 3**. Resume normal WIP after it merges.  
 15. **WIRE + TEST FIRST, RECONCILE LATER (owner 2026-08-05):** Reconciliation is **FROZEN**. Nobody touches Faro / QBO / factoring / the **$40,882** figure / transaction-reconcile work until the money skeleton is wired, tested, and proven live **and** Jorge says **"reconcile"** in chat. Builders wire + prove; they do **not** reconcile.  
-16. **Prod migrations:** reach the prod branch **only** via merge → deploy/ledger path. **Never** hand-apply DDL to prod ahead of the migration file on `main`. Rehearse on a Neon REHEARSE branch only. Main, ledger, and prod must agree.
+16. **Prod migrations:** reach the prod branch **only** via merge → deploy/ledger path. **Never** hand-apply DDL to prod ahead of the migration file on `main`. Rehearse on a Neon REHEARSE branch only. Main, ledger, and prod must agree.  
+17. **SYSTEMIC SWEEP > PER-SITE PATCH (owner ruling 2026-08-05 — every lane, every fix).**  
+    When a fix is the SAME mechanical change repeated at ≥3 call sites (a codemod: identical before→after — swap component X→Y, rename an API, apply one pattern across screens/routes), it MUST ship as **ONE sweep PR** with **ONE generalized guard** that scans ALL sites and fails if any site still carries the old pattern. **NOT** one PR per site. **NOT** one bespoke guard or one CLAIMED number per site. One review, one regression surface, one guard that also blocks the NEXT new site from regressing.  
+    - This is **ONE logical fix** → it is **NOT** a "grab-bag" under §9.0.4. The generalized guard is the proof it is a single pattern. Cite it in the PR body.  
+    - Group sweeps by **pattern / entity-kind**, never by screen.  
+    - **In scope (examples, not exhaustive):** EntityPicker migrations by kind (`unit` / `driver` / `load` / `trailer` / …); customer and vendor picker boxes; repeated `+ Create` / nested-create chrome; identical dropdown → searchable-picker swaps; wiring / connectivity / reverse-drill / linkage patterns that are the same transform at many sites.  
+    - Keep fixes SEPARATE only when each genuinely needs different logic/review — not the same transform. Do not bundle UNRELATED fixes to game this rule.  
+    - **MONEY/GL/MIGRATION:** a sweep is still one logical change, reviewed with extra care; never bundle unrelated money fixes into one PR (§1.4 still governs). Prefer CC-1 for money sweeps.  
+    - Applies to: Cursor (FE sweeps), CC-1 (money/schema sweeps), Cascade (evidence), GUARD (guards).
 
 ### 9.1 Jorge (owner)
 
@@ -384,7 +392,7 @@ Claude’s measured method → Cursor law (Rule **36** / `.cursor/rules/36-claud
 3. Title: `Cursor- fix(<module>): <FINDING> — <defect>`. Body: FINDING-first Claude-green (no `## Summary` / no draft theater).  
 4. `node scripts/ops/cursor-ship-preflight.mjs --body-file /tmp/pr-body.txt` → PASS.  
 5. Fetch again; if behind, `git rebase origin/main` → re-preflight → **one** push (`--force-with-lease` only after rebase).  
-6. PR **ready** (not draft). Max **1** open Cursor CLAIMED/verify-step PR. Next EntityPicker only after squash-merge.  
+6. PR **ready** (not draft). Max **1** open Cursor CLAIMED/verify-step PR at a time. Mechanical migrations obey §9.0 item **17**: **ONE sweep PR per pattern / entity-kind** (unit · driver · load · trailer · customer · vendor · +Create · linkage wiring) + **ONE generalized guard** — never one PR per screen.  
 7. If main moves → CONFLICTING: rebase same turn — never a multi-hour babysit/rebase loop.
 
 ### 9.3 Claude Coder / CC-1 (money builder — Neon / Phase 0 hygiene)
@@ -495,8 +503,9 @@ Any of these → **STOP that item**, post a one-line `ISSUE:`, keep working ever
 - Cascade shipping builder PRs or off-slice breadth audits  
 - Purging abolition sentences or rewriting audit/migration history  
 - Touching Faro/QBO/factoring/$40,882/transaction reconcile before Jorge says **"reconcile"**  
+- Shipping **per-site / per-screen** patches (or one bespoke guard / CLAIMED number per site) when ≥3 call sites share the same mechanical transform — violates §9.0 item **17** (Systemic sweep > per-site patch)  
 
 ---
 
-**End of full plan (rev F).**  
+**End of full plan (rev G).**  
 Amend only with Jorge in writing. Cursor is sole editor of this file.
