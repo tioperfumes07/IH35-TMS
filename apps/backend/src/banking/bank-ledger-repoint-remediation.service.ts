@@ -41,6 +41,7 @@ import {
   postSourceTransaction,
   reversePostedSourceTransaction,
 } from "../accounting/posting-engine.service.js";
+import { BANK_FEED_GL_POSTING_FLAG_KEY } from "./bank-feed-gl-posting.service.js";
 
 export const BANK_LEDGER_REPOINT_REMEDIATION_FLAG_KEY = "BANK_LEDGER_REPOINT_REMEDIATION_ENABLED";
 
@@ -70,7 +71,7 @@ export type RepointRemediationRow = {
 
 export type RepointRemediationResult = {
   ran: boolean;
-  reason?: "flag_off" | "bridge_still_mismatched" | "nothing_to_correct";
+  reason?: "flag_off" | "bank_feed_posting_off" | "bridge_still_mismatched" | "nothing_to_correct";
   dry_run: boolean;
   candidates: number;
   corrected: number;
@@ -165,6 +166,17 @@ export async function remediateRepointedBankLedgerPostings(
       user_uuid: input.actorUserUuid,
     });
     if (!flagOn) return { gate: "flag_off" as const };
+
+    // BOTH flags must be ON. This service reposts through
+    // postSourceTransaction('bank_categorization'), so it is a bank-feed GL posting path like any
+    // other and must honour that path's own per-entity kill switch. Checking only the remediation
+    // flag would let a correction post into an entity whose bank-feed posting is deliberately OFF —
+    // re-opening the exact kill switch the entity relies on, through a side door.
+    const bankFeedPostingOn = await isEnabled(client, BANK_FEED_GL_POSTING_FLAG_KEY, {
+      operating_company_id: input.companyId,
+      user_uuid: input.actorUserUuid,
+    });
+    if (!bankFeedPostingOn) return { gate: "bank_feed_posting_off" as const };
 
     // Reposting into a still-wrong bridge would rewrite the same error under a new batch id.
     if (!(await bridgeIsSane(client, input.companyId, input.bankAccountId))) {
