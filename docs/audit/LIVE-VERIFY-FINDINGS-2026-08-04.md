@@ -2367,3 +2367,58 @@ consistent with the entity model, not a defect.
              Ledger counts **884** / **877**, reverse-difference **0**; file existence resolved against
              `origin/main` via `git cat-file -e`, disk count **875**; each effect probe as tabulated.
 - status:    OPEN (informational)
+
+## LV-110  **LV-099 RESOLVED — enum re-probe: all three labels are now ON PROD, verified by effect and by cast, with the ledger row explicitly rejected as proof**
+- module:    dispatch · db/migrations (GUARD — the LV-099 re-probe, verify-after)
+- entity:    ALL
+- surface:   `mdata.load_status_enum` · `db/migrations/202612140000_load_status_enum_abandonment_values.sql` · `scripts/verify-steps/2629-…`
+- observed:  LV-099 recorded that `0094` was ledgered applied in **both** ledgers while its three enum labels
+  were absent, leaving the abandonment → escrow-forfeit path structurally unreachable. CC-1 landed
+  **ACCT-F117** (#4487, migration `202612140000…`, guard **2629**). This is the re-probe, run exactly as
+  committed: **the ledger row was not consulted as evidence.**
+  **(1) Effect present — the three-label probe now returns TRUE, TRUE, TRUE** (was FALSE, FALSE, FALSE):
+  `abandoned` · `driver_walkoff` · `driver_no_show`. `mdata.load_status_enum` label count **17 → 20**.
+  **(2) The cast test that FAILED in LV-099 now succeeds.** `SELECT 'abandoned'::mdata.load_status_enum`
+  previously raised `invalid input value for enum`; it now returns `abandoned`, as do `driver_walkoff` and
+  `driver_no_show`, with the `cancelled` control passing alongside. **A load can now be set to an abandonment
+  status** — the block that made the escrow path unreachable is gone.
+  **(3) The guard is real and MUTATION-PROVEN on disk, not merely present.** `2629` runs GREEN on the clean
+  tree (exit 0) and its selftest passes 4 mutations. I then planted a genuine violation — deleted the
+  `ALTER TYPE … ADD VALUE … 'driver_no_show';` **statement** from the migration — and the guard returned
+  **exit 1**, then **exit 0** after restore, `git status` clean.
+  **It took me three attempts to plant that violation, and the first two are the point.** Attempt 1 removed a
+  *prose comment* naming the label, which the guard deliberately strips (`stripComments`), so it stayed green
+  — correctly. Attempt 2 was a regex that matched nothing. **In both cases a green guard looked like a broken
+  guard.** Only confirming the intended STATE — `ADD VALUE … 'driver_no_show'` occurrences = **0** — made the
+  test valid. Same trap as the `pod.ts` no-op in LV-109, hit twice more; the lesson is not "be careful" but
+  **"assert the post-plant state, never the fact that you edited something."**
+  **(4) The guard's design is better than the fix it protects, and that is worth recording.** It does not
+  merely assert the three labels are in a migration file. It asserts `scripts/db-migrate.mjs` still carries a
+  **post-apply `pg_enum` assertion** — the runner must re-read the database after migrating and fail the
+  deploy when a label is missing. One of its selftest mutations rejects a runner that reads
+  `_system._schema_migrations` instead. **That guards the MECHANISM, not the instance:** the next migration
+  whose effect silently fails to land is caught by the runner, not by someone noticing months later. The
+  guard's own header states the reason CI cannot be the proof — *"CI's database is built from these same
+  migrations, so it would agree with itself no matter what prod actually contains."* That is precisely the
+  trap LV-099 fell into, correctly diagnosed.
+  **CC-1's root cause is sharper than mine and I defer to it.** I hypothesised `BEGIN;` wrapping
+  `ALTER TYPE … ADD VALUE`. CC-1 states it "shared one transaction with table/function/trigger DDL" — the
+  same transaction mechanism, more precisely located.
+  **(5) The path is UNBLOCKED but still UNEXERCISED — stated plainly rather than upgraded.**
+  `dispatch.load_abandonments` remains **0 rows with `n_tup_ins = 0`**, `mdata.loads` in an abandonment
+  status = **0**, and the trigger `trg_auto_propose_escrow_on_abandon` is present. So the enum no longer
+  blocks the write, but **no abandonment has been executed end-to-end**. I did not attempt one: creating a
+  load and abandoning it is a write, outside GUARD's read-only lane. **"Unblocked" is not "proven working"**
+  — the end-to-end escrow-forfeit/chargeback run remains owed, and belongs to whoever exercises the hop.
+  **Role note, stated rather than glossed:** `current_user` returned `neondb_owner` on the enum probes
+  despite repeated attempts. For `pg_enum` catalog reads and type casts this is immaterial — neither is
+  RLS-gated and casting is role-independent — so the readings stand. The `ih35_app` assertion **was**
+  obtained for the row-count probe in (5). I am flagging the difference rather than implying a uniform
+  assertion I did not get.
+- severity:  none — LV-099 RESOLVED (verify-after PASS)
+- LANE:      n/a (verification of CC-1's ACCT-F117)
+- neon-check: prod `br-fancy-credit-akjnd07a`, bypass in its own statement. Three-label probe TRUE/TRUE/TRUE;
+             label count **20**; casts of all three succeed with `cancelled` as control; `load_abandonments`
+             0 rows / `n_tup_ins` 0 (`current_user=ih35_app` asserted); trigger present. Guard exit codes
+             read WITHOUT a pipe: clean 0, selftest 0 (4 mutations), planted 1, restored 0.
+- status:    **RESOLVED** (supersedes LV-099 OPEN)
