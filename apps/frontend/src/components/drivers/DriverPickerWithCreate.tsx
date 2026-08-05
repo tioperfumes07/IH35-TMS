@@ -1,8 +1,4 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { listDrivers } from "../../api/mdata";
-import { Combobox } from "../Combobox";
-import { CreateDriverModal } from "./CreateDriverModal";
+import { EntityPicker } from "../parity/EntityPicker";
 
 export type DriverPickerWithCreateProps = {
   operatingCompanyId: string;
@@ -22,10 +18,9 @@ export type DriverPickerWithCreateProps = {
 };
 
 /**
- * PLUS-DRIVER-SYSTEM — shared Combobox + CreateDriverModal gold pattern (VendorBillForm).
- * Prefer this over ad-hoc SelectCombobox/select for create-worthy driver fields.
- * Specialized UIs (InlineDriverPicker, DriverAutocomplete, AssignDriverDropdown) wire
- * CreateDriverModal into those components instead so all consumers inherit.
+ * PLUS-DRIVER-SYSTEM / SAF-B29 — shared driver picker.
+ * EntityPicker kind=driver owns server search + inline CreateDriverModal (nestedInDrawer when shell=drawer).
+ * Never Combobox + listDrivers(limit:200) — that silently hid drivers past page 1 on every consumer.
  */
 export function DriverPickerWithCreate({
   operatingCompanyId,
@@ -40,66 +35,24 @@ export function DriverPickerWithCreate({
   allowClear = true,
   dataField,
 }: DriverPickerWithCreateProps) {
-  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const queryEnabled = (enabled ?? true) && open && Boolean(operatingCompanyId);
 
-  // SAF-B29: this picker hardcoded search:"" with limit:200, so on a roster larger than 200 the rest
-  // were unselectable and nothing said so. Because this is the SHARED driver picker, that silent
-  // truncation was reproduced on every surface that uses it. The typed term now goes to the server,
-  // which already supports `search`; Combobox skips its local filter when onSearch is provided, so
-  // server matches are never re-filtered away client-side.
-  const [driverSearch, setDriverSearch] = useState("");
-
-  const driversQuery = useQuery({
-    queryKey: ["driver-picker-with-create", operatingCompanyId, driverSearch],
-    queryFn: () =>
-      listDrivers({
-        operating_company_id: operatingCompanyId,
-        status: "Active",
-        search: driverSearch || undefined,
-        limit: 200,
-      }),
-    enabled: queryEnabled,
-  });
-
-  const driverOptions = useMemo(
-    () =>
-      (driversQuery.data?.drivers ?? []).map((driver) => ({
-        value: driver.id,
-        label: [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || driver.id,
-      })),
-    [driversQuery.data?.drivers]
-  );
-
   return (
-    <>
-      <Combobox
-        dataField={dataField}
-        className={className}
-        options={driverOptions}
+    <div data-driver-picker-with-create="true">
+      <EntityPicker
+        kind="driver"
+        operatingCompanyId={operatingCompanyId}
         value={value}
         onChange={onChange}
-        onSearch={setDriverSearch}
+        enabled={queryEnabled}
         placeholder={placeholder}
-        loading={driversQuery.isLoading}
+        className={className}
         disabled={disabled || !operatingCompanyId}
         allowClear={allowClear}
-        allowAddNew={{
-          label: "+ Create driver",
-          onAdd: () => setDriverCreateOpen(true),
-        }}
+        nestedInDrawer={shell === "drawer"}
+        dataField={dataField}
+        dataTestId="driver-picker-with-create"
       />
-      <CreateDriverModal
-        open={driverCreateOpen}
-        companyId={operatingCompanyId}
-        shell={shell}
-        onClose={() => setDriverCreateOpen(false)}
-        onCreated={(createdId) => {
-          onChange(createdId);
-          setDriverCreateOpen(false);
-          void driversQuery.refetch();
-        }}
-      />
-    </>
+    </div>
   );
 }
