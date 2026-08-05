@@ -13,9 +13,10 @@ import {
   type FactoringMonthlyFeeSummary,
   type FactoringSettingsRow,
 } from "../../api/factoring";
-import { listUnits, listVendors } from "../../api/mdata";
+import { listVendors } from "../../api/mdata";
 import { listLoads } from "../../api/loads";
 import { Combobox } from "../../components/shared/Combobox";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import {
   createDriverVendorMerge,
@@ -261,11 +262,6 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
     queryKey: ["data-infra", "equipment-loan-ledger", selectedLoanId, companyId],
     queryFn: () => getEquipmentLoanLedger(selectedLoanId, companyId),
     enabled: Boolean(companyId && selectedLoanId),
-  });
-  const unitsQuery = useQuery({
-    queryKey: ["mdata", "units", companyId],
-    queryFn: () => listUnits({ operating_company_id: companyId }).then((r) => r.units as { id: string; unit_number: string | null }[]),
-    enabled: Boolean(companyId) && tab === "equipment_loans",
   });
   const attributionLoadsQuery = useQuery({
     queryKey: ["mdata", "loads", "attribution", companyId],
@@ -743,11 +739,15 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Create equipment loan</div>
             <div className="grid gap-2 md:grid-cols-5">
-              <Combobox
-                options={(unitsQuery.data ?? []).map((u) => ({ value: u.id, label: u.unit_number ?? u.id }))}
+              {/* SAF-B29: EntityPicker kind=unit — never Combobox over silent listUnits page. */}
+              <EntityPicker
+                kind="unit"
+                operatingCompanyId={companyId}
                 value={loanEquipmentId || null}
                 onChange={(v) => setLoanEquipmentId(v ?? "")}
                 placeholder="Select equipment"
+                allowCreate={false}
+                dataTestId="factoring-loan-equipment-unit"
               />
               <ReferenceSelect
                 value={loanLenderVendorId || null}
