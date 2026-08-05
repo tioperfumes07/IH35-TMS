@@ -10,11 +10,12 @@
  *   0280-03 / 0280-09  Active-loads widget surfaces the assigned DRIVER + power UNIT and drills
  *                      through to each (load↔driver↔unit). Backend must SELECT driver/unit ids +
  *                      labels and JOIN the canonical mdata.drivers / mdata.units on the assignment
- *                      FKs; the panel must render record-specific Links to /drivers/:id and
- *                      /fleet/units/:id (not a generic module landing).
+ *                      FKs; the panel must render record-specific drill-through to /drivers/:id and
+ *                      /fleet/units/:id (raw <Link to=…> OR shared <EntityLink kind=…>) — never a
+ *                      generic module landing.
  *   home widgets       Every list/alert home panel keeps a drill-through affordance (a <Link to=…>
- *                      or navigate(action_url)) — a panel that renders records with no way to open
- *                      them is a linkage defect.
+ *                      or navigate(action_url) or EntityLink) — a panel that renders records with no
+ *                      way to open them is a linkage defect.
  *
  * Usage:
  *   node scripts/verify-owner-home-linkage.mjs            # scan
@@ -53,9 +54,24 @@ const RULES = [
   {
     file: "apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx",
     label: "0280-03/09 panel: driver + unit + load render as record-specific drill-through links",
+    // Driver/unit: accept raw Link OR EntityLink (parallel kind-sweep PRs). Load: EntityLink only (C5).
+    anyOfPatterns: [
+      {
+        label: "driver drill-through (Link or EntityLink kind=driver)",
+        patterns: [
+          /to=\{`\/drivers\/\$\{encodeURIComponent\(row\.driver_id\)\}`\}/,
+          /<EntityLink[^>]*kind=["']driver["'][^>]*id=\{row\.driver_id\}/,
+        ],
+      },
+      {
+        label: "unit drill-through (Link or EntityLink kind=unit)",
+        patterns: [
+          /to=\{`\/fleet\/units\/\$\{encodeURIComponent\(row\.unit_id\)\}`\}/,
+          /<EntityLink[^>]*kind=["']unit["'][^>]*id=\{row\.unit_id\}/,
+        ],
+      },
+    ],
     patterns: [
-      /to=\{`\/drivers\/\$\{encodeURIComponent\(row\.driver_id\)\}`\}/,
-      /to=\{`\/fleet\/units\/\$\{encodeURIComponent\(row\.unit_id\)\}`\}/,
       // C5 (2026-07-25) TIGHTENED, NOT WEAKENED. This pattern required the literal
       // `to={`/dispatch?load_id=${encodeURIComponent(row.id)}`}`, so the guard PINNED the
       // query-param form and would have failed the canonical migration. The 0280-03/09 intent —
@@ -83,7 +99,7 @@ const DRILL_THROUGH_PANELS = [
   "apps/frontend/src/components/home/TodaysAttentionTop5.tsx",
 ];
 
-const DRILL_RE = /\bto=["{]|navigate\(/;
+const DRILL_RE = /\bto=["{]|navigate\(|<EntityLink\b/;
 
 function scan() {
   const failures = [];
@@ -93,8 +109,13 @@ function scan() {
       failures.push(`${rule.file}: MISSING (rule "${rule.label}")`);
       continue;
     }
-    for (const pat of rule.patterns) {
+    for (const pat of rule.patterns ?? []) {
       if (!pat.test(src)) failures.push(`${rule.file}: missing ${pat} — ${rule.label}`);
+    }
+    for (const group of rule.anyOfPatterns ?? []) {
+      if (!group.patterns.some((pat) => pat.test(src))) {
+        failures.push(`${rule.file}: missing ${group.label} — ${rule.label}`);
+      }
     }
     for (const bad of rule.forbidden ?? []) {
       if (bad.pattern.test(src)) failures.push(`${rule.file}: forbidden ${bad.pattern} — ${bad.why}`);
@@ -114,22 +135,52 @@ function scan() {
 function selftest() {
   // Pure-logic self-test: a source missing a required link must be detected, and the superseded
   // ?load_id= form must be detected as forbidden (C5 — otherwise the ratchet could silently
-  // relax back to the shape it used to demand).
+  // relax back to the shape it used to demand). Driver/unit accept Link OR EntityLink.
+  const driverGroup = RULES[1].anyOfPatterns[0];
+  const unitGroup = RULES[1].anyOfPatterns[1];
+  const loadPat = RULES[1].patterns[0];
   const checks = [
     [
-      "driver link required",
-      RULES[1].patterns[0].test('x to={`/drivers/${encodeURIComponent(row.driver_id)}`} y') &&
-        !RULES[1].patterns[0].test("x <span>no link</span> y"),
+      "driver Link accepted",
+      driverGroup.patterns.some((p) =>
+        p.test('x to={`/drivers/${encodeURIComponent(row.driver_id)}`} y'),
+      ),
+    ],
+    [
+      "driver EntityLink accepted",
+      driverGroup.patterns.some((p) =>
+        p.test('<EntityLink kind="driver" id={row.driver_id} label="Driver" />'),
+      ),
+    ],
+    [
+      "driver missing rejected",
+      !driverGroup.patterns.some((p) => p.test("x <span>no link</span> y")),
+    ],
+    [
+      "unit Link accepted",
+      unitGroup.patterns.some((p) =>
+        p.test('x to={`/fleet/units/${encodeURIComponent(row.unit_id)}`} y'),
+      ),
+    ],
+    [
+      "unit EntityLink accepted",
+      unitGroup.patterns.some((p) =>
+        p.test('<EntityLink kind="unit" id={row.unit_id} label="Unit" />'),
+      ),
     ],
     [
       "canonical load link required",
-      RULES[1].patterns[2].test('<EntityLink kind="load" id={row.id} label="Open" />') &&
-        !RULES[1].patterns[2].test('<Link to={`/dispatch?load_id=${encodeURIComponent(row.id)}`}>Open</Link>'),
+      loadPat.test('<EntityLink kind="load" id={row.id} label="Open" />') &&
+        !loadPat.test('<Link to={`/dispatch?load_id=${encodeURIComponent(row.id)}`}>Open</Link>'),
     ],
     [
       "superseded ?load_id= forbidden",
-      RULES[1].forbidden[0].pattern.test('<Link to={`/dispatch?load_id=${encodeURIComponent(row.id)}`}>Open</Link>') &&
-        !RULES[1].forbidden[0].pattern.test('<EntityLink kind="load" id={row.id} label="Open" />'),
+      RULES[1].forbidden[0].pattern.test(
+        '<Link to={`/dispatch?load_id=${encodeURIComponent(row.id)}`}>Open</Link>',
+      ) &&
+        !RULES[1].forbidden[0].pattern.test(
+          '<EntityLink kind="load" id={row.id} label="Open" />',
+        ),
     ],
   ];
   const failed = checks.filter(([, ok]) => !ok);
