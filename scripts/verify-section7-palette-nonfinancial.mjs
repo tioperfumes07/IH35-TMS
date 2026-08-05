@@ -40,7 +40,13 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 472; // lowered 2026-08-04 (ScenarioTrackerPanel moved hop status colors to inline styles)
+// CORRECTED 2026-08-05 from 472 -> 474, the MEASURED count. This is not a ratchet loosening and it
+// hides no drift: the count is 474 at c86c070f2 (the commit that set 472), at 590943adf, and at main —
+// it has not moved. #4344 lowered the constant to 472 while its own diff removed ZERO off-palette
+// classes (it added a new panel that used inline styles from the start), so the baseline landed 2 below
+// reality and main went red the moment it merged, blocking every lane's PR. Lowering further requires
+// actually deleting off-palette classes from the non-financial tree, which is UI work, not a constant edit.
+const BASELINE = 474;
 
 function walk(dir) {
   let out = [];
