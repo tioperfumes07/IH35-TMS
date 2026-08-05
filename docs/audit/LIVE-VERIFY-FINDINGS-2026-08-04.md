@@ -1115,3 +1115,310 @@ membership-scoped session.
 - LANE:      none — GUARD attestation
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `mdata.units`: total **182**, `owner_company_id IS NOT NULL` **182**, `currently_leased_to_company_id IS NOT NULL` **52**, rows where `currently_leased_to_company_id = owner_company_id` **0**. `mdata.drivers`: total **179**, active **88**.
 - status:    OPEN (informational)
+
+## LV-071  GUARD passes 23–40 — 18 further passes across every remaining schema. Referential integrity holds at 155K+ scale; USDOT gap CLOSED; three new gaps found: IFTA/SCAC missing on all 3 entities, 24 documents with no link or category, and a "signed" contract with neither PDF nor signature record
+- module:    cross-module (GUARD live-verify-after-merge, passes 23–40)
+- entity:    ALL
+- surface:   `banking` · `accounting` · `mdata` · `docs` · `org` · `identity` · `legal` · `insurance` · `maintenance` · `events` · `integrations`
+- observed:  Eighteen passes completing the sweep to 40. **Referential integrity is clean everywhere it was tested, including at real scale.**
+  | # | pass | result |
+  |---|---|---|
+  | 23 | bank account ↔ ledger bind | 17 accounts, **0** live unbound, **0** orphan binds |
+  | 24 | invoice lines → invoices | 7 lines, **0** orphans |
+  | 25 | bill lines → bills | **155,274** lines, **0** orphans |
+  | 26 | payments → customers | **12,124** payments, **0** orphan customers |
+  | 27 | QBO sync queue | 9 rows: 7 `synced`, **2 `dead_letter`** |
+  | 28 | insurance | `type_catalog` 45; `policy_unit`/`coi_request`/`payment_schedule` all 0 — configured, unused |
+  | 29 | legal | `contract_templates` 69, `contract_audit_log` 30, `contract_instances` 1, **`signatures` 0** |
+  | 30 | maintenance | `pm_auto_wo_log` 33,216 (7,854 del), `pm_schedule_runs` 3,890, `parts_inventory` 144, `pm_schedules` 24 (12 del) |
+  | 31 | load stops → loads | 12 stops, **0** orphans |
+  | 32 | events | `events.event_log` 1,354, **`n_tup_del` 0** — append-only holds |
+  | 33 | identity | 25 users, 15 active |
+  | 34 | org structure | 3 companies: USMCA Freight, IH 35 Transportation, IH 35 Trucking |
+  | 35 | access control | 13 grants, 11 users, 3 companies, all active, **0 orphans** |
+  | 36 | USDOT registration | **0 missing — a previously recorded owner data gap is now CLOSED** |
+  | 37 | fixed-asset depreciation | 4 postings, nets 0¢ (LV-065) |
+  | 38 | compliance identifiers | **1 missing MC, 3 missing IFTA, 3 missing SCAC** |
+  | 39 | document store | 24 files, all uploads complete, **16 of 24 hashed**, **0 linked to a load, 0 categorised** |
+  | 40 | document integrity | **0** orphan load references |
+  **CLOSED — USDOT.** All three operating companies now carry a `usdot_number`. This was on record as an owner data gap blocking a module; it is resolved and I am recording the closure with evidence so nobody re-opens it.
+  **NEW GAP 1 — IFTA and SCAC missing on every entity.** `ifta_license_number` is NULL on **all 3** companies and `scac_code` is NULL on **all 3**; `mc_number` is NULL on 1. For a carrier running Laredo↔Mexico, the IFTA licence is not cosmetic — it is the registration under which interstate fuel tax is reported, and the system already holds 1,548 fuel transactions and a fuel-tax filing checklist item in the month-close wizard. SCAC is required for EDI and customer onboarding. These are **owner data-entry items, not code defects**.
+  **NEW GAP 2 — 24 documents are unlinked and uncategorised.** `docs.files` holds 24 rows, all with `upload_completed_at` set, but **`dispatch_load_id` NULL on all 24** and **`category_id` NULL on all 24**; `docs.file_links` has never been written (`n_tup_ins` 0). So every uploaded document floats free of any load, entity record or category. **0 carry a dangling load reference**, so nothing is broken — they are simply attached to nothing, which for an evidence store (POD/BOL, insurance certificates, driver files) means the documents exist but cannot be found from the records they belong to. Also **only 16 of 24 carry a `sha256_hash`**, so a third of the store lacks the integrity digest that makes a document defensible as evidence.
+  **NEW GAP 3 — the one "signed" contract has no signature record either.** LV-049 found `legal.contract_instances` holding a single row marked `signed_electronically` with `signed_pdf_attachment_id` NULL. Pass 29 adds that **`legal.signatures` is entirely empty (0 rows)**. So that contract has a status asserting execution, no signed PDF, and no signature record — three independent places where the evidence should exist and does not. This strengthens LV-049 from "missing artifact" to "no execution evidence of any kind", on the control that gates escrow forfeiture.
+  **Also noted, not filed:** 2 `dead_letter` rows in the QBO sync queue (small, but they are failures parked with no alerting — same family as LV-027/LV-053); and `maintenance.pm_auto_wo_log` carries 7,854 deletes against 33,216 live rows, which is log churn on a non-financial table rather than a void-not-delete violation.
+- severity:  major (three concrete gaps: statutory identifiers, an unlinked evidence store, and a contract with no execution evidence) — all other passes clean
+- LANE:      OWNER for IFTA/SCAC/MC data entry · CURSOR/CC-1 for document linking + hashing · CC-1 for the legal signature chain
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. Counts exactly as tabulated. `org.companies` 3 with `usdot_number` NULL **0**, `mc_number` NULL 1, `ifta_license_number` NULL 3, `scac_code` NULL 3. `docs.files` 24 total / 24 live / 24 `upload_completed_at` / 16 `sha256_hash` / 0 `dispatch_load_id` / 0 `category_id`; `docs.file_links` `n_tup_ins` 0; orphan load refs 0. `legal.signatures` 0. `org.user_company_access` 13 rows, 0 orphaned against `identity.users` or `org.companies`.
+- status:    OPEN
+
+## LV-072  GOVERNANCE DRIFT — the standards skill indexes 32 `.cursor/rules` files; there are **41**. Nine are undocumented, including Rule 32 (continuous mode) and Rule 35 (no CI babysit) — two rules I was actively violating because they were not in the index I had read.
+- module:    governance / session-boot
+- entity:    N/A
+- surface:   `.claude/skills/ih35-tms-standards` §11 vs `.cursor/rules/*.mdc`
+- observed:  §11 of the standards skill states **"COUNTED 2026-08-03: 32 files"** and instructs, in the same paragraph, **"Never trust this count: run `ls .cursor/rules/*.mdc | wc -l` and reconcile against this list at session start."** I ran it. The actual count is **41**.
+  **Nine files are absent from the index:** `00-operating-method-LAW`, `31-cursor-never-idle-wave-drain`, `31-full-system-audit-mandatory`, `32-continuous-mode-no-idle`, `32-load-linkage-pre-operational`, `33-standing-session-directive`, `34-cursor-pr-title-prefix`, `35-fix-failures-no-ci-babysit`, `ih35-deep-linkage-audit`.
+  **This is not academic — I was violating two of them.** The skill's own §11 predicts precisely this: *"That is exactly how an agent violates a live rule while believing it had read them all."*
+  - **Rule 35 — FIX FAILURES, DO NOT BABYSIT CI** hard-bans `gh pr checks --watch`, long watch loops, and multi-turn "waiting for green" as a primary activity. I had been running merge-on-green polling loops on every PR this session. Killed on discovery.
+  - **Rule 32 — CONTINUOUS MODE** forbids ending a turn on "waiting for CI" and requires the next action to start in the same turn. I had repeatedly closed turns on PR status.
+  Both were invisible to me because I had read the index rather than the directory. The index is a *summary of the law*, and the skill says outright: **"A summary of the law is not the law."**
+  **Two of the nine also matter to work already recorded in this file.** `32-load-linkage-pre-operational` is the codified owner ruling that imported fuel/expense rows are legitimately `load_id`-null — the exact law under which I retracted LV-063. `31-full-system-audit-mandatory` sets the completion bar at DoD A–E + VERIFY 1–8 **PROD-VERIFIED per entity**, which is the standard the 40 GUARD passes in this file are measured against.
+  **The numbering also repeats more than §11 records.** §11 documents 21, 23 and 25 as duplicated numbers; the directory shows **31 and 32 are duplicated as well** (`31-cursor-never-idle-wave-drain` / `31-full-system-audit-mandatory`, and `32-continuous-mode-no-idle` / `32-load-linkage-pre-operational`). Counting by number rather than by file therefore under-counts by more than the index admits.
+- severity:  major (governance — an agent reading only the index will violate live, always-apply rules, as I did)
+- LANE:      whoever owns `.claude/skills/ih35-tms-standards` — the skill lives in the sibling clone `/Users/jorgemunoz/IH35-TMS-clean`, outside my working tree, so I am **not** editing it. Routing the correction rather than making it.
+- neon-check: none — repository-level governance finding. `ls .cursor/rules/*.mdc | wc -l` → **41** at main `272a59bf6`; full filename list enumerated above; both Rule 32 and Rule 35 read in full and confirmed `alwaysApply: true`.
+- status:    OPEN
+
+## LV-073  Rule 31 per-entity verification — all 3 entities balance independently (0¢ each), and the per-entity split sharpens LV-051: **TRK holds 13,051 of 16,250 bills (80%) against a 13-posting ledger**, and issues ZERO invoices
+- module:    accounting (GUARD — Rule 31 per-entity bar)
+- entity:    TRANSP · TRK · USMCA
+- surface:   `accounting.journal_entries` · `accounting.invoices` · `accounting.bills` · `banking.bank_transactions` · `catalogs.accounts`
+- observed:  Rule 31 sets completion at **PROD-VERIFIED per entity**, and my earlier passes were TRANSP-weighted. Decomposing every prior aggregate by entity:
+  **Ledger balance — each entity balances on its own, not merely in aggregate:**
+  | entity | entries | postings | net |
+  |---|---|---|---|
+  | TRANSP | 1,769 | 3,566 | **0¢** |
+  | USMCA | 12 | 24 | **0¢** |
+  | TRK | 6 | 13 | **0¢** |
+  This is a stronger result than LV-050's whole-ledger proof: a cross-entity imbalance could in principle cancel in aggregate, and it does not — each entity's books close independently.
+  **Document population by entity:**
+  | entity | invoices (QBO / TMS) | bills (of which QBO-cloned) | bank txns | CoA accounts |
+  |---|---|---|---|---|
+  | TRANSP | 11,979 (11,976 / 3) | 3,196 (3,195) | 6,012 | 404 |
+  | **TRK** | **0** | **13,051 (13,050)** | 4,835 | **958** |
+  | USMCA | 4 (0 / 4) | 3 (0) | 160 | 80 |
+  **Two findings fall out of the split.**
+  1. **TRK carries 80% of all accounts payable** — 13,051 of 16,250 bills — against a ledger holding **6 journal entries and 13 postings**, and it holds the **largest chart of accounts** (958, more than double TRANSP's 404) despite the least GL activity. That is coherent for an asset holder absorbing a large imported QuickBooks history, but it means **LV-051's A/P tie-out was measured across mixed entities**: the $4.27M gap between GL `ap_control` and the bills subledger is overwhelmingly TRK's imported payables sitting against a near-empty TRK ledger, not a TRANSP condition. The conclusion of LV-051 is unchanged — the gap is expected under parallel books — but its **location** is now precise, and any future tie-out must be run per entity or it will keep reporting a number that belongs to a different company.
+  2. **TRK issues zero invoices.** Not a small number — none at all. That is exactly correct for an entity that owns and leases equipment rather than hauling freight, and it independently corroborates the standing ruling that TRK does not factor and leases equipment only. Recording it as a **PASS**, since a single TRK customer invoice would contradict the entity model.
+  **USMCA is entirely TMS-native**: all 4 invoices and all 3 bills carry no QBO origin. So the test entity is the one place where the go-forward path is exercised without imported history mixed in — which is why the invoice→GL→email chain proved out there and on TRANSP (LV-058) rather than on TRK.
+- severity:  informational — per-entity PASS; sharpens LV-051's scope
+- LANE:      none — GUARD attestation. Note for CC-1: run control-account tie-outs **per entity**, never aggregated.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. Journal entries joined to postings grouped by `operating_company_id`: TRANSP 1,769/3,566/0¢, USMCA 12/24/0¢, TRK 6/13/0¢. Unvoided invoices by entity with `source_system` split, unvoided bills by entity with `qbo_bill_id` split, unvoided `banking.bank_transactions` by entity, and `catalogs.accounts` by entity — all as tabulated. Totals reconcile: bills 3,196+13,051+3 = 16,250; invoices 11,979+4 = 11,983; accounts 404+958+80 = 1,442.
+- status:    OPEN (informational)
+
+## LV-074  GUARD — locked invariants verified at 100%: `security_invoker=true` on 40 of 40 views, FORCED RLS on every money-schema table (190 of 190). The 4 `catalogs` tables without RLS are shared-canonical reference data — EXPECTED STATE, not a defect.
+- module:    accounting / catalogs / platform (GUARD live-verify-after-merge)
+- entity:    ALL
+- surface:   `pg_class` view options and RLS flags across the money schemas
+- observed:  Two §2 locked invariants, both verified live rather than assumed from the spec.
+  **`security_invoker=true` on every view — 40 of 40 PASS.** `views` schema **39 of 39**, `accounting` **1 of 1**. No view runs with definer rights, so none can silently bypass the RLS of the caller reading through it. *(Method note: my first query searched the view **definition text** for `security_invoker` and returned 0 — the wrong place. The option lives in `pg_class.reloptions`, not the SQL body. Running both is what caught it; a single query would have produced a false "0 of 40 compliant" alarm.)*
+  **FORCED RLS on the money schemas — 190 of 190 PASS:**
+  | schema | tables | RLS on | FORCED |
+  |---|---|---|---|
+  | accounting | 85 | **85** | **85** |
+  | mdata | 50 | **50** | **50** |
+  | driver_finance | 37 | **37** | **37** |
+  | banking | 12 | **12** | **12** |
+  | fuel | 5 | **5** | **5** |
+  | hos | 1 | **1** | **1** |
+  | catalogs | 115 | 111 | 111 |
+  | lib | 2 | 2 | **1** |
+  Every table in `accounting`, `mdata`, `banking`, `driver_finance`, `fuel` and `hos` has row-level security **enabled and FORCED** — forced matters because without it the table owner bypasses the policy entirely.
+  **The 4 `catalogs` tables without RLS are correctly excluded, and I classified before filing.** §0 requires scoping to be judged by opco values and policy rather than column presence. **None of the four has an `operating_company_id` column at all**: `audit_event_types` (13 rows, event-type enum), `cancellation_reasons` (9 rows — the **legacy** table §10 rules must be archived and never dropped, superseded by `catalogs.load_cancellation_reasons`), `equipment_types_dedup_ledger_0318` (2 rows, a migration dedup artifact), `tax_form_thresholds` (8 rows, statutory thresholds). These are shared-canonical reference data with no per-entity dimension — RLS would have nothing to scope on, and adding it would be meaningless. **Reporting "4 catalogs tables missing RLS" would have been a false finding**; the classification rule is what prevented it.
+  **One genuine asymmetry, recorded not filed:** `lib` has 2 RLS-enabled tables but only **1 FORCED** — `lib.feature_flags` is `relforcerowsecurity=false` while `lib.feature_flag_overrides` is forced. That is consistent with what LV-036 measured (the flag row is visible to the runtime role while the override row is not) and is not itself the LV-036 defect, which lives in the check route's missing entity GUC.
+- severity:  informational — two locked invariants at 100%; no defect
+- LANE:      none — GUARD attestation
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. Views by schema with `reloptions ILIKE '%security_invoker=true%'`: `views` 39/39, `accounting` 1/1. `pg_class.relrowsecurity` / `relforcerowsecurity` by schema exactly as tabulated. Money-schema tables (`accounting`,`catalogs`,`mdata`,`banking`) without RLS = **4**, all in `catalogs`, each confirmed to have **0** `operating_company_id` columns via `information_schema.columns`.
+- status:    OPEN (informational)
+
+## LV-075  ROOT CAUSE of the empty Scenario Tracker (and therefore of the P0 homepage crash): **`ih35_app` has no INSERT privilege on `audit.scenario_status`.** The certifier cannot write it — it is not that it never ran. Also: WORM is enforced by GRANT, not merely observed.
+- module:    accounting / platform (GUARD live-verify-after-merge)
+- entity:    ALL
+- surface:   table privileges on `audit.*` and `events.*`
+- observed:  LV-056 recorded that `audit.scenario_status` is empty (0 rows, lifetime 1 insert / 1 delete) and that the empty payload crashed `/home` via an unguarded spread. I attributed the emptiness to the certifier never having run. **That was incomplete — the runtime role is not permitted to write the table at all.**
+  **Effective privileges for `ih35_app`:**
+  | table | SELECT | INSERT | UPDATE | DELETE |
+  |---|---|---|---|---|
+  | `audit.audit_events` | ✓ | ✓ | **✗** | **✗** |
+  | `audit.row_changes` | ✓ | ✓ | **✗** | **✗** |
+  | **`audit.scenario_status`** | ✓ | **✗** | ✗ | ✗ |
+  | `events.event_log` | ✓ | **✗** | ✗ | ✗ |
+  Schema `USAGE` is granted on both `audit` and `events`, so this is a table-level grant gap, not a schema-level one — which is exactly the failure §2 warns about: *"new schema → add GRANTs … or it 500s at runtime."* Here it does not 500; it fails silently, leaving an empty table that reads as "not yet certified".
+  **So the causal chain behind the P0 is one link longer than I first recorded:** missing INSERT grant → certifier cannot persist → `audit.scenario_status` empty → tracker payload omits `scenarios` → unguarded spread in `ScenarioTrackerPanel` → `TypeError` → entire owner homepage down. The panel fix (PR #4368) correctly stops the crash, but **the tracker will stay permanently empty until this grant is added**, so LV-056's remaining half is now precisely actionable rather than "CC-1 to investigate".
+  **Method note — two privilege views disagree, and only one is authoritative.** `information_schema.role_table_grants` reports `ih35_app` holding **only SELECT** on *both* `scenario_status` and `audit_events`, which would wrongly suggest the audit tables are unwritable too. `has_table_privilege()` returns **INSERT true for `audit_events`** and **false for `scenario_status`**. The difference is that `role_table_grants` lists only *direct* grants while `has_table_privilege` resolves *effective* privilege including role inheritance. **Effective privilege is what the runtime actually experiences**, so it is the one to test; reading the grants view alone would have produced a false finding that the audit log is unwritable.
+  **The same check yields a genuine PASS worth stating: WORM is enforced, not merely observed.** `audit.audit_events` and `audit.row_changes` both grant INSERT but **explicitly deny UPDATE and DELETE** to the runtime role. LV-054 measured `n_tup_upd = 0` and `n_tup_del = 0` across 4.5M rows; this shows that is not luck or discipline — **the runtime role is structurally incapable of mutating those rows**. `events.event_log` is even stricter (SELECT only), consistent with its 1,354 rows and 0 deletes.
+- severity:  major (identifies the actionable root cause behind a P0; the Scenario Tracker cannot function until fixed)
+- LANE:      CC-1 (platform) — `GRANT INSERT ON audit.scenario_status TO ih35_app` (plus DEFAULT PRIVILEGES if the certifier also updates/supersedes rows). Verify afterwards that a certifier run actually persists a row; the grant alone is necessary, not sufficient.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `has_table_privilege('ih35_app', …)` per table exactly as tabulated. `has_schema_privilege('ih35_app','audit','USAGE')` **true**, `('events','USAGE')` **true**. `information_schema.role_table_grants` for `audit.scenario_status` and `audit.audit_events` both show grantee `ih35_app` with `SELECT` only — direct grants, which is why they disagree with the effective-privilege result.
+- status:    OPEN
+
+## LV-076  Seven tables deny INSERT to the runtime role — three are correct WORM/reference protection, but **`catalogs.ifta_states` (0 rows) and `driver_finance.settlement_disputes` (0 rows) are empty AND unwritable**, so those features cannot ever populate
+- module:    platform / catalogs / driver_finance (GUARD live-verify-after-merge)
+- entity:    ALL
+- surface:   effective `INSERT` privilege for `ih35_app` across 20 schemas
+- observed:  Extending LV-075 from 2 schemas to **20**, exactly **7** tables deny INSERT to the runtime role. They split into three distinct classes, and only one class is a defect:
+  | table | rows | verdict |
+  |---|---|---|
+  | `events.event_log` | **1,361** | **CORRECT** — append-only WORM, written by a privileged path; newest row `2026-08-05T11:00:00Z`, so it is actively being written |
+  | `reference.ifta_tax_rates` | 96 | **CORRECT** — seeded statutory reference data, app must not mutate |
+  | `reference.non_ifta_jurisdictions` | 3 | **CORRECT** — same class |
+  | `catalogs.tax_form_thresholds` | 8 | **CORRECT** — seeded statutory thresholds |
+  | **`audit.scenario_status`** | **0** | **DEFECT** — LV-075; the certifier cannot write, so the Scenario Tracker is permanently empty |
+  | **`catalogs.ifta_states`** | **0** | **DEFECT (new)** — empty *and* unwritable |
+  | **`driver_finance.settlement_disputes`** | **0** | **DEFECT (new)** — empty *and* unwritable |
+  **The discriminator is rows-versus-writability, and it is what separates protection from paralysis.** A table that is unwritable *and populated* is deliberate protection: the data was seeded by a privileged path and the application is correctly barred from altering it — that is `events.event_log` (still receiving rows today), the two `reference.*` IFTA tables, and `tax_form_thresholds`. A table that is unwritable *and empty* is a feature that can never start: nothing seeded it and the app cannot seed it either.
+  **`catalogs.ifta_states` is the one with real consequence.** IFTA state registration underpins interstate fuel-tax reporting for a Laredo↔Mexico carrier; the system already holds 1,548 fuel transactions, 96 IFTA tax-rate rows, 3 non-IFTA jurisdictions, and an IFTA line in the Month-close wizard. The rate table is populated and readable, but the **states** table is empty and the app cannot add to it — so IFTA setup cannot be completed through the product. This compounds LV-071's finding that `ifta_license_number` is NULL on all three companies: the licence number is missing *and* the states table it would pair with is unwritable.
+  **`driver_finance.settlement_disputes` is latent.** Settlements have never run (0 rows, LV-047), so nothing has needed a dispute yet. But when one is raised, the write will fail — a silent-failure path armed and waiting rather than an active fault.
+  **Method — the same check produces both a PASS and a FAIL, and only the row count separates them.** Reporting "7 tables deny INSERT" as a defect would have been wrong for 4 of the 7; reporting none would have missed 3. The origin/intent test applies to privileges exactly as §0 applies it to data.
+- severity:  major (two features cannot ever populate; one is statutory fuel-tax setup)
+- LANE:      CC-1 (platform) — grant INSERT on `catalogs.ifta_states` and `driver_finance.settlement_disputes` alongside the `audit.scenario_status` grant from LV-075, and confirm each then persists a row. Leave the four populated tables denied — that denial is the control.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. Across 20 schemas, tables where `has_table_privilege('ih35_app', …, 'INSERT')` is false = **7**, enumerated above with live row counts. `catalogs.ifta_states` count **0**; `driver_finance.settlement_disputes` count **0**; `events.event_log` count **1,361** with newest `created_at` **2026-08-05T11:00:00.006Z**; `reference.ifta_tax_rates` 96; `reference.non_ifta_jurisdictions` 3; `catalogs.tax_form_thresholds` 8; `audit.scenario_status` 0.
+- status:    OPEN
+
+## LV-077  GUARD — catalogs coverage and the JE-type gap re-measured: **only 11 of 1,787 journal entries carry a `journal_entry_type_id` (0.6%)** despite 16 active types existing; and `catalogs.classes` is 100% TRANSP-only, so USMCA/TRK have no class dimension at all
+- module:    accounting / catalogs (GUARD live-verify-after-merge)
+- entity:    ALL
+- surface:   `catalogs.journal_entry_types` · `catalogs.classes` · `catalogs.items` · `catalogs.detail_types`
+- observed:  **Catalogs are populated and healthy**: `journal_entry_types` **16, all active**; `detail_types` **144**; `items` **241**; `classes` **177**. Every table `ih35_app` needs to read is readable — across 20 schemas, tables denying **SELECT** to the runtime role = **0**.
+  **JE typing has barely moved and the denominator has grown.** LV-021 measured 11 typed journal entries. It is still **11 — now against 1,787 entries, i.e. 0.6%**, and 16 active types are sitting unused. The gap is not "types were never configured"; the catalog is complete and the auto poster simply does not stamp the column. Since LV-021 the untyped population has grown, so JE-type reporting is getting blinder, not better. This is the same shape as LV-028 (`detail_type_id` populated on 48 of 1,442 accounts while `account_subtype` carries the real value on 1,435) — a catalog that exists, a column that references it, and a writer that never sets it.
+  **`catalogs.classes` is entirely single-entity.** All **177** classes belong to TRANSP; **0** belong to USMCA or TRK. So the class dimension — the one field §7 allows to render green, and the QBO-parity grouping used across reports — does not exist for two of the three operating companies. `catalogs.items` by contrast is properly distributed: TRANSP 190, TRK 46, USMCA 5 (241 total).
+  **Why the items/classes asymmetry matters.** Both are per-entity catalogs reached from the same categorization surfaces. Items were seeded per entity; classes were not. Any TRK or USMCA transaction that needs a class has nothing to select, and the inline "+ Add new" path (§7) would be the only way to create one — which lands back on LV-045, where the class dropdown is capped at 200 with no pagination. TRANSP is at 177 of that 200 cap while the other two entities sit at zero.
+  Recording the JE-type figure precisely because LV-021 has been cited since as "auto poster never stamps journal_entry_type_id"; that remains true and the current ratio is **11 / 1,787**.
+- severity:  major (JE-type reporting blind on 99.4% of the ledger; two entities have no class dimension)
+- LANE:      CC-1 (accounting) for JE-type stamping — note LV-021 flagged that intent must be confirmed first, since entry-type may be manual-only by design; CURSOR/CC-1 for seeding classes on TRK and USMCA
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `catalogs.journal_entry_types` 16 total / 16 active. `accounting.journal_entries` with `journal_entry_type_id IS NOT NULL` = **11** of **1,787** (0.6%). `catalogs.classes` 177 total, TRANSP 177, non-TRANSP **0**. `catalogs.items` 241 total — TRANSP 190, TRK 46, USMCA 5. `catalogs.detail_types` 144. Tables denying SELECT to `ih35_app` across 20 schemas = **0**.
+- status:    OPEN
+
+## LV-078  PM automation has run **3,914 times** and written **33,216 auto-WO log rows** while only **4 of 182 units** have a schedule and **0 of 24 schedules are active** — high-volume machinery driving one work order. Plus a real landmine: an empty `app.operating_company_id` makes maintenance RLS **throw**, not return zero.
+- module:    maintenance / fleet (GUARD live-verify-after-merge)
+- entity:    TRANSP
+- surface:   `maintenance.pm_schedules` · `pm_schedule_runs` · `pm_auto_wo_log` · `work_orders` · `mdata.units`
+- observed:  **The automation is busy; the configuration is empty.**
+  | measure | value |
+  |---|---|
+  | `pm_schedule_runs` | **3,914** |
+  | `pm_auto_wo_log` rows | **33,216** (7,854 historical deletes) |
+  | `pm_schedules` total | 24 |
+  | `pm_schedules` **active** | **0** |
+  | distinct units with any schedule | **4** of **182** |
+  | `work_orders` produced | **1** (with unit and vendor set) |
+  | `work_order_lines` | 1 |
+  So the preventive-maintenance engine has executed nearly four thousand times and written thirty-three thousand log rows, against a configuration where **no schedule is active** and **178 of 182 units are uncovered**. Whatever those 33,216 rows record, they are not producing work: exactly one work order exists in the entire system.
+  **I am deliberately NOT calling the empty configuration a defect.** Per §0's origin rule and the owner's standing statement that nothing operational has been created in the TMS — no loads, no dispatch, no maintenance beyond test — an unconfigured PM programme is expected state. A prior finding recorded the fleet as having *zero* PM schedules; there are now 24, so the direction is forward.
+  **What is worth flagging is the ratio, not the emptiness.** A scheduler that runs 3,914 times and logs 33,216 rows while 0 schedules are active is doing sustained work with no possible output. That is either a loop that should short-circuit when no active schedule exists, or a log that records evaluations rather than actions. Either way it is 33,216 rows of storage and 3,914 executions bought for one work order, and it will look identical whether the programme is switched on correctly later or stays broken — the same "expected-state-recorded-as-failure" ambiguity as LV-027 and LV-053. **UNVERIFIED — whether the log records evaluations or attempted actions**; I did not read the scheduler, and the answer decides whether this is benign idling or wasted work.
+  **Separately — a genuine RLS landmine, found by tripping it.** After an earlier test set `app.operating_company_id` to the empty string, every query against `maintenance.*` failed with **`invalid input syntax for type uuid: ""`**. The policy casts the GUC to `uuid` without a `NULLIF` guard, so an **empty** GUC **throws** instead of returning zero rows. That matters because it is the opposite of the documented RLS-0 landmine: an unset GUC silently yields 0 (a false-empty), while an *empty-string* GUC produces a hard error. Any code path that clears rather than unsets the GUC will 500 on maintenance rather than degrade quietly. The canonical FORCED-RLS pattern in §2 uses `current_setting('app.operating_company_id', true)` with a `NULLIF`-style guard elsewhere; these maintenance policies appear not to.
+  **The landmine is enumerable and small — I counted the whole class rather than reporting the one table I tripped over.** Exactly **5 policies** in the entire database cast `current_setting('app.operating_company_id')` to `uuid` without a `NULLIF` guard: `dispatch.customer_notify_preferences` (`customer_notify_preferences_company_scope`), `dispatch.notify_log` (`notify_log_company_scope`), `maintenance.pm_auto_engine_settings`, `maintenance.pm_auto_wo_log`, and `maintenance.pm_schedule_runs`. **Every other RLS policy uses the safe pattern.** So this is a bounded 5-table class, not a systemic flaw — and two of the five are dispatch **notification** tables, i.e. the customer-facing messaging path, where a hard 500 on an empty GUC is worse than a silent empty.
+- severity:  major (33,216 log rows and 3,914 runs producing 1 WO; plus 5 RLS policies that throw on an empty GUC)
+- LANE:      CC-1 / CURSOR (maintenance) — short-circuit the scheduler when no active schedule exists, and add the `NULLIF` guard to the maintenance RLS cast so an empty GUC degrades instead of erroring
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` set to TRANSP. `maintenance.pm_schedule_runs` **3,914**; `pm_auto_wo_log` **33,216**; `pm_schedules` 24 total with **0** `is_active` and **4** distinct `unit_id`; `mdata.units` without any PM schedule **178** of 182; `maintenance.work_orders` **1** (unit and vendor both set); `work_order_lines` **1**. Landmine reproduced: with `app.operating_company_id = ''`, `SELECT count(*) FROM maintenance.pm_schedule_runs` raises `invalid input syntax for type uuid: ""`; setting the GUC to a valid uuid makes the identical query succeed.
+- status:    OPEN
+
+## LV-079  Module readiness map — insurance, compliance and legal are **configured but unpopulated**: 45 + 64 + 69 reference rows and essentially no records. Recorded as EXPECTED STATE, explicitly NOT filed as defects.
+- module:    insurance · compliance · legal (GUARD live-verify-after-merge)
+- entity:    ALL
+- surface:   `insurance.*` · `compliance.*` · `legal.*`
+- observed:  Three compliance-adjacent modules measured end to end. All three follow the same pattern: **reference/catalog data seeded, operational records absent.**
+  | module | populated tables | everything else |
+  |---|---|---|
+  | insurance | `type_catalog` **45** | `policy`, `policy_unit`, `coi_request`, `payment_schedule` — all **0** |
+  | compliance | `required_document_types` **54**, `appraisal_districts` **10** | 18 of 20 tables **0** |
+  | legal | `contract_templates` **69**, `contract_audit_log` 30, `contract_instances` **1** | `signatures` **0** |
+  **I am recording these as EXPECTED STATE and filing none of them as defects.** The owner has stated repeatedly that nothing operational has been created in this TMS — no loads, no dispatch, no maintenance, no safety events — and that all real data arrived as QuickBooks and Relay imports. Per §0's origin rule and Rule 32 (load-linkage pre-operational), "this module has no records yet" is not a defect and opening a card for it would be the `expected-state-recorded-as-failure` anti-pattern. The catalogs being *seeded* is the meaningful signal: someone prepared these modules to be usable.
+  **The one exception I already filed stands, and it is a different shape.** LV-049/LV-071 report that the single `legal.contract_instances` row is marked `signed_electronically` while carrying **no signed PDF and no `signatures` row**. That is not "nothing has happened yet" — it is a record asserting that something *did* happen, with no evidence behind it, on the control that gates escrow forfeiture. Absence is expected; a false positive is not.
+  **Why the distinction is worth stating explicitly.** Across this sweep the same raw shape — an empty table — has been correct three times (escrow, factoring, these three modules) and wrong twice (`audit.scenario_status` empty *because the role cannot INSERT*, LV-075; `catalogs.ifta_states` empty *and* unwritable, LV-076). Emptiness alone carries no verdict. The discriminator that separated them was **writability and intent**, not row count: a module with seeded catalogs and writable tables is waiting; a table that is empty *and* denies INSERT can never start.
+- severity:  informational — no defect; recorded so the emptiness is not re-discovered and mis-filed later
+- LANE:      none — GUARD attestation. Insurance/compliance population is owner/operational work, not a code fix.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` set to TRANSP. `insurance.*` tables with `n_live_tup > 0`: only `type_catalog` (45). `compliance` schema: 20 tables, only `required_document_types` (54) and `appraisal_districts` (10) non-empty. `legal`: `contract_templates` 69, `contract_audit_log` 30, `contract_instances` 1, `signatures` 0.
+- status:    OPEN (informational)
+
+## LV-080  GUARD — bank categorization is never half-done: all **170** categorized transactions carry both a CoA and a GL account (**0** exceptions of 11,007); and **1,413** transactions already carry a unit link, 8× the categorized count
+- module:    banking (GUARD live-verify-after-merge)
+- entity:    TRANSP
+- surface:   `banking.bank_transactions` categorization columns
+- observed:  **Integrity PASS — categorization is atomic in practice.** Of **11,007** unvoided bank transactions, **170** have `categorized_at` set, and exactly **170** carry `coa_account_id` *and* **170** carry `categorization_gl_account_id`. Transactions marked categorized but missing an account: **0**. So the categorization write never lands half-applied — a row is either uncategorized or fully coded to an account. That is the property that matters, because a `categorized_at` timestamp without an account would be the same status-without-substance shape as LV-010 (`sent` with no queue row) and LV-063's `overage_recovered_cents` without a deduction.
+  **Attribution is far ahead of coding, and that is the more useful observation.** The same table already carries:
+  | link | count | vs 170 categorized |
+  |---|---|---|
+  | `categorization_unit_id` | **1,413** | **8.3×** |
+  | `categorization_driver_id` | **363** | 2.1× |
+  | `categorization_load_id` | 13 | — |
+  So unit and driver attribution have been resolved on far more transactions than have been accounting-coded. That attribution is arriving from telematics and fuel matching rather than from the categorization workflow, which means **the operational linkage needed to code these rows already exists on 1,413 of them** — the constraint on CLS-BANK-MATCH-DENSITY (LV-046, categorization frozen at 170 of 11,002) is not missing context. Whoever works that class has a large pre-attributed pool to draw on rather than a cold start.
+  `categorization_load_id` at 13 is expected state, not a gap: no loads have been dispatched in the TMS (Rule 32 / LV-073), so there is almost nothing to link to.
+  `banking.transaction_categories` holds 23 seeded categories and `banking.intercompany_entity_pairs` 6, so the supporting catalogs are configured.
+- severity:  informational — integrity PASS plus a materially useful observation for the open categorization class
+- LANE:      none — GUARD attestation. Note for CC-1 working CLS-BANK-MATCH-DENSITY: 1,413 transactions already carry unit attribution.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` set to TRANSP, exit 0. `banking.bank_transactions` unvoided **11,007**: `categorized_at` NOT NULL **170**, `coa_account_id` NOT NULL **170**, `categorization_gl_account_id` NOT NULL **170**, `categorization_unit_id` **1,413**, `categorization_driver_id` **363**, `categorization_load_id` **13**. Count categorized with neither CoA nor GL account = **0**. `banking.transaction_categories` 23, `intercompany_entity_pairs` 6, `bank_accounts` 17.
+- status:    OPEN (informational)
+
+## LV-081  ★ ORIGIN CENSUS — **99.98% of every financial record is a QuickBooks/Relay import. TMS-native total: 14 records out of 56,857.** Consult this before calling ANY gap a defect.
+- module:    cross-module (GUARD — canonical origin reference)
+- entity:    ALL
+- surface:   `accounting.invoices` · `accounting.bills` · `accounting.expenses` · `fuel.fuel_transactions`
+- observed:  The owner has had to restate the same fact repeatedly: *"all transactions are synced from QuickBooks, we have not begun creating invoices, dispatch, loads etc, we are only testing."* This finding exists so the fact is **measured** rather than remembered, and so any future reader can settle an origin question in one lookup instead of re-deriving it or asking again.
+  | record type | total | import-origin | % imported | TMS-native |
+  |---|---|---|---|---|
+  | invoices (`source_system='qbo'`) | 11,983 | 11,976 | **99.94%** | **7** |
+  | bills (`qbo_bill_id`) | 16,250 | 16,245 | **99.97%** | **5** |
+  | expenses (`qbo_purchase_id`) | 27,072 | 27,070 | **99.99%** | **2** |
+  | fuel transactions (`imported_at`) | 1,552 | 1,552 | **100.00%** | **0** |
+  | **TOTAL** | **56,857** | **56,843** | **99.98%** | **14** |
+  **Fourteen records.** That is the entire TMS-native financial footprint of this system, and every one of them is a test artifact created during verification — the $5.00 and $1.00 invoices, the $1,200 WIRE-04 test invoice, the $25 draft bill, the two proof expenses. Loads stand at 6 (4 live, all test, LV-073); dispatched loads at 0; settlements at 0; work orders at 1.
+  **The operational consequence, stated once so it need not be inferred again:** for any query over these tables, the answer describes **QuickBooks history**, not this product's behaviour. An empty link, an unposted document, a null `load_id`, an uncategorized bank row — on 56,843 of 56,857 records these are the **correct** state under parallel double-books, because QBO is the system of record and the TMS has not transacted. A defect can only exist in (a) the **14 native records**, (b) the **code path** that will handle the fifteenth, or (c) a **control that misreports** either. Everything else is history being carried, and "fixing" it means inventing financial data.
+  **This is not theoretical — I violated it during this very sweep.** LV-063 filed $316.34 of fuel-card overage as never recovered; the origin test showed all three rows were Relay imports with no settlement to deduct from, and I retracted it. The census exists so the next agent runs the lookup instead of the retraction.
+  **Live import still active:** fuel transactions moved 1,548 → **1,552** during this session, so the import cohort is growing in real time and any "missing" count taken against it is stale within hours.
+- severity:  informational — canonical reference; prevents the most repeated class of false finding in this file
+- LANE:      none — GUARD attestation for all lanes
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` set to TRANSP, exit 0. Single UNION query over four tables returning total, import-origin count and percentage per type as tabulated; totals 56,857 records with 56,843 import-origin = 99.98%, leaving 14 TMS-native.
+- status:    OPEN (informational — permanent reference)
+
+## LV-082  GO-FORWARD VERDICT on the 14 native records: **11 posted, 3 correctly declined, 1 wrongly accepted.** The poster is fully observable at this size — and it already demonstrates the LV-064 denylist defect exactly once.
+- module:    accounting (GUARD — go-forward engine verdict)
+- entity:    TRANSP + USMCA
+- surface:   the 14 TMS-native records from LV-081 vs `accounting.posting_batches`
+- observed:  LV-081 established that only **14** financial records in the system were created by this TMS. That is small enough to audit **exhaustively** rather than statistically — every native record's posting outcome can be checked individually, which is not possible for the 56,843 imported ones. Doing so:
+  | type | native | posted | not posted |
+  |---|---|---|---|
+  | invoices | 7 | **4** | 3 |
+  | bills | 5 | **5** | 0 |
+  | expenses | 2 | **2** | 0 |
+  | **total** | **14** | **11** | **3** |
+  **All 3 non-postings are correct** (LV-059): INV-2026-00002 is `proforma` (a non-posting projection by design), INV-2026-00741 is `draft` (not issued), INV-2026-00004 has `total_cents = 0` (nothing to post). So the engine declined exactly the documents it should decline.
+  **One of the 11 postings is wrong, and it is the LV-060 draft bill.** Bill `f8f8e5a4` ($25.00) was created `draft`, never left draft, and posted to the general ledger three minutes later. So across the complete native population the poster is **13 of 14 correct**: it refuses draft *invoices* and accepts draft *bills*, which is precisely the allowlist-versus-denylist asymmetry LV-064 enumerates across 4 of the 5 posters.
+  **Why this is the strongest available evidence for LV-064.** The defect is not inferred from reading code alone — it is observable in the live outcome of the entire go-forward corpus. With 14 records, one incorrect posting is a **7% error rate on native documents**, and it is the *only* error. At $25 on test data it is a curiosity; the same code path at real dispatch volume produces a stream of prematurely recognised liabilities from un-issued documents, and by then the population is too large to audit exhaustively the way I just did.
+  **This is the cheapest moment in the system's life to fix it.** The native corpus is 14 records, there is no posted history to unwind, and the correct pattern (`INVOICE_ELIGIBLE_STATUSES`) already exists in the same file. Every additional day of real volume raises the cost.
+  **Method note:** this verdict is only meaningful *because* of the origin census. Run against all 56,857 records the same query returns "11 of 56,857 posted", which reads as catastrophic and is meaningless. Scoping to the 14 native records turns an uninterpretable ratio into an exhaustive audit with a single defect.
+- severity:  major (confirms LV-064 empirically on the complete native corpus; 1 incorrect posting of 14)
+- LANE:      CC-1 (money) — LV-064 remains the fix: replace the 4 denylists with allowlists mirroring `INVOICE_ELIGIBLE_STATUSES`
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` TRANSP, exit 0. TMS-native records with a `posted` batch: invoices **4** of 7 (`source_system='tms'`), bills **5** of 5 (`qbo_bill_id IS NULL`), expenses **2** of 2 (`qbo_purchase_id IS NULL`) — 11 of 14. The 3 unposted invoices and their statuses per LV-059; the incorrectly posted draft bill `f8f8e5a4-8c66-4d16-a4c9-44beff6b79e2` per LV-060.
+- status:    OPEN
+
+## LV-083  §10 LINKAGE LAW violation — **3 canonical tables carry foreign keys INTO retired schemas**, and the retire targets are not dormant: `maint.part` holds 144 rows and `maint.pm_schedule` 24, duplicating the canonical `maintenance.*` tables exactly
+- module:    maintenance · driver_finance (GUARD — §10 linkage law)
+- entity:    ALL
+- surface:   RETIRE schemas `payroll` · `settlement` · `bank` · `maint` vs canonical `driver_finance` · `banking` · `maintenance`
+- observed:  §10 defines the RETIRE→canonical mapping — `driver_finance.*` supersedes `payroll.*`/`settlement.*`, `banking.*` supersedes `bank.*`, `maintenance.*` supersedes `maint.*` — and states that FK-ing a RETIRE table is a correctness gate, not a style preference.
+  **11 retire tables still exist** (maint 5, settlement 3, payroll 2, bank 1) and **9 FKs point into them**. Splitting those 9 by origin is what separates legacy debris from a live violation:
+  **The 3 live violations — canonical → RETIRE:**
+  | from (canonical) | → to (RETIRE) | target rows |
+  |---|---|---|
+  | `driver_finance.trip_link_queue` | `settlement.settlement_line` | 0 |
+  | `maintenance.position_history` | `maint.position_set` | **6** |
+  | `maintenance.position_history` | `maint.part` | **144** |
+  The remaining **6 are retire→retire** (`maint.part_position_assignment`→`maint.position_set`, `maint.position_history`→`maint.position_set`/`maint.part`, `payroll.driver_settlement_line_items`→`payroll.driver_settlements`, `settlement.settlement_deduction`/`settlement_line`→`settlement.settlement`) — internal legacy structure, harmless, and correctly left alone under archive-never-delete.
+  **The retire targets are populated, which is the part that makes this more than bookkeeping.** `maint.part` **144** and `maint.pm_schedule` **24** — and the canonical side reports `maintenance.parts_inventory` **144** and `maintenance.pm_schedules` **24**. Identical counts on both sides means these are not dormant shells awaiting drop; **the same data exists in both the retired and the canonical schema**. So `maintenance.position_history` — a canonical table — resolves its part and position references through the **retired** copy while an equivalent canonical copy exists alongside it. Any divergence between the two copies would silently split maintenance history.
+  **What I am NOT claiming.** I did not verify that the 144 `maint.part` rows are the *same* 144 as `maintenance.parts_inventory` — only that the counts match exactly, which is strong but not proof of identity. **UNVERIFIED — row-level identity between the retire and canonical copies**; establishing it needs a key-level diff, and the answer determines whether this is a safe repoint or a genuine data merge.
+  Under §10 and archive-never-delete, the fix is to **repoint the 3 canonical FKs at canonical targets** and leave the retire tables in place archived — never to drop them.
+- severity:  major (§10 correctness gate — canonical tables structurally depend on retired schemas holding live duplicate data)
+- LANE:      CC-1 / CURSOR (maintenance + driver_finance) — repoint `maintenance.position_history` to `maintenance.parts_inventory` and the canonical position table, and `driver_finance.trip_link_queue` to the canonical settlement line; archive the retire tables, do not drop them
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` TRANSP, exit 0. Base tables in retire schemas = **11** (maint 5, settlement 3, payroll 2, bank 1). FKs whose target is a retire schema = **9**, of which **3** originate outside retire schemas and **6** are retire→retire, each enumerated above. Retire row counts: `maint.part` **144**, `maint.pm_schedule` **24**, `maint.position_set` **6**, all others **0**. Canonical comparison: `maintenance.parts_inventory` **144**, `maintenance.pm_schedules` **24**.
+- status:    OPEN
+
+## LV-084  §10 — the retired `accounting.qbo_*` tables hold **7,934 rows that DRIFT from canonical master data** (49 vendors, 41 customers apart). Nothing structurally depends on them (1 FK, self-referential), so this is a read-risk not a coupling risk.
+- module:    accounting · mdata (GUARD — §10 linkage law, QBO mirror)
+- entity:    ALL
+- surface:   `accounting.qbo_*` (RETIRE) vs `mdata.qbo_*` (canonical mirror) vs `mdata.vendors`/`customers`
+- observed:  §10 states the QBO mirror is `mdata.qbo_*` **read-only**, that projections write `accounting.*`, and that **`accounting.qbo_*` is RETIRE**. Both mirrors are live on prod.
+  **The retired set holds 7,934 rows:** `accounting.qbo_vendors` **2,782**, `qbo_customers` **2,655**, `qbo_accounts` **1,647**, `qbo_remote_counts` 848, `qbo_remote_count_collection_state` 2.
+  **The canonical mirror is an order of magnitude larger** and is clearly the one being fed: `mdata.qbo_sync_runs` **31,728**, `qbo_purchases` **28,332**, `qbo_ar_payments` **23,308**, `qbo_ap_bills` **17,303**, `qbo_ar_invoices` **9,078**, `qbo_ap_bill_payments` **6,397** — 14 tables in total.
+  **The retired copies have drifted from canonical master data:**
+  | retired | rows | canonical | rows | drift |
+  |---|---|---|---|---|
+  | `accounting.qbo_vendors` | 2,782 | `mdata.vendors` | 2,831 | **49** |
+  | `accounting.qbo_customers` | 2,655 | `mdata.customers` | 2,696 | **41** |
+  So the retired tables are neither empty nor synchronised — they are a stale snapshot roughly 1.7% behind canonical vendors and 1.5% behind canonical customers. That is the worst of both states for a retired table: populated enough to look authoritative, stale enough to be wrong.
+  **The structural risk is low and I checked rather than assuming it.** Exactly **1** foreign key targets the `accounting.qbo_*` set, and it is `accounting.qbo_accounts` → `accounting.qbo_accounts` — a self-referential parent/child hierarchy. **No canonical table FKs into the retired QBO set**, so unlike LV-083 (where `maintenance.position_history` genuinely depends on `maint.*`) nothing here is structurally coupled. The exposure is purely that application code or a report could still *read* these tables and get 49 vendors' worth of stale answers.
+  This is the live measurement behind the standing unresolved contradiction over which `qbo_vendors` is canonical: the owner ruled `mdata` canonical, and the drift figures quantify what deferring the repoint currently costs — a second, wrong copy that answers queries.
+  **Not filed as a data defect.** Under archive-never-delete the retired tables should remain; the correct resolution is repointing readers, not dropping rows. And per the origin census (LV-081) every row in both mirrors is QuickBooks-imported, so neither copy is TMS-authored.
+- severity:  major (a retired, drifted duplicate of master data remains readable; 49 vendors / 41 customers divergent)
+- LANE:      CC-1 (money) — repoint any remaining readers of `accounting.qbo_*` at `mdata.*`; archive the retire tables in place, never drop
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` TRANSP, exit 0. `accounting.qbo_*` = 5 tables totalling 7,934 rows as listed. `mdata.qbo_*` = 14 tables, top counts as listed. `mdata.vendors` **2,831** vs `accounting.qbo_vendors` **2,782**; `mdata.customers` **2,696** vs `accounting.qbo_customers` **2,655**. FKs targeting `accounting.qbo_*` = **1**, self-referential on `qbo_accounts`.
+- status:    OPEN
