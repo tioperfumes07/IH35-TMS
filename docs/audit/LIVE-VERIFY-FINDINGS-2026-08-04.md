@@ -2233,3 +2233,44 @@ consistent with the entity model, not a defect.
              `is_active` true with `reversed_by_je_id` non-null on their JEs. Differential predicate counts
              **2** (naive) vs **0** (ACCT-F66) executed as SQL against those rows.
 - status:    PASS
+
+## LV-106  BANK PATH (Phase-1 hop 9 / WIRE-10) — **WIRING PASS, proven three ways and both directions**; density is 1.5% and is an ops backlog, correctly NOT claimed as green
+- module:    banking · accounting (GUARD — Phase-1 money hop verification)
+- entity:    ALL
+- surface:   `banking.bank_transactions` ↔ `accounting.journal_entries` ↔ `accounting.journal_entry_postings`
+- observed:  The delivery plan anticipated exactly this split for hop 9 — *"Match/categorize wiring proven;
+  density may be ops backlog (named)"* — so I separated the two rather than reporting one number.
+  **(1) The wiring is correct, and the three independent counts agree exactly:**
+  | measure | count |
+  |---|---|
+  | transactions with `categorized_at` set | **170** |
+  | transactions with `matched_journal_entry_id` set | **170** |
+  | distinct bank transactions appearing as a posting source | **170** |
+  Three separate tables agreeing on 170 is a stronger statement than any one of them: a transaction does not
+  get categorized without producing a journal entry, and does not get a journal entry without producing
+  posting lines that name it. The 380 posting lines over 170 transactions (≈2.2 each) is consistent with
+  split categorizations.
+  **(2) Both directions resolve, 0 orphans either way.** Forward (LV-104): all **380**
+  `bank_categorization` posting lines resolve to a live `banking.bank_transactions` row, **0** dangling.
+  Reverse: bank transactions whose `matched_journal_entry_id` points at a **missing** journal entry = **0**.
+  Nothing is matched to a JE that does not exist, and nothing posts from a transaction that does not exist.
+  **(3) Density is 1.5%, and that is an operations fact, not a defect.** **170 of 11,064** transactions are
+  categorized. The remaining 10,894 are uncategorized imported bank feed — the same origin class as the
+  16,245 QBO-cloned bills and the 1,548 relay-ingest fuel rows (§0 origin ruling). **Categorizing them is
+  bookkeeping work, not engineering work**, and "fixing" it in code would mean inventing categorizations.
+  **(4) The tracker is telling the truth about this hop.** `matched_invoice_id` is **0** across all 11,064
+  rows, and the Bank path slice reads **MERGED**, not PASSED, with evidence *"0 customer payment(s) matched to
+  an invoice"*. That is honest reporting of an unexercised leg — the wiring exists, the customer-payment
+  matching leg has never run. Worth stating plainly because it is the opposite of the LV-088 failure: here
+  the board declines to claim green it has not earned.
+  **Also clean:** `voided_at` non-null = **0** and `reconciliation_cleared` = **0** — no voided transactions
+  distorting the counts, and no reconciliation has been run (consistent with the owner's standing
+  RECONCILE-FROZEN instruction, §9.0 item 15).
+- severity:  none — wiring verify PASS; density recorded as a named ops backlog, not filed as a defect
+- LANE:      n/a (verification) — the 10,894 uncategorized transactions are an operations task for the owner's
+             bookkeeping lane, and are explicitly **out of scope** until the owner says "reconcile"
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             `banking.bank_transactions` total **11,064** (credits 2,742); categorized **170**;
+             `matched_journal_entry_id` set **170**, dangling **0**; distinct bank txns appearing as a
+             posting source **170**; `matched_invoice_id` **0**; `reconciliation_cleared` **0**; `voided_at` **0**.
+- status:    PASS (wiring) · density named, not a defect
