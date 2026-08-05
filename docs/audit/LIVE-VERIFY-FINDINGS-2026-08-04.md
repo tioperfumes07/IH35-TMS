@@ -2580,3 +2580,56 @@ consistent with the entity model, not a defect.
              `pg_get_functiondef` (`current_user=ih35_app` asserted); index definition from `pg_indexes`;
              all four zero counts with `n_tup_ins` from `pg_stat_user_tables`.
 - status:    OPEN — chain unproven (both known blockers fixed; zero executions)
+
+## LV-115  **ACCT-F120's SQL fix is CORRECT — and the LV-088 SYMPTOM IS STILL LIVE**: the UI sends entity CODES, the API accepts only UUIDs, and silently serves ALL-scope on HTTP 200
+- module:    home/program · scenario-tracker (GUARD — verify-after; the fix works, the defect does not close)
+- entity:    TRANSP + USMCA + TRK (all three selector states affected)
+- surface:   `GET /api/v1/home/scenario-tracker?entity=…` · Program → Scenario tracker scope buttons
+- observed:  ACCT-F120 (#4493) fixed the `currentCert()` predicate I reported in LV-088 — a `CASE` so an
+  ALL read sees only ALL rows, plus deterministic ordering with the entity's own cert winning over the
+  fallback. **That fix is correct and I verified it works.** But verifying the *fix* is not verifying the
+  *defect is closed*, and end-to-end it is not.
+  **(1) The backend, exercised directly, is right:**
+  | `?entity=` | `entity_scope` returned | hop.book live / cert |
+  |---|---|---|
+  | *(omitted)* | `ALL` | 3 / 3 ✓ |
+  | `5c854333…` (USMCA UUID) | `5c854333…` | **1 / 1** ✓ |
+  | `91e0bf0a…` (TRANSP UUID) | `91e0bf0a…` | **2 / 2** ✓ |
+  Live and cert now agree per entity, in both directions. **LV-088's root cause is genuinely fixed.**
+  **(2) The UI never sends a UUID.** Captured from the live page, clicking the scope buttons:
+  `GET …/scenario-tracker?entity=USMCA` and `…?entity=TRANSP` — **the entity CODE**, not the id.
+  **(3) The API accepts only UUIDs and degrades SILENTLY:**
+  | `?entity=` | HTTP | `entity_scope` | hop.book |
+  |---|---|---|---|
+  | `USMCA` | **200** | **`ALL`** | **3 / 3** |
+  | `TRANSP` | **200** | **`ALL`** | **3 / 3** |
+  | `TRK` | **200** | **`ALL`** | **3 / 3** |
+  No 400, no error, no empty state — a plausible board rendered from the wrong scope.
+  **NET EFFECT: the scope selector is INERT and every entity view shows ALL-entity numbers.** That is the
+  same user-visible symptom LV-088 reported — one entity's rows credited to another's view — now produced
+  one layer up. I confirmed it on screen: with **USMCA selected**, `hop.book` still read **3 loads**; USMCA
+  has **1**. The two extra are TRANSP's, and TRK's zero is folded in.
+  **Why this class survives a correct fix, and why it is the lesson.** LV-088 was diagnosed in SQL, fixed in
+  SQL, and verified in SQL — and by every SQL measure it is closed. The contract between the caller and that
+  SQL was never part of the diagnosis, so nothing in the fix or its guard exercises the path the UI actually
+  takes. **A guard asserting the predicate is right cannot notice that nobody calls it correctly.** This is
+  the same shape as LV-099 (a ledger asserting an effect) and LV-103 (a card asserting a guard): a layer
+  certifying itself while the layer above it disagrees.
+  **The silence is the severity multiplier.** An unknown entity yielding HTTP 200 + ALL is indistinguishable
+  from a correct answer. Rejecting a non-UUID `entity` with 400, or resolving codes to ids server-side, both
+  close it; **failing loudly is the part that matters**, because the numbers are plausible either way.
+  **Not claimed:** I did not determine whether the frontend once sent UUIDs and regressed, or never did. The
+  relocation to Program (#4495) rewrote this surface, but I have not diffed the caller across it, so the
+  origin is **UNVERIFIED**. Either way the current contract is broken.
+- severity:  **major** (the evidence surface reports cross-entity numbers under an entity label; LV-088's
+             user-visible defect is NOT closed despite its root cause being fixed)
+- LANE:      CC-3 / CURSOR (owns the Program tracker surface) — send the entity **UUID**, or resolve codes to
+             ids in the route. **Backend must fail closed:** a non-UUID `entity` should 400, never silently
+             become ALL. Guard must assert an unknown/`code`-shaped `entity` does NOT return `entity_scope:"ALL"`
+             — a guard over the SQL predicate alone reproduces this exact miss.
+- neon-check: none required for the contract itself; per-entity truth cross-checked against prod
+             `br-fancy-credit-akjnd07a` (`audit.scenario_status`: hop.book ALL=3 / TRANSP=2 / USMCA=1 / TRK=0),
+             which is what makes the UUID responses verifiably correct and the code responses verifiably ALL.
+             Deploy confirmed live: `/api/v1/healthz/shallow` version `82d9c8c` == `origin/main` tip, and
+             ACCT-F120 (`387aa6721`) is an ancestor, so the fix under test is the deployed one.
+- status:    OPEN (LV-088 root cause RESOLVED; user-visible defect REOPENED at the API contract)
