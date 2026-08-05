@@ -663,9 +663,9 @@
       "layer": "A",
       "modules": ["dispatch"],
       "instances": [
-        { "path": "apps/backend/src/dispatch/pod.routes.ts:309-329 POST /dispatch/loads/:loadId/bol/generate → bol-generator.service.ts (WIRE-09)", "entity": "ALL", "note": "Wire exists. dispatch.bol_documents needs live verification. R2 configured." }
+        { "path": "apps/backend/src/dispatch/pod.routes.ts:309-329 POST /dispatch/loads/:loadId/bol/generate → bol-generator.service.ts (WIRE-09)", "entity": "ALL", "note": "Wire exists. Live 2026-08-04: dispatch.bol_documents=0 vs mdata.loads=6. R2 configured." }
       ],
-      "completeness": "Code-verified: pod.routes.ts registerDispatchPodBolRoutes includes BOL generate + download routes. bol-generator.service.ts generateAndStoreBol + generateBolPdf exist. PDF render + R2 upload path present.",
+      "completeness": "Code-verified + live 2026-08-04: pod.routes.ts registerDispatchPodBolRoutes includes BOL generate + download routes. bol-generator.service.ts generateAndStoreBol + generateBolPdf exist. PDF render + R2 upload path present. Live count: dispatch.bol_documents=0 vs mdata.loads=6 — no BOL generated yet.",
       "guard": "scripts/verify-disp-wire-09-bol-generate.mjs",
       "drain_proof": {
         "guard_green": false,
@@ -685,14 +685,14 @@
       "layer": "C",
       "modules": ["dispatch", "accounting"],
       "instances": [
-        { "path": "apps/backend/src/dispatch/cancellation.service.ts — load cancellation service (WIRE-10a)", "entity": "ALL", "note": "Service exists. Needs verification: does cancel void proforma invoice? Does it cancel driver bill?" },
-        { "path": "apps/backend/src/dispatch/cancel-load.routes.ts — cancel load route (WIRE-10b)", "entity": "ALL", "note": "Route exists. Spine event emitted. Economics reversal unverified." }
+        { "path": "apps/backend/src/dispatch/cancellation.service.ts — load cancellation service (WIRE-10a)", "entity": "ALL", "note": "Service exists. Live 2026-08-04: cancelled load L-20260616-0120 has no invoice and 2 driver_bills (1 void, 1 still open). Partial reversal: driver bill not fully cancelled." },
+        { "path": "apps/backend/src/dispatch/cancel-load.routes.ts — cancel load route (WIRE-10b)", "entity": "ALL", "note": "Route exists. Spine event emitted. Live cancelled load shows one driver_bill remains open." }
       ],
-      "completeness": "Code-verified: cancellation.service.ts and cancel-load.routes.ts exist. Spine events emitted on cancellation. Whether proforma invoice is voided and driver bill is cancelled on load cancel is UNVERIFIED — needs code read of cancellation service economics path.",
+      "completeness": "Code-verified + live 2026-08-04: cancellation.service.ts and cancel-load.routes.ts exist. Spine events emitted on cancellation. Live: cancelled load L-20260616-0120 has no invoice, but 2 driver_bills (1 void, 1 still open). Driver bill cancellation is partial / not fully enforced. Proforma invoice voiding is unverified because no invoice was created for this load.",
       "guard": "scripts/verify-disp-wire-10-cancel-economics.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "WIRE-10 cancel economics: cancellation.service.ts + cancel-load.routes.ts exist. Whether proforma is voided and driver bill cancelled on load cancel is UNVERIFIED. Spine events emitted.",
+        "guard_sample": "WIRE-10 cancel economics: cancellation.service.ts + cancel-load.routes.ts exist. Live 2026-08-04: cancelled load L-20260616-0120 has driver_bills=2 (1 void, 1 open). Driver bill cancellation is incomplete. No proforma invoice existed for this load.",
         "money_critical": true
       },
       "status": "open",
