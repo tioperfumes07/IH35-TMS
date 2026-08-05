@@ -112,6 +112,10 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Reconciliation", path: "/accounting/reconciliation", section: "more" },
   { label: "QBO reconcile", path: "/accounting/qbo-reconcile", section: "more" },
 
+  // More ▾ — loans & advances. Backend (migrations 202611230000 / 202611260000, posting,
+  // auto-deduct, reminder worker) shipped with no frontend door at all; this is that door.
+  { label: "Loans & Advances", path: "/accounting/loans-advances", section: "more" },
+
   // More ▾ — settlements / driver finance
   { label: "Settlements", path: "/driver-finance/settlements", section: "more" },
   { label: "Pre-settlements", path: "/accounting/pre-settlements", section: "more" },

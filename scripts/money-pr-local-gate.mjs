@@ -51,6 +51,28 @@ const STEPS = [
   ["verify-no-guard-file-deletion", "scripts/verify-no-guard-file-deletion.mjs"],
   // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).
   ["verify-claude-green-evidence-shape", "scripts/verify-claude-green-evidence-shape.mjs"],
+
+  // ── GLOBAL FE COMPONENT STANDARDS (added 2026-08-05, CC-3) ──────────────────────────────────
+  // WHY: this gate covered money/DoD/palette/EntityLink but NOT the shared-component ratchets, so a
+  // screens-lane PR could pass every local check and still red CI. It cost #4484 two full CI cycles
+  // in a row — locked-guards on verify:money-fields-use-moneyinput (raw <input> for principal), then
+  // build-typecheck at step 99/1393 on no-raw-date-input (5m37s) for <input type="date">. Each was a
+  // one-line component swap that a 0.1s local scan catches.
+  //
+  // SCOPE: only the GLOBAL ratchets — these scan all of apps/frontend/src, so ANY new FE file can
+  // trip them. The ~100 per-page `*-uses-paritytable` guards are deliberately NOT here: they only
+  // fire when you touch their specific page, and running them all would make the gate slow enough to
+  // be skipped, which is how a gate dies. Combined cost of the five below is ~0.5s.
+  // NOTE: the meta-guard that ASSERTS this list mirrors CI ships separately under claim 2632 —
+  // verify:guard-wired requires every guard script to be wired into package.json + CI, which needs a
+  // claimed verify-step number (Rule 37). Until it lands, this list is hand-maintained; the entries
+  // below are the empirically-burned set.
+  ["verify-no-raw-date-input", "scripts/verify-no-raw-date-input.mjs"],
+  ["verify-no-native-datetime-input", "scripts/verify-no-native-datetime-input.mjs"],
+  ["verify-money-fields-use-moneyinput", "scripts/verify-money-fields-use-moneyinput.mjs"],
+  ["verify-referenceselect-qbo-standard", "scripts/verify-referenceselect-qbo-standard.mjs"],
+  ["verify-referenceselect-coverage-ratchet", "scripts/verify-referenceselect-coverage-ratchet.mjs"],
+  ["verify-no-internal-language-in-prod-ui", "scripts/verify-no-internal-language-in-prod-ui.mjs"],
 ];
 
 function runNode(rel) {
