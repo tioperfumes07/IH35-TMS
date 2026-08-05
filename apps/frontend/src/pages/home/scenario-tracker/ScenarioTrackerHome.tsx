@@ -91,6 +91,7 @@ export function ScenarioTrackerHome() {
   const hops = HOP_IDENTITY.map((id) => mergeLiveItem(id, liveByKey.get(id.key), stale));
   const scenarios = SCENARIO_IDENTITY.map((id) => ({
     kind: id.kind,
+    links: id.links,
     item: mergeLiveItem(id, liveByKey.get(id.key), stale),
   }));
 
@@ -198,7 +199,7 @@ export function ScenarioTrackerHome() {
       <h2 className="st-h2">Part B — Every other end-to-end process (same engine)</h2>
       <p className="st-sub">Each is its own vertical slice, each on the same 6-stage lifecycle.</p>
       <div className="st-grid" data-testid="scenario-tracker-scenarios">
-        {scenarios.map(({ kind, item }) => (
+        {scenarios.map(({ kind, links, item }) => (
           <div key={item.key} className={`st-sc ${kind}`} data-testid={`scenario-card-${item.key}`}>
             <div className="t">{item.title}</div>
             {item.trigger ? (
@@ -207,9 +208,15 @@ export function ScenarioTrackerHome() {
               </div>
             ) : null}
             {item.je ? <div className="st-je">{item.je}</div> : null}
+            {links ? (
+              <div className="st-lk">
+                <b>Links:</b> {links}
+              </div>
+            ) : null}
             {item.spec_ref ? (
               <div className="st-spec">
                 <b>Spec:</b> {item.spec_ref}
+                {item.evidence && !stale ? ` · ${item.evidence}` : ""}
               </div>
             ) : null}
             <ScenarioPipeline item={item} stale={stale} />
