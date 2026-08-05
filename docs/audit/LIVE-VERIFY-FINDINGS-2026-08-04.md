@@ -1102,3 +1102,16 @@ membership-scoped session.
 - LANE:      none — GUARD attestation
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `pg_stat_user_tables` for `hos.duty_status_events`: `n_live_tup` **592,535**, `n_tup_ins` 594,504, `n_tup_upd` **0**, `n_tup_del` **0**. Safety schema counts as listed, all `n_tup_del` 0 except `integrity_alert_events` (1).
 - status:    OPEN (informational)
+
+## LV-069  GUARD pass 21 — fleet/asset entity model PASS: 182 units all carry an owner, 52 leased out, ZERO self-leases; the TRK-owns/TRANSP-leases split holds on the correct columns
+- module:    fleet / mdata (GUARD live-verify-after-merge, pass 21)
+- entity:    ALL
+- surface:   `mdata.units` · `mdata.drivers`
+- observed:  `mdata.units` holds **182** rows. **All 182 carry an `owner_company_id`** — no unit is orphaned from an owning entity — and **52** carry a `currently_leased_to_company_id`, i.e. are currently leased out. **Zero units are leased to their own owner** (`currently_leased_to_company_id = owner_company_id` → 0), so the lease relation never degenerates into a self-reference that would double-count an asset or make an entity appear to lease from itself.
+  This is the multi-entity asset model working as specified: **TRK owns the equipment; TRANSP/USMCA lease it.** Ownership and leasehold are tracked on the two purpose-built columns — `owner_company_id` and `currently_leased_to_company_id` — and **not** on `operating_company_id`, which does not exist on this table and whose assumed presence is a documented recurring source of 500s. The live data confirms the documented model rather than the mistaken one.
+  `mdata.drivers` holds **179** rows, **88 active** (`deactivated_at IS NULL AND archived_at IS NULL`), consistent with the 86 TRANSP-active figure measured against contract instances in LV-049 (the difference being other entities).
+  Recorded as a pass because asset ownership is the foundation of the lease accounting, depreciation and insurance chains; if units were orphaned or self-leased, every downstream allocation built on them would inherit the error.
+- severity:  informational — structural pass, no defect
+- LANE:      none — GUARD attestation
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `mdata.units`: total **182**, `owner_company_id IS NOT NULL` **182**, `currently_leased_to_company_id IS NOT NULL` **52**, rows where `currently_leased_to_company_id = owner_company_id` **0**. `mdata.drivers`: total **179**, active **88**.
+- status:    OPEN (informational)
