@@ -112,7 +112,12 @@ function check(sources) {
           `between the implicit transactions of later queries, and every probe silently reads 0.`
       );
     }
-    if (/is_test_data\s*[:=]\s*true|,\s*true\s*\]\s*\);?\s*$/m.test(src) && /set_scenario_status/.test(src)) {
+    // Match the named form only. An earlier version also tried to catch a bare trailing `, true]` in
+    // the argument list, but that alternative was unanchored (CodeQL js/regex/missing-regexp-anchor)
+    // and matched almost any array literal ending in true — a guard that fires on unrelated code gets
+    // muted, and a muted guard protects nothing. The certifier passes is_test_data by name, so the
+    // named form is the one that matters.
+    if (/is_test_data\s*[:=]\s*true\b/.test(src) && /set_scenario_status/.test(src)) {
       errors.push(`${f}: appears to certify with is_test_data=true — a fixture cert must never move a real dot.`);
     }
   }
