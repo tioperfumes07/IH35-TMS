@@ -1380,3 +1380,24 @@ membership-scoped session.
 - LANE:      CC-1 (money) — LV-064 remains the fix: replace the 4 denylists with allowlists mirroring `INVOICE_ELIGIBLE_STATUSES`
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` TRANSP, exit 0. TMS-native records with a `posted` batch: invoices **4** of 7 (`source_system='tms'`), bills **5** of 5 (`qbo_bill_id IS NULL`), expenses **2** of 2 (`qbo_purchase_id IS NULL`) — 11 of 14. The 3 unposted invoices and their statuses per LV-059; the incorrectly posted draft bill `f8f8e5a4-8c66-4d16-a4c9-44beff6b79e2` per LV-060.
 - status:    OPEN
+
+## LV-083  §10 LINKAGE LAW violation — **3 canonical tables carry foreign keys INTO retired schemas**, and the retire targets are not dormant: `maint.part` holds 144 rows and `maint.pm_schedule` 24, duplicating the canonical `maintenance.*` tables exactly
+- module:    maintenance · driver_finance (GUARD — §10 linkage law)
+- entity:    ALL
+- surface:   RETIRE schemas `payroll` · `settlement` · `bank` · `maint` vs canonical `driver_finance` · `banking` · `maintenance`
+- observed:  §10 defines the RETIRE→canonical mapping — `driver_finance.*` supersedes `payroll.*`/`settlement.*`, `banking.*` supersedes `bank.*`, `maintenance.*` supersedes `maint.*` — and states that FK-ing a RETIRE table is a correctness gate, not a style preference.
+  **11 retire tables still exist** (maint 5, settlement 3, payroll 2, bank 1) and **9 FKs point into them**. Splitting those 9 by origin is what separates legacy debris from a live violation:
+  **The 3 live violations — canonical → RETIRE:**
+  | from (canonical) | → to (RETIRE) | target rows |
+  |---|---|---|
+  | `driver_finance.trip_link_queue` | `settlement.settlement_line` | 0 |
+  | `maintenance.position_history` | `maint.position_set` | **6** |
+  | `maintenance.position_history` | `maint.part` | **144** |
+  The remaining **6 are retire→retire** (`maint.part_position_assignment`→`maint.position_set`, `maint.position_history`→`maint.position_set`/`maint.part`, `payroll.driver_settlement_line_items`→`payroll.driver_settlements`, `settlement.settlement_deduction`/`settlement_line`→`settlement.settlement`) — internal legacy structure, harmless, and correctly left alone under archive-never-delete.
+  **The retire targets are populated, which is the part that makes this more than bookkeeping.** `maint.part` **144** and `maint.pm_schedule` **24** — and the canonical side reports `maintenance.parts_inventory` **144** and `maintenance.pm_schedules` **24**. Identical counts on both sides means these are not dormant shells awaiting drop; **the same data exists in both the retired and the canonical schema**. So `maintenance.position_history` — a canonical table — resolves its part and position references through the **retired** copy while an equivalent canonical copy exists alongside it. Any divergence between the two copies would silently split maintenance history.
+  **What I am NOT claiming.** I did not verify that the 144 `maint.part` rows are the *same* 144 as `maintenance.parts_inventory` — only that the counts match exactly, which is strong but not proof of identity. **UNVERIFIED — row-level identity between the retire and canonical copies**; establishing it needs a key-level diff, and the answer determines whether this is a safe repoint or a genuine data merge.
+  Under §10 and archive-never-delete, the fix is to **repoint the 3 canonical FKs at canonical targets** and leave the retire tables in place archived — never to drop them.
+- severity:  major (§10 correctness gate — canonical tables structurally depend on retired schemas holding live duplicate data)
+- LANE:      CC-1 / CURSOR (maintenance + driver_finance) — repoint `maintenance.position_history` to `maintenance.parts_inventory` and the canonical position table, and `driver_finance.trip_link_queue` to the canonical settlement line; archive the retire tables, do not drop them
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` TRANSP, exit 0. Base tables in retire schemas = **11** (maint 5, settlement 3, payroll 2, bank 1). FKs whose target is a retire schema = **9**, of which **3** originate outside retire schemas and **6** are retire→retire, each enumerated above. Retire row counts: `maint.part` **144**, `maint.pm_schedule` **24**, `maint.position_set` **6**, all others **0**. Canonical comparison: `maintenance.parts_inventory` **144**, `maintenance.pm_schedules` **24**.
+- status:    OPEN
