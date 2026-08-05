@@ -859,3 +859,150 @@ membership-scoped session.
 - LANE:      none — GUARD attestation only
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `db_now` 2026-08-05T02:42:58Z. Entity isolation: 3 mismatch queries each returning 0. `pg_stat_user_tables` snapshot for the 11 tables listed. `posting_batches` authoritative `count(*)` = 13,732 vs `n_live_tup` 14,909. Recent-batch window: 2 rows, both posted invoices, 00:05:10Z and 01:08:13Z. `catalogs.posting_templates` 22 rows; orphan template refs 0; NULL-template batches 9 (8 posted, 1 reversed).
 - status:    OPEN (informational)
+
+## LV-056  **P0 — the entire Owner homepage is DOWN on production.** `ScenarioTrackerPanel.tsx:164` spreads `data.scenarios` unguarded; `audit.scenario_status` is empty, so the spread throws and the error boundary kills all of `/home`
+- module:    home / scenario-tracker (GUARD verify-after-merge)
+- entity:    TRANSP
+- surface:   `https://app.ih35dispatch.com/home` · `ScenarioTrackerPanel` · `audit.scenario_status`
+- observed:  **`/home` does not render. It shows "Something went wrong — The page hit an unexpected error."** Captured live from the deployed build:
+  `TypeError: i.scenarios is not iterable` at `assets/OwnerHome-LbhU1yG3.js:1:35090`, inside a `useMemo` (`Object.fs [as useMemo]`), re-entered at `OwnerHome-LbhU1yG3.js:1:35067`.
+  This is a **regression within this session** — `/home` rendered normally earlier tonight (Pending Owner Approvals, Today's Revenue, Open Loads, Cash Position $4,717, the "Overdue bills and customers · Count 277" tile and driver day-summaries were all read from it, and are cited in LV-034).
+  **Exact cause, located in source.** `apps/frontend/src/components/home/ScenarioTrackerPanel.tsx:164`:
+  `return [...data.hops, ...data.scenarios];`
+  An unguarded double spread inside a `useMemo`. Spreading `undefined` throws `TypeError: … is not iterable`, which matches the deployed error verbatim. `ScenarioTrackerPanel` is mounted unconditionally at `apps/frontend/src/pages/home/OwnerHome.tsx:243`, so the throw escapes into the page-level error boundary and **the whole owner homepage is lost, not just the panel**.
+  **Why the payload lacks `scenarios` — the two findings are the same finding.** `audit.scenario_status` is **empty on prod**: `count(*)` = **0 total, 0 `is_current`, 0 `state='passed'`**, and the view `audit.v_scenario_status_current` returns **0** rows. Lifetime counters are `n_tup_ins` 1 / `n_tup_del` 1, so exactly one row was ever written and it was removed — the certifier has never persisted a result. `audit.audit_events` contains **0** scenario/certify-class events. `scenario-tracker.service.ts:78` reads `FROM audit.scenario_status` (`is_current`), so with no rows the response carries no populated `scenarios` array and the panel spreads `undefined`.
+  Notably **no `/api/v1/home/scenario-tracker` request is issued at all** on the failing load — the crash occurs in the render/`useMemo` path before or independently of the fetch, which is consistent with a missing-field spread rather than a network error.
+  **The fix is one line and safe:** `return [...(data.hops ?? []), ...(data.scenarios ?? [])];`. That restores the homepage immediately and degrades the panel to empty, which is the honest state given the table is empty. It does not require the certifier to work.
+  **I am not applying it.** My lane is read-only GUARD — no build, no merge. Routing to Cursor (FE) as P0. If the owner wants me to break read-only for this one line, that is his call to make in chat.
+- severity:  **P0 — production owner homepage completely unavailable**
+- LANE:      CURSOR (FE) — one-line nullish-coalesce at `ScenarioTrackerPanel.tsx:164`. Separately CC-1 owns why `audit.scenario_status` is never populated by the certifier.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user` observed `ih35_app` and `neondb_owner`, bypass its own statement, `db_now` 2026-08-05T02:51:13Z. `audit.scenario_status`: `count(*)` 0 total / 0 current / 0 passed; `n_tup_ins` 1, `n_tup_upd` 0, `n_tup_del` 1. `audit.v_scenario_status_current` 0 rows. Scenario/certify audit events 0. Live browser error and stack captured from `https://app.ih35dispatch.com/home` on the deployed bundle `OwnerHome-LbhU1yG3.js`.
+- status:    OPEN — **P0**
+
+  **RESOLVED 2026-08-05 by PR #4368** — one-line nullish-coalesce at `ScenarioTrackerPanel.tsx:164` plus a mutation-verified regression test. The panel now degrades to empty instead of taking `/home` down. The underlying cause (certifier never populates `audit.scenario_status`) is UNCHANGED and stays routed to CC-1, as does the fact that `verify-no-false-green-certify` and `verify-homepage-scenario-tracker-staleness` both stayed green (exit 0) throughout the outage.
+
+## LV-057  GUARD pass 8 — the WORM audit records journal-entry HEADERS but not their LINES: `journal_entries` 1,837 audit rows, `journal_entry_postings` 0, `posting_batches` 0, `payments` 0 of 12,124, and the entire `driver_finance` schema 0
+- module:    accounting / driver_finance (GUARD live-verify-after-merge, pass 8)
+- entity:    ALL
+- surface:   `audit.row_changes` coverage vs the money tables
+- observed:  LV-026 reported that `audit.row_changes` holds no rows for `journal_entry_postings`. That was true but I framed it too narrowly, as if the WORM store were generally unused. It is not: `audit.row_changes` holds **2,280,887 rows** and covers accounting heavily. The real shape is **selective coverage**, and the selection is the problem.
+  **What IS audited** (2% `TABLESAMPLE`, extrapolated): `accounting` ~1.7M rows — `bills` (20,416 in sample), `bill_payments` (7,467), `bill_lines` (3,011), `invoices` (2,402), `qbo_accounts` (45), **`journal_entries` (36 in sample; exact count 1,837)**. Also `mdata` ~590K, `banking` ~9.5K, `qbo` ~1K.
+  **What is NOT audited — exact counts, not sampled:**
+  | table | rows on prod | audit rows |
+  |---|---|---|
+  | `accounting.journal_entry_postings` | 3,603 | **0** |
+  | `accounting.posting_batches` | 13,732 | **0** |
+  | `accounting.payments` | 12,124 | **0** |
+  | `driver_finance.*` (whole schema) | — | **0** |
+  **The header/line split is the finding.** `journal_entries` — the header carrying date, memo and source — is audited 1,837 times. `journal_entry_postings` — the lines carrying **the account, the amount, and the debit/credit direction** — is audited **zero** times. So the audit trail can prove that a journal entry was touched, and cannot prove what any of its money lines were before or after. For an auditor reconstructing a disputed entry that is the wrong half: the header is metadata, the lines are the money.
+  **Why the coverage is selective — mechanism, not accident.** There are **0 triggers on any `accounting` table** whose definition references `row_change`. The audit is therefore **application-level**: rows appear only where application code explicitly calls the audit writer. Coverage tracks which code paths were instrumented, not which tables are financially material — which is exactly how the posting engine, the batch writer, the payments path and all of driver_finance came to be silent while the bills path is exhaustively logged.
+  **Corroborating instance found this pass.** `driver_finance.driver_settlements` shows lifetime `n_tup_ins` 11 / `n_tup_del` **7** / 0 live — seven settlement rows were **hard-deleted** — and `audit.row_changes` holds **0** rows for that table, so nothing records who deleted them or what they contained. The table also carries no `voided_at`/`archived_at` column (only `status`, `approval_status`), so void-not-delete is not structurally available on it. Settlements are driver pay; deleting them unlogged is the highest-exposure instance of this gap. Settlement volume is otherwise 0, consistent with nothing operational having been created yet, so no live money is affected today.
+  **Relationship to LV-026:** LV-026's conclusion stands and strengthens. The Audit Trail page reads the mutable ledger rather than a WORM store, *and* the WORM store would not have covered the posting lines even if it did.
+- severity:  major (auditability — the money lines of every journal entry are unlogged; a money table was hard-deleted with no audit record)
+- LANE:      CC-1 (accounting) — instrument `journal_entry_postings`, `posting_batches`, `payments` and `driver_finance.*`; a trigger-based writer would close the class rather than the instances
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. Exact counts: `row_changes` where `table_name` = `journal_entry_postings` **0**, `posting_batches` **0**, `payments` **0**, `journal_entries` **1,837**; `schema_name='driver_finance'` **0**. Schema distribution via `TABLESAMPLE SYSTEM (2)`. Triggers on `accounting.*` referencing `row_change`: **0**. `driver_finance.driver_settlements` `n_tup_ins` 11, `n_tup_del` 7, `n_live_tup` 0; columns include `status`, `approval_status`, no void/archive column.
+- status:    OPEN
+
+## LV-058  **LV-013 RESOLVED — Hop 0's last blocker is cleared.** The go-forward money path is proven end-to-end on live prod: TMS-native invoice → posted GL batch → email queue row → real Google send with a provider message id
+- module:    accounting / email (GUARD live-verify-after-merge)
+- entity:    TRANSP
+- surface:   `accounting.invoices` → `accounting.posting_batches` → `email.email_queue`
+- observed:  LV-013 held Hop 0 open on the finding that an invoice could reach `status='sent'` with **no `email.email_queue` row at all** — an invoice marked sent with zero delivery artifact. LV-023 recorded my recommendation to hold Hop 0 until it closed. **It has closed, and I verified the whole chain rather than just the queue count.**
+  **The chain, with timestamps, for `INV-2026-00740`:**
+  | step | evidence |
+  |---|---|
+  | invoice | `25b208fb-2234-4698-8700-88718c144745`, `display_id` INV-2026-00740, `status` **sent**, `total_cents` 500, **`source_system='tms'`** |
+  | GL posting | batch `f1ffc3a4-cfa2-4b9e-881e-902fb91b0a44`, `batch_status` **posted**, `source_transaction_id` = the invoice, created **2026-08-05T01:08:13.287Z** |
+  | queue row | `623b97ee-fdc3-4794-be4c-e1bef4ef0a70`, `template_key` `invoice-send`, created **01:08:13.397Z** — 110 ms after the batch |
+  | delivery | `status` **sent**, `provider` **google**, `provider_message_id` **`19fcf77743a93429`**, `sent_at` **01:09:00.582Z** |
+  A second send followed at 01:18:00.570Z (`76c617c5…`, message id `19fcf7fb3594eeb6`). The queue moved **232 → 234** rows, and provider mix is now `console` 232 / **`google` 2** — the first real deliveries in the table's history.
+  **Both halves of LV-010/LV-013 are now honest.** LV-010 was the queue *lying* (`sent` while a console stub swallowed the mail); that was fixed to `logged_only`, and all 232 historical rows still carry `provider='console'` / `logged_only`, correctly not claiming delivery. LV-013 was the send *not reaching the queue*; these two rows prove it now does, with a real provider and a real message id. Nothing is marked sent that did not send.
+  **The architecture is confirmed working in BOTH directions on the same day.** These invoices posted because `source_system='tms'`. The 11,976 QBO-origin invoices were refused the same day by `QBO_INVOICE_POST_GL_REFUSED` (LV-053). So the posting engine admits TMS-native economic events and refuses imported QuickBooks history — exactly the parallel-books design, demonstrated live in both branches rather than argued from code.
+  `source_load_id` is null on this invoice, which is expected state, not a gap: no loads have been created in the TMS (owner, 2026-08-05 — everything TMS-created is test).
+  **Hop 0 status.** The blocker I recorded in LV-023 is cleared. The remaining Hop 0 preconditions I verified this pass are also green: exactly **2** real (`is_test_data=false`) driver pay rates exist and both match the owner's instruction — **Fernando Mecor Hernandez** and **GERARDO URBINA**, each `per_mile_pay` at **48¢/mi** on **`short_miles`**, both `is_active`, both drivers active, both TRANSP. Hop 0 itself remains **owner-reserved** and I am not initiating it.
+- severity:  informational — this is a PASS and a blocker clearing, not a defect
+- LANE:      none — GUARD attestation. Hop 0 go/no-go is the owner's chat decision.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `email.email_queue` 234 rows (was 232), status `logged_only` 232 / `sent` 2, provider `console` 232 / `google` 2, newest 2026-08-05T01:17:20.525Z; both sent rows quoted above with provider message ids. `accounting.invoices` INV-2026-00740 as tabulated. Recent invoice batches all `posted`: `1e30e7e4` (53b8ddb3 = INV-2026-00003), `9852e0d8` (e4d2ebdd = INV-2026-00001), `f1ffc3a4` (25b208fb = INV-2026-00740). `driver_finance.driver_pay_rates`: 93 rows, 91 `is_test_data=true`, the 2 real ones as listed.
+- status:    OPEN (informational — LV-013 marked RESOLVED)
+
+## LV-059  GUARD pass 9 — go-forward invoice posting is 100% correct: 4 of 4 ELIGIBLE TMS-native invoices posted, and all 3 "unposted" ones are correctly unposted (proforma, draft, $0.00). Two items for the owner: a $0.00 invoice marked `sent`, and the $1,200 WIRE-04 test invoice has now posted to the USMCA ledger.
+- module:    accounting (GUARD live-verify-after-merge, pass 9)
+- entity:    TRANSP + USMCA
+- surface:   `accounting.invoices` (`source_system='tms'`) → `accounting.posting_batches`
+- observed:  **The origin split is exact and confirms the parallel-books model numerically.** Unvoided invoices: **11,983 total = 7 TMS-native + 11,976 QBO-origin**, zero with a null `source_system`. The QBO figure is **identical** to the 11,976 refused posting batches of LV-053 — one refusal per imported invoice, no duplicates and no omissions. Bills mirror it: **16,250 total = 5 TMS-native + 16,245 QBO-cloned**, matching audit ledger row 665 exactly on a dataset that has since grown.
+  **Scoped to the only population where posting is expected, the result is clean.** Of the 7 TMS-native invoices, 3 have no posted batch — and each is *correctly* unposted:
+  | invoice | entity | amount | status | why unposted |
+  |---|---|---|---|---|
+  | INV-2026-00002 `cf3f7203` | USMCA | $1.00 | **proforma** | a proforma is a non-posting projection by design |
+  | INV-2026-00741 `0ce56005` | TRANSP | $0.05 | **draft** | not issued |
+  | INV-2026-00004 `f280b52a` | USMCA | **$0.00** | sent | zero total — nothing to post |
+  The remaining **4 of 4 eligible** invoices all posted: INV-2026-00001 `06c7af5d` (TRANSP $0.01), INV-2026-00001 `e4d2ebdd` (USMCA $1.00), INV-2026-00740 `25b208fb` (TRANSP $5.00), INV-2026-00003 `53b8ddb3` (USMCA $1,200.00). **There is no unexplained posting gap in the go-forward path.** Stating that plainly because the raw "3 unposted" count would read as a defect and is not one — the same shape as the imported-history trap, one layer in.
+  **Two items I am surfacing for the owner rather than filing as defects:**
+  1. **INV-2026-00004 carries `total_cents = 0` and `status='sent'`.** A zero-dollar invoice that has been marked sent is odd on its own terms — it is either a test artifact or a line-less invoice that reached send. It posts nothing, so there is no GL consequence, but it is the kind of row that later reads as a real receivable of $0.00 in a customer's history.
+  2. **INV-2026-00003 (`53b8ddb3`, USMCA, $1,200.00) has now POSTED to the ledger.** This is the WIRE-04 test invoice on my pending-cleanup list, and it is no longer only a subledger row — batch `1e30e7e4` is `posted`. Cleanup is still owner-held and I have touched nothing, but the cleanup decision is now a GL decision (a posted batch would need reversing, not deleting), which it was not when the item was first parked.
+- severity:  informational — a PASS, plus two owner-facing notes
+- LANE:      none for the posting result. The two notes are owner decisions; if INV-2026-00004's `sent` status is a defect it routes to CC-1.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `accounting.invoices` unvoided: 11,983 total / 7 `source_system='tms'` / 11,976 `'qbo'` / 0 null. `accounting.bills` unvoided: 16,250 / 16,245 with `qbo_bill_id` / 5 without. TMS-native invoices without a posted batch: **3**, each enumerated above with status and amount; the 4 posted ones listed with ids and entities.
+- status:    OPEN (informational)
+
+## LV-060  A DRAFT bill posted to the general ledger — the bill poster gates on a DENYLIST (`void`/`voided`/`revoked_at`) while the invoice poster uses an ALLOWLIST, so any status not explicitly blocked posts
+- module:    accounting (GUARD live-verify-after-merge, pass 10)
+- entity:    USMCA
+- surface:   `apps/backend/src/accounting/posting-engine.service.ts` · `accounting.bills` → `accounting.posting_batches`
+- observed:  All **5 of 5** TMS-native bills have posted batches — but one of them should not have. Bill **`f8f8e5a4-8c66-4d16-a4c9-44beff6b79e2`** ($25.00) currently has **`status = 'draft'`** and a **`posted`** GL batch.
+  **The audit trail proves it posted *as* a draft; it was not posted-then-reverted.** `audit.row_changes` holds exactly **one** row for this bill — the `INSERT` at 2026-08-03T15:52:21.457Z with `new_data.status = 'draft'`. There is no subsequent status change. `updated_at` still equals `created_at` (15:52:21.457Z), so the row was never edited, and the posting batch was created at **15:55:16.925Z — about three minutes later, after the last edit.** The bill was created as a draft, never left draft, and was posted to the general ledger anyway.
+  **Root cause: the two posters gate eligibility in opposite directions.**
+  - **Invoices — allowlist** (`posting-engine.service.ts:310`): `const INVOICE_ELIGIBLE_STATUSES = new Set(["sent", "partial", "paid", "factored"])`, enforced by `INVOICE_NOT_POSTING_ELIGIBLE`. `draft` is absent, so a draft invoice is refused — confirmed live: INV-2026-00741 (`draft`) has no batch (LV-059).
+  - **Bills — denylist** (`posting-engine.service.ts:917`): `if (bill.revoked_at || bill.status === "void" || bill.status === "voided") throw new PostingEngineError("BILL_NOT_POSTING_ELIGIBLE", …)`. Only void/revoked are blocked; **every other status falls through and posts**, `draft` included.
+  **Why the direction matters more than the one row.** A denylist fails open. Today it admits `draft`; the moment anyone adds a status such as `pending_approval`, `disputed`, `on_hold` or `submitted`, that status will post to the general ledger automatically, with no code change and no error — because it simply is not named in the block list. The invoice allowlist fails closed: an unrecognised status is refused until someone deliberately adds it. Two parallel posters in the same file disagree on which way to fail, and the money side of a bill is a liability plus expense recognised from a document nobody has issued.
+  Live exposure today is **$25.00** on USMCA test data, so nothing material is misstated — this is a control-shape defect, not a live misstatement, and it is cheap to fix now precisely because volume is zero.
+- severity:  major (control fails open on the AP side; a draft liability reached the GL, and unknown future statuses will too)
+- LANE:      CC-1 (money) — replace the bill denylist with an allowlist mirroring `INVOICE_ELIGIBLE_STATUSES`, and decide explicitly which bill statuses may post. The existing `BILL_NOT_POSTING_ELIGIBLE` error code already exists, so the change is the predicate, not the plumbing.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. TMS-native bills (`qbo_bill_id IS NULL`, unvoided): **5 of 5 posted**. Offending row `f8f8e5a4…`: `status` draft, `amount_cents` 2500, `created_at` = `updated_at` = 2026-08-03T15:52:21.457Z, batch `posted` at 2026-08-03T15:55:16.925Z, `batch_after_last_edit` true. `audit.row_changes` for that `row_pk`: 1 row, op INSERT, `new_data.status` = draft, no status transitions. Source: `posting-engine.service.ts:310` (invoice allowlist) vs `:917` (bill denylist).
+- status:    OPEN
+
+## LV-061  GUARD pass 11 — driver-bill pricing PASSES the owner's Hop 0 rule exactly: all 3 reissued bills price at 48¢ × SHORT miles with arithmetic tying to the cent, 0 rate mismatches, and the mispriced originals were VOIDED not deleted
+- module:    driver_finance / settlements (GUARD live-verify-after-merge, pass 11)
+- entity:    TRANSP + USMCA
+- surface:   `driver_finance.driver_bills` ↔ `driver_finance.driver_pay_rates`
+- observed:  The owner's Hop 0 instruction is explicit: *"assign a driver who has a REAL (is_test_data=FALSE) 48¢ rate — Gerardo Urbina or Fernando Mecor Hernandez — so the driver bill prices on the real rate card, not a test rate and not the customer rate. Capture the load's shortest miles so the bill prices."* Every clause of that is now verifiable on prod, and every clause holds.
+  **`driver_finance.driver_bills` holds 6 rows: 3 `void` originals and 3 `open` `-R1` reissues.**
+  The three originals carried **no pricing basis at all** — `miles_basis`, `miles_basis_type` and `rate_per_mile_cents` all NULL — and were priced at figures inconsistent with a 48¢ rate card: B-20260616-0120 at **$5,800.00**, B-20260627-0036 at **$4,900.00**, B-20260802-0258 at **$1.00**. Those are the customer-rate/unbased artifacts the instruction warns against.
+  The three reissues price correctly, and I recomputed each rather than trusting the stored total:
+  | bill | driver | miles | basis | rate | gross | check |
+  |---|---|---|---|---|---|---|
+  | B-20260616-0120-R1 | GERARDO URBINA | 2,000 | **short** | 48¢ | 96,000¢ = **$960.00** | 2000 × 48 = 96,000 ✓ |
+  | B-20260627-0036-R1 | Fernando Mecor Hernandez | 2,200 | **short** | 48¢ | 105,600¢ = **$1,056.00** | 2200 × 48 = 105,600 ✓ |
+  | B-20260802-0258-R1 | Juan USMCA-Battery | 2,300 | **short** | 48¢ | 110,400¢ = **$1,104.00** | 2300 × 48 = 110,400 ✓ |
+  **All three tie to the cent.** `miles_basis_type = 'short'` on every one, satisfying the shortest-miles requirement. Two of the three drivers are exactly the two named in the instruction, and they are precisely the two holding real `is_test_data=false` 48¢ rate cards (LV-058).
+  **Cross-check against the rate cards: 0 mismatches.** Joining every driver bill to its driver's active `driver_pay_rates` row, the count of bills whose `rate_per_mile_cents` differs from the active card is **0**. No bill is priced off a stale or test rate.
+  **Void-not-delete respected.** The three mispriced originals are `status='void'` and still present — not deleted — with the corrected bills issued as explicit `-R1` revisions carrying the same `load_id`. That is the correct remediation shape for a money artifact, and it is what makes the before/after independently auditable, which is how I was able to verify it at all.
+  This corroborates the live Scenario Tracker, which reports *"2 driver bill(s) priced from the rate card, not the customer rate"* for TRANSP — exactly the two TRANSP reissues here (the third is USMCA and correctly outside that entity's scope).
+  Settlements themselves remain empty (`driver_settlements` 0 live), which is expected state: nothing operational has been created in the TMS.
+- severity:  informational — a PASS on a rule the owner specified explicitly
+- LANE:      none — GUARD attestation. Confirms a Hop 0 precondition rather than raising a defect.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `driver_finance.driver_bills` 6 rows enumerated above with `bill_number`, `status`, `gross_amount_cents`, `miles_basis`, `miles_basis_type`, `rate_per_mile_cents`, driver name and `operating_company_id`. Rate-card cross-check: bills whose `rate_per_mile_cents` differs from the driver's active `driver_pay_rates.rate_per_mile_cents` = **0**. Arithmetic recomputed independently per row.
+- status:    OPEN (informational)
+
+## LV-062  Two OPEN driver bills totalling $2,016.00 are payable against loads that no longer exist operationally — one CANCELLED, one SOFT-DELETED three weeks ago. Also: the voided originals prove driver pay was being set to the CUSTOMER LINEHAIL, which the driver model forbids.
+- module:    dispatch ↔ driver_finance (GUARD live-verify-after-merge, pass 12)
+- entity:    TRANSP
+- surface:   `driver_finance.driver_bills` ↔ `mdata.loads`
+- observed:  **Linkage itself is excellent** — `bills_orphan_load` = **0** (no bill points at a non-existent load), bill numbers mirror load numbers (`B-20260616-0120` ↔ `L-20260616-0120`), and `l.assigned_primary_driver_id = db.driver_id` is **true on all 6 bills**. Forward and reverse both resolve.
+  **The defect is lifecycle, not linkage. Two `open` bills sit on dead loads:**
+  | bill | amount | load | load state |
+  |---|---|---|---|
+  | `B-20260616-0120-R1` | **$960.00** | L-20260616-0120 | **`cancelled`** |
+  | `B-20260627-0036-R1` | **$1,056.00** | L-20260627-0036 | **soft-deleted 2026-07-13T21:45:26.921Z** |
+  Combined exposure **$2,016.00**, and neither carries a `settled_in_settlement_id` — both are live, unsettled payables. This is precisely the class ACCT-F70 / WIRE-10 (PR #4339, *"cancelling a load left its invoice and driver bill alive"*) was merged to close. Its presence here means either that fix does not remediate rows that pre-date it, or the **soft-delete** path is not covered by it at all — only the explicit `cancelled` status is. The soft-deleted case is the more serious of the two: that load disappeared from operations three weeks ago and a $1,056.00 driver payable outlived it, invisible to anyone browsing loads.
+  **Separately — and this is the stronger corroboration — the three VOIDED originals prove the defect the driver model exists to prevent.** Each was priced at *exactly* the customer linehaul on its load:
+  | voided bill | gross | load `rate_total_cents` | identical? |
+  |---|---|---|---|
+  | B-20260616-0120 | 580,000¢ | 580,000¢ | **yes** |
+  | B-20260627-0036 | 490,000¢ | 490,000¢ | **yes** |
+  | B-20260802-0258 | 100¢ | 100¢ | **yes** |
+  Driver pay was being set equal to the gross customer rate. The locked driver model is explicit that drivers are hired Mexican-B1 1099 contractors, so driver pay is a wage/fee and **never** a share of the customer linehaul, which is company revenue. The `-R1` reissues correct this to 48¢ × short miles (LV-061). So the original defect and its remediation are now both independently proven on live data, which is what makes the remaining lifecycle gap worth fixing rather than assuming closed.
+- severity:  major ($2,016.00 of live unsettled driver payables attached to a cancelled and a deleted load; a merged fix does not cover this case)
+- LANE:      CC-1 (money) — extend the ACCT-F70 / WIRE-10 cancellation cascade to cover `soft_deleted_at` as well as `status='cancelled'`, and decide whether it should remediate pre-existing rows or only new ones. Voiding these two bills is a money action and is not mine to take.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `driver_bills` joined to `mdata.loads`: orphan load references **0**; `driver_matches` true on all 6; open bills on cancelled-or-soft-deleted loads **2**, summed exposure **201,600¢**, both with `settled_in_settlement_id` NULL. Voided originals' `gross_amount_cents` compared against their load's `rate_total_cents`: identical on all three. `mdata.loads` totals: 6 rows, 4 live, statuses `assigned_not_dispatched` 2 / `cancelled` 1 / `completed_docs_received` 1 — all test loads, consistent with nothing operational having been created in the TMS.
+- status:    OPEN
