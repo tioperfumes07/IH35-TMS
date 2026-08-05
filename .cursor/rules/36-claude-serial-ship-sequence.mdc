@@ -70,14 +70,15 @@ Run in order. Skipping a step is a trust defect.
 - `git reset --soft origin/main` (Rule 30 — deletes other guards)
 - Opening draft “for WIP accounting” when the work is finished
 - Pushing without `cursor-ship-preflight --body-file`
-- Starting the next EntityPicker before the current CLAIMED PR merges
+- Starting the next CLAIMED/verify-step PR before the current one merges
+- Per-site EntityPicker / identical-codemod PRs when ≥3 sites share one transform (§9.0 item **17** — ONE sweep + ONE generalized guard)
 
 ## Mechanical teeth
 
 - `scripts/ops/cursor-ship-preflight.mjs` — fails closed if `origin/main` is not an ancestor of HEAD
 - Rules 29 + 30 + 33 sibling-guard law + Rule 34 `Cursor-` title prefix
-- Delivery plan §9.2 sequence (rev G+)
+- Delivery plan §9.0 item 17 (SYSTEMIC SWEEP) + §9.2.1 (rev G+)
 
 ## Tie-breakers
 
-Parallel speed < serial green · babysit < local preflight · stale tip < tip-main rebase before push · draft theater < ready PR · 3-hour rebase loop < 8-minute Claude ship.
+Parallel speed < serial green · babysit < local preflight · stale tip < tip-main rebase before push · draft theater < ready PR · 3-hour rebase loop < 8-minute Claude ship · per-site patch pileup < one kind-sweep.
