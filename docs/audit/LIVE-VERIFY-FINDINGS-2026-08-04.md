@@ -960,3 +960,26 @@ membership-scoped session.
 - LANE:      CC-1 (money) — replace the bill denylist with an allowlist mirroring `INVOICE_ELIGIBLE_STATUSES`, and decide explicitly which bill statuses may post. The existing `BILL_NOT_POSTING_ELIGIBLE` error code already exists, so the change is the predicate, not the plumbing.
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. TMS-native bills (`qbo_bill_id IS NULL`, unvoided): **5 of 5 posted**. Offending row `f8f8e5a4…`: `status` draft, `amount_cents` 2500, `created_at` = `updated_at` = 2026-08-03T15:52:21.457Z, batch `posted` at 2026-08-03T15:55:16.925Z, `batch_after_last_edit` true. `audit.row_changes` for that `row_pk`: 1 row, op INSERT, `new_data.status` = draft, no status transitions. Source: `posting-engine.service.ts:310` (invoice allowlist) vs `:917` (bill denylist).
 - status:    OPEN
+
+## LV-061  GUARD pass 11 — driver-bill pricing PASSES the owner's Hop 0 rule exactly: all 3 reissued bills price at 48¢ × SHORT miles with arithmetic tying to the cent, 0 rate mismatches, and the mispriced originals were VOIDED not deleted
+- module:    driver_finance / settlements (GUARD live-verify-after-merge, pass 11)
+- entity:    TRANSP + USMCA
+- surface:   `driver_finance.driver_bills` ↔ `driver_finance.driver_pay_rates`
+- observed:  The owner's Hop 0 instruction is explicit: *"assign a driver who has a REAL (is_test_data=FALSE) 48¢ rate — Gerardo Urbina or Fernando Mecor Hernandez — so the driver bill prices on the real rate card, not a test rate and not the customer rate. Capture the load's shortest miles so the bill prices."* Every clause of that is now verifiable on prod, and every clause holds.
+  **`driver_finance.driver_bills` holds 6 rows: 3 `void` originals and 3 `open` `-R1` reissues.**
+  The three originals carried **no pricing basis at all** — `miles_basis`, `miles_basis_type` and `rate_per_mile_cents` all NULL — and were priced at figures inconsistent with a 48¢ rate card: B-20260616-0120 at **$5,800.00**, B-20260627-0036 at **$4,900.00**, B-20260802-0258 at **$1.00**. Those are the customer-rate/unbased artifacts the instruction warns against.
+  The three reissues price correctly, and I recomputed each rather than trusting the stored total:
+  | bill | driver | miles | basis | rate | gross | check |
+  |---|---|---|---|---|---|---|
+  | B-20260616-0120-R1 | GERARDO URBINA | 2,000 | **short** | 48¢ | 96,000¢ = **$960.00** | 2000 × 48 = 96,000 ✓ |
+  | B-20260627-0036-R1 | Fernando Mecor Hernandez | 2,200 | **short** | 48¢ | 105,600¢ = **$1,056.00** | 2200 × 48 = 105,600 ✓ |
+  | B-20260802-0258-R1 | Juan USMCA-Battery | 2,300 | **short** | 48¢ | 110,400¢ = **$1,104.00** | 2300 × 48 = 110,400 ✓ |
+  **All three tie to the cent.** `miles_basis_type = 'short'` on every one, satisfying the shortest-miles requirement. Two of the three drivers are exactly the two named in the instruction, and they are precisely the two holding real `is_test_data=false` 48¢ rate cards (LV-058).
+  **Cross-check against the rate cards: 0 mismatches.** Joining every driver bill to its driver's active `driver_pay_rates` row, the count of bills whose `rate_per_mile_cents` differs from the active card is **0**. No bill is priced off a stale or test rate.
+  **Void-not-delete respected.** The three mispriced originals are `status='void'` and still present — not deleted — with the corrected bills issued as explicit `-R1` revisions carrying the same `load_id`. That is the correct remediation shape for a money artifact, and it is what makes the before/after independently auditable, which is how I was able to verify it at all.
+  This corroborates the live Scenario Tracker, which reports *"2 driver bill(s) priced from the rate card, not the customer rate"* for TRANSP — exactly the two TRANSP reissues here (the third is USMCA and correctly outside that entity's scope).
+  Settlements themselves remain empty (`driver_settlements` 0 live), which is expected state: nothing operational has been created in the TMS.
+- severity:  informational — a PASS on a rule the owner specified explicitly
+- LANE:      none — GUARD attestation. Confirms a Hop 0 precondition rather than raising a defect.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `driver_finance.driver_bills` 6 rows enumerated above with `bill_number`, `status`, `gross_amount_cents`, `miles_basis`, `miles_basis_type`, `rate_per_mile_cents`, driver name and `operating_company_id`. Rate-card cross-check: bills whose `rate_per_mile_cents` differs from the driver's active `driver_pay_rates.rate_per_mile_cents` = **0**. Arithmetic recomputed independently per row.
+- status:    OPEN (informational)
