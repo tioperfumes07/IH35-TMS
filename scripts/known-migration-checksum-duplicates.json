@@ -1,0 +1,35 @@
+{
+  "_comment": [
+    "LV-087 — FROZEN BASELINE of migration checksum duplicates that already existed when the guard was written.",
+    "",
+    "Read by BOTH scripts/db-migrate.mjs (runtime refusal) and scripts/verify-migration-checksum-collision.mjs",
+    "(CI guard), so there is exactly one list and the two can never disagree.",
+    "",
+    "WHY THESE ARE NOT FIXED RATHER THAN GRANDFATHERED: both files are already applied on the prod ledger",
+    "(_system._schema_migrations). Editing an applied migration breaks its checksum (never-edit-an-applied-",
+    "migration), and deleting one deletes ledger history to make a guard green — falsifying the audit trail.",
+    "Owner ruling 2026-08-05: do NOT retro-delete the existing duplicates; idempotency made the second run a",
+    "no-op. The guard exists to prevent the NEXT one.",
+    "",
+    "Prod carries FOUR duplicate-checksum ledger pairs (876 applied rows / 872 distinct checksums). Only the",
+    "pair below still exists as two files on disk; for the other three the duplicate file was renumbered away",
+    "and survives in the ledger only, so there is nothing on disk for this guard to see:",
+    "  5acf4643bd  202609260000_fuel_03_overage_events_unit_fk.sql || 202609280000_..._unit_fk.sql",
+    "  a31f13227e  202609160000_c9_form_roundtrip_persist_columns.sql || 202609190000_...",
+    "  f09800562a  202609250000_fuel_03_overage_engine.sql || 202609270000_...",
+    "",
+    "Entries are pinned to the EXACT checksum AND the exact sorted filename list. A third file joining this",
+    "checksum, or any other pair, is NOT covered and fails. This baseline is append-only by review — adding an",
+    "entry means consciously accepting a duplicate, which is the decision the guard is meant to force."
+  ],
+  "duplicates": [
+    {
+      "checksum": "b2eef9c614ea355c04c67eb54639b0f18134e2e2c3752f635febe02b61d2d5fb",
+      "files": [
+        "0237_accounting_ar_collection_tasks.sql",
+        "0238_accounting_ar_collection_tasks.sql"
+      ],
+      "reason": "Both applied on prod before LV-087. Idempotent (CREATE TABLE IF NOT EXISTS), so the second run was a no-op. Cannot be edited (applied checksum) or deleted (ledger history)."
+    }
+  ]
+}

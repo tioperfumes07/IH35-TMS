@@ -347,6 +347,33 @@ try {
   const ledgerRows = await getCanonicalLedgerRows(client);
   const mirrorRows = await getMirrorLedgerRows(client);
   const ledgerByFile = new Map(ledgerRows.map((row) => [row.filename, row]));
+  // LV-087: checksum -> the filename(s) already applied under it. A byte-identical file re-applied
+  // under a NEW number is a renumber-and-reapply, and idempotency is the only thing that has stopped
+  // it corrupting the schema so far. Four such pairs already exist on prod.
+  // The frozen LV-087 baseline: duplicates that predate the guard and cannot be unmade (both files are
+  // already on the prod ledger). Shared with verify-migration-checksum-collision.mjs so the two can never
+  // disagree. Without this, a FRESH database (CI) applies 0237 then hits the refusal on 0238 and dies —
+  // the refusal must block NEW duplicates without breaking a from-scratch migrate of the existing history.
+  const grandfathered = new Set();
+  try {
+    const baseline = JSON.parse(
+      fs.readFileSync(new URL("./known-migration-checksum-duplicates.json", import.meta.url), "utf8")
+    );
+    for (const entry of baseline.duplicates ?? []) {
+      for (const f of entry.files ?? []) grandfathered.add(`${entry.checksum}::${f}`);
+    }
+  } catch (error) {
+    throw new Error(
+      `LV-087: cannot read known-migration-checksum-duplicates.json (${error.message}). Refusing to migrate ` +
+        `rather than silently dropping the duplicate-checksum protection.`
+    );
+  }
+
+  const ledgerFilesByChecksum = new Map();
+  for (const row of ledgerRows) {
+    if (!ledgerFilesByChecksum.has(row.checksum)) ledgerFilesByChecksum.set(row.checksum, []);
+    ledgerFilesByChecksum.get(row.checksum).push(row.filename);
+  }
   const mirrorByFile = new Map(mirrorRows.map((row) => [row.name, row]));
   const overridesByFile = loadChecksumOverrides();
 
@@ -388,8 +415,33 @@ try {
       continue;
     }
 
+    // LV-087 — REFUSE A RENUMBER-AND-REAPPLY.
+    //
+    // If this exact SQL has already been applied under a DIFFERENT filename, applying it again is not
+    // a new migration: it is the same DDL re-run under a new number. Prod already carries four such
+    // pairs (fuel_03_overage_engine, fuel_03_overage_events_unit_fk, c9_form_roundtrip,
+    // ar_collection_tasks). Those were harmless only because the SQL happened to be idempotent —
+    // `IF NOT EXISTS` absorbed the second run. That is luck, not a control. The same mistake with a
+    // non-idempotent statement (an UPDATE, an INSERT of seed rows, an ALTER that appends) double-applies
+    // it, and on the financial cluster that means duplicated data or a doubled balance with no error.
+    //
+    // Refusing here stops it at the source rather than detecting it afterwards. The override file is
+    // deliberately NOT consulted: it exists to accept a checksum CHANGE on the same filename, which is
+    // the opposite situation.
+    const priorFiles = (ledgerFilesByChecksum.get(checksum) ?? []).filter((f) => f !== file);
+    if (priorFiles.length > 0 && !grandfathered.has(`${checksum}::${file}`)) {
+      throw new Error(
+        `Migration ${file} has the SAME checksum (${checksum}) as already-applied ${priorFiles.join(", ")}. ` +
+          `This is a renumber-and-reapply of identical DDL, not a new migration. If the change is genuinely ` +
+          `needed again, write a migration that expresses the NEW intent; do not re-run the old file under a ` +
+          `new number. (Prod carries 4 such pairs that were harmless only because their SQL was idempotent.)`
+      );
+    }
+
     console.log(`APPLY ${file}`);
     await applyMigration(client, file, sql, checksum);
+    if (!ledgerFilesByChecksum.has(checksum)) ledgerFilesByChecksum.set(checksum, []);
+    ledgerFilesByChecksum.get(checksum).push(file);
     ledgerByFile.set(file, { filename: file, checksum });
   }
 
