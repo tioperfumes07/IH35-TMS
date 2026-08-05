@@ -56,6 +56,37 @@ services:
         source: /*
         destination: /index.html
 
+  # SCENARIO CERTIFIER — spec §4. NOTE: the schedule that actually runs is the IN-PROCESS cron
+  # (apps/backend/src/home/scenario-certify.cron.ts, every 5 min America/Chicago). This service is
+  # declared for parity with the spec and for manual/one-off runs, but Render cron SERVICES in this
+  # blueprint have historically not been provisioned — so nothing here may be treated as proof the
+  # certifier is running. Proof is audit.scenario_status rows refreshing, nothing less.
+  - type: cron
+    name: scenario-certify
+    runtime: node
+    schedule: "*/5 * * * *"
+    buildCommand: npm install && npm run build:backend
+    startCommand: node scripts/scenario-certify.mjs
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+
+  # SCOREBOARD FROM LIVE — spec §5, scheduled alongside the certifier per owner order 2026-08-05.
+  # CAVEAT, stated rather than hidden: this job's output is a FILE IN THE REPO, and a Render container
+  # is ephemeral and is not a git checkout with push rights. On this service it will recompute and log,
+  # but the committed docs/module-completion/*.json cannot be updated from here. The freshness
+  # guarantee therefore comes from `npm run scoreboard:check` failing in CI when the committed file
+  # drifts from live — that check is what actually catches staleness.
+  - type: cron
+    name: scoreboard-from-live
+    runtime: node
+    schedule: "*/5 * * * *"
+    buildCommand: npm install && npm run build:backend
+    startCommand: node scripts/scoreboard-from-live.mjs
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+
   - type: cron
     name: loves-card-import
     runtime: node

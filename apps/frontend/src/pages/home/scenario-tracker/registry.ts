@@ -81,22 +81,24 @@ export const HOP_IDENTITY: Array<Omit<ScenarioTrackerItem, "stage" | "state"> & 
   },
 ];
 
-export const SCENARIO_IDENTITY: Array<Omit<ScenarioTrackerItem, "stage" | "state"> & { kind: "money" | "ops" | "risk" }> = [
-  { key: "scenario.customer", title: "New Customer", lane: "ops", kind: "ops", trigger: "create customer (universal picker/creator)", spec_ref: "QBO Lists parity" },
-  { key: "scenario.driver_onboarding", title: "New Driver onboarding", lane: "ops", kind: "ops", trigger: "onboard driver", spec_ref: "MUST 3.13.1" },
-  { key: "scenario.coa", title: "Chart of Accounts", lane: "money", kind: "money", trigger: "CoA setup / edit", spec_ref: "accounting skill §6" },
-  { key: "scenario.settlement", title: "Driver Settlement", lane: "money", kind: "money", trigger: "delivered loads in the period", je: "Header + pay lines + deductions + escrow = Net", spec_ref: "settlement blueprint" },
-  { key: "scenario.advance", title: "Driver Advance / Loan", lane: "money", kind: "money", trigger: "cash advance to driver", je: "DR Driver Cash Advance / CR Cash", spec_ref: "accounting skill §4" },
-  { key: "scenario.deductions", title: "Deductions", lane: "money", kind: "money", trigger: "fine / damage / advance payback", spec_ref: "settlement blueprint §1" },
-  { key: "scenario.escrow", title: "Escrow", lane: "money", kind: "money", trigger: "escrow deposit / separation payout", je: "DR Cash / CR Driver Escrow (LIABILITY)", spec_ref: "accounting skill §4" },
-  { key: "scenario.ap", title: "Expense / Bill / AP", lane: "money", kind: "money", trigger: "vendor bill or expense", je: "Bill: DR Expense / CR A/P · Pay: DR A/P / CR Cash", spec_ref: "standards parity §1" },
-  { key: "scenario.fuel", title: "Fuel", lane: "money", kind: "money", trigger: "fuel card txn (ComData / Relay)", spec_ref: "QBO parity §6 · IFTA" },
-  { key: "scenario.maintenance", title: "Maintenance Work Order", lane: "ops", kind: "ops", trigger: "WO on a unit", je: "Parts + labor → Maint Expense + A/P", spec_ref: "test battery step 17" },
-  { key: "scenario.accident", title: "Full Accident chain", lane: "risk", kind: "risk", trigger: "accident / safety incident", spec_ref: "DIRE-ACCIDENT linkage" },
-  { key: "scenario.insurance", title: "Insurance", lane: "risk", kind: "risk", trigger: "claim filed / insurer pays", je: "Deductible · recovery credits same expense", spec_ref: "test battery step 22" },
-  { key: "scenario.legal", title: "Legal Matter + Civil Fine", lane: "risk", kind: "risk", trigger: "lawsuit or civil/safety fine", spec_ref: "civil_fines_expense" },
-  { key: "scenario.factoring", title: "Factoring", lane: "money", kind: "money", trigger: "factor an invoice (Faro → RTS)", je: "DR Cash + Fee/Reserve / CR Factoring Advance", spec_ref: "ASC 860 recourse" },
-  { key: "scenario.banking", title: "Banking / Reconciliation", lane: "money", kind: "money", trigger: "bank feed + twice daily", spec_ref: "RECON-01" },
+export const SCENARIO_IDENTITY: Array<
+  Omit<ScenarioTrackerItem, "stage" | "state"> & { kind: "money" | "ops" | "risk"; links?: string }
+> = [
+  { key: "scenario.customer", title: "New Customer", lane: "ops", kind: "ops", trigger: "create customer (universal picker/creator)", spec_ref: "QBO Lists parity" , links: "Canonical entity-scoped write; A/R-ready; links ⇄ loads, invoices, factoring. Relationship health live (LV-001 fixed, proven on prod)." },
+  { key: "scenario.driver_onboarding", title: "New Driver onboarding", lane: "ops", kind: "ops", trigger: "onboard driver", spec_ref: "MUST 3.13.1" , links: "One txn: driver + driver-vendor + W-8BEN + escrow ledger + pay_basis + Driver Receivable." },
+  { key: "scenario.coa", title: "Chart of Accounts", lane: "money", kind: "money", trigger: "CoA setup / edit", spec_ref: "accounting skill §6" , links: "Additive only (never delete/rename); roles bound (unbilled_revenue, ar_control, revenue_default) per entity." },
+  { key: "scenario.settlement", title: "Driver Settlement", lane: "money", kind: "money", trigger: "delivered loads in the period", je: "Header + pay lines + deductions + escrow = Net", spec_ref: "settlement blueprint" , links: "Gross (rate × shortest miles) − deductions + reimbursements = net; 5% floor; debt shown in red." },
+  { key: "scenario.advance", title: "Driver Advance / Loan", lane: "money", kind: "money", trigger: "cash advance to driver", je: "DR Driver Cash Advance / CR Cash", spec_ref: "accounting skill §4" , links: "Recovered through settlement, capped by the net-pay floor; links ⇄ driver, bill_payment." },
+  { key: "scenario.deductions", title: "Deductions", lane: "money", kind: "money", trigger: "fine / damage / advance payback", spec_ref: "settlement blueprint §1" , links: "Separate itemized ledger, running balance per obligation (not negative pay lines); driver acknowledgement required before settlement closes." },
+  { key: "scenario.escrow", title: "Escrow", lane: "money", kind: "money", trigger: "escrow deposit / separation payout", je: "DR Cash / CR Driver Escrow (LIABILITY)", spec_ref: "accounting skill §4" , links: "Held-in-trust sub-ledger, control = Σ per-driver balances; returned 60–90d post-separation." },
+  { key: "scenario.ap", title: "Expense / Bill / AP", lane: "money", kind: "money", trigger: "vendor bill or expense", je: "Bill: DR Expense / CR A/P · Pay: DR A/P / CR Cash", spec_ref: "standards parity §1" , links: "Per-line load/unit/driver cost tags; vendor is a real FK; A/P aging by vendor." },
+  { key: "scenario.fuel", title: "Fuel", lane: "money", kind: "money", trigger: "fuel card txn (ComData / Relay)", spec_ref: "QBO parity §6 · IFTA" , links: "Chain: fuel card → driver → unit → IFTA (miles/gallons by state) → settlement; fuel expense FK to the load." },
+  { key: "scenario.maintenance", title: "Maintenance Work Order", lane: "ops", kind: "ops", trigger: "WO on a unit", je: "Parts + labor → Maint Expense + A/P", spec_ref: "test battery step 17" , links: "WO ⇄ unit ⇄ vendor ⇄ GL, both-way; parts ⇄ inventory." },
+  { key: "scenario.accident", title: "Full Accident chain", lane: "risk", kind: "risk", trigger: "accident / safety incident", spec_ref: "DIRE-ACCIDENT linkage" , links: "Depth: accident ⇄ driver ⇄ unit ⇄ trailer ⇄ load → claim ⇄ policy → at-fault: driver liability carries the full company-funded repair (driver acknowledgement required) → damage recovery is a contra-expense, never income." },
+  { key: "scenario.insurance", title: "Insurance", lane: "risk", kind: "risk", trigger: "claim filed / insurer pays", je: "Deductible · recovery credits same expense", spec_ref: "test battery step 22" , links: "Claim ⇄ accident ⇄ policy ⇄ unit ⇄ driver." },
+  { key: "scenario.legal", title: "Legal Matter + Civil Fine", lane: "risk", kind: "risk", trigger: "lawsuit or civil/safety fine", spec_ref: "civil_fines_expense" , links: "Legal stores documents/consents; Accounting posts (separation of duties). Fine ⇄ safety event." },
+  { key: "scenario.factoring", title: "Factoring", lane: "money", kind: "money", trigger: "factor an invoice (Faro → RTS)", je: "DR Cash + Fee/Reserve / CR Factoring Advance", spec_ref: "ASC 860 recourse" , links: "A/R stays on IH35 books as pledged collateral — no derecognition; secured borrowing, not a sale." },
+  { key: "scenario.banking", title: "Banking / Reconciliation", lane: "money", kind: "money", trigger: "bank feed + twice daily", spec_ref: "RECON-01" , links: "AM count/sum 06:00 CT, PM categorization diff 19:00 CT; every divergence flagged (no $ threshold); read-only." },
 ];
 
 export function mergeLiveItem(
