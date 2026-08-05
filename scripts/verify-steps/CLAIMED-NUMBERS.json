@@ -1306,6 +1306,7 @@
     "2625": "2625-verify-migration-checksum-collision.mjs",
     "2626": "2626-verify-no-stale-approval-gate.mjs",
     "2628": "2628-verify-scenario-tracker-reachable.mjs",
+    "2630": "2630-verify-loan-wizard-payload-complete.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
