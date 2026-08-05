@@ -1313,6 +1313,8 @@
     "2634": "2634-verify-delivery-evidence-latch-wired.mjs",
     "2636": "2636-verify-reverse-linkage-embedded.mjs",
     "2638": "2638-verify-hooks-before-return.mjs",
+    "2640": "2640-verify-no-uuid-label-rendering.mjs",
+    "2642": "2642-verify-test-provider-completeness.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
