@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDrivers } from "../../../api/mdata";
 import { companyToday } from "../../../lib/businessDate";
@@ -225,7 +225,8 @@ export function DrugAlcoholTab() {
           <label className="block min-w-[240px] text-xs text-slate-600">
             Driver
             <div className="mt-1">
-              <DriverPickerWithCreate
+              <EntityPicker
+              kind="driver"
                 operatingCompanyId={companyId}
                 value={driverId || null}
                 onChange={(next) => setDriverId(next ?? "")}
