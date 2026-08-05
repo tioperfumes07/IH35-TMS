@@ -1238,6 +1238,7 @@
     "2392": "2392-verify-cargo-claim-entity-pickers.mjs",
     "2394": "2394-verify-incident-trailer-entity-picker.mjs",
     "2396": "2396-verify-cash-advance-load-trailer-entity-picker.mjs",
+    "2398": "2398-verify-escrow-forfeit-liability-select.mjs",
     "2400": "2400-verify-verify-step-claimed-on-main.mjs",
     "2401": "2401-verify-no-extract-over-date-difference.mjs",
     "2402": "2402-verify-claude-settings-hard-deny.mjs",
