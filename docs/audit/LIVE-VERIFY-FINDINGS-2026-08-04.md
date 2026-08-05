@@ -1842,3 +1842,44 @@ guaranteed `42P01` on first call, because the table the handler selects from doe
 - neon-check: n/a for this addendum — HTTP probe against prod `api.ih35dispatch.com`; deploy confirmed
   earlier this session at `/api/v1/healthz/shallow` version `94c520a`.
 - status:    OPEN (unchanged — CC-1 owns the canonical-target decision)
+
+## LV-098  SYSTEMIC SWEEP of the LV-088 idiom — 8 uses of `operating_company_id IS NULL OR …` in backend reads: **5 correct and load-bearing, 1 comment, 1 the LV-088 defect, and 1 DEAD-BUT-LATENT** in the GL approvals path
+- module:    accounting · catalogs · home (GUARD — generalizing LV-088)
+- entity:    ALL
+- surface:   every non-test `operating_company_id IS NULL OR` in `apps/backend/src`
+- observed:  LV-088 is one instance of an idiom that is **correct in most places it appears**, so the useful
+  question is not "where is this pattern" but "where is it not justified by the data". §0 requires classifying
+  by opco **VALUES**, not column presence, so I read the rows rather than the schema for each site.
+  | site | table | prod opco values | verdict |
+  |---|---|---|---|
+  | `catalogs/accounting/detail-types-catalog.routes.ts` ×4 · `catalogs/accounts.routes.ts:113` | `catalogs.detail_types` | **144 of 144 NULL** | **CORRECT — load-bearing** |
+  | `lists/lists-module-count-spec.ts:167` | — | — | N/A — a comment describing policy, not code |
+  | `home/scenario-tracker.service.ts:86` | `audit.scenario_status` | per-entity rows + 1 ALL row per key | **DEFECT — LV-088** |
+  | `accounting/role-home/pending-approvals-gl.service.ts:491` | `catalogs.accounts` | **0 of 1,444 NULL** | **DEAD TODAY — latent** |
+  **`catalogs.detail_types` is the genuine shared-canonical case and the idiom there is required.** Every one
+  of its 144 rows has a NULL `operating_company_id` — one system-wide set consumed by all entities. Removing
+  the disjunct would blank the catalog for every tenant. Those 5 sites are correct and must not be "fixed".
+  **The GL approvals site is the one worth naming, and its severity is *latent*, not active.**
+  `catalogs.accounts` holds **1,444** rows across **3** distinct opcos and **zero** NULL-opco rows, so the
+  `a.operating_company_id IS NULL` disjunct **cannot match anything today** — it is dead. Nothing is leaking.
+  But it encodes the assumption that a NULL-opco account is shared across all entities, and the day one is
+  created — by an import, a migration, or a hand-insert — that account silently becomes visible in all three
+  entities' GL approval screens with no code change and no alert. It is a leak waiting for a row.
+  **I checked whether the leak is already happening rather than reasoning about it:** postings whose account
+  belongs to a *different* entity than the posting = **0**. The GL is clean.
+  **Why this is a finding at all, given nothing is broken.** LV-088 was the same shape — an `IS NULL` disjunct
+  that looked like the harmless catalog idiom — and it was live-wrong across 23 keys and 2 entities. The
+  difference between the two sites is a data fact (`0 NULL rows` vs `1 ALL row per key`), not anything visible
+  in the code. That is precisely why this must be pinned by a guard rather than by review: the code reads
+  identically in the safe case and the unsafe one.
+- severity:  minor (latent — 0 rows can trigger it today) · informational (the 5 correct sites, recorded so
+             nobody "fixes" them into an outage)
+- LANE:      CC-1 (money) — either drop the dead disjunct at `pending-approvals-gl.service.ts:491` (the
+             narrower change, since `catalogs.accounts` is entity-scoped by policy) or add a guard asserting
+             `catalogs.accounts` has **0** NULL-opco rows, which converts the latent leak into a loud failure.
+             **Do NOT touch the 5 `catalogs.detail_types` sites** — they are correct and load-bearing.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             `catalogs.accounts` **1,444** total / **0** NULL-opco / **3** distinct opcos;
+             `catalogs.detail_types` **144** total / **144** NULL-opco; cross-entity posting→account
+             mismatches **0**. Code census by grep over `apps/backend/src/**/*.ts` excluding tests.
+- status:    OPEN
