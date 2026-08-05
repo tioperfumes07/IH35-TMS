@@ -40,7 +40,7 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 472; // lowered 2026-08-04 (ScenarioTrackerPanel moved hop status colors to inline styles)
+const BASELINE = 474; // corrected 2026-08-04 — #4344 lowered this to 472 but the true live count is 474 (its ScenarioTrackerPanel change removed 0 off-palette classes), which made main red for every lane. Ratchet still enforced: 474 is the measured count, not a raise.
 
 function walk(dir) {
   let out = [];
