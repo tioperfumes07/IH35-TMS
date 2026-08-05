@@ -92,6 +92,28 @@ export const SLICE_MODULE = {
   "scenario.banking": "banking",
 };
 
+/**
+ * REFUSE A TRANSACTION-POOLER ENDPOINT.
+ *
+ * This is not defensive boilerplate — it is the explanation for a failure measured while building this.
+ * Probes run against a pooled connection returned real counts for some tables and 0 for others, varying
+ * between runs. Cause: under transaction pooling a SESSION-scoped GUC does not survive between
+ * statements, so `app.bypass_rls` is gone by the time the next probe runs and FORCE-RLS returns ZERO
+ * ROWS **with no error**. The script would read nothing, see zeroes, and confidently certify the whole
+ * board red.
+ *
+ * A silent wrong answer is worse than a crash, so refuse the endpoint outright rather than hope.
+ */
+function assertNotPooler(connectionString) {
+  if (/-pooler\./.test(String(connectionString ?? ""))) {
+    throw new Error(
+      "refusing a -pooler connection string: session-scoped app.bypass_rls does not survive between " +
+        "statements under transaction pooling, so every FORCE-RLS read would silently return 0 rows and " +
+        "this job would certify a false all-red board. Use the direct (non-pooler) endpoint."
+    );
+  }
+}
+
 async function loadRegistry() {
   for (const rel of [
     "../apps/backend/dist/home/scenario-registry.js",
@@ -170,6 +192,7 @@ async function main() {
     process.exit(2);
   }
   const registry = await loadRegistry();
+  assertNotPooler(process.env.DATABASE_URL);
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
   const client = await pool.connect();
   try {
