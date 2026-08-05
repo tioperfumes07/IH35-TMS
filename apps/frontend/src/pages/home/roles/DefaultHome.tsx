@@ -32,7 +32,6 @@ import { VendorMappingIntegrityCard } from "../../../components/home/VendorMappi
 import { RevenueDiscrepancyDrill } from "../../../components/home/RevenueDiscrepancyDrill";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AttentionList } from "../AttentionList";
-import { ScenarioTrackerPanel } from "../../../components/home/ScenarioTrackerPanel";
 import { FleetUtilizationGauge } from "../charts/FleetUtilizationGauge";
 import { WeeklyRevenueChart } from "../charts/WeeklyRevenueChart";
 import { WOStatusPieChart } from "../charts/WOStatusPieChart";
@@ -199,9 +198,6 @@ export function DefaultHome({ auth }: Props) {
           </div>
         }
       />
-
-      {/* HOMEPAGE LIVE SCENARIO TRACKER §8 — live pipeline, auto-refreshes every 20s */}
-      <ScenarioTrackerPanel companyId={selectedCompanyId} />
 
       {auth.role === "Owner" && selectedCompanyId ? (
         <section className="rounded-sm border border-slate-300 bg-slate-100/90 px-3 py-3 text-sm text-slate-700">

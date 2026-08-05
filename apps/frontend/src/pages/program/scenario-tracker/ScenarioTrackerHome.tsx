@@ -1,14 +1,38 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { fetchScenarioTracker } from "./api";
 import { HOP_IDENTITY, SCENARIO_IDENTITY, mergeLiveItem } from "./registry";
 import { ScenarioPipeline } from "./ScenarioPipeline";
 import { evaluateScenarioTrackerStaleness, formatLiveAsOfCt } from "./staleness";
-import { stageIndex, type EntityScope, type ScenarioTrackerResponse } from "./types";
+import { stageIndex, type EntityScope, type ScenarioTrackerItem, type ScenarioTrackerResponse } from "./types";
 import "./scenario-tracker.css";
 
-const POLL_MS = 20_000;
+/**
+ * WIRE-LIVE Layer 1 — the board moves on its own within 3s, no human reload.
+ *
+ * Was a hand-rolled setTimeout loop at 20s that only advanced while the tab was focused, so a board
+ * left open on a wall display drifted arbitrarily far behind prod. Now a TanStack Query at 3s with
+ * refetchIntervalInBackground, on the app's shared query client.
+ *
+ * BACK-OFF: once every hop AND scenario is green, the interval returns false and polling STOPS — a
+ * finished board must not hammer prod forever. It resumes automatically the moment anything is
+ * not-green, because the predicate is recomputed from each response.
+ */
+const POLL_MS = 3000;
 const ENTITIES: EntityScope[] = ["ALL", "TRANSP", "USMCA", "TRK"];
+
+/** Green = reached `passed` (stage index 4) or better AND not sitting in a fix state. */
+function itemIsGreen(item: ScenarioTrackerItem): boolean {
+  return stageIndex(item.stage) >= 4 && item.state === "done";
+}
+
+export function allHopsGreen(payload: ScenarioTrackerResponse | undefined | null): boolean {
+  if (!payload) return false;
+  const all = [...(payload.hops ?? []), ...(payload.scenarios ?? [])];
+  // An empty payload is NOT "all green" — treating it as green would stop polling on a failed read.
+  return all.length > 0 && all.every(itemIsGreen);
+}
 
 function laneClass(lane: string): string {
   if (lane === "money") return "money";
@@ -26,41 +50,24 @@ function hopDotClass(stale: boolean, state: string, stageIdx: number): string {
 
 export function ScenarioTrackerHome() {
   const [entity, setEntity] = useState<EntityScope>("ALL");
-  const [payload, setPayload] = useState<ScenarioTrackerResponse | null>(null);
-  const [fetchFailed, setFetchFailed] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
+  const trackerQuery = useQuery({
+    queryKey: ["scenario-tracker", entity],
+    queryFn: ({ signal }) => fetchScenarioTracker(entity, signal),
+    refetchInterval: (query) => (allHopsGreen(query.state.data) ? false : POLL_MS),
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    retry: 1,
+  });
+
+  const payload = trackerQuery.data ?? null;
+  const fetchFailed = trackerQuery.isError;
+
+  // Move the age clock on every settled fetch so "Live as of" tracks the real read.
   useEffect(() => {
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const ctrl = { current: null as AbortController | null };
-
-    const tick = async () => {
-      ctrl.current?.abort();
-      const ac = new AbortController();
-      ctrl.current = ac;
-      try {
-        const data = await fetchScenarioTracker(entity, ac.signal);
-        if (cancelled) return;
-        setPayload(data);
-        setFetchFailed(false);
-        setNowMs(Date.now());
-      } catch {
-        if (cancelled || ac.signal.aborted) return;
-        setFetchFailed(true);
-        setNowMs(Date.now());
-      } finally {
-        if (!cancelled) timer = setTimeout(tick, POLL_MS);
-      }
-    };
-
-    void tick();
-    return () => {
-      cancelled = true;
-      ctrl.current?.abort();
-      if (timer) clearTimeout(timer);
-    };
-  }, [entity]);
+    if (trackerQuery.dataUpdatedAt || trackerQuery.errorUpdatedAt) setNowMs(Date.now());
+  }, [trackerQuery.dataUpdatedAt, trackerQuery.errorUpdatedAt]);
 
   // Heartbeat clock so age crosses the 2×max_age threshold without waiting for the next poll.
   useEffect(() => {

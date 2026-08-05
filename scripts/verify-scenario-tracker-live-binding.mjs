@@ -29,7 +29,7 @@ import { readFileSync } from "node:fs";
 
 const LABEL = "verify-scenario-tracker-live-binding";
 const BACKEND = "apps/backend/src/home/scenario-registry.ts";
-const FE = "apps/frontend/src/pages/home/scenario-tracker/registry.ts";
+const FE = "apps/frontend/src/pages/program/scenario-tracker/registry.ts";
 const CERTIFIER = "scripts/scenario-certify.mjs";
 const SCOREBOARD = "scripts/scoreboard-from-live.mjs";
 
