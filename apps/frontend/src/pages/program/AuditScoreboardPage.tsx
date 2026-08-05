@@ -164,6 +164,13 @@ export function AuditScoreboardPage() {
       {/* Program module top-nav tabs — Scoreboard is the main/default page */}
       <nav className="tabs">
         <span className="tab active">Scoreboard</span>
+        {/* PROG-NAV-01: the live 24-slice board at /home/scenario-tracker was routed but had ZERO
+            inbound links anywhere in the app — no rail item (the rail renders only
+            SIDEBAR_ITEM_META; getSidebarFlyoutItems is not imported by Sidebar.tsx), no tab, no
+            home link. It was reachable only by typing the URL. Added here rather than as a 31st
+            sidebar id: the locked 30-item contract + the 30-file Rule 24 module manifest would both
+            have to move for a surface that is a view of the Program board, not a module. */}
+        <Link className="tab" to="/program/scenario-tracker">Scenario tracker</Link>
         <Link className="tab" to="/program/tracker">Tracker</Link>
         <Link className="tab" to="/program/modules">Module completion</Link>
         <Link className="tab" to="/program/final-additions">Final additions</Link>
