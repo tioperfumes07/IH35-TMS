@@ -69,6 +69,13 @@ function main() {
   if (!page.includes("+ Create Inspection")) failures.push("InspectionsPage must expose + Create Inspection");
   if (!page.includes("requestUploadUrl")) failures.push("InspectionsPage must upload photos via docs module");
   if (!page.includes("getSafetyDvirSubmissions")) failures.push("InspectionsPage must wire DVIR linkage");
+  // SAF-B29: unit picker is EntityPicker kind=unit (not silent <select>+listUnits Active page).
+  if (!/EntityPicker[\s\S]*kind=["']unit["']/.test(page)) {
+    failures.push("InspectionsPage must use EntityPicker kind=unit for create/edit unit");
+  }
+  if (/listUnits\s*\(/.test(page)) {
+    failures.push("InspectionsPage must not call listUnits for the unit picker — use EntityPicker");
+  }
   if ((pageTest.match(/\bit\(/g) ?? []).length < 3) {
     failures.push("InspectionsPage.test must include at least 3 vitest cases");
   }

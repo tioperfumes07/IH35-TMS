@@ -10,7 +10,6 @@ const createMaintenanceInspection = vi.fn();
 const updateMaintenanceInspection = vi.fn();
 const archiveMaintenanceInspection = vi.fn();
 const attachMaintenanceInspectionPhoto = vi.fn();
-const listUnits = vi.fn();
 const getSafetyDvirSubmissions = vi.fn();
 const requestUploadUrl = vi.fn();
 const confirmUpload = vi.fn();
@@ -23,8 +22,23 @@ vi.mock("../../../api/maintenance", () => ({
   attachMaintenanceInspectionPhoto: (...args: unknown[]) => attachMaintenanceInspectionPhoto(...args),
 }));
 
-vi.mock("../../../api/mdata", () => ({
-  listUnits: (...args: unknown[]) => listUnits(...args),
+vi.mock("../../../components/parity/EntityPicker", () => ({
+  EntityPicker: ({
+    value,
+    onChange,
+    placeholder,
+  }: {
+    value: string | null;
+    onChange: (next: string | null) => void;
+    placeholder?: string;
+  }) => (
+    <input
+      data-testid="mock-entity-picker-unit"
+      aria-label={placeholder ?? "unit"}
+      value={value ?? ""}
+      onChange={(e) => onChange(e.target.value || null)}
+    />
+  ),
 }));
 
 vi.mock("../../../api/safety", async (importOriginal) => {
@@ -69,7 +83,6 @@ describe("Maintenance InspectionsPage (B30)", () => {
     updateMaintenanceInspection.mockReset();
     archiveMaintenanceInspection.mockReset();
     attachMaintenanceInspectionPhoto.mockReset();
-    listUnits.mockReset();
     getSafetyDvirSubmissions.mockReset();
     requestUploadUrl.mockReset();
     confirmUpload.mockReset();
@@ -91,7 +104,6 @@ describe("Maintenance InspectionsPage (B30)", () => {
         },
       ],
     });
-    listUnits.mockResolvedValue({ units: [{ id: "unit-1", unit_number: "T-101" }] });
     getSafetyDvirSubmissions.mockResolvedValue({
       submissions: [{ id: "dvir-1", type: "pre_trip", submitted_at: "2026-06-04T08:00:00Z" }],
     });

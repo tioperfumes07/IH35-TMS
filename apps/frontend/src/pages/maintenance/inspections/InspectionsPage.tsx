@@ -12,12 +12,12 @@ import {
   type MaintenanceInspectionRow,
   updateMaintenanceInspection,
 } from "../../../api/maintenance";
-import { listUnits } from "../../../api/mdata";
 import { getSafetyDvirSubmissions } from "../../../api/safety";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type InspectionDraft = {
@@ -89,12 +89,6 @@ export function InspectionsPage() {
     enabled: Boolean(companyId),
   });
 
-  const unitsQ = useQuery({
-    queryKey: ["mdata", "units", companyId],
-    queryFn: () => listUnits({ operating_company_id: companyId, status: "Active" }),
-    enabled: Boolean(companyId),
-  });
-
   const dvirQ = useQuery({
     queryKey: ["safety", "dvir", companyId, draft.unit_id],
     queryFn: () =>
@@ -104,11 +98,6 @@ export function InspectionsPage() {
       }),
     enabled: Boolean(companyId) && (draft.inspection_type === "pre_trip" || draft.inspection_type === "post_trip"),
   });
-
-  const units = useMemo(
-    () => (unitsQ.data?.units ?? []) as Array<{ id: string; unit_number?: string }>,
-    [unitsQ.data?.units]
-  );
 
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["maintenance", "inspections", companyId] });
@@ -266,21 +255,20 @@ export function InspectionsPage() {
         }}
       >
         <div className="space-y-3 text-sm">
-          <label className="block">
+          <div className="block">
             <span className="text-xs text-gray-600">Unit</span>
-            <select
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={draft.unit_id}
-              onChange={(e) => setDraft((d) => ({ ...d, unit_id: e.target.value }))}
-            >
-              <option value="">Select unit</option>
-              {units.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.unit_number ?? u.id}
-                </option>
-              ))}
-            </select>
-          </label>
+            {/* SAF-B29: EntityPicker kind=unit — never silent <select> over listUnits Active page. */}
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={companyId}
+              value={draft.unit_id || null}
+              enabled={formOpen && Boolean(companyId)}
+              placeholder="Select unit…"
+              allowClear={false}
+              className="mt-1 w-full text-sm"
+              onChange={(next) => setDraft((d) => ({ ...d, unit_id: next ?? "" }))}
+            />
+          </div>
 
           <label className="block">
             <span className="text-xs text-gray-600">Inspection type</span>
