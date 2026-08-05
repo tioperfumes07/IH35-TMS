@@ -63,10 +63,15 @@ const STEPS = [
   // trip them. The ~100 per-page `*-uses-paritytable` guards are deliberately NOT here: they only
   // fire when you touch their specific page, and running them all would make the gate slow enough to
   // be skipped, which is how a gate dies. Combined cost of the five below is ~0.5s.
+  // META: the FE list below must mirror what CI runs. Hand-maintained mirrors rot — my first version
+  // of this list missed verify-referenceselect-coverage-ratchet (invoked via `npm run`, not `node`)
+  // and #4484 burned another cycle on it. This asserts the mirror instead of trusting it.
+  ["verify-local-gate-covers-fe-ratchets", "scripts/verify-local-gate-covers-fe-ratchets.mjs"],
   ["verify-no-raw-date-input", "scripts/verify-no-raw-date-input.mjs"],
   ["verify-no-native-datetime-input", "scripts/verify-no-native-datetime-input.mjs"],
   ["verify-money-fields-use-moneyinput", "scripts/verify-money-fields-use-moneyinput.mjs"],
   ["verify-referenceselect-qbo-standard", "scripts/verify-referenceselect-qbo-standard.mjs"],
+  ["verify-referenceselect-coverage-ratchet", "scripts/verify-referenceselect-coverage-ratchet.mjs"],
   ["verify-no-internal-language-in-prod-ui", "scripts/verify-no-internal-language-in-prod-ui.mjs"],
 ];
 
