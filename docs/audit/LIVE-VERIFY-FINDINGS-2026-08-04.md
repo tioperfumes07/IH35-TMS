@@ -1301,3 +1301,21 @@ membership-scoped session.
 - LANE:      CC-1 / CURSOR (maintenance) — short-circuit the scheduler when no active schedule exists, and add the `NULLIF` guard to the maintenance RLS cast so an empty GUC degrades instead of erroring
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` set to TRANSP. `maintenance.pm_schedule_runs` **3,914**; `pm_auto_wo_log` **33,216**; `pm_schedules` 24 total with **0** `is_active` and **4** distinct `unit_id`; `mdata.units` without any PM schedule **178** of 182; `maintenance.work_orders` **1** (unit and vendor both set); `work_order_lines` **1**. Landmine reproduced: with `app.operating_company_id = ''`, `SELECT count(*) FROM maintenance.pm_schedule_runs` raises `invalid input syntax for type uuid: ""`; setting the GUC to a valid uuid makes the identical query succeed.
 - status:    OPEN
+
+## LV-079  Module readiness map — insurance, compliance and legal are **configured but unpopulated**: 45 + 64 + 69 reference rows and essentially no records. Recorded as EXPECTED STATE, explicitly NOT filed as defects.
+- module:    insurance · compliance · legal (GUARD live-verify-after-merge)
+- entity:    ALL
+- surface:   `insurance.*` · `compliance.*` · `legal.*`
+- observed:  Three compliance-adjacent modules measured end to end. All three follow the same pattern: **reference/catalog data seeded, operational records absent.**
+  | module | populated tables | everything else |
+  |---|---|---|
+  | insurance | `type_catalog` **45** | `policy`, `policy_unit`, `coi_request`, `payment_schedule` — all **0** |
+  | compliance | `required_document_types` **54**, `appraisal_districts` **10** | 18 of 20 tables **0** |
+  | legal | `contract_templates` **69**, `contract_audit_log` 30, `contract_instances` **1** | `signatures` **0** |
+  **I am recording these as EXPECTED STATE and filing none of them as defects.** The owner has stated repeatedly that nothing operational has been created in this TMS — no loads, no dispatch, no maintenance, no safety events — and that all real data arrived as QuickBooks and Relay imports. Per §0's origin rule and Rule 32 (load-linkage pre-operational), "this module has no records yet" is not a defect and opening a card for it would be the `expected-state-recorded-as-failure` anti-pattern. The catalogs being *seeded* is the meaningful signal: someone prepared these modules to be usable.
+  **The one exception I already filed stands, and it is a different shape.** LV-049/LV-071 report that the single `legal.contract_instances` row is marked `signed_electronically` while carrying **no signed PDF and no `signatures` row**. That is not "nothing has happened yet" — it is a record asserting that something *did* happen, with no evidence behind it, on the control that gates escrow forfeiture. Absence is expected; a false positive is not.
+  **Why the distinction is worth stating explicitly.** Across this sweep the same raw shape — an empty table — has been correct three times (escrow, factoring, these three modules) and wrong twice (`audit.scenario_status` empty *because the role cannot INSERT*, LV-075; `catalogs.ifta_states` empty *and* unwritable, LV-076). Emptiness alone carries no verdict. The discriminator that separated them was **writability and intent**, not row count: a module with seeded catalogs and writable tables is waiting; a table that is empty *and* denies INSERT can never start.
+- severity:  informational — no defect; recorded so the emptiness is not re-discovered and mis-filed later
+- LANE:      none — GUARD attestation. Insurance/compliance population is owner/operational work, not a code fix.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` set to TRANSP. `insurance.*` tables with `n_live_tup > 0`: only `type_catalog` (45). `compliance` schema: 20 tables, only `required_document_types` (54) and `appraisal_districts` (10) non-empty. `legal`: `contract_templates` 69, `contract_audit_log` 30, `contract_instances` 1, `signatures` 0.
+- status:    OPEN (informational)
