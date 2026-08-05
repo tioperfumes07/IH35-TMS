@@ -8,9 +8,14 @@
  * and that the repair money leg posts through the real engine.
  */
 import { randomUUID } from "node:crypto";
+import type { FastifyInstance } from "fastify";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
+import { testAuthHeaders } from "../../../test-helpers/auth-fixture.js";
+import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
+import { createIntegrationApp } from "../../../test-helpers/http-app.js";
+import { registerSafetyRoutes } from "../../safety/safety.routes.js";
 import {
   createIsolatedOperatingCompany, ensureIntegrationPrerequisites, deactivateIsolatedOperatingCompany,
   type IsolatedOperatingCompany,
@@ -21,7 +26,7 @@ const run = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 const CENTS = 5;
 
 run("dire accident scenario — full linkage (real engine)", () => {
-  let db: pg.Client; let companyId: string; let isolated: IsolatedOperatingCompany;
+  let db: pg.Client; let companyId: string; let isolated: IsolatedOperatingCompany; let app: FastifyInstance;
   const s = randomUUID().slice(0, 6);
   const userId = "00000000-0000-4000-8000-0000000000dd";
   const id = {
@@ -60,7 +65,9 @@ run("dire accident scenario — full linkage (real engine)", () => {
       // operational: Tio Perfumes customer, unit, driver, delivered load
       await db.query(`INSERT INTO mdata.customers (id,operating_company_id,customer_name) VALUES ($1::uuid,$2::uuid,'Tio Perfumes')`, [id.customer, companyId]);
       await db.query(`INSERT INTO mdata.units (id,owner_company_id,unit_number,vin, is_sample_data) VALUES ($1::uuid,$2::uuid,$3,$4, true)`, [id.unit, companyId, `TRK${s}`, `1DIRE${s}ACCIDENT01`]);
-      await db.query(`INSERT INTO mdata.drivers (id,operating_company_id,first_name,last_name,phone) VALUES ($1::uuid,$2::uuid,'AtFault','Driver',$3)`, [id.driver, companyId, `95605${s.slice(0,5)}`]);
+      // status Active is REQUIRED, not decoration: the real spawn-liability route refuses a driver
+      // whose status is not 'active' (safety.routes.ts driver_inactive guard).
+      await db.query(`INSERT INTO mdata.drivers (id,operating_company_id,first_name,last_name,phone,status) VALUES ($1::uuid,$2::uuid,'AtFault','Driver',$3,'Active')`, [id.driver, companyId, `95605${s.slice(0,5)}`]);
       await db.query(`INSERT INTO mdata.loads (id,operating_company_id,load_number,customer_id,dispatcher_user_id,status,assigned_primary_driver_id,assigned_unit_id) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,'delivered',$6::uuid,$7::uuid)`, [id.load, companyId, `LOAD-${s}`, id.customer, userId, id.driver, id.unit]);
       // insurance coverage type + policy
       await db.query(`INSERT INTO insurance.type_catalog (id,tenant_id,code,name) VALUES ($1::uuid,$2::uuid,$3,'Auto Liability')`, [id.covType, companyId, `AL-${s}`]);
@@ -75,10 +82,13 @@ run("dire accident scenario — full linkage (real engine)", () => {
       // ACCIDENT WORK ORDER (source_type AC) — links unit, driver, claim, load
       await db.query(`INSERT INTO maintenance.work_orders (id,operating_company_id,source_type,unit_sequence,unit_id,driver_id,insurance_claim_id,load_id) VALUES ($1::uuid,$2::uuid,'AC',1,$3::uuid,$4::uuid,$5::uuid,$6::uuid)`, [id.wo, companyId, id.unit, id.driver, id.claim, id.load]);
       await db.query(`INSERT INTO maintenance.work_order_lines (work_order_uuid,line_type,description) VALUES ($1::uuid,'labor','Accident repair labor')`, [id.wo]);
-      // DRIVER CHARGED THE DEDUCTIBLE — liability + settlement deduction
-      await db.query(`INSERT INTO driver_finance.driver_liabilities (id,operating_company_id,driver_id,type,source_description,original_amount,current_balance) VALUES ($1::uuid,$2::uuid,$3::uuid,'deductible','Accident deductible (at-fault)',$4,$4)`, [id.liability, companyId, id.driver, CENTS/100]);
-      await db.query(`INSERT INTO driver_finance.driver_settlement_deductions (operating_company_id,driver_id,deduction_type,amount_cents,reason,load_id,status) VALUES ($1::uuid,$2::uuid,'deductible',$3,'Accident deductible charged to at-fault driver',$4::uuid,'pending')`, [companyId, id.driver, CENTS, id.load]);
+      // DRIVER CHARGE — cost lines only. The liability and the settlement deduction are NOT inserted
+      // here on purpose: they are produced by the REAL route in the spawn-liability test below. The
+      // route sums safety.accident_cost_lines for the amount, so this is the only input it needs.
+      await db.query(`INSERT INTO safety.accident_cost_lines (operating_company_id,accident_id,section,description,amount_cents,sort_order) VALUES ($1::uuid,$2::uuid,'A','Accident deductible charged to at-fault driver',$3,1)`, [companyId, id.accident, CENTS]);
     });
+
+    app = await createIntegrationApp(registerSafetyRoutes);
   });
 
   afterAll(async () => {
@@ -87,7 +97,45 @@ run("dire accident scenario — full linkage (real engine)", () => {
       await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid`, [companyId]);
       if (isolated) await deactivateIsolatedOperatingCompany(db, isolated);
     }); } catch { /* best effort */ }
+    await app?.close().catch(() => {});
     await db.end();
+  });
+
+  // Runs FIRST: the linkage test below now asserts rows this route produces, not fixtures.
+  it("the REAL spawn-liability route charges the at-fault driver (no hand-inserted liability)", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/accidents/${id.accident}/spawn-liability?operating_company_id=${companyId}`,
+      // TEST_OWNER_USER_ID, not the local fixture userId: the route runs under withCompanyScope,
+      // which needs a user that actually holds org.user_company_access. The local id is only a
+      // created_by stamp and gets a 403 here.
+      headers: testAuthHeaders(TEST_OWNER_USER_ID, "Owner"),
+    });
+    expect(res.statusCode).toBeLessThan(300);
+
+    const [liability] = await read(`
+      SELECT type, origin, origin_id::text AS origin_id, status, requires_acknowledgment,
+             (original_amount * 100)::bigint::text AS original_amount_cents
+        FROM driver_finance.driver_liabilities
+       WHERE operating_company_id=$1::uuid AND driver_id=$2::uuid`, [companyId, id.driver]);
+    expect(liability).toBeTruthy();
+    expect(liability.type).toBe("accident_damage");
+    expect(liability.origin).toBe("safety_accident");
+    expect(liability.origin_id).toBe(id.accident);
+    expect(liability.status).toBe("pending_recovery");
+    // WF-036 / blueprint MUST 3.13.3.3.A — the driver-liable charge must NOT auto-deduct before a
+    // signed acknowledgment. If this ever flips to false, money comes off a driver's check without
+    // consent and this guard is the thing that says so.
+    expect(liability.requires_acknowledgment).toBe(true);
+    expect(Number(liability.original_amount_cents)).toBe(CENTS);
+
+    const [ded] = await read(`
+      SELECT deduction_type, amount_cents::text AS amount_cents, status
+        FROM driver_finance.driver_settlement_deductions
+       WHERE operating_company_id=$1::uuid AND driver_id=$2::uuid`, [companyId, id.driver]);
+    expect(ded).toBeTruthy();
+    expect(ded.deduction_type).toBe("damage");
+    expect(Number(ded.amount_cents)).toBe(CENTS);
   });
 
   it("FULL LINKAGE resolves both-way across safety/insurance/legal/maintenance/driver-finance", async () => {
@@ -102,8 +150,8 @@ run("dire accident scenario — full linkage (real engine)", () => {
         JOIN insurance.policy p  ON p.id = c.policy_id
         JOIN legal.matters m     ON m.insurance_claim_id = c.id
         JOIN maintenance.work_orders wo ON wo.insurance_claim_id = c.id
-        JOIN driver_finance.driver_liabilities dl ON dl.driver_id = ar.driver_id AND dl.type='deductible'
-        JOIN driver_finance.driver_settlement_deductions dsd ON dsd.driver_id = ar.driver_id AND dsd.deduction_type='deductible'
+        JOIN driver_finance.driver_liabilities dl ON dl.driver_id = ar.driver_id AND dl.type='accident_damage'
+        JOIN driver_finance.driver_settlement_deductions dsd ON dsd.driver_id = ar.driver_id AND dsd.deduction_type='damage'
         JOIN mdata.drivers d ON d.id = ar.driver_id
         JOIN mdata.units u   ON u.id = ar.unit_id
         JOIN mdata.loads l   ON l.id = ar.load_id
@@ -118,8 +166,8 @@ run("dire accident scenario — full linkage (real engine)", () => {
     expect(r.wo_source).toBe("AC");           // accident-caused work order
     expect(Number(r.deductible_cents)).toBe(CENTS);
     expect(r.matter_type).toBe("claim");
-    expect(r.liability_type).toBe("deductible");
-    expect(r.deduction_type).toBe("deductible");
+    expect(r.liability_type).toBe("accident_damage");
+    expect(r.deduction_type).toBe("damage");
   });
 
   it("the accident repair posts a BALANCED expense JE ($0.05)", async () => {
@@ -135,5 +183,17 @@ run("dire accident scenario — full linkage (real engine)", () => {
     const dr = je.filter((r:any)=>r.debit_or_credit==="debit").reduce((a:number,r:any)=>a+Number(r.amount_cents),0);
     const cr = je.filter((r:any)=>r.debit_or_credit==="credit").reduce((a:number,r:any)=>a+Number(r.amount_cents),0);
     expect(dr).toBe(cr); expect(dr).toBe(CENTS);
+
+    // SOURCE LINKAGE — a balanced JE is only half the bar. An entry that does not name the
+    // transaction that caused it is untraceable in an audit: the money is right and nobody can say
+    // WHY. The linkage is NOT a column on journal_entries (it has none); it is the
+    // accounting.transaction_source_links spine, keyed per POSTING, which the shared poster writes.
+    const links = await read(
+      `SELECT DISTINCT tsl.linked_object_type, tsl.linked_object_id::text AS linked_object_id
+         FROM accounting.transaction_source_links tsl
+         JOIN accounting.journal_entry_postings p ON p.id = tsl.journal_entry_posting_id
+        WHERE p.journal_entry_uuid = $1::uuid`, [res.journal_entry_id]);
+    expect(links.length).toBeGreaterThan(0);
+    expect(links.some((l:any)=>l.linked_object_type==="bill" && l.linked_object_id===billId)).toBe(true);
   });
 });

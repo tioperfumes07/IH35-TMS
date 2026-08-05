@@ -314,7 +314,9 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.post("/api/v1/safety/fines/:id/convert-to-liability", async (req, reply) => {
+  // Rate-limited per the repo pattern (config.rateLimit, cf. accounting/expenses.routes.ts). 30/min:
+  // this writes a driver debt, so it sits with the other money-mutating routes, not the read tier.
+  app.post("/api/v1/safety/fines/:id/convert-to-liability", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -365,7 +367,14 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
           return { code: 422 as const, error: "driver_not_active" };
         }
 
+        // TWO units, deliberately two names. `amount` stays CENTS because createSettlementDeduction
+        // below takes amountCents (and requires an integer) — that path was always correct and must
+        // not move. `amountDollars` exists only for driver_liabilities.original_amount /
+        // current_balance, which are numeric(10,2) DOLLARS (cash-advance-create.ts writes dollars;
+        // fuel-posting/poster.service.ts reads them back with *100). Passing cents into those columns
+        // made a $1,000 fine read as a $100,000 debt against the driver.
         const amount = Number(fine.amount_cents ?? 0);
+        const amountDollars = amount / 100;
         const liabilityRes = await client.query(
           `
             INSERT INTO driver_finance.driver_liabilities (
@@ -390,7 +399,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
             query.data.operating_company_id,
             fine.subject_driver_id,
             `Fine: ${String(fine.violation_description)} (${String(fine.issued_by_authority)} ${String(fine.jurisdiction ?? "")})`,
-            amount,
+            amountDollars,
             fine.id,
             fine.source_doc_id ?? null,
           ]

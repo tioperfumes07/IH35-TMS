@@ -269,7 +269,10 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
               query.data.operating_company_id,
               body.data.driver_uuid,
               `Internal fine ${fine.id}`,
-              Math.round(Number(body.data.amount) * 100),
+              // body.data.amount is already DOLLARS (the line below converts it to cents for the
+              // deduction). original_amount / current_balance are numeric(10,2) DOLLARS, so the *100
+              // here was converting into the wrong unit and inflating the driver's debt 100x.
+              Number(body.data.amount),
               fine.id,
             ]
           );
