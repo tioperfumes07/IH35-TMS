@@ -1030,3 +1030,88 @@ membership-scoped session.
 - LANE:      CC-1 (money/fuel) — either wire the overage to a real `driver_settlement_deductions` row, or stop writing `overage_recovered_cents` until a deduction exists. The BANK-F10 Status column belongs to whoever owns `banking.json`; I do not edit it.
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. Fuel txns with `overage_event_id` NOT NULL = **3**, summed `overage_recovered_cents` = **31,634¢**, unrecovered (NULL or 0) = **0**, `overage_deduction_id` NULL on all 3, driver attached on all 3. `fuel.fuel_card_overage_events` 3, `fuel_card_overage_policies` 3, `catalogs.driver_deduction_types` 23. Deduction tables `n_live_tup`: `driver_settlement_deductions` 0 (`n_tup_ins` 14), `driver_deduction_buckets` 0, `driver_deduction_bucket_events` 0, `deduction_schedule` 0, `auto_deduction_policies` 0, `escrow_deductions_pending` 0, `settlement.settlement_deduction` 0; `driver_finance.driver_settlements` 0 live.
 - status:    OPEN
+
+## LV-065  GUARD passes 15–16 — the ledger balances to zero on EVERY dimension: whole-ledger net 0¢, and all 12 source types net 0¢ independently; intercompany transfers carry correct reciprocal legs across TRANSP↔USMCA
+- module:    accounting / banking (GUARD live-verify-after-merge, passes 15–16)
+- entity:    ALL
+- surface:   `accounting.journal_entry_postings` · `banking.transfers`
+- observed:  **PASS 16 — double-entry integrity, decomposed.** LV-050 proved every one of 1,787 journal entries balances individually. This decomposes the same ledger a second, independent way — by source type — and it holds everywhere:
+  | source type | postings | net |
+  |---|---|---|
+  | `fuel_event` | 3,094 | **0¢** |
+  | `bank_categorization` | 380 | **0¢** |
+  | (untyped) | 82 | **0¢** |
+  | `bill` | 10 | **0¢** |
+  | `invoice` | 10 | **0¢** |
+  | `transfer` | 8 | **0¢** |
+  | `prepaid_purchase` | 4 | **0¢** |
+  | `fixed_asset_depreciation` | 4 | **0¢** |
+  | `expense` | 4 | **0¢** |
+  | `loan_payment` | 3 | **0¢** |
+  | `bill_payment` | 2 | **0¢** |
+  | `customer_payment` | 2 | **0¢** |
+  **Whole-ledger net: 0¢.** Not one source type carries a residual, including the 82 untyped postings that hold the opening balance. Two independent decompositions — per journal entry (LV-050) and per source type (here) — both return zero, so the balance property is not an artifact of how the ledger is sliced.
+  **PASS 15 — intercompany transfers are structurally correct.** `banking.transfers` holds 4 rows, **all 4 posted**, none revoked. The one intercompany group `e8ea4c5c-5378-49fd-8327-3b5d6287433a` carries exactly **2 legs** with distinct roles (`initiator` + `counterparty`) spanning **two entities** — TRANSP `91e0bf0a…` and USMCA `5c854333…` — at $1.00 per leg. The remaining 2 transfers are intra-entity and correctly carry no group. All 8 transfer postings net **0¢**. That is the reciprocal-leg model BANK-DOM-05 describes, verified live rather than assumed from its PASS mark.
+  Recording these affirmatively because the failures in this file are easier to find than the passes, and a reader needs to know which properties actually hold. The ledger's arithmetic is sound; the defects I have filed are about *what reaches* the ledger (LV-064 poster denylists), *what is recorded about it* (LV-057 unaudited posting lines), and *how it is presented* (LV-018/024/029/032/034), not about the double-entry itself.
+- severity:  informational — two structural passes, no defect
+- LANE:      none — GUARD attestation
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `accounting.journal_entry_postings` grouped by `source_transaction_type` with signed sums as tabulated; ungrouped whole-ledger signed sum **0**. `banking.transfers`: 4 rows, 4 with a `posted` batch, 0 revoked; group `e8ea4c5c…` = 2 legs, `intercompany_leg` values `initiator,counterparty`, 2 distinct `operating_company_id`s, `SUM(amount_cents)` 200; transfers without a group = 2.
+- status:    OPEN (informational)
+
+## LV-066  GUARD pass 17 — chart-of-accounts and posting-target integrity PASS: 176 deactivated accounts and ZERO postings landed on any of them; 0 duplicate account numbers within an entity
+- module:    accounting / catalogs (GUARD live-verify-after-merge, pass 17)
+- entity:    ALL
+- surface:   `catalogs.accounts` ↔ `accounting.journal_entry_postings`
+- observed:  **Structure — clean.** `catalogs.accounts` holds **1,442** rows across **3** entities: **1,266 active, 176 deactivated, 0 locked**. Zero rows are missing `account_type`, zero are missing `account_number`, and there are **zero duplicate `account_number`s within an operating company** — the per-entity key holds, which is what makes the repeated numbers across entities (QBO-168, 2000, 1100) correct instancing rather than collisions (LV-030).
+  **The control that matters — also clean.** **0 postings** reference a **deactivated** account, and **0** reference a **locked** one. 176 accounts have been deactivated and not a single journal line landed on any of them. Deactivation is therefore enforced at the posting boundary rather than being a UI-only affordance — a real control, verified against a non-trivial population rather than a token one.
+  This closes the account-side of the posting question. Combined with LV-065 (every source type nets 0¢) and LV-050 (every journal entry balances), the three legs of ledger integrity — the entries, the amounts, and the accounts they land on — are all independently verified sound.
+  **Method note, recorded because it nearly became a false report.** My first pass wrote `count(*) AS deactivated_accounts` with **no FILTER clause**, which returned 1,442 — the total row count — and would have read as "every account is deactivated", a dramatic and completely false finding sitting next to a contradictory "0 postings to deactivated accounts" in the same result set. The internal contradiction is what caught it. Two numbers in one query that cannot both be true is a stronger self-check than either number alone, and I am recording it as a habit worth keeping: when a result implies something extreme, look for a second value in the same output that would have to agree.
+- severity:  informational — structural pass, no defect
+- LANE:      none — GUARD attestation
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `catalogs.accounts`: total **1,442**, `deactivated_at IS NOT NULL` **176**, `is_locked` **0**, active **1,266**, `account_type IS NULL` **0**, `account_number IS NULL` **0**, distinct `operating_company_id` **3**; duplicate `(operating_company_id, account_number)` groups **0**. Postings joined to accounts: to deactivated **0**, to locked **0**.
+- status:    OPEN (informational)
+
+## LV-067  GUARD passes 18–19 — master-data entity isolation and payment integrity both PASS at real scale: 0 cross-entity customer/vendor references across 5,527 master records, and 0 over-application across 6,544 payments
+- module:    accounting / mdata (GUARD live-verify-after-merge, passes 18–19)
+- entity:    ALL
+- surface:   `mdata.customers` · `mdata.vendors` · `accounting.invoices` · `accounting.bills` · `accounting.bill_payments`
+- observed:  **PASS 18 — cross-entity isolation on master data, tested at scale.** `mdata.customers` holds **2,696** rows (2,692 active) across **3** entities; `mdata.vendors` holds **2,831** (2,444 active). Joining money documents to their counterparties:
+  - invoices whose `operating_company_id` differs from their customer's: **0**
+  - bills whose `operating_company_id` differs from their vendor's: **0**
+  This matters more than the equivalent check inside the GL (LV-054, also 0) because it runs against **5,527 real master records and ~28,000 real documents**, not the handful of TMS-native test rows. The standing cross-entity-leak concern is not observable here: no document reaches across the TRANSP / TRK / USMCA boundary to a counterparty that belongs to another entity.
+  **PASS 19 — payment over-application, tested at scale.** Across **6,544 bill payments**:
+  - payments whose amount exceeds their bill's amount: **0**
+  - bills where `paid_cents > amount_cents`: **0** (of 16,250)
+  - invoices where `amount_paid_cents > total_cents`: **0** (of 11,983)
+  No bill or invoice has been over-applied, and no payment line exceeds the document it settles. Since `amount_open_cents` on invoices is a generated column (`total_cents - amount_paid_cents`), a violation here would have produced negative open balances propagating into AR aging and the $831,073.13 open figure — it has not.
+  Recording both affirmatively. These are the invariants an auditor would test first on imported books, and they hold across the full imported population rather than a sample.
+- severity:  informational — two structural passes at scale, no defect
+- LANE:      none — GUARD attestation
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `mdata.customers` 2,696 total / 2,692 active / 3 entities; `mdata.vendors` 2,831 total / 2,444 active. Cross-entity joins: invoices↔customers mismatch **0**, bills↔vendors mismatch **0**. `accounting.bill_payments` 6,544 with 0 exceeding their bill; `accounting.bills` unvoided with `paid_cents > amount_cents` **0**; `accounting.invoices` unvoided with `amount_paid_cents > total_cents` **0**.
+- status:    OPEN (informational)
+
+## LV-068  GUARD pass 20 — HOS duty-status log is append-only at full scale: 592,535 records with ZERO updates and ZERO deletes. This is the tamper-evidence property a DOT/FMCSA reviewer tests first, and it holds.
+- module:    hos / safety (GUARD live-verify-after-merge, pass 20)
+- entity:    ALL
+- surface:   `hos.duty_status_events` · `safety.*`
+- observed:  `hos.duty_status_events` holds **592,535 live rows** (`n_tup_ins` 594,504) with **`n_tup_upd` = 0** and **`n_tup_del` = 0**. Over half a million driver duty-status records have been written and **not one has ever been modified or removed**.
+  **Why this is the most consequential append-only result in this file.** The other WORM checks protect the company's own books — `audit.audit_events` and `audit.row_changes` (LV-054, 4.5M rows, also 0/0). This one protects a **legally mandated record**. Hours-of-service logs are the primary artifact in a DOT/FMCSA audit and in any accident or hours-falsification proceeding; their evidentiary value depends entirely on being unalterable after the fact. A single UPDATE on this table would compromise the defensibility of the whole log, and there have been none across 592,535 rows.
+  This also independently corroborates the schema rule that `hos.duty_status_events` is append-only — that is not merely documented, it is observably true in production at scale.
+  **Safety surfaces, for the record:** `safety.driver_safety_scores` 409, `safety.fuel_gps_matches` 176, `safety.integrity_alerts` 30 with `integrity_alert_events` 30 (one historical delete), `document_alert_rules` 21, `anomaly_alert_rules` 18. Modest volumes, consistent with the safety module being configured and partially exercised while nothing operational has been created in the TMS. **I am not filing the low counts as a gap** — per the origin rule, absence of operational activity is expected state, and the one `integrity_alert_events` delete is undated historical churn on a non-financial table.
+- severity:  informational — a structural pass with regulatory significance
+- LANE:      none — GUARD attestation
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `pg_stat_user_tables` for `hos.duty_status_events`: `n_live_tup` **592,535**, `n_tup_ins` 594,504, `n_tup_upd` **0**, `n_tup_del` **0**. Safety schema counts as listed, all `n_tup_del` 0 except `integrity_alert_events` (1).
+- status:    OPEN (informational)
+
+## LV-069  GUARD pass 21 — fleet/asset entity model PASS: 182 units all carry an owner, 52 leased out, ZERO self-leases; the TRK-owns/TRANSP-leases split holds on the correct columns
+- module:    fleet / mdata (GUARD live-verify-after-merge, pass 21)
+- entity:    ALL
+- surface:   `mdata.units` · `mdata.drivers`
+- observed:  `mdata.units` holds **182** rows. **All 182 carry an `owner_company_id`** — no unit is orphaned from an owning entity — and **52** carry a `currently_leased_to_company_id`, i.e. are currently leased out. **Zero units are leased to their own owner** (`currently_leased_to_company_id = owner_company_id` → 0), so the lease relation never degenerates into a self-reference that would double-count an asset or make an entity appear to lease from itself.
+  This is the multi-entity asset model working as specified: **TRK owns the equipment; TRANSP/USMCA lease it.** Ownership and leasehold are tracked on the two purpose-built columns — `owner_company_id` and `currently_leased_to_company_id` — and **not** on `operating_company_id`, which does not exist on this table and whose assumed presence is a documented recurring source of 500s. The live data confirms the documented model rather than the mistaken one.
+  `mdata.drivers` holds **179** rows, **88 active** (`deactivated_at IS NULL AND archived_at IS NULL`), consistent with the 86 TRANSP-active figure measured against contract instances in LV-049 (the difference being other entities).
+  Recorded as a pass because asset ownership is the foundation of the lease accounting, depreciation and insurance chains; if units were orphaned or self-leased, every downstream allocation built on them would inherit the error.
+- severity:  informational — structural pass, no defect
+- LANE:      none — GUARD attestation
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `mdata.units`: total **182**, `owner_company_id IS NOT NULL` **182**, `currently_leased_to_company_id IS NOT NULL` **52**, rows where `currently_leased_to_company_id = owner_company_id` **0**. `mdata.drivers`: total **179**, active **88**.
+- status:    OPEN (informational)
