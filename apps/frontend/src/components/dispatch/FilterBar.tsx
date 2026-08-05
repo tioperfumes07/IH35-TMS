@@ -1,7 +1,12 @@
-import { Combobox } from "../Combobox";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { listCustomers } from "../../api/mdata";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { EntityPicker } from "../parity/EntityPicker";
+import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { CollapsedListFilters, TableSearch, ColumnChooser, type TableColumn } from "../../components/table";
 import { Button } from "../Button";
+import { Combobox } from "../Combobox";
 import type { LoadStatus } from "../../api/loads";
 import { STATUS_LABEL } from "./constants";
 
@@ -16,12 +21,6 @@ export type DispatchFilterState = {
   search: string;
 };
 
-type LookupOption = {
-  id: string;
-  label: string;
-  sublabel?: string;
-};
-
 type CompanyOption = {
   id: string;
   label: string;
@@ -32,11 +31,8 @@ type Props = {
   value: DispatchFilterState;
   onChange: (next: DispatchFilterState) => void;
   companies: CompanyOption[];
-  customers: LookupOption[];
-  drivers: LookupOption[];
+  operatingCompanyId: string;
   onClearAll: () => void;
-  // GLOBAL-TABLE-CONTROLS gear (column chooser + rows-per-page). Optional so the board can
-  // wire it once its columns adopt the shared controller (Part B). Reused, never re-forked.
   columns?: TableColumn[];
   hiddenColumns?: Set<string>;
   onToggleColumn?: (key: string) => void;
@@ -71,8 +67,7 @@ export function FilterBar({
   value,
   onChange,
   companies,
-  customers,
-  drivers,
+  operatingCompanyId,
   onClearAll,
   columns,
   hiddenColumns,
@@ -80,7 +75,30 @@ export function FilterBar({
   pageSize,
   onPageSizeChange,
 }: Props) {
-  // Active filters EXCLUDE the search box (which lives inline in the slim toolbar).
+  const [customerSearch, setCustomerSearch] = useState("");
+
+  const customersQuery = useQuery({
+    queryKey: ["dispatch-filter", "customers", operatingCompanyId, customerSearch],
+    queryFn: () =>
+      listCustomers({
+        operating_company_id: operatingCompanyId,
+        status: "active",
+        limit: 5000,
+        search: customerSearch || undefined,
+      }),
+    enabled: Boolean(operatingCompanyId),
+  });
+
+  const customerOptions = useMemo(
+    () =>
+      (customersQuery.data?.customers ?? []).map((c) => ({
+        value: c.id,
+        label: c.name,
+        type: c.customer_code ?? undefined,
+      })),
+    [customersQuery.data?.customers]
+  );
+
   const activeCount =
     value.companyIds.length +
     value.statuses.length +
@@ -89,13 +107,9 @@ export function FilterBar({
     (value.dateFrom ? 1 : 0) +
     (value.dateTo ? 1 : 0);
 
-  const customerOption = customers.find((item) => item.id === value.customerId) ?? null;
-  const driverOption = drivers.find((item) => item.id === value.driverId) ?? null;
+  const customerOption = customerOptions.find((item) => item.value === value.customerId) ?? null;
 
   return (
-    // CHROME-02: this IS the original slim QuickBooks-style toolbar the shared
-    // CollapsedListFilters gold pattern was extracted from — now delegates to that shared
-    // component too, so there is exactly one popover/collapse implementation, not two.
     <div className="flex flex-wrap items-center gap-2" data-dispatch-toolbar="true">
       <CollapsedListFilters
         activeFilterCount={activeCount}
@@ -141,22 +155,28 @@ export function FilterBar({
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Customer</label>
-            <Combobox
-              options={customers.map((item) => ({ value: item.id, label: item.label, sublabel: item.sublabel }))}
+            <ReferenceSelect
               value={value.customerId}
               onChange={(customerId) => onChange({ ...value, customerId })}
+              options={customerOptions}
+              createKind="customer"
+              operatingCompanyId={operatingCompanyId}
               placeholder="Search customer"
-              allowClear
+              disabled={!operatingCompanyId}
+              loading={customersQuery.isLoading}
+              onSearch={setCustomerSearch}
             />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Driver</label>
-            <Combobox
-              options={drivers.map((item) => ({ value: item.id, label: item.label, sublabel: item.sublabel }))}
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={operatingCompanyId}
               value={value.driverId}
               onChange={(driverId) => onChange({ ...value, driverId })}
+              allowCreate={false}
               placeholder="Search driver"
-              allowClear
+              disabled={!operatingCompanyId}
             />
           </div>
         </div>
@@ -180,7 +200,6 @@ export function FilterBar({
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Date From</label>
-            {/* DatePicker renders its own bordered control — no extra border here (was box-in-box). */}
             <DatePicker value={value.dateFrom} onChange={(next) => onChange({ ...value, dateFrom: next })} className="w-full" />
           </div>
           <div className="space-y-1">
@@ -219,9 +238,9 @@ export function FilterBar({
               Customer: {customerOption.label} ×
             </button>
           ) : null}
-          {driverOption ? (
+          {value.driverId ? (
             <button type="button" onClick={() => onChange({ ...value, driverId: null })} className="rounded-sm border border-gray-300 px-2 py-1 hover:bg-gray-50">
-              Driver: {driverOption.label} ×
+              Driver filter ×
             </button>
           ) : null}
           <Button type="button" size="sm" variant="secondary" onClick={onClearAll}>
