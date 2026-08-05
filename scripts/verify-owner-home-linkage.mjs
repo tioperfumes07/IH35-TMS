@@ -85,6 +85,10 @@ const RULES = [
         pattern: /to=\{`\/dispatch\?[^`]*\bload_id=/,
         why: "load must use EntityLink kind=\"load\" (/dispatch/loads/:id), not a ?load_id= board bookmark",
       },
+      {
+        pattern: /to=\{`[^`]*\?[^`]*\bdriver_id=/,
+        why: "driver must drill to /drivers/:id (Link or EntityLink), not a ?driver_id= bookmark",
+      },
     ],
   },
 ];
@@ -180,6 +184,15 @@ function selftest() {
       ) &&
         !RULES[1].forbidden[0].pattern.test(
           '<EntityLink kind="load" id={row.id} label="Open" />',
+        ),
+    ],
+    [
+      "superseded ?driver_id= forbidden",
+      RULES[1].forbidden[1].pattern.test(
+        '<Link to={`/dispatch?driver_id=${encodeURIComponent(row.driver_id)}`}>Driver</Link>',
+      ) &&
+        !RULES[1].forbidden[1].pattern.test(
+          '<EntityLink kind="driver" id={row.driver_id} label="Driver" />',
         ),
     ],
   ];
