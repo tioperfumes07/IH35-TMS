@@ -264,22 +264,27 @@ if (/Field label="Vendor"[\s\S]{0,400}SelectCombobox/.test(applyToBillForm)) {
   failures.push("ApplyToBillForm Vendor must not use SelectCombobox");
 }
 
-// ── PLUS-01/02 wave 2 (2026-07-22): Unit picker nested "+ Create unit" ──
-// No createKind="unit" on ReferenceSelect yet — canonical pattern (same as VendorBillForm's
-// Driver field) is Combobox + allowAddNew wired to the single canonical fleet creator
-// (CreateUnitModal, writes mdata.units — same table the picker's unitsQuery reads).
+// ── PLUS-01/02 wave 2 (2026-07-22) → EP-UNIT-KIND-SWEEP (§9.0 item 17) ──
+// Canonical unit field = EntityPicker kind="unit" (inline create via registry CreateUnitModal).
+// Legacy Combobox + allowAddNew + CreateUnitModal still accepted until fully drained.
+const billUnitEp = /EntityPicker[\s\S]{0,400}kind=["']unit["']/.test(bill);
+const billUnitLegacy =
+  bill.includes("CreateUnitModal") && /allowAddNew[\s\S]{0,80}Create unit/.test(bill);
 if (/Field label="Unit"[\s\S]{0,400}SelectCombobox/.test(bill)) {
-  failures.push("VendorBillForm Unit must not use bare SelectCombobox — use Combobox + CreateUnitModal");
+  failures.push("VendorBillForm Unit must not use bare SelectCombobox — use EntityPicker kind=unit");
 }
-if (!bill.includes("CreateUnitModal") || !/allowAddNew[\s\S]{0,80}Create unit/.test(bill)) {
-  failures.push("VendorBillForm Unit must use Combobox allowAddNew + CreateUnitModal nested create");
+if (!billUnitEp && !billUnitLegacy) {
+  failures.push("VendorBillForm Unit must use EntityPicker kind=unit (or legacy Combobox + CreateUnitModal)");
 }
 
+const expenseUnitEp = /EntityPicker[\s\S]{0,400}kind=["']unit["']/.test(expense);
+const expenseUnitLegacy =
+  expense.includes("CreateUnitModal") && /allowAddNew[\s\S]{0,80}Create unit/.test(expense);
 if (/Truck\/Unit \(optional\)[\s\S]{0,400}SelectCombobox/.test(expense)) {
-  failures.push("RecordExpenseForm Unit must not use bare SelectCombobox — use Combobox + CreateUnitModal");
+  failures.push("RecordExpenseForm Unit must not use bare SelectCombobox — use EntityPicker kind=unit");
 }
-if (!expense.includes("CreateUnitModal") || !/allowAddNew[\s\S]{0,80}Create unit/.test(expense)) {
-  failures.push("RecordExpenseForm Unit must use Combobox allowAddNew + CreateUnitModal nested create");
+if (!expenseUnitEp && !expenseUnitLegacy) {
+  failures.push("RecordExpenseForm Unit must use EntityPicker kind=unit (or legacy Combobox + CreateUnitModal)");
 }
 
 if (failures.length) {

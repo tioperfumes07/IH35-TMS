@@ -28,6 +28,30 @@ vi.mock("../../../api/maintenance", () => ({
   auditMaintenanceTireTread: (...args: unknown[]) => auditMaintenanceTireTread(...args),
 }));
 
+vi.mock("../../../components/parity/EntityPicker", () => ({
+  EntityPicker: ({
+    value,
+    onChange,
+    dataTestId,
+    placeholder,
+  }: {
+    value: string | null;
+    onChange: (v: string | null) => void;
+    dataTestId?: string;
+    placeholder?: string;
+  }) => (
+    <select
+      data-testid={dataTestId ?? "entity-picker-unit"}
+      aria-label={placeholder ?? "Select unit"}
+      value={value ?? ""}
+      onChange={(event) => onChange(event.target.value || null)}
+    >
+      <option value="">Select unit…</option>
+      <option value="unit-1">T-101</option>
+    </select>
+  ),
+}));
+
 vi.mock("../../../api/mdata", () => ({
   listUnits: (...args: unknown[]) => listUnits(...args),
 }));
