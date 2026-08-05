@@ -54,7 +54,16 @@ mustContain(BOOK_LOAD, "is_oos", "is_oos check on book-load");
 mustContain(PRE_DISPATCH, "is_oos", "is_oos in pre-dispatch validator");
 mustContain(PRE_DISPATCH, "UNIT-OOS", "UNIT-OOS rule id");
 mustContain(BOOK_LOAD_UI, "E_UNIT_OOS", "Book Load UI surfaces E_UNIT_OOS");
-mustMatch(INLINE_PICKER, /is_oos/, "inline picker filters OOS units");
+// Client-side OOS filter lived on Combobox+listUnits. EntityPicker kind=unit relies on
+// backend assign-unit E_UNIT_OOS (same severity). Accept either legacy filter or EntityPicker.
+{
+  const inline = read(INLINE_PICKER);
+  const hasEntityPicker = /EntityPicker[\s\S]*kind=["']unit["']/.test(inline);
+  const hasClientFilter = /is_oos/.test(inline);
+  if (!hasEntityPicker && !hasClientFilter) {
+    failures.push(`${INLINE_PICKER}: must EntityPicker kind=unit OR filter is_oos`);
+  }
+}
 
 const qa = read(QUICK_ASSIGN);
 if (qa.includes("is_dispatch_blocked") && !qa.includes("is_oos")) {

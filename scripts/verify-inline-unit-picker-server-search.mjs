@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * InlineUnitPicker — Combobox + server search (not silent listUnits limit:500).
- * Cursor even claim: 2120.
+ * InlineUnitPicker — EntityPicker kind=unit (server search via registry, not silent listUnits limit:500).
+ * Cursor even claim: 2120 (sibling intent preserved after EntityPicker migration).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -26,11 +26,14 @@ export function collectProblems(root = ROOT) {
     return problems;
   }
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (!/unitSearch/.test(code) || !/onSearch=\{setUnitSearch\}/.test(code)) {
-    problems.push(`${FILE}: must wire unitSearch + onSearch`);
+  if (!/EntityPicker[\s\S]*?kind=["']unit["']/.test(code)) {
+    problems.push(`${FILE}: must use EntityPicker kind=unit`);
   }
-  if (/limit:\s*500/.test(code)) {
-    problems.push(`${FILE}: must not fetch silent limit:500 unit page`);
+  if (/listUnits\s*\(/.test(code) || /limit:\s*200/.test(code) || /limit:\s*500/.test(code)) {
+    problems.push(`${FILE}: must not silent-fetch listUnits limit:200/500 — use EntityPicker kind=unit`);
+  }
+  if (/from\s+["'][^"']*Combobox["']/.test(code) && !/EntityPicker/.test(code)) {
+    problems.push(`${FILE}: must not use raw Combobox for unit roster`);
   }
   return problems;
 }
@@ -50,7 +53,7 @@ if (process.argv.includes("--selftest")) {
       path.join(dir, "InlineUnitPicker.tsx"),
       `listUnits({ operating_company_id: id, limit: 500 })
 <Combobox options={options} value={unitId} />
-`
+`,
     );
     const planted = collectProblems(stubRoot);
     if (!planted.length) {
@@ -68,5 +71,5 @@ if (process.argv.includes("--selftest")) {
     for (const p of problems) console.error("  - " + p);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — InlineUnitPicker server search`);
+  console.log(`${LABEL} OK — InlineUnitPicker EntityPicker kind=unit`);
 }
