@@ -1,7 +1,7 @@
 # IH35 — FULL DELIVERY PLAN (NOW → LAUNCH)
 
 **Status:** LOCKED hybrid — DORA/WIP + walking skeleton + Owner module certify  
-**Date:** 2026-08-04 (rev **E** — Coder no-purge correction + Cascade instructions + positive-only ratchet)  
+**Date:** 2026-08-05 (rev **F** — P0-blocker override · locked lane map · wire+test first / reconcile later)  
 **Authority:** This committed file wins over any chat summary, agent memory, or stale paste.  
 **Supersedes as primary queue:** 400+ block pile, breadth-first 30×13 certify-everything, multi-agent sprawl  
 **Does not supersede:** Law of the Land · Rule 16/21/23/24 · `00-operating-method-LAW.mdc` (OWNER LAW 2026-08-03) · parallel books (no TMS→QBO write-back)
@@ -64,7 +64,7 @@ Canonical: `.cursor/rules/00-operating-method-LAW.mdc`.
 
 | # | Law |
 |---|-----|
-| O1 | **WIP ≤ 3 active feature branches across ALL agents / ALL lanes** (one counter — no separate Cursor cap) |
+| O1 | **WIP ≤ 3 active feature branches across ALL agents / ALL lanes** (one counter — no separate Cursor cap). **P0 main-unblock PRs are excluded** from the counter (§9.0 item 14). |
 | O2 | **One agent = one git worktree** — no shared-clone branch thrash |
 | O3 | Start at **2** concurrent builders; scale only after **1 full day / 0 collisions** |
 | O4 | **Kill after ~3 stuck iterations** — fix or hand off with evidence; no CI babysit loops |
@@ -226,15 +226,15 @@ Ledger stays reference unless a leftover maps to an active defect.
 
 ---
 
-## 3. Agent map (summary)
+## 3. Agent map (summary) — LOCKED 2026-08-05
 
-| Role | Owns |
-|------|------|
-| **Cursor** | Sole author of this plan file; skeleton FE/ops; non-financial; guards; Cursor ledger Status; WIP enforcement |
-| **Claude Coder** | Phase 0 branch hygiene (safe half); money/GL/migrations — **builds, applies on Neon, merges on green with proof** |
-| **Cascade** | Audit evidence on **active** slice/module only; class cards; ledger = reference |
-| **GUARD** | Independent live verify **AFTER** merge only |
-| **Jorge** | Decisions in chat (flags, Hop 0, launch, DEFER, OB figures); kill WIP when > 3; does **not** apply Neon; does **not** review PRs for a label |
+| Alias | Role | Owns |
+|-------|------|------|
+| **Cursor** | FE builder + plan + WIP enforcer | Sole author of this plan file; skeleton FE/ops/wiring/pickers/guards; Cursor ledger Status; WIP enforcement + reporting |
+| **CC-1** | Claude Coder (money builder) | Phase 0 branch hygiene (safe half); money/GL/migrations — **builds, merges on green with proof**; Neon apply **after** migration file is on main via merge (never hand-apply DDL ahead of the file) |
+| **CC-2** | GUARD | Independent live verify **AFTER** merge only (Neon `bypass_rls=lucia` + app/health) |
+| **Cascade** | Auditor | Audit evidence on **active** slice/module only; class cards; ledger = reference — not a third builder |
+| **Jorge** | Owner | Decisions in chat (flags, Hop 0, launch, DEFER, OB figures, **"reconcile"** go); kill WIP when > 3; does **not** apply Neon; does **not** review PRs for a label |
 
 Full collision law → **§9**.
 
@@ -309,6 +309,7 @@ Proof gate ≠ owner-approval merge label ≠ CPA sign-off.
 | 2026-08-04 | **Rev C** — Phase 4: no CPA path; §9 strict per-coder instructions |
 | 2026-08-04 | **Rev D** — Agent GOVERNANCE block + over-broad token purge (partially wrong mechanism) |
 | 2026-08-04 | **Rev E** — Claude Coder measured: Agent “1178 lines” wrong; restore abolition language; revert `.block-ready` history edits; positive-only ratchet; **full Cascade §9.4** |
+| 2026-08-05 | **Rev F** — Owner ruling: **P0 main-unblock override** (no WIP count) · locked lane map (Cursor / CC-1 / CC-2 / Cascade) · **WIRE+TEST FIRST, RECONCILE LATER** (Faro/QBO/factoring/$40,882 frozen until Jorge says "reconcile") · migrations land via merged PR then Neon apply |
 
 ---
 
@@ -319,18 +320,21 @@ Proof gate ≠ owner-approval merge label ≠ CPA sign-off.
 ### 9.0 Shared laws (every coder, every turn)
 
 1. Read this file first. Obey current phase only (P0 → P1 → P2… in order).  
-2. **WIP ≤ 3** total active feature branches (all agents). Before opening a branch: count open non-Dependabot feature PRs/branches; if already 3, finish or park one first.  
+2. **WIP ≤ 3** total active feature branches (all agents). Before opening a branch: count open non-Dependabot feature PRs/branches; if already 3, finish or park one first. **Exception:** P0 main-unblock (§9.0 item 14) does **not** count.  
 3. **One worktree per agent.** Never share a clone. Never force-push another agent’s branch.  
 4. **One hop OR one ranked FAIL per PR.** No grab-bags.  
-5. **No babysit loops.** Fix reds or one-shot re-run flake; do not sleep-poll CI.  
-6. **Merge on green + proof** (OWNER LAW). Never wait for `JORGE-APPROVED`. Never invent a CPA gate.  
+5. **No babysit loops.** Fix reds or one-shot re-run flake; do not sleep-poll CI. Kill after ~3 stuck iterations; hand off with evidence.  
+6. **Merge on green + proof** (OWNER LAW). Neon (`SET app.bypass_rls='lucia'`) + live app/health. CI green is the floor, not the verdict. Never wait for `JORGE-APPROVED`. Never invent a CPA gate.  
 7. Money commits: FINDING · LANE · DOD-A…E · VERIFY-1…8 · MODULE_PROGRESS · Rule 16 · MIGRATE if needed (verify-steps 1324/1430/1431).  
 8. Same-commit ledger Status update when a row is FIXED.  
 9. Rule 17: do **not** thrash `package.json` / locked CI workflows for new guards — verify-steps only.  
-10. PR title prefixes: Cursor → `Cursor-` · Claude Coder → `Claude-` · Cascade → `Cascade-` · GUARD → `Guard-`.  
+10. PR title prefixes: Cursor → `Cursor-` · Claude Coder / CC-1 → `Claude-` / `Claude-1-` · Cascade → `Cascade-` · GUARD / CC-2 → `Guard-`.  
 11. When chat summary contradicts this file → **this file wins**.  
 12. Stop after ~3 stuck iterations; hand off with evidence.  
-13. **Do not purge** abolition law. **Do not rewrite** audit/migration/`.block-ready` history to erase old label mentions.
+13. **Do not purge** abolition law. **Do not rewrite** audit/migration/`.block-ready` history to erase old label mentions.  
+14. **P0-BLOCKER OVERRIDE (owner 2026-08-05):** When **main is red for all lanes** (shared gate / shared guard floor — e.g. §7 palette baseline stale), the **first free lane** lands the **smallest fix immediately**. Cross-lane allowed. **No park, no ask.** That PR **does not count against WIP ≤ 3**. Resume normal WIP after it merges.  
+15. **WIRE + TEST FIRST, RECONCILE LATER (owner 2026-08-05):** Reconciliation is **FROZEN**. Nobody touches Faro / QBO / factoring / the **$40,882** figure / transaction-reconcile work until the money skeleton is wired, tested, and proven live **and** Jorge says **"reconcile"** in chat. Builders wire + prove; they do **not** reconcile.  
+16. **Prod migrations:** reach the prod branch **only** via merge → deploy/ledger path. **Never** hand-apply DDL to prod ahead of the migration file on `main`. Rehearse on a Neon REHEARSE branch only. Main, ledger, and prod must agree.
 
 ### 9.1 Jorge (owner)
 
@@ -345,26 +349,28 @@ Proof gate ≠ owner-approval merge label ≠ CPA sign-off.
 - Be treated as a CPA bottleneck  
 - Apply Neon / flip flags (coders do)  
 
-### 9.2 Cursor (builder — FE / ops / guards / this plan)
+### 9.2 Cursor (FE builder + plan + WIP enforcer)
 
 **MUST**
 - Own **this file** (sole methodology author)  
-- Phase 1: hops that are FE/ops/wiring/guards (dispatch chrome, pickers, `actual_departure`, POD/BOL UI, scoreboard, verify-steps)  
-- Enforce WIP ≤ 3 in STATUS replies  
+- Phase 1: hops that are FE/ops/wiring/pickers/guards (dispatch chrome, EntityPickers, reverse-drill linkage UI, scoreboard, verify-steps)  
+- Enforce WIP ≤ 3 in STATUS replies (report `WIP: n/3` every reply; exclude P0-unblock from the count)  
 - Desktop-copy this plan after every rev land  
-- Coordinate handoff to Claude when hop enters money/GL/migration  
+- Hand a hop to **CC-1** the moment it touches money/GL/migration  
+- Take P0 main-unblock immediately when free (§9.0 item 14)  
 
 **MUST NOT**
 - Race Claude on Phase 0 branch deletes/archives  
-- Open money/GL/migration PRs while Claude owns that hop (wait for handoff or empty WIP slot + explicit split)  
+- Open money/GL/migration PRs (CC-1 owns)  
 - Author a second delivery method  
 - Restart 400+ block pile as primary queue  
 - Touch another agent’s worktree or force-push their branch  
 - Blind-delete unmerged branches  
+- Touch Faro/QBO/factoring/$40,882/transaction reconcile (§9.0 item 15)  
 
 **Worktree:** dedicated Cursor worktree only (e.g. cleanup / main-check — never Claude’s).
 
-### 9.3 Claude Coder (builder — money / Neon / Phase 0 hygiene)
+### 9.3 Claude Coder / CC-1 (money builder — Neon / Phase 0 hygiene)
 
 **MUST**
 - On Jorge **Phase 0 go:** delete merged-into-main heads only; tag-archive stale unmerged (`archive/<name>`); leave ~recent set; report active count  
@@ -413,7 +419,7 @@ Cascade is the **auditor**, not a third builder. Cascade prevents breadth amnesi
 **Worktree:** dedicated Cascade worktree only.  
 **Done for Cascade:** evidence row with proof pointer — not “module certified” (certify is builders + GUARD + Rule 24).
 
-### 9.5 GUARD (verifier — after merge only)
+### 9.5 GUARD / CC-2 (verifier — after merge only)
 
 **MUST**
 - Live-prove AFTER merge (Neon lucia + app/health as required)  
@@ -423,6 +429,7 @@ Cascade is the **auditor**, not a third builder. Cascade prevents breadth amnesi
 - Build product features in the same slot as verify  
 - Block merges with owner-label waits  
 - Pre-empt builders by opening competing fix PRs without Jorge assignment  
+- Touch Faro/QBO/factoring/$40,882/transaction reconcile (§9.0 item 15)  
 
 ### 9.6 Collision matrix (who may touch what)
 
@@ -449,17 +456,20 @@ Cascade is the **auditor**, not a third builder. Cascade prevents breadth amnesi
 ```text
 PHASE: P0|P1|P2(module)|P3|P4
 HOP_OR_FAIL: <id>
-WIP: <n>/3  BRANCHES: <list>
-ROLE: Cursor|Claude|Cascade|GUARD
+WIP: <n>/3
+ROLE: Cursor|CC-1|CC-2|Cascade
+FILES-OWNED: <paths this turn>
 NEXT: <one sentence>
 BLOCKER: none | <exact>
 ```
 
+P0-unblock PRs: note `P0-EXCLUDED` beside WIP so the counter stays honest.
+
 ### 9.8 Deviation = stop
 
-Any of these → **STOP and ask Jorge** before continuing:
-- Opening a 4th active feature branch  
-- Editing another role’s OWN surface from §9.6  
+Any of these → **STOP that item**, post a one-line `ISSUE:`, keep working everything else (or ask Jorge when the law itself is unclear):
+- Opening a 4th active feature branch (unless it is a §9.0 item-14 P0 main-unblock)  
+- Editing another role’s OWN surface from §9.6 (except P0 cross-lane unblock)  
 - Waiting on `JORGE-APPROVED` / CPA / inventing a hold  
 - Starting Phase 1 without Hop 0 go  
 - Deleting an unmerged branch without `archive/` tag  
@@ -467,8 +477,9 @@ Any of these → **STOP and ask Jorge** before continuing:
 - Treating ledger rows as the sprint backlog  
 - Cascade shipping builder PRs or off-slice breadth audits  
 - Purging abolition sentences or rewriting audit/migration history  
+- Touching Faro/QBO/factoring/$40,882/transaction reconcile before Jorge says **"reconcile"**  
 
 ---
 
-**End of full plan (rev E).**  
+**End of full plan (rev F).**  
 Amend only with Jorge in writing. Cursor is sole editor of this file.
