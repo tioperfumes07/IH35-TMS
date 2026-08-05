@@ -2422,3 +2422,44 @@ consistent with the entity model, not a defect.
              0 rows / `n_tup_ins` 0 (`current_user=ih35_app` asserted); trigger present. Guard exit codes
              read WITHOUT a pipe: clean 0, selftest 0 (4 mutations), planted 1, restored 0.
 - status:    **RESOLVED** (supersedes LV-099 OPEN)
+
+## LV-111  **CORRECTION to LV-109** — `CLS-RAW-UUID-INPUT` IS guarded, by a differently-named script; **4 missing ratchets, not 5.** Class mutation-proven and stamped → **11/25**
+- module:    docs/audit · scripts (GUARD — correction + class stamp)
+- entity:    ALL
+- surface:   `scripts/verify-picker-law-no-raw-uuid.mjs` vs the guard named on the `CLS-RAW-UUID-INPUT` card
+- observed:  LV-109 listed `CLS-RAW-UUID-INPUT` among the drained-but-unguardable classes. **That was wrong,
+  and the reason it was wrong is worth recording** — my sweep resolved each card's **named** script
+  (`verify-no-raw-uuid-inputs.mjs`) by basename across `scripts/`. The protection for that shape ships under
+  a different name, **`verify-picker-law-no-raw-uuid.mjs`**, whose stem does not contain the card's stem, so
+  no basename match could ever find it. **I measured guard-name resolution and reported it as guard absence.**
+  Those are different claims, and only the first was actually tested.
+  **The guard is real, and strong:**
+  - Clean tree: **exit 0**.
+  - Selftest: **exit 0 — 39 of 39 mutations caught**, including rejecting pickers, comments and non-text
+    inputs as false positives. That is the highest mutation count of any guard checked this session.
+  - **Real on-disk plant:** inserted a raw-UUID text input (`placeholder="xxxxxxxx-…"`, `value={driverUuid}`)
+    into `apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx`. Guard returned **exit 1** with a precise
+    locator — *"PICKER-LAW: …InTransitIssuesPage.tsx:2 field `driverUuid` is a raw-UUID input (bound state
+    `driverUuid`)"* — then **exit 0** after restore, `git status` clean. RED on violation, GREEN on zero.
+  **So the card's guard reference is wrong; the protection is not missing.** Those are different defects with
+  different fixes: this one is a one-line correction to `wave-queue.json`, not a guard to author. Recording it
+  distinctly so nobody writes a duplicate `verify-no-raw-uuid-inputs.mjs` alongside a working guard.
+  **Revised fail-closed list — 4, not 5:**
+  | class | missing ratchet | money |
+  |---|---|---|
+  | `CLS-GL-DARK` | `verify-gl-posting-coverage.mjs` | **yes** |
+  | `CLS-DUAL-PATH` | `verify-qbo-canonical-recon.mjs` | **yes** |
+  | `CLS-REVERSE-LINKAGE-MISSING` | `verify-reverse-linkage-embedded.mjs` | adjacent |
+  | `CLS-HOOKS-ORDER` | `verify-hooks-before-return.mjs` | no |
+  **This also qualifies LV-103.** That finding counted 14 wave-queue guard references resolving to no file.
+  At least one of those 14 — this one — has working protection under another name, so **14 is a count of
+  broken REFERENCES, not necessarily 14 unprotected shapes.** The remaining 13 have not been individually
+  re-checked for differently-named equivalents. **LV-103's severity should be read as "the card cannot cite
+  its own guard" rather than "the shape is unguarded"**, until each is checked the way this one was.
+- severity:  none for the class (**VERIFIED**) · LV-109 corrected · LV-103 qualified
+- LANE:      CASCADE — repoint the `CLS-RAW-UUID-INPUT` card at `verify-picker-law-no-raw-uuid.mjs`; do NOT
+             author a new guard. Re-check the other 13 LV-103 references for differently-named equivalents
+             before treating any as unprotected.
+- neon-check: none required — static guard efficacy. Exit codes read WITHOUT a pipe: clean 0, selftest 0
+             (39/39 mutations), planted 1, restored 0; planted file restored and `git status` confirmed clean.
+- status:    **VERIFIED** — `CLS-RAW-UUID-INPUT` drained, verified live, **11/25 total**
