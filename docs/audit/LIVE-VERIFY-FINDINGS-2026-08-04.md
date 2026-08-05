@@ -902,3 +902,25 @@ membership-scoped session.
 - LANE:      CC-1 (accounting) — instrument `journal_entry_postings`, `posting_batches`, `payments` and `driver_finance.*`; a trigger-based writer would close the class rather than the instances
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. Exact counts: `row_changes` where `table_name` = `journal_entry_postings` **0**, `posting_batches` **0**, `payments` **0**, `journal_entries` **1,837**; `schema_name='driver_finance'` **0**. Schema distribution via `TABLESAMPLE SYSTEM (2)`. Triggers on `accounting.*` referencing `row_change`: **0**. `driver_finance.driver_settlements` `n_tup_ins` 11, `n_tup_del` 7, `n_live_tup` 0; columns include `status`, `approval_status`, no void/archive column.
 - status:    OPEN
+
+## LV-058  **LV-013 RESOLVED — Hop 0's last blocker is cleared.** The go-forward money path is proven end-to-end on live prod: TMS-native invoice → posted GL batch → email queue row → real Google send with a provider message id
+- module:    accounting / email (GUARD live-verify-after-merge)
+- entity:    TRANSP
+- surface:   `accounting.invoices` → `accounting.posting_batches` → `email.email_queue`
+- observed:  LV-013 held Hop 0 open on the finding that an invoice could reach `status='sent'` with **no `email.email_queue` row at all** — an invoice marked sent with zero delivery artifact. LV-023 recorded my recommendation to hold Hop 0 until it closed. **It has closed, and I verified the whole chain rather than just the queue count.**
+  **The chain, with timestamps, for `INV-2026-00740`:**
+  | step | evidence |
+  |---|---|
+  | invoice | `25b208fb-2234-4698-8700-88718c144745`, `display_id` INV-2026-00740, `status` **sent**, `total_cents` 500, **`source_system='tms'`** |
+  | GL posting | batch `f1ffc3a4-cfa2-4b9e-881e-902fb91b0a44`, `batch_status` **posted**, `source_transaction_id` = the invoice, created **2026-08-05T01:08:13.287Z** |
+  | queue row | `623b97ee-fdc3-4794-be4c-e1bef4ef0a70`, `template_key` `invoice-send`, created **01:08:13.397Z** — 110 ms after the batch |
+  | delivery | `status` **sent**, `provider` **google**, `provider_message_id` **`19fcf77743a93429`**, `sent_at` **01:09:00.582Z** |
+  A second send followed at 01:18:00.570Z (`76c617c5…`, message id `19fcf7fb3594eeb6`). The queue moved **232 → 234** rows, and provider mix is now `console` 232 / **`google` 2** — the first real deliveries in the table's history.
+  **Both halves of LV-010/LV-013 are now honest.** LV-010 was the queue *lying* (`sent` while a console stub swallowed the mail); that was fixed to `logged_only`, and all 232 historical rows still carry `provider='console'` / `logged_only`, correctly not claiming delivery. LV-013 was the send *not reaching the queue*; these two rows prove it now does, with a real provider and a real message id. Nothing is marked sent that did not send.
+  **The architecture is confirmed working in BOTH directions on the same day.** These invoices posted because `source_system='tms'`. The 11,976 QBO-origin invoices were refused the same day by `QBO_INVOICE_POST_GL_REFUSED` (LV-053). So the posting engine admits TMS-native economic events and refuses imported QuickBooks history — exactly the parallel-books design, demonstrated live in both branches rather than argued from code.
+  `source_load_id` is null on this invoice, which is expected state, not a gap: no loads have been created in the TMS (owner, 2026-08-05 — everything TMS-created is test).
+  **Hop 0 status.** The blocker I recorded in LV-023 is cleared. The remaining Hop 0 preconditions I verified this pass are also green: exactly **2** real (`is_test_data=false`) driver pay rates exist and both match the owner's instruction — **Fernando Mecor Hernandez** and **GERARDO URBINA**, each `per_mile_pay` at **48¢/mi** on **`short_miles`**, both `is_active`, both drivers active, both TRANSP. Hop 0 itself remains **owner-reserved** and I am not initiating it.
+- severity:  informational — this is a PASS and a blocker clearing, not a defect
+- LANE:      none — GUARD attestation. Hop 0 go/no-go is the owner's chat decision.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `email.email_queue` 234 rows (was 232), status `logged_only` 232 / `sent` 2, provider `console` 232 / `google` 2, newest 2026-08-05T01:17:20.525Z; both sent rows quoted above with provider message ids. `accounting.invoices` INV-2026-00740 as tabulated. Recent invoice batches all `posted`: `1e30e7e4` (53b8ddb3 = INV-2026-00003), `9852e0d8` (e4d2ebdd = INV-2026-00001), `f1ffc3a4` (25b208fb = INV-2026-00740). `driver_finance.driver_pay_rates`: 93 rows, 91 `is_test_data=true`, the 2 real ones as listed.
+- status:    OPEN (informational — LV-013 marked RESOLVED)
