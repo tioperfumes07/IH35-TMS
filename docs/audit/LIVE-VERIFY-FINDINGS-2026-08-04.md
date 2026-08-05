@@ -1693,3 +1693,47 @@ predicate feeding it, not the downgrade mechanism.
 - neon-check: prod `br-fancy-credit-akjnd07a`, bypass in its own statement, exit 0. Column types read from
              `information_schema.columns`; orphan counts per LV-093.
 - status:    OPEN (informational — CC-1 decides whether to accept the guard)
+
+## LV-095  GUARD VERIFY-AFTER of **ACCT-F114** (DRV-LIAB-CENTS-INTO-DOLLARS, PR #4473, landed @ `66c840c96`) — **PASS, and the sweep is COMPLETE**
+- module:    driver_finance · safety (GUARD — post-merge live verification)
+- entity:    ALL
+- surface:   `driver_finance.driver_liabilities` · the 4 production writers of that table
+- observed:  I verified the four claims this PR rests on rather than accepting them, and all four hold.
+  **(1) The unit is DOLLARS — confirmed from the schema, not from the narrative.** On prod,
+  `original_amount`, `current_balance` and `paid_to_date` are all **`numeric(10,2)`**. Consistent with the
+  dollars reading and with the `numeric(10,2)` overflow ceiling (99,999,999.99) the PR describes.
+  **(2) "Not corrupted in production" — VERIFIED with the strongest available discriminator.** A bare `0`
+  would not have settled this (§0). On the SAME table, in one statement with `current_user` asserted:
+  visible **0**, `n_live_tup` **0**, `n_tup_del` **0**, and decisively **`n_tup_ins` = 0** — the table has
+  **never had a row inserted**, so no row was ever written at 100x and there is genuinely nothing to restate.
+  `n_tup_ins = 0` is what makes this a verdict rather than an RLS artifact.
+  **(3) All three sites are REALLY fixed — read from the diff, not from a grep.** My initial grep for the fix
+  pattern found nothing in `safety-v5.routes.ts` and I did not conclude from that; the diff shows the fix
+  **removed** the offending expression rather than introducing a new name, which a pattern-grep scores as
+  absent. Confirmed per site: `safety.routes.ts:918` now passes `amountCents / 100`; `fines.routes.ts:380`
+  passes a new `amountDollars = amount / 100`; `safety-v5.routes.ts:262` passes `Number(body.data.amount)`
+  in place of `Math.round(... * 100)`.
+  **(4) The money actually withheld from the driver's check is UNTOUCHED — the part a cosmetic fix breaks.**
+  At both sites the cents path survives independently: `fines.routes.ts` keeps `amount` in cents for
+  `createSettlementDeduction`, and `safety-v5.routes.ts:281` recomputes
+  `amountCents = Math.round(Number(body.data.amount) * 100)` for the deduction *after* writing dollars to the
+  liability at :275. Two units, two names, both correct. A naive "divide the shared variable by 100" would
+  have fixed the balance and silently under-withheld real money; it was not done that way.
+  **COMPLETENESS — the claim I most wanted to break, and could not.** §9.0.17 requires a sweep to cover every
+  site, so I enumerated writers independently instead of trusting "three of the four". Production (non-test)
+  `INSERT INTO driver_finance.driver_liabilities` sites number exactly **4**: `cash-advances/
+  cash-advance-create.ts:230`, `safety/fines.routes.ts:380`, `safety/safety-v5.routes.ts:262`,
+  `safety/safety.routes.ts:918`. Three fixed, one already correct. **No fifth writer exists.**
+  **I checked one edge the PR did not mention.** Writer #4 chooses
+  `linkedBill ? Number(linkedBill.total_amount ?? body.amount) : body.amount` — so if bills stored cents, that
+  branch would carry the identical defect. On prod `accounting.bills.total_amount` is **`numeric(12,2)`** and
+  the live distribution settles the unit beyond argument: min **0.01**, max **696,466.47**, mean **3,578.74**
+  over **16,250** rows. Cents would put the average carrier bill at $35.79. Bills also carry a separate
+  `amount_cents` **bigint**. The branch is dollars. **No residual defect.**
+- severity:  none — GUARD verify-after PASS; recorded so this is not re-derived
+- LANE:      n/a (verification of CC-1/CC-3 work)
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             Column types from `information_schema.columns`; liability table counters from
+             `pg_stat_user_tables`; bill distribution from `accounting.bills`. Code read from
+             `origin/main` @ `66c840c96`, not from a working tree.
+- status:    PASS
