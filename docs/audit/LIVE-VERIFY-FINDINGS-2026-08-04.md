@@ -2059,3 +2059,78 @@ consistent with the entity model, not a defect.
              **26**; distinct non-null `source_transaction_type` ever posted **11**; entities with journal
              entries **3**; per-type line counts as listed (totalling the 3,603 lines of LV-092).
 - status:    OPEN (informational)
+
+## LV-102  GUARD VERIFY-AFTER of **ECON-012** (Cascade, #4480, `bfe795f2a`) — **CONFIRMED**, with one material refinement: the PERMIT gap is real but has **never mis-posted**, because zero PERMIT bill lines exist
+- module:    accounting (GUARD — verification of an audit claim)
+- entity:    ALL
+- surface:   `apps/frontend/src/components/accounting/vendorBillLines.ts` · `catalogs.expense_categories` · `accounting.expense_category_account_map` · `accounting.bill_lines`
+- observed:  Every factual claim in the ECON-012 write-up holds:
+  | claim | verified on prod |
+  |---|---|
+  | picker catalog offers 3 codes across 3 entities | **FUEL 3 / PERMIT 3 / REPAIR 3** = 9 rows, 3 entities each |
+  | canonical GL map supports 30 codes | **30** distinct active `category_code` over **82** rows |
+  | translation handles only FUEL and REPAIR | confirmed in source — `mapExpenseCatalogCodeToBillCategory` returns `fuel`, `maintenance`, else **`null`** |
+  So PERMIT genuinely falls through to `return null`, keeping `expense_category_uuid` only, which the poster
+  treats as uncategorized. **The defect is real.**
+  **The refinement — and it changes the severity, not the diagnosis.** `accounting.bill_lines` joined to the
+  catalog gives **FUEL 0 · PERMIT 0 · REPAIR 4**. **No PERMIT bill line has ever been created**, so nothing
+  has been mis-posted to uncategorized. The wording "PERMIT posts uncategorized to GL" describes a mechanism
+  that is correct in principle but has **never fired**. This is prospective misposting, not a corrupted ledger
+  — there is nothing to restate, and the fix is cheap for exactly that reason.
+  **Worth saying plainly: the fallback is the RIGHT default.** The code comment states the intent — *"Unknown
+  codes keep `expense_category_uuid` only (poster → uncategorized) — never invent a GL account."* Falling back
+  to uncategorized rather than guessing an account is correct behaviour under the no-invented-GL rule. The
+  defect is the **missing PERMIT entry**, not the fallback that catches it.
+  **Same shape as LV-098 and worth noting as a pattern:** a real gap whose blast radius is currently zero
+  because no data exercises it. Both should be fixed while that is still true.
+- severity:  minor (latent — 0 rows affected today; would become a live misclassification on the first PERMIT bill)
+- LANE:      CC-1 (accounting) — add the PERMIT translation, or document why PERMIT is deliberately excluded;
+             separately decide whether the 3-code picker should expand toward the 30-code canonical map
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             Counts as tabulated; `bill_lines` joined via `expense_category_uuid`.
+- status:    OPEN (confirmed; severity refined from the original write-up)
+
+## LV-103  **14 of 25 guard scripts cited by `docs/audit/wave-queue.json` DO NOT EXIST** — including the one named as ECON-012's own guard. A card's `guard_green` has never reflected a run that could happen
+- module:    docs/audit · scripts (GUARD — guard theater at scale)
+- entity:    ALL
+- surface:   `docs/audit/wave-queue.json` guard references vs `scripts/**/*.mjs` on `origin/main`
+- observed:  Cascade noticed one instance while working ECON-012 — *"`scripts/verify-orphan-surface-drill.mjs`
+  referenced by the wave card does not exist on disk (MODULE_NOT_FOUND) — the card's `guard_green:false` has
+  never reflected a real guard run."* **Credit where due: that observation is correct and it is what prompted
+  this sweep.** It is also not one card. It is most of them.
+  Of **25** distinct guard scripts referenced by `wave-queue.json`: **10** exist at the cited path, **1** was
+  renamed (`verify-disp-wire-04-invoice-evidence.mjs` → `…-durable.mjs`, a real guard, correctly counted as
+  present), and **14 do not exist anywhere under `scripts/`** — checked by basename across the whole tree,
+  including the numbered `verify-steps/` scheme, so a renumbering would not be miscounted as absence:
+  `verify-disp-wire-06-load-expense-link` · `verify-disp-wire-07-departure-evidence` ·
+  **`verify-econ-empty-density`** · `verify-gl-posting-coverage` · `verify-hooks-before-return` ·
+  `verify-money-hold-surfaces` · `verify-money-ops-fk-density` · `verify-no-raw-uuid-inputs` ·
+  `verify-no-silent-list-cap` · `verify-no-uuid-labels` · `verify-orphan-surface-drill` ·
+  `verify-qbo-canonical-recon` · `verify-reverse-linkage-embedded` · `verify-silent-success-posting-output`.
+  **The sharpest instance is self-referential.** `verify-econ-empty-density.mjs` is listed under `GUARD:` in
+  the ECON-012 PR body itself, described as the "existing CLS-ECON-EMPTY guard". **It does not exist.** A guard
+  that is absent from disk cannot have run, so it contributed nothing to that finding's proof — the finding
+  stands on its SQL and code reading, which I independently confirmed in LV-102, not on the guard.
+  **Why this matters more than a broken path.** `wave-queue.json` is a drain queue whose cards carry a
+  `guard_green` field. For these 14, that field can only ever be `false` — never because the guarded defect is
+  present, but because the guard cannot be invoked. A permanently-`false` signal is indistinguishable from a
+  genuinely failing one, and a card can never drain. The names are also the money-critical ones:
+  `gl-posting-coverage`, `money-ops-fk-density`, `money-hold-surfaces`, `silent-success-posting-output`,
+  `reverse-linkage-embedded`, `qbo-canonical-recon`.
+  **This is the same failure class as LV-099, one layer up.** There, a ledger row asserted a migration had
+  been applied when its effect was absent. Here, a card asserts a guard governs a defect when the guard is
+  absent. **Both are records that assert a fact nobody re-checked against reality** — which is precisely why
+  §0 requires proving the effect rather than trusting the record.
+  **What I am NOT claiming.** I did not verify whether these 14 were ever written and later removed, or were
+  only ever aspirational names. Either way the current state is the same and the remedy is the same. I also
+  did not audit guard references outside `wave-queue.json`.
+- severity:  major (the audit system's own proof mechanism is absent for 56% of its cited guards, concentrated
+             on money-critical checks)
+- LANE:      CASCADE (owns `wave-queue.json`) with CC-1 for the money-critical guards — either author the 14
+             guards or remove/annotate the references so `guard_green` means something. **A meta-guard is the
+             durable fix:** assert every guard path referenced by `wave-queue.json` resolves on disk, so a
+             card can never again cite a guard that cannot run.
+- neon-check: none required — this is a repo/filesystem verification against `origin/main`; guard existence
+             checked by basename across `scripts/**/*.mjs` recursively, not by exact path alone, so renames
+             are correctly excluded from the absent count.
+- status:    OPEN
