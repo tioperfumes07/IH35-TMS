@@ -1,6 +1,6 @@
 ---
 name: ih35-tms-standards
-description: The durable operating standards for the IH35-TMS repository — permissions and merge gates, migration/schema invariants, per-change workflow, schema landmines, product and design locks, communication norms, the LINKAGE LAW + canonical wiring map (§10), the COMPLETE governing index of all 32 rule files (§11), and the 18-key money-PR git gate (§12). Load this at the start of ANY work in this repo. Version-controlled companion to the (git-excluded) root CLAUDE.md. When this skill and a handoff doc disagree, this skill wins; on any rule conflict the source .cursor/rule wins and the MORE PROTECTIVE reading wins.
+description: The durable operating standards for the IH35-TMS repository — permissions and merge gates, migration/schema invariants, per-change workflow, schema landmines, product and design locks, communication norms, the LINKAGE LAW + canonical wiring map (§10), the COMPLETE governing index of all 43 rule files (§11), and the 18-key money-PR git gate (§12). Load this at the start of ANY work in this repo. Version-controlled companion to the (git-excluded) root CLAUDE.md. When this skill and a handoff doc disagree, this skill wins; on any rule conflict the source .cursor/rule wins and the MORE PROTECTIVE reading wins.
 ---
 
 # IH35-TMS — Operating Standards
@@ -130,6 +130,18 @@ session boot; **verified live on prod `br-fancy-credit-akjnd07a` 2026-08-05** (`
 USMCA true / 22 / 0. Flag-key DEFAULTS remain OFF; the per-entity overrides above drive the ON state, and only
 the owner decides in chat when a flag flips.
 Factoring = secured borrowing/recourse; drivers Mexican-B1 1099 (wage/fee, never % of linehaul).
+**§9.5 DEDUCTION AUTHORIZATION — OWNER-LOCKED 2026-07-04/07-05, reaffirmed 2026-08-05 (SUPERSEDES blueprint
+MUST 3.13.3.3.A + 3.13.3.4.A):** the **signed HIRE CONTRACT authorizes payroll/settlement deductions. NO
+separate driver e-sign, NO per-expense acknowledgment before auto-deduction**; the company decides the
+deduction at settlement preparation. Never build `pending_acknowledgment` / `requires_acknowledgment` blocking,
+and never re-add it from the blueprint (those MUSTs are struck through + annotated).
+**Source of record — cite, don't re-derive:** `apps/backend/src/legal/signed-finance-handoff.service.ts:25-33`
+(legacy `driver_deduction_auth` codes kept ONLY to honour pre-existing signed instances; the primary document is
+the hire contract) · audit item **0008-f RESOLVED** · `00_LOCKED_DECISIONS.md` §9.5 · `docs/CLAUDE.md`.
+**The ONLY settlement acknowledgment is the COMPANY USER's sign-off — `MUST 3.4.2(d)(e)`** (debt-alert
+disclosure acknowledged by the user signing off + signature on file) = `driver_settlements.acknowledged_at` /
+`acknowledged_by_user_id`, written with the authed company user (`settlements.routes.ts:412`). **That control
+STAYS** — it is not a driver ack. Owner decision wins over spec (§0: DECISIONS → the owner).
 US GAAP/ASC — Ch.11 = ASC 470-60 (NOT 852), 606 revenue, 842 leases; cutover 04/01/2026, OB 03/31 owner-entered.
 
 ## §7. Product & design locks (additive-only — never silently redesign)
@@ -151,7 +163,16 @@ when you learn/correct a durable rule.
 Before ANY block declare: (a) you read `FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md` + `01-LINKAGE-LAW`; (b)
 canonical target (`to_regclass`, NOT a RETIRE table); (c) the cross-module linkage matrix; (d) deployed SHA vs
 `origin/main`. **RETIRE → canonical:** `driver_finance.*` (RETIRE `payroll.*`/`settlement.*`); `mdata.qbo_*`
-mirror read-only, projections WRITE `accounting.*` (RETIRE `accounting.qbo_*`); `banking.*` (RETIRE `bank.*`);
+mirror read-only, projections WRITE `accounting.*` (RETIRE `accounting.qbo_*`) — **PROD-VERIFIED
+2026-08-05 (`pg_class`, br-fancy-credit-akjnd07a): `mdata.qbo_*` = 14 tables incl. EVERY transactional
+one (`qbo_ap_bills`, `qbo_bills`, `qbo_purchases`, `qbo_ar_invoices`, `qbo_ar_payments`,
+`qbo_vendor_credits`, `qbo_sync_runs`, ~125K rows); `accounting.qbo_*` = only 5 (accounts, customers,
+vendors, remote_counts, remote_count_collection_state) and has NO transactional tables at all.** A
+recon/loans build pointed at `accounting.qbo_*` finds no bills, purchases or payments and silently
+reconciles nothing. The handoff doc `LOANS-ADVANCES-BUILD-INSTRUCTIONS-FINAL.md` had this exact
+mapping INVERTED ("not `mdata.qbo_*` (use `accounting.qbo_*`)"); it is corrected + struck through
+there, but that file is NOT in the repo — **this line is the durable record; trust it over any
+handoff bundle.**; `banking.*` (RETIRE `bank.*`);
 `maintenance.*` (RETIRE `maint.*`); `mdata.vendors`; `mdata.loads`; cancellation reasons =
 `catalogs.load_cancellation_reasons` (owner ruling A; archive legacy `catalogs.cancellation_reasons`, never
 drop). **Hub tables:** org.companies, identity.users, mdata.drivers/units/loads/customers/vendors,
@@ -162,7 +183,7 @@ never create/import/reclassify/merge/deactivate (Rule 19).**
 
 ---
 
-## §11. THE 32 `.cursor/rules` FILES — COMPLETE GOVERNING INDEX (all always-apply; source rule wins on conflict)
+## §11. THE 43 `.cursor/rules` FILES — COMPLETE GOVERNING INDEX (all always-apply; source rule wins on conflict)
 - **00 always-read-first** · **01 spec-sources** (MASTER_BLUEPRINT_v3 + UNIFIED_ADDITIONS + ARCHITECTURAL_DESIGN) · **02 respond-before-code** (post spec-review acknowledgment BEFORE code) · **03 display-ids** (server-generated) · **04 locked-invariants** (RLS/security_invoker/lockstep/append-only-audit/void-not-delete/idempotent/WF-012·017·038·044·050·053·064/425C-exclusion/+Create) · **05 architectural-design-is-law** (tab count = design; `verify:arch-design`) · **06 quality-hardline** (trust>speed; false-empty) · **07 never-delete-only-add** (= §F.24) · **10 verification-and-neon-rls** (prod wins; lucia re-run; ledgered≠effective) · **11 multi-agent-orchestration** (planner→builder→independent code-review→financial-agent VETO→GUARD; builder never self-reviews) · **12 model-tiering** (highest model for money/schema/RLS/migration/review; escalate when in doubt) · **13 financial-and-accounting-law** (financial cluster = merge on green, no owner gate — OWNER LAW 2026-08-03; reuse poster; parallel books; QBO never written; flags OFF until owner chat-decision to flip) · **14 linkage-law-enforcement** (§10) · **15 research-mandate** (cite the standard) · **16 fix-not-patch-evidence-law** (ROOT CAUSE/FIX/GUARD/LIVE PROOF/REMAINING) · **17 no-guard-hotfile-thrash** (verify-steps only) · **18 pipeline-truth-and-throughput** (fail-closed runner; single-domain PRs; law = governance-only PR) · **19 owner-manual-reserve-accounts** · **21 full-system-no-partial-amnesia** (M grows; wave-slice ≠ module) · **22 session-boot-announce** (`NEW SESSION · rules autoloaded · tiered model in force`) · **23 no-money-theater-prs** (18-key gate; CI 1430; every coder builds AND merges on green — OWNER LAW 2026-08-03) · **24 module-completion-n-of-m** (manifest N of M; CI 1431) · **25 one-push-money-fail-fast** (`money-pr-local-gate` first in pre-push; amend hole closed; CI 1702; no CI cancel thrash) · **29 cursor-claude-parity-ship** (expanded local gate: migration HH band + EVEN steps + no CLAIMED edit + EntityLink; never `--no-verify`; CI 1998) · **30 claude-green-evidence-format** (FINDING-first body/commit; `LIVE PROOF: … exit 0`; never stack/soft-reset; `cursor-pr-body-gate` before `gh pr create`; CI 2088) · **dual-lane-never-idle** (Lane A Lists/Safety/Drivers, Lane B Dispatch/Maintenance).
 · **26 serialize-scoreboard-hotfiles** (at most ONE ready PR may edit `docs/module-completion/*.json`, the ACCT surface matrix, or `CLAIMED-NUMBERS.json`; `gh pr list` BEFORE opening) · **27 one-open-pr-per-area** (ONE open PR per area — accounting/money, banking, settlements, dispatch, safety, lists, migrations; NEVER open the next same-area PR until the current is squash-merged and the branch deleted; cross-area parallel only when scopes are disjoint) · **28 audit-coverage-single-source** (`docs/audit/AUDIT-COVERAGE-LIVE.md` is THE source; build only Verdict=FAIL + Status=OPEN rows in your lane; column ownership — CASCADE owns Module/Layer/Entity/Verdict/Evidence and APPENDS rows, CODER owns Status + Block/PR only, GUARD owns VERIFIED/REOPENED; never delete a row, supersede instead; `git pull --ff-only` before editing).
 
@@ -170,7 +191,11 @@ never create/import/reclassify/merge/deactivate (Rule 19).**
 `21-full-system-no-partial-amnesia` **and** `21-session-operating-decree` (roles: Jorge answers questions before code · every coder applies Neon + merges on green themselves (OWNER LAW 2026-08-03 supersedes the old "Cursor applies Neon · Devin merges" split) · Claude plans/CPA/inventories; `JORGE-APPROVED` label DELETED) ·
 `23-no-money-theater-prs` **and** `23-per-pr-checklist` ·
 `25-one-push-money-fail-fast` **and** `25-verify-step-odd-even-bands` (Claude = ODD verify-step numbers, Cursor = EVEN).
-**COUNTED 2026-08-03: 32 files** — 31 numbered (00–30, with **21, 23 and 25 each used TWICE**) plus `dual-lane-never-idle`. No rules 08/09/20 exist.
+· **31-cursor-never-idle-wave-drain** · **31-full-system-audit-mandatory** · **32-continuous-mode-no-idle** (never end a turn idle; the next action starts in the same turn) · **32-load-linkage-pre-operational** · **33-standing-session-directive** · **34-cursor-pr-title-prefix** (verify-step 2377) · **35-fix-failures-no-ci-babysit** (read the failing log line once, fix the root cause; no `--watch` loops) · **36-claude-serial-ship-sequence** (tip-main before every push; max 1 open CLAIMED PR) · **37-claim-merge-then-author** (a verify-step number must be on `origin/main` BEFORE the step file is authored; never claim+author in one PR) · `ih35-deep-linkage-audit`.
+
+**COUNTED 2026-08-05 (CC-3, corrected): 43 files** = **41 numbered** across 00–37 — with **00, 21, 23, 25, 31 and 32 each used TWICE** — plus the two unnumbered `dual-lane-never-idle` and `ih35-deep-linkage-audit`. No rules 08/09/20 exist. **Verify with `ls .cursor/rules/*.mdc | wc -l`.**
+
+The previous line here said "COUNTED 2026-08-03: 32 files … 00–30", omitting rules **31–37 entirely** — including 36 (serial ship) and 37 (claim→merge→author), the two that govern how every PR is pushed. That is the same failure this section already warns about one paragraph below, repeated: on 2026-08-03 the index said "25" while 26/27/28 existed, and work proceeded against live rules nobody had read. An index that lags the directory is worse than no index, because it is trusted. **Never trust the number written here — run the `ls` and reconcile.**
 
 This index was headed "25" (and this skill's own frontmatter still said "24-rule") while omitting 26/27/28 outright. That is exactly how an agent violates a live rule while believing it had read them all — it happened on 2026-08-03, when work proceeded against Rule 27 (one open PR per area) and Rule 28 (audit column ownership) because neither appeared here. **Never trust this count: run `ls .cursor/rules/*.mdc | wc -l` and reconcile against this list at session start.** A summary of the law is not the law.
 
