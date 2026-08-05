@@ -1,3 +1,4 @@
+import { latchOnDeliveryEvidence } from "../dispatch/delivery-evidence-latch.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -489,6 +490,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       );
 
       await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.id, nextLoadStatus]);
+
       return { lifecycle_stage: lifecycleFromLoadStatus(nextLoadStatus) };
     });
 
@@ -511,9 +513,10 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
     if (!driver) return;
 
     const updated = await withCurrentUser(req.user!.uuid, async (client) => {
-      const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; latitude: number | null; longitude: number | null; sequence_number: number }>(
+      const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; latitude: number | null; longitude: number | null; sequence_number: number; operating_company_id: string }>(
         `
-          SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude, s.sequence_number
+          SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude, s.sequence_number,
+                 l.operating_company_id::text AS operating_company_id
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
@@ -569,6 +572,17 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       );
 
       await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.id, nextLoadStatus]);
+
+      // CLS-DISP-WIRE-07 — latch revenue on the DRIVER's delivery departure, not only the office
+      // transition. No-op unless nextLoadStatus is a delivery-evidence status, and it can only be
+      // that on the FINAL active delivery stop (multi-drop guard above), so a multi-drop load still
+      // earns exactly once, at the last drop.
+      await latchOnDeliveryEvidence({
+        operatingCompanyId: stop.operating_company_id,
+        loadId: params.data.id,
+        targetStatus: nextLoadStatus,
+        actorUserId: req.user!.uuid,
+      });
       return { lifecycle_stage: lifecycleFromLoadStatus(nextLoadStatus) };
     });
 

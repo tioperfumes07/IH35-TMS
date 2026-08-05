@@ -9,6 +9,7 @@
 
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
+import { latchOnDeliveryEvidence } from "../delivery-evidence-latch.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireDriverSession } from "../../driver/auth.js";
@@ -363,9 +364,10 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
     if (!driver) return;
 
     const updated = await withCurrentUser(req.user!.uuid, async (client) => {
-      const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; latitude: number | null; longitude: number | null }>(
+      const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; latitude: number | null; longitude: number | null; operating_company_id: string }>(
         `
-          SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude
+          SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude,
+                 l.operating_company_id::text AS operating_company_id
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
@@ -401,6 +403,16 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
       );
 
       await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.uuid, nextLoadStatus]);
+
+      // CLS-DISP-WIRE-07 — the driver's departure is the delivery evidence. Without this the office
+      // transition was the ONLY path that latched revenue, so a load delivered in the field never
+      // reached hops 6-9. Shared helper: no-op unless nextLoadStatus is a delivery-evidence status.
+      await latchOnDeliveryEvidence({
+        operatingCompanyId: stop.operating_company_id,
+        loadId: params.data.uuid,
+        targetStatus: nextLoadStatus,
+        actorUserId: req.user!.uuid,
+      });
 
       await appendCrudAudit(client, req.user!.uuid, "dispatch.driver_pwa.stop_departure", {
         load_id: params.data.uuid,
