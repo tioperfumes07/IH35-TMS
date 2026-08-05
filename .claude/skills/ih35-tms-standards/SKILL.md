@@ -119,9 +119,17 @@ blocks `.block-ready/*.json`; `npm run reconcile:blocks`.
 
 ## §6. Business context
 Multi-entity TRANSP (active carrier, `operating_company_id 91e0bf0a-133f-4ce8-a734-2586cfa66d96`), TRK (asset
-holder), USMCA (future, hidden until launch). **Accounting = PARALLEL double-books (not a sync): QBO is
-system-of-record; CLONE-ONCE + RECONCILE-ONLY; NO write-back; money-posting flags default OFF until CPA + Neon
-tie-out.** Factoring = secured borrowing/recourse; drivers Mexican-B1 1099 (wage/fee, never % of linehaul).
+holder), USMCA (**ACTIVE — the test entity; NOT hidden/future**). **Accounting = PARALLEL double-books (not a
+sync): QBO is system-of-record; CLONE-ONCE + RECONCILE-ONLY; NO write-back. POSTING FLAGS ARE ON for all three
+entities — the ONLY thing OFF is QBO write-back (`QBO_JE_PUSH_ENABLED` / `QBO_ENTITY_PUSH_ENABLED`).**
+**There is NO CPA and NO CPA gate** (`DELIVERY-METHOD-LOCKED.md` §Phase 4, `.cursor/rules/11`,
+`00_LOCKED_DECISIONS.md` §9.9 — owner ruled "flags on … on all", 2026-07-20). The prior wording here —
+"money-posting flags default OFF until CPA + Neon tie-out" — was STALE and contradicted the owner law at every
+session boot; **verified live on prod `br-fancy-credit-akjnd07a` 2026-08-05** (`lib.feature_flag_overrides`,
+`org.companies`): TRANSP `is_active=true` / 22 posting flags enabled / 0 QBO-push enabled; TRK true / 21 / 0;
+USMCA true / 22 / 0. Flag-key DEFAULTS remain OFF; the per-entity overrides above drive the ON state, and only
+the owner decides in chat when a flag flips.
+Factoring = secured borrowing/recourse; drivers Mexican-B1 1099 (wage/fee, never % of linehaul).
 US GAAP/ASC — Ch.11 = ASC 470-60 (NOT 852), 606 revenue, 842 leases; cutover 04/01/2026, OB 03/31 owner-entered.
 
 ## §7. Product & design locks (additive-only — never silently redesign)
