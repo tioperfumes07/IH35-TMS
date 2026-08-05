@@ -123,10 +123,15 @@ run("dire accident scenario — full linkage (real engine)", () => {
     expect(liability.origin).toBe("safety_accident");
     expect(liability.origin_id).toBe(id.accident);
     expect(liability.status).toBe("pending_recovery");
-    // WF-036 / blueprint MUST 3.13.3.3.A — the driver-liable charge must NOT auto-deduct before a
-    // signed acknowledgment. If this ever flips to false, money comes off a driver's check without
-    // consent and this guard is the thing that says so.
-    expect(liability.requires_acknowledgment).toBe(true);
+    // requires_acknowledgment is FALSE, and that is the CORRECT state, not a weakening.
+    // legal/signed-finance-handoff.service.ts carries the owner lock (2026-07-04/05): the signed HIRE
+    // CONTRACT authorizes settlement deductions and there is NO per-charge driver e-sign — building
+    // one is explicitly forbidden. Gating here on a driver signature stranded every at-fault recovery
+    // in pending_acknowledgment waiting for a tap the company never requests.
+    // The authorization control did not disappear, it sits on the COMPANY side where the lock puts
+    // it: blueprint MUST 3.4.2(d)(e) user sign-off with a digital signature on file at settlement
+    // prep, plus maker != checker (F13). Those are asserted by the settlement suites, not here.
+    expect(liability.requires_acknowledgment).toBe(false);
     expect(Number(liability.original_amount_cents)).toBe(CENTS);
 
     const [ded] = await read(`

@@ -225,8 +225,10 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
     // FD1 approval control: approving a fine instantly creates a recoverable driver liability (money
     // deducted from a real driver's settlement). QBO/NetSuite-grade control — any record that creates a
     // financial obligation must identify its approver in the audit trail. This validates the who-approved
-    // side; the existing insert already sets requires_acknowledgment = true. Behavior is unchanged unless
-    // status === "approved" with no approver.
+    // side. It is now the ONLY acknowledgment control on this path: the insert below sets
+    // requires_acknowledgment = FALSE, because the signed hire contract authorizes the deduction and
+    // no per-charge driver e-sign exists (owner lock, legal/signed-finance-handoff.service.ts). That
+    // makes this approver check load-bearing rather than belt-and-braces — do not weaken it.
     if (body.data.status === "approved" && !body.data.approved_by_user_uuid) {
       return reply.code(400).send({ error: "approver_required" });
     }
@@ -262,7 +264,11 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
               INSERT INTO driver_finance.driver_liabilities (
                 operating_company_id, driver_id, type, source_description, original_amount, current_balance, paid_to_date, requires_acknowledgment, origin, origin_id, status
               )
-              VALUES ($1,$2,'internal_fine',$3,$4,$4,0,true,'internal_fine',$5,'pending_recovery')
+              -- requires_acknowledgment = FALSE — see the accident path in safety.routes.ts. Signed
+              -- HIRE CONTRACT authorizes the deduction (legal/signed-finance-handoff.service.ts,
+              -- owner-LOCKED 2026-07-04/05); no per-charge driver e-sign. The approver check above
+              -- (FD1, maker != checker) is the control that stays.
+              VALUES ($1,$2,'internal_fine',$3,$4,$4,0,false,'internal_fine',$5,'pending_recovery')
               RETURNING *
             `,
             [
