@@ -1017,3 +1017,45 @@ export async function fetchSafetyOfficerRoleHome(companyId: string): Promise<Saf
     computed_at: typeof payload.computed_at === "string" ? payload.computed_at : new Date().toISOString(),
   };
 }
+
+// ─── HOMEPAGE LIVE SCENARIO TRACKER §7 ───────────────────────────────────────
+
+export type ScenarioStage = "spec" | "built" | "merged" | "proof" | "passed" | "complete";
+export type ScenarioState = "go" | "fix" | "done";
+
+export type ScenarioResult = {
+  key: string;
+  title: string;
+  lane: string;
+  stage: ScenarioStage;
+  state: ScenarioState;
+  evidence: string;
+  je: string;
+  spec_ref: string;
+};
+
+export type SourceHealth = {
+  source: string;
+  ok: boolean;
+  probed_at_ct: string;
+  detail?: string;
+};
+
+export type HomeScenarioTrackerResult = {
+  generated_at_utc: string;
+  generated_at_ct: string;
+  tz_label: string;
+  max_age_seconds: number;
+  entity_scope: string;
+  hops: ScenarioResult[];
+  scenarios: ScenarioResult[];
+  source_health: SourceHealth[];
+};
+
+export async function fetchHomeScenarioTracker(
+  companyId?: string | null
+): Promise<HomeScenarioTrackerResult> {
+  const base = "/api/v1/home/scenario-tracker";
+  const path = companyId ? `${base}?entity=${encodeURIComponent(companyId)}` : base;
+  return apiRequest<HomeScenarioTrackerResult>(path);
+}

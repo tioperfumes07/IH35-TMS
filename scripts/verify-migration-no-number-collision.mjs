@@ -214,17 +214,67 @@ async function liveCheck(repoFiles) {
     const repoByNumber = new Map();
     for (const f of repoFiles) {
       const m = NUM_RE.exec(f);
-      if (m) repoByNumber.set(m[1], f);
+      if (m) {
+        if (!repoByNumber.has(m[1])) repoByNumber.set(m[1], new Set());
+        repoByNumber.get(m[1]).add(f);
+      }
+    }
+
+    const ledgerByNumber = new Map();
+    for (const { filename } of led.rows) {
+      const m = NUM_RE.exec(filename);
+      if (!m) continue;
+      if (!ledgerByNumber.has(m[1])) ledgerByNumber.set(m[1], new Set());
+      ledgerByNumber.get(m[1]).add(filename);
+    }
+
+    const allNumbers = new Set([...repoByNumber.keys(), ...ledgerByNumber.keys()]);
+    for (const number of allNumbers) {
+      const repoSet = repoByNumber.get(number) ?? new Set();
+      const ledgerSet = ledgerByNumber.get(number) ?? new Set();
+      const known = KNOWN_COLLISIONS.get(number);
+
+      if (known) {
+        const knownSet = new Set(known);
+        const extraLedger = [...ledgerSet].filter((f) => !knownSet.has(f));
+        if (extraLedger.length) {
+          problems.push(
+            `number ${number} has ledger file(s) outside the frozen baseline: ${extraLedger.join(", ")}`
+          );
+        }
+        // The repo side is already ratcheted by findRepoCollisions. A ledger subset of the frozen
+        // set is the expected historical residue — do not treat it as a new collision.
+        continue;
+      }
+
+      if (repoSet.size > 1) {
+        problems.push(
+          `number ${number} is used by ${repoSet.size} migrations in ${MIGRATIONS_DIR}: ${[...repoSet].join(" AND ")}`
+        );
+      }
+      if (ledgerSet.size > 1) {
+        problems.push(
+          `number ${number} is stamped ${ledgerSet.size} times on prod: ${[...ledgerSet].join(" AND ")}`
+        );
+      }
+      const repoFile = [...repoSet][0];
+      const ledgerFile = [...ledgerSet][0];
+      if (repoFile && ledgerFile && repoFile !== ledgerFile) {
+        problems.push(
+          `number ${number} is '${repoFile}' in the repo but '${ledgerFile}' on prod — the same number is two different migrations`
+        );
+      }
     }
 
     const missing = [];
     for (const { filename } of led.rows) {
       const m = NUM_RE.exec(filename);
       if (!m) continue;
-      if (!repoFiles.includes(filename)) missing.push(filename);
-      const repoFile = repoByNumber.get(m[1]);
-      if (repoFile && repoFile !== filename) {
-        problems.push(`number ${m[1]} is '${repoFile}' in the repo but '${filename}' on prod — the same number is two different migrations`);
+      if (!repoFiles.includes(filename)) {
+        const known = KNOWN_COLLISIONS.get(m[1]);
+        if (!known || !known.includes(filename)) {
+          missing.push(filename);
+        }
       }
     }
     if (missing.length) {
