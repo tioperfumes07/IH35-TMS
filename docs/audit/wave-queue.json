@@ -185,43 +185,44 @@
           "note": "DISPOSITION: (B) empty state \u2014 parts catalog not populated (inventory exists at 144 rows, catalog is cosmetic). NOT a defect."
         },
         {
-          "path": "catalogs.expense_categories = 9 (3/opco) \u2014 picker may read wrong source (ECON-012)",
+          "path": "catalogs.expense_categories = 9 (3 codes × 3 opco: FUEL/PERMIT/REPAIR) — mapExpenseCatalogCodeToBillCategory() only translates 2 of 3 (ECON-012)",
           "entity": "ALL",
-          "note": "DISPOSITION: (A) BROKEN WIRING \u2014 picker alignment unverified. If picker reads catalogs.expense_categories instead of expense_category_account_map, it offers 9 rows vs 27 seeded map rows. Real defect."
+          "note": "DISPOSITION: (A) BROKEN WIRING — CONFIRMED 2026-08-05 (row 684). Picker source was correct (catalogs.expense_categories IS what VendorBillForm.tsx reads); the defect is downstream: apps/frontend/src/components/accounting/vendorBillLines.ts:20-29 hardcodes only FUEL→fuel and REPAIR→maintenance against a 30-code canonical map (accounting.expense_category_account_map). PERMIT has zero translation — selecting it silently posts an uncategorized GL line (own code comment: 'poster → uncategorized'). 0 PERMIT bill lines exist yet (not yet exercised); 2 anomalous REPAIR-tagged bill_lines rows initially looked like a second write path but their description columns ('GL proof repair line' / 'USMCA test - brake repair labor') confirm they are prior audit proof-of-concept rows, not a live bug — no second write path found."
         },
         {
           "path": "catalogs.parts = 0; canonical is maintenance.parts_inventory = 144 (ECON-013)",
           "entity": "TRANSP",
-          "note": "DISPOSITION: (B) empty state \u2014 catalogs.parts is deprecated/unused. Real inventory at 144 rows. NOT a defect."
+          "note": "DISPOSITION: (B) empty state — catalogs.parts is deprecated/unused. Real inventory at 144 rows. NOT a defect."
         },
         {
-          "path": "catalogs.cash_advance_types = 18, escrow_types = 3, deduction_types = 21 \u2014 consumer tables lack FK (ECON-014)",
+          "path": "catalogs.cash_advance_types = 18, escrow_types = 3, deduction_types = 21 — consumer tables lack FK (ECON-014)",
           "entity": "ALL",
-          "note": "DISPOSITION: (A) BROKEN WIRING \u2014 catalogs are seeded but consumer services use hardcoded enums instead of FK'ing the catalog. Real defect: catalog exists but is not consumed."
+          "note": "DISPOSITION: (A) BROKEN WIRING — catalogs are seeded but consumer services use hardcoded enums instead of FK'ing the catalog. Real defect: catalog exists but is not consumed."
         },
         {
-          "path": "accounting.chart_of_accounts_roles = 114 \u2014 legacy catalogs.account_role_bindings = 0 (ECON-015)",
+          "path": "accounting.chart_of_accounts_roles = 114 — legacy catalogs.account_role_bindings = 0 (ECON-015)",
           "entity": "ALL",
-          "note": "DISPOSITION: (A) BROKEN WIRING \u2014 if any resolver references catalogs.account_role_bindings (the empty table) instead of accounting.chart_of_accounts_roles (114 rows), role lookup silently returns NULL. Real defect."
+          "note": "DISPOSITION: (A) BROKEN WIRING — if any resolver references catalogs.account_role_bindings (the empty table) instead of accounting.chart_of_accounts_roles (114 rows), role lookup silently returns NULL. Real defect."
         },
         {
           "path": "mdata.loads = 10 for 16K bills / 12K invoices (ECON-016)",
           "entity": "ALL",
-          "note": "DISPOSITION: (B) empty state \u2014 QBO-origin bills/invoices have no loads (parallel books). TMS-native load count is genuinely low (pre-dispatch). NOT a defect."
+          "note": "DISPOSITION: (B) empty state — QBO-origin bills/invoices have no loads (parallel books). TMS-native load count is genuinely low (pre-dispatch). NOT a defect."
         }
       ],
-      "completeness": "lucia-bypass Neon prod 2026-08-05: zero-amount density stable \u2014 invoices total_cents=0 = 1/11984, bills amount_cents=0 = 0/16250, payments amount_cents=0 = 0/12124. Broken-wiring defects ECON-005/014/015 remain OPEN (overage_deduction_id never written, cash_advance_type_id column missing, account_role_bindings empty). Owner ruling: historical/QBO-import rows without cash_advance_type_id are exempt; TMS-native driver advance creation is not yet operational.",
+      "completeness": "lucia-bypass Neon prod 2026-08-05: zero-amount density stable — invoices total_cents=0 = 1/11984, bills amount_cents=0 = 0/16250, payments amount_cents=0 = 0/12124. Broken-wiring defects ECON-005/012/014/015 remain OPEN (overage_deduction_id never written, PERMIT category has no GL translation, cash_advance_type_id column missing, account_role_bindings empty). Owner ruling: historical/QBO-import rows without cash_advance_type_id are exempt; TMS-native driver advance creation is not yet operational.",
       "guard": "scripts/verify-econ-empty-density.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "ECON-005 fuel.fuel_transactions.overage_deduction_id ALL=0/1552 (dead FK); ECON-014 driver_finance.driver_advances.cash_advance_type_id column does not exist; ECON-015 catalogs.account_role_bindings=0. Empty-state cohort is NOT a defect.",
+        "guard_sample": "ECON-005 fuel.fuel_transactions.overage_deduction_id ALL=0/1552 (dead FK); ECON-012 catalogs.expense_categories PERMIT code has 0/2 required mapper entries in vendorBillLines.ts (only FUEL/REPAIR mapped); ECON-014 driver_finance.driver_advances.cash_advance_type_id column does not exist; ECON-015 catalogs.account_role_bindings=0. Empty-state cohort is NOT a defect.",
         "money_critical": true
       },
       "status": "open",
       "hotfiles": [
         "apps/backend/src/fuel",
         "apps/backend/src/driver-finance",
-        "apps/backend/src/accounting/coa-roles"
+        "apps/backend/src/accounting/coa-roles",
+        "apps/frontend/src/components/accounting/vendorBillLines.ts"
       ]
     },
     {
