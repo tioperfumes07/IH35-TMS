@@ -2320,3 +2320,50 @@ consistent with the entity model, not a defect.
              (per LV-095), so no stalled acknowledgment rows exist. Code verified against `origin/main`
              @ `ae0782836`.
 - status:    PASS
+
+## LV-108  LV-099 IS **NOT SYSTEMIC** — I hunted for more ledger-says-applied/effect-missing migrations and found none; the ledgers disagree on 7 rows, of which 1 is a phantom naming a file that does not exist
+- module:    db/migrations (GUARD — bounding the LV-099 defect class)
+- entity:    ALL
+- surface:   `_system._schema_migrations` · `ih35_migrations.applied_migrations` · `db/migrations/*.sql` on `origin/main`
+- observed:  LV-099 found a migration recorded applied in both ledgers whose effect never reached prod. The
+  obvious next question is **how many others**, because if that is a class it changes what every green means.
+  **I looked, and it is not a class.** That is the finding.
+  **(1) The two ledgers disagree by exactly 7 rows, in one direction only.**
+  `ih35_migrations.applied_migrations` **884** vs `_system._schema_migrations` **877**; files on disk **875**.
+  Rows in `_system` but not in `ih35_migrations`: **0**. So one ledger is a strict superset — a bookkeeping
+  inconsistency, not two ledgers contradicting each other about the same migration.
+  **(2) Six of the seven exist as real files; ONE is a phantom.**
+  `202610290000_disp01_escrow_abandon_trigger_text_cast.sql` is ledgered (applied_by
+  `cursor-live-ops-2026-07-30`) but **has no file on `origin/main`**. Its renumbered twin
+  `202610291200_disp01_escrow_abandon_trigger_text_cast.sql` *does* exist and is in **both** ledgers. So the
+  file was renumbered and the stale ledger row was left behind. **This is a live historical instance of
+  precisely the renumber-and-reapply hazard the LV-087 checksum guard now blocks** (verified working in
+  LV-096) — the guard arrived after this one, which is why it is in the record rather than prevented.
+  **(3) I verified the EFFECT of the six real ones rather than trusting their ledger rows — all present:**
+  | migration | asserted effect | verified on prod |
+  |---|---|---|
+  | `…lease_bridge_rent_expense_coa_role` | CHECK on `chart_of_accounts_roles.role` includes `rent_expense` | **present** (constraint def 1,515 chars, includes it) |
+  | `…drv_02_escrow_pending_source_type_catalog_fk` | composite FK to `catalogs.driver_deduction_types` | **present** — `(operating_company_id, source_type)` → `(operating_company_id, code)`, entity-scoped |
+  | `…sweep_c11_driver_subcatalog_split_brain_lock` | trigger + assert function on `catalogs.license_classes` | **both present** |
+  | `…flt_02_real_fleet_owned_by_trk` | units owned by TRK | **present** — all **182** units carry `owner_company_id` = TRK |
+  | `…nd_inv_01_proforma_invoice_pipeline` | proforma invoice status | **present** — 1 proforma invoice exists |
+  | `…archive_legacy_fixed_assets_schema_rule07` | archive-if-exists | conditional no-op by construction |
+  **(4) So LV-099 is ONE migration, and its mechanism is specific rather than general.** `0094` wraps its body
+  in `BEGIN;` and `ALTER TYPE … ADD VALUE` cannot execute inside a transaction block on older PostgreSQL.
+  That is a property of *that* migration's shape, not of the apply pipeline. Every other migration checked
+  here took effect exactly as written.
+  **Why a negative result is worth recording.** Had I filed LV-099 and stopped, the reasonable inference
+  would be "the ledger cannot be trusted, re-verify everything" — expensive and, as it turns out, wrong. The
+  scope is **one migration plus one stale ledger row**. Bounding a defect is as much a part of the verdict as
+  finding it, and an unbounded critical finding distorts priorities as badly as a missed one.
+  **What I did NOT verify:** the effects of the ~869 migrations present in both ledgers. This checked the 7
+  that the ledgers disagree about, on the reasoning that a disagreement is the strongest available signal of
+  an apply that went sideways. A full effect audit of every migration is a different and much larger exercise.
+- severity:  informational (scope-bounding for LV-099) · minor (1 phantom ledger row naming a missing file)
+- LANE:      CC-1 (migrations) — optionally reconcile the 7-row ledger drift and retire the phantom
+             `202610290000_…` row (**archive/annotate, never delete** — rule 07 and the ledger is evidence).
+             **LV-099 itself remains the priority and is unchanged by this.**
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             Ledger counts **884** / **877**, reverse-difference **0**; file existence resolved against
+             `origin/main` via `git cat-file -e`, disk count **875**; each effect probe as tabulated.
+- status:    OPEN (informational)
