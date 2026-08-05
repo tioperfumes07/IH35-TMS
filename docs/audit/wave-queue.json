@@ -28,11 +28,11 @@
           "note": "Owner/Claude 2026-08-03: $47.7K Fuel gap was Relay-card-only vs all-sources GL (scope mismatch), not double-post. Real defect is miscategorization into Fuel. Claude Coder owns the mapping fix. Scoreboard row 673."
         }
       ],
-      "completeness": "Code-verified + live 2026-08-04: accounting.expense_category_account_map=92 rows. TMS-native bills (source_system='tms') total=5; 2 bill_lines still lack a resolvable (kind,code) map row. Fuel density: fuel_transactions=1548 / posting_batches fuel-related=1548 (per FINDING-LOAD-LINKAGE-SCOPE-RULING, all load_id=NULL are pre-dispatch imports). Positive control: posting_batches with status='posted' > 180. tires/tolls ~$4,594 Fuel miscategorization remains open for mapping fix.",
+      "completeness": "Guard PASS 2026-08-05: verify-entity-expense-category-map-complete.mjs OK — expense category map complete; sub-account numbering is QBO-independent. Live: accounting.expense_category_account_map active=82 rows across 12 kinds (fuel=13, maintenance=30, revenue=12, etc.). TMS-native bills (source_system='tms') total=5; 2 bill_lines still lack a resolvable active (kind,code) map row. Fuel linkage: fuel_transactions=1552 all load_id=NULL per FINDING-LOAD-LINKAGE-SCOPE-RULING (pre-dispatch imports). Residual tires/tolls miscategorized into Fuel GL (~$4,594) remains open for Claude mapping fix.",
       "guard": "scripts/verify-entity-expense-category-map-complete.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "expense_category_account_map=92 rows; TMS-native bills=5; 2 bill_lines lack active (kind,code) map row. Fuel gap is pre-dispatch import per owner ruling. tires/tolls~$4594 Fuel miscategorization still OPEN.",
+        "guard_sample": "verify-entity-expense-category-map-complete.mjs OK; active map=82 rows; TMS-native bills=5; 2 unmapped bill_lines. Fuel 1552/1552 load_id=NULL pre-dispatch imports. tires/tolls~$4594 Fuel miscategorization still OPEN.",
         "money_critical": true
       },
       "status": "open",
@@ -210,11 +210,11 @@
           "note": "DISPOSITION: (B) empty state — QBO-origin bills/invoices have no loads (parallel books). TMS-native load count is genuinely low (pre-dispatch). NOT a defect."
         }
       ],
-      "completeness": "SPLIT COMPLETE. Broken-wiring instances (ECON-005, ECON-012, ECON-014, ECON-015) remain OPEN — real code defects where FK/catalog plumbing is dead or mispointed. Empty-state instances (ECON-002/003/006/007/008/010/011/013/016) are NOT defects — just no owner data yet. Owner-hold instances (ECON-001/004/009) tracked under CLS-MONEY-HOLD. Live 2026-08-04 zero-density: invoices total_cents=0 = 1/11984; bills amount_cents=0 = 0/16250; payments amount_cents=0 = 0/12124.",
+      "completeness": "SPLIT COMPLETE. Broken-wiring instances (ECON-005, ECON-012, ECON-014, ECON-015) remain OPEN. Empty-state instances (ECON-002/003/006/007/008/010/011/013/016) are NOT defects — no owner data yet. Owner-hold instances (ECON-001/004/009) tracked under CLS-MONEY-HOLD. Live 2026-08-05 zero-density: invoices total_cents=0 = 1/11984; bills amount_cents=0 = 0/16250; payments amount_cents=0 = 0/12124. Broken-wiring live: overage_deduction_id populated=0/1552; cash_advance_types=18 seeded but driver_advances=0; catalogs.account_role_bindings=0 vs accounting.chart_of_accounts_roles=131.",
       "guard": "scripts/verify-econ-empty-density.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "ECON-005 fuel.fuel_transactions.overage_deduction_id ALL: 0/1548, dead FK — code never writes it; ECON-014 catalogs.cash_advance_types=18 seeded but driver_finance.driver_advances has no FK to it; ECON-015 catalogs.account_role_bindings=0 (resolver may use wrong table). Live zero-density noted above.",
+        "guard_sample": "ECON-005 fuel.fuel_transactions.overage_deduction_id ALL: 0/1552, dead FK; ECON-014 catalogs.cash_advance_types=18 seeded but driver_finance.driver_advances=0; ECON-015 catalogs.account_role_bindings=0 vs accounting.chart_of_accounts_roles=131. Live zero-density: 1/11984 invoices, 0/16250 bills, 0/12124 payments.",
         "money_critical": true
       },
       "status": "open",
@@ -282,11 +282,11 @@
           "note": "Fleet lease data incomplete. P1-006."
         }
       ],
-      "completeness": "Code-verified + live 2026-08-04: mdata.loads=6, accounting.invoices=11984. Loads with no invoice = 5/6 (pre-operational, only 1 completed-docs load has invoice). Invoices pointing to a non-existent load = 0. No broken FK; linkage is one-way because loads exist before invoices.",
+      "completeness": "Live 2026-08-05: mdata.loads=6, accounting.invoices=11984. Loads with no invoice = 5/6 (pre-operational, only 1 completed-docs load has invoice). Invoices pointing to a non-existent load = 0/11984. No broken FK; one-way linkage is expected pre-operational state.",
       "guard": "scripts/verify-money-ops-fk-density.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "loads with no invoice = 5/6; invoices with load FK not in loads = 0/11984. One-way linkage is expected pre-operational state.",
+        "guard_sample": "loads with no invoice = 5/6; invoices with load FK not in loads = 0/11984. One-way linkage expected pre-operational.",
         "money_critical": true
       },
       "status": "open",
@@ -333,11 +333,11 @@
           "note": "N/A — QBO-origin, correctly not posted (parallel books). QBO-synced invoices have no TMS line items by design."
         }
       ],
-      "completeness": "Live 2026-08-04: banking.bank_transactions total=11002; fully unmatched = 10819 (98.3%); matched (any linked obligation) = 183 (1.7%). Bank feed is ingesting but auto/match logic has not tied most rows to invoices/bills/transfers. No silent posting — just low linkage density.",
+      "completeness": "Live 2026-08-05: banking.bank_transactions total=11007; fully unmatched = 10824 (98.3%); matched (any linked obligation) = 183 (1.7%). Bank feed is ingesting but auto/match logic has not tied most rows to invoices/bills/transfers. No silent posting — just low linkage density.",
       "guard": "scripts/verify-silent-success-posting-output.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "bank_transactions=11002; unmatched=10819 (98.3%); matched=183 (1.7%). Low density, no silent posting.",
+        "guard_sample": "bank_transactions=11007; unmatched=10824 (98.3%); matched=183 (1.7%). Low density, no silent posting.",
         "money_critical": true
       },
       "status": "open",
@@ -437,7 +437,7 @@
           "note": "Correlates with 0-row canonical tables. P1-007. 'vendors' listed explicitly."
         }
       ],
-      "completeness": "Live-confirmed via browser exercise 2026-07-22..2026-08-02. Bills row-click FAIL confirmed on both TRANSP and USMCA. Cash-flow $0 confirmed live. Vendor detail empty on USMCA audit vendor. Positive control: bill grid renders real data (16K rows). Live 2026-08-04 row-count sanity: voided invoices=1/11984; revoked bills=0/16250; voided payments=0/12124; voided journal_entries=0.",
+      "completeness": "Live-confirmed via browser exercise 2026-07-22..2026-08-02. Bills row-click FAIL confirmed on both TRANSP and USMCA. Cash-flow $0 confirmed live. Vendor detail empty on USMCA audit vendor. Positive control: bill grid renders real data (16K rows). Live 2026-08-05 row-count sanity: voided invoices=1/11984; revoked bills=0/16250; voided payments=0/12124; voided journal_entries=0.",
       "guard": "scripts/verify-orphan-surface-drill.mjs",
       "drain_proof": {
         "guard_green": false,
@@ -478,11 +478,11 @@
           "note": "insurance.claim = 0. AUD-F015."
         }
       ],
-      "completeness": "Live 2026-08-04: driver_finance.driver_settlements=0; factoring.reserve_movement=0; insurance.claim=0. Money-hold surfaces are pre-operational: no pay-runs, no reserve movements, no claims posted yet. Positive control: factoring.company_factor_assignments has agreement rows.",
+      "completeness": "Live 2026-08-05: driver_finance.driver_settlements=0; accounting.factoring_reserve_movements=0; insurance.claim=0. Money-hold surfaces are pre-operational: no pay-runs, no reserve movements, no claims posted yet. Positive control: factoring.canonical_factor_agreements=1 (agreement exists).",
       "guard": "scripts/verify-money-hold-surfaces.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "driver_settlements=0; reserve_movement=0; insurance.claim=0. Pre-operational, no money posted yet.",
+        "guard_sample": "driver_settlements=0; accounting.factoring_reserve_movements=0; insurance.claim=0. Pre-operational, no money posted yet. Positive control: factoring.canonical_factor_agreements=1.",
         "money_critical": true
       },
       "status": "open",
@@ -647,7 +647,7 @@
           "note": "DRAINED by PR #4234 for banking: picker now uses server-side onSearch + limit:200. Banking slice complete for this card."
         }
       ],
-      "completeness": "Code-verified + live 2026-08-04: matters.service.ts LIMIT 500 pattern remains, but legal.matters=0 so no truncation observed. DriversListPage CSV export limit:500 pattern remains, but mdata.drivers=179 so no truncation observed. Banking picker cap is drained (PR #4234). Positive control: DriversListPage paginated list uses limit:25 with real total count (correct pattern).",
+      "completeness": "Code-verified + live 2026-08-05: matters.service.ts LIMIT 500 pattern remains, but legal.matters=0 so no truncation observed. DriversListPage CSV export limit:500 pattern remains, but mdata.drivers=179 so no truncation observed. Banking picker cap is drained (PR #4234). Positive control: DriversListPage paginated list uses limit:25 with real total count.",
       "guard": "scripts/verify-no-silent-list-cap.mjs",
       "drain_proof": {
         "guard_green": false,
@@ -698,11 +698,11 @@
           "note": "If class_name column stores a UUID, the picker dropdown shows UUIDs. Row 601 / row 611 related."
         }
       ],
-      "completeness": "Code-verified + live 2026-08-04: LegalMatterDetailPage.tsx still passes FK id as EntityLink label when no name join is performed (4 instances). VehicleProfilePage class picker renders name from mdata.qbo_classes; live count of UUID-like name values = 0/172 after PR #4234 CHECK constraint + 'Unnamed class' fallback. 4 Legal EntityLink instances remain open.",
+      "completeness": "Code-verified 2026-08-05: LegalMatterDetailPage.tsx still passes FK id as EntityLink label when no name join is performed (4 instances). VehicleProfilePage class picker renders name from mdata.qbo_classes; live count of UUID-like name values = 0/172 after PR #4234 CHECK constraint + 'Unnamed class' fallback. 4 Legal EntityLink instances remain open.",
       "guard": "scripts/verify-no-uuid-labels.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "",
+        "guard_sample": "LegalMatterDetailPage EntityLink uses truncated UUID labels (4 instances); qbo_classes UUID-like name=0/172.",
         "money_critical": false
       },
       "status": "open",
@@ -911,11 +911,11 @@
           "note": "N/A-PRE-OPERATIONAL per FINDING-LOAD-LINKAGE-SCOPE-RULING. Going-forward linkage only. Claude Coder: backfill load_required=false + load_exemption_reason='PRE_TMS_DISPATCH_IMPORT'."
         }
       ],
-      "completeness": "Owner ruling 2026-08-04: 1,552 fuel_transactions.load_id=NULL are pre-dispatch imports — expected state, not broken wiring (FINDING-LOAD-LINKAGE-SCOPE-RULING). Live 2026-08-05: expense_attribution.expense_load_links=0; accounting.expenses with load_id=0; accounting.bills has no load_id column. Going-forward guard still needed for TMS-native loads (only 1 load past assigned, none with linked costs).",
+      "completeness": "Owner ruling 2026-08-04: 1,552 fuel_transactions.load_id=NULL are pre-dispatch imports — expected state, not broken wiring (FINDING-LOAD-LINKAGE-SCOPE-RULING). Live 2026-08-05: expense_attribution.expense_load_links=0; accounting.expenses with load_id=0; accounting.bills has no load_id column. Loads status: completed_docs_received=1, assigned_not_dispatched=4, cancelled=1. Going-forward guard still needed for TMS-native loads (none yet carry linked costs).",
       "guard": "scripts/verify-disp-wire-06-load-expense-link.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "WIRE-06 load-expense/fuel linkage: 1,552 fuel_transactions.load_id=NULL (pre-dispatch imports); expense_load_links=0; expenses.load_id=0; bills table has no load_id column. Going-forward guard needed.",
+        "guard_sample": "WIRE-06 load-expense/fuel linkage: 1,552 fuel_transactions.load_id=NULL (pre-dispatch imports); expense_load_links=0; expenses.load_id=0; bills table has no load_id column. loads: completed=1 / assigned=4 / cancelled=1. Going-forward guard needed.",
         "money_critical": true
       },
       "status": "open",
