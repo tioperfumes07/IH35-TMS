@@ -129,7 +129,20 @@ Locked by the owner while triaging the shared 130-finding audit. Source of truth
 
 9.4 **Escrow return = 60–90 day return-on-separation, net of open claims.** Every escrow draw debits the **Driver Escrow liability** (QBO-1150040187), never an expense — see `[[driver-escrow-is-liability]]`.
 
-9.5 **Deduction authorization = the signed HIRE CONTRACT — no separate driver e-sign.** The `CONSENT_MISSING` gate (finding G11-1) is satisfied by the hire contract, not a driver-facing e-sign template. The hire-contract template is built later in the **Legal module** and carries the payroll-deduction authorization for new drivers. (Simplifies the former "Repair B / consent template" build.)
+9.5 **Deduction authorization = the signed HIRE CONTRACT — no separate driver e-sign.**
+    **OWNER-LOCKED 2026-07-04/07-05, REAFFIRMED 2026-08-05:** the **signed HIRE CONTRACT** authorizes
+    payroll/settlement deductions — **NO separate driver e-sign, NO per-expense acknowledgment** — and the
+    company decides the deduction at settlement preparation. **Source of record (cite, do not re-derive):**
+    `apps/backend/src/legal/signed-finance-handoff.service.ts:25-33` (legacy `driver_deduction_auth` codes kept
+    ONLY to honour pre-existing signed instances; primary document = hire contract) + audit item
+    **0008-f RESOLVED**. **The ONLY settlement acknowledgment is the COMPANY USER's sign-off — MUST 3.4.2(d)(e)**
+    (`driver_settlements.acknowledged_at` / `acknowledged_by_user_id`, authed company user, settlements.routes.ts:412);
+    that control STAYS and is not a driver ack. This explicitly **SUPERSEDES blueprint
+    MUST 3.13.3.3.A** (and its sibling MUST 3.13.3.4.A for internal fines): there is **NO per-expense /
+    per-charge signed acknowledgment before auto-deduction**, and no `pending_acknowledgment` state that
+    blocks a deduction. No future agent may re-add that gate — the blueprint lines are struck through and
+    annotated at `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md` §3.13.3.3 / §3.13.3.4. Owner decision wins
+    over spec (§0). The `CONSENT_MISSING` gate (finding G11-1) is satisfied by the hire contract, not a driver-facing e-sign template. The hire-contract template is built later in the **Legal module** and carries the payroll-deduction authorization for new drivers. (Simplifies the former "Repair B / consent template" build.)
 
 9.6 **Schema canonicals:** `finance.loans` kept as a documented §4 exception (no rename); `reporting.*` canonical for scheduled reports (migrate `reports.*` rows in, archive the old); `mdata.qbo_*` canonical for the QBO mirror (repoint the `accounting.qbo_*` writers); `mdata.vendors` canonical for vendors (+ a resolver so WO/expense pickers read it).
 

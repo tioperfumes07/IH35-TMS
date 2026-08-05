@@ -928,7 +928,15 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
               origin_id,
               status
             ) VALUES (
-              $1,$2,'accident_damage',$3,$4,$4,0,true,'safety_accident',$5,'pending_recovery'
+              -- requires_acknowledgment = FALSE. Deduction authorization is the signed HIRE CONTRACT,
+              -- not a per-charge driver e-sign: legal/signed-finance-handoff.service.ts (owner-LOCKED
+              -- 2026-07-04/05) states "there is NO separate driver-facing deduction-authorization
+              -- e-sign … do NOT build a separate driver e-sign flow". Gating here on a driver tap
+              -- contradicted that lock and stalled every at-fault recovery behind a signature the
+              -- company never asks for. The company-side control is unchanged and is where it belongs:
+              -- blueprint MUST 3.4.2(d)(e) — a user signs off at settlement prep with a digital
+              -- signature on file, and maker != checker (F13) still applies before anything posts.
+              $1,$2,'accident_damage',$3,$4,$4,0,false,'safety_accident',$5,'pending_recovery'
             )
             RETURNING id::text
           `,

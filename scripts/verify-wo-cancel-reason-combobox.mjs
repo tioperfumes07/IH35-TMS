@@ -68,6 +68,7 @@ function main() {
   const args = new Set(process.argv.slice(2));
   if (args.has("--selftest")) {
     const tmp = fs.mkdtempSync(path.join(ROOT, ".verify-wo-cancel-selftest-"));
+    let selftestExit = 1;
     try {
       for (const rel of PAGES) {
         const good = readRel(ROOT, rel);
@@ -87,7 +88,7 @@ function main() {
       const pass = collectProblems(tmp);
       if (pass.length) {
         console.error(`${LABEL} --selftest PASS probe failed: expected [], got ${JSON.stringify(pass)}`);
-        process.exit(1);
+        return; // exits via the finally-teardown path below, never before it
       }
 
       const badPage = readRel(ROOT, PAGES[0]);
@@ -103,13 +104,20 @@ function main() {
       const fail = collectProblems(tmp);
       if (!fail.some((p) => p.includes("SelectCombobox"))) {
         console.error(`${LABEL} --selftest FAIL probe did not detect SelectCombobox regression`);
-        process.exit(1);
+        selftestExit = 1;
+      } else {
+        console.log(`${LABEL} --selftest OK`);
+        selftestExit = 0;
       }
-      console.log(`${LABEL} --selftest OK`);
-      process.exit(0);
     } finally {
+      // JANITOR: this rmSync already existed and NEVER RAN. Every exit path inside the try above
+      // called process.exit(), which terminates the process immediately — finally blocks do not run
+      // on process.exit(). So each --selftest left a .verify-wo-cancel-selftest-XXXXXX/ directory in
+      // the repo root, dirtying the working tree and failing the pre-push hook for whichever lane
+      // ran it next. The fix is to record the exit code and exit AFTER teardown, never inside it.
       fs.rmSync(tmp, { recursive: true, force: true });
     }
+    process.exit(selftestExit);
   }
 
   const problems = collectProblems();

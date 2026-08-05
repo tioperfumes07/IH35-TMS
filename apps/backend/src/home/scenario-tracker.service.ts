@@ -83,8 +83,32 @@ async function currentCert(
         FROM audit.scenario_status
        WHERE is_current
          AND scenario_key = $1
-         AND (operating_company_id IS NULL OR $2::uuid IS NULL OR operating_company_id = $2::uuid)
-       ORDER BY verified_at DESC
+         -- #4469 — SCOPE. Asking for ONE entity may see that entity's cert or the ALL row (the
+         -- fallback); asking for ALL must see ONLY the ALL row. The old predicate collapsed to
+         -- "match anything" whenever $2 was NULL, so an ALL-scope read swept in every entity's
+         -- rows and one entity's certification was reported as the programme-wide state.
+         AND (CASE WHEN $2::uuid IS NULL
+                   THEN operating_company_id IS NULL
+                   ELSE (operating_company_id = $2::uuid OR operating_company_id IS NULL)
+              END)
+       -- #4469 — PRECEDENCE, and it must be deterministic. Both rows are legitimately eligible for
+       -- an entity read, and the certifier stamps verified_at from the same clock, so identical
+       -- timestamps are the NORM, not an edge case. Ordering by verified_at alone then left the
+       -- winner to whatever the planner returned first, and the ALL row won often enough that USMCA
+       -- certs were being credited to TRANSP across all 23 keys.
+       --   0 = this entity's own cert   (most specific — always wins)
+       --   1 = the ALL/NULL row         (the intended fallback)
+       --   2 = some other entity's row  (unreachable via the WHERE above; ranked last so that if the
+       --                                 predicate is ever loosened again this cannot silently win)
+       -- id DESC is the final tiebreak so two rows identical in scope AND timestamp still resolve to
+       -- one stable answer rather than a coin flip between board loads.
+       ORDER BY CASE
+                  WHEN $2::uuid IS NOT NULL AND operating_company_id = $2::uuid THEN 0
+                  WHEN operating_company_id IS NULL THEN 1
+                  ELSE 2
+                END,
+                verified_at DESC,
+                id DESC
        LIMIT 1
     `,
     [scenarioKey, entity]

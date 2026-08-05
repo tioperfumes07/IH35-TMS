@@ -1693,3 +1693,677 @@ predicate feeding it, not the downgrade mechanism.
 - neon-check: prod `br-fancy-credit-akjnd07a`, bypass in its own statement, exit 0. Column types read from
              `information_schema.columns`; orphan counts per LV-093.
 - status:    OPEN (informational — CC-1 decides whether to accept the guard)
+
+## LV-095  GUARD VERIFY-AFTER of **ACCT-F114** (DRV-LIAB-CENTS-INTO-DOLLARS, PR #4473, landed @ `66c840c96`) — **PASS, and the sweep is COMPLETE**
+- module:    driver_finance · safety (GUARD — post-merge live verification)
+- entity:    ALL
+- surface:   `driver_finance.driver_liabilities` · the 4 production writers of that table
+- observed:  I verified the four claims this PR rests on rather than accepting them, and all four hold.
+  **(1) The unit is DOLLARS — confirmed from the schema, not from the narrative.** On prod,
+  `original_amount`, `current_balance` and `paid_to_date` are all **`numeric(10,2)`**. Consistent with the
+  dollars reading and with the `numeric(10,2)` overflow ceiling (99,999,999.99) the PR describes.
+  **(2) "Not corrupted in production" — VERIFIED with the strongest available discriminator.** A bare `0`
+  would not have settled this (§0). On the SAME table, in one statement with `current_user` asserted:
+  visible **0**, `n_live_tup` **0**, `n_tup_del` **0**, and decisively **`n_tup_ins` = 0** — the table has
+  **never had a row inserted**, so no row was ever written at 100x and there is genuinely nothing to restate.
+  `n_tup_ins = 0` is what makes this a verdict rather than an RLS artifact.
+  **(3) All three sites are REALLY fixed — read from the diff, not from a grep.** My initial grep for the fix
+  pattern found nothing in `safety-v5.routes.ts` and I did not conclude from that; the diff shows the fix
+  **removed** the offending expression rather than introducing a new name, which a pattern-grep scores as
+  absent. Confirmed per site: `safety.routes.ts:918` now passes `amountCents / 100`; `fines.routes.ts:380`
+  passes a new `amountDollars = amount / 100`; `safety-v5.routes.ts:262` passes `Number(body.data.amount)`
+  in place of `Math.round(... * 100)`.
+  **(4) The money actually withheld from the driver's check is UNTOUCHED — the part a cosmetic fix breaks.**
+  At both sites the cents path survives independently: `fines.routes.ts` keeps `amount` in cents for
+  `createSettlementDeduction`, and `safety-v5.routes.ts:281` recomputes
+  `amountCents = Math.round(Number(body.data.amount) * 100)` for the deduction *after* writing dollars to the
+  liability at :275. Two units, two names, both correct. A naive "divide the shared variable by 100" would
+  have fixed the balance and silently under-withheld real money; it was not done that way.
+  **COMPLETENESS — the claim I most wanted to break, and could not.** §9.0.17 requires a sweep to cover every
+  site, so I enumerated writers independently instead of trusting "three of the four". Production (non-test)
+  `INSERT INTO driver_finance.driver_liabilities` sites number exactly **4**: `cash-advances/
+  cash-advance-create.ts:230`, `safety/fines.routes.ts:380`, `safety/safety-v5.routes.ts:262`,
+  `safety/safety.routes.ts:918`. Three fixed, one already correct. **No fifth writer exists.**
+  **I checked one edge the PR did not mention.** Writer #4 chooses
+  `linkedBill ? Number(linkedBill.total_amount ?? body.amount) : body.amount` — so if bills stored cents, that
+  branch would carry the identical defect. On prod `accounting.bills.total_amount` is **`numeric(12,2)`** and
+  the live distribution settles the unit beyond argument: min **0.01**, max **696,466.47**, mean **3,578.74**
+  over **16,250** rows. Cents would put the average carrier bill at $35.79. Bills also carry a separate
+  `amount_cents` **bigint**. The branch is dollars. **No residual defect.**
+- severity:  none — GUARD verify-after PASS; recorded so this is not re-derived
+- LANE:      n/a (verification of CC-1/CC-3 work)
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             Column types from `information_schema.columns`; liability table counters from
+             `pg_stat_user_tables`; bill distribution from `accounting.bills`. Code read from
+             `origin/main` @ `66c840c96`, not from a working tree.
+- status:    PASS
+
+## LV-096  CHECKSUM GUARD (LV-087 / verify-step 2625) — **PASS: it genuinely blocks renumber-and-reapply.** Proven by planting a real duplicate against the live scanner, not by reading the guard
+- module:    db/migrations (GUARD — guard-efficacy test)
+- entity:    ALL
+- surface:   `scripts/verify-steps/2625-verify-migration-checksum-collision.mjs` · `scripts/verify-migration-checksum-collision.mjs` (landed @ `c47a82f82`, PR #4467)
+- observed:  Earlier this session this guard did **not exist** — `2625` was claimed in `CLAIMED-NUMBERS.json`
+  with no file, which was correct Rule 37 claim-first behaviour, and I recorded that I could not test it. It
+  has since been authored, so the test was run.
+  **A guard that cannot fail is theater, so I tested the failure path, not the passing one.**
+  **(1) Both legs pass on the clean tree.** `--selftest` → **exit 0**, "8 mutations all detected; baseline
+  matches the files it names". Real leg → **exit 0**, "874 migration files scanned; 1 checksum collision(s),
+  all 1 of them the frozen pre-existing pair".
+  **(2) Independent planted-duplicate test — the one that actually proves it.** The built-in selftest checks
+  detection against an in-memory `Map`, which proves the comparison logic but not that the **real scanner**
+  walking `db/migrations/` catches a real file. So I copied `0001_audit_init.sql` to
+  `9998_cc2_planted_duplicate_DELETEME.sql` — a literal renumber-and-reapply — and re-ran the real leg:
+  **exit 1**, with `checksum 81f9eda777af is shared by 2 migration files: 0001_audit_init.sql,
+  9998_cc2_planted_duplicate_DELETEME.sql`. It **fails closed and names both files**.
+  The planted file was untracked, removed immediately by an `EXIT` trap, and its removal verified
+  (`git status --porcelain db/migrations/` clean). **No migration history was touched** — WORM intact.
+  **(3) The selftest itself is unusually well built and worth crediting.** Its four mutations do not merely
+  assert detection: mutation 2 rejects a runner with no refusal; mutation 3 rejects a runner that merely
+  *mentions* checksums, explicitly distinguishing the pre-existing same-filename **drift** check from the
+  renumber-and-reapply **collision** check — two different defects that would otherwise be conflated; and
+  mutation 4 requires grandfathering to be **exact-set**, so a third file joining an already-baselined
+  checksum still fails. That last one is the difference between a frozen baseline and a blanket amnesty, and
+  it is the mutation most guards of this shape get wrong.
+  **Scope of the claim.** I proved the guard detects a byte-identical duplicate and that `db-migrate.mjs`
+  carries the refusal the guard checks for. I did **not** execute a migration against any database, and
+  **UNVERIFIED — the runtime refusal path was not exercised live**; testing that would require applying a
+  migration, which is out of GUARD's read-only lane and would touch prod.
+- severity:  none — guard-efficacy PASS
+- LANE:      n/a (verification of CC-1's guard)
+- neon-check: none required — this is a static-guard efficacy test executed locally against
+             `origin/main` code; exit codes read WITHOUT a pipe (0 / 0 clean, 1 with plant).
+- status:    PASS
+
+## LV-097  POSTING-FLAG SWEEP — 75 of 78 (flag × entity) combinations are ON as the law states; the 3 exceptions are all **IH 35 Trucking**, and one of them is **silently EXPIRED while its row still reads `enabled = true`**
+- module:    accounting · lib (GUARD — posting-flag state vs owner law)
+- entity:    ALL (TRANSP · USMCA · TRK)
+- surface:   `lib.feature_flags` × `lib.feature_flag_overrides` × `org.companies`
+- observed:  Owner law is that GL posting is ON for all three entities. I verified that against prod rather
+  than assuming it. **26** posting flags × **3** entities = **78** combinations; **75 are effectively ON**.
+  All **3** exceptions belong to **IH 35 Trucking LLC** (`b49a737b`), and they are three *different* causes —
+  which is why a single "is it on?" glance would misread them:
+  | flag | stored | effective | cause |
+  |---|---|---|---|
+  | `FACTORING_GL_POSTING_ENABLED` | **`enabled = true`** | **OFF** | override **EXPIRED 2026-07-27** (9 days ago; today 2026-08-05) → falls back to `default_enabled = false` |
+  | `RELATED_PARTY_LOAN_GL_POSTING_ENABLED` | *no row* | OFF | no override exists for TRK → `default_enabled = false` |
+  | `REVENUE_RECOGNITION_POST_ENABLED` | `enabled = false` | OFF | explicit OFF |
+  **The factoring one is the finding.** Its row says `enabled = true`. Anyone reading the overrides table —
+  or a dashboard that renders `enabled` — concludes factoring GL posting is ON for TRK. It is OFF, and has
+  been for 9 days, because `expires_at` silently returned it to the default. Stored state and effective state
+  disagree, and the stored state is the reassuring one. That is the shape of defect that survives review.
+  **I sized the class rather than implying an epidemic.** Of **242** total overrides, exactly **1** carries an
+  `expires_at` at all — this one — and it is expired, and it says `enabled = true`. So this is **singular, not
+  systemic**. It is arguably *more* likely to be forgotten precisely because it is the only expiring override
+  in the system: no one is watching a mechanism that is used once.
+  **The third row is probably CORRECT and I am not filing it as a defect.** TRK is the **asset holder**, not
+  an operating carrier (`ih35-entity-facts`); freight revenue recognition belongs to the operating entity, so
+  `REVENUE_RECOGNITION_POST_ENABLED = false` on TRK is consistent with the entity model. Calling it a defect
+  would be the same error as flagging import-origin rows. **Recorded as owner-confirm, not as a fault.**
+  **The second row deserves an owner decision, not a fix.** `RELATED_PARTY_LOAN_GL_POSTING_ENABLED` is off on
+  TRK only — and TRK, as the asset holder, is the entity most likely to *have* related-party loans. Whether
+  that is deliberate or an oversight is a decision, not a fact I can derive. **UNVERIFIED — intent.**
+- severity:  major (factoring: stored `enabled = true` while effectively OFF on a money-posting path) ·
+             informational (the other two)
+- LANE:      CC-1 (money) — decide TRK's factoring posting intent and either renew/remove the `expires_at` or
+             set the override explicitly OFF so stored and effective state agree. Guard suggestion: fail
+             closed on any `lib.feature_flag_overrides` row where `expires_at < now()` AND `enabled = true` —
+             a one-predicate check that makes this class impossible to miss again. **Owner decision needed**
+             on `RELATED_PARTY_LOAN_GL_POSTING_ENABLED` for TRK.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             26 posting flags × 3 entities enumerated by CROSS JOIN so absent overrides surface as rows
+             rather than vanishing from the result — the join shape is what makes the "no row" case visible.
+             Override census: **242** total, **1** with `expires_at`, **1** expired, **1** expired-but-enabled.
+             `now()::date` asserted as 2026-08-05 in the same transaction.
+- status:    OPEN
+
+### LV-091 ADDENDUM — the unmounted-route half is now proven LIVE against prod, with both controls
+The original finding established by static analysis that `registerPayrollIntegrationRoutes` is referenced
+nowhere outside its own file and that no autoload covers it. That is inference. This is the measurement.
+
+Probed prod (`api.ih35dispatch.com`) with the **404-vs-401 discriminator**: an unmounted route returns 404,
+a mounted route that merely rejects an unauthenticated caller returns 401. No credentials needed, so this
+proves mounting without touching auth.
+
+| request | result | meaning |
+|---|---|---|
+| `GET /api/v1/payroll-integration/aggregate` | **404** | declared at `aggregate.routes.ts:40` — **not mounted** |
+| `GET /api/v1/payroll-integration/aggregate/refresh` | **404** | declared at `:95` — **not mounted** |
+| `GET /api/v1/customers` *(positive control)* | **401** | mounted; a live route rejects auth, it does not 404 |
+| `GET /api/v1/definitely-not-a-route` *(negative control)* | **404** | the signature of a route that does not exist |
+
+The payroll endpoints return **exactly** the nonexistent-route code and **not** the mounted-route code. Both
+controls were run in the same probe, so the 404 cannot be explained by a global auth filter or by the API
+being down. **The routes are declared in shipped code and are unreachable in production.**
+
+This closes the reachability half of LV-091 as CONFIRMED. The phantom-table half was already confirmed
+(`to_regclass('accounting.qbo_payroll_links')` → NULL with a non-null control on the same query). Both halves
+now rest on measurement rather than reading. The severity stands: fixing only the mount would ship a
+guaranteed `42P01` on first call, because the table the handler selects from does not exist.
+- neon-check: n/a for this addendum — HTTP probe against prod `api.ih35dispatch.com`; deploy confirmed
+  earlier this session at `/api/v1/healthz/shallow` version `94c520a`.
+- status:    OPEN (unchanged — CC-1 owns the canonical-target decision)
+
+## LV-098  SYSTEMIC SWEEP of the LV-088 idiom — 8 uses of `operating_company_id IS NULL OR …` in backend reads: **5 correct and load-bearing, 1 comment, 1 the LV-088 defect, and 1 DEAD-BUT-LATENT** in the GL approvals path
+- module:    accounting · catalogs · home (GUARD — generalizing LV-088)
+- entity:    ALL
+- surface:   every non-test `operating_company_id IS NULL OR` in `apps/backend/src`
+- observed:  LV-088 is one instance of an idiom that is **correct in most places it appears**, so the useful
+  question is not "where is this pattern" but "where is it not justified by the data". §0 requires classifying
+  by opco **VALUES**, not column presence, so I read the rows rather than the schema for each site.
+  | site | table | prod opco values | verdict |
+  |---|---|---|---|
+  | `catalogs/accounting/detail-types-catalog.routes.ts` ×4 · `catalogs/accounts.routes.ts:113` | `catalogs.detail_types` | **144 of 144 NULL** | **CORRECT — load-bearing** |
+  | `lists/lists-module-count-spec.ts:167` | — | — | N/A — a comment describing policy, not code |
+  | `home/scenario-tracker.service.ts:86` | `audit.scenario_status` | per-entity rows + 1 ALL row per key | **DEFECT — LV-088** |
+  | `accounting/role-home/pending-approvals-gl.service.ts:491` | `catalogs.accounts` | **0 of 1,444 NULL** | **DEAD TODAY — latent** |
+  **`catalogs.detail_types` is the genuine shared-canonical case and the idiom there is required.** Every one
+  of its 144 rows has a NULL `operating_company_id` — one system-wide set consumed by all entities. Removing
+  the disjunct would blank the catalog for every tenant. Those 5 sites are correct and must not be "fixed".
+  **The GL approvals site is the one worth naming, and its severity is *latent*, not active.**
+  `catalogs.accounts` holds **1,444** rows across **3** distinct opcos and **zero** NULL-opco rows, so the
+  `a.operating_company_id IS NULL` disjunct **cannot match anything today** — it is dead. Nothing is leaking.
+  But it encodes the assumption that a NULL-opco account is shared across all entities, and the day one is
+  created — by an import, a migration, or a hand-insert — that account silently becomes visible in all three
+  entities' GL approval screens with no code change and no alert. It is a leak waiting for a row.
+  **I checked whether the leak is already happening rather than reasoning about it:** postings whose account
+  belongs to a *different* entity than the posting = **0**. The GL is clean.
+  **Why this is a finding at all, given nothing is broken.** LV-088 was the same shape — an `IS NULL` disjunct
+  that looked like the harmless catalog idiom — and it was live-wrong across 23 keys and 2 entities. The
+  difference between the two sites is a data fact (`0 NULL rows` vs `1 ALL row per key`), not anything visible
+  in the code. That is precisely why this must be pinned by a guard rather than by review: the code reads
+  identically in the safe case and the unsafe one.
+- severity:  minor (latent — 0 rows can trigger it today) · informational (the 5 correct sites, recorded so
+             nobody "fixes" them into an outage)
+- LANE:      CC-1 (money) — either drop the dead disjunct at `pending-approvals-gl.service.ts:491` (the
+             narrower change, since `catalogs.accounts` is entity-scoped by policy) or add a guard asserting
+             `catalogs.accounts` has **0** NULL-opco rows, which converts the latent leak into a loud failure.
+             **Do NOT touch the 5 `catalogs.detail_types` sites** — they are correct and load-bearing.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             `catalogs.accounts` **1,444** total / **0** NULL-opco / **3** distinct opcos;
+             `catalogs.detail_types` **144** total / **144** NULL-opco; cross-entity posting→account
+             mismatches **0**. Code census by grep over `apps/backend/src/**/*.ts` excluding tests.
+- status:    OPEN
+
+### LV-097 CORRECTION — **OWNER RULING 2026-08-05: "trucking does not have factoring."** Severity downgraded major → informational; my original reading was wrong
+**Owner decisions outrank my analysis (§0 precedence: FACTS resolve prod > guard > repo > memory, but
+DECISIONS are the owner's).** I filed TRK's expired `FACTORING_GL_POSTING_ENABLED` as **major** on the
+reasoning that a money-posting flag was silently OFF. That reasoning assumed TRK factors invoices. It does
+not. **IH 35 Trucking is the asset holder and has no factoring**, so factoring GL posting being effectively
+OFF for TRK is the **correct end state**, not a defect. I am correcting this rather than leaving a wrong
+severity standing in the record.
+
+**Corroborated on prod before accepting it** — the ruling and the data agree:
+| check (TRK `b49a737b`) | result |
+|---|---|
+| invoices with `factoring_advance_id` or `factor_profile_id` | **0** |
+| invoices with `factoring_status` other than `none` | **0** |
+| `factoring.factoring_advances` (all entities) | **0** rows |
+| `factoring.factoring_reserve_movements` / `letter_of_release` / `customer_factor_assignment` | **0** rows each |
+TRK has **no factoring footprint whatsoever**. Nothing was being under-posted, because there is nothing to post.
+
+**What was wrong in my original write-up:** I treated "flag effectively OFF" as inherently a risk without
+first asking whether the entity should ever post that flag. That is the same error as flagging import-origin
+rows as unlinked — judging a state against a generic expectation instead of against what the entity actually
+does. I applied the origin test rigorously to rows (LV-092) and then failed to apply the equivalent
+entity-model test to a flag.
+
+**What survives, narrowed and de-escalated.** One point remains true and is worth keeping only as hygiene:
+the override row reads **`enabled = true`** while being effectively OFF. Stored state still disagrees with
+effective state. But since the effective state is now known to be **correct**, this is a **record-tidiness
+issue, not a money risk** — nobody will be misled into thinking posting is on for a path that should never
+post anyway.
+**The recommendation therefore INVERTS.** My original advice was to renew or remove the `expires_at`. Renewing
+it would be actively wrong — it would turn ON posting for a capability TRK does not have. The correct action
+is to **delete the override row or set `enabled = false`**, so the stored record states the owner's actual
+intent instead of relying on a lapsed timestamp to produce the right answer by accident.
+**The proposed guard still stands and is unaffected** (`expires_at < now() AND enabled = true` → fail closed):
+its value is surfacing stored-vs-effective divergence, which was real here regardless of which direction is
+correct. It would have surfaced this row for an owner decision months earlier.
+
+**Unchanged by this ruling:** `RELATED_PARTY_LOAN_GL_POSTING_ENABLED` on TRK remains **UNVERIFIED — intent**
+(owner decision outstanding), and `REVENUE_RECOGNITION_POST_ENABLED = false` on TRK remains recorded as
+consistent with the entity model, not a defect.
+- severity:  **informational** (superseded from *major* by owner ruling 2026-08-05)
+- LANE:      CC-1 (money) — remove the override row or set it explicitly `enabled = false`; **do NOT renew
+             the expiry**
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             TRK factoring footprint counts as tabulated above.
+- status:    SUPERSEDED-BY-OWNER-RULING (factoring row) · LV-097's other two rows unchanged
+
+## LV-099  **LEDGER SAYS APPLIED — EFFECT MISSING.** Migration `0094` is recorded applied in BOTH ledgers, yet all three of its enum labels are absent from prod, and that makes the entire abandonment → escrow-forfeit chain **structurally unreachable**
+- module:    dispatch · driver_finance (GUARD — migration effect verification, FAIL CLOSED)
+- entity:    ALL
+- surface:   `mdata.load_status_enum` · `db/migrations/0094_p5_e1_auto_deduct_escrow_load_abandonment.sql` · `_system._schema_migrations` · `ih35_migrations.applied_migrations`
+- expected:  `0094` runs `ALTER TYPE mdata.load_status_enum ADD VALUE IF NOT EXISTS` for **`abandoned`**,
+             **`driver_walkoff`**, **`driver_no_show`**. Recorded-applied should mean those labels exist.
+- observed:  **All three labels are ABSENT from prod, while both ledgers say the migration was applied.**
+  | ledger | row for `0094…abandonment.sql` | applied_at | applied_by |
+  |---|---|---|---|
+  | `_system._schema_migrations` | **present** | 2026-05-12 01:42:05 | `neondb_owner` |
+  | `ih35_migrations.applied_migrations` | **present** | 2026-05-23 16:10:16 | **`claude-backfill-2026-05-23`** |
+  `mdata.load_status_enum` carries **17** labels and none is one of the three. Verified schema-qualified —
+  it is the only `%load_status%` type on prod with any labels at all (`catalogs.driver_load_statuses` and the
+  array types have 0), so this is not a wrong-type mix-up.
+  **The two ledgers also disagree with each other** (applied 11 days apart; 876 vs 883 total rows), and the
+  second entry's `applied_by` is a **backfill**. That is the most probable mechanism: the ledger row was
+  *inserted to mark the migration applied* rather than produced by executing it. **A ledger row is an
+  assertion, not evidence.**
+  **PROOF THE EFFECT IS MISSING — read-only, no write performed.** Casting the literal is enough:
+  `SELECT 'abandoned'::mdata.load_status_enum` → **`ERROR: invalid input value for enum
+  mdata.load_status_enum: "abandoned"`**. Positive control in the same session:
+  `SELECT 'cancelled'::mdata.load_status_enum` → returns `cancelled`. So the cast mechanism works and
+  **only these labels are missing**.
+  **THE CONSEQUENCE IS THE FINDING: the abandonment write path CANNOT SUCCEED — not "has not yet", CANNOT.**
+  The escrow machinery is fully wired: trigger **`trg_auto_propose_escrow_on_abandon` exists on
+  `mdata.loads`**, `dispatch.load_abandonments` exists, `abandonment_chargebacks` has its audit trigger. But a
+  load can never *enter* the status that fires the trigger, because `UPDATE mdata.loads SET status =
+  'abandoned'` throws on the enum before any trigger runs. Confirmed by the counters:
+  `dispatch.load_abandonments` **0 rows with `n_tup_ins = 0`** (never inserted in the table's lifetime), and
+  `mdata.loads` in an abandon status **0**. The `n_tup_ins = 0` is what turns "empty" into "never once".
+  **The team already knew, and worked around the symptom instead of the cause.** Migration
+  `202610291200_disp01_escrow_abandon_trigger_text_cast.sql` (applied 2026-07-30) states in its own header:
+  *"literals abandoned/driver_walkoff/driver_no_show that do NOT exist on prod mdata.load_status_enum …
+  FIX: compare as ::text"*. That change stopped the **trigger definition** from erroring — it did **not**
+  make the path reachable, because the blocking cast is on the `UPDATE`, not inside the trigger body. The
+  workaround is why this has stayed invisible: nothing errors any more, and nothing works either.
+  **Answering the assigned question directly: I could NOT confirm the abandonment path end-to-end, because
+  end-to-end success is impossible in the current prod state.** I did not attempt a write — GUARD is
+  read-only, and the enum cast proves the outcome without one.
+  **Status of CC-1's expected enum migration: NOT YET LANDED.** Latest `origin/main` is `07daa0f6b`; no new
+  migration adds these labels. This finding is the **baseline**. When CC-1's migration deploys, re-run exactly
+  this check — the three-label `EXISTS` probe plus the `::mdata.load_status_enum` cast — and the ledger row
+  must NOT be accepted as proof.
+- severity:  **critical** (a merged, twice-recorded migration never took effect; an entire money path —
+             escrow forfeit / abandonment chargeback — is unreachable and silently so)
+- LANE:      CC-1 (money/migrations) — add the three labels via a NEW forward migration (never re-run or
+             renumber `0094`; §2 + LV-087). `ALTER TYPE … ADD VALUE` cannot run inside a transaction block in
+             older PG, which is the most likely reason the original silently did not take — `0094` wraps its
+             body in `BEGIN;`. **Guard must assert the three labels EXIST on prod**, not that the migration is
+             ledgered — a ledger-based guard would have passed throughout.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement.
+             Three-label presence probe → `false`/`false`/`false`. Cast probe → error 22P02 as quoted;
+             positive control `'cancelled'` → success. `mdata.load_status_enum` label count **17**.
+             Ledger rows as tabulated. `dispatch.load_abandonments` 0 rows / `n_tup_ins` **0**.
+             Trigger `trg_auto_propose_escrow_on_abandon` confirmed present on `loads` via `pg_trigger`.
+- status:    OPEN
+
+## LV-100  GUARD VERIFY-AFTER of **ACCT-F115** (#4478, `c8b6a3cbb`) and **ACCT-F116** (#4479, `07daa0f6b`) — **both PASS**; every factual claim in both PRs independently re-verified on prod
+- module:    accounting · insurance · driver_finance (GUARD — post-merge verification)
+- entity:    ALL
+- surface:   `insurance.claim` · `accounting.insurance_claim_recovery_postings` · `accounting.escrow_postings` · `accounting.chart_of_accounts_roles` → `catalogs.accounts`
+- observed:  Both PRs add executable proof for a money hop and change **no production code**. That makes the
+  PR body itself the load-bearing artifact, so I re-derived every number rather than reading them.
+  **ACCT-F115 (insurer claim recovery) — all claims hold.**
+  | claim | verified |
+  |---|---|
+  | `insurance.claim` = 0 rows | **0**, `n_tup_ins` **0**, `n_tup_del` **0** |
+  | `accounting.insurance_claim_recovery_postings` = 0 | **0**, `n_tup_ins` **0**, `n_tup_del` **0** |
+  | `insurance_recovery` → 6155 [OtherExpense] on all three | **confirmed**, active, all 3 entities |
+  | `INSURANCE_CLAIM_RECOVERY_GL_POSTING_ENABLED` true ×3 | **confirmed** — independently, in LV-097's sweep |
+  The `n_tup_ins = 0` on both tables is stronger than the PR's own `n_live_tup 0 / n_tup_del 0`: it shows the
+  rows were never there rather than merely absent now.
+  **ACCT-F116 (new-hire driver escrow) — all claims hold, including the one that matters.**
+  `accounting.escrow_postings` **0** with `n_tup_ins` **0**; `accounting.escrow_accounts` **0**. The critical
+  property — escrow is money **held in trust**, a liability owed back to the driver — is correct in all three:
+  | entity | account | type |
+  |---|---|---|
+  | IH 35 Transportation | QBO-250 "2025-Damage Claim Escrow" | **Liability** |
+  | IH 35 Trucking | QBO-1150040187 "Damage Claim Escrow" | **Liability** |
+  | USMCA Freight | 2100 "Driver Escrow - Held in Trust" | **Liability** |
+  Not one resolves to Income or to a contra-expense, so the failure the PR names — booking a driver's own
+  money as company earnings — is not present.
+  **One thing the PRs did not mention, which I checked and cleared.** USMCA carries **two** rows for
+  `escrow_liability_default`, one `is_active = false` and one `true`. That is the LV-088 shape — two candidate
+  rows and a resolver picking one — so I did not assume it was benign. System-wide: **131** role rows across
+  **114** distinct (entity, role) pairs, so 17 extras exist; and **pairs with more than one ACTIVE row = 0**.
+  Every pair resolves to exactly one active binding. The extras are deactivated history (11 of the 14
+  multi-row pairs point at a genuinely *different* account, i.e. the role was re-pointed over time and the old
+  binding was retired rather than deleted) — correct void-not-delete behaviour under rule 07, **not a defect**.
+  Recording it so the next agent who finds duplicate role rows does not file it as one.
+- severity:  none — both verify-after PASS
+- LANE:      n/a (verification of CC-1/CC-3 work)
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             All counts as tabulated; role bindings joined through `catalogs.accounts` for `account_type`.
+- status:    PASS
+
+## LV-101  **26 posting flags are ON, but only 11 source types have ever produced a journal line** — most of the enabled money surface has zero live execution evidence
+- module:    accounting (GUARD — coverage of the money surface)
+- entity:    ALL (3 entities carry journal entries)
+- surface:   `lib.feature_flags` (`%POST%`) vs `accounting.journal_entry_postings.source_transaction_type`
+- observed:  Verifying F115 and F116 exposed a pattern larger than either. Both describe a hop that is
+  **built, wired and flag-enabled but has never executed**, and that is not two isolated cases.
+  **26** posting flags are defined and (per LV-097) effectively ON across the entities, with 3 known TRK
+  exceptions. Against that, **11** distinct `source_transaction_type` values have *ever* written a posting
+  line: `fuel_event` (3,094), `bank_categorization` (380), `bill` (10), `invoice` (10), `transfer` (8),
+  `prepaid_purchase` (4), `fixed_asset_depreciation` (4), `expense` (4), `loan_payment` (3), `bill_payment` (2),
+  `customer_payment` (2).
+  **I am stating this as a coverage measurement, not a defect, and the distinction matters.** Flags do not map
+  one-to-one onto `source_transaction_type`, so "26 minus 11" is **not** a count of broken paths and I am not
+  presenting it as one. What is exactly true: the great majority of GL volume is two paths (`fuel_event` and
+  `bank_categorization` are **3,474 of 3,603** lines, **96%**), and most enabled posting capabilities have
+  produced **no** live evidence at all.
+  **Why this is worth a finding rather than a shrug.** A flag that is ON is an assertion that the path is
+  ready. For most of these the only thing standing behind that assertion is code review — and LV-099 is the
+  proof of what that is worth: a migration recorded applied in **both** ledgers whose effect never reached
+  prod, sitting under a money path (escrow forfeit on abandonment) that **cannot execute at all**. That defect
+  was invisible for ~3 months precisely because nothing had ever run it.
+  **So ACCT-F115/F116 are the correct response to this, not a formality.** An executable scenario test is the
+  only mechanism that exercises a path with no production data, and it catches exactly the properties that
+  only fail under real data — F116's Liability-type binding and over-draw guard, F115's ASC 450-30 / 610-30
+  recovery cap. **The right conclusion is to continue that pattern across the remaining enabled paths**,
+  prioritising the ones with zero postings, rather than to treat flag-ON as evidence of readiness.
+- severity:  informational (coverage measurement; no defect asserted)
+- LANE:      CC-1 (money) — extend the F115/F116 executable-scenario pattern to the enabled posting paths that
+             have never executed; treat LV-099 as the worked example of what zero-execution conceals
+- neon-check: prod `br-fancy-credit-akjnd07a`, bypass in its own statement, exit 0. Posting flags defined
+             **26**; distinct non-null `source_transaction_type` ever posted **11**; entities with journal
+             entries **3**; per-type line counts as listed (totalling the 3,603 lines of LV-092).
+- status:    OPEN (informational)
+
+## LV-102  GUARD VERIFY-AFTER of **ECON-012** (Cascade, #4480, `bfe795f2a`) — **CONFIRMED**, with one material refinement: the PERMIT gap is real but has **never mis-posted**, because zero PERMIT bill lines exist
+- module:    accounting (GUARD — verification of an audit claim)
+- entity:    ALL
+- surface:   `apps/frontend/src/components/accounting/vendorBillLines.ts` · `catalogs.expense_categories` · `accounting.expense_category_account_map` · `accounting.bill_lines`
+- observed:  Every factual claim in the ECON-012 write-up holds:
+  | claim | verified on prod |
+  |---|---|
+  | picker catalog offers 3 codes across 3 entities | **FUEL 3 / PERMIT 3 / REPAIR 3** = 9 rows, 3 entities each |
+  | canonical GL map supports 30 codes | **30** distinct active `category_code` over **82** rows |
+  | translation handles only FUEL and REPAIR | confirmed in source — `mapExpenseCatalogCodeToBillCategory` returns `fuel`, `maintenance`, else **`null`** |
+  So PERMIT genuinely falls through to `return null`, keeping `expense_category_uuid` only, which the poster
+  treats as uncategorized. **The defect is real.**
+  **The refinement — and it changes the severity, not the diagnosis.** `accounting.bill_lines` joined to the
+  catalog gives **FUEL 0 · PERMIT 0 · REPAIR 4**. **No PERMIT bill line has ever been created**, so nothing
+  has been mis-posted to uncategorized. The wording "PERMIT posts uncategorized to GL" describes a mechanism
+  that is correct in principle but has **never fired**. This is prospective misposting, not a corrupted ledger
+  — there is nothing to restate, and the fix is cheap for exactly that reason.
+  **Worth saying plainly: the fallback is the RIGHT default.** The code comment states the intent — *"Unknown
+  codes keep `expense_category_uuid` only (poster → uncategorized) — never invent a GL account."* Falling back
+  to uncategorized rather than guessing an account is correct behaviour under the no-invented-GL rule. The
+  defect is the **missing PERMIT entry**, not the fallback that catches it.
+  **Same shape as LV-098 and worth noting as a pattern:** a real gap whose blast radius is currently zero
+  because no data exercises it. Both should be fixed while that is still true.
+- severity:  minor (latent — 0 rows affected today; would become a live misclassification on the first PERMIT bill)
+- LANE:      CC-1 (accounting) — add the PERMIT translation, or document why PERMIT is deliberately excluded;
+             separately decide whether the 3-code picker should expand toward the 30-code canonical map
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             Counts as tabulated; `bill_lines` joined via `expense_category_uuid`.
+- status:    OPEN (confirmed; severity refined from the original write-up)
+
+## LV-103  **14 of 25 guard scripts cited by `docs/audit/wave-queue.json` DO NOT EXIST** — including the one named as ECON-012's own guard. A card's `guard_green` has never reflected a run that could happen
+- module:    docs/audit · scripts (GUARD — guard theater at scale)
+- entity:    ALL
+- surface:   `docs/audit/wave-queue.json` guard references vs `scripts/**/*.mjs` on `origin/main`
+- observed:  Cascade noticed one instance while working ECON-012 — *"`scripts/verify-orphan-surface-drill.mjs`
+  referenced by the wave card does not exist on disk (MODULE_NOT_FOUND) — the card's `guard_green:false` has
+  never reflected a real guard run."* **Credit where due: that observation is correct and it is what prompted
+  this sweep.** It is also not one card. It is most of them.
+  Of **25** distinct guard scripts referenced by `wave-queue.json`: **10** exist at the cited path, **1** was
+  renamed (`verify-disp-wire-04-invoice-evidence.mjs` → `…-durable.mjs`, a real guard, correctly counted as
+  present), and **14 do not exist anywhere under `scripts/`** — checked by basename across the whole tree,
+  including the numbered `verify-steps/` scheme, so a renumbering would not be miscounted as absence:
+  `verify-disp-wire-06-load-expense-link` · `verify-disp-wire-07-departure-evidence` ·
+  **`verify-econ-empty-density`** · `verify-gl-posting-coverage` · `verify-hooks-before-return` ·
+  `verify-money-hold-surfaces` · `verify-money-ops-fk-density` · `verify-no-raw-uuid-inputs` ·
+  `verify-no-silent-list-cap` · `verify-no-uuid-labels` · `verify-orphan-surface-drill` ·
+  `verify-qbo-canonical-recon` · `verify-reverse-linkage-embedded` · `verify-silent-success-posting-output`.
+  **The sharpest instance is self-referential.** `verify-econ-empty-density.mjs` is listed under `GUARD:` in
+  the ECON-012 PR body itself, described as the "existing CLS-ECON-EMPTY guard". **It does not exist.** A guard
+  that is absent from disk cannot have run, so it contributed nothing to that finding's proof — the finding
+  stands on its SQL and code reading, which I independently confirmed in LV-102, not on the guard.
+  **Why this matters more than a broken path.** `wave-queue.json` is a drain queue whose cards carry a
+  `guard_green` field. For these 14, that field can only ever be `false` — never because the guarded defect is
+  present, but because the guard cannot be invoked. A permanently-`false` signal is indistinguishable from a
+  genuinely failing one, and a card can never drain. The names are also the money-critical ones:
+  `gl-posting-coverage`, `money-ops-fk-density`, `money-hold-surfaces`, `silent-success-posting-output`,
+  `reverse-linkage-embedded`, `qbo-canonical-recon`.
+  **This is the same failure class as LV-099, one layer up.** There, a ledger row asserted a migration had
+  been applied when its effect was absent. Here, a card asserts a guard governs a defect when the guard is
+  absent. **Both are records that assert a fact nobody re-checked against reality** — which is precisely why
+  §0 requires proving the effect rather than trusting the record.
+  **What I am NOT claiming.** I did not verify whether these 14 were ever written and later removed, or were
+  only ever aspirational names. Either way the current state is the same and the remedy is the same. I also
+  did not audit guard references outside `wave-queue.json`.
+- severity:  major (the audit system's own proof mechanism is absent for 56% of its cited guards, concentrated
+             on money-critical checks)
+- LANE:      CASCADE (owns `wave-queue.json`) with CC-1 for the money-critical guards — either author the 14
+             guards or remove/annotate the references so `guard_green` means something. **A meta-guard is the
+             durable fix:** assert every guard path referenced by `wave-queue.json` resolves on disk, so a
+             card can never again cite a guard that cannot run.
+- neon-check: none required — this is a repo/filesystem verification against `origin/main`; guard existence
+             checked by basename across `scripts/**/*.mjs` recursively, not by exact path alone, so renames
+             are correctly excluded from the absent count.
+- status:    OPEN
+
+## LV-104  §10 BOTH-WAY LINKAGE — **PASS, complete**: every one of the 3,521 source-bearing posting lines resolves to a live source, and `transaction_source_links` covers all of them. **This CORRECTS LV-092, which overstated the gap.**
+- module:    accounting (GUARD — §10 linkage law, full-coverage proof)
+- entity:    ALL
+- surface:   `accounting.journal_entry_postings` ↔ source tables ↔ `accounting.transaction_source_links`
+- observed:  I previously verified only invoice and bill (10 lines each). That left **96% of GL volume
+  unverified**, so I finished the job across every source type.
+  **(1) Direct resolution — every typed line resolves to a live source row, 0 dangling:**
+  | source type | lines | dangling |
+  |---|---|---|
+  | `fuel_event` → `fuel.fuel_transactions` | **3,094** | **0** |
+  | `bank_categorization` → `banking.bank_transactions` | **380** | **0** |
+  | `invoice` → `accounting.invoices` | 10 | 0 |
+  | `bill` → `accounting.bills` | 10 | 0 |
+  | `expense` → `accounting.expenses` | 4 | 0 |
+  | `bill_payment` → `accounting.bill_payments` | 2 | 0 |
+  | `customer_payment` → `accounting.payments` | 2 | 0 |
+  **(2) The canonical linkage table is complete in BOTH directions.**
+  `accounting.transaction_source_links` holds **3,582** rows with `n_tup_ins = 3,582` (nothing ever deleted).
+  Forward: postings with **no** link = **30**. Reverse: links pointing at a **missing posting = 0**.
+  **Every posting carrying a `source_transaction_type` has a link — the 30 unlinked are ALL null-source.**
+  **(3) The 30 unlinked are 100% `source='manual'` — EXPECTED STATE.** A manual journal entry *is* the source
+  document; there is no upstream transaction to point at. Filing these would be the
+  expected-state-recorded-as-failure anti-pattern.
+  **★ CORRECTION TO LV-092 — I overstated that finding, and this is the evidence that shows it.**
+  LV-092 reported that the 44 reversal lines had **no line-level traceability** because `reversal_of_line_id`
+  is populated on 0 of 3,603 rows, and treated the 4 revrec lines as a real gap. Both claims were wrong in
+  their conclusion, though the underlying observation was accurate:
+  - **All 44 reversal lines DO carry a link** — `linked_object_type='journal_entry'`,
+    `relationship_role='reversal_of'`, count **44**, an exact match to the 44 reversal lines.
+  - **The 4 revrec lines and the 2 fuel-card-overage lines also carry links** — they are absent from the
+    unlinked set of 30, which is entirely manual.
+  `reversal_of_line_id` being 0-populated **is still true**. What was wrong was my inference that this meant
+  traceability was missing. It is not missing; it lives in `transaction_source_links`, which is the **§10
+  canonical mechanism** — the links table is where the linkage law says the relationship belongs, not a
+  denormalised column on the posting row. **I checked one mechanism, found it empty, and concluded absence
+  without checking the canonical one.** That is precisely the error §0 warns about, and it is the same shape
+  as trusting a ledger row (LV-099) or a `guard_green` field (LV-103): reading one record instead of proving
+  the fact.
+  **Net effect on LV-092:** its traceability claim is **withdrawn**. What survives is narrow and cosmetic —
+  `reversal_of_line_id` and `reversed_by_line_id` exist as columns and are never written. That is dead schema,
+  not a linkage defect, and it does not warrant the *major* severity I assigned.
+- severity:  none for the linkage itself (**PASS**) · LV-092 downgraded to **minor/cosmetic** (unused columns)
+- LANE:      CC-1 (money) — no linkage work required. Optionally decide whether `reversal_of_line_id` /
+             `reversed_by_line_id` should be populated or dropped as dead schema; **not** a correctness issue
+             either way, since `transaction_source_links` already carries the relationship.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             Per-type dangling counts as tabulated; `transaction_source_links` **3,582** rows /
+             `n_tup_ins` **3,582**; postings without a link **30**, all `source='manual'`; links pointing at a
+             missing posting **0**; `journal_entry`/`reversal_of` links **44** matching the 44 reversal lines.
+- status:    PASS (supersedes the traceability claim of LV-092)
+
+## LV-105  REVREC LATCH (Phase-1 hop 6 / WIRE-05) — **PASS on all three layers**: the GL shape is correct ASC 606, the status-driven firing defect is CLOSED, and ACCT-F66's stale-latch fix is proven by DIFFERENTIAL on the real prod rows (old predicate latches 2, new latches 0)
+- module:    accounting · dispatch (GUARD — Phase-1 money hop verification)
+- entity:    TRANSP
+- surface:   `accounting/revrec-delivery-posting/poster.service.ts` · `accounting.load_revenue_recognition_postings` · `accounting.journal_entries`
+- observed:  This is the only Phase-1 money hop with real GL evidence behind it, so I verified all three layers
+  rather than the one that was asked about.
+  **(1) The double entry is textbook ASC 606 — verified from the posted lines, not from the design doc.**
+  | event | debit | credit | amount |
+  |---|---|---|---|
+  | Event 1 *earn* | `1240 Unbilled Revenue` [**Asset**] | `4100 Freight Revenue` [**Income**] | $15,000.00 |
+  | Event 2 *bill* | `QBO-45 Accounts Receivable` [**Asset**] | `1240 Unbilled Revenue` [**Asset**] | $15,000.00 |
+  Earn recognises revenue against a contract asset; bill reclassifies the contract asset to A/R. Net effect
+  DR A/R / CR Revenue. Both entries balance (part of the 1,787 in LV-089) and every account carries the
+  correct type — revenue is not booked to an asset, and the unbilled leg is not booked to income.
+  **(2) The defect that caused these two entries to be reversed is CLOSED.** The owner-authorised reversal
+  memo recorded that revrec had *"posted off load status with zero delivery evidence… no POD exists and none
+  will be fabricated."* The current poster refuses that: Event 1 may only earn when the **final active
+  delivery stop carries a real `actual_departure_at`**, with an explicit `missing_delivery_evidence` refusal.
+  The reasoning in the source is exactly right and worth preserving here — `mdata.loads.status` is written
+  from **8 separate code paths, three of which reach `delivered_pending_docs`+ by validating only a status
+  graph without ever reading `mdata.load_stops`**; the only path that *captures* delivery evidence never
+  triggered the latch, and the only path that *triggered* it captured no evidence. Gating on evidence rather
+  than on status closes the inversion regardless of which status writer fires.
+  **(3) ACCT-F66's stale-latch fix — PROVEN BY EFFECT, not by reading it.** The residual documented in the
+  source is real and still visible on prod: both subledger rows (`earn`, `bill`) remain `is_active = true`,
+  `status = 'posted'`, `voided_at = NULL`, even though their journal entries carry `reversed_by_je_id`.
+  Nothing ever set `is_active = false`. Under a naive `is_active`-only check that load could **never**
+  re-recognise: Event 1 would refuse with `already_posted`, the revenue would be **lost silently**, and the
+  ACCT-F59 invoice interlock would refuse that load's invoice forever.
+  I ran the shipped predicate against those exact rows. **Differential result:**
+  | predicate | rows that latch |
+  |---|---|
+  | old, naive (`p.is_active` alone) | **2** |
+  | ACCT-F66 `STANDING_LATCH_JE_PREDICATE` (`is_active` AND `je.voided_at IS NULL` AND `je.reversed_by_je_id IS NULL`) | **0** |
+  Per row, both `earn` and `bill` return `naive = true` / `standing = false`. **The fix demonstrably works on
+  the live data it was written for**, and load `L-20260624-0083` is not blocked.
+  **Why the declarative approach is the right one and worth recording.** ACCT-F66 derives "is this latch
+  standing?" from the journal entry's own reversal state instead of requiring every reversal path to remember
+  to flip a subledger flag. There is no hook to forget. Given LV-099 — where a migration's effect never
+  landed because a step was assumed to have run — a design with no step to miss is the stronger pattern.
+- severity:  none — verify-after PASS on all three layers
+- LANE:      n/a (verification of CC-1 work)
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             Revrec JE lines and account types joined through `catalogs.accounts`. Latch rows: 2, both
+             `is_active` true with `reversed_by_je_id` non-null on their JEs. Differential predicate counts
+             **2** (naive) vs **0** (ACCT-F66) executed as SQL against those rows.
+- status:    PASS
+
+## LV-106  BANK PATH (Phase-1 hop 9 / WIRE-10) — **WIRING PASS, proven three ways and both directions**; density is 1.5% and is an ops backlog, correctly NOT claimed as green
+- module:    banking · accounting (GUARD — Phase-1 money hop verification)
+- entity:    ALL
+- surface:   `banking.bank_transactions` ↔ `accounting.journal_entries` ↔ `accounting.journal_entry_postings`
+- observed:  The delivery plan anticipated exactly this split for hop 9 — *"Match/categorize wiring proven;
+  density may be ops backlog (named)"* — so I separated the two rather than reporting one number.
+  **(1) The wiring is correct, and the three independent counts agree exactly:**
+  | measure | count |
+  |---|---|
+  | transactions with `categorized_at` set | **170** |
+  | transactions with `matched_journal_entry_id` set | **170** |
+  | distinct bank transactions appearing as a posting source | **170** |
+  Three separate tables agreeing on 170 is a stronger statement than any one of them: a transaction does not
+  get categorized without producing a journal entry, and does not get a journal entry without producing
+  posting lines that name it. The 380 posting lines over 170 transactions (≈2.2 each) is consistent with
+  split categorizations.
+  **(2) Both directions resolve, 0 orphans either way.** Forward (LV-104): all **380**
+  `bank_categorization` posting lines resolve to a live `banking.bank_transactions` row, **0** dangling.
+  Reverse: bank transactions whose `matched_journal_entry_id` points at a **missing** journal entry = **0**.
+  Nothing is matched to a JE that does not exist, and nothing posts from a transaction that does not exist.
+  **(3) Density is 1.5%, and that is an operations fact, not a defect.** **170 of 11,064** transactions are
+  categorized. The remaining 10,894 are uncategorized imported bank feed — the same origin class as the
+  16,245 QBO-cloned bills and the 1,548 relay-ingest fuel rows (§0 origin ruling). **Categorizing them is
+  bookkeeping work, not engineering work**, and "fixing" it in code would mean inventing categorizations.
+  **(4) The tracker is telling the truth about this hop.** `matched_invoice_id` is **0** across all 11,064
+  rows, and the Bank path slice reads **MERGED**, not PASSED, with evidence *"0 customer payment(s) matched to
+  an invoice"*. That is honest reporting of an unexercised leg — the wiring exists, the customer-payment
+  matching leg has never run. Worth stating plainly because it is the opposite of the LV-088 failure: here
+  the board declines to claim green it has not earned.
+  **Also clean:** `voided_at` non-null = **0** and `reconciliation_cleared` = **0** — no voided transactions
+  distorting the counts, and no reconciliation has been run (consistent with the owner's standing
+  RECONCILE-FROZEN instruction, §9.0 item 15).
+- severity:  none — wiring verify PASS; density recorded as a named ops backlog, not filed as a defect
+- LANE:      n/a (verification) — the 10,894 uncategorized transactions are an operations task for the owner's
+             bookkeeping lane, and are explicitly **out of scope** until the owner says "reconcile"
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             `banking.bank_transactions` total **11,064** (credits 2,742); categorized **170**;
+             `matched_journal_entry_id` set **170**, dangling **0**; distinct bank txns appearing as a
+             posting source **170**; `matched_invoice_id` **0**; `reconciliation_cleared` **0**; `voided_at` **0**.
+- status:    PASS (wiring) · density named, not a defect
+
+## LV-107  GUARD VERIFY-AFTER of **ACCT-F119** (#4486, `ae0782836`) — **PASS**: all 4 writers verified on `origin/main`, the owner lock quoted verbatim is real, and the retained legacy read is intact
+- module:    driver_finance · safety · legal (GUARD — post-merge verification)
+- entity:    ALL
+- surface:   the 4 production writers of `driver_finance.driver_liabilities` · `legal/signed-finance-handoff.service.ts`
+- observed:  Same 4-writer surface as ACCT-F114 (LV-095), so the completeness test applies again and I re-ran
+  it rather than reusing the earlier result.
+  **(1) All four writers now insert `requires_acknowledgment = false` — read from `origin/main`:**
+  | writer | inserted value |
+  |---|---|
+  | `safety/safety.routes.ts` (accident spawn) | `…,false,'safety_accident',…` |
+  | `safety/fines.routes.ts` (civil-fine convert) | `false` |
+  | `safety/safety-v5.routes.ts` (internal-fine convert) | `…,false,'internal_fine',…` |
+  | `cash-advances/cash-advance-create.ts` (4th, always correct) | `VALUES ($1,…,0,false)` |
+  **Three fixed, one already right — and no fifth writer**, consistent with the independent enumeration in
+  LV-095.
+  **(2) The owner lock the PR quotes is real, not paraphrased.** `legal/signed-finance-handoff.service.ts`
+  carries it verbatim at lines 29–39: *"NO separate driver-facing deduction-authorization e-sign … the
+  PRIMARY authorizing document is the signed HIRE CONTRACT … do NOT build a separate driver e-sign flow."*
+  So the diagnosis holds: the three sites gated recovery on a signature the company never collects, which
+  could not open, stalling every at-fault recovery and fine before settlement.
+  **(3) The deliberate NON-removal is confirmed present, which is the part most likely to be over-corrected.**
+  The column survives and so does its read — `safety/safety.routes.ts:251` still carries
+  `AND requires_acknowledgment = true` for the `pending_acknowledgments` KPI. That is correct: the lock
+  retains legacy template codes so a pre-existing signed instance still satisfies the gate, and the KPI must
+  keep counting any legacy row. **Deleting the column would have destroyed that.** Ripping out a gate is easy;
+  ripping out only the wrong half of it is the harder and correct move, and it was done.
+  **(4) The stale comment was corrected, not left behind.** `safety-v5.routes.ts` previously asserted *"the
+  existing insert already sets requires_acknowledgment = true"*. On `origin/main` that string is **gone**
+  (0 occurrences) and is replaced by one stating the insert now sets FALSE and that the FD1 approver check is
+  therefore the **only** acknowledgment control on that path. A comment left claiming the opposite of the code
+  is exactly how the next reader re-introduces the defect.
+  **(5) Nothing to restate on prod.** `driver_finance.driver_liabilities` is **0 rows with `n_tup_ins = 0`**
+  (LV-095) — the table has never held a row, so no charge is currently stalled in
+  `pending_acknowledgment` and there is no backfill.
+  **Method note on my own process, recorded because it nearly produced a false finding.** My first pass read
+  these files from the working tree, which sat on an older base, and showed the *pre-fix* values — the stale
+  comment and `true`. I re-read every one through `git show origin/main:<path>` before concluding.
+  **A verification is only as good as the ref it reads**; for post-merge checks the ref must be `origin/main`,
+  never the local checkout.
+- severity:  none — verify-after PASS
+- LANE:      n/a (verification of CC-1 work)
+- neon-check: prod `br-fancy-credit-akjnd07a` — `driver_finance.driver_liabilities` 0 rows / `n_tup_ins` 0
+             (per LV-095), so no stalled acknowledgment rows exist. Code verified against `origin/main`
+             @ `ae0782836`.
+- status:    PASS
+
+## LV-108  LV-099 IS **NOT SYSTEMIC** — I hunted for more ledger-says-applied/effect-missing migrations and found none; the ledgers disagree on 7 rows, of which 1 is a phantom naming a file that does not exist
+- module:    db/migrations (GUARD — bounding the LV-099 defect class)
+- entity:    ALL
+- surface:   `_system._schema_migrations` · `ih35_migrations.applied_migrations` · `db/migrations/*.sql` on `origin/main`
+- observed:  LV-099 found a migration recorded applied in both ledgers whose effect never reached prod. The
+  obvious next question is **how many others**, because if that is a class it changes what every green means.
+  **I looked, and it is not a class.** That is the finding.
+  **(1) The two ledgers disagree by exactly 7 rows, in one direction only.**
+  `ih35_migrations.applied_migrations` **884** vs `_system._schema_migrations` **877**; files on disk **875**.
+  Rows in `_system` but not in `ih35_migrations`: **0**. So one ledger is a strict superset — a bookkeeping
+  inconsistency, not two ledgers contradicting each other about the same migration.
+  **(2) Six of the seven exist as real files; ONE is a phantom.**
+  `202610290000_disp01_escrow_abandon_trigger_text_cast.sql` is ledgered (applied_by
+  `cursor-live-ops-2026-07-30`) but **has no file on `origin/main`**. Its renumbered twin
+  `202610291200_disp01_escrow_abandon_trigger_text_cast.sql` *does* exist and is in **both** ledgers. So the
+  file was renumbered and the stale ledger row was left behind. **This is a live historical instance of
+  precisely the renumber-and-reapply hazard the LV-087 checksum guard now blocks** (verified working in
+  LV-096) — the guard arrived after this one, which is why it is in the record rather than prevented.
+  **(3) I verified the EFFECT of the six real ones rather than trusting their ledger rows — all present:**
+  | migration | asserted effect | verified on prod |
+  |---|---|---|
+  | `…lease_bridge_rent_expense_coa_role` | CHECK on `chart_of_accounts_roles.role` includes `rent_expense` | **present** (constraint def 1,515 chars, includes it) |
+  | `…drv_02_escrow_pending_source_type_catalog_fk` | composite FK to `catalogs.driver_deduction_types` | **present** — `(operating_company_id, source_type)` → `(operating_company_id, code)`, entity-scoped |
+  | `…sweep_c11_driver_subcatalog_split_brain_lock` | trigger + assert function on `catalogs.license_classes` | **both present** |
+  | `…flt_02_real_fleet_owned_by_trk` | units owned by TRK | **present** — all **182** units carry `owner_company_id` = TRK |
+  | `…nd_inv_01_proforma_invoice_pipeline` | proforma invoice status | **present** — 1 proforma invoice exists |
+  | `…archive_legacy_fixed_assets_schema_rule07` | archive-if-exists | conditional no-op by construction |
+  **(4) So LV-099 is ONE migration, and its mechanism is specific rather than general.** `0094` wraps its body
+  in `BEGIN;` and `ALTER TYPE … ADD VALUE` cannot execute inside a transaction block on older PostgreSQL.
+  That is a property of *that* migration's shape, not of the apply pipeline. Every other migration checked
+  here took effect exactly as written.
+  **Why a negative result is worth recording.** Had I filed LV-099 and stopped, the reasonable inference
+  would be "the ledger cannot be trusted, re-verify everything" — expensive and, as it turns out, wrong. The
+  scope is **one migration plus one stale ledger row**. Bounding a defect is as much a part of the verdict as
+  finding it, and an unbounded critical finding distorts priorities as badly as a missed one.
+  **What I did NOT verify:** the effects of the ~869 migrations present in both ledgers. This checked the 7
+  that the ledgers disagree about, on the reasoning that a disagreement is the strongest available signal of
+  an apply that went sideways. A full effect audit of every migration is a different and much larger exercise.
+- severity:  informational (scope-bounding for LV-099) · minor (1 phantom ledger row naming a missing file)
+- LANE:      CC-1 (migrations) — optionally reconcile the 7-row ledger drift and retire the phantom
+             `202610290000_…` row (**archive/annotate, never delete** — rule 07 and the ledger is evidence).
+             **LV-099 itself remains the priority and is unchanged by this.**
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             Ledger counts **884** / **877**, reverse-difference **0**; file existence resolved against
+             `origin/main` via `git cat-file -e`, disk count **875**; each effect probe as tabulated.
+- status:    OPEN (informational)

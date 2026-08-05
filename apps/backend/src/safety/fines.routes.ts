@@ -391,7 +391,11 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
               reference_doc_id,
               status
             ) VALUES (
-              $1,$2,'civil_fine',$3,$4,$4,0,true,'safety_fine',$5,$6,'pending_recovery'
+              -- requires_acknowledgment = FALSE — see the accident path in safety.routes.ts. The
+              -- authorizing document is the signed HIRE CONTRACT (legal/signed-finance-handoff.service.ts,
+              -- owner-LOCKED 2026-07-04/05), not a per-charge driver e-sign. Company sign-off at
+              -- settlement prep (MUST 3.4.2 d/e) + maker != checker (F13) remain the controls.
+              $1,$2,'civil_fine',$3,$4,$4,0,false,'safety_fine',$5,$6,'pending_recovery'
             )
             RETURNING *
           `,
