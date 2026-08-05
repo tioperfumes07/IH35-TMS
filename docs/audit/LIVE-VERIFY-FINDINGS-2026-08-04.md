@@ -1422,3 +1422,181 @@ membership-scoped session.
 - LANE:      CC-1 (money) — repoint any remaining readers of `accounting.qbo_*` at `mdata.*`; archive the retire tables in place, never drop
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` TRANSP, exit 0. `accounting.qbo_*` = 5 tables totalling 7,934 rows as listed. `mdata.qbo_*` = 14 tables, top counts as listed. `mdata.vendors` **2,831** vs `accounting.qbo_vendors` **2,782**; `mdata.customers` **2,696** vs `accounting.qbo_customers` **2,655**. FKs targeting `accounting.qbo_*` = **1**, self-referential on `qbo_accounts`.
 - status:    OPEN
+
+---
+
+# PASS 2026-08-05 — CC-2 / GUARD live verification (deploy `94c520a` == `origin/main` tip)
+
+**ID continuity note:** this file's prior max is **LV-084**. `LV-085`/`LV-086`/`LV-087` are referenced by
+merged PR **#4463** ("CLAIM-RESERVE: claim verify-step 2625 for CC-1 (LV-087 checksum-collision guard)")
+but a repo-wide search returns **zero** definitions for any of the three. A verify-step number was reserved
+on `main` against a finding ID that has never been published. I start at **LV-088** so I cannot collide with
+whatever CC-1 holds those IDs to mean. Flagged, not claimed — CC-1 owns reconciling it.
+
+## LV-088  SCENARIO TRACKER ENTITY LEAK — the TRANSP board displays **ALL-entity** certifications, including USMCA rows, on every one of the **23** scenario keys
+- module:    home · scenario-tracker (GUARD — false-green / entity isolation)
+- entity:    TRANSP + USMCA + TRK (all three; the leak is in the read path, not the data)
+- surface:   Office HOME → "End-to-End Scenario Tracker" · `apps/backend/src/home/scenario-tracker.service.ts` `currentCert()` · `audit.scenario_status`
+- expected:  A board whose header reads `scope: 91e0bf0a-…` (TRANSP) shows TRANSP's certification.
+- observed:  It shows the **ALL-scope** certification instead. Live on prod, TRANSP selected, three hops on one screen:
+  | hop | live (TRANSP, correct) | cert shown (ALL, wrong) | TRANSP cert on prod | USMCA cert on prod |
+  |---|---|---|---|---|
+  | `hop.book` | 2 loads | **3 loads** | 2 | 1 |
+  | `hop.invoice` | 2 invoices sent/paid | **5 invoices** | 2 | 3 |
+  | `hop.gl` | 1747 journal entries | **1765 entries** | 1747 | 12 |
+  The displayed number is exactly TRANSP + USMCA + TRK every time. **USMCA freight is being counted onto
+  the TRANSP board** — and USMCA is the entity that is supposed to stay hidden until launch (`ih35-entity-facts`).
+  **ROOT CAUSE — located, not inferred.** `currentCert()` (scenario-tracker.service.ts:~85):
+  ```sql
+  WHERE is_current AND scenario_key = $1
+    AND (operating_company_id IS NULL OR $2::uuid IS NULL OR operating_company_id = $2::uuid)
+  ORDER BY verified_at DESC LIMIT 1
+  ```
+  The first disjunct `operating_company_id IS NULL` makes the **ALL-scope row match for every entity**. Two rows
+  then qualify (ALL + TRANSP) and the tie is broken by `ORDER BY verified_at DESC LIMIT 1` — with **no
+  deterministic tiebreaker**. The certifier writes all four scopes in one sweep, so `verified_at` is *identical*:
+  every one of the **23** scenario keys has exactly **4** current rows with **`count(DISTINCT verified_at) = 1`**
+  (`2026-08-05T19:05:00.002Z`). The tie is resolved arbitrarily by Postgres, and on prod it is landing on ALL.
+  **Why this is worse than a cosmetic count.** This board is the Phase-1 evidence surface — the thing read to
+  decide whether a hop is done. Three hops currently read **PASSED** on TRANSP while the number underwriting
+  that badge belongs partly to a different legal entity. Per §0 the highest-cost error class is attributing
+  something to the wrong entity; here it is happening in the *evidence layer itself*, which is the layer whose
+  entire job is to be trustworthy. An operator cannot see it: both numbers are plausible and sit side by side.
+  **Scope is systemic, not one row:** 23 of 23 scenario keys, all 4 scopes, every hop on the board.
+  **What I am NOT claiming.** The **live** (left-hand) numbers are correct and correctly entity-scoped — I
+  verified 1747 = TRANSP's 1769 JEs minus its 22 reversals, exactly. The defect is confined to the *cert*
+  half of the row. The underlying `audit.scenario_status` data is also correct — all four scopes are stored
+  properly and separately. **Nothing needs recomputing; only the read path needs to stop matching ALL.**
+- severity:  **critical** (cross-entity contamination of the evidence surface; USMCA surfaced on TRANSP; 23/23 keys)
+- LANE:      CC-1 (money/GL board) or CURSOR (home FE read path) — fix `currentCert()` to prefer the entity-specific
+             row: match ALL **only** when `$2 IS NULL`, or add a deterministic tiebreaker
+             (`ORDER BY (operating_company_id IS NOT NULL) DESC, verified_at DESC`). Guard must plant a
+             two-scope fixture with identical `verified_at` and assert the entity row wins — a guard that
+             only checks "a cert exists" reproduces this bug.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             `audit.scenario_status WHERE is_current`: **23** keys × **4** rows, `distinct_ts = 1` on every key,
+             exactly 1 ALL-scope row per key. `hop.book` ALL=3 / TRANSP=2 / USMCA=1 / TRK=0;
+             `hop.invoice` ALL=5 / TRANSP=2 / USMCA=3 / TRK=0; `hop.gl` ALL=1765 / TRANSP=1747 / USMCA=12 / TRK=6.
+             Corroborated in-app at `https://app.ih35dispatch.com/home` as owner, TRANSP selected.
+- status:    OPEN
+
+## LV-089  GL INTEGRITY — **PASS**: all 1,787 journal entries balance DR=CR exactly, zero orphans, zero single-line entries
+- module:    accounting (GUARD — money integrity, fail-closed check)
+- entity:    ALL (TRANSP 1769 · USMCA 12 · TRK 6)
+- surface:   `accounting.journal_entries` × `accounting.journal_entry_postings`
+- observed:  This is the check I am required to fail closed on, and it **passes cleanly**:
+  - **1,787 of 1,787** JEs balanced (`sum(debit) = sum(credit)` per entry). **Unbalanced: 0.**
+  - Total debits **1,163,883,772** cents == total credits **1,163,883,772** cents ($11,638,837.72).
+  - **0** single-line JEs (every entry has ≥2 postings).
+  - **0** journal entries with no posting lines at all (LEFT JOIN orphan check returned empty).
+  - **0** posting lines with a NULL `account_id`.
+  - Every JE on prod is `status='posted'` with `voided_at IS NULL` in all three entities.
+  Reversal linkage is also structurally sound: all **22** reversal JEs carry `reverses_je_id`, and **22** carry
+  `reversed_by_je_id` — the §10 both-way link resolves through **columns, not memo text**. I checked memo-parsing
+  specifically because the memos do contain "Reversal of journal entry <uuid>"; the FK is populated in 22 of 22,
+  so the text is redundant rather than load-bearing.
+- severity:  none — recorded as a PASS so the next agent does not re-derive it
+- LANE:      n/a
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             Counts as stated; `debit_or_credit` domain verified to be exactly {`debit`,`credit`} so the
+             balance aggregate cannot silently miss a third spelling.
+- status:    PASS
+
+## LV-090  READ-PATH CENSUS for the retired `accounting.qbo_*` set — the **7,084 drifted master-data rows have ZERO live readers** and are safe for CC-1 to archive; the 860 recon rows are LIVE and must NOT be
+- module:    accounting · integrations (GUARD — §10, unblocks LV-084)
+- entity:    ALL
+- surface:   `accounting.qbo_*` (RETIRE) vs live code in `apps/backend/src`
+- observed:  LV-084 established the retired set has drifted from canonical. The open question blocking CC-1 was
+  whether anything still **reads** it. Split by table, live code only (tests/specs excluded):
+  | retired table | prod rows | live code refs | verdict |
+  |---|---|---|---|
+  | `accounting.qbo_vendors` | 2,782 | **0** | **safe to archive** |
+  | `accounting.qbo_customers` | 2,655 | **0** | **safe to archive** |
+  | `accounting.qbo_accounts` | 1,647 | **0** | **safe to archive** |
+  | `accounting.qbo_remote_counts` | 858 | **10** | **LIVE — do not archive** |
+  | `accounting.qbo_remote_count_collection_state` | 2 | **6** | **LIVE — do not archive** |
+  **The three drifted master-data tables — the entire 7,084-row drift documented in LV-084 — have no live
+  reader.** The 49-vendor / 41-customer divergence is therefore inert: it can answer no query, because nothing
+  asks. Archiving them cannot break a read path.
+  **The two recon tables are a different matter and must be carved out.** They are not stale duplicates at all —
+  `remote-count-collector.ts` **INSERTs** into both (lines 106/137/230), and `reconciliation-worker.service.ts`
+  + `qbo-recon-reads.ts` + `qbo-reconcile-read.service.ts` read them. Treating "`accounting.qbo_*` is RETIRE"
+  as a blanket rule would archive a table the reconciliation worker actively writes. **The §10 mapping is
+  correct per-table, not per-prefix.**
+- severity:  informational — this is the evidence CC-1 asked for; the actionable part is the carve-out
+- LANE:      CC-1 (money) — archive `qbo_vendors`/`qbo_customers`/`qbo_accounts` in place (never drop, per
+             `07-never-delete-only-add`); **exclude** `qbo_remote_counts` + `qbo_remote_count_collection_state`
+             from any retire sweep and from any guard that forbids writes to `accounting.qbo_*`
+- neon-check: prod `br-fancy-credit-akjnd07a`, bypass in its own statement, exit 0. Row counts as stated from
+             `pg_class`/`pg_stat_user_tables`. Code census by grep over `apps/**/*.ts(x)` excluding
+             `.test.`/`__tests__`/`.spec.`; per-table counts reproduced individually, not inferred from a total.
+- status:    OPEN (evidence delivered to CC-1)
+
+## LV-091  PHANTOM SCHEMA — live payroll code selects `FROM accounting.qbo_payroll_links`, a table that **does not exist on prod**; the route is also never mounted, so a shipped feature is inert
+- module:    payroll-integration (GUARD — phantom schema + wiring)
+- entity:    ALL
+- surface:   `apps/backend/src/payroll-integration/qbo-payroll-pull.ts:52` · `aggregate.routes.ts`
+- observed:  `pullQboPayroll()` runs `SELECT … FROM accounting.qbo_payroll_links qpl WHERE qpl.operating_company_id = $1 …`.
+  On prod **`to_regclass('accounting.qbo_payroll_links')` returns NULL** — the table exists in no form
+  (checked all `relkind`, so it is not a view or matview either). The `accounting` schema contains exactly five
+  `qbo_*` relations and this is not among them. Any execution throws `42P01 undefined_table`.
+  **It is not currently throwing in production, and the reason is its own defect.** `pullQboPayroll` is called
+  by `aggregate.routes.ts:51`, which lives inside `registerPayrollIntegrationRoutes` — exported as a
+  `fastify-plugin` default export and referenced **nowhere outside its own file**. There is no global autoload
+  that would pick it up: the only `@fastify/autoload` in the codebase is in `accounting/index.ts`, scoped to the
+  accounting directory. So `GET/POST /api/v1/payroll-integration/aggregate*` is **not mounted** on the running
+  server. A payroll-aggregate feature appears built (routes, RBAC, zod validation, tests) and is unreachable.
+  **Both halves matter and they mask each other.** The unmounted route hides the phantom table (no 500s in
+  logs); the phantom table means the day anyone wires the route up, it fails immediately on first call. Fixing
+  only the mount would ship a guaranteed `42P01` to production.
+  **UNVERIFIED — whether `accounting.qbo_payroll_links` was ever intended to exist** (no migration creates it)
+  or whether the canonical target should be `mdata.qbo_*` per §10. That is a design call, not a live fact, and
+  it decides whether the fix is a migration or a repoint. CC-1 owns it.
+- severity:  major (latent guaranteed runtime failure + a module that reads as built but is not wired)
+- LANE:      CC-1 (money — payroll/settlements) — decide canonical target, then either add the table via
+             idempotent migration or repoint at `mdata.qbo_*`; mount the plugin only after the read resolves.
+             Guard must assert every `FROM accounting.<table>` in live code resolves via `to_regclass` — this
+             class is invisible to typecheck and to CI without a live schema check.
+- neon-check: prod `br-fancy-credit-akjnd07a`, bypass in its own statement, exit 0.
+             `to_regclass('accounting.qbo_payroll_links')` → **NULL**; control on the same query
+             `to_regclass('accounting.qbo_vendors')` → `accounting.qbo_vendors` (non-null), so the NULL is a
+             real absence and not a search_path or permission artifact.
+- status:    OPEN
+
+## LV-092  POSTING-LINE TRACEABILITY — 82 posted GL lines carry no `source_transaction_type`/`id`; **44 are reversals and 4 are revrec (real gap), 32 are manual JEs (EXPECTED STATE, not a defect)**
+- module:    accounting (GUARD — §10 both-way linkage on posting lines)
+- entity:    TRANSP (all 82)
+- surface:   `accounting.journal_entry_postings.source_transaction_type` / `source_transaction_id` / `reversal_of_line_id`
+- observed:  Of **3,603** posting lines, **82** have NULL `source_transaction_type` **and** NULL
+  `source_transaction_id`. I classified all 82 by origin before calling any of it a defect (§0 origin test):
+  | cohort | JEs | lines | verdict |
+  |---|---|---|---|
+  | reversal JEs (`source='auto'`) | 22 | **44** | real gap — line-level |
+  | manual JEs (`source='manual'`) | 2 | **32** | **EXPECTED — not a defect** |
+  | revrec JEs (`source='auto'`) | 2 | **4** | real gap |
+  | fuel-card overage receivable (`auto`) | 1 | **2** | real gap |
+  **The 32 manual lines are correct as they stand.** A manual journal entry *is* the source document — there is
+  no upstream transaction to point at. Reporting those as orphans would be the `expected-state-recorded-as-failure`
+  anti-pattern, and a guard that reddens on them would have to be suppressed on day one.
+  **The real gap is 50 lines, and it is narrower than "no traceability".** For the 44 reversal lines the
+  *entry-level* link is intact (LV-089: 22/22 carry `reverses_je_id`), so a reversal can always be traced to the
+  JE it reverses. What is missing is the **line-level** link: `reversal_of_line_id` is populated on **0 of 44**,
+  and system-wide **0 of 3,603** — the column exists and has never been written. So you can say *which entry*
+  a reversal undoes, but not *which line* — and with multi-line entries that mapping is inferred, not recorded.
+  **The 4 revrec lines are the ones that matter going forward.** These are the Phase-1 money hop
+  (`Revrec Event 1 earn` / `Event 2 bill` on load `L-20260624-0083`). Both were subsequently reversed with an
+  owner-authorized memo recording that revrec had posted off load status with **zero delivery evidence and no POD**.
+  So the revrec poster today writes GL lines that name no source transaction, on the exact hop Phase 1 is about
+  to run for real. At 4 lines this is trivially fixable; at dispatch volume it is a reconciliation problem.
+  **Not blocking, and I am not inflating it:** `posting_batch_id` is populated on 3,510 of 3,603 lines
+  (1,755 batches), so batch-level provenance exists for the overwhelming majority.
+- severity:  major (revrec cohort — the going-forward path) / minor (reversal cohort — entry-level link intact)
+- LANE:      CC-1 (money) — stamp `source_transaction_type`/`id` in the revrec poster and
+             `reversal_of_line_id` in the reversal poster; reuse the existing poster, write no new GL math.
+             **Guard must scope to TMS-native non-manual entries** (`source <> 'manual'`) or it reddens on
+             expected state and gets disabled.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             82 NULL-source lines of 3,603; cohort split by `je.source` × memo shape as tabulated;
+             `reversal_of_line_id` non-null = **0** of 44 reversal lines and 0 of 3,603 overall;
+             `posting_batch_id` non-null = 3,510 across 1,755 batches.
+- status:    OPEN
