@@ -633,9 +633,9 @@
   "progress": "38 of 39",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
-    "pass_count": 0,
-    "total_count": 3,
-    "progress": 0,
+    "pass_count": 4,
+    "total_count": 5,
+    "progress": 80,
     "prod_verified": false,
     "slices": [
       {
@@ -645,13 +645,23 @@
       },
       {
         "key": "hop.invoice",
-        "holds": false,
-        "evidence": "no count probe (resolved at request time)"
+        "holds": true,
+        "evidence": "5 live invoice(s) sent or paid"
       },
       {
         "key": "hop.gl",
-        "holds": false,
-        "evidence": "no count probe (resolved at request time)"
+        "holds": true,
+        "evidence": "1765 live journal entr(ies)"
+      },
+      {
+        "key": "scenario.coa",
+        "holds": true,
+        "evidence": "149 account(s) in the chart"
+      },
+      {
+        "key": "scenario.ap",
+        "holds": true,
+        "evidence": "5 open (non-voided) bill(s)"
       }
     ]
   }
