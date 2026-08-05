@@ -1292,13 +1292,27 @@ DR  Driver Receivable          (entity = driver-vendor, class = unit)      $X
 
 **MUST 3.13.3.3.A** — ~~A driver-liable expense MUST require the driver's signed acknowledgment per WF-036 BEFORE the deduction schedule is auto-applied to settlements. Until acknowledgment, the deduction is `pending_acknowledgment` and does not auto-deduct.~~
 
-> **⛔ SUPERSEDED — OWNER RULING 2026-08-05.** There is **NO per-charge driver acknowledgment gate.**
-> Driver deductions are authorized by the **signed HIRE POLICY** at hire, and the **company decides the
-> deduction at settlement preparation**. A `pending_acknowledgment` state that blocks auto-deduction
-> must **not** be built or re-introduced. Owner decision wins over spec (§0 precedence: DECISIONS →
-> the owner). Recorded in `docs/lockdown/00_LOCKED_DECISIONS.md` §9.5,
-> `.claude/skills/ih35-tms-standards/SKILL.md` §6, and `docs/CLAUDE.md`.
-> **Do not re-add this gate.** The signed hire policy is the authorization of record.
+> **⛔ SUPERSEDED — OWNER-LOCKED DECISION 2026-07-04/07-05, reaffirmed 2026-08-05.**
+> The **signed HIRE CONTRACT authorizes payroll/settlement deductions. There is NO separate
+> driver-facing deduction-authorization e-sign, and NO per-expense acknowledgment before
+> auto-deduction.** The company decides the deduction at settlement preparation.
+> A `pending_acknowledgment` state that blocks auto-deduction must **not** be built or re-introduced.
+>
+> **SOURCE OF RECORD (cite these, do not re-derive):**
+> - `apps/backend/src/legal/signed-finance-handoff.service.ts:25-33` — the lock in code: the legacy
+>   `driver_deduction_auth` template codes are retained ONLY so a pre-existing signed instance still
+>   satisfies the gate; the PRIMARY authorizing document is the signed hire contract
+>   (`isHireContractTemplateCode`).
+> - Audit item **0008-f — RESOLVED**.
+> - `docs/lockdown/00_LOCKED_DECISIONS.md` §9.5 · `.claude/skills/ih35-tms-standards/SKILL.md` §6 ·
+>   `docs/CLAUDE.md`.
+>
+> **THE ONLY settlement acknowledgment is the COMPANY USER's sign-off — `MUST 3.4.2(d)(e)`**
+> (debt-alert disclosure acknowledged by *the user signing off* + digital signature on file). That is
+> a company-side control and it STAYS. In code it is `driver_finance.driver_settlements.acknowledged_at`
+> / `acknowledged_by_user_id`, written with the authed company user's uuid
+> (`settlements.routes.ts:412`) — do NOT mistake it for a driver acknowledgment and do NOT remove it.
+> Owner decision wins over spec (§0 precedence: DECISIONS → the owner). **Do not re-add the driver-ack gate.**
 
 #### 3.13.3.4 Internal company fine (policy violation) [WF-035]
 
