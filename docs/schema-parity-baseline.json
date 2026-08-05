@@ -5498,6 +5498,7 @@
     "integrations.relay_company_cards": [
       "card_last4",
       "created_at",
+      "funding_bank_account_id",
       "id",
       "is_active",
       "label",
