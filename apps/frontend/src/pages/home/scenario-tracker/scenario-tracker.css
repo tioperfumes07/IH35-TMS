@@ -9,14 +9,24 @@
   --st-muted: #64748b;
   --st-green: #15803d;
   --st-green-bg: #dcfce7;
-  /* §7: navy/slate only — no blue/indigo/violet accent hex */
+  /* §7 GOVERNS — navy, NOT the locked design HTML's blue accent.
+     I briefly restored the design's blue, having checked only the two palette guards that match
+     Tailwind CLASS names and concluded no guard covered raw hex. That was wrong:
+     verify-section7-palette-maintenance scans for non-§7 accent HEX and rejected it. So the drift
+     between CLAUDE.md §7 ("no blue") and the locked design resolves in §7's favour, and the guard is
+     the tie-breaker rather than my reading of it. Do not reintroduce the hex here, even in a comment —
+     that guard reads raw text.
+     The Money/Screens lane distinction is preserved through the pill BACKGROUND (green vs slate),
+     not hue, so no information is lost. */
   --st-blue: #1f2a44;
   --st-blue-bg: #e2e8f0;
   --st-amber: #b45309;
   --st-amber-bg: #fef3c7;
   --st-red: #b91c1c;
   --st-red-bg: #fee2e2;
+  /* §7: no purple — risk cards use slate. */
   --st-purple: #334155;
+  --st-purple-bg: #e2e8f0;
   max-width: 900px;
   margin: 0 auto;
   padding: 16px;
@@ -403,4 +413,14 @@
 .st-legacy-link a {
   color: #c7d2e5;
   text-decoration: underline;
+}
+
+/* Part B linkage line — .sc .lk in the locked design. */
+.st-sc .st-lk {
+  font-size: 11px;
+  color: #334155;
+  margin-top: 7px;
+}
+.st-sc .st-lk b {
+  color: var(--st-ink);
 }
