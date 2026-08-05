@@ -1,0 +1,55 @@
+# RESERVATION LEDGER
+**Multi-writer, append-only.** Explicitly carved out of Rule 28 — every agent appends its OWN rows here (Cascade is NOT the sole writer of this file, unlike `AUDIT-COVERAGE-LIVE.md`). Protocol: `docs/audit/RESERVATION-LEDGER-PROTOCOL-2026-08-05.md`.
+
+**Never edit a row in place.** Release/change = a NEW dated row that supersedes the prior one. History is the source of truth for "who holds what right now" — the most recent row per class-id/finding-id/claim-block wins.
+
+**Reserve-before-start (every class/finding):** `git pull --ff-only origin main` → scan for an active `RESERVED` row whose class-id/finding-id matches or whose files overlap yours → overlap = STOP, pick something else → clear = append your row, commit (docs-only, atomic), push, self-merge on green → push rejected (non-ff) = re-pull, re-scan, back off if now taken.
+
+---
+
+## CLAIM-BLOCKS (Rule 37 verify-step numbers — per-agent, non-overlapping, no shared counter)
+
+Base confirmed 2026-08-05: max claimed in `scripts/verify-steps/CLAIMED-NUMBERS.json` = **2632** (both local and `origin/main`, re-checked after this session's merges). Next free = 2633. Blocks of 30, contiguous, non-overlapping. Retires the even/odd hand-off.
+
+| Type | Agent | Range |
+|---|---|---|
+| CLAIM-BLOCK | CC-1 | 2633-2662 |
+| CLAIM-BLOCK | CC-3 | 2663-2692 |
+| CLAIM-BLOCK | CC-2 | 2693-2722 |
+| CLAIM-BLOCK | Cascade | 2723-2752 |
+
+**2026-08-05 update:** `2633` was claimed by CC-1 on `main` (#4500, `CLS-GL-DARK` ratchet
+`verify-gl-posting-coverage`) after this base was confirmed but before this file landed — it falls
+inside CC-1's block as expected, no collision. Next free for CC-1 is **2634**.
+
+Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below, proceed — no waiting on another agent. Rule 37's "claim before author, verified on main" is unchanged; only the number source changes. When a block is ~80% used, append a `BLOCK-REQUEST` row and Cascade allocates the next contiguous block (next base = current max block ceiling + 1, i.e. 2753 for the next round).
+
+---
+
+## ACTIVE RESERVATIONS (seeded 2026-08-05, in-flight this session)
+
+| Timestamp (CST) | Agent | Class-id / Finding-id | Files | Status | Branch/PR |
+|---|---|---|---|---|---|
+| 2026-08-05T17:50:00-05:00 | CC-1 | CLS-DISP-WIRE-06 | integrations/relay-payments/relay-fuel-canonical-bridge.ts, expense_attribution.expense_load_links | RESERVED | — |
+| 2026-08-05T17:50:00-05:00 | CC-1 | CLS-GL-DARK (ratchet) | scripts/verify-gl-posting-coverage.mjs | RESERVED | — |
+| 2026-08-05T17:50:00-05:00 | CC-1 | CLS-DUAL-PATH (ratchet) | scripts/verify-qbo-canonical-recon.mjs | RESERVED | — |
+| 2026-08-05T17:50:00-05:00 | CC-3 | CLS-DISP-WIRE-07 | apps/backend/.../delivery-evidence-latch.ts, driver/loads.routes.ts, driver-pwa/dispatch-view.routes.ts, mdata/loads.routes.ts | RESERVED | — |
+| 2026-08-05T17:50:00-05:00 | CC-3 | CLS-ORPHAN-SURFACE / CLS-UUID-LABEL / CLS-SILENT-CAP | (list on start) | RESERVED | — |
+| 2026-08-05T17:50:00-05:00 | CC-2 | verify-after (read-only, docs-only evidence) | — | N/A (no file reservation — read-only never collides) | — |
+
+## KNOWN HOTFILE OVERLAPS (Cascade pre-audit, CLASS-DRAIN CONVERGENCE 2026-08-05 — flag before either side starts)
+
+| Path | Claimed by (card) | Note |
+|---|---|---|
+| `apps/backend/src/fuel` | `CLS-LINKAGE-ONEWAY` (LINK-005, N/A-PRE-OPERATIONAL — should NOT open a PR here), `CLS-DISP-WIRE-06` (fuel_transactions.load_id backfill), `CLS-ECON-EMPTY` (ECON-005 fuel overage_deduction_id dead code) | 3-way directory-level overlap. Only one of `CLS-DISP-WIRE-06` / `CLS-ECON-EMPTY` should hold this directory at a time — reserve below before starting either. |
+| `apps/backend/src/banking` | `CLS-LINKAGE-ONEWAY` (dir-level, LINK-006/007/008 — findings only, no fix assigned yet), `CLS-BANK-MATCH-DENSITY` (SS-003 real defect — `categorization.service.ts`, `categorization.routes.ts`, `banking.routes.ts`) | `CLS-BANK-MATCH-DENSITY`'s SS-003 is the only actionable banking instance right now. Reserve `apps/backend/src/banking/categorization.*` before starting SS-003. |
+
+---
+
+## APPEND-LEASE (short-hold lock for appending to `AUDIT-COVERAGE-LIVE.md`'s Findings table — pull → append → regen → push → release)
+
+*(none active — append here when taking a lease)*
+
+---
+
+## LEDGER ROWS (append below this line, oldest first — do not reorder, do not edit existing rows)

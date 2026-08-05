@@ -5,6 +5,8 @@ Method is governed by **`docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md` (v3.1 · 202
 **This file is the work list.** Before ANY block, read it. Your work list = the rows where
 `Verdict = FAIL` **and** `Status = OPEN` **and** the lane is yours.
 
+**Before starting a class/finding, RESERVE it in `RESERVATION-LEDGER.md`** (multi-writer, carved out of Rule 28). Draw verify-step numbers from your own CLAIM-BLOCK. On a Scoreboard conflict: union the Findings rows and regenerate — never hand-merge. Protocol: `docs/audit/RESERVATION-LEDGER-PROTOCOL-2026-08-05.md`.
+
 Established 2026-08-02 · **APPEND-ONLY** · one file, many writers.
 
 ---
