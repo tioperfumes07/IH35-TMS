@@ -33,6 +33,27 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
 const OUT = "docs/audit/program-scoreboard.json";
+const MODULE_DIR = "docs/module-completion";
+
+/**
+ * ADDITIVE write into docs/module-completion/<module>.json.
+ *
+ * These files are NOT ours to regenerate wholesale: they carry curated `items`, `sweep_matrix`,
+ * `desktop_audit` and `ranked_fail_registry` that the auditor lane maintains by hand, and they are a
+ * serialized hot file (Rule 26). Overwriting them from a probe would delete real audit work to publish
+ * a percentage — trading something irreplaceable for something recomputable.
+ *
+ * So the live numbers go into their OWN key, `live_scenario_probe`, and every existing key is left
+ * exactly as found. The derived percentage is therefore never hand-typed, and nothing curated is lost.
+ */
+function writeModuleLiveBlock(module, block) {
+  const path = `${MODULE_DIR}/${module}.json`;
+  if (!existsSync(path)) return false;
+  const doc = JSON.parse(readFileSync(path, "utf8"));
+  doc.live_scenario_probe = block;
+  writeFileSync(path, JSON.stringify(doc, null, 2) + "\n");
+  return true;
+}
 
 /** Which module each slice belongs to. Cascade owns the module→% mapping; this is the slice→module half. */
 export const SLICE_MODULE = {
@@ -156,6 +177,25 @@ async function main() {
       process.exit(0);
     }
     writeFileSync(OUT, next);
+    // Additive per-module live block. Modules with no matching file are skipped, not created — this
+    // job reports on the module set that exists, it does not invent modules.
+    let wrote = 0;
+    for (const [module, v] of Object.entries(board.modules)) {
+      if (module === "unmapped") continue;
+      if (
+        writeModuleLiveBlock(module, {
+          source: "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
+          pass_count: v.pass_count,
+          total_count: v.total_count,
+          progress: v.progress,
+          prod_verified: v.prod_verified,
+          slices: v.slices,
+        })
+      ) {
+        wrote += 1;
+      }
+    }
+    console.log(`scoreboard-from-live: updated live_scenario_probe in ${wrote} module-completion file(s).`);
     const summary = Object.entries(board.modules)
       .map(([m, v]) => `${m} ${v.pass_count}/${v.total_count}`)
       .join(" · ");

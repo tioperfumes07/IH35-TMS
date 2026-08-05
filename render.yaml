@@ -56,6 +56,21 @@ services:
         source: /*
         destination: /index.html
 
+  # SCENARIO CERTIFIER — spec §4. NOTE: the schedule that actually runs is the IN-PROCESS cron
+  # (apps/backend/src/home/scenario-certify.cron.ts, every 5 min America/Chicago). This service is
+  # declared for parity with the spec and for manual/one-off runs, but Render cron SERVICES in this
+  # blueprint have historically not been provisioned — so nothing here may be treated as proof the
+  # certifier is running. Proof is audit.scenario_status rows refreshing, nothing less.
+  - type: cron
+    name: scenario-certify
+    runtime: node
+    schedule: "*/5 * * * *"
+    buildCommand: npm install && npm run build:backend
+    startCommand: node scripts/scenario-certify.mjs
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+
   - type: cron
     name: loves-card-import
     runtime: node
