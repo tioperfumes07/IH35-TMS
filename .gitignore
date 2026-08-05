@@ -100,3 +100,8 @@ docs/module-completion/safety.md
 # on the derived file. Generate on typecheck/build/dev (frontend package.json) and via
 # MODULE_COMPLETION_AUTOGEN / verify-module-completion --write-md. Do not re-commit it.
 apps/frontend/src/generated/module-completion.ts
+
+# Selftest scratch — these are now cleaned up by the scripts themselves (teardown runs before
+# process.exit); ignored as belt-and-braces so a crashed run can never dirty another lane's tree.
+.tmp-selftest-*.ts
+.verify-wo-cancel-selftest-*/

@@ -14,6 +14,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -98,7 +99,16 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
     const wo = read("apps/backend/src/work-orders/work-orders.routes.ts");
     if (/catalogs\.wo_cancellation_reasons/.test(wo)) {
       const fake = wo.replace(/catalogs\.wo_cancellation_reasons/g, "catalogs.REMOVED");
-      fs.writeFileSync(path.join(ROOT, ".tmp-selftest-wo.ts"), fake);
+      // JANITOR: this wrote .tmp-selftest-wo.ts into the REPO ROOT and never removed it, so every
+      // --selftest run left an untracked file behind and the next coder's pre-push hook failed on a
+      // dirty tree. The probe only ever needed the mutated text in memory — it is never read back
+      // from disk — so write it to the OS temp dir and delete it in a finally.
+      const tmpFile = path.join(os.tmpdir(), `ih35-lst-link02-selftest-${process.pid}.ts`);
+      try {
+        fs.writeFileSync(tmpFile, fake);
+      } finally {
+        fs.rmSync(tmpFile, { force: true });
+      }
     }
   }
   const realAfterFix = collectProblems();
