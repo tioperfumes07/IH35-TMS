@@ -1,6 +1,6 @@
 {
  "date": "2026-08-05",
- "generated_at_iso": "2026-08-05T09:11:03.244Z",
+ "generated_at_iso": "2026-08-05T14:38:16.077Z",
  "counts": {
   "PENDING": 15,
   "PENDING (GATED)": 28,
@@ -948,9 +948,9 @@
    "fin": true,
    "tier": "1",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #4348 title-match only, unverified",
+   "evidence": "PR #4394 title-match only, unverified",
    "name": "CONNECTIONS / TASK 3 — Relay internal-bank + diesel codes",
-   "pr": 4348
+   "pr": 4394
   },
   {
    "id": "consolidate-distributed-modules-fuel-tasks-fin",
@@ -3765,10 +3765,10 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1023 merged 2026-06-16",
+   "evidence": "all 11 file(s) on main",
    "name": "FH-2 Loan Wizard — Finance Hub centerpiece, PREVIEW/COMPUTE-ONLY (Tier 3). One form computes the full preview-first draf",
    "registered_on": null,
-   "pr": 1023
+   "pr": null
   },
   {
    "id": "FEAT-FH-3-AMORTIZATION",
@@ -4403,10 +4403,10 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1021 merged 2026-06-15",
+   "evidence": "all 1 file(s) on main",
    "name": "Step 3 (expense → GL posting) balanced-JE proof + two posting-engine robustness fixes uncovered while obtaining it. (1) ",
    "registered_on": null,
-   "pr": 1021
+   "pr": null
   },
   {
    "id": "FIX-TASK-CREATE-DOUBLE-STRINGIFY",
@@ -13262,6 +13262,24 @@
  ],
  "merged_prs": [
   {
+   "number": 4402,
+   "title": "Cursor- docs(delivery): DELIVERY-SYSTEMIC-SWEEP — §9.0 item 17 Systemic sweep + §9.8",
+   "mergedAt": "2026-08-05T13:49:59Z",
+   "branch": "cursor/delivery-method-systemic-sweep-17"
+  },
+  {
+   "number": 4395,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-08-05T12:36:31Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 4394,
+   "title": "Claude-1- feat(relay): BANK-F20 CONN-3 stage 1 — fund the wallet as a TRANSFER, reusing the existing poster",
+   "mergedAt": "2026-08-05T12:36:20Z",
+   "branch": "claude/conn3-stage1-deposit-transfer"
+  },
+  {
    "number": 4385,
    "title": "Claude-1- feat(banking): BANK-F19 HOP 9 — link the bank receipt to the invoice it settled (matched_invoice_id had no writer)",
    "mergedAt": "2026-08-05T05:29:11Z",
@@ -13272,6 +13290,12 @@
    "title": "Claude-2- audit(live): LV-064 4 of 5 money posters fail OPEN on document status (class defect); LV-065 ledger balances 0c on every dimension",
    "mergedAt": "2026-08-05T05:17:24Z",
    "branch": "claude/lv064-poster-denylist-class"
+  },
+  {
+   "number": 4378,
+   "title": "Cursor- fix(governance): CURSOR-SHIP-SEQUENCE — Rule 36 Claude serial tip-main ship",
+   "mergedAt": "2026-08-05T12:34:30Z",
+   "branch": "cursor/rule-36-claude-serial-ship"
   },
   {
    "number": 4376,
@@ -13302,6 +13326,12 @@
    "title": "Cascade-audit: refresh wave-queue + program scoreboard from live Neon probe",
    "mergedAt": "2026-08-05T04:22:36Z",
    "branch": "Cascade-audit-scoreboard-sync-0804"
+  },
+  {
+   "number": 4371,
+   "title": "Claude-1- feat(tracker): BANK-F18 — bind all 24 scenario slices to live TMS-native data + automatic certifier",
+   "mergedAt": "2026-08-05T13:09:06Z",
+   "branch": "claude/scenario-tracker-live-bind"
   },
   {
    "number": 4369,
@@ -16830,36 +16860,6 @@
    "title": "fix(banking): BANK-F10 wire fuel overage approve API routes",
    "mergedAt": "2026-07-28T20:02:00Z",
    "branch": "cursor/bank-f10-fuel-overage-driver-recovery"
-  },
-  {
-   "number": 3721,
-   "title": "fix(accounting): ACCT-ECON-05 flip G4 map — mdata.qbo_vendors is RETIRE",
-   "mergedAt": "2026-07-28T19:15:28Z",
-   "branch": "cursor/acct-econ-05-canonical-guard-flip"
-  },
-  {
-   "number": 3720,
-   "title": "claude: fix(integrity): USMCA was being served TRANSP's chart of accounts — incident record + prevention guard",
-   "mergedAt": "2026-07-28T23:12:26Z",
-   "branch": "claude/usmca-mirror-leak-incident"
-  },
-  {
-   "number": 3719,
-   "title": "claude: docs(law): RLS counts require a completeness discriminator",
-   "mergedAt": "2026-07-28T19:15:22Z",
-   "branch": "claude/rls-completeness-discriminator-law"
-  },
-  {
-   "number": 3718,
-   "title": "fix(accounting): ACCT-R-11 PASS — TRANSP+USMCA bank capture fields live",
-   "mergedAt": "2026-07-28T18:24:41Z",
-   "branch": "cursor/acct-r11-capture-fields"
-  },
-  {
-   "number": 3717,
-   "title": "[HOLD-FOR-JORGE · FINANCIAL] claude: fix(accounting): LST-PICKER-02 — the expense-category picker read the QBO mirror, not the GL ledger",
-   "mergedAt": "2026-07-28T21:10:01Z",
-   "branch": "claude/lst-picker-02-categories-canonical"
   }
  ],
  "merged_pr_total": 3000,
@@ -20061,12 +20061,6 @@
    "title": "docs(go-live): Block 6 demo-purge plan (show-first/gated) + park 2H/2J post-go-live",
    "mergedAt": "2026-06-16T14:10:39Z",
    "category": "HOLD"
-  },
-  {
-   "number": 1021,
-   "title": "fix(accounting): Step 3 posting — unmask markBatchFailed + prove balanced JE [TIER 1 · STOP before merge]",
-   "mergedAt": "2026-06-15T23:45:30Z",
-   "category": "TIER-1 financial"
   }
  ]
 }
