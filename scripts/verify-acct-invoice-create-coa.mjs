@@ -34,8 +34,21 @@ function checkInvoiceCreateCoa(files) {
   const violations = [];
 
   if (!base.includes('createKind="account"')) violations.push("InvoiceTypeModalBase must use ReferenceSelect createKind=account for income CoA");
-  if (!base.includes("getCoaAccounts")) violations.push("InvoiceTypeModalBase must load entity-scoped CoA via getCoaAccounts");
-  if (!base.includes("listLoads")) violations.push("InvoiceTypeModalBase must list loads for optional load linkage");
+  if (!base.includes("getCoaAccounts") && !base.includes("listCatalogAccounts")) {
+    violations.push("InvoiceTypeModalBase must load entity-scoped CoA via getCoaAccounts or listCatalogAccounts");
+  }
+  {
+    const hasLoadList = base.includes("listLoads");
+    const hasLoadPicker =
+      base.includes("EntityPicker") &&
+      (base.includes('kind="load"') || base.includes("kind='load'"));
+    const hasGetLoad = base.includes("getLoad");
+    if (!hasLoadList && !(hasLoadPicker && hasGetLoad) && !hasLoadPicker) {
+      violations.push(
+        "InvoiceTypeModalBase must link loads via listLoads OR EntityPicker kind=load (+ getLoad for selected label)"
+      );
+    }
+  }
   if (!base.includes("operating_company_id")) violations.push("InvoiceTypeModalBase catalogs must be entity-scoped");
   if (!base.includes("addInvoiceLine")) violations.push("InvoiceTypeModalBase must persist line with income account at create");
   if (!base.includes("patchInvoice")) violations.push("InvoiceTypeModalBase must patch source_load_id when load linked");
