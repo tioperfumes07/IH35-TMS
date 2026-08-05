@@ -26,14 +26,26 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ScenarioTrackerHome } from "./ScenarioTrackerHome";
 import * as api from "./api";
 
+// THE SAME BREAKAGE AS THE ONE DOCUMENTED ABOVE, ONE PROVIDER LATER. #4495 (PROG-LIVE-01) moved this
+// component to Program and switched it to `useQuery` so the board refreshes itself. This wrapper
+// supplied only MemoryRouter, so every test died on "No QueryClient set" — the P0 case included, and
+// silently, exactly as the Link/MemoryRouter incident above. A render helper must carry EVERY provider
+// its subject consumes; each new hook the component adopts is a new way for this file to go quiet.
+// retry:false is required — the rejection test would otherwise retry past the assertion window.
 function renderTracker() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 } },
+  });
   return render(
-    <MemoryRouter>
-      <ScenarioTrackerHome />
-    </MemoryRouter>
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <ScenarioTrackerHome />
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
