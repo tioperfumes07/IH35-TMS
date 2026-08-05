@@ -1004,6 +1004,11 @@
       "key": "apps/backend/src/work-orders/work-orders.routes.ts#c57823f7ae1b3c67d57c74b7103665538aa05ee7",
       "file": "apps/backend/src/work-orders/work-orders.routes.ts",
       "preview": "`SELECT load_number FROM mdata.loads WHERE id = $1 LIMIT 1`"
+    },
+    {
+      "key": "apps/backend/src/home/scenario-certify.service.ts#d60ab8a755a6398fba024c62396a071d89ad3521",
+      "file": "apps/backend/src/home/scenario-certify.service.ts",
+      "preview": "`SELECT (SELECT count(*) FROM org.companies)::int AS companies, (SELECT count(*) FROM catalogs.accounts)::int AS account"
     }
   ]
 }
