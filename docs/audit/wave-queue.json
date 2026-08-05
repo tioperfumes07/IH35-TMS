@@ -335,15 +335,15 @@
       "layer": "B",
       "modules": ["banking", "factoring"],
       "instances": [
-        { "path": "banking.routes.ts:184 — Banking Home KPI cents-as-dollars (UNIT-001)", "entity": "ALL", "note": "AUD-F020. Cash KPI 100x scale bug." },
-        { "path": "banking.routes.ts:308 — Factoring virtual register cents-as-dollars (UNIT-002)", "entity": "ALL", "note": "AUD-F024." },
-        { "path": "banking.routes.ts:426 — Categorize suggestions cents-as-dollars (UNIT-003)", "entity": "ALL", "note": "AUD-F024." }
+        { "path": "banking.routes.ts:194 — Banking Home KPI now divides by 100 (UNIT-001 FIXED)", "entity": "ALL", "note": "Code-verified: total_cash = authoritativeTotalCash / 100; formatUsd receives dollars. Guard verify-banking-cash-posting-cents-scale PASS." },
+        { "path": "banking.routes.ts:331 — Factoring virtual register still projects advance_amount_cents AS amount (UNIT-002 OPEN)", "entity": "ALL", "note": "Code-verified in main: line 331 has `fa.advance_amount_cents AS amount` with no /100. Fix in PR #4365." },
+        { "path": "banking.routes.ts:450 — Categorize suggestions still projects amount_cents AS amount (UNIT-003 OPEN)", "entity": "ALL", "note": "Code-verified in main: line 450 has `amount_cents AS amount` with no /100. Fix in PR #4365." }
       ],
-      "completeness": "Code-verified: banking.routes.ts lines 184, 308, 426 pass amount_cents directly to formatUsd (dollar formatter). Live confirmed: Banking Home KPI showed $9,368.00 when correct value was $93.68 (TRANSP). Positive control: USMCA Cash Posting $93.68 correct after fix.",
+      "completeness": "Code-verified 2026-08-04: 1 of 3 surfaces fixed (Banking Home KPI divides by 100); 2 surfaces still project raw cents under a dollar alias in main. PR #4365 adds guard scripts/verify-cents-dollar-scale.mjs and divides both remaining projections by 100. Live UI confirmation of fixed KPI pending; 100x display bug remains for factoring register and suggestions until merge.",
       "guard": "scripts/verify-cents-dollar-scale.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "Banking Home KPI TRANSP: displayed $9,368.00, correct = $93.68 (100x). USMCA confirmed correct after fix.",
+        "guard_sample": "2026-08-04 source review: banking.routes.ts line 331 `fa.advance_amount_cents AS amount` and line 450 `amount_cents AS amount` remain unscaled; line 194 divides by 100. PR #4365 fixes both.",
         "money_critical": false
       },
       "status": "open",
