@@ -1737,3 +1737,39 @@ predicate feeding it, not the downgrade mechanism.
              `pg_stat_user_tables`; bill distribution from `accounting.bills`. Code read from
              `origin/main` @ `66c840c96`, not from a working tree.
 - status:    PASS
+
+## LV-096  CHECKSUM GUARD (LV-087 / verify-step 2625) — **PASS: it genuinely blocks renumber-and-reapply.** Proven by planting a real duplicate against the live scanner, not by reading the guard
+- module:    db/migrations (GUARD — guard-efficacy test)
+- entity:    ALL
+- surface:   `scripts/verify-steps/2625-verify-migration-checksum-collision.mjs` · `scripts/verify-migration-checksum-collision.mjs` (landed @ `c47a82f82`, PR #4467)
+- observed:  Earlier this session this guard did **not exist** — `2625` was claimed in `CLAIMED-NUMBERS.json`
+  with no file, which was correct Rule 37 claim-first behaviour, and I recorded that I could not test it. It
+  has since been authored, so the test was run.
+  **A guard that cannot fail is theater, so I tested the failure path, not the passing one.**
+  **(1) Both legs pass on the clean tree.** `--selftest` → **exit 0**, "8 mutations all detected; baseline
+  matches the files it names". Real leg → **exit 0**, "874 migration files scanned; 1 checksum collision(s),
+  all 1 of them the frozen pre-existing pair".
+  **(2) Independent planted-duplicate test — the one that actually proves it.** The built-in selftest checks
+  detection against an in-memory `Map`, which proves the comparison logic but not that the **real scanner**
+  walking `db/migrations/` catches a real file. So I copied `0001_audit_init.sql` to
+  `9998_cc2_planted_duplicate_DELETEME.sql` — a literal renumber-and-reapply — and re-ran the real leg:
+  **exit 1**, with `checksum 81f9eda777af is shared by 2 migration files: 0001_audit_init.sql,
+  9998_cc2_planted_duplicate_DELETEME.sql`. It **fails closed and names both files**.
+  The planted file was untracked, removed immediately by an `EXIT` trap, and its removal verified
+  (`git status --porcelain db/migrations/` clean). **No migration history was touched** — WORM intact.
+  **(3) The selftest itself is unusually well built and worth crediting.** Its four mutations do not merely
+  assert detection: mutation 2 rejects a runner with no refusal; mutation 3 rejects a runner that merely
+  *mentions* checksums, explicitly distinguishing the pre-existing same-filename **drift** check from the
+  renumber-and-reapply **collision** check — two different defects that would otherwise be conflated; and
+  mutation 4 requires grandfathering to be **exact-set**, so a third file joining an already-baselined
+  checksum still fails. That last one is the difference between a frozen baseline and a blanket amnesty, and
+  it is the mutation most guards of this shape get wrong.
+  **Scope of the claim.** I proved the guard detects a byte-identical duplicate and that `db-migrate.mjs`
+  carries the refusal the guard checks for. I did **not** execute a migration against any database, and
+  **UNVERIFIED — the runtime refusal path was not exercised live**; testing that would require applying a
+  migration, which is out of GUARD's read-only lane and would touch prod.
+- severity:  none — guard-efficacy PASS
+- LANE:      n/a (verification of CC-1's guard)
+- neon-check: none required — this is a static-guard efficacy test executed locally against
+             `origin/main` code; exit codes read WITHOUT a pipe (0 / 0 clean, 1 with plant).
+- status:    PASS
