@@ -67,6 +67,10 @@ const STEPS = [
   // verify:guard-wired requires every guard script to be wired into package.json + CI, which needs a
   // claimed verify-step number (Rule 37). Until it lands, this list is hand-maintained; the entries
   // below are the empirically-burned set.
+  // META: asserts the FE list below still mirrors what CI runs. Hand-maintained mirrors rot — the
+  // first version of this list missed verify-referenceselect-coverage-ratchet (invoked via `npm run`,
+  // not `node`) and #4484 burned a cycle on it. Wired into CI as verify-step 2632.
+  ["verify-local-gate-covers-fe-ratchets", "scripts/verify-local-gate-covers-fe-ratchets.mjs"],
   ["verify-no-raw-date-input", "scripts/verify-no-raw-date-input.mjs"],
   ["verify-no-native-datetime-input", "scripts/verify-no-native-datetime-input.mjs"],
   ["verify-money-fields-use-moneyinput", "scripts/verify-money-fields-use-moneyinput.mjs"],
