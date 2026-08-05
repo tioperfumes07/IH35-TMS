@@ -1,11 +1,11 @@
 {
  "date": "2026-08-05",
- "generated_at_iso": "2026-08-05T03:39:08.312Z",
+ "generated_at_iso": "2026-08-05T09:11:03.244Z",
  "counts": {
   "PENDING": 15,
   "PENDING (GATED)": 28,
-  "NEEDS-VERIFY": 59,
-  "DONE": 594,
+  "NEEDS-VERIFY": 60,
+  "DONE": 593,
   "AUDIT-NOTE": 507
  },
  "universe": {
@@ -759,6 +759,17 @@
    "name": "",
    "registered_on": null,
    "pr": 3124
+  },
+  {
+   "id": "audit-spine-a1-a9-emit-coverage-task",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #4374 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 4374
   },
   {
    "id": "audit2-internal-controls-approval-workflow",
@@ -3710,10 +3721,10 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1008 merged 2026-06-15",
+   "evidence": "all 3 file(s) on main",
    "name": "GAP-EXPENSES Phase 1.5 -- expense_lines cents reconciliation + the hard 'balances or fails hard' total=sum invariant, la",
    "registered_on": null,
-   "pr": 1008
+   "pr": null
   },
   {
    "id": "FEAT-EXPENSES-PHASE1-FOUNDATION",
@@ -3732,10 +3743,10 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1018 merged 2026-06-15",
+   "evidence": "all 4 file(s) on main",
    "name": "GAP-EXPENSES Phase 2 Step 3 (TIER 1) — expense → GL posting engine + reversing-JE void, ALL behind EXPENSE_GL_POSTING_EN",
    "registered_on": null,
-   "pr": 1018
+   "pr": null
   },
   {
    "id": "FEAT-EXPENSES-PHASE2-UNCATEGORIZED-SEED",
@@ -3743,10 +3754,10 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1015 merged 2026-06-15",
+   "evidence": "all 3 file(s) on main",
    "name": "GAP-EXPENSES Phase 2 Step 2 — the safe foundation seed (NO posting logic). Migration 202606151500 seeds one global 'Unca",
    "registered_on": null,
-   "pr": 1015
+   "pr": null
   },
   {
    "id": "FEAT-FH-2-LOAN-WIZARD",
@@ -3787,10 +3798,10 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1017 merged 2026-06-15",
+   "evidence": "all 2 file(s) on main",
    "name": "FH-1 Fixed Assets + Depreciation — Step 1: the asset-register DATA MODEL only (NO posting, NO cron). TIER 3 (FH-module b",
    "registered_on": null,
-   "pr": 1017
+   "pr": null
   },
   {
    "id": "FEAT-HELP-ARTICLE-STUBS",
@@ -4161,10 +4172,10 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1019 merged 2026-06-15",
+   "evidence": "all 2 file(s) on main",
    "name": "BUGFIX COA-UNCATEGORIZED-EXPENSE-QBO-RECONCILE — the #1015 seed created catalogs.accounts #6999 'Uncategorized Expenses'",
    "registered_on": null,
-   "pr": 1019
+   "pr": null
   },
   {
    "id": "FIX-CUSTOMER-INVOICE-CUSTOMER-ID-DEEPLINK",
@@ -4282,10 +4293,10 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1011 merged 2026-06-15",
+   "evidence": "all 2 file(s) on main",
    "name": "Insurance create/units 500 fix. insurance.policy_unit has NO is_active column (active state = removed_at IS NULL; verifi",
    "registered_on": null,
-   "pr": 1011
+   "pr": null
   },
   {
    "id": "FIX-LEGAL-FLEET-VEHICLE-TYPE-PHANTOM",
@@ -7022,17 +7033,6 @@
    "evidence": "branch feat/tbl-standard-dispatch-load-table → PR #2296 merged 2026-07-08",
    "name": "TABLE/UX / TASK Standard — Universal table sweep (bespoke → shared DataTable)",
    "pr": 2296
-  },
-  {
-   "id": "TEST-COPY-TO-ACCOUNTING-LINES-BILL-BRANCH",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "PR #1009 merged 2026-06-15",
-   "name": "Follow-up to GAP-EXPENSES Phase 1.5 (#1008): add the bill-branch regression guard GUARD's checklist item (d) flagged as ",
-   "registered_on": null,
-   "pr": 1009
   },
   {
    "id": "TIER14-MEXICO-OPS",
@@ -10603,17 +10603,6 @@
    "pr": null
   },
   {
-   "id": "audit-spine-a1-a9-emit-coverage-task",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "AUDIT-NOTE",
-   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "audit10-payroll-automation-tax-withhol_DISPATCH",
    "source": ".block-ready",
    "fin": true,
@@ -13084,6 +13073,17 @@
    "pr": null
   },
   {
+   "id": "TEST-COPY-TO-ACCOUNTING-LINES-BILL-BRANCH",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Follow-up to GAP-EXPENSES Phase 1.5 (#1008): add the bill-branch regression guard GUARD's checklist item (d) flagged as ",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "threewayaudit-biz02-qbo-sync-workers-stale",
    "source": ".block-ready",
    "fin": true,
@@ -13262,10 +13262,70 @@
  ],
  "merged_prs": [
   {
+   "number": 4385,
+   "title": "Claude-1- feat(banking): BANK-F19 HOP 9 — link the bank receipt to the invoice it settled (matched_invoice_id had no writer)",
+   "mergedAt": "2026-08-05T05:29:11Z",
+   "branch": "claude/hop9-bank-invoice-backlink"
+  },
+  {
+   "number": 4379,
+   "title": "Claude-2- audit(live): LV-064 4 of 5 money posters fail OPEN on document status (class defect); LV-065 ledger balances 0c on every dimension",
+   "mergedAt": "2026-08-05T05:17:24Z",
+   "branch": "claude/lv064-poster-denylist-class"
+  },
+  {
+   "number": 4376,
+   "title": "Claude-2- audit(live): LV-063 RETRACTED — mistook expected state on IMPORTED fuel data for a money defect; BANK-F10 challenge withdrawn",
+   "mergedAt": "2026-08-05T04:39:13Z",
+   "branch": "claude/lv063-fuel-overage"
+  },
+  {
+   "number": 4375,
+   "title": "Claude-1- fix(banking): BANK-F16 — reconcile 3 hand-applied migrations + Amex bank leg bridged to an Asset",
+   "mergedAt": "2026-08-05T04:47:35Z",
+   "branch": "claude/bank-ledger-class-mismatch-v3"
+  },
+  {
+   "number": 4374,
+   "title": "Claude-2- audit(live): LV-056..060 — P0 homepage crash caught+fixed; WORM audits JE headers but not lines; draft bill posted to GL (denylist fails open); LV-013",
+   "mergedAt": "2026-08-05T04:01:39Z",
+   "branch": "claude/lv056-p0-record"
+  },
+  {
+   "number": 4373,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-08-05T04:15:10Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 4372,
+   "title": "Cascade-audit: refresh wave-queue + program scoreboard from live Neon probe",
+   "mergedAt": "2026-08-05T04:22:36Z",
+   "branch": "Cascade-audit-scoreboard-sync-0804"
+  },
+  {
+   "number": 4369,
+   "title": "Cursor- fix(insurance): INS-CLAIM-LOAD-TRAILER-PICKER — ClaimCreate still Combobox+listLoads",
+   "mergedAt": "2026-08-05T05:12:25Z",
+   "branch": "cursor/claim-create-load-trailer-entity-pickers"
+  },
+  {
    "number": 4368,
    "title": "Claude-2- P0 fix(home): owner homepage was DOWN — ScenarioTrackerPanel spread data.scenarios unguarded and crashed all of /home",
    "mergedAt": "2026-08-05T03:19:50Z",
    "branch": "claude/p0-owner-home-scenario-crash"
+  },
+  {
+   "number": 4367,
+   "title": "Cursor- fix: InlineDriverPicker EntityPicker",
+   "mergedAt": "2026-08-05T04:14:12Z",
+   "branch": "cursor/inline-driver-entity-picker"
+  },
+  {
+   "number": 4366,
+   "title": "Cursor- fix(safety): SAF-MEET-TRAIN-DRIVER-PICKER — meetings/training used limit:200 roster",
+   "mergedAt": "2026-08-05T04:38:59Z",
+   "branch": "cursor/safety-meetings-training-entity-pickers"
   },
   {
    "number": 4365,
@@ -13298,6 +13358,12 @@
    "branch": "chore/claim-reserve-cc1-2525-2545-v2"
   },
   {
+   "number": 4356,
+   "title": "Cursor- fix: Report runner filters EntityPickers (driver/unit)",
+   "mergedAt": "2026-08-05T04:13:55Z",
+   "branch": "cursor/runner-filters-entity-pickers"
+  },
+  {
    "number": 4355,
    "title": "Cursor- fix: HOS Viewer driver EntityPicker",
    "mergedAt": "2026-08-05T03:27:16Z",
@@ -13308,6 +13374,18 @@
    "title": "Cursor- fix: HOS History driver EntityPicker",
    "mergedAt": "2026-08-05T03:06:53Z",
    "branch": "cursor/hos-history-driver-entity-picker"
+  },
+  {
+   "number": 4353,
+   "title": "Cursor- fix: Invoice type modal load EntityPicker",
+   "mergedAt": "2026-08-05T03:39:55Z",
+   "branch": "cursor/invoice-load-entity-picker"
+  },
+  {
+   "number": 4352,
+   "title": "Cursor- fix: Escrow forfeit liability SelectCombobox",
+   "mergedAt": "2026-08-05T03:39:22Z",
+   "branch": "cursor/escrow-forfeit-liability-select"
   },
   {
    "number": 4350,
@@ -16782,84 +16860,6 @@
    "title": "[HOLD-FOR-JORGE · FINANCIAL] claude: fix(accounting): LST-PICKER-02 — the expense-category picker read the QBO mirror, not the GL ledger",
    "mergedAt": "2026-07-28T21:10:01Z",
    "branch": "claude/lst-picker-02-categories-canonical"
-  },
-  {
-   "number": 3716,
-   "title": "claude: feat(ci): META-GUARD — a baseline column that exists on no table can never re-enter",
-   "mergedAt": "2026-07-29T02:52:09Z",
-   "branch": "claude/phantom-column-meta-guard"
-  },
-  {
-   "number": 3715,
-   "title": "claude: fix(ci): the schema-drift baseline contained 495 columns that exist on no table",
-   "mergedAt": "2026-07-28T17:25:38Z",
-   "branch": "claude/schema-parity-window-bug"
-  },
-  {
-   "number": 3714,
-   "title": "fix(deploy): fail closed without fixed smoke target",
-   "mergedAt": "2026-07-28T18:10:38Z",
-   "branch": "cursor/acct-r10-myaccountant-seed"
-  },
-  {
-   "number": 3713,
-   "title": "fix(accounting): harden ACCT-R-09 bill creator types",
-   "mergedAt": "2026-07-28T17:59:35Z",
-   "branch": "cursor/acct-r09-bill-subnav-creators"
-  },
-  {
-   "number": 3712,
-   "title": "fix(accounting): ACCT-ECON-05 held backfill RETIRE→canonical qbo_vendors",
-   "mergedAt": "2026-07-28T18:30:00Z",
-   "branch": "cursor/acct-econ-05-qbo-vendor-backfill"
-  },
-  {
-   "number": 3711,
-   "title": "fix(infra): ACCT-R-04 closure — deploy smoke env + test-owner guard (step 1704)",
-   "mergedAt": "2026-07-28T17:41:24Z",
-   "branch": "cursor/acct-r04-smoke-unit-env"
-  },
-  {
-   "number": 3710,
-   "title": "fix(accounting): ACCT-ECON-05 — CC bill-pay reads accounting.qbo_vendors",
-   "mergedAt": "2026-07-28T18:14:43Z",
-   "branch": "cursor/acct-econ-05-repoint-cc-payment"
-  },
-  {
-   "number": 3709,
-   "title": "fix(accounting): ACCT-LINK-05 opco-aware template resolve + unlock seed UI",
-   "mergedAt": "2026-07-28T17:41:19Z",
-   "branch": "cursor/acct-link-05-opco-resolver"
-  },
-  {
-   "number": 3708,
-   "title": "fix(accounting): ACCT-SURF-01/03 PASS — TRANSP+USMCA browser re-click",
-   "mergedAt": "2026-07-28T16:59:42Z",
-   "branch": "cursor/acct-surf-01-03-browser-proof"
-  },
-  {
-   "number": 3707,
-   "title": "claude: fix(lists): LST-LINK-02 — two safety catalogs were FK islands; the category was a copied string",
-   "mergedAt": "2026-07-29T02:02:09Z",
-   "branch": "claude/lst-link-02-safety-catalog-fks"
-  },
-  {
-   "number": 3706,
-   "title": "ACCT-R-44 PASS — browser re-click proves accounting surfaces not blank",
-   "mergedAt": "2026-07-28T16:41:28Z",
-   "branch": "cursor/acct-r44-browser-proof"
-  },
-  {
-   "number": 3705,
-   "title": "claude: fix(lists): LST-COUNT-01 — a permanently-zero badge, 147 uncounted rows, and silent understatement",
-   "mergedAt": "2026-07-28T23:00:17Z",
-   "branch": "claude/lst-count-01-badge-truth"
-  },
-  {
-   "number": 3704,
-   "title": "Rule 25 — permanent one-push money fail-fast (close amend hole)",
-   "mergedAt": "2026-07-28T16:39:06Z",
-   "branch": "chore/one-push-money-fail-fast"
   }
  ],
  "merged_pr_total": 3000,
