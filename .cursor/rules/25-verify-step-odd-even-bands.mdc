@@ -25,13 +25,14 @@ Branch prefixes (enforced by `scripts/verify-verify-step-lane-band.mjs`):
 
 `claude/` maps to **CC-1** (≡1). CC-2 **must** use `cc-2/` (or `cc2/`) — never share `claude/` with CC-1 for new steps.
 
-## Claim-before-write (atomic reservation)
+## Claim-before-write (atomic reservation) — Rule 25 + Rule 37
 
-1. **Reserve first:** open a claim-only PR that edits **only** `scripts/verify-steps/CLAIMED-NUMBERS.json` (branch `chore/claim-reserve*` / `chore/claimed-regen*` **or** commit subject contains `CLAIM-RESERVE` / `CLAIMED-REGEN`). Merge it to `main`.
-2. **Then author the guard:** on a feature branch, add `scripts/verify-<name>.mjs` + `scripts/verify-steps/NNNN-verify-<name>.mjs` using the **already-claimed** number.
-3. **CI fails closed** if a PR adds a new `verify-steps/NNNN-*.mjs` whose `NNNN` is **not** already present in `CLAIMED-NUMBERS.json` on `origin/main` (`scripts/verify-verify-step-claimed-on-main.mjs`).
+1. **Reserve first:** open a claim-only PR that edits **only** `scripts/verify-steps/CLAIMED-NUMBERS.json` (branch `chore/claim-reserve*` **or** commit subject contains `CLAIM-RESERVE`). Merge it to `main`. Confirm `NNNN` on `origin/main`.
+2. **Then author the guard:** on a **fresh** feature branch from `origin/main`, add `scripts/verify-<name>.mjs` + `scripts/verify-steps/NNNN-verify-<name>.mjs` using the **already-claimed** number. **Do not** edit `CLAIMED-NUMBERS.json` in the feature PR.
+3. **CI + local gate fail closed** if a PR adds a new `verify-steps/NNNN-*.mjs` whose `NNNN` is **not** already present in `CLAIMED-NUMBERS.json` on `origin/main` (`scripts/verify-verify-step-claimed-on-main.mjs`, also in `money-pr-local-gate`).
+4. **Never claim+author same PR** — editing CLAIMED and adding a step file together is forbidden (Rule 37). Only `chore/claimed-regen*` / `CLAIMED-REGEN` may land claim+file atomically.
 
-Do **not** claim and author in the same feature PR. Do **not** renumber after a collision — reserve the next free number in **your** mod-4 band.
+Do **not** claim and author in the same feature PR. Do **not** use `chore/claim-reserve-*` as a combined claim+guard branch. Do **not** renumber after a collision — reserve the next free number in **your** mod-4 band.
 
 ## Forbidden
 
@@ -40,6 +41,7 @@ Do **not** claim and author in the same feature PR. Do **not** renumber after a 
 - CC-2 claiming even or ≡1
 - CC-2 using `claude/` prefix for new steps (collides with CC-1)
 - Authoring a verify-step file before its number is on `main`'s CLAIMED registry
+- Combining CLAIMED edit + new verify-step file in one PR (Rule 37; claimed-regen exempt only)
 - "Next free overall" without checking mod-4 band
 - Feature-PR edits to `CLAIMED-NUMBERS.json` (except allowlisted claim-reserve / CLAIMED-REGEN)
 - Spending turns on `gh pr checks --watch` / CI babysit instead of reading the failing log line and fixing the root cause

@@ -12,6 +12,8 @@
  *
  * Owner 2026-08-03: agents must NOT babys CI. Local PASS → one push → stop.
  * Owner 2026-08-05: tip-main ancestry is mandatory (Claude serial ship — Rule 36).
+ * Owner 2026-08-05 Rule 37: claim→merge→author — money-pr-local-gate runs
+ *   verify-verify-step-claimed-on-main (NNNN must be on origin/main; no CLAIMED+step same PR).
  */
 import { spawnSync } from "node:child_process";
 import path from "node:path";
