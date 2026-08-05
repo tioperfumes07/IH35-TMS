@@ -29,11 +29,17 @@ export function collectProblems(root = ROOT) {
   if (!/EntityPicker[\s\S]*?kind=["']unit["']/.test(code)) {
     problems.push(`${FILE}: unit/asset must use EntityPicker kind=unit`);
   }
-  if (!/loadSearch/.test(code) || !/onSearch=\{setLoadSearch\}/.test(code)) {
-    problems.push(`${FILE}: load Combobox must wire loadSearch`);
+  const hasLoadEntity =
+    /EntityPicker/.test(src) && (/kind=["']load["']/.test(code) || /kind=\{\s*["']load["']\s*\}/.test(code));
+  const hasTrailerEntity =
+    /EntityPicker/.test(src) && (/kind=["']trailer["']/.test(code) || /kind=\{\s*["']trailer["']\s*\}/.test(code));
+  const hasLoadLegacy = /loadSearch/.test(code) && /onSearch=\{setLoadSearch\}/.test(code);
+  const hasTrailerLegacy = /trailerSearch/.test(code) && /onSearch=\{setTrailerSearch\}/.test(code);
+  if (!hasLoadEntity && !hasLoadLegacy) {
+    problems.push(`${FILE}: load must be EntityPicker kind=load OR Combobox with loadSearch + onSearch`);
   }
-  if (!/trailerSearch/.test(code) || !/onSearch=\{setTrailerSearch\}/.test(code)) {
-    problems.push(`${FILE}: trailer Combobox must wire trailerSearch`);
+  if (!hasTrailerEntity && !hasTrailerLegacy) {
+    problems.push(`${FILE}: trailer must be EntityPicker kind=trailer OR Combobox with trailerSearch + onSearch`);
   }
   if (/limit:\s*500/.test(code)) {
     problems.push(`${FILE}: must not fetch silent limit:500 fleet/load pages`);
