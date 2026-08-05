@@ -6,10 +6,12 @@
  *   node scripts/ops/cursor-ship-preflight.mjs
  *   node scripts/ops/cursor-ship-preflight.mjs --body-file /tmp/pr-body.txt
  *
+ * 0) tip contains origin/main (Rule 36 — fail closed if behind; rebase then re-run)
  * 1) money-pr-local-gate (Rule 29 suite: DoD, palette fin+nonfin, auth rateLimit, lanes, …)
  * 2) cursor-pr-body-gate when --body-file is provided (Rule 30 / CI evidence body)
  *
  * Owner 2026-08-03: agents must NOT babys CI. Local PASS → one push → stop.
+ * Owner 2026-08-05: tip-main ancestry is mandatory (Claude serial ship — Rule 36).
  */
 import { spawnSync } from "node:child_process";
 import path from "node:path";
@@ -35,6 +37,40 @@ function run(rel, args = []) {
   return res.status ?? 1;
 }
 
+function git(args) {
+  const res = spawnSync("git", args, { cwd: ROOT, encoding: "utf8" });
+  return {
+    status: res.status ?? 1,
+    out: `${res.stdout ?? ""}${res.stderr ?? ""}`.trim(),
+  };
+}
+
+/** Rule 36: refuse push when tip is behind origin/main (Claude never ships stale bases). */
+function assertTipContainsMain() {
+  console.log(`\n[${LABEL}] RUN tip-contains-origin/main (Rule 36)`);
+  const fetch = git(["fetch", "origin", "main"]);
+  if (fetch.status !== 0) {
+    console.error(`${LABEL}: FAIL — git fetch origin main failed.\n${fetch.out}`);
+    return 1;
+  }
+  const anc = git(["merge-base", "--is-ancestor", "origin/main", "HEAD"]);
+  if (anc.status !== 0) {
+    const behind = git(["rev-list", "--count", "HEAD..origin/main"]);
+    console.error(
+      `${LABEL}: FAIL — HEAD does not contain origin/main (behind=${behind.out || "?"}).\n` +
+        `Rule 36: git rebase origin/main → re-run this preflight → then ONE push.\n` +
+        `Do not open/push a CONFLICTING / stale-base PR.`,
+    );
+    return 1;
+  }
+  const tip = git(["rev-parse", "--short", "HEAD"]);
+  const main = git(["rev-parse", "--short", "origin/main"]);
+  console.log(
+    `${LABEL}: tip ${tip.out} contains origin/main ${main.out} — ancestry OK`,
+  );
+  return 0;
+}
+
 if (process.argv.includes("--selftest")) {
   const a = run("scripts/money-pr-local-gate.mjs", ["--selftest"]);
   const b = run("scripts/cursor-pr-body-gate.mjs", ["--selftest"]);
@@ -43,6 +79,9 @@ if (process.argv.includes("--selftest")) {
   console.log(`${LABEL} --selftest PASS`);
   process.exit(0);
 }
+
+const tipGate = assertTipContainsMain();
+if (tipGate !== 0) process.exit(tipGate);
 
 const codeGate = run("scripts/money-pr-local-gate.mjs");
 if (codeGate !== 0) {

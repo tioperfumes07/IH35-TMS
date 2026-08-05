@@ -63,6 +63,8 @@ docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 !.cursor/rules/32-load-linkage-pre-operational.mdc
 !.cursor/rules/33-standing-session-directive.mdc
 !.cursor/rules/34-cursor-pr-title-prefix.mdc
+!.cursor/rules/35-fix-failures-no-ci-babysit.mdc
+!.cursor/rules/36-claude-serial-ship-sequence.mdc
 !.cursor/rules/00-operating-method-LAW.mdc
 !.cursor/rules/ih35-deep-linkage-audit.mdc
 !.cursor/rules/dual-lane-never-idle.mdc
