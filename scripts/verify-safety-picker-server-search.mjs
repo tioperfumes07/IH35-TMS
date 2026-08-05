@@ -21,10 +21,13 @@ const SELFTEST = process.argv.includes("--selftest");
 const CHECKS = [
   {
     file: "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx",
-    describe: "incidents cluster fleet query sends unitSearch",
+    // Wave-7: create/edit pickers are EntityPicker (server search). Optional fleet listUnits map is
+    // label-fallback only — must NOT be the picker source. Accept unitSearch OR EntityPicker trailers.
+    describe: "incidents cluster pickers are EntityPicker (not silent fleet Combobox)",
     test: (s) =>
-      /queryKey:\s*\["safety",\s*"incidents-fleet",\s*operatingCompanyId,\s*unitSearch\]/.test(s) &&
-      /listUnits\([\s\S]*?search:\s*unitSearch\s*\|\|\s*undefined/.test(s),
+      /EntityPicker[\s\S]*?kind=["']trailer["']/.test(s) &&
+      /EntityPicker[\s\S]*?kind=["']unit["']/.test(s) &&
+      !/field-trailer_id[\s\S]{0,400}<Combobox/.test(s),
   },
   {
     file: "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx",
@@ -36,11 +39,12 @@ const CHECKS = [
   },
   {
     file: "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx",
-    // Trailer stays Combobox+onSearch; unit/load are EntityPicker (internal server search).
-    describe: "incidents cluster drawer unit EntityPicker + trailer onSearch",
+    // Wave-7: trailer is EntityPicker kind=trailer (same server-search class as unit/load).
+    describe: "incidents cluster drawer unit+trailer EntityPicker",
     test: (s) =>
       (/field-unit_id[\s\S]*?EntityPicker[\s\S]*?kind=["']unit["']/.test(s) || /kind=["']unit["']/.test(s)) &&
-      /onSearch=\{setUnitSearch\}/.test(s),
+      (/field-trailer_id[\s\S]*?EntityPicker[\s\S]*?kind=["']trailer["']/.test(s) ||
+        /kind=["']trailer["']/.test(s)),
   },
   {
     file: "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx",
@@ -133,10 +137,10 @@ if (SELFTEST) {
   };
 
   expectFail(
-    "incidents-fleet-no-search",
+    "incidents-trailer-not-entitypicker",
     CHECKS[0].file,
-    (s) => s.replace("search: unitSearch || undefined", "limit: 200"),
-    "fleet query sends unitSearch"
+    (s) => s.replace(/kind=["']trailer["']/g, 'kind="driver"'),
+    "pickers are EntityPicker"
   );
   expectFail(
     "internal-fines-no-entitypicker-load",
