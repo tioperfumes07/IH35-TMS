@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
-import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
+import { EntityPicker } from "../parity/EntityPicker";
 
 export type QuickAssignTarget = {
   equipmentKind: "truck" | "trailer";
@@ -43,15 +43,17 @@ export function QuickAssignModal({ open, companyId, target, onClose, onConfirm }
         <p className="text-xs text-gray-600">
           Assign an eligible active driver to this {target.equipmentKind === "truck" ? "truck" : "trailer"}.
         </p>
-        <DriverPickerWithCreate
+        {/* SAF-B29: EntityPicker kind=driver — not DriverPickerWithCreate Combobox+listDrivers page. */}
+        <EntityPicker
+          kind="driver"
           operatingCompanyId={companyId}
           value={driverId || null}
           onChange={(next) => setDriverId(next ?? "")}
-          open={open}
+          enabled={open}
           placeholder="Select driver…"
           className="h-9 w-full text-sm"
           allowClear={false}
-          // Standalone Modal chrome → default shell="modal".
+          dataTestId="fleet-quick-assign-driver"
         />
         <div className="flex justify-end gap-2">
           <Button type="button" size="sm" variant="secondary" onClick={onClose}>
