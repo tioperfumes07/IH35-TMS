@@ -9,6 +9,7 @@ import {
   runPostingEngineMvpBackfill,
   type PostingSourceType,
 } from "./posting-engine.service.js";
+import { remediateRepointedBankLedgerPostings } from "../banking/bank-ledger-repoint-remediation.service.js";
 import { enforcePsePostingOnBillPost } from "./pse-enforce.middleware.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -46,6 +47,14 @@ const postBodySchema = z.object({
 const reverseBodySchema = z.object({
   source_transaction_type: z.enum(["invoice", "bill", "customer_payment", "bill_payment"]),
   source_transaction_id: z.string().trim().min(1),
+});
+
+// dry_run defaults TRUE at the schema level: the caller must opt IN to writing corrections, so a
+// request that forgets the field reports instead of posting.
+const remediateRepointBodySchema = z.object({
+  bank_account_id: z.string().uuid().optional().nullable(),
+  dry_run: z.boolean().optional().default(true),
+  limit: z.number().int().positive().max(2000).optional(),
 });
 
 function mapPostingError(error: PostingEngineError) {
@@ -195,6 +204,31 @@ export async function registerPostingEngineRoutes(app: FastifyInstance) {
       source_types: ["invoice", "bill", "customer_payment", "bill_payment"] satisfies PostingSourceType[],
       ...result,
     });
+  });
+
+  // Correct bank-feed postings written through a WRONG bank-leg bridge (see
+  // bank-ledger-repoint-remediation.service.ts). Reverse + repost through the existing engine — no
+  // hand-written journal entry. Flag-gated DEFAULT OFF and a strict no-op while the bridge is still
+  // mismatched. `dry_run` is the default: correcting live ledger history is opt-in per call, never
+  // something a stray POST does by accident.
+  app.post("/api/v1/accounting/posting-engine-mvp/remediate-bank-ledger-repoint", async (req, reply) => {
+    const user = ensureFinanceUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = remediateRepointBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
+
+    const result = await remediateRepointedBankLedgerPostings({
+      companyId: query.data.operating_company_id,
+      actorUserUuid: user.uuid,
+      bankAccountId: body.data.bank_account_id ?? null,
+      dryRun: body.data.dry_run !== false,
+      limit: body.data.limit,
+    });
+    return reply.code(200).send(result);
   });
 }
 
