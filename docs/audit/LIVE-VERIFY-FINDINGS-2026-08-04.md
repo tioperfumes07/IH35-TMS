@@ -1640,3 +1640,56 @@ predicate feeding it, not the downgrade mechanism.
   share `verified_at = 2026-08-05T19:35:00.055Z` — `distinct_ts = 1`, so the tie persists across sweeps.
 - status:    OPEN (same fix as LV-088; the guard must assert BOTH directions — no false green on the
              larger entity AND no false FIX on the smaller one)
+
+## LV-093  CERTIFICATION DATA + §10.3 BOTH-WAY LINKAGE — **PASS**: zero false-greens across all 92 cert rows, and every invoice/bill posting resolves to a live source
+- module:    accounting · home (GUARD — false-green hunt + linkage law)
+- entity:    ALL (4 scopes: ALL + TRANSP + USMCA + TRK)
+- surface:   `audit.scenario_status` · `accounting.journal_entry_postings` ↔ `accounting.invoices`/`bills`
+- observed:  Two fail-closed checks, both clean, both positive-controlled.
+  **(1) No false-green in the certification data.** Zero rows are certified `passed`/`complete` while their
+  own evidence reads "0 …". **This empty is a verdict, not an unqualified zero** — completeness discriminator
+  on the SAME table: `is_current` rows total **92** = **23** keys × **4** scopes (exactly the expected
+  cross-product, nothing hidden), split `built/go` **58** + `passed/done` **34**. Positive control on the same
+  predicate: the `^0 ` regex matches **58** rows — precisely the 58 `built` rows — proving the pattern *does*
+  fire; of those 58, **0** are `passed`. So every zero-evidence slice is correctly parked at `built`.
+  **This matters for how LV-088 gets fixed.** The stored certifications are correct and correctly
+  entity-separated. LV-088 is **purely a read-path defect** — no backfill, no recompute, no data repair.
+  A fix that touches `audit.scenario_status` rows would be repairing data that is already right.
+  **(2) §10.3 both-way linkage resolves — forward.** Every posting line naming a source resolves to one:
+  `source_transaction_type='invoice'` → **10** lines, **0** dangling; `='bill'` → **10** lines, **0** dangling.
+  **(3) Reverse direction — 4 of 5 posted, and the 5th is CORRECTLY declined.** Of the TMS-native invoices
+  that are `sent`/`paid` and not voided, **5** exist and **1** has no journal entry: `INV-2026-00004`
+  (`f280b52a`, USMCA) with **`total_cents = 0`**. That is the exact case LV-059 already established as correct
+  engine behaviour — there is nothing to post on a zero-value document. **Classified as EXPECTED STATE and
+  deliberately NOT re-filed as a defect.** Reverse linkage is therefore 4 of 4 postable invoices posted.
+- severity:  none — recorded as a PASS so the next agent does not re-derive it
+- LANE:      n/a
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             Counts and the positive control as stated above.
+- status:    PASS
+
+## LV-094  `source_transaction_id` is **text**, not `uuid` — the polymorphic source link is the one linkage in the posting table no foreign key can enforce
+- module:    accounting (GUARD — §10 linkage durability)
+- entity:    ALL
+- surface:   `accounting.journal_entry_postings.source_transaction_id`
+- observed:  Column types on the same table: `journal_entry_uuid` **uuid**, `reversal_of_line_id` **uuid**,
+  but `source_transaction_id` **text** (paired with `source_transaction_type` **text**). The pairing is a
+  deliberate polymorphic pointer — one column addressing invoices, bills, expenses, fuel events, bank
+  categorizations and more — and Postgres cannot FK a polymorphic column, so this is a **consequence of the
+  design, not a mistake in it**. I am recording it as a durability observation, not accusing it of being wrong.
+  **It is currently intact and I verified that rather than assuming it:** 0 dangling of 10 invoice lines and
+  0 of 10 bill lines (LV-093). Nothing is broken today.
+  **The exposure is that nothing prevents it from breaking.** A void, a re-key, or a bad backfill can orphan
+  a posting line's source pointer and the database will not object — unlike `journal_entry_uuid`, which is a
+  real FK. At today's 3,603 lines a full re-resolution is cheap; the checks in LV-093 are exactly that sweep,
+  and they are the only thing standing in for referential integrity here.
+  **Not a request to change the column.** Converting a polymorphic pointer to a typed FK would mean one
+  nullable FK column per source kind — a larger design change than the risk warrants, and squarely CC-1's call.
+  The proportionate answer is a periodic guard that re-resolves every `(source_transaction_type,
+  source_transaction_id)` pair against its target table and fails closed on the first orphan.
+- severity:  minor (latent integrity risk; zero orphans at time of verification)
+- LANE:      CC-1 (money) — if accepted, a recurring resolution guard scoped to TMS-native lines; **not** an FK
+             migration, and **not** a guard over imported cohorts (§0 origin test)
+- neon-check: prod `br-fancy-credit-akjnd07a`, bypass in its own statement, exit 0. Column types read from
+             `information_schema.columns`; orphan counts per LV-093.
+- status:    OPEN (informational — CC-1 decides whether to accept the guard)
