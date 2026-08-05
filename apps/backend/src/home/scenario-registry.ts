@@ -412,10 +412,14 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     trigger: "Accident reported through to claim + cost",
     je: "DR Accident Loss / CR A/P or Escrow",
     spec_ref: "SAF-ACC",
-    sources: ["safety.accidents"],
+    sources: ["safety.accident_reports"],
     probe: {
       sql: `
-        SELECT count(*)::text AS n FROM safety.accidents a WHERE ($1::uuid IS NULL OR a.operating_company_id = $1::uuid)
+        SELECT count(*)::text AS n FROM safety.accident_reports a
+         -- safety.accidents exists on PROD but no migration creates it, so a fresh database (CI, a new
+         -- environment) would not have it and this probe would error there. safety.accident_reports is
+         -- the migration-created, entity-scoped table and holds the same 0 rows on prod today.
+         WHERE ($1::uuid IS NULL OR a.operating_company_id = $1::uuid)
       `,
       describe: (n) => `${n} accident(s) recorded`,
     },
