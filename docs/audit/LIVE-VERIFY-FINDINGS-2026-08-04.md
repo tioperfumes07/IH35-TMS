@@ -859,3 +859,24 @@ membership-scoped session.
 - LANE:      none — GUARD attestation only
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `db_now` 2026-08-05T02:42:58Z. Entity isolation: 3 mismatch queries each returning 0. `pg_stat_user_tables` snapshot for the 11 tables listed. `posting_batches` authoritative `count(*)` = 13,732 vs `n_live_tup` 14,909. Recent-batch window: 2 rows, both posted invoices, 00:05:10Z and 01:08:13Z. `catalogs.posting_templates` 22 rows; orphan template refs 0; NULL-template batches 9 (8 posted, 1 reversed).
 - status:    OPEN (informational)
+
+## LV-056  **P0 — the entire Owner homepage is DOWN on production.** `ScenarioTrackerPanel.tsx:164` spreads `data.scenarios` unguarded; `audit.scenario_status` is empty, so the spread throws and the error boundary kills all of `/home`
+- module:    home / scenario-tracker (GUARD verify-after-merge)
+- entity:    TRANSP
+- surface:   `https://app.ih35dispatch.com/home` · `ScenarioTrackerPanel` · `audit.scenario_status`
+- observed:  **`/home` does not render. It shows "Something went wrong — The page hit an unexpected error."** Captured live from the deployed build:
+  `TypeError: i.scenarios is not iterable` at `assets/OwnerHome-LbhU1yG3.js:1:35090`, inside a `useMemo` (`Object.fs [as useMemo]`), re-entered at `OwnerHome-LbhU1yG3.js:1:35067`.
+  This is a **regression within this session** — `/home` rendered normally earlier tonight (Pending Owner Approvals, Today's Revenue, Open Loads, Cash Position $4,717, the "Overdue bills and customers · Count 277" tile and driver day-summaries were all read from it, and are cited in LV-034).
+  **Exact cause, located in source.** `apps/frontend/src/components/home/ScenarioTrackerPanel.tsx:164`:
+  `return [...data.hops, ...data.scenarios];`
+  An unguarded double spread inside a `useMemo`. Spreading `undefined` throws `TypeError: … is not iterable`, which matches the deployed error verbatim. `ScenarioTrackerPanel` is mounted unconditionally at `apps/frontend/src/pages/home/OwnerHome.tsx:243`, so the throw escapes into the page-level error boundary and **the whole owner homepage is lost, not just the panel**.
+  **Why the payload lacks `scenarios` — the two findings are the same finding.** `audit.scenario_status` is **empty on prod**: `count(*)` = **0 total, 0 `is_current`, 0 `state='passed'`**, and the view `audit.v_scenario_status_current` returns **0** rows. Lifetime counters are `n_tup_ins` 1 / `n_tup_del` 1, so exactly one row was ever written and it was removed — the certifier has never persisted a result. `audit.audit_events` contains **0** scenario/certify-class events. `scenario-tracker.service.ts:78` reads `FROM audit.scenario_status` (`is_current`), so with no rows the response carries no populated `scenarios` array and the panel spreads `undefined`.
+  Notably **no `/api/v1/home/scenario-tracker` request is issued at all** on the failing load — the crash occurs in the render/`useMemo` path before or independently of the fetch, which is consistent with a missing-field spread rather than a network error.
+  **The fix is one line and safe:** `return [...(data.hops ?? []), ...(data.scenarios ?? [])];`. That restores the homepage immediately and degrades the panel to empty, which is the honest state given the table is empty. It does not require the certifier to work.
+  **I am not applying it.** My lane is read-only GUARD — no build, no merge. Routing to Cursor (FE) as P0. If the owner wants me to break read-only for this one line, that is his call to make in chat.
+- severity:  **P0 — production owner homepage completely unavailable**
+- LANE:      CURSOR (FE) — one-line nullish-coalesce at `ScenarioTrackerPanel.tsx:164`. Separately CC-1 owns why `audit.scenario_status` is never populated by the certifier.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user` observed `ih35_app` and `neondb_owner`, bypass its own statement, `db_now` 2026-08-05T02:51:13Z. `audit.scenario_status`: `count(*)` 0 total / 0 current / 0 passed; `n_tup_ins` 1, `n_tup_upd` 0, `n_tup_del` 1. `audit.v_scenario_status_current` 0 rows. Scenario/certify audit events 0. Live browser error and stack captured from `https://app.ih35dispatch.com/home` on the deployed bundle `OwnerHome-LbhU1yG3.js`.
+- status:    OPEN — **P0**
+
+  **RESOLVED 2026-08-05 by PR #4368** — one-line nullish-coalesce at `ScenarioTrackerPanel.tsx:164` plus a mutation-verified regression test. The panel now degrades to empty instead of taking `/home` down. The underlying cause (certifier never populates `audit.scenario_status`) is UNCHANGED and stays routed to CC-1, as does the fact that `verify-no-false-green-certify` and `verify-homepage-scenario-tracker-staleness` both stayed green (exit 0) throughout the outage.
