@@ -266,7 +266,7 @@ export function LegalMatterDetailPage() {
                 <div>
                   <strong>Related driver:</strong>{" "}
                   {matter?.related_driver_id ? (
-                    <EntityLink kind="driver" id={String(matter.related_driver_id)} label="Open driver" />
+                    <EntityLink kind="driver" id={String(matter.related_driver_id)} label={String(matter.related_driver_name ?? "Open driver")} />
                   ) : (
                     "—"
                   )}
@@ -277,7 +277,7 @@ export function LegalMatterDetailPage() {
                     <EntityLink
                       kind="claim"
                       id={String(matter.insurance_claim_id)}
-                      label={String(matter.insurance_claim_id).slice(0, 8)}
+                      label={String(matter.insurance_claim_number ?? matter.insurance_claim_id)}
                     />
                   ) : (
                     "—"
@@ -289,7 +289,7 @@ export function LegalMatterDetailPage() {
                     <EntityLink
                       kind="lawsuit"
                       id={String(matter.insurance_lawsuit_id)}
-                      label={String(matter.insurance_lawsuit_id).slice(0, 8)}
+                      label={String(matter.insurance_lawsuit_case_number ?? matter.insurance_lawsuit_id)}
                       data-testid="matter-insurance-lawsuit-link"
                     />
                   ) : (
@@ -299,7 +299,7 @@ export function LegalMatterDetailPage() {
                 <div>
                   <strong>Unit:</strong>{" "}
                   {matter?.unit_id ? (
-                    <EntityLink kind="unit" id={String(matter.unit_id)} label={String(matter.unit_id).slice(0, 8)} />
+                    <EntityLink kind="unit" id={String(matter.unit_id)} label={String(matter.unit_number ?? matter.unit_id)} />
                   ) : (
                     "—"
                   )}
@@ -307,9 +307,11 @@ export function LegalMatterDetailPage() {
                 <div>
                   <strong>Incident:</strong>{" "}
                   {matter?.incident_id ? (
-                    <Link className="text-slate-700 underline" to={`/safety/accidents`}>
-                      {String(matter.incident_id).slice(0, 8)}
-                    </Link>
+                    <EntityLink
+                      kind="claim"
+                      id={String(matter.incident_id)}
+                      label={String(matter.incident_display_id ?? matter.incident_id)}
+                    />
                   ) : (
                     "—"
                   )}
