@@ -163,20 +163,18 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
   const createFormFields = (
     <div className={isFullPage ? "grid gap-2" : "mb-3 grid gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 md:grid-cols-2"}>
       {isFullPage ? (
-        <label className="text-xs font-semibold text-gray-600">
+        <label className="block text-xs">
           Policy
-          <select
-            className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={requestPolicyId}
-            onChange={(event) => setRequestPolicyId(event.target.value)}
-          >
-            <option value="">No policy selected</option>
-            {(policiesQuery.data ?? []).map((policy) => (
-              <option key={policy.id} value={policy.id}>
-                {policy.policy_number} · {policy.insurer_name}
-              </option>
-            ))}
-          </select>
+          {/* CLS-EP-INS-POLICY: full-page branch → EntityPicker kind=insurance_policy (same as compact). */}
+          <EntityPicker
+            kind="insurance_policy"
+            operatingCompanyId={operatingCompanyId ?? ""}
+            value={requestPolicyId || null}
+            onChange={(next) => setRequestPolicyId(next ?? "")}
+            enabled={requestOpen}
+            placeholder="No policy selected"
+            className="mt-0.5"
+          />
         </label>
       ) : (
         <label className="block text-xs">

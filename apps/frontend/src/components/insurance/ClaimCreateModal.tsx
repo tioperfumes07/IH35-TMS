@@ -262,18 +262,15 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Policy *</span>
-            <select
-              className="w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={form.policy_id}
-              onChange={(event) => updateField("policy_id", event.target.value)}
-            >
-              <option value="">Select policy</option>
-              {(policiesQuery.data ?? []).map((policy) => (
-                <option key={policy.id} value={policy.id}>
-                  {policy.policy_number} — {policy.insurer_name}
-                </option>
-              ))}
-            </select>
+            <EntityPicker
+              kind="insurance_policy"
+              operatingCompanyId={operatingCompanyId}
+              value={form.policy_id || null}
+              onChange={(next) => updateField("policy_id", next ?? "")}
+              enabled={open}
+              placeholder="Select policy"
+              nestedInDrawer
+            />
             {fieldErrors.policy_id ? (
               <span className="text-xs text-red-700" role="alert">
                 Policy is required or invalid.
