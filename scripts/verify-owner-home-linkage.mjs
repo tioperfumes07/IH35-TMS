@@ -54,7 +54,8 @@ const RULES = [
     file: "apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx",
     label: "0280-03/09 panel: driver + unit + load render as record-specific drill-through links",
     patterns: [
-      /to=\{`\/drivers\/\$\{encodeURIComponent\(row\.driver_id\)\}`\}/,
+      // C5 — driver drill-through accepts EntityLink kind="driver" (same ratchet as load below).
+      /<EntityLink[^>]*kind=["']driver["'][^>]*id=\{row\.driver_id\}/,
       /to=\{`\/fleet\/units\/\$\{encodeURIComponent\(row\.unit_id\)\}`\}/,
       // C5 (2026-07-25) TIGHTENED, NOT WEAKENED. This pattern required the literal
       // `to={`/dispatch?load_id=${encodeURIComponent(row.id)}`}`, so the guard PINNED the
@@ -68,6 +69,10 @@ const RULES = [
       {
         pattern: /to=\{`\/dispatch\?[^`]*\bload_id=/,
         why: "load must use EntityLink kind=\"load\" (/dispatch/loads/:id), not a ?load_id= board bookmark",
+      },
+      {
+        pattern: /to=\{`[^`]*\?[^`]*\bdriver_id=/,
+        why: "driver must use EntityLink kind=\"driver\" (/drivers/:id), not a ?driver_id= bookmark",
       },
     ],
   },
@@ -117,8 +122,8 @@ function selftest() {
   // relax back to the shape it used to demand).
   const checks = [
     [
-      "driver link required",
-      RULES[1].patterns[0].test('x to={`/drivers/${encodeURIComponent(row.driver_id)}`} y') &&
+      "driver EntityLink required",
+      RULES[1].patterns[0].test('<EntityLink kind="driver" id={row.driver_id} label={row.driver_name ?? "Driver"} />') &&
         !RULES[1].patterns[0].test("x <span>no link</span> y"),
     ],
     [
@@ -130,6 +135,11 @@ function selftest() {
       "superseded ?load_id= forbidden",
       RULES[1].forbidden[0].pattern.test('<Link to={`/dispatch?load_id=${encodeURIComponent(row.id)}`}>Open</Link>') &&
         !RULES[1].forbidden[0].pattern.test('<EntityLink kind="load" id={row.id} label="Open" />'),
+    ],
+    [
+      "superseded ?driver_id= forbidden",
+      RULES[1].forbidden[1].pattern.test('<Link to={`/dispatch?driver_id=${encodeURIComponent(row.driver_id)}`}>Driver</Link>') &&
+        !RULES[1].forbidden[1].pattern.test('<EntityLink kind="driver" id={row.driver_id} label="Driver" />'),
     ],
   ];
   const failed = checks.filter(([, ok]) => !ok);
