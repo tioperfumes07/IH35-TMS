@@ -403,7 +403,7 @@
     },
     {
       "id": "CLS-ORPHAN-SURFACE",
-      "root_cause": "A nav/leaf renders but has no back-link, no detail, or points to the wrong system of record. 5 surfaces across bills, accounting, vendors, cash flow, and general empty states.",
+      "root_cause": "A nav/leaf renders but has no back-link, no detail, or points to the wrong system of record. 4 surfaces remain across accounting, vendors, cash flow, and general empty states (ORPH-001 resolved).",
       "lane": "mechanical",
       "layer": "A",
       "modules": [
@@ -415,7 +415,7 @@
         {
           "path": "/accounting/bills: row not clickable, no vendor drill, no back button (ORPH-001)",
           "entity": "ALL",
-          "note": "AUD-F001."
+          "note": "RESOLVED, verified live 2026-08-05 (CASCADE). apps/frontend/src/pages/accounting/BillsPage.tsx:355-356 renders EntityLink kind=\"vendor\" (billVendorDrillId) and EntityLink kind=\"bill\" per row \u2014 both drill through. BillDetailPage.tsx:192-199 renders <PageHeader backHref=\"/accounting/bills\" breadcrumb=[...]> which (components/forms/shared/PageHeader.tsx:41-57) unconditionally renders a back button (ArrowLeft, navigate(-1) or backHref). All three original complaints (no row click, no vendor drill, no back button) are false against current code. AUD-F001 was correct when filed; superseded by a later fix. No longer actionable."
         },
         {
           "path": "Accounting > More dropdown: CoA not reachable, dropdown not alphabetical (ORPH-002)",
@@ -438,11 +438,11 @@
           "note": "Correlates with 0-row canonical tables. P1-007. 'vendors' listed explicitly."
         }
       ],
-      "completeness": "lucia-bypass Neon prod 2026-08-05: voided invoices=1/11984, revoked bills=0/16250, voided payments=0/12124, voided journal_entries=0. Orphan row surface remains minimal. UI drill-through defects (bill row-click detail, cash-flow drill, vendor detail) still OPEN pending frontend fixer lane.",
+      "completeness": "lucia-bypass Neon prod 2026-08-05: voided invoices=1/11984, revoked bills=0/16250, voided payments=0/12124, voided journal_entries=0. Orphan row surface remains minimal. ORPH-001 (bill row/vendor drill + back button) verified RESOLVED against current code 2026-08-05. Remaining UI drill-through defects (ORPH-002 CoA nav, ORPH-004 cash-flow drill, ORPH-003 vendor detail) still OPEN pending frontend fixer lane.",
       "guard": "scripts/verify-orphan-surface-drill.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "ORPH-001 bills row-click detail FAIL persists; ORPH-002 cash-flow drill-through empty; ORPH-003 vendor detail empty. Live void/revoke counts: invoices=1/11984, bills=0/16250, payments=0/12124, JEs=0.",
+        "guard_sample": "ORPH-001 RESOLVED (verified live 2026-08-05: BillsPage.tsx EntityLink drills + PageHeader back button); ORPH-002 cash-flow drill-through empty; ORPH-003 vendor detail empty. Live void/revoke counts: invoices=1/11984, bills=0/16250, payments=0/12124, JEs=0.",
         "money_critical": false
       },
       "status": "open",
