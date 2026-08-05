@@ -16,6 +16,17 @@
  *
  * --check exits non-zero when the committed file disagrees with live, so CI can catch a stale commit
  * without this job needing write access in that context.
+ *
+ * WHY THIS IS *NOT* IN THE IN-PROCESS CRON, unlike the certifier
+ * The certifier's output is a database row, so a Render container can write it and everyone sees it.
+ * This job's output is a FILE IN THE REPO. A Render filesystem is ephemeral and is not a git checkout
+ * with push rights — running this on the app cron would regenerate the scoreboard into a container that
+ * is about to be destroyed, log "wrote", and change nothing anyone can read. That is precisely the kind
+ * of looks-done-runs-never wiring this board exists to expose, so it would be self-defeating here.
+ *
+ * The honest split: `npm run scoreboard:from-live` regenerates and commits it (a human or CI job with a
+ * checkout), and `npm run scoreboard:check` runs in CI to FAIL when the committed file has drifted from
+ * live. The freshness guarantee comes from the check failing, not from a write nobody can see.
  */
 import pg from "pg";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
