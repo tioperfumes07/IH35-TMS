@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchHomeScenarioTracker,
@@ -197,13 +198,24 @@ export function ScenarioTrackerPanel({ companyId }: Props) {
             )}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => refetch()}
-          className="text-[11px] font-medium text-slate-600 hover:text-slate-900"
-        >
-          Refresh
-        </button>
+        <div className="flex items-center gap-3">
+          {/* PROG-NAV-01: door to the full pixel-locked board. This panel is the only place the
+              owner meets the tracker on the page he lands on, so without this link the full
+              24-slice board stayed URL-only. */}
+          <Link
+            to="/home/scenario-tracker"
+            className="text-[11px] font-medium text-slate-600 hover:text-slate-900"
+          >
+            Open full board
+          </Link>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="text-[11px] font-medium text-slate-600 hover:text-slate-900"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
       {staleInfo.stale && (
