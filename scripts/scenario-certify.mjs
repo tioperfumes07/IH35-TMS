@@ -107,68 +107,17 @@ async function assertNotMasked(client) {
   return row;
 }
 
+/**
+ * Delegates to the compiled backend service so the cron and this script run the SAME code. An earlier
+ * draft of this file reimplemented the loop; two copies of a certifier is how a board starts disagreeing
+ * with itself depending on which entry point last ran.
+ */
 export async function certifyOnce(client, registry) {
-  // Session-scoped (third arg false), its OWN statement. Transaction-local would be discarded between
-  // the implicit transactions of subsequent queries, and a bypass folded into a CTE silently fails to
-  // apply at all (see the neon-bypass landmine).
+  const mod = await import(
+    new URL("../apps/backend/dist/home/scenario-certify.service.js", import.meta.url).href
+  );
   await client.query(`SELECT set_config('app.bypass_rls','lucia',false)`);
-  // NOTE: do NOT also set app.operating_company_id here. Measured on prod: setting it alongside the
-  // bypass drops visibility back to zero. Entity scoping is done by the $1 parameter inside each
-  // probe, never by the GUC.
-  const control = await assertNotMasked(client);
-  console.log(`scenario-certify: visibility ok (user=${control.who}, ${control.companies} companies).`);
-
-  const entities = await activeEntities(client);
-  const scopes = [{ id: null, code: "ALL" }, ...entities];
-  const summary = { certified: 0, passed: 0, notYet: 0, regressed: 0, skipped: 0, errors: [] };
-
-  for (const scope of scopes) {
-    for (const def of registry.SCENARIO_REGISTRY) {
-      // hop.revenue is flag-based; the read path resolves it through isEnabled(). Certifying it from
-      // here would need the flag resolver, so it is left to the read path rather than approximated.
-      if (!def.probe) {
-        summary.skipped += 1;
-        continue;
-      }
-      try {
-        const res = await client.query(def.probe.sql, [scope.id]);
-        const n = Number(res.rows[0]?.n ?? 0);
-        const holds = registry.probeHolds(n);
-        const evidence = def.probe.describe(n);
-
-        let stage = "built";
-        let state = "go";
-        if (holds) {
-          stage = "passed";
-          state = "done";
-          summary.passed += 1;
-        } else {
-          const before = await priorStage(client, def.key, scope.id);
-          if (before === "passed" || before === "complete") {
-            state = "fix";
-            summary.regressed += 1;
-          } else {
-            summary.notYet += 1;
-          }
-        }
-
-        await client.query(`SELECT audit.set_scenario_status($1, $2::uuid, $3, $4, $5, $6, $7)`, [
-          def.key,
-          scope.id,
-          stage,
-          state,
-          evidence,
-          "CI-PROBE",
-          false,
-        ]);
-        summary.certified += 1;
-      } catch (error) {
-        // One bad slice must not stop the sweep — the rest of the board still needs refreshing.
-        summary.errors.push(`${def.key}@${scope.code}: ${error instanceof Error ? error.message : String(error)}`);
-      }
-    }
-  }
-  return summary;
+  return mod.certifyAllScenarios(client);
 }
 
 async function main() {
