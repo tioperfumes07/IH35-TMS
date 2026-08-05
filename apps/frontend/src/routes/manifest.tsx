@@ -174,7 +174,7 @@ const EquipmentTypesPage = React.lazy(() => import("../pages/EquipmentTypesPage"
 const HomePage = React.lazy(() => import("../pages/Home").then((m) => ({ default: m.HomePage })));
 const OwnerHome = React.lazy(() => import("../pages/home/OwnerHome").then((m) => ({ default: m.OwnerHome })));
 const ScenarioTrackerHome = React.lazy(() =>
-  import("../pages/home/scenario-tracker/ScenarioTrackerHome").then((m) => ({ default: m.ScenarioTrackerHome })),
+  import("../pages/program/scenario-tracker/ScenarioTrackerHome").then((m) => ({ default: m.ScenarioTrackerHome })),
 );
 // QBO-style home stays mounted at /app/homepage (bookmarks + never-delete). Sidebar HOME → /home.
 const QboStyleHomePage = React.lazy(() => import("../pages/home/QboStyleHomePage").then((m) => ({ default: m.QboStyleHomePage })));
@@ -280,6 +280,7 @@ const MultiEntityAccountingPage = React.lazy(() => import("../pages/accounting/M
 const AccountingHubPage = React.lazy(() => import("../pages/accounting/AccountingHubPage").then((m) => ({ default: m.AccountingHubPage })));
 const DisputeQueuePage = React.lazy(() => import("../pages/accounting/DisputeQueuePage").then((m) => ({ default: m.DisputeQueuePage })));
 const AbandonmentQueuePage = React.lazy(() => import("../pages/accounting/AbandonmentQueuePage").then((m) => ({ default: m.AbandonmentQueuePage })));
+const LoansAdvancesPage = React.lazy(() => import("../pages/accounting/loans/LoansAdvancesPage").then((m) => ({ default: m.LoansAdvancesPage })));
 const InvoiceDetailPage = React.lazy(() => import("../pages/accounting/InvoiceDetailPage").then((m) => ({ default: m.InvoiceDetailPage })));
 const PaymentsListPage = React.lazy(() => import("../pages/accounting/PaymentsListPage").then((m) => ({ default: m.PaymentsListPage })));
 const PaymentDetailPage = React.lazy(() => import("../pages/accounting/PaymentDetailPage").then((m) => ({ default: m.PaymentDetailPage })));
@@ -3695,6 +3696,16 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <AbandonmentQueuePage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Loans & Advances register + 5-step application wizard. The data model, routes, poster,
+            auto-deduct and reminder worker already shipped; this route is the first frontend door. */}
+        <Route
+          path="/accounting/loans-advances"
+          element={
+            <ProtectedRoute>
+              <LoansAdvancesPage />
             </ProtectedRoute>
           }
         />

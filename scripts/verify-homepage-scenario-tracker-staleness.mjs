@@ -11,8 +11,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-homepage-scenario-tracker-staleness";
 const SELFTEST = process.argv.includes("--selftest");
 
-const HOME = "apps/frontend/src/pages/home/scenario-tracker/ScenarioTrackerHome.tsx";
-const STALE = "apps/frontend/src/pages/home/scenario-tracker/staleness.ts";
+const HOME = "apps/frontend/src/pages/program/scenario-tracker/ScenarioTrackerHome.tsx";
+const STALE = "apps/frontend/src/pages/program/scenario-tracker/staleness.ts";
 const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 const SPEC = "docs/specs/HOMEPAGE-LIVE-SCENARIO-TRACKER-BUILD-SPEC-2026-08-04.md";
 
@@ -43,7 +43,19 @@ export function collectProblems(root = ROOT) {
   if (!home) {
     problems.push(`missing ${HOME}`);
   } else {
-    if (!/POLL_MS\s*=\s*20_000/.test(home)) problems.push(`${HOME}: must poll every 20s (POLL_MS = 20_000)`);
+    // WIRE-LIVE (owner 2026-08-05): the board must refresh ITSELF and fast. This used to pin the
+    // literal 20_000, which made the required cadence un-tunable — tightening the poll to 3s (the
+    // owner's "instantly + automatically" order) FAILED a guard whose only complaint was that the
+    // board got fresher. Assert the intent instead: a poll of at most 20s, and background refetch so
+    // a board left open on a wall display keeps moving while unfocused.
+    const pollMatch = /POLL_MS\s*=\s*([0-9_]+)/.exec(home);
+    const pollMs = pollMatch ? Number(pollMatch[1].replace(/_/g, "")) : NaN;
+    if (!Number.isFinite(pollMs) || pollMs <= 0 || pollMs > 20_000) {
+      problems.push(`${HOME}: must poll at least every 20s (found POLL_MS = ${pollMatch?.[1] ?? "none"})`);
+    }
+    if (!/refetchIntervalInBackground:\s*true/.test(home)) {
+      problems.push(`${HOME}: must set refetchIntervalInBackground: true — an unfocused board must keep updating`);
+    }
     if (!/scenario-tracker-stale-banner/.test(home)) problems.push(`${HOME}: missing stale banner testid`);
     if (!/TRANSP/.test(home) || !/USMCA/.test(home) || !/TRK/.test(home)) {
       problems.push(`${HOME}: must offer TRANSP/USMCA/TRK entity chips`);
@@ -70,9 +82,9 @@ export function collectProblems(root = ROOT) {
     }
   }
 
-  const api = readRel("apps/frontend/src/pages/home/scenario-tracker/api.ts");
+  const api = readRel("apps/frontend/src/pages/program/scenario-tracker/api.ts");
   if (!api) {
-    problems.push("missing apps/frontend/src/pages/home/scenario-tracker/api.ts");
+    problems.push("missing apps/frontend/src/pages/program/scenario-tracker/api.ts");
   } else if (!/\/api\/v1\/home\/scenario-tracker/.test(api)) {
     problems.push("api.ts: must call GET /api/v1/home/scenario-tracker (CC-1 path lock)");
   }
@@ -95,12 +107,12 @@ if (SELFTEST) {
     );
     mk(
       HOME,
-      'const POLL_MS = 20_000; data-testid="scenario-tracker-stale-banner"; TRANSP USMCA TRK; scenario-tracker-home\n',
+      'const POLL_MS = 3000; refetchIntervalInBackground: true; data-testid="scenario-tracker-stale-banner"; TRANSP USMCA TRK; scenario-tracker-home\n',
     );
     mk(MANIFEST, 'ScenarioTrackerHome; path="/home/scenario-tracker"; path="/home/ops"\n');
-    mk("apps/frontend/src/pages/home/scenario-tracker/api.ts", 'return "/api/v1/home/scenario-tracker";\n');
+    mk("apps/frontend/src/pages/program/scenario-tracker/api.ts", 'return "/api/v1/home/scenario-tracker";\n');
     const good = collectProblems(tmp);
-    mk(HOME, "const POLL_MS = 999; no banner\n");
+    mk(HOME, "const POLL_MS = 60_000; refetchIntervalInBackground: true; no banner\n");
     const bad = collectProblems(tmp);
     if (good.length !== 0 || bad.length < 2) {
       console.error(`${LABEL} SELFTEST FAIL`, { good, bad });
