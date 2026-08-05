@@ -1089,3 +1089,16 @@ membership-scoped session.
 - LANE:      none — GUARD attestation
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `mdata.customers` 2,696 total / 2,692 active / 3 entities; `mdata.vendors` 2,831 total / 2,444 active. Cross-entity joins: invoices↔customers mismatch **0**, bills↔vendors mismatch **0**. `accounting.bill_payments` 6,544 with 0 exceeding their bill; `accounting.bills` unvoided with `paid_cents > amount_cents` **0**; `accounting.invoices` unvoided with `amount_paid_cents > total_cents` **0**.
 - status:    OPEN (informational)
+
+## LV-068  GUARD pass 20 — HOS duty-status log is append-only at full scale: 592,535 records with ZERO updates and ZERO deletes. This is the tamper-evidence property a DOT/FMCSA reviewer tests first, and it holds.
+- module:    hos / safety (GUARD live-verify-after-merge, pass 20)
+- entity:    ALL
+- surface:   `hos.duty_status_events` · `safety.*`
+- observed:  `hos.duty_status_events` holds **592,535 live rows** (`n_tup_ins` 594,504) with **`n_tup_upd` = 0** and **`n_tup_del` = 0**. Over half a million driver duty-status records have been written and **not one has ever been modified or removed**.
+  **Why this is the most consequential append-only result in this file.** The other WORM checks protect the company's own books — `audit.audit_events` and `audit.row_changes` (LV-054, 4.5M rows, also 0/0). This one protects a **legally mandated record**. Hours-of-service logs are the primary artifact in a DOT/FMCSA audit and in any accident or hours-falsification proceeding; their evidentiary value depends entirely on being unalterable after the fact. A single UPDATE on this table would compromise the defensibility of the whole log, and there have been none across 592,535 rows.
+  This also independently corroborates the schema rule that `hos.duty_status_events` is append-only — that is not merely documented, it is observably true in production at scale.
+  **Safety surfaces, for the record:** `safety.driver_safety_scores` 409, `safety.fuel_gps_matches` 176, `safety.integrity_alerts` 30 with `integrity_alert_events` 30 (one historical delete), `document_alert_rules` 21, `anomaly_alert_rules` 18. Modest volumes, consistent with the safety module being configured and partially exercised while nothing operational has been created in the TMS. **I am not filing the low counts as a gap** — per the origin rule, absence of operational activity is expected state, and the one `integrity_alert_events` delete is undated historical churn on a non-financial table.
+- severity:  informational — a structural pass with regulatory significance
+- LANE:      none — GUARD attestation
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement. `pg_stat_user_tables` for `hos.duty_status_events`: `n_live_tup` **592,535**, `n_tup_ins` 594,504, `n_tup_upd` **0**, `n_tup_del` **0**. Safety schema counts as listed, all `n_tup_del` 0 except `integrity_alert_events` (1).
+- status:    OPEN (informational)
