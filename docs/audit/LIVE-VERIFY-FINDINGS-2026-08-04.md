@@ -1401,3 +1401,24 @@ membership-scoped session.
 - LANE:      CC-1 / CURSOR (maintenance + driver_finance) — repoint `maintenance.position_history` to `maintenance.parts_inventory` and the canonical position table, and `driver_finance.trip_link_queue` to the canonical settlement line; archive the retire tables, do not drop them
 - neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` TRANSP, exit 0. Base tables in retire schemas = **11** (maint 5, settlement 3, payroll 2, bank 1). FKs whose target is a retire schema = **9**, of which **3** originate outside retire schemas and **6** are retire→retire, each enumerated above. Retire row counts: `maint.part` **144**, `maint.pm_schedule` **24**, `maint.position_set` **6**, all others **0**. Canonical comparison: `maintenance.parts_inventory` **144**, `maintenance.pm_schedules` **24**.
 - status:    OPEN
+
+## LV-084  §10 — the retired `accounting.qbo_*` tables hold **7,934 rows that DRIFT from canonical master data** (49 vendors, 41 customers apart). Nothing structurally depends on them (1 FK, self-referential), so this is a read-risk not a coupling risk.
+- module:    accounting · mdata (GUARD — §10 linkage law, QBO mirror)
+- entity:    ALL
+- surface:   `accounting.qbo_*` (RETIRE) vs `mdata.qbo_*` (canonical mirror) vs `mdata.vendors`/`customers`
+- observed:  §10 states the QBO mirror is `mdata.qbo_*` **read-only**, that projections write `accounting.*`, and that **`accounting.qbo_*` is RETIRE**. Both mirrors are live on prod.
+  **The retired set holds 7,934 rows:** `accounting.qbo_vendors` **2,782**, `qbo_customers` **2,655**, `qbo_accounts` **1,647**, `qbo_remote_counts` 848, `qbo_remote_count_collection_state` 2.
+  **The canonical mirror is an order of magnitude larger** and is clearly the one being fed: `mdata.qbo_sync_runs` **31,728**, `qbo_purchases` **28,332**, `qbo_ar_payments` **23,308**, `qbo_ap_bills` **17,303**, `qbo_ar_invoices` **9,078**, `qbo_ap_bill_payments` **6,397** — 14 tables in total.
+  **The retired copies have drifted from canonical master data:**
+  | retired | rows | canonical | rows | drift |
+  |---|---|---|---|---|
+  | `accounting.qbo_vendors` | 2,782 | `mdata.vendors` | 2,831 | **49** |
+  | `accounting.qbo_customers` | 2,655 | `mdata.customers` | 2,696 | **41** |
+  So the retired tables are neither empty nor synchronised — they are a stale snapshot roughly 1.7% behind canonical vendors and 1.5% behind canonical customers. That is the worst of both states for a retired table: populated enough to look authoritative, stale enough to be wrong.
+  **The structural risk is low and I checked rather than assuming it.** Exactly **1** foreign key targets the `accounting.qbo_*` set, and it is `accounting.qbo_accounts` → `accounting.qbo_accounts` — a self-referential parent/child hierarchy. **No canonical table FKs into the retired QBO set**, so unlike LV-083 (where `maintenance.position_history` genuinely depends on `maint.*`) nothing here is structurally coupled. The exposure is purely that application code or a report could still *read* these tables and get 49 vendors' worth of stale answers.
+  This is the live measurement behind the standing unresolved contradiction over which `qbo_vendors` is canonical: the owner ruled `mdata` canonical, and the drift figures quantify what deferring the repoint currently costs — a second, wrong copy that answers queries.
+  **Not filed as a data defect.** Under archive-never-delete the retired tables should remain; the correct resolution is repointing readers, not dropping rows. And per the origin census (LV-081) every row in both mirrors is QuickBooks-imported, so neither copy is TMS-authored.
+- severity:  major (a retired, drifted duplicate of master data remains readable; 49 vendors / 41 customers divergent)
+- LANE:      CC-1 (money) — repoint any remaining readers of `accounting.qbo_*` at `mdata.*`; archive the retire tables in place, never drop
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass its own statement, `app.operating_company_id` TRANSP, exit 0. `accounting.qbo_*` = 5 tables totalling 7,934 rows as listed. `mdata.qbo_*` = 14 tables, top counts as listed. `mdata.vendors` **2,831** vs `accounting.qbo_vendors` **2,782**; `mdata.customers` **2,696** vs `accounting.qbo_customers` **2,655**. FKs targeting `accounting.qbo_*` = **1**, self-referential on `qbo_accounts`.
+- status:    OPEN
