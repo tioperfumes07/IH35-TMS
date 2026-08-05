@@ -2134,3 +2134,54 @@ consistent with the entity model, not a defect.
              checked by basename across `scripts/**/*.mjs` recursively, not by exact path alone, so renames
              are correctly excluded from the absent count.
 - status:    OPEN
+
+## LV-104  §10 BOTH-WAY LINKAGE — **PASS, complete**: every one of the 3,521 source-bearing posting lines resolves to a live source, and `transaction_source_links` covers all of them. **This CORRECTS LV-092, which overstated the gap.**
+- module:    accounting (GUARD — §10 linkage law, full-coverage proof)
+- entity:    ALL
+- surface:   `accounting.journal_entry_postings` ↔ source tables ↔ `accounting.transaction_source_links`
+- observed:  I previously verified only invoice and bill (10 lines each). That left **96% of GL volume
+  unverified**, so I finished the job across every source type.
+  **(1) Direct resolution — every typed line resolves to a live source row, 0 dangling:**
+  | source type | lines | dangling |
+  |---|---|---|
+  | `fuel_event` → `fuel.fuel_transactions` | **3,094** | **0** |
+  | `bank_categorization` → `banking.bank_transactions` | **380** | **0** |
+  | `invoice` → `accounting.invoices` | 10 | 0 |
+  | `bill` → `accounting.bills` | 10 | 0 |
+  | `expense` → `accounting.expenses` | 4 | 0 |
+  | `bill_payment` → `accounting.bill_payments` | 2 | 0 |
+  | `customer_payment` → `accounting.payments` | 2 | 0 |
+  **(2) The canonical linkage table is complete in BOTH directions.**
+  `accounting.transaction_source_links` holds **3,582** rows with `n_tup_ins = 3,582` (nothing ever deleted).
+  Forward: postings with **no** link = **30**. Reverse: links pointing at a **missing posting = 0**.
+  **Every posting carrying a `source_transaction_type` has a link — the 30 unlinked are ALL null-source.**
+  **(3) The 30 unlinked are 100% `source='manual'` — EXPECTED STATE.** A manual journal entry *is* the source
+  document; there is no upstream transaction to point at. Filing these would be the
+  expected-state-recorded-as-failure anti-pattern.
+  **★ CORRECTION TO LV-092 — I overstated that finding, and this is the evidence that shows it.**
+  LV-092 reported that the 44 reversal lines had **no line-level traceability** because `reversal_of_line_id`
+  is populated on 0 of 3,603 rows, and treated the 4 revrec lines as a real gap. Both claims were wrong in
+  their conclusion, though the underlying observation was accurate:
+  - **All 44 reversal lines DO carry a link** — `linked_object_type='journal_entry'`,
+    `relationship_role='reversal_of'`, count **44**, an exact match to the 44 reversal lines.
+  - **The 4 revrec lines and the 2 fuel-card-overage lines also carry links** — they are absent from the
+    unlinked set of 30, which is entirely manual.
+  `reversal_of_line_id` being 0-populated **is still true**. What was wrong was my inference that this meant
+  traceability was missing. It is not missing; it lives in `transaction_source_links`, which is the **§10
+  canonical mechanism** — the links table is where the linkage law says the relationship belongs, not a
+  denormalised column on the posting row. **I checked one mechanism, found it empty, and concluded absence
+  without checking the canonical one.** That is precisely the error §0 warns about, and it is the same shape
+  as trusting a ledger row (LV-099) or a `guard_green` field (LV-103): reading one record instead of proving
+  the fact.
+  **Net effect on LV-092:** its traceability claim is **withdrawn**. What survives is narrow and cosmetic —
+  `reversal_of_line_id` and `reversed_by_line_id` exist as columns and are never written. That is dead schema,
+  not a linkage defect, and it does not warrant the *major* severity I assigned.
+- severity:  none for the linkage itself (**PASS**) · LV-092 downgraded to **minor/cosmetic** (unused columns)
+- LANE:      CC-1 (money) — no linkage work required. Optionally decide whether `reversal_of_line_id` /
+             `reversed_by_line_id` should be populated or dropped as dead schema; **not** a correctness issue
+             either way, since `transaction_source_links` already carries the relationship.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app`, bypass in its own statement, exit 0.
+             Per-type dangling counts as tabulated; `transaction_source_links` **3,582** rows /
+             `n_tup_ins` **3,582**; postings without a link **30**, all `source='manual'`; links pointing at a
+             missing posting **0**; `journal_entry`/`reversal_of` links **44** matching the 44 reversal lines.
+- status:    PASS (supersedes the traceability claim of LV-092)
