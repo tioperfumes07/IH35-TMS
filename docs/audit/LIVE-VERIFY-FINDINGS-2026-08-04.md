@@ -322,3 +322,27 @@ membership-scoped session.
 - LANE:      CLAUDE-CODER-1 (posting engine) — confirm intent first
 - neon-check: manual 2/2 typed; auto 9/1783 typed; JEs since 2026-08-01 = 1,598 with 0 typed
 - status:    OPEN
+
+## LV-022  LV-010 FIXED honestly (`logged_only`) — but LV-013 REMAINS: a sent invoice still produces no queue row at all
+- module:    accounting · email
+- entity:    USMCA (send path is shared — system-wide)
+- surface:   invoice send -> `email.email_queue`
+- expected:  Every invoice recorded `status='sent'` has a matching delivery artifact, even when the provider is a console stub.
+- observed:  Re-tested on deployed `ec0d65f` (includes #4319 and #4313). Sent `INV-2026-00001` (`e4d2ebdd…`, USMCA, TEST-TIO, no email on file): **HTTP 200 in 579 ms, status flipped to `sent`**. Results split:
+  **(a) LV-010 is FIXED, and fixed the right way.** `email.email_queue` rows now carry status **`logged_only`** instead of `sent` (newest row: `logged_only / console-email-1785865680029`; non-console provider ids still 0). CC-1 did not fake delivery — they stopped the ledger from CLAIMING delivery. The false green is gone: the table no longer asserts 232 messages were sent when the provider is a console stub.
+  **(b) LV-013 is NOT fixed.** `email.email_queue` was **232 before and 232 after** this successful send — the send created **no queue row at all**, not even a `logged_only` one. So an invoice can still reach `status='sent'` with **zero** delivery artifact of any kind. That is precisely the "flagged sent that didn't send" state the owner ruled must never be left behind.
+  **(c) WIRE-04 counter fired again** (1 -> 2), confirming LV-012's fix is stable across repeats and not a one-shot.
+- why the distinction matters:  LV-010 and LV-013 look like one problem and are not. LV-010 was "the queue lies about what it did" — fixed. LV-013 is "the send does not reach the queue" — still open. Closing LV-010 does not close LV-013, and a reader could easily assume it did.
+- severity:  major (last remaining Hop 0 blocker)
+- LANE:      CLAUDE-CODER-1 (money/notification path)
+- neon-check: email_queue 232 -> 232 across a 200-OK send; newest row status `logged_only`; non-console provider ids 0; wire04 1 -> 2
+- status:    OPEN
+
+## LV-023  HOP 0 GATE STATUS — one blocker left
+- module:    accounting / dispatch (skeleton hop 7)
+- entity:    TRANSP (where Hop 0 must run)
+- observed:  Live-verified state of every blocker I filed against the money skeleton: **LV-011 send hangs — FIXED** (915 ms, 200). **LV-012 evidence counter silent — FIXED** (0 -> 1 -> 2, payload carries `reason:"no_source_load"`). **LV-010 email false-green — FIXED** (`logged_only`). **ACCT-F63 driver bill at customer rate — merged and deployed** (#4313), to be verified at Hop 0 against the real 48¢ card. **LV-013 — STILL OPEN.** Hop 0 preconditions otherwise confirmed: must run in **TRANSP** (USMCA copies of both named drivers are `status='Inactive'` and unassignable by the dispatch picker); GERARDO URBINA `e3cf9598-783e-43c0-b361-b229537daedc` and Fernando Mecor Hernandez `b7b22ff7-277c-4bb9-ab77-3ed52322327c` each carry a real **48¢/mi, `is_test_data=FALSE`, `miles_basis=short_miles`** rate, alongside a **120¢ `is_test_data=true`** decoy created 2026-08-04 that must NOT price the bill.
+- recommendation:  hold Hop 0 until LV-013 closes. Hop 7 would otherwise mark a REAL customer invoice `sent` with no delivery artifact — manufacturing the exact false state Hop 0 exists to disprove. The remaining fix is narrow: enqueue on send, even as `logged_only`.
+- severity:  minor (status record, not a defect)
+- LANE:      n/a — gate status for the owner
+- status:    OPEN

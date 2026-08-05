@@ -3867,6 +3867,24 @@
       "type",
       "updated_at"
     ],
+    "driver_finance.driver_pay_rates": [
+      "basis_type",
+      "created_at",
+      "created_by_user_id",
+      "driver_id",
+      "effective_from",
+      "effective_to",
+      "flat_per_load_cents",
+      "id",
+      "is_active",
+      "is_test_data",
+      "miles_basis",
+      "notes",
+      "operating_company_id",
+      "rate_per_mile_cents",
+      "updated_at",
+      "updated_by_user_id"
+    ],
     "driver_finance.driver_pay_settings": [
       "created_at",
       "created_by_user_id",
@@ -10194,24 +10212,6 @@
       "template_name",
       "to_phone",
       "variables"
-    ],
-    "driver_finance.driver_pay_rates": [
-      "basis_type",
-      "created_at",
-      "created_by_user_id",
-      "driver_id",
-      "effective_from",
-      "effective_to",
-      "flat_per_load_cents",
-      "id",
-      "is_active",
-      "is_test_data",
-      "miles_basis",
-      "notes",
-      "operating_company_id",
-      "rate_per_mile_cents",
-      "updated_at",
-      "updated_by_user_id"
     ]
   }
 }
