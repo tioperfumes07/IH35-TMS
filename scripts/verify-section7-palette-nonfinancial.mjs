@@ -40,7 +40,7 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 483; // lowered 2026-08-04 (DispatcherHome slate flatten removed 9 amber/emerald/red tiles)
+const BASELINE = 472; // lowered 2026-08-04 (ScenarioTrackerPanel moved hop status colors to inline styles)
 
 function walk(dir) {
   let out = [];
