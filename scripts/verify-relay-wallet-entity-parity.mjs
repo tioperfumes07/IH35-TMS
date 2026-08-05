@@ -20,12 +20,23 @@
  * TRANSP held 1295 that predicate matched for everyone and silently seeded nothing for any other
  * entity. USMCA was left with no wallet and no items until it started using Relay.
  *
- * WHAT IS ASSERTED (static, on the migration set — CI has no prod credentials)
+ * THE WALLET LIVES IN TWO PLACES AND THE CODE READS THE SECOND ONE
+ * A CoA row alone is inert. `resolveRelayWalletBankAccountId()` looks up
+ * banking.bank_accounts scoped by operating_company_id, and every Relay row — fuel draws AND wallet
+ * deposits — returns `skipped_no_wallet` when that lookup misses. So an entity needs BOTH the
+ * catalogs.accounts #1295 row and its own banking.bank_accounts registration, or its Relay activity
+ * is invisible on /banking and unlinked from unit/driver/load.
+ *
+ * WHAT IS ASSERTED (static, on the migration set + the resolver — CI has no prod credentials)
  *   1. every entity-scoped existence check for the wallet is scoped by operating_company_id, so no
  *      entity can be starved by another entity already holding the account number;
  *   2. the five RELAY-* items are seeded with an entity-scoped NOT EXISTS as well;
  *   3. both fee items survive — they are the "Relay is also a vendor" leg and are easy to drop when
- *      someone thinks of Relay as only a fuel wallet.
+ *      someone thinks of Relay as only a fuel wallet;
+ *   4. the USMCA bank-account registration exists, is entity-scoped, and links to the entity's OWN
+ *      #1295 ledger row (linking to TRANSP's would cross-book two companies onto one asset);
+ *   5. the resolver itself stays entity-scoped — if it ever drops `operating_company_id`, one
+ *      entity's wallet silently absorbs another's fuel.
  *
  * METHOD: comments and strings are stripped only where structure is asserted; SQL literals are matched
  * on a string-preserving form. --selftest mutates the REAL migration and requires every assertion to
@@ -36,6 +47,7 @@ import { join } from "node:path";
 
 const LABEL = "verify-relay-wallet-entity-parity";
 const DIR = "db/migrations";
+const RESOLVER = "apps/backend/src/integrations/relay-payments/relay-wallet-bank-feed.service.ts";
 const REQUIRED_ITEMS = [
   "RELAY-DIESEL",
   "RELAY-DEF",
@@ -52,6 +64,14 @@ function relaySeedFiles() {
     .sort();
 }
 
+/** Every migration that registers the wallet as a banking.bank_accounts row. */
+function relayBankRegistrationFiles() {
+  return readdirSync(DIR, { withFileTypes: true })
+    .filter((e) => e.isFile() && e.name.endsWith(".sql") && /relay_wallet_banking_registration/.test(e.name))
+    .map((e) => join(DIR, e.name))
+    .sort();
+}
+
 function stripComments(sql) {
   return sql.replace(/^\s*--.*$/gm, "");
 }
@@ -60,7 +80,7 @@ function check(sources) {
   const errors = [];
   const files = Object.keys(sources);
 
-  if (files.length === 0) {
+  if (files.filter((f) => /relay_internal_bank_seed/.test(f)).length === 0) {
     errors.push("no relay_internal_bank_seed migration found — the Relay wallet master data is gone");
     return errors;
   }
@@ -68,7 +88,9 @@ function check(sources) {
   // The USMCA seed is the one that must be entity-scoped; the original TRANSP seed is historical and
   // must never be edited (applied-migration checksum freeze), so it is inspected but not required to
   // change.
-  const usmca = files.filter((f) => /usmca/i.test(f));
+  // Match the SEED migrations only — the bank-registration migration also ends in _usmca.sql, and
+  // running the seed assertions against it would fail for the wrong reason.
+  const usmca = files.filter((f) => /relay_internal_bank_seed/.test(f) && /usmca/i.test(f));
   if (usmca.length === 0) {
     errors.push(
       "no USMCA Relay seed migration — USMCA uses Relay, so without its own wallet account stage 2 " +
@@ -114,12 +136,71 @@ function check(sources) {
       errors.push(`${f}: writes journal entries — this seed is master data only, nothing may post here`);
     }
   }
+
+  // 4. The bank-account registration — without it the CoA row is inert.
+  const reg = files.filter((f) => /relay_wallet_banking_registration/.test(f));
+  const usmcaReg = reg.filter((f) => /usmca/i.test(f));
+  if (usmcaReg.length === 0) {
+    errors.push(
+      "no USMCA relay_wallet_banking_registration migration — resolveRelayWalletBankAccountId() is " +
+        "scoped by operating_company_id, so with no banking.bank_accounts row for USMCA every USMCA " +
+        "Relay draw and deposit returns skipped_no_wallet: invisible on /banking and unlinked"
+    );
+  }
+  for (const f of usmcaReg) {
+    const sql = stripComments(sources[f]);
+    if (!/INSERT INTO banking\.bank_accounts/i.test(sql)) {
+      errors.push(`${f}: does not insert a banking.bank_accounts row`);
+    }
+    // Must resolve the ledger row for THIS entity — pointing at another entity's #1295 would put two
+    // companies' fuel on one asset account.
+    if (!/operating_company_id\s*=\s*v_usmca\s+AND\s+system_purpose\s*=\s*'relay_fuel_wallet'/i.test(sql)) {
+      errors.push(
+        `${f}: the ledger_account_id lookup is not scoped to USMCA's own relay_fuel_wallet row — ` +
+          `linking to another entity's #1295 would cross-book two companies onto one asset`
+      );
+    }
+    if (!/b\.operating_company_id\s*=\s*v_usmca/i.test(sql)) {
+      errors.push(`${f}: the duplicate-registration check is not entity-scoped`);
+    }
+    // The scope must be set BEFORE the FORCED-RLS ledger lookup. Setting it only just before the
+    // INSERT leaves the lookup running under whatever app.operating_company_id the connection
+    // carried; a wrong-entity GUC returns NULL, the block RETURNs, and the migration reports success
+    // having inserted nothing. The first prod apply of this migration did exactly that.
+    const scopeAt = sql.search(/set_config\(\s*'app\.operating_company_id'/);
+    const lookupAt = sql.search(/FROM catalogs\.accounts/i);
+    if (scopeAt === -1) {
+      errors.push(`${f}: never sets app.operating_company_id — the RLS-scoped reads and the INSERT will not see USMCA`);
+    } else if (lookupAt !== -1 && scopeAt > lookupAt) {
+      errors.push(
+        `${f}: sets app.operating_company_id AFTER the catalogs.accounts lookup. catalogs.accounts is ` +
+          `FORCED-RLS, so the lookup can return NULL under a wrong-entity GUC and the migration then ` +
+          `silently inserts nothing while reporting success. Scope first, then look up.`
+      );
+    }
+  }
+
+  // 5. The resolver must stay entity-scoped, or per-entity registration buys nothing.
+  const resolver = sources[RESOLVER];
+  if (resolver === undefined) {
+    errors.push(`${RESOLVER}: missing — the Relay wallet bank-feed resolver is gone`);
+  } else {
+    const fn = resolver.slice(resolver.indexOf("export async function resolveRelayWalletBankAccountId"));
+    const body = fn.slice(0, fn.indexOf("\n}") + 2);
+    if (!/ba\.operating_company_id\s*=\s*\$1/.test(body)) {
+      errors.push(
+        `${RESOLVER}: resolveRelayWalletBankAccountId no longer filters on ba.operating_company_id — ` +
+          `one entity's wallet would absorb another entity's fuel draws and deposits`
+      );
+    }
+  }
   return errors;
 }
 
 function loadAll() {
   const out = {};
-  for (const f of relaySeedFiles()) out[f] = readFileSync(f, "utf8");
+  for (const f of [...relaySeedFiles(), ...relayBankRegistrationFiles()]) out[f] = readFileSync(f, "utf8");
+  out[RESOLVER] = readFileSync(RESOLVER, "utf8");
   return out;
 }
 
@@ -131,9 +212,66 @@ function selftest() {
     for (const e of baseline) console.error(`  - ${e}`);
     process.exit(1);
   }
-  const target = Object.keys(real).find((f) => /usmca/i.test(f));
+  const target = Object.keys(real).find((f) => /relay_internal_bank_seed/.test(f) && /usmca/i.test(f));
+  const regTarget = Object.keys(real).find((f) => /relay_wallet_banking_registration/.test(f) && /usmca/i.test(f));
 
   const mutations = [
+    [
+      "USMCA bank registration deleted",
+      (s) => {
+        const { [regTarget]: _dropped, ...rest } = s;
+        return rest;
+      },
+    ],
+    [
+      "registration links another entity's ledger row",
+      (s) => ({
+        ...s,
+        [regTarget]: s[regTarget].replace(
+          "WHERE operating_company_id = v_usmca\n     AND system_purpose = 'relay_fuel_wallet'",
+          "WHERE system_purpose = 'relay_fuel_wallet'"
+        ),
+      }),
+    ],
+    [
+      "duplicate-registration check unscoped",
+      (s) => ({
+        ...s,
+        [regTarget]: s[regTarget].replace("WHERE b.operating_company_id = v_usmca", "WHERE true"),
+      }),
+    ],
+    [
+      "scope set after the RLS-forced ledger lookup (the silent no-op)",
+      (s) => ({
+        ...s,
+        [regTarget]: s[regTarget]
+          .replace(/  PERFORM set_config\('app\.operating_company_id', v_usmca::text, true\);\n\n/, "")
+          .replace(
+            "  INSERT INTO banking.bank_accounts (",
+            "  PERFORM set_config('app.operating_company_id', v_usmca::text, true);\n\n  INSERT INTO banking.bank_accounts ("
+          ),
+      }),
+    ],
+    [
+      "scope never set at all",
+      (s) => ({
+        ...s,
+        [regTarget]: s[regTarget].replace(
+          /  PERFORM set_config\('app\.operating_company_id', v_usmca::text, true\);\n/,
+          ""
+        ),
+      }),
+    ],
+    [
+      "resolver drops entity scoping",
+      (s) => ({
+        ...s,
+        [RESOLVER]: s[RESOLVER].replace(
+          "WHERE ba.operating_company_id = $1::uuid",
+          "WHERE true"
+        ),
+      }),
+    ],
     [
       "global 1295 check restored",
       (s) => ({
@@ -160,7 +298,10 @@ function selftest() {
 
   for (const [name, mutate] of mutations) {
     const broken = mutate(real);
-    if (broken[target] === real[target]) {
+    // Compare the WHOLE source map, not just the seed file — several mutations target the
+    // registration migration or the resolver, and a per-file comparison would call those "unchanged"
+    // and let a stale mutation pass unnoticed.
+    if (JSON.stringify(broken) === JSON.stringify(real)) {
       console.error(`${LABEL} --selftest FAIL — mutation "${name}" changed nothing (guard is stale).`);
       process.exit(1);
     }
@@ -182,6 +323,6 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `${LABEL} PASS — every Relay-using entity gets its own wallet account and all five RELAY-* items, ` +
-    `entity-scoped, master-data only.`
+  `${LABEL} PASS — every Relay-using entity gets its own wallet account, all five RELAY-* items, and ` +
+    `its own bank-account registration; every lookup entity-scoped, master-data only.`
 );
