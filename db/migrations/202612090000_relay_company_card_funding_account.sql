@@ -45,14 +45,24 @@
 
 BEGIN;
 
+-- Inline REFERENCES (not a follow-up ADD CONSTRAINT): verify:orphan-fk-inventory requires the FK to be
+-- declared with the column so a fresh database can never end up with the column but no constraint.
 ALTER TABLE integrations.relay_company_cards
-  ADD COLUMN IF NOT EXISTS funding_bank_account_id uuid;
+  ADD COLUMN IF NOT EXISTS funding_bank_account_id uuid REFERENCES banking.bank_accounts(id);
 
+-- Convergence for a database where the column was already added WITHOUT the inline constraint (prod is
+-- exactly that case). ADD COLUMN IF NOT EXISTS is a no-op there, so the inline REFERENCES above never
+-- fires and the FK would be missing. This adds it only when absent, leaving fresh DBs untouched.
 DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'relay_company_cards_funding_bank_account_fk'
+    SELECT 1 FROM pg_constraint c
+    JOIN pg_class t ON t.oid = c.conrelid
+    JOIN pg_namespace n ON n.oid = t.relnamespace
+    WHERE n.nspname = 'integrations'
+      AND t.relname = 'relay_company_cards'
+      AND c.contype = 'f'
+      AND pg_get_constraintdef(c.oid) ILIKE '%funding_bank_account_id%'
   ) THEN
     ALTER TABLE integrations.relay_company_cards
       ADD CONSTRAINT relay_company_cards_funding_bank_account_fk
