@@ -537,25 +537,30 @@
   "progress": "0 of 37",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
-    "pass_count": 0,
-    "total_count": 3,
-    "progress": 0,
+    "pass_count": 2,
+    "total_count": 4,
+    "progress": 50,
     "prod_verified": false,
     "slices": [
       {
         "key": "hop.book",
-        "holds": false,
-        "evidence": "no count probe (resolved at request time)"
+        "holds": true,
+        "evidence": "3 load(s) booked with a customer and a rate"
       },
       {
         "key": "hop.dispatch",
-        "holds": false,
-        "evidence": "no count probe (resolved at request time)"
+        "holds": true,
+        "evidence": "1 load(s) dispatched or beyond"
       },
       {
         "key": "hop.deliver",
         "holds": false,
-        "evidence": "no count probe (resolved at request time)"
+        "evidence": "0 delivery stop(s) with a captured departure"
+      },
+      {
+        "key": "hop.pod_bol",
+        "holds": false,
+        "evidence": "0 POD/BOL document(s) linked to a load"
       }
     ]
   }
