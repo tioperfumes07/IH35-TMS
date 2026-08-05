@@ -45,10 +45,10 @@ const SURFACES = [
     route: "/program/scenario-tracker",
     what: "live 24-slice Scenario Tracker board (canonical — lives in PROGRAM beside the Scoreboard)",
     requireDoor: true,
-    linkSources: [
-      "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
-      "apps/frontend/src/components/home/ScenarioTrackerPanel.tsx",
-    ],
+    // OWNER DECISION 2026-08-05: the tracker lives ONLY on Program. The Home panel that used to
+    // host the second door was removed (it became an orphan component), so Program's tab row is the
+    // door — and the board is now also mounted inline on /program itself.
+    linkSources: ["apps/frontend/src/pages/program/AuditScoreboardPage.tsx"],
   },
   {
     // Owner moved the board to PROGRAM on 2026-08-05. The old path stays routed as a redirect —

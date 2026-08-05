@@ -174,7 +174,7 @@ const EquipmentTypesPage = React.lazy(() => import("../pages/EquipmentTypesPage"
 const HomePage = React.lazy(() => import("../pages/Home").then((m) => ({ default: m.HomePage })));
 const OwnerHome = React.lazy(() => import("../pages/home/OwnerHome").then((m) => ({ default: m.OwnerHome })));
 const ScenarioTrackerHome = React.lazy(() =>
-  import("../pages/home/scenario-tracker/ScenarioTrackerHome").then((m) => ({ default: m.ScenarioTrackerHome })),
+  import("../pages/program/scenario-tracker/ScenarioTrackerHome").then((m) => ({ default: m.ScenarioTrackerHome })),
 );
 // QBO-style home stays mounted at /app/homepage (bookmarks + never-delete). Sidebar HOME → /home.
 const QboStyleHomePage = React.lazy(() => import("../pages/home/QboStyleHomePage").then((m) => ({ default: m.QboStyleHomePage })));
