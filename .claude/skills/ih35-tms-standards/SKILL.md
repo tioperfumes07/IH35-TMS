@@ -163,7 +163,16 @@ when you learn/correct a durable rule.
 Before ANY block declare: (a) you read `FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md` + `01-LINKAGE-LAW`; (b)
 canonical target (`to_regclass`, NOT a RETIRE table); (c) the cross-module linkage matrix; (d) deployed SHA vs
 `origin/main`. **RETIRE → canonical:** `driver_finance.*` (RETIRE `payroll.*`/`settlement.*`); `mdata.qbo_*`
-mirror read-only, projections WRITE `accounting.*` (RETIRE `accounting.qbo_*`); `banking.*` (RETIRE `bank.*`);
+mirror read-only, projections WRITE `accounting.*` (RETIRE `accounting.qbo_*`) — **PROD-VERIFIED
+2026-08-05 (`pg_class`, br-fancy-credit-akjnd07a): `mdata.qbo_*` = 14 tables incl. EVERY transactional
+one (`qbo_ap_bills`, `qbo_bills`, `qbo_purchases`, `qbo_ar_invoices`, `qbo_ar_payments`,
+`qbo_vendor_credits`, `qbo_sync_runs`, ~125K rows); `accounting.qbo_*` = only 5 (accounts, customers,
+vendors, remote_counts, remote_count_collection_state) and has NO transactional tables at all.** A
+recon/loans build pointed at `accounting.qbo_*` finds no bills, purchases or payments and silently
+reconciles nothing. The handoff doc `LOANS-ADVANCES-BUILD-INSTRUCTIONS-FINAL.md` had this exact
+mapping INVERTED ("not `mdata.qbo_*` (use `accounting.qbo_*`)"); it is corrected + struck through
+there, but that file is NOT in the repo — **this line is the durable record; trust it over any
+handoff bundle.**; `banking.*` (RETIRE `bank.*`);
 `maintenance.*` (RETIRE `maint.*`); `mdata.vendors`; `mdata.loads`; cancellation reasons =
 `catalogs.load_cancellation_reasons` (owner ruling A; archive legacy `catalogs.cancellation_reasons`, never
 drop). **Hub tables:** org.companies, identity.users, mdata.drivers/units/loads/customers/vendors,
