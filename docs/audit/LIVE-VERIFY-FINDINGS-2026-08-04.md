@@ -3252,3 +3252,39 @@ populated today is a separate question from whether they are the right mechanism
 - neon-check: unchanged from LV-123 — prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app` asserted TRUE:
              DELETE granted on **149** tables; `driver_settlements` `n_tup_del` **7**.
 - status:    LV-123 remedy CORRECTED (grant revocation only) · hazard UNCHANGED
+
+## LV-132  **CLS-GL-DARK STAMPED — 13/26.** Guard prod-run + positive-controlled; the CI path is provably vacuous
+- module:    accounting (GUARD — class stamp, prod-only verification)
+- entity:    ALL
+- surface:   `scripts/verify-gl-posting-coverage.mjs` (ACCT-F122, #4528) · `accounting.transaction_source_links`
+- observed:  **(1) The CI path is vacuous — confirmed from the guard itself.** With no DB it returns
+  **SKIP, exit 0**: *"no DATABASE_URL/DATABASE_DIRECT_URL; live coverage cannot be asserted here."* That is
+  what CI runs. **A green CI on this guard proves nothing**, exactly as the owner warned. It was therefore
+  never stamped on CI.
+  **(2) Live prod run — 10 TMS-native postable documents, uncovered = 0** (`current_user=ih35_app` asserted
+  TRUE, bypass in its own statement): bills **5/0**, invoices (`sent`, `total_cents>0`) **3/0**, payments
+  **1/0**, bill_payments **1/0**.
+  **(3) POSITIVE CONTROL — the zero is real.** Same query, same table, same session, with the QBO-origin
+  filter removed: **uncovered = 16,245**. So the shipped `0` is a genuine zero, **not a query that can only
+  ever return zero** — the discriminator §0 requires, and the thing an in-memory selftest cannot establish.
+  **(4) Selftest passes 5 mutations**, including Mutation 1 — *"an UNBASELINED violation must be reported as
+  fresh — the ratchet's whole purpose"* — which is the RED-on-uncovered proof at the detector level.
+  **The control also quantifies the trap this guard exists to prevent.** Dropping one predicate
+  (`qbo_bill_id IS NULL`) converts a clean guard into a **16,245-row demand for journal entries against
+  bills QuickBooks has already booked** — the parallel-books double-post, one `WHERE` clause away. Mutation 5
+  makes that structural rather than conventional: every source must carry `qbo_\w+_id IS NULL` or the
+  selftest fails. **That is the single most important line in the guard**, and it is enforced.
+  **Why the stamp is safe.** All four evidence legs are present: vacuity of the CI path established, live
+  prod measurement taken, positive control proving the query can go non-zero, and mutation coverage at the
+  detector. No leg rests on a green CI run.
+  **Scope limit stated:** I did not create a Neon fork or plant a row on prod — both are writes outside
+  GUARD's lane. The positive control is the read-only equivalent and is stronger than a planted row in one
+  respect: it exercises the **real scanner's SQL against real data at production scale**, which a fixture
+  cannot.
+- severity:  none — class stamped
+- LANE:      n/a (verification of CC-1's ACCT-F122)
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app` asserted TRUE, bypass in its own
+             statement, exit 0. Per-source uncovered counts as tabulated; positive control **16,245**;
+             guard exit codes read WITHOUT a pipe (no-DB 0/SKIP, selftest 0/5 mutations).
+- status:    **GUARD-VERIFIED / DRAINED → 13 of 26.** Remaining unstamped: **CLS-DUAL-PATH** only
+             (`verify-qbo-canonical-recon.mjs` still absent from main — nothing to run, gating nobody).
