@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { withLuciaBypass } from "../auth/db.js";
+import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { currentAuthUser } from "../accounting/shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { buildScenarioTracker, MAX_AGE_SECONDS, type ScenarioTrackerResponse } from "./scenario-tracker.service.js";
@@ -46,10 +46,46 @@ export async function registerHomeRoutes(app: FastifyInstance) {
       if (!user) return;
       const q = (req.query ?? {}) as Record<string, unknown>;
       const rawEntity = typeof q.entity === "string" ? q.entity.trim() : "";
-      // ?entity= accepts an operating_company_id; anything else (or absent) means ALL.
+      // LV-115 — `?entity=` accepts an operating_company_id OR an org.companies.code (the UI sends the
+      // CODE, e.g. ?entity=USMCA). The previous logic was `isUuid ? rawEntity : "ALL"`, so a code cast to
+      // no uuid and SILENTLY became ALL: the endpoint answered 200 with the three-entity SUM under every
+      // entity button. Verified live on deploy dc85375 — TRANSP/USMCA/TRK each returned hop.gl = 1766,
+      // which is 1747 + 13 + 6; the UUIDs returned the real 1747 / 13 / 6. The owner's progress board was
+      // showing merged totals as per-entity numbers.
+      //
+      // Note what this was NOT: the SQL predicate was correct and RLS was never breached. The caller
+      // simply never asked for a scope, so no guard on the query text could see it (same trap as
+      // ACCT-F120) — which is why the guard for this asserts the RESPONSE's entity_scope instead.
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawEntity);
-      const entity = isUuid ? rawEntity : null;
-      const entityScope = isUuid ? rawEntity : "ALL";
+      let entity: string | null = isUuid ? rawEntity : null;
+
+      if (rawEntity && !isUuid) {
+        // Resolve the code under the CALLER'S OWN scope, deliberately NOT through the bypass.
+        // A bypass here would resolve ANY company's code — including one the caller cannot access — and
+        // only then check membership, which is a privilege-escalation shape (resolve-then-authorise).
+        // Reading as the caller means an inaccessible code simply does not resolve and returns 400
+        // unknown_entity, revealing nothing about other entities. verify-lucia-bypass-guard-pattern
+        // flagged the bypass version and it was right to: the correct fix was to not need the bypass.
+        const resolved = await withCurrentUser(user.uuid, async (client) => {
+          const res = await client.query<{ id: string }>(
+            `SELECT id::text AS id FROM org.companies WHERE upper(code) = upper($1) AND deactivated_at IS NULL LIMIT 1`,
+            [rawEntity]
+          );
+          return res.rows[0]?.id ?? null;
+        });
+        // FAIL LOUD. An unresolvable entity must never fall back to ALL — that silent widening is the
+        // whole defect. A caller asking for one entity and receiving every entity is worse than an error.
+        if (!resolved) {
+          return reply.code(400).send({
+            error: "unknown_entity",
+            message: `entity "${rawEntity}" is not a known operating company id or code`,
+          });
+        }
+        entity = resolved;
+      }
+
+      // Absent/empty entity still legitimately means ALL — that is the unfiltered board, explicitly asked for.
+      const entityScope = entity ?? "ALL";
 
       if (entity) await assertCompanyMembership(user.uuid, entity);
 
