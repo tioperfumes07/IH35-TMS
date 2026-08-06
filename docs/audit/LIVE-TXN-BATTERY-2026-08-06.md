@@ -304,3 +304,46 @@ prepare factoring packet. After dispatch: USMCA `accounting.bills` unchanged at 
 entered) and **driver pay rate/mi = 0**, so suppressing a $0 driver bill may be correct behaviour. To
 settle it, re-run the chain with real stop mileage and a non-zero pay rate and re-check. **UNVERIFIED —
 needs live check.** Recorded rather than guessed.
+
+### 11 — `LV-LOAD-UNASSIGNED`: load detail renders an ASSIGNED load as "Unassigned" — FAIL (major)
+
+Opened the load detail for `L-20260806-0005` (`a0b1df25-…`). The Overview panel shows:
+
+- **DRIVER: `Unassigned`**
+- **TRUCK UNIT: `—`**
+- **TRIP TYPE: `—`**
+
+…while the load-board row *directly beside it on the same screen* correctly shows
+`TEST-UNIT-20260806-01` / `Juan USMCA-Battery`, and prod has all three populated
+(`assigned_primary_driver_id 88c04cf5-…`, `assigned_unit_id 240be73b-…`, `trip_type NB`).
+
+**Root cause — isolated to the API, and the asymmetry is the smoking gun.**
+`GET /api/v1/dispatch/loads/:id?operating_company_id=…` returns **200** with:
+
+```
+assigned_unit_id            : "240be73b-…"   <-- id present
+assigned_primary_driver_id  : "88c04cf5-…"   <-- id present
+assigned_secondary_driver_name : null        <-- a *_name field EXISTS for the SECONDARY driver
+customer_name               : "TEST-Customer-One-20260806"   <-- customer IS resolved
+drivers                     : []             <-- empty despite an assigned primary
+```
+
+There is **no `assigned_primary_driver_name`**, **no unit-number field**, and **no `trip_type`** key
+anywhere in the payload. So the endpoint resolves `customer_id → customer_name` and even carries a
+name field for the *secondary* driver, but never resolves the **primary** driver or the unit — the
+frontend receives only UUIDs for those and correctly falls back to "Unassigned" / "—".
+
+This is **not** a frontend rendering bug and **not** an RLS/entity-scope bug (the ids are correct and
+correctly scoped) — it is a missing projection in the detail query.
+
+**Why it matters:** a dispatcher opening an assigned load is told it is *Unassigned*. That invites a
+double-assignment of the same driver/truck, which is the exact failure the assignment board exists to
+prevent. It also silently hides `trip_type`, which drives NB/TR/SB settlement closure.
+
+Board row `LV-LOAD-UNASSIGNED` (CC-3).
+
+**Corroborating positive — total connectivity is otherwise well wired here.** Loading this one screen
+fired scoped reads for `insurance/claims?load_id=`, `safety/incidents` (damage_report,
+trailer_interchange, cargo_claim), `safety/accidents?load_id=` and `loads/:id/expenses`, each carrying
+`operating_company_id=5c854333-…`. The §10 cross-module linkage from a load out to insurance, safety
+and expenses is present and entity-scoped.
