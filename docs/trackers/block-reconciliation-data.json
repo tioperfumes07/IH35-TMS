@@ -1,6 +1,6 @@
 {
  "date": "2026-08-06",
- "generated_at_iso": "2026-08-06T09:11:20.823Z",
+ "generated_at_iso": "2026-08-06T14:39:02.556Z",
  "counts": {
   "PENDING": 15,
   "PENDING (GATED)": 28,
@@ -13262,6 +13262,12 @@
  ],
  "merged_prs": [
   {
+   "number": 4605,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-08-06T09:22:11Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 4594,
    "title": "GUARD: ACCT-F93 (#4062) VERIFIED live on prod — plus GOV-F01 (constitution published to a PUBLIC repo) and an unconstrained category column",
    "mergedAt": "2026-08-06T06:02:16Z",
@@ -16854,12 +16860,6 @@
    "title": "CURSOR- fix(maintenance): LST-PICKER-01 road-service vendor_id + inline create (guard 1866)",
    "mergedAt": "2026-07-31T13:52:21Z",
    "branch": "fix/lst-picker01-road-service-vendor-1866"
-  },
-  {
-   "number": 3890,
-   "title": "CURSOR- fix(lists): LST-PICKER-01 insurance coverage type inline create (guard 1864)",
-   "mergedAt": "2026-07-31T13:33:26Z",
-   "branch": "fix/lst-picker01-insurance-coverage-type-1864"
   }
  ],
  "merged_pr_total": 3000,
