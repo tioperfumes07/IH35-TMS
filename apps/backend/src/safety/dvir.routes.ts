@@ -49,7 +49,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerSafetyDvirRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/dvir", async (req, reply) => {
+  app.get("/api/v1/safety/dvir", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
@@ -126,7 +126,7 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
     return { submissions: rows };
   });
 
-  app.get("/api/v1/safety/dvir/:id", async (req, reply) => {
+  app.get("/api/v1/safety/dvir/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
