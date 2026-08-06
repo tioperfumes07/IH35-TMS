@@ -1323,6 +1323,7 @@
     "2650": "2650-verify-entity-param-never-silently-all.mjs",
     "2723": "2723-verify-gl-posting-coverage.mjs",
     "2724": "2724-verify-qbo-canonical-recon.mjs",
+    "2725": "2725-verify-law-registry.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
