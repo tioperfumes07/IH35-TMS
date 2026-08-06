@@ -81,6 +81,10 @@ async function driverBelongsToCompany(
       JOIN org.user_company_access uca ON uca.user_id = d.identity_user_id
       WHERE d.id = $1
         AND uca.company_id = $2
+        -- The driver ROW must belong to the company too, not merely their user account (same defect as
+        -- MDATA-F02 in driver-team.service.ts): a driver in company Y whose user has access to X would
+        -- otherwise pass this gate and be teamed into X.
+        AND d.operating_company_id = $2
         AND uca.deactivated_at IS NULL
       LIMIT 1
     `,
@@ -158,7 +162,9 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
             t.created_by_user_id
           FROM mdata.driver_teams t
           JOIN mdata.drivers pd ON pd.id = t.primary_driver_id
+                               AND pd.operating_company_id = t.operating_company_id
           JOIN mdata.drivers sd ON sd.id = t.secondary_driver_id
+                               AND sd.operating_company_id = t.operating_company_id
           ${whereClause}
           ORDER BY t.is_active DESC, t.created_at DESC
         `,
@@ -204,7 +210,9 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
             t.created_by_user_id
           FROM mdata.driver_teams t
           JOIN mdata.drivers pd ON pd.id = t.primary_driver_id
+                               AND pd.operating_company_id = t.operating_company_id
           JOIN mdata.drivers sd ON sd.id = t.secondary_driver_id
+                               AND sd.operating_company_id = t.operating_company_id
           WHERE t.id = $1
             AND t.operating_company_id = $2
           LIMIT 1
