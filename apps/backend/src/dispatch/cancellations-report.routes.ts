@@ -71,8 +71,11 @@ export async function registerCancellationsReportRoutes(app: FastifyInstance) {
             NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name
           FROM dispatch.load_cancellations lc
           LEFT JOIN mdata.loads l ON l.id = lc.load_id
+                                 AND l.operating_company_id = lc.operating_company_id
           LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                     AND c.operating_company_id = lc.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                   AND d.operating_company_id = lc.operating_company_id
           LEFT JOIN catalogs.load_cancellation_reasons lcr
             ON lcr.reason_code = lc.reason_code
            AND lcr.operating_company_id = lc.operating_company_id
