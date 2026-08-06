@@ -597,8 +597,11 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           SELECT COUNT(*)::int AS total_count
           FROM mdata.loads l
           JOIN mdata.customers c ON c.id = l.customer_id
+                                AND c.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                   AND d.operating_company_id = l.operating_company_id
           LEFT JOIN LATERAL (
             SELECT city, scheduled_arrival_at
             FROM mdata.load_stops
@@ -653,8 +656,11 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             ) AS geofence_ready
           FROM mdata.loads l
           JOIN mdata.customers c ON c.id = l.customer_id
+                                AND c.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                   AND d.operating_company_id = l.operating_company_id
           LEFT JOIN LATERAL (
             SELECT city, scheduled_arrival_at
             FROM mdata.load_stops
@@ -760,6 +766,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               OR EXISTS (
                 SELECT 1 FROM mdata.drivers d
                 WHERE d.identity_user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+                  AND d.operating_company_id = mdata.loads.operating_company_id
                   AND (d.id = mdata.loads.assigned_primary_driver_id OR d.id = mdata.loads.assigned_secondary_driver_id)
               )
             )
@@ -1545,7 +1552,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             sd.scheduled_arrival_at AS delivery_scheduled_at
           FROM mdata.loads l
           JOIN mdata.customers c ON c.id = l.customer_id
+                                AND c.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           LEFT JOIN LATERAL (
             SELECT city, scheduled_arrival_at FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'pickup'
