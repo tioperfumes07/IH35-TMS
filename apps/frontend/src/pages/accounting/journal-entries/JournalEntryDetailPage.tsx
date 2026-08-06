@@ -135,16 +135,18 @@ const postingColumns: Array<ParityColumn<JournalEntryPosting>> = [
     key: "account_name",
     label: "Account",
     sortable: true,
-    sortValue: (posting) =>
-      `$${posting.account_name || posting.account_id}`,
+    // CLS-UUID-LABEL — same rule as Class below: never fall back to the raw account_id. This one is
+    // the more misleading of the two, because the uuid was rendered as the TEXT OF A LINK to the
+    // account register, so an unresolvable account looked like a working reference to a real account.
+    // The link still uses account_id (that is a route param, not a label); only the visible text changes.
+    sortValue: (posting) => posting.account_name || "",
     render: (posting) => (
       <Link
         to={`/accounting/chart-of-accounts/register/${posting.account_id}`}
         className="text-slate-700 hover:underline"
         onClick={(event) => event.stopPropagation()}
       >
-        
-        {posting.account_name || posting.account_id}
+        {posting.account_name || "—"}
       </Link>
     ),
   },
