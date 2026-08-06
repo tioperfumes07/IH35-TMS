@@ -1,0 +1,9 @@
+{
+  "note": "CLS-DISPLAYID-UNSCOPED ratchet \u2014 may only SHRINK. The 4 baselined entries are ILIKE SEARCH FRAGMENTS inside withCompanyScope(...)-wrapped list endpoints: the operating_company_id predicate is added elsewhere in the query builder, so they are scoped at RUNTIME even though the template literal does not contain the word. Cascade verified each of these as SAFE on 2026-08-05. They are baselined, NOT defects \u2014 do not 'fix' them. This guard is a text-level scan; it cannot see a predicate assembled in a different fragment, which is precisely why these need the allowlist.",
+  "offenders": [
+    "apps/backend/src/accounting/factoring-advances.routes.ts|(fa.display_id ILIKE $${idx} OR COALESCE",
+    "apps/backend/src/accounting/invoices.routes.ts|(i.display_id ILIKE $${idx} OR c.custome",
+    "apps/backend/src/accounting/payments.routes.ts|(p.display_id ILIKE $${idx} OR c.custome",
+    "apps/backend/src/cash-advances/cash-advances.routes.ts|(display_id ILIKE $${values.length} OR d"
+  ]
+}
