@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { withLuciaBypass } from "../auth/db.js";
+import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { currentAuthUser } from "../accounting/shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { buildScenarioTracker, MAX_AGE_SECONDS, type ScenarioTrackerResponse } from "./scenario-tracker.service.js";
@@ -60,9 +60,13 @@ export async function registerHomeRoutes(app: FastifyInstance) {
       let entity: string | null = isUuid ? rawEntity : null;
 
       if (rawEntity && !isUuid) {
-        // Resolve a code to its id. Read through the bypass because org.companies is entity-scoped and
-        // the caller's own scope is exactly what we are trying to establish.
-        const resolved = await withLuciaBypass(async (client) => {
+        // Resolve the code under the CALLER'S OWN scope, deliberately NOT through the bypass.
+        // A bypass here would resolve ANY company's code — including one the caller cannot access — and
+        // only then check membership, which is a privilege-escalation shape (resolve-then-authorise).
+        // Reading as the caller means an inaccessible code simply does not resolve and returns 400
+        // unknown_entity, revealing nothing about other entities. verify-lucia-bypass-guard-pattern
+        // flagged the bypass version and it was right to: the correct fix was to not need the bypass.
+        const resolved = await withCurrentUser(user.uuid, async (client) => {
           const res = await client.query<{ id: string }>(
             `SELECT id::text AS id FROM org.companies WHERE upper(code) = upper($1) AND deactivated_at IS NULL LIMIT 1`,
             [rawEntity]
