@@ -169,7 +169,9 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     return packet;
   });
 
-  app.get("/api/v1/accounting/factoring-advances", async (req, reply) => {
+  // Rate-limited (CodeQL js/missing-rate-limiting). Pre-existing gap surfaced because this PR touched
+  // the file; the plugin is registered global:false, so an un-configured route has NO limit at all.
+  app.get("/api/v1/accounting/factoring-advances", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
