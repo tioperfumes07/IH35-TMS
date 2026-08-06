@@ -39,6 +39,10 @@ export const legalMattersApi = {
       unit_id?: string;
       /** Filter legal.matters.equipment_id (trailer reverse drill-through - equipment, not units). */
       equipment_id?: string;
+      /** Page size (server bounds it 1..500; default 200). */
+      limit?: number;
+      /** Row offset for paging. */
+      offset?: number;
       /** Filter legal.matters.insurance_claim_id (insurance reverse drill-through). */
       insurance_claim_id?: string;
     } = {}
@@ -51,7 +55,14 @@ export const legalMattersApi = {
     if (filters.unit_id) params.unit_id = filters.unit_id;
     if (filters.equipment_id) params.equipment_id = filters.equipment_id;
     if (filters.insurance_claim_id) params.insurance_claim_id = filters.insurance_claim_id;
-    return apiRequest<{ matters: LegalMatterRow[] }>(withCompany("/api/v1/legal/matters", operatingCompanyId, params));
+    // CLS-SILENT-CAP — the endpoint now returns total/limit/offset alongside the rows. Passing the
+    // page through and surfacing `total` is what turns a silent truncation into an honest
+    // "showing N of M": before this, row 501 simply vanished with nothing able to say so.
+    if (typeof filters.limit === "number") params.limit = String(filters.limit);
+    if (typeof filters.offset === "number") params.offset = String(filters.offset);
+    return apiRequest<{ matters: LegalMatterRow[]; total?: number; limit?: number; offset?: number }>(
+      withCompany("/api/v1/legal/matters", operatingCompanyId, params)
+    );
   },
 
   get(operatingCompanyId: string, id: string) {
