@@ -542,3 +542,75 @@ driver create, unit create, bill create (twice, with balanced GL), and the full 
 (which created a load, an invoice and two consumed outbox events). The two confirmed inert submits are
 **`Save stops`** and **`Create work order & Bill`**. So this is a specific defect in those handlers,
 not a global regression — which is the useful scoping for whoever picks it up.
+
+## ★★ 16 — OWNER ANSWERS LOCATED — the GL-DARK P0 needs NO owner decision; it is a BUILD
+
+Owner directed (2026-08-06): *"there is no hold … all questions have been asked and answered … never
+defer we always fix. all responses live here."* Located and read the answer set:
+
+- `~/Downloads/OWNER-DECISIONS-FINAL-2026-07-26.md` (complete A–H answered set)
+- `~/Desktop/CPA ANSWERS.docx`
+- **in-repo:** `.block-ready/REVENUE-RECOGNITION-TWO-EVENT-LATCH-2026-07-19.json`,
+  `.block-ready/CPA-ANSWERS-PHASE1.json`, `docs/OWNER-RULING-flag-flips-sole-owner-decision-2026-07-11.md`
+
+### 16a — Revenue recognition is OWNER-LOCKED as a TWO-EVENT LATCH (ASC 606)
+
+From `.block-ready/REVENUE-RECOGNITION-TWO-EVENT-LATCH-2026-07-19.json` (status BUILD, locked 2026-07-19):
+
+| event | trigger | posting |
+|---|---|---|
+| **Event 1** | `delivered` / `delivered_pending_docs` | **DR Unbilled Revenue / CR Line-Haul Income** |
+| **Event 2** | `completed_docs_received` (POD, via `docs.files`) | **DR A/R / CR Unbilled** |
+
+Never one combined POD+delivered gate. Reversible on status revert. Entity scope locked: TRANSP seeds
+Unbilled + enables first; **USMCA seeds Unbilled+Deferred, dormant until loads**; **TRK excluded**
+(lease lessor, 42000-LEASE, no delivery trigger).
+
+Corroborated by `CPA ANSWERS.docx` §7: *"revenue recognition should be the second the invoice is
+created, and the invoice should be created on the day we pick up the load and closes the day we
+deliver"*, and by `OWNER-DECISIONS-FINAL` **B2a/B2b** (auto-create a **Pro Forma Invoice** at booking,
+call it that) and **B2d** (*"at POD auto-convert to Official Invoice + auto-send to factoring"*).
+
+### 16b — ★ THE FLAGS ARE ALREADY ON FOR USMCA (verified live on prod, not assumed)
+
+`lib.feature_flag_overrides` on `br-fancy-credit-akjnd07a`:
+
+| flag | TRANSP | TRK | USMCA |
+|---|---|---|---|
+| `REVENUE_RECOGNITION_ENABLED` | true | true | **true** |
+| `REVENUE_RECOGNITION_POST_ENABLED` | true | **false** | **true** |
+
+**TRK = false is CORRECT**, matching the locked entity scope (lease lessor, no freight Unbilled/Deferred,
+no delivery trigger). So the posting machinery is **armed for USMCA and waiting on a delivery event**.
+
+### 16c — Conclusions that replace my earlier "UNVERIFIED / needs decision" framing
+
+1. **`INV-2026-00005` sitting at `proforma` with 0 GL links is CORRECT** — it is the owner-specified
+   Pro Forma at booking (B2a), and **Event 1 has not fired because the load has not been delivered**.
+   This is expected state, not GL-DARK.
+2. **No owner/architectural decision is pending on `CLS-SUBLEDGER-GL-DARK`.** The treatment is locked,
+   the flags are on, and the work is a BUILD. Any board card still reading *"architectural decision
+   needed"* or *"needs owner decision"* is stale and must not be used to defer.
+3. **`LV-STOPS-NOSAVE` is the single thing standing between here and proving the whole revenue chain.**
+   No delivery address → no `delivered` → Event 1 never fires → Event 2 never fires → no A/R posting.
+   It is the top build priority on this board.
+
+### 16d — DRIFT FLAGGED (§9): stale HOLD language in the locked revenue block
+
+`.block-ready/REVENUE-RECOGNITION-TWO-EVENT-LATCH-2026-07-19.json` still states:
+*"Flag default OFF per-entity behind financial HOLD/JORGE-APPROVED + Neon proof before enable."*
+
+That is **contradicted by three later sources**: the **OWNER LAW of 2026-08-03** (no holds, the
+`JORGE-APPROVED` label is deleted, coders merge on green), the **live prod flag state above** (already
+enabled for USMCA), and the **owner's direct instruction of 2026-08-06** (*"there is no hold"*).
+Flagging both files rather than silently picking one, per §9. **Canonical = the owner law + live prod
+state; the `HOLD/JORGE-APPROVED` clause in that block-ready JSON is stale and should be struck.**
+
+### 16e — Owner-decision checks run against live prod while I was in there
+
+- **C2b escrow cap $2,500 — PASS.** `ESCROW_CAP_CENTS = 250_000` in
+  `apps/backend/src/driver-finance/escrow-resolver.service.ts:38`, and prod
+  `driver_finance.escrow_settings.escrow_target_cents = 250000` for **both TRANSP and USMCA**. The
+  owner's note that "code caps $2,000 today" is now historical — it has been implemented. Not a defect.
+- **A4-D5 "require a Work Order on every repair" — PASS**, and it is enforced live: the maintenance
+  Create Expense drawer requires `Work order *` before anything else (item 15b).
