@@ -139,6 +139,9 @@ Status: **OPEN — TOP PRIORITY, NON-STOP**, owner-directed. This card never "co
 | PR #4558 red on 3 checks | — | — | CC-3 mechanical | DRVFIN-F01 (16 cross-entity driver resolutions) — `verify-branch-fresh` + `locked-guards` + `build-typecheck` all FAILED. Rebase alone won't clear this (locked-guards + build-typecheck are real, not staleness) — author fix. | #4558 | **OPEN — author fix** |
 | PR #4563 red on rls-migration-scan | — | — | CC-1 | LOCKDOWN-OWNER-ACCT-DECISIONS-2026-08-05 — `rls-migration-scan` FAILED. Author fix. | #4563 | **OPEN — author fix** |
 | **OPEN** `verify-qbo-sync-staleness` red on clean main | — | C | whoever owns the QBO sync-health card | `scripts/verify-qbo-sync-staleness.mjs` fails — `apps/frontend/src/components/home/__tests__/QboSyncHealthCard.test.tsx` **2 of 2 tests fail**. **PRE-EXISTING, NOT introduced by CC-2** — verified 2026-08-06 by checking out clean `origin/main` (`f39432105`) with all local changes stashed and running the guard: it fails identically there. Same class as the `home-widgets` and `collections.routes` rows above. Recorded so it is owned rather than carried silently in every PR's static output. | — | **OPEN** |
+| PR #4562 red on build-typecheck | — | — | CC-3 mechanical | MDATA-F07 (resend-invite could email another entity's driver) — `build-typecheck` FAILED. Author fix. | #4562 | **OPEN — author fix** |
+| PR #4564 red on build-typecheck | — | — | CC-3 mechanical | MDATA-F08 (customer/vendor reclassify by id, cross-entity) — `build-typecheck` FAILED. Author fix. | #4564 | **OPEN — author fix** |
+| PR #4576 red on build-typecheck | — | — | CC-1 money | ACCT-F137 (WORM sweep, 4 more financial tables) — `build-typecheck` FAILED. Author fix. | #4576 | **OPEN — author fix** |
 
 ---
 
