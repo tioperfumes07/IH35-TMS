@@ -71,8 +71,11 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
             ON wo.id = pil.work_order_id
            AND wo.operating_company_id = pil.operating_company_id
           LEFT JOIN mdata.units u ON u.id = wo.unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = pil.operating_company_id
           LEFT JOIN mdata.vendors v ON v.id = pil.vendor_id
+                                   AND v.operating_company_id = pil.operating_company_id
           LEFT JOIN maintenance.parts_inventory pi ON pi.id = pil.parts_inventory_id
+                                                           AND pi.operating_company_id = pil.operating_company_id
           WHERE pil.operating_company_id = $1
           ORDER BY pil.created_at DESC
           LIMIT 500
@@ -133,8 +136,11 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
               ON wo.id = pil.work_order_id
              AND wo.operating_company_id = pil.operating_company_id
             LEFT JOIN mdata.units u ON u.id = wo.unit_id
+                                   AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = pil.operating_company_id
             LEFT JOIN mdata.vendors v ON v.id = pil.vendor_id
+                                     AND v.operating_company_id = pil.operating_company_id
             LEFT JOIN maintenance.parts_inventory pi ON pi.id = pil.parts_inventory_id
+                                                             AND pi.operating_company_id = pil.operating_company_id
             WHERE pil.operating_company_id = $1
               AND wo.unit_id = $2
             ORDER BY pil.created_at DESC
