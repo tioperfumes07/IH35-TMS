@@ -47,6 +47,7 @@ async function syncRequestsFromEvents(client: PoolClient, operatingCompanyId: st
         $2
       FROM dispatch.detention_events de
       JOIN mdata.loads l ON l.id = de.load_id
+                        AND l.operating_company_id = de.operating_company_id
       WHERE de.operating_company_id = $1
         AND de.status = 'closed'
         AND de.accrued_amount_cents > 0
@@ -85,7 +86,9 @@ export async function listDetentionRequests(
           ls.state AS stop_state
         FROM dispatch.detention_requests dr
         JOIN mdata.loads l ON l.id = dr.load_id
+                          AND l.operating_company_id = dr.operating_company_id
         LEFT JOIN mdata.customers c ON c.id = dr.customer_id
+                                   AND c.operating_company_id = dr.operating_company_id
         JOIN mdata.load_stops ls ON ls.id = dr.stop_id
         WHERE dr.operating_company_id = $1
           ${statusClause}
@@ -312,7 +315,9 @@ export async function approveDetentionRequest(
         SELECT dr.*, l.load_number, c.customer_name, c.ar_email
         FROM dispatch.detention_requests dr
         JOIN mdata.loads l ON l.id = dr.load_id
+                          AND l.operating_company_id = dr.operating_company_id
         LEFT JOIN mdata.customers c ON c.id = dr.customer_id
+                                   AND c.operating_company_id = dr.operating_company_id
         WHERE dr.id = $1 AND dr.operating_company_id = $2
       `,
       [requestId, operatingCompanyId]
