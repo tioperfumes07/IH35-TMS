@@ -521,3 +521,24 @@ whether the token substitution happens server-side on write. The display may be 
 resolves on save. **UNVERIFIED — needs live check once `LV-WO-NOSAVE` is fixed.** Note this is NOT the
 same symptom as board card 611 (which was about raw **UUIDs** rendering); this is an un-substituted
 template string, so do not treat 611 as re-opened on this evidence.
+
+### 15b — `LV-WO-NOSAVE` cascades to maintenance expenses — and the linkage gate itself is a PASS
+
+`Maintenance → + Create Expense` opens with **`Work order *` as a required first field** and the
+explicit note: *"Select a work order so this expense carries Maintenance linkage (WO FK)."*
+
+**That gate is correct and is a PASS** — it refuses to create a maintenance expense that is not linked
+to a work order, which is exactly the §10 total-connectivity / G18-style enforcement we want (no
+orphan expense records).
+
+**But because `LV-WO-NOSAVE` means no work order can be created on USMCA, this path is blocked too.**
+So the single inert submit button takes out: WO creation → WO→bill → WO parts/labor → close-WO→bill →
+**and** maintenance expense creation. `LV-WO-NOSAVE` is therefore the blocker for the entire
+Maintenance module on this entity, not one form.
+
+**Scope note on the inert-submit class (measured, not assumed).** The signature is NOT universal —
+these submits all worked and persisted this session: vendor create, vendor edit, customer create,
+driver create, unit create, bill create (twice, with balanced GL), and the full Book Load wizard
+(which created a load, an invoice and two consumed outbox events). The two confirmed inert submits are
+**`Save stops`** and **`Create work order & Bill`**. So this is a specific defect in those handlers,
+not a global regression — which is the useful scoping for whoever picks it up.
