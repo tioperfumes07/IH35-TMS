@@ -59,7 +59,9 @@ export async function syncDetentionEventsFromStopArrivals(userId: string, operat
         FROM dispatch.stop_arrivals sa
         JOIN mdata.load_stops ls ON ls.id = sa.stop_id
         JOIN mdata.loads l ON l.id = ls.load_id
+                          AND l.operating_company_id = sa.operating_company_id
         JOIN mdata.customers c ON c.id = l.customer_id
+                              AND c.operating_company_id = l.operating_company_id
         WHERE sa.operating_company_id = $1
           AND sa.confirmed_at IS NOT NULL
           AND l.soft_deleted_at IS NULL
@@ -128,10 +130,14 @@ export async function listDetentionBoard(userId: string, operatingCompanyId: str
           u.unit_number
         FROM dispatch.detention_events de
         JOIN mdata.loads l ON l.id = de.load_id
+                          AND l.operating_company_id = de.operating_company_id
         JOIN mdata.customers c ON c.id = l.customer_id
+                              AND c.operating_company_id = l.operating_company_id
         JOIN mdata.load_stops ls ON ls.id = de.stop_id
         LEFT JOIN mdata.drivers d ON d.id = de.driver_id
+                                 AND d.operating_company_id = de.operating_company_id
         LEFT JOIN mdata.units u ON u.id = de.unit_id
+                               AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = de.operating_company_id
         WHERE de.operating_company_id = $1
           AND de.status IN ('accruing', 'closed')
         ORDER BY de.status ASC, de.started_at ASC
@@ -213,6 +219,7 @@ export async function bridgeDetentionToBilling(
         SELECT de.*, l.rate_total_cents, l.quicksave_pending_fields
         FROM dispatch.detention_events de
         JOIN mdata.loads l ON l.id = de.load_id
+                          AND l.operating_company_id = de.operating_company_id
         WHERE de.id = $1 AND de.operating_company_id = $2
       `,
       [eventId, operatingCompanyId]
@@ -305,7 +312,9 @@ export async function notifyCustomerDetentionThreshold(
         SELECT de.*, l.load_number, c.customer_name, c.ar_email
         FROM dispatch.detention_events de
         JOIN mdata.loads l ON l.id = de.load_id
+                          AND l.operating_company_id = de.operating_company_id
         JOIN mdata.customers c ON c.id = l.customer_id
+                              AND c.operating_company_id = l.operating_company_id
         WHERE de.id = $1 AND de.operating_company_id = $2
       `,
       [eventId, operatingCompanyId]

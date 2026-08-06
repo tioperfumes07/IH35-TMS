@@ -60,10 +60,13 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
             u.year AS truck_model_year
           FROM mdata.loads l
           JOIN mdata.customers c ON c.id = l.customer_id
+                                AND c.operating_company_id = l.operating_company_id
           LEFT JOIN identity.users disp ON disp.id = l.dispatcher_user_id
           LEFT JOIN identity.users book ON book.id = l.booked_by_user_id
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                   AND d.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           WHERE l.id = $1
             AND l.operating_company_id = $2
           LIMIT 1
