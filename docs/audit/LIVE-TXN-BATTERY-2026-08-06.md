@@ -570,6 +570,68 @@ one-line misrouting with a proven-working engine behind it. Combined with LV-TXN
 
 ---
 
+## ★★★ LV-TXN-016 — NEW CLASS `CLS-TENANT-OPCO-RLS-MISMATCH`: **13 tables write `tenant_id` while RLS enforces `operating_company_id`** — **FAIL (critical)**
+
+LV-TXN-014 found this on `insurance.policy`. It is not one table. It is a schema-wide class, and it
+explains **HOLD-002 as well as HOLD-003**.
+
+### The census (prod `information_schema` + `pg_policy`, RLS-immune)
+Tables carrying **BOTH** `tenant_id` and `operating_company_id`, where `operating_company_id` is
+**NULLABLE** and the **RLS WITH CHECK tests `operating_company_id`**:
+
+| schema | tables |
+|---|---|
+| `insurance.*` | `policy`, `policy_unit`, `claim`, `coi_request`, `lawsuit`, `payment_schedule`, `refund_obligation` (**7**) |
+| `factoring.*` | `factor`, `batch`, `reserve_movement`, `letter_of_release`, `customer_factor_assignment`, `bank_match_suggestion` (**6**) |
+
+**All 13: `opco_nullable = YES`, `rls_checks_opco = true`.** Any INSERT that omits
+`operating_company_id` leaves it NULL, the WITH CHECK compares NULL to the GUC, yields NULL, and the
+transaction aborts with **42501**.
+
+**Correctly immune** (verified, so nobody re-checks them): `maintenance.internal_labor_log`,
+`master_data.customer_terms_history`, `mdata.mx_permits`, `mdata.mx_tolls_ledger` — all have
+`operating_company_id NOT NULL`, so the column cannot be silently skipped.
+
+### The write paths confirm it
+- `factoring.reserve_movement` — the single INSERT (`factoring/reserve.service.ts:118-125`) writes
+  exactly `tenant_id, batch_id, factor_id, direction, amount_cents, reason`. **No
+  `operating_company_id`.** Read in full, not counted by grep.
+- `factoring.batch` and `factoring.letter_of_release` — one INSERT site each, **zero**
+  `operating_company_id` in the column list.
+- `insurance.policy` — proven live at 42501 (LV-TXN-014).
+
+### ★ This re-explains HOLD-002
+`CLS-MONEY-HOLD` HOLD-002 is filed as *"factor agreement exists, 0 reserve movement"* and I earlier
+called it an owner hold. **Both readings are wrong.** The agreement exists (Faro ↔ IH 35
+TRANSPORTATION LLC; `factoring.factor` = 1 TRANSP row), and the reason `reserve_movement` is empty is
+that **its INSERT cannot satisfy its own RLS policy.** Reserve movement is not waiting on a contract or
+on an owner — it is a write that would 500 on first use.
+
+### Honest distinction between the two, because the evidence differs
+- **`insurance.policy` — PROVEN.** `n_tup_ins` **5** with `n_tup_del` **0** and `n_live_tup` **0** (five
+  aborted attempts), **plus** a live reproduction: HTTP 500 / `42501`.
+- **`factoring.reserve_movement` — PRESENT IN CODE, NOT YET FIRED.** `n_tup_ins` is **0**, so nothing has
+  ever attempted the insert; there is no aborted-write evidence and I did **not** reproduce a 500. The
+  defect is established by reading the schema, the RLS policy and the INSERT column list — it would fire
+  on first use. **I am not claiming a reproduction I did not run.**
+
+### Why this survived
+Every one of these tables is empty on prod, so the class reads as "module never used" — the same
+misreading that produced my own false HOLD verdict. **An empty table downstream of a broken write is
+indistinguishable from an unused one until you either attempt the write or read the column list against
+the RLS policy.**
+
+- **FIX:** add `operating_company_id` to all 13 INSERT paths (same value already passed as `tenant_id`),
+  then make the column **NOT NULL** so the class cannot recur silently. Do **not** relax the RLS
+  policies — they are correct; the writes are wrong. Decide which of the two columns is canonical before
+  any further table copies the pattern.
+- **GUARD:** static — assert that every INSERT into a table whose RLS WITH CHECK references
+  `operating_company_id` includes that column in its column list. Mutation-prove by removing it from one
+  site and confirming RED. This is exactly the guard that would have caught all 13 at once.
+- **LANE: CC-1** (schema/RLS/migrations). **status:** OPEN — board row filed.
+
+---
+
 ## Entity-safety note
 No write has been performed on TRANSP in this session. All observation above is read-only; the only
 mutation contemplated (walking `L-20260802-0258` forward) is on USMCA test data.
