@@ -1,0 +1,9 @@
+[
+  {
+    "id": "LAW-2026-08-06-CI-CONCURRENCY-SHA-SCOPED",
+    "title": "A workflow may not key its concurrency group on a bare ref — a queued run that never executed can otherwise be cancelled into a permanently dead required check, leaving the PR unmergeable with no code failure",
+    "source_file": ".github/workflows/ci.yml",
+    "guard": "scripts/verify-ci-concurrency-sha-scoped.mjs",
+    "type": "enforced"
+  }
+]
