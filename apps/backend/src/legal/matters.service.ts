@@ -224,19 +224,21 @@ export async function listMatters(
   //   mdata.drivers  -> first_name/last_name (§4: there is NO full_name column)
   //   mdata.units    -> unit_number
   //   insurance.claim -> claim_number  (SINGULAR table: `insurance.claims` DOES NOT EXIST on prod)
-  //   safety.accidents -> display_id
+  //   safety.accidents -> NOT JOINED. It exists on PROD but is created by NO migration (only referenced
+  //     in migration comments as "prod-proven"), so joining it would break any fresh database —
+  //     verify:sql-read-targets caught exactly that. The incident link therefore carries a human
+  //     label instead of a joined display_id; it still shows no uuid, which is what CLS-UUID-LABEL
+  //     requires. The missing migration is a separate, reportable drift finding.
   // LEFT JOINs throughout: a matter with no driver/unit/claim/incident is normal and must still list.
   const displaySelect = `
       NULLIF(CONCAT_WS(' ', d.first_name, d.last_name), '') AS related_driver_name,
       u.unit_number                                          AS unit_number,
       ic.claim_number                                        AS insurance_claim_number,
-      a.display_id                                           AS incident_display_id,
       lw.case_number                                         AS insurance_lawsuit_case_number`;
   const displayJoins = `
     LEFT JOIN mdata.drivers   d  ON d.id  = m.related_driver_id
     LEFT JOIN mdata.units     u  ON u.id  = m.unit_id
     LEFT JOIN insurance.claim ic ON ic.id = m.insurance_claim_id
-    LEFT JOIN safety.accidents a ON a.id  = m.incident_id
     LEFT JOIN insurance.lawsuit lw ON lw.id = m.insurance_lawsuit_id`;
 
   // CLS-SILENT-CAP inst.1 — this was a bare `LIMIT 500` with no offset and no total, so matter 501
@@ -287,8 +289,7 @@ export async function getMatter(
              NULLIF(CONCAT_WS(' ', d.first_name, d.last_name), '') AS related_driver_name,
              u.unit_number                                          AS unit_number,
              ic.claim_number                                        AS insurance_claim_number,
-             a.display_id                                           AS incident_display_id,
-             lw.case_number                                         AS insurance_lawsuit_case_number
+                    lw.case_number                                         AS insurance_lawsuit_case_number
       FROM legal.matters m
       -- CLS-UUID-LABEL — the DETAIL page is where the truncated uuids were rendered, so the same
       -- display joins used by listMatters must exist here too. Fixing only the list query would have
@@ -296,8 +297,7 @@ export async function getMatter(
       LEFT JOIN mdata.drivers   d  ON d.id  = m.related_driver_id
       LEFT JOIN mdata.units     u  ON u.id  = m.unit_id
       LEFT JOIN insurance.claim ic ON ic.id = m.insurance_claim_id
-      LEFT JOIN safety.accidents a ON a.id  = m.incident_id
-      LEFT JOIN insurance.lawsuit lw ON lw.id = m.insurance_lawsuit_id
+        LEFT JOIN insurance.lawsuit lw ON lw.id = m.insurance_lawsuit_id
       WHERE m.operating_company_id = $1 AND m.id = $2
       LIMIT 1
     `,

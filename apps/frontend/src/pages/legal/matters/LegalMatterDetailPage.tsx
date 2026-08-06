@@ -310,7 +310,9 @@ export function LegalMatterDetailPage() {
                     <EntityLink
                       kind="claim"
                       id={String(matter.incident_id)}
-                      label={String(matter.incident_display_id ?? matter.incident_id)}
+                      /* safety.accidents is prod-only (no migration), so it cannot be joined for a display id.
+                         A human label still satisfies CLS-UUID-LABEL — what it must never be is a uuid. */
+                      label="Open incident"
                     />
                   ) : (
                     "—"
