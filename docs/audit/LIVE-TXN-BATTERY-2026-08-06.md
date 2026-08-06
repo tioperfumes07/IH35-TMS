@@ -292,6 +292,46 @@ is `L-20260802-0258` — **two different load-number formats on the same entity*
 
 ---
 
+## CLASS: `CLS-LINKAGE-ONEWAY` — the percentages are measured over populations that are ~100% QBO clones
+
+### LV-TXN-010 — 5 of 9 instances are `expected-state-recorded-as-failure` at scale — **RECLASSIFY, do NOT backfill**
+- The class states its instances as whole-table percentages. **Origin census, live on prod
+  (bypass in-statement; `qbo_*_id IS NULL` = TMS-native):**
+
+  | instance | filed as | TOTAL | **TMS-native** | native w/ FK |
+  |---|---|---|---|---|
+  | LINK-001 `bills.unit_id` | "1.8% (300/16250)" | 16,255 | **10** | 1 |
+  | LINK-002 `invoices.source_load_id` | "0.01% (1/11984)" | 11,985 | **9** | **2** |
+  | LINK-004 `expenses.load_id` | "0% (0/27072)" | 27,072 | **2** | 0 |
+  | LINK-007 `payments.source_bank_transaction_id` | "0% (0/12124)" | 12,125 | **2** | 0 |
+  | LINK-008 `bill_payments.source_bank_transaction_id` | "0% (0/6544)" | 6,544 | **1** | 0 |
+
+- **the denominators are the finding.** These percentages divide by 16,255 / 11,985 / 27,072 / 12,125 /
+  6,544 rows that are **~100% QBO-origin clones**. A 2024 QBO bill cannot link to a TMS load that never
+  existed; a QBO payment cannot link to a bank transaction the TMS never matched. Under the owner ruling
+  (`LOAD-LINKAGE-SCOPE-RULING-2026-08-04`) and the ledger-row-665 / LINK-F01 precedent, that is
+  **EXPECTED STATE, not a defect** — and "fixing" it means **inventing financial data**.
+  Two supporting numbers: **299 of the 300** unit-linked bills are QBO-origin (so LINK-001's "1.8%" is
+  almost entirely describing QBO rows), and **0** QBO invoices carry `source_load_id`, exactly as they
+  should.
+- **corrected scale:** the actionable TMS-native population across these five instances is roughly
+  **24 rows**, not ~73,000. LINK-002 is in fact **2 of 9 linked (~22%)**, not 0.01%.
+- **LINK-005 (fuel) already carries the right annotation** — `N/A-PRE-OPERATIONAL, all 1,548 are QBO-origin
+  pre-TMS-dispatch imports`. **The same annotation is missing from LINK-001/002/004/007/008, which are the
+  identical shape.** That inconsistency is what makes the class look ~73,000 rows deep.
+- **HONEST LIMIT — what I am NOT claiming.** `0 of 2` native expenses, `0 of 2` native payments and
+  `0 of 1` native bill_payment carry their FK. That is *consistent with* a broken going-forward writer,
+  and *equally* consistent with a writer that simply has not been exercised. **n = 1–2 cannot distinguish
+  the two, and I will not call it either way.** The class cannot be judged until TMS-native volume exists
+  — which is itself gated on LV-TXN-004, since that is what stops loads producing money records.
+- **verdict:** **RECLASSIFY 5 instances to `N/A-PRE-OPERATIONAL` for the imported cohort**, keep a
+  going-forward-only guard scoped to `qbo_*_id IS NULL`, and **do not schedule a backfill.** A guard
+  written over the whole table reddens on expected state forever.
+- **LANE:** Cascade for the wave-queue reclassification; CC-1 owns the going-forward guard scoping.
+- **status:** OPEN — board row filed.
+
+---
+
 ## Entity-safety note
 No write has been performed on TRANSP in this session. All observation above is read-only; the only
 mutation contemplated (walking `L-20260802-0258` forward) is on USMCA test data.
