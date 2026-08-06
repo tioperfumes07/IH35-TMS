@@ -408,6 +408,48 @@ is `L-20260802-0258` — **two different load-number formats on the same entity*
 
 ---
 
+## CLASS: `CLS-DISP-WIRE-06` — the guard is well-built and **cannot detect a prod regression**
+
+### LV-TXN-013 — WIRE-06's guard is mutation-proven statically but its LIVE assertion runs against an empty CI database — **GUARD-INTEGRITY (major)**
+- **the guard is genuinely good, and I want that on the record:** `--selftest` → **exit 0**,
+  *"4 mutations detected; scope is import-safe by construction."* Its own header states it
+  *"RED only on TMS-NATIVE fuel costs (`load_required=true`) missing their load, NEVER on the 1,548
+  pre-TMS-dispatch imports"* and keys on the `load_required` discriminator rather than a row count —
+  exactly the origin-aware design the other classes lacked. It is registered as verify-step **2637** and
+  runs selftest-then-live, in that order, deliberately.
+- **but its live half cannot fail in CI.** Run with no database it prints
+  *"SKIP — no DATABASE_URL/DATABASE_DIRECT_URL; live linkage cannot be asserted here"* (exit 0). In CI a
+  database IS provided — `ci.yml:79` sets `DATABASE_URL: postgres://verify:verify@localhost:54329/ih35_verify`
+  — so it does not skip; it connects to a **fresh ephemeral instance built from migrations**. Migrations
+  create schema, not the 1,554 prod fuel rows. **The live assertion therefore evaluates an empty table
+  and passes vacuously, in every CI run, forever.**
+- **so the protection is asymmetric:** the selftest genuinely stops the *guard* from rotting, but nothing
+  in CI can observe a *prod* linkage regression. The only environment where the live half is meaningful
+  is prod, which CI never touches.
+- **live prod state (bypass in-statement; positive control `accounting.bills` = 16,255 same statement):**
+  `expense_attribution.expense_load_links` **0 rows, `n_tup_ins` 0** — never one row, ever;
+  `fuel.fuel_transactions` 1,554 rows, **0** with `load_id`.
+- **the imported cohort is correctly exempt** — all 1,548 historical fuel rows are pre-TMS-dispatch QBO
+  imports, `N/A-PRE-OPERATIONAL` per the owner ruling, and the guard already refuses to redden on them.
+  That part is right and should not be touched.
+- **what is actually unproven:** `expense_load_links` has `n_tup_ins = 0`, so the going-forward attribution
+  writer has **never executed once**. Same n=0 problem as LINKAGE-ONEWAY: I cannot distinguish "writer
+  broken" from "writer never exercised", and I will not guess. It is gated on the same thing —
+  **LV-TXN-004**, which is what stops loads generating downstream cost records.
+- **honest limit on my own claim:** I verified `ci.yml:79` sets the ephemeral `DATABASE_URL` and that the
+  CI database is built from migrations. I did **not** execute the guard against that database to watch it
+  pass on empty. The vacuity is inferred from those two verified facts, not directly observed — stated so
+  nobody quotes it as a measurement.
+- **LANE: CC-1** (owns the WIRE-06 guard). **status:** OPEN — board row filed.
+
+### ★ CLASS VERDICT — `CLS-DISP-WIRE-06`: **NOT DRAINED**
+Per the standing order a class drains only when every instance is proven live **AND** a mutation-proven CI
+guard exists so it cannot regress. Here the guard exists and is mutation-proven, but its live half is inert
+in CI — so the "cannot regress" half is **not satisfied**, and the going-forward writer has never run.
+Neither condition is met.
+
+---
+
 ## Entity-safety note
 No write has been performed on TRANSP in this session. All observation above is read-only; the only
 mutation contemplated (walking `L-20260802-0258` forward) is on USMCA test data.
