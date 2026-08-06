@@ -100,7 +100,9 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
             COALESCE(SUM(ABS(bt.amount_cents)), 0)::text AS cents
           FROM banking.bank_transactions bt
           JOIN mdata.loads l ON l.id = bt.matched_load_id
+                            AND l.operating_company_id = bt.operating_company_id
           JOIN mdata.units u ON u.id = l.assigned_unit_id
+                            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           WHERE bt.operating_company_id = $1
             AND l.soft_deleted_at IS NULL
             AND l.assigned_unit_id IS NOT NULL
@@ -120,6 +122,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
             COALESCE(SUM(wo.fuel_cost_cents), 0)::text AS cents
           FROM maintenance.work_orders wo
           JOIN mdata.units u ON u.id = wo.unit_id
+                            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = wo.operating_company_id
           WHERE wo.operating_company_id = $1
             AND wo.unit_id IS NOT NULL
             AND COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
@@ -169,6 +172,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
             u.unit_number::text AS unit_number
           FROM maintenance.work_orders wo
           JOIN mdata.units u ON u.id = wo.unit_id
+                            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = wo.operating_company_id
           WHERE wo.operating_company_id = $1
             AND wo.unit_id IS NOT NULL
             AND wo.fuel_cost_cents > 0
