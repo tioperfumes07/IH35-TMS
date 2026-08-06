@@ -2693,3 +2693,45 @@ consistent with the entity model, not a defect.
              Deploy confirmed live: `/api/v1/healthz/shallow` version `82d9c8c` == `origin/main` tip, and
              ACCT-F120 (`387aa6721`) is an ancestor, so the fix under test is the deployed one.
 - status:    OPEN (LV-088 root cause RESOLVED; user-visible defect REOPENED at the API contract)
+
+## LV-116  GUARD VERIFY-AFTER of **ACCT-F124** (#4510, `fc6082f3a`) — **PASS and mutation-proven**; the remediation correctly VOIDED rather than deleted; **but the fix is MERGED, NOT DEPLOYED**
+- module:    accounting (GUARD — post-merge verification)
+- entity:    USMCA (the affected invoice) · ALL (the guard)
+- surface:   `accounting/invoice-linkage-guards.ts` · `invoice-send.service.ts` · `accounting.invoices` / `invoice_lines`
+- observed:  ACCT-F124 fixes the exact document I classified in LV-093, and **its conclusion matches mine**:
+  *"The POSTER WAS RIGHT… the defect is upstream."* In LV-093 I recorded `INV-2026-00004` as **correctly
+  declined** (zero value, nothing to post) and deliberately did **not** file it as a poster defect. F124
+  locates the real defect upstream — the document should never have become sendable. **Both halves were
+  needed: my pass established the poster was innocent, this one found who was guilty.**
+  **(1) Root cause verified in source.** `assertRevenueLinesHaveIncomeAccount` is a `for (const row of
+  lines)` loop — it validates the lines that exist and raises nothing on an empty set. The new
+  `assertInvoiceHasRevenueLines` uses **`lines.some(isRevenueBearingLine)`** — a *positive* assertion that
+  returns only when a revenue-bearing line exists. **An allowlist cannot pass vacuously; the loop could.**
+  The PR also annotates the old loop as a no-op on empty *by construction*, pointing at the new guard —
+  documenting the interaction instead of leaving the next reader to rediscover it.
+  **(2) MUTATION-PROVEN, not merely green.** Its test passes **5 of 5** on `main`. I then planted
+  `if (true) return;` at the top of `assertInvoiceHasRevenueLines`, confirmed the edit landed, and the suite
+  returned **exit 1 with 3 of 5 failing**; restored → clean, `git status` clean. The guard is load-bearing.
+  **(3) The remediation honoured void-not-delete — checked, not assumed.** `INV-2026-00004` (USMCA) is now
+  `status='void'`, `voided_at 2026-08-05T23:14:59Z`, reason *"test/demo residue — zero-value E2E artifact"*.
+  The USMCA proforma `INV-2026-00002` was voided the same way at 23:16:48Z. **Nothing was deleted:**
+  `accounting.invoices` `n_tup_del = **0**` table-wide, and both rows are still present and readable with
+  their reasons. Completeness discriminator on the same table: visible **11,984** == `n_live_tup` **11,984**,
+  `current_user = ih35_app` asserted in the same statement.
+  **(4) The gap is closed in the data too:** TMS-native invoices in `sent`/`paid` with **zero** lines = **0**.
+  Every remaining native invoice carries at least one line.
+  **★ (5) MERGED IS NOT DEPLOYED — and right now it is not deployed.** `/api/v1/healthz/shallow` reports
+  version **`82d9c8c`**, and `fc6082f3a` (F124) is **not** an ancestor of it: the fix landed on `main` after
+  the current deploy. **So production today still runs the vacuous-loop version**, and an invoice with no
+  revenue lines can still be sent until the next deploy. The data remediation (the voids) is live because it
+  was applied to the database; the *code* guard is not.
+  This is the §0 ladder stated exactly: **ledgered ≠ effective, CI-green ≠ done, merged ≠ done, deployed ≠
+  live until the health SHA matches.** F124 is at "merged"; it is not yet at "live."
+- severity:  none for the fix (**PASS**) · **operational note: unprotected in production until deployed**
+- LANE:      n/a (verification of CC-1 work) — re-verify the health SHA after the next deploy; no code action
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app` asserted, bypass in its own statement,
+             exit 0. `accounting.invoices` visible **11,984** == `n_live_tup`, `n_tup_del` **0**; TMS-native
+             invoices any state **8**; zero-line `sent`/`paid` native invoices **0**; `INV-2026-00004` and the
+             USMCA `INV-2026-00002` both `status='void'` with timestamps and reasons as quoted. Test exit
+             codes read WITHOUT a pipe: clean 0 (5/5), planted 1 (3 of 5 failing), restored clean.
+- status:    PASS (fix verified + mutation-proven) · **deploy pending**
