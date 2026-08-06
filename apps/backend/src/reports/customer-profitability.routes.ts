@@ -108,6 +108,7 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
           SELECT l.customer_id::text AS customer_id, COALESCE(SUM(db.gross_amount_cents), 0)::text AS cost_cents
           FROM driver_finance.driver_bills db
           JOIN mdata.loads l ON l.id = db.load_id
+                            AND l.operating_company_id = db.operating_company_id
           WHERE db.operating_company_id = $1
             AND l.soft_deleted_at IS NULL
             AND l.status IS DISTINCT FROM 'cancelled'

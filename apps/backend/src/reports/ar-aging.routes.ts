@@ -126,7 +126,9 @@ export async function registerReportsArAgingRoutes(app: FastifyInstance) {
           SELECT i.customer_id, MAX(p.payment_date)::text AS last_payment_date
           FROM accounting.payments p
           JOIN accounting.payment_applications pa ON pa.payment_id = p.id
+                                                              AND pa.operating_company_id = p.operating_company_id
           JOIN accounting.invoices i ON i.id = pa.invoice_id
+                                               AND i.operating_company_id = pa.operating_company_id
           WHERE p.voided_at IS NULL
             AND p.payment_date <= $2::date
             AND i.operating_company_id = $1

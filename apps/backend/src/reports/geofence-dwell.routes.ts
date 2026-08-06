@@ -68,7 +68,9 @@ export async function registerGeofenceDwellRoutes(app: FastifyInstance) {
           FROM ordered o
           JOIN geo.geofences gf ON gf.id = o.geofence_id
           JOIN mdata.units u ON u.id = o.unit_id
+                            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = o.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = o.driver_id
+                                   AND d.operating_company_id = o.operating_company_id
           WHERE o.event_kind = 'entered'
           ORDER BY o.occurred_at DESC
         `,
