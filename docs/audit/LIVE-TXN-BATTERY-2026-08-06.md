@@ -163,6 +163,41 @@ statement. Exit codes read WITHOUT a pipe. Done = live proof, not CI-green, not 
 - **verdict:** one load, two endpoints, two vocabularies, one of them contradicting the rendered board.
 - **LANE: CC-2** (mechanical/FE + route contract). **status:** OPEN — board row filed.
 
+### LV-TXN-006 — HOLD-002 (factoring reserve) and HOLD-003 (insurance claims) — **BLOCKED ON AN OWNER BUSINESS DECISION, not defects**
+- **HOLD-002 factoring:** USMCA home surface states, live: *"FACTORING BALANCE — Not applicable · This
+  entity has no factoring contract."* `GET /accounting/factoring-advances/candidate-invoices` → 200
+  `{"rows":[]}`. `accounting.factoring_advances` 0 / `n_tup_ins` 0; `factoring.reserve_movement` 0/0.
+  Positive control that the schema is reachable: `factoring.factor` = **1** agreement row exists (TRANSP's).
+- **HOLD-003 insurance:** `GET /insurance/claims` → 200 `{"claims":[]}` **and `GET /insurance/policies`
+  → 200 `{"policies":[]}`**. `insurance.claim` 0 / `n_tup_ins` 0.
+- **verdict — the prerequisite is a REAL-WORLD CONTRACT, and an agent must not invent one.** A factoring
+  reserve movement requires an executed factoring agreement for USMCA; an insurance claim requires an
+  in-force policy. Both are legal/financial instruments with real counterparties. Fabricating either to
+  make a class go green would be inventing financial records — the exact anti-pattern §0 forbids.
+- **status:** BLOCKED — **owner business decision required**, not a builder card. Do not open one.
+
+---
+
+## ★ CLASS VERDICT — `CLS-MONEY-HOLD`: **NOT DRAINED**, and the class label was wrong on its biggest surface
+
+| Surface | Was labelled | Live verdict |
+|---|---|---|
+| **HOLD-001** settlement pay-run | "financial hold, blocked on owner/Neon/flag" | **NOT A HOLD — it is a CODE DEFECT.** Proven by walking a load to `delivered` through the app's own office control and measuring zero settlements and zero revrec. See **LV-TXN-004**. Routed to CC-1. |
+| **HOLD-002** factoring reserve | financial hold | **CONFIRMED HOLD** — USMCA has no factoring contract. Owner decision. |
+| **HOLD-003** insurance claims | financial hold | **CONFIRMED HOLD** — USMCA has no insurance policy at all, so a claim is impossible. Owner decision. |
+
+**The single most important correction this lane produced:** `CLS-MONEY-HOLD` describes itself as
+*"the correct money design is blocked on owner/Neon/flag; this is a financial hold, not a chrome PR."*
+For 2 of 3 surfaces that is accurate. For **HOLD-001 it is wrong** — nothing was blocked on the owner, on
+Neon, or on a flag. A dispatcher advancing a load on the board has *never* triggered revenue recognition
+or opened a settlement, because the board calls the endpoint that does neither. It was filed as a hold and
+therefore never investigated as a bug. **It cannot be drained by owner action; it needs a code fix.**
+
+**Guard status:** `scripts/verify-money-hold-surfaces.mjs` is the registered guard for this class and
+`drain_proof.guard_green` is `false`. Per the standing order a class is drained only when every instance
+is proven live AND a mutation-proven guard exists — so even after LV-TXN-004 is fixed, this class stays
+open until that guard is green and mutation-proven.
+
 ---
 
 ## Entity-safety note
