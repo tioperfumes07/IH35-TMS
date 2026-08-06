@@ -93,6 +93,11 @@ already has an owner here.
 | 7 pickers "D CODE-VERIFIED" | 19–23,26,55 | D | GUARD live exercise | EXERCISE the inline +Create live (fill→save→persist, no native GET); after FIX 2. Code-wired ≠ verified (see §2-D note). **Test list:** `docs/audit/GUARD-DE-TEST-LIST.md` §D — exact surface, picker, canonical table, PASS criteria per row. | — | UNVERIFIED |
 | 28 E design-bar CODE-VERIFIED | 27–54 | E | GUARD live exercise | Interactive per module: resize works+discoverable, proportions, QBO filters, box-in-box, drawer-on-drawer; per entity. **Test list:** `docs/audit/GUARD-DE-TEST-LIST.md` §E — resize/filter/proportion test per module. | — | UNVERIFIED |
 | 11 modules UNVERIFIABLE-until-data | (C rows) | C | seed → GUARD | Become real PASS/FAIL once the seed battery posts transactions; GUARD verifies each JE | — | UNVERIFIED |
+| PR #4534 red on build-typecheck | — | — | CC-1 money | ACCT-F130 (DELETE→WORM on 7 financial rows) — `build-typecheck` FAILED. Author fix — merger does not edit. | #4534 | **OPEN — author fix** |
+| PR #4535 red on 3 checks | — | — | CC-3 mechanical | LV-115 (scenario tracker 3-entity SUM) — `lucia-bypass-guard-pattern` + `locked-guards` + `build-typecheck` all FAILED. Author fix. | #4535 | **OPEN — author fix** |
+| PR #4537 red on build-typecheck | — | — | CC-1 money | ACCT-F131 (GL line table deletable, no soft-delete col) — `build-typecheck` FAILED. Author fix. | #4537 | **OPEN — author fix** |
+| PR #4541 red on build-typecheck | — | — | CC-3 mechanical | MDATA-F03 (safety events cross-entity via supplied load id) — `build-typecheck` FAILED. Author fix. | #4541 | **OPEN — author fix** |
+| PR #4544 red on build-typecheck | — | — | CC-3 mechanical | MDATA-F04 (load list joined customer/unit/driver across entities) — `build-typecheck` FAILED. Author fix. | #4544 | **OPEN — author fix** |
 
 ---
 
