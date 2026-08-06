@@ -730,3 +730,45 @@ categorize. The flag being enabled is necessary, not sufficient — the code pat
 decisive test is to categorize one transaction and check for a balanced JE on prod.
 **UNVERIFIED — needs live check.** What IS proven is the contradiction between the banner text and
 `lib.feature_flag_overrides`.
+
+### 19b — ★ RESOLVED: bank categorize DOES post a balanced JE — `LV-BANKFLAG-STALE` CONFIRMED
+
+Item 19a left this **UNVERIFIED**. It is now **proven**, and the banner is actively wrong.
+
+Categorized bank transaction `49e3a071-d63e-40a4-a167-e80a54b4be4c` (Monthly Fee Business Adv
+Fundamentals, 08/03/2026, **$16.00 money out**, USMCA FREIGHT ••••3224) to account
+**6300 Bank Service Charges & Wire Fees** via the real UI, then pressed **Post**.
+
+**Prod (`banking.bank_transactions`):** `categorized_at 2026-08-06 21:52:41.211105+00`,
+`coa_account_id de553cc4-…`, `matched_journal_entry_id 0eb02ac8-69f7-480b-b1da-208535418d79`.
+
+**The JE is a real, balanced posting** (`accounting.journal_entry_postings`):
+
+| seq | dr/cr | amount | account | source_transaction_type |
+|---|---|---|---|---|
+| 1 | debit | $16.00 | **6300** Bank Service Charges & Wire Fees | `bank_categorization` |
+| 2 | credit | $16.00 | **1000** Bank of America - Operating (USMCA) | `bank_categorization` |
+
+**DR = CR exactly.** Both postings and both accounts are `operating_company_id` = USMCA
+(`acct_same_entity = true`) — no cross-entity account FK.
+
+**★ The page's own caveat is ruled out.** The banner warns that `matched_journal_entry_id` is not
+proof of posting because *"recon Match can also stamp it when `ledger_entry_kind = 'je'`"*. That
+escape hatch does not apply here: **`source_transaction_type = 'bank_categorization'`** on both
+legs, which can only come from the categorize path. This was a Post from the Categorize tab, not a
+Match.
+
+**Verdict: `BANK_FEED_GL_POSTING_ENABLED` is ON for USMCA and the poster fires on categorize.** The
+banner telling the operator it *"stays OFF by default"* is not merely imprecise — it states the
+opposite of live behaviour on the entity being viewed. `LV-BANKFLAG-STALE` upgraded from
+UNVERIFIED to **CONFIRMED (major)**.
+
+**Battery PASS recorded:** bank categorize → balanced GL. This drains the categorize half of
+`CLS-BANK-MATCH-DENSITY`; the match-to-bill / match-to-invoice half remains.
+
+**Module quality note (fair to the builders):** apart from the banner, this module is the best-built
+surface encountered in the battery. The match engine returns real scored candidates from live ledger
+data (bills, expenses, journal entries, with amount/date gaps and scores), the row carries
+Driver/Unit/Trailer/**Trip (load)** linkage fields inline per §10, and it discloses its own limits
+honestly ("Bank row attachments and notes are not wired yet"; "Draft fields below are not Law §9
+links until Post / Categorize commits them"). The defect is the stale banner text, not the machinery.
