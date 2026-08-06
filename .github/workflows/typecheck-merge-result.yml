@@ -1,0 +1,87 @@
+# CLS-MERGE-RESULT-STALE — two individually-green PRs can still combine into a RED main.
+#
+# WHY THIS EXISTS (happened twice, same shape):
+#   #4494 added apps/frontend/src/pages/home/scenario-tracker/ScenarioTrackerHome.test.tsx
+#   #4495 git-mv'd that whole directory to pages/program/scenario-tracker/
+# Each was green. Neither could see the other, because `actions/checkout` resolves
+# refs/pull/<n>/merge — a merge commit GitHub computed WHEN THE CHECK RAN. #4495's merge result was
+# built against a main that did not yet contain #4494's file, so the move could not carry it. Both
+# merged, and main was left with a test importing "./ScenarioTrackerHome" that no longer existed
+# beside it: `tsc -b` exit 2, every lane blocked, and the Render web build red.
+#
+# This job re-merges CURRENT origin/main into the PR head at run time and typechecks THAT, so a PR
+# that is stale against main fails here instead of on main.
+#
+# ⚠ HONEST LIMITATION — this file alone does NOT close the hole, and must not be reported as if it
+# does. A check still runs at a point in time; if main advances after it goes green, the green is
+# stale again. Closing it fully needs a GitHub SETTING that only an admin can enable:
+#     Settings → Branches → main → "Require branches to be up to date before merging"
+#     (or enable the merge queue and add this job to it via the `merge_group` trigger below)
+# With that setting on, a PR cannot merge while behind, so this job's result is always current.
+# Without it, this job still catches every PR that is already behind when CI runs — which is the
+# case that broke main today.
+name: typecheck-merge-result
+
+on:
+  pull_request:
+    branches: [main]
+  # Present so this job can be added to a merge queue once an admin enables one. Harmless until then.
+  merge_group:
+
+concurrency:
+  group: typecheck-merge-result-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck-merge-result:
+    if: github.event_name != 'pull_request' || github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v7
+        with:
+          # fetch-depth 0 so origin/main is a real ref we can merge, not a shallow tip.
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Merge CURRENT origin/main into PR head
+        id: merge
+        run: |
+          set -euo pipefail
+          git config user.email "ci@ih35tms.local"
+          git config user.name "typecheck-merge-result"
+          git fetch origin main --depth=0 || git fetch origin main
+          echo "main_sha=$(git rev-parse origin/main)" >> "$GITHUB_OUTPUT"
+          # A CONFLICT here is itself a finding: the PR cannot land on current main as-is.
+          if ! git merge origin/main --no-edit; then
+            echo "::error::This PR CONFLICTS with current origin/main ($(git rev-parse --short origin/main)). Rebase or merge main, then push."
+            exit 1
+          fi
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      # apps/frontend/src/generated/module-completion.ts is GITIGNORED and build-generated. Without
+      # this step `tsc -b` fails on a missing module and this job reports a red that has nothing to do
+      # with the merge — which is exactly what it did on its own first run. A guard that cries wolf
+      # gets bypassed, so it generates what the real build generates.
+      - name: Generate build-time modules
+        run: node scripts/generate-module-completion-data.mjs
+
+      - name: Typecheck the MERGE RESULT (frontend)
+        run: |
+          set -euo pipefail
+          echo "Typechecking PR head merged with origin/main @ ${{ steps.merge.outputs.main_sha }}"
+          cd apps/frontend && npx tsc -b --pretty false
+
+      - name: Typecheck the MERGE RESULT (backend)
+        run: |
+          set -euo pipefail
+          cd apps/backend && npx tsc --noEmit -p tsconfig.json
