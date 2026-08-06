@@ -926,6 +926,27 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
   if (bill.revoked_at || bill.status === "void" || bill.status === "voided") {
     throw new PostingEngineError("BILL_NOT_POSTING_ELIGIBLE", "Voided bill is not posting-eligible");
   }
+  // LV-060 — A DRAFT IS NOT A LIABILITY YET.
+  //
+  // This guard refused voided bills and stopped there, so a bill still in `draft` posted happily.
+  // It happened: bill f8f8e5a4-8c66-4d16-a4c9-44beff6b79e2 (TRK, $25.00, auto-created from work order
+  // WO-TEST-TRUCK-1-IS-08-03-2026-0001) is status='draft' on prod with TWO transaction_source_links —
+  // DR Repair & Maintenance / CR Accounts Payable — and a NULL bill_number. The books therefore carry
+  // an expense and an A/P liability for a document nobody finalised and that has no number to cite.
+  //
+  // Draft is the state where amounts, the vendor and the account mapping can all still change. Posting
+  // it recognises an obligation that may never exist, and correcting it later needs a reversing entry
+  // for money that should not have moved.
+  //
+  // Safe to enforce, measured rather than assumed (prod 2026-08-05): of the 5 TMS-native bills, the 3
+  // `unpaid` and 1 `paid` are all posted and all finalised; exactly ONE `draft` is posted — this
+  // defect. No legitimate posting path depends on posting a draft.
+  if (bill.status === "draft") {
+    throw new PostingEngineError(
+      "BILL_NOT_POSTING_ELIGIBLE",
+      "Draft bill is not posting-eligible — a draft is not yet an approved liability. Finalise the bill (its amounts, vendor and account mapping can still change) before posting to the ledger."
+    );
+  }
   // Parallel books: QBO-origin bills already have A/P economics in QBO. Projecting Line[] into
   // accounting.bill_lines must NOT unlock a second TMS JE via post-gl (BILL_GL_POSTING_ENABLED is ON
   // for live entities). Mirror the JE-push refuse pattern — clone/reconcile only, never invent GL.
