@@ -847,3 +847,38 @@ being the thing that actually posted in 19b.
 
 **Note for whoever owns `CHAIN-04`:** the bank-match half of this class is waiting on it, and USMCA now
 has the density (163 transactions / 111 for review) to exercise it the moment it ships.
+
+## 20 — FACTORING: cannot be exercised on USMCA — EXPECTED STATE, no defect
+
+Battery item "factoring advance (link customer + invoice + reserve)". **It is not creatable on USMCA,
+and that is correct.**
+
+**Prod (`bypass_rls='lucia'`, discriminator on the same tables):**
+
+| table | rows | n_live_tup | **n_tup_ins** |
+|---|---|---|---|
+| `accounting.factoring_advances` (all entities) | 0 | 0 | **0** |
+| `accounting.factoring_advances` (USMCA) | 0 | — | — |
+| `factoring.factor` (all entities) | **1** | — | — |
+| `factoring.factor` (**USMCA**) | **0** | — | — |
+
+**`factoring.factor` = 1 row globally and ZERO for USMCA — USMCA has no factor configured.** The Home
+widget says the same in words: *"This entity has no factoring contract."* Per `ih35-entity-facts`,
+Faro is **TRANSP's** factor; USMCA is not on a factoring agreement.
+
+**So the zero is the correct answer, not a gap.** An advance cannot be linked to a customer/invoice/
+reserve for an entity with no factor, and inventing one would be fabricating a financial relationship
+that does not exist — exactly what the owner ruling on import-origin/expected-state forbids.
+
+**`accounting.factoring_advances` `n_tup_ins = 0` across ALL entities** means no advance has ever been
+recorded in the TMS by anyone. That is a real observation about system-wide coverage, but on **USMCA**
+specifically it is expected and unactionable.
+
+**No board row filed** — there is no defect to assign. This battery item is closed as **NOT APPLICABLE
+TO USMCA**; it must be exercised on TRANSP, which this lane is forbidden to touch (real QBO books).
+Recording that boundary explicitly so a later session does not "fix" it by seeding a fake factor.
+
+**Module quality note:** the factoring tab is again exemplary about its own limits — *"zeros here are
+not 'factoring healthy'… Use Recourse Pipeline / Reserve Tracker / Chargebacks for live Faro truth.
+Do not invent Advances funded MTD from cash posting KPIs"* — and it names the canonical table
+(`accounting.factoring_advances`) rather than implying health from a KPI tile.
