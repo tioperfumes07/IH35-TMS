@@ -7,8 +7,21 @@ export const TRUSTED_GITHUB_AUTHORITY = Object.freeze({
   host: "github.com",
   repository: "tioperfumes07/IH35-TMS",
   branch: "main",
+  // The ID is the trust anchor. It is immutable for the life of the ruleset and is what proves we are
+  // reading the authority we think we are. The NAME is corroborating detail a human can change in the
+  // GitHub UI at any time.
   rulesetId: 17935054,
-  rulesetName: "hold-merge-gate",
+  // Accepted names for ruleset 17935054, newest first. The owner renamed it from "hold-merge-gate" to
+  // "require-up-to-date-main" on 2026-08-05 while enabling "require branches to be up to date before
+  // merging". Because the pin matched on name AS WELL AS id, a rename that changed nothing about the
+  // ruleset's authority failed the identity check and blocked the push gate for every branch that
+  // reaches this capability probe — a policy improvement locked all four lanes out, and migration
+  // branches hit it first because they exercise this path.
+  //
+  // A LIST, deliberately, not a swap: replacing one hardcoded string with another breaks again on the
+  // next rename, and dropping the name check would weaken the anchor. Both names refer to the same
+  // immutable id, so both stay valid; a ruleset with a DIFFERENT id is still rejected.
+  rulesetNames: Object.freeze(["require-up-to-date-main", "hold-merge-gate"]),
 });
 
 function workflowDeclaresJob(root, wiring) {
@@ -105,7 +118,7 @@ export function loadLiveRequiredStatusChecks(
 
   const identityMatches =
     Number(rulesetIdentity.id) === TRUSTED_GITHUB_AUTHORITY.rulesetId &&
-    rulesetIdentity.name === TRUSTED_GITHUB_AUTHORITY.rulesetName &&
+    TRUSTED_GITHUB_AUTHORITY.rulesetNames.includes(rulesetIdentity.name) &&
     rulesetIdentity.source_type === "Repository" &&
     rulesetIdentity.source === TRUSTED_GITHUB_AUTHORITY.repository &&
     rulesetIdentity.target === "branch" &&
