@@ -2856,3 +2856,50 @@ is gone; only re-running the original observation proves that. LV-115 stays OPEN
              Both planted artefacts removed and `git status` confirmed clean.
 - status:    **CLS-HOOKS-ORDER VERIFIED → 12/25** · **CLS-REVERSE-LINKAGE-MISSING BASELINE-CAPPED (10→…), not drained**
              · still held fail-closed: **CLS-GL-DARK**, **CLS-DUAL-PATH** (guards not yet on main)
+
+## LV-119  GUARD VERIFY of **#4525** (driver-settlement-summary) — **all four claims PASS**; and the probe surfaced **7 DELETEs on `driver_finance.driver_settlements`, a financial table with NO soft-delete column**
+- module:    reports · driver_finance (GUARD — pre-merge claim verification + an incidental finding)
+- entity:    ALL
+- surface:   `views.driver_settlement_with_debt` · `driver_finance.escrow_ledger` · `driver_finance.driver_settlements`
+- observed:  **PART A — #4525's four claims, each verified live** (`current_user = ih35_app` asserted TRUE in
+  the same statement):
+  | claim | verified on prod |
+  |---|---|
+  | `v.escrow_withheld` does not exist → endpoint threw on every call | **confirmed absent** — the view has 17 columns, none named `escrow_withheld` |
+  | `escrow_ledger.amount_cents` is already cents, so the `*100` was wrong | **confirmed `integer` cents** — the old `ROUND(... * 100)` would have inflated escrow **100×** |
+  | `transaction_type` is CHECK-constrained to hold/release/forfeit | **confirmed exactly** `CHECK (transaction_type = ANY (ARRAY['hold','release','forfeit']))` |
+  | the join needs an entity predicate | **confirmed possible** — `operating_company_id` present on `escrow_ledger` |
+  Filtering to `'hold'` for "withheld" is right: netting `release`/`forfeit` in would under-report what was
+  actually withheld in the period. And the 100× fix is the same defect class as ACCT-F114 (LV-095) — a cents
+  column multiplied as though it were dollars.
+  **Nothing was corrupted:** `driver_finance.escrow_ledger` is **0 rows with `n_tup_ins = 0`** — never once
+  inserted — so the 100× scaling never fired and there is nothing to restate. Fixed before real rows exist,
+  exactly as with ACCT-F114.
+  **PART B — the incidental finding, and it is the more serious one.**
+  `driver_finance.driver_settlements` — the table recording what drivers are paid — reads:
+  **visible `0`** · `n_tup_ins` **11** · `n_tup_del` **7** · `n_tup_upd` **0**.
+  **Seven rows were DELETED from a financial table.** And the table has **no soft-delete mechanism at all** —
+  its columns include `status` and `approval_status` but **no `voided_at`, `archived_at` or `deleted_at`**.
+  Rule 07 / §2 require void-not-delete for financial records; here there is no column with which to comply,
+  so DELETE is structurally the only removal path. **That is a schema gap, not merely an operator mistake.**
+  **What I am NOT claiming, stated precisely.** The arithmetic does not close: 11 inserted − 7 deleted = 4,
+  yet **0** are visible. `TRUNCATE` does **not** increment `n_tup_del`, so a truncate is one explanation for
+  the missing 4; a `pg_stat` reset between the inserts and now is another. **UNVERIFIED — how the remaining 4
+  rows left the table**, and I will not guess between those. Nor can I say *when* the 7 deletes happened or
+  whether they were test data: `pg_stat_user_tables` counters carry no timestamps. What is certain is that a
+  financial table has had DELETEs, and that it cannot satisfy void-not-delete as currently shaped.
+  **Role note:** this probe returned `current_user = neondb_owner`. Immaterial here — `pg_stat` counters and
+  `information_schema` are role-independent, and a privileged reader seeing **0** visible rows makes the
+  emptiness *more* certain, not less. The `ih35_app` assertion **was** obtained for Part A.
+- severity:  none for #4525 (**PASS**, pre-merge) · **major** for the settlements DELETE/no-soft-delete gap
+- LANE:      CC-3 (owns #4525 — no change needed; verified again after it merges) ·
+             **CC-1 (money)** for Part B: add `voided_at`/`void_reason` to `driver_finance.driver_settlements`
+             so void-not-delete is expressible, and a guard asserting `n_tup_del` cannot grow on financial
+             tables. **Determine what the 7 deleted rows were before anything else** — if any represented real
+             driver pay, that is a restatement question, not a schema one.
+- neon-check: prod `br-fancy-credit-akjnd07a`, bypass in its own statement. Part A with
+             `current_user=ih35_app` asserted TRUE; view/column/constraint definitions from
+             `information_schema` and `pg_constraint`. Part B counters from `pg_stat_user_tables`:
+             `driver_settlements` ins **11** / del **7** / upd **0** / visible **0**; `escrow_ledger`
+             visible **0** == `n_live_tup` **0**, `n_tup_ins` **0**, `n_tup_del` **0**.
+- status:    #4525 PASS (re-verify after merge) · **settlements DELETE gap OPEN**
