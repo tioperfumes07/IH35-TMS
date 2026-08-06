@@ -82,7 +82,7 @@ const LATEST_TAG_CTE = `
 
 export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
   // ── GET /queue ──────────────────────────────────────────────────────────────────────────────
-  app.get("/api/v1/maintenance/pre-flight-dvir/queue", async (req, reply) => {
+  app.get("/api/v1/maintenance/pre-flight-dvir/queue", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = queueQuerySchema.safeParse(req.query ?? {});
