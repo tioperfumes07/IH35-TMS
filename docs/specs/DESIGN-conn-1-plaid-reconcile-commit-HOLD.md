@@ -1,4 +1,6 @@
-# DESIGN / EVIDENCE (build-and-HOLD) — Plaid bank reconcile-COMMIT (CONN-1)
+# DESIGN / EVIDENCE (build-and-ship) — Plaid bank reconcile-COMMIT (CONN-1)
+
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
 
 - **Block:** `CONN-1-plaid-reconcile-commit` — "CONNECTIONS / TASK 1 — Plaid bank reconcile-commit (enable the commit)"
 - **Module:** banking · **Pile:** NEEDS-PROD · **Classification:** FINANCIAL CLUSTER, **Tier 1 (writes GL)**
