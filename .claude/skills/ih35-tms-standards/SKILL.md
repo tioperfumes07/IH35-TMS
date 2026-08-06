@@ -214,3 +214,26 @@ Full text: `docs/specs/DEFINITION-OF-DONE.md` + `docs/specs/EVERY-PR-AUDIT-CHECK
 3. Prod DB access of any kind? → **verify the branch/connection every time (§0); this is a safety check, not a permission ask.**
 4. Writing/FK-ing a RETIRE table, or shipping a block with no linkage declaration, or touching a reserve account? → **STOP and fix the linkage/target — this is a correctness gate (§10/Rule 19), not an owner-approval gate.**
 5. Green CI + independent review pass (+ financial-agent pass if money)? → auto-PR, fix CI, resolve conflicts, squash-merge yourself, verify deploy, GUARD re-proves live after.
+
+---
+
+## ★ PERMANENT LAW (owner-locked 2026-08-05, session-boot) — read at every session start
+
+1. **FINDINGS FLOW AGENT→BOARD→AGENT, NEVER THROUGH THE OWNER.** Find a defect in another lane → WRITE an
+   OPEN row into `docs/audit/GUARD-WORKORDERS.md` yourself + commit. Target coder pulls it next loop. Owner
+   is NOT a message bus, ever, any session. Row shape: `| id | OWNER lane (CC-1 money/CC-3 mechanical) | fix
+   + standard | live evidence | OPEN |`.
+2. **LAW = ENFORCED GUARD OR IT'S NOT LAW (phased).** Every NEW rule ships a guard registered in
+   `docs/law/LAW.json`; `verify-law-registry.mjs` (required check, <2s, existence-only, adds ZERO PR time)
+   fails the build if a registered law's guard file is missing. Old rules migrate as a backlog class,
+   non-blocking. Judgment rules ("professional/honest/McLeod-quality") stay JUDGMENT — not force-guarded.
+3. **ROLES** (until owner changes in chat): CC-1 = money/GL/WORM. CC-3 = mechanical/entity-scope/FE/CI-guards.
+   CC-2 = GUARD verify-live-never-build (GL-DARK/DUAL-PATH prod+fork only). Cascade = merger via direct API +
+   scribe.
+4. **VOID = reversal, nothing deletable.** TRANSP/USMCA own no assets today (archive USMCA 1500/1510/1600,
+   keep 2400 generic). ALL TMS data is test; only the TRANSP QBO mirror is real; an empty TMS table is
+   expected. RLS is NOT a backstop for Owner sessions (`org.user_accessible_company_ids()` returns all
+   entities) — every unscoped read is load-bearing on its own predicate.
+5. **EVERY loop, EVERY agent:** read board → grep-verify top OPEN row against main (done → mark DONE w/ SHA;
+   wrong card → fix the REAL defect) → build ONE complete atomic block → find another lane's defect? write it
+   to the board → push → next. Never idle, never pause to summarize, never half-edit.
