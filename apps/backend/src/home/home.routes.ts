@@ -46,10 +46,42 @@ export async function registerHomeRoutes(app: FastifyInstance) {
       if (!user) return;
       const q = (req.query ?? {}) as Record<string, unknown>;
       const rawEntity = typeof q.entity === "string" ? q.entity.trim() : "";
-      // ?entity= accepts an operating_company_id; anything else (or absent) means ALL.
+      // LV-115 — `?entity=` accepts an operating_company_id OR an org.companies.code (the UI sends the
+      // CODE, e.g. ?entity=USMCA). The previous logic was `isUuid ? rawEntity : "ALL"`, so a code cast to
+      // no uuid and SILENTLY became ALL: the endpoint answered 200 with the three-entity SUM under every
+      // entity button. Verified live on deploy dc85375 — TRANSP/USMCA/TRK each returned hop.gl = 1766,
+      // which is 1747 + 13 + 6; the UUIDs returned the real 1747 / 13 / 6. The owner's progress board was
+      // showing merged totals as per-entity numbers.
+      //
+      // Note what this was NOT: the SQL predicate was correct and RLS was never breached. The caller
+      // simply never asked for a scope, so no guard on the query text could see it (same trap as
+      // ACCT-F120) — which is why the guard for this asserts the RESPONSE's entity_scope instead.
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawEntity);
-      const entity = isUuid ? rawEntity : null;
-      const entityScope = isUuid ? rawEntity : "ALL";
+      let entity: string | null = isUuid ? rawEntity : null;
+
+      if (rawEntity && !isUuid) {
+        // Resolve a code to its id. Read through the bypass because org.companies is entity-scoped and
+        // the caller's own scope is exactly what we are trying to establish.
+        const resolved = await withLuciaBypass(async (client) => {
+          const res = await client.query<{ id: string }>(
+            `SELECT id::text AS id FROM org.companies WHERE upper(code) = upper($1) AND deactivated_at IS NULL LIMIT 1`,
+            [rawEntity]
+          );
+          return res.rows[0]?.id ?? null;
+        });
+        // FAIL LOUD. An unresolvable entity must never fall back to ALL — that silent widening is the
+        // whole defect. A caller asking for one entity and receiving every entity is worse than an error.
+        if (!resolved) {
+          return reply.code(400).send({
+            error: "unknown_entity",
+            message: `entity "${rawEntity}" is not a known operating company id or code`,
+          });
+        }
+        entity = resolved;
+      }
+
+      // Absent/empty entity still legitimately means ALL — that is the unfiltered board, explicitly asked for.
+      const entityScope = entity ?? "ALL";
 
       if (entity) await assertCompanyMembership(user.uuid, entity);
 
