@@ -673,3 +673,60 @@ system's history — the same "never exercised, not broken" shape as WF064 (item
 producer genuinely is dead, because the button that would produce it does nothing.
 
 Board row `LV-SPAWN-LIABILITY-NOSAVE` (CC-3), to be fixed with the other two inert submits.
+
+## 19 — BANKING: real density found, and a UI banner that contradicts prod
+
+`/banking` on USMCA is the first module with **real data density**: Plaid 2 accounts (last sync
+`8/6/2026 10:32:24 AM`), **163 transactions**, **112 uncategorized**, `USMCA FREIGHT ••••3224`
+$93.68, Relay Fuel Wallet $0.00. Tabs: `For review · 112` / `Categorized · 3` / `Excluded · 0`.
+This is the population `CLS-BANK-MATCH-DENSITY` needs.
+
+**Much of this module is exemplary.** It carries honest self-disclosure banners rather than implying
+completeness — e.g. *"Bank row attachments and notes are not wired yet"*, and it explicitly warns that
+`matched_journal_entry_id` is **not** proof that bank-feed GL posting is live because recon Match can
+also stamp it when `ledger_entry_kind = 'je'`. That distinction is exactly right and is the kind of
+honesty this audit usually has to discover the hard way.
+
+### 19a — `LV-BANKFLAG-STALE`: the banner states the OPPOSITE of live prod — FAIL
+
+The banner asserts:
+
+> *"Categorize tags are not ledger posts — **`BANK_FEED_GL_POSTING_ENABLED` stays OFF by default**"* …
+> *"the flag-gated bank-feed poster is a separate path (**default OFF**)"* …
+> *"A JE link with the flag **OFF** is a match/link, not 'posting is on.'"*
+
+**Live on prod (`lib.feature_flag_overrides`, br-fancy-credit-akjnd07a):**
+
+| flag | TRANSP | TRK | USMCA |
+|---|---|---|---|
+| **`BANK_FEED_GL_POSTING_ENABLED`** | **true** | **true** | **true** |
+| `BANK_TX_SPLIT_GL_POSTING_ENABLED` | true | true | true |
+| `BANK_TX_SPLIT_ENABLED` | true | true | true |
+| `BANK_DRIVER_ADVANCE_ENABLED` | true | true | true |
+| `BANK_DRIVER_EXPENSE_DEDUCTION_ENABLED` | true | true | true |
+| `BANK_ACCOUNT_HIDE_ENABLED` | true | true | true |
+
+**The stated nuance is real but the banner does not carry it.** It is true that the flag *key* DEFAULT
+is OFF and that per-entity `lib.feature_flag_overrides` drive the ON state (standards §6) — that is
+the same distinction preserved during the 2026-08-06 governance cleanup. But the operator is looking
+at **USMCA, where the override is ON**, and the banner reports the key default as if it were the
+effective state.
+
+**Why this is material, not pedantic:** an accountant reading this page is being told that
+categorizing a bank transaction does **not** write to the ledger. If the poster is in fact armed for
+this entity, that belief drives real errors — double-posting a categorised transaction manually,
+or treating the GL as untouched during reconciliation. A banner about whether the books are being
+written must state the **effective, per-entity** state, never the key default.
+
+**FIX:** render the effective resolved flag state for the currently selected entity (e.g. "bank-feed
+GL posting: **ON** for USMCA"), not the key default. Same defect class as the one
+`verify-no-stale-approval-gate` was built for — a law/UI surface asserting flags are OFF when prod
+says ON — but here it is operator-facing rather than agent-facing.
+
+Board row `LV-BANKFLAG-STALE` (CC-1 money — it concerns whether the GL is being written).
+
+**NOT YET PROVEN, stated honestly:** I have **not** demonstrated that the poster actually fires on
+categorize. The flag being enabled is necessary, not sufficient — the code path may still no-op. The
+decisive test is to categorize one transaction and check for a balanced JE on prod.
+**UNVERIFIED — needs live check.** What IS proven is the contradiction between the banner text and
+`lib.feature_flag_overrides`.
