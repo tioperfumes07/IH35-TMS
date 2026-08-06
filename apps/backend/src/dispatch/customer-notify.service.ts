@@ -220,6 +220,7 @@ async function fetchLoadNotifyContext(client: DbClient, loadId: string): Promise
         l.latest_eta_prediction
       FROM mdata.loads l
       JOIN mdata.customers c ON c.id = l.customer_id
+                          AND c.operating_company_id = l.operating_company_id
       LEFT JOIN LATERAL (
         SELECT city, state FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'pickup' ORDER BY sequence_number ASC LIMIT 1
       ) sp ON true
@@ -383,6 +384,7 @@ export async function processStopArrivalNotifications(
       FROM dispatch.stop_arrivals sa
       JOIN mdata.load_stops ls ON ls.id = sa.stop_id
       JOIN mdata.loads l ON l.id = ls.load_id
+                        AND l.operating_company_id = sa.operating_company_id
       WHERE sa.operating_company_id = $1::uuid
         AND sa.confirmed_at IS NOT NULL
         AND sa.confirmed_at >= now() - interval '7 days'
