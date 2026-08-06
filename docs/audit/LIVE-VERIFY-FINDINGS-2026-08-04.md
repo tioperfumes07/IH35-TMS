@@ -2938,3 +2938,45 @@ is gone; only re-running the original observation proves that. LV-115 stays OPEN
              statement, exit 0. `catalogs.accounts`: Asset **778**, `Bank`/`CreditCard` subtype **20**,
              accumulated-depreciation **163**. Picker contents read from the live deployed app.
 - status:    **GUARD-VERIFIED (USMCA)** — board row 37 may move off "awaiting GUARD browser re-check"
+
+### LV-121 CORRECTION — **OWNER RULINGS 2026-08-05**: my "778 Assets / 163 accum-depr" was a CROSS-ENTITY TOTAL, not what any picker renders; and both entity anomalies are EXPECTED
+**Owner rulings (binding, §0 — decisions outrank my analysis):**
+1. *"Transportation and USMCA have no assets… Trucking only leases equipment to Transportation and USMCA."*
+2. *"Transportation's assets are LEASED FROM TRUCKING."*
+3. *"USMCA might purchase equipment later so it is OK to have it."*
+4. *"USMCA, Transportation and Trucking have not created any transactions, only tests — all data comes from
+   QuickBooks in Transportation."*
+**The prod split corroborates ruling 1 exactly** (`current_user = ih35_app` asserted):
+| entity | Accumulated Depreciation | Asset accounts |
+|---|---|---|
+| IH 35 **Trucking** (asset holder) | **162** | 631 |
+| IH 35 **Transportation** | **0** | 124 |
+| **USMCA** | **1** | 23 |
+Transportation carries **zero** accumulated depreciation and Trucking carries the 162 — the asset holder
+holding the depreciation is precisely the entity model in `ih35-entity-facts`.
+**MY ERROR, and it is a scoping error not an arithmetic one.** LV-121 cited **778** Asset accounts and **163**
+accumulated-depreciation accounts as the hazard the picker prevents. Those are **cross-entity SUMS**. The
+picker is entity-scoped, so it could never have rendered 778 at once: the real pre-fix exposure is **23** in
+USMCA and **124** in TRANSP. **The fix and the verdict stand — the picker correctly shows 2 spendable
+accounts and no fixed-asset account — but the number I used to size it was wrong.** I aggregated across
+entities and then described the total as if one dropdown would show it. Same class as the derived
+parent-count in LV-112: **I computed a total instead of scoping to what the surface actually renders**, and a
+total is not evidence about a scoped surface.
+**The USMCA accumulated-depreciation account is NOT a defect.** I flagged it as an anomaly on the basis that
+USMCA has no assets. Owner ruling 3 settles it: USMCA may purchase equipment later, so the account is
+deliberate headroom. **Withdrawn — not filed, and no card opened.** Likewise TRANSP's 124 asset accounts are
+**expected**: they are leased-from-Trucking right-of-use assets (ASC 842), not owned equipment.
+**Ruling 4 is the one with the widest reach and it reframes the whole account census.** All three entities
+have produced **only test transactions**; every substantive row originates from **QuickBooks in
+Transportation**. So the 778 accounts are overwhelmingly **QBO-imported chart-of-accounts entries**, not
+accounts this TMS created — the §0 origin test applied at the *account* level rather than the row level.
+**I should have asked where the accounts came from before citing their count as risk.** That is the same
+discipline I applied correctly to `accounting.bills` (16,245 QBO clones) and `fuel_transactions` (1,548
+relay_ingest), and did not apply here.
+- severity:  none — LV-121's verdict (GUARD-VERIFIED) stands; only its sizing is corrected
+- LANE:      n/a — no action for any lane; both flagged items are owner-confirmed expected state
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app` asserted TRUE, bypass in its own
+             statement, exit 0. Per-entity accumulated-depreciation **162 / 0 / 1** and Asset accounts
+             **631 / 124 / 23** (Trucking / Transportation / USMCA); `catalogs.accounts` total 1,444 of which
+             **149** carry no `qbo_account_id`.
+- status:    LV-121 verdict UNCHANGED (GUARD-VERIFIED, USMCA) · sizing CORRECTED · USMCA accum-depr flag WITHDRAWN
