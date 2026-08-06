@@ -408,3 +408,58 @@ read/hydration path does not resolve driver, unit, customer, trip type or charge
 edit surfaces, even though the detail API returns the correct ids and prod holds correct values. Fix
 the hydration once and all three symptoms (detail "Unassigned", blank Edit form, and plausibly the
 stops editor) resolve together — they should be triaged as one block, not three.
+
+## ★ 14 — AR CHAIN: load → invoice auto-created — PASS (linkage), GL posting NOT YET PROVABLE
+
+**The dispatch auto-created the invoice.** `INV-2026-00005`, id `d921fbde-b6e2-4e65-9e21-8bcf4278a862`,
+created at **`17:02:41.402Z` — the exact load-creation timestamp**, i.e. in the same transaction.
+
+- `total_cents 245000` = **$2,450.00**, matching the load's `rate_total_cents` exactly.
+- `qbo_invoice_id IS NULL` → TMS-native, not a QBO clone.
+- **Reverse linkage PASS:** `source_load_id = a0b1df25-…` (my load) and
+  `customer_id = 01a29250-…` (my customer). USMCA invoices 4 → 5.
+- Invoice detail renders **Source Load `L-20260806-0005`** correctly — note this **contrasts with the
+  LOAD detail**, which fails to resolve driver/unit (item 11). The invoice screen resolves its
+  relation; the load screen does not.
+- Line: `linehaul`, income account **4000 - Freight / Line-haul Income**, qty 1, $2,450.00.
+- GL panel states honestly: *"No journal entries linked yet (unposted or posting reversed)."*
+  `transaction_source_links` for this invoice = **0**.
+
+### 14a — Is this the `CLS-SUBLEDGER-GL-DARK` P0? **NOT PROVEN — and the card needs re-scoping**
+
+The invoice is `status = proforma` and has no GL posting. **A proforma legitimately should NOT post** —
+under ASC 606 revenue is recognised when the performance obligation is satisfied, and this load has not
+been delivered. So a zero here is **expected state**, not the GL-DARK defect.
+
+I attempted to advance it: the invoice detail offers only `Print` · `View invoice PDF` · `Send` · `Void`.
+**`Send` is `disabled: true`** (verified in the DOM, not inferred from styling). Clicking it did nothing —
+prod re-read confirms `status` still `proforma`, `updated_at` still `17:02:41.402Z` (unchanged from
+creation), `gl_links` still 0.
+
+**Most likely correct design:** proforma → final is gated on **delivery / POD**, which is exactly right.
+
+**Critical-path consequence — this is the useful finding:**
+`LV-STOPS-NOSAVE` (item 12) means the load has **no delivery address**, so the load cannot be
+delivered → the invoice cannot leave `proforma` → **the AR → GL posting path cannot be exercised at
+all.** The stops defect is therefore a **blocker for proving the highest-dollar open card on the
+board.** It should be prioritised on that basis, not just as a dispatch annoyance.
+
+**Verdict recorded honestly: `CLS-SUBLEDGER-GL-DARK` remains UNVERIFIED for the TMS-native AR path.**
+I could not reach a finalized invoice, so I can neither confirm nor clear it. What IS now established:
+the load → invoice hop works, amounts and both-way linkage are correct, and the income account maps to
+4000. Re-test once `LV-STOPS-NOSAVE` is fixed and a load can be delivered.
+
+### 14b — `LV-SEND-NOREASON`: disabled `Send` gives no reason — FAIL (minor UX)
+
+`Send` is disabled with **no `title`, no `aria-disabled`, and no helper text** anywhere on the page.
+A user cannot tell whether the invoice is not ready, they lack permission, or the button is broken —
+and an assistive-technology user gets no signal at all, since `aria-disabled` is absent. If the gate is
+"deliver the load first", say so. Board row `LV-SEND-NOREASON` (CC-3).
+
+### 14c — `LV-INV-UUID`: invoice line shows a raw load UUID in customer-facing text — FAIL (minor)
+
+The invoice line description reads
+`Linehaul · Load a0b1df25-e49e-4853-b8ee-a26b407e88ba` — a raw UUID — while the header of the same
+page correctly renders `L-20260806-0005`. This text is on a document that goes to a customer
+(`View invoice PDF` / `Send`). It should read the load number. Same class as the existing
+"Class-UUID renders in picker" card. Board row `LV-INV-UUID` (CC-3).
