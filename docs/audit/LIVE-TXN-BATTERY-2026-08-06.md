@@ -330,6 +330,47 @@ is `L-20260802-0258` — **two different load-number formats on the same entity*
 - **LANE:** Cascade for the wave-queue reclassification; CC-1 owns the going-forward guard scoping.
 - **status:** OPEN — board row filed.
 
+### LV-TXN-011 — LINK-009 is expected state with a **perfect** correlation, and LINK-003/006 complete the census — **RECLASSIFY**
+- **LINK-009 `mdata.units.currently_leased_to_company_id` — filed as *"lease data incomplete, null 71.4%
+  (130/182)"*. It is not incomplete. Live on prod, and the correlation is exact with ZERO exceptions
+  either way:**
+
+  | | leased | not leased |
+  |---|---|---|
+  | **active** (`deactivated_at IS NULL`) | **53** | **0** |
+  | **inactive** | **0** | **130** |
+
+  `currently_leased_to_company_id` is NULL **exactly** when the unit is deactivated. A retired or sold
+  truck has no current lease — that is correct by design (§4: units are scoped by the
+  `owner_company_id` / `currently_leased_to_company_id` pair). All 183 units carry `owner_company_id`.
+  The filed "71.4% null" is measuring **deactivated units**. **NOT A DEFECT.**
+- **LINK-003 `accounting.expense_lines`** — 33,980 lines total, but only **2** sit on a TMS-native expense
+  (`qbo_purchase_id IS NULL`). Same denominator problem as LINK-001/002/004/007/008. Expected state.
+- **LINK-006 `banking.bank_transactions`** — 11,072 rows (`n_tup_ins` 12,300), 2,742 credits, **0** matched
+  to bill/payment/invoice. Bank rows are feed imports; matching is a TMS operation never performed.
+  **This is a DUPLICATE of `CLS-BANK-MATCH-DENSITY`**, which exists for exactly this — it should be
+  counted once, in that class, not twice.
+
+### ★ CLASS VERDICT — `CLS-LINKAGE-ONEWAY`: **8 of 9 instances are expected-state or misclassified; the 9th is a duplicate**
+
+| instance | verdict |
+|---|---|
+| LINK-001 bills, LINK-002 invoices, LINK-004 expenses, LINK-007 payments, LINK-008 bill_payments | **expected state** — denominators are ~100% QBO clones; TMS-native population ≈ 24 rows total |
+| LINK-003 expense_lines | **expected state** — 2 of 33,980 lines are TMS-native |
+| LINK-005 fuel | already correctly annotated `N/A-PRE-OPERATIONAL` |
+| LINK-009 units | **expected state** — NULL exactly when deactivated, 53/53 and 130/130, zero exceptions |
+| LINK-006 bank_transactions | **duplicate** of `CLS-BANK-MATCH-DENSITY` |
+
+- **what this means practically:** the class as filed reads as ~73,000 unlinked money rows. The real
+  TMS-native population is roughly **two dozen**. There is no backfill to schedule, and a backfill would
+  be actively harmful — inventing operational FKs on QBO-origin financial records.
+- **WHAT I AM NOT SAYING.** I am **not** declaring the class clean. The going-forward writers are
+  **unproven**: 0 of 2 native expenses, 0 of 2 native payments, 0 of 1 native bill_payment carry their FK.
+  That is too small a sample to distinguish a broken writer from an unexercised one. The correct verdict
+  is *"the filed evidence does not establish a defect, and the real population is too small to judge"* —
+  not *"it works."* Judgement requires TMS-native volume, which is gated on **LV-TXN-004**.
+- **status:** OPEN — reclassification requested; class cannot be drained or dismissed until volume exists.
+
 ---
 
 ## Entity-safety note
