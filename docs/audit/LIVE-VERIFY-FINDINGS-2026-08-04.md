@@ -1987,6 +1987,66 @@ consistent with the entity model, not a defect.
              Trigger `trg_auto_propose_escrow_on_abandon` confirmed present on `loads` via `pg_trigger`.
 - status:    OPEN
 
+## LV-109  CLASS-DRAIN CONVERGENCE — **10 of 25 classes VERIFIED**; 15 are marked `drained` but **5 of those cannot be verified at all** because their ratcheting guard does not exist
+- module:    docs/audit · scripts (GUARD — class-drain convergence, verify-after only)
+- entity:    TRANSP + USMCA (both, role-asserted)
+- surface:   `docs/audit/wave-queue.json` (25 waves) · each class's ratcheting guard · Neon prod
+- observed:  **Denominator: 25 waves. Status on `origin/main`: 15 `drained`, 10 open.**
+  **(1) FAIL CLOSED — 5 of the 15 "drained" classes have NO guard on disk, so `drained` is unverifiable:**
+  | class | missing guard | money? |
+  |---|---|---|
+  | `CLS-GL-DARK` | `verify-gl-posting-coverage.mjs` | **money** |
+  | `CLS-DUAL-PATH` | `verify-qbo-canonical-recon.mjs` | **money** |
+  | `CLS-REVERSE-LINKAGE-MISSING` | `verify-reverse-linkage-embedded.mjs` | money-adjacent |
+  | `CLS-HOOKS-ORDER` | `verify-hooks-before-return.mjs` | no |
+  | `CLS-RAW-UUID-INPUT` | `verify-no-raw-uuid-inputs.mjs` | no |
+  A class whose ratchet cannot be invoked cannot be shown to be RED on a violation, so **no amount of live
+  data makes it VERIFIED**. **These 5 are NOT stamped.** This is LV-103 landing on the drain queue: two of
+  them are money classes, and `CLS-GL-DARK` — GL posting coverage — is the single class whose guard absence
+  matters most, since it is the ratchet that would catch the next LV-099.
+  **(2) The 10 with runnable guards are ALL GREEN on zero — `exit 0`, every one:**
+  `verify-zero-count-completeness-discriminator` · `verify-cents-dollar-scale` · `disp-wire-01-book-invoice`
+  · `02-driver-bill` · `03-pod-capture` · `04-invoice-evidence-durable` · `05-revrec-latch`
+  · `08-settlement-ping` · `09-bol-generate` · `10-cancel-economics`.
+  **(3) All 10 are RED on a violation — proven by mutation selftest, and for one, by a REAL on-disk plant.**
+  Every selftest passes with explicit mutation counts (3–9 each; `pod-capture` and `bol-generate` print no
+  count but carry **4** labelled mutation cases apiece — checked, not assumed).
+  **Selftests mutate in memory, which LV-096 already showed is not the same code path as the real scanner.**
+  So I planted a genuine violation on disk for `disp-wire-03`: rewrote the POST path in
+  `apps/driver-pwa/src/api/pod.ts`, confirmed the edit landed, and the guard returned **exit 1** —
+  `"submitPodCapture must POST .../stops/:stopId/pod"` — then **exit 0** after restore, working tree clean.
+  **My first plant attempt was a no-op** (I substituted `/stops/${stopId}/pod` when the file actually reads
+  `/stops/${encodeURIComponent(stopId)}/pod`), and the guard stayed green. I verified the file had actually
+  changed before drawing any conclusion. **A failed plant looks exactly like a broken guard** — the check
+  that separates them is confirming the mutation landed.
+  **(4) LIVE, BOTH ENTITIES, role-asserted — and the discriminator caught a false reading mid-check.**
+  Per-entity via `SET app.operating_company_id` (preferred over bypass when scoping is the question):
+  | scope | `current_user` | journal_entries | postings | invoices |
+  |---|---|---|---|---|
+  | TRANSP `91e0bf0a` | `ih35_app` | **1,769** | 3,566 | 11,980 |
+  | USMCA `5c854333` | `ih35_app` | **12** | 24 | 4 |
+  | unscoped (bypass) | `ih35_app` | 1,787 | 3,603 | 11,984 |
+  **Reconciliation is exact:** 1,769 + 12 + 6 (TRK) = **1,787**; invoices 11,980 + 4 + 0 = **11,984**.
+  Per-entity RLS isolation is correct in both entities.
+  **★ The role check is not ceremony — it caught a live false reading in this very check.** My first USMCA
+  run returned `current_user = neondb_owner` and reported **1,787** journal entries for USMCA. As table
+  owner, RLS does not apply, so the scope setting was inert and the number was the unscoped total. Reported
+  naively that is a spectacular cross-entity leak; it is an artifact of the alternating MCP role. §0 states
+  the role alternates `ih35_app` / `neondb_owner` — **it did, mid-session, between two adjacent queries.**
+  I re-ran asserting `current_user = 'ih35_app'` in the same statement and got the true **12**.
+  **Money-bearing sample, as required:** the live check is over `accounting.journal_entries`,
+  `journal_entry_postings` and `invoices` — not a cosmetic table — and the drained money classes among the 10
+  (`CLS-UNIT-SCALE`, `CLS-FUEL-DOUBLE-POST`, `CLS-DISP-WIRE-05` revrec) sit on that same evidence, with the
+  revrec latch independently proven by differential in LV-105.
+- severity:  major (5 classes marked `drained` with an unrunnable ratchet — 2 of them money)
+- LANE:      CASCADE (owns `wave-queue.json` status) + CC-1 (money guards) — author the 5 missing guards, or
+             move those classes back to `open`. **`CLS-GL-DARK` first**: it is the ratchet that would catch
+             the next effect-missing money defect.
+- neon-check: prod `br-fancy-credit-akjnd07a`, per-entity via `SET app.operating_company_id`, `current_user`
+             asserted **in the same statement** (`role_is_app_MUST_BE_TRUE = true`), exit 0. Counts and the
+             exact reconciliation as tabulated. Guard runs and the planted-violation exit codes read WITHOUT
+             a pipe; planted file restored and `git status` confirmed clean.
+- status:    **VERIFIED (10 of 25)** · 5 drained-but-unguardable NOT stamped · 10 still open
 ## LV-100  GUARD VERIFY-AFTER of **ACCT-F115** (#4478, `c8b6a3cbb`) and **ACCT-F116** (#4479, `07daa0f6b`) — **both PASS**; every factual claim in both PRs independently re-verified on prod
 - module:    accounting · insurance · driver_finance (GUARD — post-merge verification)
 - entity:    ALL
