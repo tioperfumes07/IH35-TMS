@@ -475,17 +475,17 @@
         {
           "path": "Accounting > More dropdown: CoA not reachable, dropdown not alphabetical (ORPH-002)",
           "entity": "ALL",
-          "note": "AUD-F008."
+          "note": "RESOLVED, verified live 2026-08-06 (CASCADE). apps/frontend/src/pages/accounting/subnav-manifest.ts:157 lists a \"Chart of Accounts\" entry (path /lists/accounting/chart-of-accounts, section \"more\") \u2014 reachable. childrenOf() at line 186 explicitly sorts the \"more\" section alphabetically at render time (.sort with localeCompare), with an inline comment citing ORPH-002 by name as the reason. Both original complaints are false against current code. AUD-F008 was correct when filed; superseded by a later fix. No longer actionable."
         },
         {
           "path": "/accounting/vendors detail tab: empty (no email/phone/address/ACH) (ORPH-003)",
           "entity": "ALL",
-          "note": "AUD-F010. Route /accounting/vendors redirects to /vendors (manifest.tsx:3593). Rendered page is VendorDetailPage at /vendors/:id \u2014 vendors module."
+          "note": "PARTIALLY RESOLVED, verified live 2026-08-06 (CASCADE). Route /accounting/vendors redirects to /vendors (routes/manifest.tsx:1023 renders VendorDetailPage at /vendors/:id, apps/frontend/src/pages/maintenance/VendorDetailPage.tsx). Email/phone/address are NOT empty \u2014 lines 69-71 render vendor.contact_email / contact_phone / address with a \"\u2014\" fallback when null. AUD-F010's \"empty tab\" claim is false against current code for those 3 fields. ACH remains genuinely absent: no ach_/routing_number/bank_account_number field exists anywhere in the vendor detail page OR in any accounting/vendor backend route \u2014 this is a missing data-model column, not a broken UI binding. Not a mechanical drill-through defect; bounced to board (see GUARD-WORKORDERS.md) for a data-model decision (does a vendor even carry ACH info, or does that live on a separate payment-method entity?) before any code is written."
         },
         {
           "path": "/cash-flow: 7-day calendar box-in-box, projected income $0 with no drill (ORPH-004)",
           "entity": "ALL",
-          "note": "P1-005."
+          "note": "RESOLVED, verified live 2026-08-06 (CASCADE). apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx:359-365 renders the 7-day strip as a single outer bordered section with flat divide-x cells (no nested box-in-box), with an inline comment citing \"ORPH-004 / AUD-F016\" by name. Each day cell's onClick calls setDate(entry.date) (line 374), which drives the page's useQuery (getDailyPrediction(operatingCompanyId, date), line 69-73) \u2014 clicking a day re-fetches and re-renders the full daily breakdown for that day. That is a real drill-through, not a dead click. Both original complaints (box-in-box layout, no drill) are false against current code. P1-005 was correct when filed; superseded by a later fix. No longer actionable."
         },
         {
           "path": "home, tasks, customers, vendors, docs, users: empty No data states (ORPH-005)",
@@ -493,14 +493,14 @@
           "note": "Correlates with 0-row canonical tables. P1-007. 'vendors' listed explicitly."
         }
       ],
-      "completeness": "lucia-bypass Neon prod 2026-08-05: voided invoices=1/11984, revoked bills=0/16250, voided payments=0/12124, voided journal_entries=0. Orphan row surface remains minimal. ORPH-001 (bill row/vendor drill + back button) verified RESOLVED against current code 2026-08-05. Remaining UI drill-through defects (ORPH-002 CoA nav, ORPH-004 cash-flow drill, ORPH-003 vendor detail) still OPEN pending frontend fixer lane.",
+      "completeness": "MECHANICAL HALF DRAINED 2026-08-06 (Cascade class-drain). ORPH-001, ORPH-002, ORPH-004 all verified RESOLVED against current code (drill-through/nav wiring intact, code-cited by name in inline comments at each fix site) and are now mutation-proven by scripts/verify-orphan-surface-drill.mjs (--selftest exit 0, live run exit 0). ORPH-003 is PARTIALLY resolved: email/phone/address render correctly (not empty); the remaining ACH gap is a missing data-model column, not a UI/drill-through defect, and is out of this class's mechanical scope — recorded on GUARD-WORKORDERS.md for a data-model decision. ORPH-005 (empty no-data states) correlates with genuinely 0-row canonical tables (lucia-bypass Neon prod 2026-08-05: voided invoices=1/11984, revoked bills=0/16250, voided payments=0/12124, voided journal_entries=0) — not a code defect, no action possible without data. No money-path instances exist in this class (lane=mechanical, layer=A, pure frontend nav/UI) — CC-1's half is N/A, not merely zero.",
       "guard": "scripts/verify-orphan-surface-drill.mjs",
       "drain_proof": {
-        "guard_green": false,
-        "guard_sample": "ORPH-001 RESOLVED (verified live 2026-08-05: BillsPage.tsx EntityLink drills + PageHeader back button); ORPH-002 cash-flow drill-through empty; ORPH-003 vendor detail empty. Live void/revoke counts: invoices=1/11984, bills=0/16250, payments=0/12124, JEs=0.",
+        "guard_green": true,
+        "guard_sample": "verify-orphan-surface-drill: OK — ORPH-001, ORPH-002, ORPH-004 drill-through/nav wiring intact (live run exit 0). Selftest: RED on a planted dropped backHref, GREEN on current source (exit 0, 3 checks). ORPH-003 ACH gap and ORPH-005 empty-state correlation are non-code, non-mechanical remainders, tracked separately on GUARD-WORKORDERS.md and via live Neon row counts respectively \u2014 neither blocks this guard's green state since neither is a drill-through/nav wiring regression.",
         "money_critical": false
       },
-      "status": "open",
+      "status": "draining",
       "hotfiles": [
         "apps/frontend/src/pages/accounting",
         "apps/frontend/src/pages/cash-flow",

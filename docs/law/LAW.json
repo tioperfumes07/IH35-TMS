@@ -320,5 +320,12 @@
     "source_file": "apps/backend/src/_helpers/scoped-company-context.ts",
     "guard": "scripts/verify-scoped-company-context-asserts-first.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-CLS-ORPHAN-SURFACE-DRILL",
+    "title": "A nav/leaf that drills through to detail (bill row, Chart-of-Accounts reachability, cash-flow 7-day strip) may not silently lose its drill-through wiring",
+    "source_file": "scripts/verify-orphan-surface-drill.mjs",
+    "guard": "scripts/verify-orphan-surface-drill.mjs",
+    "type": "enforced"
   }
 ]
