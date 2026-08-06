@@ -184,3 +184,123 @@ dispatcher or safety reviewer filtering by status will never see newly created d
 narrower filter in play beyond `archived_at` that I have **not** isolated. **UNVERIFIED — needs live
 check**; the `Probation`-has-no-tab gap above is fully proven and is the reportable defect. Recorded
 rather than guessed.
+
+### 08 — Create customer (TEST customer #1) — PASS (after a real validation block)
+
+`/customers` → `+ Create Customer`. First save attempt did **nothing and fired no network request** —
+the cause was a genuine required-field block: **"Customer type is required"**. That is correct behaviour,
+not a defect (the `Customer type` options `Broker` / `Direct shipper` are hardcoded in the form, NOT served
+by the broken `customer_types` catalog endpoint — checked, because `LV-CAT-500` would otherwise have made
+this required field unsatisfiable and blocked customer creation entirely).
+
+- **Prod (`mdata.customers`):** id `01a29250-9bc1-4679-9613-79331056294d`,
+  `customer_name TEST-Customer-One-20260806`, `operating_company_id` = USMCA,
+  `qbo_customer_id IS NULL` (TMS-native).
+- **Counts:** USMCA 2 → 3; `visible_all` 2697 → 2698 **and `visible_all = n_live_tup`** (complete read).
+
+**Minor UX observation (recorded, not boarded):** the validation message renders at the very TOP of a long
+scrolling drawer while the Save button sits at the very BOTTOM, with no scroll-to-error. The form looks
+inert when it is in fact correctly refusing. Worth a fix, but it is a usability nit, not a data defect.
+
+### 09 — Create unit (TEST unit #1) — PASS · entity-ownership model verified correct
+
+`/fleet` → `+ Create Unit`. USMCA fleet already held `USMCA-001` (truck) and `USMCA-T01` (dry van).
+
+- **Prod (`mdata.units`):** id `240be73b-d02e-4205-a566-bb0000d66180`,
+  `unit_number TEST-UNIT-20260806-01`, `vin 1XKTESTUSMCA080601`.
+- **`visible_all = n_live_tup = 183`** (complete read).
+- **★ ENTITY MODEL CORRECT — this is the notable result:**
+  `owner_company_id = b49a737b-…` = **TRK** (the asset holder) and
+  `currently_leased_to_company_id = 5c854333-…` = **USMCA** (the lessee).
+
+  The Create Unit drawer exposes **no** owner or lease field at all, yet the write landed on the correct
+  two columns in the correct direction. This is live confirmation that **PERMANENT LAW §4 — "TRANSP /
+  USMCA own no assets today"** is actually enforced by the create path, not merely documented, and that
+  `mdata.units` is correctly keyed on `owner_company_id` / `currently_leased_to_company_id` rather than
+  the `operating_company_id` that §4 warns is a recurring 500 source.
+
+**`TEST-` unit-name guard — checked before creating, no conflict.** `scripts/verify-no-test-units-in-prod.mjs`
+forbids `unit_number LIKE 'TEST-%'`, which on its face collides with the owner's standing order to name
+records `TEST-…`. It does not, for two independent reasons: (a) its live DB scan is gated behind
+`ENABLE_LIVE_DB_UNIT_TEST_GUARD === "true"`, and the script's own comment records that no workflow has ever
+set it, so that branch has never run; (b) when it does run it sets
+`app.operating_company_id = TRANSP_COMPANY_ID` and scans only TRANSP. A `TEST-` unit on **USMCA** is
+outside its scope either way. Verified by reading the guard, not assumed.
+
+## ★★ 10 — DISPATCH CHAIN — book → assign → dispatch — PASS, and it DRAINS the WF064 board cards
+
+Booked through the real Book Load wizard on USMCA. Load `L-20260806-0005`,
+id `a0b1df25-e49e-4853-b8ee-a26b407e88ba`.
+
+- **Prod (`mdata.loads`):** `status assigned_not_dispatched`, `trip_type NB`,
+  **`rate_total_cents 245000` = $2,450.00** (GROSS customer rate, per §4), `operating_company_id` USMCA.
+  `visible_all = n_live_tup = 7` (complete read).
+- **★ TOTAL-CONNECTIVITY (§10) SATISFIED — every hop resolves, and to the records I created:**
+
+  | link | value |
+  |---|---|
+  | driver | `88c04cf5-…` **Juan USMCA-Battery** |
+  | customer | `01a29250-…` **TEST-Customer-One-20260806** (created in item 08) |
+  | unit | `240be73b-…` **TEST-UNIT-20260806-01** (created in item 09) |
+  | stops | **2** (pickup Laredo TX 78040 → delivery San Antonio TX 78201) |
+
+### 10a — Pre-dispatch FMCSA/DOT compliance gate — PASS (works, and works well)
+
+The wizard **blocked** the dispatch with `Active blocker(s) — override required`:
+
+- `[WF-CDL-MISSING]` Juan USMCA-Battery: no CDL expiry on file — DOT requirement for dispatch
+- `[WF-MED-CARD-MISSING]` Juan USMCA-Battery: no DOT medical card on file
+- `[GAP-14-FMCSA-NO-NUMBER]` (advisory) customer has no MC#/DOT# for FMCSA verification
+
+`6 of 7 checks pass`. Override required a ≥10-char reason and states it is audit-logged. This is
+best-in-class behaviour and is a genuine PASS for the compliance gate. Overridden deliberately with a
+reason naming this as a USMCA live-verifier test; the **override textarea accepted keystrokes**, which
+independently corroborates the merged owner-override keystroke fix (#4036) still working on prod.
+
+### 10b — ★ WF064 / dispatch outbox: PRODUCER **AND** CONSUMER BOTH WORK — board cards are WRONG
+
+Two board cards state the WF064 lifecycle is dead — *"the whole WF064 lifecycle is inert end-to-end —
+wired, never executed"*, *"0 of 31,646 outbox events match `dispatch.*` / `%wf064%`"*, and
+*"WF064-consumer dead (P1) … the settlement cycle never fires."*
+
+**Live on prod, immediately after this single dispatch:**
+
+| event_type | created_at | delivered_at | retry | outcome |
+|---|---|---|---|---|
+| `dispatch.load.dispatched` | 17:02:41.402Z | **17:02:46.213Z** | 0 | `driver_instructions_distributed` |
+| `dispatch.wf064.override_notice` | 17:02:41.402Z | **17:03:10.184Z** | 1 | `override_notice_delivered_to_3_owner(s)` |
+
+`dispatch.*` total went **0 → 2**; `%wf064%` total went **0 → 1**. Both rows have
+`delivered_at NOT NULL` and `failed_at NULL` — i.e. **both were produced AND consumed successfully**,
+within 5 and 29 seconds respectively.
+
+**Correct conclusion: the WF064 lifecycle was never EXERCISED, not broken.** The prior "0 rows"
+reading was accurate but was interpreted as "the producer never fires / the consumer is disconnected."
+The real cause was simply that **no load had ever been dispatched in the TMS**, so nothing had ever
+produced the event. This run is the exercise, and the chain works end to end. The cards should be
+closed as *not-a-defect / never-exercised*, not built against.
+
+This is the textbook shape of the `expected-state-recorded-as-failure` anti-pattern applied to an
+event stream: an empty queue on a system that has never performed the triggering action is expected
+state, and a zero there is not evidence of a broken consumer.
+
+### 10c — `LV-OUTBOX-ERRCOL`: success detail is written into `last_error` — FAIL (minor, observability)
+
+Both delivered rows carry a **success** string in **`last_error`** (`driver_instructions_distributed`,
+`override_notice_delivered_to_3_owner(s)`). `last_error` is the failure-diagnosis column; putting
+success detail there means any triage query of the form `WHERE last_error IS NOT NULL` returns healthy
+rows, and — worse — the override-notice row has **`retry_count = 1`**, so its first attempt genuinely
+did fail, and that real error message has been **overwritten by the later success string and is now
+unrecoverable**. Board row `LV-OUTBOX-ERRCOL`.
+
+### 10d — "Auto-create driver bill with short miles" did NOT produce a bill — UNVERIFIED
+
+The wizard's ON SAVE panel promises five effects: create load with assigned status · **auto-create
+driver bill with short miles** · queue QBO outbox invoice + bill · send driver dispatch message ·
+prepare factoring packet. After dispatch: USMCA `accounting.bills` unchanged at **8** (0 new), and
+`driver_finance.settlement_lines` = **0**.
+
+**Deliberately NOT filed as a defect.** This load was booked with **0 miles** (no PC*MILER routing
+entered) and **driver pay rate/mi = 0**, so suppressing a $0 driver bill may be correct behaviour. To
+settle it, re-run the chain with real stop mileage and a non-zero pay rate and re-check. **UNVERIFIED —
+needs live check.** Recorded rather than guessed.
