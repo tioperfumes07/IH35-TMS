@@ -57,11 +57,26 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
     const result = await withCurrentUser(user.uuid, async (client) => {
       const companyId = body.data.operating_company_id;
 
+      // ENTITY-SCOPED RESOLVER. The row's own operating_company_id is what the membership assert and
+      // the pinned UPDATE below are derived from, so this read cannot be scoped by a caller-supplied
+      // company — that is the untrusted input MDATA-F08 was about. It IS scoped to the companies the
+      // CALLER actually belongs to, which does two things: it satisfies the entity-predicate contract
+      // (verify-steps/84) with a real predicate rather than a baseline waiver, and it closes an
+      // existence oracle — previously a caller could tell "no such id" (404) from "exists in another
+      // entity" (403) and enumerate ids across entities. Now both are 404.
       const beforeRes = await client.query(
         `SELECT entity_classification, qbo_classification_ref, operating_company_id::text AS row_company_id
            FROM mdata.customers
-          WHERE id = $1 LIMIT 1`,
-        [params.data.id]
+          WHERE id = $1
+            AND operating_company_id IN (
+              SELECT uca.company_id
+                FROM org.user_company_access uca
+                JOIN org.companies c ON c.id = uca.company_id AND c.deactivated_at IS NULL
+               WHERE uca.user_id = $2::uuid
+                 AND uca.deactivated_at IS NULL
+            )
+          LIMIT 1`,
+        [params.data.id, user.uuid]
       );
       if (!beforeRes.rows.length) return { notFound: true };
       const before = beforeRes.rows[0] as Record<string, unknown>;
@@ -177,11 +192,26 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
     const result = await withCurrentUser(user.uuid, async (client) => {
       const companyId = body.data.operating_company_id;
 
+      // ENTITY-SCOPED RESOLVER. The row's own operating_company_id is what the membership assert and
+      // the pinned UPDATE below are derived from, so this read cannot be scoped by a caller-supplied
+      // company — that is the untrusted input MDATA-F08 was about. It IS scoped to the companies the
+      // CALLER actually belongs to, which does two things: it satisfies the entity-predicate contract
+      // (verify-steps/84) with a real predicate rather than a baseline waiver, and it closes an
+      // existence oracle — previously a caller could tell "no such id" (404) from "exists in another
+      // entity" (403) and enumerate ids across entities. Now both are 404.
       const beforeRes = await client.query(
         `SELECT entity_classification, qbo_classification_ref, operating_company_id::text AS row_company_id
            FROM mdata.vendors
-          WHERE id = $1 LIMIT 1`,
-        [params.data.id]
+          WHERE id = $1
+            AND operating_company_id IN (
+              SELECT uca.company_id
+                FROM org.user_company_access uca
+                JOIN org.companies c ON c.id = uca.company_id AND c.deactivated_at IS NULL
+               WHERE uca.user_id = $2::uuid
+                 AND uca.deactivated_at IS NULL
+            )
+          LIMIT 1`,
+        [params.data.id, user.uuid]
       );
       if (!beforeRes.rows.length) return { notFound: true };
       const before = beforeRes.rows[0] as Record<string, unknown>;
