@@ -84,7 +84,9 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
           FROM safety.dvir_defects dd
           INNER JOIN safety.dvir_submissions ds ON ds.id = dd.dvir_submission_id
           LEFT JOIN mdata.drivers d ON d.id = ds.driver_id
+                                   AND d.operating_company_id = ds.operating_company_id
           LEFT JOIN mdata.units u ON u.id = dd.unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = dd.operating_company_id
           LEFT JOIN LATERAL (
             SELECT ae.event_class AS latest_triage_event
             FROM audit.audit_events ae
@@ -133,7 +135,9 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
           FROM safety.dvir_defects dd
           INNER JOIN safety.dvir_submissions ds ON ds.id = dd.dvir_submission_id
           LEFT JOIN mdata.drivers d ON d.id = ds.driver_id
+                                   AND d.operating_company_id = ds.operating_company_id
           LEFT JOIN mdata.units u ON u.id = dd.unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = dd.operating_company_id
           WHERE dd.id = $1
             AND dd.operating_company_id = $2
           LIMIT 1

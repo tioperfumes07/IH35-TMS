@@ -453,9 +453,17 @@ export async function buildAccountingOutboundPayload(
                  a.qbo_account_id, c.qbo_class_id,
                  d.qbo_vendor_id AS driver_qbo_vendor_id
           FROM accounting.journal_entry_postings p
+          -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED). These three resolve the QuickBooks IDs this
+          -- posting is pushed OUT with — qbo_account_id, qbo_class_id and the driver's qbo_vendor_id. An
+          -- unscoped match sends ANOTHER ENTITY'S QuickBooks identifier to QBO, which would file the entry
+          -- against the wrong company's books in an external system we do not control and cannot silently
+          -- correct. The posting p is already scoped; these were not.
           LEFT JOIN catalogs.accounts a ON a.id = p.account_id
+                                       AND a.operating_company_id = p.operating_company_id
           LEFT JOIN catalogs.classes c ON c.id = p.class_id
+                                      AND c.operating_company_id = p.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = p.entity_uuid
+                                   AND d.operating_company_id = p.operating_company_id
           WHERE p.journal_entry_uuid = $1::uuid
             AND p.operating_company_id = $2::uuid
           ORDER BY p.line_sequence ASC
@@ -540,6 +548,7 @@ export async function buildAccountingOutboundPayload(
                  bp.qbo_bill_payment_id, bp.qbo_sync_token
           FROM accounting.bill_payments bp
           JOIN accounting.bills b ON b.id = bp.bill_id
+                                 AND b.operating_company_id = bp.operating_company_id
           WHERE bp.id = $1::uuid AND bp.operating_company_id = $2::uuid
           FOR UPDATE OF bp
         `,
@@ -575,6 +584,7 @@ export async function buildAccountingOutboundPayload(
                  bp.qbo_sync_token
           FROM accounting.bill_payments bp
           JOIN accounting.bills b ON b.id = bp.bill_id
+                                 AND b.operating_company_id = bp.operating_company_id
           WHERE bp.operating_company_id = $1::uuid
             AND COALESCE(bp.payment_batch_id, bp.id) = $2::uuid
           ORDER BY bp.created_at ASC, bp.id ASC

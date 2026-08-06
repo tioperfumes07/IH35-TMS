@@ -127,10 +127,16 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
         LEFT JOIN banking.bank_accounts ba
           ON ba.id = bt.bank_account_id
           AND ba.operating_company_id = bt.operating_company_id
+        -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED). These two resolve the GL ACCOUNTS this bank
+        -- transaction will POST to — the categorised account and the bank's ledger account. The bank
+        -- account join beside them was already pinned to bt.operating_company_id; these were not. An
+        -- unscoped match here selects another entity's account as a posting target.
         LEFT JOIN catalogs.accounts ca
           ON ca.id = bt.categorization_gl_account_id
+          AND ca.operating_company_id = bt.operating_company_id
         LEFT JOIN catalogs.accounts led
           ON led.id = ba.ledger_account_id
+          AND led.operating_company_id = bt.operating_company_id
         WHERE bt.id = $1::uuid
           AND bt.operating_company_id = $2::uuid
         LIMIT 1
@@ -287,6 +293,7 @@ export async function maybePostBankCategorizationToGl(input: MaybePostBankCatego
         `SELECT COUNT(DISTINCT je.id)::text AS n
            FROM accounting.journal_entries je
            JOIN accounting.journal_entry_postings p ON p.journal_entry_uuid = je.id
+                                                   AND p.operating_company_id = je.operating_company_id
           WHERE je.operating_company_id = $1::uuid
             AND p.source_transaction_type = 'bank_categorization'
             AND p.source_transaction_id::text = $2

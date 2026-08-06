@@ -55,7 +55,9 @@ export async function listOpenEstimates(client: PoolClient, operating_company_id
         COALESCE(EXTRACT(EPOCH FROM (now() - u.oos_since)) / 86400, 0)::numeric AS days_oos
       FROM maintenance.severe_repair_estimates e
       LEFT JOIN mdata.units u ON u.id = e.unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id
       LEFT JOIN mdata.drivers d ON d.id = u.assigned_driver_id
+                               AND d.operating_company_id = e.operating_company_id
       WHERE e.operating_company_id = $1
         AND e.estimate_status IN ('open', 'awaiting_approval', 'approved')
       ORDER BY e.estimated_total_cents DESC
@@ -97,6 +99,7 @@ export async function getFleetRestoreCost(client: PoolClient, operating_company_
       FROM maintenance.severe_repair_estimates e
       LEFT JOIN maintenance.work_orders w ON w.id = e.trigger_wo_id
       LEFT JOIN mdata.units u ON u.id = e.unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id
       WHERE e.operating_company_id = $1
         AND e.estimate_status IN ('open', 'awaiting_approval', 'approved')
     `,
@@ -125,6 +128,7 @@ export async function getPerUnitBreakdown(client: PoolClient, operating_company_
         MAX(e.damage_severity)::text AS severity
       FROM maintenance.severe_repair_estimates e
       LEFT JOIN mdata.units u ON u.id = e.unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id
       WHERE e.operating_company_id = $1
         AND e.estimate_status IN ('open', 'awaiting_approval', 'approved')
       GROUP BY e.unit_id, u.unit_number
@@ -153,6 +157,7 @@ export async function getRollupTotal(client: PoolClient, operating_company_id: s
         COALESCE(MAX(EXTRACT(EPOCH FROM (now() - u.oos_since)) / 86400), 0)::numeric AS oldest_oos_days
       FROM maintenance.severe_repair_estimates e
       LEFT JOIN mdata.units u ON u.id = e.unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id
       WHERE e.operating_company_id = $1
         AND e.estimate_status IN ('open', 'awaiting_approval', 'approved')
     `,

@@ -473,6 +473,7 @@ export async function getDeadheadReport(
         dc.rank_in_fleet
       FROM reports.deadhead_cache dc
       JOIN mdata.units u ON u.id = dc.unit_id
+                        AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = dc.operating_company_id
       WHERE dc.operating_company_id = $1::uuid
         AND dc.week_starting >= $2::date
         AND dc.week_starting <= $3::date
