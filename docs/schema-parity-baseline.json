@@ -4075,7 +4075,10 @@
       "status",
       "trip_closed_at",
       "trip_started_at",
-      "updated_at"
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "driver_finance.escrow_balances": [
       "created_at",
