@@ -9,7 +9,9 @@ const querySchema = companyQuerySchema.extend({
 });
 
 export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver-finance/driver-bills", async (req: FastifyRequest, reply: FastifyReply) => {
+  // Rate-limited (CodeQL js/missing-rate-limiting). Pre-existing; the plugin is global:false so an
+  // un-configured route has NO limit at all. Surfaced because this PR touched the file.
+  app.get("/api/v1/driver-finance/driver-bills", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -28,8 +30,13 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
             d1.identity_user_id AS primary_identity_user_id,
             d2.identity_user_id AS secondary_identity_user_id
           FROM mdata.loads l
+          -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED): the load is scoped, the drivers it resolves were
+          -- not. These supply identity_user_id, which downstream decides WHO may see a driver bill — so an
+          -- unscoped match here is an authorization input, not just a label.
           LEFT JOIN mdata.drivers d1 ON d1.id = l.assigned_primary_driver_id
+                                    AND d1.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.drivers d2 ON d2.id = l.assigned_secondary_driver_id
+                                    AND d2.operating_company_id = l.operating_company_id
           WHERE l.id = $1
             AND l.operating_company_id = $2
             AND l.soft_deleted_at IS NULL

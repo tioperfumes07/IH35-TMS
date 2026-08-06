@@ -335,6 +335,7 @@ export async function escalateCashAdvanceRequestToOwner(
         concat_ws(' ', d.first_name, d.last_name) AS driver_name
       FROM driver_finance.cash_advance_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
+                           AND d.operating_company_id = r.operating_company_id
       WHERE r.operating_company_id = $1 AND r.id = $2
       LIMIT 1
     `,
@@ -354,6 +355,7 @@ export async function listPendingOwnerApprovalCashAdvanceRequests(client: Querya
         concat_ws(' ', d.first_name, d.last_name) AS driver_name
       FROM driver_finance.cash_advance_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
+                           AND d.operating_company_id = r.operating_company_id
       WHERE r.operating_company_id = $1
         AND r.owner_approval_required = true
         AND r.owner_approval_token IS NOT NULL
@@ -380,6 +382,7 @@ export async function getPublicOwnerApprovalDetails(
           concat_ws(' ', d.first_name, d.last_name) AS driver_name
         FROM driver_finance.cash_advance_requests r
         JOIN mdata.drivers d ON d.id = r.driver_id
+                           AND d.operating_company_id = r.operating_company_id
         WHERE r.owner_approval_token = $1
           AND r.owner_approval_token_expires_at > now()
           AND r.owner_approval_required = true
