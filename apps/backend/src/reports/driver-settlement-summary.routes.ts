@@ -18,7 +18,10 @@ function previousCycleWindow() {
 }
 
 export async function registerDriverSettlementSummaryRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/driver-settlement-summary", async (req, reply) => {
+  // Rate-limited because this is an authorized read (CodeQL js/missing-rate-limiting). The guard flagged
+  // it as soon as the escrow fix pulled this file into scope — it has always been unlimited, it was just
+  // never in a changed-file set before. 60/min matches the other authorized report reads.
+  app.get("/api/v1/reports/driver-settlement-summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
