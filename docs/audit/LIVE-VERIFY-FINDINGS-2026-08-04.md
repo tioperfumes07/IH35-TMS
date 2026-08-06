@@ -3215,3 +3215,40 @@ relay_ingest), and did not apply here.
              restored 0; planted file restored and `git status` confirmed clean.
 - status:    **BASELINE-CAPPED (164→…)** — capped classes now **3**: UUID-LABEL 164 · REVERSE-LINKAGE 10 ·
              DISPLAYID-UNSCOPED 4. **Drained count unchanged at 12/26.**
+
+### LV-123 CORRECTION — **VOID LAW (owner-locked 2026-08-05)**: the remedy I proposed was wrong. Void = REVERSAL, not a `voided_at` column. The gap is ONLY the DELETE grant
+**Owner law (final, not to be re-derived):** *every transaction can be VOIDED, nothing can be DELETED. Voiding
+a journal entry = a REVERSING entry (`reversal_of_line_id`/`reversed_by_line_id`) — the ledger stays balanced.
+The WORM fix is therefore ONLY: **REVOKE DELETE + a DELETE-blocking trigger**. Do NOT add `voided_at` to
+posting lines.*
+**What I got wrong.** LV-123 sized the exposure as *"45 financial tables have DELETE and NO soft-delete
+column"* and proposed adding soft-delete columns. **That remedy is wrong.** A posting line is never voided by
+flagging it — it is voided by **posting its reverse**, which keeps DR = CR intact. Adding `voided_at` to
+`journal_entry_postings` would invent a second, competing void mechanism alongside the reversal the ledger
+already uses.
+**My own prior findings already proved the reversal mechanism works — I failed to connect them.**
+- **LV-089:** all **22** reversal JEs carry `reverses_je_id`, and 22 carry `reversed_by_je_id` — the both-way
+  §10 link resolves through **columns, not memo text**.
+- **LV-104:** all **44** reversal posting lines carry a `relationship_role='reversal_of'` link in
+  `accounting.transaction_source_links`.
+- **LV-105:** ACCT-F66's standing-latch predicate **derives** "is this latch still standing?" from the JE's
+  own reversal state — proven by differential (naive 2, correct 0).
+So voidability was already demonstrated three separate ways in my own record. **I measured a missing column
+and called it a missing capability.** The capability exists; it simply is not a column.
+**What SURVIVES from LV-123, unchanged and still critical:** `ih35_app` holds **DELETE** on **149** tables
+(catalogs 91, accounting 32, driver_finance 11, banking 9, factoring 6), and **`accounting.journal_entry_postings`
+is among them**. A DELETE there still silently unbalances the GL with no trace — that hazard is real and is
+exactly what REVOKE + a DELETE-blocking trigger closes. And it is **not hypothetical**: LV-119 measured
+`driver_finance.driver_settlements` at **`n_tup_del = 7`**.
+**So the finding stands; the fix shrinks.** It is a **grant revocation plus a trigger**, not a schema
+migration across 45 tables. That is a materially smaller and faster piece of work, and I should not have
+sized it as the larger one.
+**Correspondingly withdrawn:** my LV-104 remark that `reversal_of_line_id`/`reversed_by_line_id` are "dead
+schema". Under void law they are the **designated** void mechanism for posting lines. Whether they are
+populated today is a separate question from whether they are the right mechanism — they are.
+- severity:  unchanged **critical** for the DELETE grant · the soft-delete-column half is **WITHDRAWN**
+- LANE:      CC-1 (money) — **REVOKE DELETE + DELETE-blocking trigger on the financial tables.** Do NOT add
+             `voided_at` to posting lines. `journal_entry_postings` first.
+- neon-check: unchanged from LV-123 — prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app` asserted TRUE:
+             DELETE granted on **149** tables; `driver_settlements` `n_tup_del` **7**.
+- status:    LV-123 remedy CORRECTED (grant revocation only) · hazard UNCHANGED
