@@ -1086,7 +1086,8 @@
     "verify:home-quickjump-counts": "node scripts/verify-home-quickjump-counts.mjs",
     "verify:banking-bankaccountdetail-is-credit-amounts": "node scripts/verify-banking-bankaccountdetail-is-credit-amounts.mjs",
     "verify:h02-qbo-topbar-sync-now": "node scripts/verify-h02-qbo-topbar-sync-now.mjs",
-    "verify:inventory-reorder-threshold-ui": "node scripts/verify-inventory-reorder-threshold-ui.mjs"
+    "verify:inventory-reorder-threshold-ui": "node scripts/verify-inventory-reorder-threshold-ui.mjs",
+    "verify:law-registry": "node scripts/verify-law-registry.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1095.0",

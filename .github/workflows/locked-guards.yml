@@ -32,6 +32,17 @@ jobs:
           cache: "npm"
       - run: npm ci
 
+      # PERMANENT LAW (owner-locked 2026-08-05) §2 — "LAW = ENFORCED GUARD, OR IT IS NOT LAW".
+      # Runs FIRST in this job on purpose: it is existence-only (~0.5s incl. selftest) and it answers
+      # the question every other guard here presupposes — is the set of live law still enumerable, and
+      # does every law registered as enforced still have its guard file on disk? The law names this
+      # check as required; `locked-guards / locked-guards` is an owner-approved mandatory context
+      # (required-checks.yml), so wiring it here is what makes it required.
+      - name: verify:law-registry --selftest
+        run: node scripts/verify-law-registry.mjs --selftest
+      - name: verify:law-registry
+        run: npm run verify:law-registry
+
       - name: verify:deep-audit-b-invoices-subnav
         run: npm run verify:deep-audit-b-invoices-subnav
       - name: verify:planner-load-templates --selftest
