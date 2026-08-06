@@ -3147,3 +3147,36 @@ relay_ingest), and did not apply here.
              `maintenance.work_orders` vendor FKs read from `pg_constraint`, all targeting `mdata.vendors(id)`.
              Picker contents read from the live deployed app.
 - status:    **GUARD-VERIFIED** — board row 39 may move off "awaiting GUARD browser re-check"
+
+## LV-126  BOARD ROW 38 (#4062 bill-validator) — **GUARD-VERIFIED**: root-cause fix, and it explicitly refuses the wrong fix
+- module:    accounting · frontend (GUARD — verify-after)
+- entity:    ALL
+- surface:   `apps/frontend/src/components/accounting/VendorBillForm.tsx` (origin/main) · Bills → Create vendor bill → Section A
+- observed:  **The corrected validator is on main and tests the right field:**
+  `linePayloads.some(line => line.section === "A" && !String(line.expense_category_uuid ?? "").trim())`.
+  **Why the original was unconditional, not flaky.** It tested `!line.account_id`, and
+  `buildVendorBillLinePayloads` **never assigns `account_id`** — the field is declared on the payload type
+  and written nowhere. So the predicate was **always true**, and the error fired for **every** Section-A line
+  no matter which category was chosen. **No vendor bill with a category line could ever be saved.** That is a
+  total-loss defect on the A/P entry path, not an intermittent one.
+  **It corrects a misdiagnosis, which is the part worth preserving.** The bug was reported as *"the combobox
+  does not commit"*. It commits fine — `CostBreakdownBox` binds the choice to `expense_category_uuid`
+  correctly, which is why the identical picker works on a Work Order. **The validator was reading a different
+  field than the grid writes.** A fix aimed at the combobox would have changed nothing.
+  **It refuses the tempting wrong fix, explicitly.** Populating `account_id` client-side would have made the
+  original test pass — and the code says why that is wrong: `vendorBillLines.ts` states *"Unknown codes keep
+  `expense_category_uuid` only (poster → uncategorized) — never invent a GL account"*, and doing it
+  client-side would re-create a same-entity FK break. **Bill-mode options come from the
+  `catalogs.expense_categories` CATALOG, so the id is a category uuid, not a GL account id**; the poster
+  resolves the account through `expense_category_account_map`. Requiring the category is therefore the
+  correct invariant, and the account stays the poster's job.
+  **This is the same principle I verified in LV-102 (ECON-012):** falling back to uncategorized is correct
+  precisely because inventing a GL account is worse than the fallback. Two independent findings, same rule,
+  applied consistently — the fix did not trade a validation bug for a fabricated-GL bug.
+  **Verification limit stated:** confirmed by reading the shipped code on `origin/main`, not by saving a bill
+  — saving is a write and outside GUARD's read-only lane. The predicate is deterministic and its inputs are
+  visible, so source is decisive here; there is no runtime state that could make it behave differently.
+- severity:  none — verify-after PASS
+- LANE:      n/a (verification of Claude Coder's #4062) · **GUARD status: VERIFIED**
+- neon-check: none required — client-side validator. Code read from `origin/main`, not the working tree.
+- status:    **GUARD-VERIFIED** — board row 38 may move off "awaiting GUARD verification"
