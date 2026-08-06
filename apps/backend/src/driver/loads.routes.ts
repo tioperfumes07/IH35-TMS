@@ -536,6 +536,13 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
             AND s.load_id = $2
             AND (l.assigned_primary_driver_id = $3 OR l.assigned_secondary_driver_id = $3)
             AND l.soft_deleted_at IS NULL
+            -- ENTITY PREDICATE (verify-mdata-entity-scope): the load must belong to the SAME operating
+            -- company as the driver acting on it. The driver session carries only an id, so the entity
+            -- is derived from the driver's own row (mdata.drivers.operating_company_id, uuid NOT NULL,
+            -- verified on prod). Selecting l.operating_company_id for the revenue latch does NOT scope
+            -- the query — a scope column must be COMPARED, not merely projected — and this is the
+            -- predicate that makes the value we hand to the latch provably the driver's own entity.
+            AND l.operating_company_id = (SELECT d.operating_company_id FROM mdata.drivers d WHERE d.id = $3)
           LIMIT 1
         `,
         [params.data.stopId, params.data.id, driver.id]
