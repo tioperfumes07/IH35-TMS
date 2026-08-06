@@ -100,7 +100,11 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
       JOIN mdata.customers c
         ON c.id = i.customer_id
        AND c.operating_company_id = i.operating_company_id
+      -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the invoice is scoped and its customer/load joins
+      -- already pin to i.operating_company_id — this one did not, so a factoring advance from another
+      -- entity could be attached to the invoice's financing view.
       LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
+                                               AND fa.operating_company_id = i.operating_company_id
       LEFT JOIN mdata.loads l
         ON l.id = i.source_load_id
        AND l.operating_company_id = i.operating_company_id
@@ -260,7 +264,11 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             ON c.id = i.customer_id
            AND c.operating_company_id = i.operating_company_id
            AND c.operating_company_id = $1
-          LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
+          -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the invoice is scoped and its customer/load joins
+      -- already pin to i.operating_company_id — this one did not, so a factoring advance from another
+      -- entity could be attached to the invoice's financing view.
+      LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
+                                               AND fa.operating_company_id = i.operating_company_id
           LEFT JOIN mdata.loads l
             ON l.id = i.source_load_id
            AND l.operating_company_id = i.operating_company_id
@@ -934,7 +942,11 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           JOIN mdata.customers c
             ON c.id = i.customer_id
            AND c.operating_company_id = i.operating_company_id
-          LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
+          -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the invoice is scoped and its customer/load joins
+      -- already pin to i.operating_company_id — this one did not, so a factoring advance from another
+      -- entity could be attached to the invoice's financing view.
+      LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
+                                               AND fa.operating_company_id = i.operating_company_id
           WHERE i.operating_company_id = $1::uuid
             AND i.source_load_id = $2::uuid
           ORDER BY i.issue_date DESC, i.created_at DESC
