@@ -139,3 +139,48 @@ Full board row: `LV-AP-DUP`.
 **Note on how it surfaced:** this was not a scripted double-submit — the two submissions were 10 s
 apart, so the gap is a missing duplicate-detection rule, not merely a missing button-disable. Both
 would be worth fixing; the duplicate check is the material one.
+
+### 06 — Create driver (TEST driver #1) — PASS
+
+`/drivers` → `+ Create Driver`. Drawer correctly pre-defaults **Operating Company = USMCA - USMCA
+Freight** and **Status = Probation**.
+
+- **Prod (`mdata.drivers`):** id `10b66f79-fa2e-4e6e-aeb8-2eb9546cb419`, `first_name TEST`,
+  `last_name Driver-One-20260806`, `cdl_number TEST-CDL-20260806-01`, `status Probation`,
+  `operating_company_id` = USMCA.
+- **Counts moved:** USMCA drivers 85 → 86; table-wide `visible_all` 180 → 181 **and
+  `visible_all = n_live_tup`** (complete read, not an RLS-masked partial).
+- **Persists on reload:** drivers list `All (79)` → `All (80)`, header shows `1 new in last 3 days`.
+
+**RLS methodology note (important for anyone repeating this).** `mdata.drivers` returned **0 rows under
+`ih35_app` even WITH `SET app.operating_company_id`** — the company GUC alone is not sufficient for this
+table; `visible_all = 0` against `n_live_tup = 180` proved it was masking, not emptiness. Adding
+`SET app.bypass_rls = 'lucia'` in the same transaction made the read complete. So on `mdata.drivers` the
+lucia bypass IS effective (contrast with the AND-gated tables where §0 warns it is inert). Any battery
+read of this table without the bypass will silently report zero.
+
+### 07 — `LV-DRV-TAB`: drivers with the default `Probation` status appear in NO status tab — FAIL
+
+The drivers list offers exactly four status tabs — `Active` / `Inactive` / `On Leave` / `Terminated` —
+plus `All`. After creating TEST driver #1 the tabs read
+`All (80) · Active (1) · Inactive (77) · On Leave (0) · Terminated (0)`: **the four tabs sum to 78 while
+All is 80.** Two drivers are reachable only through `All`.
+
+Prod confirms exactly why (`mdata.drivers`, USMCA, non-archived, `bypass_rls='lucia'`,
+`current_user = neondb_owner`, complete read):
+
+| status | rows (not archived) |
+|---|---|
+| Inactive | 78 |
+| **Probation** | **2** |
+| Active | 1 |
+
+`Probation` is the **default status the Create Driver drawer itself assigns**, and there is no tab for it.
+So every driver created through the UI lands, by default, in a bucket that no status filter surfaces — a
+dispatcher or safety reviewer filtering by status will never see newly created drivers.
+
+**Residual, honestly flagged:** the tab math still does not fully tie — prod shows 78 non-archived
+`Inactive` but the tab reads 77, and non-archived total is 81 vs `All (80)`. So there is a second,
+narrower filter in play beyond `archived_at` that I have **not** isolated. **UNVERIFIED — needs live
+check**; the `Probation`-has-no-tab gap above is fully proven and is the reportable defect. Recorded
+rather than guessed.
