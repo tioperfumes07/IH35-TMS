@@ -772,3 +772,37 @@ data (bills, expenses, journal entries, with amount/date gaps and scores), the r
 Driver/Unit/Trailer/**Trip (load)** linkage fields inline per §10, and it discloses its own limits
 honestly ("Bank row attachments and notes are not wired yet"; "Draft fields below are not Law §9
 links until Post / Categorize commits them"). The defect is the stale banner text, not the machinery.
+
+### 19c — Bank MATCH: test INCOMPLETE (not a failure) — method correction recorded
+
+Attempted the match half of `CLS-BANK-MATCH-DENSITY` on the 08/03/2026 `Wire Transfer Fee` $15.00.
+
+**Result: no match persisted** — all four USMCA $15.00 rows still show `matched_bill_id`,
+`matched_invoice_id` and `matched_journal_entry_id` = NULL.
+
+**I am NOT recording this as a defect, because the test was invalid.** Two reasons, both verified:
+
+1. **The browser tab died immediately after the click**, so the non-persistence could not be cleanly
+   attributed to the app.
+2. **More importantly, I clicked the wrong control.** The `find` tool reported a per-candidate
+   "Match" button on the `USMCA-RB-002` bill card (`ref_241`). A direct DOM inspection disproves
+   that: the expanded panel's complete button set is **`Match`, `Categorize`, `Split`, `Cancel`,
+   `Post`, `Search all`, `Open match drawer`** — `Match`/`Categorize` are the row-level MODE toggle,
+   not an apply. The candidate cards are **informational links to the bill**, with no apply action.
+   Applying a match evidently goes through **`Open match drawer`**, which I did not reach.
+
+So the correct method for the match test is: expand row → `Match` (mode) → **`Open match drawer`** →
+select target → apply. **Re-run that way before any verdict.** Recorded as a method correction so the
+next session does not repeat the same invalid attempt and mistake it for a finding.
+
+**Lesson worth keeping:** the accessibility-tree `find` tool named a button that does not exist. On
+this codebase, an a11y-tree claim about an actionable control must be confirmed in the DOM before it
+is used as evidence — the same "verify, don't trust the convenient reading" rule that applies to a
+0-row query.
+
+### 19d — Categorize persistence re-proven across a full browser restart — PASS
+
+The Chrome tab was lost and the session re-established from scratch. On reload the banking page still
+reads **`For review · 111` / `Categorized · 4`** (from 112/3 before item 19b), with USMCA still the
+selected entity. The categorize from 19b therefore survives a full client restart — server-side
+persistence, not client state.
