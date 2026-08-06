@@ -70,26 +70,25 @@ jobs:
         run: npm run verify:branch-fresh
 
   build-typecheck:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, mac]
     # Was 25 → 45 — money/FA PRs with full verify:pre-commit + migration replay still
     # hit cancel at ~45m on FA-ARCHIVE (#3648) with no code failure. 75m headroom after
     # verify-step set growth on main.
     timeout-minutes: 75
 
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: verify
-          POSTGRES_PASSWORD: verify
-          POSTGRES_DB: ih35_verify
-        ports:
-          - 54329:5432
-        options: >-
-          --health-cmd "pg_isready -U verify"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    # NO `services:` BLOCK — that is the whole point of this change. Service containers are
+    # Linux-only, so declaring one pinned the repo's most load-bearing required check to hosted
+    # capacity. On 2026-08-06 hosted stopped serving this repo and nothing in the money lane could be
+    # verified or merged for hours: 49 queued, 0 executing, and of 45 completions 39 were CANCELLED.
+    # A required check with exactly one place it can run is a single point of failure for every
+    # financial merge.
+    #
+    # scripts/ci-ephemeral-postgres.sh provisions the identical contract the container did —
+    # localhost:54329, user verify, database ih35_verify — from the runner host's own Postgres
+    # binaries, so DATABASE_URL below is unchanged. The cluster is created fresh in a temp dir and
+    # destroyed in a step that always runs; it binds localhost only and never touches an existing
+    # cluster, which matters far more here than in a container because the host is a real machine
+    # with real databases on it.
 
     env:
       DATABASE_URL: postgres://verify:verify@localhost:54329/ih35_verify
@@ -117,6 +116,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # Replaces the deleted `services: postgres` container. Same host/port/user/database, so
+      # DATABASE_URL is untouched. Verified locally on the runner host: the full migration set
+      # applies against this cluster, exit 0.
+      - name: Start ephemeral Postgres
+        run: ./scripts/ci-ephemeral-postgres.sh start
 
       - name: Verification source of truth (local + CI parity)
         run: npm run verify:pre-commit
@@ -1343,3 +1348,11 @@ jobs:
         env:
           IH35_TEST_AUTH_BYPASS: "1"
         run: npm run smoke:accounting
+
+      # ALWAYS, including on failure or cancellation. On a hosted runner the VM evaporated and took
+      # any stray process with it; on a self-hosted runner it does not, so a leaked cluster would sit
+      # on port 54329 and the NEXT job would fail to bind — turning one red build into every
+      # subsequent build. This is the step that makes self-hosting safe to repeat.
+      - name: Stop ephemeral Postgres
+        if: always()
+        run: ./scripts/ci-ephemeral-postgres.sh stop
