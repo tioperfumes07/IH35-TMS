@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { latchOnDeliveryEvidence } from "../dispatch/delivery-evidence-latch.js";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -930,6 +931,18 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       if (loadStatusRequiresDeliveryDepartureStamp(String(row.status))) {
         await stampFinalActiveDeliveryDeparture(client, row.id, null);
       }
+
+      // CLS-DISP-WIRE-07 — this route STAMPED the departure but never LATCHED revenue, so a load
+      // delivered via the mdata status PATCH recorded evidence the ledger never heard about. Found
+      // by verify-delivery-evidence-latch-wired while fixing the two driver paths — the guard caught
+      // a site I had not been asked to look at, which is the point of scanning for the shape rather
+      // than patching the three known files.
+      await latchOnDeliveryEvidence({
+        operatingCompanyId: String(row.operating_company_id),
+        loadId: String(row.id),
+        targetStatus: String(row.status),
+        actorUserId: req.user!.uuid,
+      });
 
       await appendCrudAudit(
         client,
