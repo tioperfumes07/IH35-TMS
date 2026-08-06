@@ -5,5 +5,12 @@
     "source_file": ".github/workflows/ci.yml",
     "guard": "scripts/verify-ci-concurrency-sha-scoped.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-BUSINESS-DATE-PARSED-LOCAL",
+    "title": "A business date (YYYY-MM-DD) must never be pinned to UTC for display — it has no timezone, and new Date(iso+\"T00:00:00Z\") renders one day early for every viewer west of UTC, which silently showed the wrong day cash position in Central Time",
+    "source_file": "apps/frontend/src/lib/businessDate.ts",
+    "guard": "scripts/verify-business-date-parsed-local.mjs",
+    "type": "enforced"
   }
 ]
