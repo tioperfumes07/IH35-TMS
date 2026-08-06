@@ -3075,3 +3075,40 @@ relay_ingest), and did not apply here.
              deletable **58**, of which **13** have a soft-delete column and **45** have none; the 45
              enumerated (first 14 listed in-session, `journal_entry_postings` among them).
 - status:    OPEN — **WORM fix NOT applied on prod** (verify-after result: not started)
+
+## LV-124  **CORRECTION — the 31,598 `qbo.sync.failed` events are NOT a failure backlog.** All delivered, none failed, closed June window. I read an event NAME as a STATE
+- module:    outbox · integrations (GUARD — correcting my own flag before it costs CC-1 time)
+- entity:    ALL
+- surface:   `outbox.events` where `event_type = 'qbo.sync.failed'`
+- observed:  In LV-120 I flagged *"31,598 `qbo.sync.failed` events, 99.8% of the entire outbox … a six-figure
+  failure count that should not sit unexamined"* and routed it to CC-1. **Measured, that framing is wrong.**
+  | measure | value |
+  |---|---|
+  | total | **31,598** |
+  | `delivered_at` NOT NULL | **31,598** |
+  | `failed_at` NOT NULL | **0** |
+  | pending (neither) | **0** |
+  | `max(retry_count)` | **0** |
+  | window | **2026-06-05 → 2026-06-25** (closed; nothing in the ~6 weeks since) |
+  | `last_error` (all rows) | **`trail_event_acknowledged`** |
+  **`qbo.sync.failed` is the event TYPE, not the delivery STATE.** It means "a QBO sync failure was
+  *recorded*". Every one of those 31,598 events was **delivered and acknowledged** — zero failed, zero
+  pending, zero retries. **There is no outbox backlog and nothing is stuck.**
+  **The error I made is worth naming because it is cheap to repeat:** I treated a string inside `event_type`
+  as evidence of system state, when the state lives in `delivered_at` / `failed_at` / `retry_count`. A name
+  that contains the word "failed" is not a failure. This is the same shape as LV-112 (a merge-*styled*
+  subject on a single-parent commit) and LV-121 (a cross-entity total described as one dropdown's exposure):
+  **an attribute that reads like the answer, accepted instead of the measurement.**
+  **What remains genuinely open, stated narrowly.** That the *delivery* was clean says nothing about whether
+  31,598 QBO sync failures were worth having in June. The payload would answer that, and I did not read it.
+  **UNVERIFIED — what those 31,598 recorded failures were.** But it is a June question about a closed window,
+  **not** a live backlog, and it does **not** belong on CC-1's critical path where I put it.
+  **Withdrawn from CC-1's queue.** Under law 2 (all TMS-native data is test; only the TRANSP QBO mirror is
+  real) a burst of sync-failure records during a June import window is unremarkable on its face.
+- severity:  none — my flag withdrawn; no defect asserted
+- LANE:      **none — removed from CC-1's queue.** If anyone wants the June payloads characterised later it is
+             an audit question for Cascade, not money-lane work.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app` asserted TRUE, bypass in its own
+             statement, exit 0. Counts as tabulated; `outbox.events` has no `status` column — state is
+             `delivered_at`/`failed_at`/`retry_count`, which is what I should have read first.
+- status:    WITHDRAWN (my error, corrected)
