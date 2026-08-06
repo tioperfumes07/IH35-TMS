@@ -146,3 +146,30 @@ green CI to merge, **never merge red**; fix **root cause** with ONE **ratcheting
 **no patch, no allowlisting a live failure**; **WORM / void-not-delete** (financial tables: no DELETE
 grant, soft-delete column, audit coverage); **never claim a class drained until its ratchet is live on
 main** — report the honest X/26.
+
+### §1 CLARIFICATION — ARCHIVE vs KEEP on TRANSP / USMCA charts (owner-locked 2026-08-05)
+
+**The principle:** an empty **generic** account that *enables a future real transaction* **STAYS**. An
+account or subtype that *asserts a current state the entity is not in* (it owns / depreciates equipment)
+is a **DEFECT** to archive.
+
+- **ARCHIVE** (assert ownership/depreciation the entity does NOT have) — **WORM: archive, never DELETE**:
+  Accumulated Depreciation + PP&E / Vehicles / FixedAsset accounts.
+  **On USMCA today (verified live on the prod branch 2026-08-05, RLS-bypassed in-transaction):**
+  `1600 Accumulated Depreciation` (subtype `Accumulated Depreciation`), `1500 Trucks & Tractors`
+  (subtype `Vehicles`), `1510 Trailers` (subtype `Vehicles`) — all three TMS-native
+  (`qbo_account_id IS NULL`). **TRANSP has NONE of these subtypes today** — verified, not assumed.
+- **KEEP** (generic, $0, asserts nothing, enables a future real event): `2400 Equipment Loans / Notes
+  Payable` stays. TRANSP/USMCA MAY finance equipment later; a zero-balance financing liability is
+  **ready-capacity, not a false-state defect**.
+
+**GUARD SCOPE — the §1 guard reddens ONLY on the `Vehicles` / `FixedAsset` / `Accumulated Depreciation`
+SUBTYPES, scoped to TRANSP/USMCA, TMS-native only. NOT liability accounts. NOT the QBO mirror.**
+
+> **Match the subtype EXACTLY — never a `%vehicle%` substring.** Verified live: a substring match sweeps in
+> **30+ legitimate TRANSP expense accounts** whose subtypes merely *start* with "Vehicle" —
+> `VehicleRepairs`, `VehicleInsurance`, `VehicleRegistration` (e.g. `US-Cargo Insurance`,
+> `Tax-IFTA-Motor Fuel Tax`, `Truck Tires`, `Towing Services`) — nearly all of them QBO-mirror rows, i.e.
+> the one set of REAL financial data in the system (§2). A `%vehicle%` guard would therefore report the
+> real chart as defective and, if anyone "fixed" it, archive live QuickBooks history. Expense accounts for
+> operating a leased truck assert nothing about owning one.
