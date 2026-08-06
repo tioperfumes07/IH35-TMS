@@ -184,7 +184,7 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
 }
 
 export async function registerInvoiceRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/invoices", async (req, reply) => {
+  app.get("/api/v1/accounting/invoices", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
