@@ -75,9 +75,13 @@ async function fetchAdvanceDetail(client: any, advanceId: string) {
           SELECT COUNT(*)
           FROM accounting.invoices i2
           WHERE i2.factoring_advance_id = fa.id
+            AND i2.operating_company_id = fa.operating_company_id
         )::int AS invoice_count
       FROM accounting.factoring_advances fa
+      -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the advance is scoped, the factoring-company
+      -- vendor it names was not. This supplies the vendor NAME shown on the advance.
       JOIN mdata.vendors v ON v.id = fa.factoring_company_vendor_id
+                          AND v.operating_company_id = fa.operating_company_id
       WHERE fa.id = $1
       LIMIT 1
     `,
@@ -98,6 +102,7 @@ async function fetchAdvanceDetail(client: any, advanceId: string) {
         i.factoring_status
       FROM accounting.invoices i
       JOIN mdata.customers c ON c.id = i.customer_id
+                            AND c.operating_company_id = i.operating_company_id
       WHERE i.factoring_advance_id = $1
       ORDER BY i.issue_date DESC, i.created_at DESC
     `,
@@ -207,9 +212,11 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
               SELECT COUNT(*)
               FROM accounting.invoices i
               WHERE i.factoring_advance_id = fa.id
+                AND i.operating_company_id = fa.operating_company_id
             )::int AS invoice_count
           FROM accounting.factoring_advances fa
           JOIN mdata.vendors v ON v.id = fa.factoring_company_vendor_id
+                              AND v.operating_company_id = fa.operating_company_id
           WHERE ${where.join(" AND ")}
           ORDER BY fa.submitted_at DESC, fa.created_at DESC
           LIMIT $${limitIdx}

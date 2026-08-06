@@ -117,7 +117,12 @@ async function fetchPaymentDetail(
         i.display_id AS invoice_display_id,
         i.amount_open_cents AS invoice_amount_open_cents
       FROM accounting.payment_applications pa
+      -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): this join supplies invoice_display_id, and
+      -- display_id is unique PER ENTITY, not globally (INV-2026-00004 exists on USMCA at $0 AND on
+      -- TRANSP as a PAID $3,800 invoice, verified live). Unscoped it could label a payment application
+      -- with another entity's invoice number. Tied to the application's own company.
       LEFT JOIN accounting.invoices i ON i.id = pa.invoice_id
+                                     AND i.operating_company_id = pa.operating_company_id
       WHERE pa.payment_id = $1
       ORDER BY pa.applied_at DESC
     `,
