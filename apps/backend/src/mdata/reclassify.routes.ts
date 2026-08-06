@@ -42,7 +42,9 @@ function sendValidation(reply: FastifyReply, error: z.ZodError) {
 export async function registerReclassifyRoutes(app: FastifyInstance) {
 
   // POST /api/v1/customers/:id/reclassify
-  app.post("/api/v1/customers/:id/reclassify", async (req, reply) => {
+  // Rate-limited (CodeQL js/missing-rate-limiting). 30/min for a state-changing POST; the plugin is
+  // global:false, so an un-configured route had NO limit at all. Pre-existing, surfaced by this PR.
+  app.post("/api/v1/customers/:id/reclassify", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReclassify(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -162,7 +164,7 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/vendors/:id/reclassify
-  app.post("/api/v1/vendors/:id/reclassify", async (req, reply) => {
+  app.post("/api/v1/vendors/:id/reclassify", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReclassify(user.role)) return reply.code(403).send({ error: "forbidden" });
