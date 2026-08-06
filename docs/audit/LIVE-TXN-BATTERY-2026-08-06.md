@@ -614,3 +614,62 @@ state; the `HOLD/JORGE-APPROVED` clause in that block-ready JSON is stale and sh
   owner's note that "code caps $2,000 today" is now historical — it has been implemented. Not a defect.
 - **A4-D5 "require a Work Order on every repair" — PASS**, and it is enforced live: the maintenance
   Create Expense drawer requires `Work order *` before anything else (item 15b).
+
+## 17 — SAFETY: accident created with FULL linkage — PASS
+
+`/safety/accidents` → `+ Create Accident`. Created on USMCA.
+
+- **Prod (`safety.accident_reports`):** id `b99b9461-e593-4376-a501-21bb36453a41`,
+  `operating_company_id` = USMCA, `status open`, `record_type accident`,
+  `location 'I-35 N mile marker 22, Laredo TX'`.
+- **★ §10 TOTAL CONNECTIVITY — every hop resolves:**
+
+  | link | value |
+  |---|---|
+  | driver | `88c04cf5-…` **Juan USMCA-Battery** |
+  | unit | `240be73b-…` **TEST-UNIT-20260806-01** |
+  | load | `a0b1df25-…` **L-20260806-0005** |
+
+- **Canonical table note:** the accident landed in **`safety.accident_reports`**, NOT `safety.accidents`.
+  My first read hit `safety.accidents` and returned 0 — which the discriminator immediately exposed as
+  a wrong-table read rather than a failure: `safety.accidents` has **`n_tup_ins = 0`**, i.e. it has
+  never had a single row inserted, as has `safety.incidents`. Both look like RETIRE tables. **Anyone
+  querying `safety.accidents` for accident data will get a permanent, misleading zero.**
+- **The load picker in this form resolves MORE than the load's own detail page does** — it rendered
+  `L-20260806-0005 · TEST-Customer-One-20260806 · Laredo` (load + customer + city). That is further
+  evidence `LV-LOAD-UNASSIGNED` (item 11) is specific to the dispatch load-detail endpoint, not a
+  general resolution failure.
+- **The accident DETAIL form hydrates completely** — driver, unit, load, location and memo all
+  populated on reopen. This is the direct counter-example to `LV-LOAD-EDIT-BLANK` (item 13) and
+  confirms that hydration defect is **specific to the load edit surface, not systemic**.
+
+## 18 — `LV-SPAWN-LIABILITY-NOSAVE`: "Spawn Liability" is INERT — FAIL (major)
+
+The accident detail offers `Spawn Liability`, `Spawn WO` and `Add Photo`. Clicking **`Spawn Liability`**:
+
+1. **No network request issued** — only `notifications?limit=20` and `notifications/unread-count`.
+2. **No modal, no form, no toast, no error, no state change.**
+3. **Nothing created.** Every claim/liability table on prod is untouched, and the discriminator is
+   conclusive — these are not "empty right now", they have **never had a row inserted**:
+
+   | table | n_live_tup | **n_tup_ins** |
+   |---|---|---|
+   | `insurance.claim` | 0 | **0** |
+   | `driver_finance.driver_liabilities` | 0 | **0** |
+   | `accounting.insurance_claim_recovery_postings` | 0 | **0** |
+   | `maintenance.warranty_claims` | 0 | **0** |
+   | `safety.accident_cost_lines` | 0 | **0** |
+
+   `safety.accident_reports.insurance_claim_id` remains NULL for the accident.
+
+**This is the THIRD control with the identical signature** — after `Save stops` (item 12) and
+`Create work order & Bill` (item 15): an enabled primary action that issues no request, logs no error,
+shows no feedback, and writes nothing. Three independent forms, one signature.
+
+**Consequence:** the entire **Safety → Insurance → Legal → Accounting** chain is unreachable. Accident
+exists and is correctly linked, but no claim can be spawned → no matter → no claim cost → no GL. The
+`n_tup_ins = 0` across every claim table shows this chain has **never once been exercised** in the
+system's history — the same "never exercised, not broken" shape as WF064 (item 10b), except here the
+producer genuinely is dead, because the button that would produce it does nothing.
+
+Board row `LV-SPAWN-LIABILITY-NOSAVE` (CC-3), to be fixed with the other two inert submits.
