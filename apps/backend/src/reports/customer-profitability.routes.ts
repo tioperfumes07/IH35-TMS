@@ -49,7 +49,7 @@ function daysBetween(a: Date, b: Date) {
 }
 
 export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/customer-profitability", async (req, reply) => {
+  app.get("/api/v1/reports/customer-profitability", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});

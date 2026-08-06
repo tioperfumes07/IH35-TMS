@@ -72,7 +72,7 @@ const num = (v: unknown): number => Number(v ?? 0);
 // at its source rather than teaching the guard to tolerate it, and matches this directory's own
 // convention — registerReportsArAgingRoutes, registerReportsIftaRoutes, registerReportsScheduledCrudRoutes.
 export async function registerReportsApAgingRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/ap-aging", async (req, reply) => {
+  app.get("/api/v1/reports/ap-aging", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = apAgingQuerySchema.safeParse(req.query ?? {});

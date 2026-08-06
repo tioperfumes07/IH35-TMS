@@ -10,7 +10,7 @@ const querySchema = companyQuerySchema.extend({
 });
 
 export async function registerGeofenceDwellRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/geofence-dwell", async (req, reply) => {
+  app.get("/api/v1/reports/geofence-dwell", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});
