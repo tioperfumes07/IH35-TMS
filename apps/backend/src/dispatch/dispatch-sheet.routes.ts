@@ -33,7 +33,7 @@ function stopReference(stopType: string, sequenceNumber: number) {
 }
 
 export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/loads/:loadId/dispatch-sheet.html", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/dispatch/loads/:loadId/dispatch-sheet.html", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = paramsSchema.safeParse(req.params ?? {});
