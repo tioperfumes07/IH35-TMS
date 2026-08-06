@@ -1,5 +1,30 @@
 # GUARD WORK-ORDERS — the live fix board (read after AUDIT-COVERAGE-LIVE.md, before any block)
 
+## ★★ PERMANENT LAW — owner-locked 2026-08-05 (supreme; applies to every agent, every session)
+
+**1. FINDINGS FLOW AGENT → BOARD → AGENT, NEVER THROUGH THE OWNER.** Find a defect in another lane →
+**WRITE an OPEN row into `docs/audit/GUARD-WORKORDERS.md` yourself and commit it**; the target coder pulls
+it on their next loop. **The owner is NOT a message bus — ever, in any session.**
+
+**2. LAW = ENFORCED GUARD, OR IT IS NOT LAW** (phased). Every NEW rule ships with a guard registered in
+`docs/law/LAW.json`. `verify-law-registry.mjs` is a required check (<2s, existence-only) and fails the
+build if a registered law's guard file is missing. Old rules migrate as a backlog class. Judgment rules
+stay judgment.
+
+**3. ROLES.** CC-1 = money / GL / WORM. CC-3 = mechanical / entity-scope / FE / CI-guards. CC-2 = GUARD,
+**verify live, never build**. CASCADE = merger (direct merge API — auto-merge is broken on our rulesets,
+community #190610).
+
+**4. ENTITY + DATA LAW.** VOID = reversal; **nothing is deletable**. TRANSP / USMCA own **no assets
+today**. **ALL TMS-native data is TEST** — only the TRANSP QBO mirror is real. **RLS is NOT a backstop for
+Owner sessions**: `org.user_accessible_company_ids()` returns EVERY active company when the role is Owner,
+so **every unscoped read is load-bearing on its own predicate**.
+
+**5. EVERY LOOP.** read board → **grep-verify the card against main** → build **ONE complete atomic block**
+→ found another lane's defect? **write it to the board** → push → next. Never idle, never pause to
+summarize, never half-edit.
+
+
 **Maintained by GUARD. Purpose: no coder idles.** `AUDIT-COVERAGE-LIVE.md` says WHAT is broken (finding +
 live evidence). This board says WHO owns it, the FIX REQUIREMENT + the standard it must meet, and the GUARD
 status. Pull the top `OPEN` item in your lane and start — do not wait to be told, do not re-audit a row that
