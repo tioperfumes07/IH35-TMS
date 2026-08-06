@@ -2735,3 +2735,33 @@ consistent with the entity model, not a defect.
              USMCA `INV-2026-00002` both `status='void'` with timestamps and reasons as quoted. Test exit
              codes read WITHOUT a pipe: clean 0 (5/5), planted 1 (3 of 5 failing), restored clean.
 - status:    PASS (fix verified + mutation-proven) · **deploy pending**
+
+### LV-116 ADDENDUM — deploy re-verified: **ACCT-F124 is now LIVE**; the "merged, not deployed" gap is CLOSED
+LV-116 recorded F124 as merged but **not** deployed (health `82d9c8c`, F124 `fc6082f3a` not an ancestor) and
+committed to re-checking after the next deploy. Doing so now:
+**`/api/v1/healthz/shallow` reports `17d5ac9`**, which **equals `origin/main` tip `17d5ac92f`** — the deploy
+is fully current, and `uptime_seconds = 239` shows it shipped moments before this check. That is also the
+answer to why the scoreboard appeared frozen: the deploy had been lagging main, not the board.
+Ancestry re-checked against `17d5ac92f` — **all four now deployed**: `ACCT-F124` (`fc6082f3a`),
+`ACCT-F120` (`387aa6721`), `ACCT-F125` (`82d9c8c93`), and my `LV-109` (`d0c2538d2`).
+So the window I flagged — production able to send an invoice with no revenue lines — **is closed**. The code
+guard is live, and the data remediation (the voids) already was.
+**One limit stated plainly:** I verified the guard is *deployed* by SHA ancestry, which is the strongest
+read-only evidence available. I did **not** attempt to send a zero-line invoice against prod to see it
+refuse — that is a write, outside GUARD's lane. Deployment is proven; the refusal behaviour in production is
+covered by the mutation-proof against the same code (LV-116, 3 of 5 tests fail when the guard is neutered).
+- status:    LV-116 deploy gap CLOSED (health `17d5ac9`)
+
+### LV-115 ADDENDUM — re-verified against the NEW deploy `17d5ac9`: **the contract bug is STILL LIVE**
+Re-ran the probe against the current build to rule out a stale-deploy explanation. It is not stale — the
+defect persists on the newest deploy:
+| `?entity=` | HTTP | `entity_scope` | hop.book |
+|---|---|---|---|
+| `USMCA` *(what the UI sends)* | **200** | **`ALL`** | **3 / 3** |
+| `5c854333…` (UUID) | 200 | `5c854333…` | 1 / 1 ✓ |
+`ACCT-F120` is confirmed an ancestor of the deployed SHA, so the **SQL fix is live and correct** — and the
+board still shows ALL-entity numbers under an entity label, because the caller never sends a UUID.
+**This is the distinction worth holding onto: F120 is deployed, verified, and working, and the defect it was
+raised against is still visible to the owner.** A fix reaching production does not mean the reported symptom
+is gone; only re-running the original observation proves that. LV-115 stays OPEN on the current deploy.
+- status:    LV-115 confirmed OPEN on `17d5ac9`
