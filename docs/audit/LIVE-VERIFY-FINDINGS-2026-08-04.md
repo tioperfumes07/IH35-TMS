@@ -3112,3 +3112,38 @@ relay_ingest), and did not apply here.
              statement, exit 0. Counts as tabulated; `outbox.events` has no `status` column — state is
              `delivered_at`/`failed_at`/`retry_count`, which is what I should have read first.
 - status:    WITHDRAWN (my error, corrected)
+
+## LV-125  BOARD ROW 39 (#4048 USMCA WO-vendor) — **GUARD-VERIFIED live, both halves**: picker offers the 4 canonical vendors where the mirror held 0, and all 4 WO vendor FKs are repointed
+- module:    maintenance · accounting · mdata (GUARD — the browser re-check the board asked for)
+- entity:    USMCA
+- surface:   Bills → **+ Create → Bill → Repair Bill** → Vendor picker · `maintenance.work_orders` FKs · `mdata.vendors` vs `mdata.qbo_vendors`
+- observed:  Board row 39 asked GUARD for a live re-check of "USMCA Repair WO + bill". Both halves verified.
+  **(1) SCHEMA — the §10 repoint is live.** All **4** vendor foreign keys on `maintenance.work_orders` now
+  target canonical **`mdata.vendors`**: `fk_maintenance_work_orders_vendor`, `fk_maintenance_wo_external_vendor`,
+  `work_orders_roadside_provider_vendor_id_fkey` (+ the docs FK). **Zero FKs point at `mdata.qbo_vendors`.**
+  That satisfies §10 — `mdata.qbo_*` is a read-only mirror; canonical writes go to `mdata.vendors`.
+  **(2) DATA — the defect's cause is confirmed, and it is exactly as reported.**
+  `mdata.qbo_vendors` scoped to USMCA = **0**. `mdata.vendors` scoped to USMCA = **4**.
+  The mirror is **empty by design for a non-QBO entity** — and under owner law 2 (2026-08-05) that is
+  permanent, not transient: *only the TRANSP QBO mirror is real*. USMCA will never have QBO vendors. So
+  validating against the mirror could **never** succeed for USMCA — the old route did not fail
+  intermittently, it failed **unconditionally**.
+  **(3) LIVE UI — the picker now offers the canonical 4.** On the deployed app, USMCA → Repair Bill → Vendor:
+  **Juan USMCA-Battery · USMCA Audit Vendor 20260722 · Elisamar Soto · Jorge Pablo Munoz**, plus
+  `+ Add new vendor`. **4 offered = 4 canonical.** Pre-fix this dropdown would have rendered **empty**
+  (0 mirror rows) and every USMCA vendor bill/WO would have been unfillable.
+  The inline `+ Add new vendor` is present per the §7 lock (inline create at the end of every reference
+  dropdown, writing the same canonical table it reads).
+  **What I did NOT do:** I did not save a bill or create a work order. Both are writes and outside GUARD's
+  read-only lane. The picker contents are the decisive evidence — the defect was that the option list was
+  empty, and it is no longer empty.
+  **Note on the WO surface itself:** USMCA shows **0 work orders**. Under law 2 an empty TMS table is
+  **EXPECTED, never a defect** — all TMS-native data is test and USMCA is pre-launch. It is recorded so the
+  emptiness is not later mistaken for a regression in this fix.
+- severity:  none — verify-after PASS
+- LANE:      n/a (verification of Claude Coder's #4048) · **GUARD status: VERIFIED**
+- neon-check: prod `br-fancy-credit-akjnd07a`, bypass in its own statement, exit 0. `mdata.qbo_vendors`
+             USMCA **0** vs `mdata.vendors` USMCA **4** (mirror total 2,787 / canonical total 2,833); the 4
+             `maintenance.work_orders` vendor FKs read from `pg_constraint`, all targeting `mdata.vendors(id)`.
+             Picker contents read from the live deployed app.
+- status:    **GUARD-VERIFIED** — board row 39 may move off "awaiting GUARD browser re-check"
