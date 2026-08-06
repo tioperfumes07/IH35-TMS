@@ -43,7 +43,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerAccountBalanceRoutes(app: FastifyInstance) {
-  app.get("/api/v1/banking/accounts/:accountId/balance", async (req, reply) => {
+  app.get("/api/v1/banking/accounts/:accountId/balance", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
