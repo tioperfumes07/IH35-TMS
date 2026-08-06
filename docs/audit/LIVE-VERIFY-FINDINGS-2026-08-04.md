@@ -2814,3 +2814,45 @@ is gone; only re-running the original observation proves that. LV-115 stays OPEN
 - neon-check: none required — repo/tooling verification. `rev-list` inclusion/exclusion and parent counts read
              directly per commit via `git rev-list --parents -n1`; exit codes read WITHOUT a pipe.
 - status:    **VERIFIED** (#4517) · LV-112 corrected · `58f2be4ac` OPEN for its owning lane
+
+## LV-118  TWO HELD GUARDS LANDED (#4513) — **CLS-HOOKS-ORDER stamped VERIFIED (true zero-drain)**; **CLS-REVERSE-LINKAGE-MISSING is BASELINE-CAPPED (10→…), NOT drained.** Board **12/25**
+- module:    frontend · governance (GUARD — class-drain convergence, verify-after)
+- entity:    ALL
+- surface:   `scripts/verify-hooks-before-return.mjs` · `scripts/verify-reverse-linkage-embedded.mjs` (landed via #4513 @ `4cdbbcfcd`)
+- observed:  Two of the four ratchets I held fail-closed in LV-109/LV-111 have landed. Both verified to the
+  full standard — **green on zero, then RED on a REAL on-disk plant, then green on restore** — and the two
+  turn out to be **different kinds of class**, which changes how each is counted.
+  **(1) `verify-hooks-before-return` — baseline `0`: a TRUE ZERO-DRAIN.**
+  Clean exit 0; selftest exit 0 (catches a hook after a guard return, and does **not** flag correct
+  hook-then-guard order — both directions). Planted `export function PlantedWidget({data}) { if (!data)
+  return null; const memo = useMemo(...) }` into a real `.tsx`: **exit 1**, firing **both** modes —
+  *"1 hook(s) called AFTER an early return"* and *"offender count rose **0 → 1**. The baseline may only
+  shrink."* Restored → exit 0, `git status` clean.
+  Because its baseline is **0**, nothing is grandfathered: any offender at all fails. **That is a genuine
+  drain, so CLS-HOOKS-ORDER is stamped VERIFIED.**
+  It also refuses to pass vacuously by construction — *"no .tsx sources found — scope is wrong, refusing to
+  pass vacuously"* — which is the property most scan-guards omit and the reason a green here means something.
+  **(2) `verify-reverse-linkage-embedded` — baseline `10`: BASELINE-CAPPED, and it is NOT drained.**
+  Clean exit 0; selftest exit 0. Planted a bare `PlantedThingDetailPage.tsx` with no back link: **exit 1**,
+  again both modes — *"1 NEW detail page(s) with NO reverse link — reachable but not escapable"* and
+  *"offender count rose **10 → 11**. The baseline may only shrink."* Removed → exit 0, tree clean.
+  **The ratchet works, but 10 pre-existing offenders remain baselined.** Under the same rule the owner set
+  for CLS-UUID-LABEL, a class with a non-zero baseline is **capped and shrinking, not drained** — it fully
+  drains only when the baseline reaches **0**. **CLS-REVERSE-LINKAGE-MISSING is therefore recorded as
+  BASELINE-CAPPED (10→…) and is NOT added to the drained count.** The number should be tracked on the board
+  so the trend is visible.
+  **My fourth invalid plant of the session, and the most instructive.** My first attempt named the component
+  `__PlantedLateHook`. The guard's `COMPONENT_START` requires `[A-Z]\w*`, so it never entered component
+  scope and never examined the hook — the guard returned **exit 0 and looked broken**. It was not; **my
+  plant was**. Renaming to `PlantedWidget` made it fail instantly. Four times now the same trap:
+  **a green guard and an invalid plant are indistinguishable from the outside.** The only defence is to read
+  the detector's own pattern (or its selftest fixture) and shape the plant to it, then assert the
+  post-plant STATE — never assume an edit is a violation.
+- severity:  none — two verify-after results; one stamp, one capped
+- LANE:      n/a (verification of CC-3's #4513) · CASCADE — carry `CLS-REVERSE-LINKAGE-MISSING` on the board
+             as **capped (10)**, alongside `CLS-UUID-LABEL` (164), distinct from the true zero-drains
+- neon-check: none required — static guard efficacy. Exit codes read WITHOUT a pipe: hooks clean 0 / selftest
+             0 / planted 1 / restored 0; reverse-linkage clean 0 / selftest 0 / planted 1 / restored 0.
+             Both planted artefacts removed and `git status` confirmed clean.
+- status:    **CLS-HOOKS-ORDER VERIFIED → 12/25** · **CLS-REVERSE-LINKAGE-MISSING BASELINE-CAPPED (10→…), not drained**
+             · still held fail-closed: **CLS-GL-DARK**, **CLS-DUAL-PATH** (guards not yet on main)
