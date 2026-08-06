@@ -1339,7 +1339,10 @@
     "2729": "2729-verify-financial-tables-not-deletable.mjs",
     "2733": "2733-verify-law-registry.mjs",
     "2737": "2737-verify-draft-bill-not-postable.mjs",
-    "2741": "2741-verify-no-driver-esign-deduction-gate.mjs"
+    "2741": "2741-verify-no-driver-esign-deduction-gate.mjs",
+    "2745": "2745-verify-displayid-entity-scoped-lookups.mjs",
+    "2749": "2749-verify-bootstrap-objects-granted.mjs",
+    "2753": "2753-verify-claimed-numbers-no-duplicate-keys.mjs"
   },
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
