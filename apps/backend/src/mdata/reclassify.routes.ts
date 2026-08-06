@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -55,12 +56,21 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
       const companyId = body.data.operating_company_id;
 
       const beforeRes = await client.query(
-        `SELECT entity_classification, qbo_classification_ref FROM mdata.customers
-         WHERE id = $1 LIMIT 1`,
+        `SELECT entity_classification, qbo_classification_ref, operating_company_id::text AS row_company_id
+           FROM mdata.customers
+          WHERE id = $1 LIMIT 1`,
         [params.data.id]
       );
       if (!beforeRes.rows.length) return { notFound: true };
       const before = beforeRes.rows[0] as Record<string, unknown>;
+
+      // CROSS-ENTITY WRITE GATE. companyId comes from the REQUEST BODY, is optional, and was never
+      // validated — and the UPDATE did not use it as a predicate at all, so any customer in any
+      // entity could be reclassified by id. The entity is DERIVED from the row itself and asserted
+      // here (resolver pattern, MDATA-F03); the UPDATE is then pinned to that same company so the
+      // read and the write cannot disagree. Throws 403 forbidden_company_membership.
+      const rowCompanyId = String(before.row_company_id ?? "");
+      await assertCompanyMembership(client, user.uuid, rowCompanyId);
 
       const updateRes = await client.query(
         `UPDATE mdata.customers
@@ -69,8 +79,9 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
              reclassified_at         = now(),
              reclassified_by_user_id = $3
          WHERE id = $4
+           AND operating_company_id = $5::uuid
          RETURNING id, entity_classification, qbo_classification_ref, reclassified_at`,
-        [body.data.classification, body.data.qbo_id ?? null, user.uuid, params.data.id]
+        [body.data.classification, body.data.qbo_id ?? null, user.uuid, params.data.id, rowCompanyId]
       );
 
       await appendCrudAudit(client, user.uuid, "category.reclassified", {
@@ -165,12 +176,21 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
       const companyId = body.data.operating_company_id;
 
       const beforeRes = await client.query(
-        `SELECT entity_classification, qbo_classification_ref FROM mdata.vendors
-         WHERE id = $1 LIMIT 1`,
+        `SELECT entity_classification, qbo_classification_ref, operating_company_id::text AS row_company_id
+           FROM mdata.vendors
+          WHERE id = $1 LIMIT 1`,
         [params.data.id]
       );
       if (!beforeRes.rows.length) return { notFound: true };
       const before = beforeRes.rows[0] as Record<string, unknown>;
+
+      // CROSS-ENTITY WRITE GATE. companyId comes from the REQUEST BODY, is optional, and was never
+      // validated — and the UPDATE did not use it as a predicate at all, so any vendor in any
+      // entity could be reclassified by id. The entity is DERIVED from the row itself and asserted
+      // here (resolver pattern, MDATA-F03); the UPDATE is then pinned to that same company so the
+      // read and the write cannot disagree. Throws 403 forbidden_company_membership.
+      const rowCompanyId = String(before.row_company_id ?? "");
+      await assertCompanyMembership(client, user.uuid, rowCompanyId);
 
       const updateRes = await client.query(
         `UPDATE mdata.vendors
@@ -179,8 +199,9 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
              reclassified_at         = now(),
              reclassified_by_user_id = $3
          WHERE id = $4
+           AND operating_company_id = $5::uuid
          RETURNING id, entity_classification, qbo_classification_ref, reclassified_at`,
-        [body.data.classification, body.data.qbo_id ?? null, user.uuid, params.data.id]
+        [body.data.classification, body.data.qbo_id ?? null, user.uuid, params.data.id, rowCompanyId]
       );
 
       await appendCrudAudit(client, user.uuid, "category.reclassified", {
