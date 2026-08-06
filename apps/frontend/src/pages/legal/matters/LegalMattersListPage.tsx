@@ -34,19 +34,37 @@ export function LegalMattersListPage() {
   const [status, setStatus] = useState("");
   const [severity, setSeverity] = useState("");
   const [type, setType] = useState("");
+  // CLS-SILENT-CAP — this list was capped at 500 server-side with no offset and no total, so matter
+  // 501 vanished and the screen had no way to say so. Page size is explicit and the server's own
+  // `total` drives the range label, so a truncated view is now visible instead of silent.
+  const PAGE_SIZE = 100;
+  const [page, setPage] = useState(0);
 
   const listQuery = useQuery({
-    queryKey: ["legal", "matters", companyId, status, severity, type],
+    queryKey: ["legal", "matters", companyId, status, severity, type, page],
     queryFn: () =>
       legalMattersApi.list(companyId, {
         status: status || undefined,
         severity: severity || undefined,
         type: type || undefined,
+        limit: PAGE_SIZE,
+        offset: page * PAGE_SIZE,
       }),
     enabled: Boolean(companyId),
   });
 
   const rows = listQuery.data?.matters ?? [];
+  // Fall back to the row count ONLY when the server omits total (older deploy) — never invent a
+  // bigger number than the server reported.
+  const total = listQuery.data?.total ?? rows.length;
+  const rangeStart = total === 0 ? 0 : page * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE + rows.length, total);
+  const hasPrev = page > 0;
+  const hasNext = rangeEnd < total;
+
+  // A filter change must reset to page 0, otherwise a narrower result set lands the user on an
+  // offset past its end and the list reads as empty.
+  const resetPage = () => setPage(0);
 
   const columns = useMemo<ParityColumn<LegalMatterListRow>[]>(
     () => [
@@ -104,6 +122,32 @@ export function LegalMattersListPage() {
       ) : listQuery.isError ? (
         <p className="text-sm text-red-600">Could not load matters.</p>
       ) : (
+        <>
+        {/* CLS-SILENT-CAP — honest range + pager. The server's own `total` is authoritative; the
+            label states "showing N of M" so a capped view can never read as "that is all there is". */}
+        <div className="mb-2 flex items-center justify-between text-[12px] text-slate-600">
+          <span data-testid="legal-matters-range">
+            {total === 0 ? "No matters" : `Showing ${rangeStart}\u2013${rangeEnd} of ${total}`}
+          </span>
+          <span className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={!hasPrev || listQuery.isFetching}
+              className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-40"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={!hasNext || listQuery.isFetching}
+              className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-40"
+            >
+              Next
+            </button>
+          </span>
+        </div>
         <ParityTable
           rows={rows}
           columns={columns}
@@ -126,7 +170,7 @@ export function LegalMattersListPage() {
                 <SelectCombobox
                   className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
                   value={status}
-                  onChange={(e) => setStatus(e.target.value)}
+                  onChange={(e) => { setStatus(e.target.value); resetPage(); }}
                 >
                   <option value="">All statuses</option>
                   {["open", "investigating", "litigation", "settled", "dismissed", "judgment", "closed"].map((s) => (
@@ -138,7 +182,7 @@ export function LegalMattersListPage() {
                 <SelectCombobox
                   className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
                   value={severity}
-                  onChange={(e) => setSeverity(e.target.value)}
+                  onChange={(e) => { setSeverity(e.target.value); resetPage(); }}
                 >
                   <option value="">All severity</option>
                   {["critical", "high", "medium", "low"].map((s) => (
@@ -147,7 +191,7 @@ export function LegalMattersListPage() {
                     </option>
                   ))}
                 </SelectCombobox>
-                <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-sm" value={type} onChange={(e) => setType(e.target.value)}>
+                <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-sm" value={type} onChange={(e) => { setType(e.target.value); resetPage(); }}>
                   <option value="">All types</option>
                   {["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"].map((s) => (
                     <option key={s} value={s}>
@@ -159,6 +203,7 @@ export function LegalMattersListPage() {
             </CollapsedListFilters>
           }
         />
+        </>
       )}
     </div>
   );
