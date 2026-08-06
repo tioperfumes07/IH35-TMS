@@ -29,6 +29,9 @@ payments 1 · journal_entries 16.
 |---|---|---|---|---|---|
 | 01 | Create vendor | `308f6434-0a51-4109-953e-c86ffb1f0999` | YES | N/A (master data — no posting expected) | **PASS** |
 | 02 | Vendor-type picker (encountered during 01) | — | — | — | **FAIL → board row `LV-CAT-500`** |
+| 03 | Edit vendor | `308f6434-…` | YES | N/A | **PASS** |
+| 04 | Create bill (Repair, Section-A category line) | `5a1d7268-a5d8-4bc4-9ffe-50187674dd19` | YES | **balanced** DR 5400 / CR 2000 $743.21 | **PASS** |
+| 05 | Duplicate bill accepted (same vendor+number+amount+date) | `55997ecb-2a81-4b01-ab70-c23f41d3829d` | YES | balanced, but **duplicates 04** | **FAIL → board row `LV-AP-DUP`** |
 
 ---
 
@@ -76,3 +79,63 @@ discriminator on the same table: `visible = n_live_tup = 24`, `n_tup_ins = 24`, 
 **Not expected state.** These are seeded reference catalogs, not import-origin transactional rows, so the
 origin test (owner ruling 2026-08-04) does not exempt them — a picker that cannot list a seeded catalog is a
 defect, not legitimate emptiness.
+
+### 03 — Edit vendor — PASS
+
+Edited via `/vendors/308f6434-…` → Edit → set Vendor Code + Tax ID → Save.
+Prod (`mdata.vendors`, txn with `SET app.operating_company_id` = USMCA): `vendor_code = 'CC3-BAT-01'`,
+`tax_id = '99-8877665'`, `updated_at > created_at`, `operating_company_id` still USMCA.
+Reload renders both values in the header and the profile rows.
+
+Methodology note: the first read returned `[]` — a **false empty** from the MCP role alternating to
+`ih35_app` under FORCED RLS with no company context. Re-run per §0 gave
+`visible = n_live_tup = 2835`, `target_visible = 1`. A `SELECT current_user` in a zero-row result set
+projects nothing, so the role is invisible exactly when you most need it — always assert it via a
+scalar subquery.
+
+### 04 — Create vendor bill (Repair, Section-A category line) — PASS
+
+`+ Create → Bill → Repair Bill`. Vendor = the item-01 vendor (**master-data → transaction linkage
+confirmed**: the newly created vendor was selectable in the bill picker). A/P Account = `2000 Accounts
+Payable (A/P)`. Section A category line: `Repairs & maintenance`, qty 1, cost **$743.21**.
+
+- **Persists:** `accounting.bills` id `5a1d7268-…`, `bill_number CC3-BILL-20260806-01`, `status unpaid`,
+  `amount_cents 74321`, `total_amount 743.21`, `operating_company_id` USMCA, `qbo_bill_id IS NULL`
+  (TMS-native), `voided_at IS NULL`.
+- **GL — BALANCED and correctly scoped:** 2 postings via `accounting.transaction_source_links`
+  (`linked_object_type = 'bill'`, `relationship_role = 'source_transaction'`) →
+  `accounting.journal_entry_postings`:
+
+  | seq | dr/cr | amount | account |
+  |---|---|---|---|
+  | 1 | debit | $743.21 | **5400** Truck Repairs & Maintenance |
+  | 2 | credit | $743.21 | **2000** Accounts Payable (A/P) |
+
+  DR = CR exactly. Both the posting **and** the account row are `operating_company_id` = USMCA
+  (`acct_same_entity = true`) — no cross-entity account FK.
+- **Vendor linkage both ways:** `vendor_uuid` AND `mdata_vendor_id` both = `308f6434-…`. Note this
+  **contradicts the "bills `mdata_vendor_id` NULL" board card for the post-#4062 save path** — on this
+  run the denormalized mirror column IS populated. Recorded so that card can be re-scoped rather than
+  built against a stale premise.
+- Tax is display-only ($61.31 at 8.25%) and correctly **excluded** from the bill total — total equals
+  the sum of lines, no invented tax GL, matching the form's own contract note.
+
+### 05 — `LV-AP-DUP`: duplicate vendor bill accepted with no warning and posted twice — FAIL
+
+Two bills now exist with the **same vendor, same bill number, same amount, same date**, created
+10.3 s apart (`16:41:28.897Z` and `16:41:39.161Z`), both `status unpaid`, both USMCA, **both posted to
+the GL**. Net effect: **$1,486.42** of expense and A/P recognised for a single $743.21 vendor invoice.
+
+- `5a1d7268-a5d8-4bc4-9ffe-50187674dd19` (item 04)
+- `55997ecb-2a81-4b01-ab70-c23f41d3829d` (the duplicate) — DR 5400 / CR 2000 $743.21, also balanced
+
+No warning, no confirmation, no blocking. Confirmed on prod there is **no unique index** on
+`accounting.bills` covering `bill_number` (`pg_indexes` filtered to UNIQUE + `bill_number` → `NONE`).
+
+This is the classic AP duplicate-payment control gap. QuickBooks Online warns
+*"Bill number already exists for this vendor"*; McLeod and NetSuite block or force an override.
+Full board row: `LV-AP-DUP`.
+
+**Note on how it surfaced:** this was not a scripted double-submit — the two submissions were 10 s
+apart, so the gap is a missing duplicate-detection rule, not merely a missing button-disable. Both
+would be worth fixing; the duplicate check is the material one.
