@@ -1,7 +1,23 @@
 name: ci
 
+# CONCURRENCY IS KEYED ON THE HEAD SHA, NOT THE REF (2026-08-06). Keying on the ref meant ANY new
+# trigger on a branch cancelled the previous run — including one that was still QUEUED and had never
+# executed. A cancelled required check is TERMINAL: it never re-reports, so the PR is unmergeable
+# until a human notices and re-runs it by hand. That is fine when runs start immediately and fatal
+# when they do not. Under a backed-up queue on 2026-08-06 it produced 8 stuck CANCELLED required
+# checks across 7 PRs, none of which had any code failure — and every attempt to clear them by
+# re-running created another trigger, which cancelled the next queued run, which is why it looked
+# like the PRs were "continuously failing".
+#
+# Keying on the head SHA confines supersession to a single commit: a redundant re-trigger of the SAME
+# commit is still cancelled (which is what this setting is for), but a NEW push can no longer orphan
+# the required checks of the commit the PR actually merges. The cost is runner time on abandoned
+# commits; the thing bought is that a required check can never be left permanently dead.
+#
+# `github.event.pull_request.head.sha` is empty on `push`, so the `|| github.ref` fallback keeps the
+# old ref-scoped behaviour on main — where cancel-in-progress is false anyway.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.sha || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 # CI-COVERAGE FIX (2026-07-23): the `pull_request` trigger deliberately has NO
