@@ -72,6 +72,7 @@
     "apps/backend/src/payroll-integration/tms-settlements-pull.ts: ds.gross_pay_cents — column \"gross_pay_cents\" does not exist on driver_finance.driver_settlements",
     "apps/backend/src/payroll-integration/tms-settlements-pull.ts: ds.net_pay_cents — column \"net_pay_cents\" does not exist on driver_finance.driver_settlements",
     "apps/backend/src/payroll-integration/tms-settlements-pull.ts: ds.total_deductions_cents — column \"total_deductions_cents\" does not exist on driver_finance.driver_settlements",
+    "apps/backend/src/reports/driver-settlement-summary.routes.ts: v.escrow_withheld — column \"escrow_withheld\" does not exist on views.driver_settlement_with_debt",
     "apps/backend/src/reports/lane-profitability.service.ts: ls.deadhead_miles — column \"deadhead_miles\" does not exist on mdata.load_stops",
     "apps/backend/src/reports/lane-profitability.service.ts: ls.destination_city — column \"destination_city\" does not exist on mdata.load_stops",
     "apps/backend/src/reports/lane-profitability.service.ts: ls.destination_state — column \"destination_state\" does not exist on mdata.load_stops",
