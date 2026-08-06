@@ -1,0 +1,138 @@
+{
+  "_header": [
+    "IH35-TMS LAW REGISTRY \u2014 the machine-readable index of rules that are actually ENFORCED.",
+    "",
+    "THE PHASED RULE (owner-locked 2026-08-05): from this point on, a NEW rule is not law unless it",
+    "ships with a guard registered here. Existing rules migrate over time as a backlog class and do",
+    "NOT block current work \u2014 that is what makes this adoptable rather than a wall.",
+    "",
+    "WHY A REGISTRY AT ALL. Rules lived in prose across 40+ .cursor/rules files and docs. Prose cannot",
+    "be checked, so a rule could be 'law' while nothing on earth enforced it \u2014 which is exactly how",
+    "financial rows got DELETED under a void-not-delete rule that had been written down for months.",
+    "A rule with no guard is a wish; this file is where that becomes visible instead of assumed.",
+    "",
+    "STATUS VALUES",
+    "  enforced      \u2014 a guard file exists and runs in CI. The rule is real.",
+    "  guard-pending \u2014 checkable, but no guard written yet. Honest backlog, non-blocking.",
+    "  JUDGMENT      \u2014 genuinely not machine-checkable (an owner decision, an accounting treatment",
+    "                  call). Recorded so nobody mistakes 'unguarded' for 'unimportant'.",
+    "",
+    "WHAT scripts/verify-law-registry.mjs CHECKS, AND WHAT IT DELIBERATELY DOES NOT. It asserts that",
+    "every law whose guard is a path has that FILE ON DISK, plus registry integrity (unique ids, valid",
+    "status, no empty rule text). It does NOT run the guards and does NOT re-run typecheck \u2014 those",
+    "already run in their own steps. Re-running them here would add minutes to every PR and buy",
+    "nothing; the check is existence-only so it costs under two seconds. A registry that made every PR",
+    "slower would be removed within a week, and then there would be no registry at all.",
+    "",
+    "STATUS `guard-pending` + guard:\"PENDING\" + planned_guard:\"<path>\" means the guard is WRITTEN and mutation-proven but not yet in the repo \u2014 it is waiting on a verify-step number (Rule 37: a step file may not be authored before its number is on origin/main). The registry records where it WILL live without claiming it exists; the check only demands a file when `guard` is a real path. Registering a path that is not on disk was the registry's own first failure, caught by its own check on the first run."
+  ],
+  "phased_rule": "New rules require a registered guard. Pre-existing rules migrate as backlog and never block a PR.",
+  "laws": [
+    {
+      "id": "LAW-WORM-NO-DELETE",
+      "rule": "Every transaction is VOIDABLE; nothing financial is DELETABLE. Voiding a journal entry is a REVERSING entry (reversal_of_line_id / reversed_by_line_id), never a voided_at on a posting line \u2014 voiding one line of a balanced entry would leave DR != CR. No financial table may grant DELETE to the app role.",
+      "guard": "PENDING",
+      "status": "guard-pending",
+      "note": "Guard written and mutation-proven (4 mutations); baseline seeded at 58 tables from live prod. Awaiting a CC-1-band verify-step number (Rule 37) before it can be wired. Enforcement already live on the two breached tables via DELETE-blocking triggers (ACCT-F130 driver_settlements, ACCT-F131 journal_entry_postings).",
+      "planned_guard": "scripts/verify-financial-tables-not-deletable.mjs"
+    },
+    {
+      "id": "LAW-ENTITY-SEPARATION",
+      "rule": "TRK / TRANSP / USMCA share nothing. Any resolution of an entity-scoped row by bare id \u2014 JOIN or single-read \u2014 reachable under bypass_rls OR owner-role RLS must carry an entity predicate, because org.user_accessible_company_ids() returns ALL active companies for the Owner role.",
+      "guard": "JUDGMENT",
+      "status": "guard-pending",
+      "note": "Sizing in progress with Cascade. 523 sites are RLS-protected and are NOT defects; the real instances are those reachable with the policy off or under owner-role. Durable fix is a composite FK (driver_id, operating_company_id), not a query patch."
+    },
+    {
+      "id": "LAW-BALANCED-LEDGER",
+      "rule": "Every journal entry must balance within its operating_company_id: SUM(debit) = SUM(credit), minimum two posting lines, and reversal links must resolve. Never net across entities.",
+      "guard": "scripts/verify-balanced-ledger.mjs",
+      "status": "enforced"
+    },
+    {
+      "id": "LAW-NO-APPROVAL-HOLDS",
+      "rule": "There are no owner holds, no JORGE-APPROVED label, and no approval gate at merge time. Coders merge on green with proof and apply migrations themselves. The safeguard is PROOF, not permission.",
+      "guard": "scripts/verify-no-approval-holds.mjs",
+      "status": "enforced"
+    },
+    {
+      "id": "LAW-MIGRATION-NO-REAPPLY",
+      "rule": "A migration whose checksum is already applied under a different filename is a renumber-and-reapply, not a new migration, and must be refused at the runner. A ledger row is not evidence that a migration had an effect.",
+      "guard": "scripts/verify-migration-checksum-collision.mjs",
+      "status": "enforced"
+    },
+    {
+      "id": "LAW-ENUM-EFFECT-NOT-LEDGER",
+      "rule": "mdata.load_status_enum must actually contain abandoned / driver_walkoff / driver_no_show. Migration 0094 was recorded applied in both ledgers while the labels were absent for months \u2014 assert the EFFECT in pg_enum, never the ledger row.",
+      "guard": "scripts/verify-load-status-enum-abandonment-values.mjs",
+      "status": "enforced"
+    },
+    {
+      "id": "LAW-NO-UUID-LABEL",
+      "rule": "A raw UUID must never be rendered as a human-facing label; resolve it to a name or display id.",
+      "guard": "scripts/verify-no-uuid-label-rendering.mjs",
+      "status": "enforced"
+    },
+    {
+      "id": "LAW-DRIVER-DEDUCTION-NO-ESIGN",
+      "rule": "Driver deductions are authorized by the signed HIRE CONTRACT. No per-charge driver e-signature gate may be introduced; requires_acknowledgment must not be set true on driver-liability writes. Company-side sign-off at settlement prep and maker != checker remain.",
+      "guard": "PENDING",
+      "status": "guard-pending",
+      "note": "Guard written and selftest-proven (3 mutations). Code fix is LIVE on main (ACCT-F119); only the static guard awaits a verify-step number.",
+      "planned_guard": "scripts/verify-no-driver-esign-deduction-gate.mjs"
+    },
+    {
+      "id": "LAW-GL-COVERAGE-TMS-NATIVE",
+      "rule": "Every TMS-NATIVE postable money event must reach the ledger. QBO-origin rows are refused by design under parallel books and must NEVER be counted as a gap \u2014 demanding coverage on the 40,887 cloned rows would report a $65M gap that must never be closed. Invoices count only at status='sent' AND total_cents > 0.",
+      "guard": "PENDING",
+      "status": "guard-pending",
+      "note": "Shipped in PR #4528, awaiting merge. Live half is opt-in (GL_POSTING_COVERAGE_LIVE=1) because CI's database is a fixture playground.",
+      "planned_guard": "scripts/verify-gl-posting-coverage.mjs"
+    },
+    {
+      "id": "LAW-QBO-CANONICAL-INBOUND",
+      "rule": "The canonical QBO mirror is the INBOUND clone set (mdata.qbo_ap_bills / qbo_ar_invoices / qbo_ar_payments / qbo_purchases / qbo_vendors / qbo_accounts). mdata.qbo_bills and mdata.qbo_invoices are OUTBOUND write-back staging and are empty BY DESIGN \u2014 never a sync gap and never a repoint target. accounting.qbo_* entity mirrors are RETIRE.",
+      "guard": "PENDING",
+      "status": "guard-pending",
+      "note": "Guard written, 6 mutations including two that fail if bills/invoices are ever repointed at the empty staging tables. Awaiting verify-step 2641.",
+      "planned_guard": "scripts/verify-qbo-canonical-recon.mjs"
+    },
+    {
+      "id": "LAW-DRAFT-NOT-POSTABLE",
+      "rule": "A bill in status 'draft' is not an approved liability and must not post to the ledger \u2014 its amount, vendor and account mapping can still change.",
+      "guard": "PENDING",
+      "status": "guard-pending",
+      "note": "Code fix shipped in PR #4540 after bill f8f8e5a4 posted from draft with a NULL bill_number. Guard written with 3 mutations.",
+      "planned_guard": "scripts/verify-draft-bill-not-postable.mjs"
+    },
+    {
+      "id": "LAW-IMPORT-ORIGIN-NOT-DEFECT",
+      "rule": "Classify row ORIGIN before calling any gap a defect. Import-origin rows (relay_ingest, QBO clones) legitimately lack load links and journal entries; a guard must never redden on them. Load linkage is going-forward only \u2014 never invent a load FK.",
+      "guard": "PENDING",
+      "status": "guard-pending",
+      "note": "Keys on load_required rather than a row count, so the 1,548-row pre-dispatch cohort can never redden it. Shipped alongside PR #4526.",
+      "planned_guard": "scripts/verify-disp-wire-06-load-expense-link.mjs"
+    },
+    {
+      "id": "LAW-ASSETS-TRK-ONLY",
+      "rule": "TRK is the sole asset holder and lessor. TRANSP and USMCA own no assets today, so no PP&E or Accumulated Depreciation accounts belong on their charts; such accounts are added only when a real asset purchase is recorded for that entity. Depreciation lives only on TRK's books.",
+      "guard": "JUDGMENT",
+      "status": "guard-pending",
+      "note": "Checkable as a CoA subtype scan scoped to TMS-native rows so the TRANSP QBO mirror never reddens. Not yet written."
+    },
+    {
+      "id": "LAW-TMS-DATA-IS-TEST",
+      "rule": "All TMS-native data across all three entities is TEST data; the only real financial history is the TRANSP QBO mirror. An empty TMS table is EXPECTED, never a defect. Guards asserting 'real financial data' key on QBO-origin rows.",
+      "guard": "JUDGMENT",
+      "status": "JUDGMENT",
+      "note": "A blanket guard would have to decide what counts as 'real', which is the judgment itself. Enforced instead by the origin test inside each money guard."
+    },
+    {
+      "id": "LAW-NO-QBO-WRITEBACK",
+      "rule": "TMS never writes back to QuickBooks. QBO is system-of-record for cloned history; posting flags stay per-entity and write-back push flags stay OFF.",
+      "guard": "JUDGMENT",
+      "status": "guard-pending",
+      "note": "Partially enforced by the JE push gate and the entity-push refusals in the poster; no single registry-level guard yet."
+    }
+  ]
+}
