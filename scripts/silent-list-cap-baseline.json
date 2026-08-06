@@ -1,12 +1,11 @@
 {
   "note": "CLS-SILENT-CAP (frontend) ratchet — screens that fetch a hard cap and never surface it. This is an inventory of EXISTING debt, not an approval of these screens. May only SHRINK.",
-  "scanned": 1510,
+  "scanned": 1511,
   "offenders": [
     "apps/frontend/src/api/forensic.ts",
     "apps/frontend/src/components/accounting/JournalEntryTypePicker.tsx",
     "apps/frontend/src/components/customers/CustomerEditModal.tsx",
     "apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
-    "apps/frontend/src/components/dispatch/FleetOosStrip.tsx",
     "apps/frontend/src/components/driver-profile/AssignTruckModal.tsx",
     "apps/frontend/src/components/drivers/AuditHistoryTab.tsx",
     "apps/frontend/src/components/expenses/RecordExpenseForm.tsx",
