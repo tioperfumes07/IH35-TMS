@@ -267,3 +267,45 @@ so **every unscoped read is load-bearing on its own predicate**.
 **5. EVERY LOOP.** read board → **grep-verify the card against main** → build **ONE complete atomic block**
 → found another lane's defect? **write it to the board** → push → next. Never idle, never pause to
 summarize, never half-edit.
+
+---
+
+## ★★★ PERMANENT LAW — OWNER STANDING ACCOUNTING DECISIONS (owner-locked 2026-08-05)
+
+**answered=closed, do not re-ask any session.** Per the ANSWERED=CLOSED behavioural law: an owner decision
+written in a locked file is CLOSED. Read it, apply it, keep working. Re-asking any item below is a process
+defect — these six kept returning to the owner every session for one reason only: they were never written
+down. They are now.
+
+**A. SUBLEDGER→GL POSTING IS FORWARD-ONLY (no backfill).**
+The bill/invoice→GL poster posts NEW documents going forward once its flag is ON. It **NEVER** backfills the
+historical document set (~11,984 invoices / ~16,250 bills). That set is overwhelmingly the TRANSP **QBO
+mirror, already booked in QuickBooks**, which is system of record through the test window — backfilling it
+would **double the parallel books** (ledger row 665 precedent) and post test-origin TMS-native documents to a
+real GL. Historical balances enter as **OPENING BALANCES only**, never by re-posting source documents
+(NetSuite/QBO cutover standard). `CLS-SUBLEDGER-GL-DARK` is therefore a **forward-coverage** task, not a
+backfill; its guard asserts coverage on NEW documents only. Anyone re-opening "should we backfill?" is
+contradicting locked law — **the answer is no, forward-only.**
+
+**B. VOID = REVERSAL; NOTHING IS DELETABLE; VOID BY UUID, NEVER display_id.**
+Every transaction is voidable; nothing financial is deletable. Voiding a journal entry **is a reversing
+entry** (`reversal_of_line_id` / `reversed_by_line_id`). **No `voided_at` on
+`accounting.journal_entry_postings`** — voiding one line of a balanced entry would leave DR ≠ CR. Record-level
+financial tables get `voided_at` / `void_reason` / `voided_by` **plus** REVOKE DELETE, a DELETE-blocking
+trigger, and audit coverage. **Void always by UUID**: `display_id` is **not unique across entities** —
+`INV-2026-00004` exists on both USMCA (test) and TRANSP (real, paid), so a display_id-keyed void can destroy
+the wrong entity's money.
+
+**C. MAKER ≠ CHECKER ON THE GL.**
+The agent that builds or verifies a money/GL PR is **not** the one that merges it. CC-2 verifies live and
+never certifies its own work; GUARD never merges a financial PR it verified. This holds on WORM revokes,
+void/reversing JEs, period close, settlement, factoring, and flag flips.
+
+**D. THE RECONCILER IS THE TRUST GATE.**
+Tie each entity to QBO **to the cent, twice daily** (Neon tie-out). That tie-out is the **evidence** the owner
+uses to decide a flag flip. QBO remains system of record through the test window; **zero write-back**.
+
+**E. REVENUE IS RECOGNIZED AT DELIVERY** (point-in-time), all entities.
+
+**F. FISCAL YEAR = CALENDAR (Jan–Dec)**, all entities. Historical import origin **01/01/2024** for TRANSP + TRK;
+**2026** for USMCA.
