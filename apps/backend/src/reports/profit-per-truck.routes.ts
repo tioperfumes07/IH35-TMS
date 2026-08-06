@@ -74,7 +74,7 @@ function num(v: unknown): number {
 }
 
 export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/profit-per-truck", async (req, reply) => {
+  app.get("/api/v1/reports/profit-per-truck", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
