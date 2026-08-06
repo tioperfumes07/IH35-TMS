@@ -526,6 +526,50 @@ signature**, and must be treated as a defect signal, never as "never used".
 
 ---
 
+## ★★ LV-TXN-015 — **POSITIVE CONTROL LANDED: the settlement machinery WORKS. Only the office path is wired to the wrong endpoint.** — completes LV-TXN-004
+
+When I first walked a load I could only prove the *negative* half — the office path produced nothing. The
+control load has now produced the **positive** half, and it closes the argument.
+
+- **`driver_finance.driver_settlements` moved during this session:** baseline `n_tup_ins` **11**,
+  `n_tup_upd` **0**, `n_live_tup` **0** → now `n_tup_ins` **12**, `n_tup_upd` **2**, `n_live_tup` **1**,
+  `count(*)` **1**. One settlement was created and updated twice.
+- **the row (read directly on prod):**
+  `d3ff8ea3-4acd-4792-b3ad-fdad6383fbb2` · entity **USMCA** · driver `88c04cf5-…` **"Juan USMCA-Battery"**
+  · `settlement_model` **`load_bookended`** · `status` **`closed`** · `trip_closed_at`
+  **2026-08-06T17:03:35.171Z** · `created_at` **17:03:34.882Z**.
+- **17:03:34 is exactly when I ran the `/dispatch/loads/:id/transition` walk** on the control load
+  `LUSMCAFREIGHT-20260806-0001`. Nothing else in the session touched settlements.
+
+### The A/B is now complete, and both halves are measured
+
+| load | endpoint used | departure stamped | settlement opened |
+|---|---|---|---|
+| `L-20260802-0258` | `PATCH /mdata/loads/:id/status` — **what the Kanban calls** | **0 of 2** | **0** |
+| `LUSMCAFREIGHT-20260806-0001` | `PATCH /dispatch/loads/:id/transition` | **1 of 2** ✓ | **1, opened AND auto-closed** ✓ |
+
+- **This overturns the framing of HOLD-001 completely.** The settlement engine is not missing, not
+  unbuilt, and not waiting on anyone: given the right endpoint it **opened a load-bookended settlement
+  and closed it out in under 300 ms**, unprompted. `pingSettlementOnLoadEvent` → `openLoadBookendedSettlement`
+  → `closeSettlementForFinalLoad` all fired correctly.
+- **The entire CLS-MONEY-HOLD/HOLD-001 symptom is one frontend call pointed at the wrong endpoint.**
+- **why the pay-run screen is still empty, and it is now EXPECTED not defective:**
+  `pre-settlements/open-by-driver` filters `trip_closed_at IS NULL`. This settlement auto-closed on the
+  final load, so it correctly does not appear as *open*. That is right behaviour, and I am recording it
+  so nobody files "pre-settlements still empty" as a further defect.
+- **estimate sharpened for CC-1:** the fix is a **frontend endpoint repoint**, not a money-engine build.
+  `Dispatch.tsx:439 onStatusDrop` → `api/loads.ts:263 updateLoadStatus` should call
+  `/dispatch/loads/:id/transition`. Note the two endpoints take **different status vocabularies**
+  (LV-TXN-005), so the repoint must map the Kanban lanes onto the transition enum — that mapping is the
+  real work, and it is small.
+
+### What this does to the class
+`CLS-MONEY-HOLD` HOLD-001 is **not a hold, not an engine gap, and not an owner decision** — it is a
+one-line misrouting with a proven-working engine behind it. Combined with LV-TXN-014 (insurance = hard
+500) and LV-TXN-006's correction, **all three HOLD surfaces are now explained and none of them is a hold.**
+
+---
+
 ## Entity-safety note
 No write has been performed on TRANSP in this session. All observation above is read-only; the only
 mutation contemplated (walking `L-20260802-0258` forward) is on USMCA test data.
