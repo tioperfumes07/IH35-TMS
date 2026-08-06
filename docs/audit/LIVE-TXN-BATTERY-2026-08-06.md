@@ -200,6 +200,49 @@ open until that guard is green and mutation-proven.
 
 ---
 
+## CLASS: `CLS-DISP-WIRE-07` (actual_departure_at) — **its documented root cause is WRONG, and it is the SAME defect as LV-TXN-004**
+
+### LV-TXN-007 — controlled A/B on two loads: the endpoint is the only variable — **FAIL (critical, same root as LV-TXN-004)**
+- **the class currently says:** *"`loads.routes.ts:1285-1303` writes actual_departure_at on the final
+  delivery stop at delivered_pending_docs, but reads `body.data.delivered_at` from the request — **if the
+  client doesn't send it, it's NULL**."*
+- **that is factually wrong.** `stampFinalActiveDeliveryDeparture`
+  (`dispatch/stamp-final-delivery-departure.ts:42`) writes
+  `SET actual_departure_at = COALESCE($2::timestamptz, now())`. When the client omits `delivered_at` it
+  falls back to **`now()`**. It can never write NULL. A builder told to "make the client send
+  `delivered_at`" would change nothing.
+- **CONTROLLED EXPERIMENT (both loads USMCA, same customer, same driver `88c04cf5-…`, same unit
+  `bb1e77ab-…`, same day; the ONLY variable is which endpoint advanced the status; NEITHER call sent
+  `delivered_at`):**
+
+  | load | path used to advance | stops | `actual_departure_at` stamped |
+  |---|---|---|---|
+  | `L-20260802-0258` | `PATCH /mdata/loads/:id/status` (**what the Kanban calls**) | 2 | **0** |
+  | `LUSMCAFREIGHT-20260806-0001` (`678fc733-…`, created for this test) | `PATCH /dispatch/loads/:id/transition` | 2 | **1** ✓ |
+
+  1 of 2 is the CORRECT result on the transition path — the stamp targets only the final active delivery
+  stop by design, not every stop.
+- **conclusion:** the stamp works. The office path simply never reaches it. **`CLS-DISP-WIRE-07` and
+  `CLS-MONEY-HOLD`/HOLD-001 are ONE defect with one fix** (LV-TXN-004): the office status control calls
+  the endpoint that does none of revrec, settlement-open, or departure-stamping.
+- **why this matters beyond one class:** WIRE-07 is registered as the *"CRITICAL-PATH ROOT BLOCKER"* for
+  WIRE-05 (revrec) and WIRE-04 (delivery-evidence invoice gating). Those three classes plus HOLD-001 all
+  trace to the same missing call. Fixing LV-TXN-004 should be expected to move **four** open classes.
+- **honest limit — one thing the transition path did NOT fix:** `accounting.posting_batches` for the
+  control load = **0**. So even on the correct endpoint, revenue recognition did not post. That is a
+  SEPARATE open question (flag gating, or revrec may require POD/invoice which this load has neither),
+  and it is recorded as unresolved rather than folded into the win.
+- **status:** OPEN — board row to be filed against LV-TXN-004 as the consolidated root.
+
+### Test data created by this lane (disclosed)
+`LUSMCAFREIGHT-20260806-0001` / `678fc733-f661-4aeb-b7c3-fb0978bdf61d` — USMCA, $1.00, Laredo TX →
+Monterrey NL, notes `"CC-3 LIVE-VERIFY WIRE-07 control load (USMCA test data)"`. Created deliberately as
+the positive control above. USMCA is the designated test entity (PERMANENT LAW §4: all TMS-native data is
+test). Also noted in passing: its display id is `LUSMCAFREIGHT-20260806-0001` while the pre-existing load
+is `L-20260802-0258` — **two different load-number formats on the same entity**, not investigated here.
+
+---
+
 ## Entity-safety note
 No write has been performed on TRANSP in this session. All observation above is read-only; the only
 mutation contemplated (walking `L-20260802-0258` forward) is on USMCA test data.
