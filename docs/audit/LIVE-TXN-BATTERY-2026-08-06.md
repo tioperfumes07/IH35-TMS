@@ -101,6 +101,68 @@ statement. Exit codes read WITHOUT a pipe. Done = live proof, not CI-green, not 
   live re-probe. Had it been filed on first sight, CC-2 would have chased a hang that does not exist.
 - **status:** CLOSED — no card opened, no builder time spent.
 
+### LV-TXN-004 — ★ **THE ROOT OF `CLS-MONEY-HOLD`: the office status control calls the endpoint that skips revenue recognition AND settlement creation** — **FAIL (critical)**
+- **surface:** Dispatch Kanban drag → `onStatusDrop` → `updateLoadStatus()` → `PATCH /api/v1/mdata/loads/:id/status`
+- **how this was found:** by *running* the business event, not by reading code. I walked USMCA load
+  `L-20260802-0258` (`a6f8a7ec-…`) `assigned_not_dispatched → dispatched → at_pickup → in_transit →
+  at_delivery → delivered`, all HTTP 200, using the endpoint the app's own Kanban calls. Then measured.
+- **live result of that walk (Neon prod, bypass in-statement, positive control `accounting.bills` = 16,255
+  in the SAME statement):**
+  - `mdata.loads.status` = **`delivered`** ✓ (the walk itself worked)
+  - `driver_finance.driver_settlements` = **0**, and `n_tup_ins` still **11** — *unchanged from the
+    pre-walk baseline*, so the walk created **zero** settlements
+  - `accounting.posting_batches` where `source_transaction_id` = this load = **0** → **no revenue
+    recognition**
+  - `audit.audit_events` matching `%settle%` in the last 20 min = **0**
+  - `driver_finance.settlement_lines` = 0 / `n_tup_ins` 0
+- **ROOT CAUSE — two status endpoints, only one of which carries the money side-effects:**
+  - `PATCH /api/v1/dispatch/loads/:id/transition` (`dispatch/loads.routes.ts:1215`) calls
+    **`postLoadRevenueLatch(...)`** (revrec) **and `pingSettlementOnLoadEvent(...)`** (opens the
+    `load_bookended` driver settlement) — `loads.routes.ts:1335` and `:1348`.
+  - `PATCH /api/v1/mdata/loads/:id/status` (`mdata/loads.routes.ts:838`) calls **only**
+    `latchOnDeliveryEvidence(...)`. It does **not** import or call either of the two above — verified by
+    reading the file's imports: the sole related import is `latchOnDeliveryEvidence`.
+  - The frontend's only office-side status control is wired to the **second** one:
+    `Dispatch.tsx:439 onStatusDrop → statusMutation` → `api/loads.ts:263 updateLoadStatus` →
+    `/api/v1/mdata/loads/:id/status`.
+  **So every load advanced by a dispatcher through the board silently skips revenue recognition and never
+  opens a driver settlement.**
+- **why the pay-run screens are empty is now fully explained (and my earlier LV-TXN-001 reading was
+  incomplete):** `pre-settlements/open-by-driver` (`pre-settlement.routes.ts:51`) selects
+  `FROM driver_finance.driver_settlements … WHERE settlement_model='load_bookended' AND trip_closed_at IS
+  NULL` — it lists **already-open settlements**; it does NOT derive candidates from delivered loads. The
+  only thing that creates that row is `pingSettlementOnLoadEvent`, which the office path never calls.
+  Chain: no ping → no `driver_settlements` row → pre-settlements `[]` → no pay run → no settlement lines →
+  no GL. **HOLD-001 is one missing call, not three empty tables.**
+- **CORRECTION I OWE MY OWN EARLIER ROW:** LV-TXN-001 called the empty pay-run "blocked upstream, no load
+  has ever been delivered." That was true but not the whole cause. A load *has* now been delivered and the
+  pay-run is **still** empty. The blocker is this missing call, not the absence of delivered loads. Row
+  LV-TXN-001 is superseded on that point.
+- **also verified — `settlement_lines = 0` immediately after delivery is EXPECTED, not a defect:** those
+  rows carry a `settlement_id` and are written by the settlement engine when a pay run generates a
+  settlement (`settlement-engine.ts:147+`), never at delivery. Recorded so nobody files a card on it.
+- **and the driver is NOT unconfigured** (the other legitimate explanation, ruled out): driver
+  `88c04cf5-…` has **1** row in `driver_finance.driver_pay_rates`, the only USMCA driver rate of the 93
+  on prod. Pay setup is not the blocker.
+- **LANE: CC-1 (money)** — the consequence is financial (revrec + settlement never fire). The mechanical
+  half (FE pointing at the wrong endpoint) is CC-2. Needs one decision: either the office control moves to
+  `/dispatch/loads/:id/transition`, or `/mdata/loads/:id/status` gains the same two calls. Both are money
+  side-effects, so the money lane should own the call.
+- **status:** OPEN — board row filed.
+
+### LV-TXN-005 — the two status endpoints accept **different status vocabularies**, and the Kanban renders a lane the API rejects — **FAIL (minor→major)**
+- `PATCH /api/v1/mdata/loads/:id/status` accepted `dispatched`, `at_pickup`, `in_transit`, `at_delivery`,
+  `delivered` (all HTTP 200) and **rejected `loaded` with HTTP 400 `validation_error`**.
+- `PATCH /api/v1/dispatch/loads/:id/transition` rejected `delivered` outright — its enum is
+  `unassigned | assigned_not_dispatched | dispatched | in_transit | delivered_pending_docs | …`. It also
+  reports the same load's status as **`delivered_pending_docs`** where the mdata path calls it
+  **`delivered`**.
+- **The Kanban board renders a "Loaded" column** (observed live between "At pickup" and "In transit").
+  Dragging a card into it calls the mdata endpoint with `new_status:'loaded'` → **400**. A dispatcher
+  dragging into a lane the product itself draws would get a silent failure.
+- **verdict:** one load, two endpoints, two vocabularies, one of them contradicting the rendered board.
+- **LANE: CC-2** (mechanical/FE + route contract). **status:** OPEN — board row filed.
+
 ---
 
 ## Entity-safety note
