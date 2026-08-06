@@ -2980,3 +2980,55 @@ relay_ingest), and did not apply here.
              **631 / 124 / 23** (Trucking / Transportation / USMCA); `catalogs.accounts` total 1,444 of which
              **149** carry no `qbo_account_id`.
 - status:    LV-121 verdict UNCHANGED (GUARD-VERIFIED, USMCA) · sizing CORRECTED · USMCA accum-depr flag WITHDRAWN
+
+## LV-122  **LAW-1 DEFECT SCAN — USMCA carries 3 PP&E/Accumulated-Depreciation accounts it must not have; TRANSP is CLEAN.** All 3 are TMS-native, not QBO-imported
+- module:    accounting · catalogs (GUARD — enforcement of owner-locked law 2026-08-05, point 1)
+- entity:    TRANSP (clean) · USMCA (3 defects)
+- surface:   `catalogs.accounts` scoped to TRANSP and USMCA
+- observed:  **The law changed the verdict on something I had withdrawn, so I re-ran it.** Earlier today the
+  owner said USMCA "might purchase equipment later so it is OK to have it", and I withdrew my flag
+  (LV-121 CORRECTION). Owner-locked law 2026-08-05 point 1 **supersedes that**: asset and depreciation
+  accounts are added to an entity's chart **ONLY WHEN a real asset purchase is recorded**, and until then
+  **any asset/Accum-Depr account scoped to TRANSP or USMCA is a DEFECT**. The flag is therefore **re-opened**,
+  and this is the scan.
+  **TRANSP — CLEAN. No PP&E, no Accumulated Depreciation.** My name-match caught 19 TRANSP accounts, and
+  **every one is an expense, COS, income, loan or bank account** — not PP&E: Fuel-Truck-Diesel, Truck Tires,
+  Trailer Tires, Truck Insurance, Truck Plates, Washout, OTR-Truck Parking (expenses); `Lease-Trailer`,
+  `Leased Trucks from IH35 TRUCKING`, `Equipment Rental - COS` (**EquipmentRentalCos** — correct, TRANSP
+  leases FROM TRK); `Inter-company - IH35 Trucking`, `Loans to Others` (receivables, not PP&E);
+  `Transportation/Trucking Loan Account` (**Checking**). **Zero `Vehicles` subtype, zero Accumulated
+  Depreciation.** This matches `ih35-entity-facts` — depreciation lives only on TRK's books.
+  **USMCA — 3 GENUINE DEFECTS under law 1:**
+  | account | name | subtype | origin |
+  |---|---|---|---|
+  | **1600** | **Accumulated Depreciation** | Accumulated Depreciation | **TMS-native** (`qbo_account_id` NULL) |
+  | **1500** | **Trucks & Tractors** | **Vehicles** | **TMS-native** |
+  | **1510** | **Trailers** | **Vehicles** | **TMS-native** |
+  **The origin fact is what makes these defects rather than import residue.** All three have
+  `qbo_account_id IS NULL` — they are **TMS-created**, not QuickBooks-imported. Under law 2, TMS-native rows
+  are exactly the cohort a guard may redden on; QBO-mirror rows are not. So the §0 origin test **confirms**
+  these instead of excusing them — the opposite of the `accounting.bills` (16,245 QBO clones) and
+  `fuel_transactions` (1,548 relay_ingest) cases where origin classification cleared the finding.
+  **Why it matters beyond tidiness.** USMCA is the entity that launches with **0 balances, TMS-only,
+  isolated**. A `Trucks & Tractors` PP&E account and an `Accumulated Depreciation` account on its chart
+  assert that USMCA owns and depreciates equipment. It does not — **TRK owns all equipment and leases it**,
+  and depreciation belongs solely to TRK. Left in place, the first depreciation run or asset posting scoped
+  to USMCA would have a home to land in, and the entity model breaks silently rather than erroring.
+  **Adjacent, flagged NOT asserted:** USMCA also carries **`2400 Equipment Loans / Notes Payable`** (Notes
+  Payable, TMS-native) — a liability that implies equipment ownership. Law 1 names **asset + Accum-Depr**
+  specifically, so I am **not** claiming it as a defect under that law; it is listed so the owner can rule
+  once rather than have it resurface. **UNVERIFIED — whether the law's intent extends to acquisition
+  liabilities.**
+  **`QBO-228-USMCA Leased Trucks from IH35 TRUCKING` is CORRECT and must not be swept up** — it is the lease
+  cost account (mirrors TRANSP's QBO-228), which is precisely what USMCA *should* have as a lessee.
+- severity:  **major** (three accounts asserting asset ownership on an entity that owns nothing, on the chart
+             of the entity about to launch isolated)
+- LANE:      CC-1 (money/CoA) — deactivate/archive USMCA `1600`, `1500`, `1510` (**never delete** — rule 07;
+             and Rule 19 reserve-account law means CoA changes are handled with care). Ratcheting guard:
+             **no account with subtype `Vehicles`/`FixedAsset`/`Accumulated Depreciation` may exist scoped to
+             TRANSP or USMCA**, scoped to TMS-native rows so QBO-mirror history never reddens it.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app` asserted TRUE, bypass in its own
+             statement, exit 0. Per-entity accumulated-depreciation: TRK **162**, TRANSP **0**, USMCA **1**.
+             The 3 USMCA rows enumerated above with `qbo_account_id IS NULL` on each; all 19 TRANSP matches
+             individually classified as non-PP&E.
+- status:    OPEN — supersedes the LV-121 withdrawal (owner-locked law 2026-08-05 point 1)
