@@ -11,7 +11,7 @@ const historyQuerySchema = companyQuerySchema.extend({
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
 export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) {
-  app.get("/api/v1/border-crossing/history", async (req, reply) => {
+  app.get("/api/v1/border-crossing/history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsed = historyQuerySchema.safeParse(req.query ?? {});
@@ -53,7 +53,7 @@ export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) 
     return reply.send({ crossings: payload });
   });
 
-  app.get("/api/v1/border-crossing/history/:id", async (req, reply) => {
+  app.get("/api/v1/border-crossing/history/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
