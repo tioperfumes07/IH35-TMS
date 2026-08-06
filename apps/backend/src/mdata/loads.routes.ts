@@ -493,7 +493,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/mdata/loads", async (req, reply) => {
+  // Rate-limited (CodeQL js/missing-rate-limiting). Pre-existing gap surfaced because this PR touched
+  // the file; the plugin is registered global:false, so an un-configured route has NO limit at all.
+  app.get("/api/v1/mdata/loads", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = listLoadsQuerySchema.safeParse(req.query ?? {});
@@ -723,7 +725,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/mdata/loads/:id", async (req, reply) => {
+  app.get("/api/v1/mdata/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = loadIdParamSchema.safeParse(req.params ?? {});
