@@ -3180,3 +3180,38 @@ relay_ingest), and did not apply here.
 - LANE:      n/a (verification of Claude Coder's #4062) · **GUARD status: VERIFIED**
 - neon-check: none required — client-side validator. Code read from `origin/main`, not the working tree.
 - status:    **GUARD-VERIFIED** — board row 38 may move off "awaiting GUARD verification"
+
+## LV-127  **CLS-UUID-LABEL — stamped BASELINE-CAPPED (164→…), NOT drained.** Ratchet mutation-proven on the landed guard (#4501 @ `dc8537529`)
+- module:    frontend · legal (GUARD — class stamp, verify-after)
+- entity:    ALL
+- surface:   `scripts/verify-no-uuid-label-rendering.mjs` + `scripts/no-uuid-label-baseline.json`
+- observed:  #4501 landed at 21:12 (`dc8537529`). In LV-113 I held this class unstamped because the PR was
+  still open and I verify **after** merge. It has merged, so this is the verification.
+  **(1) Baseline is 164 — so this is a CAP, not a drain.** `no-uuid-label-baseline.json` carries **164**
+  offenders. Under the rule the owner set for this class, a non-zero baseline is **capped and shrinking**:
+  it fully drains only when the baseline reaches **0**. **It does NOT count toward the drained total.**
+  **(2) Clean and selftest both pass.** Clean run **exit 0** — "no rendered link is labelled with a raw or
+  truncated" uuid. Selftest **exit 0** — "all 5 pre-fix uuid labels caught, name labels pass", i.e. it is
+  exercised in **both** directions: it catches the offending shape and does not flag legitimate name labels.
+  **(3) MUTATION-PROVEN on a real on-disk plant.** Planted
+  `String(matter.related_driver_id).slice(0, 8)` into a live `.tsx`. Guard returned **exit 1**, firing
+  **both** independent modes: *"1 NEW truncated-uuid label(s) — the ratchet may only shrink"* **and**
+  *"offender count rose **164 → 165**. The baseline may only shrink."* Removed → **exit 0**, `git status`
+  clean.
+  **The two-mode design is what makes this ratchet sound, and it is the property I checked for.** Keying on
+  `file|field` and failing on any **unknown key** closes the hole a count-only ratchet leaves: drain one
+  offender, introduce a different one, net zero, quietly worse. Here both fired, so neither substitution nor
+  growth can pass.
+  **(4) The detector is correctly scoped, which is why 164 is a real number and not noise.**
+  `UUID_SLICE` matches `.slice(0, N)` only on expressions whose name ends in `_id`/`Id`/`uuid`/`Uuid`, and
+  `ALLOWED_SUFFIX` exempts `display_id`, `_number`, `_name`, `sha`, `hash`, `_code`. So a truncated
+  **display id** or hash is not counted — only genuine uuid truncation. The baseline is the real population.
+  **Stamp:** **BASELINE-CAPPED (164→…), 1 page cleared** — `LegalMatterDetailPage` fixed to zero and off the
+  baseline permanently. **NOT "drained".** Cascade should carry the live baseline number on the board so the
+  trend is visible rather than binary.
+- severity:  none — class stamped; ratchet verified effective
+- LANE:      n/a (verification of CC-3's #4501) · CASCADE — track the 164 as a shrinking number on the board
+- neon-check: none required — static ratchet. Exit codes read WITHOUT a pipe: clean 0, selftest 0, planted 1,
+             restored 0; planted file restored and `git status` confirmed clean.
+- status:    **BASELINE-CAPPED (164→…)** — capped classes now **3**: UUID-LABEL 164 · REVERSE-LINKAGE 10 ·
+             DISPLAYID-UNSCOPED 4. **Drained count unchanged at 12/26.**
