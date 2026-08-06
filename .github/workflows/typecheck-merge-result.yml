@@ -68,6 +68,13 @@ jobs:
       - name: Install
         run: npm ci --no-audit --no-fund
 
+      # apps/frontend/src/generated/module-completion.ts is GITIGNORED and build-generated. Without
+      # this step `tsc -b` fails on a missing module and this job reports a red that has nothing to do
+      # with the merge — which is exactly what it did on its own first run. A guard that cries wolf
+      # gets bypassed, so it generates what the real build generates.
+      - name: Generate build-time modules
+        run: node scripts/generate-module-completion-data.mjs
+
       - name: Typecheck the MERGE RESULT (frontend)
         run: |
           set -euo pipefail
