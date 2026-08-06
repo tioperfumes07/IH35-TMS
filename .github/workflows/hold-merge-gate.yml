@@ -4,7 +4,7 @@
 name: hold-merge-gate
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.sha || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 on:
@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   hold-merge-gate:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, mac]
     steps:
       - name: Checkout (full history for the base..head diff)
         uses: actions/checkout@v7
