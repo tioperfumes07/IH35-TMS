@@ -9,7 +9,9 @@ const querySchema = companyQuerySchema.extend({
 });
 
 export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver-finance/driver-bills", async (req: FastifyRequest, reply: FastifyReply) => {
+  // Rate-limited (CodeQL js/missing-rate-limiting). Pre-existing; the plugin is global:false so an
+  // un-configured route has NO limit at all. Surfaced because this PR touched the file.
+  app.get("/api/v1/driver-finance/driver-bills", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
