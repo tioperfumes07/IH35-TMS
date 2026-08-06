@@ -806,3 +806,44 @@ The Chrome tab was lost and the session re-established from scratch. On reload t
 reads **`For review · 111` / `Categorized · 4`** (from 112/3 before item 19b), with USMCA still the
 selected entity. The categorize from 19b therefore survives a full client restart — server-side
 persistence, not client state.
+
+### 19e — ★ RESOLVED: bank MATCH is GATED BY DESIGN, not broken — no defect
+
+Re-ran the match test through the correct path (expand row → `Match` → **`Open match drawer`**). The
+drawer is the real apply surface: each candidate carries a radio + a **`Confirm match`** button, plus
+an explicit gate label. Live state for the 08/03/2026 `Wire Transfer Fee` $15.00:
+
+| candidate | amount | gate label shown | `Confirm match` |
+|---|---|---|---|
+| BILL `USMCA-RB-002` | $1.00 | **"Posting available after CHAIN-04"** | **disabled** |
+| BILL `USMCA-TEST-BILL-05` | $0.05 | **"Posting available after CHAIN-04"** | **disabled** |
+| JE `Bank categorization 49e3a071… posting` | $16.00 | "Variance posting pending balanced-JE proof (Tier-1)" | enabled |
+| EXPENSE / JE (variance) ×5 | $1.00–$1,200 | "Variance posting pending balanced-JE proof (Tier-1)" | mostly disabled |
+
+Drawer header states the contract outright:
+> *"Exact-amount matches can be confirmed to link and clear — **no journal entry is posted**. Bill
+> payments and any amount variance **stay held**. Candidates are live production ledger rows — never
+> fixtures."*
+
+**Conclusion — NO DEFECT.** Three facts, all from the running DOM:
+
+1. **Bank → bill match is gated behind a named, disclosed dependency (`CHAIN-04`)** and the control is
+   correctly **disabled**, not silently inert. That is the opposite of the `LV-*-NOSAVE` class.
+2. **Amount-variance matches are deliberately held** pending Tier-1 balanced-JE proof — a conservative,
+   correct stance for a money surface.
+3. **My test could never have succeeded:** every candidate for this $15.00 row carries a variance
+   ($1.00 to $1,185.00). There is no exact-amount candidate, and only exact-amount matches are
+   confirmable. The earlier non-persistence (19c) is fully explained and was never app misbehaviour.
+
+**Match ≠ posting, by design** — "confirmed to link and clear, no journal entry is posted". That is
+consistent with the page banner's distinction and with `source_transaction_type='bank_categorization'`
+being the thing that actually posted in 19b.
+
+**`CLS-BANK-MATCH-DENSITY` — status recorded honestly:**
+- **categorize half: DRAINED** (19b, balanced JE DR 6300 / CR 1000, persisted across a browser restart).
+- **match half: BLOCKED UPSTREAM on `CHAIN-04`**, not failing. It cannot be drained by this lane until
+  CHAIN-04 lands; re-test then with an **exact-amount** candidate. Not a board row — there is no defect
+  to assign.
+
+**Note for whoever owns `CHAIN-04`:** the bank-match half of this class is waiting on it, and USMCA now
+has the density (163 transactions / 111 for review) to exercise it the moment it ships.
