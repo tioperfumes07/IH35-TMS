@@ -18,8 +18,11 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
           sd.state AS delivery_state
         FROM views.dispatch_load_with_driver_status l
         JOIN mdata.customers c ON c.id = l.customer_id
+                              AND c.operating_company_id = l.operating_company_id
         LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                               AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
         LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                 AND d.operating_company_id = l.operating_company_id
         LEFT JOIN LATERAL (
           SELECT scheduled_arrival_at, city, state
           FROM mdata.load_stops
@@ -83,8 +86,11 @@ export async function listIntransitIssues(userId: string, operatingCompanyId: st
           CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name
         FROM dispatch.intransit_issues i
         LEFT JOIN mdata.loads l ON l.id = i.load_id
+                               AND l.operating_company_id = i.operating_company_id
         LEFT JOIN mdata.units u ON u.id = i.unit_id
+                               AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = i.operating_company_id
         LEFT JOIN mdata.drivers d ON d.id = i.driver_id
+                                 AND d.operating_company_id = i.operating_company_id
         WHERE l.operating_company_id = $1
           AND l.soft_deleted_at IS NULL
           ${statusFilter}
@@ -145,9 +151,13 @@ export async function listAssignmentHistoryGlobal(
         FROM dispatch.load_assignment_history h
         JOIN mdata.loads l ON l.id = h.load_id AND l.operating_company_id = $1
         LEFT JOIN mdata.drivers pd ON pd.id = h.previous_driver_id
+                                  AND pd.operating_company_id = l.operating_company_id
         LEFT JOIN mdata.drivers nd ON nd.id = h.new_driver_id
+                                  AND nd.operating_company_id = l.operating_company_id
         LEFT JOIN mdata.units pu ON pu.id = h.previous_unit_id
+                                AND COALESCE(pu.currently_leased_to_company_id, pu.owner_company_id) = l.operating_company_id
         LEFT JOIN mdata.units nu ON nu.id = h.new_unit_id
+                                AND COALESCE(nu.currently_leased_to_company_id, nu.owner_company_id) = l.operating_company_id
         WHERE ${clauses.join(" AND ")}
         ORDER BY h.assigned_at DESC
         LIMIT 200
