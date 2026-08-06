@@ -176,7 +176,17 @@ function leafOf(path: string): { label: string; href: string } {
 }
 
 function childrenOf(section: AccountingSubNavSection) {
-  return bySection(section).map((item) => ({ label: item.label, href: item.path }));
+  const items = bySection(section).map((item) => ({ label: item.label, href: item.path }));
+  // ORPH-002 — the More ▾ overflow carries 44 entries. Source order is grouped by THEME (see the
+  // `// More ▾ — AR / receivables`, `— factoring`, `— reconciliation` comments), which is useful to a
+  // reader of this file and useless to an operator hunting one item in a 44-row dropdown. Sort ONLY
+  // the overflow, and only at RENDER time, so the curated grouping + its comments survive in source.
+  // The approved-PNG top nodes (Bills/Expenses/Bill payment/Maintenance & shop) keep their locked
+  // order — More is the overflow bucket, not part of the approved screen.
+  if (section === "more") {
+    return [...items].sort((a, b) => a.label.localeCompare(b.label, "en", { sensitivity: "base" }));
+  }
+  return items;
 }
 
 /**
