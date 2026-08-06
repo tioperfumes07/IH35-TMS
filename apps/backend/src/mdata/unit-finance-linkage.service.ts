@@ -125,7 +125,9 @@ export async function getUnitFinanceLinkage(
             lal.allocated_cost_cents::text AS allocated_cost_cents,
             lal.fixed_asset_id::text AS fixed_asset_id
        FROM accounting.lease_asset_line lal
+       -- lal is scoped; the contract supplying display_id/election/status was not.
        JOIN accounting.lease_contract lc ON lc.id = lal.lease_contract_id
+                                        AND lc.operating_company_id = lal.operating_company_id
       WHERE lal.operating_company_id = $1::uuid
         AND lal.unit_uuid = $2::uuid
         AND lal.is_active = true
@@ -150,8 +152,13 @@ export async function getUnitFinanceLinkage(
             l.principal_cents::text, l.apr_percent::text,
             l.started_on::text, l.maturity_on::text, l.status
        FROM banking.equipment_loans l
+       -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED): the loan l is scoped, but the equipment and the
+       -- lender vendor it names were not. mdata.equipment has NO operating_company_id — it uses the
+       -- owner/leased pair (querying operating_company_id on it is a recurring 500, CLAUDE.md §4).
        JOIN mdata.equipment e ON e.id = l.equipment_id
+                             AND COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = l.operating_company_id
        JOIN mdata.vendors v ON v.id = l.lender_vendor_id
+                           AND v.operating_company_id = l.operating_company_id
       WHERE l.operating_company_id = $1::uuid
         AND e.current_unit_id = $2::uuid
         AND l.status <> 'voided'
