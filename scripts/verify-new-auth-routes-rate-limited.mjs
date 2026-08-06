@@ -117,6 +117,33 @@ export function findRouteRegistrations(src) {
   return out;
 }
 
+/**
+ * FULL-TREE companion to the diff-scoped check below.
+ *
+ * WHY BOTH: the diff check is the fast pre-push gate and only sees CHANGED route files — by design, so
+ * money-pr-local-gate stays sub-second. Its blind spot is everything already on main: routes that have
+ * never been rate-limited stay invisible until someone happens to edit their file, at which point the
+ * finding lands on whoever touched it (that happened twice on 2026-08-05 — #4518's four driver capture
+ * endpoints and #4525's settlement-summary read, neither of which the toucher had introduced).
+ *
+ * The rate-limit plugin is registered `global: false` in apps/backend/src/index.ts, i.e. OPT-IN ONLY.
+ * A route without `config.rateLimit` therefore has NO limit at all — not a lax one. So the existing debt
+ * is a real inventory, not a lint preference, and it deserves a number that can only go down.
+ *
+ * Returns line-INDEPENDENT keys (`file|METHOD|url`) so the baseline does not churn when unrelated code
+ * shifts line numbers.
+ */
+export function unlimitedAuthRouteKeys(src, rel) {
+  const keys = [];
+  for (const reg of findRouteRegistrations(src)) {
+    if (!AUTH_RE.test(reg.head)) continue;
+    if (RATE_RE.test(reg.head)) continue;
+    const url = reg.head.match(/["'`]([^"'`]*\/[^"'`]*)["'`]/);
+    keys.push(`${rel}|${reg.method.toUpperCase()}|${url ? url[1] : `L${reg.startLine}`}`);
+  }
+  return keys;
+}
+
 export function findUnlimitedAuthRoutes(src, addedLines /* Set<number>|null */) {
   const problems = [];
   for (const reg of findRouteRegistrations(src)) {
@@ -194,12 +221,15 @@ const nameOnly = sh(`git diff --name-only ${BASE}...HEAD -- 'apps/backend/src/**
   .map((s) => s.trim())
   .filter(Boolean);
 
-if (!nameOnly.length) {
-  console.log(`${LABEL}: OK — no backend route files changed vs ${BASE}`);
-  process.exit(0);
-}
+// NOTE: no early exit when nothing changed. The full-tree ratchet at the bottom must still run —
+// "no route files changed" is exactly the case where the diff check has nothing to say and the
+// shrink-only inventory is the only thing standing between main and a growing pile of unlimited
+// authorized endpoints.
+const skipDiffCheck = nameOnly.length === 0;
 
-const diffText = sh(
+const diffText = skipDiffCheck
+  ? ""
+  : sh(
   `git diff ${BASE}...HEAD --unified=0 -- 'apps/backend/src/**/*.routes.ts' 'apps/backend/src/**/*.route.ts'`,
 );
 const addedMap = parseAddedLines(diffText);
@@ -222,6 +252,79 @@ if (failures.length) {
       `Then re-run: node scripts/money-pr-local-gate.mjs\n`,
   );
   process.exit(1);
+}
+
+// ── FULL-TREE RATCHET ────────────────────────────────────────────────────────────────────────────
+// Shrink-only inventory of authorized routes with NO rateLimit. See unlimitedAuthRouteKeys() for why
+// this exists alongside the diff check. Deliberately does NOT try to fix the existing debt: adding a
+// limit to ~900 live endpoints is a behaviour change on every request path and belongs to a decision,
+// not to a guard. What the guard guarantees is that the number never grows.
+const BASELINE_PATH = "scripts/auth-route-rate-limit-baseline.json";
+
+function allRouteFiles() {
+  const out = [];
+  (function walk(dir) {
+    for (const e of fs.readdirSync(dir)) {
+      const p = path.join(dir, e);
+      const st = fs.statSync(p);
+      if (st.isDirectory()) {
+        if (e !== "node_modules" && e !== "dist" && e !== "__tests__") walk(p);
+      } else if (/\.routes?\.ts$/.test(e) && !e.includes(".test.")) out.push(path.relative(ROOT, p));
+    }
+  })(path.join(ROOT, "apps/backend/src"));
+  return out.sort();
+}
+
+function collectTreeKeys() {
+  const files = allRouteFiles();
+  const keys = [];
+  for (const rel of files) keys.push(...unlimitedAuthRouteKeys(fs.readFileSync(path.join(ROOT, rel), "utf8"), rel));
+  return { keys: [...new Set(keys)].sort(), files: files.length };
+}
+
+if (process.argv.includes("--write-baseline")) {
+  const { keys, files } = collectTreeKeys();
+  fs.writeFileSync(
+    path.join(ROOT, BASELINE_PATH),
+    JSON.stringify(
+      {
+        note:
+          "Authorized backend routes with NO config.rateLimit. The rate-limit plugin is registered " +
+          "global:false (opt-in), so these have NO limit at all. An INVENTORY of existing debt, not an " +
+          "approval of it. May only SHRINK.",
+        route_files: files,
+        offenders: keys,
+      },
+      null,
+      2,
+    ) + "\n",
+  );
+  console.log(`${LABEL}: baseline written — ${keys.length} unlimited authorized route(s) across ${files} file(s).`);
+  process.exit(0);
+}
+
+const baselineAbs = path.join(ROOT, BASELINE_PATH);
+if (fs.existsSync(baselineAbs)) {
+  const { keys, files } = collectTreeKeys();
+  if (files === 0) {
+    console.error(`${LABEL} FAIL — scanned ZERO route files; scope is wrong, refusing to pass vacuously.`);
+    process.exit(1);
+  }
+  const baseline = new Set(JSON.parse(fs.readFileSync(baselineAbs, "utf8")).offenders ?? []);
+  const added = keys.filter((k) => !baseline.has(k));
+  if (added.length || keys.length > baseline.size) {
+    console.error(`${LABEL} FAIL — NEW authorized route(s) with no rateLimit (plugin is global:false → NO limit at all):\n`);
+    for (const a of added.slice(0, 15)) console.error(`  - ${a}`);
+    if (keys.length > baseline.size) {
+      console.error(`\n  offender count rose ${baseline.size} -> ${keys.length}. The baseline may only SHRINK.`);
+    }
+    console.error(`\nFix: add { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } } to the registration.\n`);
+    process.exit(1);
+  }
+  console.log(
+    `${LABEL}: OK — ${nameOnly.length} changed route file(s) clean; full-tree ratchet holding at ${keys.length}/${baseline.size} unlimited authorized routes.`,
+  );
+  process.exit(0);
 }
 
 console.log(`${LABEL}: OK — ${nameOnly.length} changed route file(s); auth registrations rate-limited`);

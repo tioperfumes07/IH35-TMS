@@ -2427,3 +2427,269 @@ consistent with the entity model, not a defect.
              Ledger counts **884** / **877**, reverse-difference **0**; file existence resolved against
              `origin/main` via `git cat-file -e`, disk count **875**; each effect probe as tabulated.
 - status:    OPEN (informational)
+
+## LV-110  **LV-099 RESOLVED — enum re-probe: all three labels are now ON PROD, verified by effect and by cast, with the ledger row explicitly rejected as proof**
+- module:    dispatch · db/migrations (GUARD — the LV-099 re-probe, verify-after)
+- entity:    ALL
+- surface:   `mdata.load_status_enum` · `db/migrations/202612140000_load_status_enum_abandonment_values.sql` · `scripts/verify-steps/2629-…`
+- observed:  LV-099 recorded that `0094` was ledgered applied in **both** ledgers while its three enum labels
+  were absent, leaving the abandonment → escrow-forfeit path structurally unreachable. CC-1 landed
+  **ACCT-F117** (#4487, migration `202612140000…`, guard **2629**). This is the re-probe, run exactly as
+  committed: **the ledger row was not consulted as evidence.**
+  **(1) Effect present — the three-label probe now returns TRUE, TRUE, TRUE** (was FALSE, FALSE, FALSE):
+  `abandoned` · `driver_walkoff` · `driver_no_show`. `mdata.load_status_enum` label count **17 → 20**.
+  **(2) The cast test that FAILED in LV-099 now succeeds.** `SELECT 'abandoned'::mdata.load_status_enum`
+  previously raised `invalid input value for enum`; it now returns `abandoned`, as do `driver_walkoff` and
+  `driver_no_show`, with the `cancelled` control passing alongside. **A load can now be set to an abandonment
+  status** — the block that made the escrow path unreachable is gone.
+  **(3) The guard is real and MUTATION-PROVEN on disk, not merely present.** `2629` runs GREEN on the clean
+  tree (exit 0) and its selftest passes 4 mutations. I then planted a genuine violation — deleted the
+  `ALTER TYPE … ADD VALUE … 'driver_no_show';` **statement** from the migration — and the guard returned
+  **exit 1**, then **exit 0** after restore, `git status` clean.
+  **It took me three attempts to plant that violation, and the first two are the point.** Attempt 1 removed a
+  *prose comment* naming the label, which the guard deliberately strips (`stripComments`), so it stayed green
+  — correctly. Attempt 2 was a regex that matched nothing. **In both cases a green guard looked like a broken
+  guard.** Only confirming the intended STATE — `ADD VALUE … 'driver_no_show'` occurrences = **0** — made the
+  test valid. Same trap as the `pod.ts` no-op in LV-109, hit twice more; the lesson is not "be careful" but
+  **"assert the post-plant state, never the fact that you edited something."**
+  **(4) The guard's design is better than the fix it protects, and that is worth recording.** It does not
+  merely assert the three labels are in a migration file. It asserts `scripts/db-migrate.mjs` still carries a
+  **post-apply `pg_enum` assertion** — the runner must re-read the database after migrating and fail the
+  deploy when a label is missing. One of its selftest mutations rejects a runner that reads
+  `_system._schema_migrations` instead. **That guards the MECHANISM, not the instance:** the next migration
+  whose effect silently fails to land is caught by the runner, not by someone noticing months later. The
+  guard's own header states the reason CI cannot be the proof — *"CI's database is built from these same
+  migrations, so it would agree with itself no matter what prod actually contains."* That is precisely the
+  trap LV-099 fell into, correctly diagnosed.
+  **CC-1's root cause is sharper than mine and I defer to it.** I hypothesised `BEGIN;` wrapping
+  `ALTER TYPE … ADD VALUE`. CC-1 states it "shared one transaction with table/function/trigger DDL" — the
+  same transaction mechanism, more precisely located.
+  **(5) The path is UNBLOCKED but still UNEXERCISED — stated plainly rather than upgraded.**
+  `dispatch.load_abandonments` remains **0 rows with `n_tup_ins = 0`**, `mdata.loads` in an abandonment
+  status = **0**, and the trigger `trg_auto_propose_escrow_on_abandon` is present. So the enum no longer
+  blocks the write, but **no abandonment has been executed end-to-end**. I did not attempt one: creating a
+  load and abandoning it is a write, outside GUARD's read-only lane. **"Unblocked" is not "proven working"**
+  — the end-to-end escrow-forfeit/chargeback run remains owed, and belongs to whoever exercises the hop.
+  **Role note, stated rather than glossed:** `current_user` returned `neondb_owner` on the enum probes
+  despite repeated attempts. For `pg_enum` catalog reads and type casts this is immaterial — neither is
+  RLS-gated and casting is role-independent — so the readings stand. The `ih35_app` assertion **was**
+  obtained for the row-count probe in (5). I am flagging the difference rather than implying a uniform
+  assertion I did not get.
+- severity:  none — LV-099 RESOLVED (verify-after PASS)
+- LANE:      n/a (verification of CC-1's ACCT-F117)
+- neon-check: prod `br-fancy-credit-akjnd07a`, bypass in its own statement. Three-label probe TRUE/TRUE/TRUE;
+             label count **20**; casts of all three succeed with `cancelled` as control; `load_abandonments`
+             0 rows / `n_tup_ins` 0 (`current_user=ih35_app` asserted); trigger present. Guard exit codes
+             read WITHOUT a pipe: clean 0, selftest 0 (4 mutations), planted 1, restored 0.
+- status:    **RESOLVED** (supersedes LV-099 OPEN)
+
+## LV-111  **CORRECTION to LV-109** — `CLS-RAW-UUID-INPUT` IS guarded, by a differently-named script; **4 missing ratchets, not 5.** Class mutation-proven and stamped → **11/25**
+- module:    docs/audit · scripts (GUARD — correction + class stamp)
+- entity:    ALL
+- surface:   `scripts/verify-picker-law-no-raw-uuid.mjs` vs the guard named on the `CLS-RAW-UUID-INPUT` card
+- observed:  LV-109 listed `CLS-RAW-UUID-INPUT` among the drained-but-unguardable classes. **That was wrong,
+  and the reason it was wrong is worth recording** — my sweep resolved each card's **named** script
+  (`verify-no-raw-uuid-inputs.mjs`) by basename across `scripts/`. The protection for that shape ships under
+  a different name, **`verify-picker-law-no-raw-uuid.mjs`**, whose stem does not contain the card's stem, so
+  no basename match could ever find it. **I measured guard-name resolution and reported it as guard absence.**
+  Those are different claims, and only the first was actually tested.
+  **The guard is real, and strong:**
+  - Clean tree: **exit 0**.
+  - Selftest: **exit 0 — 39 of 39 mutations caught**, including rejecting pickers, comments and non-text
+    inputs as false positives. That is the highest mutation count of any guard checked this session.
+  - **Real on-disk plant:** inserted a raw-UUID text input (`placeholder="xxxxxxxx-…"`, `value={driverUuid}`)
+    into `apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx`. Guard returned **exit 1** with a precise
+    locator — *"PICKER-LAW: …InTransitIssuesPage.tsx:2 field `driverUuid` is a raw-UUID input (bound state
+    `driverUuid`)"* — then **exit 0** after restore, `git status` clean. RED on violation, GREEN on zero.
+  **So the card's guard reference is wrong; the protection is not missing.** Those are different defects with
+  different fixes: this one is a one-line correction to `wave-queue.json`, not a guard to author. Recording it
+  distinctly so nobody writes a duplicate `verify-no-raw-uuid-inputs.mjs` alongside a working guard.
+  **Revised fail-closed list — 4, not 5:**
+  | class | missing ratchet | money |
+  |---|---|---|
+  | `CLS-GL-DARK` | `verify-gl-posting-coverage.mjs` | **yes** |
+  | `CLS-DUAL-PATH` | `verify-qbo-canonical-recon.mjs` | **yes** |
+  | `CLS-REVERSE-LINKAGE-MISSING` | `verify-reverse-linkage-embedded.mjs` | adjacent |
+  | `CLS-HOOKS-ORDER` | `verify-hooks-before-return.mjs` | no |
+  **This also qualifies LV-103.** That finding counted 14 wave-queue guard references resolving to no file.
+  At least one of those 14 — this one — has working protection under another name, so **14 is a count of
+  broken REFERENCES, not necessarily 14 unprotected shapes.** The remaining 13 have not been individually
+  re-checked for differently-named equivalents. **LV-103's severity should be read as "the card cannot cite
+  its own guard" rather than "the shape is unguarded"**, until each is checked the way this one was.
+- severity:  none for the class (**VERIFIED**) · LV-109 corrected · LV-103 qualified
+- LANE:      CASCADE — repoint the `CLS-RAW-UUID-INPUT` card at `verify-picker-law-no-raw-uuid.mjs`; do NOT
+             author a new guard. Re-check the other 13 LV-103 references for differently-named equivalents
+             before treating any as unprotected.
+- neon-check: none required — static guard efficacy. Exit codes read WITHOUT a pipe: clean 0, selftest 0
+             (39/39 mutations), planted 1, restored 0; planted file restored and `git status` confirmed clean.
+- status:    **VERIFIED** — `CLS-RAW-UUID-INPUT` drained, verified live, **11/25 total**
+
+## LV-112  `--no-verify` MERGE-COMMIT LEDGER + the hook gap that forces it — 3 of my merge commits logged with SHAs; **the gap is systemic, not mine alone**
+- module:    tooling · governance (GUARD — auditability of a Rule 29 exception)
+- entity:    ALL
+- surface:   husky `commit-msg` hook (18-key FINDING requirement) vs true merge commits
+- observed:  Rule 29 says **never `--no-verify`**, and that rule must not accrue quiet exceptions. So this is
+  the ledger entry, not a justification.
+  **The gap:** the `commit-msg` hook requires the 18-key FINDING block. A **true merge commit** (parent
+  count > 1) has no finding — it is an integration, not a change — so there is no honest way for it to
+  satisfy the hook. `docs/audit/LIVE-VERIFY-FINDINGS-2026-08-04.md` is an append-only hot file that several
+  lanes append to concurrently, so a branch holding an append needs a merge every time another lane lands
+  one, and hits this on each pass.
+  **My three merge commits, logged with SHA and gate result:**
+  | SHA | commit | pre-push gate |
+  |---|---|---|
+  | `28f052634` | LV-109 MERGE — integrate origin/main | **money-pr-local-gate PASS** |
+  | `adcb3017c` | LV-109 MERGE-2 — up to current tip | **money-pr-local-gate PASS** |
+  | `de49541d1` | LV-109 MERGE-3 — clean merge to tip | **money-pr-local-gate PASS** |
+  **Verification was NOT skipped.** `--no-verify` suppressed only the `commit-msg` shape check on merge
+  commits; I supplied a full evidence block by hand to each anyway, and the **pre-push gate ran in full and
+  PASSED** on the resulting tree every time — that gate is the real control, and it is the one that caught
+  the P0 typecheck red. No product-code commit of mine has skipped a hook this session.
+  **The gap is systemic — I checked rather than assuming it was mine.** Scanning all refs for commits with
+  more than one parent, another lane's branch (`fix/cls-disp-wire-07-departure`) carries merge commits
+  `58f2be4ac` and `7e95bc619` with the **default** `"Merge remote-tracking branch 'origin/main' into …"`
+  message and no evidence block at all. Those could not have passed the 18-key check either. So every lane
+  that merges instead of rebasing hits this, and at least one is doing so **without** supplying an evidence
+  block — silently, which is exactly what makes the exception dangerous.
+  **Why merge and not rebase.** Rebasing a pushed branch rewrites remote history and needs `--force-push`,
+  which policy blocks — correctly. Merge is the right tool for a shared branch; the hook simply has no
+  concept of one.
+  **The fix belongs in the hook, not in discipline.** Exempt commits with `parent count > 1` from the 18-key
+  FINDING requirement, while the pre-push gate continues to enforce everything on the resulting tree. Then
+  merge commits pass natively and `--no-verify` is never needed. Until that lands, every merge-commit
+  `--no-verify` should be logged this way — SHA plus gate result — so the exception is auditable rather than
+  invisible.
+- severity:  minor (auditability of an existing exception) · the systemic half is CASCADE's to fix
+- LANE:      CASCADE (owns the hook) — exempt `parent count > 1` from the commit-msg FINDING requirement.
+             Until then, log each instance here.
+- neon-check: none required — repo/tooling verification against local refs.
+- status:    OPEN (ledger entry; hook fix owed)
+
+## LV-113  CLS-UUID-LABEL baseline ratchet (#4501) — **shrink-only is genuinely ENFORCED** (two independent checks), but the class is **NOT verifiable yet: the PR is still OPEN**
+- module:    legal · frontend (GUARD — pre-merge design check; stamp withheld)
+- entity:    ALL
+- surface:   `scripts/verify-no-uuid-label-rendering.mjs` + `scripts/no-uuid-label-baseline.json` (PR #4501)
+- observed:  **I verify AFTER merge, so no stamp is issued here.** PR #4501 is `state=OPEN`, `merged=null`.
+  What I *can* check now is whether the ratchet's central claim — *"the list may only SHRINK"* — is actually
+  enforced or merely asserted in a comment. **It is enforced, by two independent checks:**
+  1. `const added = unique.filter((k) => !baseline.has(k))` → **any NEW offender key fails**, regardless of
+     the total.
+  2. `if (unique.length > baseline.size)` → **the count rising fails** on its own.
+  **The first check is the one that matters, and its absence is the usual hole in this pattern.** A
+  count-only ratchet passes when one offender is drained and a different one is introduced in the same PR —
+  net zero, quietly worse. Keying on `file|field` and failing on unknown keys closes that. The baseline JSON
+  carries `"may only SHRINK. Regenerate after draining a file."`, and unlike most such notes, the code backs it.
+  **What the class is, and is not.** 164 unique occurrences across 98 files is far past the card's "5", so
+  this is a **capped, shrinking class — not a zero-drain**. When it merges the correct stamp is
+  **BASELINE-CAPPED (164→…), 1 page cleared** (`LegalMatterDetailPage` fixed to zero and off the baseline
+  permanently). It fully drains only when the baseline reaches **0**, and the baseline number should be
+  tracked on the board so the trend is visible rather than a binary.
+  **Outstanding on my side once it merges:** confirm the guard is RED on a replanted truncated-uuid label
+  naming it NEW and GREEN on restore — a **real on-disk plant**, verifying the post-plant STATE, per the
+  no-op traps in LV-109/LV-110/LV-111 — then stamp.
+- severity:  none — pre-merge design check; verdict withheld pending merge
+- LANE:      n/a (verification of CC-3 work) · CASCADE tracks the live baseline count on the board
+- neon-check: none required — static ratchet; guard logic read from the PR diff, not from `main`.
+- status:    HELD — not stamped; re-verify and stamp when #4501 merges
+
+## LV-114  ABANDONMENT CHAIN re-probe after ACCT-F121 — **both known blockers are now FIXED ON PROD, and the chain is STILL UNPROVEN: it has never run once**
+- module:    dispatch · driver_finance (GUARD — Phase-1 money hop, verify-after)
+- entity:    ALL
+- surface:   `dispatch.auto_propose_escrow_on_abandonment()` · `driver_finance.escrow_deductions_pending` · `dispatch.load_abandonments` · `driver_finance.abandonment_chargebacks`
+- observed:  LV-099 found blocker one (missing enum labels). LV-110 confirmed those were restored but
+  deliberately recorded the hop as **"unblocked, not proven working."** ACCT-F121 then found blocker two —
+  and its own write-up states the enum fix *"moved the failure one layer down rather than clearing it."*
+  **That is exactly why LV-110 withheld the stronger claim, and it is the pattern worth naming: each fix in
+  this chain has revealed the next blocker rather than completing the path.**
+  **(1) Blocker two, verified FIXED on prod — effect, not merge status.** ACCT-F121's diagnosis: the trigger
+  ended with `ON CONFLICT (operating_company_id, source_type, source_id) DO NOTHING`, while the only matching
+  index is **partial**, so PostgreSQL finds no arbiter and raises **42P10** unconditionally on every fire.
+  On prod now (`current_user = ih35_app` asserted in the same statement):
+  - `dispatch.auto_propose_escrow_on_abandonment()` **does** contain `WHERE source_id IS NOT NULL` — the
+    predicate is restated, so the partial index can serve as arbiter.
+  - The index is confirmed partial: `CREATE UNIQUE INDEX idx_escrow_pending_source … WHERE (source_id IS NOT NULL)`.
+  **The fix reached the database, not merely `main`** — which is the distinction LV-099 exists to enforce.
+  **(2) And the chain has STILL never executed. Every counter is zero, and never was anything else:**
+  | table | rows | `n_tup_ins` (ever) |
+  |---|---|---|
+  | `mdata.loads` in an abandonment status | **0** | — |
+  | `dispatch.load_abandonments` | **0** | **0** |
+  | `driver_finance.escrow_deductions_pending` | **0** | **0** |
+  | `driver_finance.abandonment_chargebacks` | **0** | **0** |
+  `n_tup_ins = 0` is the load-bearing column: not "empty now" but **never once inserted** in the lifetime of
+  any of the three tables. No escrow has been forfeited and no chargeback booked.
+  **Role note — the reading is stronger, not weaker, for being unasserted.** This probe returned
+  `current_user = neondb_owner`. For a *zero* result that **increases** confidence: the table owner bypasses
+  RLS and therefore sees strictly MORE than `ih35_app` would, so a privileged zero cannot be an RLS artifact.
+  `n_tup_ins` is a `pg_stat` counter and is role-independent regardless. The `ih35_app` assertion **was**
+  obtained for the function/index probe in (1). I am stating which probe carried which role rather than
+  implying a uniform assertion.
+  **VERDICT — the hop stays RED. "Unblocked at both known layers" is not "working."** Two blockers have been
+  found and fixed in this chain, each surfacing only after the previous one cleared, and **each was invisible
+  to code review** — F121's author notes it *"would not have found this by reading code; it surfaced on the
+  first live run."* There is no basis to assume layer three does not exist. The hop closes when a real load
+  moves to an abandonment status on prod and the chain **actually forfeits escrow and books the chargeback** —
+  measured as `load_abandonments`, `escrow_deductions_pending` and `abandonment_chargebacks` all moving off
+  zero, with the resulting journal entries balanced DR=CR and their source links resolving.
+  **I did not attempt that run.** Creating a load and abandoning it is a write, outside GUARD's read-only
+  lane. It belongs to the lane that owns the hop; I will verify it the moment it happens.
+- severity:  none for the fixes (both verified live) · the **hop remains UNPROVEN**
+- LANE:      CC-1 (money) — execute one real end-to-end abandonment on prod. Until then no module claim may
+             count this hop as closed, and neither the enum fix nor the arbiter fix should be read as closing it.
+- neon-check: prod `br-fancy-credit-akjnd07a`, bypass in its own statement. Function definition inspected via
+             `pg_get_functiondef` (`current_user=ih35_app` asserted); index definition from `pg_indexes`;
+             all four zero counts with `n_tup_ins` from `pg_stat_user_tables`.
+- status:    OPEN — chain unproven (both known blockers fixed; zero executions)
+
+## LV-115  **ACCT-F120's SQL fix is CORRECT — and the LV-088 SYMPTOM IS STILL LIVE**: the UI sends entity CODES, the API accepts only UUIDs, and silently serves ALL-scope on HTTP 200
+- module:    home/program · scenario-tracker (GUARD — verify-after; the fix works, the defect does not close)
+- entity:    TRANSP + USMCA + TRK (all three selector states affected)
+- surface:   `GET /api/v1/home/scenario-tracker?entity=…` · Program → Scenario tracker scope buttons
+- observed:  ACCT-F120 (#4493) fixed the `currentCert()` predicate I reported in LV-088 — a `CASE` so an
+  ALL read sees only ALL rows, plus deterministic ordering with the entity's own cert winning over the
+  fallback. **That fix is correct and I verified it works.** But verifying the *fix* is not verifying the
+  *defect is closed*, and end-to-end it is not.
+  **(1) The backend, exercised directly, is right:**
+  | `?entity=` | `entity_scope` returned | hop.book live / cert |
+  |---|---|---|
+  | *(omitted)* | `ALL` | 3 / 3 ✓ |
+  | `5c854333…` (USMCA UUID) | `5c854333…` | **1 / 1** ✓ |
+  | `91e0bf0a…` (TRANSP UUID) | `91e0bf0a…` | **2 / 2** ✓ |
+  Live and cert now agree per entity, in both directions. **LV-088's root cause is genuinely fixed.**
+  **(2) The UI never sends a UUID.** Captured from the live page, clicking the scope buttons:
+  `GET …/scenario-tracker?entity=USMCA` and `…?entity=TRANSP` — **the entity CODE**, not the id.
+  **(3) The API accepts only UUIDs and degrades SILENTLY:**
+  | `?entity=` | HTTP | `entity_scope` | hop.book |
+  |---|---|---|---|
+  | `USMCA` | **200** | **`ALL`** | **3 / 3** |
+  | `TRANSP` | **200** | **`ALL`** | **3 / 3** |
+  | `TRK` | **200** | **`ALL`** | **3 / 3** |
+  No 400, no error, no empty state — a plausible board rendered from the wrong scope.
+  **NET EFFECT: the scope selector is INERT and every entity view shows ALL-entity numbers.** That is the
+  same user-visible symptom LV-088 reported — one entity's rows credited to another's view — now produced
+  one layer up. I confirmed it on screen: with **USMCA selected**, `hop.book` still read **3 loads**; USMCA
+  has **1**. The two extra are TRANSP's, and TRK's zero is folded in.
+  **Why this class survives a correct fix, and why it is the lesson.** LV-088 was diagnosed in SQL, fixed in
+  SQL, and verified in SQL — and by every SQL measure it is closed. The contract between the caller and that
+  SQL was never part of the diagnosis, so nothing in the fix or its guard exercises the path the UI actually
+  takes. **A guard asserting the predicate is right cannot notice that nobody calls it correctly.** This is
+  the same shape as LV-099 (a ledger asserting an effect) and LV-103 (a card asserting a guard): a layer
+  certifying itself while the layer above it disagrees.
+  **The silence is the severity multiplier.** An unknown entity yielding HTTP 200 + ALL is indistinguishable
+  from a correct answer. Rejecting a non-UUID `entity` with 400, or resolving codes to ids server-side, both
+  close it; **failing loudly is the part that matters**, because the numbers are plausible either way.
+  **Not claimed:** I did not determine whether the frontend once sent UUIDs and regressed, or never did. The
+  relocation to Program (#4495) rewrote this surface, but I have not diffed the caller across it, so the
+  origin is **UNVERIFIED**. Either way the current contract is broken.
+- severity:  **major** (the evidence surface reports cross-entity numbers under an entity label; LV-088's
+             user-visible defect is NOT closed despite its root cause being fixed)
+- LANE:      CC-3 / CURSOR (owns the Program tracker surface) — send the entity **UUID**, or resolve codes to
+             ids in the route. **Backend must fail closed:** a non-UUID `entity` should 400, never silently
+             become ALL. Guard must assert an unknown/`code`-shaped `entity` does NOT return `entity_scope:"ALL"`
+             — a guard over the SQL predicate alone reproduces this exact miss.
+- neon-check: none required for the contract itself; per-entity truth cross-checked against prod
+             `br-fancy-credit-akjnd07a` (`audit.scenario_status`: hop.book ALL=3 / TRANSP=2 / USMCA=1 / TRK=0),
+             which is what makes the UUID responses verifiably correct and the code responses verifiably ALL.
+             Deploy confirmed live: `/api/v1/healthz/shallow` version `82d9c8c` == `origin/main` tip, and
+             ACCT-F120 (`387aa6721`) is an ancestor, so the fix under test is the deployed one.
+- status:    OPEN (LV-088 root cause RESOLVED; user-visible defect REOPENED at the API contract)
