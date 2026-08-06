@@ -1,0 +1,140 @@
+#!/usr/bin/env node
+// Enforce CodeQL findings from the SARIF on disk, because the Security-tab upload is unavailable.
+//
+// WHY: publishing SARIF is a GitHub Advanced Security feature. GHAS is free on public repositories
+// and licensed on private ones, so when this repo went private on 2026-08-06 the upload began
+// returning 403 "Code scanning is not enabled for this repository" and failed the job — while the
+// scan itself was perfectly healthy (4,639 TS + 4,242 JS files analysed, zero findings).
+//
+// Losing the upload must not mean losing the CHECK. `continue-on-error` would have produced a green
+// badge that verified nothing, which is exactly the fake-green this repo's rules forbid. Instead the
+// analysis still runs in full and this reads its output directly, failing the build on real findings.
+//
+// Fails on results whose effective severity is error (CodeQL's default failure bar, matching what
+// code-scanning would surface as an alert). Warnings and notes are printed, not fatal.
+//
+// --selftest proves it can go red: a synthetic SARIF with one error-level result must exit 1, and the
+// same file with that result removed must exit 0.
+
+import fs from "node:fs";
+import path from "node:path";
+
+const LABEL = "ci-codeql-enforce-sarif";
+
+function severityOf(result, rulesById) {
+  // SARIF precedence: result.level, then the rule's defaultConfiguration.level, then "warning".
+  if (result.level) return result.level;
+  const ruleId = result.ruleId || result.rule?.id;
+  const rule = ruleId ? rulesById.get(ruleId) : undefined;
+  return rule?.defaultConfiguration?.level || "warning";
+}
+
+function analyze(sarifPath) {
+  const sarif = JSON.parse(fs.readFileSync(sarifPath, "utf8"));
+  const findings = [];
+  let total = 0;
+  for (const run of sarif.runs || []) {
+    const rulesById = new Map();
+    for (const r of run.tool?.driver?.rules || []) rulesById.set(r.id, r);
+    for (const ext of run.tool?.extensions || []) {
+      for (const r of ext.rules || []) rulesById.set(r.id, r);
+    }
+    for (const result of run.results || []) {
+      total++;
+      const level = severityOf(result, rulesById);
+      const loc = result.locations?.[0]?.physicalLocation;
+      findings.push({
+        level,
+        ruleId: result.ruleId || result.rule?.id || "(unknown rule)",
+        message: (result.message?.text || "").split("\n")[0],
+        file: loc?.artifactLocation?.uri || "(no location)",
+        line: loc?.region?.startLine ?? 0,
+      });
+    }
+  }
+  return { total, findings };
+}
+
+if (process.argv.includes("--selftest")) {
+  const tmp = fs.mkdtempSync(path.join(process.env.TMPDIR || "/tmp", "sarifsel-"));
+  const withError = {
+    runs: [
+      {
+        tool: { driver: { rules: [{ id: "js/sql-injection", defaultConfiguration: { level: "error" } }] } },
+        results: [
+          {
+            ruleId: "js/sql-injection",
+            message: { text: "planted finding" },
+            locations: [
+              { physicalLocation: { artifactLocation: { uri: "a.ts" }, region: { startLine: 7 } } },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  const p1 = path.join(tmp, "bad.sarif");
+  fs.writeFileSync(p1, JSON.stringify(withError));
+  const bad = analyze(p1);
+  const badErrors = bad.findings.filter((f) => f.level === "error");
+  if (badErrors.length !== 1) {
+    console.error(`${LABEL}: SELFTEST FAIL — planted error-level finding not detected`);
+    process.exit(1);
+  }
+  const p2 = path.join(tmp, "clean.sarif");
+  fs.writeFileSync(p2, JSON.stringify({ runs: [{ tool: { driver: { rules: [] } }, results: [] }] }));
+  const clean = analyze(p2);
+  if (clean.findings.length !== 0) {
+    console.error(`${LABEL}: SELFTEST FAIL — clean SARIF reported findings`);
+    process.exit(1);
+  }
+  fs.rmSync(tmp, { recursive: true, force: true });
+  console.log(`${LABEL}: selftest PASS — RED on a planted error-level finding, GREEN on a clean SARIF.`);
+  process.exit(0);
+}
+
+const dir = process.argv[2];
+if (!dir) {
+  console.error(`${LABEL}: usage: ${path.basename(process.argv[1])} <sarif-output-dir>`);
+  process.exit(2);
+}
+if (!fs.existsSync(dir)) {
+  // Refuse to pass silently: a missing output directory means the analysis did not produce results,
+  // which is indistinguishable from "the check did not run" and must not read as success.
+  console.error(`${LABEL} FAILED — no SARIF output at ${dir}. The analysis produced nothing to check.`);
+  process.exit(1);
+}
+const sarifs = fs.readdirSync(dir).filter((f) => f.endsWith(".sarif"));
+if (sarifs.length === 0) {
+  console.error(`${LABEL} FAILED — ${dir} contains no .sarif file. Nothing was verified.`);
+  process.exit(1);
+}
+
+let errors = 0;
+let warnings = 0;
+let scanned = 0;
+for (const f of sarifs) {
+  const { total, findings } = analyze(path.join(dir, f));
+  scanned += total;
+  for (const x of findings) {
+    const line = `  [${x.level}] ${x.ruleId} — ${x.file}:${x.line} — ${x.message}`;
+    if (x.level === "error") {
+      errors++;
+      console.error(line);
+    } else {
+      warnings++;
+      console.log(line);
+    }
+  }
+}
+
+if (errors > 0) {
+  console.error(
+    `\n${LABEL} FAILED — ${errors} error-level CodeQL finding(s) across ${sarifs.length} SARIF file(s).`
+  );
+  process.exit(1);
+}
+console.log(
+  `${LABEL} OK — ${sarifs.length} SARIF file(s), ${scanned} result(s), 0 error-level findings ` +
+    `(${warnings} warning/note).`
+);
