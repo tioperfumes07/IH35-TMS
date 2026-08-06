@@ -1,7 +1,7 @@
 name: Block-Ready Manifest Split Guard
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.sha || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 # Enforces the per-block manifest pattern introduced in STRUCTURAL-MANIFEST-SPLIT.
