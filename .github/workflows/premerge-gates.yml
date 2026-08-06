@@ -24,7 +24,7 @@ jobs:
   # Triggered on any PR that adds or modifies .sql files under db/migrations/.
   # Fails if a new CREATE TABLE with operating_company_id lacks ENABLE ROW LEVEL SECURITY.
   rls-migration-scan:
-    runs-on: [self-hosted, mac]
+    runs-on: ubuntu-latest
     timeout-minutes: 5
 
     steps:
@@ -47,7 +47,7 @@ jobs:
   # Validates tsconfig.json has strict=true + no bare @ts-ignore bypasses.
   # Then runs tsc --noEmit so any TS18048 "Object is possibly undefined" hard-fails.
   typescript-strict-null:
-    runs-on: [self-hosted, mac]
+    runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
@@ -75,7 +75,7 @@ jobs:
   # Scans all .sql files in db/migrations/ for GRANT ... TO <role>.
   # Fails if a role is not in the canonical allowed list (ih35_app, neondb_owner, …).
   migration-role-validation:
-    runs-on: [self-hosted, mac]
+    runs-on: ubuntu-latest
     timeout-minutes: 5
 
     steps:
