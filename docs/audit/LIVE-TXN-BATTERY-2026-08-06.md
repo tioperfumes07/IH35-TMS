@@ -373,6 +373,41 @@ is `L-20260802-0258` — **two different load-number formats on the same entity*
 
 ---
 
+## CLASS: `CLS-BANK-MATCH-DENSITY` — SS-003's stated cause is wrong on **both** counts
+
+### LV-TXN-012 — "the rule engine covers <2%" describes an engine with **ZERO rules**, and the auto-matcher **does not exist server-side** — **RECLASSIFY (feature gap, not a broken engine)**
+- **filed as:** *"98.4% of bank transactions stuck in for_review… **The auto-categorization rule engine
+  exists but covers <2% of volume.** Auto-categorization rule engine matches only 170/11002 (1.5%)."*
+- **live status distribution (prod, bypass in-statement):**
+
+  | status | n | `categorized_at` | `categorization_gl_account_id` | `plaid_category` | suggested match |
+  |---|---|---|---|---|---|
+  | `pending_categorization` | **10,902** | 0 | 0 | **10,902** | **0** |
+  | `categorized` | **170** | 170 | 170 | 170 | **0** |
+
+- **COUNT 1 — there are no rules. `accounting.banking_rules` = 0 rows.** A rule engine with **zero rules
+  configured** matching zero transactions is **correct behaviour**, not an engine "covering <2%". Bank
+  rules are user-authored (this is the QuickBooks model), so an empty rule set on a system nobody has
+  configured is expected state. **This is an ops/configuration task, not a code defect** — and a builder
+  sent to "fix the rule engine" would be hunting a bug in something behaving correctly.
+- **COUNT 2 — there is no server-side auto-matcher at all.** `suggested_match_bill_id` /
+  `suggested_match_invoice_id` are **0 across all 11,072 rows**, and the only writer is
+  `banking/categorization.routes.ts:352-384`, which assigns them from
+  **`body.data.suggested_match_invoice_id ?? null`** — i.e. the suggestion is **supplied by the client**,
+  never computed. Nothing on the server proposes a match. So the empty suggestion columns are not an
+  engine underperforming; **the capability that would fill them does not exist.**
+- **what IS genuinely there:** all 10,902 pending rows carry a `plaid_category` from the feed, so the raw
+  material for matching/categorising is present and waiting. The 170 categorised rows all carry a GL
+  account, so the categorise write-path works when it is invoked.
+- **corrected framing:** this class is **(a) an unbuilt feature** — server-side match suggestion, which
+  QBO/NetSuite both do automatically — plus **(b) an empty rule set**, which is configuration. It is
+  **not** a defective engine. Sizing it as "fix the engine" would be wrong in both direction and effort.
+- **LINK-006 folds in here** per LV-TXN-011: `matched_bill_id` / `matched_payment_id` /
+  `matched_invoice_id` all 0 is the same fact as this class, counted once.
+- **LANE: CC-1 (money)** for the matcher; **owner/ops** for the rule set. **status:** OPEN — board row filed.
+
+---
+
 ## Entity-safety note
 No write has been performed on TRANSP in this session. All observation above is read-only; the only
 mutation contemplated (walking `L-20260802-0258` forward) is on USMCA test data.
