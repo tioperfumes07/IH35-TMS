@@ -55,6 +55,10 @@ async function assertDriverCompany(client: Queryable, driverId: string, operatin
       JOIN org.user_company_access uca ON uca.user_id = d.identity_user_id
       WHERE d.id = $1
         AND uca.company_id = $2
+        -- The driver ROW must belong to the company too, not merely their user account. Without this a
+        -- driver whose identity_user_id has access to company X, but whose driver record lives in
+        -- company Y, passes the assert and can be added to X's team.
+        AND d.operating_company_id = $2
         AND uca.deactivated_at IS NULL
       LIMIT 1
     `,
@@ -107,7 +111,9 @@ export async function listDriverTeams(userId: string, operatingCompanyId: string
           concat_ws(' ', cd.first_name, cd.last_name) AS co_driver_name
         FROM mdata.driver_teams t
         JOIN mdata.drivers pd ON pd.id = t.primary_driver_id
+                             AND pd.operating_company_id = t.operating_company_id
         JOIN mdata.drivers cd ON cd.id = t.secondary_driver_id
+                             AND cd.operating_company_id = t.operating_company_id
         WHERE t.operating_company_id = $1
         ORDER BY t.is_active DESC, t.created_at DESC
       `,
@@ -128,7 +134,9 @@ export async function getDriverTeam(userId: string, operatingCompanyId: string, 
           concat_ws(' ', cd.first_name, cd.last_name) AS co_driver_name
         FROM mdata.driver_teams t
         JOIN mdata.drivers pd ON pd.id = t.primary_driver_id
+                             AND pd.operating_company_id = t.operating_company_id
         JOIN mdata.drivers cd ON cd.id = t.secondary_driver_id
+                             AND cd.operating_company_id = t.operating_company_id
         WHERE t.id = $2
           AND t.operating_company_id = $1
         LIMIT 1
@@ -240,11 +248,12 @@ export async function updateTeamSplit(
         SELECT id
         FROM mdata.loads
         WHERE team_id = $1
+          AND operating_company_id = $3
           AND status = ANY($2::mdata.load_status_enum[])
           AND soft_deleted_at IS NULL
         LIMIT 1
       `,
-      [input.team_id, ACTIVE_LOAD_STATUSES]
+      [input.team_id, ACTIVE_LOAD_STATUSES, input.operating_company_id]
     );
     if (inProgressRes.rows[0]?.id) throw new Error("E_TEAM_HAS_IN_PROGRESS_LOADS");
 
@@ -317,11 +326,12 @@ export async function deactivateTeam(
         SELECT id
         FROM mdata.loads
         WHERE team_id = $1
+          AND operating_company_id = $3
           AND status = ANY($2::mdata.load_status_enum[])
           AND soft_deleted_at IS NULL
         LIMIT 1
       `,
-      [input.team_id, ACTIVE_LOAD_STATUSES]
+      [input.team_id, ACTIVE_LOAD_STATUSES, input.operating_company_id]
     );
     if (inProgressRes.rows[0]?.id) throw new Error("E_TEAM_HAS_IN_PROGRESS_LOADS");
     const updated = await client.query(

@@ -22,7 +22,9 @@ const createBodySchema = z.object({
 });
 
 export async function registerPaymentApplicationsRoutes(app: FastifyInstance) {
-  app.post("/api/v1/accounting/payments/:paymentId/applications", async (req, reply) => {
+  // Rate-limited (CodeQL js/missing-rate-limiting). A money-mutating POST with no limit at all, since
+  // the plugin is global:false. 30/min for a write path rather than the 60/min used for reads.
+  app.post("/api/v1/accounting/payments/:paymentId/applications", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -60,13 +62,22 @@ export async function registerPaymentApplicationsRoutes(app: FastifyInstance) {
       const applicationId = applied.application_ids[0];
       if (!applicationId) return { code: 500 as const, error: "payment_application_create_failed" };
 
+      // ENTITY-SCOPED read-backs (CLS-JOIN-ENTITY-UNSCOPED). These two values are not display-only —
+      // they are written straight into the CRUD audit record below as the post-application balances.
+      // Read by id alone, an id belonging to another operating company still matches (RLS is no backstop:
+      // org.user_accessible_company_ids() returns EVERY active company when the role is Owner), so the
+      // audit trail could record another entity's unapplied/open balance as this application's outcome.
+      // An audit row that is wrong is worse than one that is missing.
       const paymentAfterRes = await client.query(
-        `SELECT amount_unapplied_cents FROM accounting.payments WHERE id = $1 LIMIT 1`,
-        [params.data.paymentId]
+        `SELECT amount_unapplied_cents FROM accounting.payments WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [params.data.paymentId, query.data.operating_company_id]
       );
       const invoiceAfterRes =
         targetKind === "invoice"
-          ? await client.query(`SELECT amount_open_cents, status FROM accounting.invoices WHERE id = $1 LIMIT 1`, [targetId])
+          ? await client.query(
+              `SELECT amount_open_cents, status FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+              [targetId, query.data.operating_company_id]
+            )
           : { rows: [{ amount_open_cents: 0, status: "n/a" }] };
 
       await appendCrudAudit(

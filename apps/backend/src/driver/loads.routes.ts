@@ -1,3 +1,4 @@
+import { latchOnDeliveryEvidence } from "../dispatch/delivery-evidence-latch.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -442,7 +443,13 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
     return acceptance;
   });
 
-  app.post("/api/v1/driver/loads/:id/stops/:stopId/arrive", async (req, reply) => {
+  app.post(
+    "/api/v1/driver/loads/:id/stops/:stopId/arrive",
+    // CLS-DISP-WIRE-07 — these driver capture endpoints authorize and write, so CodeQL
+    // (js/missing-rate-limiting) requires an explicit limit. 60/min matches the other authorized
+    // write routes and is far above a real driver's arrive/depart cadence.
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const params = stopParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
@@ -489,6 +496,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       );
 
       await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.id, nextLoadStatus]);
+
       return { lifecycle_stage: lifecycleFromLoadStatus(nextLoadStatus) };
     });
 
@@ -501,7 +509,13 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.post("/api/v1/driver/loads/:id/stops/:stopId/depart", async (req, reply) => {
+  app.post(
+    "/api/v1/driver/loads/:id/stops/:stopId/depart",
+    // CLS-DISP-WIRE-07 — these driver capture endpoints authorize and write, so CodeQL
+    // (js/missing-rate-limiting) requires an explicit limit. 60/min matches the other authorized
+    // write routes and is far above a real driver's arrive/depart cadence.
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const params = stopParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
@@ -511,9 +525,10 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
     if (!driver) return;
 
     const updated = await withCurrentUser(req.user!.uuid, async (client) => {
-      const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; latitude: number | null; longitude: number | null; sequence_number: number }>(
+      const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; latitude: number | null; longitude: number | null; sequence_number: number; operating_company_id: string }>(
         `
-          SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude, s.sequence_number
+          SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude, s.sequence_number,
+                 l.operating_company_id::text AS operating_company_id
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
@@ -521,6 +536,13 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
             AND s.load_id = $2
             AND (l.assigned_primary_driver_id = $3 OR l.assigned_secondary_driver_id = $3)
             AND l.soft_deleted_at IS NULL
+            -- ENTITY PREDICATE (verify-mdata-entity-scope): the load must belong to the SAME operating
+            -- company as the driver acting on it. The driver session carries only an id, so the entity
+            -- is derived from the driver's own row (mdata.drivers.operating_company_id, uuid NOT NULL,
+            -- verified on prod). Selecting l.operating_company_id for the revenue latch does NOT scope
+            -- the query — a scope column must be COMPARED, not merely projected — and this is the
+            -- predicate that makes the value we hand to the latch provably the driver's own entity.
+            AND l.operating_company_id = (SELECT d.operating_company_id FROM mdata.drivers d WHERE d.id = $3)
           LIMIT 1
         `,
         [params.data.stopId, params.data.id, driver.id]
@@ -569,6 +591,17 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       );
 
       await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.id, nextLoadStatus]);
+
+      // CLS-DISP-WIRE-07 — latch revenue on the DRIVER's delivery departure, not only the office
+      // transition. No-op unless nextLoadStatus is a delivery-evidence status, and it can only be
+      // that on the FINAL active delivery stop (multi-drop guard above), so a multi-drop load still
+      // earns exactly once, at the last drop.
+      await latchOnDeliveryEvidence({
+        operatingCompanyId: stop.operating_company_id,
+        loadId: params.data.id,
+        targetStatus: nextLoadStatus,
+        actorUserId: req.user!.uuid,
+      });
       return { lifecycle_stage: lifecycleFromLoadStatus(nextLoadStatus) };
     });
 

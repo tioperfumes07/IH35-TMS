@@ -9,6 +9,7 @@
 
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
+import { latchOnDeliveryEvidence } from "../delivery-evidence-latch.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireDriverSession } from "../../driver/auth.js";
@@ -288,7 +289,13 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/arrival", async (req, reply) => {
+  app.post(
+    "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/arrival",
+    // CLS-DISP-WIRE-07 — these driver capture endpoints authorize and write, so CodeQL
+    // (js/missing-rate-limiting) requires an explicit limit. 60/min matches the other authorized
+    // write routes and is far above a real driver's arrive/depart cadence.
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const params = stopParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
@@ -353,7 +360,13 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.post("/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/departure", async (req, reply) => {
+  app.post(
+    "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/departure",
+    // CLS-DISP-WIRE-07 — these driver capture endpoints authorize and write, so CodeQL
+    // (js/missing-rate-limiting) requires an explicit limit. 60/min matches the other authorized
+    // write routes and is far above a real driver's arrive/depart cadence.
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const params = stopParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
@@ -363,9 +376,10 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
     if (!driver) return;
 
     const updated = await withCurrentUser(req.user!.uuid, async (client) => {
-      const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; latitude: number | null; longitude: number | null }>(
+      const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; latitude: number | null; longitude: number | null; operating_company_id: string }>(
         `
-          SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude
+          SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude,
+                 l.operating_company_id::text AS operating_company_id
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
@@ -373,6 +387,13 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
             AND s.load_id = $2
             AND (l.assigned_primary_driver_id = $3 OR l.assigned_secondary_driver_id = $3)
             AND l.soft_deleted_at IS NULL
+            -- ENTITY PREDICATE (verify-mdata-entity-scope): the load must belong to the SAME operating
+            -- company as the driver acting on it. The driver session carries only an id, so the entity
+            -- is derived from the driver's own row (mdata.drivers.operating_company_id, uuid NOT NULL,
+            -- verified on prod). Selecting l.operating_company_id for the revenue latch does NOT scope
+            -- the query — a scope column must be COMPARED, not merely projected — and this is the
+            -- predicate that makes the value we hand to the latch provably the driver's own entity.
+            AND l.operating_company_id = (SELECT d.operating_company_id FROM mdata.drivers d WHERE d.id = $3)
           LIMIT 1
         `,
         [params.data.stop_uuid, params.data.uuid, driver.id]
@@ -401,6 +422,16 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
       );
 
       await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.uuid, nextLoadStatus]);
+
+      // CLS-DISP-WIRE-07 — the driver's departure is the delivery evidence. Without this the office
+      // transition was the ONLY path that latched revenue, so a load delivered in the field never
+      // reached hops 6-9. Shared helper: no-op unless nextLoadStatus is a delivery-evidence status.
+      await latchOnDeliveryEvidence({
+        operatingCompanyId: stop.operating_company_id,
+        loadId: params.data.uuid,
+        targetStatus: nextLoadStatus,
+        actorUserId: req.user!.uuid,
+      });
 
       await appendCrudAudit(client, req.user!.uuid, "dispatch.driver_pwa.stop_departure", {
         load_id: params.data.uuid,
