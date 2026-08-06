@@ -347,3 +347,64 @@ fired scoped reads for `insurance/claims?load_id=`, `safety/incidents` (damage_r
 trailer_interchange, cargo_claim), `safety/accidents?load_id=` and `loads/:id/expenses`, each carrying
 `operating_company_id=5c854333-…`. The §10 cross-module linkage from a load out to insurance, safety
 and expenses is present and entity-scoped.
+
+### 12 — `LV-STOPS-NOSAVE`: "Save stops" persists nothing and issues no request — FAIL (major)
+
+On load `L-20260806-0005`, prod held pickup `100 Bridge Rd / Laredo / state ''` and a **completely
+empty delivery stop** (`address_line1 ''`, `city ''`, `state ''`, `postal_code NULL`), even though the
+Book Load wizard had been given `200 Commerce St / San Antonio / 78201`.
+
+**Isolation test.** Rather than guess, I re-entered the values in the load detail **Stops** tab (which
+has no load-number reservation timer, unlike the create wizard) and clicked **`Save stops`**:
+
+1. All six fields visibly populated in the UI (pickup TX, dropoff `200 Commerce St / San Antonio / TX`).
+2. `Save stops` clicked.
+3. **Prod unchanged** — re-read as `neondb_owner` (complete read): delivery stop still
+   `addr ''`, `city ''`, `state ''`; pickup state still empty.
+4. **No save request was issued.** The only traffic after the click was `notifications?limit=20`,
+   `notifications/unread-count` and `feature-flags/check?key=LOAD_WIZARD_V5` — no PUT/PATCH/POST.
+
+So the button is inert. This **also exonerates my first hypothesis** (that the create wizard's
+reservation-timer re-render, which regenerated the load number `0001→0002→0003→0005`, had discarded
+the typed stop data). The stops write path fails on its own, with no timer involved. I record the
+discarded hypothesis because it was the more obvious explanation and it was wrong.
+
+**Impact:** a delivery address cannot be set or corrected on a load. No delivery address means no
+routing, no POD location, no IFTA state miles, and `Est. leg miles ~145` is being derived from
+something other than the stored stop. Board row `LV-STOPS-NOSAVE` (CC-3).
+
+### 13 — `LV-LOAD-EDIT-BLANK`: the Edit-load form opens completely UNHYDRATED — FAIL (major, data-loss risk)
+
+Clicking **Edit** on the live load opened the `Edit load` wizard with **every field empty**, for a load
+that on prod is assigned and worth $2,450:
+
+| field | Edit form shows | prod actually holds |
+|---|---|---|
+| Trip type | *nothing selected* | `NB` |
+| Customer | `Select customer…` | `TEST-Customer-One-20260806` |
+| Linehaul | **$0.00** | $2,450.00 |
+| Total customer invoice | **$0.00** | $2,450.00 |
+| Truck unit | `Select truck unit` | `TEST-UNIT-20260806-01` |
+| Driver | `Select driver` | `Juan USMCA-Battery` |
+
+The form's own banner reads: *"Editing persisted load details. Only fields you change are saved
+(partial PATCH — untouched columns stay)."*
+
+**Why this is dangerous, not merely cosmetic.** The partial-PATCH contract is the only thing standing
+between this screen and destroying the load: a user who opens Edit, sees `$0.00` and `Select
+customer…`, and re-enters what they believe is missing will be writing over correct data; and any
+control that reports itself as "changed" on submit (a select that fires onChange when re-picking the
+same value, a currency input that normalises `""`→`0`) will silently zero a real charge. The screen
+presents a populated, dispatched, invoiced load as if it were an empty draft.
+
+**I did not submit the form** — I closed it and re-verified on prod that nothing was written:
+`updated_at` still `2026-08-06T17:02:46.215Z` (the original dispatch timestamp), `rate_total_cents`
+still `245000`, driver/unit/customer/trip_type all intact. The risk above is therefore **reasoned, not
+demonstrated** — I deliberately did not run the destructive confirmation on live data. Board row
+`LV-LOAD-EDIT-BLANK` (CC-3).
+
+**Same family as `LV-LOAD-UNASSIGNED` (item 11), and it is now clearly the broader defect:** the load
+read/hydration path does not resolve driver, unit, customer, trip type or charges into the detail and
+edit surfaces, even though the detail API returns the correct ids and prod holds correct values. Fix
+the hydration once and all three symptoms (detail "Unassigned", blank Edit form, and plausibly the
+stops editor) resolve together — they should be triaged as one block, not three.
