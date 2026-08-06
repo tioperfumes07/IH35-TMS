@@ -72,8 +72,11 @@ const COMPLETED_STOPS_CTE = `
     FROM dispatch.stop_arrivals sa
     JOIN mdata.load_stops ls ON ls.id = sa.stop_id
     JOIN mdata.loads l ON l.id = ls.load_id
+                  AND l.operating_company_id = sa.operating_company_id
     LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                           AND c.operating_company_id = l.operating_company_id
     LEFT JOIN mdata.drivers d ON d.id = sa.driver_id
+                         AND d.operating_company_id = sa.operating_company_id
     LEFT JOIN LATERAL (
       SELECT
         NULLIF(trim(p.city), '') AS origin_city,
