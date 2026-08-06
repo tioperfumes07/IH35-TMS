@@ -44,7 +44,7 @@ function groupBy(rows: Row[], keyOf: (r: Row) => string, labelOf: (r: Row) => st
 }
 
 export async function registerCancellationsReportRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/cancellations-report", async (req, reply) => {
+  app.get("/api/v1/dispatch/cancellations-report", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const q = querySchema.safeParse(req.query ?? {});

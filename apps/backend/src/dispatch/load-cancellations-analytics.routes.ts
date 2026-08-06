@@ -74,7 +74,7 @@ function groupRows(rows: Row[], groupBy: GroupBy): AnalyticsRow[] {
 }
 
 export async function registerLoadCancellationsAnalyticsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/load-cancellations/analytics", async (req, reply) => {
+  app.get("/api/v1/dispatch/load-cancellations/analytics", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const q = querySchema.safeParse(req.query ?? {});
