@@ -173,6 +173,8 @@ export async function listMatters(
     unit_id?: string | undefined;
     equipment_id?: string | undefined;
     insurance_claim_id?: string | undefined;
+    limit?: number | undefined;
+    offset?: number | undefined;
     requesterUserId: string;
     requesterRole: string;
   }
@@ -213,23 +215,70 @@ export async function listMatters(
     where.push(`m.insurance_claim_id = $${values.length}`);
   }
   const orderRank = severityRankSql();
+
+  // CLS-UUID-LABEL — return DISPLAY NAMES, not bare FKs. The matter payload previously carried only
+  // related_driver_id / unit_id / insurance_claim_id / incident_id, so every consumer had nothing to
+  // render but the uuid and the detail page fell back to `id.slice(0, 8)`. Patching those call sites
+  // only relocates the uuid; the root cause is that the query never resolved a name. Columns verified
+  // live on prod (br-fancy-credit-akjnd07a) before writing these joins:
+  //   mdata.drivers  -> first_name/last_name (§4: there is NO full_name column)
+  //   mdata.units    -> unit_number
+  //   insurance.claim -> claim_number  (SINGULAR table: `insurance.claims` DOES NOT EXIST on prod)
+  //   safety.accidents -> NOT JOINED. It exists on PROD but is created by NO migration (only referenced
+  //     in migration comments as "prod-proven"), so joining it would break any fresh database —
+  //     verify:sql-read-targets caught exactly that. The incident link therefore carries a human
+  //     label instead of a joined display_id; it still shows no uuid, which is what CLS-UUID-LABEL
+  //     requires. The missing migration is a separate, reportable drift finding.
+  // LEFT JOINs throughout: a matter with no driver/unit/claim/incident is normal and must still list.
+  const displaySelect = `
+      NULLIF(CONCAT_WS(' ', d.first_name, d.last_name), '') AS related_driver_name,
+      u.unit_number                                          AS unit_number,
+      ic.claim_number                                        AS insurance_claim_number,
+      lw.case_number                                         AS insurance_lawsuit_case_number`;
+  // ENTITY PREDICATE ON THE JOIN ITSELF (verify-mdata-entity-scope). The matter is scoped by
+  // `m.operating_company_id = $1` in WHERE, but that does NOT scope what we join TO: a bare `d.id =
+  // m.related_driver_id` would happily surface another entity's driver name or unit number if an id
+  // ever crossed over. Scoping each join to the MATTER's own company keeps the displayed label in the
+  // same entity as the record it describes. mdata.units uses the owner/leased pair, not
+  // operating_company_id (that column does not exist on units).
+  const displayJoins = `
+    LEFT JOIN mdata.drivers   d  ON d.id  = m.related_driver_id
+                                AND d.operating_company_id = m.operating_company_id
+    LEFT JOIN mdata.units     u  ON u.id  = m.unit_id
+                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = m.operating_company_id
+    LEFT JOIN insurance.claim ic ON ic.id = m.insurance_claim_id
+    LEFT JOIN insurance.lawsuit lw ON lw.id = m.insurance_lawsuit_id`;
+
+  // CLS-SILENT-CAP inst.1 — this was a bare `LIMIT 500` with no offset and no total, so matter 501
+  // simply vanished with nothing in the UI to say so. A cap the caller cannot see is indistinguishable
+  // from "there is no more data". Now: caller-controlled limit/offset (bounded), plus the unfiltered
+  // total so a consumer can page or honestly report "showing N of M".
+  const limit = Math.min(Math.max(args.limit ?? 200, 1), 500);
+  const offset = Math.max(args.offset ?? 0, 0);
+  values.push(limit, offset);
+  const limitIdx = values.length - 1;
+  const offsetIdx = values.length;
+
   const sql = `
-    SELECT m.*,
-      (${orderRank}) AS _severity_rank
-    FROM legal.matters m
+    SELECT m.*,${displaySelect},
+      (${orderRank}) AS _severity_rank,
+      COUNT(*) OVER () AS _total_count
+    FROM legal.matters m${displayJoins}
     WHERE ${where.join(" AND ")}
     ORDER BY
       ${orderRank} ASC,
       m.next_hearing_date ASC NULLS LAST,
       m.statute_of_limitations_at ASC NULLS LAST,
       m.matter_number ASC
-    LIMIT 500
+    LIMIT $${limitIdx} OFFSET $${offsetIdx}
   `;
   const res = await client.query(sql, values);
-  return res.rows.map((row) => {
-    const { _severity_rank: _, ...rest } = row;
+  const total = Number((res.rows[0] as { _total_count?: string } | undefined)?._total_count ?? 0);
+  const rows = res.rows.map((row) => {
+    const { _severity_rank: _r, _total_count: _t, ...rest } = row as Record<string, unknown>;
     return rest;
   });
+  return { rows, total, limit, offset };
 }
 
 export async function getMatter(
@@ -244,8 +293,22 @@ export async function getMatter(
   await setOperatingCompany(client, args.operatingCompanyId);
   const mRes = await client.query(
     `
-      SELECT *
+      SELECT m.*,
+             NULLIF(CONCAT_WS(' ', d.first_name, d.last_name), '') AS related_driver_name,
+             u.unit_number                                          AS unit_number,
+             ic.claim_number                                        AS insurance_claim_number,
+                    lw.case_number                                         AS insurance_lawsuit_case_number
       FROM legal.matters m
+      -- CLS-UUID-LABEL — the DETAIL page is where the truncated uuids were rendered, so the same
+      -- display joins used by listMatters must exist here too. Fixing only the list query would have
+      -- left the actual offending screen unchanged. Same prod-verified columns, same LEFT JOINs.
+      -- Same entity predicate as the list query: scope what we join TO, not just the matter row.
+      LEFT JOIN mdata.drivers   d  ON d.id  = m.related_driver_id
+                                  AND d.operating_company_id = m.operating_company_id
+      LEFT JOIN mdata.units     u  ON u.id  = m.unit_id
+                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = m.operating_company_id
+      LEFT JOIN insurance.claim ic ON ic.id = m.insurance_claim_id
+        LEFT JOIN insurance.lawsuit lw ON lw.id = m.insurance_lawsuit_id
       WHERE m.operating_company_id = $1 AND m.id = $2
       LIMIT 1
     `,
