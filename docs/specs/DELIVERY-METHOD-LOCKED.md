@@ -10,6 +10,7 @@
 `Execute docs/specs/DELIVERY-METHOD-LOCKED.md — vertical money skeleton → certify modules under WIP≤3 — do not invent a fourth method. Obey §9 coder instructions exactly.`
 
 Companion: `docs/trackers/OWNER-EXECUTION-PLAN-2026-07-22.md` (module order + audit depth).  
+**Reservation protocol (before starting any class-drain wave):** `docs/audit/RESERVATION-LEDGER-PROTOCOL-2026-08-05.md` — reserve class-id **+ files** (as ONE reservation when two classes share a hotfile); draw verify-step numbers from your own CLAIM-BLOCK band and land the claim on `main` first (Rule 25/37); Scoreboard conflicts = union the Findings rows and **regenerate**, never hand-merge a generated file.  
 Sidebar / modules: **30** (`SIDEBAR_ITEM_IDS` + 30 module-completion files). Not 28.  
 Ratchet: `scripts/verify-no-approval-holds.mjs` (verify-step **2218**) — FAILS only on **new affirmative** hold language in **active governance**. Abolition lines (`NO HOLDS. NO JORGE-APPROVED`) are **retained on purpose**. History (`docs/audit`, `db/migrations`, `.block-ready`) is **excluded**.
 
