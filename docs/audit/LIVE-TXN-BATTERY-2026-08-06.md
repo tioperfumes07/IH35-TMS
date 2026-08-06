@@ -243,6 +243,55 @@ is `L-20260802-0258` — **two different load-number formats on the same entity*
 
 ---
 
+## CLASS: `CLS-ECON-EMPTY` — two instances are misclassified, and ECON-005 is worse than filed
+
+### LV-TXN-008 — ECON-001 / ECON-004 are dispositioned **(C) owner-hold**, which LV-TXN-004 disproves — **RECLASSIFY**
+- Both instances (`driver_finance.driver_settlements = 0`, on the list and on the driver profile) carry
+  `DISPOSITION: (C) owner-hold — poster code exists, no pay-run executed. Tracked under CLS-MONEY-HOLD`.
+- **That disposition is inherited from HOLD-001, and LV-TXN-004 proves HOLD-001 is not an owner hold.**
+  No pay-run was ever executed because no settlement was ever *opened*, because the office status control
+  calls the endpoint that never calls `pingSettlementOnLoadEvent`. Nothing is waiting on the owner.
+- **verdict:** ECON-001 and ECON-004 should move **(C) → (A) broken wiring**, and resolve when LV-TXN-004
+  does. Left as-is they read "not actionable", which is how this stayed still.
+- ECON-002 (`driver_advances` 0 / `n_tup_ins` **0**, `catalogs.cash_advance_types` = 18 seeded) and
+  ECON-003 (`escrow_ledger` 0 / `n_tup_ins` **0**) are **correctly** dispositioned (B) empty state —
+  confirmed live, catalogs seeded, writers exist, simply never exercised. Not defects. No card.
+
+### LV-TXN-009 — ECON-005 is not "an empty FK column"; it is a **VACUOUS DEDUPE GUARD on a driver-money path** — **FAIL (major)**
+- **filed as:** *"`fuel.fuel_transactions.overage_deduction_id` = 0 — FK column exists but no code path
+  ever writes it. DISPOSITION: (A) BROKEN WIRING."* True, but it understates the consequence.
+- **live:** `fuel.fuel_transactions` **1,554** rows (`n_tup_ins` 1,557), rows with
+  `overage_deduction_id IS NOT NULL` = **0**. Positive control `accounting.bills` = 16,255 in the SAME
+  statement.
+- **the design, from the code's own comment** (`fuel/fuel-card-overage.service.ts:109-111`):
+  *"BANK-DOM-06 reverse/forward FKs — still live columns on prod. FUEL-03 approve path must read them
+  **so we never double-create a settlement deduction** / leave dead schema."* So there is a deliberate
+  bidirectional link:
+  - FORWARD `driver_finance.driver_settlement_deductions.source_fuel_transaction_id` → fuel txn
+  - REVERSE `fuel.fuel_transactions.overage_deduction_id` → deduction
+- **BOTH DIRECTIONS ARE DEAD — verified by exhaustive grep of non-test `apps/backend/src`:**
+  - `source_fuel_transaction_id` occurs **exactly once in the entire backend**, and it is the `SELECT` at
+    `fuel-card-overage.service.ts:122`. There are **four** `INSERT INTO
+    driver_finance.driver_settlement_deductions` sites (`recover-from-driver.service.ts:105`,
+    `deductions.service.ts:135`, `escrow-deduction-pending.service.ts:398`,
+    `settlements/auto-deductions/apply.ts:141`) and **not one of them names that column**.
+  - `overage_deduction_id` occurs only in the same file, only in a `SELECT`. No `INSERT`/`UPDATE`
+    anywhere in `apps/backend/src` or `db/migrations`.
+- **therefore `loadExistingOverageDeductionLink()` can only ever return `{deduction_id: null,
+  overage_deduction_id: null}`.** The dedupe check it exists to perform **can never fire**. The
+  double-create it is documented to prevent is, in fact, unprotected.
+- **why this is a money finding, not a schema tidiness one:** a fuel-card overage is a **deduction taken
+  from a driver's settlement**. The only guard against charging the same overage twice is a lookup on two
+  columns that nothing populates. This is latent rather than realised today only because no overage has
+  been approved yet (`driver_settlement_deductions` live 0) — i.e. it is protected by absence of use, not
+  by the control.
+- **LANE: CC-1 (money)** — driver deduction path. **status:** OPEN — board row filed.
+- **cross-class note:** this is also a textbook `CLS-LINKAGE-ONEWAY` instance (LINKAGE LAW §10 requires
+  both-way linkage). Here it is *zero*-way: both FKs are read-only. Whoever drains LINKAGE-ONEWAY should
+  take this with them rather than count it separately.
+
+---
+
 ## Entity-safety note
 No write has been performed on TRANSP in this session. All observation above is read-only; the only
 mutation contemplated (walking `L-20260802-0258` forward) is on USMCA test data.
