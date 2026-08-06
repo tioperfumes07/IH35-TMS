@@ -59,7 +59,9 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
           FROM dispatch.stop_arrivals a
           JOIN mdata.load_stops s ON s.id = a.stop_id
           JOIN mdata.loads l ON l.id = s.load_id
+                            AND l.operating_company_id = a.operating_company_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+                                       AND loc.operating_company_id = a.operating_company_id
           WHERE a.operating_company_id = $1::uuid
             AND a.driver_id = $2::uuid
             AND a.confirmed_at IS NULL

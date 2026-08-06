@@ -214,9 +214,13 @@ export async function registerBorderCrossingWizardRoutes(app: FastifyInstance) {
                  v.name AS customs_broker_name
           FROM mdata.unit_border_crossings ubc
           LEFT JOIN mdata.units u ON u.id = ubc.unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ubc.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = ubc.driver_id
+                                   AND d.operating_company_id = ubc.operating_company_id
           LEFT JOIN mdata.loads l ON l.id = ubc.load_id
+                                 AND l.operating_company_id = ubc.operating_company_id
           LEFT JOIN mdata.vendors v ON v.id = ubc.customs_broker_id
+                                   AND v.operating_company_id = ubc.operating_company_id
           WHERE ubc.id = $1::uuid
             AND ubc.operating_company_id = $2::uuid
         `,
