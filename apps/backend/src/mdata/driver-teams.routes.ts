@@ -119,7 +119,9 @@ function ensureEffectiveFromWithinWindow(effectiveFrom: string | undefined): boo
 }
 
 export async function registerDriverTeamRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/driver-teams", async (req, reply) => {
+  // Rate-limited (CodeQL js/missing-rate-limiting) — pre-existing gap surfaced because this PR touched
+  // the file; the plugin is global:false so an un-configured route has NO limit at all.
+  app.get("/api/v1/mdata/driver-teams", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
@@ -176,7 +178,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
     return { teams: rows };
   });
 
-  app.get("/api/v1/mdata/driver-teams/:id", async (req, reply) => {
+  app.get("/api/v1/mdata/driver-teams/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
