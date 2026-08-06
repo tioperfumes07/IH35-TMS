@@ -58,6 +58,18 @@ statement. Exit codes read WITHOUT a pipe. Done = live proof, not CI-green, not 
   `load.assigned_primary_driver_name ?? "Unassigned"` and `load.assigned_unit_number ?? "—"`
   (`LoadDetailDrawer.tsx:372,374`), so `undefined` renders as **"Unassigned"**.
   **The endpoint is structurally incapable of returning these fields.**
+- **PAYLOAD-LEVEL PROOF (strongest form — the API response itself, fetched live from inside the app with
+  `credentials:'include'` against deployed `e6343f4`):**
+  `GET /api/v1/dispatch/loads/a6f8a7ec-…?operating_company_id=5c854333-…` → **HTTP 200**, and on the
+  response object:
+  - `'assigned_primary_driver_name' in payload` → **false** (field ABSENT, not null)
+  - `'assigned_unit_number'        in payload` → **false** (field ABSENT, not null)
+  - `'assigned_secondary_driver_name' in payload` → **true**  ← the tell
+  - `assigned_primary_driver_id` = `88c04cf5-…` (**non-null**), `assigned_unit_id` = `bb1e77ab-…`
+    (**non-null**), `status` = `assigned_not_dispatched`
+  So the ids are present and the names are structurally absent from the same payload. This is the exact
+  pair of assertions the guard must make, and it is measured at the contract boundary — no UI, no DOM, no
+  screenshot involved.
 - **that the SECONDARY (team) driver name IS resolved while the PRIMARY is not** is the strongest evidence
   this is an oversight rather than a design choice.
 - **scope — WIDER than this class:** the missing columns are on the view and the route, with no entity
@@ -71,14 +83,23 @@ statement. Exit codes read WITHOUT a pipe. Done = live proof, not CI-green, not 
 - **LANE: CC-2** (mechanical / routes / scope / FE). GUARD verifies, never builds — not fixed here.
 - **status:** OPEN — board row filed for CC-2.
 
-### LV-TXN-003 — `GET /api/v1/dispatch/units-without-load` did not settle — **UNVERIFIED, needs re-probe**
-- **observed:** in the live network trace for the dispatch board, `dispatch/units-without-load?…` appears
-  **three times, all `statusCode: pending`**, while every sibling dispatch call on the same page returned
-  200. This is the endpoint behind the "Unassigned units / Awaiting assignment" panel.
-- **honest limit:** `pending` in a captured trace can mean in-flight at capture time, not hung. I did not
-  re-probe it in isolation, so I am NOT calling it a defect.
-- **verdict:** **UNVERIFIED — needs live check.** Re-probe directly before anyone opens a card.
-- **status:** OPEN — to re-probe in this lane.
+### LV-TXN-003 — `GET /api/v1/dispatch/units-without-load` appeared to hang — **RESOLVED: NOT A DEFECT**
+- **observed:** in the live network trace for the dispatch board, `dispatch/units-without-load?…` appeared
+  **three times, all `statusCode: pending`**, while every sibling dispatch call returned 200. This is the
+  endpoint behind the "Unassigned units / Awaiting assignment" panel.
+- **re-probe (authenticated, from inside the app, `credentials:'include'`, timed):**
+  `dispatch/units-without-load` → **HTTP 200 in 537 ms**, 209 bytes, body
+  `{"units":[{"id":"f151a7b6-…","unit_number":"TEST-U01",…}]}`. Control on the same call:
+  `dispatch/dashboard` → **200 in 140 ms**.
+  (An unauthenticated `curl` returns 401 in ~0.16 s for BOTH endpoints, so the unauth probe proves nothing
+  about the authenticated path — recorded so nobody mistakes it for evidence.)
+- **verdict:** **NOT A DEFECT.** `pending` in a captured trace means in-flight at capture time, exactly the
+  caveat stated when this was first logged. The earlier 45 s `get_page_text` timeout was the browser
+  waiting on `document_idle` for a raw-JSON navigation, not the API.
+- **why this row is kept rather than deleted:** it is the worked example of the §0 rule — a suspicious
+  observation was logged **UNVERIFIED and never promoted to a defect**, then resolved by an isolated
+  live re-probe. Had it been filed on first sight, CC-2 would have chased a hang that does not exist.
+- **status:** CLOSED — no card opened, no builder time spent.
 
 ---
 
