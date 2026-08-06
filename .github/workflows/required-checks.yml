@@ -16,7 +16,7 @@ on:
 
 jobs:
   required-checks-gate:
-    runs-on: [self-hosted, mac]
+    runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
