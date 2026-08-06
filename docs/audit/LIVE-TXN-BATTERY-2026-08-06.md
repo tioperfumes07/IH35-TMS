@@ -450,6 +450,82 @@ Neither condition is met.
 
 ---
 
+## ★★ LV-TXN-014 — **I WAS WRONG: HOLD-002 AND HOLD-003 ARE NOT HOLDS.** Insurance policy creation is a hard 500 on every entity — **FAIL (critical)**
+
+**Correction first.** Earlier in this file (LV-TXN-006) I recorded HOLD-002 and HOLD-003 as *"BLOCKED ON AN
+OWNER BUSINESS DECISION"* because USMCA had no factoring contract and no insurance policy. **That verdict
+was wrong, and I reached it by stopping at the empty table instead of checking the answered sources the
+owner had already provided.** All questions are asked-and-answered; there are no holds. What follows is the
+verification I should have done first.
+
+### HOLD-002 factoring — ANSWERED, and the agreement exists
+- The executed **FACTORING AGREEMENT (V-2023-1), Faro Factoring LLC ↔ IH 35 TRANSPORTATION LLC**, is on
+  the owner's Desktop (`CPA ANSWERS.docx`, also `FARO FACTORING AGREEMENT(1).docx`), with terms —
+  Factoring Ratio Tier 1 **1.5%**.
+- **Accounting treatment is fully answered** in the same document: reserves = **asset "Factoring
+  Reserves"** (short-term, because the factor remits on a cycle while new invoices keep replenishing);
+  advance = **liability "Factoring Advance"**; **"Factoring Fees"**; chargebacks booked as **"Factoring
+  Recoursed Invoices"**; **C3 — Faro is also a full vendor** (advance stays a factoring liability, the
+  vendor record carries fees/chargebacks A/P); **C5 — the COMPANY absorbs factoring chargebacks, NOT the
+  driver** (company drivers, not owner-operators; distinct from fuel-overage/damage/fines which ARE
+  driver-fault deductions); **B2d — at POD auto-convert to Official Invoice + auto-submit to factoring**;
+  **F16 — factoring required-docs blocked by default, owner may override in the moment**.
+- **Live:** `factoring.factor` = 1 row, `operating_company_id = 91e0bf0a-…` = **TRANSP** — matching the
+  real agreement's named Seller. **USMCA having no factoring contract is CORRECT**, not a gap: the
+  agreement is TRANSP's. Nothing is waiting on the owner.
+
+### HOLD-003 insurance — ANSWERED and LOCKED, and the create path is BROKEN
+- The insurance module is **locked and fully specified** in-repo
+  (`docs/lockdown/01_insurance/01_INSURANCE_BLUEPRINT_ADDITION.md`): tabs Policies · Claims · Lawsuits ·
+  Coverage gaps · Carriers · Settings; `+ Create policy` (locked vocabulary); the 4-step wizard; and
+  exactly what one atomic transaction writes — `insurance.policy` + `insurance.policy_unit`.
+  `docs/lockdown/00_LOCKED_DECISIONS.md` §3–4 locks the financial-write pattern (math delegated to
+  `computeInsuranceDispersal`, **no new ledger math**) and *"Insurance OWNS; Safety READS + flags, never
+  writes."* **Nothing here is unanswered.**
+- **`insurance.type_catalog` is seeded for USMCA** — 45 rows, `auto_liability`, `cargo`,
+  `general_liability`, `physical_damage`, `bobtail`, `occupational_accident`, … all `active = true`.
+- **THE SMOKING GUN IN THE STATS:** `insurance.policy` — `n_tup_ins` **5**, `n_tup_upd` **0**,
+  `n_tup_del` **0**, `n_live_tup` **0**; identical on `insurance.policy_unit`. Neither table has any
+  soft-delete column. Inserts that are counted but never committed and never deleted = **transactions
+  that ABORTED**. Five prior attempts to create a policy all failed.
+- **REPRODUCED LIVE, on USMCA, through the product's own endpoint:**
+  `POST /api/v1/insurance/policies` → **HTTP 500**, `{"code":"42501","message":"new row violates row-level
+  security policy for table \"policy\""}`.
+- **ROOT CAUSE — the INSERT writes the wrong tenancy column:**
+  - `insurance.policy` carries **BOTH** `tenant_id` (**NOT NULL**) and `operating_company_id`
+    (**nullable, no default**) — verified on prod `information_schema`.
+  - `policy.routes.ts:266-296` inserts **`tenant_id`** (value `body.operating_company_id`) and **never
+    inserts `operating_company_id`**.
+  - The RLS policy `insurance_policy_opco_scope` (FOR ALL) has WITH CHECK
+    `identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true)`.
+  - So the new row's `operating_company_id` is **NULL**, `NULL::text = '5c854333-…'` evaluates to NULL —
+    not true — WITH CHECK fails, the transaction aborts. **Every single time.**
+  - The GUC is NOT the problem and I checked it rather than assuming: `withCompanyScope`
+    (`accounting/shared.ts:24`) does `set_config('app.operating_company_id', $1, true)`, and
+    `withCurrentUser` (`auth/db.ts:220`) issues `BEGIN`, so the transaction-local GUC is correctly in
+    scope for the INSERT.
+- **SCOPE — this is not a USMCA or test-data artifact.** No entity predicate is involved in the defect;
+  the INSERT omits the column on every code path. **Insurance policy creation is impossible for TRANSP,
+  TRK and USMCA alike**, which is why the whole module — policies, policy_units, and therefore claims,
+  lawsuits, COI requests, refund obligations — is empty on prod.
+- **FIX:** add `operating_company_id` to the INSERT column list (same value as `tenant_id`), and
+  reconcile the two columns — one of them is redundant and the schema should say which is canonical
+  before more tables copy the pattern. Do **not** relax the RLS policy; the policy is correct and the
+  write is wrong.
+- **GUARD:** assert that every INSERT into an RLS-scoped `insurance.*` table populates the column the RLS
+  WITH CHECK actually tests. Mutation-prove by removing `operating_company_id` from the column list and
+  confirming RED. A guard that only checks "route returns 2xx in a fixture DB" would miss this, because
+  a fresh CI database with `is_lucia_bypass()` true never exercises the failing branch.
+- **LANE: CC-1** (schema/RLS/migrations). **status:** OPEN — board row filed.
+
+### What this correction is really about
+Both surfaces I labelled *"owner business decision"* were answered before I looked, and one of them was
+concealing a hard 500. **The empty table was not evidence of a hold — it was evidence of a crash.** The
+lesson for this lane: an empty money table with `n_tup_ins > 0` and `n_tup_del = 0` is an **aborted-write
+signature**, and must be treated as a defect signal, never as "never used".
+
+---
+
 ## Entity-safety note
 No write has been performed on TRANSP in this session. All observation above is read-only; the only
 mutation contemplated (walking `L-20260802-0258` forward) is on USMCA test data.
