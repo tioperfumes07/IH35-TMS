@@ -3032,3 +3032,46 @@ relay_ingest), and did not apply here.
              The 3 USMCA rows enumerated above with `qbo_account_id IS NULL` on each; all 19 TRANSP matches
              individually classified as non-PP&E.
 - status:    OPEN — supersedes the LV-121 withdrawal (owner-locked law 2026-08-05 point 1)
+
+## LV-123  **WORM FIX IS NOT LIVE ON PROD.** `ih35_app` still holds DELETE on **149** tables — **45 financial tables have DELETE and NO soft-delete column**, including `accounting.journal_entry_postings` (the GL lines)
+- module:    accounting · driver_finance · banking · factoring · catalogs (GUARD — verify-after of the WORM/DELETE-grant law)
+- entity:    ALL
+- surface:   `information_schema.role_table_grants` × `information_schema.columns`
+- observed:  Assigned to verify CC-1's WORM fix live — DELETE grant revoked, soft-delete column present,
+  audit-wiring live, per table. **It is not applied. The grants are unchanged on prod.**
+  **(1) DELETE is still granted to `ih35_app` on 149 tables:**
+  | schema | tables with DELETE |
+  |---|---|
+  | `catalogs` | **91** |
+  | `accounting` | **32** |
+  | `driver_finance` | **11** |
+  | `banking` | **9** |
+  | `factoring` | **6** |
+  **(2) The board's "58" is the core-financial slice, and 45 of those cannot comply with void-not-delete.**
+  Restricting to `accounting`/`driver_finance`/`banking`/`factoring` gives **58** deletable tables. Of those,
+  **13 have a soft-delete column** (`voided_at`/`archived_at`/`deactivated_at`/`deleted_at`) and
+  **45 have NONE**. On those 45, **DELETE is structurally the only way to remove a row** — rule 07 /
+  §2 void-not-delete is not merely unenforced, it is **unexpressible**.
+  **(3) The worst entry is `accounting.journal_entry_postings`.** Those are the **3,603 posting lines** I
+  proved balanced in LV-089 (DR = CR = $11,638,837.72 across 1,787 entries). It is deletable, has no
+  soft-delete column, and a DELETE of a single line **silently unbalances the general ledger with no trace and
+  no reversing entry** — defeating the very invariant LV-089 verifies. Also on the 45: `invoice_lines`,
+  `bill_payments`, `payment_applications`, `expense_lines`, `chart_of_accounts_roles`.
+  **(4) This is not hypothetical — it has already happened.** LV-119 found
+  `driver_finance.driver_settlements` at **`n_tup_del = 7`**: seven rows deleted from the table recording
+  what drivers are paid, on a table with no soft-delete column. **The capability is live and has been used.**
+  **The honest scope note:** `catalogs` (91) is largely reference data where DELETE may be defensible, so I am
+  **not** asserting all 149 need revoking. The **45 core-financial tables with no soft-delete column** are the
+  defensible unit of work, and `journal_entry_postings` is the one to fix first.
+- severity:  **critical** (the GL's own posting lines are deletable without trace; the capability has already
+             been exercised once on a financial table)
+- LANE:      CC-1 (money) — this is its declared top item and it is **confirmed not started on prod**. Order:
+             (a) `accounting.journal_entry_postings` first, (b) the remaining 44, (c) then the 13 that have a
+             soft-delete column but still hold DELETE. Ratcheting guard: **no table in the financial schemas
+             may hold a DELETE grant for `ih35_app` without a soft-delete column**, and it must be a
+             shrink-only baseline so the 45 can only go down.
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app` asserted TRUE, bypass in its own
+             statement, exit 0. DELETE grants **149** total, split per schema as tabulated; core-financial
+             deletable **58**, of which **13** have a soft-delete column and **45** have none; the 45
+             enumerated (first 14 listed in-session, `journal_entry_postings` among them).
+- status:    OPEN — **WORM fix NOT applied on prod** (verify-after result: not started)
