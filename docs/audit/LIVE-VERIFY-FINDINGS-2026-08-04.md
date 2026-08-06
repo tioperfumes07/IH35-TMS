@@ -3288,3 +3288,46 @@ populated today is a separate question from whether they are the right mechanism
              guard exit codes read WITHOUT a pipe (no-DB 0/SKIP, selftest 0/5 mutations).
 - status:    **GUARD-VERIFIED / DRAINED → 13 of 26.** Remaining unstamped: **CLS-DUAL-PATH** only
              (`verify-qbo-canonical-recon.mjs` still absent from main — nothing to run, gating nobody).
+
+## LV-134  **A customer payment moved the subledger and posted NOTHING to the GL — flags ON, zero posting batch.** Found by exercising a path that had never run
+- module:    accounting (GUARD — defect found while verifying ACCT-F130 row 1)
+- entity:    USMCA
+- surface:   Payments → Receive Payment → `accounting.payments` / `payment_applications` vs `accounting.posting_batches`
+- observed:  Verifying board row 1 required creating a real payment on USMCA (rows 622–631: *UNVERIFIED-until-data
+  — you create the data and verify*). Doing so exposed a defect nothing could have found by reading code or
+  querying existing rows, because **USMCA had ZERO payments before this one**.
+  **What happened.** Recorded `PMT-2026-00001` — $250.00, ACH, customer `GUARD-TEST-customers-name-USMCA`,
+  applied in full to `INV-2026-00003`.
+  **The subledger moved correctly:** `accounting.payments` `amount_cents` **25000**, `amount_unapplied_cents`
+  **0**; `payment_applications` 1 row at **25000**; the invoice went `sent` → **`partial`** with
+  `amount_paid_cents` **25000** and `amount_open_cents` **95000**. The UI's "Open after $950.00" matches.
+  **The general ledger saw nothing.** Posting batches for payment `a0b83bf5-c9fb-485c-a646-9090b8630bb0`:
+  **0**. Not `failed`, not `skipped` — **no batch in any state**, and no `journal_entry_postings` rows.
+  **The flags are ON, so this is not a by-design refusal.** `CUSTOMER_PAYMENT_GL_POSTING_ENABLED` override for
+  USMCA = **true**, `GL_POSTING_ENABLED` = **true**, `expires_at` NULL on both. There is no posting-OFF
+  short-circuit to explain it.
+  **This is a DIFFERENT defect from the invoice case (LV-133), and the distinction is the whole point.**
+  `accounting.posting_batches` holds **11,976 `invoice` batches in status `failed`** — there the poster RAN
+  and correctly REFUSED, because those are QBO clones and posting them would double the parallel books. Here
+  there is **no batch at all**: the poster was **never invoked** on the customer-payment create/apply path.
+  *Refused* and *never called* look identical from the ledger and are opposite defects.
+  **Net effect:** USMCA's Cash/Undeposited Funds and A/R are now **$250.00 out of step with the subledger**.
+  The A/R subledger says the customer paid; the GL still shows the receivable unrelieved. No
+  DR Undeposited Funds / CR A/R exists.
+  **Why it stayed invisible.** Same architectural shape as `CLS-SUBLEDGER-GL-DARK` — a create path that never
+  calls `postSourceTransaction` — but on the payment leg, which had **no rows on any entity except one
+  TRANSP payment from 2026-08-03**. A coverage guard scoped to existing rows reports clean because the
+  population was empty. **Only creating the data reveals it.**
+  **Positive control on the same table:** the one pre-existing `customer_payment` batch
+  (`1cb8b565…`, TRANSP, 2026-08-03) **does** carry 2 balanced posting lines — so the payment poster works when
+  it is called. The defect is the call site, not the poster.
+- severity:  **major** (money path: subledger and GL disagree by a real applied amount, on a flag-ON path)
+- LANE:      **CC-1 (money)** — wire `postSourceTransaction` into the customer-payment create/apply path, the
+  same fix shape as ACCT-F1xx did for `RecordExpense`. **Scope forward-only to TMS-native payments** — never
+  backfill the QBO-origin payment history (LV-133 / clone-once). Guard: assert every TMS-native
+  `accounting.payments` row with an application has a `posting_batches` row, scoped by `qbo_payment_id IS NULL`.
+- neon-check: prod `br-fancy-credit-akjnd07a`, bypass in its own statement, exit 0. `current_user=ih35_app`
+  asserted TRUE on the payment/application/invoice reads. Posting batches for the new payment **0**;
+  `customer_payment` batches on prod total **1** (TRANSP, 2026-08-03, source `b5ef0cd4…`) carrying **2**
+  posting lines as the positive control; flags read from `lib.feature_flag_overrides`.
+- status:    OPEN — bounced to CC-1

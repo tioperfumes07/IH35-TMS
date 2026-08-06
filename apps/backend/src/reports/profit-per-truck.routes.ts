@@ -74,7 +74,7 @@ function num(v: unknown): number {
 }
 
 export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/profit-per-truck", async (req, reply) => {
+  app.get("/api/v1/reports/profit-per-truck", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -176,6 +176,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
               SELECT l.assigned_unit_id::text AS unit_id, COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::text AS fuel_cents
               FROM fuel.fuel_transactions ft
               JOIN mdata.loads l ON l.id = ft.load_id
+                                    AND l.operating_company_id = ft.operating_company_id
               WHERE ft.operating_company_id = $1
                 AND l.soft_deleted_at IS NULL
                 AND l.status IS DISTINCT FROM 'cancelled'

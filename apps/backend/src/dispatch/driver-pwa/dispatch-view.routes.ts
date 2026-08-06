@@ -159,6 +159,7 @@ async function fetchDriverOwnedLoad(
         delivery.site_contact_phone AS delivery_contact_phone
       FROM mdata.loads l
       JOIN mdata.customers c ON c.id = l.customer_id
+                          AND c.operating_company_id = l.operating_company_id
       LEFT JOIN LATERAL (
         SELECT s.site_contact_name, s.site_contact_phone
         FROM mdata.load_stops s
@@ -311,6 +312,7 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+                                      AND loc.operating_company_id = l.operating_company_id
           WHERE s.id = $1
             AND s.load_id = $2
             AND (l.assigned_primary_driver_id = $3 OR l.assigned_secondary_driver_id = $3)
@@ -383,6 +385,7 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+                                      AND loc.operating_company_id = l.operating_company_id
           WHERE s.id = $1
             AND s.load_id = $2
             AND (l.assigned_primary_driver_id = $3 OR l.assigned_secondary_driver_id = $3)

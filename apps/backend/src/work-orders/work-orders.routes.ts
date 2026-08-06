@@ -535,6 +535,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
           FROM maintenance.work_orders w
           ${laborJoin}
           LEFT JOIN mdata.units wu ON wu.id = w.unit_id
+                                  AND COALESCE(wu.currently_leased_to_company_id, wu.owner_company_id) = w.operating_company_id
           WHERE ${where.join(" AND ")}${segmentClause}
           ${orderBy}
           LIMIT $${limitIdx} OFFSET $${offsetIdx}
@@ -658,7 +659,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
           });
 
           const linkedLoadRes = body.linked_load_id
-            ? await client.query(`SELECT load_number FROM mdata.loads WHERE id = $1 LIMIT 1`, [body.linked_load_id])
+            ? await client.query(`SELECT load_number FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [body.linked_load_id, body.operating_company_id])
             : { rows: [] as Array<{ load_number?: string | null }> };
           const linkedLoadNumber = linkedLoadRes.rows[0]?.load_number ? String(linkedLoadRes.rows[0].load_number) : null;
 
@@ -858,7 +859,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       if (body.linked_load_id !== undefined) {
         push(`load_id = $IDX`, body.linked_load_id);
         if (body.linked_load_id) {
-          const loadRow = await client.query(`SELECT load_number FROM mdata.loads WHERE id = $1 LIMIT 1`, [body.linked_load_id]);
+          const loadRow = await client.query(`SELECT load_number FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [body.linked_load_id, query.data.operating_company_id]);
           push(`linked_load_number = $IDX`, loadRow.rows[0]?.load_number ?? null);
         } else {
           push(`linked_load_number = $IDX`, null);
