@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -37,6 +38,11 @@ async function scopeToRelatedEntity(
     );
     const opco = res.rows[0]?.operating_company_id;
     if (!opco) return null;
+    // CROSS-ENTITY WRITE GATE. The company here is derived from a CALLER-SUPPLIED id, so without this a
+    // user in company A could pass company B's load/driver/customer id and have the GUC — and the
+    // subsequent INSERT — land in company B. Asserted INSIDE the resolver so no call path can skip it.
+    // Throws 403 forbidden_company_membership.
+    await assertCompanyMembership(client, userId, opco);
     await setOperatingCompanyGuc(client, opco);
     return opco;
   }
@@ -47,6 +53,11 @@ async function scopeToRelatedEntity(
     );
     const opco = res.rows[0]?.operating_company_id;
     if (!opco) return null;
+    // CROSS-ENTITY WRITE GATE. The company here is derived from a CALLER-SUPPLIED id, so without this a
+    // user in company A could pass company B's load/driver/customer id and have the GUC — and the
+    // subsequent INSERT — land in company B. Asserted INSIDE the resolver so no call path can skip it.
+    // Throws 403 forbidden_company_membership.
+    await assertCompanyMembership(client, userId, opco);
     await setOperatingCompanyGuc(client, opco);
     return opco;
   }
@@ -57,6 +68,11 @@ async function scopeToRelatedEntity(
     );
     const opco = res.rows[0]?.operating_company_id;
     if (!opco) return null;
+    // CROSS-ENTITY WRITE GATE. The company here is derived from a CALLER-SUPPLIED id, so without this a
+    // user in company A could pass company B's load/driver/customer id and have the GUC — and the
+    // subsequent INSERT — land in company B. Asserted INSIDE the resolver so no call path can skip it.
+    // Throws 403 forbidden_company_membership.
+    await assertCompanyMembership(client, userId, opco);
     await setOperatingCompanyGuc(client, opco);
     return opco;
   }
