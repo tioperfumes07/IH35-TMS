@@ -16,7 +16,7 @@ on:
 jobs:
   locked-guards:
     name: locked-guards
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, mac]
     steps:
       - uses: actions/checkout@v7
         with:
