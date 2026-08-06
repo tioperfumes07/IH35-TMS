@@ -2765,3 +2765,52 @@ board still shows ALL-entity numbers under an entity label, because the caller n
 raised against is still visible to the owner.** A fix reaching production does not mean the reported symptom
 is gone; only re-running the original observation proves that. LV-115 stays OPEN on the current deploy.
 - status:    LV-115 confirmed OPEN on `17d5ac9`
+
+## LV-117  **#4517 `--no-merges` STAMPED — correctly narrow, cannot smuggle an authored commit.** And it **CORRECTS my LV-112**: `58f2be4ac` is a ONE-PARENT authored commit that changed backend routes with zero evidence keys
+- module:    tooling · governance (GUARD — guard-scope change on a required check)
+- entity:    ALL
+- surface:   `scripts/lib/branch-range-guard.mjs` (PR #4517) · consumed by `verify-definition-of-done-evidence`, `verify-no-money-theater`, `verify-module-completion`, +2
+- observed:  A guard-scope change on a **required** check is exactly where a bypass could hide, so the
+  question is not "does it exclude merges" but "**can it be used to exempt an authored commit**". It cannot.
+  **(1) The mechanism is parent-count, not message text — which is the whole ballgame.** The functional diff
+  is one line: `rev-list ${base}..HEAD` → `rev-list --no-merges ${base}..HEAD`. `--no-merges` is git's own
+  filter on **parent count ≥ 2**. It never inspects the subject line, so a merge-*styled* message cannot buy
+  an exemption.
+  **(2) Proven empirically on real commits, not reasoned about:**
+  | commit | parents | plain `rev-list` | `--no-merges` |
+  |---|---|---|---|
+  | **`58f2be4ac`** (authored, merge-style subject) | **1** | included | **STILL INCLUDED** ✓ |
+  | `7e95bc619` (true merge) | 2 | included | **excluded** ✓ |
+  | `28f052634`, `adcb3017c` (my own merges) | 2 | — | **excluded** ✓ |
+  The commit the owner named as the acid test survives the filter and stays subject to the Rule 16 check.
+  **(3) Scope confirmed by reading every changed line.** 19 changed lines in the PR; **exactly one is
+  functional code** — the `rev-list` call. The rest are comments. The apps/`db/` classification and the
+  evidence requirement are untouched, so **no authored commit is silently exempted**: every single-parent
+  commit remains in range exactly as before.
+  **VERDICT: STAMPED.** It excludes true merges and still catches `58f2be4ac`-shaped authored commits.
+  **★ CORRECTION TO LV-112 — and the error understated the problem.** LV-112 said *"another lane's branch
+  carries merge commits `58f2be4ac` and `7e95bc619` with the default merge message and no evidence block."*
+  I derived that from an `awk` field-count over `%H %P %s`, which is a crude parent count, and I did not
+  verify per commit. **`7e95bc619` is a true merge (2 parents) — that part stands. `58f2be4ac` has ONE
+  parent: it is an AUTHORED COMMIT wearing a merge-style subject, not a merge at all.**
+  **That distinction inverts what the finding means.** A true merge with no evidence block is the benign
+  tooling gap LV-112 describes. An **authored** commit with no evidence block is a Rule 16 violation, and
+  this one is not cosmetic — `58f2be4ac` changes **`apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts`**
+  and **`apps/backend/src/driver/loads.routes.ts`** (+16/−2 each) plus a verify-step, and carries **0**
+  `FINDING`/`ROOT CAUSE`/`LIVE PROOF` keys. **Backend route code reached a branch with no evidence block,
+  disguised by a merge-style subject line.**
+  So LV-112's ledger entry is right about my three merge commits and right that the hook gap is real, but its
+  "systemic — another lane does it too" evidence was **half mis-derived**: one of the two examples is a
+  different and more serious defect. **The lesson is the one I keep re-learning: a derived count is not a
+  per-item check.** I counted fields instead of asking git for each commit's parents.
+  **This is also precisely why #4517 must stay parent-count-based.** Had it matched on the subject line,
+  `58f2be4ac` would have been exempted — an un-evidenced authored backend change waved through by the
+  required check. The narrow implementation is what prevents that.
+- severity:  none for #4517 (**STAMPED**) · **major** for the `58f2be4ac` class (authored commit touching
+             backend routes with no Rule 16 block)
+- LANE:      CC-3 (owns #4517 — no change needed) · the `58f2be4ac` commit belongs to
+             `fix/cls-disp-wire-07-departure`; **whoever lands that branch must supply the Rule 16 evidence
+             block for that authored commit** — once #4517 is on main the required check will demand it.
+- neon-check: none required — repo/tooling verification. `rev-list` inclusion/exclusion and parent counts read
+             directly per commit via `git rev-list --parents -n1`; exit codes read WITHOUT a pipe.
+- status:    **VERIFIED** (#4517) · LV-112 corrected · `58f2be4ac` OPEN for its owning lane
