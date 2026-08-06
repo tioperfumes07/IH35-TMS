@@ -2903,3 +2903,38 @@ is gone; only re-running the original observation proves that. LV-115 stays OPEN
              `driver_settlements` ins **11** / del **7** / upd **0** / visible **0**; `escrow_ledger`
              visible **0** == `n_live_tup` **0**, `n_tup_ins` **0**, `n_tup_del` **0**.
 - status:    #4525 PASS (re-verify after merge) · **settlements DELETE gap OPEN**
+
+## LV-121  BOARD ROW 37 (#4053 picker-scope) — **GUARD-VERIFIED live**: the payment-account picker offers 2 spendable accounts, not 778 Assets
+- module:    accounting (GUARD — browser re-check the board explicitly asked for)
+- entity:    USMCA (verified) · TRANSP pending
+- surface:   Expenses → **+ Create** → *Record expense* → **Payment account** picker · `apps/frontend/src/lib/account-picker-scope.ts`
+- observed:  Board row 37 asked GUARD to "confirm live picker no longer offers non-spendable accounts". Done,
+  in the app, on the deployed build.
+  **The picker offers exactly three entries:** `+ Add new account`, **Bank of America - Operating (USMCA)**,
+  **Undeposited Funds**. Two real accounts, both genuinely spendable. **No Accumulated Depreciation, no
+  Trucks, no Prepaid, no A/R, no Intercompany** — the five classes ACCT-F92 named.
+  **The prod numbers are what make this decisive.** `catalogs.accounts` holds **778** `account_type='Asset'`
+  rows, of which **163 are Accumulated Depreciation**, against only **20** with subtype `Bank`/`CreditCard`
+  across all entities. The pre-fix predicate was `account_type === "Asset"`, so it would have offered all
+  **778** — including every one of the 163 accumulated-depreciation accounts — as a place money could be paid
+  *from*. The picker now shows **2**, entity-scoped to USMCA.
+  **Two details that are correct and worth recording so nobody "fixes" them:**
+  - **`Undeposited Funds` belongs there.** It is in the helper's `CASH_LIKE_SUBTYPES`
+    (`Checking, Savings, CashOnHand, MoneyMarket, UndepositedFunds, Bank, TrustAccounts`) and is genuinely
+    cash-like. Its presence is not scope leakage.
+  - The inline **`+ Add new account`** is present, per the §7 product lock requiring an inline create at the
+    end of every reference dropdown.
+  **The helper's own reasoning is sound and I checked it rather than assuming.** It rejects a hardcoded
+  allowlist of account *names* ("would silently miss accounts depending on spelling") and keys on
+  type+subtype instead; and it documents that subtype `Savings` on prod contains "Faro …" — a factoring
+  reserve that is **not** spendable — which is why the type gate exists alongside the subtype set.
+  **Consistency check on existing data:** both USMCA expenses on file read *"Paid from: Bank of America -
+  Operating (USMCA)"* — a real Bank account, never a fixed-asset account.
+  **Scope limit stated:** verified in **USMCA** only. TRANSP has 778-scale account data and should be
+  re-checked the same way before this row is closed for all entities. **Not claimed as both-entity.**
+- severity:  none — verify-after PASS for USMCA
+- LANE:      n/a (verification of Claude Coder's #4053) · **GUARD status: VERIFIED (USMCA) — TRANSP pending**
+- neon-check: prod `br-fancy-credit-akjnd07a`, `current_user=ih35_app` asserted TRUE, bypass in its own
+             statement, exit 0. `catalogs.accounts`: Asset **778**, `Bank`/`CreditCard` subtype **20**,
+             accumulated-depreciation **163**. Picker contents read from the live deployed app.
+- status:    **GUARD-VERIFIED (USMCA)** — board row 37 may move off "awaiting GUARD browser re-check"
