@@ -463,3 +463,61 @@ The invoice line description reads
 page correctly renders `L-20260806-0005`. This text is on a document that goes to a customer
 (`View invoice PDF` / `Send`). It should read the load number. Same class as the existing
 "Class-UUID renders in picker" card. Board row `LV-INV-UUID` (CC-3).
+
+## 15 — MAINTENANCE: `LV-WO-NOSAVE` — "Create work order & Bill" is INERT — FAIL (major)
+
+Attempted the full maintenance chain on USMCA: Repair WO → Section-A cost line → vendor →
+`Create work order & Bill` (the form states *"Registers as a Bill (A/P) — payable later, 1099-tracked"*).
+
+**Everything up to the submit is correct and several things are notably good:**
+
+- **Board card #4048 (WO-vendor) — the picker half IS fixed.** The USMCA vendor
+  `CC3 Battery Vendor 20260806-01` **appears in the WO vendor picker**. Under the original defect
+  (validating against `mdata.qbo_vendors`, empty by design for non-QBO entities) no USMCA vendor could
+  be found at all. The picker now reads canonical `mdata.vendors`.
+- **`Load #` auto-populated to `L-20260806-0005`** the moment the unit was chosen — the WO
+  auto-linked to the unit's **active trip**. That is exactly the §10 cross-module linkage we want,
+  happening automatically (WO → unit → active load).
+- **The cost-line validator fix is LIVE.** The pre-save panel shows **`✓ At least one cost line item`**
+  with **only a Section-A category line** present. That is precisely the defect the board's
+  "Cost-line-validator (C1, P1)" card was closed for — confirmed live on prod, not just on main.
+- The pre-save validation panel is genuinely good: it blocked initially on
+  `! Driver and unit required for non-PM operational types` and `! Vendor invoice # or vendor WO #
+  required`, and cleared to **all 9 ✓** once satisfied.
+
+**Then the submit does nothing.**
+
+With all 9 validations green and the `Create work order & Bill` button **enabled** (green, not
+disabled — verified visually and by it no longer being greyed):
+
+1. Clicked. **No network request issued** — only `notifications?limit=20` and
+   `notifications/unread-count` followed.
+2. **No console error or exception** (console tracking active at click time).
+3. **No UI feedback** — no toast, no error, no state change, drawer stays open.
+4. **Nothing persisted:** `maintenance.work_orders` for USMCA = **0** (unchanged),
+   USMCA `accounting.bills` = **8** (unchanged, no new bill).
+
+Clicked twice with the button in its enabled state; identical result both times.
+
+**Consequence: work orders cannot be created on USMCA at all**, so the whole maintenance chain
+(WO → parts/labor → close → bill → GL) is unreachable, and **board card #4048 cannot be closed** — its
+vendor-picker half is demonstrably fixed, but the create still fails, now at the CLIENT rather than in
+the route. The card should be re-scoped accordingly rather than marked verified.
+
+**Same failure shape as `LV-STOPS-NOSAVE` (item 12):** an enabled primary submit control that issues no
+request and reports nothing. Two independent forms exhibiting the identical signature suggests a shared
+cause (a submit handler not wired, or a guarded handler swallowing the call) and they should be
+investigated together. Board row `LV-WO-NOSAVE` (CC-3).
+
+### 15a — Class auto-derive renders the template, not the values — observation
+
+With unit **and** driver both set, the green `Class (auto)` field reads the literal **`UNIT-DRIVER`**
+(and read `UNIT-UNASSIGNED` before the driver was set). Per §7 the class auto-derive should be
+`{UNIT}-{LASTNAME}` — here `TEST-UNIT-20260806-01-USMCA-Battery` or similar.
+
+**Recorded as an observation, NOT filed as a defect, and deliberately so:** because the WO cannot be
+saved (above), I could not read the persisted `class` value from `maintenance.work_orders` to see
+whether the token substitution happens server-side on write. The display may be a placeholder that
+resolves on save. **UNVERIFIED — needs live check once `LV-WO-NOSAVE` is fixed.** Note this is NOT the
+same symptom as board card 611 (which was about raw **UUIDs** rendering); this is an un-substituted
+template string, so do not treat 611 as re-opened on this evidence.
