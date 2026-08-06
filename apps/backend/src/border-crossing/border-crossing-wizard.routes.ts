@@ -196,7 +196,7 @@ export async function registerBorderCrossingWizardRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/api/v1/border-crossing/:id/emanifest.pdf", async (req, reply) => {
+  app.get("/api/v1/border-crossing/:id/emanifest.pdf", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});

@@ -21,7 +21,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver/arrival-prompts", async (req, reply) => {
+  app.get("/api/v1/driver/arrival-prompts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;
