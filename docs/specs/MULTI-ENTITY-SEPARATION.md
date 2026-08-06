@@ -104,3 +104,45 @@ See `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` → "Legal ↔ Finance sepa
 and `docs/specs/LEGAL-FINANCE-OWNERSHIP-AND-FLIP-READINESS.md`. Legal captures consent + emits the
 opco-scoped handoff (`legal.contract_instance_links` + `events.log_event`); Finance (FIN-18/FIN-21/
 FIN-22) owns all GL posting. Each entity books its own side of a lease/deduction in its own opco.
+
+---
+
+## ★ PERMANENT LAW — owner-locked 2026-08-05 (supreme; do not re-ask, do not stop for these)
+
+**1. ASSETS / DEPRECIATION.** TRANSP and USMCA presently own NO assets → **NO Accumulated Depreciation and
+NO PP&E accounts** (Trucks, Trailers, Equipment) on their charts today. They MAY purchase assets later;
+asset + depreciation accounts are added to that entity's chart **ONLY WHEN a real asset purchase is
+recorded**. Until then, any asset / Accum-Depr account scoped to TRANSP or USMCA is a **DEFECT**.
+**TRK (Trucking) is the sole current asset holder and lessor** — it owns all equipment, leases it to
+TRANSP + USMCA, and Depreciation + Accumulated Depreciation live **ONLY on TRK's books**.
+
+**2. TEST vs REAL DATA.** **ALL TMS-native data across TRANSP, TRK, and USMCA is TEST data.** The ONLY
+real financial data is the QuickBooks history in TRANSP (the QBO mirror/import). **An empty TMS table is
+EXPECTED, never a defect.** Guards checking "real financial data" key on **QBO-origin / TRANSP-mirror
+rows, never TMS-native rows**.
+
+**3. ANSWERED = CLOSED (behavioral law).** An owner decision written in any locked file is **CLOSED**. A
+coder must NOT stop, pause, or ask the owner about anything already answered in the locked files.
+Required sequence before any question reaches the owner:
+(a) **READ the locked files** — if answered, apply it and keep working;
+(b) **VERIFY LIVE on prod** — never answer from the card, memory, or assumption;
+(c) only if **NOT in any locked file AND genuinely ambiguous in live data** does it go to the **BOARD as
+OPEN** — and work continues on everything else.
+**A question NEVER stops the loop. Re-asking a locked decision is a process defect.**
+
+**4. CONTINUOUS MODE (permanent).** Pull top OPEN item in your lane from `docs/audit/GUARD-WORKORDERS.md`
+→ build/verify to full standard → **arm auto-merge (armed = done, don't wait for it to land)** → emit ONE
+line `"shipped X (PR#), next Y"` → immediately start Y → repeat. Empty board = **mine the backlog
+yourself** (`.block-ready/*`, wave-queue OPEN, AUDIT-COVERAGE FAIL+OPEN). Never idle, never pause for a
+summary, never ask "should I continue" — permanently YES. **Only stop conditions:** (a) a genuine
+owner-only decision (surface it, keep working everything else), (b) shared-registry merge conflict
+(coordinate, continue), (c) CI red you can't fix in-lane (recreate fresh, continue).
+
+**5. SCRIBES.** CC-3 and CC-2 both write `docs/audit/GUARD-WORKORDERS.md` (**one at a time**). CC-2 holds
+the `AUDIT-COVERAGE-LIVE.md` append-lease. Cascade is off the critical write-path until it clears its jam.
+
+**6. HARD RULES** (already law, restated here so they live in one place — **speed never suspends them**):
+green CI to merge, **never merge red**; fix **root cause** with ONE **ratcheting** guard, entity-scoped;
+**no patch, no allowlisting a live failure**; **WORM / void-not-delete** (financial tables: no DELETE
+grant, soft-delete column, audit coverage); **never claim a class drained until its ratchet is live on
+main** — report the honest X/26.
