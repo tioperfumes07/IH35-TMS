@@ -493,7 +493,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.get("/api/v1/dispatch/loads", async (req, reply) => {
+  app.get("/api/v1/dispatch/loads", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = listDispatchLoadsQuerySchema.safeParse(req.query ?? {});
@@ -660,7 +660,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/dispatch/loads/:id", async (req, reply) => {
+  app.get("/api/v1/dispatch/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const params = dispatchLoadIdParamsSchema.safeParse(req.params ?? {});
