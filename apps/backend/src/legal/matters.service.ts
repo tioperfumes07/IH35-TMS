@@ -235,9 +235,17 @@ export async function listMatters(
       u.unit_number                                          AS unit_number,
       ic.claim_number                                        AS insurance_claim_number,
       lw.case_number                                         AS insurance_lawsuit_case_number`;
+  // ENTITY PREDICATE ON THE JOIN ITSELF (verify-mdata-entity-scope). The matter is scoped by
+  // `m.operating_company_id = $1` in WHERE, but that does NOT scope what we join TO: a bare `d.id =
+  // m.related_driver_id` would happily surface another entity's driver name or unit number if an id
+  // ever crossed over. Scoping each join to the MATTER's own company keeps the displayed label in the
+  // same entity as the record it describes. mdata.units uses the owner/leased pair, not
+  // operating_company_id (that column does not exist on units).
   const displayJoins = `
     LEFT JOIN mdata.drivers   d  ON d.id  = m.related_driver_id
+                                AND d.operating_company_id = m.operating_company_id
     LEFT JOIN mdata.units     u  ON u.id  = m.unit_id
+                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = m.operating_company_id
     LEFT JOIN insurance.claim ic ON ic.id = m.insurance_claim_id
     LEFT JOIN insurance.lawsuit lw ON lw.id = m.insurance_lawsuit_id`;
 
@@ -294,8 +302,11 @@ export async function getMatter(
       -- CLS-UUID-LABEL — the DETAIL page is where the truncated uuids were rendered, so the same
       -- display joins used by listMatters must exist here too. Fixing only the list query would have
       -- left the actual offending screen unchanged. Same prod-verified columns, same LEFT JOINs.
+      -- Same entity predicate as the list query: scope what we join TO, not just the matter row.
       LEFT JOIN mdata.drivers   d  ON d.id  = m.related_driver_id
+                                  AND d.operating_company_id = m.operating_company_id
       LEFT JOIN mdata.units     u  ON u.id  = m.unit_id
+                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = m.operating_company_id
       LEFT JOIN insurance.claim ic ON ic.id = m.insurance_claim_id
         LEFT JOIN insurance.lawsuit lw ON lw.id = m.insurance_lawsuit_id
       WHERE m.operating_company_id = $1 AND m.id = $2
