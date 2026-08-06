@@ -69,8 +69,16 @@ jobs:
           POSTGRES_DB: ih35_verify
         ports:
           - 54329:5432
+        # -d ih35_verify is not optional noise-tidying: without it pg_isready defaults dbname to the
+        # username, probes a database named "verify" that is never created, and the server logs
+        # `FATAL: database "verify" does not exist` every 10s for the whole job (46 per run). The probe
+        # still returns PQPING_OK — the server answered — so the job starts and nothing is actually
+        # gated. That is exactly what makes it dangerous: the container log dump printed after a
+        # failure is full of FATALs unrelated to why the job failed, and it has already been read once
+        # as "the CI database is broken on main" when main was green and each PR was failing its own
+        # verify-step. Probe the database we actually use.
         options: >-
-          --health-cmd "pg_isready -U verify"
+          --health-cmd "pg_isready -U verify -d ih35_verify"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
