@@ -882,3 +882,36 @@ Recording that boundary explicitly so a later session does not "fix" it by seedi
 not 'factoring healthy'… Use Recourse Pipeline / Reserve Tracker / Chargebacks for live Faro truth.
 Do not invent Advances funded MTD from cash posting KPIs"* — and it names the canonical table
 (`accounting.factoring_advances`) rather than implying health from a KPI tile.
+
+## 21 — `LV-EXP-NOLOAD`: Record Expense cannot link a load — G18 unsatisfiable on this path — FAIL
+
+**Expense → GL posting works** (confirms the board's GUARD-VERIFIED "Expense posting — record-expense
+calls poster" card): USMCA has 2 expenses, both `Posted` with JE refs `ff286e60` / `b927818f`, GL
+column `Posted`.
+
+**But the create form cannot set the load link.** `/accounting/expenses` → `+ Create` → `Record
+expense` offers exactly: Vendor · Category · Payment Date · Amount (USD) · **Truck/Unit (optional)** ·
+Description · Payment method\* · Payment account\* · Receipts & documents. **There is no Load / Trip
+field at all.**
+
+**Why this matters — it is a documented hard rule, not a preference.** §4 of the standards:
+*"Every diesel/roadside expense MUST FK to a load (G18, critical)."* On this path that FK **cannot be
+supplied by the person recording the expense**. The Expenses list even renders a **`Load` column** —
+which reads `—` on both existing USMCA rows, because nothing in this form can populate it.
+
+**The capability exists elsewhere, which is what makes this an inconsistency rather than a missing
+feature:** the **bank categorize** panel (item 19) carries inline **`Driver` / `Unit (truck)` /
+`Trailer` / `Trip (load)`** fields on the bank row. So load-linking is built and wired there, but
+absent from the dedicated expense-entry form.
+
+**Consequence:** the battery item *"fuel expense WITH load link (IFTA)"* is **not creatable through
+the accounting Record Expense path**. IFTA state-mileage attribution and per-load fuel cost both
+depend on that FK.
+
+**Scope stated honestly:** I have **not** established that NO path can create a load-linked expense —
+the fuel module and the bank-categorize row are both plausible alternatives, and the maintenance
+expense path requires a WO instead (item 15b). What is proven is that the **primary, general-purpose
+expense-entry form omits the field**, while the list it feeds displays a column for it.
+**UNVERIFIED — needs live check** on whether the fuel module supplies it.
+
+Board row `LV-EXP-NOLOAD` (CC-2 mechanical/FE).
