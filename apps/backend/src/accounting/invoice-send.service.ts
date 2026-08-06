@@ -9,8 +9,10 @@ import { postInvoiceGlIfEnabled } from "./invoice-gl.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import {
   assertLoadRevenueHasSourceLoad,
+  assertInvoiceHasRevenueLines,
   assertRevenueLinesHaveIncomeAccount,
   InvoiceLoadSourceRequiredError,
+  InvoiceHasNoRevenueLinesError,
   InvoiceLineIncomeAccountRequiredError,
   type InvoiceLineGuardRow,
 } from "./invoice-linkage-guards.js";
@@ -107,12 +109,21 @@ export async function sendDraftInvoice(
   );
   const sendLines = sendLinesRes.rows as InvoiceLineGuardRow[];
   try {
+    // ACCT-F124 — FIRST, because the two guards below iterate the lines and therefore pass vacuously
+    // on an empty set. INV-2026-00004 sent with zero lines and left a receivable the poster correctly
+    // refused to recognise.
+    assertInvoiceHasRevenueLines(input.operatingCompanyId, input.invoiceId, sendLines);
     assertLoadRevenueHasSourceLoad(
       current.source_load_id ? String(current.source_load_id) : null,
       sendLines
     );
     assertRevenueLinesHaveIncomeAccount(input.operatingCompanyId, sendLines);
   } catch (guardErr) {
+    if (guardErr instanceof InvoiceHasNoRevenueLinesError) {
+      // 422, matching the sibling line-validity refusals: the request is well-formed, the invoice is
+      // not yet sendable.
+      return { ok: false, code: 422, error: "invoice_has_no_revenue_lines", message: guardErr.message };
+    }
     if (guardErr instanceof InvoiceLoadSourceRequiredError) {
       return { ok: false, code: 409, error: "invoice_load_source_required", message: guardErr.message };
     }

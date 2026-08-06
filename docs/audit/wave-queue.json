@@ -2,6 +2,60 @@
   "_README": "Cascade publishes CLS-* class wave cards here (schema: docs/audit/wave-queue.SCHEMA.json). Legacy per-module rows in AUDIT-COVERAGE-LIVE.md are WORM history and are NOT rewritten by this artifact. Cursor drains mechanical cards; Claude Coder drains money cards. verify-wave-card-format + verify-no-false-green-certify enforce the method in CI.",
   "waves": [
     {
+      "id": "CLS-DISPLAYID-UNSCOPED",
+      "root_cause": "accounting.invoices.display_id is UNIQUE only per (operating_company_id, display_id), not globally \u2014 each entity's sequence restarts at 00001 independently, by design. Any void/lookup/report/action that resolves an invoice (or any other per-entity numbered doc: bills, POs, settlements) by display_id ALONE, without also filtering by operating_company_id, can resolve the wrong entity's row. Entity-separation law (docs/IH35-TMS-ARCHITECTURE-AND-BLUEPRINT.md), not cosmetic.",
+      "lane": "money",
+      "layer": "C",
+      "modules": [
+        "accounting",
+        "driver_finance",
+        "maintenance"
+      ],
+      "instances": [
+        {
+          "path": "accounting.invoices \u2014 display_id collides across entities on 4 numbers: INV-2026-00001 (TRANSP e4d2ebdd / USMCA 06c7af5d), 00002 (USMCA cf3f7203 / TRANSP b4ab88d9), 00003 (TRANSP 2dd42828 / USMCA 53b8ddb3), 00004 (TRANSP 769f3062 / USMCA f280b52a \u2014 the pair cited in the work order)",
+          "entity": "ALL",
+          "note": "DATA FACT CONFIRMED live 2026-08-05. Schema has UNIQUE (operating_company_id, display_id) \u2014 per-entity sequence restart is by design, not a broken constraint. The hazard is any code that trusts display_id alone."
+        },
+        {
+          "path": "apps/backend/src/accounting/void.service.ts \u2014 canonical void engine",
+          "entity": "ALL",
+          "note": "CHECKED, SAFE: takes UUID target_id + explicit operatingCompanyId param; every query is WHERE operating_company_id = $1 AND id = $2. Never resolves by display_id."
+        },
+        {
+          "path": "apps/backend/src/factoring/faro-csv-import.ts:298-307, :381-402 \u2014 exact-match display_id lookups (FARO CSV import invoice matching)",
+          "entity": "ALL",
+          "note": "CHECKED, SAFE: both are WHERE operating_company_id = $1::uuid AND display_id = $2::text \u2014 correctly co-scoped."
+        },
+        {
+          "path": "apps/backend/src/accounting/invoices.routes.ts:209, payments.routes.ts:167, factoring-advances.routes.ts:196, cash-advances.routes.ts:173 \u2014 display_id ILIKE search-box filters",
+          "entity": "ALL",
+          "note": "CHECKED, SAFE: each sits inside a withCompanyScope(...)-wrapped list endpoint \u2014 layered on top of an opco-scoped base query, not a replacement for one."
+        },
+        {
+          "path": "accounting.bills, driver_finance.driver_settlements, accounting.factoring_advances \u2014 same duplicate-display_id-across-entity pattern",
+          "entity": "ALL",
+          "note": "CHECKED live 2026-08-05: 0 duplicates in all three tables today. No current collision to exploit even if an unscoped lookup existed \u2014 does not mean the class is closed, only that today's data has no live trigger outside invoices."
+        }
+      ],
+      "completeness": "Full grep sweep of apps/backend/src for display_id in a WHERE/lookup position (routes + services), plus frontend for a display_id-driven .find()/void action, 2026-08-05. Every call site found this pass is correctly co-scoped by operating_company_id. The reported exploit (\"a display_id void would have voided a real paid $3,800 TRANSP invoice\") was NOT independently located or reproduced in current code \u2014 flagged as UNVERIFIED (row 688) pending the specific file/line citation from whoever ran that repro. Ratchet/regression card: the schema allows the collision (by design), so this guards against a FUTURE unscoped call site, not a currently-live exploit.",
+      "guard": "scripts/verify-displayid-entity-scoped-lookups.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "GUARD NOT YET WRITTEN. Should scan for display_id used in a WHERE/lookup clause without an accompanying operating_company_id predicate in the same query, across accounting/driver_finance/maintenance routes+services.",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/accounting/void.service.ts",
+        "apps/backend/src/accounting/invoices.routes.ts",
+        "apps/backend/src/factoring/faro-csv-import.ts",
+        "apps/backend/src/accounting/payments.routes.ts",
+        "apps/backend/src/accounting/factoring-advances.routes.ts",
+        "apps/backend/src/cash-advances/cash-advances.routes.ts"
+      ]
+    },
+    {
       "id": "CLS-CATEGORY-MAP-COHERENCE",
       "root_cause": "expense_category_account_map incomplete, posting_side incoherent, OR spend miscategorized into the wrong GL expense account (e.g. tires/tolls into Fuel). A TMS-native bill whose category code has no map row fails with BILL_LINE_ACCOUNT_UNRESOLVED / CATEGORY_MAPPING_MISSING; a scope-mismatched Fuel GL overage that is NOT a double-post is usually this class.",
       "lane": "money",
@@ -210,7 +264,7 @@
           "note": "DISPOSITION: (B) empty state — QBO-origin bills/invoices have no loads (parallel books). TMS-native load count is genuinely low (pre-dispatch). NOT a defect."
         }
       ],
-      "completeness": "lucia-bypass Neon prod 2026-08-05: zero-amount density stable — invoices total_cents=0 = 1/11984, bills amount_cents=0 = 0/16250, payments amount_cents=0 = 0/12124. Broken-wiring defects ECON-005/012/014/015 remain OPEN (overage_deduction_id never written, PERMIT category has no GL translation, cash_advance_type_id column missing, account_role_bindings empty). Owner ruling: historical/QBO-import rows without cash_advance_type_id are exempt; TMS-native driver advance creation is not yet operational.",
+      "completeness": "lucia-bypass Neon prod 2026-08-05: zero-amount density stable — invoices total_cents=0 = 1/11984, bills amount_cents=0 = 0/16250, payments amount_cents=0 = 0/12124. Broken-wiring defects ECON-005/012/014/015 remain OPEN (overage_deduction_id never written, PERMIT category has no GL translation, cash_advance_type_id column missing, account_role_bindings empty). Owner ruling: historical/QBO-import rows without cash_advance_type_id are exempt; TMS-native driver advance creation is not yet operational. §9.0.17 DISPOSITION ROLLUP 2026-08-05 (CLASS-DRAIN work order, split real-defect vs by-design-empty before any drain): of 16 instances, REAL DEFECT / broken-wiring (A) = 4 (ECON-005 fuel overage_deduction_id dead code, ECON-012 PERMIT category untranslated, ECON-014 seeded catalogs not FK'd by consumers, ECON-015 orphan legacy role-binding table risk) — these are the only instances a builder should drain here. BY-DESIGN-EMPTY / catalog-awaiting-first-record (B) = 9 (ECON-002, 003, 006, 007, 008, 010, 011, 013, 016) — NOT actionable, no code to fix, closes only when a real business event is recorded. OWNER-HOLD (C) = 3 (ECON-001, 004, 009) — tracked under CLS-MONEY-HOLD (HOLD-001/002), NOT actionable on this card, do not duplicate the fix here.",
       "guard": "scripts/verify-econ-empty-density.mjs",
       "drain_proof": {
         "guard_green": false,
