@@ -97,3 +97,24 @@ freeze. That is expected, not a defect: it is this lane's own working record. An
 **Result: 13 of 13 rooted paths resolve on `origin/main`. One name (`01-LINKAGE-LAW.md`) has no such
 file and is served by the two sources named above.** Re-run this check when the order changes.
 
+---
+
+## ★ PERMANENT RULE 8 — SHARING (owner-added 2026-08-06, after a real failure)
+
+**A finding is NOT "recorded" until it is ON ORIGIN, and for a defect, ON THE SHARED BOARD ON MAIN.**
+
+`committed locally != shared`. This lane wrote 16 board rows and an 849-line log, all to the correct
+files, and **none of it was reachable by CC-1 or CC-2** because the commits sat unpushed behind a
+trigger freeze. The other lanes pull `docs/audit/GUARD-WORKORDERS.md` from **`main`** — a row that
+only exists locally, or only on a feature branch, has not been delivered and the agent→board→agent
+law is broken at the delivery step.
+
+**After EVERY finding, without exception:**
+1. `git commit` the row.
+2. `git push` it.
+3. **CONFIRM it landed:** `git log origin/<branch>` / `git show origin/<branch>:docs/audit/GUARD-WORKORDERS.md | grep <ID>` — do not assume the push succeeded (it can be rejected non-fast-forward when another lane has pushed to the same branch; rebase and re-push).
+4. For a **defect**, ensure the row reaches **`GUARD-WORKORDERS.md` on `main`** — open/maintain a PR so Cascade merges it. `LIVE-TXN-BATTERY-*.md` is this lane's own log; **`GUARD-WORKORDERS.md` on `main` is how other agents actually receive the finding.**
+
+**A CI freeze never justifies withholding a finding.** If a freeze blocks pushing, say so out loud and
+escalate — do not silently accumulate local commits. Tag every defect row with its owning lane
+(money → CC-1, mechanical → CC-2).
