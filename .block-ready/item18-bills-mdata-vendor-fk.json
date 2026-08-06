@@ -26,7 +26,7 @@
   "db_required": true,
   "guard_required": true,
   "extra_gates": [],
-  "hold": "TIER-1 MIGRATION — build-and-hold. DO NOT RUN ON PROD (registered held). Owner runs on Neon; GUARD proves the column+FK; owner merges.",
+  "superseded_hold": "OWNER LAW 2026-08-03: no holds, no approval label; coders have full Neon access and merge on green. Proof, not approval, is the gate.",
   "deferred": [
     { "item": "backfill accounting.bills.mdata_vendor_id from vendor_id/vendor_uuid + repoint writers (createBill etc.) to populate it and stop using the QBO-mirror id as the AP vendor; then consider NOT NULL after coverage proof", "reason": "backfill is a data step (owner/GUARD on Neon, prove coverage first) and the writer repoint needs vendor-resolution logic — an explicit coordinated follow-up, not silently dropped." }
   ]

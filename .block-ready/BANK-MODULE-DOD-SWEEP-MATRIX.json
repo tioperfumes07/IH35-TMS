@@ -1,6 +1,6 @@
 {
   "block_id": "BANK-MODULE-DOD",
-  "status": "HOLD",
+  "status": "BUILD",
   "classification": "FINANCIAL",
   "phase": "module-completion/banking",
   "task": "BANK-MODULE-DOD — per-surface DoD A–E + VERIFY 1–8 structural sweep matrix across 8 Banking leaves × TRANSP+USMCA, bound to banking.json (M 13→14), guard verify-step 1477. FINANCIAL-HOLD: evidence + manifest reconciliation only; no DDL/DML; no FAIL→PASS.",

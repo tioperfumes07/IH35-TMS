@@ -1,9 +1,9 @@
 {
   "block_id": "FACT-PAR-2",
-  "status": "BUILD-AND-HOLD",
-  "classification": "TIER 2 — HOLD-FOR-JORGE (migration ALTERs existing factoring.factor table)",
+  "status": "BUILD",
+  "classification": "TIER 2 — owner-preauthorized (migration ALTERs existing factoring.factor table)",
   "branch": "feat/factoring-noa-remit-enforcement",
   "title": "NOA Stamp + Remit-To Enforcement + Letter-of-Release Lifecycle",
   "migration": "db/migrations/202607160000_fact_par2_noa_remit_to.sql",
-  "guard_notes": "Migration adds 4 additive columns to factoring.factor + new factoring.letter_of_release table. No GL, no posting flags. NEVER self-merge — wait for JORGE-APPROVED label."
+  "guard_notes": "Migration adds 4 additive columns to factoring.factor + new factoring.letter_of_release table. No GL, no posting flags. OWNER LAW 2026-08-03: no holds, no approval label; coders have full Neon access and merge on green. Proof, not approval, is the gate."
 }

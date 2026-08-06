@@ -1,7 +1,7 @@
 {
   "block_id": "IMPORT-P0b",
-  "status": "hold-for-jorge",
-  "classification": "Tier-1 financial (flag-seed migration + gates the six entity write-back paths). BUILD-SOLO-AND-HOLD — never self-merge; GUARD verifies independently, owner labels + merges.",
+  "status": "BUILD",
+  "classification": "Tier-1 financial (flag-seed migration + gates the six entity write-back paths). BUILD-SOLO-AND-HOLD — OWNER LAW 2026-08-03: no holds, no approval label; coders have full Neon access and merge on green. Proof, not approval, is the gate.; GUARD verifies independently, owner labels + merges.",
   "phase": "QBO-IMPORT",
   "task": "IMPORT-P0b — entity-push kill-switch: gate every TMS→QBO write of invoice/bill/customer/vendor/account/item so nothing round-trips into QuickBooks under the parallel-books / reconcile-only architecture. Mirrors IMPORT-P0 (JE kill-switch, PR #1797).",
   "branch": "fix/qbo-entity-push-killswitch",
@@ -38,7 +38,7 @@
   "runtime_path": "src",
   "db_required": true,
   "guard_required": true,
-  "extra_gates": ["hold-merge-gate (JORGE-APPROVED required)"],
+  "extra_gates": ["hold-merge-gate"],
   "flag": "QBO_ENTITY_PUSH_ENABLED",
   "flag_default": "OFF",
   "depends_on": [],

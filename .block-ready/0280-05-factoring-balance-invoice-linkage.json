@@ -69,8 +69,8 @@
       "check": "verify-factoring-balance-invoice-linkage semantic --selftest PASS via verify-steps/929; no package.json / workflow hot-file edits"
     },
     {
-      "check": "DRAFT HOLD PR only — NEVER self-merge; owner Neon ceremony"
+      "check": "PR opened normally — OWNER LAW 2026-08-03: no holds, no approval label; coders have full Neon access and merge on green. Proof, not approval, is the gate.; owner Neon ceremony"
     }
   ],
-  "note": "FINANCIAL HOLD. No Home/Factoring tab/nav edits (tab drift). FE api + Home KPI render for null/unverifiable only."
+  "note": "merge on green (owner law 2026-08-03: no holds; proof, not approval, is the gate); . No Home/Factoring tab/nav edits (tab drift). FE api + Home KPI render for null/unverifiable only."
 }
