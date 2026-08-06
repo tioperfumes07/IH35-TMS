@@ -152,8 +152,13 @@ const postingColumns: Array<ParityColumn<JournalEntryPosting>> = [
     key: "class_name",
     label: "Class",
     sortable: true,
-    sortValue: (posting) => posting.class_name || posting.class_id || "",
-    render: (posting) => posting.class_name || posting.class_id || "—",
+    // CLS-UUID-LABEL — never fall back to the raw class_id. A uuid is not a label: it tells the reader
+    // nothing, and on a GL screen it reads as if it were the class's real identity. When the name cannot
+    // be resolved (the class was archived, or the posting carries a class from outside this entity), the
+    // honest render is "—", which says "unclassified" instead of showing a string nobody can act on.
+    // Sorting follows the same rule so the column does not order by a hidden uuid the user cannot see.
+    sortValue: (posting) => posting.class_name || "",
+    render: (posting) => posting.class_name || "—",
   },
   {
     key: "entity_uuid",
