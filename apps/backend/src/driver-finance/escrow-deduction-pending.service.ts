@@ -128,6 +128,7 @@ export async function emitAutoProposedEscrowEvents(params: {
       FROM driver_finance.escrow_deductions_pending p
       LEFT JOIN mdata.loads l ON l.id = p.load_id
       LEFT JOIN mdata.drivers d ON d.id = p.driver_id
+                                AND d.operating_company_id = p.operating_company_id
       WHERE p.operating_company_id = $1
         AND p.load_id = $2
         AND p.source_type = '${LOAD_ABANDONMENT_SOURCE_TYPE}'
@@ -244,6 +245,7 @@ export async function processEscrowPendingExpiryReminders(
       FROM driver_finance.escrow_deductions_pending p
       LEFT JOIN mdata.loads l ON l.id = p.load_id
       LEFT JOIN mdata.drivers d ON d.id = p.driver_id
+                                AND d.operating_company_id = p.operating_company_id
       WHERE p.operating_company_id = $1
         AND p.status = 'pending'
         AND p.expires_at <= (now() + INTERVAL '7 days')
@@ -320,6 +322,7 @@ export async function listPendingDeductions(client: PoolClient, operating_compan
         p.status
       FROM driver_finance.escrow_deductions_pending p
       LEFT JOIN mdata.drivers d ON d.id = p.driver_id
+                                AND d.operating_company_id = p.operating_company_id
       LEFT JOIN mdata.loads l ON l.id = p.load_id
       WHERE p.operating_company_id = $1
         AND p.status = 'pending'
