@@ -54,10 +54,53 @@ export function assertLoadRevenueHasSourceLoad(
   );
 }
 
+export class InvoiceHasNoRevenueLinesError extends Error {
+  operatingCompanyId: string;
+  invoiceId: string | null;
+  constructor(operatingCompanyId: string, invoiceId: string | null, message: string) {
+    super(message);
+    this.name = "InvoiceHasNoRevenueLinesError";
+    this.operatingCompanyId = operatingCompanyId;
+    this.invoiceId = invoiceId;
+  }
+}
+
+/**
+ * An invoice must carry at least ONE revenue-bearing line before it can be sent.
+ *
+ * ACCT-F124 — this is the assertion the other two could never make. Both of them iterate the lines
+ * and validate what they find, so on an EMPTY line set they pass vacuously: nothing to check, no
+ * error, invoice sends. That is not hypothetical. INV-2026-00004 (USMCA) reached status='sent' on
+ * 2026-08-04 with ZERO invoice_lines, and the posting engine then correctly refused it —
+ * `accounting.invoice.gl_post_failed / INVOICE_LINE_REVENUE_UNRESOLVED: "Invoice has no
+ * revenue-bearing lines to resolve"` — leaving a sent receivable with no journal entry.
+ *
+ * The poster was right to refuse: there is genuinely nothing to recognise. The defect is upstream —
+ * an invoice with nothing on it should never have become 'sent'. Fixing it here rather than making
+ * the poster invent a line is the difference between closing a gap and fabricating revenue.
+ */
+export function assertInvoiceHasRevenueLines(
+  operatingCompanyId: string,
+  invoiceId: string | null,
+  lines: InvoiceLineGuardRow[]
+): void {
+  if (lines.some((row) => isRevenueBearingLine(row))) return;
+  throw new InvoiceHasNoRevenueLinesError(
+    operatingCompanyId,
+    invoiceId,
+    `invoice_has_no_revenue_lines: invoice ${invoiceId ?? "(unknown)"} has ${lines.length} line(s) and ` +
+      `none of them are revenue-bearing, so sending it would create a receivable the ledger cannot ` +
+      `recognise. Add the billable line(s) before sending.`
+  );
+}
+
 /**
  * Every revenue-bearing line must already resolve to an income account (explicit account_id
  * or item default). Callers that only have account_id (send path) pass that; posting engine
  * passes the COALESCE'd income_account_id.
+ *
+ * NOTE: this loop is a no-op on an empty line set by construction — see
+ * assertInvoiceHasRevenueLines above, which is the guard that covers that case.
  */
 export function assertRevenueLinesHaveIncomeAccount(
   operatingCompanyId: string,
