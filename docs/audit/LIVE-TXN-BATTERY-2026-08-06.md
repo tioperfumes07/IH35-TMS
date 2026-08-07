@@ -3878,3 +3878,76 @@ void path. **Write no new GL math — copy the working neighbour.**
 **GUARD:** assert that for every JE carrying `voided_at`/reversal, both `reverses_je_id` and
 `reversed_by_je_id` resolve, and that a JE with a non-null `reversed_by_je_id` cannot be voided again.
 **LANE: CC-1 / money.**
+
+---
+
+## 60. EXPENSE VOID — the endpoint is BUILT and the UI cannot reach it; void behaviour stays UNVERIFIED
+
+**LIVE 2026-08-07, USMCA. The last unmapped void path — and it could not be exercised, for a reason
+that is itself the finding.**
+
+### Baseline (captured before attempting anything)
+
+`accounting.expenses` for USMCA: **2 rows**, both `$1.00`, `status = posted`, `posting_status = posted`,
+`voided_at` NULL, **2 GL postings each**. Entity totals: `je_total` **27**, expense postings **4**.
+Expense `2b520d35` posts **DR `6160` Parts & Supplies Expense $1.00 / CR `1000` Bank of America –
+Operating (USMCA) $1.00** — correct and balanced. A natural sibling pair already existed, so the
+standing order's *"reverse exactly ONE, siblings live"* rule was satisfiable without creating more.
+
+### What I found instead
+
+- The **list** page is titled **"Expenses — Recorded expenses (read-only)"** and has **no ACTIONS
+  column**; its columns are Expense #, Date, Payee, Category/Memo, Load, WO, Vendor, JE, Bank txn,
+  Amount, Status, GL, Bank Match.
+- The **detail** page (`/accounting/expenses/2b520d35-…`) shows POSTED, Amount, GL posting **Posted**,
+  Journal entry **`ff286e60`**, Payment account, Unit, Memo and Lines — **and offers no action at all.
+  No Void, no Edit.**
+
+**So there is no UI path to void an expense.**
+
+### The capability exists — it is just unreachable
+
+| layer | state |
+|---|---|
+| DB | `accounting.expenses` has **`voided_at`, `void_reason`, `voided_by_user_id`** |
+| Backend route | **`POST /api/v1/expenses/:expenseId/void`** — `accounting/expenses.routes.ts:1045` |
+| Shared service | `accounting/void.service.ts:301` maps **`expense: "accounting.expenses"`** |
+| Status vocabulary | `expenses.routes.ts:130` — status is `IN ('draft','posted','void')` |
+| **Frontend** | **nothing invokes it.** `ExpenseDetailPage.tsx`'s only `void` occurrences are a badge mapping (`if (status === "void") return "neutral"`) and an unrelated JS `void detailQuery.refetch()` |
+
+**The frontend knows how to RENDER a voided expense and has no way to PRODUCE one.** That badge branch
+is dead code today.
+
+### Verdict — a reachability gap, stated with its ambiguity
+
+**I am NOT filing this as a hard defect.** The list page **declares** itself "read-only", and a
+deliberately read-only expense module is a coherent design — expenses may be captured upstream (bank
+feed, driver app, card import) and corrected at source rather than voided in place. **Per the intent
+test, a declared behaviour is not a defect.**
+
+**But the declaration does not cover the whole picture:** a void ENDPOINT was built, a shared void
+SERVICE knows about expenses, the status enum includes `void`, and the UI renders a `void` badge. **Four
+independent signals say voiding an expense is intended to be possible; zero UI affords it.** That is a
+reachable-capability gap under the total-connectivity law (§10a), and it is worth a deliberate answer
+rather than silence.
+
+**CONSEQUENCE FOR THIS BATTERY, STATED PLAINLY: expense void behaviour is UNVERIFIED.** I cannot say
+whether it posts a reversal, writes linkage, or leaves residue, because **I will not call the raw API
+to find out** — this lane verifies the running application, and invoking an endpoint the app never
+invokes would be testing something no user can do, on a money-affecting write. **The void map
+therefore has three measured paths and one unreachable one.**
+
+### Updated void map
+
+| path | reversal | net GL zero | linkage | reachable from UI |
+|---|---|---|---|---|
+| **JE void** | ✅ | ✅ | ✅ both | ✅ |
+| **Invoice void** | ✅ | ✅ | ❌ | ✅ |
+| **Bill-payment void** | ❌ | ❌ | — | ✅ |
+| **Expense void** | **UNVERIFIED** | **UNVERIFIED** | **UNVERIFIED** | ❌ **no control exists** |
+
+**FIX (if voiding expenses is intended):** surface the existing endpoint on the expense detail page,
+reusing the same reason-required panel the JE/invoice/bill-payment voids already use. **If the module
+is deliberately read-only, say so explicitly** on the detail page too, and the dead `void` badge branch
+should be removed or justified. **Either answer is fine; the current state is the one that is not.**
+**LANE: CC-2 / mechanical (FE) — with a design answer needed from whoever owns expenses.**
