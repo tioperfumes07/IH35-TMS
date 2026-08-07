@@ -4913,3 +4913,60 @@ remediation is: attribute everything from the fix forward, and record in the aud
 before that date carry no actor**, so nobody later mistakes a null actor for a system action.
 
 **Routed:** WORM / audit integrity → **CC-1**.
+
+---
+
+## 79. FAIL (P1) — `LV-BANKING-QBO-CONNECTED-IS-HARDCODED`: Banking tells every entity "QBO Sync: Connected" from a string literal, while USMCA has no QBO connection at all
+
+**Observed live, USMCA, 2026-08-07, `/banking`.** The Banking Home status strip renders, verbatim:
+
+> **QBO Sync:** Connected | Last sync: n/a | Transactions: 163 | Uncategorized: 111 | Pending QBO sync: 0
+
+The same line claims a live connection **and** admits it has never synced. Meanwhile the global top bar,
+two inches above it, shows a grey **"QuickBooks: not connected"**. Two contradictory statements about the
+same entity on the same screen.
+
+**PROD — USMCA has NO QBO connection.** `integrations.qbo_connections`, completeness discriminator
+satisfied (`visible_all` **4** == `n_live_tup` **4**, `current_user` asserted in the same statement):
+
+| operating_company_id | realm_id | live (`revoked_at IS NULL`) | is USMCA |
+|---|---|---|---|
+| `b49a737b…` | 1432746210 | true | **false** |
+| `91e0bf0a…` (TRANSP) | 123145885549599 | false | **false** |
+| `b49a737b…` | 123145885549599 | false | **false** |
+| `91e0bf0a…` (TRANSP) | 123145885549599 | true | **false** |
+
+**Zero rows for USMCA.** The header is right; the banking strip is wrong.
+
+**ROOT CAUSE — a hardcoded literal, no inference required.**
+`apps/frontend/src/pages/banking/components/SyncStatusStrip.tsx:11-12`:
+
+```jsx
+<span className="font-semibold">QBO Sync:</span>{" "}
+<span className="text-slate-700">Connected</span>
+```
+
+The component's entire prop surface is `{ syncedAt, transactionCount, uncategorizedCount, pendingSyncCount }`
+— **not one of them is a connection state.** There is no query, no flag, no conditional. "Connected" is
+printed unconditionally, for every entity, forever. This is not a scoping bug or a stale cache; the screen
+has no access to the fact it is asserting.
+
+**WHY IT MATTERS.** Under the locked parallel-books architecture QBO is the system of record through
+2025-12-31 and TMS reconciles against it. A banking screen that certifies "QBO Sync: Connected · Pending
+QBO sync: 0" tells the reader their bank activity is mirrored and nothing is outstanding. For USMCA —
+TMS-only and isolated **by design** — every part of that is false: there is no connection, so "0 pending"
+is not "all clear", it is "nothing can ever sync". A user reconciling USMCA banking would reasonably
+conclude it ties to QuickBooks. It cannot.
+
+**Same class as `LV-DISPATCH-TOAST-LIES`:** a UI asserting a system state it never checked. It is the
+cheapest kind of defect to fix and among the most expensive to trust wrongly, because it is
+indistinguishable from a true "Connected" until someone checks the database.
+
+**Fix, completely:** derive the label from the entity's real connection state (a live
+`integrations.qbo_connections` row for the current `operating_company_id`, `revoked_at IS NULL`), render
+"Not connected" when there is none, and suppress or relabel "Pending QBO sync" when no connection exists —
+`0 pending` against no connection is affirmatively misleading. **A guard should assert this component takes
+connection state as a prop**, so the literal cannot come back.
+
+**Routed:** FE/mechanical for the render; the wording of the connected/not-connected states touches the
+parallel-books contract, so CC-1 should sanity-check the copy.
