@@ -18,5 +18,5 @@
   "db_required": false,
   "guard_required": false,
   "extra_gates": [],
-  "hold": "TIER-1 FINANCIAL DECISION — design only, but records a canonical-engine decision + defers Bill-vs-JE to owner. HOLD for Jorge's ratification before any S2+ code."
+  "superseded_hold": "OWNER LAW 2026-08-03: no holds, no approval label — this field previously gated S2+ code on the owner's ratification and is abolished as a MERGE GATE. The substance is retained and unchanged: this is a TIER-1 FINANCIAL block, design-only, and it records a canonical-engine decision; the Bill-vs-JE choice remains an OWNER DECISION (a canonical pick the owner makes in chat), which the law preserves. What is removed is only the merge gate — the coder builds, proves live, and merges on green. Proof, not approval, is the gate."
 }

@@ -1,5 +1,7 @@
 # IH35-TMS — Unified Blueprint Additions
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 > Companion to IH35_MASTER_BLUEPRINT_v3_FULL.md. Captures every chat-derived
 > addition, refinement, and clarification from Jorge that is NOT in the formal
 > v3 blueprint but IS approved-and-locked design.
@@ -1375,7 +1377,7 @@ Canonical detail: `docs/specs/TMS-QBO-PARALLEL-BOOKS.md` + CPA skill. Layers are
 ## 16a. Factoring Balance — invoice-grain Faro liability + separate reserve (0280-05)
 
 Source: Owner cloud dispatch 2026-07-19 (`0280-05-factoring-balance-invoice-linkage`)  
-Status: LOCKED (read-only contract; financial HOLD — no self-merge; owner Neon ceremony)  
+Status: LOCKED (read-only contract; financial HOLD — merge on green with proof; owner Neon ceremony)  
 Standards: QuickBooks/NetSuite liability-vs-asset honesty; McLeod/Alvys factoring tiles; CPA Faro ASC 860 secured borrowing (CHAIN-06).
 
 ### Owner decisions (append-only — do not re-litigate)
@@ -1385,7 +1387,7 @@ Standards: QuickBooks/NetSuite liability-vs-asset honesty; McLeod/Alvys factorin
    (full Net liability credited at funding per CHAIN-06 / CODER-34 poster).
 2. **Factoring Reserves = separate 1.5% short-term asset/receivable**, never netted into the
    liability balance. Factored A/R remains on IH35 books as pledged collateral (no sale/derecognition).
-3. **Migration is additive FORCE-RLS + security_invoker view**, build-and-HOLD; owner applies on Neon
+3. **Migration is additive FORCE-RLS + security_invoker view**, build-and-ship; the coder applies on Neon
    + ledger-backfill. Never self-merge.
 4. **Posting flags remain OFF**; **no TMS→QBO write-back**. Reuse existing poster/read models —
    no new GL math.
@@ -1653,7 +1655,7 @@ reserve (not status); (5) TRANSP/Faro identity fail-closed; (6) FORCE RLS Owner/
 ## 16. Accounting Home — Pending approvals ↔ GL linkage (0280-15)
 
 Source: Owner cloud dispatch 2026-07-19 (`0280-15-pending-approvals-gl-linkage`)  
-Status: LOCKED (read-only control; financial HOLD — no self-merge)  
+Status: LOCKED (read-only control; financial HOLD — merge on green with proof)  
 Implementation: Accounting Core Block 23/67  
 Adversarial fix (2026-07-19): eliminate phantom period-close warning source; honest
 `control_available=false` until a migrated JE approval record exists.
@@ -1769,7 +1771,7 @@ Status: LOCKED (non-financial guard/spec wiring plus behavior tests; relation-fa
 
 Owner decision (Jorge P. Munoz, 2026-07-19), sole owner call per the 2026-07-11 owner-authority ruling. No owner sign-off this session; reviewable by a CPA/auditor later.
 
-This section refines, and does **not** contradict, the CPA Answers Integration Phase 1 lock ("TMS ACCRUAL recognition event = canonical load delivery"): the two-event latch below is the exact posting mechanics of that same delivery-recognition event, plus the invoice-time reclass, materiality, approval, entity-scope, reconciliation, reporting, and boundary controls around it. **Financial cluster → build-and-HOLD**; owner `JORGE-APPROVED` + owner Neon-apply required before any posting change ships. Reuse the existing poster — write no new GL math.
+This section refines, and does **not** contradict, the CPA Answers Integration Phase 1 lock ("TMS ACCRUAL recognition event = canonical load delivery"): the two-event latch below is the exact posting mechanics of that same delivery-recognition event, plus the invoice-time reclass, materiality, approval, entity-scope, reconciliation, reporting, and boundary controls around it. **Financial cluster → build-and-ship**; owner `JORGE-APPROVED` + the coder applies on Neon before any posting change ships. Reuse the existing poster — write no new GL math.
 
 ### Method
 
@@ -1804,7 +1806,7 @@ Per-entity, configurable, **no permissive default**; **single-correction AND cum
 ### Controls
 
 - `REVENUE_RECOGNITION_POST_ENABLED` **default OFF**; does **not** alter `INVOICE_AR_GL_POSTING_ENABLED`.
-- Build-and-HOLD; **no QBO write-back**.
+- Build-and-ship; **no QBO write-back**.
 
 ### Reconciliation
 

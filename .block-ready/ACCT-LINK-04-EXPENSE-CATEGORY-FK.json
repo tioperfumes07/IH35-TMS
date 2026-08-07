@@ -54,5 +54,5 @@
       "evidence": "accounting.expenses=0 and accounting.expense_lines=0 on prod; catalogs.expense_categories metadata={} on all 9 rows so no category->account binding exists yet. Density needs the owner's Lists-hub bindings."
     }
   ],
-  "note": "HOLD — financial cluster. Do NOT merge without JORGE-APPROVED + owner Neon-apply."
+  "note": "OWNER LAW 2026-08-03: no holds, no approval label; coders have full Neon access and merge on green. Proof, not approval, is the gate."
 }

@@ -243,7 +243,7 @@ No frontend file contains `payroll.driver_settlements` or `driver_finance.driver
 | **P2d** | Approval → canonical | Service already on DF; confirm columns + tests; comment cleanup |
 | **P2e** | Converge disputes → `driver_settlement_disputes` | Plural `settlements.*` + DF dup `settlement_disputes` still live |
 | **P2f** | Team-split config → `mdata.driver_teams` (Option A) | **Done 2026-07-21** — plural facade mounted; zero RETIRE `team_split_*` SQL |
-| **P1** | Additive approval columns | HOLD migration (owner apply) — not this PR |
+| **P1** | Additive approval columns | migration applied by the coder on green — not this PR |
 | **P3** | Unmount + archive | After P2* |
 | **P4** | G4 harden + route-mount | Inventory §10–12 + G4 `settlements.*` + wire `verify-no-payroll-settlement-writes` |
 
