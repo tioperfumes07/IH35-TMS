@@ -7655,3 +7655,72 @@ Recording both readings so the next agent does not "resolve" item 90 as coverage
 the shape the false-zero rule exists for — 19 zeroes in one family is precisely what an RLS mask looks like.
 It is not one: `driver_settlements` returns **1** and `escrow_settings` returns **2** from the same schema in
 the same transaction. **The positive controls are inside the same result set.**
+
+## 124. ★★ BOARD ITEM PULLED — `LV-WO-CREATE-500-OPENED-AT` (P0): CONFIRMED as a real break, and its SEVERITY CLAIM IS WRONG. Plus the first USMCA work order ever, and a NEW locked-format defect it exposed.
+
+**Pulled the top OPEN P0 off the board and re-tested it with the production service — two controlled runs
+differing in exactly one input.** The row's root cause is right; its scope claim is not.
+
+| run | input | result |
+|---|---|---|
+| A | `service_date` only, **no `opened_at`** | **CREATED** — `cf886b9f-7397-4bb5-a42a-7596f9902277`, `WO-T149-IS-08-07-2026-0001-PEND0` |
+| B | same + `opened_at = 2026-08-05T10:00:00Z` | **`P0001 E_WO_OPENED_AT_IMMUTABLE: opened_at cannot be changed once set`** |
+
+### ★ CORRECTION TO THE BOARD ROW — `LV-WO-CREATE-IS-CONDITIONAL-NOT-TOTAL`
+
+The row states *"work-order creation is **100% broken for EVERY entity**"*. **It is not.** Run A created a
+work order on the current build, on prod, for USMCA. **Creation succeeds whenever `opened_at` is omitted.**
+
+**The mechanism, confirmed at both ends:** the INSERT (`two-section-service.ts:203`) writes
+`opened_at = COALESCE($8::timestamptz, now())` where **`$8` = `header.service_date`** (param list `:216`), so
+`opened_at` is **never null** after insert. The post-insert UPDATE (`:285`) writes
+`opened_at = COALESCE($1, opened_at)` with `$1 = header.opened_at ?? null` — and **`COALESCE(NULL, opened_at)`
+is a no-op**, so `OLD.opened_at IS DISTINCT FROM NEW.opened_at` is FALSE and the trigger stays silent. The
+UPDATE block is itself gated (`:274`) on `header.opened_at != null || …`. **The 500 requires `opened_at` to be
+supplied AND to differ from `COALESCE(service_date, now())`.**
+
+**This still deserves P0, and the correction is not a downgrade — it is a different bug with a different
+test.** The WO wizard's "Open date/time" field is precisely what populates `opened_at`, so **any operator who
+touches that field gets a 500 and loses the form**, while an operator who leaves it alone never sees it. That
+explains why it reproduced twice through the UI and why the table is not empty. **A fixer told "100% broken"
+writes the wrong regression test** — the passing case is as important as the failing one, and the guard must
+assert BOTH.
+
+**The prior analysis is otherwise vindicated:** `maintenance.wo_set_opened_at` is the sensor, not the bug —
+two writers in one request disagree, exactly as the row says.
+
+### ★ FIRST USMCA WORK ORDER IN EXISTENCE
+
+`maintenance.work_orders` for USMCA was **0** before this unit (`visible_all == n_live_tup == 1`, that one row
+being TRK's). Now **1**: `cf886b9f-…`, `open`, unit `T149` (owned by TRK `b49a737b-…`, **leased to USMCA** —
+the correct `COALESCE(currently_leased_to_company_id, owner_company_id)` entity resolution), `total_actual_cost
+100.00`, `estimated_cost_cents 10000`, `source_type IS`, `bucket in_house`, `opened_at 2026-08-07`. **The
+`scenario.maintenance` red dot is no longer hard-blocked** — item 112 listed it as *"the only red dot with a
+known code blocker"*, and the blocker is avoidable by omitting one field.
+
+### ★ NEW FAIL (P1 · locked format · CC-2) — `LV-WO-DISPLAY-ID-V5-IS-HARDCODED-PEND0`
+
+The display ID came back **`WO-T149-IS-08-07-2026-0001-PEND0`**. The locked format (CLAUDE.md §7, rule 03) is
+**`WO-{UNIT}-{TYPE}-{MM-DD-YYYY}-{NNNN}-{V5}`** — V5 being the VIN's last five. Unit T149's VIN is
+**`1XPCDP9X3LD649118`**, so V5 should be **`49118`**.
+
+**ROOT CAUSE — read from the live function definition on prod, not inferred.**
+`maintenance.next_wo_display_id(uuid, text, date, uuid)` ends with:
+```sql
+display_id := CONCAT('WO-', v_unit_display_id, '-', p_source_type, '-',
+  TO_CHAR(COALESCE(p_date, CURRENT_DATE),'MM-DD-YYYY'), '-', LPAD(v_seq::text,4,'0'), '-PEND0');
+```
+**`'-PEND0'` is a hardcoded string literal.** The function never reads `vin` — although it already
+`SELECT`s from `mdata.units` four lines above and could take it from the same row at zero cost.
+
+**Scope, measured:** **2 of 2** work orders in the database end in `-PEND0` — TRK's
+`WO-TEST-TRUCK-1-IS-08-03-2026-0001-PEND0` (VIN `TESTTRUCKVIN00001`, V5 `00001`) and USMCA's. **Every work
+order the system has ever produced carries a placeholder where the locked format specifies the VIN**, and
+display IDs are server-generated, immutable, and cited on repair documents and vendor invoices. The
+placeholder name suggests "pending", but nothing ever fills it in: there is no update path, and the value is
+baked at insert.
+
+**Why it is P1 and not cosmetic:** two different units produce visually distinct IDs only via `{UNIT}`; the
+V5 segment exists so an ID is traceable to a *vehicle* when unit numbers are reassigned between trucks — a
+real event in a fleet. A constant defeats that entirely, and because the ID is immutable, every WO created
+before the fix keeps the placeholder forever.
