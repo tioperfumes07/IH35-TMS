@@ -5028,3 +5028,38 @@ should assert that for a fixed date and memo, a smaller amount gap never scores 
 that property is what broke, and it is cheap to test.
 
 **Routed:** money / reconciliation → **CC-1**.
+
+---
+
+## 81. CONTROLLED COMPARISON — the SAME CoA picker works in Banking and is empty in Record-expense, which isolates item 75 to that one component
+
+**Verified live, USMCA, 2026-08-07, same browser session, minutes apart.** This is the positive control item
+75 was missing.
+
+| surface | picker | result |
+|---|---|---|
+| `/banking/transactions` → row → Categorize | **Category (Chart of Accounts)** | **POPULATED** — `Driver Cash Advance- TEST Driver-One-20260806` (Asset) · `Relay Fuel Wallet` (Asset) · **`Interest & Financing Expense` (Expense)** · `Interest Receivable` (Asset) · `Loans to Related Parties` |
+| `/accounting/expenses` → `+ Create` → Record expense | **Category** | **EMPTY** — only `+ Add new category` |
+
+Same entity, same session, same chart, same authenticated user, minutes apart. The Banking picker even
+renders an **Expense**-type account (`Interest & Financing Expense`), which is exactly the class the
+Record-expense picker claims none of.
+
+**WHAT THIS ELIMINATES — with evidence, so nobody re-runs these:** the empty picker is **not** missing data,
+**not** the CoA endpoint, **not** entity scoping, **not** RLS, **not** auth or session, and **not** a
+per-entity CoA gap. All of those would have broken the Banking picker identically. Combined with the four
+hypotheses already killed in item 76 (data absent · filter wrong · stale bundle predating the
+`qbo_account_id` fix · query never fired), the surviving surface is now **one component**:
+`components/expenses/RecordExpenseForm.tsx` `categoryOptions` (:138-152).
+
+**Everything around it is proven working:** `catalogs.accounts` holds 32 active+postable expense-family rows
+for USMCA; the exact client URL returns 76/76; `isExpenseAccount` is correct; `ReferenceSelect` renders what
+its parent passes; and a sibling picker over the same chart populates fine.
+
+**Still UNVERIFIED and still not guessed:** why that one component's `categoryOptions` evaluates empty.
+Settling it needs source maps or a runtime breakpoint. **I will not name the failing line without watching
+it execute** — but the owning lane now has a controlled A/B, which is the cheapest possible starting point.
+
+**Note (minor, both surfaces):** `+ Add new category` renders as the **FIRST** row of both dropdowns.
+Product lock §7 says the inline `+ Add new ___` belongs at the **END** of a reference dropdown. Recorded as
+a consistency observation, not filed as a defect.
