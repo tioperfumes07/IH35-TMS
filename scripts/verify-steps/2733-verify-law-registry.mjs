@@ -18,6 +18,17 @@ export default {
     // difference, and that is the gap.) A drained wave with a missing guard is a HARD FAIL here; an open
     // wave still owing one is shrink-only debt. Existence-only, same cost profile as the law check above.
     await ctx.run("node", ["scripts/verify-wave-queue-guards-exist.mjs", "--selftest"]);
-    return ctx.run("node", ["scripts/verify-wave-queue-guards-exist.mjs"]);
+    await ctx.run("node", ["scripts/verify-wave-queue-guards-exist.mjs"]);
+
+    // LAW-2026-08-07-LANE-TERRITORY — stop the lanes colliding, enforced rather than written.
+    // Measured over 60 PRs: lanes do NOT collide on domain code (dispatch/mdata/frontend are CC-2
+    // only; accounting/driver-finance/migrations/.github are CC-1 only). They collide on shared entry
+    // points. Layer 1 keeps the clean partition clean; layer 1b serializes the handful of files that
+    // genuinely belong to everyone. Append-only registries are deliberately excluded from BOTH — they
+    // are union-merged, so filing a board finding never waits for a token. Both advisory outside a PR.
+    await ctx.run("node", ["scripts/verify-lane-territory.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-lane-territory.mjs"]);
+    await ctx.run("node", ["scripts/verify-hotfile-single-open-pr.mjs", "--selftest"]);
+    return ctx.run("node", ["scripts/verify-hotfile-single-open-pr.mjs"]);
   },
 };
