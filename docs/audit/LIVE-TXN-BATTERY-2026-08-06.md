@@ -2375,3 +2375,73 @@ safe — but it is **not** something this lane will do, since it does not build.
 
 `INV-2026-00006` was **auto-created for `L-20260806-0008`** at `$1,875.50`, status `proforma`,
 `source_load_id = 1d5d8733-…`. The booking wizard's "queue invoice" step works. **PASS.**
+
+---
+
+## 48. ★ NEW DEFECT — the A/R invoice list counts VOID invoices in "Total billed" AND "Open" (overstated $2,452.00)
+
+**LIVE-PROVEN 2026-08-07 in the running app — `/accounting/invoices`, USMCA, visible on screen and
+confirmed by arithmetic against the same screen's rows.**
+
+The page header reads:
+
+> **Total billed: $5,527.50 · Open: $5,277.50 · Rows: 6 of 6**
+
+The six rows it is summing (no filter applied — "6 of 6"):
+
+| invoice | status | Total | Open |
+|---|---|---|---|
+| INV-2026-00006 | proforma | $1,875.50 | $1,875.50 |
+| **INV-2026-00005** | **void** | **$2,450.00** | **$2,450.00** |
+| **INV-2026-00004** | **void** | **$0.00** | **$0.00** |
+| INV-2026-00003 | partial | $1,200.00 | $950.00 |
+| **INV-2026-00002** | **void** | **$1.00** | **$1.00** |
+| **INV-2026-00001** | **void** | **$1.00** | **$1.00** |
+
+`1875.50 + 2450.00 + 0 + 1200.00 + 1.00 + 1.00 = ` **5527.50** — matches "Total billed" exactly.
+`1875.50 + 2450.00 + 0 + 950.00 + 1.00 + 1.00 = ` **5277.50** — matches "Open" exactly.
+
+**The four VOID invoices contribute $2,452.00 to the reported Open balance.** True open across
+non-void rows is `1875.50 + 950.00 = ` **$2,825.50**.
+
+### Two distinct faults, one screen
+
+1. **Per row:** a void invoice still shows a **non-zero Open** ($2,450.00, $1.00, $1.00). A voided
+   document has no open balance, by definition.
+2. **In the summary:** those non-zero values are then **summed into "Open"** — an A/R balance concept.
+
+### THIS IS NOT item 47, and the difference decides the fix
+
+Item 47 is a **data** defect: one row (`INV-2026-00005`) mis-stamped by the load-cancel path, missing
+`voided_at`. **This item is a QUERY defect** — because `INV-2026-00001`, `…002` and `…004` **DO** carry
+a proper `voided_at` (verified on prod: `2026-08-05 23:16:48.664…`, `23:16:48.299…`, `23:14:59.653…`)
+**and they are still being counted.**
+
+**Fixing item 47 alone would NOT move this number**, since the aggregation is evidently not filtering
+on `voided_at` at all. Both fixes are required, and they live in different places. Recording them as
+separate cards is deliberate.
+
+### Fair reading of the design — and why it is still wrong
+
+Showing void rows in the **register** is a legitimate design (WORM: void, never delete — the row must
+remain visible). **That is not the complaint.** The complaint is that a **balance** labelled "Open"
+includes them. Even in a register that deliberately displays voided documents, a voided invoice's open
+amount is **$0.00**, and the "Open" total must exclude it.
+
+**Separately worth a decision (flagged, not claimed as a defect):** `INV-2026-00006` is a **proforma**
+and contributes $1,875.50 to both figures. A proforma is not yet an issued receivable, so whether it
+belongs in "Total billed"/"Open" is a **policy question**, not obviously a bug — the two-event
+recognition model treats billing as the POD event. **Naming it so whoever fixes the void filter also
+decides the proforma question explicitly rather than by accident.**
+
+### Relationship to `LV-AP-OPEN-INCLUDES-VOIDED`
+
+**This is the exact A/R twin of that A/P finding, and the SAME mechanism** (an open-balance aggregate
+that does not exclude voided documents) — unlike item 47, which shares only the symptom. **Two sides
+of the ledger, one missing predicate.** Whoever fixes one should fix the other in the same pass and
+sweep for the pattern elsewhere (aging reports, dashboards, cash-flow projections).
+
+**FIX:** exclude voided invoices from both aggregates, and zero the per-row Open for a voided document.
+**GUARD:** assert that the A/R open-balance aggregate equals the sum over **non-void** invoices only —
+a live data assertion computed two independent ways, which is exactly how this was caught.
+**LANE: CC-1 / money.**
