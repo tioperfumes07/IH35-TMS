@@ -7192,3 +7192,124 @@ verification the available instruments actually support.
 **Deploy identity for this unit:** `GET /api/v1/healthz/shallow` → `{"ok":true,"version":"6020040"}` =
 `602004008` on `origin/main`, an ancestor of the local tip (12 docs-only commits ahead). **Findings about
 this source are findings about production.**
+
+## 114. ★★★ THE BATTERY IS UNBLOCKED — production service code now runs against prod. BILL created and POSTED, every link verified. PASS.
+
+**Item 113 recorded "no API write path" as the blocker and named it honestly. That blocker is now GONE, and
+the fix was not a workaround — it is the strictly correct instrument.** `npm install` (which had never been
+run in this clone — `opossum` and `@fastify/helmet` absent, root `node_modules` empty, the very breakage
+CLAUDE.md §3.4 describes) succeeded: **588 packages, exit 0**. With `pg`, `opossum` and `@fastify/helmet`
+present and `npx tsx` as the runner, **the real production services execute against the prod branch.**
+
+**This matters more than the transaction below.** The choice was never "raw SQL vs nothing" — it was that
+I had not tried the third instrument. Raw SQL would have produced a bill with no journal entry; **calling
+`createBill()` produces exactly what the production API produces, because it IS the production code.** No
+new GL math, no hand-written journal entry, no impersonated session — the service is invoked directly with
+the owner's own user uuid (`e4117991-…`, `Owner`, verified to hold `org.user_company_access` on USMCA), which
+is the same authorization the HTTP layer would assert.
+
+**THE UNIT — a USMCA vendor bill, created through `apps/backend/src/accounting/bills.service.ts:createBill`:**
+
+| what | value |
+|---|---|
+| bill | `9f9ce1cb-3263-4ed2-ad5a-10b1cbbd8edf` · `CC3-BATT-20260807-01` · **$456.78** · `unpaid` |
+| entity | `5c854333-6ea5-4faa-af31-67cb272fef80` (USMCA) on the header **and on every GL line** |
+| vendor | `mdata_vendor_id 308f6434-…` → `mdata.vendors` "CC3 Battery Vendor 20260806-01" |
+| line | 1 line, `68941c1d-…`, explicit account, resolution method **`bill_line_explicit_account`** |
+| posting batch | `1f0b3fcc-de1c-49ee-9e31-3af3d51241fb` · **`posted`** · template `bill` |
+| journal entry | `2d0cfb71-02c1-452e-8b05-86e5f104d4d4` · `posted` · memo *"Bill CC3-BATT-20260807-01 posting"* |
+
+**THE GENERAL LEDGER — read back from prod, not from the return value:**
+
+| seq | account | type | side | cents |
+|---|---|---|---|---|
+| 1 | Legal & Professional Fees | Expense | **debit** | 45,678 |
+| 2 | Accounts Payable (A/P) | Liability | **credit** | 45,678 |
+
+**`DR 45,678 = CR 45,678`, net `0`.** Balanced to the cent, correct sides, an expense debited and a
+liability credited — the economics a CPA would expect of a vendor bill.
+
+**BOTH-WAY LINKAGE — PASS in both directions, and they are different mechanisms, so this is two proofs:**
+- **forward (GL → source):** `accounting.transaction_source_links` carries **2** rows, one per posting line,
+  `linked_object_type='bill'`, `linked_object_id=9f9ce1cb-…`, `relationship_role='source_transaction'`,
+  `operating_company_id` = USMCA.
+- **reverse (source → GL):** `journal_entry_postings.source_transaction_type='bill'` +
+  `source_transaction_id=9f9ce1cb-…` returns exactly the 2 lines. **Net of every GL line carrying this
+  bill's id = 0** — the bill's own ledger footprint is self-balancing.
+
+**CONTRAST WITH ITEM 113's DEFECT, on the same table, hours apart.** `CC3-BILL-0001` (`304f5fa3`) has 0
+lines, 0 GL, batch `failed`. `CC3-BATT-20260807-01` supplied one line and posted cleanly. **The variable is
+the `lines` field and nothing else** — which is the live control proving `LV-BILL-HEADER-ONLY-UNPOSTABLE`'s
+root cause is exactly what item 113 named, not merely correlated with it.
+
+## 115. BILL PAYMENT (partial) — PASS on all four: subledger arithmetic, balanced GL, bank-cache agreement, entity scope
+
+Created through `payBill()` — again the production service, not SQL.
+
+| what | value |
+|---|---|
+| payment | `6e23a112-6c22-4362-aa63-deaf878227f8` · **$50.00** · `ach` · `status='posted'` |
+| bank | `e83028a5-…` "USMCA FREIGHT" (active, `ledger_account_id c7af1219` = Bank of America - Operating (USMCA)) |
+| journal entry | `60028af4-8dd1-4633-a9e6-f3e14726a166` |
+
+**GL:** `DR Accounts Payable (Liability) 5,000` / `CR Bank of America - Operating (USMCA) (Asset) 5,000`.
+Balanced; **the payment debits the same A/P account the bill credited**, so the two entries compose into a
+correct A/P lifecycle rather than two unrelated postings.
+
+**SUBLEDGER:** the bill moved `unpaid → partially_paid` with `paid_cents = 5,000` against
+`amount_cents = 45,678`. Correct — a partial payment, correctly recognised as partial.
+
+**BANK CACHE vs GL — the check most likely to drift, and it holds.** `banking.bank_accounts.
+current_balance_cents` went **9,368 → 4,368**, exactly `-5,000`, matching the GL credit to the cent. The
+cached balance and the ledger agree.
+
+**ENTITY SCOPE:** every row — payment, both GL lines, bank account — carries USMCA. No TRANSP leakage.
+
+## 116. ★ FAIL (P1 · legal evidence · CC-1) — `LV-JE-LINES-HAVE-NO-AUDIT-TRIGGER`: the GL header is audited, the DEBITS AND CREDITS are not
+
+Found by auditing the transaction I had just created, which is the only reason it surfaced: the bill, its
+line and the journal-entry **header** each produced an `audit.row_changes` row — and the two
+`journal_entry_postings` did **not**.
+
+**Trigger inventory on prod (`pg_trigger`, RLS-immune):**
+
+| table | audit triggers | WORM delete-refuse |
+|---|---|---|
+| `accounting.journal_entries` | **1** | 1 |
+| `accounting.journal_entry_postings` | **0** | 1 |
+| `accounting.bills` / `bill_lines` / `invoices` | 1 each | 1 each |
+| `accounting.posting_batches` / `transaction_source_links` / `expenses` | **0** | **0** |
+
+**`audit.row_changes` agrees, with a positive control that makes the zero a verdict:** the table holds
+**2,325,102** rows across **22** distinct `table_name` values (so it is emphatically not empty and not
+RLS-masked); `journal_entries` = **1,857**; **`journal_entry_postings` = 0 — no row has ever existed.**
+
+**What this costs:** the header records that a journal entry changed; **the amounts, the accounts and the
+debit/credit sides — the entire content of the entry — are outside the WORM trail.** `refuse_financial_row_
+delete` blocks DELETEs, so lines cannot vanish, but **an UPDATE to `amount_cents` or `account_id` on a
+posted line leaves no before-image anywhere.** For an auditor, attorney or DOT/FMCSA reviewer the question
+is never "was there an entry" but "was this entry altered after posting", and today the ledger cannot
+answer it. `transaction_source_links` — the both-way linkage proven in item 114 — is likewise unaudited, so
+a re-pointed link is also invisible.
+
+**Owning lane: CC-1 (money / GL / WORM).** Filed to the board with a four-condition definition of done.
+
+## 117. LIVE RE-REPRODUCTION of the P0 `LV-AUDIT-TRAIL-HAS-NO-ACTOR` — on rows created MINUTES ago, by a known actor
+
+Not a new finding — **a fresh instance of the open P0**, and worth recording because it kills the most
+likely objection to that row (that the actor-less rows are old backfill).
+
+All three `audit.row_changes` rows produced by item 114 — `bills`, `bill_lines`, `journal_entries`, all
+stamped `2026-08-07T23:16:22Z` — carry **`changed_by_user_id = NULL` and `changed_by_role = NULL`**.
+
+**The identity was demonstrably in hand at the time.** The very same transaction wrote
+`accounting.bill_payments.created_by_user_id = e4117991-d2c0-406d-8cda-74e98d95bccd` and an
+`audit.audit_events` row `accounting.bill.created` for the same resource. **The application knows who acted;
+the WORM trigger simply does not receive it.** So `LV-AUDIT-TRAIL-HAS-NO-ACTOR` is not a historical artefact
+to be backfilled — **it reproduces on every write made today**, and it compounds item 116: the trail records
+neither who changed a GL line nor what the line said before.
+
+**Method note, and it is the whole reason these two items exist.** I did not go looking for an audit defect —
+I ran the standard post-create verification on a transaction that PASSED every economic check, and the gap
+fell out of the trigger inventory. **A clean PASS is the best available position from which to find the next
+defect, because everything else is known-good.**
