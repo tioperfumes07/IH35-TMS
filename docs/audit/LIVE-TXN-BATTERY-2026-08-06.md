@@ -1405,3 +1405,37 @@ write no new GL math."
 reversal. This proves cancel's preservation/audit/cascade behaviour, **not** that cancel would post a
 correct reversal if there were postings to unwind. **UNVERIFIED** on that specific point — do not read
 this as proof that cancel reverses correctly.
+
+### 28e — ★ `LV-VOID-NO-REVERSAL` verified at the JOURNAL-ENTRY level too — the ledger never learns the bill was voided
+
+I originally proved this at **posting** level (`reversal_of_line_id` / `reversed_by_line_id` NULL).
+`accounting.journal_entries` also carries its own reversal columns (`reversed_by_je_id`,
+`reverses_je_id`, `voided_at`, `void_reason`), so I re-checked there before letting my own finding
+stand. **It holds, and the JE-level view is the cleaner statement of the defect.**
+
+**USMCA journal entries, whole-entity census:** 19 total, **all `status = posted`**,
+**0 voided**, **0 with `reversed_by_je_id`**, **0 that are themselves a reversal (`reverses_je_id`)**.
+There is no reversing journal entry anywhere on this entity.
+
+**The three JEs behind the voided bills — every one still fully posted:**
+
+| bill | amount | bill `voided_at` | JE | **JE status** | JE voided | reversed_by |
+|---|---|---|---|---|---|---|
+| CC3-BILL-20260806-01 | $743.21 | 2026-08-07 00:33:50 | `811cb8bc-99dd-41ab-8822-1a9219d94a6c` | **posted** | not voided | none |
+| TEST-BILL-0806-A | $450.00 | 2026-08-07 00:33:50 | `570ba3b6-7795-4cd7-98c5-596af46a501e` | **posted** | not voided | none |
+| TEST-BILL-0806-A | $450.00 | 2026-08-07 00:33:50 | `faeccb0d-cbc3-4fc0-b2b8-9be7206cf7b5` | **posted** | not voided | none |
+
+$743.21 + $450.00 + $450.00 = **$1,643.21** — matching the residue measured in item 28 exactly, from
+an independent direction.
+
+**The sharpest way to state the defect: the bill is voided, but its journal entry is still
+`status = posted`, not voided, and has no reversal. The ledger never learns the bill was voided at
+all.** Voiding currently touches only the subledger document; the GL is left untouched.
+
+**This gives CC-1 three exact JE targets** for the back-post, and tells them the fix must address the
+journal entry (void or reverse it), not merely stamp `voided_at` on the bill.
+
+**Method note:** I checked the JE-level columns specifically because finding the defect at posting
+level did not rule out the reversal being recorded elsewhere. Had `reversed_by_je_id` been populated,
+my original finding would have been wrong. It was worth the one query to be sure of my own claim
+before CC-1 spends time on it.
