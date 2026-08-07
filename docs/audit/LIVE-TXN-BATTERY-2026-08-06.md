@@ -7597,3 +7597,61 @@ argument that the silent branches are an oversight rather than a house style.
 **The generalisable lesson: `to_regclass` prevents a crash; it does not decide what SHOULD happen.** Of eight
 absent tables, three fallbacks are right, four degrade a feature with no signal, and one name was a phantom
 that existed only in a test. **The guard is not the control — the branch is.**
+
+## 123. ★★ THE SETTLEMENT + ESCROW SUBSYSTEM HAS NEVER CARRIED A CENT — 19 of 21 tables empty database-wide, and it BOUNDS my own item 90 "PASS"
+
+**Measured on prod, RLS-immune, every count carrying `visible_all == n_live_tup`.** Not a USMCA scope
+statement — **database-wide, all three entities.**
+
+| table family (`driver_finance.*`) | rows |
+|---|---|
+| `settlement_lines` — **the canonical driver-earnings table (CLAUDE.md §4)** | **0** |
+| `escrow_ledger` · `escrow_balances` · `escrow_deductions_pending` · `driver_escrow_separations` | **0 each** |
+| `driver_settlement_deductions` · `driver_deduction_buckets` · `driver_deduction_bucket_events` | **0 each** |
+| `driver_settlement_gl_bills` · `driver_settlement_gl_runs` · `settlement_payment_events` | **0 each** |
+| `settlement_contract_lines` · `settlement_contract_terms_config` · `settlement_preview_costs` | **0 each** |
+| `team_settlement_splits` · `settlement_disputes` · `driver_settlement_disputes` · `auto_deduction_policies` | **0 each** |
+| `driver_settlements` | **1** |
+| `deduction_schedule` | 1 · `escrow_settings` | 2 (config) |
+
+**19 of 21 are empty.** And in `accounting.*`: **`escrow_accounts` = 0**, **settlement/escrow GL lines = 0**,
+**settlement/escrow posting batches = 0.**
+
+**THE ONE SETTLEMENT THAT EXISTS** — `d3ff8ea3-…` / `S-LUSMCAFREIGHT-20260806-0001`, USMCA:
+`status = 'closed'` · `gross_pay 0.00` · `deductions_total 0.00` · `net_pay 0.00` ·
+**`accounting_bill_id = NULL`** · **`posted_at = NULL`** · driver *"Juan USMCA-Battery"*, whose
+`mdata.drivers.status` is **`Inactive`**. A closed settlement that paid nothing, deducted nothing, produced
+no bill and posted nothing, for a driver who is not active.
+
+### ★ FILED (P1 · money · CC-1) — `LV-ESCROW-CONFIGURED-NEVER-ACCRUED`
+
+**Escrow is not unbuilt or unconfigured — it is configured and inert.** `driver_finance.escrow_settings`
+carries an **active** `escrow_target_cents = 250000` (**$2,500.00 per driver**) for **both** USMCA
+`5c854333-…` and TRANSP `91e0bf0a-…`, set 2026-07-24. `DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED` and
+`SETTLEMENT_GL_POSTING_ENABLED` are both ON for USMCA (item 113). **And not one cent has ever been withheld,
+recorded, or posted for any driver at any entity.**
+
+**Why that is a money finding and not a "feature not used yet" note.** Driver escrow is a **liability the
+company owes back to the driver** — the owner-locked treatment (`ih35-accounting-decisions`: *driver escrow
+= liability*). An active $2,500-per-driver policy against **24 active USMCA drivers** describes an obligation
+of up to **$60,000** that the books do not carry, cannot age, and cannot return on separation:
+`driver_escrow_separations` is empty and `escrow_balances` has no per-driver row to return **from**. The
+policy is switched on; the ledger has no idea.
+
+### ★ AND IT BOUNDS MY OWN EARLIER PASS — item 90 is re-characterised here by its author
+
+Item 90 recorded *"DRIVER ESCROW — PASS on the control tie-out"*. **That tie-out was `0 == 0`.** With
+`escrow_ledger`, `escrow_balances` and `accounting.escrow_accounts` all at zero rows, agreement between the
+subledger and the control account is arithmetically unavoidable and proves nothing about the machinery. **A
+reconciliation over an empty population is not a passing reconciliation — it is an untested one**, and item
+90 should be read as "no discrepancy exists yet", never as "escrow reconciles".
+
+The same caveat applies to item 91's `LV-ESCROW-SUBLEDGER-NOT-WORM`: that finding is about the **schema**
+(the subledger is hard-deletable with no audit trail), which stands independently of row count — **the WORM
+gap is real whether or not rows exist, and it becomes exploitable the moment the first cent is withheld.**
+Recording both readings so the next agent does not "resolve" item 90 as coverage it never had.
+
+**METHOD NOTE.** Every zero above is paired with `n_live_tup` on the same relation, because this is exactly
+the shape the false-zero rule exists for — 19 zeroes in one family is precisely what an RLS mask looks like.
+It is not one: `driver_settlements` returns **1** and `escrow_settings` returns **2** from the same schema in
+the same transaction. **The positive controls are inside the same result set.**
