@@ -156,6 +156,12 @@ export const PER_ENTITY_ONLY_FLAG_KEYS: ReadonlySet<string> = new Set([
   // be flipped ONE ENTITY AT A TIME (TRANSP first) — a global default/rollout enable would alter payment
   // behavior for EVERY entity (incl. USMCA / TRK). Per-entity override only; default OFF. Owner flips.
   "DRIVER_PAYMENT_METHODS_ENABLED",
+  // BANK-F16: reverse+reposts bank-feed journal entries whose posted bank leg disagrees with the bank
+  // account's CURRENT ledger_account_id (entries written before a bridge was corrected). It REWRITES
+  // POSTED LEDGER HISTORY, so a global default/rollout enable would let it loose on every entity at
+  // once. Per-entity override only; default OFF; the owner decides when a given entity's history is
+  // corrected. Migration 202612110000 seeds it "Per-entity overrides only".
+  "BANK_LEDGER_REPOINT_REMEDIATION_ENABLED",
   // RATECON-1: AI rate-con extractor. The extract endpoint passes operating_company_id only (no
   // user_uuid) → rollout_pct silently no-ops. Live-enabled for TRANSP via a tenant override.
   "RATECON_EXTRACT_ENABLED",

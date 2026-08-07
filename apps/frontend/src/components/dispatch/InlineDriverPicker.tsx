@@ -1,9 +1,6 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { listDrivers } from "../../api/mdata";
+import { useState } from "react";
 import { patchAssignDriver } from "../../api/dispatch";
-import { Combobox } from "../Combobox";
-import { CreateDriverModal } from "../drivers/CreateDriverModal";
+import { EntityPicker } from "../parity/EntityPicker";
 import { optimisticPatch } from "../../lib/optimisticPatch";
 
 type Props = {
@@ -18,52 +15,6 @@ type Props = {
 export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displayLabel, onAssigned, onRollback }: Props) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
-
-  // SAF-B29: never silent listDrivers(limit:200) — type-ahead re-queries so drivers past page 1 stay assignable.
-  const [driverSearch, setDriverSearch] = useState("");
-
-  const driversQuery = useQuery({
-    queryKey: ["dispatch", "inline-drivers", operatingCompanyId, driverSearch],
-    queryFn: () =>
-      listDrivers({
-        operating_company_id: operatingCompanyId,
-        status: "Active",
-        limit: 200,
-        search: driverSearch || undefined,
-      }),
-    enabled: open && Boolean(operatingCompanyId),
-  });
-
-  const options = useMemo(() => {
-    const rows = driversQuery.data?.drivers ?? [];
-    return rows.map((row) => ({
-      value: row.id,
-      label: `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim() || row.id.slice(0, 8),
-    }));
-  }, [driversQuery.data?.drivers]);
-
-  const assignDriver = async (next: string, labelHint?: string) => {
-    const label = labelHint ?? options.find((opt) => opt.value === next)?.label ?? next.slice(0, 8);
-    const prior = { driverId, label: displayLabel };
-    const result = await optimisticPatch({
-      applyOptimistic: () => onAssigned({ driverId: next, label }),
-      rollback: () => {
-        onRollback();
-        onAssigned({ driverId: prior.driverId ?? "", label: prior.label });
-      },
-      request: () =>
-        patchAssignDriver(loadId, {
-          operating_company_id: operatingCompanyId,
-          driver_uuid: next,
-        }),
-      onError: (message) => setError(message.slice(0, 40)),
-    });
-    if (result.ok) {
-      setError(null);
-      setOpen(false);
-    }
-  };
 
   if (!open) {
     return (
@@ -85,32 +36,36 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
 
   return (
     <div className="relative z-20 min-w-[200px]" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
-      <Combobox
-        options={options}
+      <EntityPicker
+        kind="driver"
+        operatingCompanyId={operatingCompanyId}
         value={driverId}
-        placeholder={driversQuery.isLoading ? "Loading drivers…" : "Type driver…"}
-        loading={driversQuery.isLoading}
-        onSearch={setDriverSearch}
-        allowAddNew={{
-          label: "+ Create driver",
-          onAdd: () => setDriverCreateOpen(true),
-        }}
+        enabled={open}
+        placeholder="Type driver…"
+        allowClear={false}
+        className="h-8 w-full text-xs"
         onChange={async (next) => {
           if (!next) return;
-          await assignDriver(next);
-        }}
-      />
-      <CreateDriverModal
-        open={driverCreateOpen}
-        companyId={operatingCompanyId}
-        onClose={() => setDriverCreateOpen(false)}
-        onCreated={(createdId) => {
-          setDriverCreateOpen(false);
-          void driversQuery.refetch().then(() => {
-            void assignDriver(createdId);
+          const label = displayLabel && driverId === next ? displayLabel : next.slice(0, 8);
+          const prior = { driverId, label: displayLabel };
+          const result = await optimisticPatch({
+            applyOptimistic: () => onAssigned({ driverId: next, label }),
+            rollback: () => {
+              onRollback();
+              onAssigned({ driverId: prior.driverId ?? "", label: prior.label });
+            },
+            request: () =>
+              patchAssignDriver(loadId, {
+                operating_company_id: operatingCompanyId,
+                driver_uuid: next,
+              }),
+            onError: (message) => setError(message.slice(0, 40)),
           });
+          if (result.ok) {
+            setError(null);
+            setOpen(false);
+          }
         }}
-        // Board cell — not nested in a ParityDrawer → default shell="modal".
       />
     </div>
   );

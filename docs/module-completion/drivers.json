@@ -22,7 +22,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S02",
@@ -35,7 +36,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S03",
@@ -48,7 +50,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S04",
@@ -61,7 +64,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S05",
@@ -74,7 +78,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S06",
@@ -87,7 +92,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S07",
@@ -100,7 +106,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S08",
@@ -113,7 +120,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S09",
@@ -126,7 +134,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S10",
@@ -139,7 +148,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S11",
@@ -152,7 +162,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S12",
@@ -165,7 +176,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S13",
@@ -178,7 +190,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S14",
@@ -191,7 +204,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S15",
@@ -204,7 +218,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S16",
@@ -217,7 +232,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S17",
@@ -230,7 +246,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S18",
@@ -243,7 +260,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S19",
@@ -256,7 +274,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DRV-S20",
@@ -269,8 +288,26 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     }
   ],
-  "M": 20
+  "M": 20,
+  "pass_count": 0,
+  "total_count": 20,
+  "progress": "0 of 20",
+  "live_scenario_probe": {
+    "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
+    "pass_count": 1,
+    "total_count": 1,
+    "progress": 100,
+    "prod_verified": true,
+    "slices": [
+      {
+        "key": "scenario.driver_onboarding",
+        "holds": true,
+        "evidence": "179 driver(s) on file"
+      }
+    ]
+  }
 }

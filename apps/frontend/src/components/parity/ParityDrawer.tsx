@@ -60,8 +60,12 @@ export function ParityDrawer({
   // element again. Positioning is unaffected: this root is `fixed inset-0`, which resolves against
   // the viewport, not the parent. React events still bubble through the REACT tree even across a
   // portal, so the drawer forms ALSO stopPropagation() on submit — the portal alone is not enough.
+  //
+  // STACKING (live 2026-08-04): BookLoadModalV4 / shared Modal shells sit at z-50. This drawer must
+  // stack ABOVE them (z-[60]) or Save clicks hit the wizard backdrop (onMouseDown → close) and the
+  // create never POSTs — same symptom as the nested-form GET (wizard closes, nothing persisted).
   return createPortal(
-    <div className="fixed inset-0 z-40">
+    <div className="fixed inset-0 z-[60]">
       <div className="absolute inset-0 bg-black/30" aria-hidden="true" onClick={onClose} />
       <aside
         role="dialog"

@@ -35,7 +35,12 @@ const listQuerySchema = operatingCompanyQuerySchema.extend({
   type: z.string().trim().optional(),
   related_driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
+  equipment_id: z.string().uuid().optional(),
   insurance_claim_id: z.string().uuid().optional(),
+  // CLS-SILENT-CAP — caller-controlled paging. Bounded at 500 (the old hard cap) so this cannot
+  // become an unbounded scan, and defaulted to 200 so existing callers get a sane page.
+  limit: z.coerce.number().int().min(1).max(500).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
 });
 
 const matterIdParamsSchema = z.object({
@@ -92,13 +97,16 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     return summary;
   });
 
-  app.get("/api/v1/legal/matters", async (req, reply) => {
+  app.get(
+    "/api/v1/legal/matters",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_READ_ROLES)) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
-    const rows = await withCompanyScope(authUser.uuid, parsed.data.operating_company_id, async (client) =>
+    const page = await withCompanyScope(authUser.uuid, parsed.data.operating_company_id, async (client) =>
       listMatters(client, {
         operatingCompanyId: parsed.data.operating_company_id,
         status: parsed.data.status,
@@ -106,13 +114,19 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
         type: parsed.data.type,
         related_driver_id: parsed.data.related_driver_id,
         unit_id: parsed.data.unit_id,
+        equipment_id: parsed.data.equipment_id,
         insurance_claim_id: parsed.data.insurance_claim_id,
         requesterUserId: authUser.uuid,
         requesterRole: String(authUser.role ?? ""),
+        limit: parsed.data.limit,
+        offset: parsed.data.offset,
       })
     );
-    return { matters: rows };
-  });
+    // CLS-SILENT-CAP — return total/limit/offset alongside the rows so a consumer can page or say
+    // "showing N of M". `matters` keeps its existing shape so current callers are unaffected.
+    return { matters: page.rows, total: page.total, limit: page.limit, offset: page.offset };
+    }
+  );
 
   app.get("/api/v1/legal/matters/:id", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);

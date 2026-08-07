@@ -194,7 +194,7 @@ export function assertNoMoneyTheater(commits) {
       );
     }
     if (hasMigration && !LANE_RE.test(text)) {
-      problems.push(`${short} migration commit omits LANE: HOLD|FINANCIAL-HOLD|FINANCIAL|…`);
+      problems.push(`${short} migration commit omits LANE: FINANCIAL|NON-FINANCIAL|DOCS|…`);
     }
   }
   return problems;
@@ -223,7 +223,7 @@ function resolveBranchCommits() {
 
 export const MONEY_DOD_COMMIT_TEMPLATE = `
 FINDING: ACCT-F## | BANK-F## | LST-F##
-LANE: HOLD | FINANCIAL-HOLD | FINANCIAL | NON-FINANCIAL | DOCS
+LANE: FINANCIAL | NON-FINANCIAL | DOCS  (legacy HOLD|FINANCIAL-HOLD still accepted)
 
 DOD-A: PASS|N/A|FAIL|UNVERIFIED — active path
 DOD-B: PASS|N/A|FAIL|UNVERIFIED — wizard depth (fields in submit)

@@ -13,9 +13,8 @@ import {
   type FactoringMonthlyFeeSummary,
   type FactoringSettingsRow,
 } from "../../api/factoring";
-import { listUnits, listVendors } from "../../api/mdata";
-import { listLoads } from "../../api/loads";
-import { Combobox } from "../../components/shared/Combobox";
+import { listVendors } from "../../api/mdata";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import {
   createDriverVendorMerge,
@@ -41,7 +40,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { factorToProfileForm, profileFormToFactorPatch, type FactorProfileForm } from "../../lib/factorProfile";
+import { factorToProfileForm, profileFormToFactorPatch, resolveActiveFactorFromSummary, type FactorProfileForm } from "../../lib/factorProfile";
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { ChargebacksTable } from "./ChargebacksTable";
 import { RecoursePipelineTable } from "./RecoursePipelineTable";
@@ -223,8 +222,8 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
     enabled: Boolean(companyId),
   });
   const factorsQuery = useQuery({
-    queryKey: ["factoring", "factors", companyId, "active"],
-    queryFn: () => listFactors(companyId, { active_only: true }).then((res) => res.factors),
+    queryKey: ["factoring", "factors", companyId],
+    queryFn: () => listFactors(companyId).then((res) => res.factors),
     enabled: Boolean(companyId),
   });
   const recourseQuery = useQuery({
@@ -262,17 +261,6 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
     queryFn: () => getEquipmentLoanLedger(selectedLoanId, companyId),
     enabled: Boolean(companyId && selectedLoanId),
   });
-  const unitsQuery = useQuery({
-    queryKey: ["mdata", "units", companyId],
-    queryFn: () => listUnits({ operating_company_id: companyId }).then((r) => r.units as { id: string; unit_number: string | null }[]),
-    enabled: Boolean(companyId) && tab === "equipment_loans",
-  });
-  const attributionLoadsQuery = useQuery({
-    queryKey: ["mdata", "loads", "attribution", companyId],
-    queryFn: () => listLoads({ operating_company_id: [companyId], limit: 200 }).then((r) => r.loads),
-    enabled: Boolean(companyId) && loanAction?.kind === "attribution",
-  });
-
   const invoices = recourseQuery.data?.invoices ?? [];
   const recourseTotals = useMemo(() => {
     return invoices.reduce(
@@ -286,21 +274,10 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   }, [invoices]);
 
   const summary = summaryQuery.data;
-  const activeFactor = useMemo(() => {
-    const factors = factorsQuery.data ?? [];
-    if (factors.length === 0) return null;
-    if (summary?.active_factor_id) {
-      const byId = factors.find((factor) => factor.id === summary.active_factor_id);
-      if (byId) return byId;
-    }
-    const targetName = summary?.active_factor_name?.trim();
-    if (targetName) {
-      const byName = factors.find((factor) => factor.name === targetName);
-      if (byName) return byName;
-    }
-    const activeFactors = factors.filter((factor) => factor.active);
-    return activeFactors[0] ?? null;
-  }, [factorsQuery.data, summary?.active_factor_id, summary?.active_factor_name]);
+  const activeFactor = useMemo(
+    () => resolveActiveFactorFromSummary(summary, factorsQuery.data ?? []),
+    [summary, factorsQuery.data]
+  );
   const canDeactivate = user?.role === "Owner";
 
   return (
@@ -490,7 +467,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
         </>
       ) : (
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500" data-testid="factoring-profile-empty">
-          {summary?.active_factor_name || summary?.active_factor_id
+          {summary?.active_factor_profile_id || summary?.active_factor_name || summary?.active_factor_id
             ? "Active factor row is still loading…"
             : "No factor configured. Activate a factor to manage its profile."}
         </div>
@@ -754,11 +731,13 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Create equipment loan</div>
             <div className="grid gap-2 md:grid-cols-5">
-              <Combobox
-                options={(unitsQuery.data ?? []).map((u) => ({ value: u.id, label: u.unit_number ?? u.id }))}
+              <EntityPicker
+                kind="unit"
+                operatingCompanyId={companyId}
                 value={loanEquipmentId || null}
                 onChange={(v) => setLoanEquipmentId(v ?? "")}
                 placeholder="Select equipment"
+                enabled={Boolean(companyId) && tab === "equipment_loans"}
               />
               <ReferenceSelect
                 value={loanLenderVendorId || null}
@@ -982,18 +961,19 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
       >
         <div className="space-y-3 text-sm">
           {loanAction?.kind === "attribution" ? (
-            <label className="block">
+            <label className="block" data-testid="factoring-loan-attribution-load-picker">
               Load
-              <Combobox
-                options={(attributionLoadsQuery.data ?? []).map((l) => ({
-                  value: l.id,
-                  label: `${l.load_number}${l.customer_name ? ` — ${l.customer_name}` : ""}`,
-                }))}
-                value={loanActionLoadId || null}
-                onChange={(v) => setLoanActionLoadId(v ?? "")}
-                placeholder="Select load"
-                className="mt-1"
-              />
+              <div className="mt-1">
+                <EntityPicker
+                  kind="load"
+                  operatingCompanyId={companyId}
+                  value={loanActionLoadId || null}
+                  onChange={(v) => setLoanActionLoadId(v ?? "")}
+                  enabled={Boolean(companyId) && loanAction?.kind === "attribution"}
+                  placeholder="Select load"
+                  allowClear
+                />
+              </div>
             </label>
           ) : null}
           <label className="block">

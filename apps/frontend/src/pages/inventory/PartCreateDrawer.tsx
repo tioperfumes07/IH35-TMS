@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { apiRequest } from "../../api/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
+import { listVendors } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import {
   PART_INVENTORY_CATEGORIES,
@@ -18,6 +21,7 @@ interface PartCreateDrawerProps {
 
 export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCreateDrawerProps) {
   const queryClient = useQueryClient();
+  const [vendorSearch, setVendorSearch] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -27,7 +31,21 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
     unit_cost: "",
     location: "",
     notes: "",
+    vendor_id: "",
   });
+
+  const vendorsQuery = useQuery({
+    queryKey: ["mdata", "vendors", operatingCompanyId, "part-create", vendorSearch],
+    queryFn: () =>
+      listVendors({
+        operating_company_id: operatingCompanyId,
+        status: "active",
+        limit: 200,
+        search: vendorSearch || undefined,
+      }),
+    enabled: Boolean(operatingCompanyId) && isOpen,
+  });
+  const vendorOptions = (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption);
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -60,6 +78,7 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
             unit_cost: Number(data.unit_cost) || 0,
             location: data.location.trim() || undefined,
             notes: data.notes.trim() || undefined,
+            vendor_id: data.vendor_id.trim() || undefined,
           },
         }
       );
@@ -76,6 +95,7 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
         unit_cost: "",
         location: "",
         notes: "",
+        vendor_id: "",
       });
     },
   });
@@ -141,6 +161,25 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
                 </option>
               ))}
             </SelectCombobox>
+          </div>
+          <div>
+            <label className="block text-sm font-medium">Preferred vendor</label>
+            <div className="mt-1" data-testid="inv-part-create-vendor-picker">
+              <ReferenceSelect
+                value={formData.vendor_id || null}
+                onChange={(next) => setFormData({ ...formData, vendor_id: next ?? "" })}
+                options={vendorOptions}
+                createKind="vendor"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Select vendor…"
+                loading={vendorsQuery.isLoading}
+                onSearch={setVendorSearch}
+                onOptionCreated={(opt) => {
+                  setFormData((v) => ({ ...v, vendor_id: opt.value }));
+                  void vendorsQuery.refetch();
+                }}
+              />
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>

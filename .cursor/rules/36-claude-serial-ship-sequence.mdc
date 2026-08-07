@@ -1,0 +1,87 @@
+---
+description: CLAUDE SERIAL SHIP — Cursor must match Claude's merge method (serial, tip-main, one push) so PRs stop failing/rebasing for hours (owner 2026-08-05)
+alwaysApply: true
+---
+
+# RULE 36 — CLAUDE SERIAL SHIP SEQUENCE (owner law — permanent)
+
+**Owner word (2026-08-05):** Claude stays mergeable (~1/10 issues, 50+ PRs without rebase thrash). Cursor was 1/1 fail + hours of rebase. Inspect Claude’s method. Implement it. Make it the permanent Cursor sequence.
+
+## Why Claude stays green (measured)
+
+| Claude does | Cursor was doing (defect) |
+|-------------|---------------------------|
+| **One** money/CLAIMED-touching PR at a time; next only after merge | 2–N parallel EntityPicker PRs all editing `CLAIMED-NUMBERS.json` → perpetual CONFLICTING |
+| Branch tip = **exactly** `origin/main` + **one** FINDING commit | Stacked / stale base / wrong tip force-push (e.g. #4369 tip overwritten with #4366 squash) |
+| Title: `Claude-1- fix(module): FINDING — one-line defect` | `Cursor- fix: short name` (no module, no FINDING, no defect sentence) |
+| Body = FINDING-first prose ROOT CAUSE (measured) + FIX + GUARD + LIVE PROOF artifact | `## Summary` / “Made with Cursor” / `DRAFT — WIP` / weak UNVERIFIED |
+| Local gate PASS → **one** push → stop | Push → watch CI → fix → rebase → repeat (3 hours) |
+| Sibling guards updated **in the same commit** as pattern migrations | New guard only → sibling Combobox asserts still red |
+
+## HARD SEQUENCE (every Cursor PR — no shortcuts)
+
+Run in order. Skipping a step is a trust defect.
+
+```text
+0) WIP — count open non-Dependabot feature PRs. If ≥3, finish/park before opening another
+   (P0 main-unblock exempt). Cursor CLAIMED/verify-step PRs: MAX 1 open at a time.
+
+1) git fetch origin main
+   git checkout -B cursor/<slug> origin/main
+   # NEVER branch from another open feature tip. NEVER reuse a polluted remote tip.
+
+2) Build ONE ranked FAIL:
+   code + every sibling guard that names the touched file + new guard + CLAIMED-REGEN
+   (union claimed dict; never drop main's keys)
+
+3) Write /tmp/pr-body.txt from docs/templates/CLAUDE-GREEN-PR-BODY.md
+   - column-0 FINDING:
+   - no ## Summary first, no "Made with Cursor", no "DRAFT — WIP" in body
+
+4) Title (Claude shape):
+   Cursor- fix(<module>): <FINDING-ID> — <one-line defect>
+   Example: Cursor- fix(insurance): INS-CLAIM-LOAD-TRAILER-PICKER — ClaimCreate still Combobox+listLoads
+
+5) Commit ONCE with the same labelled block as the PR body (Rule 30).
+
+6) node scripts/ops/cursor-ship-preflight.mjs --body-file /tmp/pr-body.txt
+   → must PASS (includes tip-contains-origin/main check)
+
+7) IMMEDIATELY BEFORE PUSH (mandatory — this is why Claude never rebases for hours):
+   git fetch origin main
+   git merge-base --is-ancestor origin/main HEAD || git rebase origin/main
+   # if rebase ran: re-run step 6
+
+8) ONE push (hooks ON). Prefer --force-with-lease only after a tip-main rebase.
+   gh pr create --body-file /tmp/pr-body.txt   # READY — never draft for finished work
+
+9) Do NOT open a second CLAIMED/verify-step PR until this one is squash-merged
+   (or closed with feature preserved). Serialize Claimed thrash = zero.
+
+10) If main advances and GitHub shows CONFLICTING / behind≥1:
+    same turn: fetch → rebase → preflight → force-with-lease.
+    Never leave CONFLICTING overnight. Never "babysit then rebase later."
+```
+
+## Forbidden forever
+
+- Parallel Cursor PRs that both edit `scripts/verify-steps/CLAIMED-NUMBERS.json`
+- Opening feature PRs that add `verify-steps/NNNN-*.mjs` before `NNNN` is on `origin/main` (Rule 37)
+- Combining claim + guard on `chore/claim-reserve-*` (claim-only vs feature — two PRs)
+- Force-pushing an unrelated squash/merge SHA onto a feature branch tip
+- `git reset --soft origin/main` (Rule 30 — deletes other guards)
+- Opening draft “for WIP accounting” when the work is finished
+- Pushing without `cursor-ship-preflight --body-file`
+- Starting the next CLAIMED/verify-step PR before the current one merges
+- Per-site EntityPicker / identical-codemod PRs when ≥3 sites share one transform (§9.0 item **17** — ONE sweep + ONE generalized guard)
+
+## Mechanical teeth
+
+- `scripts/ops/cursor-ship-preflight.mjs` — fails closed if `origin/main` is not an ancestor of HEAD
+- Rules 29 + 30 + 33 sibling-guard law + Rule 34 `Cursor-` title prefix + **Rule 37** claim→merge→author
+- `scripts/money-pr-local-gate.mjs` includes `verify-verify-step-claimed-on-main`
+- Delivery plan §9.0 item 17 (SYSTEMIC SWEEP) + §9.2.1 (rev H+)
+
+## Tie-breakers
+
+Parallel speed < serial green · babysit < local preflight · stale tip < tip-main rebase before push · draft theater < ready PR · 3-hour rebase loop < 8-minute Claude ship · per-site patch pileup < one kind-sweep.

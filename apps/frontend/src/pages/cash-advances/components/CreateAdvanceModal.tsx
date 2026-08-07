@@ -9,10 +9,8 @@ import {
 } from "../../../api/cashAdvances";
 import { cashAdvanceTypesCatalogClient } from "../../../api/catalogs-driver";
 import { getAllAccounts } from "../../../api/banking";
-import { listUnits } from "../../../api/mdata";
-import { listLoads, getLoad } from "../../../api/loads";
+import { getLoad } from "../../../api/loads";
 import { Button } from "../../../components/Button";
-import { Combobox } from "../../../components/Combobox";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
@@ -134,41 +132,10 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
     enabled: open && Boolean(operatingCompanyId) && method === "direct_bank_transfer",
   });
 
-  const [loadSearch, setLoadSearch] = useState("");
-  const loadsQuery = useQuery({
-    queryKey: ["cash-advances", "loads", operatingCompanyId, driverId, loadSearch],
-    queryFn: () =>
-      listLoads({
-        operating_company_id: [operatingCompanyId],
-        driver_id: driverId,
-        status: ["assigned", "dispatched", "at_pickup", "in_transit", "at_delivery", "booked", "planned"],
-        limit: 50,
-        sort: "created_at_desc",
-        search: loadSearch || undefined,
-      }),
-    enabled: open && Boolean(operatingCompanyId) && Boolean(driverId),
-  });
-
   const loadDetailQuery = useQuery({
     queryKey: ["cash-advances", "load-detail", loadId],
     queryFn: () => getLoad(String(loadId)),
     enabled: open && Boolean(loadId),
-  });
-
-  const [trailerSearch, setTrailerSearch] = useState("");
-  const trailersQuery = useQuery({
-    queryKey: ["cash-advances", "trailers", operatingCompanyId, trailerSearch],
-    queryFn: () =>
-      listUnits({
-        operating_company_id: operatingCompanyId,
-        include: "trailers",
-        limit: 200,
-        search: trailerSearch || undefined,
-      }),
-    enabled:
-      open &&
-      Boolean(operatingCompanyId) &&
-      (requiresLoad(purpose) || purpose === "border_fee" || purpose === "other" || Boolean(loadId)),
   });
 
   useEffect(() => {
@@ -192,25 +159,6 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
       .filter((a) => a.id.length > 0)
       .map((a) => ({ id: a.id, name: formatBankAccountPickerLabel(a) }));
   }, [bankAccountsQuery.data?.accounts]);
-
-  const loadOptions = useMemo(
-    () =>
-      (loadsQuery.data?.loads ?? []).map((load) => ({
-        value: load.id,
-        label: `${load.load_number} · ${load.status}${load.first_pickup_city ? ` · ${load.first_pickup_city}` : ""}`,
-      })),
-    [loadsQuery.data]
-  );
-
-  const trailerOptions = useMemo(() => {
-    const rows = (trailersQuery.data?.units ?? []) as Array<Record<string, unknown>>;
-    return rows
-      .filter((u) => String(u.kind ?? "") === "trailer")
-      .map((u) => ({
-        value: String(u.id),
-        label: String(u.equipment_number ?? u.unit_number ?? u.display_id ?? u.id),
-      }));
-  }, [trailersQuery.data]);
 
   const selectedBill = useMemo(
     () => billsQuery.data?.bills?.find((row) => String(row.id) === linkedBillId) ?? null,
@@ -483,18 +431,20 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                   : "Optional load / unit / trailer for trip context."}
             </p>
             <div className="grid gap-3 md:grid-cols-2">
-              <label className="space-y-1 md:col-span-2" data-field="load_id">
+              <label className="space-y-1 md:col-span-2" data-field="load_id" data-testid="cash-advance-load-picker">
                 <span className="font-medium text-gray-700">
                   Load{requiresLoad(purpose) ? " *" : " (optional)"}
                 </span>
-                <Combobox
-                  options={loadOptions}
+                {/* Picker law: EntityPicker kind=load — not Combobox over listLoads page. */}
+                <EntityPicker
+                  kind="load"
+                  operatingCompanyId={operatingCompanyId}
                   value={loadId}
                   onChange={setLoadId}
-                  onSearch={setLoadSearch}
+                  enabled={open && Boolean(driverId)}
+                  nestedInDrawer
                   placeholder={driverId ? "Select load" : "Select driver first"}
-                  loading={loadsQuery.isLoading}
-                  disabled={!driverId}
+                  dataField="load_id"
                   allowClear
                 />
               </label>
@@ -515,15 +465,17 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                       dataField="unit_id"
                     />
                   </label>
-                  <label className="space-y-1" data-field="trailer_id">
+                  <label className="space-y-1" data-field="trailer_id" data-testid="cash-advance-trailer-picker">
                     <span className="font-medium text-gray-700">Trailer</span>
-                    <Combobox
-                      options={trailerOptions}
+                    <EntityPicker
+                      kind="trailer"
+                      operatingCompanyId={operatingCompanyId}
                       value={trailerId}
                       onChange={setTrailerId}
-                      onSearch={setTrailerSearch}
+                      enabled={open}
+                      nestedInDrawer
                       placeholder="Select trailer"
-                      loading={trailersQuery.isLoading}
+                      dataField="trailer_id"
                       allowClear
                     />
                   </label>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -8,11 +8,11 @@ import {
   syncSafetyMeetingAttendance,
   type SafetyMeetingRow,
 } from "../../api/safety";
-import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
-import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 import { Modal } from "../../components/Modal";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { companyToday } from "../../lib/businessDate";
 
 type Props = {
@@ -22,11 +22,10 @@ type Props = {
 export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
-  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const [topic, setTopic] = useState("");
   const [meetingDate, setMeetingDate] = useState(companyToday());
   const [requiredAttendees, setRequiredAttendees] = useState<string[]>([]);
-  const [driverSearch, setDriverSearch] = useState("");
+  const [attendeePick, setAttendeePick] = useState<string | null>(null);
   const [expandedMeetingId, setExpandedMeetingId] = useState<string | null>(null);
 
   const meetingsQuery = useQuery({
@@ -34,27 +33,6 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
     queryFn: () => listSafetyMeetings(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
-
-  const driversQuery = useQuery({
-    queryKey: ["mdata", "drivers", operatingCompanyId, driverSearch],
-    queryFn: () =>
-      listDrivers({
-        operating_company_id: operatingCompanyId,
-        status: "Active",
-        limit: 200,
-        search: driverSearch || undefined,
-      }),
-    enabled: Boolean(operatingCompanyId),
-  });
-
-  const drivers = driversQuery.data?.drivers ?? [];
-  const driverNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const driver of drivers) {
-      map.set(driver.id, `${driver.first_name ?? ""} ${driver.last_name ?? ""}`.trim() || driver.id);
-    }
-    return map;
-  }, [drivers]);
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -67,6 +45,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
       setCreateOpen(false);
       setTopic("");
       setRequiredAttendees([]);
+      setAttendeePick(null);
       void queryClient.invalidateQueries({ queryKey: ["safety", "meetings", operatingCompanyId] });
     },
   });
@@ -86,10 +65,13 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
 
   const meetings = meetingsQuery.data?.meetings ?? [];
 
-  const toggleRequiredAttendee = (driverId: string) => {
-    setRequiredAttendees((current) =>
-      current.includes(driverId) ? current.filter((id) => id !== driverId) : [...current, driverId]
-    );
+  const addAttendee = (driverId: string | null) => {
+    if (!driverId) {
+      setAttendeePick(null);
+      return;
+    }
+    setRequiredAttendees((current) => (current.includes(driverId) ? current : [...current, driverId]));
+    setAttendeePick(null);
   };
 
   // Migrated to the shared QBO-parity grid (resize / sticky-header / density / export). Columns,
@@ -152,7 +134,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
           {(() => {
             const meeting = meetings.find((row) => row.id === expandedMeetingId);
             if (!meeting) return null;
-            const attendeeIds = meeting.required_attendees?.length ? meeting.required_attendees : drivers.map((d) => d.id);
+            const attendeeIds = meeting.required_attendees ?? [];
             return (
               <div className="space-y-2">
                 <div className="text-xs font-semibold text-slate-700">Attendance — {meeting.title}</div>
@@ -171,9 +153,12 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
                           });
                         }}
                       />
-                      {driverNameById.get(driverId) ?? driverId}
+                      <EntityLink kind="driver" id={driverId} />
                     </label>
                   ))}
+                  {attendeeIds.length === 0 ? (
+                    <div className="text-xs text-slate-500">No required attendees on this meeting.</div>
+                  ) : null}
                 </div>
               </div>
             );
@@ -211,38 +196,42 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
             />
           </label>
           <div>
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-xs font-semibold text-slate-600">Required attendees</div>
-              <button
-                type="button"
-                className="text-xs font-semibold text-slate-700 underline"
-                data-testid="safety-meeting-create-driver"
-                onClick={() => setDriverCreateOpen(true)}
-              >
-                + Create driver
-              </button>
-            </div>
-            <div className="mt-1 max-h-40 space-y-1 overflow-y-auto rounded-sm border border-gray-200 p-2">
-              <input
-                type="search"
-                value={driverSearch}
-                onChange={(event) => setDriverSearch(event.target.value)}
+            <div className="text-xs font-semibold text-slate-600">Required attendees</div>
+            {/* Picker law: EntityPicker kind=driver — server search; nested create. */}
+            <div className="mt-1" data-testid="safety-meeting-driver-search">
+              <EntityPicker
+                kind="driver"
+                operatingCompanyId={operatingCompanyId}
+                value={attendeePick}
+                onChange={addAttendee}
+                nestedInDrawer
+                enabled={createOpen}
                 placeholder="Search drivers…"
-                className="mb-2 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
-                data-testid="safety-meeting-driver-search"
+                dataTestId="safety-meeting-driver-picker"
               />
-              {drivers.map((driver) => (
-                <label key={driver.id} className="flex items-center gap-2 text-xs text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={requiredAttendees.includes(driver.id)}
-                    data-testid={`safety-meeting-required-${driver.id}`}
-                    onChange={() => toggleRequiredAttendee(driver.id)}
-                  />
-                  {`${driver.first_name ?? ""} ${driver.last_name ?? ""}`.trim() || driver.id}
-                </label>
-              ))}
             </div>
+            {requiredAttendees.length > 0 ? (
+              <ul className="mt-2 space-y-1 rounded-sm border border-gray-200 p-2">
+                {requiredAttendees.map((driverId) => (
+                  <li
+                    key={driverId}
+                    className="flex items-center justify-between gap-2 text-xs text-slate-700"
+                    data-testid={`safety-meeting-required-${driverId}`}
+                  >
+                    <EntityLink kind="driver" id={driverId} />
+                    <button
+                      type="button"
+                      className="text-slate-600 underline"
+                      onClick={() =>
+                        setRequiredAttendees((current) => current.filter((id) => id !== driverId))
+                      }
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" size="sm" onClick={() => setCreateOpen(false)}>
@@ -254,16 +243,6 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
           </div>
         </form>
       </Modal>
-      <CreateDriverModal
-        open={driverCreateOpen}
-        companyId={operatingCompanyId}
-        onClose={() => setDriverCreateOpen(false)}
-        onCreated={(createdId) => {
-          setRequiredAttendees((current) => (current.includes(createdId) ? current : [...current, createdId]));
-          setDriverCreateOpen(false);
-          void driversQuery.refetch();
-        }}
-      />
     </div>
   );
 }

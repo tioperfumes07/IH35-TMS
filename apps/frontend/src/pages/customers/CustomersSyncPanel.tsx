@@ -35,20 +35,44 @@ function formatRelative(iso: string | null) {
 }
 
 // Decision #5 (parallel-books lock): TMS holds its own CLONE of QBO and reconciles daily — there is NO
-// two-way sync. Retire the "Synced X of Y" parallel counter; show the clone total + open exceptions +
+// two-way sync. Retire the "Synced X of Y" parallel counter; show QBO-sourced count + open exceptions +
 // last-reconciled instead. Empty-state marker "Not cloned yet" is pinned by the status-endpoint guard.
-function renderStatusLine(status: CustomersSyncStatus) {
-  if (status.total_local === 0 && !status.last_pull_at) {
+//
+// LV-002: never label TMS-only rows (USMCA / local_only) as "Cloned from QBO". Provenance count is
+// `synced` (+ drift that still carries a QBO id), never `total_local`.
+export function renderCustomersQboStatusLine(status: CustomersSyncStatus) {
+  const exceptions = status.drift_detected + status.sync_error;
+  const exceptionBit = exceptions > 0 ? ` · ${exceptions} exception${exceptions === 1 ? "" : "s"}` : "";
+  const lastBit = ` · Last reconciled: ${formatRelative(status.last_reconcile_at ?? status.last_pull_at)}`;
+  const qboSourced = status.synced + status.drift_detected;
+
+  if (status.total_local === 0 && !status.last_pull_at && qboSourced === 0) {
     return "Not cloned yet — click Refresh from QBO to clone the current customers";
   }
-  const exceptions = status.drift_detected + status.sync_error;
+
+  // Entity with TMS customers but zero QBO-sourced rows (e.g. USMCA — TMS-only, 0 QBO).
+  if (qboSourced === 0) {
+    return (
+      <>
+        TMS customers: {status.total_local} (no QBO provenance)
+        {exceptionBit}
+        {lastBit}
+      </>
+    );
+  }
+
   return (
     <>
-      Cloned from QBO: {status.total_local}
-      {exceptions > 0 ? ` · ${exceptions} exception${exceptions === 1 ? "" : "s"}` : ""}
-      {" · "}Last reconciled: {formatRelative(status.last_reconcile_at ?? status.last_pull_at)}
+      Cloned from QBO: {status.synced}
+      {status.local_only > 0 ? ` · ${status.local_only} TMS-only` : ""}
+      {exceptionBit}
+      {lastBit}
     </>
   );
+}
+
+function renderStatusLine(status: CustomersSyncStatus) {
+  return renderCustomersQboStatusLine(status);
 }
 
 type Props = {

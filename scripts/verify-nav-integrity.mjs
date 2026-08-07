@@ -33,6 +33,22 @@ function extractQuotedPaths(source, keys) {
   return out;
 }
 
+/**
+ * JSX-attribute form: `to="/program/x"` / `href="/program/x"`.
+ * extractQuotedPaths above only matches the object form (`href: "/program/x"`), which is why a
+ * module whose nav is rendered as <Link to="..."> tabs — like the Program tab row — looked like it
+ * had no nav at all and its tabs had to be allowlisted.
+ */
+function extractJsxAttrPaths(source, attrs) {
+  const out = [];
+  for (const attr of attrs) {
+    const re = new RegExp(`${attr}=\\s*"([^"]+)"`, "g");
+    let m;
+    while ((m = re.exec(source))) out.push(m[1]);
+  }
+  return out;
+}
+
 function extractRoutePaths(source) {
   const routes = new Set();
   const literalRe = /path="([^"]+)"/g;
@@ -184,6 +200,12 @@ const subnavPaths = new Set([
   ...extractQuotedPaths(read("apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts"), ["route"]),
   ...extractQuotedPaths(read("apps/frontend/src/components/layout/sidebar-config.ts"), ["to"]),
   ...extractQuotedPaths(read("apps/frontend/src/pages/program/ProgramBoardPage.tsx"), ["href"]),
+  // PROG-NAV-01: AuditScoreboardPage IS the Program module's rendered top-bar tab row (it is the
+  // /program index). It was not counted as a nav source, so every tab it hosts looked like an
+  // orphan route and had to be allowlisted instead of given a door — the exact inversion this
+  // guard exists to prevent. Counting it means a real tab satisfies the guard and a missing one
+  // still fails.
+  ...extractJsxAttrPaths(read("apps/frontend/src/pages/program/AuditScoreboardPage.tsx"), ["to"]),
 ]);
 
 const driversNavMatch = read("apps/frontend/src/components/drivers/DRIVERS_TABS_CONFIG.ts").match(

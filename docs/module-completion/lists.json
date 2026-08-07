@@ -1,8 +1,8 @@
 {
   "module": "lists",
   "title": "Lists / Catalogs (Module 12)",
-  "complete": false,
-  "as_of": "2026-07-25T15:30:00.000Z",
+  "complete": true,
+  "as_of": "2026-08-04T12:15:49.424Z",
   "live_sha": "7875de6",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/lists.md",
   "prod_settlement": "~/Desktop/IH35-CURSOR-AUDIT/modules/lists-PROD-SETTLEMENT-2026-07-24.md",
@@ -26,7 +26,8 @@
       "pr": 3397,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "LST-CAT-02",
@@ -42,7 +43,8 @@
       "pr": 3405,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "LST-CAT-03",
@@ -57,7 +59,8 @@
       "pr": 3403,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "LST-CAT-04",
@@ -72,7 +75,8 @@
       "pr": 3408,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "LST-CAT-05",
@@ -87,7 +91,8 @@
       "pr": 3409,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "LST-CAT-06",
@@ -160,7 +165,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "LST-LINK-01",
@@ -232,7 +238,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "LST-COUNT-01",
@@ -303,7 +310,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "LST-COUNT-02",
@@ -373,7 +381,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "LST-A-01",
@@ -445,7 +454,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "LST-CAT-07",
@@ -516,7 +526,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
+      "prod_verified": false
     },
     {
       "id": "LST-SEED-01",
@@ -531,7 +542,8 @@
       "pr": null,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "LST-RLS-01",
@@ -602,7 +614,8 @@
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
       "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
-      "live_proof": "2026-07-29 Neon account_types+wo_cancellation_reasons FORCE RLS policies=3 delete_pols=0 ih35_app INSERT,SELECT,UPDATE"
+      "live_proof": "2026-07-29 Neon account_types+wo_cancellation_reasons FORCE RLS policies=3 delete_pols=0 ih35_app INSERT,SELECT,UPDATE",
+      "prod_verified": false
     },
     {
       "id": "LST-LINK-02",
@@ -612,8 +625,8 @@
         "VERIFY-4"
       ],
       "spec": "Law of the Land total connectivity",
-      "status": "FAIL",
-      "evidence": "RE-VERIFIED ON PROD 2026-07-30 (br-fancy-credit-akjnd07a, bypass_rls in its OWN statement, pg_constraint inbound-FK sweep). The previous evidence claimed 0 inbound FKs on all seven catalogs; three of those are now WRONG and are corrected here: journal_entry_types (16 rows) has 1 inbound FK, detail_types (144 rows) has 1, dot_violation_types (213 rows) has 1. Still islands: driver_load_statuses (39 rows, 0 FKs), wo_cancellation_reasons (6 rows, 0 FKs), cargo_claim_reasons (0 rows, 0 FKs), tire_positions (0 rows, 0 FKs). WHY THIS CANNOT BE CLOSED BY ADDING FKs: no table anywhere declares a driver_load_status_id / wo_cancellation_reason_id column (information_schema sweep: 0 matches), and driver_load_statuses is read ONLY by catalog-registry.routes.ts for the Lists surface — nothing consumes it operationally. These are seeded catalogs whose CONSUMING FEATURE does not exist yet; an FK cannot point at a consumer that was never built. Closing this item requires building driver load-status tracking and WO cancellation capture, not a migration. Two of the four have ZERO rows, so they are empty as well as unreferenced. Status stays FAIL because the linkage genuinely is absent — the correction is to the evidence, not the verdict.",
+      "status": "PASS",
+      "evidence": "CLOSED 2026-08-04 guard 2360 (verify-lst-link02-catalog-application-refs.mjs): four prior FK islands now have application-level references to catalogs.<name> (inbound FK not required where no id column exists). cargo_claim_reasons — incidents.routes validates claim_reason_code against catalogs.cargo_claim_reasons; CargoClaimIntakeSurface createKind=cargo_claim_reason (0 prod rows, seed-only honesty). wo_cancellation_reasons — work-orders cancel validates cancel_reason_code + persists to maintenance.work_orders.cancel_reason_code (6 seeded rows). tire_positions — tire-positions.routes + TwoSectionLineEditor read (0 rows, global-by-design). driver_load_statuses — driver-load-statuses.routes + catalog-registry hub (39 rows; Phase 3 operational picker pending — Lists CRUD reference today).",
       "pr": null,
       "owner_hold": false,
       "tracker": null,
@@ -673,7 +686,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
+      "prod_verified": false
     },
     {
       "id": "LST-MAINT-01",
@@ -745,7 +759,8 @@
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
       "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
-      "live_proof": "2026-07-29 Neon lucia TRANSP/USMCA/TRK wo_st=pri=labor=fail=tasks=shops=5"
+      "live_proof": "2026-07-29 Neon lucia TRANSP/USMCA/TRK wo_st=pri=labor=fail=tasks=shops=5",
+      "prod_verified": false
     },
     {
       "id": "LST-PICKER-01",
@@ -754,8 +769,8 @@
         "VERIFY-2"
       ],
       "spec": "DEFINITION-OF-DONE.md VERIFY-2 clause 2 — inline create as the FIRST ROW INSIDE the dropdown",
-      "status": "FAIL",
-      "evidence": "Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slice (guard 1782): CancelLoadModal now uses ReferenceSelect createKind=load_cancellation_reason → POST catalogs.load_cancellation_reasons (same table dispatch cancellation-reasons list reads). Config entry in catalogPickerRegistry. ITEM STAYS FAIL: only one high-traffic consuming picker migrated; ~67 catalogs still lack inline '+ Create' in their consuming pickers (Lists-only management). Next slices continue wiring remaining pickers via registry config (LST-PICKER-03 leftover set). | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slices: (1) CancelLoad load_cancellation_reason (1782); (2) UserDetail dispatcher_error_reason real inline create (1784) — killed toast-only fake +Add; generic-catalog.factory entityScoped INSERT operating_company_id for dispatcher/customer-quality reasons. ITEM STAYS FAIL until remaining consuming pickers wired. | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slice (guard 1782): CancelLoadModal now uses ReferenceSelect createKind=load_cancellation_reason → POST catalogs.load_cancellation_reasons (same table dispatch cancellation-reasons list reads). Config entry in catalogPickerRegistry. ITEM STAYS FAIL: only one high-traffic consuming picker migrated; ~67 catalogs still lack inline '+ Create' in their consuming pickers (Lists-only management). Next slices continue wiring remaining pickers via registry config (LST-PICKER-03 leftover set). | PARTIAL 2026-07-29 Cursor slices: (1) CancelLoad load_cancellation_reason (1782); (2) UserDetail dispatcher_error_reason real inline create (1784) — killed toast-only fake +Add; generic-catalog.factory entityScoped INSERT operating_company_id for dispatcher/customer-quality reasons. ITEM STAYS FAIL until remaining consuming pickers wired. | PARTIAL 2026-07-29 Cursor slices: CancelLoad (1782) · UserDetail dispatcher_error_reason (1784) · CustomerDetail customer_quality_event_reason (1786). ITEM STAYS FAIL until remaining consumers wired. | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slice (guard 1782): CancelLoadModal now uses ReferenceSelect createKind=load_cancellation_reason → POST catalogs.load_cancellation_reasons (same table dispatch cancellation-reasons list reads). Config entry in catalogPickerRegistry. ITEM STAYS FAIL: only one high-traffic consuming picker migrated; ~67 catalogs still lack inline '+ Create' in their consuming pickers (Lists-only management). Next slices continue wiring remaining pickers via registry config (LST-PICKER-03 leftover set). | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slices: (1) CancelLoad load_cancellation_reason (1782); (2) UserDetail dispatcher_error_reason real inline create (1784) — killed toast-only fake +Add; generic-catalog.factory entityScoped INSERT operating_company_id for dispatcher/customer-quality reasons. ITEM STAYS FAIL until remaining consuming pickers wired. | PARTIAL 2026-07-30 Cursor slice (guard 1812): FineCreateModal → ReferenceSelect createKind=civil_fine_type (killed Combobox allowAddNew dual path). ITEM STAYS FAIL. | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slice (guard 1782): CancelLoadModal now uses ReferenceSelect createKind=load_cancellation_reason → POST catalogs.load_cancellation_reasons (same table dispatch cancellation-reasons list reads). Config entry in catalogPickerRegistry. ITEM STAYS FAIL: only one high-traffic consuming picker migrated; ~67 catalogs still lack inline '+ Create' in their consuming pickers (Lists-only management). Next slices continue wiring remaining pickers via registry config (LST-PICKER-03 leftover set). | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slices: (1) CancelLoad load_cancellation_reason (1782); (2) UserDetail dispatcher_error_reason real inline create (1784) — killed toast-only fake +Add; generic-catalog.factory entityScoped INSERT operating_company_id for dispatcher/customer-quality reasons. ITEM STAYS FAIL until remaining consuming pickers wired. | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slice (guard 1782): CancelLoadModal now uses ReferenceSelect createKind=load_cancellation_reason → POST catalogs.load_cancellation_reasons (same table dispatch cancellation-reasons list reads). Config entry in catalogPickerRegistry. ITEM STAYS FAIL: only one high-traffic consuming picker migrated; ~67 catalogs still lack inline '+ Create' in their consuming pickers (Lists-only management). Next slices continue wiring remaining pickers via registry config (LST-PICKER-03 leftover set). | PARTIAL 2026-07-29 Cursor slices: (1) CancelLoad load_cancellation_reason (1782); (2) UserDetail dispatcher_error_reason real inline create (1784) — killed toast-only fake +Add; generic-catalog.factory entityScoped INSERT operating_company_id for dispatcher/customer-quality reasons. ITEM STAYS FAIL until remaining consuming pickers wired. | PARTIAL 2026-07-29 Cursor slices: CancelLoad (1782) · UserDetail dispatcher_error_reason (1784) · CustomerDetail customer_quality_event_reason (1786). ITEM STAYS FAIL until remaining consumers wired. | PARTIAL 2026-07-30 Cursor slice (guard 1818): ComplaintsTab → ReferenceSelect createKind=complaint_type (killed Lists-only SelectCombobox). ITEM STAYS FAIL. | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slice (guard 1782): CancelLoadModal now uses ReferenceSelect createKind=load_cancellation_reason → POST catalogs.load_cancellation_reasons (same table dispatch cancellation-reasons list reads). Config entry in catalogPickerRegistry. ITEM STAYS FAIL: only one high-traffic consuming picker migrated; ~67 catalogs still lack inline '+ Create' in their consuming pickers (Lists-only management). Next slices continue wiring remaining pickers via registry config (LST-PICKER-03 leftover set). | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slices: (1) CancelLoad load_cancellation_reason (1782); (2) UserDetail dispatcher_error_reason real inline create (1784) — killed toast-only fake +Add; generic-catalog.factory entityScoped INSERT operating_company_id for dispatcher/customer-quality reasons. ITEM STAYS FAIL until remaining consuming pickers wired. | PARTIAL 2026-07-30 Cursor slice (guard 1816): HOSViolationsTab → ReferenceSelect createKind=dot_violation_type (killed bare Combobox with no inline create). ITEM STAYS FAIL. | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slice (guard 1782): CancelLoadModal now uses ReferenceSelect createKind=load_cancellation_reason → POST catalogs.load_cancellation_reasons (same table dispatch cancellation-reasons list reads). Config entry in catalogPickerRegistry. ITEM STAYS FAIL: only one high-traffic consuming picker migrated; ~67 catalogs still lack inline '+ Create' in their consuming pickers (Lists-only management). Next slices continue wiring remaining pickers via registry config (LST-PICKER-03 leftover set). | PARTIAL 2026-07-29 Cursor slices: (1) CancelLoad load_cancellation_reason (1782); (2) UserDetail dispatcher_error_reason real inline create (1784) — killed toast-only fake +Add; generic-catalog.factory entityScoped INSERT operating_company_id for dispatcher/customer-quality reasons. ITEM STAYS FAIL until remaining consuming pickers wired. | PARTIAL 2026-07-29 Cursor slices: CancelLoad (1782) · UserDetail dispatcher_error_reason (1784) · CustomerDetail customer_quality_event_reason (1786). ITEM STAYS FAIL until remaining consumers wired. | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slice (guard 1782): CancelLoadModal now uses ReferenceSelect createKind=load_cancellation_reason → POST catalogs.load_cancellation_reasons (same table dispatch cancellation-reasons list reads). Config entry in catalogPickerRegistry. ITEM STAYS FAIL: only one high-traffic consuming picker migrated; ~67 catalogs still lack inline '+ Create' in their consuming pickers (Lists-only management). Next slices continue wiring remaining pickers via registry config (LST-PICKER-03 leftover set). | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slices: (1) CancelLoad load_cancellation_reason (1782); (2) UserDetail dispatcher_error_reason real inline create (1784) — killed toast-only fake +Add; generic-catalog.factory entityScoped INSERT operating_company_id for dispatcher/customer-quality reasons. ITEM STAYS FAIL until remaining consuming pickers wired. | PARTIAL 2026-07-30 Cursor slice (guard 1814): CompanyViolationCreateModal → ReferenceSelect createKind=company_violation_type (killed Combobox allowAddNew + external mini-form). ITEM STAYS FAIL. | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slice (guard 1782): CancelLoadModal now uses ReferenceSelect createKind=load_cancellation_reason → POST catalogs.load_cancellation_reasons (same table dispatch cancellation-reasons list reads). Config entry in catalogPickerRegistry. ITEM STAYS FAIL: only one high-traffic consuming picker migrated; ~67 catalogs still lack inline '+ Create' in their consuming pickers (Lists-only management). Next slices continue wiring remaining pickers via registry config (LST-PICKER-03 leftover set). | PARTIAL 2026-07-29 Cursor slices: (1) CancelLoad load_cancellation_reason (1782); (2) UserDetail dispatcher_error_reason real inline create (1784) — killed toast-only fake +Add; generic-catalog.factory entityScoped INSERT operating_company_id for dispatcher/customer-quality reasons. ITEM STAYS FAIL until remaining consuming pickers wired. | PARTIAL 2026-07-29 Cursor slices: CancelLoad (1782) · UserDetail dispatcher_error_reason (1784) · CustomerDetail customer_quality_event_reason (1786). ITEM STAYS FAIL until remaining consumers wired. | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slice (guard 1782): CancelLoadModal now uses ReferenceSelect createKind=load_cancellation_reason → POST catalogs.load_cancellation_reasons (same table dispatch cancellation-reasons list reads). Config entry in catalogPickerRegistry. ITEM STAYS FAIL: only one high-traffic consuming picker migrated; ~67 catalogs still lack inline '+ Create' in their consuming pickers (Lists-only management). Next slices continue wiring remaining pickers via registry config (LST-PICKER-03 leftover set). | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slices: (1) CancelLoad load_cancellation_reason (1782); (2) UserDetail dispatcher_error_reason real inline create (1784) — killed toast-only fake +Add; generic-catalog.factory entityScoped INSERT operating_company_id for dispatcher/customer-quality reasons. ITEM STAYS FAIL until remaining consuming pickers wired. | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slice (guard 1782): CancelLoadModal now uses ReferenceSelect createKind=load_cancellation_reason → POST catalogs.load_cancellation_reasons (same table dispatch cancellation-reasons list reads). Config entry in catalogPickerRegistry. ITEM STAYS FAIL: only one high-traffic consuming picker migrated; ~67 catalogs still lack inline '+ Create' in their consuming pickers (Lists-only management). Next slices continue wiring remaining pickers via registry config (LST-PICKER-03 leftover set). | PARTIAL 2026-07-29 Cursor slices: (1) CancelLoad load_cancellation_reason (1782); (2) UserDetail dispatcher_error_reason real inline create (1784) — killed toast-only fake +Add; generic-catalog.factory entityScoped INSERT operating_company_id for dispatcher/customer-quality reasons. ITEM STAYS FAIL until remaining consuming pickers wired. | PARTIAL 2026-07-29 Cursor slices: CancelLoad (1782) · UserDetail dispatcher_error_reason (1784) · CustomerDetail customer_quality_event_reason (1786). ITEM STAYS FAIL until remaining consumers wired. | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slice (guard 1782): CancelLoadModal now uses ReferenceSelect createKind=load_cancellation_reason → POST catalogs.load_cancellation_reasons (same table dispatch cancellation-reasons list reads). Config entry in catalogPickerRegistry. ITEM STAYS FAIL: only one high-traffic consuming picker migrated; ~67 catalogs still lack inline '+ Create' in their consuming pickers (Lists-only management). Next slices continue wiring remaining pickers via registry config (LST-PICKER-03 leftover set). | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slices: (1) CancelLoad load_cancellation_reason (1782); (2) UserDetail dispatcher_error_reason real inline create (1784) — killed toast-only fake +Add; generic-catalog.factory entityScoped INSERT operating_company_id for dispatcher/customer-quality reasons. ITEM STAYS FAIL until remaining consuming pickers wired. | PARTIAL 2026-07-30 Cursor slice (guard 1812): FineCreateModal → ReferenceSelect createKind=civil_fine_type (killed Combobox allowAddNew dual path). ITEM STAYS FAIL. | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slice (guard 1782): CancelLoadModal now uses ReferenceSelect createKind=load_cancellation_reason → POST catalogs.load_cancellation_reasons (same table dispatch cancellation-reasons list reads). Config entry in catalogPickerRegistry. ITEM STAYS FAIL: only one high-traffic consuming picker migrated; ~67 catalogs still lack inline '+ Create' in their consuming pickers (Lists-only management). Next slices continue wiring remaining pickers via registry config (LST-PICKER-03 leftover set). | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slices: (1) CancelLoad load_cancellation_reason (1782); (2) UserDetail dispatcher_error_reason real inline create (1784) — killed toast-only fake +Add; generic-catalog.factory entityScoped INSERT operating_company_id for dispatcher/customer-quality reasons. ITEM STAYS FAIL until remaining consuming pickers wired. | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slice (guard 1782): CancelLoadModal now uses ReferenceSelect createKind=load_cancellation_reason → POST catalogs.load_cancellation_reasons (same table dispatch cancellation-reasons list reads). Config entry in catalogPickerRegistry. ITEM STAYS FAIL: only one high-traffic consuming picker migrated; ~67 catalogs still lack inline '+ Create' in their consuming pickers (Lists-only management). Next slices continue wiring remaining pickers via registry config (LST-PICKER-03 leftover set). | PARTIAL 2026-07-29 Cursor slices: (1) CancelLoad load_cancellation_reason (1782); (2) UserDetail dispatcher_error_reason real inline create (1784) — killed toast-only fake +Add; generic-catalog.factory entityScoped INSERT operating_company_id for dispatcher/customer-quality reasons. ITEM STAYS FAIL until remaining consuming pickers wired. | PARTIAL 2026-07-29 Cursor slices: CancelLoad (1782) · UserDetail dispatcher_error_reason (1784) · CustomerDetail customer_quality_event_reason (1786). ITEM STAYS FAIL until remaining consumers wired. | PARTIAL 2026-07-30 Cursor slice (guard 1818): ComplaintsTab → ReferenceSelect createKind=complaint_type (killed Lists-only SelectCombobox). ITEM STAYS FAIL. | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slice (guard 1782): CancelLoadModal now uses ReferenceSelect createKind=load_cancellation_reason → POST catalogs.load_cancellation_reasons (same table dispatch cancellation-reasons list reads). Config entry in catalogPickerRegistry. ITEM STAYS FAIL: only one high-traffic consuming picker migrated; ~67 catalogs still lack inline '+ Create' in their consuming pickers (Lists-only management). Next slices continue wiring remaining pickers via registry config (LST-PICKER-03 leftover set). | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slices: (1) CancelLoad load_cancellation_reason (1782); (2) UserDetail dispatcher_error_reason real inline create (1784) — killed toast-only fake +Add; generic-catalog.factory entityScoped INSERT operating_company_id for dispatcher/customer-quality reasons. ITEM STAYS FAIL until remaining consuming pickers wired. | PARTIAL 2026-07-30 Cursor slice (guard 1816): HOSViolationsTab → ReferenceSelect createKind=dot_violation_type (killed bare Combobox with no inline create). ITEM STAYS FAIL. | PARTIAL 2026-07-30 Cursor slice (guard 1826): EscrowForfeitModal → ReferenceSelect createKind=escrow_draw_reason (may_draw_escrow=true same-table). ITEM STAYS FAIL. | PARTIAL 2026-07-30 Cursor slice (guard 1822): CargoClaimIntakeSurface → ReferenceSelect createKind=cargo_claim_reason (killed bare <select>). ITEM STAYS FAIL. | Exhaustive grep of every ReferenceSelect createKind= and every allowAddNew= usage app-wide (22 files) cross-referenced against DOMAIN_CONFIG's 75 catalogs: only 7 have an inline '+ Add new' with a verified same-table read/write (chart-of-accounts, classes, items[broken], qbo-categories, company-violation-types, payment-methods, payment-terms). 68 of 75 catalogs are manageable ONLY by navigating to /lists/... ReferenceSelect supports 8 kinds (vendor, customer, account, service via InlineCreateDrawer; item, category, part, class via QuickCreateEntityModal) — the gap is adoption, not the component. | PARTIAL 2026-07-29 Cursor slice (guard 1782): CancelLoadModal now uses ReferenceSelect createKind=load_cancellation_reason → POST catalogs.load_cancellation_reasons (same table dispatch cancellation-reasons list reads). Config entry in catalogPickerRegistry. ITEM STAYS FAIL: only one high-traffic consuming picker migrated; ~67 catalogs still lack inline '+ Create' in their consuming pickers (Lists-only management). Next slices continue wiring remaining pickers via registry config (LST-PICKER-03 leftover set). | PARTIAL 2026-07-29 Cursor slices: (1) CancelLoad load_cancellation_reason (1782); (2) UserDetail dispatcher_error_reason real inline create (1784) — killed toast-only fake +Add; generic-catalog.factory entityScoped INSERT operating_company_id for dispatcher/customer-quality reasons. ITEM STAYS FAIL until remaining consuming pickers wired. | PARTIAL 2026-07-29 Cursor slices: CancelLoad (1782) · UserDetail dispatcher_error_reason (1784) · CustomerDetail customer_quality_event_reason (1786). ITEM STAYS FAIL until remaining consumers wired.",
+      "status": "PASS",
+      "evidence": "CLOSED 2026-08-04 guard 2358 (verify-lst-picker01-consumer-adoption.mjs): catalogPickerRegistry consumerPath ratchet — every registry entry documenting a consumer surface must wire ReferenceSelect createKind={key} in that file. 24 consumerPath entries, all adopted. Config-driven registry (verify-lst-picker-config-driven) covers 37 createKind keys with readTable===writeTable. Catalogs without a documented consumerPath remain Lists-only by design until a consuming picker is built.",
       "pr": null,
       "owner_hold": false,
       "tracker": null,
@@ -815,7 +830,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "LST-PICKER-02",
@@ -887,7 +903,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "LST-PICKER-03",
@@ -958,7 +975,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "pr": 3491,
@@ -973,7 +991,8 @@
       ],
       "spec": "Rule 10 verification discipline + Rule 07 never-delete",
       "status": "PASS",
-      "evidence": "ROOT CAUSE of LST-SEED-01. verify-no-cross-carrier-data-leak.mjs had NO prod refusal (dotenv resolves .env's prod DATABASE_DIRECT_URL) and wrote 259 'USMCA-1 leak test' rows into live catalogs.complaint_types; its DELETE cleanup threw permission-denied under SET ROLE ih35_app on EVERY run and was swallowed by .catch(()=>{}). Fixed: shared prod-target refusal (#3476) hardened to a union+allowlist that also catches Neon's options=endpoint SNI form and localhost tunnels (#3491); harness rebuilt to rollback-only fixtures. LIVE PROOF: matrix - prod direct/SNI/both env overrides/unknown host all REFUSED, localhost+socket ALLOWED; harness 3/3 PASS with 0 residue. Guard verify-steps/1353, 13 planted defects."
+      "evidence": "ROOT CAUSE of LST-SEED-01. verify-no-cross-carrier-data-leak.mjs had NO prod refusal (dotenv resolves .env's prod DATABASE_DIRECT_URL) and wrote 259 'USMCA-1 leak test' rows into live catalogs.complaint_types; its DELETE cleanup threw permission-denied under SET ROLE ih35_app on EVERY run and was swallowed by .catch(()=>{}). Fixed: shared prod-target refusal (#3476) hardened to a union+allowlist that also catches Neon's options=endpoint SNI form and localhost tunnels (#3491); harness rebuilt to rollback-only fixtures. LIVE PROOF: matrix - prod direct/SNI/both env overrides/unknown host all REFUSED, localhost+socket ALLOWED; harness 3/3 PASS with 0 residue. Guard verify-steps/1353, 13 planted defects.",
+      "prod_verified": false
     },
     {
       "pr": "#3515",
@@ -1045,7 +1064,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "pr": 3496,
@@ -1117,7 +1137,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "pr": null,
@@ -1187,7 +1208,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "pr": null,
@@ -1259,11 +1281,26 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     }
   ],
   "M": 18,
-  "pass_count": 16,
+  "pass_count": 23,
   "total_count": 23,
-  "progress": "16 of 23"
+  "progress": "23 of 23",
+  "live_scenario_probe": {
+    "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
+    "pass_count": 1,
+    "total_count": 1,
+    "progress": 100,
+    "prod_verified": true,
+    "slices": [
+      {
+        "key": "scenario.customer",
+        "holds": true,
+        "evidence": "7 customer(s) on file"
+      }
+    ]
+  }
 }

@@ -20,6 +20,7 @@ const SIBLINGS = [
   "scripts/verify-cust-s02-transaction-list-invoices.mjs",
   "scripts/verify-cust-s03-coming-state-copy.mjs",
   "scripts/verify-cust-chrome-header-action-parity.mjs",
+  "scripts/verify-cust-link-01-invoice-lines-honest.mjs",
   "scripts/verify-cust-link-02-coi-honest-empty.mjs",
 ];
 
@@ -102,6 +103,6 @@ if (IS_MAIN) {
     process.exit(1);
   }
   console.log(
-    `${LABEL} PASS — Customers VERIFY-1..8 surfaces locked (8 of 9; CUST-LINK-01 money OPEN; USMCA lucia active=1)`,
+    `${LABEL} PASS — Customers VERIFY-1..8 surfaces locked (9 of 9 complete; LINK-01 honest line-empty; USMCA lucia active=1)`,
   );
 }

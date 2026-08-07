@@ -113,7 +113,7 @@ export function WorkOrdersTable({
       label: "Driver",
       render: (row) => <EntityLink kind="driver" id={row.driver_id ?? undefined} label={row.driver_id ? row.driver_id.slice(0, 8) : undefined} />,
     },
-    { key: "external_vendor_id", label: "Vendor", render: (row) => row.external_vendor_id ?? "—" },
+    { key: "external_vendor_id", label: "Vendor", render: (row) => row.external_vendor_id ? <EntityLink kind="vendor" id={row.external_vendor_id} label={row.external_vendor_id.slice(0, 8)} /> : "—" },
     { key: "status", label: "Status", sortable: true },
     { key: "total_actual_cost", label: "Cost", sortable: true, render: (row) => money((row as Record<string, unknown>).total_actual_cost) },
     { key: "timing", label: "Timing", render: (row) => renderDuration(row) },

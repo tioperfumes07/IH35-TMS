@@ -36,6 +36,7 @@ const REQUIRED_IN_GATE = [
   "verify-migration-lane-band",
   "verify-verify-step-lane-band",
   "verify-no-claimed-numbers-edits",
+  "verify-verify-step-claimed-on-main",
   "verify-data-migrations-rehearsed",
   "verify-entity-link-adoption",
   "verify-no-guard-file-deletion",

@@ -46,6 +46,20 @@
   verify-step but not `verify:arch-design`, and PRs kept going red. Requires a local Postgres SERVER binary
   (Postgres.app or `brew install postgresql@16`); takes ~6-10 min. Run it before every substantive push.
 
+> **★ DRIVER DEDUCTION AUTHORIZATION — OWNER-LOCKED 2026-07-04/07-05, reaffirmed 2026-08-05 (binding):**
+> The **signed HIRE CONTRACT authorizes payroll/settlement deductions. There is NO separate driver e-sign and
+> NO per-expense acknowledgment before auto-deduction** — the company decides the deduction at settlement
+> preparation. This **SUPERSEDES blueprint `MUST 3.13.3.3.A`** and its sibling `MUST 3.13.3.4.A` (internal
+> fines), both struck through and annotated in `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md`.
+> **Source of record (cite, do not re-derive):** `apps/backend/src/legal/signed-finance-handoff.service.ts:25-33`
+> — the legacy `driver_deduction_auth` template codes are retained ONLY so a pre-existing signed instance still
+> satisfies the gate; the primary authorizing document is the hire contract — plus audit item **0008-f RESOLVED**.
+> **The ONLY settlement acknowledgment is the COMPANY USER's sign-off, `MUST 3.4.2(d)(e)`** — in code
+> `driver_settlements.acknowledged_at` / `acknowledged_by_user_id`, written with the authed company user
+> (`settlements.routes.ts:412`). That control **STAYS**; it is not a driver ack. **Do not re-add the driver-ack
+> gate.** Owner decision wins over spec (§0). Canonical: `docs/lockdown/00_LOCKED_DECISIONS.md` §9.5 +
+> `.claude/skills/ih35-tms-standards/SKILL.md` §6.
+
 ## 1a) LINKAGE LAW + CANONICAL WIRING (read before any block)
 
 The LINKAGE law + canonical table map now lives in the **auto-loaded** skill
@@ -284,3 +298,26 @@ historically and DEFAULT PRIVILEGES prevents recurrence.
 
 
 **Model tiers:** `docs/specs/MODEL-TIER-POLICY.md` + `.cursor/rules/12-model-tiering.mdc`.
+
+---
+
+## ★ PERMANENT LAW (owner-locked 2026-08-05, session-boot) — read at every session start
+
+1. **FINDINGS FLOW AGENT→BOARD→AGENT, NEVER THROUGH THE OWNER.** Find a defect in another lane → WRITE an
+   OPEN row into `docs/audit/GUARD-WORKORDERS.md` yourself + commit. Target coder pulls it next loop. Owner
+   is NOT a message bus, ever, any session. Row shape: `| id | OWNER lane (CC-1 money/CC-3 mechanical) | fix
+   + standard | live evidence | OPEN |`.
+2. **LAW = ENFORCED GUARD OR IT'S NOT LAW (phased).** Every NEW rule ships a guard registered in
+   `docs/law/LAW.json`; `verify-law-registry.mjs` (required check, <2s, existence-only, adds ZERO PR time)
+   fails the build if a registered law's guard file is missing. Old rules migrate as a backlog class,
+   non-blocking. Judgment rules ("professional/honest/McLeod-quality") stay JUDGMENT — not force-guarded.
+3. **ROLES** (until owner changes in chat): CC-1 = money/GL/WORM. CC-3 = mechanical/entity-scope/FE/CI-guards.
+   CC-2 = GUARD verify-live-never-build (GL-DARK/DUAL-PATH prod+fork only). Cascade = merger via direct API +
+   scribe.
+4. **VOID = reversal, nothing deletable.** TRANSP/USMCA own no assets today (archive USMCA 1500/1510/1600,
+   keep 2400 generic). ALL TMS data is test; only the TRANSP QBO mirror is real; an empty TMS table is
+   expected. RLS is NOT a backstop for Owner sessions (`org.user_accessible_company_ids()` returns all
+   entities) — every unscoped read is load-bearing on its own predicate.
+5. **EVERY loop, EVERY agent:** read board → grep-verify top OPEN row against main (done → mark DONE w/ SHA;
+   wrong card → fix the REAL defect) → build ONE complete atomic block → find another lane's defect? write it
+   to the board → push → next. Never idle, never pause to summarize, never half-edit.

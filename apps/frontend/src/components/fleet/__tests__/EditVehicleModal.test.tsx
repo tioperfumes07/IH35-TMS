@@ -91,4 +91,13 @@ describe("EditVehicleModal", () => {
     expect(screen.getByTestId("edit-vehicle-currently_leased_to_company_id")).toBeTruthy();
     expect(screen.queryByLabelText(/Owner Company ID/i)).toBeNull();
   });
+
+  it("uses EntityPicker for default driver (not raw UUID text)", async () => {
+    renderModal();
+    await screen.findByText("Edit Vehicle · TRK-1");
+    fireEvent.click(screen.getByRole("button", { name: "Quick-availability" }));
+    expect(screen.getByTestId("edit-vehicle-assigned_driver_id")).toBeTruthy();
+    expect(screen.getByTestId("edit-vehicle-assigned_driver_id-picker")).toBeTruthy();
+    expect(screen.queryByLabelText(/Default Driver ID/i)).toBeNull();
+  });
 });

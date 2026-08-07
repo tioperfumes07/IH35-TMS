@@ -1,0 +1,10 @@
+{
+  "note": "Test route stubs that capture the Fastify handler POSITIONALLY (app.get(path, handler)) and therefore break when the route gains an options object such as { config: { rateLimit } }. An INVENTORY of remaining debt, not an approval of it. May only SHRINK. Fix by using apps/backend/test-helpers/capture-route-handler.ts.",
+  "test_files_scanned": 850,
+  "offenders": [
+    "apps/backend/src/catalogs/accounting/factory.entity-scope.test.ts|delete|1",
+    "apps/backend/src/catalogs/accounting/factory.entity-scope.test.ts|get|1",
+    "apps/backend/src/catalogs/accounting/factory.entity-scope.test.ts|patch|1",
+    "apps/backend/src/catalogs/accounting/factory.entity-scope.test.ts|post|1"
+  ]
+}

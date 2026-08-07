@@ -50,11 +50,60 @@ async function insertEmailAlert(
   );
 }
 
-async function finalizeSuccess(client: pg.PoolClient, id: string, messageId: string) {
+/**
+ * Per-entity From address.
+ *
+ * EMAIL_FROM_BY_COMPANY is a JSON map of operating_company_id -> address, e.g.
+ *   {"91e0bf0a-133f-4ce8-a734-2586cfa66d96":"dispatch@ih35trucking.net"}
+ * Unmapped entities fall back to the provider's configured default rather than failing the send —
+ * a missing map entry must not silently stop a customer being billed. Parsed once per process.
+ */
+let senderMap: Record<string, string> | null = null;
+function senderForCompany(operatingCompanyId: string): string | undefined {
+  if (senderMap === null) {
+    const raw = process.env.EMAIL_FROM_BY_COMPANY?.trim();
+    if (!raw) {
+      senderMap = {};
+    } else {
+      try {
+        const parsed = JSON.parse(raw) as Record<string, string>;
+        senderMap = Object.fromEntries(
+          Object.entries(parsed).map(([id, addr]) => [id.trim(), String(addr).trim()])
+        );
+      } catch {
+        // Loud, and non-fatal: fall back to the default sender rather than halting the queue.
+        console.error({}, "[email-cron] EMAIL_FROM_BY_COMPANY is not valid JSON — using default sender");
+        senderMap = {};
+      }
+    }
+  }
+  return senderMap[operatingCompanyId] || undefined;
+}
+
+/**
+ * LV-010 — a message that only reached the console is NOT delivered mail.
+ *
+ * EMAIL_PROVIDER defaults to "console" (email/factory.ts), and on prod every one of the 232 queue rows
+ * carried a 'console-email-' message id while reading status='sent'. 'sent' is the word an operator, a
+ * customer dispute, a collections workflow and an auditor all read as "we delivered this" — so an
+ * invoice whose only destination was stdout was indistinguishable from one a customer received.
+ *
+ * The transport now decides the terminal status: a console provider terminates at 'logged_only', and
+ * only a real ESP may write 'sent'. The provider is recorded alongside it so the row states which
+ * transport handled it instead of leaving everyone to infer it from a message-id prefix.
+ */
+async function finalizeSuccess(
+  client: pg.PoolClient,
+  id: string,
+  messageId: string,
+  providerKind: "console" | "ses" | "postmark" | "google"
+) {
+  const terminalStatus = providerKind === "console" ? "logged_only" : "sent";
   await client.query(
     `
       UPDATE email.email_queue
-      SET status = 'sent',
+      SET status = $3,
+          provider = $4,
           sent_at = now(),
           provider_message_id = $2,
           error_code = NULL,
@@ -63,7 +112,7 @@ async function finalizeSuccess(client: pg.PoolClient, id: string, messageId: str
           updated_at = now()
       WHERE id = $1::uuid
     `,
-    [id, messageId]
+    [id, messageId, terminalStatus, providerKind]
   );
 }
 
@@ -192,6 +241,10 @@ export async function processEmailQueueTick(logger?: Pick<FastifyBaseLogger, "in
 
     try {
       const sent = await provider.send({
+        // Multi-entity sender: TRANSP/TRK bill from the ih35trucking.net mailbox, USMCA from its own.
+        // Sending every entity's invoices from one address would misrepresent who is billing the
+        // customer — on a factored A/R that is a real dispute risk, not cosmetics.
+        from: senderForCompany(operatingCompanyId),
         to: toAddresses,
         cc: ccAddresses,
         bcc: bccAddresses,
@@ -205,7 +258,7 @@ export async function processEmailQueueTick(logger?: Pick<FastifyBaseLogger, "in
       // back up after 5m and, worst case, re-send once — far better than the tick crashing mid-batch.
       try {
         await withLuciaBypass(async (client) => {
-          await finalizeSuccess(client, id, sent.messageId);
+          await finalizeSuccess(client, id, sent.messageId, provider.kind);
         });
       } catch (persistError) {
         logger?.error?.(

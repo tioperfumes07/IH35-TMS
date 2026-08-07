@@ -22,7 +22,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "LEGAL-S02",
@@ -35,7 +36,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "LEGAL-S03",
@@ -48,7 +50,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "LEGAL-S04",
@@ -61,7 +64,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "LEGAL-S05",
@@ -74,7 +78,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "LEGAL-S06",
@@ -87,7 +92,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "LEGAL-S07",
@@ -100,7 +106,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "LEGAL-S08",
@@ -113,7 +120,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "LEGAL-S09",
@@ -126,7 +134,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "LEGAL-S10",
@@ -139,7 +148,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "LEGAL-S11",
@@ -152,7 +162,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "LEGAL-S12",
@@ -165,8 +176,26 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     }
   ],
-  "M": 12
+  "M": 12,
+  "pass_count": 0,
+  "total_count": 12,
+  "progress": "0 of 12",
+  "live_scenario_probe": {
+    "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
+    "pass_count": 0,
+    "total_count": 1,
+    "progress": 0,
+    "prod_verified": false,
+    "slices": [
+      {
+        "key": "scenario.legal",
+        "holds": false,
+        "evidence": "0 legal matter(s)"
+      }
+    ]
+  }
 }

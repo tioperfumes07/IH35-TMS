@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import { useAuth } from "../auth/useAuth";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { Shell } from "../components/Shell";
+import { resolveListsDomainHubKey } from "../pages/lists/components/AllCatalogsMap";
 const CustomersPage = React.lazy(() => import("../pages/Customers").then((m) => ({ default: m.CustomersPage })));
 const CustomerDetailPage = React.lazy(() => import("../pages/CustomerDetail").then((m) => ({ default: m.CustomerDetailPage })));
 const ListsHubPage = React.lazy(() => import("../pages/lists/ListsHubPage").then((m) => ({ default: m.ListsHubPage })));
@@ -172,6 +173,9 @@ const NotificationCenterPage = React.lazy(() => import("../pages/notifications/N
 const EquipmentTypesPage = React.lazy(() => import("../pages/EquipmentTypesPage").then((m) => ({ default: m.EquipmentTypesPage })));
 const HomePage = React.lazy(() => import("../pages/Home").then((m) => ({ default: m.HomePage })));
 const OwnerHome = React.lazy(() => import("../pages/home/OwnerHome").then((m) => ({ default: m.OwnerHome })));
+const ScenarioTrackerHome = React.lazy(() =>
+  import("../pages/program/scenario-tracker/ScenarioTrackerHome").then((m) => ({ default: m.ScenarioTrackerHome })),
+);
 // QBO-style home stays mounted at /app/homepage (bookmarks + never-delete). Sidebar HOME → /home.
 const QboStyleHomePage = React.lazy(() => import("../pages/home/QboStyleHomePage").then((m) => ({ default: m.QboStyleHomePage })));
 const LoginPage = React.lazy(() => import("../pages/Login").then((m) => ({ default: m.LoginPage })));
@@ -276,6 +280,7 @@ const MultiEntityAccountingPage = React.lazy(() => import("../pages/accounting/M
 const AccountingHubPage = React.lazy(() => import("../pages/accounting/AccountingHubPage").then((m) => ({ default: m.AccountingHubPage })));
 const DisputeQueuePage = React.lazy(() => import("../pages/accounting/DisputeQueuePage").then((m) => ({ default: m.DisputeQueuePage })));
 const AbandonmentQueuePage = React.lazy(() => import("../pages/accounting/AbandonmentQueuePage").then((m) => ({ default: m.AbandonmentQueuePage })));
+const LoansAdvancesPage = React.lazy(() => import("../pages/accounting/loans/LoansAdvancesPage").then((m) => ({ default: m.LoansAdvancesPage })));
 const InvoiceDetailPage = React.lazy(() => import("../pages/accounting/InvoiceDetailPage").then((m) => ({ default: m.InvoiceDetailPage })));
 const PaymentsListPage = React.lazy(() => import("../pages/accounting/PaymentsListPage").then((m) => ({ default: m.PaymentsListPage })));
 const PaymentDetailPage = React.lazy(() => import("../pages/accounting/PaymentDetailPage").then((m) => ({ default: m.PaymentDetailPage })));
@@ -576,6 +581,15 @@ function OwnerOnlyRoute({ children }: { children: ReactNode }) {
 function HomeRoute() {
   const auth = useAuth();
   if (!auth.user) return null;
+  // /home stays role homes until GUARD verifies live GET /api/v1/home/scenario-tracker
+  // (staleness heartbeat + entity chips). Tracker is mounted additively at /home/scenario-tracker.
+  if (auth.user.role === "Owner") return <OwnerHome auth={auth.user} />;
+  return <HomePage auth={auth.user} />;
+}
+
+function HomeOpsRoute() {
+  const auth = useAuth();
+  if (!auth.user) return null;
   if (auth.user.role === "Owner") return <OwnerHome auth={auth.user} />;
   return <HomePage auth={auth.user} />;
 }
@@ -709,6 +723,10 @@ function ListsDomainRoute() {
     if (redirectPath) {
       return <Navigate to={`${redirectPath}${location.search}${location.hash}`} replace />;
     }
+    const hubKey = resolveListsDomainHubKey(domain);
+    if (hubKey) {
+      return <Navigate to={`/lists/hub/${hubKey}${location.search}${location.hash}`} replace />;
+    }
   }
   return <ComingSoonPage />;
 }
@@ -763,6 +781,21 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* PROG-NAV-01 (owner 2026-08-05): the Scenario Tracker belongs in PROGRAM, next to the
+            Scoreboard — not under /home. Canonical route is now /program/scenario-tracker (below).
+            This legacy path is KEPT and redirected (additive-only: never delete a route; same
+            pattern as the retained /safety/vehicle-inspections redirect) so existing links and
+            bookmarks keep working. */}
+        <Route path="/home/scenario-tracker" element={<Navigate to="/program/scenario-tracker" replace />} />
+        {/* Additive: role dashboards also kept at /home/ops (never-delete). */}
+        <Route
+          path="/home/ops"
+          element={
+            <ProtectedRoute>
+              <HomeOpsRoute />
+            </ProtectedRoute>
+          }
+        />
         {/* Program Audit Scoreboard is the main /program page (owner 2026-08). Tracker kept at /program/tracker. */}
         <Route
           path="/program"
@@ -780,6 +813,16 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ModuleCompletionPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Scenario Tracker — CANONICAL home (owner 2026-08-05): it lives in PROGRAM alongside the
+            Scoreboard, both fed live from prod. /home/scenario-tracker redirects here. */}
+        <Route
+          path="/program/scenario-tracker"
+          element={
+            <ProtectedRoute>
+              <ScenarioTrackerHome />
             </ProtectedRoute>
           }
         />
@@ -3656,6 +3699,16 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* Loans & Advances register + 5-step application wizard. The data model, routes, poster,
+            auto-deduct and reminder worker already shipped; this route is the first frontend door. */}
+        <Route
+          path="/accounting/loans-advances"
+          element={
+            <ProtectedRoute>
+              <LoansAdvancesPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/accounting/invoices/:id"
           element={
@@ -4111,7 +4164,7 @@ export const ROUTES = React.Children.toArray(
           path="/catalogs/accounts"
           element={
             <ProtectedRoute>
-              <Navigate to="/coming-soon?feature=Chart%20of%20Accounts&phase=5&eta=After%20accounting%20cutover" replace />
+              <Navigate to="/lists/accounting/chart-of-accounts" replace />
             </ProtectedRoute>
           }
         />
@@ -4127,7 +4180,7 @@ export const ROUTES = React.Children.toArray(
           path="/catalogs/items"
           element={
             <ProtectedRoute>
-              <Navigate to="/coming-soon?feature=Items&phase=5&eta=After%20accounting%20cutover" replace />
+              <Navigate to="/lists/accounting/items" replace />
             </ProtectedRoute>
           }
         />

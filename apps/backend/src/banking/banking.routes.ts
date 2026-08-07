@@ -309,7 +309,9 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     return { updated_accounts: updated };
   });
 
-  app.get("/api/v1/banking/accounts/:id/register", async (req, reply) => {
+  // Rate-limited like the other authorizing banking reads: this endpoint pages a full account register
+  // and CodeQL (js/missing-rate-limiting) flags an authorizing route without one.
+  app.get("/api/v1/banking/accounts/:id/register", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = accountIdParamsSchema.safeParse(req.params ?? {});
@@ -328,7 +330,10 @@ export async function registerBankingRoutes(app: FastifyInstance) {
                 fa.id,
                 fa.created_at::date AS txn_date,
                 COALESCE(fa.memo, fa.notes, 'Factoring activity') AS description,
-                fa.advance_amount_cents AS amount,
+                -- CLS-UNIT-SCALE (UNIT-002): the amount column is consumed as DOLLARS by the register — the
+                -- escrow and advance_pool branches below both divide by 100. Emitting raw cents here
+                -- displayed every factoring advance at 100x.
+                (fa.advance_amount_cents::numeric / 100) AS amount,
                 'virtual_factoring'::text AS category,
                 'synced'::text AS status
               FROM accounting.factoring_advances fa
@@ -447,7 +452,10 @@ export async function registerBankingRoutes(app: FastifyInstance) {
               id,
               transaction_date AS txn_date,
               description,
-              amount_cents AS amount,
+              -- CLS-UNIT-SCALE (UNIT-003): same amount contract as the register — dollars, not cents.
+              -- The $2 comparison below stays in CENTS on purpose: it matches amount_cents against the
+              -- target's amount_cents with a 500-cent ($5) tolerance. Only the OUTPUT is scaled.
+              (amount_cents::numeric / 100) AS amount,
               category,
               status
             FROM banking.bank_transactions

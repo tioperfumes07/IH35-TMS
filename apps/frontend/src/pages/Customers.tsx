@@ -378,7 +378,11 @@ export function CustomersPage() {
     () => [
       { key: "date", label: "Date", sortable: true, render: (r) => formatDateUS(r.issue_date) },
       { key: "type", label: "Type", sortable: true, render: (r) => String(r.invoice_type ?? "manual") },
-      { key: "doc_no", label: "Doc #", render: (r) => r.display_id },
+      {
+        key: "doc_no",
+        label: "Doc #",
+        render: (r) => <EntityLink kind="invoice" id={r.id} label={r.display_id} />,
+      },
       { key: "status", label: "Status", sortable: true, render: (r) => r.status },
       { key: "amount", label: "Amount", render: (r) => fmtMoney(r.total_cents) },
       { key: "balance", label: "Balance", render: (r) => fmtMoney(r.amount_open_cents) },
@@ -599,6 +603,7 @@ export function CustomersPage() {
                   rows={txRows}
                   columns={txColumns}
                   rowKey={(invoice) => invoice.id}
+                  onRowClick={(invoice) => navigate(`/accounting/invoices/${invoice.id}`)}
                   // Settled-only empty (LIST-EMPTY-1 invariant): show the loading state while pending
                   // OR while a refetch is in flight with zero current rows, so ParityTable's emptyText
                   // never flashes mid-fetch — the same guarantee the shared list-state primitive gives.

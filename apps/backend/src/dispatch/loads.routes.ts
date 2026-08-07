@@ -21,6 +21,10 @@ import { distributeLoadInstructions } from "./load-distribution.service.js";
 import { cancelLoadIdReservation, reserveNextLoadId } from "./load-id-reservation.service.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
+import {
+  loadStatusRequiresDeliveryDepartureStamp,
+  stampFinalActiveDeliveryDeparture,
+} from "./stamp-final-delivery-departure.js";
 import { notifyAbandonedLoadStakeholders } from "../notifications/dispatcher.js";
 import { isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 import { getCurrentClocks } from "../telematics/hos-clocks.service.js";
@@ -489,7 +493,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.get("/api/v1/dispatch/loads", async (req, reply) => {
+  app.get("/api/v1/dispatch/loads", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = listDispatchLoadsQuerySchema.safeParse(req.query ?? {});
@@ -535,6 +539,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           SELECT count(*)::int AS total
           FROM views.dispatch_load_with_driver_status l
           JOIN mdata.customers c ON c.id = l.customer_id
+                                AND c.operating_company_id = l.operating_company_id
           LEFT JOIN LATERAL (
             SELECT city, state, scheduled_arrival_at
             FROM mdata.load_stops
@@ -588,7 +593,9 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             inv.invoice_amount_open_cents
           FROM views.dispatch_load_with_driver_status l
           JOIN mdata.customers c ON c.id = l.customer_id
+                                AND c.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           -- A9: trailer has NO column on mdata.loads (and was never assigned_secondary_driver_id, which is
           -- the team driver) — the only real trailer↔load link is dispatch.load_assignment_history.new_trailer_id
           -- (mdata.equipment). Resolve the most recent assignment-history row that actually set a trailer.
@@ -596,12 +603,14 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             SELECT eq.equipment_number, eq.equipment_type
             FROM dispatch.load_assignment_history lah
             JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id
+                                   AND COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = l.operating_company_id
               AND (eq.owner_company_id = l.operating_company_id OR eq.currently_leased_to_company_id = l.operating_company_id)
             WHERE lah.load_id = l.id AND lah.new_trailer_id IS NOT NULL
             ORDER BY lah.assigned_at DESC
             LIMIT 1
           ) tr ON true
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                   AND d.operating_company_id = l.operating_company_id
           LEFT JOIN views.units_with_dispatch_status uds ON uds.id = l.assigned_unit_id
           LEFT JOIN views.drivers_with_hos_status dhs ON dhs.id = l.assigned_primary_driver_id
           LEFT JOIN LATERAL (
@@ -651,7 +660,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/dispatch/loads/:id", async (req, reply) => {
+  app.get("/api/v1/dispatch/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const params = dispatchLoadIdParamsSchema.safeParse(req.params ?? {});
@@ -683,7 +692,9 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                  rc.uploaded_at AS ratecon_uploaded_at
           FROM views.dispatch_load_with_driver_status l
           JOIN mdata.customers c ON c.id = l.customer_id
+                                AND c.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.drivers sd ON sd.id = l.assigned_secondary_driver_id
+                                    AND sd.operating_company_id = l.operating_company_id
           -- A9 — surface the load's rate-con PDF (docs.file_links + docs.files, category
           -- 'rate_confirmation'). No column on mdata.loads carries this (unlike
           -- driver_instructions_file_id below, which IS persisted) — the link is polymorphic via
@@ -1201,7 +1212,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.patch("/api/v1/dispatch/loads/:id/transition", async (req, reply) => {
+  app.patch("/api/v1/dispatch/loads/:id/transition", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const params = dispatchLoadIdParamsSchema.safeParse(req.params ?? {});
@@ -1279,27 +1290,9 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       // office-stamped departure carries who asserted it. NOT a backfill: this fires only on a live
       // office action, never over historical rows (see DISPATCH-STATUS-STOP-COUPLING-SCOPE §3 — loads
       // already past the gate stay flagged and unrecognized until a human supplies real evidence).
-      if (targetStatus === "delivered_pending_docs" || targetStatus === "completed_docs_received") {
-        await client.query(
-          `
-            UPDATE mdata.load_stops s
-               SET actual_departure_at = COALESCE($2::timestamptz, now()),
-                   status = 'departed'::mdata.stop_status_enum,
-                   updated_at = now()
-             WHERE s.id = (
-                     SELECT s2.id
-                       FROM mdata.load_stops s2
-                      WHERE s2.load_id = $1
-                        AND s2.stop_type::text = 'delivery'
-                        AND s2.status::text <> 'cancelled'
-                        AND s2.soft_deleted_at IS NULL
-                      ORDER BY s2.sequence_number DESC
-                      LIMIT 1
-                   )
-               AND s.actual_departure_at IS NULL
-          `,
-          [params.data.id, body.data.delivered_at ?? null]
-        );
+      if (loadStatusRequiresDeliveryDepartureStamp(targetStatus)) {
+        // CLS-DISP-WIRE-07 — shared stamp (also used by bulk + mdata status paths).
+        await stampFinalActiveDeliveryDeparture(client, params.data.id, body.data.delivered_at ?? null);
       }
 
       // ND-INV-01 — at POD (delivered_pending_docs), convert proforma → draft so send/A/R/factoring can proceed.

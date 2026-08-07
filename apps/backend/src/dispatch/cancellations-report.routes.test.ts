@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { captureRoutes } from "../../test-helpers/capture-route-handler.js";
 
 const fakeUser = { uuid: "00000000-0000-4000-8000-0000000000aa", role: "Owner" };
 let rows: unknown[];
@@ -13,9 +14,11 @@ vi.mock("../accounting/shared.js", () => ({
 const { registerCancellationsReportRoutes } = await import("./cancellations-report.routes.js");
 
 function captureHandler() {
-  let handler: ((req: unknown, reply: unknown) => Promise<unknown>) | null = null;
-  registerCancellationsReportRoutes({ get: (_p: string, h: typeof handler) => { handler = h; } } as never);
-  return handler!;
+  // Shared stub models Fastify's real (path, options?, handler) overload — a route gaining a
+  // `{ config: { rateLimit } }` options object must not break these tests. See capture-route-handler.ts.
+  const capture = captureRoutes();
+  registerCancellationsReportRoutes(capture.app as never);
+  return capture.handler();
 }
 function makeReply() {
   const out: { code: number; body: unknown } = { code: 200, body: undefined };

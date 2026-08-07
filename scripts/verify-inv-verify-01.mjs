@@ -11,6 +11,7 @@ const SIBLINGS = [
   "scripts/verify-inv-s01-parts-roster-density.mjs",
   "scripts/verify-inv-cat-01-category-honesty.mjs",
   "scripts/verify-inv-s02-s03-pick-01.mjs",
+  "scripts/verify-inv-link-01-part-vendor.mjs",
 ];
 
 function run(script) {

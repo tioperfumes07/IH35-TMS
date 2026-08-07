@@ -1,7 +1,7 @@
 name: required-checks
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.sha || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 # CI-COVERAGE FIX (2026-07-23): NO `branches:` filter on the PR trigger, so stacked

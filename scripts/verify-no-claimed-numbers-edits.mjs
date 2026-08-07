@@ -3,10 +3,17 @@
  * TOOL-F03 companion — feature PRs must not edit CLAIMED-NUMBERS.json.
  *
  * GitHub cannot run merge=json-union; every CLAIMED touch conflicts every sibling PR.
- * Uniqueness = verify-steps directory; lane band = verify-verify-step-lane-band;
+ * Uniqueness = verify-steps directory; lane band = verify-verify-step-lane-band (mod-4);
  * registry step 1599 reports drift only.
  *
- * Allowlist: branch name starts with chore/claimed-regen OR commit subject contains CLAIMED-REGEN.
+ * Claim-before-write (Rule 25 / 2026-08-04): numbers are reserved on allowlisted claim PRs
+ * that merge BEFORE the verify-step file is authored (except one-time 2400 self-bootstrap).
+ *
+ * Allowlist: branch chore/claimed-regen* or chore/claim-reserve*, OR commit subject contains
+ * CLAIMED-REGEN or CLAIM-RESERVE.
+ *
+ * CI note: Actions often checks out a detached HEAD, so `git rev-parse --abbrev-ref HEAD`
+ * returns "HEAD". Prefer GITHUB_HEAD_REF / GITHUB_REF_NAME when present (PR head branch).
  */
 import { execSync } from "node:child_process";
 import { resolve, dirname } from "node:path";
@@ -20,16 +27,32 @@ function sh(cmd) {
   return execSync(cmd, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
 }
 
+/** Resolve PR/feature branch name even under detached CI checkouts. */
+export function resolveBranchName(env = process.env, gitAbbrev = "") {
+  const headRef = (env.GITHUB_HEAD_REF || "").trim();
+  if (headRef) return headRef;
+  const refName = (env.GITHUB_REF_NAME || "").trim();
+  if (refName && refName !== "main" && !refName.startsWith("refs/")) {
+    // pull_request workflows set GITHUB_HEAD_REF; push/merge_group may set REF_NAME to branch
+    if (!/^\d+$/.test(refName)) return refName;
+  }
+  const abbrev = (gitAbbrev || "").trim();
+  if (abbrev && abbrev !== "HEAD") return abbrev;
+  return abbrev || "";
+}
+
 export function assertNoClaimedEdits({ changedFiles, branch, commitSubjects }) {
   const errs = [];
   if (!changedFiles?.includes(TARGET)) return errs;
-  const branchOk = typeof branch === "string" && branch.startsWith("chore/claimed-regen");
-  const subjectOk = (commitSubjects || []).some((s) => /\bCLAIMED-REGEN\b/.test(s));
+  const branchOk =
+    typeof branch === "string" &&
+    (branch.startsWith("chore/claimed-regen") || branch.startsWith("chore/claim-reserve"));
+  const subjectOk = (commitSubjects || []).some((s) => /\bCLAIMED-REGEN\b|\bCLAIM-RESERVE\b/.test(s));
   if (branchOk || subjectOk) return errs;
   errs.push(
-    `${LABEL}: feature PR edits ${TARGET}. Filename is the claim (TOOL-F03). ` +
-      `Use Cursor EVEN / Claude ODD step files only. Regen registry on branch chore/claimed-regen* ` +
-      `or with commit subject CLAIMED-REGEN.`,
+    `${LABEL}: feature PR edits ${TARGET}. Claim-before-write (Rule 25): reserve on ` +
+      `chore/claim-reserve* or chore/claimed-regen* (subject CLAIM-RESERVE / CLAIMED-REGEN), merge, ` +
+      `THEN author the guard. Bands: Cursor EVEN · CC-1 ≡1 · CC-2 ≡3.`,
   );
   return errs;
 }
@@ -62,6 +85,24 @@ function selftest() {
     console.error(`${LABEL}: selftest FAIL — CLAIMED-REGEN subject must pass`);
     process.exit(1);
   }
+  const okReserveBranch = assertNoClaimedEdits({
+    changedFiles: [TARGET],
+    branch: "chore/claim-reserve-2400",
+    commitSubjects: ["chore: reserve"],
+  });
+  if (okReserveBranch.length) {
+    console.error(`${LABEL}: selftest FAIL — chore/claim-reserve must pass`);
+    process.exit(1);
+  }
+  const okReserveSubject = assertNoClaimedEdits({
+    changedFiles: [TARGET],
+    branch: "fix/anything",
+    commitSubjects: ["CLAIM-RESERVE: 2400 verify-verify-step-claimed-on-main"],
+  });
+  if (okReserveSubject.length) {
+    console.error(`${LABEL}: selftest FAIL — CLAIM-RESERVE subject must pass`);
+    process.exit(1);
+  }
   const clean = assertNoClaimedEdits({
     changedFiles: ["scripts/verify-steps/1906-verify-no-claimed-numbers-edits.mjs"],
     branch: "fix/tool-f03",
@@ -69,6 +110,24 @@ function selftest() {
   });
   if (clean.length) {
     console.error(`${LABEL}: selftest FAIL — no CLAIMED touch must pass`);
+    process.exit(1);
+  }
+  // Detached CI: GITHUB_HEAD_REF must win over abbrev=HEAD
+  const fromCi = resolveBranchName(
+    { GITHUB_HEAD_REF: "chore/claim-reserve-2540-ep-unit-sweep" },
+    "HEAD",
+  );
+  if (fromCi !== "chore/claim-reserve-2540-ep-unit-sweep") {
+    console.error(`${LABEL}: selftest FAIL — GITHUB_HEAD_REF must resolve under detached HEAD`);
+    process.exit(1);
+  }
+  const detachedOk = assertNoClaimedEdits({
+    changedFiles: [TARGET],
+    branch: fromCi,
+    commitSubjects: ["FINDING: EP-UNIT-KIND-SWEEP"],
+  });
+  if (detachedOk.length) {
+    console.error(`${LABEL}: selftest FAIL — claim-reserve via GITHUB_HEAD_REF must pass`);
     process.exit(1);
   }
   console.log(`${LABEL}: selftest PASS`);
@@ -85,12 +144,13 @@ function main() {
   } catch {
     changed = sh("git diff --name-only main...HEAD").split("\n").filter(Boolean);
   }
-  let branch = "";
+  let gitAbbrev = "";
   try {
-    branch = sh("git rev-parse --abbrev-ref HEAD");
+    gitAbbrev = sh("git rev-parse --abbrev-ref HEAD");
   } catch {
-    branch = "";
+    gitAbbrev = "";
   }
+  const branch = resolveBranchName(process.env, gitAbbrev);
   let subjects = [];
   try {
     subjects = sh("git log --format=%s origin/main..HEAD").split("\n").filter(Boolean);

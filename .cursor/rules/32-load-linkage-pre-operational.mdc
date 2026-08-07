@@ -1,0 +1,54 @@
+---
+description: Load linkage is going-forward only — historical QBO-import fuel/expenses are legitimately load-null; NEVER invent load FKs (owner 2026-08-04)
+alwaysApply: true
+---
+
+# RULE 32 — LOAD LINKAGE PRE-OPERATIONAL (owner 2026-08-04)
+
+**Canonical ruling:** `docs/OWNER-RULING-load-linkage-pre-operational-2026-08-04.md`  
+**Evidence:** GUARD-verified live on prod 2026-08-04 — zero dispatched loads; 1,548 fuel rows all `load_id = NULL` (QBO-import/categorization cohort).
+
+## The one-line law
+
+> **Historical/QBO-imported fuel & expenses are legitimately load-null because the TMS has not dispatched loads yet.
+> Load linkage is going-forward only. NEVER invent a load FK. Mark the historical cohort exempt
+> (`load_required=false`, `load_exemption_reason`), guard that *new* TMS-native loads link — nothing more.**
+
+## Why (non-negotiable)
+
+There is **no load↔expense/fuel linkage today because the TMS is not yet dispatching loads.** Historical
+transactions are QuickBooks-imported bookkeeping data being *categorized* — they were never dispatched through
+this TMS, so there is **no TMS load to link them to.** A load FK on these rows would have to be **invented**,
+and inventing financial linkage violates the hardline rule (never guess, never fabricate).
+
+Load linkage is a **going-forward capability.** The resolver and FK plumbing are **already built and correct**
+— they simply have nothing to resolve yet. An empty result is the **honest, expected state**, not a broken wire.
+Cost-per-mile, load margin, and per-load driver accountability **cannot be computed until loads exist in dispatch.**
+
+## Forbidden (every agent)
+
+- Backfill, infer, or "repair" `load_id` / `expense_load_links` on historical QBO-import rows.
+- Treat "1,548 fuel rows have no load" or "expenses have zero load linkage" as a wiring FAIL.
+- Count pre-operational empty linkage against module completion or hold other work on it.
+- Any guard that flags historical exempt rows as offenders.
+
+## Cursor lane (frontend)
+
+- **No load-linkage fix work** — do not build backfill UI, resolver patches, or "missing load" repair flows for the historical cohort.
+- **NEVER invent load FKs** in frontend submit payloads or display logic.
+- **Honest exempt UI (low priority, after current waves):** when a fuel/expense row is exempt
+  (`load_required = false`), show the honest state (e.g. "No load — pre-dispatch import" from
+  `load_exemption_reason`) rather than an empty/error "missing load" affordance.
+- Do **not** backfill `load_id` from the UI or suggest loads for imported rows.
+
+## Lane split (do not cross)
+
+| Lane | Scope |
+|---|---|
+| **Cascade** | Reclassify `CLS-LINKAGE-ONEWAY` → N/A-PRE-OPERATIONAL (wiring exists, correctly empty) + going-forward guard card |
+| **Claude Coder** | Exempt backfill (`load_required=false`, `load_exemption_reason='PRE_TMS_DISPATCH_IMPORT'`) on import cohort; TMS-native going-forward linkage guard |
+| **Cursor** | Exempt UI only (above); no migrations, no FK writes |
+
+## Tie-breakers
+
+Invent linkage < honest null · historical backfill < going-forward guard · empty FK count < sequencing fact · memory < this file + owner ruling.

@@ -75,10 +75,13 @@ const listQuerySchema = companyQuerySchema.extend({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
-// Cancel/Void require a reason (Jorge 2026-06-29): the WHY is always captured in the immutable audit
-// trail. Soft only — the WO row + history are never deleted.
+// Cancel requires a catalog reason code (LST-LINK-02: validates against catalogs.wo_cancellation_reasons).
+// Optional cancel_notes for operator context; cancellation_reason free-text retained for audit display.
 const cancelBodySchema = z.object({
-  cancellation_reason: z.string().trim().min(3, "a reason is required").max(500),
+  cancel_reason_code: z.string().trim().min(1).max(64),
+  cancel_notes: z.string().trim().max(500).optional(),
+  /** @deprecated legacy free-text — ignored when cancel_reason_code is present */
+  cancellation_reason: z.string().trim().min(3).max(500).optional(),
 });
 const voidBodySchema = z.object({
   reason: z.string().trim().min(3, "a reason is required").max(500),
@@ -532,6 +535,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
           FROM maintenance.work_orders w
           ${laborJoin}
           LEFT JOIN mdata.units wu ON wu.id = w.unit_id
+                                  AND COALESCE(wu.currently_leased_to_company_id, wu.owner_company_id) = w.operating_company_id
           WHERE ${where.join(" AND ")}${segmentClause}
           ${orderBy}
           LIMIT $${limitIdx} OFFSET $${offsetIdx}
@@ -655,7 +659,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
           });
 
           const linkedLoadRes = body.linked_load_id
-            ? await client.query(`SELECT load_number FROM mdata.loads WHERE id = $1 LIMIT 1`, [body.linked_load_id])
+            ? await client.query(`SELECT load_number FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [body.linked_load_id, body.operating_company_id])
             : { rows: [] as Array<{ load_number?: string | null }> };
           const linkedLoadNumber = linkedLoadRes.rows[0]?.load_number ? String(linkedLoadRes.rows[0].load_number) : null;
 
@@ -855,7 +859,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       if (body.linked_load_id !== undefined) {
         push(`load_id = $IDX`, body.linked_load_id);
         if (body.linked_load_id) {
-          const loadRow = await client.query(`SELECT load_number FROM mdata.loads WHERE id = $1 LIMIT 1`, [body.linked_load_id]);
+          const loadRow = await client.query(`SELECT load_number FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [body.linked_load_id, query.data.operating_company_id]);
           push(`linked_load_number = $IDX`, loadRow.rows[0]?.load_number ?? null);
         } else {
           push(`linked_load_number = $IDX`, null);
@@ -1096,6 +1100,23 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     const row = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       if (!(await maintenanceReady(client))) return { kind: "unavailable" as const };
 
+      // LST-LINK-02: cancel_reason_code must exist in the shared WO-cancel catalog (not a hard-coded enum).
+      const reasonRow = await client.query(
+        `SELECT reason_code, reason_label
+           FROM catalogs.wo_cancellation_reasons
+          WHERE reason_code = $1 AND is_active = true
+          LIMIT 1`,
+        [parsed.data.cancel_reason_code]
+      );
+      const reasonHit = reasonRow.rows[0] as { reason_code: string; reason_label: string } | undefined;
+      if (!reasonHit) {
+        return { kind: "invalid_reason" as const };
+      }
+      const reasonLabel = reasonHit.reason_label;
+      const notes = parsed.data.cancel_notes?.trim() ?? "";
+      const cancellationReason =
+        notes.length > 0 ? `${reasonLabel} — ${notes}` : reasonLabel;
+
       // Lock the row + read prior status BEFORE any financial reversal (idempotency + no-orphan).
       const pre = await client.query(
         `SELECT status::text AS status FROM maintenance.work_orders
@@ -1124,7 +1145,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
         query.data.operating_company_id,
         params.data.id,
         user.uuid,
-        parsed.data.cancellation_reason
+        cancellationReason
       );
       if (fin.kind === "financial_blocked") return { kind: "financial_blocked" as const };
       if (fin.kind === "bill_has_payments") return { kind: "bill_has_payments" as const };
@@ -1136,13 +1157,23 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
           SET status = 'cancelled',
               cancelled_at = COALESCE(cancelled_at, now()),
               cancelled_by_user_id = COALESCE(cancelled_by_user_id, $2),
-              cancellation_reason = COALESCE(cancellation_reason, $3),
-              reversing_entry_ref = COALESCE($5, reversing_entry_ref),
+              cancel_reason_code = COALESCE(cancel_reason_code, $3),
+              cancel_notes = COALESCE(cancel_notes, $4),
+              cancellation_reason = COALESCE(cancellation_reason, $5),
+              reversing_entry_ref = COALESCE($6, reversing_entry_ref),
               updated_at = now()
-          WHERE id = $1 AND operating_company_id = $4 AND status <> 'complete'
+          WHERE id = $1 AND operating_company_id = $7 AND status <> 'complete'
           RETURNING *
         `,
-        [params.data.id, user.uuid, parsed.data.cancellation_reason ?? null, query.data.operating_company_id, reversingEntryRef]
+        [
+          params.data.id,
+          user.uuid,
+          parsed.data.cancel_reason_code,
+          notes || null,
+          cancellationReason,
+          reversingEntryRef,
+          query.data.operating_company_id,
+        ]
       );
       const wo = res.rows[0];
       if (!wo) return { kind: "missing" as const };
@@ -1150,15 +1181,17 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
         client,
         user.uuid,
         "maintenance.work_order.cancelled",
-        { resource_id: wo.id, entity_type: "work_order", entity_id: wo.id, reason: parsed.data.cancellation_reason, reversing_entry_ref: reversingEntryRef, financial_void: reversingEntryRef != null },
+        { resource_id: wo.id, entity_type: "work_order", entity_id: wo.id, reason: cancellationReason, cancel_reason_code: parsed.data.cancel_reason_code, reversing_entry_ref: reversingEntryRef, financial_void: reversingEntryRef != null },
         "warning",
         "P6-T11179"
       );
-      await enqueueWorkOrderOutbox(client, "work_order.cancelled", { work_order_id: wo.id, reason: parsed.data.cancellation_reason });
+      await enqueueWorkOrderOutbox(client, "work_order.cancelled", { work_order_id: wo.id, reason: cancellationReason, cancel_reason_code: parsed.data.cancel_reason_code });
       return { kind: "ok" as const, wo };
     });
 
     if (row.kind === "unavailable") return reply.code(501).send({ error: "maintenance_schema_not_available" });
+    if (row.kind === "invalid_reason")
+      return reply.code(400).send({ error: "invalid_cancel_reason_code", message: "cancel_reason_code must match an active catalogs.wo_cancellation_reasons row" });
     if (row.kind === "missing") return reply.code(404).send({ error: "work_order_not_found" });
     if (row.kind === "financial_blocked")
       return reply.code(409).send({ error: "wo_has_posted_financial_entries", message: "WO has posted financial entries; financial void is disabled (WO_VOID_ENABLED off)" });

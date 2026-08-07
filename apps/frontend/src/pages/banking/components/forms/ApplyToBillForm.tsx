@@ -3,7 +3,7 @@ import type { JSX } from "react";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listCatalogAccounts } from "../../../../api/catalog-accounts";
-import { listVendors, listUnits } from "../../../../api/mdata";
+import { listVendors } from "../../../../api/mdata";
 import { getWoCostContext } from "../../../../api/maintenance";
 import {
   CostBreakdownBox,
@@ -13,6 +13,7 @@ import {
 } from "../../../../components/forms/shared/CostBreakdownBox";
 import { DatePicker } from "../../../../components/forms/DatePicker";
 import { DriverPickerWithCreate } from "../../../../components/drivers/DriverPickerWithCreate";
+import { EntityPicker } from "../../../../components/parity/EntityPicker";
 import { ReferenceSelect } from "../../../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../../../components/parity/referenceOptionLabels";
 import { SelectCombobox } from "../../../../components/shared/SelectCombobox";
@@ -39,11 +40,6 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
   const vendorsQuery = useQuery({
     queryKey: ["categorize-bill", "vendors", operatingCompanyId],
     queryFn: () => listVendors({ operating_company_id: operatingCompanyId }),
-    enabled: Boolean(operatingCompanyId),
-  });
-  const unitsQuery = useQuery({
-    queryKey: ["categorize-bill", "units", operatingCompanyId],
-    queryFn: () => listUnits({ status: "Active", operating_company_id: operatingCompanyId }),
     enabled: Boolean(operatingCompanyId),
   });
   const accountsQuery = useQuery({
@@ -202,14 +198,16 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
           />
         </Field>
         <Field label="Unit">
-          <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={String(value.unit_id ?? "")} onChange={(event) => onChange({ ...value, unit_id: event.target.value })}>
-            <option value="">Select unit...</option>
-            {((unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>).map((unit) => (
-              <option key={String(unit.id ?? "")} value={String(unit.id ?? "")}>
-                {String(unit.unit_number ?? unit.id ?? "")}
-              </option>
-            ))}
-          </SelectCombobox>
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={operatingCompanyId}
+            value={value.unit_id ? String(value.unit_id) : null}
+            onChange={(next) => onChange({ ...value, unit_id: next ?? "" })}
+            placeholder="Select unit…"
+            disabled={!operatingCompanyId}
+            nestedInDrawer
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+          />
         </Field>
         <Field label="Class">
           <input

@@ -43,7 +43,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerAccountBalanceRoutes(app: FastifyInstance) {
-  app.get("/api/v1/banking/accounts/:accountId/balance", async (req, reply) => {
+  app.get("/api/v1/banking/accounts/:accountId/balance", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -125,7 +125,10 @@ export async function registerAccountBalanceRoutes(app: FastifyInstance) {
               COALESCE(SUM(${signedExpr}), 0)::text AS bal,
               COUNT(*)::text AS hits
             FROM accounting.journal_entry_postings p
+            -- Pinned to the posting's company: this SUM is a BANK BALANCE, so the entry set it walks
+            -- must not be able to widen beyond the entity the postings belong to.
             JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+                                              AND je.operating_company_id = p.operating_company_id
             WHERE p.account_id = $1
               AND p.operating_company_id = $2
               AND je.status = 'posted'

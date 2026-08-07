@@ -4,7 +4,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { listBills, listPaymentsForBill, type BillPayment, type BillStatus, type VendorBill } from "../../api/accounting";
+import { billVendorDrillId, listBills, listPaymentsForBill, type BillPayment, type BillStatus, type VendorBill } from "../../api/accounting";
 import { listVendors } from "../../api/mdata";
 import { BillAllocationPanel } from "../../components/allocation";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -352,7 +352,7 @@ export function BillsPage() {
 
   const columns = useMemo<ParityColumn<VendorBill>[]>(
     () => [
-      { key: "vendor_name", label: "Vendor", sortable: true, render: (bill) => <EntityLink kind="vendor" id={bill.mdata_vendor_id} label={bill.vendor_name || bill.vendor_id} /> },
+      { key: "vendor_name", label: "Vendor", sortable: true, render: (bill) => <EntityLink kind="vendor" id={billVendorDrillId(bill)} label={bill.vendor_name || bill.vendor_id} /> },
       { key: "bill_number", label: "Bill #", sortable: true, render: (bill) => <EntityLink kind="bill" id={bill.id} label={bill.bill_number || bill.id.slice(0, 8)} /> },
       { key: "bill_date", label: "Date", sortable: true, render: (bill) => formatDateUS(bill.bill_date) },
       { key: "amount_cents", label: "Original", sortable: true, className: "text-right", cellClass: "text-right", render: (bill) => money(bill.amount_cents) },

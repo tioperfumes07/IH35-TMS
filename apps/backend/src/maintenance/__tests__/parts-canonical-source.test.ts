@@ -74,5 +74,14 @@ describe("maintenance parts canonical source (B23)", () => {
       expect(source).toMatch(/add\("category"/);
       expect(source).toMatch(/add\("notes"/);
     });
+
+    it("INV-LINK-01: persists vendor_id on create, read and update", () => {
+      expect(source).toMatch(/vendor_id:\s*z\.string\(\)\.uuid\(\)/);
+      const insert = source.match(/INSERT INTO maintenance\.parts_inventory[\s\S]*?RETURNING/);
+      expect(insert![0]).toMatch(/vendor_id/);
+      expect(source).toMatch(/vendor_id::text AS vendor_id/);
+      expect(source).toMatch(/add\("vendor_id"/);
+      expect(source).not.toMatch(/NULL::text AS vendor_default/);
+    });
   });
 });

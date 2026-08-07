@@ -202,6 +202,11 @@ export type ParityTableProps<T> = {
   pageSize?: number;
   onPageSizeChange?: (size: number) => void;
   hidePager?: boolean;
+  /**
+   * When true, omit the outer rounded border frame so the table sits flush inside a parent
+   * section card (BOX-IN-BOX flatten). Additive — default false preserves all existing surfaces.
+   */
+  embedded?: boolean;
 };
 
 function compareSortValues(
@@ -291,6 +296,7 @@ export function ParityTable<T>({
   pageSize: controlledPageSize,
   onPageSizeChange,
   hidePager = false,
+  embedded = false,
 }: ParityTableProps<T>) {
   const persisted = useMemo(() => loadPersisted(storageKey), [storageKey]);
 
@@ -734,8 +740,12 @@ export function ParityTable<T>({
     );
   };
 
+  const shellClass = embedded
+    ? "overflow-visible bg-white"
+    : "overflow-visible rounded-md border border-gray-200 bg-white";
+
   return (
-    <div className="overflow-visible rounded-md border border-gray-200 bg-white" data-testid={tableTestId}>
+    <div className={shellClass} data-testid={tableTestId}>
       {/* Toolbar: optional slot + gear */}
       <div className="flex items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
         <div className="flex items-center gap-2 text-[11px] text-gray-600">

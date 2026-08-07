@@ -1,0 +1,62 @@
+---
+description: CLAIM → MERGE → AUTHOR — never open verify-step feature PRs before the number is on origin/main; never claim+author same PR (owner 2026-08-05 Rule 37)
+alwaysApply: true
+---
+
+# RULE 37 — CLAIM → MERGE → AUTHOR (owner law — permanent hardline)
+
+**Owner word (2026-08-05):** Cursor opened ~40 pattern/kind-sweep PRs that added `verify-steps/NNNN-*.mjs` while `NNNN` was not yet on `origin/main`, and combined claim+guard on `chore/claim-reserve-*`. CI failed for hours. **Reruns are not the fix.** This sequence is.
+
+Companion: Rule 25 (bands + claim-before-write) · Rule 36 (Claude serial ship) · `docs/specs/VERIFY-STEP-MOD4-CLAIM-BEFORE-WRITE-LAW-2026-08-04.md`
+
+## CHECK BEFORE (every PR that touches verify-steps — no shortcuts)
+
+```text
+0) Will this PR add scripts/verify-steps/NNNN-*.mjs ?
+   NO  → normal Rule 36 ship.
+   YES → continue.
+
+1) git fetch origin main
+   git show origin/main:scripts/verify-steps/CLAIMED-NUMBERS.json
+   → Is NNNN present?
+   NO  → STOP. Do NOT author the step file. Do NOT open the feature PR.
+        Open a CLAIM-ONLY PR (step 2).
+   YES → go to step 3.
+
+2) CLAIM-ONLY PR (one at a time — Rule 36 max 1 CLAIMED):
+   - Branch: chore/claim-reserve-<even>-…
+   - Diff: ONLY scripts/verify-steps/CLAIMED-NUMBERS.json
+   - Subject/title contains CLAIM-RESERVE
+   - Merge to main. Confirm NNNN on origin/main.
+   - FORBIDDEN: claim-reserve PR that also adds verify-steps/*.mjs or apps/
+
+3) FEATURE PR (after claim is on main):
+   - Fresh branch from origin/main (never from another open tip)
+   - Add scripts/verify-<name>.mjs + scripts/verify-steps/NNNN-*.mjs
+   - NEVER edit CLAIMED-NUMBERS.json
+   - node scripts/ops/cursor-ship-preflight.mjs --body-file /tmp/pr-body.txt → PASS
+   - tip-main rebase → ONE push → stop
+```
+
+## Forbidden forever
+
+- Opening a feature PR that adds `verify-steps/NNNN-*.mjs` when `NNNN` is missing from `origin/main` CLAIMED
+- Editing `CLAIMED-NUMBERS.json` AND adding a new verify-step file in the **same** PR (except `chore/claimed-regen*` / `CLAIMED-REGEN` registry tooling)
+- Using `chore/claim-reserve*` as a combined claim+feature branch to bypass claimed-on-main
+- Opening 2–N Cursor CLAIMED/verify-step PRs in parallel “for volume”
+- Babysitting CI / blind `gh run rerun` instead of fixing the claim sequence
+
+## Mechanical teeth
+
+| Gate | What it fails |
+|------|----------------|
+| `scripts/verify-verify-step-claimed-on-main.mjs` | New step whose NNNN is not on `origin/main`; CLAIMED+step same PR (Rule 37) |
+| `scripts/verify-no-claimed-numbers-edits.mjs` | Feature PR edits CLAIMED (claim-reserve / claimed-regen allowlisted for claim-only) |
+| `scripts/money-pr-local-gate.mjs` | Runs **both** above before push (local = CI) |
+| `scripts/ops/cursor-ship-preflight.mjs` | Tip-main + money-pr-local-gate |
+
+`regenSamePr` atomic claim+file bypass applies **only** to `chore/claimed-regen*` / subject `CLAIMED-REGEN` — **not** claim-reserve / CLAIM-RESERVE.
+
+## Tie-breakers
+
+Volume < serial green · rerun < claim-on-main first · claim+feature same PR < two PRs · CI babysit < local preflight PASS.

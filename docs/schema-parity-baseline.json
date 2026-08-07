@@ -229,6 +229,7 @@
       "id",
       "insurance_claim_id",
       "last_qbo_synced_at",
+      "legal_matter_id",
       "linked_work_order_uuid",
       "mdata_vendor_id",
       "memo",
@@ -256,7 +257,9 @@
       "vendor_id",
       "vendor_uuid",
       "version_int",
-      "voided_at"
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "accounting.cash_flow_adjustments": [
       "amount_cents",
@@ -1798,6 +1801,19 @@
       "session_id",
       "table_name",
       "tenant_id"
+    ],
+    "audit.scenario_status": [
+      "evidence",
+      "id",
+      "is_current",
+      "is_test_data",
+      "operating_company_id",
+      "scenario_key",
+      "stage",
+      "state",
+      "superseded_by",
+      "verified_at",
+      "verified_by"
     ],
     "bank.reconciliation_matches": [
       "bank_transaction_id",
@@ -3854,6 +3870,24 @@
       "type",
       "updated_at"
     ],
+    "driver_finance.driver_pay_rates": [
+      "basis_type",
+      "created_at",
+      "created_by_user_id",
+      "driver_id",
+      "effective_from",
+      "effective_to",
+      "flat_per_load_cents",
+      "id",
+      "is_active",
+      "is_test_data",
+      "miles_basis",
+      "notes",
+      "operating_company_id",
+      "rate_per_mile_cents",
+      "updated_at",
+      "updated_by_user_id"
+    ],
     "driver_finance.driver_pay_settings": [
       "created_at",
       "created_by_user_id",
@@ -4043,7 +4077,10 @@
       "status",
       "trip_closed_at",
       "trip_started_at",
-      "updated_at"
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "driver_finance.escrow_balances": [
       "created_at",
@@ -4354,6 +4391,7 @@
       "max_retries",
       "next_retry_at",
       "operating_company_id",
+      "provider",
       "provider_message_id",
       "queued_by_user_id",
       "retry_count",
@@ -5466,6 +5504,7 @@
     "integrations.relay_company_cards": [
       "card_last4",
       "created_at",
+      "funding_bank_account_id",
       "id",
       "is_active",
       "label",
@@ -5830,6 +5869,7 @@
       "created_at",
       "created_by_user_id",
       "description",
+      "equipment_id",
       "financial_reserve_cents",
       "id",
       "incident_id",

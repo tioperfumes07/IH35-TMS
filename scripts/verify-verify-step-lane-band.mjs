@@ -1,32 +1,35 @@
 #!/usr/bin/env node
 /**
- * TOOL-F03 — verify-step numbers come from a RESERVED PER-LANE PARITY. Claude claims ODD, Cursor
- * claims EVEN (owner ruling 2026-07-28, recorded in .cursor/rules/25-verify-step-odd-even-bands.mdc
- * and in CLAIMED-NUMBERS.json's own `_how_to_claim`).
+ * TOOL-F03 / Rule 25 (2026-08-04) — verify-step lane bands by mod-4.
  *
- * WHY THIS GUARD EXISTS. Migrations have had `verify-migration-lane-band.mjs` enforcing their bands
- * since 2026-07-28. Verify-step numbers had the SAME owner ruling and NO enforcement — the parity was
- * a rule in a document, honoured by hand. The only mechanical thing standing near it was
- * CLAIMED-NUMBERS.json, which every guard PR had to hand-edit to restate a number the FILENAME already
- * declares. That restatement bought no safety (uniqueness is computed from the directory in
- * verify-verify-step-numbers-unique.mjs) and cost a guaranteed merge conflict on every guard PR from
- * either agent, because GitHub cannot run this repo's json-union merge driver.
+ *   Cursor  → EVEN          (n % 2 === 0)
+ *   CC-1    → ≡ 1 (mod 4)   (claude/, cc-1/, cc1/)
+ *   CC-2    → ≡ 3 (mod 4)   (cc-2/, cc2/)
  *
- * So: enforce the invariant mechanically here, and the registry stops being load-bearing ceremony.
- * With parity enforced by branch prefix, the two lanes CANNOT pick the same number.
- *
- * Scope: NEW step files only (added on this branch vs origin/main). Existing steps are grandfathered —
- * renumbering a wired step would break its CI wiring for no gain.
- * Unmapped branch (not clearly one lane's) -> SKIP rather than guess, same as the migration guard.
+ * Two Claude lanes both drawing plain ODD caused three collisions in one day.
+ * Mod-4 makes CC-1 and CC-2 disjoint. Credit: CC-2 analysis.
  */
 import { spawnSync } from "node:child_process";
 
 const LANES = [
-  { lane: "claude", branchPrefixes: ["claude/"], parity: 1, label: "ODD" },
+  {
+    lane: "cc-1",
+    branchPrefixes: ["claude/", "cc-1/", "cc1/"],
+    /** n % 4 === 1 */
+    ok: (n) => n % 4 === 1,
+    label: "≡1 (mod 4)",
+  },
+  {
+    lane: "cc-2",
+    branchPrefixes: ["cc-2/", "cc2/"],
+    /** n % 4 === 3 */
+    ok: (n) => n % 4 === 3,
+    label: "≡3 (mod 4)",
+  },
   {
     lane: "cursor",
     branchPrefixes: ["cursor/", "cursoragent/", "chore/", "feat/", "fix/"],
-    parity: 0,
+    ok: (n) => n % 2 === 0,
     label: "EVEN",
   },
 ];
@@ -40,13 +43,13 @@ function git(args) {
 }
 
 export function laneForBranch(branch) {
+  // Prefer more-specific prefixes first (cc-2 before claude is already ordered by LANES).
   for (const l of LANES) {
     if (l.branchPrefixes.some((p) => branch.startsWith(p))) return l;
   }
   return null;
 }
 
-/** Step numbers newly ADDED on this branch relative to the base. */
 export function newStepNumbers(baseRef = "origin/main") {
   const out = git([
     "diff",
@@ -64,17 +67,17 @@ export function newStepNumbers(baseRef = "origin/main") {
   return nums;
 }
 
-/** Pure, so both directions are testable without a git repo. */
 export function analyse(lane, steps) {
   if (!lane) return { skipped: true, problems: [] };
   const problems = [];
   for (const s of steps) {
     const n = Number(s.number);
     if (!Number.isFinite(n)) continue;
-    if (n % 2 !== lane.parity) {
+    if (!lane.ok(n)) {
       problems.push(
-        `${s.file} claims ${s.number}, which is ${n % 2 === 1 ? "ODD" : "EVEN"} — the ${lane.lane} lane claims ${lane.label} only. ` +
-          `Two lanes writing outside their parity is how they collide on one number.`
+        `${s.file} claims ${s.number} (n%4=${n % 4}, ${n % 2 === 0 ? "EVEN" : "ODD"}) — ` +
+          `the ${lane.lane} lane claims ${lane.label} only. ` +
+          `CC-1≡1 · CC-2≡3 · Cursor EVEN (Rule 25 / 2026-08-04).`,
       );
     }
   }
@@ -101,8 +104,9 @@ export function run(baseRef = "origin/main") {
 }
 
 function selftest() {
-  const claude = LANES[0];
-  const cursor = LANES[1];
+  const cc1 = LANES[0];
+  const cc2 = LANES[1];
+  const cursor = LANES[2];
   let bad = 0;
   const t = (name, cond) => {
     if (!cond) {
@@ -111,25 +115,29 @@ function selftest() {
     }
   };
 
-  t("claude ODD passes", analyse(claude, [{ file: "f", number: "1799" }]).problems.length === 0);
-  t("claude EVEN fails", analyse(claude, [{ file: "f", number: "1800" }]).problems.length === 1);
-  t("cursor EVEN passes", analyse(cursor, [{ file: "f", number: "1800" }]).problems.length === 0);
-  t("cursor ODD fails", analyse(cursor, [{ file: "f", number: "1799" }]).problems.length === 1);
-  t("no lane -> skipped", analyse(null, [{ file: "f", number: "1800" }]).skipped === true);
-  t("branch prefix maps claude", laneForBranch("claude/anything")?.lane === "claude");
-  t("branch prefix maps cursor", laneForBranch("cursor/anything")?.lane === "cursor");
+  t("cc-1 ≡1 passes", analyse(cc1, [{ file: "f", number: "2401" }]).problems.length === 0);
+  t("cc-1 ≡3 fails", analyse(cc1, [{ file: "f", number: "2403" }]).problems.length === 1);
+  t("cc-1 EVEN fails", analyse(cc1, [{ file: "f", number: "2400" }]).problems.length === 1);
+  t("cc-2 ≡3 passes", analyse(cc2, [{ file: "f", number: "2403" }]).problems.length === 0);
+  t("cc-2 ≡1 fails", analyse(cc2, [{ file: "f", number: "2401" }]).problems.length === 1);
+  t("cursor EVEN passes", analyse(cursor, [{ file: "f", number: "2400" }]).problems.length === 0);
+  t("cursor ODD fails", analyse(cursor, [{ file: "f", number: "2401" }]).problems.length === 1);
+  t("no lane -> skipped", analyse(null, [{ file: "f", number: "2400" }]).skipped === true);
+  t("branch maps claude → cc-1", laneForBranch("claude/money")?.lane === "cc-1");
+  t("branch maps cc-1", laneForBranch("cc-1/foo")?.lane === "cc-1");
+  t("branch maps cc-2", laneForBranch("cc-2/foo")?.lane === "cc-2");
+  t("branch maps cursor", laneForBranch("cursor/anything")?.lane === "cursor");
   t("unknown prefix maps nothing", laneForBranch("wip/whatever") === null);
-  // The message must name the number, or a failure is unactionable.
   t(
     "failure names the offending number",
-    analyse(claude, [{ file: "f", number: "1800" }]).problems[0].includes("1800")
+    analyse(cc1, [{ file: "f", number: "2400" }]).problems[0].includes("2400"),
   );
   return bad;
 }
 
 if (process.argv.includes("--selftest")) {
   const bad = selftest();
-  console.log(bad === 0 ? `${LABEL} SELFTEST PASS — 9 cases` : `${LABEL} SELFTEST FAILED (${bad})`);
+  console.log(bad === 0 ? `${LABEL} SELFTEST PASS — 14 cases` : `${LABEL} SELFTEST FAILED (${bad})`);
   process.exit(bad === 0 ? 0 : 1);
 }
 

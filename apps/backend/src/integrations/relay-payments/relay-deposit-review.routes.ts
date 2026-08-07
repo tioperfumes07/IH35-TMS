@@ -81,10 +81,23 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
     return withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opco]);
       const rows = (await client.query(
-        `SELECT id::text, card_last4, label, source_hint, is_active
-         FROM integrations.relay_company_cards
-         WHERE operating_company_id = $1::uuid AND voided_at IS NULL
-         ORDER BY card_last4`,
+        // CONN-3 Part D drill-through: surface WHICH account each card actually draws on, and the GL
+        // account that funding would credit. A card with funding_bank_account_id NULL is reported
+        // unmapped rather than hidden — the future stage-1 poster fails closed on exactly that state,
+        // so the owner needs to see it here instead of discovering it when a deposit refuses to post.
+        `SELECT c.id::text, c.card_last4, c.label, c.source_hint, c.is_active,
+                c.funding_bank_account_id::text AS funding_bank_account_id,
+                ba.account_name                 AS funding_account_name,
+                ba.account_class                AS funding_account_class,
+                led.account_number              AS funding_gl_account_number,
+                led.account_name                AS funding_gl_account_name,
+                led.account_type                AS funding_gl_account_type,
+                (c.funding_bank_account_id IS NULL) AS funding_unmapped
+         FROM integrations.relay_company_cards c
+         LEFT JOIN banking.bank_accounts ba ON ba.id = c.funding_bank_account_id
+         LEFT JOIN catalogs.accounts led ON led.id = ba.ledger_account_id
+         WHERE c.operating_company_id = $1::uuid AND c.voided_at IS NULL
+         ORDER BY c.card_last4`,
         [opco]
       )).rows;
       return reply.code(200).send({ operating_company_id: opco, cards: rows });
