@@ -4031,3 +4031,73 @@ come from the sign — and the recon engine's normalization does exactly that.**
 with a positive amount while another has a negative one — or, if the Relay feed is legitimately
 different, assert it is the *only* exception and is explicitly registered as such.
 **LANE: CC-1 / money** (recon + banking conventions).
+
+---
+
+## 62. ★ THE BANKING PAGE TELLS OPERATORS CATEGORIZE DOESN'T POST — the flag is ON and it does
+
+**LIVE-PROVEN 2026-08-07, USMCA. This is the "read the global default and conclude OFF" masked-scope
+error — the exact class the accounting standard names — written into the operator-facing UI.**
+
+### What the page says
+
+`/banking/transactions` renders a standing banner:
+
+> **"Categorize tags are not ledger posts — `BANK_FEED_GL_POSTING_ENABLED` stays OFF by default"**
+> *"Categorize persists driver/unit/load/vendor fields immediately; that alone does not post a balanced
+> TMS JE. `matched_journal_entry_id` is **not** proof that bank-feed GL posting is live … the
+> flag-gated bank-feed poster is a separate path (default OFF). A JE link with the flag OFF is a
+> match/link, not 'posting is on.'"*
+
+### What prod says
+
+| source | value |
+|---|---|
+| `lib.feature_flags.default_enabled` | **false** ← the only thing the banner is describing |
+| `lib.feature_flag_overrides` — **TRANSP** | **true** |
+| `lib.feature_flag_overrides` — **TRK** | **true** |
+| `lib.feature_flag_overrides` — **USMCA** | **true** |
+
+**The flag is ON for all three entities.** The banner's clause is *technically* true about the default
+and **materially false about the live system** — and the default is the one thing that does not govern,
+because the poster resolves the per-entity override first.
+
+### And the posting is demonstrably happening — by the banner's OWN evidentiary standard
+
+The banner correctly warns that `matched_journal_entry_id` is not proof. **So I did not rely on it.**
+Independent measurement on USMCA:
+
+- categorized transactions: **4**
+- of those, with a JE link: **4**
+- **`accounting.journal_entry_postings` where `source_transaction_type = 'bank_categorization'`: 8**
+
+**Eight postings — two per categorized transaction, i.e. balanced pairs — explicitly tagged as bank
+categorization.** That is not a match/link stamped by recon; that is the bank-feed poster's own output
+under its own source type. **The banner's stated disproof condition is satisfied.**
+
+### Why this matters more than a wording nit
+
+The banner is not incidental copy — it is a **standing operator instruction about whether an action
+touches the general ledger.** An operator reading it will categorize freely, believing the act is
+bookkeeping metadata with no ledger effect. In this entity **every categorize posts a balanced journal
+entry.** That is the opposite of what the screen promises, on the one axis (does this touch the GL?)
+where being wrong matters most.
+
+**This is also the precise error the accounting standard warns about**, quoted there against
+revenue-recognition: *"Reading the global `default_enabled=false` and concluding 'OFF' is a
+masked-scope error — read `lib.feature_flag_overrides` PER ENTITY."* **The same mistake is now baked
+into the banking UI.** The warning exists because this error keeps recurring; here it recurred in the
+place an operator is most likely to trust.
+
+**NOTE ON METHOD — the intent test did NOT excuse this.** Earlier this session I correctly declined to
+file the vendor-credit GL gap because the page *declared* it and **prod corroborated the declaration**
+(flag genuinely off). **A declaration only earns deference when it is TRUE.** Here I checked the same
+way and prod contradicted it, so the declaration is the defect rather than the excuse. **The test is
+"verify the declaration", not "trust the declaration."**
+
+**FIX:** the banner must read the per-entity override, not the global default — ideally rendering the
+live state ("bank-feed GL posting is **ON** for this entity — categorizing posts a balanced JE") so it
+can never drift from reality again. Static copy asserting a flag state will always rot.
+**GUARD:** assert no UI string claims a money-posting flag is OFF while any per-entity override for it
+is true. **LANE: CC-2 / mechanical (FE copy) — but flag to CC-1, since the misstatement is about GL
+effect.**
