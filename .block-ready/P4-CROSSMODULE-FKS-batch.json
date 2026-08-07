@@ -28,7 +28,7 @@
   "db_required": true,
   "guard_required": true,
   "extra_gates": [],
-  "hold": "TIER-1 MIGRATION — build-and-hold. DO NOT RUN ON PROD (registered held). GUARD pre-cleared 0-orphan safe; owner runs on Neon + merges.",
+  "superseded_hold": "OWNER LAW 2026-08-03: no holds, no approval label; coders have full Neon access and merge on green. Proof, not approval, is the gate.",
   "deferred": [
     { "item": "P4-03 backfill mdata.assets.unit_id (by vin/unit_number) + unit->asset resolver + fix Create-Claim/Policy 500/404", "reason": "data backfill + code/route logic — a coordinated follow-up beyond the additive bridge column+FK." },
     { "item": "P4-01 accidents/violations tables + P4-02 populate-on-escalation code", "reason": "safety.accidents/violations tables do not exist as named (only accident_reports); populating the legal links on lawsuit->matter escalation is code — follow-up." }
