@@ -1355,6 +1355,9 @@
     "2789": "2789-verify-displayid-entity-scoped-lookups.mjs",
     "2791": "2791-verify-class-scoreboard-live-sourced.mjs",
     "2793": "2793-verify-money-side-effect-after-commit.mjs",
+    "2795": "2795-verify-pod-bol-evidence-linkage.mjs",
+    "2799": "2799-verify-guards-mask-comments.mjs",
+    "2803": "2803-verify-route-file-mounted.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
@@ -1369,7 +1372,7 @@
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "_how_to_claim": "MOD-4 BANDS + CLAIM-BEFORE-WRITE (owner-locked 2026-08-04; credit CC-2): Cursor = EVEN; CC-1 = ≡1 (mod 4) via claude|/cc-1|/cc1; CC-2 = ≡3 (mod 4) via cc-2|/cc2. Reserve first: merge a claim-only PR (chore/claim-reserve* or chore/claimed-regen* with CLAIM-RESERVE/CLAIMED-REGEN) that adds only the number here; THEN author scripts/verify-steps/NNNN-*.mjs on a feature PR. CI fails if a new step file is not already claimed on origin/main (except one-time 2400 self-bootstrap). Never claim another lane's residue. Never renumber after collisions.",
   "generated_at": "2026-07-28T13:11:57Z",
-  "total_claimed": 1020,
+  "total_claimed": 1066,
   "known_duplicates_frozen": {
     "15": [
       "15-verify-accounting-autoload-coverage.mjs",
