@@ -54,8 +54,16 @@ if (!/unbilled_revenue/.test(poster)) {
   failures.push("poster must resolveRoleAccount unbilled_revenue");
 }
 
-if (!/postLoadRevenueLatch/.test(loads)) {
-  failures.push("loads.routes.ts must call postLoadRevenueLatch");
+// ACCT-F166/F170 — assert the INVARIANT (the transition applies the revenue latch), not the CALL SITE.
+// This required the literal postLoadRevenueLatch inside dispatch/loads.routes.ts, so correctly
+// EXTRACTING it into the shared accounting/load-status-money-effects.service.ts turned it RED on a
+// better tree. Same defect class as verify-revrec-two-event-latch (CLS-GUARD-PINS-CALLSITE): a guard
+// that punishes correct extraction teaches people to inline, which is the very drift that let the
+// office endpoint and the dispatch endpoint disagree. Either shape is accepted; the shared service is
+// held to calling BOTH primitives by verify-load-status-money-effects-wired.mjs, which additionally
+// scans EVERY mdata.loads.status writer.
+if (!/postLoadRevenueLatch|applyLoadStatusMoneyEffects/.test(loads)) {
+  failures.push("loads.routes.ts must apply the revenue latch (postLoadRevenueLatch or applyLoadStatusMoneyEffects)");
 }
 if (!/delivered_pending_docs/.test(loads) || !/completed_docs_received/.test(loads)) {
   failures.push("loads.routes.ts must hook both delivered_pending_docs and completed_docs_received");
