@@ -5928,3 +5928,61 @@ future coverage-shaped finding.
 only while TRANSP is not dispatching in TMS. **When TRANSP loads begin to exist in TMS, a still-0%
 attribution rate becomes a real defect** — and the existing test will catch it once volume passes the
 threshold. Recorded so the re-check happens at the right trigger rather than never.
+
+---
+
+## 96. PER-LOAD CONNECTIVITY (all 4 USMCA loads) — PASS on wiring, a disproven "premature revenue" alarm, and item 48's number has GROWN by exactly what its mechanism predicts
+
+**Unit: the no-record-is-an-island law applied to the central object. Verdict: PASS on master-data wiring;
+two prior findings corroborated from a new direction; one alarm disproven; one path recorded UNVERIFIED.**
+
+**PER-LOAD MAP — prod, USMCA GUC in-transaction, discriminator `loads_visible = 9 == n_live_tup = 9`:**
+
+| load | status | rate | customer | driver | stops | invoice | revrec |
+|---|---|---|---|---|---|---|---|
+| `L-20260802-0258` | delivered | $1.00 | ✓ | ✓ | 2 | INV-00002 | **0** |
+| `L-20260806-0005` | cancelled | $2,450.00 | ✓ | ✓ | 2 | INV-00005 | **0** |
+| `LUSMCAFREIGHT-20260806-0001` | delivered_pending_docs | $1.00 | ✓ | ✓ | 2 | — | **0** |
+| `L-20260806-0008` | assigned_not_dispatched | $1,875.50 | ✓ | ✓ | 2 | INV-00006 | **0** |
+
+**PASS on wiring: 4 of 4 loads carry a customer, a driver and 2 stops.** No orphan loads.
+
+**`revrec_rows = 0` on all four, including the DELIVERED one** — that is `LV-TXN-004` (the office status
+control calls the endpoint that skips revenue recognition), already filed and routed to CC-1. Corroborated
+here from the load side rather than the endpoint side; nothing new to add.
+
+**★ DISPROVEN — "an undispatched load has already been invoiced."** `L-20260806-0008` is
+`assigned_not_dispatched` and carries invoice `INV-2026-00006` for $1,875.50. Billing a load that has not
+moved would be revenue recognised before performance — a real accrual defect. **It is not one.** The invoice
+status is **`proforma`**, which is exactly the right status for work not yet performed, and the live check
+confirms it behaves like one: **`gl_lines_as_source = 0` and `tsl_links = 0` — the proforma posts NOTHING to
+the general ledger.** A proforma is a quote, not revenue, and this system treats it as such. **Correct
+behaviour, and worth recording precisely because the load/invoice pairing looks alarming until you read the
+status.**
+
+**★ ITEM 48 CORROBORATED — and its number has moved exactly as its own mechanism predicts.** Item 48 filed
+that the A/R list counts VOID invoices in both "Total billed" and "Open", overstating by **$2,452.00**.
+Measured now: **5 of 7 USMCA invoices are `void`, and 4 of them still carry a positive
+`amount_open_cents`, totalling `276,590` cents = $2,765.90.** The delta from item 48 is **$313.90**, which is
+precisely `INV-2026-00007` — the invoice voided at 03:14 today during the void-class testing. **The
+overstatement grew by the exact amount of the next void.** That is the strongest possible confirmation that
+item 48 named the real mechanism: the figure is not drifting, it is accumulating one void at a time, and it
+will keep growing with every void until the fix lands.
+
+**ITEM 47 CORROBORATED.** `void_without_voided_at = 1` — `INV-2026-00005`, the invoice belonging to the
+**cancelled** load `L-20260806-0005`, carries `status = 'void'` with **`voided_at IS NULL`**. That is item
+47's exact signature (the load-cancel path voids by status only and never stamps the timestamp), reproduced
+independently on a different load. The other four voids all have `voided_at` set, which isolates the defect
+to the cancel path rather than to voiding in general — a useful narrowing for whoever fixes it.
+
+**UNVERIFIED — do `from_load` invoices post to the GL at all?** A pattern is visible and I will not call it:
+all three `from_load` invoices (`00002`, `00005`, `00006`) have **0 GL lines and 0 source links**, while every
+`manual` invoice with a non-zero total (`00001`, `00003`, `00007`) has **2 GL lines**. That looks like
+"load-sourced invoices never post". **But the innocent explanation fits equally well and I cannot yet
+separate them:** `00006` is proforma (correctly no GL), and `00002` and `00005` both have `sent_at IS NULL`
+and are now void — so they may simply have gone proforma → void **without ever being issued**, in which case
+0 GL is correct and there is no defect. **No USMCA `from_load` invoice has ever reached issued status, so the
+posting path has not been exercised.** **The decisive test is one transaction: take a delivered load,
+issue its from_load invoice, and check for 2 GL lines** — that separates "never posts" from "never issued".
+Recorded as the next A/R unit rather than filed as a defect, because a 0 with an unexercised path behind it
+is not evidence of failure. This is the same counterfactual check that withdrew item 95's fuel card.
