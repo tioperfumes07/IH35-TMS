@@ -98,7 +98,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-PAY-SETTLE-NOPOST` | — | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-AP-OPEN-INCLUDES-VOIDED` | — | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-BILLS-VENDOR-UUID` | — | CC-2 / mechanical+FE | — | — | — | — | — | — |
-| ☐ | `LV-REVREC-NOT-FIRING` | — | CC-1 / money — URGENT | — | — | — | — | — | — |
+| ☐ | `LV-REVREC-NOT-FIRING` | — | CC-1 / money — URGENT | CC-1 | #4730 | 2026-08-07 | — | — | **DELIBERATELY LEFT ☐.** Root cause fixed and mutation-proven in #4730 (`node scripts/verify-money-side-effect-after-commit.mjs` RED on the replanted real defect, GREEN restored), but a tick here would claim a POST-FIX LEDGER ROW exists and none does yet — that needs a delivery transition against the deployed build. Tick only after re-checking `LUSMCAFREIGHT-20260806-0001` on prod. See `LV-REVREC-LEDGER-DBTEST`. |
 | ☐ | `LV-BILLVOID-DATE-ERROR` | — | CC-1 / money — URGENT, blocks the void path | — | — | — | — | — | — |
 | ☐ | `LV-VOID-NO-REVERSAL` | — | CC-1 / money — URGENT | — | — | — | — | — | — |
 | ☐ | `LV-CREDITMEMO-NOPATH` | — | CC-2 / mechanical+route (CC-1 confirms posti | — | — | — | — | — | — |
@@ -117,7 +117,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-DRV-TAB` | — | — | — | — | — | — | — | — |
 | ☐ | `LV-AP-DUP` | — | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-CAT-500` | — | — | — | — | — | — | — | — |
-| ☐ | `LV-BULK-DELIVER-NOLATCH` | — | CC-1 / money (fix) + CC-2 / guard | — | — | — | — | — | — |
+| ☑ | `LV-BULK-DELIVER-NOLATCH` | — | CC-1 / money (fix) + CC-2 / guard | CC-1 | #4730 | 2026-08-07 | Mutation on the REAL `apps/backend/src/dispatch/loads-bulk.routes.ts`: strip `latchOnDeliveryEvidence` → `node scripts/verify-delivery-evidence-latch-wired.mjs` exit **1** naming the file; restore → exit **0**. Selftest (cases 1-9) exit 0. That mutation is now permanent selftest case9, so the widening is a regression test, not a description of one. | `scripts/verify-delivery-evidence-latch-wired.mjs` + step `2634` | — |
 | ☐ | `LV-STOP-ZIP-DROPPED` | — | CC-2 / mechanical | — | — | — | — | — | — |
 | ☐ | `LV-DISPATCH-TOAST-LIES` | — | CC-2 / mechanical | — | — | — | — | — | — |
 | ☐ | `LV-LOAD-DETAIL-SHOWS-UNASSIGNED` | — | CC-2 / mechanical | — | — | — | — | — | — |
@@ -139,7 +139,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `CI-CODEQL-BASELINE-STALE-ON-MAIN` | — | — | — | — | — | — | — | — |
 | ☐ | `LV-EXPENSE-CATEGORY-PICKER-EMPTY` | P1 | FE / mechanical lane | — | — | — | — | — | — |
 | ☐ | `LV-EXPENSE-CATEGORY-PICKER-EMPTY-RC` | P1 | FE / mechanical | — | — | — | — | — | — |
-| ☐ | `LV-REVREC-BULK-LATCH-GUARD-READY` | P0 | CC-1 (money / revenue latch) | — | — | — | — | — | — |
+| ☑ | `LV-REVREC-BULK-LATCH-GUARD-READY` | P0 | CC-1 (money / revenue latch) | CC-1 | #4730 | 2026-08-07 | CC-3's widened matcher from `0579e654e` restored in the SAME PR as the fix, byte-identical where not deliberately extended; `--selftest` exit **0**; the guard now also REFUSES to pass when its non-literal signals match no file (the state it was in while printing OK through the defect). | `scripts/verify-delivery-evidence-latch-wired.mjs` + step `2634` | — |
 | ☐ | `LV-REVREC-LEDGER-DBTEST` | P0 | CC-1 / money (db-test) | — | — | — | — | — | — |
 | ☐ | `LV-AUDIT-TRAIL-HAS-NO-ACTOR` | P0 | CC-1 (WORM / audit integrity) | — | — | — | — | — | — |
 | ☐ | `LV-BANKING-QBO-CONNECTED-IS-HARDCODED` | P1 | FE / mechanical (render); CC-1 to sanity-che | — | — | — | — | — | — |
