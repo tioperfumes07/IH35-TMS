@@ -1339,6 +1339,18 @@
     "2763": "2763-verify-caller-scoped-guc-membership.mjs",
     "2767": "2767-verify-scoped-company-context-asserts-first.mjs",
     "2771": "2771-verify-assignment-history-resolves-names.mjs",
+    "2773": {
+      "script": "scripts/verify-no-hold-language-in-active-blocks.mjs",
+      "lane": "cc-1",
+      "why": "CC-1 ADOPTS a CC-3-authored guard so it actually RUNS. The _band map partitions every integer among cursor/cc-1/cc-2 and leaves CC-3 no residue class, so CC-3 could not claim a compliant number and parked both guards in .guard-exempt.json — registered, on disk, enforcing nothing. Squatting another lane's band would have been the collision claim-before-write exists to prevent; adopting into CC-1's band is the honest fix."
+    },
+    "2777": {
+      "script": "scripts/verify-no-patch-or-defer-language.mjs",
+      "lane": "cc-1",
+      "why": "CC-1 ADOPTS a CC-3-authored guard so it actually RUNS. The _band map partitions every integer among cursor/cc-1/cc-2 and leaves CC-3 no residue class, so CC-3 could not claim a compliant number and parked both guards in .guard-exempt.json — registered, on disk, enforcing nothing. Squatting another lane's band would have been the collision claim-before-write exists to prevent; adopting into CC-1's band is the honest fix."
+    },
+    "2781": "2781-verify-bill-vendor-entity-consistent.mjs",
+    "2785": "2785-verify-driver-vendor-no-uuid-fallback.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
@@ -1347,21 +1359,11 @@
     "06": "06-verify-scheduler-tenant-context.mjs",
     "07": "07-verify-canonical-schema-names.mjs",
     "08": "08-verify-outbox-handler-parity.mjs",
-    "09": "09-verify-migration-application-consistency.mjs",
-    "2773": {
-      "script": "scripts/verify-no-hold-language-in-active-blocks.mjs",
-      "lane": "cc-1",
-      "why": "CC-1 ADOPTS a CC-3-authored guard so it actually RUNS. The _band map partitions every integer among cursor/cc-1/cc-2 and leaves CC-3 no residue class, so CC-3 could not claim a compliant number and parked both guards in .guard-exempt.json \u2014 registered, on disk, enforcing nothing. Squatting another lane's band would have been the collision claim-before-write exists to prevent; adopting into CC-1's band is the honest fix."
-    },
-    "2777": {
-      "script": "scripts/verify-no-patch-or-defer-language.mjs",
-      "lane": "cc-1",
-      "why": "CC-1 ADOPTS a CC-3-authored guard so it actually RUNS. The _band map partitions every integer among cursor/cc-1/cc-2 and leaves CC-3 no residue class, so CC-3 could not claim a compliant number and parked both guards in .guard-exempt.json \u2014 registered, on disk, enforcing nothing. Squatting another lane's band would have been the collision claim-before-write exists to prevent; adopting into CC-1's band is the honest fix."
-    }
+    "09": "09-verify-migration-application-consistency.mjs"
   },
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
-  "_how_to_claim": "MOD-4 BANDS + CLAIM-BEFORE-WRITE (owner-locked 2026-08-04; credit CC-2): Cursor = EVEN; CC-1 = \u22611 (mod 4) via claude|/cc-1|/cc1; CC-2 = \u22613 (mod 4) via cc-2|/cc2. Reserve first: merge a claim-only PR (chore/claim-reserve* or chore/claimed-regen* with CLAIM-RESERVE/CLAIMED-REGEN) that adds only the number here; THEN author scripts/verify-steps/NNNN-*.mjs on a feature PR. CI fails if a new step file is not already claimed on origin/main (except one-time 2400 self-bootstrap). Never claim another lane's residue. Never renumber after collisions.",
+  "_how_to_claim": "MOD-4 BANDS + CLAIM-BEFORE-WRITE (owner-locked 2026-08-04; credit CC-2): Cursor = EVEN; CC-1 = ≡1 (mod 4) via claude|/cc-1|/cc1; CC-2 = ≡3 (mod 4) via cc-2|/cc2. Reserve first: merge a claim-only PR (chore/claim-reserve* or chore/claimed-regen* with CLAIM-RESERVE/CLAIMED-REGEN) that adds only the number here; THEN author scripts/verify-steps/NNNN-*.mjs on a feature PR. CI fails if a new step file is not already claimed on origin/main (except one-time 2400 self-bootstrap). Never claim another lane's residue. Never renumber after collisions.",
   "generated_at": "2026-07-28T13:11:57Z",
   "total_claimed": 1020,
   "known_duplicates_frozen": {

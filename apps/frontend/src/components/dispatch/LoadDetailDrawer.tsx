@@ -687,8 +687,21 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                 const method = String(r.assignment_method ?? "");
                 const reason = r.reason_code != null ? String(r.reason_code) : "";
                 const notes = r.notes != null ? String(r.notes) : "";
-                const prev = r.previous_driver_id != null ? String(r.previous_driver_id).slice(0, 8) : "—";
-                const next = r.new_driver_id != null ? String(r.new_driver_id).slice(0, 8) : "—";
+                // CLS-UUID-LABEL. This used to render a truncated uuid prefix for the driver — an
+                // 8-character uuid prefix, on the tab that records who a load was taken away from and
+                // given to. The names now come resolved and entity-scoped from the endpoint
+                // (quick-assign.service.ts getAssignmentHistory). Fall back to "Unassigned" when the
+                // id is genuinely null, and to "Driver — not visible" when there IS an id but no name,
+                // which means the driver belongs to another entity and the scoped join found nothing:
+                // that is a real signal and must not be disguised as a name.
+                const driverLabel = (id: unknown, name: unknown) =>
+                  name != null && String(name).trim() !== ""
+                    ? String(name)
+                    : id != null
+                      ? "Driver — not visible"
+                      : "Unassigned";
+                const prev = driverLabel(r.previous_driver_id, r.previous_driver_name);
+                const next = driverLabel(r.new_driver_id, r.new_driver_name);
                 return (
                   <div key={id || at + method} className="relative border-l-2 border-slate-300 pl-3">
                     <div className="absolute left-[-5px] top-1 h-2 w-2 rounded-full bg-slate-1000" />
