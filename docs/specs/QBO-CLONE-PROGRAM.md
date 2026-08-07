@@ -1,11 +1,13 @@
 # QBO → TMS Full Clone Program (master data + AR/AP sub-ledgers) — design spec
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 > **Canonical TMS↔QBO relationship:** `docs/specs/TMS-QBO-PARALLEL-BOOKS.md`.
 > Detailed accounting mechanics remain in `docs/specs/ACCOUNTING-ARCHITECTURE.md`; locked decisions are in
 > `docs/lockdown/00_LOCKED_DECISIONS.md` §8. For parallel-books, source-of-truth, no-write-back, or
 > reconcile-only framing, `TMS-QBO-PARALLEL-BOOKS.md` controls over earlier wording.
 
-**Status:** design spec (Tier-3 docs). The engines it defines are Tier-1 financial → BUILD-AND-HOLD
+**Status:** design spec (Tier-3 docs). The engines it defines are Tier-1 financial → BUILD-AND-SHIP
 behind `QBO_HISTORICAL_IMPORT_ENABLED` (OFF), owner-triggered, per the operating constitution §1.4.
 **Owner decision that motivates this (2026-07-02):** *"Clone every transaction for the time period, for
 each customer [and vendor] — invoices, payments, statements, all tabs — into our database. After that,
@@ -76,7 +78,7 @@ Reuses IMPORT-0 (`qboReport`, `qboPaginateEntity`, `amountToCents`) and the IMPO
   upsert by `(operating_company_id, qbo_customer_id)`. Extend the existing projection to carry ALL fields
   + the QBO deep-link + `source_system='qbo_clone'`. Void customers gone-from-QBO. (Master data already
   ~partly present; this makes it complete + full-field.) *Tier-2 (catalogs/mdata data, no migration) —
-  build-and-hold, owner triggers the run.*
+  build-and-ship, owner triggers the run.*
 - **MD-2 — Vendors full clone.** Same for QBO `Vendor` → `mdata.vendors`. *Tier-2.*
 - **MD-3 — Schema: AR/AP clone tables + link tables.** CREATE-only migration: extend/confirm
   `accounting.invoices` + `accounting.invoice_lines`, `accounting.bills` + `accounting.bill_lines`,

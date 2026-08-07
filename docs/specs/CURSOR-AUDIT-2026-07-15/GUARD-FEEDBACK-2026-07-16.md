@@ -1,5 +1,7 @@
 # GUARD FEEDBACK on the IH35-CURSOR-AUDIT pack — 2026-07-16
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 Independent GUARD (Cowork) review of the Cursor audit. Verdict: **this is a strong, honest, well-structured audit — accept it as the standing system-level backlog.** Its highest-cost financial and legal claims are verifiable against the repo. Below: what I re-verified, where to apply caution, and the one ranking I'd change.
 
 ## 1. Claims GUARD re-verified TRUE (repo @ main 756b7a61)
@@ -18,7 +20,7 @@ Independent GUARD (Cowork) review of the Cursor audit. Verdict: **this is a stro
 - **Repo-only ≠ verified.** Many module verdicts are repo-read, not live-smoked (their own note). Hold every fix to the definition of done: file + route mounted + (migration on prod) + live endpoint/browser proof. CI-green is not done.
 - **Tab-count "drift" is a design decision, not automatically a bug.** Banking 12-vs-5, Accounting ~12-vs-57 subnav — these need an **owner ruling on which count is canonical** before any code change. Do not let "drift" be treated as a defect to fix without your call (and never delete tabs to "match design").
 - **Gaps #9 and #11 are fixed only in a Cursor worktree (`feat/audit-connectivity-url-fixes`), NOT in production.** Do not mark them done until merged, deployed, and live-verified. The pack says this — enforce it.
-- **QBO write-back stays OFF; opening-balance/GL flags stay OFF until owner sign-off + Neon tie-out.** Any "build" from this audit that touches posting is build-and-HOLD.
+- **QBO write-back stays OFF; opening-balance/GL flags stay OFF until owner sign-off + Neon tie-out.** Any "build" from this audit that touches posting is build-and-ship.
 
 ## 4. The one ranking I'd change (GUARD)
 **#17 (425C hardcoded `petition_date`) is under-ranked.** It is a *court-filing correctness* defect on an **active Chapter 11** — legal exposure, not a UX nicety. It should sit near the top with the financial-integrity gaps, not at #17. Fix: bind petition_date from the case record (a single source), never a literal. Low effort, high legal risk-reduction.

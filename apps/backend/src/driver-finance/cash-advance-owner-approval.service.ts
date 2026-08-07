@@ -715,6 +715,8 @@ export async function sendOwnerEscalationEmails(args: {
         actorUserId: null,
         recipientUserUuid: o.uuid,
       });
+    // sendEmail logs its own failures; a notification miss must not roll back the escalation
+    // intentional swallow
     } catch {
       // logged inside sendEmail
     }
@@ -740,6 +742,8 @@ export async function notifyOfficeEscalatorOfOwnerDecision(args: {
       eventClass: "driver_finance.cash_advance_request.owner_decision_office_notify",
       actorUserId: null,
     });
+  // sendEmail logs its own failures; the owner decision is already persisted
+  // intentional swallow
   } catch {
     // non-fatal
   }

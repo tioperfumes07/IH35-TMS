@@ -65,13 +65,21 @@ export function InventoryAssignmentsPage() {
     },
     {
       key: "work_order_display_id",
+      // CLS-UUID-LABEL. The label fallbacks below used to render `id.slice(0, 8)`. A uuid fragment
+      // tells an operator nothing and cannot be acted on, and EntityLink's own default is worse: it
+      // does `label ?? id ?? "—"`, so dropping the label renders the FULL uuid.
+      // The fallbacks ARE reachable even though mdata.units.unit_number and mdata.vendors.vendor_name
+      // are NOT NULL on prod — a LEFT JOIN that is scoped out returns NULL for a NOT NULL column,
+      // which is exactly the LV-TXN-002 shape. maintenance.work_orders.display_id is genuinely
+      // nullable. So each fallback now states what is true: the name is missing, or the record is not
+      // visible from this entity.
       label: "Work Order",
       sortable: true,
       render: (row) => (
         <EntityLink
           kind="work_order"
           id={row.work_order_id}
-          label={row.work_order_display_id ?? row.work_order_id.slice(0, 8)}
+          label={row.work_order_display_id ?? "Work order — no number"}
         />
       ),
     },
@@ -81,7 +89,7 @@ export function InventoryAssignmentsPage() {
       sortable: true,
       render: (row) =>
         row.unit_id ? (
-          <EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? row.unit_id.slice(0, 8)} />
+          <EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? "Unit — not visible"} />
         ) : (
           "—"
         ),
@@ -108,7 +116,7 @@ export function InventoryAssignmentsPage() {
       sortable: true,
       render: (row) =>
         row.vendor_id ? (
-          <EntityLink kind="vendor" id={row.vendor_id} label={row.vendor_name ?? row.vendor_id.slice(0, 8)} />
+          <EntityLink kind="vendor" id={row.vendor_id} label={row.vendor_name ?? "Vendor — not visible"} />
         ) : (
           "—"
         ),
