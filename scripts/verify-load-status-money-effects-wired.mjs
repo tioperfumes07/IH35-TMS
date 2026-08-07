@@ -61,29 +61,34 @@ function walk(dir, out = []) {
 const WRITES_LOAD_STATUS = /UPDATE\s+mdata\.loads[\s\S]{0,400}?\bSET\b[\s\S]{0,400}?\bstatus\s*=/i;
 
 /**
- * PENDING-WIRE BASELINE — shrink-only, and every entry is a REAL gap, not an exemption.
+ * TWO LISTS, because "not wired" and "correctly not wired" are different facts and collapsing them
+ * loses the one that matters.
  *
- * The shape scan found six additional status-writing paths. The Samsara GPS detector (ACCT-F167) and the driver PWA (ACCT-F168) are now WIRED, leaving FOUR — this list only ever shrinks.
- * They are recorded rather than wired here because each needs its own verification of what company
- * id and actor are in scope at the write, and guessing that in a money path is how the original
- * defect was written. They are on the board as their own block.
+ * PENDING_WIRE_BASELINE — REAL gaps, shrink-only. Never ADD to it to make a build pass; a NEW status
+ * writer must be wired. Entries leave only by being WIRED.
  *
- * RULES: never ADD to this list to make a build pass — a NEW status writer must be wired. Removing an
- * entry (by wiring it) is the goal. When it reaches zero, delete the list and the guard gets stricter
- * for free.
+ * PROVEN_NO_OP — paths verified NOT to need the call, each with the evidence. These are not
+ * exemptions: `applyLoadStatusMoneyEffects` acts only when the target status is a revenue-latch
+ * status (delivered_pending_docs / completed_docs_received) or a settlement-ping status (in_transit /
+ * delivered_pending_docs — verified by reading pingSettlementOnLoadEvent's own switch). A writer that
+ * can only ever produce a status outside BOTH sets cannot post anything, and forcing a call there
+ * would be ceremony that teaches the next reader the guard is arbitrary.
  */
 const PENDING_WIRE_BASELINE = new Set([
-  // driver-PWA dispatch view — a second driver-side status writer.
-  path.join("apps", "backend", "src", "dispatch", "driver-pwa", "dispatch-view.routes.ts"),
-  // bulk status change; one of its writes sets 'paid', a payment state rather than a delivery
-  // milestone — needs a per-write decision, not a blanket call.
+  // bulk status change; one write sets 'paid', a payment state rather than a delivery milestone —
+  // needs a per-write decision, not a blanket call.
   path.join("apps", "backend", "src", "dispatch", "loads-bulk.routes.ts"),
-  // abandonment already runs its own escrow/settlement money path (migration 0094 statuses); wiring
-  // it blindly risks double-handling.
-  path.join("apps", "backend", "src", "driver-finance", "abandonment.service.ts"),
-  // cancellation — a cancelled load must NOT recognise revenue, so this one may be correct as-is;
-  // it is listed so the decision is made deliberately rather than by omission.
+]);
+
+const PROVEN_NO_OP = new Set([
+  // cancellation writes the LITERAL 'cancelled'. Not a latch status and not a ping status, so both
+  // primitives are unreachable from here. A cancelled load MUST NOT recognise revenue or open a
+  // settlement — the absence of the call is the correct behaviour, proven rather than assumed.
   path.join("apps", "backend", "src", "dispatch", "cancellation.service.ts"),
+  // abandonment writes 'abandoned' / 'driver_walkoff' (migration 0094). Neither is a latch or ping
+  // status, and this service already runs its OWN escrow/settlement money path — wiring it would risk
+  // double-handling the very money it already books.
+  path.join("apps", "backend", "src", "driver-finance", "abandonment.service.ts"),
 ]);
 
 export function findViolations(root = ROOT) {
@@ -113,7 +118,7 @@ export function findViolations(root = ROOT) {
     const src = stripComments(fs.readFileSync(abs, "utf8"));
     if (!WRITES_LOAD_STATUS.test(src)) continue;
     if (src.includes(`${SHARED_FN}(`)) continue;
-    if (PENDING_WIRE_BASELINE.has(rel)) continue; // known gap, board-tracked, shrink-only
+    if (PENDING_WIRE_BASELINE.has(rel) || PROVEN_NO_OP.has(rel)) continue;
     problems.push({
       where: rel,
       why: `writes mdata.loads.status but never calls ${SHARED_FN}() — a load moved through this path recognises no revenue and opens no settlement`,
@@ -126,7 +131,7 @@ export function findViolations(root = ROOT) {
     if (rel === SHARED) continue;
     const src = stripComments(fs.readFileSync(abs, "utf8"));
     if (!WRITES_LOAD_STATUS.test(src)) continue;
-    if (PENDING_WIRE_BASELINE.has(rel)) continue;
+    if (PENDING_WIRE_BASELINE.has(rel) || PROVEN_NO_OP.has(rel)) continue;
     if (/postLoadRevenueLatch\s*\(|pingSettlementOnLoadEvent\s*\(/.test(src)) {
       problems.push({
         where: rel,

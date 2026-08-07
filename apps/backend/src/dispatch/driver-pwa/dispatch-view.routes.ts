@@ -14,6 +14,7 @@ import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireDriverSession } from "../../driver/auth.js";
 import { validateLoadStopStatusWrite } from "../load-state-machine.js";
+import { applyLoadStatusMoneyEffects } from "../../accounting/load-status-money-effects.service.js";
 
 type StopType = "pickup" | "delivery" | "fuel" | "break";
 type StopStatus = "pending" | "arrived" | "loading" | "loaded" | "departed";
@@ -306,9 +307,9 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
     if (!driver) return;
 
     const updated = await withCurrentUser(req.user!.uuid, async (client) => {
-      const stopRes = await client.query<{ id: string; stop_type: string; load_status: string; latitude: number | null; longitude: number | null }>(
+      const stopRes = await client.query<{ id: string; stop_type: string; load_status: string; operating_company_id: string; latitude: number | null; longitude: number | null }>(
         `
-          SELECT s.id, s.stop_type::text, l.status::text AS load_status, loc.latitude, loc.longitude
+          SELECT s.id, s.stop_type::text, l.status::text AS load_status, l.operating_company_id::text AS operating_company_id, loc.latitude, loc.longitude
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
@@ -344,6 +345,19 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
       );
 
       await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.uuid, nextLoadStatus]);
+
+      // ACCT-F169 / LV-TXN-004 — second driver-side status writer; same invariant as ACCT-F168.
+      // Entity comes from the LOAD (l.operating_company_id), now projected by the stop SELECT above,
+      // never from caller input. Currently a no-op for at_pickup/at_delivery (the ping fires only on
+      // in_transit / delivered_pending_docs) — the value is that a money-relevant status written here
+      // can never again slip past the ledger unnoticed.
+      await applyLoadStatusMoneyEffects({
+        client,
+        operatingCompanyId: String(stop.operating_company_id),
+        loadId: params.data.uuid,
+        targetStatus: String(nextLoadStatus),
+        actorUserId: String(req.user!.uuid),
+      });
 
       await appendCrudAudit(client, req.user!.uuid, "dispatch.driver_pwa.stop_arrival", {
         load_id: params.data.uuid,
@@ -425,6 +439,19 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
       );
 
       await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.uuid, nextLoadStatus]);
+
+      // ACCT-F169 / LV-TXN-004 — second driver-side status writer; same invariant as ACCT-F168.
+      // Entity comes from the LOAD (l.operating_company_id), now projected by the stop SELECT above,
+      // never from caller input. Currently a no-op for at_pickup/at_delivery (the ping fires only on
+      // in_transit / delivered_pending_docs) — the value is that a money-relevant status written here
+      // can never again slip past the ledger unnoticed.
+      await applyLoadStatusMoneyEffects({
+        client,
+        operatingCompanyId: String(stop.operating_company_id),
+        loadId: params.data.uuid,
+        targetStatus: String(nextLoadStatus),
+        actorUserId: String(req.user!.uuid),
+      });
 
       // CLS-DISP-WIRE-07 — the driver's departure is the delivery evidence. Without this the office
       // transition was the ONLY path that latched revenue, so a load delivered in the field never
