@@ -1,3 +1,4 @@
+import { entityLabel } from "../../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
@@ -47,7 +48,7 @@ const AUDIT_REPORT_COLUMNS: Array<ParityColumn<AuditReportTableRow>> = [
     label: "Actor",
     sortable: true,
     sortValue: (row) => row.actor_email ?? row.actor_user_id ?? "",
-    render: (row) => <span className="text-gray-500">{row.actor_email ?? row.actor_user_id?.slice(0, 8) ?? "—"}</span>,
+    render: (row) => <span className="text-gray-500">{entityLabel(row.actor_email, row.actor_user_id, "User") ?? "—"}</span>,
   },
   {
     key: "source",

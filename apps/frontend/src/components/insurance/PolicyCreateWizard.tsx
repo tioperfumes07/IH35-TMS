@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -68,7 +69,7 @@ const ALLOCATION_LABELS: Record<AllocationMethod, string> = {
 const UNIT_TYPE_CHIPS = ["All", "Tractor", "Trailer", "Reefer", "TRK", "TRANSP"] as const;
 
 function unitLabel(unit: UnitRow) {
-  return unit.unit_code ?? unit.unit_number ?? unit.id.slice(0, 8);
+  return unit.unit_code ?? entityLabel(unit.unit_number, unit.id, "Record");
 }
 
 function unitMatchesChip(unit: UnitRow, chip: string): boolean {

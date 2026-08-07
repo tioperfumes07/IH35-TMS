@@ -8,6 +8,7 @@
  * file is drawer-ised, and it fails if this annotation disappears or the file is renamed without
  * the exception moving with it.
  */
+import { entityLabel } from "../../../lib/entity-label";
 import { useEffect, type ReactNode } from "react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -975,7 +976,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       <Modal open={open} onClose={handleModalClose} title="Work order created" sizePreset="md">
         <div className="space-y-3 text-[12.5px] text-sidebar-bg">
           <p className="text-sm text-gray-700">
-            Work order <EntityLink kind="work_order" id={createdWO.uuid} label={createdWO.display_id ?? createdWO.uuid.slice(0, 8)} className="font-semibold text-slate-700 hover:underline" /> created.
+            Work order <EntityLink kind="work_order" id={createdWO.uuid} label={entityLabel(createdWO.display_id, createdWO.uuid, "Record")} className="font-semibold text-slate-700 hover:underline" /> created.
           </p>
           <div className="flex items-center justify-between gap-3 border-t border-gray-200 pt-3">
             <span className="text-xs text-gray-600">Close an open task this work order fulfils:</span>
