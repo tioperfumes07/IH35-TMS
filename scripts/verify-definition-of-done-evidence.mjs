@@ -115,8 +115,29 @@ export function proofLineIsSubstantiated(text) {
   return isUnverified ? /\S/.test(section) : PROOF_ARTIFACT.test(section);
 }
 
-/** A commit is "app-affecting" when it touches shipped code. */
+/**
+ * Manifest/lockfile paths. A commit that touches ONLY these is a dependency bump: it ships no code
+ * of ours, so there is no defect to root-cause and no behaviour to prove live.
+ */
+const MANIFEST_ONLY = /(^|\/)(package(-lock)?\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-lock\.yaml)$/;
+
+/**
+ * A commit is "app-affecting" when it touches shipped code.
+ *
+ * DEPENDENCY BUMPS ARE EXEMPT, and this is implementing what this guard's own SCOPE note has always
+ * claimed ("chore commits are exempt — they carry no defect to prove") rather than loosening it. The
+ * note was never actually true in code: the test was purely directory-based, and Dependabot bumps
+ * apps/frontend/package.json, so every dependency PR counted as app code and was asked for a Rule 16
+ * evidence block — ROOT CAUSE, FIX, GUARD, LIVE PROOF. Dependabot cannot write one, so the gate was
+ * unsatisfiable by construction and NO dependency PR could ever merge. Eight were stuck behind it
+ * (#4165, #4166, #4167, #4168, #4191, #4243, #4245, #4631), including security bumps in the
+ * npm_and_yarn group — a supply-chain patch held out by our own paperwork rule.
+ *
+ * Scoped to commits whose ENTIRE file list is manifests/lockfiles, so it cannot be used to smuggle a
+ * source change through: touch one .ts alongside the bump and the evidence requirement returns.
+ */
 function isAppAffecting(files) {
+  if (files.length > 0 && files.every((f) => MANIFEST_ONLY.test(f))) return false;
   return files.some((f) => f.startsWith("apps/") || f.startsWith("db/"));
 }
 

@@ -268,6 +268,8 @@ export async function registerPlaidBankingItemsRoutes(app: FastifyInstance) {
             "P5-T1.3-PLAID-DIAG"
           );
         });
+      // auditing must never mask the original error — the 500 below is still returned to the caller
+      // intentional swallow
       } catch {
         /* auditing must never mask the original error */
       }

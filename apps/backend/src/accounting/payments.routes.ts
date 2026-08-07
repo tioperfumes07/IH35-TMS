@@ -8,6 +8,10 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
+import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+import { recordPostingFlagSkip } from "./posting-flag-skip-audit.js";
+import { postVoidReversal } from "./void.service.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -235,7 +239,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.post("/api/v1/accounting/payments", async (req, reply) => {
+  app.post("/api/v1/accounting/payments", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -377,6 +381,49 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         applicationsCount += 1;
       }
 
+      // CLS-SUBLEDGER-GL-DARK / ACCT-F150 instance 2 — POST THE RECEIPT.
+      //
+      // Second live instance of the same class, on a DIFFERENT write path. customer-payments.routes.ts
+      // was the one found from a live $250 USMCA payment; this route has the identical shape — it
+      // INSERTs accounting.payments and accounting.payment_applications in one transaction, so A/R
+      // moves here too, and it never invoked the poster. Both routes were dark for the same reason:
+      // apply.service.ts was hardened for exactly this and the ROUTES were never wired to it.
+      //
+      // Same gate, same skip-audit, same poster as the sibling route — no new GL math (locked rule:
+      // reuse the existing poster). Flag OFF still writes the payment and applications and records the
+      // skip append-only, so a skip can never read as a silent success.
+      const customerPaymentPostingEnabled = await isEnabled(client, "CUSTOMER_PAYMENT_GL_POSTING_ENABLED", {
+        operating_company_id: query.data.operating_company_id,
+        user_uuid: user.uuid,
+      });
+      if (applicationsCount > 0 && customerPaymentPostingEnabled) {
+        // ATOMICITY — this MUST be the in-client-tx poster, not postSourceTransaction().
+        // withCompanyScope -> withCurrentUser does pool.connect() + BEGIN ... COMMIT, so this callback
+        // runs inside an open transaction and the payment row above is NOT yet committed.
+        // postSourceTransaction() takes its own pool connection and its own transaction, so from there
+        // the payment does not exist yet — the poster would find nothing and the receipt would stay
+        // dark, which is the very defect this block fixes. Passing the caller's client also makes the
+        // payment, its applications and its journal entry commit or roll back as ONE unit: there is no
+        // window in which A/R has moved and the GL has not.
+        await postSourceTransactionInClientTx(
+          client,
+          {
+            operating_company_id: query.data.operating_company_id,
+            source_transaction_type: "customer_payment",
+            source_transaction_id: payment.id,
+            posting_purpose: "initial_post",
+          },
+          { userId: user.uuid }
+        );
+      } else if (applicationsCount > 0) {
+        await recordPostingFlagSkip(client, user.uuid, {
+          flagKey: "CUSTOMER_PAYMENT_GL_POSTING_ENABLED",
+          postingDomain: "customer_payment",
+          operatingCompanyId: query.data.operating_company_id,
+          context: { payment_id: payment.id, route: "POST /api/v1/accounting/payments" },
+        });
+      }
+
       const refreshedRes = await client.query(
         `SELECT amount_unapplied_cents FROM accounting.payments WHERE id = $1 LIMIT 1`,
         [payment.id]
@@ -433,7 +480,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
     return reply.code(result.code).send(result.data);
   });
 
-  app.post("/api/v1/accounting/payments/:id/void", async (req, reply) => {
+  app.post("/api/v1/accounting/payments/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     // G9-C3: voiding a financial record is an EXECUTOR-only action (Owner|Administrator|Accountant).
@@ -480,6 +527,36 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         [params.data.id, user.uuid]
       );
 
+      // ACCT-F151 — REVERSE THE RECEIPT IN THE GL ON VOID.
+      //
+      // The other half of the same defect, and it only becomes reachable once the create path above
+      // posts. Voiding set voided_at and unapplied every application — the SUBLEDGER correctly
+      // released the cash from the invoice — while the receipt's journal entry stayed in the ledger
+      // untouched. Posting the initial receipt without this would be strictly worse than posting
+      // nothing: every voided payment would permanently understate A/R by its own amount, and both
+      // sides would look right in isolation (the payment reads voided, the JE reads balanced).
+      //
+      // postVoidReversal reads the ORIGINAL postings by source_transaction_type and flips them —
+      // no new GL math, and it already accepts 'customer_payment' as a VoidableEntityType. It returns
+      // reversal_journal_entry_id: null when the payment has no GL postings at all, which is exactly
+      // the right behaviour for every payment recorded BEFORE this fix and for a payment written
+      // while the flag was OFF: nothing to reverse, so nothing is invented.
+      //
+      // Reversal DATE is resolved by the shared grounded rule, not by this route: original period
+      // open -> reverse at the original date; original period CLOSED -> reverse in the current open
+      // period, never rewriting a closed period.
+      const voidReversal = await postVoidReversal(
+        client,
+        {
+          operatingCompanyId: query.data.operating_company_id,
+          entityType: "customer_payment",
+          entityId: params.data.id,
+          originalDate: String(payment.payment_date ?? "").slice(0, 10),
+          memo: `Void reversal: payment ${payment.display_id ?? params.data.id}`,
+        },
+        { userId: user.uuid }
+      );
+
       await appendCrudAudit(
         client,
         user.uuid,
@@ -489,6 +566,10 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
           resource_id: params.data.id,
           operating_company_id: query.data.operating_company_id,
           void_reason: body.data.void_reason,
+          reversal_journal_entry_id: voidReversal.reversal_journal_entry_id,
+          reversal_date: voidReversal.reversal_date,
+          closed_period_reversal: voidReversal.closed_period_reversal,
+          reversed_line_count: voidReversal.reversed_line_count,
         },
         "warning",
         "P3-T11.20.3-PAYMENT-RECORDING"
