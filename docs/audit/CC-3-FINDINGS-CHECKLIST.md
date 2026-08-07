@@ -44,13 +44,13 @@ only truly closed when both the coder's ☑ and CC-3's VERIFIED are present.
 
 | metric | count |
 |---|---|
-| **total findings filed** | **73** |
-| **OPEN — awaiting a coder** | **66** |
+| **total findings filed** | **81** |
+| **OPEN — awaiting a coder** | **73** |
 | **☑ fixed & signed off by a coder** | **0** |
-| **VERIFIED ✓ by CC-3 (independently re-tested)** | **0** |
-| closed / withdrawn / superseded by CC-3 | 7 |
+| **VERIFIED ✓ by CC-3 (independently re-tested)** | **2** (`CLS-MONEY-WORM-GAP` 99.6% · `LV-ESCROW-SUBLEDGER-NOT-WORM` partial — both still OPEN pending coder sign-off) |
+| closed / withdrawn / superseded by CC-3 | 8 |
 
-**Zero is the honest number today.** No lane has yet signed off a CC-3 finding. This register starts the
+**Still zero coder sign-offs — and that is the honest number.** On 2026-08-07 CC-1 DID fix a CC-3 finding (`ACCT-F160`, which drained `CLS-MONEY-WORM-GAP` by 99.6% and is verified live below), but **no lane has ticked its own box yet**, so the ☑ column stays 0. CC-3 will not tick another lane's box (clause 2). This register starts the
 clock; every row below is waiting on the named lane.
 
 ---
@@ -136,6 +136,14 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-BANK-CATEGORIZE-POSTS-GL-WHILE-BANNER-SAYS-IT-DOES-NOT` | P0 | CC-1 (money / GL) + FE | — | — | — | — | — | — |
 | ☐ | `LV-BANK-CATEGORIZE-REVERSE-LINK-IS-A-MEMO-STRING` | P2 | CC-1 (ledger linkage) | — | — | — | — | — | — |
 | ☐ | `LV-MONEY-TABLES-HAVE-NO-AUDIT-TRIGGER` | P0 | CC-1 (WORM / audit integrity) | — | — | — | — | — | — |
+| ☐ | `LV-ACCT-F158-NOT-IN-REPO` | **P0** | CC-1 (money) | — | — | — | — | — | **CC-3 filed 2026-08-07** — ACCT-F158 declared closed on the board, but PR #4691 is `CLOSED`/`merged=null`; the FK is live on prod yet ABSENT from `db/migrations/` and from BOTH ledgers, and the service fail-open is still on `main`. A fresh DB gets no protection. **REOPENED.** |
+| ☐ | `CLS-MONEY-WORM-GAP` | **P0** | CC-1 (money/WORM) | — | — | — | — | — | **VERIFIED ✓ 99.6% DRAINED 2026-08-07** — CC-1's `ACCT-F160` re-measured live: unprotected **47 → 27**, at-risk rows **33,472 → 119**, both-layer tables **8 → 18**; `invoice_lines` + `payments` now carry BOTH layers. **Row stays OPEN for the residual 27.** Baseline → **27**. |
+| ☐ | `LV-ESCROW-SUBLEDGER-NOT-WORM` | P1 | CC-1 (money/WORM) | — | — | — | — | — | **VERIFIED ✓ PARTIAL 2026-08-07** — all 4 tables (`escrow_ledger`, `escrow_balances`, `escrow_deductions_pending`, `settlement_lines`) now carry a BEFORE DELETE trigger. **But `ih35_app` still HOLDS the DELETE grant on all 4 — trigger-only, and that trigger yields to every role except `ih35_app` (item 88). Half-protected, not closed.** |
+| ☐ | `LV-G18-INERT-ON-EXPENSE-LINES` | P1 | CC-1 (money) | — | — | — | — | — | **CC-3 filed 2026-08-07** — `line_category` NULL on all **33,980** expense lines and `load_required` never TRUE, so the G18 trigger can never fire on the expense path. Registry is correctly seeded (9 categories); the classification side was never wired. |
+| ☐ | `LV-DRIVER-BILLS-IS-A-MONEY-EVENT` | P2 | CC-1 (money/WORM) | — | — | — | — | — | **CC-3 filed 2026-08-07, re-confirmed live** — `driver_finance.driver_bills` is **STILL EXPOSED** (`can_delete=true`, `del_trg=0`). Schema proves it is a per-load earning document, not config. One line in the next sweep. |
+| ☐ | `LV-BILL-MDATA-VENDOR-FK-OPTOUT` | P2 | CC-1 (money) | — | — | — | — | — | **CC-3 filed 2026-08-07** — the entity-consistent vendor FK is NULLABLE; 2 of 11 USMCA bills carry `mdata_vendor_id = NULL` and bypass it. Same mechanism as the un-merged half of ACCT-F158. |
+| ☐ | `LV-FILE-LINK-ENTITY-TYPE-3WAY-MISMATCH` | P2 | mechanical lane | — | — | — | — | — | **CC-3 filed 2026-08-07** — FE `FileEntityType` (8) and backend Zod enum (8) advertise `settlement`/`invoice`; `SUPPORTED_LINK_ENTITY_TYPES` (6) rejects them, **inside the upload transaction — so the throw rolls back the whole file upload.** Second instance of the KANBAN-DROPSTATUS drift class. |
+| ☐ | `LV-ACCT-F158-IS-ISOLATED` | info | CC-1 (informational) | — | — | — | — | — | **CC-3 scope note 2026-08-07** — parity sweep bounds the ACCT-F158 P0: **11 of 12** entity FKs and **135 of 135** triggers are repo-traceable. Fix is ONE migration, not a remediation programme. |
 
 ---
 
@@ -153,6 +161,7 @@ deleted, so the correction is auditable. **No lane owes work on these.**
 | `LV-WF064-ALIVE` | P1 | EVIDENCE — refutes the 2 WF064 cards; no build required |
 | `LV-LATCH-GUARD-BLIND` | — | GUARD FIXED (unmerged) — blocks on `LV-BULK-DELIVER-NOLATCH` |
 | `CI-BLOCK-ACCEPTANCE-RED-ON-MAIN` | — | WITHDRAWN (self-corrected) 2026-08-07 |
+| `LV-FUEL-LOAD-ATTRIBUTION-NEVER-MATCHES` | P1 | **WITHDRAWN by CC-3 2026-08-07, ~20 min after filing, before any lane acted.** Filed because 1,555 of 1,555 TRANSP fuel transactions have `load_id IS NULL` and the rematch service has attributed none. Every number was true; the conclusion was not. **TRANSP's 5 loads are all 2026-06-16→06-27 and the fuel spans 2026-07-16→08-07 — the windows never overlap, so zero matches is the only arithmetically possible result.** Expected state, and already dispositioned by `fuel-load-attribution-coverage.db.test.ts:17-18`. **No lane owes work.** |
 ---
 
 ## ENFORCEMENT — stated honestly
