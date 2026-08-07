@@ -10,6 +10,15 @@
 every defect CC-3 files. `GUARD-WORKORDERS.md` holds the evidence and the fix instructions; **this file
 holds the sign-off.**
 
+
+> **★★★ PERMANENT RULE — OWNER-RESTATED 2026-08-07: "you need to add everything to the shared file… that is a
+> permanent rule."** EVERY finding, EVERY verification run, EVERY PASS and EVERY FAIL, and every task CC-3
+> executes goes into THIS file **and** `docs/audit/GUARD-WORKORDERS.md`, on the same commit that produces it —
+> not at the end of a session, not "when it's tidy". **A result that exists only in a chat reply, a battery
+> note, or a PR body is NOT filed.** This file is what the owner reads to know what was done; if it is behind,
+> the owner is being told less than CC-3 knows. Applies to non-defects too: a PASS that is not written down
+> gets re-investigated by the next agent.
+
 ---
 
 ## THE RULE (four clauses — none optional)
@@ -48,7 +57,7 @@ only truly closed when both the coder's ☑ and CC-3's VERIFIED are present.
 | **OPEN — awaiting a coder** | **77** |
 | **☑ fixed & signed off by a coder** | **0** |
 | **VERIFIED ✓ by CC-3 (independently re-tested)** | **2** (`CLS-MONEY-WORM-GAP` 99.6% · `LV-ESCROW-SUBLEDGER-NOT-WORM` partial — both still OPEN pending coder sign-off) |
-| **created-txn registration runs** | **3** — 2 PASS, **1 FAIL (P0)**; see the verify section below |
+| **created-txn registration runs** | **4** — 2 PASS, **1 FAIL (P0)**, 1 owner task DONE+VERIFIED; see the verify section below |
 | closed / withdrawn / superseded by CC-3 | 8 |
 
 **Still zero coder sign-offs — and that is the honest number.** On 2026-08-07 CC-1 DID fix a CC-3 finding (`ACCT-F160`, which drained `CLS-MONEY-WORM-GAP` by 99.6% and is verified live below), but **no lane has ticked its own box yet**, so the ☑ column stays 0. CC-3 will not tick another lane's box (clause 2). This register starts the
@@ -163,6 +172,7 @@ keyed on `app.operating_company_id` — units/equipment have no such column at a
 |---|---|---|---|---|
 | 01 | 2026-08-07 | **bank categorization** | **PASS** (4/4) | txn `cb271ba0` $918.00 → JE `ff746cfa` 120 ms later. Balanced DR=CR 91,800 · DR `6999` / CR `1000` correct for money-out · forward + reverse links (2 `transaction_source_links`) · `abs(amount_cents)` = GL debit **to the cent** · USMCA on source, JE and both postings |
 | 02 | 2026-08-07 | **all surfaces, 24h window** | **PASS** (10/10 JEs · 5/5 docs) | 10 JEs: all balanced, 2 lines each, **0 lines missing an account**, **2 source links each**. Correct pairs: bill `2000`/`5400` · bill-payment `1295`/`2000` · invoice `1100`/`4000` · categorization `1000`/`6300`,`1000`/`6999`. Docs: bill REGISTERED · `INV-2026-00007` REGISTERED · `INV-2026-00006` proforma = **correctly no-GL by design** · 2 loads pre-delivery/cancelled = correctly no revrec |
+| 04 | 2026-08-07 | **USMCA active-driver roster (owner task)** | **DONE + VERIFIED** (5/5) | Owner-assigned build task. HOS-45d active = **24**, all on TRANSP, 0 on USMCA. Pre-write match check: **0 duplicate CDL, 0 duplicate name, 0 cdl-vs-name conflicts** — no fuzzy matching used. Wrote in one transaction with `app.bypass_rls` set: 18 USMCA rows linked to their Samsara ID + set Active, **6 USMCA rows CREATED** (carry-over from TRANSP), all others set Inactive. **Disclosed extra mutation:** cleared `deactivated_at` on 18 and `archived_at` on 2 — forced by CHECK `chk_drivers_status_deactivated_consistent` and by the owner's own "can be assigned a truck" criterion. First attempt failed that constraint and **rolled back whole — no partial state**. Verified: Active=**24** · 1:1 to HOS-active=**24** · distinct Samsara ids=**24** · Active rows still deactivated/archived=**0** · USMCA-leased live trucks=**40**. No TRANSP/TRK row modified. See `LV-USMCA-ROSTER-HOS45-2026-08-07`. |
 | 03 | 2026-08-07 | **delivered load** | **★ FAIL (P0)** | **2 loads in delivered states posted NOTHING** — 0 revrec, 0 A/R, 0 GL. Handed to CC-1 as `LV-TXN-REGISTER-VERIFY-03-DELIVERED-LOAD-FAIL`. Predicted in run #02 and confirmed. |
 
 **SURFACES STILL UNEXERCISED (cannot be verified until the harness creates one):** fuel txn (USMCA has 0 —
