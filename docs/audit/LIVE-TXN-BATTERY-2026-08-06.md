@@ -1263,3 +1263,49 @@ re-run the clicks and report the same failure as if it were new evidence.
 
 **Landed this session and relevant:** `915ab9b43` (CC-1 ACCT-F142 — the duplicate-bill fix, which is
 what performed the voids in item 28) and `df429772e` (CI-DEPENDABOT — matches my `LV-CI-DEPENDABOT-RED`).
+
+## 29 — ★★ `LV-REVREC-NOT-FIRING`: Event 1 of the two-event revenue latch does NOT fire on delivery — FAIL (critical, money) — resolves the GL-DARK P0
+
+Item 16 left `CLS-SUBLEDGER-GL-DARK` **UNVERIFIED** because I could not reach a delivered load
+(`LV-STOPS-NOSAVE` blocked it). **Two USMCA loads have since reached delivery status**, so the test
+is now runnable — and it fails.
+
+**All four preconditions are satisfied, verified individually on prod:**
+
+| precondition | state |
+|---|---|
+| 1. Owner-locked rule exists | ✅ `.block-ready/REVENUE-RECOGNITION-TWO-EVENT-LATCH-2026-07-19.json`: **Event 1 at `delivered` / `delivered_pending_docs` → DR Unbilled Revenue / CR Line-Haul Income** |
+| 2. Flags enabled for USMCA | ✅ `REVENUE_RECOGNITION_ENABLED` **true**, `REVENUE_RECOGNITION_POST_ENABLED` **true** (item 16b) |
+| 3. **The account exists** | ✅ `catalogs.accounts` **USMCA `1150` "Unbilled Revenue"**, type Asset (TRANSP has `1240`) |
+| 4. **A load is in the trigger state** | ✅ `LUSMCAFREIGHT-20260806-0001` = **`delivered_pending_docs`**; `L-20260802-0258` = **`delivered`** |
+
+**And the posting is absent:**
+
+| account | postings | net | source types |
+|---|---|---|---|
+| **1150 Unbilled Revenue (USMCA)** | **0** | — | — |
+| 4000 Freight / Line-haul Income | 3 | $1,200.00 Cr | **`invoice` only** |
+
+**Zero postings to Unbilled Revenue.** Every dollar of revenue on USMCA arrived via
+`source_transaction_type = 'invoice'` — the direct invoice path — **not one came from a delivery
+event.** Event 1 has never fired.
+
+**This is the GL-DARK P0, now proven rather than inferred.** The earlier honest verdict was
+"UNVERIFIED — could not reach a delivered load." That obstacle is gone, and with the account present,
+the flags on, and a load sitting in the exact trigger state the locked spec names, the conclusion is
+no longer avoidable: **the delivery→revenue latch is not wired to fire.**
+
+**Why the account check mattered:** had `1150` been missing, this would have been a seeding gap, not
+a posting gap — a completely different fix owned by a different lane. I checked before concluding;
+the account is present, so the defect is the trigger.
+
+**Secondary gap recorded:** the locked spec says *"USMCA seeds Unbilled **+ Deferred** flagged dormant
+until loads."* USMCA has **Unbilled (1150) but NO Deferred Revenue account** — TRANSP has
+`QBO-340 Deferred Revenue`, USMCA has none. Event 2 / deferred treatment may need it. Flagged, not
+assumed to be a defect: it may be legitimately unnecessary until deferred revenue actually arises.
+
+Board row `LV-REVREC-NOT-FIRING` — **CC-1, critical**. Note this is a **different defect** from
+`LV-VOID-NO-REVERSAL` (item 28) — that one is the void path, this one is the delivery trigger — but
+both share a shape worth naming: **a flag is ON, the machinery is present, and the posting simply
+never happens.** Two independent money paths with that shape suggests checking whether other
+flag-gated posters are equally inert.
