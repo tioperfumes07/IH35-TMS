@@ -75,9 +75,8 @@ const WRITES_LOAD_STATUS = /UPDATE\s+mdata\.loads[\s\S]{0,400}?\bSET\b[\s\S]{0,4
  * would be ceremony that teaches the next reader the guard is arbitrary.
  */
 const PENDING_WIRE_BASELINE = new Set([
-  // bulk status change; one write sets 'paid', a payment state rather than a delivery milestone —
-  // needs a per-write decision, not a blanket call.
-  path.join("apps", "backend", "src", "dispatch", "loads-bulk.routes.ts"),
+  // EMPTY — every mdata.loads.status writer now applies the shared money side-effects, or is proven
+  // below not to need them. Keep it empty: a NEW status writer must be wired, never listed here.
 ]);
 
 const PROVEN_NO_OP = new Set([
