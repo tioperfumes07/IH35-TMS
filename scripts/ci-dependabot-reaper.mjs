@@ -69,6 +69,11 @@ export function decide(pr) {
   if (bump === "major") return { merge: false, reason: "MAJOR bump — a breaking change is a human decision" };
   if (bump === "unknown") return { merge: false, reason: "could not classify bump from title — leaving for a human" };
   if (pr.mergeable === false) return { merge: false, reason: "CONFLICTING — needs a rebase" };
+  // UNKNOWN is not a yes. GitHub reports mergeable=null while it is still computing the merge, and
+  // treating "not known to conflict" as "safe to merge" is how a reaper merges something it should not
+  // have. Found by running this live: five PRs flipped from CONFLICTING to UNKNOWN mid-run and sailed
+  // past this check to be caught only by the required-checks gate downstream. Require a positive yes.
+  if (pr.mergeable !== true) return { merge: false, reason: "mergeability UNKNOWN — GitHub still computing; will retry next run" };
 
   const byName = new Map((pr.checks ?? []).map((c) => [c.name, c.conclusion]));
   const missing = REQUIRED_CHECKS.filter((c) => byName.get(c) !== "SUCCESS");
@@ -161,6 +166,7 @@ function selftest() {
     ["MAJOR bump", { ...base, title: "chore(deps): bump plaid from 43.0.0 to 45.0.0" }, false],
     ["MAJOR bullmq", { ...base, title: "chore(deps): bump bullmq from 5.81.2 to 6.0.6" }, false],
     ["conflicting", { ...base, title: "chore(deps): bump x from 1.0.0 to 1.0.1", mergeable: false }, false],
+    ["mergeability UNKNOWN", { ...base, title: "chore(deps): bump x from 1.0.0 to 1.0.1", mergeable: null }, false],
     ["a required check failing", {
       ...base, title: "chore(deps): bump x from 1.0.0 to 1.0.1",
       checks: green.map((c) => (c.name === "build-typecheck" ? { ...c, conclusion: "FAILURE" } : c)),
