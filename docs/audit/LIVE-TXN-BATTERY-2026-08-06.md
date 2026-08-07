@@ -4308,3 +4308,73 @@ placeholder for evidence that has not arrived yet.**
 
 **LANE: informational — item 64's UNVERIFIED item is retired; the $5,670.00 goes to CC-1 as an opening
 tie-out input, not as a defect.**
+
+---
+
+## 66. CONTROL-ACCOUNT ROLE REGISTRY — two UNVERIFIED items retired, one real split found
+
+**LIVE-PROVEN 2026-08-07 on Neon prod, read-only, all entities. STRUCTURAL only — no numeric QBO-vs-TMS
+comparison, per the standing rule that FY2023–2025 figures are still moving while Martin reconciles.**
+
+### The registry is well-built — and it retires item 64's second UNVERIFIED
+
+`accounting.chart_of_accounts_roles` binds control accounts **per entity**, and supersedes old bindings
+by **deactivating, never deleting** (WORM, correctly applied):
+
+| entity | `ar_control` | `ap_control` |
+|---|---|---|
+| TRANSP | **`QBO-45`** active · `1100` **inactive** | **`QBO-47`** active · `2000` **inactive** |
+| TRK | **`TRK-1100`** active · `1100` **inactive** | **`TRK-2000`** active · `2000` **inactive** |
+| USMCA | **`1100`** active | **`2000`** active |
+
+**Item 64 flagged as UNVERIFIED that "USMCA posts A/R to `1100` while the locked mapping says A/R =
+`QBO-45`". RESOLVED — it is correct by configuration.** USMCA's active `ar_control` **is** `1100` and its
+`ap_control` **is** `2000`, so the poster is faithfully honouring the registry. The locked
+"A/R = QBO-45 / A/P = QBO-47" statement is **TRANSP-specific** — it describes the QBO-mirrored entity's
+mapping, and TRANSP does exactly that (1,550 A/P postings on `QBO-47`). **USMCA has no QBO realm, so
+native numbering is right. NOT a defect.**
+
+**That is the third UNVERIFIED item retired with evidence rather than argued away.**
+
+### The real finding — TRK's A/P is SPLIT across an active and a DEACTIVATED control account
+
+TRK's `ap_control` moved to **`TRK-2000`** at **2026-06-16 04:42:46**, deactivating `2000` at the same
+instant. Yet A/P postings landed on **both** afterwards:
+
+| account | posted | amount | memo |
+|---|---|---|---|
+| **`2000`** *(deactivated)* | **2026-07-12** — **26 days after** | $0.01 | "GUARD TRK posting test — void me" |
+| **`2000`** *(deactivated)* | **2026-07-29** — **43 days after** | $300.00 | "Prepaid purchase GUARD prepaid first-JE 2026-07-29" |
+| `TRK-2000` *(active)* | 2026-08-03 | $25.00 | "Bill … posting" |
+
+**Both stragglers postdate the deactivation, so this is not historical residue from before the
+switchover.** The one clearly-production posting — a bill — correctly used the active account, so **the
+bill poster honours the registry.**
+
+### What I will NOT claim, and why
+
+**Both `2000` postings carry "GUARD" in their memo**, which marks them as verification-lane artifacts
+rather than business transactions. I therefore **cannot** tell whether:
+
+- **(a)** a posting path resolved `2000` from the registry and ignored `is_active=false` — **a real
+  defect**, or
+- **(b)** a guard test named the account explicitly, which would be **expected state** for a test.
+
+**UNVERIFIED — and I am not guessing between them.** Distinguishing them requires reading the
+prepaid-purchase posting path to see whether it resolves `ap_control` or takes an account id from its
+caller. That is a bounded code read, and it belongs to the lane that owns the poster.
+
+### What IS established regardless of which explanation holds
+
+**TRK's A/P is genuinely split: $300.01 sits on a DEACTIVATED control account and $25.00 on the active
+one.** Any report, aging, or tie-out that resolves A/P through the **active** `ap_control` role — which
+is the correct way to resolve it — **silently omits $300.01**. That is true whether the postings came
+from a test or a production path, and it will not correct itself.
+
+**FIX:** decide and act — if the two are test artifacts, void them per WORM (they are on the ledger, so
+they count); if a posting path resolves the role without honouring `is_active`, fix that path.
+**Either way TRK's A/P must end up on one account.**
+**GUARD:** assert **no posting targets a `chart_of_accounts_roles` account whose binding is
+`is_active = false`**. That is a clean, permanent, entity-agnostic invariant — and it catches this class
+before it splits a control account again.
+**LANE: CC-1 / money.**
