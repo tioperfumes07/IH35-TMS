@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 export const US_JURISDICTIONS = [
   "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA",
@@ -113,7 +114,7 @@ export async function registerUnitPlatesRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "validation_error" });
     }
     const rows = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const unitOk = await assertUnitScope(client, params.data.id, query.data.operating_company_id);
       if (!unitOk) return null;
       const res = await client.query(
@@ -148,7 +149,7 @@ export async function registerUnitPlatesRoutes(app: FastifyInstance) {
     }
     try {
       const row = await withCurrentUser(user.uuid, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+        await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
         const unitOk = await assertUnitScope(client, params.data.id, query.data.operating_company_id);
         if (!unitOk) return null;
         const res = await client.query(
@@ -195,7 +196,7 @@ export async function registerUnitPlatesRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "validation_error" });
     }
     const updated = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const existing = await client.query(
         `SELECT * FROM mdata.unit_plates WHERE id = $1::uuid AND unit_id = $2::uuid AND operating_company_id = $3::uuid LIMIT 1`,
         [params.data.plate_id, params.data.id, query.data.operating_company_id]
@@ -241,7 +242,7 @@ export async function registerUnitPlatesRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
     const archived = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           UPDATE mdata.unit_plates
