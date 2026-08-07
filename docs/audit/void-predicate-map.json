@@ -1,0 +1,518 @@
+{
+  "_why": "CANONICAL VOID PREDICATE per financial table (ACCT-F157). 'Exclude the voided row' had TEN different spellings across apps/backend/src (is_active=true 352, deleted_at IS NULL 285, voided_at IS NULL 269, soft_deleted_at IS NULL 199, archived_at IS NULL 150, revoked_at IS NULL 101, status<>'voided' 28, status NOT IN ('void') 11, reversed_by_je_id IS NULL 4, unapplied_at IS NULL 4). With no canonical predicate the invariant 'a money total never includes a voided row' cannot be guarded: every pattern either misses real defects or reddens on correct code. This map is the missing fact.",
+  "_generated_from": "Neon prod br-fancy-credit-akjnd07a information_schema, 2026-08-07 (RLS-bypassed). Prod is authoritative over migrations.",
+  "_precedence": "voided_at > soft_deleted_at > deleted_at > revoked_at > archived_at > unapplied_at > is_active. The strongest 'this did not happen' marker wins. is_active is LAST and canonical only when a table has nothing else, because on a transactional table it usually means enabled/disabled rather than voided \u2014 see _is_active_only below.",
+  "_rules": [
+    "A money aggregate over one of these tables MUST carry that table's predicate.",
+    "A NEW financial table with a soft-delete column must be added here; verify-void-predicate-map-current.mjs fails otherwise.",
+    "Never change a canonical_column to make a query pass \u2014 change the query."
+  ],
+  "_is_active_only": "Tables whose ONLY marker is is_active are mostly CONFIG/reference (banking_rules, chart_of_accounts_roles, escrow_settings, driver_pay_rates, transaction_categories, recurring_templates, expense_category_account_map). For those is_active means enabled, not voided. driver_finance.settlement_lines is the notable EXCEPTION: it is transactional money and is_active IS its void marker (ACCT-F156 fixed two aggregates that omitted it).",
+  "tables": {
+    "accounting.ap_import_batches": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "is_active"
+      ]
+    },
+    "accounting.banking_rules": {
+      "canonical_column": "is_active",
+      "predicate": "is_active = true",
+      "all_columns": [
+        "is_active"
+      ]
+    },
+    "accounting.bill_lines": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "accounting.bill_payments": {
+      "canonical_column": "revoked_at",
+      "predicate": "revoked_at IS NULL",
+      "all_columns": [
+        "revoked_at"
+      ]
+    },
+    "accounting.bills": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "revoked_at"
+      ]
+    },
+    "accounting.cash_flow_adjustments": {
+      "canonical_column": "archived_at",
+      "predicate": "archived_at IS NULL",
+      "all_columns": [
+        "archived_at"
+      ]
+    },
+    "accounting.chart_of_accounts_roles": {
+      "canonical_column": "is_active",
+      "predicate": "is_active = true",
+      "all_columns": [
+        "is_active"
+      ]
+    },
+    "accounting.civil_fine_postings": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "is_active"
+      ]
+    },
+    "accounting.credit_memos": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "accounting.customer_classifications": {
+      "canonical_column": "archived_at",
+      "predicate": "archived_at IS NULL",
+      "all_columns": [
+        "archived_at"
+      ]
+    },
+    "accounting.depreciation_autopost_runs": {
+      "canonical_column": "is_active",
+      "predicate": "is_active = true",
+      "all_columns": [
+        "is_active"
+      ]
+    },
+    "accounting.depreciation_schedule_rows": {
+      "canonical_column": "deleted_at",
+      "predicate": "deleted_at IS NULL",
+      "all_columns": [
+        "deleted_at",
+        "is_active"
+      ]
+    },
+    "accounting.expense_category_account_map": {
+      "canonical_column": "is_active",
+      "predicate": "is_active = true",
+      "all_columns": [
+        "is_active"
+      ]
+    },
+    "accounting.expenses": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "deleted_at",
+        "is_active"
+      ]
+    },
+    "accounting.factoring_default_interest_accruals": {
+      "canonical_column": "is_active",
+      "predicate": "is_active = true",
+      "all_columns": [
+        "is_active"
+      ]
+    },
+    "accounting.factoring_reserve_movements": {
+      "canonical_column": "is_active",
+      "predicate": "is_active = true",
+      "all_columns": [
+        "is_active"
+      ]
+    },
+    "accounting.fixed_asset_classes": {
+      "canonical_column": "deleted_at",
+      "predicate": "deleted_at IS NULL",
+      "all_columns": [
+        "deleted_at",
+        "is_active"
+      ]
+    },
+    "accounting.fixed_asset_disposals": {
+      "canonical_column": "deleted_at",
+      "predicate": "deleted_at IS NULL",
+      "all_columns": [
+        "deleted_at",
+        "is_active"
+      ]
+    },
+    "accounting.fixed_assets": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "deleted_at",
+        "is_active"
+      ]
+    },
+    "accounting.form_1042_s": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "accounting.form_1099_nec": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "accounting.insurance_claim_recovery_postings": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "is_active"
+      ]
+    },
+    "accounting.invoice_lines": {
+      "canonical_column": "soft_deleted_at",
+      "predicate": "soft_deleted_at IS NULL",
+      "all_columns": [
+        "soft_deleted_at"
+      ]
+    },
+    "accounting.invoices": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "accounting.journal_entries": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "accounting.lease_asset_line": {
+      "canonical_column": "deleted_at",
+      "predicate": "deleted_at IS NULL",
+      "all_columns": [
+        "deleted_at",
+        "is_active"
+      ]
+    },
+    "accounting.lease_classification": {
+      "canonical_column": "deleted_at",
+      "predicate": "deleted_at IS NULL",
+      "all_columns": [
+        "deleted_at",
+        "is_active"
+      ]
+    },
+    "accounting.lease_contract": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "deleted_at",
+        "is_active"
+      ]
+    },
+    "accounting.lease_schedule_period": {
+      "canonical_column": "deleted_at",
+      "predicate": "deleted_at IS NULL",
+      "all_columns": [
+        "deleted_at",
+        "is_active"
+      ]
+    },
+    "accounting.load_revenue_recognition_postings": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "is_active"
+      ]
+    },
+    "accounting.parts_purchase_postings": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "is_active"
+      ]
+    },
+    "accounting.payment_applications": {
+      "canonical_column": "unapplied_at",
+      "predicate": "unapplied_at IS NULL",
+      "all_columns": [
+        "unapplied_at"
+      ]
+    },
+    "accounting.payments": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "accounting.prepaid_amortization_rows": {
+      "canonical_column": "deleted_at",
+      "predicate": "deleted_at IS NULL",
+      "all_columns": [
+        "deleted_at",
+        "is_active"
+      ]
+    },
+    "accounting.prepaid_assets": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "deleted_at",
+        "is_active"
+      ]
+    },
+    "accounting.property_tax_accruals": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "is_active"
+      ]
+    },
+    "accounting.qbo_customers": {
+      "canonical_column": "archived_at",
+      "predicate": "archived_at IS NULL",
+      "all_columns": [
+        "archived_at"
+      ]
+    },
+    "accounting.recon_exceptions": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "is_active"
+      ]
+    },
+    "accounting.recon_runs": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "is_active"
+      ]
+    },
+    "accounting.recurring_bill_templates": {
+      "canonical_column": "is_active",
+      "predicate": "is_active = true",
+      "all_columns": [
+        "is_active"
+      ]
+    },
+    "accounting.recurring_templates": {
+      "canonical_column": "is_active",
+      "predicate": "is_active = true",
+      "all_columns": [
+        "is_active"
+      ]
+    },
+    "accounting.related_party_loan_entries": {
+      "canonical_column": "deleted_at",
+      "predicate": "deleted_at IS NULL",
+      "all_columns": [
+        "deleted_at",
+        "is_active"
+      ]
+    },
+    "accounting.related_party_loan_schedule": {
+      "canonical_column": "deleted_at",
+      "predicate": "deleted_at IS NULL",
+      "all_columns": [
+        "deleted_at",
+        "is_active"
+      ]
+    },
+    "accounting.revenue_contracts": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "deleted_at",
+        "is_active"
+      ]
+    },
+    "accounting.revenue_obligations": {
+      "canonical_column": "deleted_at",
+      "predicate": "deleted_at IS NULL",
+      "all_columns": [
+        "deleted_at",
+        "is_active"
+      ]
+    },
+    "accounting.revenue_recognition_rows": {
+      "canonical_column": "deleted_at",
+      "predicate": "deleted_at IS NULL",
+      "all_columns": [
+        "deleted_at",
+        "is_active"
+      ]
+    },
+    "accounting.tax_document": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "is_active"
+      ]
+    },
+    "accounting.vendor_classifications": {
+      "canonical_column": "archived_at",
+      "predicate": "archived_at IS NULL",
+      "all_columns": [
+        "archived_at"
+      ]
+    },
+    "accounting.vendor_credit_applications": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "accounting.warranty_reimburse_postings": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "is_active"
+      ]
+    },
+    "banking.bank_accounts": {
+      "canonical_column": "is_active",
+      "predicate": "is_active = true",
+      "all_columns": [
+        "is_active"
+      ]
+    },
+    "banking.bank_transaction_splits": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "is_active"
+      ]
+    },
+    "banking.bank_transactions": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "banking.transaction_categories": {
+      "canonical_column": "is_active",
+      "predicate": "is_active = true",
+      "all_columns": [
+        "is_active"
+      ]
+    },
+    "banking.transfers": {
+      "canonical_column": "revoked_at",
+      "predicate": "revoked_at IS NULL",
+      "all_columns": [
+        "revoked_at"
+      ]
+    },
+    "driver_finance.driver_advance_accounts": {
+      "canonical_column": "is_active",
+      "predicate": "is_active = true",
+      "all_columns": [
+        "is_active"
+      ]
+    },
+    "driver_finance.driver_escrow_separations": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "is_active"
+      ]
+    },
+    "driver_finance.driver_pay_rates": {
+      "canonical_column": "is_active",
+      "predicate": "is_active = true",
+      "all_columns": [
+        "is_active"
+      ]
+    },
+    "driver_finance.driver_payment_methods": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "is_active"
+      ]
+    },
+    "driver_finance.driver_reimbursements": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "driver_finance.driver_settlements": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "driver_finance.escrow_settings": {
+      "canonical_column": "is_active",
+      "predicate": "is_active = true",
+      "all_columns": [
+        "is_active"
+      ]
+    },
+    "driver_finance.settlement_lines": {
+      "canonical_column": "is_active",
+      "predicate": "is_active = true",
+      "all_columns": [
+        "is_active"
+      ]
+    },
+    "factoring.canonical_factor_agreements": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "fuel.fuel_card_overage_events": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
+    "fuel.fuel_card_overage_policies": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at",
+        "is_active"
+      ]
+    },
+    "fuel.fuel_transactions": {
+      "canonical_column": "archived_at",
+      "predicate": "archived_at IS NULL",
+      "all_columns": [
+        "archived_at"
+      ]
+    }
+  }
+}
