@@ -103,3 +103,8 @@ docs/audit/*.md                         merge=union
 #     git merge origin/main          # registries now union automatically
 # Verified end-to-end on #4615: without the adoption step GUARD-WORKORDERS.md conflicts; with it, the
 # same merge auto-resolves it and only genuinely-uncovered files remain.
+docs/audit/GUARD-WORKORDERS.md merge=union
+docs/law/LAW.json merge=union
+docs/audit/wave-queue.json merge=union
+docs/audit/LIVE-TXN-BATTERY-2026-08-06.md merge=union
+docs/audit/AUDIT-COVERAGE-LIVE.md merge=union
