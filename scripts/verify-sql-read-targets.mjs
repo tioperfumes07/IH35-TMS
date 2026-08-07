@@ -21,6 +21,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { maskComments } from "./lib/mask-comments.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BACKEND = path.join(ROOT, "apps/backend/src");
@@ -83,7 +84,9 @@ const problems = [];
 let blocks = 0, refsChecked = 0, skippedUntracked = 0;
 
 for (const file of walk(BACKEND)) {
-  const src = fs.readFileSync(file, "utf8");
+  // Mask comments so prose that MENTIONS a column is not read as a live column reference
+  // (CLS-GUARD-READS-COMMENTS). Offset-preserving, so reported positions stay correct.
+  const src = maskComments(fs.readFileSync(file, "utf8"));
   // each backtick template-literal block (SQL lives in these); no nested backticks in our SQL
   for (const blockMatch of src.matchAll(/`([^`]*)`/gs)) {
     const block = blockMatch[1];

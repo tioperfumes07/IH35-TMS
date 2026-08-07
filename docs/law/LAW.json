@@ -341,5 +341,12 @@
     "source_file": "apps/backend/src/_helpers/scoped-company-context.ts",
     "guard": "scripts/verify-scoped-company-context-asserts-first.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-CLASS-SCOREBOARD-FRESH",
+    "title": "The Programs by-class scoreboard is GENERATED from docs/audit/wave-queue.json and must match it — a board that renders stale class status is trusted precisely because it looks authoritative, so drift must fail the build rather than mislead",
+    "source_file": "apps/frontend/src/pages/program/classScoreboard.data.ts",
+    "guard": "scripts/verify-class-scoreboard-fresh.mjs",
+    "type": "enforced"
   }
 ]
