@@ -7064,3 +7064,131 @@ production.
 **Verdict: hypotheses 5 and 6 DISPROVEN with live evidence. Root cause NOT found — and the search space
 is now bounded to the observation itself, with a named leading suspect. UNVERIFIED remains UNVERIFIED;
 I did not watch the failing render, and I will not name a cause I did not watch execute.**
+
+## 113. ★★ POSTING-FAILURE SWEEP — a LIVE USMCA A/P liability with ZERO general ledger, its one-line root cause, and 11,976 "failures" that are the system working correctly
+
+**Unit: the whole `accounting.posting_batches` population, every entity, every source type. Verdict: ONE
+real money defect in USMCA (filed P1), ONE observability defect (filed P1), and THREE hypotheses of mine
+killed on the way — including my own opening one.**
+
+**METHOD — the discriminator failed, so I changed instrument rather than reporting the number.** Under
+`ih35_app` + `set_config('app.bypass_rls','lucia')`, `count(*) = 13,745` while
+`pg_stat_all_tables.n_live_tup = 14,922`. **`visible_all != n_live_tup` is a broken run, not a finding.**
+Re-taken under `RESET ROLE` → `current_user = neondb_owner`, `row_security_active('accounting.posting_batches')
+= false` — an **RLS-immune** read — the exact count is **13,745**, byte-identical to the masked read. The
+stat is stale (`last_autoanalyze 2026-08-03`, `n_tup_upd 27,427` against 15,305 inserts); `ANALYZE` under a
+`SET ROLE`d session is silently skipped because the permission check is against `current_user`. **Every
+number below is the RLS-immune one.**
+
+### THE POSTER-COVERAGE MAP (13,745 batches, all three entities)
+
+| source type | posted | failed | reversed | USMCA |
+|---|---|---|---|---|
+| `invoice` | 5 | **11,976** | 1 | 3 posted |
+| `fuel_event` | 1,547 | — | — | **0** |
+| `bank_categorization` | 192 | — | — | 5 |
+| `bill` | 11 | **3** | — | 9 posted / **3 failed** |
+| `transfer` | 4 | — | — | 1 |
+| `bill_payment` | 3 | — | — | 2 |
+| `expense` | 2 | — | — | 2 |
+| `customer_payment` | 1 | — | — | 0 |
+
+**24 GL-posting feature flags exist. USMCA has an active, unexpired, `enabled=true` override on 24 of 24**
+(`default_enabled` is true on exactly 1). **So nothing in USMCA is flag-dark** — and that corrects item
+112's "1 red dot is config-gated": `FACTORING_GL_POSTING_ENABLED` **is ON** for USMCA. **Yet only 8 of those
+24 posting paths have EVER produced a batch in the entire database, and only 6 have for USMCA.** The other
+16 posters are enabled, wired, and have never run once — for anyone.
+
+### ★ FINDING A (P1 · money · CC-1) — `LV-BILL-HEADER-ONLY-UNPOSTABLE`: a live USMCA bill that the ledger can never see
+
+`accounting.bills 304f5fa3-8064-4eca-957c-d48249573184` — `CC3-BILL-0001`, **$123.45**, `status = unpaid`,
+**`voided_at IS NULL`**, created 2026-08-06 19:11:43Z. It has **0 `bill_lines`** and **0
+`journal_entry_postings`**. Its posting batch `91ca3d17-…` is `failed`. The reason is on prod verbatim:
+
+```
+audit.audit_events  de4a8d5f-15db-4889-8504-15d5619afc47   accounting.bill.gl_post_failed   source=P1-BILL-GL
+  {"code":"BILL_LINE_ACCOUNT_UNRESOLVED","message":"Bill has no lines to resolve",
+   "resource_id":"304f5fa3-8064-4eca-957c-d48249573184"}
+```
+
+**ROOT CAUSE, one line, and the comment above it states the exact rule the code fails to enforce** —
+`apps/backend/src/accounting/bills.service.ts:1188-1192`:
+
+```ts
+// LAW-E2E #3167: when the UI (or any caller) sends lines, fail closed — never create a header-only
+// bill that the poster cannot resolve (live Neon had 16k bills / 0 bill_lines).
+const linesProvided = input.lines !== undefined;
+if (linesProvided) {
+  if (!input.lines || input.lines.length === 0) throw new Error("bill_lines_required");
+```
+
+**The guard is opt-in by the caller.** `lines: []` is rejected; **`lines` omitted skips the guard entirely**
+— and `apps/backend/src/accounting/bills.routes.ts:82` declares `lines: z.array(...).optional()`, so
+omitting it is a valid API request. The comment promises "never create a header-only bill that the poster
+cannot resolve"; the implementation creates exactly that whenever the field is absent. The poster's
+fail-loud at `posting-engine.service.ts:995` (`"Bill has no lines to resolve"`) is **correct** — it is the
+last honest actor in the chain, and it fires after the liability is already committed and irreversible
+(`bill-gl.service.ts` deliberately does not roll back the bill).
+
+**ECONOMIC CONSEQUENCE, measured.** USMCA's TMS-native A/P subledger is **7 live non-draft bills =
+$1,394.88 open**. **$123.45 of it has no GL counterpart at all** — the subledger and the control account
+cannot tie, by construction, and no reversing entry can fix it because there is nothing to reverse.
+
+**CLASS SIZE — exactly 2 rows, and I measured it rather than assuming a class.** Of **16,258** bills
+(discriminator `visible = n_live_tup = 16,258`), **16,256 have lines**. The 2 that do not are both
+`CC3-BILL-0001` (`304f5fa3` live, `d613ca88` voided). The "16k bills / 0 bill_lines" state the code comment
+describes **has been backfilled**; only the escape hatch survives. **13 TMS-native bills exist in the whole
+database — 1 in 13 went through the hole.**
+
+### ★ FINDING B (P1 · money observability · CC-1) — `LV-POSTING-BATCH-FAILED-CONFLATES-REFUSAL`
+
+**11,976 of 11,982 invoice posting batches are `failed`.** Every one is TRANSP, every one is a QBO clone
+(`qbo_invoice_id IS NOT NULL`, **`source_system = 'qbo'` on 11,976 of 11,976**), **$40,728,911.19** of
+invoice face value, all marked in a 22-minute window on 2026-08-03 06:19–06:41Z.
+
+**These are not broken. They are the parallel-books law working.** `posting-engine.service.ts:706` refuses
+`source_system='qbo'` with `QBO_INVOICE_POST_GL_REFUSED` — *"parallel books; QBO already holds this A/R +
+revenue. Do not invent a second TMS journal entry"* (shipped `5a36c18b9`, 2026-08-03 — the same day). The
+refusal is exactly right. **The recording of it is not:** `markBatchFailed()`
+(`posting-engine.service.ts:1902-1932`) writes `batch_status = 'failed'` and the table **has no reason,
+code, or message column at all**, so a deliberate policy refusal is byte-indistinguishable from a genuine
+break. **`audit.audit_events` holds `accounting.invoice.gl_post_failed` exactly ONCE** in the entire
+database — a USMCA invoice on 2026-08-04 — and **zero** of the 11,976. In the 06:00–17:00Z window that
+produced them, **5** invoice-related audit events exist in total.
+
+**Why this is a P1 and not a cosmetic quibble:** a real USMCA invoice posting failure lands in this table as
+row 11,977 of 11,976 identical-looking rows, with no reason recorded, and **nothing anywhere reads
+`batch_status='failed'`** — grep of the whole backend returns the one write site and one unit test; no
+route, no service, no KPI, no frontend file queries it. The failure population is unmonitored *and*
+unreadable. **Fix is a status that distinguishes `refused_by_policy` from `failed`, plus persisting the
+`PostingEngineError.code` on the batch row** — the code is already in hand at the throw site and is thrown
+away.
+
+### THREE HYPOTHESES KILLED — including the one I opened the unit with
+
+| # | hypothesis | verdict |
+|---|---|---|
+| 1 | **"a posting failure records no reason anywhere"** — my opening claim | **DISPROVEN, by me, in this unit.** `bills.service.ts:1510-1522` appends `accounting.bill.gl_post_failed` with `code` + `message`. **3 of 3 bill failures carry their reason on prod.** The gap is invoice-specific and bulk-path-specific, not systemic. I would have filed a false P0 had I stopped at the batch table. |
+| 2 | "failed batches leave partial, unbalanced GL behind" | **DISPROVEN. `journal_entry_postings` joined to every `failed` batch = 0 rows.** Posting atomicity holds: a batch either produces its complete balanced entry or nothing. **PASS — and it is the reason Finding A is a missing entry rather than a corrupt one.** |
+| 3 | "duplicate `bill_number` (`CC3-BILL-0001` ×2, `TEST-BILL-0806-A` ×3) is an uncontrolled display-id defect" | **WITHDRAWN.** `uq_bills_tms_native_vendor_bill_number` is a partial unique index on `(operating_company_id, mdata_vendor_id, bill_number) WHERE qbo_bill_id IS NULL AND voided_at IS NULL`. In **every** duplicate group exactly one row is live and the rest are voided — the index is doing its job and **void-not-delete is what makes the duplicates visible.** Filing this would have been a false positive against a working control. |
+
+### WHY THIS UNIT CREATED NO TRANSACTIONS — stated plainly, not deferred
+
+The battery's create path is the real app. **This session has no browser and no API write path**, and that
+is verified, not assumed: `POST /api/v1/fuel/gl/reflush-unposted` unauthenticated → **HTTP 401**; every
+write route is `requireAuth` behind the `ih35_session` Lucia cookie. Minting a session row for an existing
+user is an access-control change and is prohibited outright (§1.6), so it is not on the table. Running the
+real poster locally is also unavailable — the repo has **no `node_modules`** (`opossum` absent, root
+`node_modules` empty), so the production posting code cannot be executed against prod from here.
+
+**What I will not do is insert rows with raw SQL to turn scenario dots green.** The GL post is application
+code (`postFuelExpenseFromEvent`, `postSourceTransaction`) with inline SQL — no database function — so a raw
+insert produces a transaction with **no journal entry**, which would make `scenario.fuel` GREEN on a fuel
+purchase that never touched the ledger. **That is precisely the false green I filed as P0 in item 112**
+(`LV-SCENARIO-REVENUE-DOT-IS-FALSE-GREEN`), and manufacturing a second one to satisfy my own task list
+would be indefensible. The blocker is named, its evidence is above, and the unit was spent on the deepest
+verification the available instruments actually support.
+
+**Deploy identity for this unit:** `GET /api/v1/healthz/shallow` → `{"ok":true,"version":"6020040"}` =
+`602004008` on `origin/main`, an ancestor of the local tip (12 docs-only commits ahead). **Findings about
+this source are findings about production.**
