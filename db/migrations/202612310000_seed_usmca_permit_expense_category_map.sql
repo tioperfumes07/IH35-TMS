@@ -48,6 +48,22 @@
 -- touches no existing row, and the 10 inactive rows (superseded bad mappings, correctly retained under
 -- void-not-delete) are left exactly as they are.
 
+-- DEPLOY-BLOCKER FIX (2026-08-07): 'permit' was absent from the category_kind CHECK
+-- (expense_category_account_map_category_kind_check), so the seed INSERT below violated the constraint
+-- and halted Render db:migrate — every deploy since stuck behind it. Extend the CHECK additively to
+-- include 'permit' BEFORE the insert. Idempotent (DROP IF EXISTS + re-ADD) and a strict superset —
+-- every existing row stays valid, no existing row can be invalidated.
+DO $$
+BEGIN
+  IF to_regclass('accounting.expense_category_account_map') IS NOT NULL THEN
+    ALTER TABLE accounting.expense_category_account_map
+      DROP CONSTRAINT IF EXISTS expense_category_account_map_category_kind_check;
+    ALTER TABLE accounting.expense_category_account_map
+      ADD CONSTRAINT expense_category_account_map_category_kind_check
+      CHECK (category_kind = ANY (ARRAY['fuel','maintenance','revenue','driver_pay','factoring_fee','toll','escrow','insurance','office','other','cash_advance','lumper','permit']));
+  END IF;
+END $$;
+
 DO $$
 DECLARE
   v_opco    uuid;
