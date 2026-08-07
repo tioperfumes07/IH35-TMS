@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
@@ -173,7 +174,7 @@ export async function registerDriverDaySummaryRoutes(app: FastifyInstance) {
 
     try {
       const rows = await withCurrentUser(user.uuid, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+        await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
         const res = await client.query<{
           driver_id: string;
           driver_name: string;

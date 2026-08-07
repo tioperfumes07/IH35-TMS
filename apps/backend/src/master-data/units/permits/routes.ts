@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../../../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../../../audit/crud-audit.js";
@@ -59,7 +60,7 @@ export async function registerUnitPermitsRoutes(app: FastifyInstance) {
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
 
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const unitOk = await assertUnitScope(client, params.data.unit_uuid, query.data.operating_company_id);
       if (!unitOk) return null;
       const permits = await listUnitPermits(client, params.data.unit_uuid, query.data.operating_company_id);
@@ -85,7 +86,7 @@ export async function registerUnitPermitsRoutes(app: FastifyInstance) {
     }
 
     const created = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const unitOk = await assertUnitScope(client, params.data.unit_uuid, query.data.operating_company_id);
       if (!unitOk) return null;
       const row = await createUnitPermit(client, params.data.unit_uuid, query.data.operating_company_id, body.data);
@@ -111,7 +112,7 @@ export async function registerUnitPermitsRoutes(app: FastifyInstance) {
     }
 
     const updated = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const row = await updateUnitPermit(
         client,
         params.data.unit_uuid,
@@ -140,7 +141,7 @@ export async function registerUnitPermitsRoutes(app: FastifyInstance) {
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
 
     const deleted = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const ok = await softDeleteUnitPermit(
         client,
         params.data.unit_uuid,

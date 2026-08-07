@@ -1,3 +1,4 @@
+import { membershipAware } from "../../test-helpers/membership-aware-query.js";
 import Fastify, { type FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildAuditEventsListQuery, registerAuditEventsListRoutes } from "./audit-events-list.routes.js";
@@ -9,7 +10,7 @@ const mockQuery = vi.fn();
 
 vi.mock("../auth/db.js", () => ({
   withCurrentUser: async (_userId: string, fn: (client: { query: typeof mockQuery }) => Promise<unknown>) =>
-    fn({ query: mockQuery }),
+    fn({ query: membershipAware(mockQuery) }),
 }));
 
 const mockRequireAuth = vi.fn(() => true);

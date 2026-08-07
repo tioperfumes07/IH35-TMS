@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
@@ -66,7 +67,7 @@ export async function registerDriverFuelReceiptRoutes(app: FastifyInstance) {
         );
         if (truckOk.rows.length === 0) throw new Error("truck_not_allowed");
 
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+        await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
 
         // BANK-ACCOUNT-HIDE: an account hidden for THIS entity must never be auto-picked as the fuel
         // -receipt deposit target (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).

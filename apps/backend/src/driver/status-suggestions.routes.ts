@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
@@ -17,7 +18,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerDriverStatusSuggestionsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver/status-suggestions", async (req, reply) => {
+  app.get("/api/v1/driver/status-suggestions", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;
@@ -31,7 +32,7 @@ export async function registerDriverStatusSuggestionsRoutes(app: FastifyInstance
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
       if (!operatingCompanyId) return [];
 
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
       const res = await client.query(
         `
           WITH latest_response AS (
@@ -68,7 +69,7 @@ export async function registerDriverStatusSuggestionsRoutes(app: FastifyInstance
     return { suggestions: rows };
   });
 
-  app.post("/api/v1/driver/status-suggestions/:id/respond", async (req, reply) => {
+  app.post("/api/v1/driver/status-suggestions/:id/respond", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;
@@ -86,7 +87,7 @@ export async function registerDriverStatusSuggestionsRoutes(app: FastifyInstance
       );
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
       if (!operatingCompanyId) return false;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
 
       const suggestion = await client.query(
         `

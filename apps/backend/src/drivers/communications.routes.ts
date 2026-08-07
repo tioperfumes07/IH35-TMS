@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
@@ -36,7 +37,7 @@ export async function registerDriverCommunicationsRoutes(app: FastifyInstance) {
     const { operating_company_id: operatingCompanyId, channel, limit, offset } = query.data;
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await setScopedCompanyContext(client, authUser.uuid, operatingCompanyId);
       return listDriverCommunications(client as Queryable, {
         operatingCompanyId,
         driverId,

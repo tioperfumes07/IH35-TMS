@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 import type { PoolClient } from "pg";
 import { withCurrentUser } from "../../auth/db.js";
 import { lateArrivalGraceMinutes } from "../late-arrivals.service.js";
@@ -269,7 +270,7 @@ export async function aggregateLateArrivals(
   groupBy: LateArrivalGroupBy
 ): Promise<{ grace_minutes: number; from: string; to: string; group_by: LateArrivalGroupBy; rows: LateArrivalAggregateRow[] }> {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const rows = await queryAggregates(client, operatingCompanyId, from, to, groupBy);
     return {
       grace_minutes: lateArrivalGraceMinutes(),
@@ -289,7 +290,7 @@ export async function getDriverLateArrivalDetail(
   to: string
 ): Promise<LateArrivalEntityDetail | null> {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const rows = await queryAggregates(client, operatingCompanyId, from, to, "driver", {
       sql: "driver_id::text = $4::text",
       value: driverUuid,
@@ -313,7 +314,7 @@ export async function getCustomerLateArrivalDetail(
   to: string
 ): Promise<LateArrivalEntityDetail | null> {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const rows = await queryAggregates(client, operatingCompanyId, from, to, "customer", {
       sql: "customer_id::text = $4::text",
       value: customerUuid,

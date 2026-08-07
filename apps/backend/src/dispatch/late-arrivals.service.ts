@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 
 const DEFAULT_LATE_GRACE_MINUTES = 30;
@@ -33,7 +34,7 @@ export function isLateArrivalByEta(input: {
 export async function listLateArrivalLoads(userId: string, operatingCompanyId: string) {
   const graceMinutes = lateArrivalGraceMinutes();
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const res = await client.query(
       `
         SELECT

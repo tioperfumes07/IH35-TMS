@@ -1,3 +1,4 @@
+import { membershipAware } from "../../test-helpers/membership-aware-query.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const createJournalEntryMock = vi.fn();
@@ -24,7 +25,7 @@ vi.mock("../audit/crud-audit.js", () => ({
 let queryMock: ReturnType<typeof vi.fn>;
 vi.mock("../auth/db.js", () => ({
   withCurrentUser: async (_userId: string, fn: (client: { query: typeof queryMock }) => Promise<unknown>) =>
-    fn({ query: queryMock }),
+    fn({ query: membershipAware(queryMock) }),
 }));
 
 import { cancelInsurancePolicy, computeUnearnedPremiumCents } from "./policy-cancel.service.js";

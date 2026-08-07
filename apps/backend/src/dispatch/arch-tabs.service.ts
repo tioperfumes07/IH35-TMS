@@ -1,8 +1,9 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 
 export async function listAtRiskLoads(userId: string, operatingCompanyId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const res = await client.query(
       `
         SELECT
@@ -62,7 +63,7 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
 
 export async function listIntransitIssues(userId: string, operatingCompanyId: string, status?: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const values: unknown[] = [operatingCompanyId];
     let statusFilter = "";
     if (status) {
@@ -109,7 +110,7 @@ export async function listAssignmentHistoryGlobal(
   filters: { driver_id?: string; from?: string; to?: string; reason?: string }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const values: unknown[] = [operatingCompanyId];
     const clauses: string[] = ["h.operating_company_id = $1"];
 
@@ -170,7 +171,7 @@ export async function listAssignmentHistoryGlobal(
 
 export async function resolveIntransitIssue(userId: string, operatingCompanyId: string, issueId: string, notes?: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const res = await client.query(
       `
         UPDATE dispatch.intransit_issues i
@@ -209,7 +210,7 @@ export async function createOfficeIntransitIssue(
   }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const loadRes = await client.query<{ id: string; assigned_unit_id: string | null; assigned_primary_driver_id: string | null }>(
       `SELECT id, assigned_unit_id, assigned_primary_driver_id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 AND soft_deleted_at IS NULL LIMIT 1`,
       [body.load_id, operatingCompanyId]
