@@ -50,8 +50,11 @@ export async function listLateArrivalLoads(userId: string, operatingCompanyId: s
           sp.stop_type AS next_stop_type
         FROM views.dispatch_load_with_driver_status l
         JOIN mdata.customers c ON c.id = l.customer_id
+                              AND c.operating_company_id = l.operating_company_id
         LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                               AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
         LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                 AND d.operating_company_id = l.operating_company_id
         LEFT JOIN LATERAL (
           SELECT scheduled_arrival_at, city, state, stop_type::text AS stop_type
           FROM mdata.load_stops
