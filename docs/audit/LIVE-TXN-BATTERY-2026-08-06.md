@@ -1356,3 +1356,52 @@ facts are proven; the exact intended trigger is UNVERIFIED.** CC-1 should confir
 wiring.
 
 Board row `LV-PAY-SETTLE-NOPOST` (CC-1, money).
+
+## 31 — ★ LOAD CANCEL — PASS on all five WORM criteria, with a working cascade
+
+Cancelled `L-20260806-0005` (`a0b1df25-…`, assigned-not-dispatched — the realistic cancel case)
+through the real UI. The modal is well built: **Cancellation Reason (required)**, **Notes (min 20
+chars, required)**, **Billable to customer**, optional **Cancellation charge**, and `Confirm Cancel`
+**disabled until a reason is selected**.
+
+**Cancellation-reason catalog loads correctly** with real codes — `CUST_NO_LONGER_NEEDED`,
+`CUST_RATE_TOO_LOW`, `CUST_NO_SHOW_AT_PICKUP`, `CUST_DOUBLE_BROKERED`, "No available unit" — plus an
+inline `+ Create cancellation reason` (the §7 inline-create pattern). Note this catalog works while 21
+others 500 (`LV-CAT-500`) — it is served by a different endpoint.
+
+**Result on prod:**
+
+| check | result |
+|---|---|
+| a. reversing entry | **N/A — correctly** (the linked invoice was a `proforma` with **0 postings**; there was nothing to reverse) |
+| b. original preserved | ✅ `status = cancelled`, **`soft_deleted_at` NULL — not deleted** |
+| c. append-only audit row | ✅ **1,828 audit rows** in the window, covering **`loads` AND `invoices`** — both the cancel and the cascade were audited |
+| d. siblings untouched | ✅ `LUSMCAFREIGHT-20260806-0001` still `delivered_pending_docs`; `L-20260802-0258` still `delivered` |
+| e. entity balance correct | ✅ no GL impact — the proforma never posted, so nothing to unwind |
+
+**★ THE CASCADE WORKS:** cancelling the load **auto-voided its linked invoice** —
+`INV-2026-00005` moved to `status = void`. Load→invoice cascade is wired, and it did the right thing
+(a proforma for a cancelled load should not survive).
+
+### 31a — ★ This is the diagnostic contrast CC-1 needs for `LV-VOID-NO-REVERSAL`
+
+**The CANCEL path is correct. The VOID path is not.** Same system, same entity, same WORM law:
+
+| | cancel (item 31) | void (item 28) |
+|---|---|---|
+| original preserved | ✅ | ✅ |
+| audit row written | ✅ | ✅ |
+| siblings untouched | ✅ | ✅ |
+| **reversal posted** | ✅ N/A, nothing to reverse | ❌ **$1,643.21 left on the books** |
+| cascade to linked docs | ✅ invoice auto-voided | — |
+
+So the void defect is **not** a missing framework — cancel demonstrates the surrounding machinery
+(audit, preservation, cascade) all works. **CC-1 should diff the cancel implementation against the
+void implementation**; the cancel path appears to do correctly what void omits. That is a far cheaper
+starting point than writing reversal logic from scratch, and it satisfies "reuse the existing poster,
+write no new GL math."
+
+**Caveat:** cancel was tested on a load whose invoice had **zero postings**, so it never had to emit a
+reversal. This proves cancel's preservation/audit/cascade behaviour, **not** that cancel would post a
+correct reversal if there were postings to unwind. **UNVERIFIED** on that specific point — do not read
+this as proof that cancel reverses correctly.
