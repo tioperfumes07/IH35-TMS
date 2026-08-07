@@ -11,7 +11,7 @@ const historyQuerySchema = companyQuerySchema.extend({
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
 export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) {
-  app.get("/api/v1/border-crossing/history", async (req, reply) => {
+  app.get("/api/v1/border-crossing/history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsed = historyQuerySchema.safeParse(req.query ?? {});
@@ -35,8 +35,11 @@ export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) 
                  l.load_number
           FROM mdata.unit_border_crossings ubc
           LEFT JOIN mdata.units u ON u.id = ubc.unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ubc.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = ubc.driver_id
+                                   AND d.operating_company_id = ubc.operating_company_id
           LEFT JOIN mdata.loads l ON l.id = ubc.load_id
+                                 AND l.operating_company_id = ubc.operating_company_id
           WHERE ${filters.join(" AND ")}
           ORDER BY ubc.wizard_completed_at DESC NULLS LAST, ubc.crossing_date DESC
           LIMIT $${values.length - 1}
@@ -50,7 +53,7 @@ export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) 
     return reply.send({ crossings: payload });
   });
 
-  app.get("/api/v1/border-crossing/history/:id", async (req, reply) => {
+  app.get("/api/v1/border-crossing/history/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -70,8 +73,11 @@ export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) 
                  p.cbp_port_code
           FROM mdata.unit_border_crossings ubc
           LEFT JOIN mdata.units u ON u.id = ubc.unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ubc.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = ubc.driver_id
+                                   AND d.operating_company_id = ubc.operating_company_id
           LEFT JOIN mdata.loads l ON l.id = ubc.load_id
+                                 AND l.operating_company_id = ubc.operating_company_id
           LEFT JOIN mdata.vendors v ON v.id = ubc.customs_broker_id
           LEFT JOIN reference.ports_of_entry p ON p.id = ubc.port_of_entry_id
           WHERE ubc.id = $1::uuid

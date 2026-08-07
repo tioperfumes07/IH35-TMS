@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -211,22 +212,18 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
       const liability = res.rows[0];
       if (!liability) return null;
 
-      await client.query(
-        `
-          INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-          VALUES ($1, $2, $3, $4::jsonb)
-        `,
-        [
-          "driver_finance.driver_liabilities",
-          params.data.id,
-          "liability.ack_request_sent",
-          JSON.stringify({
-            liability_id: params.data.id,
-            driver_id: liability.driver_id,
-            channel: body.data.channel,
-            message: body.data.message,
-          }),
-        ]
+      await enqueueOutboxEvent(
+        client,
+        "liability.ack_request_sent",
+        { aggregate_type: "driver_finance.driver_liabilities", aggregate_id: params.data.id },
+        {
+          liability_id: params.data.id,
+          driver_id: liability.driver_id,
+          // Required by the consumer: every notification is entity-scoped.
+          operating_company_id: companyId,
+          channel: body.data.channel,
+          message: body.data.message,
+        }
       );
       await appendCrudAudit(
         client,

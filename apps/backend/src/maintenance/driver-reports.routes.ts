@@ -55,7 +55,9 @@ export async function registerMaintenanceDriverReportsRoutes(app: FastifyInstanc
           r.updated_at
         FROM maintenance.driver_reports r
         LEFT JOIN mdata.drivers d ON d.id = r.driver_id
+                               AND d.operating_company_id = r.operating_company_id
         LEFT JOIN mdata.loads l ON l.id = r.load_id
+                             AND l.operating_company_id = r.operating_company_id
         WHERE r.operating_company_id = $1
       `;
       if (query.data.status) {

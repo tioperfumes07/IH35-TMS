@@ -4,6 +4,10 @@
  *
  * docs/module-completion/<module>.json is the machine source of truth.
  * - complete:true is ILLEGAL while any item is not PASS or qualifying HOLD
+ * - complete:true is ILLEGAL while any open|draining wave card in
+ *   docs/audit/wave-queue.json lists the module (cross-cutting class still open)
+ * - complete:false is REQUIRED (legal) when N===M BUT open wave cards list the module —
+ *   honesty, not a gap. Without this, verify-no-false-green-certify and this guard fight.
  * - Branch commits claiming "accounting done" / "banking done" / "module complete"
  *   while that module's complete!==true → FAIL
  * - Prints PROGRESS: N of M for each module
@@ -21,6 +25,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { classifyCommitRange, collectGitFacts, rangeCommitShas } from "./lib/branch-range-guard.mjs";
+import { openWaveIdsForModule } from "./lib/open-wave-modules.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIR = path.join(ROOT, "docs/module-completion");
@@ -73,7 +78,7 @@ export function scoreManifest(data) {
   return { N, M, open, progress: `${N} of ${M}` };
 }
 
-export function assertManifestShape(file, data) {
+export function assertManifestShape(file, data, opts = {}) {
   const problems = [];
   if (!data.module || typeof data.module !== "string") problems.push(`${file}: missing module`);
   if (typeof data.complete !== "boolean") problems.push(`${file}: complete must be boolean`);
@@ -99,6 +104,13 @@ export function assertManifestShape(file, data) {
     }
   }
   const { N, M, open } = scoreManifest(data);
+  const openWaves =
+    opts.openWaveIds !== undefined
+      ? opts.openWaveIds
+      : typeof data.module === "string"
+        ? openWaveIdsForModule(data.module, opts.waveQueuePath)
+        : [];
+
   if (data.complete === true && open.length) {
     problems.push(
       `${file}: complete:true ILLEGAL — still open: ${open.map((i) => i.id).join(", ")} (${N} of ${M})`
@@ -107,7 +119,13 @@ export function assertManifestShape(file, data) {
   if (data.complete === true && N !== M) {
     problems.push(`${file}: complete:true but N!==M (${N} of ${M})`);
   }
-  if (data.complete === false && N === M && M > 0) {
+  if (data.complete === true && openWaves.length) {
+    problems.push(
+      `${file}: complete:true ILLEGAL — open wave card(s) list this module: ${openWaves.join(", ")} (set complete:false until classes drain)`
+    );
+  }
+  // All items PASS/HOLD: complete:true required UNLESS cross-cutting open waves list the module.
+  if (data.complete === false && N === M && M > 0 && openWaves.length === 0) {
     problems.push(
       `${file}: all items PASS/HOLD but complete:false — set complete:true or fix item statuses`
     );
@@ -253,6 +271,14 @@ const isMain =
 
 if (isMain && SELFTEST) {
   const failures = [];
+  const passItem = (id) => ({
+    id,
+    title: "t",
+    layers: ["DOD-A"],
+    spec: "s",
+    status: "PASS",
+    evidence: "e",
+  });
   const bad = {
     module: "accounting",
     complete: true,
@@ -267,21 +293,14 @@ if (isMain && SELFTEST) {
       },
     ],
   };
-  const p1 = assertManifestShape("test.json", bad);
+  const p1 = assertManifestShape("test.json", bad, { openWaveIds: [] });
   if (!p1.some((x) => x.includes("complete:true ILLEGAL"))) failures.push("complete-illegal not caught");
 
   const good = {
     module: "accounting",
     complete: false,
     items: [
-      {
-        id: "X1",
-        title: "t",
-        layers: ["DOD-A"],
-        spec: "s",
-        status: "PASS",
-        evidence: "e",
-      },
+      passItem("X1"),
       {
         id: "X2",
         title: "t2",
@@ -299,6 +318,38 @@ if (isMain && SELFTEST) {
     [{ file: "x", data: good }]
   );
   if (!claims.length) failures.push("false complete claim not caught");
+
+  // Cross-cutting wave reconcile (both directions):
+  // A) all-PASS + complete:false + open wave → legal honesty (must NOT fail)
+  const allPassFalse = {
+    module: "banking",
+    complete: false,
+    items: [passItem("B1"), passItem("B2")],
+  };
+  const honestyOk = assertManifestShape("banking.json", allPassFalse, {
+    openWaveIds: ["CLS-PLANT-BANK"],
+  });
+  if (honestyOk.length) {
+    failures.push(`all-PASS+open-wave+complete:false should be legal, got: ${honestyOk.join("; ")}`);
+  }
+  // B) all-PASS + complete:true + open wave → ILLEGAL
+  const allPassTrue = { ...allPassFalse, complete: true };
+  const falseGreen = assertManifestShape("banking.json", allPassTrue, {
+    openWaveIds: ["CLS-PLANT-BANK"],
+  });
+  if (!falseGreen.some((x) => x.includes("open wave card"))) {
+    failures.push("all-PASS+open-wave+complete:true not caught");
+  }
+  // C) all-PASS + complete:false + NO open wave → still must set complete:true
+  const staleIncomplete = assertManifestShape("banking.json", allPassFalse, { openWaveIds: [] });
+  if (!staleIncomplete.some((x) => x.includes("set complete:true"))) {
+    failures.push("all-PASS+no-wave+complete:false not forced to complete:true");
+  }
+  // D) all-PASS + complete:true + NO open wave → legal
+  const cleanComplete = assertManifestShape("banking.json", allPassTrue, { openWaveIds: [] });
+  if (cleanComplete.length) {
+    failures.push(`all-PASS+no-wave+complete:true should be clean, got: ${cleanComplete.join("; ")}`);
+  }
 
   if (failures.length) {
     console.error(`${LABEL} --selftest FAIL`, failures);

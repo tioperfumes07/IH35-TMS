@@ -29,6 +29,8 @@ import {
   buildBillEvent2Postings,
   buildEarnEvent1Postings,
 } from "../revrec-delivery-posting/poster.service.js";
+import { buildInterestAccrualPostings } from "../related-party-loan-posting/interest-accrual.service.js";
+import { buildRelatedPartyLoanPostings } from "../related-party-loan-posting/poster.service.js";
 import { buildCompanyPaidFinePostings } from "../safety-fine-posting/poster.service.js";
 import { buildWarrantyReimbursePostings } from "../warranty-posting/poster.service.js";
 
@@ -53,6 +55,34 @@ const BUILDERS: Array<{ name: string; fn: Builder }> = [
   // Cr Unbilled at invoice. Both must balance independently or revenue and A/R drift apart.
   { name: "buildEarnEvent1Postings", fn: buildEarnEvent1Postings as Builder },
   { name: "buildBillEvent2Postings", fn: buildBillEvent2Postings as Builder },
+  // Related-party loans take `direction` as their FIRST argument, so each direction is registered as
+  // its own shape. They are genuinely different entries — 'in' credits a liability, 'out' debits a
+  // receivable — and a single registration would only ever exercise one of them.
+  {
+    name: "buildRelatedPartyLoanPostings",
+    fn: ((a: string, b: string, amt: number, memo: string) =>
+      buildRelatedPartyLoanPostings("in", b, a, amt, memo)) as Builder,
+  },
+  {
+    name: "buildRelatedPartyLoanPostings_out",
+    fn: ((a: string, b: string, amt: number, memo: string) =>
+      buildRelatedPartyLoanPostings("out", a, b, amt, memo)) as Builder,
+  },
+  // Interest accrual on those same loans, likewise one registration per direction. 'in' debits the
+  // dedicated related-party interest EXPENSE account and credits the lender liability; 'out' debits
+  // Interest Receivable and credits Interest Income. Registered so the argument-order assertion below
+  // pins each direction's debit side — reversing an accrual understates income and overstates expense
+  // by the same number, which nets to zero on the trial balance and hides in plain sight.
+  {
+    name: "buildInterestAccrualPostings",
+    fn: ((a: string, b: string, amt: number, memo: string) =>
+      buildInterestAccrualPostings("in", a, b, amt, memo)) as Builder,
+  },
+  {
+    name: "buildInterestAccrualPostings_out",
+    fn: ((a: string, b: string, amt: number, memo: string) =>
+      buildInterestAccrualPostings("out", b, a, amt, memo)) as Builder,
+  },
 ];
 
 /**
@@ -119,7 +149,7 @@ describe("auto-poster builders — double-entry balance invariant", () => {
 
   it("covers every builder exported by the poster services", () => {
     // Mirrors the static guard so a bare `vitest` run also catches an uncovered poster.
-    expect(BUILDERS).toHaveLength(8);
+    expect(BUILDERS).toHaveLength(12);
   });
 });
 

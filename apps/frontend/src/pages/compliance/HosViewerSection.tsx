@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Combobox, type ComboboxOption } from "../../components/Combobox";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { listDrivers } from "../../api/mdata";
 import {
   getHosDaily,
   getHosDailyRoster,
@@ -60,22 +59,7 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
   const strip = useMemo(() => buildDayStrip(today), [today]);
   const [selectedDate, setSelectedDate] = useState(today);
   const [driverId, setDriverId] = useState<string | null>(null);
-  // SAF-B29: never silent listDrivers(limit:500) — type-ahead re-queries so drivers past page 1 stay selectable.
-  const [driverSearch, setDriverSearch] = useState("");
 
-  // Picker source = ACTIVE drivers with server search (all selectable, not just those with HOS today).
-  const driversQ = useQuery({
-    queryKey: ["hos-viewer", "drivers", operatingCompanyId, driverSearch],
-    queryFn: () =>
-      listDrivers({
-        operating_company_id: operatingCompanyId,
-        status: "Active",
-        limit: 200,
-        search: driverSearch || undefined,
-      }),
-    enabled: Boolean(operatingCompanyId),
-    staleTime: 5 * 60 * 1000,
-  });
   // Roster for the chosen date = who HAS HOS data + their unit number (always passes date; roster 400s without it).
   const rosterQ = useQuery({
     queryKey: ["hos-viewer", "roster", operatingCompanyId, selectedDate],
@@ -84,35 +68,12 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
     staleTime: 60_000,
   });
 
-  const rosterByDriver = useMemo(() => {
-    const m = new Map<string, { unit: string | null; hasData: boolean }>();
-    for (const d of rosterQ.data?.drivers ?? []) m.set(d.driver_id, { unit: d.unit_number, hasData: d.available });
-    return m;
-  }, [rosterQ.data]);
-
-  const options: ComboboxOption[] = useMemo(() => {
-    const drivers = driversQ.data?.drivers ?? [];
-    return drivers
-      .map((d) => {
-        const name = [d.first_name, d.last_name].filter(Boolean).join(" ") || d.id;
-        const meta = rosterByDriver.get(d.id);
-        const bits: string[] = [];
-        if (meta?.unit) bits.push(`Unit ${meta.unit}`);
-        if (meta?.hasData) bits.push("HOS today");
-        return { value: d.id, label: name, sublabel: bits.join(" · ") || undefined };
-      })
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [driversQ.data, rosterByDriver]);
-
-  // Auto-select so the Viewer is never an empty prompt: prefer the first roster driver WITH HOS data for the date,
-  // else the first active driver.
+  // Auto-select so the Viewer is never an empty prompt: prefer the first roster driver WITH HOS data for the date.
   useEffect(() => {
     if (driverId) return;
     const firstWithData = (rosterQ.data?.drivers ?? []).find((d) => d.available);
-    if (firstWithData) { setDriverId(firstWithData.driver_id); return; }
-    const firstActive = driversQ.data?.drivers?.[0];
-    if (firstActive) setDriverId(firstActive.id);
-  }, [driverId, rosterQ.data, driversQ.data]);
+    if (firstWithData) setDriverId(firstWithData.driver_id);
+  }, [driverId, rosterQ.data]);
 
   const dailyQ = useQuery({
     queryKey: ["hos-viewer", "daily", operatingCompanyId, driverId, selectedDate],
@@ -121,7 +82,8 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
     staleTime: 60_000,
   });
 
-  const selectedName = options.find((o) => o.value === driverId)?.label ?? "driver";
+  const selectedName =
+    (rosterQ.data?.drivers ?? []).find((d) => d.driver_id === driverId)?.driver_name?.trim() || "driver";
   const daily = dailyQ.data;
   const verdict = daily?.clocks ? STATUS_VERDICT[daily.clocks.status] ?? STATUS_VERDICT.ok : null;
   const segmentColumns = useMemo<ParityColumn<HosSegment>[]>(
@@ -169,17 +131,18 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
     <section data-testid="compliance-section-hos-viewer">
       {/* Picker + date controls */}
       <div className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white px-3 py-3">
-        <div className="min-w-[260px] flex-1">
+        <div className="min-w-[260px] flex-1" data-testid="hos-viewer-driver-picker">
           <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500">Driver</label>
-          <Combobox
-            options={options}
+          {/* Picker law: EntityPicker kind=driver — not Combobox over listDrivers page. */}
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={operatingCompanyId}
             value={driverId}
             onChange={setDriverId}
-            onSearch={setDriverSearch}
-            placeholder={driversQ.isLoading ? "Loading drivers…" : "Search a driver…"}
-            loading={driversQ.isLoading}
-            filterMode="contains"
+            enabled={Boolean(operatingCompanyId)}
+            placeholder="Search a driver…"
             dataField="hos-viewer-driver"
+            allowClear
           />
         </div>
         <div>

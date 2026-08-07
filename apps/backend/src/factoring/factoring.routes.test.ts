@@ -79,6 +79,7 @@ describe("factoring.routes active factor identity", () => {
     expect(response.json()).toMatchObject({
       active_factor_id: faroVendorId,
       active_factor_name: "Faro Factoring LLC",
+      active_factor_profile_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
     });
   });
 
@@ -94,6 +95,7 @@ describe("factoring.routes active factor identity", () => {
     expect(response.json().current).toMatchObject({
       active_factor_id: faroVendorId,
       active_factor_name: "Faro Factoring LLC",
+      active_factor_profile_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
     });
   });
 
@@ -119,6 +121,7 @@ describe("factoring.routes active factor identity", () => {
     expect(response.json()).toMatchObject({
       active_factor_id: null,
       active_factor_name: null,
+      active_factor_profile_id: null,
     });
   });
 });

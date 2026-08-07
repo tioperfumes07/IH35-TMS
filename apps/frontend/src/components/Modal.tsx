@@ -170,9 +170,11 @@ export function Modal({
     <>
       <div
         className={
+          // z-[70] above ParityDrawer (z-[60]) and page wizards (z-50) so nested +Create unit/driver
+          // from Book Load / money drawers receive clicks — never the parent backdrop.
           isDrawer
-            ? "fixed inset-0 z-50 flex justify-end bg-black/50"
-            : "fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            ? "fixed inset-0 z-[70] flex justify-end bg-black/50"
+            : "fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4"
         }
         onMouseDown={attemptClose}
       >

@@ -21,7 +21,7 @@ auto-loaded entry point, and why §3/§4 below are **machine-enforced** rather t
 - [ ] `git fetch origin` → `git checkout main` → `git pull --ff-only` (the local clone lags routinely)
 - [ ] Fresh branch per block (`feat/…`, `fix/…`, `chore/…`). **Never `git add -A`** — stage explicit paths
 - [ ] Read the spec / approved screen **first**. Never build from a defect list
-- [ ] Classify the lane. Financial cluster → **build-and-HOLD**, never self-merge (§6)
+- [ ] Classify the lane. Financial cluster → proof gate (independent review + financial-agent pass + 18-key evidence), then merge on green yourself (§6 — OWNER LAW 2026-08-03, no hold)
 
 ## 1 · The five DONE layers — per module · per tab · per nested tab · per wizard
 
@@ -121,16 +121,20 @@ A PR that changes app code and omits this block is **not reviewable and is not d
 - [ ] **Establish the baseline before blaming your change** — run the suite on `main` and compare
 - [ ] **Deploy is verified by ancestry**, not string equality (`git merge-base --is-ancestor`)
 
-## 6 · Merge gates
+## 6 · Merge gates — OWNER LAW (2026-08-03, FINAL): NO HOLDS, NO `JORGE-APPROVED`
 
-- [ ] Merging to `main` **IS** the production-deploy decision. There is no second gate
-- [ ] **Self-merge allowed:** pure frontend / docs / CI-action bumps, and non-financial backend
-      touching none of the financial cluster, migrations, or `accounting.*`/`catalogs.*`/`mdata.*`
-- [ ] **STOP for the owner's explicit OK:** any financial change, any migration/schema change, any
-      touch to `accounting.*`/`catalogs.*`/`mdata.*`, any runtime dependency bump
-- [ ] Opening balances are owner-entered only. Default env flags **OFF**. **Flag flips are the
-      owner's sole decision**
-- [ ] Prod DB access is gated **per connection** — ask every time
+- [ ] Merging to `main` **IS** the production-deploy decision. There is no second gate — including no
+      owner-approval gate
+- [ ] **Every coder merges on green itself, in every lane** — non-financial AND financial cluster /
+      migrations / `accounting.*`/`catalogs.*`/`mdata.*`. See `.cursor/rules/00-operating-method-LAW.mdc`
+- [ ] **Financial cluster proof gate (not an owner-approval gate):** independent code-review +
+      financial-agent pass, the 18-key evidence block, migration firewall, apply on Neon yourself —
+      then merge on green
+- [ ] Opening balances are owner-entered only (retained — a data-accuracy control). Default env flags
+      **OFF**. **Flag flips happen after the owner's DECISION in chat** ("turn it on"), executed and
+      proven live by the coder — never a label, never a merge-time ask
+- [ ] Prod DB access is verified **per connection** (right branch) — a correctness check, not a
+      permission ask
 
 ## 7 · Migration PRs — additionally
 

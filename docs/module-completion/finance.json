@@ -15,83 +15,125 @@
     {
       "id": "FIN-S01",
       "title": "/finance hub renders honest per-entity feature gate when disabled",
-      "layers": ["DOD-A", "DOD-B"],
+      "layers": [
+        "DOD-A",
+        "DOD-B"
+      ],
       "spec": "FinanceHubPage · finance-hub-deep-2026-08-01",
       "status": "OPEN",
       "evidence": "scaffold — auditor PASS: honest gate message on TRANSP",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "FIN-S02",
       "title": "/finance/overview honest stub (future module labeled)",
-      "layers": ["DOD-A", "DOD-B"],
+      "layers": [
+        "DOD-A",
+        "DOD-B"
+      ],
       "spec": "FinanceOverviewPage",
       "status": "OPEN",
       "evidence": "scaffold — auditor PASS: explicitly labeled future module",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "FIN-S03",
       "title": "/finance/ar-ap-aging names AR_AP_AGING_UI_ENABLED flag when off",
-      "layers": ["DOD-B", "VERIFY-1"],
+      "layers": [
+        "DOD-B",
+        "VERIFY-1"
+      ],
       "spec": "ArApAgingPage feature-flag honesty",
       "status": "OPEN",
       "evidence": "scaffold — auditor PASS: names exact flag",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "FIN-S04",
       "title": "/finance/loan-wizard preview form functional (preview-only, no post)",
-      "layers": ["DOD-A", "DOD-D"],
+      "layers": [
+        "DOD-A",
+        "DOD-D"
+      ],
       "spec": "LoanWizardPage · FH-VERIFY",
       "status": "OPEN",
       "evidence": "scaffold — auditor PASS live: full preview form, explicitly no posting",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "FIN-S05",
       "title": "/finance/projections tab entity-scoped",
-      "layers": ["DOD-A", "DOD-C"],
+      "layers": [
+        "DOD-A",
+        "DOD-C"
+      ],
       "spec": "FinanceProjectionsPage route",
       "status": "OPEN",
       "evidence": "scaffold — not proven",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "FIN-S06",
       "title": "/finance/scenarios tab entity-scoped",
-      "layers": ["DOD-A", "DOD-C"],
+      "layers": [
+        "DOD-A",
+        "DOD-C"
+      ],
       "spec": "FinanceScenariosPage route",
       "status": "OPEN",
       "evidence": "scaffold — not proven",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "FIN-S07",
       "title": "/finance/statements tab wired (flag-gated tabs honest)",
-      "layers": ["DOD-A", "DOD-B"],
+      "layers": [
+        "DOD-A",
+        "DOD-B"
+      ],
       "spec": "FinancialStatementsPage · VFINANCE wave",
       "status": "OPEN",
       "evidence": "scaffold — not proven; VFINANCE vertical-close block FH-VERIFY-finance-hub-modules",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "FIN-S08",
       "title": "/finance/calculator and /finance/amortization flag-gated reachability",
-      "layers": ["DOD-A", "VERIFY-1"],
+      "layers": [
+        "DOD-A",
+        "VERIFY-1"
+      ],
       "spec": "sidebar flyout finance tabs",
       "status": "OPEN",
       "evidence": "scaffold — routes exist; flag gating UNVERIFIED",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "FIN-VERIFY-01",
       "title": "Finance Hub VERIFY-1..8 when entity flag enabled",
-      "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
+      "layers": [
+        "VERIFY-1",
+        "VERIFY-2",
+        "VERIFY-3",
+        "VERIFY-4",
+        "VERIFY-5",
+        "VERIFY-6",
+        "VERIFY-7",
+        "VERIFY-8"
+      ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "OPEN",
       "evidence": "scaffold — not proven on enabled entity",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     }
   ],
   "pass_count": 0,

@@ -4,10 +4,10 @@
   "_captured": "2026-07-21",
   "_scope": "SCHEMA REACHABILITY IN CODE only. This guard cannot prove rows are populated, that a poster runs, or that reverse drill-through exists in the UI. Those are live-data audits (LAW 0: prod wins). Never cite this guard as proof the books are wired.",
   "_verdicts": {
-    "none": "identifier appears NOWHERE in non-test source \u2014 storage with no reader at all",
-    "weak": "identifier appears in the codebase but in NO file that touches this table \u2014 the substring illusion (e.g. mdata.drivers.employment_status, superseded by driver_employment_status_id in 0343)"
+    "none": "identifier appears NOWHERE in non-test source — storage with no reader at all",
+    "weak": "identifier appears in the codebase but in NO file that touches this table — the substring illusion (e.g. mdata.drivers.employment_status, superseded by driver_employment_status_id in 0343)"
   },
-  "_recapture": "2026-07-21 \u2014 coverage went from 1,074 ADD COLUMN-only objects to 5,740 live columns (inline CREATE TABLE columns were 81% of the schema and were invisible), and whole-corpus substring matching was replaced by whole-token, table-context matching. The count grew because the guard now sees what it always claimed to check. DO-block DDL (real CREATE TABLE inside $$ bodies) and comma-separated inline columns are now parsed too \u2014 the prior revision discarded dollar-quoted bodies entirely.",
+  "_recapture": "2026-07-21 — coverage went from 1,074 ADD COLUMN-only objects to 5,740 live columns (inline CREATE TABLE columns were 81% of the schema and were invisible), and whole-corpus substring matching was replaced by whole-token, table-context matching. The count grew because the guard now sees what it always claimed to check. DO-block DDL (real CREATE TABLE inside $$ bodies) and comma-separated inline columns are now parsed too — the prior revision discarded dollar-quoted bodies entirely.",
   "count": 498,
   "entries": [
     {
@@ -2403,6 +2403,13 @@
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "0003_outbox_init.sql"
+    },
+    {
+      "object": "outbox.outbox_queue.last_error",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0003_outbox_init.sql",
+      "reason": "outbox.outbox_queue is a RETIRED duplicate of outbox.events. Verified on prod 2026-08-03 (positive control mdata.vendors=2,828): 49 rows, ALL 'PENDING', attempts=0 on every row, oldest 2026-06-16 — nothing has ever drained it, because processor.ts reads outbox.events (31,622 rows, 31,618 delivered). This column became reader-less in the SAME PR that repointed 9 of its 11 producers onto the live table; its siblings available_at/locked_at/processed_at were already baselined here for the same reason and are the pre-existing evidence of it. Retiring the table is a MIGRATION and therefore owner-gated, so it is tracked separately rather than smuggled in — the two remaining writers are a deprecated unreachable route file and the QBO write-back pair that stays off by owner ruling."
     },
     {
       "object": "outbox.outbox_queue.locked_at",

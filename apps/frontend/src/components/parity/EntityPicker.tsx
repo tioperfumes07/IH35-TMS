@@ -35,6 +35,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Combobox } from "../Combobox";
 import { CreateDriverModal } from "../drivers/CreateDriverModal";
+import { CreateTrailerModal } from "../fleet/CreateTrailerModal";
 import { CreateUnitModal } from "../fleet/CreateUnitModal";
 import { PolicyCreateModal } from "../insurance/PolicyCreateModal";
 import {
@@ -165,6 +166,15 @@ export function EntityPicker({
 
       {createOffered && kind === "unit" ? (
         <CreateUnitModal
+          open={createOpen}
+          operatingCompanyId={operatingCompanyId}
+          onClose={() => setCreateOpen(false)}
+          onCreated={(id) => handleCreated(id)}
+        />
+      ) : null}
+
+      {createOffered && kind === "trailer" ? (
+        <CreateTrailerModal
           open={createOpen}
           operatingCompanyId={operatingCompanyId}
           onClose={() => setCreateOpen(false)}

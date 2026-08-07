@@ -7,7 +7,7 @@
  * file's assertion instead of re-implementing it, so the local hook and the CI gate can never drift
  * apart ? a second copy of a rule is a rule that will disagree with itself.
  *
- * Money paths ALSO run assertNoMoneyTheater (DoD ù10 / verify-step 1430) ? FINDING + LANE +
+ * Money paths ALSO run assertNoMoneyTheater (DoD ?10 / verify-step 1430) ? FINDING + LANE +
  * DOD-A..E + VERIFY-1..8 + MODULE_PROGRESS + Rule 16 required or the commit is rejected.
  *
  * AMEND HOLE (fixed Rule 25 / 2026-07-28): `git commit --amend` with a message-only rewrite leaves
@@ -25,7 +25,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveCommitMsgFiles } from "./lib/commit-msg-files.mjs";
-import { assertDoDEvidence } from "./verify-definition-of-done-evidence.mjs";
+import { assertDoDEvidence, splitCommitMessage } from "./verify-definition-of-done-evidence.mjs";
 import {
   assertNoMoneyTheater,
   isMoneyAppCommit,
@@ -51,8 +51,9 @@ function main() {
     .join("\n")
     .trim();
 
-  const [subject = "", ...rest] = message.split("\n");
-  const body = rest.join("\n");
+  // Same splitter as CI (verify-definition-of-done-evidence collectBranchCommits) ? first LINE
+  // is subject; rest keeps newlines so Rule 16 labels stay line-anchored.
+  const { subject, body } = splitCommitMessage(message);
 
   if (/^(Merge|Revert|fixup!|squash!)\b/i.test(subject.trim())) process.exit(0);
 
@@ -70,16 +71,17 @@ function main() {
     for (const p of problems) console.error("  ? " + p.replace(/^STAGED0+\s*/, ""));
     console.error(`
 This commit touches shipped code (apps/ or db/), so its message must carry the
-Rule 16 evidence block. Template:
+Rule 16 evidence block. Put a BLANK LINE after the one-line subject, then:
 
-  <type>(<scope>): <what changed>
-
+  FINDING: ?
+  LANE: ?
+  DOD-A: ? through DOD-E: ?
+  VERIFY-1: ? through VERIFY-8: ?
+  MODULE_PROGRESS: <module> N of M
   ROOT CAUSE: the actual mechanism, not the symptom
-  FIX:        what changed, and why this is the root fix rather than a patch
+  FIX:        what changed (root fix, not a patch)
   GUARD:      scripts/verify-*.mjs + scripts/verify-steps/NNNN-*.mjs
-  LIVE PROOF: endpoint / health sha / DB row / browser ó or:
-  LIVE PROOF: UNVERIFIED: <named blocker>
-  (also accepted: UNVERIFIED: <named blocker> as its own labelled line)
+  LIVE PROOF: endpoint / health sha / DB row / browser ? or UNVERIFIED: <blocker>
   REMAINING:  what is still open (or "none")
 
 Canonical standard: docs/specs/DEFINITION-OF-DONE.md
@@ -89,7 +91,7 @@ Pre-push also runs scripts/money-pr-local-gate.mjs (Rule 25).
 `);
     if (isMoneyAppCommit(files) || files.some((f) => /^db\/migrations\//i.test(f))) {
       console.error(`
-MONEY / MIGRATION PATH ? also required (DoD ù10 / Rules 23?25):
+MONEY / MIGRATION PATH ? also required (DoD ?10 / Rules 23?25):
 
 ${MONEY_DOD_COMMIT_TEMPLATE}
 

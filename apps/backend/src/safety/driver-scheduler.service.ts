@@ -258,6 +258,83 @@ export async function getLeaveBalance(client: QueryableClient, operatingCompanyI
   return res.rows[0] ?? null;
 }
 
+/**
+ * Office Leave Balances tab — every active (non-sample) driver for the entity + plan year,
+ * seeded from catalogs.leave_policies when a balance row is missing.
+ */
+export async function listLeaveBalances(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  planYear: number
+) {
+  const policy = await getLeavePolicy(client, operatingCompanyId);
+  if (!policy) return { policy: null, year: planYear, balances: [] as Record<string, unknown>[] };
+
+  await client.query(
+    `
+      INSERT INTO catalogs.driver_leave_balances (
+        operating_company_id,
+        driver_id,
+        plan_year,
+        vacation_allocated,
+        sick_allocated,
+        personal_allocated
+      )
+      SELECT
+        $1,
+        d.id,
+        $2,
+        $3,
+        $4,
+        $5
+      FROM mdata.drivers d
+      WHERE d.operating_company_id = $1
+        AND d.deactivated_at IS NULL
+        AND d.is_sample_data IS NOT TRUE
+        AND concat_ws(' ', d.first_name, d.last_name) NOT ILIKE '%DEMO%'
+        AND concat_ws(' ', d.first_name, d.last_name) NOT ILIKE '%DUMMY%'
+        AND concat_ws(' ', d.first_name, d.last_name) NOT ILIKE 'TEST%'
+      ON CONFLICT (operating_company_id, driver_id, plan_year) DO NOTHING
+    `,
+    [
+      operatingCompanyId,
+      planYear,
+      policy.vacation_days_per_year ?? 0,
+      policy.sick_days_per_year ?? 0,
+      policy.personal_days_per_year ?? 0,
+    ]
+  );
+
+  const res = await client.query(
+    `
+      SELECT
+        b.id,
+        b.driver_id,
+        concat_ws(' ', d.first_name, d.last_name) AS driver_name,
+        d.status::text AS driver_status,
+        b.plan_year,
+        b.vacation_allocated,
+        b.vacation_used,
+        GREATEST(b.vacation_allocated - b.vacation_used, 0) AS vacation_remaining,
+        b.sick_allocated,
+        b.sick_used,
+        GREATEST(b.sick_allocated - b.sick_used, 0) AS sick_remaining,
+        b.personal_allocated,
+        b.personal_used,
+        GREATEST(b.personal_allocated - b.personal_used, 0) AS personal_remaining
+      FROM catalogs.driver_leave_balances b
+      JOIN mdata.drivers d ON d.id = b.driver_id
+      WHERE b.operating_company_id = $1
+        AND b.plan_year = $2
+        AND d.deactivated_at IS NULL
+        AND d.is_sample_data IS NOT TRUE
+      ORDER BY d.last_name, d.first_name
+    `,
+    [operatingCompanyId, planYear]
+  );
+  return { policy, year: planYear, balances: res.rows };
+}
+
 async function hasApprovedOverlap(
   client: QueryableClient,
   driverId: string,

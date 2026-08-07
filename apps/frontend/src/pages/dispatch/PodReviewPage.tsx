@@ -1,16 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import {
-  downloadBolDocument,
-  generateLoadBol,
-  getLoadPodBolSummary,
-  getPodDocuments,
-  listDispatchLoads,
-  reviewPodDocument,
-  type BolDocumentSummary,
-  type PodDocumentSummary,
-} from "../../api/dispatch";
+import { getPodDocuments, reviewPodDocument, type PodDocumentSummary } from "../../api/dispatch";
+import { LoadBolPanel } from "../../components/dispatch/LoadBolPanel";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -59,91 +52,12 @@ function PodRowActions({
   );
 }
 
-function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId: string }) {
-  const queryClient = useQueryClient();
-  const summaryQuery = useQuery({
-    queryKey: ["pod-bol-summary", companyId, loadId],
-    queryFn: () => getLoadPodBolSummary(loadId, companyId),
-    enabled: Boolean(companyId && loadId),
-  });
-
-  const generateMutation = useMutation({
-    mutationFn: () => generateLoadBol(loadId, companyId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["pod-bol-summary", companyId, loadId] });
-    },
-  });
-
-  const bols = summaryQuery.data?.bols ?? [];
-  const pods = summaryQuery.data?.pods ?? [];
-
-  return (
-    <div className="rounded-sm border p-4" data-testid="load-pod-bol-panel">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold">Load POD + BOL</h3>
-        <div className="flex gap-2">
-          <a
-            className="rounded-sm border px-3 py-1 text-sm"
-            href={`/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/bol.pdf?operating_company_id=${encodeURIComponent(companyId)}`}
-            data-testid="bol-download-link"
-          >
-            Download BOL PDF
-          </a>
-          <button
-            type="button"
-            className="rounded-sm bg-slate-900 px-3 py-1 text-sm text-white"
-            data-testid="bol-generate-button"
-            disabled={generateMutation.isPending}
-            onClick={() => generateMutation.mutate()}
-          >
-            {generateMutation.isPending ? "Generating…" : "Generate BOL"}
-          </button>
-        </div>
-      </div>
-      <p className="mb-2 text-xs text-slate-600">
-        {pods.length} POD(s) · {bols.length} generated BOL(s)
-      </p>
-      {bols.length > 0 ? (
-        <ul className="space-y-1 text-sm">
-          {bols.map((bol: BolDocumentSummary) => (
-            <li key={bol.id} className="flex items-center justify-between gap-2">
-              <span>{new Date(bol.generated_at).toLocaleString()} · {bol.template_version}</span>
-              <button
-                type="button"
-                className="text-xs underline"
-                onClick={() => void downloadBolDocument(bol.id, companyId).then((res) => window.open(res.download_url, "_blank"))}
-              >
-                Download stored copy
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-sm text-slate-600">No stored BOL yet — generate from load data.</p>
-      )}
-    </div>
-  );
-}
-
 export function PodReviewPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const [loadId, setLoadId] = useState("");
   const [statusFilter, setStatusFilter] = useState<"pending_review" | "approved" | "rejected" | "">("pending_review");
-
-  const loadsQuery = useQuery({
-    queryKey: ["loads-pod-review", companyId],
-    queryFn: () =>
-      listDispatchLoads({
-        operating_company_id: companyId,
-        view: "loads",
-        limit: 50,
-        offset: 0,
-        status: [],
-      }),
-    enabled: Boolean(companyId),
-  });
 
   const podsQuery = useQuery({
     queryKey: ["pod-documents", companyId, statusFilter, loadId],
@@ -154,8 +68,6 @@ export function PodReviewPage() {
       }),
     enabled: Boolean(companyId),
   });
-
-  const loadOptions = useMemo(() => loadsQuery.data?.loads ?? [], [loadsQuery.data]);
 
   const documents = podsQuery.data?.documents ?? [];
 
@@ -214,19 +126,18 @@ export function PodReviewPage() {
       <div className="flex flex-wrap items-center gap-3">
         <label className="text-sm">
           Filter by load
-          <select
-            value={loadId}
-            onChange={(event) => setLoadId(event.target.value)}
-            className="mt-1 h-10 w-full rounded-sm border px-2"
-            data-testid="pod-load-filter"
-          >
-            <option value="">All loads</option>
-            {loadOptions.map((load) => (
-              <option key={load.id} value={load.id}>
-                {load.load_number ?? load.id}
-              </option>
-            ))}
-          </select>
+          <div className="mt-1" data-testid="pod-load-filter">
+            <EntityPicker
+              kind="load"
+              operatingCompanyId={companyId}
+              value={loadId || null}
+              onChange={(v) => setLoadId(v ?? "")}
+              enabled={Boolean(companyId)}
+              allowCreate={false}
+              allowClear
+              placeholder="All loads"
+            />
+          </div>
         </label>
         <label className="text-sm">
           POD status

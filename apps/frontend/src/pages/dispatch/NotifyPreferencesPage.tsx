@@ -10,6 +10,7 @@ import {
 } from "../../api/dispatch";
 import { listCustomers } from "../../api/mdata";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -91,10 +92,16 @@ export function NotifyPreferencesPage() {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const [customerId, setCustomerId] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
 
   const customersQuery = useQuery({
-    queryKey: ["customers-list-notify", companyId],
-    queryFn: () => listCustomers({ operating_company_id: companyId }),
+    queryKey: ["customers-list-notify", companyId, customerSearch],
+    queryFn: () =>
+      listCustomers({
+        operating_company_id: companyId,
+        limit: 5000,
+        search: customerSearch || undefined,
+      }),
     enabled: Boolean(companyId),
   });
 
@@ -135,7 +142,15 @@ export function NotifyPreferencesPage() {
   });
 
   const prefs = prefsQuery.data?.preferences;
-  const customers = useMemo(() => customersQuery.data?.customers ?? [], [customersQuery.data]);
+  const customerOptions = useMemo(
+    () =>
+      (customersQuery.data?.customers ?? []).map((c) => ({
+        value: c.id,
+        label: c.name ?? c.id,
+        type: c.customer_code ?? undefined,
+      })),
+    [customersQuery.data?.customers]
+  );
 
   return (
     <div className="p-4" data-testid="dispatch-notify-preferences-page">
@@ -145,21 +160,22 @@ export function NotifyPreferencesPage() {
       />
 
       <div className="mt-4 flex flex-wrap items-end gap-3">
-        <label className="text-sm">
+        <label className="block text-sm">
           Customer
-          <select
-            className="ml-2 rounded-sm border px-2 py-1"
-            value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-            data-testid="notify-customer-select"
-          >
-            <option value="">Select customer</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name ?? c.id}
-              </option>
-            ))}
-          </select>
+          {/* CLS-CUST-BARE-SELECT: EntityPicker has no customer kind — ReferenceSelect createKind=customer. */}
+          <div className="mt-1 w-80" data-testid="notify-customer-select">
+            <ReferenceSelect
+              value={customerId || null}
+              onChange={(next) => setCustomerId(next ?? "")}
+              options={customerOptions}
+              createKind="customer"
+              operatingCompanyId={companyId}
+              placeholder="Select customer"
+              disabled={!companyId}
+              loading={customersQuery.isLoading}
+              onSearch={setCustomerSearch}
+            />
+          </div>
         </label>
         <button
           type="button"

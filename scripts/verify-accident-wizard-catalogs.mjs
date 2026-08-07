@@ -40,8 +40,16 @@ if (delegatesDriverPicker) {
   let shared = "";
   try { shared = fs.readFileSync(path.join(process.cwd(), SHARED_DRIVER_PICKER), "utf8"); } catch { shared = ""; }
   if (!shared) fail(`${SHARED_DRIVER_PICKER} is missing but ${DRAWER} delegates its driver catalog to it`);
-  else if (!shared.includes("listDrivers")) {
-    fail(`${SHARED_DRIVER_PICKER} no longer calls listDrivers — the driver catalog is dead through the shared picker`);
+  else if (!shared.includes("listDrivers") && !/EntityPicker[\s\S]{0,200}kind=["']driver["']/.test(shared)) {
+    fail(`${SHARED_DRIVER_PICKER} must delegate to EntityPicker kind=driver or call listDrivers — driver catalog dead`);
+  }
+  if (/EntityPicker[\s\S]{0,200}kind=["']driver["']/.test(shared)) {
+    const REG = "apps/frontend/src/components/parity/entityPickerRegistry.ts";
+    let reg = "";
+    try { reg = fs.readFileSync(path.join(process.cwd(), REG), "utf8"); } catch { reg = ""; }
+    if (!reg || !/kind:\s*"driver"[\s\S]*?listDrivers\(/.test(reg)) {
+      fail(`${REG} no longer calls listDrivers for kind=driver — driver catalog dead through EntityPicker`);
+    }
   }
 }
 // Unit catalog: direct listUnits OR EntityPicker kind="unit" (listUnits inside entityPickerRegistry).

@@ -20,6 +20,13 @@ function asText(value: unknown) {
 }
 
 export class TwilioSmsHandler implements OutboxEventHandler {
+  /**
+   * A driver message is not optional telemetry — someone is waiting on it. Without
+   * credentials the processor would otherwise mark it DELIVERED and nobody would learn the
+   * message never left.
+   */
+  requiresDelivery = true as const;
+
   eventType = "twilio.sms.send" as const;
 
   canHandle() {

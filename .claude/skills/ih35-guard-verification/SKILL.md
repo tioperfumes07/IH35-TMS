@@ -24,9 +24,11 @@ so honestly. Report outcomes faithfully: if a step was skipped or a check failed
    columns/tables 500 at runtime). See the schema landmines in `ih35-tms-standards` / `CLAUDE.md §4`.
 2. **Local verify green** — `tsc`, relevant `vitest`, the block's `verify-*` scripts, responsive audit
    (`new_vs_baseline=0`).
-3. **CI green** — `build-typecheck` (the real backend compile+test), `required-checks-gate`, `hold-merge-gate`.
+3. **CI green** — `build-typecheck` (the real backend compile+test), `required-checks-gate`, `hold-merge-gate`
+   (migration firewall only — the label it used to also check is DELETED, OWNER LAW 2026-08-03).
    A green *individual* check is not enough; the gate is the whole required set.
-4. **Merged per the rules** — non-financial self-merge on green; financial/migration only with `JORGE-APPROVED`.
+4. **Merged per the rules** — every lane, including financial/migration, merges on green by the coder itself;
+   no `JORGE-APPROVED` label (deleted), no owner hold.
 5. **Deploy verified LIVE** — poll `GET /api/v1/healthz/shallow` until `version` == your merge short-sha;
    confirm deep `/api/v1/healthz` green; for UI, confirm in the browser.
 
@@ -73,12 +75,13 @@ the proof the fix holds. When you build a guard, prove it FAILS on the bug and P
 - Local-only edits and status lines are not shared evidence. Commit + push + independent verification are
   required before reporting a repository fix as shipped.
 
-## 7. Live-DB verification (gated — ask every time, §1.5)
-Prefer schema truth from `db/migrations/` + public health endpoints. If a live read is truly needed: ask
-first; `assert-neon-branch --expect-branch` before ANY connection (neonctl connection-string silently returns
-the PROD endpoint if the branch isn't positional); verify `current_database()`/`inet_server_addr()`; use
-`BEGIN; SET TRANSACTION READ ONLY; … ROLLBACK` for zero-write proof. A bare read-only `.sql` trips the
-hold-merge-gate → write diagnostics as `scripts/*.mjs`.
+## 7. Live-DB verification (full access, §1 — verify the branch every time, not permission to ask)
+Prefer schema truth from `db/migrations/` + public health endpoints. Coders have FULL Neon access (OWNER LAW
+2026-08-03) — no need to ask before a live read; the discipline is verifying you're on the right branch, not
+seeking permission: `assert-neon-branch --expect-branch` before ANY connection (neonctl connection-string
+silently returns the PROD endpoint if the branch isn't positional); verify
+`current_database()`/`inet_server_addr()`; use `BEGIN; SET TRANSACTION READ ONLY; … ROLLBACK` for zero-write
+proof. A bare read-only `.sql` trips the hold-merge-gate classification → write diagnostics as `scripts/*.mjs`.
 
 ## 8. Durable tool mechanics (stable) vs volatile (may change — re-verify)
 **Durable:** never bypass branch freshness or a real red guard — pre-push failures are classified and fail

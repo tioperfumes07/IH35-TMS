@@ -89,7 +89,7 @@ export default function PositionHistoryPage() {
             <EntityLink
               kind="unit"
               id={row.unit_id}
-              label={row.unit_number ?? row.unit_id}
+              label={row.unit_number?.trim() || "Unit"}
             />
             {row.unit_license_plate ? <div className="text-xs text-gray-500">{row.unit_license_plate}</div> : null}
           </div>
@@ -221,21 +221,19 @@ export default function PositionHistoryPage() {
         />
       ) : (
         <div className="mobile-table-fallback w-full" data-testid="mobile-optimized-table">
-          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white p-2">
-            <ParityTable<PositionHistoryRecord>
-              columns={columns}
-              rows={records}
-              rowKey={(row) => row.id}
-              loading={historyQuery.isLoading}
-              storageKey="safety-position-history"
-              emptyText="No position history records found"
-              exportFilename="position-history"
-              tableTestId="position-history-table"
-              rowTestId={(row) => `position-history-row-${row.id}`}
-              initialPageSize={limit}
-              pageSizeOptions={[limit]}
-            />
-          </div>
+          <ParityTable<PositionHistoryRecord>
+            columns={columns}
+            rows={records}
+            rowKey={(row) => row.id}
+            loading={historyQuery.isLoading}
+            storageKey="safety-position-history"
+            emptyText="No position history records found"
+            exportFilename="position-history"
+            tableTestId="position-history-table"
+            rowTestId={(row) => `position-history-row-${row.id}`}
+            initialPageSize={limit}
+            pageSizeOptions={[limit]}
+          />
         </div>
       )}
 

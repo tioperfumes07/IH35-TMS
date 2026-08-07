@@ -33,7 +33,7 @@ function stopReference(stopType: string, sequenceNumber: number) {
 }
 
 export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/loads/:loadId/dispatch-sheet.html", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/dispatch/loads/:loadId/dispatch-sheet.html", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = paramsSchema.safeParse(req.params ?? {});
@@ -60,10 +60,13 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
             u.year AS truck_model_year
           FROM mdata.loads l
           JOIN mdata.customers c ON c.id = l.customer_id
+                                AND c.operating_company_id = l.operating_company_id
           LEFT JOIN identity.users disp ON disp.id = l.dispatcher_user_id
           LEFT JOIN identity.users book ON book.id = l.booked_by_user_id
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                   AND d.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           WHERE l.id = $1
             AND l.operating_company_id = $2
           LIMIT 1

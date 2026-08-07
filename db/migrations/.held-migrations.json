@@ -28,13 +28,6 @@
       "block": "ND-INV-01"
     },
     {
-      "file": "202609130000_saf_dom_02_company_violation_jsonb_archive.sql",
-      "held_apply_order": [
-        "202609130000_saf_dom_02_company_violation_jsonb_archive.sql"
-      ],
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] SAF-DOM-02 \u2014 finishes the company_violations jsonb\u2192FK normalization that 202607820000 (already applied) started. THREE parts: (\u00a71) a RE-BACKFILL SWEEP of retired-jsonb ids into the existing join tables, with the same 0-orphan ABORT \u2014 needed because the PATCH handler kept writing the jsonb after that one-shot backfill ran, so ids added by an operator edit exist only in the memo; (\u00a72) repoints safety.auto_create_internal_fine_from_violation() (SECURITY DEFINER, fired on resolve) at safety.company_violation_drivers \u2014 it still resolves its driver from NEW.related_drivers, which the create route stopped populating when 202607820000 landed, so a monetary_fine resolution silently issues NO FINE; no GL, no posting, no amount logic changes; (\u00a73) DB-enforced archive: a BEFORE UPDATE OF trigger that REFUSES any write to the three retired jsonb columns (columns kept, never dropped, never cleared). \u26a0 APPLY ORDER: \u00a73 turns SAF-B28's silent PATCH no-op into a loud error \u2014 APPLY ONLY AFTER the SAF-B28 PATCH repoint (apps/backend/src/safety/company-violations.routes.ts:256-269, C2 lane) is live on prod. \u00a71 and \u00a72 are safe to apply at any time and fix real data/money loss. Idempotent; no DROP/DELETE/TRUNCATE; no hardcoded company UUID. Owner applies on a Neon branch, then ledger-backfills with the sha256 of the COMMITTED file on main."
-    },
-    {
       "file": "202609250000_flt_02_real_fleet_owned_by_trk.sql",
       "reason": "[HOLD-FOR-JORGE \u2014 DATA FIX] RENUMBERED TWICE off 202609190000 then 202609220000 \u2014 both were already stamped on prod by concurrent Cursor applies; 202609250000 leaves a gap above the live max for in-flight work.sql applied 21:28Z \u2014 repo/prod number collision, reported separately). FLT-02 real fleet ownership. ALREADY APPLIED ON PROD BY HAND this session \u2014 this file exists so a fresh DB (CI/local/new Neon branch) reaches the same state and the fix lives in the repo record. Idempotent by WHERE clause; dynamic org.companies resolution, no hardcoded UUID. Prod-verified 2026-07-26 (lucia, positive control mdata.vendors=2789): 87 of 87 non-sample units already owner=TRK/leased_to=TRANSP, 0 exceptions -> NO-OP on prod. EXCLUDES fixtures (is_sample_data) so the 93 USMCA-owned sample units are NOT re-homed \u2014 they are FLT-03/FLT-07 evidence, not an isolation breach. No DELETE, no TRUNCATE, no void (owner ruling F9). Validated apply-twice on a throwaway localhost Postgres with a 5-unit fixture: run 1 moved exactly the 2 wrongly-owned real units, left the already-correct one and BOTH sample units untouched; run 2 moved 0.",
       "verify_step": "scripts/verify-steps/1559-verify-real-owned-fleet-is-trk.mjs"
@@ -91,6 +84,19 @@
   ],
   "_integrity_note": "Every entry appears EXACTLY ONCE (file is the key). applied_on_prod MUST agree with the pinned prod-ledger snapshot scripts/lib/prod-migration-ledger-checksums.json for any file inside its window (>= 202606010000). Enforced by scripts/verify-steps/1361-verify-held-registry-integrity.mjs. Repaired 2026-07-25: 119 entries collapsed to 110 (9 duplicates, 7 of them carrying contradictory applied_on_prod), and 79 entries that were already applied on prod were stamped. Before the repair, verify-schema-parity-from-prod (step 1437) derived held-unapplied columns from this file and therefore treated applied migrations as unapplied.",
   "applied_held": [
+    {
+      "file": "202609130000_saf_dom_02_company_violation_jsonb_archive.sql",
+      "held_apply_order": [
+        "202609130000_saf_dom_02_company_violation_jsonb_archive.sql"
+      ],
+      "reason": "[APPLIED] SAF-DOM-02 \u2014 company_violations jsonb\u2192FK normalization complete. \u00a71 re-backfill; \u00a72 auto_create_internal_fine_from_violation reads company_violation_drivers; \u00a73 trg_reject_retired_cv_jsonb refuses retired jsonb writes. Cursor Neon-applied 2026-08-03 on br-fancy-credit-akjnd07a (neondb_owner direct). No owner HOLD / no JORGE-APPROVED gate \u2014 Cursor applies under standing Neon authorization.",
+      "applied_on_prod": true,
+      "applied_at": "2026-08-03T15:58:18Z",
+      "applied_by": "cursor-neon-apply-saf-dom-02",
+      "neon_branch": "br-fancy-credit-akjnd07a",
+      "ledger_checksum": "896dbc341393b9806f1e524243d20f7a7efd2ee3d193f749839dd352198c3f54",
+      "applied_evidence": "Cursor Neon-apply 2026-08-03 (project tiny-field-89581227, br-fancy-credit-akjnd07a, neondb_owner direct endpoint): CREATE OR REPLACE auto_create_internal_fine_from_violation reads company_violation_drivers (reads_join_table=t still_reads_jsonb=f); trg_reject_retired_cv_jsonb=O; ledgered _system._schema_migrations + ih35_migrations.applied_migrations checksum=896dbc341393b9806f1e524243d20f7a7efd2ee3d193f749839dd352198c3f54 applied_at=2026-08-03T15:58:18Z applied_by=cursor-neon-apply-saf-dom-02."
+    },
     {
       "file": "202609110000_bank_dom_04_reconciling_item_aging.sql",
       "reason": "[HOLD-FOR-JORGE \u2014 TIER 1 FINANCIAL] BANK-DOM-04 reconciling-item aging/classification columns. No GL. Owner Neon-applies then ledger-backfills.",

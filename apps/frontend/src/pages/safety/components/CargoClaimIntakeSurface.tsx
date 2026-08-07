@@ -11,13 +11,12 @@ import {
 } from "../../../api/safety";
 import { useAuth } from "../../../auth/useAuth";
 import { listCargoClaimReasons } from "../../../api/catalogs-safety";
-import { listCustomers, listDrivers, listUnits } from "../../../api/mdata";
+import { listCustomers } from "../../../api/mdata";
 import { listLoads } from "../../../api/loads";
 import { Button } from "../../../components/Button";
-import { Combobox } from "../../../components/Combobox";
-import { CreateDriverModal } from "../../../components/drivers/CreateDriverModal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ReferenceSelect, type ReferenceOption } from "../../../components/parity/ReferenceSelect";
 import { formatDateUS } from "../../../lib/formatDate";
 import { companyNow } from "../../../lib/businessDate";
@@ -33,8 +32,6 @@ type Props = {
   title: string;
   subtitle: string;
 };
-
-type UnifiedUnit = { id: string; unit_number?: string | null; kind?: "truck" | "trailer" };
 
 const PICKER_LIMIT = 200;
 
@@ -95,17 +92,13 @@ export function CargoClaimIntakeSurface({
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [creating, setCreating] = useState(false);
-  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [driverSearch, setDriverSearch] = useState("");
-  const [unitSearch, setUnitSearch] = useState("");
-  const [loadSearch, setLoadSearch] = useState("");
   // SAF-B29: claimant + reason were silent limit:200 — search must be state + queryKey + server param.
-  // Keep alongside wave-2 driver/unit/load search (do not drop when rebasing wave-2 onto cargo PR).
+  // Driver/unit/load/trailer search is owned by EntityPicker (not local Combobox pages).
   const [customerSearch, setCustomerSearch] = useState("");
   const [reasonSearch, setReasonSearch] = useState("");
   // SAF-F20 (cargo-claim leg): the Carmack intake surface was create-only — existing claims could
@@ -153,22 +146,11 @@ export function CargoClaimIntakeSurface({
     enabled: pickersEnabled,
   });
 
+  // Label map for ParityTable EntityLink — form pickers use EntityPicker server search.
   const loadsQuery = useQuery({
-    queryKey: ["mdata", "loads", "cargo-claim-picker", operatingCompanyId, loadSearch],
-    queryFn: () => listLoads({ operating_company_id: [operatingCompanyId], limit: PICKER_LIMIT, sort: "-created_at", search: loadSearch || undefined }),
-    enabled: pickersEnabled,
-  });
-
-  const driversQuery = useQuery({
-    queryKey: ["mdata", "drivers", "cargo-claim-picker", operatingCompanyId, driverSearch],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: PICKER_LIMIT, search: driverSearch || undefined }),
-    enabled: pickersEnabled,
-  });
-
-  const unitsQuery = useQuery({
-    queryKey: ["mdata", "units", "cargo-claim-picker", operatingCompanyId, unitSearch],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: PICKER_LIMIT, include: "trailers", search: unitSearch || undefined }),
-    enabled: pickersEnabled,
+    queryKey: ["mdata", "loads", "cargo-claim-labels", operatingCompanyId],
+    queryFn: () => listLoads({ operating_company_id: [operatingCompanyId], limit: PICKER_LIMIT, sort: "-created_at" }),
+    enabled: companyEnabled,
   });
 
   const detailQuery = useQuery({
@@ -199,18 +181,8 @@ export function CargoClaimIntakeSurface({
     type: c.customer_code ?? undefined,
   }));
   const loads = loadsQuery.data?.loads ?? [];
-  const drivers = driversQuery.data?.drivers ?? [];
-  const driverOptions = drivers.map((d) => ({
-    value: d.id,
-    label: `${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || d.id,
-  }));
-  const allUnits = (unitsQuery.data?.units ?? []) as UnifiedUnit[];
-  const trucks = useMemo(() => allUnits.filter((u) => u.kind !== "trailer"), [allUnits]);
-  const trailers = useMemo(() => allUnits.filter((u) => u.kind === "trailer"), [allUnits]);
 
-  // Name lookups for the table's drill-through labels — both catalogs are already loaded for the
-  // creator's pickers, so this adds no request. Falling back to a truncated uuid only when a row
-  // references something outside the loaded page.
+  // Name lookups for the table's drill-through labels.
   const customerNameById = useMemo(
     () => new Map(customers.map((c) => [String(c.id), String(c.name ?? "")])),
     [customers]
@@ -453,15 +425,15 @@ export function CargoClaimIntakeSurface({
             </label>
             <label className="block">
               <span className={labelSpan}>Load (shipment)</span>
-              <div className="mt-1">
-                <Combobox
-                  options={loads.map((load) => ({ value: String(load.id), label: `${load.load_number}${load.customer_name ? ` · ${load.customer_name}` : ""}` }))}
+              <div className="mt-1" data-testid={`${pageTestId}-load-picker`}>
+                <EntityPicker
+                  kind="load"
+                  operatingCompanyId={operatingCompanyId}
                   value={form.loadId || null}
                   onChange={(v) => set({ loadId: v ?? "" })}
-                  onSearch={setLoadSearch}
-                  placeholder="Select load"
-                  loading={loadsQuery.isLoading}
-                  allowClear
+                  placeholder="Search load…"
+                  nestedInDrawer
+                  dataTestId={`${pageTestId}-load-entity-picker`}
                 />
               </div>
             </label>
@@ -537,46 +509,45 @@ export function CargoClaimIntakeSurface({
             </label>
             <label className="block">
               <span className={labelSpan}>Driver</span>
-              <div className="mt-1">
-                <Combobox
-                  options={driverOptions}
+              <div className="mt-1" data-testid={`${pageTestId}-driver-picker`}>
+                <EntityPicker
+                  kind="driver"
+                  operatingCompanyId={operatingCompanyId}
                   value={form.driverId || null}
                   onChange={(v) => set({ driverId: v ?? "" })}
-                  onSearch={setDriverSearch}
-                  placeholder="Select driver"
-                  loading={driversQuery.isLoading}
-                  allowAddNew={{
-                    label: "+ Create driver",
-                    onAdd: () => setDriverCreateOpen(true),
-                  }}
+                  placeholder="Search driver…"
+                  nestedInDrawer
+                  allowCreate
+                  onCreated={(id) => set({ driverId: id })}
+                  dataTestId={`${pageTestId}-driver-entity-picker`}
                 />
               </div>
             </label>
             <label className="block">
               <span className={labelSpan}>Unit (truck)</span>
-              <div className="mt-1">
-                <Combobox
-                  options={trucks.map((u) => ({ value: String(u.id), label: String(u.unit_number ?? u.id) }))}
+              <div className="mt-1" data-testid={`${pageTestId}-unit-picker`}>
+                <EntityPicker
+                  kind="unit"
+                  operatingCompanyId={operatingCompanyId}
                   value={form.unitId || null}
                   onChange={(v) => set({ unitId: v ?? "" })}
-                  onSearch={setUnitSearch}
-                  placeholder="Select unit"
-                  loading={unitsQuery.isLoading}
-                  allowClear
+                  placeholder="Search unit…"
+                  nestedInDrawer
+                  dataTestId={`${pageTestId}-unit-entity-picker`}
                 />
               </div>
             </label>
             <label className="block">
               <span className={labelSpan}>Trailer</span>
-              <div className="mt-1">
-                <Combobox
-                  options={trailers.map((u) => ({ value: String(u.id), label: String(u.unit_number ?? u.id) }))}
+              <div className="mt-1" data-testid={`${pageTestId}-trailer-picker`}>
+                <EntityPicker
+                  kind="trailer"
+                  operatingCompanyId={operatingCompanyId}
                   value={form.trailerId || null}
                   onChange={(v) => set({ trailerId: v ?? "" })}
-                  onSearch={setUnitSearch}
-                  placeholder="Select trailer"
-                  loading={unitsQuery.isLoading}
-                  allowClear
+                  placeholder="Search trailer…"
+                  nestedInDrawer
+                  dataTestId={`${pageTestId}-trailer-entity-picker`}
                 />
               </div>
             </label>
@@ -674,15 +645,15 @@ export function CargoClaimIntakeSurface({
               </label>
               <label className="block">
                 <span className={labelSpan}>Load (shipment)</span>
-                <div className="mt-1">
-                  <Combobox
-                    options={loads.map((load) => ({ value: String(load.id), label: String(load.load_number) }))}
+                <div className="mt-1" data-testid={`${pageTestId}-edit-load-picker`}>
+                  <EntityPicker
+                    kind="load"
+                    operatingCompanyId={operatingCompanyId}
                     value={editForm.loadId || null}
                     onChange={(v) => setEdit({ loadId: v ?? "" })}
-                    onSearch={setLoadSearch}
-                    placeholder="Select load"
-                    loading={loadsQuery.isLoading}
-                    allowClear
+                    placeholder="Search load…"
+                    nestedInDrawer
+                    dataTestId={`${pageTestId}-edit-load-entity-picker`}
                   />
                 </div>
               </label>
@@ -919,16 +890,6 @@ export function CargoClaimIntakeSurface({
         </div>
       ) : null}
 
-      <CreateDriverModal
-        open={driverCreateOpen}
-        companyId={operatingCompanyId}
-        onClose={() => setDriverCreateOpen(false)}
-        onCreated={(driverId) => {
-          set({ driverId });
-          setDriverCreateOpen(false);
-          void driversQuery.refetch();
-        }}
-      />
     </div>
   );
 }

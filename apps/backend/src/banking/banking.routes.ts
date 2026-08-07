@@ -14,6 +14,8 @@ import {
 } from "./bank-account-visibility.js";
 import { countDriverEscrowKpis } from "./driver-escrow-counts.js";
 import { countTotalBankTransactions, countUncategorizedTransactions } from "./pending-categorization.js";
+import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
+import { POSTING_ENGINE_SUPPORTS_REPOST } from "../accounting/posting-engine.service.js";
 import {
   sumAuthoritativeDepositoryCashCents,
   withInternalWalletBalances,
@@ -307,7 +309,9 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     return { updated_accounts: updated };
   });
 
-  app.get("/api/v1/banking/accounts/:id/register", async (req, reply) => {
+  // Rate-limited like the other authorizing banking reads: this endpoint pages a full account register
+  // and CodeQL (js/missing-rate-limiting) flags an authorizing route without one.
+  app.get("/api/v1/banking/accounts/:id/register", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = accountIdParamsSchema.safeParse(req.params ?? {});
@@ -326,7 +330,10 @@ export async function registerBankingRoutes(app: FastifyInstance) {
                 fa.id,
                 fa.created_at::date AS txn_date,
                 COALESCE(fa.memo, fa.notes, 'Factoring activity') AS description,
-                fa.advance_amount_cents AS amount,
+                -- CLS-UNIT-SCALE (UNIT-002): the amount column is consumed as DOLLARS by the register — the
+                -- escrow and advance_pool branches below both divide by 100. Emitting raw cents here
+                -- displayed every factoring advance at 100x.
+                (fa.advance_amount_cents::numeric / 100) AS amount,
                 'virtual_factoring'::text AS category,
                 'synced'::text AS status
               FROM accounting.factoring_advances fa
@@ -445,7 +452,10 @@ export async function registerBankingRoutes(app: FastifyInstance) {
               id,
               transaction_date AS txn_date,
               description,
-              amount_cents AS amount,
+              -- CLS-UNIT-SCALE (UNIT-003): same amount contract as the register — dollars, not cents.
+              -- The $2 comparison below stays in CENTS on purpose: it matches amount_cents against the
+              -- target's amount_cents with a 500-cent ($5) tolerance. Only the OUTPUT is scaled.
+              (amount_cents::numeric / 100) AS amount,
               category,
               status
             FROM banking.bank_transactions
@@ -465,7 +475,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     return { suggestions };
   });
 
-  app.post("/api/v1/banking/transactions/:id/split", async (req, reply) => {
+  app.post("/api/v1/banking/transactions/:id/split", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = transactionIdParamsSchema.safeParse(req.params ?? {});
@@ -489,7 +499,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     });
   });
 
-  app.post("/api/v1/banking/transactions/:id/undo-categorization", async (req, reply) => {
+  app.post("/api/v1/banking/transactions/:id/undo-categorization", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = transactionIdParamsSchema.safeParse(req.params ?? {});
@@ -499,11 +509,74 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const ok = await withCompanyScope(user.uuid, companyId, async (client) => {
+      // BANK-F01 — undoing a categorization MUST reverse the journal entry it posted.
+      //
+      // THE DEFECT THIS CLOSES. This handler used to clear the categorization fields and leave
+      // `matched_journal_entry_id` set. Two things followed, and neither was visible to anyone:
+      //   1. the JE posted under the OLD (wrong) account stayed in the ledger, unreversed; and
+      //   2. bank-feed-gl-posting.service.ts:160 refuses to post a row that already carries
+      //      `matched_journal_entry_id` (`already_posted`), so the CORRECTED categorization could
+      //      never post either.
+      // Net effect: re-categorising was a silent no-op against the general ledger. The operator saw
+      // the correction, the books kept the error, and nothing surfaced the divergence — a
+      // SILENT-SUCCESS defect, and for an auditor worse than a duplicate, because the operational
+      // record and the ledger disagree permanently with no signal.
+      //
+      // Verified on prod 2026-08-03 (banking.bank_transactions 10975/10975 visible, n_tup_del 46):
+      // ZERO rows were stranded, i.e. the trap had not yet been sprung. It is closed here before it is.
+      //
+      // FAIL-CLOSED. The reversal runs on this same transaction client, so if it throws — closed
+      // period, non-posted JE, an integrity conflict — the whole undo rolls back and the caller gets
+      // an error. Refusing the undo is correct: silently leaving a stale GL line is the outcome this
+      // exists to prevent. Reuses the EXISTING reverseJournalEntryNoFlip (idempotent, linkage-aware);
+      // NO new GL math is written here.
+      const posted = await client.query<{ matched_journal_entry_id: string | null }>(
+        `SELECT matched_journal_entry_id::text
+           FROM banking.bank_transactions
+          WHERE id = $1 AND operating_company_id = $2
+          LIMIT 1
+          FOR UPDATE`,
+        [params.data.id, companyId]
+      );
+      const priorJournalEntryId = posted.rows[0]?.matched_journal_entry_id ?? null;
+
+      // BANK-F03 — FAIL LOUD rather than reverse into a dead end.
+      //
+      // BANK-F01 (PR #4225) made this handler reverse the posted JE, which fixed a stale-ledger defect
+      // but introduced a WORSE one that I did not catch before merging: the canonical poster cannot
+      // RE-POST a source transaction after a reversal (its batch idempotency key ends in
+      // posting_purpose, which has only initial_post|reversal — see POSTING_ENGINE_SUPPORTS_REPOST).
+      // So the sequence became: reverse the entry, clear the link, then have the corrected
+      // categorization silently return the ORIGINAL batch. Net effect: the expense disappears from the
+      // books entirely. Proven on a prod fork — 20 rows, fuel down $4,593.94, target accounts zero lines.
+      //
+      // Until the poster gains a real repost capability, refusing is the only honest outcome: a wrong
+      // account on the books is recoverable, an expense silently deleted from the ledger is not. This
+      // check runs BEFORE the reversal, so nothing is undone when nothing can be re-posted.
+      if (priorJournalEntryId && !POSTING_ENGINE_SUPPORTS_REPOST) {
+        return {
+          status: "repost_unsupported" as const,
+          journalEntryId: priorJournalEntryId,
+        };
+      }
+
+      if (priorJournalEntryId) {
+        await reverseJournalEntryNoFlip(client, {
+          operatingCompanyId: companyId,
+          journalEntryId: priorJournalEntryId,
+          reason: `undo-categorization of bank transaction ${params.data.id}`,
+          actorUserId: user.uuid,
+        });
+      }
+
       const res = await client.query(
         `
           UPDATE banking.bank_transactions
           SET
             status = 'pending_categorization',
+            -- Cleared with the reversal above: leaving it set is what made the corrected
+            -- categorization unpostable (already_posted) while the wrong JE stood.
+            matched_journal_entry_id = NULL,
             category = NULL,
             category_kind = NULL,
             linked_entity_id = NULL,
@@ -536,12 +609,26 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           resource_type: "banking.bank_transactions",
           resource_id: params.data.id,
           operating_company_id: companyId,
+          // BANK-F01 — name the JE that was reversed. Without it the audit trail records that a
+          // categorization was undone but not that the ledger was corrected, which is the half a
+          // reviewer actually needs.
+          reversed_journal_entry_id: priorJournalEntryId,
         },
         "info",
         "BT-3-BANKING-REBUILD"
       );
       return true;
     });
+    if (ok && typeof ok === "object" && "status" in ok && ok.status === "repost_unsupported") {
+      return reply.code(409).send({
+        error: "repost_unsupported",
+        message:
+          "This transaction has a posted journal entry, and the posting engine cannot yet re-post a " +
+          "corrected categorization after a reversal. Undoing now would reverse the entry and leave the " +
+          "expense unrecorded. Refused deliberately (BANK-F03).",
+        journal_entry_id: ok.journalEntryId,
+      });
+    }
     if (!ok) return reply.code(404).send({ error: "transaction_not_found" });
     return { ok: true };
   });

@@ -2,6 +2,9 @@
 
 **Status: BINDING. Owner-agreed. This file is the single canonical statement of "done."**
 
+**OWNER LAW (2026-08-03, FINAL) governs §6 Merge gates below: NO HOLDS, NO `JORGE-APPROVED` LABEL — every
+coder merges on green in every lane, including financial. See `.cursor/rules/00-operating-method-LAW.mdc`.**
+
 Before this file existed the standard was real but scattered across
 `docs/trackers/FULL-SYSTEM-AUDIT-AND-WIRING-MASTER-PLAN-2026-07-22.md` (§§0–0.3),
 `docs/trackers/OWNER-EXECUTION-PLAN-2026-07-22.md`, `.cursor/rules/14-linkage-law-enforcement.mdc`,
@@ -151,16 +154,20 @@ A PR that changes app code and omits this block is not reviewable and is not don
 
 ---
 
-## 6. Merge gates (CLAUDE.md §1 — unchanged, restated)
+## 6. Merge gates (OWNER LAW 2026-08-03, FINAL — supersedes the old CLAUDE.md §1 self-merge/owner-approval split)
 
-- Merging to `main` **is** the production-deploy decision. There is no second gate.
-- **Self-merge allowed:** pure frontend/docs/CI-action bumps, and non-financial backend touching none of
-  the financial cluster, migrations, or `accounting.*`/`catalogs.*`/`mdata.*` schema-or-data.
-- **STOP and get explicit owner approval:** any financial change, any migration/schema change, any touch
-  to `accounting.*`/`catalogs.*`/`mdata.*`, any runtime dependency bump.
-- **Never self-merge the financial cluster.** Opening balances are owner-entered only. Default env flags
-  **OFF**. Flag flips are the owner's sole decision.
-- Prod DB access is gated **per connection** — ask every time.
+- Merging to `main` **is** the production-deploy decision. There is no second gate — including no owner
+  approval gate.
+- **NO HOLDS. NO `JORGE-APPROVED` LABEL.** Every coder (Cursor, Claude, Devin, Cascade) merges on green in
+  **every** lane, including the financial cluster, migrations, and `accounting.*`/`catalogs.*`/`mdata.*`.
+- **Financial cluster still has a proof gate, not an approval gate:** independent code-review + financial-
+  agent pass, the 18-key evidence block, the migration firewall, and (for a migration) applying it on Neon
+  yourself with the SHA posted — then merge on green. No "STOP and get owner approval."
+- Opening balances are **owner-entered only** (retained — a data-accuracy control, not a merge gate).
+  Default env flags **OFF**; flag flips happen after the owner's DECISION in chat ("turn it on"), executed
+  and proven live by the coder — never a label, never a merge-time ask.
+- Prod DB access is verified **per connection** (right branch, `current_database()`) — a correctness check,
+  not a permission ask.
 
 ---
 
@@ -213,7 +220,7 @@ Touches `apps/**/accounting|banking|qbo-sync|qbo/**` or `pages/accounting|bankin
 
 - `git fetch` + current `main` · fresh branch · never `git add -A`
 - Read spec / approved screen first — never build from a defect list alone
-- Classify lane: financial → build-and-HOLD, never self-merge
+- Classify lane: financial → proof gate (independent review + financial-agent pass + 18-key evidence), then merge on green yourself (OWNER LAW 2026-08-03 — no hold)
 
 ### Required commit keys
 

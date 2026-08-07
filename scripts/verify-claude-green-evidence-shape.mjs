@@ -75,9 +75,32 @@ export function assertClaudeGreenEvidenceShape(text) {
     );
   }
 
+  // Claude-green HARD: first non-empty, non-comment line must be FINDING:.
+  // ## Summary / prose-first bodies are the #1 Cursor CI red (Rule 16 PR-body gate).
+  const firstContent = text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .find((l) => l && !l.startsWith("#") && !/^Co-authored-by:/i.test(l));
+  if (!firstContent || !/^FINDING\s*:/i.test(firstContent)) {
+    problems.push(
+      `Claude-green requires FINDING: as the first content line (got ${JSON.stringify(firstContent ?? "")}). ` +
+        `Copy docs/templates/CLAUDE-GREEN-PR-BODY.md — never lead with ## Summary. Run: ` +
+        `node scripts/ops/cursor-ship-preflight.mjs --body-file /tmp/pr-body.txt`,
+    );
+  }
+
   if (/^##\s+Summary\b/m.test(text) && !/^FINDING\s*:/m.test(text)) {
     problems.push(
       "## Summary preamble without FINDING: — replace with FINDING-first Claude body (Rule 30).",
+    );
+  }
+
+  // ## Summary BEFORE FINDING is also forbidden even if FINDING appears later.
+  const summaryIdx = text.search(/^##\s+Summary\b/m);
+  const findingIdx = text.search(/^FINDING\s*:/m);
+  if (summaryIdx >= 0 && (findingIdx < 0 || summaryIdx < findingIdx)) {
+    problems.push(
+      "## Summary appears before FINDING: — delete Summary; start at column 0 with FINDING: (Claude format).",
     );
   }
 
@@ -121,7 +144,17 @@ REMAINING: none`;
   expect(
     "summary-no-finding",
     "## Summary\nROOT CAUSE: x\nFIX: y\nGUARD: z\nLIVE PROOF: exit 0\nREMAINING: none",
-    "## Summary",
+    "FINDING:",
+  );
+  expect(
+    "summary-before-finding",
+    "## Summary\nstuff\nFINDING: X\nLANE: NON-FINANCIAL\nROOT CAUSE: x\nFIX: y\nGUARD: z\nLIVE PROOF: exit 0\nREMAINING: none",
+    "## Summary appears before FINDING",
+  );
+  expect(
+    "missing-finding-first",
+    "ROOT CAUSE: x\nFIX: y\nGUARD: z\nLIVE PROOF: exit 0\nREMAINING: none",
+    "FINDING:",
   );
   refute(
     "unverified-colon",

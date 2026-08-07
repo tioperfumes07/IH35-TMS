@@ -34,10 +34,8 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useToast } from "../../../components/Toast";
 import { formatUsdCents } from "../../../lib/money";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
-import { CreateDriverModal } from "../../../components/drivers/CreateDriverModal";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
-import { TrailerAutocomplete } from "../../../components/banking/TrailerAutocomplete";
-import { LoadAutocomplete } from "../../../components/banking/LoadAutocomplete";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { listVendors, listCustomers } from "../../../api/mdata";
 import { classesCatalogClient, itemsCatalogClient, type AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import { BankTransactionSplitModal } from "./BankTransactionSplitModal";
@@ -291,7 +289,6 @@ export function BankingTransactionsDesignView({
   const [transferModalTx, setTransferModalTx] = useState<PlaidBankTransaction | null>(null);
   const [ccPaymentModalTx, setCcPaymentModalTx] = useState<PlaidBankTransaction | null>(null);
   // PLUS-DRIVER-MONEY: nested "+ Create driver" from the categorization row's Driver picker.
-  const [driverCreateForTx, setDriverCreateForTx] = useState<PlaidBankTransaction | null>(null);
   // Bulk categorize-to-account (QBO parity): the operator multi-selects for-review rows, picks ONE GL
   // account, and the real POST /banking/transactions/categorize-bulk applies it. No new GL math — the
   // chosen COA account IS the category, exactly like the single-row Post.
@@ -411,19 +408,32 @@ export function BankingTransactionsDesignView({
     staleTime: 120_000,
   });
 
-  // Catalog-linkage pickers (QBO parity). limit:200 dodges the endpoint 50-caps so the FULL roster is
-  // selectable. Payee→vendors, Customer/project→customers, Product/Service (Item)→Products & Services.
+  // Catalog-linkage pickers (QBO parity). Server-side search + page size 200 — never load 1000/5000
+  // into the browser and pretend the roster is complete. Typing refetches; empty query loads first page.
+  const [vendorSearch, setVendorSearch] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
+  const PICKER_PAGE = 200;
   const vendorsQuery = useQuery({
-    queryKey: ["banking", "tx-vendors", companyId],
-    queryFn: () => listVendors({ operating_company_id: companyId, limit: 1000 }).then((r) => r.vendors ?? []),
+    queryKey: ["banking", "tx-vendors", companyId, vendorSearch],
+    queryFn: () =>
+      listVendors({
+        operating_company_id: companyId,
+        limit: PICKER_PAGE,
+        search: vendorSearch.trim() || undefined,
+      }).then((r) => r.vendors ?? []),
     enabled: Boolean(companyId),
-    staleTime: 120_000,
+    staleTime: 30_000,
   });
   const customersQuery = useQuery({
-    queryKey: ["banking", "tx-customers", companyId],
-    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 5000 }).then((r) => r.customers ?? []),
+    queryKey: ["banking", "tx-customers", companyId, customerSearch],
+    queryFn: () =>
+      listCustomers({
+        operating_company_id: companyId,
+        limit: PICKER_PAGE,
+        search: customerSearch.trim() || undefined,
+      }).then((r) => r.customers ?? []),
     enabled: Boolean(companyId),
-    staleTime: 120_000,
+    staleTime: 30_000,
   });
   const itemsQuery = useQuery({
     queryKey: ["banking", "tx-items", companyId],
@@ -1609,7 +1619,9 @@ export function BankingTransactionsDesignView({
                   options={(vendorsQuery.data ?? []).map((v) => ({ value: v.id, label: v.name }))}
                   createKind="vendor"
                   operatingCompanyId={companyId}
-                  placeholder="Select payee (vendor)"
+                  placeholder="Search payee (vendor)"
+                  onSearch={setVendorSearch}
+                  loading={vendorsQuery.isFetching}
                   onOptionCreated={(opt) => {
                     void vendorsQuery.refetch();
                     setDraft(tx, { payee: opt.label });
@@ -1728,12 +1740,17 @@ export function BankingTransactionsDesignView({
                   value={draft.classId || null}
                   onChange={(cid) => {
                     const c = (classesQuery.data ?? []).find((x) => x.id === cid);
-                    setDraft(tx, { classId: cid ?? "", ...(c ? { className: c.display_name } : {}) });
+                    const label = String(c?.display_name ?? "").trim();
+                    setDraft(tx, { classId: cid ?? "", ...(label ? { className: label } : {}) });
                   }}
-                  options={(classesQuery.data ?? []).map((c: AccountingCatalogRow) => ({
-                    value: c.id,
-                    label: c.display_name,
-                  }))}
+                  options={(classesQuery.data ?? []).map((c: AccountingCatalogRow) => {
+                    const label = String(c.display_name ?? "").trim();
+                    // Never surface the row UUID as the human label (row 601 / picker law).
+                    return {
+                      value: c.id,
+                      label: label && label !== c.id ? label : "Unnamed class",
+                    };
+                  })}
                   createKind="class"
                   addNewLabel="+ Add new class"
                   operatingCompanyId={companyId}
@@ -1798,7 +1815,9 @@ export function BankingTransactionsDesignView({
                   options={(customersQuery.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
                   createKind="customer"
                   operatingCompanyId={companyId}
-                  placeholder="Select customer"
+                  placeholder="Search customer"
+                  onSearch={setCustomerSearch}
+                  loading={customersQuery.isFetching}
                   onOptionCreated={(opt) => {
                     void customersQuery.refetch();
                     setDraft(tx, { customerProject: opt.label });
@@ -1822,7 +1841,6 @@ export function BankingTransactionsDesignView({
                 <DriverAutocomplete
                   companyId={companyId}
                   value={draft.driverId}
-                  limit={200}
                   onChange={(driverId, driverName, meta) => {
                     const driverAcct =
                       typeof meta?.default_expense_account_id === "string"
@@ -1835,7 +1853,7 @@ export function BankingTransactionsDesignView({
                       accountId: draft.accountId || driverAcct || "",
                     });
                   }}
-                  onRequestCreate={() => setDriverCreateForTx(tx)}
+                  onRequestCreate={() => {}}
                 />
               </div>
               {draft.driverId ? (
@@ -1876,10 +1894,13 @@ export function BankingTransactionsDesignView({
             <div className="text-xs text-gray-600">
               Trailer
               <div className="mt-0.5">
-                <TrailerAutocomplete
-                  companyId={companyId}
-                  value={draft.trailerId}
-                  onChange={(trailerId, trailerName) => setDraft(tx, { trailerId, trailerName })}
+                <EntityPicker
+                  kind="trailer"
+                  operatingCompanyId={companyId}
+                  value={draft.trailerId || null}
+                  onChange={(trailerId) => setDraft(tx, { trailerId: trailerId ?? "", trailerName: "" })}
+                  placeholder="Search trailer (optional)"
+                  allowClear
                 />
               </div>
               {draft.trailerId ? (
@@ -1898,10 +1919,13 @@ export function BankingTransactionsDesignView({
             <div className="text-xs text-gray-600">
               Trip (load)
               <div className="mt-0.5">
-                <LoadAutocomplete
-                  companyId={companyId}
-                  value={draft.loadId}
-                  onChange={(loadId, loadName) => setDraft(tx, { loadId, loadName })}
+                <EntityPicker
+                  kind="load"
+                  operatingCompanyId={companyId}
+                  value={draft.loadId || null}
+                  onChange={(loadId) => setDraft(tx, { loadId: loadId ?? "", loadName: "" })}
+                  placeholder="Search trip / load (optional)"
+                  allowClear
                 />
               </div>
               {draft.loadId ? (
@@ -2792,17 +2816,6 @@ export function BankingTransactionsDesignView({
           setCcPaymentModalTx(null);
           onDataChanged();
         }}
-      />
-      <CreateDriverModal
-        open={Boolean(driverCreateForTx)}
-        companyId={companyId}
-        onClose={() => setDriverCreateForTx(null)}
-        onCreated={(createdId) => {
-          if (driverCreateForTx) setDraft(driverCreateForTx, { driverId: createdId });
-          setDriverCreateForTx(null);
-        }}
-        // Full-page banking view (not nested inside another drawer/modal) — default centered
-        // shell="modal" is the correct chrome here.
       />
     </div>
   );

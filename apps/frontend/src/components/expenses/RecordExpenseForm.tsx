@@ -2,16 +2,15 @@ import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getWoCostContext } from "../../api/maintenance";
-import { ensureDriverVendors, listUnits, listVendors } from "../../api/mdata";
+import { ensureDriverVendors, listVendors } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 // ACCT-F92: one definition of which accounts may appear in which picker — see account-picker-scope.ts
 // for the live evidence (Accumulated Depreciation / Trucks / Prepaid / A/R are all account_type Asset).
 import { isExpenseAccount, isPaymentAccount } from "../../lib/account-picker-scope";
 import { Button } from "../Button";
-import { Combobox } from "../Combobox";
-import { CreateUnitModal } from "../fleet/CreateUnitModal";
 import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
+import { EntityPicker } from "../parity/EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../parity/referenceOptionLabels";
 import { SelectCombobox } from "../shared/SelectCombobox";
@@ -62,7 +61,6 @@ export function RecordExpenseForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
-  const [unitCreateOpen, setUnitCreateOpen] = useState(false);
 
   // Prefill unit from WO context without clobbering a user picker change.
   useEffect(() => {
@@ -75,13 +73,6 @@ export function RecordExpenseForm({
     queryFn: () => getWoCostContext(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
-  });
-  const unitsQuery = useQuery({
-    queryKey: ["record-expense", "units", operatingCompanyId],
-    // No status filter — a tow / roadside expense is written against an OutOfService or
-    // InMaintenance unit, which a hard "InService" filter would hide. See VendorBillForm.
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 500 }),
-    enabled: Boolean(operatingCompanyId),
   });
   const vendorsQuery = useQuery({
     queryKey: ["record-expense", "vendors", operatingCompanyId],
@@ -121,19 +112,7 @@ export function RecordExpenseForm({
     [vendorsQuery.data?.vendors]
   );
 
-  // Unit picker — same "Combobox + canonical CreateUnitModal" pattern as VendorBillForm's Driver/Unit
-  // (no createKind="unit" on ReferenceSelect yet; CreateUnitModal is the single canonical fleet-roster
-  // unit creator — writes mdata.units, same table unitsQuery reads, so a created unit selects +
-  // survives reload).
-  const unitOptions = useMemo(
-    () =>
-      ((unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>).map((unit) => ({
-        value: String(unit.id ?? ""),
-        label: String(unit.unit_number ?? unit.id ?? ""),
-      })),
-    [unitsQuery.data?.units]
-  );
-
+  // Unit picker — EntityPicker kind=unit (canonical mdata.units roster + inline create).
   // Payment account = the cash/bank account the expense was paid FROM.
   // ACCT-F92: this previously filtered on `account_type === "Asset"`, which on prod also admits
   // Accumulated Depreciation, Trucks & Tractors, Trailers, Prepaid Expenses, Inventory, A/R, Unbilled
@@ -172,18 +151,6 @@ export function RecordExpenseForm({
     }));
   }, [paymentAccountsQuery.data?.accounts, costContextQuery.data?.expense_categories]);
 
-  // Resolve unit label for memo when WO context prefills unitId before the user touches the picker.
-  useEffect(() => {
-    if (!values.unitId || values.unitLabel) return;
-    const units = (unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>;
-    const match = units.find((row) => String(row.id ?? "") === values.unitId);
-    if (!match) return;
-    setValues((prev) => ({
-      ...prev,
-      unitLabel: String(match.unit_number ?? match.id ?? ""),
-    }));
-  }, [values.unitId, values.unitLabel, unitsQuery.data?.units]);
-
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (!operatingCompanyId) {
@@ -212,7 +179,6 @@ export function RecordExpenseForm({
   const fieldId = (name: string) => `${idPrefix}-${name}`;
 
   return (
-    <>
     <form className="space-y-3" onSubmit={onSubmit} data-testid="record-expense-form">
       {workOrderId && linkedWoDisplayId ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
@@ -325,24 +291,20 @@ export function RecordExpenseForm({
       <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("unit")}>
         Truck/Unit (optional)
         <div className="mt-1">
-          <Combobox
-            options={unitOptions}
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={operatingCompanyId}
             value={values.unitId || null}
-            onChange={(next) => {
-              const match = unitOptions.find((row) => row.value === (next ?? ""));
+            onChange={(next) =>
               setValues((prev) => ({
                 ...prev,
                 unitId: next ?? "",
-                unitLabel: match?.label ?? "",
-              }));
-            }}
+                unitLabel: next ?? "",
+              }))
+            }
             placeholder="Select unit…"
-            loading={unitsQuery.isLoading}
-            allowClear
-            allowAddNew={{
-              label: "+ Create unit",
-              onAdd: () => setUnitCreateOpen(true),
-            }}
+            dataField={fieldId("unit")}
+            dataTestId={fieldId("unit")}
           />
         </div>
       </label>
@@ -429,18 +391,5 @@ export function RecordExpenseForm({
         </div>
       ) : null}
     </form>
-    <CreateUnitModal
-      open={unitCreateOpen}
-      operatingCompanyId={operatingCompanyId}
-      onClose={() => setUnitCreateOpen(false)}
-      onCreated={(createdId) => {
-        // unitLabel resolves via the existing "resolve unit label for memo" effect above once
-        // unitsQuery refetches and the new row is present (same pattern as WO-context prefill).
-        setValues((prev) => ({ ...prev, unitId: createdId, unitLabel: "" }));
-        setUnitCreateOpen(false);
-        void unitsQuery.refetch();
-      }}
-    />
-    </>
   );
 }

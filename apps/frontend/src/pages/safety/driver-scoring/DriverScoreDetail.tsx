@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listDriverSafetyTrend, listDriverScoreEvents, type DriverSafetyScoreRow } from "../../../api/safety";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { HarshEventDetail } from "../HarshEventDetail";
 
 type Props = {
@@ -126,66 +127,78 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
   });
 
   return (
-    <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-3">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <h4 className="text-sm font-semibold text-slate-900">{driverName}</h4>
-          <p className="text-xs text-slate-500">12-period composite safety trend</p>
+    <div className="space-y-3">
+      <section
+        className="overflow-hidden rounded-sm border border-slate-200 bg-white"
+        data-testid="driver-score-detail-panel"
+      >
+        <div className="flex items-start justify-between gap-2 border-b border-slate-200 px-3 py-2">
+          <div>
+            <h4 className="text-sm font-semibold text-slate-900">{driverName}</h4>
+            <p className="text-xs text-slate-500">12-period composite safety trend</p>
+          </div>
+          <button type="button" className="text-xs text-slate-600 underline" onClick={onClose}>
+            Close
+          </button>
         </div>
-        <button type="button" className="text-xs text-slate-600 underline" onClick={onClose}>
-          Close
-        </button>
-      </div>
 
-      {trendQuery.isError ? (
-        <ListErrorState
-          title="Couldn't load driver score history"
-          status={0}
-          message={(trendQuery.error as Error)?.message}
-          onRetry={() => void trendQuery.refetch()}
-        />
-      ) : (
-        <>
-          <TrendChart periods={periods} />
+        {trendQuery.isError ? (
+          <div className="px-3 py-2">
+            <ListErrorState
+              title="Couldn't load driver score history"
+              status={0}
+              message={(trendQuery.error as Error)?.message}
+              onRetry={() => void trendQuery.refetch()}
+            />
+          </div>
+        ) : (
+          <>
+            <div className="border-b border-slate-100 px-3 py-2">
+              <TrendChart periods={periods} />
+            </div>
 
-          {latest ? (
-            <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
-              <div className="rounded-sm border border-slate-100 p-2">
-                <div className="text-slate-500">Latest score</div>
-                <div className="font-semibold">{latest.composite_score?.toFixed(1) ?? "N/A"}</div>
-              </div>
-              <div className="rounded-sm border border-slate-100 p-2">
-                <div className="text-slate-500">Fleet rank</div>
-                <div className="font-semibold">{latest.rank_in_fleet ?? "—"}</div>
-              </div>
-              <div className="rounded-sm border border-slate-100 p-2">
-                <div className="text-slate-500">Miles</div>
-                <div className="font-semibold">{latest.miles_driven.toFixed(0)}</div>
-              </div>
-              <div className="rounded-sm border border-slate-100 p-2">
-                <div className="text-slate-500">Period</div>
-                <div className="font-semibold">
-                  {latest.period_start} → {latest.period_end}
+            {latest ? (
+              <div className="grid grid-cols-2 text-xs sm:divide-x sm:divide-slate-100 md:grid-cols-4">
+                <div className="border-t border-slate-100 px-3 py-2 md:border-t-0">
+                  <div className="text-slate-500">Latest score</div>
+                  <div className="font-semibold">{latest.composite_score?.toFixed(1) ?? "N/A"}</div>
+                </div>
+                <div className="border-t border-slate-100 px-3 py-2 md:border-t-0">
+                  <div className="text-slate-500">Fleet rank</div>
+                  <div className="font-semibold">{latest.rank_in_fleet ?? "—"}</div>
+                </div>
+                <div className="border-t border-slate-100 px-3 py-2 md:border-t-0">
+                  <div className="text-slate-500">Miles</div>
+                  <div className="font-semibold">{latest.miles_driven.toFixed(0)}</div>
+                </div>
+                <div className="border-t border-slate-100 px-3 py-2 md:border-t-0">
+                  <div className="text-slate-500">Period</div>
+                  <div className="font-semibold">
+                    {latest.period_start} → {latest.period_end}
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : null}
+            ) : null}
 
-          <ParityTable<DriverSafetyScoreRow>
-            columns={periodColumns}
-            rows={periods}
-            rowKey={(row) => `${row.period_start}-${row.period_end}`}
-            loading={trendQuery.isLoading}
-            emptyText="No historical periods stored for this driver."
-            storageKey="safety-driver-score-detail-periods"
-            exportFilename="driver-score-detail-periods"
-            tableTestId="driver-score-detail-periods-table"
-          />
-        </>
-      )}
+            <ParityTable<DriverSafetyScoreRow>
+              columns={periodColumns}
+              rows={periods}
+              rowKey={(row) => `${row.period_start}-${row.period_end}`}
+              loading={trendQuery.isLoading}
+              emptyText="No historical periods stored for this driver."
+              storageKey="safety-driver-score-detail-periods"
+              exportFilename="driver-score-detail-periods"
+              tableTestId="driver-score-detail-periods-table"
+            />
+          </>
+        )}
+      </section>
 
-      <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
-        <div className="flex items-center justify-between">
+      <section
+        className="overflow-hidden rounded-sm border border-slate-200 bg-white"
+        data-testid="driver-score-harsh-events-panel"
+      >
+        <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
           <h5 className="text-sm font-semibold text-slate-900">Harsh Event Timeline</h5>
           <div className="flex items-center gap-2 text-xs">
             <span className="text-slate-500">Period</span>
@@ -194,20 +207,25 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
                 key={days}
                 type="button"
                 onClick={() => setEventPeriodDays(days)}
-                className={`rounded-sm px-2 py-1 ${eventPeriodDays === days ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+                className={`rounded-sm px-2 py-1 ${eventPeriodDays === days ? "bg-[#1f2a44] text-white" : "bg-slate-100 text-slate-700"}`}
               >
                 {days}d
               </button>
             ))}
           </div>
         </div>
-        <div className="space-y-1 text-xs">
+        <div className="divide-y divide-slate-100 text-xs">
           {(eventsQuery.data?.events ?? []).slice(0, 50).map((event) => (
-            <div key={event.id} className="rounded-sm border border-slate-100 px-2 py-1">
+            <div key={event.id} className="px-3 py-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span>
                   {String(event.event_at).slice(0, 19).replace("T", " ")} · {event.event_kind} · {event.severity} · Unit{" "}
-                  {event.unit_number ?? "N/A"} · lat/lng {event.latitude ?? "—"}/{event.longitude ?? "—"}
+                  {event.unit_id ? (
+                    <EntityLink kind="unit" id={String(event.unit_id)} label={event.unit_number?.trim() || "Unit"} />
+                  ) : (
+                    event.unit_number ?? "N/A"
+                  )}{" "}
+                  · lat/lng {event.latitude ?? "—"}/{event.longitude ?? "—"}
                 </span>
                 <button
                   type="button"
@@ -225,10 +243,10 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
             </div>
           ))}
           {(eventsQuery.data?.events ?? []).length === 0 ? (
-            <div className="text-slate-500">No harsh events for this driver in period.</div>
+            <div className="px-3 py-2 text-slate-500">No harsh events for this driver in period.</div>
           ) : null}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

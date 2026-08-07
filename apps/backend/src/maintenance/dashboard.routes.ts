@@ -84,6 +84,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
             COALESCE(u.unit_number, '') AS unit_display_id
           FROM maintenance.work_orders w
           JOIN mdata.units u ON u.id = w.unit_id
+                            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = w.operating_company_id
           WHERE w.operating_company_id = $1::uuid
             AND w.status NOT IN ('complete', 'cancelled')
             AND (
@@ -141,7 +142,9 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
           s.scheduled_arrival_at::text AS eta_at
         FROM dispatch.intransit_issues i
         JOIN mdata.units u ON u.id = i.unit_id
+                          AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = i.operating_company_id
         JOIN mdata.drivers d ON d.id = i.driver_id
+                            AND d.operating_company_id = i.operating_company_id
         -- Entity-scoped on PURPOSE: mdata.loads RLS allows any of a multi-entity user's companies, so we
         -- additionally pin the Load # join to the viewed operating company ($1) — a load from another entity
         -- (TRANSP/TRK/USMCA) can never surface here even for a cross-entity user. ETA stop inherits the load.
@@ -222,6 +225,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
             w.updated_at::text
           FROM maintenance.work_orders w
           JOIN mdata.units u ON u.id = w.unit_id
+                            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = w.operating_company_id
           WHERE w.operating_company_id = $1::uuid
             AND w.status::text IN ('open', 'in_progress', 'waiting_parts')
             AND w.description ILIKE '[samsara_dtc_auto]%'

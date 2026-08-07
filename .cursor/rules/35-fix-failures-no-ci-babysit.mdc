@@ -1,0 +1,22 @@
+---
+description: Never CI-babysit — read the failing log, fix root cause, land permanent guard (owner 2026-08-04)
+alwaysApply: true
+---
+
+# RULE 35 — FIX FAILURES, DO NOT BABYSIT CI (owner 2026-08-04)
+
+## Hard ban
+
+- **Do not** run `gh pr checks --watch`, long `gh run watch` loops, or multi-turn "waiting for green" as the primary activity.
+- **Do** fetch the **failing log line** once (`gh run view … --log-failed | rg '✗|Error:'`), fix the root cause in the worktree, push, move to the next WIP item.
+
+## When CI is red
+
+1. Identify the exact guard / error (one line).
+2. Fix it permanently (code + verify-step / rule if the class can recur).
+3. Push. Do not sit on the PR.
+4. If the red is an `origin/main` defect (e.g. duplicate verify-step numbers), fix it in an allowlisted claim/janitor PR — do not renumber randomly across open feature PRs.
+
+## Companion
+
+Rule **25** (mod-4 bands + claim-before-write) is the permanent end to verify-step collision churn. Credit CC-2 analysis.

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { listCustomers, listDrivers } from "../api/mdata";
 import { type LoadStatus, useLoadsList, useUpdateLoadStatus } from "../api/loads";
 import { listSettlements } from "../api/driverFinance";
 import { listGeofenceBreaches } from "../api/safetyGeofence";
@@ -88,19 +87,6 @@ function serializeFilters(params: URLSearchParams, filters: DispatchFilterState)
   return next;
 }
 
-function customerMatchReason(search: string, customer: { name: string; customer_code: string | null }): string | null {
-  const term = search.trim().toLowerCase();
-  if (!term) return null;
-  const code = String(customer.customer_code ?? "");
-  if (code.toLowerCase().includes(term)) {
-    return `matched: customer_code = ${code}`;
-  }
-  if (customer.name.toLowerCase().includes(term)) {
-    return `matched: customer_name = ${customer.name}`;
-  }
-  return null;
-}
-
 export function DispatchPage({
   loadsDeepLink = false,
   initialSubTab,
@@ -175,15 +161,6 @@ export function DispatchPage({
     include_progress: true,
   });
 
-  const customerLookup = useQuery({
-    queryKey: ["dispatch", "customers", filters.search],
-    queryFn: () => listCustomers({ status: "active", search: filters.search || undefined }),
-  });
-  const driverLookup = useQuery({
-    queryKey: ["dispatch", "drivers", selectedCompanyId, filters.search],
-    enabled: Boolean(selectedCompanyId),
-    queryFn: () => listDrivers({ operating_company_id: selectedCompanyId, status: "Active", search: filters.search || undefined, limit: 200 }), // full active set (endpoint default 50 truncates >50)
-  });
   const preSettlementsQuery = useQuery({
     queryKey: ["dispatch", "pre-settlements", defaultCompanyIds.join(",")],
     queryFn: () => listSettlements(defaultCompanyIds[0] ?? ""),
@@ -215,25 +192,6 @@ export function DispatchPage({
     next.delete("book_load");
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
-
-  const customers = useMemo(
-    () =>
-      (customerLookup.data?.customers ?? []).map((customer) => ({
-        id: customer.id,
-        label: customer.name,
-        sublabel: customerMatchReason(filters.search, customer) ?? customer.customer_code ?? undefined,
-      })),
-    [customerLookup.data, filters.search]
-  );
-  const drivers = useMemo(
-    () =>
-      (driverLookup.data?.drivers ?? []).map((driver) => ({
-        id: driver.id,
-        label: `${driver.first_name} ${driver.last_name}`.trim(),
-        sublabel: driver.phone,
-      })),
-    [driverLookup.data]
-  );
 
   const loads = loadsQuery.data?.loads ?? [];
 
@@ -382,13 +340,12 @@ export function DispatchPage({
         <FilterBar
         value={filters}
         onChange={setFilterState}
+        operatingCompanyId={selectedCompanyId ?? defaultCompanyIds[0] ?? ""}
         companies={companies.map((company) => ({
           id: company.id,
           label: company.legal_name,
           shortName: company.short_name,
         }))}
-        customers={customers}
-        drivers={drivers}
         onClearAll={() =>
           setFilterState({
             companyIds: defaultCompanyIds,

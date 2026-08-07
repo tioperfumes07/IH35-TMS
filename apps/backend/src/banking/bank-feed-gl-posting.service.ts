@@ -53,6 +53,7 @@ export type BankFeedGlSkipReason =
   | "account_cross_entity"
   | "account_not_postable"
   | "bank_account_ledger_unlinked"
+  | "bank_ledger_account_class_mismatch"
   | "bank_account_hidden"
   | "zero_amount"
   | "post_failed";
@@ -113,6 +114,10 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
           bt.destination_bank_account_id::text         AS destination_bank_account_id,
           bt.matched_transfer_id::text                 AS matched_transfer_id,
           ba.ledger_account_id::text                   AS bank_ledger_account_id,
+          ba.account_class::text                        AS bank_account_class,
+          led.account_type::text                        AS bank_ledger_account_type,
+          led.account_subtype::text                     AS bank_ledger_account_subtype,
+          led.account_name::text                        AS bank_ledger_account_name,
           ba.hidden_at                                  AS bank_account_hidden_at,
           ca.id::text                                  AS cat_account_id,
           ca.operating_company_id::text                AS cat_account_opco,
@@ -122,8 +127,16 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
         LEFT JOIN banking.bank_accounts ba
           ON ba.id = bt.bank_account_id
           AND ba.operating_company_id = bt.operating_company_id
+        -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED). These two resolve the GL ACCOUNTS this bank
+        -- transaction will POST to — the categorised account and the bank's ledger account. The bank
+        -- account join beside them was already pinned to bt.operating_company_id; these were not. An
+        -- unscoped match here selects another entity's account as a posting target.
         LEFT JOIN catalogs.accounts ca
           ON ca.id = bt.categorization_gl_account_id
+          AND ca.operating_company_id = bt.operating_company_id
+        LEFT JOIN catalogs.accounts led
+          ON led.id = ba.ledger_account_id
+          AND led.operating_company_id = bt.operating_company_id
         WHERE bt.id = $1::uuid
           AND bt.operating_company_id = $2::uuid
         LIMIT 1
@@ -144,6 +157,10 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
           destination_bank_account_id: string | null;
           matched_transfer_id: string | null;
           bank_ledger_account_id: string | null;
+          bank_account_class: string | null;
+          bank_ledger_account_type: string | null;
+          bank_ledger_account_subtype: string | null;
+          bank_ledger_account_name: string | null;
           bank_account_hidden_at: string | null;
           cat_account_id: string | null;
           cat_account_opco: string | null;
@@ -201,6 +218,32 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
     // Fail-closed bank cash-GL bridge (the direction-appropriate bank leg).
     if (!txn.bank_ledger_account_id) return { ok: false, reason: "bank_account_ledger_unlinked" };
 
+    // The bridge being PRESENT is not the same as it being RIGHT, and a wrong bridge posts silently.
+    // Measured on prod 2026-08-04: the "Business Platinum Card®" bank account (account_class='credit')
+    // has ledger_account_id pointing at "Faro Factoring Reserves" — an Asset/Savings account. Because
+    // this function trusted ledger_account_id verbatim, 120 categorized card purchases CREDITED
+    // $41,191.86 to the factoring reserve between 2026-07-04 and 2026-08-04, where a card purchase must
+    // instead CREDIT a card liability. Nothing errored; the books simply drifted.
+    //
+    // So validate the bridge's SHAPE, not just its presence: a credit-class account must bridge to a
+    // Liability, a depository account to an Asset. A mismatch is a mapping defect that only a human can
+    // resolve (which GL account represents this card), so refuse to post and say why. Refusing leaves
+    // the line categorized and unposted — recoverable. Posting it wrong is not.
+    const bankClass = (txn.bank_account_class ?? "").trim().toLowerCase();
+    const ledgerType = (txn.bank_ledger_account_type ?? "").trim().toLowerCase();
+    const expectedType = bankClass === "credit" ? "liability" : bankClass === "depository" ? "asset" : null;
+    if (expectedType && ledgerType && ledgerType !== expectedType) {
+      return {
+        ok: false,
+        reason: "bank_ledger_account_class_mismatch",
+        message:
+          `bank account class '${bankClass}' must bridge to a ${expectedType} GL account, but ` +
+          `ledger_account_id points at '${txn.bank_ledger_account_name ?? "?"}' ` +
+          `(${txn.bank_ledger_account_type}/${txn.bank_ledger_account_subtype}). ` +
+          `Fix the bank account's ledger_account_id before posting.`,
+      };
+    }
+
     // BANK-ACCOUNT-HIDE: an account hidden for THIS entity can never receive a NEW GL posting (flag OFF
     // by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
     if (txn.bank_account_hidden_at && (await isBankAccountHideEnabled(client, input.companyId))) {
@@ -236,12 +279,39 @@ export async function maybePostBankCategorizationToGl(input: MaybePostBankCatego
   // direction, enforces the closed-period gate + assertBalanced + idempotency (posting_batches unique key).
   let posted;
   try {
+    // BANK-F05 — a categorization that has been reversed must RE-post, not silently return the
+    // original batch.
+    //
+    // The revision is the number of journal entries for THIS source that have already been reversed.
+    // That count is the only discriminator that is stable across a double-submit: it rises when
+    // someone reverses, never when someone posts. Counting posting_batches instead would increment on
+    // the repost itself, so a retried request would mint a SECOND corrected entry — a double-post.
+    // reverseJournalEntryNoFlip stamps reversed_by_je_id on the original JE, which is what makes this
+    // countable (it does not touch posting_batches at all — only postVoidReversal does).
+    const reversedCountRows = await withCompanyScope(input.actorUserUuid, input.companyId, async (client) => {
+      const r = await client.query(
+        `SELECT COUNT(DISTINCT je.id)::text AS n
+           FROM accounting.journal_entries je
+           JOIN accounting.journal_entry_postings p ON p.journal_entry_uuid = je.id
+                                                   AND p.operating_company_id = je.operating_company_id
+          WHERE je.operating_company_id = $1::uuid
+            AND p.source_transaction_type = 'bank_categorization'
+            AND p.source_transaction_id::text = $2
+            AND je.reversed_by_je_id IS NOT NULL`,
+        [input.companyId, input.bankTransactionId]
+      );
+      return r.rows as Array<{ n: string }>;
+    });
+    const reversedCount = Number(reversedCountRows[0]?.n ?? 0);
+
     posted = await postSourceTransaction(
       {
         operating_company_id: input.companyId,
         source_transaction_type: "bank_categorization",
         source_transaction_id: input.bankTransactionId,
-        posting_purpose: "initial_post",
+        ...(reversedCount > 0
+          ? { posting_purpose: "repost" as const, repost_revision: reversedCount }
+          : { posting_purpose: "initial_post" as const }),
       },
       { userId: input.actorUserUuid }
     );

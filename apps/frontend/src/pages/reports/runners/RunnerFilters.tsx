@@ -1,9 +1,8 @@
 import { useMemo } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
-import { useQuery } from "@tanstack/react-query";
 import type { RunnerFilter } from "./runner-config";
-import { listDrivers, listUnits } from "../../../api/mdata";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { CollapsedListFilters } from "../../../components/table";
 
@@ -33,16 +32,6 @@ export function defaultFilterValues(filters: RunnerFilter[]) {
 
 export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: Props) {
   const { selectedCompanyId, companies } = useCompanyContext();
-  const driversQuery = useQuery({
-    queryKey: ["runner-filters", "drivers", selectedCompanyId ?? ""],
-    queryFn: () => listDrivers({ status: "Active", search: "", operating_company_id: selectedCompanyId ?? null, limit: 200 }), // full active set (endpoint default 50 truncates >50)
-    enabled: filters.some((f) => f.type === "driver_select") && Boolean(selectedCompanyId),
-  });
-  const unitsQuery = useQuery({
-    queryKey: ["runner-filters", "units", selectedCompanyId ?? ""],
-    queryFn: () => listUnits({ status: "active", operating_company_id: selectedCompanyId }),
-    enabled: filters.some((f) => f.type === "unit_select"),
-  });
 
   const requiredMissing = useMemo(() => {
     return filters.some((filter) => {
@@ -85,34 +74,38 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
               );
             }
             if (filter.type === "unit_select") {
-              const units = (unitsQuery.data?.units ?? []) as Array<{ id: string; unit_number: string }>;
               return (
-                <label key={filter.key} className="block">
+                <label key={filter.key} className="block" data-testid={`runner-filter-unit-${filter.key}`}>
                   <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-                  <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
-                    <option value="">Select unit</option>
-                    {units.map((unit) => (
-                      <option key={unit.id} value={unit.id}>
-                        {unit.unit_number}
-                      </option>
-                    ))}
-                  </SelectCombobox>
+                  <EntityPicker
+                    kind="unit"
+                    operatingCompanyId={selectedCompanyId ?? ""}
+                    value={String(values[filter.key] ?? "") || null}
+                    onChange={(next) => onChange(filter.key, next ?? "")}
+                    enabled={Boolean(selectedCompanyId)}
+                    placeholder="Select unit"
+                    className="h-9 w-full text-sm"
+                    dataField={`runner-filter-${filter.key}`}
+                    allowClear
+                  />
                 </label>
               );
             }
             if (filter.type === "driver_select") {
-              const drivers = driversQuery.data?.drivers ?? [];
               return (
-                <label key={filter.key} className="block">
+                <label key={filter.key} className="block" data-testid={`runner-filter-driver-${filter.key}`}>
                   <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-                  <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
-                    <option value="">Select driver</option>
-                    {drivers.map((driver) => (
-                      <option key={driver.id} value={driver.id}>
-                        {`${driver.first_name} ${driver.last_name}`}
-                      </option>
-                    ))}
-                  </SelectCombobox>
+                  <EntityPicker
+                    kind="driver"
+                    operatingCompanyId={selectedCompanyId ?? ""}
+                    value={String(values[filter.key] ?? "") || null}
+                    onChange={(next) => onChange(filter.key, next ?? "")}
+                    enabled={Boolean(selectedCompanyId)}
+                    placeholder="Search driver…"
+                    className="h-9 w-full text-sm"
+                    dataField={`runner-filter-${filter.key}`}
+                    allowClear
+                  />
                 </label>
               );
             }

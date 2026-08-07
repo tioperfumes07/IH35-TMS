@@ -1,6 +1,6 @@
 # Module completion — Home — acceptance checklist
 
-**PROGRESS: 1 of 1** · complete: `true` · as_of: 2026-07-29 · live_sha: `4de9adb`
+**PROGRESS: 1 of 1** · complete: `true` · as_of: 2026-08-04 · live_sha: `8d2f67b`
 
 | Status | Count |
 |---|---:|

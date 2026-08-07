@@ -23,6 +23,10 @@ function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
 
+/** CUST-LINK-01 — Neon lucia invoice_lines density is sparse (~5 rows vs ~12k invoices). */
+export const INVOICE_LINES_HONEST_EMPTY =
+  "No invoice lines on this record. Production invoice_lines are sparse — most invoices have header totals only until line rows are posted.";
+
 function factoringPillClass(status: string | null | undefined) {
   const base = "rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
   if (status === "advanced") return `${base} bg-slate-100 text-slate-700 border border-slate-300`;
@@ -477,18 +481,27 @@ export function InvoiceDetailPage() {
             </div>
           ) : null}
         </div>
-        <ParityTable<InvoiceLine>
-          columns={lineColumns}
-          rows={invoice.lines ?? []}
-          rowKey={(line) => line.id}
-          loading={detailQuery.isFetching && !detailQuery.data}
-          emptyText="No lines yet."
-          density="compact"
-          storageKey="invoice-detail-lines"
-          sortKey={sortKey}
-          sortDirection={sortDirection}
-          onSortChange={onSortChange}
-        />
+        {lineCount === 0 ? (
+          <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700" data-testid="invoice-lines-honest-empty">
+            <p>{INVOICE_LINES_HONEST_EMPTY}</p>
+            {isDraft ? (
+              <p className="mt-1 text-xs text-gray-600">Use + Create Line above to add the first line item on this draft invoice.</p>
+            ) : null}
+          </div>
+        ) : (
+          <ParityTable<InvoiceLine>
+            columns={lineColumns}
+            rows={invoice.lines ?? []}
+            rowKey={(line) => line.id}
+            loading={detailQuery.isFetching && !detailQuery.data}
+            emptyText={INVOICE_LINES_HONEST_EMPTY}
+            density="compact"
+            storageKey="invoice-detail-lines"
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onSortChange={onSortChange}
+          />
+        )}
       </DataPanel>
 
       <DataPanel title="Payment Applications">

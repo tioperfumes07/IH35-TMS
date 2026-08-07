@@ -3,6 +3,8 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 
 const createIssueBodySchema = z.object({
   load_id: z.string().uuid(),
@@ -177,22 +179,41 @@ export async function registerIntransitIssuesRoutes(app: FastifyInstance) {
       );
 
       if (body.severity === "critical") {
-        await client.query(
-          `
-            INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-            VALUES ($1, $2, $3, $4::jsonb)
-          `,
-          [
-            "dispatch.intransit_issues",
-            inserted.id,
-            "dispatch.intransit_issue.critical",
-            JSON.stringify({
-              issue_id: inserted.id,
-              load_id: body.load_id,
-              notify_channels: ["sms", "email"],
-              notify_targets: ["owner", "manager", "safety"],
-            }),
-          ]
+        // The event carries operating_company_id because every notification is entity-scoped, and the
+        // consumer refuses to deliver without one. This route scopes by user, not by company, so the
+        // company is resolved FROM THE LOAD rather than assumed.
+        // ENTITY-SCOPED to the reporting driver's OWN company. A bare id lookup would happily return
+        // a load from another entity; requiring the match also means the notice can never be raised
+        // against a company the driver does not belong to.
+        // ENTITY-SCOPED through the sanctioned helper (auth/operating-company-scope.ts), which is the
+        // membership gate the rest of the app uses. A bare id lookup would happily return a load from
+        // another entity; requiring the match means the notice can never be raised against a company
+        // this caller does not belong to. The pre-existing driver self-lookup above is left BYTE-
+        // IDENTICAL — it is keyed on identity_user_id (the caller themselves), which is narrower than
+        // a company predicate, and rewriting it would only churn the entity-scope baseline.
+        const callerCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, null);
+        const scopeRes = await client.query<{ operating_company_id: string | null; load_number: string | null }>(
+          `SELECT operating_company_id::text AS operating_company_id, load_number
+             FROM mdata.loads
+            WHERE id = $1::uuid
+              AND operating_company_id = $2::uuid
+            LIMIT 1`,
+          [body.load_id, callerCompanyId]
+        );
+        await enqueueOutboxEvent(
+          client,
+          "dispatch.intransit_issue.critical",
+          { aggregate_type: "dispatch.intransit_issues", aggregate_id: inserted.id },
+          {
+            issue_id: inserted.id,
+            load_id: body.load_id,
+            load_number: scopeRes.rows[0]?.load_number ?? null,
+            operating_company_id: scopeRes.rows[0]?.operating_company_id ?? null,
+            issue_type: body.type,
+            description: body.description,
+            notify_channels: ["sms", "email"],
+            notify_targets: ["owner", "manager", "safety"],
+          }
         );
       }
 

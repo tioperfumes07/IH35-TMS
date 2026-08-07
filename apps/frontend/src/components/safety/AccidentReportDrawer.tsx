@@ -454,19 +454,23 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   const liabilityId = payload?.spawned_liability_id;
                   if (liabilityId == null || liabilityId === "") {
                     pushToast(
-                      "Spawn Liability is not live yet (FINANCIAL-HOLD) — no payable was created.",
+                      "Spawn Liability failed — no liability id returned. Check cost lines and driver.",
                       "error",
                     );
                     return;
                   }
-                  pushToast("Spawn liability created", "success");
+                  const reused = Boolean((payload as { reused?: boolean }).reused);
+                  pushToast(
+                    reused ? "Existing accident liability reused" : "Spawn liability created",
+                    "success",
+                  );
                   onUpdated();
                 })
                 .catch((error) =>
                   pushToast(
                     String(
                       (error as Error).message ||
-                        "Spawn Liability is not live yet (FINANCIAL-HOLD) — no payable was created.",
+                        "Spawn Liability failed — add positive cost lines and an active driver, then retry.",
                     ),
                     "error",
                   ),

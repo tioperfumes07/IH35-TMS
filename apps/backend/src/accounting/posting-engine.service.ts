@@ -13,8 +13,64 @@ import { resolveReversalDate, todayIso } from "./void.service.js";
 // CHAIN-05 (BLOCK-03) adds "bank_categorization" (a categorized bank-feed line → direction-aware balanced
 // JE; built by buildBankCategorizationLines). NOTE: kept on ONE line — verify-posting-engine-mvp-contract
 // prefix-matches the leading four MVP types on a single line.
-export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment" | "cash_advance" | "driver_advance" | "expense" | "bank_categorization" | "driver_reimbursement" | "transfer";
-export type PostingPurpose = "initial_post" | "reversal";
+/**
+ * The posting source types, as ONE list.
+ *
+ * This used to be a hand-written union PLUS a hand-written array inside assertKnownSourceType() — two
+ * copies of the same truth, which is a drift waiting to happen: adding a type to the union without the
+ * array compiles fine and then throws UNKNOWN_SOURCE_TYPE at runtime, and adding it to the array
+ * without the union fails to typecheck at every call site. The union is now DERIVED from the array, so
+ * a new source type is a one-line change that cannot be half-applied.
+ */
+export const POSTING_SOURCE_TYPES = [
+  "invoice",
+  "bill",
+  "customer_payment",
+  "bill_payment",
+  "cash_advance",
+  "driver_advance",
+  "expense",
+  "bank_categorization",
+  "driver_reimbursement",
+  "transfer",
+  // LOAN-02: related-party lending (owner/spouse/employee/driver, both directions). Posts through the
+  // shared poster onto accounting.journal_entries — no new GL math, no second ledger.
+  "related_party_loan",
+] as const;
+
+export type PostingSourceType = (typeof POSTING_SOURCE_TYPES)[number];
+export type PostingPurpose = "initial_post" | "reversal" | "repost";
+
+/**
+ * BANK-F04 — the canonical poster CAN now re-post a source transaction whose previous posting was
+ * reversed. This is the capability BANK-F03 declared missing.
+ *
+ * WHY IT COULD NOT BEFORE. The batch idempotency key is
+ *     ih35:posting-mvp:v1:<opco>:<type>:<source_id>:<line_id>:<posting_purpose>
+ * and PostingPurpose had two members, so exactly ONE `initial_post` batch could ever exist per source
+ * transaction. Calling the poster after a reversal returned the EXISTING batch and reported success.
+ * Proven on a prod fork: 20 reversed bank categorizations, fuel down exactly $4,593.94, target
+ * accounts ZERO lines, `posted: true` carrying the ORIGINAL journal-entry id. The expense did not move
+ * to the right account — it vanished.
+ *
+ * HOW IT WORKS NOW. A corrected posting uses purpose `repost` and carries an explicit
+ * `repost_revision` (1 for the first correction, 2 for a correction of that correction, ...). The
+ * revision is appended to the idempotency key, so each successive correction gets a DISTINCT key and
+ * posts a NEW balanced batch, while a genuine double-submit of the SAME correction repeats the SAME
+ * revision, hits the SAME key, and still dedups exactly as before.
+ *
+ * WHY THE REVISION IS EXPLICIT RATHER THAN INFERRED. The obvious design is to derive it from how many
+ * batches are already reversed. That is silently wrong here: the reversal path this actually serves
+ * (reverseJournalEntryNoFlip) does NOT touch accounting.posting_batches at all — only postVoidReversal
+ * marks batch_status='reversed' (line ~2211). An inferred revision would therefore compute 0 on the
+ * live path and collide with the original key, reproducing the very defect this closes. Explicit beats
+ * inferred when the inference is silently wrong.
+ *
+ * ADDITIVE BY CONSTRUCTION: the revision segment is appended ONLY for `repost`, so `initial_post` and
+ * `reversal` keys are byte-identical to every key already stored in accounting.posting_batches. No
+ * existing caller, and no already-posted batch, changes behaviour.
+ */
+export const POSTING_ENGINE_SUPPORTS_REPOST = true;
 type BatchStatus = "queued" | "in_progress" | "posted" | "reversed" | "failed";
 
 type DbClient = {
@@ -43,6 +99,12 @@ type PostSourceInput = {
   source_transaction_id: string;
   source_transaction_line_id?: string | null;
   posting_purpose?: PostingPurpose;
+  /**
+   * Required when posting_purpose === "repost": which correction this is (1-based). Appended to the
+   * idempotency key so successive corrections are distinct while a double-submit of the same
+   * correction still dedups. Ignored for initial_post / reversal.
+   */
+  repost_revision?: number;
   // Optional credit (cash/bank) account for cash_advance postings. When omitted, the
   // company-default cash-like account is used (same fallback as bill_payment). B5's approve
   // path passes the operator-chosen source account here. Ignored by other source types.
@@ -88,7 +150,8 @@ export type PostingErrorCode =
   | "QBO_BILL_POST_GL_REFUSED"
   | "QBO_BILL_PAYMENT_POST_GL_REFUSED"
   | "EXPENSE_POST_GL_REFUSED"
-  | "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED";
+  | "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED"
+  | "QBO_INVOICE_POST_GL_REFUSED";
 
 export class PostingEngineError extends Error {
   code: PostingErrorCode;
@@ -248,20 +311,9 @@ const INVOICE_ELIGIBLE_STATUSES = new Set(["sent", "partial", "paid", "factored"
 const PERIOD_LOCKED_TOKEN = "IH35_CLOSED_PERIOD";
 
 function assertKnownSourceType(value: string): asserts value is PostingSourceType {
-  if (
-    ![
-      "invoice",
-      "bill",
-      "customer_payment",
-      "bill_payment",
-      "cash_advance",
-      "driver_advance",
-      "expense",
-      "bank_categorization",
-      "driver_reimbursement",
-      "transfer",
-    ].includes(value)
-  ) {
+  // Reads the SAME array the type is derived from — the runtime check and the compile-time type can no
+  // longer disagree.
+  if (!(POSTING_SOURCE_TYPES as readonly string[]).includes(value)) {
     throw new PostingEngineError("UNKNOWN_SOURCE_TYPE", `Unknown source_transaction_type: ${value}`);
   }
 }
@@ -319,7 +371,10 @@ export function buildPostingMvpIdempotencyKey(input: {
   source_transaction_id: string;
   source_transaction_line_id: string | null;
   posting_purpose: PostingPurpose;
+  repost_revision?: number | null;
 }) {
+  // ADDITIVE: appended ONLY for `repost`, so initial_post/reversal keys are byte-identical to before.
+  const revisionSuffix = input.posting_purpose === "repost" ? [String(input.repost_revision ?? 1)] : [];
   return [
     "ih35:posting-mvp:v1",
     input.operating_company_id.toLowerCase(),
@@ -327,6 +382,7 @@ export function buildPostingMvpIdempotencyKey(input: {
     input.source_transaction_id,
     input.source_transaction_line_id ?? "-",
     input.posting_purpose,
+    ...revisionSuffix,
   ].join(":");
 }
 
@@ -623,6 +679,7 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
     tax_cents: number;
     display_id: string | null;
     source_load_id: string | null;
+    source_system: string | null;
   }>(
     `
       SELECT
@@ -632,7 +689,8 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
         total_cents::bigint AS total_cents,
         tax_cents::bigint AS tax_cents,
         display_id,
-        source_load_id::text
+        source_load_id::text,
+        source_system::text
       FROM accounting.invoices
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -643,6 +701,14 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
   );
   const invoice = invoiceRes.rows[0];
   if (!invoice) throw new PostingEngineError("SOURCE_NOT_FOUND", "Invoice not found");
+  // Parallel books: QBO-origin invoices already have A/R + revenue in QBO. Posting them here would
+  // create duplicate journal entries. Mirror the bill/payment refuse pattern.
+  if ((invoice.source_system ?? "").toLowerCase() === "qbo") {
+    throw new PostingEngineError(
+      "QBO_INVOICE_POST_GL_REFUSED",
+      "Refusing Invoice\u2192GL post for source_system=qbo \u2014 parallel books; QBO already holds this A/R + revenue. Do not invent a second TMS journal entry."
+    );
+  }
   if (!INVOICE_ELIGIBLE_STATUSES.has(invoice.status)) {
     throw new PostingEngineError(
       "INVOICE_NOT_POSTING_ELIGIBLE",
@@ -700,6 +766,15 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
         AND itm.operating_company_id = $2::uuid
         AND itm.deactivated_at IS NULL
         AND itm.is_postable = true
+        -- REVENUE MUST CREDIT AN INCOME ACCOUNT. catalogs.items.default_income_account_id is not
+        -- type-constrained, and on prod at least one TRANSP item ("Driver Deduction-Escrow for
+        -- Claims") points it at a LIABILITY (2026-Damage Claim Escrow). For a driver DEDUCTION that
+        -- credit is correct — escrow is a liability — but this is the INVOICE revenue resolver, so if
+        -- that item ever lands on a customer invoice the poster would credit a liability as revenue:
+        -- income understated, liabilities overstated, and nothing raised. Restricting the join makes
+        -- the account unresolvable instead, which routes to the existing fail-closed error naming the
+        -- line — a refusal a human can act on, rather than a silent misclassification.
+        AND itm.account_type IN ('Income', 'Revenue', 'OtherIncome')
       WHERE il.invoice_id = $1::uuid
       ORDER BY il.display_order ASC, il.id ASC
     `,
@@ -850,6 +925,27 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
   if (!bill) throw new PostingEngineError("SOURCE_NOT_FOUND", "Bill not found");
   if (bill.revoked_at || bill.status === "void" || bill.status === "voided") {
     throw new PostingEngineError("BILL_NOT_POSTING_ELIGIBLE", "Voided bill is not posting-eligible");
+  }
+  // LV-060 — A DRAFT IS NOT A LIABILITY YET.
+  //
+  // This guard refused voided bills and stopped there, so a bill still in `draft` posted happily.
+  // It happened: bill f8f8e5a4-8c66-4d16-a4c9-44beff6b79e2 (TRK, $25.00, auto-created from work order
+  // WO-TEST-TRUCK-1-IS-08-03-2026-0001) is status='draft' on prod with TWO transaction_source_links —
+  // DR Repair & Maintenance / CR Accounts Payable — and a NULL bill_number. The books therefore carry
+  // an expense and an A/P liability for a document nobody finalised and that has no number to cite.
+  //
+  // Draft is the state where amounts, the vendor and the account mapping can all still change. Posting
+  // it recognises an obligation that may never exist, and correcting it later needs a reversing entry
+  // for money that should not have moved.
+  //
+  // Safe to enforce, measured rather than assumed (prod 2026-08-05): of the 5 TMS-native bills, the 3
+  // `unpaid` and 1 `paid` are all posted and all finalised; exactly ONE `draft` is posted — this
+  // defect. No legitimate posting path depends on posting a draft.
+  if (bill.status === "draft") {
+    throw new PostingEngineError(
+      "BILL_NOT_POSTING_ELIGIBLE",
+      "Draft bill is not posting-eligible — a draft is not yet an approved liability. Finalise the bill (its amounts, vendor and account mapping can still change) before posting to the ledger."
+    );
   }
   // Parallel books: QBO-origin bills already have A/P economics in QBO. Projecting Line[] into
   // accounting.bill_lines must NOT unlock a second TMS JE via post-gl (BILL_GL_POSTING_ENABLED is ON
@@ -1858,6 +1954,8 @@ function buildPostingExecCtx(input: PostSourceInput, actor: Actor): PostingExecC
     source_transaction_id: sourceId,
     source_transaction_line_id: idempotencyLinePart,
     posting_purpose: postingPurpose,
+    // Only consumed for `repost`; ignored otherwise, so existing keys are unchanged.
+    repost_revision: input.repost_revision ?? null,
   });
   return { input, actor, sourceType, sourceId, postingPurpose, idempotencyKey };
 }

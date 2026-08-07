@@ -22,7 +22,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "FLEET-S02",
@@ -35,7 +36,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "FLEET-S03",
@@ -48,7 +50,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "FLEET-S04",
@@ -61,7 +64,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "FLEET-S05",
@@ -74,7 +78,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "FLEET-S06",
@@ -87,7 +92,8 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "FLEET-S07",
@@ -100,8 +106,12 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "OPEN",
       "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     }
   ],
-  "M": 7
+  "M": 7,
+  "pass_count": 0,
+  "total_count": 7,
+  "progress": "0 of 7"
 }

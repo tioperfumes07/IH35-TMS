@@ -1,7 +1,7 @@
 name: security-checks
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.sha || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 # CI-COVERAGE FIX (2026-07-23): NO `branches:` filter on the PR trigger. The
@@ -30,8 +30,11 @@ jobs:
           POSTGRES_DB: ih35_verify
         ports:
           - 54329:5432
+        # See the note in ci.yml: without -d, pg_isready probes a database named after the user
+        # ("verify") that is never created, spraying `FATAL: database "verify" does not exist` into the
+        # container log every 10s while still returning PQPING_OK. Same fix, same reason.
         options: >-
-          --health-cmd "pg_isready -U verify"
+          --health-cmd "pg_isready -U verify -d ih35_verify"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5

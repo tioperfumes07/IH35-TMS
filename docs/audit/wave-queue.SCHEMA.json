@@ -1,0 +1,46 @@
+{
+  "$comment": "IH35-TMS wave queue — Cascade writes docs/audit/wave-queue.json to THIS schema. verify-wave-card-format.mjs enforces it in CI. Legacy per-module rows in AUDIT-COVERAGE-LIVE.md are NOT touched (WORM history); this governs the NEW class-wave artifact only.",
+  "type": "object",
+  "required": ["waves"],
+  "properties": {
+    "waves": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "root_cause", "lane", "layer", "modules", "instances", "completeness", "guard", "drain_proof", "status"],
+        "properties": {
+          "id":          { "type": "string", "pattern": "^CLS-[A-Z0-9-]+$" },
+          "root_cause":  { "type": "string", "minLength": 8 },
+          "lane":        { "type": "string", "enum": ["money", "mechanical"] },
+          "layer":       { "type": "string", "enum": ["A","B","C","D","E","V1","V2","V3","V4","V5","V6","V7","V8"] },
+          "modules":     { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "instances": {
+            "type": "array", "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["path", "entity"],
+              "properties": {
+                "path":   { "type": "string", "minLength": 3 },
+                "entity": { "type": "string", "enum": ["TRANSP","USMCA","TRK","ALL"] },
+                "note":   { "type": "string" }
+              }
+            }
+          },
+          "completeness": { "type": "string", "minLength": 8, "$comment": "how the instance count was PROVEN — visible==n_live_tup, n_tup_del=0, RLS-subject role, same-table positive control. A lucia-bypass 0 is inert." },
+          "guard":        { "type": "string", "pattern": "^scripts/verify-.*\\.mjs$" },
+          "drain_proof": {
+            "type": "object",
+            "required": ["guard_green", "guard_sample", "money_critical"],
+            "properties": {
+              "guard_green":   { "type": "boolean" },
+              "guard_sample":  { "type": "string", "$comment": "<path/entity/JE-or-row>; must be non-empty when status=drained; must be a money-bearing instance when money_critical=true" },
+              "money_critical":{ "type": "boolean" }
+            }
+          },
+          "status":   { "type": "string", "enum": ["open", "draining", "drained"] },
+          "hotfiles": { "type": "array", "items": { "type": "string" }, "$comment": "files this class edits — Cursor uses overlap to decide the <=3 parallel cap" }
+        }
+      }
+    }
+  }
+}

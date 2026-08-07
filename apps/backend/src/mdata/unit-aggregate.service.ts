@@ -186,6 +186,7 @@ export async function buildUnitAggregate(
       SELECT d.id, d.first_name, d.last_name, d.phone, vda.started_at::text
       FROM telematics.vehicle_driver_assignments vda
       JOIN mdata.drivers d ON d.id = vda.driver_id
+                          AND d.operating_company_id = vda.operating_company_id
       WHERE vda.unit_id = $1::uuid
         AND vda.operating_company_id = $2::uuid
         AND vda.is_default = true
@@ -201,6 +202,7 @@ export async function buildUnitAggregate(
       SELECT d.id, d.first_name, d.last_name, d.phone, vda.started_at::text AS logged_in_at, vda.source
       FROM telematics.vehicle_driver_assignments vda
       JOIN mdata.drivers d ON d.id = vda.driver_id
+                          AND d.operating_company_id = vda.operating_company_id
       WHERE vda.unit_id = $1::uuid
         AND vda.operating_company_id = $2::uuid
         AND vda.source = 'samsara_webhook'
@@ -264,6 +266,7 @@ export async function buildUnitAggregate(
         ) AS eta
       FROM mdata.loads l
       LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                 AND c.operating_company_id = l.operating_company_id
       WHERE l.assigned_unit_id = $1::uuid
         AND l.operating_company_id = $2::uuid
         AND l.soft_deleted_at IS NULL
@@ -350,6 +353,7 @@ export async function buildUnitAggregate(
       SELECT w.updated_at::text AS date, NULL::int AS odometer, w.total_actual_cost AS cost, v.vendor_name AS vendor
       FROM maintenance.work_orders w
       LEFT JOIN mdata.vendors v ON v.id = w.external_vendor_id
+                               AND v.operating_company_id = w.operating_company_id
       WHERE w.unit_id = $1::uuid
         AND w.operating_company_id = $2::uuid
         AND w.status IN ('complete', 'completed')
@@ -467,12 +471,13 @@ export async function buildUnitAggregate(
         e.reefer_notes
       FROM mdata.equipment e
       WHERE e.current_unit_id = $1::uuid
+        AND COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = $2::uuid
         AND e.equipment_type = 'Reefer'
         AND e.deactivated_at IS NULL
       ORDER BY e.updated_at DESC
       LIMIT 1
     `,
-    [unitId]
+    [unitId, operatingCompanyId]
   );
   const reeferRow = reeferRes.rows[0];
   const engineHours = samsara?.raw_payload_parsed?.engine_hours ?? null;
@@ -572,6 +577,7 @@ export async function buildUnitAggregate(
         NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name
       FROM mdata.unit_photos p
       LEFT JOIN mdata.drivers d ON d.id = p.uploaded_by_driver_id
+                               AND d.operating_company_id = p.operating_company_id
       WHERE p.unit_id = $1::uuid
         AND p.operating_company_id = $2::uuid
         AND p.archived_at IS NULL

@@ -9,6 +9,8 @@ import { bookLoadRateTotalCents } from "./book-load-accessorial.js";
 import { assertDriverQualifiedForLoad } from "./driver-qualification.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { enqueueOverrideNotice } from "../outbox/enqueue-override-notice.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import {
   claimReservation,
   consumeLoadNumberReservation,
@@ -319,6 +321,85 @@ async function collectAssignedDriverIdsForDrugGate(
   return Array.from(ids);
 }
 
+/**
+ * WIRE-02 / ACCT-F63 — resolve the driver's base pay for a load.
+ *
+ * Returns cents when a driver pay rate is configured, or `null` when none exists.
+ *
+ * Today it always returns `null`, and that is the honest answer rather than a stub: verified on the
+ * prod branch, the schema has NOWHERE to store a driver money rate. `mdata.drivers.pay_basis` is the
+ * `miles_basis` enum (short_miles / practical_miles) — it says how to MEASURE miles, not what a mile
+ * is worth — and `driver_finance.driver_pay_rates` / `driver_pay_basis` do not exist (to_regclass
+ * NULL for both). The previous implementation filled that hole with the customer rate, which is the
+ * defect this replaces.
+ *
+ * When the owner decides the pay structure (rate-per-mile and/or flat-per-load, per driver or per
+ * contract), this is the single seam that resolves it — the callers, the extras, the team split and
+ * the INSERTs all stay exactly as they are. Deliberately NOT given a default: a default here is an
+ * invented wage.
+ */
+/** Set by resolveDriverBasePayCents so the created bill can label a §7 placeholder rate. */
+let lastResolvedRateWasTestData = false;
+
+async function resolveDriverBasePayCents(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  operatingCompanyId: string,
+  driverId: string | null | undefined,
+  load: Record<string, unknown>
+): Promise<number | null> {
+  if (!driverId) return null;
+
+  const rateRes = await client.query<{
+    basis_type: string;
+    rate_per_mile_cents: string | null;
+    flat_per_load_cents: string | null;
+    miles_basis: string;
+    is_test_data: boolean;
+  }>(
+    `
+      SELECT basis_type, rate_per_mile_cents::text, flat_per_load_cents::text, miles_basis,
+             is_test_data
+        FROM driver_finance.driver_pay_rates
+       WHERE operating_company_id = $1::uuid
+         AND driver_id = $2::uuid
+         AND is_active
+         AND effective_to IS NULL
+       ORDER BY effective_from DESC
+       LIMIT 1
+    `,
+    [operatingCompanyId, driverId]
+  );
+  const rate = rateRes.rows[0];
+  if (!rate) return null;
+  if (rate.is_test_data) {
+    // §7 placeholder rates exist so the skeleton can be exercised before real per-driver rates are
+    // entered. Pricing from one is allowed, but it must never pass silently as operational truth —
+    // the bill says so in its own notes below.
+    lastResolvedRateWasTestData = true;
+  } else {
+    lastResolvedRateWasTestData = false;
+  }
+
+  if (rate.basis_type === "per_load_pay") {
+    const flat = Number(rate.flat_per_load_cents ?? 0);
+    return Number.isFinite(flat) && flat > 0 ? Math.round(flat) : null;
+  }
+
+  // per_mile_pay — SHORTEST miles by default, because the approved Load Wizard prototype states
+  // shortest miles are what a driver is paid on; practical miles drive fuel and ETA, not pay.
+  const miles =
+    rate.miles_basis === "practical_miles"
+      ? Number(load.miles_practical ?? Number.NaN)
+      : Number(load.miles_shortest ?? Number.NaN);
+  // Fail closed rather than assume zero: a load whose mileage has not been captured yet cannot be
+  // priced, and a 0-mile bill would look like a settled $0 rather than an unpriced load.
+  if (!Number.isFinite(miles) || miles <= 0) return null;
+
+  const perMile = Number(rate.rate_per_mile_cents ?? 0);
+  if (!Number.isFinite(perMile) || perMile <= 0) return null;
+  return Math.round(perMile * miles);
+}
+
 export async function createDriverBillArtifacts(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   input: BookLoadInput,
@@ -337,7 +418,55 @@ export async function createDriverBillArtifacts(
     if (!stop.lumper_required) return sum;
     return stop.lumper_paid_by === "carrier" ? sum + Number(stop.lumper_amount_cents ?? 0) : sum;
   }, 0);
-  const basePayCents = bookLoadRateTotalCents(input.charges);
+  // WIRE-02 / ACCT-F63 — driver base pay must NOT come from the customer rate.
+  //
+  // This line used to read `bookLoadRateTotalCents(input.charges)` — the IDENTICAL call that
+  // populates mdata.loads.rate_total_cents, i.e. the GROSS CUSTOMER RATE. The driver was therefore
+  // billed 100% of the customer's linehaul plus every accessorial, guaranteeing a non-positive
+  // gross margin on every load and a materially overstated payable feeding settlements. Proven on
+  // prod: all three existing driver_bills have gross_amount_cents EXACTLY equal to their load's
+  // rate_total_cents ($1.00/$1.00, $4,900/$4,900, $5,800/$5,800 — difference 0 in every case).
+  //
+  // It also violates the LOCKED driver model: drivers are hired Mexican-B1 1099 contractors paid a
+  // wage/fee, NEVER a percentage of the customer linehaul (linehaul is company revenue). 100% is
+  // not even a percentage — it is the whole thing.
+  //
+  // There is no configured rate to substitute: mdata.drivers.pay_basis is the MILES-measurement
+  // enum (short_miles / practical_miles), not a money rate, and driver_finance.driver_pay_rates /
+  // driver_pay_basis do not exist (verified on prod). Inventing a rate here would be fabricating
+  // financial data, so this refuses to mint a payable it cannot source. Dispatch still books the
+  // load; the missing bill is recorded durably below so it is countable, not silent.
+  const primaryDriverForPay = input.assigned_primary_driver_id ?? null;
+  const basePayCents = await resolveDriverBasePayCents(
+    client,
+    input.operating_company_id,
+    primaryDriverForPay,
+    load
+  );
+  if (basePayCents === null) {
+    await appendCrudAudit(
+      client,
+      input.requestingUserUuid,
+      "driver_finance.driver_bill.skipped_no_pay_rate",
+      {
+        load_id: String(load.id),
+        load_number: String(load.load_number ?? loadNumber),
+        operating_company_id: input.operating_company_id,
+        reason:
+          "no active driver_finance.driver_pay_rates row for this driver/entity, or the load has no " +
+          "miles captured yet for a per-mile basis. Refusing to derive driver pay from the customer " +
+          "rate (locked driver model: wage/fee, never a % of linehaul).",
+        driver_id: primaryDriverForPay,
+        miles_shortest: load.miles_shortest ?? null,
+        extra_stop_bonus_cents: extraStopBonusCents,
+        tarp_pay_cents: tarpPayCents,
+        driver_lumper_cents: driverLumperCents,
+      },
+      "warning",
+      "WIRE-02"
+    );
+    return;
+  }
   const totalBillCents = basePayCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
 
   const resolvedLoadNumber = String(load.load_number ?? loadNumber);
@@ -500,7 +629,7 @@ export async function createDriverBillArtifacts(
       milesBasis,
       milesBasisType,
       ratePerMileCents,
-      `Auto-created from load ${resolvedLoadNumber}`,
+      `Auto-created from load ${resolvedLoadNumber}${lastResolvedRateWasTestData ? " — priced from a TEST pay rate (§7 placeholder), not an owner-entered rate" : ""}`,
       input.requestingUserUuid,
     ]
   );
@@ -655,24 +784,13 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           "warning",
           "BT-3-DISPATCH-AUTH-GATES"
         );
-        await client.query(
-          `
-            INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-            VALUES ($1,$2,$3,$4::jsonb)
-          `,
-          [
-            "dispatch.loads",
-            input.assigned_unit_id,
-            "dispatch.wf064.override_notice",
-            JSON.stringify({
-              override_type: "unit_block",
-              notify_channels: ["email", "sms"],
-              operating_company_id: input.operating_company_id,
-              override_reason: input.override_reason,
-              override_by_user_id: input.requestingUserUuid,
-            }),
-          ]
-        );
+        await enqueueOverrideNotice(client, input.assigned_unit_id, {
+          override_type: "unit_block",
+          notify_channels: ["email", "sms"],
+          operating_company_id: input.operating_company_id,
+          override_reason: input.override_reason,
+          override_by_user_id: input.requestingUserUuid,
+        });
       }
 
       // 0441-mod2: hard-block OOS units (same severity class as WF-050 / is_dispatch_blocked).
@@ -900,24 +1018,13 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           "warning",
           "BT-3-DISPATCH-AUTH-GATES"
         );
-        await client.query(
-          `
-            INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-            VALUES ($1,$2,$3,$4::jsonb)
-          `,
-          [
-            "dispatch.loads",
-            input.assigned_primary_driver_id,
-            "dispatch.wf064.override_notice",
-            JSON.stringify({
-              override_type: "hos_violation",
-              notify_channels: ["email"],
-              operating_company_id: input.operating_company_id,
-              override_reason: input.override_reason,
-              override_by_user_id: input.requestingUserUuid,
-            }),
-          ]
-        );
+        await enqueueOverrideNotice(client, input.assigned_primary_driver_id, {
+          override_type: "hos_violation",
+          notify_channels: ["email"],
+          operating_company_id: input.operating_company_id,
+          override_reason: input.override_reason,
+          override_by_user_id: input.requestingUserUuid,
+        });
       }
     }
 
@@ -1075,27 +1182,16 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
               "warning",
               "BT-3-DISPATCH-AUTH-GATES"
             );
-            await client.query(
-              `
-                INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-                VALUES ($1,$2,$3,$4::jsonb)
-              `,
-              [
-                "dispatch.loads",
-                block.driverId,
-                "dispatch.wf064.override_notice",
-                JSON.stringify({
-                  override_type: "driver_qualification",
-                  notify_channels: ["email", "sms"],
-                  operating_company_id: input.operating_company_id,
-                  overridden_reasons: block.reasons,
-                  override_reason: input.override_reason,
-                  override_by_user_id: input.requestingUserUuid,
-                  override_class: "DOT_QUALIFICATION",
-                  load_context: loadContext,
-                }),
-              ]
-            );
+            await enqueueOverrideNotice(client, block.driverId, {
+              override_type: "driver_qualification",
+              notify_channels: ["email", "sms"],
+              operating_company_id: input.operating_company_id,
+              overridden_reasons: block.reasons,
+              override_reason: input.override_reason,
+              override_by_user_id: input.requestingUserUuid,
+              override_class: "DOT_QUALIFICATION",
+              load_context: loadContext,
+            });
             continue; // Owner attested — this driver passes; every other driver is still gated.
           }
 
@@ -1287,6 +1383,39 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
             loadId: String(load.id),
             asProforma: true,
           });
+        } else {
+          // WIRE-01 — this branch used to be an empty `if`, so when the column was absent the
+          // proforma was skipped with NO log, NO error and NO record, directly contradicting the
+          // comment above it ("Failures are loud so booking never silently skips the projection
+          // document the owner expects"). The flag being ON is an explicit instruction to produce
+          // that document; producing nothing and saying nothing is the silent-failure class.
+          //
+          // It does NOT throw: an accounting projection must never block dispatch from booking a
+          // real load. Instead the skip becomes COUNTABLE — a durable append-only audit row written
+          // on the same client as the booking, so it commits with the load or not at all and can be
+          // queried later. Same treatment as the ACCT-F61 evidence gate.
+          await appendCrudAudit(
+            client,
+            input.requestingUserUuid,
+            "accounting.invoice.proforma_skipped_missing_column",
+            {
+              load_id: String(load.id),
+              operating_company_id: input.operating_company_id,
+              flag: "INVOICE_PROFORMA_PIPELINE_ENABLED",
+              missing_column: "accounting.invoices.broker_advance_applied_cents",
+              migration: "202609100090",
+            },
+            "warning",
+            "WIRE-01"
+          );
+          console.error(
+            {
+              load_id: String(load.id),
+              operating_company_id: input.operating_company_id,
+              missing_column: "accounting.invoices.broker_advance_applied_cents",
+            },
+            "wire_01_proforma_skipped_missing_column"
+          );
         }
       }
     }
@@ -1563,55 +1692,34 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         "BT-3-DISPATCH-AUTH-GATES"
       );
 
-      const outboxEvents = [
-        "dispatch.load.created",
-        "dispatch.driver_sms",
-        "dispatch.qbo_invoice",
-        "dispatch.qbo_bill",
-        "dispatch.fuel_planner",
-        "dispatch.factoring_packet",
-        "dispatch.load_notification",
-      ];
-      for (const eventType of outboxEvents) {
-        await client.query(
-          `
-            INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-            VALUES ($1,$2,$3,$4::jsonb)
-          `,
-          [
-            "dispatch.loads",
-            load.id,
-            eventType,
-            JSON.stringify(
-              eventType === "dispatch.load.created"
-                ? {
-                    load,
-                    stops: input.stops,
-                    operating_company_id: load.operating_company_id,
-                    actor_user_id: input.requestingUserUuid,
-                    save_mode: input.save_mode,
-                    load_number: loadNumber,
-                  }
-                : { load_id: load.id, operating_company_id: load.operating_company_id }
-            ),
-          ]
-        );
-      }
-      await client.query(
-        `
-          INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-          VALUES ($1,$2,$3,$4::jsonb)
-        `,
-        [
-          "dispatch.load",
-          load.id,
-          "dispatch.load.dispatched",
-          JSON.stringify({
-            load_id: load.id,
-            operating_company_id: load.operating_company_id,
-            actor_user_id: input.requestingUserUuid,
-          }),
-        ]
+      // SPECULATIVE FAN-OUT REMOVED 2026-08-03 — it was never wired, and every business outcome it
+      // named is now delivered by a real, consumed path. The loop emitted seven placeholder events on
+      // every load creation into outbox.outbox_queue, a table nothing reads (prod: 49 rows, attempts=0,
+      // oldest 2026-06-16). None had a handler. Building consumers for them would have DOUBLE-notified,
+      // because each duplicates a path that now works:
+      //   dispatch.driver_sms         -> twilio.whatsapp.send            (load-distribution.service.ts)
+      //   dispatch.load_notification  -> dispatch.load.dispatched chain  (distributeLoadInstructions)
+      //   dispatch.factoring_packet   -> dispatch.factoring_packet_assembled (packet-assemble.service.ts)
+      //   dispatch.fuel_planner       -> fuel.recommendation_sent_to_driver  (fuel/planner.routes.ts)
+      //   dispatch.load.created       -> the audit event appended immediately above carries the same
+      //                                  facts (load, stops, actor, save_mode) to a surface that IS read
+      //   dispatch.qbo_invoice/_bill  -> QuickBooks write-back, which is OFF by owner ruling
+      // Nothing functional is lost: the emissions were inert by construction. Removing them is the fix;
+      // leaving writes aimed at a dead table would be the patch.
+      // This is the head of the driver-notification chain: the handler calls
+      // distributeLoadInstructions(), which enqueues the WhatsApp message to the driver. Both links
+      // pointed at the orphaned outbox table, so no driver has ever received a dispatch message.
+      await enqueueOutboxEvent(
+        client,
+        "dispatch.load.dispatched",
+        // `load` is a loosely-typed row here, so coerce rather than assert — the aggregate id is
+        // traceability metadata and must not be the reason a dispatch throws.
+        { aggregate_type: "dispatch.load", aggregate_id: load.id == null ? null : String(load.id) },
+        {
+          load_id: load.id,
+          operating_company_id: load.operating_company_id,
+          actor_user_id: input.requestingUserUuid,
+        }
       );
     }
 

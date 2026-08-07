@@ -26,10 +26,8 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useToast } from "../../../components/Toast";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
-import { CreateDriverModal } from "../../../components/drivers/CreateDriverModal";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
-import { TrailerAutocomplete } from "../../../components/banking/TrailerAutocomplete";
-import { LoadAutocomplete } from "../../../components/banking/LoadAutocomplete";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { listVendors } from "../../../api/mdata";
 import { getCoaAccounts } from "../../../api/banking";
 import { itemsCatalogClient } from "../../../api/catalogs-accounting";
@@ -79,8 +77,6 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
   // out of proportion" / table crammed 7 columns).
   const [expandedLinks, setExpandedLinks] = useState<Record<string, boolean>>({});
   // PLUS-DRIVER-MONEY: nested "+ Create driver" from a split line's Driver picker.
-  const [driverCreateForLineKey, setDriverCreateForLineKey] = useState<string | null>(null);
-
   const txnId = transaction?.id ?? "";
   const totalCents = Math.abs(transaction?.amount_cents ?? 0);
 
@@ -438,6 +434,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                         <DriverAutocomplete
                           companyId={companyId}
                           value={line.driver_id ?? ""}
+                          nestedInDrawer
                           onChange={(driverId, driverName, meta) => {
                             const driverAcct =
                               typeof meta?.default_expense_account_id === "string"
@@ -450,7 +447,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                               ...(driverAcct && !line.gl_account_id ? { gl_account_id: driverAcct } : {}),
                             });
                           }}
-                          onRequestCreate={() => setDriverCreateForLineKey(line._key)}
+                          onRequestCreate={() => {}}
                         />
                         {line.driver_id ? (
                           <label className="mt-1 flex items-center gap-1 text-[10px] text-gray-600">
@@ -473,18 +470,30 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                       </div>
                       <div>
                         <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Trailer</span>
-                        <TrailerAutocomplete
-                          companyId={companyId}
-                          value={line.trailer_id ?? ""}
-                          onChange={(trailerId, trailerName) => patchLine(line._key, { trailer_id: trailerId || undefined, _trailerName: trailerName })}
+                        <EntityPicker
+                          kind="trailer"
+                          operatingCompanyId={companyId}
+                          value={line.trailer_id ?? null}
+                          onChange={(trailerId) =>
+                            patchLine(line._key, { trailer_id: trailerId || undefined, _trailerName: undefined })
+                          }
+                          nestedInDrawer
+                          placeholder="Search trailer (optional)"
+                          allowClear
                         />
                       </div>
                       <div>
                         <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Trip (load)</span>
-                        <LoadAutocomplete
-                          companyId={companyId}
-                          value={line.load_id ?? ""}
-                          onChange={(loadId, loadName) => patchLine(line._key, { load_id: loadId || undefined, _loadName: loadName })}
+                        <EntityPicker
+                          kind="load"
+                          operatingCompanyId={companyId}
+                          value={line.load_id ?? null}
+                          onChange={(loadId) =>
+                            patchLine(line._key, { load_id: loadId || undefined, _loadName: undefined })
+                          }
+                          nestedInDrawer
+                          placeholder="Search trip / load (optional)"
+                          allowClear
                         />
                       </div>
                     </div>
@@ -517,18 +526,6 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
         </div>
       )}
     </ParityDrawer>
-    <CreateDriverModal
-      open={Boolean(driverCreateForLineKey)}
-      companyId={companyId}
-      shell="drawer"
-      onClose={() => setDriverCreateForLineKey(null)}
-      onCreated={(createdId) => {
-        if (driverCreateForLineKey) {
-          patchLine(driverCreateForLineKey, { driver_id: createdId });
-        }
-        setDriverCreateForLineKey(null);
-      }}
-    />
     </>
   );
 }

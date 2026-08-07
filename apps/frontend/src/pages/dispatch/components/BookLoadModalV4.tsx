@@ -847,10 +847,15 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
           ) : null}
 
           {isEditMode ? (
-            <div className="mx-3 mt-2 rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
-              Editing the persisted load details. <span className="font-semibold">Commodity, weight, trailer/trip
-              type, hazmat and reefer settings</span> aren&apos;t stored for edit yet — they show blank here and
-              will <span className="font-semibold">not</span> be changed by saving. Only fields you edit are saved.
+            <div
+              className="mx-3 mt-2 rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700"
+              data-testid="book-load-edit-honesty"
+            >
+              Editing persisted load details. Only fields you change are saved (partial PATCH — untouched
+              columns stay). <span className="font-semibold">Commodity, weight, trip type, and reefer/tarp
+              settings</span> round-trip on edit. <span className="font-semibold">Hazmat</span> is owner-locked
+              out of edit (create-path only). <span className="font-semibold">Load type / trailer type</span>{" "}
+              are not edit-PATCH columns yet.
             </div>
           ) : null}
 
@@ -1395,16 +1400,18 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
               </div>
             </section>
 
-            {/* render-v6 §E — DOCUMENTS at the BOTTOM near Save (design note: "moved to the BOTTOM").
-                Rate confirmation + BOL / POD / lumper receipt upload. */}
+            {/* render-v6 §E — DOCUMENTS at the BOTTOM near Save.
+                HONESTY: only rate-con OCR is wired here. BOL / POD / lumper live on Load Detail
+                Documents + POD Review after the load is booked — do not claim upload chrome that
+                is not implemented on this surface. */}
             <section className="blw-sec" data-testid="book-load-documents">
               <div className="blw-sec-hd">
                 <span className="blw-sec-chip">E</span>
                 <span className="blw-sec-name">Documents</span>
-                <span className="blw-sec-meta">rate con · BOL · POD · lumper receipt</span>
+                <span className="blw-sec-meta">rate confirmation (OCR prefill)</span>
               </div>
               <div className="space-y-2 p-3">
-                <label className="text-[11px] font-semibold text-gray-600">Upload rate confirmation &amp; documents</label>
+                <label className="text-[11px] font-semibold text-gray-600">Upload rate confirmation</label>
                 {!editLoadId ? (
                   <OcrDropZone
                     operatingCompanyId={operatingCompanyId}
@@ -1428,6 +1435,9 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                 ) : (
                   <p className="text-[11px] text-gray-500">Rate-con extraction fills a new load — open Book Load to read a rate con into a fresh draft.</p>
                 )}
+                <p className="text-[10px] text-gray-500" data-testid="book-load-documents-honesty">
+                  BOL, POD, and lumper receipts are captured on Load Detail → Documents / POD Review after booking — not on this Book Load form.
+                </p>
               </div>
             </section>
           </div>

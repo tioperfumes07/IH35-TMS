@@ -25,7 +25,36 @@ const LABEL = "audit-coverage-scoreboard";
 const LAYERS = ["A", "B", "C", "D", "E"];
 const ENTITIES = ["TRANSP", "TRK", "USMCA"];
 const GATE_OK = new Set(["PASS", "AUDIT", "FIX", "FAIL", "UNV", "NA"]);
+/** DoD A–E + VERIFY V1–V8 — 13 gates (Program scoreboard + meta.gateTally). */
+export const GATE_LABELS_13 = ["A", "B", "C", "D", "E", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8"];
 const SCOREBOARD_START = "## Scoreboard";
+
+/**
+ * Per-gate tally across all module rows (both entities folded into cells).
+ * applicable = non-NA cells; pass = PASS; fail = FAIL; unverified = UNV.
+ * AUDIT/FIX count toward applicable only (weakest-column signal still honest).
+ */
+export function computeGateTally(modules) {
+  const out = {};
+  for (let i = 0; i < GATE_LABELS_13.length; i++) {
+    const gate = GATE_LABELS_13[i];
+    let pass = 0;
+    let applicable = 0;
+    let fail = 0;
+    let unverified = 0;
+    for (const m of modules || []) {
+      const cells = Array.isArray(m.cells) ? m.cells : [];
+      const c = cells[i] || "UNV";
+      if (c === "NA") continue;
+      applicable += 1;
+      if (c === "PASS") pass += 1;
+      else if (c === "FAIL") fail += 1;
+      else if (c === "UNV") unverified += 1;
+    }
+    out[gate] = { pass, applicable, fail, unverified };
+  }
+  return out;
+}
 // End marker: first `---` after Scoreboard that precedes ## Findings (Deployed SHA / help lines may sit between).
 const FINDINGS_HEADER = "\n## Findings";
 
@@ -602,7 +631,13 @@ function ledgerGitOr(fmt, fb) {
  * Preserves Cascade-authored prod/chain/guard/V1–V8 from the prior JSON; refreshes meta + A–E
  * from the ledger. Never invents PASS for unmodeled VERIFY gates.
  */
-export function emitProgramJson(rows, metrics, sidebarIds) {
+/**
+ * Build the Program scoreboard payload from the ledger + prior JSON seed.
+ * @param {{ write?: boolean }} [opts] — when write:false, return the object without touching disk
+ *   (used by the live /program API). Default write:true keeps the gen:program-scoreboard contract.
+ */
+export function emitProgramJson(rows, metrics, sidebarIds, opts = {}) {
+  const write = opts.write !== false;
   let prev;
   try {
     prev = JSON.parse(fs.readFileSync(PROGRAM_JSON, "utf8"));
@@ -698,9 +733,11 @@ export function emitProgramJson(rows, metrics, sidebarIds) {
   // Write-stable: skip rewrite when payload is byte-identical.
   // generatedAt/sourceSha are ledger-commit-derived (deterministic) so re-emit does not drift.
   if (JSON.stringify(prev) === JSON.stringify(out)) {
-    console.log(`${LABEL}: program-scoreboard.json unchanged (skip write)`);
+    if (write) console.log(`${LABEL}: program-scoreboard.json unchanged (skip write)`);
     return prev;
   }
+
+  if (!write) return out;
 
   // Atomic replace — avoids CodeQL js/file-system-race-condition (exists/check then write).
   const payload = JSON.stringify(out, null, 2) + "\n";
@@ -708,6 +745,33 @@ export function emitProgramJson(rows, metrics, sidebarIds) {
   fs.writeFileSync(tmp, payload);
   fs.renameSync(tmp, PROGRAM_JSON);
   return out;
+}
+
+/**
+ * Request-time board: parse AUDIT-COVERAGE-LIVE.md → scoreboard object (no disk write).
+ * Used by apps/backend program audit-scoreboard routes (ledger_live source).
+ */
+export function buildProgramScoreboardLive() {
+  const md = fs.readFileSync(COVERAGE, "utf8");
+  const ids = loadSidebarIds();
+  const rows = parseFindings(md);
+  const metrics = computeMetrics(rows, ids);
+  if (metrics.problems.length) {
+    throw new Error(`${LABEL}: ledger metrics problems: ${metrics.problems.join("; ")}`);
+  }
+  const data = emitProgramJson(rows, metrics, ids, { write: false });
+  const gateTally = computeGateTally(data.modules || []);
+  return {
+    ...data,
+    meta: {
+      ...(data.meta ?? {}),
+      source: "ledger_live",
+      ledgerRows: metrics.rowsTotal,
+      failOpen: metrics.failOpen,
+      defects: metrics.defectModules,
+      gateTally,
+    },
+  };
 }
 
 const IS_MAIN = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
@@ -737,6 +801,14 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
   if (m.cellsPassByEntity.TRANSP >= m.cellsByEntity.TRANSP) {
     throw new Error("PASS cells must be strictly less than covered when FAIL cells exist");
   }
+  const tallyProbe = computeGateTally([
+    { cells: ["PASS", "FAIL", "UNV", "NA", "AUDIT", "PASS", "UNV", "FAIL", "NA", "NA", "NA", "NA", "NA"] },
+    { cells: ["PASS", "PASS", "PASS", "PASS", "PASS", "AUDIT", "AUDIT", "AUDIT", "AUDIT", "AUDIT", "AUDIT", "AUDIT", "AUDIT"] },
+  ]);
+  if (tallyProbe.A.pass !== 2 || tallyProbe.A.applicable !== 2) throw new Error("gateTally A");
+  if (tallyProbe.B.fail !== 1 || tallyProbe.B.pass !== 1) throw new Error("gateTally B");
+  if (tallyProbe.C.unverified !== 1) throw new Error("gateTally C");
+  if (tallyProbe.D.applicable !== 1) throw new Error("gateTally D applicable excludes NA from first row only — expect 1");
   const fuelAlias = parseModuleCell("Fuel", ids);
   if (!fuelAlias.ok || fuelAlias.id !== "fuel" || fuelAlias.via !== "alias") {
     throw new Error("Fuel must resolve via MODULE_ALIASES");

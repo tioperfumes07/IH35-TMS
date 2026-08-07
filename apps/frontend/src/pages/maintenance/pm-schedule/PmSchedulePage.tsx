@@ -6,8 +6,8 @@ import {
   listMaintenancePmSchedules,
   type PmScheduleRow,
 } from "../../../api/maintenance";
-import { listUnits } from "../../../api/mdata";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
@@ -61,12 +61,6 @@ export function PmSchedulePage() {
     enabled: Boolean(companyId),
   });
 
-  const unitsQ = useQuery({
-    queryKey: ["mdata", "units", companyId, "pm-schedule-create"],
-    queryFn: () => listUnits({ operating_company_id: companyId, status: "Active" }),
-    enabled: Boolean(companyId) && formOpen,
-  });
-
   const createM = useMutation({
     mutationFn: (body: {
       operating_company_id: string;
@@ -91,10 +85,6 @@ export function PmSchedulePage() {
   });
 
   const rows = listQ.data?.rows ?? [];
-  const units = useMemo(
-    () => (unitsQ.data?.units ?? []) as Array<{ id: string; unit_number?: string }>,
-    [unitsQ.data?.units]
-  );
 
   const columns = useMemo<ParityColumn<PmScheduleRow>[]>(
     () => [
@@ -201,19 +191,16 @@ export function PmSchedulePage() {
         <div className="space-y-3 text-sm" data-testid="pm-schedule-create-form">
           <label className="block">
             <span className="text-xs text-gray-600">Unit</span>
-            <select
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={draft.unit_id}
-              onChange={(e) => setDraft((d) => ({ ...d, unit_id: e.target.value }))}
-              data-testid="pm-schedule-unit"
-            >
-              <option value="">Select unit</option>
-              {units.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.unit_number ?? u.id}
-                </option>
-              ))}
-            </select>
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={companyId}
+              value={draft.unit_id || null}
+              onChange={(next) => setDraft((d) => ({ ...d, unit_id: next ?? "" }))}
+              placeholder="Select unit"
+              enabled={Boolean(companyId) && formOpen}
+              nestedInDrawer
+              dataTestId="pm-schedule-unit"
+            />
           </label>
 
           <label className="block">

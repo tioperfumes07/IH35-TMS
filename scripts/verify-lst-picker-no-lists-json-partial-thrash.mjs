@@ -7,6 +7,7 @@
  * Cursor even claim: 1828.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -78,14 +79,73 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const planted = collectProblems(ROOT, [
-    LISTS,
-    "apps/frontend/src/components/parity/catalogPickerRegistry.ts",
-  ]);
-  if (!planted.some((p) => p.includes("must NOT edit lists.json"))) {
-    console.error(`${LABEL} SELFTEST FAIL: planted lists.json+registry change not flagged`);
-    process.exit(1);
+
+  // Selftest must NOT depend on live LST-PICKER-01 status (PASS after lists close #4281).
+  // Plant a throwaway FAIL fixture so detection stays load-bearing forever.
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lst-picker-thrash-"));
+  try {
+    fs.mkdirSync(path.join(tmpRoot, "docs/module-completion"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmpRoot, ".gitattributes"),
+      [
+        "scripts/verify-steps/CLAIMED-NUMBERS.json merge=json-union",
+        "apps/frontend/src/components/parity/catalogPickerRegistry.ts merge=catalog-picker-union",
+        "docs/module-completion/lists-picker-partials.md merge=union",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+    fs.writeFileSync(path.join(tmpRoot, PARTIALS), "# LST-PICKER partials (selftest)\n", "utf8");
+    fs.writeFileSync(
+      path.join(tmpRoot, LISTS),
+      JSON.stringify(
+        {
+          module: "lists",
+          complete: false,
+          items: [{ id: "LST-PICKER-01", status: "FAIL", title: "selftest planted FAIL" }],
+        },
+        null,
+        2
+      ) + "\n",
+      "utf8"
+    );
+
+    const planted = collectProblems(tmpRoot, [
+      LISTS,
+      "apps/frontend/src/components/parity/catalogPickerRegistry.ts",
+    ]);
+    if (!planted.some((p) => p.includes("must NOT edit lists.json"))) {
+      console.error(`${LABEL} SELFTEST FAIL: planted lists.json+registry change not flagged`);
+      console.error("  planted problems:", planted);
+      process.exit(1);
+    }
+
+    // PASS status must NOT fire the thrash rule (close PR editing both is legal).
+    fs.writeFileSync(
+      path.join(tmpRoot, LISTS),
+      JSON.stringify(
+        {
+          module: "lists",
+          complete: true,
+          items: [{ id: "LST-PICKER-01", status: "PASS", title: "selftest planted PASS" }],
+        },
+        null,
+        2
+      ) + "\n",
+      "utf8"
+    );
+    const passOk = collectProblems(tmpRoot, [
+      LISTS,
+      "apps/frontend/src/components/parity/catalogPickerRegistry.ts",
+    ]);
+    if (passOk.some((p) => p.includes("must NOT edit lists.json"))) {
+      console.error(`${LABEL} SELFTEST FAIL: PASS status incorrectly flagged thrash`);
+      process.exit(1);
+    }
+  } finally {
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
+
   console.log(`${LABEL} SELFTEST OK`);
 } else {
   const problems = collectProblems();
