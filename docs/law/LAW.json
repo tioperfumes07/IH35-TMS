@@ -376,5 +376,12 @@
     "source_file": "docs/standing-orders/CC-1-MONEY-CI.md",
     "guard": "scripts/verify-vertical-method-law-present.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-ASSIGNMENT-HISTORY-NAMES-AND-SCOPE",
+    "title": "The load assignment-history trail must name the drivers it records and must assert company membership before setting the RLS scope — a uuid prefix is not an identification of a person, and a caller-supplied company is not an authorization",
+    "source_file": "apps/backend/src/dispatch/quick-assign.service.ts",
+    "guard": "scripts/verify-assignment-history-resolves-names.mjs",
+    "type": "enforced"
   }
 ]
