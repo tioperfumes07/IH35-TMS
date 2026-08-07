@@ -5851,3 +5851,80 @@ lookup carrying `current_user` and a visible/n_live_tup discriminator, and never
 
 **Three plausible defects, one of them P0-shaped, all killed by evidence — and the single real gap that
 survived is a nullable FK, not a broken one.**
+
+---
+
+## 95. G18 (every diesel/roadside expense must FK to a load) — PASS on enforcement, one real gap on `expense_lines`, and a defect I FILED AND WITHDREW in the same session
+
+**Unit: the G18 load-FK invariant. Verdict: the DB enforcement is correct and working. One genuine gap
+survives. One filing was wrong and is withdrawn.**
+
+**G18 IS REAL AND ENFORCED AT THE DATABASE.** `accounting.enforce_load_fk_invariant()` is attached to both
+`accounting.expense_lines` and `fuel.fuel_transactions` (`trg_fuel_txn_load_fk BEFORE INSERT OR UPDATE`).
+It demands a `load_id` **or** a `load_exemption_reason` of ≥20 characters, and it is category-driven off
+`accounting.line_category_load_required`, which is **properly seeded with 9 categories** — `diesel`,
+`roadside_repair`, `toll`, `scale`, `lumper`, `parking`, `detention_paid`, `over_road_other`, `def`. For
+fuel it defaults to `load_required = true`. This is a well-built control.
+
+**★ THE REAL GAP — G18 is INERT on `accounting.expense_lines` because its input column is never written.**
+
+The trigger decides via `NEW.line_category`, falling back to `COALESCE(NEW.load_required, false)` for
+expense lines. Measured on prod with the completeness discriminator (`visible = 33,980 == n_live_tup =
+33,980`, the whole table):
+
+| measure | value |
+|---|---|
+| expense lines total | **33,980** |
+| with `line_category` populated | **0** |
+| with `load_required IS TRUE` | **0** |
+| with `load_id` populated | **0** |
+| with `load_exemption_reason` | 0 |
+
+**Not one expense line in the database carries a `line_category`,** so the registry lookup never runs, the
+fallback is `false`, and **G18 can never fire on an expense line.** A diesel purchase entered through the
+expense path is not checked. Confirmed against the writers: `cash-advances/lumper-cash-advance-split.ts:144-145`
+is the ONLY writer that sets `line_category` (`'lumper'`, with `load_required = true`) and it has evidently
+never run; the primary expense writer `accounting/expenses.routes.ts:612` and `:1000`, plus
+`maintenance/two-section-service.ts:568` and `qbo-sync/qbo-purchases-puller.ts:446`, do not set it at all.
+**The enforcement side is complete and the classification side was never wired to it.** Fuel is protected by
+its `true` default; expense lines are not.
+
+**★★ AND THE PART I GOT WRONG — filed as a P1, withdrawn 20 minutes later, before any lane touched it.**
+
+From the same sweep I filed `LV-FUEL-LOAD-ATTRIBUTION-NEVER-MATCHES`: 1,555 of 1,555 TRANSP fuel
+transactions have `load_id IS NULL`, `relay-fuel-load-rematch.service.ts` exists to attribute them and has
+attributed **none**, therefore G18 is 0% enforced on real operational data. Every one of those statements is
+factually true. **The conclusion was still wrong.**
+
+**The measurement I failed to take before filing:** `mdata.loads`, discriminator asserted
+(`visible = 9 == n_live_tup = 9`) — **TRANSP has FIVE loads in total, every one created between 2026-06-16
+and 2026-06-27.** The 1,555 fuel transactions run **2026-07-16 to 2026-08-07**. **The windows do not overlap
+by one day.** The rematcher resolves by `(unit_id, driver_id, transaction_at)` inside a time window, so for
+every row there is **no load in existence to match**. Zero matches is not a failure — it is the only
+arithmetically possible outcome. `PRE_TMS_DISPATCH_IMPORT` is a literally accurate label: TRANSP does not
+dispatch through TMS yet.
+
+**Worse — it was already dispositioned, and the disposition is a comment I could have read first.**
+`apps/backend/src/fuel/__tests__/fuel-load-attribution-coverage.db.test.ts:17-18` says the guard was
+deliberately not asserted across all fuel rows because doing so *"would have gone RED on prod against
+expected state — the expected-state-recorded-as-failure anti-pattern that has already cost this project real
+time."* **I reproduced the precise anti-pattern that test exists to prevent, on the table it was written
+about.** I also mis-read the guard as weak: it asserts that one exemption reason must not cover every
+TMS-native row, gated by `MIN_ROWS_TO_JUDGE`; the live `relay_ingest_no_load_link` cohort is 7 rows, below
+the threshold. Green because 7 is too few to judge, not because the guard is soft. **No new guard is needed
+and none should be built.**
+
+**THE DIAGNOSTIC I AM KEEPING.** Two findings this session came from the same sweep. One survived
+(`expense_lines`) and one collapsed (fuel), and at the moment of filing they looked equally strong — both
+were "the invariant is 0% satisfied on live data", both had complete-table discriminators, both named a real
+mechanism. The difference is that **the expense-lines gap has a counterfactual and the fuel one does not**:
+an expense line COULD have carried a `line_category` — a writer exists that does it — whereas a fuel row
+COULD NOT have carried a load that did not exist. **A 0% rate is only a defect if a better state was
+reachable. "Is the good outcome even possible here?" is a distinct question from "did the good outcome
+happen?", and a discriminator answers only the second one.** That is the check I will run before filing any
+future coverage-shaped finding.
+
+**Watch item, not a defect:** `relay_ingest_no_load_link` (live daily, last row 2026-08-07 12:00) is correct
+only while TRANSP is not dispatching in TMS. **When TRANSP loads begin to exist in TMS, a still-0%
+attribution rate becomes a real defect** — and the existing test will catch it once volume passes the
+threshold. Recorded so the re-check happens at the right trigger rather than never.
