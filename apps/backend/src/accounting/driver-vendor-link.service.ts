@@ -100,3 +100,70 @@ export async function resolveDriverVendorLink(
   if (!row) throw new DriverVendorMissingError(driverId, operatingCompanyId);
   return { vendorId: row.id, qboVendorId: row.qbo_vendor_id ?? null, vendorName: row.vendor_name ?? null };
 }
+
+/**
+ * ACCT-F164 — resolve the driver's A/P vendor, CREATING it when absent.
+ *
+ * WHY THIS EXISTS. ACCT-F159 made the settlement posters fail loud when a driver has no A/P vendor,
+ * which is correct — you cannot book A/P to a payee that does not exist. But nothing in the system
+ * ever CREATES a driver's vendor. Verified by sweeping every `INSERT INTO mdata.vendors` in the
+ * backend: the only writers are the CSV seed importer, the manual vendors route, and the QBO
+ * vendors puller/reconciler.
+ *
+ * That is survivable for TRANSP, whose vendors arrive from QuickBooks. It is NOT survivable for
+ * USMCA, which by locked decision §8.5 has NO QuickBooks — so the automatic path can never run for
+ * it, and every driver's vendor would have to be hand-created or that driver silently cannot be paid.
+ * Measured on prod 2026-08-07, with USMCA going live 2026-08-10: USMCA has 86 drivers, 3 active, and
+ * exactly ONE with an A/P vendor.
+ *
+ * A driver is financially complete when it has three primitives: an escrow sub-account, a cash-advance
+ * sub-account, and an A/P VENDOR to be paid through. The first two are already provisioned by
+ * driver-subaccount-provision.service.ts. This is the missing third.
+ *
+ * SAFE TO CREATE, and deliberately narrow about it:
+ *   • entity-scoped — the row is written with the DRIVER'S OWN operating_company_id, so it can never
+ *     land in another entity (the exact leak class being drained);
+ *   • `qbo_vendor_id` is left NULL — this is a TMS-native vendor, and for USMCA there is no QBO to
+ *     map to. Owner directive 2026-08-07: "Account missing? CREATE it — additive, entity-scoped,
+ *     sensible default, QBO-map null. Owner edits later. Never block a wire or test on naming."
+ *   • `vendor_type` = 'Other' — the CHECK constraint allows Fuel/Repair/Tires/Towing/Insurance/
+ *     Permit/Toll/Other, and a driver is none of the specific ones;
+ *   • idempotent — a NOT EXISTS guard, backstopped by the partial unique index
+ *     `uq_vendors_driver_active_per_company (operating_company_id, driver_id)
+ *      WHERE driver_id IS NOT NULL AND deactivated_at IS NULL`.
+ *
+ * It does NOT auto-create from inside a posting path. The settlement poster keeps calling
+ * resolveDriverVendorLink and keeps failing loud: minting a vendor as a side effect of posting money
+ * would hide a provisioning gap inside a financial transaction. Provisioning is its own step.
+ */
+export async function ensureDriverApVendor(
+  client: QueryClient,
+  operatingCompanyId: string,
+  driverId: string,
+  driverName: string
+): Promise<{ action: "created" | "exists"; vendorId: string }> {
+  const existing = await client.query<{ id: string }>(
+    `SELECT v.id::text AS id
+       FROM mdata.vendors v
+      WHERE v.operating_company_id = $1::uuid
+        AND v.driver_id = $2::uuid
+        AND v.deactivated_at IS NULL
+      LIMIT 1`,
+    [operatingCompanyId, driverId]
+  );
+  if (existing.rows[0]) return { action: "exists", vendorId: existing.rows[0].id };
+
+  const name = driverName.trim();
+  if (!name) {
+    // A vendor with no name is not a payee. Refuse rather than create "  " and call it provisioned.
+    throw new Error(`driver_vendor_name_missing: driver ${driverId} has no name to create an A/P vendor from`);
+  }
+
+  const created = await client.query<{ id: string }>(
+    `INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_type, driver_id, qbo_vendor_id)
+     VALUES ($1::uuid, $2::text, 'Other', $3::uuid, NULL)
+     RETURNING id::text AS id`,
+    [operatingCompanyId, name, driverId]
+  );
+  return { action: "created", vendorId: created.rows[0]!.id };
+}
