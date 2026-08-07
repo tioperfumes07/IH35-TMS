@@ -1281,3 +1281,10 @@ jobs:
         run: node scripts/verify-inventory-reorder-threshold-ui.mjs --selftest
       - name: verify:inventory-reorder-threshold-ui
         run: node scripts/verify-inventory-reorder-threshold-ui.mjs
+      # ACCT-F158 — a bill's vendor must resolve inside the bill's OWN entity. Wired HERE rather than
+      # as a verify-step because Rule 37 forbids claiming a step number and authoring the step file in
+      # the same PR, and shipping the guard orphaned (or .guard-exempt'd) would gate nothing.
+      - name: verify:bill-vendor-entity-consistent --selftest
+        run: node scripts/verify-bill-vendor-entity-consistent.mjs --selftest
+      - name: verify:bill-vendor-entity-consistent
+        run: node scripts/verify-bill-vendor-entity-consistent.mjs

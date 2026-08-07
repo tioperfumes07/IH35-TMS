@@ -257,7 +257,10 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.post("/api/v1/accounting/bills", async (req, reply) => {
+  // rateLimit: this authorizes and WRITES a financial row, so it matches the money-write siblings
+  // (payments, payment-applications, post-gl) at 30/min rather than the 120/min used by the reads
+  // above. Was unset — CodeQL js/missing-rate-limiting.
+  app.post("/api/v1/accounting/bills", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -319,7 +322,9 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         message === "bill_lines_required" ||
         message === "bill_line_amount_must_be_positive" ||
         message === "bill_lines_amount_mismatch" ||
-        message === "bill_line_account_not_in_company"
+        message === "bill_line_account_not_in_company" ||
+        // ACCT-F158 — a vendor outside the caller's entity is a client error, not a 500.
+        message === "bill_vendor_not_in_company"
       ) {
         return reply.code(400).send({ error: message });
       }

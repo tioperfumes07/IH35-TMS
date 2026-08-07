@@ -1,5 +1,12 @@
 [
   {
+    "id": "LAW-2026-08-07-BILL-VENDOR-ENTITY-CONSISTENT",
+    "title": "A bill's vendor must resolve inside the bill's OWN entity — an unresolvable vendor is an error, never a NULL FK (which escapes the ACCT-F142 duplicate index, partial on mdata_vendor_id IS NOT NULL) and never a pass-through uuid (which the single-column bills_mdata_vendor_id_fkey accepts from another entity)",
+    "source_file": "apps/backend/src/accounting/bills.service.ts",
+    "guard": "scripts/verify-bill-vendor-entity-consistent.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-08-06-CI-CONCURRENCY-SHA-SCOPED",
     "title": "A workflow may not key its concurrency group on a bare ref — a queued run that never executed can otherwise be cancelled into a permanently dead required check, leaving the PR unmergeable with no code failure",
     "source_file": ".github/workflows/ci.yml",
