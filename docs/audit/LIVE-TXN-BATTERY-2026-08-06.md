@@ -1309,3 +1309,50 @@ Board row `LV-REVREC-NOT-FIRING` — **CC-1, critical**. Note this is a **differ
 both share a shape worth naming: **a flag is ON, the machinery is present, and the posting simply
 never happens.** Two independent money paths with that shape suggests checking whether other
 flag-gated posters are equally inert.
+
+## 30 — `LV-PAY-SETTLE-NOPOST`: a live customer payment and a CLOSED settlement both have ZERO GL — FAIL (money)
+
+| document | id | state | GL postings |
+|---|---|---|---|
+| customer payment | `a0b83bf5-c9fb-485c-a646-9090b8630bb0` | **$250.00, `voided_at` NULL — LIVE** | **0** |
+| driver settlement | `d3ff8ea3-4acd-4792-b3ad-fdad6383fbb2` | **status `closed`** | **0** |
+
+Both are money documents in a **final** state carrying **no ledger entry at all**. A received customer
+payment should post DR Cash / CR A/R; a closed driver settlement should post its earnings, deductions
+and escrow contribution. Neither did.
+
+### 30a — ★ I must correct my own speculation from item 29
+
+In item 29 I suggested the "flag ON + machinery present + posting never happens" shape might be
+**systemic**. **The evidence says it is not, and I am correcting that.** Poster census on USMCA
+(`journal_entry_postings` grouped by `source_transaction_type`):
+
+| poster | postings | JEs | works? |
+|---|---|---|---|
+| `bill` | 16 | 8 | ✅ |
+| `bank_categorization` | 8 | 4 | ✅ |
+| `invoice` | 4 | 2 | ✅ |
+| `expense` | 4 | 2 | ✅ |
+| `prepaid_purchase` | 2 | 1 | ✅ |
+| `transfer` | 2 | 1 | ✅ |
+| `(null)` | 2 | 1 | ⚠️ posting with **no `source_transaction_type`** — minor data-quality note |
+
+**Six posters demonstrably fire.** The money engine broadly works. So the correct characterisation is
+**four specific inert paths**, not a systemic failure:
+
+1. **revenue-on-delivery** (Event 1) — item 29
+2. **void-reversal** — item 28
+3. **customer payment** — this item
+4. **driver settlement** — this item
+
+That distinction matters for whoever picks this up: it is four targeted wirings against a working
+poster, **not** a rebuild of the posting engine. Overstating it as systemic would have sent a builder
+down the wrong path — which is why the census was worth running before repeating the claim.
+
+**Caveat stated honestly:** a settlement in `closed` state *should* have posted, and a live customer
+payment *should* have posted — but I have **not** read the code to confirm those are the intended
+trigger points, and there may be a further "paid"/"disbursed" step for settlements. **The zero-GL
+facts are proven; the exact intended trigger is UNVERIFIED.** CC-1 should confirm the trigger before
+wiring.
+
+Board row `LV-PAY-SETTLE-NOPOST` (CC-1, money).
