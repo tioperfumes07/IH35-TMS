@@ -6860,3 +6860,66 @@ guard's adoption — no defect.
 withdraw it (item 110). The second time I ran the positive control first and killed it in three commands
 before it reached the board.** Same instinct, same evidence shape, opposite outcome. **The discipline is not
 "be more careful"; it is the mechanical step of proving your detector works before trusting its zeros.**
+
+---
+
+## 112. ★★ USMCA SCENARIO TRACKER — 14 GREEN / 10 RED measured with the tracker's OWN SQL, and one of the greens is FALSE
+
+**Unit: the 2026-08-07 owner directive — "drive every Scenario Tracker dot green on real USMCA data."
+Verdict: the map is published as the work list, and the acceptance instrument itself has a P0 defect.**
+
+**METHOD — this is the tracker, not my approximation of it.** I extracted all **24** probe SQL bodies from
+`apps/backend/src/home/scenario-registry.ts` and ran them **verbatim** against USMCA
+`5c854333-6ea5-4faa-af31-67cb272fef80` on prod, substituting only the `$1` company parameter. **These are the
+dots, not a proxy for them.**
+
+**RESULT: 14 GREEN / 10 RED.**
+
+| green | n | | red (all 0) |
+|---|---|---|---|
+| `scenario.driver_onboarding` | 86 | | `hop.pod_bol` |
+| `scenario.coa` | 81 | | `hop.bank` |
+| `hop.gl` | 26 | | `scenario.escrow` |
+| `scenario.ap` | 7 | | `scenario.deductions` |
+| `scenario.banking` | 5 | | `scenario.advance` |
+| `hop.book` | 4 | | `scenario.fuel` |
+| `scenario.customer` | 3 | | `scenario.maintenance` |
+| `hop.dispatch` | 2 | | `scenario.insurance` |
+| `hop.assign` / `hop.deliver` / `hop.invoice` / `scenario.accident` / `scenario.settlement` | 1 each | | `scenario.legal` |
+| **`hop.revenue`** | **1 — FALSE** | | `scenario.factoring` |
+
+**★ THE FALSE GREEN — the most important thing in this unit.** `hop.revenue` ("Revenue recognition latch",
+declared JE **DR A/R / CR Unbilled Revenue**) and `hop.invoice` ("Invoice + evidence gate") run **byte-identical
+SQL**: `count(*) FROM accounting.invoices WHERE voided_at IS NULL AND status IN ('sent','partial','paid') AND
+qbo_invoice_id IS NULL AND operating_company_id = $1`. **Two dots that can never disagree are one dot drawn
+twice, and neither looks at a posting.**
+
+Measured against reality in the same session: **`accounting.load_revenue_recognition_postings` for USMCA = 0**
+(discriminator `visible_all = 2 == n_live_tup = 2 == n_tup_ins = 2` — two rows exist in the entire database,
+neither USMCA), and **GL lines against the `unbilled_revenue` role account = 0.** The credit the scenario
+itself declares has never been posted for any USMCA load. Battery item 96 measured `revrec_rows = 0` on all
+four USMCA loads independently, including the delivered one.
+
+**So the latch dot is GREEN and the latch has never fired.** Under a directive that makes the tracker the
+acceptance instrument, **this dot cannot fail** — it is green today, stays green for any sent invoice, and
+would still be green with `LV-TXN-004` never fixed. **An acceptance test that passes on work not performed is
+worse than no test.** Filed P0 as `LV-SCENARIO-REVENUE-DOT-IS-FALSE-GREEN`, with the explicit instruction to
+change the PROBE — and to let it go RED today, because red is the truthful reading.
+
+**THE TEN REDS, WITH THEIR REAL BLOCKERS** (published as `LV-USMCA-SCENARIO-MAP-2026-08-07`):
+**6 are exercisable today with no code fix** — `pod_bol` (the `docs.file_links` write path is fully wired,
+merely never exercised — item 105), `bank` (163 USMCA bank txns, 0 matched to an invoice), `advance`,
+`fuel`, `insurance`, `legal` (the whole accident→claim→matter→GL chain is wired both ways — item 102).
+**2 are blocked on `LV-TXN-004`** — `escrow` and `deductions` both need a settlement with real gross pay, and
+USMCA's only settlement is $0.00. **1 is hard-blocked on `LV-WO-CREATE-500-OPENED-AT`** — `maintenance`, the
+only red dot with a known code blocker. **1 is config-gated** — `factoring`.
+
+**A POINT THAT FITS THE NEW DIRECTIVE EXACTLY:** five probes already filter `qbo_*_id IS NULL` — they were
+deliberately written to count **TMS-native only**, so QuickBooks clones cannot certify TMS work. With QBO now
+out of scope for USMCA, **those filters need no change**; they were right in advance.
+
+**METHOD NOTE — a false zero caught inside this very unit.** `hop.invoice` returned **0** standalone while
+`hop.revenue` returned **1** from the *same predicate*. Two answers to one query is a broken run, not a
+finding: a role-alternation RLS mask. Re-run with `current_user` and `visible_all == n_live_tup` asserted, the
+true value is **1**. **Every number in the map above carries that discriminator** — which matters more than
+usual here, because this map is about to be used to decide what work remains.

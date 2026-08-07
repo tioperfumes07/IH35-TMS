@@ -44,8 +44,8 @@ only truly closed when both the coder's ☑ and CC-3's VERIFIED are present.
 
 | metric | count |
 |---|---|
-| **total findings filed** | **82** |
-| **OPEN — awaiting a coder** | **74** |
+| **total findings filed** | **84** |
+| **OPEN — awaiting a coder** | **76** |
 | **☑ fixed & signed off by a coder** | **0** |
 | **VERIFIED ✓ by CC-3 (independently re-tested)** | **2** (`CLS-MONEY-WORM-GAP` 99.6% · `LV-ESCROW-SUBLEDGER-NOT-WORM` partial — both still OPEN pending coder sign-off) |
 | closed / withdrawn / superseded by CC-3 | 8 |
@@ -144,6 +144,8 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-BILL-MDATA-VENDOR-FK-OPTOUT` | P2 | CC-1 (money) | — | — | — | — | — | **CC-3 filed 2026-08-07** — the entity-consistent vendor FK is NULLABLE; 2 of 11 USMCA bills carry `mdata_vendor_id = NULL` and bypass it. Same mechanism as the un-merged half of ACCT-F158. |
 | ☐ | `LV-FILE-LINK-ENTITY-TYPE-3WAY-MISMATCH` | P2 | mechanical lane | — | — | — | — | — | **CC-3 filed 2026-08-07** — FE `FileEntityType` (8) and backend Zod enum (8) advertise `settlement`/`invoice`; `SUPPORTED_LINK_ENTITY_TYPES` (6) rejects them, **inside the upload transaction — so the throw rolls back the whole file upload.** Second instance of the KANBAN-DROPSTATUS drift class. |
 | ☐ | `LV-OUTBOX-HANDLER-SETS-WRONG-TENANT-GUC` | **P1** | mechanical lane | — | — | — | — | — | **CC-3 PROVEN live 2026-08-07 — SCOPE CORRECTED SAME SESSION: it is ONE handler, not seven.** `fmcsa-customer-verify` sets only `app.operating_company_id` and no `app.bypass_rls`, so `mdata.customers` RLS (which keys on user identity) hides the row: 3 of 4 events failed `missing_or_cross_tenant` on customers that **exist, are active, and match the payload entity**. **6 of 7 handlers set the bypass correctly — `tms-vendor-push.handler.ts:246` is the reference; the fix is one line.** See `LV-OUTBOX-GUC-IS-ONE-HANDLER-NOT-SEVEN`. |
+| ☐ | `LV-SCENARIO-REVENUE-DOT-IS-FALSE-GREEN` | **P0** | CC-1 (money — probe semantics) | — | — | — | — | — | **CC-3 PROVEN live 2026-08-07** — the "Revenue recognition latch" dot is GREEN on USMCA while `load_revenue_recognition_postings` for USMCA = **0** and `unbilled_revenue` GL lines = **0**. Its probe is **byte-identical** to `hop.invoice` — it measures invoice status, not the latch. **Under the owner's "drive every dot green" directive this dot cannot fail, and it certifies exactly what `LV-TXN-004` proves is broken.** |
+| ☐ | `LV-USMCA-SCENARIO-MAP-2026-08-07` | info | ALL LANES (work list) | — | — | — | — | — | **CC-3 reference 2026-08-07** — all 24 tracker probes run VERBATIM on USMCA: **14 green / 10 red**, each red dot's blocker measured. 6 of 10 exercisable today with no code fix; 2 blocked on `LV-TXN-004`; 1 hard-blocked on `LV-WO-CREATE-500-OPENED-AT`; 1 config-gated. |
 | ☐ | `LV-ACCT-F158-IS-ISOLATED` | info | CC-1 (informational) | — | — | — | — | — | **CC-3 scope note 2026-08-07** — parity sweep bounds the ACCT-F158 P0: **11 of 12** entity FKs and **135 of 135** triggers are repo-traceable. Fix is ONE migration, not a remediation programme. |
 
 ---
