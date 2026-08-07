@@ -27,6 +27,40 @@ const BASE = process.env.MERGE_BASE || "origin/main";
 
 const AUTH_RE = /\b(requireAuth|currentAuthUser|requireDriverSession|requireAuthUser)\b/;
 const RATE_RE = /\brateLimit\s*:/;
+
+/**
+ * A route may pass its options as a NAMED CONST instead of an inline object literal — the house
+ * pattern in mdata/customers.routes.ts:
+ *
+ *   const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } } as const;
+ *   app.get("/api/v1/mdata/customers", RL_READ, async (req, reply) => { … });
+ *
+ * That route IS rate-limited at runtime, but the registration head contains only the identifier, so a
+ * bare `/rateLimit:/` test on the head reports it as unlimited. FALSE POSITIVE, and a costly one: it
+ * pushes whoever touches the file to "fix" an already-correct route by pasting a second config object
+ * next to the const — which is a TypeScript error (4 args to app.get) and duplicates the constant.
+ * Hit exactly that way on 2026-08-07 while draining CLS-GUC-CALLER-SCOPED.
+ *
+ * So: collect the names of consts whose initializer contains `rateLimit:`, and treat a head that
+ * references one as limited. Deliberately narrow — only an identifier that is DEFINED in this file
+ * with a rateLimit in its initializer counts; an arbitrary identifier still fails.
+ */
+export function rateLimitedOptionNames(src) {
+  const names = new Set();
+  for (const m of src.matchAll(/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(\{[\s\S]{0,400}?\})\s*(?:as\s+const\s*)?;/g)) {
+    if (RATE_RE.test(m[2])) names.add(m[1]);
+  }
+  return names;
+}
+
+/** True when the registration head carries a rate limit inline OR via such a named const. */
+export function headIsRateLimited(head, optionNames) {
+  if (RATE_RE.test(head)) return true;
+  for (const n of optionNames) {
+    if (new RegExp(`[,(]\\s*${n}\\b`).test(head)) return true;
+  }
+  return false;
+}
 const METHOD_RE = /\bapp\.(get|post|put|patch|delete)\s*\(/g;
 
 function sh(cmd) {
@@ -135,9 +169,10 @@ export function findRouteRegistrations(src) {
  */
 export function unlimitedAuthRouteKeys(src, rel) {
   const keys = [];
+  const optionNames = rateLimitedOptionNames(src);
   for (const reg of findRouteRegistrations(src)) {
     if (!AUTH_RE.test(reg.head)) continue;
-    if (RATE_RE.test(reg.head)) continue;
+    if (headIsRateLimited(reg.head, optionNames)) continue;
     const url = reg.head.match(/["'`]([^"'`]*\/[^"'`]*)["'`]/);
     keys.push(`${rel}|${reg.method.toUpperCase()}|${url ? url[1] : `L${reg.startLine}`}`);
   }
@@ -146,6 +181,7 @@ export function unlimitedAuthRouteKeys(src, rel) {
 
 export function findUnlimitedAuthRoutes(src, addedLines /* Set<number>|null */) {
   const problems = [];
+  const optionNames = rateLimitedOptionNames(src);
   for (const reg of findRouteRegistrations(src)) {
     if (addedLines && addedLines.size) {
       let hits = false;
@@ -167,7 +203,7 @@ export function findUnlimitedAuthRoutes(src, addedLines /* Set<number>|null */) 
       if (!hits) continue;
     }
     if (!AUTH_RE.test(reg.head)) continue;
-    if (RATE_RE.test(reg.head)) continue;
+    if (headIsRateLimited(reg.head, optionNames)) continue;
     problems.push(
       `L${reg.startLine}: app.${reg.method}(…) authorizes but has no rateLimit config (CodeQL js/missing-rate-limiting)`,
     );
@@ -204,6 +240,25 @@ app.get("/bad", async (req, reply) => {
   if (!added || added.size < 2) {
     console.error("SELFTEST FAIL: parseAddedLines", added);
     process.exit(1);
+  }
+
+  // NAMED-CONST OPTIONS (2026-08-07). A route whose options come from a const — the house pattern in
+  // mdata/customers.routes.ts — IS rate-limited, and reporting it as unlimited pushed a real branch to
+  // paste a second config next to the const (a 4-arg TypeScript error). These four cases pin both
+  // directions: the named form passes, and NOTHING ELSE was loosened.
+  const namedCases = [
+    ["named const with rateLimit passes", `const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } };\napp.get("/a", RL_READ, async (req, reply) => { if (!requireAuth(req, reply)) return; });`, 0],
+    ["a const WITHOUT rateLimit is still flagged", `const OPTS = { config: { schema: {} } };\napp.get("/a", OPTS, async (req, reply) => { if (!requireAuth(req, reply)) return; });`, 1],
+    ["an identifier defined nowhere is still flagged", `app.get("/a", SOMETHING_ELSE, async (req, reply) => { if (!requireAuth(req, reply)) return; });`, 1],
+    ["no options at all is still flagged", `app.get("/a", async (req, reply) => { if (!requireAuth(req, reply)) return; });`, 1],
+  ];
+  for (const [name, src, expect] of namedCases) {
+    const got = findUnlimitedAuthRoutes(src, null).length;
+    const ok = expect === 0 ? got === 0 : got >= 1;
+    if (!ok) {
+      console.error(`SELFTEST FAIL: ${name} — expected ${expect ? ">=1" : "0"}, got ${got}`);
+      process.exit(1);
+    }
   }
   console.log(`${LABEL} SELFTEST PASS`);
   process.exit(0);

@@ -181,6 +181,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
               SELECT 1
               FROM banking.bank_transactions bt2
               JOIN mdata.loads l ON l.id = bt2.matched_load_id
+                                 AND l.operating_company_id = $1::uuid
               WHERE bt2.operating_company_id = $1
                 AND l.soft_deleted_at IS NULL
                 AND l.assigned_unit_id = wo.unit_id
@@ -276,6 +277,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
               SELECT 1
               FROM banking.bank_transactions bt2
               JOIN mdata.loads l ON l.id = bt2.matched_load_id
+                                 AND l.operating_company_id = $1::uuid
               WHERE bt2.operating_company_id = $1
                 AND l.soft_deleted_at IS NULL
                 AND l.assigned_unit_id = wo.unit_id

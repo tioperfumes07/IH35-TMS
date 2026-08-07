@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
@@ -53,7 +54,7 @@ export async function registerQboAutocompleteRoutes(app: FastifyInstance) {
       const activeClause = active_only ? `AND v.active = true` : "";
 
       const result = await withCurrentUser(userId, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operating_company_id]);
+        await setScopedCompanyContext(client, userId, operating_company_id);
         const allowed = await assertCompanyAccess(client, userId, operating_company_id);
         if (!allowed) return null;
 

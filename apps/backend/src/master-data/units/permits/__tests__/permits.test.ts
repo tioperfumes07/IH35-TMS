@@ -1,3 +1,4 @@
+import { membershipAware } from "../../../../../test-helpers/membership-aware-query.js";
 import Fastify, { type FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildPermitExpiryAlert, scanUnitPermitExpiries } from "../service.js";
@@ -10,7 +11,7 @@ const PERMIT = "33333333-3333-4333-8333-333333333333";
 const { mockQuery, mockWithCurrentUser, mockAppendCrudAudit } = vi.hoisted(() => {
   const query = vi.fn();
   const withCurrentUser = vi.fn(async (_userId: string, fn: (client: { query: typeof query }) => Promise<unknown>) =>
-    fn({ query })
+    fn({ query: membershipAware(query) })
   );
   const appendCrudAudit = vi.fn(async () => undefined);
   return { mockQuery: query, mockWithCurrentUser: withCurrentUser, mockAppendCrudAudit: appendCrudAudit };

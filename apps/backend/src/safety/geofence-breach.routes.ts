@@ -85,8 +85,10 @@ export async function registerGeofenceBreachRoutes(app: FastifyInstance) {
               e.created_at::text
             FROM safety.geofence_breach_events e
             LEFT JOIN mdata.units u ON u.id = e.vehicle_id
+                                    AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
             LEFT JOIN geo.geofences g ON g.id = e.geofence_id
             LEFT JOIN mdata.customers c ON c.id = e.customer_id
+                                        AND c.operating_company_id = $1::uuid
             WHERE e.operating_company_id = $1::uuid
               AND e.event_at >= $2::timestamptz
               AND e.event_at <= $3::timestamptz

@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -180,7 +181,7 @@ export function registerBulkRoute<TPayload>(options: RegisterBulkRouteOptions<TP
       const operatingCompanyId = parsedQuery.data.operating_company_id;
 
       const response = await withCurrentUser(authUser.uuid, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+        await setScopedCompanyContext(client, authUser.uuid, operatingCompanyId);
 
         return processBulkPerId(
           client,

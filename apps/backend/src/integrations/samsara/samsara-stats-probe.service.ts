@@ -118,6 +118,7 @@ export async function localPairingDiagnostics(query: LocalQuery, operatingCompan
                FROM samsara.hos_snapshots WHERE operating_company_id = $1::uuid
               ORDER BY driver_uuid, polled_at DESC) s
        JOIN mdata.drivers d ON d.id = s.driver_uuid
+                            AND d.operating_company_id = $1::uuid
       ORDER BY driver_name`,
     [operatingCompanyId]
   );

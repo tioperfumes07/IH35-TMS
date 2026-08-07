@@ -626,7 +626,9 @@ export async function getDriverPairingHistory(
         a.source
       FROM telematics.vehicle_driver_assignments a
       JOIN mdata.units u ON u.id = a.unit_id
+                         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
       LEFT JOIN mdata.drivers d ON d.id = a.driver_id
+                                AND d.operating_company_id = $1::uuid
       WHERE a.operating_company_id = $1::uuid
         AND a.driver_id = $2::uuid
         AND a.started_at <= $4::timestamptz

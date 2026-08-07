@@ -124,6 +124,7 @@ export async function materialiseRelayDepositAsTransfer(
     `SELECT ba.id::text AS id
        FROM banking.bank_accounts ba
        JOIN catalogs.accounts ca ON ca.id = ba.ledger_account_id
+                                 AND ca.operating_company_id = $1::uuid
       WHERE ba.operating_company_id = $1::uuid
         AND ba.is_active = true
         AND ca.system_purpose = 'relay_fuel_wallet'

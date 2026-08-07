@@ -104,6 +104,7 @@ export async function listPendingHubCashAdvanceRequests(client: QueryableClient,
         r.expires_at
       FROM driver_finance.cash_advance_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
+                           AND d.operating_company_id = $1::uuid
       WHERE r.operating_company_id = $1
         AND r.status IN ('pending', 'under_review')
       ORDER BY r.is_above_policy ASC, r.submitted_at ASC

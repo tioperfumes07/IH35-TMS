@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 
@@ -16,7 +17,7 @@ export async function resolveCompanyViolation(input: ResolveInput): Promise<{
   finalAmountCents: number | null;
 }> {
   return withCurrentUser(input.resolvedByUserUuid, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operatingCompanyId]);
+    await setScopedCompanyContext(client, input.resolvedByUserUuid, input.operatingCompanyId);
 
     const existingRes = await client.query<{
       id: string;

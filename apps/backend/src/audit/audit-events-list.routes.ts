@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
@@ -151,7 +152,7 @@ export function buildAuditEventsListQuery(input: ListAuditEventsInput): { sql: s
 
 export async function listAuditEvents(userId: string, input: ListAuditEventsInput) {
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     const query = buildAuditEventsListQuery(input);
     const res = await (client as Queryable).query<AuditEventListRow>(query.sql, query.values);
     const events = res.rows.map((row) => ({

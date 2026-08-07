@@ -108,6 +108,7 @@ async function resolveLocalUnitId(
       SELECT sv.local_unit_id::text AS unit_id, u.unit_number
       FROM integrations.samsara_vehicles sv
       LEFT JOIN mdata.units u ON u.id = sv.local_unit_id
+                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
       WHERE sv.operating_company_id = $1::uuid
         AND sv.samsara_vehicle_id = $2
       LIMIT 1

@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { computeNextScheduledAt, type CadenceInput, type SubscriptionCadence } from "./cadence.js";
 
@@ -79,7 +80,7 @@ function cadenceFromRow(row: Record<string, unknown>): CadenceInput {
 
 export async function listSubscriptions(operatingCompanyId: string, userId: string): Promise<ScheduledSubscription[]> {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const res = await client.query(
       `SELECT * FROM reports.scheduled_subscriptions WHERE operating_company_id = $1 ORDER BY report_slug ASC`,
       [operatingCompanyId]
@@ -136,7 +137,7 @@ export async function updateSubscription(
   userId: string
 ): Promise<ScheduledSubscription> {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const existing = await client.query(
       `SELECT * FROM reports.scheduled_subscriptions WHERE uuid = $1::uuid AND operating_company_id = $2`,
       [uuid, operatingCompanyId]
@@ -199,7 +200,7 @@ export async function updateSubscription(
 
 export async function deactivateSubscription(uuid: string, operatingCompanyId: string, userId: string): Promise<void> {
   await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const res = await client.query(
       `
         UPDATE reports.scheduled_subscriptions
@@ -220,7 +221,7 @@ export async function listDeliveryLog(
 ): Promise<DeliveryLogRow[]> {
   const limit = Math.min(Math.max(opts?.limit ?? 100, 1), 500);
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const params: unknown[] = [operatingCompanyId, limit];
     let filter = "";
     if (opts?.subscriptionUuid) {

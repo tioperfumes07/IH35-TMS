@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 
 const DEFAULT_PREFERENCES = {
@@ -22,7 +23,7 @@ function mergeDefaults(raw: unknown) {
 export async function getPrefs(userId: string, operatingCompanyId?: string | null) {
   return withCurrentUser(userId, async (client) => {
     if (operatingCompanyId) {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await setScopedCompanyContext(client, userId, operatingCompanyId);
     }
     const res = await client.query<{ preferences: Record<string, unknown> | null }>(
       `
@@ -40,7 +41,7 @@ export async function getPrefs(userId: string, operatingCompanyId?: string | nul
 export async function updatePrefs(userId: string, partial: Record<string, unknown>, operatingCompanyId?: string | null) {
   return withCurrentUser(userId, async (client) => {
     if (operatingCompanyId) {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await setScopedCompanyContext(client, userId, operatingCompanyId);
     }
     const currentRes = await client.query<{ preferences: Record<string, unknown> | null }>(
       `SELECT preferences FROM identity.user_preferences WHERE user_id = $1 LIMIT 1`,
