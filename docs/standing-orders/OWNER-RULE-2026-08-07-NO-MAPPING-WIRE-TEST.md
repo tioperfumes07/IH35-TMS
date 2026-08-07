@@ -30,3 +30,24 @@
 ## One-line version for the loop
 > Do not map. Jorge maps USMCA. TRANSP is closing, TRK is a lease co — skip their mapping.
 > Wire and test only. Need an account? Create it, owner edits later. Never block on mapping.
+
+---
+
+## USMCA-ONLY FOCUS (owner clarification, 2026-08-07)
+- Build and test the ENTIRE software — wiring, connectivity, linkage, functionality, expenses —
+  in **USMCA only, from zero**. USMCA is the single test target.
+- **USMCA has NO QuickBooks.** QBO is fully out of scope now: no sync, no reconcile, no QBO mapping.
+- USMCA runs the **same real operation as transportation** — same physical drivers, trucks,
+  GPS/Samsara tracking. Perfecting USMCA = perfecting the real operation. BUT every USMCA record is
+  **entity-scoped to USMCA** (its own driver/unit/load rows) — NEVER shared with TRANSP/TRK. Sharing
+  rows across entities is the entity-leak class being drained; do not do it.
+- **Ignore TRANSP's books and QuickBooks** right now. TRANSP is winding down; TRK is a lease company.
+- **Internal debit/credit account resolution is WIRING, not mapping — it CONTINUES.** Choosing which
+  account a JE debits/credits (fuel→Fuel Expense, escrow→Damage-Claim liability, deduction→its
+  liability) is required to post a balanced JE. If the account doesn't exist, CREATE it (additive,
+  entity-scoped, sensible default, QBO-map null); owner edits later. This is NOT the QBO/historical
+  mapping that is stopped.
+- **First step on operational slices:** read USMCA's live fleet/driver/load state the CORRECT way
+  (app withLuciaBypass / correct scope — RLS on mdata.drivers/units/loads is NOT keyed on
+  app.operating_company_id), then create USMCA-scoped drivers/units for the same physical fleet as
+  needed, then wire + test loads → dispatch → delivery → settlement → expenses → GL end-to-end.
