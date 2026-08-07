@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -36,7 +37,7 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
 
     const rows = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           SELECT id::text, training_name, completed_at::text, expiry_date::text, notes
@@ -64,7 +65,7 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
     }
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           INSERT INTO safety.training_records (
@@ -124,7 +125,7 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
     if (sets.length === 0) return reply.code(400).send({ error: "validation_error" });
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           UPDATE safety.training_records
@@ -151,7 +152,7 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           UPDATE safety.training_records

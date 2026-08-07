@@ -54,6 +54,7 @@ export async function getDriverFuelHistory(
         ft.created_at::text
       FROM fuel.fuel_transactions ft
       LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id
+                                AND v.operating_company_id = $2::uuid
       WHERE ft.driver_id = $1::uuid
         AND ft.operating_company_id = $2::uuid
         AND ft.archived_at IS NULL

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import { setsTenantGuc, TENANT_GUC_HINT } from "./lib/tenant-guc-match.mjs";
 
 const ROOT = process.cwd();
 
@@ -34,8 +35,11 @@ if (!service.includes("FROM hos.duty_status_events e")) {
 if (!service.includes("e.operating_company_id = $1::uuid") || !service.includes("e.driver_id = $2::uuid")) {
   failures.push("apps/backend/src/telematics/hos-clocks.service.ts: duty events query must be tenant-scoped by company and driver");
 }
-if (!routes.includes("set_config('app.operating_company_id'")) {
-  failures.push("apps/backend/src/telematics/hos.routes.ts: routes must set tenant context");
+// CLS-GUARD-LITERAL-GUC: assert the PROPERTY (the tenant GUC is set here), not one exact call.
+// These routes now go through setScopedCompanyContext, which asserts membership and then sets the
+// SAME GUC — strictly stronger — and a literal grep for set_config went red on that improvement.
+if (!setsTenantGuc(routes)) {
+  failures.push(`apps/backend/src/telematics/hos.routes.ts: routes must set tenant context — ${TENANT_GUC_HINT}`);
 }
 if (!routes.includes("WHERE id = $1::uuid") || !routes.includes("operating_company_id = $2::uuid")) {
   failures.push("apps/backend/src/telematics/hos.routes.ts: driver lookup must enforce tenant scope");

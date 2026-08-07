@@ -2,6 +2,7 @@
  * GAP-61 / CAP-11 — Fuel fraud alert routes.
  * Base path: /api/v1/fuel/fraud-alerts
  */
+import { setScopedCompanyContext } from "../../../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../../../audit/crud-audit.js";
@@ -79,7 +80,7 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 
     const alerts = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [parsed.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, parsed.data.operating_company_id);
       const filters = ["fa.operating_company_id = $1::uuid"];
       const params: unknown[] = [parsed.data.operating_company_id];
       if (parsed.data.status) {
@@ -128,7 +129,7 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
     if (!parsed.success) return reply.code(400).send({ error: "validation_error" });
 
     const summary = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [parsed.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, parsed.data.operating_company_id);
       const res = await client.query<{ open_critical: string; open_total: string }>(
         `
           SELECT
@@ -156,7 +157,7 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
     if (!params.success || !body.success) return reply.code(400).send({ error: "validation_error" });
 
     const alert = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       const res = await client.query(
         `
           UPDATE fuel.fraud_alerts
@@ -192,7 +193,7 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
     if (!params.success || !body.success) return reply.code(400).send({ error: "validation_error" });
 
     const alert = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       const res = await client.query(
         `
           UPDATE fuel.fraud_alerts
@@ -231,7 +232,7 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
     if (!params.success || !body.success) return reply.code(400).send({ error: "validation_error" });
 
     const alert = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       const res = await client.query(
         `
           UPDATE fuel.fraud_alerts

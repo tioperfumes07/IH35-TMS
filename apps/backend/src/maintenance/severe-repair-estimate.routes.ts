@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { pool } from "../auth/db.js";
+import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
   getFleetRestoreCost,
@@ -12,6 +12,7 @@ import {
   refreshEstimate,
 } from "./severe-repair-estimate.service.js";
 import { renderSevereRepairInsurancePdf } from "./severe-repair-pdf-export.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -59,14 +60,11 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
-    const client = await pool.connect();
-    try {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
-      const rows = await listOpenEstimates(client, query.data.operating_company_id);
-      return reply.send({ data: rows });
-    } finally {
-      client.release();
-    }
+    const rows = await withCurrentUser(user.uuid, async (client) => {
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
+      return listOpenEstimates(client, query.data.operating_company_id);
+    });
+    return reply.send({ data: rows });
   });
 
   app.get("/api/v1/maintenance/severe-repair/fleet-restore-cost", async (req, reply) => {
@@ -75,14 +73,11 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
-    const client = await pool.connect();
-    try {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
-      const row = await getFleetRestoreCost(client, query.data.operating_company_id);
-      return reply.send({ data: row });
-    } finally {
-      client.release();
-    }
+    const row = await withCurrentUser(user.uuid, async (client) => {
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
+      return getFleetRestoreCost(client, query.data.operating_company_id);
+    });
+    return reply.send({ data: row });
   });
 
   app.get("/api/v1/maintenance/severe-repair/per-unit-breakdown", async (req, reply) => {
@@ -91,14 +86,11 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
-    const client = await pool.connect();
-    try {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
-      const rows = await getPerUnitBreakdown(client, query.data.operating_company_id);
-      return reply.send({ data: rows });
-    } finally {
-      client.release();
-    }
+    const rows = await withCurrentUser(user.uuid, async (client) => {
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
+      return getPerUnitBreakdown(client, query.data.operating_company_id);
+    });
+    return reply.send({ data: rows });
   });
 
   app.post("/api/v1/maintenance/severe-repair/export-pdf", async (req, reply) => {
@@ -108,23 +100,24 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
     const body = refreshBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
 
-    const client = await pool.connect();
-    try {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
-      const summary = await getFleetRestoreCost(client, body.data.operating_company_id);
-      const units = await getPerUnitBreakdown(client, body.data.operating_company_id);
-      const pdf = await renderSevereRepairInsurancePdf({
-        operatingCompanyId: body.data.operating_company_id,
-        summary,
-        units,
-      });
-      return reply
-        .header("Content-Type", pdf.mimeType)
-        .header("Content-Disposition", `attachment; filename="${pdf.filename}"`)
-        .send(pdf.pdfBuffer);
-    } finally {
-      client.release();
-    }
+    const { summary, units } = await withCurrentUser(user.uuid, async (client) => {
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
+      return {
+        summary: await getFleetRestoreCost(client, body.data.operating_company_id),
+        units: await getPerUnitBreakdown(client, body.data.operating_company_id),
+      };
+    });
+    // Rendering is CPU work with no DB dependency — kept OUT of the transaction so a slow PDF does
+    // not hold a pooled connection and its txn open.
+    const pdf = await renderSevereRepairInsurancePdf({
+      operatingCompanyId: body.data.operating_company_id,
+      summary,
+      units,
+    });
+    return reply
+      .header("Content-Type", pdf.mimeType)
+      .header("Content-Disposition", `attachment; filename="${pdf.filename}"`)
+      .send(pdf.pdfBuffer);
   });
 
   app.get("/api/v1/maintenance/severe-repair-estimates/total", async (req, reply) => {
@@ -133,14 +126,11 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
-    const client = await pool.connect();
-    try {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
-      const row = await getRollupTotal(client, query.data.operating_company_id);
-      return reply.send({ data: row });
-    } finally {
-      client.release();
-    }
+    const row = await withCurrentUser(user.uuid, async (client) => {
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
+      return getRollupTotal(client, query.data.operating_company_id);
+    });
+    return reply.send({ data: row });
   });
 
   app.post("/api/v1/maintenance/severe-repair-estimates/:id/refresh", async (req, reply) => {

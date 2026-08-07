@@ -539,6 +539,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+                                        AND loc.operating_company_id = l.operating_company_id
           WHERE s.id = $1
             AND s.load_id = $2
             AND (l.assigned_primary_driver_id = $3 OR l.assigned_secondary_driver_id = $3)

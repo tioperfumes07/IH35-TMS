@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
@@ -239,7 +240,7 @@ async function assertUniqueCustomerFields(
   excludeId?: string
 ): Promise<null | "name" | "mc_number" | "dot_number"> {
   const conflict = await withCurrentUser(authUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, authUserId, operatingCompanyId);
     const checks: Array<{ key: "name" | "mc_number" | "dot_number"; column: string; value: string; caseInsensitive: boolean }> = [];
     if (payload.name) checks.push({ key: "name", column: "customer_name", value: payload.name, caseInsensitive: true });
     if (payload.mc_number) checks.push({ key: "mc_number", column: "mc_number", value: payload.mc_number, caseInsensitive: false });
@@ -281,7 +282,7 @@ async function validateParentCustomer(
   if (parentId === null) return null; // clearing / no parent is always valid
   if (selfId && parentId === selfId) return "self";
   return withCurrentUser(authUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, authUserId, operatingCompanyId);
     const parentRes = await client.query<{ id: string; parent_customer_id: string | null }>(
       `SELECT id, parent_customer_id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL LIMIT 1`,
       [parentId, operatingCompanyId]
@@ -498,7 +499,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: "operating_company_id_required" });
       }
       const results = await withCurrentUser(authUser.uuid, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operating_company_id]);
+        await setScopedCompanyContext(client, authUser.uuid, operating_company_id);
         return searchCustomersForAutocomplete(client, {
           operating_company_id,
           term,

@@ -147,6 +147,7 @@ async function fetchRouteStops(client: DbClient, input: RecommendFuelStopsInput,
       FROM mdata.load_stops s
       JOIN mdata.loads l ON l.id = s.load_id
       LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+                                    AND loc.operating_company_id = $2::uuid
       WHERE s.load_id = $1::uuid
         AND l.operating_company_id = $2::uuid
       ORDER BY s.sequence_number ASC

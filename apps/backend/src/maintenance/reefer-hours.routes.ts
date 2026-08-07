@@ -167,7 +167,11 @@ const SPECS_SELECT = `
     rs.archived_at::text,
     rs.updated_at::text
   FROM maintenance.reefer_specs rs
+  -- CLS-JOIN-ENTITY-UNSCOPED: scoping the DRIVING row does not scope the joined row.
+  -- §4 landmine: mdata.units/mdata.equipment have NO operating_company_id — the scope column is
+  -- COALESCE(currently_leased_to_company_id, owner_company_id).
   JOIN mdata.equipment e ON e.id = rs.equipment_id
+                        AND COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = rs.operating_company_id
 `;
 
 async function fetchLatestHours(client: DbClient, equipmentId: string): Promise<number | null> {
@@ -272,6 +276,7 @@ export async function ingestReeferHoursFromSamsaraForCompany(
         sv.samsara_vehicle_id
       FROM mdata.equipment e
       JOIN mdata.units u ON u.id = e.current_unit_id
+                         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
       JOIN integrations.samsara_vehicles sv
         ON sv.local_unit_id = u.id
        AND sv.operating_company_id = $1::uuid
@@ -324,6 +329,7 @@ export async function evaluateReeferHoursPmSchedulesForCompany(
       JOIN mdata.units u ON u.id = ps.unit_id
                         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ps.operating_company_id
       LEFT JOIN mdata.equipment e ON e.current_unit_id = u.id AND e.equipment_type = 'Reefer'
+                                  AND COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = $1::uuid
       WHERE ps.operating_company_id = $1::uuid
         AND ps.is_active = true
         AND ps.interval_kind = 'hours'

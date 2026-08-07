@@ -123,6 +123,7 @@ export async function listOpenDocumentAlertEvents(client: QueryableClient, opera
       FROM safety.document_alert_events e
       JOIN safety.document_alert_rules r ON r.id = e.rule_id
       LEFT JOIN mdata.drivers d ON d.id = e.driver_id
+                                AND d.operating_company_id = $1::uuid
       WHERE e.operating_company_id = $1::uuid
         AND e.event_status = 'open'
       ORDER BY e.days_until_expiry ASC, e.detected_at DESC
@@ -202,6 +203,7 @@ async function loadExpiryCandidates(
           (tr.expiry_date - CURRENT_DATE)::int AS days_until_expiry
         FROM safety.training_records tr
         JOIN mdata.drivers d ON d.id = tr.driver_id
+                             AND d.operating_company_id = $1::uuid
         WHERE tr.operating_company_id = $1::uuid
           AND tr.expiry_date IS NOT NULL
           AND tr.voided_at IS NULL
@@ -225,6 +227,7 @@ async function loadExpiryCandidates(
           (q.expiry_date - CURRENT_DATE)::int AS days_until_expiry
         FROM safety.driver_qualification_files q
         JOIN mdata.drivers d ON d.id = q.driver_id
+                             AND d.operating_company_id = $1::uuid
         WHERE q.operating_company_id = $1::uuid
           AND q.expiry_date IS NOT NULL
           AND q.voided_at IS NULL
@@ -249,6 +252,7 @@ async function loadExpiryCandidates(
         FROM docs.file_links fl
         JOIN docs.files f ON f.id = fl.file_id
         JOIN mdata.drivers d ON d.id = fl.entity_id
+                             AND d.operating_company_id = $1::uuid
         WHERE fl.entity_type = 'driver'
           AND fl.deleted_at IS NULL
           AND f.deleted_at IS NULL

@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
@@ -157,7 +158,7 @@ export async function reassignUnit(
   input: { operating_company_id: string; load_uuid: string; unit_uuid: string }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     await client.query("BEGIN");
     try {
       const load = await fetchLoadForUpdate(client, input.load_uuid, input.operating_company_id);
@@ -208,7 +209,7 @@ export async function reassignTrailer(
   input: { operating_company_id: string; load_uuid: string; trailer_uuid: string }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     await client.query("BEGIN");
     try {
       const load = await fetchLoadForUpdate(client, input.load_uuid, input.operating_company_id);
@@ -272,7 +273,7 @@ export async function reassignDriver(
   input: { operating_company_id: string; load_uuid: string; driver_uuid: string }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     await client.query("BEGIN");
     try {
       const load = await fetchLoadForUpdate(client, input.load_uuid, input.operating_company_id);

@@ -96,6 +96,7 @@ async function fetchRemainingStops(client: DbClient, input: ArrivalGpsInput): Pr
       FROM mdata.loads l
       JOIN mdata.load_stops s ON s.load_id = l.id
       LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+                                    AND loc.operating_company_id = $1::uuid
       WHERE l.operating_company_id = $1::uuid
         AND l.assigned_unit_id = $2::uuid
         AND l.soft_deleted_at IS NULL

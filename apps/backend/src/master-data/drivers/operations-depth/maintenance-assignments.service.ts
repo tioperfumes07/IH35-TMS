@@ -50,6 +50,7 @@ export async function getDriverMaintenanceAssignments(
         a.created_at::text
       FROM telematics.vehicle_driver_assignments a
       LEFT JOIN mdata.units u ON u.id = a.unit_id
+                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
       WHERE a.driver_id = $1::uuid
         AND a.operating_company_id = $2::uuid
       ORDER BY a.started_at DESC NULLS LAST, a.created_at DESC

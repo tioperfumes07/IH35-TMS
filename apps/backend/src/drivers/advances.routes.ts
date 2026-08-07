@@ -65,6 +65,7 @@ export async function registerDriverAdvancesRoutes(app: FastifyInstance) {
             aa.is_active
           FROM driver_finance.driver_advance_accounts aa
           LEFT JOIN catalogs.accounts a ON a.id = aa.coa_account_id
+                                        AND a.operating_company_id = $1::uuid
           WHERE aa.operating_company_id = $1::uuid
             AND aa.driver_id = $2::uuid
           LIMIT 1

@@ -21,6 +21,7 @@
  * All DB work is RLS-scoped to the operating company.
  */
 
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { createJournalEntry } from "../accounting/journal-entries.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -122,7 +123,7 @@ async function withCompanyScope<T>(
   fn: (client: Queryable) => Promise<T>
 ): Promise<T> {
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     return fn(client as Queryable);
   });
 }

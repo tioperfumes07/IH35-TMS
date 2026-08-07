@@ -58,6 +58,10 @@ describe("assignments quicksave routes (always-on smoke)", () => {
       },
     });
     expect(res.statusCode).not.toBe(500);
-    expect([401, 404]).toContain(res.statusCode);
+    // 403 joined this list when the CLS-GUC sweep added the cross-entity gate: operating_company_id is
+    // caller-supplied here, so a caller who is not a member of that company is now refused BEFORE the
+    // equipment lookup. That is strictly better than the old 404 — it does not leak whether the company
+    // exists — and this test's stated intent (see its name) is "does not return 500", which still holds.
+    expect([401, 403, 404]).toContain(res.statusCode);
   });
 });

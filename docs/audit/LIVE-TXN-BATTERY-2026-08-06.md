@@ -4926,3 +4926,144 @@ did not watch execute.
 otherwise, guard green, and the owner gate is open with its blocking fact now answered. **Zero defects
 filed against a lane, because zero defects were found.** One board row is filed for stale evidence in the
 HOLD doc — see `LV-HOLD-INVENTORY-PURCHASES-DOC-STALE`.
+## 77. ★★ `LV-EXPENSE-CATEGORY-PICKER-EMPTY` — THE LAST SURVIVING HYPOTHESIS IS DISPROVEN. Every link in the chain is now verified correct, which makes the OBSERVATION itself the thing to re-take.
+
+Item 76 closed with exactly one question left: *"does the DEPLOYED `RecordExpenseForm.categoryOptions`
+actually invoke `isExpenseAccount`?"* — and judged it unsettleable without source maps or a runtime
+breakpoint. **That judgement was wrong, and there was a browser-free way to settle it.** I settled it.
+
+**Deploy identity established first.** `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` →
+`{"ok":true,"uptime_seconds":1338,"version":"13e79fb"}`. Local `origin/main` tip = `13e79fb1c`. **The
+deployed build IS the source I read** — so source-level findings below are findings about production.
+
+### The method item 76 missed: Vite emits the IMPORT BINDING into the importing chunk
+
+Item 76 reasoned that because `RecordExpenseForm` lives in `index-*.js` while the helper is its own
+chunk, "the constants are legitimately absent from the form's chunk whether or not it imports them."
+That is true of the *constants* and false of the *import binding*. Rollup must emit an `import{…}`
+statement into any chunk that references the helper, and it renames the bindings — so the binding names
+are a probe into the call sites.
+
+**`/assets/account-picker-scope-DJg-YhI6.js` (543 bytes, fetched live, read in full):**
+```
+function i(e){return!!e.is_postable&&!e.deactivated_at}
+function a(r){…return n.has(a)?!0:a===`Asset`&&t.has(e(r.account_subtype))}   // isPaymentAccount
+function o(e){return i(e)?r.has(String(e.account_type??``)):!1}                // isExpenseAccount
+export{a as n,o as t};
+```
+**`/assets/index-CvFMBPGf.js` (1,900,692 bytes) imports BOTH:**
+```
+import{n as Ji,t as Yi}from"./account-picker-scope-DJg-YhI6.js"
+```
+→ `Ji` = `isPaymentAccount`, `Yi` = `isExpenseAccount`.
+
+### The call site, found verbatim in the deployed bundle
+
+```js
+y=b({queryKey:[`record-expense`,`payment-accounts`,e],queryFn:()=>ve({status:`active`,
+   operating_company_id:e,postable_only:!0}),enabled:!!e,staleTime:6e4}),
+S=(0,Y.useMemo)(()=>(y.data?.accounts??[]).filter(Ji).map(e=>({id:e.id,label:e.account_name})),
+   [y.data?.accounts]),
+C=(0,Y.useMemo)(()=>{let e=(y.data?.accounts??[]).filter(Yi).map(e=>({id:String(e.id),
+   label:e.account_name,qboId:e.qbo_account_id}));return e.length>0?e:…},[…]);
+```
+`S` = `paymentAccountOptions`. `C` = `categoryOptions`. **`C` calls `Yi` = `isExpenseAccount`, on
+`y.data?.accounts`.** ANSWERED: **YES, the deployed form invokes it.**
+
+**THE POSITIVE CONTROL that makes this a verdict and not a name-match.** `Ji` and `Yi` are both shadowed
+elsewhere in this bundle (the React scheduler has its own `Yi=t.unstable_scheduleCallback`, and a
+`new Ji` AbortController local), so a bare grep would prove nothing. It does not have to: `S` and `C`
+are **adjacent statements in the same minified scope, reading the same array, from the same import
+statement** — and `S` is the picker that is **live-observed POPULATED** with 2 correct USMCA accounts.
+For the payment picker to work, `Ji` MUST be the import; therefore `Yi`, from the same declaration one
+statement later, is the import too. **The working picker is the control for the broken one.**
+
+### Having disproven #5, I checked the two inputs nobody had checked at all
+
+**INPUT A — does the API even serialize the fields the filter reads?** `apps/backend/src/catalogs/
+accounts.routes.ts:93` `ACCOUNT_SELECT_COLS` emits `account_type, account_subtype, … is_postable, …
+deactivated_at`. **All four inputs are served.** And at `:180-183` the route applies
+`deactivated_at IS NULL` for `status=active` and `is_postable = true` for `postable_only` **server-side**
+— so **every returned row passes `isSelectable` by construction**, and `isExpenseAccount` collapses to a
+single question: the exact string in `account_type`.
+
+**INPUT B — the exact bytes of `account_type` on prod** (`br-fancy-credit-akjnd07a`, USMCA GUC + lucia in
+one txn, `current_user` asserted = `neondb_owner`, values bracketed and length-measured so trailing
+whitespace or casing drift cannot hide):
+
+| `account_type` | bracketed | len | rows | postable | active |
+|---|---|---|---|---|---|
+| Asset | `[Asset]` | 5 | 24 | 24 | 22 |
+| CostOfGoodsSold | `[CostOfGoodsSold]` | **15** | 10 | 10 | 10 |
+| Equity | `[Equity]` | 6 | 3 | 3 | 3 |
+| Expense | `[Expense]` | **7** | 18 | 18 | 16 |
+| Income | `[Income]` | 6 | 10 | 10 | 10 |
+| Liability | `[Liability]` | 9 | 10 | 10 | 9 |
+| OtherExpense | `[OtherExpense]` | **12** | 6 | 6 | 6 |
+
+**Exact-cased, no padding, byte-identical to `EXPENSE_ACCOUNT_TYPES`.** Expense-family active+postable =
+16+10+6 = **32**. Total active = **76** — which **independently matches the API's own `total: 76`** from
+item 76, two different instruments agreeing.
+
+**INPUT C — do all 76 actually arrive?** The deployed queryFn passes no `limit`.
+`apps/frontend/src/api/catalog-accounts.ts` `listCatalogAccounts`: with `limit` undefined it loops
+`PAGE = 200` until a short page. 76 < 200 → **one request, all 76 delivered.** No truncation.
+
+### Status of the six candidate causes
+
+| # | hypothesis | status |
+|---|---|---|
+| 1 | data isn't there | DISPROVEN (item 76) — 76/76, 32 expense-family |
+| 2 | the filter is wrong | DISPROVEN (item 76) + helper source re-read here |
+| 3 | stale bundle predating the `qbo_account_id` fix | DISPROVEN (item 76) — deployed chunk is current |
+| 4 | query never fired / `operatingCompanyId` missing | DISPROVEN (item 76) — payment picker populated |
+| 5 | deployed form never calls `isExpenseAccount` | **DISPROVEN HERE** — call site read, positive-controlled |
+| 6 | API omits `is_postable`/`account_type`, or the type string drifts | **DISPROVEN HERE** — cols + exact bytes verified |
+
+**Every link is verified correct: prod row → server filter → serialized column → delivered page →
+deployed helper → deployed call site.** There is no remaining mechanism by which this picker renders
+zero rows.
+
+### What that means — stated honestly, because the conclusion changed direction
+
+I set out to find the root cause and instead **eliminated the last mechanism that could produce one.**
+The professional reading of that is not "therefore the defect is imaginary" — it is that **the
+observation is now the least-verified link in the chain, and it is the one that must be re-taken.**
+Item 75's evidence for the symptom is a DOM reading; every other link now has instrument-grade proof.
+
+**Two possibilities remain, and I will not choose between them without evidence:**
+- **(a) A transient/state-dependent condition at observation time** — e.g. the drawer rendered before
+  `y.data` resolved (both queries carry `staleTime: 60_000` and item 76 already caught cache serving
+  masking a re-fetch), so `C` was `[]` for that render. This would make the defect REAL but
+  **intermittent and load-order dependent**, not a static wiring fault — a materially different bug with
+  a different fix (a loading state on the picker, which it currently lacks: `ReferenceSelect` receives
+  `disabled`/`loading` props on the payment picker and **neither** on the category picker, lines 226-263).
+- **(b) The observation was mis-taken.**
+
+**Possibility (a) is the one I would investigate first**, and note it is *supported* by an asymmetry I
+found in the source while doing this: the **payment** picker passes `disabled={!operatingCompanyId}`
+(`RecordExpenseForm.tsx:363`) and the **category** picker passes no `disabled` and no `loading` at all.
+A picker with no loading state that renders an empty list during fetch shows the user "no categories
+exist" and offers `+ Add new category` — **exactly the reported symptom, exactly the CoA-corruption
+path** — and it would resolve on its own a moment later, which is precisely why a static audit finds
+nothing wrong. **I am flagging this as the leading hypothesis with its supporting evidence; I am NOT
+filing it as the root cause, because I did not watch it happen.**
+
+### Why I am recording an elimination rather than a fix
+
+The card began as "the picker is broken, find out why." It is now: *every static mechanism is proven
+correct; re-take the observation with the fetch state captured, and check the missing loading state
+first.* That is a one-afternoon investigation with a named first suspect instead of an open-ended one,
+and six dead hypotheses that nobody needs to re-run — each with the evidence that killed it.
+
+**The methodological lesson worth keeping:** item 76 declared a question unanswerable without a browser,
+and it was answerable with `curl` and a grep, because **module boundaries in a bundle leak information
+about call sites even when they hide constants.** "I need a tool I don't have" deserves one more attempt
+at a different instrument before it becomes a handoff. And the reason the answer counts as proof rather
+than a name-match is the positive control — the working sibling in the same scope. A minified bundle
+will happily hand you a coincidence; it will not hand you a coincidence that also renders correctly in
+production.
+
+**Verdict: hypotheses 5 and 6 DISPROVEN with live evidence. Root cause NOT found — and the search space
+is now bounded to the observation itself, with a named leading suspect. UNVERIFIED remains UNVERIFIED;
+I did not watch the failing render, and I will not name a cause I did not watch execute.**

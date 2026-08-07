@@ -43,6 +43,7 @@ export async function pullTmsSettlements(
       ds.period_end::text
     FROM driver_finance.driver_settlements ds
     LEFT JOIN mdata.drivers d ON d.id = ds.driver_id
+                              AND d.operating_company_id = $1::uuid
     WHERE ds.operating_company_id = $1::uuid
       AND ds.period_start >= $2::date
       AND ds.period_end <= $3::date

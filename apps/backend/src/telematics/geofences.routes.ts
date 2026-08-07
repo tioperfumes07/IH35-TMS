@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
@@ -142,14 +143,14 @@ function isWriteRole(role: string): boolean {
 }
 
 export async function registerGeofencesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/telematics/geofences", async (req, reply) => {
+  app.get("/api/v1/telematics/geofences", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
 
     const data = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [parsed.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, parsed.data.operating_company_id);
       const filters: string[] = ["g.operating_company_id = $1::uuid"];
       const params: unknown[] = [parsed.data.operating_company_id];
       if (parsed.data.is_active !== undefined) {
@@ -188,7 +189,7 @@ export async function registerGeofencesRoutes(app: FastifyInstance) {
     return { geofences: data };
   });
 
-  app.post("/api/v1/telematics/geofences", async (req, reply) => {
+  app.post("/api/v1/telematics/geofences", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isWriteRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -203,7 +204,7 @@ export async function registerGeofencesRoutes(app: FastifyInstance) {
     }
 
     const created = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [parsed.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, parsed.data.operating_company_id);
       const res = await client.query<GeofenceRow>(
         `
           INSERT INTO geo.geofences (

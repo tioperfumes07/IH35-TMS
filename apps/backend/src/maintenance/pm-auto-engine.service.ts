@@ -538,6 +538,7 @@ export async function registerMaintenancePmAutoEngineRoutes(app: FastifyInstance
           FROM maintenance.pm_auto_wo_log l
           LEFT JOIN maintenance.pm_schedules s ON s.id = l.pm_schedule_id
           LEFT JOIN mdata.units u ON u.id = l.unit_id
+                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
           WHERE l.operating_company_id = $1::uuid
           ORDER BY l.created_at DESC
           LIMIT $2
