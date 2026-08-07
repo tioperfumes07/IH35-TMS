@@ -1354,6 +1354,7 @@
     "2787": "2787-verify-tenant-guc-inside-txn.mjs",
     "2789": "2789-verify-displayid-entity-scoped-lookups.mjs",
     "2791": "2791-verify-class-scoreboard-live-sourced.mjs",
+    "2793": "2793-verify-money-side-effect-after-commit.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",

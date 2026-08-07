@@ -56,6 +56,12 @@ const HANDLES_BOUNDARY = [
   /\bpageSize\b/i,
   /Showing\s/,
   /\bPagination\b/,
+  // The canonical disclosure component (CLS-SILENT-CAP). It renders "Showing N of M" — or "Showing the
+  // first N" when the endpoint returns no total — and renders NOTHING until the cap is actually hit.
+  // Recognised here so that adopting the shared component is what shrinks this baseline; without it the
+  // guard would keep flagging screens that had been properly fixed, which is how a guard trains people
+  // to paste the word "total" into a comment instead of fixing anything.
+  /\bCappedListNotice\b/,
 ];
 
 export function auditFile(src, file = "<mem>") {
