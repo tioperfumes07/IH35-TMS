@@ -446,5 +446,19 @@
     "source_file": "apps/driver-pwa/src/lib/upload-sync.ts",
     "guard": "scripts/verify-pod-bol-evidence-linkage.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-MONEY-SIDE-EFFECT-AFTER-COMMIT",
+    "title": "A GL poster that opens its OWN connection must never be awaited from inside an open transaction — under READ COMMITTED that second connection cannot see the caller's uncommitted writes, so the poster's evidence gate re-read a delivery departure the caller had just stamped, found NULL, returned missing_delivery_evidence and posted nothing while every static guard stayed green; defer it with enqueueAfterCommit(client, …) so it runs after COMMIT, and drop the queue on ROLLBACK and on ROLLBACK TO SAVEPOINT so a side effect never outlives the write that justified it",
+    "source_file": "apps/backend/src/lib/after-commit.ts",
+    "guard": "scripts/verify-money-side-effect-after-commit.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-DELIVERY-PATH-SCOPED-BY-STAMP",
+    "title": "A guard that scopes delivery paths by a STRING-LITERAL status match is green-while-broken — the bulk route writes the status from a variable and its one literal sits inside a Set, so the file was never considered and verify-delivery-evidence-latch-wired printed OK exit 0 while bulk 'Mark delivered' stamped delivery evidence and never latched revenue; scope on stampFinalActiveDeliveryDeparture(), a shared call name that cannot be written as a variable",
+    "source_file": "apps/backend/src/dispatch/loads-bulk.routes.ts",
+    "guard": "scripts/verify-delivery-evidence-latch-wired.mjs",
+    "type": "enforced"
   }
 ]
