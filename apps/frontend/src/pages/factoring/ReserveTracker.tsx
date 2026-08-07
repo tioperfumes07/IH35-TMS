@@ -12,6 +12,7 @@
  *
  * All data from existing reserve/factoring APIs — no new financial code.
  */
+import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -144,7 +145,7 @@ const CHARGEBACK_COLUMNS: Array<ParityColumn<FactoringChargebackFeeRow>> = [
       <EntityLink
         kind="factoring_advance"
         id={row.factoring_advance_id}
-        label={row.statement_reference || row.factoring_advance_id.slice(0, 8)}
+        label={entityLabel(row.statement_reference, row.factoring_advance_id, "Advance")}
       />
     ),
   },

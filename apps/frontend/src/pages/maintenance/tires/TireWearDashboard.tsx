@@ -2,6 +2,7 @@
  * Tire Wear Dashboard — GAP-62 / CAP-12
  * At-risk units with replacement projected within 30 days.
  */
+import { entityLabel } from "../../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -61,7 +62,7 @@ export function TireWearDashboard() {
         sortable: true,
         render: (row) => (
           <Link to={`/fleet/units/${row.unit_uuid}?tab=tires`} className="text-slate-700 hover:underline">
-            {row.unit_number ?? row.unit_uuid.slice(0, 8)}
+            {entityLabel(row.unit_number, row.unit_uuid, "Unit")}
           </Link>
         ),
       },
