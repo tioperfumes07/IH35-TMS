@@ -4655,3 +4655,49 @@ WO → parts+labor → close → bill, and therefore the maintenance half of the
 **Routed:** mechanical/backend. See the routing note on the board — standing-order rule 7 says
 mechanical → CC-2, while the owner-locked board §3 says CC-2 **never builds** and assigns mechanical to
 CC-3, which does not build either. Filed naming **both** so the work is not stranded in a never-build lane.
+
+---
+
+## 74. USMCA COVERAGE MAP — verified with the completeness discriminator, after a FALSE ZERO nearly became the record
+
+**Verdict: PASS (coverage), plus a recorded near-miss that matters more than the numbers.**
+
+**THE NEAR-MISS.** A single-statement coverage sweep across eleven USMCA tables returned **0 for every one of
+them** — including `mdata.loads` and `mdata.drivers`. I did **not** record it. It was self-evidently false:
+minutes earlier the work-order form had auto-linked load `L-20260806-0008` and driver `Juan USMCA-Battery`,
+and the captured POST payload carried live UUIDs for both. **A result that contradicts something you watched
+happen is a broken query, not a discovery.**
+
+**Cause, verified:** `mcp__Neon__run_sql` runs each statement standalone, and the MCP role **alternates**
+(`ih35_app` on that call, `neondb_owner` on others — observed both within minutes). Under `ih35_app` with no
+`app.operating_company_id` and no `app.bypass_rls`, FORCED-RLS masks `mdata.*` / `accounting.*` /
+`banking.*` to zero **silently — no error, no warning, just zeros.** Re-run inside ONE transaction with
+`set_config(...,true)` first, the same tables returned real counts. Had I filed the first result, this
+document would now assert that USMCA has no drivers, no loads, no bills and no bank activity — every
+statement false, and each one would have justified fabricating data to "fix" it.
+
+**VERIFIED MAP** — prod `br-fancy-credit-akjnd07a`, GUC + lucia bypass set in the same transaction,
+`current_user` asserted in-statement, and `visible_all == n_live_tup` proven on **every** row:
+
+| table | USMCA | visible_all | n_live_tup | complete |
+|---|---|---|---|---|
+| `banking.bank_transactions` | **163** | 11,073 | 11,073 | ✓ |
+| `mdata.drivers` | **86** | 181 | 181 | ✓ |
+| `accounting.journal_entries` | **27** | 1,802 | 1,802 | ✓ |
+| `accounting.bills` | **11** | 16,258 | 16,258 | ✓ |
+| `accounting.invoices` | **7** | 11,987 | 11,987 | ✓ |
+| `mdata.vendors` | **7** | 2,836 | 2,836 | ✓ |
+| `mdata.loads` | **4** | 9 | 9 | ✓ |
+| `accounting.payments` | **3** | 12,127 | 12,127 | ✓ |
+| `mdata.customers` | **3** | 2,698 | 2,698 | ✓ |
+| `mdata.units` | **3** (owner or lessee) | 183 | 183 | ✓ |
+| `driver_finance.driver_settlements` | **1** | 1 | 1 | ✓ |
+| **`maintenance.work_orders`** | **0** | 1 | 1 | ✓ |
+
+**`maintenance.work_orders` is the ONLY genuinely empty subledger**, and it is empty for a proven reason —
+`LV-WO-CREATE-500-OPENED-AT` (item 73) aborts every create. That zero carries its own discriminator
+(`visible_all` 1 == `n_live_tup` 1, positive control on the same table), so it is a **verdict**, not a mask.
+
+**The standing rule this reinforces:** a `0` from this MCP is worthless until the same statement proves who
+it ran as, that it could see the table at all, and that what it saw equals what exists. Two zeros appeared in
+this session — one false, one true — and they were indistinguishable until the discriminator was applied.
