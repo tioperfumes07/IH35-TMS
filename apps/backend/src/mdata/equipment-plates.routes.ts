@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { validatePlateJurisdiction } from "./unit-plates.routes.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 const equipmentParamsSchema = z.object({ id: z.string().uuid() });
@@ -62,7 +63,7 @@ export async function registerEquipmentPlatesRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
     const rows = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       if (!(await assertEquipmentScope(client, params.data.id, query.data.operating_company_id))) return null;
       const res = await client.query(
         `
@@ -94,7 +95,7 @@ export async function registerEquipmentPlatesRoutes(app: FastifyInstance) {
     }
     try {
       const row = await withCurrentUser(user.uuid, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+        await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
         if (!(await assertEquipmentScope(client, params.data.id, query.data.operating_company_id))) return null;
         const res = await client.query(
           `
@@ -138,7 +139,7 @@ export async function registerEquipmentPlatesRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "validation_error" });
     }
     const updated = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const existing = await client.query(
         `SELECT * FROM mdata.equipment_plates WHERE id = $1::uuid AND equipment_id = $2::uuid AND operating_company_id = $3::uuid LIMIT 1`,
         [params.data.plate_id, params.data.id, query.data.operating_company_id]
@@ -174,7 +175,7 @@ export async function registerEquipmentPlatesRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
     const archived = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           UPDATE mdata.equipment_plates

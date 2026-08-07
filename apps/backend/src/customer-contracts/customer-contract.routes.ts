@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 const SOURCE_TAG = "C3-CUSTOMER-CONTRACT-UPLOAD";
 
@@ -56,7 +57,7 @@ export async function registerCustomerContractRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
 
       const custCheck = await client.query<{ id: string }>(
         `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
@@ -118,7 +119,7 @@ export async function registerCustomerContractRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
 
       const rows = await client.query(
         `SELECT
@@ -182,7 +183,7 @@ export async function registerCustomerContractRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
 
       const existing = await client.query<{
         id: string;

@@ -8,6 +8,7 @@ import { buildEquipmentAggregate } from "./equipment-aggregate.service.js";
 import { registerEquipmentPdfExportRoutes } from "./equipment-pdf-export.routes.js";
 import { registerEquipmentPlatesRoutes } from "./equipment-plates.routes.js";
 import { validateTrailerStatusTransition } from "../fleet/trailer-status-state-machine.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 const equipmentStatusSchema = z.enum([
   "InService",
@@ -315,7 +316,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/mdata/equipment/:id", async (req, reply) => {
+  app.get("/api/v1/mdata/equipment/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -375,7 +376,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.post("/api/v1/mdata/equipment/:id/status-change", async (req, reply) => {
+  app.post("/api/v1/mdata/equipment/:id/status-change", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -386,7 +387,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
     if (!body.success) return sendValidationError(reply, body.error);
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
       const oldRes = await client.query<{ status: string }>(
         `
           SELECT status::text AS status

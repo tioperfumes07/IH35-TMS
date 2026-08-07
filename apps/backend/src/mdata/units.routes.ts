@@ -22,6 +22,7 @@ import {
   unitStatusSchema,
   updateUnitBodySchema,
 } from "./unit-update-schema.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 
 export { unitStatusSchema, updateUnitBodySchema, UNIT_PATCHABLE_FIELD_KEYS } from "./unit-update-schema.js";
@@ -299,7 +300,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/mdata/units/:id", async (req, reply) => {
+  app.get("/api/v1/mdata/units/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -314,7 +315,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     return aggregate;
   });
 
-  app.get("/api/v1/mdata/units/:id/financial", async (req, reply) => {
+  app.get("/api/v1/mdata/units/:id/financial", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -325,9 +326,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const financial = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [
-        parsedQuery.data.operating_company_id,
-      ]);
+      await setScopedCompanyContext(client, authUser.uuid, parsedQuery.data.operating_company_id);
       return getUnitFinancialYTD(
         client,
         parsedParams.data.id,

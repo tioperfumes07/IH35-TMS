@@ -5,6 +5,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { officePasswordSchema } from "../identity/office-password-policy.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 const idParams = z.object({ id: z.string().uuid() });
 const portalUserParams = idParams.extend({ portal_user_id: z.string().uuid() });
@@ -32,7 +33,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 const argon2id = new Argon2id();
 
 export async function registerPortalUsersAdminRoutes(app: FastifyInstance) {
-  app.get("/api/v1/customers/:id/portal-users", async (req, reply) => {
+  app.get("/api/v1/customers/:id/portal-users", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParams.safeParse(req.params ?? {});
@@ -41,7 +42,7 @@ export async function registerPortalUsersAdminRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
 
     const rows = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           SELECT
@@ -66,7 +67,7 @@ export async function registerPortalUsersAdminRoutes(app: FastifyInstance) {
     return { portal_users: rows };
   });
 
-  app.post("/api/v1/customers/:id/portal-users", async (req, reply) => {
+  app.post("/api/v1/customers/:id/portal-users", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParams.safeParse(req.params ?? {});
@@ -83,7 +84,7 @@ export async function registerPortalUsersAdminRoutes(app: FastifyInstance) {
     const email = body.data.email.trim().toLowerCase();
 
     const created = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       const customerRes = await client.query(
         `
           SELECT id::text
@@ -136,7 +137,7 @@ export async function registerPortalUsersAdminRoutes(app: FastifyInstance) {
     return reply.code(201).send({ portal_user: created });
   });
 
-  app.post("/api/v1/customers/:id/portal-users/:portal_user_id/archive", async (req, reply) => {
+  app.post("/api/v1/customers/:id/portal-users/:portal_user_id/archive", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = portalUserParams.safeParse(req.params ?? {});
@@ -145,7 +146,7 @@ export async function registerPortalUsersAdminRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
 
     const archived = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           UPDATE shipper_portal.portal_users

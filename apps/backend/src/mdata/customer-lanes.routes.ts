@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 const paramsSchema = z.object({
   customer_id: z.string().uuid(),
@@ -59,7 +60,7 @@ function canManageLanes(role: string) {
 }
 
 export async function registerCustomerLanesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/customers/:customer_id/lanes", async (req, reply) => {
+  app.get("/api/v1/mdata/customers/:customer_id/lanes", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = paramsSchema.safeParse(req.params ?? {});
@@ -68,7 +69,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     return withCurrentUser(authUser.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, parsedQuery.data.operating_company_id);
       const includeInactive = parsedQuery.data.include_inactive === "true";
       const rowsRes = await client.query(
         `
@@ -85,7 +86,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
     });
   });
 
-  app.post("/api/v1/mdata/customers/:customer_id/lanes", async (req, reply) => {
+  app.post("/api/v1/mdata/customers/:customer_id/lanes", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canManageLanes(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -97,7 +98,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
     return withCurrentUser(authUser.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, parsedQuery.data.operating_company_id);
       const res = await client.query(
         `
           INSERT INTO mdata.customer_lanes (
@@ -135,7 +136,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
     });
   });
 
-  app.patch("/api/v1/mdata/customers/:customer_id/lanes/:lane_id", async (req, reply) => {
+  app.patch("/api/v1/mdata/customers/:customer_id/lanes/:lane_id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canManageLanes(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -147,7 +148,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
     return withCurrentUser(authUser.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, parsedQuery.data.operating_company_id);
       const fields: string[] = [];
       const values: unknown[] = [];
       for (const [key, value] of Object.entries(parsedBody.data)) {
@@ -183,7 +184,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
     });
   });
 
-  app.delete("/api/v1/mdata/customers/:customer_id/lanes/:lane_id", async (req, reply) => {
+  app.delete("/api/v1/mdata/customers/:customer_id/lanes/:lane_id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canManageLanes(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -193,7 +194,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     return withCurrentUser(authUser.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, parsedQuery.data.operating_company_id);
       const res = await client.query(
         `
           UPDATE mdata.customer_lanes
