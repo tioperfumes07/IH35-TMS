@@ -2286,3 +2286,92 @@ root cause does not depend on it — it rests on the connection-boundary code re
 evidence already recorded — but the live replay is an outstanding gap and is logged as such rather
 than quietly dropped. **Next attempt should use the driver PWA**, which is the surface that actually
 performs departures, rather than continuing to hunt the office board.
+
+---
+
+## 47. ★ NEW DEFECT — cancelling a load voids its invoice by STATUS ONLY, never stamping `voided_at`
+
+**LIVE-PROVEN 2026-08-07 on Neon prod, USMCA. Found while taking an AR baseline — before creating
+anything.**
+
+`INV-2026-00005` — **`status = 'void'`, `voided_at` NULL, `void_reason` NULL**, `total_cents` 245000,
+`amount_open_cents` 245000. Its `source_load_id` is `a0b1df25-…` = **`L-20260806-0005`, the cancelled
+load.**
+
+**Whole-entity count:** exactly **1** invoice is `status='void' AND voided_at IS NULL`, overstating by
+**$2,450.00** on both `total_cents` and `amount_open_cents`.
+
+**How it distorts a live read.** Under the §2 WORM convention, "live" means `voided_at IS NULL`. So:
+
+```
+live_invoices = 3, live_total_cents = 552550
+  = 187550 (INV-…006 proforma) + 245000 (INV-…005, VOID) + 120000 (INV-…003 partial)
+```
+
+**A voided invoice is being carried as live A/R.** `amount_open_cents` is still 245000, so AR aging
+shows it open too.
+
+### Root cause — the two void paths disagree
+
+**Canonical void route** — `accounting/invoices.routes.ts:846-856`:
+```sql
+UPDATE accounting.invoices
+   SET status = 'void', voided_at = now(), void_reason = $2, updated_at = now(), updated_by_user_id = $3
+ WHERE id = $1
+```
+Sets **status + `voided_at` + `void_reason`.** Correct.
+
+**Load-cancellation path** — `dispatch/cancellation.service.ts:181-187`:
+```sql
+UPDATE accounting.invoices
+   SET status = 'void', updated_at = now(), updated_by_user_id = $3
+ WHERE source_load_id = $1::uuid AND operating_company_id = $2::uuid AND status = 'proforma'
+```
+Sets **status only. No `voided_at`. No `void_reason`.**
+
+**Corroborated by the data:** every invoice voided through the proper route (`INV-…001`, `…002`,
+`…004`) carries **both** a `voided_at` and a descriptive `void_reason`. The one voided by load
+cancellation carries **neither**. The split is perfectly clean.
+
+### Scope, stated precisely — this is NOT a GL defect
+
+`gl_postings` for `INV-2026-00005` = **0**. A `proforma` invoice was never posted, so there is **no GL
+residue and no reversing entry is owed.** The trial balance is unaffected.
+
+**This matters for whoever fixes it:** the correct fix is to stamp `voided_at` (and a `void_reason`
+naming the cancellation), **not** to post a reversal. Treating this like the GL-residue class
+(`LV-VOID-NO-REVERSAL`) would create an entry against a document that never hit the ledger — inventing
+financial data. **The damage is confined to the A/R subledger and every report built on
+`voided_at IS NULL`.**
+
+### Relationship to the AP finding — same symptom, DIFFERENT mechanism
+
+`LV-AP-OPEN-INCLUDES-VOIDED` also showed voided money counted as open, but by a different route (the
+open-AP query not excluding voided rows, over bills that *did* carry `voided_at`). **Here the row
+itself is mis-stamped, so even a correctly-written query would count it.** Same symptom class —
+voided document still counted — **different cause, and they need different fixes.** Recorded as
+separate defects on purpose; merging them would send a fixer to the wrong layer.
+
+### Fix + guard
+
+**FIX:** in `cancellation.service.ts`, set `voided_at = now()` and a `void_reason` (e.g. the
+cancellation reason) in the same UPDATE — matching the canonical route. Keep the `status='proforma'`
+predicate: the surrounding comments correctly explain that a *non*-proforma invoice must NOT be
+auto-voided because a TONU or cancellation charge may be genuinely owed, and that a driver bill is
+deliberately never auto-voided. **That reasoning is sound and must be preserved — the bug is only the
+missing stamp.**
+
+**GUARD:** assert `accounting.invoices` has **zero** rows with `status='void' AND voided_at IS NULL`
+(and the same invariant for any other table using the status+timestamp void pattern). This is a live
+data assertion — a static scan would not catch it. It reddens today on exactly one row and goes green
+the moment the row is stamped. **LANE: CC-1 / money** (A/R correctness), even though the offending
+write lives in `dispatch/`.
+
+**NOTE — the fix must also stamp the EXISTING row**, or the guard stays red: `INV-2026-00005` needs
+`voided_at` backfilled. That is a data correction on a test-entity row with no GL impact, so it is
+safe — but it is **not** something this lane will do, since it does not build.
+
+### Also observed (PASS) — the proforma pipeline fired for the new load
+
+`INV-2026-00006` was **auto-created for `L-20260806-0008`** at `$1,875.50`, status `proforma`,
+`source_load_id = 1d5d8733-…`. The booking wizard's "queue invoice" step works. **PASS.**
