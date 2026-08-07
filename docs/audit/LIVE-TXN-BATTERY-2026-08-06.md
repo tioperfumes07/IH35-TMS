@@ -5633,3 +5633,77 @@ fixed. Mutation-prove it.
 them WORM — before there is a driver escrow balance in them to lose.
 
 **Routed:** CC-1 (money / GL / WORM). Board row `LV-ESCROW-SUBLEDGER-NOT-WORM` delivered to `main` via PR #4693.
+
+---
+
+## 92. GL ↔ SOURCE-DOCUMENT BOTH-WAY LINKAGE — PASS, 56/56, and a disproven orphan hypothesis that would have filed an 18% false-orphan rate
+
+**Unit: §10.3 both-way linkage for every USMCA general-ledger line. Verdict: PASS — complete in both
+directions, zero orphans, zero dangling links.**
+
+This is the connectivity law measured directly rather than argued: **can every posting line be drilled back
+to the document that caused it, and does every link point at a row that exists?**
+
+**VERIFIED — prod `br-fancy-credit-akjnd07a`, USMCA GUC set in the same transaction:**
+
+| check | result |
+|---|---|
+| USMCA posting lines | **56** |
+| lines with **exactly one** `transaction_source_links` row | **56** |
+| lines with **ZERO** source link | **0** |
+| `transaction_source_links` rows pointing at a posting that does not exist | **0** |
+| journal entries balanced (DR = CR) | **28 of 28** — positive control, the same query with the predicate inverted returns 28 |
+| USMCA GL totals | **DR = CR = $12,318.54** |
+
+**Forward and reverse both hold.** Forward: every line reaches its document. Reverse: no link dangles. The
+link table also carries a `relationship_role`, and it is used meaningfully rather than uniformly —
+`source_transaction` (bill 18, bank_categorization 10, invoice 6, bill_payment 4, transfer 2, expense 2),
+`reversal_of` (invoice 4, journal_entry 4), `expense_cash_payment` 2, `prepaid_purchase` 2, `manual_entry` 2.
+A reversal is not mislabelled as an origination, which is what makes the drill-through legible.
+
+**★ THE HYPOTHESIS I WAS ABOUT TO FILE, AND THE EVIDENCE THAT KILLED IT.**
+
+Grouping `accounting.journal_entry_postings` by `source_transaction_type` returns a conspicuous bucket:
+**10 lines across 5 journal entries with `source_transaction_type = NULL` AND `source_transaction_id = NULL`.**
+That is **18% of USMCA's ledger with no visible link to any source document** — and the memo text on two of
+them names an invoice UUID in prose, which is a string, not a link. It read as a clean, high-severity
+connectivity defect: *GL entries that cannot be drilled back to their origin.*
+
+**It is wrong. The linkage is not on the posting row — it is in `accounting.transaction_source_links`, and
+it is complete.** All five JEs carry `tsl_links = 2`, and the links are specific and correct:
+
+| JE | denormalized col | actual link in `transaction_source_links` |
+|---|---|---|
+| `43b3ed80` | NULL | `invoice` / `reversal_of` → `e4d2ebdd` (`INV-2026-00001`, status `void`) |
+| `53415aef` | NULL | `invoice` / `reversal_of` → `135af1df` (`INV-2026-00007`, status `void`) |
+| `ea6a0f05` | NULL | `journal_entry` / `reversal_of` → `ff286e60` |
+| `56a58856` | NULL | `journal_entry` / `reversal_of` → `5f70a75c` |
+| `5f70a75c` | NULL | `journal_entry` / `manual_entry` → itself (a manual JE — correctly has no upstream document) |
+
+**The NULLs are not missing data. They are the correct value.** The denormalized columns describe a
+*source transaction*; a reversal has no source transaction and a manual JE has no source document. The
+relationship those rows do have — `reversal_of`, `manual_entry` — is a different kind of edge and is stored
+where the role can be named. Filing this would have been an `expected-state-recorded-as-failure` at 18% of
+the ledger, and it would have sent CC-1 to "fix" a schema that is already right.
+
+**★ THE TRAP THIS LEAVES FOR THE LINKAGE GUARD — the part worth acting on.**
+
+There are **two** linkage mechanisms, and they disagree by design: the denormalized
+`journal_entry_postings.source_transaction_type/id` pair is populated on **46 of 56** lines, while
+`transaction_source_links` is complete at **56 of 56**. **A linkage guard written against the denormalized
+columns — the obvious choice, they are right there on the row — reports a false 18% orphan rate on a ledger
+that is fully linked.** Whoever writes that guard must read `transaction_source_links` and treat the
+denormalized pair as a convenience cache, never as the linkage of record. Recorded here so the guard is
+written correctly the first time.
+
+**NOT re-filing what item 59 already owns.** Both invoice-void reversals have `reverses_je_id = NULL` while
+the JE-void path populates it. That is **item 59's finding** (the three-tier void map: invoice void has the
+reversal and nets to zero but lacks the `reverses_je_id` / `reversed_by_je_id` linkage half), already on the
+board and routed. This unit confirms it from a second direction and adds nothing new to it. Note also that
+both invoices carry `voided_at` correctly — they were voided through the invoice void action, not the
+load-cancel path of item 47, so there is no contradiction with that item.
+
+**What this unit establishes for the connectivity mission:** the ledger side of §10.3 is **done and provable**
+for USMCA. Every GL line reaches its document and every document link resolves. The remaining connectivity
+work is not in the GL — it is upstream, in the paths that never post at all (`LV-TXN-004`,
+`LV-PAY-SETTLE-NOPOST`).
