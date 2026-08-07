@@ -319,7 +319,10 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     return { transactions: rows };
   });
 
-  app.post("/api/v1/banking/plaid/accounts/:id/disconnect", async (req, reply) => {
+  app.post(
+    "/api/v1/banking/plaid/accounts/:id/disconnect",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ensureRole(reply, user.role, ownerOnlyRoles)) return;
@@ -362,6 +365,8 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
             // CI-ALLOWLIST: registerPlaidLinkRoutes invokes Plaid item revoke in request path for explicit user disconnect intent — see DS-AUDIT-B-016.
             const plaid = getPlaidClient();
             await plaid.itemRemove({ access_token: accessToken });
+          // local deactivation must complete even if the remote Plaid revoke fails — see DS-AUDIT-B-016
+          // intentional swallow
           } catch {
             // Continue local deactivation even if Plaid revoke fails.
           }
@@ -421,7 +426,10 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/banking/plaid/items/disconnect", async (req, reply) => {
+  app.post(
+    "/api/v1/banking/plaid/items/disconnect",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ensureRole(reply, user.role, ownerOnlyRoles)) return;
@@ -448,6 +456,8 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           // CI-ALLOWLIST: registerPlaidLinkRoutes invokes Plaid item revoke in request path for explicit user disconnect intent — see DS-AUDIT-B-016.
           const plaid = getPlaidClient();
           await plaid.itemRemove({ access_token: accessToken });
+        // local deactivation must complete even if the remote Plaid revoke fails — see DS-AUDIT-B-016
+        // intentional swallow
         } catch {
           /* continue */
         }

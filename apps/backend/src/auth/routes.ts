@@ -98,6 +98,15 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       const parsedState = packedState ? decodeOAuthState(packedState) : null;
       const storedState = req.cookies[STATE_COOKIE];
       const codeVerifier = req.cookies[VERIFIER_COOKIE];
+      // CodeQL js/user-controlled-bypass fires here because a user-provided value (`state`, echoed back
+      // by Google in the query string) takes part in a condition that guards a sensitive action. That is
+      // the RFC 6749 §10.12 CSRF defence working as designed, not a bypass: the whole point is to compare
+      // the returned `state` against the one WE generated and stored in an HttpOnly cookie. The attacker
+      // controls `parsedState.state`; they do not control `storedState`, so the comparison can only pass
+      // when both sides came from this browser's own authorization request. Removing or loosening this
+      // condition is what would create a vulnerability. Suppressed with justification rather than
+      // rewritten — see CI-F03b. The suppression is reported (not hidden) by ci-codeql-enforce-sarif.
+      // codeql[js/user-controlled-bypass]
       if (!code || !parsedState || !storedState || !codeVerifier || parsedState.state !== storedState) {
         return reply.code(400).send({ error: "invalid_oauth_state" });
       }
