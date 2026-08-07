@@ -28,6 +28,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
+import { maskComments } from "./lib/mask-comments.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const LABEL = "verify-no-uuid-label-rendering";
@@ -92,7 +93,7 @@ function collectAll() {
   const keys = [];
   for (const rel of files) {
     if (rel.endsWith("verify-no-uuid-label-rendering.mjs")) continue;
-    keys.push(...offenderKeys(readFileSync(join(ROOT, rel), "utf8"), rel));
+    keys.push(...offenderKeys(maskComments(readFileSync(join(ROOT, rel), "utf8")), rel));
   }
   return { keys, fileCount: files.length };
 }

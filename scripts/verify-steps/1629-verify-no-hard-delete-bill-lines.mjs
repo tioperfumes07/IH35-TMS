@@ -23,5 +23,14 @@ export default {
     // soft-deleted. Same invariant family as this step, so it is hosted here.
     await ctx.run("node", ["scripts/verify-money-line-sums-exclude-voided.mjs"]);
     await ctx.run("node", ["scripts/verify-money-line-sums-exclude-voided.mjs", "--selftest"]);
+
+    // ACCT-F157 — keep the canonical void-predicate map honest. "Exclude the voided row" had TEN
+    // spellings across the backend, which made the invariant above UNGUARDABLE beyond the three line
+    // tables: three sweep rounds (114 -> 82 -> 44 sites) shrank only as each new spelling was learned,
+    // and the two sites hand-checked at 44 were BOTH correct code. docs/audit/void-predicate-map.json
+    // is the missing fact — one canonical predicate per financial table, generated from prod. This
+    // guard stops it drifting, because a map callers TRUST but that has drifted is worse than no map.
+    await ctx.run("node", ["scripts/verify-void-predicate-map-current.mjs"]);
+    await ctx.run("node", ["scripts/verify-void-predicate-map-current.mjs", "--selftest"]);
   },
 };
