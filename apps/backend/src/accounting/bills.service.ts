@@ -328,12 +328,22 @@ async function resolveBillVendorWriteColumns(
       mdataVendorId: row.id,
     };
   }
-  const isUuid = new RegExp(BILL_VENDOR_UUID_PATTERN.slice(1, -1), "i").test(trimmed);
-  return {
-    vendorIdText: trimmed,
-    vendorUuidText: isUuid ? trimmed : null,
-    mdataVendorId: isUuid ? trimmed : null,
-  };
+  // ACCT-F158 — FAIL CLOSED. The SELECT above is already entity-scoped, so reaching here means the
+  // vendor does not exist inside the caller's own entity. The previous fallback returned nulls (or,
+  // for a uuid-shaped input, wrote that uuid through unchecked), and both branches failed OPEN:
+  //
+  //   • mdataVendorId = null  ->  the ACCT-F142 duplicate index is PARTIAL on
+  //     `mdata_vendor_id IS NOT NULL`, so a null-vendor bill escapes it entirely and the same vendor
+  //     bill can be entered without limit — precisely the defect ACCT-F142 exists to stop. Four such
+  //     rows are on prod today (USMCA-RB-002, USMCA-TEST-BILL-05, GL-PROOF-BILL-001, f8f8e5a4).
+  //   • mdataVendorId = trimmed (uuid-shaped)  ->  written straight into the FK column, whose
+  //     constraint `bills_mdata_vendor_id_fkey` REFERENCES mdata.vendors(id) with NO entity
+  //     predicate. Since the scoped lookup just proved the vendor is not in this entity, a uuid that
+  //     resolves at all resolves to ANOTHER ENTITY'S vendor, and the bill accepts it.
+  //
+  // An unresolvable vendor is an error, not a null. Named to match the sibling
+  // `bill_line_account_not_in_company` so bills.routes.ts maps it to a 400, not a 500.
+  throw Object.assign(new Error("bill_vendor_not_in_company"), { code: "bill_vendor_not_in_company" });
 }
 
 function hashPayload(payload: Record<string, unknown>) {
