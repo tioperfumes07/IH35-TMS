@@ -5389,3 +5389,71 @@ neither the change nor the author is not evidence. **Guard: assert every table i
 transactional data has an audit trigger, so a new money table cannot ship unaudited.**
 
 **Routed:** WORM / audit integrity → **CC-1**.
+
+---
+
+## 88. SELF-CORRECTION to item 87 — the money tables ARE protected; the real gap is that WORM is role-scoped and UPDATEs are unrecorded
+
+**Item 87's headline was WRONG and is corrected here, in place, an hour after filing.** I wrote that
+`accounting.journal_entry_postings` is "unprotected" because it has no *audit* trigger. It has **three**
+triggers, and the protection is real. I had used "no audit trigger" as a proxy for "unprotected", and that
+proxy is invalid.
+
+**WHAT IS ACTUALLY THERE** (prod, `pg_trigger`/`pg_proc`, 2026-08-07):
+
+| table | triggers | `n_tup_upd` | `n_tup_del` |
+|---|---|---|---|
+| `accounting.journal_entry_postings` | `ensure_journal_entry_balanced` · `trg_block_closed_period_journal_entry_postings` · `refuse_financial_row_delete` | 2 | **0** |
+| `accounting.expense_lines` | `enforce_load_fk_invariant` · `ensure_expense_total_matches_lines` · `expense_lines_derive_company` · `refuse_financial_row_delete` | 305,542 | **0** |
+| `accounting.payments` | `trg_block_closed_period_payments` | **72,824** | 0 |
+| `accounting.invoice_lines` | **(none)** | 0 | 0 |
+| `driver_finance.driver_settlements` | `refuse_financial_row_delete` | 2 | **7** |
+| `driver_finance.driver_settlement_deductions` | `refuse_financial_row_delete` | 0 | **14** |
+
+`ensure_journal_entry_balanced` is a **database-level** guarantee that every entry balances — which is *why*
+item 84 found 0 unbalanced entries. That is a genuinely strong control and I mis-framed the table as
+exposed. **Correction recorded before anyone acts on the wrong version.**
+
+**AND HOS IS EXEMPLARY — the model the rest should copy.** `hos.duty_status_events` (628,629 rows) has
+`trg_block_hos_duty_status_events_update` and `..._delete` → `block_duty_status_events_mutation`, `ih35_app`
+holds **no** UPDATE/DELETE grant, and `n_tup_upd = 0` / `n_tup_del = 0` across **630,626** inserts. Three
+independent mechanisms, zero mutations ever. Append-only is **enforced**, not asserted. For FMCSA data that
+is the correct, stronger choice: it *prevents* change rather than recording it.
+
+**THE REAL FINDING, and it survives — two precise gaps:**
+
+**(1) WORM deletion is scoped to ONE ROLE and silently permits everyone else.**
+`accounting.refuse_financial_row_delete()`:
+
+```sql
+IF current_user <> 'ih35_app' THEN
+  RETURN OLD;            -- the DELETE proceeds, silently
+END IF;
+RAISE EXCEPTION '%.% is WORM: DELETE is refused by the application role …';
+```
+
+The guard fires **only** for `ih35_app`. `neondb_owner`, a migration, a maintenance script or a console
+session deletes financial rows with **no block and no error**. That is exactly how
+`driver_settlements` took 7 deletions and `driver_settlement_deductions` 14 **while carrying this very
+trigger** — the puzzle from item 87, now solved. Those tables also have no audit trigger, so **nothing
+recorded it.** An escape hatch for administrative repair is defensible; an escape hatch that is *silent and
+unlogged* is not — that combination is indistinguishable from tampering after the fact.
+
+**(2) UPDATEs to money rows are neither blocked nor recorded.** `accounting.payments` has taken **72,824**
+updates and `accounting.expense_lines` **305,542**, with no audit trigger on either. Deletion is the
+protected verb; **mutation is not.** For an embezzlement case, quietly changing an amount is at least as
+damaging as deleting a row, and the ledger cannot show it happened.
+
+**REVISED SEVERITY: P0 stands, but for the corrected reason.** Not "123 unaudited tables" — that number
+counted well-defended tables as exposed. The defensible statement is: **financial deletion is blocked for
+the app role only, silently permitted for every other role, and financial mutation is unrecorded on the
+highest-volume money tables.**
+
+**FIX:** (a) make `refuse_financial_row_delete` refuse for **all** roles, with an explicit, logged
+break-glass path if administrative deletion must exist; (b) attach the audit trigger to the transactional
+money tables so mutations are recorded; (c) copy the `hos` pattern — block, don't just record — wherever
+append-only is claimed. **Guard: assert no financial table grants a silent delete escape by role.**
+
+**The lesson I am recording against myself:** "no audit trigger" is not "no protection". I filed a P0 on a
+proxy metric and had to correct the headline within the hour. The corrected finding is narrower, provable,
+and points at a specific line of SQL — which is what the card should have said the first time.
