@@ -1,5 +1,41 @@
 # GUARD WORK-ORDERS — the live fix board (read after AUDIT-COVERAGE-LIVE.md, before any block)
 
+## ★★ STANDING RULE — QBO 2023–2025 FIGURES ARE STILL MOVING. DO NOT FILE NUMERIC DELTAS AS DEFECTS.
+
+**Owner-stated 2026-08-07.** The internal accountant (**Martin**) is **still adjusting FY2023, FY2024 and
+FY2025** in QuickBooks as a consequence of the **embezzlement by Ignacio Muñoz**. **Those figures will
+keep changing until the reconciliation is complete.**
+
+**WHAT THIS MEANS FOR EVERY LANE — this is a "do not file" rule, and it is not optional:**
+
+1. **A numeric difference between QBO and TMS for FY2023–FY2025 is EXPECTED STATE, not a defect.** TMS
+   cloned a snapshot; QBO has moved since and will move again. Filing the delta as a discrepancy is the
+   `expected-state-recorded-as-failure` anti-pattern, and at these magnitudes it would send a lane
+   chasing a number that is *supposed* to change.
+2. **NEVER "fix" TMS to match a QBO figure from those years.** The locked strategy is
+   **clone-as-is-then-adjust**: clone faithfully, then book post-opening adjusting entries — or let
+   Martin fix it at source. Reaching in to force a match destroys the audit trail on both sides.
+3. **NEVER write back to QBO.** Unchanged and absolute (`QBO_JE_PUSH_ENABLED` / `QBO_ENTITY_PUSH_ENABLED`
+   default OFF). A lane "helpfully" correcting QBO would be corrupting the book of record **during an
+   embezzlement reconciliation** — the one book that may be examined by counsel, a court, or an insurer.
+4. **What IS legitimately reportable:** a **structural** defect that is true regardless of the numbers —
+   a sign convention applied inconsistently, an account mapped to the wrong control account, a posting
+   that never happens at all, a subledger that disagrees with its own GL **within TMS**. Those do not
+   depend on Martin's figures and stay in scope.
+5. **Record the number, do not act on it.** When a delta is measured, log it as a **tie-out input for
+   when the close is finalised** — e.g. the **exact −$5,670.00** difference between the TMS opening entry
+   and QBO's current A/R (battery item 65). That is useful; calling it a bug is not.
+
+**CONTEXT THAT EXPLAINS THE CHART OF ACCOUNTS:** the A/R sub-accounts **"Unauthorized Expenses Ignacio
+Muñoz" ($350,451.38)** and **"Unauthorized Expenses Anarely Alcazar" ($73,253.48)** on QBO's 12/31/2024
+balance sheet are the embezzlement receivables. Per the locked decision they are **receivables pursued in
+bankruptcy court — NOT written off and NOT reclassed to expense.** **No lane may "clean up" or reclassify
+them.** They are evidence.
+
+**WHEN THIS RULE EXPIRES:** when the owner states the 2023–2025 reconciliation is complete. Until then it
+governs, and the opening JE stays deferred by owner decision — **which is an owner-written deferral, the
+one form the never-defer law explicitly allows.**
+
 ## ★ SHARED RESOURCE COORDINATION — DEBUGGED CHROME PORTS (owner-directed 2026-08-07)
 
 **Why this exists:** the browser is a SHARED resource. Lanes were attaching to the same Chrome instance,
