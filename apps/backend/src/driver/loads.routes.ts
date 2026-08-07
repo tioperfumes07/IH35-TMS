@@ -5,6 +5,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { validateLoadStopStatusWrite } from "../dispatch/load-state-machine.js";
 import { requireDriverSession } from "./auth.js";
+import { applyLoadStatusMoneyEffects } from "../accounting/load-status-money-effects.service.js";
 
 type LoadLifecycleStage =
   | "pre_trip"
@@ -466,9 +467,9 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
     if (!driver) return;
 
     const updated = await withCurrentUser(req.user!.uuid, async (client) => {
-      const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; latitude: number | null; longitude: number | null }>(
+      const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; operating_company_id: string; latitude: number | null; longitude: number | null }>(
         `
-          SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude
+          SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, l.operating_company_id::text AS operating_company_id, loc.latitude, loc.longitude
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
@@ -504,6 +505,18 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
 
       await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.id, nextLoadStatus]);
 
+      // ACCT-F168 / LV-TXN-004 — the driver PWA is the MOST-USED status path once USMCA operates:
+      // drivers mark arrival and delivery from the cab. It wrote mdata.loads.status and ran none of
+      // the money side-effects. operating_company_id is now projected by the stop SELECT above (it was
+      // not, which is exactly why I refused to wire this by guessing at scope in ACCT-F166).
+      await applyLoadStatusMoneyEffects({
+        client,
+        operatingCompanyId: String(stop.operating_company_id),
+        loadId: params.data.id,
+        targetStatus: String(nextLoadStatus),
+        actorUserId: String(req.user!.uuid),
+      });
+
       return { lifecycle_stage: lifecycleFromLoadStatus(nextLoadStatus) };
     });
 
@@ -534,7 +547,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
     const updated = await withCurrentUser(req.user!.uuid, async (client) => {
       const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; latitude: number | null; longitude: number | null; sequence_number: number; operating_company_id: string }>(
         `
-          SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude, s.sequence_number,
+          SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, l.operating_company_id::text AS operating_company_id, loc.latitude, loc.longitude, s.sequence_number,
                  l.operating_company_id::text AS operating_company_id
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
@@ -598,6 +611,18 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       );
 
       await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.id, nextLoadStatus]);
+
+      // ACCT-F168 / LV-TXN-004 — the driver PWA is the MOST-USED status path once USMCA operates:
+      // drivers mark arrival and delivery from the cab. It wrote mdata.loads.status and ran none of
+      // the money side-effects. operating_company_id is now projected by the stop SELECT above (it was
+      // not, which is exactly why I refused to wire this by guessing at scope in ACCT-F166).
+      await applyLoadStatusMoneyEffects({
+        client,
+        operatingCompanyId: String(stop.operating_company_id),
+        loadId: params.data.id,
+        targetStatus: String(nextLoadStatus),
+        actorUserId: String(req.user!.uuid),
+      });
 
       // CLS-DISP-WIRE-07 — latch revenue on the DRIVER's delivery departure, not only the office
       // transition. No-op unless nextLoadStatus is a delivery-evidence status, and it can only be

@@ -63,7 +63,7 @@ const WRITES_LOAD_STATUS = /UPDATE\s+mdata\.loads[\s\S]{0,400}?\bSET\b[\s\S]{0,4
 /**
  * PENDING-WIRE BASELINE — shrink-only, and every entry is a REAL gap, not an exemption.
  *
- * The shape scan found six additional status-writing paths. The Samsara GPS detector is now WIRED (ACCT-F167), leaving FIVE — this list only ever shrinks.
+ * The shape scan found six additional status-writing paths. The Samsara GPS detector (ACCT-F167) and the driver PWA (ACCT-F168) are now WIRED, leaving FOUR — this list only ever shrinks.
  * They are recorded rather than wired here because each needs its own verification of what company
  * id and actor are in scope at the write, and guessing that in a money path is how the original
  * defect was written. They are on the board as their own block.
@@ -73,9 +73,6 @@ const WRITES_LOAD_STATUS = /UPDATE\s+mdata\.loads[\s\S]{0,400}?\bSET\b[\s\S]{0,4
  * for free.
  */
 const PENDING_WIRE_BASELINE = new Set([
-  // driver PWA marks arrival/delivery — two one-line status writes whose handler SELECT does not
-  // project operating_company_id, so the call needs that column added first.
-  path.join("apps", "backend", "src", "driver", "loads.routes.ts"),
   // driver-PWA dispatch view — a second driver-side status writer.
   path.join("apps", "backend", "src", "dispatch", "driver-pwa", "dispatch-view.routes.ts"),
   // bulk status change; one of its writes sets 'paid', a payment state rather than a delivery
