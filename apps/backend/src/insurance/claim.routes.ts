@@ -96,7 +96,15 @@ function claimSelectColumns(caps: ClaimColumnCapabilities, alias = "c") {
     ${a}created_at::text,
     ${a}accident_report_id::text,
     ${a}load_id::text,
-    ${a}driver_id::text,${economics}
+    ${a}driver_id::text,
+    -- CLS-UUID-LABEL: ClaimsTab rendered .slice(0, 8) of each of these ids because the payload carried
+    -- ONLY ids. An adjuster saw "a3f9c21b" where a driver, unit, load or policy number belongs, and a
+    -- link nobody can read is decoration. Slicing at the call site would only relocate the uuid, so the
+    -- names are resolved here, at the query, which is the actual root cause.
+    NULLIF(TRIM(CONCAT(COALESCE(cdrv.first_name, ''), ' ', COALESCE(cdrv.last_name, ''))), '') AS driver_display_name,
+    cunit.unit_number AS unit_display_id,
+    cload.load_number AS load_display_id,
+    cpol.policy_number AS policy_display_id,${economics}
   `;
 }
 
@@ -134,6 +142,25 @@ function claimFrom(caps: ClaimColumnCapabilities) {
   LEFT JOIN mdata.assets assets
     ON assets.id = c.asset_id
    AND assets.tenant_id = ${scope}${trailerJoin}
+  -- CLS-UUID-LABEL display-name joins. Each is scoped the way ITS OWN table requires, not uniformly:
+  --   drivers/loads carry operating_company_id;
+  --   mdata.units has NO operating_company_id (§4) and is scoped by the owner/leased PAIR, so a
+  --     TRK-owned unit leased to USMCA still resolves;
+  --   insurance.policy is joined on tenant_id ON PURPOSE — its operating_company_id column exists but
+  --     is nullable and is never written by the create path (see LV-TXN-014), so joining on it would
+  --     silently resolve NOTHING and leave the policy label blank again.
+  LEFT JOIN mdata.drivers cdrv
+    ON cdrv.id = c.driver_id
+   AND cdrv.operating_company_id = ${scope}
+  LEFT JOIN mdata.units cunit
+    ON cunit.id = assets.unit_id
+   AND COALESCE(cunit.currently_leased_to_company_id, cunit.owner_company_id) = ${scope}
+  LEFT JOIN mdata.loads cload
+    ON cload.id = c.load_id
+   AND cload.operating_company_id = ${scope}
+  LEFT JOIN insurance.policy cpol
+    ON cpol.id = c.policy_id
+   AND cpol.tenant_id = ${scope}
 `;
 }
 

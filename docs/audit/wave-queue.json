@@ -1,5 +1,6 @@
 {
   "_README": "Cascade publishes CLS-* class wave cards here (schema: docs/audit/wave-queue.SCHEMA.json). Legacy per-module rows in AUDIT-COVERAGE-LIVE.md are WORM history and are NOT rewritten by this artifact. Cursor drains mechanical cards; Claude Coder drains money cards. verify-wave-card-format + verify-no-false-green-certify enforce the method in CI.",
+  "_LANE_TERRITORY_2026-08-06": "OWNER-LOCKED PARTITION (Cascade auditor duty, no overlap ever): CC-1 (lane=money) owns ONLY migrations, grants, GL/posting, settlement, WORM, AP/AR, ci.yml DB-env — NEVER routes, NEVER route tests, NEVER rate-limit, NEVER dispatch/mdata scope, NEVER FE. CC-2 (lane=mechanical) owns ONLY routes, route tests, rate-limit, dispatch/mdata entity-scope, FE — NEVER migrations/grants/GL/WORM. Root cause of the 2026-08-06 all-PR-red incident: both builders ran a rate-limit route sweep simultaneously on overlapping route files (a mechanical-lane class assigned to CC-1 in violation of this partition). Before assigning ANY new class, Cascade checks the new card's hotfiles against every OTHER open card's hotfiles; if a money card and a mechanical card share a hotfile, serialize them (one stays queued) instead of running both.",
   "waves": [
     {
       "id": "CLS-DISPLAYID-UNSCOPED",
