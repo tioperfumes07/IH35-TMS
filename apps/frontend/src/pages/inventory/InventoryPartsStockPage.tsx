@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { listMaintenanceParts, type MaintenancePartRow } from "../../api/maintenance";
 import { listVendors } from "../../api/mdata";
@@ -65,7 +66,7 @@ const columns: ParityColumn<InventoryPartRow>[] = [
     label: "Vendor",
     render: (row) =>
       row.vendor_id ? (
-        <EntityLink kind="vendor" id={row.vendor_id} label={row.vendor_label ?? row.vendor_id.slice(0, 8)} />
+        <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_label, row.vendor_id, "Vendor")} />
       ) : (
         <span className="text-gray-400">—</span>
       ),

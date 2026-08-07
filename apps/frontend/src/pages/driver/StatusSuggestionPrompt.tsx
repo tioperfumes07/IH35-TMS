@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDriverStatusSuggestions, respondDriverStatusSuggestion } from "../../api/driver";
@@ -33,7 +34,7 @@ export function StatusSuggestionPrompt() {
       <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-4 shadow-xl">
         <p className="text-sm font-semibold text-slate-900">Status suggestion</p>
         <p className="mt-1 text-sm text-slate-700">
-          Looks like you’re underway on load <span className="font-semibold">{active.load_number ?? active.load_id.slice(0, 8)}</span>. Mark as{" "}
+          Looks like you’re underway on load <span className="font-semibold">{entityLabel(active.load_number, active.load_id, "Load")}</span>. Mark as{" "}
           <span className="font-semibold">{active.suggested_to.replace("_", " ")}</span>?
         </p>
         <p className="mt-1 text-xs text-slate-500">{active.reason}</p>

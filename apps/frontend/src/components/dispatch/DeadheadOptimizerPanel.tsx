@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { getDeadheadNextLoadSuggestions, type DeadheadNextLoadSuggestion } from "../../api/dispatch";
 import { formatUsdCents } from "../../lib/money";
@@ -76,7 +77,7 @@ export function DeadheadOptimizerPanel({
           >
             <div className="flex items-center justify-between gap-2 font-semibold">
               <span>
-                #{index + 1} · <EntityLink kind="load" id={row.load_uuid} label={row.load_number ?? row.load_uuid.slice(0, 8)} /> · {row.pickup_city}, {row.pickup_state}
+                #{index + 1} · <EntityLink kind="load" id={row.load_uuid} label={entityLabel(row.load_number, row.load_uuid, "Load")} /> · {row.pickup_city}, {row.pickup_state}
               </span>
               <span className="font-mono text-[11px] text-slate-700">{row.score.toFixed(2)} ¢/mi score</span>
             </div>

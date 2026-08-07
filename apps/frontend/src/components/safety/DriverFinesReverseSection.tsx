@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { getSafetyFines, getInternalFines } from "../../api/safety";
@@ -75,7 +76,7 @@ export function DriverFinesReverseSection({
           <ul className="mt-1 space-y-2">
             {civil.map((f: Record<string, unknown>) => {
               const id = String(f.id ?? "");
-              const label = String(f.violation_code ?? f.jurisdiction ?? id.slice(0, 8));
+              const label = String(f.violation_code ?? entityLabel(f.jurisdiction, id, "Record"));
               return (
                 <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
                   <EntityLink kind="safety_fine" id={id} label={label} className="font-semibold text-slate-700" />
@@ -93,7 +94,7 @@ export function DriverFinesReverseSection({
           <ul className="mt-1 space-y-2">
             {internal.map((f: Record<string, unknown>) => {
               const id = String(f.id ?? "");
-              const label = String(f.reason_name ?? f.reason_code ?? id.slice(0, 8));
+              const label = String(f.reason_name ?? entityLabel(f.reason_code, id, "Record"));
               return (
                 <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
                   {/* Deliberately NOT an EntityLink: /safety/internal-fines does not honour a

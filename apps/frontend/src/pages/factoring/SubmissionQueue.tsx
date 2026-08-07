@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listSubmissionQueue, submitFactoringQueueBatch, type SubmissionQueueItem } from "../../api/factoring";
@@ -137,7 +138,7 @@ export function SubmissionQueue() {
                   <EntityLink
                     kind="invoice"
                     id={item.invoice_id}
-                    label={item.display_id ?? item.invoice_id.slice(0, 8)}
+                    label={entityLabel(item.display_id, item.invoice_id, "Invoice")}
                   />
                 </td>
                 <td className="py-1.5 pr-3">{item.customer_name ?? "—"}</td>
