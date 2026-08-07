@@ -947,3 +947,37 @@ load*) cannot be satisfied by someone entering an expense directly.
 
 The board row `LV-EXP-NOLOAD` is updated from "UNVERIFIED on the fuel module" to **fuel module
 confirmed to have no manual create path**.
+
+## 23 — ★ COMPLIANCE: regulatory calendar correct + driver→compliance auto-linkage — PASS
+
+`/compliance` on USMCA: `6 OVERDUE · 0 DUE SOON · 3 UPCOMING · 0 NOT YET TRACKED`. **Every row is
+`Entity = USMCA`** — correctly scoped.
+
+**★ The regulatory calendar is CORRECT against the actual federal/state rules** (checked against
+`ih35-fmcsa-compliance`, not assumed):
+
+| program | detail shown | due date | correct? |
+|---|---|---|---|
+| **Form 2290 / HVUT** | Annual Heavy Vehicle Use Tax filing | **08/31/2026** | ✅ 2290 tax period runs Jul 1–Jun 30, filing due Aug 31 |
+| **IFTA Quarterly Fuel Tax Return** | **Q3 2026** return | **10/31/2026** | ✅ Q3 (Jul–Sep) is due Oct 31 — the correct quarter *and* the correct deadline |
+| **Texas Business Personal Property Tax Rendition** | 2027 rendition, **Tax Code §22.23, due Apr 15** | 04/15/2027 | ✅ statute cited correctly |
+| **Drug & Alcohol Clearinghouse Query** ×3 | annual query, **49 CFR §382.701** | — (Overdue) | ✅ correct CFR cite |
+| **Annual MVR Review** ×3 | annual motor vehicle record review, **49 CFR §391.25** | — (Overdue) | ✅ correct CFR cite |
+
+This matters because the board records a prior defect class where *"a regulatory calendar lived in
+nobody's head (e.g. the IFTA wrong-quarter bug)."* On this entity, live, **the quarter and the
+deadline are both right**, and the statutes are cited rather than paraphrased.
+
+**★ DRIVER → COMPLIANCE AUTO-LINKAGE CONFIRMED (§10).** The overdue rows include
+**`TEST Driver-One-20260806`** — the driver I created in item 06 — with **both** an annual
+Clearinghouse query (§382.701) and an annual MVR review (§391.25) generated for it, alongside the
+same two obligations for `TEST DRIVER-USMCA` and `Juan USMCA-Battery`. **Creating a driver
+automatically spawned its federal compliance obligations, with no manual step.** That is exactly the
+total-connectivity behaviour §10 requires, working end to end.
+
+**Battery PASS.** No defect. This is the strongest module result so far: correct regulation, correct
+dates, correct citations, correct entity scoping, and automatic driver→obligation wiring.
+
+Note the 6 "Overdue" items are **expected state**, not a defect — they are annual obligations for
+drivers that have just been created in a test entity with no prior query/review history. Flagging
+them as overdue is the correct behaviour.
