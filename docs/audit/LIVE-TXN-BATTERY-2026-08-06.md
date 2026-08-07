@@ -4811,3 +4811,142 @@ including one that fit the evidence exactly — are eliminated **with the eviden
 nobody re-runs them. Hypothesis 3 is the cautionary one: `qbo_account_id = NULL` on every USMCA account is
 TRUE, the code comment describing that exact failure is TRUE, and the conclusion drawn from both was still
 FALSE. Two true facts and a coherent story are not proof.
+
+---
+
+## 77. DRIVER ESCROW — PASS on the control tie-out, and a FALSE ZERO that would have declared the entire USMCA general ledger empty
+
+**Unit: driver escrow (USMCA). Verdict: PASS — GL and subledger tie at zero, and the zero is a verdict, not a mask.**
+
+Escrow was the one item in the battery list never exercised. It appears nine times in this log, always as a
+baseline number, never as a unit.
+
+**VERIFIED STATE — prod `br-fancy-credit-akjnd07a`, `app.operating_company_id` set to USMCA in the same
+transaction as every read:**
+
+| surface | USMCA | discriminator |
+|---|---|---|
+| GL `2100 Driver Escrow - Held in Trust` (`Liability`, `is_postable`, `system_purpose='driver_escrow_liability'`) | **$0.00**, 0 posting lines | account row read by id `99ce594c-…` |
+| `driver_finance.escrow_ledger` | **0** | `n_tup_ins = 0` — never written, any entity, ever |
+| `driver_finance.escrow_balances` | **0** | `n_tup_ins = 0` |
+| `driver_finance.escrow_deductions_pending` | **0** | `n_tup_ins = 0` |
+| `driver_finance.driver_escrow_separations` | **0** | `n_tup_ins = 0` |
+| `accounting.escrow_accounts` / `escrow_postings` | **0** / **0** | `n_tup_ins = 0` / `0` |
+| `driver_finance.escrow_settings` | **1** (USMCA), `escrow_target_cents = 250000`, `is_active` | 2 of 2 rows visible (TRANSP + USMCA) |
+
+**Why this is a PASS and not a gap.** The chart-of-accounts treatment is correct against the locked owner
+decision — **escrow = LIABILITY**, held in trust, and account 2100 is typed `Liability` with the right
+`system_purpose`. GL 2100 = $0.00 and the escrow subledger = $0.00, so **the control account and its
+subledger tie**. `n_tup_ins = 0` is a far stronger discriminator than a row count: the table has never
+received a row in its life, so there is nothing for RLS to be hiding.
+
+**And the escrow contribution that did not happen is arithmetically correct.** USMCA's only settlement,
+`S-LUSMCAFREIGHT-20260806-0001` (`d3ff8ea3-…`, `status='closed'`, `settlement_model='load_bookended'`),
+carries `gross_pay = 0.00 / deductions_total = 0.00 / net_pay = 0.00`. **A percentage of zero is zero** —
+there was no gross pay to withhold escrow from, so the absent escrow row is the right answer, not a missing
+one. Recorded explicitly because "closed settlement + active escrow + zero escrow rows" reads like a defect
+at a glance, and filing it would have been an `expected-state-recorded-as-failure`.
+
+**★ THE FALSE ZERO — caught before it was written down, and it was a big one.**
+
+Computing the escrow control balance, I aggregated `accounting.journal_entry_postings` with
+`FILTER (WHERE debit_or_credit = 'D')` / `'C'`. The result: **56 posting lines across 28 journal entries,
+every account, DR = 0 and CR = 0.** Read literally, *the entire USMCA general ledger contains no money.*
+
+It fit a story. USMCA is a launch entity, all TMS-native data is test data, and this log already carries
+`LV-PAY-SETTLE-NOPOST` — a genuine posting failure. "USMCA posts JEs with no amounts" would have slotted
+straight into that narrative and become a P0.
+
+**It was wrong. The column stores `'debit'` / `'credit'`, not `'D'` / `'C'`** (`debit_or_credit` is `text`).
+My filter matched nothing, and `coalesce(sum(...), 0)` dressed the miss as a clean zero. Re-run grouping BY
+the column instead of filtering on an assumed value:
+
+- **28 debit lines totalling `1231854` cents and 28 credit lines totalling `1231854` cents.**
+- **USMCA's GL is DR = CR = $12,318.54 — exactly balanced.** 28 JEs, 0 voided, 2 reversals.
+
+**The lesson is narrower and more useful than "verify everything."** The near-miss in item 74 was an RLS
+mask — a whole table hidden. This one is different and more dangerous: **the rows were fully visible, the
+count was right (56), the grouping was right, and only the enum spelling was assumed.** A partially-correct
+query that returns a plausible zero is harder to distrust than one that returns nothing at all. **The
+discriminator for a `sum(... ) FILTER (WHERE col = 'X')` is not a row count — it is `GROUP BY col`, which
+makes the query tell you the domain instead of you telling it.** I never asserted `'D'`/`'C'`; I inherited
+it from convention. Two of my earlier per-account tables in this session are the same shape, and they were
+only ever used to locate the escrow account, not to state a balance.
+
+---
+
+## 78. FAIL (P1, money/WORM) — `LV-ESCROW-SUBLEDGER-NOT-WORM`: the driver-facing escrow subledger is hard-deletable with no audit trail, while its GL counterpart is protected
+
+**The escrow unit passed on the numbers and failed on the protection.** Both halves of escrow are at zero
+and tie; only one half is prevented from being changed by a DELETE.
+
+**MEASURED LIVE — one statement, carrying its own positive control**
+(`has_table_privilege('ih35_app', tbl, 'DELETE')` + `pg_trigger` where `tgtype & 8` + audit-trigger presence):
+
+| table | `ih35_app` can DELETE | delete triggers | audit trigger |
+|---|---|---|---|
+| **`driver_finance.escrow_ledger`** | **TRUE** | **0** | **0** |
+| **`driver_finance.escrow_balances`** | **TRUE** | **0** | **0** |
+| **`driver_finance.escrow_deductions_pending`** | **TRUE** | **0** | **0** |
+| **`driver_finance.settlement_lines`** | **TRUE** | **0** | **0** |
+| `accounting.escrow_postings` | false | 1 (`trg_no_delete_escrow_postings`) | 0 |
+| `accounting.escrow_accounts` | false | 0 | 0 |
+| `accounting.journal_entry_postings` | false | 3 | 0 |
+| `accounting.bill_payments` | false | 2 | 1 |
+| `driver_finance.driver_settlements` | **TRUE** | 1 (`trg_worm_refuse_delete`) | 0 |
+| `driver_finance.driver_settlement_deductions` | **TRUE** | 1 (`trg_worm_refuse_delete`) | 0 |
+
+The bottom six rows are the positive control: **the protection mechanism is real and this query detects it
+wherever it is applied.** So the top four are a genuine absence, not a blind spot in the method.
+
+**The declared standard, read from prod rather than from a migration:** exactly **9** tables carry
+`trg_worm_refuse_delete`. The four unprotected tables sit *inside* that protected neighbourhood — this is a
+gap in an established programme, not an un-started one.
+
+**Why escrow specifically.** Escrow is **money held in trust for a driver**, returned 60–90 days after
+separation net of damage and fines (locked owner decision; escrow = LIABILITY). A deleted `escrow_ledger`
+row silently changes what the company owes a person, and leaves **no forensic trace at all** — no audit
+trigger either. That is the exact record a driver suit, an auditor, or counsel would demand.
+
+**The asymmetry is internal to escrow, and the codebase already names the risk.**
+`driver-finance/escrow-forfeit.service.ts:182` refuses to proceed rather than create a
+*"split-brain forfeit (accounting posted without driver-facing decrement)"*. The application guards against
+producing that state — **and the database permits the identical state to be produced by a DELETE**, because
+the accounting side is WORM and the driver-facing side is not.
+
+**Not theoretical — it has already happened on this database.** `pg_stat_user_tables`:
+`driver_settlement_deductions` `n_tup_ins=14 / n_tup_del=14 / n_live_tup=0`; `driver_settlements`
+`n_tup_ins=12 / n_tup_del=7`. Financial rows have been hard-deleted in prod. No `DELETE FROM driver_finance.*`
+exists anywhere in `apps/backend/src`, so the deletes came from outside the application — which is exactly the
+access path the trigger does not cover.
+
+**★ A FINDING INSIDE THE FINDING — the protection is weaker than the trigger list suggests.** I read the
+function body rather than trusting its name:
+
+```
+IF current_user <> 'ih35_app' THEN RETURN OLD; END IF;   -- allows the delete
+RAISE EXCEPTION '%.% is WORM: DELETE is refused by the application role...'
+```
+
+`accounting.refuse_financial_row_delete()` **refuses only for `ih35_app` and explicitly permits the DELETE
+for every other role** — including `neondb_owner`, which this MCP connection itself intermittently runs as
+(item 74). So on the accounting tables the real protection is the **revoked grant**, and the trigger is a
+second layer. But **`driver_finance.driver_settlements` and `driver_settlement_deductions` still have
+`ih35_app_can_delete = TRUE`** — the trigger is their *only* layer, and it is the layer that yields to any
+other role. Counting triggers would have scored those two as protected. They are half-protected.
+
+**FIX REQUIREMENT (CC-1, money/WORM — the fix is a migration, financial cluster):** extend **both** layers to
+the four tables — `REVOKE DELETE … FROM ih35_app` **and** `trg_worm_refuse_delete` — and close the
+`driver_settlements` / `driver_settlement_deductions` grant gap in the same migration. Reuse
+`accounting.refuse_financial_row_delete()`; do not add a third bespoke mechanism.
+
+**GUARD:** drive off a declared money-table registry and assert **both** layers on every entry, so a new money
+table fails closed. A guard that counts delete triggers alone passes today on two tables the grant still
+leaves open — that guard would have certified this defect as fixed. Mutation-prove it.
+
+**NOT a duplicate of `LV-TXN-008`.** That row dispositions `escrow_ledger` as **(B) empty-state**, which I
+re-verified in this same session and which stands (`n_tup_ins = 0`, all entities). This is orthogonal: not
+*"it is empty"* but *"it is unprotected"*. An empty table with no WORM protection is the cheapest possible
+moment to fix it — before there is a driver balance in it to lose.
+
+**Routed:** CC-1 (money / GL / WORM). Board row `LV-ESCROW-SUBLEDGER-NOT-WORM`, commit `8a4ed870c`.
