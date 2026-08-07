@@ -90,3 +90,19 @@ export function monthBoundsIso(iso: string): { start: string; end: string } {
   const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
   return { start, end: `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}` };
 }
+
+/**
+ * Parse a business date (`YYYY-MM-DD`) as a LOCAL calendar date.
+ *
+ * A business date has no timezone — it is the company's calendar day. Parsing it as
+ * `new Date(iso + "T00:00:00Z")` pins it to UTC midnight, and rendering that with
+ * `toLocaleDateString` shifts it back a day for every viewer west of UTC. IH35 operates in Central
+ * Time, so that shift is permanent rather than an edge case: the /cash-flow 7-day outlook labelled
+ * every cell one day early while its click handler used the true date, so clicking "Fri 8/7"
+ * selected Sat 8/8 and the operator read the wrong day's cash. Guarded by
+ * scripts/verify-business-date-parsed-local.mjs.
+ */
+export function localDateFromIso(iso: string): Date {
+  const [y, m, d] = iso.split("-");
+  return new Date(Number(y), Number(m) - 1, Number(d));
+}

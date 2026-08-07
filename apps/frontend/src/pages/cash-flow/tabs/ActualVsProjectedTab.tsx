@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { localDateFromIso } from "../../../lib/businessDate";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown } from "lucide-react";
@@ -77,7 +78,7 @@ const COLUMNS: Array<ParityColumn<RowGroup>> = [
     className: "text-left",
     render: (g) => (
       <span className="font-medium text-gray-900">
-        {new Date(g.date + "T00:00:00Z").toLocaleDateString("en-US", {
+        {localDateFromIso(g.date).toLocaleDateString("en-US", {
           weekday: "short",
           month: "short",
           day: "numeric",
