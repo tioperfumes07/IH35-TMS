@@ -44,7 +44,7 @@ function groupBy(rows: Row[], keyOf: (r: Row) => string, labelOf: (r: Row) => st
 }
 
 export async function registerCancellationsReportRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/cancellations-report", async (req, reply) => {
+  app.get("/api/v1/dispatch/cancellations-report", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const q = querySchema.safeParse(req.query ?? {});
@@ -71,8 +71,11 @@ export async function registerCancellationsReportRoutes(app: FastifyInstance) {
             NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name
           FROM dispatch.load_cancellations lc
           LEFT JOIN mdata.loads l ON l.id = lc.load_id
+                                 AND l.operating_company_id = lc.operating_company_id
           LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                     AND c.operating_company_id = lc.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                   AND d.operating_company_id = lc.operating_company_id
           LEFT JOIN catalogs.load_cancellation_reasons lcr
             ON lcr.reason_code = lc.reason_code
            AND lcr.operating_company_id = lc.operating_company_id
