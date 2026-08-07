@@ -7512,3 +7512,88 @@ a productive sweep. Nine were wrong, and each died to a *different* check — `e
 test-fixture path, an author's documented intent, a too-narrow regex, and a UI-vs-posting flag namespace
 collision. **A grep is a hypothesis generator, never a verdict** — the same lesson as item 96's disproven
 orphan rate, arrived at from the opposite direction. The one surviving row is stronger for it.
+
+## 122. ★★ THE FAIL-CLOSED LATCH SWEEP — 97 `to_regclass` guards, 8 tables absent on prod. Two degrade SILENTLY (filed), three are correct, three are not defects at all.
+
+**The pattern:** `SELECT to_regclass('schema.table') IS NOT NULL` before touching a table whose migration
+may not be applied. It exists so a missing table degrades instead of throwing 42P01. **The question the
+pattern never answers is what happens on the "missing" branch** — and that is where the defects are.
+
+**METHOD:** extracted **97** distinct `to_regclass('…')` targets from `apps/backend/src` and tested every one
+against prod in a single RLS-immune statement. **8 are absent.** Then read the fallback branch at each call
+site, because the count is not the finding.
+
+| absent table | call site | behaviour on the missing branch | verdict |
+|---|---|---|---|
+| `notifications.suppression_rules` | `notifications/email.service.ts:48` | **`return false` — FAIL-OPEN** | **FILED** |
+| `pwa.driver_notifications` | `cash-advance-requests.service.ts:128`, `cash-advance-owner-approval.service.ts` | **`if (!ok) return;` — silent drop** | **FILED** |
+| `inventory.parts` | `maintenance/wo-cost-context.routes.ts:63` | block skipped, no signal | **FILED (low)** |
+| `maintenance.labor_rates` | `maintenance/wo-cost-context.routes.ts:88` | block skipped, no signal | **FILED (low)** |
+| `fuel.loves_prices_daily` | `sync/loves-card-import.ts:305`, `fuel/loves-upload.routes.ts:82` | **throws `loves_prices_daily_unavailable`**; status returns `"never"` | **CORRECT — not filed** |
+| `samsara.hos_log_edits` | `safety/eld-audit-trail/viewer.service.ts:58` | honest empty history | **NOT A DEFECT — see below** |
+| `accounting.accounting_periods` | **tests only** | — | **NOT A DEFECT — see below** |
+| `audit.audit_log` | no non-test call site | — | **NOT A DEFECT** |
+
+### ★ FILED (P2 · CC-1) — `LV-EMAIL-SUPPRESSION-FAILS-OPEN`
+
+`email.service.ts:44-68`. `isSuppressed()` checks `to_regclass('notifications.suppression_rules')` and, when
+absent, **`return false`** — *not suppressed*. The table does not exist on prod, so **`isSuppressed()` can
+only ever return false, and no suppression rule can apply to any recipient.** The whole function is wrapped
+in `catch { return false; }` too, so a genuine query error is also indistinguishable from "not suppressed".
+
+**A suppression control that fails OPEN is the wrong default for this control specifically.** Suppression
+exists to stop mail to someone who opted out or whose address is bouncing; failing open sends it anyway. It
+is silent in both directions — nothing logs that suppression was unavailable, and the operator sees a normal
+send. **Context that makes this concrete rather than theoretical:** `audit.audit_events` holds **247**
+`email.failed` events in a single 11-hour window on 2026-08-03 (measured in item 113's window query) —
+whatever share of those is a bouncing address, the suppression that should stop re-sending to it is
+structurally unreachable.
+
+### ★ FILED (P2 · CC-1) — `LV-DRIVER-PWA-NOTIFY-SILENTLY-DROPPED`
+
+`cash-advance-requests.service.ts:128` — `const reg = await client.query("SELECT to_regclass('pwa.driver_notifications') IS NOT NULL AS ok"); if (!reg.rows[0]?.ok) return;`
+
+**A bare `return`.** No throw, no log, no audit event, no queued retry. The table is absent on prod, so
+**every driver-facing notification on the cash-advance path — approvals, denials, owner escalations — is
+discarded, and nothing anywhere records that it happened.** The office sees the request approved; the driver
+is told nothing and no evidence exists that a notification was owed. This sits directly on the money path
+that item 118 just exercised for the first time (`CA-2026-0001`).
+
+### FILED (low · CC-2) — `LV-WO-COST-CONTEXT-SILENTLY-MISSING-SOURCES`
+
+`wo-cost-context.routes.ts:63` and `:88` skip the `inventory.parts` and `maintenance.labor_rates` blocks
+when absent — both are. The work-order cost context therefore returns **with no inventory parts and no labor
+rates and no indication that two of its sources are missing**, which reads to the operator as "there are no
+parts and no labor rates" rather than "two catalogues are not provisioned". Low severity, same shape.
+
+### THREE WITHDRAWALS — recorded because each would have been an expensive false alarm
+
+**`accounting.accounting_periods` — the scariest-looking result in the sweep, and it is nothing.** A missing
+accounting-periods table would mean the closed-period guard has nothing to read, so back-dated postings into
+closed periods would be unguarded — a serious control failure. **It is not the case.** The name appears
+**only in tests**; production uses **`accounting.periods`**, which exists, and
+`accounting.closed_period_cutoff(uuid)` reads it correctly:
+```sql
+SELECT MAX(p.period_end) FROM accounting.periods p
+ WHERE p.operating_company_id = p_company AND p.status = 'closed';
+```
+Both `trg_block_closed_period_journal_entries` and `trg_block_closed_period_journal_entry_postings` are
+attached and functional. **The closed-period control is intact — verified, not assumed.**
+
+**`samsara.hos_log_edits` — deliberate and documented, by the owner.** `viewer.service.ts:50-57` states it:
+*"That table's real source + migration are a **Jorge-gated follow-up** … Guard the reads with `to_regclass`
+so, until the table exists, the endpoint returns an honest EMPTY history (source-not-connected) instead of
+crashing … **Fail-honest, not silent**."* An owner-gated follow-up is a decision, not a defect. **One
+question this unit did NOT settle and will not assert either way: whether the UI renders that empty result
+as "no ELD edit source connected" or as "no edits" — the service returns an honest empty, and what the
+screen does with it is UNVERIFIED here.** For an FMCSA reviewer those two readings are not the same, so it
+is worth a browser-side check by a lane that has one.
+
+**`fuel.loves_prices_daily` is the model the other four should copy** — it **throws**
+`loves_prices_daily_unavailable` on the import path and reports `status: "never"` on the status path. Loud
+where it matters, honest where it doesn't. It is in the same codebase as the two silent ones, which is the
+argument that the silent branches are an oversight rather than a house style.
+
+**The generalisable lesson: `to_regclass` prevents a crash; it does not decide what SHOULD happen.** Of eight
+absent tables, three fallbacks are right, four degrade a feature with no signal, and one name was a phantom
+that existed only in a test. **The guard is not the control — the branch is.**
