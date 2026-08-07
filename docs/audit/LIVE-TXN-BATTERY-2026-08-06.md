@@ -4811,3 +4811,45 @@ including one that fit the evidence exactly — are eliminated **with the eviden
 nobody re-runs them. Hypothesis 3 is the cautionary one: `qbo_account_id = NULL` on every USMCA account is
 TRUE, the code comment describing that exact failure is TRUE, and the conclusion drawn from both was still
 FALSE. Two true facts and a coherent story are not proof.
+
+---
+
+## 77. PASS — JE void satisfies EVERY WORM invariant in the standing order, including "siblings untouched"
+
+**Verified on prod `br-fancy-credit-akjnd07a`, USMCA, 2026-08-07**, GUC + lucia bypass in one transaction,
+`current_user` (`ih35_app`) asserted in the same statement. Lines read from
+`accounting.journal_entry_postings` (`debit_or_credit`, `amount_cents`) — note the table is NOT
+`journal_entry_lines`, which does not exist.
+
+The standing order requires, for each voidable type: *"reversing JE DR=CR nets zero, original preserved
+(voided_at/cancelled not deleted), append-only audit row, siblings untouched."* For the manual JE path,
+all of it holds:
+
+| invariant | result | evidence |
+|---|---|---|
+| reversing JE nets zero | **PASS** | `56a58856` DR `$64.20` = CR `$64.20` |
+| original preserved, not deleted | **PASS** | `5f70a75c` still present, `status = posted` |
+| linkage written BOTH ways | **PASS** | `5f70a75c.reversed_by_je_id = 56a58856` AND `56a58856.reverses_je_id = 5f70a75c` |
+| **siblings untouched** | **PASS** | all 6 other USMCA JEs have `updated_at == created_at` to the second |
+| every entry balanced | **PASS** | 8 of 8 JEs read DR = CR |
+
+**The siblings check is the one that had never been proven, and it is the sharpest.** Across the 8 most
+recent USMCA journal entries, exactly **one** row has `updated_at > created_at`: `5f70a75c`
+(`03:33:20 → 03:34:07`), which is the void stamping its own linkage. Every other entry — `53415aef`,
+`e30baa6a`, `6fe7c21a`, `4da3efbd`, `6f63081e`, `ea6a0f05` — carries `updated_at` identical to
+`created_at`. A void touched precisely the row it was supposed to touch and nothing else. That is the
+property a court or examiner actually tests, and it is now measured rather than assumed.
+
+**PRECISION THAT MATTERS — `voided_at` is NOT set on the original.** `5f70a75c` reads `voided: false` and
+remains `status = posted`; what marks it is `reversed_by_je_id`, and the UI renders `Reversed` in place of
+the Void button. So for journal entries the void model is **a reversing entry plus bidirectional linkage**,
+NOT a `voided_at` flag. This is correct under board Rule 4 ("VOID = reversal; nothing is deletable") and
+under GAAP — a posted entry is never unposted — but it differs from `accounting.payments`, which DOES carry
+`voided_at`. **Anyone auditing "is this voided?" by testing `voided_at IS NOT NULL` will read a reversed JE
+as live.** Recording the distinction so a future guard is written against the right column per table.
+
+**This is the working reference implementation.** Items already on the board record that invoice void
+reverses without writing linkage, bill-payment void produces no reversal, and expense void is unreachable.
+The JE path shows the complete correct shape — reversing entry, balanced, original preserved, linkage both
+directions, siblings untouched — so the other three paths have a proven in-repo model to be fixed against.
+No new engine has to be designed.
