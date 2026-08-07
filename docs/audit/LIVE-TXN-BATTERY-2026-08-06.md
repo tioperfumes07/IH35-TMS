@@ -4101,3 +4101,72 @@ can never drift from reality again. Static copy asserting a flag state will alwa
 **GUARD:** assert no UI string claims a money-posting flag is OFF while any per-entity override for it
 is true. **LANE: CC-2 / mechanical (FE copy) — but flag to CC-1, since the misstatement is about GL
 effect.**
+
+---
+
+## 63. ★ VOID-INVARIANT CLASS MEASURED AND BOUNDED — 5 rows across the ENTIRE money schema
+
+**LIVE-PROVEN 2026-08-07 on Neon prod, all entities, read-only. This turns
+`LV-VOID-INVARIANT-BOTH-WAYS` from "broken in both directions" into a bounded, safely fixable class —
+and the boundary is the finding.**
+
+### Scope of the sweep
+
+`information_schema` says **27 tables** across `accounting` / `banking` / `mdata` / `driver_finance` /
+`maintenance` carry **both** a `status` column and a void timestamp (`voided_at` or `revoked_at`).
+Notably **`accounting.bills` carries BOTH `voided_at` AND `revoked_at`** — two void timestamps on one
+table, which is its own latent trap.
+
+Of those, **10 are populated**. Measured every one for the invariant in **both** directions:
+`ts IS NOT NULL AND status NOT IN (void-ish)` and `status IN (void-ish) AND ts IS NULL`.
+
+**Rows measured: 75,459.**
+
+### Result
+
+| table | stamped but status not void | status void but not stamped | rows in table |
+|---|---|---|---|
+| **`accounting.bills`** | **4** | 0 | 16,258 |
+| **`accounting.invoices`** | 0 | **1** | 11,987 |
+| `accounting.expenses` | 0 | 0 | 27,072 |
+| `banking.bank_transactions` | 0 | 0 | 11,072 |
+| `accounting.bill_payments` | 0 | 0 | 6,546 |
+| `accounting.journal_entries` | 0 | 0 | 1,802 |
+| `accounting.recon_runs` | 0 | 0 | 519 |
+| `accounting.recon_exceptions` | 0 | 0 | 201 |
+| `driver_finance.driver_settlements` | 0 | 0 | 1 |
+| `maintenance.work_orders` | 0 | 0 | 1 |
+
+> **FIVE ROWS. Across 75,459 rows and 10 populated money tables, the invariant is violated exactly five
+> times — and only in the two tables whose broken write-paths this battery already identified.**
+
+### Why the boundary is the valuable part
+
+The earlier card established the invariant is broken **in both directions**, which reads like a
+schema-wide integrity problem. **It is not.** Eight populated tables — including the three largest —
+are **100% clean**, which means:
+
+1. **The pairing is being maintained correctly almost everywhere.** The two failures are specific
+   write-paths, not a missing convention: `accounting.bills` (4 rows voided **out-of-band by direct
+   SQL**, which never ran the service) and `accounting.invoices` (1 row from the **load-cancel path**
+   that sets `status` without stamping — `LV-CANCEL-VOIDS-STATUS-ONLY`).
+2. **A DATABASE CONSTRAINT IS NOW CHEAP AND SAFE.** The permanent fix — a CHECK/trigger enforcing
+   `status='void' ⟺ void-timestamp IS NOT NULL`, which no future writer can forget — requires
+   correcting **5 rows**, not a mass backfill across 75k. **That removes the usual reason this class of
+   fix gets deferred.**
+3. **It tells CC-1 where NOT to look.** No sweep of expenses, bank transactions, bill payments or
+   journal entries is warranted; they are already correct.
+
+### The permanent fix this evidence unlocks
+
+Per the owner law (never patch): correct the 5 rows **and** add the DB-level constraint in the same
+change, **and** fix the two write-paths so they cannot recreate it. A guard alone would catch the next
+occurrence after the fact; **a constraint makes it impossible**, which is the difference between a patch
+and a permanent fix.
+
+**MUST BE PER-TABLE, NOT COPY-PASTE:** the void column is **`revoked_at`** on `bill_payments`,
+**`voided_at`** on invoices/bills/expenses, **`voided_reason`** vs **`void_reason`** for the reason
+field, and **`bills` has both `voided_at` and `revoked_at`**. A single templated constraint applied
+blindly will target the wrong column on at least one table.
+
+**LANE: CC-1 / money.** Board card `LV-VOID-INVARIANT-BOTH-WAYS` updated with the measured boundary.
