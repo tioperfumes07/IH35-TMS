@@ -2517,3 +2517,95 @@ new GL math**; six posters already work. Voiding a payment must reverse it.
 **GUARD:** assert every live `accounting.payments` row carries a balanced posting, and — the stronger
 form — that **A/R subledger open equals the GL A/R control balance** per entity. That tie-out assertion
 would have caught this on the first payment ever recorded. **LANE: CC-1 / money.**
+
+---
+
+## 50. NEW DEFECT — TMS-native BILLS never get a `display_id` (invoices and payments do)
+
+**LIVE-PROVEN 2026-08-07 on Neon prod. ORIGIN TEST APPLIED — this is the narrow, defensible claim, not
+the raw count.**
+
+Raw counts look alarming and would be **wrong to report as-is**: `display_id` is NULL on **all 16,258**
+`accounting.bills` rows across all three entities. **But per the origin ruling, imported rows are
+legitimately unlike TMS-native ones**, so the raw number is meaningless. Classifying by origin:
+
+| entity | bills | QBO-cloned (`qbo_bill_id` NOT NULL) | **TMS-native** | **TMS-native WITH `display_id`** |
+|---|---|---|---|---|
+| TRK | 13,051 | 13,050 | 1 | **0** |
+| TRANSP | 3,196 | 3,195 | 1 | **0** |
+| USMCA | 11 | **0** | **11** | **0** |
+
+USMCA's 11 all carry `source_system = 'tms'` and **zero** `qbo_bill_id` — unambiguously TMS-native.
+
+> **Every TMS-native bill that has ever existed — 13 of 13, across all three entities — has a NULL
+> `display_id`. Zero exceptions.** The 16,245 QBO clones are excluded from the claim; their NULL is
+> expected state, not a defect.
+
+**The contrast is the proof this is a gap and not a design choice:** in the SAME entity, TMS-native
+**invoices carry a display_id 6 of 6** (`INV-2026-00001`…`00006`) and **payments 2 of 2**
+(`PMT-2026-00001`, `PMT-2026-00002`). **Bills are the only money document in the system without a
+human-readable identifier.**
+
+**Why it matters:** a bill is what you argue about with a vendor, attach to an approval, cite in a
+dispute, and hand an auditor. Everything else in A/P and A/R has a stable citable ID; a bill can only
+be referenced by raw UUID (which is exactly what the app's own URL falls back to —
+`/accounting/bills/7ccd431e-8e85-433a-a5e0-4425011ffb5e`). This also conflicts with the
+server-generated display-ID convention that invoices, payments and work orders all follow.
+
+**NOT a WORM conflict — stated because it looks like one.** The standing order says *void ALWAYS by
+UUID, never display_id*. That governs **which key an operation is performed on**, not whether a
+human-readable ID should exist. Invoices are voided by UUID **and** carry `INV-…` display IDs. So
+adding a bill display_id does not weaken the WORM rule.
+
+**FIX:** generate a server-side `display_id` for TMS-native bills, matching the existing convention.
+**GUARD:** assert every TMS-native (`qbo_bill_id IS NULL`) bill has a non-null `display_id` — **scoped
+to TMS-native rows by the origin test**, so the 16,245 imported clones can never redden it. **A guard
+written against the whole table would be red forever on expected state** — the
+`expected-state-recorded-as-failure` anti-pattern. **LANE: CC-1 / money.**
+
+---
+
+## 51. ★ The void invariant is broken in BOTH directions — my item-47 guard was half a guard
+
+**LIVE-PROVEN 2026-08-07, USMCA.** Query: bills where `voided_at IS NOT NULL AND status <> 'void'`
+**OR** `status = 'void' AND voided_at IS NULL` → **4 rows**.
+
+All four are the bills voided out-of-band (identical `voided_at 2026-08-07 00:33:50.999787+00`), and
+**every one still has `status = 'unpaid'`.**
+
+### This is the exact MIRROR of item 47, and that changes the guard
+
+| | `status` | `voided_at` |
+|---|---|---|
+| **Item 47** — invoice voided by the load-cancel path | **`void`** ✅ | **NULL** ❌ |
+| **Here** — bills voided out-of-band | **`unpaid`** ❌ | **set** ✅ |
+
+**The same invariant — `status = 'void'` ⟺ `voided_at IS NOT NULL` — is violated in opposite
+directions by two different mechanisms.** Either half alone reads as a one-off; together they show the
+system has **no enforcement of the pairing at all**, so any writer can set one field and not the other.
+
+### Correcting my own item-47 guard proposal
+
+Item 47 proposed: *assert zero rows with `status='void' AND voided_at IS NULL`.* **That is only half a
+guard.** It passes cleanly on all four bills here, which are broken the other way.
+
+**The correct guard is bidirectional**, per table using the status+timestamp void pattern:
+
+```
+status = 'void'  XOR-fails  voided_at IS NOT NULL
+  -> flag rows where (voided_at IS NOT NULL AND status <> 'void')
+                  OR (status = 'void' AND voided_at IS NULL)
+```
+
+Applied to `accounting.bills` + `accounting.invoices` today, that reddens on **5 rows** — 4 bills
+(item 51) + 1 invoice (item 47) — and each needs a different correction. **Better still, enforce it in
+the database** (a CHECK constraint or trigger) so no future writer can set one without the other;
+a guard catches it after the fact, a constraint makes it impossible.
+
+**This also explains a symptom already on the board:** those four voided bills reading `status='unpaid'`
+is precisely why voided money keeps appearing in open-A/P figures — the status field, which the A/P
+views key off, still says the bill is owed. **`LV-AP-OPEN-INCLUDES-VOIDED` and this are the same root
+cause seen from two ends.**
+
+**LANE: CC-1 / money.** Supersedes the guard wording in item 47 — **fix the guard there to the
+bidirectional form before building it.**
