@@ -376,5 +376,19 @@
     "source_file": "apps/backend/src/dispatch/quick-assign.service.ts",
     "guard": "scripts/verify-assignment-history-resolves-names.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-RECENT-ACTIVITY-LEDGER-SOURCED",
+    "title": "A board panel must not depend on an unauthenticated runtime GitHub call — a visibility change empties it silently, and an empty array is indistinguishable from 'nothing happened'; derive it from the ledger at generation time",
+    "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
+    "guard": "scripts/verify-recent-activity-ledger-sourced.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-CLASS-SCOREBOARD-LIVE-SOURCED",
+    "title": "A status board must be served from the source of truth at REQUEST time, not rendered from a committed build artifact — a generated module can only change on a redeploy, so the Programs by-class grid silently drifted to 26 classes while the wave queue held 31; and where a fallback is shown, the board must say so",
+    "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
+    "guard": "scripts/verify-class-scoreboard-live-sourced.mjs",
+    "type": "enforced"
   }
 ]
