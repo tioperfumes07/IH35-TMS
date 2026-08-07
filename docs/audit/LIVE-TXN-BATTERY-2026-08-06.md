@@ -5986,3 +5986,68 @@ posting path has not been exercised.** **The decisive test is one transaction: t
 issue its from_load invoice, and check for 2 GL lines** — that separates "never posts" from "never issued".
 Recorded as the next A/R unit rather than filed as a defect, because a 0 with an unexercised path behind it
 is not evidence of failure. This is the same counterfactual check that withdrew item 95's fuel card.
+
+---
+
+## 97. ENTITY-CONSISTENT FK COVERAGE — measured: 11 of 357. NOT filed as 346 defects, and the reason is the point
+
+**Unit: the structural defence against cross-entity leakage. Verdict: MEASURED and handed over as a
+denominator — deliberately NOT filed as a defect class.**
+
+While verifying `accounting.bills` (item 94) I found `bills_mdata_vendor_entity_consistent_fkey
+FOREIGN KEY (operating_company_id, mdata_vendor_id) REFERENCES mdata.vendors(operating_company_id, id)`.
+That composite shape is the strongest possible cross-entity control: it makes a wrong-entity reference
+**impossible**, rather than merely invisible the way RLS does. So I swept for it.
+
+**MEASURED on prod** — population = every FK where BOTH the referencing and referenced table carry
+`operating_company_id` (i.e. every FK structurally capable of crossing entities), across
+`accounting · driver_finance · banking · fuel · insurance · maintenance · mdata · factoring`:
+
+| metric | value |
+|---|---|
+| cross-entity-capable FKs | **357** |
+| **entity-consistent** (composite includes `operating_company_id`) | **11** |
+| not entity-consistent | 346 |
+
+**The 11 that have it:** `accounting.bills → mdata.vendors` · `accounting.expense_lines →
+accounting.expenses` · `accounting.factoring_advances → mdata.vendors` ·
+`accounting.factoring_default_interest_accruals → accounting.journal_entries` ·
+`accounting.factoring_lifecycle_posting_keys → accounting.factoring_advances` and `→ journal_entries` ·
+`accounting.factoring_reserve_movements → journal_entries` · `banking.bank_transactions → mdata.customers`
+and `→ mdata.vendors` · `driver_finance.cash_advance_requests → mdata.drivers` ·
+`driver_finance.driver_settlements → mdata.drivers`.
+
+**★ WHY I AM NOT FILING "346 UNPROTECTED FOREIGN KEYS."**
+
+`11 / 357` is a striking ratio and it would make a dramatic P0. It would also very likely be wrong, for the
+same reason item 95's fuel card was wrong: **a coverage number is not a defect unless the uncovered state
+was reachable and intended.** Before writing anything I looked for evidence of intent, and found it:
+
+- The 11 are **clustered and named as a programme** — `*_same_entity_fkey`, `*_entity_fkey`,
+  `*_entity_consistent_fkey` — concentrated in factoring, banking-categorisation and driver-finance.
+- The migration series is **active and recent**: `202608020000_acct_link_04_expense_lines_expense_category_fk`,
+  `202608040000_payment_terms_consumer_remap_same_entity`,
+  `202608050000_bank_link_01_counterparty_same_entity_fk`, `202610010000_fact_02_subledger_je_fk`,
+  `202608060000_acct_r03_…` — numbered cuts (`acct_link_04`, `bank_link_01`, `fact_02`) landing as recently
+  as **2026-08-06, yesterday**.
+
+**This is an in-flight programme applying the control deliberately to the highest-risk edges first, not an
+unnoticed gap.** Filing it as a 346-instance class would have duplicated another lane's live work and buried
+the board.
+
+**Also checked and ruled out as the wrong ratchet:** `scripts/entity-link-adoption-baseline.json`
+(consumed by `scripts/verify-entity-link-adoption.mjs`) is a hash-set of **source-code** EntityLink findings
+— a code-adoption ratchet, not a DB FK ratchet. So the composite-FK coverage genuinely is not ratcheted by
+that guard, and the number above is not otherwise being tracked. **That is the one thing worth handing over.**
+
+**WHAT THE OWNING LANE GETS FROM THIS:** a prod-measured denominator for its own programme —
+**11 of 357, as of 2026-08-07** — so progress can be stated as a fraction instead of a feeling, and a
+DB-side ratchet can be pinned at 11 and driven up if the lane decides the control should be universal.
+**Whether all 357 should carry it is an architecture decision that belongs to the money lane, not to me.**
+RLS already scopes these tables; the composite FK is defence in depth, and how deep to go is a design call.
+
+**The discipline this unit records:** two coverage-shaped sweeps in one session produced a real defect
+(item 95, `line_category` on 33,980 expense lines — a writer exists that sets it, so the good state was
+reachable) and two non-defects (fuel attribution, this). **The distinguishing question was never the
+measurement. It was "who intended what, and is this already someone's live work?" — and it is answerable
+from migration names and baseline files in about two minutes.** Ask it before filing, not after.
