@@ -6268,3 +6268,60 @@ leased to TRANSP these differ — `OR` matches both entities, `COALESCE` matches
 defensible readings of "whose unit is this"** and the right answer depends on whether the question is
 "who may see it" or "whose cost centre is it". Recorded as an observation for whoever owns unit-attribution
 semantics; I have no evidence either site is wrong for its own purpose.
+
+---
+
+## 102. SAFETY → INSURANCE → LEGAL → ACCOUNTING — the chain is FULLY WIRED BOTH WAYS (PASS), plus the definitive entity-scope column map
+
+**Unit: the accident→claim→matter→cost→GL chain required by the TOTAL CONNECTIVITY law. Verdict: PASS on
+wiring. No defect. Two reference maps produced.**
+
+**THE CHAIN IS COMPLETE AND BIDIRECTIONAL — every edge verified as a real FK on prod:**
+
+| direction | edge |
+|---|---|
+| safety → insurance | `safety.accident_reports.insurance_claim_id`, `safety.incidents.insurance_claim_id` **and** `.auto_created_claim_id`, `safety.damage_continuity_chains.insurance_claim_id` |
+| insurance → safety (**reverse**) | `insurance.claim.accident_report_id` |
+| insurance → legal | `legal.matters.insurance_claim_id`, `legal.matters.insurance_lawsuit_id`, `insurance.lawsuit.claim_id` |
+| legal → safety | `legal.matters.incident_id` |
+| accounting → insurance/legal | `accounting.bills.insurance_claim_id`, `accounting.bills.legal_matter_id`, `accounting.expenses.insurance_claim_id` |
+| insurance → accounting (**reverse**) | `insurance.claim.bill_id`, `insurance.claim.expense_id`, `insurance.payment_schedule.bill_uuid` |
+| insurance → GL | `insurance.refund_obligation.journal_entry_id`, `accounting.insurance_claim_recovery_postings.claim_id` |
+| insurance → driver money | `insurance.claim.liability_id` → `driver_finance.driver_liabilities`, `insurance.claim.deduction_id` → `driver_finance.driver_settlement_deductions` |
+| insurance → assets/ops | `claim.asset_id`, `.driver_id`, `.trailer_id`, `.load_id`, `.vendor_id`, `.policy_id`, `.lawsuit_id`; `legal.matters.unit_id/.related_driver_id/.equipment_id` |
+
+**Forward AND reverse exist at every hop, and the driver-recovery edges are present** — a claim can reach the
+driver liability and the settlement deduction that recovers it. This is exactly what §10 demands, and it is
+already built. **The tables are empty (`insurance.claim` `n_tup_ins = 0`), so nothing has traversed it — but
+the wiring is not the gap.** No card.
+
+**★ REFERENCE MAP 1 — THE ENTITY-SCOPE COLUMN IS NOT UNIFORM. There are THREE conventions.** This is the
+single most useful output of this unit, because picking the wrong one is a **500, not a wrong answer**:
+
+1. **`operating_company_id`** — the norm: `banking` 12/12, `driver_finance` 37/37, `legal` 11/11,
+   `safety` 65/65, `fuel` 5/5, `accounting` 75/85, `maintenance` 34/36, `mdata` 34/50.
+2. **`tenant_id` ONLY — 9 tables. Querying these by `operating_company_id` is a SQL error:**
+   `accounting.bill_unit_allocation` · `accounting.coa_account` · `accounting.ps_category` ·
+   `accounting.ps_item` · `accounting.pse_posting_policy` · `accounting.vendor_subtype_pse_map` ·
+   `insurance.type_catalog` · `mdata.asset_status_history` · `mdata.assets`.
+3. **Neither** — `mdata.units` (`owner_company_id` / `currently_leased_to_company_id`, item 101).
+
+**AND THE CODE ALREADY HANDLES CONVENTION 2 CORRECTLY — checked, not assumed.** Every call site I sampled
+binds an `operating_company_id` *value* to the `tenant_id` *column*, which is right:
+`wo-ap-posting.service.ts:99` `ON a.tenant_id = w.operating_company_id`;
+`pse-mirror.service.ts:56` `ON ca.tenant_id = qi.operating_company_id`; `:17` `qa.operating_company_id AS
+tenant_id`. One site even carries an explicit warning comment — `compliance/missing-required.service.ts:89`
+*"NOTE: mdata.units has NO operating_company_id…"*. **The variable is named for the concept; the column is
+named for the table. No defect.**
+
+**★ REFERENCE MAP 2 — 10 tables carry BOTH columns, which is a latent split-brain:** `insurance.claim`,
+`.coi_request`, `.lawsuit`, `.payment_schedule`, `.policy`, `.policy_unit`, `.refund_obligation`,
+`maintenance.internal_labor_log`, `mdata.mx_permits`, `mdata.mx_tolls_ledger`. If `tenant_id` and
+`operating_company_id` ever disagree on a row, then RLS (which picks one) and application filters (which may
+pick the other) scope that row differently — a cross-entity visibility bug that no current guard would see.
+
+**UNVERIFIED, and I will not guess it:** whether they can disagree in practice. **Every one of these tables
+is empty on prod**, so there is no row to compare and a `0 disagreements` result is vacuous, not a PASS. The
+decisive test is one row: create a claim through the app and compare the two columns. **Recorded as a watch
+item with its test, not as a finding** — an empty-table zero is exactly the false verdict this log exists to
+prevent (items 74, 95).
