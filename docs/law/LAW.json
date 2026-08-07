@@ -355,5 +355,12 @@
     "source_file": "apps/frontend/src/pages/program/classScoreboard.data.ts",
     "guard": "scripts/verify-class-scoreboard-fresh.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-LOAD-DETAIL-RESOLVES-NAMES",
+    "title": "The dispatch load-detail query must RESOLVE the primary driver name and unit number, not only carry their ids — a drawer that renders a covered load as \"Unassigned\" invites double-assignment, and the entity predicates on those joins must scope units by the owner/leased pair",
+    "source_file": "apps/backend/src/dispatch/loads.routes.ts",
+    "guard": "scripts/verify-load-detail-resolves-names.mjs",
+    "type": "enforced"
   }
 ]
