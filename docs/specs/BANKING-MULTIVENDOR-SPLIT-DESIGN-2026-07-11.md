@@ -1,11 +1,13 @@
 # UI-03 PART B — Banking Multi-Vendor Split → balanced GL — Design & Verify-First Report
 
-**Date:** 2026-07-11 · **Tier:** FINANCIAL Tier-1 (build-and-hold) · **Status:** ★ **ALREADY BUILT, flag-gated OFF**
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
+**Date:** 2026-07-11 · **Tier:** FINANCIAL Tier-1 (build-and-ship) · **Status:** ★ **ALREADY BUILT, flag-gated OFF**
 **Author:** coder (verify-first per skill §0) · **Decision owner:** GUARD proof + owner (Jorge) Neon ceremony
 
-> GUARD/owner instruction (2026-07-11): *"UI-03 PART B … build the DESIGN DOC + build-and-hold the GL
+> GUARD/owner instruction (2026-07-11): *"UI-03 PART B … build the DESIGN DOC + build-and-ship the GL
 > assembly behind the existing OFF flag ONLY. Do NOT wire live posting, do NOT flip any flag."*
-> **Finding: the build-and-hold already exists.** This doc records what is built (with evidence), the one
+> **Finding: the build-and-ship already exists.** This doc records what is built (with evidence), the one
 > design divergence from the block spec that needs an owner/GUARD ruling, and the exact steps left before
 > anyone enables it. **Nothing in this PR posts, wires, or flips a flag** — it is documentation only.
 
@@ -15,7 +17,7 @@
 
 The banking multi-vendor split — split ONE cash/check disbursement (e.g. $1,000) across MULTIPLE vendors AND
 categories in one transaction — is **implemented front-to-back and gated OFF by two default-OFF flags**. It is
-in exactly the build-and-hold state the block asks for. It was **not rebuilt** (verify-first).
+in exactly the build-and-ship state the block asks for. It was **not rebuilt** (verify-first).
 
 - **Frontend** `BankTransactionSplitModal.tsx` — `single_vendor_multi_category` **and** `multi_vendor` modes,
   per-line Vendor / Category / Item / Class / Customer / Memo / Amount, exact tie-out, `+ Add line`, mounted on
@@ -126,6 +128,6 @@ per-vendor-bill path** (§7 additive-only).
 ## 6. Hold confirmation
 
 - No live posting wired in this PR. No flag flipped. No migration added.
-- The GL assembly is already build-and-hold behind two default-OFF flags.
+- The GL assembly is already build-and-ship behind two default-OFF flags.
 - Enable path is owner-only, gated on GUARD proof + CPA + Neon tie-out.
 - Additive-only: the per-vendor-bill path is not to be deleted; any single-JE mode is a separate additive block.

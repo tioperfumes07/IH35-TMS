@@ -1,5 +1,7 @@
 # LIVE PROD TRUTH — Relay TRANSP + QBO balances — 2026-07-16 (updated)
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 **Neon:** project `tiny-field-89581227` · branch `br-fancy-credit-akjnd07a` (production)  
 **Entity:** TRANSP `91e0bf0a-133f-4ce8-a734-2586cfa66d96` (IH 35 Transportation)
 
@@ -42,7 +44,7 @@
 | Locked OB date | **03/31/2026** (cutover **04/01/2026**, ASC 470-60) — supersedes stale 06/30/07/01 draft |
 | OB importer code | still **12/31/2024 static preview** — must become live `qboReport(BalanceSheet/TrialBalance)` as_of 03/31 — **after** Step-2 |
 
-**QBO Step-2 (this worktree, build-and-HOLD):** writers/readers repointed to `mdata.qbo_*`; guard `verify-no-accounting-qbo-writes` green. Not production until merge + deploy + owner OK.
+**QBO Step-2 (this worktree, build-and-ship):** writers/readers repointed to `mdata.qbo_*`; guard `verify-no-accounting-qbo-writes` green. Not production until merge + deploy + owner OK.
 
 **Bring balances (professional path — no invented figures):**
 1. Merge/deploy Step-2.

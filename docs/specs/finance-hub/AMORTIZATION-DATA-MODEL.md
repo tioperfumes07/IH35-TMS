@@ -1,8 +1,10 @@
 # Amortization (Loans / Intangibles) — Data-Model Spec — Migration-Ready
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 **Status:** Design / Docs only. No code, no DDL executed, no posting. This document DEFINES the migration
 Claude Coder will build; Cascade never writes a migration. Build gated behind a flag default OFF;
-GUARD verifies vs QuickBooks before merge. BUILD-AND-HOLD.
+GUARD verifies vs QuickBooks before merge. BUILD-AND-SHIP.
 **Date:** 2026-06-28
 **Author:** Cascade (design lane)
 **Standard cited:** effective-interest method (ASC 835-30 interest; ASC 350 for intangible
@@ -171,7 +173,7 @@ On each period's due date (idempotent per `(schedule_id, period_number)`; closed
 2. No posting code in the migration (engine code, gated by §5 flags, separate PR).
 3. After inserting a schedule, set `loans.current_schedule_id`. Confirm `accounting.fixed_assets` exists
    (C1 migration) before adding that FK, or make it nullable/deferred.
-4. BUILD-AND-HOLD. Tier-1 (creates tables) → JORGE-APPROVED + GUARD branch-verify.
+4. BUILD-AND-SHIP. Tier-1 (creates tables) → merge on green with proof; GUARD verifies live AFTER (no label, no hold).
 
 ## 8. Acceptance
 DDL implementable as-is; effective-interest/French math cited; posting gated OFF; sample 3-leg JE
