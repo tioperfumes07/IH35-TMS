@@ -29,8 +29,8 @@
       "check": "Rule-17 verify-steps 920–923 auto-discover the new chain proof plus existing ar-subledger, factoring-ar-tieout, and secured-borrowing guards (IDs globally free vs main + open PRs #2714/#2716/#2717). No package.json/CI hotfile thrash. Guard-exempt removals only after valid wiring."
     },
     {
-      "check": "MOCKED SERVICE GATES (not live Neon): unit tests assert funding/payment/release/chargeback JE debit=credit + role/direction, entity scope, invoice FK, voided/missing/duplicate/wrong-entity/unbalanced/flag-off paths, and executable guard --selftest. Complementary CI Postgres Leg B/C + invoice kill-switch remain in existing .db.test.ts files. No new GL math/migration/flag flip. FINANCIAL HOLD — do not merge."
+      "check": "MOCKED SERVICE GATES (not live Neon): unit tests assert funding/payment/release/chargeback JE debit=credit + role/direction, entity scope, invoice FK, voided/missing/duplicate/wrong-entity/unbalanced/flag-off paths, and executable guard --selftest. Complementary CI Postgres Leg B/C + invoice kill-switch remain in existing .db.test.ts files. No new GL math/migration/flag flip. merge on green (owner law 2026-08-03: no holds; proof, not approval, is the gate)."
     }
   ],
-  "note": "Financial HOLD. Claims narrowed to static + mocked service gates; live DB proofs cited as existing complementary CI tests only."
+  "note": "merge on green (owner law 2026-08-03: no holds; proof, not approval, is the gate); . Claims narrowed to static + mocked service gates; live DB proofs cited as existing complementary CI tests only."
 }

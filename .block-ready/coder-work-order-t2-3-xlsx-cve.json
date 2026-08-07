@@ -67,7 +67,7 @@
       "evidence": "scripts/verify-steps/144-verify-xlsx-cve-closeout.mjs runs both the guard and --selftest; guard_required=true. block-ready requires structural Rule 17 wiring plus executable shared-checker good/pass and planted-bad/fail evidence, and rejects inert, malformed, ignored-input, and unsafe-path guards; package.json/workflow hot files remain untouched."
     },
     {
-      "check": "Corrective review commit may be pushed to the existing PR branch, but the financial PR remains build-and-HOLD with no merge, production DB access, deployment, or live proof.",
+      "check": "Corrective review commit may be pushed to the existing PR branch, but the financial PR remains build with GUARD verify-after with no merge, production DB access, deployment, or live proof.",
       "evidence": "Owner explicitly requested normal commit/push for PR review and prohibited merge. UNVERIFIED live; owner approval remains required."
     }
   ],

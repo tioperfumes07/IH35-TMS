@@ -1,5 +1,7 @@
 # REPAIR — Settlement Engine Reconciliation
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 **SETTLE-1 / SETTLE-2 / G11-2 / G11-3 / G7-1 — one canonical settlement money path.**
 
 > DESIGN / ANALYSIS DOC. **No production code changed.** This is the most contentious financial
@@ -97,7 +99,7 @@ The audit disagreement is real because there are **three** distinct code surface
   (`:213-219`, key at `settlement-posting.math.ts:6`) — proper resolver, per-entity, kill-switch aware.
 - **NOT WIRED:** `registerSettlementPostingRoutes` (`settlement-posting.routes.ts:45,135`) is **not
   registered in `apps/backend/src/index.ts`** (verified: zero hits). So this poster is
-  build-and-hold, reachable by no HTTP route, and OFF regardless.
+  build-and-ship, reachable by no HTTP route, and OFF regardless.
 
 ### 1.4 The core contradiction (why agents disagreed)
 

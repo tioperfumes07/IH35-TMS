@@ -1,7 +1,9 @@
 # FH-3 / FH-7 / FH-8 — Design-Spec Reconciliation + ASC 842 Lease Layer
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 **Status:** Design / Docs only. No code, no DDL executed, no posting. Gated build, GUARD-verified,
-never self-merged. BUILD-AND-HOLD.
+never self-merged. BUILD-AND-SHIP.
 **Date:** 2026-06-28
 **Author:** Cascade (design lane)
 **Purpose:** Reconcile the three existing Finance-Hub design specs (FH-3 Amortization, FH-7 Unit
@@ -225,7 +227,7 @@ CONSOLIDATION design. Entity separation is absolute (TRK/TRANSP/USMCA never merg
    `LOAN_AMORTIZATION_AUTOPOST_ENABLED` flag — migration-ready DDL per the prepaid pattern.
 3. **FH-8 ASC 842:** build the 2 tables in C.3 + grants/RLS (C.4) + flags (C.5). Reuse FH-8's existing
    `lease_contracts` / `lease_contract_units` for the operational bill; the ASC 842 tables are additive.
-4. All migrations: idempotent, cents spine, RLS ENABLE+FORCE, audit cols, BUILD-AND-HOLD, Tier-1
+4. All migrations: idempotent, cents spine, RLS ENABLE+FORCE, audit cols, BUILD-AND-SHIP, Tier-1
    (creates tables) → JORGE-APPROVED label + GUARD branch-verify. Cascade does not write migrations.
 
 ## Part E — DO NOT

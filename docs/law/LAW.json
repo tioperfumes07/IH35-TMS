@@ -1,5 +1,19 @@
 [
   {
+    "id": "LAW-2026-08-06-CI-CONCURRENCY-SHA-SCOPED",
+    "title": "A workflow may not key its concurrency group on a bare ref — a queued run that never executed can otherwise be cancelled into a permanently dead required check, leaving the PR unmergeable with no code failure",
+    "source_file": ".github/workflows/ci.yml",
+    "guard": "scripts/verify-ci-concurrency-sha-scoped.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-BUSINESS-DATE-PARSED-LOCAL",
+    "title": "A business date (YYYY-MM-DD) must never be pinned to UTC for display — it has no timezone, and new Date(iso+\"T00:00:00Z\") renders one day early for every viewer west of UTC, which silently showed the wrong day cash position in Central Time",
+    "source_file": "apps/frontend/src/lib/businessDate.ts",
+    "guard": "scripts/verify-business-date-parsed-local.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-08-05-B2-ENFORCED-GUARD-OR-NOT-LAW",
     "title": "LAW = ENFORCED GUARD, OR IT IS NOT LAW — every NEW rule ships a guard registered in docs/law/LAW.json; verify-law-registry.mjs is a required check that reddens when a registered law's guard file is missing",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
@@ -273,17 +287,52 @@
     "type": "enforced"
   },
   {
-    "id": "LAW-2026-08-06-CI-CONCURRENCY-SHA-SCOPED",
-    "title": "A workflow may not key its concurrency group on a bare ref — a queued run that never executed can otherwise be cancelled into a permanently dead required check, leaving the PR unmergeable with no code failure",
-    "source_file": ".github/workflows/ci.yml",
-    "guard": "scripts/verify-ci-concurrency-sha-scoped.mjs",
-    "type": "enforced"
-  },
-  {
     "id": "LAW-2026-08-06-DISP-WIRE-07-DEPARTURE-EVIDENCE",
     "title": "Every path stamping mdata.load_stops.actual_departure_at must write a real clock value (now() or COALESCE onto now()), never a bare client parameter — that stamp is the delivery evidence revenue recognition and invoice gating hang off",
     "source_file": "apps/backend/src/dispatch/stamp-final-delivery-departure.ts",
     "guard": "scripts/verify-disp-wire-07-departure-evidence.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-DISPLAYID-ENTITY-SCOPED",
+    "title": "display_id is unique only per (operating_company_id, display_id) — it may never be an equality lookup key without an entity predicate; resolve money documents by UUID (PERMANENT LAW B: void by UUID, never display_id)",
+    "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
+    "guard": "scripts/verify-displayid-entity-scoped-lookups.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-SCENARIO-TRACKER-SINGLE-MOUNT",
+    "title": "A component that owns a polling query is a page-level singleton — mounting it inside a .map()ed child multiplies both the render and the prod read rate by the collection length, silently and with no visual error",
+    "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
+    "guard": "scripts/verify-scenario-tracker-single-mount.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX",
+    "title": "NEVER GUESS · NEVER DEFER · ALWAYS VERIFY · ALWAYS FIX, NEVER PATCH — every change fixes the root cause at its source, ships a guard that fails on the bug and passes on the fix, and is proven live on prod; CI-green is the floor, not the verdict; when a fact cannot be verified the required output is UNVERIFIED, never a guess",
+    "source_file": "docs/law/NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX.md",
+    "guard": "scripts/verify-no-patch-or-defer-language.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-CALLER-SCOPED-GUC-MEMBERSHIP",
+    "title": "A route may not SET app.operating_company_id to a company the caller named without first asserting the caller belongs to it — RLS then enforces whatever the attacker asked for, and an accessible-companies predicate is not a membership check because user_accessible_company_ids() returns every active company for an Owner",
+    "source_file": "apps/backend/src/mdata/driver-messages.routes.ts",
+    "guard": "scripts/verify-caller-scoped-guc-membership.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-INVITE-WRITE-ENTITY-GATED",
+    "title": "A route that writes an invite must prove the caller belongs to the invited driver's company BEFORE the write — a membership guard scoped by helper-import is vacuous, because a route with zero asserts is exactly the vulnerable state and is invisible to it",
+    "source_file": "apps/backend/src/mdata/drivers.routes.ts",
+    "guard": "scripts/verify-invite-write-entity-gated.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-SCOPED-COMPANY-CONTEXT-ASSERTS-FIRST",
+    "title": "setScopedCompanyContext must assert company membership before setting app.operating_company_id — it concentrates the cross-entity authorization of every handler that delegates to it, and a call-site guard cannot see it break",
+    "source_file": "apps/backend/src/_helpers/scoped-company-context.ts",
+    "guard": "scripts/verify-scoped-company-context-asserts-first.mjs",
     "type": "enforced"
   }
 ]

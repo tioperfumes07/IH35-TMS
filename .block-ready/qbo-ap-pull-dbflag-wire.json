@@ -5,7 +5,7 @@
   "phase": "ACCOUNTING",
   "priority": "P0",
   "module": "qbo-sync / accounts-payable",
-  "hold": "HOLD-FOR-JORGE",
+  "superseded_hold": "OWNER LAW 2026-08-03: no holds, no approval label; coders have full Neon access and merge on green. Proof, not approval, is the gate.",
   "guard_required": true,
   "source": "Owner defect 2026-07-13: Accounting/Expenses A/P tab empty ('no wiring'). GUARD root-caused live.",
   "allowed_files": [

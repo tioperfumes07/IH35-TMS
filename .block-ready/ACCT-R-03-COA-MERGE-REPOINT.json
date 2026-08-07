@@ -63,7 +63,7 @@
     {
       "check": "catalogs.account_merge_records exists on prod with company_scope FORCE RLS and append-only grants",
       "status": "UNVERIFIED",
-      "evidence": "BUILD-AND-HOLD \u2014 owner Neon-applies 202608060000 then ledger-backfills; GUARD re-proves under app.bypass_rls='lucia'."
+      "evidence": "build with GUARD verify-after \u2014 owner Neon-applies 202608060000 then ledger-backfills; GUARD re-proves under app.bypass_rls='lucia'."
     },
     {
       "check": "live merge writes a merge record and leaves 0 stale config pointers at the source",

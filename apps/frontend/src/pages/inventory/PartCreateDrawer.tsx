@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { apiRequest } from "../../api/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
@@ -12,6 +12,12 @@ import {
   PART_INVENTORY_CATEGORIES,
   formatPartInventoryCategoryLabel,
 } from "./partInventoryCategories";
+import { capNotice, listCapInfo } from "../../lib/list-cap";
+
+// CLS-SILENT-CAP: named so the fetch and the truncation check read the SAME number.
+// 2,836 vendors on prod, so an unsearched 200-row fetch hides 2,636 of them.
+const VENDOR_PICKER_CAP = 200;
+
 
 interface PartCreateDrawerProps {
   isOpen: boolean;
@@ -40,11 +46,18 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
       listVendors({
         operating_company_id: operatingCompanyId,
         status: "active",
-        limit: 200,
+        limit: VENDOR_PICKER_CAP,
         search: vendorSearch || undefined,
       }),
     enabled: Boolean(operatingCompanyId) && isOpen,
   });
+
+  // CLS-SILENT-CAP: EXACT truncation — listVendors returns the server's real `total`.
+  const vendorCap = useMemo(
+    () => listCapInfo(vendorsQuery.data?.vendors?.length ?? 0, VENDOR_PICKER_CAP, vendorsQuery.data?.total ?? null),
+    [vendorsQuery.data],
+  );
+  const vendorCapNotice = capNotice(vendorCap, "vendors");
   const vendorOptions = (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption);
 
   const createMutation = useMutation({
@@ -165,6 +178,8 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
           <div>
             <label className="block text-sm font-medium">Preferred vendor</label>
             <div className="mt-1" data-testid="inv-part-create-vendor-picker">
+              {/* CLS-SILENT-CAP: say so when the picker is not showing every vendor. */}
+              {vendorCapNotice ? <p className="text-[10px] text-slate-700">{vendorCapNotice}</p> : null}
               <ReferenceSelect
                 value={formData.vendor_id || null}
                 onChange={(next) => setFormData({ ...formData, vendor_id: next ?? "" })}

@@ -9,12 +9,11 @@ import {
   type DailyPredictionResult,
   type SevenDayEntry,
 } from "../../../api/cashFlow";
-import { addDaysIso, companyToday } from "../../../lib/businessDate";
+import { addDaysIso, companyToday, localDateFromIso } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
 
 function fmtDate(iso: string): string {
-  const [y, m, d] = iso.split("-");
-  return new Date(Number(y), Number(m) - 1, Number(d)).toLocaleDateString("en-US", {
+  return localDateFromIso(iso).toLocaleDateString("en-US", {
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -378,10 +377,10 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                     }`}
                   >
                     <span className="text-xs text-gray-500">
-                      {new Date(entry.date + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "short" })}
+                      {localDateFromIso(entry.date).toLocaleDateString("en-US", { weekday: "short" })}
                     </span>
                     <span className="text-xs text-gray-400">
-                      {new Date(entry.date + "T00:00:00Z").toLocaleDateString("en-US", { month: "numeric", day: "numeric" })}
+                      {localDateFromIso(entry.date).toLocaleDateString("en-US", { month: "numeric", day: "numeric" })}
                     </span>
                     <span className={`mt-1 text-xs font-bold ${pos ? "text-slate-600" : "text-red-600"}`}>
                       {formatCompactUsd(entry.predicted_net_cents)}
