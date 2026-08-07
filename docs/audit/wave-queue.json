@@ -1,5 +1,6 @@
 {
   "_README": "Cascade publishes CLS-* class wave cards here (schema: docs/audit/wave-queue.SCHEMA.json). Legacy per-module rows in AUDIT-COVERAGE-LIVE.md are WORM history and are NOT rewritten by this artifact. Cursor drains mechanical cards; Claude Coder drains money cards. verify-wave-card-format + verify-no-false-green-certify enforce the method in CI.",
+  "_LANE_TERRITORY_2026-08-06": "OWNER-LOCKED PARTITION (Cascade auditor duty, no overlap ever): CC-1 (lane=money) owns ONLY migrations, grants, GL/posting, settlement, WORM, AP/AR, ci.yml DB-env — NEVER routes, NEVER route tests, NEVER rate-limit, NEVER dispatch/mdata scope, NEVER FE. CC-2 (lane=mechanical) owns ONLY routes, route tests, rate-limit, dispatch/mdata entity-scope, FE — NEVER migrations/grants/GL/WORM. Root cause of the 2026-08-06 all-PR-red incident: both builders ran a rate-limit route sweep simultaneously on overlapping route files (a mechanical-lane class assigned to CC-1 in violation of this partition). Before assigning ANY new class, Cascade checks the new card's hotfiles against every OTHER open card's hotfiles; if a money card and a mechanical card share a hotfile, serialize them (one stays queued) instead of running both.",
   "waves": [
     {
       "id": "CLS-DISPLAYID-UNSCOPED",
@@ -1106,6 +1107,171 @@
       "hotfiles": [
         "apps/backend/src/dispatch/cancellation.service.ts",
         "apps/backend/src/dispatch/cancel-load.routes.ts"
+      ]
+    },
+    {
+      "id": "CLS-CALENDAR",
+      "root_cause": "A JS Date value is passed where Postgres expects a ::date cast (String(Date) is not castable to ::date), blocking a money-critical send/post path outright rather than corrupting data. §9.0.17 reconciliation 2026-08-06: this card ABSORBS the earlier informal label CLS-CALENDAR-DATE (seen only as inline text in CLS-GL-DARK, never its own wave card) as a sub-tag \u2014 same underlying pattern (calendar/date handling on a money path), not a separate class.",
+      "lane": "money",
+      "layer": "C",
+      "modules": [
+        "accounting",
+        "dispatch"
+      ],
+      "instances": [
+        {
+          "path": "apps/backend/src/accounting/invoice-send.service.ts \u2014 sendDraftInvoice date cast [sub-tag: CLS-CALENDAR-DATE]",
+          "entity": "ALL",
+          "note": "FIXED, PR #4194 (5a36c18b9, deployed). Root cause: String(Date) not castable to ::date in the send-path SQL, which blocked EVERY draft invoice from ever being sent regardless of entity. Cited as fixed in CLS-GL-DARK's own text (row 672 AUDIT-COVERAGE-LIVE.md): '4 draft/void invoices pending send \u2014 send-path date-cast fix deployed PR #4194'."
+        }
+      ],
+      "completeness": "Single known instance, live-cited and deployed (PR #4194). No second CLS-CALENDAR instance found in this reconciliation pass beyond the folded-in CLS-CALENDAR-DATE. Not exhaustively re-swept for other Date-vs-::date call sites outside the invoice-send path \u2014 that would be new audit work, out of scope for this reconciliation.",
+      "guard": "scripts/verify-invoice-send-date-cast.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "Fix is live and deployed (#4194) but NO guard is registered in docs/law/LAW.json for it \u2014 that file does not exist on main as of 2026-08-06 (see #4584, still open). Per \u00a79.0.17 rule 5 (a class drains only when every instance is live-proven AND a mutation-proven guard is registered in LAW.json), this stays OPEN despite the underlying fix being shipped.",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/accounting/invoice-send.service.ts",
+        "apps/backend/src/dispatch/loads.routes.ts"
+      ]
+    },
+    {
+      "id": "CLS-SCHEMA-DRIFT",
+      "root_cause": "Backend code assumes a column or view shape that does not match the live database schema. Postgres resolves column references at PLAN time, so the query 500s on EVERY request, independent of data \u2014 not intermittent, not data-dependent. Recurs in two distinct forms: (a) a hand-written SQL query referencing a column a view does not have, and (b) a generic factory/config layer hardcoding a column name/shape that a subset of its target tables do not physically carry.",
+      "lane": "mechanical",
+      "layer": "D",
+      "modules": [
+        "reports",
+        "catalogs"
+      ],
+      "instances": [
+        {
+          "path": "apps/backend/src/reports/driver-settlement-summary.routes.ts \u2014 selected COALESCE(v.escrow_withheld,0) from views.driver_settlement_with_debt; column does not exist on the view (17 columns, none named escrow_withheld)",
+          "entity": "ALL",
+          "note": "FIXED, PR #4525 (631da872e, merged). Hard 500 on every request since 2026-07-05 \u2014 caught by the existing verify-sql-read-targets guard, but the exact string sat in scripts/sql-read-targets-known-debt.json as an allowlist entry for a month. Fix sources escrow from driver_finance.escrow_ledger directly (entity-scoped, transaction_type='hold' only, no incorrect x100 scaling) and shrinks the allowlist by one line \u2014 the guard's shrink-only ratchet is the enforcement, not a new script."
+        },
+        {
+          "path": "apps/backend/src/catalogs/generic-catalog.factory.ts:70,165-166 \u2014 hardcodes `t.deactivated_at IS NULL/NOT NULL` (19 of 22 config tables lack the column) and defaults dbColumnForApiColumn to \"name\" (2 tables physically have display_name, not name)",
+          "entity": "ALL",
+          "note": "OPEN, live-proven 2026-08-06 on prod (#4612, LV-CAT-500, not yet merged). 21 of 22 generic catalog list endpoints return HTTP 500 \u2014 every vendor-type/customer-type/PM-interval/fuel-station/etc picker across ALL THREE entities is silently empty because the FE swallows the 500. Recorded by the CC-3 live-verifier lane, which does not build; CC-3 builder lane owns the fix per the PR's own FIX REQUIREMENT (make the soft-delete predicate conditional on the column existing; default the display-name alias to identity)."
+        }
+      ],
+      "completeness": "Two independently-discovered instances of the same pattern (code assumes a physical column shape it never verified against information_schema), one fixed and merged, one live-proven and open pending #4612's merge and the CC-3 build. No class-level guard exists yet that would catch a THIRD instance before it ships \u2014 the fixed instance was caught by a generic SQL-read-target allowlist (not schema-shape-aware), and the open instance has no guard at all yet.",
+      "guard": "scripts/verify-catalog-config-physical-columns.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "Instance 1 fixed and its allowlist line removed (verified: known-debt list shrinks by exactly 1). Instance 2 (LV-CAT-500) is OPEN on prod, no guard exists for it yet. Not registered in docs/law/LAW.json (file does not exist on main).",
+        "money_critical": false
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/reports/driver-settlement-summary.routes.ts",
+        "apps/backend/src/catalogs/generic-catalog.factory.ts",
+        "scripts/sql-read-targets-known-debt.json"
+      ]
+    },
+    {
+      "id": "CLS-SILENT-SUCCESS",
+      "root_cause": "A money-posting create/apply path is reachable and its flags are ON, but the code never invokes the poster at all \u2014 no batch in any state, no failed record, no error. From the ledger this is indistinguishable from 'ran and correctly refused' (the QBO parallel-books case), but it is the OPPOSITE defect: never called vs. ran-and-refused. It stays invisible specifically where the entity's row population was previously zero, so a coverage guard scoped to existing rows reports clean on an empty population.",
+      "lane": "mechanical",
+      "layer": "C",
+      "modules": [
+        "accounting"
+      ],
+      "instances": [
+        {
+          "path": "apps/backend/src/accounting/payments/apply.service.ts \u2014 customer-payment create/apply path never calls postSourceTransaction (LV-134)",
+          "entity": "USMCA",
+          "note": "OPEN, live-proven 2026-08-04 (docs/audit/LIVE-VERIFY-FINDINGS-2026-08-04.md LV-134), bounced to CC-1 (money). USMCA payment a0b83bf5 ($250.00) applied fully to INV-2026-00003 \u2014 subledger moved correctly (payment_applications row, invoice status sent\u2192partial), but posting_batches for that payment = 0 in ANY state and CUSTOMER_PAYMENT_GL_POSTING_ENABLED / GL_POSTING_ENABLED are both true (not a by-design refusal). Net effect: USMCA Cash/Undeposited Funds and A/R are $250.00 out of step with the subledger. Positive control: the one pre-existing TRANSP customer_payment batch DOES carry 2 balanced posting lines \u2014 the poster works when called; the defect is the call site."
+        }
+      ],
+      "completeness": "Single confirmed instance (LV-134), found only because USMCA had zero prior payments to mask it with an empty-population false-clean. Not swept for other create/apply paths that might share the same never-called shape (settlement, factoring-advance, cash-advance disbursement) \u2014 that is new audit work, out of scope here. Card classified mechanical for this reconciliation pass because the class-level guard being built is generic route/API instrumentation (detecting a flag-gated write path with zero downstream effect), independent of which domain the specific instance lands in; the LV-134 instance itself remains routed to CC-1 (money) to fix.",
+      "guard": "scripts/verify-no-silent-noop-posting.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "LV-134 reproduced live 2026-08-04, still OPEN on prod. scripts/verify-no-silent-noop-posting.mjs exists and already enumerates apply.service.ts as a posting writer, but it asserts an honest-signal token on a FLAG-GATED no-op \u2014 LV-134's failure mode (poster never invoked at all, no flag-gate branch involved) is NOT confirmed to be caught by this guard; needs verification/extension. Not registered in docs/law/LAW.json (file does not exist on main).",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/accounting/payments/apply.service.ts",
+        "scripts/verify-no-silent-noop-posting.mjs"
+      ]
+    },
+    {
+      "id": "CLS-JOIN-ENTITY-UNSCOPED",
+      "root_cause": "A JOIN or a bare scoped-read (FROM <entity-table> WHERE id = $1) resolves another entity's row with no operating_company_id predicate. Reachable under bypass_rls OR ordinary owner-role RLS \u2014 org.user_accessible_company_ids() returns EVERY active company when role = Owner (verified live via pg_get_functiondef), so RLS is NOT a backstop for this class.",
+      "lane": "mechanical",
+      "layer": "C",
+      "modules": [
+        "accounting"
+      ],
+      "instances": [
+        {
+          "path": "apps/backend/src/accounting/customer-payments.routes.ts \u2014 LATERAL JOIN accounting.invoices with no operating_company_id predicate (ACCT-F130 half a)",
+          "entity": "ALL",
+          "note": "FIXED and mutation-proven (docs/audit/AUDIT-COVERAGE-LIVE.md row 689, PR #4536 19ed1a4d3). Plant (drop the entity predicate) \u2192 exit 1; restore \u2192 exit 0. Live proof: accounting.invoices.display_id collides across entities on 4 numbers (INV-2026-00001..00004), so the unscoped join was reachable and the hazard was real, not theoretical."
+        },
+        {
+          "path": "apps/backend/src/accounting/payment-applications.routes.ts \u2014 two post-application read-backs with no operating_company_id predicate (ACCT-F130 half b)",
+          "entity": "ALL",
+          "note": "FIXED and mutation-proven (row 689). Plant (drop both entity predicates) \u2192 exit 1, 2 NEW offenders; restore \u2192 exit 0, tree clean. CORRECTION recorded in row 689: the wrong values are NOT written into the audit trail (appendCrudAudit takes an explicit payload without them) \u2014 they leak only into the HTTP 201 response body. Real defect confirmed, just a narrower blast radius (response-surface, not audit-trail corruption) than the original PR body claimed."
+        },
+        {
+          "path": "scripts/join-entity-scope-baseline.json \u2014 430 pre-existing offenders across 1,582 scanned files, none individually audited/fixed by this class card",
+          "entity": "ALL",
+          "note": "Re-verified live on this reconciliation pass 2026-08-06: `node scripts/verify-join-entity-scoped.mjs` exit 0 ('no NEW entity-unscoped JOINs'); scripts/join-entity-scope-baseline.json offenders=430, scanned=1582 (was 446 before ACCT-F130's 3 fixed sites, per row 689 \u2014 shrink-only ratchet holds). This is the '1 open' remainder: the guard is REAL and ENFORCING (verify-step 2648, landed via #4554), the 3 known-dangerous sites are fixed and mutation-proven, but the 430-offender baseline itself has not been individually triaged \u2014 each entry is a candidate, not a confirmed live exploit, per the same-shape trap that made the original display_id hazard look empty on the first (too-broad) query."
+        }
+      ],
+      "completeness": "Guard verify-join-entity-scoped.mjs confirmed live on main 2026-08-06 (this pass): exit 0, baseline 430/1582. ACCT-F130's 3 cited sites are fully mutation-proven (row 689). The 430-offender baseline is the class's real remaining surface area \u2014 shrink-only, cannot silently regrow, but not yet drained to zero.",
+      "guard": "scripts/verify-join-entity-scoped.mjs",
+      "drain_proof": {
+        "guard_green": true,
+        "guard_sample": "verify-join-entity-scoped OK \u2014 no NEW entity-unscoped JOINs (re-run live 2026-08-06). ACCT-F130's 3 sites RED-on-plant / GREEN-on-restore, mutation-proven. Baseline offenders=430 (down from 446), scanned=1582 \u2014 shrink-only, not yet zero.",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/accounting/customer-payments.routes.ts",
+        "apps/backend/src/accounting/payment-applications.routes.ts",
+        "scripts/verify-join-entity-scoped.mjs",
+        "scripts/join-entity-scope-baseline.json"
+      ]
+    },
+    {
+      "id": "CLS-SUBLEDGER-GL-DARK",
+      "root_cause": "A TMS-native money-posting create/apply path exists but never calls postSourceTransaction, so the subledger (payments, applications, invoices) moves correctly while the GL (posting_batches, journal_entries) stays permanently dark \u2014 zero batches in ANY state, not 'failed', not 'skipped'. This is architecturally distinct from a poster that RAN and correctly REFUSED (the QBO parallel-books case, which is CLS-GL-DARK's already-drained TMS-native population): 'refused' and 'never called' look identical on the ledger and are opposite defects.",
+      "lane": "money",
+      "layer": "C",
+      "modules": [
+        "accounting"
+      ],
+      "instances": [
+        {
+          "path": "QBO-origin population: 0/16,245 bills, 0/6,543 bill_payments, 0/12,123 customer_payments posted",
+          "entity": "ALL",
+          "note": "N/A \u2014 by design, CORRECTLY refused by the posting engine's explicit QBO-origin guards (qbo_bill_payment_post_gl_refused, QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED, QBO_INVOICE_POST_GL_REFUSED). Same finding as CLS-GL-DARK rows 670/672 \u2014 cross-referenced here, NOT double-counted as a separate defect."
+        },
+        {
+          "path": "apps/backend/src/accounting/payments/apply.service.ts \u2014 USMCA TMS-native customer payment, postSourceTransaction never invoked (LV-134)",
+          "entity": "USMCA",
+          "note": "OPEN, live-proven 2026-08-04, bounced to CC-1 (money). $250.00 applied, subledger correct, posting_batches=0 in ANY state, flags ON (not a by-design refusal). Same instance as CLS-SILENT-SUCCESS's LV-134 \u2014 cross-referenced by mechanism (never-called poster), tracked here by ledger-population effect (subledger/GL divergence)."
+        }
+      ],
+      "completeness": "TAXONOMY CALL (\u00a79.0.17 reconciliation 2026-08-06, evidence-based): is this a distinct class or a variant of CLS-GL-DARK? DECISION: DISTINCT, not superseded. CLS-GL-DARK's TMS-native population is fully drained \u2014 row 672 confirms ZERO TMS-native payment/bill/bill_payment GL gaps as of 2026-08-03. CLS-SUBLEDGER-GL-DARK's TMS-native instance (LV-134, found 2026-08-04, AFTER CLS-GL-DARK's drain) is a live, OPEN, money-critical gap on a leg CLS-GL-DARK's audit never covered (customer-payment create/apply). The QBO-origin halves of the two cards describe the identical by-design-refusal population and are cross-referenced, not duplicated as defects. superseded_by: none.",
+      "guard": "scripts/verify-tms-native-payment-gl-posted.mjs",
+      "drain_proof": {
+        "guard_green": false,
+        "guard_sample": "QBO-origin half: guard_green true, by design (see CLS-GL-DARK). TMS-native half (LV-134): OPEN, no guard built yet, not registered in docs/law/LAW.json (file does not exist on main).",
+        "money_critical": true
+      },
+      "status": "open",
+      "hotfiles": [
+        "apps/backend/src/accounting/payments/apply.service.ts",
+        "apps/backend/src/accounting/posting-engine.service.ts"
       ]
     }
   ],
