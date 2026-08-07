@@ -5707,3 +5707,79 @@ load-cancel path of item 47, so there is no contradiction with that item.
 for USMCA. Every GL line reaches its document and every document link resolves. The remaining connectivity
 work is not in the GL — it is upstream, in the paths that never post at all (`LV-TXN-004`,
 `LV-PAY-SETTLE-NOPOST`).
+
+---
+
+## 93. ★★ CLASS ESTABLISHED — `CLS-MONEY-WORM-GAP`: the escrow finding was four instances of a 47-table class, and 33,472 live money rows are hard-deletable
+
+**Item 91 found four unprotected tables. The mandate is vertical class sweeps — global and universal — so I
+swept the whole money surface instead of stopping at the instance. The class is an order of magnitude bigger.**
+
+**METHOD.** Population = every ordinary table in `accounting · driver_finance · banking · fuel · insurance ·
+maintenance · factoring` carrying a money column (`%_cents`, `%amount%cents%`, or `amount/total/debit/credit`).
+Each scored on both WORM layers in one statement: `has_table_privilege('ih35_app', oid, 'DELETE')` and
+`pg_trigger` where `tgtype & 8`.
+
+**BASELINE — prod `br-fancy-credit-akjnd07a`, 2026-08-07. Ratchet target 0.**
+
+| metric | value |
+|---|---|
+| money-bearing tables | **101** |
+| protected by at least one layer | 54 |
+| **UNPROTECTED — neither layer** | **47** |
+| unprotected **with live rows** | **10** |
+| **live money rows hard-deletable, no audit trail** | **33,472** |
+| carrying **both** layers | **8** |
+
+**THE TEN WITH LIVE ROWS** — `can_delete = true`, `del_trg = 0`, `audit_trg = 0` on every one:
+
+| table | live rows |
+|---|---|
+| **`accounting.invoice_lines`** | **21,213** |
+| **`accounting.payments`** | **12,127** |
+| `driver_finance.driver_pay_rates` | 93 |
+| `banking.bank_accounts` | 17 |
+| `accounting.vendor_credits` | 7 |
+| `driver_finance.driver_bills` | 6 |
+| `insurance.policy_unit` | 5 |
+| `banking.transfers` | 4 |
+| `banking.reconciliation_sessions` | 2 |
+| `driver_finance.escrow_settings` | 2 |
+
+**`maintenance.severe_repair_estimates` has already lost rows** — `n_tup_ins=11 / n_tup_del=2 / n_live_tup=1`.
+
+**★ THE A/P-vs-A/R ASYMMETRY IS THE CLEAREST TELL, and it is the finding a reviewer should look at first.**
+`accounting.bills`, `bill_lines` and `bill_payments` are **all** WORM-protected. `accounting.invoices` has
+only an audit trigger, and **`accounting.invoice_lines` — 21,213 rows — has nothing at all.** The payable
+side of the ledger is protected and the receivable side is not, in the same schema, with no stated reason.
+Deleting an `invoice_lines` row silently reduces revenue and A/R, with no audit row and no reversing entry.
+For a company in a Ch.11 with an active embezzlement reconciliation, an unaudited, unreversible way to
+reduce recorded revenue is the single worst shape this defect could take.
+
+**POSITIVE CONTROL, in the same result set.** 54 tables score protected and exactly **9** carry
+`trg_worm_refuse_delete`. The query detects protection wherever it exists, so the 47 are a genuine absence
+rather than a blind spot in the predicate.
+
+**WHY "8 with both layers" is the number that matters.** Item 88 established that
+`accounting.refuse_financial_row_delete()` is role-scoped — `IF current_user <> 'ih35_app' THEN RETURN OLD`
+**permits** the DELETE for every role except the app role. So a trigger alone is defeated by `neondb_owner`,
+a migration, or a console session, and the **revoked grant is the layer that actually holds**. A
+trigger-only table is half-protected — which is precisely how `driver_settlements` and
+`driver_settlement_deductions` took 7 and 14 deletions *while carrying the trigger*. Only 8 of 101 money
+tables have the combination that genuinely holds.
+
+**THE GUARD TRAP, stated plainly because it would defeat the whole fix.** A guard that counts delete
+triggers — the obvious implementation — would certify this class as fixed while `invoice_lines`, `payments`
+and 45 other tables remain deletable, and would also score the two half-protected settlement tables as done.
+**The guard must assert BOTH layers, and must test the GRANT.** Registry-driven and fail-closed, so a new
+money table is unprotected-by-default and fails until someone protects it. Mutation-prove both halves
+independently.
+
+**SEQUENCING FOR CC-1.** `invoice_lines` and `payments` are the only two that are simultaneously
+high-volume and completely bare — they go first. **37 of the 47 are still empty**, so the remainder is the
+cheapest kind of fix there is: make them WORM before they ever hold a balance.
+
+**Relationship to prior items — additive, not a re-file.** Item 87 was wrong and item 88 corrected it; item
+88 established the role-scoping hole on a different table set; item 91 found four bare tables in escrow and
+settlement. This item generalises all of it into one measured class with a baseline that can be ratcheted.
+Board row `CLS-MONEY-WORM-GAP`; `LV-ESCROW-SUBLEDGER-NOT-WORM` remains open as its four escrow instances.
