@@ -2001,3 +2001,134 @@ or be explicitly exempted with a stated reason. The `stampFinalActiveDeliveryDep
 better signal: **stamping delivery departure is the definition of "this path delivers a load"**, it is a
 single shared helper, and it cannot be written as a variable. Pair it with the live ledger assertion from
 item 40 — a static guard alone cannot catch item 40, and a ledger guard alone would not name the file.
+
+---
+
+## 42. FIXED (CC-3 lane) — the false-green guard now catches the parameterized shape
+
+**This is the one thing in items 40/41 that is CC-3's own lane (CLAUDE.md §3: mechanical / CI-guards,
+non-financial). Fixed in the same session it was found, not boarded and left.**
+
+`scripts/verify-delivery-evidence-latch-wired.mjs` — `assignsEvidenceStatus()` widened from
+literal-only to three signals:
+
+1. the original literal assignment (unchanged);
+2. **`stampFinalActiveDeliveryDeparture(` is called** — the *definitional* signal that a path delivers
+   a load. It is a single shared helper and, unlike a status string, **a function call cannot be
+   hidden behind a variable**, so it survives the validate→map→bind pattern that defeated the literal
+   scan;
+3. belt-and-braces: `UPDATE mdata.loads` + `SET status` + the file names an evidence status.
+
+Signal 3 deliberately requires `SET status` specifically, so `mdata/driver-team.service.ts` — which
+writes `SET team_id` and only *reads* `delivered_pending_docs` in an `ACTIVE_LOAD_STATUSES` filter
+list — is **not** false-positived. That was checked by reading the file before shipping the rule.
+
+**Selftest extended from 6 cases to 8, and the new cases are the ones that matter:**
+- **case6** — the exact parameterized shape that was invisible (validate enum → `toMdataStatus` →
+  bind `$3`, plus the stamp call and a `new Set([… "delivered_pending_docs" …])`) **must be caught**.
+- **case7** — same shape *with* a latch call **must stay clean** (proves the widening did not become
+  an unconditional flag).
+- **case8** — a writer of a *different* column that merely reads an evidence status **must not** be
+  flagged.
+
+**Removed the old case6, which asserted the real tree was clean.** That conflated two different
+questions — *is the matcher correct* (selftest) and *is the repo compliant* (the main run) — so a
+genuine defect would have surfaced as a confusing selftest failure instead of a plain guard failure.
+
+**RESULT, executed 2026-08-07:**
+
+```
+$ node scripts/verify-delivery-evidence-latch-wired.mjs --selftest
+verify-delivery-evidence-latch-wired: selftest PASS   exit 0
+
+$ node scripts/verify-delivery-evidence-latch-wired.mjs
+  ✗ apps/backend/src/dispatch/loads-bulk.routes.ts: calls stampFinalActiveDeliveryDeparture() — it
+    records delivery evidence, but never references the revenue latch …
+exit 1
+```
+
+**Exactly one file flagged — the real defect — and no false positives.** The guard can no longer be
+green while the law is broken.
+
+> **★ THE GUARD IS NOW RED, AND THAT IS THE POINT — but it is NOT merged.** It lives on
+> `audit/cc3-live-battery-20260806`. Merging it to `main` turns a required check red for **every**
+> lane until CC-1 wires the bulk latch. **This lane did not impose that on the other lanes
+> unilaterally.** The correct sequence is: CC-1 wires the bulk latch **using item 40's after-commit
+> ordering** → the guard goes green → both land together. **That is sequencing, not deferring:** the
+> guard is the forcing function and it is already written. **Merging it red immediately is available
+> and is the owner's call.**
+
+---
+
+## 43. NEW DEFECT — the book-load wizard silently DROPS the stop ZIP code (0 of 18 stops have one)
+
+**LIVE-PROVEN 2026-08-07, USMCA, booked through the real UI.** Booked `L-20260806-0008`
+(`1d5d8733-5891-44fc-891f-078ced5ae66f`), $1,875.50, customer TIO PERFUMES, unit USMCA-001, driver
+Juan USMCA-Battery. **I typed `78040` (pickup) and `78205` (delivery) and saw both rendered in the
+form fields** before booking.
+
+On prod immediately after:
+
+| field | pickup | delivery |
+|---|---|---|
+| `address_line1` | `1200 Santa Ursula Ave` ✅ | `500 E Cesar E Chavez Blvd` ✅ |
+| `city` | `Laredo` ✅ | `San Antonio` ✅ |
+| **`postal_code`** | **NULL ❌** | **NULL ❌** |
+
+**Whole-table check with the completeness discriminator:** `mdata.load_stops` — `postal_code`
+non-empty = **0**, total rows = **18**, `n_live_tup` = **18** (visible == live, so this is a real
+zero, not an RLS mask). By contrast `city` is non-empty on **10 of 18** and `state` on **9 of 18** —
+**those columns persist when supplied; `postal_code` never does, for any row that has ever existed.**
+`postal_code` is confirmed the only candidate column (`information_schema`: the address columns are
+`address_line1`, `city`, `state`, `postal_code` — there is no separate `zip`), so this is not a
+wrong-column read.
+
+**WHY THIS IS A MONEY DEFECT, not cosmetic.** The section is titled **"STOPS · PC\*MILER ROUTING"**,
+and the booking screen showed **PRACTICAL 0 · SHORTEST 0 · DEADHEAD 0 · RPM —**. Postal code is the
+routing key for PC\*MILER mileage. Without it: **driver pay per mile** (the screen states *"Shortest
+miles (yellow) used for driver pay"*), **fuel planning + ETA**, and **IFTA jurisdiction miles** are
+all structurally unreachable — and every diesel expense must FK to a load (G18). A load that can
+never compute miles cannot settle a per-mile driver correctly or produce a defensible IFTA return.
+**LANE: mechanical/FE (CC-2) for the persistence bug; the mileage/IFTA consequence is why it is not
+low priority.**
+
+**GUARD:** assert that a load stop created through the booking path with a supplied postal code
+persists it — and, as the live assertion, that TMS-native stops are not 100% NULL on `postal_code`
+(scoped to TMS-native rows per the origin test, since imported stops may legitimately lack one).
+
+---
+
+## 44. NEW DEFECT — "Load booked and dispatched" toast, but the load was NEVER dispatched
+
+**LIVE-PROVEN 2026-08-07.** After `Override & dispatch` on `L-20260806-0008`, the UI showed a green
+**"Load booked and dispatched"** toast (plus "Load saved"). On prod, that load's status is
+**`assigned_not_dispatched`** — at `created_at 02:05:48` and still at `updated_at 02:05:51`, and
+unchanged on re-query minutes later.
+
+**This is NOT a naming artifact.** `mdata.load_status_enum` contains a real, distinct **`dispatched`**
+member (verified via `enum_range`: … `assigned`, **`dispatched`**, `at_pickup`, `in_transit` …,
+alongside `assigned_not_dispatched`). The load sits in the *pre*-dispatch state while the UI reports
+the post-dispatch one.
+
+**WHY IT MATTERS:** the override was recorded specifically to permit **dispatch** past two DOT
+blockers (no CDL expiry, no medical card on file). A dispatcher reading that toast believes a truck is
+rolling under an audited override; the record says it never left. **An override audit trail that
+attests to an action that did not happen is worse than no override at all** — it is exactly what a
+DOT/FMCSA reviewer or an insurer would read. **LANE: mechanical (CC-2)**, but flag the audit
+consequence.
+
+**ALSO — this blocked the item-40 empirical test.** The plan was to drive a fresh load
+book → dispatch → depart → deliver and watch Event 1 fail on the office path. **The load will not
+leave `assigned_not_dispatched`, so the lifecycle is stalled at step 2.** The item-40 root cause
+stands on the code + prod evidence already recorded; the end-to-end reproduction is **NOT yet done**
+and is stated as such rather than implied.
+
+**GUARD:** assert the success toast is emitted only after the transition the server actually applied —
+i.e. the dispatch path must report the *returned* status, never an assumed one.
+
+### Correction to `LV-STOPS-NOSAVE` — partially disproven
+
+Earlier this battery recorded that booking-wizard stops do not save. **That is now too strong.**
+`L-20260806-0008`'s stops persisted **address and city** on both rows. The accurate finding is
+narrower and is item 43: **`postal_code` specifically is dropped, always.** Recording the correction
+because a builder acting on "stops don't save" would go looking in the wrong place.
