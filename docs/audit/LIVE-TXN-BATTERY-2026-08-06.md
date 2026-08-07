@@ -4758,3 +4758,56 @@ cache and simply did not re-fetch. I then predicted the Payment account picker w
 theory.** Recorded because the falsified prediction is what stopped a wrong root cause from being filed.
 
 **Routed:** FE/mechanical — see the routing note on the board.
+
+---
+
+## 76. item 75's UNVERIFIED root cause — PARTIALLY RESOLVED: the component is confirmed, and FOUR hypotheses are now DISPROVEN by live evidence
+
+Item 75 closed with *"UNVERIFIED — needs one more live check."* I ran the checks. Two questions closed,
+four theories died, and the residue is now small enough to hand over precisely.
+
+**CLOSED — which component actually mounts the drawer.** Fingerprinted by strings that are unique in the
+tree and were both present in the live DOM: **`Truck/Unit (optional)`** appears ONLY in
+`components/expenses/RecordExpenseForm.tsx`, and **`View all expenses`** ONLY in
+`components/expenses/RecordExpenseModal.tsx`. The modal wraps the form. So `categoryOptions`
+(`RecordExpenseForm.tsx:138-152`) is the code under suspicion — no longer a guess between three candidates.
+
+**CLOSED — `ReferenceSelect` honours what the parent passes.** `components/parity/ReferenceSelect.tsx:102`
+builds `comboOptions = [...options, ...created]`. It does not fetch its own list by `createKind`. So an
+empty picker means `categoryOptions` was genuinely empty at render, not that the child ignored it.
+
+**DISPROVEN 1 — "the data isn't there."** The EXACT URL the client builds
+(`status=active&limit=200&offset=0&operating_company_id=5c854333-…&postable_only=true`) returns
+**76 of 76** rows: `Asset 22 · Expense 16 · CostOfGoodsSold 10 · Income 10 · Liability 9 · OtherExpense 6 ·
+Equity 3`. **All 76 postable, ZERO with `deactivated_at`.** Expense-family = **32**.
+
+**DISPROVEN 2 — "the filter is wrong."** `isExpenseAccount` = `is_postable && !deactivated_at &&
+account_type ∈ {Expense, CostOfGoodsSold, OtherExpense}`. Against the 76 rows actually delivered it must
+match **32**. `isPaymentAccount`, over the SAME array, correctly yields the 2 accounts that DO render
+(`Bank of America - Operating (USMCA)`, `Undeposited Funds`).
+
+**DISPROVEN 3 — "prod runs a stale bundle predating the 2026-07-22 category fix."** I pursued this because
+the source carries a `LIVE-DEFECT fix (2026-07-22)` comment saying the filter *previously* required
+`qbo_account_id`, and **every USMCA account has `qbo_account_id = NULL`** (verified live: `allWithQbo: 0`
+across all 76 — correct for a TMS-only entity with QuickBooks not connected). It fit perfectly. **It is
+still wrong.** I fetched the deployed chunk `account-picker-scope-*.js` (543 bytes) and read it: it gates
+on `is_postable` and `deactivated_at`, carries types `Bank, Bank, CreditCard, Expense, CostOfGoodsSold,
+OtherExpense`, and contains **no `qbo_account_id` reference at all**. The deployed helper is CURRENT.
+
+**DISPROVEN 4 — "the query never fired / `operatingCompanyId` is missing."** Predicted the Payment account
+picker would also be empty (both queries share `enabled: Boolean(operatingCompanyId)`). It was **populated**.
+
+**WHAT REMAINS — the only surviving candidate.** Data correct, delivered, filter correct, helper deployed
+and current, sibling filter over the same array working. That leaves whether the **deployed**
+`RecordExpenseForm.categoryOptions` actually invokes `isExpenseAccount` on `paymentAccountsQuery.data.accounts`.
+Static bundle probing could not settle it: `RecordExpenseForm` sits in `index-*.js` while the helper is a
+separate 543-byte chunk, so the constants are legitimately absent from the form's chunk whether or not it
+imports them. Settling it needs source maps or a runtime breakpoint — **UNVERIFIED, and I will not name a
+line I did not watch execute.**
+
+**Why this is worth recording rather than four dead ends:** the defect is real and reproducible, and the
+owning lane now inherits a one-question investigation instead of an open-ended one. Four plausible causes —
+including one that fit the evidence exactly — are eliminated **with the evidence that killed them**, so
+nobody re-runs them. Hypothesis 3 is the cautionary one: `qbo_account_id = NULL` on every USMCA account is
+TRUE, the code comment describing that exact failure is TRUE, and the conclusion drawn from both was still
+FALSE. Two true facts and a coherent story are not proof.
