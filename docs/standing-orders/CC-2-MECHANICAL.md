@@ -124,3 +124,7 @@ order, which means the local gate must be run deliberately. `money-pr-local-gate
 `build-typecheck` exactly and works on this machine** (Postgres.app 16). Order that converges:
 `node scripts/precheck-verify-steps.mjs` (fast, no DB) → fix → `npm run verify:local-ci` (exact) →
 push once.
+
+
+## OWNER RULE 2026-08-07 — NO MAPPING NOW (WIRE + TEST ONLY)
+> **OWNER RULE 2026-08-07 (LOCKED): NO MAPPING NOW — WIRE + TEST ONLY.** Stop all account/entity/QBO/historical MAPPING. Jorge maps USMCA himself (coders do not). TRANSP is winding down (ceases in weeks); TRK is a lease company — do NOT map either. Focus = wiring + testing end-to-end. Need a chart-of-accounts/catalog account that does not exist? CREATE it (additive, entity-scoped, sensible default, QBO-map null) — owner edits later; never block on naming/mapping. Full rule: docs/standing-orders/OWNER-RULE-2026-08-07-NO-MAPPING-WIRE-TEST.md
