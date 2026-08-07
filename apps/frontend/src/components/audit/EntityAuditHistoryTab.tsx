@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useState, useMemo } from "react";
@@ -75,7 +76,7 @@ const COLUMNS: Array<ParityColumn<EventWithPayload>> = [
     label: "Who",
     sortable: true,
     sortValue: (row) => row.actor_email || row.actor_user_id || "",
-    render: (row) => <>{row.actor_email || row.actor_user_id?.slice(0, 8) || "—"}</>,
+    render: (row) => <>{entityLabel(row.actor_email, row.actor_user_id, "User") || "—"}</>,
   },
   {
     key: "event_type",

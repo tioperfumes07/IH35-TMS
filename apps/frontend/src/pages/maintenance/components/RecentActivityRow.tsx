@@ -1,3 +1,4 @@
+import { entityLabel } from "../../../lib/entity-label";
 import type { WorkOrder } from "../../../api/maintenance";
 
 type Props = {
@@ -13,7 +14,7 @@ function Table({ title, rows, onOpen }: { title: string; rows: WorkOrder[]; onOp
       <div>
         {rows.map((row) => (
           <button key={row.id} type="button" onClick={() => onOpen(row.id)} className="flex w-full items-center justify-between border-b border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50">
-            <span className="font-semibold">{row.display_id ?? row.id.slice(0, 8)}</span>
+            <span className="font-semibold">{entityLabel(row.display_id, row.id, "Record")}</span>
             <span>{row.wo_type}</span>
             <span className="text-gray-500">{row.status}</span>
           </button>
