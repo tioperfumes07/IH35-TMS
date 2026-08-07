@@ -430,7 +430,7 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
       // CLS-DISP-WIRE-07 — the driver's departure is the delivery evidence. Without this the office
       // transition was the ONLY path that latched revenue, so a load delivered in the field never
       // reached hops 6-9. Shared helper: no-op unless nextLoadStatus is a delivery-evidence status.
-      await latchOnDeliveryEvidence({
+      await latchOnDeliveryEvidence(client, {
         operatingCompanyId: stop.operating_company_id,
         loadId: params.data.uuid,
         targetStatus: nextLoadStatus,

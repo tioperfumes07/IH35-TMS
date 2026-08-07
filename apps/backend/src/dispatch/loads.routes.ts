@@ -42,8 +42,7 @@ import type { PoolClient } from "pg";
 import { convertProformaToOfficial } from "../accounting/proforma-convert.service.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-import { postLoadRevenueLatch } from "../accounting/revrec-delivery-posting/poster.service.js";
-import { companyBusinessDate } from "../lib/company-business-date.js";
+import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
 
 // Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
 // (BookLoadStopsSection.tsx). RHF reads a hidden input's value as a STRING ("" when empty), so
@@ -1344,19 +1343,21 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       }
 
       // DISP-01 — two-event revenue latch (flag OFF → no-op). Earn at delivery; bill at POD.
-      if (targetStatus === "delivered_pending_docs" || targetStatus === "completed_docs_received") {
-        try {
-          await postLoadRevenueLatch({
-            operating_company_id: operatingCompanyId,
-            load_id: params.data.id,
-            target_status: targetStatus,
-            entry_date_iso: companyBusinessDate(),
-            actor_user_id: authUser.uuid,
-          });
-        } catch (err) {
-          console.warn({ err, load_id: params.data.id, targetStatus }, "disp_01_revrec_latch_failed");
-        }
-      }
+      //
+      // LV-REVREC-NOT-FIRING (live-proven on prod 2026-08-07): this used to call
+      // postLoadRevenueLatch() DIRECTLY, from inside this open transaction. The poster opens its own
+      // connection via withLuciaBypass, so it could not see the delivery departure this very handler
+      // stamps ~40 lines above (still uncommitted). Its evidence gate returned
+      // missing_delivery_evidence and posted nothing — silently, because a gate is a return value,
+      // not a throw. Now routed through the shared helper, which defers the poster to after COMMIT
+      // and owns the trigger condition + swallow-and-log in ONE place (§9.0.17), so this route and
+      // the four other delivery paths cannot drift on what "delivered" means.
+      await latchOnDeliveryEvidence(client, {
+        operatingCompanyId,
+        loadId: params.data.id,
+        targetStatus,
+        actorUserId: authUser.uuid,
+      });
 
       try {
         await pingSettlementOnLoadEvent(client, {

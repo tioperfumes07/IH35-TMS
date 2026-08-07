@@ -946,7 +946,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       // by verify-delivery-evidence-latch-wired while fixing the two driver paths — the guard caught
       // a site I had not been asked to look at, which is the point of scanning for the shape rather
       // than patching the three known files.
-      await latchOnDeliveryEvidence({
+      await latchOnDeliveryEvidence(client, {
         operatingCompanyId: String(row.operating_company_id),
         loadId: String(row.id),
         targetStatus: String(row.status),

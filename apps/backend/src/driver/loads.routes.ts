@@ -604,7 +604,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       // transition. No-op unless nextLoadStatus is a delivery-evidence status, and it can only be
       // that on the FINAL active delivery stop (multi-drop guard above), so a multi-drop load still
       // earns exactly once, at the last drop.
-      await latchOnDeliveryEvidence({
+      await latchOnDeliveryEvidence(client, {
         operatingCompanyId: stop.operating_company_id,
         loadId: params.data.id,
         targetStatus: nextLoadStatus,
