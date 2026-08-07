@@ -797,6 +797,9 @@ export async function createDriverCanonical(
       let inviteUrl: string | null = null;
       let inviteExpiresAt: string | null = null;
 
+      // invite-entity-gate-exempt: resolvedOperatingCompanyId came from a lookup restricted to
+      // `id IN (SELECT org.user_accessible_company_ids())`, which IS the membership check — the caller
+      // cannot name a company they do not belong to, so there is nothing left to assert here.
       if (onboardingEnabled && resolvedOperatingCompanyId && operatingCompany && identityUserId) {
         const inviteToken = randomBytes(32).toString("hex");
         inviteUrl = `${driverInviteBaseUrl}/invite?token=${inviteToken}`;
@@ -1229,6 +1232,15 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     const whatsappReady = isWhatsappChannelConfigured();
 
     const outcome = await withCurrentUser(authUser.uuid, async (client) => {
+      // MDATA-F08 — CROSS-ENTITY GATE. Same class as MDATA-F07 on resend-invite (fixed in #4562),
+      // but at mass scale. The only check above is isOwnerOrAdmin, which is a ROLE, not a company.
+      // `b.operating_company_id` arrives in the REQUEST BODY and is used verbatim as the
+      // `d.operating_company_id = $1` predicate below, so an Owner/Admin in company A could pass
+      // company B's id and mass-invite every driver in B — real email/WhatsApp to real people, plus
+      // one identity.driver_invites row each under B. RLS is no backstop: org.user_accessible_company_ids()
+      // returns EVERY active company for an Owner (PERMANENT LAW 4), so the predicate authorizes nothing.
+      await assertCompanyMembership(client, authUser.uuid, b.operating_company_id);
+
       const targetsRes = await client.query<{
         id: string;
         first_name: string | null;
