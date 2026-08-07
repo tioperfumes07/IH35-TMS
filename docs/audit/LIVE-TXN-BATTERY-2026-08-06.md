@@ -3951,3 +3951,83 @@ reusing the same reason-required panel the JE/invoice/bill-payment voids already
 is deliberately read-only, say so explicitly** on the detail page too, and the dead `void` badge branch
 should be removed or justified. **Either answer is fine; the current state is the one that is not.**
 **LANE: CC-2 / mechanical (FE) — with a design answer needed from whoever owns expenses.**
+
+---
+
+## 61. ★ TWO MUTUALLY EXCLUSIVE SIGN CONVENTIONS live in `banking.bank_transactions.amount_cents`
+
+**LIVE-PROVEN 2026-08-07 on Neon prod, all three entities. Read-only across entities — no write to
+TRANSP; this lane never writes outside USMCA.**
+
+### The split is perfectly clean, and it is BY ACCOUNT
+
+`is_credit = true` rows, by entity:
+
+| entity | credits | stored **negative** | stored **positive** |
+|---|---|---|---|
+| USMCA | 69 | **69** | 0 |
+| TRK | 1,395 | **1,395** | 0 |
+| TRANSP | 1,278 | 1,170 | **108** |
+
+Drilling into TRANSP's 108 — they are not scattered, they are **one account**:
+
+| TRANSP account | credits | negative | positive |
+|---|---|---|---|
+| BUSINESS CHECKING …6103 / …6129 / …6137 / …3500, Business Platinum Card® | 1,170 | **1,170** | 0 |
+| **Relay Fuel Wallet** | **108** | 0 | **108** |
+
+**Whole-database totals: 2,634 credits stored NEGATIVE, 108 stored POSITIVE.** The 108 are a single
+coherent cohort — one account, a contiguous window (2026-03-03 → 2026-05-30), one description shape
+(*"Relay deposit · card …NNNN. Card deposit. Manual De…"*), totalling **$446,896.99**. **Origin test
+applied: this is a distinct feed, not corruption.**
+
+> **Two mutually exclusive conventions coexist in one column, and nothing in the schema records which
+> applies to which row.** Every future reader of `amount_cents` must already know that Relay Fuel
+> Wallet is special — or be wrong.
+
+### What is NOT a defect — stated explicitly, because it looks like one
+
+`banking/internal-wallet-balance.ts:97,198` computes
+`SUM(CASE WHEN is_credit THEN amount_cents ELSE -amount_cents END)` — signed math on the stored value,
+which would be wrong under the negative-credit convention. **It is correct**, because its own header
+scopes it: *"INTERNAL (non-Plaid) WALLET BALANCE — root-cause fix for the Relay Fuel Wallet tile
+showing $0.00 … an account with `plaid_item_id IS NULL` — **the Relay Fuel Wallet is the only one
+today (verified prod, 2026-07-16)**"*. It runs **only** over the account that stores credits positive,
+so its formula matches its data. **NOT FILED.** I checked the scoping before judging the arithmetic.
+
+### What IS wrong — a code comment that contradicts prod on 96% of rows
+
+`accounting/recon/recon-engine.service.ts:188-193`:
+
+```
+// banking.bank_transactions stores amount_cents (bigint magnitude) + is_credit; normalize to a signed value
+(CASE WHEN is_credit THEN amount_cents ELSE -amount_cents END)::text AS amount_cents
+```
+
+**`amount_cents` is NOT a magnitude.** It is a magnitude on 108 rows and a signed value on **2,634** —
+so the stated premise is false for **96% of all credits in the database**. Under the real convention,
+`WHEN is_credit THEN amount_cents` yields a **negative** value for a credit the normalization intends
+to make positive.
+
+**And this engine is LIVE, not parked:** `TMS_QBO_RECON_ENABLED` is **true for TRANSP, TRK and USMCA**
+(prod `lib.feature_flag_overrides`). The accounting standard calls reconciliation *"the correctness
+spine … the daily correctness test"*, so a sign assumption that is false for 96% of credits sits in the
+one component whose job is catching errors.
+
+**WHAT I AM NOT CLAIMING — and why.** Line 40 of the same file says *"sign per is_credit convention
+(caller normalizes both sides the same way)"*. **If the QBO side is normalized with the identical
+(mistaken) expression, the inversion cancels and matching still works.** Whether real exceptions are
+produced therefore depends on the other side of the comparison, **which I did not trace — UNVERIFIED,
+and CC-1 must confirm before treating this as a live mis-match rather than a false premise.** I will
+not assert a dollar impact I have not measured.
+
+**FIX:** make the convention explicit rather than assumed — either normalize on write so
+`amount_cents` is a true magnitude everywhere (with `is_credit` the only direction carrier, which is
+what `posting-engine.service.ts:1677` and `bank-feed-gl-posting.service.ts:8` already declare as law:
+*"DIRECTION IS DRIVEN ONLY BY is_credit — NEVER by the sign of amount_cents"*), or record the
+per-account convention in the schema. **Note those two files state the law that direction must never
+come from the sign — and the recon engine's normalization does exactly that.**
+**GUARD:** assert `banking.bank_transactions` has **one** sign convention — e.g. no `is_credit` row
+with a positive amount while another has a negative one — or, if the Relay feed is legitimately
+different, assert it is the *only* exception and is explicitly registered as such.
+**LANE: CC-1 / money** (recon + banking conventions).
