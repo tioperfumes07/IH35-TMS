@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { getCurrentClocks, getCurrentClocksForDrivers } from "../telematics/hos-clocks.service.js";
 import { assertDriverQualifiedForLoad } from "./driver-qualification.service.js";
@@ -126,7 +127,7 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
   const weekEndIso = `${weekEnd}T00:00:00.000Z`;
 
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
 
     const driversRes = await client.query(
       `
@@ -248,7 +249,7 @@ export async function reschedulePlannerLoad(
   }
 
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
 
     const loadRes = await client.query(
       `

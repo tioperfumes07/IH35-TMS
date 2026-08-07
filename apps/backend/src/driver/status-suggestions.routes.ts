@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
@@ -31,7 +32,7 @@ export async function registerDriverStatusSuggestionsRoutes(app: FastifyInstance
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
       if (!operatingCompanyId) return [];
 
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
       const res = await client.query(
         `
           WITH latest_response AS (
@@ -86,7 +87,7 @@ export async function registerDriverStatusSuggestionsRoutes(app: FastifyInstance
       );
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
       if (!operatingCompanyId) return false;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
 
       const suggestion = await client.query(
         `

@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
@@ -20,7 +21,7 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
     const q = companyQuery.safeParse(req.query ?? {});
     if (!q.success) return reply.code(400).send({ error: "validation_error" });
     const rows = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [q.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, q.data.operating_company_id);
       const res = await client.query(`SELECT * FROM safety.anomaly_alert_rules WHERE operating_company_id = $1 ORDER BY rule_name`, [q.data.operating_company_id]);
       return res.rows;
     });
@@ -38,7 +39,7 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
     }).safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error" });
     const row = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       const res = await client.query(
         `INSERT INTO safety.anomaly_alert_rules (operating_company_id,rule_slug,rule_name,category,detector_function,threshold_config,severity,notify_roles,cadence_minutes)
          VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7,$8::text[],$9) RETURNING *`,
@@ -80,7 +81,7 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
     }).safeParse(req.query ?? {});
     if (!q.success) return reply.code(400).send({ error: "validation_error" });
     const rows = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [q.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, q.data.operating_company_id);
       const filters = ["operating_company_id = $1"]; const vals: unknown[] = [q.data.operating_company_id]; let i = 2;
       if (q.data.status) { filters.push(`resolution_status = $${i++}`); vals.push(q.data.status); }
       if (q.data.severity) { filters.push(`severity = $${i++}`); vals.push(q.data.severity); }
@@ -133,7 +134,7 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
     const q = companyQuery.safeParse(req.body ?? {});
     if (!q.success) return reply.code(400).send({ error: "validation_error" });
     await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [q.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, q.data.operating_company_id);
       await seedDefaultAnomalyRules(client, q.data.operating_company_id);
     });
     return { ok: true };
@@ -144,7 +145,7 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
     const q = companyQuery.safeParse(req.body ?? {});
     if (!q.success) return reply.code(400).send({ error: "validation_error" });
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [q.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, q.data.operating_company_id);
       return evaluateRulesForTenant(client, q.data.operating_company_id);
     });
     return result;

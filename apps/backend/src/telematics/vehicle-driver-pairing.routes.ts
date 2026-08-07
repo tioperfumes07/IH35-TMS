@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
@@ -38,7 +39,7 @@ export async function registerVehicleDriverPairingRoutes(app: FastifyInstance) {
 
     const days = parsed.data.days ?? 30;
     const rows = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [parsed.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, parsed.data.operating_company_id);
 
       const filters: string[] = ["a.operating_company_id = $1::uuid", "a.started_at >= now() - ($2::int || ' days')::interval"];
       const params: unknown[] = [parsed.data.operating_company_id, days];
@@ -96,7 +97,7 @@ export async function registerVehicleDriverPairingRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     const payload = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [parsed.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, parsed.data.operating_company_id);
       const res = await client.query<{ driver_id: string | null }>(
         `
           SELECT a.driver_id::text

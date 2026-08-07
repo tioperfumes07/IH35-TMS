@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
@@ -63,7 +64,7 @@ export async function registerDriverReportsRoutes(app: FastifyInstance) {
           if (loadOk.rows.length === 0) throw new Error("load_not_owned");
         }
 
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+        await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
 
         const reportId = randomUUID();
         await client.query(

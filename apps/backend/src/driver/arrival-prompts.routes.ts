@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -35,7 +36,7 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
       if (!operatingCompanyId) return [];
 
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
       const res = await client.query<{
         id: string;
         stop_id: string;
@@ -98,7 +99,7 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
       if (!operatingCompanyId) return { updated: false };
 
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
 
       const res = await client.query<{ stop_id: string }>(
         `
@@ -168,7 +169,7 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
       if (!operatingCompanyId) return;
 
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
       await appendCrudAudit(
         client,
         user.uuid,

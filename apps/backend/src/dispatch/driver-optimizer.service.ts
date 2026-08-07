@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 
 /** Default multi-factor weights (B21-D8). */
@@ -177,7 +178,7 @@ export type OptimalDriversQuery = {
 
 export async function listOptimalDriversForLoad(userId: string, query: OptimalDriversQuery) {
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [query.operating_company_id]);
+    await setScopedCompanyContext(client, userId, query.operating_company_id);
 
     const loadRes = await client.query(
       `
