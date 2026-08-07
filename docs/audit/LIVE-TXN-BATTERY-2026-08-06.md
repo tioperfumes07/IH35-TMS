@@ -6488,3 +6488,64 @@ entity-type check **before** the file INSERT so a bad link can never destroy a g
 defect was three lines of type declaration I only read **because** I was chasing the empty table.
 **Investigating a non-defect thoroughly is not wasted work — the surrounding code is where the real one
 was.**
+
+---
+
+## 106. WORM RESIDUAL TRIAGE + THE `driver_pay_rates` NAME COLLISION — three clarifications, one of them a withdrawal of my own flag
+
+**Verdict: no new defect. Three things corrected or clarified, all measured. Recording because each one is a
+trap the next agent would otherwise hit.**
+
+**1. `maintenance.severe_repair_estimates` — I flagged its deletions; that flag is WITHDRAWN.** In item 103
+I noted it "has already lost rows (`n_tup_ins=11 / n_tup_del=2`) and may deserve the same question."
+Applying my own obligation-vs-parameter test to the schema answers it: **it is a PARAMETER — specifically a
+derived projection.** Columns: `estimate_status`, `estimated_labor_cents` / `estimated_parts_cents` /
+`estimated_outside_service_cents` / `estimated_total_cents`, `trigger_wo_id` FK → `maintenance.work_orders`,
+and decisively **`refreshed_at`**. There is **no document number and no link to anything that settled it**,
+and prod carries `trg_refresh_severe_repair_estimate_from_line` and `trg_upsert_severe_repair_estimate` —
+**it is recomputed from work-order lines.** Its 2 deletions are the refresh mechanism working, not data
+loss. **Correctly excluded from the WORM sweep. My flag was over-cautious and is withdrawn.**
+
+**2. `mdata.equipment` is NOT unscoped.** My "tables with no scope column" sweep looked only for
+`operating_company_id` / `tenant_id`, so `mdata.equipment` (183 rows) appeared on the list. It uses
+**convention 3** — the same as `mdata.units`: `owner_company_id` + `currently_leased_to_company_id`, with
+`equipment_select` RLS scoping on **both** and `relforcerowsecurity = true`. **Correct, and consistent with
+the TRK-owns / TRANSP-leases model.** The remaining names on that list are child tables scoped through their
+parent (`load_stops`→loads, `driver_cdl_*`→drivers, `customer_contacts`→customers). **No finding — my filter
+was incomplete, not the schema.**
+
+**3. ★ TWO TABLES NAMED `driver_pay_rates` MODEL DIFFERENT THINGS. I assumed a split-brain; it is not one.**
+
+Both are live: `mdata.driver_pay_rates` (7 rows) and `driver_finance.driver_pay_rates` (93 rows). Different
+modules touch each — the **driver-profile UI** writes and reads `mdata.*`
+(`mdata/driver-profile.routes.ts` INSERT `:254`, UPDATE `:558`/`:567`, SELECT `:150`/`:313`/`:451`/`:534`),
+while **load booking** reads `driver_finance.*` (`dispatch/book-load.service.ts:362`, whose error text at
+`:456` is *"no active driver_finance.driver_pay_rates row for this driver/entity"*). That is a textbook
+split-brain shape: **a rate entered on the driver's profile would not be the rate used when booking a load.**
+
+**It is wrong, and the column lists prove it:**
+
+| table | keyed by | measures |
+|---|---|---|
+| `mdata.driver_pay_rates` | **`driver_qualification_id`** → `mdata.driver_equipment_qualifications`, **`line_item_template_id`** → `catalogs.equipment_line_item_templates` | `amount`, `effective_from/to`, `change_reason`, `change_notes`, `previous_rate_id` |
+| `driver_finance.driver_pay_rates` | **`driver_id`**, `operating_company_id` | `basis_type`, `rate_per_mile_cents`, `flat_per_load_cents`, `miles_basis`, `is_active` |
+
+**`mdata.driver_pay_rates` has no `driver_id` at all** — the driver is reached through the equipment
+qualification. It is a **per-equipment-qualification LINE-ITEM rate** (what this driver earns for this
+line item on this equipment class). `driver_finance.driver_pay_rates` is the **driver's base pay basis**
+(per-mile or flat-per-load). **Different grain, different purpose, unfortunate shared name.** The two modules
+are each reading the correct table for their question. **No defect.**
+
+**Why this is worth a paragraph rather than a shrug:** two identically-named tables in different schemas,
+both live, both touched by different modules, is exactly the shape of the split-brain defects this log is
+full of — and the canonical/RETIRE law (`driver_finance.*` canonical, never `payroll.*`/`settlement.*`)
+primes a reader to conclude `mdata.driver_pay_rates` is the retired one. **It is not on any RETIRE list; it
+is a different table.** The next agent will form the same hypothesis I did. **The disproof is the column
+list — read the keys before concluding two same-named tables are duplicates.**
+
+**One low-severity observation, not filed:** `mdata.driver_pay_rates` deliberately keeps rate history
+(`previous_rate_id` chain, `change_reason`, `change_notes`, `deactivated_at`) yet its FK to
+`driver_equipment_qualifications` is **`ON DELETE CASCADE`** — removing a qualification silently destroys
+that rate history. It is a parameter table so it is out of WORM scope by my own test, but a table that
+carries an explicit change-history chain and can be cascade-erased is a mild contradiction. Recorded for
+whoever owns driver qualifications; no card.
