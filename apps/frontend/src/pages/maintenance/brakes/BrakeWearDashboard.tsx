@@ -2,6 +2,7 @@
  * Brake Wear Dashboard — GAP-63 / CAP-13
  * At-risk fleet list with replacement projected within 30 days.
  */
+import { entityLabel } from "../../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -61,7 +62,7 @@ export function BrakeWearDashboard() {
         sortable: true,
         render: (row) => (
           <Link to={`/fleet/units/${row.unit_uuid}?tab=brakes`} className="font-medium text-slate-700 hover:underline">
-            {row.unit_number ?? row.unit_uuid.slice(0, 8)}
+            {entityLabel(row.unit_number, row.unit_uuid, "Unit")}
           </Link>
         ),
       },

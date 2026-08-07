@@ -1,3 +1,4 @@
+import { entityLabel } from "../../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLink } from "../../../components/shared/EntityLink";
@@ -191,7 +192,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
             <div>
               <p className="text-sm font-semibold">Dispute Detail</p>
               <p className="text-xs text-gray-500">
-                <EntityLink kind="settlement" id={detail.settlement_id} label={detail.settlement_display_id ?? detail.settlement_id?.slice(0, 8)} /> ·{" "}
+                <EntityLink kind="settlement" id={detail.settlement_id} label={entityLabel(detail.settlement_display_id, detail.settlement_id, "Settlement")} /> ·{" "}
                 <span
                   title={
                     detail.driver_name || detail.driver_id

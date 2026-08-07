@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -21,7 +22,7 @@ function daysUntil(value: string) {
 }
 
 function unitLabel(unit: InsuranceCoverageGapUnit) {
-  return unit.unit_number || unit.unit_id.slice(0, 8);
+  return entityLabel(unit.unit_number, unit.unit_id, "Unit");
 }
 
 export function CoverageGapDashboard() {

@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useMemo } from "react";
 import type { LaneProfitabilityLane, LaneProfitabilityLoadDetail } from "../../api/reports";
 import { formatDateUS } from "../../lib/formatDate";
@@ -28,7 +29,7 @@ const LOAD_COLUMNS: Array<ParityColumn<LaneProfitabilityLoadDetail>> = [
     label: "Load",
     sortable: true,
     render: (load) => (
-      <EntityLink kind="load" id={load.load_id} label={load.load_number ?? load.load_id.slice(0, 8)} />
+      <EntityLink kind="load" id={load.load_id} label={entityLabel(load.load_number, load.load_id, "Load")} />
     ),
   },
   {
