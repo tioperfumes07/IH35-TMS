@@ -981,3 +981,41 @@ dates, correct citations, correct entity scoping, and automatic driver→obligat
 Note the 6 "Overdue" items are **expected state**, not a defect — they are annual obligations for
 drivers that have just been created in a test entity with no prior query/review history. Flagging
 them as overdue is the correct behaviour.
+
+## 24 — ★ REQUIRED DOCUMENTS: FMCSA matrix correct + owner decision E1/W-8BEN implemented — PASS
+
+`/compliance?tab=required_docs` → sub-tabs `Drivers · Units · Customers · Vendors`. Header states the
+model plainly: *"Which documents are required per record. Warn-first; promote any to a hard block.
+Seeded from FMCSA/IRS defaults."* Drivers tab, 6 rows, all `Source = Regulatory default`,
+`Enforcement = Warn`, each with a `Make hard block` action:
+
+| document | authority | expiry |
+|---|---|---|
+| Commercial Driver License (`cdl`) | **FMCSA §383** | Tracked |
+| DOT Medical Certificate (`med_cert`) | **FMCSA §391.41** | Tracked |
+| Motor Vehicle Record (`mvr`) | **FMCSA §391.25** | Tracked |
+| Drug & Alcohol Clearinghouse (`clearinghouse`) | **FMCSA §382.701** | Tracked |
+| Driver Employment Application (`driver_application`) | **FMCSA §391.21** | — |
+| **Form W-9 (or W-8BEN if foreign)** (`w9`) | **IRS** | — |
+
+**Every citation is correct** — §383 CDL, §391.41 medical certificate, §391.25 MVR, §382.701
+Clearinghouse, §391.21 employment application. Checked against `ih35-fmcsa-compliance`, not assumed.
+
+**★ OWNER DECISION IMPLEMENTED — verified, not asserted.** `CPA ANSWERS.docx` §12 states:
+*"We need to include the wben8 treasure form to confirm that the person does exist in Mexico, it
+should go in the driver file when hiring and renew every year."* And `OWNER-DECISIONS-FINAL`
+**E1 — "no withholding from anyone; W-8BEN on file + in Legal."** The **`Form W-9 (or W-8BEN if
+foreign)`** row is live in the driver required-documents matrix under IRS authority. **The owner
+decision is built, not pending.** This is exactly the driver model the standards describe — Mexican
+B1 1099 contractors, so a W-8BEN rather than a W-4.
+
+**The warn-first / promote-to-hard-block design is the right control shape**: it surfaces the gap
+without blocking operations by default, and lets the carrier escalate any single document to a hard
+dispatch block. That matches how McLeod/Alvys handle driver-qualification enforcement.
+
+**Battery PASS.** No defect.
+
+**Minor note (recorded, not boarded):** navigating directly to `/compliance/required-documents`
+silently redirects to `/home` rather than resolving or 404-ing; the tab is reachable only via
+`/compliance?tab=required_docs`. A deep link that quietly lands somewhere unrelated is a small
+usability wart, not a data defect.
