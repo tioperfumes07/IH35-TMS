@@ -44,8 +44,8 @@ only truly closed when both the coder's ☑ and CC-3's VERIFIED are present.
 
 | metric | count |
 |---|---|
-| **total findings filed** | **81** |
-| **OPEN — awaiting a coder** | **73** |
+| **total findings filed** | **82** |
+| **OPEN — awaiting a coder** | **74** |
 | **☑ fixed & signed off by a coder** | **0** |
 | **VERIFIED ✓ by CC-3 (independently re-tested)** | **2** (`CLS-MONEY-WORM-GAP` 99.6% · `LV-ESCROW-SUBLEDGER-NOT-WORM` partial — both still OPEN pending coder sign-off) |
 | closed / withdrawn / superseded by CC-3 | 8 |
@@ -143,6 +143,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-DRIVER-BILLS-IS-A-MONEY-EVENT` | P2 | CC-1 (money/WORM) | — | — | — | — | — | **CC-3 filed 2026-08-07, re-confirmed live** — `driver_finance.driver_bills` is **STILL EXPOSED** (`can_delete=true`, `del_trg=0`). Schema proves it is a per-load earning document, not config. One line in the next sweep. |
 | ☐ | `LV-BILL-MDATA-VENDOR-FK-OPTOUT` | P2 | CC-1 (money) | — | — | — | — | — | **CC-3 filed 2026-08-07** — the entity-consistent vendor FK is NULLABLE; 2 of 11 USMCA bills carry `mdata_vendor_id = NULL` and bypass it. Same mechanism as the un-merged half of ACCT-F158. |
 | ☐ | `LV-FILE-LINK-ENTITY-TYPE-3WAY-MISMATCH` | P2 | mechanical lane | — | — | — | — | — | **CC-3 filed 2026-08-07** — FE `FileEntityType` (8) and backend Zod enum (8) advertise `settlement`/`invoice`; `SUPPORTED_LINK_ENTITY_TYPES` (6) rejects them, **inside the upload transaction — so the throw rolls back the whole file upload.** Second instance of the KANBAN-DROPSTATUS drift class. |
+| ☐ | `LV-OUTBOX-HANDLER-SETS-WRONG-TENANT-GUC` | **P1** | mechanical lane (CC-1 informed) | — | — | — | — | — | **CC-3 PROVEN live 2026-08-07** — 7 outbox handlers scope reads with `app.operating_company_id`, but `mdata` RLS keys on `org.user_accessible_company_ids()` (user identity, never that GUC). 3 of 4 FMCSA events failed `missing_or_cross_tenant` on customers that **exist, are active, and match the payload entity**. Other 6 handlers UNVERIFIED — may no-op SILENTLY. |
 | ☐ | `LV-ACCT-F158-IS-ISOLATED` | info | CC-1 (informational) | — | — | — | — | — | **CC-3 scope note 2026-08-07** — parity sweep bounds the ACCT-F158 P0: **11 of 12** entity FKs and **135 of 135** triggers are repo-traceable. Fix is ONE migration, not a remediation programme. |
 
 ---

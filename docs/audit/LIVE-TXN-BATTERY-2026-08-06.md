@@ -6663,3 +6663,68 @@ a strong defect signal and was **wrong both times** — `docs.file_links` (item 
 resolution was the same: **find the writer and the intended tier before concluding.** `file_links` had a
 fully-wired writer nobody had exercised; `account_role_bindings` is a deliberately-empty fallback behind a
 primary that resolves. **An empty table is evidence of nothing until you know what was supposed to fill it.**
+
+---
+
+## 109. ★★ OUTBOX — 99.98% healthy, and the 7 failures contained one real class defect: handlers set a tenant GUC the RLS policies do not read
+
+**Unit: the transactional outbox — the mission's "no silent failures" clause. Verdict: the queue is healthy;
+one of the four failure causes is a genuine P1 class defect.**
+
+**QUEUE HEALTH — excellent, and worth stating plainly:** 31,674 events · **31,667 delivered (99.98%)** ·
+**0 pending** · 0 pending over 24h · **0 locked-undelivered** · **0 stuck locks over 1h** · max retry 6 ·
+1 event retried more than 3 times. **There is no backlog and no stuck-lock problem.** The 7 failures are the
+entire defect surface, so I examined every one.
+
+**THE FOUR CAUSES — three resolved, one real:**
+
+**1. `expense.created` ×2 — "no handler registered". ALREADY FIXED; these are residue.** Both failures are
+from **2026-08-02 only** (`total = 2`, `first_seen = last_seen`), and `expenses.routes.ts:47` records the fix
+in a comment: *"two call sites emitted bare `expense.created`, which was not [handled]"*. The code now emits
+**`expense.created.attributed` / `expense.created.unattributed`** (`:677`, `:691`, `:708`), and **both are
+registered** in `trail-events.handler.ts:18-19`. No new occurrences. **No card.**
+
+**2. `twilio.whatsapp.send` ×1 — "handler unavailable in this environment".** The known Twilio production
+blocker (P7-T3, sender approval pending). 6 of 7 delivered. **Expected state, no card.**
+
+**3. `tms.vendor.push_requested` ×1 (retry 6, 2026-06-27) — "vendor_update_requires_ids".** QBO write-back is
+gated OFF under the locked parallel-books architecture; 9 of 10 delivered. **Legacy, no card.**
+
+**4. ★ `fmcsa.customer.verify_requested` — 3 FAILED of 4, still failing 2026-08-06. THIS ONE IS REAL.**
+
+**The error is `fmcsa_customer_missing_or_cross_tenant`. It is factually false.** All four customers exist,
+are active, and their entity matches the payload exactly (discriminator `customers visible = 2,700 ==
+n_live_tup = 2,700`):
+
+| customer | entity | payload entity | outcome |
+|---|---|---|---|
+| `3e066edd` TIO PERFUMES | USMCA | USMCA | **FAILED** |
+| `01a29250` TEST-Customer-One-20260806 | USMCA | USMCA | **FAILED** |
+| `df25eb7a` GUARD-TEST-…-TRANSP | TRANSP | TRANSP | **FAILED** |
+| `0f65bf5e` GUARD-TEST-…-USMCA | USMCA | USMCA | delivered |
+
+**ROOT CAUSE.** The handler (`fmcsa-customer-verify.handler.ts:37`) scopes its read with
+`set_config('app.operating_company_id', …)`. But `mdata.customers`' `customers_select` policy is
+`is_lucia_bypass() OR (deactivated_at IS NULL AND operating_company_id IN (SELECT
+org.user_accessible_company_ids()))` — and that function's body, read from prod, branches **only** on
+`identity.current_user_role()` and `identity.current_user_id()`. **It never reads
+`app.operating_company_id`.** In a background worker there is no lucia session and no user, so it returns
+**zero companies**, FORCED RLS filters every row, and the handler cannot see a customer that is plainly
+there. **The handler sets a GUC the policy does not consult.**
+
+**IT IS A CLASS: 7 handlers set that GUC and NONE establish a user context or bypass** —
+`fmcsa-customer-verify` (proven) plus `tms-customer-push`, `tms-vendor-push`, `tms-invoice-push`,
+`tms-bill-push`, `tms-account-push`, `tms-item-push`. The processor sets no context either. **UNVERIFIED for
+the other six, and I refuse to overclaim:** they are flag-gated, but `tms.vendor.push_requested` shows 9
+DELIVERED so they do execute. **The open question is whether an empty read makes them no-op SILENTLY instead
+of erroring — which would be strictly worse than FMCSA's loud wrong error.**
+
+**Why the misleading message cost real time, and why I am calling it out separately:** `missing_or_cross_tenant`
+sent me hunting a cross-tenant enqueue bug. The payload entity matched the row entity on **every** event,
+which is what killed that theory and pointed at visibility instead. **A handler must not report "I could not
+see it" as "it does not exist or belongs to someone else"** — those demand opposite fixes, and only one of
+them is real here.
+
+**Residual unknown, stated rather than guessed:** `0f65bf5e` DID deliver, and I cannot yet explain why —
+most plausibly it ran in a request context carrying a user rather than in the background worker. That
+difference would itself corroborate the root cause, but it is **UNVERIFIED**.
