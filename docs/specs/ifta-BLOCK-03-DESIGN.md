@@ -1,4 +1,6 @@
-# BLOCK-03 — IFTA Quarterly Fuel-Tax Engine v2 — Design Spec (DESIGN-ONLY / BUILD-AND-HOLD)
+# BLOCK-03 — IFTA Quarterly Fuel-Tax Engine v2 — Design Spec (DESIGN-ONLY / BUILD-AND-SHIP)
+
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
 
 **Status:** Design / docs only. No code, no DDL, no migration, no posting. Behind a feature flag,
 default **OFF**. Never self-merged; this doc is a HOLD-FOR-JORGE artifact per the Tier-1 lane rule.
@@ -284,6 +286,6 @@ not instead of it:
 
 ---
 
-*Design-only. No migration, no code, no posting authorized by this document. Build-and-hold per Jorge's
+*Design-only. No migration, no code, no posting authorized by this document. Build-and-ship per Jorge's
 Tier-1 lane rule — the next building agent picks up §9's answers before writing any DDL, and must not
 duplicate the already-working v1 preparer without an explicit decision on §0/§5.*

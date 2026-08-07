@@ -1,6 +1,8 @@
 # DESIGN HOLD — CPA Step 3 CORRECTED: CoA role designation + accessorial/TONU additions
 
-**Status:** DESIGN-ONLY · **DOCS-ONLY PR** · **BUILD-AND-HOLD** · **DO NOT MERGE** · no migration, no seed, no Neon write, no flag flip.
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
+**Status:** DESIGN-ONLY · **DOCS-ONLY PR** · **BUILD-AND-SHIP** · **DO NOT MERGE** · no migration, no seed, no Neon write, no flag flip.
 **Branch:** `design/cpa-step3-coa-role-map-hold`
 **CPA posture:** reuse the existing poster · **no new GL math** · flags stay as-is · no writes to Neon/prod.
 
@@ -103,4 +105,4 @@ Posting stays role-resolved (control-account pattern). Forward + reverse, on liv
 - All role designation targets **`accounting.chart_of_accounts_roles`** (primary), **never** `catalogs.account_role_bindings` (legacy fallback).
 - The **system never guesses** a control account — the owner designates through the CoA-roles surface; the resolver stays fail-closed.
 - Reserve subtype + duplicate-reserve archival are **GATED on Jorge's ruling** before any balance-sheet move.
-- **DO NOT MERGE without `JORGE-APPROVED`.** Financial cluster — no self-merge; owner applies any future migration/seed on Neon.
+- **DO NOT MERGE without `JORGE-APPROVED`.** Financial cluster — merge on green with proof; owner applies any future migration/seed on Neon.

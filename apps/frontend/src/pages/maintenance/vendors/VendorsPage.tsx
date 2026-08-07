@@ -17,6 +17,12 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { capNotice, listCapInfo } from "../../../lib/list-cap";
+
+// Named so the fetch and the CLS-SILENT-CAP truncation check read the SAME numbers and cannot drift.
+// Browse cap is the route max; the search cap is deliberately smaller because a search should narrow.
+const AP_VENDOR_BROWSE_CAP = 1000;
+const AP_VENDOR_SEARCH_CAP = 200;
 
 type VendorDraft = {
   code: string;
@@ -69,7 +75,7 @@ export function VendorsPage() {
       listVendors({
         operating_company_id: companyId,
         status: "active",
-        limit: apVendorSearch ? 200 : 1000,
+        limit: apVendorSearch ? AP_VENDOR_SEARCH_CAP : AP_VENDOR_BROWSE_CAP,
         search: apVendorSearch || undefined,
       }),
     enabled: Boolean(companyId) && (createOpen || Boolean(editing)),
@@ -82,6 +88,22 @@ export function VendorsPage() {
         .sort((a, b) => a.label.localeCompare(b.label)),
     [apVendorsQ.data?.vendors]
   );
+
+  // CLS-SILENT-CAP. The comment above already records that `limit: 1000` "dropped vendors past page 1",
+  // and server-search was added as the mitigation — but that only helps a user who already suspects the
+  // vendor is missing. Unsearched, this picker loads 1,000 of 2,836 active vendors on prod TODAY and
+  // renders no indication whatsoever, so a vendor in the last 1,836 looks like it does not exist.
+  // listVendors returns the server's real `total`, so the truncation here is EXACT, not inferred.
+  const apVendorCap = useMemo(
+    () =>
+      listCapInfo(
+        apVendorsQ.data?.vendors?.length ?? 0,
+        apVendorSearch ? AP_VENDOR_SEARCH_CAP : AP_VENDOR_BROWSE_CAP,
+        apVendorsQ.data?.total ?? null,
+      ),
+    [apVendorsQ.data, apVendorSearch]
+  );
+  const apVendorCapNotice = capNotice(apVendorCap, "vendors");
 
   const apVendorLabelById = useMemo(() => {
     const map = new Map<string, string>();
@@ -266,6 +288,12 @@ export function VendorsPage() {
           <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Code (optional)" value={draft.code} onChange={(e) => setDraft((p) => ({ ...p, code: e.target.value.toUpperCase() }))} />
           <div className="space-y-1">
             <label className="text-[11px] font-semibold text-gray-600">AP Vendor (mdata.vendors)</label>
+            {/* CLS-SILENT-CAP: say so when the picker is not showing every vendor. */}
+            {apVendorCapNotice ? (
+              <p className="text-[10px] text-slate-700" data-testid="ap-vendor-cap-notice">
+                {apVendorCapNotice}
+              </p>
+            ) : null}
             <ReferenceSelect
               options={apVendorOptions}
               value={draft.mdata_vendor_id}
@@ -299,6 +327,12 @@ export function VendorsPage() {
             <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={editing.display_name} onChange={(e) => setEditing((p) => (p ? { ...p, display_name: e.target.value } : p))} />
             <div className="space-y-1">
               <label className="text-[11px] font-semibold text-gray-600">AP Vendor (mdata.vendors)</label>
+            {/* CLS-SILENT-CAP: say so when the picker is not showing every vendor. */}
+            {apVendorCapNotice ? (
+              <p className="text-[10px] text-slate-700" data-testid="ap-vendor-cap-notice">
+                {apVendorCapNotice}
+              </p>
+            ) : null}
               <ReferenceSelect
                 options={apVendorOptions}
                 value={editing.mdata_vendor_id}

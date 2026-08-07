@@ -1,11 +1,13 @@
 # 1099-NEC / 1042-S Annual Tax-Document Generation + General Tax-Document PDF Engine
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 **Block:** BLOCK-24-of-29 (TIER3.5-1099-ANNUAL) — annual generation engine.
 Distinct from **BLOCK-17-of-29 (TIER2.5-W2-1099)**, already DONE on `main`, which built the
 per-driver **worker-classification** field (`driver_finance.driver_pay_settings.worker_class`,
 `mdata.drivers.employment_status`) that this block *consumes* — it does not redo it.
 
-**Status: DESIGN-ONLY / BUILD-AND-HOLD.** No migration in this PR. No posting logic. No
+**Status: DESIGN-ONLY / BUILD-AND-SHIP.** No migration in this PR. No posting logic. No
 transmission logic. This document is the spec a future BUILD PR implements against, and the
 `docs.tax_document.status` chosen output MUST be treated as advisory/reference until the CPA
 signs off and `TAX_DOC_1099_ENABLED` is flipped ON by the owner. **Financial-cluster — the

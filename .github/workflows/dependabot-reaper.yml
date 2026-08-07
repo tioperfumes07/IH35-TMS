@@ -1,0 +1,68 @@
+name: dependabot-reaper
+
+# CI-F24 — the permanent fix for dependency chores piling up.
+#
+# Dependency PRs were opened weekly and merged by nobody. Eight accumulated; while they sat, each
+# one's package-lock.json drifted from main and from the other seven, so they conflicted with each
+# other, and all of them failed a gate that could not be satisfied (CI-F21). Two were the npm_and_yarn
+# SECURITY group — supply-chain patches held out of production by an empty merge queue.
+#
+# Fixing CI-F21 made them mergeable. It did not make them MERGE, and nothing else was going to. Without
+# this, the pile rebuilds next Monday.
+#
+# Runs on a schedule rather than on pull_request because the useful moment is "checks have since gone
+# green", which is not a PR event. It never checks out or executes PR code — it only reads PR metadata
+# and calls the merge API — so the usual pull_request_target supply-chain hazard does not apply.
+#
+# It cannot bypass anything: it merges ONLY when all four REQUIRED checks are SUCCESS on the PR's
+# current head sha, the bump is patch/minor, and GitHub reports it mergeable. MAJOR bumps are always
+# left for a human. See scripts/ci-dependabot-reaper.mjs for the rule and its selftest.
+
+on:
+  schedule:
+    # Every 3 hours. Frequent enough that a bump merges the day it goes green; infrequent enough that
+    # it costs almost nothing and cannot become a source of API-rate or queue pressure.
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report what would happen without merging anything"
+        type: boolean
+        default: false
+
+# Never let two reapers run at once — concurrent merges of PRs that touch the same lockfile is exactly
+# the conflict storm this exists to end.
+concurrency:
+  group: dependabot-reaper
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  reap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Prove the merge rule before using it
+        run: node scripts/ci-dependabot-reaper.mjs --selftest
+
+      - name: Reap
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REAPER_REPO: ${{ github.repository }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            node scripts/ci-dependabot-reaper.mjs --dry-run
+          else
+            node scripts/ci-dependabot-reaper.mjs
+          fi

@@ -1,9 +1,9 @@
 {
   "block_id": "bank-splits-vendor-bill-gl-atomic",
-  "status": "HOLD",
+  "status": "BUILD",
   "classification": "FINANCIAL",
   "phase": "tier1",
-  "task": "CPA VETO remediation: atomic one-transaction vendor-bill bank-split GL (FOR UPDATE + dual postSourceTransactionInClientTx + dual JE proof). Rebased onto #2719 isolated-company/.companyId; preserve step 924 honesty guard + atomic DB tests. Draft HOLD — do not merge.",
+  "task": "CPA VETO remediation: atomic one-transaction vendor-bill bank-split GL (FOR UPDATE + dual postSourceTransactionInClientTx + dual JE proof). Rebased onto #2719 isolated-company/.companyId; preserve step 924 honesty guard + atomic DB tests. merge on green (owner law 2026-08-03: no holds; proof, not approval, is the gate).",
   "branch": "cursor/bank-splits-gl-integrity-6b53",
   "lane": "cloud",
   "allowed_files": [
@@ -20,7 +20,7 @@
   "extra_gates": [],
   "acceptance": [
     {
-      "check": "commitVendorBillSplitLineAtomic posts bill+payment GL in one txn via postSourceTransactionInClientTx; dual JE proof before posted=true; rollback leaves zero artifacts; DB tests cover concurrent same-line, flags-off, missing ap_control, wrong entity, cross-tenant isolation using createIsolatedOperatingCompany().companyId; step 924 + executable-contract honesty guard PASS; no tracker/QBO/package.json/CI hotfile churn; draft HOLD."
+      "check": "commitVendorBillSplitLineAtomic posts bill+payment GL in one txn via postSourceTransactionInClientTx; dual JE proof before posted=true; rollback leaves zero artifacts; DB tests cover concurrent same-line, flags-off, missing ap_control, wrong entity, cross-tenant isolation using createIsolatedOperatingCompany().companyId; step 924 + executable-contract honesty guard PASS; no tracker/QBO/package.json/CI hotfile churn; merge on green (owner law 2026-08-03: no holds; proof, not approval, is the gate); ."
     }
   ],
   "note": "Product service from #2717 atomic remediation. Isolation helper is canonical #2719 isolated-company.ts (db-fixture re-export only). Do not duplicate createIsolatedOperatingCompany. Do not weaken #2719 shared-coa / global bindings guard."

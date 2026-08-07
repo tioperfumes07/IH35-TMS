@@ -34,6 +34,12 @@ export async function recomputeInvoiceTotals(client: { query: (sql: string, valu
         COALESCE(SUM(CASE WHEN line_type = 'tax' THEN line_total_cents ELSE 0 END), 0)::bigint AS tax_cents
       FROM accounting.invoice_lines
       WHERE invoice_id = $1
+        -- ACCT-F156: void-not-delete means a soft-deleted line STAYS in this table carrying its
+        -- original amount. Without this predicate, soft-deleting an invoice line does not reduce the
+        -- invoice total, and the header silently disagrees with ACCT-F146's tie-out, which DOES filter
+        -- soft_deleted_at. Zero soft-deleted lines exist today (21,213 of 21,213 live on prod), so this
+        -- has never produced a wrong number -- it is armed for the first soft-delete.
+        AND soft_deleted_at IS NULL
     `,
     [invoiceId]
   );
