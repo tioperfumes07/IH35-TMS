@@ -1,7 +1,9 @@
-# Opening-Balance Import (re-syncable) + 04/01/2026 Cutover — design (build-and-HOLD)
+# Opening-Balance Import (re-syncable) + 04/01/2026 Cutover — design (build-and-ship)
+
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
 
 **Authoritative build spec.** Owner decisions LOCKED (GUARD → CODER, 2026-07-15). Every code/migration piece is
-**financial → build-and-HOLD**: owner approves + applies migrations on Neon; GUARD validates each migration on a
+**financial → build-and-ship**: owner approves + applies migrations on Neon; GUARD validates each migration on a
 throwaway PG (apply-twice) and re-proofs live. **QBO is never written to.** This doc captures the design so it
 can't drift before the sequence reaches it; it does not authorize a build ahead of the sequence.
 

@@ -14,6 +14,7 @@ import { registerFilingsAggregateRoutes } from "./filings-aggregate.routes.js";
 import { registerPropertyTaxRoutes } from "./property-tax/property-tax.routes.js";
 import { registerComplianceSchedulerJobs } from "../scheduler/jobs.index.js";
 import { registerNotificationRoutes } from "../notifications/notifications.routes.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 const dashboardQuery = z.object({
   operating_company_id: z.string().uuid(),
@@ -81,7 +82,7 @@ export async function registerComplianceRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
 
     const rows = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           SELECT id::text, credential_type, entity_type, entity_id::text, expiration_date::text,

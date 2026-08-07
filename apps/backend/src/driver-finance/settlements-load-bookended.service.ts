@@ -194,6 +194,11 @@ export async function aggregateSettlementTotals(
         COALESCE(SUM(CASE WHEN line_type = 'reimbursement' THEN amount ELSE 0 END), 0) AS reimbursements
       FROM driver_finance.settlement_lines
       WHERE settlement_id = $1
+        -- ACCT-F156: settlement_lines soft-deletes via is_active, so an inactive line stays here with
+        -- its amount. Unfiltered, this misstates ALL THREE aggregates at once -- earnings, deductions
+        -- and reimbursements -- which is the driver's entire settlement. Table is empty today; latent
+        -- until pay-runs start, which is exactly when nobody re-audits it.
+        AND is_active = true
     `,
     [settlementId]
   );
