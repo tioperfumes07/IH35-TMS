@@ -44,10 +44,11 @@ only truly closed when both the coder's ☑ and CC-3's VERIFIED are present.
 
 | metric | count |
 |---|---|
-| **total findings filed** | **84** |
-| **OPEN — awaiting a coder** | **76** |
+| **total findings filed** | **85** |
+| **OPEN — awaiting a coder** | **77** |
 | **☑ fixed & signed off by a coder** | **0** |
 | **VERIFIED ✓ by CC-3 (independently re-tested)** | **2** (`CLS-MONEY-WORM-GAP` 99.6% · `LV-ESCROW-SUBLEDGER-NOT-WORM` partial — both still OPEN pending coder sign-off) |
+| **created-txn registration runs** | **3** — 2 PASS, **1 FAIL (P0)**; see the verify section below |
 | closed / withdrawn / superseded by CC-3 | 8 |
 
 **Still zero coder sign-offs — and that is the honest number.** On 2026-08-07 CC-1 DID fix a CC-3 finding (`ACCT-F160`, which drained `CLS-MONEY-WORM-GAP` by 99.6% and is verified live below), but **no lane has ticked its own box yet**, so the ☑ column stays 0. CC-3 will not tick another lane's box (clause 2). This register starts the
@@ -144,9 +145,34 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-BILL-MDATA-VENDOR-FK-OPTOUT` | P2 | CC-1 (money) | — | — | — | — | — | **CC-3 filed 2026-08-07** — the entity-consistent vendor FK is NULLABLE; 2 of 11 USMCA bills carry `mdata_vendor_id = NULL` and bypass it. Same mechanism as the un-merged half of ACCT-F158. |
 | ☐ | `LV-FILE-LINK-ENTITY-TYPE-3WAY-MISMATCH` | P2 | mechanical lane | — | — | — | — | — | **CC-3 filed 2026-08-07** — FE `FileEntityType` (8) and backend Zod enum (8) advertise `settlement`/`invoice`; `SUPPORTED_LINK_ENTITY_TYPES` (6) rejects them, **inside the upload transaction — so the throw rolls back the whole file upload.** Second instance of the KANBAN-DROPSTATUS drift class. |
 | ☐ | `LV-OUTBOX-HANDLER-SETS-WRONG-TENANT-GUC` | **P1** | mechanical lane | — | — | — | — | — | **CC-3 PROVEN live 2026-08-07 — SCOPE CORRECTED SAME SESSION: it is ONE handler, not seven.** `fmcsa-customer-verify` sets only `app.operating_company_id` and no `app.bypass_rls`, so `mdata.customers` RLS (which keys on user identity) hides the row: 3 of 4 events failed `missing_or_cross_tenant` on customers that **exist, are active, and match the payload entity**. **6 of 7 handlers set the bypass correctly — `tms-vendor-push.handler.ts:246` is the reference; the fix is one line.** See `LV-OUTBOX-GUC-IS-ONE-HANDLER-NOT-SEVEN`. |
+| ☐ | `LV-TXN-REGISTER-VERIFY-03-DELIVERED-LOAD-FAIL` | **P0** | CC-1 (money — revenue latch) | — | — | — | — | — | **CC-3 PROVEN live 2026-08-07 — the created-but-doesn't-register gap.** 2 USMCA loads in delivered states (`L-20260802-0258`=delivered, `LUSMCAFREIGHT-20260806-0001`=delivered_pending_docs) posted **0 revrec, 0 A/R, 0 GL**. Discriminator: `load_revenue_recognition_postings` `visible_all=2==n_live_tup=2==n_tup_ins=2` — 2 rows in the table's lifetime, neither USMCA. Same root cause as `LV-TXN-004`. **Asymmetry for the fixer:** one load has 2 driver bills + 0 settlements, the other 1 settlement + 0 driver bills. |
 | ☐ | `LV-SCENARIO-REVENUE-DOT-IS-FALSE-GREEN` | **P0** | CC-1 (money — probe semantics) | — | — | — | — | — | **CC-3 PROVEN live 2026-08-07** — the "Revenue recognition latch" dot is GREEN on USMCA while `load_revenue_recognition_postings` for USMCA = **0** and `unbilled_revenue` GL lines = **0**. Its probe is **byte-identical** to `hop.invoice` — it measures invoice status, not the latch. **Under the owner's "drive every dot green" directive this dot cannot fail, and it certifies exactly what `LV-TXN-004` proves is broken.** |
 | ☐ | `LV-USMCA-SCENARIO-MAP-2026-08-07` | info | ALL LANES (work list) | — | — | — | — | — | **CC-3 reference 2026-08-07** — all 24 tracker probes run VERBATIM on USMCA: **14 green / 10 red**, each red dot's blocker measured. 6 of 10 exercisable today with no code fix; 2 blocked on `LV-TXN-004`; 1 hard-blocked on `LV-WO-CREATE-500-OPENED-AT`; 1 config-gated. |
 | ☐ | `LV-ACCT-F158-IS-ISOLATED` | info | CC-1 (informational) | — | — | — | — | — | **CC-3 scope note 2026-08-07** — parity sweep bounds the ACCT-F158 P0: **11 of 12** entity FKs and **135 of 135** triggers are repo-traceable. Fix is ONE migration, not a remediation programme. |
+
+---
+
+## CC-3 CREATED-TXN REGISTRATION VERIFY — per-surface PASS/FAIL (owner order 2026-08-07)
+
+*For each transaction created in USMCA: balanced JE in the GL (or correctly no-GL by design) · both-way
+linkage (source↔JE, source↔operational parents) · economics correct. Every run reads unmasked with the
+correct scope per table and a positive control on the same table. `mdata.drivers/units/loads` RLS is NOT
+keyed on `app.operating_company_id` — units/equipment have no such column at all.*
+
+| run | date | surface | verdict | evidence |
+|---|---|---|---|---|
+| 01 | 2026-08-07 | **bank categorization** | **PASS** (4/4) | txn `cb271ba0` $918.00 → JE `ff746cfa` 120 ms later. Balanced DR=CR 91,800 · DR `6999` / CR `1000` correct for money-out · forward + reverse links (2 `transaction_source_links`) · `abs(amount_cents)` = GL debit **to the cent** · USMCA on source, JE and both postings |
+| 02 | 2026-08-07 | **all surfaces, 24h window** | **PASS** (10/10 JEs · 5/5 docs) | 10 JEs: all balanced, 2 lines each, **0 lines missing an account**, **2 source links each**. Correct pairs: bill `2000`/`5400` · bill-payment `1295`/`2000` · invoice `1100`/`4000` · categorization `1000`/`6300`,`1000`/`6999`. Docs: bill REGISTERED · `INV-2026-00007` REGISTERED · `INV-2026-00006` proforma = **correctly no-GL by design** · 2 loads pre-delivery/cancelled = correctly no revrec |
+| 03 | 2026-08-07 | **delivered load** | **★ FAIL (P0)** | **2 loads in delivered states posted NOTHING** — 0 revrec, 0 A/R, 0 GL. Handed to CC-1 as `LV-TXN-REGISTER-VERIFY-03-DELIVERED-LOAD-FAIL`. Predicted in run #02 and confirmed. |
+
+**SURFACES STILL UNEXERCISED (cannot be verified until the harness creates one):** fuel txn (USMCA has 0 —
+all 1,555 fuel rows are TRANSP and must NOT be borrowed) · work order (**hard-blocked** by
+`LV-WO-CREATE-500-OPENED-AT`) · driver advance · escrow movement · settlement deduction · vendor credit ·
+factoring advance · insurance claim · legal matter · POD/BOL file link (`docs.file_links` `n_tup_ins = 0`).
+
+**STANDING RULE FOR EVERY FUTURE RUN:** a delivered USMCA load must show `revrec_rows > 0`. **Never confirm
+revenue recognition from the Scenario Tracker's revenue dot — it is GREEN today and is a proven false green
+(`LV-SCENARIO-REVENUE-DOT-IS-FALSE-GREEN`).**
 
 ---
 
