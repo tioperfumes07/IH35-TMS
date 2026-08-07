@@ -1476,3 +1476,49 @@ on this entity." That was true of the **`reverses_je_id` census** but **overstat
 reversal JE does exist (43b3ed80); it simply isn't *linked*, which is why the column-based census
 returned zero. The measurement was right, my sentence around it was too broad, and the corrected
 version above is what CC-1 should work from.
+
+## 32 — ★★ JE VOID — PERFECT WORM REVERSAL (PASS) — and it pinpoints the bill-void defect exactly
+
+Voided JE `ff286e60` (Expense posting, $1.00) through the real UI. The drawer states its contract
+up front: *"Voiding posts an **equal-and-opposite reversing entry** and keeps the audit trail. This
+can't be undone."* Reason required (min 3 chars). **It delivers exactly that.**
+
+**Prod result — the pair:**
+
+| | original `ff286e60-f3d2-4912-8e3d-15dbc5f5b8a8` | reversal `ea6a0f05-39df-465d-ba69-1385ccdf57ab` |
+|---|---|---|
+| memo | Expense 2b520d35… posting | **"Reversal of journal entry ff286e60-…"** |
+| legs | **6160 debit $1.00 \| 1000 credit $1.00** | **6160 credit $1.00 \| 1000 debit $1.00** ← exact opposite |
+| status | `posted` (preserved, not deleted) | `posted` |
+| `reversed_by_je_id` | **`ea6a0f05…`** ✅ forward link | (NULL) |
+| `reverses_je_id` | (NULL) | **`ff286e60…`** ✅ back link |
+| `void_reason` | — | **"CC3 live battery - WORM reversal verification…"** ✅ captured |
+| net | 0 (balanced) | 0 (balanced) |
+
+USMCA JEs 19 → **20**. Every WORM criterion met: equal-and-opposite reversal, original preserved,
+reason recorded, **bidirectional linkage populated**, nets to zero.
+
+### 32a — ★★ THE DISCRIMINATOR: three void implementations, three quality levels
+
+This is the most actionable form of `LV-VOID-NO-REVERSAL`. The same system contains **three different
+void behaviours**:
+
+| void path | posts reversal? | links `reverses_je_id` / `reversed_by_je_id`? | evidence |
+|---|---|---|---|
+| **JE void** | ✅ **yes, equal-and-opposite** | ✅ **yes, BOTH directions** | `ff286e60` ↔ `ea6a0f05` (this item) |
+| **Invoice void** | ✅ yes | ❌ **no — NULL both ways** | `43b3ed80` (item 28f) |
+| **Bill void** | ❌ **no reversal at all** | ❌ n/a | `811cb8bc`, `570ba3b6`, `faeccb0d` (items 28/28e) |
+
+**So the reversal service exists and is CORRECT — bill void simply never calls it.** The fix is not to
+write reversal logic; it is to make bill void do what **JE void** already does. JE void is the
+best-in-class reference in this codebase: it reverses, preserves, records a reason, and links both
+ways.
+
+**I must correct my own earlier statement again:** in item 28f I wrote that `reverses_je_id` is
+"never populated." **That was wrong** — it is populated correctly by the JE-void path; only the
+invoice-void path leaves it NULL. The corrected picture is the quality ladder above, and it is more
+useful than either of my earlier framings.
+
+**Recommended order for CC-1:** (1) point bill void at the JE-void reversal service — that clears the
+$1,643.21; (2) add the linkage population to invoice void so its reversals are traceable too;
+(3) back-post reversals for the three already-voided bills.
