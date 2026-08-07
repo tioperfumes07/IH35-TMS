@@ -5457,3 +5457,49 @@ append-only is claimed. **Guard: assert no financial table grants a silent delet
 **The lesson I am recording against myself:** "no audit trigger" is not "no protection". I filed a P0 on a
 proxy metric and had to correct the headline within the hour. The corrected finding is narrower, provable,
 and points at a specific line of SQL — which is what the card should have said the first time.
+
+---
+
+## 89. Accounting-period close control — correctly built and wired, but NEVER EXERCISED anywhere in the system
+
+**Measured on prod `br-fancy-credit-akjnd07a`, 2026-08-07**, `current_user` asserted.
+
+**PASS — the control is sound.** `accounting.raise_if_txn_in_closed_period()`:
+
+```sql
+cutoff := accounting.closed_period_cutoff(p_company);   -- MAX(period_end) WHERE status='closed'
+IF cutoff IS NOT NULL AND p_txn_date IS NOT NULL AND p_txn_date <= cutoff THEN
+  RAISE EXCEPTION 'IH35_CLOSED_PERIOD closed_through=% txn_date=%', cutoff, p_txn_date
+    USING ERRCODE = 'P0001';
+```
+
+It is **entity-scoped** (`p_company`, so one company's close cannot block another's postings), **null-safe**
+on both sides, and uses the correct inclusive comparison. It is wired on **six** money tables:
+`accounting.journal_entries` · `journal_entry_postings` · `invoices` · `bills` · `bill_payments` ·
+`payments`. That is the right set — headers *and* posting lines.
+
+**THE OBSERVATION — it has never run.** Across **all** entities, `accounting.periods` holds **120** rows
+and **every one has `status = 'open'`**. `closed_at` and `closed_by_user_id` are NULL on all 24 USMCA
+periods (2026-01-01 → 2027-12-31). Because `closed_period_cutoff()` returns NULL when no period is closed,
+the guard short-circuits on its first condition and **has never blocked anything, for any entity, ever**.
+
+**Is that a defect? No — and I am not filing it as one.** Closing a period is an accounting act the owner or
+accountant performs; it is not something the software should do by itself. TRANSP mirrors QBO, which is the
+system of record through 2025-12-31, and USMCA is a new test entity. **Zero closes is coherent expected
+state**, and filing it as a defect would be the `expected-state-recorded-as-failure` anti-pattern.
+
+**What I am recording is the honest limit of my verification:** the close control's correctness is
+established **by reading it**, not by exercising it. Its live behaviour is **UNVERIFIED** — no transaction
+has ever been rejected by it on this database. The first real month-end close will be the first time this
+code path executes against production data.
+
+**Two edge cases worth the owning lane's attention before that first close — stated as questions, not
+claims:**
+1. `closed_period_cutoff` takes `MAX(period_end)` of closed periods. If periods are ever closed **out of
+   order** (say March closed while February is still open), the cutoff jumps to March's end and would also
+   block February postings. That is **conservative** — it over-blocks rather than letting entries slip into
+   a closed period — so it fails safe, but it would look like a bug to whoever hits it.
+2. A NULL `p_txn_date` skips the check entirely. Whether a NULL transaction date is reachable on those six
+   tables depends on their NOT NULL constraints, which I have **not** verified — flagging, not asserting.
+
+**No card filed.** This is a PASS with a stated verification limit, plus two questions for the first close.
