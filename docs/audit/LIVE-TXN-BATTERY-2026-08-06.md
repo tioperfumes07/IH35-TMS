@@ -3064,3 +3064,87 @@ an invoice reading `paid` against a GL that still shows it fully outstanding is 
 alarming line an auditor could read.
 
 **Board row for `LV-PAY-SETTLE-NOPOST` updated with the grown figure.**
+
+---
+
+## 58. ★★ VOID CLASS RESOLVED — invoice void DOES reverse; the failure is SPECIFIC to bill payments
+
+**LIVE-PROVEN 2026-08-07, USMCA. Controlled before/after on an invoice I created, posted and voided
+myself. This answers the open question from item 54 and prevents a broad, wrong fix.**
+
+### Method
+
+Created a **fresh** invoice specifically for this test (leaving the paid `INV-2026-00003` and the live
+proforma `INV-2026-00006` untouched): **`INV-2026-00007`**, TIO PERFUMES, **$313.90**, income account
+`4000`. Created as `draft` — **and a draft correctly posts nothing** ("No journal entries linked yet").
+Sent it to post, captured a baseline, then voided.
+
+**Outbound-action check before Sending:** `invoice-send.service.ts` imports `enqueueEmail`, so Send is
+outward-facing. Verified on prod first that TIO PERFUMES has **all six email columns NULL**
+(`billing_email`, `ar_email`, `main_contact_email`, `cc_email`, `bcc_email`) — **no recipient exists,
+so nothing could leave the system.** Send is also explicitly listed in this lane's standing order.
+
+**Baseline after posting:** invoice postings **6**, journal entries **24**, and the invoice posted
+**DR `1100` A/R $313.90 / CR `4000` Freight Income $313.90** — balanced and correct.
+
+### Result — the GL half PASSES
+
+| check | result |
+|---|---|
+| invoice status | **`void`** ✅ |
+| **reversing JE created** | ✅ **`53415aef`**, memo *"Void reversal of invoice `135af1df`…: \<my reason\>"*, created **03:14:32** (the void moment) |
+| **reversal postings real and correct** | ✅ **DR `4000` $313.90 / CR `1100` $313.90** — the exact inverse |
+| **net GL effect** | ✅ **account `1100` net = 0, account `4000` net = 0** |
+| journal entries | 24 → **25** |
+
+**The general ledger is correctly cleaned up.** This is a genuine PASS, and it is the opposite of what
+the bill-payment void did.
+
+### ★ THE CLASS QUESTION IS ANSWERED — and the answer narrows item 54
+
+| path | reversing JE | net GL | linkage |
+|---|---|---|---|
+| **Invoice void** | ✅ created | ✅ **zero** | ❌ none |
+| **Bill-payment void** (item 54) | ❌ **none at all** | ❌ **$33.40 residue** | — |
+| JE void (item 37, code read) | ✅ | ✅ | ✅ writes both sides |
+
+**INDEPENDENT CONFIRMATION OF ITEM 54 FROM A SECOND ANGLE:** a direct query for journal entries whose
+memo matches *"void reversal of bill payment"* returns **0** for this entity — even though I voided a
+bill payment an hour earlier. **The reversal JE simply does not exist**, while the invoice one plainly
+does, with the same memo convention.
+
+> **Void-without-reversal is NOT a systemic class. It is specific to the bill-payment path.**
+
+**This materially changes the fix.** Had this gone unverified, CC-1 could have rewritten void handling
+across accounting — when in fact **invoice void already contains a working implementation of exactly
+what bill-payment void is missing**, using the same memo convention. As with item 53, the correct fix
+is to copy a neighbour, not to rebuild.
+
+### Two real defects remain on the invoice path — both lesser, both worth fixing
+
+**1. NO REVERSAL LINKAGE.** `reverses_je_id` and `reversed_by_je_id` are **NULL on both** the original
+(`e30baa6a`) and the reversal (`53415aef`), even though `accounting.journal_entries` has both columns.
+**Item 37's code-read claim is now LIVE-CONFIRMED:** invoice void reverses but does not link. The only
+thing connecting the two entries is **a memo string containing the invoice UUID**. A memo is not a
+foreign key — proving a reversal belongs to its original requires text-parsing, which is exactly what
+an auditor should never have to do. The JE-void path already writes both columns, so the pattern
+exists in-repo.
+
+**2. THE REVERSAL POSTINGS ARE UNTAGGED — and this one silently corrupts reports.** The reversal's
+postings carry **`source_transaction_type = NULL` and `source_transaction_id = NULL`**. Consequence,
+measured: **`invoice_postings` stayed at 6 across the void** — the reversal is invisible to any query
+grouped or filtered by source type.
+
+> **A revenue report that groups postings by `source_transaction_type = 'invoice'` will show the full
+> $313.90 as income and never see the reversal.** The trial balance is fine — it sums by account and
+> nets to zero — **but any source-typed P&L, revenue-by-type, or drill-through is overstated by the
+> full amount of every voided invoice.**
+
+This also explains the **`(null)` source-type bucket** already visible in the earlier posting census —
+those NULL-tagged rows are reversals, sitting outside every source-typed report.
+
+**FIX:** (a) populate `reverses_je_id` / `reversed_by_je_id` on both entries, mirroring the JE-void
+path; (b) carry `source_transaction_type` / `source_transaction_id` onto reversal postings so they
+appear in the same reports as what they reverse. **GUARD:** assert every posting has a non-null
+`source_transaction_type`, and that a voided invoice's postings net to zero **within its source
+grouping**, not merely by account. **LANE: CC-1 / money.**
