@@ -1,114 +1,215 @@
 #!/usr/bin/env node
 /**
- * Emit the BY-CLASS scoreboard from docs/audit/wave-queue.json.
+ * BY-CLASS SCOREBOARD GENERATOR — emits the defect-class matrix the Programs > Scoreboard tab renders.
  *
- * The module board answers "which screens are certified". It cannot answer "which DEFECT CLASSES are
- * drained", which is the question the vertical method is actually run against — one root cause, one
- * shared helper, one ratcheting guard, drained to zero. This emits that second view.
+ * WHY THIS EXISTS. The Scoreboard tab already carries the 13-GATE TALLY (DoD A–E + VERIFY 1–8) and the
+ * per-module rows, both read live. What it has never carried is the OTHER axis the work is actually
+ * organised by: the defect CLASS. Work is dispatched vertically, by class, across all modules — but the
+ * only place a class status lived was `docs/audit/wave-queue.json`, which nobody can see from the app.
+ * So "15 drained / 11 open" was a number people quoted from a file rather than a board they could read.
  *
- * Cell states, all DERIVED — never hand-set:
- *   C  drained      status=drained AND the class's guard file exists on disk
- *   B  in progress  status=draining, or status=drained but the guard file is MISSING
- *   X  live defect  status=open AND the class still lists instances
- *   N  not started  status=open with no instances recorded yet
+ * SOURCE OF TRUTH IS THE QUEUE, NOT THIS FILE. Exactly the rule the sibling generator states: the board
+ * renders truth, it cannot manufacture it. Every cell here is derived from wave-queue.json. If a class
+ * is wrong on the board, the queue is wrong — fix it there.
  *
- * "drained but no guard on disk" deliberately reports B, not C. A class is drained only at zero live
- * AND a guard; without the guard nothing stops it coming back, so calling it green would be exactly
- * the fake-green this repo forbids. That check is a real filesystem stat at generation time, not a
- * status field trusted at face value.
+ * CELL CODES (2 letters, per the standing order) and the status they come from:
+ *   CC = drained   — status "drained"                     (green)
+ *   BB = building  — status "open" AND instances claimed   (amber)
+ *   NN = not started — status "open", nothing claimed      (grey)
+ *   XX = live defect — status "open" AND drain_proof.money_critical or a FAIL-verdict instance (red)
  *
- * Usage: node scripts/gen-class-scoreboard.mjs [--emit] [--selftest]
+ * HONEST LIMIT — READ BEFORE TRUSTING A GREEN CELL. "drained" is the queue's own claim. This generator
+ * does NOT re-verify it against prod, and a class is only genuinely drained when every instance is
+ * proven live AND a mutation-proven guard exists. Where the queue names a guard, the generator checks
+ * only that the FILE EXISTS (cheap, deterministic, no DB) and surfaces `guardMissing` — a class marked
+ * drained whose guard file is absent is reported, because that combination is the one that has bitten
+ * this repo repeatedly. It is existence-only; it does not run the guard.
  */
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { join, dirname } from "node:path";
+import fs from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const QUEUE = join(ROOT, "docs/audit/wave-queue.json");
-const OUT_JSON = join(ROOT, "docs/audit/class-scoreboard.json");
-const LABEL = "gen-class-scoreboard";
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const QUEUE = path.join(ROOT, "docs/audit/wave-queue.json");
+const OUT = path.join(ROOT, "apps/frontend/src/pages/program/classScoreboard.data.ts");
 
-/** @returns {"C"|"B"|"X"|"N"} */
-export function cellFor(wave, guardExists) {
+/** Two-letter cell code + tone, derived ONLY from queue fields. */
+export function classifyCell(wave) {
   const status = String(wave.status ?? "").toLowerCase();
-  const instances = Array.isArray(wave.instances) ? wave.instances.length : 0;
-  if (status === "drained") return guardExists ? "C" : "B";
-  if (status === "draining") return "B";
-  if (status === "open") return instances > 0 ? "X" : "N";
-  return "N";
+  const instances = Array.isArray(wave.instances) ? wave.instances : [];
+  const proof = wave.drain_proof ?? {};
+
+  if (status === "drained") return { code: "CC", tone: "green", label: "drained" };
+
+  // A money-critical open class, or one whose instances carry an explicit FAIL/defect note, is a live
+  // defect rather than merely unstarted — the board should show red, not grey.
+  const moneyCritical = proof.money_critical === true;
+  const hasDefect = instances.some((i) => /(?:^|\W)(FAIL|defect|BROKEN)/i.test(JSON.stringify(i ?? {})));
+  if (moneyCritical || hasDefect) return { code: "XX", tone: "red", label: "live defect" };
+
+  // "Building" = someone has already resolved instances (a PR/block id is recorded on any of them).
+  const claimed = instances.some((i) => /#\d{3,}|PR\s*#?\d{3,}|block/i.test(JSON.stringify(i ?? {})));
+  if (claimed) return { code: "BB", tone: "amber", label: "in progress" };
+
+  return { code: "NN", tone: "grey", label: "not started" };
 }
 
-export function buildRows(queue, guardExistsFn) {
+/**
+ * Look for a guard whose filename is a superset/variant of the referenced one (e.g. the queue names
+ * `verify-x.mjs` but the file shipped as `verify-x-durable.mjs`). Deliberately conservative: it only
+ * reports a candidate, and the caller must not treat it as proof the class is guarded.
+ */
+function nearMatchFor(guard) {
+  const base = path.basename(guard, ".mjs");
+  const dir = path.join(ROOT, "scripts");
+  if (!fs.existsSync(dir)) return null;
+  const stem = base.replace(/^verify-/, "").split("-").filter((p) => p.length > 3);
+  if (stem.length === 0) return null;
+  const hit = fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith(".mjs") && f !== path.basename(guard))
+    // STRICT: every meaningful stem part must appear. A partial match produced a WRONG candidate in
+    // testing (it offered verify-delivery-evidence-latch-wired for a disp-wire-04-invoice-evidence
+    // reference), and a misleading hint is worse than no hint on a board people act on.
+    .find((f) => stem.every((p) => f.includes(p)));
+  return hit ? `scripts/${hit}` : null;
+}
+
+export function buildRows(queue) {
   const waves = Array.isArray(queue.waves) ? queue.waves : [];
-  return waves.map((w) => {
-    const guard = typeof w.guard === "string" ? w.guard : "";
-    const guardExists = guard ? guardExistsFn(guard) : false;
-    return {
-      id: String(w.id ?? "(unnamed)"),
-      lane: String(w.lane ?? "unknown"),
-      layer: String(w.layer ?? "?"),
-      status: String(w.status ?? "unknown"),
-      instances: Array.isArray(w.instances) ? w.instances.length : 0,
-      modules: Array.isArray(w.modules) ? w.modules : [],
-      guard,
-      guardExists,
-      guardGreen: Boolean(w.drain_proof?.guard_green),
-      cell: cellFor(w, guardExists),
-    };
-  });
+  return waves
+    .map((w) => {
+      const cell = classifyCell(w);
+      const guard = typeof w.guard === "string" && w.guard.trim() ? w.guard.trim() : null;
+      return {
+        id: String(w.id ?? "?"),
+        lane: String(w.lane ?? "—"),
+        layer: String(w.layer ?? "—"),
+        status: String(w.status ?? "—"),
+        code: cell.code,
+        tone: cell.tone,
+        label: cell.label,
+        instances: Array.isArray(w.instances) ? w.instances.length : 0,
+        modules: Array.isArray(w.modules) ? w.modules.length : 0,
+        guard,
+        // Existence-only, per the header note. Never "the guard passes".
+        // EXISTENCE ONLY. A true value means the NAMED FILE is not on disk — which in practice has
+        // meant a STALE REFERENCE (the guard was renamed or split) at least as often as a missing
+        // guard. Both are registry defects worth surfacing; neither asserts the class is unprotected.
+        guardMissing: guard ? !fs.existsSync(path.join(ROOT, guard)) : true,
+        // Best-effort: a same-subject guard under a different filename, so a stale reference is
+        // distinguishable from a genuinely absent one without claiming either.
+        guardNearMatch: guard ? nearMatchFor(guard) : null,
+      };
+    })
+    .sort((a, b) => a.id.localeCompare(b.id));
 }
 
-export function tally(rows) {
-  const t = { C: 0, B: 0, X: 0, N: 0 };
-  for (const r of rows) t[r.cell] = (t[r.cell] ?? 0) + 1;
-  return t;
+export function summarise(rows) {
+  const by = (c) => rows.filter((r) => r.code === c).length;
+  return {
+    total: rows.length,
+    drained: by("CC"),
+    building: by("BB"),
+    notStarted: by("NN"),
+    liveDefect: by("XX"),
+    // The number that matters most and is easiest to lose: classes claiming drained with no guard file.
+    drainedWithoutGuard: rows.filter((r) => r.code === "CC" && r.guardMissing).length,
+  };
 }
 
-if (process.argv.includes("--selftest")) {
+// Only act when invoked directly. verify-class-scoreboard-fresh.mjs IMPORTS buildRows/summarise from
+// here, and an import that regenerates a file would give the guard the side effect it promises not to
+// have — and would mask drift by rewriting the very file it is meant to check.
+const IS_ENTRY = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (IS_ENTRY && process.argv.includes("--selftest")) {
   const cases = [
-    ["drained + guard on disk = C", { status: "drained", guard: "g.mjs" }, true, "C"],
-    ["drained but guard MISSING = B, never C", { status: "drained", guard: "g.mjs" }, false, "B"],
-    ["draining = B", { status: "draining", guard: "g.mjs", instances: [1] }, true, "B"],
-    ["open with instances = X", { status: "open", instances: [1, 2] }, false, "X"],
-    ["open with no instances = N", { status: "open", instances: [] }, false, "N"],
-    ["unknown status = N", { status: "", instances: [1] }, false, "N"],
+    [{ id: "A", status: "drained" }, "CC"],
+    [{ id: "B", status: "open", drain_proof: { money_critical: true } }, "XX"],
+    [{ id: "C", status: "open", instances: [{ note: "landed in #4321" }] }, "BB"],
+    [{ id: "D", status: "open", instances: [{ note: "nothing yet" }] }, "NN"],
+    [{ id: "E", status: "open", instances: [{ note: "OPEN — real defect, FAIL" }] }, "XX"],
   ];
   let bad = 0;
-  for (const [name, wave, exists, expect] of cases) {
-    const got = cellFor(wave, exists);
-    if (got !== expect) { bad++; console.error(`  selftest FAIL: ${name} — expected ${expect}, got ${got}`); }
+  for (const [wave, want] of cases) {
+    const got = classifyCell(wave).code;
+    if (got !== want) {
+      console.error(`SELFTEST FAIL: ${wave.id} expected ${want}, got ${got}`);
+      bad++;
+    }
   }
-  const rows = buildRows({ waves: [{ id: "A", status: "drained", guard: "x" }, { id: "B", status: "open", instances: [1] }] }, () => true);
-  if (rows.length !== 2 || tally(rows).C !== 1 || tally(rows).X !== 1) { bad++; console.error("  selftest FAIL: buildRows/tally"); }
-  if (bad) { console.error(`${LABEL} --selftest: ${bad} case(s) failed`); process.exit(1); }
-  console.log(`${LABEL} --selftest: ${cases.length + 1} cases pass`);
+  // A drained class whose guard file does not exist must be counted — this is the regression that matters.
+  const rows = buildRows({ waves: [{ id: "Z", status: "drained", guard: "scripts/does-not-exist-xyz.mjs" }] });
+  if (summarise(rows).drainedWithoutGuard !== 1) {
+    console.error("SELFTEST FAIL: drainedWithoutGuard not counted");
+    bad++;
+  }
+  if (bad) process.exit(1);
+  console.log(`gen-class-scoreboard SELFTEST PASS — ${cases.length + 1} cases`);
   process.exit(0);
 }
 
-const queue = JSON.parse(readFileSync(QUEUE, "utf8"));
-const rows = buildRows(queue, (g) => existsSync(join(ROOT, g)));
-const t = tally(rows);
-const byLane = {};
-for (const r of rows) {
-  byLane[r.lane] = byLane[r.lane] ?? { C: 0, B: 0, X: 0, N: 0 };
-  byLane[r.lane][r.cell] += 1;
+if (IS_ENTRY) {
+  runGenerator();
 }
 
-const payload = {
-  _README:
-    "GENERATED by scripts/gen-class-scoreboard.mjs from docs/audit/wave-queue.json. Cell states are DERIVED " +
-    "(C drained+guard-on-disk / B draining or guard missing / X open with live instances / N open, none recorded). " +
-    "Never hand-edit: the board renders truth, it cannot manufacture it.",
-  generatedFrom: "docs/audit/wave-queue.json",
-  classes: rows.length,
-  tally: t,
-  byLane,
-  rows,
-};
+function runGenerator() {
+if (!fs.existsSync(QUEUE)) {
+  console.error(`gen-class-scoreboard FAIL — missing ${path.relative(ROOT, QUEUE)}`);
+  process.exit(1);
+}
 
-if (process.argv.includes("--emit")) {
-  writeFileSync(OUT_JSON, `${JSON.stringify(payload, null, 2)}\n`);
-  console.log(`${LABEL}: emitted ${rows.length} classes — C=${t.C} B=${t.B} X=${t.X} N=${t.N}`);
-} else {
-  console.log(`${LABEL}: ${rows.length} classes — C=${t.C} B=${t.B} X=${t.X} N=${t.N} (dry run; pass --emit to write)`);
+const queue = JSON.parse(fs.readFileSync(QUEUE, "utf8"));
+const rows = buildRows(queue);
+if (rows.length === 0) {
+  console.error("gen-class-scoreboard FAIL — wave-queue.json produced ZERO classes; refusing to emit an empty board.");
+  process.exit(1);
+}
+const summary = summarise(rows);
+
+const header = `// ─────────────────────────────────────────────────────────────────────────────
+// GENERATED FILE — do not hand-edit.
+// Produced by scripts/gen-class-scoreboard.mjs from docs/audit/wave-queue.json.
+// Source of truth = the wave queue. The board renders truth; it cannot manufacture it.
+//
+// A green (CC) cell is the QUEUE'S claim that a class is drained — it is NOT independent proof.
+// \`guardMissing\` flags a class claiming drained whose named guard file does not exist; that is an
+// existence check only and never asserts the guard passes.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type ClassCellCode = "CC" | "BB" | "NN" | "XX";
+export type ClassCellTone = "green" | "amber" | "grey" | "red";
+export interface ClassRow {
+  id: string;
+  lane: string;
+  layer: string;
+  status: string;
+  code: ClassCellCode;
+  tone: ClassCellTone;
+  label: string;
+  instances: number;
+  modules: number;
+  guard: string | null;
+  guardMissing: boolean;
+  guardNearMatch: string | null;
+}
+export interface ClassScoreboard {
+  meta: { generatedAt: string; source: string };
+  summary: { total: number; drained: number; building: number; notStarted: number; liveDefect: number; drainedWithoutGuard: number };
+  rows: ClassRow[];
+}
+
+export const CLASS_SCOREBOARD: ClassScoreboard = ${JSON.stringify(
+  { meta: { generatedAt: new Date().toISOString(), source: "docs/audit/wave-queue.json" }, summary, rows },
+  null,
+  2,
+)};
+`;
+
+fs.writeFileSync(OUT, header);
+console.log(
+  `gen-class-scoreboard: wrote ${rows.length} classes — ${summary.drained} drained, ${summary.building} building, ` +
+    `${summary.notStarted} not started, ${summary.liveDefect} live defect; ${summary.drainedWithoutGuard} drained WITHOUT a guard file.`,
+);
 }

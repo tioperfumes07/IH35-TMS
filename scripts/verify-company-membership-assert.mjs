@@ -66,6 +66,7 @@
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { maskComments } from "./lib/mask-comments.mjs";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../..");
 const BACKEND_SRC = join(ROOT, "apps/backend/src");
@@ -304,13 +305,20 @@ if (!existsSync(FUEL_GPS_ROUTE)) {
   }
 }
 
-function analyzeCallerSource(src) {
+function analyzeCallerSource(rawSrc) {
+  // CLS-GUARD-READS-COMMENTS: count GUC sites and asserts against comment-MASKED source, so an
+  // explanatory comment that merely mentions set_config(...) is not counted as a real tenant-GUC site.
+  // Masking is offset-preserving, so the positional "GUC #1 before assert #1" comparison below stays
+  // valid. Exemption markers are detected on the RAW lines, because `membership-scope-exempt:`
+  // deliberately lives in a comment.
+  const src = maskComments(rawSrc);
+  const rawLines = rawSrc.split("\n");
   const lines = src.split("\n");
   const callerDerivedSource = lines
     .filter((line, index) => {
       if (!GUC_SET_RE.test(line)) return true;
       GUC_SET_RE.lastIndex = 0;
-      const exemption = `${lines[index - 1] ?? ""}\n${line}`;
+      const exemption = `${rawLines[index - 1] ?? ""}\n${rawLines[index] ?? ""}`;
       return !exemption.includes("membership-scope-exempt:");
     })
     .join("\n");
