@@ -1439,3 +1439,40 @@ journal entry (void or reverse it), not merely stamp `voided_at` on the bill.
 level did not rule out the reversal being recorded elsewhere. Had `reversed_by_je_id` been populated,
 my original finding would have been wrong. It was worth the one query to be sure of my own claim
 before CC-1 spends time on it.
+
+### 28f — ★★ REFINEMENT: invoice-void DOES reverse. Bill-void does not. There is a working reference implementation.
+
+The Manual Journal Entries screen surfaced JE `43b3ed80-c2f6-4fa1-a53d-6ba0d480697c`, memo
+**"Void reversal of invoice e4d2ebdd-…"**, dated **2026-08-02**. Verified on prod:
+
+| field | value |
+|---|---|
+| status / source | `posted` / `auto` |
+| **legs** | **`1100 credit $1.00` \| `4000 debit $1.00`** — a correct flip of an invoice posting (DR A/R / CR Revenue reversed) |
+| `reverses_je_id` | **NULL** |
+| `reversed_by_je_id` | **NULL** |
+
+**Two conclusions, and they change the shape of `LV-VOID-NO-REVERSAL`:**
+
+**1. The reversal capability EXISTS and has fired correctly — for INVOICE void.** An automatic,
+balanced, correctly-flipped reversing JE was produced on 08/02. So this is **not** a missing
+framework and **not** "reversal has never worked." **Bill void (08/07) simply does not do what
+invoice void does.** CC-1 has a working reference implementation to copy rather than logic to invent
+— which is both cheaper and satisfies "reuse the existing poster, write no new GL math."
+
+**2. Even the working reversal leaves `reverses_je_id` NULL.** The reversing JE is not linked to the
+entry it reverses. So there is **no programmatic way to walk reversal → original**; the relationship
+survives only as free text in the memo. That is a real audit-trail weakness independent of the bill
+defect: a reversal that cannot be traced to its original is not a complete audit chain, and any
+report or guard trying to net originals against reversals cannot do it by join.
+
+**Revised statement of the defect for CC-1:**
+- **(a)** bill void does not emit the reversing JE that invoice void does — **copy the invoice-void path**;
+- **(b)** when a reversal IS emitted, populate `reverses_je_id` / `reversed_by_je_id` so the chain is
+  traceable — currently the only link is prose in `memo`.
+
+**Correcting my own earlier wording:** items 28/28e said "no reversing journal entry exists anywhere
+on this entity." That was true of the **`reverses_je_id` census** but **overstated as prose** — a
+reversal JE does exist (43b3ed80); it simply isn't *linked*, which is why the column-based census
+returned zero. The measurement was right, my sentence around it was too broad, and the corrected
+version above is what CC-1 should work from.
