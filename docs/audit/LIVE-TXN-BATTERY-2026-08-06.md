@@ -7451,3 +7451,64 @@ an active USMCA override — "nothing is flag-dark". **That measurement enumerat
 poster whose flag was never seeded is invisible to that check, because it has no row to enumerate. **The
 completeness question is not "is every flag on" but "does every flag the CODE reads exist"** — and the
 answer here is no.
+
+## 121. ★★ THE FLAG-SWEEP I PROMISED — run in full, and it KILLED NINE OF ITS OWN TEN CANDIDATES. One confirmed instance, three dead flags, and a correction to my own item 113.
+
+Item 120's board row demanded a *"code-referenced-vs-seeded flag-key diff"* as the class condition. **I ran it
+myself rather than leaving it to the fixer. The first pass returned 10 unseeded keys and looked like a
+ten-instance class. Nine of them are not defects, and this entry is mostly about how each one died** — the
+work of the unit was disproving my own result, and filing the 10 would have cost CC-1 far more than the one
+real row is worth.
+
+**PASS 1 — naive:** every `"[A-Z_]{6,}_ENABLED"` literal in `apps/backend/src`, diffed against
+`lib.feature_flags`. **86 keys, 10 unseeded.** Tempting, and wrong.
+
+**FILTER 1 — four are ENVIRONMENT variables, not DB flags.** `BANK_RECON_AUTO_MATCH_CRON_ENABLED`,
+`EMAIL_CRON_ENABLED`, `QBO_MASTERDATA_SYNC_ENABLED`, `QBO_SYNC_RETRY_ENABLED` are read via
+`envEnabled(...)` (`health.routes.ts:446-492`, `lib/env-validation.ts:73`) — `process.env`, never
+`isEnabled(client, …)`. **Correctly absent from `lib.feature_flags`. Not defects.**
+
+**FILTER 2 — four exist ONLY inside a unit test.** `EXPENSE_VOID_ENABLED`, `PAYROLL_POSTING_ENABLED`,
+`SETTLEMENT_VOID_ENABLED`, `SOMETHING_NEW_GL_POSTING_ENABLED` appear at exactly one place each —
+`lib/feature-flags/__tests__/service.test.ts:117,118,133,134` — as fixtures for `isPostingFlag()`. **They are
+test strings, not flags.** (`SOMETHING_NEW_GL_POSTING_ENABLED` should have been the tell on sight; I checked
+all four anyway, because "it looks like a placeholder" is not evidence.)
+
+**FILTER 3 — the tenth is deliberate, and the author wrote it down.** `CASH_FOLLOWS_ETA_ENABLED` IS a real
+`isEnabled(client, …)` DB-flag call (`cash-flow/cash-flow.routes.ts:53, :73`) and IS unseeded — the same
+shape as item 120. **But the line above it reads: `// (OFF/unregistered → false → current behaviour).`** The
+unregistered case was anticipated and false was chosen as the safe default, and what it gates is
+**re-bucketing projected income by ETA in a forecast view — no money posts either way.** **Verified benign;
+NOT filed.** The contrast with `REIMBURSEMENT_GL_POSTING_ENABLED` is the whole point: same mechanism, and
+one leaves a $75 payment permanently outside the ledger while the other changes a chart bucket.
+
+**RESULT: the class has exactly ONE member — `REIMBURSEMENT_GL_POSTING_ENABLED`, already filed as item 120.**
+`LV-REIMBURSEMENT-FLAG-NEVER-SEEDED` is an INSTANCE, not a class, and its board row is updated to say so.
+
+### The reverse diff — seeded flags nothing reads — and it caught me overreaching a second time
+
+**10 flags are seeded and absent from my literal sweep. Two of those are my regex's fault, not defects:**
+`CASH_FORECAST_ENABLED` (1 backend file) and `LEGAL_CONTRACTS_ENABLED` (3 backend files) **are** referenced —
+my literal-only pattern missed them. Recorded because an unverified "dead flag" list would have sent someone
+to delete live flags.
+
+**★ A THIRD WITHDRAWAL, AND IT CORRECTS MY OWN ITEM 113.** `REVENUE_RECOGNITION_ENABLED` has **0** backend
+references and **2** frontend ones — `RevenueRecognitionPage.tsx:240`
+`useFeatureFlag("REVENUE_RECOGNITION_ENABLED", …)`, gating the contracts table. **It is a UI flag, and it is
+working as designed.** The backend's revenue posting is gated by a *different* key,
+`REVENUE_RECOGNITION_POST_ENABLED` (`revenue-recognition.routes.ts:19`). **So item 113's "24 of 24 GL-posting
+flags carry a USMCA override" mis-classified this one: the GL-posting count is 23, and
+`REVENUE_RECOGNITION_ENABLED` is the single flag whose `default_enabled = true` — which is unremarkable for a
+UI toggle and would have been alarming for a posting flag.** The correction is recorded on
+`LV-USMCA-POSTING-FLAGS-ALL-ON`.
+
+**GENUINELY DEAD — 0 references in backend AND frontend:** `PERIODS_INIT_ENABLED`,
+`PREPAID_EXPENSES_ENABLED`, `IFTA_TRIP_METHODOLOGY_ENABLED`. Filed as low-severity hygiene
+(`LV-DEAD-SEEDED-FLAGS`) — a flag an operator can toggle that changes nothing is a control-surface lie, and
+under ADDITIVE-ONLY the fix is to mark them deprecated, **never to drop them**.
+
+**WHY THIS UNIT IS WORTH ITS SPACE even though it filed almost nothing.** Ten findings would have looked like
+a productive sweep. Nine were wrong, and each died to a *different* check — `envEnabled` vs `isEnabled`, a
+test-fixture path, an author's documented intent, a too-narrow regex, and a UI-vs-posting flag namespace
+collision. **A grep is a hypothesis generator, never a verdict** — the same lesson as item 96's disproven
+orphan rate, arrived at from the opposite direction. The one surviving row is stronger for it.
