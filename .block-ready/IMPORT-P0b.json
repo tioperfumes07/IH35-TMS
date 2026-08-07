@@ -1,7 +1,7 @@
 {
   "block_id": "IMPORT-P0b",
   "status": "hold-for-jorge",
-  "classification": "Tier-1 financial (flag-seed migration + gates the six entity write-back paths). BUILD-SOLO-AND-HOLD — never self-merge; GUARD verifies independently, owner labels + merges.",
+  "classification": "Tier-1 financial (flag-seed migration + gates the six entity write-back paths). BUILD-SOLO-AND-HOLD — merge on green with proof (OWNER LAW 2026-08-03); GUARD verifies independently, owner labels + merges.",
   "phase": "QBO-IMPORT",
   "task": "IMPORT-P0b — entity-push kill-switch: gate every TMS→QBO write of invoice/bill/customer/vendor/account/item so nothing round-trips into QuickBooks under the parallel-books / reconcile-only architecture. Mirrors IMPORT-P0 (JE kill-switch, PR #1797).",
   "branch": "fix/qbo-entity-push-killswitch",

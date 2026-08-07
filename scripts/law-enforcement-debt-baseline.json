@@ -1,0 +1,99 @@
+{
+  "_why": "SHRINK-ONLY. verify-law-registry proves an enforced law names a guard that RESOLVES ON DISK. It does not prove the guard RUNS. 21 laws were declared type=enforced while their guard was either listed in .guard-exempt.json (13) or referenced by no verify-step and no workflow (8) — a green tick over a guard enforcing nothing, which reads as protected and is worse than a visibly unguarded law. Found independently by CC-3.",
+  "_rules": [
+    "Never RAISE these counts. A new enforced law ships WIRED, not exempt.",
+    "Lowering a count means the guard now runs — and expect real violations to surface when it does: un-exempting the two CC-3 guards revealed ELEVEN live breaches of OWNER LAW 2026-08-03 in active .block-ready work orders.",
+    "Deleting a law to make this pass is forbidden. Wire the guard or downgrade the law to type=judgment honestly."
+  ],
+  "_recorded_at": "2026-08-07",
+  "exempted_count": 13,
+  "orphaned_count": 8,
+  "exempted": [
+    {
+      "id": "LAW-2026-08-06-CLASS-SCOREBOARD-FRESH",
+      "guard": "verify-class-scoreboard-fresh.mjs"
+    },
+    {
+      "id": "LAW-2026-08-05-A6-WORM-VOID-NOT-DELETE",
+      "guard": "verify-inv2-no-hard-delete-accounting.mjs"
+    },
+    {
+      "id": "LOCK-08-3-QBO-NO-WRITE-BACK",
+      "guard": "verify-qbo-push-gates.mjs"
+    },
+    {
+      "id": "LOCK-10-ACCOUNTING-NAV-TOP-BAR-ONLY",
+      "guard": "verify-accounting-nav.mjs"
+    },
+    {
+      "id": "NO-TEST-UNITS-IN-PROD",
+      "guard": "verify-no-test-units-in-prod.mjs"
+    },
+    {
+      "id": "CASH-BASIS-CLOSED-PERIOD-SNAPSHOT-READONLY",
+      "guard": "verify-period-cash-basis-snapshot-readonly.mjs"
+    },
+    {
+      "id": "CASH-BASIS-SELECTOR-ALLOWED-PAGES",
+      "guard": "verify-basis-selector-allowed-pages.mjs"
+    },
+    {
+      "id": "LAW-2026-08-06-DISP-WIRE-07-DEPARTURE-EVIDENCE",
+      "guard": "verify-disp-wire-07-departure-evidence.mjs"
+    },
+    {
+      "id": "LAW-2026-08-06-SCENARIO-TRACKER-SINGLE-MOUNT",
+      "guard": "verify-scenario-tracker-single-mount.mjs"
+    },
+    {
+      "id": "LAW-2026-08-06-CALLER-SCOPED-GUC-MEMBERSHIP",
+      "guard": "verify-caller-scoped-guc-membership.mjs"
+    },
+    {
+      "id": "LAW-2026-08-06-INVITE-WRITE-ENTITY-GATED",
+      "guard": "verify-invite-write-entity-gated.mjs"
+    },
+    {
+      "id": "LAW-2026-08-06-SCOPED-COMPANY-CONTEXT-ASSERTS-FIRST",
+      "guard": "verify-scoped-company-context-asserts-first.mjs"
+    },
+    {
+      "id": "LAW-2026-08-06-BUSINESS-DATE-PARSED-LOCAL",
+      "guard": "verify-business-date-parsed-local.mjs"
+    }
+  ],
+  "orphaned": [
+    {
+      "id": "LOCK-01-SIDEBAR-CONTRACT-ADDITIVE-ONLY",
+      "guard": "verify-sidebar-contract.mjs"
+    },
+    {
+      "id": "LOCK-02-CASHFLOW-IS-A-MODULE",
+      "guard": "verify-cashflow-module.mjs"
+    },
+    {
+      "id": "LOCK-03-INSURANCE-FINANCIAL-WRITES",
+      "guard": "verify-insurance-financial-writes.mjs"
+    },
+    {
+      "id": "SCHEMA-CANONICAL-NAMES",
+      "guard": "verify-canonical-schema-names.mjs"
+    },
+    {
+      "id": "MIGRATION-APPLIED-IMMUTABLE",
+      "guard": "verify-applied-migrations-immutable.mjs"
+    },
+    {
+      "id": "SECTION7-PALETTE-LOCK",
+      "guard": "verify-section7-palette-nonfinancial.mjs"
+    },
+    {
+      "id": "SECTION7-WO-DISPLAY-ID-FORMAT",
+      "guard": "verify-wo-display-id-format.mjs"
+    },
+    {
+      "id": "SAFETY-TAB-COUNT-CONTRACT",
+      "guard": "verify-safety-count-nav-integrity.mjs"
+    }
+  ]
+}

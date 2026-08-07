@@ -18,6 +18,14 @@ export default {
     // difference, and that is the gap.) A drained wave with a missing guard is a HARD FAIL here; an open
     // wave still owing one is shrink-only debt. Existence-only, same cost profile as the law check above.
     await ctx.run("node", ["scripts/verify-wave-queue-guards-exist.mjs", "--selftest"]);
-    return ctx.run("node", ["scripts/verify-wave-queue-guards-exist.mjs"]);
+    await ctx.run("node", ["scripts/verify-wave-queue-guards-exist.mjs"]);
+
+    // LAW-2026-08-07-GUARD-MUST-RUN — the registry above proves an enforced law's guard RESOLVES ON
+    // DISK. It does not prove the guard RUNS. Found independently by CC-3: a guard can be registered,
+    // sit in .guard-exempt.json, be referenced by no step and no workflow, and still report enforced —
+    // a green tick over nothing, which reads as protected and is worse than a visibly unguarded law.
+    // 21 laws were in exactly that state (13 exempt, 8 orphaned), so it ships shrink-only.
+    await ctx.run("node", ["scripts/verify-law-guard-actually-runs.mjs", "--selftest"]);
+    return ctx.run("node", ["scripts/verify-law-guard-actually-runs.mjs"]);
   },
 };

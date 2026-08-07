@@ -1,7 +1,7 @@
 {
   "block_id": "IMPORT-P0",
   "status": "hold-for-jorge",
-  "classification": "Tier-1 financial (feature-flag seed migration + gates the JE→QBO sync integrity). BUILD-SOLO-AND-HOLD — never self-merge; owner labels + merges after zero-call proof reviewed.",
+  "classification": "Tier-1 financial (feature-flag seed migration + gates the JE→QBO sync integrity). BUILD-SOLO-AND-HOLD — merge on green with proof (OWNER LAW 2026-08-03); owner labels + merges after zero-call proof reviewed.",
   "phase": "QBO-IMPORT-V2",
   "task": "IMPORT-P0 JE→QBO push kill-switch + masterdata echo guard. HARD PREREQUISITE: no import run (opening balance or GL detail) may execute until this is merged and its zero-call proof is green. Three defense-in-depth layers stop TMS from writing/echoing journal entries into QuickBooks (the system of record through 12/31/2025).",
   "branch": "fix/qbo-je-push-killswitch",
