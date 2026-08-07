@@ -2445,3 +2445,75 @@ sweep for the pattern elsewhere (aging reports, dashboards, cash-flow projection
 **GUARD:** assert that the A/R open-balance aggregate equals the sum over **non-void** invoices only —
 a live data assertion computed two independent ways, which is exactly how this was caught.
 **LANE: CC-1 / money.**
+
+---
+
+## 49. `LV-PAY-SETTLE-NOPOST` UPGRADED — customer-payment GL failure REPRODUCED ON DEMAND; subledger and GL now provably out of balance by $687.25
+
+**LIVE 2026-08-07, USMCA. Item 30 observed this on a pre-existing payment. This item reproduces it
+deliberately with a payment I created in the UI seconds earlier — which is a much stronger claim.**
+
+### The transaction (PASS on everything except the ledger)
+
+Recorded a customer payment on `INV-2026-00003` via **Record Payment → Receive Payment**:
+method **ACH**, reference **`CC3-BATTERY-ACH-43725`**, **$437.25**, deposited to **Undeposited Funds**,
+applied $437.25 to `INV-2026-00003`.
+
+**What worked — genuinely well-built, and worth recording as PASS:**
+- The panel's allocation tracker updated live: **"Applied $437.25 / Remaining $0.00"**.
+- **`PMT-2026-00002`** created at **$437.25**.
+- Invoice **Open moved $950.00 → $512.75** — exactly `950.00 − 437.25`.
+- Status correctly stayed **`partial`** (not flipped to paid).
+- **Payment Applications** now lists **both** `PMT-2026-00002 $437.25` and `PMT-2026-00001 $250.00`.
+- The invoice page links its own **Journal Entry `45424cff` · posted**.
+
+**The subledger arithmetic and the linkage are correct. Only the ledger is missing.**
+
+### The failure — on prod, with a positive control that cannot be waved away
+
+| payment | amount | live? | **GL postings** |
+|---|---|---|---|
+| **`PMT-2026-00002`** (created 02:28:55, this session) | $437.25 | LIVE | **0** |
+| `PMT-2026-00001` | $250.00 | LIVE | **0** |
+
+**Posting census for USMCA by `source_transaction_type`:**
+`bill` 18 · `bank_categorization` 8 · `invoice` 4 · `expense` 4 · *(null)* 4 · `transfer` 2 ·
+`prepaid_purchase` 2.
+
+> **There is no `payment` source type at all. Not one customer-payment posting exists in this entity.**
+
+**POSITIVE CONTROL — this is not an RLS artifact.** I **created** `PMT-2026-00002` through the UI, and
+I can **read it back** on the same table in the same query that reports its zero postings, with
+`n_tup_del = 0`. A masked read cannot show me a row and hide only its postings. And six other source
+types **do** post, so the posting engine itself works — consistent with the item-30 census.
+
+### The consequence, stated the way a CPA would read it
+
+`INV-2026-00003`: total **$1,200.00**, GL postings **2** (A/R debited $1,200.00 at issue).
+Payments applied: `$250.00 + $437.25 = ` **$687.25**. Subledger open: **$512.75**.
+**GL A/R still carries the full $1,200.00**, because no payment ever posted.
+
+- **A/R control (GL) is overstated by $687.25.**
+- **Undeposited Funds is understated by $687.25** — the payment panel explicitly says *Deposited to:
+  Undeposited Funds*, so the intended entry is **DR Undeposited Funds / CR A/R**.
+- **The A/R subledger and the GL A/R control no longer agree.** A subledger-to-GL tie-out — the first
+  reconciliation any auditor, CPA or lender performs — **fails by exactly $687.25**, and the gap grows
+  with every payment received.
+
+**This is the cleanest possible demonstration of the defect**: cash was received and applied, the
+customer's balance went down, and the general ledger never heard about it.
+
+### Refines item 30's scope
+
+Item 30 grouped the customer payment with the driver settlement and correctly warned that the intended
+trigger point was **UNVERIFIED**. For the customer payment that ambiguity is now **closed**: the
+trigger is unmistakably *payment received and applied* — the app itself performs the application and
+updates the subledger in the same action. **No further trigger question remains for this half.** The
+settlement half of item 30 is untouched here and remains open on its own terms.
+
+**FIX:** wire the payment-received path to the existing poster — **DR Undeposited Funds (or the
+selected deposit account) / CR A/R**, entity-scoped, honouring the `Deposited to` selection. **Write no
+new GL math**; six posters already work. Voiding a payment must reverse it.
+**GUARD:** assert every live `accounting.payments` row carries a balanced posting, and — the stronger
+form — that **A/R subledger open equals the GL A/R control balance** per entity. That tie-out assertion
+would have caught this on the first payment ever recorded. **LANE: CC-1 / money.**
