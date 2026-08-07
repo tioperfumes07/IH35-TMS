@@ -218,11 +218,19 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
 
     return withCompany(user.uuid, data.operating_company_id, async (client: any) => {
       if (!(await canonicalTableReady(client))) return sendCanonicalTableMissing(reply);
+      // CLS-SCHEMA-DRIFT / PHANTOM COLUMN — prod-verified 2026-08-07: identity.users has
+      // first_name / last_name / email and NO display_name, so this SELECT threw 42703 and every
+      // POST to this route 500'd before a position-history row could be written. Composed the same way
+      // as every other actor-name read in the repo (tasks/task.routes.ts, opening-balance-register):
+      // "First Last", falling back to email when neither name is set, never a blank attribution on an
+      // append-only history row.
+      // No type argument: `client` is `any` inside withCompany, and an untyped call cannot take one.
       const actorResult = await client.query(
-        `SELECT display_name FROM identity.users WHERE id = $1`,
+        `SELECT COALESCE(NULLIF(TRIM(CONCAT_WS(' ', first_name, last_name)), ''), email) AS actor_name
+         FROM identity.users WHERE id = $1`,
         [user.uuid]
       );
-      const actorName = actorResult.rows[0]?.display_name ?? "";
+      const actorName = actorResult.rows[0]?.actor_name ?? "";
 
       const result = await client.query(
         `INSERT INTO maintenance.position_history (
