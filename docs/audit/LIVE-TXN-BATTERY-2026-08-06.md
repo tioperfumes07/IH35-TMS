@@ -4240,3 +4240,71 @@ says **A/R = `QBO-45`** — and USMCA has BOTH accounts. TRANSP posts to `QBO-45
 deliberately on a different mapping is a decision I cannot verify from here. **UNVERIFIED.**
 
 **LANE: CC-1 / money — and this correction should be read BEFORE the tie-out guard is built.**
+
+---
+
+## 65. ★★ ITEM 64's UNVERIFIED QUESTION — RESOLVED FROM PRIMARY SOURCE. The A/R credit balance is FAITHFUL, not inverted.
+
+**LIVE-PROVEN 2026-08-07 against QuickBooks itself (authenticated connector, realm "IH 35
+Transportation LLC" = TRANSP). Read-only report pull; no QBO write, and no credential was handled by
+this lane.**
+
+Item 64 flagged, honestly, that I could not tell whether TMS's opening entry crediting A/R
+$961,983.52 was **faithful to QBO's signed-actual balance sheet** or a **sign inversion on import** —
+because I could not read that balance sheet. **I can now, and the answer is faithful.**
+
+### QBO Balance Sheet, 12/31/2024, accrual — primary source
+
+| line | QBO value |
+|---|---|
+| **Accounts Receivable (A/R)** — the account itself | **−$956,313.52** |
+| ↳ sub: Unauthorized Expenses Ignacio Muñoz | +$350,451.38 |
+| ↳ sub: Unauthorized Expenses Anarely Alcazar | +$73,253.48 |
+| **A/R group total** | **−$532,608.66** |
+
+The group total reconciles exactly: `−956,313.52 + 350,451.38 + 73,253.48 = −532,608.66` ✓
+
+> **QBO genuinely reports A/R as a NEGATIVE (credit) balance. The locked decision takes opening balances
+> "signed-actual (not natural-side)", so TMS carrying a credit A/R is the decision working as written —
+> NOT a defect, and NOT a sign inversion. Item 64's suspicion is retired.**
+
+**This also confirms the two "Unauthorized Expenses" receivables are still on the books as receivables**
+— consistent with the locked decision that they are *"receivables pursued in bankruptcy court — NOT
+written off, NOT reclassed to expense."*
+
+### NEW, PRECISE OBSERVATION — a round $5,670.00 delta (flagged, NOT filed)
+
+| side | A/R |
+|---|---|
+| QBO 12/31/2024 (account, without subgroups) | **−$956,313.52** |
+| TMS opening entry to `QBO-45` (posted 2026-07-04) | **−$961,983.52** |
+| **delta** | **−$5,670.00** |
+
+**$5,670.00 exactly — a round number, not rounding drift**, which usually means one identifiable
+transaction or adjustment rather than accumulated error.
+
+**I am NOT filing this as a defect, and the reason is documented in the locked decisions:** *"The QBO
+source is a MOVING TARGET: the internal accountant (Martin) is still cleaning/reconciling. The opening
+JE is DEFERRED until Martin finalizes the 2024 close."* TMS imported on **2026-07-04**; QBO has been
+actively edited since. **A delta between a July snapshot and today's QBO is the expected consequence of
+a deliberate, owner-approved strategy** (clone-as-is-then-adjust), not an import bug.
+
+**What it IS good for:** this is the exact figure the opening tie-out must explain when Martin finalises
+the close. Recording it now means the tie-out starts from a measured number instead of a rediscovery.
+
+### PASS — a locked invariant verified against primary source
+
+**`Opening Balance Equity = $0.00`** on QBO's 12/31/2024 sheet. The locked decision states *"OBE →
+Retained Earnings as a temporary clearing account — a permanent Opening Balance Equity balance is a
+DEFECT (must net ≈ 0)."* **It nets to zero. PASS**, verified at source rather than assumed.
+
+### Method note
+
+Item 64 said *"this lane cannot read that sheet — UNVERIFIED"* rather than guessing at a sign
+inversion. **That restraint was correct: guessing would have produced a $961,983.52 false defect
+against the entity holding the real books.** The question stayed open exactly as long as it needed to,
+and was closed the moment a primary source became reachable. **UNVERIFIED is not a dead end — it is a
+placeholder for evidence that has not arrived yet.**
+
+**LANE: informational — item 64's UNVERIFIED item is retired; the $5,670.00 goes to CC-1 as an opening
+tie-out input, not as a defect.**
