@@ -1578,3 +1578,56 @@ Same class as `LV-INV-UUID` (raw load UUID on the invoice line) and the historic
 "Class-UUID renders in picker" card — **resolve ids to human identifiers, entity-scoped**.
 
 Board row `LV-BILLS-VENDOR-UUID` (CC-2 mechanical/FE).
+
+## 36 — ★★ `LV-BILLVOID-DATE-ERROR`: the Void Bill action FAILS with a date-parse error — FAIL (critical) — and it re-diagnoses `LV-VOID-NO-REVERSAL`
+
+Attempted the controlled reproduction: voided the fresh bill `CC3-VOIDTEST-20260807-01`
+(`7ccd431e-8e85-433a-a5e0-4425011ffb5e`, $88.77, JE `6f63081e`) through the real UI on deploy
+`fb0920c`, with a valid reason.
+
+**The drawer returned a hard error:**
+
+> **`invalid input syntax for type date: "Thu Aug 06"`**
+
+That is a **Postgres date-parse failure**. A date is being sent to the database as the human-formatted
+string **`"Thu Aug 06"`** (JavaScript `Date.prototype.toDateString()` shape, and note it is even
+truncated — no year) instead of an ISO date. **The void never executes.**
+
+**Prod confirms nothing happened:** the bill is still `voided_at (live)`, `status = 'unpaid'`, its 2
+original postings intact, **0 reversal postings**, JE `6f63081e` still `status = posted` with
+`reversed_by_je_id` NULL. USMCA JEs went 20 → 21, but the new JE is the bill's **own creation
+posting** (`6f63081e`, "Bill CC3-VOIDTEST-20260807-01 posting", DR 5400 / CR 2000 $88.77) — **not a
+reversal**. I checked that specifically rather than reading the count as success.
+
+### 36a — ★ This RE-DIAGNOSES `LV-VOID-NO-REVERSAL`, and the correction matters
+
+I had assumed the 4 previously-voided bills went through this UI path and that the path simply
+omitted the reversal. **That cannot be what happened — this path cannot complete at all.**
+
+So the accurate picture is:
+
+- **The UI "Void Bill" action has never successfully run** — it dies on date parsing before doing anything.
+- **The 4 bills that carry `voided_at` were therefore voided by some OTHER route** — almost certainly
+  a direct SQL/script step in CC-1's ACCT-F142 duplicate remediation (all four share the identical
+  timestamp `2026-08-07 00:33:50.999787+00`, which is the signature of a single UPDATE, not four user
+  actions).
+- **That explains the missing reversals cleanly:** a script that sets `voided_at` directly bypasses
+  the reversal service entirely. It was never a case of the void path "forgetting" to reverse.
+
+**Revised guidance for CC-1 — two separate defects, in this order:**
+1. **`LV-BILLVOID-DATE-ERROR` (this item)** — fix the date serialisation so Void Bill can run at all.
+   Until then the UI void is untestable and unusable.
+2. **`LV-VOID-NO-REVERSAL`** — the **$1,643.21 already on the books** still needs back-posted
+   reversals, because the rows were voided out-of-band. And once (1) is fixed, the UI path must be
+   re-verified to confirm it actually emits the reversal its own drawer promises.
+
+**The drawer's promise is now a stated contract:** *"Voiding posts an equal-and-opposite reversing
+entry and keeps the audit trail."* Identical wording to the JE-void drawer, which **does** honour it
+(item 32). So the bill-void drawer advertises behaviour that currently cannot execute.
+
+**Honest note on my own earlier framing:** items 28/28e/28f/32 described bill void as "does not
+reverse." That was a correct description of the *observed data* but an incorrect inference about the
+*mechanism* — the UI path doesn't reverse because it doesn't run. The residue and the dollar figures
+are unchanged and still stand; the causal story is now right.
+
+Board row `LV-BILLVOID-DATE-ERROR` — **CC-1, critical** (blocks the void path entirely).
