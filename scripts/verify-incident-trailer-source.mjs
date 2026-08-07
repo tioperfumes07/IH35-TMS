@@ -58,8 +58,14 @@ if (fs.existsSync(creatorsAbs)) {
     // Does this creator persist a trailer? (sends trailer_id in a create body)
     const persistsTrailer = /trailer_id\s*:/.test(src);
     if (!persistsTrailer) continue;
-    // If so, it MUST fetch trailers via the equipment-backed unified fleet list.
-    if (!/include\s*:\s*["']trailers["']/.test(src)) {
+    // Must source trailers from mdata.equipment: either the legacy unified fleet list
+    // (listUnits include:"trailers") OR EntityPicker kind="trailer" (listEquipment).
+    const fromUnifiedList = /include\s*:\s*["']trailers["']/.test(src);
+    const fromEntityPicker =
+      /EntityPicker[\s\S]{0,200}kind=["']trailer["']/.test(src) ||
+      /kind=["']trailer["'][\s\S]{0,200}EntityPicker/.test(src) ||
+      /listEquipment\s*\(/.test(src);
+    if (!fromUnifiedList && !fromEntityPicker) {
       failures.push(`creator_trailer_not_sourced_from_equipment:${file}`);
     }
   }

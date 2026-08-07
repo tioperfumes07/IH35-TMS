@@ -48,7 +48,7 @@ const PICKER_CHECKS = [
   },
 ];
 
-const REQUIRED_SERVER_SEARCH_KINDS = ["driver", "unit", "load", "vendor", "factoring_advance"];
+const REQUIRED_SERVER_SEARCH_KINDS = ["driver", "unit", "trailer", "load", "vendor", "factoring_advance"];
 
 export function run() {
   const pickerSrc = stripComments(readFileSync(PICKER, "utf8"));

@@ -465,6 +465,7 @@ export async function listPendingCashAdvanceRequests(client: QueryableClient, op
         concat_ws(' ', d.first_name, d.last_name) AS driver_name
       FROM driver_finance.cash_advance_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
+                           AND d.operating_company_id = r.operating_company_id
       WHERE r.operating_company_id = $1
         AND r.status IN ('pending', 'under_review')
       ORDER BY r.is_above_policy ASC, r.submitted_at ASC
@@ -497,6 +498,7 @@ export async function listCashAdvanceRequests(
         concat_ws(' ', d.first_name, d.last_name) AS driver_name
       FROM driver_finance.cash_advance_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
+                           AND d.operating_company_id = r.operating_company_id
       WHERE ${where}
       ORDER BY r.submitted_at DESC
       LIMIT 300
@@ -514,6 +516,7 @@ export async function getCashAdvanceRequestDetail(client: QueryableClient, opera
         concat_ws(' ', d.first_name, d.last_name) AS driver_name
       FROM driver_finance.cash_advance_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
+                           AND d.operating_company_id = r.operating_company_id
       WHERE r.operating_company_id = $1 AND r.id = $2
       LIMIT 1
     `,

@@ -116,7 +116,13 @@ export async function bridgeRelayFuelToCanonical(
       VALUES (
         $1, $2::timestamptz, $2::timestamptz, $3, $4, $5, $6, $7,
         $8, $9, $10, $11, $12, $13, $14, $15, 'other', $16, $17, now(),
-        true, $18
+        -- CLS-DISP-WIRE-06: load_required is DERIVED from whether a load actually resolved. It used
+        -- to be the literal true while load_exemption_reason was simultaneously set to
+        -- 'relay_ingest_no_load_link' — a row asserting both "a load is required here" and "here is
+        -- why it is exempt". Four such rows exist on prod (created 2026-08-05), and every future
+        -- relay ingest without a resolvable load would mint another, so any load-linkage ratchet
+        -- would go permanently RED on expected state.
+        $19, $18
       )
       ON CONFLICT (operating_company_id, source_row_hash) DO UPDATE SET
         transaction_at = EXCLUDED.transaction_at,
@@ -125,7 +131,18 @@ export async function bridgeRelayFuelToCanonical(
         unit_id = COALESCE(EXCLUDED.unit_id, fuel.fuel_transactions.unit_id),
         load_id = COALESCE(EXCLUDED.load_id, fuel.fuel_transactions.load_id),
         vendor_id = COALESCE(EXCLUDED.vendor_id, fuel.fuel_transactions.vendor_id),
-        load_exemption_reason = COALESCE(EXCLUDED.load_exemption_reason, fuel.fuel_transactions.load_exemption_reason),
+        -- Keep the pair consistent on re-ingest too. Once a load resolves, the row genuinely requires
+        -- one and the exemption is cleared ("an assigned load clears the exemption", the same rule
+        -- fuel-transactions.routes.ts states for the manual path).
+        load_required = (COALESCE(EXCLUDED.load_id, fuel.fuel_transactions.load_id) IS NOT NULL),
+        -- EXISTING reason wins over the incoming one, deliberately — the reverse of the old
+        -- precedence. The 1,548-row historical cohort carries the owner-ruled
+        -- 'PRE_TMS_DISPATCH_IMPORT' exemption; letting a re-ingest overwrite it with
+        -- 'relay_ingest_no_load_link' would erase the ruling that made that cohort expected state.
+        load_exemption_reason = CASE
+          WHEN COALESCE(EXCLUDED.load_id, fuel.fuel_transactions.load_id) IS NOT NULL THEN NULL
+          ELSE COALESCE(fuel.fuel_transactions.load_exemption_reason, EXCLUDED.load_exemption_reason)
+        END,
         gallons = EXCLUDED.gallons,
         price_per_gallon = EXCLUDED.price_per_gallon,
         total_cost = EXCLUDED.total_cost,
@@ -154,6 +171,9 @@ export async function bridgeRelayFuelToCanonical(
       sourceRowHash,
       notes,
       loadExemptionReason,
+      // $19 — load_required, the mirror of loadExemptionReason above. Both derive from the SAME
+      // resolveLoadId result, so the pair can never contradict itself again.
+      loadId != null,
     ]
   );
 

@@ -1,0 +1,15 @@
+{
+  "note": "CLS-ORPHAN-SURFACE reverse-linkage ratchet — may only SHRINK.",
+  "offenders": [
+    "apps/frontend/src/pages/dispatch/TriSignalHoverDetail.tsx",
+    "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+    "apps/frontend/src/pages/factoring/BatchDetail.tsx",
+    "apps/frontend/src/pages/qbo-sync-detail/QboSyncDetailPage.tsx",
+    "apps/frontend/src/pages/safety/HarshEventDetail.tsx",
+    "apps/frontend/src/pages/safety/damage-reports/DamageReportDetail.tsx",
+    "apps/frontend/src/pages/safety/photo-comparison/SessionDetail.tsx",
+    "apps/frontend/src/pages/safety/photo-comparison/SessionDetailPage.tsx",
+    "apps/frontend/src/pages/units/UnitDetail.tsx",
+    "apps/frontend/src/pages/work-orders/WorkOrdersConsoleDetailPage.tsx"
+  ]
+}

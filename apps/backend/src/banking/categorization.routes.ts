@@ -565,13 +565,25 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             bt.split_mode,
             bt.matched_journal_entry_id::text AS matched_journal_entry_id
           FROM banking.bank_transactions bt
+          -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED): bt is scoped by the WHERE, but every dimension
+          -- it categorises INTO was resolved on a bare id. This is the bank-categorization surface — the
+          -- driver, unit, trailer, load, vendor, customer and item chosen here are what a transaction is
+          -- coded to, and coding drives posting. mdata.units/equipment have NO operating_company_id; they
+          -- use the owner/leased pair (CLAUDE.md §4). All verified on prod before writing.
           LEFT JOIN mdata.drivers d ON d.id = bt.categorization_driver_id
+                                   AND d.operating_company_id = bt.operating_company_id
           LEFT JOIN mdata.units u ON u.id = bt.categorization_unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = bt.operating_company_id
           LEFT JOIN mdata.equipment eq ON eq.id = bt.categorization_trailer_id
+                                      AND COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = bt.operating_company_id
           LEFT JOIN mdata.loads l ON l.id = bt.categorization_load_id
+                                 AND l.operating_company_id = bt.operating_company_id
           LEFT JOIN mdata.vendors ven ON ven.id = bt.categorization_vendor_id
+                                     AND ven.operating_company_id = bt.operating_company_id
           LEFT JOIN mdata.customers cust ON cust.id = bt.categorization_customer_id
+                                        AND cust.operating_company_id = bt.operating_company_id
           LEFT JOIN catalogs.items itm ON itm.id = bt.categorization_item_id
+                                      AND itm.operating_company_id = bt.operating_company_id
           LEFT JOIN driver_finance.driver_settlement_deductions ded ON ded.id = bt.categorization_deduction_id
           WHERE bt.id = $1::uuid AND bt.operating_company_id = $2::uuid
           LIMIT 1

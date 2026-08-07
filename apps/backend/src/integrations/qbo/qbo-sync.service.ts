@@ -157,9 +157,15 @@ async function loadBankTxnContext(operatingCompanyId: string, entityId: string) 
           u.unit_number,
           d.last_name AS driver_last_name
         FROM banking.bank_transactions bt
+        -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED): bt is scoped; the matched load and the unit and
+        -- driver hanging off it were not. These supply unit_number and driver_last_name into the QBO sync
+        -- payload. mdata.units has NO operating_company_id — owner/leased pair (CLAUDE.md §4).
         LEFT JOIN mdata.loads l ON l.id = bt.matched_load_id
+                               AND l.operating_company_id = bt.operating_company_id
         LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                               AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = bt.operating_company_id
         LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                 AND d.operating_company_id = bt.operating_company_id
         WHERE bt.id = $2
           AND bt.operating_company_id = $1
         LIMIT 1

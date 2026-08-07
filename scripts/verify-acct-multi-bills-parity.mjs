@@ -77,8 +77,14 @@ function checkMultiBillsParity(files) {
   if (deactivatedGuards.length < 2) {
     violations.push("CreateMultipleBillsPage A/P and expense pickers must both filter out deactivated_at");
   }
-  if (!page.includes("listDrivers")) violations.push("CreateMultipleBillsPage must load entity-scoped drivers");
-  if (!page.includes("listUnits")) violations.push("CreateMultipleBillsPage must load entity-scoped units");
+  // Drivers may still be listDrivers or EntityPicker kind=driver (driver kind-sweep).
+  if (!page.includes("listDrivers") && !/kind=["']driver["']/.test(page)) {
+    violations.push("CreateMultipleBillsPage must load entity-scoped drivers (listDrivers or EntityPicker kind=driver)");
+  }
+  // EP-UNIT-KIND-SWEEP: units via EntityPicker kind=unit (no local listUnits roster).
+  if (!page.includes("listUnits") && !/kind=["']unit["']/.test(page)) {
+    violations.push("CreateMultipleBillsPage must load entity-scoped units (listUnits or EntityPicker kind=unit)");
+  }
   if (!page.includes("unit_id")) violations.push("CreateMultipleBillsPage must pass unit_id to createVendorBill");
   if (!page.includes('data-testid="create-multiple-bills-page"')) {
     violations.push("CreateMultipleBillsPage missing data-testid");

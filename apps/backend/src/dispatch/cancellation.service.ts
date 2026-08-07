@@ -154,6 +154,88 @@ export async function cancelLoad(
         );
       }
 
+      // WIRE-10 — cancelling a load must not leave its money artifacts alive.
+      //
+      // cancelLoad previously set mdata.loads.status and wrote an audit row, and touched NOTHING else:
+      // no invoice, no driver bill, no posting. So a cancelled load kept the proforma invoice created
+      // at booking (WIRE-01) and the driver bill created at assign (WIRE-02) — phantom A/R and a
+      // phantom payable for work that will never happen. Measured on prod before this change: 1
+      // cancelled load, and 1 driver bill still status='open' against it ($960.00).
+      //
+      // The two artifacts are NOT treated the same, because the money question is not the same:
+      //
+      //  * A PROFORMA invoice is an explicitly non-posting projection of a load that is now cancelled.
+      //    Nothing was recognised and nothing was billed, so voiding it is safe and unambiguous.
+      //    Only 'proforma' is voided here — a 'sent' or 'paid' invoice represents a real customer
+      //    obligation (a TONU or cancellation charge may be genuinely owed) and voiding that silently
+      //    would destroy real A/R. Those are surfaced instead.
+      //
+      //  * A DRIVER BILL is deliberately NOT auto-voided. A cancelled load can still owe the driver —
+      //    truck-ordered-not-used, deadhead already run, a layover already incurred — and blanket
+      //    voiding would silently strip pay a driver earned. Whether a specific cancellation owes the
+      //    driver is a business decision, not something this function may invent. It is recorded
+      //    durably instead, so the payable cannot sit unnoticed the way the $960 one did.
+      if (!pendingOwnerApproval) {
+        const voidedInvoices = await client.query<{ id: string }>(
+          `
+            UPDATE accounting.invoices
+               SET status = 'void', updated_at = now(), updated_by_user_id = $3
+             WHERE source_load_id = $1::uuid
+               AND operating_company_id = $2::uuid
+               AND status = 'proforma'
+            RETURNING id::text
+          `,
+          [input.load_id, input.operating_company_id, userId]
+        );
+
+        const liveInvoices = await client.query<{ id: string; status: string }>(
+          `
+            SELECT id::text, status::text
+              FROM accounting.invoices
+             WHERE source_load_id = $1::uuid
+               AND operating_company_id = $2::uuid
+               AND status NOT IN ('void', 'proforma')
+          `,
+          [input.load_id, input.operating_company_id]
+        );
+
+        const openBills = await client.query<{ bill_number: string; gross_amount_cents: string }>(
+          `
+            SELECT bill_number, gross_amount_cents::text
+              FROM driver_finance.driver_bills
+             WHERE load_id = $1::uuid
+               AND operating_company_id = $2::uuid
+               AND status <> 'void'
+          `,
+          [input.load_id, input.operating_company_id]
+        );
+
+        if (voidedInvoices.rows.length || liveInvoices.rows.length || openBills.rows.length) {
+          await appendCrudAudit(
+            client,
+            userId,
+            "dispatch.load.cancellation_money_artifacts",
+            {
+              resource_type: "mdata.loads",
+              resource_id: input.load_id,
+              operating_company_id: input.operating_company_id,
+              proforma_invoices_voided: voidedInvoices.rows.map((r) => r.id),
+              // Left alone on purpose — a real obligation may exist; needs a human decision.
+              live_invoices_requiring_review: liveInvoices.rows,
+              driver_bills_still_open: openBills.rows.map((r) => ({
+                bill_number: r.bill_number,
+                gross_amount_cents: Number(r.gross_amount_cents),
+              })),
+              note:
+                "proforma invoices voided automatically; driver bills and non-proforma invoices are " +
+                "NOT auto-voided because a cancelled load may still owe money (TONU, deadhead, layover)",
+            },
+            "warning",
+            "WIRE-10"
+          );
+        }
+      }
+
       await appendCrudAudit(
         client,
         userId,

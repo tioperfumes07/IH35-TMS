@@ -246,6 +246,14 @@ export function findDomainByKey(key: string, config: DomainConfig[] = DOMAIN_CON
   return config.find((d) => d.key === key);
 }
 
+/** Map a /lists/:domain route param to a DOMAIN_CONFIG hub key, if any. */
+export function resolveListsDomainHubKey(routeDomain: string, config: DomainConfig[] = DOMAIN_CONFIG): string | undefined {
+  if (findDomainByKey(routeDomain, config)) return routeDomain;
+  if (routeDomain === "driver" && findDomainByKey("drivers", config)) return "drivers";
+  if (routeDomain === "names" && findDomainByKey("names_master", config)) return "names_master";
+  return undefined;
+}
+
 export function listsDomainSectionId(domainKey: string): string {
   return `lists-domain-${domainKey}`;
 }
@@ -260,7 +268,7 @@ function normalizeListsDomain(domain: string): string {
 // the two surfaces.
 export function buildCatalogPath(domain: string, catalogKey: string): string {
   const routeDomain = normalizeListsDomain(domain);
-  if (catalogKey === "_create") return `/lists/${routeDomain}`;
+  if (catalogKey === "_create") return `/lists/hub/${domain}`;
   if (domain === "dispatch") {
     const dispatchRouteMap: Record<string, string> = {
       "load-types": "/lists/dispatch/load-types",

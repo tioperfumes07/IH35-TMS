@@ -225,9 +225,13 @@ export type VendorBill = {
    */
   vendor_id: string | null;
   /**
-   * ACCT-F84 — THE canonical vendor uuid for drill-through. Populated on 16,244 of 16,246 prod bills
-   * (2 orphans, both vendor_id '2244'), and it disagrees with the qbo_vendor_id resolution on ZERO
-   * rows. Null renders as plain text via EntityLink rather than a link that 404s.
+   * ACCT-F603 — canonical mdata.vendors.id (uuid text). Populated on 16,248/16,248 prod bills; TMS
+   * create path writes this on every new bill. Prefer this for EntityLink drill-through.
+   */
+  vendor_uuid: string | null;
+  /**
+   * ACCT-F84 — uuid FK column on accounting.bills (backfilled from vendor_uuid / qbo bridge).
+   * Use {@link billVendorDrillId} — prefer vendor_uuid, fall back to mdata_vendor_id.
    */
   mdata_vendor_id: string | null;
   vendor_name?: string | null;
@@ -252,6 +256,14 @@ export type VendorBill = {
   /** ACCT-F04 reverse drill — present when accounting.bills.insurance_claim_id column exists. */
   insurance_claim_id?: string | null;
 };
+
+/** ACCT-F603 — never pass legacy QBO vendor_id text to EntityLink (404s /vendors/472). */
+export function billVendorDrillId(
+  bill: Pick<VendorBill, "vendor_uuid" | "mdata_vendor_id">
+): string | null {
+  const id = (bill.vendor_uuid ?? bill.mdata_vendor_id)?.trim();
+  return id || null;
+}
 
 export type BillDetailLine = {
   id: string;

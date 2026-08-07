@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** InlineDriverPicker — server search (not silent listDrivers limit:200). Claim 2146. */
+/** InlineDriverPicker — EntityPicker kind=driver (server search via registry, not silent listDrivers limit:200). Claim 2146. */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,17 +15,14 @@ export function collectProblems(root = ROOT) {
   const src = readRel(root, FILE);
   if (!src) return [`missing ${FILE}`];
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (!/driverSearch/.test(code) || !/search:\s*driverSearch/.test(code)) {
-    problems.push(`${FILE}: listDrivers must pass search: driverSearch`);
+  if (!/EntityPicker[\s\S]*?kind=["']driver["']/.test(code)) {
+    problems.push(`${FILE}: must use EntityPicker kind=driver`);
   }
-  if (!/onSearch=\{setDriverSearch\}/.test(src) && !/onSearch=\{setDriverSearch\}/.test(code)) {
-    problems.push(`${FILE}: Combobox must wire onSearch={setDriverSearch}`);
+  if (/listDrivers\s*\(/.test(code) || /limit:\s*200/.test(code) || /limit:\s*500/.test(code)) {
+    problems.push(`${FILE}: must not silent-fetch listDrivers limit:200/500 — use EntityPicker kind=driver`);
   }
-  if (/queryKey:.*"inline-drivers"[^,\]]*\]/.test(code) && !/driverSearch/.test(code.match(/queryKey:[\s\S]*?\]/)?.[0] ?? "")) {
-    problems.push(`${FILE}: queryKey must include driverSearch`);
-  }
-  if (!/driverSearch\]/.test(code) && !/"driverSearch"/.test(code)) {
-    problems.push(`${FILE}: driversQuery key must include driverSearch`);
+  if (/from\s+["'][^"']*Combobox["']/.test(code) && !/EntityPicker/.test(code)) {
+    problems.push(`${FILE}: must not use raw Combobox for driver roster`);
   }
   return problems;
 }

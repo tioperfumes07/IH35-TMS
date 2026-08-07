@@ -9,8 +9,10 @@ import { postInvoiceGlIfEnabled } from "./invoice-gl.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import {
   assertLoadRevenueHasSourceLoad,
+  assertInvoiceHasRevenueLines,
   assertRevenueLinesHaveIncomeAccount,
   InvoiceLoadSourceRequiredError,
+  InvoiceHasNoRevenueLinesError,
   InvoiceLineIncomeAccountRequiredError,
   type InvoiceLineGuardRow,
 } from "./invoice-linkage-guards.js";
@@ -41,7 +43,9 @@ import { isEnabled } from "../lib/feature-flags/service.js";
  * DEFAULT OFF, AND WARN-ONLY UNTIL FLIPPED — deliberately. Enforcing immediately would block
  * invoicing entirely for a fleet whose drivers are not yet capturing departures through the PWA, and
  * stopping the cash cycle to fix an evidence gap is the wrong trade to make unilaterally. While OFF
- * it logs every send that lacks evidence, so the real exposure is measurable BEFORE it is enforced.
+ * every unevidenced send appends a durable, append-only row to audit.audit_events
+ * (`accounting.invoice.sent_without_delivery_evidence`) atomically with the send, so the real
+ * exposure is COUNTABLE — not merely logged — BEFORE anyone decides to enforce it.
  * `isEnabled` returns false for a flag_key that has no registry row, so this is genuinely inert until
  * one is seeded — no migration in this PR.
  *
@@ -105,12 +109,21 @@ export async function sendDraftInvoice(
   );
   const sendLines = sendLinesRes.rows as InvoiceLineGuardRow[];
   try {
+    // ACCT-F124 — FIRST, because the two guards below iterate the lines and therefore pass vacuously
+    // on an empty set. INV-2026-00004 sent with zero lines and left a receivable the poster correctly
+    // refused to recognise.
+    assertInvoiceHasRevenueLines(input.operatingCompanyId, input.invoiceId, sendLines);
     assertLoadRevenueHasSourceLoad(
       current.source_load_id ? String(current.source_load_id) : null,
       sendLines
     );
     assertRevenueLinesHaveIncomeAccount(input.operatingCompanyId, sendLines);
   } catch (guardErr) {
+    if (guardErr instanceof InvoiceHasNoRevenueLinesError) {
+      // 422, matching the sibling line-validity refusals: the request is well-formed, the invoice is
+      // not yet sendable.
+      return { ok: false, code: 422, error: "invoice_has_no_revenue_lines", message: guardErr.message };
+    }
     if (guardErr instanceof InvoiceLoadSourceRequiredError) {
       return { ok: false, code: 409, error: "invoice_load_source_required", message: guardErr.message };
     }
@@ -125,39 +138,77 @@ export async function sendDraftInvoice(
     throw guardErr;
   }
 
-  // ACCT-F61 — DELIVERY-EVIDENCE GATE. Inert until INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE is
-  // enabled per entity; when OFF it only WARNS, so the exposure is visible before it is enforced.
-  if (current.source_load_id) {
-    const departedAt = await finalActiveDeliveryDepartureAt(
-      client as never,
-      input.operatingCompanyId,
-      String(current.source_load_id)
-    );
-    if (!departedAt) {
-      const enforce = await isEnabled(client as never, DELIVERY_EVIDENCE_FLAG, {
-        operating_company_id: input.operatingCompanyId,
-      });
-      if (enforce) {
-        return {
-          ok: false,
-          code: 409,
-          error: "delivery_evidence_missing",
-          message:
-            `Load ${String(current.source_load_id)} has no actual_departure_at on its final active ` +
-            `delivery stop. This invoice bills a delivery the system cannot evidence — capture the ` +
-            `driver's departure, or send it manually after confirming delivery by another means.`,
-        };
-      }
-      console.warn(
-        {
-          invoice_id: input.invoiceId,
-          load_id: String(current.source_load_id),
-          operating_company_id: input.operatingCompanyId,
-          flag: DELIVERY_EVIDENCE_FLAG,
-        },
-        "acct_f61_invoice_sent_without_delivery_evidence"
-      );
+  // ACCT-F61 / LV-012 — DELIVERY-EVIDENCE GATE. Inert until INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE
+  // is enabled per entity; when OFF it only WARNS, so the exposure is visible before it is enforced.
+  //
+  // LV-012: this gate used to sit INSIDE `if (current.source_load_id)`. That inverted the control —
+  // an invoice with NO load at all has zero delivery evidence BY DEFINITION, the weakest case of all,
+  // and it skipped the check entirely and sent clean. Measured on prod: 11,981 of 11,982 invoices
+  // carry no source_load_id (236 of them already status='sent'), so the gate could see exactly ONE
+  // invoice and was blind to the rest. For a book factored on RECOURSE, a no-load invoice is at least
+  // as risky as a load whose final delivery stop lacks a departure — it is not an exemption.
+  //
+  // Evidence is now evaluated for EVERY invoice, and the two failure shapes are recorded distinctly
+  // so the population can be split when the owner decides whether to enforce.
+  const evidenceReason = current.source_load_id
+    ? (await finalActiveDeliveryDepartureAt(
+        client as never,
+        input.operatingCompanyId,
+        String(current.source_load_id)
+      ))
+      ? null
+      : ("no_departure_on_final_delivery_stop" as const)
+    : ("no_source_load" as const);
+
+  if (evidenceReason) {
+    const enforce = await isEnabled(client as never, DELIVERY_EVIDENCE_FLAG, {
+      operating_company_id: input.operatingCompanyId,
+    });
+    if (enforce) {
+      return {
+        ok: false,
+        code: 409,
+        error: "delivery_evidence_missing",
+        message:
+          evidenceReason === "no_source_load"
+            ? `This invoice is not linked to a load, so the system holds no delivery evidence for it. ` +
+              `Link the load it bills, or send it manually after confirming delivery by another means.`
+            : `Load ${String(current.source_load_id)} has no actual_departure_at on its final active ` +
+              `delivery stop. This invoice bills a delivery the system cannot evidence — capture the ` +
+              `driver's departure, or send it manually after confirming delivery by another means.`,
+      };
     }
+    // The exposure has to be COUNTABLE, not just tailable. A console.warn on Render is ephemeral: it
+    // cannot be queried, aggregated or tied out, so "measure before enforcing" was never satisfied by
+    // logging alone. Written through appendCrudAudit on the SAME client as the send, so the row
+    // commits with the invoice or not at all — the count cannot silently under-report, which is what
+    // a factoring recourse-risk figure has to be before anyone relies on it.
+    await appendCrudAudit(
+      client as never,
+      input.userId,
+      "accounting.invoice.sent_without_delivery_evidence",
+      {
+        invoice_id: input.invoiceId,
+        // null when the invoice has no load — the reason field says which shape this is.
+        load_id: current.source_load_id ? String(current.source_load_id) : null,
+        reason: evidenceReason,
+        operating_company_id: input.operatingCompanyId,
+        flag: DELIVERY_EVIDENCE_FLAG,
+        enforcement: "warn_only",
+      },
+      "warning",
+      "ACCT-F61-WIRE-04"
+    );
+    console.warn(
+      {
+        invoice_id: input.invoiceId,
+        load_id: current.source_load_id ? String(current.source_load_id) : null,
+        reason: evidenceReason,
+        operating_company_id: input.operatingCompanyId,
+        flag: DELIVERY_EVIDENCE_FLAG,
+      },
+      "acct_f61_invoice_sent_without_delivery_evidence"
+    );
   }
 
   const invoiceDate = current.issue_date instanceof Date
@@ -218,7 +269,7 @@ export async function sendDraftInvoice(
   // A post failure is SURFACED, never swallowed, and never rolls back an invoice the customer has
   // already been sent — the send is a business act that stands on its own. Retriable via the existing
   // manual post endpoint.
-  const invoiceGl = await postInvoiceGlIfEnabled(input.operatingCompanyId, input.invoiceId, {
+  const invoiceGl = await postInvoiceGlIfEnabled(client as never, input.operatingCompanyId, input.invoiceId, {
     userId: input.userId,
   });
   if (!invoiceGl.posted && invoiceGl.reason === "post_failed") {
@@ -286,23 +337,66 @@ export async function sendDraftInvoice(
   );
   const notify = notifyRes.rows[0] ?? null;
   const customerEmail = notify?.customer_email ? String(notify.customer_email).trim() : "";
+  // LV-013 — an invoice stamped status='sent' must not silently transmit NOTHING.
+  //
+  // This block was `if (customerEmail && notify)` with a fire-and-forget `void enqueueEmail(...)
+  // .catch(() => undefined)`. A customer with no AP/billing/AR email on file therefore produced no
+  // queue row at all, while the invoice had already been stamped 'sent' above — the ledger asserted a
+  // customer was billed when nothing was ever produced, and an enqueue failure was swallowed on the
+  // way out. Both cases are now recorded durably on the SAME client as the send, so "issued to A/R"
+  // and "actually transmitted" stop being the same claim.
+  //
+  // The invoice legitimately stays 'sent' — it IS issued and posted to A/R. What was missing is a
+  // truthful record that the transmission never happened; changing the invoice status vocabulary
+  // needs a migration and an owner decision, and is not smuggled in here.
   if (customerEmail && notify) {
     const total = (Number(notify.total_cents ?? 0) / 100).toFixed(2);
-    void enqueueEmail({
-      operatingCompanyId: input.operatingCompanyId,
-      toAddresses: [customerEmail],
-      subject: `Invoice ${notify.display_id} — IH 35 TMS`,
-      templateKey: "invoice-send",
-      templateVars: {
-        invoiceDisplayId: String(notify.display_id ?? ""),
-        customerName: String(notify.customer_name ?? "Customer"),
-        issueDate: String(notify.issue_date ?? ""),
-        currency: String(notify.currency_code ?? "USD"),
-        total,
-        memo: String(notify.customer_notes ?? notify.internal_notes ?? ""),
+    try {
+      await enqueueEmail({
+        operatingCompanyId: input.operatingCompanyId,
+        toAddresses: [customerEmail],
+        subject: `Invoice ${notify.display_id} — IH 35 TMS`,
+        templateKey: "invoice-send",
+        templateVars: {
+          invoiceDisplayId: String(notify.display_id ?? ""),
+          customerName: String(notify.customer_name ?? "Customer"),
+          issueDate: String(notify.issue_date ?? ""),
+          currency: String(notify.currency_code ?? "USD"),
+          total,
+          memo: String(notify.customer_notes ?? notify.internal_notes ?? ""),
+        },
+        queuedByUserId: input.userId,
+      });
+    } catch (err) {
+      await appendCrudAudit(
+        client as never,
+        input.userId,
+        "accounting.invoice.transmission_enqueue_failed",
+        {
+          invoice_id: input.invoiceId,
+          operating_company_id: input.operatingCompanyId,
+          to: customerEmail,
+          error: err instanceof Error ? err.message : String(err),
+        },
+        "warning",
+        "LV-013"
+      );
+    }
+  } else {
+    await appendCrudAudit(
+      client as never,
+      input.userId,
+      "accounting.invoice.sent_without_transmission",
+      {
+        invoice_id: input.invoiceId,
+        operating_company_id: input.operatingCompanyId,
+        reason: notify
+          ? "customer has no ap_email / billing_email / ar_email / ar_email_snapshot on file"
+          : "no customer row resolved for this invoice in this entity",
       },
-      queuedByUserId: input.userId,
-    }).catch(() => undefined);
+      "warning",
+      "LV-013"
+    );
   }
 
   return { ok: true };

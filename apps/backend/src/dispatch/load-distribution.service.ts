@@ -47,7 +47,9 @@ export async function distributeLoadInstructions(input: DistributionInput) {
           d.phone AS driver_phone
         FROM mdata.loads l
         LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                   AND c.operating_company_id = l.operating_company_id
         LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                 AND d.operating_company_id = l.operating_company_id
         WHERE l.id = $1
           AND l.operating_company_id = $2
         LIMIT 1

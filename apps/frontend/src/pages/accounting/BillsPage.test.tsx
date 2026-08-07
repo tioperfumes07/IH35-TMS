@@ -46,6 +46,7 @@ describe("BillsPage", () => {
           id: "bill-partial-1",
           operating_company_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
           vendor_id: "v-1",
+          vendor_uuid: "11111111-2222-4333-8444-555555555555",
           mdata_vendor_id: "11111111-2222-4333-8444-555555555555",
           vendor_name: "Vendor One",
           bill_number: "B-100",

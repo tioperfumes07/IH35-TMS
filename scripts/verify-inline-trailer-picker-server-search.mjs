@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** InlineTrailerPicker — server search (not silent listUnits limit:500). Claim 2148. */
+/** InlineTrailerPicker — EntityPicker kind=trailer (mdata.equipment, not listUnits include:trailers). Claim 2148. */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,15 +15,11 @@ export function collectProblems(root = ROOT) {
   const src = readRel(root, FILE);
   if (!src) return [`missing ${FILE}`];
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (/limit:\s*500/.test(code)) problems.push(`${FILE}: must not silent-fetch listUnits(limit:500)`);
-  if (!/trailerSearch/.test(code) || !/search:\s*trailerSearch/.test(code)) {
-    problems.push(`${FILE}: listUnits must pass search: trailerSearch`);
+  if (!/EntityPicker[\s\S]*?kind=["']trailer["']/.test(code)) {
+    problems.push(`${FILE}: must use EntityPicker kind=trailer`);
   }
-  if (!/onSearch=\{setTrailerSearch\}/.test(src)) {
-    problems.push(`${FILE}: Combobox must wire onSearch={setTrailerSearch}`);
-  }
-  if (!/trailerSearch\]/.test(code)) {
-    problems.push(`${FILE}: trailersQuery key must include trailerSearch`);
+  if (/limit:\s*500/.test(code) || /include:\s*["']trailers["']/.test(code)) {
+    problems.push(`${FILE}: must not use listUnits(include:trailers) silent cap`);
   }
   return problems;
 }
@@ -34,7 +30,7 @@ if (process.argv.includes("--selftest")) {
   try {
     const dir = path.join(stubRoot, "apps/frontend/src/components/dispatch");
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, "InlineTrailerPicker.tsx"), `listUnits({ limit: 500 })\nqueryKey: ["dispatch","inline-trailers",id]\n`);
+    fs.writeFileSync(path.join(dir, "InlineTrailerPicker.tsx"), `listUnits({ limit: 500, include: "trailers" })\nqueryKey: ["dispatch","inline-trailers",id]\n`);
     if (!collectProblems(stubRoot).length) { console.error("planted miss"); process.exit(1); }
   } finally { fs.rmSync(stubRoot, { recursive: true, force: true }); }
   console.log(LABEL, "SELFTEST OK");

@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Combobox, type ComboboxOption } from "../../components/Combobox";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { listDrivers } from "../../api/mdata";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { getHosDailyRoster, getHosEvents, DUTY_LABEL, DUTY_COLOR } from "../../api/hosTracker";
 import { companyToday, addDaysIso, formatInCompanyTimeZone } from "../../lib/businessDate";
 
@@ -26,21 +25,7 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
   const [driverId, setDriverId] = useState<string | null>(null);
   const [fromDate, setFromDate] = useState(addDaysIso(today, -7));
   const [toDate, setToDate] = useState(today);
-  // SAF-B29: never silent listDrivers(limit:500) — type-ahead re-queries (HosViewer parity).
-  const [driverSearch, setDriverSearch] = useState("");
 
-  const driversQ = useQuery({
-    queryKey: ["hos-history", "drivers", operatingCompanyId, driverSearch],
-    queryFn: () =>
-      listDrivers({
-        operating_company_id: operatingCompanyId,
-        status: "Active",
-        limit: 200,
-        search: driverSearch || undefined,
-      }),
-    enabled: Boolean(operatingCompanyId),
-    staleTime: 5 * 60 * 1000,
-  });
   // Today's roster only used to auto-select a driver with recent HOS data (so the tab isn't an empty prompt).
   const rosterQ = useQuery({
     queryKey: ["hos-history", "roster", operatingCompanyId, today],
@@ -49,20 +34,11 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
     staleTime: 60_000,
   });
 
-  const options: ComboboxOption[] = useMemo(() => {
-    const drivers = driversQ.data?.drivers ?? [];
-    return drivers
-      .map((d) => ({ value: d.id, label: [d.first_name, d.last_name].filter(Boolean).join(" ") || d.id }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [driversQ.data]);
-
   useEffect(() => {
     if (driverId) return;
     const firstWithData = (rosterQ.data?.drivers ?? []).find((d) => d.available);
-    if (firstWithData) { setDriverId(firstWithData.driver_id); return; }
-    const firstActive = driversQ.data?.drivers?.[0];
-    if (firstActive) setDriverId(firstActive.id);
-  }, [driverId, rosterQ.data, driversQ.data]);
+    if (firstWithData) setDriverId(firstWithData.driver_id);
+  }, [driverId, rosterQ.data]);
 
   // Window is a plain UTC calendar span for audit drill-down (not the FMCSA home-terminal day boundary
   // used by the daily/roster endpoints) — inclusive of the full "to" day.
@@ -76,23 +52,26 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
     staleTime: 60_000,
   });
 
-  const selectedName = options.find((o) => o.value === driverId)?.label ?? "driver";
+  const rosterName =
+    (rosterQ.data?.drivers ?? []).find((d) => d.driver_id === driverId)?.driver_name?.trim() || null;
+  const selectedName = rosterName || "driver";
   const events = eventsQ.data?.events ?? [];
 
   return (
     <section data-testid="compliance-section-hos-history">
       <div className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white px-3 py-3">
-        <div className="min-w-[240px] flex-1">
+        <div className="min-w-[240px] flex-1" data-testid="hos-history-driver-picker">
           <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500">Driver</label>
-          <Combobox
-            options={options}
+          {/* Picker law: EntityPicker kind=driver — not Combobox over listDrivers page. */}
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={operatingCompanyId}
             value={driverId}
             onChange={setDriverId}
-            onSearch={setDriverSearch}
-            placeholder={driversQ.isLoading ? "Loading drivers…" : "Search a driver…"}
-            loading={driversQ.isLoading}
-            filterMode="contains"
+            enabled={Boolean(operatingCompanyId)}
+            placeholder="Search a driver…"
             dataField="hos-history-driver"
+            allowClear
           />
         </div>
         <div>

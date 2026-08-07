@@ -1,0 +1,221 @@
+import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { X } from "lucide-react";
+import { updateMaintenancePart, type MaintenancePartRow } from "../../api/maintenance";
+import { listVendors } from "../../api/mdata";
+import { Button } from "../../components/Button";
+import { MoneyInput } from "../../components/forms/MoneyInput";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import {
+  PART_INVENTORY_CATEGORIES,
+  formatPartInventoryCategoryLabel,
+} from "./partInventoryCategories";
+
+interface PartEditDrawerProps {
+  part: MaintenancePartRow | null;
+  onClose: () => void;
+  operatingCompanyId: string;
+}
+
+export function PartEditDrawer({ part, onClose, operatingCompanyId }: PartEditDrawerProps) {
+  const queryClient = useQueryClient();
+  const [vendorSearch, setVendorSearch] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    sku: "",
+    category: "",
+    on_hand_qty: "",
+    reorder_point: "",
+    unit_cost: "",
+    location: "",
+    notes: "",
+    vendor_id: "",
+  });
+
+  useEffect(() => {
+    if (!part) return;
+    setFormData({
+      name: part.name ?? "",
+      sku: part.part_number ?? "",
+      category: part.category ?? "",
+      on_hand_qty: String(part.qty_on_hand ?? 0),
+      reorder_point: String(part.reorder_threshold ?? 0),
+      unit_cost: part.unit_cost != null ? String(part.unit_cost) : "",
+      location: part.location ?? "",
+      notes: part.notes ?? "",
+      vendor_id: part.vendor_id ?? "",
+    });
+  }, [part]);
+
+  const vendorsQuery = useQuery({
+    queryKey: ["mdata", "vendors", operatingCompanyId, "part-edit", vendorSearch],
+    queryFn: () =>
+      listVendors({
+        operating_company_id: operatingCompanyId,
+        status: "active",
+        limit: 200,
+        search: vendorSearch || undefined,
+      }),
+    enabled: Boolean(operatingCompanyId) && Boolean(part),
+  });
+  const vendorOptions = useMemo(
+    () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
+    [vendorsQuery.data?.vendors],
+  );
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      if (!part) throw new Error("No part selected");
+      return updateMaintenancePart(part.id, operatingCompanyId, {
+        part_number: data.sku.trim() || undefined,
+        name: data.name.trim(),
+        category: data.category.trim() || undefined,
+        qty_on_hand: Number(data.on_hand_qty) || 0,
+        reorder_threshold: Number(data.reorder_point) || 0,
+        unit_cost: Number(data.unit_cost) || 0,
+        location: data.location.trim() || null,
+        notes: data.notes.trim() || null,
+        vendor_id: data.vendor_id.trim() || null,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory", "parts", operatingCompanyId] });
+      onClose();
+    },
+  });
+
+  if (!part) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative flex h-full w-full max-w-lg flex-col bg-white shadow-xl overflow-y-auto">
+        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+          <h2 className="text-lg font-semibold">Edit part</h2>
+          <button onClick={onClose} className="rounded-sm p-1 hover:bg-gray-100">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!formData.category.trim()) return;
+            updateMutation.mutate(formData);
+          }}
+          className="space-y-4 p-4"
+        >
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium">Name *</label>
+              <input
+                required
+                className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium">SKU</label>
+              <input
+                className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
+                value={formData.sku}
+                onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium" htmlFor="inv-part-edit-category">
+              Category *
+            </label>
+            <SelectCombobox
+              id="inv-part-edit-category"
+              required
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              aria-label="Part category"
+            >
+              <option value="">Select category…</option>
+              {PART_INVENTORY_CATEGORIES.map((code) => (
+                <option key={code} value={code}>
+                  {formatPartInventoryCategoryLabel(code)}
+                </option>
+              ))}
+            </SelectCombobox>
+          </div>
+          <div>
+            <label className="block text-sm font-medium">Preferred vendor</label>
+            <div className="mt-1" data-testid="inv-part-edit-vendor-picker">
+              <ReferenceSelect
+                value={formData.vendor_id || null}
+                onChange={(next) => setFormData({ ...formData, vendor_id: next ?? "" })}
+                options={vendorOptions}
+                createKind="vendor"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Select vendor…"
+                loading={vendorsQuery.isLoading}
+                onSearch={setVendorSearch}
+                onOptionCreated={(opt) => {
+                  setFormData((v) => ({ ...v, vendor_id: opt.value }));
+                  void vendorsQuery.refetch();
+                }}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium">On-hand qty</label>
+              <input
+                type="number"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
+                value={formData.on_hand_qty}
+                onChange={(e) => setFormData({ ...formData, on_hand_qty: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium">Reorder point</label>
+              <input
+                type="number"
+                className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
+                value={formData.reorder_point}
+                onChange={(e) => setFormData({ ...formData, reorder_point: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium">Unit cost</label>
+              <MoneyInput
+                valueDollars={formData.unit_cost ? Number(formData.unit_cost) : null}
+                onChangeDollars={(d) => setFormData({ ...formData, unit_cost: d == null ? "" : String(d) })}
+                ariaLabel="Unit cost"
+                className="mt-1 w-full"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium">Location/Bin</label>
+            <input
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
+              value={formData.location}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">Notes</label>
+            <textarea
+              rows={3}
+              className="mt-1 w-full rounded-sm border border-gray-300 px-3 py-2"
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="secondary" onClick={onClose}>Cancel</Button>
+            <Button type="submit" loading={updateMutation.isPending}>Save</Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

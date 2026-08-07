@@ -265,9 +265,15 @@ export async function getArAgingCustomerInvoices(input: {
                 i.id, i.display_id, i.status, i.issue_date, i.due_date, i.total_cents,
                 COALESCE((
                   SELECT SUM(pa.amount_cents)
+                  -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED): this SUM is the amount applied against
+                  -- the invoice and it drives the AR AGING figure. Unscoped, another entity's payment
+                  -- application could reduce this invoice's open balance — a WRONG MONEY NUMBER on a
+                  -- financial report, not a mislabel. Both pinned to the invoice's own company.
                   FROM accounting.payment_applications pa
                   JOIN accounting.payments p ON p.id = pa.payment_id
+                                            AND p.operating_company_id = pa.operating_company_id
                   WHERE pa.invoice_id = i.id
+                    AND pa.operating_company_id = i.operating_company_id
                     AND p.payment_date <= $3::date
                     AND (p.voided_at IS NULL OR p.voided_at::date > $3::date)
                     AND (pa.unapplied_at IS NULL OR pa.unapplied_at::date > $3::date)

@@ -117,7 +117,9 @@ export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
           ) tag ON true
           LEFT JOIN safety.dvir_submissions ds ON ds.id = dd.dvir_submission_id
           LEFT JOIN mdata.units u ON u.id = dd.unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = dd.operating_company_id
           LEFT JOIN mdata.drivers dr ON dr.id = ds.driver_id
+                                    AND dr.operating_company_id = ds.operating_company_id
           WHERE ${filters.join(" AND ")}
           ORDER BY
             CASE ${severityExpr} WHEN 'major' THEN 0 WHEN 'minor' THEN 1 ELSE 2 END,

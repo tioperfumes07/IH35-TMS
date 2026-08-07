@@ -142,7 +142,9 @@ export async function getDailyPrediction(
           ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} AS projected_cash_date
         FROM mdata.loads l
         LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                   AND c.operating_company_id = l.operating_company_id
         LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
+                                                      AND pt.operating_company_id = c.operating_company_id
         LEFT JOIN LATERAL (
           SELECT scheduled_arrival_at
           FROM mdata.load_stops
@@ -172,6 +174,7 @@ export async function getDailyPrediction(
       AND ls.stop_type = 'delivery'
       AND ls.scheduled_arrival_at::date = $2::date
     LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                               AND c.operating_company_id = l.operating_company_id
     WHERE l.operating_company_id = $1
       AND ${ACTIVE_LOAD_FILTER}
     ORDER BY ls.scheduled_arrival_at ASC NULLS LAST, l.load_number ASC
@@ -219,6 +222,7 @@ export async function getDailyPrediction(
         ROUND(COALESCE(s.net_pay, 0) * 100)::int AS amount_cents
       FROM driver_finance.driver_settlements s
       LEFT JOIN mdata.drivers d ON d.id = s.driver_id
+                             AND d.operating_company_id = s.operating_company_id
       WHERE s.operating_company_id = $1
         AND s.reversed_at IS NULL
         AND COALESCE(s.net_pay, 0) > 0
@@ -362,7 +366,9 @@ async function buildSevenDayStrip(
           SELECT SUM(COALESCE(l.rate_total_cents, 0))
           FROM mdata.loads l
           LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                     AND c.operating_company_id = l.operating_company_id
           LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
+                                                        AND pt.operating_company_id = c.operating_company_id
           LEFT JOIN LATERAL (
             SELECT scheduled_arrival_at FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'delivery'
@@ -455,7 +461,9 @@ export async function getActualVsProjected(
         ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} AS bucket_date
       FROM mdata.loads l
       LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                 AND c.operating_company_id = l.operating_company_id
       LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
+                                                    AND pt.operating_company_id = c.operating_company_id
       LEFT JOIN LATERAL (
         SELECT scheduled_arrival_at FROM mdata.load_stops
         WHERE load_id = l.id AND stop_type = 'delivery'

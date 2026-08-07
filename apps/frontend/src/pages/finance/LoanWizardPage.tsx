@@ -153,96 +153,107 @@ export function LoanWizardPage() {
     <div className="p-6">
       <FinanceModuleTabs />
       {header}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Inputs */}
-        <div className="rounded-sm border border-slate-200 bg-white p-4">
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">Loan & asset</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {field("Asset name", "assetName", "text", "Peterbilt 579")}
-            {field("VIN / serial", "vin")}
-            {field("Purchase price ($)", "purchasePrice", "number")}
-            {field("Down payment ($)", "downPayment", "number")}
-            {field("Loan amount ($)", "loanAmount", "number")}
-            {field("Annual rate (%)", "annualRatePct", "number")}
-            {field("Term (months)", "termMonths", "number")}
-            {field("First payment date", "firstPaymentDate", "date")}
-            {field("Lender", "lender", "text", "Commercial Credit Group")}
-            {field("Useful life (months)", "usefulLifeMonths", "number")}
-            {field("Salvage value ($)", "salvageValue", "number")}
-          </div>
-          <button
-            onClick={onPreview}
-            disabled={busy || !companyId}
-            className="mt-4 rounded-sm bg-slate-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-          >
-            {busy ? "Computing…" : "Preview"}
-          </button>
-          {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-        </div>
-
-        {/* Preview pane */}
-        <div className="rounded-sm border border-slate-200 bg-white p-4">
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">Will auto-create (preview)</h2>
-          {!preview ? (
-            <p className="text-sm text-slate-500">Enter loan details and Preview to see every generated entry.</p>
-          ) : (
-            <div className="space-y-4 text-sm">
-              <div className="flex items-center gap-2">
-                <span className={preview.balanced ? "rounded-sm bg-slate-100 px-2 py-0.5 text-slate-700" : "rounded-sm bg-red-100 px-2 py-0.5 text-red-700"}>
-                  {preview.balanced ? "Opening JE balanced ✓" : "Opening JE does NOT balance"}
-                </span>
-              </div>
-              <div>
-                <div className="font-medium text-slate-700">
-                  {preview.loan_record.loan_type === "note_payable" ? "Note Payable (long-term)" : "Loan Payable (current)"} — {preview.loan_record.lender}
-                </div>
-                <div className="text-slate-500">
-                  {dollars(preview.loan_record.principal_cents)} @ {preview.loan_record.annual_rate_pct}% × {preview.loan_record.term_months} mo · monthly {dollars(preview.summary.monthly_payment_cents)} · total interest {dollars(preview.summary.total_interest_cents)}
-                </div>
-              </div>
-              <div>
-                <div className="font-medium text-slate-700">Fixed asset + depreciation</div>
-                <div className="text-slate-500">
-                  Capitalized {dollars(preview.fixed_asset.capitalized_cost_cents)} · straight-line {preview.fixed_asset.useful_life_months} mo · salvage {dollars(preview.fixed_asset.salvage_value_cents)} ({preview.depreciation_schedule.length} periods)
-                </div>
-              </div>
-              <div>
-                <div className="font-medium text-slate-700">Opening journal entry</div>
-                <div className="mt-1">
-                  <ParityTable
-                    columns={OPENING_JE_COLUMNS}
-                    rows={[
-                      ...preview.opening_journal_entry.lines.map(
-                        (l, i): OpeningJeRow => ({
-                          id: `line-${i}`,
-                          description: l.description,
-                          debit: l.debit_or_credit === "debit" ? dollars(l.amount_cents) : "",
-                          credit: l.debit_or_credit === "credit" ? dollars(l.amount_cents) : "",
-                          isTotals: false,
-                        }),
-                      ),
-                      {
-                        id: "totals",
-                        description: "Totals",
-                        debit: dollars(preview.opening_journal_entry.debit_total_cents),
-                        credit: dollars(preview.opening_journal_entry.credit_total_cents),
-                        isTotals: true,
-                      },
-                    ]}
-                    rowKey={(r) => r.id}
-                    storageKey="loan-wizard-opening-je"
-                    tableTestId="loan-wizard-opening-je-table"
-                    emptyText="No journal lines in preview."
-                  />
-                </div>
-              </div>
-              <p className="text-xs text-slate-400">
-                Preview only — posting these entries is a separate, owner-gated step (not enabled here).
-              </p>
+      {/* Flat QBO-style workspace — single section frame, divide-x columns (no nested bordered tiles). */}
+      <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:divide-x lg:divide-slate-100">
+          {/* Inputs */}
+          <div>
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+              Loan &amp; asset
             </div>
-          )}
+            <div className="px-4 py-3">
+              <div className="grid grid-cols-2 gap-3">
+                {field("Asset name", "assetName", "text", "Peterbilt 579")}
+                {field("VIN / serial", "vin")}
+                {field("Purchase price ($)", "purchasePrice", "number")}
+                {field("Down payment ($)", "downPayment", "number")}
+                {field("Loan amount ($)", "loanAmount", "number")}
+                {field("Annual rate (%)", "annualRatePct", "number")}
+                {field("Term (months)", "termMonths", "number")}
+                {field("First payment date", "firstPaymentDate", "date")}
+                {field("Lender", "lender", "text", "Commercial Credit Group")}
+                {field("Useful life (months)", "usefulLifeMonths", "number")}
+                {field("Salvage value ($)", "salvageValue", "number")}
+              </div>
+              <button
+                onClick={onPreview}
+                disabled={busy || !companyId}
+                className="mt-4 rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {busy ? "Computing…" : "Preview"}
+              </button>
+              {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+            </div>
+          </div>
+
+          {/* Preview pane */}
+          <div>
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+              Will auto-create (preview)
+            </div>
+            <div className="px-4 py-3">
+              {!preview ? (
+                <p className="text-sm text-slate-500">Enter loan details and Preview to see every generated entry.</p>
+              ) : (
+                <div className="space-y-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className={preview.balanced ? "rounded-sm bg-slate-100 px-2 py-0.5 text-slate-700" : "rounded-sm bg-red-100 px-2 py-0.5 text-red-700"}>
+                      {preview.balanced ? "Opening JE balanced ✓" : "Opening JE does NOT balance"}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="font-medium text-slate-700">
+                      {preview.loan_record.loan_type === "note_payable" ? "Note Payable (long-term)" : "Loan Payable (current)"} — {preview.loan_record.lender}
+                    </div>
+                    <div className="text-slate-500">
+                      {dollars(preview.loan_record.principal_cents)} @ {preview.loan_record.annual_rate_pct}% × {preview.loan_record.term_months} mo · monthly {dollars(preview.summary.monthly_payment_cents)} · total interest {dollars(preview.summary.total_interest_cents)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="font-medium text-slate-700">Fixed asset + depreciation</div>
+                    <div className="text-slate-500">
+                      Capitalized {dollars(preview.fixed_asset.capitalized_cost_cents)} · straight-line {preview.fixed_asset.useful_life_months} mo · salvage {dollars(preview.fixed_asset.salvage_value_cents)} ({preview.depreciation_schedule.length} periods)
+                    </div>
+                  </div>
+                  <div>
+                    <div className="font-medium text-slate-700">Opening journal entry</div>
+                    <div className="mt-1">
+                      <ParityTable
+                        columns={OPENING_JE_COLUMNS}
+                        rows={[
+                          ...preview.opening_journal_entry.lines.map(
+                            (l, i): OpeningJeRow => ({
+                              id: `line-${i}`,
+                              description: l.description,
+                              debit: l.debit_or_credit === "debit" ? dollars(l.amount_cents) : "",
+                              credit: l.debit_or_credit === "credit" ? dollars(l.amount_cents) : "",
+                              isTotals: false,
+                            }),
+                          ),
+                          {
+                            id: "totals",
+                            description: "Totals",
+                            debit: dollars(preview.opening_journal_entry.debit_total_cents),
+                            credit: dollars(preview.opening_journal_entry.credit_total_cents),
+                            isTotals: true,
+                          },
+                        ]}
+                        rowKey={(r) => r.id}
+                        storageKey="loan-wizard-opening-je"
+                        tableTestId="loan-wizard-opening-je-table"
+                        emptyText="No journal lines in preview."
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Preview only — posting these entries is a separate, owner-gated step (not enabled here).
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

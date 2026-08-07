@@ -11,10 +11,10 @@ import { FieldError, fieldErrorClassname } from "../../../components/forms/Field
 import { FormErrorBanner } from "../../../components/forms/FormErrorBanner";
 import { useFormValidation } from "../../../components/forms/useFormValidation";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
-import { Combobox } from "../../../components/Combobox";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { listCustomers } from "../../../api/mdata";
-import { listLoads } from "../../../api/loads";
+import { getLoad } from "../../../api/loads";
 import { listCatalogAccounts } from "../../../api/catalog-accounts";
 import { addInvoiceLine, patchInvoice } from "../../../api/accounting";
 import { ApiError } from "../../../api/client";
@@ -30,7 +30,6 @@ type CreditLimitBlock = {
 
 const INCOME_TYPES = ["Income", "OtherIncome"];
 const CARRIER_DEFAULT_INCOME_NAME = "Sales of Service Income";
-const LOAD_PICKER_LIMIT = 200;
 
 const invoiceModalSchema = z
   .object({
@@ -107,16 +106,10 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     staleTime: 60_000,
   });
 
-  const loadsQuery = useQuery({
-    queryKey: ["invoice-type-modal", "loads", operatingCompanyId, customerId],
-    queryFn: () =>
-      listLoads({
-        operating_company_id: operatingCompanyId ? [operatingCompanyId] : undefined,
-        customer_id: customerId ?? undefined,
-        limit: LOAD_PICKER_LIMIT,
-        sort: "-pickup_date",
-      }),
-    enabled: Boolean(operatingCompanyId) && open,
+  const loadDetailQuery = useQuery({
+    queryKey: ["invoice-type-modal", "load-detail", loadId],
+    queryFn: () => getLoad(String(loadId)),
+    enabled: Boolean(operatingCompanyId) && open && Boolean(loadId),
     staleTime: 60_000,
   });
 
@@ -161,20 +154,6 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
           type: a.account_type ?? undefined,
         })),
     [accountsQuery.data?.accounts]
-  );
-
-  const loadOptions = useMemo(
-    () =>
-      (loadsQuery.data?.loads ?? []).map((load) => ({
-        value: load.id,
-        label: load.load_number ? `${load.load_number}${load.customer_name ? ` · ${load.customer_name}` : ""}` : load.id,
-      })),
-    [loadsQuery.data?.loads]
-  );
-
-  const loadsById = useMemo(
-    () => new Map((loadsQuery.data?.loads ?? []).map((load) => [load.id, load])),
-    [loadsQuery.data?.loads]
   );
 
   const formSnapshot = useMemo(
@@ -266,6 +245,24 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     setDraftAttachmentEntityId(crypto.randomUUID());
   }, [open, resetInvoiceErrors]);
 
+  // When a load is picked, seed customer / line description / amount from the load detail.
+  useEffect(() => {
+    const load = loadDetailQuery.data;
+    if (!load || !loadId) return;
+    if (load.customer_id && load.customer_id !== customerId) {
+      setCustomerId(load.customer_id);
+      clearInvoiceFieldError("customer_id");
+    }
+    if (load.load_number && !lineDescription.trim()) {
+      setLineDescription(`Linehaul · Load ${load.load_number}`);
+    }
+    const rateCents = Number(load.rate_total_cents ?? 0);
+    if (rateCents > 0 && (lineAmountCents == null || lineAmountCents === 0)) {
+      setLineAmountCents(rateCents);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when load detail arrives
+  }, [loadDetailQuery.data, loadId]);
+
   // Customer default income account (Option-B suggestion — editable, never silent).
   useEffect(() => {
     if (!open || !customerId || incomeAccountId) return;
@@ -330,31 +327,20 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
             />
             <FieldError id="customer_id" message={invoiceFieldErrors.customer_id} />
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1" data-testid="invoice-type-load-picker">
             <label className="text-xs font-semibold text-slate-600">Load (optional)</label>
-            <Combobox
-              options={loadOptions}
+            <EntityPicker
+              kind="load"
+              operatingCompanyId={operatingCompanyId}
               value={loadId}
               onChange={(next) => {
                 clearInvoiceFieldError("load_id");
                 setLoadId(next);
-                if (!next) return;
-                const load = loadsById.get(next);
-                if (load?.customer_id && load.customer_id !== customerId) {
-                  setCustomerId(load.customer_id);
-                  clearInvoiceFieldError("customer_id");
-                }
-                if (load?.load_number && !lineDescription.trim()) {
-                  setLineDescription(`Linehaul · Load ${load.load_number}`);
-                }
-                const rateCents = Number(load?.rate_total_cents ?? 0);
-                if (rateCents > 0 && (lineAmountCents == null || lineAmountCents === 0)) {
-                  setLineAmountCents(rateCents);
-                }
               }}
+              enabled={open && Boolean(operatingCompanyId)}
+              nestedInDrawer
               placeholder={customerId ? "Link load (optional)…" : "Select customer first…"}
-              loading={loadsQuery.isLoading}
-              disabled={!operatingCompanyId}
+              dataField="load_id"
               allowClear
             />
             <FieldError id="load_id" message={invoiceFieldErrors.load_id} />

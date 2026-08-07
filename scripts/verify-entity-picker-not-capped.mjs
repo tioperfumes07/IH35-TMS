@@ -45,6 +45,15 @@ const GUARDED = [
   // Add catalogs.items / catalogs.classes here when they cross ~200; both are close.
 ];
 
+/** Regression pins — pages that already breached the cap and must not regress. */
+const PINNED = [
+  {
+    rel: "apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx",
+    fn: "listVendors",
+    entity: "mdata.vendors",
+  },
+];
+
 export function findCappedCalls(source, fn) {
   const out = [];
   const re = new RegExp(`${fn}\\(\\s*\\{([^}]*)\\}`, "g");
@@ -72,6 +81,16 @@ function walk(dir, out = []) {
 export function run() {
   const files = walk(path.join(ROOT, "apps/frontend/src"));
   const problems = [];
+  for (const pin of PINNED) {
+    const full = path.join(ROOT, pin.rel);
+    const src = readFileSync(full, "utf8");
+    for (const lim of findCappedCalls(src, pin.fn)) {
+      problems.push(
+        `${pin.rel}: pinned regression — ${pin.fn}(limit: ${lim}) with no search term ` +
+          `(~950 ${pin.entity} rows in TRANSP). Use limit >= ${MIN_LIMIT}, or pass a search term.`
+      );
+    }
+  }
   for (const f of files) {
     const src = readFileSync(f, "utf8");
     for (const g of GUARDED) {
@@ -112,6 +131,11 @@ function selftest() {
   t("mutation: unrelated source yields nothing", findCappedCalls("const x = 1;", "listVendors").length === 0);
   t("mutation: the actual limit value is reported",
     findCappedCalls("listVendors({ limit: 200 })", "listVendors")[0] === 200);
+  t("pinned inventory page passes at MIN_LIMIT",
+    findCappedCalls(
+      readFileSync(path.join(ROOT, PINNED[0].rel), "utf8"),
+      "listVendors"
+    ).length === 0);
   return bad;
 }
 
@@ -119,7 +143,7 @@ const DIRECT = process.argv[1] && process.argv[1].endsWith("verify-entity-picker
 if (DIRECT) {
   if (process.argv.includes("--selftest")) {
     const bad = selftest();
-    console.log(bad === 0 ? `${LABEL} SELFTEST PASS — 8 cases` : `${LABEL} SELFTEST FAILED (${bad})`);
+    console.log(bad === 0 ? `${LABEL} SELFTEST PASS — 9 cases` : `${LABEL} SELFTEST FAILED (${bad})`);
     process.exit(bad === 0 ? 0 : 1);
   }
   const r = run();

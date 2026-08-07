@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import type { MaintenancePartRow } from "../../api/maintenance";
 import partsStockPage from "./InventoryPartsStockPage.tsx?raw";
-import { mapMaintenancePartsToInventoryRows, type MaintenancePartRow } from "./InventoryPartsStockPage";
+import { mapMaintenancePartsToInventoryRows } from "./InventoryPartsStockPage";
 
 // B1: the inventory Parts & Stock page reads /api/v1/maintenance/parts (the real backend) and maps
 // its row shape onto the page's columns. This locks the field mapping + status derivation.
@@ -11,11 +12,15 @@ const base: MaintenancePartRow = {
   name: "Brake pad",
   category: "Brakes",
   notes: "OEM only",
+  vendor_id: "v-11111111-1111-1111-1111-111111111111",
+  vendor_default: null,
   unit_cost: 42.5,
   qty_on_hand: 7,
   reorder_threshold: 4,
   location: "A-12",
+  source: "manual",
   voided_at: null,
+  voided_reason: null,
 };
 
 describe("InventoryPartsStockPage read path", () => {
@@ -27,7 +32,8 @@ describe("InventoryPartsStockPage read path", () => {
 
 describe("mapMaintenancePartsToInventoryRows", () => {
   it("maps maintenance fields onto the inventory row shape", () => {
-    const [row] = mapMaintenancePartsToInventoryRows([base]);
+    const vendorMap = new Map([["v-11111111-1111-1111-1111-111111111111", "Acme Parts"]]);
+    const [row] = mapMaintenancePartsToInventoryRows([base], vendorMap);
     expect(row).toEqual({
       id: "p1",
       name: "Brake pad",
@@ -38,9 +44,24 @@ describe("mapMaintenancePartsToInventoryRows", () => {
       reorder_threshold: 4,
       unit_cost: 42.5,
       location: "A-12",
+      vendor_id: "v-11111111-1111-1111-1111-111111111111",
+      vendor_label: "Acme Parts",
       status: "In stock",
       voided_at: null,
     });
+  });
+
+  it("INV-LINK-01: maps vendor_id and resolves vendor_label from catalog", () => {
+    const vendorMap = new Map([["v-11111111-1111-1111-1111-111111111111", "Acme Parts"]]);
+    const [row] = mapMaintenancePartsToInventoryRows([base], vendorMap);
+    expect(row.vendor_id).toBe("v-11111111-1111-1111-1111-111111111111");
+    expect(row.vendor_label).toBe("Acme Parts");
+  });
+
+  it("INV-LINK-01: null vendor_id yields null vendor_label", () => {
+    const [row] = mapMaintenancePartsToInventoryRows([{ ...base, vendor_id: null }]);
+    expect(row.vendor_id).toBeNull();
+    expect(row.vendor_label).toBeNull();
   });
 
   it("INV-1: null category/notes tolerate to null (no crash, real SKU still maps)", () => {
@@ -56,12 +77,17 @@ describe("mapMaintenancePartsToInventoryRows", () => {
   });
 
   it("defaults missing reorder_threshold to 0", () => {
-    const [row] = mapMaintenancePartsToInventoryRows([{ ...base, reorder_threshold: undefined }]);
+    const [row] = mapMaintenancePartsToInventoryRows([
+      { ...base, reorder_threshold: undefined } as unknown as MaintenancePartRow,
+    ]);
     expect(row.reorder_threshold).toBe(0);
   });
 
   it("treats null qty as 0 and tolerates an empty list", () => {
-    expect(mapMaintenancePartsToInventoryRows([{ ...base, qty_on_hand: null }])[0].on_hand_qty).toBe(0);
+    expect(
+      mapMaintenancePartsToInventoryRows([{ ...base, qty_on_hand: null } as unknown as MaintenancePartRow])[0]
+        .on_hand_qty,
+    ).toBe(0);
     expect(mapMaintenancePartsToInventoryRows([])).toEqual([]);
   });
 });

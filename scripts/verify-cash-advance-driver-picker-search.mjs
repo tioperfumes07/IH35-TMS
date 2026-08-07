@@ -30,17 +30,24 @@ export function collectProblems(root = ROOT) {
   if (!/DriverPickerWithCreate/.test(code)) {
     problems.push(`${FILE}: must use DriverPickerWithCreate for driver`);
   }
-  if (!/EntityPicker[\s\S]*?kind=["']unit["']/.test(code)) {
+  const hasTrailerPicker =
+    (/EntityPicker/.test(code) && /kind=["']trailer["']/.test(code)) ||
+    (/trailerSearch/.test(code) && /onSearch=\{setTrailerSearch\}/.test(code));
+  if (!hasTrailerPicker) {
+    problems.push(`${FILE}: trailer must use EntityPicker kind=trailer OR trailerSearch → onSearch`);
+  }
+  const hasLoadPicker =
+    (/EntityPicker/.test(code) && /kind=["']load["']/.test(code)) ||
+    (/loadSearch/.test(code) &&
+      /onSearch=\{setLoadSearch\}/.test(code) &&
+      /search:\s*loadSearch\s*\|\|\s*undefined/.test(code));
+  if (!hasLoadPicker) {
+    problems.push(
+      `${FILE}: load must use EntityPicker kind=load OR Combobox loadSearch → onSearch + listLoads search`
+    );
+  }
+  if (!(/EntityPicker/.test(code) && /kind=["']unit["']/.test(code))) {
     problems.push(`${FILE}: unit must use EntityPicker kind=unit`);
-  }
-  if (!/trailerSearch/.test(code) || !/onSearch=\{setTrailerSearch\}/.test(code)) {
-    problems.push(`${FILE}: trailer must wire trailerSearch → onSearch`);
-  }
-  if (!/loadSearch/.test(code) || !/onSearch=\{setLoadSearch\}/.test(code)) {
-    problems.push(`${FILE}: load Combobox must wire loadSearch → onSearch`);
-  }
-  if (!/search:\s*loadSearch\s*\|\|\s*undefined/.test(code)) {
-    problems.push(`${FILE}: listLoads must send search: loadSearch`);
   }
   if (/listDrivers\s*\(/.test(code)) {
     problems.push(`${FILE}: must not call listDrivers (capped roster)`);
