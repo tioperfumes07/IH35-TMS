@@ -278,5 +278,12 @@
     "source_file": ".github/workflows/ci.yml",
     "guard": "scripts/verify-ci-concurrency-sha-scoped.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-DISP-WIRE-07-DEPARTURE-EVIDENCE",
+    "title": "Every path stamping mdata.load_stops.actual_departure_at must write a real clock value (now() or COALESCE onto now()), never a bare client parameter — that stamp is the delivery evidence revenue recognition and invoice gating hang off",
+    "source_file": "apps/backend/src/dispatch/stamp-final-delivery-departure.ts",
+    "guard": "scripts/verify-disp-wire-07-departure-evidence.mjs",
+    "type": "enforced"
   }
 ]
