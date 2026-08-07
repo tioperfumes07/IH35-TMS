@@ -7,6 +7,8 @@ export async function withMasterDataSyncHeartbeat<T>(syncRunId: string, fn: () =
       await withLuciaBypass(async (client) => {
         await client.query(`UPDATE mdata.qbo_sync_runs SET last_heartbeat_at = now() WHERE id = $1::uuid`, [syncRunId]);
       });
+    // a heartbeat write is liveness telemetry; losing one must not fail the sync run it reports on
+    // intentional swallow
     } catch {
       // heartbeat failures are non-fatal
     }

@@ -27,26 +27,55 @@ const SRC = path.join(ROOT, "apps/backend/src");
 export const MONEY =
   /accounting\/|poster\.service|driver-finance\/|-posting\/|spine-emit|factoring\/|settlement|qbo-sync\/|banking\/|integrations\/qbo\/|integrations\/plaid\/|integrations\/relay-payments\/|\/qbo\//i;
 
-// empty catch OR catch whose body is only comments/whitespace = silent swallow
-// ReDoS-safe (CODEQL-F02, js/redos). The previous form was
-//     \{\s*(\/\/[^\n]*\s*|\/\*[\s\S]*?\*\/\s*)*\}
-// where EVERY alternative ended in \s* while the outer * repeated, so the same run of whitespace
-// could be consumed by the inner \s* or by the next iteration. That ambiguity is the classic
-// exponential-backtracking shape: CodeQL demonstrated it on input starting `catch(){{//`.
-// This form is unambiguous — each branch is distinguished by its FIRST character (whitespace vs
-// `/`, then `/` vs `*`) and no branch ends in a quantifier that the next can also match, so the
-// engine never has a choice to backtrack over. Same language, linear time.
-// It matters here because this guard scans money-path sources in CI: a guard that hangs is a guard
+// empty catch OR catch whose body is only comments/whitespace = silent swallow.
+//
+// NO REGEX MATCHES THE BODY, deliberately. CODEQL-F02 tried twice to express "whitespace and comments
+// only" as `(?:\s|//[^\n]*|/\*[\s\S]*?\*/)*` inside the match, and CodeQL flagged js/redos both
+// times — correctly. Those branches are NOT disambiguated by their first character the way the previous
+// comment here claimed: `//[^\n]*` can itself swallow later `/` characters, so a run like `////` has
+// several valid parses, and when the closing `}` fails to match the engine walks every one of them.
+// That is exponential, and this guard scans money-path sources in CI — a guard that hangs is a guard
 // that does not run.
-const SWALLOW = /catch\s*\([^)]*\)\s*\{(?:\s|\/\/[^\n]*|\/\*[\s\S]*?\*\/)*\}/g;
+//
+// A hand-written scan has no backtracking to exploit: it reads each character at most once, so it is
+// linear by construction rather than by argument. It also fixes a correctness bug the regex could not
+// have handled — a catch body containing braces (an object literal, a nested block) was never matched
+// at all, so those swallows were invisible to this guard.
+const CATCH_HEAD = /catch\s*(?:\([^)]*\))?\s*\{/g;
+
+/**
+ * From the index just past a `catch (...) {`, decide whether the block holds nothing but whitespace
+ * and comments. Returns the index just past the closing `}` when it is a swallow, else -1.
+ */
+function scanEmptyCatchBody(src, i) {
+  while (i < src.length) {
+    const c = src[i];
+    if (c === "}") return i + 1;
+    if (c === " " || c === "\t" || c === "\r" || c === "\n") { i += 1; continue; }
+    if (c === "/" && src[i + 1] === "/") {
+      const nl = src.indexOf("\n", i + 2);
+      i = nl === -1 ? src.length : nl + 1;
+      continue;
+    }
+    if (c === "/" && src[i + 1] === "*") {
+      const end = src.indexOf("*/", i + 2);
+      if (end === -1) return -1; // unterminated comment — not our business to judge
+      i = end + 2;
+      continue;
+    }
+    return -1; // real code in the body: not a swallow
+  }
+  return -1; // ran off the end without closing
+}
 
 /** Scan one file's source for empty/comment-only catch swallows on a money-path relative path. */
 export function checkEmptyCatchSwallows(rel, src) {
   const offenders = [];
   if (!MONEY.test(rel)) return offenders;
-  SWALLOW.lastIndex = 0;
+  CATCH_HEAD.lastIndex = 0;
   let m;
-  while ((m = SWALLOW.exec(src))) {
+  while ((m = CATCH_HEAD.exec(src))) {
+    if (scanEmptyCatchBody(src, m.index + m[0].length) === -1) continue;
     const start = Math.max(0, m.index - 120);
     const ctx = src.slice(start, m.index);
     if (/intentional swallow|intentionally ignored/i.test(ctx)) continue;
