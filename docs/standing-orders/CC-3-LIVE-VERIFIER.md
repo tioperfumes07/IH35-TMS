@@ -1,7 +1,7 @@
 # CC-3 — PERMANENT STANDING ORDER (LIVE VERIFIER + USMCA BATTERY)
 
-> **Owner-issued 2026-08-06 (v2, supersedes the earlier text). Permanent law, not a one-time message.**
-> **LOAD THIS AT THE START OF EVERY SESSION.** Recorded verbatim below.
+> **Owner-issued, re-issued verbatim 2026-08-07. Permanent law, not a one-time message.**
+> **LOAD THIS AT THE START OF EVERY SESSION.** Recorded verbatim below, exactly as issued.
 
 ---
 
