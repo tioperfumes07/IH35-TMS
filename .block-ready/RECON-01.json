@@ -7,7 +7,7 @@
   "branch": "feat/recon-01-schema-jobs-engine",
   "lane": "coder",
   "details": [
-    "GATED (Tier-2): carries db/migrations/*.sql and touches accounting.* schema → financial-cluster for MERGE. Build locally, run migration on a Neon TEST branch only, show Jorge git diff --staged --stat + full SQL, WAIT for explicit OK to merge. OWNER LAW 2026-08-03: no holds, no approval label; coders have full Neon access and merge on green. Proof, not approval, is the gate. (constitution §1.3/§1.4). Flag OFF at merge.",
+    "GATED (Tier-2): carries db/migrations/*.sql and touches accounting.* schema → financial-cluster for MERGE. Build locally, run migration on a Neon TEST branch only, show Jorge git diff --staged --stat + full SQL, WAIT for explicit OK to merge. Never self-merge (constitution §1.3/§1.4). Flag OFF at merge.",
     "Read-only / no-autofix: engine writes only accounting.recon_runs + accounting.recon_exceptions; no INSERT/UPDATE/DELETE on any other financial table; no QBO write client ever imported.",
     "Maker≠checker: resolved_by must differ from run preparer; system/scheduled-job identity can never resolve. resolution_note NOT NULL on resolve.",
     "Every state change emits events.log_event (actor attribution source for MODIFIED_AFTER_VERIFIED).",
