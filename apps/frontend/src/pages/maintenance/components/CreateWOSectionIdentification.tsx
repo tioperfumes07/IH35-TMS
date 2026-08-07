@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { getDriver, getUnit, listCustomers, listVendors } from "../../../api/mdata";
@@ -10,6 +10,12 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { Combobox } from "../../../components/shared/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { capNotice, listCapInfo } from "../../../lib/list-cap";
+
+// CLS-SILENT-CAP: named so the fetch and the truncation check read the SAME number.
+// 2,836 vendors exist on prod, so an unsearched 200-row fetch hides 2,636 of them.
+const VENDOR_PICKER_CAP = 200;
+
 
 /** AUDIT-611 / backend deriveClassHint — {UNIT_DISPLAY}-{DRIVER_LAST} never raw UUIDs. */
 export function deriveWoClassHintLabel(opts: {
@@ -108,12 +114,19 @@ export function CreateWOSectionIdentification({
       listVendors({
         operating_company_id: String(operatingCompanyId),
         status: "active",
-        limit: 200,
+        limit: VENDOR_PICKER_CAP,
         search: vendorSearch || undefined,
       }),
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
+
+  // CLS-SILENT-CAP: EXACT truncation — listVendors returns the server's real `total`.
+  const vendorCap = useMemo(
+    () => listCapInfo(vendorsQuery.data?.vendors?.length ?? 0, VENDOR_PICKER_CAP, vendorsQuery.data?.total ?? null),
+    [vendorsQuery.data],
+  );
+  const vendorCapNotice = capNotice(vendorCap, "vendors");
   const customersQuery = useQuery({
     queryKey: ["maintenance", "customers", operatingCompanyId, "create-wo-id", customerSearch],
     queryFn: () =>
@@ -266,6 +279,8 @@ export function CreateWOSectionIdentification({
               <input type="hidden" {...register("vendor_id")} />
               <input type="hidden" {...register("vendor_qbo_id")} />
               {/* Label only — shop_name/vendor_id are the persisted fields. */}
+              {/* CLS-SILENT-CAP: tell the user the picker is not showing every vendor. */}
+              {vendorCapNotice ? <p className="text-[10px] text-slate-700">{vendorCapNotice}</p> : null}
               <ReferenceSelect
                 value={watch("vendor_id") || null}
                 onChange={(next) => {
