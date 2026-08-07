@@ -1041,3 +1041,39 @@ vehicle file with correct authorities throughout.
 this battery: correct regulatory calendar, correct CFR/IRS citations on both drivers and units,
 correct entity scoping, automatic driver→obligation generation, and an implemented owner decision
 (W-8BEN). Nothing here needed a board row.
+
+## 26 — `LV-CREDITMEMO-NOPATH`: AR credit memo and AP vendor credit have NO create path — FAIL
+
+Battery items *"AR … credit memo"* and *"AP … vendor credit"*. **Neither can be created.**
+
+**UI — exhaustively checked, not sampled.** On `/accounting/invoices`:
+- `+ Create ▾` offers exactly: `New Bill` · `Expense` · `Invoice` · `Receive payment` · `Journal entry`.
+- The `More ▾` accounting menu was enumerated from the DOM — **120 distinct menu items** — and the
+  only credit/memo/refund match is the string **`Memo`**, which is a table COLUMN HEADER, not a
+  route. There is **no Credit memo and no Vendor credit anywhere in accounting navigation**.
+- The invoice detail (item 14) offers only `Print` · `View invoice PDF` · `Send` · `Void`.
+
+**Prod — the tables exist, so this is unrouted, not undesigned:**
+
+| table | rows | **n_tup_ins** | meaning |
+|---|---|---|---|
+| `accounting.credit_memos` | 0 | **0** | exists, **never written by anyone, ever** |
+| `accounting.vendor_credit_applications` | 0 | **0** | exists, never written |
+| `accounting.vendor_credits` | **6** | 6 | see origin below |
+| `mdata.qbo_vendor_credits` (mirror) | 6 | 6 | — |
+
+**Origin census on `accounting.vendor_credits` (the discriminator that settles it):** all **6 rows are
+`TRANSP`**, **`qbo_id IS NOT NULL` on all 6**, **`tms_native = 0`**, `source_system = 'qbo'`.
+**USMCA has zero.** So every vendor credit in the system is a QBO clone on the real-books entity —
+**the TMS has never originated a vendor credit, and has never written a credit memo at all.**
+
+**Expected-state test applied (owner ruling 2026-08-04):** the 6 QBO-origin rows are legitimately
+imported and are NOT a defect — no backfill, no invented data. **The defect is the absent create
+path**, which is a different thing and is not exempted by the origin rule.
+
+**Consequence:** AR cannot issue a customer credit, and AP cannot record a vendor credit, through the
+product. For a system targeting QuickBooks/NetSuite parity these are baseline AR/AP documents —
+QBO has both as first-class create actions.
+
+Board row `LV-CREDITMEMO-NOPATH` (CC-2 mechanical/route; **CC-1 to confirm the posting treatment**
+before the route is wired, since a credit memo is GL-affecting).
