@@ -5783,3 +5783,71 @@ cheapest kind of fix there is: make them WORM before they ever hold a balance.
 88 established the role-scoping hole on a different table set; item 91 found four bare tables in escrow and
 settlement. This item generalises all of it into one measured class with a baseline that can be ratcheted.
 Board row `CLS-MONEY-WORM-GAP`; `LV-ESCROW-SUBLEDGER-NOT-WORM` remains open as its four escrow instances.
+
+---
+
+## 94. MASTER-DATA ↔ TRANSACTION LINKAGE — PASS on every edge but one, and THREE hypotheses killed on the way to the one real finding
+
+**Unit: forward and reverse referential integrity from every USMCA money document to its master-data record.
+Verdict: PASS on 5 of 6 edges; one real gap, `LV-BILL-MDATA-VENDOR-FK-OPTOUT`, filed to CC-1.**
+
+**VERIFIED — prod `br-fancy-credit-akjnd07a`, USMCA GUC set in the same transaction:**
+
+| edge | rows | NULL fk | dangling | verdict |
+|---|---|---|---|---|
+| `invoices → customer` | 7 | 0 | **0** | PASS |
+| `invoices → source_load` | 7 | 4 | **0** | PASS — manual invoices correctly have no load |
+| `loads → driver` | 4 | 0 | **0** | PASS |
+| `loads → customer` | 4 | 0 | **0** | PASS |
+| `payments → customer` | 3 | 0 | **0** | PASS |
+| `bills → vendor` | 11 | **2** (`mdata_vendor_id`) | 0 | **GAP — see below** |
+
+**0 USMCA bills reference a non-USMCA vendor.** Cross-entity leakage on this surface: none.
+
+**THE ONE REAL FINDING.** `accounting.bills` has two vendor columns. `vendor_id` is `text` and holds the
+QBO/legacy external id — **16,245 of 16,258 rows are non-UUID-shaped**, so it is an external id doing its job.
+The real FK is `mdata_vendor_id (uuid)`, and it carries **`bills_mdata_vendor_entity_consistent_fkey
+FOREIGN KEY (operating_company_id, mdata_vendor_id) REFERENCES mdata.vendors(operating_company_id, id)`** —
+a composite FK that makes a cross-entity vendor reference **impossible at the database level.** That is
+excellent design. **It is also nullable, and therefore opt-out** — and 2 of 11 USMCA TMS-native bills
+(`77f2659f`, `62fbc5ec`, both `unpaid`) have opted out, keeping the link only in the untyped text column
+where no FK can reach it. Data correct today; control not applied. Filed as `LV-BILL-MDATA-VENDOR-FK-OPTOUT`.
+
+**★ THREE HYPOTHESES DISPROVEN — recorded with the evidence that killed each, because every one of them
+would have been a serious false filing.**
+
+**DISPROVEN 1 — "`bills.vendor_id` is `text` referencing a `uuid` PK, so bills have no referential
+integrity."** The type mismatch is real and a `text → uuid` FK is impossible in Postgres, so this looked like
+a structural linkage hole in A/P. **Wrong:** `pg_constraint` shows 12 FKs on the table including the two on
+`mdata_vendor_id`. The text column is not a broken FK, it is a deliberate external id. **Reading the
+constraint list beat reasoning from the column type.**
+
+**DISPROVEN 2 — "those two bills point at a vendor that does not exist" (dangling reference on live open
+payables).** A `LEFT JOIN` to `mdata.vendors` returned `vendor_name = NULL` for both. **Wrong, and it
+contradicted a query I had already run** — a `NOT EXISTS` check minutes earlier had returned `dangling = 0`
+for the same rows. Two results in one session disagreed, so one was broken. Direct lookup with the
+completeness discriminator settled it: the vendor exists — `USMCA Audit Vendor 20260722`,
+`operating_company_id` = USMCA, `deactivated_at` NULL — with `vendors_visible = 2,836 == n_live_tup = 2,836`.
+**The join was the broken query, not the data.**
+
+**DISPROVEN 3 — "the runtime role cannot see its own entity's vendor, so open bills render vendorless."**
+This one was seductive: the failing join reported `ran_as = ih35_app` while the successful lookup reported
+`ran_as = neondb_owner`, and `mdata.vendors`' RLS policy `vendors_select` reads
+`is_lucia_bypass() OR (deactivated_at IS NULL AND operating_company_id IN (SELECT org.user_accessible_company_ids()))`.
+A real "runtime cannot resolve its own vendor" defect would be P0. **I chased the `deactivated_at` clause
+first — the vendor's `deactivated_at` is NULL, so that clause was not the filter.** The surviving clause is
+the user-based one, and the discriminator killed the theory: in this MCP session
+**`is_lucia_bypass() = false` and `org.user_accessible_company_ids()` returns `0` companies**, so under
+`ih35_app` **NO vendors are visible at all** — 2,836 hidden, not one. It is the item-74 global RLS mask
+wearing a different coat, and it says nothing about that vendor. In the real app there is an authenticated
+user, so the function returns their companies. **Not a defect.**
+
+**The pattern worth carrying forward.** `accounting.bills` WAS visible under `ih35_app` in the very same
+statement where `mdata.vendors` was not — because the two tables scope by different mechanisms (GUC vs
+authenticated user). **A join across two tables with different RLS bases can return NULL for one side while
+the other side reads normally, and it looks exactly like missing data.** That is the shape that produced
+hypothesis 2 and 3 here. The defence is the one that worked: when a join yields NULL, re-ask it as a direct
+lookup carrying `current_user` and a visible/n_live_tup discriminator, and never file the join's answer.
+
+**Three plausible defects, one of them P0-shaped, all killed by evidence — and the single real gap that
+survived is a nullable FK, not a broken one.**
