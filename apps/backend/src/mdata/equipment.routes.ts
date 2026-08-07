@@ -316,7 +316,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/mdata/equipment/:id", async (req, reply) => {
+  app.get("/api/v1/mdata/equipment/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -376,7 +376,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.post("/api/v1/mdata/equipment/:id/status-change", async (req, reply) => {
+  app.post("/api/v1/mdata/equipment/:id/status-change", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });

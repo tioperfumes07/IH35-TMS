@@ -486,7 +486,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
   const RL_WRITE = { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } } as const;
   const RL_FMCSA_VERIFY = { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } } as const;
 
-  app.get("/api/v1/mdata/customers", RL_READ, async (req, reply) => {
+  app.get("/api/v1/mdata/customers", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});

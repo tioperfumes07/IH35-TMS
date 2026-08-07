@@ -79,7 +79,7 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
     return { prompts: rows };
   });
 
-  app.post("/api/v1/driver/arrival-prompts/:id/confirm", async (req, reply) => {
+  app.post("/api/v1/driver/arrival-prompts/:id/confirm", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;
@@ -150,7 +150,7 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/driver/arrival-prompts/:id/dismiss", async (req, reply) => {
+  app.post("/api/v1/driver/arrival-prompts/:id/dismiss", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;

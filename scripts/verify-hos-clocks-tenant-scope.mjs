@@ -34,8 +34,13 @@ if (!service.includes("FROM hos.duty_status_events e")) {
 if (!service.includes("e.operating_company_id = $1::uuid") || !service.includes("e.driver_id = $2::uuid")) {
   failures.push("apps/backend/src/telematics/hos-clocks.service.ts: duty events query must be tenant-scoped by company and driver");
 }
-if (!routes.includes("set_config('app.operating_company_id'")) {
-  failures.push("apps/backend/src/telematics/hos.routes.ts: routes must set tenant context");
+// The tenant context may be set either inline via set_config, or through the shared helper
+// setScopedCompanyContext(), which asserts company membership AND sets the same GUC in one call. The
+// helper is the preferred form (CLS-GUC-CALLER-SCOPED) — it makes the assert-then-set ordering
+// impossible to get wrong — so a guard that recognised only the inline literal would fail a file that
+// is strictly MORE correct than the form it was written against.
+if (!routes.includes("set_config('app.operating_company_id'") && !routes.includes("setScopedCompanyContext(")) {
+  failures.push("apps/backend/src/telematics/hos.routes.ts: routes must set tenant context (inline set_config or setScopedCompanyContext)");
 }
 if (!routes.includes("WHERE id = $1::uuid") || !routes.includes("operating_company_id = $2::uuid")) {
   failures.push("apps/backend/src/telematics/hos.routes.ts: driver lookup must enforce tenant scope");

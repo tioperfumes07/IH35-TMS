@@ -41,7 +41,7 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerEdiRoutes(app: FastifyInstance) {
-  app.post("/api/integrations/edi/partners", async (req, reply) => {
+  app.post("/api/integrations/edi/partners", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const body = partnerBodySchema.safeParse(req.body);
@@ -54,7 +54,7 @@ export async function registerEdiRoutes(app: FastifyInstance) {
     return reply.send({ uuid });
   });
 
-  app.get("/api/integrations/edi/partners", async (req, reply) => {
+  app.get("/api/integrations/edi/partners", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query);
@@ -67,7 +67,7 @@ export async function registerEdiRoutes(app: FastifyInstance) {
     return reply.send({ partners });
   });
 
-  app.post("/api/integrations/edi/partners/:uuid/test-connection", async (req, reply) => {
+  app.post("/api/integrations/edi/partners/:uuid/test-connection", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = z.object({ uuid: z.string().uuid() }).safeParse(req.params);
@@ -81,7 +81,7 @@ export async function registerEdiRoutes(app: FastifyInstance) {
     return reply.send(result);
   });
 
-  app.get("/api/integrations/edi/messages", async (req, reply) => {
+  app.get("/api/integrations/edi/messages", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const q = messagesQuerySchema.safeParse(req.query);
@@ -111,7 +111,7 @@ export async function registerEdiRoutes(app: FastifyInstance) {
     return reply.send({ messages });
   });
 
-  app.post("/api/integrations/edi/inbound", async (req, reply) => {
+  app.post("/api/integrations/edi/inbound", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const body = inboundBodySchema.safeParse(req.body);
@@ -165,7 +165,7 @@ export async function registerEdiRoutes(app: FastifyInstance) {
     return reply.send(result);
   });
 
-  app.post("/api/integrations/edi/build/214", async (req, reply) => {
+  app.post("/api/integrations/edi/build/214", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const body = z
@@ -211,7 +211,7 @@ export async function registerEdiRoutes(app: FastifyInstance) {
     return reply.send(payload);
   });
 
-  app.post("/api/integrations/edi/build/210", async (req, reply) => {
+  app.post("/api/integrations/edi/build/210", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const body = z

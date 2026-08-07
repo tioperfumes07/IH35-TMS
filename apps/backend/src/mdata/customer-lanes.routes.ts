@@ -60,7 +60,7 @@ function canManageLanes(role: string) {
 }
 
 export async function registerCustomerLanesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/customers/:customer_id/lanes", async (req, reply) => {
+  app.get("/api/v1/mdata/customers/:customer_id/lanes", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = paramsSchema.safeParse(req.params ?? {});
@@ -86,7 +86,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
     });
   });
 
-  app.post("/api/v1/mdata/customers/:customer_id/lanes", async (req, reply) => {
+  app.post("/api/v1/mdata/customers/:customer_id/lanes", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canManageLanes(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -136,7 +136,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
     });
   });
 
-  app.patch("/api/v1/mdata/customers/:customer_id/lanes/:lane_id", async (req, reply) => {
+  app.patch("/api/v1/mdata/customers/:customer_id/lanes/:lane_id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canManageLanes(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -184,7 +184,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
     });
   });
 
-  app.delete("/api/v1/mdata/customers/:customer_id/lanes/:lane_id", async (req, reply) => {
+  app.delete("/api/v1/mdata/customers/:customer_id/lanes/:lane_id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canManageLanes(authUser.role)) return reply.code(403).send({ error: "forbidden" });

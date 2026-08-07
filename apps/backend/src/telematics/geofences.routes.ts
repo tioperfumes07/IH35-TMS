@@ -143,7 +143,7 @@ function isWriteRole(role: string): boolean {
 }
 
 export async function registerGeofencesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/telematics/geofences", async (req, reply) => {
+  app.get("/api/v1/telematics/geofences", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -189,7 +189,7 @@ export async function registerGeofencesRoutes(app: FastifyInstance) {
     return { geofences: data };
   });
 
-  app.post("/api/v1/telematics/geofences", async (req, reply) => {
+  app.post("/api/v1/telematics/geofences", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isWriteRole(user.role)) return reply.code(403).send({ error: "forbidden" });

@@ -86,7 +86,7 @@ function isWriteRole(role: string): boolean {
 }
 
 export async function registerTrailerFleetRoutes(app: FastifyInstance) {
-  app.put("/api/v1/fleet/trailers/:id/status", async (req, reply) => {
+  app.put("/api/v1/fleet/trailers/:id/status", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -197,7 +197,7 @@ export async function registerTrailerFleetRoutes(app: FastifyInstance) {
     return updated.row;
   });
 
-  app.patch("/api/v1/fleet/trailers/:id", async (req, reply) => {
+  app.patch("/api/v1/fleet/trailers/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });

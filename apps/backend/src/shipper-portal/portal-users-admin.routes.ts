@@ -33,7 +33,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 const argon2id = new Argon2id();
 
 export async function registerPortalUsersAdminRoutes(app: FastifyInstance) {
-  app.get("/api/v1/customers/:id/portal-users", async (req, reply) => {
+  app.get("/api/v1/customers/:id/portal-users", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParams.safeParse(req.params ?? {});
@@ -67,7 +67,7 @@ export async function registerPortalUsersAdminRoutes(app: FastifyInstance) {
     return { portal_users: rows };
   });
 
-  app.post("/api/v1/customers/:id/portal-users", async (req, reply) => {
+  app.post("/api/v1/customers/:id/portal-users", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParams.safeParse(req.params ?? {});
@@ -137,7 +137,7 @@ export async function registerPortalUsersAdminRoutes(app: FastifyInstance) {
     return reply.code(201).send({ portal_user: created });
   });
 
-  app.post("/api/v1/customers/:id/portal-users/:portal_user_id/archive", async (req, reply) => {
+  app.post("/api/v1/customers/:id/portal-users/:portal_user_id/archive", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = portalUserParams.safeParse(req.params ?? {});

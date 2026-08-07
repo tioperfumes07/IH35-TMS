@@ -20,7 +20,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 export async function registerDriverPushSubscriptionRoutes(app: FastifyInstance) {
   await registerWebPushAckRoutes(app);
 
-  app.post("/api/v1/driver/push-subscription", async (req, reply) => {
+  app.post("/api/v1/driver/push-subscription", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;

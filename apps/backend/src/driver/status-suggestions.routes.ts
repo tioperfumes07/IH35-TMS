@@ -18,7 +18,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerDriverStatusSuggestionsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver/status-suggestions", async (req, reply) => {
+  app.get("/api/v1/driver/status-suggestions", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;
@@ -69,7 +69,7 @@ export async function registerDriverStatusSuggestionsRoutes(app: FastifyInstance
     return { suggestions: rows };
   });
 
-  app.post("/api/v1/driver/status-suggestions/:id/respond", async (req, reply) => {
+  app.post("/api/v1/driver/status-suggestions/:id/respond", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;
