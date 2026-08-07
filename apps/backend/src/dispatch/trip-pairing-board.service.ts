@@ -71,6 +71,7 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
         trim(coalesce(d.first_name,'') || ' ' || coalesce(d.last_name,'')) AS driver_name
        FROM telematics.vehicle_driver_assignments a
        JOIN mdata.drivers d ON d.id = a.driver_id
+                            AND d.operating_company_id = $1::uuid
       WHERE a.operating_company_id = $1::uuid AND a.ended_at IS NULL AND a.driver_id IS NOT NULL
       ORDER BY a.unit_id, a.started_at DESC`,
     [operatingCompanyId]

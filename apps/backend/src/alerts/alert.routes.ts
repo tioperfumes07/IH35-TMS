@@ -164,7 +164,9 @@ export default async function alertRoutes(fastify: FastifyInstance) {
           c.customer_name as broker_name
         FROM alerts.broker_queue q
         LEFT JOIN mdata.loads l ON l.id = q.load_id
+                                AND l.operating_company_id = $1::uuid
         LEFT JOIN mdata.customers c ON c.id = q.broker_id
+                                    AND c.operating_company_id = $1::uuid
         WHERE q.operating_company_id = $1 AND q.status = 'pending' AND q.is_active = true
         ORDER BY q.created_at DESC
       `;

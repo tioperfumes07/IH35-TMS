@@ -81,6 +81,7 @@ export async function resolveRelayWalletBankAccountId(
       SELECT ba.id::text AS id
       FROM banking.bank_accounts ba
       LEFT JOIN catalogs.accounts ca ON ca.id = ba.ledger_account_id
+                                     AND ca.operating_company_id = $1::uuid
       WHERE ba.operating_company_id = $1::uuid
         AND ba.is_active = true
         AND (

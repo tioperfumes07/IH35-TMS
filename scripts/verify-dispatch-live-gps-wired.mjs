@@ -4,6 +4,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { setsTenantGuc, TENANT_GUC_HINT } from "./lib/tenant-guc-match.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => readFileSync(join(root, p), "utf8");
@@ -16,7 +17,10 @@ const fail = (m) => {
 const route = read("apps/backend/src/telematics/hos.routes.ts");
 if (!route.includes("/api/v1/dispatch/load-positions")) fail("batched /api/v1/dispatch/load-positions endpoint missing");
 if (!route.includes("integrations.samsara_vehicle_positions")) fail("positions must come from integrations.samsara_vehicle_positions");
-if (!route.includes("set_config('app.operating_company_id'")) fail("positions endpoint must be per-entity scoped");
+// CLS-GUARD-LITERAL-GUC: the property is "this file sets the tenant GUC", not "this file contains one
+// exact string". setScopedCompanyContext sets the same GUC after asserting membership; keying on the
+// literal made this guard go RED when the route was made safer.
+if (!setsTenantGuc(route)) fail(`positions endpoint must be per-entity scoped — ${TENANT_GUC_HINT}`);
 
 // Frontend client + board binding (no more null stub).
 const api = read("apps/frontend/src/api/dispatch.ts");

@@ -7,7 +7,7 @@ const querySchema = companyQuerySchema.extend({
 });
 
 export async function registerFuelSavingsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/fuel-savings", async (req, reply) => {
+  app.get("/api/v1/reports/fuel-savings", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
@@ -23,6 +23,7 @@ export async function registerFuelSavingsRoutes(app: FastifyInstance) {
             COALESCE(s.lost_savings_ytd, 0)::numeric(14,2) AS missed_savings_dollars
           FROM views.fuel_savings_summary s
           LEFT JOIN mdata.drivers d ON d.id = s.driver_id
+                                    AND d.operating_company_id = $1::uuid
           WHERE s.operating_company_id = $1
           ORDER BY COALESCE(s.savings_ytd, 0) DESC
         `,

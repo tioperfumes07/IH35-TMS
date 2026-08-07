@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";
@@ -25,7 +26,7 @@ export async function registerDriverVendorMappingIntegrityRoutes(app: FastifyIns
     if (!body.success) return reply.code(400).send({ error: "validation_error" });
 
     const findings = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       const result = await checkAllMappings(client, body.data.operating_company_id);
       await persistFindings(client, body.data.operating_company_id, result);
       return result;

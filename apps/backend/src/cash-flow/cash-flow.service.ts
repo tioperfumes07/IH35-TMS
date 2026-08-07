@@ -275,6 +275,7 @@ export async function getDailyPrediction(
       GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0)::int AS remaining_balance_cents
     FROM accounting.bills b
     LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_id
+                              AND v.operating_company_id = $1::uuid
     WHERE b.operating_company_id = $1
       AND b.due_date::date = $2::date
       AND b.status <> 'paid'

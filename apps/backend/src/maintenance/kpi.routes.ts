@@ -314,7 +314,9 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
             END AS compliance_status,
             ps.next_due_odometer
           FROM maintenance.pm_schedules ps
+          -- CLS-JOIN-ENTITY-UNSCOPED (§4: units carry owner/leased, never operating_company_id)
           JOIN mdata.units u ON u.id = ps.unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ps.operating_company_id
           WHERE ps.operating_company_id = $1::uuid
             AND ps.is_active = true
             ${unitId ? " AND ps.unit_id = $2::uuid" : ""}
@@ -364,7 +366,9 @@ async function kpiDrilldown(req: FastifyRequest, reply: FastifyReply, kind: "dow
             wo.status::text,
             COALESCE(wo.closed_at, wo.opened_at)::text AS event_at
           FROM maintenance.work_orders wo
+          -- CLS-JOIN-ENTITY-UNSCOPED (§4: units carry owner/leased, never operating_company_id)
           JOIN mdata.units u ON u.id = wo.unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = wo.operating_company_id
           WHERE wo.operating_company_id = $1::uuid
             AND COALESCE(wo.closed_at, wo.opened_at, wo.created_at)::date BETWEEN $2::date AND $3::date
             AND COALESCE(wo.duration_seconds, 0) > 0
@@ -386,7 +390,9 @@ async function kpiDrilldown(req: FastifyRequest, reply: FastifyReply, kind: "dow
             COUNT(*)::int AS repair_count,
             COALESCE(AVG(wo.duration_seconds), 0)::numeric / 3600.0 AS avg_repair_hours
           FROM maintenance.work_orders wo
+          -- CLS-JOIN-ENTITY-UNSCOPED (§4: units carry owner/leased, never operating_company_id)
           JOIN mdata.units u ON u.id = wo.unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = wo.operating_company_id
           WHERE wo.operating_company_id = $1::uuid
             AND wo.wo_type = 'repair'
             AND wo.status IN ('complete', 'completed')
@@ -432,7 +438,9 @@ async function kpiDrilldown(req: FastifyRequest, reply: FastifyReply, kind: "dow
             COALESCE(um.miles, 0)::numeric AS miles,
             CASE WHEN COALESCE(um.miles, 0) > 0 THEN ROUND(wc.total_cents / um.miles)::int ELSE NULL END AS cost_per_mile_cents
           FROM wo_cost wc
+          -- CLS-JOIN-ENTITY-UNSCOPED (§4: units carry owner/leased, never operating_company_id)
           JOIN mdata.units u ON u.id = wc.unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
           LEFT JOIN unit_miles um ON um.unit_id = wc.unit_id
           ORDER BY wc.total_cents DESC
           LIMIT 100
@@ -450,7 +458,9 @@ async function kpiDrilldown(req: FastifyRequest, reply: FastifyReply, kind: "dow
           COUNT(*)::int AS wo_count,
           COALESCE(SUM(ROUND(COALESCE(wo.total_actual_cost, 0)::numeric * 100)), 0)::bigint AS total_cents
         FROM maintenance.work_orders wo
+        -- CLS-JOIN-ENTITY-UNSCOPED (§4: units carry owner/leased, never operating_company_id)
         JOIN mdata.units u ON u.id = wo.unit_id
+                           AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = wo.operating_company_id
         WHERE wo.operating_company_id = $1::uuid
           AND COALESCE(wo.closed_at, wo.opened_at, wo.updated_at)::date BETWEEN $2::date AND $3::date
           ${unitClause}

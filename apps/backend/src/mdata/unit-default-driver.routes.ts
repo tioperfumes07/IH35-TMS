@@ -57,6 +57,7 @@ async function fetchDriverAssignments(
       SELECT d.id, d.first_name, d.last_name, d.phone, vda.started_at::text, vda.source, vda.is_default
       FROM telematics.vehicle_driver_assignments vda
       JOIN mdata.drivers d ON d.id = vda.driver_id
+                           AND d.operating_company_id = $2::uuid
       WHERE vda.unit_id = $1::uuid
         AND vda.operating_company_id = $2::uuid
         AND vda.is_default = true
@@ -71,6 +72,7 @@ async function fetchDriverAssignments(
       SELECT d.id, d.first_name, d.last_name, d.phone, vda.started_at::text AS logged_in_at, vda.source
       FROM telematics.vehicle_driver_assignments vda
       JOIN mdata.drivers d ON d.id = vda.driver_id
+                           AND d.operating_company_id = $2::uuid
       WHERE vda.unit_id = $1::uuid
         AND vda.operating_company_id = $2::uuid
         AND vda.source = 'samsara_webhook'
@@ -86,6 +88,7 @@ async function fetchDriverAssignments(
              d.id::text AS driver_id, d.first_name, d.last_name
       FROM telematics.vehicle_driver_assignments vda
       LEFT JOIN mdata.drivers d ON d.id = vda.driver_id
+                                AND d.operating_company_id = $2::uuid
       WHERE vda.unit_id = $1::uuid
         AND vda.operating_company_id = $2::uuid
       ORDER BY vda.started_at DESC

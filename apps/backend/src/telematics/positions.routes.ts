@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
@@ -36,7 +37,7 @@ export async function registerTelematicsPositionsRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     const rows = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           SELECT
@@ -77,7 +78,7 @@ export async function registerTelematicsPositionsRoutes(app: FastifyInstance) {
     const limit = normalizeHistoryLimit(query.data.limit);
 
     const rows = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           SELECT

@@ -23,6 +23,7 @@ export async function driverSettlementsWeeklyQuery(context: QueryContext): Promi
           COALESCE(ROUND(s.net_pay::numeric * 100), 0)::bigint AS net_cents
         FROM driver_finance.driver_settlements s
         LEFT JOIN mdata.drivers d ON d.id = s.driver_id
+                                  AND d.operating_company_id = $1::uuid
         WHERE s.operating_company_id = $1
           AND s.status IN ('draft', 'ready', 'approved')
           AND s.period_end >= CURRENT_DATE - interval '14 days'

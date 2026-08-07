@@ -422,6 +422,7 @@ export async function listAtRiskRelationshipScores(
         s.computed_at::text
       FROM master_data.customer_relationship_scores s
       JOIN mdata.customers c ON c.id = s.customer_uuid
+                             AND c.operating_company_id = $1::uuid
       WHERE s.operating_company_id = $1::uuid
         AND s.health_tier = 'at_risk'
         AND c.deactivated_at IS NULL

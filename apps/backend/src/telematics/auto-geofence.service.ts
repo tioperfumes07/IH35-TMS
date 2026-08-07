@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 
 type DbClient = {
@@ -97,7 +98,9 @@ async function loadStopsForGeofencing(client: DbClient, input: AutoGeofenceInput
       FROM mdata.load_stops s
       JOIN mdata.loads l ON l.id = s.load_id
       JOIN mdata.customers c ON c.id = l.customer_id
+                             AND c.operating_company_id = $1::uuid
       LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+                                    AND loc.operating_company_id = $1::uuid
       WHERE l.operating_company_id = $1::uuid
         AND l.id = $2::uuid
       ORDER BY s.sequence_number ASC
@@ -215,7 +218,7 @@ export async function autoCreateGeofencesForLoad(
 ): Promise<AutoGeofenceResult> {
   const { withCurrentUser } = await import("../auth/db.js");
   return withCurrentUser(actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await setScopedCompanyContext(client, actorUserId, input.operating_company_id);
     return autoCreateGeofencesForLoadWithClient(client as DbClient, actorUserId, input);
   });
 }

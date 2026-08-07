@@ -159,6 +159,7 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
           ) AS has_pod
         FROM mdata.loads l
         JOIN mdata.customers c ON c.id = l.customer_id
+                               AND c.operating_company_id = $1::uuid
         LEFT JOIN accounting.invoices inv
           ON inv.source_load_id = l.id
           AND inv.operating_company_id = l.operating_company_id

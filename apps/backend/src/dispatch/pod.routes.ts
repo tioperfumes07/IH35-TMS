@@ -75,7 +75,7 @@ export async function uploadPodAsset(
 }
 
 export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
-  app.post("/api/v1/driver/loads/:loadId/stops/:stopId/pod", async (req, reply) => {
+  app.post("/api/v1/driver/loads/:loadId/stops/:stopId/pod", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const params = stopParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
@@ -167,7 +167,7 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/dispatch/pod-documents", async (req, reply) => {
+  app.get("/api/v1/dispatch/pod-documents", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeDispatchRoles(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -205,8 +205,14 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
             p.review_notes,
             p.created_at::text
           FROM dispatch.pod_documents p
+          -- CLS-JOIN-ENTITY-UNSCOPED: p is scoped by p.operating_company_id, but joining l and d on a
+          -- bare id is not scoped by that. Without these predicates a POD row could render ANOTHER
+          -- entity's load_number and driver name as the authoritative labels on a delivery document —
+          -- no error, no empty result, just the wrong entity's data on evidence.
           JOIN mdata.loads l ON l.id = p.load_id
+                            AND l.operating_company_id = p.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = p.driver_id
+                                   AND d.operating_company_id = p.operating_company_id
           WHERE ${filters.join(" AND ")}
           ORDER BY p.created_at DESC
           LIMIT $${values.length}

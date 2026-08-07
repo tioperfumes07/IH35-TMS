@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
@@ -85,7 +86,7 @@ function isWriteRole(role: string): boolean {
 }
 
 export async function registerTrailerFleetRoutes(app: FastifyInstance) {
-  app.put("/api/v1/fleet/trailers/:id/status", async (req, reply) => {
+  app.put("/api/v1/fleet/trailers/:id/status", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -97,7 +98,7 @@ export async function registerTrailerFleetRoutes(app: FastifyInstance) {
     if (!body.success) return sendValidationError(reply, body.error);
 
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
       const oldRes = await client.query<{ status: string }>(
         `
           SELECT status::text AS status
@@ -196,7 +197,7 @@ export async function registerTrailerFleetRoutes(app: FastifyInstance) {
     return updated.row;
   });
 
-  app.patch("/api/v1/fleet/trailers/:id", async (req, reply) => {
+  app.patch("/api/v1/fleet/trailers/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -241,7 +242,7 @@ export async function registerTrailerFleetRoutes(app: FastifyInstance) {
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+        await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
         const oldRes = await client.query(
           `
             SELECT *

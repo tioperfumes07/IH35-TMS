@@ -84,7 +84,9 @@ export async function listSubmissionQueueInvoices(
         ), false)::boolean                  AS has_rate_confirmation
       FROM accounting.invoices i
       JOIN mdata.customers c ON c.id = i.customer_id
+                             AND c.operating_company_id = $1::uuid
       JOIN mdata.vendors   fv ON fv.id = c.factoring_company_vendor_id
+                              AND fv.operating_company_id = $1::uuid
       WHERE i.operating_company_id = $1::uuid
         AND i.status                = 'sent'
         AND COALESCE(i.factoring_status, 'not_factored') = 'not_factored'
@@ -159,11 +161,13 @@ export async function listWorkqueueInvoices(
         rr.days_until_recourse_expiry
       FROM accounting.invoices i
       LEFT JOIN mdata.customers c          ON c.id  = i.customer_id
+                                           AND c.operating_company_id = $1::uuid
       LEFT JOIN factoring.batch b
         ON i.id = ANY(b.invoice_ids)
         AND b.tenant_id = i.operating_company_id
       LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
       LEFT JOIN mdata.vendors fv            ON fv.id = fa.factoring_company_vendor_id
+                                            AND fv.operating_company_id = $1::uuid
       -- Recourse view: join on factoring_advance_id (the invoice-level FK)
       LEFT JOIN views.factoring_recourse_at_risk rr
         ON rr.factoring_advance_id = fa.id

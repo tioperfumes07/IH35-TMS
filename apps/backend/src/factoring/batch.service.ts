@@ -360,6 +360,7 @@ export async function listCandidateInvoices(
         i.total_cents::bigint
       FROM accounting.invoices i
       LEFT JOIN mdata.customers c ON c.id = i.customer_id
+                                  AND c.operating_company_id = $1::uuid
       WHERE i.operating_company_id = $1::uuid
         -- CODER-34 eligibility fix (see createDraftBatch): factor OPEN, UNFACTORED invoices ('sent'),
         -- never already-collected ('paid'). Not-in-an-active-batch is enforced by the NOT EXISTS below.
@@ -421,6 +422,7 @@ export async function getBatchDetail(
       FROM unnest($1::uuid[]) WITH ORDINALITY AS input_ids(invoice_id, ord)
       JOIN accounting.invoices i ON i.id = input_ids.invoice_id
       LEFT JOIN mdata.customers c ON c.id = i.customer_id
+                                  AND c.operating_company_id = $2::uuid
       WHERE i.operating_company_id = $2::uuid
       ORDER BY input_ids.ord ASC
     `,
