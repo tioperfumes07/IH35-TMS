@@ -4811,3 +4811,118 @@ including one that fit the evidence exactly — are eliminated **with the eviden
 nobody re-runs them. Hypothesis 3 is the cautionary one: `qbo_account_id = NULL` on every USMCA account is
 TRUE, the code comment describing that exact failure is TRUE, and the conclusion drawn from both was still
 FALSE. Two true facts and a coherent story are not proof.
+
+---
+
+## 77. PURCHASE ORDER — the last unrun battery item. **NOT EXERCISABLE: the capability does not exist anywhere in the system**, and that is owner-gated by design, not a defect
+
+**Verdict: N/A-BY-DESIGN (capability absent, honestly declared, owner-gated).** Verified live 2026-08-07,
+prod `br-fancy-credit-akjnd07a`, deployed backend `d022728`. This was the only battery line with **zero**
+prior mentions in this 4,800-line log — every other type had been touched at least once.
+
+### Why I did not just write "PO: missing"
+
+An absent capability and an undelivered capability look identical from the outside. The difference is
+whether the system *claims* to have it. So the unit was run as three separate live proofs, not one grep.
+
+### PROOF 1 — no purchase-order relation exists on prod
+
+`pg_class` sweep (a catalog — RLS-immune, so no discriminator is owed here; ran as `neondb_owner`), across
+every non-system schema, matching `%purchase%`, `(^|_)po(_|$)`, `%requisition%`, `%procure%`. **Two hits,
+and neither is a purchase order:**
+
+| relation | n_live_tup | what it actually is |
+|---|---|---|
+| `accounting.parts_purchase_postings` | **0** | the MNT-ECON-01 posting **latch** (`parts_inventory_id, bill_id, expense_je_id, amount_cents, voided_at`) — an idempotency ledger, not a document |
+| `mdata.qbo_purchases` | 28,404 | the QBO **Purchase** mirror. Column list settles it: `payment_type, account_qbo_id, entity_qbo_id, total_cents` — QBO's *Purchase* entity is an expense/check/CC-charge. QBO's **PurchaseOrder** is a *different* entity, and it is **not mirrored** |
+
+The `qbo_purchases` distinction is the trap in this item: the name looks like a PO table, has 28K rows, and
+would have made "PO: PASS, 28,404 rows" a plausible and completely false entry. **Read the columns.**
+
+### PROOF 2 — the deployed API has a purchase WRITE path and no purchase READ path
+
+Unauthenticated probes against `https://ih35-tms.onrender.com` — `401` proves the route exists and is
+auth-gated, `404` proves it is absent. Both controls run in the same pass so the discriminator is on the
+same server, same deploy:
+
+| probe | code | reading |
+|---|---|---|
+| `POST /api/v1/maintenance/parts-inventory/purchases` | **401** | **route EXISTS** |
+| `GET  /api/v1/maintenance/parts-inventory/purchases` | **404** | **route ABSENT** |
+| `GET  /api/v1/maintenance/parts-inventory` | 401 | positive control — exists |
+| `POST /api/v1/maintenance/parts-inventory` | 404 | negative control — correctly absent |
+| `GET  /api/v1/maintenance/parts-inventory/zzz-nonexistent-probe` | 404 | absent-route control |
+
+Source agrees (`apps/backend/src/maintenance/parts-inventory.routes.ts` — `get` :40, `post .../purchases`
+:55, `patch .../:id/adjust` :102; no GET purchases). **A purchase can be recorded and cannot be listed
+back as a purchase** — the row lands in `maintenance.parts_inventory` and is readable only as *stock*.
+
+### PROOF 3 — the UI declares the gap instead of faking it, and a guard holds that line
+
+`InventoryPurchasesPage.tsx` renders an honest-empty panel — *"Purchase order history is not yet tracked"* —
+importing neither `listPartsInventory` nor `PartsInventoryTable`. `scripts/verify-inventory-purchases-honesty.mjs`
+is registered as **verify-step 1000** and is green: `OK — Purchase History is honest (no stock twin)`, **exit 0**.
+The door stays reachable (`sidebar-config.ts:317`) per never-delete. **This is the system behaving correctly
+about something it does not have.**
+
+### ★ I ANSWERED THE HOLD DOC'S OWN GATED QUESTION — it asked for exactly this prod check
+
+`docs/blocks/HOLD-INVENTORY-PURCHASE-HISTORY-SOR.md` §"Gated for Jorge" item 1 reads: *"Approve table name +
+column set (**or alternate SoR if one already exists on Neon that repo missed — prod verify first**)."*
+
+**PROOF 1 is that prod verify. The answer is NO — no alternate purchase SoR exists on Neon.** The owner's
+decision is not blocked on a fact anymore.
+
+### ★★ A FINDING I DID NOT FILE, AND WHY — the near-miss matters more than the verdict
+
+The same HOLD doc lists under **explicit non-goals**: *"No new GL math / bill auto-post from purchases."*
+But `parts-inventory.routes.ts:88` calls `postPartsInventoryPurchase(...)`, which creates **an A/P bill and
+a balanced JE** — and the flag is **ON**. A documented non-goal and a shipped, enabled GL path: that reads
+as a clean drift finding, and I nearly wrote it as one.
+
+**It is not a defect.** The HOLD is dated **2026-07-16**; MNT-ECON-01 is dated **2026-07-26** and
+`db/migrations/.held-migrations.json:1108` records *"Owner Neon-applied 2026-07-27T20:16Z"*. The block is
+**owner-authorized and supersedes the older doc's non-goal.** The poster header states it writes **zero new
+GL math** — vendor path reuses `createBill` + `postSourceTransaction('bill')` (the CHAIN-03 poster the
+WO-close path uses), cash path reuses `createJournalEntry`, accounts resolve via `resolveRoleAccount` only.
+
+**The lesson, which is the same one as item 76:** two true facts (the non-goal is really written there; the
+GL path really is enabled) supported a coherent story that was still false. **Checking the DATES of both
+documents cost one grep and prevented filing a false P1 against CC-1.** Supersession is invisible unless you
+look for it.
+
+### ★ NEW, VERIFIED, AND ACTIONABLE — the parts-purchase economic path is ARMED for USMCA and has never fired
+
+All four preconditions checked live in one transaction, GUC + lucia bypass set first, discriminator on every
+table read:
+
+| precondition | prod state | armed? |
+|---|---|---|
+| `PARTS_PURCHASE_GL_POSTING_ENABLED` override, USMCA | **`enabled = true`** (also true for TRANSP + TRK) | ✓ |
+| latch table `accounting.parts_purchase_postings` | present (poster fails closed if absent) | ✓ |
+| role `maintenance_parts_expense`, USMCA | **6160 Parts & Supplies Expense**, `is_active` (no shape-fallback; fails closed if undesignated) | ✓ |
+| role `cash_clearing`, USMCA | **1090 Undeposited Funds**, `is_active` | ✓ |
+
+**Completeness discriminators (same-table, in-transaction):**
+
+| table | USMCA | visible_all | n_live_tup | n_tup_del | verdict |
+|---|---|---|---|---|---|
+| `maintenance.parts_inventory` | **0** | 144 | 144 | 0 | ✓ true zero |
+| `accounting.parts_purchase_postings` | 0 | 0 | 0 | 0 | ✓ true zero |
+| `accounting.chart_of_accounts_roles` | 45 | 131 | 131 | 0 | ✓ complete |
+
+All 144 `parts_inventory` rows carry `last_purchase_amount` and **none are USMCA**. So: **the path is fully
+armed for USMCA and has fired exactly zero times, on any entity.** Nothing is broken — it is untested.
+
+**THIS IS THE NEXT BATTERY UNIT, and it is now a one-step job:** POST one authenticated USMCA parts purchase
+and assert `accounting.parts_purchase_postings` gains a row whose `bill_id` / `expense_je_id` resolve to a
+balanced JE hitting **6160**. Every precondition is pre-verified above, so a failure will be unambiguous.
+**I could not perform it this cycle** — it needs an authenticated session, and I will not claim a create I
+did not watch execute.
+
+### Honest status of this battery item
+
+**PO as a document type: NOT EXERCISABLE — and correctly so.** No table, no read API, no UI pretending
+otherwise, guard green, and the owner gate is open with its blocking fact now answered. **Zero defects
+filed against a lane, because zero defects were found.** One board row is filed for stale evidence in the
+HOLD doc — see `LV-HOLD-INVENTORY-PURCHASES-DOC-STALE`.
