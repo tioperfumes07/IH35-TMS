@@ -33,7 +33,7 @@
   "guard_required": true,
   "acceptance": [
     {
-      "check": "today-revenue + weekly-revenue call computeRevenueGlLinkage; dual-basis invoice_basis + gl_posted; discrepancy + drill; unverifiable not fabricated $0; Rule-17 guard+selftest; behavioral unit+db tests; no migration/flag/QBO writes. Builder STOPS at branch-proof for GUARD. FINANCIAL HOLD — do not merge."
+      "check": "today-revenue + weekly-revenue call computeRevenueGlLinkage; dual-basis invoice_basis + gl_posted; discrepancy + drill; unverifiable not fabricated $0; Rule-17 guard+selftest; behavioral unit+db tests; no migration/flag/QBO writes. Builder STOPS at branch-proof for GUARD. merge on green (owner law 2026-08-03: no holds; proof, not approval, is the gate)."
     }
   ],
   "note": "Financial read-only HOLD. No migration / posting flag / QBO writes."

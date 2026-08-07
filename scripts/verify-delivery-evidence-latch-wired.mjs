@@ -55,12 +55,44 @@ const EXEMPT = new Set([
   "apps/backend/src/driver/earnings.routes.ts",
 ]);
 
-/** A write that puts a load INTO a delivery-evidence status. */
+/**
+ * A path that puts a load INTO a delivery-evidence status.
+ *
+ * WIDENED 2026-08-07 (CC-3 live-verifier lane) after this guard was PROVEN green while the law it
+ * encodes was being broken. The original matcher recognised only a STRING-LITERAL assignment, so
+ * `dispatch/loads-bulk.routes.ts` — which validates a payload enum, maps it, and binds it as a query
+ * parameter (`SET status = $3::mdata.load_status_enum`) — was never even considered. It stamps the
+ * delivery departure and never latches, and the guard printed "OK — every delivery-evidence
+ * transition fires the revenue latch" and exited 0. That statement was false. Live-proven on prod
+ * 2026-08-07: matcher returned null for that file while it demonstrably transitions loads to
+ * delivered_pending_docs. The guard's own docstring names "a bulk driver tool" as one of three
+ * examples it promises to catch — the validate-map-bind shape is enterprise-normal, and a matcher
+ * that only sees literals is blind to it.
+ *
+ * @returns a human-readable reason this file is a delivery path, or null.
+ */
 function assignsEvidenceStatus(src) {
   for (const status of EVIDENCE_STATUSES) {
     // `nextLoadStatus = "delivered_pending_docs"` / `: "delivered_pending_docs"` / `'...'`
     const assign = new RegExp(`(?:=|\\?|:)\\s*["']${status}["']`);
-    if (assign.test(src)) return status;
+    if (assign.test(src)) return `assigns the literal status "${status}"`;
+  }
+  // The DEFINITIONAL signal that a path delivers a load. Stamping the final delivery departure IS
+  // the act of recording delivery evidence; it is a single shared helper, and — unlike a status
+  // string — a function call cannot be hidden behind a variable. This is the check that catches the
+  // parameterized writers the literal scan cannot see.
+  if (/\bstampFinalActiveDeliveryDeparture\s*\(/.test(src)) {
+    return "calls stampFinalActiveDeliveryDeparture() — it records delivery evidence";
+  }
+  // Belt-and-braces: a NON-literal write to mdata.loads.status in a file that handles an evidence
+  // status. Requires SET status specifically, so writers of other columns (e.g. driver-team.service
+  // writes SET team_id and only READS the status in a filter list) are not false-positived.
+  if (
+    /UPDATE\s+mdata\.loads/i.test(src) &&
+    /SET\s+status\b/i.test(src) &&
+    EVIDENCE_STATUSES.some((s) => src.includes(s))
+  ) {
+    return "writes mdata.loads.status from a non-literal while handling a delivery-evidence status";
   }
   return null;
 }
@@ -89,7 +121,7 @@ export function auditSources(files) {
     scanned++;
     if (!LATCH_MARKERS.some((m) => src.includes(m))) {
       problems.push(
-        `${rel}: transitions a load into "${status}" but never references the revenue latch ` +
+        `${rel}: ${status}, but never references the revenue latch ` +
           `(${LATCH_MARKERS.join(" / ")}). Delivery evidence would be recorded while the ledger hears ` +
           `nothing, stalling deliver → revenue → invoice → GL → bank. Call latchOnDeliveryEvidence() ` +
           `after the status write, or add this file to EXEMPT with a stated reason.`
@@ -146,8 +178,37 @@ function selftest() {
   )
     failures.push("case5 FAIL — an exempt file was flagged");
 
-  const tree = auditTree();
-  if (tree.length !== 0) failures.push(`case6 FAIL — real tree flagged: ${tree.join(" | ")}`);
+  // The parameterized shape that this guard was BLIND to until 2026-08-07 — validate a payload enum,
+  // map it, bind it. No literal anywhere, so the original matcher skipped the file entirely. This is
+  // the real dispatch/loads-bulk.routes.ts shape, reduced.
+  const parameterized = `const mdataStatus = toMdataStatus(statusPayload.transition);
+    await client.query("UPDATE mdata.loads SET status = $3::mdata.load_status_enum", [id, opco, mdataStatus]);
+    if (loadStatusRequiresDeliveryDepartureStamp(mdataStatus)) {
+      await stampFinalActiveDeliveryDeparture(client, id, statusPayload.delivered_at ?? null);
+    }
+    const PAID = new Set(["invoiced", "completed_docs_received", "delivered_pending_docs", "paid"]);`;
+  if (auditSources([{ rel: "apps/backend/src/dispatch/x-bulk.routes.ts", src: parameterized }]).problems.length === 0)
+    failures.push("case6 FAIL — a PARAMETERIZED delivery transition with no latch was NOT caught (the 2026-08-07 blind spot)");
+
+  // Same shape, latched → clean. Proves the widening did not become an unconditional flag.
+  if (
+    auditSources([
+      { rel: "apps/backend/src/dispatch/x-bulk.routes.ts", src: parameterized + "\nawait latchOnDeliveryEvidence({});" },
+    ]).problems.length !== 0
+  )
+    failures.push("case7 FAIL — a latched parameterized path was flagged");
+
+  // A writer of a DIFFERENT column that merely READS an evidence status in a filter list is not a
+  // delivery path (the real mdata/driver-team.service.ts shape) — must not be flagged.
+  const otherColumn = `const ACTIVE_LOAD_STATUSES = ["in_transit", "delivered_pending_docs"];
+    await client.query("UPDATE mdata.loads SET team_id = $2 WHERE id = $1", [id, teamId]);`;
+  if (auditSources([{ rel: "apps/backend/src/mdata/x-team.service.ts", src: otherColumn }]).problems.length !== 0)
+    failures.push("case8 FAIL — a non-status writer that only READS an evidence status was flagged");
+
+  // NOTE: the selftest deliberately does NOT assert that the real tree is clean. That conflates two
+  // different things — "is the matcher correct" (this selftest) and "is the repo currently compliant"
+  // (the main run). The previous version asserted tree-cleanliness here, which meant a genuine defect
+  // would surface as a confusing selftest failure instead of a plain guard failure.
 
   if (failures.length) {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);

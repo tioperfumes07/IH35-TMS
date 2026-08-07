@@ -26,7 +26,7 @@
   "db_required": true,
   "guard_required": true,
   "extra_gates": [],
-  "hold": "TIER-1 MIGRATION — build-and-hold. DO NOT RUN ON PROD (registered held). Owner runs on Neon; GUARD 0-orphan-checks + VALIDATEs; owner merges.",
+  "superseded_hold": "OWNER LAW 2026-08-03: no holds, no approval label; coders have full Neon access and merge on green. Proof, not approval, is the gate.",
   "deferred": [
     { "item": "repoint work_orders.vendor_id from the mdata.qbo_vendors MIRROR to canonical mdata.vendors (writer + FK + data)", "reason": "vendor identity split — depends on the vendor-namespace work (item 18); needs writer-change + backfill, a coordinated follow-up, not silently dropped." }
   ]
