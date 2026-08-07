@@ -1818,3 +1818,186 @@ exact miss**, because all three were already true.
 
 **Verdict: `LV-REVREC-NOT-FIRING` — root cause LOCATED to invocation, gates EXONERATED, scope narrowed
 from 2 loads to 1, and one apparent instance reclassified as CORRECT behaviour.**
+
+---
+
+## 40. ★★ ROOT CAUSE PROVEN — `LV-REVREC-NOT-FIRING` is a CROSS-CONNECTION read-your-own-writes bug
+
+**Item 39 bounded it to "the poster was never invoked, or invoked and silently gated." This item closes
+that gap. The latch IS invoked. It reads the delivery evidence on a DIFFERENT database connection than
+the one that just wrote it, inside a transaction that has not committed — so the evidence is invisible,
+gate 7 fires, and the poster returns a no-op that not even the error log records.**
+
+### The call path, read end to end
+
+| step | file:line | what it does |
+|---|---|---|
+| 1 | `dispatch/loads.routes.ts:1166` | handler enters `withCompanyScope(...)` |
+| 2 | `dispatch/loads.routes.ts:357-368` | `withCompanyScope` → `withCurrentUser` |
+| 3 | `auth/db.ts` (`withCurrentUser`) | **`pool.connect()` → `BEGIN`** … `COMMIT` — call it **connection A**. The whole handler body runs inside this ONE open transaction. |
+| 4 | `dispatch/loads.routes.ts:1295` | `stampFinalActiveDeliveryDeparture(client, …)` writes `mdata.load_stops.actual_departure_at` **on connection A — uncommitted** |
+| 5 | `dispatch/loads.routes.ts:1335` | `postLoadRevenueLatch({...})` — still inside A's transaction |
+| 6 | `auth/db.ts:158-166` (`withLuciaBypass`) | **`luciaPool.connect()` → its own `BEGIN`** — **connection B** |
+| 7 | `poster.service.ts:277-298` | `finalActiveDeliveryDepartureAt` runs **on B** |
+
+**Step 7 cannot see step 4.** Under READ COMMITTED, connection B reads only committed data; A's stamp is
+still in flight. `actual_departure_at` reads **NULL** → gate `missing_delivery_evidence` → the poster
+returns `{ posted: false, reason: "missing_delivery_evidence" }`. Then A commits, the departure becomes
+visible to everyone, and **nothing ever retries.**
+
+### This explains every observed fact — including the ones that looked contradictory
+
+1. **`actual_departure_at` is present now** (`2026-08-06 17:03:35.076384+00`) — A committed.
+2. **Zero latch rows** — the poster no-opped before that commit.
+3. **All nine gates pass when queried after the fact** (item 39) — because I queried on a *fresh*
+   connection, *after* the commit. **The gates were never wrong; they were evaluated at a moment when
+   the evidence genuinely did not exist yet.** Item 39's table is accurate and its conclusion —
+   "never invoked" — was the *one* wrong branch; it was invoked, at the wrong instant.
+4. **No error appears anywhere, not even in the swallow-and-log.** This is the subtle part: a gate is a
+   **return value**, not a throw. The `catch` in `loads.routes.ts:1341` and the deliberate swallow in
+   `delivery-evidence-latch.ts` only fire on an exception. A gated no-op logs **nothing at all**. So the
+   swallow-and-log policy is not even the reason this was invisible — it would have been invisible with
+   no swallow at all.
+5. **TRANSP's `L-20260624-0083` posted both events** — consistent: its departure was captured by the
+   **driver** path in an **earlier, already-committed** request, so by the time a later request called
+   the latch, the evidence was visible on any connection.
+
+### The sharp, falsifiable prediction this makes
+
+> The latch fails **exactly when** the departure stamp and the latch call happen in the **same request**
+> (the office "mark delivered" path, ACCT-F81), and succeeds when the departure was committed by an
+> **earlier** request (the driver capture path).
+
+That is precisely the split observed: my office-transitioned USMCA load failed; the driver-evidenced
+TRANSP load posted. **The office-delivers coupling (ACCT-F81) is what created the same-request case.**
+Its own comment shows the dependency was understood — *"the recognition gate in poster.service.ts reads
+exactly that timestamp off the final active delivery stop"* — but the **connection boundary** between
+the writer and that reader was not. ACCT-F81 added the stamp to make office deliveries recognizable and,
+for the same-request path, achieved the opposite.
+
+### Scope — who else is exposed
+
+**Every path that stamps departure and latches in one request.** `stampFinalActiveDeliveryDeparture` is
+shared by the office transition, the bulk path and the mdata status path (per its own comment,
+*"shared stamp (also used by bulk + mdata status paths)"*). Any of those that also calls the latch in the
+same transaction has this bug. **The driver paths are the safe case only by accident of ordering** — they
+derive status FROM an already-committed stop event.
+
+### For CC-1 — the fix, and the one option that does NOT work
+
+**Does NOT work:** passing the route's `client` into the poster. The poster needs the RLS bypass
+(`SET LOCAL app.bypass_rls='lucia'` + the sentinel company GUC), which is exactly what `withLuciaBypass`
+establishes; handing it connection A would run the poster without its bypass context.
+
+**Works, in preference order:**
+1. **Fire the latch AFTER the transaction commits** (post-commit hook / after `withCompanyScope` returns).
+   Preserves the swallow-and-log policy, preserves the bypass, and makes the evidence unambiguously
+   visible. It also matches the existing intent that a latch failure must never 500 the delivery tap.
+2. **Pass the departure timestamp into the poster** as an input when the caller just stamped it, so gate 7
+   can be satisfied from the caller's own knowledge rather than a re-read. Narrower, but couples the
+   caller to the gate.
+
+**GUARD REQUIREMENT — and this is the one that matters:** the existing static guard
+`verify-delivery-evidence-latch-wired` **passes today and always would have**, because the call *is*
+wired — wiring was never the problem. **A guard asserting wiring cannot catch a visibility bug.** The
+guard that catches this asserts on the **ledger**: a load whose highest-sequence active delivery stop has
+`actual_departure_at` set, status `delivered`/`delivered_pending_docs`, flag on, non-TRK, **must have a
+balanced `earn` row** in `accounting.load_revenue_recognition_postings` (scoped to TMS-native loads per
+the origin test). That is a live-data assertion, not a static scan.
+
+### Correction to item 39, stated plainly
+
+Item 39 concluded "**never invoked**." That was wrong on that one point — it **was** invoked, and gated
+on evidence that was real but not yet visible. Every measurement in item 39 stands; the inference from
+them did not. **The nine-gate table is what made this findable**: it is precisely *because* all nine
+gates passed post-hoc that the timing explanation was the only one left.
+
+### Secondary finding, recorded separately below
+
+While tracing callers, `dispatch/loads-bulk.routes.ts` was found to be an **un-latched** delivery-evidence
+writer — see item 41. It is a **different** defect from this one and must not be merged into this fix.
+
+---
+
+## 41. NEW DEFECT — bulk "Mark delivered" stamps delivery evidence and NEVER latches; the guard is blind to it
+
+**Found while tracing item 40's callers. This is a SEPARATE defect from item 40 and needs its own fix.**
+
+`apps/backend/src/dispatch/loads-bulk.routes.ts`, action `set_status`:
+
+- **Accepts the delivery-evidence statuses.** `setStatusPayloadSchema.transition` is
+  `dispatchStatusSchema` (`load-state-machine.ts:3-14`), which includes **`delivered_pending_docs`** and
+  **`completed_docs_received`**. `PER_LOAD_ONLY_TRANSITIONS` (`:23`) excludes only `abandoned`,
+  `driver_walkoff`, `driver_no_show` — **the delivery statuses are NOT excluded.**
+- **Writes the status** — `UPDATE mdata.loads SET status = $3::mdata.load_status_enum` (`:90-97`), from a
+  runtime value `toMdataStatus(statusPayload.transition)`, never a literal.
+- **Stamps the delivery departure** — `loadStatusRequiresDeliveryDepartureStamp(mdataStatus)` (`:99`),
+  which is exactly `DELIVERY_EVIDENCE_STATUSES.has(status)`
+  (`stamp-final-delivery-departure.ts:27-29`) → calls `stampFinalActiveDeliveryDeparture`.
+- **Emits the dispatch spine event** (`:104`).
+- **NEVER references `latchOnDeliveryEvidence` or `postLoadRevenueLatch`.**
+
+**So an office bulk "Mark delivered" creates delivery evidence, tells the workflow spine the load
+delivered, and the ledger hears nothing.** That is verbatim the defect CLS-DISP-WIRE-07 was written to
+eliminate — *"every path that moves a load INTO a delivery-evidence status must fire the two-event
+revenue latch"*. The bulk path got the **stamp** half of WIRE-07 and not the **latch** half.
+
+**The file's own comment shows the hole was half-seen** (`:19-23`): *"Bulk set_status does NOT run those
+financial hooks, so moving a load into one of these states in bulk would silently skip the escrow
+proposal and the settlement ping. Route them to the per-load action instead of losing the side-effects."*
+The author identified exactly this failure mode and fenced off **three** statuses — but not the delivery
+statuses, and did not add the latch call. **The delivery-evidence statuses fall through the very hole
+that comment was written to close.**
+
+### The guard passes green while the hole is open — PROVEN, not argued
+
+`scripts/verify-delivery-evidence-latch-wired.mjs` decides scope with
+`assignsEvidenceStatus()`, a regex requiring a **string-literal assignment**:
+`(?:=|\?|:)\s*["']delivered_pending_docs["']`. The bulk route sets the status from a **variable**
+(`$3` ← `mdataStatus`), so nothing matches. Its only literal occurrence sits inside
+`new Set([… , "delivered_pending_docs", …])` (`:42`), preceded by a **comma** — which the regex does not
+accept. **The file is therefore never even considered.**
+
+Executed live, 2026-08-07, on `audit/cc3-live-battery-20260806`:
+
+```
+file mentions delivered_pending_docs : true
+guard matcher says it ASSIGNS status : null
+file references the latch            : false
+=> guard IN SCOPE for this file      : false
+
+$ node scripts/verify-delivery-evidence-latch-wired.mjs
+verify-delivery-evidence-latch-wired OK — every delivery-evidence transition fires the revenue latch
+exit=0
+```
+
+**The guard prints "every delivery-evidence transition fires the revenue latch" and exits 0 — and that
+statement is false.** The guard's docstring says it scans for the SHAPE so that *"anyone adding a fourth
+path (offline sync replay, a bulk driver tool, a telematics auto-complete) reproduces it"* and is caught.
+**A bulk tool is one of the three examples it names, and it is not caught** — because the matcher
+recognises only literal assignment, while the enterprise-normal pattern (validate a payload enum → map →
+bind as a parameter) is invisible to it.
+
+**This is the "law = enforced guard or it is not law" failure mode in its most dangerous form: not a
+missing guard, but a guard that is green and trusted while the law it encodes is being broken.**
+
+### Two defects, two fixes — do not merge them
+
+| | item 40 | item 41 |
+|---|---|---|
+| path | per-load office transition | bulk `set_status` |
+| latch call | **present**, fires at the wrong instant | **absent entirely** |
+| cause | cross-connection read-your-own-writes | never wired |
+| fix | latch after commit | call the latch (after commit — item 40 applies here too) |
+
+**Fixing item 40 alone leaves the bulk path dark. Fixing item 41 alone reproduces item 40's timing bug
+in a second place** — because the bulk route stamps the departure on its own `client` in the same
+transaction, so a latch naively added there would hit the identical invisibility. **Item 41's fix must
+adopt item 40's after-commit ordering.**
+
+**GUARD REQUIREMENT:** widen `assignsEvidenceStatus` to catch non-literal status writes — any file that
+`UPDATE mdata.loads SET status` **or** calls `stampFinalActiveDeliveryDeparture` must reference the latch
+or be explicitly exempted with a stated reason. The `stampFinalActiveDeliveryDeparture` call is the
+better signal: **stamping delivery departure is the definition of "this path delivers a load"**, it is a
+single shared helper, and it cannot be written as a variable. Pair it with the live ledger assertion from
+item 40 — a static guard alone cannot catch item 40, and a ledger guard alone would not name the file.
