@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
@@ -123,7 +124,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         label: "Policy",
         render: (claim) => (
           <Link className="text-slate-700 underline" to={`/safety/insurance/policies/${claim.policy_id}`}>
-            {claim.policy_display_id ?? claim.policy_id.slice(0, 8)}
+            {entityLabel(claim.policy_display_id, claim.policy_id, "Policy")}
           </Link>
         ),
       },
@@ -297,7 +298,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                     }
                     data-testid={`claim-reverse-incident-${i.id}`}
                   >
-                    Incident {i.incident_type ?? i.id.slice(0, 8)}
+                    Incident {entityLabel(i.incident_type, i.id, "Record")}
                   </Link>
                 ))}
                 {(graph.reverse.bills ?? []).map((b) => (

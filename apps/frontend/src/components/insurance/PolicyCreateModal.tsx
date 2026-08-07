@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -58,7 +59,7 @@ const INITIAL_FORM: FormState = {
 };
 
 function unitLabel(unit: UnitOption) {
-  return unit.unit_code || unit.unit_number || unit.id.slice(0, 8);
+  return unit.unit_code || entityLabel(unit.unit_number, unit.id, "Record");
 }
 
 function parseCurrencyToCents(raw: string) {

@@ -1,3 +1,4 @@
+import { entityLabel } from "../../../lib/entity-label";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -30,7 +31,7 @@ export function UnidentifiedTab({ operatingCompanyId }: Props) {
         cellClass: "font-medium",
         render: (row) => (
           <Link to={`/fleet/units/${row.unit_id}`} className="text-slate-700 hover:underline">
-            {row.unit_number ?? row.unit_id.slice(0, 8)}
+            {entityLabel(row.unit_number, row.unit_id, "Unit")}
           </Link>
         ),
       },

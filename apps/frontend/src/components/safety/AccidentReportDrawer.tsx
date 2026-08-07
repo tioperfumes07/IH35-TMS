@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -498,7 +499,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                         })
                         .filter((r): r is { id: string; display_id: string } => r != null)
                     : woId
-                      ? [{ id: woId, display_id: displayId || woId.slice(0, 8) }]
+                      ? [{ id: woId, display_id: entityLabel(displayId, woId, "Wo") }]
                       : [];
                   if (list.length) setSpawnedWorkOrders(list);
                   pushToast(

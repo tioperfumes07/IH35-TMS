@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { getUnitFinanceLinkage } from "../../api/unit-finance-linkage";
@@ -75,7 +76,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
           <ul className="mb-2 divide-y divide-gray-100">
             {linkedBills.map((b) => (
               <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-sm">
-                <EntityLink kind="bill" id={b.id} label={b.bill_number ?? b.id.slice(0, 8)} />
+                <EntityLink kind="bill" id={b.id} label={entityLabel(b.bill_number, b.id, "Record")} />
                 <span className="text-xs tabular-nums text-gray-600">{fmtCents(b.amount_cents)}</span>
               </li>
             ))}
@@ -135,7 +136,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
             {data.leases.map((row) => (
               <li key={`${row.lease_contract_id}-${row.fixed_asset_id}`} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
                 <div>
-                  <span className="font-medium">{row.display_id ?? row.lease_contract_id.slice(0, 8)}</span>
+                  <span className="font-medium">{entityLabel(row.display_id, row.lease_contract_id, "Contract")}</span>
                   <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs capitalize text-slate-700">{row.status}</span>
                   <span className="ml-1 text-xs text-gray-500">({row.election})</span>
                 </div>
@@ -165,7 +166,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
             {data.equipment_loans.map((row) => (
               <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
                 <div>
-                  <span className="font-medium">{row.equipment_number ?? row.equipment_id.slice(0, 8)}</span>
+                  <span className="font-medium">{entityLabel(row.equipment_number, row.equipment_id, "Equipment")}</span>
                   {row.lender_vendor_name ? <span className="text-gray-500"> · {row.lender_vendor_name}</span> : null}
                   <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs capitalize text-slate-700">{row.status}</span>
                 </div>
