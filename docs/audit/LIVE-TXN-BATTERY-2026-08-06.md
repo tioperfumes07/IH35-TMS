@@ -6423,3 +6423,68 @@ posts, every time, 5 of 5.** The banner is wrong; the engine is right.
 **One observation, explicitly NOT filed as a defect:** the oldest uncategorized transaction dates to
 **2025-12-12**, ~8 months back, with the newest at 2026-08-04. That is an operational backlog — a question of
 who categorises and when — not a code defect, and not this lane's call to raise as a card.
+
+---
+
+## 105. DOCUMENT → ENTITY LINKAGE — the empty table is NOT the defect; a three-way contract mismatch beside it is
+
+**Unit: `docs.file_links`, the only general-purpose document→entity attachment mechanism. Verdict: the
+obvious finding was expected state; the real defect was next to it.**
+
+**WHAT DREW ME IN.** `docs.file_links` is the one place in this schema where orphans are structurally
+possible — it is **polymorphic** (`entity_type text` + `entity_id uuid`), so no foreign key can protect it,
+and `docs/CLAUDE.md` says so explicitly: *"`docs.file_links` is polymorphic; `entity_id` is not enforced as a
+single FK."* Measured on prod: **0 rows, `n_tup_ins = 0` — never written, ever** — while **30 files exist**
+(`visible = 30 == n_live_tup = 30`), of which **26 have no `dispatch_load_id` either** and **0 have a
+`category_id`**. Meanwhile **7+ code paths JOIN that table**: the load's rate-con surface
+(`dispatch/loads.routes.ts:715`), `dispatch/ratecon-extract.routes.ts:99` (`entity_type='load'`), **three
+joins in `dispatch/factoring-queue.routes.ts`** (132/142/152), `factoring/submission-queue.service.ts:75`,
+`drivers/document-alerts.service.ts:249`, `home/scenario-registry.ts:166`.
+
+"A table that 7 features read and nothing has ever written" is a compelling P1 shape.
+
+**IT IS NOT A DEFECT, and the counterfactual test is what settled it.** The write path is wired **end to
+end**: three backend INSERT sites (`docs/files.routes.ts:268`, `:667`, `tax-documents.routes.ts:302`) and the
+frontend genuinely sends `entity_links` from five places — `UploadModal.tsx:155`,
+`OnboardingWizardPage.tsx:34`, `FineCreateModal.tsx:97`, `InspectionsPage.tsx:65`, and the driver PWA
+`upload-sync.ts:139`. The link is **optional at upload** (`if (body.entity_links && …length > 0)`), and the
+30 existing files were uploaded through the general document-library flow where no entity is in scope
+(`...(entityType && entityId ? { entity_links: … } : {})`). **An unexercised feature on test data, not a
+broken one.** Recorded explicitly so the next agent does not re-file it — this is the third time this
+session that a striking zero turned out to be expected state (items 95, 97, and now this).
+
+**★ BUT THE READ OF THAT CODE FOUND A REAL ONE — three lists that disagree.**
+
+| source | entity types |
+|---|---|
+| FE `apps/frontend/src/api/docs.ts:3` `FileEntityType` | driver, customer, vendor, unit, equipment, load, **settlement**, **invoice** — **8** |
+| BE Zod `files.routes.ts:27` `entityTypeSchema` | the same **8**, and it **accepts** them |
+| BE `files.routes.ts:23` `SUPPORTED_LINK_ENTITY_TYPES` | driver, customer, vendor, unit, equipment, load — **6** |
+
+**TypeScript says `invoice` is fine. Zod says `invoice` is fine. The handler throws
+`entity_type_not_supported_yet`.** Nothing catches it before production.
+
+**And the failure mode is worse than a rejected link — it is a lost upload.** In the create path the check
+runs **inside the transaction**, after `INSERT INTO docs.files` and the `r2_key` UPDATE
+(`files.routes.ts:253-268`). The `throw` **rolls back the file row itself**, so the user does not see "the
+link failed" — they see a failed upload with no document saved.
+
+`settlement` and `invoice` are not obscure: invoice backup and settlement backup are precisely the
+attachments a factor, an auditor, or a driver dispute asks for. They appear in two of the three lists
+because someone intended them.
+
+**Evidence this is already a known sharp edge:** `FineCreateModal.tsx:94-96` carries the comment
+*"docs.file_links has no 'fine' entity type, so the citation is filed under the entities it concerns"* and
+hand-fans the link to driver/unit/load. A careful author routed around the list. **The next author will read
+`FileEntityType`, see `invoice`, and ship a broken upload.**
+
+**It is a second instance of a class we have already named.** `LAW-2026-08-06-KANBAN-DROPSTATUS-CONTRACT`
+exists because *"the frontend lane list and backend enum live in separate files owned by separate lanes so
+they drift independently"* — the identical shape, different feature. Filed as
+`LV-FILE-LINK-ENTITY-TYPE-3WAY-MISMATCH` with a three-way parity guard, and the recommendation to move the
+entity-type check **before** the file INSERT so a bad link can never destroy a good upload.
+
+**The transferable lesson:** the empty table was the loud signal and the correct answer was "expected". The
+defect was three lines of type declaration I only read **because** I was chasing the empty table.
+**Investigating a non-defect thoroughly is not wasted work — the surrounding code is where the real one
+was.**
