@@ -1631,3 +1631,63 @@ reverse." That was a correct description of the *observed data* but an incorrect
 are unchanged and still stand; the causal story is now right.
 
 Board row `LV-BILLVOID-DATE-ERROR` — **CC-1, critical** (blocks the void path entirely).
+
+## 37 — ★★ `LV-BILLVOID-DATE-ERROR` ROOT CAUSE FOUND — one line, and it explains everything
+
+**`apps/backend/src/accounting/bills.service.ts:1764`:**
+
+```js
+const originalDate = String(billRaw.bill_date).slice(0, 10);
+```
+
+**The mechanism.** The `pg` driver returns a Postgres `date` column as a **JavaScript `Date` object**,
+not a string. So:
+
+- `String(new Date('2026-08-06'))` → `"Thu Aug 06 2026 00:00:00 GMT+0000 (UTC)"`
+- `.slice(0, 10)` → **`"Thu Aug 06"`**
+
+…which is passed as `originalDate` into `postVoidReversal` and reaches Postgres as a `date`, producing
+the exact error observed live: **`invalid input syntax for type date: "Thu Aug 06"`**. The line
+assumes an ISO string (where `.slice(0,10)` correctly yields `2026-08-06`); it gets a Date object.
+
+**★ And the surrounding code resolves the whole puzzle.** The comment immediately above reads:
+
+> *"Post the reversing JE **BEFORE** the status flip so both land atomically on this client."*
+
+and the block is `if (flagOn)` — gated on `MONEY_CONTROL_VOID_REVERSAL_ENABLED`, which I verified is
+**true for USMCA** (item 28b). So:
+
+1. **The reversal IS implemented** — this corrects my repeated earlier characterisation that bill void
+   "doesn't reverse." It does; the code is there and its intent is correct.
+2. **It throws on the date before it can post.**
+3. **Because the reversal runs BEFORE the status flip and both are in one transaction, the throw rolls
+   the ENTIRE void back** — which is exactly why the bill was left un-voided with no reversal and no
+   partial state. That is actually *correct* transactional behaviour around a broken input.
+4. **And it explains the 4 out-of-band voids**: since this path cannot complete, those rows must have
+   been set by direct SQL, which bypassed this reversal block entirely.
+
+**One-line fix shape** (CC-1's call, not mine): normalise to ISO before slicing — e.g. use the same
+date-normalisation the working JE-void path uses, or `toISOString().slice(0,10)` / a shared helper.
+**Do not "fix" it by removing the reversal.**
+
+### 37a — Same pattern appears at 13 other sites — a CANDIDATE class, not 14 proven bugs
+
+`String(<date>).slice(0, 10)` occurs **14 times** across the backend. **Exactly one is proven broken**
+(the bill-void line above, where I have the live error). The other 13 are **candidates** — each is a
+bug only if that column is returned as a `Date` object rather than a string, which depends on the
+column type and driver parsing:
+
+`invoice-send.service.ts:216` (`issue_date`) · `cash-basis/engine.ts:90` · `applicants.routes.ts:70`
+(`date_of_birth`) · `compliance-aggregate.service.ts:22,35` · `form-2290.routes.ts:144`
+(`acquired_date`) · `csa.routes.ts:147` (`due_date`) · `filings-aggregate.service.ts:47` ·
+`driver-scheduler.service.ts:792,794` (`start_date`/`end_date`) · `cert-monitor.service.ts:130` ·
+`obligation-reconcile.routes.ts:215,242` (`issue_date`/`bill_date`)
+
+**I am deliberately NOT claiming these are all defects.** Several land in read/display paths where a
+malformed string may never reach Postgres as a `date`, and would degrade rather than throw. But
+`obligation-reconcile.routes.ts:242` uses `bill_date` — the *same column* that fails in bill void —
+and `invoice-send.service.ts:216` sits on the invoice send path, so both are worth checking first.
+
+**Recommended:** fix the proven site, then sweep the pattern with a shared date-normalisation helper
+and a guard that bans `String(...).slice(0, 10)` on a value sourced from a `date`/`timestamp` column.
+That converts a recurring foot-gun into a one-time fix.
