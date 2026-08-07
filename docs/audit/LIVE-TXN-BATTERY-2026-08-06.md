@@ -915,3 +915,35 @@ expense-entry form omits the field**, while the list it feeds displays a column 
 **UNVERIFIED — needs live check** on whether the fuel module supplies it.
 
 Board row `LV-EXP-NOLOAD` (CC-2 mechanical/FE).
+
+## 22 — FUEL module: GL mapping complete (PASS) · `LV-EXP-NOLOAD` scope RESOLVED
+
+**PASS — Fuel → GL mapping coverage is complete for USMCA: `5 of 5 categories mapped`** —
+`Diesel` · `DEF` · `Reefer fuel` · `Oil` · `Misc fuel`, each showing `mapped`. The page states its own
+limit honestly: *"Read-only check of the expense category map (no GL posting is performed here)."*
+Fuel Home KPIs are all zero (Active plans 0, MTD spend $0, Fleet MPG 0.0, Loves sync Never) with
+`0` open fraud alerts and `0` card-overage queue.
+
+**`LV-EXP-NOLOAD` scope question — now SETTLED (was UNVERIFIED in item 21).** The fuel module offers
+tabs `Home · Planner · Relay inbox · Settings · Expense mapping · History & savings · Loves prices ·
+Compliance` and an `IMPORT RELAY HISTORY` control. **There is no manual fuel-transaction create
+anywhere in it** — the module is relay/import-driven, which matches the prod census on the board
+(all 1,548 `fuel.fuel_transactions` are `relay_ingest`).
+
+So the full picture across every expense entry path on USMCA:
+
+| path | can set load link? |
+|---|---|
+| `/accounting/expenses` → Record expense | **NO** — no Load/Trip field (item 21) |
+| Fuel module | **NO manual create at all** — relay/import only |
+| Maintenance → Create Expense | requires a **Work order** first, and WO creation is dead (`LV-WO-NOSAVE`) |
+| **Bank categorize row** | **YES** — inline `Driver` / `Unit (truck)` / `Trailer` / **`Trip (load)`** |
+
+**Conclusion:** the ONLY surface on which a user can attach a load to an expense is the **bank
+categorize row**. `LV-EXP-NOLOAD` therefore stands and is now fully scoped — it is not that the
+capability is missing from the product, it is that it is reachable from exactly one screen, and not
+from the screen actually named "Record expense". G18 (*every diesel/roadside expense MUST FK to a
+load*) cannot be satisfied by someone entering an expense directly.
+
+The board row `LV-EXP-NOLOAD` is updated from "UNVERIFIED on the fuel module" to **fuel module
+confirmed to have no manual create path**.
