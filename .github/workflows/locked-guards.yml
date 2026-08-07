@@ -1288,3 +1288,9 @@ jobs:
         run: node scripts/verify-bill-vendor-entity-consistent.mjs --selftest
       - name: verify:bill-vendor-entity-consistent
         run: node scripts/verify-bill-vendor-entity-consistent.mjs
+      # CLS-DRIVER-VENDOR-UUID-FALLBACK — the defect the guard above uncovered: a driver's A/P vendor
+      # was SUBSTITUTED with the driver's own id rather than resolved. Same wiring rationale.
+      - name: verify:driver-vendor-no-uuid-fallback --selftest
+        run: node scripts/verify-driver-vendor-no-uuid-fallback.mjs --selftest
+      - name: verify:driver-vendor-no-uuid-fallback
+        run: node scripts/verify-driver-vendor-no-uuid-fallback.mjs

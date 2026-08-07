@@ -243,7 +243,11 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     return { payments };
   });
 
-  app.get("/api/v1/accounting/bills/:id", async (req, reply) => {
+  // rateLimit: guard precondition for touching this file (verify-new-auth-routes-rate-limited /
+  // CodeQL js/missing-rate-limiting). Read, so it matches the 120/min the sibling reads use.
+  // Inline on purpose — the guard matches a literal `rateLimit:` in the registration window, so a
+  // hoisted const reads as covered to a human and as UNLIMITED to the guard.
+  app.get("/api/v1/accounting/bills/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -257,9 +261,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  // rateLimit: this authorizes and WRITES a financial row, so it matches the money-write siblings
-  // (payments, payment-applications, post-gl) at 30/min rather than the 120/min used by the reads
-  // above. Was unset — CodeQL js/missing-rate-limiting.
+  // rateLimit: authorizes and WRITES a financial row, so it matches the money-write siblings
+  // (payments.routes.ts:242, :483) at 30/min rather than the 120/min used by the reads.
   app.post("/api/v1/accounting/bills", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
