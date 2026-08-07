@@ -4926,6 +4926,2115 @@ did not watch execute.
 otherwise, guard green, and the owner gate is open with its blocking fact now answered. **Zero defects
 filed against a lane, because zero defects were found.** One board row is filed for stale evidence in the
 HOLD doc — see `LV-HOLD-INVENTORY-PURCHASES-DOC-STALE`.
+## 77. PASS — JE void satisfies EVERY WORM invariant in the standing order, including "siblings untouched"
+
+**Verified on prod `br-fancy-credit-akjnd07a`, USMCA, 2026-08-07**, GUC + lucia bypass in one transaction,
+`current_user` (`ih35_app`) asserted in the same statement. Lines read from
+`accounting.journal_entry_postings` (`debit_or_credit`, `amount_cents`) — note the table is NOT
+`journal_entry_lines`, which does not exist.
+
+The standing order requires, for each voidable type: *"reversing JE DR=CR nets zero, original preserved
+(voided_at/cancelled not deleted), append-only audit row, siblings untouched."* For the manual JE path,
+all of it holds:
+
+| invariant | result | evidence |
+|---|---|---|
+| reversing JE nets zero | **PASS** | `56a58856` DR `$64.20` = CR `$64.20` |
+| original preserved, not deleted | **PASS** | `5f70a75c` still present, `status = posted` |
+| linkage written BOTH ways | **PASS** | `5f70a75c.reversed_by_je_id = 56a58856` AND `56a58856.reverses_je_id = 5f70a75c` |
+| **siblings untouched** | **PASS** | all 6 other USMCA JEs have `updated_at == created_at` to the second |
+| every entry balanced | **PASS** | 8 of 8 JEs read DR = CR |
+
+**The siblings check is the one that had never been proven, and it is the sharpest.** Across the 8 most
+recent USMCA journal entries, exactly **one** row has `updated_at > created_at`: `5f70a75c`
+(`03:33:20 → 03:34:07`), which is the void stamping its own linkage. Every other entry — `53415aef`,
+`e30baa6a`, `6fe7c21a`, `4da3efbd`, `6f63081e`, `ea6a0f05` — carries `updated_at` identical to
+`created_at`. A void touched precisely the row it was supposed to touch and nothing else. That is the
+property a court or examiner actually tests, and it is now measured rather than assumed.
+
+**PRECISION THAT MATTERS — `voided_at` is NOT set on the original.** `5f70a75c` reads `voided: false` and
+remains `status = posted`; what marks it is `reversed_by_je_id`, and the UI renders `Reversed` in place of
+the Void button. So for journal entries the void model is **a reversing entry plus bidirectional linkage**,
+NOT a `voided_at` flag. This is correct under board Rule 4 ("VOID = reversal; nothing is deletable") and
+under GAAP — a posted entry is never unposted — but it differs from `accounting.payments`, which DOES carry
+`voided_at`. **Anyone auditing "is this voided?" by testing `voided_at IS NOT NULL` will read a reversed JE
+as live.** Recording the distinction so a future guard is written against the right column per table.
+
+**This is the working reference implementation.** Items already on the board record that invoice void
+reverses without writing linkage, bill-payment void produces no reversal, and expense void is unreachable.
+The JE path shows the complete correct shape — reversing entry, balanced, original preserved, linkage both
+directions, siblings untouched — so the other three paths have a proven in-repo model to be fixed against.
+No new engine has to be designed.
+
+---
+
+## 78. FAIL (P0 · legal evidence) — `LV-AUDIT-TRAIL-HAS-NO-ACTOR`: 2 of 2,319,894 WORM audit rows record WHO made the change
+
+**Verified on prod `br-fancy-credit-akjnd07a`, 2026-08-07**, `audit.row_changes`, whole table, `current_user`
+asserted in the same statement. This is the append-only WORM trail the constitution names as the audit
+system of record.
+
+| column | populated | of total |
+|---|---|---|
+| rows in table | — | **2,319,894** (2026-05-28 → 2026-08-07) |
+| `changed_by_user_id` | **2** | 0.00009% |
+| `changed_by_role` | **0** | 0% |
+| `session_id` | **0** | 0% |
+| `tenant_id` | 2,163,538 | 93% |
+| `op = 'DELETE'` | **27** | — |
+
+**The trail records WHAT changed and never WHO.** Two rows out of 2.3 million carry a user; not one carries
+a role or a session. The columns exist and are correctly designed — they are simply not being written.
+
+**WHY THIS IS P0 AND NOT A NICE-TO-HAVE.** `CLAUDE.md` opens by stating this system holds *"live financial
+and legal-evidence data"*, and §10 requires every change be made as if *"a CPA, auditor, attorney, insurer,
+lender, DOT/FMCSA reviewer, architect, or court will review it."* An audit trail without an actor is a
+**change log, not evidence** — it cannot answer the one question every one of those reviewers asks first:
+*who did this?* This company is in confirmed Ch. 11 and is actively litigating an embezzlement by Ignacio
+Muñoz, with the "Unauthorized Expenses" receivables held as evidence. Attribution is not paperwork here; it
+is the mechanism by which a disputed change is pinned to a person. Non-repudiation is impossible today.
+
+**CONCRETE DEMONSTRATION — 27 rows were DELETED and the trail cannot say by whom.** All 27 `DELETE`
+operations in the entire table occurred in **one transaction at `2026-08-04 16:05:35`**:
+
+| table | deletes | with actor |
+|---|---|---|
+| `mdata.load_stops` | 10 | **0** |
+| `mdata.units` | 6 | **0** |
+| `mdata.loads` | 5 | **0** |
+| `mdata.drivers` | 4 | **0** |
+| `maintenance.work_orders` | 2 | **0** |
+
+**I am NOT filing the deletion itself as the defect.** A single-transaction purge of 27 rows across
+TMS-native test tables on one day is most plausibly a deliberate test-data cleanup, and board Rule 4 records
+that all TMS-native data is test. Calling that a defect without evidence of intent would be the guessing
+this lane forbids — **origin matters, and I did not establish it.** What the deletion proves is the
+*consequence* of the actor gap: 27 operational records were destroyed and the WORM trail is structurally
+incapable of naming who destroyed them. That is the finding.
+
+**Worth a separate look by the owning lane, NOT claimed here:** board Rule 4 also says *"VOID = reversal;
+**nothing is deletable**."* Hard `DELETE`s did execute against `mdata.loads`, `mdata.drivers`, `mdata.units`,
+`mdata.load_stops` and `maintenance.work_orders`. Whether that purge was sanctioned is **UNVERIFIED —
+needs an owner/lane answer**, and it is recorded rather than assumed in either direction.
+
+**What "fixed" must mean (do not accept less):** the writer populates `changed_by_user_id`, `changed_by_role`
+and `session_id` from the authenticated request context on every mutation, and a CI guard proves a mutation
+through a real route lands an audit row WITH an actor. Back-filling the 2.3M historical rows is neither
+possible nor desirable — that data is gone and inventing it would be fabricating evidence. **The honest
+remediation is: attribute everything from the fix forward, and record in the audit documentation that rows
+before that date carry no actor**, so nobody later mistakes a null actor for a system action.
+
+**Routed:** WORM / audit integrity → **CC-1**.
+
+---
+
+## 79. FAIL (P1) — `LV-BANKING-QBO-CONNECTED-IS-HARDCODED`: Banking tells every entity "QBO Sync: Connected" from a string literal, while USMCA has no QBO connection at all
+
+**Observed live, USMCA, 2026-08-07, `/banking`.** The Banking Home status strip renders, verbatim:
+
+> **QBO Sync:** Connected | Last sync: n/a | Transactions: 163 | Uncategorized: 111 | Pending QBO sync: 0
+
+The same line claims a live connection **and** admits it has never synced. Meanwhile the global top bar,
+two inches above it, shows a grey **"QuickBooks: not connected"**. Two contradictory statements about the
+same entity on the same screen.
+
+**PROD — USMCA has NO QBO connection.** `integrations.qbo_connections`, completeness discriminator
+satisfied (`visible_all` **4** == `n_live_tup` **4**, `current_user` asserted in the same statement):
+
+| operating_company_id | realm_id | live (`revoked_at IS NULL`) | is USMCA |
+|---|---|---|---|
+| `b49a737b…` | 1432746210 | true | **false** |
+| `91e0bf0a…` (TRANSP) | 123145885549599 | false | **false** |
+| `b49a737b…` | 123145885549599 | false | **false** |
+| `91e0bf0a…` (TRANSP) | 123145885549599 | true | **false** |
+
+**Zero rows for USMCA.** The header is right; the banking strip is wrong.
+
+**ROOT CAUSE — a hardcoded literal, no inference required.**
+`apps/frontend/src/pages/banking/components/SyncStatusStrip.tsx:11-12`:
+
+```jsx
+<span className="font-semibold">QBO Sync:</span>{" "}
+<span className="text-slate-700">Connected</span>
+```
+
+The component's entire prop surface is `{ syncedAt, transactionCount, uncategorizedCount, pendingSyncCount }`
+— **not one of them is a connection state.** There is no query, no flag, no conditional. "Connected" is
+printed unconditionally, for every entity, forever. This is not a scoping bug or a stale cache; the screen
+has no access to the fact it is asserting.
+
+**WHY IT MATTERS.** Under the locked parallel-books architecture QBO is the system of record through
+2025-12-31 and TMS reconciles against it. A banking screen that certifies "QBO Sync: Connected · Pending
+QBO sync: 0" tells the reader their bank activity is mirrored and nothing is outstanding. For USMCA —
+TMS-only and isolated **by design** — every part of that is false: there is no connection, so "0 pending"
+is not "all clear", it is "nothing can ever sync". A user reconciling USMCA banking would reasonably
+conclude it ties to QuickBooks. It cannot.
+
+**Same class as `LV-DISPATCH-TOAST-LIES`:** a UI asserting a system state it never checked. It is the
+cheapest kind of defect to fix and among the most expensive to trust wrongly, because it is
+indistinguishable from a true "Connected" until someone checks the database.
+
+**Fix, completely:** derive the label from the entity's real connection state (a live
+`integrations.qbo_connections` row for the current `operating_company_id`, `revoked_at IS NULL`), render
+"Not connected" when there is none, and suppress or relabel "Pending QBO sync" when no connection exists —
+`0 pending` against no connection is affirmatively misleading. **A guard should assert this component takes
+connection state as a prop**, so the literal cannot come back.
+
+**Routed:** FE/mechanical for the render; the wording of the connected/not-connected states touches the
+parallel-books contract, so CC-1 should sanity-check the copy.
+
+---
+
+## 80. FAIL (P1 · money) — `LV-BANK-MATCH-SCORE-SATURATES-TO-MEMO`: once every candidate is outside tolerance the amount term clamps to zero, so the top-ranked "match" is chosen by fuzzy memo text
+
+**Observed live, USMCA, 2026-08-07, `/banking/transactions`**, match drawer for the bank row
+*"Zelle payment to Dreamline Transit LLC for 'INV-418334'; Conf# vfmqou1ne"*, **$918.00 spent, 08/05/2026**.
+The drawer offers *"Recommended matches (±7 days) from live ledger data"*, ranked by Score:
+
+| rank | candidate | amount | **amount gap** | date gap | score |
+|---|---|---|---|---|---|
+| **1** | JOURNAL ENTRY · CC3-JE-LINKAGE-TEST | $64.20 | **$853.80** | 1d | **0.202** |
+| 2 | JOURNAL ENTRY · Invoice INV-2026-00003 posting | $1,200.00 | **$282.00** | 1d | 0.191 |
+| 3 | JOURNAL ENTRY · Invoice INV-2026-00007 posting | $313.90 | $604.10 | 1d | 0.191 |
+| 4 | JOURNAL ENTRY · Bill payment 8b68a9d7 posting | $33.40 | $884.60 | 1d | 0.186 |
+
+**The closest candidate by amount ranks SECOND.** A candidate off by $853.80 is presented as the best match
+over one off by $282.00, and two candidates with gaps of $282.00 and $604.10 score **identically**.
+
+**ROOT CAUSE — read in code, then confirmed arithmetically against the live scores.**
+`apps/backend/src/accounting/bank-recon/match.service.ts:136-141`:
+
+```js
+const amountScore = Math.max(0, 1 - input.amountGapCents / Math.max(input.toleranceCents, 1));
+const dateScore   = Math.max(0, 1 - input.dateGapDays / AUTO_MATCH_DATE_WINDOW_DAYS);
+const memoScore   = Math.max(0, Math.min(input.similarity, 1));
+return Number((0.55 * amountScore + 0.2 * dateScore + 0.25 * memoScore).toFixed(6));
+```
+
+Tolerance (`:92-93`, `:133`) is `max(100 cents, |amount| × 0.0001)` → for $918.00 that is **$1.00**. Every
+candidate's gap ($282.00 – $884.60) is **282× to 884× the tolerance**, so `1 - gap/tolerance` is deeply
+negative and `Math.max(0, …)` clamps **`amountScore` to 0 for every candidate**. The 0.55 weight — the
+majority of the score — contributes **nothing**. `AUTO_MATCH_DATE_WINDOW_DAYS = 5` and all four rows share
+a 1-day gap, so `dateScore` is identical too. **The only term left varying is the 0.25 memo similarity**,
+which is exactly what the observed spread (0.202 / 0.191 / 0.191 / 0.186) decomposes to.
+
+**The ranking has silently degenerated from "closest amount" to "text that looks most like the bank memo."**
+
+**WHY THIS IS A MONEY DEFECT, not a UX nit.** The drawer's job is to tell an operator which ledger entry a
+bank line corresponds to. It labels these "Recommended matches" and sorts by Score, so the rational
+operator accepts the top row. Here the top row is the **worst of the four by amount** — accepting it would
+reconcile a **$918.00** bank payment against a **$64.20** journal entry that exists only because I created
+it as a void-linkage test. In a real reconciliation that is a mis-tied bank line, and bank reconciliation
+is precisely where a CPA, lender or examiner checks that cash agrees with the ledger.
+
+**Honest mitigation, stated:** the UI **does** display `Amount gap: $853.80` on every row, so an attentive
+operator can catch it. The defect is the RANKING and the Score, not concealment — the screen is not lying,
+it is recommending badly. That is why this is P1 and not P0.
+
+**Fix, at the root — do not just re-sort the list.** The score must remain discriminating when all
+candidates fall outside tolerance. Any of: replace the hard clamp with a continuous decay
+(`1 / (1 + gap/tolerance)`) so ordering by amount survives at any distance; or suppress candidates beyond a
+sanity multiple of tolerance rather than presenting them as recommendations; or, when every `amountScore`
+is 0, fall back to ranking by amount gap ascending and label the list "no close amount match". **A guard
+should assert that for a fixed date and memo, a smaller amount gap never scores lower than a larger one** —
+that property is what broke, and it is cheap to test.
+
+**Routed:** money / reconciliation → **CC-1**.
+
+---
+
+## 81. CONTROLLED COMPARISON — the SAME CoA picker works in Banking and is empty in Record-expense, which isolates item 75 to that one component
+
+**Verified live, USMCA, 2026-08-07, same browser session, minutes apart.** This is the positive control item
+75 was missing.
+
+| surface | picker | result |
+|---|---|---|
+| `/banking/transactions` → row → Categorize | **Category (Chart of Accounts)** | **POPULATED** — `Driver Cash Advance- TEST Driver-One-20260806` (Asset) · `Relay Fuel Wallet` (Asset) · **`Interest & Financing Expense` (Expense)** · `Interest Receivable` (Asset) · `Loans to Related Parties` |
+| `/accounting/expenses` → `+ Create` → Record expense | **Category** | **EMPTY** — only `+ Add new category` |
+
+Same entity, same session, same chart, same authenticated user, minutes apart. The Banking picker even
+renders an **Expense**-type account (`Interest & Financing Expense`), which is exactly the class the
+Record-expense picker claims none of.
+
+**WHAT THIS ELIMINATES — with evidence, so nobody re-runs these:** the empty picker is **not** missing data,
+**not** the CoA endpoint, **not** entity scoping, **not** RLS, **not** auth or session, and **not** a
+per-entity CoA gap. All of those would have broken the Banking picker identically. Combined with the four
+hypotheses already killed in item 76 (data absent · filter wrong · stale bundle predating the
+`qbo_account_id` fix · query never fired), the surviving surface is now **one component**:
+`components/expenses/RecordExpenseForm.tsx` `categoryOptions` (:138-152).
+
+**Everything around it is proven working:** `catalogs.accounts` holds 32 active+postable expense-family rows
+for USMCA; the exact client URL returns 76/76; `isExpenseAccount` is correct; `ReferenceSelect` renders what
+its parent passes; and a sibling picker over the same chart populates fine.
+
+**Still UNVERIFIED and still not guessed:** why that one component's `categoryOptions` evaluates empty.
+Settling it needs source maps or a runtime breakpoint. **I will not name the failing line without watching
+it execute** — but the owning lane now has a controlled A/B, which is the cheapest possible starting point.
+
+**Note (minor, both surfaces):** `+ Add new category` renders as the **FIRST** row of both dropdowns.
+Product lock §7 says the inline `+ Add new ___` belongs at the **END** of a reference dropdown. Recorded as
+a consistency observation, not filed as a defect.
+
+---
+
+## 82. FAIL (P0 · money) — `LV-BANK-CATEGORIZE-POSTS-GL-WHILE-BANNER-SAYS-IT-DOES-NOT`
+
+**The Banking screen tells the operator that categorizing does not post to the ledger. It posts to the
+ledger. Proven by doing it once.**
+
+**WHAT THE SCREEN SAYS** (`/banking/transactions`, standing banner, verbatim):
+
+> **Categorize tags are not ledger posts — BANK_FEED_GL_POSTING_ENABLED stays OFF by default**
+> Categorize persists driver/unit/load/vendor fields immediately; **that alone does not post a balanced TMS JE.**
+
+**WHAT ACTUALLY HAPPENED.** I categorized exactly one row — *"Zelle payment to Dreamline Transit LLC for
+'INV-418334'"*, **$918.00**, 08/05/2026 — to `Other Operating Expense`, and clicked **Post**. UI counters
+moved honestly (For review 111 → 110, Categorized 4 → 5). Then, on prod:
+
+| evidence | value |
+|---|---|
+| `banking.bank_transactions.review_state` | `matched` |
+| `matched_journal_entry_id` | **set** |
+| journal entry created | **`ff746cfa`** |
+| its `created_at` | **`2026-08-07 15:13:10`** — the same second as the bank row's `updated_at` |
+| its memo | **`Bank categorization cb271ba0-691a-48b5-ad07-3669bbe6c569 posting`** |
+| its debits | **$918.00** |
+| USMCA `accounting.journal_entries` | **27 → 28** |
+
+A **new, balanced journal entry** was created by the categorize, and its own memo says so.
+
+**THE FLAG IS ON — AND THAT IS WHY THE BANNER IS WRONG, NOT THE POSTER.** `lib.feature_flags` /
+`lib.feature_flag_overrides` on prod:
+
+| scope | `BANK_FEED_GL_POSTING_ENABLED` |
+|---|---|
+| global `default_enabled` | **false** |
+| **USMCA** override | **TRUE** |
+| TRANSP override | **TRUE** |
+| TRK override | **TRUE** |
+
+**The posting is CORRECT behaviour.** The flag is enabled for every entity. The defect is that the screen
+asserts the opposite.
+
+**ROOT CAUSE — a hardcoded sentence, not a scoping bug.**
+`apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx:2155-2157` is a static `<p>`:
+the words "stays OFF by default" and "does not post a balanced TMS JE" are literal prose. **The banner never
+reads the flag it names.**
+
+**This is the exact masked-scope error the house standards call out** — *"Reading the global
+`default_enabled=false` and concluding 'OFF' is a masked-scope error — read `lib.feature_flag_overrides`
+PER ENTITY."* The banner reads like someone checked the global default and wrote it down. The global default
+IS `false`; the effective per-entity value is `TRUE` everywhere.
+
+**WHY THIS IS P0.** There are **110 transactions still in the for-review queue**. An operator who believes
+this banner will categorize them as mere tagging and thereby post **110 unintended journal entries** into a
+live general ledger — during a Ch.11 case with an active embezzlement reconciliation, where every GL entry
+is potential evidence. Unlike the other UI-truth defects I filed today, this one does not merely misinform:
+**acting on the false statement changes the books.**
+
+**Cruel detail:** the same banner block already warns that `matched_journal_entry_id` "is not proof that
+bank-feed GL posting is live." That caution is well-founded and correct — and it is the sentence that could
+lead a reviewer to dismiss the very evidence of this defect. I therefore did not stop at the linkage column:
+I confirmed a **new JE row**, its creation timestamp, its memo, its balanced debit, and the entity JE count
+moving 27 → 28.
+
+**FIX COMPLETELY:** derive the sentence from the effective per-entity flag
+(`resolveFlagEnabled(BANK_FEED_GL_POSTING_ENABLED, operating_company_id)`), and when posting is ON say so
+loudly — *"Categorizing WILL post a balanced journal entry to the ledger for this entity."* Never print a
+flag's global default as if it were the effective state. **Guard: assert this banner's text is rendered from
+the resolved per-entity flag value and that no literal 'stays OFF' string exists in the component.**
+
+**Routed:** money / GL → **CC-1** (posting truth), with FE for the render.
+
+---
+
+## 83. Bank categorize — the ENGINE is correct end-to-end; one structural weakness in reverse linkage
+
+**Verified on prod after the item-82 categorize (USMCA, $918.00, 2026-08-07).** Having proven the banner
+false, the fair question is whether the thing it denied is at least *done well*. It is — with one gap.
+
+**PASS — the posted entry is accounting-correct:**
+
+| side | account | type | amount |
+|---|---|---|---|
+| DR | `6999` Other Operating Expense | Expense | **$918.00** |
+| CR | `1000` Bank of America - Operating (USMCA) | Asset | **$918.00** |
+
+Balanced, and the correct double entry for a money-out bank line categorized to an expense: the expense is
+debited, the bank account it actually cleared is credited. **The poster picked the right cash account on its
+own** — I chose only the expense category.
+
+**PASS — attribution persisted exactly as the banner promises:** on `banking.bank_transactions`,
+`categorized_at = 15:13:10`, `categorization_gl_account_id` → `6999 Other Operating Expense`,
+`category_kind = "Other Operating Expense"`, `review_state = matched`. `categorization_driver_id`,
+`_unit_id`, `_load_id`, `_vendor_id` are all NULL — **correct**, because I set none of them. The banner's
+claim that categorize "persists driver/unit/load/vendor fields immediately" holds.
+
+**PASS — forward linkage is a real FK:** `bank_transactions.matched_journal_entry_id` → the JE. One row
+points at it.
+
+**FINDING (P2, structural) — reverse linkage exists only as a STRING inside a memo.** From the journal
+entry, the only row-level pointer back to the bank transaction is the memo text
+`Bank categorization cb271ba0-691a-48b5-ad07-3669bbe6c569 posting`. I verified that UUID **is** the bank
+transaction id — so reverse drill-through genuinely works, **by parsing prose**. The JE's own structured
+columns are `source = 'auto'` and `source_system = 'tms'`, which identify no specific record.
+
+**And the purpose-built mechanism for this is sitting empty.** `banking.bank_transaction_splits` carries
+exactly the right shape — `result_journal_entry_id` (a proper reverse FK) plus `load_id`, `driver_id`,
+`unit_id`, `trailer_id`, `vendor_id`, `customer_id`, `item_id`, `posting_status`, `voided_at` — and it holds
+**0 rows** (`visible_all` 0 == `n_live_tup` 0, discriminator satisfied). The categorize path does not write
+it.
+
+**Why this is worth a card rather than a shrug:** LAW §10a (TOTAL CONNECTIVITY) requires forward **and**
+reverse drill-through. Today the reverse direction is load-bearing on a free-text string. Nothing enforces
+that memo's format — no FK, no constraint, no index. Anyone who edits a memo, or any change to the memo
+template, silently severs the audit path from a ledger entry back to the bank line that produced it. That
+path is exactly what an examiner walks. **It works now and would break quietly**, which is the definition of
+a structural weakness rather than a bug.
+
+**NOT claimed:** I did not verify the JE-detail UI's "Source maps bank_categorization → Banking
+Transactions" reverse drill (the banner documents it at
+`BankingTransactionsDesignView.tsx:1530`). That is a MODULE-level jump, not row-level, and I have not
+exercised it — **UNVERIFIED**.
+
+**Fix:** write the `bank_transaction_splits` row the schema was designed for (it already has
+`result_journal_entry_id`), or add a `source_bank_transaction_id` column on `accounting.journal_entries`.
+Either makes the reverse link a constraint instead of a sentence. **Guard: assert every JE whose memo begins
+`Bank categorization` has a structured FK back to its bank transaction.**
+
+**Routed:** CC-1 (ledger linkage).
+
+---
+
+## 84. PASS — nine ledger-integrity and entity-isolation invariants, measured on prod
+
+**Verified on prod `br-fancy-credit-akjnd07a`, USMCA, 2026-08-07**, GUC + lucia bypass in one transaction,
+`current_user` asserted in the same statement. These are the invariants an auditor tests first, and they had
+not been measured — only assumed.
+
+**Ledger integrity — `accounting.journal_entries` / `journal_entry_postings`:**
+
+| invariant | result |
+|---|---|
+| USMCA journal entries | **28** |
+| entries where Σdebits ≠ Σcredits | **0** |
+| one-sided entries (debits or credits missing) | **0** |
+| entries with zero postings | **0** |
+| **postings to an account belonging to ANOTHER entity** | **0** |
+
+**Entity isolation — the subledgers:**
+
+| invariant | result |
+|---|---|
+| USMCA bills | 11 |
+| bills whose `vendor_id` resolves to no vendor | **0** |
+| bills pointing at a FOREIGN entity's vendor | **0** |
+| invoices pointing at a FOREIGN entity's customer | **0** |
+| bank transactions categorised to a FOREIGN entity's GL account | **0** |
+
+**What this establishes, and why it matters to how the rest of my findings should be read.** The double-entry
+engine and the entity boundary are **sound**. Every journal entry balances, none is malformed, and not one
+posting, bill, invoice or bank categorisation crosses into another company's records. USMCA is genuinely
+isolated at the data layer.
+
+That is the important frame for the defects filed today: **the money math and the entity walls are holding;
+what is failing is what the software TELLS the operator.** The Banking banner denies a GL post that happens
+(item 82). The QBO strip reports a connection that does not exist (item 79). The match drawer recommends its
+worst candidate first (item 80). The reconcile certifies a tie that is $436.66 off (item 72). None of those
+corrupted the ledger — they mislead the human, who then acts. **A correct engine behind a lying interface is
+still dangerous, because the operator is part of the system.**
+
+**Schema note, already filed — no duplicate raised.** `accounting.bills.vendor_id` is **`text`** while
+`mdata.vendors.id` is **`uuid`**, so a foreign key across that link is not even expressible and nothing
+constrains the column to a real vendor. Today all 11 USMCA bills resolve cleanly, so this is latent rather
+than active. It is already on the board as `LV-BILLS-VENDOR-UUID`; I checked before writing rather than
+filing it twice.
+
+---
+
+## 85. ROOT CAUSE beneath the void findings — two money tables have NO void or soft-delete column at all
+
+**Measured on prod `br-fancy-credit-akjnd07a` (`information_schema.columns`), 2026-08-07.** I filed several
+void defects from the UI side; this is the schema fact underneath them. **No new card — the existing cards
+are annotated instead**, because filing the same defect twice inflates the board and splits the fix.
+
+| table | `voided_at` | `deactivated_at` | `archived_at` | other soft-delete |
+|---|---|---|---|---|
+| `accounting.journal_entries` | **✓** | — | — | — |
+| `accounting.invoices` | **✓** | — | — | — |
+| `accounting.bills` | **✓** | — | — | — |
+| `accounting.payments` | **✓** | — | — | — |
+| `banking.bank_transactions` | **✓** | — | — | — |
+| `driver_finance.driver_settlements` | **✓** | — | — | — |
+| `accounting.invoice_lines` | — | — | — | ✓ (`is_active`-class) |
+| `driver_finance.settlement_lines` | — | — | — | ✓ (`is_active`-class) |
+| **`accounting.bill_payments`** | **NONE** | **NONE** | **NONE** | **NONE** |
+| **`accounting.expense_lines`** | **NONE** | **NONE** | **NONE** | **NONE** |
+
+**Two money tables have no way to mark a row void, inactive, archived or cancelled.** The constitution is
+explicit — *"void-not-delete: set `voided_at`, never DELETE"* and *"Every table gets `is_active` + audit"* —
+and board Rule 4 states *"VOID = reversal; nothing is deletable."* For these two tables the schema offers no
+mechanism to comply: the only way to remove a row is a hard `DELETE`, which the law forbids. **The rule and
+the schema are in direct conflict.**
+
+**This explains the UI symptoms I filed separately rather than duplicating them:**
+- `LV-BILLPAY-VOID-NO-REVERSAL` — voiding a bill payment produces no reversal. With no `voided_at` on
+  `accounting.bill_payments`, there is nowhere to record that it was voided. **(Already documented in the
+  constitution itself: "`accounting.bill_payments` (no `voided_at`)" — so this is known, not newly
+  discovered.)**
+- `LV-EXPENSE-VOID-UNREACHABLE` — the expense void path is unreachable from the UI. `expense_lines` has no
+  void column either.
+
+**NOT claimed — and I checked rather than assumed:** there is **no evidence of data loss**. `audit.row_changes`
+records **27** `DELETE` operations in the entire table, and **none of them touched `bill_payments` or
+`expense_lines`** (they were `mdata.load_stops` 10 · `mdata.units` 6 · `mdata.loads` 5 · `mdata.drivers` 4 ·
+`maintenance.work_orders` 2). **This is a latent structural gap, not an active one** — it becomes real the
+first time someone needs to void a bill payment or an expense line.
+
+**What the fix must be (for the lane that takes the existing cards):** add `voided_at` to
+`accounting.bill_payments` and a soft-delete column to `accounting.expense_lines` in an additive, idempotent
+migration, then make the void paths write them. **Do not "solve" it with a `DELETE`** — that is the one
+outcome the law forbids, and it is the path of least resistance for anyone who does not read this first.
+
+---
+
+## 86. PASS — USMCA trial balance balances to the cent, entity-wide
+
+**Measured on prod `br-fancy-credit-akjnd07a`, 2026-08-07**, all postings joined through
+`accounting.journal_entries` scoped to USMCA, `current_user` asserted in the same statement.
+
+| account type | debits | credits | net debit |
+|---|---|---|---|
+| Asset | 1,981.10 | 7,411.20 | **(5,430.10)** |
+| CostOfGoodsSold | 2,927.24 | 1.00 | 2,926.24 |
+| Equity | 0.00 | 100.00 | (100.00) |
+| Expense | 6,984.10 | 0.00 | 6,984.10 |
+| Income | 314.90 | 1,514.90 | (1,200.00) |
+| Liability | 110.20 | 3,291.44 | (3,181.24) |
+| OtherExpense | 1.00 | 0.00 | 1.00 |
+| **TOTAL** | **12,318.54** | **12,318.54** | **0.00** |
+
+**Total debits equal total credits exactly.** Item 84 proved every entry balances individually; this proves
+the entity's books balance in aggregate — the trial balance, the first thing any accountant runs. It holds
+across all 28 journal entries including the one the bank categorize posted an hour ago (item 82).
+
+**OBSERVATION, not a defect — assets carry a NET CREDIT balance of $5,430.10.** Asset accounts are credited
+more than debited, i.e. the entity's cash/asset position is negative in the TMS books. That is consistent
+with what the Banking register shows (a running balance that dips to **−$12,372.32** mid-July) and with
+USMCA being seeded from bank-feed activity without corresponding funding entries. **Under board Rule 4 all
+TMS-native data is TEST data**, so a negative asset position is expected state here, not a finding — I am
+recording it so nobody later reads it as a discovered discrepancy and "corrects" it. If USMCA were a live
+book this would be the first thing to question; it is not.
+
+**What this closes out:** together with item 84, the double-entry engine is verified sound at both the
+entry level and the entity level, with zero cross-entity contamination. The defects filed today are
+concentrated entirely in what the interface **says**, not in what the ledger **does**.
+
+---
+
+## 87. FAIL (P0 · legal evidence) — `LV-MONEY-TABLES-HAVE-NO-AUDIT-TRIGGER`: 123 of 134 money tables are unaudited, including the GL posting lines themselves
+
+**Measured on prod `br-fancy-credit-akjnd07a` from `pg_trigger`/`pg_proc`/`pg_stat_all_tables`, 2026-08-07**,
+`current_user` asserted in the same statement. Scope: schemas `accounting`, `driver_finance`, `banking`.
+
+| measure | value |
+|---|---|
+| tables in scope | **134** |
+| tables WITH an audit trigger | **11** |
+| **tables with NO audit trigger** | **123 (92%)** |
+| unaudited tables currently holding data | **46** |
+| **rows sitting in unaudited tables** | **140,248 of 343,195 (41%)** |
+
+**THE HEADLINE — the ledger header is audited; the money is not.**
+
+| table | audit triggers |
+|---|---|
+| `accounting.journal_entries` (the entry header) | **1** ✓ |
+| **`accounting.journal_entry_postings`** (every debit and credit — the account and the amount) | **0** ✗ |
+
+An entry's *existence* is audited. **Its debits, credits, accounts and amounts are not.** A posting's amount
+or account can be altered and `audit.row_changes` will hold no record of it, while the header's audit row
+still reads as though nothing changed. For a double-entry system this is the wrong half to protect.
+
+**Other unaudited tables holding real money data** (`n_live_tup`, all with 0 audit triggers):
+`accounting.expense_lines` **33,980** · `accounting.expenses` **27,072** · `accounting.invoice_lines`
+**21,213** · `accounting.posting_batches` **14,922** · `accounting.payment_applications` **12,209** ·
+**`accounting.payments` 12,127** · `accounting.journal_entry_postings` **3,635** ·
+`accounting.transaction_source_links` **3,614** · `accounting.periods` **120** ·
+`accounting.chart_of_accounts_roles` **131** · `driver_finance.driver_pay_rates` **93**.
+
+**PROOF THAT THE GAP IS ALREADY LOSING HISTORY — 21 deletions left no trace.**
+`driver_finance.driver_settlements` shows `n_tup_del = 7` and
+`driver_finance.driver_settlement_deductions` shows `n_tup_del = 14`. Both have **0 audit triggers**, and
+neither appears among the 27 `DELETE` rows recorded in `audit.row_changes` (item 78 — those were all
+`mdata.*` / `maintenance.*`). **Twenty-one driver-pay records were hard-deleted and the audit trail does not
+know they ever existed.** `driver_settlements` even *has* a `voided_at` column, so void-not-delete was
+available and was not used.
+
+This is **driver pay** — what a driver was paid and what was deducted from them. Under the locked driver
+model these are 1099 contractor settlements. A driver disputing a deduction, or a tax or labour authority
+asking what was withheld, would find no record that the settlement or the deduction ever existed, and no
+record of its removal.
+
+**COMPOUNDS WITH ITEM 78 — the two findings together are worse than either alone.** Item 78 established
+that of **2,319,894** rows in `audit.row_changes`, exactly **2** name a user and **0** name a role or
+session. So the true posture is: **92% of money tables produce no audit record at all, and the 8% that do
+cannot say who made the change.** "We have a WORM audit trail" is not a safe summary of this system.
+
+**WHY P0.** `CLAUDE.md` opens by stating this holds *"live financial and legal-evidence data"*; §2 requires
+*"append-only audit — every table gets `is_active` + audit"*. The company is in confirmed Ch. 11 and is
+litigating the Ignacio Muñoz embezzlement, with the "Unauthorized Expenses" receivables held **as
+evidence**. An embezzlement case is fought over *who changed which number, when*. On 41% of the rows and on
+every GL posting line, this system cannot answer that.
+
+**NOT CLAIMED — I checked instead of assuming.** I have **no evidence of malicious alteration**. The 21
+deletions are most plausibly test-data cleanup, and all TMS-native data is test data under Rule 4. **The
+finding is the missing capability, not an accusation.** Establishing intent would require the very audit
+trail that is absent — which is precisely the point.
+
+**FIX — the class, not the two tables:** attach the existing `audit.row_changes` trigger to every table in
+`accounting`, `driver_finance` and `banking` that holds transactional data, starting with
+`journal_entry_postings`, `payments`, `payment_applications`, `expenses`, `expense_lines`, `invoice_lines`
+and the `driver_finance` settlement family. Pair it with item 78's actor fix — an audit row that records
+neither the change nor the author is not evidence. **Guard: assert every table in these schemas holding
+transactional data has an audit trigger, so a new money table cannot ship unaudited.**
+
+**Routed:** WORM / audit integrity → **CC-1**.
+
+---
+
+## 88. SELF-CORRECTION to item 87 — the money tables ARE protected; the real gap is that WORM is role-scoped and UPDATEs are unrecorded
+
+**Item 87's headline was WRONG and is corrected here, in place, an hour after filing.** I wrote that
+`accounting.journal_entry_postings` is "unprotected" because it has no *audit* trigger. It has **three**
+triggers, and the protection is real. I had used "no audit trigger" as a proxy for "unprotected", and that
+proxy is invalid.
+
+**WHAT IS ACTUALLY THERE** (prod, `pg_trigger`/`pg_proc`, 2026-08-07):
+
+| table | triggers | `n_tup_upd` | `n_tup_del` |
+|---|---|---|---|
+| `accounting.journal_entry_postings` | `ensure_journal_entry_balanced` · `trg_block_closed_period_journal_entry_postings` · `refuse_financial_row_delete` | 2 | **0** |
+| `accounting.expense_lines` | `enforce_load_fk_invariant` · `ensure_expense_total_matches_lines` · `expense_lines_derive_company` · `refuse_financial_row_delete` | 305,542 | **0** |
+| `accounting.payments` | `trg_block_closed_period_payments` | **72,824** | 0 |
+| `accounting.invoice_lines` | **(none)** | 0 | 0 |
+| `driver_finance.driver_settlements` | `refuse_financial_row_delete` | 2 | **7** |
+| `driver_finance.driver_settlement_deductions` | `refuse_financial_row_delete` | 0 | **14** |
+
+`ensure_journal_entry_balanced` is a **database-level** guarantee that every entry balances — which is *why*
+item 84 found 0 unbalanced entries. That is a genuinely strong control and I mis-framed the table as
+exposed. **Correction recorded before anyone acts on the wrong version.**
+
+**AND HOS IS EXEMPLARY — the model the rest should copy.** `hos.duty_status_events` (628,629 rows) has
+`trg_block_hos_duty_status_events_update` and `..._delete` → `block_duty_status_events_mutation`, `ih35_app`
+holds **no** UPDATE/DELETE grant, and `n_tup_upd = 0` / `n_tup_del = 0` across **630,626** inserts. Three
+independent mechanisms, zero mutations ever. Append-only is **enforced**, not asserted. For FMCSA data that
+is the correct, stronger choice: it *prevents* change rather than recording it.
+
+**THE REAL FINDING, and it survives — two precise gaps:**
+
+**(1) WORM deletion is scoped to ONE ROLE and silently permits everyone else.**
+`accounting.refuse_financial_row_delete()`:
+
+```sql
+IF current_user <> 'ih35_app' THEN
+  RETURN OLD;            -- the DELETE proceeds, silently
+END IF;
+RAISE EXCEPTION '%.% is WORM: DELETE is refused by the application role …';
+```
+
+The guard fires **only** for `ih35_app`. `neondb_owner`, a migration, a maintenance script or a console
+session deletes financial rows with **no block and no error**. That is exactly how
+`driver_settlements` took 7 deletions and `driver_settlement_deductions` 14 **while carrying this very
+trigger** — the puzzle from item 87, now solved. Those tables also have no audit trigger, so **nothing
+recorded it.** An escape hatch for administrative repair is defensible; an escape hatch that is *silent and
+unlogged* is not — that combination is indistinguishable from tampering after the fact.
+
+**(2) UPDATEs to money rows are neither blocked nor recorded.** `accounting.payments` has taken **72,824**
+updates and `accounting.expense_lines` **305,542**, with no audit trigger on either. Deletion is the
+protected verb; **mutation is not.** For an embezzlement case, quietly changing an amount is at least as
+damaging as deleting a row, and the ledger cannot show it happened.
+
+**REVISED SEVERITY: P0 stands, but for the corrected reason.** Not "123 unaudited tables" — that number
+counted well-defended tables as exposed. The defensible statement is: **financial deletion is blocked for
+the app role only, silently permitted for every other role, and financial mutation is unrecorded on the
+highest-volume money tables.**
+
+**FIX:** (a) make `refuse_financial_row_delete` refuse for **all** roles, with an explicit, logged
+break-glass path if administrative deletion must exist; (b) attach the audit trigger to the transactional
+money tables so mutations are recorded; (c) copy the `hos` pattern — block, don't just record — wherever
+append-only is claimed. **Guard: assert no financial table grants a silent delete escape by role.**
+
+**The lesson I am recording against myself:** "no audit trigger" is not "no protection". I filed a P0 on a
+proxy metric and had to correct the headline within the hour. The corrected finding is narrower, provable,
+and points at a specific line of SQL — which is what the card should have said the first time.
+
+---
+
+## 89. Accounting-period close control — correctly built and wired, but NEVER EXERCISED anywhere in the system
+
+**Measured on prod `br-fancy-credit-akjnd07a`, 2026-08-07**, `current_user` asserted.
+
+**PASS — the control is sound.** `accounting.raise_if_txn_in_closed_period()`:
+
+```sql
+cutoff := accounting.closed_period_cutoff(p_company);   -- MAX(period_end) WHERE status='closed'
+IF cutoff IS NOT NULL AND p_txn_date IS NOT NULL AND p_txn_date <= cutoff THEN
+  RAISE EXCEPTION 'IH35_CLOSED_PERIOD closed_through=% txn_date=%', cutoff, p_txn_date
+    USING ERRCODE = 'P0001';
+```
+
+It is **entity-scoped** (`p_company`, so one company's close cannot block another's postings), **null-safe**
+on both sides, and uses the correct inclusive comparison. It is wired on **six** money tables:
+`accounting.journal_entries` · `journal_entry_postings` · `invoices` · `bills` · `bill_payments` ·
+`payments`. That is the right set — headers *and* posting lines.
+
+**THE OBSERVATION — it has never run.** Across **all** entities, `accounting.periods` holds **120** rows
+and **every one has `status = 'open'`**. `closed_at` and `closed_by_user_id` are NULL on all 24 USMCA
+periods (2026-01-01 → 2027-12-31). Because `closed_period_cutoff()` returns NULL when no period is closed,
+the guard short-circuits on its first condition and **has never blocked anything, for any entity, ever**.
+
+**Is that a defect? No — and I am not filing it as one.** Closing a period is an accounting act the owner or
+accountant performs; it is not something the software should do by itself. TRANSP mirrors QBO, which is the
+system of record through 2025-12-31, and USMCA is a new test entity. **Zero closes is coherent expected
+state**, and filing it as a defect would be the `expected-state-recorded-as-failure` anti-pattern.
+
+**What I am recording is the honest limit of my verification:** the close control's correctness is
+established **by reading it**, not by exercising it. Its live behaviour is **UNVERIFIED** — no transaction
+has ever been rejected by it on this database. The first real month-end close will be the first time this
+code path executes against production data.
+
+**Two edge cases worth the owning lane's attention before that first close — stated as questions, not
+claims:**
+1. `closed_period_cutoff` takes `MAX(period_end)` of closed periods. If periods are ever closed **out of
+   order** (say March closed while February is still open), the cutoff jumps to March's end and would also
+   block February postings. That is **conservative** — it over-blocks rather than letting entries slip into
+   a closed period — so it fails safe, but it would look like a bug to whoever hits it.
+2. A NULL `p_txn_date` skips the check entirely. Whether a NULL transaction date is reachable on those six
+   tables depends on their NOT NULL constraints, which I have **not** verified — flagging, not asserting.
+
+**No card filed.** This is a PASS with a stated verification limit, plus two questions for the first close.
+
+---
+
+## 90. DRIVER ESCROW — PASS on the control tie-out, and a FALSE ZERO that would have declared the entire USMCA general ledger empty
+
+**Unit: driver escrow (USMCA). Verdict: PASS — GL and subledger tie at zero, and the zero is a verdict, not a mask.**
+
+Escrow was the one item in the battery list never exercised. It appears nine times earlier in this log,
+always as a baseline number, never as a unit.
+
+**VERIFIED STATE — prod `br-fancy-credit-akjnd07a`, `app.operating_company_id` set to USMCA in the same
+transaction as every read:**
+
+| surface | USMCA | discriminator |
+|---|---|---|
+| GL `2100 Driver Escrow - Held in Trust` (`Liability`, `is_postable`, `system_purpose='driver_escrow_liability'`) | **$0.00**, 0 posting lines | account row read by id `99ce594c-…` |
+| `driver_finance.escrow_ledger` | **0** | `n_tup_ins = 0` — never written, any entity, ever |
+| `driver_finance.escrow_balances` | **0** | `n_tup_ins = 0` |
+| `driver_finance.escrow_deductions_pending` | **0** | `n_tup_ins = 0` |
+| `driver_finance.driver_escrow_separations` | **0** | `n_tup_ins = 0` |
+| `accounting.escrow_accounts` / `escrow_postings` | **0** / **0** | `n_tup_ins = 0` / `0` |
+| `driver_finance.escrow_settings` | **1** (USMCA), `escrow_target_cents = 250000`, `is_active` | 2 of 2 rows visible (TRANSP + USMCA) |
+
+**Why this is a PASS and not a gap.** The chart-of-accounts treatment is correct against the locked owner
+decision — **escrow = LIABILITY**, held in trust — and account 2100 is typed `Liability` with the right
+`system_purpose`. GL 2100 = $0.00 and the escrow subledger = $0.00, so **the control account and its
+subledger tie.** `n_tup_ins = 0` is a far stronger discriminator than a row count: the table has never
+received a row in its life, so there is nothing for RLS to be hiding. This confirms `LV-TXN-008`'s
+disposition of `escrow_ledger` as **(B) empty-state**.
+
+**And the escrow contribution that did not happen is arithmetically correct.** USMCA's only settlement,
+`S-LUSMCAFREIGHT-20260806-0001` (`d3ff8ea3-…`, `status='closed'`, `settlement_model='load_bookended'`),
+carries `gross_pay = 0.00 / deductions_total = 0.00 / net_pay = 0.00`. **A percentage of zero is zero** —
+there was no gross pay to withhold escrow from, so the absent escrow row is the right answer, not a missing
+one. Recorded explicitly because "closed settlement + active escrow + zero escrow rows" reads like a defect
+at a glance, and filing it would have been an `expected-state-recorded-as-failure`.
+
+**★ THE FALSE ZERO — caught before it was written down, and it was a big one.**
+
+Computing the escrow control balance I aggregated `accounting.journal_entry_postings` with
+`FILTER (WHERE debit_or_credit = 'D')` / `'C'`. The result: **56 posting lines across 28 journal entries,
+every account, DR = 0 and CR = 0.** Read literally, *the entire USMCA general ledger contains no money.*
+
+It fit a story. USMCA is a launch entity, all TMS-native data is test data, and this log already carries
+`LV-PAY-SETTLE-NOPOST` — a genuine posting failure. "USMCA posts JEs with no amounts" would have slotted
+straight into that narrative and become a P0.
+
+**It was wrong. The column stores `'debit'` / `'credit'`, not `'D'` / `'C'`** (`debit_or_credit` is `text`).
+The filter matched nothing, and `coalesce(sum(...), 0)` dressed the miss as a clean zero. Re-run grouping BY
+the column instead of filtering on an assumed value:
+
+- **28 debit lines totalling `1231854` cents and 28 credit lines totalling `1231854` cents.**
+- **USMCA's GL is DR = CR = $12,318.54, exactly balanced.** 28 JEs, 0 voided, 2 reversals. This independently
+  corroborates item 86's trial-balance PASS by a different route.
+
+**The lesson is narrower and more useful than "verify everything."** Item 74's near-miss was an RLS mask — a
+whole table hidden. This one is different and more dangerous: **the rows were fully visible, the count was
+right (56), the grouping was right, and only the enum spelling was assumed.** A partially-correct query that
+returns a plausible zero is harder to distrust than one that returns nothing at all. **The discriminator for
+`sum(...) FILTER (WHERE col = 'X')` is not a row count — it is `GROUP BY col`, which makes the query tell you
+the domain instead of you telling it.**
+
+---
+
+## 91. FAIL (P1, money/WORM) — `LV-ESCROW-SUBLEDGER-NOT-WORM`: the driver-facing escrow subledger is hard-deletable with no audit trail, while its GL counterpart is protected
+
+**The escrow unit passed on the numbers and failed on the protection.** Both halves of escrow are at zero and
+tie; only one half is prevented from being changed by a DELETE.
+
+**This extends item 88 to four tables item 88 did not examine.** Item 88 corrected item 87 and established
+the two real gaps in WORM (role-scoping, and unrecorded UPDATEs) across `journal_entry_postings`,
+`expense_lines`, `payments`, `invoice_lines`, `driver_settlements`, `driver_settlement_deductions` and `hos`.
+It did **not** cover the escrow subledger or the settlement earnings lines. Those four are a **third** gap:
+not role-scoped protection, but **no protection of either kind at all.**
+
+**MEASURED LIVE — one statement carrying its own positive control**
+(`has_table_privilege('ih35_app', tbl, 'DELETE')` + `pg_trigger` where `tgtype & 8` + audit-trigger presence):
+
+| table | `ih35_app` can DELETE | delete triggers | audit trigger |
+|---|---|---|---|
+| **`driver_finance.escrow_ledger`** | **TRUE** | **0** | **0** |
+| **`driver_finance.escrow_balances`** | **TRUE** | **0** | **0** |
+| **`driver_finance.escrow_deductions_pending`** | **TRUE** | **0** | **0** |
+| **`driver_finance.settlement_lines`** | **TRUE** | **0** | **0** |
+| `accounting.escrow_postings` | false | 1 (`trg_no_delete_escrow_postings`) | 0 |
+| `accounting.escrow_accounts` | false | 0 | 0 |
+| `accounting.journal_entry_postings` | false | 3 | 0 |
+| `accounting.bill_payments` | false | 2 | 1 |
+| `driver_finance.driver_settlements` | TRUE | 1 (`trg_worm_refuse_delete`) | 0 |
+| `driver_finance.driver_settlement_deductions` | TRUE | 1 (`trg_worm_refuse_delete`) | 0 |
+
+The lower rows are the positive control: **the protection mechanism is real and this query detects it wherever
+it is applied.** So the top four are a genuine absence, not a blind spot in the method.
+
+**The declared standard, read from prod rather than from a migration:** exactly **9** tables carry
+`trg_worm_refuse_delete`. The four unprotected tables sit *inside* that protected neighbourhood — a gap in an
+established programme, not an un-started one.
+
+**Why escrow specifically.** Escrow is **money held in trust for a driver**, returned 60–90 days after
+separation net of damage and fines (locked owner decision; escrow = LIABILITY). A deleted `escrow_ledger` row
+silently changes what the company owes a person and leaves **no forensic trace whatsoever** — no delete block
+and no audit trigger. That is precisely the record a driver suit, an auditor, or counsel would demand.
+
+**The asymmetry is internal to escrow, and the codebase already names the risk.**
+`driver-finance/escrow-forfeit.service.ts:182` refuses to proceed rather than create a *"split-brain forfeit
+(accounting posted without driver-facing decrement)"*. The application guards against producing that state —
+**and the database permits the identical state to be produced by a DELETE**, because the accounting side is
+WORM and the driver-facing side is not.
+
+**`settlement_lines` is money by this repo's own classification.** `docs/audit/void-predicate-map.json` calls
+it *"the notable EXCEPTION: it is transactional money and `is_active` IS its void marker"*. A void marker
+exists; nothing forces its use over a DELETE.
+
+**Item 88's role-scoping finding compounds this, it does not overlap it.** For the four tables above there is
+no trigger to be role-scoped — the DELETE grant alone settles it, for `ih35_app` and every other role.
+
+**FIX REQUIREMENT (CC-1, money/WORM — the fix is a migration, financial cluster):** extend **both** layers to
+the four tables — `REVOKE DELETE … FROM ih35_app` **and** `trg_worm_refuse_delete`. Reuse
+`accounting.refuse_financial_row_delete()`; do not add a third bespoke mechanism. Pair it with item 88's
+recommendation so the role-scoping hole is not inherited by the newly-protected tables.
+
+**GUARD:** drive off a declared money-table registry and assert **both** layers on every entry, so a new money
+table fails closed. A guard that counts delete triggers alone passes today on `driver_settlements` and
+`driver_settlement_deductions`, which the grant still leaves open — that guard would certify this defect as
+fixed. Mutation-prove it.
+
+**Timing argument for doing it now:** all four tables are empty. This is the cheapest possible moment to make
+them WORM — before there is a driver escrow balance in them to lose.
+
+**Routed:** CC-1 (money / GL / WORM). Board row `LV-ESCROW-SUBLEDGER-NOT-WORM` delivered to `main` via PR #4693.
+
+---
+
+## 92. GL ↔ SOURCE-DOCUMENT BOTH-WAY LINKAGE — PASS, 56/56, and a disproven orphan hypothesis that would have filed an 18% false-orphan rate
+
+**Unit: §10.3 both-way linkage for every USMCA general-ledger line. Verdict: PASS — complete in both
+directions, zero orphans, zero dangling links.**
+
+This is the connectivity law measured directly rather than argued: **can every posting line be drilled back
+to the document that caused it, and does every link point at a row that exists?**
+
+**VERIFIED — prod `br-fancy-credit-akjnd07a`, USMCA GUC set in the same transaction:**
+
+| check | result |
+|---|---|
+| USMCA posting lines | **56** |
+| lines with **exactly one** `transaction_source_links` row | **56** |
+| lines with **ZERO** source link | **0** |
+| `transaction_source_links` rows pointing at a posting that does not exist | **0** |
+| journal entries balanced (DR = CR) | **28 of 28** — positive control, the same query with the predicate inverted returns 28 |
+| USMCA GL totals | **DR = CR = $12,318.54** |
+
+**Forward and reverse both hold.** Forward: every line reaches its document. Reverse: no link dangles. The
+link table also carries a `relationship_role`, and it is used meaningfully rather than uniformly —
+`source_transaction` (bill 18, bank_categorization 10, invoice 6, bill_payment 4, transfer 2, expense 2),
+`reversal_of` (invoice 4, journal_entry 4), `expense_cash_payment` 2, `prepaid_purchase` 2, `manual_entry` 2.
+A reversal is not mislabelled as an origination, which is what makes the drill-through legible.
+
+**★ THE HYPOTHESIS I WAS ABOUT TO FILE, AND THE EVIDENCE THAT KILLED IT.**
+
+Grouping `accounting.journal_entry_postings` by `source_transaction_type` returns a conspicuous bucket:
+**10 lines across 5 journal entries with `source_transaction_type = NULL` AND `source_transaction_id = NULL`.**
+That is **18% of USMCA's ledger with no visible link to any source document** — and the memo text on two of
+them names an invoice UUID in prose, which is a string, not a link. It read as a clean, high-severity
+connectivity defect: *GL entries that cannot be drilled back to their origin.*
+
+**It is wrong. The linkage is not on the posting row — it is in `accounting.transaction_source_links`, and
+it is complete.** All five JEs carry `tsl_links = 2`, and the links are specific and correct:
+
+| JE | denormalized col | actual link in `transaction_source_links` |
+|---|---|---|
+| `43b3ed80` | NULL | `invoice` / `reversal_of` → `e4d2ebdd` (`INV-2026-00001`, status `void`) |
+| `53415aef` | NULL | `invoice` / `reversal_of` → `135af1df` (`INV-2026-00007`, status `void`) |
+| `ea6a0f05` | NULL | `journal_entry` / `reversal_of` → `ff286e60` |
+| `56a58856` | NULL | `journal_entry` / `reversal_of` → `5f70a75c` |
+| `5f70a75c` | NULL | `journal_entry` / `manual_entry` → itself (a manual JE — correctly has no upstream document) |
+
+**The NULLs are not missing data. They are the correct value.** The denormalized columns describe a
+*source transaction*; a reversal has no source transaction and a manual JE has no source document. The
+relationship those rows do have — `reversal_of`, `manual_entry` — is a different kind of edge and is stored
+where the role can be named. Filing this would have been an `expected-state-recorded-as-failure` at 18% of
+the ledger, and it would have sent CC-1 to "fix" a schema that is already right.
+
+**★ THE TRAP THIS LEAVES FOR THE LINKAGE GUARD — the part worth acting on.**
+
+There are **two** linkage mechanisms, and they disagree by design: the denormalized
+`journal_entry_postings.source_transaction_type/id` pair is populated on **46 of 56** lines, while
+`transaction_source_links` is complete at **56 of 56**. **A linkage guard written against the denormalized
+columns — the obvious choice, they are right there on the row — reports a false 18% orphan rate on a ledger
+that is fully linked.** Whoever writes that guard must read `transaction_source_links` and treat the
+denormalized pair as a convenience cache, never as the linkage of record. Recorded here so the guard is
+written correctly the first time.
+
+**NOT re-filing what item 59 already owns.** Both invoice-void reversals have `reverses_je_id = NULL` while
+the JE-void path populates it. That is **item 59's finding** (the three-tier void map: invoice void has the
+reversal and nets to zero but lacks the `reverses_je_id` / `reversed_by_je_id` linkage half), already on the
+board and routed. This unit confirms it from a second direction and adds nothing new to it. Note also that
+both invoices carry `voided_at` correctly — they were voided through the invoice void action, not the
+load-cancel path of item 47, so there is no contradiction with that item.
+
+**What this unit establishes for the connectivity mission:** the ledger side of §10.3 is **done and provable**
+for USMCA. Every GL line reaches its document and every document link resolves. The remaining connectivity
+work is not in the GL — it is upstream, in the paths that never post at all (`LV-TXN-004`,
+`LV-PAY-SETTLE-NOPOST`).
+
+---
+
+## 93. ★★ CLASS ESTABLISHED — `CLS-MONEY-WORM-GAP`: the escrow finding was four instances of a 47-table class, and 33,472 live money rows are hard-deletable
+
+**Item 91 found four unprotected tables. The mandate is vertical class sweeps — global and universal — so I
+swept the whole money surface instead of stopping at the instance. The class is an order of magnitude bigger.**
+
+**METHOD.** Population = every ordinary table in `accounting · driver_finance · banking · fuel · insurance ·
+maintenance · factoring` carrying a money column (`%_cents`, `%amount%cents%`, or `amount/total/debit/credit`).
+Each scored on both WORM layers in one statement: `has_table_privilege('ih35_app', oid, 'DELETE')` and
+`pg_trigger` where `tgtype & 8`.
+
+**BASELINE — prod `br-fancy-credit-akjnd07a`, 2026-08-07. Ratchet target 0.**
+
+| metric | value |
+|---|---|
+| money-bearing tables | **101** |
+| protected by at least one layer | 54 |
+| **UNPROTECTED — neither layer** | **47** |
+| unprotected **with live rows** | **10** |
+| **live money rows hard-deletable, no audit trail** | **33,472** |
+| carrying **both** layers | **8** |
+
+**THE TEN WITH LIVE ROWS** — `can_delete = true`, `del_trg = 0`, `audit_trg = 0` on every one:
+
+| table | live rows |
+|---|---|
+| **`accounting.invoice_lines`** | **21,213** |
+| **`accounting.payments`** | **12,127** |
+| `driver_finance.driver_pay_rates` | 93 |
+| `banking.bank_accounts` | 17 |
+| `accounting.vendor_credits` | 7 |
+| `driver_finance.driver_bills` | 6 |
+| `insurance.policy_unit` | 5 |
+| `banking.transfers` | 4 |
+| `banking.reconciliation_sessions` | 2 |
+| `driver_finance.escrow_settings` | 2 |
+
+**`maintenance.severe_repair_estimates` has already lost rows** — `n_tup_ins=11 / n_tup_del=2 / n_live_tup=1`.
+
+**★ THE A/P-vs-A/R ASYMMETRY IS THE CLEAREST TELL, and it is the finding a reviewer should look at first.**
+`accounting.bills`, `bill_lines` and `bill_payments` are **all** WORM-protected. `accounting.invoices` has
+only an audit trigger, and **`accounting.invoice_lines` — 21,213 rows — has nothing at all.** The payable
+side of the ledger is protected and the receivable side is not, in the same schema, with no stated reason.
+Deleting an `invoice_lines` row silently reduces revenue and A/R, with no audit row and no reversing entry.
+For a company in a Ch.11 with an active embezzlement reconciliation, an unaudited, unreversible way to
+reduce recorded revenue is the single worst shape this defect could take.
+
+**POSITIVE CONTROL, in the same result set.** 54 tables score protected and exactly **9** carry
+`trg_worm_refuse_delete`. The query detects protection wherever it exists, so the 47 are a genuine absence
+rather than a blind spot in the predicate.
+
+**WHY "8 with both layers" is the number that matters.** Item 88 established that
+`accounting.refuse_financial_row_delete()` is role-scoped — `IF current_user <> 'ih35_app' THEN RETURN OLD`
+**permits** the DELETE for every role except the app role. So a trigger alone is defeated by `neondb_owner`,
+a migration, or a console session, and the **revoked grant is the layer that actually holds**. A
+trigger-only table is half-protected — which is precisely how `driver_settlements` and
+`driver_settlement_deductions` took 7 and 14 deletions *while carrying the trigger*. Only 8 of 101 money
+tables have the combination that genuinely holds.
+
+**THE GUARD TRAP, stated plainly because it would defeat the whole fix.** A guard that counts delete
+triggers — the obvious implementation — would certify this class as fixed while `invoice_lines`, `payments`
+and 45 other tables remain deletable, and would also score the two half-protected settlement tables as done.
+**The guard must assert BOTH layers, and must test the GRANT.** Registry-driven and fail-closed, so a new
+money table is unprotected-by-default and fails until someone protects it. Mutation-prove both halves
+independently.
+
+**SEQUENCING FOR CC-1.** `invoice_lines` and `payments` are the only two that are simultaneously
+high-volume and completely bare — they go first. **37 of the 47 are still empty**, so the remainder is the
+cheapest kind of fix there is: make them WORM before they ever hold a balance.
+
+**Relationship to prior items — additive, not a re-file.** Item 87 was wrong and item 88 corrected it; item
+88 established the role-scoping hole on a different table set; item 91 found four bare tables in escrow and
+settlement. This item generalises all of it into one measured class with a baseline that can be ratcheted.
+Board row `CLS-MONEY-WORM-GAP`; `LV-ESCROW-SUBLEDGER-NOT-WORM` remains open as its four escrow instances.
+
+---
+
+## 94. MASTER-DATA ↔ TRANSACTION LINKAGE — PASS on every edge but one, and THREE hypotheses killed on the way to the one real finding
+
+**Unit: forward and reverse referential integrity from every USMCA money document to its master-data record.
+Verdict: PASS on 5 of 6 edges; one real gap, `LV-BILL-MDATA-VENDOR-FK-OPTOUT`, filed to CC-1.**
+
+**VERIFIED — prod `br-fancy-credit-akjnd07a`, USMCA GUC set in the same transaction:**
+
+| edge | rows | NULL fk | dangling | verdict |
+|---|---|---|---|---|
+| `invoices → customer` | 7 | 0 | **0** | PASS |
+| `invoices → source_load` | 7 | 4 | **0** | PASS — manual invoices correctly have no load |
+| `loads → driver` | 4 | 0 | **0** | PASS |
+| `loads → customer` | 4 | 0 | **0** | PASS |
+| `payments → customer` | 3 | 0 | **0** | PASS |
+| `bills → vendor` | 11 | **2** (`mdata_vendor_id`) | 0 | **GAP — see below** |
+
+**0 USMCA bills reference a non-USMCA vendor.** Cross-entity leakage on this surface: none.
+
+**THE ONE REAL FINDING.** `accounting.bills` has two vendor columns. `vendor_id` is `text` and holds the
+QBO/legacy external id — **16,245 of 16,258 rows are non-UUID-shaped**, so it is an external id doing its job.
+The real FK is `mdata_vendor_id (uuid)`, and it carries **`bills_mdata_vendor_entity_consistent_fkey
+FOREIGN KEY (operating_company_id, mdata_vendor_id) REFERENCES mdata.vendors(operating_company_id, id)`** —
+a composite FK that makes a cross-entity vendor reference **impossible at the database level.** That is
+excellent design. **It is also nullable, and therefore opt-out** — and 2 of 11 USMCA TMS-native bills
+(`77f2659f`, `62fbc5ec`, both `unpaid`) have opted out, keeping the link only in the untyped text column
+where no FK can reach it. Data correct today; control not applied. Filed as `LV-BILL-MDATA-VENDOR-FK-OPTOUT`.
+
+**★ THREE HYPOTHESES DISPROVEN — recorded with the evidence that killed each, because every one of them
+would have been a serious false filing.**
+
+**DISPROVEN 1 — "`bills.vendor_id` is `text` referencing a `uuid` PK, so bills have no referential
+integrity."** The type mismatch is real and a `text → uuid` FK is impossible in Postgres, so this looked like
+a structural linkage hole in A/P. **Wrong:** `pg_constraint` shows 12 FKs on the table including the two on
+`mdata_vendor_id`. The text column is not a broken FK, it is a deliberate external id. **Reading the
+constraint list beat reasoning from the column type.**
+
+**DISPROVEN 2 — "those two bills point at a vendor that does not exist" (dangling reference on live open
+payables).** A `LEFT JOIN` to `mdata.vendors` returned `vendor_name = NULL` for both. **Wrong, and it
+contradicted a query I had already run** — a `NOT EXISTS` check minutes earlier had returned `dangling = 0`
+for the same rows. Two results in one session disagreed, so one was broken. Direct lookup with the
+completeness discriminator settled it: the vendor exists — `USMCA Audit Vendor 20260722`,
+`operating_company_id` = USMCA, `deactivated_at` NULL — with `vendors_visible = 2,836 == n_live_tup = 2,836`.
+**The join was the broken query, not the data.**
+
+**DISPROVEN 3 — "the runtime role cannot see its own entity's vendor, so open bills render vendorless."**
+This one was seductive: the failing join reported `ran_as = ih35_app` while the successful lookup reported
+`ran_as = neondb_owner`, and `mdata.vendors`' RLS policy `vendors_select` reads
+`is_lucia_bypass() OR (deactivated_at IS NULL AND operating_company_id IN (SELECT org.user_accessible_company_ids()))`.
+A real "runtime cannot resolve its own vendor" defect would be P0. **I chased the `deactivated_at` clause
+first — the vendor's `deactivated_at` is NULL, so that clause was not the filter.** The surviving clause is
+the user-based one, and the discriminator killed the theory: in this MCP session
+**`is_lucia_bypass() = false` and `org.user_accessible_company_ids()` returns `0` companies**, so under
+`ih35_app` **NO vendors are visible at all** — 2,836 hidden, not one. It is the item-74 global RLS mask
+wearing a different coat, and it says nothing about that vendor. In the real app there is an authenticated
+user, so the function returns their companies. **Not a defect.**
+
+**The pattern worth carrying forward.** `accounting.bills` WAS visible under `ih35_app` in the very same
+statement where `mdata.vendors` was not — because the two tables scope by different mechanisms (GUC vs
+authenticated user). **A join across two tables with different RLS bases can return NULL for one side while
+the other side reads normally, and it looks exactly like missing data.** That is the shape that produced
+hypothesis 2 and 3 here. The defence is the one that worked: when a join yields NULL, re-ask it as a direct
+lookup carrying `current_user` and a visible/n_live_tup discriminator, and never file the join's answer.
+
+**Three plausible defects, one of them P0-shaped, all killed by evidence — and the single real gap that
+survived is a nullable FK, not a broken one.**
+
+---
+
+## 95. G18 (every diesel/roadside expense must FK to a load) — PASS on enforcement, one real gap on `expense_lines`, and a defect I FILED AND WITHDREW in the same session
+
+**Unit: the G18 load-FK invariant. Verdict: the DB enforcement is correct and working. One genuine gap
+survives. One filing was wrong and is withdrawn.**
+
+**G18 IS REAL AND ENFORCED AT THE DATABASE.** `accounting.enforce_load_fk_invariant()` is attached to both
+`accounting.expense_lines` and `fuel.fuel_transactions` (`trg_fuel_txn_load_fk BEFORE INSERT OR UPDATE`).
+It demands a `load_id` **or** a `load_exemption_reason` of ≥20 characters, and it is category-driven off
+`accounting.line_category_load_required`, which is **properly seeded with 9 categories** — `diesel`,
+`roadside_repair`, `toll`, `scale`, `lumper`, `parking`, `detention_paid`, `over_road_other`, `def`. For
+fuel it defaults to `load_required = true`. This is a well-built control.
+
+**★ THE REAL GAP — G18 is INERT on `accounting.expense_lines` because its input column is never written.**
+
+The trigger decides via `NEW.line_category`, falling back to `COALESCE(NEW.load_required, false)` for
+expense lines. Measured on prod with the completeness discriminator (`visible = 33,980 == n_live_tup =
+33,980`, the whole table):
+
+| measure | value |
+|---|---|
+| expense lines total | **33,980** |
+| with `line_category` populated | **0** |
+| with `load_required IS TRUE` | **0** |
+| with `load_id` populated | **0** |
+| with `load_exemption_reason` | 0 |
+
+**Not one expense line in the database carries a `line_category`,** so the registry lookup never runs, the
+fallback is `false`, and **G18 can never fire on an expense line.** A diesel purchase entered through the
+expense path is not checked. Confirmed against the writers: `cash-advances/lumper-cash-advance-split.ts:144-145`
+is the ONLY writer that sets `line_category` (`'lumper'`, with `load_required = true`) and it has evidently
+never run; the primary expense writer `accounting/expenses.routes.ts:612` and `:1000`, plus
+`maintenance/two-section-service.ts:568` and `qbo-sync/qbo-purchases-puller.ts:446`, do not set it at all.
+**The enforcement side is complete and the classification side was never wired to it.** Fuel is protected by
+its `true` default; expense lines are not.
+
+**★★ AND THE PART I GOT WRONG — filed as a P1, withdrawn 20 minutes later, before any lane touched it.**
+
+From the same sweep I filed `LV-FUEL-LOAD-ATTRIBUTION-NEVER-MATCHES`: 1,555 of 1,555 TRANSP fuel
+transactions have `load_id IS NULL`, `relay-fuel-load-rematch.service.ts` exists to attribute them and has
+attributed **none**, therefore G18 is 0% enforced on real operational data. Every one of those statements is
+factually true. **The conclusion was still wrong.**
+
+**The measurement I failed to take before filing:** `mdata.loads`, discriminator asserted
+(`visible = 9 == n_live_tup = 9`) — **TRANSP has FIVE loads in total, every one created between 2026-06-16
+and 2026-06-27.** The 1,555 fuel transactions run **2026-07-16 to 2026-08-07**. **The windows do not overlap
+by one day.** The rematcher resolves by `(unit_id, driver_id, transaction_at)` inside a time window, so for
+every row there is **no load in existence to match**. Zero matches is not a failure — it is the only
+arithmetically possible outcome. `PRE_TMS_DISPATCH_IMPORT` is a literally accurate label: TRANSP does not
+dispatch through TMS yet.
+
+**Worse — it was already dispositioned, and the disposition is a comment I could have read first.**
+`apps/backend/src/fuel/__tests__/fuel-load-attribution-coverage.db.test.ts:17-18` says the guard was
+deliberately not asserted across all fuel rows because doing so *"would have gone RED on prod against
+expected state — the expected-state-recorded-as-failure anti-pattern that has already cost this project real
+time."* **I reproduced the precise anti-pattern that test exists to prevent, on the table it was written
+about.** I also mis-read the guard as weak: it asserts that one exemption reason must not cover every
+TMS-native row, gated by `MIN_ROWS_TO_JUDGE`; the live `relay_ingest_no_load_link` cohort is 7 rows, below
+the threshold. Green because 7 is too few to judge, not because the guard is soft. **No new guard is needed
+and none should be built.**
+
+**THE DIAGNOSTIC I AM KEEPING.** Two findings this session came from the same sweep. One survived
+(`expense_lines`) and one collapsed (fuel), and at the moment of filing they looked equally strong — both
+were "the invariant is 0% satisfied on live data", both had complete-table discriminators, both named a real
+mechanism. The difference is that **the expense-lines gap has a counterfactual and the fuel one does not**:
+an expense line COULD have carried a `line_category` — a writer exists that does it — whereas a fuel row
+COULD NOT have carried a load that did not exist. **A 0% rate is only a defect if a better state was
+reachable. "Is the good outcome even possible here?" is a distinct question from "did the good outcome
+happen?", and a discriminator answers only the second one.** That is the check I will run before filing any
+future coverage-shaped finding.
+
+**Watch item, not a defect:** `relay_ingest_no_load_link` (live daily, last row 2026-08-07 12:00) is correct
+only while TRANSP is not dispatching in TMS. **When TRANSP loads begin to exist in TMS, a still-0%
+attribution rate becomes a real defect** — and the existing test will catch it once volume passes the
+threshold. Recorded so the re-check happens at the right trigger rather than never.
+
+---
+
+## 96. PER-LOAD CONNECTIVITY (all 4 USMCA loads) — PASS on wiring, a disproven "premature revenue" alarm, and item 48's number has GROWN by exactly what its mechanism predicts
+
+**Unit: the no-record-is-an-island law applied to the central object. Verdict: PASS on master-data wiring;
+two prior findings corroborated from a new direction; one alarm disproven; one path recorded UNVERIFIED.**
+
+**PER-LOAD MAP — prod, USMCA GUC in-transaction, discriminator `loads_visible = 9 == n_live_tup = 9`:**
+
+| load | status | rate | customer | driver | stops | invoice | revrec |
+|---|---|---|---|---|---|---|---|
+| `L-20260802-0258` | delivered | $1.00 | ✓ | ✓ | 2 | INV-00002 | **0** |
+| `L-20260806-0005` | cancelled | $2,450.00 | ✓ | ✓ | 2 | INV-00005 | **0** |
+| `LUSMCAFREIGHT-20260806-0001` | delivered_pending_docs | $1.00 | ✓ | ✓ | 2 | — | **0** |
+| `L-20260806-0008` | assigned_not_dispatched | $1,875.50 | ✓ | ✓ | 2 | INV-00006 | **0** |
+
+**PASS on wiring: 4 of 4 loads carry a customer, a driver and 2 stops.** No orphan loads.
+
+**`revrec_rows = 0` on all four, including the DELIVERED one** — that is `LV-TXN-004` (the office status
+control calls the endpoint that skips revenue recognition), already filed and routed to CC-1. Corroborated
+here from the load side rather than the endpoint side; nothing new to add.
+
+**★ DISPROVEN — "an undispatched load has already been invoiced."** `L-20260806-0008` is
+`assigned_not_dispatched` and carries invoice `INV-2026-00006` for $1,875.50. Billing a load that has not
+moved would be revenue recognised before performance — a real accrual defect. **It is not one.** The invoice
+status is **`proforma`**, which is exactly the right status for work not yet performed, and the live check
+confirms it behaves like one: **`gl_lines_as_source = 0` and `tsl_links = 0` — the proforma posts NOTHING to
+the general ledger.** A proforma is a quote, not revenue, and this system treats it as such. **Correct
+behaviour, and worth recording precisely because the load/invoice pairing looks alarming until you read the
+status.**
+
+**★ ITEM 48 CORROBORATED — and its number has moved exactly as its own mechanism predicts.** Item 48 filed
+that the A/R list counts VOID invoices in both "Total billed" and "Open", overstating by **$2,452.00**.
+Measured now: **5 of 7 USMCA invoices are `void`, and 4 of them still carry a positive
+`amount_open_cents`, totalling `276,590` cents = $2,765.90.** The delta from item 48 is **$313.90**, which is
+precisely `INV-2026-00007` — the invoice voided at 03:14 today during the void-class testing. **The
+overstatement grew by the exact amount of the next void.** That is the strongest possible confirmation that
+item 48 named the real mechanism: the figure is not drifting, it is accumulating one void at a time, and it
+will keep growing with every void until the fix lands.
+
+**ITEM 47 CORROBORATED.** `void_without_voided_at = 1` — `INV-2026-00005`, the invoice belonging to the
+**cancelled** load `L-20260806-0005`, carries `status = 'void'` with **`voided_at IS NULL`**. That is item
+47's exact signature (the load-cancel path voids by status only and never stamps the timestamp), reproduced
+independently on a different load. The other four voids all have `voided_at` set, which isolates the defect
+to the cancel path rather than to voiding in general — a useful narrowing for whoever fixes it.
+
+**UNVERIFIED — do `from_load` invoices post to the GL at all?** A pattern is visible and I will not call it:
+all three `from_load` invoices (`00002`, `00005`, `00006`) have **0 GL lines and 0 source links**, while every
+`manual` invoice with a non-zero total (`00001`, `00003`, `00007`) has **2 GL lines**. That looks like
+"load-sourced invoices never post". **But the innocent explanation fits equally well and I cannot yet
+separate them:** `00006` is proforma (correctly no GL), and `00002` and `00005` both have `sent_at IS NULL`
+and are now void — so they may simply have gone proforma → void **without ever being issued**, in which case
+0 GL is correct and there is no defect. **No USMCA `from_load` invoice has ever reached issued status, so the
+posting path has not been exercised.** **The decisive test is one transaction: take a delivered load,
+issue its from_load invoice, and check for 2 GL lines** — that separates "never posts" from "never issued".
+Recorded as the next A/R unit rather than filed as a defect, because a 0 with an unexercised path behind it
+is not evidence of failure. This is the same counterfactual check that withdrew item 95's fuel card.
+
+---
+
+## 97. ENTITY-CONSISTENT FK COVERAGE — measured: 11 of 357. NOT filed as 346 defects, and the reason is the point
+
+**Unit: the structural defence against cross-entity leakage. Verdict: MEASURED and handed over as a
+denominator — deliberately NOT filed as a defect class.**
+
+While verifying `accounting.bills` (item 94) I found `bills_mdata_vendor_entity_consistent_fkey
+FOREIGN KEY (operating_company_id, mdata_vendor_id) REFERENCES mdata.vendors(operating_company_id, id)`.
+That composite shape is the strongest possible cross-entity control: it makes a wrong-entity reference
+**impossible**, rather than merely invisible the way RLS does. So I swept for it.
+
+**MEASURED on prod** — population = every FK where BOTH the referencing and referenced table carry
+`operating_company_id` (i.e. every FK structurally capable of crossing entities), across
+`accounting · driver_finance · banking · fuel · insurance · maintenance · mdata · factoring`:
+
+| metric | value |
+|---|---|
+| cross-entity-capable FKs | **357** |
+| **entity-consistent** (composite includes `operating_company_id`) | **11** |
+| not entity-consistent | 346 |
+
+**The 11 that have it:** `accounting.bills → mdata.vendors` · `accounting.expense_lines →
+accounting.expenses` · `accounting.factoring_advances → mdata.vendors` ·
+`accounting.factoring_default_interest_accruals → accounting.journal_entries` ·
+`accounting.factoring_lifecycle_posting_keys → accounting.factoring_advances` and `→ journal_entries` ·
+`accounting.factoring_reserve_movements → journal_entries` · `banking.bank_transactions → mdata.customers`
+and `→ mdata.vendors` · `driver_finance.cash_advance_requests → mdata.drivers` ·
+`driver_finance.driver_settlements → mdata.drivers`.
+
+**★ WHY I AM NOT FILING "346 UNPROTECTED FOREIGN KEYS."**
+
+`11 / 357` is a striking ratio and it would make a dramatic P0. It would also very likely be wrong, for the
+same reason item 95's fuel card was wrong: **a coverage number is not a defect unless the uncovered state
+was reachable and intended.** Before writing anything I looked for evidence of intent, and found it:
+
+- The 11 are **clustered and named as a programme** — `*_same_entity_fkey`, `*_entity_fkey`,
+  `*_entity_consistent_fkey` — concentrated in factoring, banking-categorisation and driver-finance.
+- The migration series is **active and recent**: `202608020000_acct_link_04_expense_lines_expense_category_fk`,
+  `202608040000_payment_terms_consumer_remap_same_entity`,
+  `202608050000_bank_link_01_counterparty_same_entity_fk`, `202610010000_fact_02_subledger_je_fk`,
+  `202608060000_acct_r03_…` — numbered cuts (`acct_link_04`, `bank_link_01`, `fact_02`) landing as recently
+  as **2026-08-06, yesterday**.
+
+**This is an in-flight programme applying the control deliberately to the highest-risk edges first, not an
+unnoticed gap.** Filing it as a 346-instance class would have duplicated another lane's live work and buried
+the board.
+
+**Also checked and ruled out as the wrong ratchet:** `scripts/entity-link-adoption-baseline.json`
+(consumed by `scripts/verify-entity-link-adoption.mjs`) is a hash-set of **source-code** EntityLink findings
+— a code-adoption ratchet, not a DB FK ratchet. So the composite-FK coverage genuinely is not ratcheted by
+that guard, and the number above is not otherwise being tracked. **That is the one thing worth handing over.**
+
+**WHAT THE OWNING LANE GETS FROM THIS:** a prod-measured denominator for its own programme —
+**11 of 357, as of 2026-08-07** — so progress can be stated as a fraction instead of a feeling, and a
+DB-side ratchet can be pinned at 11 and driven up if the lane decides the control should be universal.
+**Whether all 357 should carry it is an architecture decision that belongs to the money lane, not to me.**
+RLS already scopes these tables; the composite FK is defence in depth, and how deep to go is a design call.
+
+**The discipline this unit records:** two coverage-shaped sweeps in one session produced a real defect
+(item 95, `line_category` on 33,980 expense lines — a writer exists that sets it, so the good state was
+reachable) and two non-defects (fuel attribution, this). **The distinguishing question was never the
+measurement. It was "who intended what, and is this already someone's live work?" — and it is answerable
+from migration names and baseline files in about two minutes.** Ask it before filing, not after.
+
+---
+
+## 98. ITEM 96's UNVERIFIED QUESTION — RESOLVED: `from_load` invoices DO post, and the invoice→GL gate is correct at EVERY status
+
+**Verdict: PASS. No defect. Item 96's open question is closed from primary evidence, without needing to
+issue a new transaction.**
+
+Item 96 recorded a suspicious pattern and refused to file it: all three USMCA `from_load` invoices had 0 GL
+lines while every non-zero `manual` invoice had 2. That reads as *"load-sourced invoices never post"*. The
+innocent alternative was that USMCA's three had simply never been **issued** (two went proforma → void, one
+is still proforma), so the path had never been exercised. I said the decisive test was to issue one.
+
+**It turned out not to need a new transaction — the path had already been exercised, on TRANSP.** Widening
+the same query beyond USMCA answered it. Discriminator asserted: `invoices_visible = 11,987 == n_live_tup =
+11,987` (unmasked, all entities).
+
+**ALL FIVE `from_load` INVOICES IN THE DATABASE:**
+
+| entity | invoice | status | total | GL lines |
+|---|---|---|---|---|
+| **TRANSP** | **INV-2026-00001** | **sent** | $0.01 | **4** |
+| TRANSP | INV-2026-00739 | void | $5.00 | 0 |
+| USMCA | INV-2026-00002 | void | $1.00 | 0 |
+| USMCA | INV-2026-00005 | void | $2,450.00 | 0 |
+| USMCA | INV-2026-00006 | proforma | $1,875.50 | 0 |
+
+**Exactly one `from_load` invoice has ever reached issued status, and it posted.** `1 of 1`. The hypothesis
+is dead: the USMCA zeros are "never issued", not "never posts".
+
+**★ AND THE FULL STATUS GATE IS CORRECT — every TMS-native issued invoice checked:**
+
+| entity | invoice | status | type | GL lines | correct? |
+|---|---|---|---|---|---|
+| TRANSP | INV-2026-00001 | sent | from_load | 4 | ✅ posts |
+| TRANSP | INV-2026-00740 | sent | manual | 2 | ✅ posts |
+| **TRANSP** | **INV-2026-00741** | **draft** | manual | **0** | ✅ **correctly does NOT post** |
+| USMCA | INV-2026-00003 | paid | manual | 2 | ✅ posts |
+
+**The one invoice without GL is a `draft`** — my filter excluded `proforma` and `void` but not `draft`, and
+a draft must not post. So the gate is right at **every** status observed: `draft` ✗ · `proforma` ✗ ·
+`void-before-issue` ✗ · `sent` ✓ · `paid` ✓. Revenue is recognised on issue and not before. That is correct
+accrual behaviour and it matches the proforma finding in item 96.
+
+**A NUMBER I AM NOT OVER-READING.** `TMS-native = 11 invoices; not-TMS-native = 11,976.` Of the 11,976,
+almost none carry TMS GL postings — and that is **expected state, not a finding**: those are the TRANSP QBO
+mirror, and under the locked parallel-books architecture QBO is the system of record for them and TMS does
+not post them. This is exactly the trap item 64 already identified (*"the tie-out guard I recommended would
+have been WRONG — it must be scoped TMS-NATIVE"*). Recorded here only to reinforce that scoping: **any
+invoice→GL coverage assertion must filter `source_system='tms'`, or it reports 11,976 false positives.**
+
+**Method note worth keeping.** Item 96's decisive test was "issue an invoice and watch it post" — a write.
+The same question was answerable **read-only** by widening the population from one entity to all of them,
+because another entity had already run the experiment. **Before exercising a new transaction to test a path,
+check whether the path has already been exercised somewhere in the data.** It is faster, it needs no write
+access, and it observes real behaviour rather than behaviour I induced.
+
+---
+
+## 99. ★★ FALSE COMPLETION CAUGHT — `ACCT-F158` is declared closed on the board; its fix PR was closed WITHOUT merging, and the constraint exists on prod ONLY
+
+**Verdict: FAIL (P0). Filed as `LV-ACCT-F158-NOT-IN-REPO`, reopening ACCT-F158 for CC-1.**
+
+This is the one job that cannot be delegated to CI: **CI can only test what is in the repo, so it is
+structurally incapable of noticing a fix that never reached the repo.**
+
+**HOW I FOUND IT — accidentally, which is worth recording.** I rebased this branch and another lane's commit
+came down: *"ACCT-F158 + ACCT-F158-B — bill cross-entity vendor hole closed (#4691)."* That touches the exact
+surface I had just filed `LV-BILL-MDATA-VENDOR-FK-OPTOUT` against, so I checked whether my card was now a
+duplicate. **The loop law says grep-verify the card against main before acting on it. Doing that to protect
+my own card is what surfaced this.**
+
+**THE DB HALF IS REAL — credit where due.** On prod, `bills_mdata_vendor_entity_consistent_fkey` exists with
+`convalidated = true`: `FOREIGN KEY (operating_company_id, mdata_vendor_id) REFERENCES
+mdata.vendors(operating_company_id, id)`. That is the strong control I praised in item 94, and CC-1 built it.
+
+**THE FOUR GAPS, each measured:**
+
+| # | claim | measured reality |
+|---|---|---|
+| 1 | "Fixed in #4691" | **PR #4691 is `CLOSED`, `merged = null`, `mergeCommit = null`.** Only the announcement PR #4692 merged. |
+| 2 | migration shipped | `db/migrations/202612270000_bills_vendor_entity_consistent_fk.sql` **ABSENT from `origin/main`**; `git grep -l entity_consistent origin/main -- db/migrations` returns **nothing**. |
+| 3 | applied on prod | FK is live — but **NO row in `ih35_migrations.applied_migrations` NOR `_system._schema_migrations`** matches `%bills_vendor%`. Applied **out-of-band**, not recorded as applied. |
+| 4 | "service throws" | `origin/main:bills.service.ts:309` still **fails open**: `mdataVendorId: isUuid ? trimmed : null`. **No `throw` for an unresolved vendor exists in the file.** Guard `verify-bill-vendor-entity-consistent.mjs` also absent. |
+
+**WHY THIS IS P0 RATHER THAN PAPERWORK.** The only copy of this control is the single live prod branch.
+**Rebuild from `db/migrations/` — CI's fresh-DB validation, a DR restore, a new Neon branch, a local
+`verify:local-ci` — and the FK is not there.** CI is validating a schema that differs from prod on a money
+constraint, and the protection would not survive a restore. Because it is absent from the ledger too,
+nothing will ever reconcile it. And the board says "closed", so every other lane will rationally skip it.
+
+**THE SIBLING PROVES IT IS AN INCOMPLETE LANDING, NOT A DISAGREEMENT ABOUT METHOD.**
+`202612170000_driver_finance_entity_consistent_driver_fk.sql` — the same programme, one week earlier — is in
+the repo **and** in both ledgers. CC-1 knows the pattern. Owner law grants full Neon access, so applying to
+prod was entirely legitimate; **the missing step is landing the file.**
+
+**IT ALSO EXPLAINS MY OWN OPEN CARD.** `LV-BILL-MDATA-VENDOR-FK-OPTOUT` reported 2 of 11 USMCA bills with
+`mdata_vendor_id = NULL`, bypassing the composite FK. **That is precisely the hole the un-merged service fix
+was written to close.** The two cards are one defect seen from both ends: the FK landed on prod, the code
+that guarantees the FK is populated did not. My card is not a duplicate — it is the live evidence that the
+missing half still matters.
+
+**★ THE SECOND-ORDER FINDING, which I think is worth more than the first.** Nothing we run can see this.
+Guards check the repo. CI builds from the repo. The board records intent. **No check compares prod's actual
+constraints against what `db/migrations/` would produce**, so any hand-applied DDL is invisible forever —
+and hand-applied DDL is *expected* now that every lane has full Neon access. The recommended guard is a
+**repo-vs-prod constraint-parity check**: every constraint on prod must be creatable by some file in
+`db/migrations/`. It would have caught this the same day, and it generalises to every lane and every future
+out-of-band change.
+
+**The lesson, stated plainly:** "merged" and "fixed" are different claims, and **"the board says closed" is
+not evidence of either.** A closed PR whose migration was hand-applied looks identical to a shipped fix from
+every angle except the two I checked — `gh pr view --json mergedAt` and `git cat-file -e origin/main:<file>`.
+Both take seconds. **Run them on every card that claims another lane closed something.**
+
+---
+
+## 100. PROD-vs-REPO DDL PARITY SWEEP — item 99's P0 is ISOLATED, not a pattern. 135 of 135 triggers accounted for; 1 of 12 entity FKs missing
+
+**Verdict: the divergence found in item 99 is a single incident. Bounding it was the right next move, and the
+answer is reassuring — which is itself the finding.**
+
+Item 99 established that `bills_mdata_vendor_entity_consistent_fkey` is live on prod but absent from
+`db/migrations/` and from both ledgers, and I recommended a repo-vs-prod constraint-parity guard. **Before
+anyone builds that guard or panics about hand-applied DDL generally, the honest question is: how common is
+this?** If it were widespread the fix is a programme; if it is one row the fix is one migration. **I measured
+instead of assuming.**
+
+**SWEEP 1 — the entity-consistency programme, 12 FKs on prod checked against `origin/main:db/migrations/`:**
+
+| result | count |
+|---|---|
+| present in a migration file | **11** |
+| **MISSING** | **1** — `bills_mdata_vendor_entity_consistent_fkey` |
+
+The 11 are properly landed and traceable: `expense_lines_*` → `202608020000_acct_link_04_…`, the four
+factoring FKs → `202607600000_factoring_balance_invoice_linkage` and `202610010000_fact_02_subledger_je_fk`,
+`bank_tx_categorization_*` → `202608050000_bank_link_01_counterparty_same_entity_fk` (which also ships its own
+guard `scripts/verify-bank-link-01-counterparty-fk.mjs`), and both driver FKs →
+`202612170000_driver_finance_entity_consistent_driver_fk`. **The programme's discipline is sound; ACCT-F158 is
+the one that did not complete.** That materially strengthens item 99 — it is an anomaly, not a habit — and it
+means the fix is a single migration, not a remediation project.
+
+**A near-false-positive inside sweep 1:** `bank_tx_categorization_vendor_same_entity_fkey` first resolved only
+to `db/migrations/.held-migrations.json`, which reads exactly like "the migration is held, not landed."
+Listing **all** matches instead of the first showed it is also in the real
+`202608050000_bank_link_01_…sql`. **`grep -l | head -1` is not a verdict** — the first match is only the first
+match.
+
+**SWEEP 2 — every trigger, because trigger names are ALWAYS explicit.** Constraint names are a poor parity
+probe: Postgres auto-names `<table>_<column>_fkey` from inline `REFERENCES`, so a missing literal proves
+nothing. **Triggers have no auto-naming**, so every trigger on prod must be traceable to migration text. All
+**135** distinct trigger names in `accounting · driver_finance · banking · fuel · insurance · maintenance ·
+factoring · catalogs · mdata`, checked against the full concatenated migration tree on `origin/main`:
+
+| result | count |
+|---|---|
+| found | 120 |
+| apparently missing | 15 — **all `trg_audit_*`** |
+| **genuinely missing after verification** | **0** |
+
+**All 15 are false positives, and the proof is explicit.** `audit.ensure_row_trigger(target_schema,
+target_table)` builds the name at runtime — `EXECUTE format('CREATE TRIGGER %I …', 'trg_audit_' ||
+target_table, …)`. The literal `trg_audit_bills` never appears in any migration because **no migration
+contains it**; the migration contains the recipe. A literal grep cannot see a dynamically constructed
+identifier. **The tell was in my own output:** `trg_audit_equipment` and `trg_audit_units` were NOT flagged
+while `trg_audit_bills` was — a mixed result inside one uniform family, which is the signature of a grep
+artifact rather than a real split. I checked instead of filing 15 P1s.
+
+**RESULT: 135 of 135 triggers and 11 of 12 entity FKs are repo-traceable. The single exception is the one
+already filed.**
+
+**What this changes for the recommended guard.** It is still worth building — item 99's divergence was
+invisible to every check we run, and hand-applied DDL is now *expected* since every lane has full Neon
+access. But it is a **preventive** control, not a cleanup, and it **must resolve dynamic DDL**: a naive
+name-grep parity guard would fail on all 15 audit triggers on day one, be declared broken, and be disabled.
+**Compare against a schema dumped from a freshly-migrated database, not against migration text.** That is the
+difference between a guard that lasts and a guard that gets switched off in week one — and I only know it
+because the naive version failed on me first.
+
+---
+
+## 101. `mdata.units` ENTITY SCOPING — PASS, and the constitution's landmine is real but already well-defended
+
+**Unit: the `mdata.units` scoping landmine. Verdict: PASS. No finding. Short entry because a clean negative
+deserves a short entry.**
+
+**THE LANDMINE IS REAL — confirmed live, not from memory.** `mdata.units` has **NO `operating_company_id`
+column**. Its only company columns are **`owner_company_id`** and **`currently_leased_to_company_id`**. Any
+query filtering `units.operating_company_id` is not a wrong answer — it is a **SQL error and a 500**, which
+is why the operating constitution flags it as a recurring 500 source.
+
+**RLS matches the real ownership model** — `units_select` scopes on **both** columns:
+`is_lucia_bypass() OR ((owner_company_id IN user_accessible_company_ids() OR currently_leased_to_company_id
+IN user_accessible_company_ids()) AND (deactivated_at IS NULL OR role IN Owner/Administrator/Manager))`.
+That is correct for the TRK-owns / TRANSP-leases structure: a unit is visible to its owner **and** to its
+lessee.
+
+**MEASURED:** zero occurrences of the broken pattern in `apps/backend/src`, and the correct dual-column form
+is in use at the real call sites — e.g. `fuel/fuel-transactions.routes.ts:146`
+(`u.owner_company_id = ft.operating_company_id OR u.currently_leased_to_company_id = ft.operating_company_id`)
+and `work-orders/work-orders.routes.ts:538`
+(`COALESCE(wu.currently_leased_to_company_id, wu.owner_company_id) = w.operating_company_id`).
+**10+ existing guards already reference these columns**, including `verify-entity-isolation.mjs`,
+`verify-booking-unit-ownership-fallback.mjs` and `verify-fleet-counter-tenant-scope.mjs`.
+
+**METHOD CAVEAT, stated because the constitution demands it:** §4 says *"don't trust a string-grep systemic
+check."* A grep alone would not be proof. The PASS rests on three things together — zero broken-pattern
+occurrences, the correct pattern observed at real call sites, and a standing guard suite that already
+enforces it. **This landmine is defended; no card.**
+
+**One semantic difference noted, not filed:** the fuel site uses `owner OR leased_to` (matches either) while
+the work-order site uses `COALESCE(leased_to, owner)` (lease wins, owner as fallback). For a TRK-owned unit
+leased to TRANSP these differ — `OR` matches both entities, `COALESCE` matches only TRANSP. **Both are
+defensible readings of "whose unit is this"** and the right answer depends on whether the question is
+"who may see it" or "whose cost centre is it". Recorded as an observation for whoever owns unit-attribution
+semantics; I have no evidence either site is wrong for its own purpose.
+
+---
+
+## 102. SAFETY → INSURANCE → LEGAL → ACCOUNTING — the chain is FULLY WIRED BOTH WAYS (PASS), plus the definitive entity-scope column map
+
+**Unit: the accident→claim→matter→cost→GL chain required by the TOTAL CONNECTIVITY law. Verdict: PASS on
+wiring. No defect. Two reference maps produced.**
+
+**THE CHAIN IS COMPLETE AND BIDIRECTIONAL — every edge verified as a real FK on prod:**
+
+| direction | edge |
+|---|---|
+| safety → insurance | `safety.accident_reports.insurance_claim_id`, `safety.incidents.insurance_claim_id` **and** `.auto_created_claim_id`, `safety.damage_continuity_chains.insurance_claim_id` |
+| insurance → safety (**reverse**) | `insurance.claim.accident_report_id` |
+| insurance → legal | `legal.matters.insurance_claim_id`, `legal.matters.insurance_lawsuit_id`, `insurance.lawsuit.claim_id` |
+| legal → safety | `legal.matters.incident_id` |
+| accounting → insurance/legal | `accounting.bills.insurance_claim_id`, `accounting.bills.legal_matter_id`, `accounting.expenses.insurance_claim_id` |
+| insurance → accounting (**reverse**) | `insurance.claim.bill_id`, `insurance.claim.expense_id`, `insurance.payment_schedule.bill_uuid` |
+| insurance → GL | `insurance.refund_obligation.journal_entry_id`, `accounting.insurance_claim_recovery_postings.claim_id` |
+| insurance → driver money | `insurance.claim.liability_id` → `driver_finance.driver_liabilities`, `insurance.claim.deduction_id` → `driver_finance.driver_settlement_deductions` |
+| insurance → assets/ops | `claim.asset_id`, `.driver_id`, `.trailer_id`, `.load_id`, `.vendor_id`, `.policy_id`, `.lawsuit_id`; `legal.matters.unit_id/.related_driver_id/.equipment_id` |
+
+**Forward AND reverse exist at every hop, and the driver-recovery edges are present** — a claim can reach the
+driver liability and the settlement deduction that recovers it. This is exactly what §10 demands, and it is
+already built. **The tables are empty (`insurance.claim` `n_tup_ins = 0`), so nothing has traversed it — but
+the wiring is not the gap.** No card.
+
+**★ REFERENCE MAP 1 — THE ENTITY-SCOPE COLUMN IS NOT UNIFORM. There are THREE conventions.** This is the
+single most useful output of this unit, because picking the wrong one is a **500, not a wrong answer**:
+
+1. **`operating_company_id`** — the norm: `banking` 12/12, `driver_finance` 37/37, `legal` 11/11,
+   `safety` 65/65, `fuel` 5/5, `accounting` 75/85, `maintenance` 34/36, `mdata` 34/50.
+2. **`tenant_id` ONLY — 9 tables. Querying these by `operating_company_id` is a SQL error:**
+   `accounting.bill_unit_allocation` · `accounting.coa_account` · `accounting.ps_category` ·
+   `accounting.ps_item` · `accounting.pse_posting_policy` · `accounting.vendor_subtype_pse_map` ·
+   `insurance.type_catalog` · `mdata.asset_status_history` · `mdata.assets`.
+3. **Neither** — `mdata.units` (`owner_company_id` / `currently_leased_to_company_id`, item 101).
+
+**AND THE CODE ALREADY HANDLES CONVENTION 2 CORRECTLY — checked, not assumed.** Every call site I sampled
+binds an `operating_company_id` *value* to the `tenant_id` *column*, which is right:
+`wo-ap-posting.service.ts:99` `ON a.tenant_id = w.operating_company_id`;
+`pse-mirror.service.ts:56` `ON ca.tenant_id = qi.operating_company_id`; `:17` `qa.operating_company_id AS
+tenant_id`. One site even carries an explicit warning comment — `compliance/missing-required.service.ts:89`
+*"NOTE: mdata.units has NO operating_company_id…"*. **The variable is named for the concept; the column is
+named for the table. No defect.**
+
+**★ REFERENCE MAP 2 — 10 tables carry BOTH columns, which is a latent split-brain:** `insurance.claim`,
+`.coi_request`, `.lawsuit`, `.payment_schedule`, `.policy`, `.policy_unit`, `.refund_obligation`,
+`maintenance.internal_labor_log`, `mdata.mx_permits`, `mdata.mx_tolls_ledger`. If `tenant_id` and
+`operating_company_id` ever disagree on a row, then RLS (which picks one) and application filters (which may
+pick the other) scope that row differently — a cross-entity visibility bug that no current guard would see.
+
+**UNVERIFIED, and I will not guess it:** whether they can disagree in practice. **Every one of these tables
+is empty on prod**, so there is no row to compare and a `0 disagreements` result is vacuous, not a PASS. The
+decisive test is one row: create a claim through the app and compare the two columns. **Recorded as a watch
+item with its test, not as a finding** — an empty-table zero is exactly the false verdict this log exists to
+prevent (items 74, 95).
+
+---
+
+## 103. ★ LOOP CLOSED — CC-1 fixed `CLS-MONEY-WORM-GAP` within the hour; VERIFIED LIVE at 99.6%, and they corrected my method
+
+**Verdict: VERIFIED FIXED (99.6%). The agent→board→agent law worked exactly as designed, in one session.**
+
+I filed `CLS-MONEY-WORM-GAP` (item 93) with a baseline of 47 unprotected money tables and 33,472
+hard-deletable rows. CC-1 shipped `db/migrations/202612290000_worm_money_bearing_tables_sweep.sql`
+(**ACCT-F160**) the same hour. **I re-measured with the identical query and predicate, so the numbers are
+directly comparable:**
+
+| metric | baseline | after ACCT-F160 |
+|---|---|---|
+| money-bearing tables | 101 | 101 |
+| **UNPROTECTED (neither layer)** | **47** | **27** (−20) |
+| unprotected **with live rows** | 10 | **5** |
+| **live money rows hard-deletable** | **33,472** | **119** (**−33,353 / 99.6%**) |
+| tables with **both** layers | 8 | **18** |
+
+**Direct probes confirm the two that mattered:** `accounting.invoice_lines` (21,213 rows) and
+`driver_finance.escrow_ledger` both now carry a BEFORE DELETE trigger. **That also closes all four instances
+of `LV-ESCROW-SUBLEDGER-NOT-WORM` (item 91).**
+
+**And it was applied through the migration runner** — `_system._schema_migrations` contains the row.
+**Contrast with `ACCT-F158` (item 99) — same lane, same day: one landed correctly, one never reached the
+repo at all.** That contrast is the useful evidence: the process works when followed, so item 99 is a lapse,
+not a limitation. It also means my item-100 conclusion holds — ACCT-F158 is an anomaly.
+
+**★ CC-1 CORRECTED MY METHOD, AND THEY ARE RIGHT.** Their migration header records that counting the single
+trigger NAME `trg_worm_refuse_delete` undercounts by 3, because `accounting.escrow_postings` and the two
+cash-advance audit tables carry their own differently-named refusal triggers from migrations 0234/0131/0135.
+**My board row asserted "exactly 9 tables carry `trg_worm_refuse_delete`" as the declared standard — that is
+a name-count where a behaviour-count was required, and as prose it was wrong.** My underlying sweep used
+`pg_trigger` with `tgtype & 8` (ANY delete trigger), which is why CC-1 and I independently arrived at the
+same **47**. **The measurement was sound; the sentence describing it was not** — and a reader trusting the
+sentence over the number would have concluded 3 tables were unprotected when they are protected. Corrected
+on the board so the 47 is what carries forward.
+
+**★ AND I ANSWERED MY OWN OPEN QUESTION RATHER THAN LEAVING IT WITH CC-1.** I had asked whether the residual
+`driver_finance.driver_bills` (6 rows) is config or a money event. The schema settles it:
+
+- **`driver_bills` = MONEY EVENT.** `gross_amount_cents` · **`bill_number`** · `status` ·
+  **`settled_in_settlement_id`** · `load_id` FK **ON DELETE RESTRICT** · driver + team-driver FKs. It is the
+  driver's **per-load earning document** — the counterpart to `settlement_lines`, which ACCT-F160 *did*
+  protect. Deleting one erases a driver's claim to be paid for a load, with no audit row.
+- **`driver_pay_rates` (93 rows) = CONFIG, correctly excluded.** `basis_type`, `effective_from` /
+  `effective_to`, `is_active` — a rate card superseded over time, with no document number, no status, and no
+  link to anything that settled it.
+
+**The reusable discriminator, which is the part worth keeping:** it is **not** "does it have a `_cents`
+column" — both tables do. It is **"does the row record an OBLIGATION (document number + status + link to
+what settled it) or a PARAMETER (effectivity window + is_active)?"** That predicate is durable for the
+remaining 27 and does not need a hand-maintained list. Filed as `LV-DRIVER-BILLS-IS-A-MONEY-EVENT`.
+
+**Not a criticism of ACCT-F160.** It used an objective, published predicate and documented every exclusion
+with a reason — including refusing to decide `banking.bank_accounts` inside a ledger sweep because it is a
+master-data question with a UI consequence. **That discipline is precisely why this residual is arguable in
+the open instead of invisible.**
+
+---
+
+## 104. BANKING → CATEGORIZATION → GL — PASS, bidirectional, with no leakage in either direction
+
+**Unit: bank-transaction categorization linkage on USMCA's 163 live bank rows. Verdict: PASS. No card.**
+
+**MEASURED — prod, USMCA GUC in-transaction, `visible_all = 163` for USMCA (`n_live_tup = 11,082` across all
+entities, so this read is correctly entity-scoped rather than masked):**
+
+| check | result |
+|---|---|
+| USMCA bank transactions | **163** |
+| categorized (`categorized_at IS NOT NULL`) | **5** |
+| categorized **with a GL posting** | **5 — 100%** |
+| GL lines claiming `source_transaction_type='bank_categorization'` | **10 lines across exactly 5 distinct transactions** |
+| **uncategorized** | **158** |
+| **uncategorized that posted anyway** | **0** |
+| dangling `matched_bill_id` / `matched_invoice_id` / `categorization_gl_account_id` | **0 / 0 / 0** |
+
+**Both directions hold, which is what makes this a real PASS rather than half of one.** Forward: every
+categorized transaction posted. **Inverse: not one of the 158 uncategorized transactions has a GL posting** —
+so nothing posted without being categorized. The set of categorized transactions and the set of
+GL-posted transactions are **identical**, and the 10 GL lines resolve to exactly those 5 rows. There is no
+leakage in either direction and no orphaned reference among a dozen `matched_*` columns.
+
+**The 158 uncategorized are EXPECTED STATE, not a finding.** An imported bank feed awaiting categorization
+*should* have no GL posting — that is the correct behaviour, and the inverse check above is precisely the
+evidence for it. Filing "97% of bank transactions have no GL entry" would have been the
+`expected-state-recorded-as-failure` pattern again, and the counterfactual test (item 95) settles it: the
+good state for an unworked transaction **is** zero.
+
+**Corroborates item 62 from the data side.** Item 62 established that the Banking page tells operators
+categorization does not post while the flag is ON and it does. Here is the ledger proof: **categorization
+posts, every time, 5 of 5.** The banner is wrong; the engine is right.
+
+**One observation, explicitly NOT filed as a defect:** the oldest uncategorized transaction dates to
+**2025-12-12**, ~8 months back, with the newest at 2026-08-04. That is an operational backlog — a question of
+who categorises and when — not a code defect, and not this lane's call to raise as a card.
+
+---
+
+## 105. DOCUMENT → ENTITY LINKAGE — the empty table is NOT the defect; a three-way contract mismatch beside it is
+
+**Unit: `docs.file_links`, the only general-purpose document→entity attachment mechanism. Verdict: the
+obvious finding was expected state; the real defect was next to it.**
+
+**WHAT DREW ME IN.** `docs.file_links` is the one place in this schema where orphans are structurally
+possible — it is **polymorphic** (`entity_type text` + `entity_id uuid`), so no foreign key can protect it,
+and `docs/CLAUDE.md` says so explicitly: *"`docs.file_links` is polymorphic; `entity_id` is not enforced as a
+single FK."* Measured on prod: **0 rows, `n_tup_ins = 0` — never written, ever** — while **30 files exist**
+(`visible = 30 == n_live_tup = 30`), of which **26 have no `dispatch_load_id` either** and **0 have a
+`category_id`**. Meanwhile **7+ code paths JOIN that table**: the load's rate-con surface
+(`dispatch/loads.routes.ts:715`), `dispatch/ratecon-extract.routes.ts:99` (`entity_type='load'`), **three
+joins in `dispatch/factoring-queue.routes.ts`** (132/142/152), `factoring/submission-queue.service.ts:75`,
+`drivers/document-alerts.service.ts:249`, `home/scenario-registry.ts:166`.
+
+"A table that 7 features read and nothing has ever written" is a compelling P1 shape.
+
+**IT IS NOT A DEFECT, and the counterfactual test is what settled it.** The write path is wired **end to
+end**: three backend INSERT sites (`docs/files.routes.ts:268`, `:667`, `tax-documents.routes.ts:302`) and the
+frontend genuinely sends `entity_links` from five places — `UploadModal.tsx:155`,
+`OnboardingWizardPage.tsx:34`, `FineCreateModal.tsx:97`, `InspectionsPage.tsx:65`, and the driver PWA
+`upload-sync.ts:139`. The link is **optional at upload** (`if (body.entity_links && …length > 0)`), and the
+30 existing files were uploaded through the general document-library flow where no entity is in scope
+(`...(entityType && entityId ? { entity_links: … } : {})`). **An unexercised feature on test data, not a
+broken one.** Recorded explicitly so the next agent does not re-file it — this is the third time this
+session that a striking zero turned out to be expected state (items 95, 97, and now this).
+
+**★ BUT THE READ OF THAT CODE FOUND A REAL ONE — three lists that disagree.**
+
+| source | entity types |
+|---|---|
+| FE `apps/frontend/src/api/docs.ts:3` `FileEntityType` | driver, customer, vendor, unit, equipment, load, **settlement**, **invoice** — **8** |
+| BE Zod `files.routes.ts:27` `entityTypeSchema` | the same **8**, and it **accepts** them |
+| BE `files.routes.ts:23` `SUPPORTED_LINK_ENTITY_TYPES` | driver, customer, vendor, unit, equipment, load — **6** |
+
+**TypeScript says `invoice` is fine. Zod says `invoice` is fine. The handler throws
+`entity_type_not_supported_yet`.** Nothing catches it before production.
+
+**And the failure mode is worse than a rejected link — it is a lost upload.** In the create path the check
+runs **inside the transaction**, after `INSERT INTO docs.files` and the `r2_key` UPDATE
+(`files.routes.ts:253-268`). The `throw` **rolls back the file row itself**, so the user does not see "the
+link failed" — they see a failed upload with no document saved.
+
+`settlement` and `invoice` are not obscure: invoice backup and settlement backup are precisely the
+attachments a factor, an auditor, or a driver dispute asks for. They appear in two of the three lists
+because someone intended them.
+
+**Evidence this is already a known sharp edge:** `FineCreateModal.tsx:94-96` carries the comment
+*"docs.file_links has no 'fine' entity type, so the citation is filed under the entities it concerns"* and
+hand-fans the link to driver/unit/load. A careful author routed around the list. **The next author will read
+`FileEntityType`, see `invoice`, and ship a broken upload.**
+
+**It is a second instance of a class we have already named.** `LAW-2026-08-06-KANBAN-DROPSTATUS-CONTRACT`
+exists because *"the frontend lane list and backend enum live in separate files owned by separate lanes so
+they drift independently"* — the identical shape, different feature. Filed as
+`LV-FILE-LINK-ENTITY-TYPE-3WAY-MISMATCH` with a three-way parity guard, and the recommendation to move the
+entity-type check **before** the file INSERT so a bad link can never destroy a good upload.
+
+**The transferable lesson:** the empty table was the loud signal and the correct answer was "expected". The
+defect was three lines of type declaration I only read **because** I was chasing the empty table.
+**Investigating a non-defect thoroughly is not wasted work — the surrounding code is where the real one
+was.**
+
+---
+
+## 106. WORM RESIDUAL TRIAGE + THE `driver_pay_rates` NAME COLLISION — three clarifications, one of them a withdrawal of my own flag
+
+**Verdict: no new defect. Three things corrected or clarified, all measured. Recording because each one is a
+trap the next agent would otherwise hit.**
+
+**1. `maintenance.severe_repair_estimates` — I flagged its deletions; that flag is WITHDRAWN.** In item 103
+I noted it "has already lost rows (`n_tup_ins=11 / n_tup_del=2`) and may deserve the same question."
+Applying my own obligation-vs-parameter test to the schema answers it: **it is a PARAMETER — specifically a
+derived projection.** Columns: `estimate_status`, `estimated_labor_cents` / `estimated_parts_cents` /
+`estimated_outside_service_cents` / `estimated_total_cents`, `trigger_wo_id` FK → `maintenance.work_orders`,
+and decisively **`refreshed_at`**. There is **no document number and no link to anything that settled it**,
+and prod carries `trg_refresh_severe_repair_estimate_from_line` and `trg_upsert_severe_repair_estimate` —
+**it is recomputed from work-order lines.** Its 2 deletions are the refresh mechanism working, not data
+loss. **Correctly excluded from the WORM sweep. My flag was over-cautious and is withdrawn.**
+
+**2. `mdata.equipment` is NOT unscoped.** My "tables with no scope column" sweep looked only for
+`operating_company_id` / `tenant_id`, so `mdata.equipment` (183 rows) appeared on the list. It uses
+**convention 3** — the same as `mdata.units`: `owner_company_id` + `currently_leased_to_company_id`, with
+`equipment_select` RLS scoping on **both** and `relforcerowsecurity = true`. **Correct, and consistent with
+the TRK-owns / TRANSP-leases model.** The remaining names on that list are child tables scoped through their
+parent (`load_stops`→loads, `driver_cdl_*`→drivers, `customer_contacts`→customers). **No finding — my filter
+was incomplete, not the schema.**
+
+**3. ★ TWO TABLES NAMED `driver_pay_rates` MODEL DIFFERENT THINGS. I assumed a split-brain; it is not one.**
+
+Both are live: `mdata.driver_pay_rates` (7 rows) and `driver_finance.driver_pay_rates` (93 rows). Different
+modules touch each — the **driver-profile UI** writes and reads `mdata.*`
+(`mdata/driver-profile.routes.ts` INSERT `:254`, UPDATE `:558`/`:567`, SELECT `:150`/`:313`/`:451`/`:534`),
+while **load booking** reads `driver_finance.*` (`dispatch/book-load.service.ts:362`, whose error text at
+`:456` is *"no active driver_finance.driver_pay_rates row for this driver/entity"*). That is a textbook
+split-brain shape: **a rate entered on the driver's profile would not be the rate used when booking a load.**
+
+**It is wrong, and the column lists prove it:**
+
+| table | keyed by | measures |
+|---|---|---|
+| `mdata.driver_pay_rates` | **`driver_qualification_id`** → `mdata.driver_equipment_qualifications`, **`line_item_template_id`** → `catalogs.equipment_line_item_templates` | `amount`, `effective_from/to`, `change_reason`, `change_notes`, `previous_rate_id` |
+| `driver_finance.driver_pay_rates` | **`driver_id`**, `operating_company_id` | `basis_type`, `rate_per_mile_cents`, `flat_per_load_cents`, `miles_basis`, `is_active` |
+
+**`mdata.driver_pay_rates` has no `driver_id` at all** — the driver is reached through the equipment
+qualification. It is a **per-equipment-qualification LINE-ITEM rate** (what this driver earns for this
+line item on this equipment class). `driver_finance.driver_pay_rates` is the **driver's base pay basis**
+(per-mile or flat-per-load). **Different grain, different purpose, unfortunate shared name.** The two modules
+are each reading the correct table for their question. **No defect.**
+
+**Why this is worth a paragraph rather than a shrug:** two identically-named tables in different schemas,
+both live, both touched by different modules, is exactly the shape of the split-brain defects this log is
+full of — and the canonical/RETIRE law (`driver_finance.*` canonical, never `payroll.*`/`settlement.*`)
+primes a reader to conclude `mdata.driver_pay_rates` is the retired one. **It is not on any RETIRE list; it
+is a different table.** The next agent will form the same hypothesis I did. **The disproof is the column
+list — read the keys before concluding two same-named tables are duplicates.**
+
+**One low-severity observation, not filed:** `mdata.driver_pay_rates` deliberately keeps rate history
+(`previous_rate_id` chain, `change_reason`, `change_notes`, `deactivated_at`) yet its FK to
+`driver_equipment_qualifications` is **`ON DELETE CASCADE`** — removing a qualification silently destroys
+that rate history. It is a parameter table so it is out of WORM scope by my own test, but a table that
+carries an explicit change-history chain and can be cascade-erased is a mild contradiction. Recorded for
+whoever owns driver qualifications; no card.
+
+---
+
+## 107. HAZMAT DRIVER-QUALIFICATION GATE — PASS end to end, and a fifth hypothesis killed by reading the SQL instead of the TypeScript
+
+**Unit: the D3-1 hazmat H-endorsement gate. Verdict: PASS — correct schema, correct logic, wired at all
+three assignment paths, and correctly FED on each. No card.**
+
+I chose this because it is a control with a documented history of being wired to the wrong column, and
+because the operating constitution's claim about it is exactly the kind of assertion that must be re-proven
+rather than trusted.
+
+**SCHEMA — verified against `information_schema` (RLS-immune, so authoritative regardless of role):**
+
+| claim | measured |
+|---|---|
+| `mdata.drivers.endorsement_h` exists | **yes** |
+| `mdata.drivers.hazmat_endorsement` exists | **no** — the constitution's correction is right |
+| `mdata.units.hazmat_endorsement` exists | **yes** (the vehicle-profile boolean, 0295) |
+| `mdata.drivers.hazmat_endorsement_expires_at` exists | **yes** |
+| `mdata.loads` hazmat columns | **NONE** — no `hazmat`, no `is_hazmat`, no `hazmat_endorsement_required` |
+| `is_hazmat` anywhere in the database | **no table has it** |
+| `mdata.loads.quicksave_pending_fields` jsonb | **yes** |
+
+**GATE LOGIC — correct** (`dispatch/driver-qualification.service.ts:337-341, 424`):
+`(d.endorsement_h IS NOT TRUE OR d.hazmat_endorsement_expires_at IS NULL OR d.hazmat_endorsement_expires_at
+< CURRENT_DATE) AS hazmat_blocked`, then `if (isHazmat && dr.hazmat_blocked) reasons.push(
+"hazmat_endorsement_missing")`. It blocks on **not held, no expiry on record, or expired** — all three, which
+is the correct FMCSA reading.
+
+**WIRED — `assertDriverQualifiedForLoad` is called from all three driver-assignment entry points:**
+`book-load.service.ts:1105`, `quick-assign.service.ts:52`, `planner.service.ts:296`. A gate nothing calls
+enforces nothing; this one is called everywhere a driver gets attached to a load.
+
+**★ THE HYPOTHESIS I ALMOST FILED — and it would have been a P0 safety defect.**
+
+The gate takes `isHazmat` as a parameter, and its own header warns *"There is NO `mdata.loads.hazmat` column
+— load-level hazmat lives in the `quicksave_pending_fields` jsonb, so callers pass the resolved `isHazmat`
+boolean in."* Two of the three callers read it as:
+
+```ts
+isHazmat: Boolean((load as { is_hazmat?: boolean }).is_hazmat)
+```
+
+**`is_hazmat` exists on no table in the database — I verified that first.** So this read as a TypeScript cast
+asserting a property that can never be populated, collapsing to `Boolean(undefined) === false`, meaning **the
+hazmat check would never fire on quick-assign or planner** — a hazmat load assignable to an unendorsed driver
+through two of three paths, silently. Correct gate, fed a constant. It is the identical shape to the real
+G18 defect I filed in item 95, which is exactly why it was believable.
+
+**It is wrong. The disproof is in the SQL, not the TypeScript:**
+
+- `quick-assign.service.ts:37` — `COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat`
+- `planner.service.ts:262` — `COALESCE((l.quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat`
+
+**`is_hazmat` is a computed column alias in each query, derived from the jsonb exactly as the gate's header
+instructs.** The cast is accurate, not aspirational. Both paths feed the gate correctly.
+
+**The lesson, and it is the sharpest one this session:** "this column does not exist in the database" is a
+**true and verified fact** that produced a **false conclusion**, because the identifier was a query alias
+rather than a column. Checking `information_schema` felt like the rigorous move and it was the wrong test.
+**When code names a field the schema does not have, read the SELECT that produced the row before concluding
+anything** — a derived alias and a phantom column are indistinguishable from the consuming code. This is now
+five hypotheses killed today (items 94 ×3, 95, 97, 105, and this), and this one came closest to being filed.
+
+**Consistent with the empty data:** 0 of 181 drivers have `endorsement_h = TRUE`, 0 have a hazmat expiry, and
+`mdata.driver_cdl_endorsements` has 0 rows — so `trg_sync_driver_endorsement_links` (correctly defined
+`AFTER INSERT OR UPDATE OF endorsement_h, endorsement_n, endorsement_p, endorsement_s, endorsement_t,
+endorsement_x`) has had nothing to sync. Consistent, not broken.
+
+**One asymmetry noted, not filed:** `book-load.service.ts:1101` resolves `Boolean(input.hazmat)` from the
+booking payload rather than the persisted jsonb, unlike the other two. That is defensible — book-load is
+*creating* the load, so the input is the only source that exists at that moment — but it does mean the three
+paths have two different sources of truth for the same fact. Recorded for whoever owns booking; no card.
+
+---
+
+## 108. COA ROLE RESOLUTION — PASS. The empty `account_role_bindings` table is a DOCUMENTED legacy fallback, not a gap
+
+**Unit: chart-of-accounts role resolution for USMCA. Verdict: PASS. No card.**
+
+**MEASURED:** `catalogs.account_role_bindings` — **0 rows, `n_tup_ins = 0`, never written for any entity**.
+That is the second "read-but-never-written" table I chased today (after `docs.file_links`), and like that one
+it is **not a defect**.
+
+**Role resolution actually runs off `catalogs.accounts.system_purpose`, and it is well populated:**
+**21 of 81 USMCA accounts carry a `system_purpose`**, and the set is coherent and correctly typed —
+`accounts_payable` → 2000 **Liability** · `accounts_receivable` → 1100 **Asset** ·
+`driver_escrow_liability` → 2100 **Liability** (matches the locked escrow-is-a-liability decision) ·
+`bank_operating` → 1000 · `undeposited_funds` → 1090 · `retained_earnings` → 3900 **Equity** ·
+`unbilled_revenue` → 1150 · `intercompany_ih35` / `intercompany_trk` → 8000 / 8001 · plus
+`prepaid_asset_default`, `amortization_expense_default`, `ask_my_accountant`, `civil_fines_expense`,
+`driver_damage_recovery`, `driver_fuel_overage_receivable`, `heavy_repair_expense`, `insurance_recovery`,
+`maintenance_parts_expense`, `relay_fuel_wallet`, `rent_expense`, `warranty_recovery`.
+
+**THE CODE SAYS SO EXPLICITLY — this is documented design, not accident.**
+`accounting/coa-roles/resolver.service.ts` describes a **tiered** resolver and names the empty table as the
+*legacy* tier: `:43` *"previously resolvable ONLY from the (empty in prod) `catalogs.account_role_bindings`
+legacy table"*; `:120` *"the resolver's LEGACY FALLBACK tier"*; `:355` *"1) Explicit designation (the field
+the resolver keys on — NOT `catalogs.accounts.system_purpose`)"*; `:362` *"2) Legacy single binding
+(`catalogs.account_role_bindings` — entity-scoped, falls back to global)"*. `posting-engine.service.ts:1631`
+and `period-close-retained-earnings.service.ts:87` both describe it the same way — **explicit designation
+first, legacy binding as a fallback tier.** An empty fallback tier is what a fallback tier looks like when
+the primary tier resolves.
+
+**The author even recorded the entity-scoping fix on it** (`:237` *"USMCA cross-entity-leak fix:
+`catalogs.account_role_bindings` is now per-entity"*), so the table is maintained infrastructure, not
+abandoned code.
+
+**Pattern now seen twice in one session, worth naming:** a table with **0 rows that several modules read** is
+a strong defect signal and was **wrong both times** — `docs.file_links` (item 105) and this. In both cases the
+resolution was the same: **find the writer and the intended tier before concluding.** `file_links` had a
+fully-wired writer nobody had exercised; `account_role_bindings` is a deliberately-empty fallback behind a
+primary that resolves. **An empty table is evidence of nothing until you know what was supposed to fill it.**
+
+---
+
+## 109. ★★ OUTBOX — 99.98% healthy, and the 7 failures contained one real class defect: handlers set a tenant GUC the RLS policies do not read
+
+**Unit: the transactional outbox — the mission's "no silent failures" clause. Verdict: the queue is healthy;
+one of the four failure causes is a genuine P1 class defect.**
+
+**QUEUE HEALTH — excellent, and worth stating plainly:** 31,674 events · **31,667 delivered (99.98%)** ·
+**0 pending** · 0 pending over 24h · **0 locked-undelivered** · **0 stuck locks over 1h** · max retry 6 ·
+1 event retried more than 3 times. **There is no backlog and no stuck-lock problem.** The 7 failures are the
+entire defect surface, so I examined every one.
+
+**THE FOUR CAUSES — three resolved, one real:**
+
+**1. `expense.created` ×2 — "no handler registered". ALREADY FIXED; these are residue.** Both failures are
+from **2026-08-02 only** (`total = 2`, `first_seen = last_seen`), and `expenses.routes.ts:47` records the fix
+in a comment: *"two call sites emitted bare `expense.created`, which was not [handled]"*. The code now emits
+**`expense.created.attributed` / `expense.created.unattributed`** (`:677`, `:691`, `:708`), and **both are
+registered** in `trail-events.handler.ts:18-19`. No new occurrences. **No card.**
+
+**2. `twilio.whatsapp.send` ×1 — "handler unavailable in this environment".** The known Twilio production
+blocker (P7-T3, sender approval pending). 6 of 7 delivered. **Expected state, no card.**
+
+**3. `tms.vendor.push_requested` ×1 (retry 6, 2026-06-27) — "vendor_update_requires_ids".** QBO write-back is
+gated OFF under the locked parallel-books architecture; 9 of 10 delivered. **Legacy, no card.**
+
+**4. ★ `fmcsa.customer.verify_requested` — 3 FAILED of 4, still failing 2026-08-06. THIS ONE IS REAL.**
+
+**The error is `fmcsa_customer_missing_or_cross_tenant`. It is factually false.** All four customers exist,
+are active, and their entity matches the payload exactly (discriminator `customers visible = 2,700 ==
+n_live_tup = 2,700`):
+
+| customer | entity | payload entity | outcome |
+|---|---|---|---|
+| `3e066edd` TIO PERFUMES | USMCA | USMCA | **FAILED** |
+| `01a29250` TEST-Customer-One-20260806 | USMCA | USMCA | **FAILED** |
+| `df25eb7a` GUARD-TEST-…-TRANSP | TRANSP | TRANSP | **FAILED** |
+| `0f65bf5e` GUARD-TEST-…-USMCA | USMCA | USMCA | delivered |
+
+**ROOT CAUSE.** The handler (`fmcsa-customer-verify.handler.ts:37`) scopes its read with
+`set_config('app.operating_company_id', …)`. But `mdata.customers`' `customers_select` policy is
+`is_lucia_bypass() OR (deactivated_at IS NULL AND operating_company_id IN (SELECT
+org.user_accessible_company_ids()))` — and that function's body, read from prod, branches **only** on
+`identity.current_user_role()` and `identity.current_user_id()`. **It never reads
+`app.operating_company_id`.** In a background worker there is no lucia session and no user, so it returns
+**zero companies**, FORCED RLS filters every row, and the handler cannot see a customer that is plainly
+there. **The handler sets a GUC the policy does not consult.**
+
+**IT IS A CLASS: 7 handlers set that GUC and NONE establish a user context or bypass** —
+`fmcsa-customer-verify` (proven) plus `tms-customer-push`, `tms-vendor-push`, `tms-invoice-push`,
+`tms-bill-push`, `tms-account-push`, `tms-item-push`. The processor sets no context either. **UNVERIFIED for
+the other six, and I refuse to overclaim:** they are flag-gated, but `tms.vendor.push_requested` shows 9
+DELIVERED so they do execute. **The open question is whether an empty read makes them no-op SILENTLY instead
+of erroring — which would be strictly worse than FMCSA's loud wrong error.**
+
+**Why the misleading message cost real time, and why I am calling it out separately:** `missing_or_cross_tenant`
+sent me hunting a cross-tenant enqueue bug. The payload entity matched the row entity on **every** event,
+which is what killed that theory and pointed at visibility instead. **A handler must not report "I could not
+see it" as "it does not exist or belongs to someone else"** — those demand opposite fixes, and only one of
+them is real here.
+
+**Residual unknown, stated rather than guessed:** `0f65bf5e` DID deliver, and I cannot yet explain why —
+most plausibly it ran in a request context carrying a user rather than in the background worker. That
+difference would itself corroborate the root cause, but it is **UNVERIFIED**.
+
+---
+
+## 110. ★ SELF-CORRECTION to item 109 — it is ONE broken handler, not a class of seven. My class claim came from a grep that missed the real GUC name
+
+**Verdict: the FMCSA defect STANDS and is now easier to fix. The "class of 7" framing was WRONG and is
+withdrawn within the hour, before any lane acted on it.**
+
+Item 109 closed with an UNVERIFIED question I set myself: do the other six outbox handlers silently no-op?
+I went to answer it. The answer is **no — they are correct**, and my premise was false.
+
+**MEASURED per file on `origin/main`:**
+
+| handler | `app.bypass_rls` | `app.operating_company_id` |
+|---|---|---|
+| **`fmcsa-customer-verify`** | **0 — NO** | 1 |
+| `tms-customer-push` | 1 | 1 |
+| `tms-vendor-push` | 1 | 1 |
+| `tms-invoice-push` | 1 | 1 |
+| `tms-bill-push` | 1 | 1 |
+| `tms-account-push` | 1 | 1 |
+| `tms-item-push` | 1 | 1 |
+
+**`tms-vendor-push.handler.ts:246-247` is the correct pattern, and the order matters:**
+
+```
+SELECT set_config('app.bypass_rls', 'lucia', true)      -- ← the GUC is_lucia_bypass() reads
+SELECT set_config('app.operating_company_id', $1, true) -- ← then the entity scope
+```
+
+`app.bypass_rls` is what `identity.is_lucia_bypass()` consults, and that call is the **first clause of every
+`mdata.*` SELECT policy**. Six handlers set it. **`fmcsa-customer-verify` does not — it is the only broken
+one.**
+
+**★ HOW I GOT IT WRONG, and it is my own §4 violation.** I concluded "none of the 7 establish a user context"
+from this returning nothing:
+
+```
+grep -rln "is_lucia_bypass\|app.lucia_bypass\|withCurrentUser\|app.user_id" apps/backend/src/outbox
+```
+
+**The real GUC is `app.bypass_rls` with the value `'lucia'`. Not one of my four patterns matched it.** So an
+**empty grep became a systemic claim about seven files** — precisely what the operating constitution §4
+forbids: *"Don't trust a string-grep 'systemic check'."* I have applied the completeness discriminator to
+every SQL zero this entire session and then failed to apply the same standard to a grep zero. **A zero from
+`grep` needs a positive control exactly like a zero from `count(*)`:** if I had grepped the same patterns
+against a handler I already knew set a context, it would have returned nothing and exposed the bad pattern
+immediately.
+
+**WHAT STANDS — unchanged, and strengthened:** the FMCSA handler is genuinely broken. 3 of 4 live events
+failed `fmcsa_customer_missing_or_cross_tenant` on customers that exist, are active, and whose
+`operating_company_id` matches the payload exactly. Root cause is the missing bypass. The error message is
+factually false.
+
+**WHAT THE CORRECTION BUYS:** the fix is no longer a design question about worker tenancy across seven
+handlers — **it is one line, copied from a proven reference implementation in the same directory.** And the
+guard I recommended gets better: *assert every outbox handler that queries an RLS-protected table sets
+`app.bypass_rls` before the query* — **6 pass, 1 fails**, so it ships green-but-one and ratchets to zero,
+instead of being a speculative rule with no baseline.
+
+**WITHDRAWN:** the suggestion that the six `tms-*-push` handlers might no-op silently. The premise is gone.
+**Nobody should spend time checking them.**
+
+**The uncomfortable lesson:** item 109 was my strongest finding of the session and I over-reached on exactly
+one sentence — the scope. The defect was real, the root cause was right, and the blast radius was 7× too
+big. **Over-scoping a true finding is its own kind of false report**: it would have sent the mechanical lane
+to audit six correct files.
+
+---
+
+## 111. BACKGROUND-JOB TENANCY — PASS, 12 of 12. The class I suspected does not exist, and checking first is the only reason I did not file it twice
+
+**Verdict: PASS. No card. And it makes the FMCSA defect (items 109-110) sharper, not broader.**
+
+After item 110 corrected my over-scoped outbox claim, the honest next question was whether the *real* class
+lives elsewhere: **do background jobs read RLS-protected tables without a tenant context?** This time I built
+the check properly before drawing any conclusion.
+
+**POSITIVE CONTROL FIRST — the lesson from item 110 applied.** Before searching for absence, I confirmed the
+pattern is detectable: **26 files in `apps/backend/src` DO set `app.bypass_rls`.** A grep that can find it
+where it exists is a grep whose zeros mean something. That single step is what item 110 was missing.
+
+**THE SUSPICIOUS RESULT.** Twelve cron/job files read `mdata.*` / `accounting.*` / `banking.*` /
+`driver_finance.*` / `fuel.*` / `maintenance.*`, and **none of them set `app.bypass_rls` inline** — while
+**nine of them set `app.operating_company_id`**, which is precisely the FMCSA failure signature. Twelve
+background jobs silently seeing nothing would have been a far bigger finding than the one handler.
+
+**IT IS WRONG, AND THE ANSWER WAS ONE IMPORT LINE AWAY.** All twelve obtain their client through
+**`withLuciaBypass`** from `auth/db.ts:158`, which does exactly the right thing — and its own comment states
+the design intent:
+
+```
+SET LOCAL ROLE ih35_app            -- fail-closed: force the NON-superuser app role
+SET LOCAL app.bypass_rls = 'lucia' -- so the bypass goes through the explicit GUC path,
+                                   -- never an implicit superuser bypass
+```
+
+| file | `withLuciaBypass` | `assertTenantContext` |
+|---|---|---|
+| `cron/depreciation-autopost` | 6 | 2 |
+| `cron/bank-recon-auto-match` | 2 | 2 |
+| `cron/plaid-daily-sync` | 2 | 0 |
+| `jobs/search-indexer-incremental` | 2 | 2 |
+| `jobs/cap-12-tire-tread-worker` | 4 | 2 |
+| `jobs/cap-13-brake-wear-worker` | 4 | 2 |
+| `jobs/cert-expiry-monitor` | 2 | 2 |
+| `jobs/fuel-fraud-detector-worker` | 2 | 2 |
+| `jobs/loan-payment-reminder-worker` | 2 | 2 |
+| `jobs/driver-retention-scorer-worker` | 2 | 0 |
+| `jobs/customer-relationship-scorer` | 2 | 0 |
+| `jobs/samsara-position-poll-worker` | 2 | 0 |
+
+**12 of 12 correct.** There is even a purpose-built runtime guard — `assertTenantContext` in
+`cron/_helpers/tenant-context-guard.ts` — used by 8 of the 12. **This area is not merely accidentally right;
+it is deliberately engineered, with a helper, a fail-closed role switch, and a guard.**
+
+**WHY THIS SHARPENS ITEMS 109-110 RATHER THAN DILUTING THEM.** The codebase already has the correct
+mechanism, used by 12 background jobs and 6 sibling outbox handlers — **18 call sites doing it right.**
+`fmcsa-customer-verify.handler.ts` is the lone place that hand-rolls the context inline and sets the wrong
+GUC. **An outlier among 18 correct implementations is a much better-supported defect than "a class of 7",**
+and it tells the fixer exactly what to copy.
+
+**Observation, not a card:** 4 of the 12 (`plaid-daily-sync`, `driver-retention-scorer-worker`,
+`customer-relationship-scorer`, `samsara-position-poll-worker`) do not call `assertTenantContext`. They all
+hold the bypass, so they are correct; they simply skip the extra assertion. Recorded for whoever owns that
+guard's adoption — no defect.
+
+**The method note I want on the record.** In one session I formed the same shape of hypothesis twice —
+"a whole class of background code is missing its tenant context." **The first time I filed it and had to
+withdraw it (item 110). The second time I ran the positive control first and killed it in three commands
+before it reached the board.** Same instinct, same evidence shape, opposite outcome. **The discipline is not
+"be more careful"; it is the mechanical step of proving your detector works before trusting its zeros.**
+
+---
+
+## 112. ★★ USMCA SCENARIO TRACKER — 14 GREEN / 10 RED measured with the tracker's OWN SQL, and one of the greens is FALSE
+
+**Unit: the 2026-08-07 owner directive — "drive every Scenario Tracker dot green on real USMCA data."
+Verdict: the map is published as the work list, and the acceptance instrument itself has a P0 defect.**
+
+**METHOD — this is the tracker, not my approximation of it.** I extracted all **24** probe SQL bodies from
+`apps/backend/src/home/scenario-registry.ts` and ran them **verbatim** against USMCA
+`5c854333-6ea5-4faa-af31-67cb272fef80` on prod, substituting only the `$1` company parameter. **These are the
+dots, not a proxy for them.**
+
+**RESULT: 14 GREEN / 10 RED.**
+
+| green | n | | red (all 0) |
+|---|---|---|---|
+| `scenario.driver_onboarding` | 86 | | `hop.pod_bol` |
+| `scenario.coa` | 81 | | `hop.bank` |
+| `hop.gl` | 26 | | `scenario.escrow` |
+| `scenario.ap` | 7 | | `scenario.deductions` |
+| `scenario.banking` | 5 | | `scenario.advance` |
+| `hop.book` | 4 | | `scenario.fuel` |
+| `scenario.customer` | 3 | | `scenario.maintenance` |
+| `hop.dispatch` | 2 | | `scenario.insurance` |
+| `hop.assign` / `hop.deliver` / `hop.invoice` / `scenario.accident` / `scenario.settlement` | 1 each | | `scenario.legal` |
+| **`hop.revenue`** | **1 — FALSE** | | `scenario.factoring` |
+
+**★ THE FALSE GREEN — the most important thing in this unit.** `hop.revenue` ("Revenue recognition latch",
+declared JE **DR A/R / CR Unbilled Revenue**) and `hop.invoice` ("Invoice + evidence gate") run **byte-identical
+SQL**: `count(*) FROM accounting.invoices WHERE voided_at IS NULL AND status IN ('sent','partial','paid') AND
+qbo_invoice_id IS NULL AND operating_company_id = $1`. **Two dots that can never disagree are one dot drawn
+twice, and neither looks at a posting.**
+
+Measured against reality in the same session: **`accounting.load_revenue_recognition_postings` for USMCA = 0**
+(discriminator `visible_all = 2 == n_live_tup = 2 == n_tup_ins = 2` — two rows exist in the entire database,
+neither USMCA), and **GL lines against the `unbilled_revenue` role account = 0.** The credit the scenario
+itself declares has never been posted for any USMCA load. Battery item 96 measured `revrec_rows = 0` on all
+four USMCA loads independently, including the delivered one.
+
+**So the latch dot is GREEN and the latch has never fired.** Under a directive that makes the tracker the
+acceptance instrument, **this dot cannot fail** — it is green today, stays green for any sent invoice, and
+would still be green with `LV-TXN-004` never fixed. **An acceptance test that passes on work not performed is
+worse than no test.** Filed P0 as `LV-SCENARIO-REVENUE-DOT-IS-FALSE-GREEN`, with the explicit instruction to
+change the PROBE — and to let it go RED today, because red is the truthful reading.
+
+**THE TEN REDS, WITH THEIR REAL BLOCKERS** (published as `LV-USMCA-SCENARIO-MAP-2026-08-07`):
+**6 are exercisable today with no code fix** — `pod_bol` (the `docs.file_links` write path is fully wired,
+merely never exercised — item 105), `bank` (163 USMCA bank txns, 0 matched to an invoice), `advance`,
+`fuel`, `insurance`, `legal` (the whole accident→claim→matter→GL chain is wired both ways — item 102).
+**2 are blocked on `LV-TXN-004`** — `escrow` and `deductions` both need a settlement with real gross pay, and
+USMCA's only settlement is $0.00. **1 is hard-blocked on `LV-WO-CREATE-500-OPENED-AT`** — `maintenance`, the
+only red dot with a known code blocker. **1 is config-gated** — `factoring`.
+
+**A POINT THAT FITS THE NEW DIRECTIVE EXACTLY:** five probes already filter `qbo_*_id IS NULL` — they were
+deliberately written to count **TMS-native only**, so QuickBooks clones cannot certify TMS work. With QBO now
+out of scope for USMCA, **those filters need no change**; they were right in advance.
+
+**METHOD NOTE — a false zero caught inside this very unit.** `hop.invoice` returned **0** standalone while
+`hop.revenue` returned **1** from the *same predicate*. Two answers to one query is a broken run, not a
+finding: a role-alternation RLS mask. Re-run with `current_user` and `visible_all == n_live_tup` asserted, the
+true value is **1**. **Every number in the map above carries that discriminator** — which matters more than
+usual here, because this map is about to be used to decide what work remains.
 ## 77. ★★ `LV-EXPENSE-CATEGORY-PICKER-EMPTY` — THE LAST SURVIVING HYPOTHESIS IS DISPROVEN. Every link in the chain is now verified correct, which makes the OBSERVATION itself the thing to re-take.
 
 Item 76 closed with exactly one question left: *"does the DEPLOYED `RecordExpenseForm.categoryOptions`

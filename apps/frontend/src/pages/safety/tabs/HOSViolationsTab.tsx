@@ -11,6 +11,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 
 type HosViolationRow = Record<string, unknown>;
 type Source = "samsara_auto" | "manual_office" | "dot_citation";
@@ -199,6 +200,14 @@ export function HOSViolationsTab() {
             void queryClient.invalidateQueries({ queryKey: ["catalogs", "dot-violation-types", "hos", companyId] });
             void violationTypesQuery.refetch();
           }}
+        />
+        {/* CLS-SILENT-CAP: this picker fetches a hard 200 cap. Server search narrows it, but with no
+            disclosure a user who never types sees 200 of N and cannot tell the list was cut. Renders
+            nothing until the cap is actually hit. */}
+        <CappedListNotice
+          shown={violationTypeRows.length}
+          limit={200}
+          hint="Type to search the full violation-type catalog."
         />
         <DateTimePicker
           aria-label="Occurred at"
