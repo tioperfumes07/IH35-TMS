@@ -4853,3 +4853,63 @@ reverses without writing linkage, bill-payment void produces no reversal, and ex
 The JE path shows the complete correct shape — reversing entry, balanced, original preserved, linkage both
 directions, siblings untouched — so the other three paths have a proven in-repo model to be fixed against.
 No new engine has to be designed.
+
+---
+
+## 78. FAIL (P0 · legal evidence) — `LV-AUDIT-TRAIL-HAS-NO-ACTOR`: 2 of 2,319,894 WORM audit rows record WHO made the change
+
+**Verified on prod `br-fancy-credit-akjnd07a`, 2026-08-07**, `audit.row_changes`, whole table, `current_user`
+asserted in the same statement. This is the append-only WORM trail the constitution names as the audit
+system of record.
+
+| column | populated | of total |
+|---|---|---|
+| rows in table | — | **2,319,894** (2026-05-28 → 2026-08-07) |
+| `changed_by_user_id` | **2** | 0.00009% |
+| `changed_by_role` | **0** | 0% |
+| `session_id` | **0** | 0% |
+| `tenant_id` | 2,163,538 | 93% |
+| `op = 'DELETE'` | **27** | — |
+
+**The trail records WHAT changed and never WHO.** Two rows out of 2.3 million carry a user; not one carries
+a role or a session. The columns exist and are correctly designed — they are simply not being written.
+
+**WHY THIS IS P0 AND NOT A NICE-TO-HAVE.** `CLAUDE.md` opens by stating this system holds *"live financial
+and legal-evidence data"*, and §10 requires every change be made as if *"a CPA, auditor, attorney, insurer,
+lender, DOT/FMCSA reviewer, architect, or court will review it."* An audit trail without an actor is a
+**change log, not evidence** — it cannot answer the one question every one of those reviewers asks first:
+*who did this?* This company is in confirmed Ch. 11 and is actively litigating an embezzlement by Ignacio
+Muñoz, with the "Unauthorized Expenses" receivables held as evidence. Attribution is not paperwork here; it
+is the mechanism by which a disputed change is pinned to a person. Non-repudiation is impossible today.
+
+**CONCRETE DEMONSTRATION — 27 rows were DELETED and the trail cannot say by whom.** All 27 `DELETE`
+operations in the entire table occurred in **one transaction at `2026-08-04 16:05:35`**:
+
+| table | deletes | with actor |
+|---|---|---|
+| `mdata.load_stops` | 10 | **0** |
+| `mdata.units` | 6 | **0** |
+| `mdata.loads` | 5 | **0** |
+| `mdata.drivers` | 4 | **0** |
+| `maintenance.work_orders` | 2 | **0** |
+
+**I am NOT filing the deletion itself as the defect.** A single-transaction purge of 27 rows across
+TMS-native test tables on one day is most plausibly a deliberate test-data cleanup, and board Rule 4 records
+that all TMS-native data is test. Calling that a defect without evidence of intent would be the guessing
+this lane forbids — **origin matters, and I did not establish it.** What the deletion proves is the
+*consequence* of the actor gap: 27 operational records were destroyed and the WORM trail is structurally
+incapable of naming who destroyed them. That is the finding.
+
+**Worth a separate look by the owning lane, NOT claimed here:** board Rule 4 also says *"VOID = reversal;
+**nothing is deletable**."* Hard `DELETE`s did execute against `mdata.loads`, `mdata.drivers`, `mdata.units`,
+`mdata.load_stops` and `maintenance.work_orders`. Whether that purge was sanctioned is **UNVERIFIED —
+needs an owner/lane answer**, and it is recorded rather than assumed in either direction.
+
+**What "fixed" must mean (do not accept less):** the writer populates `changed_by_user_id`, `changed_by_role`
+and `session_id` from the authenticated request context on every mutation, and a CI guard proves a mutation
+through a real route lands an audit row WITH an actor. Back-filling the 2.3M historical rows is neither
+possible nor desirable — that data is gone and inventing it would be fabricating evidence. **The honest
+remediation is: attribute everything from the fix forward, and record in the audit documentation that rows
+before that date carry no actor**, so nobody later mistakes a null actor for a system action.
+
+**Routed:** WORM / audit integrity → **CC-1**.
