@@ -4970,3 +4970,61 @@ connection state as a prop**, so the literal cannot come back.
 
 **Routed:** FE/mechanical for the render; the wording of the connected/not-connected states touches the
 parallel-books contract, so CC-1 should sanity-check the copy.
+
+---
+
+## 80. FAIL (P1 · money) — `LV-BANK-MATCH-SCORE-SATURATES-TO-MEMO`: once every candidate is outside tolerance the amount term clamps to zero, so the top-ranked "match" is chosen by fuzzy memo text
+
+**Observed live, USMCA, 2026-08-07, `/banking/transactions`**, match drawer for the bank row
+*"Zelle payment to Dreamline Transit LLC for 'INV-418334'; Conf# vfmqou1ne"*, **$918.00 spent, 08/05/2026**.
+The drawer offers *"Recommended matches (±7 days) from live ledger data"*, ranked by Score:
+
+| rank | candidate | amount | **amount gap** | date gap | score |
+|---|---|---|---|---|---|
+| **1** | JOURNAL ENTRY · CC3-JE-LINKAGE-TEST | $64.20 | **$853.80** | 1d | **0.202** |
+| 2 | JOURNAL ENTRY · Invoice INV-2026-00003 posting | $1,200.00 | **$282.00** | 1d | 0.191 |
+| 3 | JOURNAL ENTRY · Invoice INV-2026-00007 posting | $313.90 | $604.10 | 1d | 0.191 |
+| 4 | JOURNAL ENTRY · Bill payment 8b68a9d7 posting | $33.40 | $884.60 | 1d | 0.186 |
+
+**The closest candidate by amount ranks SECOND.** A candidate off by $853.80 is presented as the best match
+over one off by $282.00, and two candidates with gaps of $282.00 and $604.10 score **identically**.
+
+**ROOT CAUSE — read in code, then confirmed arithmetically against the live scores.**
+`apps/backend/src/accounting/bank-recon/match.service.ts:136-141`:
+
+```js
+const amountScore = Math.max(0, 1 - input.amountGapCents / Math.max(input.toleranceCents, 1));
+const dateScore   = Math.max(0, 1 - input.dateGapDays / AUTO_MATCH_DATE_WINDOW_DAYS);
+const memoScore   = Math.max(0, Math.min(input.similarity, 1));
+return Number((0.55 * amountScore + 0.2 * dateScore + 0.25 * memoScore).toFixed(6));
+```
+
+Tolerance (`:92-93`, `:133`) is `max(100 cents, |amount| × 0.0001)` → for $918.00 that is **$1.00**. Every
+candidate's gap ($282.00 – $884.60) is **282× to 884× the tolerance**, so `1 - gap/tolerance` is deeply
+negative and `Math.max(0, …)` clamps **`amountScore` to 0 for every candidate**. The 0.55 weight — the
+majority of the score — contributes **nothing**. `AUTO_MATCH_DATE_WINDOW_DAYS = 5` and all four rows share
+a 1-day gap, so `dateScore` is identical too. **The only term left varying is the 0.25 memo similarity**,
+which is exactly what the observed spread (0.202 / 0.191 / 0.191 / 0.186) decomposes to.
+
+**The ranking has silently degenerated from "closest amount" to "text that looks most like the bank memo."**
+
+**WHY THIS IS A MONEY DEFECT, not a UX nit.** The drawer's job is to tell an operator which ledger entry a
+bank line corresponds to. It labels these "Recommended matches" and sorts by Score, so the rational
+operator accepts the top row. Here the top row is the **worst of the four by amount** — accepting it would
+reconcile a **$918.00** bank payment against a **$64.20** journal entry that exists only because I created
+it as a void-linkage test. In a real reconciliation that is a mis-tied bank line, and bank reconciliation
+is precisely where a CPA, lender or examiner checks that cash agrees with the ledger.
+
+**Honest mitigation, stated:** the UI **does** display `Amount gap: $853.80` on every row, so an attentive
+operator can catch it. The defect is the RANKING and the Score, not concealment — the screen is not lying,
+it is recommending badly. That is why this is P1 and not P0.
+
+**Fix, at the root — do not just re-sort the list.** The score must remain discriminating when all
+candidates fall outside tolerance. Any of: replace the hard clamp with a continuous decay
+(`1 / (1 + gap/tolerance)`) so ordering by amount survives at any distance; or suppress candidates beyond a
+sanity multiple of tolerance rather than presenting them as recommendations; or, when every `amountScore`
+is 0, fall back to ranking by amount gap ascending and label the list "no close amount match". **A guard
+should assert that for a fixed date and memo, a smaller amount gap never scores lower than a larger one** —
+that property is what broke, and it is cheap to test.
+
+**Routed:** money / reconciliation → **CC-1**.
