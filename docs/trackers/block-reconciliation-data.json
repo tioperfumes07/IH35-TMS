@@ -1,6 +1,6 @@
 {
  "date": "2026-08-07",
- "generated_at_iso": "2026-08-07T14:07:13.294Z",
+ "generated_at_iso": "2026-08-07T19:21:44.989Z",
  "counts": {
   "PENDING": 15,
   "PENDING (GATED)": 28,
@@ -1035,10 +1035,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #4609 title-match only, unverified",
+   "evidence": "PR #4635 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 4609
+   "pr": 4635
   },
   {
    "id": "f-02-jump-to-tab-nonstandard",
@@ -13262,10 +13262,118 @@
  ],
  "merged_prs": [
   {
+   "number": 4705,
+   "title": "Claude-1- CLAIM-RESERVE: 2789 (cc-1 band) for the display_id entity-scoped-lookup guard",
+   "mergedAt": "2026-08-07T19:08:24Z",
+   "branch": "chore/claim-reserve-2789"
+  },
+  {
+   "number": 4703,
+   "title": "Claude-1- fix(accounting): ACCT-F161 — evidence/legal tables deletable with NO void path; add the void path, then WORM (ratchet 107→101)",
+   "mergedAt": "2026-08-07T18:47:31Z",
+   "branch": "claude/acct-f161-worm-evidence-master"
+  },
+  {
+   "number": 4700,
+   "title": "Claude-1- fix(accounting): ACCT-F160 — GL header deletable while its postings are WORM; 22 money-bearing tables swept, ratchet 129→107",
+   "mergedAt": "2026-08-07T18:14:58Z",
+   "branch": "claude/acct-f160-worm-money-tables"
+  },
+  {
+   "number": 4698,
+   "title": "Claude-1- CLAIM-RESERVE: 2781, 2785 (cc-1 band) for the ACCT-F159 bill/driver vendor guards",
+   "mergedAt": "2026-08-07T18:10:48Z",
+   "branch": "chore/claim-reserve-2781-2785"
+  },
+  {
+   "number": 4695,
+   "title": "Claude-1- fix(accounting): ACCT-F159 CLS-DRIVER-VENDOR-UUID-FALLBACK — driver pay booked to A/P against a vendor that does not exist",
+   "mergedAt": "2026-08-07T19:06:39Z",
+   "branch": "claude/cls-driver-vendor-uuid-fallback"
+  },
+  {
+   "number": 4692,
+   "title": "Claude-1- docs(board): ACCT-F158 + ACCT-F158-B — bill cross-entity vendor hole closed (#4691); guard not yet CI-gated",
+   "mergedAt": "2026-08-07T17:38:46Z",
+   "branch": "claude/board-acct-f158"
+  },
+  {
+   "number": 4690,
+   "title": "Claude-3- audit(live): LV-EXPENSE-CATEGORY-PICKER-EMPTY — hypotheses 5 & 6 DISPROVEN; static chain verified end-to-end",
+   "mergedAt": "2026-08-07T19:12:03Z",
+   "branch": "audit/cc3-expense-category-rc-20260807"
+  },
+  {
+   "number": 4686,
+   "title": "Claude-1- CLS-MONEY-HOLD ruling: card is stale — pipeline fires 1:1 and the $0.00 settlement is arithmetically correct",
+   "mergedAt": "2026-08-07T18:00:42Z",
+   "branch": "claude/cls-money-hold-ruling"
+  },
+  {
+   "number": 4685,
+   "title": "Claude-1- CLS-BANK-MATCH-DENSITY ruling: empty rule set + human backlog, not broken wiring — do NOT auto-categorize",
+   "mergedAt": "2026-08-07T18:31:45Z",
+   "branch": "claude/cls-bank-match-density-ruling"
+  },
+  {
+   "number": 4684,
+   "title": "Claude-1- CI-F26: build-typecheck cannot be split by classifying steps — 1,412 steps, 1 declares a DB capability",
+   "mergedAt": "2026-08-07T17:38:27Z",
+   "branch": "claude/ci-f26-buildtypecheck-split-findings"
+  },
+  {
+   "number": 4683,
+   "title": "Claude-1- CLAIM-RESERVE: 2773, 2777 (cc-1 band) to adopt two CC-3 guards that currently enforce nothing",
+   "mergedAt": "2026-08-07T17:38:23Z",
+   "branch": "chore/claim-reserve-2773-2777"
+  },
+  {
+   "number": 4682,
+   "title": "Claude-2: FINDING: CLS-UUID-LABEL — 57 truncated-uuid fallbacks replaced with an honest label, via one shared helper",
+   "mergedAt": "2026-08-07T17:38:18Z",
+   "branch": "cc-2/board-uuid-label-ratchet-scope"
+  },
+  {
+   "number": 4679,
+   "title": "Claude-1- LAW-2026-08-07-VERTICAL-METHOD: the vertical/class method is now an ENFORCED law, not just prose",
+   "mergedAt": "2026-08-07T17:38:09Z",
+   "branch": "claude/law-vertical-method-permanent"
+  },
+  {
+   "number": 4678,
+   "title": "Claude-1- ACCT-F157: canonicalise the void predicate — 67 financial tables, one predicate each, so the invariant becomes guardable",
+   "mergedAt": "2026-08-07T15:04:26Z",
+   "branch": "claude/acct-f157-void-predicate-canonical"
+  },
+  {
+   "number": 4675,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-08-07T14:29:44Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 4674,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-08-07T14:05:25Z",
    "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 4673,
+   "title": "Claude-1- CI-F24b: the chore reaper was silently doing nothing — GraphQL says UNKNOWN where REST says dirty",
+   "mergedAt": "2026-08-07T14:10:01Z",
+   "branch": "claude/ci-f24b-reaper-rest-mergeable"
+  },
+  {
+   "number": 4672,
+   "title": "Claude-1- CLS-LINKAGE-ONEWAY ruling: the density instances are expected state — a density guard must NOT be built",
+   "mergedAt": "2026-08-07T15:04:16Z",
+   "branch": "claude/cls-linkage-oneway-ruling"
+  },
+  {
+   "number": 4670,
+   "title": "Claude-1- ACCT-F156: six money-line SUMs count VOIDED rows — including the invoice header recompute and the driver deduction cap",
+   "mergedAt": "2026-08-07T14:09:48Z",
+   "branch": "claude/acct-f156-voided-lines-in-money-sums"
   },
   {
    "number": 4669,
@@ -13284,6 +13392,12 @@
    "title": "Claude-1- ACCT-F155 (CLS-GUARD-PHANTOM): 10 of 31 class-queue waves name a guard file that does not exist",
    "mergedAt": "2026-08-07T12:00:14Z",
    "branch": "claude/cls-guard-phantom-queue-paths"
+  },
+  {
+   "number": 4666,
+   "title": "Claude-2: FINDING: CI-F06 — the only local gate with true CI parity threw a false red",
+   "mergedAt": "2026-08-07T14:48:46Z",
+   "branch": "fix/ci-f06-localci-seed-dispatcher-user"
   },
   {
    "number": 4665,
@@ -13316,10 +13430,22 @@
    "branch": "claude/acct-f152-worm-coverage-ratchet"
   },
   {
+   "number": 4660,
+   "title": "FINDING: CLS-ORPHAN-SURFACE mechanical half drained - 3/4 stale, ORPH-003 ACH gap routed to board",
+   "mergedAt": "2026-08-07T18:37:31Z",
+   "branch": "chore/drain-cls-orphan-surface-0806"
+  },
+  {
    "number": 4659,
    "title": "Claude-1- CI-F21: every dependency PR was unmergeable by construction — the DoD gate demanded evidence Dependabot cannot write",
    "mergedAt": "2026-08-07T04:58:52Z",
    "branch": "claude/ci-f21-dependency-bumps-unmergeable"
+  },
+  {
+   "number": 4658,
+   "title": "Claude-2: FINDING: CLS-GUARD-READS-COMMENTS — four guards read prose as code, so documenting a fix could fail the build",
+   "mergedAt": "2026-08-07T14:40:44Z",
+   "branch": "fix/cls-guard-reads-comments-masking"
   },
   {
    "number": 4657,
@@ -13388,6 +13514,12 @@
    "branch": "chore/claim-reserve-cc2-2755-2771"
   },
   {
+   "number": 4646,
+   "title": "Claude-2: FINDING: DISP-F10/F11 — the Assignment History tab named nobody, and all four dispatch quicksave endpoints let the caller set their own RLS scope",
+   "mergedAt": "2026-08-07T18:13:25Z",
+   "branch": "fix/dispatch-assignment-history-names-and-scope"
+  },
+  {
    "number": 4645,
    "title": "Claude-1- CLS-DISPLAYID-UNSCOPED drained — display_id can resolve another entity's money document",
    "mergedAt": "2026-08-07T01:27:23Z",
@@ -13448,6 +13580,12 @@
    "branch": "fix/cls-uuid-label-inventory-assignments"
   },
   {
+   "number": 4635,
+   "title": "Claude-2- docs(board): CI-F01 closed — CC-1 already fixed CodeQL; my row corrected with their root cause",
+   "mergedAt": "2026-08-07T16:06:57Z",
+   "branch": "docs/board-codeql-scanning-disabled"
+  },
+  {
    "number": 4634,
    "title": "Claude-2- fix(insurance): CLS-UUID-LABEL — claims screen showed a uuid where a driver, unit, load or policy belongs",
    "mergedAt": "2026-08-07T01:20:34Z",
@@ -13476,6 +13614,24 @@
    "title": "Claude-2- fix(cash-flow): ORPH-004 — the 7-day outlook showed the WRONG DAY's money (UTC off-by-one)",
    "mergedAt": "2026-08-07T12:22:17Z",
    "branch": "fix/cashflow-outlook-utc-offbyone"
+  },
+  {
+   "number": 4628,
+   "title": "Claude-2- fix(dispatch): LV-TXN-005 Kanban half was FALSE — withdrawn + contract guard added",
+   "mergedAt": "2026-08-07T15:30:46Z",
+   "branch": "fix/kanban-dropstatus-contract"
+  },
+  {
+   "number": 4627,
+   "title": "Claude-2- fix(dispatch): LV-TXN-002 — load drawer reported a driver-assigned load as \"Unassigned\"",
+   "mergedAt": "2026-08-07T16:12:06Z",
+   "branch": "fix/disp-loads-detail-resolve-driver-unit"
+  },
+  {
+   "number": 4626,
+   "title": "Claude-2- feat(program): by-class scoreboard — the axis the work is dispatched on had no board",
+   "mergedAt": "2026-08-07T14:39:05Z",
+   "branch": "feat/program-by-class-scoreboard"
   },
   {
    "number": 4625,
@@ -15344,6 +15500,12 @@
    "branch": "claude/posting-engine-repost-capability"
   },
   {
+   "number": 4243,
+   "title": "chore(deps): bump ip-address from 10.2.0 to 10.4.0",
+   "mergedAt": "2026-08-07T14:31:27Z",
+   "branch": "dependabot/npm_and_yarn/ip-address-10.4.0"
+  },
+  {
    "number": 4242,
    "title": "Claude- fix(banking): undo now REFUSES rather than reversing into a dead end (my #4225 regression)",
    "mergedAt": "2026-08-04T03:07:17Z",
@@ -15620,6 +15782,12 @@
    "branch": "claude/loans-advances-financial-lane"
   },
   {
+   "number": 4191,
+   "title": "chore(deps): bump the npm_and_yarn group across 2 directories with 1 update",
+   "mergedAt": "2026-08-07T16:16:06Z",
+   "branch": "dependabot/npm_and_yarn/apps/driver-pwa/npm_and_yarn-5be82b6a7f"
+  },
+  {
    "number": 4190,
    "title": "Claude- fix(safety): my own alert_category fix was incomplete — the accounting watchdog still cannot record itself",
    "mergedAt": "2026-08-03T17:18:01Z",
@@ -15750,6 +15918,18 @@
    "title": "Cursor- fix(safety): accident spawn-liability creates driver liability (2196)",
    "mergedAt": "2026-08-03T15:50:43Z",
    "branch": "cursor/Cursor-safety-accident-spawn-liability-2196-2026-08-03"
+  },
+  {
+   "number": 4166,
+   "title": "chore(deps): bump the production-dependencies group with 13 updates",
+   "mergedAt": "2026-08-07T16:18:23Z",
+   "branch": "dependabot/npm_and_yarn/production-dependencies-26407fbdac"
+  },
+  {
+   "number": 4165,
+   "title": "chore(deps): bump the development-dependencies group with 8 updates",
+   "mergedAt": "2026-08-07T14:33:25Z",
+   "branch": "dependabot/npm_and_yarn/development-dependencies-fefb1ffc73"
   },
   {
    "number": 4164,
@@ -16680,190 +16860,16 @@
    "title": "Claude- fix(dispatch): restore the dead-stub dispatch-status view — WF-050 DVIR and WF-044 PM gates have never fired",
    "mergedAt": "2026-08-02T06:55:38Z",
    "branch": "claude/disp-f02-restore-dispatch-status-view"
-  },
-  {
-   "number": 3999,
-   "title": "Claude- fix(dispatch): OOS/dispatch-block/PM gates were silently dead — 13 out-of-service trucks were dispatchable",
-   "mergedAt": "2026-08-02T04:37:02Z",
-   "branch": "claude/disp-f01-oos-gate-dead-view"
-  },
-  {
-   "number": 3998,
-   "title": "Claude- fix(insurance): the Claims tab crashed on any direct link or refresh — a hook ran after an early return",
-   "mergedAt": "2026-08-02T04:13:11Z",
-   "branch": "claude/ins-f01-claims-tab-hook-order"
-  },
-  {
-   "number": 3997,
-   "title": "Claude- fix(banking): the headline Cash KPI was inflated exactly 100x — cents rendered through a dollar formatter",
-   "mergedAt": "2026-08-02T03:57:25Z",
-   "branch": "claude/bank-f01-cash-kpi-cents-unit"
-  },
-  {
-   "number": 3996,
-   "title": "Claude- fix(safety): the orphan-bill GL alert read a vestigial header column — 16,245 false positives hiding 29 real ones",
-   "mergedAt": "2026-08-02T03:15:53Z",
-   "branch": "claude/acct-f85-integrity-alert-canonical-vendor-fk"
-  },
-  {
-   "number": 3995,
-   "title": "Claude- fix(accounting): every vendor link on bills/payments/allocations pointed at a legacy QBO id and 404'd — 16,246 bills, not 3,195",
-   "mergedAt": "2026-08-02T03:00:39Z",
-   "branch": "claude/acct-f84-bill-vendor-canonical-link"
-  },
-  {
-   "number": 3994,
-   "title": "Claude- fix(qbo-sync): items_reconcile had NEVER succeeded — a rename #3988 fixed in the puller was still live in its two siblings",
-   "mergedAt": "2026-08-02T02:47:16Z",
-   "branch": "claude/acct-f83-items-reconcile-name-collision"
-  },
-  {
-   "number": 3993,
-   "title": "Claude- fix(qbo-sync): vendors_pull wrote a RETIRE mirror with no matching unique index — repoint to canonical mdata.qbo_vendors",
-   "mergedAt": "2026-08-02T01:19:29Z",
-   "branch": "claude/acct-f82-qbo-vendors-canonical-repoint"
-  },
-  {
-   "number": 3992,
-   "title": "Claude- fix(schema-parity): the DDL parser applied every DROP after every ADD, so drop-and-re-add erased 8 real prod columns from the baseline",
-   "mergedAt": "2026-08-02T00:17:47Z",
-   "branch": "claude/acct-f83-schema-parity-parser-drops-readd-column"
-  },
-  {
-   "number": 3991,
-   "title": "Claude- fix(dispatch): the OFFICE could deliver a load without capturing any delivery evidence — invoicing must not depend on the driver",
-   "mergedAt": "2026-08-01T23:09:48Z",
-   "branch": "claude/acct-f81-office-delivers-stamps-stop-evidence"
-  },
-  {
-   "number": 3990,
-   "title": "Claude- fix(qbo-sync): a sync step that SUCCEEDS recorded nothing — the health scoreboard could only render red or absent",
-   "mergedAt": "2026-08-01T22:54:43Z",
-   "branch": "claude/acct-f79-qbo-sync-steps-record-success"
-  },
-  {
-   "number": 3989,
-   "title": "Claude- fix(qbo-sync): the ACCT-F77 guard was fail-open, and its rationale comment named the wrong linkage",
-   "mergedAt": "2026-08-01T22:20:53Z",
-   "branch": "fix/acct-f77b-guard-fail-open-and-false-rationale"
-  },
-  {
-   "number": 3988,
-   "title": "Claude- fix(qbo-sync): items_pull renamed its own twin into a unique-constraint collision — code fix, zero data mutation",
-   "mergedAt": "2026-08-01T21:49:47Z",
-   "branch": "claude/acct-f77-retire-generic-seed-items"
-  },
-  {
-   "number": 3987,
-   "title": "fix(dispatch): wire GAP-28 layover-detector worker into index.ts",
-   "mergedAt": "2026-08-01T20:43:05Z",
-   "branch": "fix/Cascade-gap28-layover-worker-wiring"
-  },
-  {
-   "number": 3986,
-   "title": "Claude- fix(health): pair the 8 remaining job cadences by hand — and confirm the OPS-F75 retraction",
-   "mergedAt": "2026-08-01T20:35:44Z",
-   "branch": "claude/ops-f76-pair-ambiguous-cron-cadences"
-  },
-  {
-   "number": 3985,
-   "title": "Claude- fix(health): 35 scheduled jobs had no cadence rule — derived from their own cron expressions",
-   "mergedAt": "2026-08-01T19:45:39Z",
-   "branch": "claude/ops-f75-derive-cron-cadences"
-  },
-  {
-   "number": 3984,
-   "title": "Cascade- chore: mark s-06-log-event-no-time-field done (already merged via PR #2630)",
-   "mergedAt": "2026-08-01T19:38:00Z",
-   "branch": "fix/Cascade-mark-s06-safety-log-time-done"
-  },
-  {
-   "number": 3983,
-   "title": "Claude- fix(accounting): load→invoice was completely broken — zero revenue category mappings existed",
-   "mergedAt": "2026-08-01T19:50:32Z",
-   "branch": "claude/acct-f74-seed-revenue-category-account-map"
-  },
-  {
-   "number": 3982,
-   "title": "Claude- fix(accounting): backfill bills.mdata_vendor_id — 16,244 of 16,246 resolvable, 2 named orphans left NULL",
-   "mergedAt": "2026-08-01T20:02:57Z",
-   "branch": "claude/acct-f73-backfill-bills-mdata-vendor-id"
-  },
-  {
-   "number": 3981,
-   "title": "Claude- fix(compliance): seed the two real carriers' USDOT/MC numbers — DO NOT MERGE WITHOUT JORGE'S OK",
-   "mergedAt": "2026-08-01T20:03:59Z",
-   "branch": "claude/comp-f72-seed-carrier-usdot-mc-numbers"
-  },
-  {
-   "number": 3979,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-08-02T19:26:56Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 3976,
-   "title": "Cascade- fix(ci): complete verify-no-duplicate-routes src-based migration (BLOCK-I)",
-   "mergedAt": "2026-08-01T19:19:18Z",
-   "branch": "fix/Cascade-no-duplicate-routes-src-migration"
-  },
-  {
-   "number": 3975,
-   "title": "Claude- fix(compliance): CSA pull sent a placeholder DOT number to the live SAFER lookup and logged a failure every run",
-   "mergedAt": "2026-08-01T19:01:35Z",
-   "branch": "fix/comp-f71-csa-pull-skips-placeholder-usdot"
-  },
-  {
-   "number": 3974,
-   "title": "Cascade- chore: mark two already-implemented non-financial blocks done",
-   "mergedAt": "2026-08-01T19:13:01Z",
-   "branch": "fix/Cascade-mark-two-already-done-blocks"
-  },
-  {
-   "number": 3973,
-   "title": "Claude- fix(safety): one probe's type error killed the whole integrity-alert engine since 2026-07-15",
-   "mergedAt": "2026-08-01T18:56:17Z",
-   "branch": "fix/saf-f70-integrity-alert-vendor-uuid-type"
-  },
-  {
-   "number": 3972,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-08-01T18:58:41Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 3971,
-   "title": "Cascade- fix(ci): update stale freshness planted-test after PR #3923 overlap-rule change",
-   "mergedAt": "2026-08-01T19:12:54Z",
-   "branch": "fix/Cascade-verify-branch-fresh-fallback-stale-test"
-  },
-  {
-   "number": 3970,
-   "title": "Claude- fix(health): the never-succeeded signal I shipped in #3966 could not fire for ANY of the 8 jobs that motivated it",
-   "mergedAt": "2026-08-01T18:47:37Z",
-   "branch": "fix/ops-f69-never-succeeded-needs-no-rule"
-  },
-  {
-   "number": 3969,
-   "title": "Claude- fix(qbo-sync): items pull never succeeded — a QBO item collides with the operator's own row instead of adopting it",
-   "mergedAt": "2026-08-01T19:50:37Z",
-   "branch": "fix/acct-f68-items-pull-adopt-local-row"
-  },
-  {
-   "number": 3968,
-   "title": "Cascade- chore: live-verify ITEM-03B active-company customer/vendor list scope",
-   "mergedAt": "2026-08-01T18:41:19Z",
-   "branch": "fix/Cascade-item-03b-live-verify"
-  },
-  {
-   "number": 3967,
-   "title": "Claude- fix(accounting): a reversed revenue latch still read as live — the load could never re-recognize",
-   "mergedAt": "2026-08-01T18:30:12Z",
-   "branch": "fix/acct-f66-revrec-latch-survives-reversal"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 4686,
+   "title": "Claude-1- CLS-MONEY-HOLD ruling: card is stale — pipeline fires 1:1 and the $0.00 settlement is arithmetically correct",
+   "mergedAt": "2026-08-07T18:00:42Z",
+   "category": "HOLD"
+  },
   {
    "number": 4615,
    "title": "Claude-2- chore(governance): the approval gate was abolished in LAW but still live in 50 design docs — 80 affirmative hold lines removed, ratchet widened",
@@ -20007,54 +20013,6 @@
    "title": "[HOLD-FOR-JORGE] catalogs: DOT Violation Types (#7) — new table + CRUD + page",
    "mergedAt": "2026-06-21T17:30:56Z",
    "category": "HOLD"
-  },
-  {
-   "number": 1281,
-   "title": "[HOLD-FOR-JORGE] gate v2: target-aware ALTER own-new-table neutral",
-   "mergedAt": "2026-06-21T04:31:00Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 1278,
-   "title": "[HOLD-FOR-JORGE] gate: CREATE-TABLE-only neutral (allow purely-additive new-table migrations)",
-   "mergedAt": "2026-06-21T03:58:16Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 1271,
-   "title": "fix(ci): HOLD-MERGE-GATE — block title-blind merge of HOLD/financial PRs",
-   "mergedAt": "2026-06-20T22:33:21Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 1270,
-   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-05 (CHAIN-07) — settlements 500 diagnosis + GL tie-out design",
-   "mergedAt": "2026-06-20T21:13:38Z",
-   "category": "TIER-1 financial"
-  },
-  {
-   "number": 1269,
-   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-04 (CHAIN-06) — Invoice→AR→Receive chain design",
-   "mergedAt": "2026-06-20T21:13:25Z",
-   "category": "TIER-1 financial"
-  },
-  {
-   "number": 1268,
-   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-03 (CHAIN-05) — bank feed categorize→match→post chain design",
-   "mergedAt": "2026-06-20T21:13:10Z",
-   "category": "TIER-1 financial"
-  },
-  {
-   "number": 1267,
-   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-02 (CHAIN-04) — Bill Payment tie-out design + draft JE",
-   "mergedAt": "2026-06-20T21:13:02Z",
-   "category": "TIER-1 financial"
-  },
-  {
-   "number": 1266,
-   "title": "[HOLD-FOR-JORGE — TIER 1] HOLD-01 (CHAIN-03) — Create Bill → GL design + draft JE proof",
-   "mergedAt": "2026-06-20T21:12:51Z",
-   "category": "TIER-1 financial"
   }
  ]
 }
