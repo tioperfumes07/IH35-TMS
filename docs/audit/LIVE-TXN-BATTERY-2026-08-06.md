@@ -5284,3 +5284,37 @@ first time someone needs to void a bill payment or an expense line.
 `accounting.bill_payments` and a soft-delete column to `accounting.expense_lines` in an additive, idempotent
 migration, then make the void paths write them. **Do not "solve" it with a `DELETE`** — that is the one
 outcome the law forbids, and it is the path of least resistance for anyone who does not read this first.
+
+---
+
+## 86. PASS — USMCA trial balance balances to the cent, entity-wide
+
+**Measured on prod `br-fancy-credit-akjnd07a`, 2026-08-07**, all postings joined through
+`accounting.journal_entries` scoped to USMCA, `current_user` asserted in the same statement.
+
+| account type | debits | credits | net debit |
+|---|---|---|---|
+| Asset | 1,981.10 | 7,411.20 | **(5,430.10)** |
+| CostOfGoodsSold | 2,927.24 | 1.00 | 2,926.24 |
+| Equity | 0.00 | 100.00 | (100.00) |
+| Expense | 6,984.10 | 0.00 | 6,984.10 |
+| Income | 314.90 | 1,514.90 | (1,200.00) |
+| Liability | 110.20 | 3,291.44 | (3,181.24) |
+| OtherExpense | 1.00 | 0.00 | 1.00 |
+| **TOTAL** | **12,318.54** | **12,318.54** | **0.00** |
+
+**Total debits equal total credits exactly.** Item 84 proved every entry balances individually; this proves
+the entity's books balance in aggregate — the trial balance, the first thing any accountant runs. It holds
+across all 28 journal entries including the one the bank categorize posted an hour ago (item 82).
+
+**OBSERVATION, not a defect — assets carry a NET CREDIT balance of $5,430.10.** Asset accounts are credited
+more than debited, i.e. the entity's cash/asset position is negative in the TMS books. That is consistent
+with what the Banking register shows (a running balance that dips to **−$12,372.32** mid-July) and with
+USMCA being seeded from bank-feed activity without corresponding funding entries. **Under board Rule 4 all
+TMS-native data is TEST data**, so a negative asset position is expected state here, not a finding — I am
+recording it so nobody later reads it as a discovered discrepancy and "corrects" it. If USMCA were a live
+book this would be the first thing to question; it is not.
+
+**What this closes out:** together with item 84, the double-entry engine is verified sound at both the
+entry level and the entity level, with zero cross-entity contamination. The defects filed today are
+concentrated entirely in what the interface **says**, not in what the ledger **does**.
