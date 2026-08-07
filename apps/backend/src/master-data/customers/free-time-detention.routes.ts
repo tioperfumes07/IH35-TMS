@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { assertCustomerScope, getTerms, listTermsHistory, updateTerms } from "./free-time-detention.service.js";
+import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 
 const paramsSchema = z.object({ uuid: z.string().uuid() });
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
@@ -37,7 +38,7 @@ export async function registerCustomerFreeTimeDetentionRoutes(app: FastifyInstan
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
 
     const terms = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const inScopeCustomer = await assertCustomerScope(client, params.data.uuid, query.data.operating_company_id);
       if (!inScopeCustomer) return null;
       return getTerms(client, params.data.uuid, query.data.operating_company_id);
@@ -56,7 +57,7 @@ export async function registerCustomerFreeTimeDetentionRoutes(app: FastifyInstan
     if (!params.success || !query.success || !body.success) return reply.code(400).send({ error: "validation_error" });
 
     const updated = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const inScopeCustomer = await assertCustomerScope(client, params.data.uuid, query.data.operating_company_id);
       if (!inScopeCustomer) return null;
       return updateTerms(client, params.data.uuid, query.data.operating_company_id, user.uuid, body.data);
@@ -73,7 +74,7 @@ export async function registerCustomerFreeTimeDetentionRoutes(app: FastifyInstan
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
 
     const rows = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const inScopeCustomer = await assertCustomerScope(client, params.data.uuid, query.data.operating_company_id);
       if (!inScopeCustomer) return null;
       return listTermsHistory(client, params.data.uuid, query.data.operating_company_id, query.data.limit);

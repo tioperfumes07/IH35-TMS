@@ -4,6 +4,7 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { validateTrailerStatusTransition } from "./trailer-status-state-machine.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 const equipmentStatusSchema = z.enum([
   "InService",
@@ -97,7 +98,7 @@ export async function registerTrailerFleetRoutes(app: FastifyInstance) {
     if (!body.success) return sendValidationError(reply, body.error);
 
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
       const oldRes = await client.query<{ status: string }>(
         `
           SELECT status::text AS status
@@ -241,7 +242,7 @@ export async function registerTrailerFleetRoutes(app: FastifyInstance) {
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+        await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
         const oldRes = await client.query(
           `
             SELECT *

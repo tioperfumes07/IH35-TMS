@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { getCurrentClocks } from "./hos-clocks.service.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -55,7 +56,7 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     const payload = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       await client.query(`SELECT set_config('app.user_role', $1, true)`, [user.role]);
 
       const driverRes = await client.query<{ id: string }>(
@@ -173,7 +174,7 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     const payload = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       await client.query(`SELECT set_config('app.user_role', $1, true)`, [user.role]);
 
       // Confine to drivers that actually belong to this operating company.
@@ -212,7 +213,7 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     const payload = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       await client.query(`SELECT set_config('app.user_role', $1, true)`, [user.role]);
 
       // Latest position per load via its assigned unit. Confined to this entity's loads + positions.

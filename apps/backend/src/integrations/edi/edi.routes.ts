@@ -8,6 +8,7 @@ import { buildX12214 } from "./transactions/outbound-214.builder.js";
 import { buildX12210 } from "./transactions/outbound-210.builder.js";
 import { buildX12990 } from "./transactions/outbound-990.builder.js";
 import { getPartnerByUuid } from "./setup.service.js";
+import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 
 const partnerBodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -47,7 +48,7 @@ export async function registerEdiRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "invalid_body", details: body.error.flatten() });
 
     const uuid = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       return addEdiPartner(client, body.data);
     });
     return reply.send({ uuid });
@@ -60,7 +61,7 @@ export async function registerEdiRoutes(app: FastifyInstance) {
     if (!q.success) return reply.code(400).send({ error: "invalid_query" });
 
     const partners = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [q.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, q.data.operating_company_id);
       return listPartners(client, q.data.operating_company_id);
     });
     return reply.send({ partners });
@@ -74,7 +75,7 @@ export async function registerEdiRoutes(app: FastifyInstance) {
     if (!params.success || !q.success) return reply.code(400).send({ error: "invalid_request" });
 
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [q.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, q.data.operating_company_id);
       return testConnection(client, q.data.operating_company_id, params.data.uuid);
     });
     return reply.send(result);
@@ -87,7 +88,7 @@ export async function registerEdiRoutes(app: FastifyInstance) {
     if (!q.success) return reply.code(400).send({ error: "invalid_query" });
 
     const messages = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [q.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, q.data.operating_company_id);
       const values: unknown[] = [q.data.operating_company_id];
       let sql = `
         SELECT uuid, partner_uuid, transaction_type, direction, control_number,
@@ -117,7 +118,7 @@ export async function registerEdiRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "invalid_body", details: body.error.flatten() });
 
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       const handled = await handleInbound204(client, {
         operating_company_id: body.data.operating_company_id,
         partner_uuid: body.data.partner_uuid,
@@ -181,7 +182,7 @@ export async function registerEdiRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "invalid_body" });
 
     const payload = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       const partner = await getPartnerByUuid(client, body.data.operating_company_id, body.data.partner_uuid);
       if (!partner) throw new Error("partner_not_found");
       const controlNumber = `214${Date.now()}`;
@@ -226,7 +227,7 @@ export async function registerEdiRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "invalid_body" });
 
     const payload = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       const partner = await getPartnerByUuid(client, body.data.operating_company_id, body.data.partner_uuid);
       if (!partner) throw new Error("partner_not_found");
       const controlNumber = `210${Date.now()}`;

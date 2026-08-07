@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 const driverParamsSchema = z.object({ id: z.string().uuid() });
@@ -106,7 +107,7 @@ export async function registerDriverDefaultTruckRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
     const payload = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const driverOk = await assertDriverScope(client, params.data.id, query.data.operating_company_id);
       if (!driverOk) return null;
       return fetchTruckAssignments(client, params.data.id, query.data.operating_company_id);
@@ -126,7 +127,7 @@ export async function registerDriverDefaultTruckRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "validation_error" });
     }
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const driverOk = await assertDriverScope(client, params.data.id, query.data.operating_company_id);
       if (!driverOk) return null;
       const unitOk = await assertUnitScope(client, body.data.unit_id, query.data.operating_company_id);
@@ -180,7 +181,7 @@ export async function registerDriverDefaultTruckRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const driverOk = await assertDriverScope(client, params.data.id, query.data.operating_company_id);
       if (!driverOk) return null;
       await client.query(

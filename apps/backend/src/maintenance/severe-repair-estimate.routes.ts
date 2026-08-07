@@ -12,6 +12,7 @@ import {
   refreshEstimate,
 } from "./severe-repair-estimate.service.js";
 import { renderSevereRepairInsurancePdf } from "./severe-repair-pdf-export.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -61,7 +62,7 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
 
     const client = await pool.connect();
     try {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const rows = await listOpenEstimates(client, query.data.operating_company_id);
       return reply.send({ data: rows });
     } finally {
@@ -77,7 +78,7 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
 
     const client = await pool.connect();
     try {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const row = await getFleetRestoreCost(client, query.data.operating_company_id);
       return reply.send({ data: row });
     } finally {
@@ -93,7 +94,7 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
 
     const client = await pool.connect();
     try {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const rows = await getPerUnitBreakdown(client, query.data.operating_company_id);
       return reply.send({ data: rows });
     } finally {
@@ -110,7 +111,7 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
 
     const client = await pool.connect();
     try {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       const summary = await getFleetRestoreCost(client, body.data.operating_company_id);
       const units = await getPerUnitBreakdown(client, body.data.operating_company_id);
       const pdf = await renderSevereRepairInsurancePdf({
@@ -135,7 +136,7 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
 
     const client = await pool.connect();
     try {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const row = await getRollupTotal(client, query.data.operating_company_id);
       return reply.send({ data: row });
     } finally {
