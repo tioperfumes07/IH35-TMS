@@ -7,10 +7,10 @@
     "type": "enforced"
   },
   {
-    "id": "LAW-2026-08-06-CLASS-SCOREBOARD-FRESH",
-    "title": "The Programs by-class scoreboard is GENERATED from docs/audit/wave-queue.json and must match it — a board that renders stale class status is trusted precisely because it looks authoritative, so drift must fail the build rather than mislead",
-    "source_file": "apps/frontend/src/pages/program/classScoreboard.data.ts",
-    "guard": "scripts/verify-class-scoreboard-fresh.mjs",
+    "id": "LAW-2026-08-06-LOAD-DETAIL-RESOLVES-NAMES",
+    "title": "The dispatch load-detail query must RESOLVE the primary driver name and unit number, not only carry their ids — a drawer that renders a covered load as \"Unassigned\" invites double-assignment, and the entity predicates on those joins must scope units by the owner/leased pair",
+    "source_file": "apps/backend/src/dispatch/loads.routes.ts",
+    "guard": "scripts/verify-load-detail-resolves-names.mjs",
     "type": "enforced"
   },
   {
@@ -340,6 +340,20 @@
     "title": "NEVER GUESS · NEVER DEFER · ALWAYS VERIFY · ALWAYS FIX, NEVER PATCH — every change fixes the root cause at its source, ships a guard that fails on the bug and passes on the fix, and is proven live on prod; CI-green is the floor, not the verdict; when a fact cannot be verified the required output is UNVERIFIED, never a guess",
     "source_file": "docs/law/NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX.md",
     "guard": "scripts/verify-no-patch-or-defer-language.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-CLASS-SCOREBOARD-FRESH",
+    "title": "The Programs by-class scoreboard is GENERATED from docs/audit/wave-queue.json and must match it — a board that renders stale class status is trusted precisely because it looks authoritative, so drift must fail the build rather than mislead",
+    "source_file": "apps/frontend/src/pages/program/classScoreboard.data.ts",
+    "guard": "scripts/verify-class-scoreboard-fresh.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-KANBAN-DROPSTATUS-CONTRACT",
+    "title": "Every dispatch Kanban lane dropStatus must be a status loadStatusSchema accepts — a lane whose drop the API rejects is a silent dead end, and the frontend lane list and backend enum live in separate files owned by separate lanes so they drift independently",
+    "source_file": "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
+    "guard": "scripts/verify-kanban-dropstatus-contract.mjs",
     "type": "enforced"
   }
 ]

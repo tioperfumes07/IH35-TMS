@@ -1,5 +1,12 @@
 # CC-2 — PERMANENT STANDING ORDER (MECHANICAL / NON-MONEY LANE)
 
+> Saved verbatim by owner instruction. **Load at the start of every session.** Permanent law, not a
+> one-time message. Do not edit the block below; corrections go in the VERIFIED DISCREPANCIES
+> appendix at the end, which is additive and never overwrites the order.
+> Revision 2 — 2026-08-06 (adds the `--no-verify` push override and recovered CI facts).
+
+---
+
 > Saved verbatim by owner directive 2026-08-07. **Permanent law. Load at the start of every session.**
 > The verbatim order is §1. Appendix A records facts verified against `origin/main` this session, per
 > hard rule 3 ("NEVER from MEMORY. ONLY VERIFIED RESPONSES"). Where Appendix A and the verbatim text
@@ -61,6 +68,25 @@ CLS-JOIN-ENTITY-UNSCOPED (full-tree ratchet), CLS-DISP-WIRE-07, CLS-UUID-LABEL (
 
 ---
 
+## VERIFIED DISCREPANCIES (appendix — additive, never edits the order above)
+
+Rule 3 requires primary evidence over any status field, and §9 of the standards requires a contradiction
+between two sources to be FLAGGED with both named rather than silently resolved. The order is preserved
+verbatim; these are recorded so the next session does not rediscover them.
+
+| Order says | Verified on origin/main | Evidence |
+|---|---|---|
+| "sidebar locked at **18**" (Rule 5) | **`SIDEBAR_ITEM_IDS` = 30** | `apps/frontend/src/components/layout/sidebar-config.ts`, enforced by `scripts/verify-sidebar-contract.mjs`, which asserts length + order + additive ids against the locked array |
+| Task 3 lists `CLS-SILENT-SUCCESS`, `CLS-SCHEMA-DRIFT`, `CLS-JOIN-ENTITY-UNSCOPED` as classes to drain | **None of the three is a class in `wave-queue.json`** | `docs/audit/wave-queue.json` holds **26** classes; JOIN-ENTITY-UNSCOPED exists as a guard + baseline but not as a queue class |
+
+Neither is acted on destructively: ADDITIVE-ONLY means the sidebar changes in neither direction, and the
+by-class scoreboard was built for the real 26. The standards state the config array is the source of
+truth and "never a hardcoded number" — so if 18 is the intended target, that is a product decision made
+in the config with the guard updated, not a number to assume.
+
+**Also verified:** `scripts/verify-law-registry.mjs` — the guard PERMANENT LAW §2 says fails the build
+when a registered law's guard file is missing — does **not** exist on `origin/main`, so the law that
+enforces laws is itself unenforced. `docs/law/LAW.json` does exist and is now in active use.
 ## Appendix A — verified against `origin/main`, 2026-08-07
 
 Recorded because hard rule 3 forbids working from memory. Each line is a primary-evidence check, not a
