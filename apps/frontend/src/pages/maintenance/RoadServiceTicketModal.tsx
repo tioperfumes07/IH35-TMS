@@ -8,6 +8,12 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useRoadServiceTickets, type RoadServiceType } from "../../hooks/useRoadServiceTickets";
+import { capNotice, listCapInfo } from "../../lib/list-cap";
+
+// CLS-SILENT-CAP: named so the fetch and the truncation check read the SAME number.
+// 2,836 vendors exist on prod, so an unsearched 200-row fetch hides 2,636 of them.
+const VENDOR_PICKER_CAP = 200;
+
 
 type Props = {
   open: boolean;
@@ -34,11 +40,18 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
       listVendors({
         operating_company_id: operatingCompanyId,
         status: "active",
-        limit: 200,
+        limit: VENDOR_PICKER_CAP,
         search: vendorSearch || undefined,
       }),
     enabled: open && Boolean(operatingCompanyId),
   });
+
+  // CLS-SILENT-CAP: EXACT truncation — listVendors returns the server's real `total`.
+  const vendorCap = useMemo(
+    () => listCapInfo(vendorsQuery.data?.vendors?.length ?? 0, VENDOR_PICKER_CAP, vendorsQuery.data?.total ?? null),
+    [vendorsQuery.data],
+  );
+  const vendorCapNotice = capNotice(vendorCap, "vendors");
 
   const [ticketNumber, setTicketNumber] = useState("");
   const [vendorId, setVendorId] = useState("");
@@ -97,6 +110,8 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
             canonical AP vendor + keeps vendor_name for display/memo.
           */}
           <div className="mt-1" data-testid="road-service-vendor-select">
+            {/* CLS-SILENT-CAP: tell the user the picker is not showing every vendor. */}
+            {vendorCapNotice ? <p className="text-[10px] text-slate-700">{vendorCapNotice}</p> : null}
             <ReferenceSelect
               value={vendorId || null}
               onChange={(next) => {

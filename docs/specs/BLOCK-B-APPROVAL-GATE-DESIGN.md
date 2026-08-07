@@ -1,6 +1,8 @@
-# Block B — Booked Cash-Advance APPROVAL GATE (design-first, BUILD-AND-HOLD, Tier-1 money)
+# Block B — Booked Cash-Advance APPROVAL GATE (design-first, BUILD-AND-SHIP, Tier-1 money)
 
-**Status:** DESIGN-FIRST. No posting/flag changes. Money path → build-and-HOLD, never self-merge; GUARD verifies.
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
+**Status:** DESIGN-FIRST. No posting/flag changes. Money path → build-and-ship, never self-merge; GUARD verifies.
 **Date:** 2026-06-28 · Supersedes #1438 Q3 (closed). Builds on #1440 (rails) + #1562 (load_id-direct).
 **Decision (Jorge-locked):** a dispatcher-booked cash advance requires **OWNER APPROVAL by default**, with an
 **owner-set auto-approve THRESHOLD** — advances **≤ $X** auto-approve under dispatcher authority; **above $X**
@@ -21,10 +23,10 @@ require the Owner. Matches McLeod/Alvys/NetSuite **approval-limit** model + make
 4. **Threshold config:** owner-settable per operating company (the value behind `resolveCompanyCashAdvanceThresholdDollars`); surfaced in an Owner/Admin settings screen (UI is a follow-up). Default conservative (e.g. $0 → everything needs owner, until the owner raises it) — Jorge sets the launch default.
 5. **Auto-approve is itself gated:** the "auto-approve ≤ threshold" behavior is OFF until the owner sets a threshold > 0 — consistent with the "never auto by default; human confirms" stance. With threshold = $0, every booked advance routes to the Owner.
 
-## What changes (build-and-HOLD, after GUARD reviews this design)
+## What changes (build-and-ship, after GUARD reviews this design)
 - The booked-advance create path **enforces the gate**: ≤ threshold → dispatcher-authority approve; > threshold → owner-required (reusing `is_above_policy` + `above_policy_requires_owner`). No new posting, no GL/flag changes.
 - A CI guard asserting the booked path never auto-disburses above the threshold (maker≠checker), and that `is_above_policy` drives the owner-required branch.
 - **No money posting** — disbursement GL stays behind its existing OFF flag; this gate only governs WHO approves and WHEN it disburses.
 
 ## Holds / verification
-Tier-1 money → **build-and-HOLD, no self-merge**. GUARD verifies: (1) booked advance ≤ threshold = dispatcher-approve, > threshold = owner-required; (2) maker≠checker enforced; (3) load_id-direct preserved (#1562); (4) recovery default amortize + net-floor (locked). PAUSE for Jorge's threshold default + GUARD sign-off before merge.
+Tier-1 money → **build-and-ship, merge on green with proof**. GUARD verifies: (1) booked advance ≤ threshold = dispatcher-approve, > threshold = owner-required; (2) maker≠checker enforced; (3) load_id-direct preserved (#1562); (4) recovery default amortize + net-floor (locked). PAUSE for Jorge's threshold default + GUARD sign-off before merge.

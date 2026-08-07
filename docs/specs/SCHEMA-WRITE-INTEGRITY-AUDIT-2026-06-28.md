@@ -1,5 +1,7 @@
 # Schema Write-Integrity Audit + Permanent Gate (2026-06-28)
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 **Problem (Jorge):** recurring table/column confusion — code writes/posts to tables or columns that don't
 exist in the migrated schema; it only surfaces as a runtime 500 (Postgres 42703 undefined column / 42P01
 undefined table). The pre-existing `verify-backend-column-references` guard only scanned `identity`+`auth`,
@@ -28,7 +30,7 @@ apps/backend/src/migrations/  (UNAPPLIED):
 ```
 **FIX:** move each orphaned migration into `db/migrations/` (renumber above current max, idempotent,
 fresh-DB-safe), OR delete the dead code that references them. These are financial/driver-finance → Tier-1
-ceremony, build-and-HOLD, JORGE-APPROVED. **Add a CI guard that fails if `apps/backend/src/migrations/` is
+ceremony, build-and-ship, JORGE-APPROVED. **Add a CI guard that fails if `apps/backend/src/migrations/` is
 non-empty** (one canonical migrations dir).
 
 ## Root cause #2 — phantom COLUMN names (table real, wrong column) — incl. the GL posting path

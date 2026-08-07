@@ -1,6 +1,8 @@
 # DESIGN HOLD — Safe mount of `settlements/approval.routes.ts` (internal-controls approval workflow)
 
-**Status:** DESIGN-ONLY · **DOCS-ONLY PR** · **BUILD-AND-HOLD** · **DO NOT MERGE** without owner `JORGE-APPROVED`.
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
+**Status:** DESIGN-ONLY · **DOCS-ONLY PR** · **BUILD-AND-SHIP** · **DO NOT MERGE** without owner `JORGE-APPROVED`.
 **Item:** `audit2-internal-controls-approval-workflow` (accounting-module GAP lane, 2026-07-21).
 **No route mount, no code change, no Neon write ships with this document.**
 
@@ -29,7 +31,7 @@ Mounting today would expose 6 handlers where any authenticated Manager/Payroll u
 ## 3. Safe-mount design (each step a separate future PR; nothing ships here)
 
 1. **Scope every handler (blocking prerequisite):** replicate the xe-fin pattern already present at `:95` — inside `withCurrentUser`, `const scoped = await resolveOperatingCompanyId(client, user.uuid, requestedCompanyId)`; 400 if absent, 403 if membership fails; pass **`scoped`** (never the raw param) to every `approval.service` call. Applies to all 6 unscoped handlers; trip-link assign additionally gets a company-scope predicate inside `assignTripLink`.
-2. **Separation of duties (owner decision):** internal-controls standard (NetSuite approval workflow / QBO min-2-role) says line-approver ≠ finalizer. Proposal: `approve-line`/`reject-line` = Manager+; `approve` (settlement) = Accountant+; `finalize` = Owner/Administrator only. **HOLD until Jorge picks the matrix.**
+2. **Separation of duties (owner decision):** internal-controls standard (NetSuite approval workflow / QBO min-2-role) says line-approver ≠ finalizer. Proposal: `approve-line`/`reject-line` = Manager+; `approve` (settlement) = Accountant+; `finalize` = Owner/Administrator only. **ship on green (hold superseded) picks the matrix.**
 3. **Collision hygiene at mount time:** keep `registerSettlementsMvpRoutes` unmounted (its allowlist entry stands on its own); mount only `registerSettlementApprovalRoutes`; boot-time duplicate-route check is CI-proven by existing route tests.
 4. **Allowlist row removal in the SAME PR as the mount** (guard `verify-no-orphan-routes.mjs` then enforces it stays mounted) — allowlist text should be corrected to name the real historical reason (unscoped handlers), not the path collision.
 5. **Frontend**: none exists — the approval UI (settlement detail approve/reject per line, finalize gate, trip-link queue screen) is its own block AFTER the safe mount; mounting first with zero callers is acceptable only because the handlers become entity-safe in step 1.
