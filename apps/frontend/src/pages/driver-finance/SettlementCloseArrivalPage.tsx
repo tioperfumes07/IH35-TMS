@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -65,7 +66,7 @@ export function SettlementCloseArrivalPage() {
         const name = (row.driver_name ?? "").trim() || row.driver_id.slice(0, 8);
         return {
           value: row.driver_id,
-          label: `${name} — ${row.settlement_number ?? row.settlement_id.slice(0, 8)}`,
+          label: `${name} — ${entityLabel(row.settlement_number, row.settlement_id, "Settlement")}`,
           sublabel: `Net ${formatUsd(row.net_pay)} · ${row.status}`,
         };
       }),
@@ -185,7 +186,7 @@ export function SettlementCloseArrivalPage() {
                   <div className="text-sm font-semibold text-gray-900">
                     {(openQuery.data?.pre_settlements ?? []).find((r) => r.driver_id === settlement.driver_id)?.driver_name?.trim() ||
                       settlement.driver_id.slice(0, 8)}{" "}
-                    — {settlement.display_id ?? settlement.id.slice(0, 8)}
+                    — {entityLabel(settlement.display_id, settlement.id, "Record")}
                   </div>
                   <div className="text-xs text-gray-600">
                     {settlement.first_load_number ?? "—"} → {settlement.last_load_number ?? "—"} · status: {settlement.status}
