@@ -178,7 +178,7 @@ export function FineDetailDrawer({
       <FineConvertConfirmModal
         open={confirmOpen}
         amountCents={Number(fine.amount_cents ?? 0)}
-        driverLabel={String(fine.subject_driver_name ?? fine.subject_driver_id ?? "driver")}
+        driverLabel={(fine.subject_driver_name as string | undefined)?.trim() || "driver"}
         loading={converting}
         onClose={() => setConfirmOpen(false)}
         onConfirm={() => {

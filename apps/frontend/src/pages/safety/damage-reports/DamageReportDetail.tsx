@@ -46,7 +46,7 @@ export function DamageReportDetail({ damageUuid, operatingCompanyId }: Props) {
       <p className="mb-2 text-xs text-slate-500">Unaltered originals with custody audit trail</p>
 
       <div className="grid gap-2 sm:grid-cols-2">
-        {photos.map((photo) => (
+        {photos.map((photo, index) => (
           <button
             key={photo.id}
             type="button"
@@ -56,8 +56,8 @@ export function DamageReportDetail({ damageUuid, operatingCompanyId }: Props) {
               setViewerOpen(true);
             }}
           >
-            <div className="font-semibold text-slate-800">Evidence {photo.id.slice(0, 8)}</div>
-            <div className="font-mono text-[10px] text-slate-500">{photo.sha256_hash.slice(0, 20)}…</div>
+            <div className="font-semibold text-slate-800">Evidence {index + 1}</div>
+            <div className="font-mono text-[10px] text-slate-500">hash {photo.sha256_hash.slice(0, 12)}…</div>
           </button>
         ))}
         {photos.length === 0 ? <p className="text-xs text-slate-500">No EXIF-verified photos attached.</p> : null}

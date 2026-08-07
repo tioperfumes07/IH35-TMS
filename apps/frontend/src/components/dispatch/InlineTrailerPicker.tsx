@@ -1,8 +1,6 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { listUnits } from "../../api/mdata";
+import { useState } from "react";
 import { patchAssignTrailer } from "../../api/dispatch";
-import { Combobox } from "../shared/Combobox";
+import { EntityPicker } from "../parity/EntityPicker";
 import { optimisticPatch } from "../../lib/optimisticPatch";
 
 type Props = {
@@ -17,34 +15,6 @@ type Props = {
 export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, displayLabel, onAssigned, onRollback }: Props) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // SAF-B29: never silent listUnits(limit:500) — type-ahead re-queries so trailers past page 1 stay assignable.
-  const [trailerSearch, setTrailerSearch] = useState("");
-
-  const trailersQuery = useQuery({
-    queryKey: ["dispatch", "inline-trailers", operatingCompanyId, trailerSearch],
-    queryFn: () =>
-      listUnits({
-        operating_company_id: operatingCompanyId,
-        limit: 200,
-        include: "trailers",
-        search: trailerSearch || undefined,
-      }),
-    enabled: open && Boolean(operatingCompanyId),
-  });
-
-  const options = useMemo(() => {
-    const rows = trailersQuery.data?.units ?? [];
-    return rows
-      .filter((row) => (row as { equipment_kind?: string }).equipment_kind === "trailer")
-      .map((row) => {
-        const trailer = row as { id: string; unit_number?: string; display_id?: string };
-        return {
-          value: trailer.id,
-          label: trailer.unit_number ?? trailer.display_id ?? trailer.id.slice(0, 8),
-        };
-      });
-  }, [trailersQuery.data?.units]);
 
   if (!open) {
     return (
@@ -66,14 +36,17 @@ export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, dis
 
   return (
     <div className="relative z-20 min-w-[180px]" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
-      <Combobox
-        options={options}
+      <EntityPicker
+        kind="trailer"
+        operatingCompanyId={operatingCompanyId}
         value={trailerId}
-        placeholder={trailersQuery.isLoading ? "Loading trailers…" : "Type trailer…"}
-        onSearch={setTrailerSearch}
+        enabled={open}
+        placeholder="Type trailer…"
+        allowClear={false}
+        className="h-8 w-full text-xs"
         onChange={async (next) => {
           if (!next) return;
-          const label = options.find((opt) => opt.value === next)?.label ?? next.slice(0, 8);
+          const label = next.slice(0, 8);
           const prior = { trailerId, label: displayLabel };
           const result = await optimisticPatch({
             applyOptimistic: () => onAssigned({ trailerId: next, label }),

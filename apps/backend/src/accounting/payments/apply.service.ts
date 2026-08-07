@@ -2,6 +2,8 @@ import { nextCreditMemoDisplayId } from "../display-id.js";
 import { postSourceTransaction } from "../posting-engine.service.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { recordPostingFlagSkip, POSTING_FLAG_SKIP_RESULT } from "../posting-flag-skip-audit.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
+import { backlinkBankTransactionToInvoice } from "./bank-invoice-backlink.service.js";
 
 // CHAIN-06 — per-entity GL-posting kill switch for the customer-payment (A/R receipt) JE. The payment and
 // its applications (AR reduced at the payment_applications level) are always written; posting the balanced
@@ -360,9 +362,35 @@ export async function applyPayment(client: Queryable, input: ApplyPaymentInput, 
     );
   }
 
+  // HOP 9 — stamp the bank line that carried this cash with the invoice it settled. Linkage only:
+  // it never throws into the payment path, because a failed back-link must not undo money that has
+  // already moved. banking.bank_transactions.matched_invoice_id had ZERO writers before this.
+  const bankBacklink = await backlinkBankTransactionToInvoice(
+    client,
+    input.operating_company_id,
+    input.payment_id,
+    applications.filter((a) => a.target_kind === "invoice").map((a) => a.target_id)
+  );
+  if (bankBacklink.linked) {
+    await appendCrudAudit(
+      client,
+      actor.user_id,
+      "banking.bank_transaction.matched_to_invoice",
+      {
+        operating_company_id: input.operating_company_id,
+        bank_transaction_id: bankBacklink.bank_transaction_id,
+        invoice_id: bankBacklink.invoice_id,
+        payment_id: input.payment_id,
+      },
+      "info",
+      "HOP9-BANK-PATH"
+    );
+  }
+
   return {
     payment_id: payment.id,
     application_ids: applicationIds,
+    bank_backlink: bankBacklink,
     amount_unapplied_cents: unappliedAfter,
     overpayment_credit_memo_display_id: overpaymentCreditMemoDisplayId,
     // Honest posting signal: "posted" when the GL receipt JE was written, the discriminated

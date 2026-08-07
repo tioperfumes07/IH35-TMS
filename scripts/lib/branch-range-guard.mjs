@@ -100,7 +100,24 @@ export function collectGitFacts(cwd = process.cwd(), baseRefs = BASE_REF_CANDIDA
 /** The real commit list for the range. Returns [] only when there is genuinely no base. */
 export function rangeCommitShas(facts, cwd = process.cwd()) {
   if (!facts.base) return [];
-  return git(`rev-list ${facts.base}..HEAD`, cwd).split("\n").filter(Boolean);
+  // --no-merges is LOAD-BEARING, not hygiene.
+  //
+  // The evidence guards (verify-definition-of-done-evidence, verify-no-money-theater) require every
+  // range commit touching apps/ or db/ to carry the Rule 16 block. A MERGE COMMIT can never carry
+  // one: git authors it, not a coder, and it introduces no change of its own — everything inside it
+  // is already evidenced by the commits being merged, each of which this range still inspects.
+  //
+  // Why this became MANDATORY (2026-08-05): the owner enabled "Require branches to be up to date
+  // before merging". Satisfying it means `Update branch`, which creates a merge commit — and
+  // rebasing instead is impossible here because `git push --force*` sits in the repo's own
+  // .claude/settings.json deny list. So every PR from every lane now acquires a merge commit it
+  // cannot avoid, and without this flag all four lanes fail DoD/money-theater on a commit no human
+  // wrote. Verified on a real branch: with the flag the true merge commit (2 parents) is excluded and
+  // both guards pass; without it they fail.
+  //
+  // This does NOT weaken the gate — every AUTHORED commit is still checked individually. It removes
+  // a commit class that is structurally incapable of satisfying it.
+  return git(`rev-list --no-merges ${facts.base}..HEAD`, cwd).split("\n").filter(Boolean);
 }
 
 const shortSha = (s) => (s ? s.slice(0, 9) : "(none)");

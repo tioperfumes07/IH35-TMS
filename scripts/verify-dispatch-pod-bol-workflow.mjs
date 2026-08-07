@@ -10,6 +10,7 @@ const ROOT = process.cwd();
 const paths = {
   migration: path.join(ROOT, "db/migrations/0356_dispatch_pod_bol.sql"),
   page: path.join(ROOT, "apps/frontend/src/pages/dispatch/PodReviewPage.tsx"),
+  bolPanel: path.join(ROOT, "apps/frontend/src/components/dispatch/LoadBolPanel.tsx"),
   pageTest: path.join(ROOT, "apps/frontend/src/pages/dispatch/__tests__/PodReviewPage.test.tsx"),
   routes: path.join(ROOT, "apps/backend/src/dispatch/pod.routes.ts"),
   bol: path.join(ROOT, "apps/backend/src/dispatch/bol-generator.service.ts"),
@@ -38,6 +39,7 @@ function fail(msg) {
 function main() {
   const migration = read(paths.migration);
   const page = read(paths.page);
+  const bolPanel = read(paths.bolPanel);
   const pageTest = read(paths.pageTest);
   const routes = read(paths.routes);
   const bol = read(paths.bol);
@@ -57,7 +59,10 @@ function main() {
   if (!migration.includes("dispatch.bol_documents")) failures.push("migration 0356 must create bol_documents");
   if (!page.includes("dispatch-pod-review-page")) failures.push("PodReviewPage must expose test id");
   if (!page.includes("pod-review-panel")) failures.push("PodReviewPage must expose review panel");
-  if (!page.includes("Download BOL PDF")) failures.push("PodReviewPage must expose BOL download");
+  // CLS-DISP-WIRE-09: BOL chrome lives in shared LoadBolPanel (Pod Review + Load Detail drawer).
+  // Page must mount the panel; panel must expose the download control (not inline-only on PodReviewPage).
+  if (!page.includes("LoadBolPanel")) failures.push("PodReviewPage must mount LoadBolPanel for BOL download/generate");
+  if (!bolPanel.includes("Download BOL PDF")) failures.push("LoadBolPanel must expose BOL download");
   if ((pageTest.match(/\bit\(/g) ?? []).length < 4) failures.push("PodReviewPage tests must cover at least 4 cases");
   if ((routeTest.match(/\bit\(/g) ?? []).length < 6) failures.push("pod-bol routes tests must cover at least 6 cases");
   if ((podCaptureTest.match(/\bit\(/g) ?? []).length < 2) failures.push("PodCapture tests must cover at least 2 cases");

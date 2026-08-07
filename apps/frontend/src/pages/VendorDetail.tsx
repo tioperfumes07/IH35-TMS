@@ -31,7 +31,13 @@ import { VENDOR_CATEGORY_VALUES, type VendorCategoryValue } from "../lib/vendorC
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { ReferenceSelect } from "../components/parity/ReferenceSelect";
 import { useCatalogQuery } from "../hooks/useCatalogQuery";
-import { emptyVendorProfileMeta, parseVendorNotes, serializeVendorNotes, type VendorProfileMeta } from "../lib/vendorProfileMeta";
+import {
+  emptyFactoringProfileMeta,
+  emptyVendorProfileMeta,
+  parseVendorNotes,
+  serializeVendorNotes,
+  type VendorProfileMeta,
+} from "../lib/vendorProfileMeta";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateUS } from "../lib/formatDate";
 
@@ -348,8 +354,9 @@ export function VendorDetailPage() {
         generalEmail: profileForm.generalEmail,
         accountingContact: profileForm.accountingContact,
         disputesContact: profileForm.disputesContact,
-          qualityRating: profileForm.qualityRating,
-          factoring: profileForm.factoring,
+        qualityRating: profileForm.qualityRating,
+        // VEND-S02 / FACT-kpi-vs-profile: factor rates live on factoring.factor — never vendor notes.
+        factoring: emptyFactoringProfileMeta(),
       };
       return updateVendor(id, {
         name: profileForm.name.trim(),
@@ -819,118 +826,14 @@ export function VendorDetailPage() {
             />
           </DataPanelRow>
           <DataPanelRow>
-            <span className="text-xs font-semibold text-gray-600">Factoring reserves %</span>
-            <input
-              value={profileForm.factoring.factoringReservesPct}
-              onChange={(event) =>
-                setProfileForm((current) => ({
-                  ...current,
-                  factoring: { ...current.factoring, factoringReservesPct: event.target.value },
-                }))
-              }
-              disabled={!profileEditMode}
-              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
-            />
-          </DataPanelRow>
-          <DataPanelRow>
-            <span className="text-xs font-semibold text-gray-600">Escrow reserves %</span>
-            <input
-              value={profileForm.factoring.escrowReservesPct}
-              onChange={(event) =>
-                setProfileForm((current) => ({
-                  ...current,
-                  factoring: { ...current.factoring, escrowReservesPct: event.target.value },
-                }))
-              }
-              disabled={!profileEditMode}
-              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
-            />
-          </DataPanelRow>
-          <DataPanelRow>
-            <span className="text-xs font-semibold text-gray-600">Late fees %</span>
-            <input
-              value={profileForm.factoring.lateFeesPct}
-              onChange={(event) =>
-                setProfileForm((current) => ({
-                  ...current,
-                  factoring: { ...current.factoring, lateFeesPct: event.target.value },
-                }))
-              }
-              disabled={!profileEditMode}
-              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
-            />
-          </DataPanelRow>
-          <DataPanelRow>
-            <span className="text-xs font-semibold text-gray-600">Chargebacks %</span>
-            <input
-              value={profileForm.factoring.chargebacksPct}
-              onChange={(event) =>
-                setProfileForm((current) => ({
-                  ...current,
-                  factoring: { ...current.factoring, chargebacksPct: event.target.value },
-                }))
-              }
-              disabled={!profileEditMode}
-              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
-            />
-          </DataPanelRow>
-          <DataPanelRow>
-            <span className="text-xs font-semibold text-gray-600">Aged invoices 31-60 (% rate / % fee)</span>
-            <div className="grid w-full max-w-md grid-cols-2 gap-2">
-              <input
-                value={profileForm.factoring.advanceRate31To60Pct}
-                onChange={(event) =>
-                  setProfileForm((current) => ({
-                    ...current,
-                    factoring: { ...current.factoring, advanceRate31To60Pct: event.target.value },
-                  }))
-                }
-                disabled={!profileEditMode}
-                placeholder="Advance rate %"
-                className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
-              />
-              <input
-                value={profileForm.factoring.advanceFee31To60Pct}
-                onChange={(event) =>
-                  setProfileForm((current) => ({
-                    ...current,
-                    factoring: { ...current.factoring, advanceFee31To60Pct: event.target.value },
-                  }))
-                }
-                disabled={!profileEditMode}
-                placeholder="Fee %"
-                className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
-              />
-            </div>
-          </DataPanelRow>
-          <DataPanelRow>
-            <span className="text-xs font-semibold text-gray-600">Aged invoices 61-90 (% rate / % fee)</span>
-            <div className="grid w-full max-w-md grid-cols-2 gap-2">
-              <input
-                value={profileForm.factoring.advanceRate61To90Pct}
-                onChange={(event) =>
-                  setProfileForm((current) => ({
-                    ...current,
-                    factoring: { ...current.factoring, advanceRate61To90Pct: event.target.value },
-                  }))
-                }
-                disabled={!profileEditMode}
-                placeholder="Advance rate %"
-                className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
-              />
-              <input
-                value={profileForm.factoring.advanceFee61To90Pct}
-                onChange={(event) =>
-                  setProfileForm((current) => ({
-                    ...current,
-                    factoring: { ...current.factoring, advanceFee61To90Pct: event.target.value },
-                  }))
-                }
-                disabled={!profileEditMode}
-                placeholder="Fee %"
-                className="rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
-              />
-            </div>
+            <span className="text-xs font-semibold text-gray-600">Factor rate schedule</span>
+            <p className="max-w-2xl text-sm text-gray-700" data-testid="vendor-factor-schedule-relocated">
+              Advance / fee / reserve rates are edited on{" "}
+              <Link to="/factoring" className="font-medium text-slate-900 underline">
+                Factoring → active factor profile
+              </Link>{" "}
+              (<span className="text-gray-500">(factoring.factor columns — not vendor notes).</span>
+            </p>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Notes</span>

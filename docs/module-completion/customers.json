@@ -2,7 +2,7 @@
   "module": "customers",
   "title": "Customers",
   "complete": false,
-  "as_of": "2026-08-02",
+  "as_of": "2026-08-04",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/customers-deep-2026-08-01.md",
   "spec_sources": [
@@ -14,86 +14,142 @@
     {
       "id": "CUST-S01",
       "title": "/customers roster density matches Neon active customers",
-      "layers": ["DOD-A", "VERIFY-6"],
+      "layers": [
+        "DOD-A",
+        "VERIFY-6"
+      ],
       "spec": "Customers.tsx · mdata.customers",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS TRANSP: 1243 active exact match UI",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor Neon lucia (br-fancy-credit-akjnd07a): active deactivated_at IS NULL → TRANSP 1243 · TRK 1446 · USMCA 1 (matches auditor TRANSP 1243). Backend customers.routes status=active filters deactivated_at IS NULL. Guard verify-cust-s01-roster-density-filter + step 2232.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "CUST-S02",
       "title": "Customer detail Transaction List ties to accounting.invoices",
-      "layers": ["DOD-C", "VERIFY-4", "VERIFY-6"],
+      "layers": [
+        "DOD-C",
+        "VERIFY-4",
+        "VERIFY-6"
+      ],
       "spec": "customers-deep transaction list proof",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS sampled customer invoices match DOM",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: Customers.tsx transaction_list calls listInvoices(companyId). Neon lucia accounting.invoices count=11981 all with customer_id. Guard verify-cust-s02-transaction-list-invoices + step 2234.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "CUST-S03",
       "title": "Nine follow-up tabs render honest COMING_STATE_COPY (not silent empty)",
-      "layers": ["DOD-B", "VERIFY-1"],
-      "spec": "Customers.tsx:143-153 COMING_STATE_COPY",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS: explicit stub messages for 9 tabs",
-      "pr": null
+      "layers": [
+        "DOD-B",
+        "VERIFY-1"
+      ],
+      "spec": "Customers.tsx COMING_STATE_COPY",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: COMING_STATE_COPY has 9 keys (activity_feed…conversations) each naming missing endpoint/source + follow-up; CustomerTabComingState renders copy. Guard verify-cust-s03-coming-state-copy + step 2228. Auditor scaffold already PASS; ratchet locks it.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "CUST-CHROME-01",
       "title": "Edit vs New transaction ActionButton visual parity on list header",
-      "layers": ["DOD-B"],
+      "layers": [
+        "DOD-B"
+      ],
       "spec": "CHROME-001 · CLS-CHROME-INCONSISTENCY",
-      "status": "OPEN",
-      "evidence": "scaffold — FAIL: 24×16px Edit vs 98×42px New transaction on same row",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: Customers master-detail header Edit is Button variant=secondary className=h-8 beside primary New transaction (was ActionButton text-link). Vendors sibling same. Guard verify-cust-chrome-header-action-parity + step 2224. data-testid customer-header-edit / customer-header-new-transaction.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "CUST-CHROME-02",
       "title": "Edit button treatment consistent list vs CustomerDetail header",
-      "layers": ["DOD-B"],
+      "layers": [
+        "DOD-B"
+      ],
       "spec": "CHROME-002",
-      "status": "OPEN",
-      "evidence": "scaffold — FAIL: two unrelated Edit visual treatments",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: Customer details tab Edit (data-testid=customer-details-edit) uses the same Button variant=secondary chrome as list-header Edit — no ActionButton dual path. CustomerDetail page Edit remains primary Button for inline edit-mode (different action).",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "CUST-CHROME-03",
       "title": "ParityTable column resize affordance discoverable",
-      "layers": ["DOD-B", "VERIFY-1"],
-      "spec": "CHROME-003 · ParityTable.tsx:876-887",
-      "status": "OPEN",
-      "evidence": "scaffold — resize works but 4-6px handle undiscoverable",
-      "pr": null
+      "layers": [
+        "DOD-B",
+        "VERIFY-1"
+      ],
+      "spec": "CHROME-003 · ParityTable.tsx resize handle",
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: ParityTable col-resize is w-2 opaque slate-200/90 + grip + title tooltip + data-testid=parity-table-col-resize (was ~w-1.5 gray-300/80 hard to see). Guard verify-parity-table-resize-affordance + step 2226.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "CUST-LINK-01",
       "title": "Customer → invoice → invoice_lines chain (system-wide SS-005)",
-      "layers": ["DOD-C", "VERIFY-4"],
+      "layers": [
+        "DOD-C",
+        "VERIFY-4"
+      ],
       "spec": "ACC-invoice-lines · WAVE-H4",
-      "status": "OPEN",
-      "evidence": "scaffold — pre-existing: 11977 invoices / 1 invoice_line",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-04 Cursor: Neon lucia invoices=11981 · invoice_lines=5 (sparse — no backfill this PR). Customers.tsx transaction_list EntityLink kind=invoice + onRowClick → /accounting/invoices/:id; InvoiceDetailPage getInvoice + data-testid=invoice-lines-honest-empty names sparse invoice_lines when lineCount=0; draft retains + Create Line. Guard verify-cust-link-01-invoice-lines-honest + step 2352.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "CUST-LINK-02",
       "title": "COI Requests tab honest when insurance.coi_request=0",
-      "layers": ["DOD-B", "VERIFY-6"],
+      "layers": [
+        "DOD-B",
+        "VERIFY-6"
+      ],
       "spec": "COI tab empty honesty",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS: legitimately empty",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: Neon prod br-fancy-credit-akjnd07a SET app.bypass_rls=lucia → insurance.coi_request count=0 AND n_live_tup=0 (true empty). CoiTab emptyText=\"No COI requests yet…\" + Create COI retained. Guard verify-cust-link-02-coi-honest-empty + step 2230.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "CUST-VERIFY-01",
       "title": "Customers module VERIFY-1..8 TRANSP + USMCA",
-      "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
+      "layers": [
+        "VERIFY-1",
+        "VERIFY-2",
+        "VERIFY-3",
+        "VERIFY-4",
+        "VERIFY-5",
+        "VERIFY-6",
+        "VERIFY-7",
+        "VERIFY-8"
+      ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "OPEN",
-      "evidence": "scaffold — 12/12 tabs rendered TRANSP; USMCA UNVERIFIED this pass",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-04 Cursor: meta guard verify-cust-verify-01 composes S01 roster (TRANSP 1243/USMCA 1 lucia deactivated_at filter), S02 transaction list, S03 coming-state copy, CHROME-01 header parity, LINK-01 honest invoice line-empty, LINK-02 COI honest empty; manifest /customers + /customers/:id. Step 2254. Was 9 of 9 until LV-001 Relationship Health FAIL opened M to 10.",
+      "pr": null,
+      "prod_verified": false
+    },
+    {
+      "id": "LV-001",
+      "title": "Relationship Health 500s on every customer — PG 42883, scores never written",
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "VERIFY-1",
+        "VERIFY-6"
+      ],
+      "spec": "Customer detail Relationship Health · catalogs/customer quality scores",
+      "status": "FAIL",
+      "evidence": "2026-08-04 GUARD/live: Relationship Health tab 500s on every customer (Postgres 42883 — function/operator missing); quality scores never written. Honest M grows 9→10; module cannot stay complete:true.",
+      "pr": null,
+      "prod_verified": false
     }
   ],
-  "pass_count": 0,
-  "total_count": 9,
-  "progress": "0 of 9"
+  "pass_count": 9,
+  "total_count": 10,
+  "progress": "9 of 10"
 }

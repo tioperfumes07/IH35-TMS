@@ -12,10 +12,8 @@ import {
   uploadSafetyIncidentPhoto,
   type SafetyIncidentType,
 } from "../../../api/safety";
-import { listUnits } from "../../../api/mdata";
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
-import { Combobox } from "../../../components/Combobox";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
@@ -176,40 +174,9 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const { user } = useAuth();
   const canVoid = user?.role === "Owner" || user?.role === "Administrator";
 
-  // SAF-B29: unit/trailer drawer pickers and fleet labels must not silently truncate past 200 rows.
-  // Driver roster: filters + create use EntityPicker / DriverPickerWithCreate (server search).
-  // Do NOT bulk listDrivers(limit:200) for labels — list/detail APIs already JOIN driver_name.
-  const [unitSearch, setUnitSearch] = useState("");
-
-  const fleetQuery = useQuery({
-    queryKey: ["safety", "incidents-fleet", operatingCompanyId, unitSearch],
-    queryFn: () =>
-      listUnits({
-        operating_company_id: operatingCompanyId,
-        limit: 200,
-        include: "trailers",
-        search: unitSearch || undefined,
-      }),
-    enabled: Boolean(operatingCompanyId),
-  });
-
-  const fleetRows = (fleetQuery.data?.units ?? []) as Array<Record<string, unknown>>;
-  const trailerOptions = fleetRows.filter((r) => str(r.kind) === "trailer");
-
-  const trailerComboboxOptions = useMemo(
-    () =>
-      trailerOptions.map((t) => ({
-        value: String(t.id ?? ""),
-        label: str(t.unit_number) || String(t.id ?? ""),
-      })),
-    [trailerOptions]
-  );
-
-  const unitNumberById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const r of fleetRows) map.set(String(r.id), str(r.unit_number));
-    return map;
-  }, [fleetRows]);
+  // SAF-B29: pickers are EntityPicker / DriverPickerWithCreate (server search). Do NOT bulk
+  // listUnits/listDrivers(limit:200) for labels — list/detail APIs already JOIN unit_number /
+  // trailer_number / driver_name. Silent fleet maps fail verify-safety-b29-typeahead-inventory.
 
   // Server already applies date_from/date_to (+ driver/unit) — no second client filter.
   const rows = listQuery.data?.incidents ?? [];
@@ -415,11 +382,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             <EntityLink
               kind="unit"
               id={String(row.unit_id)}
-              label={
-                str(row.unit_number) ||
-                unitNumberById.get(String(row.unit_id)) ||
-                undefined
-              }
+              label={str(row.unit_number) || undefined}
             />
           ) : (
             "—"
@@ -447,7 +410,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         ),
       },
     ],
-    [config.detailLabel, openRow, unitNumberById]
+    [config.detailLabel, openRow]
   );
 
   const inputCls = "mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs";
@@ -682,9 +645,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                   </div>
                 ) : (
                   <div className="mt-1 text-slate-800">
-                    {str(detail?.unit_number) ||
-                      (detail?.unit_id ? unitNumberById.get(String(detail.unit_id)) : "") ||
-                      "—"}
+                    {str(detail?.unit_number) || "—"}
                   </div>
                 )}
               </label>
@@ -697,13 +658,18 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                 </span>
                 {formEditable ? (
                   <div className="mt-1" data-testid={`${config.pageTestId}-field-trailer_id`}>
-                    <Combobox
-                      options={trailerComboboxOptions}
+                    <EntityPicker
+                      kind="trailer"
+                      operatingCompanyId={operatingCompanyId}
                       value={str(selected?.trailer_id) || null}
                       onChange={(next) => setField("trailer_id", next ?? "")}
-                      onSearch={setUnitSearch}
+                      allowCreate
+                      nestedInDrawer
+                      enabled={drawerOpen && formEditable}
                       placeholder="Select trailer"
-                      loading={fleetQuery.isLoading}
+                      className="w-full"
+                      dataField={`${config.pageTestId}-trailer`}
+                      dataTestId={`${config.pageTestId}-trailer`}
                       allowClear
                     />
                   </div>
@@ -712,11 +678,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                     <EntityLink
                       kind="trailer"
                       id={String(detail.trailer_id)}
-                      label={
-                        (detail.trailer_number as string | undefined) ??
-                        unitNumberById.get(String(detail.trailer_id)) ??
-                        undefined
-                      }
+                      label={(detail.trailer_number as string | undefined) || undefined}
                       data-testid={`${config.pageTestId}-detail-trailer-link`}
                     />
                   </div>

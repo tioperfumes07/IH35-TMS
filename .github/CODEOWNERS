@@ -1,5 +1,6 @@
-# IH35-TMS — critical path ownership (CLOSURE-22)
-# Jorge must approve changes to migrations, QBO sync, USMCA, deploy config, and CI.
+# IH35-TMS — critical path reviewers (CLOSURE-22)
+# OWNER LAW 2026-08-03: no JORGE-APPROVED label / no approval hold.
+# These paths still notify @tioperfumes07 for awareness; coders merge on green with proof + GUARD.
 
 /apps/backend/src/migrations/ @tioperfumes07
 /apps/backend/src/qbo-sync/ @tioperfumes07

@@ -9,6 +9,7 @@ import {
   stopWoTimeEntry,
   type WoTimeEntryRow,
 } from "../../api/woTimeEntries";
+import { listMaintenanceLaborCodes } from "../../api/maintenance";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -23,6 +24,21 @@ type Props = {
 
 const ACTORS = ["vendor", "internal_mechanic", "driver", "admin"] as const;
 
+type LaborCodeOption = { id: string; code: string; display_name: string };
+
+function laborEntryCodeLabel(row: WoTimeEntryRow, codes: LaborCodeOption[]): string {
+  const embedded = row.labor_code as { code?: string; display_name?: string } | null | undefined;
+  if (embedded?.code) {
+    return embedded.display_name ? `${embedded.code} — ${embedded.display_name}` : embedded.code;
+  }
+  const codeId = row.labor_code_id as string | undefined;
+  if (codeId) {
+    const match = codes.find((c) => c.id === codeId);
+    if (match) return `${match.code} — ${match.display_name}`;
+  }
+  return "General labor";
+}
+
 export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
@@ -33,6 +49,13 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
   const [notes, setNotes] = useState("");
   const [manualStart, setManualStart] = useState("");
   const [manualEnd, setManualEnd] = useState("");
+
+  const laborCodesQuery = useQuery({
+    queryKey: ["maintenance", "labor-codes", operatingCompanyId],
+    queryFn: () => listMaintenanceLaborCodes(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const laborCodes = laborCodesQuery.data?.labor_codes ?? [];
 
   const entriesQuery = useQuery({
     queryKey: ["wo-time-entries", workOrderId, operatingCompanyId],
@@ -114,10 +137,11 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
   const columns = useMemo((): Array<ParityColumn<WoTimeEntryRow>> => {
     return [
       {
-        key: "id",
-        label: "ID",
+        key: "labor_code",
+        label: "Labor code",
         sortable: true,
-        render: (row) => <span className="font-mono text-[11px]">{String(row.id ?? "").slice(0, 8)}…</span>,
+        sortValue: (row) => laborEntryCodeLabel(row, laborCodes),
+        render: (row) => <span className="text-slate-900">{laborEntryCodeLabel(row, laborCodes)}</span>,
       },
       {
         key: "actor_kind",
@@ -152,7 +176,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
         render: (row) => (row.computed_labor_cost_cents != null ? String(row.computed_labor_cost_cents) : "—"),
       },
     ];
-  }, []);
+  }, [laborCodes]);
 
   const entriesErr = entriesQuery.error as { status?: number; message?: string } | null;
 
@@ -195,7 +219,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
         <Button type="button" size="sm" onClick={() => void startMut.mutateAsync()} disabled={startMut.isPending || openEntries.length > 0}>
           Start timer
         </Button>
-        {openEntries.length > 0 ? <span className="text-xs text-amber-700">An open timer exists — stop it before starting another.</span> : null}
+        {openEntries.length > 0 ? <span className="text-xs text-slate-600">An open timer exists — stop it before starting another.</span> : null}
       </div>
 
       <div className="mt-4 border-t border-gray-100 pt-3">

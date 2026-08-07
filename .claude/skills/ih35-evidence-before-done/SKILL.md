@@ -34,7 +34,7 @@ A complete fix includes **all** of:
 
 | Forbidden deferral | Allowed deferral |
 |---|---|
-| "Ship now, fix isolation later" | Jorge-approved tracker + future block id |
+| "Ship now, fix isolation later" | owner-written tracker + future block id |
 | "CI green is enough" | Explicit UNVERIFIED + what blocks proof |
 | "User can SQL the flag for now" | Fix API + test (BUG-4 pattern) |
 | Fire more backfills while rate-limited | Stop, cool down, ship throttle fix |

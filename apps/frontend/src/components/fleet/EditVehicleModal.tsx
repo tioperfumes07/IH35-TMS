@@ -8,7 +8,15 @@ import { Button } from "../Button";
 import { FieldSet } from "../forms/FieldSet";
 import { FormField } from "../forms/FormField";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { Combobox } from "../Combobox";
+import { EntityPicker } from "../parity/EntityPicker";
+import { listMyCompanies, type MyCompany } from "../../api/org";
 import type { FleetRow } from "../FleetTable";
+
+function companyPickerLabel(c: MyCompany): string {
+  const name = (c.short_name ?? c.legal_name ?? "").trim();
+  return name ? `${c.code} · ${name}` : c.code;
+}
 
 export const EDIT_VEHICLE_MODAL_TABS = [
   "Identity",
@@ -26,7 +34,7 @@ type TabId = (typeof EDIT_VEHICLE_MODAL_TABS)[number];
 type FieldDef = {
   key: string;
   label: string;
-  type: "text" | "number" | "date" | "textarea" | "select" | "boolean";
+  type: "text" | "number" | "date" | "textarea" | "select" | "boolean" | "company" | "driver";
   options?: Array<{ value: string; label: string }>;
   ownerOnly?: boolean;
   tab: TabId;
@@ -55,8 +63,8 @@ const FIELD_DEFS: FieldDef[] = [
   ]},
   { key: "hazmat_endorsement", label: "Hazmat Endorsement", type: "boolean", tab: "Identity" },
   { key: "notes", label: "Notes", type: "textarea", tab: "Identity" },
-  { key: "owner_company_id", label: "Owner Company ID", type: "text", tab: "Identity" },
-  { key: "currently_leased_to_company_id", label: "Leased To Company ID", type: "text", tab: "Identity" },
+  { key: "owner_company_id", label: "Owner Company", type: "company", tab: "Identity" },
+  { key: "currently_leased_to_company_id", label: "Leased To Company", type: "company", tab: "Identity" },
   { key: "us_insurance_carrier", label: "US Insurance Carrier", type: "text", tab: "Insurance" },
   { key: "us_insurance_policy_number", label: "US Policy Number", type: "text", tab: "Insurance" },
   { key: "us_insurance_expiration", label: "US Insurance Expiration", type: "date", tab: "Insurance" },
@@ -100,7 +108,7 @@ const FIELD_DEFS: FieldDef[] = [
   { key: "quick_availability", label: "Quick Availability", type: "select", tab: "Quick-availability", options: [
     { value: "available", label: "Available" }, { value: "booked", label: "Booked" }, { value: "holding", label: "Holding" },
   ]},
-  { key: "assigned_driver_id", label: "Default Driver ID", type: "text", tab: "Quick-availability" },
+  { key: "assigned_driver_id", label: "Default Driver", type: "driver", tab: "Quick-availability" },
   { key: "status_change_reason", label: "Status Change Reason", type: "textarea", tab: "Quick-availability" },
   { key: "is_dispatch_blocked", label: "Dispatch Blocked", type: "boolean", tab: "Quick-availability" },
   { key: "dispatch_block_reason", label: "Dispatch Block Reason", type: "textarea", tab: "Quick-availability" },
@@ -155,6 +163,20 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
       ),
     enabled: open && Boolean(unitId && operatingCompanyId),
   });
+
+  const companiesQuery = useQuery({
+    queryKey: ["org", "me-companies", "edit-vehicle"],
+    queryFn: () => listMyCompanies().then((r) => r.companies ?? []),
+    enabled: open,
+    staleTime: 120_000,
+  });
+  const companyOptions = useMemo(
+    () =>
+      (companiesQuery.data ?? [])
+        .filter((c) => c.is_active)
+        .map((c) => ({ value: c.id, label: companyPickerLabel(c) })),
+    [companiesQuery.data]
+  );
 
   const unit = profileQuery.data?.unit ?? null;
   const reefer = profileQuery.data?.reefer ?? null;
@@ -247,6 +269,44 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
+      );
+    }
+    if (def.type === "company") {
+      const selected = String(value ?? "");
+      const options =
+        selected && !companyOptions.some((o) => o.value === selected)
+          ? [...companyOptions, { value: selected, label: `Unknown company (${selected.slice(0, 8)}…)` }]
+          : companyOptions;
+      return (
+        <div data-testid={`edit-vehicle-${def.key}`}>
+          <Combobox
+            options={options}
+            value={selected || null}
+            onChange={(v) => setField(def.key, v ?? "")}
+            placeholder="Select company"
+            loading={companiesQuery.isLoading}
+            allowClear
+            dataField={def.key}
+          />
+        </div>
+      );
+    }
+    if (def.type === "driver") {
+      const selected = String(value ?? "");
+      return (
+        <div data-testid={`edit-vehicle-${def.key}`}>
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={operatingCompanyId}
+            value={selected || null}
+            onChange={(v) => setField(def.key, v ?? "")}
+            placeholder="Select driver"
+            enabled={open}
+            allowClear
+            dataField={def.key}
+            dataTestId={`edit-vehicle-${def.key}-picker`}
+          />
+        </div>
       );
     }
     if (def.type === "date") {

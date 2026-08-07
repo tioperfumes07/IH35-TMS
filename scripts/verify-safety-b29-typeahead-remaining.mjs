@@ -37,8 +37,9 @@ const CHECKS = [
     file: "apps/frontend/src/pages/safety/TrainingProgramsPage.tsx",
     describe: "training programs driver roster sends driverSearch",
     test: (s) =>
-      /queryKey:\s*\["mdata",\s*"drivers",\s*operatingCompanyId,\s*driverSearch\]/.test(s) &&
-      /listDrivers\([\s\S]*?search:\s*driverSearch\s*\|\|\s*undefined/.test(s),
+      (/EntityPicker/.test(s) && /kind=["']driver["']/.test(s)) ||
+      (/queryKey:\s*\["mdata",\s*"drivers",\s*operatingCompanyId,\s*driverSearch\]/.test(s) &&
+        /listDrivers\([\s\S]*?search:\s*driverSearch\s*\|\|\s*undefined/.test(s)),
   },
   {
     file: "apps/frontend/src/pages/safety/TrainingProgramsPage.tsx",
@@ -49,8 +50,9 @@ const CHECKS = [
     file: "apps/frontend/src/pages/safety/SafetyMeetingsPage.tsx",
     describe: "safety meetings driver roster sends driverSearch",
     test: (s) =>
-      /queryKey:\s*\["mdata",\s*"drivers",\s*operatingCompanyId,\s*driverSearch\]/.test(s) &&
-      /listDrivers\([\s\S]*?search:\s*driverSearch\s*\|\|\s*undefined/.test(s),
+      (/EntityPicker/.test(s) && /kind=["']driver["']/.test(s)) ||
+      (/queryKey:\s*\["mdata",\s*"drivers",\s*operatingCompanyId,\s*driverSearch\]/.test(s) &&
+        /listDrivers\([\s\S]*?search:\s*driverSearch\s*\|\|\s*undefined/.test(s)),
   },
   {
     file: "apps/frontend/src/pages/safety/SafetyMeetingsPage.tsx",
@@ -136,7 +138,10 @@ if (SELFTEST) {
   expectFail(
     "training-programs-no-search",
     "apps/frontend/src/pages/safety/TrainingProgramsPage.tsx",
-    (s) => s.replace("search: driverSearch || undefined", ""),
+    (s) =>
+      s
+        .replace(/kind=["']driver["']/g, 'kind="unit"')
+        .replace("search: driverSearch || undefined", ""),
     "driver roster sends driverSearch"
   );
   expectFail(

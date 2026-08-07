@@ -4,6 +4,8 @@ import { generateLoadInstructionsPdf } from "./pdf-generator.service.js";
 import { sendEmail } from "../notifications/email.service.js";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { generatePresignedDownloadUrl } from "../storage/r2-client.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
+import { isWhatsappChannelConfigured } from "../outbox/handlers/twilio-channel-config.js";
 
 type DistributionInput = {
   operating_company_id: string;
@@ -45,7 +47,9 @@ export async function distributeLoadInstructions(input: DistributionInput) {
           d.phone AS driver_phone
         FROM mdata.loads l
         LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                   AND c.operating_company_id = l.operating_company_id
         LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                 AND d.operating_company_id = l.operating_company_id
         WHERE l.id = $1
           AND l.operating_company_id = $2
         LIMIT 1
@@ -230,28 +234,29 @@ export async function distributeLoadInstructions(input: DistributionInput) {
       channels.push("pwa");
     }
 
-    if (load.driver_phone) {
+    // WhatsApp is not active for this company yet (owner ruling 2026-08-03). Enqueuing anyway would
+    // create an event the handler must FAIL (it declares requiresDelivery), so the honest move is to
+    // not claim the channel at all and let the caller see that the driver was reached by fewer means.
+    const whatsappUsable = Boolean(load.driver_phone) && isWhatsappChannelConfigured();
+    if (load.driver_phone && !whatsappUsable) {
+      channels.push("whatsapp_unavailable");
+    }
+    if (whatsappUsable) {
       distributionTasks.push(
-        client.query(
-          `
-            INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-            VALUES ($1,$2,$3,$4::jsonb)
-          `,
-          [
-            "dispatch.loads",
-            input.load_id,
-            "twilio.whatsapp.send",
-            JSON.stringify({
-              to: load.driver_phone,
-              template: "load_dispatched",
-              variables: {
-                load_display_id: load.load_number,
-                pickup_location: stopsRes.rows[0]?.city ?? "pickup location",
-                pickup_time: stopsRes.rows[0]?.scheduled_arrival_at ?? "scheduled time",
-                pdf_url: presignedUrl,
-              },
-            }),
-          ]
+        enqueueOutboxEvent(
+          client,
+          "twilio.whatsapp.send",
+          { aggregate_type: "dispatch.loads", aggregate_id: input.load_id },
+          {
+            to: load.driver_phone,
+            template: "load_dispatched",
+            variables: {
+              load_display_id: load.load_number,
+              pickup_location: stopsRes.rows[0]?.city ?? "pickup location",
+              pickup_time: stopsRes.rows[0]?.scheduled_arrival_at ?? "scheduled time",
+              pdf_url: presignedUrl,
+            },
+          }
         )
       );
       channels.push("whatsapp");

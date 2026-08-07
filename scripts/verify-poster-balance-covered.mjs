@@ -11,8 +11,15 @@
  *
  * WHY ENUMERATING, NOT A FIXED LIST: a guard that hardcodes today's six builders goes green forever the
  * moment someone adds a seventh. This DERIVES the class from the source tree — every
- * `export function build<X>Postings` under a poster.service.ts — and requires each to be registered in
- * the balance test. Adding a poster without a balance test fails CI. That is the ratchet.
+ * `export function build<X>Postings` under apps/backend/src/accounting — and requires each to be
+ * registered in the balance test. Adding a poster without a balance test fails CI. That is the ratchet.
+ *
+ * IT SCANS EVERY .ts, NOT JUST poster.service.ts — corrected 2026-08-03. The original walk matched only
+ * files literally named `poster.service.ts`, so buildInterestAccrualPostings in interest-accrual.service.ts
+ * was invisible: the guard reported "9 builder(s), every one covered" while a tenth uncovered builder sat
+ * in the same directory. A filename convention is not the class; `export function build*Postings` is. This
+ * is the same fail-open shape as the earlier guards that matched an import or a `if (false && …)` — the
+ * guard was structurally incapable of seeing the thing it claimed to enumerate, so it could never go red.
  *
  * IMPORT LINES ARE STRIPPED from the test before matching. A builder that is merely imported but never
  * registered in the BUILDERS table is never exercised; treating the import as coverage is the exact
@@ -79,12 +86,13 @@ export function analyse(posterSources, testSource) {
   return problems;
 }
 
-function walk(dir, out = []) {
+export function walk(dir, out = []) {
   if (!existsSync(dir)) return out;
   for (const entry of readdirSync(dir)) {
     const full = path.join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (entry === "poster.service.ts") out.push(full);
+    // __tests__ is skipped so a builder NAMED in a test can never be mistaken for a builder DEFINED there.
+    if (statSync(full).isDirectory()) { if (entry !== "__tests__") walk(full, out); }
+    else if (entry.endsWith(".ts") && !entry.endsWith(".test.ts") && !entry.endsWith(".d.ts")) out.push(full);
   }
   return out;
 }
@@ -136,6 +144,16 @@ function selftest() {
   t("a near-miss name is not mistaken for coverage",
     analyse({ "a/poster.service.ts": poster }, "const BUILDERS = [buildFooPostingsExtra];").length === 1);
 
+  // ── THE ENUMERATION ITSELF (added 2026-08-03) ────────────────────────────────────────────────────
+  // Every case above feeds analyse() a hand-built source map, so all nine passed while walk() was
+  // silently filtering the tree down to files literally named poster.service.ts. The defect lived in
+  // the collector, and nothing here could reach it. These two assert the collector.
+  const scanned = walk(ACCOUNTING_DIR);
+  t("walk() is not filename-filtered — it must collect .ts files beyond poster.service.ts",
+    scanned.some((f) => path.basename(f) !== "poster.service.ts"));
+  t("walk() excludes test files — a builder NAMED in a test must never be read as a builder DEFINED",
+    !scanned.some((f) => f.includes(`${path.sep}__tests__${path.sep}`) || f.endsWith(".test.ts")));
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
     process.exit(1);
@@ -144,7 +162,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) {
   selftest();
-  console.log(`${LABEL} selftest OK — 9 cases (2 pass-shapes, 7 fail-shapes incl. the real gap and the import-only fail-open)`);
+  console.log(`${LABEL} selftest OK — 11 cases (2 pass-shapes, 7 fail-shapes, 2 collector-shape assertions on the real tree)`);
   process.exit(0);
 }
 

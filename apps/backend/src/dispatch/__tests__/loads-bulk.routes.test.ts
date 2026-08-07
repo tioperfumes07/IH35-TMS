@@ -46,6 +46,13 @@ describe("loads-bulk.routes", () => {
     expect(routes).toContain('event_type: "load.status_changed"');
   });
 
+  // CLS-DISP-WIRE-07: bulk Mark delivered must stamp final delivery actual_departure_at
+  // (DispatchBoard uses this path — transition-only stamp left prod at 0 departures).
+  it("stamps final delivery departure on delivered_pending_docs / completed_docs_received", () => {
+    expect(routes).toContain("stampFinalActiveDeliveryDeparture");
+    expect(routes).toContain("loadStatusRequiresDeliveryDepartureStamp");
+  });
+
   // G9-M: escrow/settlement-triggering terminal transitions run financial side-effects only on the
   // per-load endpoint — bulk must refuse them instead of silently skipping the escrow proposal + ping.
   it("refuses escrow/settlement-triggering terminal transitions in bulk", () => {

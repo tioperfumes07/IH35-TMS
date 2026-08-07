@@ -21,10 +21,37 @@ try {
   const routes = read(routesPath);
   const tests = read(testsPath);
 
+  // CORRECTED 2026-08-03. This previously asserted the LITERAL text
+  //   /type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment"/
+  // with the message "not limited to exactly four MVP types". The regex was UNANCHORED, so it only ever
+  // matched a PREFIX — the union has carried ten source types (cash_advance, driver_advance, expense,
+  // bank_categorization, driver_reimbursement, transfer, ...) for a long time while this guard stayed
+  // green and reported "exactly four". It asserted something untrue, which is worse than asserting
+  // nothing: it read as coverage.
+  //
+  // What actually matters, and what is checked now: the four MVP source types must still be DECLARED
+  // (removing one would break posting for a shipped path), and the type must be DERIVED from that single
+  // declaration rather than hand-maintained in parallel with the runtime validator — the duplication
+  // that made a half-applied source type possible in the first place.
+  // Scope the membership check to the ARRAY LITERAL. A first attempt used
+  // /POSTING_SOURCE_TYPES[\s\S]*?"<type>"/ against the whole file — mutation-testing showed that passed
+  // even with "customer_payment" DELETED from the array, because the lazy span simply reached a later
+  // occurrence elsewhere in the file. A guard that matches anywhere in a file is not a membership check.
+  const sourceTypesBlock = /export const POSTING_SOURCE_TYPES = \[([\s\S]*?)\] as const;/.exec(service);
+  if (!sourceTypesBlock) {
+    throw new Error("POSTING_SOURCE_TYPES array literal not found — the single source of posting types is gone");
+  }
+  for (const mvpType of ["invoice", "bill", "customer_payment", "bill_payment"]) {
+    assertIncludes(
+      sourceTypesBlock[1],
+      `"${mvpType}"`,
+      `MVP posting source type "${mvpType}" is no longer declared in POSTING_SOURCE_TYPES`,
+    );
+  }
   assertMatches(
     service,
-    /type PostingSourceType = "invoice" \| "bill" \| "customer_payment" \| "bill_payment"/,
-    "Posting source type scope is not limited to exactly four MVP types",
+    /export type PostingSourceType = \(typeof POSTING_SOURCE_TYPES\)\[number\]/,
+    "PostingSourceType is no longer DERIVED from POSTING_SOURCE_TYPES — a hand-written union can drift from the runtime validator",
   );
   assertMatches(
     service,

@@ -17,19 +17,19 @@ export interface ProgramScoreboard {
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
   "meta": {
-    "generatedAt": "2026-08-02T23:59:42-05:00",
-    "sourceSha": "694a95977",
+    "generatedAt": "2026-08-04T22:08:00-05:00",
+    "sourceSha": "a4c6b619b",
     "deployedSha": "308bc66",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 645,
-    "failOpen": 21,
-    "defects": 11
+    "ledgerRows": 680,
+    "failOpen": 15,
+    "defects": 14
   },
   "modules": [
     {
       "tier": "0",
       "module": "banking",
-      "build": "18/18",
+      "build": "18/19",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -71,7 +71,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "0",
       "module": "lists",
-      "build": "21/23",
+      "build": "23/23",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -113,7 +113,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "1",
       "module": "vendors",
-      "build": "0/7",
+      "build": "7/7",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -138,7 +138,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "cells": [
         "AUDIT",
         "AUDIT",
-        "FAIL",
+        "FIX",
         "FAIL",
         "AUDIT",
         "AUDIT",
@@ -155,7 +155,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "1",
       "module": "settlements",
-      "build": "0/9",
+      "build": "1/9",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -222,7 +222,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "cells": [
         "AUDIT",
         "FAIL",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -260,11 +260,11 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "2",
       "module": "safety",
-      "build": "26/38",
+      "build": "36/38",
       "cells": [
         "AUDIT",
         "AUDIT",
-        "UNV",
+        "FAIL",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -285,7 +285,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "cells": [
         "AUDIT",
         "AUDIT",
-        "UNV",
+        "FIX",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -344,7 +344,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "customers",
-      "build": "0/9",
+      "build": "9/10",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -386,7 +386,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "inventory",
-      "build": "0/7",
+      "build": "7/7",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -512,7 +512,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "eld",
-      "build": "1/5",
+      "build": "5/5",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -579,7 +579,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "cells": [
         "AUDIT",
         "AUDIT",
-        "NA",
+        "FAIL",
         "NA",
         "AUDIT",
         "AUDIT",
@@ -617,7 +617,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "docs",
-      "build": "0/5",
+      "build": "1/5",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -638,7 +638,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "help",
-      "build": "0/5",
+      "build": "5/5",
       "cells": [
         "AUDIT",
         "NA",

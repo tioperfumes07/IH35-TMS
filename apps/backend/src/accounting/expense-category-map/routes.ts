@@ -32,12 +32,18 @@ const oneQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+// ACCT-F100 — posting_side is DERIVED from the mapped account's normal balance by the database
+// (migration 202611290000, trigger trg_derive_expense_category_posting_side). It stays ACCEPTED here so
+// existing clients do not break, but it is no longer authoritative: whatever arrives is normalised to
+// the account's normal balance on write. It is optional because a caller cannot know better than the
+// account does. This is the write path that let USMCA escrow/escrow be stored 'debit' against a
+// Liability for a week (ACCT-F99) — a client-supplied side was trusted with nothing reconciling it.
 const createBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   category_kind: categoryKindSchema,
   category_code: z.string().trim().min(1).max(120),
   account_id: z.string().uuid(),
-  posting_side: postingSideSchema,
+  posting_side: postingSideSchema.optional(),
 });
 
 const updateBodySchema = z
@@ -247,7 +253,8 @@ export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
             parsed.data.category_kind,
             parsed.data.category_code,
             parsed.data.account_id,
-            parsed.data.posting_side,
+            // null -> the BEFORE trigger derives it from the account's normal balance (ACCT-F100).
+            parsed.data.posting_side ?? null,
             user.uuid,
           ]
         );
@@ -261,7 +268,9 @@ export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
             category_kind: parsed.data.category_kind,
             category_code: parsed.data.category_code,
             account_id: parsed.data.account_id,
-            posting_side: parsed.data.posting_side,
+            // The STORED (derived) side, not what the caller sent — auditing the request would record
+            // a value the database did not keep.
+            posting_side: row.posting_side,
           },
         });
         return { status: "ok" as const, row };

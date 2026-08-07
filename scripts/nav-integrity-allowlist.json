@@ -573,6 +573,14 @@
       "reason": "Additive QBO-style home (C6) mounting QboStyleHomePage. Bookmarks stay valid; not sidebar training HOME."
     },
     {
+      "path": "/home/ops",
+      "reason": "Additive never-delete role ops dashboard (OwnerHome / role homes) kept reachable while /home remains canonical."
+    },
+    {
+      "path": "/home/scenario-tracker",
+      "reason": "Parked Scenario Tracker FE until GUARD verifies live GET /api/v1/home/scenario-tracker; not sidebar until /home switch."
+    },
+    {
       "path": "/finance/ar-ap-aging",
       "reason": "FIN-20 read-only Finance-Hub page, behind OFF flag AR_AP_AGING_UI_ENABLED; subnav wiring deferred until flag ON"
     },

@@ -1,0 +1,29 @@
+{
+  "_comment": [
+    "CLS-GL-DARK / ACCT-F122 — carried coverage gaps for verify-gl-posting-coverage.mjs.",
+    "",
+    "known_gaps IS EMPTY, and that is the finding, not an oversight. Prod has ZERO TMS-native postable",
+    "money events without a journal entry. Anything the guard reports is therefore NEW and fails.",
+    "",
+    "WHAT MAY NOT GO IN HERE. QBO-origin rows never belong — under parallel books QuickBooks is the",
+    "system of record for cloned history and the posting engine refuses them on purpose. Nor may",
+    "draft / proforma / void invoices, nor zero-dollar invoices: the guard's status='sent' AND",
+    "total_cents > 0 conditions already express that they are not postable events. An entry here means",
+    "recognised money genuinely failed to reach the ledger.",
+    "",
+    "ADDING an entry is a decision to accept real debt. REMOVING one is the goal — fix the posting path",
+    "and delete the line, never write a journal entry by hand to make the check pass."
+  ],
+  "known_gaps": [],
+  "superseded": [
+    {
+      "kind": "invoice",
+      "id": "f280b52a-5007-4820-8576-ceec1e2355c0",
+      "label": "INV-2026-00004",
+      "entity": "USMCA",
+      "found": "2026-08-05",
+      "disposition": "RESOLVED — BY DESIGN, not a gap",
+      "reason": "First carried as tracked debt on the belief that a sent invoice with no journal entry meant the poster had failed. Live prod read settled it: total_cents 0, subtotal_cents 0, amount_open_cents 0, voided_at NULL, and zero invoice_lines. A $0.00 invoice has no revenue and no receivable, so there is nothing for the ledger to recognise and the poster's refusal (audit accounting.invoice.gl_post_failed / INVOICE_LINE_REVENUE_UNRESOLVED, 2026-08-04 22:58:26Z) was CORRECT. Both original hypotheses were refuted on evidence: the flag was ON (INVOICE_AR_GL_POSTING_ENABLED true for USMCA since 2026-07-26, nine days earlier), and the poster did not error on the #4194 date cast — it declined for a stated reason and recorded it. Owner confirmed it as a $0.00 owner-test invoice, void pending via CC-3. The guard now expresses this structurally (total_cents > 0), so no zero-value invoice is ever counted as a gap and no exclusion entry is needed. Kept here rather than deleted: the investigation is the audit trail."
+    }
+  ]
+}

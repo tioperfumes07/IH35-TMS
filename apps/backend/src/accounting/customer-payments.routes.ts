@@ -46,7 +46,9 @@ const createCustomerPaymentBodySchema = z.object({
 });
 
 export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/customers/:id/payments", async (req, reply) => {
+  // Rate-limited (CodeQL js/missing-rate-limiting). Pre-existing gap surfaced because this PR touched
+  // the file; the plugin is registered global:false so an un-configured route has NO limit at all.
+  app.get("/api/v1/customers/:id/payments", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -91,7 +93,14 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
               ORDER BY pa.applied_at
             ) AS applied_to_invoices
             FROM accounting.payment_applications pa
+            -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the payment p is scoped by the outer WHERE,
+            -- but the invoice it resolves to was not. This join supplies invoice_display_id, and
+            -- display_id is unique PER ENTITY, not globally — INV-2026-00004 exists on both USMCA (a $0
+            -- test row) and TRANSP (a PAID $3,800 LONGSHIP invoice), verified live. So an unscoped join
+            -- could label a payment application with another entity's invoice number, which reads as a
+            -- legitimate reference and is impossible to spot downstream.
             JOIN accounting.invoices i ON i.id = pa.invoice_id
+                                      AND i.operating_company_id = p.operating_company_id
             WHERE pa.payment_id = p.id
           ) apps ON true
           WHERE ${whereSql}

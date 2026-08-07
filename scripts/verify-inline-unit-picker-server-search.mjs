@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * InlineUnitPicker — Combobox + server search (not silent listUnits limit:500).
- * Cursor even claim: 2120.
+ * InlineUnitPicker — EntityPicker kind=unit (superseded server-search Combobox check).
+ * Cursor even claim: 2120 · ratcheted by EP-UNIT-KIND-SWEEP claim 2540.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -26,11 +26,11 @@ export function collectProblems(root = ROOT) {
     return problems;
   }
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (!/unitSearch/.test(code) || !/onSearch=\{setUnitSearch\}/.test(code)) {
-    problems.push(`${FILE}: must wire unitSearch + onSearch`);
+  if (!/EntityPicker/.test(code) || !/kind=["']unit["']/.test(code)) {
+    problems.push(`${FILE}: must use EntityPicker kind="unit"`);
   }
-  if (/limit:\s*500/.test(code)) {
-    problems.push(`${FILE}: must not fetch silent limit:500 unit page`);
+  if (/\blistUnits\s*\(/.test(code)) {
+    problems.push(`${FILE}: must not call listUnits directly — EntityPicker registry owns roster reads`);
   }
   return problems;
 }
@@ -68,5 +68,5 @@ if (process.argv.includes("--selftest")) {
     for (const p of problems) console.error("  - " + p);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — InlineUnitPicker server search`);
+  console.log(`${LABEL} OK — InlineUnitPicker EntityPicker kind=unit`);
 }

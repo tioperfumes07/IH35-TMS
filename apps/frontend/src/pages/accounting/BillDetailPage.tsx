@@ -2,7 +2,13 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getVendorBill, voidVendorBill, type BillDetailLine, type BillPayment } from "../../api/accounting";
+import {
+  billVendorDrillId,
+  getVendorBill,
+  voidVendorBill,
+  type BillDetailLine,
+  type BillPayment,
+} from "../../api/accounting";
 import { ApiError } from "../../api/client";
 import { Button } from "../../components/Button";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
@@ -241,10 +247,10 @@ export function BillDetailPage() {
       />
 
       <DataPanel title="Bill">
-        {bill.vendor_id ? (
+        {billVendorDrillId(bill) || bill.vendor_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Vendor</span>
-            <EntityLink kind="vendor" id={bill.mdata_vendor_id} label={bill.vendor_name ?? bill.vendor_id.slice(0, 8)} />
+            <EntityLink kind="vendor" id={billVendorDrillId(bill)} label={bill.vendor_name ?? bill.vendor_id?.slice(0, 8)} />
           </DataPanelRow>
         ) : null}
         <DataPanelRow>

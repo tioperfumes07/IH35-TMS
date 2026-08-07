@@ -45,6 +45,21 @@ function analyse(files) {
     if (!/document\.body/.test(shell)) {
       problems.push(`${DRAWER_SHELL} calls createPortal but not to document.body — the nesting may remain.`);
     }
+    // STACKING (live 2026-08-04): Book Load / page wizards are z-50. A drawer still at z-40 sits
+    // BEHIND the wizard backdrop — Save clicks never reach the create form; mousedown on the wizard
+    // closes it as if success. Must be z-[60] (or higher).
+    if (!/z-\[60\]/.test(shell) && !/\bz-60\b/.test(shell)) {
+      problems.push(
+        `${DRAWER_SHELL} must stack at z-[60] (or z-60) above Book Load / page wizards (z-50). ` +
+          `A drawer at z-40 receives no Save clicks — the wizard backdrop closes the wizard instead.`
+      );
+    }
+    if (/\bfixed inset-0 z-40\b/.test(shell)) {
+      problems.push(
+        `${DRAWER_SHELL} still uses z-40 — that is below BookLoadModalV4 (z-50) and reproduces the ` +
+          `silent-close / no-POST defect on "+ Add new customer".`
+      );
+    }
   }
 
   for (const [file, src] of Object.entries(files)) {
@@ -80,7 +95,7 @@ function selftest() {
     if (!cond) failures.push(label);
   };
 
-  const goodShell = "createPortal(<div/>, document.body)";
+  const goodShell = "createPortal(<div className='fixed inset-0 z-[60]'/>, document.body)";
   const goodForm = "e.preventDefault(); e.stopPropagation(); await createCustomer();";
 
   t("clean tree passes", analyse({ [DRAWER_SHELL]: goodShell, "d/NewCustomerDrawerForm.tsx": goodForm }).length === 0);
@@ -88,11 +103,11 @@ function selftest() {
   // The REAL pre-fix shell: no portal at all.
   t(
     "pre-fix shell (no portal) FAILS",
-    analyse({ [DRAWER_SHELL]: "return (<div className='fixed inset-0'/>);", "d/x.tsx": goodForm }).length >= 1
+    analyse({ [DRAWER_SHELL]: "return (<div className='fixed inset-0 z-[60]'/>);", "d/x.tsx": goodForm }).length >= 1
   );
   t(
     "portal to the wrong node FAILS",
-    analyse({ [DRAWER_SHELL]: "createPortal(<div/>, someOtherNode)", "d/x.tsx": goodForm }).length >= 1
+    analyse({ [DRAWER_SHELL]: "createPortal(<div className='fixed inset-0 z-[60]'/>, someOtherNode)", "d/x.tsx": goodForm }).length >= 1
   );
   // The REAL pre-fix form: preventDefault without stopPropagation.
   t(
@@ -104,6 +119,13 @@ function selftest() {
     analyse({ [DRAWER_SHELL]: goodShell, "d/helpers.tsx": "export const X = 1;" }).length === 0
   );
   t("missing shell FAILS", analyse({ [DRAWER_SHELL]: null, "d/x.tsx": goodForm }).length >= 1);
+  t(
+    "portal at z-40 (below Book Load) FAILS",
+    analyse({
+      [DRAWER_SHELL]: "createPortal(<div className='fixed inset-0 z-40'/>, document.body)",
+      "d/x.tsx": goodForm,
+    }).length >= 1
+  );
 
   // Exit INSIDE selftest — verify-selftests-can-fail.mjs treats "collects failures but cannot exit
   // non-zero" as fake-green, correctly: an unreachable failure path proves nothing.
@@ -116,7 +138,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) {
   selftest();
-  console.log(`${LABEL} selftest OK — 6 cases (2 pass-shapes, 4 fail-shapes)`);
+  console.log(`${LABEL} selftest OK — 7 cases (2 pass-shapes, 5 fail-shapes)`);
   process.exit(0);
 }
 

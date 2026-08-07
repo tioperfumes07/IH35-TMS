@@ -322,6 +322,7 @@ export async function evaluateReeferHoursPmSchedulesForCompany(
         e.equipment_number
       FROM maintenance.pm_schedules ps
       JOIN mdata.units u ON u.id = ps.unit_id
+                        AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ps.operating_company_id
       LEFT JOIN mdata.equipment e ON e.current_unit_id = u.id AND e.equipment_type = 'Reefer'
       WHERE ps.operating_company_id = $1::uuid
         AND ps.is_active = true

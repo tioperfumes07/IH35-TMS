@@ -203,6 +203,7 @@ async function fetchPreviewItems(
           a.account_name
         FROM catalogs.account_role_bindings arb
         LEFT JOIN catalogs.accounts a ON a.id = arb.account_id
+                                             AND a.operating_company_id = arb.operating_company_id
         WHERE arb.deactivated_at IS NULL
         ORDER BY arb.role_key
         LIMIT ${limitPlusOne}

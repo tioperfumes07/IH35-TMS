@@ -51,84 +51,89 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
 
   return (
     <form
-      className="space-y-2 rounded-sm border border-gray-200 bg-white p-3"
+      className="space-y-3"
       data-testid="maintenance-settings-page"
       onSubmit={(event) => {
         event.preventDefault();
         saveMutation.mutate();
       }}
     >
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <section className="rounded-sm border border-gray-200 p-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">PM Intervals</h3>
-          <label className="mt-2 block text-xs text-gray-600" htmlFor="maint-settings-pm-interval">
-            Default PM interval (days)
-          </label>
-          <input
-            id="maint-settings-pm-interval"
-            data-testid="maintenance-settings-pm-interval"
-            className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
-            type="number"
-            min={1}
-            max={365}
-            value={pmIntervalDays}
-            onChange={(event) => setPmIntervalDays(event.target.value)}
-          />
-        </section>
-
-        <section className="rounded-sm border border-gray-200 p-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">Vendor Defaults</h3>
-          <label className="mt-2 block text-xs text-gray-600">Maintenance vendors available</label>
-          <input
-            className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
-            value={String(settings?.maintenance_vendors ?? 0)}
-            readOnly
-          />
-          <label className="mt-2 block text-xs text-gray-600" htmlFor="maint-settings-shop-location">
-            Default shop location
-          </label>
-          <input
-            id="maint-settings-shop-location"
-            data-testid="maintenance-settings-shop-location"
-            className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
-            value={defaultShopLocation}
-            onChange={(event) => setDefaultShopLocation(event.target.value)}
-          />
-        </section>
-
-        <section className="rounded-sm border border-gray-200 p-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">Bay Assignments</h3>
-          <label className="mt-2 block text-xs text-gray-600" htmlFor="maint-settings-bay-policy">
-            Bay assignment policy
-          </label>
-          <input
-            id="maint-settings-bay-policy"
-            data-testid="maintenance-settings-bay-policy"
-            className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
-            value={bayAssignmentPolicy}
-            onChange={(event) => setBayAssignmentPolicy(event.target.value)}
-          />
-        </section>
-
-        <section className="rounded-sm border border-gray-200 p-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">Notifications</h3>
-          <label className="mt-2 flex items-center gap-2 text-xs text-gray-600">
+      <section className="overflow-hidden rounded-sm border border-slate-300 bg-white">
+        <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Maintenance settings</h2>
+        </div>
+        <div className="grid grid-cols-1 divide-y divide-slate-200 md:grid-cols-2 md:divide-x md:divide-y-0">
+          <div className="px-3 py-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">PM Intervals</h3>
+            <label className="mt-2 block text-xs text-slate-600" htmlFor="maint-settings-pm-interval">
+              Default PM interval (days)
+            </label>
             <input
-              type="checkbox"
-              data-testid="maintenance-settings-email-enabled"
-              checked={notificationEmailEnabled}
-              onChange={(event) => setNotificationEmailEnabled(event.target.checked)}
+              id="maint-settings-pm-interval"
+              data-testid="maintenance-settings-pm-interval"
+              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-sm text-slate-900"
+              type="number"
+              min={1}
+              max={365}
+              value={pmIntervalDays}
+              onChange={(event) => setPmIntervalDays(event.target.value)}
             />
-            Email notifications enabled
-          </label>
-          <label className="mt-2 block text-xs text-gray-600">PM schedules tracked</label>
-          <input
-            className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
-            value={String(settings?.pm_schedules ?? 0)}
-            readOnly
-          />
-        </section>
-      </div>
+          </div>
+
+          <div className="px-3 py-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">Vendor Defaults</h3>
+            <label className="mt-2 block text-xs text-slate-600">Maintenance vendors available</label>
+            <input
+              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-sm text-slate-900"
+              value={String(settings?.maintenance_vendors ?? 0)}
+              readOnly
+            />
+            <label className="mt-2 block text-xs text-slate-600" htmlFor="maint-settings-shop-location">
+              Default shop location
+            </label>
+            <input
+              id="maint-settings-shop-location"
+              data-testid="maintenance-settings-shop-location"
+              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-sm text-slate-900"
+              value={defaultShopLocation}
+              onChange={(event) => setDefaultShopLocation(event.target.value)}
+            />
+          </div>
+
+          <div className="border-t border-slate-200 px-3 py-3 md:border-t-0">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">Bay Assignments</h3>
+            <label className="mt-2 block text-xs text-slate-600" htmlFor="maint-settings-bay-policy">
+              Bay assignment policy
+            </label>
+            <input
+              id="maint-settings-bay-policy"
+              data-testid="maintenance-settings-bay-policy"
+              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-sm text-slate-900"
+              value={bayAssignmentPolicy}
+              onChange={(event) => setBayAssignmentPolicy(event.target.value)}
+            />
+          </div>
+
+          <div className="border-t border-slate-200 px-3 py-3 md:border-t-0">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">Notifications</h3>
+            <label className="mt-2 flex items-center gap-2 text-xs text-slate-600">
+              <input
+                type="checkbox"
+                data-testid="maintenance-settings-email-enabled"
+                checked={notificationEmailEnabled}
+                onChange={(event) => setNotificationEmailEnabled(event.target.checked)}
+              />
+              Email notifications enabled
+            </label>
+            <label className="mt-2 block text-xs text-slate-600">PM schedules tracked</label>
+            <input
+              className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-sm text-slate-900"
+              value={String(settings?.pm_schedules ?? 0)}
+              readOnly
+            />
+          </div>
+        </div>
+      </section>
 
       <div className="flex items-center justify-end gap-2">
         {saveMutation.isError ? (

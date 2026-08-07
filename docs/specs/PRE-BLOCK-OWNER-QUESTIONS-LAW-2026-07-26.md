@@ -1,6 +1,10 @@
-# PRE-BLOCK OWNER QUESTIONS LAW (2026-07-26)
+# PRE-BLOCK OWNER QUESTIONS LAW (2026-07-26; §5 Merge superseded 2026-08-03)
 
-**Owner:** Jorge · **Binding for Cursor · Claude · Devin**
+**Owner:** Jorge · **Binding for Cursor · Claude · Devin · Cascade**
+
+**OWNER LAW (2026-08-03, FINAL):** NO HOLDS, NO `JORGE-APPROVED` label — every coder has FULL Neon access
+and merge authority in every lane. See `.cursor/rules/00-operating-method-LAW.mdc` (governance section).
+§5 below is updated to match; the rest of this file (front-load questions, never re-ask at merge) is unchanged.
 
 Jorge does **not** review PRs or click merge labels.  
 All unanswered owner questions must be settled **before** implementation starts.
@@ -61,8 +65,8 @@ Add rows when a module inventory finds more. Close rows when Jorge answers in wr
 
 ---
 
-## 5. Merge
+## 5. Merge (OWNER LAW 2026-08-03, FINAL)
 
-Devin merges on CI green.  
-`hold-merge-gate` does not require owner label (firewall-only hard fail remains).  
-Neon apply: Cursor/Claude under owner standing “prepare then apply,” or Jorge says apply once per packet.
+Every coder (Cursor, Claude, Devin, Cascade) merges its own work on CI green — no role split, no owner gate.  
+`hold-merge-gate` label check is DELETED (firewall-only hard fail remains).  
+Neon apply: every coder prepares AND applies themselves, standing order — no waiting for Jorge to say "apply."

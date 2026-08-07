@@ -65,10 +65,10 @@ export function assertAccidentsNames(sources) {
   }
 
   // Frontend: EntityLink columns carry the name as label, filters match the name.
-  if (!/kind="driver"[\s\S]{0,80}label=\{\(row\.driver_name/.test(page)) {
+  if (!/kind="driver"[\s\S]{0,120}label=\{\(row\.driver_name/.test(page)) {
     problems.push(`${PAGE}: the Driver EntityLink does not pass driver_name as label — it shows the raw uuid.`);
   }
-  if (!/kind="unit"[\s\S]{0,80}label=\{\(row\.unit_number/.test(page)) {
+  if (!/kind="unit"[\s\S]{0,120}label=\{\(row\.unit_number/.test(page)) {
     problems.push(`${PAGE}: the Unit EntityLink does not pass unit_number as label — it shows the raw uuid.`);
   }
   if (!/row\.driver_name/.test(page) || !/row\.unit_number/.test(page)) {
@@ -115,8 +115,17 @@ if (SELFTEST) {
     "not scoped by owner_company_id",
   );
   // 3. frontend drops the driver name label.
-  expectCaught("no-driver-label", { ...live, [PAGE]: live[PAGE].replace(/label=\{\(row\.driver_name as string \| undefined\) \?\? undefined\}/, "") }, "does not pass driver_name as label");
-
+  expectCaught(
+    "no-driver-label",
+    {
+      ...live,
+      [PAGE]: live[PAGE].replace(
+        /label=\{\(row\.driver_name as string \| undefined\)(?:\?\.trim\(\) \|\| "Driver"| \?\? undefined)\}/,
+        'label={undefined}',
+      ),
+    },
+    "does not pass driver_name as label",
+  );
   const liveProblems = assertAccidentsNames(live);
   if (liveProblems.length) failures.push(`live sources FAIL: ${liveProblems.join(" | ")}`);
 

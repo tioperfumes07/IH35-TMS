@@ -199,8 +199,12 @@ export function AuditTrailPage() {
     <div className="space-y-4 p-4">
       <PageHeader title="Audit Trail" subtitle="Universal spine event log — read-only" />
 
-      <div className="rounded-sm border border-gray-200 bg-white p-4">
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      {/* Single outer frame — filter row is border-b only (no nested card above ParityTable). */}
+      <section
+        className="overflow-hidden rounded-sm border border-gray-200 bg-white"
+        data-testid="audit-trail-list-frame"
+      >
+        <div className="grid grid-cols-2 gap-3 border-b border-gray-200 bg-gray-50 p-4 md:grid-cols-4">
           <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Module
             <select className="rounded-sm border border-gray-300 px-2 py-1.5 text-sm normal-case font-normal" value={module} onChange={(e) => setModule(e.target.value)}>
@@ -244,17 +248,15 @@ export function AuditTrailPage() {
           )}
           {totalCount > 0 && <span className="ml-auto text-xs text-gray-500">{totalCount.toLocaleString()} event{totalCount !== 1 ? "s" : ""}</span>}
         </div>
-      </div>
 
-      {query.isError ? (
-        <ListErrorState
-          title="Couldn't load audit trail"
-          status={0}
-          message={(query.error as Error)?.message ?? "Failed to load audit trail."}
-          onRetry={() => void query.refetch()}
-        />
-      ) : (
-        <div className="overflow-hidden rounded-sm border border-gray-200 bg-white p-2">
+        {query.isError ? (
+          <ListErrorState
+            title="Couldn't load audit trail"
+            status={0}
+            message={(query.error as Error)?.message ?? "Failed to load audit trail."}
+            onRetry={() => void query.refetch()}
+          />
+        ) : (
           <ParityTable
             rows={rows}
             columns={COLUMNS}
@@ -266,8 +268,8 @@ export function AuditTrailPage() {
             rowTestId={(row) => `audit-trail-row-${row.event_id}`}
             renderExpanded={(row) => <ExpandedEventDetail row={row} />}
           />
-        </div>
-      )}
+        )}
+      </section>
 
       {totalPages > 1 && (
         <div className="flex items-center gap-3 text-sm">

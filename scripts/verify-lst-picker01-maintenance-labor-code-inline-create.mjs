@@ -127,7 +127,7 @@ if (process.argv.includes("--selftest")) {
   expectCaught(
     "registry-entry-removed",
     REGISTRY,
-    (s) => s.replace(/maintenance_labor_code:\s*catalogEntry\([\s\S]{0,400}\}\),/, ""),
+    (s) => s.replace(/maintenance_labor_code:\s*catalogEntry\([\s\S]*?\}\),/, ""),
     "missing maintenance_labor_code catalogEntry"
   );
   expectCaught(

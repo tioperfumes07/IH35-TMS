@@ -2,9 +2,9 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../../components/Button";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
-import { Combobox } from "../../../components/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { getLiabilitiesByDriver } from "../../../api/liabilities";
 import { driverDeductionTypesCatalogClient } from "../../../api/catalogs-driver";
 import { formatUsd } from "../../../lib/money";
@@ -180,13 +180,26 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
         <label className="block text-xs">
           <span className="text-slate-600">Offsets which debt?</span>
           <div className="mt-1" data-testid="escrow-forfeit-liability-picker">
-            <Combobox
-              options={liabilityOptions}
-              value={linkedLiabilityId}
-              onChange={setLinkedLiabilityId}
-              placeholder={liabilitiesQuery.isLoading ? "Loading debts…" : "Select a driver liability (optional)"}
-              loading={liabilitiesQuery.isLoading}
-            />
+            {/*
+              Driver-scoped liability list (not a global EntityPicker kind). SelectCombobox matches
+              Driver Escrow / cash-advance enum chrome — searchable, allow-clear, no silent Combobox
+              roster page pattern.
+            */}
+            <SelectCombobox
+              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              value={linkedLiabilityId ?? ""}
+              onChange={(e) => setLinkedLiabilityId(e.target.value || null)}
+              disabled={liabilitiesQuery.isLoading}
+            >
+              <option value="">
+                {liabilitiesQuery.isLoading ? "Loading debts…" : "Select a driver liability (optional)"}
+              </option>
+              {liabilityOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </SelectCombobox>
           </div>
           {!liabilitiesQuery.isLoading && liabilityOptions.length === 0 ? (
             <span className="mt-1 block text-[11px] text-slate-500">

@@ -57,7 +57,6 @@ type Props = {
   auth: AuthMeResponse["user"];
 };
 
-
 /**
  * An entity with no factoring contract is NOT an unverifiable balance — it is a balance that does not
  * apply.

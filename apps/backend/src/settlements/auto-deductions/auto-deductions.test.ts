@@ -97,6 +97,9 @@ describe("auto-deduction policies (CLOSURE-4)", () => {
     max_per_settlement_cents: number;
     memo: string | null;
     status: string;
+    /** LOAN-08 — set only for related-party loan repayment policies. */
+    related_party_loan_id?: string | null;
+    next_scheduled_payment_cents?: number | null;
   };
 
   type SubLedgerRow = { policy_id: string; amount_cents: number; reason: string; open: boolean };
@@ -218,6 +221,90 @@ describe("auto-deduction policies (CLOSURE-4)", () => {
     expect(third.total_materialized_cents).toBe(10000);
     expect(subLedger).toHaveLength(2);
     expect(policy.deducted_so_far_cents).toBe(20000);
+  });
+
+  // ── LOAN-08: a loan policy repays on its SCHEDULE, not the flat cap ──────────────────────────────
+  it("takes the SCHEDULED payment for a loan policy, not max_per_settlement_cents", async () => {
+    const policy: PolicyState = {
+      id: "policy-loan",
+      deduction_type: "LOAN-REPAYMENT",
+      total_owed_cents: 100000,
+      deducted_so_far_cents: 0,
+      // The cap is deliberately LARGER than the scheduled payment: if the code still used the cap this
+      // would materialize $500 instead of the $187.50 the borrower actually agreed to pay.
+      max_per_settlement_cents: 50000,
+      memo: null,
+      status: "active",
+      related_party_loan_id: "loan-1",
+      next_scheduled_payment_cents: 18750,
+    };
+    makeMaterializerMock([policy]);
+
+    const result = await applyAutoDeductionsToSettlement({ query: queryMock }, MATERIALIZE_INPUT);
+
+    expect(result.total_materialized_cents).toBe(18750);
+    expect(policy.deducted_so_far_cents).toBe(18750);
+  });
+
+  it("still honours the cap as a CEILING when the scheduled payment exceeds it", async () => {
+    const policy: PolicyState = {
+      id: "policy-loan",
+      deduction_type: "LOAN-REPAYMENT",
+      total_owed_cents: 100000,
+      deducted_so_far_cents: 0,
+      max_per_settlement_cents: 10000,
+      memo: null,
+      status: "active",
+      related_party_loan_id: "loan-1",
+      next_scheduled_payment_cents: 18750,
+    };
+    makeMaterializerMock([policy]);
+
+    const result = await applyAutoDeductionsToSettlement({ query: queryMock }, MATERIALIZE_INPUT);
+
+    // The remainder rolls forward exactly as an over-cap tranche already does — the driver's net-pay
+    // floor is not breached to satisfy a loan schedule.
+    expect(result.total_materialized_cents).toBe(10000);
+  });
+
+  it("materializes NOTHING for a loan policy whose schedule has no unposted row", async () => {
+    const policy: PolicyState = {
+      id: "policy-loan",
+      deduction_type: "LOAN-REPAYMENT",
+      total_owed_cents: 100000,
+      deducted_so_far_cents: 0,
+      // A fallback to the cap here would deduct $500 with no principal/interest split behind it.
+      max_per_settlement_cents: 50000,
+      memo: null,
+      status: "active",
+      related_party_loan_id: "loan-1",
+      next_scheduled_payment_cents: null,
+    };
+    makeMaterializerMock([policy]);
+
+    const result = await applyAutoDeductionsToSettlement({ query: queryMock }, MATERIALIZE_INPUT);
+
+    expect(result.materialized).toHaveLength(0);
+    expect(result.total_materialized_cents).toBe(0);
+    expect(policy.deducted_so_far_cents).toBe(0);
+  });
+
+  it("leaves NON-loan policies on the flat cap (no behaviour change)", async () => {
+    const policy: PolicyState = {
+      id: "policy-1",
+      deduction_type: "SAFETY-FINE",
+      total_owed_cents: 50000,
+      deducted_so_far_cents: 0,
+      max_per_settlement_cents: 10000,
+      memo: null,
+      status: "active",
+      related_party_loan_id: null,
+      next_scheduled_payment_cents: null,
+    };
+    makeMaterializerMock([policy]);
+
+    const result = await applyAutoDeductionsToSettlement({ query: queryMock }, MATERIALIZE_INPUT);
+    expect(result.total_materialized_cents).toBe(10000);
   });
 
   it("completes the policy at the final tranche (five $100 tranches on $500 owed)", async () => {

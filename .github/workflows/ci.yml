@@ -1,7 +1,23 @@
 name: ci
 
+# CONCURRENCY IS KEYED ON THE HEAD SHA, NOT THE REF (2026-08-06). Keying on the ref meant ANY new
+# trigger on a branch cancelled the previous run — including one that was still QUEUED and had never
+# executed. A cancelled required check is TERMINAL: it never re-reports, so the PR is unmergeable
+# until a human notices and re-runs it by hand. That is fine when runs start immediately and fatal
+# when they do not. Under a backed-up queue on 2026-08-06 it produced 8 stuck CANCELLED required
+# checks across 7 PRs, none of which had any code failure — and every attempt to clear them by
+# re-running created another trigger, which cancelled the next queued run, which is why it looked
+# like the PRs were "continuously failing".
+#
+# Keying on the head SHA confines supersession to a single commit: a redundant re-trigger of the SAME
+# commit is still cancelled (which is what this setting is for), but a NEW push can no longer orphan
+# the required checks of the commit the PR actually merges. The cost is runner time on abandoned
+# commits; the thing bought is that a required check can never be left permanently dead.
+#
+# `github.event.pull_request.head.sha` is empty on `push`, so the `|| github.ref` fallback keeps the
+# old ref-scoped behaviour on main — where cancel-in-progress is false anyway.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.sha || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 # CI-COVERAGE FIX (2026-07-23): the `pull_request` trigger deliberately has NO
@@ -60,6 +76,22 @@ jobs:
     # verify-step set growth on main.
     timeout-minutes: 75
 
+    # Service container restored 2026-08-06 after the self-hosted experiment was reverted.
+    #
+    # HISTORY, so nobody re-does the loop: build-typecheck was briefly moved to a self-hosted macOS
+    # runner because service containers are Linux-only and hosted capacity had stopped serving this
+    # repo. That fixed the wrong problem. One runner executes ONE job at a time, and five workflows
+    # had been pointed at it, so nine PRs x six jobs serialised behind a single Mac and were cancelled
+    # waiting — job record: `build-typecheck | cancelled | runner=(empty) | labels=self-hosted,mac`.
+    # A starved pool was traded for a single-threaded one. Hosted recovered; hosted has effectively
+    # unlimited parallelism; hosted is where this belongs.
+    #
+    # `-d ih35_verify` on the health-cmd is kept from the original fix: without it pg_isready defaults
+    # dbname to the USERNAME, probes a database named "verify" that is never created, and logs
+    # `FATAL: database "verify" does not exist` every 10s for the whole job while still returning
+    # PQPING_OK. Nothing is gated by it — the damage is that the container log dumped after a failure
+    # is full of FATALs unrelated to the failure, which has already been misread once as "the CI
+    # database is broken".
     services:
       postgres:
         image: postgres:16-alpine
@@ -70,7 +102,7 @@ jobs:
         ports:
           - 54329:5432
         options: >-
-          --health-cmd "pg_isready -U verify"
+          --health-cmd "pg_isready -U verify -d ih35_verify"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -1327,3 +1359,4 @@ jobs:
         env:
           IH35_TEST_AUTH_BYPASS: "1"
         run: npm run smoke:accounting
+

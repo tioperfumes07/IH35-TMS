@@ -1596,6 +1596,33 @@ export type MdataEquipment = Record<string, unknown> & {
   equipment_number?: string;
 };
 
+export type ListEquipmentParams = {
+  operating_company_id: string;
+  limit?: number;
+  offset?: number;
+  status?: string;
+  search?: string;
+};
+
+export type ListEquipmentResponse = {
+  equipment: MdataEquipment[];
+  total: number;
+  limit: number;
+  offset: number;
+  has_more: boolean;
+};
+
+/** GET /api/v1/mdata/equipment — canonical trailer roster (mdata.equipment, entity-scoped). */
+export function listEquipment(params: ListEquipmentParams) {
+  const qs = new URLSearchParams();
+  qs.set("operating_company_id", params.operating_company_id);
+  if (params.limit != null) qs.set("limit", String(params.limit));
+  if (params.offset != null) qs.set("offset", String(params.offset));
+  if (params.status) qs.set("status", params.status);
+  if (params.search) qs.set("search", params.search);
+  return apiRequest<ListEquipmentResponse>(`/api/v1/mdata/equipment?${qs.toString()}`);
+}
+
 /** POST /api/v1/mdata/equipment — canonical trailer create (Fleet roster + Profiles). */
 export function createEquipment(body: CreateEquipmentInput) {
   return apiRequest<MdataEquipment>("/api/v1/mdata/equipment", { method: "POST", body });

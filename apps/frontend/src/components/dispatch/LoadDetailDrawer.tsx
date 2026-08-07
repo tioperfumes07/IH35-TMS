@@ -12,6 +12,7 @@ import { FlatFieldGrid } from "../layout/FlatFieldGrid";
 import { DocumentsTab } from "../documents/DocumentsTab";
 import { listFiles } from "../../api/docs";
 import { CancelLoadModal } from "./CancelLoadModal";
+import { LoadBolPanel } from "./LoadBolPanel";
 import { LoadDetailDriverPayTab } from "./LoadDetailDriverPayTab";
 import { LoadDetailSettlementTab } from "./LoadDetailSettlementTab";
 import { LoadDetailGeofenceTimelineTab } from "./LoadDetailGeofenceTimelineTab";
@@ -663,6 +664,9 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                     </div>
                   </div>
                 </div>
+                {/* CLS-DISP-WIRE-09 — BOL generate on the canonical load drawer (EntityLink path),
+                    not only /dispatch/pod-review. Same LoadBolPanel as Pod Review. */}
+                <LoadBolPanel loadId={load.id} companyId={load.operating_company_id} />
                 <DocumentsTab entityType="load" entityId={load.id} entityName={load.load_number} operatingCompanyId={load.operating_company_id} />
               </div>
             ) : (

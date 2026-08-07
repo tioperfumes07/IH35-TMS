@@ -324,5 +324,13 @@
     "reason": "LIVE RENDER OUTAGE 2026-07-29: owner/manual Neon-apply ledgered this file with sentinel checksum 'acct-econ-05-backfill-manual' (not a sha256). Disk sha256 is c3c14c52\u2026. db:migrate pre_deploy then aborts on \"modified after apply\" and has blocked every deploy after #3733 (47013bc, f04d8a8, ce3d88f all pre_deploy_failed). Accept historical ledger\u2194disk sentinel; do not re-apply. Never edit an applied migration.",
     "added_at": "2026-07-29",
     "added_in_pr": "DEPLOY-UNBLOCK-ACCT-ECON-05-121800"
+  },
+  {
+    "filename": "202608120000_item5a_demo_purge_recursive_cascade.sql",
+    "ledger_checksum": "held-manual-apply",
+    "disk_checksum": "4d9baceebe4b5e14e39e6016897e46e31faec9f4f2ffbb3ae0b949884c92aa7d",
+    "reason": "LIVE RENDER OUTAGE 2026-08-04: Claude Neon-applied ITEM-5a and ledgered _system._schema_migrations with sentinel checksum 'held-manual-apply' (not a sha256). Disk sha256 is 4d9bacee\u2026. db:migrate preDeploy aborts on \"modified after apply\" (same class as DEPLOY-UNBLOCK-ACCT-ECON-05). Accept historical ledger\u2194disk sentinel; do not re-apply; never edit the applied SQL (PR #4296 SQL header rewrite would change disk hash and re-break deploy).",
+    "added_at": "2026-08-04",
+    "added_in_pr": "DEPLOY-UNBLOCK-ITEM5A-20260812"
   }
 ]

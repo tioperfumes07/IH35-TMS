@@ -34,7 +34,7 @@
  * ADDITIVE: this file adds a mechanism beside catalogPickerRegistry; it replaces nothing. Catalog
  * reference lists keep going through ReferenceSelect exactly as before.
  */
-import { listDrivers, listUnits, listVendors } from "../../api/mdata";
+import { listDrivers, listEquipment, listUnits, listVendors } from "../../api/mdata";
 import { listLoads } from "../../api/loads";
 import { listWorkOrders } from "../../api/maintenance";
 import { listInsurancePolicies } from "../../api/insurance";
@@ -43,6 +43,7 @@ import { listFactoringAdvances } from "../../api/accounting";
 export type EntityPickerKind =
   | "driver"
   | "unit"
+  | "trailer"
   | "load"
   | "vendor"
   | "work_order"
@@ -118,6 +119,40 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
         value: d.id,
         label: nonEmpty(d.first_name, d.last_name) || String(d.id),
       }));
+    },
+  },
+
+  trailer: {
+    kind: "trailer",
+    label: "trailer",
+    readTable: "mdata.equipment",
+    writeTable: "mdata.equipment",
+    readEndpoint: "GET /api/v1/mdata/equipment",
+    writeEndpoint: "POST /api/v1/mdata/equipment",
+    entityScoped: true,
+    evidence: "apps/backend/src/mdata/equipment.routes.ts:132 (SELECT) / :230 (INSERT)",
+    inlineCreate: { available: true },
+    serverSearch: true,
+    async list(operatingCompanyId, opts) {
+      const res = await listEquipment({
+        operating_company_id: operatingCompanyId,
+        limit: 200,
+        search: opts?.search || undefined,
+      });
+      return (res.equipment ?? []).map((row) => {
+        const e = row as {
+          id: string;
+          equipment_number?: string | null;
+          equipment_type?: string | null;
+          make?: string | null;
+          model?: string | null;
+        };
+        return {
+          value: e.id,
+          label: nonEmpty(e.equipment_number) || String(e.id),
+          sublabel: [e.equipment_type, e.make, e.model].filter(Boolean).join(" · ") || undefined,
+        };
+      });
     },
   },
 

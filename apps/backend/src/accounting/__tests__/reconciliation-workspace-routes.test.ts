@@ -1,11 +1,23 @@
 import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+/**
+ * Repo-root anchored, NOT cwd-anchored. These tests read source files by path; using
+ * repoRootPath("apps/backend/...") silently resolves against the CURRENT WORKING DIRECTORY, so the
+ * same test passes from the repo root and throws ENOENT from apps/backend with a doubled path
+ * ("apps/backend/apps/backend/..."). That reads as a broken test rather than a broken invocation and
+ * has already cost one false "pre-existing failures" diagnosis. Anchoring to this file's own location
+ * makes the tests independent of where vitest is started.
+ */
+const repoRootPath = (p: string) => path.resolve(fileURLToPath(new URL("../../../../../", import.meta.url)), p);
+
 
 describe("accounting reconciliation workspace routes", () => {
   it("exposes workspace GET under accounting namespace", () => {
     const routes = fs.readFileSync(
-      path.resolve("apps/backend/src/accounting/reconciliation.routes.ts"),
+      repoRootPath("apps/backend/src/accounting/reconciliation.routes.ts"),
       "utf8"
     );
     expect(routes).toContain("/api/v1/accounting/reconciliation/workspace");
@@ -14,7 +26,7 @@ describe("accounting reconciliation workspace routes", () => {
 
   it("wires match POST", () => {
     const routes = fs.readFileSync(
-      path.resolve("apps/backend/src/accounting/reconciliation.routes.ts"),
+      repoRootPath("apps/backend/src/accounting/reconciliation.routes.ts"),
       "utf8"
     );
     expect(routes).toContain("/api/v1/accounting/reconciliation/match");
@@ -23,7 +35,7 @@ describe("accounting reconciliation workspace routes", () => {
 
   it("wires unmatch PATCH", () => {
     const routes = fs.readFileSync(
-      path.resolve("apps/backend/src/accounting/reconciliation.routes.ts"),
+      repoRootPath("apps/backend/src/accounting/reconciliation.routes.ts"),
       "utf8"
     );
     expect(routes).toContain("/api/v1/accounting/reconciliation/unmatch");
@@ -32,7 +44,7 @@ describe("accounting reconciliation workspace routes", () => {
 
   it("maps unreconciled bank txns in workspace payload", () => {
     const routes = fs.readFileSync(
-      path.resolve("apps/backend/src/accounting/reconciliation.routes.ts"),
+      repoRootPath("apps/backend/src/accounting/reconciliation.routes.ts"),
       "utf8"
     );
     expect(routes).toContain("unreconciled_bank_transactions");
@@ -53,7 +65,7 @@ describe("accounting reconciliation workspace routes", () => {
 describe("accounting reconciliation workspace — autoload registration contract", () => {
   it("route file exports a default fastify-plugin so @fastify/autoload loads it", () => {
     const routes = fs.readFileSync(
-      path.resolve("apps/backend/src/accounting/reconciliation.routes.ts"),
+      repoRootPath("apps/backend/src/accounting/reconciliation.routes.ts"),
       "utf8"
     );
     // `default fp(...)` is what makes autoload pick the file up. A named-only export 404s silently.
@@ -63,7 +75,7 @@ describe("accounting reconciliation workspace — autoload registration contract
 
   it("accounting module autoloads *.routes.{ts,js} (the mechanism that registers this file)", () => {
     const accountingIndex = fs.readFileSync(
-      path.resolve("apps/backend/src/accounting/index.ts"),
+      repoRootPath("apps/backend/src/accounting/index.ts"),
       "utf8"
     );
     expect(accountingIndex).toContain("@fastify/autoload");
@@ -73,7 +85,7 @@ describe("accounting reconciliation workspace — autoload registration contract
 
   it("backend boot registers the accounting autoload group", () => {
     const indexSrc = fs.readFileSync(
-      path.resolve("apps/backend/src/index.ts"),
+      repoRootPath("apps/backend/src/index.ts"),
       "utf8"
     );
     expect(indexSrc).toMatch(/await\s+registerAccountingRoutes\(app\);/);

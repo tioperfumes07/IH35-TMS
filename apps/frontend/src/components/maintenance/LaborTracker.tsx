@@ -25,6 +25,21 @@ type Props = {
 
 const ACTORS = ["vendor", "internal_mechanic", "driver", "admin"] as const;
 
+type LaborCodeOption = { id: string; code: string; display_name: string };
+
+function laborEntryCodeLabel(row: WoTimeEntryRow, codes: LaborCodeOption[]): string {
+  const embedded = row.labor_code as { code?: string; display_name?: string } | null | undefined;
+  if (embedded?.code) {
+    return embedded.display_name ? `${embedded.code} — ${embedded.display_name}` : embedded.code;
+  }
+  const codeId = row.labor_code_id as string | undefined;
+  if (codeId) {
+    const match = codes.find((c) => c.id === codeId);
+    if (match) return `${match.code} — ${match.display_name}`;
+  }
+  return "General labor";
+}
+
 export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
@@ -146,10 +161,11 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
   const columns = useMemo((): Array<ParityColumn<WoTimeEntryRow>> => {
     return [
       {
-        key: "id",
-        label: "ID",
+        key: "labor_code",
+        label: "Labor code",
         sortable: true,
-        render: (row) => <span className="font-mono text-[11px]">{String(row.id ?? "").slice(0, 8)}…</span>,
+        sortValue: (row) => laborEntryCodeLabel(row, laborCodes),
+        render: (row) => <span className="text-gray-900">{laborEntryCodeLabel(row, laborCodes)}</span>,
       },
       {
         key: "actor_kind",
@@ -184,16 +200,22 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
         render: (row) => (row.computed_labor_cost_cents != null ? String(row.computed_labor_cost_cents) : "—"),
       },
     ];
-  }, []);
+  }, [laborCodes]);
 
   const entriesErr = entriesQuery.error as { status?: number; message?: string } | null;
 
   return (
-    <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm" data-testid="maint-labor-tracker">
-      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Mechanic labor</div>
-      <p className="mt-1 text-xs text-slate-600">Start/stop timers or add manual ranges. Rates drive computed labor cost.</p>
+    <section
+      className="overflow-hidden rounded-sm border border-gray-200 bg-white text-sm"
+      data-testid="maint-labor-tracker"
+    >
+      <div className="border-b border-gray-200 bg-gray-50 px-3 py-2">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Mechanic labor</div>
+        <p className="mt-1 text-xs text-slate-600">Start/stop timers or add manual ranges. Rates drive computed labor cost.</p>
+      </div>
 
-      <div className="mt-3 grid gap-2 md:grid-cols-4">
+      <div className="space-y-3 p-3">
+      <div className="grid gap-2 md:grid-cols-4">
         <label className="text-xs text-slate-600">
           Actor kind
           <SelectCombobox
@@ -247,14 +269,14 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
         </label>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button type="button" size="sm" onClick={() => void startMut.mutateAsync()} disabled={startMut.isPending || Boolean(openEntry)}>
           Clock in
         </Button>
         {Boolean(openEntry) ? <span className="text-xs text-amber-700">An open timer exists — stop it before starting another.</span> : null}
       </div>
 
-      <div className="mt-4 border-t border-gray-100 pt-3">
+      <div className="border-t border-gray-100 pt-3">
         <div className="text-xs font-semibold text-slate-600">Book manual labor range</div>
         <div className="mt-2 grid gap-2 md:grid-cols-2">
           <label className="text-xs text-slate-600">
@@ -274,13 +296,14 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
       </div>
 
       <div
-        className={`mt-3 rounded-sm border px-3 py-2 text-sm ${openEntry ? "border-amber-200 bg-amber-50 text-amber-900" : "border-gray-200 bg-gray-50 text-gray-700"}`}
+        className={`rounded-sm border px-3 py-2 text-sm ${openEntry ? "border-amber-200 bg-amber-50 text-amber-900" : "border-gray-200 bg-gray-50 text-gray-700"}`}
         data-testid="maint-labor-running-timer"
       >
         {runningLabel}
       </div>
+      </div>
 
-      <div className="mt-4" data-testid="maint-labor-entries-table">
+      <div className="border-t border-gray-100" data-testid="maint-labor-entries-table">
         {entriesQuery.isError ? (
           <ListErrorState
             title="Couldn't load labor entries"
@@ -289,52 +312,54 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
             onRetry={() => void entriesQuery.refetch()}
           />
         ) : (
-          <ParityTable
-            storageKey="maint-labor-tracker-entries"
-            tableTestId="maint-labor-entries-parity"
-            columns={columns}
-            rows={entries}
-            rowKey={(row) => String(row.id ?? "")}
-            loading={entriesQuery.isLoading}
-            emptyText="No time entries yet."
-            initialPageSize={25}
-            pageSizeOptions={[10, 25, 50]}
-            rowActions={(row) => {
-              const id = String(row.id ?? "");
-              const rate = row.labor_rate_cents_per_hour != null ? String(row.labor_rate_cents_per_hour) : "";
-              return (
-                <span className="inline-flex flex-wrap justify-end gap-2">
-                  {!row.ended_at ? (
-                    <Button type="button" size="sm" variant="secondary" onClick={() => void stopMut.mutateAsync(id)} disabled={stopMut.isPending}>
-                      Stop
-                    </Button>
-                  ) : null}
-                  {isOwnerAdmin ? (
-                    <>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => {
-                          const next = window.prompt("Labor rate (cents/hour)", rate || "0");
-                          if (next === null) return;
-                          void patchMut.mutateAsync({ entryId: id, labor_rate_cents_per_hour: Number(next) });
-                        }}
-                        disabled={patchMut.isPending}
-                      >
-                        Rate
+          <div className="mobile-table-fallback w-full" data-testid="mobile-optimized-table">
+            <ParityTable
+              storageKey="maint-labor-tracker-entries"
+              tableTestId="maint-labor-entries-parity"
+              columns={columns}
+              rows={entries}
+              rowKey={(row) => String(row.id ?? "")}
+              loading={entriesQuery.isLoading}
+              emptyText="No time entries yet."
+              initialPageSize={25}
+              pageSizeOptions={[10, 25, 50]}
+              rowActions={(row) => {
+                const id = String(row.id ?? "");
+                const rate = row.labor_rate_cents_per_hour != null ? String(row.labor_rate_cents_per_hour) : "";
+                return (
+                  <span className="inline-flex flex-wrap justify-end gap-2">
+                    {!row.ended_at ? (
+                      <Button type="button" size="sm" variant="secondary" onClick={() => void stopMut.mutateAsync(id)} disabled={stopMut.isPending}>
+                        Stop
                       </Button>
-                      <Button type="button" size="sm" variant="danger" onClick={() => void deleteMut.mutateAsync(id)} disabled={deleteMut.isPending}>
-                        Remove
-                      </Button>
-                    </>
-                  ) : null}
-                </span>
-              );
-            }}
-          />
+                    ) : null}
+                    {isOwnerAdmin ? (
+                      <>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => {
+                            const next = window.prompt("Labor rate (cents/hour)", rate || "0");
+                            if (next === null) return;
+                            void patchMut.mutateAsync({ entryId: id, labor_rate_cents_per_hour: Number(next) });
+                          }}
+                          disabled={patchMut.isPending}
+                        >
+                          Rate
+                        </Button>
+                        <Button type="button" size="sm" variant="danger" onClick={() => void deleteMut.mutateAsync(id)} disabled={deleteMut.isPending}>
+                          Remove
+                        </Button>
+                      </>
+                    ) : null}
+                  </span>
+                );
+              }}
+            />
+          </div>
         )}
       </div>
-    </div>
+    </section>
   );
 }
