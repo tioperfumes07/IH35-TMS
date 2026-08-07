@@ -7724,3 +7724,67 @@ baked at insert.
 V5 segment exists so an ID is traceable to a *vehicle* when unit numbers are reassigned between trucks — a
 real event in a fleet. A constant defeats that entirely, and because the ID is immutable, every WO created
 before the fix keeps the placeholder forever.
+
+## 125. ★★ BOARD ITEM PULLED — `LV-WO-RECONCILE-EXCLUDES-SECTION-A` (P0 money): CONFIRMED, and the leak is THREE TIMES WIDER than the row states. `line_type` has FIVE DB-valid values and the reconcile counts TWO.
+
+The board row pins the reconcile's blindness to **Section A category lines** and to a parent amount exceeding
+its children. **Both are real. There is a third leak the row does not name, and it is the largest.**
+
+**THE RECONCILE'S ACTUAL INPUT — read at source, `apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx:435-436`:**
+```ts
+const woPartsDollars = sectionBSubRows.filter((r) => r.line_type === "parts").reduce((s,r) => s + Number(r.amount||0), 0);
+const woLaborDollars = sectionBSubRows.filter((r) => r.line_type === "labor").reduce((s,r) => s + Number(r.amount||0), 0);
+```
+`CreateWOSectionReconcile.tsx` is a **pure display component** — it receives these two numbers as props and
+does nothing but subtract the operator's typed invoice figures. **The defect is entirely in what the caller
+sums**, and `reconcileOk` (`:438-441`) is the gate that lets the save proceed with every check ✓.
+
+### ★ THE THIRD LEAK — `line_type` is a FIVE-VALUE DOMAIN AND THE RECONCILE MATCHES TWO STRING LITERALS
+
+**The DB CHECK constraint, read live off prod:**
+```sql
+work_order_lines_line_type_check
+  CHECK (line_type = ANY (ARRAY['part','parts','labor','disposal','other']))
+```
+
+**Three of five DB-valid line types are structurally invisible to the reconcile** while being fully included
+in the WO total and the resulting A/P bill:
+
+| `line_type` | in WO total | seen by reconcile |
+|---|---|---|
+| `'parts'` | ✅ | ✅ |
+| `'labor'` | ✅ | ✅ |
+| **`'part'`** (singular) | ✅ | **❌** |
+| **`'disposal'`** | ✅ | **❌** |
+| **`'other'`** | ✅ | **❌** |
+
+**`'part'` vs `'parts'` is the dangerous one.** Two spellings of the same concept are both DB-valid; one is
+counted and one is not, and nothing anywhere reconciles the two. A line saved as `'part'` reads identically
+to a human in every UI and vanishes from the tie-out. **`'disposal'` is a real trucking cost** — tire and oil
+disposal fees appear on virtually every shop invoice — and it can never be reconciled by construction.
+
+### ★ AND THE SAME FIELD IS DEFINED THREE DIFFERENT WAYS IN THREE LAYERS
+
+| layer | domain |
+|---|---|
+| **DB** `maintenance.work_order_lines` CHECK | `'part' \| 'parts' \| 'labor' \| 'disposal' \| 'other'` — **5** |
+| **Frontend** `CreateWorkOrderModal.tsx:209,:222` · `api/maintenance.ts:222` | `"parts" \| "labor" \| "other"` — **3** |
+| **Backend** `two-section-service.ts:76` | `"parts" \| "labor"` — **2** |
+
+**Three contracts for one column.** The frontend can construct `"other"`, which the backend's own type does
+not admit; the DB accepts two more the frontend cannot produce but an import or a future path could. **The
+reconcile's two-literal filter is not an oversight against a two-value field — it is an oversight against a
+five-value field that nobody in the stack agrees on.**
+
+**Verdict: the board row's P0 stands and its severity is UNDERSTATED.** Its stated fix — include Section A —
+would still leave `'part'`, `'disposal'` and `'other'` silently unreconciled, and the panel would keep
+printing *"Reconciled — WO parts & labor tie to the vendor invoice."* over a shortfall. **A fix that
+enumerates buckets by string literal will re-introduce this the next time a sixth value is added; the
+reconcile must be defined as `WO total − Σ(reconciled buckets) = 0`, so anything uncategorised shows up as
+variance instead of disappearing.**
+
+**METHOD NOTE.** The board row located the root cause in the backend service (`two-section-service.ts:186-191`,
+where `totalCost = A + B` is computed). That is where the WO **total** comes from, and it is correct. **The
+reconcile's numbers never touch that code** — they are computed independently in the browser from a different
+array. Two independent computations of "what this work order costs" is the actual structural defect, and it
+is why adding Section A on one side would not make them agree.
