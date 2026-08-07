@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 const companyQuery = z.object({ operating_company_id: z.string().uuid() });
 
@@ -38,7 +39,7 @@ export async function registerComplianceNotificationRulesRoutes(app: FastifyInst
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
 
     const rows = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           SELECT id::text, credential_type, entity_scope, recipient_user_ids, recipient_emails,
@@ -61,7 +62,7 @@ export async function registerComplianceNotificationRulesRoutes(app: FastifyInst
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
     const row = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       const res = await client.query(
         `
           INSERT INTO compliance.notification_rules (
@@ -101,10 +102,14 @@ export async function registerComplianceNotificationRulesRoutes(app: FastifyInst
     if (!params.success || !body.success) {
       return reply.code(400).send({ error: "validation_error" });
     }
-    if (!body.data.operating_company_id) return reply.code(400).send({ error: "operating_company_id_required" });
+    // Hoisted so the narrowing survives into the closure below — a property access does not stay
+    // narrowed across a callback boundary, and this value is the RLS scope, so it must be a definite
+    // string before it reaches setScopedCompanyContext.
+    const operatingCompanyId = body.data.operating_company_id;
+    if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const row = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
       const res = await client.query(
         `
           UPDATE compliance.notification_rules
@@ -145,7 +150,7 @@ export async function registerComplianceNotificationRulesRoutes(app: FastifyInst
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
 
     await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       await client.query(
         `
           UPDATE compliance.notification_rules

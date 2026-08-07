@@ -306,5 +306,26 @@
     "source_file": "docs/law/NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX.md",
     "guard": "scripts/verify-no-patch-or-defer-language.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-CALLER-SCOPED-GUC-MEMBERSHIP",
+    "title": "A route may not SET app.operating_company_id to a company the caller named without first asserting the caller belongs to it — RLS then enforces whatever the attacker asked for, and an accessible-companies predicate is not a membership check because user_accessible_company_ids() returns every active company for an Owner",
+    "source_file": "apps/backend/src/mdata/driver-messages.routes.ts",
+    "guard": "scripts/verify-caller-scoped-guc-membership.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-INVITE-WRITE-ENTITY-GATED",
+    "title": "A route that writes an invite must prove the caller belongs to the invited driver's company BEFORE the write — a membership guard scoped by helper-import is vacuous, because a route with zero asserts is exactly the vulnerable state and is invisible to it",
+    "source_file": "apps/backend/src/mdata/drivers.routes.ts",
+    "guard": "scripts/verify-invite-write-entity-gated.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-SCOPED-COMPANY-CONTEXT-ASSERTS-FIRST",
+    "title": "setScopedCompanyContext must assert company membership before setting app.operating_company_id — it concentrates the cross-entity authorization of every handler that delegates to it, and a call-site guard cannot see it break",
+    "source_file": "apps/backend/src/_helpers/scoped-company-context.ts",
+    "guard": "scripts/verify-scoped-company-context-asserts-first.mjs",
+    "type": "enforced"
   }
 ]

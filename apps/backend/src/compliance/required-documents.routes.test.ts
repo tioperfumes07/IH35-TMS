@@ -5,7 +5,15 @@ import { registerRequiredDocumentTypesRoutes } from "./required-documents.routes
 const OPCO = "11111111-1111-4111-8111-111111111111";
 let lastScopedOpco: string | null = null;
 
+// Membership probe issued by assertCompanyMembership, which setScopedCompanyContext now runs BEFORE
+// setting the tenant GUC. Default: the caller DOES belong to the company. Flip `memberOfCompany` to
+// false to exercise the cross-entity rejection — the whole point of the gate.
+let memberOfCompany = true;
+
 const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
+  if (sql.includes("org.user_company_access")) {
+    return memberOfCompany ? { rows: [{ ok: 1 }], rowCount: 1 } : { rows: [], rowCount: 0 };
+  }
   if (sql.includes("set_config") && sql.includes("app.operating_company_id")) {
     lastScopedOpco = String(values?.[0] ?? "");
     return { rows: [] };
@@ -39,6 +47,7 @@ describe("required-document-types routes (DOC-REQ-2)", () => {
     await Promise.all(apps.splice(0).map((app) => app.close()));
     queryMock.mockClear();
     lastScopedOpco = null;
+    memberOfCompany = true;
   });
 
   async function buildApp(role: string) {
@@ -89,6 +98,18 @@ describe("required-document-types routes (DOC-REQ-2)", () => {
     });
     expect(res.statusCode).toBe(200);
     expect(res.json().required_document_type.enforcement).toBe("hard_block");
+  });
+
+  // The security property setScopedCompanyContext exists for: operating_company_id arrives from the
+  // caller, so a caller who is NOT a member of that company must be refused BEFORE the tenant GUC is
+  // set. Without this test the gate could be deleted and every other test here would still pass.
+  it("refuses a company the caller is not a member of, before scoping (cross-entity gate)", async () => {
+    memberOfCompany = false;
+    const app = await buildApp("Owner");
+    const res = await app.inject({ method: "GET", url: `/api/v1/compliance/required-document-types?operating_company_id=${OPCO}` });
+    expect(res.statusCode).not.toBe(200);
+    // and the tenant GUC must never have been set for a company we do not belong to
+    expect(lastScopedOpco).toBeNull();
   });
 
   it("rejects an invalid entity_kind (validation_error)", async () => {
