@@ -1178,3 +1178,35 @@ original posting has a non-null `reversed_by_line_id`. This is a shrink-only rat
 caught this the moment the void ran.
 
 Board row `LV-VOID-NO-REVERSAL` — **CC-1, critical**.
+
+### 28a — `LV-VOID-NO-REVERSAL` extends to AR: it is the VOID PATH, not a bill-specific bug
+
+Checked every USMCA invoice for the same shape:
+
+| invoice | status | total | voided_at | postings | **reversals** | verdict |
+|---|---|---|---|---|---|---|
+| INV-2026-00001 | void | $1.00 | 2026-08-05 23:16:48 | **2** | **0** | ❌ **same defect — un-reversed** |
+| INV-2026-00002 | void | $1.00 | 2026-08-05 23:16:48 | 0 | 0 | ✅ nothing to reverse (never posted) |
+| INV-2026-00004 | void | $0.00 | 2026-08-05 23:14:59 | 0 | 0 | ✅ nothing to reverse |
+| INV-2026-00003 | partial | $1,200.00 | (live) | 2 | 0 | ✅ live, correctly posted |
+| INV-2026-00005 | proforma | $2,450.00 | (live) | 0 | 0 | ✅ correct — Event 1 has not fired (item 16) |
+
+**So the defect is in the VOID PATH ITSELF, across document types** — AR and AP both. `INV-2026-00001`
+was voided on **2026-08-05**, two days before the bill voids, and is *also* un-reversed. This is not a
+one-off from the recent duplicate remediation; it is how void has been behaving.
+
+**Materially:** the AR residue is only **$1.00**, so the dollar exposure remains dominated by the
+$1,643.21 on the AP side. But the *fix* must be made at the void path, not patched per-document-type,
+or the next voided invoice reintroduces it at whatever amount that invoice happens to carry.
+
+**WORM checklist result for the void pass — 3 of 5 PASS:**
+
+| requirement | result |
+|---|---|
+| a. reversing JE posted, DR=CR nets zero | ❌ **FAIL — no reversal exists on any voided doc** |
+| b. original preserved (`voided_at` set, not deleted) | ✅ PASS — all 4 bills + 3 invoices still exist as rows |
+| c. append-only audit row written | ✅ PASS — **4 `audit.row_changes` rows on `bills`** at the exact void timestamp, one per voided bill (audit table 2,312,528 rows total) |
+| d. siblings untouched | ✅ PASS — `5a1d7268`, `304f5fa3`, `0fe49cd0` all still `(live)` |
+| e. entity balance reflects the net correctly | ❌ **FAIL — $1,643.21 residue in 2000/5400** |
+
+Both failures are the same single missing behaviour. Everything else about void is correct.
