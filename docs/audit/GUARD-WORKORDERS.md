@@ -82,6 +82,125 @@ Status: **OPEN — TOP PRIORITY, NON-STOP**, owner-directed. This card never "co
 
 ## LIVE BOARD (GUARD updates as shas land)
 
+
+---
+
+## ★★★ CC-3 DISPATCH — 2026-08-07 · COMPLETE + PERMANENT FIXES ONLY (no patches)
+
+**OWNER RULE, BINDING ON EVERY ROW BELOW (CLAUDE.md §10):** *we never patch — we make complete and
+permanent fixes.* A row is DONE only when **(1)** the root cause is fixed at its source, **(2)** a guard
+exists that fails on the bug and passes on the fix, and **(3)** live proof is produced on prod. Green CI
+is the floor, not the verdict. **Each row below also names THE PATCH THAT MUST NOT BE APPLIED** — for
+most of these the tempting shallow fix makes CI green while leaving the defect, or is actively worse.
+
+**★ ROUTING CORRECTION — READ FIRST.** Rows found by this lane were previously tagged `CC-2 / mechanical`.
+**That is wrong per this board's own supreme law §3**, which says **CC-1 = money/GL/WORM · CC-3 =
+mechanical/entity-scope/FE/CI-guards · CC-2 = GUARD, verify live, NEVER BUILD.** Routing build work to
+CC-2 guarantees it is never built. **Mechanical/FE rows below are therefore addressed to the
+MECHANICAL/FE lane (CC-3 role per §3), not CC-2.** This lane's current instance is the live verifier and
+does not fix what it verified (maker != checker) — it owns CI-guards only.
+
+### ORDER OF WORK — by blast radius, not by discovery order
+
+**TIER 1 — MOVES CASH OR MISSTATES THE LEDGER (CC-1, money):**
+
+1. **`LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS`** — voided bills are offered for payment in TWO
+   independent pickers. **COMPLETE FIX:** every payable/open-bill query filters on the authoritative
+   void column, and the status/void pairing is enforced **in the database** (CHECK or trigger) so no
+   future writer can desync them. **DO NOT PATCH BY:** fixing only the one selector you found, or by
+   back-filling `status` on today's rows — both leave the next writer free to recreate it.
+   **PERMANENT because:** a DB constraint cannot be forgotten by a new code path.
+
+2. **`LV-BILLPAY-VOID-NO-REVERSAL`** — void posts no reversing entry though the UI promises one.
+   **COMPLETE FIX:** post the equal-and-opposite entry **through the existing poster** and write
+   `reverses_je_id` / `reversed_by_je_id` both ways. **THE WORKING REFERENCE IS ALREADY IN-REPO** — the
+   JE-void path does all of this correctly; copy it. **DO NOT PATCH BY:** writing new GL math, or by
+   softening the UI text to stop promising a reversal — the promise is correct, the code is wrong.
+
+3. **`LV-PAY-SETTLE-NOPOST`** — customer payments never post; A/R subledger vs GL control out by
+   **$1,287.25** and growing. **COMPLETE FIX:** wire payment-received to the existing poster
+   (DR selected deposit account / CR A/R), honouring the `Deposited to` selection, and reverse on void.
+   **A/P is the working mirror — copy it.** **DO NOT PATCH BY:** a per-row "payments must post" check
+   alone — **the guard must be the subledger-to-GL tie-out per control account**, because only the
+   tie-out catches an invoice that reads `paid` against a GL still carrying it in full.
+
+4. **`LV-REVREC-NOT-FIRING`** — cross-connection read-your-own-writes: `loads.routes.ts:1295` stamps
+   `actual_departure_at` on connection A (uncommitted), `:1335` reads it on connection B via
+   `withLuciaBypass`. **COMPLETE FIX:** fire the latch **after the transaction commits**.
+   **DO NOT PATCH BY (this one is dangerous):** loosening the `missing_delivery_evidence` gate so the
+   latch posts on status alone. That gate is CORRECT ASC-606 conservatism — loosening it starts
+   recognising **unearned revenue**, which is worse than the bug. Also **do not** pass the route's
+   `client` into the poster: it needs the `withLuciaBypass` RLS context.
+
+5. **`LV-VOID-INVARIANT-BOTH-WAYS` + `LV-CANCEL-VOIDS-STATUS-ONLY` + `LV-AR/AP-OPEN-INCLUDES-VOIDED`** —
+   **these are ONE root cause with four symptoms: void state is not authoritative anywhere in A/P.**
+   **COMPLETE FIX:** one piece of work — enforce `status='void' <-> voided_at IS NOT NULL` in the DB,
+   correct the cancel path to stamp both, and make every open-balance aggregate exclude voided rows.
+   **DO NOT PATCH BY:** fixing the four cards separately, or by a one-directional guard — the pairing
+   is broken in BOTH directions (invoices: status set / timestamp missing; bills: timestamp set /
+   status missing), so a one-sided assertion passes on half the corrupt rows.
+   **TRAP:** `accounting.bill_payments` uses **`revoked_at`**, not `voided_at`; `vendor_credit_applications`
+   uses `voided_reason`, invoices use `void_reason`. **A copy-paste fix WILL silently miss tables — you
+   need a per-table map.**
+
+6. **`LV-BANK-TWO-SIGN-CONVENTIONS`** — one column, two conventions (Relay Fuel Wallet positive, all
+   else negative). **COMPLETE FIX:** normalise on write so `amount_cents` is a true magnitude with
+   `is_credit` the sole direction carrier — which is the law two files already declare — or record the
+   convention per account in the schema. **DO NOT PATCH BY:** special-casing Relay in each reader; that
+   multiplies the trap. **VERIFY FIRST, DO NOT ASSUME:** whether the live recon engine actually
+   mis-matches is UNVERIFIED — its comment is false for 96% of credits, but both sides may normalise
+   identically and cancel. Trace the QBO side before changing behaviour.
+
+7. **`LV-BANK-BANNER-SAYS-FLAG-OFF`** — the banking page tells operators categorize does not post; the
+   flag is **ON for all three entities** and it does. **COMPLETE FIX:** render the **live per-entity
+   override**, never the global default. **DO NOT PATCH BY:** editing the sentence to say "ON" — static
+   copy asserting a flag state will rot again the moment the flag flips.
+
+**TIER 2 — MECHANICAL / FE (mechanical lane per §3 — NOT CC-2):**
+
+8. **`LV-LOAD-DETAIL-SHOWS-UNASSIGNED`** — `GET /dispatch/loads/:id` selects `l.*` from an 18-column
+   view lacking `trip_type` / `assigned_unit_number` / `assigned_primary_driver_name`. **COMPLETE FIX:**
+   mirror for the PRIMARY driver exactly what the same query already does for the SECONDARY, and add
+   `trip_type`. **DO NOT PATCH BY:** having the UI fall back to a UUID — that is the defect this repo
+   already fixed once elsewhere (`CLS-UUID-LABEL`).
+
+9. **`LV-STOP-ZIP-DROPPED`** — `postal_code` is NULL on **0 of 18** stops while city/state persist.
+   **COMPLETE FIX:** persist it on the booking path. **WHY IT IS NOT COSMETIC:** it is the PC*MILER
+   routing key — without it, per-mile driver pay and IFTA jurisdiction miles are unreachable.
+
+10. **`LV-DISPATCH-TOAST-LIES`** — "Load booked and dispatched" after an audited DOT override, while the
+    load never left `assigned_not_dispatched`. **COMPLETE FIX:** report the status the SERVER returned.
+    **An override audit trail attesting to an action that did not happen is worse than no override.**
+
+11. **`LV-BULK-DELIVER-NOLATCH`** — bulk "Mark delivered" stamps delivery evidence and never latches.
+    **COMPLETE FIX:** call the latch — **using item 40's after-commit ordering**, or you reproduce the
+    Tier-1 #4 timing bug in a second place. **Note:** the widened guard on this branch is *correctly RED*
+    on that file and cannot go green until this is done. That redness is the forcing function, not a
+    problem to silence.
+
+12. **`LV-EXPENSE-VOID-UNREACHABLE`** — the void endpoint exists, no UI reaches it, and the FE renders a
+    `void` badge it can never produce. **COMPLETE FIX:** either surface the endpoint on the expense
+    detail page, **or** state the read-only decision explicitly and remove the dead badge branch.
+    **Either answer is fine; the current ambiguous state is the one that is not.**
+
+13. **`SKILL-DRIFT-USMCA-HIDDEN`** — two AUTO-LOADED skills say USMCA is hidden/future with 0 balances;
+    prod and this lane's live transactions disprove it. **COMPLETE FIX:** correct the skill text AND add
+    a presence-ratchet so no auto-loaded skill can describe USMCA as hidden again. **DO NOT PATCH BY:**
+    editing the prose only — an unguarded doc fact drifts back.
+
+**TIER 3 — OWNED BY WHOEVER OWNS THE BLOCK:**
+
+14. **`BLOCK-0280-02-BOILERPLATE-ACCEPTANCE`** — the abolished-hold half is **DONE** (removed at the root
+    2026-08-07). What remains is typed machine-checkable `acceptance[]`. **CC-3 will not invent criteria
+    for a revenue-GL block it does not own — that is guessing.**
+
+**STANDING NOTE FOR EVERY ROW:** the live evidence, exact file:line, and the disproof conditions are in
+`docs/audit/LIVE-TXN-BATTERY-2026-08-06.md`. Where this lane could not prove something it says
+**UNVERIFIED** rather than guessing — those are marked in-row and must be verified, not assumed, before
+code changes.
+
+---
+
 | Item | Audit row | Layer | Owner | Fix requirement (+ standard) | Block/PR | GUARD status |
 |---|---|---|---|---|---|---|
 | Fleet KPI parity | 114 | A | Cursor | Shared visibility helper; roster + KPI same predicate; parity guard | #4016 `575aee6eaf` | **VERIFIED** |

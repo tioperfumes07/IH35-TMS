@@ -117,3 +117,36 @@ law is broken at the delivery step.
 **A CI freeze never justifies withholding a finding.** If a freeze blocks pushing, say so out loud and
 escalate — do not silently accumulate local commits. Tag every defect row with its owning lane
 (money → CC-1, mechanical → CC-2).
+
+---
+
+## ★ ROUTING CORRECTION — resolved 2026-08-07 (the verbatim order above is UNCHANGED)
+
+**The conflict.** Rule 7 of the order above says a FAIL goes to *"the owning lane (money→CC-1,
+**mechanical→CC-2**)"*. The shared board's **PERMANENT LAW §3 (owner-locked 2026-08-05, marked supreme)**
+says the opposite about CC-2:
+
+> **CC-1 = money / GL / WORM. CC-3 = mechanical / entity-scope / FE / CI-guards. CC-2 = GUARD, verify
+> live, never build.**
+
+**Why this matters, concretely.** Routing mechanical/FE build work to CC-2 sends it to a lane whose
+defining constraint is **never build** — so the work is guaranteed never to be done. Roughly a third of
+this lane's findings are mechanical/FE, so the mis-route would have silently stranded them.
+
+**Resolution applied (per §9 drift prevention — both sources named, neither silently overwritten):**
+- **Money / GL / WORM → CC-1.** Both sources agree; unchanged.
+- **Mechanical / entity-scope / FE → the MECHANICAL lane (CC-3 role per board §3), NOT CC-2.**
+- **CI-guards → this lane** (CC-3 role), which is why the two guards in this battery were built here and
+  the money fixes were not.
+- **CC-2 → GUARD / verify-live only.** Never assign it build work.
+
+**Maker != checker still binds.** This lane's instance is the live verifier; it does not fix the
+mechanical/FE defects it found. Those go to the mechanical lane as a peer, exactly as money findings go
+to CC-1. The one thing this instance builds is CI-guards, which both sources place with CC-3.
+
+**Board rows written before 2026-08-07 carry the old `CC-2 / mechanical` tag.** They are not rewritten
+(WORM — a row is never edited to hide history); the dispatch block at the top of
+`docs/audit/GUARD-WORKORDERS.md` states the correction once, authoritatively, and it governs.
+
+**This is recorded here rather than by editing the verbatim order above, because the order is the
+owner's words and is reproduced exactly as issued.**
