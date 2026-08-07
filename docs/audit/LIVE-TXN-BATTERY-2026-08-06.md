@@ -5238,3 +5238,49 @@ still dangerous, because the operator is part of the system.**
 constrains the column to a real vendor. Today all 11 USMCA bills resolve cleanly, so this is latent rather
 than active. It is already on the board as `LV-BILLS-VENDOR-UUID`; I checked before writing rather than
 filing it twice.
+
+---
+
+## 85. ROOT CAUSE beneath the void findings — two money tables have NO void or soft-delete column at all
+
+**Measured on prod `br-fancy-credit-akjnd07a` (`information_schema.columns`), 2026-08-07.** I filed several
+void defects from the UI side; this is the schema fact underneath them. **No new card — the existing cards
+are annotated instead**, because filing the same defect twice inflates the board and splits the fix.
+
+| table | `voided_at` | `deactivated_at` | `archived_at` | other soft-delete |
+|---|---|---|---|---|
+| `accounting.journal_entries` | **✓** | — | — | — |
+| `accounting.invoices` | **✓** | — | — | — |
+| `accounting.bills` | **✓** | — | — | — |
+| `accounting.payments` | **✓** | — | — | — |
+| `banking.bank_transactions` | **✓** | — | — | — |
+| `driver_finance.driver_settlements` | **✓** | — | — | — |
+| `accounting.invoice_lines` | — | — | — | ✓ (`is_active`-class) |
+| `driver_finance.settlement_lines` | — | — | — | ✓ (`is_active`-class) |
+| **`accounting.bill_payments`** | **NONE** | **NONE** | **NONE** | **NONE** |
+| **`accounting.expense_lines`** | **NONE** | **NONE** | **NONE** | **NONE** |
+
+**Two money tables have no way to mark a row void, inactive, archived or cancelled.** The constitution is
+explicit — *"void-not-delete: set `voided_at`, never DELETE"* and *"Every table gets `is_active` + audit"* —
+and board Rule 4 states *"VOID = reversal; nothing is deletable."* For these two tables the schema offers no
+mechanism to comply: the only way to remove a row is a hard `DELETE`, which the law forbids. **The rule and
+the schema are in direct conflict.**
+
+**This explains the UI symptoms I filed separately rather than duplicating them:**
+- `LV-BILLPAY-VOID-NO-REVERSAL` — voiding a bill payment produces no reversal. With no `voided_at` on
+  `accounting.bill_payments`, there is nowhere to record that it was voided. **(Already documented in the
+  constitution itself: "`accounting.bill_payments` (no `voided_at`)" — so this is known, not newly
+  discovered.)**
+- `LV-EXPENSE-VOID-UNREACHABLE` — the expense void path is unreachable from the UI. `expense_lines` has no
+  void column either.
+
+**NOT claimed — and I checked rather than assumed:** there is **no evidence of data loss**. `audit.row_changes`
+records **27** `DELETE` operations in the entire table, and **none of them touched `bill_payments` or
+`expense_lines`** (they were `mdata.load_stops` 10 · `mdata.units` 6 · `mdata.loads` 5 · `mdata.drivers` 4 ·
+`maintenance.work_orders` 2). **This is a latent structural gap, not an active one** — it becomes real the
+first time someone needs to void a bill payment or an expense line.
+
+**What the fix must be (for the lane that takes the existing cards):** add `voided_at` to
+`accounting.bill_payments` and a soft-delete column to `accounting.expense_lines` in an additive, idempotent
+migration, then make the void paths write them. **Do not "solve" it with a `DELETE`** — that is the one
+outcome the law forbids, and it is the path of least resistance for anyone who does not read this first.
