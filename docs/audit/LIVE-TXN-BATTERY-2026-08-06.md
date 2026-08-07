@@ -526,6 +526,112 @@ signature**, and must be treated as a defect signal, never as "never used".
 
 ---
 
+## ★★ LV-TXN-015 — **POSITIVE CONTROL LANDED: the settlement machinery WORKS. Only the office path is wired to the wrong endpoint.** — completes LV-TXN-004
+
+When I first walked a load I could only prove the *negative* half — the office path produced nothing. The
+control load has now produced the **positive** half, and it closes the argument.
+
+- **`driver_finance.driver_settlements` moved during this session:** baseline `n_tup_ins` **11**,
+  `n_tup_upd` **0**, `n_live_tup` **0** → now `n_tup_ins` **12**, `n_tup_upd` **2**, `n_live_tup` **1**,
+  `count(*)` **1**. One settlement was created and updated twice.
+- **the row (read directly on prod):**
+  `d3ff8ea3-4acd-4792-b3ad-fdad6383fbb2` · entity **USMCA** · driver `88c04cf5-…` **"Juan USMCA-Battery"**
+  · `settlement_model` **`load_bookended`** · `status` **`closed`** · `trip_closed_at`
+  **2026-08-06T17:03:35.171Z** · `created_at` **17:03:34.882Z**.
+- **17:03:34 is exactly when I ran the `/dispatch/loads/:id/transition` walk** on the control load
+  `LUSMCAFREIGHT-20260806-0001`. Nothing else in the session touched settlements.
+
+### The A/B is now complete, and both halves are measured
+
+| load | endpoint used | departure stamped | settlement opened |
+|---|---|---|---|
+| `L-20260802-0258` | `PATCH /mdata/loads/:id/status` — **what the Kanban calls** | **0 of 2** | **0** |
+| `LUSMCAFREIGHT-20260806-0001` | `PATCH /dispatch/loads/:id/transition` | **1 of 2** ✓ | **1, opened AND auto-closed** ✓ |
+
+- **This overturns the framing of HOLD-001 completely.** The settlement engine is not missing, not
+  unbuilt, and not waiting on anyone: given the right endpoint it **opened a load-bookended settlement
+  and closed it out in under 300 ms**, unprompted. `pingSettlementOnLoadEvent` → `openLoadBookendedSettlement`
+  → `closeSettlementForFinalLoad` all fired correctly.
+- **The entire CLS-MONEY-HOLD/HOLD-001 symptom is one frontend call pointed at the wrong endpoint.**
+- **why the pay-run screen is still empty, and it is now EXPECTED not defective:**
+  `pre-settlements/open-by-driver` filters `trip_closed_at IS NULL`. This settlement auto-closed on the
+  final load, so it correctly does not appear as *open*. That is right behaviour, and I am recording it
+  so nobody files "pre-settlements still empty" as a further defect.
+- **estimate sharpened for CC-1:** the fix is a **frontend endpoint repoint**, not a money-engine build.
+  `Dispatch.tsx:439 onStatusDrop` → `api/loads.ts:263 updateLoadStatus` should call
+  `/dispatch/loads/:id/transition`. Note the two endpoints take **different status vocabularies**
+  (LV-TXN-005), so the repoint must map the Kanban lanes onto the transition enum — that mapping is the
+  real work, and it is small.
+
+### What this does to the class
+`CLS-MONEY-HOLD` HOLD-001 is **not a hold, not an engine gap, and not an owner decision** — it is a
+one-line misrouting with a proven-working engine behind it. Combined with LV-TXN-014 (insurance = hard
+500) and LV-TXN-006's correction, **all three HOLD surfaces are now explained and none of them is a hold.**
+
+---
+
+## ★★★ LV-TXN-016 — NEW CLASS `CLS-TENANT-OPCO-RLS-MISMATCH`: **13 tables write `tenant_id` while RLS enforces `operating_company_id`** — **FAIL (critical)**
+
+LV-TXN-014 found this on `insurance.policy`. It is not one table. It is a schema-wide class, and it
+explains **HOLD-002 as well as HOLD-003**.
+
+### The census (prod `information_schema` + `pg_policy`, RLS-immune)
+Tables carrying **BOTH** `tenant_id` and `operating_company_id`, where `operating_company_id` is
+**NULLABLE** and the **RLS WITH CHECK tests `operating_company_id`**:
+
+| schema | tables |
+|---|---|
+| `insurance.*` | `policy`, `policy_unit`, `claim`, `coi_request`, `lawsuit`, `payment_schedule`, `refund_obligation` (**7**) |
+| `factoring.*` | `factor`, `batch`, `reserve_movement`, `letter_of_release`, `customer_factor_assignment`, `bank_match_suggestion` (**6**) |
+
+**All 13: `opco_nullable = YES`, `rls_checks_opco = true`.** Any INSERT that omits
+`operating_company_id` leaves it NULL, the WITH CHECK compares NULL to the GUC, yields NULL, and the
+transaction aborts with **42501**.
+
+**Correctly immune** (verified, so nobody re-checks them): `maintenance.internal_labor_log`,
+`master_data.customer_terms_history`, `mdata.mx_permits`, `mdata.mx_tolls_ledger` — all have
+`operating_company_id NOT NULL`, so the column cannot be silently skipped.
+
+### The write paths confirm it
+- `factoring.reserve_movement` — the single INSERT (`factoring/reserve.service.ts:118-125`) writes
+  exactly `tenant_id, batch_id, factor_id, direction, amount_cents, reason`. **No
+  `operating_company_id`.** Read in full, not counted by grep.
+- `factoring.batch` and `factoring.letter_of_release` — one INSERT site each, **zero**
+  `operating_company_id` in the column list.
+- `insurance.policy` — proven live at 42501 (LV-TXN-014).
+
+### ★ This re-explains HOLD-002
+`CLS-MONEY-HOLD` HOLD-002 is filed as *"factor agreement exists, 0 reserve movement"* and I earlier
+called it an owner hold. **Both readings are wrong.** The agreement exists (Faro ↔ IH 35
+TRANSPORTATION LLC; `factoring.factor` = 1 TRANSP row), and the reason `reserve_movement` is empty is
+that **its INSERT cannot satisfy its own RLS policy.** Reserve movement is not waiting on a contract or
+on an owner — it is a write that would 500 on first use.
+
+### Honest distinction between the two, because the evidence differs
+- **`insurance.policy` — PROVEN.** `n_tup_ins` **5** with `n_tup_del` **0** and `n_live_tup` **0** (five
+  aborted attempts), **plus** a live reproduction: HTTP 500 / `42501`.
+- **`factoring.reserve_movement` — PRESENT IN CODE, NOT YET FIRED.** `n_tup_ins` is **0**, so nothing has
+  ever attempted the insert; there is no aborted-write evidence and I did **not** reproduce a 500. The
+  defect is established by reading the schema, the RLS policy and the INSERT column list — it would fire
+  on first use. **I am not claiming a reproduction I did not run.**
+
+### Why this survived
+Every one of these tables is empty on prod, so the class reads as "module never used" — the same
+misreading that produced my own false HOLD verdict. **An empty table downstream of a broken write is
+indistinguishable from an unused one until you either attempt the write or read the column list against
+the RLS policy.**
+
+- **FIX:** add `operating_company_id` to all 13 INSERT paths (same value already passed as `tenant_id`),
+  then make the column **NOT NULL** so the class cannot recur silently. Do **not** relax the RLS
+  policies — they are correct; the writes are wrong. Decide which of the two columns is canonical before
+  any further table copies the pattern.
+- **GUARD:** static — assert that every INSERT into a table whose RLS WITH CHECK references
+  `operating_company_id` includes that column in its column list. Mutation-prove by removing it from one
+  site and confirming RED. This is exactly the guard that would have caught all 13 at once.
+- **LANE: CC-1** (schema/RLS/migrations). **status:** OPEN — board row filed.
+
+---
+
 ## Entity-safety note
 No write has been performed on TRANSP in this session. All observation above is read-only; the only
 mutation contemplated (walking `L-20260802-0258` forward) is on USMCA test data.

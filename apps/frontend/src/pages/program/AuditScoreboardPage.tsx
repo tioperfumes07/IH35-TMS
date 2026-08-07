@@ -307,6 +307,18 @@ export function AuditScoreboardPage() {
         <div className="fanout">{sb.chainReverse}</div>
       </div>
 
+      {/* OWNER DECISION 2026-08-05: the Scenario Tracker lives ONLY on Program, never on Home.
+          Mounted here — ONCE, at page level — so /program shows the certification scoreboard AND the
+          live end-to-end pipeline together. The dedicated /program/scenario-tracker route stays as
+          the full-page view (tab above).
+
+          SCENARIO-TRACKER-DUP: this used to sit inside ChainCard, which renders once per chain node,
+          so the tracker mounted 9× — 9 headers, 36 entity chips, and 9 independent 3s useQuery polls
+          plus 9 heartbeat intervals all hammering /api/v1/home/scenario-tracker. It is a page-level
+          singleton; never move it back inside a mapped child. Guarded by
+          scripts/verify-scenario-tracker-single-mount.mjs. */}
+      <ScenarioTrackerHome />
+
       {/* LIVE PROD READ */}
       <h2>Live prod read <span className="sub">{prodReadLabel} · {prodReadSnapshot} · all entities</span></h2>
       <div className="prodpanel">
@@ -412,11 +424,6 @@ function ChainCard({ n }: { n: ProgramScoreboard["chain"][number] }) {
       <div className="nt"><span>{n.title}</span><span className={`chip c-${n.chipTone}`}>{n.chip}</span></div>
       <div className="tbl">{n.table}</div>
       <div className="fk">{n.fk}</div>
-      {/* OWNER DECISION 2026-08-05: the Scenario Tracker lives ONLY on Program, never on Home.
-          Mounted here under the scoreboard so /program shows the certification scoreboard AND the
-          live end-to-end pipeline together. The dedicated /program/scenario-tracker route stays as
-          the full-page view (tab above). */}
-      <ScenarioTrackerHome />
     </div>
   );
 }

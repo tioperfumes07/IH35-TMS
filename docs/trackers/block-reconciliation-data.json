@@ -1,12 +1,12 @@
 {
- "date": "2026-08-06",
- "generated_at_iso": "2026-08-06T14:39:02.556Z",
+ "date": "2026-08-07",
+ "generated_at_iso": "2026-08-07T07:46:32.267Z",
  "counts": {
   "PENDING": 15,
   "PENDING (GATED)": 28,
-  "NEEDS-VERIFY": 60,
+  "NEEDS-VERIFY": 59,
   "DONE": 593,
-  "AUDIT-NOTE": 507
+  "AUDIT-NOTE": 508
  },
  "universe": {
   "total_blocks_after_dedup": 1203,
@@ -805,17 +805,6 @@
    "pr": 2905
   },
   {
-   "id": "BLOCK-10-TIER2-RLS-TEST-GATE",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1224 title-match only, unverified",
-   "name": "Cross-tenant RLS gate verification script with fixture generation",
-   "registered_on": null,
-   "pr": 1224
-  },
-  {
    "id": "block-22-driver-settlement-engine",
    "source": ".block-ready",
    "fin": true,
@@ -854,10 +843,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #1176 title-match only, unverified",
+   "evidence": "9/10 signature file(s) on main — partial, unverified",
    "name": "Insurance policy cancellation + unearned-premium refund with Decision C hardened soft-skip. POST /api/v1/insurance/polic",
    "registered_on": null,
-   "pr": 1176
+   "pr": null
   },
   {
    "id": "BLOCKS-FUEL",
@@ -1046,10 +1035,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #4594 title-match only, unverified",
+   "evidence": "PR #4609 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 4594
+   "pr": 4609
   },
   {
    "id": "f-02-jump-to-tab-nonstandard",
@@ -1057,10 +1046,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #4570 title-match only, unverified",
+   "evidence": "PR #4656 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 4570
+   "pr": 4656
   },
   {
    "id": "FEAT-DISP-DRAWER-WIRE",
@@ -10922,6 +10911,17 @@
    "pr": null
   },
   {
+   "id": "BLOCK-10-TIER2-RLS-TEST-GATE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "Cross-tenant RLS gate verification script with fixture generation",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "BLOCKS-NEW-DECISIONS",
    "source": "program",
    "fin": false,
@@ -13262,10 +13262,334 @@
  ],
  "merged_prs": [
   {
+   "number": 4665,
+   "title": "Claude-1- ACCT-F154: the AR importer projects headers only — a re-clone silently undoes the ACCT-F146 back-fill",
+   "mergedAt": "2026-08-07T06:27:58Z",
+   "branch": "claude/acct-f154-ar-importer-projects-lines"
+  },
+  {
+   "number": 4664,
+   "title": "Claude-1- CI-F24: the permanent fix for chores — a reaper that merges green dependency PRs and rebases stale ones, forever",
+   "mergedAt": "2026-08-07T06:04:56Z",
+   "branch": "claude/ci-f24-dependabot-reaper"
+  },
+  {
+   "number": 4663,
+   "title": "Claude-1- CI-F23: the union rule covered ONE board and lost the race to the next — generalize to docs/audit/*.md, plus the adoption caveat",
+   "mergedAt": "2026-08-07T05:36:08Z",
+   "branch": "claude/ci-f23-audit-docs-union"
+  },
+  {
+   "number": 4662,
+   "title": "FINDING: LV-134/ACCT-F150/ACCT-F151 reconciled - route fix landed via #4653, one retro-post backfill remains",
+   "mergedAt": "2026-08-07T05:33:32Z",
+   "branch": "chore/reconcile-cls-silent-success-0807b"
+  },
+  {
+   "number": 4661,
+   "title": "Claude-1- ACCT-F152: the WORM control has had nothing verifying it since it landed — #4607 promised a ratchet that was never written",
+   "mergedAt": "2026-08-07T05:15:15Z",
+   "branch": "claude/acct-f152-worm-coverage-ratchet"
+  },
+  {
+   "number": 4659,
+   "title": "Claude-1- CI-F21: every dependency PR was unmergeable by construction — the DoD gate demanded evidence Dependabot cannot write",
+   "mergedAt": "2026-08-07T04:58:52Z",
+   "branch": "claude/ci-f21-dependency-bumps-unmergeable"
+  },
+  {
+   "number": 4656,
+   "title": "Claude-1- CODEQL-F02 reopened: the 2 js/redos findings blocking CodeQL repo-wide — linear scanner, no regex",
+   "mergedAt": "2026-08-07T04:41:30Z",
+   "branch": "claude/codeql-f02-redos-linear-scanner"
+  },
+  {
+   "number": 4655,
+   "title": "Claude-1- CI-F20: union-merge the three shared registries that were conflicting 9 of 15 CC-2 PRs",
+   "mergedAt": "2026-08-07T05:01:43Z",
+   "branch": "claude/ci-union-merge-hotfiles"
+  },
+  {
+   "number": 4654,
+   "title": "Claude-1- CODEQL-F03 — my own enforcer made pre-existing debt permanently red; shrink-only ratchet",
+   "mergedAt": "2026-08-07T03:46:51Z",
+   "branch": "claude/codeql-baseline-ratchet"
+  },
+  {
+   "number": 4653,
+   "title": "Claude-1- ACCT-F150 — a customer payment route moves A/R and never posts to the GL ($250 dark on USMCA)",
+   "mergedAt": "2026-08-07T04:53:38Z",
+   "branch": "claude/acct-f150-customer-payment-gl-dark"
+  },
+  {
+   "number": 4652,
+   "title": "Claude-2: FINDING: CI-F03 — the CodeQL gate had no way to mark a false positive, so the only route to green was editing correct security code",
+   "mergedAt": "2026-08-07T04:11:53Z",
+   "branch": "fix/ci-f03-codeql-script-findings"
+  },
+  {
+   "number": 4651,
+   "title": "Claude-1- CODEQL-F02 — the money-path swallow guard could be hung by a crafted file (js/redos)",
+   "mergedAt": "2026-08-07T02:17:05Z",
+   "branch": "claude/codeql-f02-redos-money-guard"
+  },
+  {
+   "number": 4650,
+   "title": "Claude-1- CI-JSDOM verified on a real dependency branch + lockfile resolution-order trap",
+   "mergedAt": "2026-08-07T02:14:08Z",
+   "branch": "chore/board-dependency-unblock"
+  },
+  {
+   "number": 4649,
+   "title": "Claude-1- ACCT-F149 — USMCA can book a lumper fee it pays but not the reimbursement it receives (12 of 13 apparent gaps are expected state)",
+   "mergedAt": "2026-08-07T03:43:26Z",
+   "branch": "claude/acct-f149-usmca-lumper-income-map"
+  },
+  {
+   "number": 4648,
+   "title": "Claude-1- CI-JSDOM — all 7 dependency PRs die on an OPTIONAL transitive the frontend test suite requires",
+   "mergedAt": "2026-08-07T01:47:29Z",
+   "branch": "fix/declare-jsdom-devdependency"
+  },
+  {
+   "number": 4647,
+   "title": "Claude-2: CLAIM-RESERVE: five CC-2 verify-step numbers (2755, 2759, 2763, 2767, 2771)",
+   "mergedAt": "2026-08-07T04:39:33Z",
+   "branch": "chore/claim-reserve-cc2-2755-2771"
+  },
+  {
+   "number": 4645,
+   "title": "Claude-1- CLS-DISPLAYID-UNSCOPED drained — display_id can resolve another entity's money document",
+   "mergedAt": "2026-08-07T01:27:23Z",
+   "branch": "claude/cls-displayid-guard"
+  },
+  {
+   "number": 4644,
+   "title": "Claude-1- ACCT-F146 — project 16,744 QBO AR invoice lines (NOT 33,429; that would double AR by $40.85M)",
+   "mergedAt": "2026-08-07T01:14:58Z",
+   "branch": "claude/acct-f146-ar-line-projection"
+  },
+  {
+   "number": 4643,
+   "title": "Claude-2: FINDING: CLS-GUC-CALLER-SCOPED — 21 handlers let the caller set the RLS scope; fixed with one helper, not twenty-one asserts",
+   "mergedAt": "2026-08-07T06:20:18Z",
+   "branch": "fix/cls-guc-unit-routes-scoped-context"
+  },
+  {
+   "number": 4642,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-08-07T01:06:27Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 4641,
+   "title": "Claude-2: FINDING: MDATA-F09 — a route let the CALLER set the RLS scope, then texted any driver in any entity; 75 more handlers have the same shape",
+   "mergedAt": "2026-08-07T05:11:31Z",
+   "branch": "fix/mdata-f09-driver-messages-caller-sets-rls-scope"
+  },
+  {
+   "number": 4640,
+   "title": "Claude-2: FINDING: MDATA-F08 — bulk-invite still mass-invites another entity's drivers after #4562",
+   "mergedAt": "2026-08-07T04:39:36Z",
+   "branch": "fix/mdata-f07-resend-invite-cross-entity"
+  },
+  {
+   "number": 4639,
+   "title": "Claude-2: FINDING: SCENARIO-TRACKER-DUP — Program page mounted the Scenario Tracker 9x, polling prod 9x from one tab",
+   "mergedAt": "2026-08-07T03:47:17Z",
+   "branch": "fix/prog-scenario-tracker-single-mount"
+  },
+  {
+   "number": 4638,
+   "title": "Claude-1- CC-1 standing order v2 — its stated projection target (33,429) would double AR by $40.85M; corrected to 16,744",
+   "mergedAt": "2026-08-07T00:59:50Z",
+   "branch": "docs/cc1-standing-order-v2"
+  },
+  {
+   "number": 4637,
+   "title": "docs: persist Cascade permanent standing order (merger + auditor + class-drain)",
+   "mergedAt": "2026-08-07T00:59:15Z",
+   "branch": "docs/cascade-standing-order-merger-auditor"
+  },
+  {
+   "number": 4636,
+   "title": "Claude-2- fix(inventory): CLS-UUID-LABEL — uuid fallbacks replaced; EntityLink's own default was worse",
+   "mergedAt": "2026-08-07T01:16:02Z",
+   "branch": "fix/cls-uuid-label-inventory-assignments"
+  },
+  {
+   "number": 4634,
+   "title": "Claude-2- fix(insurance): CLS-UUID-LABEL — claims screen showed a uuid where a driver, unit, load or policy belongs",
+   "mergedAt": "2026-08-07T01:20:34Z",
+   "branch": "fix/cls-uuid-label-insurance-claims"
+  },
+  {
+   "number": 4633,
+   "title": "Claude-1- POSTMORTEM 2026-08-06 — CI cancellation cascade: 8h unmergeable, zero code failures, remediation was the amplifier",
+   "mergedAt": "2026-08-07T00:48:46Z",
+   "branch": "docs/postmortem-ci-2026-08-06"
+  },
+  {
+   "number": 4632,
+   "title": "Claude-2- feat(guard): CLS-DISP-WIRE-07 named a guard that never existed — built it against the REAL root cause",
+   "mergedAt": "2026-08-07T00:46:07Z",
+   "branch": "feat/guard-disp-wire-07-departure-evidence"
+  },
+  {
+   "number": 4630,
+   "title": "Claude-1- ACCT-F145 — invoice_lines slot uniqueness, landing BEFORE the 33,429-line AR projection",
+   "mergedAt": "2026-08-07T00:40:59Z",
+   "branch": "claude/acct-f145-invoice-lines-unique"
+  },
+  {
+   "number": 4625,
+   "title": "Claude-1- CI-RUNNER-3 — one runner serialised all CI; back to hosted parallelism, service container restored",
+   "mergedAt": "2026-08-06T23:24:30Z",
+   "branch": "fix/ci-back-to-hosted-parallel"
+  },
+  {
+   "number": 4624,
+   "title": "chore(claim-reserve): reserve verify-step 2746 for orphan-surface-drill",
+   "mergedAt": "2026-08-07T01:38:49Z",
+   "branch": "chore/claim-reserve-2746-orphan-surface"
+  },
+  {
+   "number": 4622,
+   "title": "Claude-1- CC-1 standing order committed to docs/standing-orders/ (2 of its 17 paths do not resolve — corrected)",
+   "mergedAt": "2026-08-06T23:49:29Z",
+   "branch": "chore/cc1-standing-order"
+  },
+  {
+   "number": 4621,
+   "title": "Claude-1- CI-DEPENDABOT — Rule 16 evidence gate is unsatisfiable by Dependabot, permanently blocking 8 dependency PRs",
+   "mergedAt": "2026-08-07T00:35:39Z",
+   "branch": "fix/pr-evidence-skip-dependabot"
+  },
+  {
+   "number": 4620,
+   "title": "Claude-1- CI-CODEQL — going private disabled code scanning; keep the scan, enforce SARIF locally",
+   "mergedAt": "2026-08-06T23:43:28Z",
+   "branch": "fix/codeql-no-ghas-upload"
+  },
+  {
+   "number": 4618,
+   "title": "Claude-1- CI-RUNNER — self-hosted runner online + 4 required workflows moved to it (folds in SHA-scoped concurrency)",
+   "mergedAt": "2026-08-06T21:11:08Z",
+   "branch": "fix/ci-self-hosted-runner"
+  },
+  {
+   "number": 4616,
+   "title": "chore(audit): reconcile wave-queue.json to findings — 26 -> 31 classes",
+   "mergedAt": "2026-08-07T00:31:19Z",
+   "branch": "chore/wave-queue-reconcile-0806"
+  },
+  {
+   "number": 4614,
+   "title": "Claude-1- ACCT-F142 — the TMS can enter the same vendor bill twice; $1,643.21 overstated A/P live on prod",
+   "mergedAt": "2026-08-07T00:31:03Z",
+   "branch": "claude/acct-f142-bill-duplicate-and-void-reason"
+  },
+  {
+   "number": 4613,
+   "title": "Claude-2- audit(live): CLS-MONEY-HOLD — HOLD-001 is NOT a hold, it is a code defect (LV-TXN-004, P0)",
+   "mergedAt": "2026-08-07T00:29:43Z",
+   "branch": "audit/cc3-live-txn-battery-0806"
+  },
+  {
+   "number": 4611,
+   "title": "Claude-1- CLAIM-RESERVE 2745/2749/2753 — and the claim registry has 88 duplicate keys",
+   "mergedAt": "2026-08-07T00:23:27Z",
+   "branch": "chore/claim-reserve-2745-2749-cc1"
+  },
+  {
+   "number": 4610,
+   "title": "Claude-1- BOARD-0806 — 'all PRs share one build-typecheck break' was false; 5 PRs, 5 causes + CC-2 lane handoff",
+   "mergedAt": "2026-08-06T23:52:31Z",
+   "branch": "chore/board-cc1-lane-handoff-0806"
+  },
+  {
+   "number": 4609,
+   "title": "Claude-1- CI-ENV-F01 — the migration ledger's grants exist in no file; every DB built from source cannot read it",
+   "mergedAt": "2026-08-07T00:24:42Z",
+   "branch": "chore/ci-pg-healthcheck-canonical-db"
+  },
+  {
+   "number": 4608,
+   "title": "chore(board): reconcile superseded red PRs + 2 new (#4604/#4588)",
+   "mergedAt": "2026-08-07T01:20:12Z",
+   "branch": "chore/board-red-prs-0806c"
+  },
+  {
+   "number": 4607,
+   "title": "Claude-1- ACCT-F141 — WORM sweep: 9 financial tables, prod-scoped enforcement (supersedes #4553/#4560/#4576/#4598)",
+   "mergedAt": "2026-08-07T00:19:00Z",
+   "branch": "claude/worm-consolidated-prod-scoped"
+  },
+  {
+   "number": 4606,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-08-06T14:54:18Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 4605,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-08-06T09:22:11Z",
    "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 4604,
+   "title": "Claude-3- fix(driver): DISP-F16 — driver load list resolved customer and unit across entities",
+   "mergedAt": "2026-08-07T00:23:01Z",
+   "branch": "fix/driver-loads-remaining-scope"
+  },
+  {
+   "number": 4603,
+   "title": "Claude-3- fix(cash-flow): ACCT-F143 — payment terms and GL role bindings resolved across entities",
+   "mergedAt": "2026-08-06T15:13:01Z",
+   "branch": "fix/cashflow-catalogs-scope"
+  },
+  {
+   "number": 4602,
+   "title": "Claude-3- fix(border-crossing): DISP-F14 — wizard and arrival prompts crossed entity boundaries",
+   "mergedAt": "2026-08-06T15:12:35Z",
+   "branch": "fix/driver-wizard-entity-scope"
+  },
+  {
+   "number": 4601,
+   "title": "Claude-3- fix(dispatch): DISP-F12 — dispatcher board and border-crossing history crossed entity boundaries",
+   "mergedAt": "2026-08-06T15:12:27Z",
+   "branch": "fix/dispatcher-board-border-scope"
+  },
+  {
+   "number": 4600,
+   "title": "Claude-3- fix(work-orders): MNT-F05 — a WO could be stamped with another entity's load number",
+   "mergedAt": "2026-08-06T15:12:18Z",
+   "branch": "fix/work-orders-entity-scope"
+  },
+  {
+   "number": 4599,
+   "title": "chore(board): 3 more red-PR board rows (#4562/#4564/#4576)",
+   "mergedAt": "2026-08-06T15:32:07Z",
+   "branch": "chore/board-red-prs-0806b"
+  },
+  {
+   "number": 4597,
+   "title": "Claude-3- fix(reports): ACCT-F141 — AP/AR aging last-payment lookups crossed entity boundaries",
+   "mergedAt": "2026-08-06T15:11:41Z",
+   "branch": "fix/reports-remaining-scope"
+  },
+  {
+   "number": 4596,
+   "title": "Claude-3- fix(maintenance): MNT-F04 — parts-invoice links resolved unit/vendor/inventory across entities",
+   "mergedAt": "2026-08-06T15:11:35Z",
+   "branch": "fix/maintenance-parts-preflight-scope"
+  },
+  {
+   "number": 4595,
+   "title": "Claude-3- fix(maintenance): MNT-F02 — severe-repair, pre-flight DVIR and reefer PM crossed entity boundaries",
+   "mergedAt": "2026-08-06T15:11:26Z",
+   "branch": "fix/maintenance-remaining-scope"
   },
   {
    "number": 4594,
@@ -13274,16 +13598,70 @@
    "branch": "guard/acct-f93-live-verify"
   },
   {
+   "number": 4593,
+   "title": "Claude-3- fix(maintenance): MNT-F01 — dashboards and DVIR defects resolved units/drivers across entities",
+   "mergedAt": "2026-08-06T15:11:18Z",
+   "branch": "fix/maintenance-entity-scope"
+  },
+  {
+   "number": 4592,
+   "title": "Claude-3- fix(reports): ACCT-F139 — fuel reconciliation and profit-per-truck attributed spend across entities",
+   "mergedAt": "2026-08-06T15:11:05Z",
+   "branch": "fix/reports-fuel-entity-scope"
+  },
+  {
+   "number": 4591,
+   "title": "Claude-3- fix(dispatch): DISP-F11 — load distribution and late-arrival analytics crossed entity boundaries",
+   "mergedAt": "2026-08-06T15:10:55Z",
+   "branch": "fix/dispatch-issues-distribution-scope"
+  },
+  {
+   "number": 4590,
+   "title": "Claude-3- fix(dispatch): DISP-F10 — planner and detention approval resolved customers/loads across entities",
+   "mergedAt": "2026-08-06T15:10:45Z",
+   "branch": "fix/dispatch-final-scope"
+  },
+  {
    "number": 4589,
    "title": "Claude-1- chore(ci): CLAIM-RESERVE verify-step 2725 — verify-law-registry (CC-1 band)",
    "mergedAt": "2026-08-06T05:55:20Z",
    "branch": "chore/claim-reserve-2725-law-registry"
   },
   {
+   "number": 4588,
+   "title": "Claude-3- fix(dispatch): DISP-F08 — cancellation reports scoped the reason lookup but not load/customer/driver",
+   "mergedAt": "2026-08-07T00:15:25Z",
+   "branch": "fix/dispatch-reports-scope"
+  },
+  {
+   "number": 4587,
+   "title": "Claude-3- fix(dispatch): DISP-F07 — customer notifications could address another entity's customer",
+   "mergedAt": "2026-08-06T15:10:37Z",
+   "branch": "fix/dispatch-remaining-scope"
+  },
+  {
    "number": 4586,
    "title": "Claude-2- audit(live): LV-134 — a USMCA customer payment moved the subledger and posted NOTHING to the GL (flags ON, zero posting batch) + row 1 ACCT-F130 VERIF",
    "mergedAt": "2026-08-06T05:52:32Z",
    "branch": "claude-2/lv-134-payment-gl-dark"
+  },
+  {
+   "number": 4585,
+   "title": "Claude-3- fix(dispatch): DISP-F06 — driver PWA view resolved customer and stop locations across entities",
+   "mergedAt": "2026-08-06T15:10:27Z",
+   "branch": "fix/dispatch-pwa-view-scope"
+  },
+  {
+   "number": 4584,
+   "title": "Claude-1- FINDING: the law 'LAW = ENFORCED GUARD OR IT IS NOT LAW' was itself unguarded — docs/law/LAW.json + verify-law-registry.mjs did not exist on main",
+   "mergedAt": "2026-08-07T00:22:18Z",
+   "branch": "claude/law-registry-guard-v2"
+  },
+  {
+   "number": 4583,
+   "title": "Claude-3- fix(dispatch): DISP-F04 — detention billing resolved customer rate and AR email across entities",
+   "mergedAt": "2026-08-06T15:10:20Z",
+   "branch": "fix/dispatch-sheet-detention-scope"
   },
   {
    "number": 4582,
@@ -13352,16 +13730,34 @@
    "branch": "fix/banking-categorization-scope-v3"
   },
   {
+   "number": 4568,
+   "title": "Claude-1- fix(db): ACCT-F129 — nothing stopped a settlement referencing ANOTHER entity's driver",
+   "mergedAt": "2026-08-06T15:10:05Z",
+   "branch": "claude/entity-consistent-driver-fk"
+  },
+  {
    "number": 4565,
    "title": "Claude-3- fix(accounting): ACCT-F134 — AR aging SUM could subtract another entity's payments",
    "mergedAt": "2026-08-06T05:19:54Z",
    "branch": "fix/accounting-bills-invoices-scope"
   },
   {
+   "number": 4564,
+   "title": "Claude-3- fix(mdata): MDATA-F08 — any customer/vendor in any entity could be reclassified by id",
+   "mergedAt": "2026-08-07T00:29:08Z",
+   "branch": "fix/mdata-reclassify-units-scope"
+  },
+  {
    "number": 4563,
    "title": "Claude-1- docs(lockdown): LOCKDOWN-OWNER-ACCT-DECISIONS-2026-08-05 — 6 owner standing decisions into permanent law",
    "mergedAt": "2026-08-06T05:20:42Z",
    "branch": "claude/lockdown-owner-acct-decisions"
+  },
+  {
+   "number": 4562,
+   "title": "Claude-3- fix(mdata): MDATA-F07 — resend-invite could email another entity's driver",
+   "mergedAt": "2026-08-07T01:02:50Z",
+   "branch": "fix/mdata-drivers-reclassify-scope"
   },
   {
    "number": 4561,
@@ -16464,406 +16860,16 @@
    "title": "Cascade- guard(no-orphan-routes): remove stale allowlist entries for mounted routes",
    "mergedAt": "2026-08-01T18:19:00Z",
    "branch": "fix/Cascade-no-orphan-routes-allowlist-refresh"
-  },
-  {
-   "number": 3958,
-   "title": "Claude- chore(tracker): refresh reconcile artifact + dated export (2026-08-01) — unblocks locked-guards repo-wide",
-   "mergedAt": "2026-08-01T16:57:23Z",
-   "branch": "chore/tracker-artifacts-refresh-2026-08-01"
-  },
-  {
-   "number": 3957,
-   "title": "Claude- fix(accounting): invoice A/R poster could double-recognize revenue over a load the revrec latch already earned",
-   "mergedAt": "2026-08-01T17:17:51Z",
-   "branch": "fix/acct-f59-revrec-invoice-double-recognition-interlock"
-  },
-  {
-   "number": 3956,
-   "title": "Claude- docs(finance): kill the stale-premise drift — flag is ON, Unbilled Revenue EXISTS, there is NO CPA",
-   "mergedAt": "2026-08-01T16:33:51Z",
-   "branch": "claude/correct-stale-financial-premises"
-  },
-  {
-   "number": 3955,
-   "title": "Claude- fix(revrec): Event 1 earned from load STATUS alone on a LIVE posting path — now requires the final active delivery stop's actual_departure_at",
-   "mergedAt": "2026-08-01T07:19:18Z",
-   "branch": "claude/revrec-evidence-driven-latch"
-  },
-  {
-   "number": 3954,
-   "title": "fix(driver-pwa): correct dispatch-view tests + CI vitest gate (1926)",
-   "mergedAt": "2026-08-01T06:49:00Z",
-   "branch": "fix/driver-pwa-vitest-ci-gate-1926"
-  },
-  {
-   "number": 3953,
-   "title": "Claude- docs(dispatch): status/stop-capture decoupling scoped; PWA walkthrough answered; my own load counts corrected",
-   "mergedAt": "2026-08-01T16:34:13Z",
-   "branch": "claude/dispatch-coupling-scope"
-  },
-  {
-   "number": 3952,
-   "title": "Claude- docs(dispatch): revenue-recognition SOURCE gap — measured scoping, 0 of 20 stops timestamped",
-   "mergedAt": "2026-08-01T06:12:02Z",
-   "branch": "claude/dispatch-linkage-scoping"
-  },
-  {
-   "number": 3951,
-   "title": "docs(trackers): park TRK accum_depr_default on ND-FA-01 (not H1)",
-   "mergedAt": "2026-08-01T06:47:51Z",
-   "branch": "docs/nd-fa-01-accum-depr-park"
-  },
-  {
-   "number": 3950,
-   "title": "fix(banking): WAVE-H3 acceptMatch reverse bank FKs (payment + bill_payment)",
-   "mergedAt": "2026-08-01T05:33:05Z",
-   "branch": "fix/wave-h3-bank-match-writepath-1924"
-  },
-  {
-   "number": 3949,
-   "title": "Claude- docs(trackers): quantify GEOFENCE-WATCHER-DEAD — 0 of 20 stops have an arrival timestamp",
-   "mergedAt": "2026-08-01T04:55:46Z",
-   "branch": "claude/geofence-finding-quantified"
-  },
-  {
-   "number": 3948,
-   "title": "Claude- fix(pickers): vendor pickers silently dropped 79% of vendors — 17 call sites capped below the fleet",
-   "mergedAt": "2026-08-01T04:25:57Z",
-   "branch": "claude/clause4-vendor-picker-cap"
-  },
-  {
-   "number": 3947,
-   "title": "fix(accounting): WAVE-H2 write-path live proof (expense.load_id + invoice.source_load_id)",
-   "mergedAt": "2026-08-01T04:33:49Z",
-   "branch": "fix/wave-h2-writepath-live-proof-1922"
-  },
-  {
-   "number": 3945,
-   "title": "Claude- fix(rls): drain the false-zero class — 39 tables across the remaining 16 schemas",
-   "mergedAt": "2026-08-01T04:00:32Z",
-   "branch": "claude/rls-bypass-driver-finance"
-  },
-  {
-   "number": 3944,
-   "title": "Claude- docs(trackers): H5 is an EMPTY wave — clause 3 has zero violations and is already guarded",
-   "mergedAt": "2026-08-01T03:54:59Z",
-   "branch": "claude/h5-corrected-picker-matrix"
-  },
-  {
-   "number": 3943,
-   "title": "Claude- fix(tests): make red mean red — verify:local-ci was permanently RED on main from 6 fixture units",
-   "mergedAt": "2026-08-01T03:01:02Z",
-   "branch": "claude/flt02-seed-drift"
-  },
-  {
-   "number": 3942,
-   "title": "Claude- fix(accounting): six accounting audit tables read as ZERO under the documented RLS bypass",
-   "mergedAt": "2026-08-01T03:40:40Z",
-   "branch": "claude/rls-bypass-accounting"
-  },
-  {
-   "number": 3941,
-   "title": "Claude- fix(qbo_archive): 1.83M archive rows read as ZERO under the documented RLS bypass",
-   "mergedAt": "2026-08-01T03:00:59Z",
-   "branch": "claude/rls-bypass-qbo-archive"
-  },
-  {
-   "number": 3940,
-   "title": "Claude- fix(accounting): repoint every human-facing bill reference to bill_number, and guard the class",
-   "mergedAt": "2026-08-01T03:50:37Z",
-   "branch": "claude/bill-display-id-class-repoint"
-  },
-  {
-   "number": 3939,
-   "title": "Claude- docs(trackers): four findings surfaced during the 425-C work, none bundled into it",
-   "mergedAt": "2026-08-01T01:42:55Z",
-   "branch": "claude/tracked-findings-2026-08-01"
-  },
-  {
-   "number": 3938,
-   "title": "Claude- fix(reports): Exhibit F labelled all 180 June bill rows \"Bill null\" with a raw uuid",
-   "mergedAt": "2026-08-01T01:23:16Z",
-   "branch": "claude/form425c-bill-number-labels"
-  },
-  {
-   "number": 3937,
-   "title": "Cursor- WAVE-H2 ops FK write-path + load reverse drill (1920)",
-   "mergedAt": "2026-08-01T03:16:32Z",
-   "branch": "fix/wave-h2-ops-fk-wire-1911"
-  },
-  {
-   "number": 3936,
-   "title": "Cursor- WAVE-H1 wire seeded catalogs + CoA completeness (1910)",
-   "mergedAt": "2026-08-01T02:51:41Z",
-   "branch": "fix/wave-h1-catalogs-coa-wire-1918"
-  },
-  {
-   "number": 3935,
-   "title": "Claude- fix(reports): the Form 425-C exhibits generator was never mounted — the page 404s on prod",
-   "mergedAt": "2026-08-01T00:48:50Z",
-   "branch": "claude/form425c-mount-exhibits-route"
-  },
-  {
-   "number": 3934,
-   "title": "Claude- fix(catalogs): opco-scoped catalogs tables read a FALSE ZERO under the documented RLS bypass",
-   "mergedAt": "2026-08-01T00:31:58Z",
-   "branch": "claude/catalogs-rls-bypass-branch"
-  },
-  {
-   "number": 3933,
-   "title": "Cursor- fix(safety): SAF-F32 Form 2290 deadline honesty guard (1917)",
-   "mergedAt": "2026-08-01T00:11:47Z",
-   "branch": "fix/saf-f32-permits-deadline-honesty-1917"
-  },
-  {
-   "number": 3932,
-   "title": "Cursor- fix(safety): SAF-F28 Safety Events EntityPicker filters (1916)",
-   "mergedAt": "2026-08-01T00:11:32Z",
-   "branch": "fix/saf-f28-safety-events-filter-pickers-1916"
-  },
-  {
-   "number": 3931,
-   "title": "Cursor- fix(safety): SAF-F26 accident list EntityPicker filters (1915)",
-   "mergedAt": "2026-07-31T23:56:11Z",
-   "branch": "fix/saf-f26-accident-filter-pickers-1915"
-  },
-  {
-   "number": 3930,
-   "title": "Cursor- fix(lists): LST-F13 hub orphans parts-catalog + abandonment-defaults (1913)",
-   "mergedAt": "2026-08-01T00:11:16Z",
-   "branch": "fix/lst-f13-orphan-catalog-hub-1913"
-  },
-  {
-   "number": 3929,
-   "title": "Cursor- fix(safety): SAF-F27 dedupe relative+absolute /safety route twins (1912)",
-   "mergedAt": "2026-08-01T00:10:21Z",
-   "branch": "fix/saf-f27-dedupe-safety-routes-1912"
-  },
-  {
-   "number": 3927,
-   "title": "Claude- docs(trackers): banking SILENT-SUCCESS triage — a false $0 cash balance and a swallowed write",
-   "mergedAt": "2026-07-31T23:05:01Z",
-   "branch": "claude/silent-success-banking-triage"
-  },
-  {
-   "number": 3926,
-   "title": "Claude- fix(reports): Form 425-C Exhibit F filed ZERO supporting docs against 28,213 real records",
-   "mergedAt": "2026-08-01T00:01:08Z",
-   "branch": "claude/form425c-exhibit-f-phantom-columns"
-  },
-  {
-   "number": 3925,
-   "title": "Cursor- fix(safety): SAF-F35 spawn-liability no silent success (1908)",
-   "mergedAt": "2026-07-31T22:50:12Z",
-   "branch": "fix/saf-b30-spawn-liability-honesty-1908"
-  },
-  {
-   "number": 3924,
-   "title": "Cursor- fix(ci): TOOL-F03 stop CLAIMED-NUMBERS conflict treadmill (1906)",
-   "mergedAt": "2026-07-31T22:31:12Z",
-   "branch": "fix/tool-f03-no-claimed-registry-require"
-  },
-  {
-   "number": 3923,
-   "title": "Claude- fix(ci): kill the rebase treadmill — freshness blocked files that CANNOT conflict",
-   "mergedAt": "2026-07-31T22:45:56Z",
-   "branch": "claude/kill-the-rebase-treadmill"
-  },
-  {
-   "number": 3922,
-   "title": "Cursor- fix(safety): SAF-B31 report XLSX export honesty (1904)",
-   "mergedAt": "2026-07-31T23:55:23Z",
-   "branch": "fix/saf-b31-report-export-honesty-1904"
-  },
-  {
-   "number": 3921,
-   "title": "Claude- fix(maintenance): 2 phantom-column 500s + the guard flagged its own fix notes",
-   "mergedAt": "2026-07-31T22:24:07Z",
-   "branch": "claude/maint-phantom-columns-batch2"
-  },
-  {
-   "number": 3920,
-   "title": "Claude- docs(trackers): correct a bare count I got wrong, and open BOL-COMMODITY-01",
-   "mergedAt": "2026-07-31T21:43:41Z",
-   "branch": "claude/tracker-live-vs-total-counts"
-  },
-  {
-   "number": 3919,
-   "title": "Claude- fix(dispatch): 8 phantom-column 500s + the guard bug that inflated the backlog by 16",
-   "mergedAt": "2026-07-31T21:43:08Z",
-   "branch": "claude/dispatch-phantom-columns-batch1"
-  },
-  {
-   "number": 3918,
-   "title": "Cursor- fix(accounting): LEASE-BRIDGE CoA keep broker role + applied_held (1902)",
-   "mergedAt": "2026-07-31T22:31:19Z",
-   "branch": "fix/lease-bridge-coa-keep-broker-role"
-  },
-  {
-   "number": 3917,
-   "title": "Claude- fix(maintenance): Warranty Claims 500s on prod — v.display_name does not exist on mdata.vendors",
-   "mergedAt": "2026-07-31T23:04:34Z",
-   "branch": "claude/maint-warranty-vendor-display-name-phantom"
-  },
-  {
-   "number": 3916,
-   "title": "Claude- fix(maintenance): PM auto-engine reported 3,554 clean successes and created nothing (MAINT-PM-ENGINE-01)",
-   "mergedAt": "2026-07-31T22:01:10Z",
-   "branch": "claude/maint-pm-engine-01-run-honesty"
-  },
-  {
-   "number": 3915,
-   "title": "Cursor- fix(dispatch): DISP-FILTER-01 mdata status contract (1898)",
-   "mergedAt": "2026-07-31T21:32:23Z",
-   "branch": "fix/disp-filter-01-mdata-status-contract"
-  },
-  {
-   "number": 3914,
-   "title": "Claude- docs: re-scope the 76 dispatch+maintenance items to the empty-state DoD (sweep blocked on data)",
-   "mergedAt": "2026-07-31T21:11:18Z",
-   "branch": "docs/disp-maint-surface-sweep-blocked-on-data"
-  },
-  {
-   "number": 3913,
-   "title": "Cursor- fix(accounting): ACCT-R-24 CoA CHECK live-role superset + Neon evidence (1900)",
-   "mergedAt": "2026-07-31T22:31:24Z",
-   "branch": "fix/acct-r24-coa-superset-scoreboard"
-  },
-  {
-   "number": 3912,
-   "title": "Claude- fix(ci): verify-step 1643 selftest was red on main, blocking every push",
-   "mergedAt": "2026-07-31T21:11:15Z",
-   "branch": "fix/verify-1643-selftest-stale-good-fixture"
-  },
-  {
-   "number": 3911,
-   "title": "Cursor- fix(lists): LST-PICKER-01 FineCreateModal driver EntityPicker (1896)",
-   "mergedAt": "2026-07-31T21:11:38Z",
-   "branch": "fix/lst-picker01-fine-create-driver-1896"
-  },
-  {
-   "number": 3910,
-   "title": "Claude- fix(maintenance): Parts grid hid the real part_number and clipped the Adjust Qty control",
-   "mergedAt": "2026-07-31T21:11:22Z",
-   "branch": "claude/parts-inventory-part-number-column"
-  },
-  {
-   "number": 3909,
-   "title": "fix(lists): LST-PICKER-01 WO create category/item createKind (1894)",
-   "mergedAt": "2026-07-31T17:48:13Z",
-   "branch": "fix/lst-picker01-wo-create-category-item-1894"
-  },
-  {
-   "number": 3908,
-   "title": "fix(lists): LST-PICKER-01 PostingTemplateModal class createKind (1892)",
-   "mergedAt": "2026-07-31T17:08:07Z",
-   "branch": "fix/lst-picker01-posting-template-class-1892"
-  },
-  {
-   "number": 3907,
-   "title": "fix(lists): LST-PICKER-01 QuickCreate item account createKind (1890)",
-   "mergedAt": "2026-07-31T16:52:12Z",
-   "branch": "fix/lst-picker01-quickcreate-item-account-1890"
-  },
-  {
-   "number": 3906,
-   "title": "Claude- fix(maintenance): Service/Location empty state read as unbuilt on a fully wired surface",
-   "mergedAt": "2026-07-31T17:56:26Z",
-   "branch": "claude/mnt-service-location-empty-copy"
-  },
-  {
-   "number": 3905,
-   "title": "fix(lists): LST-PICKER-01 vendor/customer default account createKind (1888)",
-   "mergedAt": "2026-07-31T16:35:46Z",
-   "branch": "fix/lst-picker01-default-account-1888"
-  },
-  {
-   "number": 3904,
-   "title": "fix(lists): LST-PICKER-01 AccountDrawer parent createKind (1886)",
-   "mergedAt": "2026-07-31T16:21:40Z",
-   "branch": "fix/lst-picker01-account-drawer-parent-1886"
-  },
-  {
-   "number": 3903,
-   "title": "fix(lists): LST-PICKER-01 NewAccountDrawer parent createKind (1884)",
-   "mergedAt": "2026-07-31T15:52:30Z",
-   "branch": "fix/lst-picker01-new-account-parent-1884"
-  },
-  {
-   "number": 3902,
-   "title": "fix(drivers): LST-PICKER-01 DriverDetail class createKind (1882)",
-   "mergedAt": "2026-07-31T15:37:41Z",
-   "branch": "fix/lst-picker01-driver-class-1882"
-  },
-  {
-   "number": 3901,
-   "title": "feat(accounting): LEASE-BRIDGE activate ASC 842 operating JEs (1880)",
-   "mergedAt": "2026-07-31T21:11:25Z",
-   "branch": "fix/lease-bridge-activate-operating-jes"
-  },
-  {
-   "number": 3900,
-   "title": "fix(maintenance): LST-PICKER-01 CostBreakdownBox part createKind (1878)",
-   "mergedAt": "2026-07-31T15:23:36Z",
-   "branch": "fix/lst-picker01-cost-part-kind-1878"
-  },
-  {
-   "number": 3899,
-   "title": "Claude- fix(pickers): 8 customer pickers capped at 200 while prod has 2,693 customers (SAF-B29)",
-   "mergedAt": "2026-07-31T16:11:30Z",
-   "branch": "claude/b29-customer-picker-200-cap"
-  },
-  {
-   "number": 3898,
-   "title": "CURSOR- fix(lists): LST-PICKER-01 NewServiceDrawerForm class + category (guard 1876)",
-   "mergedAt": "2026-07-31T15:10:25Z",
-   "branch": "fix/lst-picker01-service-class-1876"
-  },
-  {
-   "number": 3897,
-   "title": "Claude- fix(safety): the Forfeiture Audit swallowed every timeline failure into 'no forfeitures' (SAF-ORPH-03)",
-   "mergedAt": "2026-07-31T15:03:07Z",
-   "branch": "claude/orph03-escrow-timeline-no-swallow"
-  },
-  {
-   "number": 3896,
-   "title": "CURSOR- fix(lists): LST-PICKER-01 NewServiceDrawerForm preferred vendor (guard 1874)",
-   "mergedAt": "2026-07-31T14:58:00Z",
-   "branch": "fix/lst-picker01-service-vendor-1874"
-  },
-  {
-   "number": 3895,
-   "title": "Claude- docs(trackers): creating a truck lease in Legal writes NO accounting subledger (LEASE-BRIDGE)",
-   "mergedAt": "2026-07-31T15:03:14Z",
-   "branch": "claude/lease-bridge-gap-tracker"
-  },
-  {
-   "number": 3894,
-   "title": "CURSOR- fix(lists): LST-PICKER-01 NewServiceDrawerForm account inline create (guard 1872)",
-   "mergedAt": "2026-07-31T14:43:17Z",
-   "branch": "fix/lst-picker01-service-account-1872"
-  },
-  {
-   "number": 3893,
-   "title": "CURSOR- fix(customers): LST-PICKER-01 parent customer inline create (guard 1870)",
-   "mergedAt": "2026-07-31T14:25:14Z",
-   "branch": "fix/lst-picker01-parent-customer-1870"
-  },
-  {
-   "number": 3892,
-   "title": "CURSOR- fix(maintenance): LST-PICKER-01 Create WO roadside vendor inline create (guard 1868)",
-   "mergedAt": "2026-07-31T14:09:21Z",
-   "branch": "fix/lst-picker01-wo-roadside-vendor-1868"
-  },
-  {
-   "number": 3891,
-   "title": "CURSOR- fix(maintenance): LST-PICKER-01 road-service vendor_id + inline create (guard 1866)",
-   "mergedAt": "2026-07-31T13:52:21Z",
-   "branch": "fix/lst-picker01-road-service-vendor-1866"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 4613,
+   "title": "Claude-2- audit(live): CLS-MONEY-HOLD — HOLD-001 is NOT a hold, it is a code defect (LV-TXN-004, P0)",
+   "mergedAt": "2026-08-07T00:29:43Z",
+   "category": "HOLD"
+  },
   {
    "number": 3876,
    "title": "CURSOR- feat(accounting): ND-FA-01 Fixed Assets register UI requires owner prices (FINANCIAL-HOLD)",
