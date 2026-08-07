@@ -6,7 +6,7 @@
   "phase": "tier2",
   "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
   "source_file": "acct-fmcsa-fire-and-forget-retry.txt",
-  "task": "Replace silent void verifyCustomerWithSafer on customer create/update with durable outbox.events enqueue (ON CONFLICT dedupe_key WHERE NOT NULL), typed FMCSA 429/5xx/network + Retry-After fail-fast (no alternate SAFER hammering), PermanentDeliveryError on malformed UUID before DB, tenant-scoped handler, manual verify 503 retryable, Rule-17 guard+selftest. No additive migration; FINANCIAL HOLD; no GL/QBO.",
+  "task": "Replace silent void verifyCustomerWithSafer on customer create/update with durable outbox.events enqueue (ON CONFLICT dedupe_key WHERE NOT NULL), typed FMCSA 429/5xx/network + Retry-After fail-fast (no alternate SAFER hammering), PermanentDeliveryError on malformed UUID before DB, tenant-scoped handler, manual verify 503 retryable, Rule-17 guard+selftest. No additive migration; merge on green (owner law 2026-08-03: no holds; proof, not approval, is the gate); no GL/QBO.",
   "priority": "P0",
   "module": "mdata-fmcsa",
   "db_required": true,
@@ -38,5 +38,5 @@
       "check": "global claim documented; handler payload company scope + canonical UUID fail-fast; audit enqueue/dedupe/retry/fail; Rule-17 selftest plants; db concurrent dedupe"
     }
   ],
-  "note": "No additive migration — lifetime uniqueness reconciled by clearing dedupe_key on terminal for FMCSA events only (0212 index retained). FINANCIAL HOLD; no GL/QBO."
+  "note": "No additive migration — lifetime uniqueness reconciled by clearing dedupe_key on terminal for FMCSA events only (0212 index retained). merge on green (owner law 2026-08-03: no holds; proof, not approval, is the gate); no GL/QBO."
 }

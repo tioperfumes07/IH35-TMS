@@ -84,6 +84,34 @@ export function decide(pr) {
 
 const gh = (args) => execFileSync("gh", args, { encoding: "utf8", maxBuffer: 32 * 1024 * 1024 });
 
+
+/**
+ * Resolve mergeability, falling back to REST when GraphQL will not say.
+ *
+ * `gh pr list` (GraphQL) returns UNKNOWN for these PRs indefinitely — not "for a moment while GitHub
+ * computes", which is what the earlier comment assumed. Observed across several reaper runs: every
+ * stale dependency PR sat at UNKNOWN while the REST endpoint reported `mergeable=false,
+ * mergeable_state=dirty` immediately. The consequence was silent and total: the reaper skipped them on
+ * UNKNOWN and, because the rebase branch only fires on a definite `false`, it never asked Dependabot to
+ * rebase either. It looked like it was working and it was doing nothing at all.
+ *
+ * REST `mergeable_state` is authoritative: `dirty` = real conflicts. `blocked`/`unstable` mean failing
+ * or pending CHECKS, not conflicts — those are mergeable as far as this function is concerned and are
+ * correctly stopped later by the required-checks gate, which is the check that should stop them.
+ */
+function resolveMergeable(p) {
+  if (p.mergeable === "MERGEABLE") return true;
+  if (p.mergeable === "CONFLICTING") return false;
+  try {
+    const state = gh(["api", `repos/${REPO}/pulls/${p.number}`, "--jq", ".mergeable_state"]).trim();
+    if (state === "dirty") return false;
+    if (["clean", "unstable", "blocked", "has_hooks"].includes(state)) return true;
+  } catch {
+    /* REST unavailable — fall through to "unknown", which is a skip, never a merge */
+  }
+  return null;
+}
+
 function fetchOpenDependabotPrs() {
   const raw = gh([
     "pr", "list", "--repo", REPO, "--state", "open", "--limit", "50",
@@ -95,7 +123,7 @@ function fetchOpenDependabotPrs() {
       number: p.number,
       title: p.title,
       author: p.author?.login,
-      mergeable: p.mergeable === "MERGEABLE" ? true : p.mergeable === "CONFLICTING" ? false : null,
+      mergeable: resolveMergeable(p),
       checks: (p.statusCheckRollup ?? []).map((c) => ({
         name: c.name ?? c.context,
         conclusion: c.conclusion ?? c.state ?? null,
