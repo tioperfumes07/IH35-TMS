@@ -26,5 +26,5 @@
   "db_required": false,
   "guard_required": true,
   "extra_gates": [],
-  "superseded_hold": "OWNER LAW 2026-08-03: no holds, no approval label; coders have full Neon access and merge on green. Proof, not approval, is the gate."
+  "hold": "TIER-1 FINANCIAL — builder STOPS after build for GUARD branch-proof. Jorge merges. Design fork flagged in PR (surface-skip-signal vs hard-block-whole-op)."
 }
