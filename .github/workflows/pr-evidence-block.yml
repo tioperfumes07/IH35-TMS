@@ -19,6 +19,18 @@ jobs:
   evidence-block:
     name: PR body carries the Rule 16 evidence block
     runs-on: ubuntu-latest
+    # Dependabot cannot satisfy this check and never will: it authors its own PR body from a template
+    # and has no way to write a FINDING / ROOT CAUSE / LIVE PROOF block. Requiring one of it is a
+    # PERMANENT red on every dependency bump — 8 such PRs were blocked on 2026-08-06 for a rule none
+    # of them could ever pass. A check that a class of PR is structurally incapable of satisfying is
+    # not a gate, it is noise, and noise is what trains reviewers to ignore red.
+    #
+    # Same precedent and same expression as semgrep.yml:34. This narrows the check's SCOPE; it does
+    # not weaken it — every human- and agent-authored PR still must carry the block, which is the
+    # population the rule was written for. Security review of dependency bumps is unaffected: the
+    # CVE-delta gate in security-checks.yml still runs on dependabot and is the check that actually
+    # matters there.
+    if: (github.actor != 'dependabot[bot]')
     steps:
       - name: Checkout
         uses: actions/checkout@v7
