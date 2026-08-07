@@ -1,5 +1,7 @@
 # QBO Reconciliation Module — spec + activation (2026-07-04)
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 The tool that makes the 3–6 month parallel run real: twice daily it compares TMS's ledger to QuickBooks
 and flags **every** divergence for review (no threshold). Read-only. No write-back to QBO.
 
@@ -31,7 +33,7 @@ type QboReconSource = { bankEntries(opco, windowStart, windowEnd): Promise<Recon
 
 To wire it: return a source whose `bankEntries()` pulls the entity's QBO register/bank transactions for the
 window via the existing QBO client (`integrations/qbo/qbo-client.ts` + `qbo-report-parser.ts`, IMPORT-0) and
-maps them to `ReconEntry`. ~1 function, reuses existing infra, behind the OFF flag (build-and-hold).
+maps them to `ReconEntry`. ~1 function, reuses existing infra, behind the OFF flag (build-and-ship).
 
 ## Two dependencies to turn it ON (owner actions)
 1. **Connect TMS to QuickBooks.** `integrations.qbo_connections` is currently **empty** — TMS has no live
@@ -49,6 +51,6 @@ QBO drift for human review; nothing changes in TMS automatically). Two options:
 
 ## Build plan (my next step, on your go)
 1. Implement `createQboReconSource()` → real `QboReconSource.bankEntries()` via the QBO client (behind the
-   OFF flag; build-and-hold, no self-merge — financial §1.4).
+   OFF flag; build-and-ship, merge on green with proof — financial §1.4).
 2. Add a CI guard that the source never fabricates a QBO side (empty pull ⇒ skip, not false-flag).
 3. You connect TMS↔QBO + flip `TMS_QBO_RECON_ENABLED` per entity → twice-daily flagging goes live at `/accounting/qbo-reconcile`.

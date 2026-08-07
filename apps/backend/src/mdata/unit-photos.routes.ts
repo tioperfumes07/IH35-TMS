@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 const unitParamsSchema = z.object({ id: z.string().uuid() });
@@ -29,7 +30,7 @@ export async function registerUnitPhotosRoutes(app: FastifyInstance) {
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
 
     const rows = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           SELECT id::text, photo_url, photo_type, caption, taken_at::text, created_at::text
@@ -53,7 +54,7 @@ export async function registerUnitPhotosRoutes(app: FastifyInstance) {
     if (!params.success || !query.success || !body.success) return reply.code(400).send({ error: "validation_error" });
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           INSERT INTO mdata.unit_photos (
@@ -91,7 +92,7 @@ export async function registerUnitPhotosRoutes(app: FastifyInstance) {
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           UPDATE mdata.unit_photos

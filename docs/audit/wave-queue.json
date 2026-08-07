@@ -1,6 +1,6 @@
 {
   "_README": "Cascade publishes CLS-* class wave cards here (schema: docs/audit/wave-queue.SCHEMA.json). Legacy per-module rows in AUDIT-COVERAGE-LIVE.md are WORM history and are NOT rewritten by this artifact. Cursor drains mechanical cards; Claude Coder drains money cards. verify-wave-card-format + verify-no-false-green-certify enforce the method in CI.",
-  "_LANE_TERRITORY_2026-08-06": "OWNER-LOCKED PARTITION (Cascade auditor duty, no overlap ever): CC-1 (lane=money) owns ONLY migrations, grants, GL/posting, settlement, WORM, AP/AR, ci.yml DB-env — NEVER routes, NEVER route tests, NEVER rate-limit, NEVER dispatch/mdata scope, NEVER FE. CC-2 (lane=mechanical) owns ONLY routes, route tests, rate-limit, dispatch/mdata entity-scope, FE — NEVER migrations/grants/GL/WORM. Root cause of the 2026-08-06 all-PR-red incident: both builders ran a rate-limit route sweep simultaneously on overlapping route files (a mechanical-lane class assigned to CC-1 in violation of this partition). Before assigning ANY new class, Cascade checks the new card's hotfiles against every OTHER open card's hotfiles; if a money card and a mechanical card share a hotfile, serialize them (one stays queued) instead of running both.",
+  "_LANE_TERRITORY_2026-08-06": "OWNER-LOCKED PARTITION (Cascade auditor duty, no overlap ever): CC-1 (lane=money) owns ONLY migrations, grants, GL/posting, settlement, WORM, AP/AR, ci.yml DB-env \u2014 NEVER routes, NEVER route tests, NEVER rate-limit, NEVER dispatch/mdata scope, NEVER FE. CC-2 (lane=mechanical) owns ONLY routes, route tests, rate-limit, dispatch/mdata entity-scope, FE \u2014 NEVER migrations/grants/GL/WORM. Root cause of the 2026-08-06 all-PR-red incident: both builders ran a rate-limit route sweep simultaneously on overlapping route files (a mechanical-lane class assigned to CC-1 in violation of this partition). Before assigning ANY new class, Cascade checks the new card's hotfiles against every OTHER open card's hotfiles; if a money card and a mechanical card share a hotfile, serialize them (one stays queued) instead of running both.",
   "waves": [
     {
       "id": "CLS-DISPLAYID-UNSCOPED",
@@ -240,32 +240,32 @@
           "note": "DISPOSITION: (B) empty state \u2014 parts catalog not populated (inventory exists at 144 rows, catalog is cosmetic). NOT a defect."
         },
         {
-          "path": "catalogs.expense_categories = 9 (3 codes × 3 opco: FUEL/PERMIT/REPAIR) — mapExpenseCatalogCodeToBillCategory() only translates 2 of 3 (ECON-012)",
+          "path": "catalogs.expense_categories = 9 (3 codes \u00d7 3 opco: FUEL/PERMIT/REPAIR) \u2014 mapExpenseCatalogCodeToBillCategory() only translates 2 of 3 (ECON-012)",
           "entity": "ALL",
-          "note": "DISPOSITION: (A) BROKEN WIRING — CONFIRMED 2026-08-05 (row 684). Picker source was correct (catalogs.expense_categories IS what VendorBillForm.tsx reads); the defect is downstream: apps/frontend/src/components/accounting/vendorBillLines.ts:20-29 hardcodes only FUEL→fuel and REPAIR→maintenance against a 30-code canonical map (accounting.expense_category_account_map). PERMIT has zero translation — selecting it silently posts an uncategorized GL line (own code comment: 'poster → uncategorized'). 0 PERMIT bill lines exist yet (not yet exercised); 2 anomalous REPAIR-tagged bill_lines rows initially looked like a second write path but their description columns ('GL proof repair line' / 'USMCA test - brake repair labor') confirm they are prior audit proof-of-concept rows, not a live bug — no second write path found."
+          "note": "DISPOSITION: (A) BROKEN WIRING \u2014 CONFIRMED 2026-08-05 (row 684). Picker source was correct (catalogs.expense_categories IS what VendorBillForm.tsx reads); the defect is downstream: apps/frontend/src/components/accounting/vendorBillLines.ts:20-29 hardcodes only FUEL\u2192fuel and REPAIR\u2192maintenance against a 30-code canonical map (accounting.expense_category_account_map). PERMIT has zero translation \u2014 selecting it silently posts an uncategorized GL line (own code comment: 'poster \u2192 uncategorized'). 0 PERMIT bill lines exist yet (not yet exercised); 2 anomalous REPAIR-tagged bill_lines rows initially looked like a second write path but their description columns ('GL proof repair line' / 'USMCA test - brake repair labor') confirm they are prior audit proof-of-concept rows, not a live bug \u2014 no second write path found."
         },
         {
           "path": "catalogs.parts = 0; canonical is maintenance.parts_inventory = 144 (ECON-013)",
           "entity": "TRANSP",
-          "note": "DISPOSITION: (B) empty state — catalogs.parts is deprecated/unused. Real inventory at 144 rows. NOT a defect."
+          "note": "DISPOSITION: (B) empty state \u2014 catalogs.parts is deprecated/unused. Real inventory at 144 rows. NOT a defect."
         },
         {
-          "path": "catalogs.cash_advance_types = 18, escrow_types = 3, deduction_types = 21 — consumer tables lack FK (ECON-014)",
+          "path": "catalogs.cash_advance_types = 18, escrow_types = 3, deduction_types = 21 \u2014 consumer tables lack FK (ECON-014)",
           "entity": "ALL",
-          "note": "DISPOSITION: (A) BROKEN WIRING — catalogs are seeded but consumer services use hardcoded enums instead of FK'ing the catalog. Real defect: catalog exists but is not consumed."
+          "note": "DISPOSITION: (A) BROKEN WIRING \u2014 catalogs are seeded but consumer services use hardcoded enums instead of FK'ing the catalog. Real defect: catalog exists but is not consumed."
         },
         {
-          "path": "accounting.chart_of_accounts_roles = 114 — legacy catalogs.account_role_bindings = 0 (ECON-015)",
+          "path": "accounting.chart_of_accounts_roles = 114 \u2014 legacy catalogs.account_role_bindings = 0 (ECON-015)",
           "entity": "ALL",
-          "note": "DISPOSITION: (A) BROKEN WIRING — if any resolver references catalogs.account_role_bindings (the empty table) instead of accounting.chart_of_accounts_roles (114 rows), role lookup silently returns NULL. Real defect."
+          "note": "DISPOSITION: (A) BROKEN WIRING \u2014 if any resolver references catalogs.account_role_bindings (the empty table) instead of accounting.chart_of_accounts_roles (114 rows), role lookup silently returns NULL. Real defect."
         },
         {
           "path": "mdata.loads = 10 for 16K bills / 12K invoices (ECON-016)",
           "entity": "ALL",
-          "note": "DISPOSITION: (B) empty state — QBO-origin bills/invoices have no loads (parallel books). TMS-native load count is genuinely low (pre-dispatch). NOT a defect."
+          "note": "DISPOSITION: (B) empty state \u2014 QBO-origin bills/invoices have no loads (parallel books). TMS-native load count is genuinely low (pre-dispatch). NOT a defect."
         }
       ],
-      "completeness": "lucia-bypass Neon prod 2026-08-05: zero-amount density stable — invoices total_cents=0 = 1/11984, bills amount_cents=0 = 0/16250, payments amount_cents=0 = 0/12124. Broken-wiring defects ECON-005/012/014/015 remain OPEN (overage_deduction_id never written, PERMIT category has no GL translation, cash_advance_type_id column missing, account_role_bindings empty). Owner ruling: historical/QBO-import rows without cash_advance_type_id are exempt; TMS-native driver advance creation is not yet operational. §9.0.17 DISPOSITION ROLLUP 2026-08-05 (CLASS-DRAIN work order, split real-defect vs by-design-empty before any drain): of 16 instances, REAL DEFECT / broken-wiring (A) = 4 (ECON-005 fuel overage_deduction_id dead code, ECON-012 PERMIT category untranslated, ECON-014 seeded catalogs not FK'd by consumers, ECON-015 orphan legacy role-binding table risk) — these are the only instances a builder should drain here. BY-DESIGN-EMPTY / catalog-awaiting-first-record (B) = 9 (ECON-002, 003, 006, 007, 008, 010, 011, 013, 016) — NOT actionable, no code to fix, closes only when a real business event is recorded. OWNER-HOLD (C) = 3 (ECON-001, 004, 009) — tracked under CLS-MONEY-HOLD (HOLD-001/002), NOT actionable on this card, do not duplicate the fix here.",
+      "completeness": "lucia-bypass Neon prod 2026-08-05: zero-amount density stable \u2014 invoices total_cents=0 = 1/11984, bills amount_cents=0 = 0/16250, payments amount_cents=0 = 0/12124. Broken-wiring defects ECON-005/012/014/015 remain OPEN (overage_deduction_id never written, PERMIT category has no GL translation, cash_advance_type_id column missing, account_role_bindings empty). Owner ruling: historical/QBO-import rows without cash_advance_type_id are exempt; TMS-native driver advance creation is not yet operational. \u00a79.0.17 DISPOSITION ROLLUP 2026-08-05 (CLASS-DRAIN work order, split real-defect vs by-design-empty before any drain): of 16 instances, REAL DEFECT / broken-wiring (A) = 4 (ECON-005 fuel overage_deduction_id dead code, ECON-012 PERMIT category untranslated, ECON-014 seeded catalogs not FK'd by consumers, ECON-015 orphan legacy role-binding table risk) \u2014 these are the only instances a builder should drain here. BY-DESIGN-EMPTY / catalog-awaiting-first-record (B) = 9 (ECON-002, 003, 006, 007, 008, 010, 011, 013, 016) \u2014 NOT actionable, no code to fix, closes only when a real business event is recorded. OWNER-HOLD (C) = 3 (ECON-001, 004, 009) \u2014 tracked under CLS-MONEY-HOLD (HOLD-001/002), NOT actionable on this card, do not duplicate the fix here.",
       "guard": "scripts/verify-econ-empty-density.mjs",
       "drain_proof": {
         "guard_green": false,
@@ -704,7 +704,7 @@
         }
       ],
       "completeness": "Code-verified + live 2026-08-05: matters.service.ts LIMIT 500 pattern remains, but legal.matters=0 so no truncation observed. DriversListPage CSV export limit:500 pattern remains, but mdata.drivers=179 so no truncation observed. Banking picker cap is drained (PR #4234). Positive control: DriversListPage paginated list uses limit:25 with real total count.",
-      "guard": "scripts/verify-no-silent-list-cap.mjs",
+      "guard": "scripts/verify-no-silent-list-caps.mjs",
       "drain_proof": {
         "guard_green": false,
         "guard_sample": "",
@@ -755,7 +755,7 @@
         }
       ],
       "completeness": "Code-verified 2026-08-05: LegalMatterDetailPage.tsx still passes FK id as EntityLink label in 4 instances. VehicleProfilePage class picker renders class_name verbatim. qbo_classes UUID-like name count=0/172. PR #4234 CHECK constraint + Unnamed class fallback mitigates new bad data, but existing 4 Legal EntityLink instances remain OPEN.",
-      "guard": "scripts/verify-no-uuid-labels.mjs",
+      "guard": "scripts/verify-no-uuid-label-rendering.mjs",
       "drain_proof": {
         "guard_green": false,
         "guard_sample": "LegalMatterDetailPage EntityLink uses truncated UUID labels (4 instances); qbo_classes UUID-like name=0/172.",
@@ -789,7 +789,7 @@
         }
       ],
       "completeness": "Code-verified: EditVehicleModal.tsx renders both fields as unadorned <input> elements with no autocomplete/combobox. Confirmed by reading lines 58-59. Positive control: other FK fields in the same app use ReferenceSelect/Combobox/Autocomplete.",
-      "guard": "scripts/verify-no-raw-uuid-inputs.mjs",
+      "guard": "scripts/verify-picker-law-no-raw-uuid.mjs",
       "drain_proof": {
         "guard_green": true,
         "guard_sample": "PR #4234 (origin/main 0869e3f6b): EditVehicleModal.tsx now imports Combobox, type:'company' fields render listMyCompanies picker. Confirmed: git show origin/main:apps/frontend/src/components/fleet/EditVehicleModal.tsx lines 11,65-66,273-285.",
@@ -905,7 +905,7 @@
         }
       ],
       "completeness": "Guard PASS 2026-08-05: verify-disp-wire-04-invoice-evidence-durable.mjs PASS. Code path exists and durable audit row is appended for unevidenced sends instead of silently posting. Live 2026-08-05: INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE still has no registry row (defaults OFF); status='sent'=239, status='paid'=11687; all 12 load_stops actual_departure_at=NULL (WIRE-07 root blocker remains). Exposure is countable, not silent.",
-      "guard": "scripts/verify-disp-wire-04-invoice-evidence.mjs",
+      "guard": "scripts/verify-disp-wire-04-invoice-evidence-durable.mjs",
       "drain_proof": {
         "guard_green": true,
         "guard_sample": "verify-disp-wire-04-invoice-evidence-durable PASS: unevidenced sends append a durable atomic audit row; live sent=239/paid=11687, all stops lack departure (WIRE-07 blocker). Exposure countable.",
@@ -1111,7 +1111,7 @@
     },
     {
       "id": "CLS-CALENDAR",
-      "root_cause": "A JS Date value is passed where Postgres expects a ::date cast (String(Date) is not castable to ::date), blocking a money-critical send/post path outright rather than corrupting data. §9.0.17 reconciliation 2026-08-06: this card ABSORBS the earlier informal label CLS-CALENDAR-DATE (seen only as inline text in CLS-GL-DARK, never its own wave card) as a sub-tag \u2014 same underlying pattern (calendar/date handling on a money path), not a separate class.",
+      "root_cause": "A JS Date value is passed where Postgres expects a ::date cast (String(Date) is not castable to ::date), blocking a money-critical send/post path outright rather than corrupting data. \u00a79.0.17 reconciliation 2026-08-06: this card ABSORBS the earlier informal label CLS-CALENDAR-DATE (seen only as inline text in CLS-GL-DARK, never its own wave card) as a sub-tag \u2014 same underlying pattern (calendar/date handling on a money path), not a separate class.",
       "lane": "money",
       "layer": "C",
       "modules": [

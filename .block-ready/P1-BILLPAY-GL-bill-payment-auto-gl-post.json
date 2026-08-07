@@ -30,5 +30,5 @@
   "deferred": [
     { "item": "vendor A/P batch-pay path (apps/backend/src/accounting/vendor-bill-payments.routes.ts)", "reason": "DISTINCT code path with its own bill_payments insert + updateBankBalance (does NOT call payBill); needs the same postSourceTransactionInClientTx + flag-gate wiring + its own Neon proof. Explicit follow-up within P1-BILLPAY-GL (per LINKAGE-LAW explicit-deferred), NOT silently dropped. GUARD acceptance covers both UI paths." }
   ],
-  "hold": "TIER-1 FINANCIAL (cash integrity + core-poster extraction). Build-and-hold: builder wired it; GUARD proves atomicity + no-double-reduction on a Neon branch (incl. that the poster extraction did not change existing posters); owner merges. Depends on P1-BILL-GL (bill must post before its payment)."
+  "superseded_hold": "OWNER LAW 2026-08-03: no holds, no approval label; coders have full Neon access and merge on green. Proof, not approval, is the gate."
 }

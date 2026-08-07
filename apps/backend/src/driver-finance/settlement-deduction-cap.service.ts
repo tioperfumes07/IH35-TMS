@@ -206,6 +206,10 @@ export async function applyPendingDeductionsToSettlementWithNetFloor(
       FROM driver_finance.settlement_lines
       WHERE settlement_id = $1
         AND line_type IN ('earnings', 'extra_pay', 'team_split_primary', 'team_split_secondary')
+        -- ACCT-F156: settlement_lines soft-deletes via is_active. An inactive earnings line left in
+        -- this SUM overstates GROSS, which raises the deduction cap the 5% net-pay floor exists to
+        -- enforce -- i.e. it lets a driver be over-deducted. Table is empty today; latent until pay-runs start.
+        AND is_active = true
     `,
     [input.settlementId]
   );

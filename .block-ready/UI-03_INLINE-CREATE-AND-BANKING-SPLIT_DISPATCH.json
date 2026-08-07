@@ -6,7 +6,7 @@
   "source": "MASTER-6 authored dispatch (07-UI-DESIGN)",
   "source_file": "UI-03_INLINE-CREATE-AND-BANKING-SPLIT_DISPATCH.txt",
   "allowed_files": [
-    "apps/frontend/src/** + reuse existing create/categorize/posting endpoints + scripts/**. The multi-vendor GL assembly is FINANCIAL -> that portion is Tier-1 build-and-hold for GUARD (Neon-branch proof of the balanced multi-vendor JE); the dropdown \"+ Create\" + split UI ship on green. NO new backend endpoints without a separate block; additive-only; never remove a field/tab/route."
+    "apps/frontend/src/** + reuse existing create/categorize/posting endpoints + scripts/**. The multi-vendor GL assembly is FINANCIAL -> that portion is Tier-1 build with GUARD live verify-after (Neon-branch proof of the balanced multi-vendor JE); the dropdown \"+ Create\" + split UI ship on green. NO new backend endpoints without a separate block; additive-only; never remove a field/tab/route."
   ],
   "acceptance": [
     {
