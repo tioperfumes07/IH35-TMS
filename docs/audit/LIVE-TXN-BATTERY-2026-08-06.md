@@ -2609,3 +2609,77 @@ cause seen from two ends.**
 
 **LANE: CC-1 / money.** Supersedes the guard wording in item 47 — **fix the guard there to the
 bidirectional form before building it.**
+
+---
+
+## 52. ★★ NEW DEFECT — the "Unpaid bill selector" OFFERS VOIDED BILLS FOR PAYMENT (item 51 made exploitable)
+
+**LIVE-PROVEN 2026-08-07 in the running app, `/accounting/bill-payments`, USMCA. This is the
+downstream consequence of item 51, and it is the most serious finding of this iteration: it puts real
+money at risk.**
+
+Opened **+ Record Bill Payment → Unpaid bill selector**. It lists **every one of the entity's 11
+bills — including all 4 that are VOIDED.**
+
+**Proven by exact count-matching against prod, not by eyeballing:**
+
+| amount | bills on prod | options offered |
+|---|---|---|
+| $123.45 | `d613ca88` **VOIDED** + `304f5fa3` live | **2** |
+| $743.21 | `55997ecb` **VOIDED** + `5a1d7268` live | **2** |
+| $450.00 | `40c1ca80` **VOIDED** + `e65dddd4` **VOIDED** + `0fe49cd0` live | **3** |
+| $88.77 | `7ccd431e` live | 1 |
+| $0.05 | `62fbc5ec` live | 1 |
+
+**The multiplicity matches exactly.** Duplicate amounts are not a rendering artifact — each duplicate
+is a distinct bill, and in every pair/triple the extra copies are precisely the voided ones. If the
+selector filtered voided bills, $450.00 would appear **once**; it appears **three times**.
+
+### The causal chain, end to end
+
+1. **Item 51** — bills voided out-of-band got `voided_at` stamped but kept **`status = 'unpaid'`**.
+2. The unpaid-bill selector evidently filters on **`status`**, not on `voided_at`.
+3. → **Voided bills are presented to the user as payable.**
+
+**This is exactly why item 51 matters, and why the bidirectional guard is not academic.** A
+one-directional guard (item 47's original wording — `status='void' AND voided_at IS NULL`) **passes
+cleanly on all four of these bills** and would never have surfaced this.
+
+### Why this is the highest-severity item in this iteration
+
+Paying a voided bill is **an erroneous cash disbursement against a document the business has already
+retracted**. In a real entity that is a duplicate or unauthorised payment to a vendor — money out the
+door, recoverable only by clawback. It is materially worse than the reporting overstatements
+(`LV-AR-OPEN-INCLUDES-VOIDED`, `LV-AP-OPEN-INCLUDES-VOIDED`), which misstate a number; **this one
+moves cash.**
+
+### WHAT I DELIBERATELY DID NOT DO
+
+**I did not complete a payment against a voided bill.** Proving the option is *offered*, plus the
+status logic that explains why, is sufficient to establish the defect. Actually executing it would
+create a real payment row against a voided document, corrupt the entity's A/P state, and require
+clean-up — and this lane's standing order forbids moving money erroneously. **The offer is the defect;
+executing it would be reckless, not more rigorous.** A builder can reproduce it from the counts above.
+
+**FIX:** the unpaid-bill selector (and every "payable/open bill" query) must exclude
+`voided_at IS NOT NULL`, **not** rely on `status`. Fixing item 51's data alone is not sufficient —
+the query must be correct even if a status field drifts again. **Both fixes are needed:** correct the
+status/timestamp pairing (item 51, ideally a DB constraint) **and** make the selector filter on the
+authoritative `voided_at`.
+**GUARD:** assert the payable-bill query returns **zero** rows with `voided_at IS NOT NULL`. Live data
+assertion. **LANE: CC-1 / money — HIGH.**
+
+### Also observed
+
+- **`+ Record Bill Payment` did nothing on first click** with no modal and no inline error. **NOT
+  filed as a defect** — the button plausibly requires a bill selected first, which is a normal
+  pattern, and I have not established otherwise. **UNVERIFIED — needs live check.**
+- The selector renders each bill as **`<vendor-uuid> · <user-entered bill #> · <due> · <amount>`** —
+  a raw UUID as the leading identifier. **This is `LV-BILL-NO-DISPLAY-ID` (item 50) surfacing in the
+  UI**: with no server-generated bill display_id, the picker falls back to a UUID.
+- **Refinement to item 50, stated in fairness:** the bill detail page *does* show a "Bill #"
+  (`CC3-VOIDTEST-20260807-01`) — but that is a **user-entered vendor reference**, not a
+  server-generated ID, so it is not guaranteed to exist or be unique. Indeed **`CC3-BILL-0001` is
+  reused across two different bills**, visible in this very dropdown. **That duplication is itself the
+  argument for a server-generated display_id** — two distinct payables are indistinguishable to the
+  user in the payment picker.
