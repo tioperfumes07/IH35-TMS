@@ -64,6 +64,7 @@ async function detectInactiveDriverAssignment(client: Parameters<DetectorFn>[0],
     `SELECT d.id::text AS driver_id, d.status::text AS status
      FROM mdata.drivers d
      JOIN mdata.loads l ON l.assigned_primary_driver_id = d.id
+                        AND l.operating_company_id = $1::uuid
      WHERE d.operating_company_id = $1::uuid
        AND (d.status <> 'Active' OR d.deactivated_at IS NOT NULL OR d.archived_at IS NOT NULL)
        AND l.status IN ('assigned','dispatched','in_transit')

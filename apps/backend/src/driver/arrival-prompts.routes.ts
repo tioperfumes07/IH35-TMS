@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -35,7 +36,7 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
       if (!operatingCompanyId) return [];
 
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
       const res = await client.query<{
         id: string;
         stop_id: string;
@@ -78,7 +79,7 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
     return { prompts: rows };
   });
 
-  app.post("/api/v1/driver/arrival-prompts/:id/confirm", async (req, reply) => {
+  app.post("/api/v1/driver/arrival-prompts/:id/confirm", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;
@@ -98,7 +99,7 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
       if (!operatingCompanyId) return { updated: false };
 
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
 
       const res = await client.query<{ stop_id: string }>(
         `
@@ -149,7 +150,7 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/driver/arrival-prompts/:id/dismiss", async (req, reply) => {
+  app.post("/api/v1/driver/arrival-prompts/:id/dismiss", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;
@@ -168,7 +169,7 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
       if (!operatingCompanyId) return;
 
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
       await appendCrudAudit(
         client,
         user.uuid,

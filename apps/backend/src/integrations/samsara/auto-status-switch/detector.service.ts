@@ -211,6 +211,7 @@ async function fetchLoadGpsContext(client: DbClient, operatingCompanyId: string,
         SELECT loc.latitude, loc.longitude
         FROM mdata.load_stops s
         LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+                                      AND loc.operating_company_id = $1::uuid
         WHERE s.load_id = l.id AND s.stop_type::text = 'pickup'
         ORDER BY s.sequence_number ASC
         LIMIT 1
@@ -219,6 +220,7 @@ async function fetchLoadGpsContext(client: DbClient, operatingCompanyId: string,
         SELECT loc.latitude, loc.longitude
         FROM mdata.load_stops s
         LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+                                      AND loc.operating_company_id = $1::uuid
         WHERE s.load_id = l.id AND s.stop_type::text = 'delivery'
         ORDER BY s.sequence_number DESC
         LIMIT 1
@@ -623,6 +625,7 @@ export async function listRecentAutoStatusSwitches(
         l.load_number
       FROM integrations.auto_status_switch_events e
       JOIN mdata.loads l ON l.id = e.load_uuid
+                         AND l.operating_company_id = $1::uuid
       WHERE e.operating_company_id = $1::uuid
         AND e.auto_switched = true
       ORDER BY e.created_at DESC

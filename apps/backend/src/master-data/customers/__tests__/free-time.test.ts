@@ -1,3 +1,4 @@
+import { membershipAware } from "../../../../test-helpers/membership-aware-query.js";
 import Fastify, { type FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { registerCustomerFreeTimeDetentionRoutes } from "../free-time-detention.routes.js";
@@ -8,7 +9,7 @@ const CUSTOMER = "22222222-2222-4222-8222-222222222222";
 const { mockQuery, mockWithCurrentUser } = vi.hoisted(() => {
   const query = vi.fn();
   const withCurrentUser = vi.fn(async (_userId: string, fn: (client: { query: typeof query }) => Promise<unknown>) =>
-    fn({ query })
+    fn({ query: membershipAware(query) })
   );
   return { mockQuery: query, mockWithCurrentUser: withCurrentUser };
 });

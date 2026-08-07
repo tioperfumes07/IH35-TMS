@@ -63,7 +63,9 @@ export async function registerFaultHistoryRoutes(app: FastifyInstance) {
             w.status AS wo_status,
             w.display_id AS wo_display_id
           FROM maintenance.samsara_fault_code_history h
+          -- CLS-JOIN-ENTITY-UNSCOPED (see §4: units carry owner/leased, never operating_company_id)
           LEFT JOIN mdata.units u ON u.id = h.unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = h.operating_company_id
           LEFT JOIN maintenance.work_orders w ON w.id = h.auto_wo_id
           WHERE ${where}
           ORDER BY h.occurred_at DESC

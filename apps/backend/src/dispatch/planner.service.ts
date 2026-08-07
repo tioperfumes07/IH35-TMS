@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { getCurrentClocks, getCurrentClocksForDrivers } from "../telematics/hos-clocks.service.js";
 import { assertDriverQualifiedForLoad } from "./driver-qualification.service.js";
@@ -126,7 +127,7 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
   const weekEndIso = `${weekEnd}T00:00:00.000Z`;
 
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
 
     const driversRes = await client.query(
       `
@@ -141,6 +142,7 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
         -- condition 42703'd → 500 → empty Timeline. Entity scoping stays via the driver filter below
         -- (d.operating_company_id = $1); the unit attaches through the entity-scoped driver's assignment.
         LEFT JOIN mdata.units u ON u.assigned_driver_id = d.id
+                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
         WHERE d.operating_company_id = $1::uuid
           AND d.deactivated_at IS NULL
           AND d.archived_at IS NULL
@@ -248,7 +250,7 @@ export async function reschedulePlannerLoad(
   }
 
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
 
     const loadRes = await client.query(
       `

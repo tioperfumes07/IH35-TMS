@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { lookupCarrierByMC, lookupCarrierByUSDOT, type CarrierResult } from "../../lib/fmcsa-client.js";
@@ -50,7 +51,7 @@ async function loadCustomer(
 ): Promise<CustomerForCheck | null> {
   return withCurrentUser(actorUserId, async (client) => {
     if (operatingCompanyId) {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await setScopedCompanyContext(client, actorUserId, operatingCompanyId);
     }
     const res = await client.query(
       `
@@ -99,7 +100,7 @@ export async function verifyCustomerWithSafer(options: VerifyOptions) {
   if (!lookup) {
     const updated = await withCurrentUser(actorUserId, async (client) => {
       if (operatingCompanyId) {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+        await setScopedCompanyContext(client, actorUserId, operatingCompanyId);
       }
       const res = await client.query(
         `
@@ -144,7 +145,7 @@ export async function verifyCustomerWithSafer(options: VerifyOptions) {
 
   const updated = await withCurrentUser(actorUserId, async (client) => {
     if (operatingCompanyId) {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await setScopedCompanyContext(client, actorUserId, operatingCompanyId);
     }
     let lookupId: string | null = null;
     if (carrier) {

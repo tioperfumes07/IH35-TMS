@@ -6,6 +6,7 @@
  * RBAC: Manager, Owner, Administrator roles.
  */
 
+import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";
@@ -43,7 +44,7 @@ export async function registerDriverManagerRoleHomeRoutes(app: FastifyInstance) 
     const { operating_company_id } = parsed.data;
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, operating_company_id);
       await client.query(`SELECT set_config('app.user_role', $1, true)`, [user.role]);
 
       const data = await getDriverManagerHomeData(client, operating_company_id);

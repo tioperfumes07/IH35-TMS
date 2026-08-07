@@ -141,7 +141,11 @@ const INSPECTION_SELECT = `
     i.updated_at::text,
     COALESCE(p.photo_count, 0)::int AS photo_count
   FROM maintenance.inspections i
+  -- CLS-JOIN-ENTITY-UNSCOPED: scoping the DRIVING row does not scope the joined row.
+  -- §4 landmine: mdata.units/mdata.equipment have NO operating_company_id — the scope column is
+  -- COALESCE(currently_leased_to_company_id, owner_company_id).
   LEFT JOIN mdata.units u ON u.id = i.unit_id
+                         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = i.operating_company_id
   LEFT JOIN safety.dvir_submissions ds ON ds.id = i.dvir_submission_id
   LEFT JOIN LATERAL (
     SELECT count(*)::int AS photo_count

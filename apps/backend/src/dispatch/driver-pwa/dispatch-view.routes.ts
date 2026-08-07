@@ -311,6 +311,7 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
           SELECT s.id, s.stop_type::text, l.status::text AS load_status, loc.latitude, loc.longitude
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
+                             AND l.operating_company_id = loc.operating_company_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
                                       AND loc.operating_company_id = l.operating_company_id
           WHERE s.id = $1

@@ -644,6 +644,7 @@ export async function buildUnitAggregate(
         SELECT COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::bigint AS cents
         FROM fuel.fuel_transactions ft
         JOIN mdata.loads l ON l.id = ft.load_id
+                           AND l.operating_company_id = $2::uuid
         WHERE l.assigned_unit_id = $1::uuid AND ft.operating_company_id = $2::uuid
       `,
         [unitId, operatingCompanyId]

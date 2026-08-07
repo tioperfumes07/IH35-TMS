@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { createJournalEntry } from "../accounting/journal-entries.service.js";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
@@ -102,7 +103,7 @@ export async function recordFleetPremiumJournalEntry(params: {
   if (amount <= 0) return null;
 
   return withCurrentUser(params.actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [params.operatingCompanyId]);
+    await setScopedCompanyContext(client, params.actorUserId, params.operatingCompanyId);
     const accounts = await pickFleetPremiumAccounts(client as Queryable, params.operatingCompanyId);
     const today = new Date().toISOString().slice(0, 10);
 

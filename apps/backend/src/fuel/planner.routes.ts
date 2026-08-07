@@ -274,7 +274,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.get("/api/v1/fuel/planner/compliance/summary", async (req, reply) => {
+  app.get("/api/v1/fuel/planner/compliance/summary", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -302,6 +302,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
             c.pct_followed
           FROM views.fuel_compliance_summary c
           LEFT JOIN mdata.drivers d ON d.id = c.driver_id
+                                    AND d.operating_company_id = $1::uuid
           WHERE c.operating_company_id = $1
           ORDER BY c.pct_followed DESC NULLS LAST
           LIMIT 25
@@ -317,7 +318,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     return summary;
   });
 
-  app.get("/api/v1/fuel/planner/savings/summary", async (req, reply) => {
+  app.get("/api/v1/fuel/planner/savings/summary", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -343,6 +344,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
             s.savings_ytd
           FROM views.fuel_savings_summary s
           LEFT JOIN mdata.drivers d ON d.id = s.driver_id
+                                    AND d.operating_company_id = $1::uuid
           WHERE s.operating_company_id = $1
           ORDER BY s.savings_ytd DESC NULLS LAST
           LIMIT 1

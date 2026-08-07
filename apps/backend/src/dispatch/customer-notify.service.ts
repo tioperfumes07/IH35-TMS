@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { PoolClient } from "pg";
@@ -37,7 +38,7 @@ type DbClient = Pick<PoolClient, "query">;
 
 async function withCompany<T>(userId: string, operatingCompanyId: string, fn: (client: PoolClient) => Promise<T>) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     return fn(client);
   });
 }
@@ -629,7 +630,9 @@ export async function listCustomerNotifyLog(
           c.customer_name
         FROM dispatch.notify_log nl
         JOIN mdata.loads l ON l.id = nl.load_id
+                           AND l.operating_company_id = $1::uuid
         JOIN mdata.customers c ON c.id = nl.customer_id
+                               AND c.operating_company_id = $1::uuid
         WHERE nl.operating_company_id = $1::uuid
           ${customerFilter}
         ORDER BY nl.created_at DESC

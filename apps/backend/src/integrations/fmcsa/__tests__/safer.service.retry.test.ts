@@ -1,3 +1,4 @@
+import { membershipAware } from "../../../../test-helpers/membership-aware-query.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const withCurrentUser = vi.fn();
@@ -34,7 +35,7 @@ describe("verifyCustomerWithSafer retry taxonomy", () => {
     vi.clearAllMocks();
     withCurrentUser.mockImplementation(async (_actor: string, fn: (client: { query: ReturnType<typeof vi.fn> }) => unknown) => {
       const client = {
-        query: vi.fn(async (sql: string) => {
+        query: membershipAware(vi.fn(async (sql: string) => {
           if (sql.includes("FROM mdata.customers") && sql.includes("SELECT")) {
             return { rows: [CUSTOMER] };
           }
@@ -45,7 +46,7 @@ describe("verifyCustomerWithSafer retry taxonomy", () => {
             return { rows: [{ id: "lookup-1" }] };
           }
           return { rows: [] };
-        }),
+        })),
       };
       return fn(client);
     });

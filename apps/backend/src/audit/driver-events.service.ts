@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 
 type Queryable = {
@@ -131,7 +132,7 @@ export function buildDriverAuditEventsQuery(input: ListDriverAuditEventsInput): 
 
 export async function listDriverAuditEvents(userId: string, input: ListDriverAuditEventsInput) {
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     const query = buildDriverAuditEventsQuery(input);
     const res = await (client as Queryable).query<DriverAuditEventRow>(query.sql, query.values);
     const events = res.rows.map((row) => ({
