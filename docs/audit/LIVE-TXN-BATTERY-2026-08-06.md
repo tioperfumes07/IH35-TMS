@@ -6051,3 +6051,59 @@ RLS already scopes these tables; the composite FK is defence in depth, and how d
 reachable) and two non-defects (fuel attribution, this). **The distinguishing question was never the
 measurement. It was "who intended what, and is this already someone's live work?" — and it is answerable
 from migration names and baseline files in about two minutes.** Ask it before filing, not after.
+
+---
+
+## 98. ITEM 96's UNVERIFIED QUESTION — RESOLVED: `from_load` invoices DO post, and the invoice→GL gate is correct at EVERY status
+
+**Verdict: PASS. No defect. Item 96's open question is closed from primary evidence, without needing to
+issue a new transaction.**
+
+Item 96 recorded a suspicious pattern and refused to file it: all three USMCA `from_load` invoices had 0 GL
+lines while every non-zero `manual` invoice had 2. That reads as *"load-sourced invoices never post"*. The
+innocent alternative was that USMCA's three had simply never been **issued** (two went proforma → void, one
+is still proforma), so the path had never been exercised. I said the decisive test was to issue one.
+
+**It turned out not to need a new transaction — the path had already been exercised, on TRANSP.** Widening
+the same query beyond USMCA answered it. Discriminator asserted: `invoices_visible = 11,987 == n_live_tup =
+11,987` (unmasked, all entities).
+
+**ALL FIVE `from_load` INVOICES IN THE DATABASE:**
+
+| entity | invoice | status | total | GL lines |
+|---|---|---|---|---|
+| **TRANSP** | **INV-2026-00001** | **sent** | $0.01 | **4** |
+| TRANSP | INV-2026-00739 | void | $5.00 | 0 |
+| USMCA | INV-2026-00002 | void | $1.00 | 0 |
+| USMCA | INV-2026-00005 | void | $2,450.00 | 0 |
+| USMCA | INV-2026-00006 | proforma | $1,875.50 | 0 |
+
+**Exactly one `from_load` invoice has ever reached issued status, and it posted.** `1 of 1`. The hypothesis
+is dead: the USMCA zeros are "never issued", not "never posts".
+
+**★ AND THE FULL STATUS GATE IS CORRECT — every TMS-native issued invoice checked:**
+
+| entity | invoice | status | type | GL lines | correct? |
+|---|---|---|---|---|---|
+| TRANSP | INV-2026-00001 | sent | from_load | 4 | ✅ posts |
+| TRANSP | INV-2026-00740 | sent | manual | 2 | ✅ posts |
+| **TRANSP** | **INV-2026-00741** | **draft** | manual | **0** | ✅ **correctly does NOT post** |
+| USMCA | INV-2026-00003 | paid | manual | 2 | ✅ posts |
+
+**The one invoice without GL is a `draft`** — my filter excluded `proforma` and `void` but not `draft`, and
+a draft must not post. So the gate is right at **every** status observed: `draft` ✗ · `proforma` ✗ ·
+`void-before-issue` ✗ · `sent` ✓ · `paid` ✓. Revenue is recognised on issue and not before. That is correct
+accrual behaviour and it matches the proforma finding in item 96.
+
+**A NUMBER I AM NOT OVER-READING.** `TMS-native = 11 invoices; not-TMS-native = 11,976.` Of the 11,976,
+almost none carry TMS GL postings — and that is **expected state, not a finding**: those are the TRANSP QBO
+mirror, and under the locked parallel-books architecture QBO is the system of record for them and TMS does
+not post them. This is exactly the trap item 64 already identified (*"the tie-out guard I recommended would
+have been WRONG — it must be scoped TMS-NATIVE"*). Recorded here only to reinforce that scoping: **any
+invoice→GL coverage assertion must filter `source_system='tms'`, or it reports 11,976 false positives.**
+
+**Method note worth keeping.** Item 96's decisive test was "issue an invoice and watch it post" — a write.
+The same question was answerable **read-only** by widening the population from one entity to all of them,
+because another entity had already run the experiment. **Before exercising a new transaction to test a path,
+check whether the path has already been exercised somewhere in the data.** It is faster, it needs no write
+access, and it observes real behaviour rather than behaviour I induced.
