@@ -6,6 +6,7 @@
  * amount formatting ($X.XX), em-dash fallbacks, column order, and the Subtotal/Miles
  * footer line preserved 1:1.
  */
+import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
@@ -34,7 +35,7 @@ const COLUMNS: Array<ParityColumn<Line>> = [
     // an em-dash when the line genuinely carries no load rather than a plausible-looking uuid.
     render: (line) =>
       line.load_id ? (
-        <EntityLink kind="load" id={line.load_id} label={line.load_number ?? line.load_id.slice(0, 8)} />
+        <EntityLink kind="load" id={line.load_id} label={entityLabel(line.load_number, line.load_id, "Load")} />
       ) : (
         "—"
       ),

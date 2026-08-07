@@ -2,6 +2,7 @@
  * Accessible forward drill for Home revenue↔GL discrepancies (0280-02).
  * Uses API-provided hrefs (`/accounting/invoices/:id`, `/accounting/journal-entries/:id`).
  */
+import { entityLabel } from "../../lib/entity-label";
 import { Link } from "react-router-dom";
 import type { HomeRevenueInvoiceDrill, HomeRevenueJournalDrill } from "../../api/home";
 import { formatUsdFromCents } from "../../pages/home/HomeKpiCard";
@@ -65,7 +66,7 @@ export function RevenueDiscrepancyDrill({
               className="inline-flex min-h-[28px] items-center gap-1 rounded-sm px-1 py-0.5 font-medium text-[#1F2A44] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1F2A44]"
               data-testid={`revenue-drill-invoice-${inv.invoice_id}`}
             >
-              <span className="font-mono">{inv.display_id ?? inv.invoice_id.slice(0, 8)}</span>
+              <span className="font-mono">{entityLabel(inv.display_id, inv.invoice_id, "Invoice")}</span>
               <span aria-hidden="true">·</span>
               <span>{reasonLabel(inv.reason)}</span>
               <span className="sr-only">
