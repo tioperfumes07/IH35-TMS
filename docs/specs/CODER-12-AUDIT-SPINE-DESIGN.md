@@ -1,5 +1,7 @@
 # CODER-12 — Audit-Spine Wiring (Design)
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 **Status:** design for confirmation (Jorge/GUARD) before any code. **Tier:** 1 (audit trail for
 financial postings). **Block:** 3 of 3 in the QUEUED-BLOCKS set. Unblocks CODER-24.
 
@@ -83,4 +85,4 @@ line already carries its link.)
 2. Confirm **link granularity = per posting line** (matches posting-engine) vs per batch.
 3. Confirm adding `RETURNING id` to the 4 BLOCK-2 posters is acceptable (needed to FK the link), and
    the conflict-skip-link behavior.
-4. Merge path: build-and-hold for GUARD, or self-merge-if-confident per your standing directive?
+4. Merge path: build-and-ship for GUARD, or self-merge-if-confident per your standing directive?

@@ -1,12 +1,14 @@
 # HOLD — Revenue Recognition Delivery Two-Event Latch — Step 4 Verification (2026-07-21)
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 **Status: HOLD — design/verification record only. NO code change. NO GL math. NO flag flip. Owner (Jorge) gates everything below.**
 
 Read-only verification of delivery-based revenue recognition wiring (two-event latch + GL posting) against `origin/main` @ `109f7c8bcb1a339d6e3e17984d9bedc13dc930ac` and the locked design (Blueprint Additions §18, LOCKED — OWNER, 2026-07-19).
 
 ## Verdict: PARTIAL
 
-Data model, chart-of-accounts prerequisite, read-only ASC 606 surface, flags (OFF), and the decision lock + guard are all BUILT and on `origin/main`. The **earn-first two-event posting engine itself is MISSING** — there is no code path anywhere in the backend that posts Event 1 (DR Unbilled Revenue / CR Line-Haul Income at `delivered`/`delivered_pending_docs`) or Event 2 (DR A/R / CR Unbilled Revenue at `completed_docs_received`). That is a financial posting build → per financial law (Rule 13, build-and-HOLD) this doc records the gap; it does not build it.
+Data model, chart-of-accounts prerequisite, read-only ASC 606 surface, flags (OFF), and the decision lock + guard are all BUILT and on `origin/main`. The **earn-first two-event posting engine itself is MISSING** — there is no code path anywhere in the backend that posts Event 1 (DR Unbilled Revenue / CR Line-Haul Income at `delivered`/`delivered_pending_docs`) or Event 2 (DR A/R / CR Unbilled Revenue at `completed_docs_received`). That is a financial posting build → per financial law (Rule 13, build-and-ship) this doc records the gap; it does not build it.
 
 ## BUILT (with evidence)
 
@@ -28,7 +30,7 @@ Data model, chart-of-accounts prerequisite, read-only ASC 606 surface, flags (OF
 ## What remains before REVENUE_RECOGNITION_POST_ENABLED may flip (owner-gated, in order)
 
 1. ~~Seed Unbilled Revenue TRANSP + USMCA~~ — **DONE, prod-verified 2026-07-21** (see table above).
-2. Build the earn-first two-event posting path (Event 1 + Event 2 + status-revert reversal + invoice-before-delivery mirror) reusing the existing poster — **financial cluster, build-and-HOLD, `JORGE-APPROVED` required**.
+2. Build the earn-first two-event posting path (Event 1 + Event 2 + status-revert reversal + invoice-before-delivery mirror) reusing the existing poster — **financial cluster, build-and-ship, `JORGE-APPROVED` required**.
 3. Resolve 0243-h3-2 flag entity-context so per-entity enablement (TRANSP first) actually works.
 4. Owner flips the flag per entity. **No agent flips flags.**
 
