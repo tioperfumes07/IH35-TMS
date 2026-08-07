@@ -83,3 +83,23 @@ scripts/.guard-exempt.json              merge=json-union
 # Row ORDER after a union merge is not guaranteed; that is acceptable because the board is a set of
 # rows keyed by their Item column, not an ordered document.
 docs/audit/GUARD-WORKORDERS.md          merge=union
+
+# CI-F23 (2026-08-07) — GENERALIZED from the single file above after the rule was exercised for real.
+# Resolving CC-2's #4615 with the new union rule worked for GUARD-WORKORDERS.md and then still stopped
+# on docs/audit/LIVE-TXN-BATTERY-2026-08-06.md: an add/add conflict on a DIFFERENT append-only board.
+# Naming boards one at a time loses that race every time a new one is created, and docs/audit/*.md are
+# uniformly append-only by law (rule 28: "never delete a row, supersede it"), so the directory is the
+# correct unit. Same reasoning as GUARD-WORKORDERS.md: picking a side on an append-only board silently
+# destroys another lane's rows, and git's built-in union keeps both.
+docs/audit/*.md                         merge=union
+
+# ADOPTION CAVEAT, learned by using this on a real stale branch — read before telling anyone "just
+# merge main". Git resolves merge attributes from the .gitattributes of the branch you are merging
+# INTO, not from the branch being merged in. A branch cut BEFORE these rules landed therefore does NOT
+# get them on its first merge of main, and conflicts exactly as before — which reads as "the fix does
+# not work". It does; the rules are simply not in effect yet. The first merge on any stale branch must
+# adopt them first:
+#     git checkout origin/main -- .gitattributes && git commit -m "adopt union merge rules"
+#     git merge origin/main          # registries now union automatically
+# Verified end-to-end on #4615: without the adoption step GUARD-WORKORDERS.md conflicts; with it, the
+# same merge auto-resolves it and only genuinely-uncovered files remain.
