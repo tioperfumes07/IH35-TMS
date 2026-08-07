@@ -1,5 +1,47 @@
 # GUARD WORK-ORDERS — the live fix board (read after AUDIT-COVERAGE-LIVE.md, before any block)
 
+## ★★★ PERMANENT LAW — owner-locked 2026-08-07 (supreme; supersedes nothing, binds everything)
+
+> **WE NEVER GUESS. WE NEVER DEFER. WE ALWAYS VERIFY. WE ALWAYS FIX, NOT PATCH. WE WANT PERMANENT FIXES
+> ALWAYS.** — owner, verbatim, 2026-08-07
+
+**ENFORCED, not aspirational.** Canonical text: `docs/law/NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX.md`.
+Guard: `scripts/verify-no-patch-or-defer-language.mjs`, wired at
+`scripts/verify-steps/2703-verify-no-patch-or-defer-language.mjs`, registered `enforced` in
+`docs/law/LAW.json` as `LAW-2026-08-07-NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX`. **Per
+LAW-2026-08-05-B2 ("LAW = ENFORCED GUARD, OR IT IS NOT LAW"), writing this rule as prose alone would
+itself have been a patch.** Live proof: guard `--selftest` **17/17 PASS**, repo scan **exit 0** across
+**1,164** active work orders; `verify-law-registry` **exit 0** (44 laws, 38 enforced, every guard file
+resolves).
+
+**1. NEVER GUESS.** A fact requires evidence produced THIS SESSION from a PRIMARY source — the running
+app, a live DB row, a job log, the file itself. Memory, a doc, a skill, another agent's "verified", and
+inference from a similar case are not evidence. A `0` is not a verdict without the completeness
+discriminator on the SAME table. **A passing guard is not proof the law it encodes holds — read what the
+guard actually gates.** Cannot verify? The output is **"UNVERIFIED — needs live check"**, never a guess.
+
+**2. NEVER DEFER.** The root problem is fixed in this change. No `TODO fix later`, no "ship now, fix
+isolation later", no "CI green is enough". The ONLY allowed deferral is an owner-written tracker entry
+with a future block id. If part of a scope is genuinely blocked, finish every other part IN FULL and say
+plainly what is left and why — **silence about a gap is deferral.**
+
+**3. ALWAYS VERIFY.** Done = real schema + local green + CI green + merged + **deploy verified live** +
+behaviour confirmed on prod. **CI-green is the floor. Merged is not done. Deployed is not done until the
+health SHA matches.** Strongest evidence, ascending: read it → create the row yourself and read it back →
+**controlled before/after with a baseline captured first**. **Check before you file** — a finding that
+dissolves on one more query was never a finding.
+
+**4. ALWAYS FIX, NEVER PATCH.** Complete only when ALL hold: (a) root cause corrected **at its source**;
+(b) a guard that **fails on the bug and passes on the fix**, wired via `scripts/verify-steps/NNNN-*.mjs`;
+(c) **live proof on prod**; (d) **the class addressed** — same shape elsewhere is fixed or explicitly
+bounded with evidence. **Forbidden as "fixes":** silencing a guard, widening a constraint to turn red
+green, special-casing the row that failed, editing the message instead of the behaviour, reverting a
+correct change to dodge a check, or "fixing" a symptom whose root cause you have not located.
+**Prefer the permanent mechanism: a DB constraint beats a guard; a guard beats a convention; a convention
+beats a comment.** If a future writer can silently recreate the defect, the fix is not permanent.
+**When a correct fix turns something red, that redness IS the fix working — finish the work it points at,
+do not silence it.**
+
 ## ★★ PERMANENT LAW — owner-locked 2026-08-05 (supreme; applies to every agent, every session)
 
 **1. FINDINGS FLOW AGENT → BOARD → AGENT, NEVER THROUGH THE OWNER.** Find a defect in another lane →

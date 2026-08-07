@@ -1,189 +1,189 @@
 [
   {
     "id": "LAW-2026-08-05-B2-ENFORCED-GUARD-OR-NOT-LAW",
-    "title": "LAW = ENFORCED GUARD, OR IT IS NOT LAW \u2014 every NEW rule ships a guard registered in docs/law/LAW.json; verify-law-registry.mjs is a required check that reddens when a registered law's guard file is missing",
+    "title": "LAW = ENFORCED GUARD, OR IT IS NOT LAW — every NEW rule ships a guard registered in docs/law/LAW.json; verify-law-registry.mjs is a required check that reddens when a registered law's guard file is missing",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-law-registry.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-05-B4-ENTITY-SCOPE-IS-LOAD-BEARING",
-    "title": "RLS is NOT a backstop for Owner sessions \u2014 org.user_accessible_company_ids() returns every active company, so every read carries its own entity predicate (CLS-JOIN-ENTITY-UNSCOPED)",
+    "title": "RLS is NOT a backstop for Owner sessions — org.user_accessible_company_ids() returns every active company, so every read carries its own entity predicate (CLS-JOIN-ENTITY-UNSCOPED)",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-join-entity-scoped.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-05-A6-WORM-VOID-NOT-DELETE",
-    "title": "WORM / void-not-delete \u2014 financial rows are voided or soft-deleted, never physically DELETEd",
+    "title": "WORM / void-not-delete — financial rows are voided or soft-deleted, never physically DELETEd",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-inv2-no-hard-delete-accounting.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-05-A1-DEPRECIATION-ON-TITLE-HOLDER-ONLY",
-    "title": "TRK is the sole asset holder \u2014 depreciation and Accumulated Depreciation book on the owner entity, never on the lessee (TRANSP/USMCA own no assets today)",
+    "title": "TRK is the sole asset holder — depreciation and Accumulated Depreciation book on the owner entity, never on the lessee (TRANSP/USMCA own no assets today)",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-depreciation-posts-on-owner-entity.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-05-A2-QBO-MIRROR-IS-THE-ONLY-REAL-DATA",
-    "title": "ALL TMS-native data is TEST; only the TRANSP QBO mirror is real \u2014 QBO-origin documents are correctly unposted and must never be backfilled into the TMS GL",
+    "title": "ALL TMS-native data is TEST; only the TRANSP QBO mirror is real — QBO-origin documents are correctly unposted and must never be backfilled into the TMS GL",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-invoice-qbo-origin-guard.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-05-B1-FINDINGS-FLOW-AGENT-BOARD-AGENT",
-    "title": "Findings flow AGENT \u2192 BOARD \u2192 AGENT, never through the owner \u2014 a defect in another lane is written as an OPEN row in docs/audit/GUARD-WORKORDERS.md",
+    "title": "Findings flow AGENT → BOARD → AGENT, never through the owner — a defect in another lane is written as an OPEN row in docs/audit/GUARD-WORKORDERS.md",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": null,
     "type": "judgment"
   },
   {
     "id": "LAW-2026-08-05-B3-ROLES",
-    "title": "Lane roles \u2014 CC-1 money/GL/WORM, CC-3 mechanical/entity-scope/FE/CI-guards, CC-2 GUARD verify-live-never-build, CASCADE merger",
+    "title": "Lane roles — CC-1 money/GL/WORM, CC-3 mechanical/entity-scope/FE/CI-guards, CC-2 GUARD verify-live-never-build, CASCADE merger",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": null,
     "type": "judgment"
   },
   {
     "id": "LAW-2026-08-05-A3-ANSWERED-IS-CLOSED",
-    "title": "ANSWERED = CLOSED \u2014 an owner decision written in a locked file is closed; re-asking it is a process defect and a question never stops the loop",
+    "title": "ANSWERED = CLOSED — an owner decision written in a locked file is closed; re-asking it is a process defect and a question never stops the loop",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": null,
     "type": "judgment"
   },
   {
     "id": "LAW-2026-08-05-A4-CONTINUOUS-MODE",
-    "title": "CONTINUOUS MODE \u2014 pull the top OPEN board item in your lane, build to standard, arm merge, emit one line, start the next; never idle, never pause to summarize",
+    "title": "CONTINUOUS MODE — pull the top OPEN board item in your lane, build to standard, arm merge, emit one line, start the next; never idle, never pause to summarize",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": null,
     "type": "judgment"
   },
   {
     "id": "LOCK-01-SIDEBAR-CONTRACT-ADDITIVE-ONLY",
-    "title": "\u00a71 Sidebar is additive-only; the count source of truth is SIDEBAR_ITEM_IDS in sidebar-config.ts, never a number written in prose",
+    "title": "§1 Sidebar is additive-only; the count source of truth is SIDEBAR_ITEM_IDS in sidebar-config.ts, never a number written in prose",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-sidebar-contract.mjs",
     "type": "enforced"
   },
   {
     "id": "LOCK-02-CASHFLOW-IS-A-MODULE",
-    "title": "\u00a72 Cash Flow is a top-level MODULE at /cash-flow between eld and accounting \u2014 not a report, and it must not import /reports/cash-flow-*",
+    "title": "§2 Cash Flow is a top-level MODULE at /cash-flow between eld and accounting — not a report, and it must not import /reports/cash-flow-*",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-cashflow-module.mjs",
     "type": "enforced"
   },
   {
     "id": "LOCK-03-INSURANCE-FINANCIAL-WRITES",
-    "title": "\u00a73 Insurance delegates all financial math to computeInsuranceDispersal \u2014 no new ledger math; bill writes carry an idempotency key",
+    "title": "§3 Insurance delegates all financial math to computeInsuranceDispersal — no new ledger math; bill writes carry an idempotency key",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-insurance-financial-writes.mjs",
     "type": "enforced"
   },
   {
     "id": "LOCK-08-3-QBO-NO-WRITE-BACK",
-    "title": "\u00a78.3 Parallel double-books \u2014 TMS never writes back to QBO; the JE push path is gated by QBO_JE_PUSH_ENABLED plus a structural refusal of any source_system != 'tms'",
+    "title": "§8.3 Parallel double-books — TMS never writes back to QBO; the JE push path is gated by QBO_JE_PUSH_ENABLED plus a structural refusal of any source_system != 'tms'",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-qbo-push-gates.mjs",
     "type": "enforced"
   },
   {
     "id": "LOCK-10-ACCOUNTING-SUBNAV-GROUPED-CLICK-OPEN",
-    "title": "\u00a710 The Accounting sub-nav is the approved grouped CLICK-open dropdown row; the flat clean-tabs render cannot silently return",
+    "title": "§10 The Accounting sub-nav is the approved grouped CLICK-open dropdown row; the flat clean-tabs render cannot silently return",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-accounting-subnav-grouped.mjs",
     "type": "enforced"
   },
   {
     "id": "LOCK-10-ACCOUNTING-NAV-TOP-BAR-ONLY",
-    "title": "\u00a710 Accounting navigation is TOP-BAR ONLY \u2014 never a left rail (QboAccountingSubNav.tsx must stay absent)",
+    "title": "§10 Accounting navigation is TOP-BAR ONLY — never a left rail (QboAccountingSubNav.tsx must stay absent)",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-accounting-nav.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-16-FIX-NOT-PATCH-EVIDENCE-BLOCK",
-    "title": "Rule 16 \u2014 every shipped-code commit carries the Definition-of-Done evidence block (FINDING/LANE/DOD-A..E/VERIFY-1..8/ROOT CAUSE/FIX/GUARD/LIVE PROOF/REMAINING)",
+    "title": "Rule 16 — every shipped-code commit carries the Definition-of-Done evidence block (FINDING/LANE/DOD-A..E/VERIFY-1..8/ROOT CAUSE/FIX/GUARD/LIVE PROOF/REMAINING)",
     "source_file": ".cursor/rules/16-fix-not-patch-evidence-law.mdc",
     "guard": "scripts/verify-definition-of-done-evidence.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-23-NO-MONEY-THEATER",
-    "title": "Rule 23 \u2014 money-path PRs may not ship theater; MODULE_PROGRESS + VERIFY-1..8 + live proof are mandatory on money and migration commits",
+    "title": "Rule 23 — money-path PRs may not ship theater; MODULE_PROGRESS + VERIFY-1..8 + live proof are mandatory on money and migration commits",
     "source_file": ".cursor/rules/23-no-money-theater-prs.mdc",
     "guard": "scripts/verify-no-money-theater.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-24-MODULE-COMPLETION-N-OF-M",
-    "title": "Rule 24 \u2014 a module is DONE only as an explicit N of M in docs/module-completion/, never as a prose claim",
+    "title": "Rule 24 — a module is DONE only as an explicit N of M in docs/module-completion/, never as a prose claim",
     "source_file": ".cursor/rules/24-module-completion-n-of-m.mdc",
     "guard": "scripts/verify-module-completion.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-25-ONE-PUSH-MONEY-FAIL-FAST",
-    "title": "Rule 25 \u2014 money-pr-local-gate runs first on pre-push; one push after local PASS, never rebase while build-typecheck runs",
+    "title": "Rule 25 — money-pr-local-gate runs first on pre-push; one push after local PASS, never rebase while build-typecheck runs",
     "source_file": ".cursor/rules/25-one-push-money-fail-fast.mdc",
     "guard": "scripts/verify-money-pr-local-gate.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-25B-VERIFY-STEP-LANE-BANDS",
-    "title": "Rule 25 bands \u2014 verify-step numbers are claimed from disjoint mod-4 bands (Cursor EVEN \u00b7 CC-1 \u22611 \u00b7 CC-2 \u22613) so parallel lanes cannot collide",
+    "title": "Rule 25 bands — verify-step numbers are claimed from disjoint mod-4 bands (Cursor EVEN · CC-1 ≡1 · CC-2 ≡3) so parallel lanes cannot collide",
     "source_file": ".cursor/rules/25-verify-step-odd-even-bands.mdc",
     "guard": "scripts/verify-verify-step-lane-band.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-29-CURSOR-CLAUDE-SHIP-PARITY",
-    "title": "Rule 29 \u2014 every lane runs the same expanded local gate before every push; never --no-verify",
+    "title": "Rule 29 — every lane runs the same expanded local gate before every push; never --no-verify",
     "source_file": ".cursor/rules/29-cursor-claude-parity-ship.mdc",
     "guard": "scripts/verify-cursor-claude-parity-ship.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-30-CLAUDE-GREEN-EVIDENCE-FORMAT",
-    "title": "Rule 30 \u2014 the tip commit's LIVE PROOF must be Claude-green (a real exit code / sha / row), never 'UNVERIFIED browser' theater",
+    "title": "Rule 30 — the tip commit's LIVE PROOF must be Claude-green (a real exit code / sha / row), never 'UNVERIFIED browser' theater",
     "source_file": ".cursor/rules/30-claude-green-evidence-format.mdc",
     "guard": "scripts/verify-claude-green-evidence-shape.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-37-CLAIM-MERGE-THEN-AUTHOR",
-    "title": "Rule 37 \u2014 a verify-step number must already be on origin/main's CLAIMED-NUMBERS.json before the step file is authored",
+    "title": "Rule 37 — a verify-step number must already be on origin/main's CLAIMED-NUMBERS.json before the step file is authored",
     "source_file": ".cursor/rules/37-claim-merge-then-author.mdc",
     "guard": "scripts/verify-verify-step-claimed-on-main.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-07-NEVER-DELETE-ONLY-ADD",
-    "title": "Rule 07 \u2014 archive, never delete; a branch may not delete a scripts/verify-*.mjs or verify-step that exists on origin/main",
+    "title": "Rule 07 — archive, never delete; a branch may not delete a scripts/verify-*.mjs or verify-step that exists on origin/main",
     "source_file": ".cursor/rules/07-never-delete-only-add.mdc",
     "guard": "scripts/verify-no-guard-file-deletion.mjs",
     "type": "enforced"
   },
   {
     "id": "RULE-06-QUALITY-HARDLINE",
-    "title": "Rule 06 \u2014 never take the short way, never defer a root cause, never fake-green; build to surpass QBO/NetSuite/McLeod/Alvys",
+    "title": "Rule 06 — never take the short way, never defer a root cause, never fake-green; build to surpass QBO/NetSuite/McLeod/Alvys",
     "source_file": ".cursor/rules/06-quality-hardline-and-law.mdc",
     "guard": null,
     "type": "judgment"
   },
   {
     "id": "RULE-15-RESEARCH-MANDATE",
-    "title": "Rule 15 \u2014 ground every recommendation in verified live state plus fresh research of how the reference systems actually do it",
+    "title": "Rule 15 — ground every recommendation in verified live state plus fresh research of how the reference systems actually do it",
     "source_file": ".cursor/rules/15-research-mandate.mdc",
     "guard": null,
     "type": "judgment"
   },
   {
     "id": "SCHEMA-CANONICAL-NAMES",
-    "title": "Schema canonicals \u2014 accounting.* (never finance.*), audit.row_changes, driver_finance.*, mdata.qbo_*, banking.*, maintenance.*; there is NO ih35_app data schema",
+    "title": "Schema canonicals — accounting.* (never finance.*), audit.row_changes, driver_finance.*, mdata.qbo_*, banking.*, maintenance.*; there is NO ih35_app data schema",
     "source_file": "docs/CLAUDE.md",
     "guard": "scripts/verify-canonical-schema-names.mjs",
     "type": "enforced"
@@ -197,56 +197,56 @@
   },
   {
     "id": "MIGRATION-APPLIED-IMMUTABLE",
-    "title": "An applied migration is checksum-frozen \u2014 never edit a migration that has already run",
+    "title": "An applied migration is checksum-frozen — never edit a migration that has already run",
     "source_file": "docs/CLAUDE.md",
     "guard": "scripts/verify-applied-migrations-immutable.mjs",
     "type": "enforced"
   },
   {
     "id": "SECTION7-PALETTE-LOCK",
-    "title": "\u00a77 Palette is LOCKED \u2014 navy/slate/bg tokens only; --green-pill is the Class pill, --red is delete/Accident; off-palette status colour is a ratchet that may only shrink",
+    "title": "§7 Palette is LOCKED — navy/slate/bg tokens only; --green-pill is the Class pill, --red is delete/Accident; off-palette status colour is a ratchet that may only shrink",
     "source_file": "AGENTS.md",
     "guard": "scripts/verify-section7-palette-nonfinancial.mjs",
     "type": "enforced"
   },
   {
     "id": "SECTION7-WO-DISPLAY-ID-FORMAT",
-    "title": "\u00a77 Work-order display ID is WO-{UNIT}-{TYPE}-{MM-DD-YYYY}-{NNNN}-{V5} over the 7 immutable source types",
+    "title": "§7 Work-order display ID is WO-{UNIT}-{TYPE}-{MM-DD-YYYY}-{NNNN}-{V5} over the 7 immutable source types",
     "source_file": "AGENTS.md",
     "guard": "scripts/verify-wo-display-id-format.mjs",
     "type": "enforced"
   },
   {
     "id": "SECTION7-INLINE-ADD-NEW-IN-EVERY-PICKER",
-    "title": "\u00a77 Every reference dropdown carries an inline '+ Add new ___' that writes the CANONICAL table, never a mdata.qbo_* mirror",
+    "title": "§7 Every reference dropdown carries an inline '+ Add new ___' that writes the CANONICAL table, never a mdata.qbo_* mirror",
     "source_file": "AGENTS.md",
     "guard": "scripts/verify-universal-picker-law.mjs",
     "type": "enforced"
   },
   {
     "id": "PICKER-LAW-NO-RAW-UUID-LABELS",
-    "title": "CLS-UUID-LABEL \u2014 a human-facing link or picker option is never labelled with a raw or truncated uuid",
+    "title": "CLS-UUID-LABEL — a human-facing link or picker option is never labelled with a raw or truncated uuid",
     "source_file": "docs/audit/GUARD-WORKORDERS.md",
     "guard": "scripts/verify-no-uuid-label-rendering.mjs",
     "type": "enforced"
   },
   {
     "id": "CLS-SILENT-CAP-NO-SILENT-LIST-CAPS",
-    "title": "No silent list caps \u2014 a screen that fetches a hard cap must surface the truncation; the ratchet may only shrink",
+    "title": "No silent list caps — a screen that fetches a hard cap must surface the truncation; the ratchet may only shrink",
     "source_file": "docs/audit/GUARD-WORKORDERS.md",
     "guard": "scripts/verify-no-silent-list-caps.mjs",
     "type": "enforced"
   },
   {
     "id": "DISPLAY-ID-LOOKUPS-ENTITY-SCOPED",
-    "title": "A display ID is unique PER ENTITY, not globally \u2014 every display-id lookup carries its entity predicate",
+    "title": "A display ID is unique PER ENTITY, not globally — every display-id lookup carries its entity predicate",
     "source_file": ".cursor/rules/03-display-ids.mdc",
     "guard": "scripts/verify-display-id-lookups-entity-scoped.mjs",
     "type": "enforced"
   },
   {
     "id": "SAFETY-TAB-COUNT-CONTRACT",
-    "title": "Safety is 28 tabs / 9 groups sourced from SAFETY_TABS_CONFIG.ts \u2014 never a count written in prose",
+    "title": "Safety is 28 tabs / 9 groups sourced from SAFETY_TABS_CONFIG.ts — never a count written in prose",
     "source_file": "docs/CLAUDE.md",
     "guard": "scripts/verify-safety-count-nav-integrity.mjs",
     "type": "enforced"
@@ -260,44 +260,51 @@
   },
   {
     "id": "CASH-BASIS-CLOSED-PERIOD-SNAPSHOT-READONLY",
-    "title": "Block-20.3 \u2014 closed-period cash-basis output is snapshotted at period close and read-only thereafter; closed-period reads return the snapshot, never a recompute",
+    "title": "Block-20.3 — closed-period cash-basis output is snapshotted at period close and read-only thereafter; closed-period reads return the snapshot, never a recompute",
     "source_file": "docs/CLAUDE.md",
     "guard": "scripts/verify-period-cash-basis-snapshot-readonly.mjs",
     "type": "enforced"
   },
   {
     "id": "CASH-BASIS-SELECTOR-ALLOWED-PAGES",
-    "title": "Block-20.2 \u2014 the basis selector renders only on Balance Sheet, Trial Balance, P&L and Reports Home; Cash Flow, AR/AP Aging and IFTA stay accrual-only",
+    "title": "Block-20.2 — the basis selector renders only on Balance Sheet, Trial Balance, P&L and Reports Home; Cash Flow, AR/AP Aging and IFTA stay accrual-only",
     "source_file": "docs/CLAUDE.md",
     "guard": "scripts/verify-basis-selector-allowed-pages.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-06-CI-CONCURRENCY-SHA-SCOPED",
-    "title": "A workflow may not key its concurrency group on a bare ref \u2014 a queued run that never executed can otherwise be cancelled into a permanently dead required check, leaving the PR unmergeable with no code failure",
+    "title": "A workflow may not key its concurrency group on a bare ref — a queued run that never executed can otherwise be cancelled into a permanently dead required check, leaving the PR unmergeable with no code failure",
     "source_file": ".github/workflows/ci.yml",
     "guard": "scripts/verify-ci-concurrency-sha-scoped.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-06-DISP-WIRE-07-DEPARTURE-EVIDENCE",
-    "title": "Every path stamping mdata.load_stops.actual_departure_at must write a real clock value (now() or COALESCE onto now()), never a bare client parameter \u2014 that stamp is the delivery evidence revenue recognition and invoice gating hang off",
+    "title": "Every path stamping mdata.load_stops.actual_departure_at must write a real clock value (now() or COALESCE onto now()), never a bare client parameter — that stamp is the delivery evidence revenue recognition and invoice gating hang off",
     "source_file": "apps/backend/src/dispatch/stamp-final-delivery-departure.ts",
     "guard": "scripts/verify-disp-wire-07-departure-evidence.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-07-DISPLAYID-ENTITY-SCOPED",
-    "title": "display_id is unique only per (operating_company_id, display_id) \u2014 it may never be an equality lookup key without an entity predicate; resolve money documents by UUID (PERMANENT LAW B: void by UUID, never display_id)",
+    "title": "display_id is unique only per (operating_company_id, display_id) — it may never be an equality lookup key without an entity predicate; resolve money documents by UUID (PERMANENT LAW B: void by UUID, never display_id)",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-displayid-entity-scoped-lookups.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-06-SCENARIO-TRACKER-SINGLE-MOUNT",
-    "title": "A component that owns a polling query is a page-level singleton \u2014 mounting it inside a .map()ed child multiplies both the render and the prod read rate by the collection length, silently and with no visual error",
+    "title": "A component that owns a polling query is a page-level singleton — mounting it inside a .map()ed child multiplies both the render and the prod read rate by the collection length, silently and with no visual error",
     "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
     "guard": "scripts/verify-scenario-tracker-single-mount.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX",
+    "title": "NEVER GUESS · NEVER DEFER · ALWAYS VERIFY · ALWAYS FIX, NEVER PATCH — every change fixes the root cause at its source, ships a guard that fails on the bug and passes on the fix, and is proven live on prod; CI-green is the floor, not the verdict; when a fact cannot be verified the required output is UNVERIFIED, never a guess",
+    "source_file": "docs/law/NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX.md",
+    "guard": "scripts/verify-no-patch-or-defer-language.mjs",
     "type": "enforced"
   }
 ]
