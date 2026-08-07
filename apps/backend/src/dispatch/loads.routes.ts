@@ -685,6 +685,12 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         `
           SELECT l.*, c.customer_name,
                  NULLIF(TRIM(CONCAT(COALESCE(sd.first_name, ''), ' ', COALESCE(sd.last_name, ''))), '') AS assigned_secondary_driver_name,
+                 -- LV-TXN-002: the PRIMARY driver name and the unit number were never selected here, so
+                 -- LoadDetailDrawer.tsx:372,374 read undefined and rendered "Unassigned" / "-" for a
+                 -- load that HAS both. The SECONDARY (team) driver was already resolved three lines up,
+                 -- which is what makes this an oversight rather than a design choice.
+                 NULLIF(TRIM(CONCAT(COALESCE(pd.first_name, ''), ' ', COALESCE(pd.last_name, ''))), '') AS assigned_primary_driver_name,
+                 u.unit_number AS assigned_unit_number,
                  NULL::text AS trailer_equipment_type,
                  NULL::text AS trailer_number,
                  rc.file_id AS ratecon_file_id,
@@ -695,6 +701,14 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                                 AND c.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.drivers sd ON sd.id = l.assigned_secondary_driver_id
                                     AND sd.operating_company_id = l.operating_company_id
+          -- Entity predicates copied from the already-correct sibling at mdata/loads.routes.ts:636 —
+          -- drivers scope on operating_company_id, but mdata.units has NO such column (§4): it is scoped
+          -- by the owner/leased PAIR, and the live case that exposed this is exactly a TRK-owned unit
+          -- leased to USMCA, which a bare owner_company_id predicate would have dropped.
+          LEFT JOIN mdata.drivers pd ON pd.id = l.assigned_primary_driver_id
+                                    AND pd.operating_company_id = l.operating_company_id
+          LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           -- A9 — surface the load's rate-con PDF (docs.file_links + docs.files, category
           -- 'rate_confirmation'). No column on mdata.loads carries this (unlike
           -- driver_instructions_file_id below, which IS persisted) — the link is polymorphic via
