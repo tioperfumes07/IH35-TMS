@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { legalMattersApi } from "../../api/legal-matters";
@@ -69,7 +70,7 @@ export function LegalMattersReverseSection({
         <ul className="space-y-2">
           {matters.map((m: Record<string, unknown>) => {
             const id = String(m.id ?? "");
-            const number = String(m.matter_number ?? id.slice(0, 8));
+            const number = String(entityLabel(m.matter_number, id, "Record"));
             return (
               <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
                 <EntityLink kind="matter" id={id} label={number} className="font-semibold text-slate-700" />

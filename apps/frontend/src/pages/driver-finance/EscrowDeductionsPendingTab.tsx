@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -143,7 +144,7 @@ export function EscrowDeductionsPendingTab() {
                           className="text-slate-700 underline hover:text-slate-700"
                           onClick={() => navigate(`/dispatch/loads/${encodeURIComponent(loadId)}`)}
                         >
-                          {row.load_number ?? row.load_id.slice(0, 8)}
+                          {entityLabel(row.load_number, row.load_id, "Load")}
                         </button>
                       ) : (
                         "—"

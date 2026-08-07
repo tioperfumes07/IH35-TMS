@@ -1,3 +1,4 @@
+import { entityLabel } from "../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../components/forms/DatePicker";
 import { MoneyInput } from "../components/forms/MoneyInput";
@@ -948,13 +949,13 @@ export function VendorDetailPage() {
                             onChange={(e) => setBillPayInclude((p) => ({ ...p, [b.id]: e.target.checked }))}
                           />
                         ) : null}
-                        <span className="font-medium text-gray-800">{b.bill_number ?? b.id.slice(0, 8)}</span>
+                        <span className="font-medium text-gray-800">{entityLabel(b.bill_number, b.id, "Record")}</span>
                         <span className="text-gray-600">Open {money.format(billOpenBalanceCents(b) / 100)}</span>
                         {!billPayAuto ? (
                           <MoneyInput
                             valueDollars={billPayAmt[b.id] ? Number(billPayAmt[b.id]) : null}
                             onChangeDollars={(d) => setBillPayAmt((p) => ({ ...p, [b.id]: d == null ? "" : String(d) }))}
-                            ariaLabel={`Apply to ${b.bill_number ?? b.id.slice(0, 8)}`}
+                            ariaLabel={`Apply to ${entityLabel(b.bill_number, b.id, "Record")}`}
                             className="w-24"
                           />
                         ) : (
@@ -1033,7 +1034,7 @@ export function VendorDetailPage() {
                   label: "Bill #",
                   sortable: true,
                   sortValue: (b) => b.bill_number ?? b.id,
-                  render: (b) => <EntityLink kind="bill" id={b.id} label={b.bill_number ?? b.id.slice(0, 8)} />,
+                  render: (b) => <EntityLink kind="bill" id={b.id} label={entityLabel(b.bill_number, b.id, "Record")} />,
                 },
                 { key: "bill_date", label: "Date", sortable: true, render: (b) => formatDateUS(b.bill_date) },
                 { key: "due_date", label: "Due", sortable: true, render: (b) => formatDateUS(b.due_date) || "—" },
@@ -1071,7 +1072,7 @@ export function VendorDetailPage() {
                     sortable: true,
                     sortValue: (e) => e.expense_number ?? e.id,
                     render: (e) => (
-                      <EntityLink kind="expense" id={e.id} label={e.expense_number ?? e.id.slice(0, 8)} />
+                      <EntityLink kind="expense" id={e.id} label={entityLabel(e.expense_number, e.id, "Record")} />
                     ),
                   },
                   { key: "transaction_date", label: "Date", sortable: true, render: (e) => formatDateUS(e.transaction_date) },

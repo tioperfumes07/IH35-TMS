@@ -362,5 +362,12 @@
     "source_file": "apps/backend/src/dispatch/loads.routes.ts",
     "guard": "scripts/verify-load-detail-resolves-names.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-VERTICAL-METHOD",
+    "title": "Work is drained VERTICALLY by CLASS, globally and universally — never module-by-module, never the old block way",
+    "source_file": "docs/standing-orders/CC-1-MONEY-CI.md",
+    "guard": "scripts/verify-vertical-method-law-present.mjs",
+    "type": "enforced"
   }
 ]

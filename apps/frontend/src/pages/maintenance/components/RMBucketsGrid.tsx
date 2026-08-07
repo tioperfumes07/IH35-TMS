@@ -1,3 +1,4 @@
+import { entityLabel } from "../../../lib/entity-label";
 import type { WorkOrder } from "../../../api/maintenance";
 
 type Props = {
@@ -56,7 +57,7 @@ function KanbanCard({
     <div className="rounded-sm border border-gray-200 bg-white" style={{ borderLeft: `3px solid ${accent}` }}>
       <button type="button" onClick={() => onOpen(row.id)} className="block w-full px-2 py-1.5 text-left hover:bg-gray-50">
         <div className="flex items-center justify-between gap-1">
-          <span className="text-[11px] font-semibold text-gray-800">{row.display_id ?? row.id.slice(0, 8)}</span>
+          <span className="text-[11px] font-semibold text-gray-800">{entityLabel(row.display_id, row.id, "Record")}</span>
           {row.source_type ? <span className="rounded-sm bg-gray-100 px-1 text-[9px] font-bold tracking-wide text-gray-600">{row.source_type}</span> : null}
         </div>
         <div className="truncate text-[10px] text-gray-500">{meta}</div>
