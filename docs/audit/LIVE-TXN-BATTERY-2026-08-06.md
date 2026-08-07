@@ -5192,3 +5192,49 @@ Either makes the reverse link a constraint instead of a sentence. **Guard: asser
 `Bank categorization` has a structured FK back to its bank transaction.**
 
 **Routed:** CC-1 (ledger linkage).
+
+---
+
+## 84. PASS — nine ledger-integrity and entity-isolation invariants, measured on prod
+
+**Verified on prod `br-fancy-credit-akjnd07a`, USMCA, 2026-08-07**, GUC + lucia bypass in one transaction,
+`current_user` asserted in the same statement. These are the invariants an auditor tests first, and they had
+not been measured — only assumed.
+
+**Ledger integrity — `accounting.journal_entries` / `journal_entry_postings`:**
+
+| invariant | result |
+|---|---|
+| USMCA journal entries | **28** |
+| entries where Σdebits ≠ Σcredits | **0** |
+| one-sided entries (debits or credits missing) | **0** |
+| entries with zero postings | **0** |
+| **postings to an account belonging to ANOTHER entity** | **0** |
+
+**Entity isolation — the subledgers:**
+
+| invariant | result |
+|---|---|
+| USMCA bills | 11 |
+| bills whose `vendor_id` resolves to no vendor | **0** |
+| bills pointing at a FOREIGN entity's vendor | **0** |
+| invoices pointing at a FOREIGN entity's customer | **0** |
+| bank transactions categorised to a FOREIGN entity's GL account | **0** |
+
+**What this establishes, and why it matters to how the rest of my findings should be read.** The double-entry
+engine and the entity boundary are **sound**. Every journal entry balances, none is malformed, and not one
+posting, bill, invoice or bank categorisation crosses into another company's records. USMCA is genuinely
+isolated at the data layer.
+
+That is the important frame for the defects filed today: **the money math and the entity walls are holding;
+what is failing is what the software TELLS the operator.** The Banking banner denies a GL post that happens
+(item 82). The QBO strip reports a connection that does not exist (item 79). The match drawer recommends its
+worst candidate first (item 80). The reconcile certifies a tie that is $436.66 off (item 72). None of those
+corrupted the ledger — they mislead the human, who then acts. **A correct engine behind a lying interface is
+still dangerous, because the operator is part of the system.**
+
+**Schema note, already filed — no duplicate raised.** `accounting.bills.vendor_id` is **`text`** while
+`mdata.vendors.id` is **`uuid`**, so a foreign key across that link is not even expressible and nothing
+constrains the column to a real vendor. Today all 11 USMCA bills resolve cleanly, so this is latent rather
+than active. It is already on the board as `LV-BILLS-VENDOR-UUID`; I checked before writing rather than
+filing it twice.
