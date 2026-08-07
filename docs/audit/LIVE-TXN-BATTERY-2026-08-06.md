@@ -7313,3 +7313,70 @@ neither who changed a GL line nor what the line said before.
 I ran the standard post-create verification on a transaction that PASSED every economic check, and the gap
 fell out of the trigger inventory. **A clean PASS is the best available position from which to find the next
 defect, because everything else is known-good.**
+
+## 118. ★★ DRIVER CASH ADVANCE — a poster that had NEVER RUN for any entity fires for the first time. Balanced GL (PASS) — and it credits the WRONG account (P1).
+
+**Item 113 measured that 16 of 24 enabled GL posters have never produced a batch in the history of the
+database. This unit takes the first one off that list, and the first execution immediately exposed a defect
+that source-reading had not.** That is the argument for exercising dark posters rather than auditing them.
+
+**PRE-STATE, with the discriminator, so "first ever" is a verdict and not a turn of phrase:**
+`driver_finance.driver_advances` held **0 rows** — `visible_all = 0 == n_live_tup = 0`, database-wide, all
+entities. `accounting.posting_batches` had **zero** rows of `source_transaction_type='driver_advance'`.
+
+**CREATED** through `createDriverCashAdvanceCore()` then `disburseDriverAdvanceCore()` — production code:
+
+| what | value |
+|---|---|
+| advance | `2239fa7f-114f-4273-b5ba-c04e7392c890` · **`CA-2026-0001`** (first cash advance the system has ever issued) |
+| driver | `40823a77-…` ALFONSO HIDALGO CHAVEZ (USMCA, `Active`) |
+| amount | **$250.00** · `disbursement_method: direct_bank_transfer` · `from_bank_account_id e83028a5-…` |
+| liability | `ea6c490b-…` created · advance `disbursed` / `outstanding` / balance $250.00 |
+| batch / JE | `34d150cb-…` **posted** → JE `e26c88d1-c14f-4ae8-aa73-98fa80a20d9f` |
+
+**WHAT PASSES — and it is most of the machine:** `DR Driver Cash Advance (Asset) 25,000 / CR … 25,000`,
+**net 0**, 2 lines, both stamped USMCA; `transaction_source_links` carries both directions
+(`driver_advance` → `source_transaction`); the receivable is correctly an **Asset** debit, which is the right
+treatment — a driver advance is a receivable, not an expense, and the poster gets that right.
+
+### ★ FAIL (P1 · money · CC-1) — `LV-ADVANCE-CREDITS-UNDEPOSITED-NOT-THE-BANK`
+
+**The credit went to `Undeposited Funds`.** The advance names its funding bank on its own row —
+`from_bank_account_id = e83028a5-…` ("USMCA FREIGHT"), whose `banking.bank_accounts.ledger_account_id =
+c7af1219-…` = **"Bank of America - Operating (USMCA)"**. That account was never consulted. And
+`banking.bank_accounts.current_balance_cents` stayed at **4,368 — unchanged**; $250 left the bank in reality
+and the cached balance still says it did not.
+
+**ROOT CAUSE, read at source** — `posting-engine.service.ts:1555` in `buildDriverAdvanceLines`:
+```ts
+const creditAccount = creditAccountId ?? (await resolveCashLikeAccountForCompany(client, operatingCompanyId));
+```
+`creditAccountId` is an **optional caller-supplied value**. The bank-originated callers do supply it
+(`bank-driver-advance.service.ts:255` `credit_account_id: decision.creditAccountId`;
+`bank-transaction-splits.service.ts:554` `bankLedgerAccountId`). **The office path does not resolve it — it
+forwards whatever the operator sent:** `cash-advance-requests.routes.ts:334` and `:393` both pass
+`credit_account_id: parsedBody.data.credit_account_id ?? null`, and the field is
+`z.string().uuid().optional()` (`cash-advance-requests.service.ts:60, :298`). **The UI makes it optional too**
+— `DriverInbox.tsx:91` sends `credit_account_id: payFrom[id] || undefined`, and there is a frontend test
+named *"approve omits `credit_account_id` when no pay-from is chosen"*. **So the omission path is designed,
+reachable and covered by a test; what it is not is correct.** My call omitted the field exactly as an
+operator who does not touch the Pay-from selector does — this is the product path, not an artefact of
+calling the service directly.
+
+**WHY IT IS WRONG, not merely imprecise.** *Undeposited Funds* is money **received** and not yet deposited.
+Crediting it for an **outbound** `direct_bank_transfer` asserts the opposite of what happened, overstates the
+bank by $250, and leaves a balance in a clearing account that no deposit will ever clear. The correct answer
+was already on the row: when `from_bank_account_id` is set and that bank has a `ledger_account_id`, that is
+the credit — no operator input required.
+
+**THE CONTROL IS IN THIS SAME SESSION, WHICH IS WHY THIS IS A DEFECT AND NOT A DESIGN OPINION.** Item 115's
+`payBill()` — **same entity, same bank account `e83028a5`, same day** — credited *"Bank of America -
+Operating (USMCA)"* **and** decremented the cache `9,368 → 4,368`, exactly matching its GL credit. Two money
+paths out of one bank account, hours apart: **one debits the real bank and reconciles, the other posts to a
+clearing account and silently leaves the bank overstated.**
+
+**A CLAIM I CHECKED AND DID NOT FILE.** The create call returned `recovery_mode: "full"` when I passed
+`"installments"`. That looked like a silent override of operator input — it is not: the type is
+`CashAdvanceRecoveryMode = "full" | "amortize"` (`cash-advance-create.ts:22`), `"installments"` was **my**
+invalid value, and the route's zod schema would have rejected it before it ever reached the core. **An
+artefact of bypassing the HTTP validation layer, not a product defect — withdrawn before filing.**
