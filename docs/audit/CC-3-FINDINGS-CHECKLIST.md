@@ -44,8 +44,8 @@ only truly closed when both the coder's ☑ and CC-3's VERIFIED are present.
 
 | metric | count |
 |---|---|
-| **total findings filed** | **72** |
-| **OPEN — awaiting a coder** | **65** |
+| **total findings filed** | **73** |
+| **OPEN — awaiting a coder** | **66** |
 | **☑ fixed & signed off by a coder** | **0** |
 | **VERIFIED ✓ by CC-3 (independently re-tested)** | **0** |
 | closed / withdrawn / superseded by CC-3 | 7 |
@@ -135,6 +135,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `CI-CC3-GUARDS-NEED-A-BANDED-ADOPTER` | P1 | CC-1 or CC-2 — EITHER may take this; whoever | — | — | — | — | — | — |
 | ☐ | `LV-BANK-CATEGORIZE-POSTS-GL-WHILE-BANNER-SAYS-IT-DOES-NOT` | P0 | CC-1 (money / GL) + FE | — | — | — | — | — | — |
 | ☐ | `LV-BANK-CATEGORIZE-REVERSE-LINK-IS-A-MEMO-STRING` | P2 | CC-1 (ledger linkage) | — | — | — | — | — | — |
+| ☐ | `LV-MONEY-TABLES-HAVE-NO-AUDIT-TRIGGER` | P0 | CC-1 (WORM / audit integrity) | — | — | — | — | — | — |
 
 ---
 

@@ -5318,3 +5318,74 @@ book this would be the first thing to question; it is not.
 **What this closes out:** together with item 84, the double-entry engine is verified sound at both the
 entry level and the entity level, with zero cross-entity contamination. The defects filed today are
 concentrated entirely in what the interface **says**, not in what the ledger **does**.
+
+---
+
+## 87. FAIL (P0 · legal evidence) — `LV-MONEY-TABLES-HAVE-NO-AUDIT-TRIGGER`: 123 of 134 money tables are unaudited, including the GL posting lines themselves
+
+**Measured on prod `br-fancy-credit-akjnd07a` from `pg_trigger`/`pg_proc`/`pg_stat_all_tables`, 2026-08-07**,
+`current_user` asserted in the same statement. Scope: schemas `accounting`, `driver_finance`, `banking`.
+
+| measure | value |
+|---|---|
+| tables in scope | **134** |
+| tables WITH an audit trigger | **11** |
+| **tables with NO audit trigger** | **123 (92%)** |
+| unaudited tables currently holding data | **46** |
+| **rows sitting in unaudited tables** | **140,248 of 343,195 (41%)** |
+
+**THE HEADLINE — the ledger header is audited; the money is not.**
+
+| table | audit triggers |
+|---|---|
+| `accounting.journal_entries` (the entry header) | **1** ✓ |
+| **`accounting.journal_entry_postings`** (every debit and credit — the account and the amount) | **0** ✗ |
+
+An entry's *existence* is audited. **Its debits, credits, accounts and amounts are not.** A posting's amount
+or account can be altered and `audit.row_changes` will hold no record of it, while the header's audit row
+still reads as though nothing changed. For a double-entry system this is the wrong half to protect.
+
+**Other unaudited tables holding real money data** (`n_live_tup`, all with 0 audit triggers):
+`accounting.expense_lines` **33,980** · `accounting.expenses` **27,072** · `accounting.invoice_lines`
+**21,213** · `accounting.posting_batches` **14,922** · `accounting.payment_applications` **12,209** ·
+**`accounting.payments` 12,127** · `accounting.journal_entry_postings` **3,635** ·
+`accounting.transaction_source_links` **3,614** · `accounting.periods` **120** ·
+`accounting.chart_of_accounts_roles` **131** · `driver_finance.driver_pay_rates` **93**.
+
+**PROOF THAT THE GAP IS ALREADY LOSING HISTORY — 21 deletions left no trace.**
+`driver_finance.driver_settlements` shows `n_tup_del = 7` and
+`driver_finance.driver_settlement_deductions` shows `n_tup_del = 14`. Both have **0 audit triggers**, and
+neither appears among the 27 `DELETE` rows recorded in `audit.row_changes` (item 78 — those were all
+`mdata.*` / `maintenance.*`). **Twenty-one driver-pay records were hard-deleted and the audit trail does not
+know they ever existed.** `driver_settlements` even *has* a `voided_at` column, so void-not-delete was
+available and was not used.
+
+This is **driver pay** — what a driver was paid and what was deducted from them. Under the locked driver
+model these are 1099 contractor settlements. A driver disputing a deduction, or a tax or labour authority
+asking what was withheld, would find no record that the settlement or the deduction ever existed, and no
+record of its removal.
+
+**COMPOUNDS WITH ITEM 78 — the two findings together are worse than either alone.** Item 78 established
+that of **2,319,894** rows in `audit.row_changes`, exactly **2** name a user and **0** name a role or
+session. So the true posture is: **92% of money tables produce no audit record at all, and the 8% that do
+cannot say who made the change.** "We have a WORM audit trail" is not a safe summary of this system.
+
+**WHY P0.** `CLAUDE.md` opens by stating this holds *"live financial and legal-evidence data"*; §2 requires
+*"append-only audit — every table gets `is_active` + audit"*. The company is in confirmed Ch. 11 and is
+litigating the Ignacio Muñoz embezzlement, with the "Unauthorized Expenses" receivables held **as
+evidence**. An embezzlement case is fought over *who changed which number, when*. On 41% of the rows and on
+every GL posting line, this system cannot answer that.
+
+**NOT CLAIMED — I checked instead of assuming.** I have **no evidence of malicious alteration**. The 21
+deletions are most plausibly test-data cleanup, and all TMS-native data is test data under Rule 4. **The
+finding is the missing capability, not an accusation.** Establishing intent would require the very audit
+trail that is absent — which is precisely the point.
+
+**FIX — the class, not the two tables:** attach the existing `audit.row_changes` trigger to every table in
+`accounting`, `driver_finance` and `banking` that holds transactional data, starting with
+`journal_entry_postings`, `payments`, `payment_applications`, `expenses`, `expense_lines`, `invoice_lines`
+and the `driver_finance` settlement family. Pair it with item 78's actor fix — an audit row that records
+neither the change nor the author is not evidence. **Guard: assert every table in these schemas holding
+transactional data has an audit trigger, so a new money table cannot ship unaudited.**
+
+**Routed:** WORM / audit integrity → **CC-1**.
