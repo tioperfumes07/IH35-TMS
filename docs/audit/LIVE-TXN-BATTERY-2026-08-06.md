@@ -4378,3 +4378,72 @@ they count); if a posting path resolves the role without honouring `is_active`, 
 `is_active = false`**. That is a clean, permanent, entity-agnostic invariant — and it catches this class
 before it splits a control account again.
 **LANE: CC-1 / money.**
+
+---
+
+## 67. ★★ SELF-CORRECTION — item 66's guard would have been WRONG, and an "inactive role binding" is NOT an inactive account
+
+**LIVE-PROVEN 2026-08-07. I filed item 66 and then kept measuring. The wider measurement disproved my
+own framing before CC-1 could act on it.**
+
+### What I claimed, and what is actually true
+
+Item 66 reported *"A/P posted to a DEACTIVATED role account"* and proposed the guard
+*"assert no posting targets a `chart_of_accounts_roles` account whose binding is `is_active = false`."*
+Generalising that measurement across all entities and roles produced **154 postings**, which looked like
+a large live class:
+
+| entity | role | postings | account |
+|---|---|---|---|
+| TRANSP | `cash_dip` | 142 | `QBO-1150040141` **WF - General Operating 6103** |
+| USMCA | `damage_recovery` | 8 | `5400` **Truck Repairs & Maintenance** |
+| TRK | `accum_depr_default` | 2 | `QBO-1150040031` |
+| TRK | `ap_control` | 2 | `2000` |
+
+**Then I looked at what those accounts actually are, and the class evaporated.**
+
+**`chart_of_accounts_roles.is_active = false` means "this account is no longer THE designated account for
+THAT ROLE". It does NOT mean the account is deactivated or unpostable.**
+
+- `WF - General Operating 6103` is a **BANK account** — and it still holds **1 ACTIVE role binding**.
+  142 postings to a live bank account is *normal banking*.
+- `5400 Truck Repairs & Maintenance` is an **EXPENSE account**. 8 repair postings is *normal expense
+  activity*. Its retired `damage_recovery` binding has nothing to do with whether repairs post there.
+
+**Verified on `catalogs.accounts`, which carries the account's own `deactivated_at`: every one of these
+accounts is ACTIVE.**
+
+### The decisive query — and it is a PASS, not a defect
+
+```
+postings landing on an account AFTER that account's own deactivated_at  ->  0
+```
+
+**ZERO. Across the entire database, not one posting has ever landed on a genuinely deactivated account.**
+The system is correct on the invariant that actually matters. TRANSP's `2000` was deactivated
+2026-06-30 and has received nothing since.
+
+### Consequences — stated plainly
+
+1. **My proposed guard was wrong and is WITHDRAWN.** Built as specified it would have reddened on **154
+   correct postings** — a permanently-red guard that would then be muted, exactly the failure mode I
+   warned about for the tie-out guard in item 64. **Twice now I have caught a guard-spec error by
+   measuring before it was built; both would have shipped as noise.**
+2. **The correct guard is the one the data already passes:** assert no posting lands on an account after
+   its own `deactivated_at`. That is meaningful, currently green, and would catch a real regression.
+3. **The narrow part of item 66 SURVIVES, restated honestly:** TRK's A/P sits on **two ACTIVE A/P
+   accounts** — `2000` "Accounts Payable" ($300.01) and `TRK-2000` "Accounts Payable" ($25.00), with
+   `ap_control` designating `TRK-2000`. **A role-based A/P report resolves `TRK-2000` and omits
+   $300.01.** That split is real and worth resolving — but the reason is *two active A/P accounts in one
+   entity*, **not** "posting to a disabled account".
+
+### Why I am recording this rather than quietly editing
+
+The wrong framing and the wrong guard were **already pushed to the shared board**, where CC-1 could have
+picked them up. Under the never-guess law a filed claim that turns out to be wrong gets **corrected in
+place with the reasoning**, not silently overwritten — the correction is as much a finding as the
+original. **The lesson is specific and reusable: a foreign-key-ish flag on a JOIN table (`role.is_active`)
+describes THE RELATIONSHIP, never the ROW it points at.** I conflated the two, and only measuring the
+target rows caught it.
+
+**Board row `LV-AP-POSTED-TO-DEACTIVATED-ROLE-ACCOUNT` corrected accordingly.**
