@@ -97,6 +97,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
         SELECT count(*)::text AS n
           FROM driver_finance.driver_bills b
           JOIN mdata.loads l ON l.id = b.load_id
+                             AND l.operating_company_id = $1::uuid
          WHERE b.status <> 'void'
            AND b.rate_per_mile_cents IS NOT NULL
            AND b.gross_amount_cents <> l.rate_total_cents

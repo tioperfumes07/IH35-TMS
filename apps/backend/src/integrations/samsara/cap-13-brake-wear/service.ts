@@ -452,6 +452,7 @@ export async function getAtRiskFleet(
         bp.wear_rate_mm_per_day::text
       FROM maintenance.brake_projections bp
       JOIN mdata.units u ON u.id = bp.unit_uuid
+                         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
       WHERE bp.operating_company_id = $1
         AND bp.projected_replacement_date IS NOT NULL
         AND bp.projected_replacement_date <= (CURRENT_DATE + ($2::int * INTERVAL '1 day'))

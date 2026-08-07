@@ -44,7 +44,7 @@ function num(v: unknown): number {
 }
 
 export async function registerDispatchMarginRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/dispatch-margin", async (req, reply) => {
+  app.get("/api/v1/reports/dispatch-margin", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});
@@ -113,6 +113,7 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
               COALESCE(l.rate_total_cents, 0)::bigint AS revenue_cents
             FROM mdata.loads l
             LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                        AND c.operating_company_id = $1::uuid
             WHERE l.operating_company_id = $1
               AND l.soft_deleted_at IS NULL
               AND l.status IS DISTINCT FROM 'cancelled'

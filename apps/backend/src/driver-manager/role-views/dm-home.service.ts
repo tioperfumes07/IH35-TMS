@@ -147,6 +147,7 @@ async function loadLateArrivals7d(
       JOIN mdata.load_stops ls ON ls.id = sa.stop_id
       JOIN mdata.loads l ON l.id = ls.load_id
       LEFT JOIN mdata.drivers d ON d.id = sa.driver_id
+                                AND d.operating_company_id = $1::uuid
       WHERE sa.operating_company_id = $1::uuid
         AND l.operating_company_id = $1::uuid
         AND l.soft_deleted_at IS NULL

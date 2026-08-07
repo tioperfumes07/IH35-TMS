@@ -53,6 +53,7 @@ export async function registerDriverStatusSuggestionsRoutes(app: FastifyInstance
             s.suggested_at::text
           FROM dispatch.auto_status_suggestions s
           JOIN mdata.loads l ON l.id = s.load_id
+                             AND l.operating_company_id = $1::uuid
           LEFT JOIN latest_response lr ON lr.suggestion_id = s.id
           WHERE s.operating_company_id = $1::uuid
             AND s.driver_id = $2::uuid

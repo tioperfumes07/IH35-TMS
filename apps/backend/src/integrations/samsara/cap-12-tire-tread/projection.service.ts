@@ -308,6 +308,7 @@ export async function listAtRiskUnits(
         END AS position_group
       FROM maintenance.tire_projections tp
       JOIN mdata.units u ON u.id = tp.unit_uuid
+                         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
       WHERE tp.operating_company_id = $1
         AND tp.projected_replacement_date IS NOT NULL
         AND tp.projected_replacement_date <= (CURRENT_DATE + ($2::int * INTERVAL '1 day'))

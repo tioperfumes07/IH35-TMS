@@ -121,6 +121,7 @@ export async function registerFuelCardOverageRoutes(app: FastifyInstance) {
               ON d.id = e.driver_id
              AND d.operating_company_id = e.operating_company_id
             LEFT JOIN mdata.units u ON u.id = e.unit_id
+                                    AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ft.operating_company_id
             ${whereClause}
             ORDER BY e.created_at DESC
             LIMIT $${limitIdx}

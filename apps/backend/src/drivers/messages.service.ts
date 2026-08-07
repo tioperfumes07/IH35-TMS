@@ -180,7 +180,7 @@ export async function markMessageRead(
       SET read_at = COALESCE(read_at, now()),
           read_by = COALESCE(read_by, $3::uuid)
       FROM mdata.drivers d
-      WHERE m.id = $1::uuid
+      WHERE d.operating_company_id = $2::uuid AND m.id = $1::uuid
         AND m.operating_company_id = $2::uuid
         AND m.driver_id = d.id
       RETURNING

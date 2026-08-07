@@ -397,6 +397,7 @@ export async function getDispatchLoadEta(userId: string, operatingCompanyId: str
                l.dispatcher_eta_at
         FROM mdata.loads l
         LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
         WHERE l.id = $1 AND l.operating_company_id = $2 AND l.soft_deleted_at IS NULL
       `,
       [loadId, operatingCompanyId]
