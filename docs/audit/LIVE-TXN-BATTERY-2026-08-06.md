@@ -1019,3 +1019,25 @@ dispatch block. That matches how McLeod/Alvys handle driver-qualification enforc
 silently redirects to `/home` rather than resolving or 404-ing; the tab is reachable only via
 `/compliance?tab=required_docs`. A deep link that quietly lands somewhere unrelated is a small
 usability wart, not a data defect.
+
+## 25 — REQUIRED DOCUMENTS · UNITS tab: vehicle matrix correct — PASS
+
+`Units` sub-tab, 5 rows, all `Regulatory default` / `Warn` / `Tracked` expiry:
+
+| document | authority | correct? |
+|---|---|---|
+| Vehicle Registration (cab card) (`registration`) | State DMV | ✅ |
+| **Annual DOT Inspection** (`annual_inspection`) | **FMCSA §396.17** | ✅ §396.17 is the annual-inspection rule |
+| IFTA License / Decal (`ifta`) | IFTA | ✅ |
+| **Form 2290 (HVUT) Schedule 1** (`form_2290`) | **IRS Form 2290** | ✅ Schedule 1 is the proof-of-payment doc |
+| Insurance / Cab-card proof (`insurance`) | State / FMCSA | ✅ |
+
+Every vehicle-side requirement in the FMCSA/IRS matrix is present and correctly attributed — annual
+DOT inspection, registration, IFTA, 2290 Schedule 1, insurance. Combined with the Drivers tab
+(item 24), the required-documents matrix covers **both** the driver-qualification file and the
+vehicle file with correct authorities throughout.
+
+**Battery PASS.** No defect. The compliance module (items 23–25) is the strongest area verified in
+this battery: correct regulatory calendar, correct CFR/IRS citations on both drivers and units,
+correct entity scoping, automatic driver→obligation generation, and an implemented owner decision
+(W-8BEN). Nothing here needed a board row.
