@@ -6325,3 +6325,62 @@ is empty on prod**, so there is no row to compare and a `0 disagreements` result
 decisive test is one row: create a claim through the app and compare the two columns. **Recorded as a watch
 item with its test, not as a finding** — an empty-table zero is exactly the false verdict this log exists to
 prevent (items 74, 95).
+
+---
+
+## 103. ★ LOOP CLOSED — CC-1 fixed `CLS-MONEY-WORM-GAP` within the hour; VERIFIED LIVE at 99.6%, and they corrected my method
+
+**Verdict: VERIFIED FIXED (99.6%). The agent→board→agent law worked exactly as designed, in one session.**
+
+I filed `CLS-MONEY-WORM-GAP` (item 93) with a baseline of 47 unprotected money tables and 33,472
+hard-deletable rows. CC-1 shipped `db/migrations/202612290000_worm_money_bearing_tables_sweep.sql`
+(**ACCT-F160**) the same hour. **I re-measured with the identical query and predicate, so the numbers are
+directly comparable:**
+
+| metric | baseline | after ACCT-F160 |
+|---|---|---|
+| money-bearing tables | 101 | 101 |
+| **UNPROTECTED (neither layer)** | **47** | **27** (−20) |
+| unprotected **with live rows** | 10 | **5** |
+| **live money rows hard-deletable** | **33,472** | **119** (**−33,353 / 99.6%**) |
+| tables with **both** layers | 8 | **18** |
+
+**Direct probes confirm the two that mattered:** `accounting.invoice_lines` (21,213 rows) and
+`driver_finance.escrow_ledger` both now carry a BEFORE DELETE trigger. **That also closes all four instances
+of `LV-ESCROW-SUBLEDGER-NOT-WORM` (item 91).**
+
+**And it was applied through the migration runner** — `_system._schema_migrations` contains the row.
+**Contrast with `ACCT-F158` (item 99) — same lane, same day: one landed correctly, one never reached the
+repo at all.** That contrast is the useful evidence: the process works when followed, so item 99 is a lapse,
+not a limitation. It also means my item-100 conclusion holds — ACCT-F158 is an anomaly.
+
+**★ CC-1 CORRECTED MY METHOD, AND THEY ARE RIGHT.** Their migration header records that counting the single
+trigger NAME `trg_worm_refuse_delete` undercounts by 3, because `accounting.escrow_postings` and the two
+cash-advance audit tables carry their own differently-named refusal triggers from migrations 0234/0131/0135.
+**My board row asserted "exactly 9 tables carry `trg_worm_refuse_delete`" as the declared standard — that is
+a name-count where a behaviour-count was required, and as prose it was wrong.** My underlying sweep used
+`pg_trigger` with `tgtype & 8` (ANY delete trigger), which is why CC-1 and I independently arrived at the
+same **47**. **The measurement was sound; the sentence describing it was not** — and a reader trusting the
+sentence over the number would have concluded 3 tables were unprotected when they are protected. Corrected
+on the board so the 47 is what carries forward.
+
+**★ AND I ANSWERED MY OWN OPEN QUESTION RATHER THAN LEAVING IT WITH CC-1.** I had asked whether the residual
+`driver_finance.driver_bills` (6 rows) is config or a money event. The schema settles it:
+
+- **`driver_bills` = MONEY EVENT.** `gross_amount_cents` · **`bill_number`** · `status` ·
+  **`settled_in_settlement_id`** · `load_id` FK **ON DELETE RESTRICT** · driver + team-driver FKs. It is the
+  driver's **per-load earning document** — the counterpart to `settlement_lines`, which ACCT-F160 *did*
+  protect. Deleting one erases a driver's claim to be paid for a load, with no audit row.
+- **`driver_pay_rates` (93 rows) = CONFIG, correctly excluded.** `basis_type`, `effective_from` /
+  `effective_to`, `is_active` — a rate card superseded over time, with no document number, no status, and no
+  link to anything that settled it.
+
+**The reusable discriminator, which is the part worth keeping:** it is **not** "does it have a `_cents`
+column" — both tables do. It is **"does the row record an OBLIGATION (document number + status + link to
+what settled it) or a PARAMETER (effectivity window + is_active)?"** That predicate is durable for the
+remaining 27 and does not need a hand-maintained list. Filed as `LV-DRIVER-BILLS-IS-A-MONEY-EVENT`.
+
+**Not a criticism of ACCT-F160.** It used an objective, published predicate and documented every exclusion
+with a reason — including refusing to decide `banking.bank_accounts` inside a ledger sweep because it is a
+master-data question with a UI consequence. **That discipline is precisely why this residual is arguable in
+the open instead of invisible.**
