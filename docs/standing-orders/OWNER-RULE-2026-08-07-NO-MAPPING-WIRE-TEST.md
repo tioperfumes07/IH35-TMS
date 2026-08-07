@@ -35,3 +35,6 @@ USMCA data.
 
 ## NEVER PAUSE (continuous loop) — owner-locked 2026-08-07
 Every coder works non-stop: finish a task -> immediately pull the next create-surface / class / board item -> keep going. No idling, no waiting for approval, no stopping to ask. The only stop is a genuine owner business decision. Fix your own red PRs first, then continue. The orchestrator (Claude desktop) keeps everyone working and MERGES green PRs + FIXES or ROUTES conflicting PRs so the pipeline never stalls.
+
+## PROD-WRITE SAFETY (owner-lane law, 2026-08-07 — from CC-3 live finding)
+mdata.drivers (and other identity-scoped tables) RLS keys on USER IDENTITY, not app.operating_company_id. The MCP/app role alternates neondb_owner / ih35_app. A write as ih35_app WITHOUT `SET LOCAL app.bypass_rls='lucia'` in the SAME transaction silently affects ZERO rows and RETURNS SUCCESS. Therefore: every prod write must (a) set the bypass the policies actually read, in the same transaction, and (b) carry a visibility/row-count control (RETURNING or a same-tx re-count) — or the write is UNVERIFIED. A 0-row UPDATE that "succeeded" is the false-success trap.
