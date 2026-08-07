@@ -1,12 +1,12 @@
 {
   "meta": {
-    "generatedAt": "2026-08-04T22:08:00-05:00",
-    "sourceSha": "a4c6b619b",
+    "generatedAt": "2026-08-06T06:02:16Z",
+    "sourceSha": "cf9a739ee",
     "deployedSha": "308bc66",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 680,
+    "ledgerRows": 691,
     "failOpen": 15,
-    "defects": 14
+    "defects": 15
   },
   "modules": [
     {
@@ -205,7 +205,7 @@
       "cells": [
         "AUDIT",
         "FAIL",
-        "FAIL",
+        "FIX",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -247,7 +247,7 @@
       "cells": [
         "AUDIT",
         "AUDIT",
-        "FAIL",
+        "FIX",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -562,7 +562,7 @@
       "cells": [
         "AUDIT",
         "AUDIT",
-        "FAIL",
+        "FIX",
         "NA",
         "AUDIT",
         "AUDIT",
@@ -604,7 +604,7 @@
       "cells": [
         "AUDIT",
         "AUDIT",
-        "NA",
+        "FAIL",
         "NA",
         "AUDIT",
         "AUDIT",
@@ -1158,5 +1158,97 @@
         "evidence": "170 categorized bank transaction(s)"
       }
     ]
-  }
+  },
+  "recentActivity": [
+    {
+      "number": 4668,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "state": "merged",
+      "mergedAtCt": "08/07/2026, 03:08 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4668",
+      "sha": "c3b6c6994",
+      "committedAtIso": "2026-08-07T08:08:35Z"
+    },
+    {
+      "number": 4665,
+      "title": "FINDING: ACCT-F154 — the AR importer projects HEADERS ONLY, so a re-clone silently undoes the ACCT-F146 back-fill",
+      "state": "merged",
+      "mergedAtCt": "08/07/2026, 01:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4665",
+      "sha": "2382c9922",
+      "committedAtIso": "2026-08-07T06:27:58Z"
+    },
+    {
+      "number": 4643,
+      "title": "FINDING: CLS-GUC-CALLER-SCOPED — 21 handlers let the caller set the RLS scope; fixed with one helper, not twenty-one asserts",
+      "state": "merged",
+      "mergedAtCt": "08/07/2026, 01:20 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4643",
+      "sha": "3180d9f0a",
+      "committedAtIso": "2026-08-07T06:20:17Z"
+    },
+    {
+      "number": 4664,
+      "title": "Claude-1- CI-F24: the permanent fix for chores — a reaper that merges green dependency PRs and rebases stale ones, forever",
+      "state": "merged",
+      "mergedAtCt": "08/07/2026, 01:04 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4664",
+      "sha": "3ff4e8b37",
+      "committedAtIso": "2026-08-07T06:04:55Z"
+    },
+    {
+      "number": 4663,
+      "title": "FINDING: CI-F23 — the union rule I shipped in CI-F20 covered ONE board and lost the race to the next one; plus an adoption caveat that made it look broken",
+      "state": "merged",
+      "mergedAtCt": "08/07/2026, 12:36 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4663",
+      "sha": "3851feaff",
+      "committedAtIso": "2026-08-07T05:36:08Z"
+    },
+    {
+      "number": 4662,
+      "title": "FINDING: LV-134/ACCT-F150/ACCT-F151 reconciled - route fix landed via #4653, one retro-post backfill remains",
+      "state": "merged",
+      "mergedAtCt": "08/07/2026, 12:33 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4662",
+      "sha": "904a95987",
+      "committedAtIso": "2026-08-07T05:33:32Z"
+    },
+    {
+      "number": 4661,
+      "title": "FINDING: ACCT-F152 — the WORM control has had NOTHING verifying it since it landed; #4607 promised a ratchet that was never written",
+      "state": "merged",
+      "mergedAtCt": "08/07/2026, 12:15 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4661",
+      "sha": "2685e230c",
+      "committedAtIso": "2026-08-07T05:15:14Z"
+    },
+    {
+      "number": 4641,
+      "title": "FINDING: MDATA-F09 — a route let the CALLER set the RLS scope, then texted any driver in any entity; 75 more handlers have the same shape",
+      "state": "merged",
+      "mergedAtCt": "08/07/2026, 12:11 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4641",
+      "sha": "b5123ab2d",
+      "committedAtIso": "2026-08-07T00:11:30-05:00"
+    },
+    {
+      "number": 4655,
+      "title": "Claude-1- CI-F20: union-merge the three shared registries that were conflicting 9 of 15 CC-2 PRs",
+      "state": "merged",
+      "mergedAtCt": "08/07/2026, 12:01 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4655",
+      "sha": "9fc741c1a",
+      "committedAtIso": "2026-08-07T05:01:43Z"
+    },
+    {
+      "number": 4659,
+      "title": "FINDING: CI-F21 — every dependency PR was unmergeable by construction: our own DoD gate demanded a Rule 16 evidence block Dependabot cannot write",
+      "state": "merged",
+      "mergedAtCt": "08/06/2026, 11:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4659",
+      "sha": "84c178eb4",
+      "committedAtIso": "2026-08-07T04:58:52Z"
+    }
+  ]
 }
