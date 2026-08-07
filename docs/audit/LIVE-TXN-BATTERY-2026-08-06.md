@@ -7380,3 +7380,74 @@ clearing account and silently leaves the bank overstated.**
 `CashAdvanceRecoveryMode = "full" | "amortize"` (`cash-advance-create.ts:22`), `"installments"` was **my**
 invalid value, and the route's zod schema would have rejected it before it ever reached the core. **An
 artefact of bypassing the HTTP validation layer, not a product defect — withdrawn before filing.**
+
+## 119. ★★ CLASS ESTABLISHED — `CLS-CASH-OUT-CREDITS-CLEARING-ACCOUNT`: the bank-leg fix was applied to ONE builder and not to its THREE siblings, and the code says so itself
+
+Item 118's defect is not an instance. **Four sibling builders in `posting-engine.service.ts` credit the cash
+side of a disbursement. One of them was fixed; three were not — and the fix carries a comment explaining
+exactly the bug the other three still have.**
+
+**`buildBillPaymentLines` (:1371-1402) — FIXED, and self-documenting:**
+> *"CHAIN-04 GAP #2 — bank leg fix. The engine used to CR `resolveCashLikeAccountForCompany`
+> (undeposited_funds / cash_clearing) and IGNORE the payment's own `from_bank_account_id`. Fix: credit the
+> REAL bank the money left, via the bank→GL bridge `banking.bank_accounts.ledger_account_id` … Fail-closed
+> if the chosen bank has no `ledger_account_id`."*
+
+It resolves `bank → cc → cash_like` in that order and **throws** when a named bank has no bridge.
+
+**The three that still carry the pre-fix line — `creditAccountId ?? (await resolveCashLikeAccountForCompany(...))`:**
+
+| builder | line | source table | bank column on the source? | verdict |
+|---|---|---|---|---|
+| `buildDriverAdvanceLines` | **1555** | `driver_finance.driver_advances` | **YES — `from_bank_account_id`** | **the column exists and is ignored — PROVEN LIVE, item 118** |
+| `buildCashAdvanceLines` | **1473** | `driver_finance.cash_advance_requests` | **NO** (30 columns, none bank/account) | cannot resolve a bank — clearing account is the only possible answer |
+| `buildDriverReimbursementLines` | **1638** | `driver_finance.driver_reimbursements` | **NO** | same |
+
+**Two distinct defects live in one class, and they need different fixes — which is why the distinction is
+stated rather than smoothed over.** `driver_advance` is a **wiring** defect: the answer is on the row and
+the code does not read it. The other two are a **schema** gap: a cash disbursement that **cannot record
+which bank it left**, so no amount of posting-logic work can attribute it. Both end the same way — company
+cash credited to a clearing account that nothing will ever clear.
+
+**Neither of the other two has ever run:** `cash_advance_requests` = **0 rows** and `driver_reimbursements`
+= **0 rows** (`visible_all == n_live_tup == 0` on both). They are not yet wrong in production **because
+nothing has used them** — which is precisely why they should be fixed before the first real disbursement,
+not after.
+
+**The fix is 90 lines above the bug, in the same file, already written.** Filed as
+`CLS-CASH-OUT-CREDITS-CLEARING-ACCOUNT`.
+
+## 120. ★ FAIL (P1 · money · CC-1) — `LV-REIMBURSEMENT-FLAG-NEVER-SEEDED`: a kill switch with no ON position. Driver reimbursements can NEVER reach the ledger, for any entity.
+
+**Created and paid through production code**, `createDriverReimbursementCore()` →
+`payDriverReimbursementImmediately()`:
+
+| what | value |
+|---|---|
+| reimbursement | `edc714ed-c1a5-4ca0-924d-02a7bc22ffcc` · driver `40823a77-…` · **$75.00** toll · USMCA |
+| result | `{ ok: true, posted: **false**, journalEntryId: **null** }` |
+| prod row | `status = 'paid'` · **`journal_entry_id = NULL`** · `posting_date 2026-08-07` |
+
+**The service is honest — it returns `posted:false` rather than faking success.** The defect is *why* it is
+false, and it is not a config decision anyone made.
+
+**ROOT CAUSE, two facts that only matter together:**
+1. `driver-reimbursement.service.ts:23` — `export const REIMBURSEMENT_GL_POSTING_FLAG = "REIMBURSEMENT_GL_POSTING_ENABLED";`
+2. **That key does not exist in `lib.feature_flags`.** `SELECT count(*) … WHERE flag_key =
+   'REIMBURSEMENT_GL_POSTING_ENABLED'` → **0**, and **0** override rows, for every entity. Discriminator:
+   `lib.feature_flags` `visible_all = 85 == n_live_tup = 85` — the table is fully visible, the row is
+   genuinely absent.
+
+And `lib/feature-flags/service.ts:322` decides it: **`if (!flag) return false;`** — an unseeded key returns
+false **before** any override is consulted. `resolveFlagEnabled` is never reached.
+
+**So this is not "the flag is OFF, flip it when ready."** There is no row to flip. **No override can turn it
+on**, because the override lookup is downstream of the early return. **Driver reimbursement GL posting is
+unreachable for every entity, permanently, until someone seeds the flag** — and nothing surfaces that: the
+operator sees a reimbursement marked `paid`.
+
+**This is the inverse of item 113's finding and worth naming as such.** There, 24 of 24 posting flags carried
+an active USMCA override — "nothing is flag-dark". **That measurement enumerated the flags that EXIST.** A
+poster whose flag was never seeded is invisible to that check, because it has no row to enumerate. **The
+completeness question is not "is every flag on" but "does every flag the CODE reads exist"** — and the
+answer here is no.
