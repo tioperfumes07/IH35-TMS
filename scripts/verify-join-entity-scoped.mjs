@@ -35,6 +35,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
+import { maskSqlComments } from "./lib/mask-comments.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const LABEL = "verify-join-entity-scoped";
@@ -103,7 +104,12 @@ function refIsScoped(block, alias, columns) {
 export function auditSql(src, file = "<mem>") {
   const problems = [];
   for (const blockMatch of src.matchAll(SQL_BLOCK)) {
-    const block = blockMatch[1];
+    // CLS-GUARD-READS-COMMENTS (5th instance, found 2026-08-07). The scope test accepts `IS` as a
+    // comparison operator, so a SQL comment containing "…operating_company_id is read out later" made
+    // this guard report a real unscoped JOIN as scoped — prose satisfying a security check. Mask `--`
+    // and slash-star comments inside the SQL before matching. Offset-preserving, so the line numbers
+    // this guard reports stay correct.
+    const block = maskSqlComments(blockMatch[1]);
     const refs = [];
     for (const j of block.matchAll(JOIN_RE)) refs.push({ table: j[1].toLowerCase(), alias: j[2], kind: "JOIN" });
     for (const f of block.matchAll(FROM_RE)) {

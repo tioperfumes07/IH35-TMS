@@ -629,7 +629,9 @@ export async function listCustomerNotifyLog(
           c.customer_name
         FROM dispatch.notify_log nl
         JOIN mdata.loads l ON l.id = nl.load_id
+                           AND l.operating_company_id = $1::uuid
         JOIN mdata.customers c ON c.id = nl.customer_id
+                               AND c.operating_company_id = $1::uuid
         WHERE nl.operating_company_id = $1::uuid
           ${customerFilter}
         ORDER BY nl.created_at DESC

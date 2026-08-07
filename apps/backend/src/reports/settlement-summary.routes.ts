@@ -61,7 +61,7 @@ function categorizeDeduction(deductionType: string, reason: string): keyof Deduc
 }
 
 export async function registerSettlementSummaryRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/settlement-summary", async (req, reply) => {
+  app.get("/api/v1/reports/settlement-summary", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});
@@ -85,6 +85,7 @@ export async function registerSettlementSummaryRoutes(app: FastifyInstance) {
             COALESCE(ROUND(s.net_pay::numeric * 100), 0)::bigint AS net_cents
           FROM driver_finance.driver_settlements s
           JOIN mdata.drivers d ON d.id = s.driver_id
+                               AND d.operating_company_id = $1::uuid
           WHERE s.operating_company_id = $1
             AND s.status IS DISTINCT FROM 'cancelled'
             AND s.period_start <= $3::date

@@ -97,7 +97,9 @@ async function loadStopsForGeofencing(client: DbClient, input: AutoGeofenceInput
       FROM mdata.load_stops s
       JOIN mdata.loads l ON l.id = s.load_id
       JOIN mdata.customers c ON c.id = l.customer_id
+                             AND c.operating_company_id = $1::uuid
       LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+                                    AND loc.operating_company_id = $1::uuid
       WHERE l.operating_company_id = $1::uuid
         AND l.id = $2::uuid
       ORDER BY s.sequence_number ASC

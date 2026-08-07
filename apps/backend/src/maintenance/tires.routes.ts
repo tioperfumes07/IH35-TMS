@@ -234,8 +234,15 @@ const RECORD_SELECT = `
     tr.created_at,
     tr.updated_at
   FROM maintenance.tire_records tr
+  -- CLS-JOIN-ENTITY-UNSCOPED: scoping the DRIVING row does not scope the joined row. tr is
+  -- filtered by tr.operating_company_id at every call site, but a LEFT JOIN on a bare id would happily
+  -- attach ANOTHER entity's unit/equipment and render its number as an authoritative label, with no
+  -- error and no empty result to notice. §4 landmine: mdata.units and mdata.equipment have NO
+  -- operating_company_id — the scope is COALESCE(currently_leased_to_company_id, owner_company_id).
   LEFT JOIN mdata.units u ON u.id = tr.unit_id
+                         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = tr.operating_company_id
   LEFT JOIN mdata.equipment e ON e.id = tr.equipment_id
+                             AND COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = tr.operating_company_id
 `;
 
 async function resolveBrandName(

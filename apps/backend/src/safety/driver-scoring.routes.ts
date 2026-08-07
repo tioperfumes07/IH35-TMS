@@ -164,6 +164,7 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
             ON d.id = e.driver_id
            AND d.operating_company_id = e.operating_company_id
           LEFT JOIN mdata.units u ON u.id = e.unit_id
+                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
           WHERE e.operating_company_id = $1::uuid
             AND e.driver_id = $2::uuid
             AND e.event_at >= (now() - make_interval(days => $3::int))

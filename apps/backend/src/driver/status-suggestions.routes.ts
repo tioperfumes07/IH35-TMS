@@ -17,7 +17,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerDriverStatusSuggestionsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver/status-suggestions", async (req, reply) => {
+  app.get("/api/v1/driver/status-suggestions", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;
@@ -52,6 +52,7 @@ export async function registerDriverStatusSuggestionsRoutes(app: FastifyInstance
             s.suggested_at::text
           FROM dispatch.auto_status_suggestions s
           JOIN mdata.loads l ON l.id = s.load_id
+                             AND l.operating_company_id = $1::uuid
           LEFT JOIN latest_response lr ON lr.suggestion_id = s.id
           WHERE s.operating_company_id = $1::uuid
             AND s.driver_id = $2::uuid

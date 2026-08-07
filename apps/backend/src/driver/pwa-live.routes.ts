@@ -38,7 +38,7 @@ async function resolveDriverCompany(
 }
 
 export async function registerDriverPwaLiveRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver-pwa/hos-clocks", async (req, reply) => {
+  app.get("/api/v1/driver-pwa/hos-clocks", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     if (!driver || !req.user) return sendForbidden(reply);
@@ -67,6 +67,7 @@ export async function registerDriverPwaLiveRoutes(app: FastifyInstance) {
           SELECT sv.raw_payload
           FROM telematics.vehicle_driver_assignments vda
           JOIN mdata.units u ON u.id = vda.unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
           LEFT JOIN integrations.samsara_vehicles sv
             ON sv.samsara_vehicle_id = u.samsara_vehicle_id
            AND sv.operating_company_id = vda.operating_company_id
@@ -108,7 +109,7 @@ export async function registerDriverPwaLiveRoutes(app: FastifyInstance) {
     return snapshot;
   });
 
-  app.get("/api/v1/driver-pwa/recent-fuel-transactions", async (req, reply) => {
+  app.get("/api/v1/driver-pwa/recent-fuel-transactions", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     if (!driver || !req.user) return sendForbidden(reply);
@@ -138,6 +139,7 @@ export async function registerDriverPwaLiveRoutes(app: FastifyInstance) {
             v.vendor_name
           FROM fuel.fuel_transactions ft
           LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id
+                                    AND v.operating_company_id = $1::uuid
           WHERE ft.operating_company_id = $1::uuid
             AND ft.driver_id = $2::uuid
             AND ft.archived_at IS NULL
@@ -160,7 +162,7 @@ export async function registerDriverPwaLiveRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.get("/api/v1/driver-pwa/equipment", async (req, reply) => {
+  app.get("/api/v1/driver-pwa/equipment", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     if (!driver || !req.user) return sendForbidden(reply);
@@ -188,6 +190,7 @@ export async function registerDriverPwaLiveRoutes(app: FastifyInstance) {
             vda.source
           FROM telematics.vehicle_driver_assignments vda
           JOIN mdata.units u ON u.id = vda.unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
           WHERE vda.driver_id = $1::uuid
             AND vda.operating_company_id = $2::uuid
             AND vda.ended_at IS NULL
@@ -202,6 +205,7 @@ export async function registerDriverPwaLiveRoutes(app: FastifyInstance) {
           SELECT u.id::text AS unit_id, u.unit_number
           FROM mdata.loads l
           JOIN mdata.units u ON u.id = l.assigned_unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
           WHERE l.operating_company_id = $1::uuid
             AND (l.assigned_primary_driver_id = $2::uuid OR l.assigned_secondary_driver_id = $2::uuid)
             AND l.soft_deleted_at IS NULL

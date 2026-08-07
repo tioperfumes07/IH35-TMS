@@ -98,6 +98,7 @@ async function fetchNextStop(client: DbClient, operatingCompanyId: string, loadI
       FROM mdata.load_stops s
       JOIN mdata.loads l ON l.id = s.load_id
       LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+                                    AND loc.operating_company_id = $1::uuid
       WHERE l.operating_company_id = $1::uuid
         AND l.id = $2::uuid
         AND l.soft_deleted_at IS NULL

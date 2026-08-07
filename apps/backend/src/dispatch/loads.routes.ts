@@ -1448,7 +1448,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return metrics;
   });
 
-  app.get("/api/v1/dispatch/units-without-load", async (req, reply) => {
+  app.get("/api/v1/dispatch/units-without-load", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
@@ -1493,6 +1493,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           -- show Driver + HOS even with no load. (The old join used the load's driver, which is
           -- null for an unloaded truck.)
           LEFT JOIN mdata.drivers ud ON ud.id = u.assigned_driver_id
+                                     AND ud.operating_company_id = $1::uuid
           LEFT JOIN mdata.load_stops ls ON ls.load_id = l.id
           LEFT JOIN telematics.vehicle_latest_position p
             ON p.unit_id = u.id

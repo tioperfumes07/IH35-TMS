@@ -48,6 +48,7 @@ export async function submitDriverDvir(
         SELECT s.id
         FROM safety.dvir_submissions s
         INNER JOIN mdata.loads l ON l.id = $2 AND s.operating_company_id = l.operating_company_id
+                                 AND l.operating_company_id = s.operating_company_id
         WHERE s.client_request_id = $1
         LIMIT 1
       `,

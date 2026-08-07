@@ -52,6 +52,7 @@ export async function getLivePositionsForActiveLoads(
             p.lat::text, p.lng::text, p.speed_mph::text, p.recorded_at::text
      FROM mdata.loads l
      JOIN mdata.units u ON u.id = l.assigned_unit_id
+                        AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
      LEFT JOIN LATERAL (
        SELECT lat, lng, speed_mph, recorded_at
        FROM integrations.samsara_vehicle_positions svp
