@@ -2854,3 +2854,60 @@ add `void_reason`).
 column-does-not-exist error at best — or, if they reach for `status` instead, walks straight into the
 item-51 trap where status and the timestamp disagree. **Whoever fixes the void-filter family must be
 told this table is named differently.** Recorded so they are.
+
+---
+
+## 55. `LV-AP-OPEN-INCLUDES-VOIDED` FULLY RECONCILED — the $1,766.66 now ties to the cent, and the COUNT is wrong too
+
+**LIVE-PROVEN 2026-08-07, `/accounting/bills`, USMCA. The earlier card asserted $1,766.66 overstated.
+This item reconciles that number exactly against the screen, so it is no longer an estimate.**
+
+The Bills page header reads:
+
+> **OPEN BILLS $3,161.54 · 11 open**
+
+The entity has **exactly 11 bills** — **7 live and 4 voided**. Reconciling every balance from prod:
+
+| bill | balance | state |
+|---|---|---|
+| `7ccd431e` | $76.17 (`88.77 − 12.60` paid) | live |
+| `304f5fa3` | $123.45 | live |
+| `5a1d7268` | $743.21 | live |
+| `0fe49cd0` | $450.00 | live |
+| `62fbc5ec` | $0.05 | live |
+| `77f2659f` | $1.00 | live |
+| `996907d6` | $1.00 | live |
+| **`d613ca88`** | **$123.45** | **VOIDED** |
+| **`55997ecb`** | **$743.21** | **VOIDED** |
+| **`40c1ca80`** | **$450.00** | **VOIDED** |
+| **`e65dddd4`** | **$450.00** | **VOIDED** |
+
+- **live** = `76.17 + 123.45 + 743.21 + 450.00 + 0.05 + 1.00 + 1.00` = **$1,394.88**
+- **voided** = `123.45 + 743.21 + 450.00 + 450.00` = **$1,766.66**
+- **total** = **$3,161.54** — **matches the header to the cent.**
+
+> **"OPEN BILLS $3,161.54" includes $1,766.66 of VOIDED bills. True open A/P is $1,394.88 — the
+> headline figure is overstated by 127%.**
+
+**The COUNT is wrong too, and that is a separate error:** "**11 open**" counts all 11 bills; only **7**
+are live. Both the money and the count are inflated by the same four rows. The earlier card named the
+dollar figure only.
+
+**Corroborating detail visible on the same screen:** the `Status` column shows **`open`** for the
+voided bills — exactly what `LV-VOID-INVARIANT-BOTH-WAYS` predicts, since their `status` was never
+changed when `voided_at` was stamped. And the duplicate rows are plainly visible: `CC3-BILL-0001`
+$123.45 **twice**, `CC3-BILL-20260806-01` $743.21 **twice**, `TEST-BILL-0806-A` $450.00 **multiple
+times** — each pair being one live bill and its voided twin, indistinguishable to the user because
+bills have no `display_id` (`LV-BILL-NO-DISPLAY-ID`).
+
+**Four separate board cards are visible in this one screenshot, all reinforcing each other:**
+`LV-AP-OPEN-INCLUDES-VOIDED` (the totals), `LV-VOID-INVARIANT-BOTH-WAYS` (status still `open`),
+`LV-BILL-NO-DISPLAY-ID` (indistinguishable duplicates), and `LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS`
+(the same voided rows are payable). **They are one root cause — void state is not authoritative
+anywhere in A/P — with four separate symptoms.** Whoever picks this up should fix it as one piece of
+work, not four.
+
+**Why the reconciliation matters:** an exact tie-out converts "the number looks too big" into "the
+number is wrong by precisely these four rows", which is directly actionable and impossible to argue
+with. It also independently re-derives the $1,766.66 from a completely different surface than the
+original finding.
