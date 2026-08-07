@@ -1735,3 +1735,86 @@ unexplained facts in this investigation.**
 **Deliberately NOT claimed:** the other 13 `String(<date>).slice(0,10)` sites elsewhere in the backend
 (item 37a) are still only *candidates* — none of them call `postVoidReversal`, so they are outside
 this class and need their own check. Bounding the void class does not bound those.
+
+---
+
+## 39. ROOT CAUSE — `LV-REVREC-NOT-FIRING`: every gate passes, so the poster was never CALLED
+
+**Verified 2026-08-07 on Neon prod `br-fancy-credit-akjnd07a`, USMCA `5c854333-…`, `current_user = ih35_app`.**
+
+Item 29 proved Event 1 never fires. This item proves **why**, the same way item 37 closed the void
+class: by reading the poster and then executing **its own verbatim SQL** against prod, gate by gate.
+
+**The poster exists and is reachable:** `apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts:310`
+`postLoadRevenueLatch()`. It refuses to post only through nine named early-return gates. Each was
+measured live for `LUSMCAFREIGHT-20260806-0001`:
+
+| # | gate | measured on prod | fires? |
+|---|---|---|---|
+| 1 | `wrong_status` | status = `delivered_pending_docs`; `resolveEvent` (`:300-305`) maps both `delivered` **and** `delivered_pending_docs` → `earn` | **no** |
+| 2 | `flag_off` | `lib.feature_flag_overrides`: `REVENUE_RECOGNITION_POST_ENABLED` = **true** for USMCA | **no** |
+| 3 | `latch_table_missing` | `to_regclass('accounting.load_revenue_recognition_postings')` → **the table exists** | **no** |
+| 4 | `trk_excluded` | company code = `USMCA` (TRK is `b49a737b…`, correctly flag-`false`) | **no** |
+| 5 | `load_not_found` | load present | **no** |
+| 6 | `already_posted` | **0** latch rows for this load | **no** |
+| 7 | `missing_delivery_evidence` | **the function's exact query returns `2026-08-06 17:03:35.076384+00`** | **no** |
+| 8 | `earn_missing_for_bill` | n/a for `earn` | **no** |
+| 9 | `zero_amount` | `rate_total_cents` = **100** (> 0) | **no** |
+
+**ALL NINE GATES PASS AND NO ROW EXISTS.** Gate 7 was not assumed — `finalActiveDeliveryDepartureAt`
+(`:277-298`) is narrower than a naive check (it takes `ORDER BY sequence_number DESC LIMIT 1`, so only
+the **highest-sequence** delivery stop counts), so its query was run **verbatim** rather than
+approximated. It returns a timestamp. The delivery stop is `sequence_number 2`, `stop_type delivery`,
+`status departed`, `soft_deleted_at NULL`.
+
+> **Therefore the failure is NOT a gate. `postLoadRevenueLatch` was never invoked for this load.**
+
+**POSITIVE CONTROL — INTERNAL TO THE SAME TABLE (so this is not an RLS artifact).**
+`accounting.load_revenue_recognition_postings` holds **2 rows**, `n_live_tup = 2`, `n_tup_ins = 2`:
+TRANSP load `L-20260624-0083` has **both** `earn` and `bill` at $15,000.00 (2026-07-30). **The poster
+demonstrably works and can write to this table.** The USMCA zero is a real zero, not a masked read.
+
+**WHY IT FAILED SILENTLY — by design, and the design is defensible.**
+`apps/backend/src/dispatch/delivery-evidence-latch.ts` states in its own header that
+**"SWALLOW-AND-LOG IS DELIBERATE"** — *"a latch failure must never 500 the driver's 'I departed the
+delivery' tap. Losing the stop capture is worse than deferring recognition."* That is a **correct**
+trade-off, and it explains why item 29 saw an absent posting with no user-visible error anywhere.
+**The swallow is not the defect — but it is why the defect was invisible, and it means this class can
+never be caught by watching for errors. Only a ledger assertion catches it.**
+
+### ★ SCOPE CORRECTION — only ONE of the two loads is a defect
+
+Item 29 named two loads. That was right about the symptom and **too broad about the cause**:
+
+- `LUSMCAFREIGHT-20260806-0001` (`delivered_pending_docs`) — delivery departure **captured**, all nine
+  gates pass → **should have posted. GENUINE DEFECT.**
+- `L-20260802-0258` (`delivered`) — its delivery stop has `actual_departure_at` **NULL** and status
+  `pending`, so `finalActiveDeliveryDepartureAt` returns null → gate 7 fires → **`missing_delivery_evidence`
+  is the CORRECT and intended refusal.** Per the code comment, *"Event 1 earns ONLY on real captured
+  delivery evidence — never on status alone."* That is sound ASC-606 conservatism and **must not be
+  "fixed"** — recognising revenue on a status flip with no captured delivery would be the worse bug.
+
+**This distinction is the point of this item.** A fix aimed at "loads in delivered status have no
+Event 1" would loosen gate 7 and start recognising unearned revenue. **The defect is one load, and it
+is an invocation failure, not a gate failure.**
+
+### For CC-1 — what is bounded and what is NOT
+
+**Bounded (proven):** the nine gates are not the cause; the poster works; the table is writable; the
+flag is on; the account (`1150`) exists.
+**NOT bounded (state honestly):** this lane did **not** determine which caller runs on the
+`delivered_pending_docs` transition, nor whether the latch was invoked-and-swallowed versus never
+reached. Two wired call sites are known to exist — `delivery-evidence-latch.ts:53` and
+`loads.routes.ts:1335`, with a guard `verify-delivery-evidence-latch-wired` — so **"wired" is already
+true and is NOT sufficient**; a guard asserting wiring would pass today while the ledger stays dark.
+**CC-1 must instrument the swallowed catch (or replay the transition) to see which of the two it is.**
+
+**GUARD REQUIREMENT (this is the one that would have caught it):** assert that a load whose
+**highest-sequence active delivery stop has `actual_departure_at` set** and whose status is
+`delivered`/`delivered_pending_docs`, with the flag on and a non-TRK entity, **has a balanced `earn`
+row in `accounting.load_revenue_recognition_postings`**. Scope it to TMS-native loads (origin test —
+QBO-clone loads must not redden it). **A guard on wiring, flags, or account existence reproduces this
+exact miss**, because all three were already true.
+
+**Verdict: `LV-REVREC-NOT-FIRING` — root cause LOCATED to invocation, gates EXONERATED, scope narrowed
+from 2 loads to 1, and one apparent instance reclassified as CORRECT behaviour.**
