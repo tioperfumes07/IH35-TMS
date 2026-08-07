@@ -34,5 +34,5 @@
       "evidence": "Backbone 2026-07-25: 7 live / 7 bound; 9 deactivated excluded. Owner GUARD re-run Step-1 SQL on br-fancy-credit-akjnd07a required before crediting live proof on merge."
     }
   ],
-  "note": "HOLD — FINANCIAL-HOLD protect-only. Do NOT merge without JORGE-APPROVED. Do NOT flip BANK-ECON-02/03/04 or SURF FAILs."
+  "note": "OWNER LAW 2026-08-03: no holds, no approval label; coders have full Neon access and merge on green. Proof, not approval, is the gate. Do NOT flip BANK-ECON-02/03/04 or SURF FAILs."
 }
