@@ -1691,3 +1691,47 @@ and `invoice-send.service.ts:216` sits on the invoice send path, so both are wor
 **Recommended:** fix the proven site, then sweep the pattern with a shared date-normalisation helper
 and a guard that bans `String(...).slice(0, 10)` on a value sourced from a `date`/`timestamp` column.
 That converts a recurring foot-gun into a one-time fix.
+
+## 38 — ★★ CLASS BOUNDED: exactly ONE of five void paths is broken, and the correct fix already exists in a sibling file
+
+Scoped the date defect at source rather than by clicking each screen. **`postVoidReversal` has five
+production callers**, and only one mangles the date:
+
+| # | caller | how it computes `originalDate` | verdict |
+|---|---|---|---|
+| 1 | **`bills.service.ts:1764`** | **`String(billRaw.bill_date).slice(0, 10)`** | ❌ **BROKEN — proven live** |
+| 2 | **`invoices.routes.ts:831-832`** | **type-checked**: `typeof rawDate === "string" ? rawDate.slice(0,10) : new Date(rawDate).toISOString().slice(0,10)` | ✅ **CORRECT — handles both shapes** |
+| 3 | `journal-entries.service.ts:555` | `originalDate: existing.entry_date` (passed raw) | ✅ works — proven live (item 32) |
+| 4 | `amortization-posting.service.ts:823` | `originalDate: je.entry_date` (raw) | ✅ same safe pattern |
+| 5 | `loan-payment-posting.service.ts:395` | `originalDate: je.entry_date` (raw) | ✅ same safe pattern |
+
+**★ The fix is a copy of line 831-832 from `invoices.routes.ts` into `bills.service.ts:1764`.** The
+codebase already contains the correct, defensive implementation of exactly this computation — three
+files away, for the sibling document type. Nothing new needs designing.
+
+### 38a — This closes the whole void investigation. Everything now agrees.
+
+The quality ladder I measured empirically (item 32) is fully explained by the code:
+
+| path | observed behaviour | code explanation |
+|---|---|---|
+| **JE void** | reversal ✅ + both links ✅ | passes `entry_date` **raw** (no mangling) **and** writes bidirectional header linkage (`journal-entries.service.ts:464` — *"Posts a LINKED reversing JE … and writes the bidirectional header linkage"*) |
+| **Invoice void** | reversal ✅, links ❌ | date handled **defensively and correctly**, so it posts — but it calls `postVoidReversal` without the header-linkage step JE-void adds |
+| **Bill void** | **no reversal, void rolls back** | `String(...).slice(0,10)` → `"Thu Aug 06"` → throws before posting; reversal precedes the status flip in one transaction, so the whole void reverts |
+
+Three independently-observed behaviours, one consistent code-level explanation. **No remaining
+unexplained facts in this investigation.**
+
+**And it confirms the earlier live evidence was right:** invoice reversal JE `43b3ed80` exists
+(item 28f) precisely *because* path 2 handles the date correctly — that was not luck.
+
+**Bounded scope for CC-1 — three ordered changes, all small:**
+1. `bills.service.ts:1764` — adopt the invoice-void date handling. Unblocks bill void entirely.
+2. Add the bidirectional linkage step to invoice void so its reversals are traceable
+   (`reverses_je_id`/`reversed_by_je_id`), matching JE void.
+3. Back-post reversals for the **$1,643.21** already voided out-of-band, which no code path will
+   clean up on its own.
+
+**Deliberately NOT claimed:** the other 13 `String(<date>).slice(0,10)` sites elsewhere in the backend
+(item 37a) are still only *candidates* — none of them call `postVoidReversal`, so they are outside
+this class and need their own check. Bounding the void class does not bound those.
