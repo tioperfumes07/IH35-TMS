@@ -6549,3 +6549,77 @@ list — read the keys before concluding two same-named tables are duplicates.**
 that rate history. It is a parameter table so it is out of WORM scope by my own test, but a table that
 carries an explicit change-history chain and can be cascade-erased is a mild contradiction. Recorded for
 whoever owns driver qualifications; no card.
+
+---
+
+## 107. HAZMAT DRIVER-QUALIFICATION GATE — PASS end to end, and a fifth hypothesis killed by reading the SQL instead of the TypeScript
+
+**Unit: the D3-1 hazmat H-endorsement gate. Verdict: PASS — correct schema, correct logic, wired at all
+three assignment paths, and correctly FED on each. No card.**
+
+I chose this because it is a control with a documented history of being wired to the wrong column, and
+because the operating constitution's claim about it is exactly the kind of assertion that must be re-proven
+rather than trusted.
+
+**SCHEMA — verified against `information_schema` (RLS-immune, so authoritative regardless of role):**
+
+| claim | measured |
+|---|---|
+| `mdata.drivers.endorsement_h` exists | **yes** |
+| `mdata.drivers.hazmat_endorsement` exists | **no** — the constitution's correction is right |
+| `mdata.units.hazmat_endorsement` exists | **yes** (the vehicle-profile boolean, 0295) |
+| `mdata.drivers.hazmat_endorsement_expires_at` exists | **yes** |
+| `mdata.loads` hazmat columns | **NONE** — no `hazmat`, no `is_hazmat`, no `hazmat_endorsement_required` |
+| `is_hazmat` anywhere in the database | **no table has it** |
+| `mdata.loads.quicksave_pending_fields` jsonb | **yes** |
+
+**GATE LOGIC — correct** (`dispatch/driver-qualification.service.ts:337-341, 424`):
+`(d.endorsement_h IS NOT TRUE OR d.hazmat_endorsement_expires_at IS NULL OR d.hazmat_endorsement_expires_at
+< CURRENT_DATE) AS hazmat_blocked`, then `if (isHazmat && dr.hazmat_blocked) reasons.push(
+"hazmat_endorsement_missing")`. It blocks on **not held, no expiry on record, or expired** — all three, which
+is the correct FMCSA reading.
+
+**WIRED — `assertDriverQualifiedForLoad` is called from all three driver-assignment entry points:**
+`book-load.service.ts:1105`, `quick-assign.service.ts:52`, `planner.service.ts:296`. A gate nothing calls
+enforces nothing; this one is called everywhere a driver gets attached to a load.
+
+**★ THE HYPOTHESIS I ALMOST FILED — and it would have been a P0 safety defect.**
+
+The gate takes `isHazmat` as a parameter, and its own header warns *"There is NO `mdata.loads.hazmat` column
+— load-level hazmat lives in the `quicksave_pending_fields` jsonb, so callers pass the resolved `isHazmat`
+boolean in."* Two of the three callers read it as:
+
+```ts
+isHazmat: Boolean((load as { is_hazmat?: boolean }).is_hazmat)
+```
+
+**`is_hazmat` exists on no table in the database — I verified that first.** So this read as a TypeScript cast
+asserting a property that can never be populated, collapsing to `Boolean(undefined) === false`, meaning **the
+hazmat check would never fire on quick-assign or planner** — a hazmat load assignable to an unendorsed driver
+through two of three paths, silently. Correct gate, fed a constant. It is the identical shape to the real
+G18 defect I filed in item 95, which is exactly why it was believable.
+
+**It is wrong. The disproof is in the SQL, not the TypeScript:**
+
+- `quick-assign.service.ts:37` — `COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat`
+- `planner.service.ts:262` — `COALESCE((l.quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat`
+
+**`is_hazmat` is a computed column alias in each query, derived from the jsonb exactly as the gate's header
+instructs.** The cast is accurate, not aspirational. Both paths feed the gate correctly.
+
+**The lesson, and it is the sharpest one this session:** "this column does not exist in the database" is a
+**true and verified fact** that produced a **false conclusion**, because the identifier was a query alias
+rather than a column. Checking `information_schema` felt like the rigorous move and it was the wrong test.
+**When code names a field the schema does not have, read the SELECT that produced the row before concluding
+anything** — a derived alias and a phantom column are indistinguishable from the consuming code. This is now
+five hypotheses killed today (items 94 ×3, 95, 97, 105, and this), and this one came closest to being filed.
+
+**Consistent with the empty data:** 0 of 181 drivers have `endorsement_h = TRUE`, 0 have a hazmat expiry, and
+`mdata.driver_cdl_endorsements` has 0 rows — so `trg_sync_driver_endorsement_links` (correctly defined
+`AFTER INSERT OR UPDATE OF endorsement_h, endorsement_n, endorsement_p, endorsement_s, endorsement_t,
+endorsement_x`) has had nothing to sync. Consistent, not broken.
+
+**One asymmetry noted, not filed:** `book-load.service.ts:1101` resolves `Boolean(input.hazmat)` from the
+booking payload rather than the persisted jsonb, unlike the other two. That is defensible — book-load is
+*creating* the load, so the input is the only source that exists at that moment — but it does mean the three
+paths have two different sources of truth for the same fact. Recorded for whoever owns booking; no card.
