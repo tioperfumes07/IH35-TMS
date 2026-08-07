@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useMemo } from "react";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -69,7 +70,7 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate }: Props) {
           <EntityLink
             kind="factoring_advance"
             id={row.factoring_advance_id}
-            label={row.invoice_reference || row.factoring_advance_id.slice(0, 8)}
+            label={entityLabel(row.invoice_reference, row.factoring_advance_id, "Advance")}
           />
         ),
       },

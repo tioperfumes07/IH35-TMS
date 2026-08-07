@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { listUnitPartsHistory, type PartsAssignmentRow } from "../../api/maintenance";
@@ -32,7 +33,7 @@ const PARTS_HISTORY_COLUMNS: Array<ParityColumn<PartsAssignmentRow>> = [
       <EntityLink
         kind="work_order"
         id={row.work_order_id}
-        label={row.work_order_display_id ?? row.work_order_id.slice(0, 8)}
+        label={entityLabel(row.work_order_display_id, row.work_order_id, "Order")}
       />
     ),
   },
@@ -59,7 +60,7 @@ const PARTS_HISTORY_COLUMNS: Array<ParityColumn<PartsAssignmentRow>> = [
     sortValue: (row) => row.vendor_name ?? row.vendor_id,
     render: (row) =>
       row.vendor_id ? (
-        <EntityLink kind="vendor" id={row.vendor_id} label={row.vendor_name ?? row.vendor_id.slice(0, 8)} />
+        <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} />
       ) : (
         "—"
       ),

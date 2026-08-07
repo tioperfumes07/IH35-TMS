@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { insuranceClaimsApi, type InsuranceClaim } from "../../api/insurance";
@@ -166,7 +167,7 @@ export function InsuranceClaimsReverseSection({
               <EntityLink
                 kind="claim"
                 id={claim.id}
-                label={claim.claim_number || claim.id.slice(0, 8)}
+                label={entityLabel(claim.claim_number, claim.id, "Record")}
                 className="font-semibold text-slate-700"
               />
               <span className="ml-2 text-gray-600">{claim.status}</span>
