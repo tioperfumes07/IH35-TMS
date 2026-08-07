@@ -5134,3 +5134,61 @@ flag's global default as if it were the effective state. **Guard: assert this ba
 the resolved per-entity flag value and that no literal 'stays OFF' string exists in the component.**
 
 **Routed:** money / GL → **CC-1** (posting truth), with FE for the render.
+
+---
+
+## 83. Bank categorize — the ENGINE is correct end-to-end; one structural weakness in reverse linkage
+
+**Verified on prod after the item-82 categorize (USMCA, $918.00, 2026-08-07).** Having proven the banner
+false, the fair question is whether the thing it denied is at least *done well*. It is — with one gap.
+
+**PASS — the posted entry is accounting-correct:**
+
+| side | account | type | amount |
+|---|---|---|---|
+| DR | `6999` Other Operating Expense | Expense | **$918.00** |
+| CR | `1000` Bank of America - Operating (USMCA) | Asset | **$918.00** |
+
+Balanced, and the correct double entry for a money-out bank line categorized to an expense: the expense is
+debited, the bank account it actually cleared is credited. **The poster picked the right cash account on its
+own** — I chose only the expense category.
+
+**PASS — attribution persisted exactly as the banner promises:** on `banking.bank_transactions`,
+`categorized_at = 15:13:10`, `categorization_gl_account_id` → `6999 Other Operating Expense`,
+`category_kind = "Other Operating Expense"`, `review_state = matched`. `categorization_driver_id`,
+`_unit_id`, `_load_id`, `_vendor_id` are all NULL — **correct**, because I set none of them. The banner's
+claim that categorize "persists driver/unit/load/vendor fields immediately" holds.
+
+**PASS — forward linkage is a real FK:** `bank_transactions.matched_journal_entry_id` → the JE. One row
+points at it.
+
+**FINDING (P2, structural) — reverse linkage exists only as a STRING inside a memo.** From the journal
+entry, the only row-level pointer back to the bank transaction is the memo text
+`Bank categorization cb271ba0-691a-48b5-ad07-3669bbe6c569 posting`. I verified that UUID **is** the bank
+transaction id — so reverse drill-through genuinely works, **by parsing prose**. The JE's own structured
+columns are `source = 'auto'` and `source_system = 'tms'`, which identify no specific record.
+
+**And the purpose-built mechanism for this is sitting empty.** `banking.bank_transaction_splits` carries
+exactly the right shape — `result_journal_entry_id` (a proper reverse FK) plus `load_id`, `driver_id`,
+`unit_id`, `trailer_id`, `vendor_id`, `customer_id`, `item_id`, `posting_status`, `voided_at` — and it holds
+**0 rows** (`visible_all` 0 == `n_live_tup` 0, discriminator satisfied). The categorize path does not write
+it.
+
+**Why this is worth a card rather than a shrug:** LAW §10a (TOTAL CONNECTIVITY) requires forward **and**
+reverse drill-through. Today the reverse direction is load-bearing on a free-text string. Nothing enforces
+that memo's format — no FK, no constraint, no index. Anyone who edits a memo, or any change to the memo
+template, silently severs the audit path from a ledger entry back to the bank line that produced it. That
+path is exactly what an examiner walks. **It works now and would break quietly**, which is the definition of
+a structural weakness rather than a bug.
+
+**NOT claimed:** I did not verify the JE-detail UI's "Source maps bank_categorization → Banking
+Transactions" reverse drill (the banner documents it at
+`BankingTransactionsDesignView.tsx:1530`). That is a MODULE-level jump, not row-level, and I have not
+exercised it — **UNVERIFIED**.
+
+**Fix:** write the `bank_transaction_splits` row the schema was designed for (it already has
+`result_journal_entry_id`), or add a `source_bank_transaction_id` column on `accounting.journal_entries`.
+Either makes the reverse link a constraint instead of a sentence. **Guard: assert every JE whose memo begins
+`Bank categorization` has a structured FK back to its bank transaction.**
+
+**Routed:** CC-1 (ledger linkage).
