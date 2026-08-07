@@ -8,7 +8,7 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { assertBankAccountUsable } from "../banking/bank-account-visibility.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
-import { postSourceTransaction } from "./posting-engine.service.js";
+import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { recordPostingFlagSkip } from "./posting-flag-skip-audit.js";
 
@@ -127,7 +127,10 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
     return payload.data;
   });
 
-  app.post("/api/v1/customers/:id/payments", async (req, reply) => {
+  app.post(
+    "/api/v1/customers/:id/payments",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -287,7 +290,16 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
         user_uuid: user.uuid,
       });
       if (applicationsCount > 0 && customerPaymentPostingEnabled) {
-        await postSourceTransaction(
+        // ATOMICITY — this MUST be the in-client-tx poster, not postSourceTransaction().
+        // withCompanyScope -> withCurrentUser does pool.connect() + BEGIN ... COMMIT, so this callback
+        // runs inside an open transaction and the payment row above is NOT yet committed.
+        // postSourceTransaction() takes its own pool connection and its own transaction, so from there
+        // the payment does not exist yet — the poster would find nothing and the receipt would stay
+        // dark, which is the very defect this block fixes. Passing the caller's client also makes the
+        // payment, its applications and its journal entry commit or roll back as ONE unit: there is no
+        // window in which A/R has moved and the GL has not.
+        await postSourceTransactionInClientTx(
+          client,
           {
             operating_company_id: query.data.operating_company_id,
             source_transaction_type: "customer_payment",
