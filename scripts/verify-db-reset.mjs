@@ -131,4 +131,43 @@ if ((migrateResult.status ?? 1) !== 0) {
   process.exit(migrateResult.status ?? 1);
 }
 
+// CI-F06 — seed the shared DB-test fixture actor.
+//
+// Four accounting scenario suites share the actor uuid …0000000000dd
+// (abandonment-escrow-forfeit, escrow-new-hire, insurance-claim-recovery, accident-dire). CI's
+// database happens to carry that identity.users row; this freshly-created local database does not, so
+// the first suite that FKs it — abandonment writes it to mdata.loads.dispatcher_user_id — died in
+// beforeAll with `violates foreign key constraint "loads_dispatcher_user_id_fkey"`, stopping
+// verify:local-ci at step 13 of 1408 on a tree CI reported GREEN.
+//
+// That matters more than one suite: verify:local-ci is the ONLY local gate that reproduces
+// build-typecheck exactly, so a false red in it is the fastest way to teach every agent to ignore the
+// one check worth trusting. Seeding here rather than in the suites fixes the ENVIRONMENT, which is
+// where the gap actually is, and covers all four at once.
+//
+// Idempotent; lowercase email for the users_email_lower CHECK; column is `id` (0004 created it under
+// the old name, 0005_identity_id_rename.sql renamed it).
+const FIXTURE_ACTOR_ID = "00000000-0000-4000-8000-0000000000dd";
+{
+  const seedClient = new Client(buildPgClientConfig(verifyUrl));
+  try {
+    await seedClient.connect();
+    const res = await seedClient.query(
+      `INSERT INTO identity.users (id, email, role)
+       VALUES ($1::uuid, 'db-test-fixture-actor@example.test', 'Owner')
+       ON CONFLICT DO NOTHING`,
+      [FIXTURE_ACTOR_ID]
+    );
+    console.log(`verify:db:reset seeded DB-test fixture actor (inserted=${res.rowCount}).`);
+  } catch (error) {
+    // Never fail the reset on the seed: a schema that legitimately lacks the table must still reset.
+    console.warn(
+      "verify:db:reset could not seed the DB-test fixture actor:",
+      error instanceof Error ? error.message : String(error)
+    );
+  } finally {
+    await seedClient.end().catch(() => {});
+  }
+}
+
 console.log("verify:db:reset completed.");
