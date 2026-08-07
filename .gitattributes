@@ -63,3 +63,43 @@ docs/module-completion/lists-picker-partials.md merge=union
 # a union driver they conflict on merge; with one they merge cleanly AND (via the .gitattributes-derived
 # exemption in branch-precheck-push.mjs / verify-branch-fresh.mjs) stop forcing rebases.
 scripts/verify-sql-column-existence.allowlist.json      merge=json-union
+
+# HOT-FILE TREADMILL KILLER, ROUND 2 (2026-08-07). Measured on the CC-2 backlog: 9 of 15 open PRs were
+# CONFLICTING, and the conflicts were NOT in their code — they were in shared registries that every
+# lane appends to. GUARD-WORKORDERS.md alone conflicted 4 PRs; docs/law/LAW.json and
+# scripts/.guard-exempt.json conflicted 3 each. Only CLAIMED-NUMBERS.json was already covered, so the
+# treadmill this file was written to kill had simply moved to the registries next door.
+#
+# docs/law/LAW.json + scripts/.guard-exempt.json are append-only JSON: every new guard adds an entry
+# at the same tail anchor, so whichever PR merges first conflicts all the others. json-union
+# deep-unions both sides (keyed on id for LAW.json — see scripts/git-merge-driver.mjs).
+docs/law/LAW.json                       merge=json-union
+scripts/.guard-exempt.json              merge=json-union
+
+# docs/audit/GUARD-WORKORDERS.md is the findings BOARD: markdown, append-only by law ("never delete a
+# row, supersede it"). It cannot use json-union, but git's BUILT-IN `union` driver is exactly right —
+# it keeps BOTH sides of an append-only conflict rather than asking a human to choose, and choosing is
+# precisely the failure mode: picking a side silently destroys another lane's findings.
+# Row ORDER after a union merge is not guaranteed; that is acceptable because the board is a set of
+# rows keyed by their Item column, not an ordered document.
+docs/audit/GUARD-WORKORDERS.md          merge=union
+
+# CI-F23 (2026-08-07) — GENERALIZED from the single file above after the rule was exercised for real.
+# Resolving CC-2's #4615 with the new union rule worked for GUARD-WORKORDERS.md and then still stopped
+# on docs/audit/LIVE-TXN-BATTERY-2026-08-06.md: an add/add conflict on a DIFFERENT append-only board.
+# Naming boards one at a time loses that race every time a new one is created, and docs/audit/*.md are
+# uniformly append-only by law (rule 28: "never delete a row, supersede it"), so the directory is the
+# correct unit. Same reasoning as GUARD-WORKORDERS.md: picking a side on an append-only board silently
+# destroys another lane's rows, and git's built-in union keeps both.
+docs/audit/*.md                         merge=union
+
+# ADOPTION CAVEAT, learned by using this on a real stale branch — read before telling anyone "just
+# merge main". Git resolves merge attributes from the .gitattributes of the branch you are merging
+# INTO, not from the branch being merged in. A branch cut BEFORE these rules landed therefore does NOT
+# get them on its first merge of main, and conflicts exactly as before — which reads as "the fix does
+# not work". It does; the rules are simply not in effect yet. The first merge on any stale branch must
+# adopt them first:
+#     git checkout origin/main -- .gitattributes && git commit -m "adopt union merge rules"
+#     git merge origin/main          # registries now union automatically
+# Verified end-to-end on #4615: without the adoption step GUARD-WORKORDERS.md conflicts; with it, the
+# same merge auto-resolves it and only genuinely-uncovered files remain.

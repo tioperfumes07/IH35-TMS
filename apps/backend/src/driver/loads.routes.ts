@@ -256,8 +256,10 @@ async function fetchDriverOwnedLoad(client: { query: <R>(sql: string, values?: u
         u.unit_number
       FROM mdata.loads l
       JOIN mdata.customers c ON c.id = l.customer_id
+                            AND c.operating_company_id = l.operating_company_id
       LEFT JOIN identity.users iu ON iu.id = l.dispatcher_user_id
       LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
       WHERE l.id = $1
         AND l.soft_deleted_at IS NULL
         AND (l.assigned_primary_driver_id = $2 OR l.assigned_secondary_driver_id = $2)
@@ -269,7 +271,10 @@ async function fetchDriverOwnedLoad(client: { query: <R>(sql: string, values?: u
 }
 
 export async function registerDriverLoadsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver/loads", async (req, reply) => {
+  // 60/min, matching the sibling driver routes in this file (L455, L521). The rate-limit plugin is
+  // registered global:false, so a route with no config.rateLimit has NO limit at all — and this one is
+  // polled by the driver PWA, so it is the highest-traffic unauthenticated-adjacent surface here.
+  app.get("/api/v1/driver/loads", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     if (!driver) return;
@@ -291,8 +296,10 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
             u.unit_number
           FROM mdata.loads l
           JOIN mdata.customers c ON c.id = l.customer_id
+                                AND c.operating_company_id = l.operating_company_id
           LEFT JOIN identity.users iu ON iu.id = l.dispatcher_user_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           WHERE l.soft_deleted_at IS NULL
             AND (l.assigned_primary_driver_id = $1 OR l.assigned_secondary_driver_id = $1)
             AND l.status::text <> 'cancelled'

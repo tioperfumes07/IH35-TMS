@@ -18,12 +18,12 @@
   "acceptance": [
     { "kind": "guard", "script": "scripts/verify-bill-create-posts-gl.mjs", "wired_into": "verify-pre-commit (verify-steps/97) + .github/workflows/locked-guards.yml + package.json verify:bill-create-posts-gl" },
     { "kind": "route", "value": "apps/backend/src/accounting/bills.service.ts", "note": "createBill() now calls postBillGlIfEnabled after commit; returns gl_posting status" },
-    { "kind": "live", "assert": "static guard PASSES on the fixed tree + --selftest passes; guard FAILS on origin/main createBill (unwired, verified this session). BEHAVIORAL Neon-branch proof OWED TO GUARD (Tier-1 build-and-hold): create Bill flag ON -> balanced DR expense / CR ap_control JE + idempotent on repeat; flag OFF -> no JE + explicit unposted status.", "verified_by": "GUARD Neon branch-proof" },
+    { "kind": "live", "assert": "static guard PASSES on the fixed tree + --selftest passes; guard FAILS on origin/main createBill (unwired, verified this session). BEHAVIORAL Neon-branch proof OWED TO GUARD (Tier-1 build with GUARD verify-after): create Bill flag ON -> balanced DR expense / CR ap_control JE + idempotent on repeat; flag OFF -> no JE + explicit unposted status.", "verified_by": "GUARD Neon branch-proof" },
     { "kind": "design", "spec": "docs/specs/repairs/REPAIR-C-BOUNDARY-AUTOPOSTS-DESIGN.md", "sections": ["bill/bill-payment GL not auto-wired"] }
   ],
   "linkage": "Bill (accounting.bills) -> vendor (mdata.vendors via vendor key) | load (mdata.loads via bill_lines) | unit (mdata.units) | expense account (catalogs.accounts) | GL balanced JE (accounting.journal_entries via canonical poster) behind per-entity BILL_GL_POSTING_ENABLED | operating_company_id + FORCED RLS. Makes the A/P money path (bill -> internal ledger) exist end-to-end.",
   "db_required": false,
   "guard_required": true,
   "extra_gates": [],
-  "hold": "TIER-1 FINANCIAL (money posting). Build-and-hold: builder wired it; GUARD proves the balanced JE + idempotency on a Neon branch; owner merges. Coordinate with P1-BILLPAY-GL (bill must post before bill_payment can)."
+  "superseded_hold": "OWNER LAW 2026-08-03: no holds, no approval label; coders have full Neon access and merge on green. Proof, not approval, is the gate."
 }

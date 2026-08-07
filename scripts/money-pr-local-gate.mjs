@@ -34,6 +34,10 @@ const STEPS = [
   ["verify-section7-palette-nonfinancial", "scripts/verify-section7-palette-nonfinancial.mjs"],
   // CodeQL js/missing-rate-limiting on new auth routes (Cursor #4198).
   ["verify-new-auth-routes-rate-limited", "scripts/verify-new-auth-routes-rate-limited.mjs"],
+  // CLS-ROUTE-STUB-ARITY — paired with the rate-limit guard above ON PURPOSE: that guard converts
+  // routes to app.get(path, options, handler), which is exactly what kills a test stub that captured
+  // the handler positionally (2 files went red on 2026-08-06). Shrink-only.
+  ["verify-route-stub-handler-arity", "scripts/verify-route-stub-handler-arity.mjs"],
   // Cursor HH 12–23 / Claude HH 00–11 — #4009 burned a full typecheck on HH=00.
   ["verify-migration-lane-band", "scripts/verify-migration-lane-band.mjs"],
   // Cursor EVEN / Claude ODD — #4010 claimed 1900 then 1985 (odd) before 1986.

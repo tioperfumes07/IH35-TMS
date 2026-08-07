@@ -45,6 +45,8 @@ async function fetchOptionalCustomersStatus(operatingCompanyId: string) {
     if (typeof mod.fetchCustomersSyncStatus === "function") {
       return mod.fetchCustomersSyncStatus(operatingCompanyId);
     }
+  // optional module probe — QBO-SYNC-3 may not be deployed; the caller returns null
+  // intentional swallow
   } catch {
     // QBO-SYNC-3 not deployed
   }
@@ -57,6 +59,8 @@ async function fetchOptionalVendorsStatus(operatingCompanyId: string) {
     if (typeof mod.fetchVendorsSyncStatus === "function") {
       return mod.fetchVendorsSyncStatus(operatingCompanyId);
     }
+  // optional module probe — QBO-SYNC-3 may not be deployed; the caller returns null
+  // intentional swallow
   } catch {
     // QBO-SYNC-3 not deployed
   }

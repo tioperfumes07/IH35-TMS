@@ -17,7 +17,7 @@
  * ALTERs and asserts each table gets ONLY its own columns.
  */
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -55,7 +55,10 @@ function run() {
     if (out === "NO_EXPORT" || !out.startsWith("{")) {
       // The parser does not expose a callable collector; fall back to asserting the SOURCE bounds the
       // window, which is the property that matters. Textual, but explicit about being a fallback.
-      const src = spawnSync("cat", [join(ROOT, "scripts/verify-schema-parity.mjs")], { encoding: "utf8" }).stdout;
+      // CI-F03 / CodeQL js/unnecessary-use-of-cat: this spawned `cat` to read a local file.
+      // readFileSync does the same thing without a process, and cannot fail silently to an
+      // undefined .stdout the way spawnSync can when the binary is missing.
+      const src = readFileSync(join(ROOT, "scripts/verify-schema-parity.mjs"), "utf8");
       const bounded = /const terminator = capped\.indexOf\(";"\)/.test(src) && /terminator === -1 \? capped : capped\.slice\(0, terminator\)/.test(src);
       return bounded
         ? { ok: true, message: "PASS: the ALTER TABLE scan window is bounded at the statement terminator (source check)." }
