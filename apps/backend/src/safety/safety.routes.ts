@@ -817,7 +817,9 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/safety/accidents/:id/spawn-liability", async (req, reply) => {
+  // Rate-limited per the repo pattern (config.rateLimit, cf. accounting/expenses.routes.ts). 30/min:
+  // this writes a driver debt, so it sits with the other money-mutating routes, not the read tier.
+  app.post("/api/v1/safety/accidents/:id/spawn-liability", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSafetyMutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -926,11 +928,23 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
               origin_id,
               status
             ) VALUES (
-              $1,$2,'accident_damage',$3,$4,$4,0,true,'safety_accident',$5,'pending_recovery'
+              -- requires_acknowledgment = FALSE. Deduction authorization is the signed HIRE CONTRACT,
+              -- not a per-charge driver e-sign: legal/signed-finance-handoff.service.ts (owner-LOCKED
+              -- 2026-07-04/05) states "there is NO separate driver-facing deduction-authorization
+              -- e-sign … do NOT build a separate driver e-sign flow". Gating here on a driver tap
+              -- contradicted that lock and stalled every at-fault recovery behind a signature the
+              -- company never asks for. The company-side control is unchanged and is where it belongs:
+              -- blueprint MUST 3.4.2(d)(e) — a user signs off at settlement prep with a digital
+              -- signature on file, and maker != checker (F13) still applies before anything posts.
+              $1,$2,'accident_damage',$3,$4,$4,0,false,'safety_accident',$5,'pending_recovery'
             )
             RETURNING id::text
           `,
-          [query.data.operating_company_id, accident.driver_id, desc, amountCents, accident.id]
+          // original_amount / current_balance are numeric(10,2) DOLLARS (see cash-advance-create.ts,
+          // which writes body.amount in dollars, and fuel-posting/poster.service.ts, which reads them
+          // back with *100 to get cents). Passing amountCents here stored 250000 for a $2,500 charge —
+          // a 100x overstatement of what the driver is told they owe.
+          [query.data.operating_company_id, accident.driver_id, desc, amountCents / 100, accident.id]
         );
         const liabilityId = (liabilityRes.rows[0] as { id?: string } | undefined)?.id;
         if (!liabilityId) throw new Error("liability_create_failed");

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listMaintenanceCompliance425cLog } from "../../../api/maintenance";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 type Compliance425cRow = Record<string, unknown>;
 
@@ -19,7 +20,12 @@ export function Compliance425CPage() {
 
   const columns = useMemo<ParityColumn<Compliance425cRow>[]>(
     () => [
-      { key: "created_at", label: "Timestamp", sortable: true, render: (row) => String(row.created_at ?? "—") },
+      {
+        key: "created_at",
+        label: "Timestamp",
+        sortable: true,
+        render: (row) => formatDateTimeUS(row.created_at as string) || "—",
+      },
       { key: "event_type", label: "Event Type", sortable: true, render: (row) => String(row.event_type ?? "—") },
       {
         key: "payload",

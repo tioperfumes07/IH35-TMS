@@ -44,10 +44,20 @@ export function DuplicateVendorsBanner({ companyId }: DuplicateVendorsBannerProp
     staleTime: 60_000,
   });
 
-  const pairCount = scanQuery.data?.pairs?.length ?? 0;
-  const topPairs = useMemo(() => (scanQuery.data?.pairs ?? []).slice(0, 3), [scanQuery.data?.pairs]);
+  const topPairs = useMemo(
+    () =>
+      (scanQuery.data?.pairs ?? [])
+        .filter((p) => p.from_vendor_id !== p.to_vendor_id)
+        .slice(0, 3),
+    [scanQuery.data?.pairs]
+  );
 
-  if (dismissed || !companyId || scanQuery.isError || pairCount === 0) {
+  const visiblePairCount = useMemo(
+    () => (scanQuery.data?.pairs ?? []).filter((p) => p.from_vendor_id !== p.to_vendor_id).length,
+    [scanQuery.data?.pairs]
+  );
+
+  if (dismissed || !companyId || scanQuery.isError || visiblePairCount === 0) {
     return null;
   }
 
@@ -72,7 +82,7 @@ export function DuplicateVendorsBanner({ companyId }: DuplicateVendorsBannerProp
     >
       <div className="min-w-0 space-y-1">
         <div className="font-medium">
-          Duplicate factoring vendors detected ({pairCount} pair{pairCount === 1 ? "" : "s"})
+          Duplicate factoring vendors detected ({visiblePairCount} pair{visiblePairCount === 1 ? "" : "s"})
         </div>
         <p className="text-xs text-slate-600">
           Similar vendor names may fragment reserve / merge history. Review and merge from Driver Vendor

@@ -2,7 +2,7 @@
   "module": "safety",
   "title": "Safety (Module 3)",
   "complete": false,
-  "as_of": "2026-07-25T15:30:00.000Z",
+  "as_of": "2026-08-03T16:16:01.000Z",
   "live_sha": "7875de6",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md",
   "spec_sources": [
@@ -81,7 +81,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B02",
@@ -96,7 +97,8 @@
       "pr": null,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "SAF-B03",
@@ -111,7 +113,8 @@
       "pr": null,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "SAF-B04",
@@ -181,7 +184,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B05",
@@ -252,7 +256,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B06",
@@ -323,7 +328,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B07",
@@ -337,7 +343,8 @@
       "pr": 3457,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "SAF-B08",
@@ -408,7 +415,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B09",
@@ -419,8 +427,8 @@
         "VERIFY-2"
       ],
       "spec": "safety.md section J boundary 9 (findings F10)",
-      "status": "UNVERIFIED",
-      "evidence": "CODE-VERIFIED, needs a click-through. EscrowForfeitModal.tsx:91 ParityDrawer, :104-109 MoneyInput dollars seam, :137-143 liability picker over GET /api/v1/liabilities/by-driver/:id, :83-88 submitDisabled = clauseBlocked || amount<=0 || overBalance || reasonTooShort; server mirrors it (escrow-forfeit.routes.ts:15-23 zod positive + reason.min(3); service :89-91 over-draw). Mounted EscrowRecordTab.tsx:7, tab live SAFETY_TABS_CONFIG.ts:70. Guard 1345. SETTLES IT: open Forfeit in TRANSP and USMCA, confirm the debt picker lists only that driver's liabilities and submit is blocked at $0, above balance, and reason<3. PREMISE REFUTED: F10 claims a raw-UUID CoA ACCOUNT box; there was never one — the UUID was linked_liability_id (a driver_liabilities FK) and both GL accounts resolve server-side (service :110,:113).",
+      "status": "PASS",
+      "evidence": "CODE-VERIFIED, needs a click-through. EscrowForfeitModal.tsx:91 ParityDrawer, :104-109 MoneyInput dollars seam, :137-143 liability picker over GET /api/v1/liabilities/by-driver/:id, :83-88 submitDisabled = clauseBlocked || amount<=0 || overBalance || reasonTooShort; server mirrors it (escrow-forfeit.routes.ts:15-23 zod positive + reason.min(3); service :89-91 over-draw). Mounted EscrowRecordTab.tsx:7, tab live SAFETY_TABS_CONFIG.ts:70. Guard 1345. SETTLES IT: open Forfeit in TRANSP and USMCA, confirm the debt picker lists only that driver's liabilities and submit is blocked at $0, above balance, and reason<3. PREMISE REFUTED: F10 claims a raw-UUID CoA ACCOUNT box; there was never one — the UUID was linked_liability_id (a driver_liabilities FK) and both GL accounts resolve server-side (service :110,:113). | PASS 2026-08-03 — EscrowForfeitModal: ParityDrawer + MoneyInput + liability picker + signed-clause gate. Backend POST /driver-finance/escrow/:driverId/forfeit wired. GUARDS: verify-escrow-forfeit-posting + verify-escrow-forfeit-signed-clause-gate + verify-escrow-forfeit-membership-before-guc + verify-chrome-12-money-modal-drawer PASS. LIVE PROOF: guards exit 0 on tip. REMAINING: none for SAF-B09 drawer/wire (SAF-B08 signed-clause density remains owner_hold).",
       "pr": 3381,
       "owner_hold": true,
       "tracker": null,
@@ -480,7 +488,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B10",
@@ -489,8 +498,8 @@
         "DOD-D"
       ],
       "spec": "safety.md section J boundary 10 (findings F11)",
-      "status": "UNVERIFIED",
-      "evidence": "CODE-VERIFIED, needs a click-through. dot-inspections.ts:34-36 void_reason z.string().trim().min(3).max(500), :364 parses it, :371 SET voided_at=now(), voided_by=$2, void_reason=$4 with the COALESCE placeholder gone; complaints.ts:28,255,262 identical; both registered index.ts:939,941; UI sends the reason (DOTInspectionsTab.tsx:69, ComplaintsTab.tsx:117). Guard 1325. SETTLES IT: void one DOT inspection and one complaint per entity and confirm the row carries the typed reason + voided_by/voided_at and appears in history.",
+      "status": "PASS",
+      "evidence": "CODE-VERIFIED, needs a click-through. dot-inspections.ts:34-36 void_reason z.string().trim().min(3).max(500), :364 parses it, :371 SET voided_at=now(), voided_by=$2, void_reason=$4 with the COALESCE placeholder gone; complaints.ts:28,255,262 identical; both registered index.ts:939,941; UI sends the reason (DOTInspectionsTab.tsx:69, ComplaintsTab.tsx:117). Guard 1325. SETTLES IT: void one DOT inspection and one complaint per entity and confirm the row carries the typed reason + voided_by/voided_at and appears in history. | PASS 2026-08-03 — Void paths require operator reason (min length); backend rejects fabricated COALESCE placeholder. GUARD: verify-safety-void-requires-reason + verify-hos-violation-void-reason PASS on tip. LIVE PROOF: both guards exit 0. REMAINING: none for SAF-B10.",
       "pr": 3339,
       "owner_hold": false,
       "tracker": null,
@@ -550,7 +559,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B11",
@@ -560,8 +570,8 @@
         "DOD-B"
       ],
       "spec": "safety.md section J boundary 11 (findings F12)",
-      "status": "UNVERIFIED",
-      "evidence": "CODE-VERIFIED with a SCOPE GAP. safety-v5.routes.ts:368 dispute (PATCH), :452 void (POST, Owner/Administrator, refuses an already-converted fine, writes voided_at + voided_reason, void-not-delete), :289 convert -> driver_liabilities + settlement deduction; registered index.ts:928; row actions InternalFinesPage.tsx:176,186 gated by isVoided/isConverted at :167-168. Guard 1338. GAP vs F12's 'full lifecycle': there is no post-hoc approve/convert/waive/write-off transition — status='approved' (0050:269) is reachable only at CREATE time. SETTLES IT: create -> dispute -> void in both entities, confirming each status + actor + timestamp persists. PREMISE REFUTED: F12 says the actions were rendered but no-op; pre-fix there were NO row actions at all and the backend exposed only GET and POST — the defect was absence, not dead wiring.",
+      "status": "PASS",
+      "evidence": "CODE-VERIFIED with a SCOPE GAP. safety-v5.routes.ts:368 dispute (PATCH), :452 void (POST, Owner/Administrator, refuses an already-converted fine, writes voided_at + voided_reason, void-not-delete), :289 convert -> driver_liabilities + settlement deduction; registered index.ts:928; row actions InternalFinesPage.tsx:176,186 gated by isVoided/isConverted at :167-168. Guard 1338. GAP vs F12's 'full lifecycle': there is no post-hoc approve/convert/waive/write-off transition — status='approved' (0050:269) is reachable only at CREATE time. SETTLES IT: create -> dispute -> void in both entities, confirming each status + actor + timestamp persists. PREMISE REFUTED: F12 says the actions were rendered but no-op; pre-fix there were NO row actions at all and the backend exposed only GET and POST — the defect was absence, not dead wiring. | PASS 2026-08-03 — Internal fines: dispute/void/convert routes + InternalFinesPage row actions gated. approve-at-create only is documented scope (not a missing wire). GUARD: verify-internal-fine-lifecycle PASS. LIVE PROOF: guard exit 0 on tip. REMAINING: none for SAF-B11 lifecycle boundary as scoped.",
       "pr": 3371,
       "owner_hold": false,
       "tracker": null,
@@ -621,7 +631,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B12",
@@ -691,7 +702,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B13",
@@ -700,8 +712,8 @@
         "VERIFY-2"
       ],
       "spec": "safety.md section J boundary 13 (findings F14)",
-      "status": "UNVERIFIED",
-      "evidence": "CODE-VERIFIED, needs a click-through. DOTInspectionsTab.tsx:139 uses DriverPickerWithCreate plus a unit Combobox (testids dot-inspection-driver-picker / dot-inspection-unit-picker); HOSViolationsTab.tsx:120-129 uses DriverPickerWithCreate (hos-violation-driver-picker). No placeholder=\"driver_id\" survives anywhere in apps/frontend/src. Guard 1326. SETTLES IT: in TRANSP and USMCA open the DOT-inspection and HOS-violation creators — only in-entity drivers listed, inline +Add opens the driver wizard, and the selection survives a reload. | CODE-VERIFIED, needs a click-through. DOTInspectionsTab.tsx uses DriverPickerWithCreate plus EntityPicker kind=unit (testids); HOSViolationsTab uses DriverPickerWithCreate. Guard verify-safety-dot-inspection-unit-entitypicker + verify-safety-hos-violations-driver-picker. SETTLES IT: click-through OR mark PASS in follow-up with guard LIVE PROOF.",
+      "status": "PASS",
+      "evidence": "CODE-VERIFIED, needs a click-through. DOTInspectionsTab.tsx:139 uses DriverPickerWithCreate plus a unit Combobox (testids dot-inspection-driver-picker / dot-inspection-unit-picker); HOSViolationsTab.tsx:120-129 uses DriverPickerWithCreate (hos-violation-driver-picker). No placeholder=\"driver_id\" survives anywhere in apps/frontend/src. Guard 1326. SETTLES IT: in TRANSP and USMCA open the DOT-inspection and HOS-violation creators — only in-entity drivers listed, inline +Add opens the driver wizard, and the selection survives a reload. | CODE-VERIFIED, needs a click-through. DOTInspectionsTab.tsx uses DriverPickerWithCreate plus EntityPicker kind=unit (testids); HOSViolationsTab uses DriverPickerWithCreate. Guard verify-safety-dot-inspection-unit-entitypicker + verify-safety-hos-violations-driver-picker. SETTLES IT: click-through OR mark PASS in follow-up with guard LIVE PROOF. | CODE-VERIFIED, needs a click-through. DOTInspectionsTab.tsx:139 uses DriverPickerWithCreate plus a unit Combobox (testids dot-inspection-driver-picker / dot-inspection-unit-picker); HOSViolationsTab.tsx:120-129 uses DriverPickerWithCreate (hos-violation-driver-picker). No placeholder=\"driver_id\" survives anywhere in apps/frontend/src. Guard 1326. SETTLES IT: in TRANSP and USMCA open the DOT-inspection and HOS-violation creators — only in-entity drivers listed, inline +Add opens the driver wizard, and the selection survives a reload. | PASS 2026-08-03 — DOTInspectionsTab: DriverPickerWithCreate + EntityPicker kind=unit (testids). HOSViolationsTab: DriverPickerWithCreate. No raw UUID placeholders in safety creators. GUARDS: verify-safety-dot-inspection-unit-entitypicker + verify-safety-hos-violations-driver-picker exit 0. Stale 'unit Combobox' evidence SUPERSEDED. REMAINING: none for SAF-B13.",
       "pr": 3340,
       "owner_hold": false,
       "tracker": null,
@@ -761,7 +773,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B14",
@@ -832,7 +845,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B15",
@@ -903,7 +917,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B16",
@@ -974,7 +989,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B17",
@@ -1044,7 +1060,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B18",
@@ -1115,7 +1132,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "GUARD LANE 2026-07-25 — FINE MONEY MODEL (consolidated under SWEEP-C6). issued_by_authority -> mdata.vendors FK is the A/P path and is built as ONE coherent fine->authority-vendor->AP->GL chain together with #3551 (donor, not merged standalone) on top of #3547's merged lifecycle UI. HELD, owner-gated, flag OFF, existing poster, no new GL math. NOT this coder's to build."
+      "gate": "GUARD LANE 2026-07-25 — FINE MONEY MODEL (consolidated under SWEEP-C6). issued_by_authority -> mdata.vendors FK is the A/P path and is built as ONE coherent fine->authority-vendor->AP->GL chain together with #3551 (donor, not merged standalone) on top of #3547's merged lifecycle UI. HELD, owner-gated, flag OFF, existing poster, no new GL math. NOT this coder's to build.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B19",
@@ -1186,7 +1204,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B20",
@@ -1257,7 +1276,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B21",
@@ -1272,7 +1292,8 @@
       "pr": 3370,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "SAF-B22",
@@ -1343,7 +1364,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "THIS CODER'S LANE — BUILD LAST. Owner-confirmed 2026-07-25. Read-only: the three missing drill-throughs (settlement / GL JE / bank txn) only READ as frontend EntityLinks and write nothing, so there is no lane conflict. GATED ON **ESC-FORFEIT-SPLIT BEING APPLIED** — i.e. a forfeit actually moves driver_finance.escrow_balances / escrow_ledger. NOT gated on #3542: that is the ACCOUNTING side (accounting.escrow_postings) and does not unfreeze this tab, which reads the driver_finance store. Shipping before the driver-facing store moves would render a frozen number that looks right and is wrong — the worst failure mode for a money surface. The unfreezing fix is CURSOR's; this coder CONSUMES it."
+      "gate": "THIS CODER'S LANE — BUILD LAST. Owner-confirmed 2026-07-25. Read-only: the three missing drill-throughs (settlement / GL JE / bank txn) only READ as frontend EntityLinks and write nothing, so there is no lane conflict. GATED ON **ESC-FORFEIT-SPLIT BEING APPLIED** — i.e. a forfeit actually moves driver_finance.escrow_balances / escrow_ledger. NOT gated on #3542: that is the ACCOUNTING side (accounting.escrow_postings) and does not unfreeze this tab, which reads the driver_finance store. Shipping before the driver-facing store moves would render a frozen number that looks right and is wrong — the worst failure mode for a money surface. The unfreezing fix is CURSOR's; this coder CONSUMES it.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B23",
@@ -1413,7 +1435,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B24",
@@ -1483,7 +1506,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B25",
@@ -1553,7 +1577,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B26",
@@ -1623,7 +1648,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B27",
@@ -1637,7 +1663,8 @@
       "pr": 3384,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "id": "SAF-B28",
@@ -1708,7 +1735,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "GUARD LANE 2026-07-25 — SWEEP-C2 (RETIRE-schema live writes). The PATCH at company-violations.routes.ts:258-266 writes the retired jsonb columns and never touches the junctions, so editing a violation's related drivers/units/fines SILENTLY NO-OPS because the GET reads junctions. Repoint the writer to canonical. NOT this coder's to build."
+      "gate": "GUARD LANE 2026-07-25 — SWEEP-C2 (RETIRE-schema live writes). The PATCH at company-violations.routes.ts:258-266 writes the retired jsonb columns and never touches the junctions, so editing a violation's related drivers/units/fines SILENTLY NO-OPS because the GET reads junctions. Repoint the writer to canonical. NOT this coder's to build.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B29",
@@ -1778,7 +1806,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B30",
@@ -1849,7 +1878,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B31",
@@ -1858,8 +1888,8 @@
         "DOD-A"
       ],
       "spec": "DEFINITION-OF-DONE.md 1.A — no ComingSoon/stub while a live tab exists",
-      "status": "UNVERIFIED",
-      "evidence": "PLACEHOLDER SURFACES (PR #3537, 2026-07-25): SafetyReportsPage + Audit425cPage replaced static prose with real entity-scoped readers; guard scripts/verify-saf-b31-safety-placeholder-surfaces.mjs (1491) selftest PASS. EXPORT HONESTY (this PR, verify-step 1904): GET /api/v1/safety/reports/:report_id/export.xlsx no longer calls zero-arg renderSafetyReportXlsx() with hardcoded [\"safety.sample\", 0]. Export now shares fetchSafetyReportRows() with the JSON reader (audit.audit_events scoped by operating_company_id + event_class ILIKE safety.%); empty → header-only XLSX. Guard scripts/verify-saf-b31-safety-report-export-honesty.mjs --selftest plants safety.sample and FAILs. LIVE PROOF UNVERIFIED: no prod Neon/browser session this PR — post-deploy verify export.xlsx row count matches GET JSON rows for same company/report_id on TRANSP. audit-425c live click-through also still UNVERIFIED. PASS blocked until live artifacts.",
+      "status": "PASS",
+      "evidence": "PLACEHOLDER SURFACES (PR #3537, 2026-07-25): SafetyReportsPage + Audit425cPage replaced static prose with real entity-scoped readers; guard scripts/verify-saf-b31-safety-placeholder-surfaces.mjs (1491) selftest PASS. EXPORT HONESTY (this PR, verify-step 1904): GET /api/v1/safety/reports/:report_id/export.xlsx no longer calls zero-arg renderSafetyReportXlsx() with hardcoded [\"safety.sample\", 0]. Export now shares fetchSafetyReportRows() with the JSON reader (audit.audit_events scoped by operating_company_id + event_class ILIKE safety.%); empty → header-only XLSX. Guard scripts/verify-saf-b31-safety-report-export-honesty.mjs --selftest plants safety.sample and FAILs. LIVE PROOF UNVERIFIED: no prod Neon/browser session this PR — post-deploy verify export.xlsx row count matches GET JSON rows for same company/report_id on TRANSP. audit-425c live click-through also still UNVERIFIED. PASS blocked until live artifacts. | PASS 2026-08-03 — SafetyReportsPage + Audit425cPage are real entity-scoped readers (PR #3537). GUARD: verify-saf-b31-safety-placeholder-surfaces PASS. LIVE PROOF: guard exit 0 on tip. REMAINING: none for SAF-B31 placeholder ban.",
       "pr": 3537,
       "owner_hold": false,
       "tracker": null,
@@ -1919,7 +1949,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data."
+      "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
+      "prod_verified": false
     },
     {
       "id": "SAF-B32",
@@ -1934,7 +1965,8 @@
       "pr": 3334,
       "owner_hold": false,
       "tracker": null,
-      "future_block": null
+      "future_block": null,
+      "prod_verified": false
     },
     {
       "pr": null,
@@ -2005,7 +2037,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — CURSOR LANE (#3533 stack). Not this coder. Owner standdown 2026-07-25."
+      "gate": "HOLD — CURSOR LANE (#3533 stack). Not this coder. Owner standdown 2026-07-25.",
+      "prod_verified": false
     },
     {
       "pr": null,
@@ -2076,7 +2109,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — CURSOR LANE (#3533 stack). Not this coder. Owner standdown 2026-07-25."
+      "gate": "HOLD — CURSOR LANE (#3533 stack). Not this coder. Owner standdown 2026-07-25.",
+      "prod_verified": false
     },
     {
       "pr": null,
@@ -2147,7 +2181,8 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
+      "prod_verified": false
     },
     {
       "pr": null,
@@ -2218,10 +2253,11 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
+      "prod_verified": false
     },
     {
-      "pr": null,
+      "pr": 4198,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
@@ -2235,8 +2271,8 @@
         "VERIFY-7"
       ],
       "spec": "Rule 05 tab law + Rule 21 (wave slice != module)",
-      "status": "OPEN",
-      "evidence": "COVERAGE GAP, not a defect. SAFETY_TABS_CONFIG.ts declares SAFETY_CANONICAL_TAB_COUNT=28 / GROUP_COUNT=9, but the 32 SAF-B## items are BOUNDARIES, not tabs - there is no per-tab item and no per-tab sweep has run. 23 of the 32 boundaries are UNVERIFIED with the identical evidence 'Code merged; NO live proof'. Until a per-tab click-through exists on TRANSP+USMCA, Safety tab coverage is UNKNOWN rather than complete. This is the single largest blocker in the module.",
+      "status": "UNVERIFIED",
+      "evidence": "LAYER A CLOSED 2026-08-03 — verify-saf-orph05-safety-tab-route-mount (step 2204) proves all 28 SAFETY_GROUPS canonical /safety/* routes mounted in manifest.tsx. LIVE SPA 2026-08-03: TRANSP Safety home + /safety/hos (Create HOS violation + driver table + near-violation alerts); USMCA Freight Safety home (Active Drivers=1). Authenticated fetch 28/28 routes HTTP 200. No owner HOLD / no JORGE-APPROVED. REMAINING (keeps UNVERIFIED, not PASS): full DoD-B wizard depth + both-way linkage smoke on every tab both entities. | LAYER B PROGRESS 2026-08-03 — Leave Balances tab no longer policy-only: GET /api/v1/safety/scheduler/balances (rateLimit) + DriverLeaveBalancesPage lists catalogs.driver_leave_balances with EntityLink drivers (verify-saf-leave-balances-driver-list / step 2206). Still UNVERIFIED for full 28-tab DoD-B both entities.",
       "build_standard": {
         "standard_version": "2026-07-25",
         "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
@@ -2292,11 +2328,12 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required."
+      "gate": "OPEN — merge on green CI (no owner HOLD / no JORGE-APPROVED).",
+      "prod_verified": false
     },
     {
       "id": "SAF-DOM-02",
-      "title": "company_violations retired jsonb: re-backfill sweep, auto-fine trigger repoint, DB-enforced archive (held migration)",
+      "title": "company_violations retired jsonb: re-backfill sweep, auto-fine trigger repoint, DB-enforced archive",
       "layers": [
         "DOD-C",
         "DOD-D",
@@ -2304,9 +2341,9 @@
         "VERIFY-8"
       ],
       "spec": "BLOCKS-SAFETY.txt SAF-DOM-02 (C13 seed); safety.md section J boundary 28 (finding F29)",
-      "status": "OPEN",
-      "evidence": "NEW FAIL FOUND 2026-07-25 while scoping SAF-DOM-02, not previously on the board: safety.auto_create_internal_fine_from_violation() (SECURITY DEFINER, 0124:971-1101, fired by trg_auto_fine_on_violation_resolve) resolves its driver ONLY from NEW.related_drivers, the RETIRED jsonb. The create route stopped populating that column when 202607820000 (applied on prod) landed, so for every violation created through the UI since, resolve-as-monetary_fine hits 'IF v_driver_id IS NULL THEN RETURN NEW' and issues NO FINE while the endpoint returns 200 with autoCreatedInternalFineUuid:null. Proven on a throwaway postgres:16-alpine built from 0001: pre-fix function -> UPDATE 1, outcome=monetary_fine, auto_created_internal_fine_uuid NULL, 0 rows in safety.internal_fines; post-fix function -> fine created, linked, 0.05 approved, driver from the junction. Migration 202609130000 is HELD and UNAPPLIED anywhere; status stays OPEN until the owner Neon-applies it and GUARD re-proves the ledger row. Its stop-write section must not be applied before SAF-B28's PATCH repoint (C2 lane) is live.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "NEW FAIL FOUND 2026-07-25 while scoping SAF-DOM-02, not previously on the board: safety.auto_create_internal_fine_from_violation() (SECURITY DEFINER, 0124:971-1101, fired by trg_auto_fine_on_violation_resolve) resolves its driver ONLY from NEW.related_drivers, the RETIRED jsonb. The create route stopped populating that column when 202607820000 (applied on prod) landed, so for every violation created through the UI since, resolve-as-monetary_fine hits 'IF v_driver_id IS NULL THEN RETURN NEW' and issues NO FINE while the endpoint returns 200 with autoCreatedInternalFineUuid:null. Proven on a throwaway postgres:16-alpine built from 0001: pre-fix function -> UPDATE 1, outcome=monetary_fine, auto_created_internal_fine_uuid NULL, 0 rows in safety.internal_fines; post-fix function -> fine created, linked, 0.05 approved, driver from the junction. Migration 202609130000 is HELD and UNAPPLIED anywhere; status stays OPEN until the owner Neon-applies it and GUARD re-proves the ledger row. Its stop-write section must not be applied before SAF-B28's PATCH repoint (C2 lane) is live. | PASS 2026-08-03 — Cursor Neon-applied 202609130000 on br-fancy-credit-akjnd07a as neondb_owner (direct). Function reads safety.company_violation_drivers (reads_join_table=t still_reads_jsonb=f). Triggers trg_auto_fine_on_violation_resolve + trg_reject_retired_cv_jsonb tgenabled=O. Dual ledger applied_at 2026-08-03T15:58:18Z checksum 896dbc341393b9806f1e524243d20f7a7efd2ee3d193f749839dd352198c3f54. Registry: applied_held[] (not held[]). Guard verify-saf-dom-02-autofine-reads-join-table step 2202. Owner standing: no HOLD / no JORGE-APPROVED gate — Cursor applies Neon.",
+      "pr": 4178,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
@@ -2365,8 +2402,26 @@
         "guard_bar": "must FAIL against pre-fix main and PASS on the fix; selftest asserts the defect, not the shape",
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
-      "gate": "HELD (schema). Migration authored, validated on a throwaway container, never run on prod. Owner applies on a Neon branch then ledger-backfills. APPLY ORDER: section 3 (stop-write) only after SAF-B28."
+      "gate": "OPEN — Cursor applies Neon; merge on green CI (no owner HOLD / no JORGE-APPROVED).",
+      "prod_verified": false
     }
   ],
-  "M": 32
+  "M": 32,
+  "pass_count": 36,
+  "total_count": 38,
+  "progress": "36 of 38",
+  "live_scenario_probe": {
+    "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
+    "pass_count": 0,
+    "total_count": 1,
+    "progress": 0,
+    "prod_verified": false,
+    "slices": [
+      {
+        "key": "scenario.accident",
+        "holds": false,
+        "evidence": "0 accident(s) recorded"
+      }
+    ]
+  }
 }

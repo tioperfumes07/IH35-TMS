@@ -358,8 +358,17 @@ export function VendorsPage() {
                         Vendor quality: {vendorQualityLabel(selectedVendor.notes).label}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <ActionButton onClick={() => navigate(`/vendors/${selectedVendor.id}`)}>Edit</ActionButton>
+                    <div className="flex items-center gap-2" data-testid="vendor-header-actions">
+                      {/* CLS-CHROME / CUST-CHROME-01 sibling: same-row Edit must share Button chrome with New transaction. */}
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="h-8"
+                        onClick={() => navigate(`/vendors/${selectedVendor.id}`)}
+                        data-testid="vendor-header-edit"
+                      >
+                        Edit
+                      </Button>
                       <Button type="button" onClick={() => navigate(`/accounting/bills?vendor_id=${selectedVendor.id}`)}>
                         New transaction
                       </Button>

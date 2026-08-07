@@ -483,11 +483,13 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       <CreateBillModal
         open={createBillOpen}
         operatingCompanyId={companyId}
+        requireWoLink
         onClose={() => setCreateBillOpen(false)}
       />
       <CreateExpenseModal
         open={createExpenseOpen}
         operatingCompanyId={companyId}
+        requireWoLink
         onClose={() => setCreateExpenseOpen(false)}
       />
       <CreateWorkOrderModal

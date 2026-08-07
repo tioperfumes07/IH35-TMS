@@ -41,7 +41,18 @@ if (creator && !creator.includes("listDrivers") && !delegatesToSharedPicker) {
 }
 if (delegatesToSharedPicker) {
   if (!sharedDriverPicker) failures.push(`missing:${sharedDriverPickerPath}`);
-  else if (!sharedDriverPicker.includes("listDrivers")) failures.push("shared_driver_picker_missing_listDrivers");
+  else if (
+    !sharedDriverPicker.includes("listDrivers") &&
+    !/EntityPicker[\s\S]{0,200}kind=["']driver["']/.test(sharedDriverPicker)
+  ) {
+    failures.push("shared_driver_picker_missing_EntityPicker_kind_driver");
+  }
+  if (/EntityPicker[\s\S]{0,200}kind=["']driver["']/.test(sharedDriverPicker)) {
+    const reg = read("apps/frontend/src/components/parity/entityPickerRegistry.ts");
+    if (!reg || !/kind:\s*"driver"[\s\S]*?listDrivers\(/.test(reg)) {
+      failures.push("entityPickerRegistry_driver_kind_missing_listDrivers");
+    }
+  }
 }
 if (creator && !creator.includes("listInternalFineReasons")) failures.push("frontend_missing_internal_fine_reasons_catalog_fetch");
 // The pickers must store the resolved uuids (not raw text) so the create button can ever enable.

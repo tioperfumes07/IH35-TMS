@@ -8,14 +8,14 @@ type Props = {
 };
 
 /**
- * Blocking confirm over an open modal. Renders at z-index above `Modal` (z-50).
+ * Blocking confirm over an open modal. Renders at z-index above `Modal` (z-[70]).
  */
 export function ConfirmDiscardDialog({ open, onCancel, onDiscard }: Props) {
   if (!open) return null;
 
   return createPortal(
     <div
-      className="fixed inset-0 z-60 flex items-center justify-center bg-black/45 p-4"
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 p-4"
       onMouseDown={onCancel}
       role="presentation"
     >

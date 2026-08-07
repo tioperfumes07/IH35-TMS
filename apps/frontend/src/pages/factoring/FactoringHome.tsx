@@ -13,9 +13,8 @@ import {
   type FactoringMonthlyFeeSummary,
   type FactoringSettingsRow,
 } from "../../api/factoring";
-import { listUnits, listVendors } from "../../api/mdata";
-import { listLoads } from "../../api/loads";
-import { Combobox } from "../../components/shared/Combobox";
+import { listVendors } from "../../api/mdata";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import {
   createDriverVendorMerge,
@@ -41,7 +40,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { parseVendorNotes, serializeVendorNotes } from "../../lib/vendorProfileMeta";
+import { factorToProfileForm, profileFormToFactorPatch, resolveActiveFactorFromSummary, type FactorProfileForm } from "../../lib/factorProfile";
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { ChargebacksTable } from "./ChargebacksTable";
 import { RecoursePipelineTable } from "./RecoursePipelineTable";
@@ -210,14 +209,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   const [creatingMerge, setCreatingMerge] = useState(false);
   const [savingFactorProfile, setSavingFactorProfile] = useState(false);
   const [profileEditOpen, setProfileEditOpen] = useState(false);
-  const [profileEditForm, setProfileEditForm] = useState<{
-    telephone: string; address: string; generalEmail: string;
-    primaryContactName: string; primaryContactEmail: string;
-    factoringReservesPct: string; escrowReservesPct: string;
-    lateFeesPct: string; chargebacksPct: string;
-    advanceRate31To60Pct: string; advanceFee31To60Pct: string;
-    advanceRate61To90Pct: string; advanceFee61To90Pct: string;
-  } | null>(null);
+  const [profileEditForm, setProfileEditForm] = useState<FactorProfileForm | null>(null);
 
   const summaryQuery = useQuery({
     queryKey: ["factoring", "summary", companyId],
@@ -230,8 +222,8 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
     enabled: Boolean(companyId),
   });
   const factorsQuery = useQuery({
-    queryKey: ["factoring", "factors", companyId, "active"],
-    queryFn: () => listFactors(companyId, { active_only: true }).then((res) => res.factors),
+    queryKey: ["factoring", "factors", companyId],
+    queryFn: () => listFactors(companyId).then((res) => res.factors),
     enabled: Boolean(companyId),
   });
   const recourseQuery = useQuery({
@@ -269,17 +261,6 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
     queryFn: () => getEquipmentLoanLedger(selectedLoanId, companyId),
     enabled: Boolean(companyId && selectedLoanId),
   });
-  const unitsQuery = useQuery({
-    queryKey: ["mdata", "units", companyId],
-    queryFn: () => listUnits({ operating_company_id: companyId }).then((r) => r.units as { id: string; unit_number: string | null }[]),
-    enabled: Boolean(companyId) && tab === "equipment_loans",
-  });
-  const attributionLoadsQuery = useQuery({
-    queryKey: ["mdata", "loads", "attribution", companyId],
-    queryFn: () => listLoads({ operating_company_id: [companyId], limit: 200 }).then((r) => r.loads),
-    enabled: Boolean(companyId) && loanAction?.kind === "attribution",
-  });
-
   const invoices = recourseQuery.data?.invoices ?? [];
   const recourseTotals = useMemo(() => {
     return invoices.reduce(
@@ -293,20 +274,10 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   }, [invoices]);
 
   const summary = summaryQuery.data;
-  const hasActiveFactorIdentity = Boolean(summary?.active_factor_id || summary?.active_factor_name);
-  const activeFactor = useMemo(() => {
-    const factors = factorsQuery.data ?? [];
-    if (factors.length === 0) return null;
-    const targetName = summary?.active_factor_name?.trim();
-    if (targetName) {
-      const byName = factors.find((factor) => factor.name === targetName);
-      if (byName) return byName;
-    }
-    const activeFactors = factors.filter((factor) => factor.active);
-    if (activeFactors.length === 1) return activeFactors[0];
-    return activeFactors[0] ?? null;
-  }, [factorsQuery.data, summary?.active_factor_name]);
-  const factorParsed = useMemo(() => parseVendorNotes(activeFactor?.notes), [activeFactor?.notes]);
+  const activeFactor = useMemo(
+    () => resolveActiveFactorFromSummary(summary, factorsQuery.data ?? []),
+    [summary, factorsQuery.data]
+  );
   const canDeactivate = user?.role === "Owner";
 
   return (
@@ -355,73 +326,89 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           <div className="mt-1 font-semibold text-gray-900">{Number(summary?.recourse_days ?? 95)}</div>
         </div>
       </div>
-      {hasActiveFactorIdentity ? (
+      {activeFactor ? (
         <>
           <FactoringProfilePanel
-            meta={factorParsed.meta}
+            factor={activeFactor}
             saving={savingFactorProfile}
             onSave={() => {
-              if (!activeFactor) {
-                pushToast("Active factor profile is still loading", "error");
-                return;
-              }
-              setProfileEditForm({
-                telephone: factorParsed.meta.telephone ?? "",
-                address: factorParsed.meta.address ?? "",
-                generalEmail: factorParsed.meta.generalEmail ?? "",
-                primaryContactName: factorParsed.meta.primaryContactName ?? "",
-                primaryContactEmail: factorParsed.meta.primaryContactEmail ?? "",
-                factoringReservesPct: String(factorParsed.meta.factoring?.factoringReservesPct ?? ""),
-                escrowReservesPct: String(factorParsed.meta.factoring?.escrowReservesPct ?? ""),
-                lateFeesPct: String(factorParsed.meta.factoring?.lateFeesPct ?? ""),
-                chargebacksPct: String(factorParsed.meta.factoring?.chargebacksPct ?? ""),
-                advanceRate31To60Pct: String(factorParsed.meta.factoring?.advanceRate31To60Pct ?? ""),
-                advanceFee31To60Pct: String(factorParsed.meta.factoring?.advanceFee31To60Pct ?? ""),
-                advanceRate61To90Pct: String(factorParsed.meta.factoring?.advanceRate61To90Pct ?? ""),
-                advanceFee61To90Pct: String(factorParsed.meta.factoring?.advanceFee61To90Pct ?? ""),
-              });
+              setProfileEditForm(factorToProfileForm(activeFactor));
               setProfileEditOpen(true);
             }}
           />
           {profileEditForm && (
             <Modal open={profileEditOpen} onClose={() => { setProfileEditOpen(false); setProfileEditForm(null); }} title="Edit Factoring Profile">
-              <div className="flex flex-col gap-3 text-sm">
+              <div className="flex flex-col gap-3 text-sm" data-testid="factoring-profile-edit-modal">
+                <p className="text-xs text-gray-500">
+                  Rates write to <code className="text-[11px]">factoring.factor</code> columns (advance_rate / fee_rate / reserve_rate). Contacts → remittance_details. Not vendor notes.
+                </p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Canonical rates (%)</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {(
+                    [
+                      ["advanceRatePct", "Advance rate %"],
+                      ["feeRatePct", "Fee rate %"],
+                      ["reserveRatePct", "Reserve rate %"],
+                      ["recourseDays", "Recourse days"],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <label key={key} className="block">
+                      <span className="text-xs font-medium text-gray-700">{label}</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step={key === "recourseDays" ? "1" : "0.01"}
+                        className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm"
+                        value={profileEditForm[key]}
+                        onChange={(e) => setProfileEditForm((f) => (f ? { ...f, [key]: e.target.value } : f))}
+                      />
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mt-1">Remittance / contacts</p>
                 <div className="grid grid-cols-2 gap-3">
                   <label className="block">
                     <span className="text-xs font-medium text-gray-700">Telephone</span>
-                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.telephone} onChange={(e) => setProfileEditForm((f) => f ? { ...f, telephone: e.target.value } : f)} />
+                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.telephone} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, telephone: e.target.value } : f))} />
                   </label>
                   <label className="block">
                     <span className="text-xs font-medium text-gray-700">General email</span>
-                    <input type="email" className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.generalEmail} onChange={(e) => setProfileEditForm((f) => f ? { ...f, generalEmail: e.target.value } : f)} />
+                    <input type="email" className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.generalEmail} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, generalEmail: e.target.value } : f))} />
                   </label>
                 </div>
                 <label className="block">
                   <span className="text-xs font-medium text-gray-700">Address</span>
-                  <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.address} onChange={(e) => setProfileEditForm((f) => f ? { ...f, address: e.target.value } : f)} />
+                  <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.address} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, address: e.target.value } : f))} />
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <label className="block">
                     <span className="text-xs font-medium text-gray-700">Primary contact</span>
-                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.primaryContactName} onChange={(e) => setProfileEditForm((f) => f ? { ...f, primaryContactName: e.target.value } : f)} />
+                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.primaryContactName} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, primaryContactName: e.target.value } : f))} />
                   </label>
                   <label className="block">
                     <span className="text-xs font-medium text-gray-700">Primary contact email</span>
-                    <input type="email" className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.primaryContactEmail} onChange={(e) => setProfileEditForm((f) => f ? { ...f, primaryContactEmail: e.target.value } : f)} />
+                    <input type="email" className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.primaryContactEmail} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, primaryContactEmail: e.target.value } : f))} />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-gray-700">Accounting contact</span>
+                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.accountingContact} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, accountingContact: e.target.value } : f))} />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-gray-700">Disputes contact</span>
+                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.disputesContact} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, disputesContact: e.target.value } : f))} />
                   </label>
                 </div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mt-1">Rate schedule (%)</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mt-1">Optional extras / aged fee tiers (%)</p>
                 <div className="grid grid-cols-2 gap-3">
                   {(
                     [
-                      ["factoringReservesPct", "Factoring reserves %"],
-                      ["escrowReservesPct", "Escrow reserves %"],
-                      ["lateFeesPct", "Late fees %"],
-                      ["chargebacksPct", "Chargebacks %"],
-                      ["advanceRate31To60Pct", "31–60d advance rate %"],
-                      ["advanceFee31To60Pct", "31–60d fee %"],
-                      ["advanceRate61To90Pct", "61–90d advance rate %"],
-                      ["advanceFee61To90Pct", "61–90d fee %"],
+                      ["escrowReservesPct", "Escrow reserves % (extra)"],
+                      ["lateFeesPct", "Late fees % (extra)"],
+                      ["chargebacksPct", "Chargebacks % (extra)"],
+                      ["fee31To60Pct", "31–60d fee % (fee_schedule)"],
+                      ["fee61To90Pct", "61–90d fee % (fee_schedule)"],
+                      ["reserve31To60Pct", "31–60d reserve % (reserve_schedule)"],
+                      ["reserve61To90Pct", "61–90d reserve % (reserve_schedule)"],
                     ] as const
                   ).map(([key, label]) => (
                     <label key={key} className="block">
@@ -433,7 +420,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                         step="0.01"
                         className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm"
                         value={profileEditForm[key]}
-                        onChange={(e) => setProfileEditForm((f) => f ? { ...f, [key]: e.target.value } : f)}
+                        onChange={(e) => setProfileEditForm((f) => (f ? { ...f, [key]: e.target.value } : f))}
                       />
                     </label>
                   ))}
@@ -443,33 +430,21 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                   <button
                     type="button"
                     disabled={savingFactorProfile}
+                    data-testid="factoring-profile-save"
                     className="rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 hover:bg-[#0f1729]"
                     onClick={async () => {
-                      if (!profileEditForm) return;
-                      const mergedMeta = {
-                        ...factorParsed.meta,
-                        telephone: profileEditForm.telephone,
-                        address: profileEditForm.address,
-                        generalEmail: profileEditForm.generalEmail,
-                        primaryContactName: profileEditForm.primaryContactName,
-                        primaryContactEmail: profileEditForm.primaryContactEmail,
-                        factoring: {
-                          ...factorParsed.meta.factoring,
-                          factoringReservesPct: profileEditForm.factoringReservesPct,
-                          escrowReservesPct: profileEditForm.escrowReservesPct,
-                          lateFeesPct: profileEditForm.lateFeesPct,
-                          chargebacksPct: profileEditForm.chargebacksPct,
-                          advanceRate31To60Pct: profileEditForm.advanceRate31To60Pct,
-                          advanceFee31To60Pct: profileEditForm.advanceFee31To60Pct,
-                          advanceRate61To90Pct: profileEditForm.advanceRate61To90Pct,
-                          advanceFee61To90Pct: profileEditForm.advanceFee61To90Pct,
-                        },
-                      };
-                      if (!activeFactor) return;
+                      if (!profileEditForm || !activeFactor) return;
                       try {
                         setSavingFactorProfile(true);
+                        const patch = profileFormToFactorPatch(profileEditForm);
                         await updateFactor(activeFactor.id, companyId, {
-                          notes: serializeVendorNotes(mergedMeta, factorParsed.publicNotes),
+                          advance_rate: patch.advance_rate,
+                          fee_rate: patch.fee_rate,
+                          reserve_rate: patch.reserve_rate,
+                          recourse_days: patch.recourse_days,
+                          remittance_details: patch.remittance_details as Record<string, unknown>,
+                          ...(patch.fee_schedule ? { fee_schedule: patch.fee_schedule } : {}),
+                          ...(patch.reserve_schedule ? { reserve_schedule: patch.reserve_schedule } : {}),
                         });
                         pushToast("Factoring profile saved", "success");
                         setProfileEditOpen(false);
@@ -491,8 +466,10 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           )}
         </>
       ) : (
-        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
-          No factor configured. Activate a factor to manage its profile.
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500" data-testid="factoring-profile-empty">
+          {summary?.active_factor_profile_id || summary?.active_factor_name || summary?.active_factor_id
+            ? "Active factor row is still loading…"
+            : "No factor configured. Activate a factor to manage its profile."}
         </div>
       )}
 
@@ -754,11 +731,13 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Create equipment loan</div>
             <div className="grid gap-2 md:grid-cols-5">
-              <Combobox
-                options={(unitsQuery.data ?? []).map((u) => ({ value: u.id, label: u.unit_number ?? u.id }))}
+              <EntityPicker
+                kind="unit"
+                operatingCompanyId={companyId}
                 value={loanEquipmentId || null}
                 onChange={(v) => setLoanEquipmentId(v ?? "")}
                 placeholder="Select equipment"
+                enabled={Boolean(companyId) && tab === "equipment_loans"}
               />
               <ReferenceSelect
                 value={loanLenderVendorId || null}
@@ -982,18 +961,19 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
       >
         <div className="space-y-3 text-sm">
           {loanAction?.kind === "attribution" ? (
-            <label className="block">
+            <label className="block" data-testid="factoring-loan-attribution-load-picker">
               Load
-              <Combobox
-                options={(attributionLoadsQuery.data ?? []).map((l) => ({
-                  value: l.id,
-                  label: `${l.load_number}${l.customer_name ? ` — ${l.customer_name}` : ""}`,
-                }))}
-                value={loanActionLoadId || null}
-                onChange={(v) => setLoanActionLoadId(v ?? "")}
-                placeholder="Select load"
-                className="mt-1"
-              />
+              <div className="mt-1">
+                <EntityPicker
+                  kind="load"
+                  operatingCompanyId={companyId}
+                  value={loanActionLoadId || null}
+                  onChange={(v) => setLoanActionLoadId(v ?? "")}
+                  enabled={Boolean(companyId) && loanAction?.kind === "attribution"}
+                  placeholder="Select load"
+                  allowClear
+                />
+              </div>
             </label>
           ) : null}
           <label className="block">

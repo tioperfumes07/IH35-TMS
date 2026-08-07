@@ -80,8 +80,12 @@ export async function registerDotInspectionEventsRoutes(app: FastifyInstance) {
             COALESCE(f.latest_at::text, e.created_at::text) AS follow_up_at
           FROM compliance.dot_inspection_events e
           JOIN geo.geofences g ON g.id = e.station_geofence_id
+          -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED): a DOT inspection event is a regulatory record;
+          -- the unit and driver it names must belong to the same entity as the event.
           JOIN mdata.units u ON u.id = e.unit_id
+                            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = e.driver_id
+                                   AND d.operating_company_id = e.operating_company_id
           LEFT JOIN latest_followup f ON f.dot_inspection_event_id = e.id
           ${stateFilter}
           ORDER BY e.departed_at DESC

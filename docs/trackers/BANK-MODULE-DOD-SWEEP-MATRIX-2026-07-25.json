@@ -3,7 +3,7 @@
   "lane": "FINANCIAL-HOLD",
   "as_of": "2026-07-30T18:46:52.087Z",
   "manifest_module": "banking",
-  "manifest_m": 18,
+  "manifest_m": 19,
   "entities": [
     "TRANSP",
     "USMCA"

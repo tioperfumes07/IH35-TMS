@@ -10,12 +10,13 @@ import {
   listSevereRepairEstimates,
   type WorkOrderPostingPreviewLine,
 } from "../../api/maintenance";
-import { cancelWorkOrderConsole, voidWorkOrderConsole } from "../../api/workOrdersConsole";
+import { cancelWorkOrderConsole, listWoCancellationReasons, voidWorkOrderConsole } from "../../api/workOrdersConsole";
 import { CreateWorkOrderModal, type EditWorkOrderLine, type EditWorkOrderTarget } from "./components/CreateWorkOrderModal";
 import { Button } from "../../components/Button";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../components/forms/TwoSectionLineEditor";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { FlatFieldGrid } from "../../components/layout/FlatFieldGrid";
+import { Combobox } from "../../components/shared/Combobox";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { UploadZone } from "../../components/UploadZone";
 import { LaborTracker } from "../../components/maintenance/LaborTracker";
@@ -275,6 +276,8 @@ export function WorkOrderDetailPage() {
   const queryClient = useQueryClient();
   const canCancelVoid = ["Owner", "Administrator"].includes(String(auth.user?.role ?? ""));
   const [reasonModal, setReasonModal] = useState<{ kind: "cancel" | "void" } | null>(null);
+  const [cancelReasonCode, setCancelReasonCode] = useState<string | null>(null);
+  const [cancelNotes, setCancelNotes] = useState("");
   const [reasonText, setReasonText] = useState("");
   const [createBillOpen, setCreateBillOpen] = useState(false);
   const [createExpenseOpen, setCreateExpenseOpen] = useState(false);
@@ -283,12 +286,28 @@ export function WorkOrderDetailPage() {
     void queryClient.invalidateQueries({ queryKey: ["maintenance", "work-order-posting-preview", id, companyId] });
     void queryClient.invalidateQueries({ queryKey: ["accounting", "wo-linked-financials", id, companyId] });
   };
+  const woCancelReasonsQ = useQuery({
+    queryKey: ["catalogs", "wo-cancellation-reasons"],
+    queryFn: () => listWoCancellationReasons(),
+    enabled: reasonModal?.kind === "cancel",
+    staleTime: 60_000,
+  });
+  const woCancelReasonOptions = useMemo(
+    () =>
+      (woCancelReasonsQ.data?.reasons ?? []).map((r) => ({
+        value: r.reason_code,
+        label: r.reason_label,
+      })),
+    [woCancelReasonsQ.data?.reasons]
+  );
   const cancelMut = useMutation({
-    mutationFn: (reason: string) => cancelWorkOrderConsole(String(id), companyId, reason),
+    mutationFn: (body: { cancel_reason_code: string; cancel_notes?: string }) =>
+      cancelWorkOrderConsole(String(id), companyId, body),
     onSuccess: () => {
       pushToast("Work order cancelled", "success");
       setReasonModal(null);
-      setReasonText("");
+      setCancelReasonCode(null);
+      setCancelNotes("");
       invalidateWo();
     },
     onError: (error: unknown) => pushToast(String((error as Error)?.message ?? "Cancel failed"), "error"),
@@ -303,11 +322,20 @@ export function WorkOrderDetailPage() {
     },
     onError: (error: unknown) => pushToast(String((error as Error)?.message ?? "Void failed"), "error"),
   });
-  const reasonValid = reasonText.trim().length >= 3;
+  const cancelValid = Boolean(cancelReasonCode);
+  const voidValid = reasonText.trim().length >= 3;
   const submitReason = () => {
-    if (!reasonValid || !reasonModal) return;
-    if (reasonModal.kind === "cancel") void cancelMut.mutateAsync(reasonText.trim());
-    else void voidMut.mutateAsync(reasonText.trim());
+    if (!reasonModal) return;
+    if (reasonModal.kind === "cancel") {
+      if (!cancelValid || !cancelReasonCode) return;
+      void cancelMut.mutateAsync({
+        cancel_reason_code: cancelReasonCode,
+        cancel_notes: cancelNotes.trim() || undefined,
+      });
+      return;
+    }
+    if (!voidValid) return;
+    void voidMut.mutateAsync(reasonText.trim());
   };
 
   const [woQ, costQ] = useQueries({
@@ -560,7 +588,8 @@ export function WorkOrderDetailPage() {
               variant="danger"
               disabled={cancelMut.isPending}
               onClick={() => {
-                setReasonText("");
+                setCancelReasonCode(null);
+                setCancelNotes("");
                 setReasonModal({ kind: "cancel" });
               }}
             >
@@ -590,27 +619,57 @@ export function WorkOrderDetailPage() {
             </h2>
             <p className="mt-1 text-xs text-slate-600">
               {reasonModal.kind === "cancel"
-                ? "This cancels the work order. It is never deleted — it stays on record with your reason in the audit trail. Any linked bill is reversed when financial void is enabled."
-                : "This voids the work order (incl. completed). It is never deleted — it stays on record with your reason in the audit trail. Any linked bill/GL is reversed when financial void is enabled."}
+                ? "Pick a reason from catalogs.wo_cancellation_reasons. The work order is never deleted — it stays on record with your reason in the audit trail."
+                : "This voids the work order (incl. completed). It is never deleted — it stays on record with your reason in the audit trail."}
             </p>
-            <label className="mt-3 block text-xs font-semibold text-slate-700" htmlFor="wo-reason">
-              Reason (required)
-            </label>
-            <textarea
-              id="wo-reason"
-              className="mt-1 w-full rounded-sm border border-slate-300 p-2 text-sm"
-              rows={3}
-              value={reasonText}
-              onChange={(event) => setReasonText(event.target.value)}
-              placeholder="Why is this being cancelled/voided?"
-              autoFocus
-            />
+            {reasonModal.kind === "cancel" ? (
+              <>
+                <label className="mt-3 block text-xs font-semibold text-slate-700" htmlFor="wo-cancel-reason-code">
+                  Cancellation reason (required)
+                </label>
+                <Combobox
+                  value={cancelReasonCode}
+                  onChange={setCancelReasonCode}
+                  options={woCancelReasonOptions}
+                  placeholder="Select a cancellation reason…"
+                  disabled={woCancelReasonsQ.isLoading}
+                />
+                <label className="mt-3 block text-xs font-semibold text-slate-700" htmlFor="wo-cancel-notes">
+                  Notes (optional)
+                </label>
+                <textarea
+                  id="wo-cancel-notes"
+                  className="mt-1 w-full rounded-sm border border-slate-300 p-2 text-sm"
+                  rows={2}
+                  value={cancelNotes}
+                  onChange={(event) => setCancelNotes(event.target.value)}
+                  placeholder="Additional context for the audit trail"
+                />
+              </>
+            ) : (
+              <>
+                <label className="mt-3 block text-xs font-semibold text-slate-700" htmlFor="wo-reason">
+                  Reason (required)
+                </label>
+                <textarea
+                  id="wo-reason"
+                  className="mt-1 w-full rounded-sm border border-slate-300 p-2 text-sm"
+                  rows={3}
+                  value={reasonText}
+                  onChange={(event) => setReasonText(event.target.value)}
+                  placeholder="Why is this being voided?"
+                  autoFocus
+                />
+              </>
+            )}
             <div className="mt-3 flex justify-end gap-2">
               <Button
                 type="button"
                 variant="secondary"
                 onClick={() => {
                   setReasonModal(null);
+                  setCancelReasonCode(null);
+                  setCancelNotes("");
                   setReasonText("");
                 }}
               >
@@ -620,7 +679,7 @@ export function WorkOrderDetailPage() {
                 type="button"
                 variant="danger"
                 onClick={submitReason}
-                disabled={!reasonValid || cancelMut.isPending || voidMut.isPending}
+                disabled={(reasonModal.kind === "cancel" ? !cancelValid : !voidValid) || cancelMut.isPending || voidMut.isPending}
               >
                 {reasonModal.kind === "cancel" ? "Confirm cancel" : "Confirm void"}
               </Button>
@@ -681,21 +740,28 @@ export function WorkOrderDetailPage() {
         </div>
 
         <div className="space-y-3">
-          <div className="rounded-sm border border-gray-200 bg-white p-4">
-            <div className="mb-2 text-sm font-semibold text-gray-900">Posting Preview</div>
-            {previewQ.isLoading ? <div className="text-xs text-gray-500">Loading posting preview...</div> : null}
+          <section
+            className="overflow-hidden rounded-sm border border-slate-200 bg-white"
+            data-testid="wo-detail-posting-preview-section"
+          >
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-900">
+              Posting Preview
+            </div>
+            {previewQ.isLoading ? (
+              <div className="px-4 py-2 text-xs text-slate-500">Loading posting preview...</div>
+            ) : null}
             {previewQ.isError ? (
-              <div className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+              <div className="border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-800">
                 Posting preview unavailable in this backend build. MAINT-11 contract fallback is active.
               </div>
             ) : null}
             {!previewQ.isLoading && !previewQ.isError && previewQ.data == null ? (
-              <div className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+              <div className="border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-800">
                 Posting preview endpoint not deployed yet for this environment.
               </div>
             ) : null}
             {previewQ.data ? (
-              <div className="space-y-2 text-xs text-gray-700">
+              <div className="space-y-2 border-t border-slate-200 px-4 py-3 text-xs text-slate-700">
                 <FlatFieldGrid
                   columns={3}
                   fields={[
@@ -716,7 +782,7 @@ export function WorkOrderDetailPage() {
                 />
               </div>
             ) : null}
-          </div>
+          </section>
 
           <UploadZone
             operatingCompanyId={companyId}
@@ -751,19 +817,28 @@ export function WorkOrderDetailPage() {
         </pre>
       </details>
 
-      <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="wo-linked-financials">
-        <div className="mb-2 text-sm font-semibold text-gray-900">Linked Bills / Expenses</div>
-        {linkedFinancialsQ.isLoading ? <div className="text-xs text-gray-500">Loading linked bills &amp; expenses…</div> : null}
+      <section
+        className="overflow-hidden rounded-sm border border-slate-200 bg-white"
+        data-testid="wo-linked-financials"
+      >
+        <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
+          <div className="text-sm font-semibold text-slate-900">Linked Bills / Expenses</div>
+        </div>
+        {linkedFinancialsQ.isLoading ? (
+          <div className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">Loading linked bills &amp; expenses…</div>
+        ) : null}
         {linkedFinancialsQ.isError ? (
-          <div className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+          <div className="border-t border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-700">
             Linked-financials lookup unavailable in this backend build.
           </div>
         ) : null}
         {linkedFinancialsQ.data ? (
-          (linkedFinancialsQ.data.bills.length === 0 && linkedFinancialsQ.data.expenses.length === 0) ? (
-            <div className="text-xs text-gray-500">No bills or expenses are linked to this work order yet.</div>
+          linkedFinancialsQ.data.bills.length === 0 && linkedFinancialsQ.data.expenses.length === 0 ? (
+            <div className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
+              No bills or expenses are linked to this work order yet.
+            </div>
           ) : (
-            <div className="space-y-3">
+            <>
               {linkedFinancialsQ.data.bills.length > 0 ? (
                 <ParityTable
                   storageKey="wo-detail-linked-bills"
@@ -788,7 +863,7 @@ export function WorkOrderDetailPage() {
                   pageSizeOptions={[10, 25, 50]}
                 />
               ) : null}
-            </div>
+            </>
           )
         ) : null}
       </section>

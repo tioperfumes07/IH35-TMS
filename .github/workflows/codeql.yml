@@ -1,7 +1,7 @@
 name: CodeQL Security Scan
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.sha || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 # GitHub's native SAST (static application security testing). Scans the WHOLE TS/JS codebase for
@@ -46,7 +46,26 @@ jobs:
           queries: security-extended
       - name: Autobuild
         uses: github/codeql-action/autobuild@v4.37.4
+      # upload: never — NOT a downgrade, and NOT fake-green. Uploading SARIF to the Security tab is a
+      # GitHub Advanced Security feature; GHAS is free on public repos and licensed on private ones, so
+      # the moment this repository was made private (2026-08-06, to make a self-hosted runner safe) the
+      # upload started returning 403 "Code scanning is not enabled for this repository" and failed the
+      # job. The scan itself was fine — that run analysed 4,639 TypeScript and 4,242 JavaScript files
+      # and produced zero security findings; only the publish step failed.
+      #
+      # So the analysis still runs in full and its results are still ENFORCED, by the step below,
+      # reading the SARIF directly. What is dropped is the dependency on a licensed publishing
+      # endpoint, not the security check. Setting continue-on-error here instead would have been the
+      # fake-green: green badge, nothing verified.
+      #
+      # If GHAS is enabled later, delete `upload`/`output` and the enforcement step and let findings
+      # flow to the Security tab again — that is strictly better, because it keeps history and dedup.
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4.37.4
         with:
           category: '/language:${{ matrix.language }}'
+          upload: never
+          output: codeql-results
+
+      - name: Enforce CodeQL findings (no GHAS upload available)
+        run: node scripts/ci-codeql-enforce-sarif.mjs codeql-results

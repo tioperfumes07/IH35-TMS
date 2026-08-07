@@ -78,6 +78,9 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
         className="space-y-3"
         onSubmit={(e) => {
           e.preventDefault();
+          // INLINE-CREATE-NESTED-FORM: React still bubbles across the Modal portal into Book Load's
+          // outer <form> — without stopPropagation the wizard submits (native GET / silent close).
+          e.stopPropagation();
           if (canSubmit) createMutation.mutate();
         }}
       >

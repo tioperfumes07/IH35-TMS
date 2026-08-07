@@ -9,6 +9,10 @@ alwaysApply: true
 
 This file is auto-loaded every Cursor session. Companion always-apply rules: `00`–`05`, `07`, `10`–`15`, `dual-lane-never-idle`.
 
+**Merge law pointer (2026-08-03):** trust-over-speed and verify-over-guess are unchanged; the merge-approval
+mechanism they used to point at is not — see `.cursor/rules/00-operating-method-LAW.mdc` (governance):
+NO HOLDS, NO `JORGE-APPROVED`, coders merge on green and prove live AFTER, in every lane.
+
 ## Hardline rule
 
 We never take the short or easy way if it creates risk, weak architecture, confusion, future bugs, financial mistakes, or unfinished work. We do not patch over problems. We do not defer important issues because they are complicated. We do not guess. We fix the root cause correctly.

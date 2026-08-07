@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { captureRoutes as captureFastifyRoutes } from "../../test-helpers/capture-route-handler.js";
 
 // AUTO-14 — backend read-endpoint smoke tests. Mocks auth + db + service so the handler runs with no
 // real pool/session: we exercise the route plumbing (auth gate, role gate, query validation, SET LOCAL
@@ -34,9 +35,11 @@ const { registerDriverInactivityPreviewRoutes } = await import("./driver-inactiv
 
 // Capture every GET handler the module registers, keyed by path.
 function captureRoutes() {
+  // Shared stub models Fastify's (path, options?, handler) overload — see capture-route-handler.ts.
+  const capture = captureFastifyRoutes();
+  registerDriverInactivityPreviewRoutes(capture.app as never);
   const handlers: Record<string, (req: unknown, reply: unknown) => Promise<unknown>> = {};
-  const app = { get: (path: string, h: (req: unknown, reply: unknown) => Promise<unknown>) => { handlers[path] = h; } } as never;
-  registerDriverInactivityPreviewRoutes(app);
+  for (const r of capture.routes) handlers[r.path] = r.handler as (req: unknown, reply: unknown) => Promise<unknown>;
   return handlers;
 }
 

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
@@ -65,6 +66,7 @@ export function BreakEvenPage() {
 
   const [fromDate, setFromDate] = useState(startOfYearIso());
   const [toDate, setToDate] = useState(todayIso());
+  const [appliedRange, setAppliedRange] = useState({ from: startOfYearIso(), to: todayIso() });
   // Non-persisted what-if overrides.
   const [classOverrides, setClassOverrides] = useState<Record<string, BreakEvenClassification>>({});
   const [milesOverride, setMilesOverride] = useState<string>(""); // blank = use live miles
@@ -73,8 +75,13 @@ export function BreakEvenPage() {
   const active = enabled && Boolean(companyId);
 
   const inputsQuery = useQuery({
-    queryKey: ["f1-break-even", companyId, fromDate, toDate],
-    queryFn: () => getBreakEvenInputs({ operating_company_id: companyId, from_date: fromDate, to_date: toDate }),
+    queryKey: ["f1-break-even", companyId, appliedRange.from, appliedRange.to],
+    queryFn: () =>
+      getBreakEvenInputs({
+        operating_company_id: companyId,
+        from_date: appliedRange.from,
+        to_date: appliedRange.to,
+      }),
     enabled: active,
     retry: false,
   });
@@ -148,50 +155,58 @@ export function BreakEvenPage() {
 
       {!companyId ? <p className="mb-3 text-sm text-red-600">Select an operating company.</p> : null}
 
-      {/* Controls */}
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white p-3">
-        <label className="flex flex-col text-xs font-medium text-slate-600">
-          From
-          <DatePicker
-            value={fromDate}
-            max={toDate}
-            onChange={setFromDate}
-            className="mt-1 rounded-sm border border-slate-300 px-2 py-1 text-sm text-slate-900"
-          />
-        </label>
-        <label className="flex flex-col text-xs font-medium text-slate-600">
-          To
-          <DatePicker
-            value={toDate}
-            min={fromDate}
-            max={todayIso()}
-            onChange={setToDate}
-            className="mt-1 rounded-sm border border-slate-300 px-2 py-1 text-sm text-slate-900"
-          />
-        </label>
-        <label className="flex flex-col text-xs font-medium text-slate-600">
-          Revenue basis
-          <select
-            value={revenueBasis}
-            onChange={(e) => setRevenueBasis(e.target.value as "gl" | "loads")}
-            className="mt-1 rounded-sm border border-slate-300 px-2 py-1 text-sm text-slate-900"
-          >
-            <option value="gl">GL recognized revenue</option>
-            <option value="loads">Loads gross rate</option>
-          </select>
-        </label>
-        <label className="flex flex-col text-xs font-medium text-slate-600">
-          Miles (override)
-          <input
-            type="number"
-            min={0}
-            placeholder={data ? fmtInt(data.miles.total_miles) : "live"}
-            value={milesOverride}
-            onChange={(e) => setMilesOverride(e.target.value)}
-            className="mt-1 w-32 rounded-sm border border-slate-300 px-2 py-1 text-sm text-slate-900"
-          />
-        </label>
-      </div>
+      {/* Controls — single section frame; filter row uses border-b only (no nested card). */}
+      <section
+        className="mb-4 overflow-hidden rounded-sm border border-slate-200 bg-white"
+        data-testid="break-even-controls"
+      >
+        <div className="flex flex-wrap items-end gap-3 border-b border-slate-200 bg-slate-50 p-3">
+          <label className="flex flex-col text-xs font-medium text-slate-600">
+            From
+            <DatePicker
+              value={fromDate}
+              max={toDate}
+              onChange={setFromDate}
+              className="mt-1 rounded-sm border border-slate-300 px-2 py-1 text-sm text-slate-900"
+            />
+          </label>
+          <label className="flex flex-col text-xs font-medium text-slate-600">
+            To
+            <DatePicker
+              value={toDate}
+              min={fromDate}
+              max={todayIso()}
+              onChange={setToDate}
+              className="mt-1 rounded-sm border border-slate-300 px-2 py-1 text-sm text-slate-900"
+            />
+          </label>
+          <Button size="sm" onClick={() => setAppliedRange({ from: fromDate, to: toDate })}>
+            Apply
+          </Button>
+          <label className="flex flex-col text-xs font-medium text-slate-600">
+            Revenue basis
+            <select
+              value={revenueBasis}
+              onChange={(e) => setRevenueBasis(e.target.value as "gl" | "loads")}
+              className="mt-1 rounded-sm border border-slate-300 px-2 py-1 text-sm text-slate-900"
+            >
+              <option value="gl">GL recognized revenue</option>
+              <option value="loads">Loads gross rate</option>
+            </select>
+          </label>
+          <label className="flex flex-col text-xs font-medium text-slate-600">
+            Miles (override)
+            <input
+              type="number"
+              min={0}
+              placeholder={data ? fmtInt(data.miles.total_miles) : "live"}
+              value={milesOverride}
+              onChange={(e) => setMilesOverride(e.target.value)}
+              className="mt-1 w-32 rounded-sm border border-slate-300 px-2 py-1 text-sm text-slate-900"
+            />
+          </label>
+        </div>
+      </section>
 
       {inputsQuery.isLoading ? <p className="text-sm text-slate-500">Loading…</p> : null}
       {inputsQuery.isError ? <p className="text-sm text-red-600">Could not load break-even inputs.</p> : null}
@@ -199,10 +214,10 @@ export function BreakEvenPage() {
       {data && model ? (
         <>
           {model.miles <= 0 ? (
-            <div className="mb-4 rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+            <p className="mb-4 border-l-4 border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700">
               No miles recorded for this period ({data.miles.load_count} load{data.miles.load_count === 1 ? "" : "s"}). Per-mile
               figures require miles — enter a miles estimate above to model the break-even rate.
-            </div>
+            </p>
           ) : null}
 
           {/* Headline break-even KPIs */}
@@ -239,15 +254,18 @@ export function BreakEvenPage() {
             <StatTile label="Net profit (period)" to="/finance/statements" value={fmtCents(model.net_profit_cents)} secondary={`${fmtCents(model.revenue_cents)} rev − ${fmtCents(model.total_cost_cents)} cost`} tone={model.net_profit_cents >= 0 ? "good" : "bad"} />
           </div>
 
-          {/* Miles + revenue provenance */}
-          <div className="mt-3 rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">
-            <span className="font-semibold text-slate-700">Live inputs:</span>{" "}
-            {fmtInt(data.miles.total_miles)} miles ({fmtInt(data.miles.loaded_miles)} loaded + {fmtInt(data.miles.deadhead_miles)} deadhead) across {fmtInt(data.miles.load_count)} loads ·
-            GL revenue {fmtCents(data.revenue.gl_revenue_cents)} · loads gross {fmtCents(data.revenue.loads_gross_revenue_cents)}
-          </div>
+          {/* Expense classification — single section frame; live-inputs strip + table (no nested cards). */}
+          <section
+            className="mt-4 overflow-hidden rounded-sm border border-slate-200 bg-white"
+            data-testid="break-even-expense-frame"
+          >
+            <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+              <span className="font-semibold text-slate-700">Live inputs:</span>{" "}
+              {fmtInt(data.miles.total_miles)} miles ({fmtInt(data.miles.loaded_miles)} loaded + {fmtInt(data.miles.deadhead_miles)} deadhead) across {fmtInt(data.miles.load_count)} loads ·
+              GL revenue {fmtCents(data.revenue.gl_revenue_cents)} · loads gross {fmtCents(data.revenue.loads_gross_revenue_cents)}
+            </div>
 
-          {/* Expense classification table */}
-          <div className="mt-4 overflow-x-auto rounded-sm border border-slate-200 bg-white">
+            <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
@@ -310,7 +328,8 @@ export function BreakEvenPage() {
                 </tr>
               </tfoot>
             </table>
-          </div>
+            </div>
+          </section>
 
           <p className="mt-4 text-xs text-slate-400">{data.disclaimer}</p>
         </>

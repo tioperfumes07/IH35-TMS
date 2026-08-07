@@ -7,8 +7,10 @@
 // Standard: complete = DoD A–E + VERIFY 1–8, PROD-VERIFIED per entity. Green = live only.
 // Palette-locked, no emojis, top-nav tabs. Additive — does not remove the Tracker/Modules pages.
 
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useMemo, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { ScenarioTrackerHome } from "./scenario-tracker/ScenarioTrackerHome";
 import { resolveApiUrl } from "../../api/client";
 import {
   PROGRAM_SCOREBOARD,
@@ -31,7 +33,11 @@ type RecentPrRow = {
 };
 
 type LiveScoreboard = ProgramScoreboard & {
-  meta: ProgramScoreboard["meta"] & { lastSyncedCt?: string | null };
+  meta: ProgramScoreboard["meta"] & {
+    lastSyncedCt?: string | null;
+    prodReadSource?: "neon_now" | "request_time" | "committed_fallback";
+    gateTally?: Record<string, { pass: number; applicable: number; fail: number; unverified: number }>;
+  };
   recentActivity?: RecentPrRow[];
 };
 
@@ -53,10 +59,22 @@ function formatLedgerCt(iso: string | null | undefined): string {
   return `${get("month")}/${get("day")}/${get("year")} ${get("hour")}:${get("minute")} ${get("dayPeriod")} CT`;
 }
 
-function useScoreboard(): LiveScoreboard {
-  // Progressive enhancement: if the read-only live endpoint is present, prefer it;
-  // otherwise render the checked-in generated snapshot. Never blocks first paint.
-  const [data, setData] = useState<LiveScoreboard>(() => ({
+/**
+ * WIRE-LIVE Layer 1 — the board refreshes itself; no human reload.
+ *
+ * The backend was never the frozen half: stampProdReadAt() in program/audit-scoreboard.routes.ts
+ * does a real Neon `SELECT now()` per request and labels it neon_now vs request_time honestly.
+ * THIS hook was the freeze — it fetched ONCE in a `useEffect(..., [])` with a raw fetch and never
+ * asked again, so "live prod read <time>" sat at whatever second the tab was opened.
+ *
+ * Now a TanStack Query on a 3s interval, refetchIntervalInBackground so a board left open on a wall
+ * display keeps moving. The committed snapshot stays as placeholderData, so first paint is instant
+ * and an unwired/offline endpoint degrades to the snapshot exactly as before.
+ */
+const SCOREBOARD_POLL_MS = 3000;
+
+function snapshotFallback(): LiveScoreboard {
+  return {
     ...PROGRAM_SCOREBOARD,
     meta: {
       ...PROGRAM_SCOREBOARD.meta,
@@ -64,40 +82,47 @@ function useScoreboard(): LiveScoreboard {
       lastSyncedCt: formatLedgerCt(PROGRAM_SCOREBOARD.meta.generatedAt),
     },
     recentActivity: [],
-  }));
-  useEffect(() => {
-    let alive = true;
-    // Prefer resolveApiUrl so the call hits the API origin, not the SPA catch-all.
-    fetch(resolveApiUrl("/api/v1/program/audit-scoreboard"), { credentials: "include" })
-      .then((r) => {
-        if (!r.ok || r.status === 204) return null;
-        return r.json();
-      })
-      .then((json) => {
-        if (!alive || !json || !Array.isArray(json.modules)) return;
-        const live = json as LiveScoreboard;
-        const lastSyncedCt =
-          live.meta?.lastSyncedCt || formatLedgerCt(live.meta?.generatedAt);
-        setData({
-          ...live,
-          meta: { ...live.meta, lastSyncedCt },
-          recentActivity: Array.isArray(live.recentActivity) ? live.recentActivity : [],
-        });
-      })
-      .catch(() => {
-        /* offline / not wired yet → keep the generated snapshot */
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
-  return data;
+  };
+}
+
+async function fetchScoreboard(): Promise<LiveScoreboard | null> {
+  const r = await fetch(resolveApiUrl("/api/v1/program/audit-scoreboard"), { credentials: "include" });
+  if (!r.ok || r.status === 204) return null;
+  const json = await r.json();
+  if (!json || !Array.isArray(json.modules)) return null;
+  const live = json as LiveScoreboard;
+  return {
+    ...live,
+    meta: { ...live.meta, lastSyncedCt: live.meta?.lastSyncedCt || formatLedgerCt(live.meta?.generatedAt) },
+    recentActivity: Array.isArray(live.recentActivity) ? live.recentActivity : [],
+  };
+}
+
+function useScoreboard(): LiveScoreboard {
+  const { data } = useQuery({
+    queryKey: ["program", "audit-scoreboard"],
+    queryFn: fetchScoreboard,
+    refetchInterval: SCOREBOARD_POLL_MS,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    placeholderData: (prev) => prev ?? snapshotFallback(),
+    // Never blank a rendered board on a transient blip — keep the last good payload.
+    retry: 1,
+  });
+  return data ?? snapshotFallback();
 }
 
 export function AuditScoreboardPage() {
   const sb = useScoreboard();
   // Alias *At fields — verify-no-native-datetime-input flags camelCase names ending in At as date fields.
   const prodReadSnapshot = sb.meta.prodReadAt;
+  const prodReadSource = sb.meta.prodReadSource ?? "committed_fallback";
+  const prodReadLabel =
+    prodReadSource === "neon_now"
+      ? "live prod read (Neon now)"
+      : prodReadSource === "request_time"
+        ? "request time (Neon stamp unavailable)"
+        : "seeded snapshot (first paint)";
   const generatedOn = sb.meta.generatedAt.slice(0, 10);
   // Last synced = ledger git commit (meta.generatedAt / lastSyncedCt), America/Chicago CT — not wall clock.
   const lastSyncedLabel = sb.meta.lastSyncedCt || formatLedgerCt(sb.meta.generatedAt);
@@ -124,6 +149,28 @@ export function AuditScoreboardPage() {
     return { prod, audit, fix, fail, unv, certified, vprod, vopen };
   }, [sb]);
 
+  const gateTally = useMemo(() => {
+    const fromMeta = sb.meta.gateTally;
+    if (fromMeta && GATE_LABELS.every((g) => fromMeta[g])) return fromMeta;
+    const computed: Record<string, { pass: number; applicable: number; fail: number; unverified: number }> = {};
+    for (let i = 0; i < GATE_LABELS.length; i++) {
+      let pass = 0;
+      let applicable = 0;
+      let fail = 0;
+      let unverified = 0;
+      for (const m of sb.modules) {
+        const c = m.cells[i] || "UNV";
+        if (c === "NA") continue;
+        applicable += 1;
+        if (c === "PASS") pass += 1;
+        else if (c === "FAIL") fail += 1;
+        else if (c === "UNV") unverified += 1;
+      }
+      computed[GATE_LABELS[i]] = { pass, applicable, fail, unverified };
+    }
+    return computed;
+  }, [sb]);
+
   return (
     <div className="ih35sb">
       <style>{CSS}</style>
@@ -131,6 +178,13 @@ export function AuditScoreboardPage() {
       {/* Program module top-nav tabs — Scoreboard is the main/default page */}
       <nav className="tabs">
         <span className="tab active">Scoreboard</span>
+        {/* PROG-NAV-01: the live 24-slice board at /home/scenario-tracker was routed but had ZERO
+            inbound links anywhere in the app — no rail item (the rail renders only
+            SIDEBAR_ITEM_META; getSidebarFlyoutItems is not imported by Sidebar.tsx), no tab, no
+            home link. It was reachable only by typing the URL. Added here rather than as a 31st
+            sidebar id: the locked 30-item contract + the 30-file Rule 24 module manifest would both
+            have to move for a surface that is a view of the Program board, not a module. */}
+        <Link className="tab" to="/program/scenario-tracker">Scenario tracker</Link>
         <Link className="tab" to="/program/tracker">Tracker</Link>
         <Link className="tab" to="/program/modules">Module completion</Link>
         <Link className="tab" to="/program/final-additions">Final additions</Link>
@@ -140,7 +194,7 @@ export function AuditScoreboardPage() {
         <div className="t">Deep-Linkage Certification Scoreboard</div>
         <div className="s">
           ledger <code>AUDIT-COVERAGE-LIVE.md</code> · main @ <b>{sb.meta.sourceSha}</b> · deployed @ <b>{sb.meta.deployedSha}</b> ·
-          live prod read <b>{prodReadSnapshot}</b> · generated {generatedOn}.
+          {prodReadLabel} <b>{prodReadSnapshot}</b> · generated {generatedOn}.
           <b> Complete = DoD A–E + VERIFY 1–8, PROD-VERIFIED per entity</b> — not five layers. Green = proven live only;
           amber = traced in code, must be exercised live. A code trace or route string is not proof; it must be clicked/called live.
         </div>
@@ -177,6 +231,25 @@ export function AuditScoreboardPage() {
           </ul>
         )}
       </section>
+
+      <div className="gate-tally" data-testid="program-scoreboard-gate-tally">
+        <div className="gate-tally-hd">13-gate tally <span className="sub">pass / applicable · weakest column = next wave</span></div>
+        <div className="gate-tally-row">
+          {GATE_LABELS.map((g) => {
+            const t = gateTally[g] ?? { pass: 0, applicable: 0, fail: 0, unverified: 0 };
+            const ratio = t.applicable > 0 ? t.pass / t.applicable : 0;
+            const tone = t.applicable === 0 ? "na" : ratio >= 0.85 ? "strong" : ratio >= 0.4 ? "mid" : "weak";
+            return (
+              <div key={g} className={`gate-cell ${tone}`} data-testid={`program-scoreboard-gate-${g}`}>
+                <div className="gate-name">{g}</div>
+                <div className="gate-ratio">
+                  {t.pass}/{t.applicable}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="metrics">
         <Metric cls="big" n={`${metrics.certified} / 30`} l="Modules certified (all 13 gates per entity)" />
@@ -235,7 +308,7 @@ export function AuditScoreboardPage() {
       </div>
 
       {/* LIVE PROD READ */}
-      <h2>Live prod read <span className="sub">{prodReadSnapshot} · read-only · all entities</span></h2>
+      <h2>Live prod read <span className="sub">{prodReadLabel} · {prodReadSnapshot} · all entities</span></h2>
       <div className="prodpanel">
         {sb.prod.map((p, i) => (
           <div className={`pc ${p.tone ?? ""}`} key={i}>
@@ -339,6 +412,11 @@ function ChainCard({ n }: { n: ProgramScoreboard["chain"][number] }) {
       <div className="nt"><span>{n.title}</span><span className={`chip c-${n.chipTone}`}>{n.chip}</span></div>
       <div className="tbl">{n.table}</div>
       <div className="fk">{n.fk}</div>
+      {/* OWNER DECISION 2026-08-05: the Scenario Tracker lives ONLY on Program, never on Home.
+          Mounted here under the scoreboard so /program shows the certification scoreboard AND the
+          live end-to-end pipeline together. The dedicated /program/scenario-tracker route stays as
+          the full-page view (tab above). */}
+      <ScenarioTrackerHome />
     </div>
   );
 }
@@ -391,6 +469,18 @@ const CSS = `
 .ih35sb .recent-title{color:var(--slate);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ih35sb .recent-state{display:inline-block;margin-right:6px;padding:1px 5px;border-radius:3px;background:var(--gray-bg);color:var(--slate);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
 .ih35sb .recent-when{color:var(--slate-lt);white-space:nowrap}
+.ih35sb .gate-tally{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:16px 0 0}
+.ih35sb .gate-tally-hd{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--slate);margin-bottom:10px}
+.ih35sb .gate-tally-hd .sub{text-transform:none;letter-spacing:0;font-weight:400;color:var(--slate-lt);margin-left:8px}
+.ih35sb .gate-tally-row{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:6px}
+.ih35sb .gate-cell{border-radius:8px;padding:8px 4px;text-align:center;border:1px solid var(--line);background:var(--gray-bg)}
+.ih35sb .gate-cell.strong{background:var(--navy);border-color:var(--navy);color:#fff}
+.ih35sb .gate-cell.mid{background:var(--accent-bg);border-color:#c5d0e3;color:var(--navy)}
+.ih35sb .gate-cell.weak{background:#fff;border-color:#cbd5e1;color:var(--slate)}
+.ih35sb .gate-cell.na{opacity:.55}
+.ih35sb .gate-name{font-size:10px;font-weight:800;letter-spacing:.02em}
+.ih35sb .gate-cell.strong .gate-name{color:#cbd5e1}
+.ih35sb .gate-ratio{font-size:12px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}
 .ih35sb .metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:16px 0}
 .ih35sb .metric{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 13px}
 .ih35sb .metric .n{font-size:22px;font-weight:800;line-height:1}

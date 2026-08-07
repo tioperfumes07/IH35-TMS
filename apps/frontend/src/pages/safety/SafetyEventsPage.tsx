@@ -197,8 +197,10 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
       rows.map((row) => ({
         id: row.id,
         event_at: row.occurred_at,
-        driver_full_name: row.subject_type === "driver" ? row.subject_driver_name || row.subject_driver_id || "" : "",
-        unit_display_id: row.subject_type === "unit" ? row.subject_unit_number || row.subject_unit_id || "" : undefined,
+        driver_id: row.subject_driver_id || null,
+        driver_full_name: row.subject_driver_name || "",
+        unit_id: row.subject_unit_id || null,
+        unit_display_id: row.subject_unit_number || "",
         event_type: row.event_type,
         severity: row.severity,
         status: row.status,
@@ -661,7 +663,17 @@ function KpiCard({
 }
 
 function renderSubject(row: SafetyEventLogRow) {
-  if (row.subject_type === "driver") return row.subject_driver_name || row.subject_driver_id || "Driver";
-  if (row.subject_type === "unit") return row.subject_unit_number || row.subject_unit_id || "Unit";
+  if (row.subject_type === "driver") {
+    const id = String(row.subject_driver_id ?? "").trim();
+    const label = String(row.subject_driver_name ?? "").trim() || "Driver";
+    if (!id) return label;
+    return <EntityLink kind="driver" id={id} label={label} />;
+  }
+  if (row.subject_type === "unit") {
+    const id = String(row.subject_unit_id ?? "").trim();
+    const label = String(row.subject_unit_number ?? "").trim() || "Unit";
+    if (!id) return label;
+    return <EntityLink kind="unit" id={id} label={label} />;
+  }
   return "Company";
 }

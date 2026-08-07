@@ -49,7 +49,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerSafetyDvirRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/dvir", async (req, reply) => {
+  app.get("/api/v1/safety/dvir", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
@@ -102,8 +102,13 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
               ELSE 'none'
             END AS defect_severity
           FROM safety.dvir_submissions ds
+          -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED): the DVIR ds is scoped; the driver and unit it
+          -- names were not. A DVIR is a DOT compliance record — the driver and unit on it are the record.
+          -- mdata.units has NO operating_company_id; it uses the owner/leased pair (CLAUDE.md §4).
           LEFT JOIN mdata.drivers d ON d.id = ds.driver_id
+                                   AND d.operating_company_id = ds.operating_company_id
           LEFT JOIN mdata.units u ON u.id = ds.unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ds.operating_company_id
           LEFT JOIN LATERAL (
             SELECT COUNT(*)::int AS defect_count
             FROM safety.dvir_defects dd
@@ -121,7 +126,7 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
     return { submissions: rows };
   });
 
-  app.get("/api/v1/safety/dvir/:id", async (req, reply) => {
+  app.get("/api/v1/safety/dvir/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -134,8 +139,13 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
         `
           SELECT ds.*, TRIM(CONCAT(d.first_name, ' ', d.last_name)) AS driver_name, u.unit_number
           FROM safety.dvir_submissions ds
+          -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED): the DVIR ds is scoped; the driver and unit it
+          -- names were not. A DVIR is a DOT compliance record — the driver and unit on it are the record.
+          -- mdata.units has NO operating_company_id; it uses the owner/leased pair (CLAUDE.md §4).
           LEFT JOIN mdata.drivers d ON d.id = ds.driver_id
+                                   AND d.operating_company_id = ds.operating_company_id
           LEFT JOIN mdata.units u ON u.id = ds.unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ds.operating_company_id
           WHERE ds.id = $1
             AND ds.operating_company_id = $2
           LIMIT 1

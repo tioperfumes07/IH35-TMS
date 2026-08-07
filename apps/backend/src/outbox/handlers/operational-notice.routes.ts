@@ -162,4 +162,36 @@ export const NOTICE_ROUTES: NoticeRoute[] = [
       `Confirm the previous driver stood down and the new driver has the instructions.`,
     actionLink: (p) => `/dispatch?load_id=${text(p, "load_id") ?? ""}`,
   },
+  {
+    // LOAN-09 — a scheduled related-party loan payment is coming due.
+    //
+    // WHY THIS IS A NOTICE AND NOT A POSTING. The reminder's whole job is to put a human in front of
+    // the payment before it is due. QuickBooks, NetSuite and McLeod all separate "a payment is due"
+    // (an alert) from "a payment happened" (a posting), and for good reason: a system that posts on the
+    // strength of a due date books money that may never have moved. Nothing here touches the ledger.
+    //
+    // AUDIENCE. Owner + Administrator, not the borrower. These are related-party loans — the
+    // counterparty is frequently the owner or someone close to them, so routing the reminder to the
+    // borrower alone would mean the only person told about an insider debt is the insider. The
+    // borrower-facing prompt is the settlement-time deduct prompt, which is a separate surface.
+    eventType: "accounting.related_party_loan.payment_due",
+    severity: "high",
+    entityType: "accounting.related_party_loan_entries",
+    entityIdKey: "loan_id",
+    audience: { kind: "roles", roles: ["Owner", "Administrator"] },
+    sourceBlock: "LOAN-09-PAYMENT-DUE",
+    title: (p) =>
+      `Loan payment due ${text(p, "due_date") ?? "soon"} — ${label(p, "counterparty_name", "loan_id")}`,
+    body: (p) =>
+      `Payment ${text(p, "payment_number") ?? "?"} on the related-party loan with ` +
+      `${label(p, "counterparty_name", "loan_id")} is due ${text(p, "due_date") ?? "shortly"}` +
+      `${text(p, "payment_amount") ? ` for ${text(p, "payment_amount")}` : ""}` +
+      `${text(p, "principal_amount") && text(p, "interest_amount")
+        ? ` (${text(p, "principal_amount")} principal + ${text(p, "interest_amount")} interest)`
+        : ""}. ` +
+      `Nothing is deducted or posted automatically from this reminder — it exists so the payment is ` +
+      `not missed. Related-party balances are separately disclosable (ASC 850), so a missed or ` +
+      `undocumented payment on this loan is a disclosure problem as well as a cash one.`,
+    actionLink: (p) => `/accounting/loans-advances?loan_id=${text(p, "loan_id") ?? ""}`,
+  },
 ];

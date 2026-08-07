@@ -16,7 +16,10 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
 
 /** Exported for future index registration; scan logic also available client-side. */
 export async function registerScanDuplicateVendorRoutes(app: FastifyInstance) {
-  app.get("/api/v1/factoring/scan-duplicate-vendors", async (req, reply) => {
+  app.get(
+    "/api/v1/factoring/scan-duplicate-vendors",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});
@@ -42,7 +45,7 @@ export async function registerScanDuplicateVendorRoutes(app: FastifyInstance) {
           FROM mdata.vendors a
           JOIN mdata.vendors b
             ON b.operating_company_id = a.operating_company_id
-           AND b.id <> a.id
+           AND a.id < b.id
            AND similarity(a.vendor_name, b.vendor_name) > 0.55
           WHERE a.operating_company_id = $1
             AND a.deactivated_at IS NULL
@@ -56,5 +59,6 @@ export async function registerScanDuplicateVendorRoutes(app: FastifyInstance) {
     });
 
     return { pairs };
-  });
+  }
+  );
 }

@@ -168,8 +168,13 @@ export async function listDisputes(
           s.period_start::text AS period_start,
           s.period_end::text AS period_end
         FROM driver_finance.driver_settlement_disputes d
+        -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED): the dispute d is scoped by the WHERE, but the
+        -- driver NAME and settlement DISPLAY_ID it resolves were not. RLS is no backstop —
+        -- org.user_accessible_company_ids() returns EVERY active company when the role is Owner.
         JOIN mdata.drivers dr ON dr.id = d.driver_id
+                             AND dr.operating_company_id = d.operating_company_id
         JOIN driver_finance.driver_settlements s ON s.id = d.settlement_id
+                                                AND s.operating_company_id = d.operating_company_id
         WHERE ${where.join(" AND ")}
         ORDER BY d.opened_at DESC
         LIMIT 300
@@ -193,8 +198,13 @@ export async function getDispute(userId: string, input: { operating_company_id: 
           s.period_end::text AS period_end,
           s.gross_pay, s.deductions_total, s.net_pay
         FROM driver_finance.driver_settlement_disputes d
+        -- ENTITY PREDICATES (CLS-JOIN-ENTITY-UNSCOPED): the dispute d is scoped by the WHERE, but the
+        -- driver NAME and settlement DISPLAY_ID it resolves were not. RLS is no backstop —
+        -- org.user_accessible_company_ids() returns EVERY active company when the role is Owner.
         JOIN mdata.drivers dr ON dr.id = d.driver_id
+                             AND dr.operating_company_id = d.operating_company_id
         JOIN driver_finance.driver_settlements s ON s.id = d.settlement_id
+                                                AND s.operating_company_id = d.operating_company_id
         WHERE d.id = $2
           AND d.operating_company_id = $1
         LIMIT 1

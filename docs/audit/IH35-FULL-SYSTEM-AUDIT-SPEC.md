@@ -9,6 +9,9 @@ and **deep cross-module linkage forward+reverse (V4)** — not just "the table e
 holds for verification (no JORGE-APPROVED gate, no asking). The owner did NOT lift honesty. A guess is a defect.
 
 > **CHANGE LOG**
+> **v3.1 (2026-08-03):** Rule **13 — SCOPE-MATCHED TIE-OUT**. Never publish a money finding (esp. `CLS-*-DOUBLE-POST`)
+> from comparing a source-specific subledger to an all-sources GL account. Folded after CLS-FUEL-DOUBLE-POST false
+> premise (row 673): $47.7K was scope mismatch; real residual ~$4,594 tires/tolls → `CLS-CATEGORY-MAP-COHERENCE`.
 > **v3 (2026-08-03):** "Complete" corrected from 5 layers (A–E) to the committed **DoD A–E + VERIFY 1–8**. Connectivity
 > & wiring (V3), universal picker+creator law incl. Lists (V2), and deep linkage F+R (V4) are mandatory, not extras.
 > Added §B12 spelling out the exact live click-throughs: every picker `+Add new`→creator wizard→canonical→appears/
@@ -36,6 +39,14 @@ holds for verification (no JORGE-APPROVED gate, no asking). The owner did NOT li
 10. **A COUNT NEVER UPGRADES A ROW'S TIER.** A live number fills the number cell only. The row stays tier-2 until its DoD + VERIFY gates are exercised live (§B8).
 11. **Re-baseline FAILs every session.** Main merges fixes under you. Re-read the fixing file on current main + check the deployed SHA before a row stays `FAIL`.
 12. **Complete = DoD A–E + VERIFY 1–8, per entity.** Never certify on a subset. A green record with a dead picker (V2), a link that 404s (V3), or an unwalked reverse chain (V4) is NOT complete.
+13. **SCOPE-MATCHED TIE-OUT (money findings).** A dollar gap is not a double-post unless both sides share the same
+    scope (source population, entity, date window, account/category filter) **and** the completeness discriminator
+    holds on the compared tables. **Forbidden:** Relay-card-only (or any source-specific) subledger vs an
+    all-sources GL account → publish as `CLS-*-DOUBLE-POST`. That is a **scope mismatch**. Before publishing any
+    double-post / double-count money card: prove amount+date (or stronger) matches > 0 under the discriminator, or
+    retract and reclassify (scope mismatch vs miscategorization vs true dual write). Miscategorization into the
+    wrong expense account is `CLS-CATEGORY-MAP-COHERENCE`, not double-post. (Canonical incident: row 673 /
+    CLS-FUEL-DOUBLE-POST drained 2026-08-03.)
 
 ## A1. SESSION BOOT SEQUENCE (exact order)
 
@@ -90,6 +101,8 @@ re-run. 6. No mutation-proven guard. 7. Force-merged / faked green. 8. Wrote tow
 missing link (must be `N/A(reason)` + owning block). 10. Passed a live COUNT off as a proven CHAIN. **11. Audited a
 shallow SUBSET — "linkage, picker, design" — and called a system with dead `+Add new` buttons, 404 links, and
 unwalked reverse chains "complete." Complete = DoD A–E + VERIFY 1–8, exercised live (§B8/§B12).**
+**12. Compared a source-specific subledger to an all-sources GL account and published the gap as a double-post
+(CLS-FUEL-DOUBLE-POST / row 599 residual).** Completeness without **scope match** invents money defects. Rule 13.
 
 ## B1. THREE SOURCES OF TRUTH
 
@@ -140,6 +153,10 @@ EXISTENCE counts: full-bypass read OK, fills the NUMBER CELL ONLY, never changes
 linkage / picker / nav: query **as `ih35_app`** (app-path GUC) or hit the live app/endpoint — NOT `neondb_owner`.
 Owner bypass proves the row is physically there; it does NOT prove the app's RLS lets `ih35_app` see it, or that the
 button/link works. Those need the live exercise.
+
+**Tie-outs / recon (Rule 13):** when two dollar totals are compared, both queries must declare and match scope
+(source filter, entity, dates, account). A completeness discriminator on one side does not license a
+cross-scope money verdict. Scope mismatch → reclassify; do not hand Claude a double-post build.
 
 ## B7. THE GUARD
 

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IH35-TMS — End-to-End Scenario Tracker (design v2)</title>
+<style>
+  :root{
+    --navy:#1F2A44; --navyDk:#0F1729; --line:#e2e8f0; --bg:#eef2f7; --card:#fff;
+    --ink:#0f172a; --muted:#64748b;
+    --green:#15803d; --greenBg:#dcfce7; --blue:#1d4ed8; --blueBg:#dbeafe;
+    --amber:#b45309; --amberBg:#fef3c7; --red:#b91c1c; --redBg:#fee2e2;
+    --grey:#64748b; --greyBg:#eef2f7; --purple:#6d28d9; --purpleBg:#ede9fe;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+  .wrap{max-width:900px;margin:0 auto;padding:16px}
+  header{background:linear-gradient(135deg,var(--navy),var(--navyDk));color:#fff;border-radius:12px;padding:18px}
+  header h1{margin:0 0 5px;font-size:20px}
+  header p{margin:0;font-size:12.5px;color:#c7d2e5}
+  .demo{display:inline-block;margin-top:9px;font-size:10.5px;font-weight:700;letter-spacing:.5px;background:#f8fafc22;border:1px solid #ffffff33;color:#e2e8f0;padding:3px 9px;border-radius:20px}
+  .engine{background:#fff;border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;padding:12px 14px;margin:14px 0}
+  .engine b{color:var(--ink)}
+  .engine .flow{font-size:12px;color:#334155;margin-top:6px;font-weight:600}
+  .engine .flow code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font-size:11.5px}
+  /* lifecycle legend */
+  .life{background:var(--navy);color:#fff;border-radius:10px;padding:12px 14px;margin:14px 0}
+  .life .lt{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#c7d2e5;margin-bottom:8px}
+  .life .steps{display:flex;align-items:center;flex-wrap:wrap;gap:2px}
+  .life .st{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700}
+  .life .st .b{width:15px;height:15px;border-radius:50%;background:#334a6b;display:flex;align-items:center;justify-content:center;font-size:9px}
+  .life .arr{color:#64809f;margin:0 4px;font-weight:700}
+  .life .hint{font-size:11px;color:#9fb0cc;margin-top:8px}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);margin:22px 0 4px}
+  .sub{font-size:12px;color:var(--muted);margin:0 0 12px}
+  /* hop list */
+  .hops{position:relative;margin-left:6px}
+  .hop{position:relative;padding:0 0 12px 40px}
+  .hop:before{content:"";position:absolute;left:14px;top:26px;bottom:-4px;width:2px;background:var(--line)}
+  .hop:last-child:before{display:none}
+  .dot{position:absolute;left:0;top:2px;width:29px;height:29px;border-radius:50%;color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 0 0 3px var(--bg)}
+  .d-green{background:var(--green)} .d-blue{background:var(--blue)} .d-amber{background:var(--amber)} .d-red{background:var(--red)} .d-grey{background:#94a3b8}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+  .card.blocked{border-color:#fca5a5;border-left:4px solid var(--red)}
+  .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .nm{font-weight:700;font-size:14px}
+  .lane{font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:7px}
+  .l-money{background:var(--greenBg);color:var(--green)} .l-screen{background:var(--blueBg);color:var(--blue)}
+  .doing{font-size:12.5px;color:#334155;margin-top:7px}
+  .doing b{color:var(--ink)}
+  .spec{font-size:11px;color:var(--muted);margin-top:5px;border-top:1px dashed var(--line);padding-top:5px}
+  .spec b{color:var(--navy);font-weight:700}
+  .je{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;background:#f8fafc;border:1px solid var(--line);border-radius:6px;padding:5px 8px;margin-top:6px;color:#0f172a}
+  .blk{font-size:12px;color:var(--red);margin-top:6px;font-weight:600}
+  /* pipeline */
+  .pipewrap{margin-top:9px}
+  .pipe{display:flex;align-items:center}
+  .pnode{flex:0 0 auto}
+  .pdot{width:15px;height:15px;border-radius:50%;border:2px solid #cbd5e1;background:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;color:#fff;line-height:1}
+  .pdot.done{background:var(--green);border-color:var(--green)}
+  .pdot.cur.go{border-color:var(--blue);background:var(--blue);box-shadow:0 0 0 3px var(--blueBg)}
+  .pdot.cur.fix{border-color:var(--amber);background:var(--amber);box-shadow:0 0 0 3px var(--amberBg)}
+  .pseg{height:2px;flex:1 1 auto;background:#e2e8f0;min-width:6px}
+  .pseg.on{background:var(--green)}
+  .pcur{margin-top:6px;font-size:10.5px;font-weight:700}
+  .pcur .stg{color:var(--muted);font-weight:600}
+  .pcur.go strong{color:var(--blue)} .pcur.fix strong{color:var(--amber)} .pcur.done strong{color:var(--green)}
+  /* scenario grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .sc{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;border-top:3px solid #cbd5e1}
+  .sc.money{border-top-color:var(--green)} .sc.ops{border-top-color:var(--blue)} .sc.risk{border-top-color:var(--purple)}
+  .sc .h{display:flex;align-items:center;gap:7px}
+  .sc .h .t{font-weight:700;font-size:13.5px}
+  .sc .trig{font-size:11px;color:var(--muted);margin-top:4px}
+  .sc .trig b{color:#334155}
+  .sc .lk{font-size:11px;color:#334155;margin-top:7px}
+  .sc .lk b{color:var(--ink)}
+  .sc .sp{font-size:10.5px;color:var(--muted);margin-top:6px;border-top:1px dashed var(--line);padding-top:5px}
+  .sc .sp b{color:var(--navy)}
+  .note{background:#fff;border:1px solid var(--line);border-left:4px solid var(--navy);border-radius:8px;padding:11px 13px;margin-top:18px;font-size:12px;color:#334155}
+  .note b{color:var(--ink)}
+  .foot{font-size:10.5px;color:var(--muted);margin:14px 2px 4px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>IH35-TMS — End-to-End Scenario Tracker</h1>
+    <p>Every business process as a vertical slice — and the full lifecycle each one travels, start to certified.</p>
+    <span class="demo">DESIGN PREVIEW v2 · representative state · 2026-08-04</span>
+  </header>
+
+  <div class="engine">
+    <b>One engine, every transaction.</b> No feature writes its own GL math — every economic event calls the <b>shared poster</b>, which produces a balanced journal entry + its document + both-way linkage automatically.
+    <div class="flow"><code>event</code> → <code>shared poster</code> → <code>balanced JE (DR = CR)</code> + <code>document</code> + <code>links: financial ⇄ operational</code></div>
+  </div>
+
+  <div class="life">
+    <div class="lt">The lifecycle every process travels</div>
+    <div class="steps">
+      <span class="st"><span class="b">1</span>Spec</span><span class="arr">→</span>
+      <span class="st"><span class="b">2</span>Built</span><span class="arr">→</span>
+      <span class="st"><span class="b">3</span>Merged</span><span class="arr">→</span>
+      <span class="st"><span class="b">4</span>Proof</span><span class="arr">→</span>
+      <span class="st"><span class="b">5</span>Passed</span><span class="arr">→</span>
+      <span class="st"><span class="b">6</span>Complete</span>
+    </div>
+    <div class="hint">Spec = locked in blueprint · Built = code written · Merged = on main + migration applied on Neon · Proof = GUARD clicks it live &amp; checks Neon · Passed = live-verified, any defect <b>fixed</b> &amp; re-proven · Complete = certified on the ledger. A defect found at Proof loops back to <b>fix</b>, then re-proves.</div>
+  </div>
+
+  <h2>Part A — The money slice: one freight load, 9 hops</h2>
+  <p class="sub">The walking skeleton. Each hop shows what's being done, its spec, and its exact position in the lifecycle.</p>
+  <div class="hops">
+
+    <div class="hop">
+      <div class="dot d-blue">1</div>
+      <div class="card">
+        <div class="top"><span class="nm">Book the load</span><span class="lane l-screen">Screens</span></div>
+        <div class="doing"><b>Doing:</b> Book Load screen persists load + inline customer; booking auto-creates the <b>proforma invoice</b> via the single writer, with a loud audit row if a projection can't be sourced.</div>
+        <div class="spec"><b>Spec:</b> WIRE-01 · <code>buildInvoiceFromLoad</code> single writer · proforma only · PR #4311.</div>
+        <div class="pipewrap"><div class="pipe" data-stage="2" data-state="go"></div></div>
+      </div>
+    </div>
+
+    <div class="hop">
+      <div class="dot d-blue">2</div>
+      <div class="card">
+        <div class="top"><span class="nm">Assign driver &amp; truck</span><span class="lane l-money">Money</span></div>
+        <div class="doing"><b>Doing:</b> pay now resolves as <b>rate-per-mile × shortest miles</b> (per-load flat alternate), never the customer rate. <b>driver_pay_rates</b> table created &amp; applied on prod; 90 TRANSP test rows @ $1.20/mi (is_test_data). Guard 6/6.</div>
+        <div class="je">driver pay = rate_per_mile × miles_shortest &nbsp;(fails closed if no rate/miles)</div>
+        <div class="spec"><b>Spec:</b> WIRE-02 · effective-dated rates · FORCE RLS + tenant policy · PR #4313 (migration applied). Was the 100%-of-rate defect — now fixed at the root.</div>
+        <div class="pipewrap"><div class="pipe" data-stage="2" data-state="go"></div></div>
+        <div class="blk">▸ Side item: 3 pre-fix bills can't reissue per-mile — those loads have NULL shortest miles. Your call: flat per-load, capture miles, or void-and-hold.</div>
+      </div>
+    </div>
+
+    <div class="hop">
+      <div class="dot d-blue">3</div>
+      <div class="card">
+        <div class="top"><span class="nm">Dispatch / in transit</span><span class="lane l-screen">Screens</span></div>
+        <div class="doing"><b>Doing:</b> the "Delivered" drag stamps <b>actual_departure_at</b> (the recognition evidence) instead of bypassing it; ratchet guard protects the path.</div>
+        <div class="spec"><b>Spec:</b> WIRE-07 · <code>actual_departure_at</code> = final-active-delivery-stop · PR #4312.</div>
+        <div class="pipewrap"><div class="pipe" data-stage="2" data-state="go"></div></div>
+      </div>
+    </div>
+
+    <div class="hop">
+      <div class="dot d-blue">4</div>
+      <div class="card">
+        <div class="top"><span class="nm">Deliver — record time</span><span class="lane l-screen">Screens</span></div>
+        <div class="doing"><b>Doing:</b> delivery flips the load to <b>delivered_pending_docs</b> and records the departure — the source event the revenue latch reads.</div>
+        <div class="spec"><b>Spec:</b> office + driver-capture paths must both call the latch on the same final-stop event.</div>
+        <div class="pipewrap"><div class="pipe" data-stage="3" data-state="go"></div></div>
+      </div>
+    </div>
+
+    <div class="hop">
+      <div class="dot d-blue">5</div>
+      <div class="card">
+        <div class="top"><span class="nm">POD + BOL paperwork</span><span class="lane l-screen">Screens</span></div>
+        <div class="doing"><b>Doing:</b> POD/BOL upload flips the load to <b>completed_docs_received</b> — the billing trigger for Event 2.</div>
+        <div class="spec"><b>Spec:</b> POD = billing/factoring readiness only; it does NOT move the accrual recognition event.</div>
+        <div class="pipewrap"><div class="pipe" data-stage="3" data-state="go"></div></div>
+      </div>
+    </div>
+
+    <div class="hop">
+      <div class="dot d-amber">6</div>
+      <div class="card">
+        <div class="top"><span class="nm">Earn the revenue</span><span class="lane l-money">Money</span></div>
+        <div class="doing"><b>Doing:</b> Event 1 fires at delivery. Smoke-tested live ($15,000, both JEs balanced), flag ON for TRANSP + USMCA. <b>Fixing:</b> the driver-capture path doesn't call the poster yet (WIRE-05).</div>
+        <div class="je">DR Unbilled Revenue&nbsp;&nbsp;/&nbsp;&nbsp;CR Line-Haul Income</div>
+        <div class="spec"><b>Spec:</b> WIRE-05 · ASC 606 point-in-time at delivery · Unbilled 1240/1150 · reuse the poster.</div>
+        <div class="pipewrap"><div class="pipe" data-stage="3" data-state="fix"></div></div>
+      </div>
+    </div>
+
+    <div class="hop">
+      <div class="dot d-blue">7</div>
+      <div class="card">
+        <div class="top"><span class="nm">Make the invoice</span><span class="lane l-money">Money</span></div>
+        <div class="doing"><b>Doing:</b> Event 2 fires at POD — the real invoice off the delivered load, accessorials each to their own account.</div>
+        <div class="je">DR Accounts Receivable&nbsp;&nbsp;/&nbsp;&nbsp;CR Unbilled Revenue</div>
+        <div class="spec"><b>Spec:</b> A/R = QBO-45 · accessorials 4210/4220/4230/4240 (no collapse) · factoring stamped at invoice time.</div>
+        <div class="pipewrap"><div class="pipe" data-stage="1" data-state="go"></div></div>
+      </div>
+    </div>
+
+    <div class="hop">
+      <div class="dot d-grey">8</div>
+      <div class="card">
+        <div class="top"><span class="nm">Money in the books (GL)</span><span class="lane l-money">Money</span></div>
+        <div class="doing"><b>Doing:</b> every hop's JE lands in the entity ledger, balanced, entity-scoped. Posters live + flag ON — but no single real load has flowed book→GL end to end yet.</div>
+        <div class="spec"><b>Spec:</b> parallel double-books · TMS ledger authority from 2026-01-01 · no TMS→QBO write-back. That proof is Hop 0.</div>
+        <div class="pipewrap"><div class="pipe" data-stage="1" data-state="go"></div></div>
+      </div>
+    </div>
+
+    <div class="hop">
+      <div class="dot d-grey">9</div>
+      <div class="card">
+        <div class="top"><span class="nm">Match the bank</span><span class="lane l-money">Money</span></div>
+        <div class="doing"><b>Doing:</b> customer payment on the invoice, then reconcile against the bank feed.</div>
+        <div class="je">DR Cash&nbsp;&nbsp;/&nbsp;&nbsp;CR Accounts Receivable&nbsp;&nbsp;→&nbsp;&nbsp;RECON-01</div>
+        <div class="spec"><b>Spec:</b> RECON-01 twice-daily (06:00 / 19:00 CT) · flag every divergence · read-only, maker≠checker · banking 18/19.</div>
+        <div class="pipewrap"><div class="pipe" data-stage="0" data-state="go"></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <h2>Part B — Every other end-to-end process (same engine)</h2>
+  <p class="sub">Each is its own vertical slice, each on the same 6-stage lifecycle. Certification runs in money order in Phase 2.</p>
+  <div class="grid">
+
+    <div class="sc ops">
+      <div class="h"><span class="t">New Customer</span></div>
+      <div class="trig"><b>Trigger:</b> create customer (universal picker/creator)</div>
+      <div class="lk">Canonical entity-scoped write; A/R-ready; links ⇄ loads, invoices, factoring. Relationship health live (LV-001 fixed, proven on prod).</div>
+      <div class="sp"><b>Spec:</b> QBO Lists parity · picker canonical write + entity isolation proven live.</div>
+      <div class="pipewrap"><div class="pipe" data-stage="4" data-state="go"></div></div>
+    </div>
+
+    <div class="sc ops">
+      <div class="h"><span class="t">New Driver onboarding</span></div>
+      <div class="trig"><b>Trigger:</b> onboard driver</div>
+      <div class="lk">One txn: driver + <b>driver-vendor</b> + W-8BEN + escrow ledger + pay_basis + Driver Receivable.</div>
+      <div class="sp"><b>Spec:</b> MUST 3.13.1 · B1 1099, no US withholding · accounting skill §4.</div>
+      <div class="pipewrap"><div class="pipe" data-stage="0" data-state="go"></div></div>
+    </div>
+
+    <div class="sc money">
+      <div class="h"><span class="t">Chart of Accounts</span></div>
+      <div class="trig"><b>Trigger:</b> CoA setup / edit</div>
+      <div class="lk">Additive only (never delete/rename); roles bound (unbilled_revenue, ar_control, revenue_default) per entity.</div>
+      <div class="sp"><b>Spec:</b> accounting skill §6 · 1,368 accounts · roles active TRANSP + USMCA.</div>
+      <div class="pipewrap"><div class="pipe" data-stage="4" data-state="go"></div></div>
+    </div>
+
+    <div class="sc money">
+      <div class="h"><span class="t">Driver Settlement</span></div>
+      <div class="trig"><b>Trigger:</b> delivered loads in the period (weekly, per-driver overridable)</div>
+      <div class="je">Header + pay lines + deductions + escrow = Net → Bill vs driver-vendor + Payment</div>
+      <div class="lk">Gross (rate × shortest miles) − deductions + reimbursements = net; <b>5% floor</b>; debt shown in red.</div>
+      <div class="sp"><b>Spec:</b> settlement blueprint · states draft/presettlement/final/voided · unblocked by WIRE-02.</div>
+      <div class="pipewrap"><div class="pipe" data-stage="1" data-state="go"></div></div>
+    </div>
+
+    <div class="sc money">
+      <div class="h"><span class="t">Driver Advance / Loan</span></div>
+      <div class="trig"><b>Trigger:</b> cash advance to driver</div>
+      <div class="je">DR Driver Cash Advance (ASSET) / CR Cash</div>
+      <div class="lk">Recovered through settlement, capped by the net-pay floor; links ⇄ driver, bill_payment.</div>
+      <div class="sp"><b>Spec:</b> accounting skill §4 · <code>driver_finance.advances</code> running balance.</div>
+      <div class="pipewrap"><div class="pipe" data-stage="0" data-state="go"></div></div>
+    </div>
+
+    <div class="sc money">
+      <div class="h"><span class="t">Deductions</span></div>
+      <div class="trig"><b>Trigger:</b> fine / damage / advance payback</div>
+      <div class="lk">Separate itemized ledger, <b>running balance per obligation</b> (not negative pay lines); WF-036 ack gate before settlement closes.</div>
+      <div class="sp"><b>Spec:</b> settlement blueprint §1 · fully auditable recovery trail.</div>
+      <div class="pipewrap"><div class="pipe" data-stage="0" data-state="go"></div></div>
+    </div>
+
+    <div class="sc money">
+      <div class="h"><span class="t">Escrow</span></div>
+      <div class="trig"><b>Trigger:</b> escrow deposit / separation payout</div>
+      <div class="je">DR Cash / CR Driver Escrow (LIABILITY) · forfeit → contra</div>
+      <div class="lk">Held-in-trust sub-ledger, control = Σ per-driver balances; returned 60–90d post-separation.</div>
+      <div class="sp"><b>Spec:</b> accounting skill §4 · escrow is a LIABILITY, never an asset.</div>
+      <div class="pipewrap"><div class="pipe" data-stage="0" data-state="go"></div></div>
+    </div>
+
+    <div class="sc money">
+      <div class="h"><span class="t">Expense / Bill / AP</span></div>
+      <div class="trig"><b>Trigger:</b> vendor bill or expense</div>
+      <div class="je">Bill: DR Expense/Asset / CR A/P (QBO-47) · Pay: DR A/P / CR Cash</div>
+      <div class="lk">Per-line load/unit/driver cost tags; vendor is a real FK; A/P aging by vendor.</div>
+      <div class="sp"><b>Spec:</b> standards parity §1 · createBill/payBill posting fixed (#2323/#2324).</div>
+      <div class="pipewrap"><div class="pipe" data-stage="2" data-state="go"></div></div>
+    </div>
+
+    <div class="sc money">
+      <div class="h"><span class="t">Fuel</span></div>
+      <div class="trig"><b>Trigger:</b> fuel card txn (ComData / Relay)</div>
+      <div class="lk">Chain: fuel card → driver → unit → IFTA (miles/gallons by state) → settlement; fuel expense FK to the load.</div>
+      <div class="sp"><b>Spec:</b> QBO parity §6 · IFTA quarterly prep · test battery step 13.</div>
+      <div class="pipewrap"><div class="pipe" data-stage="0" data-state="go"></div></div>
+    </div>
+
+    <div class="sc ops">
+      <div class="h"><span class="t">Maintenance Work Order</span></div>
+      <div class="trig"><b>Trigger:</b> WO on a unit</div>
+      <div class="je">Parts (→inventory→GL) + labor → Maint/Parts Expense + Maintenance Bill (A/P)</div>
+      <div class="lk">WO ⇄ unit ⇄ vendor ⇄ GL, both-way; parts ⇄ inventory.</div>
+      <div class="sp"><b>Spec:</b> test battery step 17 · parts catalog + PM · money-gate guard active.</div>
+      <div class="pipewrap"><div class="pipe" data-stage="1" data-state="go"></div></div>
+    </div>
+
+    <div class="sc risk">
+      <div class="h"><span class="t">Full Accident chain</span></div>
+      <div class="trig"><b>Trigger:</b> accident / safety incident</div>
+      <div class="lk">Depth: accident ⇄ driver ⇄ unit ⇄ trailer ⇄ load → claim ⇄ policy → at-fault: <b>driver_liabilities</b> carries full company-funded repair (WF-036 ack) → <b>damage_recovery = contra-expense (never income)</b>.</div>
+      <div class="sp"><b>Spec:</b> test battery steps 19–24 · owner ruling 2026-07-23 · DIRE-ACCIDENT linkage proof.</div>
+      <div class="pipewrap"><div class="pipe" data-stage="0" data-state="go"></div></div>
+    </div>
+
+    <div class="sc risk">
+      <div class="h"><span class="t">Insurance</span></div>
+      <div class="trig"><b>Trigger:</b> claim filed / insurer pays</div>
+      <div class="je">Deductible booked · recovery → CREDIT the SAME expense (never sales income)</div>
+      <div class="lk">Claim ⇄ accident ⇄ policy ⇄ unit ⇄ driver.</div>
+      <div class="sp"><b>Spec:</b> test battery step 22 · substance-over-form recovery treatment.</div>
+      <div class="pipewrap"><div class="pipe" data-stage="0" data-state="go"></div></div>
+    </div>
+
+    <div class="sc risk">
+      <div class="h"><span class="t">Legal Matter + Civil Fine</span></div>
+      <div class="trig"><b>Trigger:</b> lawsuit or civil/safety fine</div>
+      <div class="je">Legal cost → legal-cost GL · fine → fine expense/liability</div>
+      <div class="lk">Legal stores documents/consents; Accounting posts (separation of duties). Fine ⇄ safety event.</div>
+      <div class="sp"><b>Spec:</b> test battery steps 23–24 · <code>civil_fines_expense</code>.</div>
+      <div class="pipewrap"><div class="pipe" data-stage="0" data-state="go"></div></div>
+    </div>
+
+    <div class="sc money">
+      <div class="h"><span class="t">Factoring</span></div>
+      <div class="trig"><b>Trigger:</b> factor an invoice (Faro → RTS)</div>
+      <div class="je">DR Cash + DR Fee/Reserve / CR Factoring Advance (LIABILITY)</div>
+      <div class="lk">A/R stays on IH35 books as pledged collateral — <b>no derecognition</b>; secured borrowing, not a sale.</div>
+      <div class="sp"><b>Spec:</b> accounting skill §3 · ASC 860 recourse · Advance + Reserve + Recoursed.</div>
+      <div class="pipewrap"><div class="pipe" data-stage="0" data-state="go"></div></div>
+    </div>
+
+    <div class="sc money">
+      <div class="h"><span class="t">Banking / Reconciliation</span></div>
+      <div class="trig"><b>Trigger:</b> bank feed + twice daily</div>
+      <div class="lk">AM count/sum 06:00 CT, PM categorization diff 19:00 CT; every divergence flagged (no $ threshold); read-only.</div>
+      <div class="sp"><b>Spec:</b> accounting skill §8 RECON-01 · <code>TMS_QBO_RECON_ENABLED</code> default OFF · 18/19.</div>
+      <div class="pipewrap"><div class="pipe" data-stage="2" data-state="go"></div></div>
+    </div>
+
+  </div>
+
+  <div class="note">
+    <b>Honest by construction.</b> A dot is filled only when that stage truly happened — Merged means the migration is on Neon, Passed means GUARD clicked it live and confirmed the row. Grey pipelines aren't behind; they're <b>Spec'd</b>, waiting their turn in the money-order certification. The living version regenerates off Cascade's ledger + GUARD's stamps so no stage can be faked, and every new scenario you name becomes one more slice on the same six-stage track.
+  </div>
+
+  <p class="foot">One posting engine · Spec → Built → Merged → Proof → Passed → Complete · Built to the standard of QuickBooks · NetSuite · McLeod · Alvys.</p>
+
+<script>
+(function(){
+  var STAGES=['Spec','Built','Merged','Proof','Passed','Complete'];
+  document.querySelectorAll('.pipe').forEach(function(p){
+    var stage=parseInt(p.dataset.stage,10); var state=p.dataset.state||'go';
+    var html='';
+    for(var i=0;i<6;i++){
+      var done=(state==='done')||i<stage;
+      var cur=(state!=='done')&&i===stage;
+      var cls='pdot'+(done?' done':'')+(cur?' cur '+state:'');
+      html+='<div class="pnode"><div class="'+cls+'">'+(done?'✓':'')+'</div></div>';
+      if(i<5){ var on=(state==='done')||i<stage; html+='<div class="pseg'+(on?' on':'')+'"></div>'; }
+    }
+    p.innerHTML=html;
+    var label=(state==='done')?'Complete':(state==='fix'?(STAGES[stage]+' · fixing'):STAGES[stage]);
+    var chip=document.createElement('div');
+    chip.className='pcur '+state;
+    chip.innerHTML='<span class="stg">Now:</span> <strong>'+label+'</strong>';
+    p.parentNode.appendChild(chip);
+  });
+})();
+</script>
+</div>
+</body>
+</html>

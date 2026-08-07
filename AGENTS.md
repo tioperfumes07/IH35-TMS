@@ -1,4 +1,20 @@
+> **Model tiers (permanent):** [docs/specs/MODEL-TIER-POLICY.md](docs/specs/MODEL-TIER-POLICY.md) — Cursor mechanical=C, feature/scoreboard=B; money=A.
+
 # IH35-TMS — Agent coordination
+
+> **★★★★ OWNER LAW (2026-08-03, FINAL — reads above every other pointer in this file): NO HOLDS. NO
+> `JORGE-APPROVED` LABEL.** Claude and all coders (Cursor / Cascade / Devin / Claude Coder) have **FULL Neon
+> access and merge authority** — they merge on green in every lane, including financial/migrations, and
+> apply migrations + flip posting flags themselves on Neon. The owner steers by **DECISION in chat**, never
+> by a label or a merge click. Safeguard = **PROOF, not approval**. Canonical:
+> `.cursor/rules/00-operating-method-LAW.mdc` (CI: `verify-no-approval-holds` / step 2218) (governance section) + `.windsurf/rules/00-operating-method-LAW.md`.
+> Any older text below referencing `JORGE-APPROVED`, "Devin merges on green" as an exclusive role, "owner
+> applies on Neon," or "STOP for owner approval" is **SUPERSEDED** by this line.
+
+> **★★ SESSION BOOT:** [docs/specs/STANDING-SESSION-DIRECTIVE.md](docs/specs/STANDING-SESSION-DIRECTIVE.md) (§0–§7 · **§6 SEARCH BEFORE YOU ASK** · **§7 TEST WITH PLACEHOLDER NUMBERS**) +
+> [docs/specs/OWNER-QUALITY-COMPACT.md](docs/specs/OWNER-QUALITY-COMPACT.md) (**ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED** · Desktop `Claude.docx` permanized as `OWNER-QUALITY-COMPACT-Claude.docx`) +
+> [docs/specs/DELIVERY-METHOD-LOCKED.md](docs/specs/DELIVERY-METHOD-LOCKED.md) — load every session.
+> Presence ratchet: `verify-standing-directive-present` (step **2374**) · `verify-owner-quality-compact-present` (step **2380**) · `verify-cursor-pr-title-prefix` (step **2377** — every Cursor PR title **MUST** begin with `Cursor-`).
 
 > **★★★ FULL SYSTEM AUDIT LAW (owner 2026-08-03 v3 — MANDATORY):** [docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md](docs/audit/IH35-FULL-SYSTEM-AUDIT-SPEC.md) — **"Complete" is NOT five layers.** Complete = **DoD A–E + VERIFY 1–8** PROD-VERIFIED per entity (live V2 picker+creator · V3 wiring · V4 deep linkage F+R). Cascade Always-On: `.windsurf/rules/ih35-deep-linkage-audit.md`. Cursor: Rule **31** (`.cursor/rules/31-full-system-audit-mandatory.mdc`). Ledger: [AUDIT-COVERAGE-LIVE.md](docs/audit/AUDIT-COVERAGE-LIVE.md) · run-log: [AUDIT-RUN-LOG.md](docs/audit/AUDIT-RUN-LOG.md). A code trace / count / CI-green is NOT proof. A guess is a defect.
 
@@ -28,6 +44,10 @@
 >
 > **★ Rule 29 — CURSOR = CLAUDE SHIP PARITY (permanent):** [`.cursor/rules/29-cursor-claude-parity-ship.mdc`](.cursor/rules/29-cursor-claude-parity-ship.mdc) — before **every** push run `node scripts/money-pr-local-gate.mjs` (DoD + theater + migration HH band + EVEN verify-step + no CLAIMED-NUMBERS edit + EntityLink adoption). **Never** `git commit --no-verify` / `git push --no-verify`. One labelled commit; PR body is not enough. CI: verify-step **1998** (`verify-cursor-claude-parity-ship`).
 >
+> **★ Rule 36 — CLAUDE SERIAL SHIP SEQUENCE (permanent — owner 2026-08-05):** [`.cursor/rules/36-claude-serial-ship-sequence.mdc`](.cursor/rules/36-claude-serial-ship-sequence.mdc) — Cursor ships like Claude: tip `origin/main` + one FINDING commit + Claude title/body + max **1** open CLAIMED/verify-step PR + `cursor-ship-preflight` fails if behind main. Mirror: [docs/specs/CLAUDE-SERIAL-SHIP-RULE-36.md](docs/specs/CLAUDE-SERIAL-SHIP-RULE-36.md). Delivery §9.2.1 rev G.
+>
+> **★ Rule 37 — CLAIM → MERGE → AUTHOR (permanent — owner 2026-08-05):** [`.cursor/rules/37-claim-merge-then-author.mdc`](.cursor/rules/37-claim-merge-then-author.mdc) — never author `verify-steps/NNNN-*.mjs` until `NNNN` is on `origin/main`; never claim+guard same PR; `money-pr-local-gate` runs `verify-verify-step-claimed-on-main`. Law: `docs/specs/VERIFY-STEP-MOD4-CLAIM-BEFORE-WRITE-LAW-2026-08-04.md`.
+
 > **★ Rule 30 — CLAUDE-GREEN EVIDENCE FORMAT (permanent):** [`.cursor/rules/30-claude-green-evidence-format.mdc`](.cursor/rules/30-claude-green-evidence-format.mdc) — FINDING-first body/commit (template [docs/templates/CLAUDE-GREEN-PR-BODY.md](docs/templates/CLAUDE-GREEN-PR-BODY.md)); `LIVE PROOF: … exit 0` (not `UNVERIFIED browser`); one commit on `origin/main` (never stack / never soft-reset); run `node scripts/cursor-pr-body-gate.mjs --body-file …` before `gh pr create|edit`. Gate suite + CI verify-step **2088**.
 > **★★ PER-PR CHECKLIST (read FIRST, every PR):** [docs/specs/PER-PR-CHECKLIST.md](docs/specs/PER-PR-CHECKLIST.md) — the single consolidated list of everything audited and fixed in **every** PR: the 5 DONE layers, the 8 audit layers (QBO chrome · universal picker law · connectivity/wiring · deep forward+reverse linkage chains · catalogs/entity scope · CPA-grade economics · tab/design law · security/RLS), the required evidence block, the guard rules, the verification traps, the merge gates, and the migration rules. Consolidated because **scattered law is skipped law**. Enforced by `.github/workflows/pr-evidence-block.yml` (PR body) + `scripts/verify-definition-of-done-evidence.mjs` (commits) + always-apply `.cursor/rules/23-per-pr-checklist.mdc`.
 
@@ -41,7 +61,7 @@
 
 ## Verify-step claims (TOOL-F03 — 2026-07-31)
 
-Do **not** edit `scripts/verify-steps/CLAIMED-NUMBERS.json` in feature PRs. The `NNNN-*.mjs` filename is the claim (Cursor EVEN / Claude ODD). GitHub cannot run `merge=json-union` on that file — editing it is the conflict treadmill. Enforced by verify-step **1599** (uniqueness only) + **1906** (`verify-no-claimed-numbers-edits`).
+Verify-step law (2026-08-04): **mod-4** Cursor EVEN · CC-1 ≡1 · CC-2 ≡3 + **claim-before-write** — reserve on `chore/claim-reserve*` + merge to main **before** authoring `NNNN-*.mjs` (Rule 37; `CLAIMED-REGEN` = registry tooling only) (Rule 25 bands file + step **2400**). Feature PRs must **not** edit `CLAIMED-NUMBERS.json` except allowlisted claim PRs. Do not renumber after collisions. Law: `docs/specs/VERIFY-STEP-MOD4-CLAIM-BEFORE-WRITE-LAW-2026-08-04.md`. Enforced by **1803** (lane-band) + **2400** (claimed-on-main) + **1906** (no feature CLAIMED edits).
 
 ## Dual lanes (always parallel when queue has work)
 
@@ -55,6 +75,8 @@ Do **not** edit `scripts/verify-steps/CLAIMED-NUMBERS.json` in feature PRs. The 
 Cursor rule: `.cursor/rules/dual-lane-never-idle.mdc` (`alwaysApply: true`)
 
 **Continuous mode (Rule 32):** `.cursor/rules/32-continuous-mode-no-idle.mdc` (`alwaysApply: true`) — never pause/idle after merge/PR/Neon/CI; always keep writing the next ranked FAIL.
+
+> **★ DELIVERY METHOD (LOCKED 2026-08-04):** [docs/specs/DELIVERY-METHOD-LOCKED.md](docs/specs/DELIVERY-METHOD-LOCKED.md) — vertical money skeleton → certify modules under WIP≤3. Do not invent a fourth method. Do not restart the block pile as primary queue.
 
 Hook: `.cursor/hooks.json` → on **subagentStop**, injects follow-up to dispatch the top **OPEN** item in that
 coder's lane from [docs/audit/GUARD-WORKORDERS.md](docs/audit/GUARD-WORKORDERS.md)
@@ -97,3 +119,29 @@ satisfy ALL of these before it is "done", verified on **live data**, forward AND
 - [ ] No orphaned created-but-unused id, no built-but-unwired poster / route, no unlinked sub-account.
 
 **If any box is unchecked, the block is NOT done.**
+
+---
+
+## ★★ PERMANENT LAW — owner-locked 2026-08-05 (supreme; applies to every agent, every session)
+
+**1. FINDINGS FLOW AGENT → BOARD → AGENT, NEVER THROUGH THE OWNER.** Find a defect in another lane →
+**WRITE an OPEN row into `docs/audit/GUARD-WORKORDERS.md` yourself and commit it**; the target coder pulls
+it on their next loop. **The owner is NOT a message bus — ever, in any session.**
+
+**2. LAW = ENFORCED GUARD, OR IT IS NOT LAW** (phased). Every NEW rule ships with a guard registered in
+`docs/law/LAW.json`. `verify-law-registry.mjs` is a required check (<2s, existence-only) and fails the
+build if a registered law's guard file is missing. Old rules migrate as a backlog class. Judgment rules
+stay judgment.
+
+**3. ROLES.** CC-1 = money / GL / WORM. CC-3 = mechanical / entity-scope / FE / CI-guards. CC-2 = GUARD,
+**verify live, never build**. CASCADE = merger (direct merge API — auto-merge is broken on our rulesets,
+community #190610).
+
+**4. ENTITY + DATA LAW.** VOID = reversal; **nothing is deletable**. TRANSP / USMCA own **no assets
+today**. **ALL TMS-native data is TEST** — only the TRANSP QBO mirror is real. **RLS is NOT a backstop for
+Owner sessions**: `org.user_accessible_company_ids()` returns EVERY active company when the role is Owner,
+so **every unscoped read is load-bearing on its own predicate**.
+
+**5. EVERY LOOP.** read board → **grep-verify the card against main** → build **ONE complete atomic block**
+→ found another lane's defect? **write it to the board** → push → next. Never idle, never pause to
+summarize, never half-edit.

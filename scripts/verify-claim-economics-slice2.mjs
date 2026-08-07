@@ -258,16 +258,21 @@ export function computeFailures(sources) {
     errors.push('claim.routes.ts PATCH: must map trailer_not_found -> 404 { error: "trailer_not_found" }');
   }
 
-  // 4) ClaimCreateModal — no bare-select regression on create-worthy trailer field; owner-locked
+  // 4) ClaimCreateModal — trailer nested-create (EntityPicker V2 or legacy Combobox+CreateTrailerModal); owner-locked
   // ask-default; deductible via MoneyInput (not a raw number input — QBO-parity money entry).
-  if (!/import \{ CreateTrailerModal \} from "\.\.\/fleet\/CreateTrailerModal"/.test(claimCreate)) {
-    errors.push("ClaimCreateModal.tsx: must import CreateTrailerModal (canonical nested-create gold pattern, Rule 21)");
-  }
-  if (!/allowAddNew=\{\{\s*label:\s*"\+ Create trailer"/.test(claimCreate)) {
-    errors.push('ClaimCreateModal.tsx: trailer Combobox must offer allowAddNew "+ Create trailer" (never a bare <select> when the gold nested-create pattern exists)');
+  const hasEntityPickerTrailer =
+    /EntityPicker[\s\S]{0,600}?kind=["']trailer["']/.test(claimCreate) &&
+    /data-testid="claim-create-trailer-field"/.test(claimCreate);
+  const hasComboboxTrailerCreate =
+    /import \{ CreateTrailerModal \} from "\.\.\/fleet\/CreateTrailerModal"/.test(claimCreate) &&
+    /allowAddNew=\{\{\s*label:\s*"\+ Create trailer"/.test(claimCreate);
+  if (!hasEntityPickerTrailer && !hasComboboxTrailerCreate) {
+    errors.push(
+      "ClaimCreateModal.tsx: trailer field must use EntityPicker kind=trailer (V2 picker+creator) or Combobox allowAddNew + CreateTrailerModal",
+    );
   }
   if (/<select[\s\S]{0,200}?value=\{form\.trailer_id\}/.test(claimCreate)) {
-    errors.push("ClaimCreateModal.tsx: trailer field regressed to a bare <select> — must use the Combobox + CreateTrailerModal nested-create pattern");
+    errors.push("ClaimCreateModal.tsx: trailer field regressed to a bare <select> — must use EntityPicker or Combobox nested-create");
   }
   if (!/recovery_rail:\s*"ask"/.test(claimCreate)) {
     errors.push("ClaimCreateModal.tsx INITIAL_FORM: recovery_rail must default to 'ask' (owner lock #1 — never auto-advanced)");
@@ -401,7 +406,7 @@ function claimFrom(caps) {
   });
 `,
     claimCreate: `
-import { CreateTrailerModal } from "../fleet/CreateTrailerModal";
+import { EntityPicker } from "../parity/EntityPicker";
 const INITIAL_FORM = {
   fault: "undetermined",
   trailer_id: "",
@@ -409,12 +414,7 @@ const INITIAL_FORM = {
   repair_books_treatment: "ask",
 };
 <label data-testid="claim-create-trailer-field">
-  <Combobox
-    allowAddNew={{
-      label: "+ Create trailer",
-      onAdd: () => setTrailerCreateOpen(true),
-    }}
-  />
+  <EntityPicker kind="trailer" />
 </label>
 <label data-testid="claim-create-recovery-rail-field"><select /></label>
 <label data-testid="claim-create-repair-books-field"><select /></label>
@@ -484,7 +484,7 @@ function selftest() {
       );
       f.claimRoutes = before + after;
     }, "PATCH: must also run"],
-    ["claimCreate", (f) => { f.claimCreate = f.claimCreate.replace('label: "+ Create trailer"', 'label: "not a trailer"'); }, "Create trailer"],
+    ["claimCreate", (f) => { f.claimCreate = f.claimCreate.replace('kind="trailer"', 'kind="unit"'); }, "EntityPicker kind=trailer"],
     ["claimCreate", (f) => { f.claimCreate += `\n<select value={form.trailer_id} />`; }, "regressed to a bare <select>"],
     ["claimCreate", (f) => { f.claimCreate = f.claimCreate.replace('recovery_rail: "ask",', 'recovery_rail: "escrow",'); }, "owner lock #1 — never auto-advanced"],
     ["insuranceApi", (f) => { f.insuranceApi = f.insuranceApi.replace("repair_books_treatment?: InsuranceClaimRepairBooksTreatment;", ""); }, "repair_books_treatment"],

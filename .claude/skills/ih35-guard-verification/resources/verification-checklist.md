@@ -10,11 +10,14 @@ Run this before claiming done / fixed / merged / works. Every unchecked box is a
 - [ ] New/changed table registered in `scripts/canonical-relations.json`; `verify:schema-parity --update` run.
 - [ ] Every bug fix has a static guard that fails on the bug, passes on the fix.
 
-## Before "merged"
-- [ ] Non-financial? → self-merge on GREEN CI (all required checks, not just one).
-- [ ] Financial / migration / `accounting.*` / `catalogs.*` / `mdata.*` / dep-bump? → **STOP**; needs
-      `JORGE-APPROVED`. Migrations validated on a LOCAL DB (proved `current_database()` ≠ prod).
-- [ ] `hold-merge-gate` red on a HOLD/financial PR is CORRECT until the label — not a bug.
+## Before "merged" (OWNER LAW 2026-08-03: no owner-approval gate, any lane)
+- [ ] Non-financial? → merge on GREEN CI (all required checks, not just one).
+- [ ] Financial / migration / `accounting.*` / `catalogs.*` / `mdata.*` / dep-bump? → same merge-on-green
+      rule, PLUS: independent code-review + financial-agent pass, 18-key evidence block, migrations
+      validated on a LOCAL DB (proved `current_database()` ≠ prod), applied on Neon by the coder themselves.
+      No `JORGE-APPROVED` — the label is DELETED.
+- [ ] `hold-merge-gate` red on a PR is CORRECT only when the migration firewall check itself fails — a
+      missing label is never the reason (there is no label check anymore).
 
 ## After "merged" (forensic)
 - [ ] `git fetch origin`; the changed file/line is actually on `origin/main` (a squash can drop a commit).
@@ -28,8 +31,8 @@ Run this before claiming done / fixed / merged / works. Every unchecked box is a
 - [ ] Synced main (`git fetch` + `gh pr list --state all` + `git pull --ff-only`) before "it's gone"?
 - [ ] Re-ran with scope proven correct before claiming absence?
 
-## Live DB (gated — §1.5)
-- [ ] Asked first (every connection).
+## Live DB (full access, OWNER LAW 2026-08-03 — verify the branch, not permission)
+- [ ] Branch verified before connecting (every connection) — not an ask-first gate, a correctness check.
 - [ ] `assert-neon-branch --expect-branch <X>` && before connecting (connection-string defaults to PROD).
 - [ ] `current_database()` / `inet_server_addr()` verified.
 - [ ] `BEGIN; SET TRANSACTION READ ONLY; … ROLLBACK` for a zero-write read; diagnostics as `scripts/*.mjs`.

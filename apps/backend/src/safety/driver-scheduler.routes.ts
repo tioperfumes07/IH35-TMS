@@ -18,6 +18,7 @@ import {
   getLeaveRequestDetail,
   getMySchedule,
   listAllLeaveRequests,
+  listLeaveBalances,
   listMyLeaveRequests,
   listPendingLeaveRequests,
   listTempAssignments,
@@ -320,6 +321,26 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     );
     return { balance: bal, year };
   });
+
+  // Office Leave Balances tab — per-driver allocated/used/remaining for the plan year.
+  // CodeQL js/missing-rate-limiting: auth + company-scoped write/seed must be rate-limited.
+  app.get(
+    "/api/v1/safety/scheduler/balances",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      if (!isSchedulerOfficeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+      const parsed = companyQuerySchema
+        .extend({ year: z.coerce.number().int().min(2000).max(2100).optional() })
+        .safeParse(req.query ?? {});
+      if (!parsed.success) return sendValidationError(reply, parsed.error);
+      const year = parsed.data.year ?? new Date().getUTCFullYear();
+      return withCompanyScope(user.uuid, parsed.data.operating_company_id, (client) =>
+        listLeaveBalances(client, parsed.data.operating_company_id, year)
+      );
+    }
+  );
 
   app.get("/api/v1/safety/scheduler/policy/:op_company_id", async (req, reply) => {
     const user = currentAuthUser(req, reply);

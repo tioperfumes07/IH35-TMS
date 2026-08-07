@@ -59,4 +59,14 @@ export const driverSchedulerOfficeApi = {
   getPolicy(operatingCompanyId: string) {
     return apiRequest<Record<string, unknown>>(`/api/v1/safety/scheduler/policy/${encodeURIComponent(operatingCompanyId)}`);
   },
+
+  listBalances(operatingCompanyId: string, year?: number) {
+    const params: Record<string, string> = {};
+    if (year != null) params.year = String(year);
+    return apiRequest<{
+      policy: Record<string, unknown> | null;
+      year: number;
+      balances: Array<Record<string, unknown>>;
+    }>(withCompanyQuery("/api/v1/safety/scheduler/balances", operatingCompanyId, params));
+  },
 };

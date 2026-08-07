@@ -4,6 +4,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
@@ -49,6 +50,8 @@ export function GeofencesPage() {
   const [label, setLabel] = useState("");
   const [locationKind, setLocationKind] = useState<GeofenceLocationKind>("custom");
   const [locationRefId, setLocationRefId] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [vendorSearch, setVendorSearch] = useState("");
   const [polygonText, setPolygonText] = useState("-97.7431,30.2672\n-97.7350,30.2672\n-97.7350,30.2620\n-97.7431,30.2620");
   const [saving, setSaving] = useState(false);
 
@@ -59,15 +62,25 @@ export function GeofencesPage() {
   });
 
   const customersQuery = useQuery({
-    queryKey: ["mdata", "customers", operatingCompanyId],
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId }),
-    enabled: Boolean(operatingCompanyId),
+    queryKey: ["mdata", "customers", operatingCompanyId, customerSearch],
+    queryFn: () =>
+      listCustomers({
+        operating_company_id: operatingCompanyId,
+        limit: 5000,
+        search: customerSearch || undefined,
+      }),
+    enabled: Boolean(operatingCompanyId) && locationKind === "customer_site",
   });
 
   const vendorsQuery = useQuery({
-    queryKey: ["mdata", "vendors", operatingCompanyId],
-    queryFn: () => listVendors({ operating_company_id: operatingCompanyId }),
-    enabled: Boolean(operatingCompanyId),
+    queryKey: ["mdata", "vendors", operatingCompanyId, vendorSearch],
+    queryFn: () =>
+      listVendors({
+        operating_company_id: operatingCompanyId,
+        limit: 5000,
+        search: vendorSearch || undefined,
+      }),
+    enabled: Boolean(operatingCompanyId) && locationKind === "vendor_site",
   });
 
   const yardsQuery = useQuery({
@@ -77,12 +90,6 @@ export function GeofencesPage() {
   });
 
   const locationOptions = useMemo(() => {
-    if (locationKind === "customer_site") {
-      return (customersQuery.data?.customers ?? []).map((customer) => ({ id: customer.id, label: customer.name }));
-    }
-    if (locationKind === "vendor_site") {
-      return (vendorsQuery.data?.vendors ?? []).map((vendor) => ({ id: vendor.id, label: vendor.name }));
-    }
     if (locationKind === "yard") {
       return (yardsQuery.data?.locations ?? [])
         .filter((loc) => String((loc as { location_type?: string }).location_type ?? "") === "yard")
@@ -92,7 +99,25 @@ export function GeofencesPage() {
         }));
     }
     return [];
-  }, [customersQuery.data?.customers, locationKind, vendorsQuery.data?.vendors, yardsQuery.data?.locations]);
+  }, [locationKind, yardsQuery.data?.locations]);
+
+  const customerRefOptions = useMemo(
+    () =>
+      (customersQuery.data?.customers ?? []).map((customer) => ({
+        value: customer.id,
+        label: customer.name,
+      })),
+    [customersQuery.data?.customers]
+  );
+
+  const vendorRefOptions = useMemo(
+    () =>
+      (vendorsQuery.data?.vendors ?? []).map((vendor) => ({
+        value: vendor.id,
+        label: vendor.name,
+      })),
+    [vendorsQuery.data?.vendors]
+  );
 
   const geofences = geofencesQuery.data?.geofences ?? [];
 
@@ -215,18 +240,50 @@ export function GeofencesPage() {
           </label>
           <label className="text-xs text-slate-700 md:col-span-2">
             Link to existing location (optional)
-            <select
-              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
-              value={locationRefId}
-              onChange={(event) => setLocationRefId(event.target.value)}
-            >
-              <option value="">None</option>
-              {locationOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            {locationKind === "customer_site" ? (
+              <div className="mt-1">
+                <ReferenceSelect
+                  value={locationRefId || null}
+                  onChange={(next) => setLocationRefId(next ?? "")}
+                  options={customerRefOptions}
+                  createKind="customer"
+                  operatingCompanyId={operatingCompanyId}
+                  placeholder="Select customer site"
+                  disabled={!operatingCompanyId}
+                  loading={customersQuery.isLoading}
+                  onSearch={setCustomerSearch}
+                />
+              </div>
+            ) : locationKind === "vendor_site" ? (
+              <div className="mt-1">
+                <ReferenceSelect
+                  value={locationRefId || null}
+                  onChange={(next) => setLocationRefId(next ?? "")}
+                  options={vendorRefOptions}
+                  createKind="vendor"
+                  operatingCompanyId={operatingCompanyId}
+                  placeholder="Select vendor site"
+                  disabled={!operatingCompanyId}
+                  loading={vendorsQuery.isLoading}
+                  onSearch={setVendorSearch}
+                />
+              </div>
+            ) : locationKind === "yard" ? (
+              <select
+                className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+                value={locationRefId}
+                onChange={(event) => setLocationRefId(event.target.value)}
+              >
+                <option value="">None</option>
+                {locationOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="mt-1 text-xs text-slate-500">No linked entity for custom geofences.</p>
+            )}
           </label>
           <label className="text-xs text-slate-700 md:col-span-2">
             Polygon points (`lng,lat`)

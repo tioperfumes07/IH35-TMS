@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { latchOnDeliveryEvidence } from "../dispatch/delivery-evidence-latch.js";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -10,6 +11,10 @@ import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { companyBusinessDateCompact } from "../lib/company-business-date.js";
 import { writeLoadCancellationRecord } from "../dispatch/cancellation.service.js";
+import {
+  loadStatusRequiresDeliveryDepartureStamp,
+  stampFinalActiveDeliveryDeparture,
+} from "../dispatch/stamp-final-delivery-departure.js";
 
 const loadStatusSchema = z.enum([
   "draft",
@@ -489,7 +494,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/mdata/loads", async (req, reply) => {
+  // Rate-limited (CodeQL js/missing-rate-limiting). Pre-existing gap surfaced because this PR touched
+  // the file; the plugin is registered global:false, so an un-configured route has NO limit at all.
+  app.get("/api/v1/mdata/loads", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = listLoadsQuerySchema.safeParse(req.query ?? {});
@@ -593,8 +600,11 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           SELECT COUNT(*)::int AS total_count
           FROM mdata.loads l
           JOIN mdata.customers c ON c.id = l.customer_id
+                                AND c.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                   AND d.operating_company_id = l.operating_company_id
           LEFT JOIN LATERAL (
             SELECT city, scheduled_arrival_at
             FROM mdata.load_stops
@@ -649,8 +659,11 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             ) AS geofence_ready
           FROM mdata.loads l
           JOIN mdata.customers c ON c.id = l.customer_id
+                                AND c.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                   AND d.operating_company_id = l.operating_company_id
           LEFT JOIN LATERAL (
             SELECT city, scheduled_arrival_at
             FROM mdata.load_stops
@@ -713,7 +726,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/mdata/loads/:id", async (req, reply) => {
+  app.get("/api/v1/mdata/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = loadIdParamSchema.safeParse(req.params ?? {});
@@ -756,6 +769,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               OR EXISTS (
                 SELECT 1 FROM mdata.drivers d
                 WHERE d.identity_user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+                  AND d.operating_company_id = mdata.loads.operating_company_id
                   AND (d.id = mdata.loads.assigned_primary_driver_id OR d.id = mdata.loads.assigned_secondary_driver_id)
               )
             )
@@ -821,7 +835,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     return { events: rows };
   });
 
-  app.patch("/api/v1/mdata/loads/:id/status", async (req, reply) => {
+  app.patch("/api/v1/mdata/loads/:id/status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOfficeWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -920,6 +934,24 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       );
       const row = updateRes.rows[0] ?? null;
       if (!row) return { error: "mdata_load_not_found" as const };
+
+      // CLS-DISP-WIRE-07 — dual-path kill: this route used to flip status with zero stop evidence.
+      // Same stamp as dispatch transition + bulk set_status (never overwrite driver departure).
+      if (loadStatusRequiresDeliveryDepartureStamp(String(row.status))) {
+        await stampFinalActiveDeliveryDeparture(client, row.id, null);
+      }
+
+      // CLS-DISP-WIRE-07 — this route STAMPED the departure but never LATCHED revenue, so a load
+      // delivered via the mdata status PATCH recorded evidence the ledger never heard about. Found
+      // by verify-delivery-evidence-latch-wired while fixing the two driver paths — the guard caught
+      // a site I had not been asked to look at, which is the point of scanning for the shape rather
+      // than patching the three known files.
+      await latchOnDeliveryEvidence({
+        operatingCompanyId: String(row.operating_company_id),
+        loadId: String(row.id),
+        targetStatus: String(row.status),
+        actorUserId: req.user!.uuid,
+      });
 
       await appendCrudAudit(
         client,
@@ -1535,7 +1567,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             sd.scheduled_arrival_at AS delivery_scheduled_at
           FROM mdata.loads l
           JOIN mdata.customers c ON c.id = l.customer_id
+                                AND c.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           LEFT JOIN LATERAL (
             SELECT city, scheduled_arrival_at FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'pickup'

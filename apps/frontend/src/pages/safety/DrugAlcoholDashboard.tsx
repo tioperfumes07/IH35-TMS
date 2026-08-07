@@ -89,25 +89,26 @@ export function DrugAlcoholDashboard() {
   }
 
   return (
-    <div className="space-y-3 rounded-sm border border-slate-200 bg-slate-50 p-4">
+    <section className="space-y-3" data-testid="drug-alcohol-dashboard">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-slate-900">FMCSA annual rate compliance ({year})</h2>
         <button
           type="button"
           disabled={drawMutation.isPending}
-          className="rounded-sm bg-slate-900 px-3 py-1 text-xs font-medium text-white disabled:opacity-50"
+          className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-medium text-white disabled:opacity-50"
           onClick={() => drawMutation.mutate()}
         >
           Run Q{currentQuarter()} random draw
         </button>
       </div>
 
+      {/* Flat KPI grid — each tile is its own single frame; no outer bordered card (CLS-BOX-IN-BOX). */}
       <div className="grid gap-3 md:grid-cols-4">
-        <div className="rounded-sm border border-white bg-white p-3 text-xs">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-slate-500">Pool size</div>
           <div className="mt-1 text-lg font-semibold">{poolSize}</div>
         </div>
-        <div className="rounded-sm border border-white bg-white p-3 text-xs">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-slate-500">Drug rate</div>
           <div className="mt-1 text-lg font-semibold">
             {rate?.drug_rate_pct ?? 0}%{" "}
@@ -116,7 +117,7 @@ export function DrugAlcoholDashboard() {
             </span>
           </div>
         </div>
-        <div className="rounded-sm border border-white bg-white p-3 text-xs">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-slate-500">Alcohol rate</div>
           <div className="mt-1 text-lg font-semibold">
             {rate?.alcohol_rate_pct ?? 0}%{" "}
@@ -125,11 +126,11 @@ export function DrugAlcoholDashboard() {
             </span>
           </div>
         </div>
-        <div className="rounded-sm border border-white bg-white p-3 text-xs">
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
           <div className="text-slate-500">Open RTD processes</div>
           <div className="mt-1 text-lg font-semibold">{openRtd}</div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { listUnits } from "../../../api/mdata";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import {
   completeWorkOrder,
   getSevereRepairRollup,
@@ -16,7 +16,6 @@ import {
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   operatingCompanyId: string;
@@ -67,12 +66,6 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
     queryFn: () => getSevereRepairRollup(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
-  const unitsQuery = useQuery({
-    queryKey: ["mdata", "units-for-oos", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId }),
-    enabled: Boolean(operatingCompanyId) && markOosOpen,
-  });
-
   const refreshAll = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["maintenance", "severe-estimates", operatingCompanyId] }),
@@ -313,21 +306,14 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
         <div className="space-y-3">
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase text-gray-600">Unit</label>
-            <SelectCombobox
-              className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-              value={selectedUnitId}
-              onChange={(event) => setSelectedUnitId(event.target.value)}
-            >
-              <option value="">Select unit</option>
-              {(unitsQuery.data?.units ?? []).map((unit) => {
-                const row = unit as Record<string, unknown>;
-                return (
-                  <option key={String(row.id ?? "")} value={String(row.id ?? "")}>
-                    {String(row.unit_number ?? row.id ?? "")}
-                  </option>
-                );
-              })}
-            </SelectCombobox>
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={operatingCompanyId}
+              value={selectedUnitId || null}
+              onChange={(next) => setSelectedUnitId(next ?? "")}
+              placeholder="Select unit"
+              enabled={Boolean(operatingCompanyId) && markOosOpen}
+            />
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase text-gray-600">Reason</label>

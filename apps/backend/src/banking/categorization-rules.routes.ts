@@ -294,7 +294,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
     return { ok: true, id: deactivated };
   });
 
-  app.post("/api/v1/banking/categorization-rules/:id/apply-historical", async (req, reply) => {
+  app.post("/api/v1/banking/categorization-rules/:id/apply-historical", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canDeactivate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -333,9 +333,9 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
         );
         if (!ruleRes.rows[0]) throw new Error("categorization_rule_not_found");
 
-        const txRes = await client.query<{ id: string; operating_company_id: string; plaid_category: string[] }>(
+        const txRes = await client.query<{ id: string; operating_company_id: string; plaid_category: string[]; description: string | null }>(
           `
-            SELECT id, operating_company_id, plaid_category
+            SELECT id, operating_company_id, plaid_category, description
             FROM banking.bank_transactions
             WHERE operating_company_id = $1
               AND categorization_gl_account_id IS NULL
@@ -353,6 +353,9 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
               id: tx.id,
               operating_company_id: tx.operating_company_id,
               plaid_category: tx.plaid_category ?? [],
+              // BANK-F02 — the merchant condition needs the bank text; the dry-run preview must score
+              // rules exactly as the live path does, or the preview would lie about what will happen.
+              description: tx.description,
             },
             dryRun
               ? { dryRun: true }

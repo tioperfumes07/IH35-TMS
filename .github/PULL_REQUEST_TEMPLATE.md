@@ -1,5 +1,5 @@
 FINDING: <!-- e.g. SAF-C01 / ACCT-F95 — REQUIRED labelled line -->
-LANE: <!-- NON-FINANCIAL | FINANCIAL-HOLD | HOLD -->
+LANE: <!-- FINANCIAL | NON-FINANCIAL | DOCS — never HOLD / never owner-approval label -->
 
 ROOT CAUSE: <!-- mechanism, not symptom — REQUIRED labelled line -->
 

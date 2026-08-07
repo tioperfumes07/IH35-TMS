@@ -123,7 +123,11 @@ async function computePaymentBehaviorSubscore(
       SELECT
         COALESCE(
           SUM(
-            GREATEST(EXTRACT(DAY FROM (current_date - i.issue_date)), 0) * i.amount_open_cents
+            -- accounting.invoices.issue_date is DATE, so (current_date - issue_date) is already an
+            -- INTEGER day count. Wrapping it in EXTRACT(DAY FROM ...) raised Postgres 42883
+            -- ("function pg_catalog.extract(unknown, integer) does not exist") and 500'd the whole
+            -- relationship-score endpoint. Do NOT reintroduce EXTRACT here (guard: verify-steps/2361).
+            GREATEST(current_date - i.issue_date, 0) * i.amount_open_cents
           ),
           0
         )::numeric::text AS weighted_days,

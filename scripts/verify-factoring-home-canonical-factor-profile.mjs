@@ -55,10 +55,17 @@ if (/updateVendor\s*\(/.test(src)) {
 }
 pass("no updateVendor profile save");
 
-if (!src.includes("hasActiveFactorIdentity")) {
-  fail(`${PAGE} must gate profile visibility on summary identity (hasActiveFactorIdentity)`);
+// Gate on the loaded factoring.factor row (activeFactor), not a summary-only boolean that
+// rendered an empty notes-based panel while KPI already showed Faro (#4211 / FACT-kpi-vs-profile).
+if (!/\{activeFactor \?/.test(src) && !/activeFactor \? \(/.test(src)) {
+  fail(`${PAGE} must gate profile panel on activeFactor (canonical factoring.factor row)`);
 }
-pass("profile visibility follows summary active-factor identity");
+pass("profile visibility follows loaded factoring.factor row");
+
+if (/parseVendorNotes|serializeVendorNotes/.test(src)) {
+  fail(`${PAGE} must not parse/serialize vendor notes for factor profile`);
+}
+pass("no vendor-notes profile path");
 
 if (!src.includes("No factor configured")) {
   fail(`${PAGE} must retain empty-state copy for companies with no active factor`);

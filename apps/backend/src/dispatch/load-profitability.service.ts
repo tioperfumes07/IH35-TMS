@@ -121,6 +121,7 @@ export async function computeLoadProfitability(
     `SELECT c.customer_name
      FROM mdata.loads l
      LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                              AND c.operating_company_id = l.operating_company_id
      WHERE l.id = $1 LIMIT 1`,
     [loadId]
   );
@@ -266,6 +267,7 @@ export async function computeTripProfitabilityReport(
         s.trip_closed_at
       FROM driver_finance.driver_settlements s
       LEFT JOIN mdata.drivers d ON d.id = s.driver_id
+                             AND d.operating_company_id = s.operating_company_id
       WHERE s.operating_company_id = $1
         AND s.settlement_model = 'load_bookended'
         AND (

@@ -459,6 +459,7 @@ import { registerSecurityHeaders } from "./middleware/security-headers.js";
 import { registerIdempotencyMiddleware } from "./middleware/idempotency.js";
 import { registerCsrfOriginGuard } from "./middleware/csrf-origin-guard.js";
 import { initializeIdempotencyCleanupCron } from "./middleware/idempotency-cleanup.cron.js";
+import { registerScenarioCertifyCron } from "./home/scenario-certify.cron.js";
 import { registerMigrationStatusRoutes } from "./admin/migration-status.routes.js";
 import { registerAdminObservabilityRoutes } from "./admin/observability.routes.js";
 import { registerHomeWidgetRoutes } from "./home/home-widgets.routes.js";
@@ -466,6 +467,7 @@ import { registerOwnerTodaysAttentionRoutes } from "./owner/todays-attention/rou
 import { registerAccountingRoleHomeRoutes } from "./accounting/role-home/routes.js";
 import { registerBillGlDraftRoutes } from "./accounting/bill-gl-draft.routes.js";
 import { registerBillPaymentGlRoutes } from "./accounting/bill-payment-gl.routes.js";
+import { registerRelatedPartyLoanRoutes } from "./accounting/related-party-loan-posting/routes.js";
 import { registerCashForecastManualRoutes } from "./forecast/cash-forecast-manual.routes.js";
 import { registerGeocodingRoutes } from "./integrations/trimble/geocoding.routes.js";
 import { registerSafetyOfficerRoleHomeRoutes } from "./safety-officer/role-views/routes.js";
@@ -482,6 +484,7 @@ import { initializeDailyTaskAlertsCron, stopDailyTaskAlertsCron } from "./cron/d
 import { initializeAdminJobsWorker, stopAdminJobsWorker } from "./admin/admin-jobs.service.js";
 import { initializeDaRandomPoolDrawWorker } from "./jobs/da-random-pool-draw-worker.js";
 import { initializeCertExpiryMonitor } from "./jobs/cert-expiry-monitor.js";
+import { initializeLoanPaymentReminder } from "./jobs/loan-payment-reminder-worker.js";
 import { initializeSamsaraCacheWarmer } from "./integrations/samsara/cache/cache-warmer.js";
 import { initializeSearchIndexerIncremental } from "./jobs/search-indexer-incremental.js";
 import { registerUniversalSearchRoutes } from "./search/universal/routes.js";
@@ -925,6 +928,7 @@ async function main() {
   await registerAccountingRoleHomeRoutes(app);
   await registerBillGlDraftRoutes(app);
   await registerBillPaymentGlRoutes(app);
+  await registerRelatedPartyLoanRoutes(app);
   await registerSafetyOfficerRoleHomeRoutes(app);
   await registerDriverManagerRoleHomeRoutes(app);
   await registerReportsRoutes(app);
@@ -1468,6 +1472,9 @@ async function main() {
     initializeSearchIndexerIncremental(app);
     app.log.info("[STARTUP] cert-expiry-monitor initialized");
 
+    initializeLoanPaymentReminder(app);
+    app.log.info("[STARTUP] loan-payment-reminder initialized");
+
     initializePmAutoEngineCron(app);
     app.log.info("[STARTUP] pm-auto-engine-cron initialized");
   } catch (error) {
@@ -1546,6 +1553,13 @@ async function main() {
     app.log.info("[STARTUP] idempotency-cleanup cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] idempotency-cleanup cron failed");
+  }
+
+  try {
+    registerScenarioCertifyCron(app);
+    app.log.info("[STARTUP] scenario-certify cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] scenario-certify cron failed");
   }
 
   try {

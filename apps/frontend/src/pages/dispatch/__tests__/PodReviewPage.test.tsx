@@ -11,11 +11,6 @@ vi.mock("../../../contexts/CompanyContext", () => ({
 }));
 
 vi.mock("../../../api/dispatch", () => ({
-  listDispatchLoads: vi.fn(async () => ({
-    loads: [{ id: "load-1", load_number: "L-500" }],
-    total_count: 1,
-    has_more: false,
-  })),
   getPodDocuments: vi.fn(async () => ({
     documents: [
       {
@@ -41,6 +36,14 @@ vi.mock("../../../api/dispatch", () => ({
   downloadBolDocument: vi.fn(async () => ({ download_url: "https://example.com/bol.pdf", expires_in_seconds: 900 })),
 }));
 
+vi.mock("../../../api/loads", () => ({
+  listLoads: vi.fn(async () => ({
+    loads: [{ id: "load-1", load_number: "L-500", customer_name: "ACME" }],
+    total_count: 1,
+    has_more: false,
+  })),
+}));
+
 function wrap(ui: ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -59,7 +62,7 @@ describe("PodReviewPage (B21-D10)", () => {
     wrap(<PodReviewPage />);
     expect(await screen.findByTestId("dispatch-pod-review-page")).toBeTruthy();
     expect(screen.getByTestId("pod-review-panel")).toBeTruthy();
-    expect(screen.getByTestId("pod-status-filter")).toBeTruthy();
+    expect(screen.getByTestId("pod-filters-toggle")).toBeTruthy();
     expect(screen.getByText("POD review + BOL")).toBeTruthy();
   });
 
@@ -73,9 +76,13 @@ describe("PodReviewPage (B21-D10)", () => {
   it("shows BOL generate and download controls when a load is selected", async () => {
     const user = userEvent.setup();
     wrap(<PodReviewPage />);
+    await user.click(await screen.findByTestId("pod-filters-toggle"));
     const filter = await screen.findByTestId("pod-load-filter");
-    await screen.findByRole("option", { name: "L-500" });
-    await user.selectOptions(filter, "load-1");
+    const input = filter.querySelector("input");
+    expect(input).toBeTruthy();
+    await user.click(input!);
+    const option = await screen.findByRole("button", { name: /L-500/ });
+    await user.click(option);
     expect(await screen.findByTestId("load-pod-bol-panel")).toBeTruthy();
     expect(screen.getByTestId("bol-generate-button")).toBeTruthy();
     expect(screen.getByTestId("bol-download-link")).toBeTruthy();

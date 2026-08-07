@@ -18,8 +18,33 @@ const read = (rel) => { const p = path.join(ROOT, rel); if (!fs.existsSync(p)) {
 
 const engine = read("apps/backend/src/accounting/posting-engine.service.ts");
 if (engine) {
-  if (!/PostingSourceType =[^;]*"expense"/s.test(engine)) fail("PostingSourceType must include \"expense\".");
-  if (!/assertKnownSourceType[\s\S]*?"expense"/.test(engine)) fail("runtime assertKnownSourceType list must include \"expense\".");
+  // THE SOURCE-TYPE VOCABULARY — read from wherever it is declared, but read ONLY that declaration.
+  //
+  // This used to be /PostingSourceType =[^;]*"expense"/, which assumed the vocabulary was spelled as an
+  // inline union. It is now a const array (POSTING_SOURCE_TYPES) with the type derived from it, so the
+  // old pattern went red against a posting engine that handles 'expense' perfectly well. A guard that
+  // fails on correct code is not a safe guard: the reflex is to delete it, and then the real defect it
+  // was written for ships unnoticed. Both spellings are accepted; neither is a free pass, because the
+  // literal must appear INSIDE the extracted declaration, not merely somewhere in the file.
+  const vocabArray = /export\s+const\s+POSTING_SOURCE_TYPES\s*=\s*\[([\s\S]*?)\]\s*as\s+const/.exec(engine);
+  const vocabUnion = /type\s+PostingSourceType\s*=([^;]*)/.exec(engine);
+  const vocabulary = vocabArray ? vocabArray[1] : vocabUnion ? vocabUnion[1] : null;
+  if (vocabulary == null) {
+    fail("no posting source-type vocabulary found (POSTING_SOURCE_TYPES array or PostingSourceType union).");
+  } else if (!/"expense"/.test(vocabulary)) {
+    fail("the posting source-type vocabulary must include \"expense\".");
+  }
+
+  // The runtime check must validate against that SAME vocabulary. Previously this was
+  // /assertKnownSourceType[\s\S]*?"expense"/ — a lazy scan across the rest of the file, so any later
+  // mention of "expense" anywhere satisfied it even if the runtime list had dropped the value. Now it
+  // must reference the vocabulary the type is derived from, which is what makes them impossible to
+  // diverge: a source type accepted by the compiler but rejected at runtime throws on a live post.
+  const assertFn = /function assertKnownSourceType[\s\S]*?\n\}/.exec(engine);
+  if (!assertFn) fail("assertKnownSourceType must exist (runtime source-type validation).");
+  else if (!/POSTING_SOURCE_TYPES/.test(assertFn[0]) && !/"expense"/.test(assertFn[0])) {
+    fail("assertKnownSourceType must validate against POSTING_SOURCE_TYPES (or list \"expense\" explicitly).");
+  }
   if (!/sourceType === "expense"\)\s*return buildExpenseLines/.test(engine)) fail("buildPostingDraft must dispatch 'expense' → buildExpenseLines.");
   if (!/async function buildExpenseLines\(/.test(engine)) fail("buildExpenseLines must exist.");
   if (!/exp\.payment_account_uuid/.test(engine)) fail("buildExpenseLines must credit payment_account_uuid (cash-basis primary).");

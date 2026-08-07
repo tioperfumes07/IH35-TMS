@@ -1,0 +1,27 @@
+{
+  "note": "CLS-TEST-PROVIDER-DRIFT ratchet — may only SHRINK.",
+  "offenders": [
+    "apps/frontend/src/components/__tests__/Sidebar.test.tsx|Sidebar|QueryClientProvider",
+    "apps/frontend/src/components/dispatch/DispatchKanban.test.tsx|DispatchKanban|QueryClientProvider",
+    "apps/frontend/src/pages/EquipmentTypesPage.test.tsx|EquipmentTypesPage|QueryClientProvider",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStates.test.tsx|CoaRolesPage|QueryClientProvider",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStates.test.tsx|FactorReconciliationPage|QueryClientProvider",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStates.test.tsx|IntegrationTransactionsPage|QueryClientProvider",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStates.test.tsx|InvoiceCreateModal|Router",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStates.test.tsx|RecordPaymentModal|QueryClientProvider",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStates.test.tsx|SalesTaxPage|QueryClientProvider",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStates.test.tsx|SalesTaxPage|Router",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStatesWaveB.test.tsx|BillPaymentsListPage|QueryClientProvider",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStatesWaveB.test.tsx|BillPaymentsListPage|Router",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStatesWaveB.test.tsx|CreateMultipleBillsPage|QueryClientProvider",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStatesWaveB.test.tsx|CreateMultipleBillsPage|Router",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStatesWaveB.test.tsx|InvoicesListPage|QueryClientProvider",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStatesWaveB.test.tsx|InvoicesListPage|Router",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStatesWaveB.test.tsx|RecurringBillCreate|QueryClientProvider",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStatesWaveB.test.tsx|RecurringBillCreate|Router",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStatesWaveB.test.tsx|SubmitFactoringModal|QueryClientProvider",
+    "apps/frontend/src/pages/accounting/__tests__/ReceiptsPage.queryError.test.tsx|ReceiptsPage|QueryClientProvider",
+    "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.test.tsx|DriverReportsQueuePage|Router",
+    "apps/frontend/src/pages/safety/__tests__/IntegrityAlertsPage.test.tsx|IntegrityAlertsPage|Router"
+  ]
+}

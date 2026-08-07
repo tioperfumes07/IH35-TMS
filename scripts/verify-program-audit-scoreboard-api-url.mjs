@@ -139,8 +139,41 @@ export function assertScoreboardContract(sources) {
     if (!/RECENT_CACHE_MS\s*=\s*60_000|60_000/.test(route)) {
       problems.push(`${routeRel}: must short-cache recentActivity (~60s)`);
     }
+    if (!/SCOREBOARD_CACHE_MS\s*=\s*60_000/.test(route)) {
+      problems.push(`${routeRel}: must short-cache scoreboard payload (~60s) like recentActivity`);
+    }
+    if (!/buildProgramScoreboardLive|loadScoreboardPayload/.test(route)) {
+      problems.push(`${routeRel}: must compute scoreboard from ledger live (buildProgramScoreboardLive / loadScoreboardPayload)`);
+    }
+    if (!/ledger_live/.test(route) || !/committed_fallback/.test(route)) {
+      problems.push(`${routeRel}: must label source ledger_live with committed_fallback`);
+    }
+    if (!/AUDIT-COVERAGE-LIVE\.md/.test(route)) {
+      problems.push(`${routeRel}: live scoreboard must read AUDIT-COVERAGE-LIVE.md`);
+    }
+    // Primary must not be "only read the committed JSON" — allow fallback after live attempt.
+    if (
+      /readFile\(\s*SCOREBOARD_JSON/.test(route) &&
+      !/buildProgramScoreboardLive|loadScoreboardPayload/.test(route)
+    ) {
+      problems.push(`${routeRel}: committed JSON must not be the only path — compute from ledger first`);
+    }
     if (!/formatCt/.test(route) || !/lastSyncedCt/.test(route)) {
       problems.push(`${routeRel}: must compute lastSyncedCt via formatCt(meta.generatedAt)`);
+    }
+    if (!/GITHUB_LEDGER_COMMITS_URL|loadLedgerCommitMetaFromGitHub/.test(route)) {
+      problems.push(
+        `${routeRel}: must resolve ledger generatedAt/sourceSha via GitHub commits API (shallow deploy clones lie)`,
+      );
+    }
+    // Shallow clones: must prefer GH ledger meta over local git log (not only on 1970 fallback).
+    if (
+      /gen\.startsWith\("1970-01-01"\)/.test(route) &&
+      !/Prefer GitHub ledger-commit meta ALWAYS|shallow/.test(route)
+    ) {
+      problems.push(
+        `${routeRel}: must not gate GitHub ledger meta on 1970-only — shallow clones return HEAD as ledger sha`,
+      );
     }
     if (!/TRACKER_BOT_TOKEN|GITHUB_TOKEN|GH_TOKEN/.test(route)) {
       problems.push(`${routeRel}: must prefer authenticated GitHub token (TRACKER_BOT_TOKEN/GITHUB_TOKEN/GH_TOKEN)`);

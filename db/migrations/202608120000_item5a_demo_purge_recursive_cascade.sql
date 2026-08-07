@@ -122,7 +122,7 @@ BEGIN
              tgt_ns.nspname  AS tgt_schema,
              tgt.relname     AS tgt_table,
              tgt_att.attname AS tgt_col,
-             COALESCE(pk_att.attname, 'id') AS src_pk
+             pk_att.attname AS src_pk
         FROM pg_constraint con
         JOIN pg_class src         ON src.oid = con.conrelid
         JOIN pg_namespace src_ns  ON src_ns.oid = src.relnamespace
@@ -138,6 +138,16 @@ BEGIN
            LIMIT 1
         ) pk_att ON true
        WHERE con.contype = 'f'
+         -- DEPLOY-F02: this was COALESCE(pk_att.attname, 'id') — when a child table has no
+         -- single-column primary key the walk ASSUMED the column was called "id" and emitted
+         -- `SELECT s.id` against a table that has no such column. On prod that is
+         -- driver_finance.driver_advance_accounts, so the migration aborted with
+         -- `column s.id does not exist` — and because db:migrate is the FIRST link of Render's
+         -- preDeploy chain, every production deploy died here (prod sat 33 commits behind at de40811).
+         -- A table whose primary key cannot be resolved is SKIPPED rather than guessed: the closure
+         -- simply does not descend through it. Guessing a key column on a purge that DELETES rows is
+         -- exactly the wrong place to be optimistic.
+         AND pk_att.attname IS NOT NULL
          AND array_length(con.conkey,1) = 1
          AND EXISTS (SELECT 1 FROM _demo_closure c
                       WHERE c.schema_name = tgt_ns.nspname AND c.table_name = tgt.relname

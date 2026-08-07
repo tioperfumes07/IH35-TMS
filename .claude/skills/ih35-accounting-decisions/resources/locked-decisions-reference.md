@@ -1,6 +1,9 @@
 # IH35-TMS locked accounting decisions — quick reference card
 
-Settled by owner. Build to these; do not re-derive. `✗ agent` = an agent must never do this (owner/CPA hand).
+Settled by owner. Build to these; do not re-derive. `✗ agent` = a permanently-retained never (opening-balance
+figures, new GL math, moving money externally) — NOT a merge/flip approval gate. **OWNER LAW (2026-08-03,
+FINAL): coders have FULL Neon access and merge authority; a coder flips a posting flag themselves after the
+owner's chat DECISION to turn it on, and proves it live — this is no longer "owner/CPA hand alone."**
 Sanitized card only — no names, signatures, addresses, emails, personal-guaranty text, or executed-agreement text.
 
 | # | Decision | Locked value | Notes |
@@ -9,7 +12,7 @@ Sanitized card only — no names, signatures, addresses, emails, personal-guaran
 | Architecture | Layer 2 — Ch.11 cutover | **ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting**; OB **03/31/2026**; live **04/01/2026** | Operating/GL line — does not erase Layer 1 |
 | Architecture | Layer 3 — Dual-run validation | QBO **actively maintained** as comparison/filing book; TMS independent; **reconcile-only**; never TMS→QBO write-back | See `TMS-QBO-PARALLEL-BOOKS.md` three-layer model |
 | Architecture | Books model | **Parallel double-books**, clone-once + reconcile-only, **no write-back** | Layers 1–3 concurrent |
-| Architecture | Kill-switches | **IMPORT-P0** / **IMPORT-P0b** → `QBO_JE_PUSH_ENABLED` / `QBO_ENTITY_PUSH_ENABLED` **default OFF** | Per-entity; ✗ agent flips |
+| Architecture | Kill-switches | **IMPORT-P0** / **IMPORT-P0b** → `QBO_JE_PUSH_ENABLED` / `QBO_ENTITY_PUSH_ENABLED` **default OFF** | Per-entity; coder flips after owner's chat decision + proves live (OWNER LAW 2026-08-03) |
 | Opening | Cutover | TMS opens **01-01-2025**; opening = QBO **BS 12/31/2024**, **signed-actual** | BS-only; TRK full equity |
 | Opening | OBE | OBE → **Retained Earnings** temp clearing; permanent OBE = **defect** (≈0) | |
 | Opening | Timing | **DEFERRED until Martin finalizes 2024 close** (moving target) | clone-as-is-then-adjust; ✗ agent posts |
@@ -31,8 +34,11 @@ Sanitized card only — no names, signatures, addresses, emails, personal-guaran
 | Entities | Set | TRANSP (op), TRK (assets, 5yr SL deprec), USMCA (future, 0-bal, isolated) | Separate entity books |
 | Entities | Intercompany | **Reciprocal intercompany monitoring** | Retain read-only consolidated reporting additively |
 | Tax | Sales tax | **None on line-haul** (interstate freight exempt) | |
-| Gating | Money flags | **All OFF** until owner sign-off + Neon tie-out | ✗ agent flips |
+| Gating | Money flags | **All OFF** until the owner's chat DECISION to turn one on + Neon tie-out proof | Coder flips + proves live |
 
-**The hard line:** an agent builds read-only engines, design docs, and flag-OFF scaffolding — it **never** posts
-an opening/financial entry to prod, moves money, writes GL-posting math solo, or flips a money flag. Those are
-**the owner's hand alone** — there is NO CPA (constitution §1.4/§1.6).
+**The hard line (OWNER LAW 2026-08-03 supersedes the old "owner's hand alone" wording):** a coder builds the
+engines, applies migrations, and flips a flag itself once the owner has decided (in chat) to turn it on —
+merging on green, with the 18-key evidence block as the safeguard, not an approval click. What stays a
+permanent `✗ agent` never: entering the **opening-balance** figures (owner-entered), writing new GL-posting
+math solo (reuse the poster), and moving money or submitting to an EXTERNAL financial/factoring system —
+there is NO CPA; the owner is the sole authority on treatment and timing, not on who clicks merge.

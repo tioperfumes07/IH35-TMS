@@ -9,8 +9,23 @@ import { upsertRelayWalletBankFeedRow } from "../apps/backend/src/integrations/r
 
 const TRANSP = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
 const BATCH = 40;
-const url = process.env.DATABASE_URL;
-if (!url) throw new Error("DATABASE_URL required");
+// POOLER LANDMINE (verified on prod 2026-08-04). This script sets SESSION-scoped GUCs
+// (set_config(..., false)) and then relies on them across later statements. Neon's `-pooler` endpoint
+// pools in TRANSACTION mode, so consecutive statements — even on a single dedicated client — can land
+// on different server backends. The GUC is then absent, and because the tables are FORCE-RLS the query
+// returns ZERO ROWS instead of erroring. A backfill silently processes nothing, or part of the set,
+// and reports success. This exact failure skipped a row in the ACCT-F101 fuel reclass dry run.
+// Prefer the DIRECT endpoint, where session state is stable; refuse the pooler rather than produce a
+// silently-wrong answer.
+const url = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
+if (!url) throw new Error("DATABASE_DIRECT_URL or DATABASE_URL required");
+if (/-pooler\./.test(url)) {
+  throw new Error(
+    "REFUSING to run against the -pooler endpoint: this script uses session-scoped app.bypass_rls, " +
+      "which does not survive transaction pooling. Under FORCE-RLS that yields ZERO ROWS silently. " +
+      "Re-run with DATABASE_DIRECT_URL pointing at the direct (non-pooler) endpoint."
+  );
+}
 
 type Row = {
   transaction_id: string;

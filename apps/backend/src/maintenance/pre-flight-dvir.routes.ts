@@ -82,7 +82,7 @@ const LATEST_TAG_CTE = `
 
 export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
   // ── GET /queue ──────────────────────────────────────────────────────────────────────────────
-  app.get("/api/v1/maintenance/pre-flight-dvir/queue", async (req, reply) => {
+  app.get("/api/v1/maintenance/pre-flight-dvir/queue", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = queueQuerySchema.safeParse(req.query ?? {});
@@ -117,7 +117,9 @@ export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
           FROM safety.dvir_defects d
           JOIN safety.dvir_submissions s ON s.id = d.dvir_submission_id
           LEFT JOIN mdata.units u        ON u.id = d.unit_id
+                                         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = d.operating_company_id
           LEFT JOIN mdata.drivers dr     ON dr.id = s.driver_id
+                                         AND dr.operating_company_id = s.operating_company_id
           LEFT JOIN latest_tag lt        ON lt.dvir_defect_id = d.id
           WHERE d.operating_company_id = $1::uuid
         )

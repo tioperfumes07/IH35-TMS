@@ -13,7 +13,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-wo-time-tracking-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/work-orders/WOTimeTrackingPanel.tsx";
 
-const REQUIRED_LABELS = ["ID", "Actor", "Start", "End", "Min", "Cost ¢"];
+const REQUIRED_LABELS = ["Labor code", "Actor", "Start", "End", "Min", "Cost ¢"];
 
 function assertMigrated(src) {
   const errors = [];
@@ -63,7 +63,7 @@ function selftest() {
     import { ListErrorState } from "../../components/ListErrorState";
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
     const COLUMNS = [
-      { key: "id", label: "ID" },
+      { key: "labor_code", label: "Labor code" },
       { key: "actor_kind", label: "Actor" },
       { key: "started_at", label: "Start" },
       { key: "ended_at", label: "End" },

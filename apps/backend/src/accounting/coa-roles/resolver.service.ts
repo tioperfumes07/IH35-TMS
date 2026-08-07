@@ -92,6 +92,12 @@ export const COA_ROLE_VALUES = [
   // Held posting flags CoA (202610131200) — picker defaults; posters may still use row FKs.
   "prepaid_asset_default",
   "amortization_expense_default",
+  // LOAN-06 (202611250000) — related-party (owner/insider) loan interest expense. SEPARATE from
+  // default_interest_expense, which resolves to 6830 Factoring Default Interest on both operating
+  // entities: a receivables-financing penalty is a different fact from the cost of insider money, and
+  // ASC 850 requires related-party interest to be separately disclosable. DELIBERATELY absent from
+  // ROLE_FALLBACKS — bound on prod for TRANSP+USMCA (6810); fails closed anywhere it is not bound.
+  "related_party_interest_expense",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

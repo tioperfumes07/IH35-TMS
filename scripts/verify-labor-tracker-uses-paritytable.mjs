@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-labor-tracker-uses-paritytable";
 const PAGE = "apps/frontend/src/components/maintenance/LaborTracker.tsx";
-const REQUIRED = ["ID", "Actor", "Start", "End", "Min", "Cost ¢"];
+const REQUIRED = ["Labor code", "Actor", "Start", "End", "Min", "Cost ¢"];
 
 function assertMigrated(src) {
   const errors = [];

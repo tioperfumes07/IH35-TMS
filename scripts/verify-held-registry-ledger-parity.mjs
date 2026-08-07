@@ -65,12 +65,8 @@ export const EXPECTED_HELD = [
   // SAFETY FINE-GL HOP (#3551) — genuinely unapplied on prod; owner Neon-applies then ledger-backfills.
   "202608120000_item5a_demo_purge_recursive_cascade.sql",
   // ACCT-R-03 account_merge_records (#3526) — Owner Neon-applied 2026-07-27T20:15Z; left held[] via #3670.
-  // SAF-DOM-02 (this PR). Authored 2026-07-25 and NEVER applied anywhere — it is new on this branch,
-  // so it cannot be in a prod ledger that predates it. It is not "GUARD re-proved unapplied"; it is
-  // unapplied by construction. It leaves this list only when the owner Neon-applies + ledger-backfills
-  // it and GUARD re-proves the ledger row. Note its apply-order dependency: its §3 stop-write trigger
-  // must not land before SAF-B28's PATCH repoint (see the registry entry's reason).
-  "202609130000_saf_dom_02_company_violation_jsonb_archive.sql",
+  // SAF-DOM-02 left EXPECTED_HELD 2026-08-03 after Cursor Neon-apply + dual-ledger backfill
+  // (reads_join_table=t still_reads_jsonb=f; applied_held + prod-migration-ledger-checksums.json).
   // SWEEP-C2 half 1 of 2 — genuinely unapplied on prod until Neon-apply.
   // SWEEP-C11 driver sub-catalog split-brain DB-level write lock.
   "202609040000_sweep_c11_driver_subcatalog_split_brain_lock.sql",

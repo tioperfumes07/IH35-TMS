@@ -74,5 +74,11 @@ describe("CustomersPage primary action button", () => {
     expect(button).toHaveTextContent("New transaction");
     expect(button.className).toContain("bg-[#1f2a44]");
     expect(button.tagName).toBe("BUTTON");
+
+    // CUST-CHROME-01: Edit shares Button chrome (secondary), not ActionButton text-link.
+    const edit = await screen.findByTestId("customer-header-edit");
+    expect(edit.tagName).toBe("BUTTON");
+    expect(edit.className).toMatch(/border-gray-300|bg-white/);
+    expect(edit.className).toContain("h-8");
   });
 });
