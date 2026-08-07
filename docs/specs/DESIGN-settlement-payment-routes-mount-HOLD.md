@@ -1,10 +1,12 @@
-# DESIGN (build-and-HOLD) — Mount `registerSettlementPaymentRoutes` in `index.ts`
+# DESIGN (build-and-ship) — Mount `registerSettlementPaymentRoutes` in `index.ts`
+
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
 
 - **Block:** `0441-mod10-payment-status-panel-404`
 - **Status:** DESIGN ONLY. **No money code. Do NOT open a code PR that mounts payment routes.** This document is the plan; the actual one-line mount + preconditions ship in a **separate owner-gated PR** after `JORGE-APPROVED`.
 - **Branch:** `design/settlement-payment-routes-mount-hold` (pinned to `origin/main` @ `cde575b64`)
 - **CPA posture (loaded `ih35-accounting-decisions`):** reuse the existing poster, **write NO new GL math**, all money-posting flags stay **default OFF**, per-entity override only. An agent never posts/moves money; the flip is the owner's hand + owner sign-off.
-- **Financial cluster → build-and-HOLD (Rule 13):** these are money endpoints; **never self-merge**, HOLD for owner merge even though the mount itself is schema-free.
+- **Financial cluster → build-and-ship (Rule 13):** these are money endpoints; **never self-merge**, HOLD for owner merge even though the mount itself is schema-free.
 
 ---
 
@@ -145,7 +147,7 @@ Every settlement payment action must link both ways to its financial primitives,
 
 ## 5. Owner-gate & Neon requirement
 
-- **`JORGE-APPROVED` required before merge:** YES. These are money endpoints (Rule 13 financial cluster → build-and-HOLD, never self-merge).
+- **`JORGE-APPROVED` required before merge:** YES. These are money endpoints (Rule 13 financial cluster → build-and-ship, never self-merge).
 - **Neon apply required for the mount itself:** **NO — IF the mount PR carries no schema/DDL.** The mount is import + register-call. If the flag row (`SETTLEMENT_PAYMENT_ROUTES_ENABLED`) is seeded via the standard `lib.feature_flags` seed migration, that is idempotent flag-seed (not `accounting.*` DDL) and follows the normal migrate path; `ih35_app` cannot run DDL, so any migration is owner-applied on Neon per the standard pattern. **No opening balances, no GL schema, no new posting table.**
 - **Still HOLD for owner merge** even though mount-only is schema-light, because turning on network-reachable money endpoints is an owner decision. Sequence: owner reviews design → owner approves → mount PR opened → CI green → **owner merges** → owner flips `SETTLEMENT_PAYMENT_ROUTES_ENABLED` per entity (TRANSP first) → GUARD re-proves live via health SHA + endpoint 200 with membership enforced.
 

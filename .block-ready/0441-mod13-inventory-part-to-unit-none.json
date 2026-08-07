@@ -35,5 +35,5 @@
       "check": "verify-unit-parts-history-reverse-drill.mjs PASS (route + VehicleProfilePage references); Rule 17 verify-step only"
     }
   ],
-  "note": "Not gated. Builder stops at PR; do not merge. Do not touch #2776 or accounting GL."
+  "note": "Not gated. Merge on green (owner law 2026-08-03: no holds). Do not touch #2776 or accounting GL."
 }

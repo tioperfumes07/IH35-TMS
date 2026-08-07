@@ -7,6 +7,18 @@
 
 ---
 
+> Saved verbatim by owner directive 2026-08-07. **Permanent law. Load at the start of every session.**
+> The verbatim order is §1. Appendix A records facts verified against `origin/main` this session, per
+> hard rule 3 ("NEVER from MEMORY. ONLY VERIFIED RESPONSES"). Where Appendix A and the verbatim text
+> disagree, the appendix states the evidence; it does not amend the order.
+
+---
+
+## §1 — THE ORDER (verbatim)
+
+CC-2 — PERMANENT STANDING ORDER (MECHANICAL / NON-MONEY LANE). Save verbatim to
+docs/standing-orders/CC-2-MECHANICAL.md, commit it, LOAD AT THE START OF EVERY SESSION. Permanent law.
+
 WHO I AM: CC-2, the mechanical UI + live-surfaced-defect lane. I build routes/scoping/rate-limit/
 frontend/presentation. I stay OFF money-path files src/(pages|components)/(accounting|banking)/ — that
 half is CC-1's. A non-author merges my PRs.
@@ -75,3 +87,40 @@ in the config with the guard updated, not a number to assume.
 **Also verified:** `scripts/verify-law-registry.mjs` — the guard PERMANENT LAW §2 says fails the build
 when a registered law's guard file is missing — does **not** exist on `origin/main`, so the law that
 enforces laws is itself unenforced. `docs/law/LAW.json` does exist and is now in active use.
+## Appendix A — verified against `origin/main`, 2026-08-07
+
+Recorded because hard rule 3 forbids working from memory. Each line is a primary-evidence check, not a
+recollection.
+
+**All 18 LOAD-FIRST paths exist.** Every one of the seven `.claude/skills/` directories, both lockdown
+docs, `docs/approved-screens/`, the CPA doc, the questionnaire, `docs/law/LAW.json`,
+`docs/audit/wave-queue.json`, `docs/audit/GUARD-WORKORDERS.md`, `docs/audit/AUDIT-COVERAGE-LIVE.md`,
+`docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md` and `scripts/audit-coverage-scoreboard.mjs` resolve
+on `origin/main`.
+
+**Sidebar count — the order says 18; the code says 30.** `SIDEBAR_ITEM_IDS` in
+`apps/frontend/src/components/layout/sidebar-config.ts` contains **30** ids. `CLAUDE.md` and
+`AGENTS.md` both state the config array is the source of truth and that a hardcoded number must never
+be asserted, and `scripts/verify-sidebar-contract.mjs` enforces the array. The ADDITIVE-ONLY intent of
+rule 5 is unaffected and binding: **never remove a sidebar entry.** The number 18 is not used as an
+authority anywhere in this lane's work.
+
+**Class queue — 31 classes.** All seven classes named in TASK 3 are present in `wave-queue.json`:
+`CLS-ORPHAN-SURFACE`, `CLS-SILENT-SUCCESS`, `CLS-SCHEMA-DRIFT`, `CLS-JOIN-ENTITY-UNSCOPED`,
+`CLS-DISP-WIRE-07`, `CLS-UUID-LABEL`, `CLS-SILENT-CAP`. This **corrects an earlier note of mine** that
+claimed `CLS-SILENT-SUCCESS`, `CLS-SCHEMA-DRIFT` and `CLS-JOIN-ENTITY-UNSCOPED` were absent from the
+queue — they are not absent, and that note should not be relied on.
+
+**CI facts confirmed.** The `hold-merge-gate` ruleset requires exactly four contexts —
+`build-typecheck`, `hold-merge-gate`, `locked-guards`, `required-checks-gate`. **CodeQL is not
+required**, matching the order. Concurrency in `.github/workflows/ci.yml` is keyed on
+`github.event.pull_request.head.sha`, i.e. SHA-scoped, matching the order.
+
+**Pre-push gate (learned this session, CI-F05/CI-F06).** `git push --no-verify` is permitted by the
+order, which means the local gate must be run deliberately. `money-pr-local-gate` and
+`npm run verify:static` are BOTH insufficient — they passed while four CI guards were failing, because
+`verify:static` only covers guards named directly in a workflow and misses the ~1,400
+`scripts/verify-steps/` files that `build-typecheck` runs. **`npm run verify:local-ci` reproduces
+`build-typecheck` exactly and works on this machine** (Postgres.app 16). Order that converges:
+`node scripts/precheck-verify-steps.mjs` (fast, no DB) → fix → `npm run verify:local-ci` (exact) →
+push once.

@@ -1,5 +1,7 @@
 # 06 — FUEL
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 **Verdict:** Working import shell; books and IFTA integrity at risk — GL poster never called; Relay siloed.
 
 ## Live / repo evidence
@@ -25,7 +27,7 @@
 **WILL FAIL:** Import OK → P&L empty; Relay-only fleet → empty IFTA; Fuel recon Save link no-op.
 
 ## Professional recommendation
-Wire poster behind expense-map gate (build-and-HOLD). Bridge Relay into `fuel.fuel_transactions` or union readers. Update Module 5 design to locked tabs or rename UI to design — pick one law.
+Wire poster behind expense-map gate (build-and-ship). Bridge Relay into `fuel.fuel_transactions` or union readers. Update Module 5 design to locked tabs or rename UI to design — pick one law.
 
 ## Deep button inventory (repo) — 2026-07-15
 

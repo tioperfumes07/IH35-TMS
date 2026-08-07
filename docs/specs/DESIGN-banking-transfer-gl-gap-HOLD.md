@@ -1,4 +1,6 @@
-# DESIGN (build-and-HOLD) — Bank-feed line categorized `transfer` has no GL / no JE
+# DESIGN (build-and-ship) — Bank-feed line categorized `transfer` has no GL / no JE
+
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
 
 - **Block:** `0285-banking-transfer-gl-gap` (a.k.a. `0285-banking-transfer-gl-gap_VERIFY`)
 - **Module:** banking · **Pile:** GAP (AUDIT-NOTE) · **Classification:** FINANCIAL CLUSTER (GL posting)
@@ -9,7 +11,7 @@
 - **CPA posture (loaded `ih35-accounting-decisions`):** **reuse the existing poster, write NO new GL math**;
   all money-posting flags stay **default OFF**, per-entity override only; an agent never posts/moves money —
   the flip is the owner's hand.
-- **Rule 13 (financial cluster → build-and-HOLD):** never self-merge; HOLD for owner even when a future fix is
+- **Rule 13 (financial cluster → build-and-ship):** never self-merge; HOLD for owner even when a future fix is
   small, because it changes what does/doesn't hit `accounting.journal_entries`.
 
 ---

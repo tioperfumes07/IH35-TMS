@@ -1,5 +1,7 @@
 # QBO Mirror — Single Canonical Source (DESIGN — owner approval required before any code)
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 **Block:** Tier-1 Batch1 #03 (0008-g3 / 0091-e1-1 / 0243-e1-1, consolidated). **Date:** 2026-07-10.
 **Status:** DESIGN-ONLY. No table drop, no repoint, no migration in this deliverable. The canonical
 choice below requires the owner's explicit approval before any code repoint block is cut.
@@ -92,7 +94,7 @@ The evidence points one way:
 - **Confirm canonical = `mdata.qbo_*`** (or choose `accounting.qbo_*` instead — then the retirement set
   inverts). No code repoint proceeds until this is confirmed in writing.
 - This is Tier-1 (financial master data + would eventually touch schema): the code block that executes the
-  repoint is BUILD-AND-HOLD, never self-merged.
+  repoint is BUILD-AND-SHIP, never self-merged.
 
 ## 7. Provenance
 - Repo inventory: `grep -rE 'accounting\.qbo_*|mdata\.qbo_*' apps/backend/src` (excl. tests), 2026-07-10.
