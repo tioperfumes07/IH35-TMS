@@ -2683,3 +2683,78 @@ assertion. **LANE: CC-1 / money — HIGH.**
   reused across two different bills**, visible in this very dropdown. **That duplication is itself the
   argument for a server-generated display_id** — two distinct payables are indistinguishable to the
   user in the payment picker.
+
+---
+
+## 53. ★★ HYPOTHESIS DISPROVEN — A/P payments post correctly; the A/R gap is ISOLATED, and there is now a working reference implementation
+
+**LIVE 2026-08-07, USMCA. I predicted the payment-poster gap would be symmetric on A/P. It is not.
+Recording the negative result, because it makes item 49 far more actionable than a confirmation would
+have.**
+
+### The A/P transaction — PASS on every dimension
+
+Recorded via `/accounting/bill-payments` → **+ Record Bill Payment → Pay Bill**: bill
+`CC3-VOIDTEST-20260807-01` ($88.77), method **check**, check # **10077**, reference
+**`CC3-BATTERY-AP-3340`**, from bank account **Relay Fuel Wallet**, amount **$33.40** (deliberately
+partial), applied $33.40.
+
+| check | result |
+|---|---|
+| bill payment row | **`8b68a9d7`**, `amount_cents` **3340** ✅ |
+| bill subledger | `paid_cents` **3340**, status **`partially_paid`** ✅ |
+| UI open balance | $88.77 → **$55.37** (exactly `88.77 − 33.40`) ✅ |
+| **GL postings** | **2** ✅ |
+| **the entry itself** | **DR `2000` Accounts Payable (A/P) $33.40 / CR `1295` Relay Fuel Wallet $33.40** ✅ |
+| JE surfaced in UI | `4da3efbd`, shown in the ledger's own **JE** column ✅ |
+| reconciliation state | `Unmatched` (honest — no bank transaction matched yet) ✅ |
+
+**Balanced, correct accounts, and it honours the selected "From bank account" rather than a hardcoded
+default.** This is exactly what a correct payment posting looks like.
+
+**STRONGEST POSSIBLE POSITIVE CONTROL:** `bill_payment` **did not exist as a `source_transaction_type`
+in this entity before I created it.** The census now reads `bill` 18 · `bank_categorization` 8 ·
+`invoice` 4 · *(null)* 4 · `expense` 4 · `prepaid_purchase` 2 · `transfer` 2 · **`bill_payment` 2**.
+I created the first bill payment in the entity's history and the poster fired correctly on it.
+
+### The matched pair — this is the finding
+
+Two payments, **same entity, same user, same session, 13 minutes apart**:
+
+| | subledger | **GL** |
+|---|---|---|
+| **A/P** — bill payment $33.40 (02:41) | ✅ `paid_cents` 3340, `partially_paid` | ✅ **2 postings, DR A/P / CR bank** |
+| **A/R** — customer payment $437.25 (02:28) | ✅ Open $950 → $512.75, `partial` | ❌ **0 postings** |
+
+**One posts. One does not. Nothing else differs.**
+
+### Why the negative result is worth more than a confirmation
+
+1. **It kills the broad diagnosis.** "Payment posting is broken" is **false** — and a builder acting on
+   it would go looking for a systemic fault that does not exist.
+2. **It isolates the defect** to the customer-payment path specifically.
+3. **It hands CC-1 a working reference implementation in the same schema, written by the same team.**
+   The A/R fix is the mirror of a posting that already exists and already works:
+   - **A/P (works):** DR `2000` Accounts Payable / CR *selected bank account*
+   - **A/R (missing):** DR *selected deposit account — the panel says **Undeposited Funds*** /
+     CR A/R control
+   Same shape, opposite sides. **"Write no new GL math" is not just policy here — the math is already
+   written 20 lines away.**
+
+**This is why item 49's guard should be the subledger-to-GL tie-out per control account**, not merely
+"payments must post": the A/P side would pass a naive per-row check *and* the tie-out, while the A/R
+side fails the tie-out by exactly $687.25. The tie-out is the assertion that distinguishes them.
+
+### Two display observations from this screen — recorded, NOT filed as defects
+
+- **Vendor renders as a raw UUID** (`308f6434-0a51-4109-953e-c86ffb1f0999`) in both the Bill-details
+  panel and the Pay-Bill form, though the bill page shows the name *CC3 Battery Vendor 20260806-01*.
+  Same family as item 45 (payload carries the id, not the joined name). **Worth a builder's attention;
+  I have not traced the endpoint, so it is UNVERIFIED as to cause.**
+- **Due date disagrees across screens:** bill page **09/05/2026**, bill-payment panel **9/4/2026**;
+  the selector's raw value is `2026-09-05T00:00:00.000Z`. Rendering a UTC midnight in Central time
+  yields the prior day — a classic **off-by-one date** display. **UNVERIFIED as to cause**, but on a
+  **due date** an off-by-one changes aging buckets and terms compliance, so it should not be dismissed.
+- **`+ Record Bill Payment` did nothing on my first click** — and I did **not** file it. Correctly so:
+  once a bill was selected it opened immediately. **The button requires a selection; it is not inert.**
+  This is the second time this session that checking before filing prevented a false defect.
