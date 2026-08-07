@@ -6384,3 +6384,42 @@ remaining 27 and does not need a hand-maintained list. Filed as `LV-DRIVER-BILLS
 with a reason — including refusing to decide `banking.bank_accounts` inside a ledger sweep because it is a
 master-data question with a UI consequence. **That discipline is precisely why this residual is arguable in
 the open instead of invisible.**
+
+---
+
+## 104. BANKING → CATEGORIZATION → GL — PASS, bidirectional, with no leakage in either direction
+
+**Unit: bank-transaction categorization linkage on USMCA's 163 live bank rows. Verdict: PASS. No card.**
+
+**MEASURED — prod, USMCA GUC in-transaction, `visible_all = 163` for USMCA (`n_live_tup = 11,082` across all
+entities, so this read is correctly entity-scoped rather than masked):**
+
+| check | result |
+|---|---|
+| USMCA bank transactions | **163** |
+| categorized (`categorized_at IS NOT NULL`) | **5** |
+| categorized **with a GL posting** | **5 — 100%** |
+| GL lines claiming `source_transaction_type='bank_categorization'` | **10 lines across exactly 5 distinct transactions** |
+| **uncategorized** | **158** |
+| **uncategorized that posted anyway** | **0** |
+| dangling `matched_bill_id` / `matched_invoice_id` / `categorization_gl_account_id` | **0 / 0 / 0** |
+
+**Both directions hold, which is what makes this a real PASS rather than half of one.** Forward: every
+categorized transaction posted. **Inverse: not one of the 158 uncategorized transactions has a GL posting** —
+so nothing posted without being categorized. The set of categorized transactions and the set of
+GL-posted transactions are **identical**, and the 10 GL lines resolve to exactly those 5 rows. There is no
+leakage in either direction and no orphaned reference among a dozen `matched_*` columns.
+
+**The 158 uncategorized are EXPECTED STATE, not a finding.** An imported bank feed awaiting categorization
+*should* have no GL posting — that is the correct behaviour, and the inverse check above is precisely the
+evidence for it. Filing "97% of bank transactions have no GL entry" would have been the
+`expected-state-recorded-as-failure` pattern again, and the counterfactual test (item 95) settles it: the
+good state for an unworked transaction **is** zero.
+
+**Corroborates item 62 from the data side.** Item 62 established that the Banking page tells operators
+categorization does not post while the flag is ON and it does. Here is the ledger proof: **categorization
+posts, every time, 5 of 5.** The banner is wrong; the engine is right.
+
+**One observation, explicitly NOT filed as a defect:** the oldest uncategorized transaction dates to
+**2025-12-12**, ~8 months back, with the newest at 2026-08-04. That is an operational backlog — a question of
+who categorises and when — not a code defect, and not this lane's call to raise as a card.
