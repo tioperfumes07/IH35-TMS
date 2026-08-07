@@ -299,5 +299,12 @@
     "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
     "guard": "scripts/verify-scenario-tracker-single-mount.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-INVITE-WRITE-ENTITY-GATED",
+    "title": "A route that writes an invite must prove the caller belongs to the invited driver's company BEFORE the write \u2014 a membership guard scoped by helper-import is vacuous, because a route with zero asserts is exactly the vulnerable state and is invisible to it",
+    "source_file": "apps/backend/src/mdata/drivers.routes.ts",
+    "guard": "scripts/verify-invite-write-entity-gated.mjs",
+    "type": "enforced"
   }
 ]
