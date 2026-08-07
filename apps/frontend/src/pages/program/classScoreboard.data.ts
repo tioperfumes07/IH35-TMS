@@ -23,6 +23,7 @@ export interface ClassRow {
   guard: string | null;
   guardMissing: boolean;
   guardNearMatch: string | null;
+  liveDefect: boolean;
 }
 export interface ClassScoreboard {
   meta: { generatedAt: string; source: string };
@@ -32,16 +33,16 @@ export interface ClassScoreboard {
 
 export const CLASS_SCOREBOARD: ClassScoreboard = {
   "meta": {
-    "generatedAt": "2026-08-06T21:47:30.649Z",
+    "generatedAt": "2026-08-07T18:54:03.813Z",
     "source": "docs/audit/wave-queue.json"
   },
   "summary": {
-    "total": 26,
+    "total": 31,
     "drained": 15,
-    "building": 1,
-    "notStarted": 2,
-    "liveDefect": 8,
-    "drainedWithoutGuard": 2
+    "building": 3,
+    "notStarted": 13,
+    "liveDefect": 11,
+    "drainedWithoutGuard": 0
   },
   "rows": [
     {
@@ -49,28 +50,45 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "lane": "money",
       "layer": "C",
       "status": "open",
-      "code": "XX",
-      "tone": "red",
-      "label": "live defect",
+      "code": "NN",
+      "tone": "grey",
+      "label": "not started",
       "instances": 5,
       "modules": 1,
       "guard": "scripts/verify-silent-success-posting-output.mjs",
-      "guardMissing": true,
-      "guardNearMatch": null
+      "guardMissing": false,
+      "guardNearMatch": null,
+      "liveDefect": true
+    },
+    {
+      "id": "CLS-CALENDAR",
+      "lane": "money",
+      "layer": "C",
+      "status": "open",
+      "code": "NN",
+      "tone": "grey",
+      "label": "not started",
+      "instances": 1,
+      "modules": 2,
+      "guard": "scripts/verify-invoice-send-date-cast.mjs",
+      "guardMissing": false,
+      "guardNearMatch": null,
+      "liveDefect": true
     },
     {
       "id": "CLS-CATEGORY-MAP-COHERENCE",
       "lane": "money",
       "layer": "C",
       "status": "open",
-      "code": "XX",
-      "tone": "red",
-      "label": "live defect",
+      "code": "NN",
+      "tone": "grey",
+      "label": "not started",
       "instances": 3,
       "modules": 3,
       "guard": "scripts/verify-entity-expense-category-map-complete.mjs",
       "guardMissing": false,
-      "guardNearMatch": null
+      "guardNearMatch": null,
+      "liveDefect": true
     },
     {
       "id": "CLS-DISP-WIRE-01",
@@ -84,7 +102,8 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "modules": 1,
       "guard": "scripts/verify-disp-wire-01-book-invoice.mjs",
       "guardMissing": false,
-      "guardNearMatch": null
+      "guardNearMatch": null,
+      "liveDefect": false
     },
     {
       "id": "CLS-DISP-WIRE-02",
@@ -98,7 +117,8 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "modules": 1,
       "guard": "scripts/verify-disp-wire-02-driver-bill.mjs",
       "guardMissing": false,
-      "guardNearMatch": null
+      "guardNearMatch": null,
+      "liveDefect": false
     },
     {
       "id": "CLS-DISP-WIRE-03",
@@ -112,7 +132,8 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "modules": 1,
       "guard": "scripts/verify-disp-wire-03-pod-capture.mjs",
       "guardMissing": false,
-      "guardNearMatch": null
+      "guardNearMatch": null,
+      "liveDefect": false
     },
     {
       "id": "CLS-DISP-WIRE-04",
@@ -124,9 +145,10 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "label": "drained",
       "instances": 2,
       "modules": 2,
-      "guard": "scripts/verify-disp-wire-04-invoice-evidence.mjs",
-      "guardMissing": true,
-      "guardNearMatch": "scripts/verify-disp-wire-04-invoice-evidence-durable.mjs"
+      "guard": "scripts/verify-disp-wire-04-invoice-evidence-durable.mjs",
+      "guardMissing": false,
+      "guardNearMatch": null,
+      "liveDefect": false
     },
     {
       "id": "CLS-DISP-WIRE-05",
@@ -140,21 +162,23 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "modules": 2,
       "guard": "scripts/verify-disp-wire-05-revrec-latch.mjs",
       "guardMissing": false,
-      "guardNearMatch": null
+      "guardNearMatch": null,
+      "liveDefect": false
     },
     {
       "id": "CLS-DISP-WIRE-06",
       "lane": "money",
       "layer": "C",
       "status": "open",
-      "code": "XX",
-      "tone": "red",
-      "label": "live defect",
+      "code": "NN",
+      "tone": "grey",
+      "label": "not started",
       "instances": 1,
       "modules": 2,
       "guard": "scripts/verify-disp-wire-06-load-expense-link.mjs",
       "guardMissing": false,
-      "guardNearMatch": null
+      "guardNearMatch": null,
+      "liveDefect": true
     },
     {
       "id": "CLS-DISP-WIRE-07",
@@ -167,8 +191,9 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "instances": 3,
       "modules": 1,
       "guard": "scripts/verify-disp-wire-07-departure-evidence.mjs",
-      "guardMissing": true,
-      "guardNearMatch": null
+      "guardMissing": false,
+      "guardNearMatch": null,
+      "liveDefect": false
     },
     {
       "id": "CLS-DISP-WIRE-08",
@@ -182,7 +207,8 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "modules": 2,
       "guard": "scripts/verify-disp-wire-08-settlement-ping.mjs",
       "guardMissing": false,
-      "guardNearMatch": null
+      "guardNearMatch": null,
+      "liveDefect": false
     },
     {
       "id": "CLS-DISP-WIRE-09",
@@ -196,7 +222,8 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "modules": 1,
       "guard": "scripts/verify-disp-wire-09-bol-generate.mjs",
       "guardMissing": false,
-      "guardNearMatch": null
+      "guardNearMatch": null,
+      "liveDefect": false
     },
     {
       "id": "CLS-DISP-WIRE-10",
@@ -210,21 +237,23 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "modules": 2,
       "guard": "scripts/verify-disp-wire-10-cancel-economics.mjs",
       "guardMissing": false,
-      "guardNearMatch": null
+      "guardNearMatch": null,
+      "liveDefect": false
     },
     {
       "id": "CLS-DISPLAYID-UNSCOPED",
       "lane": "money",
       "layer": "C",
       "status": "open",
-      "code": "XX",
-      "tone": "red",
-      "label": "live defect",
+      "code": "NN",
+      "tone": "grey",
+      "label": "not started",
       "instances": 5,
       "modules": 3,
       "guard": "scripts/verify-displayid-entity-scoped-lookups.mjs",
-      "guardMissing": true,
-      "guardNearMatch": null
+      "guardMissing": false,
+      "guardNearMatch": null,
+      "liveDefect": true
     },
     {
       "id": "CLS-DUAL-PATH",
@@ -238,21 +267,23 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "modules": 1,
       "guard": "scripts/verify-qbo-canonical-recon.mjs",
       "guardMissing": false,
-      "guardNearMatch": null
+      "guardNearMatch": null,
+      "liveDefect": false
     },
     {
       "id": "CLS-ECON-EMPTY",
       "lane": "money",
       "layer": "C",
       "status": "open",
-      "code": "XX",
-      "tone": "red",
-      "label": "live defect",
+      "code": "NN",
+      "tone": "grey",
+      "label": "not started",
       "instances": 16,
       "modules": 2,
       "guard": "scripts/verify-econ-empty-density.mjs",
-      "guardMissing": true,
-      "guardNearMatch": null
+      "guardMissing": false,
+      "guardNearMatch": null,
+      "liveDefect": true
     },
     {
       "id": "CLS-FUEL-DOUBLE-POST",
@@ -266,7 +297,8 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "modules": 2,
       "guard": "scripts/verify-zero-count-completeness-discriminator.mjs",
       "guardMissing": false,
-      "guardNearMatch": null
+      "guardNearMatch": null,
+      "liveDefect": false
     },
     {
       "id": "CLS-GL-DARK",
@@ -280,7 +312,8 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "modules": 1,
       "guard": "scripts/verify-gl-posting-coverage.mjs",
       "guardMissing": false,
-      "guardNearMatch": null
+      "guardNearMatch": null,
+      "liveDefect": false
     },
     {
       "id": "CLS-HOOKS-ORDER",
@@ -294,49 +327,68 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "modules": 1,
       "guard": "scripts/verify-hooks-before-return.mjs",
       "guardMissing": false,
-      "guardNearMatch": "scripts/verify-hooks-before-early-return.mjs"
+      "guardNearMatch": "scripts/verify-hooks-before-early-return.mjs",
+      "liveDefect": false
+    },
+    {
+      "id": "CLS-JOIN-ENTITY-UNSCOPED",
+      "lane": "mechanical",
+      "layer": "C",
+      "status": "open",
+      "code": "NN",
+      "tone": "grey",
+      "label": "not started",
+      "instances": 3,
+      "modules": 1,
+      "guard": "scripts/verify-join-entity-scoped.mjs",
+      "guardMissing": false,
+      "guardNearMatch": null,
+      "liveDefect": true
     },
     {
       "id": "CLS-LINKAGE-ONEWAY",
       "lane": "money",
       "layer": "C",
       "status": "open",
-      "code": "XX",
-      "tone": "red",
-      "label": "live defect",
+      "code": "NN",
+      "tone": "grey",
+      "label": "not started",
       "instances": 9,
       "modules": 4,
       "guard": "scripts/verify-money-ops-fk-density.mjs",
-      "guardMissing": true,
-      "guardNearMatch": null
+      "guardMissing": false,
+      "guardNearMatch": null,
+      "liveDefect": true
     },
     {
       "id": "CLS-MONEY-HOLD",
       "lane": "money",
       "layer": "C",
       "status": "open",
-      "code": "XX",
-      "tone": "red",
-      "label": "live defect",
+      "code": "NN",
+      "tone": "grey",
+      "label": "not started",
       "instances": 3,
       "modules": 3,
       "guard": "scripts/verify-money-hold-surfaces.mjs",
-      "guardMissing": true,
-      "guardNearMatch": null
+      "guardMissing": false,
+      "guardNearMatch": null,
+      "liveDefect": true
     },
     {
       "id": "CLS-ORPHAN-SURFACE",
       "lane": "mechanical",
       "layer": "A",
-      "status": "open",
-      "code": "NN",
-      "tone": "grey",
-      "label": "not started",
+      "status": "draining",
+      "code": "BB",
+      "tone": "amber",
+      "label": "in progress",
       "instances": 5,
       "modules": 3,
       "guard": "scripts/verify-orphan-surface-drill.mjs",
-      "guardMissing": true,
-      "guardNearMatch": null
+      "guardMissing": false,
+      "guardNearMatch": null,
+      "liveDefect": false
     },
     {
       "id": "CLS-RAW-UUID-INPUT",
@@ -348,9 +400,10 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "label": "drained",
       "instances": 2,
       "modules": 1,
-      "guard": "scripts/verify-no-raw-uuid-inputs.mjs",
-      "guardMissing": true,
-      "guardNearMatch": null
+      "guard": "scripts/verify-picker-law-no-raw-uuid.mjs",
+      "guardMissing": false,
+      "guardNearMatch": null,
+      "liveDefect": false
     },
     {
       "id": "CLS-REVERSE-LINKAGE-MISSING",
@@ -364,21 +417,68 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "modules": 3,
       "guard": "scripts/verify-reverse-linkage-embedded.mjs",
       "guardMissing": false,
-      "guardNearMatch": null
+      "guardNearMatch": null,
+      "liveDefect": false
+    },
+    {
+      "id": "CLS-SCHEMA-DRIFT",
+      "lane": "mechanical",
+      "layer": "D",
+      "status": "open",
+      "code": "NN",
+      "tone": "grey",
+      "label": "not started",
+      "instances": 2,
+      "modules": 2,
+      "guard": "scripts/verify-catalog-config-physical-columns.mjs",
+      "guardMissing": false,
+      "guardNearMatch": null,
+      "liveDefect": false
     },
     {
       "id": "CLS-SILENT-CAP",
       "lane": "mechanical",
       "layer": "B",
       "status": "open",
+      "code": "NN",
+      "tone": "grey",
+      "label": "not started",
+      "instances": 3,
+      "modules": 3,
+      "guard": "scripts/verify-no-silent-list-caps.mjs",
+      "guardMissing": false,
+      "guardNearMatch": null,
+      "liveDefect": false
+    },
+    {
+      "id": "CLS-SILENT-SUCCESS",
+      "lane": "mechanical",
+      "layer": "C",
+      "status": "draining",
       "code": "BB",
       "tone": "amber",
       "label": "in progress",
-      "instances": 3,
-      "modules": 3,
-      "guard": "scripts/verify-no-silent-list-cap.mjs",
-      "guardMissing": true,
-      "guardNearMatch": "scripts/verify-no-silent-list-caps.mjs"
+      "instances": 1,
+      "modules": 1,
+      "guard": "scripts/verify-subledger-writes-post-to-gl.mjs",
+      "guardMissing": false,
+      "guardNearMatch": null,
+      "liveDefect": true
+    },
+    {
+      "id": "CLS-SUBLEDGER-GL-DARK",
+      "lane": "money",
+      "layer": "C",
+      "status": "draining",
+      "code": "BB",
+      "tone": "amber",
+      "label": "in progress",
+      "instances": 2,
+      "modules": 1,
+      "guard": "scripts/verify-subledger-writes-post-to-gl.mjs",
+      "guardMissing": false,
+      "guardNearMatch": null,
+      "liveDefect": true
     },
     {
       "id": "CLS-UNIT-SCALE",
@@ -392,21 +492,23 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "modules": 2,
       "guard": "scripts/verify-cents-dollar-scale.mjs",
       "guardMissing": false,
-      "guardNearMatch": null
+      "guardNearMatch": null,
+      "liveDefect": false
     },
     {
       "id": "CLS-UUID-LABEL",
       "lane": "mechanical",
       "layer": "D",
       "status": "open",
-      "code": "XX",
-      "tone": "red",
-      "label": "live defect",
+      "code": "NN",
+      "tone": "grey",
+      "label": "not started",
       "instances": 5,
       "modules": 3,
-      "guard": "scripts/verify-no-uuid-labels.mjs",
-      "guardMissing": true,
-      "guardNearMatch": null
+      "guard": "scripts/verify-no-uuid-label-rendering.mjs",
+      "guardMissing": false,
+      "guardNearMatch": null,
+      "liveDefect": false
     }
   ]
 };
