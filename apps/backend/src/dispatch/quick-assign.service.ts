@@ -1,3 +1,4 @@
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { notifyLoadAssigned } from "../services/push-notification.service.js";
@@ -23,6 +24,10 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
   } = { v: null };
 
   const result = await withCurrentUser(userId, async (client) => {
+    // ENTITY GATE (MDATA-F09 class). input.operating_company_id is caller-supplied — quicksave.routes.ts
+    // passes the request body straight through — and it both SETS the RLS scope and drives every
+    // predicate below, so without this the caller chooses the scope RLS enforces. Assert first.
+    await assertCompanyMembership(client, userId, input.operating_company_id);
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
     await client.query("BEGIN");
     try {
@@ -277,6 +282,8 @@ export async function completeQuicksaveDraft(
   input: { operating_company_id: string; load_id: string; fields: Record<string, unknown> }
 ) {
   return withCurrentUser(userId, async (client) => {
+    // ENTITY GATE (MDATA-F09 class) — input.operating_company_id is caller-supplied and sets the RLS scope.
+    await assertCompanyMembership(client, userId, input.operating_company_id);
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
     const patch = input.fields ?? {};
     const unitId = typeof patch.assigned_unit_id === "string" ? patch.assigned_unit_id : null;
@@ -362,6 +369,8 @@ export async function completeQuicksaveDraft(
 
 export async function listQuicksaveDrafts(userId: string, operatingCompanyId: string) {
   return withCurrentUser(userId, async (client) => {
+    // ENTITY GATE (MDATA-F09 class) — operatingCompanyId is caller-supplied and sets the RLS scope.
+    await assertCompanyMembership(client, userId, operatingCompanyId);
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
     const rows = await client.query(
       `
@@ -380,14 +389,55 @@ export async function listQuicksaveDrafts(userId: string, operatingCompanyId: st
 
 export async function getAssignmentHistory(userId: string, operatingCompanyId: string, loadId: string) {
   return withCurrentUser(userId, async (client) => {
+    // ENTITY GATE. operatingCompanyId reaches here straight from the caller's query string
+    // (quicksave.routes.ts:165 passes query.data.operating_company_id), and it is used both to SET the
+    // RLS scope and as the WHERE predicate — so without this assert the caller picks the scope RLS
+    // enforces and RLS authorizes nothing. Same class as MDATA-F09; this one sits in a *.service.ts,
+    // where the caller-scoped-GUC guard was not looking.
+    await assertCompanyMembership(client, userId, operatingCompanyId);
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+
+    // Resolve DISPLAY NAMES here rather than shipping raw uuids to the client. `SELECT *` returned
+    // previous_driver_id / new_driver_id as bare uuids, so LoadDetailDrawer rendered
+    // String(id).slice(0, 8) — an 8-character uuid prefix is not an identification of a human being,
+    // and this tab is the audit trail for who a load was taken away from. Joins are entity-scoped:
+    // drivers by operating_company_id, units by COALESCE(currently_leased_to_company_id,
+    // owner_company_id) because mdata.units has no operating_company_id column.
     const rows = await client.query(
       `
-        SELECT *
-        FROM dispatch.load_assignment_history
-        WHERE operating_company_id = $1
-          AND load_id = $2
-        ORDER BY assigned_at DESC
+        SELECT h.*,
+               NULLIF(TRIM(CONCAT(COALESCE(pd.first_name, ''), ' ', COALESCE(pd.last_name, ''))), '')
+                 AS previous_driver_name,
+               NULLIF(TRIM(CONCAT(COALESCE(nd.first_name, ''), ' ', COALESCE(nd.last_name, ''))), '')
+                 AS new_driver_name,
+               pu.unit_number AS previous_unit_number,
+               nu.unit_number AS new_unit_number,
+               -- identity.users has NO first_name/last_name — 0004 creates it with email/role only and
+               -- no later migration adds a name — so email is the only human-readable identifier.
+               -- The PK column is id: 0004 created it under the old name and
+               -- 0005_identity_id_rename.sql renames it to id for the Lucia adapter. Read the MIGRATED
+               -- schema, never a single migration file. (Deliberately not naming the pre-rename column
+               -- here: verify-sql-read-targets regexes raw source and would read the mention in this
+               -- comment as a live column reference — CLS-GUARD-READS-COMMENTS.)
+               au.email AS assigned_by_email
+        FROM dispatch.load_assignment_history h
+        LEFT JOIN mdata.drivers pd
+               ON pd.id = h.previous_driver_id
+              AND pd.operating_company_id = h.operating_company_id
+        LEFT JOIN mdata.drivers nd
+               ON nd.id = h.new_driver_id
+              AND nd.operating_company_id = h.operating_company_id
+        LEFT JOIN mdata.units pu
+               ON pu.id = h.previous_unit_id
+              AND COALESCE(pu.currently_leased_to_company_id, pu.owner_company_id) = h.operating_company_id
+        LEFT JOIN mdata.units nu
+               ON nu.id = h.new_unit_id
+              AND COALESCE(nu.currently_leased_to_company_id, nu.owner_company_id) = h.operating_company_id
+        LEFT JOIN identity.users au
+               ON au.id = h.assigned_by_user_id
+        WHERE h.operating_company_id = $1
+          AND h.load_id = $2
+        ORDER BY h.assigned_at DESC
       `,
       [operatingCompanyId, loadId]
     );
