@@ -1,3 +1,4 @@
+import { entityLabel } from "../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../components/forms/DatePicker";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
@@ -211,7 +212,7 @@ export function VendorsPage() {
     () => [
       { key: "date", label: "Date", sortable: true, render: (r) => formatDateUS(r.bill_date) },
       { key: "type", label: "Type", sortable: true, render: () => "bill" },
-      { key: "doc_no", label: "Doc #", render: (r) => r.bill_number ?? r.id.slice(0, 8) },
+      { key: "doc_no", label: "Doc #", render: (r) => entityLabel(r.bill_number, r.id, "Record") },
       { key: "status", label: "Status", sortable: true, render: (r) => r.status },
       { key: "amount", label: "Amount", render: (r) => fmtMoney(r.amount_cents) },
       {

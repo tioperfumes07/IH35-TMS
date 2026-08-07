@@ -9,6 +9,7 @@
  * Aggregates NB + SB per driver_settlement (load_bookended model).
  * Read-only. No new financial code.
  */
+import { entityLabel } from "../../lib/entity-label";
 import { useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
@@ -68,7 +69,7 @@ export function TripProfitability() {
       sortable: true,
       render: (row) => (
         <span className="font-mono text-xs">
-          <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? row.settlement_id.slice(0, 8)} />
+          <EntityLink kind="settlement" id={row.settlement_id} label={entityLabel(row.settlement_display_id, row.settlement_id, "Settlement")} />
         </span>
       ),
     },
