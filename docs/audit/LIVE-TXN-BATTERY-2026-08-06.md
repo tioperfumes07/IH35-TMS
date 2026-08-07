@@ -3806,3 +3806,75 @@ path; (b) carry `source_transaction_type` / `source_transaction_id` onto reversa
 appear in the same reports as what they reverse. **GUARD:** assert every posting has a non-null
 `source_transaction_type`, and that a voided invoice's postings net to zero **within its source
 grouping**, not merely by account. **LANE: CC-1 / money.**
+
+---
+
+## 59. ★★ VOID LANDSCAPE COMPLETE — JE void is the WORKING REFERENCE; three paths, three quality tiers
+
+**LIVE-PROVEN 2026-08-07, USMCA. Created a manual JE, posted it, voided it — controlled before/after.
+This completes the void map and gives CC-1 an in-repo implementation to copy, so no new GL math is
+needed for either broken path.**
+
+### The transaction
+
+Created via `/accounting/journal-entries` → **+ Create** (two-step wizard): ref
+**`CC3-JE-LINKAGE-TEST`**, type **Adjusting Entry**, lines **DR `1295` Relay Fuel Wallet $64.20 / CR
+`2000` Accounts Payable $64.20**. The wizard's live balance validator read **"Debits $64.20 / Credits
+$64.20 Balanced ✓"** before it would save — correct, and a genuine control. JE **`5f70a75c`** created,
+`source = manual` (correctly distinguished from the `auto` system entries), status `posted`.
+
+Then voided it with a reason.
+
+### Result — JE void is CORRECT ON EVERY DIMENSION
+
+| check | result |
+|---|---|
+| reversing JE created | ✅ **`56a58856`**, memo *"Reversal of journal entry `5f70a75c`…"* |
+| net GL effect | ✅ account `1295` net = **0**, account `2000` net = **0** |
+| **`reverses_je_id`** on the reversal | ✅ **`5f70a75c`** — points at the original |
+| **`reversed_by_je_id`** on the original | ✅ **`56a58856`** — points at the reversal |
+| **`void_reason`** | ✅ **stored verbatim** on the reversal |
+| UI affordance | ✅ the original's action cell now reads **"Reversed"** instead of offering Void |
+
+**The linkage is bidirectional and the UI consumes it.** This is exactly what the other two paths lack.
+
+### ★ THE COMPLETE VOID MAP — measured, not inferred
+
+| path | reversal JE | net GL zero | `reverses_je_id` | `reversed_by_je_id` | `void_reason` |
+|---|---|---|---|---|---|
+| **JE void** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Invoice void** (item 58) | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Bill-payment void** (item 54) | ❌ **none** | ❌ **$33.40 residue** | — | — | (reason on the payment row only) |
+
+**All three rows were produced by the same method — create it myself, baseline, void, re-read prod —
+so they are directly comparable.** The invoice and JE rows sit side by side in one query: `53415aef` /
+`e30baa6a` both NULL on both columns, while `56a58856` / `5f70a75c` are both populated.
+
+**This is the best possible outcome for the fix.** Neither broken path needs new GL math or a design
+decision — **the correct behaviour already exists in this repo, on a path in the same schema, and can
+be copied**:
+- **bill-payment void** needs the *whole* thing (reversal + linkage);
+- **invoice void** needs only the *linkage half* (its reversal already nets to zero).
+
+### NEW CONSEQUENCE FOUND — missing linkage leaves an already-reversed JE re-voidable
+
+Because JE void writes `reversed_by_je_id`, the UI renders **"Reversed"** on the original and
+**withdraws the Void action**. The invoice path writes neither column — so in the same list,
+**`e30baa6a` (the invoice's original JE, already reversed by `53415aef`) STILL OFFERS A VOID BUTTON**,
+and so does the reversal itself.
+
+> **Nothing prevents a user from voiding an already-reversed invoice JE a second time**, producing a
+> second reversal and swinging the GL the wrong way by the full invoice amount.
+
+**I did NOT execute a double-void** — that would corrupt the entity's ledger to prove a point the
+button already proves, and this lane does not move money erroneously. **The offer is the finding**,
+exactly as with the voided-bill selector (item 52). **The linkage is not cosmetic traceability: it is
+the control that makes double-reversal impossible.** That reframes item 58's linkage gap from an audit
+inconvenience to a correctness guard, and it should raise its priority.
+
+**FIX:** point CC-1 at `journal-entries.service.ts`'s void path as the reference; replicate its
+linkage write in the invoice-void path and its whole reversal+linkage behaviour in the bill-payment
+void path. **Write no new GL math — copy the working neighbour.**
+**GUARD:** assert that for every JE carrying `voided_at`/reversal, both `reverses_je_id` and
+`reversed_by_je_id` resolve, and that a JE with a non-null `reversed_by_je_id` cannot be voided again.
+**LANE: CC-1 / money.**
