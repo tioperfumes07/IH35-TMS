@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useSearchParams, Link } from "react-router-dom";
@@ -126,7 +127,7 @@ export function VehicleProfilePage() {
 
   const profile = profileQuery.data;
   const unit = profile?.unit;
-  const unitNumber = String(unit?.unit_number ?? id.slice(0, 8));
+  const unitNumber = String(entityLabel(unit?.unit_number, id, "Record"));
 
   useEffect(() => {
     const tab = searchParams.get("tab");
