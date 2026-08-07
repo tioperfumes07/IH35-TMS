@@ -96,6 +96,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-TXN-017` | — | CC-2 / mechanical+routes+validation | — | — | — | — | — | — |
 | ☐ | `LV-TXN-018` | P0 | CC-1 (money) | — | — | — | — | — | — |
 | ☐ | `LV-PAY-SETTLE-NOPOST` | — | CC-1 / money | — | — | — | — | — | — |
+| ☐ | `CLS-SUBLEDGER-GL-DARK-TIEOUT` | P0 | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-AP-OPEN-INCLUDES-VOIDED` | — | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-BILLS-VENDOR-UUID` | — | CC-2 / mechanical+FE | — | — | — | — | — | — |
 | ☐ | `LV-REVREC-NOT-FIRING` | — | CC-1 / money — URGENT | CC-1 | #4730 | 2026-08-07 | — | — | **DELIBERATELY LEFT ☐.** Root cause fixed and mutation-proven in #4730 (`node scripts/verify-money-side-effect-after-commit.mjs` RED on the replanted real defect, GREEN restored), but a tick here would claim a POST-FIX LEDGER ROW exists and none does yet — that needs a delivery transition against the deployed build. Tick only after re-checking `LUSMCAFREIGHT-20260806-0001` on prod. See `LV-REVREC-LEDGER-DBTEST`. |
