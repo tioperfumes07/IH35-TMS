@@ -13,5 +13,5 @@
     { "check": "Dedupe: BankTransactionSplitModal is canonical; the older SplitTransactionModal is ARCHIVED (not deleted).", "resolved": false },
     { "check": "With BANK_TX_SPLIT_ENABLED ON (owner flip) for an entity: $1,000 split across 3 vendors ties to the cent, posts one balanced result, each line vendor-tagged 1099-eligible Expense/Check (or Bill-Payment) with a single cash credit — NOT a raw JE. GUARD Neon-proves.", "resolved": false }
   ],
-  "note": "MIXED: enabling the button + wiring the modal + dedupe = non-financial UI (ships on green). The BANK_TX_SPLIT_ENABLED flag flip is the OWNER's sole switch; the multi-vendor GL assembly stays Tier-1 build-and-hold (already built, verified in the UI-03 PART B design doc). Split UI portion ships; flag + GL enable = HOLD-FOR-JORGE."
+  "note": "MIXED: enabling the button + wiring the modal + dedupe = non-financial UI (ships on green). The BANK_TX_SPLIT_ENABLED flag flip is the OWNER's sole switch; the multi-vendor GL assembly stays Tier-1 build with GUARD verify-after (already built, verified in the UI-03 PART B design doc). Split UI portion ships; flag + GL enable = owner-preauthorized."
 }

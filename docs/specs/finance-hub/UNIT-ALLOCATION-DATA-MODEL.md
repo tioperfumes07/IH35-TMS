@@ -1,7 +1,9 @@
 # Unit Allocation (Shared Cost Allocation) — Data-Model Spec
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 **Status:** Design / Docs only. No code, no DDL executed. Mostly REUSE of the existing allocation
-control; the one schema change (a CHECK extension) is defined here for Coder. BUILD-AND-HOLD.
+control; the one schema change (a CHECK extension) is defined here for Coder. BUILD-AND-SHIP.
 **Date:** 2026-06-28
 **Author:** Cascade (design lane)
 **Standard cited:** managerial cost allocation (no single GAAP posting standard — allocation is a

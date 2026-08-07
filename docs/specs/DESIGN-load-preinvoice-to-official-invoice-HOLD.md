@@ -1,9 +1,11 @@
 # DESIGN — Load PRE-INVOICE (on book) → OFFICIAL INVOICE (on deliver) · TONU fee MANUAL (HOLD)
 
-> **STATUS: DESIGN ONLY · BUILD-AND-HOLD · DO NOT MERGE.**
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
+> **STATUS: DESIGN ONLY · BUILD-AND-SHIP · DO NOT MERGE.**
 > This document is **doc-only**. It contains **NO migration, NO money code, NO flag flip, NO account seed.**
 > It is the planning artifact for a **future** implementation PR that will itself be a financial-cluster PR
-> (`build-and-HOLD`; owner `JORGE-APPROVED` + owner Neon-apply required — Rule 13, `.cursor/rules/13`).
+> (`build-and-ship`; owner `JORGE-APPROVED` + the coder applies on Neon — Rule 13, `.cursor/rules/13`).
 > Cursor never merges this; it is left **open** for the Claude coder / owner ceremony.
 >
 > - **Author role:** Planner (multi-agent orchestration, Rule 11). Builder / Financial-Accounting / GUARD are **separate** agents on the future PR. The Planner writes no GL math.

@@ -1,5 +1,7 @@
 # IH35-TMS — Accounting Architecture (CANONICAL, locked 2026-07-02)
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 > **★ CURRENT CONSOLIDATED GUARDRAIL:** [`ARCHITECTURE-BLUEPRINT-2026-07-05.md`](ARCHITECTURE-BLUEPRINT-2026-07-05.md)
 > is the current consolidated architecture guardrail — the **Law of the Land** total-connectivity rule, the
 > driver **Bill + BillPayment** settlement model, the **Faro** exact factoring terms, the auto-provisioned
@@ -94,7 +96,7 @@ event-gated ceremony after reconcile proves agreement — not a silent drift, an
 6. **Integrity invariants (every engine).** Exact cents (BigInt, never `parseFloat`); void-not-delete +
    audit; idempotent upsert by QBO id; unmatched account = abort (no guessed mapping); unbalanced = abort;
    tie out to the cent or fail loud; everything behind `QBO_HISTORICAL_IMPORT_ENABLED` (OFF),
-   owner-triggered, build-and-hold, prove on a Neon branch with real pulls before any merge.
+   owner-triggered, build-and-ship, prove on a Neon branch with real pulls before any merge.
 
 ## What is RETIRED
 The master blueprint §3.12 "QBO AUTO-SYNC + OFFLINE QUEUE / REPLAY" (WF-031 auto-sync on writes,

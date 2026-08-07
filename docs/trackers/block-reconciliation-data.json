@@ -1,6 +1,6 @@
 {
  "date": "2026-08-07",
- "generated_at_iso": "2026-08-07T07:46:32.267Z",
+ "generated_at_iso": "2026-08-07T13:43:09.815Z",
  "counts": {
   "PENDING": 15,
   "PENDING (GATED)": 28,
@@ -13262,6 +13262,24 @@
  ],
  "merged_prs": [
   {
+   "number": 4669,
+   "title": "Claude-2: CC2-STANDING-ORDER — permanent mechanical-lane standing order saved verbatim",
+   "mergedAt": "2026-08-07T12:21:59Z",
+   "branch": "chore/cc2-standing-order-permanent"
+  },
+  {
+   "number": 4668,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-08-07T08:08:35Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 4667,
+   "title": "Claude-1- ACCT-F155 (CLS-GUARD-PHANTOM): 10 of 31 class-queue waves name a guard file that does not exist",
+   "mergedAt": "2026-08-07T12:00:14Z",
+   "branch": "claude/cls-guard-phantom-queue-paths"
+  },
+  {
    "number": 4665,
    "title": "Claude-1- ACCT-F154: the AR importer projects headers only — a re-clone silently undoes the ACCT-F146 back-fill",
    "mergedAt": "2026-08-07T06:27:58Z",
@@ -13442,6 +13460,12 @@
    "branch": "claude/acct-f145-invoice-lines-unique"
   },
   {
+   "number": 4629,
+   "title": "Claude-2- fix(cash-flow): ORPH-004 — the 7-day outlook showed the WRONG DAY's money (UTC off-by-one)",
+   "mergedAt": "2026-08-07T12:22:17Z",
+   "branch": "fix/cashflow-outlook-utc-offbyone"
+  },
+  {
    "number": 4625,
    "title": "Claude-1- CI-RUNNER-3 — one runner serialised all CI; back to hosted parallelism, service container restored",
    "mergedAt": "2026-08-06T23:24:30Z",
@@ -13472,6 +13496,12 @@
    "branch": "fix/codeql-no-ghas-upload"
   },
   {
+   "number": 4619,
+   "title": "Claude-2- fix(cls-silent-cap): 7 lists silently hid rows — shared truncation helper + baseline 61→54; class spans both lanes",
+   "mergedAt": "2026-08-07T12:17:41Z",
+   "branch": "fix/cls-silent-cap-truncation-disclosure"
+  },
+  {
    "number": 4618,
    "title": "Claude-1- CI-RUNNER — self-hosted runner online + 4 required workflows moved to it (folds in SHA-scoped concurrency)",
    "mergedAt": "2026-08-06T21:11:08Z",
@@ -13482,6 +13512,12 @@
    "title": "chore(audit): reconcile wave-queue.json to findings — 26 -> 31 classes",
    "mergedAt": "2026-08-07T00:31:19Z",
    "branch": "chore/wave-queue-reconcile-0806"
+  },
+  {
+   "number": 4615,
+   "title": "Claude-2- chore(governance): the approval gate was abolished in LAW but still live in 50 design docs — 80 affirmative hold lines removed, ratchet widened",
+   "mergedAt": "2026-08-07T12:16:23Z",
+   "branch": "chore/abolish-hold-language-docs-specs"
   },
   {
    "number": 4614,
@@ -16824,46 +16860,16 @@
    "title": "Claude- fix(search): universal search has never indexed a driver — phantom d.driver_code",
    "mergedAt": "2026-08-01T18:07:30Z",
    "branch": "fix/srch-f64-universal-indexer-driver-phantom-column"
-  },
-  {
-   "number": 3964,
-   "title": "Claude- fix(qbo-sync): purchases projector could never parse, and the tick asked USMCA to sync a QuickBooks it does not have",
-   "mergedAt": "2026-08-01T18:14:05Z",
-   "branch": "fix/qbo-f63-sync-pull-steps-never-succeeded"
-  },
-  {
-   "number": 3963,
-   "title": "Cascade- h-05: wire HomeKpiRangeToggle into QboStyleHomePage",
-   "mergedAt": "2026-08-01T18:19:08Z",
-   "branch": "fix/Cascade-h05-qbo-home-kpi-toggle"
-  },
-  {
-   "number": 3962,
-   "title": "Claude- fix(safety): the DOT random drug/alcohol pool draw has NEVER run — a parse error, not a data gap",
-   "mergedAt": "2026-08-01T17:45:49Z",
-   "branch": "fix/saf-f62-da-random-pool-draw-never-succeeded"
-  },
-  {
-   "number": 3961,
-   "title": "Claude- fix(accounting): a customer invoice could be sent for a delivery the system cannot evidence",
-   "mergedAt": "2026-08-01T17:48:09Z",
-   "branch": "fix/acct-f61-invoice-send-requires-delivery-evidence"
-  },
-  {
-   "number": 3960,
-   "title": "Claude- fix(dispatch): the load state machine existed in 3 copies and the GPS writer consulted none of them",
-   "mergedAt": "2026-08-01T17:18:12Z",
-   "branch": "fix/load-state-machine-single-definition"
-  },
-  {
-   "number": 3959,
-   "title": "Cascade- guard(no-orphan-routes): remove stale allowlist entries for mounted routes",
-   "mergedAt": "2026-08-01T18:19:00Z",
-   "branch": "fix/Cascade-no-orphan-routes-allowlist-refresh"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 4615,
+   "title": "Claude-2- chore(governance): the approval gate was abolished in LAW but still live in 50 design docs — 80 affirmative hold lines removed, ratchet widened",
+   "mergedAt": "2026-08-07T12:16:23Z",
+   "category": "HOLD"
+  },
   {
    "number": 4613,
    "title": "Claude-2- audit(live): CLS-MONEY-HOLD — HOLD-001 is NOT a hold, it is a code defect (LV-TXN-004, P0)",

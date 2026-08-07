@@ -28,7 +28,7 @@
   "db_required": true,
   "guard_required": true,
   "extra_gates": [],
-  "hold": "TIER-1 MIGRATION — build-and-hold. DO NOT RUN ON PROD (registered held). Owner runs 202607410000 on a Neon branch, then ledger-backfill; owner merges. NEVER self-merge (financial cluster: db/migrations/*).",
+  "superseded_hold": "OWNER LAW 2026-08-03: no holds, no approval label; coders have full Neon access and merge on green. Proof, not approval, is the gate.",
   "deferred": [
     { "item": "Populate insurance.claim.{accident_report_id,load_id,driver_id} from the claim-create / accident-escalation flows + surface the links in the claim UI", "reason": "code/route follow-up — this block adds the columns+FKs so attribution is possible now; the writers wire in when the create/escalation flow carries that context. Explicit follow-up, not silently dropped." },
     { "item": "GL posting of claim payouts (amount_paid_cents -> journal entry)", "reason": "the posting/GL-math half of G11-1 is design-only (never built solo); reuses the existing posting engine behind a default-OFF flag when specced." }

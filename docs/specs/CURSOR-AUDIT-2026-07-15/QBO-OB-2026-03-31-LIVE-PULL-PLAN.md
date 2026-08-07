@@ -1,6 +1,8 @@
 # QBO Opening Balances — Live Pull Plan (as_of 2026-03-31)
 
-**Status:** DESIGN / PREVIEW ONLY — build-and-HOLD.  
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
+**Status:** DESIGN / PREVIEW ONLY — build-and-ship.  
 **This PR:** design/spec markdown only. **Does not** implement JE posting, flag flips, Neon writes, or QBO write-back.
 
 > **Owner lock (Ch.11 fresh-start):** opening balances = QBO Balance Sheet / Trial Balance **as of 2026-03-31** per entity; TMS parallel live posting + daily TMS↔QBO reconcile from **2026-04-01**. Supersedes stale 06/30 / 07/01 draft dates. Canonical companions: `docs/specs/OPENING-BALANCE-IMPORT-AND-CUTOVER-2026-07-16.md`, `docs/lockdown/00_LOCKED_DECISIONS.md` §8.9, `docs/specs/qbo-parity/OPENING-BALANCE-TIEOUT-CEREMONY-2026-07-04.md`.
