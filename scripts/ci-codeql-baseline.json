@@ -1,0 +1,19 @@
+{
+  "_why": "SHRINK-ONLY RATCHET. These error-level CodeQL findings PRE-DATE the local SARIF enforcement added in #4620 — they existed for as long as the GHAS upload was failing and nobody could read them. Baselining is NOT dismissal: each is on the board (CODEQL-F01), each fails the build the moment its count grows, and removing an entry is a one-way ratchet. What the baseline buys is that a NEW finding is never hidden inside a wall of old red.",
+  "_rules": [
+    "A key may only ever DECREASE. Fixing a finding means lowering or deleting its entry, never raising it.",
+    "Never add a key to silence a finding you just introduced — that is the fake-green this whole file exists to prevent.",
+    "Deleting the last entry is the goal, not the exception."
+  ],
+  "_recorded_at": "2026-08-07",
+  "baseline": {
+    "js/user-controlled-bypass": {
+      "count": 2,
+      "note": "apps/backend/src/auth/routes.ts:98 and :101 — the OAuth state/CSRF check compares parsedState.state (query) against storedState (cookie). That comparison IS the CSRF defense; CodeQL flags it because both sides are attacker-influenceable in its taint model. Needs a security read, NOT a lint fix — rewriting auth logic on a heuristic without a demonstrated exploit is the greater risk. Board: CODEQL-F01."
+    },
+    "js/unnecessary-use-of-cat": {
+      "count": 1,
+      "note": "scripts/verify-schema-parity-window-bounded.mjs:58 — cosmetic; a `cat` subprocess where fs.readFileSync would do. Harmless, low priority, kept visible rather than fixed opportunistically inside an unrelated PR."
+    }
+  }
+}

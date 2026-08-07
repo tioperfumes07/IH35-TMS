@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { randomBytes } from "crypto";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
@@ -749,6 +750,7 @@ export async function createDriverCanonical(
             // INSERTs resolve/land inside THIS driver's entity chart. Without it, AF-1 RLS returns 0 rows and
             // the sub-accounts are silently never created (a live break even for TRANSP); under bypass they
             // would nest under another entity's parent (cross-entity GL leak).
+            // membership-scope-exempt: the company was resolved by a lookup restricted to `id IN (SELECT org.user_accessible_company_ids())`, which IS the membership check
             await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
             const provisionArgs = {
               operatingCompanyId: resolvedOperatingCompanyId,
@@ -795,6 +797,9 @@ export async function createDriverCanonical(
       let inviteUrl: string | null = null;
       let inviteExpiresAt: string | null = null;
 
+      // invite-entity-gate-exempt: resolvedOperatingCompanyId came from a lookup restricted to
+      // `id IN (SELECT org.user_accessible_company_ids())`, which IS the membership check — the caller
+      // cannot name a company they do not belong to, so there is nothing left to assert here.
       if (onboardingEnabled && resolvedOperatingCompanyId && operatingCompany && identityUserId) {
         const inviteToken = randomBytes(32).toString("hex");
         inviteUrl = `${driverInviteBaseUrl}/invite?token=${inviteToken}`;
@@ -992,9 +997,15 @@ export async function createDriverCanonical(
   }
 }
 
+// Rate limits are written INLINE, not hoisted into an RL_READ-style const, on purpose: the
+// rate-limit plugin is registered `global: false`, so a route with no `config.rateLimit` has NO limit
+// at all — and verify-new-auth-routes-rate-limited.mjs matches a literal `rateLimit:` inside the
+// registration window (RATE_RE, scripts/verify-new-auth-routes-rate-limited.mjs:29). A shared const
+// reads as covered to a human and as unlimited to the guard. House values, from
+// mdata/customers.routes.ts:484-486: reads 120/min, writes 30/min.
 export async function registerDriverRoutes(app: FastifyInstance) {
 
-  app.get("/api/v1/mdata/drivers", async (req, reply) => {
+  app.get("/api/v1/mdata/drivers", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
@@ -1026,6 +1037,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       // operating_company_id predicate — using the requested company or the user's current one.
       const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
       if (!scopedCompanyId) return { rows: [], total: 0 };
+      // membership-scope-exempt: scopedCompanyId comes from resolveOperatingCompanyId, which validates a requested company against org.user_accessible_company_ids() and throws forbidden_company_membership
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
       values.push(scopedCompanyId);
       const ociIdx = values.length;
@@ -1115,7 +1127,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
   await registerDriverMessagesRoutes(app);
   await registerDriverPdfExportRoutes(app);
 
-  app.get("/api/v1/mdata/drivers/:id", async (req, reply) => {
+  app.get("/api/v1/mdata/drivers/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -1142,6 +1154,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       // otherwise the caller's default/first-accessible company.
       const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, requestedCompanyId);
       if (!scopedCompanyId) return null;
+      // membership-scope-exempt: scopedCompanyId comes from resolveOperatingCompanyId, which validates a requested company against org.user_accessible_company_ids() and throws forbidden_company_membership
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
       const res = await client.query(
         `
@@ -1219,6 +1232,15 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     const whatsappReady = isWhatsappChannelConfigured();
 
     const outcome = await withCurrentUser(authUser.uuid, async (client) => {
+      // MDATA-F08 — CROSS-ENTITY GATE. Same class as MDATA-F07 on resend-invite (fixed in #4562),
+      // but at mass scale. The only check above is isOwnerOrAdmin, which is a ROLE, not a company.
+      // `b.operating_company_id` arrives in the REQUEST BODY and is used verbatim as the
+      // `d.operating_company_id = $1` predicate below, so an Owner/Admin in company A could pass
+      // company B's id and mass-invite every driver in B — real email/WhatsApp to real people, plus
+      // one identity.driver_invites row each under B. RLS is no backstop: org.user_accessible_company_ids()
+      // returns EVERY active company for an Owner (PERMANENT LAW 4), so the predicate authorizes nothing.
+      await assertCompanyMembership(client, authUser.uuid, b.operating_company_id);
+
       const targetsRes = await client.query<{
         id: string;
         first_name: string | null;
@@ -1397,7 +1419,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
   );
 
 
-  app.post("/api/v1/mdata/drivers/:id/resend-invite", async (req, reply) => {
+  // 10/min, not the 30/min write default: this route sends a REAL email to a REAL person and writes an
+  // identity.driver_invites row, so the abuse case is mail-bombing a driver. Same limit as
+  // driver-pdf-export.routes.ts:17 — the other endpoint here that produces something outside the app.
+  app.post("/api/v1/mdata/drivers/:id/resend-invite", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOwnerOrAdmin(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -1411,6 +1436,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         last_name: string;
         email: string | null;
         identity_user_id: string | null;
+        driver_operating_company_id: string;
         operating_company_id: string | null;
         operating_company_name: string | null;
       }>(
@@ -1421,18 +1447,42 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             d.last_name,
             d.email,
             d.identity_user_id,
+            d.operating_company_id AS driver_operating_company_id,
             i.default_company_id AS operating_company_id,
             c.legal_name AS operating_company_name
           FROM mdata.drivers d
           LEFT JOIN identity.users i ON i.id = d.identity_user_id
           LEFT JOIN org.companies c ON c.id = i.default_company_id
           WHERE d.id = $1
+            AND d.operating_company_id IN (
+              SELECT uca.company_id
+                FROM org.user_company_access uca
+                JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+               WHERE uca.user_id = $2::uuid
+                 AND uca.deactivated_at IS NULL
+            )
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, authUser.uuid]
       );
       const row = driverRes.rows[0] ?? null;
       if (!row) return { error: "mdata_driver_not_found" as const };
+
+      // ENTITY-SCOPED RESOLVER. The read is scoped to the companies the CALLER actually belongs to —
+      // NOT to a caller-supplied company, which would be the untrusted input this fix exists to
+      // distrust, and not by the driver's own company, which is what the read is trying to discover.
+      // Same shape as the reclassify resolver already on main, and it reads org.user_company_access,
+      // the same table assertCompanyMembership keys on, so the read and the gate below cannot drift.
+      // Two effects: it satisfies the entity-predicate contract (verify-steps/84) with a real
+      // predicate rather than a baseline waiver, and it collapses 403-vs-404 so a caller can no longer
+      // tell "no such driver" from "exists in another entity" and enumerate ids across entities.
+      //
+      // CROSS-ENTITY GATE. This route looked the driver up by id ALONE, so a caller in company A could
+      // trigger an invite to company B's driver — a real email to a real person in another entity, plus
+      // an identity.driver_invites row written under that entity. The company is DERIVED from the
+      // driver record here, so the control is a membership assertion on it (the resolver pattern from
+      // MDATA-F03), not a circular predicate on the lookup. Throws 403 forbidden_company_membership.
+      await assertCompanyMembership(client, authUser.uuid, row.driver_operating_company_id);
 
       // BOOTSTRAP, don't reject. Previously this returned `driver_not_linked` whenever
       // identity_user_id was null, which is the state of 86 of 88 active drivers on prod — every

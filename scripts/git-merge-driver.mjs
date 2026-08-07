@@ -10,6 +10,8 @@
  *   - scripts/entity-isolation-allowlist.json (derived allowlist + append-only backlog)
  *   - docs/module-completion/*.json           (module N-of-M manifests — keyed by items[].id)
  *   - scripts/verify-steps/CLAIMED-NUMBERS.json (collision-strict on claimed.*)
+ *   - docs/law/LAW.json                       (bare array of laws — keyed by [].id, see below)
+ *   - scripts/.guard-exempt.json              (flat {script: reason} map — plain deep union)
  * Because they are single shared files, any PR that merges first makes EVERY other open
  * PR conflict on them — and hand-resolving them (union guesses) then fails CI because the
  * baseline must EXACTLY match `verify-schema-parity.mjs --update`. That treadmill cost real money.
@@ -177,12 +179,51 @@ function unionModuleManifest(ours, theirs) {
   return out;
 }
 
+/**
+ * TOP-LEVEL ID-KEYED ARRAY union — for registries that are a bare array of identified records.
+ *
+ * docs/law/LAW.json is exactly that: 42 entries of {id,title,source_file,guard,type}. The generic
+ * union() above dedupes arrays by STRUCTURAL identity, which is wrong here in one specific and
+ * damaging way: if both branches edit the SAME law differently (say one repoints `guard`), the two
+ * objects are structurally distinct, so union() keeps BOTH and the registry ends up with two rows of
+ * law claiming the same identity. verify-law-registry.mjs already goes RED on a duplicate id
+ * (selftest case 5), so that corruption would be caught rather than shipped — but a merge driver
+ * whose output reliably reddens CI is not a merge driver. Key by id instead.
+ *
+ * Disjoint ids (the normal case — each PR registers its own new law) union silently. Same id with
+ * DIFFERENT content is a genuine semantic collision, not a rebase nuisance: two lanes disagreeing
+ * about what a law says is precisely the thing a human must adjudicate. Refuse and leave a conflict.
+ */
+function unionIdKeyedRootArray(ours, theirs, pathname) {
+  if (!Array.isArray(ours) || !Array.isArray(theirs)) {
+    throw new Error(`${pathname} is not a top-level array on both sides`);
+  }
+  const byId = new Map();
+  for (const el of [...ours, ...theirs]) {
+    if (!el || typeof el !== "object" || Array.isArray(el) || el.id == null || el.id === "") {
+      throw new Error(`${pathname} contains an entry with no id — refusing to key-union`);
+    }
+    const prev = byId.get(el.id);
+    if (prev && JSON.stringify(prev) !== JSON.stringify(el)) {
+      throw new ScalarClash(`entry id ${el.id}`, prev, el);
+    }
+    byId.set(el.id, prev ?? el);
+  }
+  return [...byId.values()];
+}
+
+const ID_KEYED_ROOT_ARRAY = new Set(["docs/law/LAW.json"]);
+
 try {
   const ours = readJson(oursFile);
   const theirs = readJson(theirsFile);
   let merged;
   if (isModuleCompletionManifest(pathname)) {
     merged = unionModuleManifest(ours, theirs);
+  } else if (ID_KEYED_ROOT_ARRAY.has(pathname)) {
+    merged = ours === undefined ? theirs
+      : theirs === undefined ? ours
+      : unionIdKeyedRootArray(ours, theirs, pathname);
   } else {
     const strictRoot = COLLISION_STRICT.get(pathname) ?? null;
     merged = ours === undefined ? theirs : theirs === undefined ? ours : union(ours, theirs, strictRoot);

@@ -172,6 +172,37 @@ function isChecksumOverrideMatch(overridesByFile, file, ledgerChecksum, diskChec
   return override.ledger_checksum === ledgerChecksum && override.disk_checksum === diskChecksum;
 }
 
+// The two ledger tables are created HERE, by the migrator, before any migration runs — so no
+// migration can grant them, and for the whole life of this repo nothing did. Prod reads them fine
+// only because the grant was made by hand at some point; it exists in no file. Every database built
+// from source — CI's ephemeral one, a DR restore, a fresh Neon branch — therefore has NO grant, and
+// launch-readiness.service.ts:134 (`SELECT COUNT(*) FROM _system._schema_migrations`) fails there
+// with "permission denied for table _schema_migrations". Verified both directions 2026-08-06:
+// prod has_table_privilege('ih35_app', '_system._schema_migrations', 'SELECT') = true; no
+// db/migrations/*.sql contains a GRANT for it.
+//
+// Granting here, at the point of creation, is the only self-contained place for it: a migration
+// cannot reliably grant a table the migrator itself needs before migrations run.
+async function ensureLedgerGrants(client) {
+  // Role-guarded because on a genuinely fresh database this runs BEFORE 0006 creates ih35_app.
+  // That first pass no-ops; the call after the apply loop then lands it in the same run.
+  await client.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ih35_app') THEN
+        RAISE NOTICE 'ledger grants: role ih35_app absent (pre-0006) — deferred to post-apply pass';
+        RETURN;
+      END IF;
+      GRANT USAGE ON SCHEMA _system, ih35_migrations TO ih35_app;
+      -- SELECT only. The application READS the ledger to answer "are we fully migrated?"; it must
+      -- never write it. The migrator writes as the migration role, not as ih35_app.
+      GRANT SELECT ON _system._schema_migrations TO ih35_app;
+      GRANT SELECT ON ih35_migrations.applied_migrations TO ih35_app;
+    END
+    $$;
+  `);
+}
+
 async function ensureLedgers(client) {
   await client.query("CREATE SCHEMA IF NOT EXISTS _system;");
   await client.query("CREATE SCHEMA IF NOT EXISTS ih35_migrations;");
@@ -190,6 +221,7 @@ async function ensureLedgers(client) {
       applied_at timestamptz NOT NULL DEFAULT now()
     );
   `);
+  await ensureLedgerGrants(client);
 }
 
 async function getCanonicalLedgerRows(client) {
@@ -532,6 +564,27 @@ try {
           `them back.`
       );
     }
+  }
+
+  // Second pass: on a fresh database the bootstrap call above ran before 0006 existed to create
+  // ih35_app, so it deferred. 0006 has certainly run by now.
+  await ensureLedgerGrants(client);
+
+  // ASK THE DATABASE, same as the enum assertion above — a GRANT that silently did not take is the
+  // failure mode being closed here, and the whole point is that it was invisible for months.
+  const ledgerGrants = await client.query(
+    `SELECT has_table_privilege('ih35_app', '_system._schema_migrations', 'SELECT')      AS canonical,
+            has_table_privilege('ih35_app', 'ih35_migrations.applied_migrations', 'SELECT') AS mirror
+       WHERE EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ih35_app')`
+  );
+  const g = ledgerGrants.rows[0];
+  if (g && !(g.canonical && g.mirror)) {
+    throw new Error(
+      `POST-APPLY CHECK FAILED: ih35_app cannot SELECT the migration ledger ` +
+        `(_system._schema_migrations=${g.canonical}, ih35_migrations.applied_migrations=${g.mirror}). ` +
+        `The application reads these to answer "are we fully migrated?", so the backend boot check ` +
+        `and launch-readiness both fail closed without them.`
+    );
   }
 
   console.log("Migrations applied successfully.");
