@@ -1,5 +1,34 @@
 # GUARD WORK-ORDERS — the live fix board (read after AUDIT-COVERAGE-LIVE.md, before any block)
 
+## ★★★ STANDING RULE — THE COMPLETION REGISTER. EVERY FIXED FINDING IS TICKED BY THE CODER WHO FIXED IT.
+
+**Owner-locked 2026-08-07 (Jorge, verbatim): _"create permanent rule that you will write all findings,
+create list and checklist and each coder that works on it checks it once its done so I can also request
+your list and you show it to me and I know the jobs were completed."_** Permanent. Applies to every lane.
+
+**→ THE REGISTER IS `docs/audit/CC-3-FINDINGS-CHECKLIST.md`.** That file is what the owner reads to see what
+is done. **This board holds the evidence and the fix instructions; the register holds the SIGN-OFF.**
+
+1. **CC-3 files every finding in BOTH** — a row here (evidence + named lane + permanent-fix definition of
+   done) and a `☐` row in the register, on the same commit. A finding that exists only in chat, a PR body,
+   or CC-3's notes **is not filed**.
+2. **THE CODER WHO FIXES IT TICKS ITS OWN ROW — never CC-3.** On merge, flip `☐` → `☑` and fill
+   **Coder · PR · Date · Live proof · Guard (file + step #)**. CC-3 ticking another lane's box would destroy
+   maker≠checker and make the register worthless.
+3. **A TICK REQUIRES ALL FOUR PERMANENT-FIX CONDITIONS** (root cause at source · a **wired** CI guard that
+   fails on the bug and passes on the fix · **live prod proof** · the class addressed). **Ticking without
+   live proof is a false completion claim** and is treated as `fake-green` under the hardline rule. There is
+   no "in progress" state — a half-fix in production is indistinguishable from no fix, so it stays `☐`.
+4. **CC-3 RE-VERIFIES INDEPENDENTLY.** A tick is the coder's claim; CC-3 re-tests live and stamps
+   `VERIFIED ✓` with its own evidence, or **reopens the row** stating what still fails. A row is closed only
+   when both are present.
+
+**Guard:** `scripts/verify-findings-register-signoff.mjs` (selftest **8/8**) asserts every OPEN board
+finding has a register row, every `☑` carries its evidence cells, and no id is listed twice. Registered
+`enforced` as `LAW-2026-08-07-FINDINGS-REGISTER-CODER-SIGNOFF`. **It is NOT yet wired into CI** — CC-3 has
+no verify-step band (`CI-CC3-GUARDS-NEED-A-BANDED-ADOPTER`), so until a banded lane adopts it this rule is
+**mandatory but not machine-enforced**. Stated plainly rather than left to a green registry to imply.
+
 ## ★★★ STANDING RULE — EVERY FINDING CARRIES A NAMED CODER AND A PERMANENT FIX. NO PATCHES.
 
 **Owner-directed 2026-08-07 (Jorge, verbatim): _"write your findings in the shared file, instruct the
