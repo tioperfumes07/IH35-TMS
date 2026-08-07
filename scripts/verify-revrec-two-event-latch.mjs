@@ -75,10 +75,24 @@ export function check(sources) {
     }
   }
 
+  // ACCT-F169 — assert the INVARIANT (the transition applies the revenue latch), not the CALL SITE.
+  //
+  // This previously required the literal `postLoadRevenueLatch` inside dispatch/loads.routes.ts. That
+  // pinned a location, so when ACCT-F166 correctly EXTRACTED the latch + settlement ping into the
+  // shared accounting/load-status-money-effects.service.ts — precisely so the office and dispatch
+  // endpoints could not drift apart again — this guard went RED on a strictly better tree.
+  //
+  // A guard that fails when a call is correctly extracted teaches people to inline calls, which is the
+  // exact defect ACCT-F166 fixed. So either shape is accepted: the direct call, OR the shared
+  // applyLoadStatusMoneyEffects — and the shared function is itself held to calling BOTH primitives by
+  // verify-load-status-money-effects-wired.mjs, which also scans every loads.status writer. The
+  // invariant is covered end to end; only the location assumption is dropped.
+  const appliesLatch = /postLoadRevenueLatch|applyLoadStatusMoneyEffects/.test(loads ?? "");
   if (!loads) problems.push("missing loads.routes.ts");
-  else if (!/postLoadRevenueLatch/.test(loads)) {
-    problems.push("load transition must call postLoadRevenueLatch");
-  } else if (!/delivered_pending_docs/.test(loads) || !/completed_docs_received/.test(loads)) {
+  else if (!appliesLatch) {
+    problems.push("load transition must apply the revenue latch (postLoadRevenueLatch or applyLoadStatusMoneyEffects)");
+  } else if (/postLoadRevenueLatch/.test(loads) && (!/delivered_pending_docs/.test(loads) || !/completed_docs_received/.test(loads))) {
+    // Only meaningful when the route inlines the latch; the shared service owns the status set otherwise.
     problems.push("load transition must wire earn + bill statuses");
   }
 
@@ -134,7 +148,7 @@ export function check(sources) {
 function selftest() {
   const good = {
     poster: `REVENUE_RECOGNITION_POST_ENABLED\ncreateJournalEntry\nresolveRoleAccount\nunbilled_revenue\nar_control\nrevenue_default\nbuildEarnEvent1Postings\nbuildBillEvent2Postings\nTRK excluded\nconst LATCH_REGCLASS = "accounting.load_revenue_recognition_postings";\nasync function latchTablePresent() { SELECT to_regclass($1::text) IS NOT NULL [LATCH_REGCLASS] }\nexport async function postLoadRevenueLatch() { if (!(await latchTablePresent(client))) return { gate: "latch_table_missing" as const }; await loadLatchExists(); }\nif (prepared.gate === "latch_table_missing") return { posted: false, reason: "latch_table_missing" };`,
-    loads: `postLoadRevenueLatch\ndelivered_pending_docs\ncompleted_docs_received`,
+    loads: `applyLoadStatusMoneyEffects`,
     resolver: `export const COA_ROLE_VALUES = ["unbilled_revenue"] as const;\nconst ROLE_FALLBACKS = { ar_control: {} };`,
     coaRoles: `const ROLE_LABELS = { unbilled_revenue: "Unbilled revenue (ASC 606 earn latch)" };`,
     flags: `POSTING_FLAG_KEYS\nREVENUE_RECOGNITION_POST_ENABLED`,
