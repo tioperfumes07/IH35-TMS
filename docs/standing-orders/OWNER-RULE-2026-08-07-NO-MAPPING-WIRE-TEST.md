@@ -31,3 +31,7 @@ USMCA data.
 > Finish the software in USMCA. Use the same driver/truck/tracking DB as transportation (carried
 > over — TRANSP is closing). USMCA keeps its own books. No QBO, no mapping. Need an account? Create
 > it, owner edits later. Wire and test every scenario green on real USMCA data.
+
+
+## NEVER PAUSE (continuous loop) — owner-locked 2026-08-07
+Every coder works non-stop: finish a task -> immediately pull the next create-surface / class / board item -> keep going. No idling, no waiting for approval, no stopping to ask. The only stop is a genuine owner business decision. Fix your own red PRs first, then continue. The orchestrator (Claude desktop) keeps everyone working and MERGES green PRs + FIXES or ROUTES conflicting PRs so the pipeline never stalls.
