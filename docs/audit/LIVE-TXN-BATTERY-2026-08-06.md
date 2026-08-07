@@ -4447,3 +4447,61 @@ describes THE RELATIONSHIP, never the ROW it points at.** I conflated the two, a
 target rows caught it.
 
 **Board row `LV-AP-POSTED-TO-DEACTIVATED-ROLE-ACCOUNT` corrected accordingly.**
+
+---
+
+## 68. WORK ORDER CREATE — four PASSes, and a z-index defect that DESTROYS the form
+
+**LIVE 2026-08-07, USMCA, `/maintenance` → + Create Work Order → Repair. The work order was NOT
+created — and the reason is the defect.**
+
+### PASS — this screen is genuinely well-built
+
+1. **Pre-save validation panel with live blockers.** Section D lists nine named checks and marks each
+   `✓` or `!` as you type, and **"Create work order & Bill" stays DISABLED while any `!` remains.** It
+   correctly blocked on *"Driver and unit required for non-PM operational types"*, *"Vendor invoice # or
+   vendor WO # required"*, and cleared each as I satisfied it. **This is the opposite of the
+   `LV-DISPATCH-TOAST-LIES` pattern** — the screen refuses to claim success it has not earned.
+2. **Class auto-derive works.** `Class (auto)` moved from **`UNIT-UNASSIGNED` → `UNIT-DRIVER`** the
+   moment a driver was attached — the §7 auto-derive rule, rendered in the one green the palette allows.
+3. **★ Auto load-linkage — the total-connectivity law working.** Attaching the driver auto-populated
+   **`Load # = L-20260806-0008`** (the unit's active trip) with a clearable `×`, and surfaced
+   **"Suggested load: L-20260806-0008 **EXACT**"**. The WO wired itself to the load without being asked.
+4. **Inline `+ Add new part`** is present at the end of the part dropdown, per §7, and opens a mini-create
+   **without closing the parent** — the correct pattern.
+
+**Cost math also verified:** part $289.45 → Subtotal $289.45 → Tax 8.25% **$23.88** → **WO Total
+$313.33**, and Section D declares *"Registers as a Bill (A/P) — payable later, 1099-tracked."*
+
+### ★ DEFECT — the Quick Create Part panel renders BEHIND its parent modal, and clicking it destroys the work order
+
+`+ Add new part "…"` opens a **Quick Create Part** side panel. **The Create Work Order modal renders ON
+TOP of it** — verified by zooming the region: the WO modal's white surface visibly overlays the left
+portion of the part panel, hiding its upper field(s). Only a narrow strip of the part panel is exposed to
+the right of the modal.
+
+**And the exposed strip is not safe to click.** Clicking there is treated as an **outside-click on the
+Create Work Order modal**, which **dismisses BOTH panels and discards the entire work order** —
+every field, the VMRS complaint/cause/correction, the cost line, the driver, the vendor invoice number.
+
+**Measured consequence: the work order was lost and `OPEN WOS` remains `0`.** This is not a cosmetic
+overlap — **it is unrecoverable data loss on a multi-section form**, triggered by using the very
+inline-create affordance §7 requires the screen to have.
+
+**Severity is amplified by where it sits:** the part panel is only reachable *after* filling out the
+whole work order, so the user has maximum unsaved work at exactly the moment the trap is armed.
+
+**FIX (root cause, not a patch):** the child panel must render **above** its parent (z-index/stacking
+context), and — independently — the parent modal must **not treat clicks inside a descendant panel as
+outside-clicks**. Both are needed: fixing only the z-index still leaves a dismiss-on-click surface if the
+outside-click handler ignores the portal.
+**GUARD:** assert that no modal's outside-click dismissal fires while a child create-panel is open. A
+purely visual z-index fix is not testable; the dismissal behaviour is.
+**LANE: mechanical / FE (CC-3 role per board §3 — NOT CC-2, which never builds).**
+
+### Honest status of this battery item
+
+**The maintenance chain (WO → parts + labor → close → bill) is NOT complete.** `maintenance.work_orders`
+for USMCA remains **0**. Everything above about validation, auto-derive and auto-linkage was observed
+live in the form; the persistence half is unproven because the form cannot survive the part-create step.
+**Recorded as incomplete rather than implied.**
