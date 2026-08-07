@@ -2990,3 +2990,77 @@ Note `voided_reason` here versus **`void_reason`** on `accounting.invoices`, and
 `revoked_reason` on `accounting.bill_payments`. **Three different names for the same concept across
 four tables in one schema.** Recorded for whoever writes the void-exclusion sweep — they will need a
 per-table map, and a copy-paste fix will silently miss tables.
+
+---
+
+## 57. OVERPAYMENT — PASS, a second prevented false-defect, and item 49's prediction CONFIRMED
+
+**LIVE 2026-08-07, USMCA. Controlled before/after with a baseline captured first.**
+
+### Finding the right test — the credit-memo "island" was not an island
+
+`accounting.credit_memos` exists but has **no UI route, no subnav entry and no REST endpoint**. The
+tempting conclusion was "a table with no path to it" — a total-connectivity violation. **That would
+have been wrong.** `apps/backend/src/accounting/payments/apply.service.ts:238-269` contains
+`createArCreditMemo(...)`, called with a `remainderCents` argument, and the test beside it is named
+**`apply-overpayment.test.ts`**. Credit memos are **generated from customer overpayment**, not created
+by hand. **There is no manual create screen because the design does not have one.**
+
+So the correct test was an overpayment, not a hunt for a missing screen.
+
+### The transaction — PASS
+
+Baseline: `credit_memos` = **0**; `INV-2026-00003` open **$512.75**, paid $687.25.
+
+Recorded a payment of **$600.00** (ref `CC3-BATTERY-OVERPAY-600`) applying only **$512.75**. The panel
+computed **"Applied $512.75 / Remaining $87.25"** correctly before submit.
+
+| check | result |
+|---|---|
+| invoice status | **`paid`**, open **$0.00**, `amount_paid_cents` **120000** ✅ |
+| payment recorded at full amount | `PMT-2026-00003` `amount_cents` **60000** ✅ |
+| **overpayment tracked** | `amount_applied_cents` **51275** + `amount_unapplied_cents` **8725** ✅ |
+| application row | `payment_applications` invoice **51275** (not the full $600) ✅ |
+| aggregate reconciliation | payments **128725** − applications **120000** = **8725** ✅ |
+
+**The $87.25 reconciles three independent ways.** The subledger arithmetic is correct throughout.
+
+### SECOND PREVENTED FALSE DEFECT — and I want this on the record
+
+`credit_memos` is still **0** after the overpayment. My first instinct was that the remainder had
+**vanished** — the `createArCreditMemo` code exists, so surely it should have fired. **I checked before
+filing, and the money is there:** `amount_unapplied_cents = 8725` on the payment row.
+
+**Leaving an overpayment as unapplied cash on the customer's account is a legitimate A/R design** —
+it is what QuickBooks does (an unapplied customer credit), and it is arguably *better* than
+auto-minting a credit memo the user did not ask for. Whether this UI path *should also* create one is
+a **design question**, not a provable defect. **NOT FILED.**
+
+**That is twice in this iteration** that checking before filing prevented a false defect (the other
+being the credit-memo "island"). Both would have sent a builder to rewrite something that works.
+
+### ★ Item 49's prediction CONFIRMED — the tie-out gap grew exactly as forecast
+
+Item 49 stated the A/R subledger-to-GL gap *"grows with every payment received"*. It has:
+
+| | then (item 49) | **now** |
+|---|---|---|
+| live customer payments | 2, **$687.25** | **3, $1,287.25** |
+| **GL postings across all of them** | **0** | **0** |
+| invoice subledger | $512.75 open | **$0.00 — PAID IN FULL** |
+| GL A/R for that invoice | $1,200.00 debited, uncredited | **$1,200.00 debited, still uncredited** |
+
+**The subledger now says the customer owes nothing; the general ledger still says they owe the entire
+$1,200.00.** The tie-out failure grew from **$687.25 to $1,200.00**, and on top of that **$87.25 of
+unapplied customer cash exists with no GL representation at all** — unapplied cash is a *liability*
+(customer deposit/credit), and it is not on the books.
+
+**Total cash received into this entity with zero ledger entries: $1,287.25.**
+
+This is not a new defect — it is `LV-PAY-SETTLE-NOPOST` doing exactly what was predicted, now at
+nearly double the size. **It also strengthens the recommended guard:** a per-row "payments must post"
+check and the subledger-to-GL tie-out both catch it, but only the tie-out expresses *why it matters* —
+an invoice reading `paid` against a GL that still shows it fully outstanding is the single most
+alarming line an auditor could read.
+
+**Board row for `LV-PAY-SETTLE-NOPOST` updated with the grown figure.**
