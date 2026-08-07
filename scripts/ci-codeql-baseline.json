@@ -1,0 +1,19 @@
+{
+  "_why": "SHRINK-ONLY RATCHET. These error-level CodeQL findings PRE-DATE the local SARIF enforcement added in #4620 \u2014 they existed for as long as the GHAS upload was failing and nobody could read them. Baselining is NOT dismissal: each is on the board (CODEQL-F01), each fails the build the moment its count grows, and removing an entry is a one-way ratchet. What the baseline buys is that a NEW finding is never hidden inside a wall of old red.",
+  "_rules": [
+    "A key may only ever DECREASE. Fixing a finding means lowering or deleting its entry, never raising it.",
+    "Never add a key to silence a finding you just introduced \u2014 that is the fake-green this whole file exists to prevent.",
+    "Deleting the last entry is the goal, not the exception."
+  ],
+  "_recorded_at": "2026-08-07",
+  "baseline": {
+    "js/user-controlled-bypass": {
+      "count": 2,
+      "note": "apps/backend/src/auth/routes.ts:98 and :101 \u2014 the OAuth state/CSRF check compares parsedState.state (query) against storedState (cookie). That comparison IS the CSRF defense; CodeQL flags it because both sides are attacker-influenceable in its taint model. Needs a security read, NOT a lint fix \u2014 rewriting auth logic on a heuristic without a demonstrated exploit is the greater risk. Board: CODEQL-F01."
+    },
+    "js/unnecessary-use-of-cat": {
+      "count": 0,
+      "note": "RESOLVED \u2014 count lowered 1 -> 0 to lock the improvement in (the ratchet refuses to let a fixed finding stay allowed). The fix was made UPSTREAM ON MAIN by the lane that owns CI-F03: scripts/verify-schema-parity-window-bounded.mjs now uses readFileSync instead of spawning `cat`. That PR fixed the code but did not lower this baseline, so main carries the same drift and its own CodeQL run reddens on it; CC-3 hit it only because merging origin/main brought the fix onto this branch. Verified on both refs: no `cat ` remains in that file on origin/main or here."
+    }
+  }
+}

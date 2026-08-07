@@ -1,9 +1,11 @@
 # Block-19 — Audit Hash-Chain VERIFICATION Layer (design)
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 **Status:** SPEC. The write-path (tamper-evident hash chain) is BUILT + CI-guarded. This spec designs the
 remaining **verification/signing** layer. It contains an **owner decision** (schema retrofit of the
 append-only `events.event_log`) that must be ratified before the migration is written → **Tier-1
-build-and-hold.** Verified against live schema 2026-07-02.
+build-and-ship.** Verified against live schema 2026-07-02.
 
 ---
 
@@ -53,7 +55,7 @@ backfill of historical rows** (owner-ratified 2026-07-02):
   asserts this.
 
 **OWNER DECISION (RATIFIED):** ADD COLUMN + genesis-anchor + INSERT-only population, **no historical
-backfill**. ALTER TABLE trips PROTECTED on the hold-merge-gate → Tier-1 build-and-hold; GUARD verifies these
+backfill**. ALTER TABLE trips PROTECTED on the hold-merge-gate → Tier-1 build-and-ship; GUARD verifies these
 §3 claims against the PR before any JORGE-APPROVED label.
 
 ## 4. Verification — recompute IN SQL (never in JS)
@@ -86,7 +88,7 @@ a row was inserted/removed/reordered in the deterministic chain. Either → tamp
 a `prev_hash` linkage that can be walked pointer-by-pointer for a weaker, order-independent linkage check;
 the per-row hash recompute is the strong guarantee for them.)
 
-## 5. Record table (Tier-1 migration, build-and-hold)
+## 5. Record table (Tier-1 migration, build-and-ship)
 `ops.audit_chain_verifications` (ops schema exists; grant USAGE + table grants per the 0192 pattern):
 `id uuid pk`, `operating_company_id uuid NOT NULL`, `run_at timestamptz DEFAULT now()`, `events_checked bigint`,
 `hash_breaks bigint`, `link_breaks bigint`, `chain_ok boolean`, `first_break_seq bigint NULL`,
@@ -103,7 +105,7 @@ the per-row hash recompute is the strong guarantee for them.)
   `DELETE FROM events.event_log` anywhere in `db/migrations/**` or `apps/backend/src/**` (the `chain_seq`
   retrofit migration must ADD COLUMN only, never backfill; population is INSERT-trigger-only).**
 
-## 7. Build order (all Tier-1 / build-and-hold — Jorge merges)
+## 7. Build order (all Tier-1 / build-and-ship — the coder merges on green)
 1. **B19-V1** (after owner ratifies §3): migration = `chain_seq` ADD COLUMN + trigger reorder + backfill.
 2. **B19-V2**: migration = `ops.audit_chain_verifications` + the verify SQL service (read-only) + guard.
 3. **B19-V3**: the daily cron + CRITICAL-alert-on-break.

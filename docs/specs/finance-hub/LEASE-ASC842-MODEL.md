@@ -1,7 +1,9 @@
 # Lease Accounting (ASC 842) — Data-Model Spec — Migration-Ready
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 **Status:** Design / Docs only. No code, no DDL executed, no posting. DEFINES the Coder migration;
-Cascade never writes a migration. Gated default OFF; GUARD verifies vs QuickBooks. BUILD-AND-HOLD.
+Cascade never writes a migration. Gated default OFF; GUARD verifies vs QuickBooks. BUILD-AND-SHIP.
 **Date:** 2026-06-28
 **Author:** Cascade (design lane)
 **Standard cited:** **ASC 842 (Leases)** — lessee right-of-use (ROU) asset + lease liability; finance
@@ -151,7 +153,7 @@ separation absolute (TRK/TRANSP/USMCA never merged).
 1. ONE migration: the 2 tables (§3) + grants/RLS (§4) + flags (§5). Idempotent, cents spine, audit cols.
 2. No posting in the migration. Confirm `accounting.lease_contracts` exists (FH-8 operational) before
    the FK — if not yet built, FH-8 operational tables land first or the FK is deferred.
-3. BUILD-AND-HOLD. Tier-1 → JORGE-APPROVED + GUARD branch-verify.
+3. BUILD-AND-SHIP. Tier-1 → merge on green with proof; GUARD verifies live AFTER (no label, no hold).
 
 ## 9. Acceptance
 DDL implementable as-is; ASC 842 cited; classification + measurement defined; posting gated OFF;

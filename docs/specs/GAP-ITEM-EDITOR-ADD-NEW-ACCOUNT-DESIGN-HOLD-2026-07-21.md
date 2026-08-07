@@ -1,5 +1,7 @@
 # DESIGN-HOLD — ItemEditorModal "+ Add new account" opens the WRONG create kind
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 **Block:** `ps-a-item-editor-account-pickers-no-addnew` (accounting · Products & Services item editor).
 **Status:** HOLD-FOR-JORGE (financial — touches `catalogs.accounts` creation). **Docs-only PR, no code.**
 **Base:** `origin/main` @ `e2db37a74`. **Author:** Cursor BUILDER (never merges).
@@ -48,7 +50,7 @@ that **category id** to `incomeAccountId` / `expenseAccountId` (the `default_inc
 ## WHY THIS IS FINANCIAL → HOLD (not a self-merge UI fix)
 
 Creating a **GL account** is a `catalogs.accounts` INSERT. Per `.cursor/rules/13` + skill §1.4, any touch to
-`catalogs.accounts` (schema **or data**) is the **financial cluster** → build-and-HOLD, owner-approved only.
+`catalogs.accounts` (schema **or data**) is the **financial cluster** → build-and-ship, owner-approved only.
 The owner directive for this lane also says **"Reserve accounts owner-manual only"** and **"do not invent GL
 accounts."** So the "correct" fix (an inline account creator) is exactly the thing that is owner-gated —
 it cannot be shipped by a builder unilaterally, and no GL account/type may be invented here.
