@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
@@ -181,7 +182,7 @@ async function vendorNameConflictExists(
   excludeId?: string
 ): Promise<boolean> {
   return withCurrentUser(authUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, authUserId, operatingCompanyId);
     const values: unknown[] = [name, operatingCompanyId];
     let where = `lower(btrim(vendor_name)) = lower(btrim($1)) AND operating_company_id = $2 AND deactivated_at IS NULL`;
     if (excludeId) {

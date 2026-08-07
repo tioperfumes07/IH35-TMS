@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 
 type DbClient = {
@@ -215,7 +216,7 @@ export async function autoCreateGeofencesForLoad(
 ): Promise<AutoGeofenceResult> {
   const { withCurrentUser } = await import("../auth/db.js");
   return withCurrentUser(actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await setScopedCompanyContext(client, actorUserId, input.operating_company_id);
     return autoCreateGeofencesForLoadWithClient(client as DbClient, actorUserId, input);
   });
 }

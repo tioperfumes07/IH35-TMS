@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { PoolClient } from "pg";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -17,7 +18,7 @@ async function withCompany<T>(
   fn: (client: PoolClient) => Promise<T>
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     return fn(client);
   });
 }

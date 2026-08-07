@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { buildPatchChanges } from "../audit/crud-audit.js";
@@ -78,7 +79,7 @@ export async function registerEquipmentBulkUpdateRoutes(app: FastifyInstance) {
       const dbStatus = patch.status ? bulkStatusToDb[patch.status] : undefined;
 
       const payload = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, operating_company_id);
 
       const setParts: string[] = [];
       const values: unknown[] = [equipment_ids, operating_company_id];
