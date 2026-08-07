@@ -2911,3 +2911,82 @@ work, not four.
 number is wrong by precisely these four rows", which is directly actionable and impossible to argue
 with. It also independently re-derives the $1,766.66 from a completely different surface than the
 original finding.
+
+---
+
+## 56. VENDOR CREDIT — PASS, and a deliberate NON-defect ruling (intent test applied)
+
+**LIVE 2026-08-07, USMCA. Created and applied a vendor credit end-to-end.**
+
+### What worked — PASS
+
+Created via `/accounting/vendor-credits` → **+ Create**: vendor *CC3 Battery Vendor 20260806-01*,
+**$27.15**, with a descriptive note.
+
+- **`VC-2026-0001`** created — **and it HAS a server-generated `display_id`**, unlike bills
+  (`LV-BILL-NO-DISPLAY-ID`). Vendor credits, invoices, payments and credit numbers all get one; bills
+  remain the sole exception. **That strengthens item 50: bills are the outlier, not the convention.**
+- Applied $27.15 to bill `CC3-VOIDTEST-20260807-01` via **Apply to bill**.
+- **Unapplied $27.15 → $0.00**, status → **`applied`**, and the credit's *Applied bills* panel lists
+  the bill with amount and date.
+- **`accounting.vendor_credit_applications`** row written correctly: `applied_cents` **2715**,
+  `applied_at 2026-08-07 02:58:03`, live.
+- The apply panel states the server re-verifies both remaining credit and the bill's remaining balance
+  — appropriate server-side validation rather than trusting the client.
+
+### The NON-defect ruling — GL absence is EXPECTED STATE, and I am not filing it
+
+`gl_postings` for `VC-2026-0001` = **0**. **This is NOT a defect.** The page says so itself, in its own
+subtitle:
+
+> *"Open vendor credits reduce A/P when applied to bills **(data-only until GL flags advance)**"*
+
+And the flag state on prod corroborates the caveat is currently active:
+**`QBO_VENDOR_CREDITS_PROJECTION_ENABLED` = false**. **Declared intent + matching flag state = expected
+state.** Filing "vendor credit doesn't post to the GL" would be the
+`expected-state-recorded-as-failure` anti-pattern, and any guard built on it would be red on purpose-
+built behaviour.
+
+### The one thing genuinely worth naming — a copy/expectation gap, not a broken invariant
+
+**Fact:** after applying the $27.15 credit, the bill's balance is **unchanged at $76.17**
+(`amount_cents 8877 − paid_cents 1260`). It did **not** become $49.02.
+
+The subtitle's first clause — *"Open vendor credits **reduce A/P** when applied to bills"* — is written
+in the **present tense**, while the parenthetical arguably scopes "data-only" to the GL only. **The two
+readings differ on whether the SUBLEDGER was meant to move**, and I cannot resolve that from the
+screen: reading (a) says only the GL entry waits for flags; reading (b) says nothing changes until they
+advance.
+
+**I am NOT calling this a defect** — the behaviour may be exactly as designed. **What is concrete is
+the user-facing risk:** a user who applies a $27.15 credit and reads that sentence may reasonably
+believe they now owe **$49.02**, while every A/P surface still says **$76.17**. Combined with
+`LV-AP-OPEN-INCLUDES-VOIDED` (open A/P already overstated by $1,766.66), the A/P figure a user sees is
+now wrong in two independent directions.
+
+**RECOMMENDATION (for the feature owner, not a defect card):** either make the subtitle state the
+current behaviour precisely, or reduce the subledger balance on application. **UNVERIFIED — the intent
+question belongs to whoever owns the vendor-credit feature; this lane records the observation, not a
+verdict.**
+
+### Extension of an existing card — a SECOND selector offers voided bills
+
+The **Apply vendor credit to bill** picker is materially better than the payable selector — it is
+**vendor-scoped** and shows the **remaining** balance ($76.17, not the original $88.77). **But it still
+lists a voided bill.** Vendor `308f6434` has three bills — `7ccd431e` (live, $76.17), `5a1d7268` (live,
+$743.21) and **`55997ecb` (VOIDED, $743.21)** — and the picker offers **all three**, with $743.21
+appearing **twice**.
+
+**This extends `LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS` from one selector to a class:** two
+independent "open bill" pickers, written at different times with different quality, both fail to
+exclude voided bills — because both key off `status`, which void never updates
+(`LV-VOID-INVARIANT-BOTH-WAYS`). **Any fix must sweep every open-bill picker, not just the payment
+one.** Board row updated accordingly.
+
+### Sub-observation — a FOURTH void-naming variant
+
+`accounting.vendor_credit_applications` uses **`voided_at` / `voided_by_user_id` / `voided_reason`**.
+Note `voided_reason` here versus **`void_reason`** on `accounting.invoices`, and `revoked_at` /
+`revoked_reason` on `accounting.bill_payments`. **Three different names for the same concept across
+four tables in one schema.** Recorded for whoever writes the void-exclusion sweep — they will need a
+per-table map, and a copy-paste fix will silently miss tables.
