@@ -2231,3 +2231,58 @@ production 500 once already.
 **NOT CLAIMED:** whether this shares a cause with `LV-DISPATCH-TOAST-LIES` (item 44). Both concern the
 same load, but the dispatch action ran from the booking wizard, not this drawer. **UNVERIFIED — needs
 its own check.** They are recorded as separate defects deliberately.
+
+---
+
+## 46. Item 45 CORROBORATED across four views + a bounded observation on the Assigned→Dispatched control
+
+**Verified 2026-08-07, USMCA, `L-20260806-0008`.**
+
+### 45 is now corroborated on four independent surfaces
+
+| surface | driver rendered | unit rendered |
+|---|---|---|
+| Load board — **List** view | **Juan USMCA-Battery** ✅ | `USMCA-001` ✅ |
+| Load board — **Kanban** card (Assigned column) | **Juan …** ✅ | `USMCA-001` ✅ |
+| Load board — **Assignment** view (`ASSIGNED UNITS`) | **Juan USMCA-Battery** ✅ | `USMCA-001` ✅ |
+| **Load detail drawer** | **"Unassigned"** ❌ | **"—"** ❌ |
+
+**Four surfaces read the same record; three are right and one is wrong.** That removes any remaining
+doubt that this is a display defect local to `GET /api/v1/dispatch/loads/:id`, and it kills the
+alternative explanation (a data problem) outright — a data problem would break all four. One earlier
+screenshot captures the contradiction in a **single frame**: the drawer reads "Unassigned" while the
+board row behind it reads `USMCA-001`.
+
+The Assignment view also renders the STATUS pills for the whole entity, which is a useful snapshot:
+`L-20260806-0008` **Assigned (not dispatched)** · `LUSMCAFREIGHT-20260806-0001` **Delivered (pending
+docs)** · `L-20260806-0005` **Cancelled** · `L-20260802-0258` **Delivered**.
+
+### BOUNDED OBSERVATION — I could not find an office control to advance Assigned → Dispatched
+
+Attempted, all on the live app:
+1. **Kanban drag** Assigned → Dispatched — the card did not move.
+2. **Kanban card click** — scrolls the board; opens no drawer or menu.
+3. **List row action button** (`ref_223`, unlabeled, end of the `L-20260806-0008` row) — clicked, no
+   menu appeared.
+4. **Assignment board view** — `STATUS` is a read-only pill; the `ASSIGN` column is empty for units
+   that are already assigned.
+
+**WHAT I AM NOT CLAIMING.** The Kanban drag failure is **not** evidence of a defect: synthetic
+`left_click_drag` events routinely fail against HTML5 drag-and-drop implementations, so I cannot
+distinguish a tool limitation from an app bug, and I will not file one on that basis. Likewise
+"I could not find a control" is **not** "no control exists" — the driver PWA plausibly owns this
+transition (the latch file states the driver capture paths set delivery statuses directly), and there
+may be a surface I did not reach.
+
+**Recorded as UNVERIFIED — needs live check**, not as a defect. What *is* established is that the
+office board offers no obvious Assigned→Dispatched affordance across the four surfaces above, which is
+worth a deliberate answer from whoever owns dispatch UX.
+
+### Consequence for the item-40 replay — stated plainly
+
+The end-to-end reproduction of the revenue-latch failure (book → dispatch → depart → deliver, watching
+Event 1 fail on the office path) **remains blocked** at step 2 and is **still not done**. Item 40's
+root cause does not depend on it — it rests on the connection-boundary code read plus the prod
+evidence already recorded — but the live replay is an outstanding gap and is logged as such rather
+than quietly dropped. **Next attempt should use the driver PWA**, which is the surface that actually
+performs departures, rather than continuing to hunt the office board.
