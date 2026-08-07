@@ -1,5 +1,40 @@
 # GUARD WORK-ORDERS — the live fix board (read after AUDIT-COVERAGE-LIVE.md, before any block)
 
+## ★ SHARED RESOURCE COORDINATION — DEBUGGED CHROME PORTS (owner-directed 2026-08-07)
+
+**Why this exists:** the browser is a SHARED resource. Lanes were attaching to the same Chrome instance,
+so one lane's navigation stole another lane's tab mid-flow, and a tab group was replaced under a running
+verification. **Each lane gets its own remote-debugging port. Do not attach to a port that is not yours.**
+
+| lane | role | **port** |
+|---|---|---|
+| **CC-1** | money / GL / WORM | **9222** |
+| **CC-2** | GUARD — verify live, never build | **9223** |
+| **CC-3** | mechanical / entity-scope / FE / CI-guards / live battery | **9224** |
+| **CASCADE** | merger + scribe | **9225** |
+| *(spare / ad-hoc)* | — | **9226+** |
+
+**Launch YOUR port with its own profile** (a separate `--user-data-dir` is required — two Chrome
+instances cannot share one profile, and omitting it silently attaches to the existing browser, which is
+the collision this table exists to prevent):
+
+```
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
+  --remote-debugging-port=<YOUR PORT> \
+  --user-data-dir="$HOME/.chrome-mcp-<YOUR LANE>" &
+```
+
+**RULES.**
+1. **Never attach to another lane's port.** If your port is not answering, start YOUR instance — do not
+   borrow one that is.
+2. **Call `tabs_context_mcp` FIRST every session** and again after any unexpected navigation. Never reuse
+   a tab id from a previous session; ids do not survive a restart.
+3. **If the extension is disconnected, say so and switch to work that does not need it** (Neon reads,
+   code reads, guards). **Do not silently retry** — a browser that is not answering is a fact to report,
+   not a condition to loop on.
+4. **Entity discipline still applies inside the browser**: confirm the company selector reads YOUR
+   entity before any write. A shared browser can leave another lane's entity selected.
+
 ## ★★★ PERMANENT LAW — owner-locked 2026-08-07 (supreme; supersedes nothing, binds everything)
 
 > **WE NEVER GUESS. WE NEVER DEFER. WE ALWAYS VERIFY. WE ALWAYS FIX, NOT PATCH. WE WANT PERMANENT FIXES
