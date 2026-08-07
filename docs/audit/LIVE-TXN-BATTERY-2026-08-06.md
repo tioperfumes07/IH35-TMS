@@ -1077,3 +1077,46 @@ QBO has both as first-class create actions.
 
 Board row `LV-CREDITMEMO-NOPATH` (CC-2 mechanical/route; **CC-1 to confirm the posting treatment**
 before the route is wired, since a credit memo is GL-affecting).
+
+## 27 — RECURRING BILL TEMPLATE — PASS (first ever created in the system)
+
+`/accounting/recurring-transactions` → redirects to `/accounting/bills/recurring` → `+ Create`.
+Full-page form (not a drawer): Template Name\* · Vendor\* · Amount\* · Memo · Frequency\* ·
+First Generation Date\* · End Date · **`Auto-post bill to ledger when generated`** · Line Items.
+
+**Created and verified on prod (`accounting.recurring_bill_templates`):**
+
+| field | value |
+|---|---|
+| `uuid` | `17f2ab49-c4d0-4bc0-99d1-e8bfb0ed0e8a` |
+| `template_name` | TEST Recurring Bill 20260806 - CC3 battery |
+| `amount` | **425.00** |
+| `frequency` | `monthly` |
+| `next_generation_date` | **2026-09-06** |
+| `auto_post` | **true** (checkbox honoured) |
+| `is_active` | true |
+| `vendor_uuid` | `308f6434-…` → **CC3 Battery Vendor 20260806-01** |
+| `vendor_opco` | `5c854333-…` **= USMCA** |
+| `operating_company_id` | `5c854333-…` **USMCA** |
+
+**★ `n_tup_ins` went 0 → 1 — this is the FIRST recurring bill template ever written in this system,
+on any entity.** The table existed and had never been exercised.
+
+**Both-way linkage correct (§10):** the template's `vendor_uuid` resolves to the vendor created in
+battery item 01, and **the vendor's own `operating_company_id` is USMCA — same entity as the
+template**, so there is no cross-entity vendor reference. The `auto_post` flag persisted as checked,
+which is the control that decides whether generated bills hit the ledger.
+
+**Battery PASS.** No defect.
+
+**Observation recorded, not boarded:** there are three recurring tables —
+`accounting.recurring_bill_templates` (now 1 row), `accounting.recurring_bill_generation_log`
+(`n_tup_ins` 0) and `accounting.recurring_templates` (`n_tup_ins` **0**). The write landed in
+`recurring_bill_templates`; `recurring_templates` has never been written by anything and looks like a
+RETIRE/superseded table. Worth confirming against the §10 canonical map before any future block
+targets it — a builder picking `recurring_templates` by name would write to a dead table.
+
+**Not yet provable:** whether generation actually fires on `2026-09-06` and whether `auto_post`
+produces a balanced JE. That is a **future-dated cron behaviour** — it cannot be observed today
+without waiting or forcing the job. **UNVERIFIED — needs a live check on/after 2026-09-06**, or a
+forced generation run. Recorded rather than assumed.
