@@ -292,5 +292,12 @@
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
     "guard": "scripts/verify-displayid-entity-scoped-lookups.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-SCENARIO-TRACKER-SINGLE-MOUNT",
+    "title": "A component that owns a polling query is a page-level singleton \u2014 mounting it inside a .map()ed child multiplies both the render and the prod read rate by the collection length, silently and with no visual error",
+    "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
+    "guard": "scripts/verify-scenario-tracker-single-mount.mjs",
+    "type": "enforced"
   }
 ]
