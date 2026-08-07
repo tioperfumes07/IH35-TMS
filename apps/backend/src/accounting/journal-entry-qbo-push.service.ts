@@ -129,6 +129,8 @@ async function writePushSkippedBreadcrumb(operatingCompanyId: string, journalEnt
         "IMPORT-P0"
       );
     });
+  // an audit breadcrumb failure must never turn a safe skip into a QBO push; the skip already happened
+  // intentional swallow
   } catch {
     // A breadcrumb failure must never turn a safe skip into a push — swallow.
   }

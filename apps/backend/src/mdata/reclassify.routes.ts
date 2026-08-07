@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -41,7 +42,9 @@ function sendValidation(reply: FastifyReply, error: z.ZodError) {
 export async function registerReclassifyRoutes(app: FastifyInstance) {
 
   // POST /api/v1/customers/:id/reclassify
-  app.post("/api/v1/customers/:id/reclassify", async (req, reply) => {
+  // Rate-limited (CodeQL js/missing-rate-limiting). 30/min for a state-changing POST; the plugin is
+  // global:false, so an un-configured route had NO limit at all. Pre-existing, surfaced by this PR.
+  app.post("/api/v1/customers/:id/reclassify", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReclassify(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -54,13 +57,37 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
     const result = await withCurrentUser(user.uuid, async (client) => {
       const companyId = body.data.operating_company_id;
 
+      // ENTITY-SCOPED RESOLVER. The row's own operating_company_id is what the membership assert and
+      // the pinned UPDATE below are derived from, so this read cannot be scoped by a caller-supplied
+      // company — that is the untrusted input MDATA-F08 was about. It IS scoped to the companies the
+      // CALLER actually belongs to, which does two things: it satisfies the entity-predicate contract
+      // (verify-steps/84) with a real predicate rather than a baseline waiver, and it closes an
+      // existence oracle — previously a caller could tell "no such id" (404) from "exists in another
+      // entity" (403) and enumerate ids across entities. Now both are 404.
       const beforeRes = await client.query(
-        `SELECT entity_classification, qbo_classification_ref FROM mdata.customers
-         WHERE id = $1 LIMIT 1`,
-        [params.data.id]
+        `SELECT entity_classification, qbo_classification_ref, operating_company_id::text AS row_company_id
+           FROM mdata.customers
+          WHERE id = $1
+            AND operating_company_id IN (
+              SELECT uca.company_id
+                FROM org.user_company_access uca
+                JOIN org.companies c ON c.id = uca.company_id AND c.deactivated_at IS NULL
+               WHERE uca.user_id = $2::uuid
+                 AND uca.deactivated_at IS NULL
+            )
+          LIMIT 1`,
+        [params.data.id, user.uuid]
       );
       if (!beforeRes.rows.length) return { notFound: true };
       const before = beforeRes.rows[0] as Record<string, unknown>;
+
+      // CROSS-ENTITY WRITE GATE. companyId comes from the REQUEST BODY, is optional, and was never
+      // validated — and the UPDATE did not use it as a predicate at all, so any customer in any
+      // entity could be reclassified by id. The entity is DERIVED from the row itself and asserted
+      // here (resolver pattern, MDATA-F03); the UPDATE is then pinned to that same company so the
+      // read and the write cannot disagree. Throws 403 forbidden_company_membership.
+      const rowCompanyId = String(before.row_company_id ?? "");
+      await assertCompanyMembership(client, user.uuid, rowCompanyId);
 
       const updateRes = await client.query(
         `UPDATE mdata.customers
@@ -69,8 +96,9 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
              reclassified_at         = now(),
              reclassified_by_user_id = $3
          WHERE id = $4
+           AND operating_company_id = $5::uuid
          RETURNING id, entity_classification, qbo_classification_ref, reclassified_at`,
-        [body.data.classification, body.data.qbo_id ?? null, user.uuid, params.data.id]
+        [body.data.classification, body.data.qbo_id ?? null, user.uuid, params.data.id, rowCompanyId]
       );
 
       await appendCrudAudit(client, user.uuid, "category.reclassified", {
@@ -151,7 +179,7 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/vendors/:id/reclassify
-  app.post("/api/v1/vendors/:id/reclassify", async (req, reply) => {
+  app.post("/api/v1/vendors/:id/reclassify", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReclassify(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -164,13 +192,37 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
     const result = await withCurrentUser(user.uuid, async (client) => {
       const companyId = body.data.operating_company_id;
 
+      // ENTITY-SCOPED RESOLVER. The row's own operating_company_id is what the membership assert and
+      // the pinned UPDATE below are derived from, so this read cannot be scoped by a caller-supplied
+      // company — that is the untrusted input MDATA-F08 was about. It IS scoped to the companies the
+      // CALLER actually belongs to, which does two things: it satisfies the entity-predicate contract
+      // (verify-steps/84) with a real predicate rather than a baseline waiver, and it closes an
+      // existence oracle — previously a caller could tell "no such id" (404) from "exists in another
+      // entity" (403) and enumerate ids across entities. Now both are 404.
       const beforeRes = await client.query(
-        `SELECT entity_classification, qbo_classification_ref FROM mdata.vendors
-         WHERE id = $1 LIMIT 1`,
-        [params.data.id]
+        `SELECT entity_classification, qbo_classification_ref, operating_company_id::text AS row_company_id
+           FROM mdata.vendors
+          WHERE id = $1
+            AND operating_company_id IN (
+              SELECT uca.company_id
+                FROM org.user_company_access uca
+                JOIN org.companies c ON c.id = uca.company_id AND c.deactivated_at IS NULL
+               WHERE uca.user_id = $2::uuid
+                 AND uca.deactivated_at IS NULL
+            )
+          LIMIT 1`,
+        [params.data.id, user.uuid]
       );
       if (!beforeRes.rows.length) return { notFound: true };
       const before = beforeRes.rows[0] as Record<string, unknown>;
+
+      // CROSS-ENTITY WRITE GATE. companyId comes from the REQUEST BODY, is optional, and was never
+      // validated — and the UPDATE did not use it as a predicate at all, so any vendor in any
+      // entity could be reclassified by id. The entity is DERIVED from the row itself and asserted
+      // here (resolver pattern, MDATA-F03); the UPDATE is then pinned to that same company so the
+      // read and the write cannot disagree. Throws 403 forbidden_company_membership.
+      const rowCompanyId = String(before.row_company_id ?? "");
+      await assertCompanyMembership(client, user.uuid, rowCompanyId);
 
       const updateRes = await client.query(
         `UPDATE mdata.vendors
@@ -179,8 +231,9 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
              reclassified_at         = now(),
              reclassified_by_user_id = $3
          WHERE id = $4
+           AND operating_company_id = $5::uuid
          RETURNING id, entity_classification, qbo_classification_ref, reclassified_at`,
-        [body.data.classification, body.data.qbo_id ?? null, user.uuid, params.data.id]
+        [body.data.classification, body.data.qbo_id ?? null, user.uuid, params.data.id, rowCompanyId]
       );
 
       await appendCrudAudit(client, user.uuid, "category.reclassified", {

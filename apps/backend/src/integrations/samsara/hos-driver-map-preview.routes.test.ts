@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { captureRoutes as captureFastifyRoutes } from "../../../test-helpers/capture-route-handler.js";
 
 // AUTO-14 — backend read-endpoint smoke test for the read-only driver↔Samsara map preview. Mocks auth +
 // db + service so the handler runs with no real pool/session: exercises the auth gate, role gate, query
@@ -30,9 +31,11 @@ vi.mock("./hos-driver-map-preview.service.js", () => ({
 const { registerHosDriverMapPreviewRoutes } = await import("./hos-driver-map-preview.routes.js");
 
 function captureRoutes() {
+  // Shared stub models Fastify's (path, options?, handler) overload — see capture-route-handler.ts.
+  const capture = captureFastifyRoutes();
+  registerHosDriverMapPreviewRoutes(capture.app as never);
   const handlers: Record<string, (req: unknown, reply: unknown) => Promise<unknown>> = {};
-  const app = { get: (path: string, h: (req: unknown, reply: unknown) => Promise<unknown>) => { handlers[path] = h; } } as never;
-  registerHosDriverMapPreviewRoutes(app);
+  for (const r of capture.routes) handlers[r.path] = r.handler as (req: unknown, reply: unknown) => Promise<unknown>;
   return handlers;
 }
 

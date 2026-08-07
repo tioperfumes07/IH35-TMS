@@ -8,6 +8,9 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { assertBankAccountUsable } from "../banking/bank-account-visibility.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
+import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+import { recordPostingFlagSkip } from "./posting-flag-skip-audit.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -124,7 +127,10 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
     return payload.data;
   });
 
-  app.post("/api/v1/customers/:id/payments", async (req, reply) => {
+  app.post(
+    "/api/v1/customers/:id/payments",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -263,6 +269,52 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
           ]
         );
         applicationsCount += 1;
+      }
+
+      // CLS-SUBLEDGER-GL-DARK / ACCT-F150 — POST THE RECEIPT.
+      //
+      // This route creates the payment AND its applications in one operation, so A/R moves here. It
+      // never called the poster, which is why USMCA payment a0b83bf5 applied $250.00 against an
+      // invoice on 2026-08-06 and produced ZERO journal_entry_postings — subledger moved, ledger
+      // stayed dark, books out by $250 with nothing reporting a failure. It was not a flag or a
+      // mapping problem: CUSTOMER_PAYMENT_GL_POSTING_ENABLED was true for USMCA, ar_control (1100)
+      // and undeposited_funds (1090) were bound and active fifteen days earlier, and the payment was
+      // source_system='tms'. The poster simply was never invoked on this path.
+      //
+      // apply.service.ts was audited and hardened for exactly this; the ROUTES were never wired to
+      // it. Same gate, same skip-audit, same poster — no new GL math (locked rule: reuse the existing
+      // poster). Flag OFF still writes the payment and applications and records the skip append-only,
+      // so a skip can never read as a silent success.
+      const customerPaymentPostingEnabled = await isEnabled(client, "CUSTOMER_PAYMENT_GL_POSTING_ENABLED", {
+        operating_company_id: query.data.operating_company_id,
+        user_uuid: user.uuid,
+      });
+      if (applicationsCount > 0 && customerPaymentPostingEnabled) {
+        // ATOMICITY — this MUST be the in-client-tx poster, not postSourceTransaction().
+        // withCompanyScope -> withCurrentUser does pool.connect() + BEGIN ... COMMIT, so this callback
+        // runs inside an open transaction and the payment row above is NOT yet committed.
+        // postSourceTransaction() takes its own pool connection and its own transaction, so from there
+        // the payment does not exist yet — the poster would find nothing and the receipt would stay
+        // dark, which is the very defect this block fixes. Passing the caller's client also makes the
+        // payment, its applications and its journal entry commit or roll back as ONE unit: there is no
+        // window in which A/R has moved and the GL has not.
+        await postSourceTransactionInClientTx(
+          client,
+          {
+            operating_company_id: query.data.operating_company_id,
+            source_transaction_type: "customer_payment",
+            source_transaction_id: payment.id,
+            posting_purpose: "initial_post",
+          },
+          { userId: user.uuid }
+        );
+      } else if (applicationsCount > 0) {
+        await recordPostingFlagSkip(client, user.uuid, {
+          flagKey: "CUSTOMER_PAYMENT_GL_POSTING_ENABLED",
+          postingDomain: "customer_payment",
+          operatingCompanyId: query.data.operating_company_id,
+          context: { payment_id: payment.id, route: "POST /api/v1/customers/:id/payments" },
+        });
       }
 
       const refreshedRes = await client.query(`SELECT amount_unapplied_cents FROM accounting.payments WHERE id = $1 LIMIT 1`, [payment.id]);

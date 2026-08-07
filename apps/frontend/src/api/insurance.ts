@@ -230,6 +230,13 @@ export type InsuranceClaim = {
   trailer_id?: string | null;
   /** Resolved from mdata.equipment.equipment_number (claim.routes.ts CLAIM_FROM join). */
   trailer_display_id?: string | null;
+  // CLS-UUID-LABEL: resolved by LEFT JOIN in insurance/claim.routes.ts so the UI can label a link with
+  // a name instead of a sliced uuid. Optional because a claim may legitimately have no driver, unit,
+  // load or policy attached — the UI falls back to EntityLink's own handling rather than a uuid.
+  driver_display_name?: string | null;
+  unit_display_id?: string | null;
+  load_display_id?: string | null;
+  policy_display_id?: string | null;
   deductible_cents?: number;
   recovery_rail?: InsuranceClaimRecoveryRail;
   repair_books_treatment?: InsuranceClaimRepairBooksTreatment;
