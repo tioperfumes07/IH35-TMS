@@ -4811,3 +4811,104 @@ including one that fit the evidence exactly — are eliminated **with the eviden
 nobody re-runs them. Hypothesis 3 is the cautionary one: `qbo_account_id = NULL` on every USMCA account is
 TRUE, the code comment describing that exact failure is TRUE, and the conclusion drawn from both was still
 FALSE. Two true facts and a coherent story are not proof.
+
+---
+
+## 90. PASS (partial) — `LV-TXN-002` re-verified live and CLOSED; `LV-LOAD-UNASSIGNED` narrowed to `trip_type` + `drivers[]`
+
+**★ NUMBERED 90, NOT 77 — DELIBERATE.** Three CC-3 PRs are open right now (#4690, #4689, #4676) and
+**each appends a DIFFERENT item numbered `77`**; #4676 runs through `89`. `docs/audit/*.md` is
+`merge=union` in `.gitattributes`, so all of them WILL land and the log would carry three distinct
+item 77s. Item numbers are cited as identifiers across the board rows, so a duplicate number is a
+broken citation, not a cosmetic clash. This item takes **90** — above every number claimed on any open
+branch. Anyone appending next must check the open branches, not just `main`.
+
+**Unit: verify a board finding that another lane reports as fixed.** Board law §5 says grep-verify the top
+OPEN row against `main` and, if done, mark it DONE with the SHA. The top OPEN row `LV-TXN-002` had a merged
+fix (`45171bad7`, PR #4627) that the board did not know about. This item is that verification.
+
+### The fix IS in the running build (not merely merged)
+
+| check | result |
+|---|---|
+| `/api/v1/healthz/shallow` | `{"ok":true,"uptime_seconds":1714,"version":"13e79fb"}` |
+| `git merge-base --is-ancestor 45171bad7 13e79fb1c` | **exit 0** — read without a pipe |
+
+Merged is not deployed; the ancestry check is what makes `13e79fb` proof rather than coincidence.
+
+### The projection now returns data on PROD
+
+The **exact deployed SELECT** was copied verbatim out of `apps/backend/src/dispatch/loads.routes.ts:685-712`
+and run against `br-fancy-credit-akjnd07a` under `set_config('app.operating_company_id',
+'5c854333-6ea5-4faa-af31-67cb272fef80', true)` — the same GUC `withCompanyScope` sets:
+
+| load | id | `assigned_primary_driver_name` | `assigned_unit_number` |
+|---|---|---|---|
+| `L-20260802-0258` | `a6f8a7ec-942e-41a8-bc49-49c784d82aa2` | **Juan USMCA-Battery** | **USMCA-001** |
+| `L-20260806-0005` | `a0b1df25-e49e-4853-b8ee-a26b407e88ba` | **Juan USMCA-Battery** | **TEST-UNIT-20260806-01** |
+
+Both were `NULL`/absent before. `USMCA-001` is the TRK-owned / USMCA-leased unit, so it resolves **only**
+through `COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id`. The fix
+author flagged that COALESCE as load-bearing rather than stylistic; running it against the real leased unit
+is what turns that claim into evidence. A bare `owner_company_id` predicate would have returned a blank unit
+number here and the row would have read as "fixed" while still failing on the exact case that reported it.
+
+### The fields survive serialization
+
+Route registered as `app.get("/api/v1/dispatch/loads/:id", { config: { rateLimit: … } }` (:663) — **no
+`schema.response`**, so Fastify strips nothing — and the handler returns `{ ...load, stops, charges,
+drivers: [] }` (:751). The two new columns are spread straight through. Without this check "the SQL returns
+it" would not have implied "the client receives it"; a response schema is exactly how a correct query still
+ships an incomplete payload.
+
+### SCOPE STATED HONESTLY — what this lane did NOT do
+
+This instance has **no browser** (CC-3's port 9224 is not listening) and the endpoint is authed — an unauth
+`GET` returns **401**. So the chain proven is *deployed code → prod SQL → serialization*, **not** an authed
+HTTP payload read of the kind that originally measured the defect (`'assigned_primary_driver_name' in
+payload === false`). The original defect was a **missing projection**; the projection is present, deployed,
+and returns real values. I am not claiming a DOM or payload observation I did not make.
+
+### THE HALF THAT IS STILL BROKEN — `LV-LOAD-UNASSIGNED` is NOT closed
+
+`LV-LOAD-UNASSIGNED` demanded three fields. PR #4627 delivered two. Marking it done off the sibling's SHA
+would have buried the third, so the row stays OPEN and is narrowed instead of closed.
+
+**1. `trip_type` still cannot reach the payload.** `views.dispatch_load_with_driver_status` has exactly
+**18 columns** — `id, operating_company_id, load_number, customer_id, status, rate_total_cents,
+currency_code, assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id,
+dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id,
+driver_lifecycle_stage, latest_eta_prediction` — and **`trip_type` is not among them**. The route selects
+`l.*` from that view and adds no `trip_type` expression. Meanwhile `mdata.loads.trip_type` **does exist**
+and is **`'NB'` on both** loads above. `LoadDetailDrawer.tsx:370` renders `load.trip_type ? … : "—"`, so an
+`NB` load still displays **TRIP TYPE `—`**. Note the trap for whoever fixes it: `l.*` will **never** carry
+this column, because the view — not the query — is where it is missing.
+
+**2. `drivers: []` is a hardcoded literal**, `loads.routes.ts:751`. Not an empty result set, not a failed
+join — an empty array constant. No amount of correct data will ever populate it, so a data-side
+investigation would find nothing wrong and conclude the payload is right.
+
+### ★ A FALSE ZERO OCCURRED HERE AND IS RECORDED, NOT CLEANED UP
+
+Reading `mdata.loads` for `trip_type`, one call returned **0 rows and `usmca_loads_visible: 0`** with
+`current_user = ih35_app`; the identical SQL returned **9 rows** with `current_user = neondb_owner`. The
+Neon MCP alternated roles between two calls in the same investigation, and under `ih35_app` RLS masked the
+table completely. Had I taken the first answer, this item would have concluded **"USMCA has no loads with a
+trip_type, so the missing column is harmless"** — the precise inverse of the truth, and it would have
+retired a real defect.
+
+The count was re-run with the discriminator on the **same** table: `visible_all` **9** == `n_live_tup`
+**9**, `n_tup_del` 41, `current_user` asserted **in the same statement**, positive control (rows returned)
+on that same table. That is what makes **9** a verdict and the **0** an artifact. The law says a 0 is never
+a verdict without this; today it was the difference between closing a defect and hiding one.
+
+### Verdict
+
+- **`LV-TXN-002` → DONE**, fix `45171bad7`, live on `13e79fb`. Board row updated with the SHA and evidence.
+- **`LV-LOAD-UNASSIGNED` → stays OPEN**, narrowed to `trip_type` + `drivers[]`, with the two fixed fields
+  explicitly marked so the owning lane does not rebuild them.
+- **Guard note for the owning lane:** a guard asserting only the driver/unit names **passes today** and
+  would reproduce this exact miss. The remaining guard must assert `trip_type` is non-null in the response
+  whenever `mdata.loads.trip_type` is non-null.
+
+**No finding routed to the owner.** Both rows are on the shared board.
