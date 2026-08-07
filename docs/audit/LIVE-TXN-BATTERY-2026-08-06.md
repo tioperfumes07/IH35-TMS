@@ -6165,3 +6165,68 @@ out-of-band change.
 not evidence of either.** A closed PR whose migration was hand-applied looks identical to a shipped fix from
 every angle except the two I checked — `gh pr view --json mergedAt` and `git cat-file -e origin/main:<file>`.
 Both take seconds. **Run them on every card that claims another lane closed something.**
+
+---
+
+## 100. PROD-vs-REPO DDL PARITY SWEEP — item 99's P0 is ISOLATED, not a pattern. 135 of 135 triggers accounted for; 1 of 12 entity FKs missing
+
+**Verdict: the divergence found in item 99 is a single incident. Bounding it was the right next move, and the
+answer is reassuring — which is itself the finding.**
+
+Item 99 established that `bills_mdata_vendor_entity_consistent_fkey` is live on prod but absent from
+`db/migrations/` and from both ledgers, and I recommended a repo-vs-prod constraint-parity guard. **Before
+anyone builds that guard or panics about hand-applied DDL generally, the honest question is: how common is
+this?** If it were widespread the fix is a programme; if it is one row the fix is one migration. **I measured
+instead of assuming.**
+
+**SWEEP 1 — the entity-consistency programme, 12 FKs on prod checked against `origin/main:db/migrations/`:**
+
+| result | count |
+|---|---|
+| present in a migration file | **11** |
+| **MISSING** | **1** — `bills_mdata_vendor_entity_consistent_fkey` |
+
+The 11 are properly landed and traceable: `expense_lines_*` → `202608020000_acct_link_04_…`, the four
+factoring FKs → `202607600000_factoring_balance_invoice_linkage` and `202610010000_fact_02_subledger_je_fk`,
+`bank_tx_categorization_*` → `202608050000_bank_link_01_counterparty_same_entity_fk` (which also ships its own
+guard `scripts/verify-bank-link-01-counterparty-fk.mjs`), and both driver FKs →
+`202612170000_driver_finance_entity_consistent_driver_fk`. **The programme's discipline is sound; ACCT-F158 is
+the one that did not complete.** That materially strengthens item 99 — it is an anomaly, not a habit — and it
+means the fix is a single migration, not a remediation project.
+
+**A near-false-positive inside sweep 1:** `bank_tx_categorization_vendor_same_entity_fkey` first resolved only
+to `db/migrations/.held-migrations.json`, which reads exactly like "the migration is held, not landed."
+Listing **all** matches instead of the first showed it is also in the real
+`202608050000_bank_link_01_…sql`. **`grep -l | head -1` is not a verdict** — the first match is only the first
+match.
+
+**SWEEP 2 — every trigger, because trigger names are ALWAYS explicit.** Constraint names are a poor parity
+probe: Postgres auto-names `<table>_<column>_fkey` from inline `REFERENCES`, so a missing literal proves
+nothing. **Triggers have no auto-naming**, so every trigger on prod must be traceable to migration text. All
+**135** distinct trigger names in `accounting · driver_finance · banking · fuel · insurance · maintenance ·
+factoring · catalogs · mdata`, checked against the full concatenated migration tree on `origin/main`:
+
+| result | count |
+|---|---|
+| found | 120 |
+| apparently missing | 15 — **all `trg_audit_*`** |
+| **genuinely missing after verification** | **0** |
+
+**All 15 are false positives, and the proof is explicit.** `audit.ensure_row_trigger(target_schema,
+target_table)` builds the name at runtime — `EXECUTE format('CREATE TRIGGER %I …', 'trg_audit_' ||
+target_table, …)`. The literal `trg_audit_bills` never appears in any migration because **no migration
+contains it**; the migration contains the recipe. A literal grep cannot see a dynamically constructed
+identifier. **The tell was in my own output:** `trg_audit_equipment` and `trg_audit_units` were NOT flagged
+while `trg_audit_bills` was — a mixed result inside one uniform family, which is the signature of a grep
+artifact rather than a real split. I checked instead of filing 15 P1s.
+
+**RESULT: 135 of 135 triggers and 11 of 12 entity FKs are repo-traceable. The single exception is the one
+already filed.**
+
+**What this changes for the recommended guard.** It is still worth building — item 99's divergence was
+invisible to every check we run, and hand-applied DDL is now *expected* since every lane has full Neon
+access. But it is a **preventive** control, not a cleanup, and it **must resolve dynamic DDL**: a naive
+name-grep parity guard would fail on all 15 audit triggers on day one, be declared broken, and be disabled.
+**Compare against a schema dumped from a freshly-migrated database, not against migration text.** That is the
+difference between a guard that lasts and a guard that gets switched off in week one — and I only know it
+because the naive version failed on me first.
