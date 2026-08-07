@@ -1,7 +1,9 @@
 # B9 — Bank Register + Inline Edit — Design (read/grid + gated write)
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 **Status:** Design / Docs only. No posting, no migration. The **write/inline-commit is financial /
-Tier-1 — OUT OF SCOPE here**, designed as gated. BUILD-AND-HOLD; Jorge merges.
+Tier-1 — OUT OF SCOPE here**, designed as gated. BUILD-AND-SHIP; the coder merges on green.
 **Date:** 2026-06-28
 **Author:** Cascade (design lane)
 **Grounding:** **LIVE-CAPTURED** from QBO (IH 35 Transportation LLC, 2026-06-28) — reached via Chart of

@@ -2,6 +2,14 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listUnits } from "../../api/mdata";
 import { listSevereRepairEstimates } from "../../api/maintenance";
+import { capNotice, listCapInfo } from "../../lib/list-cap";
+
+/**
+ * The route's own maximum (units.routes.ts). Named rather than inlined so the cap and the truncation
+ * check can never drift apart — the CLS-SILENT-CAP failure mode is a literal in the fetch that nothing
+ * downstream knows about.
+ */
+const UNITS_FETCH_CAP = 500;
 
 type OosUnitRow = {
   unitId: string;
@@ -46,7 +54,7 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
 
   const unitsQuery = useQuery({
     queryKey: ["dispatch", "fleet-oos-units", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 500 }),
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: UNITS_FETCH_CAP }),
     enabled,
     refetchInterval: 60_000,
   });
@@ -57,6 +65,18 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
     enabled,
     refetchInterval: 60_000,
   });
+
+  // CLS-SILENT-CAP: the units endpoint returns a real server-side `total`, so truncation here is EXACT
+  // rather than inferred. Computed from the SAME constant the fetch uses, so the two cannot drift.
+  const unitsCap = useMemo(
+    () =>
+      listCapInfo(
+        unitsQuery.data?.units?.length ?? 0,
+        UNITS_FETCH_CAP,
+        (unitsQuery.data as { total?: number } | undefined)?.total ?? null,
+      ),
+    [unitsQuery.data],
+  );
 
   const rows = useMemo(() => {
     const byUnitId = new Map<string, OosUnitRow>();
@@ -116,7 +136,17 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
         <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">
           Fleet OOS / In shop ({unitsQuery.isLoading || severeQuery.isLoading ? "…" : rows.length})
         </span>
-        <span className="text-[10px] text-slate-700">Pinned — full fleet visibility</span>
+        {/*
+          CLS-SILENT-CAP: this strip fetches `limit: UNITS_FETCH_CAP` and used to claim "full fleet
+          visibility" unconditionally. That claim is not the component's to make — beyond the cap the
+          fleet is silently invisible, and a promise of completeness is worse than a plain cap because
+          it actively tells the dispatcher not to look further. Prod carries 183 units today so the
+          claim happens to hold; it stops holding the moment the fleet outgrows the cap, and nothing
+          would have surfaced that. The label now states what is actually known.
+        */}
+        <span className="text-[10px] text-slate-700">
+          {unitsCap.truncated ? capNotice(unitsCap, "units") : "Pinned — full fleet visibility"}
+        </span>
       </div>
       {unitsQuery.isLoading || severeQuery.isLoading ? (
         <div className="px-3 py-2 text-xs text-slate-700">Loading out-of-service units…</div>

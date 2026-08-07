@@ -1,0 +1,36 @@
+{
+  "_why": "SHRINK-ONLY guard debt for docs/audit/wave-queue.json. Each wave names the guard that holds its class drained; nothing checked those files existed. A DRAINED wave whose guard is absent is a false drain claim and is a HARD FAIL, never baselined. An OPEN wave still owes its guard — honest debt, tracked here so it can only shrink.",
+  "_rules": [
+    "Never RAISE open_missing_count. A new wave ships its guard, or lands with the guard written and the class still open.",
+    "A drained wave with a missing guard is never baselined — fix the path or write the guard.",
+    "Lowering this to 0 is the goal."
+  ],
+  "_recorded_at": "2026-08-07",
+  "open_missing": [
+    {
+      "id": "CLS-ECON-EMPTY",
+      "guard": "scripts/verify-econ-empty-density.mjs"
+    },
+    {
+      "id": "CLS-LINKAGE-ONEWAY",
+      "guard": "scripts/verify-money-ops-fk-density.mjs"
+    },
+    {
+      "id": "CLS-BANK-MATCH-DENSITY",
+      "guard": "scripts/verify-silent-success-posting-output.mjs"
+    },
+    {
+      "id": "CLS-ORPHAN-SURFACE",
+      "guard": "scripts/verify-orphan-surface-drill.mjs"
+    },
+    {
+      "id": "CLS-MONEY-HOLD",
+      "guard": "scripts/verify-money-hold-surfaces.mjs"
+    },
+    {
+      "id": "CLS-SCHEMA-DRIFT",
+      "guard": "scripts/verify-catalog-config-physical-columns.mjs"
+    }
+  ],
+  "open_missing_count": 6
+}

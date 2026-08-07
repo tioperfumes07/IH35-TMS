@@ -1,6 +1,8 @@
 # REPAIR G6-4 — `accounting.bills.amount_cents` single canonical money representation
 
-**Status:** BUILD-AND-HOLD (financial / §1.4). Owner (Jorge) must approve the money backfill and
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
+**Status:** BUILD-AND-SHIP (financial / §1.4). Owner (Jorge) must approve the money backfill and
 the VALIDATE / SET NOT NULL steps below. An agent NEVER runs a money-mutating UPDATE solo.
 
 **Migration shipped (safe, no data mutation):**

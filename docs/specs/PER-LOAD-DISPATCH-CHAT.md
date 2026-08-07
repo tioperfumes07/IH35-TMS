@@ -1,6 +1,8 @@
 # Per-Load Dispatch Chat — Design & Build Plan
 
-**Status:** DESIGN / build-and-hold. The CHAT-1 schema is a migration → §1.3 Jorge merge gate.
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
+**Status:** DESIGN / build-and-ship. The CHAT-1 schema is a migration → §1.3 Jorge merge gate.
 
 > **RECONCILED 2026-07-01 to the CHAT-1 build directive (authoritative).** The migration
 > `db/migrations/202607012000_chat_dispatch_schema.sql` is now the source of truth for the schema;
@@ -119,7 +121,7 @@ was the explicit requirement. **OPEN DECISION for Jorge: commit to Path B (nativ
 
 | Block | Scope | Gate |
 |---|---|---|
-| **CHAT-1** | `chat` schema: `load_threads` + `messages` + `attachments` + `receipts` + `acks`; RLS FORCE + policies; grants; hash-chain trigger | **Migration → Jorge merge gate. Build-and-hold.** |
+| **CHAT-1** | `chat` schema: `load_threads` + `messages` + `attachments` + `receipts` + `acks`; RLS FORCE + policies; grants; hash-chain trigger | **Migration → Jorge merge gate. Build-and-ship.** |
 | CHAT-2 | Backend: thread get-or-create, list, post message, attach (R2 presign upload-then-commit), delivery/read receipts, ack | rides on CHAT-1 |
 | CHAT-3 | Office UI (apps/frontend): load-chat panel off Load Detail + a dispatch chat hub | non-financial |
 | CHAT-4 | Driver PWA: per-load chat in `LoadDetail` + BOL photo attach (reuse `PodCapture`) + **offline outbox** | non-financial |

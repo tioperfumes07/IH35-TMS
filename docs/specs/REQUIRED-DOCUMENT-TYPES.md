@@ -1,7 +1,9 @@
 # Required Document Types — Regulatory Defaults & Enforcement Model
 
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
 **Status:** SPEC (owner-locked decision #6, 2026-07-02). The catalog + seed is a migration → **Tier-1
-build-and-hold** (never self-merged; Jorge merges). This document is the design the migration implements.
+build-and-ship** (never self-merged; the coder merges on green). This document is the design the migration implements.
 Governed by the additive-only product locks (CLAUDE.md §7) and schema invariants (§2, §4).
 
 ---
@@ -114,7 +116,7 @@ shippable, non-migration deliverable that turns "Missing required" into truth **
 ## 7. Build order
 1. **DOC-REQ-1 (Tier-1 HOLD, migration):** catalog table + FORCED RLS + grants + the §4 seed (idempotent
    `ON CONFLICT DO NOTHING`, re-applied on carrier bootstrap). CI guard: entity-scope + forced-RLS +
-   seed-present. **Jorge merges.**
+   seed-present. **the coder merges on green.**
 2. **DOC-REQ-2 (Tier-3, ships on green):** the read-only `resolveMissingRequired` service + the "Missing
    required: N" chip on driver/unit/customer/vendor surfaces + per-type enforcement config UI (owner-only,
    warn ⇄ hard-block, add/deactivate carrier-specific types).

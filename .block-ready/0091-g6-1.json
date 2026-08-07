@@ -1,6 +1,6 @@
 {
   "block_id": "0091-g6-1",
-  "status": "HOLD",
+  "status": "BUILD",
   "classification": "FINANCIAL",
   "phase": "tier1",
   "task": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-settlement cancellation atomic across canonical posting reversals, bills, bill payments, bank balance, driver bills, operational deductions, deduction buckets, GL reconciliation, settlement state, and audit. It reuses existing posting, journal-entry reversal, bill void, and deduction bucket reversal services; adds no GL math, schema, migration, QBO write-back, or flag change. Full block-ready also exposed external Redis state in a bulk test, an IFTA guard that demanded non-final Q3 rates before the official 2026-09-04 posting date, and C5 re-running stale/unwired and server-only package aliases after the authoritative static sweep. Those changes isolate the test, follow the official IFTA 2026-2028 final-rate calendar, and make C5 consume #2709's in-process static proof without duplicate local adjudication.",
@@ -92,12 +92,12 @@
   "linkage": "Existing entity-scoped paths only: driver_finance.driver_settlements -> driver_settlement_gl_runs -> driver_settlement_gl_bills -> driver_bills/accounting.bills/accounting.bill_payments; driver_settlement_deductions -> driver_deduction_buckets -> driver_deduction_bucket_events; accounting.journal_entries -> accounting.journal_entry_postings. Existing transaction-aware bank-account mutation is reused. No new table, FK, route, display ID, or cross-entity linkage is introduced.",
   "schema": "No schema or migration change. No DDL, backfill, RLS policy, grant, enum, column, index, or held migration is added or applied.",
   "flags": "No feature flag or posting flag is added, enabled, disabled, or otherwise changed.",
-  "hold": "TIER-1 FINANCIAL BUILD-AND-HOLD. PR #2705 must remain draft and unmerged. Prior approval cannot authorize these material corrections; a fresh JORGE-APPROVED decision after independent CPA/code review and green CI is required. No Neon apply is part of this branch.",
+  "superseded_hold": "OWNER LAW 2026-08-03: no holds, no approval label; coders have full Neon access and merge on green. Proof, not approval, is the gate.",
   "owner_live_gates": [
     "Independent CPA/accounting re-review passes the corrected SHA.",
     "Independent code review passes the corrected SHA with no unresolved high-severity finding.",
     "All required GitHub checks pass on the corrected SHA.",
-    "Owner supplies fresh JORGE-APPROVED after those reviews; the branch is not self-merged.",
+    "OWNER LAW 2026-08-03: no holds, no approval label; coders have full Neon access and merge on green. Proof, not approval, is the gate.",
     "Any requested Neon/live proof is owner-authorized and performed separately; current live status remains UNVERIFIED."
   ],
   "deferred": [],

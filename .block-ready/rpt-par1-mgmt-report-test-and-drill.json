@@ -50,5 +50,5 @@
       "check": "Rule-17 auto-discovered guard scripts/verify-mgmt-report-aging-drill.mjs + verify-steps/927 + --selftest fail-closed"
     }
   ],
-  "note": "No schema/migration/posting/GL changes. Additive list filter + UI drill + tests + static guard only. Keep draft/HOLD — do not merge."
+  "note": "No schema/migration/posting/GL changes. Additive list filter + UI drill + tests + static guard only. Merge on green (owner law 2026-08-03: no holds; proof, not approval, is the gate)."
 }
