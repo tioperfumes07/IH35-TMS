@@ -6795,3 +6795,68 @@ instead of being a speculative rule with no baseline.
 one sentence — the scope. The defect was real, the root cause was right, and the blast radius was 7× too
 big. **Over-scoping a true finding is its own kind of false report**: it would have sent the mechanical lane
 to audit six correct files.
+
+---
+
+## 111. BACKGROUND-JOB TENANCY — PASS, 12 of 12. The class I suspected does not exist, and checking first is the only reason I did not file it twice
+
+**Verdict: PASS. No card. And it makes the FMCSA defect (items 109-110) sharper, not broader.**
+
+After item 110 corrected my over-scoped outbox claim, the honest next question was whether the *real* class
+lives elsewhere: **do background jobs read RLS-protected tables without a tenant context?** This time I built
+the check properly before drawing any conclusion.
+
+**POSITIVE CONTROL FIRST — the lesson from item 110 applied.** Before searching for absence, I confirmed the
+pattern is detectable: **26 files in `apps/backend/src` DO set `app.bypass_rls`.** A grep that can find it
+where it exists is a grep whose zeros mean something. That single step is what item 110 was missing.
+
+**THE SUSPICIOUS RESULT.** Twelve cron/job files read `mdata.*` / `accounting.*` / `banking.*` /
+`driver_finance.*` / `fuel.*` / `maintenance.*`, and **none of them set `app.bypass_rls` inline** — while
+**nine of them set `app.operating_company_id`**, which is precisely the FMCSA failure signature. Twelve
+background jobs silently seeing nothing would have been a far bigger finding than the one handler.
+
+**IT IS WRONG, AND THE ANSWER WAS ONE IMPORT LINE AWAY.** All twelve obtain their client through
+**`withLuciaBypass`** from `auth/db.ts:158`, which does exactly the right thing — and its own comment states
+the design intent:
+
+```
+SET LOCAL ROLE ih35_app            -- fail-closed: force the NON-superuser app role
+SET LOCAL app.bypass_rls = 'lucia' -- so the bypass goes through the explicit GUC path,
+                                   -- never an implicit superuser bypass
+```
+
+| file | `withLuciaBypass` | `assertTenantContext` |
+|---|---|---|
+| `cron/depreciation-autopost` | 6 | 2 |
+| `cron/bank-recon-auto-match` | 2 | 2 |
+| `cron/plaid-daily-sync` | 2 | 0 |
+| `jobs/search-indexer-incremental` | 2 | 2 |
+| `jobs/cap-12-tire-tread-worker` | 4 | 2 |
+| `jobs/cap-13-brake-wear-worker` | 4 | 2 |
+| `jobs/cert-expiry-monitor` | 2 | 2 |
+| `jobs/fuel-fraud-detector-worker` | 2 | 2 |
+| `jobs/loan-payment-reminder-worker` | 2 | 2 |
+| `jobs/driver-retention-scorer-worker` | 2 | 0 |
+| `jobs/customer-relationship-scorer` | 2 | 0 |
+| `jobs/samsara-position-poll-worker` | 2 | 0 |
+
+**12 of 12 correct.** There is even a purpose-built runtime guard — `assertTenantContext` in
+`cron/_helpers/tenant-context-guard.ts` — used by 8 of the 12. **This area is not merely accidentally right;
+it is deliberately engineered, with a helper, a fail-closed role switch, and a guard.**
+
+**WHY THIS SHARPENS ITEMS 109-110 RATHER THAN DILUTING THEM.** The codebase already has the correct
+mechanism, used by 12 background jobs and 6 sibling outbox handlers — **18 call sites doing it right.**
+`fmcsa-customer-verify.handler.ts` is the lone place that hand-rolls the context inline and sets the wrong
+GUC. **An outlier among 18 correct implementations is a much better-supported defect than "a class of 7",**
+and it tells the fixer exactly what to copy.
+
+**Observation, not a card:** 4 of the 12 (`plaid-daily-sync`, `driver-retention-scorer-worker`,
+`customer-relationship-scorer`, `samsara-position-poll-worker`) do not call `assertTenantContext`. They all
+hold the bypass, so they are correct; they simply skip the extra assertion. Recorded for whoever owns that
+guard's adoption — no defect.
+
+**The method note I want on the record.** In one session I formed the same shape of hypothesis twice —
+"a whole class of background code is missing its tenant context." **The first time I filed it and had to
+withdraw it (item 110). The second time I ran the positive control first and killed it in three commands
+before it reached the board.** Same instinct, same evidence shape, opposite outcome. **The discipline is not
+"be more careful"; it is the mechanical step of proving your detector works before trusting its zeros.**
