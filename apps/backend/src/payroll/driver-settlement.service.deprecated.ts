@@ -20,6 +20,7 @@
 import { withCurrentUser } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { createBill, payBill } from "../accounting/bills.service.js";
+import { resolveDriverVendorLink } from "../accounting/driver-vendor-link.service.js";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { depositEscrow, openEscrow } from "../accounting/escrow/service.js";
 import { resolveSettlementMinNet } from "../driver-finance/settlement-deduction-cap.service.js";
@@ -472,18 +473,14 @@ export async function postSettlement(input: PostSettlementInput, userId: string)
       return { settlement, result: "blocked_flag_off" as const };
     }
 
-    const driverRes = await client.query<{ qbo_vendor_id: string | null }>(
-      `
-        SELECT qbo_vendor_id
-        FROM mdata.drivers
-        WHERE id = $1::uuid
-          AND operating_company_id = $2::uuid
-        LIMIT 1
-      `,
-      [settlement.driver_id, input.operatingCompanyId]
-    );
-    const vendorId = String(driverRes.rows[0]?.qbo_vendor_id ?? settlement.driver_id).trim();
-    if (!vendorId) throw new Error("driver_vendor_missing");
+    // CLS-DRIVER-VENDOR-UUID-FALLBACK — second site of the same defect as
+    // settlement-bill-payment-posting.service.ts: `qbo_vendor_id ?? settlement.driver_id` made the
+    // `driver_vendor_missing` throw below unreachable and passed a DRIVER uuid to createBill as the
+    // vendor. Deprecated path, but it is still compiled and still callable, so it is fixed with the
+    // same shared resolver rather than left as a live copy of the bug.
+    const vendorId = (
+      await resolveDriverVendorLink(client, input.operatingCompanyId, settlement.driver_id)
+    ).vendorId;
 
     const billDate = normalizeDate(settlement.pay_period_end);
     const paymentDate = normalizeDate(settlement.bank_settle_date ?? settlement.pay_period_end);

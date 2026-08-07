@@ -78,7 +78,8 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
   const dipBankId = randomUUID();
   const customerId = randomUUID();
   const driverId = randomUUID();
-  const driverVendorId = `VND-${suffix}`;
+  const driverVendorId = `VND-${suffix}`; // QBO text key, written to accounting.bills.vendor_id
+  const driverVendorUuid = randomUUID(); // mdata.vendors.id, written to accounting.bills.mdata_vendor_id
   const loadIds = [randomUUID(), randomUUID(), randomUUID()];
   const loadNumbers = [`L-${suffix}-1`, `L-${suffix}-2`, `L-${suffix}-3`];
   const billIds = [randomUUID(), randomUUID(), randomUUID()];
@@ -318,6 +319,15 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
          VALUES ($1::uuid,$2::uuid,'Mecor','Perez',$3,$4)`,
         [driverId, companyId, `+1004${randomUUID().slice(0, 7)}`, driverVendorId]
       );
+      // CLS-DRIVER-VENDOR-UUID-FALLBACK — the driver's A/P vendor. This row was MISSING, and the
+      // fixture still passed because the poster fell back to the driver's own uuid as the vendor id.
+      // A driver settlement is A/P to a vendor; without this row there is no payee, and the poster
+      // now correctly refuses (DRIVER_VENDOR_MISSING) rather than inventing one.
+      await db.query(
+        `INSERT INTO mdata.vendors (id, operating_company_id, vendor_name, vendor_type, driver_id, qbo_vendor_id)
+         VALUES ($1::uuid,$2::uuid,$3,'Other',$4::uuid,$5)`,
+        [driverVendorUuid, companyId, `Mecor Perez ${suffix}`, driverId, driverVendorId]
+      );
       const mkAcct = async (id: string, name: string, type: string, subtype: string | null, parent: string | null) =>
         db.query(
           `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, account_subtype, parent_account_id, is_postable)
@@ -510,14 +520,26 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     // assigns its own id (never = the driver_finance.driver_bills id) — resolve via the gl_bills link.
     const glBillIds = await resolveGlBillIds();
     expect(glBillIds.length).toBe(3);
-    const bills = await read<{ bill_number: string; vendor_id: string; amount_cents: string; paid_cents: string }>(
-      `SELECT bill_number, vendor_id, amount_cents::text, paid_cents::text FROM accounting.bills WHERE id = ANY($1::uuid[]) ORDER BY amount_cents DESC`,
+    const bills = await read<{
+      bill_number: string;
+      vendor_id: string;
+      mdata_vendor_id: string | null;
+      amount_cents: string;
+      paid_cents: string;
+    }>(
+      `SELECT bill_number, vendor_id, mdata_vendor_id::text AS mdata_vendor_id, amount_cents::text, paid_cents::text
+         FROM accounting.bills WHERE id = ANY($1::uuid[]) ORDER BY amount_cents DESC`,
       [glBillIds]
     );
     expect(bills.length).toBe(3);
     expect(new Set(bills.map((b) => b.bill_number))).toEqual(new Set(loadNumbers));
     for (const b of bills) {
       expect(b.vendor_id).toBe(driverVendorId);
+      // CLS-DRIVER-VENDOR-UUID-FALLBACK — the bill must carry the REAL mdata.vendors row, not the
+      // driver's uuid. This is what the old `?? settlement.driver_id` fallback silently got wrong,
+      // and it is also what keeps the bill inside the ACCT-F142 partial duplicate index.
+      expect(b.mdata_vendor_id).toBe(driverVendorUuid);
+      expect(b.mdata_vendor_id).not.toBe(driverId);
       expect(Number(b.paid_cents)).toBe(Number(b.amount_cents)); // fully closed (cash + non-cash deduction)
     }
 
