@@ -4505,3 +4505,153 @@ purely visual z-index fix is not testable; the dismissal behaviour is.
 for USMCA remains **0**. Everything above about validation, auto-derive and auto-linkage was observed
 live in the form; the persistence half is unproven because the form cannot survive the part-create step.
 **Recorded as incomplete rather than implied.**
+
+---
+
+## 70. CORRECTION to item 68 — the part-panel defect DESTROYS ONLY THE COST LINES, not the work order
+
+**Verdict: SELF-CORRECTION (item 68 overstated the damage).** Item 68 claimed the trap "discards the entire
+work order — every field, the VMRS complaint/cause/correction, the cost line, the driver, the vendor invoice
+number." **That is wrong.** Re-opening `+ Create Work Order → Repair` on 2026-08-07 restored, intact and
+unprompted: unit `USMCA-001`, driver `Juan USMCA-Battery`, `Class (auto) UNIT-DRIVER`, `Load # L-20260806-0008`,
+`Source Type IS - Internal shop`, `Location Internal shop`, `Vendor RO / Invoice CC3-WO-INV-0001`, the full
+description, AND all three VMRS panels (complaint / cause / correction).
+
+**What is actually lost:** the COST LINES only — Section A read `No Section A lines / Subtotal A: $0.00` and
+Section B read `No Section B lines / Subtotal B: $0.00`, where `$289.45` had stood.
+
+The draft persistence is real and it works. The precise defect is narrower than filed and the board row is
+corrected accordingly. **A finding that overstates its blast radius is still a wrong finding** — the law does
+not only forbid missing defects, it forbids inflating them.
+
+---
+
+## 71. `+ Create labor` is INLINE and clean — the trap is specific to `+ Create part`
+
+**Verdict: PASS (and it bounds item 68).** `+ Create labor` renders a LABOR sub-row **inside** the Section B
+item line — no modal, no overlay, no dismiss-on-click. Entered `Alternator R&R - charging system load test`,
+`2` hr @ `$95.00` → sub-row total computed **$190.00**, correct.
+
+So the z-index/outside-click defect is **not** a general property of the WO modal's inline-create — it is
+specific to the `+ Create part` panel. That narrows the fix surface and proves the intended pattern already
+works somewhere in the same component.
+
+---
+
+## 72. FAIL (P0, money) — `LV-WO-RECONCILE-EXCLUDES-SECTION-A`: the WO declares "Reconciled" while its own total is $436.66 higher than the amount reconciled
+
+**Verified live in the product, USMCA, 2026-08-07.** Final state of one work order:
+
+| surface | value |
+|---|---|
+| Subtotal A (category lines) | `$289.45` |
+| Subtotal B (item lines) | `$289.45` |
+| Subtotal | `$578.90` |
+| Tax 8.25% | `$47.76` |
+| **WO Total = A + B** | **`$626.66`** |
+| Vendor Invoice Reconcile — Parts, WO total | `$0.00` |
+| Vendor Invoice Reconcile — Labor, WO total | `$190.00` |
+| Vendor invoice entered | `$190.00` |
+| Panel verdict | **"Reconciled — WO parts & labor tie to the vendor invoice."** |
+| Pre-save validation | **all 9 ✓**, incl. "Vendor invoice reconciles — WO parts & labor tie to invoice" |
+| Registers as | **Bill (A/P)** — "payable later, 1099-tracked" |
+
+**The two totals are computed from DISJOINT sets.** Verified in code, not inferred —
+`apps/backend/src/maintenance/two-section-service.ts:186-191`:
+
+- `sectionATotal` = Σ category lines
+- `sectionBTotal` = Σ `Math.max(line.amount, Σ sub_rows.amount)` — the parent item-line amount **or** its
+  parts/labor children, **whichever is larger**
+- `totalCost = sectionATotal + sectionBTotal`
+
+The **vendor-invoice reconcile reads only the parts/labor sub-rows.** Therefore Section A category lines and
+any parent item-line amount that exceeds its children are **structurally invisible** to the reconcile, while
+being fully included in the WO total and in the A/P bill. A user can put the entire cost of a repair in
+Section A, enter a vendor invoice of `$0.00`, and the screen will certify **"Reconciled."**
+
+**Why this matters beyond the arithmetic:** the reconcile is the control that proves a maintenance bill
+matches the vendor's actual invoice — the thing an auditor, an insurer, or a bankruptcy examiner tests. A
+control that certifies a tie while $436.66 of the same document is outside its scope is worse than no
+control: it produces documentary assurance that is not true. Under Ch.11 with an active embezzlement
+reconciliation, an A/P control that reports false agreement is exactly the wrong failure to ship.
+
+**NOT claimed / UNVERIFIED:** the amount that would actually land on `accounting.bills`. The create call
+**500s** (item 73), so the bill is unreachable and the posted figure has never been observed. Whether the
+bill takes `$626.66`, `$578.90` or `$190.00` is **UNVERIFIED — needs live check once item 73 is fixed.**
+
+**Routed:** money/GL → **CC-1**.
+
+---
+
+## 73. FAIL (P0, BLOCKER) — `LV-WO-CREATE-500-OPENED-AT`: work-order creation is 100% broken; two writers disagree and trip the table's own immutability trigger
+
+**Reproduced live, twice, through the product's own endpoint on USMCA:**
+
+```
+POST https://api.ih35dispatch.com/api/v1/maintenance/work-orders
+→ HTTP 500
+{"statusCode":500,"code":"P0001","error":"Internal Server Error",
+ "message":"E_WO_OPENED_AT_IMMUTABLE: opened_at cannot be changed once set"}
+```
+
+`P0001` = PL/pgSQL `RAISE EXCEPTION`. Captured with a fetch interceptor in the live authed session; the
+request carried `operating_company_id 5c854333-…` (USMCA), `wo_type repair`, `source_type IS`,
+`service_date "2026-08-07"`, and a separate `opened_at`.
+
+**FIRST HYPOTHESIS WAS WRONG — recorded because the correction is the finding.** I first concluded the
+trigger "fires on INSERT, where there is no prior value to change." Reading the actual function on prod
+disproved it. `maintenance.wo_set_opened_at` is **correct**:
+
+```sql
+IF TG_OP = 'INSERT' AND NEW.opened_at IS NULL THEN
+  NEW.opened_at := COALESCE(NEW.created_at, now());
+ELSIF TG_OP = 'UPDATE' AND OLD.opened_at IS DISTINCT FROM NEW.opened_at THEN
+  RAISE EXCEPTION 'E_WO_OPENED_AT_IMMUTABLE: opened_at cannot be changed once set';
+END IF;
+```
+
+It raises on **UPDATE**. The trigger is not the bug — it is the sensor that caught the bug.
+
+**ACTUAL ROOT CAUSE — two writers in one request, sourced from different fields**
+(`apps/backend/src/maintenance/two-section-service.ts`):
+
+1. **:203 INSERT** — `opened_at = COALESCE($8::timestamptz, now())` where `$8 = header.service_date`
+2. **:285 post-insert UPDATE** — `opened_at = COALESCE($1, opened_at)` where `$1 = header.opened_at`
+
+When a request carries **both** `service_date` and `opened_at` and they differ (they always do — one is a
+date at midnight, the other a timestamp), the UPDATE changes a column the INSERT already set →
+`OLD.opened_at IS DISTINCT FROM NEW.opened_at` → **RAISE** → the whole transaction aborts → 500, no row.
+
+The comment at **:272-273** shows the author saw the hazard — *"All COALESCE so a missing field never
+clobbers the INSERT defaults (e.g. opened_at)"*. `COALESCE` protects only when the field is **absent**. It
+does nothing when the field is **present and different**, which is the normal case from this very form.
+
+**LIVE DB EVIDENCE — prod `br-fancy-credit-akjnd07a`, `maintenance.work_orders`, completeness discriminator satisfied:**
+
+| metric | value |
+|---|---|
+| `current_user` | `neondb_owner` (asserted in the same statement) |
+| `n_tup_ins` | **13** |
+| `n_tup_del` | **3** |
+| `n_live_tup` | **1** |
+| `count(*)` visible, all entities | **1** — `visible == n_live_tup` ✓ (positive control, same table) |
+| `count(*)` visible, USMCA | **0** |
+| trigger | `trg_wo_set_opened_at` on **INS/UPD** |
+
+**13 inserted − 3 deleted = 10 expected live, but 1 is live.** Nine inserts exist in the statistics and
+nowhere in the table: they were **rolled back**. That is the durable signature of an aborted transaction,
+and it is the identical shape as `LV-TXN-014` (insurance policy create). **This is a class, not an
+incident** — a post-insert UPDATE pattern colliding with a column guard.
+
+**THE FIX MUST BE THE ROOT CAUSE, NOT THE SENSOR.** Do **not** relax, drop, or add an exception to
+`wo_set_opened_at` — the immutability guard is correct and is protecting an audit-relevant timestamp.
+Fix the writers: settle on ONE source of truth for `opened_at`, and stop the post-insert UPDATE from
+rewriting a column the INSERT already owns (drop `opened_at` from the :285 SET list, and have the INSERT
+take `header.opened_at ?? header.service_date`). **A guard that fires correctly is not a bug to silence.**
+
+**Consequence:** the maintenance module cannot create a work order at all, for any entity. This blocks
+WO → parts+labor → close → bill, and therefore the maintenance half of the USMCA battery.
+
+**Routed:** mechanical/backend. See the routing note on the board — standing-order rule 7 says
+mechanical → CC-2, while the owner-locked board §3 says CC-2 **never builds** and assigns mechanical to
+CC-3, which does not build either. Filed naming **both** so the work is not stranded in a never-build lane.
