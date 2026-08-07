@@ -1,0 +1,24 @@
+{
+  "_why": "SHRINK-ONLY RATCHET for database-level WORM (void-not-delete) coverage on financial tables. ACCT-F141 made 9 tables physically undeletable after 139 real rows were destroyed on prod and could not be recovered; its header promised this ratchet and it was never written, so the control had nothing watching it. protected_tables is absolute — losing any entry is RED. unprotected_count may only DECREASE.",
+  "_rules": [
+    "Never remove a table from protected_tables. WORM is one-way.",
+    "Never RAISE unprotected_count to make a build pass — decide whether the new table needs WORM.",
+    "Lowering unprotected_count after adding protection is the goal, not the exception."
+  ],
+  "_recorded_at": "2026-08-07",
+  "protected_tables": [
+    "accounting.bill_lines",
+    "accounting.bill_payments",
+    "accounting.bills",
+    "accounting.escrow_postings",
+    "accounting.expense_lines",
+    "accounting.journal_entry_postings",
+    "accounting.payment_applications",
+    "banking.bank_transactions",
+    "driver_finance.cash_advance_owner_approval_audit",
+    "driver_finance.cash_advance_request_audit",
+    "driver_finance.driver_settlement_deductions",
+    "driver_finance.driver_settlements"
+  ],
+  "unprotected_count": 129
+}

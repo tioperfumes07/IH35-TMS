@@ -1,6 +1,8 @@
 # DESIGN HOLD — CoA "Merge accounts": true merge (repoint references), not deactivate-only
 
-**Status:** DESIGN-ONLY · **DOCS-ONLY PR** · **BUILD-AND-HOLD** · **DO NOT MERGE** without owner `JORGE-APPROVED`.
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
+**Status:** DESIGN-ONLY · **DOCS-ONLY PR** · **BUILD-AND-SHIP** · **DO NOT MERGE** without owner `JORGE-APPROVED`.
 **Item:** `0091-m-lists-2` (accounting-module GAP lane, 2026-07-21).
 **No code, no migration, no Neon write ships with this document.**
 
@@ -31,13 +33,13 @@ A true merge, per the QuickBooks standard (QBO "merge accounts" moves **all exis
 - **Closed periods**: any repoint touching a closed period must either be blocked or produce a dated reclass JE — never a silent UPDATE across a close.
 - **Parallel books**: TMS-side merge must NOT write to QBO (reconcile-only law); the twice-daily recon must be told about the mapping change or it will flag every merged posting as drift.
 
-Every one of those is `accounting.*` / posting / GL territory → **financial cluster → build-and-HOLD, owner-gated, CPA review required** (`13-financial-and-accounting-law.mdc`). Writing this merge engine solo without the owner/CPA decision on (a)-vs-(b) would be exactly the "new GL math without approval" the law forbids.
+Every one of those is `accounting.*` / posting / GL territory → **financial cluster → build-and-ship, owner-gated, CPA review required** (`13-financial-and-accounting-law.mdc`). Writing this merge engine solo without the owner/CPA decision on (a)-vs-(b) would be exactly the "new GL math without approval" the law forbids.
 
 ## 3. Proposed design (for owner/CPA review — each step a separate future PR)
 
 1. **Backend `POST /api/v1/catalogs/accounts/merge`** (new, owner-role only): `{ target_id, source_ids[] }`, entity-scoped via `resolveOperatingCompanyId` + `withCompanyScope`; rejects locked accounts, cross-entity pairs, type/subtype-incompatible pairs (QBO refuses cross-type merges too), and any source with children unless `reparent_children: true`.
 2. **Reference repoint, in one transaction** (lockstep pattern): configuration + open-document references UPDATE source→target; each table touched emits an append-only audit event.
-3. **Posted-GL treatment = CPA decision (blocking question)**: (a) in-place account_id repoint on JE lines in OPEN periods only + reclass JE for closed periods, or (b) reclass JE for everything (no historic UPDATE). Recommendation: **(b) for closed periods, (a) for open**, matching QBO merge behavior while protecting closed-period immutability. **HOLD until Jorge/CPA picks.**
+3. **Posted-GL treatment = CPA decision (blocking question)**: (a) in-place account_id repoint on JE lines in OPEN periods only + reclass JE for closed periods, or (b) reclass JE for everything (no historic UPDATE). Recommendation: **(b) for closed periods, (a) for open**, matching QBO merge behavior while protecting closed-period immutability. **ship on green (hold superseded)/CPA picks.**
 4. **Archive source** (existing deactivate path, `deactivated_at`) + write `merged_into_account_id` (new nullable column, held migration) so the archived row permanently points at its survivor — forward/reverse drill-through preserved (linkage law).
 5. **Frontend**: same modal, but calls the merge endpoint; result panel lists every repointed reference count; label stays "Merge accounts".
 6. **Guard (Rule 17)**: `scripts/verify-coa-merge-repoints-references.mjs` + verify-step — fails if the merge endpoint deactivates without repointing (greps service for the repoint transaction) and if the frontend "Merge" path calls deactivate-only.

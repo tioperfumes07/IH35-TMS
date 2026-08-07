@@ -10,6 +10,12 @@ import { vendorReferenceOption } from "../../../components/parity/referenceOptio
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { capNotice, listCapInfo } from "../../../lib/list-cap";
+
+// CLS-SILENT-CAP: named so the fetch and the truncation check read the SAME number.
+// 2,836 vendors on prod, so an unsearched 200-row fetch hides 2,636 of them.
+const VENDOR_PICKER_CAP = 200;
+
 
 type Props = {
   companyId: string;
@@ -50,11 +56,18 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
       listVendors({
         operating_company_id: companyId,
         status: "active",
-        limit: 200,
+        limit: VENDOR_PICKER_CAP,
         search: vendorSearch || undefined,
       }),
     enabled: Boolean(companyId),
   });
+
+  // CLS-SILENT-CAP: EXACT truncation — listVendors returns the server's real `total`.
+  const vendorCap = useMemo(
+    () => listCapInfo(vendorsQuery.data?.vendors?.length ?? 0, VENDOR_PICKER_CAP, vendorsQuery.data?.total ?? null),
+    [vendorsQuery.data],
+  );
+  const vendorCapNotice = capNotice(vendorCap, "vendors");
   const vendorOptions = useMemo(
     () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
     [vendorsQuery.data?.vendors],
@@ -174,6 +187,8 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
           <label className="block text-xs font-semibold text-gray-700">
             Vendor
             <div className="mt-1" data-testid="parts-inventory-vendor-picker">
+              {/* CLS-SILENT-CAP: say so when the picker is not showing every vendor. */}
+              {vendorCapNotice ? <p className="text-[10px] text-slate-700">{vendorCapNotice}</p> : null}
               <ReferenceSelect
                 value={form.vendor_id || null}
                 onChange={(next) => setForm((v) => ({ ...v, vendor_id: next ?? "" }))}

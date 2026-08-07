@@ -1,6 +1,8 @@
 # BLOCK-01 — Fixed-Asset Depreciation — Design Doc (reconciliation + residual-gap build)
 
-**Status:** DESIGN-ONLY / BUILD-AND-HOLD. No posting code in this PR. One optional HELD, idempotent,
+> **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.
+
+**Status:** DESIGN-ONLY / BUILD-AND-SHIP. No posting code in this PR. One optional HELD, idempotent,
 additive migration (asset-linkage + cron-run-log only — **no new posting math**). Financial cluster
 per constitution §1.4 — **never self-merge**; migration (if used) runs on a Neon branch by Jorge's hand,
 never on prod, until Jorge says "OK to merge."

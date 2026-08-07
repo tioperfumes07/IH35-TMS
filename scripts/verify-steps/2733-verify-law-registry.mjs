@@ -8,6 +8,16 @@ export default {
   name: "verify-law-registry",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-law-registry.mjs", "--selftest"]);
-    return ctx.run("node", ["scripts/verify-law-registry.mjs"]);
+    await ctx.run("node", ["scripts/verify-law-registry.mjs"]);
+
+    // CLS-GUARD-PHANTOM — the same existence law, applied to the CLASS QUEUE. docs/audit/wave-queue.json
+    // names, per wave, the guard that holds its class drained; nothing verified those files existed and
+    // 10 of 31 did not resolve. Two were on waves marked DRAINED, which is a drain claim nothing was
+    // enforcing. (Both turned out to be STALE PATHS to real guards, not phantom guards — verified by
+    // reading each target's header, which names its own class — but the queue had no way to tell the
+    // difference, and that is the gap.) A drained wave with a missing guard is a HARD FAIL here; an open
+    // wave still owing one is shrink-only debt. Existence-only, same cost profile as the law check above.
+    await ctx.run("node", ["scripts/verify-wave-queue-guards-exist.mjs", "--selftest"]);
+    return ctx.run("node", ["scripts/verify-wave-queue-guards-exist.mjs"]);
   },
 };
