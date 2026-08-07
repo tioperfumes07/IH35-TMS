@@ -6,7 +6,7 @@
  "source": "MASTER-6 authored dispatch (02-MONEY-WIRING-P1-P3)",
  "source_file": "PHASE1_SETTLE-FK_cross-schema-fk-violation_DISPATCH.txt",
  "allowed_files": [
-  "canonical = driver_finance.* only; NEVER write payroll.*/settlement.*. Additive; no delete. Tier-1; build-and-hold."
+  "canonical = driver_finance.* only; NEVER write payroll.*/settlement.*. Additive; no delete. Tier-1; build with GUARD verify-after."
  ],
  "acceptance": [
   {
