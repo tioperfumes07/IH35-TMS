@@ -6107,3 +6107,61 @@ The same question was answerable **read-only** by widening the population from o
 because another entity had already run the experiment. **Before exercising a new transaction to test a path,
 check whether the path has already been exercised somewhere in the data.** It is faster, it needs no write
 access, and it observes real behaviour rather than behaviour I induced.
+
+---
+
+## 99. ★★ FALSE COMPLETION CAUGHT — `ACCT-F158` is declared closed on the board; its fix PR was closed WITHOUT merging, and the constraint exists on prod ONLY
+
+**Verdict: FAIL (P0). Filed as `LV-ACCT-F158-NOT-IN-REPO`, reopening ACCT-F158 for CC-1.**
+
+This is the one job that cannot be delegated to CI: **CI can only test what is in the repo, so it is
+structurally incapable of noticing a fix that never reached the repo.**
+
+**HOW I FOUND IT — accidentally, which is worth recording.** I rebased this branch and another lane's commit
+came down: *"ACCT-F158 + ACCT-F158-B — bill cross-entity vendor hole closed (#4691)."* That touches the exact
+surface I had just filed `LV-BILL-MDATA-VENDOR-FK-OPTOUT` against, so I checked whether my card was now a
+duplicate. **The loop law says grep-verify the card against main before acting on it. Doing that to protect
+my own card is what surfaced this.**
+
+**THE DB HALF IS REAL — credit where due.** On prod, `bills_mdata_vendor_entity_consistent_fkey` exists with
+`convalidated = true`: `FOREIGN KEY (operating_company_id, mdata_vendor_id) REFERENCES
+mdata.vendors(operating_company_id, id)`. That is the strong control I praised in item 94, and CC-1 built it.
+
+**THE FOUR GAPS, each measured:**
+
+| # | claim | measured reality |
+|---|---|---|
+| 1 | "Fixed in #4691" | **PR #4691 is `CLOSED`, `merged = null`, `mergeCommit = null`.** Only the announcement PR #4692 merged. |
+| 2 | migration shipped | `db/migrations/202612270000_bills_vendor_entity_consistent_fk.sql` **ABSENT from `origin/main`**; `git grep -l entity_consistent origin/main -- db/migrations` returns **nothing**. |
+| 3 | applied on prod | FK is live — but **NO row in `ih35_migrations.applied_migrations` NOR `_system._schema_migrations`** matches `%bills_vendor%`. Applied **out-of-band**, not recorded as applied. |
+| 4 | "service throws" | `origin/main:bills.service.ts:309` still **fails open**: `mdataVendorId: isUuid ? trimmed : null`. **No `throw` for an unresolved vendor exists in the file.** Guard `verify-bill-vendor-entity-consistent.mjs` also absent. |
+
+**WHY THIS IS P0 RATHER THAN PAPERWORK.** The only copy of this control is the single live prod branch.
+**Rebuild from `db/migrations/` — CI's fresh-DB validation, a DR restore, a new Neon branch, a local
+`verify:local-ci` — and the FK is not there.** CI is validating a schema that differs from prod on a money
+constraint, and the protection would not survive a restore. Because it is absent from the ledger too,
+nothing will ever reconcile it. And the board says "closed", so every other lane will rationally skip it.
+
+**THE SIBLING PROVES IT IS AN INCOMPLETE LANDING, NOT A DISAGREEMENT ABOUT METHOD.**
+`202612170000_driver_finance_entity_consistent_driver_fk.sql` — the same programme, one week earlier — is in
+the repo **and** in both ledgers. CC-1 knows the pattern. Owner law grants full Neon access, so applying to
+prod was entirely legitimate; **the missing step is landing the file.**
+
+**IT ALSO EXPLAINS MY OWN OPEN CARD.** `LV-BILL-MDATA-VENDOR-FK-OPTOUT` reported 2 of 11 USMCA bills with
+`mdata_vendor_id = NULL`, bypassing the composite FK. **That is precisely the hole the un-merged service fix
+was written to close.** The two cards are one defect seen from both ends: the FK landed on prod, the code
+that guarantees the FK is populated did not. My card is not a duplicate — it is the live evidence that the
+missing half still matters.
+
+**★ THE SECOND-ORDER FINDING, which I think is worth more than the first.** Nothing we run can see this.
+Guards check the repo. CI builds from the repo. The board records intent. **No check compares prod's actual
+constraints against what `db/migrations/` would produce**, so any hand-applied DDL is invisible forever —
+and hand-applied DDL is *expected* now that every lane has full Neon access. The recommended guard is a
+**repo-vs-prod constraint-parity check**: every constraint on prod must be creatable by some file in
+`db/migrations/`. It would have caught this the same day, and it generalises to every lane and every future
+out-of-band change.
+
+**The lesson, stated plainly:** "merged" and "fixed" are different claims, and **"the board says closed" is
+not evidence of either.** A closed PR whose migration was hand-applied looks identical to a shipped fix from
+every angle except the two I checked — `gh pr view --json mergedAt` and `git cat-file -e origin/main:<file>`.
+Both take seconds. **Run them on every card that claims another lane closed something.**
