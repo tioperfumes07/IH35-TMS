@@ -2758,3 +2758,99 @@ side fails the tie-out by exactly $687.25. The tie-out is the assertion that dis
 - **`+ Record Bill Payment` did nothing on my first click** — and I did **not** file it. Correctly so:
   once a bill was selected it opened immediately. **The button requires a selection; it is not inert.**
   This is the second time this session that checking before filing prevented a false defect.
+
+---
+
+## 54. ★★ NEW DEFECT (HIGH) — voiding a bill payment does NOT post the reversing entry the UI explicitly promises
+
+**LIVE-PROVEN 2026-08-07, USMCA, on a payment I created myself minutes earlier. Baseline captured
+BEFORE the void, so this is a controlled before/after, not an inference.**
+
+### The experiment — designed to isolate void behaviour from posting behaviour
+
+Item 53 proved the A/P payment path **posts correctly**. So a void failure on that same path cannot be
+blamed on a broken poster. Per the standing order (*multiples of each voidable type, reverse exactly
+ONE, siblings live*), I first created a **second** payment so a sibling would remain:
+
+- `8b68a9d7` — **$33.40**, check 10077, ref `CC3-BATTERY-AP-3340`, JE `4da3efbd`
+- `70299eff` — **$12.60**, check 10078, ref `CC3-BATTERY-AP-1260-SIBLING`, JE `6fe7c21a`
+
+**Pre-void baseline on prod:** bill `paid_cents` **4600**; `source_transaction_type='bill_payment'`
+postings **4**, totalling **9200¢**.
+
+Then voided **only** `8b68a9d7` through the app's Void Bill Payment panel, which states verbatim:
+
+> *"Voiding posts an equal-and-opposite **reversing entry** and keeps the audit trail. This can't be
+> undone."*
+
+A reason was required and supplied.
+
+### Result — three of four invariants PASS, the accounting one FAILS
+
+| invariant | result |
+|---|---|
+| **WORM — row preserved, not deleted** | ✅ `8b68a9d7` still present, `status='void'`, `revoked_at 2026-08-07 02:48:58`, `revoked_reason` stored **verbatim** |
+| **Sibling untouched** | ✅ `70299eff` still `status='posted'`, `revoked_at` NULL, its 2 postings intact |
+| **Subledger rolled back** | ✅ bill `paid_cents` **4600 → 1260**; UI open balance $42.77 → **$76.17** (`88.77 − 12.60`) |
+| **REVERSING ENTRY POSTED** | ❌ **`bill_payment` postings still 4, still 9200¢ — byte-identical to the pre-void baseline** |
+
+**Nothing was created at the void timestamp.** The full posting list is only: `8b68a9d7` DR `2000`
+$33.40 / CR `1295` $33.40 (created **02:41:42**, the original), and `70299eff` DR/CR $12.60 (created
+**02:47:47**). **There is no 02:48 entry.**
+
+### The accounting consequence
+
+The GL still carries the **full** effect of a payment that has been voided:
+
+- **GL:** DR `2000` Accounts Payable = `3340 + 1260 = ` **$46.00**; CR `1295` Relay Fuel Wallet =
+  **$46.00**
+- **Subledger:** bill `paid_cents` = **$12.60**
+
+> **A/P control (GL) is understated by $33.40** against the subledger, and **the bank account is
+> credited $33.40 for cash that never left** — the payment was voided.
+
+The bank side is the worse half: the ledger asserts money went out of Relay Fuel Wallet on a payment
+the business retracted. **A bank reconciliation will not tie**, and the discrepancy is invisible from
+the A/P screens because the subledger looks correct.
+
+### Why this finding is unusually strong
+
+1. **The UI makes an explicit accounting promise and does not keep it.** This is not a silent gap —
+   the panel names the reversing entry as the mechanism. A user reading it has every reason to believe
+   the ledger was corrected.
+2. **The other half of the same sentence IS honoured** ("keeps the audit trail" — `revoked_at`,
+   `revoked_reason`, row preserved). So the void path was clearly written with care; the reversal is a
+   specific omission, not general neglect.
+3. **It isolates cleanly:** the same path **posts correctly on create** (item 53) and **fails to
+   reverse on void**. Posting works; reversal does not. That is a bounded defect with a known-good
+   reference right beside it.
+4. **Controlled before/after on a row I created**, so no origin ambiguity and no RLS doubt.
+
+### Relationship to `LV-VOID-NO-REVERSAL` — related, but this is much stronger evidence
+
+That card covers **$1,643.21** of GL residue from bills voided **out-of-band by direct SQL**, where
+one could argue the service was simply bypassed. **This is the in-app void path, on a freshly created
+payment, with the reversal explicitly advertised — and it still does not reverse.** It removes the
+"they bypassed the service" explanation entirely.
+
+**FIX:** the bill-payment void path must post the equal-and-opposite entry (DR bank / CR A/P for the
+voided amount) **through the existing poster** — the create side already builds DR `2000` / CR bank,
+so the reversal is that entry inverted. Link it back via `reverses_je_id` / `reversed_by_je_id` as the
+JE-void path does. **Write no new GL math.**
+**GUARD:** assert that for every `bill_payments` row with `revoked_at IS NOT NULL`, the net GL effect
+of its `source_transaction_id` is **zero** — original plus reversal must cancel. Live data assertion.
+**LANE: CC-1 / money — HIGH.**
+
+### Sub-finding — a THIRD void-column convention in one schema
+
+`accounting.bill_payments` uses **`revoked_at` / `revoked_by_user_id` / `revoked_reason`**, while
+`accounting.invoices`, `accounting.bills` and `accounting.payments` all use **`voided_at`** (invoices
+add `void_reason`).
+
+**This is a live trap, not pedantry.** Every "exclude voided rows" fix on the board
+(`LV-AR-OPEN-INCLUDES-VOIDED`, `LV-AP-OPEN-INCLUDES-VOIDED`,
+`LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS`) is written by looking for `voided_at`. **On
+`bill_payments` that column does not exist**, so a developer applying the same fix pattern here gets a
+column-does-not-exist error at best — or, if they reach for `status` instead, walks straight into the
+item-51 trap where status and the timestamp disagree. **Whoever fixes the void-filter family must be
+told this table is named differently.** Recorded so they are.
