@@ -378,17 +378,10 @@
     "type": "enforced"
   },
   {
-    "id": "LAW-2026-08-07-RECENT-ACTIVITY-LEDGER-SOURCED",
-    "title": "A board panel must not depend on an unauthenticated runtime GitHub call — a visibility change empties it silently, and an empty array is indistinguishable from 'nothing happened'; derive it from the ledger at generation time",
-    "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
-    "guard": "scripts/verify-recent-activity-ledger-sourced.mjs",
-    "type": "enforced"
-  },
-  {
-    "id": "LAW-2026-08-07-CLASS-SCOREBOARD-LIVE-SOURCED",
-    "title": "A status board must be served from the source of truth at REQUEST time, not rendered from a committed build artifact — a generated module can only change on a redeploy, so the Programs by-class grid silently drifted to 26 classes while the wave queue held 31; and where a fallback is shown, the board must say so",
-    "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
-    "guard": "scripts/verify-class-scoreboard-live-sourced.mjs",
+    "id": "LAW-2026-08-07-FINDINGS-REGISTER-CODER-SIGNOFF",
+    "title": "Every CC-3 finding is written to the board AND listed in docs/audit/CC-3-FINDINGS-CHECKLIST.md; the coder who fixes it ticks its own row with coder+PR+date+live-proof+guard, never CC-3; a tick without that evidence is a false completion claim; CC-3 re-verifies live and stamps VERIFIED or reopens",
+    "source_file": "docs/audit/CC-3-FINDINGS-CHECKLIST.md",
+    "guard": "scripts/verify-findings-register-signoff.mjs",
     "type": "enforced"
   },
   {
@@ -403,6 +396,20 @@
     "title": "A bill's vendor must resolve inside the bill's OWN entity — an unresolvable vendor is an error, never a NULL FK (which escapes the ACCT-F142 duplicate index, partial on mdata_vendor_id IS NOT NULL) and never a pass-through uuid (which the single-column bills_mdata_vendor_id_fkey accepts from another entity)",
     "source_file": "apps/backend/src/accounting/bills.service.ts",
     "guard": "scripts/verify-bill-vendor-entity-consistent.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-RECENT-ACTIVITY-LEDGER-SOURCED",
+    "title": "A board panel must not depend on an unauthenticated runtime GitHub call — a visibility change empties it silently, and an empty array is indistinguishable from 'nothing happened'; derive it from the ledger at generation time",
+    "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
+    "guard": "scripts/verify-recent-activity-ledger-sourced.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-CLASS-SCOREBOARD-LIVE-SOURCED",
+    "title": "A status board must be served from the source of truth at REQUEST time, not rendered from a committed build artifact — a generated module can only change on a redeploy, so the Programs by-class grid silently drifted to 26 classes while the wave queue held 31; and where a fallback is shown, the board must say so",
+    "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
+    "guard": "scripts/verify-class-scoreboard-live-sourced.mjs",
     "type": "enforced"
   },
   {
