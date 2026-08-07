@@ -148,7 +148,15 @@ function governingFiles() {
     const abs = path.join(ROOT, rel);
     if (fs.existsSync(abs) && !isExcluded(rel)) out.add(abs);
   }
-  for (const d of [".claude/skills", ".cursor/rules", ".windsurf/rules"]) {
+  // WIDENED 2026-08-06 (owner directive: "there are no more holds, remove the approval gate").
+  // The named SCAN_FILES above were already clean, and so were .cursor/rules — the abolition had
+  // landed in the LAW but not in the 50 per-block design docs under docs/specs, which still carried
+  // 80 affirmative "build-and-HOLD / Jorge merges / never self-merge" lines. An agent reading one of
+  // those docs would follow a gate that no longer exists, which is exactly how a deleted rule keeps
+  // operating. Scanning the whole of docs/specs + docs/lockdown makes the abolition enforceable
+  // rather than declared. History stays excluded via EXCLUDE_PREFIXES (docs/audit, docs/trackers,
+  // docs/incidents, db/migrations, .block-ready) — evidence is never rewritten.
+  for (const d of [".claude/skills", ".cursor/rules", ".windsurf/rules", "docs/specs", "docs/lockdown"]) {
     for (const abs of walk(path.join(ROOT, d))) {
       const rel = path.relative(ROOT, abs);
       if (!isExcluded(rel)) out.add(abs);

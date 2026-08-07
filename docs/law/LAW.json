@@ -327,5 +327,19 @@
     "source_file": "apps/backend/src/_helpers/scoped-company-context.ts",
     "guard": "scripts/verify-scoped-company-context-asserts-first.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-BUSINESS-DATE-PARSED-LOCAL",
+    "title": "A business date (YYYY-MM-DD) must never be pinned to UTC for display — it has no timezone, and new Date(iso+\"T00:00:00Z\") renders one day early for every viewer west of UTC, which silently showed the wrong day cash position in Central Time",
+    "source_file": "apps/frontend/src/lib/businessDate.ts",
+    "guard": "scripts/verify-business-date-parsed-local.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX",
+    "title": "NEVER GUESS · NEVER DEFER · ALWAYS VERIFY · ALWAYS FIX, NEVER PATCH — every change fixes the root cause at its source, ships a guard that fails on the bug and passes on the fix, and is proven live on prod; CI-green is the floor, not the verdict; when a fact cannot be verified the required output is UNVERIFIED, never a guess",
+    "source_file": "docs/law/NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX.md",
+    "guard": "scripts/verify-no-patch-or-defer-language.mjs",
+    "type": "enforced"
   }
 ]
