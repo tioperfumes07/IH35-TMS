@@ -5063,3 +5063,74 @@ it execute** — but the owning lane now has a controlled A/B, which is the chea
 **Note (minor, both surfaces):** `+ Add new category` renders as the **FIRST** row of both dropdowns.
 Product lock §7 says the inline `+ Add new ___` belongs at the **END** of a reference dropdown. Recorded as
 a consistency observation, not filed as a defect.
+
+---
+
+## 82. FAIL (P0 · money) — `LV-BANK-CATEGORIZE-POSTS-GL-WHILE-BANNER-SAYS-IT-DOES-NOT`
+
+**The Banking screen tells the operator that categorizing does not post to the ledger. It posts to the
+ledger. Proven by doing it once.**
+
+**WHAT THE SCREEN SAYS** (`/banking/transactions`, standing banner, verbatim):
+
+> **Categorize tags are not ledger posts — BANK_FEED_GL_POSTING_ENABLED stays OFF by default**
+> Categorize persists driver/unit/load/vendor fields immediately; **that alone does not post a balanced TMS JE.**
+
+**WHAT ACTUALLY HAPPENED.** I categorized exactly one row — *"Zelle payment to Dreamline Transit LLC for
+'INV-418334'"*, **$918.00**, 08/05/2026 — to `Other Operating Expense`, and clicked **Post**. UI counters
+moved honestly (For review 111 → 110, Categorized 4 → 5). Then, on prod:
+
+| evidence | value |
+|---|---|
+| `banking.bank_transactions.review_state` | `matched` |
+| `matched_journal_entry_id` | **set** |
+| journal entry created | **`ff746cfa`** |
+| its `created_at` | **`2026-08-07 15:13:10`** — the same second as the bank row's `updated_at` |
+| its memo | **`Bank categorization cb271ba0-691a-48b5-ad07-3669bbe6c569 posting`** |
+| its debits | **$918.00** |
+| USMCA `accounting.journal_entries` | **27 → 28** |
+
+A **new, balanced journal entry** was created by the categorize, and its own memo says so.
+
+**THE FLAG IS ON — AND THAT IS WHY THE BANNER IS WRONG, NOT THE POSTER.** `lib.feature_flags` /
+`lib.feature_flag_overrides` on prod:
+
+| scope | `BANK_FEED_GL_POSTING_ENABLED` |
+|---|---|
+| global `default_enabled` | **false** |
+| **USMCA** override | **TRUE** |
+| TRANSP override | **TRUE** |
+| TRK override | **TRUE** |
+
+**The posting is CORRECT behaviour.** The flag is enabled for every entity. The defect is that the screen
+asserts the opposite.
+
+**ROOT CAUSE — a hardcoded sentence, not a scoping bug.**
+`apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx:2155-2157` is a static `<p>`:
+the words "stays OFF by default" and "does not post a balanced TMS JE" are literal prose. **The banner never
+reads the flag it names.**
+
+**This is the exact masked-scope error the house standards call out** — *"Reading the global
+`default_enabled=false` and concluding 'OFF' is a masked-scope error — read `lib.feature_flag_overrides`
+PER ENTITY."* The banner reads like someone checked the global default and wrote it down. The global default
+IS `false`; the effective per-entity value is `TRUE` everywhere.
+
+**WHY THIS IS P0.** There are **110 transactions still in the for-review queue**. An operator who believes
+this banner will categorize them as mere tagging and thereby post **110 unintended journal entries** into a
+live general ledger — during a Ch.11 case with an active embezzlement reconciliation, where every GL entry
+is potential evidence. Unlike the other UI-truth defects I filed today, this one does not merely misinform:
+**acting on the false statement changes the books.**
+
+**Cruel detail:** the same banner block already warns that `matched_journal_entry_id` "is not proof that
+bank-feed GL posting is live." That caution is well-founded and correct — and it is the sentence that could
+lead a reviewer to dismiss the very evidence of this defect. I therefore did not stop at the linkage column:
+I confirmed a **new JE row**, its creation timestamp, its memo, its balanced debit, and the entity JE count
+moving 27 → 28.
+
+**FIX COMPLETELY:** derive the sentence from the effective per-entity flag
+(`resolveFlagEnabled(BANK_FEED_GL_POSTING_ENABLED, operating_company_id)`), and when posting is ON say so
+loudly — *"Categorizing WILL post a balanced journal entry to the ledger for this entity."* Never print a
+flag's global default as if it were the effective state. **Guard: assert this banner's text is rendered from
+the resolved per-entity flag value and that no literal 'stays OFF' string exists in the component.**
+
+**Routed:** money / GL → **CC-1** (posting truth), with FE for the render.

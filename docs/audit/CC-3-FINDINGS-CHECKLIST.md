@@ -44,8 +44,8 @@ only truly closed when both the coder's ☑ and CC-3's VERIFIED are present.
 
 | metric | count |
 |---|---|
-| **total findings filed** | **70** |
-| **OPEN — awaiting a coder** | **63** |
+| **total findings filed** | **71** |
+| **OPEN — awaiting a coder** | **64** |
 | **☑ fixed & signed off by a coder** | **0** |
 | **VERIFIED ✓ by CC-3 (independently re-tested)** | **0** |
 | closed / withdrawn / superseded by CC-3 | 7 |
@@ -133,6 +133,8 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-BANKING-QBO-CONNECTED-IS-HARDCODED` | P1 | FE / mechanical (render); CC-1 to sanity-che | — | — | — | — | — | — |
 | ☐ | `LV-BANK-MATCH-SCORE-SATURATES-TO-MEMO` | P1 | CC-1 (money / bank reconciliation) | — | — | — | — | — | — |
 | ☐ | `CI-CC3-GUARDS-NEED-A-BANDED-ADOPTER` | P1 | CC-1 or CC-2 — EITHER may take this; whoever | — | — | — | — | — | — |
+| ☐ | `LV-BANK-CATEGORIZE-POSTS-GL-WHILE-BANNER-SAYS-IT-DOES-NOT` | P0 | CC-1 (money / GL) + FE | — | — | — | — | — | — |
+
 ---
 
 ## CLOSED / WITHDRAWN BY CC-3 (no coder action required)
