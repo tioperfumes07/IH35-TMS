@@ -1718,9 +1718,7 @@
     "1445": [
       "1445-verify-acct-surfaces-structural.mjs",
       "1445-verify-expense-category-picker-canonical.mjs"
-    ],
-    "2701": "2701-verify-no-hold-language-in-active-blocks.mjs",
-    "2703": "2703-verify-no-patch-or-defer-language.mjs"
+    ]
   },
   "_band": {
     "cursor": "even (n%2===0)",

@@ -87,8 +87,13 @@ subledger that reads `paid` against a ledger still carrying the debt in full.
 
 ---
 
-**Enforcement:** `scripts/verify-no-patch-or-defer-language.mjs` (registered `enforced` in
-`docs/law/LAW.json`, wired at `scripts/verify-steps/2703-verify-no-patch-or-defer-language.mjs`). It
+**Enforcement:** `scripts/verify-no-patch-or-defer-language.mjs`, registered `enforced` in `docs/law/LAW.json`. **STATUS —
+READ THIS BEFORE CITING THE LAW AS ENFORCED: the guard is written and self-tests 17/17, but it is NOT yet
+wired into CI and therefore enforces nothing today.** CC-3 cannot wire it — the verify-step band map
+allocates every integer to Cursor / CC-1 / CC-2 and none to CC-3 (board card
+`CI-CC3-HAS-NO-VERIFY-STEP-BAND`). A banded lane must reserve two numbers in its own band and wire it.
+Recording that gap here rather than letting a green `verify-law-registry` imply enforcement is itself an
+application of §1 of this law. Once wired, it
 bans affirmative defer/patch instructions in **ACTIVE** work orders, while explicitly permitting
 sentences that RECORD this law, honest `UNVERIFIED` disclosures, and owner-written tracker deferrals —
 because banning those would delete the very record that makes the law legible.
