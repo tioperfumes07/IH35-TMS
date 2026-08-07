@@ -14,5 +14,14 @@ export default {
     // is held by another open PR (Rule 26); same family of invariant, so it belongs with this step.
     await ctx.run("node", ["scripts/verify-worm-coverage-ratchet.mjs"]);
     await ctx.run("node", ["scripts/verify-worm-coverage-ratchet.mjs", "--selftest"]);
+
+    // ACCT-F156 — the OTHER half of void-not-delete. The checks above stop a financial row being
+    // DELETED; this one stops a voided row being COUNTED. Verifying the AP tie-out on prod, 3 bills
+    // appeared to drift $235.00 and every "drift" was exactly a voided bill_line still inside the sum;
+    // filtered, 16,256 of 16,258 tie to the cent with 0 drift. Six live sites had the same gap,
+    // including recomputeInvoiceTotals — an invoice header that would not shrink when a line is
+    // soft-deleted. Same invariant family as this step, so it is hosted here.
+    await ctx.run("node", ["scripts/verify-money-line-sums-exclude-voided.mjs"]);
+    await ctx.run("node", ["scripts/verify-money-line-sums-exclude-voided.mjs", "--selftest"]);
   },
 };
