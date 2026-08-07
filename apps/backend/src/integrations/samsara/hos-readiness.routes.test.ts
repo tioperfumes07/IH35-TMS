@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { captureRoutes as captureFastifyRoutes } from "../../../test-helpers/capture-route-handler.js";
 
 // Mock the scope helpers so we can drive the handler with a fake client (no real pool / auth).
 const fakeUser = { uuid: "00000000-0000-4000-8000-0000000000aa", role: "Owner" };
@@ -20,10 +21,10 @@ vi.mock("../../auth/db.js", () => ({
 const { registerSamsaraHosReadinessRoutes } = await import("./hos-readiness.routes.js");
 
 function captureRoute() {
-  let handler: ((req: unknown, reply: unknown) => Promise<unknown>) | null = null;
-  const app = { get: (_path: string, h: typeof handler) => { handler = h; } } as never;
-  registerSamsaraHosReadinessRoutes(app);
-  return () => handler!;
+  // Shared stub models Fastify's (path, options?, handler) overload — see capture-route-handler.ts.
+  const capture = captureFastifyRoutes();
+  registerSamsaraHosReadinessRoutes(capture.app as never);
+  return () => capture.handler() as (req: unknown, reply: unknown) => Promise<unknown>;
 }
 
 function makeReply() {

@@ -123,7 +123,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         label: "Policy",
         render: (claim) => (
           <Link className="text-slate-700 underline" to={`/safety/insurance/policies/${claim.policy_id}`}>
-            {claim.policy_id.slice(0, 8)}
+            {claim.policy_display_id ?? claim.policy_id.slice(0, 8)}
           </Link>
         ),
       },
@@ -134,7 +134,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
           <EntityLink
             kind="unit"
             id={claim.unit_id ?? undefined}
-            label={claim.unit_id ? claim.unit_id.slice(0, 8) : undefined}
+            label={claim.unit_display_id ?? undefined}
           />
         ),
       },
@@ -145,7 +145,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
           <EntityLink
             kind="driver"
             id={claim.driver_id ?? undefined}
-            label={claim.driver_id ? claim.driver_id.slice(0, 8) : undefined}
+            label={claim.driver_display_name ?? undefined}
           />
         ),
       },
@@ -156,7 +156,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
           <EntityLink
             kind="load"
             id={claim.load_id ?? undefined}
-            label={claim.load_id ? claim.load_id.slice(0, 8) : undefined}
+            label={claim.load_display_id ?? undefined}
           />
         ),
       },

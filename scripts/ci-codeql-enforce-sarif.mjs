@@ -13,6 +13,15 @@
 // Fails on results whose effective severity is error (CodeQL's default failure bar, matching what
 // code-scanning would surface as an alert). Warnings and notes are printed, not fatal.
 //
+// SUPPRESSIONS (CI-F03b, 2026-08-06): SARIF carries a standard `result.suppressions` array, which is
+// how CodeQL represents an in-source `// codeql[rule-id]` comment. This script used to ignore it and
+// count every result, which meant the repo had NO supported way to mark a false positive — the only
+// way to clear one was to change the flagged code. That is a dangerous incentive when the finding sits
+// on a security control: js/user-controlled-bypass fires on the OAuth callback's
+// `parsedState.state !== storedState`, which IS the CSRF check, and "fixing" it would break login.
+// Suppressed results are now honoured AND PRINTED — never silently dropped — so a suppression is an
+// auditable statement in the log rather than an invisible hole.
+//
 // --selftest proves it can go red: a synthetic SARIF with one error-level result must exit 1, and the
 // same file with that result removed must exit 0.
 
@@ -20,6 +29,18 @@ import fs from "node:fs";
 import path from "node:path";
 
 const LABEL = "ci-codeql-enforce-sarif";
+
+/**
+ * True when the result carries an accepted in-source suppression (a `// codeql[rule-id]` comment).
+ * Only `inSource` counts: an `external` suppression would live outside the repo and could not be
+ * reviewed in a diff.
+ */
+function suppressionOf(result) {
+  const list = Array.isArray(result.suppressions) ? result.suppressions : [];
+  return list.find(
+    (s) => (s.kind === "inSource" || s.kind === undefined) && (s.status === undefined || s.status === "accepted")
+  );
+}
 
 function severityOf(result, rulesById) {
   // SARIF precedence: result.level, then the rule's defaultConfiguration.level, then "warning".
@@ -42,9 +63,12 @@ function analyze(sarifPath) {
     for (const result of run.results || []) {
       total++;
       const level = severityOf(result, rulesById);
+      const suppression = suppressionOf(result);
       const loc = result.locations?.[0]?.physicalLocation;
       findings.push({
         level,
+        suppressed: Boolean(suppression),
+        justification: suppression?.justification || "",
         ruleId: result.ruleId || result.rule?.id || "(unknown rule)",
         message: (result.message?.text || "").split("\n")[0],
         file: loc?.artifactLocation?.uri || "(no location)",
@@ -88,8 +112,45 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL}: SELFTEST FAIL — clean SARIF reported findings`);
     process.exit(1);
   }
+  // An in-source suppression must clear the SAME planted finding — and must be reported as suppressed,
+  // not dropped. Without this the repo has no way to mark a false positive except editing the code.
+  const withSuppressed = JSON.parse(JSON.stringify(withError));
+  withSuppressed.runs[0].results[0].suppressions = [
+    { kind: "inSource", status: "accepted", justification: "reviewed false positive" },
+  ];
+  const p3 = path.join(tmp, "suppressed.sarif");
+  fs.writeFileSync(p3, JSON.stringify(withSuppressed));
+  const sup = analyze(p3);
+  const supErrors = sup.findings.filter((f) => f.level === "error" && !f.suppressed);
+  if (supErrors.length !== 0) {
+    console.error(`${LABEL}: SELFTEST FAIL — in-source suppression did not clear the finding`);
+    process.exit(1);
+  }
+  if (sup.findings.filter((f) => f.suppressed).length !== 1) {
+    console.error(`${LABEL}: SELFTEST FAIL — suppressed finding was dropped instead of reported`);
+    process.exit(1);
+  }
+  // A suppression the tool REJECTED must NOT clear the finding.
+  const rejected = JSON.parse(JSON.stringify(withError));
+  rejected.runs[0].results[0].suppressions = [{ kind: "inSource", status: "rejected" }];
+  const p4 = path.join(tmp, "rejected.sarif");
+  fs.writeFileSync(p4, JSON.stringify(rejected));
+  if (analyze(p4).findings.filter((f) => f.level === "error" && !f.suppressed).length !== 1) {
+    console.error(`${LABEL}: SELFTEST FAIL — a REJECTED suppression wrongly cleared the finding`);
+    process.exit(1);
+  }
+  // An EXTERNAL suppression lives outside the repo and cannot be reviewed in a diff — must not clear.
+  const external = JSON.parse(JSON.stringify(withError));
+  external.runs[0].results[0].suppressions = [{ kind: "external", status: "accepted" }];
+  const p5 = path.join(tmp, "external.sarif");
+  fs.writeFileSync(p5, JSON.stringify(external));
+  if (analyze(p5).findings.filter((f) => f.level === "error" && !f.suppressed).length !== 1) {
+    console.error(`${LABEL}: SELFTEST FAIL — an EXTERNAL suppression wrongly cleared the finding`);
+    process.exit(1);
+  }
   fs.rmSync(tmp, { recursive: true, force: true });
-  console.log(`${LABEL}: selftest PASS — RED on a planted error-level finding, GREEN on a clean SARIF.`);
+  console.log(`${LABEL}: selftest PASS — RED on a planted error-level finding, GREEN on a clean SARIF, ` +
+    `in-source suppression clears + is reported, rejected/external suppressions do NOT clear.`);
   process.exit(0);
 }
 
@@ -112,13 +173,20 @@ if (sarifs.length === 0) {
 
 let errors = 0;
 let warnings = 0;
+let suppressed = 0;
 let scanned = 0;
 for (const f of sarifs) {
   const { total, findings } = analyze(path.join(dir, f));
   scanned += total;
   for (const x of findings) {
     const line = `  [${x.level}] ${x.ruleId} — ${x.file}:${x.line} — ${x.message}`;
-    if (x.level === "error") {
+    if (x.suppressed) {
+      // PRINTED, never silent: a suppression must be as visible in the log as the finding it clears,
+      // so reviewing "what are we ignoring?" is reading the output, not auditing the source tree.
+      suppressed++;
+      console.log(`  [suppressed:${x.level}] ${x.ruleId} — ${x.file}:${x.line} — ${x.message}` +
+        (x.justification ? `\n      justification: ${x.justification}` : ""));
+    } else if (x.level === "error") {
       errors++;
       console.error(line);
     } else {
@@ -128,13 +196,48 @@ for (const f of sarifs) {
   }
 }
 
-if (errors > 0) {
-  console.error(
-    `\n${LABEL} FAILED — ${errors} error-level CodeQL finding(s) across ${sarifs.length} SARIF file(s).`
-  );
+// SHRINK-ONLY RATCHET. Pre-existing error-level findings are baselined per rule id so a NEW finding
+// is never hidden inside a wall of old red — the failure mode where a permanently-red check stops
+// being read. A rule may only ever go DOWN: exceeding its baseline fails, and coming in under it
+// fails too, loudly, demanding the baseline be lowered so the win is locked in.
+const baselinePath = path.join(path.dirname(process.argv[1]), "ci-codeql-baseline.json");
+let baseline = {};
+if (fs.existsSync(baselinePath)) {
+  baseline = JSON.parse(fs.readFileSync(baselinePath, "utf8")).baseline || {};
+}
+
+const byRule = new Map();
+for (const f of sarifs) {
+  for (const x of analyze(path.join(dir, f)).findings) {
+    if (x.level !== "error") continue;
+    byRule.set(x.ruleId, (byRule.get(x.ruleId) || 0) + 1);
+  }
+}
+
+const regressions = [];
+const improvements = [];
+for (const [ruleId, count] of byRule) {
+  const allowed = baseline[ruleId]?.count ?? 0;
+  if (count > allowed) regressions.push(`${ruleId}: ${count} error-level finding(s), baseline allows ${allowed}`);
+}
+for (const [ruleId, entry] of Object.entries(baseline)) {
+  const now = byRule.get(ruleId) || 0;
+  if (now < entry.count) improvements.push(`${ruleId}: now ${now}, baseline says ${entry.count} — LOWER the baseline to lock this in`);
+}
+
+if (regressions.length) {
+  console.error(`\n${LABEL} FAILED — CodeQL findings ABOVE baseline:\n`);
+  for (const r of regressions) console.error(`  - ${r}`);
+  console.error(`\nFix the finding. Do NOT raise ${path.basename(baselinePath)} to make this pass.\n`);
+  process.exit(1);
+}
+if (improvements.length) {
+  console.error(`\n${LABEL} FAILED — a finding was FIXED but the baseline still allows it:\n`);
+  for (const r of improvements) console.error(`  - ${r}`);
+  console.error(`\nLower the count in ${path.basename(baselinePath)} so the improvement cannot silently regress.\n`);
   process.exit(1);
 }
 console.log(
-  `${LABEL} OK — ${sarifs.length} SARIF file(s), ${scanned} result(s), 0 error-level findings ` +
-    `(${warnings} warning/note).`
+  `${LABEL} OK — ${sarifs.length} SARIF file(s), ${scanned} result(s), 0 unsuppressed error-level ` +
+    `findings (${warnings} warning/note, ${suppressed} suppressed in-source).`
 );
