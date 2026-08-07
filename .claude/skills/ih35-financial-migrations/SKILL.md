@@ -6,16 +6,20 @@ description: >-
   append-only rules, genesis-anchor-over-backfill for audit tables, feature-flag seeding (default
   OFF), the fresh-DB-CI-only validation rule, and the db:migrate-hits-prod landmine. Load this for
   ANY change under db/migrations/, or any touch to accounting.* / catalogs.* / a new schema/table/
-  grant. Migrations are financial-cluster: NEVER self-merge — build, validate locally, show the full
-  SQL, wait for the owner's explicit OK. Bundles a copy-paste migration template + an RLS/grants snippet.
+  grant. OWNER LAW (2026-08-03, FINAL): migrations are financial-cluster but coders have FULL Neon
+  access and merge authority — build, validate locally, apply on Neon yourself, merge on green; no
+  owner hold, no "wait for OK." Bundles a copy-paste migration template + an RLS/grants snippet.
 ---
 
 # IH35-TMS — Financial migration authoring
 
-**A migration is a financial-cluster change. NEVER self-merge one** (constitution §1.4). The flow is
-always: fresh branch → author → validate on a **local** Postgres (never prod) → show the owner
-`git diff --staged --stat` + the **full SQL** → **wait for explicit "OK to merge"** → they merge.
-Preparing the PR and getting CI green is fine; merging is not yours.
+**OWNER LAW (2026-08-03, FINAL — supersedes constitution §1.4's old wording): a migration is still a
+financial-cluster change, but coders have FULL Neon access and merge authority — no owner hold.** The flow
+is: fresh branch → author → validate on a **local** Postgres (never prod, twice for idempotency) → get the
+independent code-review + financial-agent pass + green CI (the 18-key evidence block IS the safeguard, not
+an owner click) → **apply the migration on Neon yourself** → merge on green → post the migration SHA →
+GUARD re-proves live AFTER. Do not tell the owner to hand-apply or to click "OK to merge" — that step no
+longer exists.
 
 Bundled resources (read/copy them — `.sql.tmpl` so the hold-merge-gate treats them as templates, not a
 runnable migration; rename to `.sql` under `db/migrations/` when you use them):
@@ -61,7 +65,8 @@ Every statement must be safe to run twice:
   append-only on such a schema you must **explicitly `REVOKE UPDATE, DELETE ... FROM ih35_app`** after the
   grant. (Schemas without a default grant — e.g. `ops` — stay append-only from the narrow grant alone.)
   **Always verify with `information_schema.role_table_grants`, not by reading the migration** — the effective
-  grant is what matters. A `REVOKE` trips the hold-merge-gate (→ PROTECTED), which is correct for a HOLD migration.
+  grant is what matters. A `REVOKE` trips the hold-merge-gate classification (→ PROTECTED/logged) — that is
+  informational tagging, not a block; the migration firewall check (not a label) is the only hard-fail.
 - For a hash-chained audit table, use a **genesis-anchor** (a sequence + trigger assigning `chain_seq`
   on INSERT), **never a backfill UPDATE** — a backfill would violate the write-once property the chain exists
   to prove. (See B19-V1/V2 for the reference implementation.)
@@ -110,7 +115,8 @@ connection, verify `SELECT current_database(), inet_server_addr();`. Validate ag
 - Prove idempotency: apply it **twice** — the second run must be a clean no-op.
 - Confirm `FORCE_RLS = true` and the grant set (`SELECT has_table_privilege('ih35_app','schema.table','DELETE')`
   should be false for evidence tables).
-- **Never set `ALLOW_PROD_MIGRATE=1` locally.** Prod DDL/seed is the owner's hand; you stop at the local DB.
+- **Never set `ALLOW_PROD_MIGRATE=1` locally.** Local validation stays on the local DB; prod apply happens
+  deliberately via the coder's own Neon-apply step (with SHA + proof posted), never via a stray local flag.
 
 ## 8. Guards & schema-parity (keep CI green)
 After adding a table/column, update the static guards so CI stays green:
@@ -125,11 +131,12 @@ Apply view-touching migrations on the local CI DB first. Views use `security_inv
 
 ---
 
-## Pre-merge checklist (paste the answers to the owner)
+## Pre-merge checklist (proof you post in the PR/commit — no owner sign-off step)
 - [ ] Number strictly above main's max **and** all in-flight PRs (re-checked at push).
 - [ ] Idempotent — applied twice locally, second run a no-op.
 - [ ] FORCED RLS + entity policies + `ih35_app` grants (SELECT/INSERT[/UPDATE]; **no DELETE** on evidence).
-- [ ] Any behavior/money logic behind a **default-OFF** flag.
+- [ ] Any behavior/money logic behind a **default-OFF** flag (flip only after the owner's chat decision).
 - [ ] `verify:schema-parity` regenerated; new table in `canonical-relations.json`; new guard registered.
 - [ ] Validated on a **local** DB (proved `current_database()` was NOT prod).
-- [ ] Full SQL + `git diff --staged --stat` shown to the owner. **Waiting for explicit "OK to merge" — not self-merging.**
+- [ ] Full SQL + `git diff --staged --stat` in the PR body (evidence, not a request for permission).
+- [ ] Applied on Neon yourself (FULL access — OWNER LAW 2026-08-03); migration SHA posted; merged on green.

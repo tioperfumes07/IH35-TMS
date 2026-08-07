@@ -621,7 +621,12 @@ export function DispatchBoard({
           resource: "loads",
           ids,
           action: "set_status",
-          payload: { transition: pendingTransition },
+          payload: {
+            transition: pendingTransition,
+            ...(pendingTransition === "delivered_pending_docs" || pendingTransition === "completed_docs_received"
+              ? { delivered_at: new Date().toISOString() }
+              : {}),
+          },
           reason,
           operatingCompanyId: companyId,
           invalidateKeys: [["loads"]],

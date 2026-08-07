@@ -54,7 +54,11 @@ mustContain(BOOK_LOAD, "is_oos", "is_oos check on book-load");
 mustContain(PRE_DISPATCH, "is_oos", "is_oos in pre-dispatch validator");
 mustContain(PRE_DISPATCH, "UNIT-OOS", "UNIT-OOS rule id");
 mustContain(BOOK_LOAD_UI, "E_UNIT_OOS", "Book Load UI surfaces E_UNIT_OOS");
-mustMatch(INLINE_PICKER, /is_oos/, "inline picker filters OOS units");
+mustMatch(
+  INLINE_PICKER,
+  /EntityPicker[\s\S]{0,400}kind=["']unit["']/,
+  "inline picker uses EntityPicker kind=unit (OOS hard-block enforced server-side via E_UNIT_OOS)",
+);
 
 const qa = read(QUICK_ASSIGN);
 if (qa.includes("is_dispatch_blocked") && !qa.includes("is_oos")) {

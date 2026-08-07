@@ -1,21 +1,29 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "./client";
 
+// Must stay aligned with apps/backend/src/mdata/loads.routes.ts loadStatusSchema
+// and mdata.load_status_enum (incl. WIRE-07 delivery-stamp statuses).
 export type LoadStatus =
   | "draft"
   | "booked"
   | "planned"
+  | "unassigned"
   | "assigned"
+  | "assigned_not_dispatched"
   | "dispatched"
   | "at_pickup"
   | "in_transit"
   | "at_delivery"
   | "delivered"
+  | "delivered_pending_docs"
+  | "completed_docs_received"
   | "invoiced"
   | "paid"
   | "closed"
   | "cancelled"
-  | "abandoned";
+  | "abandoned"
+  | "driver_walkoff"
+  | "driver_no_show";
 
 export type LoadStop = {
   id: string;

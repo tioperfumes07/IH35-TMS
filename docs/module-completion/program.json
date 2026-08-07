@@ -14,56 +14,85 @@
     {
       "id": "PROG-S01",
       "title": "/program board renders live block registry counts",
-      "layers": ["DOD-A", "DOD-B"],
+      "layers": [
+        "DOD-A",
+        "DOD-B"
+      ],
       "spec": "ProgramBoardPage · program-system-help breadth pass",
       "status": "OPEN",
       "evidence": "scaffold — auditor PASS: ~1029 registered blocks, sequence/by-module views",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "PROG-S02",
       "title": "Block reconciliation snapshot matches committed block-reconciliation-data.json",
-      "layers": ["DOD-C", "VERIFY-6"],
+      "layers": [
+        "DOD-C",
+        "VERIFY-6"
+      ],
       "spec": "npm run reconcile:blocks shared JSON",
       "status": "OPEN",
       "evidence": "scaffold — not proven after this measurability pass regen",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "PROG-S03",
       "title": "/program/module-completion N-of-M manifests visible",
-      "layers": ["DOD-A", "DOD-C"],
+      "layers": [
+        "DOD-A",
+        "DOD-C"
+      ],
       "spec": "ModuleCompletionPage · verify-module-completion",
       "status": "OPEN",
       "evidence": "scaffold — 13 new manifests added 2026-08-02; UI sync UNVERIFIED",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "PROG-S04",
       "title": "Per-block table shows honest status (not fake-green from title-match PRs)",
-      "layers": ["DOD-B", "VERIFY-6"],
+      "layers": [
+        "DOD-B",
+        "VERIFY-6"
+      ],
       "spec": "reconcile-block-status truth-first law",
       "status": "OPEN",
       "evidence": "scaffold — overrides + superseded blocks must reflect in UI",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "PROG-S05",
       "title": "Merged PR spine tab mirrors reconcile merged_prs slice",
-      "layers": ["DOD-C"],
+      "layers": [
+        "DOD-C"
+      ],
       "spec": "Program tracker tab 01 Merged PRs",
       "status": "OPEN",
       "evidence": "scaffold — not proven",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "PROG-VERIFY-01",
       "title": "Program module VERIFY-1..8 (Owner/Admin)",
-      "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
+      "layers": [
+        "VERIFY-1",
+        "VERIFY-2",
+        "VERIFY-3",
+        "VERIFY-4",
+        "VERIFY-5",
+        "VERIFY-6",
+        "VERIFY-7",
+        "VERIFY-8"
+      ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "OPEN",
       "evidence": "scaffold — Layer A PASS; individual block drill UNVERIFIED",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     }
   ],
   "pass_count": 0,

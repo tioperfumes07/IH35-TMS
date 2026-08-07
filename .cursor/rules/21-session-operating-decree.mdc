@@ -3,37 +3,43 @@ description: Permanent speed/queue operating decree — who builds, who merges, 
 alwaysApply: true
 ---
 
-# RULE 21 — SESSION OPERATING DECREE (2026-07-26)
+# RULE 21 — SESSION OPERATING DECREE (2026-07-26; merge/Neon roles SUPERSEDED 2026-08-03)
+
+**SUPERSESSION NOTE (2026-08-03):** the roles table and STOP list below predate **OWNER LAW (FINAL,
+2026-08-03)**: NO HOLDS, NO `JORGE-APPROVED`, every coder (Cursor / Cascade / Devin / Claude Coder) has FULL
+Neon access and merges on green in every lane, including financial. Where this file says "Devin merges" or
+"Neon prepare+apply when ordered," read it as **any coder merges on green / applies on Neon themselves,
+standing order, no waiting.** Canonical: `.cursor/rules/00-operating-method-LAW.mdc` (governance section).
 
 **Canonical:** `docs/specs/SESSION-OPERATING-DECREE-SPEED-QUEUE-2026-07-26.md`  
 **Shared law:** `docs/specs/UNIFIED-PLATFORM-OPERATING-LAW-2026-07-26.md`  
 **Owner questions:** `docs/specs/PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26.md`  
-**Hold gate:** `docs/specs/HOLD-MERGE-GATE.md` (label **not** required)
+**Hold gate:** `docs/specs/HOLD-MERGE-GATE.md` (label **DELETED**, migration firewall stays)
 
-## Roles
+## Roles (2026-08-03: every coder does all rows below — no role split on merge/Neon)
 
 | Role | Who |
 |---|---|
 | Answer unanswered questions **before code** (batch inventory) | **Jorge** (once per packet) |
-| Neon prepare+apply when ordered | **Cursor** (standing order) |
-| Merge / rebase when CI green | **Devin** |
-| Build + Neon read proofs | **Cursor** |
+| Neon prepare+apply, standing order, no waiting to be ordered | **every coder** (Cursor, Claude Coder, Devin, Cascade) |
+| Merge on green (every lane, including financial) | **every coder** |
+| Build + Neon read/write proofs | **every coder** |
 | Plan / CPA / inventories | **Claude** |
 
-## Owner 2026-07-26
+## Owner 2026-08-03 (FINAL)
 
-- **`JORGE-APPROVED` label NOT required** for merge. Jorge does not review PRs.
-- Ask all unanswered questions at **block invent / module inventory** — then code.
-- `hold-merge-gate` only hard-fails if held migration lacks db-migrate firewall.
+- **`JORGE-APPROVED` label is DELETED**, not merely "not required." Jorge does not review PRs.
+- Ask all unanswered questions at **block invent / module inventory** — then code, then merge on green.
+- `hold-merge-gate` only hard-fails if held migration lacks db-migrate firewall (the one safeguard that stays).
 
 ## STOP
 
 1. No re-asking locked money policy at merge  
 2. No L1–L8 essays — DoD A–E + VERIFY 1–8  
 3. No tab-by-tab re-audit of known classes  
-4. Agents never self-merge money without Devin  
+4. **Removed 2026-08-03** — "self-merge without Devin" is no longer a STOP; every coder merges on green in every lane, financial included  
 5. Rule 17 — no hotfile guard thrash  
 
 ## Neon
 
-Reads free via MCP. Prepare+apply when Jorge ordered. No Jorge copy-paste.
+Reads free via MCP. Every coder prepares AND applies themselves, standing order — no waiting for Jorge to say "apply."

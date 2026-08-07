@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -10,12 +11,24 @@ type ScopeClient = { query: <T = Record<string, unknown>>(sql: string, values?: 
 // LST-CAT-06 — catalogs.dispatcher_error_reasons is per-entity + FORCE RLS company_scope.
 // Prefer related LOAD's operating_company_id (owner ruling); else driver/customer; else caller.
 async function setOperatingCompanyGuc(client: ScopeClient, operatingCompanyId: string): Promise<void> {
+  // This is a shared SETTER, not a scope decision. Every caller authorises first: scopeToCallerCompany
+  // goes through resolveOperatingCompanyId (validates against org.user_accessible_company_ids() and
+  // throws forbidden_company_membership), and scopeToRelatedEntity now calls assertCompanyMembership on
+  // the derived company before reaching here (MDATA-F03). An assert inside this one-line helper would
+  // re-check what the caller just established.
+  // membership-scope-exempt: shared setter; callers authorise before invoking it (see above)
   await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
 }
 
 async function scopeToCallerCompany(client: ScopeClient, userId: string, requested?: string | null): Promise<string | null> {
   const operatingCompanyId = await resolveOperatingCompanyId(client, userId, requested ?? null);
   if (!operatingCompanyId) return null;
+  // resolveOperatingCompanyId IS the membership check for this path: a caller-supplied company is
+  // validated against org.user_accessible_company_ids() and throws the same forbidden_company_membership
+  // error as assertCompanyMembership; when omitted it resolves from that same accessible set. Calling
+  // assertCompanyMembership after it would re-query the identical source. The caller-supplied-id path
+  // that genuinely lacked a check is scopeToRelatedEntity below, which now asserts explicitly (MDATA-F03).
+  // membership-scope-exempt: validated inside resolveOperatingCompanyId (same accessible-company source)
   await setOperatingCompanyGuc(client, operatingCompanyId);
   return operatingCompanyId;
 }
@@ -37,6 +50,11 @@ async function scopeToRelatedEntity(
     );
     const opco = res.rows[0]?.operating_company_id;
     if (!opco) return null;
+    // CROSS-ENTITY WRITE GATE. The company here is derived from a CALLER-SUPPLIED id, so without this a
+    // user in company A could pass company B's load/driver/customer id and have the GUC — and the
+    // subsequent INSERT — land in company B. Asserted INSIDE the resolver so no call path can skip it.
+    // Throws 403 forbidden_company_membership.
+    await assertCompanyMembership(client, userId, opco);
     await setOperatingCompanyGuc(client, opco);
     return opco;
   }
@@ -47,6 +65,11 @@ async function scopeToRelatedEntity(
     );
     const opco = res.rows[0]?.operating_company_id;
     if (!opco) return null;
+    // CROSS-ENTITY WRITE GATE. The company here is derived from a CALLER-SUPPLIED id, so without this a
+    // user in company A could pass company B's load/driver/customer id and have the GUC — and the
+    // subsequent INSERT — land in company B. Asserted INSIDE the resolver so no call path can skip it.
+    // Throws 403 forbidden_company_membership.
+    await assertCompanyMembership(client, userId, opco);
     await setOperatingCompanyGuc(client, opco);
     return opco;
   }
@@ -57,6 +80,11 @@ async function scopeToRelatedEntity(
     );
     const opco = res.rows[0]?.operating_company_id;
     if (!opco) return null;
+    // CROSS-ENTITY WRITE GATE. The company here is derived from a CALLER-SUPPLIED id, so without this a
+    // user in company A could pass company B's load/driver/customer id and have the GUC — and the
+    // subsequent INSERT — land in company B. Asserted INSIDE the resolver so no call path can skip it.
+    // Throws 403 forbidden_company_membership.
+    await assertCompanyMembership(client, userId, opco);
     await setOperatingCompanyGuc(client, opco);
     return opco;
   }

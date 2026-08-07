@@ -163,6 +163,7 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
           pu.state AS pickup_state
         FROM mdata.loads l
         JOIN mdata.customers c ON c.id = l.customer_id
+                              AND c.operating_company_id = l.operating_company_id
         LEFT JOIN LATERAL (
           SELECT scheduled_arrival_at, appointment_start_at, city, state
           FROM mdata.load_stops
@@ -262,6 +263,7 @@ export async function reschedulePlannerLoad(
           COALESCE(pu.scheduled_arrival_at, pu.appointment_start_at)::text AS start_at
         FROM mdata.loads l
         JOIN mdata.customers c ON c.id = l.customer_id
+                              AND c.operating_company_id = l.operating_company_id
         LEFT JOIN LATERAL (
           SELECT id, scheduled_arrival_at, appointment_start_at
           FROM mdata.load_stops
@@ -396,6 +398,7 @@ export async function reschedulePlannerLoad(
           pu.state AS pickup_state
         FROM mdata.loads l
         JOIN mdata.customers c ON c.id = l.customer_id
+                              AND c.operating_company_id = l.operating_company_id
         LEFT JOIN LATERAL (
           SELECT scheduled_arrival_at, appointment_start_at, city, state
           FROM mdata.load_stops

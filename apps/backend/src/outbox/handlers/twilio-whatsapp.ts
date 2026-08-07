@@ -1,5 +1,10 @@
 import Twilio from "twilio";
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxHandlerResult, OutboxPayload } from "./registry.js";
+import { isWhatsappChannelConfigured } from "./twilio-channel-config.js";
+
+// Re-exported so existing importers keep working; the definition lives in the leaf module to avoid
+// an import cycle through the handler registry.
+export { isWhatsappChannelConfigured };
 
 const ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
@@ -41,10 +46,17 @@ function renderTemplate(templateName: string, variables: Record<string, unknown>
 }
 
 export class TwilioWhatsappHandler implements OutboxEventHandler {
+  /**
+   * A driver message is not optional telemetry — someone is waiting on it. Without
+   * credentials the processor would otherwise mark it DELIVERED and nobody would learn the
+   * message never left.
+   */
+  requiresDelivery = true as const;
+
   eventType = "twilio.whatsapp.send" as const;
 
   canHandle() {
-    return Boolean(twilioClient() && (WHATSAPP_FROM || WHATSAPP_MESSAGING_SERVICE_SID || DEFAULT_MESSAGING_SERVICE_SID));
+    return isWhatsappChannelConfigured();
   }
 
   async deliver(payload: OutboxPayload, ctx: OutboxHandlerContext): Promise<OutboxHandlerResult> {

@@ -1,4 +1,5 @@
 import { distributeLoadInstructions } from "../../dispatch/load-distribution.service.js";
+import { enqueueOutboxEvent } from "../enqueue-outbox-event.js";
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxHandlerResult, OutboxPayload } from "./registry.js";
 
 export class DispatchLoadDispatchedHandler implements OutboxEventHandler {
@@ -52,22 +53,16 @@ export class DispatchLoadDispatchedHandler implements OutboxEventHandler {
           "P6-D3",
         ]
       );
-      await ctx.client.query(
-        `
-          INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-          VALUES ($1,$2,$3,$4::jsonb)
-        `,
-        [
-          "dispatch.loads",
-          loadId,
-          "dispatch.wf064.distribution_failure",
-          JSON.stringify({
-            load_id: loadId,
-            operating_company_id: operatingCompanyId,
-            reason: String(lastError.message ?? lastError),
-            attempts: maxAttempts,
-          }),
-        ]
+      await enqueueOutboxEvent(
+        ctx.client,
+        "dispatch.wf064.distribution_failure",
+        { aggregate_type: "dispatch.loads", aggregate_id: loadId },
+        {
+          load_id: loadId,
+          operating_company_id: operatingCompanyId,
+          reason: String(lastError.message ?? lastError),
+          attempts: maxAttempts,
+        }
       );
       throw lastError;
     }

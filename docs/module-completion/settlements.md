@@ -1,12 +1,12 @@
 # Module completion — Settlements / Driver Finance
 
-**PROGRESS: 0 of 9** · complete: `false` · as_of: 2026-08-02 · live_sha: `—`
+**PROGRESS: 1 of 9** · complete: `false` · as_of: 2026-08-03 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 0 |
+| PASS | 1 |
 | HOLD | 0 |
-| OPEN | 9 |
+| OPEN | 8 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -15,7 +15,7 @@
 | `SETL-S01` | **OPEN** | /driver-finance/settlements renders honest empty when driver_settlements=0 | scaffold — not proven; auditor 2026-08-01: Neon driver_settlements=0, UI shows honest empty (not masked zero) | — |
 | `SETL-S02` | **OPEN** | /cash-advances roster honest empty when driver_advances=0 | scaffold — not proven; auditor: KPIs $0.00, honest empty state | — |
 | `SETL-S03` | **OPEN** | /accounting/escrow honest empty when escrow tables=0 | scaffold — not proven; auditor: escrow_ledger/balances=0, honest empty | — |
-| `SETL-PICK-01` | **OPEN** | Auto-deduction Type picker reads catalogs.driver_deduction_types (not hardcoded enum) | scaffold — FAIL confirmed: AutoDeductionPolicies.tsx:24-31 hardcoded 6 options vs 7 catalog rows | — |
+| `SETL-PICK-01` | **PASS** | Auto-deduction Type picker reads catalogs.driver_deduction_types (not hardcoded enum) | AutoDeductionPolicies.tsx ReferenceSelect createKind=driver_deduction_type + useDriverDeductionTypeCatalog → GET/POST /api/v1/catalogs/driver/deduction-types; guard verify-setl-deduction-type-catalog.mjs exit 0 | — |
 | `SETL-PICK-02` | **OPEN** | Cash advance Purpose picker wired to catalogs.cash_advance_types | scaffold — sibling surface PASS per auditor; needs formal VERIFY-2 closure | — |
 | `SETL-PICK-03` | **OPEN** | Settlement dispute types consistent modal vs detail (catalog-backed) | scaffold — FAIL: SettlementDisputeModal vs SettlementDetailPage code drift | — |
 | `SETL-ECON-01` | **OPEN** | driver_finance.driver_settlements density > 0 when settlements go live | scaffold — Neon TRANSP=0 (2026-08-01); honest empty today, economics unproven | — |

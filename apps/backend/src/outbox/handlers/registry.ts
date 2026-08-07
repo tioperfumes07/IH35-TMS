@@ -11,9 +11,12 @@ import { TmsBillPushHandler } from "./tms-bill-push.handler.js";
 import { buildTrailEventHandlers } from "./trail-events.handler.js";
 import { SamsaraMasterDataPushHandler } from "./samsara-master-data-push.handler.js";
 import { FmcsaCustomerVerifyHandler } from "./fmcsa-customer-verify.handler.js";
-// WF-064: dispatch.wf064.override_notice had NO consumer — processor.markFailedNow() meant every
-// owner-override notice failed permanently and silently. See the handler for the full account.
+// WF-064: dispatch.wf064.override_notice and dispatch.wf064.distribution_failure had NO consumer.
+// Corrected 2026-08-03: the override notice was not "failing permanently" — it was written to
+// outbox.outbox_queue, which nothing reads, so it was never attempted at all. See each handler.
 import { DispatchOverrideNoticeHandler } from "./dispatch-override-notice.handler.js";
+import { DispatchDistributionFailureHandler } from "./dispatch-distribution-failure.handler.js";
+import { operationalNoticeHandlers } from "./operational-notice.handler.js";
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./outbox-handler.types.js";
 
 // Re-export leaf types so existing handler imports from ./registry.js keep working
@@ -99,9 +102,12 @@ export function buildOutboxHandlerRegistry() {
     new SamsaraMasterDataPushHandler(),
     new FmcsaCustomerVerifyHandler(),
     new DispatchOverrideNoticeHandler(),
+    new DispatchDistributionFailureHandler(),
     new GeofenceBreachDetectedHandler(),
     new AuditPersistHandler(),
     new TestNoopHandler(),
+    // Seven events that were produced with no consumer at all — see operational-notice.routes.ts.
+    ...operationalNoticeHandlers(),
     ...buildTrailEventHandlers(),
   ];
   return new Map(handlers.map((handler) => [handler.eventType, handler]));

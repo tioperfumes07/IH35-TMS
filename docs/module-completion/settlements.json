@@ -2,7 +2,7 @@
   "module": "settlements",
   "title": "Settlements / Driver Finance",
   "complete": false,
-  "as_of": "2026-08-02",
+  "as_of": "2026-08-03",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/settlements-deep-2026-08-01.md",
   "spec_sources": [
@@ -15,86 +15,131 @@
     {
       "id": "SETL-S01",
       "title": "/driver-finance/settlements renders honest empty when driver_settlements=0",
-      "layers": ["DOD-A", "DOD-B", "VERIFY-6"],
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "VERIFY-6"
+      ],
       "spec": "Settlements hub · AUD-F006 / SETL-settlements-empty",
       "status": "OPEN",
       "evidence": "scaffold — not proven; auditor 2026-08-01: Neon driver_settlements=0, UI shows honest empty (not masked zero)",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "SETL-S02",
       "title": "/cash-advances roster honest empty when driver_advances=0",
-      "layers": ["DOD-A", "DOD-B", "VERIFY-6"],
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "VERIFY-6"
+      ],
       "spec": "Cash advances · ECON-002",
       "status": "OPEN",
       "evidence": "scaffold — not proven; auditor: KPIs $0.00, honest empty state",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "SETL-S03",
       "title": "/accounting/escrow honest empty when escrow tables=0",
-      "layers": ["DOD-A", "DOD-B", "VERIFY-6"],
+      "layers": [
+        "DOD-A",
+        "DOD-B",
+        "VERIFY-6"
+      ],
       "spec": "Escrow ledger · ECON-003",
       "status": "OPEN",
       "evidence": "scaffold — not proven; auditor: escrow_ledger/balances=0, honest empty",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "SETL-PICK-01",
       "title": "Auto-deduction Type picker reads catalogs.driver_deduction_types (not hardcoded enum)",
-      "layers": ["VERIFY-2", "DOD-D"],
+      "layers": [
+        "VERIFY-2",
+        "DOD-D"
+      ],
       "spec": "ENUM-AUTO-DEDUCT-TYPES · settlements-deep-2026-08-01",
-      "status": "OPEN",
-      "evidence": "scaffold — FAIL confirmed: AutoDeductionPolicies.tsx:24-31 hardcoded 6 options vs 7 catalog rows",
-      "pr": null
+      "status": "PASS",
+      "evidence": "AutoDeductionPolicies.tsx ReferenceSelect createKind=driver_deduction_type + useDriverDeductionTypeCatalog → GET/POST /api/v1/catalogs/driver/deduction-types; guard verify-setl-deduction-type-catalog.mjs exit 0",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "SETL-PICK-02",
       "title": "Cash advance Purpose picker wired to catalogs.cash_advance_types",
-      "layers": ["VERIFY-2", "DOD-D"],
+      "layers": [
+        "VERIFY-2",
+        "DOD-D"
+      ],
       "spec": "ENUM-CASH-ADV-PURPOSE · CreateAdvanceModal pattern",
       "status": "OPEN",
       "evidence": "scaffold — sibling surface PASS per auditor; needs formal VERIFY-2 closure",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "SETL-PICK-03",
       "title": "Settlement dispute types consistent modal vs detail (catalog-backed)",
-      "layers": ["VERIFY-2", "DOD-D"],
+      "layers": [
+        "VERIFY-2",
+        "DOD-D"
+      ],
       "spec": "ENUM-DISPUTE-TYPES-MODAL/DETAIL · SCHEMA-FINDINGS sibling sweep",
       "status": "OPEN",
       "evidence": "scaffold — FAIL: SettlementDisputeModal vs SettlementDetailPage code drift",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "SETL-ECON-01",
       "title": "driver_finance.driver_settlements density > 0 when settlements go live",
-      "layers": ["DOD-D", "VERIFY-6"],
+      "layers": [
+        "DOD-D",
+        "VERIFY-6"
+      ],
       "spec": "AUD-F006 · SETL-settlements-empty",
       "status": "OPEN",
       "evidence": "scaffold — Neon TRANSP=0 (2026-08-01); honest empty today, economics unproven",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "SETL-LINK-01",
       "title": "Settlement close / deduction recovery rails honor catalog metadata",
-      "layers": ["DOD-C", "VERIFY-4"],
+      "layers": [
+        "DOD-C",
+        "VERIFY-4"
+      ],
       "spec": "driver_deduction_types.default_recovery_rail / may_draw_escrow",
       "status": "OPEN",
       "evidence": "scaffold — catalog carries recovery metadata; UI picker does not consume it yet",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "SETL-VERIFY-01",
       "title": "Settlements module VERIFY-1..8 click-through TRANSP + USMCA",
-      "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
+      "layers": [
+        "VERIFY-1",
+        "VERIFY-2",
+        "VERIFY-3",
+        "VERIFY-4",
+        "VERIFY-5",
+        "VERIFY-6",
+        "VERIFY-7",
+        "VERIFY-8"
+      ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "OPEN",
       "evidence": "scaffold — not proven; browser MCP unavailable on 2026-08-01 merged run",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     }
   ],
-  "pass_count": 0,
+  "pass_count": 1,
   "total_count": 9,
-  "progress": "0 of 9"
+  "progress": "1 of 9"
 }

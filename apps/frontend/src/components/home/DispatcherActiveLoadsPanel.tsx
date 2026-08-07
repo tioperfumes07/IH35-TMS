@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { EntityLink } from "../shared/EntityLink";
 
 export type DispatcherActiveLoadRow = {
@@ -74,22 +73,14 @@ export function DispatcherActiveLoadsPanel({ rows, isLoading, isError, onRetry }
               </span>
               <span className="min-w-0 shrink-0 truncate text-xs text-slate-500">
                 {row.driver_id ? (
-                  <Link
-                    to={`/drivers/${encodeURIComponent(row.driver_id)}`}
-                    className="single-line-name text-slate-700 hover:underline"
-                    title={row.driver_name ?? undefined}
-                  >
-                    {row.driver_name ?? "Driver"}
-                  </Link>
+                  <EntityLink kind="driver" id={row.driver_id} label={row.driver_name ?? "Driver"} className="single-line-name text-slate-700 hover:underline" />
                 ) : (
                   <span className="text-slate-400">Unassigned</span>
                 )}
               </span>
               <span className="shrink-0 font-mono text-xs">
                 {row.unit_id ? (
-                  <Link to={`/fleet/units/${encodeURIComponent(row.unit_id)}`} className="text-slate-700 hover:underline">
-                    {row.unit_number ?? "Unit"}
-                  </Link>
+                  <EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? "Unit"} className="text-slate-700 hover:underline" />
                 ) : (
                   <span className="text-slate-400">—</span>
                 )}

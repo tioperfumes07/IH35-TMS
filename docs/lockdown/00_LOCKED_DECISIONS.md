@@ -1,10 +1,16 @@
 # IH35-TMS — LOCKED DECISIONS (single source of truth)
 Last locked: 2026-06-08 by Jorge. Repo doc WINS over any handoff/STATUS/memory. Do not re-ask Jorge any item below.
 
+> **OWNER LAW (2026-08-03, FINAL) governs merge/Neon-apply mechanics referenced anywhere below: NO HOLDS, NO
+> `JORGE-APPROVED` LABEL — every coder has FULL Neon access and merge authority in every lane. See
+> `.cursor/rules/00-operating-method-LAW.mdc` (governance section). The business/accounting DECISIONS in this
+> file remain locked and unchanged; only "never self-merge" / "owner applies" / "owner sign-off to merge"
+> mechanics are superseded.
+
 ## 1. SIDEBAR — FINAL ORDER (additive, owner-locked)
 > **Count source of truth = `apps/frontend/src/components/layout/sidebar-config.ts` (`SIDEBAR_ITEM_IDS`),
-> enforced by `scripts/verify-sidebar-contract.mjs`. It is currently 28 items (render count is role-dependent;
-> `eld` is a hidden stub). The historical list below is kept for record; the live array (now 28) is
+> enforced by `scripts/verify-sidebar-contract.mjs`. Live count is **30** (render count is role-dependent;
+> `eld` is a hidden stub). The historical list below is kept for record; the live array is
 > authoritative — do not trust a hardcoded number here.**
 
 Historical id order (left rail, top→bottom):
@@ -111,7 +117,9 @@ See `docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM.md` (design law).
 ---
 
 ## 9. Driver-pay / deduction / escrow engine — LOCKED 2026-07-04 (audit-fix decisions B–I)
-Locked by the owner while triaging the shared 130-finding audit. Source of truth: auto-memory `[[audit-fix-decisions-2026-07-04]]`, Desktop `IH35-TMS-BUG-FIX-OWNER-DECISIONS.md`, tracker `docs/trackers/BUG-AUDIT-FIX-TRACKER.md`. All financial items build behind OFF flags on a Neon test branch → owner OK + CPA-verify in staging → only then flip a prod flag; never self-merge.
+Locked by the owner while triaging the shared 130-finding audit. Source of truth: auto-memory `[[audit-fix-decisions-2026-07-04]]`, Desktop `IH35-TMS-BUG-FIX-OWNER-DECISIONS.md`, tracker `docs/trackers/BUG-AUDIT-FIX-TRACKER.md`. **Merge/flag mechanics REMOVED as stale (owner, 2026-08-05): all posting flags are ON for all three entities; the ONLY thing OFF is QuickBooks write-back (`QBO_JE_PUSH_ENABLED` / `QBO_ENTITY_PUSH_ENABLED`). There is NO CPA, NO `JORGE-APPROVED`, NO hold.** Coders have full Neon access, apply migrations themselves, and merge on green CI with live proof; the owner's only money role is deciding in chat when a flag flips, and entering opening-balance figures. The prior clause here — "build behind OFF flags on a Neon test branch → owner OK + CPA-verify in staging → only then flip a prod flag; never self-merge" — is superseded and must not be reinstated (see the note below and `.cursor/rules/00-operating-method-LAW.mdc`).
+
+> **SUPERSESSION NOTE (2026-08-03):** the merge/flag-flip mechanics in the line above ("never self-merge," "owner OK... only then flip") predate **OWNER LAW (FINAL, 2026-08-03)**: NO HOLDS, NO `JORGE-APPROVED` — every coder has FULL Neon access and merges on green in every lane, and flips a flag itself once the owner has decided (in chat) to turn it on. The underlying decisions above (net-pay floor, recovery ordering, escrow liability treatment, etc.) are unchanged and still locked; only the merge/flip *mechanism* is superseded. See `.cursor/rules/00-operating-method-LAW.mdc` (governance section).
 
 9.1 **Canonical deduction store = `driver_finance.driver_settlement_deductions`** (the FIN-18 poster already reads it). The live settlement route must write deductions here and stamp `applied_to_settlement_id` (today it writes `settlement_lines` auto_deduction, which the poster never reads → drivers silently overpaid). Retire the `payroll.*` copy + the `settlement_lines` auto_deduction path.
 
@@ -121,7 +129,20 @@ Locked by the owner while triaging the shared 130-finding audit. Source of truth
 
 9.4 **Escrow return = 60–90 day return-on-separation, net of open claims.** Every escrow draw debits the **Driver Escrow liability** (QBO-1150040187), never an expense — see `[[driver-escrow-is-liability]]`.
 
-9.5 **Deduction authorization = the signed HIRE CONTRACT — no separate driver e-sign.** The `CONSENT_MISSING` gate (finding G11-1) is satisfied by the hire contract, not a driver-facing e-sign template. The hire-contract template is built later in the **Legal module** and carries the payroll-deduction authorization for new drivers. (Simplifies the former "Repair B / consent template" build.)
+9.5 **Deduction authorization = the signed HIRE CONTRACT — no separate driver e-sign.**
+    **OWNER-LOCKED 2026-07-04/07-05, REAFFIRMED 2026-08-05:** the **signed HIRE CONTRACT** authorizes
+    payroll/settlement deductions — **NO separate driver e-sign, NO per-expense acknowledgment** — and the
+    company decides the deduction at settlement preparation. **Source of record (cite, do not re-derive):**
+    `apps/backend/src/legal/signed-finance-handoff.service.ts:25-33` (legacy `driver_deduction_auth` codes kept
+    ONLY to honour pre-existing signed instances; primary document = hire contract) + audit item
+    **0008-f RESOLVED**. **The ONLY settlement acknowledgment is the COMPANY USER's sign-off — MUST 3.4.2(d)(e)**
+    (`driver_settlements.acknowledged_at` / `acknowledged_by_user_id`, authed company user, settlements.routes.ts:412);
+    that control STAYS and is not a driver ack. This explicitly **SUPERSEDES blueprint
+    MUST 3.13.3.3.A** (and its sibling MUST 3.13.3.4.A for internal fines): there is **NO per-expense /
+    per-charge signed acknowledgment before auto-deduction**, and no `pending_acknowledgment` state that
+    blocks a deduction. No future agent may re-add that gate — the blueprint lines are struck through and
+    annotated at `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md` §3.13.3.3 / §3.13.3.4. Owner decision wins
+    over spec (§0). The `CONSENT_MISSING` gate (finding G11-1) is satisfied by the hire contract, not a driver-facing e-sign template. The hire-contract template is built later in the **Legal module** and carries the payroll-deduction authorization for new drivers. (Simplifies the former "Repair B / consent template" build.)
 
 9.6 **Schema canonicals:** `finance.loans` kept as a documented §4 exception (no rename); `reporting.*` canonical for scheduled reports (migrate `reports.*` rows in, archive the old); `mdata.qbo_*` canonical for the QBO mirror (repoint the `accounting.qbo_*` writers); `mdata.vendors` canonical for vendors (+ a resolver so WO/expense pickers read it).
 
@@ -151,3 +172,140 @@ Locked by the owner while triaging the shared 130-finding audit. Source of truth
   `QboAccountingSubNav.tsx` absent). Enforced by `scripts/verify-accounting-subnav-grouped.mjs`
   (asserts grouped click-open render + approved top-group set; flat clean-tabs cannot silently return).
 - Vocab stays locked: **`+ Create`** (kept as `+ Create ▾`), never `+ Add`/`+ New`.
+
+---
+
+## ★ PERMANENT LAW — owner-locked 2026-08-05 (supreme; do not re-ask, do not stop for these)
+
+**1. ASSETS / DEPRECIATION.** TRANSP and USMCA presently own NO assets → **NO Accumulated Depreciation and
+NO PP&E accounts** (Trucks, Trailers, Equipment) on their charts today. They MAY purchase assets later;
+asset + depreciation accounts are added to that entity's chart **ONLY WHEN a real asset purchase is
+recorded**. Until then, any asset / Accum-Depr account scoped to TRANSP or USMCA is a **DEFECT**.
+**TRK (Trucking) is the sole current asset holder and lessor** — it owns all equipment, leases it to
+TRANSP + USMCA, and Depreciation + Accumulated Depreciation live **ONLY on TRK's books**.
+
+**2. TEST vs REAL DATA.** **ALL TMS-native data across TRANSP, TRK, and USMCA is TEST data.** The ONLY
+real financial data is the QuickBooks history in TRANSP (the QBO mirror/import). **An empty TMS table is
+EXPECTED, never a defect.** Guards checking "real financial data" key on **QBO-origin / TRANSP-mirror
+rows, never TMS-native rows**.
+
+**3. ANSWERED = CLOSED (behavioral law).** An owner decision written in any locked file is **CLOSED**. A
+coder must NOT stop, pause, or ask the owner about anything already answered in the locked files.
+Required sequence before any question reaches the owner:
+(a) **READ the locked files** — if answered, apply it and keep working;
+(b) **VERIFY LIVE on prod** — never answer from the card, memory, or assumption;
+(c) only if **NOT in any locked file AND genuinely ambiguous in live data** does it go to the **BOARD as
+OPEN** — and work continues on everything else.
+**A question NEVER stops the loop. Re-asking a locked decision is a process defect.**
+
+**4. CONTINUOUS MODE (permanent).** Pull top OPEN item in your lane from `docs/audit/GUARD-WORKORDERS.md`
+→ build/verify to full standard → **arm auto-merge (armed = done, don't wait for it to land)** → emit ONE
+line `"shipped X (PR#), next Y"` → immediately start Y → repeat. Empty board = **mine the backlog
+yourself** (`.block-ready/*`, wave-queue OPEN, AUDIT-COVERAGE FAIL+OPEN). Never idle, never pause for a
+summary, never ask "should I continue" — permanently YES. **Only stop conditions:** (a) a genuine
+owner-only decision (surface it, keep working everything else), (b) shared-registry merge conflict
+(coordinate, continue), (c) CI red you can't fix in-lane (recreate fresh, continue).
+
+**5. SCRIBES.** CC-3 and CC-2 both write `docs/audit/GUARD-WORKORDERS.md` (**one at a time**). CC-2 holds
+the `AUDIT-COVERAGE-LIVE.md` append-lease. Cascade is off the critical write-path until it clears its jam.
+
+**6. HARD RULES** (already law, restated here so they live in one place — **speed never suspends them**):
+green CI to merge, **never merge red**; fix **root cause** with ONE **ratcheting** guard, entity-scoped;
+**no patch, no allowlisting a live failure**; **WORM / void-not-delete** (financial tables: no DELETE
+grant, soft-delete column, audit coverage); **never claim a class drained until its ratchet is live on
+main** — report the honest X/26.
+
+### §1 CLARIFICATION — ARCHIVE vs KEEP on TRANSP / USMCA charts (owner-locked 2026-08-05)
+
+**The principle:** an empty **generic** account that *enables a future real transaction* **STAYS**. An
+account or subtype that *asserts a current state the entity is not in* (it owns / depreciates equipment)
+is a **DEFECT** to archive.
+
+- **ARCHIVE** (assert ownership/depreciation the entity does NOT have) — **WORM: archive, never DELETE**:
+  Accumulated Depreciation + PP&E / Vehicles / FixedAsset accounts.
+  **On USMCA today (verified live on the prod branch 2026-08-05, RLS-bypassed in-transaction):**
+  `1600 Accumulated Depreciation` (subtype `Accumulated Depreciation`), `1500 Trucks & Tractors`
+  (subtype `Vehicles`), `1510 Trailers` (subtype `Vehicles`) — all three TMS-native
+  (`qbo_account_id IS NULL`). **TRANSP has NONE of these subtypes today** — verified, not assumed.
+- **KEEP** (generic, $0, asserts nothing, enables a future real event): `2400 Equipment Loans / Notes
+  Payable` stays. TRANSP/USMCA MAY finance equipment later; a zero-balance financing liability is
+  **ready-capacity, not a false-state defect**.
+
+**GUARD SCOPE — the §1 guard reddens ONLY on the `Vehicles` / `FixedAsset` / `Accumulated Depreciation`
+SUBTYPES, scoped to TRANSP/USMCA, TMS-native only. NOT liability accounts. NOT the QBO mirror.**
+
+> **Match the subtype EXACTLY — never a `%vehicle%` substring.** Verified live: a substring match sweeps in
+> **30+ legitimate TRANSP expense accounts** whose subtypes merely *start* with "Vehicle" —
+> `VehicleRepairs`, `VehicleInsurance`, `VehicleRegistration` (e.g. `US-Cargo Insurance`,
+> `Tax-IFTA-Motor Fuel Tax`, `Truck Tires`, `Towing Services`) — nearly all of them QBO-mirror rows, i.e.
+> the one set of REAL financial data in the system (§2). A `%vehicle%` guard would therefore report the
+> real chart as defective and, if anyone "fixed" it, archive live QuickBooks history. Expense accounts for
+> operating a leased truck assert nothing about owning one.
+
+---
+
+## ★★ PERMANENT LAW — owner-locked 2026-08-05 (supreme; applies to every agent, every session)
+
+**1. FINDINGS FLOW AGENT → BOARD → AGENT, NEVER THROUGH THE OWNER.** Find a defect in another lane →
+**WRITE an OPEN row into `docs/audit/GUARD-WORKORDERS.md` yourself and commit it**; the target coder pulls
+it on their next loop. **The owner is NOT a message bus — ever, in any session.**
+
+**2. LAW = ENFORCED GUARD, OR IT IS NOT LAW** (phased). Every NEW rule ships with a guard registered in
+`docs/law/LAW.json`. `verify-law-registry.mjs` is a required check (<2s, existence-only) and fails the
+build if a registered law's guard file is missing. Old rules migrate as a backlog class. Judgment rules
+stay judgment.
+
+**3. ROLES.** CC-1 = money / GL / WORM. CC-3 = mechanical / entity-scope / FE / CI-guards. CC-2 = GUARD,
+**verify live, never build**. CASCADE = merger (direct merge API — auto-merge is broken on our rulesets,
+community #190610).
+
+**4. ENTITY + DATA LAW.** VOID = reversal; **nothing is deletable**. TRANSP / USMCA own **no assets
+today**. **ALL TMS-native data is TEST** — only the TRANSP QBO mirror is real. **RLS is NOT a backstop for
+Owner sessions**: `org.user_accessible_company_ids()` returns EVERY active company when the role is Owner,
+so **every unscoped read is load-bearing on its own predicate**.
+
+**5. EVERY LOOP.** read board → **grep-verify the card against main** → build **ONE complete atomic block**
+→ found another lane's defect? **write it to the board** → push → next. Never idle, never pause to
+summarize, never half-edit.
+
+---
+
+## ★★★ PERMANENT LAW — OWNER STANDING ACCOUNTING DECISIONS (owner-locked 2026-08-05)
+
+**answered=closed, do not re-ask any session.** Per the ANSWERED=CLOSED behavioural law: an owner decision
+written in a locked file is CLOSED. Read it, apply it, keep working. Re-asking any item below is a process
+defect — these six kept returning to the owner every session for one reason only: they were never written
+down. They are now.
+
+**A. SUBLEDGER→GL POSTING IS FORWARD-ONLY (no backfill).**
+The bill/invoice→GL poster posts NEW documents going forward once its flag is ON. It **NEVER** backfills the
+historical document set (~11,984 invoices / ~16,250 bills). That set is overwhelmingly the TRANSP **QBO
+mirror, already booked in QuickBooks**, which is system of record through the test window — backfilling it
+would **double the parallel books** (ledger row 665 precedent) and post test-origin TMS-native documents to a
+real GL. Historical balances enter as **OPENING BALANCES only**, never by re-posting source documents
+(NetSuite/QBO cutover standard). `CLS-SUBLEDGER-GL-DARK` is therefore a **forward-coverage** task, not a
+backfill; its guard asserts coverage on NEW documents only. Anyone re-opening "should we backfill?" is
+contradicting locked law — **the answer is no, forward-only.**
+
+**B. VOID = REVERSAL; NOTHING IS DELETABLE; VOID BY UUID, NEVER display_id.**
+Every transaction is voidable; nothing financial is deletable. Voiding a journal entry **is a reversing
+entry** (`reversal_of_line_id` / `reversed_by_line_id`). **No `voided_at` on
+`accounting.journal_entry_postings`** — voiding one line of a balanced entry would leave DR ≠ CR. Record-level
+financial tables get `voided_at` / `void_reason` / `voided_by` **plus** REVOKE DELETE, a DELETE-blocking
+trigger, and audit coverage. **Void always by UUID**: `display_id` is **not unique across entities** —
+`INV-2026-00004` exists on both USMCA (test) and TRANSP (real, paid), so a display_id-keyed void can destroy
+the wrong entity's money.
+
+**C. MAKER ≠ CHECKER ON THE GL.**
+The agent that builds or verifies a money/GL PR is **not** the one that merges it. CC-2 verifies live and
+never certifies its own work; GUARD never merges a financial PR it verified. This holds on WORM revokes,
+void/reversing JEs, period close, settlement, factoring, and flag flips.
+
+**D. THE RECONCILER IS THE TRUST GATE.**
+Tie each entity to QBO **to the cent, twice daily** (Neon tie-out). That tie-out is the **evidence** the owner
+uses to decide a flag flip. QBO remains system of record through the test window; **zero write-back**.
+
+**E. REVENUE IS RECOGNIZED AT DELIVERY** (point-in-time), all entities.
+
+**F. FISCAL YEAR = CALENDAR (Jan–Dec)**, all entities. Historical import origin **01/01/2024** for TRANSP + TRK;
+**2026** for USMCA.

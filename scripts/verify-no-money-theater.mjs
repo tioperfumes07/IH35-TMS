@@ -50,7 +50,7 @@ const WRITE_PATH_RE =
 const MIGRATION_PATH_RE = /^db\/migrations\//i;
 
 const FINDING_RE = /\bFINDING(?:\s*ID)?\s*:\s*(ACCT|BANK|LST)-F\d+\b/i;
-const LANE_RE = /\bLANE\s*:\s*(HOLD|FINANCIAL-HOLD|NON-FINANCIAL|DOCS)\b/i;
+const LANE_RE = /\bLANE\s*:\s*(HOLD|FINANCIAL-HOLD|FINANCIAL|NON-FINANCIAL|DOCS)\b/i;
 
 const REQUIRED_KEYS = [
   { key: "FINDING", re: FINDING_RE },
@@ -194,7 +194,7 @@ export function assertNoMoneyTheater(commits) {
       );
     }
     if (hasMigration && !LANE_RE.test(text)) {
-      problems.push(`${short} migration commit omits LANE: HOLD|FINANCIAL-HOLD|…`);
+      problems.push(`${short} migration commit omits LANE: FINANCIAL|NON-FINANCIAL|DOCS|…`);
     }
   }
   return problems;
@@ -223,7 +223,7 @@ function resolveBranchCommits() {
 
 export const MONEY_DOD_COMMIT_TEMPLATE = `
 FINDING: ACCT-F## | BANK-F## | LST-F##
-LANE: HOLD | FINANCIAL-HOLD | NON-FINANCIAL | DOCS
+LANE: FINANCIAL | NON-FINANCIAL | DOCS  (legacy HOLD|FINANCIAL-HOLD still accepted)
 
 DOD-A: PASS|N/A|FAIL|UNVERIFIED — active path
 DOD-B: PASS|N/A|FAIL|UNVERIFIED — wizard depth (fields in submit)

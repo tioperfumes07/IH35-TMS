@@ -30,11 +30,11 @@ export function collectProblems(root = ROOT) {
   if (!/EntityPicker[\s\S]*?kind=["']unit["']/.test(code) || !/assigned_unit_id/.test(code)) {
     problems.push(`${FILE}: truck unit must use EntityPicker kind=unit`);
   }
-  if (!/trailerSearch/.test(code) || !/onSearch=\{setTrailerSearch\}/.test(code)) {
-    problems.push(`${FILE}: trailer picker must wire trailerSearch → onSearch`);
+  if (!/EntityPicker[\s\S]*?kind=["']trailer["']/.test(code) || !/assigned_trailer_unit_id/.test(code)) {
+    problems.push(`${FILE}: trailer unit must use EntityPicker kind=trailer`);
   }
-  if (!/search:\s*trailerSearch\s*\|\|\s*undefined/.test(code)) {
-    problems.push(`${FILE}: trailer listUnits must send search: trailerSearch`);
+  if (/include:\s*["']trailers["']/.test(code)) {
+    problems.push(`${FILE}: must not use listUnits(include:trailers) — EntityPicker kind=trailer reads mdata.equipment`);
   }
   if (/SelectCombobox[\s\S]{0,200}assigned_unit_id/.test(code) || /SelectCombobox[\s\S]{0,120}trucks\.map/.test(code)) {
     problems.push(`${FILE}: must not keep SelectCombobox dual path for truck unit`);

@@ -5,7 +5,6 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import * as accountingApi from "../../api/accounting";
 import * as maintenanceApi from "../../api/maintenance";
-import * as mdataApi from "../../api/mdata";
 import { ToastProvider } from "../Toast";
 import { RecordExpenseModal } from "./RecordExpenseModal";
 
@@ -32,6 +31,23 @@ vi.mock("../../api/maintenance", () => ({
 vi.mock("../../api/mdata", () => ({
   listUnits: vi.fn().mockResolvedValue({ units: [{ id: "unit-1", unit_number: "T-101" }] }),
   listVendors: vi.fn().mockResolvedValue({ vendors: [] }),
+}));
+
+vi.mock("../parity/EntityPicker", () => ({
+  EntityPicker: ({
+    value,
+    onChange,
+    placeholder,
+  }: {
+    value: string | null;
+    onChange: (v: string | null) => void;
+    placeholder?: string;
+  }) => (
+    <select aria-label={placeholder ?? "Select unit…"} value={value ?? ""} onChange={(event) => onChange(event.target.value || null)}>
+      <option value="">{placeholder ?? "Select unit…"}</option>
+      <option value="unit-1">T-101</option>
+    </select>
+  ),
 }));
 
 vi.mock("../UploadZone", () => ({
@@ -109,7 +125,6 @@ describe("RecordExpenseModal", () => {
     );
 
     await waitFor(() => expect(maintenanceApi.getWoCostContext).toHaveBeenCalled());
-    await waitFor(() => expect(mdataApi.listUnits).toHaveBeenCalled());
 
     const form = screen.getByTestId("record-expense-form");
     // Vendor + Category + Payment account use ReferenceSelect (mocked as <select aria-label=placeholder>).

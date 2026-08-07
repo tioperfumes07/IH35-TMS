@@ -49,11 +49,30 @@ type RouteDbClient = {
 async function resolveActiveFactor(client: RouteDbClient, companyId: string) {
   const identity = await resolveCanonicalActiveFactor(client, companyId);
   if (!identity.ok || !identity.vendorId) return null;
-  return { id: identity.vendorId, vendor_name: identity.vendorName ?? null };
+  return {
+    id: identity.vendorId,
+    vendor_name: identity.vendorName ?? null,
+    profile_id: identity.factorProfileId ?? null,
+  };
+}
+
+function withCanonicalFactorIdentity<T extends Record<string, unknown>>(
+  payload: T,
+  activeFactor: Awaited<ReturnType<typeof resolveActiveFactor>>
+): T & { active_factor_profile_id: string | null } {
+  return {
+    ...payload,
+    active_factor_id: activeFactor?.id ?? payload.active_factor_id ?? null,
+    active_factor_name: activeFactor?.vendor_name ?? payload.active_factor_name ?? null,
+    active_factor_profile_id: activeFactor?.profile_id ?? null,
+  };
 }
 
 export async function registerFactoringRoutes(app: FastifyInstance) {
-  app.get("/api/v1/factoring/summary", async (req, reply) => {
+  app.get(
+    "/api/v1/factoring/summary",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -76,20 +95,22 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       return { row: res.rows[0] ?? null, activeFactor };
     });
 
-    return summary.row ?? {
-        operating_company_id: companyId,
-        active_factor_id: summary.activeFactor?.id ?? null,
-        active_factor_name: summary.activeFactor?.vendor_name ?? null,
-        recourse_days: FACTORING_REPURCHASE_DEADLINE_DAYS,
-        reserve_balance: 0,
-        chargeback_balance: 0,
-        last_advance_at: null,
-        active_factor_count: 0,
-        single_factor_invariant_ok: true,
-        mtd_advances_count: 0,
-        mtd_advanced_total: 0,
-      };
-  });
+    const fallback = {
+      operating_company_id: companyId,
+      active_factor_id: summary.activeFactor?.id ?? null,
+      active_factor_name: summary.activeFactor?.vendor_name ?? null,
+      recourse_days: FACTORING_REPURCHASE_DEADLINE_DAYS,
+      reserve_balance: 0,
+      chargeback_balance: 0,
+      last_advance_at: null,
+      active_factor_count: 0,
+      single_factor_invariant_ok: true,
+      mtd_advances_count: 0,
+      mtd_advanced_total: 0,
+    };
+    return withCanonicalFactorIdentity(summary.row ?? fallback, summary.activeFactor);
+  }
+  );
 
   app.get("/api/v1/factoring/recourse-pipeline", async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -164,7 +185,10 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/factoring/statements-settings", async (req, reply) => {
+  app.get(
+    "/api/v1/factoring/statements-settings",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -187,14 +211,17 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
         .catch(() => ({ rows: [] as Record<string, unknown>[] }));
 
       const rows = rowsRes.rows;
-      const current = rows[0] ?? {
-        operating_company_id: companyId,
-        active_factor_id: activeFactor?.id ?? null,
-        active_factor_name: activeFactor?.vendor_name ?? null,
-        recourse_days: FACTORING_REPURCHASE_DEADLINE_DAYS,
-        active_factor_count: 0,
-        single_factor_invariant_ok: true,
-      };
+      const current = withCanonicalFactorIdentity(
+        rows[0] ?? {
+          operating_company_id: companyId,
+          active_factor_id: activeFactor?.id ?? null,
+          active_factor_name: activeFactor?.vendor_name ?? null,
+          recourse_days: FACTORING_REPURCHASE_DEADLINE_DAYS,
+          active_factor_count: 0,
+          single_factor_invariant_ok: true,
+        },
+        activeFactor
+      );
       return {
         current,
         statements: rows.filter((row) => row.statement_month),
@@ -202,7 +229,8 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     });
 
     return payload;
-  });
+  }
+  );
 
   app.post("/api/v1/factoring/deactivate", async (req, reply) => {
     const user = currentAuthUser(req, reply);

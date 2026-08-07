@@ -1,6 +1,7 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { notifyLoadAssigned, notifyLoadReassignedAway } from "../services/push-notification.service.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 
 export type ReassignBody = {
   operating_company_id: string;
@@ -105,21 +106,19 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
         ]
       );
 
-      await client.query(
-        `
-          INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-          VALUES ('load', $1, 'load.reassigned', $2::jsonb)
-        `,
-        [
-          input.load_id,
-          JSON.stringify({
-            load_id: input.load_id,
-            from_driver_id: load.assigned_primary_driver_id,
-            to_driver_id: input.new_driver_id,
-            reason_code: input.reason_code,
-            reassigned_by_user_id: userId,
-          }),
-        ]
+      await enqueueOutboxEvent(
+        client,
+        "load.reassigned",
+        { aggregate_type: "load", aggregate_id: input.load_id },
+        {
+          load_id: input.load_id,
+          load_number: load.load_number,
+          operating_company_id: input.operating_company_id,
+          from_driver_id: load.assigned_primary_driver_id,
+          to_driver_id: input.new_driver_id,
+          reason_code: input.reason_code,
+          reassigned_by_user_id: userId,
+        }
       );
 
       await appendCrudAudit(

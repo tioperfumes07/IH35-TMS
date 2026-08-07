@@ -155,7 +155,15 @@ async function deriveClassHint(
   const unitPart = String(unitRes.rows[0]?.unit_number ?? "UNIT").trim();
   let driverPart = "UNASSIGNED";
   if (driverId) {
-    const driverRes = await client.query<{ last_name: string | null }>(`SELECT last_name FROM mdata.drivers WHERE id = $1 LIMIT 1`, [driverId]);
+    // ENTITY-SCOPED, for the same reason the unit lookup above is. This read was scoped by driver id
+    // ALONE, so a work order in one entity could derive its Class from another entity's driver — the
+    // Class is `{UNIT}-{LASTNAME}` (§7 locked), so that surname is printed on the WO and its audit line.
+    // mdata.drivers.operating_company_id is uuid NOT NULL (verified on prod), and RLS is not a backstop:
+    // org.user_accessible_company_ids() returns EVERY active company when the role is Owner.
+    const driverRes = await client.query<{ last_name: string | null }>(
+      `SELECT last_name FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+      [driverId, operatingCompanyId]
+    );
     driverPart = String(driverRes.rows[0]?.last_name ?? "UNASSIGNED").trim().toUpperCase();
   }
   return `${unitPart}-${driverPart}`;

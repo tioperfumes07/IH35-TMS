@@ -72,10 +72,15 @@ export function checkChrome11({ referenceSelect, quickCreate, createDriverModal,
     failures.push("CreateDriverModal.tsx no longer imports/uses ParityDrawer for the drawer shell");
   }
 
-  // 4) VendorBillForm (Bill create ParityDrawer — the highest-traffic money path this block targets)
-  //    must open the nested driver creator with shell="drawer", not the bare centered Modal.
-  if (!/<CreateDriverModal[\s\S]{0,700}?shell="drawer"/.test(vendorBillForm)) {
-    failures.push('VendorBillForm.tsx <CreateDriverModal> no longer passes shell="drawer" — Modal-on-drawer regression on Bill create');
+  // 4) VendorBillForm (Bill create ParityDrawer) — nested driver create via EntityPicker nestedInDrawer
+  //    or legacy CreateDriverModal shell="drawer".
+  const vendorBillNestedDriverCreate =
+    /<EntityPicker[\s\S]{0,400}kind=["']driver["'][\s\S]{0,400}nestedInDrawer/.test(vendorBillForm) ||
+    /<CreateDriverModal[\s\S]{0,700}?shell="drawer"/.test(vendorBillForm);
+  if (!vendorBillNestedDriverCreate) {
+    failures.push(
+      'VendorBillForm.tsx must use EntityPicker kind="driver" nestedInDrawer or <CreateDriverModal shell="drawer" — Modal-on-drawer regression on Bill create'
+    );
   }
 
   return failures;
@@ -94,7 +99,7 @@ export function CreateDriverModal({ shell = "modal" }: Props) {
   if (shell === "drawer") return <ParityDrawer />;
   return <Modal />;
 }`,
-    vendorBillForm: `<CreateDriverModal open={x} onClose={y} shell="drawer" />`,
+    vendorBillForm: `<EntityPicker kind="driver" nestedInDrawer operatingCompanyId={id} />`,
   };
 }
 
@@ -117,6 +122,7 @@ function selftest() {
     ["createDriverModal", (f) => { f.createDriverModal = f.createDriverModal.replace('shell?: "modal" | "drawer"', "shell?: string"); }, "missing shell"],
     ["createDriverModal", (f) => { f.createDriverModal = f.createDriverModal.replace('shell === "drawer"', 'shell === "sheet"'); }, "no longer branches"],
     ["vendorBillForm", (f) => { f.vendorBillForm = `<CreateDriverModal open={x} onClose={y} />`; }, "Modal-on-drawer regression on Bill create"],
+    ["vendorBillForm", (f) => { f.vendorBillForm = `<EntityPicker kind="driver" value={null} />`; }, "Modal-on-drawer regression on Bill create"],
   ];
 
   for (const [name, mutate, expectFragment] of cases) {

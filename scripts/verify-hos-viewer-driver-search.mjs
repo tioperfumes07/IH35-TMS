@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * HosViewerSection — driver Combobox server search (not silent listDrivers limit:500).
+ * HosViewerSection — driver picker must server-search (not silent listDrivers limit:500).
+ * Accepts either legacy Combobox+onSearch OR EntityPicker kind="driver" (picker law).
  * Cursor even claim: 2124.
  */
 import fs from "node:fs";
@@ -26,8 +27,14 @@ export function collectProblems(root = ROOT) {
     return problems;
   }
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (!/driverSearch/.test(code) || !/onSearch=\{setDriverSearch\}/.test(code)) {
-    problems.push(`${FILE}: driver Combobox must wire driverSearch + onSearch`);
+  const hasEntityPicker =
+    /EntityPicker/.test(src) &&
+    (/kind=["']driver["']/.test(src) || /kind=\{\s*["']driver["']\s*\}/.test(src));
+  const hasLegacySearch = /driverSearch/.test(code) && /onSearch=\{setDriverSearch\}/.test(code);
+  if (!hasEntityPicker && !hasLegacySearch) {
+    problems.push(
+      `${FILE}: driver picker must be EntityPicker kind="driver" OR Combobox with driverSearch + onSearch`
+    );
   }
   if (/limit:\s*500/.test(code)) {
     problems.push(`${FILE}: must not fetch silent listDrivers limit:500`);
@@ -68,5 +75,5 @@ if (process.argv.includes("--selftest")) {
     for (const p of problems) console.error("  - " + p);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — HosViewer driver search`);
+  console.log(`${LABEL} OK — HosViewer driver search (EntityPicker or Combobox)`);
 }

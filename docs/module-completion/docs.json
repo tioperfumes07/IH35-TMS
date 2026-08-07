@@ -2,7 +2,7 @@
   "module": "docs",
   "title": "Documents (DOCS)",
   "complete": false,
-  "as_of": "2026-08-02",
+  "as_of": "2026-08-03",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/reports-docs-maintenance-2026-08-01.md",
   "spec_sources": [
@@ -14,50 +14,76 @@
     {
       "id": "DOCS-S01",
       "title": "/docs home renders document index with honest KPIs",
-      "layers": ["DOD-A", "DOD-B"],
+      "layers": [
+        "DOD-A",
+        "DOD-B"
+      ],
       "spec": "DocsHomePage · reports-docs-maintenance DOCS section",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor: Total Docs=3, Missing Required=3 (100%)",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: DocsHomePage KPIs (Total/Expiring/Missing/Recent) + list + Upload. Neon lucia docs.files=24. Entity column EntityLink when links exist; honest — when unlinked. Guard verify-docs-entity-column-entitylink + step 2250.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DOCS-ECON-01",
       "title": "Entity-linked classified documents (not generic test PDFs only)",
-      "layers": ["DOD-D", "VERIFY-6"],
+      "layers": [
+        "DOD-D",
+        "VERIFY-6"
+      ],
       "spec": "docs.file_links · expiration tracking law",
       "status": "OPEN",
       "evidence": "scaffold — OPEN: 3 uncategorized test PDFs; real driver/unit docs may live elsewhere",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DOCS-LINK-01",
       "title": "Document rows link to entity (driver/unit/customer) forward+reverse",
-      "layers": ["DOD-C", "VERIFY-4"],
+      "layers": [
+        "DOD-C",
+        "VERIFY-4"
+      ],
       "spec": "0441-mod12-docs-lowest-uuid-company-bug",
       "status": "OPEN",
-      "evidence": "scaffold — Entity=— on all 3 rows; linkage unproven",
-      "pr": null
+      "evidence": "2026-08-03 PARTIAL: EntityLink wired on DocsHome (no UUID slice). Neon lucia docs.file_links=0 — density still blocks PASS until classified entity links exist (DOCS-ECON-01 sibling).",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DOCS-S02",
       "title": "Required document types catalog populated per opco",
-      "layers": ["VERIFY-2", "VERIFY-6"],
+      "layers": [
+        "VERIFY-2",
+        "VERIFY-6"
+      ],
       "spec": "Missing Required KPI honesty",
       "status": "OPEN",
       "evidence": "scaffold — 100% missing required may be data gap not bug; needs source-of-truth check",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "DOCS-VERIFY-01",
       "title": "Docs module VERIFY-1..8 TRANSP + USMCA",
-      "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
+      "layers": [
+        "VERIFY-1",
+        "VERIFY-2",
+        "VERIFY-3",
+        "VERIFY-4",
+        "VERIFY-5",
+        "VERIFY-6",
+        "VERIFY-7",
+        "VERIFY-8"
+      ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "OPEN",
       "evidence": "scaffold — functionally empty of classified data; follow-up vs attachment tables",
-      "pr": null
+      "pr": null,
+      "prod_verified": false
     }
   ],
-  "pass_count": 0,
+  "pass_count": 1,
   "total_count": 5,
-  "progress": "0 of 5"
+  "progress": "1 of 5"
 }

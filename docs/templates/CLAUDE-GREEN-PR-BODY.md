@@ -3,11 +3,16 @@
 **Use this for every Cursor PR.** Same text in the commit message and `gh pr create --body`.
 Do **not** wrap it in `## Summary`. Start with `FINDING:`.
 
+**Title (Claude shape — Rule 36):**
+`Cursor- fix(<module>): <FINDING-ID> — <one-line defect>`
+
+**Ship sequence:** branch from tip `origin/main` → one commit → `cursor-ship-preflight --body-file` → fetch + rebase if behind → one push. **Max one Cursor CLAIMED/verify-step PR open at a time.**
+
 ```
 FINDING: SAF-C01
 LANE: NON-FINANCIAL
 
-ROOT CAUSE: <one or more paragraphs naming the mechanism>
+ROOT CAUSE: <one or more paragraphs naming the mechanism — measure on prod/code, do not invent>
 
 FIX: <what changed at root; name guard + verify-step>
 
@@ -36,6 +41,10 @@ REMAINING: <honest open work — never "module done" while N of M incomplete>
 ## Local gate before create/edit
 
 ```bash
+# Preferred one-shot (Rule 29):
+node scripts/ops/cursor-ship-preflight.mjs --body-file /tmp/pr-body.txt
+
+# Equivalent:
 node scripts/money-pr-local-gate.mjs
 node scripts/cursor-pr-body-gate.mjs --body-file /tmp/pr-body.txt
 gh pr create --body-file /tmp/pr-body.txt   # or: gh pr edit N --body-file /tmp/pr-body.txt

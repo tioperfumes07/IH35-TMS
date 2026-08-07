@@ -21,7 +21,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver/arrival-prompts", async (req, reply) => {
+  app.get("/api/v1/driver/arrival-prompts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;
@@ -59,7 +59,9 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
           FROM dispatch.stop_arrivals a
           JOIN mdata.load_stops s ON s.id = a.stop_id
           JOIN mdata.loads l ON l.id = s.load_id
+                            AND l.operating_company_id = a.operating_company_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+                                       AND loc.operating_company_id = a.operating_company_id
           WHERE a.operating_company_id = $1::uuid
             AND a.driver_id = $2::uuid
             AND a.confirmed_at IS NULL

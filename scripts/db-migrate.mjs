@@ -172,6 +172,37 @@ function isChecksumOverrideMatch(overridesByFile, file, ledgerChecksum, diskChec
   return override.ledger_checksum === ledgerChecksum && override.disk_checksum === diskChecksum;
 }
 
+// The two ledger tables are created HERE, by the migrator, before any migration runs — so no
+// migration can grant them, and for the whole life of this repo nothing did. Prod reads them fine
+// only because the grant was made by hand at some point; it exists in no file. Every database built
+// from source — CI's ephemeral one, a DR restore, a fresh Neon branch — therefore has NO grant, and
+// launch-readiness.service.ts:134 (`SELECT COUNT(*) FROM _system._schema_migrations`) fails there
+// with "permission denied for table _schema_migrations". Verified both directions 2026-08-06:
+// prod has_table_privilege('ih35_app', '_system._schema_migrations', 'SELECT') = true; no
+// db/migrations/*.sql contains a GRANT for it.
+//
+// Granting here, at the point of creation, is the only self-contained place for it: a migration
+// cannot reliably grant a table the migrator itself needs before migrations run.
+async function ensureLedgerGrants(client) {
+  // Role-guarded because on a genuinely fresh database this runs BEFORE 0006 creates ih35_app.
+  // That first pass no-ops; the call after the apply loop then lands it in the same run.
+  await client.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ih35_app') THEN
+        RAISE NOTICE 'ledger grants: role ih35_app absent (pre-0006) — deferred to post-apply pass';
+        RETURN;
+      END IF;
+      GRANT USAGE ON SCHEMA _system, ih35_migrations TO ih35_app;
+      -- SELECT only. The application READS the ledger to answer "are we fully migrated?"; it must
+      -- never write it. The migrator writes as the migration role, not as ih35_app.
+      GRANT SELECT ON _system._schema_migrations TO ih35_app;
+      GRANT SELECT ON ih35_migrations.applied_migrations TO ih35_app;
+    END
+    $$;
+  `);
+}
+
 async function ensureLedgers(client) {
   await client.query("CREATE SCHEMA IF NOT EXISTS _system;");
   await client.query("CREATE SCHEMA IF NOT EXISTS ih35_migrations;");
@@ -190,6 +221,7 @@ async function ensureLedgers(client) {
       applied_at timestamptz NOT NULL DEFAULT now()
     );
   `);
+  await ensureLedgerGrants(client);
 }
 
 async function getCanonicalLedgerRows(client) {
@@ -347,7 +379,74 @@ try {
   const ledgerRows = await getCanonicalLedgerRows(client);
   const mirrorRows = await getMirrorLedgerRows(client);
   const ledgerByFile = new Map(ledgerRows.map((row) => [row.filename, row]));
+  // Declared here (not below the LV-087 block) because the ledger-divergence check needs it.
   const mirrorByFile = new Map(mirrorRows.map((row) => [row.name, row]));
+  // LV-087: checksum -> the filename(s) already applied under it. A byte-identical file re-applied
+  // under a NEW number is a renumber-and-reapply, and idempotency is the only thing that has stopped
+  // it corrupting the schema so far. Four such pairs already exist on prod.
+  // The frozen LV-087 baseline: duplicates that predate the guard and cannot be unmade (both files are
+  // already on the prod ledger). Shared with verify-migration-checksum-collision.mjs so the two can never
+  // disagree. Without this, a FRESH database (CI) applies 0237 then hits the refusal on 0238 and dies —
+  // the refusal must block NEW duplicates without breaking a from-scratch migrate of the existing history.
+  const grandfathered = new Set();
+  const knownLedgerOrphans = new Set();
+  try {
+    const baseline = JSON.parse(
+      fs.readFileSync(new URL("./known-migration-ledger-exceptions.json", import.meta.url), "utf8")
+    );
+    for (const entry of baseline.duplicates ?? []) {
+      for (const f of entry.files ?? []) grandfathered.add(`${entry.checksum}::${f}`);
+    }
+    for (const entry of baseline.ledger_orphans ?? []) {
+      if (entry?.file) knownLedgerOrphans.add(entry.file);
+    }
+  } catch (error) {
+    throw new Error(
+      `LV-087: cannot read known-migration-ledger-exceptions.json (${error.message}). Refusing to migrate ` +
+        `rather than silently dropping the duplicate-checksum protection.`
+    );
+  }
+
+  // LV-087 (second clause) — THE TWO LEDGERS MUST AGREE, OR THE DISAGREEMENT MUST BE EXPLAINED.
+  //
+  // Backend boot accepts a migration that appears in EITHER ledger. So a row in the mirror alone is
+  // enough to make a migration look applied even if it never ran — the ledger can lie in the direction
+  // of "already done", which is the dangerous direction: the DDL is missing while everything reports
+  // healthy. Only two things legitimately explain a one-sided row:
+  //   (a) the file is in the held union (held + applied_held + superseded) — a held migration is
+  //       hand-applied on a Neon branch and mirror-backfilled BY DESIGN, so mirror-only is correct; or
+  //   (b) it is a frozen orphan recorded in known-migration-ledger-exceptions.json.
+  // Anything else is an unexplained divergence and stops the run before a single migration is applied.
+  //
+  // Prod on 2026-08-05: canonical 876, mirror 883, canonical-only 0, mirror-only 7 = 6 held + 1 frozen
+  // orphan. Zero unexplained, so this refusal is armed against the NEXT one rather than papering over
+  // a current mess.
+  const ledgerDivergence = [];
+  for (const row of mirrorRows) {
+    const name = row.name;
+    if (ledgerByFile.has(name) || HELD_SET.has(name) || knownLedgerOrphans.has(name)) continue;
+    ledgerDivergence.push(`${name}: in ${MIRROR_LEDGER_TABLE} only (not canonical, not held, not baselined)`);
+  }
+  for (const row of ledgerRows) {
+    const name = row.filename;
+    if (mirrorByFile.has(name) || HELD_SET.has(name) || knownLedgerOrphans.has(name)) continue;
+    ledgerDivergence.push(`${name}: in ${CANONICAL_LEDGER_TABLE} only (not mirrored, not held, not baselined)`);
+  }
+  if (ledgerDivergence.length > 0) {
+    throw new Error(
+      `LV-087: the two migration ledgers disagree on ${ledgerDivergence.length} migration(s) that the held ` +
+        `registry does not explain:\n  ${ledgerDivergence.join("\n  ")}\n` +
+        `A one-sided ledger row makes a migration look applied to the boot check while its DDL may never ` +
+        `have run. Resolve it (apply the migration, or record it in known-migration-ledger-exceptions.json ` +
+        `with the evidence) before migrating.`
+    );
+  }
+
+  const ledgerFilesByChecksum = new Map();
+  for (const row of ledgerRows) {
+    if (!ledgerFilesByChecksum.has(row.checksum)) ledgerFilesByChecksum.set(row.checksum, []);
+    ledgerFilesByChecksum.get(row.checksum).push(row.filename);
+  }
   const overridesByFile = loadChecksumOverrides();
 
   if (VERIFY_ONLY) {
@@ -388,8 +487,33 @@ try {
       continue;
     }
 
+    // LV-087 — REFUSE A RENUMBER-AND-REAPPLY.
+    //
+    // If this exact SQL has already been applied under a DIFFERENT filename, applying it again is not
+    // a new migration: it is the same DDL re-run under a new number. Prod already carries four such
+    // pairs (fuel_03_overage_engine, fuel_03_overage_events_unit_fk, c9_form_roundtrip,
+    // ar_collection_tasks). Those were harmless only because the SQL happened to be idempotent —
+    // `IF NOT EXISTS` absorbed the second run. That is luck, not a control. The same mistake with a
+    // non-idempotent statement (an UPDATE, an INSERT of seed rows, an ALTER that appends) double-applies
+    // it, and on the financial cluster that means duplicated data or a doubled balance with no error.
+    //
+    // Refusing here stops it at the source rather than detecting it afterwards. The override file is
+    // deliberately NOT consulted: it exists to accept a checksum CHANGE on the same filename, which is
+    // the opposite situation.
+    const priorFiles = (ledgerFilesByChecksum.get(checksum) ?? []).filter((f) => f !== file);
+    if (priorFiles.length > 0 && !grandfathered.has(`${checksum}::${file}`)) {
+      throw new Error(
+        `Migration ${file} has the SAME checksum (${checksum}) as already-applied ${priorFiles.join(", ")}. ` +
+          `This is a renumber-and-reapply of identical DDL, not a new migration. If the change is genuinely ` +
+          `needed again, write a migration that expresses the NEW intent; do not re-run the old file under a ` +
+          `new number. (Prod carries 4 such pairs that were harmless only because their SQL was idempotent.)`
+      );
+    }
+
     console.log(`APPLY ${file}`);
     await applyMigration(client, file, sql, checksum);
+    if (!ledgerFilesByChecksum.has(checksum)) ledgerFilesByChecksum.set(checksum, []);
+    ledgerFilesByChecksum.get(checksum).push(file);
     ledgerByFile.set(file, { filename: file, checksum });
   }
 
@@ -398,6 +522,71 @@ try {
       `Held (NOT applied on prod): ${heldSkipped.length} migration(s) — ${heldSkipped.join(", ")}`
     );
   }
+  // ACCT-F117 — POST-APPLY EFFECT ASSERTION. Verify what the database actually CONTAINS, not what
+  // the ledger claims was run.
+  //
+  // Migration 0094 added these three enum labels, is recorded applied in BOTH ledgers, and the
+  // labels are not on prod. Nothing noticed for months: the ledger row was treated as proof. The
+  // cost was real — 202610291200 had to rewrite the abandonment trigger to compare status::text
+  // because casting the missing literals raised 22P02 and aborted EVERY load status UPDATE on
+  // mdata.loads, and driver-finance/abandonment.service.ts still throws on its uncast write.
+  //
+  // So after applying, we ASK THE DATABASE. This runs on the prod preDeploy, which is the only
+  // place the question can be answered honestly — CI's ephemeral database is built from these same
+  // migrations and would agree with itself no matter what.
+  //
+  // Deliberately a hard failure, not a warning: a deploy that silently loses a schema change is the
+  // exact defect being closed, and a warning is how it stayed invisible the first time.
+  const REQUIRED_ENUM_LABELS = [
+    { schema: "mdata", type: "load_status_enum", labels: ["abandoned", "driver_walkoff", "driver_no_show"] },
+  ];
+  for (const req of REQUIRED_ENUM_LABELS) {
+    const present = await client.query(
+      `SELECT e.enumlabel::text AS label
+         FROM pg_enum e
+         JOIN pg_type t ON t.oid = e.enumtypid
+         JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = $1 AND t.typname = $2`,
+      [req.schema, req.type]
+    );
+    // A missing TYPE is not this check's business — a database that has not reached the migration
+    // creating it (a fresh partial run) must not be failed by an assertion about its contents.
+    if (present.rowCount === 0) continue;
+    const have = new Set(present.rows.map((r) => r.label));
+    const missing = req.labels.filter((l) => !have.has(l));
+    if (missing.length > 0) {
+      throw new Error(
+        `POST-APPLY CHECK FAILED: ${req.schema}.${req.type} is missing ${missing.length} required ` +
+          `label(s): ${missing.join(", ")}. Migrations reported success and the ledger will say ` +
+          `"applied", but the type does not contain them — which is precisely how 0094 was lost. ` +
+          `Do NOT re-run and do NOT edit an applied migration; add a NEW migration containing ONLY ` +
+          `the ALTER TYPE ... ADD VALUE statements, so nothing else in its transaction can roll ` +
+          `them back.`
+      );
+    }
+  }
+
+  // Second pass: on a fresh database the bootstrap call above ran before 0006 existed to create
+  // ih35_app, so it deferred. 0006 has certainly run by now.
+  await ensureLedgerGrants(client);
+
+  // ASK THE DATABASE, same as the enum assertion above — a GRANT that silently did not take is the
+  // failure mode being closed here, and the whole point is that it was invisible for months.
+  const ledgerGrants = await client.query(
+    `SELECT has_table_privilege('ih35_app', '_system._schema_migrations', 'SELECT')      AS canonical,
+            has_table_privilege('ih35_app', 'ih35_migrations.applied_migrations', 'SELECT') AS mirror
+       WHERE EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ih35_app')`
+  );
+  const g = ledgerGrants.rows[0];
+  if (g && !(g.canonical && g.mirror)) {
+    throw new Error(
+      `POST-APPLY CHECK FAILED: ih35_app cannot SELECT the migration ledger ` +
+        `(_system._schema_migrations=${g.canonical}, ih35_migrations.applied_migrations=${g.mirror}). ` +
+        `The application reads these to answer "are we fully migrated?", so the backend boot check ` +
+        `and launch-readiness both fail closed without them.`
+    );
+  }
+
   console.log("Migrations applied successfully.");
 } catch (error) {
   console.error("Migration failed:", error.message);

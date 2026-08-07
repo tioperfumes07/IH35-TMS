@@ -72,6 +72,11 @@ if (files.some((f) => f.startsWith("apps/frontend/src/pages/accounting/") || f.s
   }
 }
 
+// §7 nonfinancial — always (Rule 29 / #4198). Covered by money-pr-local-gate; keep explicit here too.
+if (!runNode("scripts/verify-section7-palette-nonfinancial.mjs")) {
+  problems.push("verify-section7-palette-nonfinancial");
+}
+
 if (touchesHot && existsSync(resolve(ROOT, "docs/module-completion/accounting.json"))) {
   if (!runNode("scripts/verify-acct-surface-dod-sweep.mjs")) {
     problems.push("verify-acct-surface-dod-sweep (matrix M vs accounting.json)");

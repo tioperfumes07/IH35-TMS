@@ -191,8 +191,11 @@ async function loadActiveLoads(
         inv.invoice_status
       FROM mdata.loads l
       JOIN mdata.customers c ON c.id = l.customer_id
+                            AND c.operating_company_id = l.operating_company_id
       LEFT JOIN mdata.drivers dr ON dr.id = l.assigned_primary_driver_id
+                                AND dr.operating_company_id = l.operating_company_id
       LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
         AND (u.owner_company_id = l.operating_company_id OR u.currently_leased_to_company_id = l.operating_company_id)
       LEFT JOIN LATERAL (
         SELECT ls.city, ls.scheduled_arrival_at
@@ -311,6 +314,7 @@ async function loadPendingDetentionApprovals(
       SELECT COUNT(*)::int AS c
       FROM dispatch.detention_requests dr
       LEFT JOIN mdata.loads l ON l.id = dr.load_id
+                           AND l.operating_company_id = dr.operating_company_id
       WHERE dr.status = 'pending_review'
         AND l.dispatcher_user_id = $1::uuid
         ${companyFilter}
@@ -339,6 +343,7 @@ async function loadIncomingMessageQueue(
       SELECT COUNT(DISTINCT m.id)::int AS c
       FROM mdata.driver_profile_messages m
       JOIN mdata.drivers d ON d.id = m.driver_id
+                          AND d.operating_company_id = m.operating_company_id
       JOIN mdata.loads l
         ON (
           l.assigned_primary_driver_id = m.driver_id

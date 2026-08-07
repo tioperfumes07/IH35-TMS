@@ -848,8 +848,16 @@ export async function getJournalEntryDetail(userId: string, operatingCompanyId: 
           p.amount_cents,
           p.description
         FROM accounting.journal_entry_postings p
+        -- ENTITY PREDICATE ON THE JOINS (CLS-JOIN-ENTITY-UNSCOPED). Scoping the POSTING does not scope
+        -- the account or class it resolves to. Both catalogs.accounts and catalogs.classes carry
+        -- operating_company_id (verified on prod), and RLS is not a backstop: the policy admits
+        -- org.user_accessible_company_ids(), which returns EVERY active company when the role is Owner.
+        -- Unscoped, this GL detail screen could label a posting with another entity's account name or
+        -- class — on the ledger, where the name IS the audit trail.
         LEFT JOIN catalogs.accounts a ON a.id = p.account_id
+                                     AND a.operating_company_id = p.operating_company_id
         LEFT JOIN catalogs.classes c ON c.id = p.class_id
+                                    AND c.operating_company_id = p.operating_company_id
         WHERE p.journal_entry_uuid = $1
           AND p.operating_company_id = $2
         ORDER BY p.line_sequence ASC, p.created_at ASC

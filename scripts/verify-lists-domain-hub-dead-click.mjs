@@ -1,0 +1,153 @@
+#!/usr/bin/env node
+/**
+ * Lists /lists/:domain catch-all used to render ComingSoonPage for every known domain
+ * (accounting, safety, drivers, …) even though DomainCatalogHubPage already existed at
+ * /lists/hub/:domain. DomainRibbon "+ Create new catalog" and bookmarked /lists/accounting
+ * URLs dead-clicked into ComingSoon.
+ *
+ * Proves:
+ *   1. ListsDomainRoute Navigate-redirects known domain params to /lists/hub/:key before fallback.
+ *   2. buildCatalogPath(domain, "_create") lands on /lists/hub/:domain (not bare /lists/:domain).
+ *   3. /lists/hub/:domain still mounts DomainCatalogHubPage (Rule 07 — additive only).
+ */
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+
+const LABEL = "verify-lists-domain-hub-dead-click";
+const ROOT = process.cwd();
+
+const PATHS = {
+  manifest: path.join(ROOT, "apps/frontend/src/routes/manifest.tsx"),
+  catalogsMap: path.join(ROOT, "apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx"),
+};
+
+const KNOWN_DOMAIN_KEYS = [
+  "accounting",
+  "safety",
+  "maintenance",
+  "dispatch",
+  "fuel",
+  "drivers",
+  "fleet",
+  "names_master",
+];
+
+function read(rel) {
+  const full = typeof rel === "string" && rel.startsWith("/") ? rel : path.join(ROOT, rel);
+  if (!fs.existsSync(full)) return null;
+  return fs.readFileSync(full, "utf8");
+}
+
+function fail(msg) {
+  return msg;
+}
+
+export function collectProblems(sources = {}) {
+  const manifest = sources.manifest ?? read(PATHS.manifest);
+  const catalogsMap = sources.catalogsMap ?? read(PATHS.catalogsMap);
+  const errors = [];
+
+  if (!manifest) errors.push(fail("missing apps/frontend/src/routes/manifest.tsx"));
+  if (!catalogsMap) errors.push(fail("missing apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx"));
+  if (errors.length) return errors;
+
+  if (!/function ListsDomainRoute\(\)/.test(manifest)) {
+    errors.push(fail("manifest missing ListsDomainRoute"));
+  } else {
+    const body = manifest.match(/function ListsDomainRoute\(\)\s*\{([\s\S]*?)\n\}/)?.[1] ?? "";
+    if (!/resolveListsDomainHubKey\(domain\)/.test(body)) {
+      errors.push(fail("ListsDomainRoute must call resolveListsDomainHubKey(domain) before ComingSoon fallback"));
+    }
+    if (!/\/lists\/hub\/\$\{hubKey\}/.test(body)) {
+      errors.push(fail("ListsDomainRoute must Navigate to /lists/hub/${hubKey} for known domains"));
+    }
+    const beforeComingSoon = body.split("ComingSoonPage")[0] ?? "";
+    if (!/resolveListsDomainHubKey\(domain\)/.test(beforeComingSoon)) {
+      errors.push(fail("ListsDomainRoute resolves hub key before rendering ComingSoonPage"));
+    }
+  }
+
+  if (!/export function resolveListsDomainHubKey/.test(catalogsMap)) {
+    errors.push(fail("AllCatalogsMap must export resolveListsDomainHubKey"));
+  }
+
+  if (!/if \(catalogKey === "_create"\) return `\/lists\/hub\/\$\{domain\}`;/.test(catalogsMap)) {
+    errors.push(fail('buildCatalogPath("_create") must return /lists/hub/${domain}, not bare /lists/:domain'));
+  }
+
+  if (!/path="\/lists\/hub\/:domain"[\s\S]{0,200}?DomainCatalogHubPage/.test(manifest)) {
+    errors.push(fail("/lists/hub/:domain must still mount DomainCatalogHubPage (Rule 07)"));
+  }
+
+  for (const key of KNOWN_DOMAIN_KEYS) {
+    if (!new RegExp(`findDomainByKey\\("${key}"`).test(catalogsMap) && key !== "names_master") {
+      // names_master resolved via route alias; others are direct keys in DOMAIN_CONFIG
+      continue;
+    }
+  }
+
+  return errors;
+}
+
+function selftest() {
+  const goodManifest = `
+function ListsDomainRoute() {
+  const { domain } = useParams();
+  const location = useLocation();
+  if (domain) {
+    const hubKey = resolveListsDomainHubKey(domain);
+    if (hubKey) {
+      return <Navigate to={\`/lists/hub/\${hubKey}\${location.search}\${location.hash}\`} replace />;
+    }
+  }
+  return <ComingSoonPage />;
+}
+<Route path="/lists/hub/:domain" element={<ProtectedRoute><DomainCatalogHubPage /></ProtectedRoute>} />
+`;
+  const goodMap = `
+export function resolveListsDomainHubKey(routeDomain) { return routeDomain; }
+if (catalogKey === "_create") return \`/lists/hub/\${domain}\`;
+`;
+
+  if (collectProblems({ manifest: goodManifest, catalogsMap: goodMap }).length) {
+    console.error(`${LABEL} --selftest FAIL: good fixture should pass`);
+    process.exit(1);
+  }
+
+  const badManifest = `
+function ListsDomainRoute() {
+  return <ComingSoonPage />;
+}
+<Route path="/lists/hub/:domain" element={<ProtectedRoute><DomainCatalogHubPage /></ProtectedRoute>} />
+`;
+  const badErrors = collectProblems({ manifest: badManifest, catalogsMap: goodMap });
+  if (!badErrors.some((e) => e.includes("resolveListsDomainHubKey"))) {
+    console.error(`${LABEL} --selftest FAIL: bad ListsDomainRoute should fail`, badErrors);
+    process.exit(1);
+  }
+
+  const badMap = `if (catalogKey === "_create") return \`/lists/\${routeDomain}\`;`;
+  const badMapErrors = collectProblems({ manifest: goodManifest, catalogsMap: badMap });
+  if (!badMapErrors.some((e) => e.includes("_create"))) {
+    console.error(`${LABEL} --selftest FAIL: bad buildCatalogPath _create should fail`, badMapErrors);
+    process.exit(1);
+  }
+
+  console.log(`${LABEL} --selftest OK`);
+}
+
+function main() {
+  if (process.argv.includes("--selftest")) return selftest();
+  const errors = collectProblems();
+  if (errors.length) {
+    console.error(`${LABEL} FAIL:`);
+    for (const e of errors) console.error(`  - ${e}`);
+    process.exit(1);
+  }
+  console.log(
+    `${LABEL} OK — /lists/:domain known domains redirect to /lists/hub/:key; _create uses hub path; DomainCatalogHubPage route intact`
+  );
+}
+
+main();

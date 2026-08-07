@@ -1,14 +1,10 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { listDrivers } from "../../api/mdata";
-import { Combobox } from "../Combobox";
-import { CreateDriverModal } from "./CreateDriverModal";
+import { EntityPicker } from "../parity/EntityPicker";
 
 export type DriverPickerWithCreateProps = {
   operatingCompanyId: string;
   value: string | null;
   onChange: (driverId: string | null) => void;
-  /** When false, skips the drivers query (parent surface closed). Default true. */
+  /** When false, skips the roster query (parent surface closed). Default true. */
   open?: boolean;
   enabled?: boolean;
   /** Parent already a ParityDrawer → pass "drawer". Standalone modal/page → default "modal". */
@@ -21,11 +17,17 @@ export type DriverPickerWithCreateProps = {
   dataField?: string;
 };
 
+/** mdata.drivers exposes first_name + last_name only. EntityPicker kind=driver uses this shape. */
+export function driverPickerDisplayLabel(driver: {
+  first_name?: string | null;
+  last_name?: string | null;
+}): string {
+  return [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim();
+}
+
 /**
- * PLUS-DRIVER-SYSTEM — shared Combobox + CreateDriverModal gold pattern (VendorBillForm).
- * Prefer this over ad-hoc SelectCombobox/select for create-worthy driver fields.
- * Specialized UIs (InlineDriverPicker, DriverAutocomplete, AssignDriverDropdown) wire
- * CreateDriverModal into those components instead so all consumers inherit.
+ * EP-DRIVER-KIND-SWEEP §9.0 item 17 — thin EntityPicker kind=driver wrapper.
+ * All create-worthy driver fields must route through EntityPicker (server search + inline create).
  */
 export function DriverPickerWithCreate({
   operatingCompanyId,
@@ -40,66 +42,21 @@ export function DriverPickerWithCreate({
   allowClear = true,
   dataField,
 }: DriverPickerWithCreateProps) {
-  const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   const queryEnabled = (enabled ?? true) && open && Boolean(operatingCompanyId);
 
-  // SAF-B29: this picker hardcoded search:"" with limit:200, so on a roster larger than 200 the rest
-  // were unselectable and nothing said so. Because this is the SHARED driver picker, that silent
-  // truncation was reproduced on every surface that uses it. The typed term now goes to the server,
-  // which already supports `search`; Combobox skips its local filter when onSearch is provided, so
-  // server matches are never re-filtered away client-side.
-  const [driverSearch, setDriverSearch] = useState("");
-
-  const driversQuery = useQuery({
-    queryKey: ["driver-picker-with-create", operatingCompanyId, driverSearch],
-    queryFn: () =>
-      listDrivers({
-        operating_company_id: operatingCompanyId,
-        status: "Active",
-        search: driverSearch || undefined,
-        limit: 200,
-      }),
-    enabled: queryEnabled,
-  });
-
-  const driverOptions = useMemo(
-    () =>
-      (driversQuery.data?.drivers ?? []).map((driver) => ({
-        value: driver.id,
-        label: [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || driver.id,
-      })),
-    [driversQuery.data?.drivers]
-  );
-
   return (
-    <>
-      <Combobox
-        dataField={dataField}
-        className={className}
-        options={driverOptions}
-        value={value}
-        onChange={onChange}
-        onSearch={setDriverSearch}
-        placeholder={placeholder}
-        loading={driversQuery.isLoading}
-        disabled={disabled || !operatingCompanyId}
-        allowClear={allowClear}
-        allowAddNew={{
-          label: "+ Create driver",
-          onAdd: () => setDriverCreateOpen(true),
-        }}
-      />
-      <CreateDriverModal
-        open={driverCreateOpen}
-        companyId={operatingCompanyId}
-        shell={shell}
-        onClose={() => setDriverCreateOpen(false)}
-        onCreated={(createdId) => {
-          onChange(createdId);
-          setDriverCreateOpen(false);
-          void driversQuery.refetch();
-        }}
-      />
-    </>
+    <EntityPicker
+      kind="driver"
+      operatingCompanyId={operatingCompanyId}
+      value={value}
+      onChange={onChange}
+      enabled={queryEnabled}
+      nestedInDrawer={shell === "drawer"}
+      placeholder={placeholder}
+      className={className}
+      disabled={disabled}
+      allowClear={allowClear}
+      dataField={dataField}
+    />
   );
 }

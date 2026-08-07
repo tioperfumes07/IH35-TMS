@@ -59,10 +59,13 @@ export function assertMoneyPrLocalGate(sources) {
       "verify-migration-lane-band",
       "verify-verify-step-lane-band",
       "verify-no-claimed-numbers-edits",
+      "verify-verify-step-claimed-on-main",
       "verify-data-migrations-rehearsed",
       "verify-entity-link-adoption",
       "verify-no-guard-file-deletion",
       "verify-claude-green-evidence-shape",
+      "verify-section7-palette-nonfinancial",
+      "verify-new-auth-routes-rate-limited",
     ]) {
       if (!gate.includes(needle)) {
         problems.push(`${GATE}: must invoke ${needle} (Rule 29/30 Claude-parity fail-fast).`);

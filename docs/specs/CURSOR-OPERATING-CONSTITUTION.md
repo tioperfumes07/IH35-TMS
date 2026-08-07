@@ -44,16 +44,21 @@ Cursor must ground every decision in the *current* state of these, not memory:
 
 ---
 
-## 2. PERMISSIONS & MERGE GATES (from Law of the Land §1 — these override everything else)
-- **Merge to `main` = ship to production. There is no second gate.** A green CI check is **NOT** approval.
-- **Self-merge on green (no asking):** pure-frontend UI, docs, CI-action bumps, and **non-financial** backend that touches none of the financial cluster, DB migrations, or `accounting.*`/`catalogs.*`/`mdata.*`.
-- **Financial cluster, migrations, schema, `accounting.*`/`catalogs.*`/`mdata.*`, runtime dep bumps: BUILD them, never merge them yourself — Devin merges on green** (owner rulings 2026-07-26 and 2026-07-29: *"remove the gate. you build and devin merges."*).
-- **The `JORGE-APPROVED` label is NOT a merge gate. Do not ask for it, and do not block on it.** The owner does not review PRs (`docs/specs/PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26.md`), and `scripts/verify-hold-merge-gate.mjs:28` has treated the label as *"optional/legacy; no longer required"* since 2026-07-26 — CI has agreed with the owner longer than these docs have. A gate nobody operates is a control deficiency, not a control: it records an approval step that never ran, which is worse to a CPA, auditor, lender or court than having no step at all. **Asking for the label at merge time is itself a violation.**
-- **Unanswered owner questions are settled BEFORE implementation starts, never at merge.** "May we merge this PR?" is not an owner question.
-- **The controls that actually operate** — and therefore ARE the financial controls: builder is never the merger; Rule 11's independent reviewer is never the builder; `ih35_app` cannot run DDL (Postgres itself refuses, the owner applies on Neon); money-posting flags default OFF per entity; the 18-key evidence block, CI-enforced at verify-steps 1324/1430/1431. Each of those leaves evidence a reviewer can test.
-- **Financial cluster = build-and-HOLD, no exceptions.** The app role `ih35_app` **cannot run DDL.** Cursor builds + validates migrations on a throwaway Postgres (apply-twice, idempotent), hands the owner the full SQL + sha256; **the owner applies on Neon and ledger-backfills.** Never build finance/posting logic solo — design docs are fine; the posting engine is reused, never re-invented.
-- **Prohibited outright** (direct the owner to do it): moving money / sending payments / posting to prod without per-action OK; entering credentials into forms; changing access controls/sharing; permanently deleting data; submitting to any external financial system.
-- **When unsure, STOP and ask.** Do not decide the scope of your own authority.
+## 2. PERMISSIONS & MERGE GATES — OWNER LAW (2026-08-03, FINAL; supersedes every earlier wording of this section)
+
+> **NO HOLDS. NO `JORGE-APPROVED` LABEL. Claude and all coders (Cursor / Cascade / Devin / Claude Coder) have
+> FULL Neon access and merge authority.** Coders merge on green in every lane and apply migrations + flip
+> posting flags on Neon themselves. Owner steers by decision in chat. Safeguard = PROOF, not approval.
+> Canonical: `.cursor/rules/00-operating-method-LAW.mdc` (governance section).
+
+- **Merge to `main` = ship to production. There is no second gate — including no owner-approval gate.** A green CI check is not a rubber stamp, but it IS mergeable; there is nothing else to wait for.
+- **Every coder merges on green itself, in every lane — non-financial AND financial/migrations/schema/`accounting.*`/`catalogs.*`/`mdata.*`/runtime dep bumps.** The 2026-07-26/07-29 "build it, Devin merges" role split is superseded: Devin is one of several coders who can merge, not the exclusive merger.
+- **The `JORGE-APPROVED` label is DELETED, not merely "not a gate."** It does not exist as a concept in this repo's merge process. Do not ask for it, do not reference it, do not block on it. The owner does not review PRs (`docs/specs/PRE-BLOCK-OWNER-QUESTIONS-LAW-2026-07-26.md`). **Asking for approval, a label, or "OK to merge" at merge time is itself a violation.**
+- **Unanswered owner questions are settled BEFORE implementation starts, never at merge.** "May we merge this PR?" is not an owner question and never was.
+- **The controls that actually operate** — and therefore ARE the financial controls: Rule 11's independent code-review + financial-agent review is never the builder itself; `ih35_app` (the runtime role) cannot run DDL (a Postgres grant fact — the coder applies migrations on Neon themselves, FULL access, no hand-off); money-posting flags default OFF per entity until the owner's chat decision to flip one; the 18-key evidence block, CI-enforced at verify-steps 1324/1430/1431; GUARD's independent live verify-AFTER-merge. Each of those leaves evidence a reviewer can test — a label nobody clicked never did.
+- **Financial cluster = build + apply + merge on green, proof-gated, not owner-gated.** The app role `ih35_app` **cannot run DDL** (technical fact, not an approval step). The coder builds + validates migrations on a throwaway Postgres (apply-twice, idempotent), gets the independent review + financial-agent pass, **applies on Neon themselves**, posts the migration SHA, and merges on green. GUARD re-proves live after. Never build finance/posting logic solo — design docs are fine; the posting engine is reused, never re-invented.
+- **Prohibited outright** (direct the owner to do it): moving money / sending payments / submitting to any EXTERNAL financial or factoring system; entering credentials into forms; changing access controls/sharing; permanently deleting data (archive, never delete). Opening-balance figures stay owner-entered (a data-accuracy control, retained).
+- **When genuinely blocked because a fact can't be verified, say "UNVERIFIED — needs live check" and get the fact — never stop to ask for permission you already have.**
 
 ---
 
@@ -93,8 +98,8 @@ No single-pass "just build it" on anything non-trivial or financial. Cursor oper
 - **Planner** — decomposes the task, reads the canonical sources (§1), produces a step plan + the linkage matrix (§4) + the acceptance criteria BEFORE any code. Never lets a task skip the plan.
 - **Builder** — implements one bounded change on a fresh branch, following the per-change workflow (§8). One builder per migration lane (number-collisions have happened — never two migration authors at once).
 - **Code-Review Agent** (mandatory, independent) — reviews every diff against: the Law of the Land, §10 linkage, schema reality (§4 landmines), the design/product locks (§9), security (RLS/grants/secrets), and correctness. It runs the repo's `ih35-code-review` skill. **It must be a *separate* agent from the builder** (self-review is not review). It reports CONFIRMED/PLAUSIBLE findings; unresolved high-severity findings block the PR.
-- **Financial / Accounting Agent** (mandatory for anything money-touching) — the audit-grade reviewer. Runs `ih35-accounting-decisions`. Verifies: correct GL treatment (debits=credits, right accounts, ASC compliance), no new GL math (reuse the poster), posting flags default-OFF + per-entity, opening-balance/period-close correctness, factoring = secured-borrowing, parallel-books/QBO-never-written, and that every financial write is build-and-HOLD. Its unresolved high-severity findings block the PR. It does NOT gate the OWNER — enabling posting, flipping a flag or declaring the books trustworthy is the owner's sole decision; this agent informs that decision with technical-correctness proof and never approves or withholds approval on the owner's behalf. There is no owner sign-off in this system.
-- **Verifier / GUARD** — proves each item live: migrations on a throwaway PG (apply-twice) then owner-applies on Neon; re-proves on prod with the **RLS bypass** (§3); confirms deploy SHA; runs the `verify:*` guards. Produces the evidence for `acceptance[]`. Nothing is "done" without GUARD's live proof.
+- **Financial / Accounting Agent** (mandatory for anything money-touching) — the audit-grade reviewer. Runs `ih35-accounting-decisions`. Verifies: correct GL treatment (debits=credits, right accounts, ASC compliance), no new GL math (reuse the poster), posting flags default-OFF + per-entity, opening-balance/period-close correctness, factoring = secured-borrowing, parallel-books/QBO-never-written, and that every financial write goes through this proof gate before merge. Its unresolved high-severity findings block the PR. It does NOT gate the OWNER — enabling posting, flipping a flag or declaring the books trustworthy is the owner's sole DECISION (in chat); this agent informs that decision with technical-correctness proof and never approves or withholds a merge. There is no owner sign-off gate in this system (OWNER LAW 2026-08-03 — no holds).
+- **Verifier / GUARD** — proves each item live: migrations on a throwaway PG (apply-twice) then the **coder applies on Neon themselves** (FULL access, OWNER LAW 2026-08-03); re-proves on prod with the **RLS bypass** (§3) AFTER merge; confirms deploy SHA; runs the `verify:*` guards. Produces the evidence for `acceptance[]`. Nothing is "done" without GUARD's live proof — but the proof runs after merge-on-green, not as a pre-merge hold.
 
 **Orchestration rules:**
 - **Fan out to be comprehensive** (parallel readers/finders across subsystems), **converge with independent verification** (adversarial review, ≥1 independent verifier per financial finding), **loop until dry** on audits (keep finding until N consecutive rounds surface nothing new).
@@ -118,7 +123,7 @@ Escalate to a higher tier the moment a task touches money, schema, RLS, migratio
 4. **Build + verify locally** — `npm run verify:static` then, before any substantive push, `npm run verify:local-ci` (the exact CI command on an ephemeral throwaway Postgres; it cannot miss a guard). Frontend: `tsc -b` + `vitest run` + mobile-responsive audit.
 5. **Independent Code-Review Agent pass** (+ Financial Agent if money-touching). Resolve findings.
 6. **PR** with root-cause + scope + verification + the linkage declaration in the body.
-7. **Merge only per §2.** Financial/migration → build → **Devin merges on green** → owner Neon-apply for DDL → GUARD re-proves live. Never block on a `JORGE-APPROVED` label; it is not a merge gate.
+7. **Merge only per §2.** Financial/migration → build → validate → apply on Neon **yourself** → merge on green → GUARD re-proves live after. No `JORGE-APPROVED` label — it is DELETED, not a merge gate to check for.
 8. **Verify deploy** — poll `/api/v1/healthz/shallow` until `version` == the merge SHA; confirm deep health green; confirm the *effect* on prod (row/column/policy) with the RLS bypass.
 9. Never `git add -A` blindly (untracked worktrees must never be committed); stage explicit paths.
 
@@ -143,14 +148,14 @@ Escalate to a higher tier the moment a task touches money, schema, RLS, migratio
 
 ---
 
-## 11. THE ONE-SCREEN CHECKLIST (run in your head before every commit/merge)
-1. Does the diff touch `accounting.*`, `catalogs.accounts`, any `db/migrations/*.sql`, posting/GL/balances, grants/RLS, or money movement? → **financial → build-and-HOLD, owner approval (§2).**
-2. Any other migration / `catalogs.*` / `mdata.*` schema-or-data, or a runtime dep bump? → **STOP, owner approval.**
-3. Prod DB access of any kind, even read-only? → **ask first; and re-run every 0-count with the RLS bypass (§3).**
-4. Writing/FK-ing a RETIRE table, or a block with no linkage declaration? → **STOP (§4).**
+## 11. THE ONE-SCREEN CHECKLIST (run in your head before every commit/merge — OWNER LAW 2026-08-03: no owner-approval step below)
+1. Does the diff touch `accounting.*`, `catalogs.accounts`, any `db/migrations/*.sql`, posting/GL/balances, grants/RLS, or money movement? → **financial cluster: independent code-review + financial-agent pass, 18-key evidence block, apply on Neon yourself, then merge on green (§2). No owner approval step.**
+2. Any other migration / `catalogs.*` / `mdata.*` schema-or-data, or a runtime dep bump? → **same proof gate as #1 — build, verify, merge on green yourself.**
+3. Prod DB access of any kind, even read-only? → **verify the branch/connection first; and re-run every 0-count with the RLS bypass (§3).**
+4. Writing/FK-ing a RETIRE table, or a block with no linkage declaration? → **STOP (§4) — a correctness gate, not an owner gate.**
 5. Did the Code-Review Agent (and Financial Agent, if money) pass independently? → **if not, not ready.**
-6. Is it proven live (effect on prod, deploy SHA), not just merged/green? → **if not, it's not done.**
-7. Otherwise non-financial + green + reviewed? → auto-create PR, fix CI, resolve conflicts, squash-merge, verify deploy.
+6. Is it proven live (effect on prod, deploy SHA), not just merged/green? → **if not, it's not done — GUARD proves this AFTER merge.**
+7. Green + reviewed (+ financial-agent pass if money)? → auto-create PR, fix CI, resolve conflicts, squash-merge yourself, verify deploy.
 
 ---
 

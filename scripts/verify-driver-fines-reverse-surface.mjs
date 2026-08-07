@@ -1,0 +1,149 @@
+#!/usr/bin/env node
+/**
+ * GUARD — verify-driver-fines-reverse-surface (CLS-REVERSE-LINKAGE-MISSING / SAF-F16)
+ *
+ * DEFECT THIS ASSERTS
+ * The driver profile carried a dozen ops views and none for fines, so money taken off a driver's
+ * settlement had no reverse surface on the driver it was taken from.
+ *
+ * The trap this guards is UNDER-REPORTING, not absence. There are TWO fines tables and they are not
+ * interchangeable: safety.civil_fines is keyed subject_driver_id, safety.internal_fines is keyed
+ * driver_id. A panel that reads only one renders, looks wired, and shows a partial list - and a
+ * partial fines list on a driver is worse than none, because it reads as complete. So this guard
+ * requires BOTH sources, and requires both to be scoped SERVER-side (the internal-fines route caps
+ * at LIMIT 500; a client-side filter would silently drop fines once the company crosses that cap).
+ *
+ * It also pins the honest-link rule: civil fines drill through EntityLink kind "safety_fine" (a
+ * route that resolves), while internal fines must NOT be given a fabricated per-id link, because
+ * /safety/internal-fines does not honour a per-id query param.
+ *
+ * METHOD: comments stripped before asserting; --selftest mutates the real sources so every
+ * assertion is proven able to fail.
+ */
+import { readFileSync } from "node:fs";
+
+const LABEL = "verify-driver-fines-reverse-surface";
+const SECTION = "apps/frontend/src/components/safety/DriverFinesReverseSection.tsx";
+const PAGE = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
+const API = "apps/frontend/src/api/safety.ts";
+
+function stripComments(src) {
+  return src
+    .replace(/\{\s*\/\*[\s\S]*?\*\/\s*\}/g, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:])\/\/.*$/gm, "$1");
+}
+
+const read = (p) => stripComments(readFileSync(p, "utf8"));
+
+/** Slice out a single exported function body so a file-wide grep cannot satisfy an assertion. */
+function fnBody(src, name) {
+  const start = src.indexOf(`export function ${name}(`);
+  if (start === -1) return "";
+  const next = src.indexOf("\nexport function ", start + 1);
+  return src.slice(start, next === -1 ? src.length : next);
+}
+
+function links(s) {
+  return [
+    {
+      ok: /getSafetyFines\(/.test(s[SECTION]),
+      why: `${SECTION}: civil fines (safety.civil_fines) are never queried — the panel under-reports`,
+    },
+    {
+      ok: /getInternalFines\(/.test(s[SECTION]),
+      why: `${SECTION}: internal fines (safety.internal_fines) are never queried — the panel under-reports`,
+    },
+    {
+      ok: /subject_driver_id:\s*driverId/.test(s[SECTION]),
+      why: `${SECTION}: civil fines are not scoped to this driver server-side`,
+    },
+    {
+      ok: /driver_id:\s*driverId/.test(s[SECTION]),
+      why: `${SECTION}: internal fines are not scoped to this driver server-side`,
+    },
+    {
+      ok: /kind="safety_fine"/.test(s[SECTION]),
+      why: `${SECTION}: civil fines lost their drill-through to the fine record`,
+    },
+    {
+      ok: !/kind="(internal_fine|civil_fine)"/.test(s[SECTION]),
+      why: `${SECTION}: uses a fabricated EntityLink kind — every declared kind must resolve to a real route`,
+    },
+    {
+      ok: /DriverFinesReverseSection/.test(s[PAGE]),
+      why: `${PAGE}: the fines reverse section is not rendered on the driver profile`,
+    },
+    // Scoped to the specific function bodies: `qs.set("driver_id"` appears four times in this file,
+    // so a file-wide match would have passed while the fines call itself was unscoped.
+    {
+      ok: /qs\.set\("subject_driver_id"/.test(fnBody(s[API], "getSafetyFines")),
+      why: `${API}: getSafetyFines drops subject_driver_id — the request would return every fine`,
+    },
+    {
+      ok: /qs\.set\("driver_id"/.test(fnBody(s[API], "getInternalFines")),
+      why: `${API}: getInternalFines drops driver_id — the 500-row cap would silently omit fines`,
+    },
+  ];
+}
+
+const check = (s) => links(s).filter((l) => !l.ok).map((l) => l.why);
+
+function loadAll() {
+  const out = {};
+  for (const p of [SECTION, PAGE, API]) out[p] = read(p);
+  return out;
+}
+
+function selftest() {
+  const real = loadAll();
+  const baseline = check(real);
+  if (baseline.length !== 0) {
+    console.error(`${LABEL} --selftest FAIL — real sources do not pass:`);
+    for (const e of baseline) console.error(`  - ${e}`);
+    process.exit(1);
+  }
+
+  const mutations = [
+    [SECTION, (x) => x.replace("getSafetyFines(", "getNothing(")],
+    [SECTION, (x) => x.replace("getInternalFines(", "getNothing(")],
+    [SECTION, (x) => x.replace("subject_driver_id: driverId", "subject_driver_id: undefined")],
+    [SECTION, (x) => x.replace("driver_id: driverId", "driver_id: undefined")],
+    [SECTION, (x) => x.replace('kind="safety_fine"', 'kind="driver"')],
+    [SECTION, (x) => x.replace('kind="safety_fine"', 'kind="internal_fine"')],
+    [PAGE, (x) => x.split("DriverFinesReverseSection").join("SomeOtherSection")],
+    [API, (x) => x.replace('qs.set("subject_driver_id"', 'qs.set("ignored"')],
+    [API, (x) => {
+      const i = x.indexOf("export function getInternalFines(");
+      return x.slice(0, i) + x.slice(i).replace('qs.set("driver_id"', 'qs.set("ignored"');
+    }],
+  ];
+
+  for (const [file, mutate] of mutations) {
+    const broken = { ...real, [file]: mutate(real[file]) };
+    if (broken[file] === real[file]) {
+      console.error(`${LABEL} --selftest FAIL — a mutation on ${file} changed nothing (guard is stale).`);
+      process.exit(1);
+    }
+    if (check(broken).length === 0) {
+      console.error(`${LABEL} --selftest FAIL — breaking ${file} was NOT detected.`);
+      process.exit(1);
+    }
+  }
+
+  console.log(`${LABEL} --selftest PASS — all ${mutations.length} assertions proven able to fail.`);
+  process.exit(0);
+}
+
+if (process.argv.includes("--selftest")) selftest();
+
+const errors = check(loadAll());
+if (errors.length > 0) {
+  console.error(`${LABEL} FAIL — driver fines reverse surface is broken at ${errors.length} point(s):`);
+  for (const e of errors) console.error(`  - ${e}`);
+  process.exit(1);
+}
+console.log(
+  `${LABEL} PASS — driver profile surfaces BOTH civil and internal fines, each scoped server-side, ` +
+    `with no fabricated drill-through.`
+);

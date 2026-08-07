@@ -11,6 +11,10 @@ import {
   validateLoadStatusTransition,
 } from "./load-state-machine.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
+import {
+  loadStatusRequiresDeliveryDepartureStamp,
+  stampFinalActiveDeliveryDeparture,
+} from "./stamp-final-delivery-departure.js";
 
 // Transitions that fire escrow-proposal + settlement side-effects on the per-load endpoint
 // (PATCH /dispatch/loads/:id/status). Bulk set_status does NOT run those financial hooks, so moving a
@@ -20,6 +24,8 @@ const PER_LOAD_ONLY_TRANSITIONS = new Set<DispatchStatus>(["abandoned", "driver_
 
 const setStatusPayloadSchema = z.object({
   transition: dispatchStatusSchema,
+  /** Optional office-attested delivery time; COALESCE(now()) when omitted (WIRE-07). */
+  delivered_at: z.string().datetime({ offset: true }).optional(),
 });
 
 const markFactoredPayloadSchema = z.object({
@@ -93,6 +99,11 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
     );
     if (updateRes.rows.length === 0) {
       return { ok: false, code: "E_UPDATE_FAILED", message: "Load status update failed" };
+    }
+    // CLS-DISP-WIRE-07 — office bulk "Mark delivered" must stamp final delivery departure
+    // (same as PATCH /dispatch/loads/:id/transition). COALESCE(now()) when client omits delivered_at.
+    if (loadStatusRequiresDeliveryDepartureStamp(mdataStatus)) {
+      await stampFinalActiveDeliveryDeparture(client, id, statusPayload.delivered_at ?? null);
     }
     // Parity with the per-load endpoint: a bulk status change must land on the dispatch event spine so
     // downstream workflow consumers (timeline, notifications) see it. (Non-financial event-bus write.)

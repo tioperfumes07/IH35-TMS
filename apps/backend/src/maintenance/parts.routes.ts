@@ -5,6 +5,9 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { PART_INVENTORY_CATEGORY_VALUES } from "./part-inventory-categories.js";
+
+const partCategorySchema = z.enum(PART_INVENTORY_CATEGORY_VALUES);
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -19,13 +22,15 @@ const createSchema = z.object({
   // field blank the INSERT generates a stable "PART-XXXXXXXX" SKU (no more fake id::text SKU).
   part_number: z.string().trim().min(1).max(120).optional(),
   name: z.string().trim().min(1).max(250),
+  // INV-LINK-01: canonical FK on maintenance.parts_inventory.vendor_id → mdata.vendors.
+  vendor_id: z.string().uuid().optional(),
   vendor_default: z.string().trim().max(250).optional(),
   unit_cost: z.number().nonnegative().optional(),
   qty_on_hand: z.number().int().nonnegative().default(0),
   reorder_threshold: z.number().int().nonnegative().default(0),
   location: z.string().trim().max(120).optional(),
-  // INV-1: previously collected by the create drawer but silently dropped by Zod — now persisted.
-  category: z.string().trim().max(120).optional(),
+  // INV-CAT-01: category required on create — must be a known taxonomy token (no blank/null).
+  category: partCategorySchema,
   notes: z.string().trim().max(2000).optional(),
   // forward-compat: the drawer also posts is_active; accept + ignore so it is not a validation_error.
   is_active: z.boolean().optional(),
@@ -35,13 +40,15 @@ const updateSchema = z
   .object({
     part_number: z.string().trim().min(1).max(120).optional(),
     name: z.string().trim().min(1).max(250).optional(),
+    vendor_id: z.string().uuid().nullable().optional(),
     vendor_default: z.string().trim().max(250).nullable().optional(),
     unit_cost: z.number().nonnegative().nullable().optional(),
     qty_on_hand: z.number().int().nonnegative().optional(),
     reorder_threshold: z.number().int().nonnegative().optional(),
     location: z.string().trim().max(120).nullable().optional(),
     // INV-1: category + notes are now editable + persisted.
-    category: z.string().trim().max(120).nullable().optional(),
+    // INV-CAT-01: when category is sent on update it must be a valid taxonomy token (not null/blank).
+    category: partCategorySchema.optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
@@ -121,7 +128,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
             part_description AS name,
             category,
             notes,
-            NULL::text AS vendor_default,
+            vendor_id::text AS vendor_id,
             last_purchase_amount AS unit_cost,
             on_hand_qty AS qty_on_hand,
             0::int AS reorder_threshold,
@@ -181,17 +188,19 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
             location,
             part_number,
             category,
-            notes
+            notes,
+            vendor_id
           )
           VALUES (
             $1,$2,$3,$4,$5,
             -- INV-1: persist the user-entered SKU; generate a stable "PART-XXXXXXXX" one when blank.
             COALESCE(NULLIF(btrim($6), ''), 'PART-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8))),
             $7,
-            $8
+            $8,
+            $9
           )
           RETURNING
-            id, part_number, part_description AS name, category, notes, NULL::text AS vendor_default, last_purchase_amount AS unit_cost, on_hand_qty AS qty_on_hand,
+            id, part_number, part_description AS name, category, notes, vendor_id::text AS vendor_id, last_purchase_amount AS unit_cost, on_hand_qty AS qty_on_hand,
             0::int AS reorder_threshold, location, 'manual'::text AS source, CASE WHEN part_description LIKE '[VOID] %' THEN updated_at ELSE NULL END AS voided_at, NULL::text AS voided_reason
         `,
         [
@@ -203,6 +212,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
           body.data.part_number ?? null,
           body.data.category ?? null,
           body.data.notes ?? null,
+          body.data.vendor_id ?? null,
         ]
       );
       await appendCrudAudit(client, user.uuid, "maintenance.parts.created", {
@@ -244,6 +254,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
       if ("part_number" in body.data) add("part_number", body.data.part_number ?? null);
       if ("category" in body.data) add("category", body.data.category ?? null);
       if ("notes" in body.data) add("notes", body.data.notes ?? null);
+      if ("vendor_id" in body.data) add("vendor_id", body.data.vendor_id ?? null);
       values.push(params.data.id);
       const result = await client.query(
         `UPDATE maintenance.parts_inventory SET ${setParts.join(", ")}, updated_at = now() WHERE id = $${values.length} RETURNING *`,
@@ -268,7 +279,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
           name: newRow.part_description,
           category: newRow.category ?? null,
           notes: newRow.notes ?? null,
-          vendor_default: null,
+          vendor_id: newRow.vendor_id ?? null,
           unit_cost: newRow.last_purchase_amount,
         qty_on_hand: newRow.on_hand_qty,
           reorder_threshold: 0,

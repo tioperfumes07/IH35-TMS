@@ -57,7 +57,15 @@ docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 !.cursor/rules/27-one-open-pr-per-area.mdc
 !.cursor/rules/29-cursor-claude-parity-ship.mdc
 !.cursor/rules/30-claude-green-evidence-format.mdc
+!.cursor/rules/31-cursor-never-idle-wave-drain.mdc
 !.cursor/rules/31-full-system-audit-mandatory.mdc
+!.cursor/rules/32-continuous-mode-no-idle.mdc
+!.cursor/rules/32-load-linkage-pre-operational.mdc
+!.cursor/rules/33-standing-session-directive.mdc
+!.cursor/rules/34-cursor-pr-title-prefix.mdc
+!.cursor/rules/35-fix-failures-no-ci-babysit.mdc
+!.cursor/rules/36-claude-serial-ship-sequence.mdc
+!.cursor/rules/00-operating-method-LAW.mdc
 !.cursor/rules/ih35-deep-linkage-audit.mdc
 !.cursor/rules/dual-lane-never-idle.mdc
 !.cursor/rules/06-live-ops-cadence.mdc
@@ -70,10 +78,12 @@ docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 # The canonical generated file has no space; working copies do. Never commit working copies.
 docs/trackers/exports/* *
 
-# Claude Code local state — ignore everything under .claude EXCEPT committed skills.
+# Claude Code local state — ignore everything under .claude EXCEPT committed skills
+# and the hard-deny floor in settings.json (owner 2026-08-04; deny outranks bypass).
 # .claude/worktrees/ (agent worktrees) and settings.local.json must never be committed.
 .claude/*
 !.claude/skills/
+!.claude/settings.json
 
 # docs/module-completion/*.md is generated from the .json beside it by
 # scripts/verify-module-completion.mjs (verify-step 1431). Committing a derived file made every
@@ -90,3 +100,8 @@ docs/module-completion/safety.md
 # on the derived file. Generate on typecheck/build/dev (frontend package.json) and via
 # MODULE_COMPLETION_AUTOGEN / verify-module-completion --write-md. Do not re-commit it.
 apps/frontend/src/generated/module-completion.ts
+
+# Selftest scratch — these are now cleaned up by the scripts themselves (teardown runs before
+# process.exit); ignored as belt-and-braces so a crashed run can never dirty another lane's tree.
+.tmp-selftest-*.ts
+.verify-wo-cancel-selftest-*/

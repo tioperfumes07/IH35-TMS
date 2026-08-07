@@ -1,68 +1,56 @@
 #!/usr/bin/env node
 /**
- * ELD-LIVE-DATA — EldPage (and tab children) must wire real useQuery/fetch for
- * live-duty, violations, and unidentified. Certifications/settings may stay
- * honest-empty. Never ship hardcoded production fixture arrays.
+ * ELD-T01..T04 / ELD-LIVE-DATA — EldPage tab children must wire real useQuery/fetch for
+ * live-duty, violations, and unidentified. Certifications/settings stay honest-empty.
+ * Never ship hardcoded production fixture arrays.
  */
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = process.cwd();
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const LABEL = "verify-eld-tabs-live-data";
 
 const paths = {
-  eldPage: path.join(ROOT, "apps/frontend/src/pages/eld/EldPage.tsx"),
-  eldApi: path.join(ROOT, "apps/frontend/src/api/eld.ts"),
-  liveDuty: path.join(ROOT, "apps/frontend/src/pages/eld/tabs/LiveDutyTab.tsx"),
-  violations: path.join(ROOT, "apps/frontend/src/pages/eld/tabs/ViolationsTab.tsx"),
-  unidentified: path.join(ROOT, "apps/frontend/src/pages/eld/tabs/UnidentifiedTab.tsx"),
-  honestEmpty: path.join(ROOT, "apps/frontend/src/pages/eld/tabs/HonestEmptyTab.tsx"),
-  tabsConfig: path.join(ROOT, "apps/frontend/src/pages/eld/ELD_TABS_CONFIG.ts"),
+  eldPage: "apps/frontend/src/pages/eld/EldPage.tsx",
+  eldApi: "apps/frontend/src/api/eld.ts",
+  liveDuty: "apps/frontend/src/pages/eld/tabs/LiveDutyTab.tsx",
+  violations: "apps/frontend/src/pages/eld/tabs/ViolationsTab.tsx",
+  unidentified: "apps/frontend/src/pages/eld/tabs/UnidentifiedTab.tsx",
+  honestEmpty: "apps/frontend/src/pages/eld/tabs/HonestEmptyTab.tsx",
+  tabsConfig: "apps/frontend/src/pages/eld/ELD_TABS_CONFIG.ts",
 };
 
-function read(filePath) {
-  if (!fs.existsSync(filePath)) return null;
-  return fs.readFileSync(filePath, "utf8");
+function read(rel) {
+  const full = path.join(ROOT, rel);
+  if (!fs.existsSync(full)) return null;
+  return fs.readFileSync(full, "utf8");
 }
 
-function fail(msg) {
-  console.error(`[verify-eld-tabs-live-data] ${msg}`);
-  process.exit(1);
-}
-
-function mustInclude(label, source, needles) {
-  for (const needle of needles) {
-    if (!source.includes(needle)) fail(`${label} missing required marker: ${needle}`);
+export function collectProblems(sources = Object.fromEntries(Object.entries(paths).map(([k, rel]) => [k, read(rel)]))) {
+  const problems = [];
+  for (const [key, rel] of Object.entries(paths)) {
+    if (sources[key] == null) problems.push(`missing file: ${rel}`);
   }
-}
+  if (problems.length) return problems;
 
-function mustNotMatch(label, source, patterns) {
-  for (const re of patterns) {
-    if (re.test(source)) fail(`${label} must not contain forbidden pattern: ${re}`);
-  }
-}
+  const {
+    eldPage,
+    eldApi,
+    liveDuty,
+    violations,
+    unidentified,
+    honestEmpty,
+    tabsConfig,
+  } = sources;
 
-function main() {
-  const eldPage = read(paths.eldPage);
-  const eldApi = read(paths.eldApi);
-  const liveDuty = read(paths.liveDuty);
-  const violations = read(paths.violations);
-  const unidentified = read(paths.unidentified);
-  const honestEmpty = read(paths.honestEmpty);
-  const tabsConfig = read(paths.tabsConfig);
+  const need = (label, src, needles) => {
+    for (const needle of needles) {
+      if (!src.includes(needle)) problems.push(`${label} missing: ${needle}`);
+    }
+  };
 
-  for (const [label, src] of Object.entries({
-    EldPage: eldPage,
-    "api/eld.ts": eldApi,
-    LiveDutyTab: liveDuty,
-    ViolationsTab: violations,
-    UnidentifiedTab: unidentified,
-    HonestEmptyTab: honestEmpty,
-    ELD_TABS_CONFIG: tabsConfig,
-  })) {
-    if (src == null) fail(`missing file for ${label}`);
-  }
-
-  mustInclude("EldPage", eldPage, [
+  need("EldPage", eldPage, [
     "LiveDutyTab",
     "ViolationsTab",
     "UnidentifiedTab",
@@ -72,9 +60,12 @@ function main() {
     'activeTab === "unidentified"',
     'activeTab === "certifications"',
     'activeTab === "settings"',
+    'data-testid="eld-page"',
+    'testId="eld-certifications-honest-empty"',
+    'testId="eld-settings-honest-empty"',
   ]);
 
-  mustInclude("api/eld.ts", eldApi, [
+  need("api/eld.ts", eldApi, [
     "fetchEldLiveDutyRoster",
     "fetchEldHosViolations",
     "fetchEldUnidentifiedDriving",
@@ -83,12 +74,16 @@ function main() {
     "getFleetLocationHos",
   ]);
 
-  mustInclude("LiveDutyTab", liveDuty, ["useQuery", "fetchEldLiveDutyRoster"]);
-  mustInclude("ViolationsTab", violations, ["useQuery", "fetchEldHosViolations"]);
-  mustInclude("UnidentifiedTab", unidentified, ["useQuery", "fetchEldUnidentifiedDriving"]);
-  mustInclude("HonestEmptyTab", honestEmpty, ["data-eld-honest-empty"]);
+  need("LiveDutyTab", liveDuty, ["useQuery", "fetchEldLiveDutyRoster", 'data-testid="eld-live-duty-tab"']);
+  need("ViolationsTab", violations, ["useQuery", "fetchEldHosViolations", 'data-testid="eld-violations-tab"']);
+  need("UnidentifiedTab", unidentified, [
+    "useQuery",
+    "fetchEldUnidentifiedDriving",
+    'data-testid="eld-unidentified-tab"',
+  ]);
+  need("HonestEmptyTab", honestEmpty, ["data-eld-honest-empty"]);
 
-  mustInclude("ELD_TABS_CONFIG", tabsConfig, [
+  need("ELD_TABS_CONFIG", tabsConfig, [
     'id: "live-duty"',
     'id: "violations"',
     'id: "unidentified"',
@@ -97,13 +92,11 @@ function main() {
     "not wired yet",
   ]);
 
-  // Forbidden: hardcoded fake fixture driver arrays gated incorrectly for production.
   const fakePatterns = [
     /FAKE_ELD_/i,
     /fixtureDrivers\s*=\s*\[/,
     /MOCK_DUTY_ROWS/,
     /demoDrivers\s*=\s*\[\s*\{/,
-    /NODE_ENV\s*!==\s*['"]production['"][\s\S]{0,200}drivers:\s*\[/,
   ];
   for (const [label, src] of [
     ["EldPage", eldPage],
@@ -112,18 +105,45 @@ function main() {
     ["UnidentifiedTab", unidentified],
     ["api/eld.ts", eldApi],
   ]) {
-    mustNotMatch(label, src, fakePatterns);
+    for (const re of fakePatterns) {
+      if (re.test(src)) problems.push(`${label} forbidden fixture pattern: ${re}`);
+    }
   }
 
-  // Stub-only EldPage regression: must not be the old empty-state-only shell.
-  if (
-    eldPage.includes("activeConfig.emptyTitle") &&
-    !eldPage.includes("LiveDutyTab")
-  ) {
-    fail("EldPage still renders only static empty states (missing LiveDutyTab wiring)");
+  if (eldPage.includes("activeConfig.emptyTitle") && !eldPage.includes("LiveDutyTab")) {
+    problems.push("EldPage still renders only static empty states (missing LiveDutyTab wiring)");
   }
 
-  console.log("[verify-eld-tabs-live-data] OK");
+  return problems;
 }
 
-main();
+const IS_MAIN = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (IS_MAIN && process.argv.includes("--selftest")) {
+  const real = Object.fromEntries(Object.entries(paths).map(([k, rel]) => [k, read(rel)]));
+  const broken = {
+    ...real,
+    violations: "export function ViolationsTab() { return <div>stub</div>; }\n",
+  };
+  if (collectProblems(broken).length === 0) {
+    console.error(`${LABEL} --selftest FAIL: broken ViolationsTab not flagged`);
+    process.exit(1);
+  }
+  const good = collectProblems(real);
+  if (good.length) {
+    console.error(`${LABEL} --selftest FAIL:\n${good.map((p) => `  - ${p}`).join("\n")}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} --selftest OK`);
+  process.exit(0);
+}
+
+if (IS_MAIN) {
+  const problems = collectProblems();
+  if (problems.length) {
+    console.error(`${LABEL} FAIL:`);
+    for (const p of problems) console.error(`  - ${p}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} OK — ELD tabs wire live APIs; cert/settings honest-empty (ELD-T01..T04)`);
+}

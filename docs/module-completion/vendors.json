@@ -2,7 +2,7 @@
   "module": "vendors",
   "title": "Vendors",
   "complete": false,
-  "as_of": "2026-08-02",
+  "as_of": "2026-08-04",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/factoring-deep-2026-08-01.md",
   "spec_sources": [
@@ -14,68 +14,101 @@
     {
       "id": "VEND-S01",
       "title": "/vendors roster active count matches Neon mdata.vendors",
-      "layers": ["DOD-A", "VERIFY-6"],
+      "layers": [
+        "DOD-A",
+        "VERIFY-6"
+      ],
       "spec": "Vendors list · ITEM-03B active_company_only",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS TRANSP: 563 active exact match",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Neon lucia br-fancy-credit-akjnd07a: TRANSP active=564 inactive=387 · TRK=1873 · USMCA=4 (deactivated_at IS NULL). Vendors.tsx listVendors + default Active filter. Guard verify-vend-s01-roster-active-filter + step 2236. (Auditor 563 was prior snapshot; live lucia now 564.)",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "VEND-S02",
       "title": "Vendor detail factor schedule uses factoring.factor not notes parse",
-      "layers": ["DOD-C", "VERIFY-4"],
+      "layers": [
+        "DOD-C",
+        "VERIFY-4"
+      ],
       "spec": "DUAL-FACTOR-VENDOR-DETAIL · VendorDetail.tsx",
-      "status": "OPEN",
-      "evidence": "scaffold — FAIL: serializeVendorNotes/parseVendorNotes dual-path",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor #4211: FactoringHome profile PATCH advance_rate/fee_rate/reserve_rate + remittance_details on factoring.factor; VendorDetail strips factoring notes block + relocates schedule UI to /factoring. Guard verify-fact-dual-canonical-profile step 2242. Neon Faro TRANSP flat rates 0.97/0.015/0.015.",
+      "pr": 4211,
+      "prod_verified": false
     },
     {
       "id": "VEND-LINK-01",
       "title": "Bills/allocations EntityLink uses vendor_uuid not legacy vendor_id text",
-      "layers": ["DOD-C", "VERIFY-4"],
+      "layers": [
+        "DOD-C",
+        "VERIFY-4"
+      ],
       "spec": "LINK-BILL-VENDOR-ID sibling sweep · ACC-bills-vendor-link",
-      "status": "OPEN",
-      "evidence": "scaffold — FAIL system-wide wrong-column linkage (accounting module)",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-04 Cursor: BillsPage, BillDetailPage, BillPaymentsListPage, BillPaymentDetailPage, AllocationsPage EntityLink kind=vendor id=mdata_vendor_id (label may fall back to legacy vendor_id text). Backend bills.service + allocations.service expose mdata_vendor_id. Guard verify-vend-link-01-vendor-uuid-entitylink composes verify-bill-vendor-link-canonical-uuid step 1969. Step 2356.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "VEND-S03",
       "title": "Vendor create dedup guard scoped per operating company",
-      "layers": ["DOD-D", "VERIFY-5"],
+      "layers": [
+        "DOD-D",
+        "VERIFY-5"
+      ],
       "spec": "0243-g6-2-vendor-create-no-dedup-guard",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: vendors.routes resolves operating_company BEFORE dedup; match is lower(btrim(vendor_name))+opco+deactivated_at IS NULL (G6-2). Guard verify-vend-s03-s04-dedup-and-types + step 2238.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "VEND-S04",
       "title": "Vendor types catalog-backed (catalogs.vendor_types populated)",
-      "layers": ["VERIFY-2", "VERIFY-6"],
+      "layers": [
+        "VERIFY-2",
+        "VERIFY-6"
+      ],
       "spec": "08-BLOCK catalog re-verification",
-      "status": "OPEN",
-      "evidence": "scaffold — Neon 24 rows (8/opco) per corrected backlog doc",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Neon lucia: catalogs.vendor_types 8/TRANSP · 8/TRK · 8/USMCA. VendorCreateModal + NewVendorDrawerForm createKind=vendor_type → catalogs.vendor_types. Guard step 2238.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "VEND-S05",
       "title": "Inactive vendor filter excludes 387 inactive from default Active view",
-      "layers": ["DOD-B"],
+      "layers": [
+        "DOD-B"
+      ],
       "spec": "Vendors default filter",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS: inactive excluded consistently",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Neon lucia TRANSP inactive=387 exact. Vendors.tsx default listStatus=\"active\" filters deactivated_at==null; data-list-status-filter=vendors. Guard verify-vend-s01-roster-active-filter + step 2236.",
+      "pr": null,
+      "prod_verified": false
     },
     {
       "id": "VEND-VERIFY-01",
       "title": "Vendors module VERIFY-1..8 TRANSP + USMCA",
-      "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
+      "layers": [
+        "VERIFY-1",
+        "VERIFY-2",
+        "VERIFY-3",
+        "VERIFY-4",
+        "VERIFY-5",
+        "VERIFY-6",
+        "VERIFY-7",
+        "VERIFY-8"
+      ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "OPEN",
-      "evidence": "scaffold — roster PASS; detail/dual-path UNVERIFIED USMCA",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-04 Cursor: meta guard verify-vend-verify-01 composes S01 roster (TRANSP 564/USMCA 4 lucia), S03/S04 dedup+types, S02 fact-dual canonical profile, VEND-LINK-01 bill/allocation vendor uuid EntityLink; manifest /vendors + /vendors/:id; VendorDetail vendor-factor-schedule-relocated + emptyFactoringProfileMeta. Steps 2252 + 2356. complete:false while CLS-ORPHAN-SURFACE lists vendors (ORPH-003 vendor detail empty — live drain required; do not game modules[]).",
+      "pr": null,
+      "prod_verified": false
     }
   ],
-  "pass_count": 0,
+  "pass_count": 7,
   "total_count": 7,
-  "progress": "0 of 7"
+  "progress": "7 of 7"
 }

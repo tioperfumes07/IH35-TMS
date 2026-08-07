@@ -92,7 +92,9 @@ const KANBAN_STATUS_GROUPS: KanbanColumnDef[] = [
   { key: "loaded", title: "Loaded", statuses: [], dropStatus: "in_transit" },
   { key: "in_transit", title: "In transit", statuses: ["in_transit"], dropStatus: "in_transit" },
   { key: "at_delivery", title: "At delivery", statuses: ["at_delivery"], dropStatus: "at_delivery", showDwell: true },
-  { key: "delivered", title: "Delivered", statuses: ["delivered", "delivered_pending_docs"], dropStatus: "delivered" },
+  // WIRE-07: drop must use delivered_pending_docs so mdata status stamps actual_departure_at.
+  // Bare "delivered" skips loadStatusRequiresDeliveryDepartureStamp (backend stamp helper).
+  { key: "delivered", title: "Delivered", statuses: ["delivered", "delivered_pending_docs"], dropStatus: "delivered_pending_docs" },
   { key: "completed", title: "Completed", statuses: ["invoiced", "paid", "closed", "completed_docs_received"], dropStatus: "closed" },
   {
     key: "cancelled",

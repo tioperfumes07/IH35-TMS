@@ -12,7 +12,9 @@ export type AllocationListItem = {
   bill_date: string;
   bill_amount_cents: number;
   vendor_id: string | null;
-  /** ACCT-F84 — canonical vendor uuid for drill-through; vendor_id is a legacy TEXT QBO id. */
+  /** ACCT-F603 — canonical mdata.vendors.id uuid text from accounting.bills.vendor_uuid. */
+  vendor_uuid: string | null;
+  /** ACCT-F84 — backfilled uuid FK; prefer vendor_uuid via billVendorDrillId when both exist. */
   mdata_vendor_id: string | null;
   vendor_name: string | null;
   asset_id: string;

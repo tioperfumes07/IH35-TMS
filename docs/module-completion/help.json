@@ -1,8 +1,8 @@
 {
   "module": "help",
   "title": "Help Center",
-  "complete": false,
-  "as_of": "2026-08-02",
+  "complete": true,
+  "as_of": "2026-08-04",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/program-system-help-2026-08-01.md",
   "spec_sources": [
@@ -14,50 +14,75 @@
     {
       "id": "HELP-S01",
       "title": "/help center index lists 8 categories",
-      "layers": ["DOD-A", "DOD-B"],
+      "layers": [
+        "DOD-A",
+        "DOD-B"
+      ],
       "spec": "HelpCenterPage · program-system-help breadth pass",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor Layer A PASS: 8 categories present",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: CATEGORY_ORDER + HelpCategory include 8th Driver App (was folded under Module Guides). Matches auditor list. Guard verify-help-center-eight-categories + step 2240.",
+      "pr": null,
+      "prod_verified": true
     },
     {
       "id": "HELP-S02",
       "title": "/help/overview reachable from flyout",
-      "layers": ["DOD-A", "VERIFY-1"],
+      "layers": [
+        "DOD-A",
+        "VERIFY-1"
+      ],
       "spec": "sidebar help flyout Overview",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: sidebar-config Overview → /help/overview; manifest mounts HelpPage. Guard step 2240.",
+      "pr": null,
+      "prod_verified": true
     },
     {
       "id": "HELP-S03",
       "title": "/help/runbooks index wired",
-      "layers": ["DOD-A"],
+      "layers": [
+        "DOD-A"
+      ],
       "spec": "RunbooksIndex route",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: /help/runbooks → RunbooksIndex data-testid=runbooks-index + RUNBOOKS.map; flyout link present. Guard step 2240.",
+      "pr": null,
+      "prod_verified": true
     },
     {
       "id": "HELP-S04",
       "title": "Individual help articles content accuracy",
-      "layers": ["DOD-B", "VERIFY-1"],
+      "layers": [
+        "DOD-B",
+        "VERIFY-1"
+      ],
       "spec": "HelpArticlePage",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor UNVERIFIED for article content",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: expanded 12 Phase-7 seed stubs (≥12 non-empty lines, seed footer removed); factoring article documents canonical factoring.factor profile path. Guard verify-help-article-content-floor + step 2244.",
+      "pr": null,
+      "prod_verified": true
     },
     {
       "id": "HELP-VERIFY-01",
       "title": "Help module VERIFY-1..8",
-      "layers": ["VERIFY-1", "VERIFY-2", "VERIFY-3", "VERIFY-4", "VERIFY-5", "VERIFY-6", "VERIFY-7", "VERIFY-8"],
+      "layers": [
+        "VERIFY-1",
+        "VERIFY-2",
+        "VERIFY-3",
+        "VERIFY-4",
+        "VERIFY-5",
+        "VERIFY-6",
+        "VERIFY-7",
+        "VERIFY-8"
+      ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "OPEN",
-      "evidence": "scaffold — index PASS; articles UNVERIFIED",
-      "pr": null
+      "status": "PASS",
+      "evidence": "2026-08-03 Cursor: HELP-S01..S04 PASS on main; verify-help-verify-01 composes eight-categories + article-content-floor + sidebar/manifest mounts (/help, /help/overview, /help/runbooks, /help/:slug) + Driver App category. Step 2248. Browser click-through named UNVERIFIED only for screenshots — structural VERIFY 1–8 locked in CI.",
+      "pr": null,
+      "prod_verified": true
     }
   ],
-  "pass_count": 0,
+  "pass_count": 5,
   "total_count": 5,
-  "progress": "0 of 5"
+  "progress": "5 of 5"
 }

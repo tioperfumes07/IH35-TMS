@@ -1,9 +1,49 @@
 ---
-description: Tiered models — highest capability for money/schema/review; escalate when in doubt
+description: PERMANENT model tiers A/B/C by task — Cursor mechanical=C, feature/scoreboard=B; money always A. Escalate stuck; never down-tier money.
 alwaysApply: true
 ---
-# Right model for the job (quality first, cost second)
-- **Highest-capability model** → architecture/planning, ALL financial/accounting work, code-review + financial-agent passes, migration authoring, adversarial verification, any ambiguous/high-stakes call.
-- **Mid-tier** → routine feature code, UI wiring, non-financial backend, tests.
-- **Fast/cheap** → mechanical edits, formatting, docs, bulk inventory/search passes.
-Escalate to a higher tier the instant a task touches money, schema, RLS, migrations, or the linkage law. When in doubt, escalate — a wrong financial change dwarfs any model cost.
+# RULE 12 — MODEL TIER POLICY (owner-locked 2026-08-03)
+
+**Canonical prose:** `docs/specs/MODEL-TIER-POLICY.md` (same text). This rule is alwaysApply so every Cursor session autoloads it.
+
+**Invariant:** Tier **never** weakens the proof bar. Cheap model output still needs ratcheting guard + (money) 3-gate + live verify. Cheaper ≠ weaker verification.
+
+## The three tiers (by TASK, not by agent brand)
+
+| Tier | Use for | Cursor product names (examples; verify current) |
+|------|---------|--------------------------------------------------|
+| **A — FRONTIER** | Financial cluster (`accounting.*` / `catalogs.accounts` / migrations / posting / GL / RLS), root-cause on money/false-green, architecture, audit completeness-discriminator reasoning, GUARD on money | Highest-capability available (e.g. Opus / GPT-frontier / Grok-high) |
+| **B — WORKHORSE** | Well-specified non-financial features, guards/tests, wiring to a clear spec, **Program scoreboard**, non-trivial UI (e.g. Loans & Advances screens) | Sonnet-class / mid GPT-Grok |
+| **C — FAST/CHEAP** | Mechanical class waves (MISSING-CREATOR, BOX-IN-BOX, CALENDAR/DATE, DEAD-CLICK, picker wiring against Cascade instance list), design-token/palette ratchet, docs, repetitive refactors | Composer / Cursor Auto |
+
+## Cursor lane defaults (HARD)
+
+| Work | Tier |
+|------|------|
+| Mechanical waves from Cascade cards (instance list + DRAIN_PROOF) | **C** |
+| Real feature UI / scoreboard / non-trivial chrome logic | **B** |
+| Anything that turns out to touch money, schema, RLS, migrations, or linkage law | **A** immediately |
+
+Most UI volume is Tier C — that is where token savings come from. Do not run mechanical waves on Tier A.
+
+## Other agents (defaults)
+
+- **Cascade (auditor):** A/B — completeness discriminator is high-stakes; do not audit cheap.
+- **Claude Coder (money):** **A** always.
+- **GUARD (verifier):** **A** on money / false-green samples; never cheap the net.
+
+## Escalation (one-way toward safety)
+
+1. Start at the tier the task type dictates.
+2. **Stuck** (2 red CI cycles / can't root-cause / fix looks wrong) → escalate **one tier up** — do not grind.
+3. Mechanical work that hides money/logic → **jump to A**.
+4. **Never down-tier** a financial/migration task to save tokens.
+5. Unproven / trial models: throwaway mechanical only until they hold the guard bar.
+
+## Subagents
+
+When spawning Task/subagents: pick `model` by this table. Do not run financial/migration design on Tier C.
+
+## Tie-breakers
+
+Tokens < trust · cheap < correct · grind on C < escalate · memory < this file + `docs/specs/MODEL-TIER-POLICY.md`.

@@ -23,7 +23,7 @@ async function postInvoiceGlAndAudit(
   client: Parameters<typeof appendCrudAudit>[0],
   args: { invoiceId: string; operatingCompanyId: string; actorUserId: string }
 ): Promise<void> {
-  const res = await postInvoiceGlIfEnabled(args.operatingCompanyId, args.invoiceId, {
+  const res = await postInvoiceGlIfEnabled(client as never, args.operatingCompanyId, args.invoiceId, {
     userId: args.actorUserId,
   });
   if (!res.posted && res.reason === "post_failed") {

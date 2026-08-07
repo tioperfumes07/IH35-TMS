@@ -1,0 +1,68 @@
+---
+description: CONTINUOUS MODE — never pause/idle; always keep building; tiered model in force (owner 2026-08-04)
+alwaysApply: true
+---
+
+# RULE 32 — CONTINUOUS MODE · NO PAUSE · NO IDLE (owner 2026-08-03; reinforced 2026-08-04)
+
+**Owner word (verbatim intent):** continuous work mode — do not stop; do not pause after anything; always keep writing.
+
+**Owner reinforcement 2026-08-04:** *"set up permanent continuous mode… I have asked you many times and you are pausing… it shows 16 working… I don't see movement."*
+
+Companion to `dual-lane-never-idle.mdc` (coordinator lanes) and Rule 12 (tiered model). This rule binds **every** IH35 Cursor session — builder, fixer, Neon apply, scoreboard, Safety, Accounting — not only dual-lane coordinators.
+
+## Standing law (non-negotiable)
+
+1. **Never idle** while ranked FAILs / OPEN module-completion items / open fixable CI / P1 Book Load remain.
+2. **Never pause for acknowledgment** after a merge, Neon apply, PR open, green CI, or “done for now.” The next action starts in the **same turn**.
+3. **Never babysit-only** — do not end a turn on “waiting for CI” without a worker **and** a `/loop 5m` heartbeat (or next build). Fix reds, open the next PR, or merge on green in parallel; then keep building.
+4. **Always keep writing** — branch → fix → guard → Claude-green PR → next ranked FAIL. Throughput is PRs that close real FAILs, not status essays.
+5. **Neon apply is Cursor’s job** when the owner has authorized standing Neon access — do not stop and ask Jorge to run SQL / apply held migrations / ledger-backfill.
+6. **Stop only when** Jorge explicitly says stop/pause/idle, or the authoritative queue has **zero** eligible work (state that honestly with the next eligible item = none).
+7. **Multitask “N working” ≠ progress.** Do not fan out 10–16 agents that poll/sit. Prefer **1 P1 builder + 1 CI babysit + `/loop 5m`**. Kill stale aborted babysits; replace with real movement.
+
+## Standing P1 (until Jorge clears)
+
+Make a load **bookable and dispatchable** live on prod (Book Load wizard → POST persist → reload → Dispatched). Then close **vendors** + **inventory**. Pull work from Cascade’s single `docs/audit/wave-queue.json` — do not invent parallel cards.
+
+## Tiered model (confirm every continuous session — Rule 12)
+
+| Tier | Use for |
+|---|---|
+| **Highest** | Architecture, ALL money/accounting, migrations, RLS/schema, code-review + financial-agent, adversarial verify |
+| **Mid** | Routine feature, UI wiring, non-financial backend, Book Load persist (no posting) |
+| **Fast/cheap** | Mechanical edits, docs, CI poll loops, bulk search |
+
+Escalate the instant work touches money, schema, RLS, migrations, or linkage law. Subagents: pick model by **task tier**.
+
+## Forbidden end states
+
+- “Merged. Ready for next?” / “Say the word and I’ll continue”
+- Waiting on Jorge to apply a migration Cursor can apply
+- Ending after subagent fail/usage-limit without immediately doing the work yourself
+- Ending after opening one PR while the next ranked FAIL is known
+- Babysit loops with no concurrent build **and** no armed `/loop`
+- Status-only replies while 16 Multitask tiles show “working” but nothing ships
+
+## Required turn shape
+
+Every work turn must include **at least one** of:
+
+- new commit / push on an in-flight PR, **or**
+- new PR opened, **or**
+- squash-merge of a green PR (when Cursor is allowed to merge that lane), **or**
+- Neon apply + proof + closeout PR, **or**
+- concrete fix for a red check, **or**
+- armed `/loop 5m` continuous heartbeat + active P1 worker
+
+Then immediately start or continue the **next** ranked item in the same turn when capacity remains.
+
+## Tie-breakers
+
+Pause < build · babysit < fix+build · ask Jorge to apply < Cursor applies · status-only < next PR · 16 idle agents < 1 moving agent.
+
+## Session boot (Rule 22 companion)
+
+First reply of a new conversation MUST include:
+
+`NEW SESSION · rules autoloaded · tiered model in force (Rule 12) · continuous mode (Rule 32)`

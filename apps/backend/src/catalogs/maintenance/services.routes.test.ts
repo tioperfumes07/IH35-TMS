@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { captureRoutes as captureFastifyRoutes } from "../../../test-helpers/capture-route-handler.js";
 
 // Regression guard for the services-catalog 500 (mdata.maintenance_services was missing → 42P01). The fix is
 // the additive migration that creates the table; this test locks the HANDLER contract so it returns a
@@ -31,14 +32,13 @@ vi.mock("../../_helpers/company-membership-guard.js", () => ({
 const { registerMaintenanceServicesCatalogRoutes } = await import("./services.routes.js");
 
 function captureRoutes() {
+  // Shared stub models Fastify's (path, options?, handler) overload — see capture-route-handler.ts.
+  const capture = captureFastifyRoutes();
+  registerMaintenanceServicesCatalogRoutes(capture.app as never);
   const handlers: Record<string, (req: unknown, reply: unknown) => Promise<unknown>> = {};
-  const app = {
-    get: (p: string, h: (req: unknown, reply: unknown) => Promise<unknown>) => { handlers[`GET ${p}`] = h; },
-    post: (p: string, h: (req: unknown, reply: unknown) => Promise<unknown>) => { handlers[`POST ${p}`] = h; },
-    patch: (p: string, h: (req: unknown, reply: unknown) => Promise<unknown>) => { handlers[`PATCH ${p}`] = h; },
-    delete: (p: string, h: (req: unknown, reply: unknown) => Promise<unknown>) => { handlers[`DELETE ${p}`] = h; },
-  } as never;
-  registerMaintenanceServicesCatalogRoutes(app);
+  for (const r of capture.routes) {
+    handlers[`${r.method.toUpperCase()} ${r.path}`] = r.handler as (req: unknown, reply: unknown) => Promise<unknown>;
+  }
   return handlers;
 }
 

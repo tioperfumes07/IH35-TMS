@@ -102,7 +102,7 @@ Idempotency: `fuel-posting:v1:<company>:<fuel_transaction_id>:<posting_path>`.
 **Blocked by:** Nothing code-wise — the poster is wired and flag is ON. The backfill has simply never been
 run. Running the reflush is the seed.
 
-**Validates rows:** 599 (CLS-FUEL-GL-DARK), and partially 122 (fuel B-layer load_id linkage)
+**Validates rows:** 599→**673** (CLS-FUEL-GL-DARK / CLS-FUEL-DOUBLE-POST superseded — scope mismatch; category-map residual), and partially 122 (fuel B-layer load_id linkage)
 
 ---
 
@@ -236,7 +236,7 @@ USMCA seed is a clean-room test.
 | SEED-U03: Safety fine→GL | SEED-06 | 306 | Settlement chain first |
 | SEED-U04: Fleet class→GL | SEED-07 | 307 | 0 QBO classes (no QBO connection). N/A until connected |
 | SEED-U05: Settlement→GL | SEED-05 | 308 | `damage_recovery` binding fix (row 260) + driver roster |
-| SEED-U06: Fuel→GL | SEED-04 | 309 | CLS-FUEL-GL-DARK must be resolved first |
+| SEED-U06: Fuel→GL | SEED-04 | 309 | CLS-FUEL-GL-DARK / DOUBLE-POST superseded (row 673); seed still useful for load_id + category-map residual |
 | SEED-U07: Insurance→GL | SEED-08 | 310 | 0 policies, same structural gaps as TRANSP |
 | SEED-U08: Money-modules catch-all | SEED-01–09 | 257 | All above |
 

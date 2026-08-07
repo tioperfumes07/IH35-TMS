@@ -73,7 +73,6 @@ describe("SafetyMeetingsPage", () => {
     expect(await screen.findByTestId("safety-meeting-row-meeting-1")).toBeTruthy();
     await user.click(screen.getByTestId("safety-meetings-create-btn"));
     await user.type(screen.getByTestId("safety-meeting-topic"), "Winter driving");
-    await user.click(screen.getByTestId("safety-meeting-required-driver-1"));
     await user.click(screen.getByTestId("safety-meeting-submit"));
     await waitFor(() => {
       expect(safetyApi.createSafetyMeeting).toHaveBeenCalledWith(companyId, expect.objectContaining({ topic: "Winter driving" }));
