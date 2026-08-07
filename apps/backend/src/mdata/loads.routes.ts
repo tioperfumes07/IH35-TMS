@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { latchOnDeliveryEvidence } from "../dispatch/delivery-evidence-latch.js";
+import { applyLoadStatusMoneyEffects } from "../accounting/load-status-money-effects.service.js";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -951,6 +952,21 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         loadId: String(row.id),
         targetStatus: String(row.status),
         actorUserId: req.user!.uuid,
+      });
+
+      // ACCT-F166 / LV-TXN-004 — THE OFFICE KANBAN CALLS THIS ENDPOINT, NOT /dispatch/:id/transition.
+      // This route stamped delivery evidence and latched it, but never ran the two money side-effects
+      // the dispatch endpoint has always run: DISP-01's revenue latch and the settlement ping. So
+      // every load a dispatcher dragged to delivered recognised NO revenue and opened NO driver
+      // settlement — proven live on USMCA (L-20260802-0258: status delivered, driver_settlements
+      // unchanged at 0, posting_batches for the load 0, zero settlement audit events).
+      // Same shared function the dispatch route calls, so the two paths cannot diverge again.
+      await applyLoadStatusMoneyEffects({
+        client,
+        operatingCompanyId: String(row.operating_company_id),
+        loadId: String(row.id),
+        targetStatus: String(row.status),
+        actorUserId: authUser.uuid,
       });
 
       await appendCrudAudit(
