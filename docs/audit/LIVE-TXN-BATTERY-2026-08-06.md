@@ -4170,3 +4170,73 @@ field, and **`bills` has both `voided_at` and `revoked_at`**. A single templated
 blindly will target the wrong column on at least one table.
 
 **LANE: CC-1 / money.** Board card `LV-VOID-INVARIANT-BOTH-WAYS` updated with the measured boundary.
+
+---
+
+## 64. ★★ THE TIE-OUT GUARD I RECOMMENDED WOULD HAVE BEEN WRONG — it must be scoped TMS-NATIVE
+
+**LIVE-PROVEN 2026-08-07, read-only across all entities. I have been recommending a
+subledger-to-GL tie-out as THE guard for the customer-payment gap. Measuring it before CC-1 builds it
+shows the naive form would redden forever on correct data.**
+
+### The measurement
+
+**A/R control balance (GL) vs invoice subledger open, per entity:**
+
+| entity | GL A/R postings | GL A/R balance | live invoices | subledger open |
+|---|---|---|---|---|
+| **USMCA** (`1100`) | 5 | **$1,200.00** DR | 2 | **$1,875.50** |
+| **TRANSP** (`QBO-45`) | 5 | **−$961,983.52** (CREDIT on an asset) | 11,979 | **$829,871.13** |
+| TRK | 0 | — | 0 | — |
+
+### TRANSP — EXPECTED STATE, NOT A DEFECT (origin test applied)
+
+A −$961,983.52 credit balance on an asset account and an $829,871.13 subledger gap look alarming. **They
+are not a defect.** All five TRANSP `QBO-45` postings, read individually:
+
+1. **CR $961,983.52** — *"Opening balance — QBO Balance Sheet 12/31/2024 (signed-actual, NI rolled to RE)"*
+2. DR $15,000.00 — Revrec Event 2, load `L-20260624-0083`
+3. CR $15,000.00 — the reversal of that Event 2
+4. CR $5.00 — customer payment `PMT-2026-00712`
+5. DR $5.00 — invoice `INV-2026-00740`
+
+They net to exactly the opening balance. **And the subledger is import-origin: TRANSP has 11,980
+invoices, of which 11,976 are QBO clones and only 4 are TMS-native.**
+
+**Under parallel books, the TMS GL was never supposed to carry the cloned invoices' postings — booking
+them would DOUBLE the books.** So a subledger of cloned invoices standing against a GL holding an
+opening balance plus TMS-native activity is **exactly the designed state**. Reporting it as a
+$1.79M discrepancy would have been the `expected-state-recorded-as-failure` anti-pattern at maximum
+volume, against the entity that holds the real books.
+
+### ★ THEREFORE — THE GUARD I RECOMMENDED NEEDS A CORRECTION BEFORE IT IS BUILT
+
+I wrote, on several board rows, that the guard should be *"A/R subledger open == GL A/R control balance
+per entity."* **Built naively, that guard is red on TRANSP on day one, forever, on correct data** — and
+a permanently-red guard gets muted, which would destroy the one assertion that catches the real defect.
+
+**The correct form — scope both sides to TMS-NATIVE rows:**
+- subledger side: invoices with `qbo_invoice_id IS NULL` (TMS-native only)
+- GL side: postings excluding the opening-balance entry (and any import-origin JE)
+- assert equality **per entity**, and let entities with zero TMS-native invoices assert trivially
+
+**On USMCA — where every invoice IS TMS-native — the tie-out is meaningful today, and it fails:**
+GL A/R **$1,200.00** vs subledger open **$1,875.50**. The two sides are not merely unequal, they are
+**disjoint**: the $1,200.00 in the GL belongs to an invoice the subledger reports **`paid`** (its
+payments never posted — `LV-PAY-SETTLE-NOPOST`), while the $1,875.50 in the subledger is a **proforma**
+that never posted to the GL at all. **Neither number appears on the other side.**
+
+### Second observation — flagged, NOT claimed
+
+The opening entry credits A/R by $961,983.52. **A/R is an asset; a credit balance is abnormal.** The
+locked decision says opening balances are taken *"signed-actual (not natural-side)"*, so this is either
+(a) faithful to what QBO's 12/31/2024 balance sheet actually showed, or (b) a sign inversion on import.
+**I cannot distinguish these without QBO's actual 12/31/2024 balance sheet, which this lane cannot
+read. UNVERIFIED — recorded so it is checked, not asserted.** Given the locked decision explicitly
+anticipates signed-actual values, (a) is entirely plausible and this is **not** filed as a defect.
+
+**Also noted, not filed:** USMCA's invoice posts A/R to **`1100`**, while the locked account mapping
+says **A/R = `QBO-45`** — and USMCA has BOTH accounts. TRANSP posts to `QBO-45`. Whether USMCA is
+deliberately on a different mapping is a decision I cannot verify from here. **UNVERIFIED.**
+
+**LANE: CC-1 / money — and this correction should be read BEFORE the tie-out guard is built.**
