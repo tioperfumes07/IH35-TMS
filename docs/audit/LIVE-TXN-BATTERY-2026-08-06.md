@@ -6623,3 +6623,43 @@ endorsement_x`) has had nothing to sync. Consistent, not broken.
 booking payload rather than the persisted jsonb, unlike the other two. That is defensible — book-load is
 *creating* the load, so the input is the only source that exists at that moment — but it does mean the three
 paths have two different sources of truth for the same fact. Recorded for whoever owns booking; no card.
+
+---
+
+## 108. COA ROLE RESOLUTION — PASS. The empty `account_role_bindings` table is a DOCUMENTED legacy fallback, not a gap
+
+**Unit: chart-of-accounts role resolution for USMCA. Verdict: PASS. No card.**
+
+**MEASURED:** `catalogs.account_role_bindings` — **0 rows, `n_tup_ins = 0`, never written for any entity**.
+That is the second "read-but-never-written" table I chased today (after `docs.file_links`), and like that one
+it is **not a defect**.
+
+**Role resolution actually runs off `catalogs.accounts.system_purpose`, and it is well populated:**
+**21 of 81 USMCA accounts carry a `system_purpose`**, and the set is coherent and correctly typed —
+`accounts_payable` → 2000 **Liability** · `accounts_receivable` → 1100 **Asset** ·
+`driver_escrow_liability` → 2100 **Liability** (matches the locked escrow-is-a-liability decision) ·
+`bank_operating` → 1000 · `undeposited_funds` → 1090 · `retained_earnings` → 3900 **Equity** ·
+`unbilled_revenue` → 1150 · `intercompany_ih35` / `intercompany_trk` → 8000 / 8001 · plus
+`prepaid_asset_default`, `amortization_expense_default`, `ask_my_accountant`, `civil_fines_expense`,
+`driver_damage_recovery`, `driver_fuel_overage_receivable`, `heavy_repair_expense`, `insurance_recovery`,
+`maintenance_parts_expense`, `relay_fuel_wallet`, `rent_expense`, `warranty_recovery`.
+
+**THE CODE SAYS SO EXPLICITLY — this is documented design, not accident.**
+`accounting/coa-roles/resolver.service.ts` describes a **tiered** resolver and names the empty table as the
+*legacy* tier: `:43` *"previously resolvable ONLY from the (empty in prod) `catalogs.account_role_bindings`
+legacy table"*; `:120` *"the resolver's LEGACY FALLBACK tier"*; `:355` *"1) Explicit designation (the field
+the resolver keys on — NOT `catalogs.accounts.system_purpose`)"*; `:362` *"2) Legacy single binding
+(`catalogs.account_role_bindings` — entity-scoped, falls back to global)"*. `posting-engine.service.ts:1631`
+and `period-close-retained-earnings.service.ts:87` both describe it the same way — **explicit designation
+first, legacy binding as a fallback tier.** An empty fallback tier is what a fallback tier looks like when
+the primary tier resolves.
+
+**The author even recorded the entity-scoping fix on it** (`:237` *"USMCA cross-entity-leak fix:
+`catalogs.account_role_bindings` is now per-entity"*), so the table is maintained infrastructure, not
+abandoned code.
+
+**Pattern now seen twice in one session, worth naming:** a table with **0 rows that several modules read** is
+a strong defect signal and was **wrong both times** — `docs.file_links` (item 105) and this. In both cases the
+resolution was the same: **find the writer and the intended tier before concluding.** `file_links` had a
+fully-wired writer nobody had exercised; `account_role_bindings` is a deliberately-empty fallback behind a
+primary that resolves. **An empty table is evidence of nothing until you know what was supposed to fill it.**
