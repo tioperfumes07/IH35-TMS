@@ -6230,3 +6230,41 @@ name-grep parity guard would fail on all 15 audit triggers on day one, be declar
 **Compare against a schema dumped from a freshly-migrated database, not against migration text.** That is the
 difference between a guard that lasts and a guard that gets switched off in week one — and I only know it
 because the naive version failed on me first.
+
+---
+
+## 101. `mdata.units` ENTITY SCOPING — PASS, and the constitution's landmine is real but already well-defended
+
+**Unit: the `mdata.units` scoping landmine. Verdict: PASS. No finding. Short entry because a clean negative
+deserves a short entry.**
+
+**THE LANDMINE IS REAL — confirmed live, not from memory.** `mdata.units` has **NO `operating_company_id`
+column**. Its only company columns are **`owner_company_id`** and **`currently_leased_to_company_id`**. Any
+query filtering `units.operating_company_id` is not a wrong answer — it is a **SQL error and a 500**, which
+is why the operating constitution flags it as a recurring 500 source.
+
+**RLS matches the real ownership model** — `units_select` scopes on **both** columns:
+`is_lucia_bypass() OR ((owner_company_id IN user_accessible_company_ids() OR currently_leased_to_company_id
+IN user_accessible_company_ids()) AND (deactivated_at IS NULL OR role IN Owner/Administrator/Manager))`.
+That is correct for the TRK-owns / TRANSP-leases structure: a unit is visible to its owner **and** to its
+lessee.
+
+**MEASURED:** zero occurrences of the broken pattern in `apps/backend/src`, and the correct dual-column form
+is in use at the real call sites — e.g. `fuel/fuel-transactions.routes.ts:146`
+(`u.owner_company_id = ft.operating_company_id OR u.currently_leased_to_company_id = ft.operating_company_id`)
+and `work-orders/work-orders.routes.ts:538`
+(`COALESCE(wu.currently_leased_to_company_id, wu.owner_company_id) = w.operating_company_id`).
+**10+ existing guards already reference these columns**, including `verify-entity-isolation.mjs`,
+`verify-booking-unit-ownership-fallback.mjs` and `verify-fleet-counter-tenant-scope.mjs`.
+
+**METHOD CAVEAT, stated because the constitution demands it:** §4 says *"don't trust a string-grep systemic
+check."* A grep alone would not be proof. The PASS rests on three things together — zero broken-pattern
+occurrences, the correct pattern observed at real call sites, and a standing guard suite that already
+enforces it. **This landmine is defended; no card.**
+
+**One semantic difference noted, not filed:** the fuel site uses `owner OR leased_to` (matches either) while
+the work-order site uses `COALESCE(leased_to, owner)` (lease wins, owner as fallback). For a TRK-owned unit
+leased to TRANSP these differ — `OR` matches both entities, `COALESCE` matches only TRANSP. **Both are
+defensible readings of "whose unit is this"** and the right answer depends on whether the question is
+"who may see it" or "whose cost centre is it". Recorded as an observation for whoever owns unit-attribution
+semantics; I have no evidence either site is wrong for its own purpose.
