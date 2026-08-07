@@ -4701,3 +4701,60 @@ statement false, and each one would have justified fabricating data to "fix" it.
 **The standing rule this reinforces:** a `0` from this MCP is worthless until the same statement proves who
 it ran as, that it could see the table at all, and that what it saw equals what exists. Two zeros appeared in
 this session — one false, one true — and they were indistinguishable until the discriminator was applied.
+
+---
+
+## 75. FAIL (P1) — `LV-EXPENSE-CATEGORY-PICKER-EMPTY`: the Record-expense Category picker offers ZERO options while 32 USMCA expense accounts exist, so the only affordance is "+ Add new category" — which duplicates the chart
+
+**Verified live, USMCA, 2026-08-07.** `+ Create` → **Record expense** drawer (`/accounting/expenses`).
+
+**OBSERVED (primary, in the product):**
+- **Category** picker with an EMPTY search string offers exactly one row: **`+ Add new category`**. Typing
+  `diesel` → only `+ Add new category "diesel"`. Typing `fuel` → only `+ Add new category "fuel"`.
+- **Payment account** picker, in the SAME drawer, IS populated: `Bank of America - Operating (USMCA)` and
+  `Undeposited Funds` — both genuine USMCA accounts.
+
+**PROD DATA — the categories exist** (`br-fancy-credit-akjnd07a`, GUC + lucia bypass in one txn,
+`current_user` asserted, `visible_all == n_live_tup` on both tables):
+
+| source | USMCA |
+|---|---|
+| `catalogs.accounts` type `Expense` (active + postable) | **16** |
+| `catalogs.accounts` type `CostOfGoodsSold` (active + postable) | **10** |
+| `catalogs.accounts` type `OtherExpense` (active + postable) | **6** |
+| **expense-family total** | **32** |
+| `accounting.expense_category_account_map` | **32** |
+
+**LIVE API — the data reaches the browser.** Called from the authed session:
+`GET /api/v1/catalogs/accounts?operating_company_id=5c854333-…&status=active&postable_only=true`
+→ **200**, `returned: 50, total: 76` (page size 50). Page 1 alone carries **21 expense-family rows**
+(Expense 10 · OtherExpense 6 · COGS 5).
+
+**THE FILTER IS CORRECT.** `apps/frontend/src/lib/account-picker-scope.ts:94` —
+`isExpenseAccount = is_postable && !deactivated_at && account_type ∈ {Expense, CostOfGoodsSold,
+OtherExpense}`. Against the 21 rows actually returned it should match 21, not 0. `isPaymentAccount`
+(same file, :82) runs over the SAME array and correctly yields the 2 accounts that render.
+
+**WHY THIS MATTERS — it is not cosmetic.** With no existing category selectable, the only path a user has
+is `+ Add new category`, which creates a NEW account in `catalogs.accounts`. Every expense recorded from
+this screen therefore grows a **parallel, duplicate expense taxonomy** beside the 32 that already exist and
+beside `expense_category_account_map`. That is silent chart-of-accounts corruption produced by using the
+screen exactly as designed — and under Ch.11 with an embezzlement reconciliation running, a duplicated
+expense chart is precisely the artifact that makes a ledger unauditable. §7's `+ Add new ___` is meant to
+be the LAST row of a populated dropdown, not the only row.
+
+**ROOT CAUSE — NARROWED, NOT PROVEN. UNVERIFIED, needs one more live check.** I can state with evidence
+that the data exists (prod), reaches the client (200, 21 rows), and that the filter which consumes it is
+correct. I could NOT confirm which component the drawer actually mounts:
+`components/expenses/RecordExpenseForm.tsx` (whose `categoryOptions`, :138-152, is the wiring I read),
+`components/expenses/RecordExpenseModal.tsx`, or `pages/accounting/ExpenseCreatePage.tsx` all render a
+"Record expense" surface. **I am not naming a line I did not confirm executes.**
+
+**A WRONG INFERENCE I MADE AND CORRECTED IN PLACE:** I first concluded "no categories endpoint is called at
+all — the picker has no data source", because my fetch interceptor saw only `/api/v1/attachments` when I
+reopened the drawer. That was wrong: both queries carry `staleTime: 60_000`, so they were served from
+cache and simply did not re-fetch. I then predicted the Payment account picker would ALSO be empty (shared
+`enabled: Boolean(operatingCompanyId)`); it was populated, which **disproved the prediction and killed the
+theory.** Recorded because the falsified prediction is what stopped a wrong root cause from being filed.
+
+**Routed:** FE/mechanical — see the routing note on the board.
