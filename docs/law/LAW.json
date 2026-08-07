@@ -1,19 +1,5 @@
 [
   {
-    "id": "LAW-2026-08-06-CI-CONCURRENCY-SHA-SCOPED",
-    "title": "A workflow may not key its concurrency group on a bare ref — a queued run that never executed can otherwise be cancelled into a permanently dead required check, leaving the PR unmergeable with no code failure",
-    "source_file": ".github/workflows/ci.yml",
-    "guard": "scripts/verify-ci-concurrency-sha-scoped.mjs",
-    "type": "enforced"
-  },
-  {
-    "id": "LAW-2026-08-06-LOAD-DETAIL-RESOLVES-NAMES",
-    "title": "The dispatch load-detail query must RESOLVE the primary driver name and unit number, not only carry their ids — a drawer that renders a covered load as \"Unassigned\" invites double-assignment, and the entity predicates on those joins must scope units by the owner/leased pair",
-    "source_file": "apps/backend/src/dispatch/loads.routes.ts",
-    "guard": "scripts/verify-load-detail-resolves-names.mjs",
-    "type": "enforced"
-  },
-  {
     "id": "LAW-2026-08-05-B2-ENFORCED-GUARD-OR-NOT-LAW",
     "title": "LAW = ENFORCED GUARD, OR IT IS NOT LAW — every NEW rule ships a guard registered in docs/law/LAW.json; verify-law-registry.mjs is a required check that reddens when a registered law's guard file is missing",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
@@ -287,6 +273,13 @@
     "type": "enforced"
   },
   {
+    "id": "LAW-2026-08-06-CI-CONCURRENCY-SHA-SCOPED",
+    "title": "A workflow may not key its concurrency group on a bare ref — a queued run that never executed can otherwise be cancelled into a permanently dead required check, leaving the PR unmergeable with no code failure",
+    "source_file": ".github/workflows/ci.yml",
+    "guard": "scripts/verify-ci-concurrency-sha-scoped.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-08-06-DISP-WIRE-07-DEPARTURE-EVIDENCE",
     "title": "Every path stamping mdata.load_stops.actual_departure_at must write a real clock value (now() or COALESCE onto now()), never a bare client parameter — that stamp is the delivery evidence revenue recognition and invoice gating hang off",
     "source_file": "apps/backend/src/dispatch/stamp-final-delivery-departure.ts",
@@ -329,6 +322,20 @@
     "type": "enforced"
   },
   {
+    "id": "LAW-2026-08-06-CLS-ORPHAN-SURFACE-DRILL",
+    "title": "A nav/leaf that drills through to detail (bill row, Chart-of-Accounts reachability, cash-flow 7-day strip) may not silently lose its drill-through wiring",
+    "source_file": "scripts/verify-orphan-surface-drill.mjs",
+    "guard": "scripts/verify-orphan-surface-drill.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-KANBAN-DROPSTATUS-CONTRACT",
+    "title": "Every dispatch Kanban lane dropStatus must be a status loadStatusSchema accepts — a lane whose drop the API rejects is a silent dead end, and the frontend lane list and backend enum live in separate files owned by separate lanes so they drift independently",
+    "source_file": "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
+    "guard": "scripts/verify-kanban-dropstatus-contract.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-08-06-BUSINESS-DATE-PARSED-LOCAL",
     "title": "A business date (YYYY-MM-DD) must never be pinned to UTC for display — it has no timezone, and new Date(iso+\"T00:00:00Z\") renders one day early for every viewer west of UTC, which silently showed the wrong day cash position in Central Time",
     "source_file": "apps/frontend/src/lib/businessDate.ts",
@@ -350,17 +357,10 @@
     "type": "enforced"
   },
   {
-    "id": "LAW-2026-08-06-KANBAN-DROPSTATUS-CONTRACT",
-    "title": "Every dispatch Kanban lane dropStatus must be a status loadStatusSchema accepts — a lane whose drop the API rejects is a silent dead end, and the frontend lane list and backend enum live in separate files owned by separate lanes so they drift independently",
-    "source_file": "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
-    "guard": "scripts/verify-kanban-dropstatus-contract.mjs",
-    "type": "enforced"
-  },
-  {
-    "id": "LAW-2026-08-07-FINDINGS-REGISTER-CODER-SIGNOFF",
-    "title": "Every CC-3 finding is written to the board AND listed in docs/audit/CC-3-FINDINGS-CHECKLIST.md; the coder who fixes it ticks its own row with coder+PR+date+live-proof+guard, never CC-3; a tick without that evidence is a false completion claim; CC-3 re-verifies live and stamps VERIFIED or reopens",
-    "source_file": "docs/audit/CC-3-FINDINGS-CHECKLIST.md",
-    "guard": "scripts/verify-findings-register-signoff.mjs",
+    "id": "LAW-2026-08-06-LOAD-DETAIL-RESOLVES-NAMES",
+    "title": "The dispatch load-detail query must RESOLVE the primary driver name and unit number, not only carry their ids — a drawer that renders a covered load as \"Unassigned\" invites double-assignment, and the entity predicates on those joins must scope units by the owner/leased pair",
+    "source_file": "apps/backend/src/dispatch/loads.routes.ts",
+    "guard": "scripts/verify-load-detail-resolves-names.mjs",
     "type": "enforced"
   },
   {
@@ -375,6 +375,13 @@
     "title": "The load assignment-history trail must name the drivers it records and must assert company membership before setting the RLS scope — a uuid prefix is not an identification of a person, and a caller-supplied company is not an authorization",
     "source_file": "apps/backend/src/dispatch/quick-assign.service.ts",
     "guard": "scripts/verify-assignment-history-resolves-names.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-FINDINGS-REGISTER-CODER-SIGNOFF",
+    "title": "Every CC-3 finding is written to the board AND listed in docs/audit/CC-3-FINDINGS-CHECKLIST.md; the coder who fixes it ticks its own row with coder+PR+date+live-proof+guard, never CC-3; a tick without that evidence is a false completion claim; CC-3 re-verifies live and stamps VERIFIED or reopens",
+    "source_file": "docs/audit/CC-3-FINDINGS-CHECKLIST.md",
+    "guard": "scripts/verify-findings-register-signoff.mjs",
     "type": "enforced"
   }
 ]
