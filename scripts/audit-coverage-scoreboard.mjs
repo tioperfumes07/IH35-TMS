@@ -613,6 +613,72 @@ function gitShortSha() {
 
 /** Ledger-commit meta — byte-stable across re-emits (CI HEAD / wall clock must not dirty the tree). */
 const LEDGER_REL = "docs/audit/AUDIT-COVERAGE-LIVE.md";
+/**
+ * PROG-PRFEED-PRIVATE-EMPTY — the last-10 feed, sourced from the LEDGER instead of the GitHub API.
+ *
+ * The panel went empty the moment this repo was made private. The backend fetches
+ * api.github.com/repos/.../pulls; that call supports a GITHUB_TOKEN, but no valid token is present in
+ * the deployed environment, so a private repo returns nothing and the endpoint answers 200 with
+ * recentActivity: [] (verified live: GET /api/v1/program/audit-scoreboard returned 200, length 0).
+ *
+ * "Last synced" survived the same event precisely because it is ledger-derived (meta.generatedAt =
+ * git log %cI). That is the pattern copied here: read the merge history from git AT GENERATION TIME,
+ * in CI, where the repo is checked out and reachable. No network call, no token, no browser fetch,
+ * so repository visibility can never empty this panel again.
+ *
+ * Squash-merges carry the PR number in the subject as (#1234), which is where number and url come
+ * from. A commit without one still renders (number 0, no link) rather than being dropped: an honest
+ * row beats a missing row.
+ */
+function ledgerRecentActivity(limit = 10) {
+  const SEP = "\u001f";
+  let raw = "";
+  for (const ref of ["origin/main", "HEAD"]) {
+    try {
+      raw = execSync("git log " + ref + " -n " + limit + " --format=%h" + SEP + "%cI" + SEP + "%s", {
+        cwd: ROOT,
+        encoding: "utf8",
+      }).trim();
+      if (raw) break;
+    } catch {
+      /* try the next ref: a shallow or detached checkout may lack origin/main */
+    }
+  }
+  if (!raw) return [];
+  return raw
+    .split("\n")
+    .map((line) => {
+      const [sha, iso, ...rest] = line.split(SEP);
+      const subject = rest.join(SEP);
+      const m = /\(#(\d+)\)\s*$/.exec(subject || "");
+      const number = m ? Number(m[1]) : 0;
+      return {
+        number,
+        title: (subject || "").replace(/\s*\(#\d+\)\s*$/, "").trim() || sha,
+        state: "merged",
+        mergedAtCt: formatCt(iso),
+        url: number ? "https://github.com/tioperfumes07/IH35-TMS/pull/" + number : "",
+        sha,
+        committedAtIso: iso,
+      };
+    })
+    .filter((r) => r.sha);
+}
+
+/** ISO to America/Chicago, labeled CT. Mirrors the frontend formatLedgerCt so both agree. */
+function formatCt(iso) {
+  try {
+    const d = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Chicago",
+      month: "2-digit", day: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit", hour12: true,
+    }).format(new Date(iso));
+    return d + " CT";
+  } catch {
+    return "";
+  }
+}
+
 function ledgerGitOr(fmt, fb) {
   try {
     const out = execSync(`git log -1 --format=${fmt} -- ${LEDGER_REL}`, {
@@ -712,6 +778,8 @@ export function emitProgramJson(rows, metrics, sidebarIds, opts = {}) {
       defects: metrics.defectModules,
     },
     modules,
+    // PROG-PRFEED-PRIVATE-EMPTY: ledger-sourced, generated in CI. Never a runtime GitHub call.
+    recentActivity: ledgerRecentActivity(10),
   };
 
 

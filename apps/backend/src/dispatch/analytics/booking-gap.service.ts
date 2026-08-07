@@ -9,6 +9,7 @@
  *   - dispatch.load_assignment_history: load_id, new_unit_id, assigned_at
  *   - identity.users: first_name, last_name, email (no full_name column)
  */
+import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 import type { PoolClient } from "pg";
 import { withCurrentUser } from "../../auth/db.js";
 
@@ -152,7 +153,7 @@ export async function getDispatcherDetail(
   to: string
 ): Promise<DispatcherGapStats | null> {
   const full = await withCurrentUser(requestingUserUuid, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, requestingUserUuid, operatingCompanyId);
     return aggregateForPeriod(client, operatingCompanyId, from, to);
   });
   return full.dispatchers.find((d) => d.dispatcher_id === dispatcherUuid) ?? null;

@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -95,7 +96,7 @@ export async function registerAssignmentsQuicksaveRoutes(app: FastifyInstance) {
       parsed.data;
 
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
+      await setScopedCompanyContext(client, user.uuid, companyId);
       const driverOk = await assertDriverScope(client, driverId, companyId);
       if (!driverOk) return { error: "driver_not_eligible" as const };
 

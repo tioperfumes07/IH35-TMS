@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
@@ -33,7 +34,7 @@ export async function fetchQboAccountsPushStatus(
   operatingCompanyId: string
 ): Promise<QboAccountsPushStatus> {
   return withCurrentUser(authUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, authUserId, operatingCompanyId);
 
     const exists = await client.query(`SELECT to_regclass('mdata.qbo_accounts') IS NOT NULL AS ok`);
     if (!exists.rows[0]?.ok) {

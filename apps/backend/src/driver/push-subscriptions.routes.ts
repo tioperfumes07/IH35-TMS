@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
@@ -19,7 +20,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 export async function registerDriverPushSubscriptionRoutes(app: FastifyInstance) {
   await registerWebPushAckRoutes(app);
 
-  app.post("/api/v1/driver/push-subscription", async (req, reply) => {
+  app.post("/api/v1/driver/push-subscription", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;
@@ -39,7 +40,7 @@ export async function registerDriverPushSubscriptionRoutes(app: FastifyInstance)
         const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
         if (!operatingCompanyId) throw new Error("driver_company_missing");
 
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+        await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
 
         await client.query(
           `

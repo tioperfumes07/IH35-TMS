@@ -61,4 +61,51 @@ export function maskComments(src) {
   return out.join("");
 }
 
+/**
+ * Mask SQL comments INSIDE a SQL string (the text of a template literal), same offset-preserving rule.
+ *
+ * WHY SEPARATE FROM maskComments: that function deliberately leaves template-literal contents alone,
+ * because `--` and `//` inside a JS string are string content, not JS comments. But once a guard has
+ * EXTRACTED the SQL out of a literal and is matching SQL patterns against it, a `--` line IS a comment
+ * and must not be able to satisfy a check.
+ *
+ * FOUND LIVE 2026-08-07, and it is the fifth instance of the class listed above: a SQL comment reading
+ * "the company is then read OUT of this row" silenced verify-join-entity-scoped for a real unscoped
+ * JOIN. Its scope test looks for `<alias>.operating_company_id` followed by an operator, and the
+ * operator alternation includes `\bIS\b` — so the ordinary English word "is" after the column name
+ * read as the SQL `IS` operator. Prose satisfied a security check. Proven both ways: the same SQL
+ * reports 1 offender without the comment and 0 with it.
+ *
+ * @returns {string} same length as `sql`, with `--` line comments and slash-star blocks spaced out.
+ */
+export function maskSqlComments(sql) {
+  const out = Array.from(sql);
+  let i = 0;
+  const n = sql.length;
+  let quote = null; // SQL string literals: ' and "
+  while (i < n) {
+    const c = sql[i];
+    const next = sql[i + 1];
+    if (quote) {
+      if (c === quote) quote = null;
+      i++;
+      continue;
+    }
+    if (c === "'" || c === '"') { quote = c; i++; continue; }
+    if (c === "-" && next === "-") {
+      while (i < n && sql[i] !== "\n") { out[i] = " "; i++; }
+      continue;
+    }
+    if (c === "/" && next === "*") {
+      const end = sql.indexOf("*/", i + 2);
+      const stop = end === -1 ? n : end + 2;
+      for (let k = i; k < stop; k++) if (out[k] !== "\n") out[k] = " ";
+      i = stop;
+      continue;
+    }
+    i++;
+  }
+  return out.join("");
+}
+
 export default maskComments;

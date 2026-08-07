@@ -467,6 +467,7 @@ export async function notifyAbandonedLoadStakeholders(input: {
           concat_ws(' ', d.first_name, d.last_name) AS driver_name
         FROM mdata.loads l
         LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                  AND d.operating_company_id = $2::uuid
         WHERE l.id = $1::uuid
           AND l.operating_company_id = $2::uuid
         LIMIT 1

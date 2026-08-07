@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import { setsTenantGuc, TENANT_GUC_HINT } from "./lib/tenant-guc-match.mjs";
 import path from "node:path";
 
 const ROOT = process.cwd();
@@ -60,8 +61,11 @@ function assertStatusRoute(statusText, routePath, tableName, migrationText, poli
   if (!/operating_company_id = \$1::uuid/.test(statusText)) {
     fail(`${routePath} counts must filter by operating_company_id`);
   }
-  if (!statusText.includes("set_config('app.operating_company_id'")) {
-    fail(`${routePath} must set tenant context before querying accounting.${tableName}`);
+  // CLS-GUARD-LITERAL-GUC: assert the PROPERTY (this file sets the tenant GUC), not one exact
+  // call. setScopedCompanyContext sets the same GUC AND asserts company membership first —
+  // strictly stronger — so a literal grep failed a route for being made safer.
+  if (!setsTenantGuc(statusText)) {
+    fail(`${routePath} must set tenant context before querying accounting.${tableName} — ${TENANT_GUC_HINT}`);
   }
   if (!migrationText.includes(policyName)) {
     fail(`migration must define accounting.${tableName} tenant RLS policy ${policyName}`);

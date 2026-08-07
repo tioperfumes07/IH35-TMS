@@ -2,6 +2,7 @@
  * GAP-56 / CAP-4 — Auto status switch routes.
  * Base path: /api/integrations/samsara/auto-status-switch
  */
+import { setScopedCompanyContext } from "../../../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../../../auth/db.js";
@@ -54,7 +55,7 @@ export async function registerAutoStatusSwitchRoutes(app: FastifyInstance): Prom
     }
 
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const detected = await detectStatusDrift(client, query.data.operating_company_id, params.data.load_uuid);
       if (!detected.drift) return { drift: null as DriftAction, context: detected.context };
       const processed = await processDriftForLoad(client, query.data.operating_company_id, params.data.load_uuid);
@@ -73,7 +74,7 @@ export async function registerAutoStatusSwitchRoutes(app: FastifyInstance): Prom
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
     const applied = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       const drift = {
         case_id: body.data.case_id,
         action: "auto_apply" as const,
@@ -103,7 +104,7 @@ export async function registerAutoStatusSwitchRoutes(app: FastifyInstance): Prom
     if (!query.success) return reply.code(400).send({ error: "validation_error" });
 
     const events = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       return listRecentAutoStatusSwitches(client, query.data.operating_company_id, query.data.limit ?? 50);
     });
 

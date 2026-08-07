@@ -4,6 +4,7 @@
  * BEGIN/COMMIT via withCurrentUser. A failure anywhere rolls the whole thing back.
  * No new financial calculation code — math via dispersal.service.ts + accounting/allocation.ts.
  */
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -235,9 +236,7 @@ export async function createInsurancePolicyWithBills(
 ): Promise<CreatedPolicyWithBills> {
   return withCurrentUser(input.userId, async (rawClient) => {
     const client = rawClient as unknown as PoolClient;
-    await client.query(
-      "SELECT set_config('app.operating_company_id', $1, true)", [input.operatingCompanyId]
-    );
+    await setScopedCompanyContext(client, input.userId, input.operatingCompanyId);
 
     const coverageTypeRes = await client.query<{ id: string }>(
       `SELECT id::text FROM insurance.type_catalog

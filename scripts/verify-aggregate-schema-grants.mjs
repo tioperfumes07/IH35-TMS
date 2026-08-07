@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { maskSqlComments } from "./lib/mask-comments.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.join(ROOT, "apps/backend/src");
@@ -30,6 +31,22 @@ function blockCommentRanges(src) {
   return ranges;
 }
 
+/**
+ * CLS-GUARD-READS-COMMENTS, 6th instance — and this one invented a schema out of ENGLISH PROSE.
+ *
+ * This guard already ignores block comments and line comments, but a SQL `--` comment lives INSIDE a
+ * template literal, so neither applied. An ordinary explanatory comment ending a sentence with
+ * "…does not scope the row you JOIN TO." matched `\b(FROM|JOIN)\s+([a-z_]\w*)\.` and the guard
+ * demanded a `GRANT USAGE ON SCHEMA to TO ih35_app` for a schema named `to`.
+ *
+ * Masking is offset-preserving, which matters here: `blockCommentRanges` and the alias heuristics below
+ * compare character indices against the ORIGINAL source, so replacing comment bodies with spaces keeps
+ * every one of those positions valid.
+ */
+function maskSqlCommentsPreservingOffsets(src) {
+  return maskSqlComments(src);
+}
+
 function isInRange(index, ranges) {
   return ranges.some(([start, end]) => index >= start && index < end);
 }
@@ -50,6 +67,8 @@ function isInRange(index, ranges) {
 export function extractSchemaReferences(src) {
   const blockRanges = blockCommentRanges(src);
   const schemas = new Set();
+  // Blank SQL `--` comments first — see maskSqlCommentsPreservingOffsets above.
+  src = maskSqlCommentsPreservingOffsets(src);
   for (const m of src.matchAll(SCHEMA_MATCH_RE)) {
     const idx = m.index;
     if (isInRange(idx, blockRanges)) continue;

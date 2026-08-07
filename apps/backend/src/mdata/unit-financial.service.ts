@@ -135,6 +135,7 @@ async function queryUnitFinancialRow(
         SELECT COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::text AS fuel_cents
         FROM fuel.fuel_transactions ft
         JOIN mdata.loads l ON l.id = ft.load_id
+                           AND l.operating_company_id = $1::uuid
         WHERE ft.operating_company_id = $1::uuid
           AND l.assigned_unit_id = $2::uuid
           AND l.soft_deleted_at IS NULL

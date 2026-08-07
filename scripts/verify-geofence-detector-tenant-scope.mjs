@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import { setsTenantGuc, TENANT_GUC_HINT } from "./lib/tenant-guc-match.mjs";
 
 function mustInclude(content, needle, description) {
   if (!content.includes(needle)) {
@@ -21,7 +22,12 @@ if (!fs.existsSync(routesPath)) {
   throw new Error(`Missing geofence routes: ${routesPath}`);
 }
 const routes = fs.readFileSync(routesPath, "utf8");
-mustInclude(routes, "set_config('app.operating_company_id'", "route tenant context");
+// CLS-GUARD-LITERAL-GUC: assert the PROPERTY (this file sets the tenant GUC), not one exact call.
+// setScopedCompanyContext sets the same GUC AND asserts company membership first — strictly
+// stronger — so a literal grep failed the route for being made safer.
+if (!setsTenantGuc(routes)) {
+  throw new Error(`Missing route tenant context in apps/backend/src/telematics/geofences.routes.ts — ${TENANT_GUC_HINT}`);
+}
 
 const reportPath = "apps/backend/src/reports/geofence-dwell.routes.ts";
 if (!fs.existsSync(reportPath)) {

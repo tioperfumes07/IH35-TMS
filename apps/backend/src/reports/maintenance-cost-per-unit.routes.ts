@@ -103,7 +103,7 @@ type MaintTruckRow = {
 };
 
 export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/maintenance-cost-per-unit", async (req, reply) => {
+  app.get("/api/v1/reports/maintenance-cost-per-unit", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -187,6 +187,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
             COALESCE(MAX(we.grand_cents), 0)::text AS max_single_wo_cents
           FROM wo_enriched we
           JOIN mdata.units u ON u.id = we.unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
           WHERE u.deactivated_at IS NULL
           GROUP BY u.id, u.unit_number
           ORDER BY SUM(we.grand_cents) DESC

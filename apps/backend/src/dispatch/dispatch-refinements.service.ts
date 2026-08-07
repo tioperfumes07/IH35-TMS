@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { notifyLoadAssigned, notifyLoadReassignedAway } from "../services/push-notification.service.js";
@@ -45,7 +46,7 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
   } = { v: null };
 
   const result = await withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     await client.query("BEGIN");
     try {
       const loadRes = await client.query(
@@ -183,7 +184,7 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
 
 export async function listLoadStopsRefined(userId: string, operatingCompanyId: string, loadId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const res = await client.query(
       `
         SELECT
@@ -228,7 +229,7 @@ export async function replaceLoadStopsRefined(
   stops: LoadStopInput[]
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     await client.query("BEGIN");
     try {
       const load = await client.query(
@@ -309,7 +310,7 @@ export async function listAvailableDriversForDispatch(
   _forPickupAtIso: string | undefined
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const loadPickup = await client.query(
       `
         SELECT COALESCE(sp.city, '') AS pickup_city, COALESCE(sp.state, '') AS pickup_state
@@ -389,13 +390,14 @@ export async function listAvailableDriversForDispatch(
 
 export async function getDispatchLoadEta(userId: string, operatingCompanyId: string, loadId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const res = await client.query(
       `
         SELECT l.id, l.status::text AS status, l.assigned_primary_driver_id, u.id AS unit_id,
                l.dispatcher_eta_at
         FROM mdata.loads l
         LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
         WHERE l.id = $1 AND l.operating_company_id = $2 AND l.soft_deleted_at IS NULL
       `,
       [loadId, operatingCompanyId]
@@ -446,7 +448,7 @@ export async function getDispatchLoadEta(userId: string, operatingCompanyId: str
 
 export async function listLoadTemplates(userId: string, operatingCompanyId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     const res = await client.query(
       `
         SELECT id, name, template_json, created_at, updated_at
@@ -466,7 +468,7 @@ export async function createLoadTemplate(
   input: { operating_company_id: string; name: string; template_json: Record<string, unknown> }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     const res = await client.query(
       `
         INSERT INTO dispatch.load_templates (operating_company_id, name, template_json, created_by_user_id)

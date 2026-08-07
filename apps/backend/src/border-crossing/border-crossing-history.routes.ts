@@ -79,6 +79,7 @@ export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) 
           LEFT JOIN mdata.loads l ON l.id = ubc.load_id
                                  AND l.operating_company_id = ubc.operating_company_id
           LEFT JOIN mdata.vendors v ON v.id = ubc.customs_broker_id
+                                    AND v.operating_company_id = $2::uuid
           LEFT JOIN reference.ports_of_entry p ON p.id = ubc.port_of_entry_id
           WHERE ubc.id = $1::uuid
             AND ubc.operating_company_id = $2::uuid
