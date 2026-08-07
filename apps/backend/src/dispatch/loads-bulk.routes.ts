@@ -15,6 +15,7 @@ import {
   loadStatusRequiresDeliveryDepartureStamp,
   stampFinalActiveDeliveryDeparture,
 } from "./stamp-final-delivery-departure.js";
+import { applyLoadStatusMoneyEffects } from "../accounting/load-status-money-effects.service.js";
 
 // Transitions that fire escrow-proposal + settlement side-effects on the per-load endpoint
 // (PATCH /dispatch/loads/:id/status). Bulk set_status does NOT run those financial hooks, so moving a
@@ -105,6 +106,23 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
     if (loadStatusRequiresDeliveryDepartureStamp(mdataStatus)) {
       await stampFinalActiveDeliveryDeparture(client, id, statusPayload.delivered_at ?? null);
     }
+
+    // ACCT-F170 / LV-TXN-004 — bulk status change must carry the SAME money side-effects as the
+    // per-load endpoints. PER_LOAD_ONLY_TRANSITIONS above already forces abandoned/driver_walkoff/
+    // driver_no_show to the per-load route precisely BECAUSE they have financial hooks — but it does
+    // not cover delivered_pending_docs / completed_docs_received (the revenue-latch statuses) or
+    // in_transit (a settlement-ping status). So a dispatcher could bulk-move loads straight through
+    // the two states that MATTER to the ledger and silently skip both. Rather than widen the block
+    // list and make bulk less useful, bulk now runs the same shared effects the per-load paths run.
+    await applyLoadStatusMoneyEffects({
+      // Same narrowing the sibling emitDispatchSpineEvent call uses below: this route's client is
+      // typed with an untyped-row query signature, so it is cast to the shared service's DbClient.
+      client: client as unknown as Parameters<typeof applyLoadStatusMoneyEffects>[0]["client"],
+      operatingCompanyId,
+      loadId: id,
+      targetStatus: String(mdataStatus),
+      actorUserId,
+    });
     // Parity with the per-load endpoint: a bulk status change must land on the dispatch event spine so
     // downstream workflow consumers (timeline, notifications) see it. (Non-financial event-bus write.)
     await emitDispatchSpineEvent(client as unknown as Parameters<typeof emitDispatchSpineEvent>[0], {
