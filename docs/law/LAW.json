@@ -7,10 +7,10 @@
     "type": "enforced"
   },
   {
-    "id": "LAW-2026-08-06-CLASS-SCOREBOARD-FRESH",
-    "title": "The Programs by-class scoreboard is GENERATED from docs/audit/wave-queue.json and must match it — a board that renders stale class status is trusted precisely because it looks authoritative, so drift must fail the build rather than mislead",
-    "source_file": "apps/frontend/src/pages/program/classScoreboard.data.ts",
-    "guard": "scripts/verify-class-scoreboard-fresh.mjs",
+    "id": "LAW-2026-08-06-KANBAN-DROPSTATUS-CONTRACT",
+    "title": "Every dispatch Kanban lane dropStatus must be a status loadStatusSchema accepts — a lane whose drop the API rejects is a silent dead end, and the frontend lane list and backend enum live in separate files owned by separate lanes so they drift independently",
+    "source_file": "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
+    "guard": "scripts/verify-kanban-dropstatus-contract.mjs",
     "type": "enforced"
   },
   {
@@ -343,17 +343,17 @@
     "type": "enforced"
   },
   {
+    "id": "LAW-2026-08-06-CLASS-SCOREBOARD-FRESH",
+    "title": "The Programs by-class scoreboard is GENERATED from docs/audit/wave-queue.json and must match it — a board that renders stale class status is trusted precisely because it looks authoritative, so drift must fail the build rather than mislead",
+    "source_file": "apps/frontend/src/pages/program/classScoreboard.data.ts",
+    "guard": "scripts/verify-class-scoreboard-fresh.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-08-07-FINDINGS-REGISTER-CODER-SIGNOFF",
     "title": "Every CC-3 finding is written to the board AND listed in docs/audit/CC-3-FINDINGS-CHECKLIST.md; the coder who fixes it ticks its own row with coder+PR+date+live-proof+guard, never CC-3; a tick without that evidence is a false completion claim; CC-3 re-verifies live and stamps VERIFIED or reopens",
     "source_file": "docs/audit/CC-3-FINDINGS-CHECKLIST.md",
     "guard": "scripts/verify-findings-register-signoff.mjs",
-    "type": "enforced"
-  },
-  {
-    "id": "LAW-2026-08-06-KANBAN-DROPSTATUS-CONTRACT",
-    "title": "Every dispatch Kanban lane dropStatus must be a status loadStatusSchema accepts — a lane whose drop the API rejects is a silent dead end, and the frontend lane list and backend enum live in separate files owned by separate lanes so they drift independently",
-    "source_file": "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
-    "guard": "scripts/verify-kanban-dropstatus-contract.mjs",
     "type": "enforced"
   }
 ]
