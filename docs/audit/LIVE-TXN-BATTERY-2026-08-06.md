@@ -1522,3 +1522,59 @@ useful than either of my earlier framings.
 **Recommended order for CC-1:** (1) point bill void at the JE-void reversal service — that clears the
 $1,643.21; (2) add the linkage population to invoice void so its reversals are traceable too;
 (3) back-post reversals for the three already-voided bills.
+
+## 33 — Controlled reproduction: bill → GL still PASSES on the current deploy
+
+Created bill `CC3-VOIDTEST-20260807-01` (`7ccd431e-8e85-433a-a5e0-4425011ffb5e`) on deploy `9c62278`:
+**$88.77**, Section-A category line `Repairs & maintenance`, vendor = the item-01 vendor.
+**Prod: 2 postings, DR 5400 $88.77 / CR 2000 $88.77 — balanced, USMCA-scoped.**
+
+So the bill→GL poster is **still working on the current deploy** — this is a fresh PASS, not a
+carry-over from the earlier sample.
+
+## 34 — ★★ `LV-AP-OPEN-INCLUDES-VOIDED`: the Open Bills KPI counts VOIDED bills — $1,766.66 overstated — FAIL (money)
+
+The Bills screen headline reads **`OPEN BILLS $3,174.14 · 11 open`**. Prod says:
+
+| measure | count | amount |
+|---|---|---|
+| all bills | 11 | **$3,174.14** |
+| **live** (`voided_at IS NULL`) | **7** | **$1,407.48** |
+| **voided** (`voided_at IS NOT NULL`) | **4** | **$1,766.66** |
+
+**The UI's "OPEN BILLS" figure is `total_all` — it is the ALL-bills total, voided included.** Open
+payables are overstated by **$1,766.66**, which is **56% of the displayed figure**. The count is wrong
+the same way: 11 shown vs 7 actually live.
+
+**Root cause is the same defect family as `LV-VOID-NO-REVERSAL`, and this makes it concrete:**
+**every bill on this entity still has `status = 'unpaid'`, including all 4 voided ones.** Void sets
+`voided_at` and nothing else — it does not move `status` to `void`, and the Open-Bills query filters
+on `status`, not on `voided_at`. So a voided bill remains "open" everywhere that reads `status`.
+
+Cross-check that the numbers hang together: the $1,766.66 of voided bills = the **$1,643.21** GL
+residue (item 28) **+ $123.45** for the fourth voided bill, which had no GL postings.
+Both measurements agree.
+
+**Operational impact:** AP aging, cash-requirement forecasting and any vendor-payables report reading
+`status` will overstate what the company owes. On the real-books entity this would misstate payables.
+
+Board row `LV-AP-OPEN-INCLUDES-VOIDED` (CC-1, money). **Fix note:** setting `status = 'void'` on void
+is likely the single change that corrects both this and the list display — but it must be done
+**with** the reversing JE (item 32), not instead of it; correcting the label without correcting the
+ledger would hide the $1,643.21 rather than clear it.
+
+## 35 — `LV-BILLS-VENDOR-UUID`: the Bills list Vendor column shows raw UUIDs for every row — FAIL
+
+The Bills list **Vendor** column renders the raw vendor UUID on **every row**, never a name:
+`308f6434-0a51-4109-953e-c86ffb1f0999`, `d9bb802f-fad4-421c-a41e-a1e834e33362`,
+`40fc1104-896b-4c42-9a5d-971a9e468a…`. Not one vendor name appears in a column headed "Vendor".
+
+The AP bills list is therefore unusable for its primary purpose — telling an operator **who** each
+bill is owed to. The data is present and resolvable (the same vendor renders correctly by name in the
+bill create drawer and on the vendor detail page), so this is a projection/display defect, not
+missing data.
+
+Same class as `LV-INV-UUID` (raw load UUID on the invoice line) and the historical
+"Class-UUID renders in picker" card — **resolve ids to human identifiers, entity-scoped**.
+
+Board row `LV-BILLS-VENDOR-UUID` (CC-2 mechanical/FE).
