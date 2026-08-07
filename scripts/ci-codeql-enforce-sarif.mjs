@@ -128,10 +128,45 @@ for (const f of sarifs) {
   }
 }
 
-if (errors > 0) {
-  console.error(
-    `\n${LABEL} FAILED — ${errors} error-level CodeQL finding(s) across ${sarifs.length} SARIF file(s).`
-  );
+// SHRINK-ONLY RATCHET. Pre-existing error-level findings are baselined per rule id so a NEW finding
+// is never hidden inside a wall of old red — the failure mode where a permanently-red check stops
+// being read. A rule may only ever go DOWN: exceeding its baseline fails, and coming in under it
+// fails too, loudly, demanding the baseline be lowered so the win is locked in.
+const baselinePath = path.join(path.dirname(process.argv[1]), "ci-codeql-baseline.json");
+let baseline = {};
+if (fs.existsSync(baselinePath)) {
+  baseline = JSON.parse(fs.readFileSync(baselinePath, "utf8")).baseline || {};
+}
+
+const byRule = new Map();
+for (const f of sarifs) {
+  for (const x of analyze(path.join(dir, f)).findings) {
+    if (x.level !== "error") continue;
+    byRule.set(x.ruleId, (byRule.get(x.ruleId) || 0) + 1);
+  }
+}
+
+const regressions = [];
+const improvements = [];
+for (const [ruleId, count] of byRule) {
+  const allowed = baseline[ruleId]?.count ?? 0;
+  if (count > allowed) regressions.push(`${ruleId}: ${count} error-level finding(s), baseline allows ${allowed}`);
+}
+for (const [ruleId, entry] of Object.entries(baseline)) {
+  const now = byRule.get(ruleId) || 0;
+  if (now < entry.count) improvements.push(`${ruleId}: now ${now}, baseline says ${entry.count} — LOWER the baseline to lock this in`);
+}
+
+if (regressions.length) {
+  console.error(`\n${LABEL} FAILED — CodeQL findings ABOVE baseline:\n`);
+  for (const r of regressions) console.error(`  - ${r}`);
+  console.error(`\nFix the finding. Do NOT raise ${path.basename(baselinePath)} to make this pass.\n`);
+  process.exit(1);
+}
+if (improvements.length) {
+  console.error(`\n${LABEL} FAILED — a finding was FIXED but the baseline still allows it:\n`);
+  for (const r of improvements) console.error(`  - ${r}`);
+  console.error(`\nLower the count in ${path.basename(baselinePath)} so the improvement cannot silently regress.\n`);
   process.exit(1);
 }
 console.log(
