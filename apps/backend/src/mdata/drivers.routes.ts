@@ -1442,13 +1442,29 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           LEFT JOIN identity.users i ON i.id = d.identity_user_id
           LEFT JOIN org.companies c ON c.id = i.default_company_id
           WHERE d.id = $1
+            AND d.operating_company_id IN (
+              SELECT uca.company_id
+                FROM org.user_company_access uca
+                JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+               WHERE uca.user_id = $2::uuid
+                 AND uca.deactivated_at IS NULL
+            )
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, authUser.uuid]
       );
       const row = driverRes.rows[0] ?? null;
       if (!row) return { error: "mdata_driver_not_found" as const };
 
+      // ENTITY-SCOPED RESOLVER. The read is scoped to the companies the CALLER actually belongs to —
+      // NOT to a caller-supplied company, which would be the untrusted input this fix exists to
+      // distrust, and not by the driver's own company, which is what the read is trying to discover.
+      // Same shape as the reclassify resolver already on main, and it reads org.user_company_access,
+      // the same table assertCompanyMembership keys on, so the read and the gate below cannot drift.
+      // Two effects: it satisfies the entity-predicate contract (verify-steps/84) with a real
+      // predicate rather than a baseline waiver, and it collapses 403-vs-404 so a caller can no longer
+      // tell "no such driver" from "exists in another entity" and enumerate ids across entities.
+      //
       // CROSS-ENTITY GATE. This route looked the driver up by id ALONE, so a caller in company A could
       // trigger an invite to company B's driver — a real email to a real person in another entity, plus
       // an identity.driver_invites row written under that entity. The company is DERIVED from the
