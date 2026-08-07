@@ -28,7 +28,17 @@ export const MONEY =
   /accounting\/|poster\.service|driver-finance\/|-posting\/|spine-emit|factoring\/|settlement|qbo-sync\/|banking\/|integrations\/qbo\/|integrations\/plaid\/|integrations\/relay-payments\/|\/qbo\//i;
 
 // empty catch OR catch whose body is only comments/whitespace = silent swallow
-const SWALLOW = /catch\s*\([^)]*\)\s*\{\s*(\/\/[^\n]*\s*|\/\*[\s\S]*?\*\/\s*)*\}/g;
+// ReDoS-safe (CODEQL-F02, js/redos). The previous form was
+//     \{\s*(\/\/[^\n]*\s*|\/\*[\s\S]*?\*\/\s*)*\}
+// where EVERY alternative ended in \s* while the outer * repeated, so the same run of whitespace
+// could be consumed by the inner \s* or by the next iteration. That ambiguity is the classic
+// exponential-backtracking shape: CodeQL demonstrated it on input starting `catch(){{//`.
+// This form is unambiguous — each branch is distinguished by its FIRST character (whitespace vs
+// `/`, then `/` vs `*`) and no branch ends in a quantifier that the next can also match, so the
+// engine never has a choice to backtrack over. Same language, linear time.
+// It matters here because this guard scans money-path sources in CI: a guard that hangs is a guard
+// that does not run.
+const SWALLOW = /catch\s*\([^)]*\)\s*\{(?:\s|\/\/[^\n]*|\/\*[\s\S]*?\*\/)*\}/g;
 
 /** Scan one file's source for empty/comment-only catch swallows on a money-path relative path. */
 export function checkEmptyCatchSwallows(rel, src) {
