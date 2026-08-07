@@ -1,24 +1,46 @@
 {
-  "_why": "SHRINK-ONLY RATCHET for database-level WORM (void-not-delete) coverage on financial tables. ACCT-F141 made 9 tables physically undeletable after 139 real rows were destroyed on prod and could not be recovered; its header promised this ratchet and it was never written, so the control had nothing watching it. protected_tables is absolute — losing any entry is RED. unprotected_count may only DECREASE.",
+  "_why": "SHRINK-ONLY RATCHET for database-level WORM (void-not-delete) coverage on financial tables. ACCT-F141 made 9 tables physically undeletable after 139 real rows were destroyed on prod and could not be recovered; its header promised this ratchet and it was never written, so the control had nothing watching it. protected_tables is absolute \u2014 losing any entry is RED. unprotected_count may only DECREASE.",
   "_rules": [
     "Never remove a table from protected_tables. WORM is one-way.",
-    "Never RAISE unprotected_count to make a build pass — decide whether the new table needs WORM.",
+    "Never RAISE unprotected_count to make a build pass \u2014 decide whether the new table needs WORM.",
     "Lowering unprotected_count after adding protection is the goal, not the exception."
   ],
   "_recorded_at": "2026-08-07",
   "protected_tables": [
     "accounting.bill_lines",
     "accounting.bill_payments",
+    "accounting.bill_unit_allocation",
     "accounting.bills",
+    "accounting.credit_memos",
     "accounting.escrow_postings",
     "accounting.expense_lines",
+    "accounting.invoice_lines",
+    "accounting.invoices",
+    "accounting.journal_entries",
     "accounting.journal_entry_postings",
     "accounting.payment_applications",
+    "accounting.payments",
+    "accounting.related_party_loan_entries",
+    "accounting.related_party_loan_schedule",
+    "accounting.vendor_credits",
     "banking.bank_transactions",
+    "banking.equipment_loan_attributions",
+    "banking.equipment_loan_payments",
+    "banking.equipment_loans",
+    "banking.reconciliation_sessions",
+    "banking.transfers",
     "driver_finance.cash_advance_owner_approval_audit",
     "driver_finance.cash_advance_request_audit",
     "driver_finance.driver_settlement_deductions",
-    "driver_finance.driver_settlements"
+    "driver_finance.driver_settlement_disputes",
+    "driver_finance.driver_settlements",
+    "driver_finance.escrow_balances",
+    "driver_finance.escrow_deductions_pending",
+    "driver_finance.escrow_ledger",
+    "driver_finance.settlement_lines",
+    "driver_finance.team_settlement_splits",
+    "factoring.batch",
+    "factoring.reserve_movement"
   ],
-  "unprotected_count": 129
+  "unprotected_count": 107
 }
