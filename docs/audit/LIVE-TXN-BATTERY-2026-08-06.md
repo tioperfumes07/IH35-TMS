@@ -1210,3 +1210,56 @@ or the next voided invoice reintroduces it at whatever amount that invoice happe
 | e. entity balance reflects the net correctly | ❌ **FAIL — $1,643.21 residue in 2000/5400** |
 
 Both failures are the same single missing behaviour. Everything else about void is correct.
+
+### 28b — ★ The reversal flag was ON. "It was gated off" is NOT the explanation.
+
+Before CC-1 investigates `LV-VOID-NO-REVERSAL`, the obvious first hypothesis — *the reversal was
+gated off* — is **ruled out on prod**:
+
+| flag | TRANSP | TRK | **USMCA** |
+|---|---|---|---|
+| **`MONEY_CONTROL_VOID_REVERSAL_ENABLED`** | true | true | **true** |
+| `VOID_ENFORCEMENT_ENABLED` | true | true | **true** |
+| `WO_VOID_ENABLED` | true | true | **true** |
+| `VOID_QBO_MIRROR_ENABLED` | false | false | **false** ✅ correct — no QBO write-back |
+
+**The void-reversal control is ENABLED for USMCA and the reversal still did not post.** So this is a
+code defect in the void path, not a configuration state. (Note the same key-default-vs-override
+pattern as `LV-BANKFLAG-STALE`: CI logs describe this key as "per-entity, default OFF", and the
+per-entity override is ON — the effective state is what matters.)
+
+`VOID_QBO_MIRROR_ENABLED = false` on all three is **correct and should stay** — QBO write-back is
+never on (parallel books). Nothing in the fix should change that flag.
+
+### 28c — Void/cancel pass: remaining voidable inventory on USMCA
+
+| document | total | voided/cancelled |
+|---|---|---|
+| customer payments | 1 | 0 |
+| journal entries | 19 | 0 |
+| driver settlements | **1** | 0 |
+| vendor credits | **0** | — (no create path, item 26) |
+| loads | 3 | 0 |
+| work orders | **0** | — (cannot be created, `LV-WO-NOSAVE`) |
+
+Two battery items are **structurally unreachable**, not skipped: **vendor-credit void** (nothing can
+create a vendor credit — item 26) and **work-order cancel** (nothing can create a WO — item 15).
+Recorded so they are not later mistaken for untested.
+
+`driver_settlements` moved 0 → **1** since the previous baseline — another lane created one. Noted per
+the diff-don't-assume rule.
+
+### 28d — The three inert submit handlers are STILL UNFIXED on the current deploy
+
+Prod advanced twice this session (`e6343f4` → `251eaf7` → `bf1a21c`). **No fix has landed for any of
+the three.** Verified by reading `origin/main` history rather than re-clicking the UI: the only
+work-order commit in the window is `68c32e162` (MNT-F05, entity scope on the WO load number) — not
+the submit handler. Nothing touches the stops save or the liability spawn.
+
+So `LV-STOPS-NOSAVE`, `LV-WO-NOSAVE` and `LV-SPAWN-LIABILITY-NOSAVE` remain OPEN and still block
+delivery→revenue, the whole Maintenance module, and Safety→Insurance→Legal. **Re-testing them in the
+browser would prove nothing while the code is unchanged** — cheaper and more honest to say so than to
+re-run the clicks and report the same failure as if it were new evidence.
+
+**Landed this session and relevant:** `915ab9b43` (CC-1 ACCT-F142 — the duplicate-bill fix, which is
+what performed the voids in item 28) and `df429772e` (CI-DEPENDABOT — matches my `LV-CI-DEPENDABOT-RED`).
