@@ -1120,3 +1120,61 @@ targets it — a builder picking `recurring_templates` by name would write to a 
 produces a balanced JE. That is a **future-dated cron behaviour** — it cannot be observed today
 without waiting or forcing the job. **UNVERIFIED — needs a live check on/after 2026-09-06**, or a
 forced generation run. Recorded rather than assumed.
+
+## 28 — ★★ `LV-VOID-NO-REVERSAL`: bills are VOIDED but NEVER REVERSED — $1,643.21 still on the USMCA books — FAIL (critical, money)
+
+**The void-reversal pass found the most serious defect of this battery.**
+
+Another lane ran a duplicate-void remediation at **`2026-08-07 00:33:50.999787+00`** (all four voids
+share that exact timestamp), voiding one of each duplicate pair and leaving the sibling live —
+including the `LV-AP-DUP` pair I reported. **The void half is correct. The reversal half never
+happened.**
+
+**Evidence 1 — the voided bill's own postings.** `55997ecb-2a81-4b01-ab70-c23f41d3829d`
+(`voided_at 2026-08-07 00:33:50`) still carries **only its two ORIGINAL postings**:
+DR 5400 $743.21 / CR 2000 $743.21, created `2026-08-06T16:41:39.304Z`. Both rows read
+**`reversed_by_line_id = NULL`** and **`reversal_of_line_id = NULL`**. **No reversing entry exists.**
+
+**Evidence 2 — the aggregate across every voided USMCA bill:**
+
+| measure | value |
+|---|---|
+| voided bills (USMCA) | **4** |
+| voided bills that carry GL postings | **3** |
+| postings sitting on voided bills | **6** |
+| **reversal postings among them** | **0** |
+| **cents still on the books from voided bills** | **164,321 = $1,643.21** |
+
+**Evidence 3 — the account balances, which is what an auditor would see:**
+
+| account | net (all) | **net from VOIDED bills** | share |
+|---|---|---|---|
+| **2000 Accounts Payable (A/P)** | $3,138.47 Cr | **$1,643.21 Cr** | **52% of A/P is voided-bill residue** |
+| **5400 Truck Repairs & Maintenance** | $2,837.47 Dr | **$1,643.21 Dr** | **58% of the expense is voided-bill residue** |
+
+**This violates the single most-repeated law in this repo.** PERMANENT LAW §4 and standing-order
+rule 5: **"VOID = reversal; nothing is deletable."** A void that sets `voided_at` without posting a
+reversing JE does not undo anything — it hides the document while leaving the money on the ledger.
+The books now show A/P and expense overstated by **$1,643.21** on USMCA.
+
+**Note the figure:** `$1,643.21` is exactly the overstatement named in CC-1's PR **#4614**
+(*"ACCT-F142 — the TMS can enter the same vendor bill twice; $1,643.21 overstated A/P live on prod"*).
+So the duplicate was correctly identified and the bills were correctly marked void — **but the
+overstatement it was meant to correct is still there**, because the void produced no reversal.
+
+**What is NOT wrong (stated fairly):** the originals are preserved — all four voided bills still
+exist as rows with `voided_at` set, none deleted. That half of WORM holds. Siblings are untouched
+(`5a1d7268`, `304f5fa3`, `0fe49cd0` all still `(live)`). The defect is precisely and only the
+missing reversing entry.
+
+**FIX REQUIREMENT (CC-1, money):** the void path must post a reversing JE — DR 2000 / CR 5400 for
+each voided bill's original amount, same entity, linked to the original via
+`reversal_of_line_id` / `reversed_by_line_id`, reusing the existing poster (**write no new GL math**).
+Then back-post reversals for the 3 already-voided bills carrying live postings so the $1,643.21 clears.
+
+**GUARD:** assert no bill with `voided_at IS NOT NULL` has un-reversed postings — i.e. for every
+voided source transaction, `SUM(debit) - SUM(credit) = 0` across original + reversal, and every
+original posting has a non-null `reversed_by_line_id`. This is a shrink-only ratchet and would have
+caught this the moment the void ran.
+
+Board row `LV-VOID-NO-REVERSAL` — **CC-1, critical**.
