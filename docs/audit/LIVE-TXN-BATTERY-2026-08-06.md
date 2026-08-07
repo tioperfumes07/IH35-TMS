@@ -6728,3 +6728,70 @@ them is real here.
 **Residual unknown, stated rather than guessed:** `0f65bf5e` DID deliver, and I cannot yet explain why —
 most plausibly it ran in a request context carrying a user rather than in the background worker. That
 difference would itself corroborate the root cause, but it is **UNVERIFIED**.
+
+---
+
+## 110. ★ SELF-CORRECTION to item 109 — it is ONE broken handler, not a class of seven. My class claim came from a grep that missed the real GUC name
+
+**Verdict: the FMCSA defect STANDS and is now easier to fix. The "class of 7" framing was WRONG and is
+withdrawn within the hour, before any lane acted on it.**
+
+Item 109 closed with an UNVERIFIED question I set myself: do the other six outbox handlers silently no-op?
+I went to answer it. The answer is **no — they are correct**, and my premise was false.
+
+**MEASURED per file on `origin/main`:**
+
+| handler | `app.bypass_rls` | `app.operating_company_id` |
+|---|---|---|
+| **`fmcsa-customer-verify`** | **0 — NO** | 1 |
+| `tms-customer-push` | 1 | 1 |
+| `tms-vendor-push` | 1 | 1 |
+| `tms-invoice-push` | 1 | 1 |
+| `tms-bill-push` | 1 | 1 |
+| `tms-account-push` | 1 | 1 |
+| `tms-item-push` | 1 | 1 |
+
+**`tms-vendor-push.handler.ts:246-247` is the correct pattern, and the order matters:**
+
+```
+SELECT set_config('app.bypass_rls', 'lucia', true)      -- ← the GUC is_lucia_bypass() reads
+SELECT set_config('app.operating_company_id', $1, true) -- ← then the entity scope
+```
+
+`app.bypass_rls` is what `identity.is_lucia_bypass()` consults, and that call is the **first clause of every
+`mdata.*` SELECT policy**. Six handlers set it. **`fmcsa-customer-verify` does not — it is the only broken
+one.**
+
+**★ HOW I GOT IT WRONG, and it is my own §4 violation.** I concluded "none of the 7 establish a user context"
+from this returning nothing:
+
+```
+grep -rln "is_lucia_bypass\|app.lucia_bypass\|withCurrentUser\|app.user_id" apps/backend/src/outbox
+```
+
+**The real GUC is `app.bypass_rls` with the value `'lucia'`. Not one of my four patterns matched it.** So an
+**empty grep became a systemic claim about seven files** — precisely what the operating constitution §4
+forbids: *"Don't trust a string-grep 'systemic check'."* I have applied the completeness discriminator to
+every SQL zero this entire session and then failed to apply the same standard to a grep zero. **A zero from
+`grep` needs a positive control exactly like a zero from `count(*)`:** if I had grepped the same patterns
+against a handler I already knew set a context, it would have returned nothing and exposed the bad pattern
+immediately.
+
+**WHAT STANDS — unchanged, and strengthened:** the FMCSA handler is genuinely broken. 3 of 4 live events
+failed `fmcsa_customer_missing_or_cross_tenant` on customers that exist, are active, and whose
+`operating_company_id` matches the payload exactly. Root cause is the missing bypass. The error message is
+factually false.
+
+**WHAT THE CORRECTION BUYS:** the fix is no longer a design question about worker tenancy across seven
+handlers — **it is one line, copied from a proven reference implementation in the same directory.** And the
+guard I recommended gets better: *assert every outbox handler that queries an RLS-protected table sets
+`app.bypass_rls` before the query* — **6 pass, 1 fails**, so it ships green-but-one and ratchets to zero,
+instead of being a speculative rule with no baseline.
+
+**WITHDRAWN:** the suggestion that the six `tms-*-push` handlers might no-op silently. The premise is gone.
+**Nobody should spend time checking them.**
+
+**The uncomfortable lesson:** item 109 was my strongest finding of the session and I over-reached on exactly
+one sentence — the scope. The defect was real, the root cause was right, and the blast radius was 7× too
+big. **Over-scoping a true finding is its own kind of false report**: it would have sent the mechanical lane
+to audit six correct files.
