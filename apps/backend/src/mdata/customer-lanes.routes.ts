@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -68,7 +69,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     return withCurrentUser(authUser.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, parsedQuery.data.operating_company_id);
       const includeInactive = parsedQuery.data.include_inactive === "true";
       const rowsRes = await client.query(
         `
@@ -97,7 +98,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
     return withCurrentUser(authUser.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, parsedQuery.data.operating_company_id);
       const res = await client.query(
         `
           INSERT INTO mdata.customer_lanes (
@@ -147,7 +148,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
     return withCurrentUser(authUser.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, parsedQuery.data.operating_company_id);
       const fields: string[] = [];
       const values: unknown[] = [];
       for (const [key, value] of Object.entries(parsedBody.data)) {
@@ -193,7 +194,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     return withCurrentUser(authUser.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, parsedQuery.data.operating_company_id);
       const res = await client.query(
         `
           UPDATE mdata.customer_lanes

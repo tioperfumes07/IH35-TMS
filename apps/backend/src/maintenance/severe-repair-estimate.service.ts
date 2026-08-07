@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import {
@@ -180,7 +181,7 @@ export async function manualMarkUnitOos(
   }
 
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
 
     const res = await client.query<{ id: string; unit_number: string }>(
       `
@@ -228,7 +229,7 @@ export async function manualReturnUnitToService(
   }
 
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
 
     const stillOpen = await client.query<{ ct: number }>(
       `

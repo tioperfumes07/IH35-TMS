@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";
@@ -22,7 +23,7 @@ export async function registerDriverRetentionRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error" });
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const rows = await listRetentionScores(client, query.data.operating_company_id, query.data.tier as RetentionTier | undefined);
       return reply.send({ rows, count: rows.length });
     });
@@ -36,7 +37,7 @@ export async function registerDriverRetentionRoutes(app: FastifyInstance) {
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const score = await computeRetentionScore(client, query.data.operating_company_id, params.data.uuid);
       return reply.send(score);
     });
@@ -49,7 +50,7 @@ export async function registerDriverRetentionRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error" });
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           SELECT date_trunc('week', computed_at)::date::text AS week,

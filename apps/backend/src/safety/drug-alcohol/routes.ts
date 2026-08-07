@@ -3,6 +3,7 @@
  * Base path: /api/safety/drug-alcohol
  * Requires: authenticated session + Safety Officer or higher for mutations.
  */
+import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
@@ -165,7 +166,7 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
     if (!params.success || !body.success) return reply.code(400).send({ error: "validation_error" });
 
     const ok = await withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [body.data.operating_company_id]);
+      await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
       return deactivateEnrollment(client, body.data.operating_company_id, params.data.uuid);
     });
     if (!ok) return reply.code(404).send({ error: "not_found" });

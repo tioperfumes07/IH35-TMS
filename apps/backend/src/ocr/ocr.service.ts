@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 
@@ -64,7 +65,7 @@ export async function parseRateConfirmation(
   }
 ): Promise<ParsedRateConfirmation> {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, input.operatingCompanyId);
     const fileRes = await client.query<{ filename: string; category: string; entity_id: string }>(
       `
         SELECT filename, category, entity_id::text

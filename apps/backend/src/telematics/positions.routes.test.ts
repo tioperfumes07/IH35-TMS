@@ -1,3 +1,4 @@
+import { membershipAware } from "../../test-helpers/membership-aware-query.js";
 import Fastify from "fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { registerTelematicsPositionsRoutes } from "./positions.routes.js";
@@ -42,7 +43,7 @@ vi.mock("../auth/session-middleware.js", () => ({
 
 vi.mock("../auth/db.js", () => ({
   withCurrentUser: async (_userId: string, fn: (client: { query: typeof queryMock }) => Promise<unknown>) =>
-    fn({ query: queryMock }),
+    fn({ query: membershipAware(queryMock) }),
 }));
 
 describe("telematics positions routes", () => {

@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { randomUUID } from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -671,7 +672,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
   }
 
   return withCurrentUser(input.requestingUserUuid, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+    await setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id);
 
     const wf044Warnings: Array<Record<string, unknown>> = [];
     const insuranceCoverageWarnings: Array<Record<string, unknown>> = [];

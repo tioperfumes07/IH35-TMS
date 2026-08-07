@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -100,7 +101,7 @@ export async function registerDriverW8benRoutes(app: FastifyInstance) {
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
 
     const rows = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           SELECT ${SELECT_COLS}
@@ -130,7 +131,7 @@ export async function registerDriverW8benRoutes(app: FastifyInstance) {
     const irsExpiration = irsExpirationFor(body.data.signed_date);
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           INSERT INTO safety.driver_w8ben (
@@ -236,7 +237,7 @@ export async function registerDriverW8benRoutes(app: FastifyInstance) {
     if (sets.length === 0) return reply.code(400).send({ error: "validation_error" });
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           UPDATE safety.driver_w8ben
@@ -272,7 +273,7 @@ export async function registerDriverW8benRoutes(app: FastifyInstance) {
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
       const res = await client.query(
         `
           UPDATE safety.driver_w8ben

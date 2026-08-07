@@ -1,3 +1,4 @@
+import { membershipAware } from "../../../../test-helpers/membership-aware-query.js";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -30,7 +31,7 @@ type QueryLog = string[];
  */
 function makeClient(credRow: Record<string, unknown>, log: QueryLog, isHazmat = false) {
   return {
-    query: vi.fn(async (sql: string) => {
+    query: membershipAware(vi.fn(async (sql: string) => {
       log.push(sql);
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
       if (/^\s*(BEGIN|COMMIT|ROLLBACK)\s*$/.test(sql)) return { rows: [] };
@@ -64,7 +65,7 @@ function makeClient(credRow: Record<string, unknown>, log: QueryLog, isHazmat = 
         return { rows: [{ id: LOAD }] };
       }
       return { rows: [] };
-    }),
+    })),
   };
 }
 

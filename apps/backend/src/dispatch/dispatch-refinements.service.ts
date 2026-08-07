@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { notifyLoadAssigned, notifyLoadReassignedAway } from "../services/push-notification.service.js";
@@ -45,7 +46,7 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
   } = { v: null };
 
   const result = await withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     await client.query("BEGIN");
     try {
       const loadRes = await client.query(
@@ -466,7 +467,7 @@ export async function createLoadTemplate(
   input: { operating_company_id: string; name: string; template_json: Record<string, unknown> }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     const res = await client.query(
       `
         INSERT INTO dispatch.load_templates (operating_company_id, name, template_json, created_by_user_id)

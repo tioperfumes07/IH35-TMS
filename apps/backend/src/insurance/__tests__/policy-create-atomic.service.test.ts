@@ -1,3 +1,4 @@
+import { membershipAware } from "../../../test-helpers/membership-aware-query.js";
 import { describe, expect, it, vi } from "vitest";
 import { createInsurancePolicyWithBills } from "../policy-create-atomic.service.js";
 
@@ -11,7 +12,7 @@ vi.mock("../../auth/db.js", async (importOriginal) => {
       let txnSeq = 0;
       let billSeq = 0;
       return fn({
-        query: vi.fn(async (sql: string) => {
+        query: membershipAware(vi.fn(async (sql: string) => {
           if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
           if (sql.includes("FROM insurance.type_catalog")) return { rows: [{ id: "type-1" }] };
           if (sql.includes("INSERT INTO insurance.policy")) {
@@ -38,7 +39,7 @@ vi.mock("../../auth/db.js", async (importOriginal) => {
           if (sql.includes("INSERT INTO accounting.bill_unit_allocation")) return { rows: [], rowCount: 1 };
           if (sql.includes("INSERT INTO audit")) return { rows: [], rowCount: 1 };
           return { rows: [], rowCount: 0 };
-        }),
+        })),
       });
     }),
   };

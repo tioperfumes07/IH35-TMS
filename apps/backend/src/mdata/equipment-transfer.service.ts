@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import {
@@ -22,7 +23,7 @@ type InitiateTransferInput = {
 
 export async function initiateTransfer(userId: string, input: InitiateTransferInput) {
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     await client.query("BEGIN");
     try {
       const drivers = await client.query<{ id: string }>(
@@ -127,7 +128,7 @@ export async function confirmTransfer(
   input: { operating_company_id: string; transfer_id: string; confirming_driver_id: string }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     await client.query("BEGIN");
     try {
       const transferRes = await client.query<{
@@ -218,7 +219,7 @@ export async function rejectTransfer(
     throw new Error("E_REJECTION_REASON_MIN_10");
   }
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     const transfer = await client.query<{ id: string; to_driver_id: string; status: string }>(
       `
         UPDATE mdata.equipment_transfers
@@ -261,7 +262,7 @@ export async function listTransfers(
     const values: unknown[] = [];
     const filters: string[] = [];
     if (input.operating_company_id) {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+      await setScopedCompanyContext(client, userId, input.operating_company_id);
       values.push(input.operating_company_id);
       filters.push(`operating_company_id = $${values.length}`);
     }
@@ -407,7 +408,7 @@ export async function ackDropoffTransfer(
   input: { operating_company_id: string; transfer_id: string; from_driver_id: string }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     await client.query("BEGIN");
     try {
       const transfer = await loadPendingTransfer(client, input);
@@ -435,7 +436,7 @@ export async function ackPickupTransfer(
   input: { operating_company_id: string; transfer_id: string; to_driver_id: string }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
     await client.query("BEGIN");
     try {
       const transfer = await loadPendingTransfer(client, input);
