@@ -2132,3 +2132,102 @@ Earlier this battery recorded that booking-wizard stops do not save. **That is n
 `L-20260806-0008`'s stops persisted **address and city** on both rows. The accurate finding is
 narrower and is item 43: **`postal_code` specifically is dropped, always.** Recording the correction
 because a builder acting on "stops don't save" would go looking in the wrong place.
+
+---
+
+## 45. ★★ NEW DEFECT — the load detail drawer shows a FULLY ASSIGNED load as "Unassigned" (root-caused to a 18-column view)
+
+**LIVE-PROVEN 2026-08-07, USMCA, `L-20260806-0008` (`1d5d8733-5891-44fc-891f-078ced5ae66f`).**
+
+**Symptom.** The Load Detail drawer → *Equipment · Driver · Trailer* renders:
+`TRIP TYPE —` · `TRUCK UNIT —` · **`DRIVER Unassigned`** · `DRIVER PAY RATE / MI —`
+…while the **load board on the very same screen** shows unit `USMCA-001` for that load. Two views of
+one record, disagreeing.
+
+**MY FIRST HYPOTHESIS WAS WRONG, AND THE DB CHECK CAUGHT IT.** I assumed the booking wizard had failed
+to persist the assignment. Prod says otherwise:
+
+| field | prod value |
+|---|---|
+| `assigned_primary_driver_id` | `88c04cf5-9e32-455c-91e5-298a9b331b10` → **Juan USMCA-Battery** |
+| `assigned_unit_id` | `bb1e77ab-f052-4d1c-961c-d2cc1289e643` → **USMCA-001** |
+| `trip_type` | **`NB`** |
+
+**The wizard saved everything correctly. This is a READ/display defect, not a write defect** — a
+distinction that decides which layer gets fixed. A builder told "the booking wizard loses the driver"
+would rewrite a form that works.
+
+### Root cause — proven, not inferred
+
+`GET /api/v1/dispatch/loads/:id` (`dispatch/loads.routes.ts:663`, observed live returning **200**)
+does `SELECT l.*` **FROM `views.dispatch_load_with_driver_status`** — not from `mdata.loads`.
+
+That view has **18 columns total**. Checked on prod via `information_schema.columns`:
+
+| field the drawer reads | in the view? |
+|---|---|
+| `trip_type` (`LoadDetailDrawer.tsx:370`) | **ABSENT (0)** |
+| `assigned_unit_number` (`:372`) | **ABSENT (0)** |
+| `assigned_primary_driver_name` (`:374`) | **ABSENT (0)** |
+| `assigned_primary_driver_id` | present (1) |
+| `assigned_unit_id` | present (1) |
+
+**Exactly the three fields that render wrong are exactly the three the view does not expose.** No
+unexplained facts remain. `undefined` → `—`, and `assigned_primary_driver_name ?? "Unassigned"` →
+**"Unassigned"**.
+
+**THE SMOKING GUN IS AN ASYMMETRY IN ONE QUERY.** The same handler *does* resolve a driver name — but
+only the **secondary** one:
+
+```sql
+NULLIF(TRIM(CONCAT(COALESCE(sd.first_name,''),' ',COALESCE(sd.last_name,''))),'') AS assigned_secondary_driver_name
+...
+LEFT JOIN mdata.drivers sd ON sd.id = l.assigned_secondary_driver_id
+```
+
+There is **no equivalent join for the PRIMARY driver, and none for the unit**. The team-driver field
+therefore works while the primary-driver field — the one that matters on every load — does not.
+
+**Corroboration that the defect is local to this endpoint:** the load board renders `USMCA-001`
+correctly for the same load, so the list path resolves the unit. Only the detail path is narrow.
+
+**Internally inconsistent within the same file:** `LoadDetailDrawer.tsx:712` and `:849` use
+`load.assigned_primary_driver_id` — which **is** in the payload and does work. So the drawer already
+proves the ID is available; only the display block reached for names that were never sent.
+
+### Why this is not cosmetic
+
+A dispatcher opening a load sees **"Driver: Unassigned"** on a load that has a driver and a truck
+committed. The realistic consequences are double-booking the driver, re-assigning a covered load, or
+believing a unit is free. It also violates the total-connectivity law (§10a): a record that IS linked
+is displayed as unlinked, and forward drill-through from the load to the driver/unit is broken on the
+primary screen for that record.
+
+### Fix — two options, one clearly better
+
+1. **(preferred, lowest risk, matches the code already there)** in the detail handler, add
+   `trip_type` and LEFT JOIN `mdata.drivers` / `mdata.units` to compute
+   `assigned_primary_driver_name` and `assigned_unit_number` — i.e. **mirror for the primary driver
+   exactly what the query already does for the secondary driver**, entity-scoped with the same
+   `operating_company_id` predicate the secondary join uses.
+2. widen `views.dispatch_load_with_driver_status`. Higher blast radius — the view is shared, and
+   `CREATE OR REPLACE VIEW` is append-only per §2, so columns must be appended, not reordered.
+
+**LANE: CC-2 / mechanical.**
+
+**GUARD:** assert the load-detail payload carries a non-null driver name and unit number whenever
+`assigned_primary_driver_id` / `assigned_unit_id` are set — a contract test on the endpoint's
+response, not a static scan. **A guard that only checked the columns exist on `mdata.loads` would pass
+here**, because the columns do exist; the endpoint simply never selects them. That is the same shape
+as item 41: the naive guard confirms the wrong thing.
+
+**RELATED, NOT CONFLATED:** the UI hint text at `LoadDetailDrawer.tsx:379` and the handler comment
+both reference **`loads.trailer_id`** — a column that **does not exist** on `mdata.loads` (verified:
+the only trailer column is `trailer_type`). The handler comment already documents that a prior join on
+that non-existent column 500'd every load-detail fetch (42703) and broke the cancel flow. The stale
+reference survives in user-facing copy. Minor, but it is the same wrong mental model that caused a
+production 500 once already.
+
+**NOT CLAIMED:** whether this shares a cause with `LV-DISPATCH-TOAST-LIES` (item 44). Both concern the
+same load, but the dispatch action ran from the booking wizard, not this drawer. **UNVERIFIED — needs
+its own check.** They are recorded as separate defects deliberately.
