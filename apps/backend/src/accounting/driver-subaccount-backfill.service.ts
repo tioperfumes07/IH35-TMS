@@ -144,7 +144,7 @@ export async function runDriverSubAccountBackfill(
       }
       // ACCT-F164 — same gate, same idempotence. A driver with both sub-accounts and no vendor is
       // still unpayable, so this belongs in the same apply pass rather than a separate errand.
-      await ensureDriverApVendor(client, input.operatingCompanyId, d.driverId, d.driverName);
+      await ensureDriverApVendor(client, input.operatingCompanyId, d.driverId, d.driverName, input.actorUserId);
     }
 
     rows.push({

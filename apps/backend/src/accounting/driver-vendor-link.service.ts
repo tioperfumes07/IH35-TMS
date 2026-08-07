@@ -50,6 +50,8 @@ export class DriverVendorMissingError extends Error {
   }
 }
 
+import { appendCrudAudit } from "../audit/crud-audit.js";
+
 type QueryClient = {
   query: <R extends Record<string, unknown> = Record<string, unknown>>(
     sql: string,
@@ -135,12 +137,22 @@ export async function resolveDriverVendorLink(
  * It does NOT auto-create from inside a posting path. The settlement poster keeps calling
  * resolveDriverVendorLink and keeps failing loud: minting a vendor as a side effect of posting money
  * would hide a provisioning gap inside a financial transaction. Provisioning is its own step.
+ *
+ * AUDITED, and `actorUserId` is REQUIRED rather than optional. This mints the payee that A/P is
+ * booked against, so an unaudited create means a driver can be paid through a vendor with no record
+ * of who brought it into existence — in a repo where `LV-AUDIT-TRAIL-HAS-NO-ACTOR` is already an open
+ * P0 about exactly that gap. `verify-audit-emit-coverage` caught this file on the first CI run and it
+ * was right to; the fix is the emit, never the allowlist. The event class is `mdata.vendors.created`,
+ * identical to the manual vendors route, so both writers land in one queryable stream instead of two
+ * shapes a reader has to know about. An OPTIONAL actor would leave the same hole open for the next
+ * caller, silently, which is how this arrived.
  */
 export async function ensureDriverApVendor(
   client: QueryClient,
   operatingCompanyId: string,
   driverId: string,
-  driverName: string
+  driverName: string,
+  actorUserId: string
 ): Promise<{ action: "created" | "exists"; vendorId: string }> {
   const existing = await client.query<{ id: string }>(
     `SELECT v.id::text AS id
@@ -165,5 +177,21 @@ export async function ensureDriverApVendor(
      RETURNING id::text AS id`,
     [operatingCompanyId, name, driverId]
   );
-  return { action: "created", vendorId: created.rows[0]!.id };
+  const vendorId = created.rows[0]!.id;
+  // Same client, same transaction as the INSERT — the vendor and the record of who created it commit
+  // or roll back together. A separate connection could leave a vendor with no audit row.
+  await appendCrudAudit(client, actorUserId, "mdata.vendors.created", {
+    resource_id: vendorId,
+    resource_type: "mdata.vendors",
+    id: vendorId,
+    name,
+    vendor_type: "Other",
+    operating_company_id: operatingCompanyId,
+    // The provenance that distinguishes this from a hand-created vendor: it exists because a driver
+    // needed a payee, and it is TMS-native (no QBO counterpart to map to).
+    driver_id: driverId,
+    created_by: "ensureDriverApVendor",
+    qbo_vendor_id: null,
+  });
+  return { action: "created", vendorId };
 }
