@@ -26,6 +26,8 @@ import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateUS } from "../lib/formatDate";
 
 type VendorTabId = "transaction_list" | "vendor_details" | "notes";
+const VENDOR_LIST_TAB_IDS = ["all", "active", "inactive", "by-category"] as const;
+type VendorListTabId = (typeof VENDOR_LIST_TAB_IDS)[number];
 
 const VENDOR_TABS: Array<{ id: VendorTabId; label: string }> = [
   { id: "transaction_list", label: "Transaction List" },
@@ -37,6 +39,12 @@ const VENDOR_TAB_IDS = new Set<string>(VENDOR_TABS.map((t) => t.id));
 export function parseVendorDetailTab(raw: string | null): VendorTabId {
   if (raw && VENDOR_TAB_IDS.has(raw)) return raw as VendorTabId;
   return "transaction_list";
+}
+
+function parseVendorListTab(raw: string | null): VendorListTabId {
+  const normalized = (raw ?? "active").toLowerCase().replace(/\s+/g, "-");
+  const id = normalized === "by_category" ? "by-category" : normalized;
+  return (VENDOR_LIST_TAB_IDS as readonly string[]).includes(id) ? (id as VendorListTabId) : "active";
 }
 
 
@@ -83,24 +91,28 @@ export function VendorsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   // §7 list segments are URL-addressable via `listTab` — NOT `tab`, which belongs to the vendor DETAIL tabs
   // (:74) and whose existing deep-links must keep working (CURSOR-RULING-PARAM-LIST-TAB, locked 2026-08-08).
-  // Reusing `tab` here would silently repoint every saved detail link.
-  const listStatus = ((): "active" | "inactive" | "all" => {
-    const raw = (searchParams.get("listTab") ?? "active").toLowerCase();
-    return raw === "inactive" || raw === "all" ? raw : "active";
-  })();
-  const setListStatus = (next: "active" | "inactive" | "all") => {
+  const listStatus = parseVendorListTab(searchParams.get("listTab"));
+  const categoryFilter = searchParams.get("category") ?? "";
+  const setListStatus = (next: VendorListTabId) => {
     const params = new URLSearchParams(searchParams);
     // "active" is the default view, so keep the URL clean rather than pinning the default.
     if (next === "active") params.delete("listTab");
     else params.set("listTab", next);
+    if (next !== "by-category") params.delete("category");
     setSearchParams(params, { replace: true });
+  };
+  const setCategoryFilter = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("listTab", "by-category");
+    if (!value) params.delete("category");
+    else params.set("category", value);
+    setSearchParams(params, { replace: false });
   };
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  // V8 — roster-level Category filter for the LEFT vendor list (distinct from the transaction
-  // filter box below, which scopes the SELECTED vendor's bills). Options are built dynamically
-  // from the categories actually present, so the dropdown never shows a category no vendor uses.
+  // transaction-list filter box (selected vendor bills) — not the roster By Category control
+  const [txnCategoryFilter, setTxnCategoryFilter] = useState("");
+  // V8 — roster-level Category filter for the LEFT vendor list (distinct from By Category tab).
   const [rosterCategory, setRosterCategory] = useState("");
   const [showFilterBox, setShowFilterBox] = useState(false);
   const [sidebarPage, setSidebarPage] = useState(1);
@@ -133,28 +145,39 @@ export function VendorsPage() {
   };
 
   // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
-  // mirroring the Driver Deactivate pattern. Defaults to Active.
+  // mirroring the Driver Deactivate pattern. Defaults to Active. By Category filters vendor_type.
   const visibleVendors = useMemo(() => {
     let all = vendorsRoster;
     if (listStatus === "inactive") all = all.filter((vendor) => vendor.deactivated_at != null);
-    else if (listStatus !== "all") all = all.filter((vendor) => vendor.deactivated_at == null);
+    else if (listStatus === "active") all = all.filter((vendor) => vendor.deactivated_at == null);
+    else if (listStatus === "by-category" && categoryFilter) {
+      all = all.filter((vendor) => vendor.vendor_type === categoryFilter);
+    }
     // V8 roster filter — applied here so the sidebar + count + selection stay in sync.
     if (rosterCategory) all = all.filter((vendor) => (vendor.vendor_category ?? "") === rosterCategory);
     return all;
-  }, [vendorsRoster, listStatus, rosterCategory]);
+  }, [vendorsRoster, listStatus, rosterCategory, categoryFilter]);
 
-  // §7 RESTORE (FE-LIST-SEGMENT-TABS-DELETED-B3690EB68). b3690eb68 deleted the vendor list segment tabs
-  // while realigning this page to the side-rail layout; §7 is ADDITIVE-ONLY (archive, never delete) and the
-  // identical pattern still ships on Drivers (Drivers.tsx:659-665). Counts are computed off the full roster
-  // BEFORE the status filter, so each tab shows its own total rather than the filtered remainder.
+  // §7 RESTORE (FE-LIST-SEGMENT-TABS-DELETED-B3690EB68). Counts off full roster BEFORE status filter.
   const vendorTabCounts = useMemo(
     () => ({
       all: vendorsRoster.length,
       active: vendorsRoster.filter((vendor) => vendor.deactivated_at == null).length,
       inactive: vendorsRoster.filter((vendor) => vendor.deactivated_at != null).length,
+      byCategory: categoryFilter
+        ? vendorsRoster.filter((vendor) => vendor.vendor_type === categoryFilter).length
+        : vendorsRoster.length,
     }),
-    [vendorsRoster]
+    [vendorsRoster, categoryFilter]
   );
+
+  const vendorTypes = useMemo(() => {
+    const set = new Set<string>();
+    for (const vendor of vendorsRoster) {
+      if (vendor.vendor_type) set.add(vendor.vendor_type);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [vendorsRoster]);
 
   // V8 — distinct categories present across the full roster (before the category filter), sorted.
   const categoryOptions = useMemo(() => {
@@ -216,10 +239,10 @@ export function VendorsPage() {
   const txRows = useMemo(() => {
     return (billsQuery.data?.rows ?? []).filter((bill) => {
       if (typeFilter && "bill" !== typeFilter) return false;
-      if (categoryFilter && !String(bill.memo ?? "").toLowerCase().includes(categoryFilter.toLowerCase())) return false;
+      if (txnCategoryFilter && !String(bill.memo ?? "").toLowerCase().includes(txnCategoryFilter.toLowerCase())) return false;
       return true;
     });
-  }, [billsQuery.data?.rows, typeFilter, categoryFilter]);
+  }, [billsQuery.data?.rows, typeFilter, txnCategoryFilter]);
 
   const overdueCents = useMemo(() => {
     const now = new Date();
@@ -342,18 +365,40 @@ export function VendorsPage() {
         }
       />
       {companyId ? <VendorsSyncPanel operatingCompanyId={companyId} /> : null}
-      {/* §7 RESTORE — segment tabs, additive. They drive the EXISTING `listStatus` state (:84), which already
-          filters the roster at :126-127, so no filtering logic is added and no URL behaviour changes: this
-          page's `?tab=` param stays owned by the vendor DETAIL tabs (:74/:397), untouched. */}
+      {/* §7 RESTORE — segment tabs (All/Active/Inactive/By Category). listTab≠detail tab. */}
       <SecondaryNavTabs
         activeId={listStatus}
-        onChange={(id) => setListStatus(id as "active" | "inactive" | "all")}
+        onChange={(id) => {
+          if ((VENDOR_LIST_TAB_IDS as readonly string[]).includes(id)) setListStatus(id as VendorListTabId);
+        }}
         tabs={[
           { id: "all", label: `All (${vendorTabCounts.all})` },
           { id: "active", label: `Active (${vendorTabCounts.active})` },
           { id: "inactive", label: `Inactive (${vendorTabCounts.inactive})` },
+          { id: "by-category", label: `By Category (${vendorTabCounts.byCategory})` },
         ]}
       />
+      {listStatus === "by-category" ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="text-xs font-semibold text-gray-600" htmlFor="vendor-category-filter">
+            Vendor type
+          </label>
+          <select
+            id="vendor-category-filter"
+            value={categoryFilter}
+            onChange={(event) => setCategoryFilter(event.target.value)}
+            className="h-8 max-w-xs rounded border border-gray-300 px-2 text-[13px]"
+            aria-label="Vendor type"
+          >
+            <option value="">All types</option>
+            {vendorTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
       {viewMode === "list" ? (
         <VendorsListView
           companyId={companyId}
@@ -470,7 +515,7 @@ export function VendorsPage() {
                             <DatePicker value={dateTo} onChange={setDateTo} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
                           </div>
                           <label className="mb-1 block text-xs font-semibold text-gray-600">Category</label>
-                          <input value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" placeholder="Category text" />
+                          <input value={txnCategoryFilter} onChange={(event) => setTxnCategoryFilter(event.target.value)} className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" placeholder="Category text" />
                         </div>
                       ) : null}
                     </div>
