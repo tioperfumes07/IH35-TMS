@@ -1,6 +1,9 @@
 import type React from "react";
+import { pickCombo } from "../../../test-utils/pickCombo";
+import { MemoryRouter } from "react-router-dom";
+import { ToastProvider } from "../../../components/Toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as safetyApi from "../../../api/safety";
 import * as mdataApi from "../../../api/mdata";
@@ -15,7 +18,15 @@ const trailerId = "33333333-3333-4333-8333-333333333333";
 
 function wrap(ui: React.ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
+  // These creator pages call useLocation/useNavigate and useToast, so with neither provider EVERY render
+  // threw and all 4 tests died before a single assertion — the failure named the router, never the page.
+  return (
+    <QueryClientProvider client={qc}>
+      <ToastProvider>
+        <MemoryRouter>{ui}</MemoryRouter>
+      </ToastProvider>
+    </QueryClientProvider>
+  );
 }
 
 let createSpy: ReturnType<typeof vi.spyOn>;
@@ -38,6 +49,12 @@ beforeEach(() => {
     drivers: [{ id: driverId, first_name: "Ana", last_name: "Mecor" }] as never,
     total: 1,
   });
+  // The TRAILER picker is EntityPicker kind="trailer", which reads `listEquipment` (GET /mdata/equipment) —
+  // NOT `listUnits`. Mocking only listUnits left its list empty except the "+ Create trailer" row, so the
+  // trailer could never be selected. Label comes from `equipment_number` (entityPickerRegistry).
+  vi.spyOn(mdataApi, "listEquipment").mockResolvedValue({
+    equipment: [{ id: trailerId, equipment_number: "TRL-900", equipment_type: "trailer" }],
+  } as never);
   vi.spyOn(mdataApi, "listUnits").mockResolvedValue({
     units: [
       { id: unitId, unit_number: "TRK-100", kind: "truck" },
@@ -92,8 +109,11 @@ describe("Incidents cluster typed creators (SC-CLUSTER: damage + interchange)", 
     fireEvent.change(screen.getByTestId("damage-reports-page-field-description"), {
       target: { value: "Fork punctured wall" },
     });
-    fireEvent.change(screen.getByTestId("damage-reports-page-field-driver_id"), { target: { value: driverId } });
-    fireEvent.change(screen.getByTestId("damage-reports-page-field-unit_id"), { target: { value: unitId } });
+    // These fields are EntityPickers (a Combobox), not inputs: setting `value` on the container throws
+    // "The given element does not have a value setter". A listbox row is addressed by its VISIBLE
+    // TEXT, not the uuid — pickCombo drives it the way the browser does.
+    pickCombo(within(screen.getByTestId("damage-reports-page-field-driver_id")).getByRole("combobox"), /Ana Mecor/i);
+    pickCombo(within(screen.getByTestId("damage-reports-page-field-unit_id")).getByRole("combobox"), /TRK-100/i);
     // Damage amount is the shared MoneyInput (cents mode) — enter dollars, it parses to integer cents.
     const amountInput = screen
       .getByTestId("damage-reports-page-field-damage_amount_cents")
@@ -128,9 +148,10 @@ describe("Incidents cluster typed creators (SC-CLUSTER: damage + interchange)", 
     fireEvent.change(screen.getByTestId("trailer-interchanges-page-field-description"), {
       target: { value: "In-gate" },
     });
-    fireEvent.change(screen.getByTestId("trailer-interchanges-page-field-trailer_id"), {
-      target: { value: trailerId },
-    });
+    // These fields are EntityPickers (a Combobox), not inputs: setting `value` on the container throws
+    // "The given element does not have a value setter". A listbox row is addressed by its VISIBLE
+    // TEXT, not the uuid — pickCombo drives it the way the browser does.
+    pickCombo(within(screen.getByTestId("trailer-interchanges-page-field-trailer_id")).getByRole("combobox"), /TRL-900/i);
     fireEvent.change(screen.getByTestId("trailer-interchanges-page-field-interchange_party"), {
       target: { value: "Carrier XYZ" },
     });
