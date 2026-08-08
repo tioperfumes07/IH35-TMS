@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as driverSchedulerApi from "../../../../api/driver-scheduler";
 import * as dispatchApi from "../../../../api/dispatch";
@@ -26,13 +26,7 @@ function wrap(ui: ReactNode) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter initialEntries={["/dispatch/planners/driver"]}>
-        <Routes>
-          <Route path="/dispatch/planners" element={ui}>
-            <Route path="driver" element={<DriverPlanner />} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
+      <MemoryRouter initialEntries={["/dispatch/planners/driver"]}>{ui}</MemoryRouter>
     </QueryClientProvider>
   );
 }
@@ -48,8 +42,14 @@ describe("Dispatch planners (DISP-PLANNERS)", () => {
     });
   });
 
+  // MOUNTED THE WAY THE APP ACTUALLY MOUNTS IT. routes/manifest.tsx registers every planner tab as
+  // `<DispatchPlannersLayout><DriverPlanner /></DispatchPlannersLayout>` (:1132) — the children prop.
+  // This test used to mount the layout as a react-router LAYOUT ROUTE with the planner as a nested
+  // child, which only renders if the parent calls <Outlet />. DispatchPlannersLayout renders {children}
+  // and contains no Outlet at all, so the nested route never rendered and the planner testids were
+  // simply absent. The layout is right for production; the test was mounting a shape the app never uses.
   it("renders driver planner with shared range toolbar default 30d", async () => {
-    wrap(<DispatchPlannersLayout />);
+    wrap(<DispatchPlannersLayout><DriverPlanner /></DispatchPlannersLayout>);
     expect(await screen.findByTestId("dispatch-planners-layout")).toBeTruthy();
     expect(await screen.findByTestId("dispatch-driver-planner-page")).toBeTruthy();
     expect(screen.getByTestId("dispatch-planner-range-toolbar")).toBeTruthy();
@@ -57,7 +57,7 @@ describe("Dispatch planners (DISP-PLANNERS)", () => {
   });
 
   it("switches shared range to 7d", async () => {
-    wrap(<DispatchPlannersLayout />);
+    wrap(<DispatchPlannersLayout><DriverPlanner /></DispatchPlannersLayout>);
     await screen.findByTestId("dispatch-driver-planner-grid");
     await userEvent.click(screen.getByRole("button", { name: "7d" }));
     expect(screen.getByRole("button", { name: "7d" }).className).toContain("bg-slate-800");
