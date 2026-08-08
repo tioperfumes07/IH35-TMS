@@ -8272,3 +8272,66 @@ operational-noise defect, not money, on TRANSP, not USMCA.** Filed **low**, and 
 **WHAT THIS UNIT IS WORTH:** it converts `CLS-VOID-PREDICATE-DRIFT` from an open-ended worry into a bounded
 fact — **8 at-risk tables, 1 money defect, 1 low-severity instance, 6 clean** — and it retires the
 speculative half of my own P0's fix list so CC-1 does not go hunting a class that is not there.
+
+## 132. ★★ BOARD ITEM PULLED — `LV-TRK-AP-SPLIT-ACROSS-TWO-ACTIVE-ACCOUNTS`: CONFIRMED, its "deactivated" premise is WRONG, and the pattern generalises to USMCA.
+
+**The row's substance holds. Two things it says are not what prod says, and both make the defect worse.**
+
+### ★ CORRECTION 1 — the superseded TRK account is NOT deactivated. It is ACTIVE and POSTABLE.
+
+The row states *"$300.01 sits on a **DEACTIVATED** `ap_control` account"* and that the supersession
+*"deactivat[ed] `2000` at the same instant (superseded by DEACTIVATION, never deletion — WORM correctly
+applied)."*
+
+**Read live from `catalogs.accounts`: TRK's superseded `ap_control` target has `deactivated_at IS NULL` and
+`is_postable = true`.** What is inactive is the **role mapping** (`accounting.chart_of_accounts_roles.is_active
+= false`), **not the account.** Those are different objects and the distinction is the whole risk:
+
+- **An audit hunting `deactivated_at IS NOT NULL` finds nothing wrong** — the account looks perfectly healthy.
+- **Nothing prevents MORE postings landing there.** A deactivated account is closed; this one is open. The
+  row treats the $300.01 as a historical spill; it is a live target.
+
+### ★ CORRECTION 2 — it is not a TRK-only story. **USMCA has two of its own.**
+
+I ran the general form: every role with more than one mapping, showing what the **superseded** mappings still
+carry.
+
+| entity | role (superseded mapping) | account it still points at | acct deactivated? | postable? | GL lines | net |
+|---|---|---|---|---|---|---|
+| TRANSP | `cash_dip` | WF - General Operating 6103 | **no** | **yes** | **71** | **−$6,191.27** |
+| **USMCA** | **`damage_recovery`** | Truck Repairs & Maintenance | **no** | **yes** | **8** | **+$2,926.24** |
+| TRK | `ap_control` | Accounts Payable | **no** | **yes** | 2 | −$300.01 ← the filed row |
+| **USMCA** | **`driver_payroll_clearing`** | Driver Cash Advance | **no** | **yes** | 1 | **+$250.00** |
+| 13 further superseded mappings | — | — | mostly no | yes | **0** | $0 |
+
+**16 of 17 superseded role mappings point at an account that is still active and postable.** Only TRANSP's
+superseded `ap_control` / `ar_control` targets are genuinely deactivated — **and those two are the only ones
+carrying zero postings.** The correlation is the point: **where supersession was completed properly the
+account is closed and empty; where it was not, the account stays open and accumulates.**
+
+### ★ FILED (P1 · money · CC-1) — `LV-SUPERSEDED-ROLE-TARGETS-STAY-POSTABLE`
+
+**TRANSP `cash_dip` is the largest instance and nobody has filed it: 71 GL lines, net −$6,191.27, on a
+superseded mapping whose account remains open.** That is 35× the TRK amount that prompted the original row.
+
+**A DISCIPLINE NOTE I AM APPLYING TO MY OWN TABLE, because the numbers invite an overclaim.** *"8 GL lines on
+USMCA's superseded `damage_recovery` target"* does **not** mean eight damage-recovery postings went astray.
+The account is **Truck Repairs & Maintenance** — an ordinary expense account that legitimately receives
+postings from many paths; a superseded role pointer aimed at it says nothing about who wrote those lines.
+**Same for USMCA `driver_payroll_clearing` → "Driver Cash Advance", 1 line, $250.00: that is THIS BATTERY's
+own advance from item 118**, posted by `resolveAccountForCategory('cash_advance')` — **not by the superseded
+role.** I checked before counting it.
+
+**So the defect is precisely this and no more:** *a superseded role mapping is left pointing at an account
+that is still open for business.* **TRK's `ap_control` is the one case where that provably caused a
+mis-posting** (the account is literally A/P and the postings were A/P), and TRANSP's `cash_dip` is the one
+carrying the most money. **The other instances are exposure, not proven harm — and saying which is which is
+the difference between a work order and a scare.**
+
+### WHAT PASSES, and it is the reference implementation
+
+**USMCA's `ap_control` and `ar_control` are CLEAN** — exactly one mapping each, active, pointing at
+"Accounts Payable (A/P)" (18 GL lines) and "Accounts Receivable (A/R)" (5 lines), neither deactivated. **My
+entity's two most important control accounts have no split at all.** And **TRANSP's superseded `ap_control` /
+`ar_control` show the correct pattern end to end: mapping deactivated, account deactivated, zero postings.**
+The right behaviour already exists in this database — it simply was not applied to the other fifteen.
