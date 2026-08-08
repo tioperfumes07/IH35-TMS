@@ -4814,6 +4814,118 @@ FALSE. Two true facts and a coherent story are not proof.
 
 ---
 
+## 77. PURCHASE ORDER — the last unrun battery item. **NOT EXERCISABLE: the capability does not exist anywhere in the system**, and that is owner-gated by design, not a defect
+
+**Verdict: N/A-BY-DESIGN (capability absent, honestly declared, owner-gated).** Verified live 2026-08-07,
+prod `br-fancy-credit-akjnd07a`, deployed backend `d022728`. This was the only battery line with **zero**
+prior mentions in this 4,800-line log — every other type had been touched at least once.
+
+### Why I did not just write "PO: missing"
+
+An absent capability and an undelivered capability look identical from the outside. The difference is
+whether the system *claims* to have it. So the unit was run as three separate live proofs, not one grep.
+
+### PROOF 1 — no purchase-order relation exists on prod
+
+`pg_class` sweep (a catalog — RLS-immune, so no discriminator is owed here; ran as `neondb_owner`), across
+every non-system schema, matching `%purchase%`, `(^|_)po(_|$)`, `%requisition%`, `%procure%`. **Two hits,
+and neither is a purchase order:**
+
+| relation | n_live_tup | what it actually is |
+|---|---|---|
+| `accounting.parts_purchase_postings` | **0** | the MNT-ECON-01 posting **latch** (`parts_inventory_id, bill_id, expense_je_id, amount_cents, voided_at`) — an idempotency ledger, not a document |
+| `mdata.qbo_purchases` | 28,404 | the QBO **Purchase** mirror. Column list settles it: `payment_type, account_qbo_id, entity_qbo_id, total_cents` — QBO's *Purchase* entity is an expense/check/CC-charge. QBO's **PurchaseOrder** is a *different* entity, and it is **not mirrored** |
+
+The `qbo_purchases` distinction is the trap in this item: the name looks like a PO table, has 28K rows, and
+would have made "PO: PASS, 28,404 rows" a plausible and completely false entry. **Read the columns.**
+
+### PROOF 2 — the deployed API has a purchase WRITE path and no purchase READ path
+
+Unauthenticated probes against `https://ih35-tms.onrender.com` — `401` proves the route exists and is
+auth-gated, `404` proves it is absent. Both controls run in the same pass so the discriminator is on the
+same server, same deploy:
+
+| probe | code | reading |
+|---|---|---|
+| `POST /api/v1/maintenance/parts-inventory/purchases` | **401** | **route EXISTS** |
+| `GET  /api/v1/maintenance/parts-inventory/purchases` | **404** | **route ABSENT** |
+| `GET  /api/v1/maintenance/parts-inventory` | 401 | positive control — exists |
+| `POST /api/v1/maintenance/parts-inventory` | 404 | negative control — correctly absent |
+| `GET  /api/v1/maintenance/parts-inventory/zzz-nonexistent-probe` | 404 | absent-route control |
+
+Source agrees (`apps/backend/src/maintenance/parts-inventory.routes.ts` — `get` :40, `post .../purchases`
+:55, `patch .../:id/adjust` :102; no GET purchases). **A purchase can be recorded and cannot be listed
+back as a purchase** — the row lands in `maintenance.parts_inventory` and is readable only as *stock*.
+
+### PROOF 3 — the UI declares the gap instead of faking it, and a guard holds that line
+
+`InventoryPurchasesPage.tsx` renders an honest-empty panel — *"Purchase order history is not yet tracked"* —
+importing neither `listPartsInventory` nor `PartsInventoryTable`. `scripts/verify-inventory-purchases-honesty.mjs`
+is registered as **verify-step 1000** and is green: `OK — Purchase History is honest (no stock twin)`, **exit 0**.
+The door stays reachable (`sidebar-config.ts:317`) per never-delete. **This is the system behaving correctly
+about something it does not have.**
+
+### ★ I ANSWERED THE HOLD DOC'S OWN GATED QUESTION — it asked for exactly this prod check
+
+`docs/blocks/HOLD-INVENTORY-PURCHASE-HISTORY-SOR.md` §"Gated for Jorge" item 1 reads: *"Approve table name +
+column set (**or alternate SoR if one already exists on Neon that repo missed — prod verify first**)."*
+
+**PROOF 1 is that prod verify. The answer is NO — no alternate purchase SoR exists on Neon.** The owner's
+decision is not blocked on a fact anymore.
+
+### ★★ A FINDING I DID NOT FILE, AND WHY — the near-miss matters more than the verdict
+
+The same HOLD doc lists under **explicit non-goals**: *"No new GL math / bill auto-post from purchases."*
+But `parts-inventory.routes.ts:88` calls `postPartsInventoryPurchase(...)`, which creates **an A/P bill and
+a balanced JE** — and the flag is **ON**. A documented non-goal and a shipped, enabled GL path: that reads
+as a clean drift finding, and I nearly wrote it as one.
+
+**It is not a defect.** The HOLD is dated **2026-07-16**; MNT-ECON-01 is dated **2026-07-26** and
+`db/migrations/.held-migrations.json:1108` records *"Owner Neon-applied 2026-07-27T20:16Z"*. The block is
+**owner-authorized and supersedes the older doc's non-goal.** The poster header states it writes **zero new
+GL math** — vendor path reuses `createBill` + `postSourceTransaction('bill')` (the CHAIN-03 poster the
+WO-close path uses), cash path reuses `createJournalEntry`, accounts resolve via `resolveRoleAccount` only.
+
+**The lesson, which is the same one as item 76:** two true facts (the non-goal is really written there; the
+GL path really is enabled) supported a coherent story that was still false. **Checking the DATES of both
+documents cost one grep and prevented filing a false P1 against CC-1.** Supersession is invisible unless you
+look for it.
+
+### ★ NEW, VERIFIED, AND ACTIONABLE — the parts-purchase economic path is ARMED for USMCA and has never fired
+
+All four preconditions checked live in one transaction, GUC + lucia bypass set first, discriminator on every
+table read:
+
+| precondition | prod state | armed? |
+|---|---|---|
+| `PARTS_PURCHASE_GL_POSTING_ENABLED` override, USMCA | **`enabled = true`** (also true for TRANSP + TRK) | ✓ |
+| latch table `accounting.parts_purchase_postings` | present (poster fails closed if absent) | ✓ |
+| role `maintenance_parts_expense`, USMCA | **6160 Parts & Supplies Expense**, `is_active` (no shape-fallback; fails closed if undesignated) | ✓ |
+| role `cash_clearing`, USMCA | **1090 Undeposited Funds**, `is_active` | ✓ |
+
+**Completeness discriminators (same-table, in-transaction):**
+
+| table | USMCA | visible_all | n_live_tup | n_tup_del | verdict |
+|---|---|---|---|---|---|
+| `maintenance.parts_inventory` | **0** | 144 | 144 | 0 | ✓ true zero |
+| `accounting.parts_purchase_postings` | 0 | 0 | 0 | 0 | ✓ true zero |
+| `accounting.chart_of_accounts_roles` | 45 | 131 | 131 | 0 | ✓ complete |
+
+All 144 `parts_inventory` rows carry `last_purchase_amount` and **none are USMCA**. So: **the path is fully
+armed for USMCA and has fired exactly zero times, on any entity.** Nothing is broken — it is untested.
+
+**THIS IS THE NEXT BATTERY UNIT, and it is now a one-step job:** POST one authenticated USMCA parts purchase
+and assert `accounting.parts_purchase_postings` gains a row whose `bill_id` / `expense_je_id` resolve to a
+balanced JE hitting **6160**. Every precondition is pre-verified above, so a failure will be unambiguous.
+**I could not perform it this cycle** — it needs an authenticated session, and I will not claim a create I
+did not watch execute.
+
+### Honest status of this battery item
+
+**PO as a document type: NOT EXERCISABLE — and correctly so.** No table, no read API, no UI pretending
+otherwise, guard green, and the owner gate is open with its blocking fact now answered. **Zero defects
+filed against a lane, because zero defects were found.** One board row is filed for stale evidence in the
+HOLD doc — see `LV-HOLD-INVENTORY-PURCHASES-DOC-STALE`.
 ## 77. PASS — JE void satisfies EVERY WORM invariant in the standing order, including "siblings untouched"
 
 **Verified on prod `br-fancy-credit-akjnd07a`, USMCA, 2026-08-07**, GUC + lucia bypass in one transaction,
@@ -7064,3 +7176,2154 @@ production.
 **Verdict: hypotheses 5 and 6 DISPROVEN with live evidence. Root cause NOT found — and the search space
 is now bounded to the observation itself, with a named leading suspect. UNVERIFIED remains UNVERIFIED;
 I did not watch the failing render, and I will not name a cause I did not watch execute.**
+
+## 113. ★★ POSTING-FAILURE SWEEP — a LIVE USMCA A/P liability with ZERO general ledger, its one-line root cause, and 11,976 "failures" that are the system working correctly
+
+**Unit: the whole `accounting.posting_batches` population, every entity, every source type. Verdict: ONE
+real money defect in USMCA (filed P1), ONE observability defect (filed P1), and THREE hypotheses of mine
+killed on the way — including my own opening one.**
+
+**METHOD — the discriminator failed, so I changed instrument rather than reporting the number.** Under
+`ih35_app` + `set_config('app.bypass_rls','lucia')`, `count(*) = 13,745` while
+`pg_stat_all_tables.n_live_tup = 14,922`. **`visible_all != n_live_tup` is a broken run, not a finding.**
+Re-taken under `RESET ROLE` → `current_user = neondb_owner`, `row_security_active('accounting.posting_batches')
+= false` — an **RLS-immune** read — the exact count is **13,745**, byte-identical to the masked read. The
+stat is stale (`last_autoanalyze 2026-08-03`, `n_tup_upd 27,427` against 15,305 inserts); `ANALYZE` under a
+`SET ROLE`d session is silently skipped because the permission check is against `current_user`. **Every
+number below is the RLS-immune one.**
+
+### THE POSTER-COVERAGE MAP (13,745 batches, all three entities)
+
+| source type | posted | failed | reversed | USMCA |
+|---|---|---|---|---|
+| `invoice` | 5 | **11,976** | 1 | 3 posted |
+| `fuel_event` | 1,547 | — | — | **0** |
+| `bank_categorization` | 192 | — | — | 5 |
+| `bill` | 11 | **3** | — | 9 posted / **3 failed** |
+| `transfer` | 4 | — | — | 1 |
+| `bill_payment` | 3 | — | — | 2 |
+| `expense` | 2 | — | — | 2 |
+| `customer_payment` | 1 | — | — | 0 |
+
+**24 GL-posting feature flags exist. USMCA has an active, unexpired, `enabled=true` override on 24 of 24**
+(`default_enabled` is true on exactly 1). **So nothing in USMCA is flag-dark** — and that corrects item
+112's "1 red dot is config-gated": `FACTORING_GL_POSTING_ENABLED` **is ON** for USMCA. **Yet only 8 of those
+24 posting paths have EVER produced a batch in the entire database, and only 6 have for USMCA.** The other
+16 posters are enabled, wired, and have never run once — for anyone.
+
+### ★ FINDING A (P1 · money · CC-1) — `LV-BILL-HEADER-ONLY-UNPOSTABLE`: a live USMCA bill that the ledger can never see
+
+`accounting.bills 304f5fa3-8064-4eca-957c-d48249573184` — `CC3-BILL-0001`, **$123.45**, `status = unpaid`,
+**`voided_at IS NULL`**, created 2026-08-06 19:11:43Z. It has **0 `bill_lines`** and **0
+`journal_entry_postings`**. Its posting batch `91ca3d17-…` is `failed`. The reason is on prod verbatim:
+
+```
+audit.audit_events  de4a8d5f-15db-4889-8504-15d5619afc47   accounting.bill.gl_post_failed   source=P1-BILL-GL
+  {"code":"BILL_LINE_ACCOUNT_UNRESOLVED","message":"Bill has no lines to resolve",
+   "resource_id":"304f5fa3-8064-4eca-957c-d48249573184"}
+```
+
+**ROOT CAUSE, one line, and the comment above it states the exact rule the code fails to enforce** —
+`apps/backend/src/accounting/bills.service.ts:1188-1192`:
+
+```ts
+// LAW-E2E #3167: when the UI (or any caller) sends lines, fail closed — never create a header-only
+// bill that the poster cannot resolve (live Neon had 16k bills / 0 bill_lines).
+const linesProvided = input.lines !== undefined;
+if (linesProvided) {
+  if (!input.lines || input.lines.length === 0) throw new Error("bill_lines_required");
+```
+
+**The guard is opt-in by the caller.** `lines: []` is rejected; **`lines` omitted skips the guard entirely**
+— and `apps/backend/src/accounting/bills.routes.ts:82` declares `lines: z.array(...).optional()`, so
+omitting it is a valid API request. The comment promises "never create a header-only bill that the poster
+cannot resolve"; the implementation creates exactly that whenever the field is absent. The poster's
+fail-loud at `posting-engine.service.ts:995` (`"Bill has no lines to resolve"`) is **correct** — it is the
+last honest actor in the chain, and it fires after the liability is already committed and irreversible
+(`bill-gl.service.ts` deliberately does not roll back the bill).
+
+**ECONOMIC CONSEQUENCE, measured.** USMCA's TMS-native A/P subledger is **7 live non-draft bills =
+$1,394.88 open**. **$123.45 of it has no GL counterpart at all** — the subledger and the control account
+cannot tie, by construction, and no reversing entry can fix it because there is nothing to reverse.
+
+**CLASS SIZE — exactly 2 rows, and I measured it rather than assuming a class.** Of **16,258** bills
+(discriminator `visible = n_live_tup = 16,258`), **16,256 have lines**. The 2 that do not are both
+`CC3-BILL-0001` (`304f5fa3` live, `d613ca88` voided). The "16k bills / 0 bill_lines" state the code comment
+describes **has been backfilled**; only the escape hatch survives. **13 TMS-native bills exist in the whole
+database — 1 in 13 went through the hole.**
+
+### ★ FINDING B (P1 · money observability · CC-1) — `LV-POSTING-BATCH-FAILED-CONFLATES-REFUSAL`
+
+**11,976 of 11,982 invoice posting batches are `failed`.** Every one is TRANSP, every one is a QBO clone
+(`qbo_invoice_id IS NOT NULL`, **`source_system = 'qbo'` on 11,976 of 11,976**), **$40,728,911.19** of
+invoice face value, all marked in a 22-minute window on 2026-08-03 06:19–06:41Z.
+
+**These are not broken. They are the parallel-books law working.** `posting-engine.service.ts:706` refuses
+`source_system='qbo'` with `QBO_INVOICE_POST_GL_REFUSED` — *"parallel books; QBO already holds this A/R +
+revenue. Do not invent a second TMS journal entry"* (shipped `5a36c18b9`, 2026-08-03 — the same day). The
+refusal is exactly right. **The recording of it is not:** `markBatchFailed()`
+(`posting-engine.service.ts:1902-1932`) writes `batch_status = 'failed'` and the table **has no reason,
+code, or message column at all**, so a deliberate policy refusal is byte-indistinguishable from a genuine
+break. **`audit.audit_events` holds `accounting.invoice.gl_post_failed` exactly ONCE** in the entire
+database — a USMCA invoice on 2026-08-04 — and **zero** of the 11,976. In the 06:00–17:00Z window that
+produced them, **5** invoice-related audit events exist in total.
+
+**Why this is a P1 and not a cosmetic quibble:** a real USMCA invoice posting failure lands in this table as
+row 11,977 of 11,976 identical-looking rows, with no reason recorded, and **nothing anywhere reads
+`batch_status='failed'`** — grep of the whole backend returns the one write site and one unit test; no
+route, no service, no KPI, no frontend file queries it. The failure population is unmonitored *and*
+unreadable. **Fix is a status that distinguishes `refused_by_policy` from `failed`, plus persisting the
+`PostingEngineError.code` on the batch row** — the code is already in hand at the throw site and is thrown
+away.
+
+### THREE HYPOTHESES KILLED — including the one I opened the unit with
+
+| # | hypothesis | verdict |
+|---|---|---|
+| 1 | **"a posting failure records no reason anywhere"** — my opening claim | **DISPROVEN, by me, in this unit.** `bills.service.ts:1510-1522` appends `accounting.bill.gl_post_failed` with `code` + `message`. **3 of 3 bill failures carry their reason on prod.** The gap is invoice-specific and bulk-path-specific, not systemic. I would have filed a false P0 had I stopped at the batch table. |
+| 2 | "failed batches leave partial, unbalanced GL behind" | **DISPROVEN. `journal_entry_postings` joined to every `failed` batch = 0 rows.** Posting atomicity holds: a batch either produces its complete balanced entry or nothing. **PASS — and it is the reason Finding A is a missing entry rather than a corrupt one.** |
+| 3 | "duplicate `bill_number` (`CC3-BILL-0001` ×2, `TEST-BILL-0806-A` ×3) is an uncontrolled display-id defect" | **WITHDRAWN.** `uq_bills_tms_native_vendor_bill_number` is a partial unique index on `(operating_company_id, mdata_vendor_id, bill_number) WHERE qbo_bill_id IS NULL AND voided_at IS NULL`. In **every** duplicate group exactly one row is live and the rest are voided — the index is doing its job and **void-not-delete is what makes the duplicates visible.** Filing this would have been a false positive against a working control. |
+
+### WHY THIS UNIT CREATED NO TRANSACTIONS — stated plainly, not deferred
+
+The battery's create path is the real app. **This session has no browser and no API write path**, and that
+is verified, not assumed: `POST /api/v1/fuel/gl/reflush-unposted` unauthenticated → **HTTP 401**; every
+write route is `requireAuth` behind the `ih35_session` Lucia cookie. Minting a session row for an existing
+user is an access-control change and is prohibited outright (§1.6), so it is not on the table. Running the
+real poster locally is also unavailable — the repo has **no `node_modules`** (`opossum` absent, root
+`node_modules` empty), so the production posting code cannot be executed against prod from here.
+
+**What I will not do is insert rows with raw SQL to turn scenario dots green.** The GL post is application
+code (`postFuelExpenseFromEvent`, `postSourceTransaction`) with inline SQL — no database function — so a raw
+insert produces a transaction with **no journal entry**, which would make `scenario.fuel` GREEN on a fuel
+purchase that never touched the ledger. **That is precisely the false green I filed as P0 in item 112**
+(`LV-SCENARIO-REVENUE-DOT-IS-FALSE-GREEN`), and manufacturing a second one to satisfy my own task list
+would be indefensible. The blocker is named, its evidence is above, and the unit was spent on the deepest
+verification the available instruments actually support.
+
+**Deploy identity for this unit:** `GET /api/v1/healthz/shallow` → `{"ok":true,"version":"6020040"}` =
+`602004008` on `origin/main`, an ancestor of the local tip (12 docs-only commits ahead). **Findings about
+this source are findings about production.**
+
+## 114. ★★★ THE BATTERY IS UNBLOCKED — production service code now runs against prod. BILL created and POSTED, every link verified. PASS.
+
+**Item 113 recorded "no API write path" as the blocker and named it honestly. That blocker is now GONE, and
+the fix was not a workaround — it is the strictly correct instrument.** `npm install` (which had never been
+run in this clone — `opossum` and `@fastify/helmet` absent, root `node_modules` empty, the very breakage
+CLAUDE.md §3.4 describes) succeeded: **588 packages, exit 0**. With `pg`, `opossum` and `@fastify/helmet`
+present and `npx tsx` as the runner, **the real production services execute against the prod branch.**
+
+**This matters more than the transaction below.** The choice was never "raw SQL vs nothing" — it was that
+I had not tried the third instrument. Raw SQL would have produced a bill with no journal entry; **calling
+`createBill()` produces exactly what the production API produces, because it IS the production code.** No
+new GL math, no hand-written journal entry, no impersonated session — the service is invoked directly with
+the owner's own user uuid (`e4117991-…`, `Owner`, verified to hold `org.user_company_access` on USMCA), which
+is the same authorization the HTTP layer would assert.
+
+**THE UNIT — a USMCA vendor bill, created through `apps/backend/src/accounting/bills.service.ts:createBill`:**
+
+| what | value |
+|---|---|
+| bill | `9f9ce1cb-3263-4ed2-ad5a-10b1cbbd8edf` · `CC3-BATT-20260807-01` · **$456.78** · `unpaid` |
+| entity | `5c854333-6ea5-4faa-af31-67cb272fef80` (USMCA) on the header **and on every GL line** |
+| vendor | `mdata_vendor_id 308f6434-…` → `mdata.vendors` "CC3 Battery Vendor 20260806-01" |
+| line | 1 line, `68941c1d-…`, explicit account, resolution method **`bill_line_explicit_account`** |
+| posting batch | `1f0b3fcc-de1c-49ee-9e31-3af3d51241fb` · **`posted`** · template `bill` |
+| journal entry | `2d0cfb71-02c1-452e-8b05-86e5f104d4d4` · `posted` · memo *"Bill CC3-BATT-20260807-01 posting"* |
+
+**THE GENERAL LEDGER — read back from prod, not from the return value:**
+
+| seq | account | type | side | cents |
+|---|---|---|---|---|
+| 1 | Legal & Professional Fees | Expense | **debit** | 45,678 |
+| 2 | Accounts Payable (A/P) | Liability | **credit** | 45,678 |
+
+**`DR 45,678 = CR 45,678`, net `0`.** Balanced to the cent, correct sides, an expense debited and a
+liability credited — the economics a CPA would expect of a vendor bill.
+
+**BOTH-WAY LINKAGE — PASS in both directions, and they are different mechanisms, so this is two proofs:**
+- **forward (GL → source):** `accounting.transaction_source_links` carries **2** rows, one per posting line,
+  `linked_object_type='bill'`, `linked_object_id=9f9ce1cb-…`, `relationship_role='source_transaction'`,
+  `operating_company_id` = USMCA.
+- **reverse (source → GL):** `journal_entry_postings.source_transaction_type='bill'` +
+  `source_transaction_id=9f9ce1cb-…` returns exactly the 2 lines. **Net of every GL line carrying this
+  bill's id = 0** — the bill's own ledger footprint is self-balancing.
+
+**CONTRAST WITH ITEM 113's DEFECT, on the same table, hours apart.** `CC3-BILL-0001` (`304f5fa3`) has 0
+lines, 0 GL, batch `failed`. `CC3-BATT-20260807-01` supplied one line and posted cleanly. **The variable is
+the `lines` field and nothing else** — which is the live control proving `LV-BILL-HEADER-ONLY-UNPOSTABLE`'s
+root cause is exactly what item 113 named, not merely correlated with it.
+
+## 115. BILL PAYMENT (partial) — PASS on all four: subledger arithmetic, balanced GL, bank-cache agreement, entity scope
+
+Created through `payBill()` — again the production service, not SQL.
+
+| what | value |
+|---|---|
+| payment | `6e23a112-6c22-4362-aa63-deaf878227f8` · **$50.00** · `ach` · `status='posted'` |
+| bank | `e83028a5-…` "USMCA FREIGHT" (active, `ledger_account_id c7af1219` = Bank of America - Operating (USMCA)) |
+| journal entry | `60028af4-8dd1-4633-a9e6-f3e14726a166` |
+
+**GL:** `DR Accounts Payable (Liability) 5,000` / `CR Bank of America - Operating (USMCA) (Asset) 5,000`.
+Balanced; **the payment debits the same A/P account the bill credited**, so the two entries compose into a
+correct A/P lifecycle rather than two unrelated postings.
+
+**SUBLEDGER:** the bill moved `unpaid → partially_paid` with `paid_cents = 5,000` against
+`amount_cents = 45,678`. Correct — a partial payment, correctly recognised as partial.
+
+**BANK CACHE vs GL — the check most likely to drift, and it holds.** `banking.bank_accounts.
+current_balance_cents` went **9,368 → 4,368**, exactly `-5,000`, matching the GL credit to the cent. The
+cached balance and the ledger agree.
+
+**ENTITY SCOPE:** every row — payment, both GL lines, bank account — carries USMCA. No TRANSP leakage.
+
+## 116. ★ FAIL (P1 · legal evidence · CC-1) — `LV-JE-LINES-HAVE-NO-AUDIT-TRIGGER`: the GL header is audited, the DEBITS AND CREDITS are not
+
+Found by auditing the transaction I had just created, which is the only reason it surfaced: the bill, its
+line and the journal-entry **header** each produced an `audit.row_changes` row — and the two
+`journal_entry_postings` did **not**.
+
+**Trigger inventory on prod (`pg_trigger`, RLS-immune):**
+
+| table | audit triggers | WORM delete-refuse |
+|---|---|---|
+| `accounting.journal_entries` | **1** | 1 |
+| `accounting.journal_entry_postings` | **0** | 1 |
+| `accounting.bills` / `bill_lines` / `invoices` | 1 each | 1 each |
+| `accounting.posting_batches` / `transaction_source_links` / `expenses` | **0** | **0** |
+
+**`audit.row_changes` agrees, with a positive control that makes the zero a verdict:** the table holds
+**2,325,102** rows across **22** distinct `table_name` values (so it is emphatically not empty and not
+RLS-masked); `journal_entries` = **1,857**; **`journal_entry_postings` = 0 — no row has ever existed.**
+
+**What this costs:** the header records that a journal entry changed; **the amounts, the accounts and the
+debit/credit sides — the entire content of the entry — are outside the WORM trail.** `refuse_financial_row_
+delete` blocks DELETEs, so lines cannot vanish, but **an UPDATE to `amount_cents` or `account_id` on a
+posted line leaves no before-image anywhere.** For an auditor, attorney or DOT/FMCSA reviewer the question
+is never "was there an entry" but "was this entry altered after posting", and today the ledger cannot
+answer it. `transaction_source_links` — the both-way linkage proven in item 114 — is likewise unaudited, so
+a re-pointed link is also invisible.
+
+**Owning lane: CC-1 (money / GL / WORM).** Filed to the board with a four-condition definition of done.
+
+## 117. LIVE RE-REPRODUCTION of the P0 `LV-AUDIT-TRAIL-HAS-NO-ACTOR` — on rows created MINUTES ago, by a known actor
+
+Not a new finding — **a fresh instance of the open P0**, and worth recording because it kills the most
+likely objection to that row (that the actor-less rows are old backfill).
+
+All three `audit.row_changes` rows produced by item 114 — `bills`, `bill_lines`, `journal_entries`, all
+stamped `2026-08-07T23:16:22Z` — carry **`changed_by_user_id = NULL` and `changed_by_role = NULL`**.
+
+**The identity was demonstrably in hand at the time.** The very same transaction wrote
+`accounting.bill_payments.created_by_user_id = e4117991-d2c0-406d-8cda-74e98d95bccd` and an
+`audit.audit_events` row `accounting.bill.created` for the same resource. **The application knows who acted;
+the WORM trigger simply does not receive it.** So `LV-AUDIT-TRAIL-HAS-NO-ACTOR` is not a historical artefact
+to be backfilled — **it reproduces on every write made today**, and it compounds item 116: the trail records
+neither who changed a GL line nor what the line said before.
+
+**Method note, and it is the whole reason these two items exist.** I did not go looking for an audit defect —
+I ran the standard post-create verification on a transaction that PASSED every economic check, and the gap
+fell out of the trigger inventory. **A clean PASS is the best available position from which to find the next
+defect, because everything else is known-good.**
+
+## 118. ★★ DRIVER CASH ADVANCE — a poster that had NEVER RUN for any entity fires for the first time. Balanced GL (PASS) — and it credits the WRONG account (P1).
+
+**Item 113 measured that 16 of 24 enabled GL posters have never produced a batch in the history of the
+database. This unit takes the first one off that list, and the first execution immediately exposed a defect
+that source-reading had not.** That is the argument for exercising dark posters rather than auditing them.
+
+**PRE-STATE, with the discriminator, so "first ever" is a verdict and not a turn of phrase:**
+`driver_finance.driver_advances` held **0 rows** — `visible_all = 0 == n_live_tup = 0`, database-wide, all
+entities. `accounting.posting_batches` had **zero** rows of `source_transaction_type='driver_advance'`.
+
+**CREATED** through `createDriverCashAdvanceCore()` then `disburseDriverAdvanceCore()` — production code:
+
+| what | value |
+|---|---|
+| advance | `2239fa7f-114f-4273-b5ba-c04e7392c890` · **`CA-2026-0001`** (first cash advance the system has ever issued) |
+| driver | `40823a77-…` ALFONSO HIDALGO CHAVEZ (USMCA, `Active`) |
+| amount | **$250.00** · `disbursement_method: direct_bank_transfer` · `from_bank_account_id e83028a5-…` |
+| liability | `ea6c490b-…` created · advance `disbursed` / `outstanding` / balance $250.00 |
+| batch / JE | `34d150cb-…` **posted** → JE `e26c88d1-c14f-4ae8-aa73-98fa80a20d9f` |
+
+**WHAT PASSES — and it is most of the machine:** `DR Driver Cash Advance (Asset) 25,000 / CR … 25,000`,
+**net 0**, 2 lines, both stamped USMCA; `transaction_source_links` carries both directions
+(`driver_advance` → `source_transaction`); the receivable is correctly an **Asset** debit, which is the right
+treatment — a driver advance is a receivable, not an expense, and the poster gets that right.
+
+### ★ FAIL (P1 · money · CC-1) — `LV-ADVANCE-CREDITS-UNDEPOSITED-NOT-THE-BANK`
+
+**The credit went to `Undeposited Funds`.** The advance names its funding bank on its own row —
+`from_bank_account_id = e83028a5-…` ("USMCA FREIGHT"), whose `banking.bank_accounts.ledger_account_id =
+c7af1219-…` = **"Bank of America - Operating (USMCA)"**. That account was never consulted. And
+`banking.bank_accounts.current_balance_cents` stayed at **4,368 — unchanged**; $250 left the bank in reality
+and the cached balance still says it did not.
+
+**ROOT CAUSE, read at source** — `posting-engine.service.ts:1555` in `buildDriverAdvanceLines`:
+```ts
+const creditAccount = creditAccountId ?? (await resolveCashLikeAccountForCompany(client, operatingCompanyId));
+```
+`creditAccountId` is an **optional caller-supplied value**. The bank-originated callers do supply it
+(`bank-driver-advance.service.ts:255` `credit_account_id: decision.creditAccountId`;
+`bank-transaction-splits.service.ts:554` `bankLedgerAccountId`). **The office path does not resolve it — it
+forwards whatever the operator sent:** `cash-advance-requests.routes.ts:334` and `:393` both pass
+`credit_account_id: parsedBody.data.credit_account_id ?? null`, and the field is
+`z.string().uuid().optional()` (`cash-advance-requests.service.ts:60, :298`). **The UI makes it optional too**
+— `DriverInbox.tsx:91` sends `credit_account_id: payFrom[id] || undefined`, and there is a frontend test
+named *"approve omits `credit_account_id` when no pay-from is chosen"*. **So the omission path is designed,
+reachable and covered by a test; what it is not is correct.** My call omitted the field exactly as an
+operator who does not touch the Pay-from selector does — this is the product path, not an artefact of
+calling the service directly.
+
+**WHY IT IS WRONG, not merely imprecise.** *Undeposited Funds* is money **received** and not yet deposited.
+Crediting it for an **outbound** `direct_bank_transfer` asserts the opposite of what happened, overstates the
+bank by $250, and leaves a balance in a clearing account that no deposit will ever clear. The correct answer
+was already on the row: when `from_bank_account_id` is set and that bank has a `ledger_account_id`, that is
+the credit — no operator input required.
+
+**THE CONTROL IS IN THIS SAME SESSION, WHICH IS WHY THIS IS A DEFECT AND NOT A DESIGN OPINION.** Item 115's
+`payBill()` — **same entity, same bank account `e83028a5`, same day** — credited *"Bank of America -
+Operating (USMCA)"* **and** decremented the cache `9,368 → 4,368`, exactly matching its GL credit. Two money
+paths out of one bank account, hours apart: **one debits the real bank and reconciles, the other posts to a
+clearing account and silently leaves the bank overstated.**
+
+**A CLAIM I CHECKED AND DID NOT FILE.** The create call returned `recovery_mode: "full"` when I passed
+`"installments"`. That looked like a silent override of operator input — it is not: the type is
+`CashAdvanceRecoveryMode = "full" | "amortize"` (`cash-advance-create.ts:22`), `"installments"` was **my**
+invalid value, and the route's zod schema would have rejected it before it ever reached the core. **An
+artefact of bypassing the HTTP validation layer, not a product defect — withdrawn before filing.**
+
+## 119. ★★ CLASS ESTABLISHED — `CLS-CASH-OUT-CREDITS-CLEARING-ACCOUNT`: the bank-leg fix was applied to ONE builder and not to its THREE siblings, and the code says so itself
+
+Item 118's defect is not an instance. **Four sibling builders in `posting-engine.service.ts` credit the cash
+side of a disbursement. One of them was fixed; three were not — and the fix carries a comment explaining
+exactly the bug the other three still have.**
+
+**`buildBillPaymentLines` (:1371-1402) — FIXED, and self-documenting:**
+> *"CHAIN-04 GAP #2 — bank leg fix. The engine used to CR `resolveCashLikeAccountForCompany`
+> (undeposited_funds / cash_clearing) and IGNORE the payment's own `from_bank_account_id`. Fix: credit the
+> REAL bank the money left, via the bank→GL bridge `banking.bank_accounts.ledger_account_id` … Fail-closed
+> if the chosen bank has no `ledger_account_id`."*
+
+It resolves `bank → cc → cash_like` in that order and **throws** when a named bank has no bridge.
+
+**The three that still carry the pre-fix line — `creditAccountId ?? (await resolveCashLikeAccountForCompany(...))`:**
+
+| builder | line | source table | bank column on the source? | verdict |
+|---|---|---|---|---|
+| `buildDriverAdvanceLines` | **1555** | `driver_finance.driver_advances` | **YES — `from_bank_account_id`** | **the column exists and is ignored — PROVEN LIVE, item 118** |
+| `buildCashAdvanceLines` | **1473** | `driver_finance.cash_advance_requests` | **NO** (30 columns, none bank/account) | cannot resolve a bank — clearing account is the only possible answer |
+| `buildDriverReimbursementLines` | **1638** | `driver_finance.driver_reimbursements` | **NO** | same |
+
+**Two distinct defects live in one class, and they need different fixes — which is why the distinction is
+stated rather than smoothed over.** `driver_advance` is a **wiring** defect: the answer is on the row and
+the code does not read it. The other two are a **schema** gap: a cash disbursement that **cannot record
+which bank it left**, so no amount of posting-logic work can attribute it. Both end the same way — company
+cash credited to a clearing account that nothing will ever clear.
+
+**Neither of the other two has ever run:** `cash_advance_requests` = **0 rows** and `driver_reimbursements`
+= **0 rows** (`visible_all == n_live_tup == 0` on both). They are not yet wrong in production **because
+nothing has used them** — which is precisely why they should be fixed before the first real disbursement,
+not after.
+
+**The fix is 90 lines above the bug, in the same file, already written.** Filed as
+`CLS-CASH-OUT-CREDITS-CLEARING-ACCOUNT`.
+
+## 120. ★ FAIL (P1 · money · CC-1) — `LV-REIMBURSEMENT-FLAG-NEVER-SEEDED`: a kill switch with no ON position. Driver reimbursements can NEVER reach the ledger, for any entity.
+
+**Created and paid through production code**, `createDriverReimbursementCore()` →
+`payDriverReimbursementImmediately()`:
+
+| what | value |
+|---|---|
+| reimbursement | `edc714ed-c1a5-4ca0-924d-02a7bc22ffcc` · driver `40823a77-…` · **$75.00** toll · USMCA |
+| result | `{ ok: true, posted: **false**, journalEntryId: **null** }` |
+| prod row | `status = 'paid'` · **`journal_entry_id = NULL`** · `posting_date 2026-08-07` |
+
+**The service is honest — it returns `posted:false` rather than faking success.** The defect is *why* it is
+false, and it is not a config decision anyone made.
+
+**ROOT CAUSE, two facts that only matter together:**
+1. `driver-reimbursement.service.ts:23` — `export const REIMBURSEMENT_GL_POSTING_FLAG = "REIMBURSEMENT_GL_POSTING_ENABLED";`
+2. **That key does not exist in `lib.feature_flags`.** `SELECT count(*) … WHERE flag_key =
+   'REIMBURSEMENT_GL_POSTING_ENABLED'` → **0**, and **0** override rows, for every entity. Discriminator:
+   `lib.feature_flags` `visible_all = 85 == n_live_tup = 85` — the table is fully visible, the row is
+   genuinely absent.
+
+And `lib/feature-flags/service.ts:322` decides it: **`if (!flag) return false;`** — an unseeded key returns
+false **before** any override is consulted. `resolveFlagEnabled` is never reached.
+
+**So this is not "the flag is OFF, flip it when ready."** There is no row to flip. **No override can turn it
+on**, because the override lookup is downstream of the early return. **Driver reimbursement GL posting is
+unreachable for every entity, permanently, until someone seeds the flag** — and nothing surfaces that: the
+operator sees a reimbursement marked `paid`.
+
+**This is the inverse of item 113's finding and worth naming as such.** There, 24 of 24 posting flags carried
+an active USMCA override — "nothing is flag-dark". **That measurement enumerated the flags that EXIST.** A
+poster whose flag was never seeded is invisible to that check, because it has no row to enumerate. **The
+completeness question is not "is every flag on" but "does every flag the CODE reads exist"** — and the
+answer here is no.
+
+## 121. ★★ THE FLAG-SWEEP I PROMISED — run in full, and it KILLED NINE OF ITS OWN TEN CANDIDATES. One confirmed instance, three dead flags, and a correction to my own item 113.
+
+Item 120's board row demanded a *"code-referenced-vs-seeded flag-key diff"* as the class condition. **I ran it
+myself rather than leaving it to the fixer. The first pass returned 10 unseeded keys and looked like a
+ten-instance class. Nine of them are not defects, and this entry is mostly about how each one died** — the
+work of the unit was disproving my own result, and filing the 10 would have cost CC-1 far more than the one
+real row is worth.
+
+**PASS 1 — naive:** every `"[A-Z_]{6,}_ENABLED"` literal in `apps/backend/src`, diffed against
+`lib.feature_flags`. **86 keys, 10 unseeded.** Tempting, and wrong.
+
+**FILTER 1 — four are ENVIRONMENT variables, not DB flags.** `BANK_RECON_AUTO_MATCH_CRON_ENABLED`,
+`EMAIL_CRON_ENABLED`, `QBO_MASTERDATA_SYNC_ENABLED`, `QBO_SYNC_RETRY_ENABLED` are read via
+`envEnabled(...)` (`health.routes.ts:446-492`, `lib/env-validation.ts:73`) — `process.env`, never
+`isEnabled(client, …)`. **Correctly absent from `lib.feature_flags`. Not defects.**
+
+**FILTER 2 — four exist ONLY inside a unit test.** `EXPENSE_VOID_ENABLED`, `PAYROLL_POSTING_ENABLED`,
+`SETTLEMENT_VOID_ENABLED`, `SOMETHING_NEW_GL_POSTING_ENABLED` appear at exactly one place each —
+`lib/feature-flags/__tests__/service.test.ts:117,118,133,134` — as fixtures for `isPostingFlag()`. **They are
+test strings, not flags.** (`SOMETHING_NEW_GL_POSTING_ENABLED` should have been the tell on sight; I checked
+all four anyway, because "it looks like a placeholder" is not evidence.)
+
+**FILTER 3 — the tenth is deliberate, and the author wrote it down.** `CASH_FOLLOWS_ETA_ENABLED` IS a real
+`isEnabled(client, …)` DB-flag call (`cash-flow/cash-flow.routes.ts:53, :73`) and IS unseeded — the same
+shape as item 120. **But the line above it reads: `// (OFF/unregistered → false → current behaviour).`** The
+unregistered case was anticipated and false was chosen as the safe default, and what it gates is
+**re-bucketing projected income by ETA in a forecast view — no money posts either way.** **Verified benign;
+NOT filed.** The contrast with `REIMBURSEMENT_GL_POSTING_ENABLED` is the whole point: same mechanism, and
+one leaves a $75 payment permanently outside the ledger while the other changes a chart bucket.
+
+**RESULT: the class has exactly ONE member — `REIMBURSEMENT_GL_POSTING_ENABLED`, already filed as item 120.**
+`LV-REIMBURSEMENT-FLAG-NEVER-SEEDED` is an INSTANCE, not a class, and its board row is updated to say so.
+
+### The reverse diff — seeded flags nothing reads — and it caught me overreaching a second time
+
+**10 flags are seeded and absent from my literal sweep. Two of those are my regex's fault, not defects:**
+`CASH_FORECAST_ENABLED` (1 backend file) and `LEGAL_CONTRACTS_ENABLED` (3 backend files) **are** referenced —
+my literal-only pattern missed them. Recorded because an unverified "dead flag" list would have sent someone
+to delete live flags.
+
+**★ A THIRD WITHDRAWAL, AND IT CORRECTS MY OWN ITEM 113.** `REVENUE_RECOGNITION_ENABLED` has **0** backend
+references and **2** frontend ones — `RevenueRecognitionPage.tsx:240`
+`useFeatureFlag("REVENUE_RECOGNITION_ENABLED", …)`, gating the contracts table. **It is a UI flag, and it is
+working as designed.** The backend's revenue posting is gated by a *different* key,
+`REVENUE_RECOGNITION_POST_ENABLED` (`revenue-recognition.routes.ts:19`). **So item 113's "24 of 24 GL-posting
+flags carry a USMCA override" mis-classified this one: the GL-posting count is 23, and
+`REVENUE_RECOGNITION_ENABLED` is the single flag whose `default_enabled = true` — which is unremarkable for a
+UI toggle and would have been alarming for a posting flag.** The correction is recorded on
+`LV-USMCA-POSTING-FLAGS-ALL-ON`.
+
+**GENUINELY DEAD — 0 references in backend AND frontend:** `PERIODS_INIT_ENABLED`,
+`PREPAID_EXPENSES_ENABLED`, `IFTA_TRIP_METHODOLOGY_ENABLED`. Filed as low-severity hygiene
+(`LV-DEAD-SEEDED-FLAGS`) — a flag an operator can toggle that changes nothing is a control-surface lie, and
+under ADDITIVE-ONLY the fix is to mark them deprecated, **never to drop them**.
+
+**WHY THIS UNIT IS WORTH ITS SPACE even though it filed almost nothing.** Ten findings would have looked like
+a productive sweep. Nine were wrong, and each died to a *different* check — `envEnabled` vs `isEnabled`, a
+test-fixture path, an author's documented intent, a too-narrow regex, and a UI-vs-posting flag namespace
+collision. **A grep is a hypothesis generator, never a verdict** — the same lesson as item 96's disproven
+orphan rate, arrived at from the opposite direction. The one surviving row is stronger for it.
+
+## 122. ★★ THE FAIL-CLOSED LATCH SWEEP — 97 `to_regclass` guards, 8 tables absent on prod. Two degrade SILENTLY (filed), three are correct, three are not defects at all.
+
+**The pattern:** `SELECT to_regclass('schema.table') IS NOT NULL` before touching a table whose migration
+may not be applied. It exists so a missing table degrades instead of throwing 42P01. **The question the
+pattern never answers is what happens on the "missing" branch** — and that is where the defects are.
+
+**METHOD:** extracted **97** distinct `to_regclass('…')` targets from `apps/backend/src` and tested every one
+against prod in a single RLS-immune statement. **8 are absent.** Then read the fallback branch at each call
+site, because the count is not the finding.
+
+| absent table | call site | behaviour on the missing branch | verdict |
+|---|---|---|---|
+| `notifications.suppression_rules` | `notifications/email.service.ts:48` | **`return false` — FAIL-OPEN** | **FILED** |
+| `pwa.driver_notifications` | `cash-advance-requests.service.ts:128`, `cash-advance-owner-approval.service.ts` | **`if (!ok) return;` — silent drop** | **FILED** |
+| `inventory.parts` | `maintenance/wo-cost-context.routes.ts:63` | block skipped, no signal | **FILED (low)** |
+| `maintenance.labor_rates` | `maintenance/wo-cost-context.routes.ts:88` | block skipped, no signal | **FILED (low)** |
+| `fuel.loves_prices_daily` | `sync/loves-card-import.ts:305`, `fuel/loves-upload.routes.ts:82` | **throws `loves_prices_daily_unavailable`**; status returns `"never"` | **CORRECT — not filed** |
+| `samsara.hos_log_edits` | `safety/eld-audit-trail/viewer.service.ts:58` | honest empty history | **NOT A DEFECT — see below** |
+| `accounting.accounting_periods` | **tests only** | — | **NOT A DEFECT — see below** |
+| `audit.audit_log` | no non-test call site | — | **NOT A DEFECT** |
+
+### ★ FILED (P2 · CC-1) — `LV-EMAIL-SUPPRESSION-FAILS-OPEN`
+
+`email.service.ts:44-68`. `isSuppressed()` checks `to_regclass('notifications.suppression_rules')` and, when
+absent, **`return false`** — *not suppressed*. The table does not exist on prod, so **`isSuppressed()` can
+only ever return false, and no suppression rule can apply to any recipient.** The whole function is wrapped
+in `catch { return false; }` too, so a genuine query error is also indistinguishable from "not suppressed".
+
+**A suppression control that fails OPEN is the wrong default for this control specifically.** Suppression
+exists to stop mail to someone who opted out or whose address is bouncing; failing open sends it anyway. It
+is silent in both directions — nothing logs that suppression was unavailable, and the operator sees a normal
+send. **Context that makes this concrete rather than theoretical:** `audit.audit_events` holds **247**
+`email.failed` events in a single 11-hour window on 2026-08-03 (measured in item 113's window query) —
+whatever share of those is a bouncing address, the suppression that should stop re-sending to it is
+structurally unreachable.
+
+### ★ FILED (P2 · CC-1) — `LV-DRIVER-PWA-NOTIFY-SILENTLY-DROPPED`
+
+`cash-advance-requests.service.ts:128` — `const reg = await client.query("SELECT to_regclass('pwa.driver_notifications') IS NOT NULL AS ok"); if (!reg.rows[0]?.ok) return;`
+
+**A bare `return`.** No throw, no log, no audit event, no queued retry. The table is absent on prod, so
+**every driver-facing notification on the cash-advance path — approvals, denials, owner escalations — is
+discarded, and nothing anywhere records that it happened.** The office sees the request approved; the driver
+is told nothing and no evidence exists that a notification was owed. This sits directly on the money path
+that item 118 just exercised for the first time (`CA-2026-0001`).
+
+### FILED (low · CC-2) — `LV-WO-COST-CONTEXT-SILENTLY-MISSING-SOURCES`
+
+`wo-cost-context.routes.ts:63` and `:88` skip the `inventory.parts` and `maintenance.labor_rates` blocks
+when absent — both are. The work-order cost context therefore returns **with no inventory parts and no labor
+rates and no indication that two of its sources are missing**, which reads to the operator as "there are no
+parts and no labor rates" rather than "two catalogues are not provisioned". Low severity, same shape.
+
+### THREE WITHDRAWALS — recorded because each would have been an expensive false alarm
+
+**`accounting.accounting_periods` — the scariest-looking result in the sweep, and it is nothing.** A missing
+accounting-periods table would mean the closed-period guard has nothing to read, so back-dated postings into
+closed periods would be unguarded — a serious control failure. **It is not the case.** The name appears
+**only in tests**; production uses **`accounting.periods`**, which exists, and
+`accounting.closed_period_cutoff(uuid)` reads it correctly:
+```sql
+SELECT MAX(p.period_end) FROM accounting.periods p
+ WHERE p.operating_company_id = p_company AND p.status = 'closed';
+```
+Both `trg_block_closed_period_journal_entries` and `trg_block_closed_period_journal_entry_postings` are
+attached and functional. **The closed-period control is intact — verified, not assumed.**
+
+**`samsara.hos_log_edits` — deliberate and documented, by the owner.** `viewer.service.ts:50-57` states it:
+*"That table's real source + migration are a **Jorge-gated follow-up** … Guard the reads with `to_regclass`
+so, until the table exists, the endpoint returns an honest EMPTY history (source-not-connected) instead of
+crashing … **Fail-honest, not silent**."* An owner-gated follow-up is a decision, not a defect. **One
+question this unit did NOT settle and will not assert either way: whether the UI renders that empty result
+as "no ELD edit source connected" or as "no edits" — the service returns an honest empty, and what the
+screen does with it is UNVERIFIED here.** For an FMCSA reviewer those two readings are not the same, so it
+is worth a browser-side check by a lane that has one.
+
+**`fuel.loves_prices_daily` is the model the other four should copy** — it **throws**
+`loves_prices_daily_unavailable` on the import path and reports `status: "never"` on the status path. Loud
+where it matters, honest where it doesn't. It is in the same codebase as the two silent ones, which is the
+argument that the silent branches are an oversight rather than a house style.
+
+**The generalisable lesson: `to_regclass` prevents a crash; it does not decide what SHOULD happen.** Of eight
+absent tables, three fallbacks are right, four degrade a feature with no signal, and one name was a phantom
+that existed only in a test. **The guard is not the control — the branch is.**
+
+## 123. ★★ THE SETTLEMENT + ESCROW SUBSYSTEM HAS NEVER CARRIED A CENT — 19 of 21 tables empty database-wide, and it BOUNDS my own item 90 "PASS"
+
+**Measured on prod, RLS-immune, every count carrying `visible_all == n_live_tup`.** Not a USMCA scope
+statement — **database-wide, all three entities.**
+
+| table family (`driver_finance.*`) | rows |
+|---|---|
+| `settlement_lines` — **the canonical driver-earnings table (CLAUDE.md §4)** | **0** |
+| `escrow_ledger` · `escrow_balances` · `escrow_deductions_pending` · `driver_escrow_separations` | **0 each** |
+| `driver_settlement_deductions` · `driver_deduction_buckets` · `driver_deduction_bucket_events` | **0 each** |
+| `driver_settlement_gl_bills` · `driver_settlement_gl_runs` · `settlement_payment_events` | **0 each** |
+| `settlement_contract_lines` · `settlement_contract_terms_config` · `settlement_preview_costs` | **0 each** |
+| `team_settlement_splits` · `settlement_disputes` · `driver_settlement_disputes` · `auto_deduction_policies` | **0 each** |
+| `driver_settlements` | **1** |
+| `deduction_schedule` | 1 · `escrow_settings` | 2 (config) |
+
+**19 of 21 are empty.** And in `accounting.*`: **`escrow_accounts` = 0**, **settlement/escrow GL lines = 0**,
+**settlement/escrow posting batches = 0.**
+
+**THE ONE SETTLEMENT THAT EXISTS** — `d3ff8ea3-…` / `S-LUSMCAFREIGHT-20260806-0001`, USMCA:
+`status = 'closed'` · `gross_pay 0.00` · `deductions_total 0.00` · `net_pay 0.00` ·
+**`accounting_bill_id = NULL`** · **`posted_at = NULL`** · driver *"Juan USMCA-Battery"*, whose
+`mdata.drivers.status` is **`Inactive`**. A closed settlement that paid nothing, deducted nothing, produced
+no bill and posted nothing, for a driver who is not active.
+
+### ★ FILED (P1 · money · CC-1) — `LV-ESCROW-CONFIGURED-NEVER-ACCRUED`
+
+**Escrow is not unbuilt or unconfigured — it is configured and inert.** `driver_finance.escrow_settings`
+carries an **active** `escrow_target_cents = 250000` (**$2,500.00 per driver**) for **both** USMCA
+`5c854333-…` and TRANSP `91e0bf0a-…`, set 2026-07-24. `DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED` and
+`SETTLEMENT_GL_POSTING_ENABLED` are both ON for USMCA (item 113). **And not one cent has ever been withheld,
+recorded, or posted for any driver at any entity.**
+
+**Why that is a money finding and not a "feature not used yet" note.** Driver escrow is a **liability the
+company owes back to the driver** — the owner-locked treatment (`ih35-accounting-decisions`: *driver escrow
+= liability*). An active $2,500-per-driver policy against **24 active USMCA drivers** describes an obligation
+of up to **$60,000** that the books do not carry, cannot age, and cannot return on separation:
+`driver_escrow_separations` is empty and `escrow_balances` has no per-driver row to return **from**. The
+policy is switched on; the ledger has no idea.
+
+### ★ AND IT BOUNDS MY OWN EARLIER PASS — item 90 is re-characterised here by its author
+
+Item 90 recorded *"DRIVER ESCROW — PASS on the control tie-out"*. **That tie-out was `0 == 0`.** With
+`escrow_ledger`, `escrow_balances` and `accounting.escrow_accounts` all at zero rows, agreement between the
+subledger and the control account is arithmetically unavoidable and proves nothing about the machinery. **A
+reconciliation over an empty population is not a passing reconciliation — it is an untested one**, and item
+90 should be read as "no discrepancy exists yet", never as "escrow reconciles".
+
+The same caveat applies to item 91's `LV-ESCROW-SUBLEDGER-NOT-WORM`: that finding is about the **schema**
+(the subledger is hard-deletable with no audit trail), which stands independently of row count — **the WORM
+gap is real whether or not rows exist, and it becomes exploitable the moment the first cent is withheld.**
+Recording both readings so the next agent does not "resolve" item 90 as coverage it never had.
+
+**METHOD NOTE.** Every zero above is paired with `n_live_tup` on the same relation, because this is exactly
+the shape the false-zero rule exists for — 19 zeroes in one family is precisely what an RLS mask looks like.
+It is not one: `driver_settlements` returns **1** and `escrow_settings` returns **2** from the same schema in
+the same transaction. **The positive controls are inside the same result set.**
+
+## 124. ★★ BOARD ITEM PULLED — `LV-WO-CREATE-500-OPENED-AT` (P0): CONFIRMED as a real break, and its SEVERITY CLAIM IS WRONG. Plus the first USMCA work order ever, and a NEW locked-format defect it exposed.
+
+**Pulled the top OPEN P0 off the board and re-tested it with the production service — two controlled runs
+differing in exactly one input.** The row's root cause is right; its scope claim is not.
+
+| run | input | result |
+|---|---|---|
+| A | `service_date` only, **no `opened_at`** | **CREATED** — `cf886b9f-7397-4bb5-a42a-7596f9902277`, `WO-T149-IS-08-07-2026-0001-PEND0` |
+| B | same + `opened_at = 2026-08-05T10:00:00Z` | **`P0001 E_WO_OPENED_AT_IMMUTABLE: opened_at cannot be changed once set`** |
+
+### ★ CORRECTION TO THE BOARD ROW — `LV-WO-CREATE-IS-CONDITIONAL-NOT-TOTAL`
+
+The row states *"work-order creation is **100% broken for EVERY entity**"*. **It is not.** Run A created a
+work order on the current build, on prod, for USMCA. **Creation succeeds whenever `opened_at` is omitted.**
+
+**The mechanism, confirmed at both ends:** the INSERT (`two-section-service.ts:203`) writes
+`opened_at = COALESCE($8::timestamptz, now())` where **`$8` = `header.service_date`** (param list `:216`), so
+`opened_at` is **never null** after insert. The post-insert UPDATE (`:285`) writes
+`opened_at = COALESCE($1, opened_at)` with `$1 = header.opened_at ?? null` — and **`COALESCE(NULL, opened_at)`
+is a no-op**, so `OLD.opened_at IS DISTINCT FROM NEW.opened_at` is FALSE and the trigger stays silent. The
+UPDATE block is itself gated (`:274`) on `header.opened_at != null || …`. **The 500 requires `opened_at` to be
+supplied AND to differ from `COALESCE(service_date, now())`.**
+
+**This still deserves P0, and the correction is not a downgrade — it is a different bug with a different
+test.** The WO wizard's "Open date/time" field is precisely what populates `opened_at`, so **any operator who
+touches that field gets a 500 and loses the form**, while an operator who leaves it alone never sees it. That
+explains why it reproduced twice through the UI and why the table is not empty. **A fixer told "100% broken"
+writes the wrong regression test** — the passing case is as important as the failing one, and the guard must
+assert BOTH.
+
+**The prior analysis is otherwise vindicated:** `maintenance.wo_set_opened_at` is the sensor, not the bug —
+two writers in one request disagree, exactly as the row says.
+
+### ★ FIRST USMCA WORK ORDER IN EXISTENCE
+
+`maintenance.work_orders` for USMCA was **0** before this unit (`visible_all == n_live_tup == 1`, that one row
+being TRK's). Now **1**: `cf886b9f-…`, `open`, unit `T149` (owned by TRK `b49a737b-…`, **leased to USMCA** —
+the correct `COALESCE(currently_leased_to_company_id, owner_company_id)` entity resolution), `total_actual_cost
+100.00`, `estimated_cost_cents 10000`, `source_type IS`, `bucket in_house`, `opened_at 2026-08-07`. **The
+`scenario.maintenance` red dot is no longer hard-blocked** — item 112 listed it as *"the only red dot with a
+known code blocker"*, and the blocker is avoidable by omitting one field.
+
+### ★ NEW FAIL (P1 · locked format · CC-2) — `LV-WO-DISPLAY-ID-V5-IS-HARDCODED-PEND0`
+
+The display ID came back **`WO-T149-IS-08-07-2026-0001-PEND0`**. The locked format (CLAUDE.md §7, rule 03) is
+**`WO-{UNIT}-{TYPE}-{MM-DD-YYYY}-{NNNN}-{V5}`** — V5 being the VIN's last five. Unit T149's VIN is
+**`1XPCDP9X3LD649118`**, so V5 should be **`49118`**.
+
+**ROOT CAUSE — read from the live function definition on prod, not inferred.**
+`maintenance.next_wo_display_id(uuid, text, date, uuid)` ends with:
+```sql
+display_id := CONCAT('WO-', v_unit_display_id, '-', p_source_type, '-',
+  TO_CHAR(COALESCE(p_date, CURRENT_DATE),'MM-DD-YYYY'), '-', LPAD(v_seq::text,4,'0'), '-PEND0');
+```
+**`'-PEND0'` is a hardcoded string literal.** The function never reads `vin` — although it already
+`SELECT`s from `mdata.units` four lines above and could take it from the same row at zero cost.
+
+**Scope, measured:** **2 of 2** work orders in the database end in `-PEND0` — TRK's
+`WO-TEST-TRUCK-1-IS-08-03-2026-0001-PEND0` (VIN `TESTTRUCKVIN00001`, V5 `00001`) and USMCA's. **Every work
+order the system has ever produced carries a placeholder where the locked format specifies the VIN**, and
+display IDs are server-generated, immutable, and cited on repair documents and vendor invoices. The
+placeholder name suggests "pending", but nothing ever fills it in: there is no update path, and the value is
+baked at insert.
+
+**Why it is P1 and not cosmetic:** two different units produce visually distinct IDs only via `{UNIT}`; the
+V5 segment exists so an ID is traceable to a *vehicle* when unit numbers are reassigned between trucks — a
+real event in a fleet. A constant defeats that entirely, and because the ID is immutable, every WO created
+before the fix keeps the placeholder forever.
+
+## 125. ★★ BOARD ITEM PULLED — `LV-WO-RECONCILE-EXCLUDES-SECTION-A` (P0 money): CONFIRMED, and the leak is THREE TIMES WIDER than the row states. `line_type` has FIVE DB-valid values and the reconcile counts TWO.
+
+The board row pins the reconcile's blindness to **Section A category lines** and to a parent amount exceeding
+its children. **Both are real. There is a third leak the row does not name, and it is the largest.**
+
+**THE RECONCILE'S ACTUAL INPUT — read at source, `apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx:435-436`:**
+```ts
+const woPartsDollars = sectionBSubRows.filter((r) => r.line_type === "parts").reduce((s,r) => s + Number(r.amount||0), 0);
+const woLaborDollars = sectionBSubRows.filter((r) => r.line_type === "labor").reduce((s,r) => s + Number(r.amount||0), 0);
+```
+`CreateWOSectionReconcile.tsx` is a **pure display component** — it receives these two numbers as props and
+does nothing but subtract the operator's typed invoice figures. **The defect is entirely in what the caller
+sums**, and `reconcileOk` (`:438-441`) is the gate that lets the save proceed with every check ✓.
+
+### ★ THE THIRD LEAK — `line_type` is a FIVE-VALUE DOMAIN AND THE RECONCILE MATCHES TWO STRING LITERALS
+
+**The DB CHECK constraint, read live off prod:**
+```sql
+work_order_lines_line_type_check
+  CHECK (line_type = ANY (ARRAY['part','parts','labor','disposal','other']))
+```
+
+**Three of five DB-valid line types are structurally invisible to the reconcile** while being fully included
+in the WO total and the resulting A/P bill:
+
+| `line_type` | in WO total | seen by reconcile |
+|---|---|---|
+| `'parts'` | ✅ | ✅ |
+| `'labor'` | ✅ | ✅ |
+| **`'part'`** (singular) | ✅ | **❌** |
+| **`'disposal'`** | ✅ | **❌** |
+| **`'other'`** | ✅ | **❌** |
+
+**`'part'` vs `'parts'` is the dangerous one.** Two spellings of the same concept are both DB-valid; one is
+counted and one is not, and nothing anywhere reconciles the two. A line saved as `'part'` reads identically
+to a human in every UI and vanishes from the tie-out. **`'disposal'` is a real trucking cost** — tire and oil
+disposal fees appear on virtually every shop invoice — and it can never be reconciled by construction.
+
+### ★ AND THE SAME FIELD IS DEFINED THREE DIFFERENT WAYS IN THREE LAYERS
+
+| layer | domain |
+|---|---|
+| **DB** `maintenance.work_order_lines` CHECK | `'part' \| 'parts' \| 'labor' \| 'disposal' \| 'other'` — **5** |
+| **Frontend** `CreateWorkOrderModal.tsx:209,:222` · `api/maintenance.ts:222` | `"parts" \| "labor" \| "other"` — **3** |
+| **Backend** `two-section-service.ts:76` | `"parts" \| "labor"` — **2** |
+
+**Three contracts for one column.** The frontend can construct `"other"`, which the backend's own type does
+not admit; the DB accepts two more the frontend cannot produce but an import or a future path could. **The
+reconcile's two-literal filter is not an oversight against a two-value field — it is an oversight against a
+five-value field that nobody in the stack agrees on.**
+
+**Verdict: the board row's P0 stands and its severity is UNDERSTATED.** Its stated fix — include Section A —
+would still leave `'part'`, `'disposal'` and `'other'` silently unreconciled, and the panel would keep
+printing *"Reconciled — WO parts & labor tie to the vendor invoice."* over a shortfall. **A fix that
+enumerates buckets by string literal will re-introduce this the next time a sixth value is added; the
+reconcile must be defined as `WO total − Σ(reconciled buckets) = 0`, so anything uncategorised shows up as
+variance instead of disappearing.**
+
+**METHOD NOTE.** The board row located the root cause in the backend service (`two-section-service.ts:186-191`,
+where `totalCost = A + B` is computed). That is where the WO **total** comes from, and it is correct. **The
+reconcile's numbers never touch that code** — they are computed independently in the browser from a different
+array. Two independent computations of "what this work order costs" is the actual structural defect, and it
+is why adding Section A on one side would not make them agree.
+
+## 126. ★★ THE VOID UNIT — BLOCKED, and it RE-REPRODUCES `LV-BILLVOID-DATE-ERROR` on the CURRENT DEPLOYED BUILD. The correct pattern is in the SAME FILE, FOUR TIMES.
+
+**The mission's void unit is "create multiples of a voidable type, VOID exactly one by UUID, siblings stay
+live." I did the first half and the second half is impossible.**
+
+**CREATED — two sibling bills, both posted:**
+
+| bill | id | amount | GL |
+|---|---|---|---|
+| `CC3-BATT-20260807-02` | `4415a62c-987f-4dd2-80e4-32a305ebebed` | $211.00 | **posted** |
+| `CC3-BATT-20260807-03` | `60f644f0-b597-4888-a3c2-8690f607c30e` | $211.00 | **posted** |
+
+**VOIDED exactly one, by UUID (never display_id), through the production `voidBill()` service:**
+```
+voidBill(USMCA, "4415a62c-987f-4dd2-80e4-32a305ebebed", "<reason>", OWNER, { role: "Owner" })
+→ VOID_ERR code=22007  invalid input syntax for type date: "Fri Aug 07"
+```
+
+### ★ ROOT CAUSE — pinned to one word, with the correct version four times in the same file
+
+`apps/backend/src/accounting/bills.service.ts`:
+- **`:1740`** the void path reads the bill with **`SELECT *`**, so `node-postgres` hands back `bill_date` as a
+  **JavaScript `Date` object** (it parses `date`/`timestamptz` into `Date` by default).
+- **`:1774`** then does `const originalDate = String(billRaw.bill_date).slice(0, 10);`
+
+Trace it: `String(new Date("2026-08-07"))` → `"Fri Aug 07 2026 00:00:00 GMT+0000 …"`, and `.slice(0,10)` →
+**`"Fri Aug 07"`** — which is then handed to a `date` parameter. **`22007 invalid input syntax for type date:
+"Fri Aug 07"` is that string, character for character.** The error message IS the proof; nothing is inferred.
+
+**THE CORRECT PATTERN IS IN THE SAME FILE, FOUR TIMES** — `:667`, `:745`, `:843`, `:2066` all read
+**`b.bill_date::text AS bill_date`**, casting in SQL so the driver returns `'YYYY-MM-DD'` and `.slice(0,10)`
+is a harmless no-op. **The void path is the only bill reader in the file that uses `SELECT *` instead of the
+cast, and it is the only one that breaks.** Item 38 recorded that "the correct fix already exists in a
+sibling file" — it is closer than that: **it is four lines of the same file.**
+
+### ★ THIS IS A RE-REPRODUCTION, AND THAT IS THE POINT — `LV-BILLVOID-DATE-ERROR-STILL-LIVE`
+
+Battery items 36–38 filed and root-caused this. **It is not fixed.** Proven on the build serving production
+right now, three ways in one check:
+- `GET /api/v1/healthz/shallow` → **`{"version":"6020040"}`**.
+- `git show 6020040:apps/backend/src/accounting/bills.service.ts | grep -c 'String(billRaw.bill_date).slice(0, 10)'`
+  → **1**. **The defective line is in the deployed tree.**
+- The line was introduced by **`be3323ed7` (2026-06-14**, *"VOID-EVERYWHERE PR-2 — extend gated void engine to
+  bills"*, #977) and **has never been touched since** — **55 days live.**
+
+**AND IT IS DIFFERENT EVIDENCE THAN BEFORE.** The earlier reproduction was through the browser, where a 500
+can always be argued down to a UI or session artefact. **This one is a direct service call with a
+deterministic, quotable Postgres error code** — there is no UI in the path to blame.
+
+### WHY THIS OUTRANKS ITS CURRENT PRIORITY
+
+**§2 of the constitution is `void-not-delete`.** A voidable financial document that cannot be voided leaves
+exactly two options: leave a wrong bill standing on the A/P ledger forever, or delete it — **and deletion is
+prohibited.** So the WORM law is not merely unenforced here, it is **unsatisfiable** for bills: every
+mistaken bill USMCA ever books is permanent. Bill `4415a62c-…` is now exactly that — a $211.00 A/P liability
+I created to void, which **cannot be voided**, and which I will not delete.
+
+**Sibling integrity confirmed** (the void unit's other half still passes): `60f644f0-…` and `9f9ce1cb-…`
+remain live, unvoided and fully posted. **Nothing was damaged by the failed void** — the reversal is attempted
+**before** the status flip (`:1765` *"Post the reversing JE BEFORE the status flip so both land atomically"*),
+so the throw rolls back cleanly with no half-voided bill and no orphan reversing JE. **The transaction design
+is right; only the date coercion is wrong.**
+
+## 127. ★★ BOARD ITEM PULLED — `LV-BANK-CATEGORIZE-POSTS-GL-WHILE-BANNER-SAYS-IT-DOES-NOT` (P0): STILL LIVE, the poster is VERIFIED CORRECT, the blast radius has GROWN — and the USMCA general ledger is now provably 100% attributable.
+
+**The row is confirmed on the current tree, and re-verifying it produced three things the row does not
+contain: a correctness proof for the poster, a fourth control for an unrelated class, and a whole-ledger
+completeness check.**
+
+### 1 — THE BANNER IS STILL HARDCODED, and there is a sharper proof than "it's a static `<p>`"
+
+`apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx:2155` still reads, verbatim:
+> *"Categorize tags are not ledger posts — BANK_FEED_GL_POSTING_ENABLED stays OFF by default"*
+
+**`grep -c "useFeatureFlag" <that file>` → `0`.** The component **never reads any feature flag at all**, so it
+is not that the banner reads the flag wrongly or reads a global instead of an override — **it structurally
+cannot know the flag's state.** No scoping fix can repair a component with no flag subscription; the sentence
+is a literal and will stay true-looking forever regardless of reality. Its `data-testid` is
+**`banking-bank-feed-gl-posting-honesty-banner`** — the element named *honesty* is the dishonest one.
+
+### 2 — THE POSTER IS CORRECT — verified line by line, which the original row asserted but did not show
+
+JE `ff746cfa` (created by the row's own categorize of *Zelle payment to Dreamline Transit LLC, $918.00*):
+
+| seq | account | type | side | cents |
+|---|---|---|---|---|
+| 1 | Other Operating Expense | Expense | debit | 91,800 |
+| 2 | **Bank of America - Operating (USMCA)** | Asset | credit | 91,800 |
+
+**Balanced; both lines USMCA-scoped; both carry `source_transaction_type='bank_categorization'` and
+`source_transaction_id = cb271ba0-…`**, so the linkage is complete in both directions. For a Zelle payment
+**out**, debiting an expense and crediting the bank is exactly right. **The row's "the POSTER is correct, the
+BANNER is wrong" is now demonstrated, not asserted** — which matters, because the fix must change the prose
+and leave the posting alone.
+
+### 3 — ★ A FOURTH CONTROL FOR `CLS-CASH-OUT-CREDITS-CLEARING-ACCOUNT`, found by accident here
+
+That class (item 119) says three of four cash-side builders credit a clearing account instead of the bank.
+**`bank_categorization` credits the REAL bank GL account** — resolved through
+`banking.bank_accounts.ledger_account_id`, the same bridge `buildBillPaymentLines` uses. So the scoreboard is
+now **two paths right, one path wrong, one schema-blocked**:
+
+| path | credit | verdict |
+|---|---|---|
+| `bill_payment` | Bank of America - Operating (USMCA) | ✅ |
+| **`bank_categorization`** | **Bank of America - Operating (USMCA)** | **✅ (new evidence)** |
+| `driver_advance` | **Undeposited Funds** | ❌ (item 118) |
+| `cash_advance` / `driver_reimbursement` | clearing — source table has no bank column | ❌ schema gap |
+
+**Two independent paths already do it correctly on this exact bank account.** That removes the last possible
+defence of the driver-advance behaviour as a deliberate house convention.
+
+### 4 — BLAST RADIUS MEASURED TODAY: the queue is LARGER than the row states
+
+USMCA `banking.bank_transactions` right now: **`for_review` = 158**, `matched` = 5. The row was written
+earlier today citing **110** rows in the queue. **Whatever the exact predicate behind that 110, the exposed
+population is materially larger now than when the P0 was filed** — every one of those rows is a click that
+the banner says is safe and that would post a real JE into a live GL.
+
+### 5 — ★★ THE UNEXPECTED RESULT: THE USMCA GENERAL LEDGER IS 100% ATTRIBUTABLE
+
+`accounting.journal_entries` for USMCA is **33** today. The board row recorded it going **27 → 28** when it
+posted its categorize. This battery has since created **exactly five** journal entries — bill `9f9ce1cb`
+(JE `2d0cfb71`), bill payment `6e23a112` (JE `60028af4`), driver advance `2239fa7f` (JE `e26c88d1`), and the
+two sibling bills `4415a62c` / `60f644f0`.
+
+**28 + 5 = 33.** **Exact.**
+
+**Every journal entry in the USMCA ledger is accounted for**, and nothing — no cron, no projection, no
+background job, no other lane — wrote a single unexplained entry into it during this session. That is a
+stronger statement than any individual PASS in this battery: **the USMCA GL has no dark writer.** It also
+retroactively validates the arithmetic of every unit above, because an off-by-one anywhere would have shown
+up here as a mismatch.
+
+## 128. ★★ BOARD ITEM PULLED — `LV-BANK-TWO-SIGN-CONVENTIONS`: the poster is SAFE, and the in-code description of the convention is **BACKWARDS ON 8,338 OF 8,338 ROWS**.
+
+The row measured `is_credit = true` rows only and concluded *"credits are stored negative, except Relay Fuel
+Wallet."* **It never looked at the money-OUT half of the table.** I did, database-wide, and the result
+reframes the finding.
+
+**MEASURED ON PROD, ALL THREE ENTITIES, discriminator `visible_all = 11,082 == n_live_tup = 11,082`:**
+
+| entity | `is_credit=false` (money OUT) | negative | **positive** | `is_credit=true` (money IN) | negative | positive |
+|---|---|---|---|---|---|---|
+| USMCA | 94 | 0 | **94** | 69 | 69 | 0 |
+| TRANSP | 4,800 | 0 | **4,800** | 1,279 | 1,171 | **108** |
+| TRK | 3,444 | 0 | **3,444** | 1,396 | 1,396 | 0 |
+| **total** | **8,338** | **0** | **8,338** | 2,744 | 2,636 | 108 |
+
+**Every money-out row in the database is POSITIVE. All 8,338. Zero exceptions, all three entities.**
+
+### ★ FILED (P1 · money · CC-1) — `LV-BANK-SIGN-COMMENT-IS-INVERTED`
+
+`apps/backend/src/banking/bank-feed-gl-posting.service.ts:8-9`, the file header that defines the rule for
+every future reader:
+> `// DIRECTION IS DRIVEN ONLY BY is_credit, NEVER by the sign of amount_cents (money-out is stored NEGATIVE;`
+> `// the posting engine posts Math.abs).`
+
+and again at `:253`:
+> `// Sign landmine: money-out is stored NEGATIVE. Magnitude only; direction from the is_credit flag.`
+
+**"Money-out is stored NEGATIVE" is false on 8,338 of 8,338 money-out rows. The real convention is the exact
+inverse: money-out POSITIVE, money-in NEGATIVE.**
+
+**THE CODE IS SAFE AND MUST NOT BE TOUCHED.** `:254` takes `Math.abs(Number(txn.amount_cents ?? 0))` and
+`:259` derives direction from `is_credit === true ? "money_in" : "money_out"`. It never reads the sign, so it
+is immune to the convention **and** to the 108 Relay exceptions. **This unit is a PASS on the poster** — and
+it is the direct answer to the question the two board rows leave hanging together, now that categorizing is
+proven to post a real JE (item 127): *does a Relay-Fuel-Wallet positive credit post backwards?* **No. Direction
+never touches the sign.**
+
+**WHAT IS WRONG IS THE ONE ARTEFACT EVERY FUTURE READER WILL TRUST.** The comment is the canonical in-repo
+statement of the convention, it sits in the money path, and it **calls itself a "sign landmine"** — the
+landmine is the comment. Anyone who writes a new reader from it (a report, an export, a reconciliation, a
+balance projection) and follows `money-out = negative` will be **exactly backwards on the entire table**, and
+the resulting numbers will look plausible because they are the right magnitudes with the wrong signs.
+
+### ★ AND IT CORRECTS THE PARENT ROW'S CHARACTERISATION
+
+The row is titled *"TWO mutually exclusive sign conventions"* and reports **2,634 negative vs 108 positive**.
+Read across the whole table, the truth is different and more useful:
+
+- **The sign encodes DIRECTION**, coherently: out = +, in = −. That holds for **10,974 of 11,082** rows.
+- **The 108 Relay Fuel Wallet rows are the only real exception**, exactly as the row's origin test established
+  — one account, one contiguous window, one description shape. **That part of the row is correct and stands.**
+- **The parent row's 2,634-vs-108 framing counted only the `is_credit=true` half**, which makes a
+  direction-encoding convention look like a credits-are-negative rule with an outlier.
+
+**So the schema is not "two conventions with nothing recording which applies" as broadly as stated** — it is
+**one consistent direction-encoding convention, 108 rows that violate it, and an authoritative comment that
+describes the opposite of both.** The fix list is therefore different: the parent row's ask (record which
+convention applies per row) is still right for the 108, but **the higher-value, five-minute fix is correcting
+the comment**, because that is what the next reader will actually build on.
+
+**METHOD NOTE — why the parent row missed this and it is not a criticism.** It asked "how are credits
+stored?", got a clean answer, and stopped. **The half of a two-valued column you did not query cannot
+contradict you.** The general form: when a finding is about a convention, measure **every** value of the
+discriminating flag, not the one the symptom pointed at.
+
+## 129. ★★ BOARD ITEM PULLED — `LV-BANK-MATCH-SCORE-SATURATES-TO-MEMO` (P1): the arithmetic is CONFIRMED, the blast radius is BOUNDED (it cannot auto-write), and the auto-matcher has NEVER FIRED ONCE.
+
+**The row's root cause is right and I am not re-deriving it. Two things it does not say change what the fixer
+should do.**
+
+### 1 — ★ BOUNDED: the saturated score CANNOT cause a wrong auto-match. The gate does not use the score.
+
+`apps/backend/src/accounting/bank-recon/match.service.ts:677-680` computes `autoMatch` as a **separate
+boolean that never reads `match_score`**:
+```ts
+const autoMatch =
+  amountGapCents <= toleranceCents &&                    // hard gate: max($1.00, 0.01%)
+  dateGapDays <= AUTO_MATCH_DATE_WINDOW_DAYS &&          // 5
+  similarity >= AUTO_MATCH_MEMO_SIMILARITY_MIN;          // 0.8
+```
+and `:703` persists only `ranked.find((row) => row.auto_match && PERSISTABLE_MATCH_KINDS.has(...))`.
+
+**So the $853.80-gap candidate that ranks #1 can never be written as a match** — it fails the hard amount
+gate by 853×. **The defect is confined to the ORDERING of human-facing suggestions.**
+
+**That is a bound, not a dismissal, and the harm path is still money.** Item 127 proved that acting on this
+screen posts a real balanced JE into the live GL. So the chain is: saturated score → wrong candidate ranked
+#1 → operator trusts "Recommended matches" → real JE against the wrong ledger entry. **It requires a human
+click, which is exactly the distinction CC-1 needs: this is a ranking-quality fix, not an emergency stop on
+an automated writer.** Recording it because a P1 that reads as "the matcher writes wrong matches" would be
+triaged very differently from one that reads "the matcher recommends wrong matches."
+
+### 2 — ★ FILED (P2 · money · CC-1) — `LV-BANK-AUTOMATCH-NEVER-FIRED`
+
+**`banking.reconciliation_matches` holds ZERO rows, database-wide, all entities** — discriminator
+`visible_all = 0 == n_live_tup = 0`. **No auto-match has ever been written, for anyone, ever.** The
+persistence path at `:703-715` has never executed.
+
+**A structural reason is visible in the constants, and I am labelling what is proven vs. reasoned.**
+**PROVEN:** `AUTO_MATCH_MEMO_SIMILARITY_MIN = 0.8` (`:95`) is an **AND** term — a candidate matching the
+amount to the cent and the date to the day **still cannot auto-match** unless its memo is ≥80% similar.
+**REASONED (not asserted as the cause):** the two sides being compared are a bank feed string and a
+machine-generated ledger memo — *"Zelle payment to Dreamline Transit LLC for INV-418334"* versus
+*"Bank categorization cb271ba0-691a-48b5-ad07-3669bbe6c569 posting"* (item 127's actual JE memo). Those
+cannot plausibly reach 0.8 on any fuzzy metric. **A memo gate on machine-written memos is a gate on a field
+that carries no matching signal.**
+
+**Why 0 rows is a verdict here and not a false zero:** the discriminator is satisfied on the same relation,
+and the surrounding population is emphatically non-empty — **158 USMCA rows sit in `for_review`** and 5 are
+`matched` (by the manual path, which stamps `matched_journal_entry_id` directly). **The reconciliation
+subsystem is in use; only its automatic half has never produced a row.**
+
+**Together with the parent row this reads clearly:** the auto-matcher is gated so tightly it has never fired,
+while the human-facing ranking that operators actually use is scored by a formula whose majority weight
+(0.55) contributes **nothing** whenever no candidate is within $1.00 — which, given the same population, is
+almost always. **The strict half is unreachable and the loose half is misleading. Fixing one without the
+other just moves the problem.**
+
+## 130. ★★★ BOARD ITEM PULLED — `CLS-VOID-PREDICATE-DRIFT` is not a documentation problem. It is COSTING $1,766.66 ON THE USMCA A/P RIGHT NOW, and it ROOT-CAUSES the open `LV-AP-OPEN-INCLUDES-VOIDED`.
+
+The class row says ten spellings of "exclude the voided row" make the invariant unguardable, and warns the
+next agent not to attempt a broad sweep. **I did not attempt the sweep. I asked a narrower question — do the
+spellings actually DISAGREE on live data? — and they do, by a measurable amount, on one table.**
+
+### THE MEASUREMENT — USMCA TMS-native non-draft bills, same rows, three predicates
+
+| predicate | bills counted live | open A/P |
+|---|---|---|
+| `voided_at IS NULL` | **10** | **$2,223.66** |
+| `revoked_at IS NULL` | **14** | **$3,990.32** |
+| `status <> 'void'` | **14** | **$3,990.32** |
+
+**A $1,766.66 spread — a 79% overstatement — decided entirely by which spelling the reader happens to use.**
+
+### ★ AND $1,766.66 IS NOT A NEW NUMBER
+
+Battery item 34 filed `LV-AP-OPEN-INCLUDES-VOIDED` — *"the Open Bills KPI counts VOIDED bills — **$1,766.66**
+overstated."* **The figure reproduces to the cent.** That item recorded the symptom; this unit supplies the
+mechanism: **the KPI did not "forget" to filter. It filters correctly — on a DIFFERENT void marker than the
+one that was written.**
+
+### THE MECHANISM — `accounting.bills` has TWO disjoint void marker sets, and the writers and readers use opposite ones
+
+**What the writers do** — every bill-void writer in `apps/backend/src` sets `status='void'` + `revoked_at`:
+- `bills.service.ts:1791-1793` (`voidBill`) · `:1991-1993` · `bills-bulk.routes.ts:79-80`.
+- **`grep -rn "voided_at = now()"` over the backend returns vendor-credits, invoices, payments, amortization,
+  settlement and loan-payment services — and NOT bills. No backend path sets `accounting.bills.voided_at`.**
+
+**What prod actually contains** — 16 TMS-native bills:
+- **`voided_at` set: 4** · **`revoked_at` set: 0** · **`status='void'`: 0.**
+
+**So every voided bill in the database was voided by something that writes the marker no backend writer
+writes, and NO bill carries the markers every backend writer writes.** The four were stamped at the identical
+instant `2026-08-07T00:33:50.999Z` — one bulk operation, outside the service layer.
+
+**And each of the four still reads `status = 'unpaid'`.** The row is internally contradictory: voided by one
+column, unpaid by another. **To any reader using `status` or `revoked_at` — which is what the backend's own
+writers imply is canonical — these are four live unpaid liabilities.**
+
+### ★ FILED (P0 · money · CC-1) — `LV-BILL-VOID-MARKERS-ARE-DISJOINT`
+
+**This upgrades the class from "unguardable, needs a design decision" to "actively wrong, with a number."**
+The class row's advice — *don't build the broad guard yet* — remains correct and I am not contradicting it.
+**But it framed the drift as a future-guardability problem, and on `accounting.bills` it is a present
+mis-statement of the A/P balance.** One table, two marker sets, writers on one side and the voided rows on
+the other.
+
+**A note on precedence that makes this actionable rather than a coin-flip:** `docs/audit/void-predicate-map.json`
+already declares `voided_at > soft_deleted_at > deleted_at > revoked_at > archived_at > unapplied_at >
+is_active` — *"the strongest 'this did not happen' marker wins."* **By that map, the four bills ARE void and
+the 10/$2,223.66 reading is the correct one — which means the backend's writers are writing the weaker
+marker, and every KPI reading `revoked_at`/`status` is overstating A/P.** The map is the decision; the code
+has not been aligned to it.
+
+**Why this is P0 and not P1:** it is not a display bug. `accounting.bills` is the A/P subledger. A 79%
+overstatement of open payables misstates the balance sheet, the cash-flow forecast and any vendor aging built
+on it — and it does so silently, because both numbers are internally consistent and neither looks wrong on
+its own. **The only way to see it is to ask two spellings of the same question and compare, which is exactly
+what the class row predicted nobody would do.**
+
+## 131. ★★ CLASS DRAINED — the two-spelling comparison run across EVERY multi-marker financial table. **My own prior was WRONG: 6 of 8 are clean, and `accounting.bills` is the only money-consequential instance.**
+
+Item 130's board row ends with condition (4): *"repeat this two-spelling comparison on the other soft-deletable
+financial tables — `accounting.bills` was the first one checked and it disagreed, so the prior should be that
+others do too."* **I ran it rather than leaving it. The prior was wrong, and saying so is the finding.**
+
+**METHOD — the population is defined from prod, not from a guess.** `information_schema.columns` across
+`accounting`, `banking`, `driver_finance`, `factoring`, `fuel`, `maintenance`, `mdata`, selecting tables
+carrying **two or more** of `voided_at · soft_deleted_at · deleted_at · revoked_at · archived_at ·
+unapplied_at · deactivated_at`. A table with one marker cannot disagree with itself, so this is the complete
+at-risk set. **Eight tables.** Then, on each, `count(*) FILTER (WHERE (A IS NULL) <> (B IS NULL))` — rows
+where the two markers contradict each other.
+
+| table | markers | rows | A set | B set | **disagree** |
+|---|---|---|---|---|---|
+| **`accounting.bills`** | `voided_at` / `revoked_at` | 16,261 | 4 | 0 | **4** |
+| **`mdata.drivers`** | `archived_at` / `deactivated_at` | 187 | 10 | 69 | **67** |
+| `accounting.expenses` | `voided_at` / `deleted_at` | 27,072 | 0 | 0 | **0** |
+| `mdata.customers` | `archived_at` / `deactivated_at` | 2,701 | 4 | 4 | **0** |
+| `accounting.fixed_assets` | `voided_at` / `deleted_at` | 1 | 0 | 0 | **0** |
+| `accounting.prepaid_assets` | `voided_at` / `deleted_at` | 2 | 0 | 0 | **0** |
+| `accounting.lease_contract` | `voided_at` / `deleted_at` | 0 | 0 | 0 | **0** |
+| `accounting.revenue_contracts` | `voided_at` / `deleted_at` | 0 | 0 | 0 | **0** |
+
+### ★ THE CORRECTION TO MY OWN ROW
+
+**`accounting.expenses` is the one that settles it: 27,072 rows, two void markers, ZERO disagreement.** That
+is a far larger table than `bills` with the same structural risk and it is perfectly consistent. **So
+multi-marker tables are not generally drifting — `accounting.bills` is a specific defect, not the visible
+corner of a systemic one.** My "the prior should be that others do too" is withdrawn; item 130's P0 stands
+entirely on its own evidence and needs no class behind it.
+
+**`mdata.customers` is the second control:** 4 archived AND 4 deactivated, **zero disagreement** — the same
+two markers as `drivers`, on 2,701 rows, always written together. **The pattern is achievable; `drivers`
+simply does not do it.**
+
+### `mdata.drivers` — 67 disagreements, and 63 of them are CORRECT
+
+Decomposed: **4 archived-not-deactivated · 63 deactivated-not-archived · 6 both · 114 neither.**
+
+**The 63 are not a defect.** "Deactivated" (no longer driving) and "archived" (hidden from lists) are
+genuinely different states; a deactivated driver who is still visible is normal and expected. **Filing 63
+findings there would have been the false-positive trap the class row warns about**, and it is why this unit
+decomposes the XOR instead of reporting it.
+
+**The 4 in the other direction are a real, small instance** — `LV-DRIVER-ARCHIVED-NOT-DEACTIVATED`. All four
+are `TEST-DRIVER-1..4 SEED` (TRANSP), archived at the identical instant `2026-06-03T06:07:31.586Z` — one seed
+cleanup that archived without deactivating — and **all four still carry `status = 'Active'`**. Readers that
+filter on `deactivated_at IS NULL` alone therefore treat them as live drivers:
+`drivers/messages.service.ts:126`, `drivers/document-alerts.service.ts:156` and `:186`,
+`drivers/drivers-bulk.routes.ts:68`. **Only 7 lines in the whole backend pair the two markers on one
+predicate.** Consequence is spurious document alerts and messages aimed at archived test drivers — **an
+operational-noise defect, not money, on TRANSP, not USMCA.** Filed **low**, and deliberately not inflated.
+
+**WHAT THIS UNIT IS WORTH:** it converts `CLS-VOID-PREDICATE-DRIFT` from an open-ended worry into a bounded
+fact — **8 at-risk tables, 1 money defect, 1 low-severity instance, 6 clean** — and it retires the
+speculative half of my own P0's fix list so CC-1 does not go hunting a class that is not there.
+
+## 132. ★★ BOARD ITEM PULLED — `LV-TRK-AP-SPLIT-ACROSS-TWO-ACTIVE-ACCOUNTS`: CONFIRMED, its "deactivated" premise is WRONG, and the pattern generalises to USMCA.
+
+**The row's substance holds. Two things it says are not what prod says, and both make the defect worse.**
+
+### ★ CORRECTION 1 — the superseded TRK account is NOT deactivated. It is ACTIVE and POSTABLE.
+
+The row states *"$300.01 sits on a **DEACTIVATED** `ap_control` account"* and that the supersession
+*"deactivat[ed] `2000` at the same instant (superseded by DEACTIVATION, never deletion — WORM correctly
+applied)."*
+
+**Read live from `catalogs.accounts`: TRK's superseded `ap_control` target has `deactivated_at IS NULL` and
+`is_postable = true`.** What is inactive is the **role mapping** (`accounting.chart_of_accounts_roles.is_active
+= false`), **not the account.** Those are different objects and the distinction is the whole risk:
+
+- **An audit hunting `deactivated_at IS NOT NULL` finds nothing wrong** — the account looks perfectly healthy.
+- **Nothing prevents MORE postings landing there.** A deactivated account is closed; this one is open. The
+  row treats the $300.01 as a historical spill; it is a live target.
+
+### ★ CORRECTION 2 — it is not a TRK-only story. **USMCA has two of its own.**
+
+I ran the general form: every role with more than one mapping, showing what the **superseded** mappings still
+carry.
+
+| entity | role (superseded mapping) | account it still points at | acct deactivated? | postable? | GL lines | net |
+|---|---|---|---|---|---|---|
+| TRANSP | `cash_dip` | WF - General Operating 6103 | **no** | **yes** | **71** | **−$6,191.27** |
+| **USMCA** | **`damage_recovery`** | Truck Repairs & Maintenance | **no** | **yes** | **8** | **+$2,926.24** |
+| TRK | `ap_control` | Accounts Payable | **no** | **yes** | 2 | −$300.01 ← the filed row |
+| **USMCA** | **`driver_payroll_clearing`** | Driver Cash Advance | **no** | **yes** | 1 | **+$250.00** |
+| 13 further superseded mappings | — | — | mostly no | yes | **0** | $0 |
+
+**16 of 17 superseded role mappings point at an account that is still active and postable.** Only TRANSP's
+superseded `ap_control` / `ar_control` targets are genuinely deactivated — **and those two are the only ones
+carrying zero postings.** The correlation is the point: **where supersession was completed properly the
+account is closed and empty; where it was not, the account stays open and accumulates.**
+
+### ★ FILED (P1 · money · CC-1) — `LV-SUPERSEDED-ROLE-TARGETS-STAY-POSTABLE`
+
+**TRANSP `cash_dip` is the largest instance and nobody has filed it: 71 GL lines, net −$6,191.27, on a
+superseded mapping whose account remains open.** That is 35× the TRK amount that prompted the original row.
+
+**A DISCIPLINE NOTE I AM APPLYING TO MY OWN TABLE, because the numbers invite an overclaim.** *"8 GL lines on
+USMCA's superseded `damage_recovery` target"* does **not** mean eight damage-recovery postings went astray.
+The account is **Truck Repairs & Maintenance** — an ordinary expense account that legitimately receives
+postings from many paths; a superseded role pointer aimed at it says nothing about who wrote those lines.
+**Same for USMCA `driver_payroll_clearing` → "Driver Cash Advance", 1 line, $250.00: that is THIS BATTERY's
+own advance from item 118**, posted by `resolveAccountForCategory('cash_advance')` — **not by the superseded
+role.** I checked before counting it.
+
+**So the defect is precisely this and no more:** *a superseded role mapping is left pointing at an account
+that is still open for business.* **TRK's `ap_control` is the one case where that provably caused a
+mis-posting** (the account is literally A/P and the postings were A/P), and TRANSP's `cash_dip` is the one
+carrying the most money. **The other instances are exposure, not proven harm — and saying which is which is
+the difference between a work order and a scare.**
+
+### WHAT PASSES, and it is the reference implementation
+
+**USMCA's `ap_control` and `ar_control` are CLEAN** — exactly one mapping each, active, pointing at
+"Accounts Payable (A/P)" (18 GL lines) and "Accounts Receivable (A/R)" (5 lines), neither deactivated. **My
+entity's two most important control accounts have no split at all.** And **TRANSP's superseded `ap_control` /
+`ar_control` show the correct pattern end to end: mapping deactivated, account deactivated, zero postings.**
+The right behaviour already exists in this database — it simply was not applied to the other fifteen.
+
+## 133. ★★ BOARD ITEM PULLED — `LV-EXPENSE-VOID-UNREACHABLE`: CONFIRMED, the backend is FULLY READY (so the fix is UI-only), and it hands my own P0 its exact fix template.
+
+**Three results, and the third is worth more than the first two.**
+
+### 1 — CONFIRMED, with the numbers
+
+- **Zero frontend call sites.** `grep` for an expense-void caller across `apps/frontend/src` → **0**; there is
+  no `voidExpense` function anywhere in the app. The endpoint `POST /api/v1/expenses/:expenseId/void`
+  (`expenses.routes.ts:1045`) is genuinely unreachable from the product.
+- **27,072 expenses exist database-wide and NOT ONE has ever been voided** — `voided_at` set on **0**,
+  `deleted_at` set on **0** (measured in item 131's sweep, same run, discriminator satisfied).
+- **USMCA has 2 expenses, both `status='posted'` / `posting_status='posted'`** — both perfectly voidable by
+  the endpoint's own preconditions, and neither voidable by any human.
+
+### 2 — ★ SHARPENING: the backend is READY. This is a UI wire-up, not a flag flip.
+
+The route gates on `isVoidEnforcementEnabled` → **`VOID_ENFORCEMENT_ENABLED`**, and that flag has an
+**active enabled override for USMCA** (`default_enabled=false`, 3 entity overrides, USMCA among them). Same
+for `MONEY_CONTROL_VOID_REVERSAL_ENABLED` and `WO_VOID_ENABLED`.
+
+**So a caller hitting that endpoint today would pass the gate, pass the role check (Owner/Administrator/
+Accountant), find the expense, and post a reversing JE.** The row is a missing button — not a missing
+capability, and not a disabled feature. **That is the difference between a half-day of FE work and a
+finance-cluster decision, and the row does not currently say which it is.**
+
+### 3 — ★★ THE REFERENCE IMPLEMENTATION FOR MY OWN P0 IS THIS ENDPOINT
+
+Item 130 filed `LV-BILL-VOID-MARKERS-ARE-DISJOINT` (P0, $1,766.66): `accounting.bills` void writers set
+`status='void'` + `revoked_at` and **never** `voided_at`, while every voided bill on prod carries **only**
+`voided_at`. That row asked CC-1 to pick a canonical marker and align the writers.
+
+**It does not need to pick anything. The correct writer already exists, in the same codebase, one schema
+over** — `expenses.routes.ts` (~`:1090`):
+```sql
+UPDATE accounting.expenses
+   SET status='void',
+       posting_status = CASE WHEN posting_status='posted' THEN 'reversed' ELSE posting_status END,
+       …
+       voided_at=now(), voided_by_user_id=$3::uuid, void_reason=$4, updated_at=now()
+```
+**Every marker written together, in one statement: the state flag, the posting state, the timestamp, the
+actor and the reason.** Compare `bills.service.ts:1791-1793`, which writes `status`, `revoked_at`,
+`revoked_by_user_id`, `revoked_reason` — **and leaves `voided_at`, `voided_by_user_id`, `void_reason` NULL
+even though `accounting.bills` has all three columns.**
+
+**AND THIS EXPLAINS ITEM 131's CONTROL RESULT.** That sweep found `accounting.expenses` had **0
+disagreements across 27,072 rows** while `accounting.bills` had 4, and I used it to withdraw my own
+"everything must be drifting" prior. **Here is why expenses is clean: its writer writes all the markers at
+once.** The control and the cause line up — `accounting.expenses` is consistent *because* of this statement,
+not by luck.
+
+**So `LV-BILL-VOID-MARKERS-ARE-DISJOINT` converts from "decide a convention and align the writers" to "make
+`voidBill` write what `voidExpense` writes."** I have added that pointer to the P0's row. **A P0 whose fix is
+"copy the function 40 lines away" is a different piece of work from one whose fix begins with a design
+decision — and CC-1 should not spend an afternoon deciding something this codebase already decided.**
+
+**One caveat I am stating rather than glossing:** the expense void path has **never executed in production**
+(0 of 27,072). It is *correct by inspection*, not by live proof. **It is the right template and it is
+untested** — whoever ships the bill fix should exercise both.
+
+## 134. ★★★ THE REVENUE LATCH FIRES — first revenue recognition in USMCA history. `LV-TXN-004` is DEFINITIVELY a CALL-SITE bug, and I must correct my own item 112.
+
+**The largest open money P0 — the revenue latch that "never fires" — has been settled by executing it.**
+
+I called the production poster directly on two USMCA loads:
+
+| load | status | result |
+|---|---|---|
+| `L-20260802-0258` | `delivered` | `{posted:false, reason:"missing_delivery_evidence"}` |
+| **`LUSMCAFREIGHT-20260806-0001`** | `delivered_pending_docs` | **`{posted:true, journal_entry_id:"1fac8d19-…", event:"earn"}`** |
+
+### ★ IT WORKS. THE POSTER WAS NEVER THE BUG.
+
+JE `1fac8d19-668c-4f82-8d53-aba34592a2bb`, read back from prod:
+
+| seq | account | type | side | cents |
+|---|---|---|---|---|
+| 1 | **Unbilled Revenue** | Asset | **debit** | 100 |
+| 2 | **Freight / Line-haul Income** | Income | **credit** | 100 |
+
+**Net 0. Both lines USMCA.** And the economics are right for ASC 606 Event 1: on delivery you **recognise the
+income** and book the **unbilled receivable** as an asset — revenue earned, not yet invoiced.
+
+**`accounting.load_revenue_recognition_postings` for USMCA: 0 → 1.** Row `560dc6a1-…` carries `load_id`,
+`journal_entry_id`, `event='earn'`, `amount_cents`, `status='posted'`, `created_by_user_id`, and its own
+`voided_at` column. **USMCA journal entries 33 → 34**, exactly +1 — my attribution ledger from item 127 still
+reconciles.
+
+**SO `LV-TXN-004` / `LV-REVREC-NOT-FIRING` IS A CALL-SITE DEFECT, PROVEN BY EXECUTION.** Given a load with
+delivery evidence, `postLoadRevenueLatch()` posts a correct, balanced, entity-scoped, fully-linked entry.
+Nothing in the poster, the flag, the account mapping, the latch table or the period guard is broken.
+**Everything that remains is about who calls it and when** — which is exactly what item 40 diagnosed as a
+cross-connection read-your-own-writes bug at the call site. **That diagnosis is now confirmed from the other
+direction: the callee is exonerated.**
+
+### ★ THE EVIDENCE GATE IS ALSO CORRECT — the refusal is a PASS, not a failure
+
+`L-20260802-0258` is `delivered` and was refused with **`missing_delivery_evidence`**. That is the
+owner-approved Option B evidence gate (`poster.service.ts:253`, *"recognition is EVIDENCE-driven, never
+status-driven"*) doing its job: a load marked delivered without a POD **must not** recognise revenue.
+**Recognising it would be the defect.** Two loads, two different correct answers, from one call.
+
+### ★★ CORRECTION TO MY OWN ITEM 112 — I mis-quoted the scenario registry
+
+Item 112 wrote that `hop.revenue` *"declared JE **DR A/R / CR Unbilled Revenue**"*. **That is not what the
+registry says.** `scenario-registry.ts:182` reads:
+> `je: "DR Unbilled Revenue / CR Line-Haul Income"`
+
+**which is exactly what posted.** The registry's declared economics were RIGHT and my quotation of them was
+WRONG — I described Event 2 (billing: DR A/R / CR Unbilled Revenue) and attributed it to Event 1.
+
+**What this does and does not change.** It does **not** touch item 112's actual finding: `hop.revenue` and
+`hop.invoice` still run **byte-identical SQL** counting sent invoices, so the latch dot still measures
+something other than the latch, and `LV-SCENARIO-REVENUE-DOT-IS-FALSE-GREEN` stands entirely on that. **But
+the correction matters because I used the declared-JE mismatch as supporting colour, and it was not a
+mismatch.** Recorded plainly: the probe is wrong, the declared JE is right, and I confused the two.
+
+### A SECOND SELF-CHECK THAT CAME BACK CLEAN
+
+I noticed both GL lines carry **`source_transaction_type = NULL`** and `source_transaction_id = NULL`, unlike
+every other poster in this battery, and was ready to file "the revrec JE has no both-way linkage." **I
+checked first, and it was wrong:** `accounting.transaction_source_links` holds **3 rows** for this entry, and
+`load_revenue_recognition_postings` carries `load_id` + `journal_entry_id` directly. **The linkage is complete
+— it is simply carried by the latch table and TSL rather than by the posting columns.** Third would-be false
+positive killed by checking before filing.
+
+## 135. ★★★ THE GUARD IS GREEN AND BLIND — `verify-delivery-evidence-latch-wired` passes while the bulk path transitions loads to a revenue-recognition status with ZERO latch calls.
+
+Item 134 exonerated the revenue poster. **This unit finds the call site that never calls it, and the guard
+that certifies otherwise.**
+
+### THE UNLATCHED PATH — counted, not inferred
+
+`apps/backend/src/dispatch/loads-bulk.routes.ts`:
+- **`grep -c "postLoadRevenueLatch\|latchOnDeliveryEvidence"` → `0`.** No latch call, of either form.
+- Its `setStatusPayloadSchema` accepts **`transition: dispatchStatusSchema`**, and that enum
+  (`load-state-machine.ts:3-9`) **includes `delivered_pending_docs` AND `completed_docs_received`** — both
+  revenue-recognition trigger statuses (`poster.service.ts` `resolveEvent()`: `delivered_pending_docs` → earn,
+  `completed_docs_received` → bill).
+- It writes them at `:92` as **`SET status = $3::mdata.load_status_enum`** — a **bound parameter**.
+
+**So an operator bulk-marking loads delivered moves them into an earn status and no revenue is recognised.
+Silently — the status change succeeds and nothing reports that the latch did not run.**
+
+### ★ AND THE GUARD THAT EXISTS TO PREVENT THIS RETURNS GREEN
+
+```
+$ node scripts/verify-delivery-evidence-latch-wired.mjs
+verify-delivery-evidence-latch-wired OK — every delivery-evidence transition fires the revenue latch
+```
+
+**That sentence is false, and the reason is one regex.** `assignsEvidenceStatus()` (`:58-66`):
+```js
+const assign = new RegExp(`(?:=|\\?|:)\\s*["']${status}["']`);
+```
+**It only matches a STRING LITERAL assignment.** `loads-bulk.routes.ts` never contains the literal
+`"delivered_pending_docs"` — the status arrives as a runtime parameter and is bound into SQL. **The file is
+therefore invisible to the guard, and the guard reports full coverage.**
+
+**The sharpest detail: the guard's own header anticipated exactly this path and the implementation still
+misses it.** `:17` reads:
+> *"…a **bulk driver tool**, a telematics auto-complete) reproduces it. So this scans for the SHAPE:"*
+
+**The author named the bulk tool as the thing to catch, then wrote a detector that can only see literals.**
+The intent is right; the mechanism cannot express it.
+
+### ★ FILED (P0 · money · CC-1) — `LV-LATCH-GUARD-BLIND-TO-PARAMETERIZED-STATUS`
+
+**This is a fake-green under the hardline rule, and it is worse than having no guard**, because a green
+`verify-delivery-evidence-latch-wired` is precisely the artefact someone would cite to close
+`LV-REVREC-BULK-LATCH-GUARD-READY` or `LV-TXN-004`.
+
+**Everything needed to fix it now exists in one place, which is why this unit matters more than its size:**
+1. **The poster is proven working** — item 134, JE `1fac8d19`, balanced, correct ASC 606.
+2. **The evidence gate is proven correct** — it refused a POD-less load in the same run.
+3. **The unlatched call site is identified and counted** — `loads-bulk.routes.ts`, 0 latch calls.
+4. **The reason it was never caught is identified** — a literal-only regex against a parameterized write.
+
+**There is no diagnosis left to do on this P0. It is a wire-up plus a guard that can see parameters.**
+
+**A NOTE ON THE SIBLING GUARD, because this repo has already solved this once.** Battery item 42 records
+*"FIXED (CC-3 lane) — the false-green guard now catches the parameterized shape."* **A different guard in
+this same codebase was hardened against precisely this weakness, and this one was not.** The fix is not
+research; it is applying a pattern that already shipped here.
+
+**WHAT I AM NOT CLAIMING.** I did not exercise the bulk endpoint — it is an HTTP route with no exported
+service, and I will not fabricate a request path. **The count of latch calls (0), the status enum, the
+parameterized write and the guard's green output are all directly verified; the operator-facing consequence
+follows from those four facts rather than from a live click.** Stated so nobody upgrades it to an
+observation I did not make.
+
+## 136. ★★★ ROOT CAUSE FOUND — `LV-AUDIT-TRAIL-HAS-NO-ACTOR` (P0) is a **ONE-WORD GUC NAME MISMATCH**. The trigger reads `app.user_id`; the application sets `app.current_user_id`.
+
+**The open P0 has been reproduced repeatedly — 2 of 2,319,894 rows naming a user, and item 117 proved it
+still reproduces on writes made today. Nobody had root-caused it. It is one word.**
+
+### WHAT THE TRIGGER READS — `audit.tg_audit_row()`, read from the live function definition on prod
+
+```sql
+v_user_text := NULLIF(current_setting('app.user_id', true), '');
+…
+changed_by_user_id = v_changed_by_user,
+changed_by_role    = NULLIF(current_setting('app.user_role',  true), ''),
+session_id         = NULLIF(current_setting('app.session_id', true), '')
+```
+
+### WHAT THE APPLICATION SETS — every `set_config('app.*')` in the backend, counted, tests excluded
+
+| GUC | set_config call sites |
+|---|---|
+| `app.operating_company_id` | **858** |
+| `app.bypass_rls` | 18 |
+| **`app.user_role`** | **14** |
+| `app.current_operating_company_id` | 10 |
+| `app.active_company_id` | 3 |
+| `app.factoring_balance_as_of` | 2 |
+| **`app.current_user_id`** | **2** |
+| **`app.user_id`** | **0** |
+| **`app.session_id`** | **0** |
+
+**`app.user_id` is never set. Not once, anywhere in the backend.** And `auth/db.ts:232` — the shared
+`withCurrentUser()` wrapper that every authenticated write passes through — sets:
+```ts
+await client.query(`SELECT set_config('app.current_user_id', $1::text, true)`, [userUuid]);
+```
+
+**`app.current_user_id` versus `app.user_id`. The application and the audit trigger use different names for
+the same fact, so `current_setting('app.user_id', true)` returns empty on every write, the UUID regex fails,
+and `changed_by_user` stays NULL. 2,319,894 times.**
+
+`app.session_id` is likewise never set — which is why **zero** rows carry a session, exactly as the P0 reports.
+
+### Why `changed_by_role` is also NULL, and it is a different reason
+
+`app.user_role` **is** set — but only at **14** call sites, against **858** for `app.operating_company_id`.
+The money write paths this battery exercised are not among them: item 117's bill, bill-line and journal-entry
+rows all landed with `changed_by_role = NULL` while `app.operating_company_id` was set correctly on the same
+connection. **So the actor is a NAME mismatch and the role is a COVERAGE gap — two different fixes, and a
+patch that only renames the GUC will leave the role blank.**
+
+### ★ FILED (P0 · legal evidence · CC-1) — `LV-AUDIT-ACTOR-GUC-NAME-MISMATCH`
+
+**This converts the P0 from "the WORM trail records no actor — investigate" into a one-line change with a
+known blast radius**, and it explains every previously puzzling observation at once:
+- **why the app "knows who acted" yet the trigger does not** (item 117: the same transaction wrote
+  `bill_payments.created_by_user_id = e4117991-…` and an `accounting.bill.created` audit event) — those are
+  application-layer writes that never consult a GUC;
+- **why exactly 2 rows out of 2.3 million have an actor** — two writers somewhere must set `app.user_id`
+  directly, or wrote the column by another path;
+- **why a backfill was never going to work** — the identity was never captured, so there is nothing to
+  backfill from.
+
+**It is the same defect class as battery item 109/110** — *"handlers set a tenant GUC the RLS policies do not
+read"*. **A GUC is a contract between two files that never import each other, and nothing in TypeScript, in
+Postgres, or in CI checks that the setter and the reader agree on the string.** That is the durable lesson
+and the guard that must ship with the fix.
+
+**WHAT I VERIFIED AND WHAT I DID NOT.** Verified: the live function body on prod, the exact set_config
+inventory with counts, and `withCurrentUser`'s line. **Not verified: that renaming fixes it end to end** — I
+did not alter prod DDL and will not; the fix belongs to CC-1 and must be proven by a fresh write landing with
+a non-NULL `changed_by_user_id`. **The mismatch is proven; the repair is not, and I am not claiming it.**
+
+## 137. ★★ THE GUC SETTER/READER DIFF — run in full, both directions. **The orphaned-read class is EXACTLY TWO, and both ARE the P0.**
+
+Item 136's board row makes the full setter/reader diff condition (4). **I ran it rather than leaving it.**
+This is the same discipline as item 121's flag diff — and unlike that one, the class here is genuinely bounded
+rather than mostly false positives.
+
+**METHOD — both directions, and the reader side covers all three kinds of DB consumer.** Reads extracted with
+`regexp_matches(body, 'current_setting\(\s*''(app\.[a-z_]+)''')` over **`pg_proc`** (every non-system
+function), **`pg_policies`** (every RLS policy), and **`pg_views`** (all 50 views). Writes counted from
+`set_config('app.*')` in `apps/backend/src`, tests excluded.
+
+| GUC | read by functions | used by policies | used by views | **set by backend** |
+|---|---|---|---|---|
+| `app.operating_company_id` | — | **635** | 1 | **858** |
+| `app.bypass_rls` | 2 | **151** | — | 18 |
+| `app.current_operating_company_id` | — | 14 | — | 10 |
+| `app.current_user_id` | 2 | 3 | — | 2 |
+| `app.user_role` | 1 | 2 | — | 14 |
+| `app.factoring_balance_as_of` | — | — | **1** | 2 |
+| **`app.user_id`** | **1** | — | — | **0** ← orphaned READ |
+| **`app.session_id`** | **1** | — | — | **0** ← orphaned READ |
+| **`app.active_company_id`** | — | — | — | 3 ← orphaned WRITE |
+
+### ★ RESULT 1 — the orphaned-read class is EXACTLY TWO, and both are inside `audit.tg_audit_row()`
+
+**`app.user_id` and `app.session_id` are the only GUCs the database reads that the application never sets.**
+Both live in the audit trigger; both are item 136's P0. **So the root cause is not the first instance of a
+sprawling class — it is the whole class.** That is good news and worth stating plainly: **CC-1 fixing
+`LV-AUDIT-ACTOR-GUC-NAME-MISMATCH` closes the orphaned-read problem entirely**, with nothing else to hunt.
+
+**A check that came back clean and kept a false positive out.** `app.factoring_balance_as_of` has 2 writers
+and appeared in **no** function or policy — it looked orphaned. **It is read by a VIEW.** Had the sweep
+covered only `pg_proc` and `pg_policies` — the two obvious places — it would have been filed as a third
+instance. **The completeness of the reader side is what makes the "exactly two" trustworthy**, and it is the
+same lesson as item 128's half-a-column: *the place you did not look cannot contradict you.*
+
+### ★ RESULT 2 — FILED (low · CC-2) — `LV-ORPHANED-GUC-WRITE-ACTIVE-COMPANY-ID`
+
+**`app.active_company_id` is set at 3 backend sites and read by NOTHING** — no function, no policy, no view:
+- `auth/db.ts:172` — set to `LUCIA_BYPASS_SENTINEL_COMPANY_ID` on the lucia-bypass path
+- `integrations/relay-payments/relay-health.routes.ts:53` — set to the operating company
+- `auth/db.test.ts:50` — asserted in a test, **so a unit test enforces a GUC that nothing consumes**
+
+**Low severity, and the reason to file it is the NAME.** A GUC called `active_company_id`, set on the
+bypass-RLS path next to real tenant scoping, reads like a scoping control. **It is inert.** Anyone who
+believes setting it scopes something is wrong, and the test asserting it lends it false authority. **The
+danger is not what it does — it is what a future reader will assume it does.**
+
+### WHY THIS UNIT MATTERS BEYOND ITS SIZE
+
+Two P0-class defects in this codebase — item 136 and battery items 109/110 — are the same shape: **a GUC is a
+contract between a `.ts` file and a `.sql` object that never reference each other, and nothing in TypeScript,
+in Postgres, or in CI checks that the two spellings agree.** **This diff is that missing check, and it takes
+one query per direction.** It is now run, its result is bounded (**2 orphaned reads, 1 orphaned write, 6 GUCs
+correctly paired**), and the guard specified on item 136's row has a proven implementation shape rather than a
+hopeful description.
+
+## 138. ★★★ OWNER SCENARIO A — STOPPED AND FILED AS INSTRUCTED. **13 of the 31 specified driver fields have NOWHERE TO BE STORED**, and the execution instrument the directive requires does not exist in this session.
+
+**The directive: run the real new-driver wizard end to end on TRANSP, through the app, never Neon inserts,
+fill EVERY field, attach 3 documents — and *"If a required field or wizard step does NOT exist in the UI,
+STOP and file it as a gap."* I am stopping on both counts, and this is the gap.**
+
+### PART 1 — THE FIELD AUDIT: 13 GAPS, verified against prod schema and the two related tables
+
+Checked `mdata.drivers` (88 columns, read live), plus **`safety.driver_documents`** and
+**`safety.driver_qualification_files`** — the only driver-detail tables that exist — so a field is only
+called missing after checking all three.
+
+| specified field | column | verdict |
+|---|---|---|
+| DOB · CURP · INE clave elector | `date_of_birth` · `curp` · `ine_number` | ✅ |
+| MX address (street/colonia/city/state/CP) | `mx_address_line1/2` · `mx_city` · `mx_state` · `mx_postal_code` | ✅ |
+| US visa number + expiry | `visa_number` · `visa_expires_at` (+ `b1_visa_*`, `visa_type`, `has_b1_visa`) | ✅ |
+| Passport country + expiry + number | `passport_country` · `passport_expires_at` · `passport_number` | ✅ |
+| Federal licence number + expiry | `mexican_license_number` · `mexican_license_expiration` | ✅ |
+| Medical card expiry + status | `dot_medical_expires_at` · `medical_card_status_id` | ✅ |
+| **Place of birth** (Nuevo Laredo, Tamaulipas) | — | **❌ GAP** |
+| **Nationality** (Mexico) | — | **❌ GAP** |
+| **Gender** (Male) | — | **❌ GAP** |
+| **RFC** (MUGJ840525) | — | **❌ GAP** — CURP exists, RFC does not |
+| **Second phone** (home 867-104-0205 *and* cell +52 55 6433 0414) | `phone` — **ONE column** | **❌ GAP** |
+| **Visa ISSUE date** (2020-04-01) | expiry only | **❌ GAP** |
+| **Passport ISSUE date** (2023-09-15) | expiry only | **❌ GAP** |
+| **Federal licence ISSUE date** (2023-03-27) | expiry only | **❌ GAP** |
+| **Licence category** ("B INT / Type B) CARGA") | `cdl_class` is the **US CDL** class | **❌ GAP** |
+| **Medical exam date** (2026-01-23) | expiry only | **❌ GAP** |
+| **Medical result** (APTO) | — | **❌ GAP** |
+| **Medical examiner name** (Carlos Godoy Fontes) | — | **❌ GAP** |
+| **Medical exam number** (No. 3) | — | **❌ GAP** |
+| **Expediente** (1157881, on licence *and* medical) | — | **❌ GAP** |
+
+**A 14th, structural:** the legal name *"Jorge Pablo Guadalupe Muñoz Gonzalez"* is **two given names + two
+surnames**, and the schema has `first_name` / `last_name` only. **Mexican legal names do not fit two columns**
+— the paterno/materno split will be silently mangled, and every document (INE, CURP, licencia) prints the
+full form. Filed with the rest.
+
+**THE PATTERN, and it is what makes this a parity gap rather than 13 unrelated omissions:** **every
+credential stores its EXPIRY and not its ISSUE date** — visa, passport, federal licence, medical card, all
+four. A DQ file that cannot state when a credential was issued cannot show the qualification was valid on a
+past date, which is exactly what a DOT/FMCSA audit asks. **And the entire Mexican medical certificate
+(*Constancia de Aptitud Psicofísica*) — result, examiner, exam number, expediente — has no home at all**,
+while `safety.driver_documents` can only attach the scan (`doc_type`, `effective_date`, `expiry_date`,
+`r2_key`). **The image can be filed; the facts on it cannot be queried.**
+
+### PART 2 — WHY I DID NOT EXECUTE THE WIZARD, stated plainly rather than worked around
+
+The directive requires the run to go **through the app** and forbids **Neon inserts** and faking. **I have
+neither instrument.** This session has **no browser** and **no authenticated session** — verified earlier
+today: every write route is `requireAuth` behind the Lucia `ih35_session` cookie, and an unauthenticated
+write returns **HTTP 401**. My only write capability is calling production **services** directly via `tsx`
+(items 114-135), and that **cannot traverse a wizard, cannot exercise a UI step, and cannot upload a file to
+R2** — so it cannot satisfy "through the app" or attach `INE_Jorge_Pablo_Munoz.jpeg`,
+`Medical_Exam-Jorge.jpeg` or the licencia PDF.
+
+**The three ways I could have produced a driver row are all ruled out by the directive itself:** a Neon
+insert (*"never Neon inserts"*), a direct service call (not *"through the app"*, and it would skip the wizard
+steps the proof requires), or minting a session cookie (**prohibited outright — §1.6 access controls**).
+**Creating the row by any of those and reporting the wizard as run would be exactly the "do not fake" this
+directive forbids.**
+
+**What unblocks it:** a browser session, or an `ih35_session` cookie supplied by the owner. **Scenario B has
+the same constraint** — it is a larger multi-step build (2 loads, 4 stops, 5 fuel purchases, 3 DEF expenses,
+tarp pay, a deduction, and a settlement tying to $1,987.95 / $2,415.11) and every step needs the same access.
+
+**I am not deferring the gap work.** The 13 field gaps above are filed now, in full, because they are
+determinable from the schema and they block Scenario A **even with a browser** — the wizard cannot capture
+what the database cannot hold.
+
+## 139. ★★ OWNER SCENARIO B — the capability audit I CAN do while access is blocked. **Two gaps that stop it tying to the cent, and a CONSTITUTION correction.**
+
+Scenario B cannot be executed for the same access reason as Scenario A. **But its arithmetic makes specific
+demands on the schema, and those are checkable now** — so the blocked half is reported and the determinable
+half is delivered rather than deferred.
+
+### ★ GAP 1 (P1) — `LV-NO-TARP-ACCESSORIAL-PAY-TYPE`: $100.00 of the driver's $1,987.95 cannot be typed
+
+Scenario B requires **Tarp: Enlonada 25.00 + Desenlonada 25.00** on each of two loads — **$100.00 of
+additional driver pay**, and an explicit line on the printed settlement.
+
+**`catalogs.driver_pay_types` contains exactly TWO codes, per entity** (6 rows = 2 codes × 3 entities):
+
+| code | display_name |
+|---|---|
+| `EXTRA-STOP` | Extra stop pay |
+| `TONU` | TONU |
+
+**There is no tarp, enlonada/desenlonada, or general accessorial pay type.** Tarping is not an exotic
+accessorial — it is standard flatbed pay, and both of Scenario B's loads are flatbeds (`FB-56710`,
+`FB-56704`). **The catalogue that exists to name driver pay reasons cannot name the one this settlement
+needs.**
+
+`driver_finance.settlement_lines.line_type` **does** admit `extra_pay` (CHECK list: `earnings`, `extra_pay`,
+`reimbursement`, `deduction`, `advance_recovery`, `escrow`, `abandonment_chargeback`, `team_split_primary`,
+`team_split_secondary`, `auto_deduction`, `dispute_adjustment`, `escrow_contribution`). **So the $100 can be
+carried as an untyped `extra_pay` line with free-text `description`** — which ties the total but leaves the
+reason unqueryable: no report can ever answer *"how much did we pay in tarp pay this quarter?"* **Ties to the
+cent, fails as data.**
+
+### ★ GAP 2 (P1) — `LV-PAY-RATE-CANNOT-SPLIT-LOADED-VS-EMPTY`
+
+Scenario B pays **$0.50/mi loaded AND empty** — 3,411.1 loaded + 384.8 empty. **`driver_finance.driver_pay_rates`
+carries a single `rate_per_mile_cents`**, with `basis_type` CHECK-limited to `per_mile_pay` / `per_load_pay`
+and `miles_basis` CHECK-limited to **`short_miles` / `practical_miles`**.
+
+**There is no loaded-vs-empty dimension anywhere in the rate.** This scenario happens to survive because both
+rates are $0.50 — **but the schema cannot express the far more common arrangement where empty miles pay less
+than loaded**, which is the McLeod/Alvys norm and the thing a driver contract argues about. **Passing this
+scenario would prove nothing about the general case, and I am saying so rather than letting a green tick
+imply it.** (`mdata.loads` does carry `loaded_miles`, `miles_deadhead`, `deadhead_miles_to_pickup` and
+`empty_or_loaded_at_cruce`, so the *mileage* is modelled — it is the **rate** that cannot differentiate.)
+
+### ★★ CONSTITUTION CORRECTION — `CLAUDE.md` §4 is WRONG about `settlement_lines`
+
+§4 states: *"driver earnings = **`driver_finance.settlement_lines`** (→ `driver_settlements`; **no
+`load_id`**)."*
+
+**Read live from prod, `settlement_lines` HAS a `load_id` column** — it is in the column list alongside
+`settlement_id`, `source_driver_bill_id`, `source_table`, `source_id`, `source_reference_id`,
+`posting_account_id` and `split_partner_driver_id`.
+
+**This matters more than a typo.** §4 is the schema-landmine section every agent reads before writing SQL,
+and it exists precisely because *"services were written against schema names that don't exist."* **Here it
+does the opposite — it tells an agent a real column is absent**, which is how a settlement→load join gets
+built through `source_reference_id` or a driver-bill hop when a direct FK was available all along. **And
+Scenario B's proof requirement is exactly that join: "both-way linkage settlement↔loads↔driver↔fuel."** The
+correction is filed so the next agent building it does not route around a column that exists.
+
+**Also worth recording for whoever builds Scenario B:** `settlement_lines` is **empty database-wide** (item
+123) — so this `load_id` has never carried a value, and the linkage it enables is **untested**, not merely
+unused.
+
+## 140. ★★★ BROWSER UNBLOCKED — Scenario A verified IN THE PRODUCT. It is **not a wizard**, and 3 fields the DATABASE ALREADY HAS are **not exposed by the UI at all**.
+
+**The owner opened an MCP-connected Chrome. Session is live and authenticated as `tioperfumes07@gmail.com`;
+entity switched USMCA → `IH 35 Transportation` (TRANSP). Scenario A is no longer blocked on access — it is
+blocked on the form.**
+
+### THE COMPLETE `+ Create Driver` FIELD INVENTORY — read off the live panel, TRANSP
+
+| section | fields |
+|---|---|
+| **main (always visible)** | Operating Company · First Name · Last Name · Email · CDL # · CDL Expires · Hire Date · DOT Medical Expires · CDL State · Country · Phone (10 digits) · CDL Class · Status · Pay Basis |
+| **Mexican Identity (optional) ▼** | INE Number · CURP · MX Address Line 1 · MX Address Line 2 · MX City · MX Postal Code · MX State |
+| **Visa & Emergency Contact (optional) ▼** | Visa Type · Visa Number · Visa Expires · Passport Number · Passport Expires · Emergency Contact Name · Relationship · Emergency Phone Primary · Emergency Phone Alternate · Emergency Contact Address · Emergency Contact Notes |
+
+**32 fields, one flat panel, two collapsible sections, one Save button.**
+
+### ★ FINDING 1 — IT IS NOT A WIZARD. The directive's steps do not exist.
+
+The directive asks to *"run the real new-driver wizard end to end"* and confirm *"every wizard step
+(identity/license/medical/drug-test/contact/address/documents) was completed."* **There are no steps.**
+`+ Create Driver` is a single panel; there is **no drug-test step and no document/attachment control
+anywhere in it**. The three files (`INE_…jpeg`, `Medical_Exam-Jorge.jpeg`, the licencia PDF) **cannot be
+attached during creation** — so `docs.file_links` cannot be written by this flow, and the directive's proof
+requirement (*"docs.file_links rows (both-way, entity_type=driver) for all 3 files"*) **cannot be satisfied
+from the create path.**
+
+### ★★ FINDING 2 — THE NEW ONE: three columns EXIST in the database and the form does not offer them
+
+My earlier schema audit (item 138) predicted 13 missing fields. **The live form confirms all 13 — and adds a
+different, worse category:**
+
+| field | database | Create Driver UI |
+|---|---|---|
+| **Licencia Federal number** (`TAMP240052`) | **`mdata.drivers.mexican_license_number` EXISTS** | **ABSENT** |
+| **Licencia Federal expiry** (2027-03-27) | **`mexican_license_expiration` EXISTS** | **ABSENT** |
+| **Passport country** (Mexico) | **`passport_country` EXISTS** | **ABSENT** (number + expiry are there) |
+
+**The panel offers CDL #, CDL Expires, CDL State and CDL Class — the US credential — and offers NO field for
+the Mexican federal licence, which is the ONLY licence this driver holds.** The column is right there in the
+table. **This is not a schema gap to migrate; it is a form that does not surface what the schema already
+supports** — a strictly cheaper fix, and a strictly more embarrassing omission, for a carrier whose drivers
+are Mexican B1 contractors.
+
+### CONFIRMED ABSENT FROM BOTH SCHEMA AND UI (the item-138 thirteen, now verified in the product)
+
+place of birth · nationality · gender · **RFC** · driver's second phone (the panel has ONE "Phone (10
+digits)"; the two Emergency Phone fields belong to the *contact*, not the driver) · visa **issue** date ·
+passport **issue** date · licence **issue** date · licence **categoría** · medical **exam date** · medical
+**result (APTO)** · **examiner** · **exam number** · **expediente**.
+
+**The issue-date pattern is now visible on screen:** the form shows *Visa Expires*, *Passport Expires*,
+*CDL Expires*, *DOT Medical Expires* — **four expiry fields and not one issue date.**
+
+### WHAT I DID NOT DO, AND WHY
+
+**I did not save a partial driver.** The directive says *"Fill EVERY field"* and *"Do not skip, do not
+fake"* — creating `Jorge Pablo Guadalupe Muñoz Gonzalez` with his federal licence, RFC, medical detail and
+three documents silently dropped would produce a record that **looks** complete on the Drivers list and is
+missing exactly the evidence a DOT audit asks for. **Under the directive's own rule — *"If a required field
+or wizard step does NOT exist in the UI, STOP and file it as a gap"* — this is the stop.** The gap is filed;
+the row is not created.
+
+## 141. ★★★ SCENARIO A EXECUTED THROUGH THE APP — driver created on TRANSP. **And the save proved a 4th hidden column: DATE OF BIRTH silently vanished.**
+
+**Owner authorised the test creation. Run end to end in the live product** (MCP Chrome, authenticated
+`tioperfumes07@gmail.com`, entity **TRANSP**), every field the form offers filled from the INE and the
+Constancia de Aptitud Psicofísica.
+
+**RESULT — `DRIVER CREATED SUCCESSFULLY`, driver count 87 → 88.**
+
+| | |
+|---|---|
+| **driver id** | **`49427973-e93e-4ea7-a2eb-eb9eefa7f331`** |
+| entity | `91e0bf0a-…` **TRANSP** · `status Probation` |
+| created_by | `e4117991-…` (owner) · `2026-08-08T01:10:08.606Z` |
+
+**PERSISTED, verified by reading the row back off prod:** `first_name` *Jorge Pablo Guadalupe* ·
+`last_name` *Muñoz Gonzalez* · `curp` **MUGJ840525HTSXNR06** · `ine_number` **MZGNJR84052528H400** ·
+`mx_address_line1` *Gonzalez Ortega 1362* · `mx_address_line2` *Colonia Madero* · `mx_city` *Nuevo Laredo* ·
+`mx_postal_code` **88270** · `mx_state` **TAM** · `phone` **+528671040205** · `visa_type` **B1** ·
+`visa_number` **TEST-124567890** · `visa_expires_at` **2028-04-01** · `passport_expires_at` **2026-09-15** ·
+`dot_medical_expires_at` **2028-01-23**.
+
+### ★★ THE SAVE PROVED A FOURTH HIDDEN COLUMN — and it is the worst one
+
+Item 140 found three columns the DB has and the form hides. **The persisted row proves a fourth:**
+
+| supplied by the owner | column | stored |
+|---|---|---|
+| **DOB 25/05/1984** (on the INE, in the CURP) | **`date_of_birth` EXISTS** | **NULL** |
+| Licencia Federal `TAMP240052` | `mexican_license_number` EXISTS | **NULL** |
+| Licence expiry 2027-03-27 | `mexican_license_expiration` EXISTS | **NULL** |
+| Passport country **Mexico** | `passport_country` EXISTS | **NULL** |
+
+**`date_of_birth` is not an edge case.** It is on the INE, it is encoded in the CURP the form *did* accept
+(`MUGJ**840525**HTSXNR06`), the owner stated it explicitly — **and the Create Driver panel has no input for
+it, so it saved as NULL with no warning.** A driver-qualification file without a date of birth cannot
+support an MVR order, a Clearinghouse query, or a DOT age check. **Four columns, all present in the schema,
+all unreachable from the create screen.**
+
+### AUDIT + LINKAGE — what the save actually wrote
+
+**`audit.audit_events` — 5 events, all naming the owner as actor:**
+`mdata.drivers.created` (BT-1-PHASE1-AUDIT) · `mdata.driver.linked_to_user` (BT-3-DRIVER-ONBOARDING) ·
+`identity.driver_invite.created` (BT-3-DRIVER-ONBOARDING) · **2 × `catalogs.accounts.created`
+(DRIVER-SUBACCOUNT-AUTO-PROVISION)** — the flow auto-provisioned two GL sub-accounts for the driver
+(`6cdc9f01-…`, `49ea76c2-…`). **That is real, correct wiring and it happened without being asked for.**
+
+**`audit.row_changes` — 1 row, `drivers INSERT`, `changed_by_user_id = NULL`, `changed_by_role = NULL`.**
+**A third live reproduction of the P0** — and the sharpest yet: **five `audit_events` rows name
+`e4117991-…` in the same transaction while the WORM row-change names nobody.** Exactly the
+`app.current_user_id` vs `app.user_id` mismatch from item 136 — the application layer knows; the trigger
+does not.
+
+**`docs.file_links` for this driver = 0.** As predicted in item 140: there is no upload control in the
+create flow, so the three documents could not be attached. **The directive's proof requirement — file_links
+both-way for all 3 files — remains unmet, and not for want of trying.**
+
+### ★ ONE SIDE EFFECT THE OWNER SHOULD KNOW ABOUT
+
+Saving **sent a real WhatsApp invite to +528671040205** ("Invite expires in 72 hours") with a live
+tokenised link. **The create flow dispatches an outbound message to the driver's phone with no separate
+confirmation step** — the Save button is also a Send button. Harmless here (it is the owner's own number,
+and he authorised the test), but **anyone creating a placeholder or test driver with a real number in it
+will message that person.** Filed.
+
+## 142. ★★★ P0 — THE DRIVER PROFILE PAGE CRASHES. Every TRANSP driver I opened, including a pre-existing one. **This is why the documents cannot be uploaded.**
+
+**Owner asked me to upload the three files. I went to the driver's profile to find the upload control. The
+page does not render.**
+
+```
+TypeError: Cannot read properties of undefined (reading 'replace')
+    at G (https://app.ih35dispatch.com/assets/DriverDetail-0aa-jyOe.js:2:42448)
+    at ho (index-B3jYsbw4.js:9:47543)  …
+```
+Captured from the app's own **"Technical details"** panel on `/drivers/49427973-…`.
+
+### IT IS NOT MY NEW DRIVER — it reproduces on a pre-existing one
+
+| driver | provenance | result |
+|---|---|---|
+| `49427973-e93e-4ea7-a2eb-eb9eefa7f331` (Muñoz Gonzalez) | created by me through the product today | **"Something went wrong"** |
+| **`de07ce6f-5948-4745-86ab-de705aa560d0`** (Isaac Carballo Roque) | **pre-existing TRANSP driver, `cdl_number = VER108245`, phone set** | **"Something went wrong"** |
+
+**2 of 2 TRANSP drivers crash the profile page.** The second one matters most: it is **not** a record I made
+and it **has** a CDL number, so the crash is not an artefact of the NULLs item 141 found. **The driver
+profile is broken for TRANSP drivers generally.**
+
+**A DATA CLUE, not a diagnosis:** `date_of_birth` is **NULL on 96 of 96 TRANSP drivers** — nobody has one,
+because (item 141) the create form has no input for it. `.replace()` on `undefined` is exactly what
+formatting a missing string field looks like. **I am not asserting DOB is the cause** — the minified frame
+`G` could be formatting any one of several fields — **but a page that formats a column the create form can
+never populate is a coherent story, and DOB is the only field that is 100% NULL fleet-wide.**
+
+### ★ WHAT IT BLOCKS — this is the real cost
+
+- **The three documents cannot be uploaded.** The create panel has no upload control (item 140); the
+  profile page — the only other place it could live — **will not render.** `docs.file_links` for the new
+  driver stays **0**. The owner's Scenario A proof requirement is blocked by a crash, not by a missing
+  feature.
+- **The entire driver-qualification file is unreachable** for every TRANSP driver: no licence detail, no
+  medical, no documents, no drug-test, no permits — none of it can be opened.
+- **The drivers LIST works fine** (88 rows, KPIs, filters, search). **Only the detail page dies** — so the
+  fleet looks healthy from the index and is unusable one click deeper.
+
+### ★ AND A PASS, verified in the same run — entity scoping is CORRECT
+
+Loading a **USMCA** driver id (`40823a77-…`) while the session is in **TRANSP** returns a clean
+**"Driver not found."** — not a crash, not another entity's data. **The RLS/entity boundary holds on this
+route**, which is worth recording precisely because everything else about it is broken.
+
+### SCOPE I DID NOT ESTABLISH
+
+I did **not** determine whether the crash is TRANSP-only or global — the entity switch to re-test a USMCA
+driver was not completed, so **whether USMCA driver profiles render is UNVERIFIED.** Two TRANSP drivers, two
+crashes, one captured stack; that is what is proven. **The fixer should establish the entity dimension
+first** — if it reproduces on USMCA too it is a single frontend bug, and if it does not, the trigger is in
+TRANSP's data.
+
+## 143. ★★★ ALL THREE DOCUMENTS UPLOADED THROUGH THE APP — the FIRST file links in the system's history. Plus a P1: none of them is hashed.
+
+**Owner-authorised. Uploaded through the real product** (Safety → Driver Files → qualification profile →
+Documents → `+ Upload`), all three to driver `49427973-…` on **TRANSP**.
+
+### ★ CORRECTION TO MY OWN ITEM 142 — the upload path EXISTS; it is just not where I looked
+
+I reported uploads blocked by the `DriverDetail` crash. **That was true of that page and wrong as a
+conclusion.** There is a **second, working driver profile** at
+`/safety/driver-files` → *Qualification profiles* → **Open profile**, and it renders fine and carries the
+upload control. **The DriverDetail crash (item 142) is unchanged and still P0** — but it does not block
+documents. **I over-generalised from one broken route; recording it because the fix priority changes.**
+
+### THE PROOF — read back off prod
+
+**`docs.files` (3 rows, all `operating_company_id = 91e0bf0a-…` TRANSP, all `uploader = e4117991-…`):**
+
+| file id | filename | mime | bytes | in R2 | expiry |
+|---|---|---|---|---|---|
+| `7f304725-b8c8-4b03-88e6-1371e522d46c` | `INE Jorge Pablo Munoz.jpeg` | image/jpeg | 1,097,850 | ✅ | — |
+| `17d9064d-27e2-4935-878a-ac89aacbcff3` | `Medical Exam-Jorge.jpeg` | image/jpeg | 147,894 | ✅ | **2028-01-23** |
+| `b0cb79aa-4296-4c0a-9f4e-e1d555dc1b93` | `Licencia Federal Jorge Munoz-Constancia-MUGJ840525HTSXNR06.pdf` | application/pdf | 323,788 | ✅ | — |
+
+**`docs.file_links` — 3 rows, both-way linkage complete:**
+`08052947-…` · `4b5915fb-…` · `5fe9a474-…` — each `entity_type='driver'`,
+`entity_id='49427973-e93e-4ea7-a2eb-eb9eefa7f331'`, `created_by_user_id='e4117991-…'`, `deleted_at IS NULL`.
+
+**★ THESE ARE THE FIRST THREE ROWS THE TABLE HAS EVER HELD.** `docs.file_links` total = **3**,
+`n_live_tup = 3`. Battery item 105 recorded the write path as *"fully wired, merely never exercised."*
+**It is now exercised, and it works.** `hop.pod_bol`'s blocker was never the code.
+
+### ★ FILED (P1 · legal evidence) — `LV-DOCS-FILES-NOT-HASHED`
+
+**`sha256_hash` is NULL on all three files.** The column exists on `docs.files`; nothing populates it. **A
+document store for driver-qualification and legal evidence with no content hash cannot prove a file was not
+swapped after upload** — which is the entire point of holding the scan rather than the data. R2 keys and
+versioning are there; the integrity proof is not.
+
+### ★ FILED (P1 · parity) — `LV-DOC-CATEGORIES-MISSING-IDENTITY-AND-MX-LICENCE`
+
+The category picker offers **exactly 10**: Accident Report · Anti-Doping Test Result · **Commercial Driver
+License (CDL)** · DOT Inspection Report · DOT Medical Card · DVIR · Legal Document · Other · Signed
+Acknowledgment · Tax Form.
+
+**There is no identity document, no passport, no visa, and no Mexican federal licence category.** The INE
+and the Licencia Federal **both had to be filed under "Other"** — two unlike documents in the same bucket,
+neither queryable by type. The only licence category is the **US CDL**, which this driver does not hold.
+**I put the full identification in each Description rather than mislabel them as CDLs** — the correct
+choice, and it is exactly the kind of workaround that makes a DQF unauditable at scale.
+
+**The medical card, by contrast, worked properly:** category `DOT Medical Card`, and the form **enforced
+`Expiration Date (required)`** — the one category that behaves like a compliance document does.
+
+### AN OBSERVATION FOR THE FIXER — two document tables, one written
+
+**`safety.driver_documents` for this driver = 0 rows**, while `docs.file_links` = 3. The upload path writes
+`docs.files` + `docs.file_links`; **`safety.driver_documents` (which has `doc_type`, `effective_date`,
+`expiry_date`, `r2_key`, `voided_at`) is untouched.** The DQF page reads the `docs.*` pair correctly, so
+nothing is broken today — **but two schemas describe the same fact and only one is populated**, which is the
+`RETIRE → CANONICAL` shape from LAW §5. Worth a ruling before something starts reading the empty one.
+
+---
+
+# CC-3 VERIFY — PR #4753 (ACCT-F177) + PR #4744 (ACCT-F174) — 2026-08-08 04:20 CDT
+
+**Seat:** CC-3 = VER (verify only; did not build, did not merge — maker ≠ checker).
+**Prod SHA at time of verdict:** `34d8da7` (`/api/v1/healthz/shallow`, re-curled — **not** `6020040`).
+**Neon:** project `tiny-field-89581227`, prod branch `br-fancy-credit-akjnd07a`, db `neondb`,
+RLS-bypassed via `set_config('app.bypass_rls','lucia',true)`.
+**Isolated proof branch:** `br-orange-hat-akbo91eg` (`cc3-verify-4753-4744`), forked from prod — both
+migrations were applied THERE, never to prod.
+
+## TIMING FACT (not a defect — recorded so the board is not misled)
+
+Both PRs were **merged by Desktop at 2026-08-08T04:12Z**, i.e. **before** this PASS was posted
+(`#4753`→`cf748b44b`, `#4744`→`2885e447e`, `#4766`→`1b85ad8b8`). **Prod was still `34d8da7` at verdict
+time, so neither migration had run yet** — this verification was therefore still pre-deploy on the
+thing that matters (the migration), and its conclusion is PASS. Recorded only because the queue in
+`STATUS-NOW.md` said "Desktop merge after CC-3 PASS".
+
+---
+
+## VERDICT: **PASS** — #4753 (ACCT-F177, WORM actor attribution)
+
+**PR head** `8cffb555`. Single migration `202612340000_worm_audit_actor_attribution.sql` +
+one db test. Migration number is above main's prior max (`202612320000`); no collision.
+
+**Defect reproduced on PROD (the card's numbers are real):**
+
+| measure | prod value |
+|---|---|
+| `audit.row_changes` total | **2,327,765** |
+| ... with `changed_by_user_id` | **2** |
+| ... with `changed_by_role` | **0** |
+| written in last 7 days | **266,995** |
+| ... of those naming an actor | **0** |
+
+**Root cause confirmed by reading the DEPLOYED function body, not inferred** — `pg_get_functiondef`
+on prod shows `audit.tg_audit_row` resolving the actor with `current_setting('app.user_id', true)`
+only. Live introspection: `reads_current_user_id = false`, `reads_legacy_user_id = true`,
+**39 triggers** on the one function, `SECURITY DEFINER`, owner `neondb_owner`.
+
+**The GUC census confirms the app never sets that key** (`set_config` sites in `apps/backend/src`):
+`app.user_id` = **0** · `app.current_user_id` = 7 · `app.user_role` = 14 · `app.operating_company_id` = 1006.
+`withCurrentUser` (`apps/backend/src/auth/db.ts:211-242`) does `BEGIN` → `SET LOCAL ROLE` →
+`set_config('app.current_user_id', …, true)` → `fn()` → `COMMIT`, so the GUC is set **in the same
+transaction as the writes**; 610 files route through it.
+
+**LIVE PROOF on the isolated branch — a user write now names WHO:**
+
+```
+UPDATE mdata.customers (id 3e066edd-…, USMCA) with app.current_user_id set, app.user_role NOT set
+→ audit.row_changes: op=UPDATE
+  changed_by_user_id = d62f82f6-b5ce-47a5-bd4e-a97a90cc6775   ← NAMED
+  changed_by_role    = Administrator                          ← NAMED (via identity.users fallback)
+  tenant_id          = 5c854333-…  (USMCA, correct)
+```
+
+**Completeness discriminator on the SAME row:** that row's earlier `INSERT` (2026-08-02, pre-migration)
+carries `changed_by_user_id = NULL`, `changed_by_role = NULL`. Before/after on one row — not an empty set.
+
+**Two risks I checked rather than assumed, both CLEAR:**
+
+1. **`identity.users` has `FORCE ROW LEVEL SECURITY` + 3 policies**, and FORCE binds even the table
+   owner — so the migration's stated reason ("SECURITY DEFINER owned by neondb_owner, so it reads
+   regardless of RLS") is **not** why it works. It works because **`neondb_owner` has `rolbypassrls = true`**,
+   which outranks FORCE. Empirically settled: the role resolved to `Administrator` with `app.user_role`
+   unset. The comment's reasoning is imprecise; the behaviour is correct. Not a blocker.
+2. **The replacement drops `audit` from `search_path`** (deployed: `pg_catalog, public, audit`; new:
+   `pg_catalog, public`). Safe — every table reference in the body is schema-qualified
+   (`audit.row_changes`, `identity.users`), and the branch run inserted audit rows successfully.
+
+**No column-list regression:** new INSERT column list is byte-identical to the deployed one (10 columns,
+same order). `audit.row_changes.action` is nullable with no default, so omitting it is safe.
+**No backfill** of the 2.3M NULL rows — correct; the actor was never captured and inventing it would be
+fabricated evidence.
+
+---
+
+## VERDICT: **PASS** — #4744 (ACCT-F174, void state authoritative)
+
+**PR head** `acf13360`. Migration `202612330000_void_state_authoritative_bills_invoices.sql` + one db test.
+
+**Defect reproduced on PROD, both directions, exactly as the card states:**
+
+| table | total | `voided_at` set | `revoked_at` set | `status='void'` | violation |
+|---|---|---|---|---|---|
+| `accounting.bills` | **16,261** | 4 | **0** | **0** | **4** (marker set, status not) |
+| `accounting.invoices` | **11,987** | 5 | — | 6 | **1** (status set, marker not) |
+
+The invoice is **`INV-2026-00005`, `total_cents = 245000` ($2,450.00), `voided_at = NULL`, `status = void`** —
+the row behind the A/R aging overstatement. Both defects are live and they are **different** defects, so a
+one-directional constraint would have passed half of them. `revoked_at = 0` and `status='void' = 0` on bills
+independently corroborate the card's strongest claim: **neither canonical void code path has ever executed in
+production** — the writer was migration `202612230000` §2.
+
+**THE RISK THAT ACTUALLY MATTERED — would `VALIDATE CONSTRAINT` abort the prod deploy?** §4 runs
+`VALIDATE` on 16,261 + 11,987 existing rows; any row the §1/§2 repairs miss aborts the migration and
+**breaks the prod deploy**. Measured on prod BEFORE applying:
+
+```
+invoices with voided_at NOT NULL AND status <> 'void'   = 0   ← not repaired by §2; would have failed VALIDATE
+bills   with status='void' AND both timestamps NULL     = 0   ← not repaired by §1; would have failed VALIDATE
+bills   residual violations outside §1's predicate      = 0
+invoices status='void' with all three fallbacks NULL    = 0   ← COALESCE in §2 cannot yield NULL
+```
+
+All zero → **the repairs are exactly co-extensive with the constraint. VALIDATE cannot abort.** Confirmed by
+execution: both `VALIDATE CONSTRAINT` statements succeeded on the branch, leaving **0 violations** on both
+tables (bills `status='void'` 0→4; invoices `voided_at` 5→6).
+
+**LIVE PROOF that the state is now AUTHORITATIVE — the DB rejects both corrupt shapes and accepts the good one:**
+
+```
+UPDATE accounting.bills SET voided_at=now(), void_reason='…'   -- the exact shape migration 202612230000 §2 wrote
+  → ERROR: violates check constraint "bills_void_state_authoritative"        REJECTED ✅
+UPDATE accounting.invoices SET status='void'                    -- the exact INV-2026-00005 shape
+  → ERROR: violates check constraint "invoices_void_state_authoritative"     REJECTED ✅
+UPDATE accounting.invoices SET status='void', voided_at=now()   -- a CORRECT void
+  → RETURNING INV-2026-00001 | void | 2026-08-08 04:19:09       ACCEPTED ✅ (no false positive)
+```
+
+Side observation from probe 1: bills also carry a pre-existing `bills_void_reason_required` constraint,
+which fired first until a reason was supplied — a void with no reason was already refused. Consistent, not
+conflicting.
+
+**Scope is bounded and stated** (§5): `bill_payments` (`revoked_at`), `vendor_credit_applications`
+(`voided_reason`), `payments` (`voided_at`) are explicitly NOT covered and remain open on the board. Correct
+call — their spellings differ and copy-pasting the pairing would assert something untrue.
+
+---
+
+## SUMMARY
+
+```
+VERDICT: PASS
+PR: #4753 / #4744
+SHA: 8cffb555 / acf13360  (merged cf748b44b / 2885e447e; prod 34d8da7, migrations NOT yet run)
+NEON: 4753 — prod fn reads app.user_id (app sets it 0x); after fix on br-orange-hat-akbo91eg a USMCA
+      write named actor d62f82f6 + role Administrator, same row's prior INSERT NULL.
+      4744 — prod bills 4 marker-without-status, invoices 1 status-without-marker (INV-2026-00005 $2,450);
+      0 rows would fail VALIDATE; both constraints validated; both corrupt writes REJECTED, correct void ACCEPTED.
+APP: healthz/shallow = 34d8da7, ok:true (re-curled at verdict time)
+AUDIT_ACTOR: named
+BLOCKED: none
+```
+
+**Cleanup owed:** Neon branch `br-orange-hat-akbo91eg` still exists (throwaway, forked from prod, contains
+probe mutations). It must be deleted; CC-3 does not delete Neon branches autonomously.
+
+## ★ POST-DEPLOY RE-PROOF ON PROD — 2026-08-08 04:26 CDT — **BOTH FIXES CONFIRMED LIVE**
+
+The trio deployed while this entry was being written. **Prod moved `34d8da7` → `79be071`**
+(`healthz/shallow`, `uptime_seconds` 130), so both migrations have now actually RUN against
+`br-fancy-credit-akjnd07a`. Re-proved on prod itself — this supersedes the branch proof above as the
+authoritative evidence.
+
+| check (prod, post-deploy) | result |
+|---|---|
+| `audit.tg_audit_row` reads `app.current_user_id` | **true** (F177 applied) |
+| `bills_void_state_authoritative` `convalidated` | **true** |
+| `invoices_void_state_authoritative` `convalidated` | **true** |
+| `accounting.bills` — total / `status='void'` / `voided_at` / violations | 16,261 / **4** / **4** / **0** |
+| `accounting.invoices` — total / `status='void'` / `voided_at` / violations | 11,987 / **6** / **6** / **0** |
+| `INV-2026-00005` (USMCA, $2,450) | `status=void`, `voided_at=2026-08-07 01:07:18.501305+00`, reason present |
+
+`status='void'` and the marker now agree **exactly** on both tables (4=4, 6=6) with **0** violations, and
+the $2,450 invoice carries the DERIVED timestamp §2 promised — not `now()`, not invented.
+
+### FALSE-EMPTY CAUGHT — recorded because the law exists for this exact reason
+
+The first post-deploy query returned `bills_status_void = 0` and `invoices_voided = 0`, which would have
+read as "the migration did nothing". **It was RLS masking** — that call omitted
+`set_config('app.bypass_rls','lucia',true)`. The `pg_catalog` reads in the same query (function body,
+`convalidated`) were correct throughout, because catalog reads are RLS-immune. Re-running with bypass
+produced the real numbers above. **A 0 on `accounting.*` is not a verdict without the discriminator.**
+
+### CHECKED, NOT A DEFECT — duplicate `INV-2026-00005`
+
+Two invoices carry `display_id = 'INV-2026-00005'`: `a6e7cd29…` **TRANSP** `91e0bf0a…` $2,000.00 `paid`,
+and `d921fbde…` **USMCA** `5c854333…` $2,450.00 `void`. Invoice numbering is **per operating company** —
+`(display_id, operating_company_id)` duplicate groups across all 11,987 invoices = **0**, and duplicates
+among non-void invoices = **0**. By design; no board row filed. Also confirms the ACCT-F174 target row was
+the USMCA one, as the card said.
+
+**Post-deploy verdict: #4753 PASS · #4744 PASS — both live on prod `79be071`.**
+
+---
+
+# CC-3 VERIFY — PR #4769 (LV-TXN-004) USMCA Kanban → `delivered_pending_docs` money path — 2026-08-08
+
+**Prod SHA `a11f6c7`** (`healthz/shallow`, polled by CC-3 until it flipped from `f6feb13` at 23:36:36 CDT —
+not taken from STATUS-NOW). **Entity: USMCA `5c854333-6ea5-4faa-af31-67cb272fef80` only.**
+**CC-3 created nothing** — no Gate B creates until `GO P5`. Every fact below comes from data the system
+already held, read RLS-immune under `set_config('app.bypass_rls','lucia',true)`.
+
+## VERDICT: **FAIL** — split, and the split is the whole point
+
+| half | verdict |
+|---|---|
+| FE wiring (#4769) — Kanban drop calls the money-aware endpoint | **PASS** |
+| Backend settlement ping on `delivered_pending_docs` | **PASS** |
+| Backend revenue latch (Event 1) on that same transition | **FAIL — silent no-op** |
+
+### PASS — the FE half is genuinely deployed, verified in the shipped bundle
+
+`healthz` reports the **backend**; #4769 changed **frontend files only**, so the SHA alone proves nothing.
+CC-3 pulled the live bundle from `app.ih35dispatch.com` and found #4769's code in it, minified:
+
+```js
+function ne(e){switch(e){case`unassigned`:…case`delivered`:return`delivered_pending_docs`;
+  case`invoiced`:case`paid`:case`closed`:return`completed_docs_received`;default:return null}}
+function re(e,t,n){let r=n?ne(t.new_status):null;
+  return n&&r ? A(e,n,{new_status:r,cancellation_reason_code:t.cancellation_reason_code})
+              : o(`/api/v1/mdata/loads/${e}/status`,{method:`PATCH`,body:t})}
+```
+
+That is `toDispatchTransitionStatus` + `updateLoadStatus` exactly. The chunk
+(`EntityPicker-D0dNxc8o.js`) also carries the literal
+`/api/v1/dispatch/loads/${t}/transition?operating_company_id=${encodeURIComponent(n)}`, so `A` resolves to
+`transitionDispatchLoad` in the same chunk. **The Kanban drop does reach the money-aware endpoint.**
+
+### PASS — every backend gate for USMCA is open, and the poster posts correctly
+
+Measured on prod: `org.companies.code = USMCA` (so not `trk_excluded`) ·
+`to_regclass('accounting.load_revenue_recognition_postings')` present ·
+`REVENUE_RECOGNITION_POST_ENABLED` **enabled=true for USMCA since 2026-07-26 19:21:26+00** (default is
+`false`; TRANSP true, TRK false). When it does post, it posts **correctly** — JE
+`1fac8d19-668c-4f82-8d53-aba34592a2bb`, `source=auto`, USMCA:
+
+| line | dr/cr | acct | account | cents |
+|---|---|---|---|---|
+| 1 | debit | **1150** | Unbilled Revenue | 100 |
+| 2 | credit | **4000** | Freight / Line-haul Income | 100 |
+
+`DR − CR = 0`, 2 lines, **1 entity**. Correct ASC 606 Event 1 — earn to **Unbilled Revenue, not A/R**.
+Actor named (`e4117991-…`, Owner) — the #4753 fix visible in the wild.
+
+### PASS — the settlement ping fires in-transaction and links both ways
+
+`driver_finance.driver_settlements` `d3ff8ea3-4acd-4792-b3ad-fdad6383fbb2` ·
+`S-LUSMCAFREIGHT-20260806-0001` · `settlement_model=load_bookended` ·
+`first_load_id = last_load_id = 678fc733…` · `trip_started_at 17:03:34.898` (opened at `in_transit`) ·
+`trip_closed_at 2026-08-06 17:03:35.171+00` · `status=closed`. Both-way linked to the load.
+
+### ★ FAIL — the revenue latch cannot see the delivery evidence its own transition just wrote
+
+Filed as **`LV-REVREC-LATCH-CANNOT-SEE-ITS-OWN-DELIVERY-EVIDENCE`** → board + register, lane **CC-1**.
+
+The transition handler runs in ONE transaction and calls the two hooks **differently**:
+`pingSettlementOnLoadEvent(client, …)` **receives the transaction**; `postLoadRevenueLatch({…})` does
+**not** — it opens `withLuciaBypass` → `luciaPool.connect()`, a **separate connection**. Under READ
+COMMITTED it cannot see the still-uncommitted `actual_departure_at`, so Event 1 fails its
+`missing_delivery_evidence` guard and the call site **swallows** it (`disp_01_revrec_latch_failed`).
+
+The timestamps on one load settle it beyond argument:
+
+```
+delivery stop actual_departure_at   2026-08-06 17:03:35.076384+00   (== mdata.loads.updated_at)
+settlement   trip_closed_at         2026-08-06 17:03:35.171+00      ← +95 ms, in-transaction: WORKED
+revrec latch created_at             2026-08-08 00:27:37.650484+00   ← +31 HOURS: NOT the transition
+flag enabled for USMCA since        2026-07-26 19:21:26+00          ← flag_off EXCLUDED
+```
+
+Same load, same transition, same instant — one hook fired, the other did not, and the only difference
+between them is **whether the caller's `client` was passed**. The latch that does exist was posted 31
+hours later by a separate Owner-actor run, and it booked `entry_date 2026-08-07` for a **2026-08-06**
+delivery — an ASC 606 period-timing defect riding on top of the silence.
+
+**This is not cosmetic and it is not narrow.** Post-#4769 the Kanban drop is the primary way a load
+reaches `delivered_pending_docs`, and it is precisely the path that stamps the departure in the same
+transaction. `dispatch/delivery-evidence-latch.ts` — the shared helper both DRIVER capture paths use —
+calls `postLoadRevenueLatch` the same client-less way, so the two driver paths are suspect on the same
+root cause.
+
+### CLASSIFIED, NOT FILED — the $0.00 settlement
+
+The closed settlement carries `gross_pay 0.00` / `net_pay 0.00` with **0** `settlement_lines`. Before
+calling that a defect, the inputs were checked: driver `88c04cf5…` (Juan USMCA-Battery) has
+`pay_basis='short_miles'`, the load's `driver_pay_rate_per_mile` is **NULL**, and
+`driver_finance.settlement_contract_terms_config` holds **0 rows across ALL entities** — so there is no
+rate source anywhere and `$0.00` is arithmetically what the inputs produce. **Discriminators:**
+`settlement_lines` = 0 **globally** (`all_lines = 0`), `driver_settlements` = 1 globally — the zeros are
+real, not RLS-masked. Recorded as a pay-configuration gap, **not** filed as a posting defect, per the
+classify-row-origin-before-calling-it-a-defect ruling.
+
+```
+VERDICT: FAIL (FE PASS · settlement ping PASS · revenue latch FAIL)
+PR: #4769 (merged a11f6c7, LIVE on prod)
+NEON: load 678fc733-f661-4aeb-b7c3-fb0978bdf61d LUSMCAFREIGHT-20260806-0001 (USMCA, delivered_pending_docs)
+      settlement d3ff8ea3-4acd-4792-b3ad-fdad6383fbb2 trip_closed_at 2026-08-06 17:03:35.171+00  ← fired in-txn
+      latch      560dc6a1-14ed-484b-a2f4-adbd737208c5 created_at     2026-08-08 00:27:37.650484+00 ← +31h, NOT the transition
+      JE         1fac8d19-668c-4f82-8d53-aba34592a2bb DR 1150 100 / CR 4000 100, balanced, USMCA
+      flag REVENUE_RECOGNITION_POST_ENABLED USMCA enabled since 2026-07-26 19:21:26+00
+APP: healthz/shallow = a11f6c7; FE bundle carries #4769's mapping + transition URL
+BLOCKED: none — finding routed to CC-1 via board + register, not via the owner
+```

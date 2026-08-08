@@ -157,19 +157,50 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     trigger: "Driver captures POD / BOL",
     je: "—",
     spec_ref: "WIRE-03 / WIRE-09",
-    // Resolved against prod: there is NO mdata.load_documents. Load evidence is docs.files joined
-    // through docs.file_links (entity_type/entity_id), and file_links carries no operating_company_id,
-    // so the entity scope comes from the parent load.
-    sources: ["docs.files", "docs.file_links", "mdata.loads"],
+    // CLS-ORPHAN-SURFACE 2026-08-07 — this probe read ONLY docs.file_links, which is not where a
+    // captured POD or a generated BOL lands. The canonical stores are dispatch.pod_documents (written
+    // by POST /api/v1/driver/loads/:loadId/stops/:stopId/pod, the signature-capture flow the driver
+    // actually uses) and dispatch.bol_documents (POST .../bol/generate) — and those two are exactly
+    // what the office reads back at GET /api/v1/dispatch/loads/:loadId/pod-bol, rendered by
+    // LoadBolPanel. So the dot measured a different table from the one the product writes and reads,
+    // and could not have gone green from a real POD capture no matter how many were taken.
+    //
+    // The docs-library arm is KEPT rather than replaced: a BOL scanned into the document library and
+    // linked to the load is genuine POD/BOL evidence too, and dropping that arm would have swapped one
+    // blind spot for another. UNION ALL over the three, so the count is "pieces of POD/BOL evidence
+    // attached to a load", which is what the label claims.
+    //
+    // Both dispatch tables carry operating_company_id directly; file_links does not, so that arm still
+    // takes its entity scope from the parent load. archived_at IS NULL matches the read endpoint's own
+    // predicate — an archived POD is not evidence the screen will show.
+    sources: [
+      "dispatch.pod_documents",
+      "dispatch.bol_documents",
+      "docs.files",
+      "docs.file_links",
+      "mdata.loads",
+    ],
     probe: {
       sql: `
-        SELECT count(*)::text AS n
-          FROM docs.file_links fl
-          JOIN docs.files f ON f.id = fl.file_id
-          JOIN mdata.loads l ON l.id = fl.entity_id
-         WHERE fl.entity_type = 'load'
-           AND fl.deleted_at IS NULL
-           AND ($1::uuid IS NULL OR l.operating_company_id = $1::uuid)
+        SELECT count(*)::text AS n FROM (
+          SELECT p.id
+            FROM dispatch.pod_documents p
+           WHERE p.archived_at IS NULL
+             AND ($1::uuid IS NULL OR p.operating_company_id = $1::uuid)
+          UNION ALL
+          SELECT b.id
+            FROM dispatch.bol_documents b
+           WHERE b.archived_at IS NULL
+             AND ($1::uuid IS NULL OR b.operating_company_id = $1::uuid)
+          UNION ALL
+          SELECT fl.id
+            FROM docs.file_links fl
+            JOIN docs.files f ON f.id = fl.file_id
+            JOIN mdata.loads l ON l.id = fl.entity_id
+           WHERE fl.entity_type = 'load'
+             AND fl.deleted_at IS NULL
+             AND ($1::uuid IS NULL OR l.operating_company_id = $1::uuid)
+        ) evidence
       `,
       describe: (n) => `${n} POD/BOL document(s) linked to a load`,
     },

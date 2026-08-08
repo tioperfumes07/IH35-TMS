@@ -30,6 +30,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-kanban-dropstatus-contract";
 const FE = "apps/frontend/src/components/dispatch/DispatchKanban.tsx";
 const BE = "apps/backend/src/mdata/loads.routes.ts";
+const API = "apps/frontend/src/api/loads.ts";
 
 export function acceptedStatuses(backendSrc) {
   const m = backendSrc.match(/const loadStatusSchema = z\.enum\(\[([\s\S]*?)\]\)/);
@@ -44,7 +45,54 @@ export function laneDrops(frontendSrc) {
   }));
 }
 
-export function audit(frontendSrc, backendSrc) {
+/**
+ * THE THIRD END, added 2026-08-08 after #4769 (LV-TXN-004 FE status wire).
+ *
+ * #4769 changed `updateLoadStatus` so a drop with an operating company goes to the MONEY-AWARE
+ * `/dispatch/loads/:id/transition` — but only if `toDispatchTransitionStatus(status)` returns non-null.
+ * When it returns null the code SILENTLY falls back to `PATCH /mdata/loads/:id/status`, the path that
+ * LV-TXN-015 proved stamps no departure and opens no settlement. There is no error, no log, no visible
+ * difference to the dispatcher — the money simply does not happen.
+ *
+ * So after #4769 the two-end check above is only HALF the contract. A lane can drop a status the schema
+ * happily accepts and still quietly bypass revenue recognition. This reads the mapper as DATA (CC-2 does
+ * not edit loads.ts / Dispatch.tsx — Cursor owns them) and returns the set of statuses that reach the
+ * money path.
+ *
+ * Returns null if the function cannot be parsed, so the caller refuses to pass vacuously.
+ */
+export function moneyPathStatuses(apiSrc) {
+  const start = apiSrc.indexOf("function toDispatchTransitionStatus");
+  if (start === -1) return null;
+  const body = apiSrc.slice(start, apiSrc.indexOf("\n}", start));
+  const events = [
+    ...[...body.matchAll(/case\s+"([a-z_]+)"\s*:/g)].map((m) => ({ at: m.index, kind: "case", value: m[1] })),
+    ...[...body.matchAll(/return\s+([^;]+);/g)].map((m) => ({ at: m.index, kind: "return", value: m[1].trim() })),
+  ].sort((a, b) => a.at - b.at);
+
+  const mapped = new Set();
+  let pending = [];
+  for (const e of events) {
+    if (e.kind === "case") {
+      pending.push(e.value);
+      continue;
+    }
+    // A `return null` means those case labels do NOT reach the money path.
+    if (e.value !== "null") for (const label of pending) mapped.add(label);
+    pending = [];
+  }
+  return mapped.size === 0 ? null : mapped;
+}
+
+/**
+ * Statuses that may legitimately skip the money-aware path, with the reason stated. These are
+ * PRE-DISPATCH lanes: nothing has moved, so there is no revenue to recognise and no settlement to open.
+ * This list is deliberately EXPLICIT — the whole point is that skipping the money path must be a decision
+ * somebody wrote down, never the silent default for anything a future author forgets to map.
+ */
+const MONEY_FREE_PRE_DISPATCH = new Set(["planned", "booked"]);
+
+export function audit(frontendSrc, backendSrc, apiSrc) {
   const accepted = acceptedStatuses(backendSrc);
   if (!accepted || accepted.length === 0) {
     return [`${BE}: could not read loadStatusSchema z.enum — refusing to pass vacuously.`];
@@ -53,7 +101,7 @@ export function audit(frontendSrc, backendSrc) {
   if (lanes.length === 0) {
     return [`${FE}: found ZERO Kanban lanes with a dropStatus — scope is wrong, refusing to pass vacuously.`];
   }
-  return lanes
+  const problems = lanes
     .filter((l) => !accepted.includes(l.drop))
     .map(
       (l) =>
@@ -61,6 +109,26 @@ export function audit(frontendSrc, backendSrc) {
         `Dragging a card there 400s and the board springs back with no explanation. ` +
         `Accepted: ${accepted.join(", ")}.`,
     );
+
+  // apiSrc is optional so existing two-argument callers/selftests keep working.
+  if (apiSrc === undefined) return problems;
+
+  const moneyPath = moneyPathStatuses(apiSrc);
+  if (!moneyPath) {
+    problems.push(`${API}: could not parse toDispatchTransitionStatus — refusing to pass vacuously.`);
+    return problems;
+  }
+  for (const l of lanes) {
+    if (moneyPath.has(l.drop) || MONEY_FREE_PRE_DISPATCH.has(l.drop)) continue;
+    problems.push(
+      `${API}: lane "${l.lane}" drops to "${l.drop}", which toDispatchTransitionStatus does NOT map. ` +
+        `It returns null, so updateLoadStatus silently falls back to PATCH /mdata/loads/:id/status — the ` +
+        `path LV-TXN-015 proved stamps no departure and opens no settlement. The drag appears to succeed ` +
+        `and the money never happens. Either map "${l.drop}" in toDispatchTransitionStatus, or add it to ` +
+        `MONEY_FREE_PRE_DISPATCH in this guard WITH a written reason why that lane has no money effect.`,
+    );
+  }
+  return problems;
 }
 
 if (process.argv.includes("--selftest")) {
@@ -68,16 +136,49 @@ if (process.argv.includes("--selftest")) {
   const good = `{ key: "a", title: "Assigned", statuses: ["assigned"], dropStatus: "assigned" },
                 { key: "b", title: "Loaded", statuses: [], dropStatus: "in_transit" },`;
   const bad = `{ key: "b", title: "Loaded", statuses: [], dropStatus: "loaded" },`;
+  // The money-path mapper, in the shape #4769 actually wrote it: a fall-through group returning the
+  // status unchanged, a remap, and a `default: return null` that is the SILENT bypass.
+  const apiGood = `function toDispatchTransitionStatus(status) {
+    switch (status) {
+      case "in_transit":
+      case "delivered_pending_docs":
+        return status;
+      case "assigned":
+        return "assigned_not_dispatched";
+      default:
+        return null;
+    }
+  }`;
+  // Same mapper with in_transit demoted to an explicit null — the exact silent-bypass regression.
+  const apiDropsInTransit = `function toDispatchTransitionStatus(status) {
+    switch (status) {
+      case "delivered_pending_docs":
+        return status;
+      case "in_transit":
+        return null;
+      case "assigned":
+        return "assigned_not_dispatched";
+      default:
+        return null;
+    }
+  }`;
+  const preDispatch = `{ key: "p", title: "Awaiting assignment", statuses: [], dropStatus: "planned" },`;
+  const beWithPlanned = `const loadStatusSchema = z.enum([\n  "assigned",\n  "in_transit",\n  "delivered_pending_docs",\n  "planned",\n]);`;
+
   const cases = [
-    ["all lanes valid", good, be, 0],
-    ["a lane dropping to a rejected status", bad, be, 1],
-    ["both a valid and an invalid lane", good + bad, be, 1],
-    ["backend enum unreadable", good, "const somethingElse = 1;", 1],
-    ["no lanes found — must not pass vacuously", "", be, 1],
+    ["all lanes valid", good, be, undefined, 0],
+    ["a lane dropping to a rejected status", bad, be, undefined, 1],
+    ["both a valid and an invalid lane", good + bad, be, undefined, 1],
+    ["backend enum unreadable", good, "const somethingElse = 1;", undefined, 1],
+    ["no lanes found — must not pass vacuously", "", be, undefined, 1],
+    ["money path: every lane maps", good, be, apiGood, 0],
+    ["MONEY BAR — a lane silently bypasses the money path (returns null)", good, be, apiDropsInTransit, 1],
+    ["money path: pre-dispatch lane is an explicit allowed exception", preDispatch, beWithPlanned, apiGood, 0],
+    ["money path: mapper unparseable — must not pass vacuously", good, be, "const nope = 1;", 1],
   ];
   let failed = 0;
-  for (const [name, fe, beSrc, want] of cases) {
-    const got = audit(fe, beSrc).length;
+  for (const [name, fe, beSrc, apiSrc, want] of cases) {
+    const got = audit(fe, beSrc, apiSrc).length;
     if (got !== want) {
       console.error(`SELFTEST FAIL: ${name} — expected ${want}, got ${got}`);
       failed++;
@@ -88,21 +189,24 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-for (const rel of [FE, BE]) {
+for (const rel of [FE, BE, API]) {
   if (!fs.existsSync(path.join(ROOT, rel))) {
     console.error(`${LABEL} FAIL — missing ${rel}; scope is wrong, refusing to pass vacuously.`);
     process.exit(1);
   }
 }
 
-const problems = audit(fs.readFileSync(path.join(ROOT, FE), "utf8"), fs.readFileSync(path.join(ROOT, BE), "utf8"));
+const feSrc = fs.readFileSync(path.join(ROOT, FE), "utf8");
+const problems = audit(feSrc, fs.readFileSync(path.join(ROOT, BE), "utf8"), fs.readFileSync(path.join(ROOT, API), "utf8"));
 if (problems.length) {
-  console.error(`${LABEL} FAIL — a Kanban lane drops to a status the API rejects:\n`);
+  console.error(`${LABEL} FAIL — a Kanban lane drops to a status the API rejects, or one that silently skips the money path:\n`);
   for (const p of problems) console.error(`  - ${p}`);
-  console.error(`\nFix: change the lane's dropStatus, or add the status to loadStatusSchema if it is genuinely valid.\n`);
+  console.error(`\nFix: change the lane's dropStatus, add the status to loadStatusSchema if it is genuinely valid, or map it in toDispatchTransitionStatus.\n`);
   process.exit(1);
 }
 
-const lanes = laneDrops(fs.readFileSync(path.join(ROOT, FE), "utf8"));
-console.log(`${LABEL} OK — all ${lanes.length} Kanban lane drops are accepted by loadStatusSchema.`);
+const lanes = laneDrops(feSrc);
+console.log(
+  `${LABEL} OK — all ${lanes.length} Kanban lane drops are accepted by loadStatusSchema, and each either reaches the money-aware transition or is an explicit pre-dispatch exception.`,
+);
 process.exit(0);

@@ -48,6 +48,32 @@
 -- touches no existing row, and the 10 inactive rows (superseded bad mappings, correctly retained under
 -- void-not-delete) are left exactly as they are.
 
+-- ROOT-CAUSE PRECONDITION (added 2026-08-07 — the reason the original seed failed on prod):
+-- the enforcing CHECK `expense_category_account_map_category_kind_check` lists exactly 12 kinds and
+-- OMITS 'permit', so the INSERT below fails closed with
+-- "violates check constraint ...category_kind_check" the moment a USMCA company exists. CI never
+-- caught it because the empty CI database has no USMCA company, so the insert block RETURNs early and
+-- the constraint is never exercised — the defect only surfaces on prod. This block extends the
+-- constraint FIRST, re-adding the EXACT existing 12-kind set plus 'permit'. Additive only: all 93
+-- existing rows (83 active + 10 inactive) already satisfy the wider set, so ADD CONSTRAINT
+-- re-validates clean. The DROP+ADD is atomic inside the migration's wrapping transaction (Postgres
+-- transactional DDL), so the table is never left unprotected. Idempotent: DROP IF EXISTS + ADD
+-- re-adds the identical constraint on any re-run, and no-ops on a fresh DB where the table is absent.
+DO $$
+BEGIN
+  IF to_regclass('accounting.expense_category_account_map') IS NOT NULL THEN
+    ALTER TABLE accounting.expense_category_account_map
+      DROP CONSTRAINT IF EXISTS expense_category_account_map_category_kind_check;
+    ALTER TABLE accounting.expense_category_account_map
+      ADD CONSTRAINT expense_category_account_map_category_kind_check
+      CHECK (category_kind = ANY (ARRAY[
+        'fuel','maintenance','revenue','driver_pay','factoring_fee','toll',
+        'escrow','insurance','office','other','cash_advance','lumper','permit'
+      ]));
+  END IF;
+END
+$$;
+
 DO $$
 DECLARE
   v_opco    uuid;

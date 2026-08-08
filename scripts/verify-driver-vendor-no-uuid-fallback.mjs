@@ -103,11 +103,22 @@ export function findViolations(root = ROOT) {
     if (!/\bfrom\s+mdata\.vendors\b/i.test(src)) {
       problems.push({ where: RESOLVER, why: "resolver does not read mdata.vendors — the canonical driver<->vendor bridge" });
     }
-    // Scoped on the VENDOR row itself (`v.`), not merely somewhere in the statement — the driver
-    // sub-probe also carries an operating_company_id predicate, and matching that one would let an
-    // unscoped vendor SELECT read as scoped.
-    if (!/\bv\.operating_company_id\s*=\s*\$1/.test(src)) {
-      problems.push({ where: RESOLVER, why: "the vendor row is not entity-scoped — it could return another entity's vendor" });
+    // EVERY vendor SELECT in this file must be entity-scoped, not merely one of them.
+    //
+    // The first version tested for a single `v.operating_company_id = $1` ANYWHERE in the file. That
+    // was already too weak, and ACCT-F164 proved it: adding a SECOND vendor query
+    // (ensureDriverApVendor) meant the file still matched even if the resolver's own scope was
+    // stripped — the guard's own mutation case caught this, on a file that had grown a legitimate
+    // second query. Counting instead of existence-checking makes it scale with the file.
+    const vendorSelects = (src.match(/FROM\s+mdata\.vendors\s+v\b/gi) ?? []).length;
+    const scopedSelects = (src.match(/\bv\.operating_company_id\s*=\s*\$1/g) ?? []).length;
+    if (vendorSelects === 0) {
+      problems.push({ where: RESOLVER, why: "no vendor SELECT found — the resolver no longer reads mdata.vendors" });
+    } else if (scopedSelects < vendorSelects) {
+      problems.push({
+        where: RESOLVER,
+        why: `${vendorSelects} vendor SELECT(s) but only ${scopedSelects} entity-scoped — an unscoped one could return another entity's vendor`,
+      });
     }
     if (!/\bdriver_id\s*=\s*\$2/.test(src)) {
       problems.push({ where: RESOLVER, why: "resolver does not match on mdata.vendors.driver_id — the canonical link" });
@@ -205,7 +216,7 @@ async function selftest() {
   if (findViolations(tmp).length === 0) failures.push("case5 FAIL — a resolver that falls back instead of throwing must go RED.");
 
   // Mutation 5 — resolver loses its entity scope.
-  writeAll(GOOD_RESOLVER.replace(/v\.operating_company_id = \$1::uuid/, "v.operating_company_id IS NOT NULL"), callerSrc);
+  writeAll(GOOD_RESOLVER.replaceAll("v.operating_company_id = $1::uuid", "v.operating_company_id IS NOT NULL"), callerSrc);
   if (findViolations(tmp).length === 0) failures.push("case6 FAIL — an unscoped resolver must go RED.");
 
   // Mutation 6 — a caller stops using the shared resolver.

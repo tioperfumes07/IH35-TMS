@@ -6,7 +6,17 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type GateState = "PASS" | "AUDIT" | "FIX" | "FAIL" | "UNV" | "NA";
-export interface ModuleRow { tier: string; module: string; build: string; cells: GateState[]; gap: string; }
+export type CellsByEntity = { TRANSP: GateState[]; USMCA: GateState[] };
+export interface ModuleRow {
+  tier: string;
+  module: string;
+  build: string;
+  /** Worst-of-entities fold (compat / weakest-column tally). */
+  cells: GateState[];
+  /** B11 — one 13-gate strip per entity (TRANSP + USMCA). */
+  cellsByEntity: CellsByEntity;
+  gap: string;
+}
 export interface ProdMetric { n: string; label: string; detail: string; tone?: "good" | "flag" | "zero"; }
 export interface ChainNode { title: string; table: string; fk: string; chip: string; chipTone: "prod" | "unv" | "fix" | "fail"; hub?: boolean; branch?: boolean; }
 export interface GuardItem { badge: string; tone: "ver" | "pend" | "flag" | "fail"; text: string; }
@@ -17,13 +27,13 @@ export interface ProgramScoreboard {
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
   "meta": {
-    "generatedAt": "2026-08-04T22:08:00-05:00",
-    "sourceSha": "a4c6b619b",
+    "generatedAt": "2026-08-06T06:02:16Z",
+    "sourceSha": "cf9a739ee",
     "deployedSha": "308bc66",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 680,
+    "ledgerRows": 691,
     "failOpen": 15,
-    "defects": 14
+    "defects": 15
   },
   "modules": [
     {
@@ -45,7 +55,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "B PROD (10,970 txns). V4: 192 JEs balanced; single-row walk + picker/link click-through pending."
+      "gap": "B PROD (10,970 txns). V4: 192 JEs balanced; single-row walk + picker/link click-through pending.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "FIX",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "0",
@@ -66,7 +108,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "Dashboard surface; V3 tile-link click-through pending."
+      "gap": "Dashboard surface; V3 tile-link click-through pending.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "NA",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "NA",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "0",
@@ -87,7 +161,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "AUDIT",
         "AUDIT"
       ],
-      "gap": "1,434 CoA. V2 FAIL: payment-terms creator 42701. Catalog click-throughs pending."
+      "gap": "1,434 CoA. V2 FAIL: payment-terms creator 42701. Catalog click-throughs pending.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "FAIL",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "FAIL",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "1",
@@ -108,7 +214,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "Bill→GL PROD (JE 52e17945). Invoice→GL merged, pending deploy. CoA→register→report click-through pending (V3)."
+      "gap": "Bill→GL PROD (JE 52e17945). Invoice→GL merged, pending deploy. CoA→register→report click-through pending (V3).",
+      "cellsByEntity": {
+        "TRANSP": [
+          "FAIL",
+          "AUDIT",
+          "FAIL",
+          "FAIL",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "FIX",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "FAIL",
+          "FIX",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "FIX",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "1",
@@ -125,11 +263,43 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "AUDIT",
         "AUDIT",
         "AUDIT",
-        "PASS",
+        "UNV",
         "UNV",
         "AUDIT"
       ],
-      "gap": "2,828 vendors. V6 PROD: vendor→bill→GL JE 52e17945. Picker/1099/WO links live-exercise pending."
+      "gap": "2,828 vendors. V6 PROD: vendor→bill→GL JE 52e17945. Picker/1099/WO links live-exercise pending.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "PASS",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "1",
@@ -140,7 +310,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "AUDIT",
         "FIX",
         "FAIL",
-        "AUDIT",
+        "FIX",
         "AUDIT",
         "FAIL",
         "FIX",
@@ -150,7 +320,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "WO create #4091 merged (was 500) — pending deploy+live 201. V2 FAIL: maintenance catalogs 404 unmounted."
+      "gap": "WO create #4091 merged (was 500) — pending deploy+live 201. V2 FAIL: maintenance catalogs 404 unmounted.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "FIX",
+          "FAIL",
+          "AUDIT",
+          "AUDIT",
+          "FAIL",
+          "FIX",
+          "FIX",
+          "AUDIT",
+          "FIX",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "FIX",
+          "FIX",
+          "FIX",
+          "AUDIT",
+          "FAIL",
+          "FIX",
+          "FIX",
+          "AUDIT",
+          "FIX",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "1",
@@ -171,7 +373,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "0 settlements — V4/V6 terminal UNVERIFIED. Step-1: run a settlement."
+      "gap": "0 settlements — V4/V6 terminal UNVERIFIED. Step-1: run a settlement.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "FAIL",
+          "UNV",
+          "AUDIT",
+          "FIX",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "FIX",
+          "AUDIT",
+          "FIX",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "1",
@@ -192,7 +426,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "1,547 txns/$625,546/100% load_id NULL/0 GL. V4+V6 FAIL, no fix merged."
+      "gap": "1,547 txns/$625,546/100% load_id NULL/0 GL. V4+V6 FAIL, no fix merged.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "FAIL",
+          "FAIL",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "FAIL",
+          "AUDIT",
+          "FAIL",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "FAIL",
+          "AUDIT",
+          "FAIL",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "2",
@@ -213,7 +479,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "11 loads. wf064 escrow consumer not completing. BookLoad/QuickAssign picker guards merged."
+      "gap": "11 loads. wf064 escrow consumer not completing. BookLoad/QuickAssign picker guards merged.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "FAIL",
+          "FIX",
+          "AUDIT",
+          "AUDIT",
+          "FIX",
+          "AUDIT",
+          "FIX",
+          "AUDIT",
+          "FIX",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "FIX",
+          "AUDIT",
+          "AUDIT",
+          "FIX",
+          "AUDIT",
+          "FIX",
+          "AUDIT",
+          "FIX",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "2",
@@ -222,7 +520,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "cells": [
         "AUDIT",
         "FAIL",
-        "FAIL",
+        "FIX",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -234,7 +532,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "183 drivers. B FAIL: duplicate drivers + 3 schema-drift cols. V4: 0 settlements."
+      "gap": "183 drivers. B FAIL: duplicate drivers + 3 schema-drift cols. V4: 0 settlements.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "FAIL",
+          "FIX",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "FIX",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "2",
@@ -255,7 +585,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "0 policies/0 claims — the 15-FK V4 web unwalkable. Step-1: create a claim (ClaimCreateModal)."
+      "gap": "0 policies/0 claims — the 15-FK V4 web unwalkable. Step-1: create a claim (ClaimCreateModal).",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "2",
@@ -264,7 +626,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "cells": [
         "AUDIT",
         "AUDIT",
-        "FAIL",
+        "FIX",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -276,7 +638,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "0 accidents/fines/incidents — V4 unwalkable. Cursor 26→38 surfaces."
+      "gap": "0 accidents/fines/incidents — V4 unwalkable. Cursor 26→38 surfaces.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "FIX",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "2",
@@ -297,7 +691,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "0 matters — matter→claim→driver→unit V4 unwalkable (exposure, no GL). Step-1: open a matter."
+      "gap": "0 matters — matter→claim→driver→unit V4 unwalkable (exposure, no GL). Step-1: open a matter.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "FIX",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "2",
@@ -306,7 +732,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "cells": [
         "AUDIT",
         "AUDIT",
-        "NA",
+        "AUDIT",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -318,7 +744,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "Operational (no GL). Permit/inspection→driver/unit V4 + D/E live-exercise."
+      "gap": "Operational (no GL). Permit/inspection→driver/unit V4 + D/E live-exercise.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "2",
@@ -339,7 +797,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "4 bg jobs failed 2026-08-02 (B FAIL)."
+      "gap": "4 bg jobs failed 2026-08-02 (B FAIL).",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "FAIL",
+          "FIX",
+          "AUDIT",
+          "FIX",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "3",
@@ -360,7 +850,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "2,694 customers. V4/V6: customer→invoice→AR→GL gated on invoice→GL fix (pending deploy)."
+      "gap": "2,694 customers. V4/V6: customer→invoice→AR→GL gated on invoice→GL fix (pending deploy).",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "FIX",
+          "AUDIT",
+          "FIX",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "FIX",
+          "AUDIT",
+          "FIX",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "3",
@@ -381,7 +903,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "188 units. V2 FAIL: fleet catalogs POST 500 (trailing -- comment). A fix live-check."
+      "gap": "188 units. V2 FAIL: fleet catalogs POST 500 (trailing -- comment). A fix live-check.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "FIX",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "FAIL",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "FAIL",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "3",
@@ -402,7 +956,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "Picker seed + parts→WO→GL, 0 activity."
+      "gap": "Picker seed + parts→WO→GL, 0 activity.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "FAIL",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "FAIL",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "3",
@@ -423,7 +1009,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "0 advances — factoring→customer/invoice/reserve V4 unwalkable."
+      "gap": "0 advances — factoring→customer/invoice/reserve V4 unwalkable.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "UNV",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "3",
@@ -444,7 +1062,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "GL cockpit traced; live click-through pending."
+      "gap": "GL cockpit traced; live click-through pending.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "3",
@@ -465,7 +1115,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "Report figures reconcile check pending (V3)."
+      "gap": "Report figures reconcile check pending (V3).",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "3",
@@ -486,7 +1168,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "Non-table surface; E + V3."
+      "gap": "Non-table surface; E + V3.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "3",
@@ -507,7 +1221,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "Derived from GL/bank; reconcile check pending."
+      "gap": "Derived from GL/bank; reconcile check pending.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "3",
@@ -528,7 +1274,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "HOS→driver/unit V4 (no GL); D/E."
+      "gap": "HOS→driver/unit V4 (no GL); D/E.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "UNV",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "3",
@@ -549,7 +1327,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "Task→entity links (CreateTask EntityPicker); live-exercise."
+      "gap": "Task→entity links (CreateTask EntityPicker); live-exercise.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "3",
@@ -570,7 +1380,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "User→company/driver links; D/E."
+      "gap": "User→company/driver links; D/E.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "NA",
+          "FIX",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "NA",
+          "FIX",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "3",
@@ -579,7 +1421,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "cells": [
         "AUDIT",
         "AUDIT",
-        "FAIL",
+        "FIX",
         "NA",
         "AUDIT",
         "AUDIT",
@@ -591,7 +1433,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "Program board; E."
+      "gap": "Program board; E.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "FIX",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "3",
@@ -612,7 +1486,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "Driver-hub→driver/loads/settlements; E."
+      "gap": "Driver-hub→driver/loads/settlements; E.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "3",
@@ -621,7 +1527,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "cells": [
         "AUDIT",
         "AUDIT",
-        "NA",
+        "FAIL",
         "NA",
         "AUDIT",
         "AUDIT",
@@ -633,7 +1539,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "docs.files hub → entity attachments; V4 both ways."
+      "gap": "docs.files hub → entity attachments; V4 both ways.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "AUDIT",
+          "FAIL",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     },
     {
       "tier": "3",
@@ -654,7 +1592,39 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "UNV",
         "AUDIT"
       ],
-      "gap": "E."
+      "gap": "E.",
+      "cellsByEntity": {
+        "TRANSP": [
+          "AUDIT",
+          "NA",
+          "NA",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "NA",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ],
+        "USMCA": [
+          "AUDIT",
+          "NA",
+          "NA",
+          "NA",
+          "AUDIT",
+          "AUDIT",
+          "NA",
+          "AUDIT",
+          "NA",
+          "NA",
+          "NA",
+          "UNV",
+          "AUDIT"
+        ]
+      }
     }
   ],
   "prod": [
@@ -806,5 +1776,374 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "tone": "fail",
       "text": "**Fuel → GL** — 1,547 txns, $625,546.39, 0 postings, 100% load_id NULL (§4)."
     }
-  ]
+  ],
+  "live_scenario_probe": {
+    "generated_by": "scripts/scoreboard-from-live.mjs",
+    "source": "live prod probes (same SQL as GET /api/v1/home/scenario-tracker)",
+    "note": "DERIVED, never hand-edited. Counts are TMS-NATIVE only — QuickBooks-imported rows are excluded so an import can never make a TMS flow look proven.",
+    "modules": {
+      "dispatch": {
+        "pass_count": 2,
+        "total_count": 4,
+        "slices": [
+          {
+            "key": "hop.book",
+            "holds": true,
+            "evidence": "3 load(s) booked with a customer and a rate"
+          },
+          {
+            "key": "hop.dispatch",
+            "holds": true,
+            "evidence": "1 load(s) dispatched or beyond"
+          },
+          {
+            "key": "hop.deliver",
+            "holds": false,
+            "evidence": "0 delivery stop(s) with a captured departure"
+          },
+          {
+            "key": "hop.pod_bol",
+            "holds": false,
+            "evidence": "0 POD/BOL document(s) linked to a load"
+          }
+        ],
+        "progress": 50,
+        "prod_verified": false
+      },
+      "driver-finance": {
+        "pass_count": 1,
+        "total_count": 5,
+        "slices": [
+          {
+            "key": "hop.assign",
+            "holds": true,
+            "evidence": "3 driver bill(s) priced from the rate card, not the customer rate"
+          },
+          {
+            "key": "scenario.settlement",
+            "holds": false,
+            "evidence": "0 settlement(s) created"
+          },
+          {
+            "key": "scenario.advance",
+            "holds": false,
+            "evidence": "0 driver advance(s) recorded"
+          },
+          {
+            "key": "scenario.deductions",
+            "holds": false,
+            "evidence": "0 settlement deduction(s) applied"
+          },
+          {
+            "key": "scenario.escrow",
+            "holds": false,
+            "evidence": "0 escrow ledger entr(ies)"
+          }
+        ],
+        "progress": 20,
+        "prod_verified": false
+      },
+      "accounting": {
+        "pass_count": 4,
+        "total_count": 5,
+        "slices": [
+          {
+            "key": "hop.revenue",
+            "holds": false,
+            "evidence": "no count probe (resolved at request time)"
+          },
+          {
+            "key": "hop.invoice",
+            "holds": true,
+            "evidence": "5 live invoice(s) sent or paid"
+          },
+          {
+            "key": "hop.gl",
+            "holds": true,
+            "evidence": "1765 live journal entr(ies)"
+          },
+          {
+            "key": "scenario.coa",
+            "holds": true,
+            "evidence": "149 account(s) in the chart"
+          },
+          {
+            "key": "scenario.ap",
+            "holds": true,
+            "evidence": "5 open (non-voided) bill(s)"
+          }
+        ],
+        "progress": 80,
+        "prod_verified": false
+      },
+      "banking": {
+        "pass_count": 1,
+        "total_count": 2,
+        "slices": [
+          {
+            "key": "hop.bank",
+            "holds": false,
+            "evidence": "0 customer payment(s) matched to an invoice"
+          },
+          {
+            "key": "scenario.banking",
+            "holds": true,
+            "evidence": "170 categorized bank transaction(s)"
+          }
+        ],
+        "progress": 50,
+        "prod_verified": false
+      },
+      "lists": {
+        "pass_count": 1,
+        "total_count": 1,
+        "slices": [
+          {
+            "key": "scenario.customer",
+            "holds": true,
+            "evidence": "7 customer(s) on file"
+          }
+        ],
+        "progress": 100,
+        "prod_verified": true
+      },
+      "drivers": {
+        "pass_count": 1,
+        "total_count": 1,
+        "slices": [
+          {
+            "key": "scenario.driver_onboarding",
+            "holds": true,
+            "evidence": "179 driver(s) on file"
+          }
+        ],
+        "progress": 100,
+        "prod_verified": true
+      },
+      "fuel": {
+        "pass_count": 0,
+        "total_count": 1,
+        "slices": [
+          {
+            "key": "scenario.fuel",
+            "holds": false,
+            "evidence": "0 fuel transaction(s)"
+          }
+        ],
+        "progress": 0,
+        "prod_verified": false
+      },
+      "maintenance": {
+        "pass_count": 1,
+        "total_count": 1,
+        "slices": [
+          {
+            "key": "scenario.maintenance",
+            "holds": true,
+            "evidence": "1 work order(s)"
+          }
+        ],
+        "progress": 100,
+        "prod_verified": true
+      },
+      "safety": {
+        "pass_count": 0,
+        "total_count": 1,
+        "slices": [
+          {
+            "key": "scenario.accident",
+            "holds": false,
+            "evidence": "0 accident(s) recorded"
+          }
+        ],
+        "progress": 0,
+        "prod_verified": false
+      },
+      "insurance": {
+        "pass_count": 0,
+        "total_count": 1,
+        "slices": [
+          {
+            "key": "scenario.insurance",
+            "holds": false,
+            "evidence": "0 insurance claim(s)"
+          }
+        ],
+        "progress": 0,
+        "prod_verified": false
+      },
+      "legal": {
+        "pass_count": 0,
+        "total_count": 1,
+        "slices": [
+          {
+            "key": "scenario.legal",
+            "holds": false,
+            "evidence": "0 legal matter(s)"
+          }
+        ],
+        "progress": 0,
+        "prod_verified": false
+      },
+      "factoring": {
+        "pass_count": 0,
+        "total_count": 1,
+        "slices": [
+          {
+            "key": "scenario.factoring",
+            "holds": false,
+            "evidence": "0 factoring advance(s)"
+          }
+        ],
+        "progress": 0,
+        "prod_verified": false
+      }
+    },
+    "slices": [
+      {
+        "key": "hop.book",
+        "module": "dispatch",
+        "holds": true,
+        "evidence": "3 load(s) booked with a customer and a rate"
+      },
+      {
+        "key": "hop.assign",
+        "module": "driver-finance",
+        "holds": true,
+        "evidence": "3 driver bill(s) priced from the rate card, not the customer rate"
+      },
+      {
+        "key": "hop.dispatch",
+        "module": "dispatch",
+        "holds": true,
+        "evidence": "1 load(s) dispatched or beyond"
+      },
+      {
+        "key": "hop.deliver",
+        "module": "dispatch",
+        "holds": false,
+        "evidence": "0 delivery stop(s) with a captured departure"
+      },
+      {
+        "key": "hop.pod_bol",
+        "module": "dispatch",
+        "holds": false,
+        "evidence": "0 POD/BOL document(s) linked to a load"
+      },
+      {
+        "key": "hop.revenue",
+        "module": "accounting",
+        "holds": false,
+        "evidence": "no count probe (resolved at request time)"
+      },
+      {
+        "key": "hop.invoice",
+        "module": "accounting",
+        "holds": true,
+        "evidence": "5 live invoice(s) sent or paid"
+      },
+      {
+        "key": "hop.gl",
+        "module": "accounting",
+        "holds": true,
+        "evidence": "1765 live journal entr(ies)"
+      },
+      {
+        "key": "hop.bank",
+        "module": "banking",
+        "holds": false,
+        "evidence": "0 customer payment(s) matched to an invoice"
+      },
+      {
+        "key": "scenario.customer",
+        "module": "lists",
+        "holds": true,
+        "evidence": "7 customer(s) on file"
+      },
+      {
+        "key": "scenario.driver_onboarding",
+        "module": "drivers",
+        "holds": true,
+        "evidence": "179 driver(s) on file"
+      },
+      {
+        "key": "scenario.coa",
+        "module": "accounting",
+        "holds": true,
+        "evidence": "149 account(s) in the chart"
+      },
+      {
+        "key": "scenario.settlement",
+        "module": "driver-finance",
+        "holds": false,
+        "evidence": "0 settlement(s) created"
+      },
+      {
+        "key": "scenario.advance",
+        "module": "driver-finance",
+        "holds": false,
+        "evidence": "0 driver advance(s) recorded"
+      },
+      {
+        "key": "scenario.deductions",
+        "module": "driver-finance",
+        "holds": false,
+        "evidence": "0 settlement deduction(s) applied"
+      },
+      {
+        "key": "scenario.escrow",
+        "module": "driver-finance",
+        "holds": false,
+        "evidence": "0 escrow ledger entr(ies)"
+      },
+      {
+        "key": "scenario.ap",
+        "module": "accounting",
+        "holds": true,
+        "evidence": "5 open (non-voided) bill(s)"
+      },
+      {
+        "key": "scenario.fuel",
+        "module": "fuel",
+        "holds": false,
+        "evidence": "0 fuel transaction(s)"
+      },
+      {
+        "key": "scenario.maintenance",
+        "module": "maintenance",
+        "holds": true,
+        "evidence": "1 work order(s)"
+      },
+      {
+        "key": "scenario.accident",
+        "module": "safety",
+        "holds": false,
+        "evidence": "0 accident(s) recorded"
+      },
+      {
+        "key": "scenario.insurance",
+        "module": "insurance",
+        "holds": false,
+        "evidence": "0 insurance claim(s)"
+      },
+      {
+        "key": "scenario.legal",
+        "module": "legal",
+        "holds": false,
+        "evidence": "0 legal matter(s)"
+      },
+      {
+        "key": "scenario.factoring",
+        "module": "factoring",
+        "holds": false,
+        "evidence": "0 factoring advance(s)"
+      },
+      {
+        "key": "scenario.banking",
+        "module": "banking",
+        "holds": true,
+        "evidence": "170 categorized bank transaction(s)"
+      }
+    ]
+  }
 };

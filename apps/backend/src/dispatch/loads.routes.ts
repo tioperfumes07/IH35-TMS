@@ -690,6 +690,15 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                  -- which is what makes this an oversight rather than a design choice.
                  NULLIF(TRIM(CONCAT(COALESCE(pd.first_name, ''), ' ', COALESCE(pd.last_name, ''))), '') AS assigned_primary_driver_name,
                  u.unit_number AS assigned_unit_number,
+                 -- LV-LOAD-DETAIL-SHOWS-UNASSIGNED: the THIRD field the drawer renders wrong. The card that
+                 -- produced the driver/unit joins above named three absent columns; only two were resolved.
+                 -- PROD-VERIFIED 2026-08-08 (information_schema, RLS-immune, discriminator satisfied):
+                 -- views.dispatch_load_with_driver_status has 18 columns and NO trip_type, while
+                 -- mdata.loads HAS it and 6 of 10 loads carry a value — L-20260806-0008 is 'NB'. So
+                 -- SELECT l.* never produced it, LoadDetailDrawer.tsx:370 read undefined, and TRIP TYPE
+                 -- rendered "-" for a load that has one. Read from mdata.loads, entity-scoped like the
+                 -- joins above; NOT added to the view, which would widen it unscoped for every consumer.
+                 ml.trip_type AS trip_type,
                  NULL::text AS trailer_equipment_type,
                  NULL::text AS trailer_number,
                  rc.file_id AS ratecon_file_id,
@@ -708,6 +717,10 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                                     AND pd.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
+          -- trip_type lives on mdata.loads, not on the view (see the SELECT note above). Same id, so this
+          -- carries the load's own operating_company_id predicate rather than trusting the view's row.
+          LEFT JOIN mdata.loads ml ON ml.id = l.id
+                                  AND ml.operating_company_id = l.operating_company_id
           -- A9 — surface the load's rate-con PDF (docs.file_links + docs.files, category
           -- 'rate_confirmation'). No column on mdata.loads carries this (unlike
           -- driver_instructions_file_id below, which IS persisted) — the link is polymorphic via
