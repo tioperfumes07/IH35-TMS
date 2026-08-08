@@ -516,5 +516,12 @@
     "source_file": "apps/backend/src/accounting/payments/apply.service.ts",
     "guard": "scripts/verify-customer-payment-posts-in-caller-tx.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-08-DELIVERY-LATCH-PAIRS-WITH-SETTLEMENT",
+    "title": "A delivery has TWO money halves and a guard that checks only one is green while the other is dark: latchOnDeliveryEvidence recognises the revenue, while pingSettlementOnLoadEvent on delivered_pending_docs calls closeSettlementForFinalLoad and closes the driver trip settlement — four of the five production latch paths (office fallback, driver route, bulk mark-delivered, driver-PWA departure) fired the latch and never pinged, leaving revenue on the books and the settlement that pays the driver OPEN FOREVER while verify-delivery-evidence-latch-wired stayed correctly green because it only ever asked about one half; every production route firing the latch must also ping settlement, non-fatally, and the guard must assert the PAIR rather than the call",
+    "source_file": "apps/backend/src/dispatch/delivery-evidence-latch.ts",
+    "guard": "scripts/verify-delivery-latch-pings-settlement.mjs",
+    "type": "enforced"
   }
 ]

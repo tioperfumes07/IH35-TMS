@@ -5,6 +5,8 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { validateLoadStopStatusWrite } from "../dispatch/load-state-machine.js";
 import { requireDriverSession } from "./auth.js";
+// ACCT-F166 — settlement half of a delivery; see the call site for why this route needs it.
+import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
 
 type LoadLifecycleStage =
   | "pre_trip"
@@ -610,6 +612,22 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
         targetStatus: nextLoadStatus,
         actorUserId: req.user!.uuid,
       });
+
+      // ACCT-F166 — the settlement half. `pingSettlementOnLoadEvent` on `delivered_pending_docs` calls
+      // closeSettlementForFinalLoad, so a delivery path that latches revenue WITHOUT pinging leaves the
+      // driver's trip settlement OPEN FOREVER: revenue recognised, the settlement that pays the driver
+      // never closed. Non-fatal, matching the dispatch route — losing the capture is worse than
+      // deferring the settlement, which the twice-daily reconcile surfaces.
+      try {
+        await pingSettlementOnLoadEvent(client, {
+          loadId: params.data.id,
+          operatingCompanyId: stop.operating_company_id,
+          dispatchTargetStatus: nextLoadStatus,
+          actorUserId: req.user!.uuid,
+        });
+      } catch (err) {
+        console.warn({ err, load_id: params.data.id }, "driver_load_settlement_ping_failed");
+      }
       return { lifecycle_stage: lifecycleFromLoadStatus(nextLoadStatus) };
     });
 

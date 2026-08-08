@@ -16,6 +16,8 @@ import {
   stampFinalActiveDeliveryDeparture,
 } from "./stamp-final-delivery-departure.js";
 import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
+// ACCT-F166 — settlement half of a delivery; see the call site for why this route needs it.
+import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
 
 // Transitions that fire escrow-proposal + settlement side-effects on the per-load endpoint
 // (PATCH /dispatch/loads/:id/status). Bulk set_status does NOT run those financial hooks, so moving a
@@ -123,6 +125,24 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
       targetStatus: mdataStatus,
       actorUserId: actorUserId,
     });
+
+    // ACCT-F166 — the settlement half. `pingSettlementOnLoadEvent` on `delivered_pending_docs` calls
+    // closeSettlementForFinalLoad, so a delivery path that latches revenue WITHOUT pinging leaves the
+    // driver's trip settlement OPEN FOREVER: revenue recognised, the settlement that pays the driver
+    // never closed. Non-fatal, matching the per-load endpoint.
+    try {
+      // The bulk route's local client type is structurally narrower than the service's DbClient
+      // (its query() returns unknown[] rows). Widened explicitly at the call site rather than with
+      // `as never`, so the cast names exactly what it is asserting.
+      await pingSettlementOnLoadEvent(client as Parameters<typeof pingSettlementOnLoadEvent>[0], {
+        loadId: id,
+        operatingCompanyId,
+        dispatchTargetStatus: mdataStatus,
+        actorUserId: actorUserId,
+      });
+    } catch (err) {
+      console.warn({ err, load_id: id }, "bulk_load_settlement_ping_failed");
+    }
     // Parity with the per-load endpoint: a bulk status change must land on the dispatch event spine so
     // downstream workflow consumers (timeline, notifications) see it. (Non-financial event-bus write.)
     await emitDispatchSpineEvent(client as unknown as Parameters<typeof emitDispatchSpineEvent>[0], {
