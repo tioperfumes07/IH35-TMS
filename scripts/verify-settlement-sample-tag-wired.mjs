@@ -290,6 +290,41 @@ const TAGGED_TABLES = [
   { table: "accounting.invoices", onlyFiles: ["accounting/from-load.ts"] },
 ];
 
+/**
+ * ACCT-F196 — CHECK 3: a writer that HAS a parent must DERIVE the flag in JS, not pass a literal.
+ *
+ * The [literal] arm above parses the SQL VALUES tuple, so it catches `..., false)` written INTO the
+ * SQL and is BLIND to a JavaScript hardcode: a writer that binds `$n` and passes a literal in the
+ * params array reads as correctly parameterised. Proven deliberately on 2026-08-08 — replacing
+ * `opts.isSampleData ?? load.is_sample_data ?? false` with `false` left this guard GREEN, because
+ * the SQL still said `$15`.
+ *
+ * That blind spot is not theoretical: it is EXACTLY how LV-SAMPLE-TAG-DISPATCH-HOLE shipped — the
+ * column was named, this guard was green, and every auto-opened settlement was still hardcoded
+ * "not sample data".
+ *
+ * Scoped BY FILE rather than applied globally, because a writer with no parent row has nothing to
+ * derive FROM, and demanding a derivation there would push authors to hardcode — the very defect
+ * this file exists to catch.
+ */
+const DERIVATION_REQUIRED = [
+  { file: "driver-finance/settlements-load-bookended.service.ts", needle: /is_sample_data\s*\?\?/ },
+  { file: "accounting/from-load.ts", needle: /load\.is_sample_data\s*\?\?/ },
+];
+
+export function jsDerivationProblems(rel, source) {
+  const spec = DERIVATION_REQUIRED.find((d) => rel.endsWith(d.file));
+  if (!spec) return [];
+  const code = source.replace(/\/\/[^\n]*/g, "").replace(/^[ \t]*--[^\n]*$/gm, "");
+  if (spec.needle.test(code)) return [];
+  return [
+    `${rel} binds ${REQUIRED_COLUMN} without deriving it from its parent row. The SQL parser cannot ` +
+      `see a JavaScript-side literal, so a hardcoded value here reads as correctly parameterised and ` +
+      `the row lands permanently mislabelled — exactly how LV-SAMPLE-TAG-DISPATCH-HOLE shipped.`,
+  ];
+}
+
+const derivationOffenders = [];
 const offenders = [];
 for (const file of walk(SRC)) {
   let source;
@@ -298,6 +333,8 @@ for (const file of walk(SRC)) {
   } catch {
     continue;
   }
+  derivationOffenders.push(...jsDerivationProblems(path.relative(ROOT, file), source));
+
   for (const { table: tbl, onlyFiles } of TAGGED_TABLES) {
   if (!source.includes(`INSERT INTO ${tbl}`)) continue;
   const rel = path.relative(ROOT, file);
@@ -340,6 +377,15 @@ if (offenders.length) {
   process.exit(1);
 }
 
+if (derivationOffenders.length) {
+  console.error(
+    `verify-settlement-sample-tag-wired FAILED — ${derivationOffenders.length} writer(s) bind ${REQUIRED_COLUMN} without deriving it (ACCT-F196):`
+  );
+  for (const d of derivationOffenders) console.error(`  \u2717 ${d}`);
+  process.exit(1);
+}
+
 console.log(
-  `verify-settlement-sample-tag-wired OK — every production INSERT into ${TABLE} carries \`${REQUIRED_COLUMN}\``
+  `verify-settlement-sample-tag-wired OK — every production INSERT into ${TABLE} carries \`${REQUIRED_COLUMN}\`, ` +
+    `and the writers with a parent row DERIVE it rather than passing a literal (CHECK 3)`
 );
