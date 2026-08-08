@@ -180,7 +180,10 @@ export async function cancelLoad(
         const voidedInvoices = await client.query<{ id: string }>(
           `
             UPDATE accounting.invoices
-               SET status = 'void', updated_at = now(), updated_by_user_id = $3
+               SET status = 'void',
+                   voided_at = now(),
+                   updated_at = now(),
+                   updated_by_user_id = $3
              WHERE source_load_id = $1::uuid
                AND operating_company_id = $2::uuid
                AND status = 'proforma'
