@@ -55,12 +55,24 @@ export function assertCargoParityAndPickerSearch(sources) {
     problems.push(`${CARGO}: the load is not an EntityLink kind="load".`);
   }
 
-  // F31 — the engine supports server search and skips double-filtering.
+  // F31 — the engine supports server search and skips double-filtering AND re-capping.
+  // FE-COMBOBOX-50-DISPLAY-CAP (2026-08-08): the prior assertion required
+  // `if (onSearch) return sourceOptions.slice(0, MAX_VISIBLE_OPTIONS)` — that kept a silent 50-row
+  // display cap AFTER the server returned the full roster (ACCT-F209). The real SAF-F31 contract is:
+  // when onSearch is set, return sourceOptions untouched (no local query filter, no MAX slice).
   if (!/onSearch\?: \(query: string\) => void;/.test(src[COMBOBOX])) {
     problems.push(`${COMBOBOX}: no optional onSearch prop — pickers cannot ask the server, so limit:200 silently truncates.`);
   }
-  if (!/if \(onSearch\) return sourceOptions\.slice\(0, MAX_VISIBLE_OPTIONS\);/.test(src[COMBOBOX])) {
-    problems.push(`${COMBOBOX}: server-filtered options are still filtered locally — a server match whose label lacks the typed text (unit by VIN, load by customer) would be dropped before it renders.`);
+  if (!/if \(onSearch\) return sourceOptions;/.test(src[COMBOBOX])) {
+    problems.push(
+      `${COMBOBOX}: server-filtered options are not returned as-is — either they are still filtered locally ` +
+        `(dropping VIN/customer matches) or they are re-capped with MAX_VISIBLE_OPTIONS (FE-COMBOBOX-50-DISPLAY-CAP).`
+    );
+  }
+  if (/if \(onSearch\) return sourceOptions\.slice\(0, MAX_VISIBLE_OPTIONS\);/.test(src[COMBOBOX])) {
+    problems.push(
+      `${COMBOBOX}: onSearch path still slices to MAX_VISIBLE_OPTIONS — server-returned roster is truncated in the UI with no notice.`
+    );
   }
 
   // F31 — unit/load: EntityPicker (registry server search) OR legacy Combobox+*Search state.
@@ -118,8 +130,11 @@ if (SELFTEST) {
     { ...live, [COMBOBOX]: live[COMBOBOX].replace("onSearch?: (query: string) => void;", "someOtherProp?: string;") },
     "no optional onSearch prop");
   expectCaught("double-filtering-returns",
-    { ...live, [COMBOBOX]: live[COMBOBOX].replace("if (onSearch) return sourceOptions.slice(0, MAX_VISIBLE_OPTIONS);", "") },
-    "still filtered locally");
+    { ...live, [COMBOBOX]: live[COMBOBOX].replace("if (onSearch) return sourceOptions;", "if (onSearch) return sourceOptions.filter((o) => o.label.includes(query));") },
+    "not returned as-is");
+  expectCaught("server-path-re-capped",
+    { ...live, [COMBOBOX]: live[COMBOBOX].replace("if (onSearch) return sourceOptions;", "if (onSearch) return sourceOptions.slice(0, MAX_VISIBLE_OPTIONS);") },
+    "still slices to MAX_VISIBLE_OPTIONS");
   // When EntityPicker owns unit/load, plant defects on vendorSearch (still Combobox) + EntityPicker removal.
   if (/EntityPicker[\s\S]*?kind=["']unit["']/.test(live[DRAWER])) {
     expectCaught(
