@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 import { cashAdvanceRequestsOfficeApi } from "../../api/cashAdvanceRequests";
 import { getDebtSummary, listSettlements, type SettlementListRow } from "../../api/driverFinance";
 import { getLiabilitiesByDriver } from "../../api/liabilities";
+import { listVendorBills } from "../../api/accounting";
+import { getDriverApVendor } from "../../api/mdata";
 import { Button } from "../Button";
 import { EntityLink } from "../shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
@@ -166,6 +168,35 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
     enabled,
   });
 
+  // FAIL-AP1 — reverse of mdata.vendors.driver_id (not QBO Mapping).
+  const apVendorQuery = useQuery({
+    queryKey: ["driver-ap-vendor", driverId, operatingCompanyId],
+    queryFn: () => getDriverApVendor(driverId, operatingCompanyId),
+    enabled,
+  });
+  const apVendorId = apVendorQuery.data?.vendor?.id ?? null;
+  const openBillsQuery = useQuery({
+    queryKey: ["driver-ap-vendor-open-bills", operatingCompanyId, apVendorId],
+    queryFn: () =>
+      listVendorBills(operatingCompanyId, {
+        vendor_id: apVendorId!,
+        status: "unpaid",
+        include_balance: true,
+        limit: 50,
+      }),
+    enabled: enabled && Boolean(apVendorId),
+  });
+  const openBillTotalCents = useMemo(() => {
+    const rows = openBillsQuery.data?.rows ?? [];
+    return rows.reduce((sum, row) => {
+      const bal =
+        row.balance_cents != null
+          ? Number(row.balance_cents)
+          : Number(row.amount_cents ?? 0) - Number(row.paid_cents ?? 0);
+      return sum + (Number.isFinite(bal) ? bal : 0);
+    }, 0);
+  }, [openBillsQuery.data?.rows]);
+
   const liabilities = liabilitiesQuery.data?.liabilities ?? [];
   const driverSettlements = useMemo(() => {
     const rows = settlementsQuery.data?.settlements ?? [];
@@ -293,6 +324,53 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
             </div>
           </div>
         </div>
+      </div>
+
+      {/* FAIL-AP1 — Driver → A/P vendor reverse (canonical mdata.vendors.driver_id).
+          Distinct from Profile → QBO Mapping (qbo_vendor_id). */}
+      <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="driver-earnings-ap-vendor">
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-gray-900">A/P vendor (driver payee)</h3>
+          {apVendorId ? (
+            <Link
+              to={`/vendors/${encodeURIComponent(apVendorId)}`}
+              className="text-xs text-slate-700 underline"
+              data-testid="driver-earnings-ap-vendor-open"
+            >
+              Open vendor →
+            </Link>
+          ) : null}
+        </div>
+        {apVendorQuery.isPending ? (
+          <p className="text-xs text-gray-500">Loading…</p>
+        ) : !apVendorQuery.data?.vendor ? (
+          <p className="text-xs text-gray-500" data-testid="driver-earnings-ap-vendor-empty">
+            No A/P vendor linked for this company. Link the vendor&apos;s driver_id (or run ensure-drivers)
+            before posting driver pay.
+          </p>
+        ) : (
+          <div className="grid gap-2 md:grid-cols-2">
+            <div>
+              <div className="text-[11px] uppercase text-gray-500">Vendor</div>
+              <div className="text-sm font-semibold text-gray-900" data-testid="driver-earnings-ap-vendor-link">
+                <EntityLink
+                  kind="vendor"
+                  id={apVendorQuery.data.vendor.id}
+                  label={apVendorQuery.data.vendor.name ?? apVendorQuery.data.vendor.id}
+                />
+              </div>
+            </div>
+            <div>
+              <div className="text-[11px] uppercase text-gray-500">Open bills</div>
+              <div className="text-lg font-semibold text-gray-900" data-testid="driver-earnings-ap-vendor-open-total">
+                {openBillsQuery.isPending ? "…" : money(openBillTotalCents / 100)}
+              </div>
+              <div className="text-[10px] text-gray-500">
+                {(openBillsQuery.data?.rows ?? []).length} unpaid bill(s)
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-2 md:grid-cols-3">

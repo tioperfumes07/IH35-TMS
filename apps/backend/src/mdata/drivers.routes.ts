@@ -27,6 +27,10 @@ import { EXCLUDE_ARCHIVED_DRIVERS_SQL } from "./test-seed-archive.js";
 import { ensureDriverAppAccess } from "./driver-app-access.service.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { isWhatsappChannelConfigured } from "../outbox/handlers/twilio-channel-config.js";
+import {
+  DriverVendorMissingError,
+  resolveDriverVendorLink,
+} from "../accounting/driver-vendor-link.service.js";
 
 const DRIVER_STATUS_VALUES = ["Active", "Probation", "Inactive", "Terminated", "OnLeave"] as const;
 export const driverStatusSchema = z.enum(DRIVER_STATUS_VALUES);
@@ -1336,6 +1340,72 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if (!row) return reply.code(404).send({ error: "mdata_driver_not_found" });
     return row;
   });
+
+  /**
+   * FAIL-AP1 — Driver → A/P vendor reverse read.
+   *
+   * Forward FK already exists (`mdata.vendors.driver_id`) and posters resolve it via
+   * `resolveDriverVendorLink`. Nothing exposed that join on the driver profile, so Earnings & Debt
+   * could not drill to the payee vendor (Cascade measured live: 3 bills / $1,350 already flow
+   * through driver-vendors with no reverse surface). Soft-miss returns `{ vendor: null }` — never
+   * invent a vendor id. Distinct from QBO Mapping (`qbo_vendor_id`).
+   */
+  app.get(
+    "/api/v1/mdata/drivers/:id/ap-vendor",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return;
+      const parsedParams = idParamSchema.safeParse(req.params ?? {});
+      if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+      const parsedQuery = z
+        .object({ operating_company_id: z.string().uuid() })
+        .safeParse(req.query ?? {});
+      if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+
+      const payload = await withCurrentUser(authUser.uuid, async (client) => {
+        const scopedCompanyId = await resolveOperatingCompanyId(
+          client,
+          authUser.uuid,
+          parsedQuery.data.operating_company_id
+        );
+        if (!scopedCompanyId) return { error: "operating_company_id_required" as const };
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+
+        const driverExists = await client.query(
+          `SELECT 1 FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+          [parsedParams.data.id, scopedCompanyId]
+        );
+        if (!driverExists.rows[0]) return { error: "mdata_driver_not_found" as const };
+
+        try {
+          const link = await resolveDriverVendorLink(client, scopedCompanyId, parsedParams.data.id);
+          return {
+            vendor: {
+              id: link.vendorId,
+              name: link.vendorName,
+              qbo_vendor_id: link.qboVendorId,
+              operating_company_id: scopedCompanyId,
+              driver_id: parsedParams.data.id,
+            },
+          };
+        } catch (err) {
+          if (err instanceof DriverVendorMissingError) {
+            return { vendor: null, operating_company_id: scopedCompanyId, driver_id: parsedParams.data.id };
+          }
+          throw err;
+        }
+      });
+
+      if ("error" in payload && payload.error === "operating_company_id_required") {
+        return reply.code(400).send({ error: "operating_company_id_required" });
+      }
+      if ("error" in payload && payload.error === "mdata_driver_not_found") {
+        return reply.code(404).send({ error: "mdata_driver_not_found" });
+      }
+      return payload;
+    }
+  );
 
   /**
    * BULK INVITE — grant app access to drivers who have none.
