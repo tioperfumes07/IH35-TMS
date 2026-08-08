@@ -7900,3 +7900,66 @@ where `totalCost = A + B` is computed). That is where the WO **total** comes fro
 reconcile's numbers never touch that code** — they are computed independently in the browser from a different
 array. Two independent computations of "what this work order costs" is the actual structural defect, and it
 is why adding Section A on one side would not make them agree.
+
+## 126. ★★ THE VOID UNIT — BLOCKED, and it RE-REPRODUCES `LV-BILLVOID-DATE-ERROR` on the CURRENT DEPLOYED BUILD. The correct pattern is in the SAME FILE, FOUR TIMES.
+
+**The mission's void unit is "create multiples of a voidable type, VOID exactly one by UUID, siblings stay
+live." I did the first half and the second half is impossible.**
+
+**CREATED — two sibling bills, both posted:**
+
+| bill | id | amount | GL |
+|---|---|---|---|
+| `CC3-BATT-20260807-02` | `4415a62c-987f-4dd2-80e4-32a305ebebed` | $211.00 | **posted** |
+| `CC3-BATT-20260807-03` | `60f644f0-b597-4888-a3c2-8690f607c30e` | $211.00 | **posted** |
+
+**VOIDED exactly one, by UUID (never display_id), through the production `voidBill()` service:**
+```
+voidBill(USMCA, "4415a62c-987f-4dd2-80e4-32a305ebebed", "<reason>", OWNER, { role: "Owner" })
+→ VOID_ERR code=22007  invalid input syntax for type date: "Fri Aug 07"
+```
+
+### ★ ROOT CAUSE — pinned to one word, with the correct version four times in the same file
+
+`apps/backend/src/accounting/bills.service.ts`:
+- **`:1740`** the void path reads the bill with **`SELECT *`**, so `node-postgres` hands back `bill_date` as a
+  **JavaScript `Date` object** (it parses `date`/`timestamptz` into `Date` by default).
+- **`:1774`** then does `const originalDate = String(billRaw.bill_date).slice(0, 10);`
+
+Trace it: `String(new Date("2026-08-07"))` → `"Fri Aug 07 2026 00:00:00 GMT+0000 …"`, and `.slice(0,10)` →
+**`"Fri Aug 07"`** — which is then handed to a `date` parameter. **`22007 invalid input syntax for type date:
+"Fri Aug 07"` is that string, character for character.** The error message IS the proof; nothing is inferred.
+
+**THE CORRECT PATTERN IS IN THE SAME FILE, FOUR TIMES** — `:667`, `:745`, `:843`, `:2066` all read
+**`b.bill_date::text AS bill_date`**, casting in SQL so the driver returns `'YYYY-MM-DD'` and `.slice(0,10)`
+is a harmless no-op. **The void path is the only bill reader in the file that uses `SELECT *` instead of the
+cast, and it is the only one that breaks.** Item 38 recorded that "the correct fix already exists in a
+sibling file" — it is closer than that: **it is four lines of the same file.**
+
+### ★ THIS IS A RE-REPRODUCTION, AND THAT IS THE POINT — `LV-BILLVOID-DATE-ERROR-STILL-LIVE`
+
+Battery items 36–38 filed and root-caused this. **It is not fixed.** Proven on the build serving production
+right now, three ways in one check:
+- `GET /api/v1/healthz/shallow` → **`{"version":"6020040"}`**.
+- `git show 6020040:apps/backend/src/accounting/bills.service.ts | grep -c 'String(billRaw.bill_date).slice(0, 10)'`
+  → **1**. **The defective line is in the deployed tree.**
+- The line was introduced by **`be3323ed7` (2026-06-14**, *"VOID-EVERYWHERE PR-2 — extend gated void engine to
+  bills"*, #977) and **has never been touched since** — **55 days live.**
+
+**AND IT IS DIFFERENT EVIDENCE THAN BEFORE.** The earlier reproduction was through the browser, where a 500
+can always be argued down to a UI or session artefact. **This one is a direct service call with a
+deterministic, quotable Postgres error code** — there is no UI in the path to blame.
+
+### WHY THIS OUTRANKS ITS CURRENT PRIORITY
+
+**§2 of the constitution is `void-not-delete`.** A voidable financial document that cannot be voided leaves
+exactly two options: leave a wrong bill standing on the A/P ledger forever, or delete it — **and deletion is
+prohibited.** So the WORM law is not merely unenforced here, it is **unsatisfiable** for bills: every
+mistaken bill USMCA ever books is permanent. Bill `4415a62c-…` is now exactly that — a $211.00 A/P liability
+I created to void, which **cannot be voided**, and which I will not delete.
+
+**Sibling integrity confirmed** (the void unit's other half still passes): `60f644f0-…` and `9f9ce1cb-…`
+remain live, unvoided and fully posted. **Nothing was damaged by the failed void** — the reversal is attempted
+**before** the status flip (`:1765` *"Post the reversing JE BEFORE the status flip so both land atomically"*),
+so the throw rolls back cleanly with no half-voided bill and no orphan reversing JE. **The transaction design
+is right; only the date coercion is wrong.**
