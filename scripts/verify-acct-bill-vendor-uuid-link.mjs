@@ -72,6 +72,25 @@ export function auditBackend(src) {
   if (/ON v\.id::text = COALESCE\(b\.vendor_id/.test(service)) {
     problems.push("bills.service.ts: getBillDetail still joins vendors on legacy vendor_id text");
   }
+  // LV-BILLS-VENDOR-UUID — resolveVendorDisplayMap read ONLY qbo_archive.entities_snapshot, which is the
+  // QBO identifier space. A TMS-native (USMCA) bill carries an mdata.vendors uuid in vendor_uuid and has no
+  // snapshot row, so every such list row fell back to rendering a raw UUID. QBO stays primary under
+  // parallel books; mdata is the fallback for uuid-shaped ids only.
+  const resolverStart = service.indexOf("export async function resolveVendorDisplayMap");
+  const resolver = resolverStart === -1 ? "" : service.slice(resolverStart, resolverStart + 4000);
+  if (!resolverStart) {
+    problems.push("bills.service.ts: resolveVendorDisplayMap not found — anchor drifted");
+  } else {
+    if (!/FROM mdata\.vendors/.test(resolver)) {
+      problems.push(
+        "bills.service.ts: resolveVendorDisplayMap must also resolve names from mdata.vendors — the QBO " +
+          "snapshot alone leaves every TMS-native bill showing a raw UUID"
+      );
+    }
+    if (!/vendor_name/.test(resolver)) {
+      problems.push("bills.service.ts: resolveVendorDisplayMap must select mdata.vendors.vendor_name");
+    }
+  }
   return problems;
 }
 
