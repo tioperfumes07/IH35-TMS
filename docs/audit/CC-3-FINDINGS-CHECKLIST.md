@@ -96,6 +96,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-TXN-017` | — | CC-2 / mechanical+routes+validation | — | — | — | — | — | — |
 | ☐ | `LV-TXN-018` | P0 | CC-1 (money) | — | — | — | — | — | — |
 | ☐ | `LV-PAY-SETTLE-NOPOST` | — | CC-1 / money | — | — | — | — | — | — |
+| ☐ | `CLS-SUBLEDGER-GL-DARK-TIEOUT` | P0 | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `ACCT-F171` | P1 | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-AP-OPEN-INCLUDES-VOIDED` | — | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `ACCT-F174` | P0 | CC-1 / money | — | — | — | — | — | — |
