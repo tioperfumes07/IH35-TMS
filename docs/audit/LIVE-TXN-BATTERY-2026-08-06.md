@@ -8152,3 +8152,65 @@ while the human-facing ranking that operators actually use is scored by a formul
 (0.55) contributes **nothing** whenever no candidate is within $1.00 — which, given the same population, is
 almost always. **The strict half is unreachable and the loose half is misleading. Fixing one without the
 other just moves the problem.**
+
+## 130. ★★★ BOARD ITEM PULLED — `CLS-VOID-PREDICATE-DRIFT` is not a documentation problem. It is COSTING $1,766.66 ON THE USMCA A/P RIGHT NOW, and it ROOT-CAUSES the open `LV-AP-OPEN-INCLUDES-VOIDED`.
+
+The class row says ten spellings of "exclude the voided row" make the invariant unguardable, and warns the
+next agent not to attempt a broad sweep. **I did not attempt the sweep. I asked a narrower question — do the
+spellings actually DISAGREE on live data? — and they do, by a measurable amount, on one table.**
+
+### THE MEASUREMENT — USMCA TMS-native non-draft bills, same rows, three predicates
+
+| predicate | bills counted live | open A/P |
+|---|---|---|
+| `voided_at IS NULL` | **10** | **$2,223.66** |
+| `revoked_at IS NULL` | **14** | **$3,990.32** |
+| `status <> 'void'` | **14** | **$3,990.32** |
+
+**A $1,766.66 spread — a 79% overstatement — decided entirely by which spelling the reader happens to use.**
+
+### ★ AND $1,766.66 IS NOT A NEW NUMBER
+
+Battery item 34 filed `LV-AP-OPEN-INCLUDES-VOIDED` — *"the Open Bills KPI counts VOIDED bills — **$1,766.66**
+overstated."* **The figure reproduces to the cent.** That item recorded the symptom; this unit supplies the
+mechanism: **the KPI did not "forget" to filter. It filters correctly — on a DIFFERENT void marker than the
+one that was written.**
+
+### THE MECHANISM — `accounting.bills` has TWO disjoint void marker sets, and the writers and readers use opposite ones
+
+**What the writers do** — every bill-void writer in `apps/backend/src` sets `status='void'` + `revoked_at`:
+- `bills.service.ts:1791-1793` (`voidBill`) · `:1991-1993` · `bills-bulk.routes.ts:79-80`.
+- **`grep -rn "voided_at = now()"` over the backend returns vendor-credits, invoices, payments, amortization,
+  settlement and loan-payment services — and NOT bills. No backend path sets `accounting.bills.voided_at`.**
+
+**What prod actually contains** — 16 TMS-native bills:
+- **`voided_at` set: 4** · **`revoked_at` set: 0** · **`status='void'`: 0.**
+
+**So every voided bill in the database was voided by something that writes the marker no backend writer
+writes, and NO bill carries the markers every backend writer writes.** The four were stamped at the identical
+instant `2026-08-07T00:33:50.999Z` — one bulk operation, outside the service layer.
+
+**And each of the four still reads `status = 'unpaid'`.** The row is internally contradictory: voided by one
+column, unpaid by another. **To any reader using `status` or `revoked_at` — which is what the backend's own
+writers imply is canonical — these are four live unpaid liabilities.**
+
+### ★ FILED (P0 · money · CC-1) — `LV-BILL-VOID-MARKERS-ARE-DISJOINT`
+
+**This upgrades the class from "unguardable, needs a design decision" to "actively wrong, with a number."**
+The class row's advice — *don't build the broad guard yet* — remains correct and I am not contradicting it.
+**But it framed the drift as a future-guardability problem, and on `accounting.bills` it is a present
+mis-statement of the A/P balance.** One table, two marker sets, writers on one side and the voided rows on
+the other.
+
+**A note on precedence that makes this actionable rather than a coin-flip:** `docs/audit/void-predicate-map.json`
+already declares `voided_at > soft_deleted_at > deleted_at > revoked_at > archived_at > unapplied_at >
+is_active` — *"the strongest 'this did not happen' marker wins."* **By that map, the four bills ARE void and
+the 10/$2,223.66 reading is the correct one — which means the backend's writers are writing the weaker
+marker, and every KPI reading `revoked_at`/`status` is overstating A/P.** The map is the decision; the code
+has not been aligned to it.
+
+**Why this is P0 and not P1:** it is not a display bug. `accounting.bills` is the A/P subledger. A 79%
+overstatement of open payables misstates the balance sheet, the cash-flow forecast and any vendor aging built
+on it — and it does so silently, because both numbers are internally consistent and neither looks wrong on
+its own. **The only way to see it is to ask two spellings of the same question and compare, which is exactly
+what the class row predicted nobody would do.**
