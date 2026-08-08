@@ -144,6 +144,12 @@ const detailQuerySchema = z.object({
 });
 
 const createVendorBodySchema = z.object({
+  /**
+   * ACCT-F220 — lets a caller mark a vendor as SAMPLE data at creation. mdata.vendors has carried
+   * is_sample_data all along and this route never wrote it, so no operator could tag a vendor through
+   * the product. Three vendors were created untagged on prod this way in a single packet.
+   */
+  is_sample_data: z.boolean().optional(),
   name: z.string().trim().min(1).max(200),
   vendor_code: z.string().trim().max(100).optional(),
   vendor_type: vendorTypeWriteSchema,
@@ -523,7 +529,13 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/mdata/vendors", async (req, reply) => {
+  // ACCT-F220 — rateLimit added because this PR touches the route and the guard is right that it was
+  // missing (CodeQL js/missing-rate-limiting). PRE-EXISTING on main, not introduced here: vendor
+  // creation is an authenticated write with no throttle. 60/min matches the sibling create routes.
+  app.post(
+    "/api/v1/mdata/vendors",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -598,6 +610,8 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         addOptional("payment_terms_id", b.payment_terms_id);
         addOptional("default_expense_account_id", b.default_expense_account_id);
         addOptional("account_number", b.account_number);
+        // ACCT-F220 — same gap as customers: the column existed, the route never wrote it.
+        addOptional("is_sample_data", b.is_sample_data);
 
         const res = await client.query(
           `

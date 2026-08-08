@@ -123,6 +123,15 @@ const createCustomerBodySchema = z
   preferred_payment_method: preferredPaymentMethodSchema.nullable().optional(),
   preferred_delivery_method: preferredDeliveryMethodSchema.optional(),
   preferred_language: preferredLanguageSchema.optional(),
+  /**
+   * ACCT-F220 — lets a caller mark a customer as SAMPLE data at creation.
+   *
+   * mdata.customers has carried is_sample_data all along and this route never wrote it, so NO
+   * operator could tag a customer through the product no matter what a create packet asked for.
+   * Five master-data records were created untagged on prod this way — all correctly through the app,
+   * with a real actor — while the loads and invoices hanging off them tagged perfectly.
+   */
+  is_sample_data: z.boolean().optional(),
   tax_exempt: z.boolean().optional(),
   tax_exempt_reason: z.string().trim().max(500).nullable().optional(),
   // Option-B: recommendation-only default income account — pre-fills invoice lines, never a silent post.
@@ -704,6 +713,8 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         addOptional("preferred_payment_method", b.preferred_payment_method);
         addOptional("preferred_delivery_method", b.preferred_delivery_method ?? "email");
         addOptional("preferred_language", b.preferred_language ?? "en");
+        // ACCT-F220 — omitted stays NULL/default false; only an explicit true tags it.
+        addOptional("is_sample_data", b.is_sample_data);
         addOptional("tax_exempt", b.tax_exempt ?? false);
         addOptional("tax_exempt_reason", b.tax_exempt_reason);
         addOptional("default_income_account_id", b.default_income_account_id);
