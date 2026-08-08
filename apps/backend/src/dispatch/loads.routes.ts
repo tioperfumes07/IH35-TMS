@@ -254,6 +254,9 @@ const updateDispatchLoadBodySchema = z.object({
   customer_wo_number: z.string().trim().max(120).nullable().optional(),
   pickup_number: z.string().trim().max(120).nullable().optional(),
   border_routing: z.string().trim().max(120).nullable().optional(),
+  // FAIL-B4 — the EDIT path never accepted this. zod strips unknown keys, so a correct UI and a correct
+  // column-writer still lost the flag in between. Create had it since FAIL-D6; update did not.
+  is_sample_data: z.boolean().optional(),
   driver_instructions_text: z.string().trim().max(5000).nullable().optional(),
   notes: z.string().trim().max(5000).nullable().optional(),
   requires_tarps: z.boolean().optional(),

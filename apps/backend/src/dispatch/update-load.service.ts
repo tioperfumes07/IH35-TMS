@@ -71,6 +71,8 @@ export type UpdateDispatchLoadFields = Partial<{
   customer_wo_number: string | null;
   pickup_number: string | null;
   border_routing: string | null;
+  /** FAIL-B4 — sample/demo flag, editable after creation. */
+  is_sample_data: boolean;
   trip_type: "NB" | "TR" | "SB";
   tour_id: string | null;
   // Block 7 (Jorge-approved, no migration): freight attributes round-tripped from the Edit wizard.
@@ -150,6 +152,7 @@ const SCALAR_COLUMNS: Record<keyof UpdateDispatchLoadFields, string> = {
   customer_wo_number: "customer_wo_number",
   pickup_number: "pickup_number",
   border_routing: "border_routing",
+  is_sample_data: "is_sample_data",
   trip_type: "trip_type",
   tour_id: "tour_id",
   commodity: "commodity",

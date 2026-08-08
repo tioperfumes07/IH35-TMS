@@ -66,6 +66,9 @@ export function buildEditPrefill(load: LoadDetail): AnyValues {
     customer_wo_number: str(load.customer_wo_number),
     pickup_number: str(load.pickup_number),
     border_routing: str(load.border_routing),
+    // FAIL-B4 — without this the checkbox rendered UNCHECKED on every edit, even for a load already
+    // flagged as sample, so opening and saving a sample load silently presented it as real.
+    is_sample_data: Boolean((load as { is_sample_data?: boolean }).is_sample_data),
     notes: str(load.notes),
     driver_instructions_text: str(load.driver_instructions_text),
     // Only the rate TOTAL is stored (no linehaul/fuel/accessorial breakdown) → seed linehaul with the
@@ -122,6 +125,9 @@ const SCALAR_FIELDS: Array<[string, string, (v: AnyValues) => unknown]> = [
   ["customer_wo_number", "customer_wo_number", (v) => str(v.customer_wo_number) || null],
   ["pickup_number", "pickup_number", (v) => str(v.pickup_number) || null],
   ["border_routing", "border_routing", (v) => str(v.border_routing) || null],
+  // FAIL-B4 — the patch body is dirtyFields-gated, so without this entry toggling the checkbox was simply
+  // never sent: the UI accepted the change and the load came back unchanged.
+  ["is_sample_data", "is_sample_data", (v) => Boolean(v.is_sample_data)],
   ["driver_instructions_text", "driver_instructions_text", (v) => str(v.driver_instructions_text) || null],
   ["notes", "notes", (v) => str(v.notes) || null],
   ["requires_tarps", "requires_tarps", (v) => Boolean(v.requires_tarps)],
