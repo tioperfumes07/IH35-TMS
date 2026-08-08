@@ -8461,3 +8461,68 @@ checked first, and it was wrong:** `accounting.transaction_source_links` holds *
 `load_revenue_recognition_postings` carries `load_id` + `journal_entry_id` directly. **The linkage is complete
 — it is simply carried by the latch table and TSL rather than by the posting columns.** Third would-be false
 positive killed by checking before filing.
+
+## 135. ★★★ THE GUARD IS GREEN AND BLIND — `verify-delivery-evidence-latch-wired` passes while the bulk path transitions loads to a revenue-recognition status with ZERO latch calls.
+
+Item 134 exonerated the revenue poster. **This unit finds the call site that never calls it, and the guard
+that certifies otherwise.**
+
+### THE UNLATCHED PATH — counted, not inferred
+
+`apps/backend/src/dispatch/loads-bulk.routes.ts`:
+- **`grep -c "postLoadRevenueLatch\|latchOnDeliveryEvidence"` → `0`.** No latch call, of either form.
+- Its `setStatusPayloadSchema` accepts **`transition: dispatchStatusSchema`**, and that enum
+  (`load-state-machine.ts:3-9`) **includes `delivered_pending_docs` AND `completed_docs_received`** — both
+  revenue-recognition trigger statuses (`poster.service.ts` `resolveEvent()`: `delivered_pending_docs` → earn,
+  `completed_docs_received` → bill).
+- It writes them at `:92` as **`SET status = $3::mdata.load_status_enum`** — a **bound parameter**.
+
+**So an operator bulk-marking loads delivered moves them into an earn status and no revenue is recognised.
+Silently — the status change succeeds and nothing reports that the latch did not run.**
+
+### ★ AND THE GUARD THAT EXISTS TO PREVENT THIS RETURNS GREEN
+
+```
+$ node scripts/verify-delivery-evidence-latch-wired.mjs
+verify-delivery-evidence-latch-wired OK — every delivery-evidence transition fires the revenue latch
+```
+
+**That sentence is false, and the reason is one regex.** `assignsEvidenceStatus()` (`:58-66`):
+```js
+const assign = new RegExp(`(?:=|\\?|:)\\s*["']${status}["']`);
+```
+**It only matches a STRING LITERAL assignment.** `loads-bulk.routes.ts` never contains the literal
+`"delivered_pending_docs"` — the status arrives as a runtime parameter and is bound into SQL. **The file is
+therefore invisible to the guard, and the guard reports full coverage.**
+
+**The sharpest detail: the guard's own header anticipated exactly this path and the implementation still
+misses it.** `:17` reads:
+> *"…a **bulk driver tool**, a telematics auto-complete) reproduces it. So this scans for the SHAPE:"*
+
+**The author named the bulk tool as the thing to catch, then wrote a detector that can only see literals.**
+The intent is right; the mechanism cannot express it.
+
+### ★ FILED (P0 · money · CC-1) — `LV-LATCH-GUARD-BLIND-TO-PARAMETERIZED-STATUS`
+
+**This is a fake-green under the hardline rule, and it is worse than having no guard**, because a green
+`verify-delivery-evidence-latch-wired` is precisely the artefact someone would cite to close
+`LV-REVREC-BULK-LATCH-GUARD-READY` or `LV-TXN-004`.
+
+**Everything needed to fix it now exists in one place, which is why this unit matters more than its size:**
+1. **The poster is proven working** — item 134, JE `1fac8d19`, balanced, correct ASC 606.
+2. **The evidence gate is proven correct** — it refused a POD-less load in the same run.
+3. **The unlatched call site is identified and counted** — `loads-bulk.routes.ts`, 0 latch calls.
+4. **The reason it was never caught is identified** — a literal-only regex against a parameterized write.
+
+**There is no diagnosis left to do on this P0. It is a wire-up plus a guard that can see parameters.**
+
+**A NOTE ON THE SIBLING GUARD, because this repo has already solved this once.** Battery item 42 records
+*"FIXED (CC-3 lane) — the false-green guard now catches the parameterized shape."* **A different guard in
+this same codebase was hardened against precisely this weakness, and this one was not.** The fix is not
+research; it is applying a pattern that already shipped here.
+
+**WHAT I AM NOT CLAIMING.** I did not exercise the bulk endpoint — it is an HTTP route with no exported
+service, and I will not fabricate a request path. **The count of latch calls (0), the status enum, the
+parameterized write and the guard's green output are all directly verified; the operator-facing consequence
+follows from those four facts rather than from a live click.** Stated so nobody upgrades it to an
+observation I did not make.
