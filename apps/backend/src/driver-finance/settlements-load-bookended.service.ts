@@ -44,6 +44,12 @@ export async function openLoadBookendedSettlement(
     operatingCompanyId: string;
     firstLoadId: string;
     actorUserId: string;
+    /**
+     * Optional override. LEAVE IT UNSET in normal code — the flag is DERIVED from the parent load
+     * below, so a caller that does not know about sample data still produces a correctly tagged
+     * settlement. Only set this when a caller genuinely knows better than the load.
+     */
+    isSampleData?: boolean;
   }
 ): Promise<{ settlementId: string; settlementNumber: string }> {
   const loadRes = await client.query<{
@@ -52,9 +58,11 @@ export async function openLoadBookendedSettlement(
     assigned_primary_driver_id: string | null;
     assigned_secondary_driver_id: string | null;
     operating_company_id: string;
+    is_sample_data: boolean | null;
   }>(
     `
-      SELECT id, load_number, assigned_primary_driver_id, assigned_secondary_driver_id, operating_company_id
+      SELECT id, load_number, assigned_primary_driver_id, assigned_secondary_driver_id, operating_company_id,
+             is_sample_data
       FROM mdata.loads
       WHERE id = $1
         AND operating_company_id = $2
@@ -129,7 +137,7 @@ export async function openLoadBookendedSettlement(
       )
       VALUES (
         $1,$2,$3,$4::date,$5::date,'open',0,0,0,0,
-        'load_bookended',$6,$7,$8::timestamptz,false
+        'load_bookended',$6,$7,$8::timestamptz,$9
       )
       RETURNING id, display_id
     `,
@@ -142,6 +150,12 @@ export async function openLoadBookendedSettlement(
       opts.firstLoadId,
       load.load_number,
       tripStartedAt,
+      // DERIVED from the parent load, not hardcoded. This is the writer dispatch calls on
+      // `in_transit`, so it opens settlements for loads nobody tagged by hand — a literal `false`
+      // here meant a Gate-B sample load silently produced an UNTAGGED live settlement that no purge
+      // query could find. Deriving it means every one of pingSettlementOnLoadEvent's three call
+      // sites, and any future one, is correct without knowing this flag exists.
+      opts.isSampleData ?? load.is_sample_data ?? false,
     ]
   );
 
