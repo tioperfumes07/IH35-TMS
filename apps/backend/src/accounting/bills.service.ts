@@ -172,6 +172,17 @@ type BillPaymentRow = {
   status: string;
   created_at: string;
   revoked_at: string | null;
+  /**
+   * ACCT-F175 — true only for a non-cash settlement DEDUCTION payment (advance repaid / escrow
+   * withheld, `from_bank_account_id` NULL). Such a payment exists ONLY to close its bill's A/P in the
+   * subledger; its GL is owned by the settlement deduction JE, and the posting engine refuses to post
+   * it independently (posting-engine.service.ts:1324). It is therefore also the one payment kind that
+   * must NOT have its GL reversed on void — everything else must.
+   *
+   * The column was already returned by the `SELECT *` in voidBillPaymentInClientTx and simply was not
+   * declared here, so reading it was a type error even though the value was present.
+   */
+  settlement_deduction_noncash: boolean | null;
   // BANKREC-LISTSTATUS-01 (read-only, additive): true iff this bill_payment has an ACTIVE
   // (auto_matched|user_matched) banking.reconciliation_matches row.
   is_reconciled: boolean;
@@ -1855,7 +1866,20 @@ export async function voidBillPaymentInClientTx(
     paymentId: string;
     reason: string;
     userId: string;
-    reversePostedGl: boolean;
+    /**
+     * ACCT-F175 — OPTIONAL, and omitting it is the correct default.
+     *
+     * Whether a voided bill payment's GL must be reversed is a property of the PAYMENT, not of the
+     * caller: a non-cash settlement DEDUCTION payment (`settlement_deduction_noncash = true`) has no
+     * independent GL to reverse — the posting engine explicitly refuses to post it because its entry
+     * is owned by the settlement deduction JE — while every other bill payment has a real
+     * DR A/P / CR bank entry that MUST be reversed when it is voided.
+     *
+     * It used to be required, so each caller had to remember, and the user-facing one did not:
+     * `voidBillPayment` hardcoded `false` and no void through the UI ever reversed anything. Leave it
+     * unset and the value is derived from the row below, which cannot be forgotten.
+     */
+    reversePostedGl?: boolean;
     currentBusinessDate: string;
   }
 ) {
@@ -1893,7 +1917,14 @@ export async function voidBillPaymentInClientTx(
     const newPaidCents = Math.max(0, Number(bill.paid_cents) - paymentAmountCents);
     const storageStatus = storageStatusForPaid(Number(bill.amount_cents), newPaidCents);
 
-    const reversal = input.reversePostedGl
+    // ACCT-F175 — derive from the payment when the caller did not state it. A non-cash settlement
+    // deduction has no GL of its own to reverse; anything else does. The two explicit call sites in
+    // settlement-bill-payment-posting.service.ts pass exactly these values already (true for the cash
+    // payment, false for the deduction), so this changes nothing for them — it only stops the next
+    // caller from having to know, which is how the UI void path came to reverse nothing at all.
+    const reversePostedGl = input.reversePostedGl ?? payment.settlement_deduction_noncash !== true;
+
+    const reversal = reversePostedGl
       ? await reversePostedSourceTransactionInClientTx(
           client,
           {
@@ -2038,7 +2069,17 @@ export async function voidBillPayment(operatingCompanyId: string, paymentId: str
       paymentId,
       reason,
       userId,
-      reversePostedGl: false,
+      // ACCT-F175 — was hardcoded `false`, and this is the route the UI calls. Voiding a bill payment
+      // through the app therefore reversed NOTHING while the void panel stated it posts an
+      // equal-and-opposite entry. Live on prod: payment 8b68a9d7 ($33.40) was voided 2026-08-07
+      // 02:48:58 and its only journal entry is still the original DR 2000 A/P / CR 1295 Relay Fuel
+      // Wallet, with reverses_je_id and reversed_by_je_id both NULL — the GL says $33.40 left the
+      // wallet and $33.40 of payables was discharged, and neither happened.
+      //
+      // Deliberately OMITTED rather than set to `true`: the correct value is a property of the
+      // payment (a non-cash settlement deduction must NOT be reversed here — its GL belongs to the
+      // settlement deduction JE, and reversing it would credit cash that never moved). Leaving it
+      // unset lets voidBillPaymentInClientTx derive it from the row.
       currentBusinessDate,
     });
   });
