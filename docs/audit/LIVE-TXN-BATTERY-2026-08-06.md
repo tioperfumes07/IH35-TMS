@@ -8214,3 +8214,61 @@ overstatement of open payables misstates the balance sheet, the cash-flow foreca
 on it — and it does so silently, because both numbers are internally consistent and neither looks wrong on
 its own. **The only way to see it is to ask two spellings of the same question and compare, which is exactly
 what the class row predicted nobody would do.**
+
+## 131. ★★ CLASS DRAINED — the two-spelling comparison run across EVERY multi-marker financial table. **My own prior was WRONG: 6 of 8 are clean, and `accounting.bills` is the only money-consequential instance.**
+
+Item 130's board row ends with condition (4): *"repeat this two-spelling comparison on the other soft-deletable
+financial tables — `accounting.bills` was the first one checked and it disagreed, so the prior should be that
+others do too."* **I ran it rather than leaving it. The prior was wrong, and saying so is the finding.**
+
+**METHOD — the population is defined from prod, not from a guess.** `information_schema.columns` across
+`accounting`, `banking`, `driver_finance`, `factoring`, `fuel`, `maintenance`, `mdata`, selecting tables
+carrying **two or more** of `voided_at · soft_deleted_at · deleted_at · revoked_at · archived_at ·
+unapplied_at · deactivated_at`. A table with one marker cannot disagree with itself, so this is the complete
+at-risk set. **Eight tables.** Then, on each, `count(*) FILTER (WHERE (A IS NULL) <> (B IS NULL))` — rows
+where the two markers contradict each other.
+
+| table | markers | rows | A set | B set | **disagree** |
+|---|---|---|---|---|---|
+| **`accounting.bills`** | `voided_at` / `revoked_at` | 16,261 | 4 | 0 | **4** |
+| **`mdata.drivers`** | `archived_at` / `deactivated_at` | 187 | 10 | 69 | **67** |
+| `accounting.expenses` | `voided_at` / `deleted_at` | 27,072 | 0 | 0 | **0** |
+| `mdata.customers` | `archived_at` / `deactivated_at` | 2,701 | 4 | 4 | **0** |
+| `accounting.fixed_assets` | `voided_at` / `deleted_at` | 1 | 0 | 0 | **0** |
+| `accounting.prepaid_assets` | `voided_at` / `deleted_at` | 2 | 0 | 0 | **0** |
+| `accounting.lease_contract` | `voided_at` / `deleted_at` | 0 | 0 | 0 | **0** |
+| `accounting.revenue_contracts` | `voided_at` / `deleted_at` | 0 | 0 | 0 | **0** |
+
+### ★ THE CORRECTION TO MY OWN ROW
+
+**`accounting.expenses` is the one that settles it: 27,072 rows, two void markers, ZERO disagreement.** That
+is a far larger table than `bills` with the same structural risk and it is perfectly consistent. **So
+multi-marker tables are not generally drifting — `accounting.bills` is a specific defect, not the visible
+corner of a systemic one.** My "the prior should be that others do too" is withdrawn; item 130's P0 stands
+entirely on its own evidence and needs no class behind it.
+
+**`mdata.customers` is the second control:** 4 archived AND 4 deactivated, **zero disagreement** — the same
+two markers as `drivers`, on 2,701 rows, always written together. **The pattern is achievable; `drivers`
+simply does not do it.**
+
+### `mdata.drivers` — 67 disagreements, and 63 of them are CORRECT
+
+Decomposed: **4 archived-not-deactivated · 63 deactivated-not-archived · 6 both · 114 neither.**
+
+**The 63 are not a defect.** "Deactivated" (no longer driving) and "archived" (hidden from lists) are
+genuinely different states; a deactivated driver who is still visible is normal and expected. **Filing 63
+findings there would have been the false-positive trap the class row warns about**, and it is why this unit
+decomposes the XOR instead of reporting it.
+
+**The 4 in the other direction are a real, small instance** — `LV-DRIVER-ARCHIVED-NOT-DEACTIVATED`. All four
+are `TEST-DRIVER-1..4 SEED` (TRANSP), archived at the identical instant `2026-06-03T06:07:31.586Z` — one seed
+cleanup that archived without deactivating — and **all four still carry `status = 'Active'`**. Readers that
+filter on `deactivated_at IS NULL` alone therefore treat them as live drivers:
+`drivers/messages.service.ts:126`, `drivers/document-alerts.service.ts:156` and `:186`,
+`drivers/drivers-bulk.routes.ts:68`. **Only 7 lines in the whole backend pair the two markers on one
+predicate.** Consequence is spurious document alerts and messages aimed at archived test drivers — **an
+operational-noise defect, not money, on TRANSP, not USMCA.** Filed **low**, and deliberately not inflated.
+
+**WHAT THIS UNIT IS WORTH:** it converts `CLS-VOID-PREDICATE-DRIFT` from an open-ended worry into a bounded
+fact — **8 at-risk tables, 1 money defect, 1 low-severity instance, 6 clean** — and it retires the
+speculative half of my own P0's fix list so CC-1 does not go hunting a class that is not there.
