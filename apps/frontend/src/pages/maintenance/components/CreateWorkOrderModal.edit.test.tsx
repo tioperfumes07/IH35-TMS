@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CreateWorkOrderModal, type EditWorkOrderTarget } from "./CreateWorkOrderModal";
 import { ToastProvider } from "../../../components/Toast";
 import { ApiError } from "../../../api/client";
+import { MemoryRouter } from "react-router-dom";
 
 // D2-3: real Work Order EDIT via the EXISTING endpoints — PATCH header + line-item POST/DELETE.
 // This drives the edit modal end-to-end and asserts it calls the right existing endpoints, plus the
@@ -59,6 +60,10 @@ function renderEdit(overrides?: Partial<EditWorkOrderTarget>, onCreated = () => 
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
+      {/* The modal now uses react-router (drill-through/navigate), so it needs a Router in scope —
+          without one React Router throws "Cannot destructure property 'basename'", which reads as a
+          component crash rather than a missing test wrapper. */}
+      <MemoryRouter>
       <ToastProvider>
         <CreateWorkOrderModal
           open={true}
@@ -68,6 +73,7 @@ function renderEdit(overrides?: Partial<EditWorkOrderTarget>, onCreated = () => 
           onCreated={onCreated}
         />
       </ToastProvider>
+      </MemoryRouter>
     </QueryClientProvider>
   );
 }

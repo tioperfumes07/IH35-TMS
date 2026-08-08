@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WorkOrderDetailPage } from "./WorkOrderDetailPage";
+import { ToastProvider } from "../../components/Toast";
 
 vi.mock("../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({
@@ -26,6 +27,20 @@ const getWorkOrder = vi.fn((_id: string, _operatingCompanyId: string) =>
     unit_id: "T169",
   }),
 );
+
+// The page also reads api/accounting (linked financials) and api/workOrdersConsole. A vi.mock factory
+// replaces the whole module, so these must be mocked too — unmocked, listWorkOrderLinkedFinancials resolves
+// undefined and the page crashes on `.expenses.map`, which surfaces as "page-header-back not found" rather
+// than as a missing mock.
+vi.mock("../../api/accounting", () => ({
+  listWorkOrderLinkedFinancials: vi.fn().mockResolvedValue({ expenses: [], bills: [], journal_entries: [] }),
+}));
+
+vi.mock("../../api/workOrdersConsole", () => ({
+  cancelWorkOrderConsole: vi.fn(),
+  voidWorkOrderConsole: vi.fn(),
+  listWoCancellationReasons: vi.fn().mockResolvedValue({ reasons: [] }),
+}));
 
 vi.mock("../../api/maintenance", () => ({
   getWorkOrder: (id: string, operatingCompanyId: string) => getWorkOrder(id, operatingCompanyId),
@@ -51,11 +66,14 @@ function renderPage() {
   });
   return render(
     <QueryClientProvider client={client}>
+      {/* The page raises toasts now; useToast throws outside a provider. */}
+      <ToastProvider>
       <MemoryRouter initialEntries={["/maintenance/work-orders/wo-pilot-id"]}>
         <Routes>
           <Route path="/maintenance/work-orders/:id" element={<WorkOrderDetailPage />} />
         </Routes>
       </MemoryRouter>
+      </ToastProvider>
     </QueryClientProvider>,
   );
 }

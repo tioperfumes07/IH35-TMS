@@ -24,6 +24,7 @@
     "accounting.related_party_loan_schedule",
     "accounting.vendor_credits",
     "banking.bank_accounts",
+    "banking.bank_transaction_splits",
     "banking.bank_transactions",
     "banking.equipment_loan_attributions",
     "banking.equipment_loan_payments",
@@ -34,10 +35,15 @@
     "driver_finance.abandonment_chargebacks",
     "driver_finance.cash_advance_owner_approval_audit",
     "driver_finance.cash_advance_request_audit",
+    "driver_finance.driver_advances",
+    "driver_finance.driver_bills",
+    "driver_finance.driver_deduction_bucket_events",
     "driver_finance.driver_escrow_separations",
+    "driver_finance.driver_liabilities",
     "driver_finance.driver_reimbursements",
     "driver_finance.driver_settlement_deductions",
     "driver_finance.driver_settlement_disputes",
+    "driver_finance.driver_settlement_gl_bills",
     "driver_finance.driver_settlements",
     "driver_finance.escrow_balances",
     "driver_finance.escrow_deductions_pending",
@@ -52,5 +58,5 @@
     "factoring.letter_of_release",
     "factoring.reserve_movement"
   ],
-  "unprotected_count": 97
+  "unprotected_count": 91
 }

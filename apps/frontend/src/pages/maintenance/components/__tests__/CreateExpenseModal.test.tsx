@@ -5,6 +5,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { CreateExpenseModal } from "../CreateExpenseModal";
 import { ToastProvider } from "../../../../components/Toast";
 import { createExpense } from "../../../../api/accounting";
+import { MemoryRouter } from "react-router-dom";
 
 const VENDOR_ID = "11111111-1111-4111-8111-111111111111";
 const ACCT_ID = "22222222-2222-4222-8222-222222222222";
@@ -34,7 +35,11 @@ vi.mock("../../../../api/catalog-accounts", () => ({
           id: ACCT_ID,
           account_number: "1000",
           account_name: "Cash",
-          account_type: "Asset",
+          // account_type "Bank", not "Asset": ACCT-F92 narrowed the Payment-account picker to
+          // Bank/CreditCard (plus cash-like Asset SUBTYPES) so an expense cannot be recorded as paid FROM
+          // Accumulated Depreciation or A/R. A bare "Asset" is correctly rejected, so the option never
+          // rendered — the fixture was stale against a deliberate product fix.
+          account_type: "Bank",
           is_postable: true,
           deactivated_at: null,
         },
@@ -61,13 +66,18 @@ vi.mock("../../../../components/parity/ReferenceSelect", () => ({
     onChange,
     options,
     placeholder,
+    id,
   }: {
     value: string | null;
     onChange: (v: string | null) => void;
     options: Array<{ value: string; label: string }>;
     placeholder?: string;
+    id?: string;
   }) => (
     <select
+      // Forward the id like the real ReferenceSelect now does, so <label htmlFor> binds and
+      // getByLabelText addresses the control instead of "no form control was found".
+      id={id}
       aria-label={placeholder ?? "Reference"}
       value={value ?? ""}
       onChange={(event) => onChange(event.target.value || null)}
@@ -87,6 +97,10 @@ function renderModal(onClose = vi.fn(), extra?: { linkedUnitId?: string }) {
   const invalidateSpy = vi.spyOn(client, "invalidateQueries");
   render(
     <QueryClientProvider client={client}>
+      {/* These modals use react-router now; with no Router in scope React Router throws
+          "Cannot destructure property 'basename'", which reads as a component crash rather than a
+          missing test wrapper. */}
+      <MemoryRouter>
       <ToastProvider>
         <CreateExpenseModal
           open={true}
@@ -97,6 +111,7 @@ function renderModal(onClose = vi.fn(), extra?: { linkedUnitId?: string }) {
           onClose={onClose}
         />
       </ToastProvider>
+      </MemoryRouter>
     </QueryClientProvider>
   );
   return { onClose, invalidateSpy };
@@ -111,7 +126,12 @@ describe("CreateExpenseModal — persists via the canonical createExpense endpoi
 
     const form = await screen.findByTestId("record-expense-form");
     await screen.findByRole("option", { name: "Fuel Category" });
-    await screen.findByRole("option", { name: "1000 · Cash" });
+    // The account option renders as "Cash" (the picker no longer prefixes the account number, so the old
+    // "1000 · Cash" name never matched), and plain text is ambiguous — "Cash" is also a payment METHOD.
+    // Wait on the option's VALUE inside the account select instead.
+    await waitFor(() =>
+      expect(document.querySelector(`option[value="${ACCT_ID}"]`)).toBeTruthy(),
+    );
     await screen.findByRole("option", { name: "Ace Parts" });
 
     await user.selectOptions(within(form).getByLabelText(/select category/i), "cat-1");
@@ -143,7 +163,12 @@ describe("CreateExpenseModal — persists via the canonical createExpense endpoi
     const user = userEvent.setup();
     renderModal();
     const form = await screen.findByTestId("record-expense-form");
-    await screen.findByRole("option", { name: "1000 · Cash" });
+    // The account option renders as "Cash" (the picker no longer prefixes the account number, so the old
+    // "1000 · Cash" name never matched), and plain text is ambiguous — "Cash" is also a payment METHOD.
+    // Wait on the option's VALUE inside the account select instead.
+    await waitFor(() =>
+      expect(document.querySelector(`option[value="${ACCT_ID}"]`)).toBeTruthy(),
+    );
     await user.selectOptions(within(form).getByLabelText(/payment account/i), ACCT_ID);
     await user.type(within(form).getByLabelText(/amount/i), "100");
     await user.click(screen.getByTestId("create-expense-submit"));

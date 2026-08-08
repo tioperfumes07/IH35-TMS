@@ -263,6 +263,56 @@ export async function aggregateSettlementTotals(
     [settlementId, gross, deductions, reimbursements, net]
   );
 
+  // ACCT-F271 / FAIL-W7a — populate the settlement -> load bookend FKs.
+  //
+  // FOUR writers create driver_settlements and only ONE (openLoadBookendedSettlement, above) ever set
+  // first_load_id / first_load_number / last_load_id / last_load_number. weekly-close.routes,
+  // settlements.routes and settlements-mvp.routes set none of them — 0 references each — so a
+  // settlement created by any of those three can never say which loads it covers. Live: S-2026-0001
+  // carries $1,705.55 with all four columns NULL, so Settlement -> loads is a dead end and the reverse
+  // drill (load -> which settlement paid it) has nothing to walk.
+  //
+  // DONE HERE, IN THE SHARED ROLLUP, NOT IN THREE WRITERS. Every path calls aggregateSettlementTotals
+  // (pre-settlement routes, weekly close, and the bookend close) and it runs AFTER lines exist, which
+  // is the first moment the covered loads are actually known — at INSERT time there are no lines to
+  // derive them from. Patching three call sites would also be the silent-failure shape ACCT-F265 and
+  // ACCT-F268 were fixed to avoid: the writer that forgets leaves NULL, indistinguishable from a
+  // settlement that genuinely covers no load.
+  //
+  // ONLY FILLS NULLS. The bookend service already sets first_load_* at creation and that is
+  // authoritative for its model; COALESCE-style guarding means this never overwrites it. Derived from
+  // the settlement's OWN lines, so nothing is invented: if no line carries a load_id, the columns stay
+  // NULL and the settlement honestly reports that it covers no load.
+  await client.query(
+    `
+      WITH covered AS (
+        SELECT sl.load_id, l.load_number, l.created_at
+          FROM driver_finance.settlement_lines sl
+          JOIN mdata.loads l ON l.id = sl.load_id
+         WHERE sl.settlement_id = $1::uuid
+           AND sl.is_active = true
+           AND sl.load_id IS NOT NULL
+      ),
+      bounds AS (
+        SELECT
+          (SELECT load_id     FROM covered ORDER BY created_at ASC,  load_id ASC  LIMIT 1) AS first_id,
+          (SELECT load_number FROM covered ORDER BY created_at ASC,  load_id ASC  LIMIT 1) AS first_no,
+          (SELECT load_id     FROM covered ORDER BY created_at DESC, load_id DESC LIMIT 1) AS last_id,
+          (SELECT load_number FROM covered ORDER BY created_at DESC, load_id DESC LIMIT 1) AS last_no
+      )
+      UPDATE driver_finance.driver_settlements s
+         SET first_load_id     = COALESCE(s.first_load_id,     b.first_id),
+             first_load_number = COALESCE(s.first_load_number, b.first_no),
+             last_load_id      = COALESCE(s.last_load_id,      b.last_id),
+             last_load_number  = COALESCE(s.last_load_number,  b.last_no),
+             updated_at        = now()
+        FROM bounds b
+       WHERE s.id = $1::uuid
+         AND b.first_id IS NOT NULL
+    `,
+    [settlementId]
+  );
+
   return { gross_pay: gross, deductions_total: deductions, reimbursements_total: reimbursements, net_pay: net };
 }
 

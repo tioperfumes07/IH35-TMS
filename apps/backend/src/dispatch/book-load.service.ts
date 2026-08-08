@@ -1346,9 +1346,9 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           detention_bill_customer_per_hour_cents, detention_driver_pay_per_hour_cents,
           late_delivery_risk_y_n, late_delivery_est_deduction_cents, late_delivery_reason,
           ocr_source_pdf_r2_key, miles_practical, miles_shortest, miles_deadhead,
-          customer_wo_number, pickup_number, border_routing, is_sample_data
+          customer_wo_number, pickup_number, border_routing, is_sample_data, loaded_miles
         )
-        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40)
+        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41)
         RETURNING *
       `,
       [
@@ -1392,6 +1392,14 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         input.pickup_number ?? null,
         input.border_routing ?? null,
         input.is_sample_data ?? false,
+        // LV-LOADED-MILES-NEVER-WRITTEN — mdata.loads.loaded_miles was NULL on every load because nothing
+        // wrote it, so every mileage-based settlement computed $0. Basis = SHORTEST, on the pay side's own
+        // evidence: all 5 active pay rates are per_mile_pay/short_miles, and the one load that ever computed
+        // pay correctly (L-20260802-0258) did it as 2300 mi x 48c = 110,400c exactly. The Book wizard says
+        // the same on screen ("Shortest miles used for driver pay"). This settles the PAY basis only —
+        // PRACTICAL-for-routing (migration 0311's COALESCE prefers practical) is a separate, unmade ruling
+        // and is deliberately NOT decided here.
+        input.miles_shortest ?? null,
       ]
     );
     const load = loadRes.rows[0] as Record<string, unknown>;

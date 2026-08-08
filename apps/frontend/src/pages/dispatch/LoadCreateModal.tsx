@@ -37,7 +37,9 @@ export function LoadCreateModal({
     <div className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
       <div className="font-semibold">{availabilityQuery.data?.blocker ?? "Driver has active repair work order"}</div>
       <div className="mt-1">
-        WO: {availabilityQuery.data?.work_order_id ?? "unknown"} · Asset: {availabilityQuery.data?.asset_id ?? "unknown"}
+        {/* FAIL-U1: show the WO display_id and unit number. A dispatcher cannot act on a uuid. */}
+        WO: {availabilityQuery.data?.work_order_display_id ?? availabilityQuery.data?.work_order_id ?? "unknown"} · Asset:{" "}
+        {availabilityQuery.data?.asset_label ?? availabilityQuery.data?.asset_id ?? "unknown"}
       </div>
       <label className="mt-2 flex items-center gap-2">
         <input

@@ -15,6 +15,11 @@ export type DriverPickerWithCreateProps = {
   allowClear?: boolean;
   /** Optional data-field for form validation focus. */
   dataField?: string;
+  /**
+   * FAIL-CA1: money create surfaces must include Probation (driver create default). Dispatch/Book
+   * keep default `active_only`.
+   */
+  driverRoster?: "active_only" | "active_or_probation";
 };
 
 /** mdata.drivers exposes first_name + last_name only. EntityPicker kind=driver uses this shape. */
@@ -41,6 +46,7 @@ export function DriverPickerWithCreate({
   disabled = false,
   allowClear = true,
   dataField,
+  driverRoster = "active_only",
 }: DriverPickerWithCreateProps) {
   const queryEnabled = (enabled ?? true) && open && Boolean(operatingCompanyId);
 
@@ -57,6 +63,7 @@ export function DriverPickerWithCreate({
       disabled={disabled}
       allowClear={allowClear}
       dataField={dataField}
+      driverRoster={driverRoster}
     />
   );
 }

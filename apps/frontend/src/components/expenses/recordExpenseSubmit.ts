@@ -4,6 +4,8 @@ import { companyToday } from "../../lib/businessDate";
 export type RecordExpensePaymentMethod = "ach" | "card" | "check" | "wire" | "cash";
 
 export type RecordExpenseFormValues = {
+  /** FAIL-F2 class-B — marks this cash-out as demo/test data at CREATION, like the Book wizard does for loads. */
+  isSampleData: boolean;
   vendorId: string | null;
   vendorUuid: string | null;
   vendorDisplay: string;
@@ -80,6 +82,8 @@ export async function submitRecordExpense(
     // HARD cross-module FKs (maintenance): only when linkage / picker supplies them — absent = unchanged.
     ...(linkage?.workOrderId ? { work_order_id: linkage.workOrderId } : {}),
     ...(resolvedUnitId ? { unit_id: resolvedUnitId } : {}),
+    // FAIL-F2 class-B: always SUPPLIED, never omitted — an absent field is what left the merged writer inert.
+    is_sample_data: values.isSampleData === true,
   });
 }
 
@@ -93,6 +97,7 @@ export const RECORD_EXPENSE_PAYMENT_METHODS: Array<{ value: RecordExpensePayment
 
 export function initialRecordExpenseFormValues(): RecordExpenseFormValues {
   return {
+    isSampleData: false,
     vendorId: null,
     vendorUuid: null,
     vendorDisplay: "",
