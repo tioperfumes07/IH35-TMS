@@ -79,7 +79,8 @@ function lineSubtotal(lines: TwoSectionLine[]) {
   }, 0);
 }
 
-function buildMemoContext(opts: {
+/** Exported for guard/selftest — operator memo (Gate-B sample tag) MUST lead; never drop it for chrome metadata. */
+export function buildMemoContext(opts: {
   billType: string;
   taxRate: number;
   taxAmount: number;
@@ -90,11 +91,13 @@ function buildMemoContext(opts: {
   unitId: string;
   className: string;
   terms: string;
+  /** Operator-entered memo / sample tag — prepended so purge can find USMCA_GATEB_SAMPLE_* in bills.memo */
+  operatorMemo?: string;
 }) {
-  const parts = [
-    `bill_type:${opts.billType}`,
-    `tax_rate:${opts.taxRate}`,
-  ];
+  const parts: string[] = [];
+  const operator = opts.operatorMemo?.trim();
+  if (operator) parts.push(operator);
+  parts.push(`bill_type:${opts.billType}`, `tax_rate:${opts.taxRate}`);
   if (opts.taxAmount > 0) {
     parts.push(`tax_amount_display_only:${opts.taxAmount.toFixed(2)}`);
   }
@@ -132,6 +135,8 @@ export function VendorBillForm({
   const [dueDate, setDueDate] = useState(() => dueDateFromBillTerms(companyToday(), "net_30"));
   const [dueDateTouched, setDueDateTouched] = useState(false);
   const [billNumber, setBillNumber] = useState("");
+  /** Operator memo / Gate-B sample tag — persisted at the front of `memo` (LV-SAMPLE-BILL-UNTAGGED). */
+  const [operatorMemo, setOperatorMemo] = useState("");
   const [terms, setTerms] = useState("net_30");
   const [vendorId, setVendorId] = useState("");
   const [loadNumber, setLoadNumber] = useState("");
@@ -299,6 +304,7 @@ export function VendorBillForm({
         unitId,
         className,
         terms,
+        operatorMemo,
       }),
       coa_account_id: accountId ?? undefined,
       attachment_draft_id: draftAttachmentEntityId,
@@ -383,6 +389,16 @@ export function VendorBillForm({
             value={billNumber}
             onChange={(event) => setBillNumber(event.target.value)}
             placeholder="Bill Number"
+          />
+        </Field>
+        <Field label="Memo">
+          <input
+            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+            value={operatorMemo}
+            onChange={(event) => setOperatorMemo(event.target.value)}
+            placeholder="Memo / sample tag (e.g. USMCA_GATEB_SAMPLE_YYYY-MM-DD)"
+            data-testid="vendor-bill-operator-memo"
+            aria-label="Memo"
           />
         </Field>
         <Field label="A/P Account *">

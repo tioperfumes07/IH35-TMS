@@ -5,6 +5,24 @@ import { assertCompanyMembership } from "../../_helpers/company-membership-guard
 import { isCatalogWriteRole } from "../../auth/role-helpers.js";
 import { companyQuerySchema, currentAuthUser, idParamSchema, listQuerySchema, validationError } from "./shared.js";
 
+/**
+ * LV-LIST-SAMPLE-TAG-IN-NAME-ONLY — Gate-B creators put `USMCA_GATEB_SAMPLE_YYYY-MM-DD` in the
+ * display name only; structured `notes`/`description` stayed NULL, so purge could only ILIKE names.
+ * When the caller omits description, copy the canonical tag out of the name into the description
+ * column (accounts → notes; items → description). Never invent a tag that is not already in the name.
+ */
+export const GATE_B_SAMPLE_TAG_RE = /\bUSMCA_GATEB_SAMPLE_\d{4}-\d{2}-\d{2}\b/;
+
+export function resolveCatalogDescriptionFromName(
+  displayName: string | null | undefined,
+  description: string | null | undefined
+): string | null {
+  const explicit = typeof description === "string" ? description.trim() : "";
+  if (explicit) return explicit;
+  const match = String(displayName ?? "").match(GATE_B_SAMPLE_TAG_RE);
+  return match ? match[0] : null;
+}
+
 type ActiveMode = "deactivated_at" | "is_active";
 
 type CatalogClient = { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> };
@@ -198,8 +216,17 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
       }
     }
     const extra = config.createMapper ? config.createMapper(metadata) : {};
+    // LV-LIST-SAMPLE-TAG-IN-NAME-ONLY: structured notes/description for Gate-B purge.
+    const resolvedDescription = resolveCatalogDescriptionFromName(body.display_name, body.description ?? null);
+    if (
+      Object.prototype.hasOwnProperty.call(extra, "notes") &&
+      (extra.notes === null || extra.notes === undefined || extra.notes === "") &&
+      resolvedDescription
+    ) {
+      extra.notes = resolvedDescription;
+    }
     const rawColumns = [config.codeColumn, config.nameColumn, config.descriptionColumn, ...Object.keys(extra)];
-    const rawValues = [body.code, body.display_name, body.description ?? null, ...Object.values(extra)];
+    const rawValues = [body.code, body.display_name, resolvedDescription, ...Object.values(extra)];
 
     // ACCT-F192 (Cascade FAIL-L3) — a catalog may map two logical fields onto ONE physical column,
     // and this builder emitted that column TWICE. Postgres rejects

@@ -180,6 +180,17 @@ export function Modal({
       >
         <div
           ref={panelRef}
+          // FAIL-B1 — a nested "+ Create" submitted the PARENT wizard. This modal renders through
+          // `createPortal`, so its DOM lives outside the wizard's <form> — but React propagates events
+          // through the REACT tree, not the DOM tree, so a submit inside the modal still reaches the
+          // outer `<form onSubmit>` that is its React ancestor. Booking a load by opening a create drawer
+          // is a real write, not a cosmetic glitch.
+          // Several forms already patched this INDIVIDUALLY (CreateDriverModal, the parity drawers) — and
+          // a census found FIVE that had not: W8BenModal, AddTrainingModal, QuickAssignModal,
+          // CreateTrailerModal and VendorCreateModal, the last two reachable straight from Book Load.
+          // Per-form guards are whack-a-mole and every NEW create form starts unguarded, so the stop
+          // belongs here, once. A child form's own onSubmit still runs first; only the bubble is cut.
+          onSubmit={(event) => event.stopPropagation()}
           className={
             isDrawer
               ? `relative flex h-full max-h-full flex-col border-l border-gray-200 bg-white shadow-xl ${PARITY_CREATE_DRAWER_WIDTH}`

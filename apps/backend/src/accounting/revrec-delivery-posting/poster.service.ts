@@ -49,6 +49,10 @@ export type RevrecPostResult = {
     | "earn_missing_for_bill"
     | "amount_mismatch"
     | "missing_delivery_evidence"
+    // ACCT-F59 reverse interlock — an invoice already recognized this load's revenue/A-R. Distinct
+    // from "already_posted" on purpose: that one means THIS latch fired, this one means the OTHER
+    // poster did, and conflating them would hide which path double-counted.
+    | "invoice_gl_already_recognized"
     | "latch_table_missing";
   journal_entry_id?: string;
   event?: RevrecEvent;
@@ -159,6 +163,45 @@ export function standingLatchJePredicate(alias = "p"): string {
 
 /** Default-alias form for the common `... postings p` shape. */
 export const STANDING_LATCH_JE_PREDICATE = standingLatchJePredicate("p");
+
+/**
+ * ACCT-F59 reverse interlock: has an INVOICE for this load already put revenue/A-R on the books?
+ *
+ * Mirror image of loadHasStandingInvoiceGl's counterpart in invoice-gl.service.ts, and it reuses the
+ * SAME standing-JE test — a reversed or voided invoice JE must NOT block recognition forever, which is
+ * the ACCT-F59 trap that the forward interlock already had to learn.
+ *
+ * Linkage is `accounting.transaction_source_links` (linked_object_type='invoice'), the canonical
+ * posting→source map the posting engine writes. Verified on prod against the real double: JE 7f2fff09
+ * links to invoice f17a6483 with relationship_role='source_transaction'. NOTE `linked_object_id` is
+ * TEXT, not uuid — the cast is required, and joining without it raises 42883 rather than silently
+ * matching nothing.
+ */
+async function loadHasStandingInvoiceGl(
+  client: DbClient,
+  operatingCompanyId: string,
+  loadId: string
+): Promise<string | null> {
+  const res = await client.query<{ invoice_id: string }>(
+    `
+      SELECT i.id::text AS invoice_id
+        FROM accounting.invoices i
+        JOIN accounting.transaction_source_links l
+          ON l.linked_object_id = i.id::text
+         AND l.linked_object_type = 'invoice'
+        JOIN accounting.journal_entry_postings p ON p.id = l.journal_entry_posting_id
+        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+       WHERE i.source_load_id = $1::uuid
+         AND i.operating_company_id = $2::uuid
+         AND i.voided_at IS NULL
+         AND je.voided_at IS NULL
+         AND je.reversed_by_je_id IS NULL
+       LIMIT 1
+    `,
+    [loadId, operatingCompanyId]
+  );
+  return res.rows[0]?.invoice_id ?? null;
+}
 
 async function loadLatchExists(
   client: DbClient,
@@ -338,6 +381,23 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
       return { gate: "already_posted" as const };
     }
 
+    // ACCT-F59 / FAIL-A1 — THE OTHER DIRECTION. The invoice poster already refuses when this latch has
+    // fired (loadHasStandingBillLatch, ACCT-F205). Nothing refused the reverse, and the reverse is the
+    // one that actually happened: on prod, JE 7f2fff09 (source `invoice`) posted at 07:14:33.413 and
+    // f19cdf41 (this latch) at 07:14:33.836 — 423ms later. The invoice went FIRST. Both credit 4000
+    // Income 187550 and neither is reversed, so USMCA income is overstated $1,875.50 on real money
+    // (INV-2026-00006 is is_sample_data=false).
+    //
+    // A one-directional interlock is not an interlock, it is a coin flip on ordering. Today's clean
+    // Delivered wave does NOT prove this closed — that run happened to post the invoice BETWEEN Event 1
+    // and Event 2, which is the direction already covered. This is the untested half.
+    const invoicePostedLoad = await loadHasStandingInvoiceGl(
+      client,
+      input.operating_company_id,
+      input.load_id
+    );
+    if (invoicePostedLoad) return { gate: "invoice_gl_already_recognized" as const };
+
     // Event 1 earns ONLY on real captured delivery evidence — never on status alone.
     if (event === "earn") {
       const departedAt = await finalActiveDeliveryDepartureAt(
@@ -389,6 +449,9 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
   if (prepared.gate === "trk_excluded") return { posted: false, reason: "trk_excluded" };
   if (prepared.gate === "load_not_found") return { posted: false, reason: "load_not_found" };
   if (prepared.gate === "already_posted") return { posted: false, reason: "already_posted" };
+  if (prepared.gate === "invoice_gl_already_recognized") {
+    return { posted: false, reason: "invoice_gl_already_recognized" };
+  }
   if (prepared.gate === "earn_missing_for_bill") return { posted: false, reason: "earn_missing_for_bill" };
   if (prepared.gate === "missing_delivery_evidence") return { posted: false, reason: "missing_delivery_evidence" };
   if (prepared.gate === "zero_amount") return { posted: false, reason: "zero_amount" };

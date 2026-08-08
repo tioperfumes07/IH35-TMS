@@ -12,6 +12,7 @@ import {
   MERGE_REASON_MIN_LENGTH,
   mergeAccountsOnClient,
 } from "./account-merge.service.js";
+import { resolveCatalogDescriptionFromName } from "./accounting/factory.js";
 
 const accountTypeSchema = z.enum([
   "Asset",
@@ -232,7 +233,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
     };
   });
 
-  app.post("/api/v1/catalogs/accounts", async (req, reply) => {
+  app.post("/api/v1/catalogs/accounts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -288,7 +289,8 @@ export async function registerAccountRoutes(app: FastifyInstance) {
             b.opening_balance_cents ?? null,
             b.opening_balance_as_of ?? null,
             b.is_locked,
-            b.notes ?? null,
+            // LV-LIST-SAMPLE-TAG-IN-NAME-ONLY: same structured-notes rule as accounting catalog factory
+            resolveCatalogDescriptionFromName(b.account_name, b.notes ?? null),
             operatingCompanyId,
             authUser.uuid,
           ]
