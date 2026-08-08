@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import * as safetyApi from "../../../api/safety";
 import { IntegrityAlertsPage } from "../IntegrityAlertsPage";
 
@@ -10,7 +11,14 @@ const companyId = "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071";
 
 function wrap(ui: React.ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
+  // MemoryRouter: this page (or a child it gained) calls useLocation, so every render threw
+  // "useLocation() may be used only in the context of a <Router> component" before any assertion ran —
+  // all three cases died on the harness, not on the page. The app always renders it inside the router.
+  return (
+    <QueryClientProvider client={qc}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>
+  );
 }
 
 describe("IntegrityAlertsPage (A23-12)", () => {
