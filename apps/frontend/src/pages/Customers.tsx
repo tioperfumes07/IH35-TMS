@@ -193,7 +193,25 @@ export function CustomersPage() {
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [listStatus, setListStatus] = useState<"active" | "inactive" | "all">("active");
+  // §7 list segments are URL-addressable via `listTab` — NOT `tab`, which belongs to the customer DETAIL
+  // tabs (:186) whose existing deep-links must keep working (CURSOR-RULING-PARAM-LIST-TAB, 2026-08-08).
+  // One param carries the whole segment set; status and quality are derived from it so they can never
+  // disagree with the URL or with each other.
+  const listTab = ((): "all" | "active" | "inactive" | "preferred" | "watch" | "factored" => {
+    const raw = (searchParams.get("listTab") ?? "active").toLowerCase();
+    return raw === "all" || raw === "inactive" || raw === "preferred" || raw === "watch" || raw === "factored"
+      ? raw
+      : "active";
+  })();
+  const setListTab = (next: string) => {
+    const params = new URLSearchParams(searchParams);
+    // "active" is the default view, so keep the URL clean rather than pinning the default.
+    if (next === "active") params.delete("listTab");
+    else params.set("listTab", next);
+    setSearchParams(params, { replace: true });
+  };
+  const listStatus: "active" | "inactive" | "all" =
+    listTab === "inactive" ? "inactive" : listTab === "active" ? "active" : "all";
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -302,7 +320,8 @@ export function CustomersPage() {
   // are restored verbatim from that commit: preferred = quality_overall_flag "preferred", watch = "caution",
   // factored = has a factoring vendor. Held in LOCAL state (like `listStatus`) rather than `?tab=`, because
   // `?tab=` on this page belongs to the customer DETAIL tabs and additive must not repoint it.
-  const [qualitySegment, setQualitySegment] = useState<"all" | "preferred" | "watch" | "factored">("all");
+  const qualitySegment: "all" | "preferred" | "watch" | "factored" =
+    listTab === "preferred" || listTab === "watch" || listTab === "factored" ? listTab : "all";
 
   // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
   // mirroring the Driver Deactivate pattern. Defaults to Active.
@@ -485,7 +504,9 @@ export function CustomersPage() {
                       key={value}
                       type="button"
                       className={`rounded-sm px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
-                      onClick={() => setListStatus(value)}
+                      // Same single source of truth as the segment tabs — this older Filters control now
+                      // writes the same `listTab` param, so the two can never disagree.
+                      onClick={() => setListTab(value)}
                     >
                       {value}
                     </button>
@@ -533,15 +554,8 @@ export function CustomersPage() {
           the roster in `visibleCustomers`, so no filtering logic is added and no URL behaviour changes: this
           page's `?tab=` param stays owned by the customer DETAIL tabs, untouched. */}
       <SecondaryNavTabs
-        activeId={qualitySegment === "all" ? listStatus : qualitySegment}
-        onChange={(id) => {
-          if (id === "preferred" || id === "watch" || id === "factored") {
-            setQualitySegment(id);
-            return;
-          }
-          setQualitySegment("all");
-          setListStatus(id as "active" | "inactive" | "all");
-        }}
+        activeId={listTab}
+        onChange={(id) => setListTab(id)}
         tabs={[
           { id: "all", label: `All (${customerTabCounts.all})` },
           { id: "preferred", label: `Preferred (${customerTabCounts.preferred})` },
