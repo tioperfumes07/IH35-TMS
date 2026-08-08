@@ -124,6 +124,18 @@ export type CreateJournalEntryInput = {
   journal_entry_type_id?: string | null;
   /** catalogs.journal_entry_types.code — optional alternate to id */
   journal_entry_type_code?: string | null;
+  /**
+   * ACCT-F210 — is this entry SAMPLE money? Defaults false, so every existing caller is unchanged.
+   *
+   * This is the choke point the whole sample-tag chain was missing. FAIL-D6 (#4923) made a load
+   * taggable, and the two load-derived money paths already inherit it — from-load.ts writes the
+   * invoice tag and settlements-load-bookended.service.ts writes the settlement-line tag. The GENERAL
+   * LEDGER did not, because createJournalEntry had no way to carry the flag at all, so no poster could
+   * pass one. A sample load therefore produced a tagged invoice, tagged settlement lines, and UNTAGGED
+   * revenue journal entries -- and the GL is the surface financial statements are built from, so
+   * "exclude sample rows from this report" still counted sample revenue as real.
+   */
+  is_sample_data?: boolean;
   postings: CreatePostingInput[];
 };
 
@@ -229,10 +241,11 @@ export async function createJournalEntryOnClient(
         journal_entry_type_id,
         created_by_user_id,
         qbo_sync_pending,
+        is_sample_data,
         created_at,
         updated_at
       )
-      VALUES ($1,$2::date,$3,'posted',$4,$5::uuid,$6,true,now(),now())
+      VALUES ($1,$2::date,$3,'posted',$4,$5::uuid,$6,true,$7,now(),now())
       RETURNING id, operating_company_id::text, entry_date::text, memo, status, source, qbo_sync_pending, created_at::text
     `,
         [
@@ -242,6 +255,7 @@ export async function createJournalEntryOnClient(
           input.source ?? "manual",
           typeId,
           actor.userId,
+          input.is_sample_data ?? false,
         ]
       )
     : await client.query<CreateJournalEntryHeader>(
@@ -254,13 +268,21 @@ export async function createJournalEntryOnClient(
         source,
         created_by_user_id,
         qbo_sync_pending,
+        is_sample_data,
         created_at,
         updated_at
       )
-      VALUES ($1,$2::date,$3,'posted',$4,$5,true,now(),now())
+      VALUES ($1,$2::date,$3,'posted',$4,$5,true,$6,now(),now())
       RETURNING id, operating_company_id::text, entry_date::text, memo, status, source, qbo_sync_pending, created_at::text
     `,
-        [input.operating_company_id, input.entry_date, input.memo ?? null, input.source ?? "manual", actor.userId]
+        [
+          input.operating_company_id,
+          input.entry_date,
+          input.memo ?? null,
+          input.source ?? "manual",
+          actor.userId,
+          input.is_sample_data ?? false,
+        ]
       );
   const header = headerRes.rows[0];
   if (!header?.id) throw new Error("journal_entry_insert_failed");

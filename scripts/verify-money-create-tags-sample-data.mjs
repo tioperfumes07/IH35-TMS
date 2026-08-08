@@ -68,7 +68,6 @@ const BASELINE = new Set([
   "apps/backend/src/accounting/fuel-posting/poster.service.ts::accounting.journal_entries",
   "apps/backend/src/accounting/invoices.routes.ts::accounting.invoices",
   "apps/backend/src/accounting/invoices.service.ts::accounting.invoices",
-  "apps/backend/src/accounting/journal-entries.service.ts::accounting.journal_entries",
   "apps/backend/src/accounting/lease-asc842/lease-posting.service.ts::accounting.journal_entries",
   "apps/backend/src/accounting/maintenance-posting/poster.service.ts::accounting.bills",
   "apps/backend/src/accounting/payments.routes.ts::accounting.payments",
