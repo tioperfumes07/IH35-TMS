@@ -298,6 +298,12 @@ export function CustomersPage() {
     isFetching: customersQuery.isFetching,
   };
 
+  // §7 RESTORE — the deleted quality segments. b3690eb68 removed these tabs AND their filter arms; the arms
+  // are restored verbatim from that commit: preferred = quality_overall_flag "preferred", watch = "caution",
+  // factored = has a factoring vendor. Held in LOCAL state (like `listStatus`) rather than `?tab=`, because
+  // `?tab=` on this page belongs to the customer DETAIL tabs and additive must not repoint it.
+  const [qualitySegment, setQualitySegment] = useState<"all" | "preferred" | "watch" | "factored">("all");
+
   // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
   // mirroring the Driver Deactivate pattern. Defaults to Active.
   const visibleCustomers = useMemo(() => {
@@ -308,8 +314,28 @@ export function CustomersPage() {
     // customersSorted consumers (list view, selection) stay in sync.
     if (rosterType) all = all.filter((customer) => customer.customer_type === rosterType);
     if (rosterCreditStatus) all = all.filter((customer) => customer.status === rosterCreditStatus);
+    // §7 RESTORE — quality segment arms, verbatim from b3690eb68.
+    if (qualitySegment === "preferred") all = all.filter((c) => c.quality_overall_flag === "preferred");
+    else if (qualitySegment === "watch") all = all.filter((c) => c.quality_overall_flag === "caution");
+    else if (qualitySegment === "factored") all = all.filter((c) => Boolean(c.factoring_company_vendor_id));
     return all;
-  }, [customersRoster, listStatus, rosterType, rosterCreditStatus]);
+  }, [customersRoster, listStatus, rosterType, rosterCreditStatus, qualitySegment]);
+
+  // §7 RESTORE (FE-LIST-SEGMENT-TABS-DELETED-B3690EB68), mirroring the Vendors half. b3690eb68 deleted the
+  // customer list segment tabs during the side-rail realignment; §7 is ADDITIVE-ONLY and Drivers still ships
+  // the identical pattern (Drivers.tsx:659-665). Counts are computed off the FULL roster BEFORE the status
+  // filter, so each tab shows its own total rather than the filtered remainder.
+  const customerTabCounts = useMemo(
+    () => ({
+      all: customersRoster.length,
+      active: customersRoster.filter((customer) => customer.deactivated_at == null).length,
+      inactive: customersRoster.filter((customer) => customer.deactivated_at != null).length,
+      preferred: customersRoster.filter((c) => c.quality_overall_flag === "preferred").length,
+      watch: customersRoster.filter((c) => c.quality_overall_flag === "caution").length,
+      factored: customersRoster.filter((c) => Boolean(c.factoring_company_vendor_id)).length,
+    }),
+    [customersRoster]
+  );
 
   const customersSorted = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -503,6 +529,28 @@ export function CustomersPage() {
         }
       />
       {companyId ? <CustomersSyncPanel operatingCompanyId={companyId} /> : null}
+      {/* §7 RESTORE — segment tabs, additive. Wired to the EXISTING `listStatus` state, which already filters
+          the roster in `visibleCustomers`, so no filtering logic is added and no URL behaviour changes: this
+          page's `?tab=` param stays owned by the customer DETAIL tabs, untouched. */}
+      <SecondaryNavTabs
+        activeId={qualitySegment === "all" ? listStatus : qualitySegment}
+        onChange={(id) => {
+          if (id === "preferred" || id === "watch" || id === "factored") {
+            setQualitySegment(id);
+            return;
+          }
+          setQualitySegment("all");
+          setListStatus(id as "active" | "inactive" | "all");
+        }}
+        tabs={[
+          { id: "all", label: `All (${customerTabCounts.all})` },
+          { id: "preferred", label: `Preferred (${customerTabCounts.preferred})` },
+          { id: "watch", label: `Watch (${customerTabCounts.watch})` },
+          { id: "active", label: `Active (${customerTabCounts.active})` },
+          { id: "inactive", label: `Inactive (${customerTabCounts.inactive})` },
+          { id: "factored", label: `Factored (${customerTabCounts.factored})` },
+        ]}
+      />
       {viewMode === "list" ? (
         <CustomersListView
           companyId={companyId}
