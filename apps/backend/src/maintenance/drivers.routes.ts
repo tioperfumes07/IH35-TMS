@@ -194,10 +194,12 @@ export async function registerMaintenanceDriversRoutes(app: FastifyInstance) {
       cdl_state: body.data.cdl_state,
       status: body.data.status,
       notes: body.data.notes,
-      create_login_user: false,
-      // INVITE-NOT-ON-SAVE: explicit false. This surface never invites (see the note above), and the
-      // flag is stated rather than inherited so the intent survives a future default change.
+      // OUTBOUND CONSENT — stated explicitly rather than inherited from a default, because the
+      // comment above already commits this surface to never inviting. A maintenance quick-add is a
+      // record, not an onboarding: it must not message the person.
       send_invite: false,
+      is_sample_data: false,
+      create_login_user: false,
       override_returning_warning: false,
       is_rehire: false,
     };
