@@ -12,8 +12,6 @@
     "apps/backend/src/border-crossing/border-crossing-history.routes.ts#mdata.vendors.name",
     "apps/backend/src/border-crossing/border-crossing-wizard.routes.ts#mdata.vendors.name",
     "apps/backend/src/cash-advances/cash-advances.routes.ts#driver_finance.settlement_lines.liability_id",
-    "apps/backend/src/dispatch/auth-gates/wf-044-advisory.gate.ts#maintenance.work_orders.category",
-    "apps/backend/src/dispatch/auth-gates/wf-044-advisory.gate.ts#maintenance.work_orders.scheduled_start_at",
     "apps/backend/src/dispatch/customer-notify.service.ts#mdata.loads.latest_eta_prediction",
     "apps/backend/src/dispatch/load-profitability.service.ts#mdata.loads.delivered_at",
     "apps/backend/src/dispatch/load-profitability.service.ts#mdata.units.operating_company_id",
