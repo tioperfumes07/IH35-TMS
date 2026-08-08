@@ -8654,3 +8654,75 @@ in Postgres, or in CI checks that the two spellings agree.** **This diff is that
 one query per direction.** It is now run, its result is bounded (**2 orphaned reads, 1 orphaned write, 6 GUCs
 correctly paired**), and the guard specified on item 136's row has a proven implementation shape rather than a
 hopeful description.
+
+## 138. ★★★ OWNER SCENARIO A — STOPPED AND FILED AS INSTRUCTED. **13 of the 31 specified driver fields have NOWHERE TO BE STORED**, and the execution instrument the directive requires does not exist in this session.
+
+**The directive: run the real new-driver wizard end to end on TRANSP, through the app, never Neon inserts,
+fill EVERY field, attach 3 documents — and *"If a required field or wizard step does NOT exist in the UI,
+STOP and file it as a gap."* I am stopping on both counts, and this is the gap.**
+
+### PART 1 — THE FIELD AUDIT: 13 GAPS, verified against prod schema and the two related tables
+
+Checked `mdata.drivers` (88 columns, read live), plus **`safety.driver_documents`** and
+**`safety.driver_qualification_files`** — the only driver-detail tables that exist — so a field is only
+called missing after checking all three.
+
+| specified field | column | verdict |
+|---|---|---|
+| DOB · CURP · INE clave elector | `date_of_birth` · `curp` · `ine_number` | ✅ |
+| MX address (street/colonia/city/state/CP) | `mx_address_line1/2` · `mx_city` · `mx_state` · `mx_postal_code` | ✅ |
+| US visa number + expiry | `visa_number` · `visa_expires_at` (+ `b1_visa_*`, `visa_type`, `has_b1_visa`) | ✅ |
+| Passport country + expiry + number | `passport_country` · `passport_expires_at` · `passport_number` | ✅ |
+| Federal licence number + expiry | `mexican_license_number` · `mexican_license_expiration` | ✅ |
+| Medical card expiry + status | `dot_medical_expires_at` · `medical_card_status_id` | ✅ |
+| **Place of birth** (Nuevo Laredo, Tamaulipas) | — | **❌ GAP** |
+| **Nationality** (Mexico) | — | **❌ GAP** |
+| **Gender** (Male) | — | **❌ GAP** |
+| **RFC** (MUGJ840525) | — | **❌ GAP** — CURP exists, RFC does not |
+| **Second phone** (home 867-104-0205 *and* cell +52 55 6433 0414) | `phone` — **ONE column** | **❌ GAP** |
+| **Visa ISSUE date** (2020-04-01) | expiry only | **❌ GAP** |
+| **Passport ISSUE date** (2023-09-15) | expiry only | **❌ GAP** |
+| **Federal licence ISSUE date** (2023-03-27) | expiry only | **❌ GAP** |
+| **Licence category** ("B INT / Type B) CARGA") | `cdl_class` is the **US CDL** class | **❌ GAP** |
+| **Medical exam date** (2026-01-23) | expiry only | **❌ GAP** |
+| **Medical result** (APTO) | — | **❌ GAP** |
+| **Medical examiner name** (Carlos Godoy Fontes) | — | **❌ GAP** |
+| **Medical exam number** (No. 3) | — | **❌ GAP** |
+| **Expediente** (1157881, on licence *and* medical) | — | **❌ GAP** |
+
+**A 14th, structural:** the legal name *"Jorge Pablo Guadalupe Muñoz Gonzalez"* is **two given names + two
+surnames**, and the schema has `first_name` / `last_name` only. **Mexican legal names do not fit two columns**
+— the paterno/materno split will be silently mangled, and every document (INE, CURP, licencia) prints the
+full form. Filed with the rest.
+
+**THE PATTERN, and it is what makes this a parity gap rather than 13 unrelated omissions:** **every
+credential stores its EXPIRY and not its ISSUE date** — visa, passport, federal licence, medical card, all
+four. A DQ file that cannot state when a credential was issued cannot show the qualification was valid on a
+past date, which is exactly what a DOT/FMCSA audit asks. **And the entire Mexican medical certificate
+(*Constancia de Aptitud Psicofísica*) — result, examiner, exam number, expediente — has no home at all**,
+while `safety.driver_documents` can only attach the scan (`doc_type`, `effective_date`, `expiry_date`,
+`r2_key`). **The image can be filed; the facts on it cannot be queried.**
+
+### PART 2 — WHY I DID NOT EXECUTE THE WIZARD, stated plainly rather than worked around
+
+The directive requires the run to go **through the app** and forbids **Neon inserts** and faking. **I have
+neither instrument.** This session has **no browser** and **no authenticated session** — verified earlier
+today: every write route is `requireAuth` behind the Lucia `ih35_session` cookie, and an unauthenticated
+write returns **HTTP 401**. My only write capability is calling production **services** directly via `tsx`
+(items 114-135), and that **cannot traverse a wizard, cannot exercise a UI step, and cannot upload a file to
+R2** — so it cannot satisfy "through the app" or attach `INE_Jorge_Pablo_Munoz.jpeg`,
+`Medical_Exam-Jorge.jpeg` or the licencia PDF.
+
+**The three ways I could have produced a driver row are all ruled out by the directive itself:** a Neon
+insert (*"never Neon inserts"*), a direct service call (not *"through the app"*, and it would skip the wizard
+steps the proof requires), or minting a session cookie (**prohibited outright — §1.6 access controls**).
+**Creating the row by any of those and reporting the wizard as run would be exactly the "do not fake" this
+directive forbids.**
+
+**What unblocks it:** a browser session, or an `ih35_session` cookie supplied by the owner. **Scenario B has
+the same constraint** — it is a larger multi-step build (2 loads, 4 stops, 5 fuel purchases, 3 DEF expenses,
+tarp pay, a deduction, and a settlement tying to $1,987.95 / $2,415.11) and every step needs the same access.
+
+**I am not deferring the gap work.** The 13 field gaps above are filed now, in full, because they are
+determinable from the schema and they block Scenario A **even with a browser** — the wizard cannot capture
+what the database cannot hold.
