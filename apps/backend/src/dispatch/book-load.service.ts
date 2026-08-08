@@ -1265,7 +1265,29 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       reservationId = reservation.reservationId;
       loadNumber = reservation.loadNumber;
     }
-    const statusForInsert = input.save_mode === "draft" ? "draft" : toMdataStatus(input.status);
+    // FAIL-D3 — a load with NO CREW must never be stored as 'assigned_not_dispatched'.
+    //
+    // Measured on prod 2026-08-08: L-20260808-0020 (c5ece310) sat at status
+    // 'assigned_not_dispatched' with assigned_primary_driver_id NULL and zero rows in
+    // dispatch.load_assignment_history. The status word said "assigned" and nothing was assigned,
+    // because the route schema defaults `status` to 'assigned_not_dispatched' (loads.routes.ts) and
+    // that default was written through here regardless of whether a driver or team was supplied.
+    //
+    // 'unassigned' is a REAL member of mdata.load_status_enum — verified on prod against pg_enum
+    // (sortorder 14), not assumed. It is NOT routed through toMdataStatus() on purpose: that mapper
+    // translates 'unassigned' -> 'draft', which would hide a genuinely booked load from every
+    // dispatch board and misrepresent a booked load as an unsubmitted one. The load IS booked; it
+    // simply has no crew yet. The state machine already allows unassigned -> assigned_not_dispatched,
+    // so the normal assign flow still works from here.
+    //
+    // A team assignment crews the load just as a primary driver does, so either satisfies this.
+    const hasCrew = Boolean(input.assigned_primary_driver_id) || Boolean(input.team_id);
+    const statusForInsert =
+      input.save_mode === "draft"
+        ? "draft"
+        : !hasCrew && input.status === "assigned_not_dispatched"
+          ? "unassigned"
+          : toMdataStatus(input.status);
     const v3Metadata = {
       customer_po_number: input.customer_po_number ?? null,
       hazmat: Boolean(input.hazmat),
