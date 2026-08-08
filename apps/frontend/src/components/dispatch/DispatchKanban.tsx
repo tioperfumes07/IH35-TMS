@@ -1,4 +1,13 @@
-import { DndContext, useDraggable, useDroppable, type DragEndEvent } from "@dnd-kit/core";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import type { DispatchLoadRow, LoadStatus } from "../../api/loads";
@@ -84,6 +93,14 @@ type KanbanColumnDef = {
   collapsedByDefault?: boolean;
   statuses: string[];
   dropStatus: LoadStatus;
+  /**
+   * FAIL-K1 — the lane is DERIVED from telematics, not from a raw load status, so a drop cannot express it.
+   * "Loaded" is reached only when a load is `in_transit` AND the pickup geofence reports `departed`
+   * (see resolveKanbanColumnKey). It is NOT a fake column — it populates the moment that signal exists —
+   * but its dropStatus was `in_transit`, so dragging a card onto it wrote in_transit and the card
+   * reappeared in "In transit". To the dispatcher that reads as "the drop did nothing".
+   */
+  derivedOnly?: boolean;
   showDwell?: boolean;
 };
 
@@ -100,7 +117,7 @@ const KANBAN_STATUS_GROUPS: KanbanColumnDef[] = [
   { key: "assigned", title: "Assigned", statuses: ["assigned", "assigned_not_dispatched"], dropStatus: "assigned" },
   { key: "dispatched", title: "Dispatched", statuses: ["dispatched"], dropStatus: "dispatched" },
   { key: "at_pickup", title: "At pickup", statuses: ["at_pickup"], dropStatus: "at_pickup", showDwell: true },
-  { key: "loaded", title: "Loaded", statuses: [], dropStatus: "in_transit" },
+  { key: "loaded", title: "Loaded", statuses: [], dropStatus: "in_transit", derivedOnly: true },
   { key: "in_transit", title: "In transit", statuses: ["in_transit"], dropStatus: "in_transit" },
   { key: "at_delivery", title: "At delivery", statuses: ["at_delivery"], dropStatus: "at_delivery", showDwell: true },
   // WIRE-07: drop must use delivered_pending_docs so mdata status stamps actual_departure_at.
@@ -431,7 +448,12 @@ function KanbanCompactCard({
       <span className={`h-2 w-2 shrink-0 rounded-full ${onTimeChipClass(load).split(" ")[0]}`} aria-hidden />
       <span className="min-w-0 flex-1 truncate font-semibold text-gray-900">{driverUnitLabel(load)}</span>
       <span className="shrink-0 font-mono text-[10px] text-gray-500">{load.load_number}</span>
-      <span className="hidden min-w-0 max-w-[120px] shrink truncate text-gray-500 sm:inline">{lane}</span>
+      {/* KANBAN-COMPACT-TRUNCATE (owner-live): the driver label was truncating because this SECONDARY lane
+          text held up to 120px of the same row at every width above `sm`. The driver is the identifying
+          field on a compact card, so the lane now yields first — it appears only on wide boards and takes
+          less room when it does. Field ORDER is unchanged (§7 additive-only); only the lane's responsive
+          visibility and max width move. */}
+      <span className="hidden min-w-0 max-w-[90px] shrink truncate text-gray-500 xl:inline">{lane}</span>
       {hasActiveGeofenceBreach ? <span className="shrink-0 text-red-600" title="Geofence breach">◆</span> : null}
       {isBreakdown(load) ? <span className="shrink-0 text-red-600" title="Breakdown">▲</span> : null}
     </div>
@@ -499,8 +521,16 @@ function KanbanStandardCard({
             {secondaryLoad}
           </span>
         ) : null}
-        <span className="min-w-0 max-w-[110px] shrink truncate">{driverNameLabel(load)}</span>
-        <span className="min-w-0 shrink truncate">· {lane}</span>
+        {/* KANBAN-COMPACT-TRUNCATE — owner saw "Leon… Unkno…" at STANDARD density too, so this is not a
+            compact-only bug. The driver was capped at an arbitrary max-w-[110px] and so truncated even when
+            the card had room to spare, and the lane competed for the same row at every width. The driver is
+            the identifying field, so it now takes the free space (flex-1) and the lane — the least
+            identifying part — yields first and only appears on wide boards. Field ORDER is unchanged
+            (§7 additive-only): only widths and the lane's responsive visibility move. */}
+        <span className="min-w-0 flex-1 truncate" data-kanban-card-secondary="driver">
+          {driverNameLabel(load)}
+        </span>
+        <span className="hidden min-w-0 max-w-[90px] shrink truncate xl:inline">· {lane}</span>
       </div>
     </div>
   );
@@ -653,6 +683,17 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
   // as HOS/geofence. Once Jorge wires the OOS source this strip lists every down unit.
   const outOfServiceLoads = useMemo(() => optimisticLoads.filter(isBreakdown), [optimisticLoads]);
 
+  // KANBAN-CLICK-DEAD (owner-live). Every card is a `useDraggable`, and dnd-kit's DEFAULT PointerSensor has
+  // NO activation constraint: pointerdown starts a drag immediately and preventDefaults, so the browser never
+  // dispatches the follow-up `click`. The cards' onClick therefore never fired and clicking a load did
+  // nothing — while DRAGGING worked perfectly, which is exactly the asymmetry the owner reported.
+  // A distance constraint makes a stationary press stay a click and anything past 8px become a drag.
+  // KeyboardSensor is kept so the board stays operable without a pointer.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor)
+  );
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const activeId = event.active.id;
     const overId = event.over?.id;
@@ -682,6 +723,16 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
       pushToast("Could not move that card — the board could not identify it. Refresh and try again.", "error");
       return;
     }
+    if (targetGroup.derivedOnly) {
+      // FAIL-K1: refuse the write rather than perform a misleading one. Dropping here used to set
+      // `in_transit`; with no `departed` geofence the card then rendered in "In transit", so the operator
+      // saw their card jump to a lane they did not choose and had no idea why.
+      pushToast(
+        `${targetGroup.title} is set by telematics (pickup departure), not by dragging. Move the load to In transit instead.`,
+        "info"
+      );
+      return;
+    }
     if (resolveKanbanColumnKey(load) === targetColumnKey) {
       // A true no-op: the card is already in this lane. Still say so — silence is what made a missed drop
       // indistinguishable from a successful one.
@@ -697,9 +748,19 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
     try {
       await onStatusDrop(loadId, nextStatus);
       pushToast(`Load ${load.load_number} moved to ${targetGroup.title}`, "success");
-    } catch {
+    } catch (error) {
       setOptimisticLoads(previousLoads);
-      pushToast("Status change rejected by server. Reverted.", "error");
+      // KANBAN-REVERSE-NOMOVE (owner-live): forward moves worked, backward ones "did not move". They were
+      // being REJECTED by the server, but this catch discarded the error and printed a generic sentence, so
+      // the dispatcher was told the move failed and never WHY — indistinguishable from a dead board.
+      // Surface the server's own reason; keep the generic line only as the fallback when there is none.
+      const reason = error instanceof Error ? error.message.trim() : "";
+      pushToast(
+        reason
+          ? `Can't move ${load.load_number} to ${targetGroup.title} — ${reason}`
+          : `Can't move ${load.load_number} to ${targetGroup.title}. The server rejected it and gave no reason. Reverted.`,
+        "error"
+      );
     }
   };
 
@@ -719,7 +780,7 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
   }
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="relative" data-testid="dispatch-kanban-board">
         <div className="mb-2 flex items-center justify-end gap-1 text-[11px]">
           <span className="text-gray-500">Density</span>
