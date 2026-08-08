@@ -61,6 +61,16 @@ function check(raw) {
     );
   }
 
+  // 2b. LIVE FAIL (2026-08-08 L-0093): invoices_void_state_authoritative requires
+  // ((status='void') = (voided_at IS NOT NULL)). Setting status='void' without voided_at
+  // rejects the UPDATE and rolls back the entire load cancel — dispatched loads become un-cancellable.
+  if (!/voided_at\s*=\s*now\(\)/.test(withStrings)) {
+    errors.push(
+      `${SVC}: proforma void sets status='void' without voided_at=now() — CHECK invoices_void_state_authoritative ` +
+        `rejects the write and the cancel transaction rolls back (L-20260808-0093 live)`
+    );
+  }
+
   // 3. Driver bills must be observed...
   if (!/driver_finance\.driver_bills/.test(withStrings)) {
     errors.push(
@@ -112,6 +122,14 @@ function selftest() {
         ),
     ],
     ["outcome made silent", (s) => s.split("cancellation_money_artifacts").join("nothing_recorded")],
+    [
+      "void status without voided_at",
+      (s) =>
+        s.replace(
+          /SET status = 'void',\s*voided_at = now\(\),\s*updated_at = now\(\),\s*updated_by_user_id = \$3/,
+          "SET status = 'void', updated_at = now(), updated_by_user_id = $3"
+        ),
+    ],
   ];
 
   for (const [name, mutate] of mutations) {
