@@ -420,6 +420,13 @@
     "type": "enforced"
   },
   {
+    "id": "LAW-2026-08-07-VOID-STATUS-LITERAL-MATCHES-COLUMN",
+    "title": "A query must not filter a status column on a literal the column's CHECK constraint forbids — A/R aging excluded accounting.invoices.status 'voided', a value invoices_status_check makes impossible (the real spelling is 'void'), so the exclusion could never fire and rested on voided_at alone; one invoice with status='void' and voided_at NULL was counted, and USMCA reported $4,325.50 of receivables where $1,875.50 was real",
+    "source_file": "apps/backend/src/accounting/ar-aging.service.ts",
+    "guard": "scripts/verify-void-status-literal-matches-column.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-08-07-SQL-SELECT-LIST-PHANTOM-COLUMN",
     "title": "A phantom column in the SELECT LIST is as fatal as one in WHERE — both throw 42703 and 500 the endpoint — so verify-sql-column-existence must check PROJECTED columns, not only WHERE/SET/ORDER-BY ones; a select-list-only phantom passed the guard with exit 0 while the route it lived in failed on every call",
     "source_file": "apps/backend/src/dispatch/auth-gates/wf-038-active-driver.gate.ts",
