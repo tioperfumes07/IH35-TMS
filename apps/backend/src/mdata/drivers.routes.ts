@@ -1135,7 +1135,24 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       if (search) {
         values.push(`%${search}%`);
         const idx = values.length;
-        filters.push(`(first_name ILIKE $${idx} OR last_name ILIKE $${idx} OR cdl_number ILIKE $${idx})`);
+        // ACCT-F203 — MATCH THE FULL NAME, not just the individual columns.
+        //
+        // This used to test first_name / last_name / cdl_number separately, so the single most
+        // natural thing a dispatcher does — type the driver's whole name — returned NOTHING. Proven
+        // on prod: '%Juan USMCA%' scores 0 against the three columns while
+        // (first_name || ' ' || last_name) matches exactly 1 driver. The picker looked empty and the
+        // driver was unreachable, because the list default is LIMIT 50 against 92 USMCA / 96 TRANSP
+        // drivers — past the cap, search is the ONLY way to reach someone, and search was the part
+        // that was broken.
+        //
+        // Both orders are matched because people type either ("Perez Juan" is normal here), and the
+        // concatenation is NULL-safe: last_name is nullable, and 'Juan' || ' ' || NULL is NULL in
+        // SQL, which would silently drop every driver missing a surname from their own search.
+        filters.push(
+          `(first_name ILIKE $${idx} OR last_name ILIKE $${idx} OR cdl_number ILIKE $${idx}` +
+            ` OR (COALESCE(first_name,'') || ' ' || COALESCE(last_name,'')) ILIKE $${idx}` +
+            ` OR (COALESCE(last_name,'') || ' ' || COALESCE(first_name,'')) ILIKE $${idx})`
+        );
       }
       // Entity scope (USMCA cross-entity leak fix): driver PII must never blend across operating
       // companies. mdata.drivers RLS is role-scoped, not entity-scoped, so ALWAYS bind the
