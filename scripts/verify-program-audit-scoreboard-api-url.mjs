@@ -7,6 +7,15 @@
  * 2) No dangerouslySetInnerHTML / __html call sites
  * 3) Guard items use `text` (markdown), never `html`
  * 4) frontend build does NOT run gen:program-scoreboard (CI dirty-tree / security-audit)
+ * 5) FE-TSC-RED-ON-TIP-MAIN-4780 — every TOP-LEVEL key of PROGRAM_SCOREBOARD is declared on the
+ *    ProgramScoreboard interface, in the same file.
+ *
+ * (5) exists because #4780 added `live_scenario_probe` to the data object and not to the interface. That is
+ * a TS2353 on tip-main — `npx tsc -b` was RED and the commit DEPLOYED TO PROD, because `build-typecheck`
+ * never ran during the Actions outage. Every FE lane then inherited an error it could not tell apart from
+ * its own; I filtered it out of every typecheck I ran that night, which is exactly how a real error gets
+ * missed. The key is generator-written (scripts/scoreboard-from-live.mjs), so the data and its type drift
+ * apart silently unless something ties them together. This is that tie.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -20,6 +29,54 @@ const LABEL = "verify-program-audit-scoreboard-api-url";
 const SELFTEST = process.argv.includes("--selftest");
 
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
+
+/**
+ * Top-level keys of the PROGRAM_SCOREBOARD object literal, and the property names declared on the
+ * ProgramScoreboard interface. Both are read out of the same file, so this cannot pass vacuously if either
+ * block is renamed — a missing block is reported, not skipped.
+ */
+export function scoreboardTypeDrift(dataSrc) {
+  const problems = [];
+
+  const ifaceMatch = dataSrc.match(/export interface ProgramScoreboard \{([\s\S]*?)\n\}/);
+  if (!ifaceMatch) return ["programScoreboard.data.ts: ProgramScoreboard interface not found — refusing to pass vacuously."];
+  // Collect property names at brace-depth 0 of the interface body. A line-anchored regex is WRONG here:
+  // this interface packs several properties onto one line ("modules: ModuleRow[]; prod: ProdMetric[]; ..."),
+  // so anchoring caught only the first and reported chainMoney/chainReverse/guard as undeclared — the guard
+  // failing on correct code. Depth-tracking also stops nested shapes (meta: { generatedAt: ... }) from
+  // masking a genuinely missing top-level key.
+  const declared = new Set();
+  {
+    const body = ifaceMatch[1];
+    let depth = 0;
+    for (let i = 0; i < body.length; i += 1) {
+      const ch = body[i];
+      if (ch === "{") depth += 1;
+      else if (ch === "}") depth -= 1;
+      else if (ch === ":" && depth === 0) {
+        const before = body.slice(0, i).match(/([a-zA-Z_][a-zA-Z0-9_]*)\??\s*$/);
+        if (before) declared.add(before[1]);
+      }
+    }
+  }
+
+  const objMatch = dataSrc.match(/export const PROGRAM_SCOREBOARD: ProgramScoreboard = \{([\s\S]*)\n\};/);
+  if (!objMatch) return ["programScoreboard.data.ts: PROGRAM_SCOREBOARD object not found — refusing to pass vacuously."];
+  // Top level only: keys at exactly two-space indent inside the literal.
+  const present = new Set([...objMatch[1].matchAll(/^  "([^"]+)":/gm)].map((m) => m[1]));
+  if (present.size === 0) return ["programScoreboard.data.ts: PROGRAM_SCOREBOARD has no top-level keys — refusing to pass vacuously."];
+
+  for (const key of present) {
+    if (!declared.has(key)) {
+      problems.push(
+        `programScoreboard.data.ts: PROGRAM_SCOREBOARD has top-level key "${key}" but the ProgramScoreboard ` +
+          `interface does not declare it. That is a TS2353 and it reddens tsc for every FE lane ` +
+          `(FE-TSC-RED-ON-TIP-MAIN-4780).`,
+      );
+    }
+  }
+  return problems;
+}
 
 export function assertScoreboardContract(sources) {
   const page = sources?.[PAGE] ?? read(PAGE);
@@ -233,7 +290,7 @@ if (SELFTEST) {
   process.exit(0);
 }
 
-const problems = assertScoreboardContract();
+const problems = [...assertScoreboardContract(), ...scoreboardTypeDrift(read(DATA))];
 if (problems.length) {
   console.error(`${LABEL} FAILED:`);
   for (const p of problems) console.error(`  - ${p}`);

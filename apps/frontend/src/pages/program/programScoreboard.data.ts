@@ -23,6 +23,32 @@ export interface GuardItem { badge: string; tone: "ver" | "pend" | "flag" | "fai
 export interface ProgramScoreboard {
   meta: { generatedAt: string; sourceSha: string; deployedSha: string; prodReadAt: string; ledgerRows: number; failOpen: number; defects: number; };
   modules: ModuleRow[]; prod: ProdMetric[]; chain: ChainNode[]; chainMoney: string; chainReverse: string; guard: GuardItem[];
+  /**
+   * FE-TSC-RED-ON-TIP-MAIN-4780. #4780 added this key to the object below but not to this interface, so
+   * `npx tsc -b` was RED on tip-main and shipped to prod — every FE lane inherited an error it could not
+   * tell apart from its own, and `build-typecheck` never caught it because Actions was down.
+   *
+   * The key is DERIVED and written by `scripts/scoreboard-from-live.mjs`, which deliberately keeps the live
+   * numbers in their OWN key so nothing curated is overwritten. Declaring it here is what keeps the
+   * generator's output and this type from drifting apart again; verify-step 2831 now enforces that every
+   * top-level key of PROGRAM_SCOREBOARD is declared on this interface.
+   *
+   * Optional because a scoreboard written before the probe existed has no such key.
+   */
+  live_scenario_probe?: {
+    generated_by: string;
+    source: string;
+    note: string;
+    /** Flat list across all modules; each slice names the module it belongs to. */
+    slices: { key: string; module: string; holds: boolean; evidence: string }[];
+    modules: Record<string, {
+      pass_count: number;
+      total_count: number;
+      progress: number;
+      prod_verified: boolean;
+      slices: { key: string; holds: boolean; evidence: string }[];
+    }>;
+  };
 }
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
