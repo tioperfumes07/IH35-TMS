@@ -195,8 +195,29 @@ for (const prefix of prefixes) {
 // --- Collect frontend /api/v1 calls -----------------------------------------------------------
 const frontendFiles = walk(FRONTEND_DIR);
 const frontendCalls = new Map(); // normalized-key -> { segs, sample }
+
+/**
+ * Strip block and line comments before scanning.
+ *
+ * FALSE-POSITIVE FIX (2026-08-08): this guard reported `/api/v1/...` — a literal ellipsis — as a frontend
+ * call with no backend route, "referenced in apps/frontend/src/api/safety.ts". There is no such call. The
+ * match came from a JSDoc block whose whole purpose is to say the endpoint is NOT under /api/v1:
+ *
+ *     Base path is `/api/safety/...` (NOT `/api/v1/...`)
+ *
+ * So the guard flagged prose explaining the exact thing it was checking for. A guard that cries wolf is
+ * worse than no guard: this one is exempt and unwired, and the one concrete "failure" it reported was
+ * noise, which is how a real missing route would have been dismissed along with it.
+ *
+ * Comments cannot contain a real call, so they are removed first. String contents are unaffected — the
+ * patterns below still see every genuine literal.
+ */
+function stripComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+}
+
 for (const file of frontendFiles) {
-  const text = readFileSync(file, "utf8");
+  const text = stripComments(readFileSync(file, "utf8"));
   for (const lit of extractLiterals(text, "/api/v1/")) {
     // A literal ending in "/" is a base prefix the code concatenates onto, not an endpoint itself.
     if (lit.split("?")[0].endsWith("/")) continue;

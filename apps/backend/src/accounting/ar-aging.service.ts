@@ -58,7 +58,27 @@ export async function getArAgingReport(input: {
           AND i.amount_open_cents IS NOT NULL
           AND i.amount_open_cents > 0
           AND i.voided_at IS NULL
-          AND i.status NOT IN ('paid', 'voided', 'draft')
+          -- ACCT-F171 / CLS-VOID-LITERAL-DEAD — 'void' was MISSING and its absence was live money.
+          --
+          -- accounting.invoices.status spells a void as 'void'. On prod br-fancy-credit-akjnd07a the
+          -- constraint invoices_status_check pins the domain to
+          -- (draft, proforma, sent, partial, paid, void, factored) — 'voided' is not in it, so the
+          -- database would REJECT that value. The literal this predicate excluded could never match,
+          -- so the status half of the filter was dead and the whole exclusion rested on voided_at.
+          -- One invoice breaks that pairing (status='void', voided_at NULL — the live half of
+          -- LV-VOID-INVARIANT-BOTH-WAYS), and A/R aging counted it: USMCA reported $4,325.50
+          -- outstanding where $1,875.50 was real. A voided $2,450.00 invoice was 56.6% of the
+          -- entity's reported receivables, and it read as a perfectly ordinary number.
+          --
+          -- The rest of the file's own neighbours already had it right — invoices.routes.ts:227
+          -- excludes ('draft','void','voided','paid'). This one query missed the dominant spelling.
+          --
+          -- 'voided' is KEPT only because removing it is churn with no behavioural change — the
+          -- constraint already makes it unreachable. It is NOT future-proofing: nothing can ever
+          -- write that value. Guarded by scripts/verify-void-status-literal-matches-column.mjs,
+          -- which fails when a predicate names a literal the column's CHECK constraint forbids, and
+          -- fails again when an exclusion names ONLY the unreachable spelling.
+          AND i.status NOT IN ('paid', 'void', 'voided', 'draft')
         ORDER BY c.customer_name ASC, i.due_date ASC
       `,
       [input.operating_company_id]

@@ -105,6 +105,7 @@ export function StopActionPage() {
         onQueued={() => setHasDoc(true)}
         defaultEntityType="load_stop"
         defaultEntityId={resolvedStop.id}
+        parentLoadId={resolvedLoad.id}
         allowedCategoryCodes={["bol", "pod", "lumper_receipt", "damage_photo"]}
         title={t("stop.upload_bol_pod")}
       />

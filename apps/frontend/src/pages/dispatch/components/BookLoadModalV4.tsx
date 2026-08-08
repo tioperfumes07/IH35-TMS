@@ -17,6 +17,7 @@ import { createDispatchLoad } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
 import { getLoad, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
 import { buildEditPrefill, buildEditPatchBody } from "./book-load-v4/editLoadMapping";
+import { bookLoadToastMessage, bookLoadToastTone, serverStatusOf } from "./book-load-toast";
 import { listCustomers, listVendors } from "../../../api/mdata";
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
@@ -129,6 +130,11 @@ type FormValues = BookLoadFormValues & {
     state: string;
     country: string;
     address_line1: string;
+    // LV-STOP-ZIP-DROPPED: the Zip Code input is registered as stops.N.postal_code
+    // (BookLoadStopsSection.tsx) but this form type never declared it, so the field existed on screen and in
+    // RHF state while being invisible to every typed consumer — which is how the submit mapping came to omit
+    // it without TypeScript ever complaining. Declaring it is what makes the drop a compile error.
+    postal_code?: string;
     scheduled_arrival_at: string;
     time_window_type?: "appointment" | "open_window" | "select_hours" | "refused";
     appointment_start_at?: string;
@@ -225,6 +231,12 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
   const [overrideReason, setOverrideReason] = useState("");
   const [overrideToken, setOverrideToken] = useState<string | null>(null);
   const [pendingCloseAfterAdvisory, setPendingCloseAfterAdvisory] = useState(false);
+  // LV-DISPATCH-TOAST-LIES (class instance 2). The maintenance-advisory branch returns EARLY from the
+  // submit handler, so the created load's server status would be lost by the time the operator presses
+  // Continue — and that Continue handler then fired its own green "success" toast that had never seen the
+  // response. Same shape as the defect this file already fixed one branch above: an outcome asserted from
+  // local state. Carrying the status forward is what lets the advisory path tell the truth too.
+  const [advisoryServerStatus, setAdvisoryServerStatus] = useState<string | null>(null);
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
   const [creditLimitBlock, setCreditLimitBlock] = useState<{ exposure_cents: number; limit_cents: number; credit_limit_source: string | null; can_override: boolean } | null>(null);
   const [overrideCreditLimit, setOverrideCreditLimit] = useState(false);
@@ -665,6 +677,17 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
           sequence_number: index + 1,
           city: stop.city,
           state: stop.state,
+          // LV-STOP-ZIP-DROPPED: this mapping is an explicit field-by-field allow-list and postal_code was
+          // never added to it. Every other layer was already correct - the Zip Code input is registered as
+          // stops.N.postal_code (BookLoadStopsSection.tsx:132), the geocode autofill writes it, the backend
+          // stop type accepts it (book-load.service.ts:44), the INSERT lists it (:1568) and binds it (:1594),
+          // and mdata.load_stops.postal_code exists on prod. So the operator typed a ZIP, watched it render,
+          // and this handler dropped it on the floor with no error. PROD 2026-08-08 (lucia bypass in a txn;
+          // visible 20 == n_live_tup 20, a REAL zero): 0 of 20 stops have EVER carried a postal_code, while
+          // city persists on 12 and address_line1 on 10 - they persist when supplied, this never has.
+          // Postal code is the PC*MILER routing key, so driver pay-per-mile, fuel/ETA and IFTA jurisdiction
+          // miles were all structurally unreachable.
+          postal_code: stop.postal_code || undefined,
           country: stop.country,
           address_line1: stop.address_line1,
           scheduled_arrival_at: stop.scheduled_arrival_at ? new Date(stop.scheduled_arrival_at).toISOString() : undefined,
@@ -693,6 +716,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         ? ((payload as Record<string, unknown>).wf_044_maintenance_warnings as Array<Record<string, unknown>>)
         : [];
       if (warnings.length > 0 && saveMode === "book_dispatch") {
+        setAdvisoryServerStatus(serverStatusOf(payload));
         setPendingCloseAfterAdvisory(true);
         setGateBanner({
           type: "advisory",
@@ -701,7 +725,12 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         });
         return;
       }
-      pushToast(saveMode === "draft" ? "Draft saved" : "Load booked and dispatched", "success");
+      // LV-DISPATCH-TOAST-LIES — report the status the SERVER returned, never the one the click intended.
+      // `save_mode: "book_dispatch"` does NOT force `dispatched` (book-load.service.ts writes
+      // `toMdataStatus(input.status)`), so asserting dispatch from `saveMode` told a dispatcher a truck was
+      // rolling under an audited DOT override while the record sat at `assigned_not_dispatched`.
+      const serverStatus = serverStatusOf(payload);
+      pushToast(bookLoadToastMessage(saveMode, serverStatus), bookLoadToastTone(saveMode, serverStatus));
       onCreated();
       onClose();
     } catch (error) {
@@ -971,7 +1000,13 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     size="sm"
                     variant="secondary"
                     onClick={() => {
-                      pushToast("Load booked with maintenance advisory", "success");
+                      // Report what the SERVER returned, exactly like the main path. "Booked with a
+                      // maintenance advisory" was true but silent about dispatch: a book_dispatch that
+                      // landed on assigned_not_dispatched still rendered green here.
+                      pushToast(
+                        `${bookLoadToastMessage("book_dispatch", advisoryServerStatus)} · maintenance advisory`,
+                        bookLoadToastTone("book_dispatch", advisoryServerStatus),
+                      );
                       onCreated();
                       setPendingCloseAfterAdvisory(false);
                       finalizeBookLoadClose();

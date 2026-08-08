@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "./client";
+import { transitionDispatchLoad, type DispatchStatus } from "./dispatch";
 
 // Must stay aligned with apps/backend/src/mdata/loads.routes.ts loadStatusSchema
 // and mdata.load_status_enum (incl. WIRE-07 delivery-stamp statuses).
@@ -256,10 +257,60 @@ export function updateDispatchLoadFull(id: string, body: Record<string, unknown>
   return apiRequest<LoadDetail>(`/api/v1/dispatch/loads/${id}`, { method: "PATCH", body });
 }
 
+/**
+ * LV-TXN-004 — map office/Kanban LoadStatus onto the dispatch transition enum so we can call the
+ * money-aware endpoint. Statuses that have no dispatch equivalent (draft/planned/booked) stay on
+ * the legacy mdata route. Mirrors apps/backend/src/dispatch/load-state-machine.ts fromMdataStatus
+ * for the aliases Kanban still drops.
+ */
+function toDispatchTransitionStatus(status: LoadStatus): DispatchStatus | null {
+  switch (status) {
+    case "unassigned":
+    case "assigned_not_dispatched":
+    case "dispatched":
+    case "in_transit":
+    case "delivered_pending_docs":
+    case "completed_docs_received":
+    case "cancelled":
+    case "abandoned":
+    case "driver_walkoff":
+    case "driver_no_show":
+      return status;
+    case "assigned":
+      return "assigned_not_dispatched";
+    case "at_pickup":
+      return "dispatched";
+    case "at_delivery":
+      return "in_transit";
+    case "delivered":
+      return "delivered_pending_docs";
+    case "invoiced":
+    case "paid":
+    case "closed":
+      return "completed_docs_received";
+    default:
+      return null;
+  }
+}
+
+/**
+ * Office status writer. When operatingCompanyId is set AND the target maps to a dispatch
+ * transition status, call PATCH /api/v1/dispatch/loads/:id/transition (runs postLoadRevenueLatch +
+ * pingSettlementOnLoadEvent). Otherwise fall back to PATCH /api/v1/mdata/loads/:id/status.
+ * FINDING: LV-TXN-004 (FE half — Cursor BUILD-STATUS).
+ */
 export function updateLoadStatus(
   id: string,
-  body: { new_status: LoadStatus; cancellation_reason_code?: string; cancellation_notes?: string }
+  body: { new_status: LoadStatus; cancellation_reason_code?: string; cancellation_notes?: string },
+  operatingCompanyId?: string | null
 ) {
+  const dispatchStatus = operatingCompanyId ? toDispatchTransitionStatus(body.new_status) : null;
+  if (operatingCompanyId && dispatchStatus) {
+    return transitionDispatchLoad(id, operatingCompanyId, {
+      new_status: dispatchStatus,
+      cancellation_reason_code: body.cancellation_reason_code,
+    }) as Promise<LoadDetail | { ok: true; status: string }>;
+  }
   return apiRequest<LoadDetail | { ok: true; status: string }>(`/api/v1/mdata/loads/${id}/status`, {
     method: "PATCH",
     body,
@@ -331,15 +382,16 @@ export function useCreateLoad() {
   });
 }
 
-export function useUpdateLoadStatus() {
+export function useUpdateLoadStatus(operatingCompanyId?: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: { new_status: LoadStatus; cancellation_reason_code?: string; cancellation_notes?: string } }) =>
-      updateLoadStatus(id, body),
+      updateLoadStatus(id, body, operatingCompanyId),
     onSuccess: (_data, vars) => {
       void queryClient.invalidateQueries({ queryKey: ["loads", "list"] });
       void queryClient.invalidateQueries({ queryKey: ["loads", "detail", vars.id] });
       void queryClient.invalidateQueries({ queryKey: ["loads", "audit", vars.id] });
+      void queryClient.invalidateQueries({ queryKey: ["dispatch", "load-detail", vars.id] });
     },
   });
 }

@@ -42,8 +42,7 @@ import type { PoolClient } from "pg";
 import { convertProformaToOfficial } from "../accounting/proforma-convert.service.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-import { postLoadRevenueLatch } from "../accounting/revrec-delivery-posting/poster.service.js";
-import { companyBusinessDate } from "../lib/company-business-date.js";
+import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
 
 // Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
 // (BookLoadStopsSection.tsx). RHF reads a hidden input's value as a STRING ("" when empty), so
@@ -691,6 +690,15 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                  -- which is what makes this an oversight rather than a design choice.
                  NULLIF(TRIM(CONCAT(COALESCE(pd.first_name, ''), ' ', COALESCE(pd.last_name, ''))), '') AS assigned_primary_driver_name,
                  u.unit_number AS assigned_unit_number,
+                 -- LV-LOAD-DETAIL-SHOWS-UNASSIGNED: the THIRD field the drawer renders wrong. The card that
+                 -- produced the driver/unit joins above named three absent columns; only two were resolved.
+                 -- PROD-VERIFIED 2026-08-08 (information_schema, RLS-immune, discriminator satisfied):
+                 -- views.dispatch_load_with_driver_status has 18 columns and NO trip_type, while
+                 -- mdata.loads HAS it and 6 of 10 loads carry a value — L-20260806-0008 is 'NB'. So
+                 -- SELECT l.* never produced it, LoadDetailDrawer.tsx:370 read undefined, and TRIP TYPE
+                 -- rendered "-" for a load that has one. Read from mdata.loads, entity-scoped like the
+                 -- joins above; NOT added to the view, which would widen it unscoped for every consumer.
+                 ml.trip_type AS trip_type,
                  NULL::text AS trailer_equipment_type,
                  NULL::text AS trailer_number,
                  rc.file_id AS ratecon_file_id,
@@ -709,6 +717,10 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                                     AND pd.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
+          -- trip_type lives on mdata.loads, not on the view (see the SELECT note above). Same id, so this
+          -- carries the load's own operating_company_id predicate rather than trusting the view's row.
+          LEFT JOIN mdata.loads ml ON ml.id = l.id
+                                  AND ml.operating_company_id = l.operating_company_id
           -- A9 — surface the load's rate-con PDF (docs.file_links + docs.files, category
           -- 'rate_confirmation'). No column on mdata.loads carries this (unlike
           -- driver_instructions_file_id below, which IS persisted) — the link is polymorphic via
@@ -1344,19 +1356,21 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       }
 
       // DISP-01 — two-event revenue latch (flag OFF → no-op). Earn at delivery; bill at POD.
-      if (targetStatus === "delivered_pending_docs" || targetStatus === "completed_docs_received") {
-        try {
-          await postLoadRevenueLatch({
-            operating_company_id: operatingCompanyId,
-            load_id: params.data.id,
-            target_status: targetStatus,
-            entry_date_iso: companyBusinessDate(),
-            actor_user_id: authUser.uuid,
-          });
-        } catch (err) {
-          console.warn({ err, load_id: params.data.id, targetStatus }, "disp_01_revrec_latch_failed");
-        }
-      }
+      //
+      // LV-REVREC-NOT-FIRING (live-proven on prod 2026-08-07): this used to call
+      // postLoadRevenueLatch() DIRECTLY, from inside this open transaction. The poster opens its own
+      // connection via withLuciaBypass, so it could not see the delivery departure this very handler
+      // stamps ~40 lines above (still uncommitted). Its evidence gate returned
+      // missing_delivery_evidence and posted nothing — silently, because a gate is a return value,
+      // not a throw. Now routed through the shared helper, which defers the poster to after COMMIT
+      // and owns the trigger condition + swallow-and-log in ONE place (§9.0.17), so this route and
+      // the four other delivery paths cannot drift on what "delivered" means.
+      await latchOnDeliveryEvidence(client, {
+        operatingCompanyId,
+        loadId: params.data.id,
+        targetStatus,
+        actorUserId: authUser.uuid,
+      });
 
       try {
         await pingSettlementOnLoadEvent(client, {

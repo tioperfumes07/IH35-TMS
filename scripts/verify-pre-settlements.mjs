@@ -64,19 +64,36 @@ for (const ep of ["/api/v1/settlements\"", "/api/v1/settlements/:id\"", "/api/v1
   else pass(`endpoint present: ${ep}`);
 }
 
-// 8. Tenant RLS scope in routes — legacy `SET LOCAL app.operating_company_id` OR the
-//    SQLi-hardened parameterized `set_config('app.operating_company_id', $1, true)` form.
-const rlsRouteCount = (routes.match(/(?:SET LOCAL app\.operating_company_id|set_config\(\s*['"]app\.operating_company_id['"])/g) || []).length;
-if (rlsRouteCount < 2) fail(`routes missing tenant RLS scope (found ${rlsRouteCount})`);
-else pass(`tenant RLS scope applied in ${rlsRouteCount} handlers`);
+// 8. Tenant RLS scope — assert it PER QUERYING HANDLER, not by counting call sites.
+//
+// STALE-ASSERTION FIX (2026-08-08): this used to require `rlsRouteCount >= 2` and FAILED on tip-main with
+// "routes missing tenant RLS scope (found 1)". That was the guard being wrong, not the code. CHAIN-07
+// (2026-07-15) RETIRED the legacy `/settlements` list and `/settlements/:id` detail handlers: they no longer
+// query anything, they 308-redirect to the canonical driver-finance subledger. A handler that runs no query
+// needs no tenant GUC, so demanding two GUC call sites demanded that the retired ledger be resurrected —
+// and this file's own header forbids exactly that ("NEVER resurrect a 2nd settlement ledger").
+//
+// The guard is exempt in .guard-exempt.json and therefore never ran in CI, which is why it could rot into a
+// state where WIRING IT WOULD HAVE REDDENED CI ON CORRECT CODE. The redirect behaviour it used to imply is
+// already owned by scripts/verify-chain07-settlements-redirect.mjs (green).
+//
+// So: every handler that actually queries must scope; handlers that only redirect must NOT be required to.
+const queryingHandlers = (routes.match(/client\.query\(/g) || []).length;
+const scopedHandlers = (routes.match(/(?:SET LOCAL app\.operating_company_id|set_config\(\s*['"]app\.operating_company_id['"])/g) || []).length;
+if (queryingHandlers === 0) fail("no querying handler found — scope is wrong, refusing to pass vacuously");
+else if (scopedHandlers < 1) fail(`querying handlers present (${queryingHandlers}) but none sets the tenant GUC`);
+else pass(`tenant GUC set for the querying path (${scopedHandlers} site(s), ${queryingHandlers} query call(s))`);
 
 // 9. LIMIT/OFFSET pagination on list endpoint
 if (!routes.includes("LIMIT") || !routes.includes("OFFSET")) fail("routes missing LIMIT/OFFSET pagination");
 else pass("pagination present");
 
-// 10. Spine event write on detail view
-if (!routes.includes("events.log_event")) fail("routes missing spine event write (events.log_event)");
-else pass("spine event write present");
+// 10. Spine event write on detail view — RETIRED WITH THE HANDLER (CHAIN-07, 2026-07-15).
+//
+// The detail handler that emitted the spine event now 308-redirects and reads nothing, so there is no
+// detail view left to log. Asserting the write still exists would require resurrecting the retired ledger.
+// Canonical detail lives under /api/v1/driver-finance/settlements/:id and carries its own observability.
+pass("spine event write not required — legacy detail handler retired to a 308 redirect (CHAIN-07)");
 
 // 11. Registered in index.ts
 if (!index.includes("registerC1PreSettlementsRoutes") && !index.includes("registerPreSettlementsRoutes")) {

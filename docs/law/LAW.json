@@ -1,19 +1,5 @@
 [
   {
-    "id": "LAW-2026-08-06-CI-CONCURRENCY-SHA-SCOPED",
-    "title": "A workflow may not key its concurrency group on a bare ref — a queued run that never executed can otherwise be cancelled into a permanently dead required check, leaving the PR unmergeable with no code failure",
-    "source_file": ".github/workflows/ci.yml",
-    "guard": "scripts/verify-ci-concurrency-sha-scoped.mjs",
-    "type": "enforced"
-  },
-  {
-    "id": "LAW-2026-08-06-BUSINESS-DATE-PARSED-LOCAL",
-    "title": "A business date (YYYY-MM-DD) must never be pinned to UTC for display — it has no timezone, and new Date(iso+\"T00:00:00Z\") renders one day early for every viewer west of UTC, which silently showed the wrong day cash position in Central Time",
-    "source_file": "apps/frontend/src/lib/businessDate.ts",
-    "guard": "scripts/verify-business-date-parsed-local.mjs",
-    "type": "enforced"
-  },
-  {
     "id": "LAW-2026-08-05-B2-ENFORCED-GUARD-OR-NOT-LAW",
     "title": "LAW = ENFORCED GUARD, OR IT IS NOT LAW — every NEW rule ships a guard registered in docs/law/LAW.json; verify-law-registry.mjs is a required check that reddens when a registered law's guard file is missing",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
@@ -287,6 +273,13 @@
     "type": "enforced"
   },
   {
+    "id": "LAW-2026-08-06-CI-CONCURRENCY-SHA-SCOPED",
+    "title": "A workflow may not key its concurrency group on a bare ref — a queued run that never executed can otherwise be cancelled into a permanently dead required check, leaving the PR unmergeable with no code failure",
+    "source_file": ".github/workflows/ci.yml",
+    "guard": "scripts/verify-ci-concurrency-sha-scoped.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-08-06-DISP-WIRE-07-DEPARTURE-EVIDENCE",
     "title": "Every path stamping mdata.load_stops.actual_departure_at must write a real clock value (now() or COALESCE onto now()), never a bare client parameter — that stamp is the delivery evidence revenue recognition and invoice gating hang off",
     "source_file": "apps/backend/src/dispatch/stamp-final-delivery-departure.ts",
@@ -305,13 +298,6 @@
     "title": "A component that owns a polling query is a page-level singleton — mounting it inside a .map()ed child multiplies both the render and the prod read rate by the collection length, silently and with no visual error",
     "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
     "guard": "scripts/verify-scenario-tracker-single-mount.mjs",
-    "type": "enforced"
-  },
-  {
-    "id": "LAW-2026-08-07-NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX",
-    "title": "NEVER GUESS · NEVER DEFER · ALWAYS VERIFY · ALWAYS FIX, NEVER PATCH — every change fixes the root cause at its source, ships a guard that fails on the bug and passes on the fix, and is proven live on prod; CI-green is the floor, not the verdict; when a fact cannot be verified the required output is UNVERIFIED, never a guess",
-    "source_file": "docs/law/NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX.md",
-    "guard": "scripts/verify-no-patch-or-defer-language.mjs",
     "type": "enforced"
   },
   {
@@ -336,17 +322,31 @@
     "type": "enforced"
   },
   {
-    "id": "LAW-2026-08-07-LANE-TERRITORY",
-    "title": "Lanes do not edit each other's domain territory; shared append-only registries are union-merged, never owned",
-    "source_file": "docs/standing-orders/LANE-COLLISION-PROTOCOL.md",
-    "guard": "scripts/verify-lane-territory.mjs",
+    "id": "LAW-2026-08-06-CLS-ORPHAN-SURFACE-DRILL",
+    "title": "A nav/leaf that drills through to detail (bill row, Chart-of-Accounts reachability, cash-flow 7-day strip) may not silently lose its drill-through wiring",
+    "source_file": "scripts/verify-orphan-surface-drill.mjs",
+    "guard": "scripts/verify-orphan-surface-drill.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-08-06-KANBAN-DROPSTATUS-CONTRACT",
-    "title": "Every dispatch Kanban lane dropStatus must be a status loadStatusSchema accepts — a lane whose drop the API rejects is a silent dead end, and the frontend lane list and backend enum live in separate files owned by separate lanes so they drift independently",
+    "title": "Every dispatch Kanban lane dropStatus must be a status loadStatusSchema accepts AND must reach the money-aware /dispatch transition (or be an explicitly listed pre-dispatch exception) — a lane whose drop the API rejects is a silent dead end, and after #4769 a lane the mapper does not handle silently falls back to the non-money mdata path, stamping no departure and opening no settlement; all three ends live in separate files owned by separate lanes so they drift independently",
     "source_file": "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
     "guard": "scripts/verify-kanban-dropstatus-contract.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-BUSINESS-DATE-PARSED-LOCAL",
+    "title": "A business date (YYYY-MM-DD) must never be pinned to UTC for display — it has no timezone, and new Date(iso+\"T00:00:00Z\") renders one day early for every viewer west of UTC, which silently showed the wrong day cash position in Central Time",
+    "source_file": "apps/frontend/src/lib/businessDate.ts",
+    "guard": "scripts/verify-business-date-parsed-local.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX",
+    "title": "NEVER GUESS · NEVER DEFER · ALWAYS VERIFY · ALWAYS FIX, NEVER PATCH — every change fixes the root cause at its source, ships a guard that fails on the bug and passes on the fix, and is proven live on prod; CI-green is the floor, not the verdict; when a fact cannot be verified the required output is UNVERIFIED, never a guess",
+    "source_file": "docs/law/NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX.md",
+    "guard": "scripts/verify-no-patch-or-defer-language.mjs",
     "type": "enforced"
   },
   {
@@ -361,13 +361,6 @@
     "title": "The dispatch load-detail query must RESOLVE the primary driver name and unit number, not only carry their ids — a drawer that renders a covered load as \"Unassigned\" invites double-assignment, and the entity predicates on those joins must scope units by the owner/leased pair",
     "source_file": "apps/backend/src/dispatch/loads.routes.ts",
     "guard": "scripts/verify-load-detail-resolves-names.mjs",
-    "type": "enforced"
-  },
-  {
-    "id": "LAW-2026-08-06-CLS-ORPHAN-SURFACE-DRILL",
-    "title": "A nav/leaf that drills through to detail (bill row, Chart-of-Accounts reachability, cash-flow 7-day strip) may not silently lose its drill-through wiring",
-    "source_file": "scripts/verify-orphan-surface-drill.mjs",
-    "guard": "scripts/verify-orphan-surface-drill.mjs",
     "type": "enforced"
   },
   {
@@ -427,10 +420,108 @@
     "type": "enforced"
   },
   {
+    "id": "LAW-2026-08-07-VOID-STATUS-LITERAL-MATCHES-COLUMN",
+    "title": "A query must not filter a status column on a literal the column's CHECK constraint forbids — A/R aging excluded accounting.invoices.status 'voided', a value invoices_status_check makes impossible (the real spelling is 'void'), so the exclusion could never fire and rested on voided_at alone; one invoice with status='void' and voided_at NULL was counted, and USMCA reported $4,325.50 of receivables where $1,875.50 was real",
+    "source_file": "apps/backend/src/accounting/ar-aging.service.ts",
+    "guard": "scripts/verify-void-status-literal-matches-column.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-08-07-SQL-SELECT-LIST-PHANTOM-COLUMN",
     "title": "A phantom column in the SELECT LIST is as fatal as one in WHERE — both throw 42703 and 500 the endpoint — so verify-sql-column-existence must check PROJECTED columns, not only WHERE/SET/ORDER-BY ones; a select-list-only phantom passed the guard with exit 0 while the route it lived in failed on every call",
     "source_file": "apps/backend/src/dispatch/auth-gates/wf-038-active-driver.gate.ts",
     "guard": "scripts/verify-sql-column-existence.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-BILLPAY-VOID-REVERSES-GL",
+    "title": "Voiding a bill payment must reverse its GL, and no caller may opt out by hardcoding the flag — voidBillPayment passed reversePostedGl:false, so every void through the UI reversed nothing while the panel promised an equal-and-opposite entry and the GL kept $33.40 of cash that had already left the bank; the decision is a property of the payment (a non-cash settlement deduction has no GL of its own), never of the caller",
+    "source_file": "apps/backend/src/accounting/bills.service.ts",
+    "guard": "scripts/verify-billpay-void-reverses-gl.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-LANE-TERRITORY",
+    "title": "Lanes do not edit each other's domain territory; shared append-only registries are union-merged, never owned",
+    "source_file": "docs/standing-orders/LANE-COLLISION-PROTOCOL.md",
+    "guard": "scripts/verify-lane-territory.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-POD-BOL-EVIDENCE-LINKAGE",
+    "title": "A POD/BOL captured at a stop must be linked to its PARENT LOAD (docs.file_links has no load_stop entity type, so dropping the link orphans the evidence), and the hop.pod_bol scenario probe must COUNT the canonical stores the office reads back — dispatch.pod_documents + dispatch.bol_documents — not only the document library",
+    "source_file": "apps/driver-pwa/src/lib/upload-sync.ts",
+    "guard": "scripts/verify-pod-bol-evidence-linkage.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-MONEY-SIDE-EFFECT-AFTER-COMMIT",
+    "title": "A GL poster that opens its OWN connection must never be awaited from inside an open transaction — under READ COMMITTED that second connection cannot see the caller's uncommitted writes, so the poster's evidence gate re-read a delivery departure the caller had just stamped, found NULL, returned missing_delivery_evidence and posted nothing while every static guard stayed green; defer it with enqueueAfterCommit(client, …) so it runs after COMMIT, and drop the queue on ROLLBACK and on ROLLBACK TO SAVEPOINT so a side effect never outlives the write that justified it",
+    "source_file": "apps/backend/src/lib/after-commit.ts",
+    "guard": "scripts/verify-money-side-effect-after-commit.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-DELIVERY-PATH-SCOPED-BY-STAMP",
+    "title": "A guard that scopes delivery paths by a STRING-LITERAL status match is green-while-broken — the bulk route writes the status from a variable and its one literal sits inside a Set, so the file was never considered and verify-delivery-evidence-latch-wired printed OK exit 0 while bulk 'Mark delivered' stamped delivery evidence and never latched revenue; scope on stampFinalActiveDeliveryDeparture(), a shared call name that cannot be written as a variable",
+    "source_file": "apps/backend/src/dispatch/loads-bulk.routes.ts",
+    "guard": "scripts/verify-delivery-evidence-latch-wired.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-08-SETTLEMENT-SAMPLE-TAG-EVERY-WRITER",
+    "title": "driver_finance.driver_settlements is the ONE money create type with no writable free-text column, so is_sample_data is the ONLY Gate-B tag path — and NAMING the column is not enough: the load-bookended writer (the one dispatch calls on in_transit) named it and then supplied the LITERAL false, so every settlement a sample load auto-opened was hardcoded \"not sample data\" while the guard sat green; every production INSERT must both name the column AND derive its value from the parent row (load for the dispatch/bookended writer, driver for the weekly close), never a literal, because the writers that strand untagged money are precisely the ones no human calls by hand",
+    "source_file": "apps/backend/src/driver-finance/settlements.routes.ts",
+    "guard": "scripts/verify-settlement-sample-tag-wired.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-08-VENDOR-TYPE-APP-DB-PARITY",
+    "title": "The app-layer vendor_type allow-list must equal the mdata.vendors CHECK constraint, case-normalised — a bare z.string() over a case-sensitive closed CHECK turns the most likely input ('other') into an opaque HTTP 500/23514 instead of a 400 naming the legal values; every DB CHECK/enum needs an app-layer counterpart that fails FIRST",
+    "source_file": "apps/backend/src/mdata/vendors.routes.ts",
+    "guard": "scripts/verify-vendor-type-app-db-parity.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-08-BOOK-LOAD-TOAST-REPORTS-SERVER-STATUS",
+    "title": "A success toast must report the status the SERVER returned, never the one the click intended — save_mode 'book_dispatch' does not force 'dispatched', so asserting dispatch from the local save mode told a dispatcher a truck was rolling under an audited DOT override while the load sat at assigned_not_dispatched",
+    "source_file": "apps/frontend/src/pages/dispatch/components/book-load-toast.ts",
+    "guard": "scripts/verify-book-load-toast-server-status.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-08-BOOK-LOAD-STOP-FIELDS-SENT",
+    "title": "The book-load submit handler must not silently discard operator input — every stop field the form registers AND the backend can persist must appear in the stops payload; postal_code was omitted from the explicit allow-list, so 0 of 20 prod load_stops ever carried the PC*MILER routing key that driver pay-per-mile and IFTA jurisdiction miles depend on",
+    "source_file": "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+    "guard": "scripts/verify-book-load-toast-server-status.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-08-REGCLASS-FALLBACK-DECLARES-INTENT",
+    "title": "A to_regclass table-presence probe must declare what its FALSE branch means — throw, fail closed, or degrade WITH a signal; a bare permissive return silently disables the control (notifications.suppression_rules FAILED OPEN and mailed every suppressed recipient). Ratcheted per file against a frozen baseline so the class cannot grow while individual sites are dispositioned",
+    "source_file": "scripts/verify-regclass-fallback-intent.mjs",
+    "guard": "scripts/verify-regclass-fallback-intent.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-FLAG-HONESTY-BANNER-READS-FLAG",
+    "title": "A banner that tells the operator what a feature flag is doing must READ that flag — two Banking banners asserted 'stays OFF by default' from literals while BANK_FEED_GL_POSTING_ENABLED and TRANSFER_GL_POSTING_ENABLED were overridden ON for all three entities, so categorizing a row posted a real balanced journal entry the operator had just been told would not exist",
+    "source_file": "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+    "guard": "scripts/verify-flag-honesty-banner-reads-flag.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-AR-RECEIPT-POSTS-IN-CALLER-TX",
+    "title": "A customer-payment (A/R receipt) GL post must run on the CALLER'S transaction — postSourceTransactionInClientTx. The pool-connection poster opens a second connection where the caller's uncommitted payment and applications are invisible, so it silently posts nothing: the subledger moves, the GL stays dark, and the subledger-to-GL tie-out fails (USMCA: 3 payments, $1,287.25, zero postings; an invoice reading 'paid' against GL A/R still carrying $1,200.00)",
+    "source_file": "apps/backend/src/accounting/payments/apply.service.ts",
+    "guard": "scripts/verify-customer-payment-posts-in-caller-tx.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-08-DELIVERY-LATCH-PAIRS-WITH-SETTLEMENT",
+    "title": "A delivery has TWO money halves and a guard that checks only one is green while the other is dark: latchOnDeliveryEvidence recognises the revenue, while pingSettlementOnLoadEvent on delivered_pending_docs calls closeSettlementForFinalLoad and closes the driver trip settlement — four of the five production latch paths (office fallback, driver route, bulk mark-delivered, driver-PWA departure) fired the latch and never pinged, leaving revenue on the books and the settlement that pays the driver OPEN FOREVER while verify-delivery-evidence-latch-wired stayed correctly green because it only ever asked about one half; every production route firing the latch must also ping settlement, non-fatally, and the guard must assert the PAIR rather than the call",
+    "source_file": "apps/backend/src/dispatch/delivery-evidence-latch.ts",
+    "guard": "scripts/verify-delivery-latch-pings-settlement.mjs",
     "type": "enforced"
   }
 ]

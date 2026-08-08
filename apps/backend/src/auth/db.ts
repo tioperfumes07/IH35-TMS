@@ -1,5 +1,12 @@
 import pg from "pg";
 import { buildPgPoolConfig } from "../lib/pg-connection-options.js";
+import {
+  afterCommitMark,
+  afterCommitRollbackTo,
+  beginAfterCommitScope,
+  discardAfterCommit,
+  drainAfterCommit,
+} from "../lib/after-commit.js";
 
 const { Pool } = pg;
 const APP_DB_ROLE = "ih35_app";
@@ -159,6 +166,8 @@ export async function withLuciaBypass<T>(
   fn: (client: pg.PoolClient) => Promise<T>
 ): Promise<T> {
   const client = await luciaPool.connect();
+  let scoped: pg.PoolClient | null = null;
+  let committed = false;
   try {
     await client.query("BEGIN");
     // #878 fail-closed: same as withCurrentUser — force the non-superuser app role so the
@@ -174,14 +183,31 @@ export async function withLuciaBypass<T>(
     await client.query(
       "SELECT set_config('app.operating_company_id', $1, true)", [LUCIA_BYPASS_SENTINEL_COMPANY_ID]
     );
-    const result = await fn(instrumentClientForDev(client));
+    // LV-REVREC-NOT-FIRING — the after-commit queue is opened on BOTH transaction wrappers, not just
+    // withCurrentUser. This one also opens a real BEGIN on its own pool, so a caller here that
+    // awaited a GL poster inline would hit the identical cross-connection blindness: the poster
+    // takes a SECOND luciaPool client, and under READ COMMITTED that connection cannot see this
+    // transaction's uncommitted rows either. Wiring only the scoped wrapper would have drained half
+    // the class and left the other half looking guarded. See lib/after-commit.ts.
+    scoped = instrumentClientForDev(client);
+    beginAfterCommitScope(scoped);
+    const result = await fn(scoped);
     await client.query("COMMIT");
+    committed = true;
     return result;
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
     throw err;
   } finally {
+    // Release BEFORE draining — deferred work runs on its own connection, so holding this pooled
+    // client through it would needlessly shrink the pool under load.
     client.release();
+    if (scoped) {
+      // Drain only on COMMIT; a rolled-back transaction discards its queue, because a side effect
+      // must never outlive the write that justified it. drainAfterCommit never throws.
+      if (committed) await drainAfterCommit(scoped);
+      else discardAfterCommit(scoped);
+    }
   }
 }
 
@@ -197,6 +223,10 @@ export async function withSavepoint<T>(
   fallback: T
 ): Promise<T> {
   const safe = name.replace(/[^a-z0-9_]/gi, "_");
+  // The after-commit queue is rolled back with the savepoint. Without this, the bulk runner (which
+  // gives EVERY row its own savepoint on this shared client) could roll a row's write back and
+  // still fire that row's deferred money side-effect after the outer COMMIT. See lib/after-commit.ts.
+  const mark = afterCommitMark(client);
   await client.query(`SAVEPOINT ${safe}`);
   try {
     const out = await fn();
@@ -204,6 +234,7 @@ export async function withSavepoint<T>(
     return out;
   } catch {
     await client.query(`ROLLBACK TO SAVEPOINT ${safe}`).catch(() => {});
+    afterCommitRollbackTo(client, mark);
     return fallback;
   }
 }
@@ -216,6 +247,8 @@ export async function withCurrentUser<T>(
     throw new Error("Invalid UUID for app.current_user_id");
   }
   const client = await pool.connect();
+  let scoped: pg.PoolClient | null = null;
+  let committed = false;
   try {
     await client.query("BEGIN");
     // #878 fail-closed: force the non-superuser app role transaction-locally, BEFORE any
@@ -230,13 +263,29 @@ export async function withCurrentUser<T>(
       await client.query(`SET LOCAL ROLE ${APP_DB_ROLE}`);
     }
     await client.query(`SELECT set_config('app.current_user_id', $1::text, true)`, [userUuid]);
-    const result = await fn(instrumentClientForDev(client));
+    // LV-REVREC-NOT-FIRING — this is the ONE funnel every scoped route transaction goes through, so
+    // it is where after-commit work is drained. A side-effect that opens its own connection (the
+    // revenue latch does, via withLuciaBypass) cannot see this transaction's uncommitted rows;
+    // enqueueing it here and running it below COMMIT is what makes that ordering structural instead
+    // of a convention each call site has to remember. See lib/after-commit.ts.
+    scoped = instrumentClientForDev(client);
+    beginAfterCommitScope(scoped);
+    const result = await fn(scoped);
     await client.query("COMMIT");
+    committed = true;
     return result;
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
     throw err;
   } finally {
+    // Release BEFORE draining: the deferred work runs on its own connection, so holding this pooled
+    // client through it would needlessly shrink the pool under load.
     client.release();
+    if (scoped) {
+      // Drain only on COMMIT; a rolled-back transaction discards its queue, because a side effect
+      // must never outlive the write that justified it. drainAfterCommit never throws.
+      if (committed) await drainAfterCommit(scoped);
+      else discardAfterCommit(scoped);
+    }
   }
 }

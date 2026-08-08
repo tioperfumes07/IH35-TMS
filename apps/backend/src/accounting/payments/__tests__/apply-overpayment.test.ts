@@ -12,6 +12,12 @@ vi.mock("../../display-id.js", () => ({
 
 vi.mock("../../posting-engine.service.js", () => ({
   postSourceTransaction: mockPostSourceTransaction,
+  // ACCT-F165 — apply.service now posts via the IN-CLIENT-TX poster so the A/R receipt lands on the
+  // CALLER'S transaction (the pool variant opened a second connection where the caller's uncommitted
+  // payment + applications were invisible, so the receipt silently posted nothing). Both exports are
+  // mocked to the SAME spy: these tests assert THAT a post happened and with what payload, which is
+  // unchanged, and pointing them at one spy keeps the existing assertions meaningful either way.
+  postSourceTransactionInClientTx: mockPostSourceTransaction,
 }));
 
 // CUSTOMER_PAYMENT_GL_POSTING_ENABLED kill switch — enable it so this test exercises the post path.

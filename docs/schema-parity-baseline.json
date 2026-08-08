@@ -4045,6 +4045,7 @@
       "first_load_number",
       "gross_pay",
       "id",
+      "is_sample_data",
       "last_load_id",
       "last_load_number",
       "locked_at",
