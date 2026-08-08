@@ -425,5 +425,12 @@
     "source_file": "apps/backend/src/dispatch/auth-gates/wf-038-active-driver.gate.ts",
     "guard": "scripts/verify-sql-column-existence.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-BILLPAY-VOID-REVERSES-GL",
+    "title": "Voiding a bill payment must reverse its GL, and no caller may opt out by hardcoding the flag — voidBillPayment passed reversePostedGl:false, so every void through the UI reversed nothing while the panel promised an equal-and-opposite entry and the GL kept $33.40 of cash that had already left the bank; the decision is a property of the payment (a non-cash settlement deduction has no GL of its own), never of the caller",
+    "source_file": "apps/backend/src/accounting/bills.service.ts",
+    "guard": "scripts/verify-billpay-void-reverses-gl.mjs",
+    "type": "enforced"
   }
 ]
