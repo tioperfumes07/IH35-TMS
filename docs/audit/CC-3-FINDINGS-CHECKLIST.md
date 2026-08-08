@@ -98,7 +98,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-PAY-SETTLE-NOPOST` | — | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-AP-OPEN-INCLUDES-VOIDED` | — | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-BILLS-VENDOR-UUID` | — | CC-2 / mechanical+FE | — | — | — | — | — | — |
-| ☐ | `LV-REVREC-NOT-FIRING` | — | CC-1 / money — URGENT | — | — | — | — | — | — |
+| ☐ | `LV-REVREC-NOT-FIRING` | — | CC-1 / money — URGENT | CC-1 | #4730 | 2026-08-07 | — | — | **DELIBERATELY LEFT ☐.** Root cause fixed and mutation-proven in #4730 (`node scripts/verify-money-side-effect-after-commit.mjs` RED on the replanted real defect, GREEN restored), but a tick here would claim a POST-FIX LEDGER ROW exists and none does yet — that needs a delivery transition against the deployed build. Tick only after re-checking `LUSMCAFREIGHT-20260806-0001` on prod. See `LV-REVREC-LEDGER-DBTEST`. |
 | ☐ | `LV-BILLVOID-DATE-ERROR` | — | CC-1 / money — URGENT, blocks the void path | — | — | — | — | — | — |
 | ☐ | `LV-VOID-NO-REVERSAL` | — | CC-1 / money — URGENT | — | — | — | — | — | — |
 | ☐ | `LV-CREDITMEMO-NOPATH` | — | CC-2 / mechanical+route (CC-1 confirms posti | — | — | — | — | — | — |
@@ -117,7 +117,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-DRV-TAB` | — | — | — | — | — | — | — | — |
 | ☐ | `LV-AP-DUP` | — | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-CAT-500` | — | — | — | — | — | — | — | — |
-| ☐ | `LV-BULK-DELIVER-NOLATCH` | — | CC-1 / money (fix) + CC-2 / guard | — | — | — | — | — | — |
+| ☑ | `LV-BULK-DELIVER-NOLATCH` | — | CC-1 / money (fix) + CC-2 / guard | CC-1 | #4730 | 2026-08-07 | Mutation on the REAL `apps/backend/src/dispatch/loads-bulk.routes.ts`: strip `latchOnDeliveryEvidence` → `node scripts/verify-delivery-evidence-latch-wired.mjs` exit **1** naming the file; restore → exit **0**. Selftest (cases 1-9) exit 0. That mutation is now permanent selftest case9, so the widening is a regression test, not a description of one. | `scripts/verify-delivery-evidence-latch-wired.mjs` + step `2634` | — |
 | ☐ | `LV-STOP-ZIP-DROPPED` | — | CC-2 / mechanical | — | — | — | — | — | — |
 | ☐ | `LV-DISPATCH-TOAST-LIES` | — | CC-2 / mechanical | — | — | — | — | — | — |
 | ☐ | `LV-LOAD-DETAIL-SHOWS-UNASSIGNED` | — | CC-2 / mechanical | — | — | — | — | — | — |
@@ -138,7 +138,9 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `CI-CC3-HAS-NO-VERIFY-STEP-BAND` | — | owner / lane-allocation decision (NOT self-a | — | — | — | — | — | — |
 | ☐ | `CI-CODEQL-BASELINE-STALE-ON-MAIN` | — | — | — | — | — | — | — | — |
 | ☐ | `LV-EXPENSE-CATEGORY-PICKER-EMPTY` | P1 | FE / mechanical lane | — | — | — | — | — | — |
-| ☐ | `LV-REVREC-BULK-LATCH-GUARD-READY` | P0 | CC-1 (money / revenue latch) | — | — | — | — | — | — |
+| ☐ | `LV-EXPENSE-CATEGORY-PICKER-EMPTY-RC` | P1 | FE / mechanical | — | — | — | — | — | — |
+| ☑ | `LV-REVREC-BULK-LATCH-GUARD-READY` | P0 | CC-1 (money / revenue latch) | CC-1 | #4730 | 2026-08-07 | CC-3's widened matcher from `0579e654e` restored in the SAME PR as the fix, byte-identical where not deliberately extended; `--selftest` exit **0**; the guard now also REFUSES to pass when its non-literal signals match no file (the state it was in while printing OK through the defect). | `scripts/verify-delivery-evidence-latch-wired.mjs` + step `2634` | — |
+| ☐ | `LV-REVREC-LEDGER-DBTEST` | P0 | CC-1 / money (db-test) | — | — | — | — | — | — |
 | ☐ | `LV-AUDIT-TRAIL-HAS-NO-ACTOR` | P0 | CC-1 (WORM / audit integrity) | — | — | — | — | — | — |
 | ☐ | `LV-BANKING-QBO-CONNECTED-IS-HARDCODED` | P1 | FE / mechanical (render); CC-1 to sanity-che | — | — | — | — | — | — |
 | ☐ | `LV-BANK-MATCH-SCORE-SATURATES-TO-MEMO` | P1 | CC-1 (money / bank reconciliation) | — | — | — | — | — | — |
@@ -146,7 +148,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-BANK-CATEGORIZE-POSTS-GL-WHILE-BANNER-SAYS-IT-DOES-NOT` | P0 | CC-1 (money / GL) + FE | — | — | — | — | — | — |
 | ☐ | `LV-BANK-CATEGORIZE-REVERSE-LINK-IS-A-MEMO-STRING` | P2 | CC-1 (ledger linkage) | — | — | — | — | — | — |
 | ☐ | `LV-MONEY-TABLES-HAVE-NO-AUDIT-TRIGGER` | P0 | CC-1 (WORM / audit integrity) | — | — | — | — | — | — |
-| ☑ | `LV-ACCT-F158-NOT-IN-REPO` | **P0 — RESOLVED** | CC-1 | — | — | — | — | — | **CC-3 filed 2026-08-07** — ACCT-F158 declared closed on the board, but PR #4691 is `CLOSED`/`merged=null`; the FK is live on prod yet ABSENT from `db/migrations/` and from BOTH ledgers, and the service fail-open is still on `main`. A fresh DB gets no protection. **RESOLVED + CC-3 RE-VERIFIED 2026-08-07:** migration now ON `origin/main`, **applied and recorded** in `ih35_migrations.applied_migrations` @19:08:37Z, FK live and `convalidated`. A fresh DB now gets the control. `LV-BILL-MDATA-VENDOR-FK-OPTOUT` stays OPEN (nullable FK, 2 USMCA bills still NULL). |
+| ☑ | `LV-ACCT-F158-NOT-IN-REPO` | **P0 — RESOLVED** | CC-1 | CC-1 | #4695 | 2026-08-07 | Neon prod `br-fancy-credit-akjnd07a` (`RESET ROLE` own stmt): `bills_mdata_vendor_entity_consistent_fkey` FOREIGN KEY (operating_company_id, mdata_vendor_id) REFERENCES `mdata.vendors`(operating_company_id, id), `convalidated`=**true**; `ih35_migrations.applied_migrations` carries `202612270000_bills_vendor_entity_consistent_fk.sql` @ 2026-08-07T19:08:37.519Z; the file is on `origin/main` (merged in `a40e8d013`). A fresh DB gets the control. | `scripts/verify-bill-vendor-entity-consistent.mjs` + step `2781` | **CC-3 filed 2026-08-07** — ACCT-F158 declared closed on the board, but PR #4691 is `CLOSED`/`merged=null`; the FK is live on prod yet ABSENT from `db/migrations/` and from BOTH ledgers, and the service fail-open is still on `main`. A fresh DB gets no protection. **RESOLVED + CC-3 RE-VERIFIED 2026-08-07:** migration now ON `origin/main`, **applied and recorded** in `ih35_migrations.applied_migrations` @19:08:37Z, FK live and `convalidated`. A fresh DB now gets the control. `LV-BILL-MDATA-VENDOR-FK-OPTOUT` stays OPEN (nullable FK, 2 USMCA bills still NULL). |
 | ☐ | `CLS-MONEY-WORM-GAP` | **P0** | CC-1 (money/WORM) | — | — | — | — | — | **VERIFIED ✓ 99.6% DRAINED 2026-08-07** — CC-1's `ACCT-F160` re-measured live: unprotected **47 → 27**, at-risk rows **33,472 → 119**, both-layer tables **8 → 18**; `invoice_lines` + `payments` now carry BOTH layers. **Row stays OPEN for the residual 27.** Baseline → **27**. |
 | ☐ | `LV-ESCROW-SUBLEDGER-NOT-WORM` | P1 | CC-1 (money/WORM) | — | — | — | — | — | **VERIFIED ✓ PARTIAL 2026-08-07** — all 4 tables (`escrow_ledger`, `escrow_balances`, `escrow_deductions_pending`, `settlement_lines`) now carry a BEFORE DELETE trigger. **But `ih35_app` still HOLDS the DELETE grant on all 4 — trigger-only, and that trigger yields to every role except `ih35_app` (item 88). Half-protected, not closed.** |
 | ☐ | `LV-G18-INERT-ON-EXPENSE-LINES` | P1 | CC-1 (money) | — | — | — | — | — | **CC-3 filed 2026-08-07** — `line_category` NULL on all **33,980** expense lines and `load_required` never TRUE, so the G18 trigger can never fire on the expense path. Registry is correctly seeded (9 categories); the classification side was never wired. |
