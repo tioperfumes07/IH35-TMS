@@ -2,13 +2,17 @@
 /**
  * verify-master-data-create-targets.mjs
  *
- * CI guard for the master-data "black-hole" fixes (audit findings D1-1 + D5-1):
+ * CI guard for the master-data "black-hole" fixes (audit findings D1-1 + D5-1) plus
+ * LV-CUSTOMER-CREATE-INVOICE-EMAIL (Cascade create-sweep #9):
  *
  *  D1-1 — the inline customer creators (New Customer drawer + Quick Create modal) must write to the
  *         REAL mdata.customers table via createCustomer (POST /api/v1/mdata/customers), NOT to the
  *         QBO mirror table (mdata.qbo_customers via createQboCustomer) that no customer picker/search/
  *         list reads. A customer created against the mirror never appears anywhere and returns a
  *         dangling, un-bookable, un-invoiceable id.
+ *
+ *  LV-CUSTOMER-CREATE-INVOICE-EMAIL — createCustomer must also stamp ar_email + ap_email (invoice-send
+ *         COALESCE order) so quick-created customers are email-deliverable without CustomerDetail.
  *
  *  D5-1 — PartCreateDrawer must submit through the shared apiRequest helper (which adds
  *         credentials:"include" + Idempotency-Key + base URL), NOT a raw fetch(resolveApiUrl(...))
@@ -53,6 +57,16 @@ for (const rel of INLINE_CUSTOMER_CREATORS) {
     errors.push(
       `D1-1 REGRESSION: ${rel} no longer calls createCustomer(...). The inline customer create must ` +
         `target the real mdata.customers endpoint.`
+    );
+  }
+  // LV-CUSTOMER-CREATE-INVOICE-EMAIL (Cascade #9): invoice-send COALESCE is
+  // ap_email → billing_email → ar_email. `email` maps to billing_email on the API, but
+  // ar_email/ap_email were never stamped from the create drawer — so quick-created customers
+  // were undeliverable until someone edited CustomerDetail. Require both keys on createCustomer.
+  if (!/\bar_email\s*:/.test(src) || !/\bap_email\s*:/.test(src)) {
+    errors.push(
+      `LV-CUSTOMER-CREATE-INVOICE-EMAIL: ${rel} createCustomer(...) must pass ar_email and ap_email ` +
+        `(same value as email) so invoice send can resolve a recipient without a CustomerDetail edit.`
     );
   }
 }
