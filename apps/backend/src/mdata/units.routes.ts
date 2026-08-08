@@ -299,7 +299,10 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/mdata/units/:id", async (req, reply) => {
+  // Rate-limited because this handler AUTHORIZES (CodeQL js/missing-rate-limiting,
+  // verify-new-auth-routes-rate-limited). Adding the membership resolve is what brought it into
+  // that guard's scope — an authorizing route is exactly the one worth rate-limiting.
+  app.get("/api/v1/mdata/units/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -314,7 +317,10 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     return aggregate;
   });
 
-  app.get("/api/v1/mdata/units/:id/financial", async (req, reply) => {
+  // Rate-limited because this handler AUTHORIZES (CodeQL js/missing-rate-limiting,
+  // verify-new-auth-routes-rate-limited). Adding the membership resolve is what brought it into
+  // that guard's scope — an authorizing route is exactly the one worth rate-limiting.
+  app.get("/api/v1/mdata/units/:id/financial", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -325,16 +331,32 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const financial = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [
-        parsedQuery.data.operating_company_id,
-      ]);
+      // CLS-GUC-CALLER-SCOPED (MDATA-F09 class) — this handler took operating_company_id straight
+      // from the query string and fed it to set_config, so the CALLER chose the scope every
+      // FORCED-RLS policy then enforced; RLS authorized nothing, it faithfully enforced whatever was
+      // asked for. Under PERMANENT LAW 4 that is not theoretical: org.user_accessible_company_ids()
+      // returns EVERY active company for an Owner session, so an accessible-companies predicate is
+      // not a membership check either. This route returns a unit's revenue, cost and margin, so the
+      // leak was a P&L read across entities.
+      //
+      // Resolved the same way as every sibling handler in this file (the list route above, L156 and
+      // L197): resolveOperatingCompanyId validates the requested company against the caller's own
+      // access and throws forbidden_company_membership rather than trusting the parameter.
+      const scopedCompanyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedQuery.data.operating_company_id
+      );
+      if (!scopedCompanyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
       return getUnitFinancialYTD(
         client,
         parsedParams.data.id,
-        parsedQuery.data.operating_company_id,
+        scopedCompanyId,
         parsedQuery.data.period as FinancialPeriod
       );
     });
+    if (!financial) return reply.code(403).send({ error: "forbidden_company_membership" });
     return financial;
   });
 

@@ -19,23 +19,28 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { maskComments } from "./lib/mask-comments.mjs";
 
 const ROOT = process.cwd();
 const HELPER = "apps/backend/src/_helpers/scoped-company-context.ts";
 const LABEL = "verify-scoped-company-context-asserts-first";
 
-/**
- * Strip comments before analysing. Without this the guard reads its own documentation as code: the
- * helper's JSDoc contains the literal text `assertCompanyMembership(...)`, which matched the
- * "assert is present" probe and made the guard pass even with the real call deleted. Caught by the
- * mutation test, and it is the same vacuous-control shape this whole class came from.
- */
-function stripComments(src) {
-  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
-}
-
 export function auditSource(raw) {
-  const src = stripComments(raw);
+  // CLS-GUARD-READS-COMMENTS — mask comments before analysing, or the guard reads its own
+  // documentation as code: the helper's JSDoc contains the literal `assertCompanyMembership(...)`,
+  // which satisfied the "assert is present" probe and made an earlier revision pass with the real
+  // call DELETED.
+  //
+  // This replaces a local naive `stripComments` (two regexes) with the shared, quote-aware
+  // `scripts/lib/mask-comments.mjs`. Two concrete reasons, not tidiness:
+  //   · the naive version treated `//` inside a string or SQL template literal as a comment, so a
+  //     `set_config(...)` written after a URL in a template literal would have been blanked — turning
+  //     a real finding into a silent pass, which is worse than the bug it fixed;
+  //   · this guard COMPARES POSITIONS (`assertAt > gucAt`). Stripping shortens the source and moves
+  //     every offset after the first comment, so a long comment between the two statements could
+  //     invert the ordering verdict. maskComments is offset-preserving — comment bytes become spaces
+  //     and newlines are kept — so the comparison stays truthful.
+  const src = maskComments(raw);
   const problems = [];
   if (!/export\s+async\s+function\s+setScopedCompanyContext/.test(src)) {
     problems.push("does not export setScopedCompanyContext — 12 route handlers import it for their cross-entity authorization.");

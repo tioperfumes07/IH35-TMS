@@ -439,5 +439,12 @@
     "source_file": "apps/driver-pwa/src/lib/upload-sync.ts",
     "guard": "scripts/verify-pod-bol-evidence-linkage.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-GUARDS-MUST-MASK-COMMENTS",
+    "title": "A guard that matches CODE patterns against RAW source reads prose as code in both directions — a comment can SATISFY a check the code no longer satisfies (a vacuous control that passes green), and a comment can CAUSE a false failure, which punishes documenting the fix. Source-reading guards must analyse scripts/lib/mask-comments.mjs output, matching only deliberate marker comments (…-exempt:) against the raw source",
+    "source_file": "scripts/verify-caller-scoped-guc-membership.mjs",
+    "guard": "scripts/verify-guards-mask-comments.mjs",
+    "type": "enforced"
   }
 ]

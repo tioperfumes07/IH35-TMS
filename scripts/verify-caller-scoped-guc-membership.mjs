@@ -30,6 +30,7 @@
  */
 import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
+import { maskComments } from "./lib/mask-comments.mjs";
 
 const ROOT = process.cwd();
 const SRC = join(ROOT, "apps/backend/src");
@@ -48,9 +49,25 @@ const CALLER_SUPPLIED =
  * resolveOperatingCompanyId counts: it validates a requested company against the caller's accessible
  * set and throws forbidden_company_membership. A `membership-scope-exempt:` comment counts only with a
  * written reason next to it — the same marker the sibling guard uses.
+ *
+ * setScopedCompanyContext counts and MUST be listed here (added 2026-08-07 while draining this class).
+ * It is the shared fix-once helper — it asserts membership and then sets the GUC in one call, and is
+ * itself guarded by verify-scoped-company-context-asserts-first.mjs. Most files that adopt it stop
+ * containing a literal `set_config('app.operating_company_id'` and so leave this guard's scope
+ * entirely; but a file that adopts it in ONE handler while another still sets the GUC directly stays
+ * in scope, and without this alternative the correctly-fixed handler would be reported as ungated.
+ * A guard that punishes the shared fix is a guard that teaches people not to use it.
  */
 const AUTHORIZED =
-  /assertCompanyMembership\(|resolveOperatingCompanyId\(|membership-scope-exempt:|user_accessible_company_ids/;
+  /assertCompanyMembership\(|resolveOperatingCompanyId\(|setScopedCompanyContext\(|user_accessible_company_ids/;
+
+/**
+ * The written-exemption marker. Split out of AUTHORIZED because it is the ONE alternative that is
+ * deliberately a COMMENT: it is matched against the RAW source while every other alternative is
+ * matched against comment-masked source. Keeping it in the same regex would have meant either
+ * masking it away (voiding every exemption in the repo) or not masking at all (the defect above).
+ */
+const EXEMPT_MARKER = /membership-scope-exempt:/;
 
 const ROUTE_DECL = /app\.(get|post|put|patch|delete)\s*\(\s*['"`]([^'"`]+)['"`]/;
 const HANDLER_START = /(?:app\.(?:get|post|put|patch|delete)\s*\(|export\s+async\s+function\s+\w+)/gm;
@@ -82,14 +99,35 @@ function keyFor(label, scope) {
   return m ? `${label}|${m[1].toUpperCase()}|${m[2]}` : `${label}|FN|${scope.slice(0, 60).replace(/\s+/g, " ").trim()}`;
 }
 
-export function auditSource(src, label) {
+export function auditSource(raw, label) {
+  // CLS-GUARD-READS-COMMENTS — analyse COMMENT-MASKED source, not raw.
+  //
+  // Proven live on 2026-08-07 while draining this very class: the fix for
+  // GET /api/v1/mdata/units/:id/financial carried an explanatory comment that mentioned
+  // `org.user_accessible_company_ids()` — one of the AUTHORIZED alternatives. Deleting the real
+  // resolveOperatingCompanyId call and restoring the raw caller-supplied set_config STILL passed at
+  // exit 0, because the prose above it satisfied the check. A control that a comment can satisfy is
+  // not a control, and it perversely punishes documenting the fix.
+  //
+  // maskComments is offset-preserving (comment bytes become spaces, newlines kept), which this guard
+  // depends on twice: `line` is computed from the offset and must stay truthful, and `handlerStart`
+  // compares positions to decide which handler a GUC set belongs to. A stripping approach would move
+  // every offset after the first comment. It is also quote-aware, so a `//` inside a SQL template
+  // literal is not treated as a comment — masking that would blank real set_config calls and turn
+  // findings into silent passes, which is worse than the bug being fixed.
+  //
+  // `membership-scope-exempt:` is deliberately a COMMENT marker, so it is still detected on the RAW
+  // source. Masking that too would void every exemption in the repo.
+  const src = maskComments(raw);
   const found = [];
   for (const m of src.matchAll(GUC_CALL)) {
     if (!CALLER_SUPPLIED.test(m[0])) continue;
-    const scope = src.slice(handlerStart(src, m.index), m.index);
-    if (AUTHORIZED.test(scope)) continue;
+    const start = handlerStart(src, m.index);
+    const scope = src.slice(start, m.index);
+    const rawScope = raw.slice(start, m.index);
+    if (AUTHORIZED.test(scope) || EXEMPT_MARKER.test(rawScope)) continue;
     found.push({
-      key: keyFor(label, src.slice(handlerStart(src, m.index), m.index + 200)),
+      key: keyFor(label, src.slice(start, m.index + 200)),
       line: src.slice(0, m.index).split("\n").length,
       label,
     });
@@ -107,6 +145,13 @@ if (process.argv.includes("--selftest")) {
     ["laundering: assert in a DIFFERENT route in the same file", `app.post("/a", async () => { await assertCompanyMembership(c,u,x); });\napp.post("/b", async () => { await c.query(\`SELECT set_config('app.operating_company_id', $1, true)\`, [query.data.operating_company_id]); });`, 1],
     ["assert AFTER the GUC set is too late", `app.post("/a", async () => { await c.query(\`SELECT set_config('app.operating_company_id', $1, true)\`, [query.data.operating_company_id]); await assertCompanyMembership(c,u,query.data.operating_company_id); });`, 1],
     ["no GUC set at all", `app.get("/a", async () => { await c.query("SELECT 1"); });`, 0],
+    [
+      // The shared fix-once helper. A handler that adopted it must not be reported as ungated just
+      // because a sibling handler in the same file still sets the GUC directly.
+      "gated by the shared setScopedCompanyContext helper",
+      `app.get("/a", async () => { const s = await setScopedCompanyContext(c, u, query.data.operating_company_id); await c.query(\`SELECT set_config('app.operating_company_id', $1, true)\`, [query.data.operating_company_id]); });`,
+      0,
+    ],
   ];
   let bad = 0;
   for (const [name, src, expect] of cases) {
