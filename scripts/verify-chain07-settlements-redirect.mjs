@@ -56,6 +56,26 @@ export function computeChain07Failures(files) {
     );
   }
 
+  // 2b. FAIL-S2 — Drivers "Settlements" tab must redirect to the canonical list/detail page.
+  const driversRedirectRe =
+    /path="\/drivers\/settlements"[\s\S]*?<(?:Navigate|PreserveSearchNavigate)\s+to="\/driver-finance\/settlements"/;
+  if (!driversRedirectRe.test(manifest)) {
+    errors.push(
+      'manifest.tsx: "/drivers/settlements" must Navigate/PreserveSearchNavigate to("/driver-finance/settlements") (FAIL-S2)'
+    );
+  }
+
+  // 2c. Drivers.tsx must not OR settlements with pre_settlements onto PreSettlementsPanel.
+  const driversPage = files.driversPage ?? "";
+  if (
+    driversPage &&
+    /subnavTab\s*===\s*["']settlements["']\s*\|\|\s*subnavTab\s*===\s*["']pre_settlements["']/.test(driversPage)
+  ) {
+    errors.push(
+      "Drivers.tsx: Settlements tab must not share PreSettlementsPanel with pre_settlements (FAIL-S2)"
+    );
+  }
+
   // 3. The retired legacy GET /api/v1/settlements handler must be a 308 redirect to the canonical
   //    driver-finance endpoint, and must NOT run a live settlement.*/payroll.* query on that path.
   const handlerMatch = legacyRoute.match(
@@ -111,8 +131,12 @@ export function computeChain07Failures(files) {
 
 function selftest() {
   const goodSubnav = '{ label: "Settlements",      to: "/driver-finance/settlements" },';
-  const goodManifest =
-    '<Route path="/accounting/settlements" element={<ProtectedRoute><PreserveSearchNavigate to="/driver-finance/settlements" /></ProtectedRoute>} />';
+  const goodManifest = [
+    '<Route path="/accounting/settlements" element={<ProtectedRoute><PreserveSearchNavigate to="/driver-finance/settlements" /></ProtectedRoute>} />',
+    '<Route path="/drivers/settlements" element={<ProtectedRoute><PreserveSearchNavigate to="/driver-finance/settlements" /></ProtectedRoute>} />',
+  ].join("\n");
+  const goodDrivers = 'subnavTab === "pre_settlements" ? (<PreSettlementsPanel />) : null';
+  const badDrivers = 'subnavTab === "settlements" || subnavTab === "pre_settlements" ? (<PreSettlementsPanel />) : null';
   const goodDetail = [
     'app.get("/api/v1/settlements/:id", async (req, reply) => {',
     '    const canonical = `/api/v1/driver-finance/settlements/${params.data.id}${qs}`;',
@@ -129,8 +153,37 @@ function selftest() {
     goodDetail,
   ].join("\n");
 
-  if (computeChain07Failures({ subnav: goodSubnav, manifest: goodManifest, legacyRoute: goodLegacy }).length) {
+  if (
+    computeChain07Failures({
+      subnav: goodSubnav,
+      manifest: goodManifest,
+      legacyRoute: goodLegacy,
+      driversPage: goodDrivers,
+    }).length
+  ) {
     console.error(`${LABEL} --selftest FAILED: fully-fixed case should pass`); process.exit(1);
+  }
+  if (
+    !computeChain07Failures({
+      subnav: goodSubnav,
+      manifest: goodManifest.replace(/\/drivers\/settlements[\s\S]*?\/>/, ""),
+      legacyRoute: goodLegacy,
+      driversPage: goodDrivers,
+    }).length
+  ) {
+    console.error(`${LABEL} --selftest FAILED: missing /drivers/settlements redirect should fail`);
+    process.exit(1);
+  }
+  if (
+    !computeChain07Failures({
+      subnav: goodSubnav,
+      manifest: goodManifest,
+      legacyRoute: goodLegacy,
+      driversPage: badDrivers,
+    }).length
+  ) {
+    console.error(`${LABEL} --selftest FAILED: settlements||pre_settlements PreSettlementsPanel should fail`);
+    process.exit(1);
   }
   // Detail handler resurrected to query settlement.* must fail.
   const detailResurrected = [
@@ -187,11 +240,14 @@ if (process.argv.includes("--selftest")) {
   const subnav = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/accounting/subnav-manifest.ts"), "utf8");
   const manifest = fs.readFileSync(path.join(ROOT, "apps/frontend/src/routes/manifest.tsx"), "utf8");
   const legacyRoute = fs.readFileSync(path.join(ROOT, "apps/backend/src/settlements/pre-settlements.routes.ts"), "utf8");
-  const errors = computeChain07Failures({ subnav, manifest, legacyRoute });
+  const driversPage = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/Drivers.tsx"), "utf8");
+  const errors = computeChain07Failures({ subnav, manifest, legacyRoute, driversPage });
   if (errors.length) {
     console.error(`${LABEL} — FAILED`);
     for (const e of errors) console.error(`- ${e}`);
     process.exit(1);
   }
-  console.log(`${LABEL} — OK (accounting settlements redirected to ${CANONICAL_FE}; legacy route retired, no settlement.*/payroll.* on the redirect path)`);
+  console.log(
+    `${LABEL} — OK (accounting+drivers settlements redirected to ${CANONICAL_FE}; legacy route retired; FAIL-S2 split enforced)`
+  );
 }
