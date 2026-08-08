@@ -206,7 +206,10 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
     queryKey: ["factoring-package", "load-invoices", load?.id, load?.operating_company_id],
     // WAVE-H2: server-side source_load_id filter (not customer_id + client filter).
     queryFn: () => listLoadInvoices(load!.operating_company_id, load!.id, { limit: 50 }),
-    enabled: Boolean(load?.id && load?.operating_company_id && activeTab === "Documents"),
+    // LV-INVOICE-RATE-SNAPSHOT: also needed on Overview, where the Create/View Invoice button lives —
+    // the button must distinguish "no invoice yet" (creating one at rate 0 is unrecoverable) from
+    // "invoice exists" (viewing it must keep working).
+    enabled: Boolean(load?.id && load?.operating_company_id && (activeTab === "Documents" || activeTab === "Overview")),
   });
   const loadExpensesQuery = useQuery({
     queryKey: ["load-expenses", load?.id, load?.operating_company_id],
@@ -460,6 +463,22 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                         size="sm"
                         onClick={async () => {
                           if (!load) return;
+                          // LV-INVOICE-RATE-SNAPSHOT-NEVER-RESYNCS — the invoice snapshots the load's rate
+                          // ONCE, at build time (accounting/from-load.ts:186 `lineTotal =
+                          // load.rate_total_cents`), and NOTHING in the backend ever re-syncs it:
+                          // update-load.service.ts computes a `rateChanged` flag and spends it on an audit
+                          // field only. So invoicing a load whose rate is still 0 mints a $0 invoice that no
+                          // code path can correct — exactly L-0087 ($3,210 load / $0 invoice). This gate is
+                          // the CREATE side only: if an invoice already exists we still navigate to it, so
+                          // "View" keeps working and an already-broken invoice stays reachable.
+                          const existingInvoiceId = loadInvoicesQuery.data?.invoices?.[0]?.id;
+                          if (!existingInvoiceId && !Number(load.rate_total_cents ?? 0)) {
+                            pushToast(
+                              "This load has no rate yet. Invoicing it now would create a $0 invoice that cannot be corrected later — set the load rate first.",
+                              "error",
+                            );
+                            return;
+                          }
                           const result = await createInvoiceMutation.mutateAsync({
                             operatingCompanyId: load.operating_company_id,
                             loadId: load.id,
