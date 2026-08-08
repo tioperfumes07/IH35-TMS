@@ -38,6 +38,9 @@ const createCustomerPaymentBodySchema = z.object({
   payment_method: paymentMethodSchema,
   bank_account_id: z.string().uuid().optional(),
   reference_number: z.string().trim().max(200).optional(),
+  // FAIL-F2 sweep / ACCT-F264 — without this the flag cannot be SUPPLIED, so the INSERT has nothing to
+  // write. Optional; only an explicit true marks sample.
+  is_sample_data: z.boolean().optional(),
   applications: z
     .array(
       z.object({
@@ -205,8 +208,14 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
             notes,
             created_by_user_id,
             payment_source_kind,
-            source_bank_transaction_id
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+            source_bank_transaction_id,
+            -- FAIL-F2 sweep / ACCT-F264 — customer payments could not be marked TEST data either.
+            -- accounting.payments.is_sample_data exists (12,129 rows) and NOTHING wrote it, exactly as
+            -- expenses and bills did not until #4993. posting-engine resolves the flag from the SOURCE
+            -- row (customer_payment is in SAMPLE_TAGGED_SOURCE_TABLES), so an untagged payment yields
+            -- an untagged journal entry and sample cash lands in real books.
+            is_sample_data
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
           RETURNING id, display_id, amount_unapplied_cents
         `,
         [
@@ -222,6 +231,9 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
           user.uuid,
           "manual",
           null,
+          // $13 — only an explicit true marks sample; omitting it keeps the column's false default, so
+          // no existing caller changes behaviour and nothing is retroactively re-classified.
+          body.data.is_sample_data === true,
         ]
       );
       const payment = paymentRes.rows[0] as { id: string; display_id: string; amount_unapplied_cents: number } | undefined;
