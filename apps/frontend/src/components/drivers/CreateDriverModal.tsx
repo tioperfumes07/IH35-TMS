@@ -12,6 +12,7 @@ import {
 } from "../../api/mdata";
 import { listMyCompanies } from "../../api/org";
 import { Button } from "../Button";
+import { curpDobMismatch } from "../../lib/curp-dob";
 import { Combobox } from "../Combobox";
 import { Modal } from "../Modal";
 import { ParityDrawer } from "../parity/ParityDrawer";
@@ -64,6 +65,15 @@ const createDriverSchema = z.object({
   visa_expires_at: z.string().optional(),
   passport_number: z.string().trim().optional(),
   passport_expires_at: z.string().optional(),
+  // DQF-P0 — 49 CFR 391.21(b)(2) names date of birth on the employment application, and 391.51(b)(1)
+  // requires that application IN the driver qualification file. Prod had 188 drivers and 188 NULL
+  // dates of birth, so no MVR order, Clearinghouse query or DOT age check could be supported for any
+  // of them. 391.21(b)(5) requires the CMV licence authority/number/expiration; for a Mexico-domiciled
+  // B1 driver that licence is the Licencia Federal, which is what the mexican_license pair records.
+  date_of_birth: z.string().optional(),
+  passport_country: z.string().trim().optional(),
+  mexican_license_number: z.string().trim().optional(),
+  mexican_license_expiration: z.string().optional(),
   ine_number: z.string().trim().optional(),
   curp: z
     .string()
@@ -103,6 +113,10 @@ const DRIVER_CREATE_FORM_INITIAL: Record<string, string> = {
   visa_expires_at: "",
   passport_number: "",
   passport_expires_at: "",
+  date_of_birth: "",
+  passport_country: "",
+  mexican_license_number: "",
+  mexican_license_expiration: "",
   ine_number: "",
   curp: "",
   mx_address_line1: "",
@@ -250,6 +264,12 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
       window.clearTimeout(timeout);
     };
   }, [open, form.curp, form.cdl_number, form.cdl_state]);
+
+  // DQF-P0 — cross-check the typed DOB against the one the CURP encodes (positions 5-10 = YYMMDD,
+  // position 17 fixes the century). A WARNING, never a block: a CURP can carry a clerical error from
+  // RENAPO and refusing to save would strand a real driver. The point is that the two disagree in
+  // front of a human who can decide, instead of the DOB being silently absent as it was on all 188.
+  const curpDobWarning = curpDobMismatch(form.curp, form.date_of_birth);
 
   const usStatesQuery = useQuery({
     queryKey: ["catalogs", "us-states"],
@@ -414,6 +434,10 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         visa_expires_at: parsed.visa_expires_at || undefined,
         passport_number: parsed.passport_number || undefined,
         passport_expires_at: parsed.passport_expires_at || undefined,
+        date_of_birth: parsed.date_of_birth || undefined,
+        passport_country: parsed.passport_country || undefined,
+        mexican_license_number: parsed.mexican_license_number || undefined,
+        mexican_license_expiration: parsed.mexican_license_expiration || undefined,
         ine_number: parsed.ine_number || undefined,
         curp: parsed.curp || undefined,
         mx_address_line1: parsed.mx_address_line1 || undefined,
@@ -485,6 +509,9 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             ["first_name", "First Name"],
             ["last_name", "Last Name"],
             ["email", "Email"],
+            // DQF-P0 — "date" in the key routes this through the DatePicker branch below. This is the
+            // 49 CFR 391.21(b)(2) field; prod had it NULL on all 188 drivers.
+            ["date_of_birth", "Date of Birth"],
             ["cdl_number", "CDL #"],
             ["cdl_expires_at", "CDL Expires"],
             ["hire_date", "Hire Date"],
@@ -516,6 +543,11 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 />
               )}
               <FieldError id={key} message={driverFieldErrors[key]} />
+              {key === "date_of_birth" && curpDobWarning ? (
+                <p className="text-[11px] text-[#dc2626]" data-testid="curp-dob-mismatch" role="status">
+                  {curpDobWarning}
+                </p>
+              ) : null}
             </div>
           ))}
           <div className="flex flex-col gap-1">
@@ -630,6 +662,11 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                 {[
                   ["ine_number", "INE Number"],
                   ["curp", "CURP"],
+                  // 49 CFR 391.21(b)(5) — for a Mexico-domiciled B1 driver the Licencia Federal IS the
+                  // CMV licence FMCSA recognises, so its number and expiration are the regulation's
+                  // "licensing authority, number and expiration date", not optional extras.
+                  ["mexican_license_number", "Licencia Federal Number"],
+                  ["mexican_license_expiration", "Licencia Federal Expires"],
                   ["mx_address_line1", "MX Address Line 1"],
                   ["mx_address_line2", "MX Address Line 2"],
                   ["mx_city", "MX City"],
@@ -692,6 +729,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                   ["visa_expires_at", "Visa Expires"],
                   ["passport_number", "Passport Number"],
                   ["passport_expires_at", "Passport Expires"],
+                  ["passport_country", "Passport Country"],
                   ["emergency_contact_name", "Emergency Contact Name"],
                   ["emergency_contact_relationship", "Relationship"],
                   ["emergency_contact_phone_primary", "Emergency Phone Primary"],

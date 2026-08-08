@@ -107,6 +107,21 @@ const createDriverBodySchema = z.object({
   visa_expires_at: isoDateSchema.optional(),
   passport_number: z.string().trim().max(100).optional(),
   passport_expires_at: isoDateSchema.optional(),
+  // DQF-P0 (2026-08-07) — these four were accepted by NEITHER the create schema nor the INSERT, so the
+  // office wizard could not have saved them even with inputs on the form. Measured on prod:
+  // date_of_birth was NULL on ALL 188 drivers and mexican_license_number / passport_country on 188/188.
+  //
+  // 49 CFR 391.21(b)(2) requires the employment application to carry "The applicant's name, address,
+  // date of birth, and social security number", and 391.51(b)(1) requires that application IN the
+  // driver qualification file — so a DQF with no DOB cannot support an MVR order, a Clearinghouse
+  // query or a DOT age check. 391.21(b)(5) requires the licensing authority, number and expiration of
+  // the CMV licence; for a Mexico-domiciled B1 driver that licence IS the Licencia Federal, which
+  // FMCSA/CVSA recognise as the reciprocal credential — so the Mexican pair is that requirement, not
+  // an optional extra.
+  date_of_birth: isoDateSchema.optional(),
+  passport_country: z.string().trim().max(100).optional(),
+  mexican_license_number: z.string().trim().max(100).optional(),
+  mexican_license_expiration: isoDateSchema.optional(),
   ine_number: ineSchema.optional(),
   curp: curpSchema.optional(),
   mx_address_line1: z.string().trim().max(200).optional(),
@@ -679,9 +694,14 @@ export async function createDriverCanonical(
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
               status, notes, prior_driver_id, rehire_count, is_rehire,
-            operating_company_id, created_by_user_id, updated_by_user_id
+            operating_company_id, created_by_user_id, updated_by_user_id,
+              -- DQF-P0: appended at the END deliberately. The lockstep rule is that columns,
+              -- placeholders and values grow together; appending avoids renumbering $1..$38 (where
+              -- $38 is deliberately reused for created_by AND updated_by), which is where a
+              -- hand-edited INSERT silently shifts a value into the wrong column.
+              date_of_birth, passport_country, mexican_license_number, mexican_license_expiration
             ) VALUES (
-            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$38
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$38,$39,$40,$41,$42
             )
             RETURNING
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
@@ -733,6 +753,11 @@ export async function createDriverCanonical(
           rehireState.is_rehire,
           resolvedOperatingCompanyId,
           authUser.uuid,
+          // $39..$42 — same order as the appended column list above.
+          b.date_of_birth ?? null,
+          b.passport_country ?? null,
+          b.mexican_license_number ?? null,
+          b.mexican_license_expiration ?? null,
         ]
       );
       const row = res.rows[0];

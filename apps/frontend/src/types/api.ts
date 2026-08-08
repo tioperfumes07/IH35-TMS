@@ -147,6 +147,14 @@ export type CreateDriverInput = {
   visa_number?: string;
   visa_expires_at?: string;
   passport_number?: string;
+  // DQF-P0 — the create path accepted NEITHER these four nor persisted them, so the office wizard
+  // could not have saved them even with inputs on the form. date_of_birth is 49 CFR 391.21(b)(2);
+  // the mexican_license pair is 391.21(b)(5) for a Mexico-domiciled B1 driver, whose CMV licence is
+  // the Licencia Federal.
+  date_of_birth?: string;
+  passport_country?: string;
+  mexican_license_number?: string;
+  mexican_license_expiration?: string;
   passport_expires_at?: string;
   ine_number?: string;
   curp?: string;
