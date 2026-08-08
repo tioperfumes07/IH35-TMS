@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { nextBillDisplayId } from "./display-id.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
@@ -1496,6 +1497,39 @@ export async function createBill(input: CreateBillInput, userId: string) {
           ]
     );
     if ((res.rowCount ?? 0) === 0 || !res.rows[0]) throw new Error("bill_insert_failed");
+
+    // ACCT-F186 — stamp the human-readable id. Bills were the ONLY money document without one:
+    // TMS-native bills 13 of 13 had display_id NULL on prod, while TMS-native invoices carry one
+    // 6 of 6 and payments 2 of 2. A bill is what you argue about with a vendor, attach to an
+    // approval, cite in a dispute and hand an auditor; without this it can only be cited by raw
+    // UUID, which is exactly what the app URL falls back to.
+    //
+    // Done as an UPDATE in THIS transaction rather than as an INSERT column, deliberately: there
+    // are FOUR INSERT variants above (insurance_claim_id x class_id), and the lockstep
+    // column/values/placeholder pattern is a documented landmine here — one UPDATE is one place to
+    // be right instead of four places to drift. Same client, so it is atomic with the insert.
+    //
+    // TMS-native ONLY. QBO-cloned bills keep their QBO identity and their NULL display_id is
+    // expected state under parallel books, not a gap — stamping them would invent an identifier
+    // for a document this system did not issue.
+    const insertedId = String((res.rows[0] as { id?: string }).id ?? "");
+    if (insertedId) {
+      const billDisplayId = await nextBillDisplayId(client, input.operatingCompanyId, new Date(input.billDate));
+      const stamped = await client.query<BillRow>(
+        `
+          UPDATE accounting.bills
+             SET display_id = $3::text
+           WHERE id = $1::uuid
+             AND operating_company_id = $2::uuid
+             AND display_id IS NULL
+             AND qbo_bill_id IS NULL
+          RETURNING *
+        `,
+        [insertedId, input.operatingCompanyId, billDisplayId]
+      );
+      if (stamped.rows[0]) res.rows[0] = stamped.rows[0];
+    }
+
     const created = normalizeBill(res.rows[0]);
 
     if (linesProvided && input.lines) {
