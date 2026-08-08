@@ -127,6 +127,35 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
   const load = loadRes.rows[0] ?? null;
   if (!load) throw Object.assign(new Error("load_not_found"), { code: "load_not_found" });
 
+  // ACCT-F267 / LV-INVOICE-RATE-SNAPSHOT-NEVER-RESYNCS — refuse to mint an invoice for a load that has
+  // no rate yet.
+  //
+  // The line below snapshots load.rate_total_cents ONCE, at creation, and nothing re-syncs it. On a
+  // rate-late load that produced a permanently $0 invoice: L-20260808-0087 was invoiced as
+  // INV-2026-00021 at $0.00, the rate was set to $3,210.00 afterwards, and the invoice stayed at zero
+  // forever — it had to be voided and re-created by hand. Four from-load invoices exist at $0.00.
+  //
+  // FAIL FAST RATHER THAN RE-SYNC, deliberately: an invoice whose amount can change after issue is a
+  // document the customer may already have seen. The correct behaviour is not to create it early and
+  // mutate it later — it is not to create it until there is something to bill. The caller retries once
+  // the rate exists and the invoice is right the first time.
+  //
+  // A ZERO-RATE LOAD IS NOT ALWAYS AN ERROR, which is why this refuses rather than throws loudly: a
+  // power-only rescue leg legitimately carries no customer revenue (L-20260808-0090 — its $0 invoice
+  // INV-2026-00022 had to be voided precisely because a bobtail rescue generates no receivable). For
+  // those loads the correct number of invoices is zero, and this makes that the default.
+  //
+  // CC-2's #4989 guards the Load drawer — the USER action. This is the SERVICE, which every other
+  // caller reaches; guarding one without the other leaves the door open.
+  const rateCents = Number(load.rate_total_cents ?? 0);
+  if (!Number.isFinite(rateCents) || rateCents <= 0) {
+    throw Object.assign(new Error("load_has_no_rate"), {
+      code: "load_has_no_rate",
+      load_id: String(load.id),
+      rate_total_cents: rateCents,
+    });
+  }
+
   const issueDate = new Date();
   const paymentTermsDays = Number(load.payment_terms_days ?? 30);
   const dueDate = new Date(issueDate);
