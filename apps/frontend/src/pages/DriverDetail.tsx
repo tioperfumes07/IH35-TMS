@@ -358,7 +358,12 @@ export function DriverDetailPage() {
   // First DatePicker/input onChange used to set form={cdl_expires_at:…} only; the old
   // `Object.keys(form).length > 0 ? form : defaults` path then blanked name/phone/CDL#
   // and fell Status back to Combobox default "Probation". Merge overlays instead.
-  const driverFormDefaults = useMemo(() => {
+  // The two branches must share ONE type. Returning a bare `{}` on the no-driver branch made TS infer a
+  // UNION (`{} | {first_name: string; …}`); spreading that union gave every field an optional-undefined
+  // variant and left `hydratedForm` with no index signature — which is what produced the 8 errors
+  // (TS7053 on every `hydratedForm[key]` read, TS18048 on `.ine_number`/`.curp`). Annotating the memo
+  // keeps FAIL-D5's merge-overlay semantics byte-for-byte and simply stops the union from forming.
+  const driverFormDefaults = useMemo((): Record<string, string> => {
     if (!driver) return {};
     return {
       first_name: driver.first_name ?? "",
@@ -392,7 +397,10 @@ export function DriverDetailPage() {
       emergency_contact_address: driver.emergency_contact_address ?? "",
       emergency_contact_notes: driver.emergency_contact_notes ?? "",
       preferred_language: driver.preferred_language ?? "en",
-      status: driver.status,
+      // `status` is optional on the API row (`status?: string`), so this was the ONE field here without a
+      // fallback — it could seed the form with `undefined`. That is the same shape as the bug FAIL-D5 was
+      // fixing (Status falling back to the Combobox default), so it gets the same `?? ""` as its siblings.
+      status: driver.status ?? "",
       notes: driver.notes ?? "",
     };
   }, [driver]);
