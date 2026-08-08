@@ -194,7 +194,9 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
           FROM accounting.bills
           WHERE operating_company_id = $1::uuid
             AND revoked_at IS NULL
-            AND status IN ('open', 'partial', 'unpaid')
+            -- ACCT-F183: 'partially_paid' too. Omitting it drops partially-paid bills from the
+            -- CASH FORECAST, so projected outflows look smaller than the money actually due.
+            AND status IN ('open', 'partial', 'partially_paid', 'unpaid')
             AND COALESCE(due_date, bill_date) BETWEEN $2::date AND $3::date
         `,
         [query.data.operating_company_id, startWeek, endWeek]

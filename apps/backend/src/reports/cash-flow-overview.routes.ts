@@ -157,7 +157,9 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
             FROM accounting.bills b
             WHERE b.operating_company_id = $1
               AND b.revoked_at IS NULL
-              AND b.status IN ('unpaid', 'partial')
+              -- ACCT-F183: 'partially_paid' too — see accounting/fin20-aging.service.ts. Without
+              -- it the cash-flow overview understates outgoing obligations.
+              AND b.status IN ('unpaid', 'partial', 'partially_paid')
               AND COALESCE(b.due_date, b.bill_date) <= ${horizonEndSql}
           `,
           [companyId, asOf]
