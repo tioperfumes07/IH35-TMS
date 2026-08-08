@@ -488,5 +488,12 @@
     "source_file": "apps/frontend/src/pages/dispatch/components/book-load-toast.ts",
     "guard": "scripts/verify-book-load-toast-server-status.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-08-BOOK-LOAD-STOP-FIELDS-SENT",
+    "title": "The book-load submit handler must not silently discard operator input — every stop field the form registers AND the backend can persist must appear in the stops payload; postal_code was omitted from the explicit allow-list, so 0 of 20 prod load_stops ever carried the PC*MILER routing key that driver pay-per-mile and IFTA jurisdiction miles depend on",
+    "source_file": "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+    "guard": "scripts/verify-book-load-toast-server-status.mjs",
+    "type": "enforced"
   }
 ]

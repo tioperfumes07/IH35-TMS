@@ -130,6 +130,11 @@ type FormValues = BookLoadFormValues & {
     state: string;
     country: string;
     address_line1: string;
+    // LV-STOP-ZIP-DROPPED: the Zip Code input is registered as stops.N.postal_code
+    // (BookLoadStopsSection.tsx) but this form type never declared it, so the field existed on screen and in
+    // RHF state while being invisible to every typed consumer — which is how the submit mapping came to omit
+    // it without TypeScript ever complaining. Declaring it is what makes the drop a compile error.
+    postal_code?: string;
     scheduled_arrival_at: string;
     time_window_type?: "appointment" | "open_window" | "select_hours" | "refused";
     appointment_start_at?: string;
@@ -672,6 +677,17 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
           sequence_number: index + 1,
           city: stop.city,
           state: stop.state,
+          // LV-STOP-ZIP-DROPPED: this mapping is an explicit field-by-field allow-list and postal_code was
+          // never added to it. Every other layer was already correct - the Zip Code input is registered as
+          // stops.N.postal_code (BookLoadStopsSection.tsx:132), the geocode autofill writes it, the backend
+          // stop type accepts it (book-load.service.ts:44), the INSERT lists it (:1568) and binds it (:1594),
+          // and mdata.load_stops.postal_code exists on prod. So the operator typed a ZIP, watched it render,
+          // and this handler dropped it on the floor with no error. PROD 2026-08-08 (lucia bypass in a txn;
+          // visible 20 == n_live_tup 20, a REAL zero): 0 of 20 stops have EVER carried a postal_code, while
+          // city persists on 12 and address_line1 on 10 - they persist when supplied, this never has.
+          // Postal code is the PC*MILER routing key, so driver pay-per-mile, fuel/ETA and IFTA jurisdiction
+          // miles were all structurally unreachable.
+          postal_code: stop.postal_code || undefined,
           country: stop.country,
           address_line1: stop.address_line1,
           scheduled_arrival_at: stop.scheduled_arrival_at ? new Date(stop.scheduled_arrival_at).toISOString() : undefined,
