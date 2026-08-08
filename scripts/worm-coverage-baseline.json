@@ -31,8 +31,11 @@
     "banking.reconciliation_matches",
     "banking.reconciliation_sessions",
     "banking.transfers",
+    "driver_finance.abandonment_chargebacks",
     "driver_finance.cash_advance_owner_approval_audit",
     "driver_finance.cash_advance_request_audit",
+    "driver_finance.driver_escrow_separations",
+    "driver_finance.driver_reimbursements",
     "driver_finance.driver_settlement_deductions",
     "driver_finance.driver_settlement_disputes",
     "driver_finance.driver_settlements",
@@ -49,5 +52,5 @@
     "factoring.letter_of_release",
     "factoring.reserve_movement"
   ],
-  "unprotected_count": 100
+  "unprotected_count": 97
 }
