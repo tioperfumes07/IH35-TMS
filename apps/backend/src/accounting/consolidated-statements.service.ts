@@ -234,7 +234,9 @@ async function readInvoices(
         ON c.id = i.customer_id
       WHERE i.operating_company_id = $1::uuid
         AND i.voided_at IS NULL
-        AND i.status NOT IN ('void', 'draft')${dateSql}
+        -- ACCT-F223 — same exclusion as A/R aging: a proforma posts no GL, so showing it on a
+        -- customer statement bills them for money the ledger says they do not owe.
+        AND i.status NOT IN ('void', 'draft', 'proforma')${dateSql}
     `,
     values
   );
