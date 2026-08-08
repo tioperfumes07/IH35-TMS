@@ -1,7 +1,7 @@
 import { formatDateUS } from "../../lib/formatDate";
 import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { getExpense, type ExpenseDetailLine } from "../../api/accounting";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getExpense, voidExpense, type ExpenseDetailLine } from "../../api/accounting";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
@@ -11,6 +11,9 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
+import { Button } from "../../components/Button";
+import { useState } from "react";
 
 function money(cents: number | string | null | undefined) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -31,6 +34,18 @@ function accountLabel(_number: string | null | undefined, name: string | null | 
 export function ExpenseDetailPage() {
   const { id = "" } = useParams();
   const { selectedCompanyId } = useCompanyContext();
+
+  const queryClient = useQueryClient();
+  const [voidOpen, setVoidOpen] = useState(false);
+  // FAIL-A2: void is reason-required at the server, so the reason travels with the mutation rather than
+  // being collected after the fact. On success the detail query is invalidated so `voided_at` (and the
+  // resulting disabled button) reflect the server, not an optimistic guess.
+  const voidMutation = useMutation({
+    mutationFn: (reason: string) => voidExpense(id, selectedCompanyId!, reason),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["accounting", "expense", selectedCompanyId, id] });
+    },
+  });
 
   const detailQuery = useQuery({
     queryKey: ["accounting", "expense", selectedCompanyId, id],
@@ -102,7 +117,36 @@ export function ExpenseDetailPage() {
           { label: "Expenses", href: "/accounting/expenses/list" },
           { label: displayId },
         ]}
-        actions={<StatusBadge variant={statusVariant(expense.status)}>{expense.status}</StatusBadge>}
+        actions={
+          <div className="flex items-center gap-2">
+            <StatusBadge variant={statusVariant(expense.status)}>{expense.status}</StatusBadge>
+            {/* FAIL-A2 — the void ROUTE has always existed and is the better-built of the two void paths
+                (it posts a reversing JE and records `reversed_by_je_id`, which the invoice void does not).
+                It simply had no affordance, so the only way to void an expense was an API call. Reason is
+                required by the server, so the shared reason modal is reused rather than a bare button.
+                Gated on `status === "void"` because the expense DETAIL payload does not expose `voided_at`
+                (same read-path shape as FAIL-B4) — `status` is what the API actually returns. */}
+            <Button
+              variant="secondary"
+              onClick={() => setVoidOpen(true)}
+              disabled={expense.status === "void" || voidMutation.isPending}
+            >
+              {expense.status === "void" ? "Voided" : "Void"}
+            </Button>
+            <VoidReasonModal
+              open={voidOpen}
+              title="Void Expense"
+              entityRef={displayId}
+              minLength={1}
+              postsReversingEntry
+              onClose={() => setVoidOpen(false)}
+              onSubmit={async (reason) => {
+                await voidMutation.mutateAsync(reason);
+                setVoidOpen(false);
+              }}
+            />
+          </div>
+        }
       />
 
       <DataPanel title="Expense">
