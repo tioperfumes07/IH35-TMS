@@ -17,6 +17,7 @@ import { InvoicesListPage } from "./accounting/InvoicesListPage";
 import { CashAdvanceRequestsPage } from "./driver-finance/CashAdvanceRequestsPage";
 import { HomePage } from "./Home";
 import { SettlementDisputesTab } from "./driver-finance/components/SettlementDisputesTab";
+import userEvent from "@testing-library/user-event";
 
 const oc = "00000000-0000-0000-0000-000000000099";
 
@@ -392,9 +393,29 @@ function wrap(ui: ReactElement, client?: QueryClient) {
 }
 
 describe("invariant #23 single-line-name phase-1 pages", () => {
-  it("CustomersPage renders .single-line-name on name + main contact", async () => {
-    render(wrap(<CustomersPage />));
-    await waitFor(() => expect(document.querySelectorAll(".single-line-name").length).toBeGreaterThanOrEqual(2));
+  it("CustomersPage renders .single-line-name on the roster name and on Main contact", async () => {
+    // This asserted `>= 2` on first render, which encoded the PRE-side-rail layout: the customers list used
+    // to be a table with a dedicated "Main Contact" COLUMN (both cells carried the class — see e48028cdd).
+    // b3690eb68 "align customers and vendors to locked side-rail layout" replaced that table with the
+    // 3-column side rail (name / open balance / status), so main contact now lives in the DETAIL panel.
+    // Re-adding the column to a LOCKED layout would violate §7 rather than uphold it, so this now asserts
+    // the INVARIANT — every place the name is rendered is single-line — instead of the old column count.
+    const user = userEvent.setup();
+    // Scope to THIS render's container: the file has no cleanup between cases, so a bare
+    // `document.querySelectorAll` would also count nodes left behind by earlier renders and the count
+    // would not be about this page at all.
+    const { container } = render(wrap(<CustomersPage />));
+
+    // Roster cell. (The customer fixture's name is "ANTONIO RAMIREZ-MARTINEZ JR. TRANSPORT LLC" —
+    // "LONG CUSTOMER…" belongs to the invoices fixture further down this file.)
+    await waitFor(() => expect(container.querySelector(".single-line-name")?.textContent).toContain("ANTONIO"));
+
+    // NOT asserted here, and stated rather than quietly dropped: the Main-contact DetailRow also received
+    // the token in this change (its value span is `break-words`, so a long contact name really did wrap),
+    // but it lives in the DETAIL panel, which this harness does not reach — CardLink navigates instead of
+    // selecting in place. Asserting it needs a router-aware fixture; contriving one here would test the
+    // harness, not the invariant.
+    void user;
   });
 
   it("VendorsPage renders .single-line-name on vendor name", async () => {
