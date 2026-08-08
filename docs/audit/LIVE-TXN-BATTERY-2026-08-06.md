@@ -8915,3 +8915,57 @@ tokenised link. **The create flow dispatches an outbound message to the driver's
 confirmation step** — the Save button is also a Send button. Harmless here (it is the owner's own number,
 and he authorised the test), but **anyone creating a placeholder or test driver with a real number in it
 will message that person.** Filed.
+
+## 142. ★★★ P0 — THE DRIVER PROFILE PAGE CRASHES. Every TRANSP driver I opened, including a pre-existing one. **This is why the documents cannot be uploaded.**
+
+**Owner asked me to upload the three files. I went to the driver's profile to find the upload control. The
+page does not render.**
+
+```
+TypeError: Cannot read properties of undefined (reading 'replace')
+    at G (https://app.ih35dispatch.com/assets/DriverDetail-0aa-jyOe.js:2:42448)
+    at ho (index-B3jYsbw4.js:9:47543)  …
+```
+Captured from the app's own **"Technical details"** panel on `/drivers/49427973-…`.
+
+### IT IS NOT MY NEW DRIVER — it reproduces on a pre-existing one
+
+| driver | provenance | result |
+|---|---|---|
+| `49427973-e93e-4ea7-a2eb-eb9eefa7f331` (Muñoz Gonzalez) | created by me through the product today | **"Something went wrong"** |
+| **`de07ce6f-5948-4745-86ab-de705aa560d0`** (Isaac Carballo Roque) | **pre-existing TRANSP driver, `cdl_number = VER108245`, phone set** | **"Something went wrong"** |
+
+**2 of 2 TRANSP drivers crash the profile page.** The second one matters most: it is **not** a record I made
+and it **has** a CDL number, so the crash is not an artefact of the NULLs item 141 found. **The driver
+profile is broken for TRANSP drivers generally.**
+
+**A DATA CLUE, not a diagnosis:** `date_of_birth` is **NULL on 96 of 96 TRANSP drivers** — nobody has one,
+because (item 141) the create form has no input for it. `.replace()` on `undefined` is exactly what
+formatting a missing string field looks like. **I am not asserting DOB is the cause** — the minified frame
+`G` could be formatting any one of several fields — **but a page that formats a column the create form can
+never populate is a coherent story, and DOB is the only field that is 100% NULL fleet-wide.**
+
+### ★ WHAT IT BLOCKS — this is the real cost
+
+- **The three documents cannot be uploaded.** The create panel has no upload control (item 140); the
+  profile page — the only other place it could live — **will not render.** `docs.file_links` for the new
+  driver stays **0**. The owner's Scenario A proof requirement is blocked by a crash, not by a missing
+  feature.
+- **The entire driver-qualification file is unreachable** for every TRANSP driver: no licence detail, no
+  medical, no documents, no drug-test, no permits — none of it can be opened.
+- **The drivers LIST works fine** (88 rows, KPIs, filters, search). **Only the detail page dies** — so the
+  fleet looks healthy from the index and is unusable one click deeper.
+
+### ★ AND A PASS, verified in the same run — entity scoping is CORRECT
+
+Loading a **USMCA** driver id (`40823a77-…`) while the session is in **TRANSP** returns a clean
+**"Driver not found."** — not a crash, not another entity's data. **The RLS/entity boundary holds on this
+route**, which is worth recording precisely because everything else about it is broken.
+
+### SCOPE I DID NOT ESTABLISH
+
+I did **not** determine whether the crash is TRANSP-only or global — the entity switch to re-test a USMCA
+driver was not completed, so **whether USMCA driver profiles render is UNVERIFIED.** Two TRANSP drivers, two
+crashes, one captured stack; that is what is proven. **The fixer should establish the entity dimension
+first** — if it reproduces on USMCA too it is a single frontend bug, and if it does not, the trigger is in
+TRANSP's data.
