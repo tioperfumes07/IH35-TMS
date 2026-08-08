@@ -9179,3 +9179,40 @@ BLOCKED: none
 
 **Cleanup owed:** Neon branch `br-orange-hat-akbo91eg` still exists (throwaway, forked from prod, contains
 probe mutations). It must be deleted; CC-3 does not delete Neon branches autonomously.
+
+## ★ POST-DEPLOY RE-PROOF ON PROD — 2026-08-08 04:26 CDT — **BOTH FIXES CONFIRMED LIVE**
+
+The trio deployed while this entry was being written. **Prod moved `34d8da7` → `79be071`**
+(`healthz/shallow`, `uptime_seconds` 130), so both migrations have now actually RUN against
+`br-fancy-credit-akjnd07a`. Re-proved on prod itself — this supersedes the branch proof above as the
+authoritative evidence.
+
+| check (prod, post-deploy) | result |
+|---|---|
+| `audit.tg_audit_row` reads `app.current_user_id` | **true** (F177 applied) |
+| `bills_void_state_authoritative` `convalidated` | **true** |
+| `invoices_void_state_authoritative` `convalidated` | **true** |
+| `accounting.bills` — total / `status='void'` / `voided_at` / violations | 16,261 / **4** / **4** / **0** |
+| `accounting.invoices` — total / `status='void'` / `voided_at` / violations | 11,987 / **6** / **6** / **0** |
+| `INV-2026-00005` (USMCA, $2,450) | `status=void`, `voided_at=2026-08-07 01:07:18.501305+00`, reason present |
+
+`status='void'` and the marker now agree **exactly** on both tables (4=4, 6=6) with **0** violations, and
+the $2,450 invoice carries the DERIVED timestamp §2 promised — not `now()`, not invented.
+
+### FALSE-EMPTY CAUGHT — recorded because the law exists for this exact reason
+
+The first post-deploy query returned `bills_status_void = 0` and `invoices_voided = 0`, which would have
+read as "the migration did nothing". **It was RLS masking** — that call omitted
+`set_config('app.bypass_rls','lucia',true)`. The `pg_catalog` reads in the same query (function body,
+`convalidated`) were correct throughout, because catalog reads are RLS-immune. Re-running with bypass
+produced the real numbers above. **A 0 on `accounting.*` is not a verdict without the discriminator.**
+
+### CHECKED, NOT A DEFECT — duplicate `INV-2026-00005`
+
+Two invoices carry `display_id = 'INV-2026-00005'`: `a6e7cd29…` **TRANSP** `91e0bf0a…` $2,000.00 `paid`,
+and `d921fbde…` **USMCA** `5c854333…` $2,450.00 `void`. Invoice numbering is **per operating company** —
+`(display_id, operating_company_id)` duplicate groups across all 11,987 invoices = **0**, and duplicates
+among non-void invoices = **0**. By design; no board row filed. Also confirms the ACCT-F174 target row was
+the USMCA one, as the card said.
+
+**Post-deploy verdict: #4753 PASS · #4744 PASS — both live on prod `79be071`.**
