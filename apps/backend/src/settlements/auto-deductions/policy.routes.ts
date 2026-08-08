@@ -30,7 +30,10 @@ const listQuerySchema = companyQuerySchema.extend({
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
 export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
-  app.get("/api/v1/auto-deductions/policies", async (req, reply) => {
+  app.get(
+    "/api/v1/auto-deductions/policies",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
@@ -67,9 +70,13 @@ export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
     });
 
     return { rows };
-  });
+  }
+  );
 
-  app.post("/api/v1/auto-deductions/policies", async (req, reply) => {
+  app.post(
+    "/api/v1/auto-deductions/policies",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -109,9 +116,13 @@ export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
     });
 
     return reply.code(201).send({ policy: row });
-  });
+  }
+  );
 
-  app.patch("/api/v1/auto-deductions/policies/:id", async (req, reply) => {
+  app.patch(
+    "/api/v1/auto-deductions/policies/:id",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -141,9 +152,13 @@ export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
 
     if (!row) return reply.code(404).send({ error: "policy_not_found" });
     return { policy: row };
-  });
+  }
+  );
 
-  app.delete("/api/v1/auto-deductions/policies/:id", async (req, reply) => {
+  app.delete(
+    "/api/v1/auto-deductions/policies/:id",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -169,7 +184,8 @@ export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
 
     if (!updated) return reply.code(404).send({ error: "policy_not_found_or_not_active" });
     return { ok: true };
-  });
+  }
+  );
 }
 
 export default fp(
