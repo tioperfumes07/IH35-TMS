@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as maintenanceApi from "../../../api/maintenance";
 import { ServiceTimeline } from "../ServiceTimeline";
+import { pickDate } from "../../../test-utils/pickDate";
 
 const navigate = vi.fn();
 
@@ -62,10 +63,17 @@ describe("ServiceTimeline (B31)", () => {
     const spy = vi.spyOn(maintenanceApi, "getMaintenanceServiceTimeline");
     renderTimeline();
     await screen.findByTestId("service-timeline");
-    fireEvent.change(screen.getByTestId("service-timeline-from-date"), { target: { value: "2026-06-01" } });
+    // The from-date is the shared DatePicker (button + calendar popover), not a typeable input — the old
+    // fireEvent.change threw "The given element does not have a value setter", so this test never actually
+    // exercised the refetch it is named for. Drive the real control instead (FE-TESTS-TYPE-INTO-DATEPICKER).
+    pickDate(screen.getByTestId("service-timeline-from-date"));
+    // The picker yields the day it clicked in the month it opens on, which is "today"-relative and therefore
+    // NOT a fixed literal. Asserting the old hardcoded "2026-06-01" would be asserting a date this control
+    // can no longer produce. What the test is actually named for — "refetches when date filters change" — is
+    // that a real ISO from_date reached the API alongside the unit, so that is what is asserted.
     await waitFor(() => {
       expect(spy).toHaveBeenCalledWith(
-        expect.objectContaining({ from_date: "2026-06-01", unit_id: "unit-1" })
+        expect.objectContaining({ from_date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), unit_id: "unit-1" })
       );
     });
   });
