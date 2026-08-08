@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { MaintKpiDashboardPage } from "../MaintKpiDashboardPage";
+import { pickDate } from "../../../test-utils/pickDate";
 
 const getMaintenanceKpiSummary = vi.fn();
 const getMaintenanceKpiDrilldown = vi.fn();
@@ -95,8 +96,11 @@ describe("MaintKpiDashboardPage (B35)", () => {
     await screen.findByTestId("maint-kpi-dashboard");
     await user.click(screen.getByTestId("maint-kpi-filters-toggle"));
     await screen.findByTestId("maint-kpi-filter-start");
-    await user.clear(screen.getByTestId("maint-kpi-filter-start"));
-    await user.type(screen.getByTestId("maint-kpi-filter-start"), "2026-05-01");
+    // Third member of FE-TESTS-TYPE-INTO-DATEPICKER (#4882/#4886). The start filter is the shared DatePicker
+    // — a button plus a calendar popover, with no editable input — so `clear()` threw
+    // "clear() is only supported on editable elements" and the typing that followed never ran. Drive the real
+    // control instead; the assertions below are about the KPI links, so the date is setup, not the subject.
+    pickDate(screen.getByTestId("maint-kpi-filter-start"));
     expect(screen.getByTestId("maint-kpi-link-pm-engine")).toHaveAttribute("href", "/maintenance/pm-auto-engine");
     expect(screen.getByTestId("maint-kpi-link-pm-schedule")).toHaveAttribute("href", "/maintenance/pm-schedule");
   });
