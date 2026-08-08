@@ -17,6 +17,7 @@ import { createDispatchLoad } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
 import { getLoad, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
 import { buildEditPrefill, buildEditPatchBody } from "./book-load-v4/editLoadMapping";
+import { bookLoadToastMessage, bookLoadToastTone } from "./book-load-toast";
 import { listCustomers, listVendors } from "../../../api/mdata";
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
@@ -701,7 +702,12 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         });
         return;
       }
-      pushToast(saveMode === "draft" ? "Draft saved" : "Load booked and dispatched", "success");
+      // LV-DISPATCH-TOAST-LIES — report the status the SERVER returned, never the one the click intended.
+      // `save_mode: "book_dispatch"` does NOT force `dispatched` (book-load.service.ts writes
+      // `toMdataStatus(input.status)`), so asserting dispatch from `saveMode` told a dispatcher a truck was
+      // rolling under an audited DOT override while the record sat at `assigned_not_dispatched`.
+      const serverStatus = typeof (payload as Record<string, unknown>)?.status === "string" ? String((payload as Record<string, unknown>).status) : null;
+      pushToast(bookLoadToastMessage(saveMode, serverStatus), bookLoadToastTone(saveMode, serverStatus));
       onCreated();
       onClose();
     } catch (error) {
