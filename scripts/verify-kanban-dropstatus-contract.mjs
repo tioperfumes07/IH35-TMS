@@ -129,6 +129,43 @@ export function auditDropErrorHandling(rawPageSrc) {
   return problems;
 }
 
+/**
+ * LV-KANBAN-SYNTHETIC-CARD-INERT-DRAG (2026-08-08). A card that cannot be dropped must not offer a drag
+ * affordance.
+ *
+ * Truck-without-a-load cards are injected with id "unit:<id>" and `status: "unassigned"`. `canDragLoad` only
+ * excludes cancelled/closed/paid/invoiced, so those cards were draggable: full listeners plus `cursor-grab`.
+ * But handleDragEnd resolves the id against `loads`, finds nothing, and returns — so every drop was silently
+ * discarded. The dispatcher could drag a truck across the board into any lane and get no movement, no toast
+ * and no reason. This asserts the affordance is gated on the card being a real load.
+ */
+export function auditSyntheticCardNotDraggable(kanbanSrc) {
+  const problems = [];
+  const src = kanbanSrc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  if (!/isSyntheticKanbanCardId/.test(src)) {
+    problems.push(
+      `DispatchKanban.tsx: no isSyntheticKanbanCardId predicate. Synthetic "unit:" truck cards are not loads ` +
+        `and can never be status-dropped, so they must not render a drag affordance ` +
+        `(LV-KANBAN-SYNTHETIC-CARD-INERT-DRAG).`,
+    );
+    return problems;
+  }
+  const sites = [...src.matchAll(/const\s+draggableEnabled\s*=\s*([^;]+);/g)].map((m) => m[1]);
+  if (sites.length === 0) {
+    problems.push(`DispatchKanban.tsx: no draggableEnabled sites found — refusing to pass vacuously.`);
+    return problems;
+  }
+  sites.forEach((expr, i) => {
+    if (!/isSyntheticKanbanCardId/.test(expr)) {
+      problems.push(
+        `DispatchKanban.tsx: draggableEnabled site #${i + 1} does not exclude synthetic cards, so a truck ` +
+          `card renders as draggable and every drop is silently discarded.`,
+      );
+    }
+  });
+  return problems;
+}
+
 export function audit(frontendSrc, backendSrc, apiSrc) {
   const accepted = acceptedStatuses(backendSrc);
   if (!accepted || accepted.length === 0) {
@@ -213,6 +250,12 @@ if (process.argv.includes("--selftest")) {
     ["money path: pre-dispatch lane is an explicit allowed exception", preDispatch, beWithPlanned, apiGood, 0],
     ["money path: mapper unparseable — must not pass vacuously", good, be, "const nope = 1;", 1],
   ];
+  const syntheticCases = [
+    ["all draggable sites exclude synthetic cards", `export function isSyntheticKanbanCardId(id){return id.startsWith("unit:")}\nconst draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);\nconst draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);`, 0],
+    ["REGRESSION BAR — a site forgets the synthetic exclusion (the shipped defect)", `export function isSyntheticKanbanCardId(id){return id.startsWith("unit:")}\nconst draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);\nconst draggableEnabled = canDragLoad(load.status);`, 1],
+    ["predicate removed entirely", `const draggableEnabled = canDragLoad(load.status);`, 1],
+    ["no draggable sites — must not pass vacuously", `export function isSyntheticKanbanCardId(id){return false}`, 1],
+  ];
   const dropCases = [
     ["propagating handler (correct — Kanban reverts)", `onStatusDrop={async (id, nextStatus) => {\n await statusMutation.mutateAsync({ id });\n }}`, 0],
     ["REGRESSION BAR — catch without re-throw (what #4788 shipped)", `onStatusDrop={async (id, nextStatus) => {\n try { await m(); } catch (e) { pushToast(\`x\`, "error"); }\n }}`, 1],
@@ -220,6 +263,13 @@ if (process.argv.includes("--selftest")) {
     ["handler missing — must not pass vacuously", `no handler here`, 1],
   ];
   let failed = 0;
+  for (const [name, kanbanSrc, want] of syntheticCases) {
+    const got = auditSyntheticCardNotDraggable(kanbanSrc).length;
+    if (got !== want) {
+      console.error(`SELFTEST FAIL: ${name} — expected ${want}, got ${got}`);
+      failed++;
+    }
+  }
   for (const [name, pageSrc, want] of dropCases) {
     const got = auditDropErrorHandling(pageSrc).length;
     if (got !== want) {
@@ -235,7 +285,7 @@ if (process.argv.includes("--selftest")) {
     }
   }
   if (failed) process.exit(1);
-  console.log(`${LABEL} SELFTEST PASS — ${cases.length + dropCases.length} mutations detected correctly`);
+  console.log(`${LABEL} SELFTEST PASS — ${cases.length + dropCases.length + syntheticCases.length} mutations detected correctly`);
   process.exit(0);
 }
 
@@ -251,6 +301,7 @@ const PAGE = "apps/frontend/src/pages/Dispatch.tsx";
 const problems = [
   ...audit(feSrc, fs.readFileSync(path.join(ROOT, BE), "utf8"), fs.readFileSync(path.join(ROOT, API), "utf8")),
   ...auditDropErrorHandling(fs.readFileSync(path.join(ROOT, PAGE), "utf8")),
+  ...auditSyntheticCardNotDraggable(feSrc),
 ];
 if (problems.length) {
   console.error(`${LABEL} FAIL — a Kanban lane drops to a status the API rejects, or one that silently skips the money path:\n`);
