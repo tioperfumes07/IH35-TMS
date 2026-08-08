@@ -1323,6 +1323,7 @@
     "2648": "2648-verify-join-entity-scoped.mjs",
     "2649": "2649-verify-financial-tables-not-deletable.mjs",
     "2650": "2650-verify-entity-param-never-silently-all.mjs",
+    "2663": "2663-verify-driver-create-fields-are-written.mjs",
     "2723": "2723-verify-gl-posting-coverage.mjs",
     "2724": "2724-verify-qbo-canonical-recon.mjs",
     "2725": "2725-verify-no-outbound-qbo-write-events.mjs",
