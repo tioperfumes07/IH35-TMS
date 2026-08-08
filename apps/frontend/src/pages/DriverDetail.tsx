@@ -662,6 +662,22 @@ export function DriverDetailPage() {
     []
   );
 
+  // FAIL-D4 / React #310 — this useMemo used to sit AFTER the early returns below. On the loading render the
+  // component returned before reaching it, so React counted one fewer hook; once the driver resolved the hook
+  // ran and the count changed -> "Rendered more hooks than during the previous render", crashing Driver Detail
+  // and taking the DQF (CDL expiry / DOT medical) edit form with it. Hooks must be unconditional, so this is
+  // hoisted above every early return, together with the plain `terminationReasons` value it depends on.
+  const terminationReasons = terminationReasonsQuery.data ?? [];
+  const terminationReasonOptions = useMemo(
+    () =>
+      terminationReasons.map((reason) => ({
+        value: reason.id,
+        label: reason.label,
+        type: reason.severity,
+      })),
+    [terminationReasons]
+  );
+
   if (driverQuery.isLoading) {
     return <div className="text-sm text-gray-500">Loading driver...</div>;
   }
@@ -700,16 +716,6 @@ export function DriverDetailPage() {
   const companies = companiesQuery.data ?? [];
   const authorizations = companyAuthQuery.data ?? [];
   const safetyEvents = safetyEventsQuery.data ?? [];
-  const terminationReasons = terminationReasonsQuery.data ?? [];
-  const terminationReasonOptions = useMemo(
-    () =>
-      terminationReasons.map((reason) => ({
-        value: reason.id,
-        label: reason.label,
-        type: reason.severity,
-      })),
-    [terminationReasons]
-  );
   const equipmentTypeOptions =
     equipmentTypesQuery.data?.filter((type) => !qualifications.some((qualification) => qualification.equipment_type_id === type.id)) ?? [];
 
