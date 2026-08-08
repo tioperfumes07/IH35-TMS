@@ -103,18 +103,41 @@ export function buildBolStops(
 export async function fetchBolPayload(client: PoolClient, operatingCompanyId: string, loadId: string): Promise<BolTemplatePayload | null> {
   const loadRes = await client.query(
     `
+      -- CLS-SCHEMA-DRIFT — this SELECT carried SEVEN phantom columns, so BOTH BOL routes threw 42703
+      -- on every call and dispatch.bol_documents has never held a row on prod. All seven verified
+      -- absent on br-fancy-credit-akjnd07a 2026-08-07, each against its table's full column count so
+      -- the 0s are verdicts and not empty reads:
+      --   mdata.loads.commodity_description / .weight_lbs / .reference_number  (98 cols, 0 hits each)
+      --   mdata.customers.physical_address_line1                               (109 cols, 0 hits)
+      --   org.companies.physical_address_line1 / .display_name                 (33 cols, 0 hits each)
+      --   mdata.units.display_id                                               (69 cols, 0 hits)
+      -- The org.companies pair was NOT in the phantom-column allowlist — that guard's curated table
+      -- list does not cover org.companies — so a fix driven only by the ratchet would have left the
+      -- query broken. Reading the whole statement against the live schema is what caught them.
+      --
+      -- COMMODITY + WEIGHT ARE SOURCED, NOT DEFAULTED. A sweep of every schema for commodity/weight
+      -- columns returns exactly one load-linked pair: mdata.unit_border_crossings.commodity and
+      -- .cargo_weight_lbs, on a table carrying load_id — the values declared to CBP for this load. For
+      -- a Laredo cross-border carrier that is the commodity of record, so the BOL reads it from the
+      -- load's most recent crossing instead of inventing one. The old "General freight" default is
+      -- dropped below: a BOL is a legal shipping document, and asserting a commodity nobody declared
+      -- is worse than the 42703 it replaces.
+      --
+      -- Every renamed column is aliased back to its original payload key, so the mapping below and
+      -- its tests are untouched. Select-list aliases are stripped as BINDINGS by
+      -- verify-sql-column-existence, so the aliases create no false positive there.
       SELECT
         l.load_number,
-        l.commodity_description,
-        l.weight_lbs,
+        bc.commodity AS commodity_description,
+        bc.cargo_weight_lbs AS weight_lbs,
         l.piece_count,
-        l.reference_number,
+        l.customer_po_number AS reference_number,
         c.customer_name,
-        COALESCE(c.billing_address_line1, c.physical_address_line1, '') AS customer_address,
-        COALESCE(comp.legal_name, comp.display_name, 'IH35 Carrier') AS carrier_name,
-        COALESCE(comp.physical_address_line1, '') AS carrier_address,
+        COALESCE(c.billing_address_line1, c.shipping_address_line1, '') AS customer_address,
+        COALESCE(comp.legal_name, comp.short_name, 'IH35 Carrier') AS carrier_name,
+        COALESCE(comp.address_line1, '') AS carrier_address,
         concat_ws(' ', d.first_name, d.last_name) AS driver_name,
-        u.display_id AS unit_display
+        u.unit_number AS unit_display
       FROM mdata.loads l
       JOIN mdata.customers c ON c.id = l.customer_id
                              AND c.operating_company_id = $2::uuid
@@ -123,6 +146,16 @@ export async function fetchBolPayload(client: PoolClient, operatingCompanyId: st
                                 AND d.operating_company_id = $2::uuid
       LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                               AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
+      -- Most recent crossing for THIS load, entity-scoped like every other join here so a commodity
+      -- can never be read across entities.
+      LEFT JOIN LATERAL (
+        SELECT x.commodity, x.cargo_weight_lbs
+          FROM mdata.unit_border_crossings x
+         WHERE x.load_id = l.id
+           AND x.operating_company_id = $2::uuid
+         ORDER BY x.crossing_date DESC
+         LIMIT 1
+      ) bc ON TRUE
       WHERE l.id = $1::uuid
         AND l.operating_company_id = $2::uuid
         AND l.soft_deleted_at IS NULL
@@ -135,15 +168,33 @@ export async function fetchBolPayload(client: PoolClient, operatingCompanyId: st
 
   const stopsRes = await client.query(
     `
+      -- CLS-SCHEMA-DRIFT + LINKAGE — two defects here, and fixing only the first would have shipped a
+      -- BOL that still prints no addresses.
+      --
+      -- (1) PHANTOM COLUMNS: s.appointment_start / s.appointment_end do not exist. Prod-verified
+      --     2026-08-07: mdata.load_stops has 37 columns and 0 hits for either; the real names are
+      --     appointment_start_at / appointment_end_at. Aliased back to the original payload keys so
+      --     buildBolStops and its test are untouched.
+      --
+      -- (2) THE ADDRESS JOIN RESOLVED TO NOTHING. mdata.load_stops carries BOTH a location_id FK and
+      --     its own inline address_line1 / city / state, and prod uses the INLINE columns: 20 of 20
+      --     stops have location_id NULL, while 20 of 20 have city, 20 of 20 have state and 16 of 20
+      --     have address_line1. Reading the address only through mdata.locations returned NULL for
+      --     every stop on every load — the BOL would have rendered "—" for each one with the data
+      --     sitting on the row it already had. The NULLIFs stop an empty string from beating a real
+      --     value in either direction; several stops carry '' rather than NULL.
+      --
+      -- The locations join is KEPT, not replaced: a stop that IS linked should prefer the location
+      -- master, and 27 rows are waiting in mdata.locations.
       SELECT
         s.stop_type::text,
         s.sequence_number,
         loc.location_name,
-        loc.address_line1,
-        loc.city,
-        loc.state,
-        s.appointment_start::text,
-        s.appointment_end::text
+        COALESCE(NULLIF(loc.address_line1, ''), NULLIF(s.address_line1, '')) AS address_line1,
+        COALESCE(NULLIF(loc.city, ''), NULLIF(s.city, '')) AS city,
+        COALESCE(NULLIF(loc.state, ''), NULLIF(s.state, '')) AS state,
+        s.appointment_start_at::text AS appointment_start,
+        s.appointment_end_at::text AS appointment_end
       FROM mdata.load_stops s
       LEFT JOIN mdata.locations loc ON loc.id = s.location_id
       WHERE s.load_id = $1::uuid
@@ -160,7 +211,11 @@ export async function fetchBolPayload(client: PoolClient, operatingCompanyId: st
     carrierAddress: String(load.carrier_address ?? ""),
     customerName: String(load.customer_name ?? "—"),
     customerAddress: String(load.customer_address ?? ""),
-    commodity: String(load.commodity_description ?? "General freight"),
+    // "General freight" was the old default and it is deliberately gone. A BOL is a legal shipping
+    // document; printing a commodity the system never captured is a fabricated assertion on a
+    // carrier's paperwork. The value now comes from the load's border-crossing declaration, and when
+    // there is none the BOL says so.
+    commodity: String(load.commodity_description ?? "—"),
     weight: load.weight_lbs != null ? `${load.weight_lbs} lbs` : "—",
     pieces: load.piece_count != null ? String(load.piece_count) : "—",
     referenceNumber: String(load.reference_number ?? "—"),

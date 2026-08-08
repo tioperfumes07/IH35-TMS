@@ -330,7 +330,7 @@
   },
   {
     "id": "LAW-2026-08-06-KANBAN-DROPSTATUS-CONTRACT",
-    "title": "Every dispatch Kanban lane dropStatus must be a status loadStatusSchema accepts — a lane whose drop the API rejects is a silent dead end, and the frontend lane list and backend enum live in separate files owned by separate lanes so they drift independently",
+    "title": "Every dispatch Kanban lane dropStatus must be a status loadStatusSchema accepts AND must reach the money-aware /dispatch transition (or be an explicitly listed pre-dispatch exception) — a lane whose drop the API rejects is a silent dead end, and after #4769 a lane the mapper does not handle silently falls back to the non-money mdata path, stamping no departure and opening no settlement; all three ends live in separate files owned by separate lanes so they drift independently",
     "source_file": "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
     "guard": "scripts/verify-kanban-dropstatus-contract.mjs",
     "type": "enforced"
@@ -420,17 +420,73 @@
     "type": "enforced"
   },
   {
-    "id": "LAW-2026-08-07-VOID-STATUS-LITERAL-MATCHES-COLUMN",
-    "title": "A query must not filter a status column on a literal the column's CHECK constraint forbids — A/R aging excluded accounting.invoices.status 'voided', a value invoices_status_check makes impossible (the real spelling is 'void'), so the exclusion could never fire and rested on voided_at alone; one invoice with status='void' and voided_at NULL was counted, and USMCA reported $4,325.50 of receivables where $1,875.50 was real",
-    "source_file": "apps/backend/src/accounting/ar-aging.service.ts",
-    "guard": "scripts/verify-void-status-literal-matches-column.mjs",
-    "type": "enforced"
-  },
-  {
     "id": "LAW-2026-08-07-SQL-SELECT-LIST-PHANTOM-COLUMN",
     "title": "A phantom column in the SELECT LIST is as fatal as one in WHERE — both throw 42703 and 500 the endpoint — so verify-sql-column-existence must check PROJECTED columns, not only WHERE/SET/ORDER-BY ones; a select-list-only phantom passed the guard with exit 0 while the route it lived in failed on every call",
     "source_file": "apps/backend/src/dispatch/auth-gates/wf-038-active-driver.gate.ts",
     "guard": "scripts/verify-sql-column-existence.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-BILLPAY-VOID-REVERSES-GL",
+    "title": "Voiding a bill payment must reverse its GL, and no caller may opt out by hardcoding the flag — voidBillPayment passed reversePostedGl:false, so every void through the UI reversed nothing while the panel promised an equal-and-opposite entry and the GL kept $33.40 of cash that had already left the bank; the decision is a property of the payment (a non-cash settlement deduction has no GL of its own), never of the caller",
+    "source_file": "apps/backend/src/accounting/bills.service.ts",
+    "guard": "scripts/verify-billpay-void-reverses-gl.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-LANE-TERRITORY",
+    "title": "Lanes do not edit each other's domain territory; shared append-only registries are union-merged, never owned",
+    "source_file": "docs/standing-orders/LANE-COLLISION-PROTOCOL.md",
+    "guard": "scripts/verify-lane-territory.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-POD-BOL-EVIDENCE-LINKAGE",
+    "title": "A POD/BOL captured at a stop must be linked to its PARENT LOAD (docs.file_links has no load_stop entity type, so dropping the link orphans the evidence), and the hop.pod_bol scenario probe must COUNT the canonical stores the office reads back — dispatch.pod_documents + dispatch.bol_documents — not only the document library",
+    "source_file": "apps/driver-pwa/src/lib/upload-sync.ts",
+    "guard": "scripts/verify-pod-bol-evidence-linkage.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-MONEY-SIDE-EFFECT-AFTER-COMMIT",
+    "title": "A GL poster that opens its OWN connection must never be awaited from inside an open transaction — under READ COMMITTED that second connection cannot see the caller's uncommitted writes, so the poster's evidence gate re-read a delivery departure the caller had just stamped, found NULL, returned missing_delivery_evidence and posted nothing while every static guard stayed green; defer it with enqueueAfterCommit(client, …) so it runs after COMMIT, and drop the queue on ROLLBACK and on ROLLBACK TO SAVEPOINT so a side effect never outlives the write that justified it",
+    "source_file": "apps/backend/src/lib/after-commit.ts",
+    "guard": "scripts/verify-money-side-effect-after-commit.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-DELIVERY-PATH-SCOPED-BY-STAMP",
+    "title": "A guard that scopes delivery paths by a STRING-LITERAL status match is green-while-broken — the bulk route writes the status from a variable and its one literal sits inside a Set, so the file was never considered and verify-delivery-evidence-latch-wired printed OK exit 0 while bulk 'Mark delivered' stamped delivery evidence and never latched revenue; scope on stampFinalActiveDeliveryDeparture(), a shared call name that cannot be written as a variable",
+    "source_file": "apps/backend/src/dispatch/loads-bulk.routes.ts",
+    "guard": "scripts/verify-delivery-evidence-latch-wired.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-08-SETTLEMENT-SAMPLE-TAG-EVERY-WRITER",
+    "title": "driver_finance.driver_settlements is the ONE money create type with no writable free-text column, so is_sample_data is the ONLY Gate-B tag path — and NAMING the column is not enough: the load-bookended writer (the one dispatch calls on in_transit) named it and then supplied the LITERAL false, so every settlement a sample load auto-opened was hardcoded \"not sample data\" while the guard sat green; every production INSERT must both name the column AND derive its value from the parent row (load for the dispatch/bookended writer, driver for the weekly close), never a literal, because the writers that strand untagged money are precisely the ones no human calls by hand",
+    "source_file": "apps/backend/src/driver-finance/settlements.routes.ts",
+    "guard": "scripts/verify-settlement-sample-tag-wired.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-08-VENDOR-TYPE-APP-DB-PARITY",
+    "title": "The app-layer vendor_type allow-list must equal the mdata.vendors CHECK constraint, case-normalised — a bare z.string() over a case-sensitive closed CHECK turns the most likely input ('other') into an opaque HTTP 500/23514 instead of a 400 naming the legal values; every DB CHECK/enum needs an app-layer counterpart that fails FIRST",
+    "source_file": "apps/backend/src/mdata/vendors.routes.ts",
+    "guard": "scripts/verify-vendor-type-app-db-parity.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-08-BOOK-LOAD-TOAST-REPORTS-SERVER-STATUS",
+    "title": "A success toast must report the status the SERVER returned, never the one the click intended — save_mode 'book_dispatch' does not force 'dispatched', so asserting dispatch from the local save mode told a dispatcher a truck was rolling under an audited DOT override while the load sat at assigned_not_dispatched",
+    "source_file": "apps/frontend/src/pages/dispatch/components/book-load-toast.ts",
+    "guard": "scripts/verify-book-load-toast-server-status.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-VOID-STATUS-LITERAL-MATCHES-COLUMN",
+    "title": "A query must not filter a status column on a literal the column's CHECK constraint forbids — A/R aging excluded accounting.invoices.status 'voided', a value invoices_status_check makes impossible (the real spelling is 'void'), so the exclusion could never fire and rested on voided_at alone; one invoice with status='void' and voided_at NULL was counted, and USMCA reported $4,325.50 of receivables where $1,875.50 was real",
+    "source_file": "apps/backend/src/accounting/ar-aging.service.ts",
+    "guard": "scripts/verify-void-status-literal-matches-column.mjs",
     "type": "enforced"
   }
 ]
