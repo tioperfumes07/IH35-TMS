@@ -361,12 +361,28 @@ export async function approveAndPostFuelCardOverage(
       );
       const row = event.rows[0];
       if (!row) return { status: "error", message: "overage_event_not_found" };
-      // Reverse/forward deduction FKs (BANK-DOM-06) — read before posting so linkage stays live.
-      await loadExistingOverageDeductionLink(
+      // Reverse/forward deduction FKs (BANK-DOM-06). This USED to be an unassigned `await` whose
+      // result was thrown away — a read that satisfied verify-no-dead-schema while protecting
+      // nothing. Even with both FKs fully populated it would have deduped nothing, because nobody
+      // looked at what it returned. A read that discards its result is not a use.
+      //
+      // Now it is load-bearing: if this fuel transaction has ALREADY been recovered from the driver
+      // as a settlement deduction, posting the receivable would charge the driver a SECOND time for
+      // the same gallon. Bail out instead.
+      //
+      // Today both columns are unwritten backend-wide (`source_fuel_transaction_id` appears exactly
+      // once in apps/backend/src, in the SELECT above), so this branch cannot fire and behaviour is
+      // UNCHANGED. That is deliberate: the guard goes in BEFORE the writer, so the day the
+      // settlement-deduction recovery path lands it inherits real protection instead of a helper
+      // that merely looks like it protects.
+      const existingLink = await loadExistingOverageDeductionLink(
         client,
         input.operating_company_id,
         row.fuel_transaction_id
       );
+      if (existingLink.deduction_id || existingLink.overage_deduction_id) {
+        return { status: "already_evaluated", overage_event_id: row.id } as const;
+      }
       if (row.journal_entry_id) {
         return {
           status: "posted",
