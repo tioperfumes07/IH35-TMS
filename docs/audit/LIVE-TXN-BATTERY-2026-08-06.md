@@ -7963,3 +7963,74 @@ remain live, unvoided and fully posted. **Nothing was damaged by the failed void
 **before** the status flip (`:1765` *"Post the reversing JE BEFORE the status flip so both land atomically"*),
 so the throw rolls back cleanly with no half-voided bill and no orphan reversing JE. **The transaction design
 is right; only the date coercion is wrong.**
+
+## 127. ★★ BOARD ITEM PULLED — `LV-BANK-CATEGORIZE-POSTS-GL-WHILE-BANNER-SAYS-IT-DOES-NOT` (P0): STILL LIVE, the poster is VERIFIED CORRECT, the blast radius has GROWN — and the USMCA general ledger is now provably 100% attributable.
+
+**The row is confirmed on the current tree, and re-verifying it produced three things the row does not
+contain: a correctness proof for the poster, a fourth control for an unrelated class, and a whole-ledger
+completeness check.**
+
+### 1 — THE BANNER IS STILL HARDCODED, and there is a sharper proof than "it's a static `<p>`"
+
+`apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx:2155` still reads, verbatim:
+> *"Categorize tags are not ledger posts — BANK_FEED_GL_POSTING_ENABLED stays OFF by default"*
+
+**`grep -c "useFeatureFlag" <that file>` → `0`.** The component **never reads any feature flag at all**, so it
+is not that the banner reads the flag wrongly or reads a global instead of an override — **it structurally
+cannot know the flag's state.** No scoping fix can repair a component with no flag subscription; the sentence
+is a literal and will stay true-looking forever regardless of reality. Its `data-testid` is
+**`banking-bank-feed-gl-posting-honesty-banner`** — the element named *honesty* is the dishonest one.
+
+### 2 — THE POSTER IS CORRECT — verified line by line, which the original row asserted but did not show
+
+JE `ff746cfa` (created by the row's own categorize of *Zelle payment to Dreamline Transit LLC, $918.00*):
+
+| seq | account | type | side | cents |
+|---|---|---|---|---|
+| 1 | Other Operating Expense | Expense | debit | 91,800 |
+| 2 | **Bank of America - Operating (USMCA)** | Asset | credit | 91,800 |
+
+**Balanced; both lines USMCA-scoped; both carry `source_transaction_type='bank_categorization'` and
+`source_transaction_id = cb271ba0-…`**, so the linkage is complete in both directions. For a Zelle payment
+**out**, debiting an expense and crediting the bank is exactly right. **The row's "the POSTER is correct, the
+BANNER is wrong" is now demonstrated, not asserted** — which matters, because the fix must change the prose
+and leave the posting alone.
+
+### 3 — ★ A FOURTH CONTROL FOR `CLS-CASH-OUT-CREDITS-CLEARING-ACCOUNT`, found by accident here
+
+That class (item 119) says three of four cash-side builders credit a clearing account instead of the bank.
+**`bank_categorization` credits the REAL bank GL account** — resolved through
+`banking.bank_accounts.ledger_account_id`, the same bridge `buildBillPaymentLines` uses. So the scoreboard is
+now **two paths right, one path wrong, one schema-blocked**:
+
+| path | credit | verdict |
+|---|---|---|
+| `bill_payment` | Bank of America - Operating (USMCA) | ✅ |
+| **`bank_categorization`** | **Bank of America - Operating (USMCA)** | **✅ (new evidence)** |
+| `driver_advance` | **Undeposited Funds** | ❌ (item 118) |
+| `cash_advance` / `driver_reimbursement` | clearing — source table has no bank column | ❌ schema gap |
+
+**Two independent paths already do it correctly on this exact bank account.** That removes the last possible
+defence of the driver-advance behaviour as a deliberate house convention.
+
+### 4 — BLAST RADIUS MEASURED TODAY: the queue is LARGER than the row states
+
+USMCA `banking.bank_transactions` right now: **`for_review` = 158**, `matched` = 5. The row was written
+earlier today citing **110** rows in the queue. **Whatever the exact predicate behind that 110, the exposed
+population is materially larger now than when the P0 was filed** — every one of those rows is a click that
+the banner says is safe and that would post a real JE into a live GL.
+
+### 5 — ★★ THE UNEXPECTED RESULT: THE USMCA GENERAL LEDGER IS 100% ATTRIBUTABLE
+
+`accounting.journal_entries` for USMCA is **33** today. The board row recorded it going **27 → 28** when it
+posted its categorize. This battery has since created **exactly five** journal entries — bill `9f9ce1cb`
+(JE `2d0cfb71`), bill payment `6e23a112` (JE `60028af4`), driver advance `2239fa7f` (JE `e26c88d1`), and the
+two sibling bills `4415a62c` / `60f644f0`.
+
+**28 + 5 = 33.** **Exact.**
+
+**Every journal entry in the USMCA ledger is accounted for**, and nothing — no cron, no projection, no
+background job, no other lane — wrote a single unexplained entry into it during this session. That is a
+stronger statement than any individual PASS in this battery: **the USMCA GL has no dark writer.** It also
+retroactively validates the arithmetic of every unit above, because an off-by-one anywhere would have shown
+up here as a mismatch.
