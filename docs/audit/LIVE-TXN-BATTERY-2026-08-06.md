@@ -9216,3 +9216,114 @@ among non-void invoices = **0**. By design; no board row filed. Also confirms th
 the USMCA one, as the card said.
 
 **Post-deploy verdict: #4753 PASS · #4744 PASS — both live on prod `79be071`.**
+
+---
+
+# CC-3 VERIFY — PR #4769 (LV-TXN-004) USMCA Kanban → `delivered_pending_docs` money path — 2026-08-08
+
+**Prod SHA `a11f6c7`** (`healthz/shallow`, polled by CC-3 until it flipped from `f6feb13` at 23:36:36 CDT —
+not taken from STATUS-NOW). **Entity: USMCA `5c854333-6ea5-4faa-af31-67cb272fef80` only.**
+**CC-3 created nothing** — no Gate B creates until `GO P5`. Every fact below comes from data the system
+already held, read RLS-immune under `set_config('app.bypass_rls','lucia',true)`.
+
+## VERDICT: **FAIL** — split, and the split is the whole point
+
+| half | verdict |
+|---|---|
+| FE wiring (#4769) — Kanban drop calls the money-aware endpoint | **PASS** |
+| Backend settlement ping on `delivered_pending_docs` | **PASS** |
+| Backend revenue latch (Event 1) on that same transition | **FAIL — silent no-op** |
+
+### PASS — the FE half is genuinely deployed, verified in the shipped bundle
+
+`healthz` reports the **backend**; #4769 changed **frontend files only**, so the SHA alone proves nothing.
+CC-3 pulled the live bundle from `app.ih35dispatch.com` and found #4769's code in it, minified:
+
+```js
+function ne(e){switch(e){case`unassigned`:…case`delivered`:return`delivered_pending_docs`;
+  case`invoiced`:case`paid`:case`closed`:return`completed_docs_received`;default:return null}}
+function re(e,t,n){let r=n?ne(t.new_status):null;
+  return n&&r ? A(e,n,{new_status:r,cancellation_reason_code:t.cancellation_reason_code})
+              : o(`/api/v1/mdata/loads/${e}/status`,{method:`PATCH`,body:t})}
+```
+
+That is `toDispatchTransitionStatus` + `updateLoadStatus` exactly. The chunk
+(`EntityPicker-D0dNxc8o.js`) also carries the literal
+`/api/v1/dispatch/loads/${t}/transition?operating_company_id=${encodeURIComponent(n)}`, so `A` resolves to
+`transitionDispatchLoad` in the same chunk. **The Kanban drop does reach the money-aware endpoint.**
+
+### PASS — every backend gate for USMCA is open, and the poster posts correctly
+
+Measured on prod: `org.companies.code = USMCA` (so not `trk_excluded`) ·
+`to_regclass('accounting.load_revenue_recognition_postings')` present ·
+`REVENUE_RECOGNITION_POST_ENABLED` **enabled=true for USMCA since 2026-07-26 19:21:26+00** (default is
+`false`; TRANSP true, TRK false). When it does post, it posts **correctly** — JE
+`1fac8d19-668c-4f82-8d53-aba34592a2bb`, `source=auto`, USMCA:
+
+| line | dr/cr | acct | account | cents |
+|---|---|---|---|---|
+| 1 | debit | **1150** | Unbilled Revenue | 100 |
+| 2 | credit | **4000** | Freight / Line-haul Income | 100 |
+
+`DR − CR = 0`, 2 lines, **1 entity**. Correct ASC 606 Event 1 — earn to **Unbilled Revenue, not A/R**.
+Actor named (`e4117991-…`, Owner) — the #4753 fix visible in the wild.
+
+### PASS — the settlement ping fires in-transaction and links both ways
+
+`driver_finance.driver_settlements` `d3ff8ea3-4acd-4792-b3ad-fdad6383fbb2` ·
+`S-LUSMCAFREIGHT-20260806-0001` · `settlement_model=load_bookended` ·
+`first_load_id = last_load_id = 678fc733…` · `trip_started_at 17:03:34.898` (opened at `in_transit`) ·
+`trip_closed_at 2026-08-06 17:03:35.171+00` · `status=closed`. Both-way linked to the load.
+
+### ★ FAIL — the revenue latch cannot see the delivery evidence its own transition just wrote
+
+Filed as **`LV-REVREC-LATCH-CANNOT-SEE-ITS-OWN-DELIVERY-EVIDENCE`** → board + register, lane **CC-1**.
+
+The transition handler runs in ONE transaction and calls the two hooks **differently**:
+`pingSettlementOnLoadEvent(client, …)` **receives the transaction**; `postLoadRevenueLatch({…})` does
+**not** — it opens `withLuciaBypass` → `luciaPool.connect()`, a **separate connection**. Under READ
+COMMITTED it cannot see the still-uncommitted `actual_departure_at`, so Event 1 fails its
+`missing_delivery_evidence` guard and the call site **swallows** it (`disp_01_revrec_latch_failed`).
+
+The timestamps on one load settle it beyond argument:
+
+```
+delivery stop actual_departure_at   2026-08-06 17:03:35.076384+00   (== mdata.loads.updated_at)
+settlement   trip_closed_at         2026-08-06 17:03:35.171+00      ← +95 ms, in-transaction: WORKED
+revrec latch created_at             2026-08-08 00:27:37.650484+00   ← +31 HOURS: NOT the transition
+flag enabled for USMCA since        2026-07-26 19:21:26+00          ← flag_off EXCLUDED
+```
+
+Same load, same transition, same instant — one hook fired, the other did not, and the only difference
+between them is **whether the caller's `client` was passed**. The latch that does exist was posted 31
+hours later by a separate Owner-actor run, and it booked `entry_date 2026-08-07` for a **2026-08-06**
+delivery — an ASC 606 period-timing defect riding on top of the silence.
+
+**This is not cosmetic and it is not narrow.** Post-#4769 the Kanban drop is the primary way a load
+reaches `delivered_pending_docs`, and it is precisely the path that stamps the departure in the same
+transaction. `dispatch/delivery-evidence-latch.ts` — the shared helper both DRIVER capture paths use —
+calls `postLoadRevenueLatch` the same client-less way, so the two driver paths are suspect on the same
+root cause.
+
+### CLASSIFIED, NOT FILED — the $0.00 settlement
+
+The closed settlement carries `gross_pay 0.00` / `net_pay 0.00` with **0** `settlement_lines`. Before
+calling that a defect, the inputs were checked: driver `88c04cf5…` (Juan USMCA-Battery) has
+`pay_basis='short_miles'`, the load's `driver_pay_rate_per_mile` is **NULL**, and
+`driver_finance.settlement_contract_terms_config` holds **0 rows across ALL entities** — so there is no
+rate source anywhere and `$0.00` is arithmetically what the inputs produce. **Discriminators:**
+`settlement_lines` = 0 **globally** (`all_lines = 0`), `driver_settlements` = 1 globally — the zeros are
+real, not RLS-masked. Recorded as a pay-configuration gap, **not** filed as a posting defect, per the
+classify-row-origin-before-calling-it-a-defect ruling.
+
+```
+VERDICT: FAIL (FE PASS · settlement ping PASS · revenue latch FAIL)
+PR: #4769 (merged a11f6c7, LIVE on prod)
+NEON: load 678fc733-f661-4aeb-b7c3-fb0978bdf61d LUSMCAFREIGHT-20260806-0001 (USMCA, delivered_pending_docs)
+      settlement d3ff8ea3-4acd-4792-b3ad-fdad6383fbb2 trip_closed_at 2026-08-06 17:03:35.171+00  ← fired in-txn
+      latch      560dc6a1-14ed-484b-a2f4-adbd737208c5 created_at     2026-08-08 00:27:37.650484+00 ← +31h, NOT the transition
+      JE         1fac8d19-668c-4f82-8d53-aba34592a2bb DR 1150 100 / CR 4000 100, balanced, USMCA
+      flag REVENUE_RECOGNITION_POST_ENABLED USMCA enabled since 2026-07-26 19:21:26+00
+APP: healthz/shallow = a11f6c7; FE bundle carries #4769's mapping + transition URL
+BLOCKED: none — finding routed to CC-1 via board + register, not via the owner
+```
