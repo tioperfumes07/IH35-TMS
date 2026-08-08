@@ -170,6 +170,12 @@ export function assertScoreboardContract(sources) {
   if (!/data-testid="program-scoreboard-recent-activity"/.test(page)) {
     problems.push(`${PAGE}: must render Recent activity panel (last 10 PRs)`);
   }
+  if (!/program-scoreboard-recent-source|recentActivitySource/.test(page)) {
+    problems.push(`${PAGE}: must surface recentActivitySource so stale ledger cannot pass as live`);
+  }
+  if (!/program-scoreboard-recent-stale-warning/.test(page)) {
+    problems.push(`${PAGE}: must warn when recentActivitySource is ledger_committed`);
+  }
   if (/"recentActivity"\s*:/.test(data) || /recentActivity:\s*\[/.test(data)) {
     problems.push(
       `${DATA}: recentActivity must NOT live in the typecheck-gated seed — serve it live from the API`
@@ -186,6 +192,25 @@ export function assertScoreboardContract(sources) {
     }
     if (!/loadRecentActivityFromGitHub|GITHUB_PULLS_URL/.test(route)) {
       problems.push(`${routeRel}: must expose loadRecentActivityFromGitHub (live heartbeat)`);
+    }
+    // PROG-PRFEED-STALE-LEDGER — committed recentActivity must never short-circuit live sources.
+    if (
+      /readRecentActivityFromLedger[\s\S]{0,400}if\s*\(\s*ledger\.length\s*>\s*0\s*\)[\s\S]{0,200}return\s+ledger/.test(
+        route,
+      ) &&
+      !/readRecentActivityFromGitLog/.test(route)
+    ) {
+      problems.push(
+        `${routeRel}: must not prefer committed ledger recentActivity over live git log / GitHub (PROG-PRFEED-STALE-LEDGER)`,
+      );
+    }
+    if (!/readRecentActivityFromGitLog/.test(route)) {
+      problems.push(
+        `${routeRel}: must compute recentActivity from request-time git log (not only a committed JSON snapshot)`,
+      );
+    }
+    if (!/recentActivitySource/.test(route)) {
+      problems.push(`${routeRel}: must stamp meta.recentActivitySource (git_log|github|ledger_committed)`);
     }
     if (
       /block-reconciliation-data\.json/.test(route) &&
