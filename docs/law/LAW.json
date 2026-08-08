@@ -425,5 +425,12 @@
     "source_file": "apps/backend/src/accounting/ar-aging.service.ts",
     "guard": "scripts/verify-void-status-literal-matches-column.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-SQL-SELECT-LIST-PHANTOM-COLUMN",
+    "title": "A phantom column in the SELECT LIST is as fatal as one in WHERE — both throw 42703 and 500 the endpoint — so verify-sql-column-existence must check PROJECTED columns, not only WHERE/SET/ORDER-BY ones; a select-list-only phantom passed the guard with exit 0 while the route it lived in failed on every call",
+    "source_file": "apps/backend/src/dispatch/auth-gates/wf-038-active-driver.gate.ts",
+    "guard": "scripts/verify-sql-column-existence.mjs",
+    "type": "enforced"
   }
 ]
