@@ -97,6 +97,9 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-TXN-018` | P0 | CC-1 (money) | — | — | — | — | — | — |
 | ☐ | `LV-PAY-SETTLE-NOPOST` | — | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-AP-OPEN-INCLUDES-VOIDED` | — | CC-1 / money | — | — | — | — | — | — |
+| ☐ | `ACCT-F174` | P0 | CC-1 / money | — | — | — | — | — | — |
+| ☐ | `LV-AP-VOID-MARKER-SPLIT` | P0 | CC-1 / money | — | — | — | — | — | — |
+| ☐ | `LV-EXPENSE-CATEGORY-PICKER-EMPTY-RC` | P1 | FE / mechanical | — | — | — | — | — | — |
 | ☐ | `LV-BILLS-VENDOR-UUID` | — | CC-2 / mechanical+FE | — | — | — | — | — | — |
 | ☐ | `LV-REVREC-NOT-FIRING` | — | CC-1 / money — URGENT | — | — | — | — | — | — |
 | ☐ | `LV-BILLVOID-DATE-ERROR` | — | CC-1 / money — URGENT, blocks the void path | — | — | — | — | — | — |
