@@ -11,6 +11,7 @@ import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { useToast } from "../components/Toast";
+import { ApiError } from "../api/client";
 import { dataTableErrorState } from "../lib/tableError";
 import { DispatchKanban } from "../components/dispatch/DispatchKanban";
 import { listUnitsWithoutLoad } from "../api/dispatch";
@@ -437,7 +438,24 @@ export function DispatchPage({
               setNewLoadOpen(true);
             }}
             onStatusDrop={async (id, nextStatus) => {
-              await statusMutation.mutateAsync({ id, body: { new_status: nextStatus } });
+              // LV-KANBAN-DROP-SILENT-FAILURE: this await had no catch and useUpdateLoadStatus has onSuccess
+              // only, so ANY failure — a refused transition, 403, network — threw an unhandled rejection with
+              // no toast and no banner. The card sprang back and the dispatcher was told nothing, so a failed
+              // drag is indistinguishable from a successful one. That is how a human came to report a load as
+              // "Completed" while prod still held delivered_pending_docs: the UI looks identical either way.
+              // Same lie-by-silence family as LV-DISPATCH-TOAST-LIES (#4783/#4785).
+              try {
+                await statusMutation.mutateAsync({ id, body: { new_status: nextStatus } });
+              } catch (error) {
+                const detail =
+                  error instanceof ApiError
+                    ? String((error.data as Record<string, unknown> | undefined)?.error ?? `HTTP ${error.status}`)
+                    : error instanceof Error
+                      ? error.message
+                      : "unknown error";
+                // Name the status that was refused — "it didn't work" is not actionable on a board with 11 lanes.
+                pushToast(`Could not move load to ${nextStatus}: ${detail}`, "error");
+              }
             }}
           />
         )

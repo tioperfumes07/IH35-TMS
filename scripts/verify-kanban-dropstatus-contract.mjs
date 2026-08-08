@@ -92,6 +92,36 @@ export function moneyPathStatuses(apiSrc) {
  */
 const MONEY_FREE_PRE_DISPATCH = new Set(["planned", "booked"]);
 
+/**
+ * LV-KANBAN-DROP-SILENT-FAILURE (2026-08-08). The drop handler must SURFACE a failure.
+ *
+ * `onStatusDrop` awaited `statusMutation.mutateAsync(...)` with no catch, and `useUpdateLoadStatus` has an
+ * `onSuccess` handler only — no `onError`. So a refused transition, a 403 or a network error became an
+ * unhandled promise rejection: no toast, no banner, card springs back. A failed drag looked exactly like a
+ * successful one, which is how a load got reported as "Completed" while prod still held
+ * delivered_pending_docs. The lane vocabulary being right (asserted above) is worthless if the write can
+ * fail in silence.
+ */
+export function auditDropErrorHandling(pageSrc) {
+  const problems = [];
+  const m = pageSrc.match(/onStatusDrop=\{async \([^)]*\) => \{([\s\S]*?)\n\s*\}\}/);
+  if (!m) {
+    problems.push(`onStatusDrop handler not found in the dispatch page — refusing to pass vacuously.`);
+    return problems;
+  }
+  const body = m[1];
+  if (!/\bcatch\b/.test(body)) {
+    problems.push(
+      `onStatusDrop awaits the status mutation without a catch. Any failure becomes an unhandled rejection ` +
+        `with no toast, so a refused drop is indistinguishable from a successful one ` +
+        `(LV-KANBAN-DROP-SILENT-FAILURE).`,
+    );
+  } else if (!/pushToast\([^)]*"error"|pushToast\([\s\S]{0,200}?"error"/.test(body)) {
+    problems.push(`onStatusDrop catches the failure but never raises an error toast — the operator still sees nothing.`);
+  }
+  return problems;
+}
+
 export function audit(frontendSrc, backendSrc, apiSrc) {
   const accepted = acceptedStatuses(backendSrc);
   if (!accepted || accepted.length === 0) {
@@ -176,7 +206,20 @@ if (process.argv.includes("--selftest")) {
     ["money path: pre-dispatch lane is an explicit allowed exception", preDispatch, beWithPlanned, apiGood, 0],
     ["money path: mapper unparseable — must not pass vacuously", good, be, "const nope = 1;", 1],
   ];
+  const dropCases = [
+    ["drop surfaces failures", `onStatusDrop={async (id, nextStatus) => {\n try { await m(); } catch (e) { pushToast(\`x\`, "error"); }\n }}`, 0],
+    ["SILENT BAR — drop awaits with no catch (the shipped defect)", `onStatusDrop={async (id, nextStatus) => {\n await statusMutation.mutateAsync({ id });\n }}`, 1],
+    ["drop catches but shows nothing", `onStatusDrop={async (id, nextStatus) => {\n try { await m(); } catch (e) { console.log(e); }\n }}`, 1],
+    ["handler missing — must not pass vacuously", `no handler here`, 1],
+  ];
   let failed = 0;
+  for (const [name, pageSrc, want] of dropCases) {
+    const got = auditDropErrorHandling(pageSrc).length;
+    if (got !== want) {
+      console.error(`SELFTEST FAIL: ${name} — expected ${want}, got ${got}`);
+      failed++;
+    }
+  }
   for (const [name, fe, beSrc, apiSrc, want] of cases) {
     const got = audit(fe, beSrc, apiSrc).length;
     if (got !== want) {
@@ -185,7 +228,7 @@ if (process.argv.includes("--selftest")) {
     }
   }
   if (failed) process.exit(1);
-  console.log(`${LABEL} SELFTEST PASS — ${cases.length} mutations detected correctly`);
+  console.log(`${LABEL} SELFTEST PASS — ${cases.length + dropCases.length} mutations detected correctly`);
   process.exit(0);
 }
 
@@ -197,7 +240,11 @@ for (const rel of [FE, BE, API]) {
 }
 
 const feSrc = fs.readFileSync(path.join(ROOT, FE), "utf8");
-const problems = audit(feSrc, fs.readFileSync(path.join(ROOT, BE), "utf8"), fs.readFileSync(path.join(ROOT, API), "utf8"));
+const PAGE = "apps/frontend/src/pages/Dispatch.tsx";
+const problems = [
+  ...audit(feSrc, fs.readFileSync(path.join(ROOT, BE), "utf8"), fs.readFileSync(path.join(ROOT, API), "utf8")),
+  ...auditDropErrorHandling(fs.readFileSync(path.join(ROOT, PAGE), "utf8")),
+];
 if (problems.length) {
   console.error(`${LABEL} FAIL — a Kanban lane drops to a status the API rejects, or one that silently skips the money path:\n`);
   for (const p of problems) console.error(`  - ${p}`);
