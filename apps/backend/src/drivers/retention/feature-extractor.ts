@@ -36,10 +36,19 @@ export async function extractRetentionFeatures(
 
   if (await tableExists(client, "mdata.loads")) {
     const miles = await client.query<{ m30: string; m90: string }>(
+      // CLS-SCHEMA-DRIFT / PHANTOM COLUMN — prod-verified 2026-08-07: mdata.loads has NO `miles`.
+      // The real columns are loaded_miles / miles_practical / miles_shortest / miles_deadhead, so this
+      // query threw 42703 and the whole retention feature-extract failed — miles_trend_30d_vs_90d_pct
+      // was never merely null, the caller errored. `tableExists` guarded the TABLE, which existed; the
+      // column is what was missing, which is exactly the gap the SELECT-list guard now closes.
+      // Uses the repo's canonical driver/vehicle-miles fallback chain, identical to
+      // accounting/break-even.service.ts:111 and reports/lane-profitability.service.ts:87.
       `
         SELECT
-          COALESCE(SUM(miles) FILTER (WHERE created_at >= now() - interval '30 days'), 0)::text AS m30,
-          COALESCE(SUM(miles) FILTER (WHERE created_at >= now() - interval '90 days'), 0)::text AS m90
+          COALESCE(SUM(COALESCE(loaded_miles, miles_practical, miles_shortest, 0))
+                     FILTER (WHERE created_at >= now() - interval '30 days'), 0)::text AS m30,
+          COALESCE(SUM(COALESCE(loaded_miles, miles_practical, miles_shortest, 0))
+                     FILTER (WHERE created_at >= now() - interval '90 days'), 0)::text AS m90
         FROM mdata.loads
         WHERE operating_company_id = $1::uuid
           AND assigned_primary_driver_id = $2::uuid
