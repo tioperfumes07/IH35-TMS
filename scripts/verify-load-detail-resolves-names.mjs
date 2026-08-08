@@ -31,8 +31,16 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-load-detail-resolves-names";
 const FILE = "apps/backend/src/dispatch/loads.routes.ts";
 
-/** The two columns LoadDetailDrawer.tsx reads with `?? "Unassigned"` / `?? "—"`. */
-const REQUIRED_COLUMNS = ["assigned_primary_driver_name", "assigned_unit_number"];
+/**
+ * The columns LoadDetailDrawer.tsx reads with `?? "Unassigned"` / `?? "—"`.
+ *
+ * `trip_type` added 2026-08-08: the original card named THREE absent columns and only two were resolved,
+ * so TRIP TYPE kept rendering "—". PROD-VERIFIED (information_schema, RLS-immune, visible == n_live_tup):
+ * `views.dispatch_load_with_driver_status` has 18 columns and NO `trip_type`, while `mdata.loads` HAS it
+ * and 6 of 10 loads carry a value (L-20260806-0008 = 'NB'). Fixing two of three fields and calling the
+ * card closed is exactly the half-fix this guard exists to prevent.
+ */
+const REQUIRED_COLUMNS = ["assigned_primary_driver_name", "assigned_unit_number", "trip_type"];
 
 /**
  * Every ON-clause for `LEFT JOIN <table> <alias>` in `src`, one entry per OCCURRENCE.
@@ -84,6 +92,17 @@ export function auditSource(src) {
     }
   });
 
+  // `trip_type` is read from mdata.loads, so that join must carry the load's own entity predicate too —
+  // it is the same id, but an unscoped join here would still be a cross-entity read waiting to happen.
+  joinOnClauses(src, String.raw`mdata\.loads`, "ml").forEach((on, i) => {
+    if (!/\bml\.operating_company_id\s*=\s*l\.operating_company_id/i.test(on)) {
+      problems.push(
+        `${FILE}: mdata.loads join #${i + 1} (alias ml, used for trip_type) is not scoped to the load's ` +
+          `operating_company_id.`,
+      );
+    }
+  });
+
   // mdata.units has NO operating_company_id (§4) — it is scoped by the owner/leased PAIR. The live case
   // that exposed this bug was a TRK-owned unit leased to USMCA, which `owner_company_id` alone drops.
   joinOnClauses(src, String.raw`mdata\.units`, "u").forEach((on, i) => {
@@ -106,8 +125,11 @@ if (process.argv.includes("--selftest")) {
   const good = `
     SELECT l.*,
       NULLIF(TRIM(CONCAT(pd.first_name,' ',pd.last_name)),'') AS assigned_primary_driver_name,
-      u.unit_number AS assigned_unit_number
+      u.unit_number AS assigned_unit_number,
+      ml.trip_type AS trip_type
     FROM views.dispatch_load_with_driver_status l
+    LEFT JOIN mdata.loads ml ON ml.id = l.id
+                            AND ml.operating_company_id = l.operating_company_id
     LEFT JOIN mdata.drivers pd ON pd.id = l.assigned_primary_driver_id
                               AND pd.operating_company_id = l.operating_company_id
     LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
@@ -118,10 +140,13 @@ if (process.argv.includes("--selftest")) {
   const twoUnitJoins = `
     SELECT l.*,
       NULLIF(TRIM(CONCAT(pd.first_name,' ',pd.last_name)),'') AS assigned_primary_driver_name,
-      u.unit_number AS assigned_unit_number
+      u.unit_number AS assigned_unit_number,
+      ml.trip_type AS trip_type
     FROM views.dispatch_load_with_driver_status l
     LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
+    LEFT JOIN mdata.loads ml ON ml.id = l.id
+                            AND ml.operating_company_id = l.operating_company_id
     WHERE l.operating_company_id = $1;
 
     SELECT l.* FROM views.dispatch_load_with_driver_status l
@@ -146,6 +171,8 @@ if (process.argv.includes("--selftest")) {
     ["fully fixed query", good, 0],
     ["missing BOTH columns (the shipped defect)", good.replace(/AS assigned_primary_driver_name/, "AS x").replace(/AS assigned_unit_number/, "AS y"), 2],
     ["missing only the unit number", good.replace(/AS assigned_unit_number/, "AS y"), 1],
+    ["missing trip_type — the field the first fix forgot", good.replace(/AS trip_type/, "AS z"), 1],
+    ["mdata.loads join unscoped (cross-entity read)", good.replace(/\s+AND ml\.operating_company_id = l\.operating_company_id/, ""), 1],
     ["unit join scoped by owner_company_id alone (drops leased units)", good.replace(/COALESCE\([^)]*\)/, "u.owner_company_id"), 1],
     ["primary-driver join unscoped (cross-entity leak)", good.replace(/\s+AND pd\.operating_company_id = l\.operating_company_id/, ""), 1],
     ["two units joins, both correct", twoUnitJoins, 0],
