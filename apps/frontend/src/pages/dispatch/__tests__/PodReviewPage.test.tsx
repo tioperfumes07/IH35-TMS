@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { PodReviewPage } from "../PodReviewPage";
+import { pickCombo } from "../../../test-utils/pickCombo";
 
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91e0bf0a-133f-4ce8-a734-2586cfa66d96" }),
@@ -81,8 +82,14 @@ describe("PodReviewPage (B21-D10)", () => {
     const input = filter.querySelector("input");
     expect(input).toBeTruthy();
     await user.click(input!);
-    const option = await screen.findByRole("button", { name: /L-500/ });
-    await user.click(option);
+    // TWO stale things here, and the second hid behind the first.
+    // (1) The load filter is the shared `Combobox` now, so its rows are role="option", not role="button".
+    // (2) `userEvent.click` on those rows does NOT commit the selection: the listbox is rendered through
+    //     `createPortal` and each row `preventDefault`s mousedown, so loadId stayed unset and
+    //     `LoadBolPanel` never mounted — which looked exactly like "selecting a load does nothing".
+    //     It is a HARNESS artifact, not a product defect: driving the same control with fireEvent (what
+    //     `pickCombo` does, and why the LoadReassignModal/BookLoad picker tests pass) commits correctly.
+    pickCombo(input!, /L-500/);
     expect(await screen.findByTestId("load-pod-bol-panel")).toBeTruthy();
     expect(screen.getByTestId("bol-generate-button")).toBeTruthy();
     expect(screen.getByTestId("bol-download-link")).toBeTruthy();
