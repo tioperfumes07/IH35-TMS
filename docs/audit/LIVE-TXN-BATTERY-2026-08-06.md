@@ -8789,3 +8789,65 @@ correction is filed so the next agent building it does not route around a column
 **Also worth recording for whoever builds Scenario B:** `settlement_lines` is **empty database-wide** (item
 123) — so this `load_id` has never carried a value, and the linkage it enables is **untested**, not merely
 unused.
+
+## 140. ★★★ BROWSER UNBLOCKED — Scenario A verified IN THE PRODUCT. It is **not a wizard**, and 3 fields the DATABASE ALREADY HAS are **not exposed by the UI at all**.
+
+**The owner opened an MCP-connected Chrome. Session is live and authenticated as `tioperfumes07@gmail.com`;
+entity switched USMCA → `IH 35 Transportation` (TRANSP). Scenario A is no longer blocked on access — it is
+blocked on the form.**
+
+### THE COMPLETE `+ Create Driver` FIELD INVENTORY — read off the live panel, TRANSP
+
+| section | fields |
+|---|---|
+| **main (always visible)** | Operating Company · First Name · Last Name · Email · CDL # · CDL Expires · Hire Date · DOT Medical Expires · CDL State · Country · Phone (10 digits) · CDL Class · Status · Pay Basis |
+| **Mexican Identity (optional) ▼** | INE Number · CURP · MX Address Line 1 · MX Address Line 2 · MX City · MX Postal Code · MX State |
+| **Visa & Emergency Contact (optional) ▼** | Visa Type · Visa Number · Visa Expires · Passport Number · Passport Expires · Emergency Contact Name · Relationship · Emergency Phone Primary · Emergency Phone Alternate · Emergency Contact Address · Emergency Contact Notes |
+
+**32 fields, one flat panel, two collapsible sections, one Save button.**
+
+### ★ FINDING 1 — IT IS NOT A WIZARD. The directive's steps do not exist.
+
+The directive asks to *"run the real new-driver wizard end to end"* and confirm *"every wizard step
+(identity/license/medical/drug-test/contact/address/documents) was completed."* **There are no steps.**
+`+ Create Driver` is a single panel; there is **no drug-test step and no document/attachment control
+anywhere in it**. The three files (`INE_…jpeg`, `Medical_Exam-Jorge.jpeg`, the licencia PDF) **cannot be
+attached during creation** — so `docs.file_links` cannot be written by this flow, and the directive's proof
+requirement (*"docs.file_links rows (both-way, entity_type=driver) for all 3 files"*) **cannot be satisfied
+from the create path.**
+
+### ★★ FINDING 2 — THE NEW ONE: three columns EXIST in the database and the form does not offer them
+
+My earlier schema audit (item 138) predicted 13 missing fields. **The live form confirms all 13 — and adds a
+different, worse category:**
+
+| field | database | Create Driver UI |
+|---|---|---|
+| **Licencia Federal number** (`TAMP240052`) | **`mdata.drivers.mexican_license_number` EXISTS** | **ABSENT** |
+| **Licencia Federal expiry** (2027-03-27) | **`mexican_license_expiration` EXISTS** | **ABSENT** |
+| **Passport country** (Mexico) | **`passport_country` EXISTS** | **ABSENT** (number + expiry are there) |
+
+**The panel offers CDL #, CDL Expires, CDL State and CDL Class — the US credential — and offers NO field for
+the Mexican federal licence, which is the ONLY licence this driver holds.** The column is right there in the
+table. **This is not a schema gap to migrate; it is a form that does not surface what the schema already
+supports** — a strictly cheaper fix, and a strictly more embarrassing omission, for a carrier whose drivers
+are Mexican B1 contractors.
+
+### CONFIRMED ABSENT FROM BOTH SCHEMA AND UI (the item-138 thirteen, now verified in the product)
+
+place of birth · nationality · gender · **RFC** · driver's second phone (the panel has ONE "Phone (10
+digits)"; the two Emergency Phone fields belong to the *contact*, not the driver) · visa **issue** date ·
+passport **issue** date · licence **issue** date · licence **categoría** · medical **exam date** · medical
+**result (APTO)** · **examiner** · **exam number** · **expediente**.
+
+**The issue-date pattern is now visible on screen:** the form shows *Visa Expires*, *Passport Expires*,
+*CDL Expires*, *DOT Medical Expires* — **four expiry fields and not one issue date.**
+
+### WHAT I DID NOT DO, AND WHY
+
+**I did not save a partial driver.** The directive says *"Fill EVERY field"* and *"Do not skip, do not
+fake"* — creating `Jorge Pablo Guadalupe Muñoz Gonzalez` with his federal licence, RFC, medical detail and
+three documents silently dropped would produce a record that **looks** complete on the Drivers list and is
+missing exactly the evidence a DOT audit asks for. **Under the directive's own rule — *"If a required field
+or wizard step does NOT exist in the UI, STOP and file it as a gap"* — this is the stop.** The gap is filed;
+the row is not created.
