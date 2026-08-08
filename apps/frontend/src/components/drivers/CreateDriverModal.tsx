@@ -8,6 +8,7 @@ import { ApiError } from "../../api/client";
 import {
   checkReturningDriver,
   createDriver,
+  resendDriverInvite,
   type ReturningDetectionResult,
 } from "../../api/mdata";
 import { listMyCompanies } from "../../api/org";
@@ -169,6 +170,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
   const [overrideReturningWarning, setOverrideReturningWarning] = useState(false);
   const [rehireAction, setRehireAction] = useState<"rehire" | "new">("rehire");
   const [selectedPriorDriverId, setSelectedPriorDriverId] = useState<string | null>(null);
+  const [invitePending, setInvitePending] = useState(false);
+  const [inviteSent, setInviteSent] = useState(false);
   const [createSummary, setCreateSummary] = useState<{
     driver_id: string;
     phone: string;
@@ -327,7 +330,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ["drivers"] });
       if (saveModeRef.current === "add_another") {
-        pushToast("Driver created and invite sent", "success");
+        pushToast("Driver created. No invite sent yet.", "success");
         setForm({ ...DRIVER_CREATE_FORM_INITIAL });
         setShowMexicanIdentity(false);
         setShowVisaEmergency(false);
@@ -345,7 +348,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         invite_url: created.invite_url,
         linked_user_event_type: created.linked_user_event_type,
       });
-      pushToast("Driver created and invite sent", "success");
+      pushToast("Driver created. No invite sent yet.", "success");
       setForm({ ...DRIVER_CREATE_FORM_INITIAL });
       setShowMexicanIdentity(false);
       setShowVisaEmergency(false);
@@ -850,9 +853,39 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
 
   const driverCreateSummary = (
     <div className="space-y-3">
-      <p className="text-sm text-gray-700">
-        WhatsApp invite sent to {createSummary?.phone}. Invite expires in 72 hours.
+      {/* INVITE-NOT-ON-SAVE — Save used to fire a real WhatsApp message with a live 72-hour token to
+          whatever phone was on the record, and this line asserted it had. Saving no longer sends; the
+          invite is prepared and sending is a separate, deliberate action below. The copy states what
+          actually happened rather than what the button used to do. */}
+      <p className="text-sm text-gray-700" data-testid="invite-not-sent-notice">
+        Driver created. <strong>No invite has been sent.</strong> The invite link below is ready and
+        expires 72 hours after it is sent.
       </p>
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          data-testid="send-invite-confirm"
+          disabled={invitePending || inviteSent || !createSummary?.driver_id}
+          onClick={async () => {
+            if (!createSummary?.driver_id) return;
+            // Deliberate second action, and it goes through the SAME endpoint the office already uses
+            // to re-send — no second sender to keep in step with the first.
+            if (!window.confirm(`Send a WhatsApp invite to ${createSummary.phone}? This messages that number.`)) return;
+            setInvitePending(true);
+            try {
+              await resendDriverInvite(createSummary.driver_id);
+              setInviteSent(true);
+              pushToast(`Invite sent to ${createSummary.phone}`, "success");
+            } catch (error) {
+              pushToast(error instanceof Error ? error.message : "Could not send invite", "error");
+            } finally {
+              setInvitePending(false);
+            }
+          }}
+        >
+          {inviteSent ? "Invite sent" : invitePending ? "Sending…" : `Send WhatsApp invite to ${createSummary?.phone ?? ""}`}
+        </Button>
+      </div>
       {createSummary?.linked_user_event_type === "existing_user" ? (
         <p className="text-sm text-slate-700">
           Phone {createSummary.phone} was already registered. Linked existing account.
