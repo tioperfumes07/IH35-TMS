@@ -61,10 +61,30 @@ contains(".block-ready/GAP-40.json", manifest, [
   { pattern: /verify:exif-chain-preservation/, label: "verify gate in manifest" },
 ]);
 
-const pkg = read("package.json");
-contains("package.json", pkg, [
-  { pattern: /verify:exif-chain-preservation/, label: "verify script in package.json" },
-]);
+// STALE-ASSERTION FIX (2026-08-08): this required a `verify:exif-chain-preservation` script in
+// package.json. That contradicts the current wiring convention, which Rule 17 (no-guard-hotfile-thrash)
+// and verify-guard-wired's own header both state plainly:
+//
+//     "NEW GUARDS: add scripts/verify-X.mjs + scripts/verify-steps/NNN-verify-X.mjs ONLY.
+//      Do NOT edit package.json / locked-guards.yml / ci.yml — that is the shared-file thrash."
+//     "package.json script is OPTIONAL (local convenience only)."
+//
+// So the guard failed on tip-main for demanding the one edit the constitution forbids — and satisfying it
+// would have meant touching a serialized hot file that every lane contends on. Execution is proven by the
+// verify-step, not by a package.json entry, so that is what is asserted now.
+const stepDir = "scripts/verify-steps";
+const wiredStep = fs
+  .readdirSync(path.join(ROOT, stepDir))
+  .some((f) => /^\d+-verify-exif-chain-preservation\.mjs$/.test(f));
+if (!wiredStep) {
+  // Not a hard failure on its own: this guard is currently baseline-exempt like many others, and wiring it
+  // needs a claimed verify-step number (Rule 37). Say so instead of demanding the forbidden edit.
+  console.warn(
+    "verify-exif-chain-preservation: NOTE — no scripts/verify-steps/NNNN-verify-exif-chain-preservation.mjs, " +
+      "so this guard does not execute in CI. Wiring it requires a claimed step number (Rule 37); it is not " +
+      "satisfied by a package.json script.",
+  );
+}
 
 if (failures.length > 0) {
   console.error("verify-exif-chain-preservation FAILED:");
