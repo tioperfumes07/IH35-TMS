@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useForm } from "react-hook-form";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "../../../components/Toast";
 import { CreateWOSectionIdentification } from "./CreateWOSectionIdentification";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 
@@ -103,8 +104,13 @@ function TestHarness() {
 function renderSection() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
+    // ToastProvider: this section now calls useToast (a child gained it after this harness was written),
+    // so every render threw "useToast must be used inside ToastProvider" before any assertion ran. The app
+    // always renders it inside the provider — the harness was the unrealistic part.
     <QueryClientProvider client={client}>
-      <TestHarness />
+      <ToastProvider>
+        <TestHarness />
+      </ToastProvider>
     </QueryClientProvider>
   );
 }
