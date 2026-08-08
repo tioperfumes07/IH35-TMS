@@ -106,6 +106,10 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
+          // A placeholder is NOT an accessible name — it is not announced as a label by screen readers and
+          // it disappears once the user types. This input had no name at all (verified by dumping the render:
+          // every control here came back label=NONE), so it was unreachable by name for assistive tech.
+          aria-label="Search by code or label"
           placeholder="Search by code or label"
           className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
         />
