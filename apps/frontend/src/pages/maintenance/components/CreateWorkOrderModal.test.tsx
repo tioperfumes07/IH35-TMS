@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 import { CreateWorkOrderModal } from "./CreateWorkOrderModal";
@@ -44,6 +45,9 @@ function renderModal() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
+      {/* MemoryRouter: the modal (or a child it gained) calls useNavigate, so every render threw
+          "useNavigate() may be used only in the context of a <Router>". */}
+      <MemoryRouter>
       <ToastProvider>
         <CreateWorkOrderModal
           open={true}
@@ -52,6 +56,7 @@ function renderModal() {
           onCreated={() => {}}
         />
       </ToastProvider>
+      </MemoryRouter>
     </QueryClientProvider>
   );
 }

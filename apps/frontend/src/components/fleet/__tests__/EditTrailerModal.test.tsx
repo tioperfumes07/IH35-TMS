@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ToastProvider } from "../../Toast";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import * as clientApi from "../../../api/client";
@@ -26,12 +27,17 @@ describe("EditTrailerModal", () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={qc}>
+        {/* ToastProvider: the component calls useToast, so every render threw "useToast must be used inside
+          ToastProvider" and the test died before a single assertion. The app always renders inside the
+          provider; the harness was the unrealistic part. */}
+        <ToastProvider>
         <EditTrailerModal
           open
           trailerId="eq-1"
           operatingCompanyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
           onClose={() => undefined}
         />
+        </ToastProvider>
       </QueryClientProvider>
     );
     expect(screen.getByTestId("tp-edit-trailer-modal")).toBeTruthy();
