@@ -178,11 +178,23 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
             -- superseded this column but the NOT NULL was left behind with nothing writing it.
             -- Derived from the SAME $2 expression as filed_at (not a new parameter) so the two can never
             -- disagree, and so a caller-supplied filed_at lands on the same calendar day.
-            complaint_date
+            complaint_date,
+            -- Same class as complaint_date: v5 (migration 0050) NOT NULL columns that the v6.4 INSERT
+            -- never filled, so each one 500s with Postgres 23502 in turn. Filling them from their v6.4
+            -- equivalents rather than one-per-deploy:
+            --   respondent_id      = the v5 SINGLE respondent id; v6.4 split it into two typed columns,
+            --                        and respondent_type already says which one is populated.
+            --   complaint_type_id  = FK to catalogs.complaint_types, resolved from the v6.4 type_code
+            --                        text within the same operating company (type_code is UNIQUE per company).
+            respondent_id,
+            complaint_type_id
           )
           VALUES (
             $1, COALESCE($2::timestamptz, now()), $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, COALESCE($16, 'open'), $17, $18,
-            COALESCE($2::timestamptz, now())::date
+            COALESCE($2::timestamptz, now())::date,
+            COALESCE($10::uuid, $11::uuid),
+            (SELECT ct.id FROM catalogs.complaint_types ct
+              WHERE ct.operating_company_id = $1::uuid AND ct.type_code = $12 LIMIT 1)
           )
           RETURNING *
         `,

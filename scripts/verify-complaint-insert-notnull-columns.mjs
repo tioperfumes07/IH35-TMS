@@ -42,6 +42,15 @@ function assert(files) {
   if (!/COALESCE\(\$2::timestamptz, now\(\)\)::date/.test(vals)) {
     problems.push(`${ROUTE}: complaint_date must be derived from the SAME $2 expression as filed_at, so the two cannot disagree`);
   }
+  // The v5 table (migration 0050) left THREE NOT NULL columns with no default that v6.4 does not natively
+  // write. Each one 500s with Postgres 23502 in turn, so they are asserted together — fixing them one at a
+  // time costs a deploy cycle per column.
+  if (!/respondent_id/.test(cols) || !/COALESCE\(\$10::uuid, \$11::uuid\)/.test(vals)) {
+    problems.push(`${ROUTE}: respondent_id (v5 NOT NULL) must be filled from COALESCE(respondent_driver_id, respondent_user_id)`);
+  }
+  if (!/complaint_type_id/.test(cols) || !/FROM catalogs\.complaint_types/.test(vals)) {
+    problems.push(`${ROUTE}: complaint_type_id (v5 NOT NULL FK) must resolve from the v6.4 type_code within the same company`);
+  }
   // Lockstep: a column added without its value silently shifts every later column.
   const colNames = cols
     .slice(cols.indexOf("(") + 1, cols.lastIndexOf(")"))
@@ -72,8 +81,10 @@ const files = Object.fromEntries([ROUTE].map((rel) => [rel, readFileSync(path.jo
 if (SELFTEST) {
   const checks = [
     // The comment block sits between the comma and the column, so target the bare column line itself.
-    ["complaint_date column dropped", { [ROUTE]: files[ROUTE].replace(/\n +complaint_date\n(?= +\))/, "\n") }],
-    ["complaint_date value dropped", { [ROUTE]: files[ROUTE].replace(/,\n\s*COALESCE\(\$2::timestamptz, now\(\)\)::date\n/, "\n") }],
+    ["complaint_date column dropped", { [ROUTE]: files[ROUTE].replace(/\n +complaint_date,\n/, "\n") }],
+    ["complaint_date value dropped", { [ROUTE]: files[ROUTE].replace(/COALESCE\(\$2::timestamptz, now\(\)\)::date,/, "") }],
+    ["respondent_id value dropped", { [ROUTE]: files[ROUTE].replace(/COALESCE\(\$10::uuid, \$11::uuid\),/, "") }],
+    ["complaint_type_id lookup dropped", { [ROUTE]: files[ROUTE].replace(/FROM catalogs\.complaint_types/, "FROM catalogs.x_removed") }],
   ];
   for (const [name, planted] of checks) {
     if (!assert(planted).length) {
