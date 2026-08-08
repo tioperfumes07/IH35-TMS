@@ -10,13 +10,78 @@ import { listActiveVendorClassifications } from "./classification-queries.js";
 import { isTestVendorFixtureName } from "./fixture-vendor-name-pattern.js";
 import { searchVendorsForAutocomplete } from "./vendor-autocomplete.shared.js";
 
-// LST-PICKER-01 (guard 1852) — vendor_type is now CATALOG-BACKED (catalogs.vendor_types), per entity,
-// with an inline "+ Add new vendor type" row (VendorCreateModal / VendorDetail). This used to be a
-// frozen z.enum of the original 8 legacy values, which 400'd on PATCH/POST the moment an owner added a
-// new vendor type from the catalog picker — the catalog table had rows the API would reject outright.
-// The mdata.vendors.vendor_type column is `text` on prod (0008_mdata_init.sql), so a free-form string
-// is the correct app-layer shape.
-const vendorTypeSchema = z.string().trim().min(1).max(100);
+// LST-PICKER-01 (guard 1852) — vendor_type is CATALOG-BACKED (catalogs.vendor_types), per entity, with an
+// inline "+ Add new vendor type" row (VendorCreateModal / VendorDetail). It was once a frozen z.enum of
+// the 8 legacy values, which 400'd on PATCH/POST the moment an owner added a new vendor type from the
+// catalog picker, so PR #3884 widened it to a free-form `z.string().trim().min(1).max(100)`. The COLUMN is
+// `text` (0008_mdata_init.sql), so free-form looked right at the app layer — but the TABLE also carries a
+// CHECK constraint that was never widened to match, which is the defect below.
+//
+// LV-TXN-017 — the app layer and the DATABASE held different contracts, and the database won with a 500.
+//
+// PROD-VERIFIED 2026-08-08 on br-fancy-credit-akjnd07a (pg_constraint, RLS-immune):
+//   vendors_vendor_type_check = CHECK (vendor_type = ANY (ARRAY['Fuel','Repair','Tires','Towing',
+//   'Insurance','Permit','Toll','Other'])), convalidated = true.
+// The relax migration 202611021200 that would widen this is marked HOLD-FOR-JORGE / "DO NOT RUN ON PROD"
+// and is NOT applied, so the closed 8-value list is what production actually enforces TODAY.
+//
+// The zod above accepts ANY string up to 100 chars, so anything outside those 8 reached Postgres and
+// aborted as HTTP 500 / PG 23514 instead of a 400. The constraint is CASE-SENSITIVE, so the single most
+// likely human or import input — lowercase 'other', 'fuel', 'repair' — produced an opaque Internal Server
+// Error that named neither the field, the legal values, nor the fact that only capitalisation was wrong.
+// CC-3 proved it live on USMCA (deploy e6343f4): 'Other' -> 201, 'other' -> 500 23514, 'NotAType123' -> 500.
+//
+// WHY TIGHTENING IS SAFE HERE, measured rather than assumed: the comment above warns that a frozen enum
+// once 400'd when an owner added a vendor type via the catalogs.vendor_types picker. On prod TODAY that
+// scenario does not exist — catalogs.vendor_types holds 24 rows across the three entities with ZERO
+// distinct names outside these 8, and all 2837 mdata.vendors rows (visible == n_live_tup, so no RLS
+// masking) use 'Other'. Nothing live is rejected by this list that the DATABASE was not already rejecting
+// with a 500. A catalog type outside the 8 still cannot be saved — but it now fails as an honest 400 that
+// names the legal values instead of a 500, and the real unblock is applying that held migration.
+//
+// We also NORMALISE case, which the card recommends: 'other' now round-trips as 'Other' (201) rather than
+// 500ing on a capitalisation difference no UI ever surfaced.
+export const VENDOR_TYPE_VALUES = ["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"] as const;
+
+const VENDOR_TYPE_BY_LOWER = new Map(VENDOR_TYPE_VALUES.map((v) => [v.toLowerCase(), v]));
+
+/** Canonical form for a caller-supplied vendor type, or null when it is not one of the 8. */
+function canonicalVendorType(raw: string): string | null {
+  return VENDOR_TYPE_BY_LOWER.get(raw.trim().toLowerCase()) ?? null;
+}
+
+/**
+ * WRITE paths (create/update). Rejects with a 400 naming the legal values instead of letting the DB CHECK
+ * raise a 23514, and normalises case so only genuinely unknown types fail.
+ */
+const vendorTypeWriteSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(100)
+  .transform((v, ctx) => {
+    const canonical = canonicalVendorType(v);
+    if (!canonical) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `vendor_type must be one of: ${VENDOR_TYPE_VALUES.join(", ")} (case-insensitive)`,
+      });
+      return z.NEVER;
+    }
+    return canonical;
+  });
+
+/**
+ * READ filter. Canonicalises case so `?vendor_type=other` matches the stored 'Other', but deliberately
+ * does NOT reject an unknown value — a filter that matches nothing should return an empty list, not a 400.
+ * Tightening a read is a behaviour change nobody asked for; the 500 this card is about is on the WRITES.
+ */
+const vendorTypeFilterSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(100)
+  .transform((v) => canonicalVendorType(v) ?? v);
 const QBO_ARCHIVE_PROJECTION_SOURCE_RE = /Projected from qbo_archive\.entities_snapshot[^\n]*/gi;
 
 // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD): the vendor row shape returned by every
@@ -60,7 +125,7 @@ const listQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
   status: z.enum(["active", "inactive"]).optional(),
   search: z.string().trim().min(1).max(100).optional(),
-  vendor_type: vendorTypeSchema.optional(),
+  vendor_type: vendorTypeFilterSchema.optional(),
   operating_company_id: z.string().uuid().optional(),
   // QboCombobox picker repoint: autocomplete mode reads the CANONICAL mdata.vendors (with qbo_vendor_id)
   // instead of the mdata.qbo_vendors mirror, so vendors created via the canonical writer are visible.
@@ -81,7 +146,7 @@ const detailQuerySchema = z.object({
 const createVendorBodySchema = z.object({
   name: z.string().trim().min(1).max(200),
   vendor_code: z.string().trim().max(100).optional(),
-  vendor_type: vendorTypeSchema,
+  vendor_type: vendorTypeWriteSchema,
   phone: z.string().trim().max(50).optional(),
   email: z
     .string()
@@ -117,7 +182,7 @@ const updateVendorBodySchema = z
   .object({
     name: z.string().trim().min(1).max(200).optional(),
     vendor_code: z.string().trim().max(100).nullable().optional(),
-    vendor_type: vendorTypeSchema.optional(),
+    vendor_type: vendorTypeWriteSchema.optional(),
     phone: z.string().trim().max(50).nullable().optional(),
     email: z
       .string()
