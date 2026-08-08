@@ -137,13 +137,24 @@ describeIntegration("CLS-SUBLEDGER-GL-DARK-TIEOUT — A/R subledger ties to the 
     return { invoiceId, loadId };
   }
 
+  /**
+   * Post an invoice through the real route and assert it actually POSTED.
+   *
+   * The route answers 201 for a fresh post and 200 only for `already_posted`
+   * (posting-engine.routes.ts:142), so a bare 2xx check would pass on a no-op re-post and this whole
+   * file would then measure a control account that never moved. Assert the semantic result, not the
+   * status code.
+   */
   async function postInvoice(invoiceId: string) {
-    return app.inject({
+    const res = await app.inject({
       method: "POST",
       url: `/api/v1/accounting/posting-engine-mvp/post?operating_company_id=${companyId}`,
       headers: testAuthHeaders(userId),
       payload: { source_transaction_type: "invoice", source_transaction_id: invoiceId },
     });
+    expect(res.statusCode, `post failed: ${res.body}`).toBe(201);
+    expect((res.json() as { result?: string }).result).toBe("posted");
+    return res;
   }
 
   async function receivePayment(invoiceId: string, amountCents: number) {
@@ -282,8 +293,7 @@ describeIntegration("CLS-SUBLEDGER-GL-DARK-TIEOUT — A/R subledger ties to the 
     await setFlag(INVOICE_FLAG, true);
     const { invoiceId } = await seedInvoice();
 
-    const posted = await postInvoice(invoiceId);
-    expect(posted.statusCode).toBe(200);
+    await postInvoice(invoiceId);
 
     const row = await arTieOut();
     // Both sides must be the invoice — a tie at ZERO on both sides would be a vacuous pass, and is
@@ -298,11 +308,13 @@ describeIntegration("CLS-SUBLEDGER-GL-DARK-TIEOUT — A/R subledger ties to the 
     await setFlag(INVOICE_FLAG, true);
     await setFlag(PAYMENT_FLAG, true);
     const { invoiceId } = await seedInvoice();
-    expect((await postInvoice(invoiceId)).statusCode).toBe(200);
+    await postInvoice(invoiceId);
 
     const before = await arTieOut();
     const paid = await receivePayment(invoiceId, INVOICE_CENTS);
-    expect(paid.statusCode).toBe(201);
+    // Carry the body into the message: a bare status assertion that fails tells you nothing, and this
+    // file has already cost three CI round-trips on things a one-line message would have named.
+    expect(paid.statusCode, `payment failed: ${paid.body}`).toBe(201);
 
     const after = await arTieOut();
     // The invoice left BOTH sides. Asserting the delta rather than an absolute keeps this honest when
@@ -320,11 +332,13 @@ describeIntegration("CLS-SUBLEDGER-GL-DARK-TIEOUT — A/R subledger ties to the 
     await setFlag(INVOICE_FLAG, true);
     await setFlag(PAYMENT_FLAG, false);
     const { invoiceId } = await seedInvoice();
-    expect((await postInvoice(invoiceId)).statusCode).toBe(200);
+    await postInvoice(invoiceId);
 
     const before = await arTieOut();
     const paid = await receivePayment(invoiceId, INVOICE_CENTS);
-    expect(paid.statusCode).toBe(201);
+    // Carry the body into the message: a bare status assertion that fails tells you nothing, and this
+    // file has already cost three CI round-trips on things a one-line message would have named.
+    expect(paid.statusCode, `payment failed: ${paid.body}`).toBe(201);
 
     const after = await arTieOut();
     // The subledger dropped the invoice; the control account did NOT.
