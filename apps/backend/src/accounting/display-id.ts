@@ -88,6 +88,45 @@ export async function nextCreditMemoDisplayId(client: Queryable, operatingCompan
   return `${prefix}${String(nextNumber).padStart(4, "0")}`;
 }
 
+/**
+ * ACCT-F186 (board card LV-BILL-NO-DISPLAY-ID) — bills were the ONLY money document with no
+ * human-readable identifier. Measured on prod with the origin test applied: TMS-native bills
+ * 13 of 13 carry display_id NULL, in every entity, while TMS-native invoices carry one 6 of 6 and
+ * payments 2 of 2. (The 16,245 QBO clones are excluded from that claim — their NULL is expected
+ * state under parallel books, not a gap.) A bill is what you argue about with a vendor, attach to
+ * an approval, cite in a dispute and hand an auditor; without this it can only be cited by raw UUID,
+ * which is exactly what the app URL falls back to.
+ *
+ * Deliberately identical in shape to nextInvoiceDisplayId: same advisory lock discipline, same
+ * per-entity + per-year scope, same padding width as the invoice/payment series so the documents
+ * read alike. display_id is unique PER ENTITY, never globally.
+ */
+export async function nextBillDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
+  const year = toYear(referenceDate);
+  const prefix = `BILL-${year}-`;
+  await withDisplayLock(client, `accounting.bill.display_id:${operatingCompanyId}:${year}`);
+  const res = await client.query<{ next_number: number }>(
+    `
+      SELECT COALESCE(
+        MAX(
+          CASE
+            WHEN display_id LIKE $2 || '%' THEN right(display_id, 5)::int
+            ELSE 0
+          END
+        ),
+        0
+      ) + 1 AS next_number
+      FROM accounting.bills
+      WHERE operating_company_id = $1
+        AND bill_date >= make_date($3, 1, 1)
+        AND bill_date < make_date($3 + 1, 1, 1)
+    `,
+    [operatingCompanyId, prefix, year]
+  );
+  const nextNumber = Number(res.rows[0]?.next_number ?? 1);
+  return `${prefix}${String(nextNumber).padStart(5, "0")}`;
+}
+
 export async function nextVendorCreditDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
   const year = toYear(referenceDate);
   const prefix = `VC-${year}-`;

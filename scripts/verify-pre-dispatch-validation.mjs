@@ -146,12 +146,48 @@ check(
   "Import and render PreDispatchValidationPanel in BookLoadModalV4.tsx Section D"
 );
 
-// ── 10. Book button blocking logic ────────────────────────────────────────────
-check(
-  "Book button disabled when blockers exist (preDispatchHasBlockers)",
-  modalSource?.includes("preDispatchHasBlockers"),
-  "Wire preDispatchHasBlockers to disable the Book + dispatch button"
-);
+// ── 10. Blocking is ENFORCED ─────────────────────────────────────────────────
+//
+// STALE-ASSERTION FIX (2026-08-08): this required the modal to contain `preDispatchHasBlockers` and to
+// disable the Book + dispatch button with it. That symbol exists NOWHERE in the repo, and the guard has
+// failed on tip-main ever since — while blocking works, and works BETTER than the check demanded.
+//
+// The modal enforces blockers on the SERVER's verdict, not on a client-side pre-check: the submit handler
+// catches the backend's refusal codes — E_UNIT_DISPATCH_BLOCKED, E_UNIT_OOS, E_DRIVER_HOS_VIOLATION — sets
+// a `hard_block` / `hos_block` gate banner and RETURNS, and the override is role-gated (Owner for
+// hard_block, Manager+ for HOS, "Contact Owner to override." otherwise).
+//
+// That is strictly stronger than a disabled button. A disabled button is a client-side courtesy that
+// devtools or a direct API call walks straight past; a server refusal cannot be bypassed. It also preserves
+// the audited "Override & dispatch" path the business actually requires — which a hard-disabled button would
+// have to break or duplicate.
+//
+// So the assertion now covers the CONTRACT (blockers are enforced and the override is role-gated) instead of
+// one superseded implementation detail. It refuses to pass vacuously if the modal cannot be read.
+if (!modalSource) {
+  check("Blocking enforced — modal readable", false, "BookLoadModalV4 source could not be read");
+} else {
+  const blockCodes = ["E_UNIT_DISPATCH_BLOCKED", "E_UNIT_OOS", "E_DRIVER_HOS_VIOLATION"];
+  // Match the QUOTED literal, not a substring. A bare includes() passed when the code was renamed to
+  // E_UNIT_DISPATCH_BLOCKED_RENAMED — the mutation that was supposed to fail it — because the old name is a
+  // prefix of the new one. My own mutation proof caught that; substring matching is not identity.
+  const missingCodes = blockCodes.filter((code) => !new RegExp(`["']${code}["']`).test(modalSource));
+  check(
+    "Server block codes are handled (E_UNIT_DISPATCH_BLOCKED / E_UNIT_OOS / E_DRIVER_HOS_VIOLATION)",
+    missingCodes.length === 0,
+    `Modal ignores server refusal code(s): ${missingCodes.join(", ")} — a refused dispatch would look like a success`
+  );
+  check(
+    "A blocked dispatch raises a hard_block / hos_block gate",
+    /type:\s*"hard_block"/.test(modalSource) && /type:\s*"hos_block"/.test(modalSource),
+    "Wire the server refusal to a hard_block/hos_block gate banner so the dispatcher is told why"
+  );
+  check(
+    "Override is role-gated, not open to everyone",
+    modalSource.includes("canOverrideHardBlock") && modalSource.includes("canOverrideHos"),
+    "Gate the override on role (Owner for hard blocks, Manager+ for HOS) — an ungated override is no block at all"
+  );
+}
 
 // ── 11. Manifest exists and declares no financial writes ──────────────────────
 const manifestSource = read(

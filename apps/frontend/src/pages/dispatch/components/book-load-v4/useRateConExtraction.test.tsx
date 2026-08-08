@@ -22,7 +22,16 @@ const fixtureResponse = {
   page_count: 2,
   duplicate_of: null,
   extraction: {
-    broker: { name: "ACME Broker", mc_number: "MC123", address: null, phone: null, email: null, contact_name: null },
+    // Faithful to the CURRENT backend contract. `parseExtraction` normalises every branch — broker, rate and
+    // terms each default to {} and are then written key-by-key — so a real response ALWAYS carries `terms`
+    // and the after-hours/invoice fields. This fixture predates RATECON-4 and omitted `terms` entirely,
+    // which made `rateConExtractionToPrefill` read `e.terms.detention_rate_per_hour_cents` off undefined and
+    // throw AFTER a SUCCESSFUL extraction — surfacing to the dispatcher as
+    // "Couldn't extract this rate confirmation (Cannot read properties of undefined …)". That was the
+    // fixture lying about the contract, not the product breaking: the live backend cannot emit this shape.
+    broker: { name: "ACME Broker", mc_number: "MC123", address: null, phone: null, email: null, contact_name: null, after_hours_phone: null, after_hours_email: null },
+    invoice_to_email: null,
+    terms: { detention_rate_per_hour_cents: null, detention_free_hours: null, layover_per_day_cents: null, tonu_fee_cents: null },
     load_reference: ["REF-1"],
     stops: [
       { type: "pickup", name: "Shipper", address: "1 A St", city: "Laredo", state: "TX", zip: "78040", date: "2026-07-10", time_window: "08:00-12:00", appointment_required: true },
@@ -48,6 +57,11 @@ function makePdf(): File {
 
 beforeEach(() => {
   extractRateCon.mockReset();
+  // The hook PUTs the file to the presigned R2 URL directly with `fetch` (added by #2001). jsdom has a real
+  // global fetch, so leaving this unmocked made every "success" run attempt a live request to
+  // https://r2.example/put, fail, and land in the error branch — which is why the success test asserted
+  // phase "done" and got "error". Mock the transport, not the contract.
+  vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200 }) as unknown as Response));
   // Deterministic, env-independent digest (jsdom does not provide crypto.subtle).
   vi.stubGlobal("crypto", { subtle: { digest: async () => new ArrayBuffer(32) } });
 });
@@ -58,7 +72,13 @@ describe("rateConErrorMessage", () => {
     expect(rateConErrorMessage(new Error("413 too_large"))).toBe("That file is too large (max 10 MB / 15 pages).");
     expect(rateConErrorMessage(new Error("503 ai_not_configured"))).toBe("AI extraction isn't configured on the server.");
     expect(rateConErrorMessage(new Error("502 extraction_failed"))).toBe("AI extraction failed — try again; if it persists tell the administrator.");
-    expect(rateConErrorMessage(new Error("boom"))).toBe("Couldn't extract this rate confirmation. You can still book the load manually.");
+    // #2001 ("extraction error self-reports the real cause") deliberately made the GENERIC fallback name the
+    // underlying reason instead of always reading as a bare "couldn't extract". This file was written in
+    // #1878 and never updated, so it asserted the pre-#2001 copy. The contract being tested is still "one
+    // canonical mapping shared by both entry points" — that has not changed; only the generic branch now
+    // carries the detail. Both shapes are asserted so neither can regress silently.
+    expect(rateConErrorMessage(new Error("boom"))).toBe("Couldn't extract this rate confirmation (boom). You can still book the load manually.");
+    expect(rateConErrorMessage(new Error(""))).toBe("Couldn't extract this rate confirmation. You can still book the load manually.");
   });
 });
 
@@ -81,7 +101,9 @@ describe("useRateConExtraction", () => {
     ["ratecon_extract_disabled 409", "Rate-con extraction is turned off for this company."],
     ["413 too_large", "That file is too large (max 10 MB / 15 pages)."],
     ["503 ai_not_configured", "AI extraction isn't configured on the server."],
-    ["boom", "Couldn't extract this rate confirmation. You can still book the load manually."],
+    // Thrown from inside step("extract", …), which prefixes the step name onto the message — so the raw
+    // reason the dispatcher sees names WHICH call broke, which is the whole point of #2001.
+    ["boom", "Couldn't extract this rate confirmation (extract: boom). You can still book the load manually."],
   ])("error path %s → phase=error, no prefill", async (thrown, message) => {
     extractRateCon.mockRejectedValueOnce(new Error(thrown));
     const onPrefill = vi.fn();

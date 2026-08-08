@@ -28,6 +28,17 @@ export default {
     // It does NOT judge whether a given PR is vertical — that is judgment, and judgment rules stay
     // judgment rather than being force-guarded into noise.
     await ctx.run("node", ["scripts/verify-vertical-method-law-present.mjs", "--selftest"]);
-    return ctx.run("node", ["scripts/verify-vertical-method-law-present.mjs"]);
+    await ctx.run("node", ["scripts/verify-vertical-method-law-present.mjs"]);
+
+    // LAW-2026-08-07-LANE-TERRITORY — stop the lanes colliding, enforced rather than written.
+    // Measured over 60 PRs: lanes do NOT collide on domain code (dispatch/mdata/frontend are CC-2
+    // only; accounting/driver-finance/migrations/.github are CC-1 only). They collide on shared entry
+    // points. Layer 1 keeps the clean partition clean; layer 1b serializes the handful of files that
+    // genuinely belong to everyone. Append-only registries are deliberately excluded from BOTH — they
+    // are union-merged, so filing a board finding never waits for a token. Both advisory outside a PR.
+    await ctx.run("node", ["scripts/verify-lane-territory.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-lane-territory.mjs"]);
+    await ctx.run("node", ["scripts/verify-hotfile-single-open-pr.mjs", "--selftest"]);
+    return ctx.run("node", ["scripts/verify-hotfile-single-open-pr.mjs"]);
   },
 };

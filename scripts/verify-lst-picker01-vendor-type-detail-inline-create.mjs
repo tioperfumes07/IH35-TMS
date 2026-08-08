@@ -92,13 +92,27 @@ export function collectProblems(root = ROOT, overrides = null) {
   if (!routes) problems.push(`missing ${ROUTES}`);
   else {
     const code = routes.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-    const schemaMatch = code.match(/const vendorTypeSchema\s*=\s*([^\n;]+);/);
-    if (!schemaMatch) {
-      problems.push(`${ROUTES}: missing vendorTypeSchema declaration`);
-    } else if (/z\.enum\(/.test(schemaMatch[1])) {
-      problems.push(`${ROUTES}: vendorTypeSchema must not be a z.enum(...) of the 8 legacy values`);
-    } else if (!/z\.string\(/.test(schemaMatch[1])) {
-      problems.push(`${ROUTES}: vendorTypeSchema must be z.string(...)-based free text`);
+    // SUPERSEDED 2026-08-08 (LV-TXN-017 / guard 2819 verify-vendor-type-app-db-parity), per
+    // CURSOR-RULING-4777. The original slice required vendorTypeSchema to be FREE-FORM so a
+    // catalog-created type could not be 400'd by a frozen z.enum. That half is now WRONG at the
+    // backend: mdata.vendors carries `vendors_vendor_type_check` (convalidated=true) limited to the
+    // 8 values below, so free-form text does not widen anything — it just converts a 400 into an
+    // opaque HTTP 500 / PG 23514. Widening the DB stays held migration 202611021200 (owner-gated);
+    // until it runs, the app allow-list MUST equal the CHECK, case-normalised.
+    // The FRONTEND half of this guard is unchanged and still enforced above.
+    if (!/const VENDOR_TYPE_VALUES\s*=/.test(code)) {
+      problems.push(`${ROUTES}: missing VENDOR_TYPE_VALUES allow-list — it must equal vendors_vendor_type_check`);
+    } else if (!LEGACY_UNION_RE.test(code)) {
+      problems.push(`${ROUTES}: VENDOR_TYPE_VALUES must equal the 8 values in vendors_vendor_type_check`);
+    }
+    if (!/const vendorTypeWriteSchema\s*=/.test(code)) {
+      problems.push(`${ROUTES}: missing vendorTypeWriteSchema — write paths must validate against the DB CHECK, not free text`);
+    }
+    if (!/canonicalVendorType/.test(code)) {
+      problems.push(`${ROUTES}: vendor_type must be case-normalised via canonicalVendorType so 'other' round-trips as 'Other' instead of 500ing`);
+    }
+    if (/const vendorTypeSchema\s*=\s*z\.string\(\)\.trim\(\)\.min\(1\)\.max\(100\)\s*;/.test(code)) {
+      problems.push(`${ROUTES}: vendor_type must not be bare free-form text — the DB CHECK rejects anything outside VENDOR_TYPE_VALUES with a 500`);
     }
   }
 
@@ -152,14 +166,22 @@ if (process.argv.includes("--selftest")) {
     "vendor_type table must be catalogs.vendor_types"
   );
   expectCaught(
-    "routes-enum-reintroduced",
+    "routes-free-form-reintroduced",
     ROUTES,
-    (s) =>
-      s.replace(
-        /const vendorTypeSchema = z\.string\(\)\.trim\(\)\.min\(1\)\.max\(100\);/,
-        'const vendorTypeSchema = z.enum(["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"]);'
-      ),
-    "must not be a z.enum"
+    (s) => s.replace(/const vendorTypeWriteSchema = z/, "const vendorTypeSchema = z.string().trim().min(1).max(100);\nconst vendorTypeWriteSchema = z"),
+    "must not be bare free-form text"
+  );
+  expectCaught(
+    "routes-allowlist-removed",
+    ROUTES,
+    (s) => s.replace(/export const VENDOR_TYPE_VALUES\s*=/, "export const VENDOR_TYPE_VALUES_RETIRED ="),
+    "missing VENDOR_TYPE_VALUES allow-list"
+  );
+  expectCaught(
+    "routes-case-normalisation-removed",
+    ROUTES,
+    (s) => s.replace(/canonicalVendorType/g, "resolveVendorTypeX"),
+    "case-normalised"
   );
 
   if (failures.length) {
@@ -167,7 +189,7 @@ if (process.argv.includes("--selftest")) {
     for (const f of failures) console.error("  - " + f);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST OK — 4 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST OK — 6 planted defects caught, live sources clean`);
 } else {
   const problems = collectProblems();
   if (problems.length) {

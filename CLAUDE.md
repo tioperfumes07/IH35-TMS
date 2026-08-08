@@ -12,6 +12,19 @@ This system holds **live financial and legal-evidence data** for a real operatin
 
 ---
 
+## 0. THE PERMANENT PRIORITY (owner-locked 2026-08-07) — FINISH THE SOFTWARE IN USMCA
+**Standing mission. Does not expire. No approval gates, no CPA, no "locked-law" ceremony — the owner decides. Do not deviate from this.**
+
+- **Finish the software completely** — wiring, connectivity, linkage, functionality, expenses — and focus **only on USMCA**.
+- **The method (owner-specified):** the coder **creates every possible transaction in every module, every tab and sub-tab, every create-surface**, in USMCA. The instant a transaction is created you can see whether it **registers correctly** — a balanced JE in the GL, both-way linkage, real economics. Every surface that does not register green is a wiring gap: fix the root cause, re-create, repeat until green. **Exhaustive creation IS the test that finishes and proves the software.**
+- **Same fleet as transportation:** TRANSP ceases operating in a few weeks. USMCA uses the **same driver + truck + GPS/Samsara tracking database**, carried over — **shared, not rebuilt, not split**. USMCA keeps its **own books** (JEs, invoices, settlements, expenses, GL).
+- **No QuickBooks, no mapping:** USMCA has no QBO; ignore TRANSP's books and QBO; TRK is a lease company. Stop all account/entity/QBO/historical mapping. Choosing which account a JE debits/credits is **wiring** — it continues; if an account doesn't exist, **create it** (additive, sensible default) — owner edits later. Never block a wire or test on naming/mapping.
+- **NEVER PAUSE — continuous loop.** Every coder works non-stop: finish a task → immediately pull the next create-surface / class / board item → keep going. No idling, no "waiting for approval," no stopping to ask. The only stop is a genuine owner business decision.
+- **Orchestrator (Claude desktop) job:** keep all coders working continuously, and **merge green PRs + fix or route conflicting PRs** so the pipeline never stalls. That is the orchestrator's standing duty.
+- Full text: `docs/standing-orders/OWNER-RULE-2026-08-07-NO-MAPPING-WIRE-TEST.md`.
+
+---
+
 ## 1. PERMISSIONS & GUARDRAILS — these override every other instruction
 
 ### 1.1 Merge to `main` = ship to production. There is no second gate.
@@ -277,5 +290,4 @@ Owner sessions**: `org.user_accessible_company_ids()` returns EVERY active compa
 so **every unscoped read is load-bearing on its own predicate**.
 
 **5. EVERY LOOP.** read board → **grep-verify the card against main** → build **ONE complete atomic block**
-→ found another lane's defect? **write it to the board** → push → next. Never idle, never pause to
-summarize, never half-edit.
+→ found another lane's defect? **write it to the board** → push → next. Then **idle + post STATUS** — idle while waiting is compliance, not failure. WIP <= 3 or park; never open a new PR to stay busy; REF (Desktop) sequences all merges. (Owner-directed 2026-08-08: supersedes the prior 'never idle' loop for CC-1/CC-2/CC-3.)

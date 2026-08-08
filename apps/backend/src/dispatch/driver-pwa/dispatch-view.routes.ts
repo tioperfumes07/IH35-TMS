@@ -14,6 +14,8 @@ import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireDriverSession } from "../../driver/auth.js";
 import { validateLoadStopStatusWrite } from "../load-state-machine.js";
+// ACCT-F166 — settlement half of a delivery; see the call site for why this route needs it.
+import { pingSettlementOnLoadEvent } from "../../driver-finance/settlements-load-bookended.service.js";
 
 type StopType = "pickup" | "delivery" | "fuel" | "break";
 type StopStatus = "pending" | "arrived" | "loading" | "loaded" | "departed";
@@ -430,12 +432,27 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
       // CLS-DISP-WIRE-07 — the driver's departure is the delivery evidence. Without this the office
       // transition was the ONLY path that latched revenue, so a load delivered in the field never
       // reached hops 6-9. Shared helper: no-op unless nextLoadStatus is a delivery-evidence status.
-      await latchOnDeliveryEvidence({
+      await latchOnDeliveryEvidence(client, {
         operatingCompanyId: stop.operating_company_id,
         loadId: params.data.uuid,
         targetStatus: nextLoadStatus,
         actorUserId: req.user!.uuid,
       });
+
+      // ACCT-F166 — the settlement half. `pingSettlementOnLoadEvent` on `delivered_pending_docs` calls
+      // closeSettlementForFinalLoad, so a delivery path that latches revenue WITHOUT pinging leaves the
+      // driver's trip settlement OPEN FOREVER: revenue recognised, the settlement that pays the driver
+      // never closed. Non-fatal — a settlement failure must never 500 the driver's departure tap.
+      try {
+        await pingSettlementOnLoadEvent(client, {
+          loadId: params.data.uuid,
+          operatingCompanyId: stop.operating_company_id,
+          dispatchTargetStatus: nextLoadStatus,
+          actorUserId: req.user!.uuid,
+        });
+      } catch (err) {
+        console.warn({ err, load_id: params.data.uuid }, "driver_pwa_settlement_ping_failed");
+      }
 
       await appendCrudAudit(client, req.user!.uuid, "dispatch.driver_pwa.stop_departure", {
         load_id: params.data.uuid,

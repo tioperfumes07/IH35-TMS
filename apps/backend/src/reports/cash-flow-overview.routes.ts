@@ -45,7 +45,13 @@ function num(v: unknown): number {
 }
 
 export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/cash-flow-overview", async (req, reply) => {
+  // ACCT-F183: rate limit added because touching this file brought it into
+  // verify-new-auth-routes-rate-limited's scope — an authorizing read with no limit trips CodeQL
+  // js/missing-rate-limiting. 60/min matches the read-route convention (writes use 30/min).
+  app.get(
+    "/api/v1/reports/cash-flow-overview",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});
@@ -157,7 +163,9 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
             FROM accounting.bills b
             WHERE b.operating_company_id = $1
               AND b.revoked_at IS NULL
-              AND b.status IN ('unpaid', 'partial')
+              -- ACCT-F183: 'partially_paid' too — see accounting/fin20-aging.service.ts. Without
+              -- it the cash-flow overview understates outgoing obligations.
+              AND b.status IN ('unpaid', 'partial', 'partially_paid')
               AND COALESCE(b.due_date, b.bill_date) <= ${horizonEndSql}
           `,
           [companyId, asOf]

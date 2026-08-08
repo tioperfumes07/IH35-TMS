@@ -22,6 +22,23 @@ const listQuerySchema = z.object({
 
 const idParamSchema = z.object({ id: z.string().uuid() });
 
+/**
+ * ACCT-F190 (Cascade FAIL-L2) — item types that MUST carry an income account on create.
+ *
+ * These are the three types QuickBooks itself requires an income account for, because they are the
+ * ones sold to a customer: an invoice line built from them has to credit something. Verified on
+ * prod: of the 17 TMS-native items (QBO clones excluded — their NULL is expected state under
+ * parallel books), 16 have NO income account — Service 10 of 11, NonInventory 6 of 6 — while
+ * 16,552 of 21,215 invoice_lines reference an item.
+ *
+ * Bundle, Discount and Charge are DELIBERATELY NOT in this set. A Bundle is a container for other
+ * items, a Discount is contra-revenue, and Charge has no prod usage here at all — none of the three
+ * has a single row on prod to reason from. Requiring an account for a type I cannot evidence would
+ * block legitimate creates to make a guard look thorough, which is the opposite of useful. If they
+ * gain usage, extend this set from the evidence then.
+ */
+const INCOME_ACCOUNT_REQUIRED_TYPES = new Set(["Service", "Inventory", "NonInventory"]);
+
 const createBodySchema = z.object({
   item_name: z.string().trim().min(1).max(200),
   item_code: z.string().trim().max(100).optional(),
@@ -35,7 +52,24 @@ const createBodySchema = z.object({
   taxable: z.boolean().default(false),
   notes: z.string().trim().max(2000).optional(),
   operating_company_id: z.string().uuid().optional(),
-});
+})
+  .superRefine((b, ctx) => {
+    // ACCT-F190: the UI already requires this; the API did not, so every non-UI caller — and any UI
+    // path that skipped the field — created an item that can never post revenue. Enforced HERE
+    // rather than in the DB so the caller gets a 400 naming the field, not a constraint violation.
+    //
+    // Scoped to the create route ON PURPOSE: qbo-sync/items-write-sql.ts inserts CLONES of QBO items
+    // that legitimately carry no local account mapping. Requiring it there would break the import.
+    if (INCOME_ACCOUNT_REQUIRED_TYPES.has(b.item_type) && !b.default_income_account_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["default_income_account_id"],
+        message:
+          `default_income_account_id is required for item_type '${b.item_type}' — an item sold to a ` +
+          `customer must name the account its invoice line credits.`,
+      });
+    }
+  });
 
 const updateBodySchema = z
   .object({

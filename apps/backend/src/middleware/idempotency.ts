@@ -305,8 +305,19 @@ export async function registerIdempotencyMiddleware(
         resourceId,
         resourceType,
       });
+      // ACCT-F180: the store is the ONLY thing that makes a retry safe. Say so on the wire, so a
+      // caller, an integration test or a live battery can tell a protected write from an
+      // unprotected one without reading server logs. This header is what would have caught the
+      // missing UPDATE grant on day one instead of after a duplicate payable reached prod.
+      void reply.header("idempotency-stored", "true");
     } catch (error) {
-      // Non-fatal: the response already succeeded. Log so we can detect store failures.
+      void reply.header("idempotency-stored", "false");
+      // Non-fatal by design: the response already succeeded and the financial write is committed, so
+      // failing here would turn a completed bill into a client-visible error. But "non-fatal" must
+      // never again mean "invisible" -- for months every single store call raised
+      // `permission denied for table idempotency_keys` (INSERT ... ON CONFLICT DO UPDATE requires
+      // UPDATE, which was never granted) and degraded to exactly this log line while the endpoint
+      // kept advertising idempotency by 400-ing without a key. Hence the header above.
       if (isSentryConfigured()) {
         Sentry.captureException(error, { tags: { subsystem: "idempotency", phase: "store" } });
       }

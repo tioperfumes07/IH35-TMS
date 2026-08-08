@@ -101,6 +101,47 @@ async function shouldProcessItem(item: UploadQueueItem) {
   return item.status === "pending" || item.status === "failed";
 }
 
+/**
+ * The ONE place a queued upload turns into `docs.file_links` rows. Every capture surface in the PWA
+ * goes through here, so a linkage rule fixed here is fixed everywhere.
+ *
+ * CLS-ORPHAN-SURFACE — measured on the prod branch br-fancy-credit-akjnd07a 2026-08-07: `docs.files`
+ * held 30 rows while `docs.file_links` held ZERO, across every entity type. The cause was one branch:
+ * `load_stop` was grouped with `standalone` and returned `undefined`, so the single surface a driver
+ * uses to submit proof of delivery (StopAction → UploadDocumentModal, categories bol/pod/
+ * lumper_receipt/damage_photo) was the single surface that dropped its link. The POD was then
+ * unreachable from the load, the customer, the invoice and the factoring submission.
+ *
+ * It was grouped with `standalone` because `docs.file_links.entity_type` has no `load_stop` member
+ * (prod CHECK chk_file_links_entity_type_widened_taxdoc). The answer is to link the PARENT LOAD —
+ * which the stop screen already has in hand — not to drop the link. `standalone` is the ONLY type
+ * that legitimately produces no link; that is what the word means.
+ *
+ * Exported for the guard and the unit tests: the mapping is the contract, not the call site.
+ */
+export function resolveEntityLinks(
+  item: Pick<UploadQueueItem, "entity_type" | "entity_id" | "parent_load_id">
+): Array<{ entity_type: "load" | "driver"; entity_id: string }> | undefined {
+  if (item.entity_type === "standalone") return undefined;
+
+  // A stop capture is evidence about its LOAD. Fall back to the stop id only if no parent was
+  // recorded, which can only happen for a queue row written before parent_load_id existed — and even
+  // then a wrong-shaped link is caught by the backend's ensureLinkEntityExists, which is a visible
+  // 400 rather than the silent orphan this replaced.
+  const linkTarget =
+    item.entity_type === "load_stop"
+      ? cleanOptionalString(item.parent_load_id) ?? cleanOptionalString(item.entity_id)
+      : cleanOptionalString(item.entity_id);
+  if (!linkTarget || !isUuid(linkTarget)) return undefined;
+
+  return [
+    {
+      entity_type: item.entity_type === "driver" ? "driver" : "load",
+      entity_id: linkTarget,
+    },
+  ];
+}
+
 async function processQueueItem(item: UploadQueueItem) {
   const cleanedEntityId = cleanOptionalString(item.entity_id);
   if (item.entity_type === "driver" && (!cleanedEntityId || !isUuid(cleanedEntityId))) {
@@ -119,17 +160,7 @@ async function processQueueItem(item: UploadQueueItem) {
 
   try {
     const cleanedCategoryId = cleanOptionalString(item.category_id);
-    const entityLinks =
-      item.entity_type === "standalone" || item.entity_type === "load_stop"
-        ? undefined
-        : cleanedEntityId && isUuid(cleanedEntityId)
-          ? [
-              {
-                entity_type: (item.entity_type === "load" ? "load" : "driver") as "load" | "driver",
-                entity_id: cleanedEntityId,
-              },
-            ]
-          : undefined;
+    const entityLinks = resolveEntityLinks(item);
 
     const uploadInit = await requestUploadUrl({
       original_filename: item.original_filename,

@@ -150,3 +150,11 @@ to CC-1. The one thing this instance builds is CI-guards, which both sources pla
 
 **This is recorded here rather than by editing the verbatim order above, because the order is the
 owner's words and is reproduced exactly as issued.**
+
+
+## OWNER RULE 2026-08-07 — NO MAPPING NOW (WIRE + TEST ONLY)
+> **OWNER RULE 2026-08-07 (LOCKED): NO MAPPING NOW — WIRE + TEST ONLY.** Stop all account/entity/QBO/historical MAPPING. Jorge maps USMCA himself (coders do not). TRANSP is winding down (ceases in weeks); TRK is a lease company — do NOT map either. Focus = wiring + testing end-to-end. Need a chart-of-accounts/catalog account that does not exist? CREATE it (additive, entity-scoped, sensible default, QBO-map null) — owner edits later; never block on naming/mapping. Full rule: docs/standing-orders/OWNER-RULE-2026-08-07-NO-MAPPING-WIRE-TEST.md
+
+
+## NEVER PAUSE (continuous loop) — owner-locked 2026-08-07
+Every coder works non-stop: finish a task -> immediately pull the next create-surface / class / board item -> keep going. No idling, no waiting for approval, no stopping to ask. The only stop is a genuine owner business decision. Fix your own red PRs first, then continue. The orchestrator (Claude desktop) keeps everyone working and MERGES green PRs + FIXES or ROUTES conflicting PRs so the pipeline never stalls.

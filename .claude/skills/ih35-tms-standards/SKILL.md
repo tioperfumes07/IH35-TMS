@@ -237,3 +237,17 @@ Full text: `docs/specs/DEFINITION-OF-DONE.md` + `docs/specs/EVERY-PR-AUDIT-CHECK
 5. **EVERY loop, EVERY agent:** read board → grep-verify top OPEN row against main (done → mark DONE w/ SHA;
    wrong card → fix the REAL defect) → build ONE complete atomic block → find another lane's defect? write it
    to the board → push → next. Never idle, never pause to summarize, never half-edit.
+
+
+---
+
+## PERMANENT OWNER PRIORITY (locked 2026-08-07) — FINISH THE SOFTWARE IN USMCA
+**Standing mission, does not expire. Owner decides — no CPA, no approval gates, no "locked-law" ceremony.**
+- Finish the software completely (wiring, linkage, functionality, expenses); focus ONLY on USMCA.
+- METHOD: create EVERY possible transaction in EVERY module / tab / sub-tab / create-surface in USMCA.
+  The instant it's created you see if it registers (balanced JE in GL, both-way linkage, economics).
+  Not green = wiring gap → fix root cause → re-create → repeat until green. Exhaustive creation IS the test.
+- Same fleet as transportation: TRANSP closes in weeks; USMCA uses the SAME driver+truck+GPS/tracking DB,
+  carried over (shared, not rebuilt/split). USMCA keeps its OWN books.
+- No QuickBooks, no mapping. Account resolution = wiring (create accounts as needed, owner edits later).
+- Full text: docs/standing-orders/OWNER-RULE-2026-08-07-NO-MAPPING-WIRE-TEST.md

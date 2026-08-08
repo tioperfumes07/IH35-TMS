@@ -14,6 +14,46 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
+
+// COA-DETAIL-TYPE-VOCAB-MISMATCH — the CoA create must post a catalogs.account_types CODE, not the UI enum.
+// The backend resolves account_type against catalogs.account_types.code|name; the picker's value is the
+// 8-value QBO-style enum, of which only "Equity"/"Income" match by name — so choosing any detail type on the
+// other six 400'd, and clearing it "succeeded" while silently writing detail_type_id=NULL. A guard on the
+// enum→code MAP alone would have passed throughout: the map was already correct and already used to filter
+// the dropdown. The defect was on the WRITE path, so that is what this asserts.
+export function assertCoaCreateTranslatesAccountType(drawerSrc) {
+  const problems = [];
+  const src = drawerSrc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  const m = src.match(/const body = \{([\s\S]*?)\n      \};/);
+  if (!m) {
+    problems.push("AccountDrawer.tsx: could not read the create `body` object — refusing to pass vacuously.");
+    return problems;
+  }
+  const line = m[1].split("\n").find((l) => /(^|\s)account_type:/.test(l) || /account_type:\s*$/.test(l));
+  const block = m[1].match(/account_type:[\s\S]{0,200}/);
+  const text = (block ? block[0] : line || "");
+  if (!text) {
+    problems.push("AccountDrawer.tsx: create body has no account_type — refusing to pass vacuously.");
+    return problems;
+  }
+  if (/account_type:\s*form\.account_type\s*,/.test(text)) {
+    problems.push(
+      "AccountDrawer.tsx: the create body posts the raw UI enum (`account_type: form.account_type`). The " +
+        "backend matches catalogs.account_types.code|name, so any detail type on Asset/Liability/Expense/" +
+        "COGS/OtherIncome/OtherExpense 400s with detail_type_account_type_mismatch " +
+        "(COA-DETAIL-TYPE-VOCAB-MISMATCH). Translate at the boundary via the resolved catalog entry's .code.",
+    );
+  }
+  if (!/previewEntry\s*\?\s*previewEntry\.code|previewEntry\.code/.test(text)) {
+    problems.push(
+      "AccountDrawer.tsx: the create body no longer derives account_type from the resolved catalog entry " +
+        "(.code). Asset and Liability map to MANY codes (BANK|AR|OCA|FA|OA and CC|AP|OCL|LTL), so a flat " +
+        "enum→code map cannot disambiguate them — only the chosen detail type's owning row can.",
+    );
+  }
+  return problems;
+}
+
 function assertAccountTypeCatalogCreate(sources) {
   const errors = [];
   const page = sources?.page ?? read("apps/frontend/src/pages/accounting/AccountTypeCatalogPage.tsx");
@@ -89,7 +129,10 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const errors = assertAccountTypeCatalogCreate();
+const errors = [
+  ...assertAccountTypeCatalogCreate(),
+  ...assertCoaCreateTranslatesAccountType(read("apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx")),
+];
 if (errors.length) {
   console.error(`${LABEL} FAIL`);
   for (const e of errors) console.error(`  ${e}`);

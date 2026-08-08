@@ -42,9 +42,18 @@ const LOAD_ID = "44444444-4444-4444-8444-444444444444";
 const AR_ACCOUNT = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const INCOME_ACCOUNT = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 
-type Opts = { sourceLoadId: string | null; latchRows: Array<{ id: string }> };
+type Opts = {
+  sourceLoadId: string | null;
+  latchRows: Array<{ id: string }>;
+  /**
+   * ACCT-F59 SECOND ARM — the load's OWN status. The 473 ms race put duplicate revenue on prod with
+   * `latchRows: []` and a delivered load: the invoice posts first in the delivery handler, so no latch
+   * row exists YET. Defaults to a pre-delivery status so every pre-existing case behaves as before.
+   */
+  loadStatus?: string;
+};
 
-function installQueryMock({ sourceLoadId, latchRows }: Opts) {
+function installQueryMock({ sourceLoadId, latchRows, loadStatus = "in_transit" }: Opts) {
   const postedLines: Array<{ account_id: string; debit_or_credit: string; amount_cents: number }> = [];
 
   mockQuery.mockReset();
@@ -67,6 +76,8 @@ function installQueryMock({ sourceLoadId, latchRows }: Opts) {
     }
     if (sql.includes("to_regclass")) return { rows: [{ ok: true }] };
     if (sql.includes("load_revenue_recognition_postings")) return { rows: latchRows };
+    // ACCT-F59 second arm reads the load's own status (order-independent interlock).
+    if (sql.includes("FROM mdata.loads")) return { rows: [{ status: loadStatus }] };
     if (sql.includes("FROM accounting.invoice_lines")) {
       return {
         rows: [
@@ -130,6 +141,54 @@ describe("posting-engine invoice ↔ revrec latch interlock (ACCT-F59)", () => {
     installQueryMock({ sourceLoadId: LOAD_ID, latchRows: [{ id: "latch-1" }] });
 
     await expect(post()).rejects.toThrow(new RegExp(LOAD_ID));
+  });
+
+  // ── ACCT-F59 SECOND ARM — the 473 ms race that actually put duplicate revenue on prod ──────────
+  //
+  // THE DEFECT THESE PIN. On the delivery transition the invoice posts FIRST and the latch SECOND,
+  // inside one handler. Measured on prod, load L-20260806-0008: invoice JE 07:14:33.413711, latch earn
+  // JE 07:14:33.886651 — 473 ms apart, and `4000 Freight/Line-haul Income` was credited TWICE for the
+  // same $1,875.50. Every test above passes in that scenario, because at the instant the invoice posts
+  // there is genuinely NO latch row: `latchRows: []`. The first arm asks about the past; only asking
+  // about the LOAD'S OWN STATE catches it.
+  it.each(["delivered_pending_docs", "completed_docs_received"])(
+    "REFUSES when the load has reached delivery evidence (%s) even though NO latch row exists yet — the prod race",
+    async (loadStatus) => {
+      mockResolveRoleAccountOptional.mockReset();
+      mockResolveRoleAccountOptional.mockResolvedValue(AR_ACCOUNT);
+      const { postedLines } = installQueryMock({ sourceLoadId: LOAD_ID, latchRows: [], loadStatus });
+
+      await expect(post()).rejects.toMatchObject({ code: "INVOICE_REVREC_LATCH_OWNS_LOAD" });
+      // Same absolute rule as the first arm: refusing means NOTHING hit the ledger.
+      expect(postedLines).toHaveLength(0);
+    }
+  );
+
+  it("explains the ordering in the refusal, so the next reader is not sent hunting for a latch row", async () => {
+    mockResolveRoleAccountOptional.mockReset();
+    mockResolveRoleAccountOptional.mockResolvedValue(AR_ACCOUNT);
+    installQueryMock({ sourceLoadId: LOAD_ID, latchRows: [], loadStatus: "delivered_pending_docs" });
+
+    await expect(post()).rejects.toThrow(/REACHED DELIVERY EVIDENCE/);
+    await expect(post()).rejects.toThrow(new RegExp(LOAD_ID));
+  });
+
+  it("does NOT over-block a delivered load that is not load-sourced (no source_load_id)", async () => {
+    mockResolveRoleAccountOptional.mockReset();
+    mockResolveRoleAccountOptional.mockResolvedValue(AR_ACCOUNT);
+    // A manual invoice never has a latch, so it must keep crediting income directly even if some
+    // unrelated load happens to be delivered.
+    const { postedLines } = installQueryMock({
+      sourceLoadId: null,
+      latchRows: [],
+      loadStatus: "completed_docs_received",
+    });
+
+    const result = await post();
+    expect(result.result).toBe("posted");
+    expect(postedLines.filter((l) => l.debit_or_credit === "credit").map((l) => l.account_id)).toEqual([
+      INCOME_ACCOUNT,
+    ]);
   });
 
   it("POSTS normally when the load has no active latch row (no over-blocking)", async () => {

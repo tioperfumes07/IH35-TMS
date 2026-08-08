@@ -1,6 +1,9 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { latchOnDeliveryEvidence } from "../dispatch/delivery-evidence-latch.js";
+// ACCT-F166 — the settlement half of a delivery, wired here so the mdata fallback path is
+// money-complete; see the call site below for why the FE can reach this route at all.
+import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -750,9 +753,14 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             detention_bill_customer_per_hour_cents, detention_driver_pay_per_hour_cents,
             late_delivery_risk_y_n, late_delivery_est_deduction_cents, late_delivery_reason,
             miles_practical, miles_shortest, miles_deadhead,
-            -- Block 7 (Jorge-approved, no migration): freight attributes that round-trip in the Edit wizard.
-            -- weight column is cargo_weight_lbs; reefer setpoint is reefer_setpoint_temp_f (numeric).
-            commodity, cargo_weight_lbs, reefer_setpoint_temp_f, trip_type,
+            -- CLS-SCHEMA-DRIFT / PHANTOM COLUMN — verified against the PROD branch 2026-08-07:
+            -- mdata.loads has NO commodity, NO cargo_weight_lbs and NO reefer_setpoint_temp_f.
+            -- The comment above asserted those names; information_schema does not. This SELECT made
+            -- GET /api/v1/mdata/loads/:id return 500 (42703, commodity does not exist) for
+            -- EVERY load, while the list and dispatch endpoints — which do not select them — returned
+            -- 200. Found by creating a real USMCA load and reading it back.
+            -- The reefer setpoint that DOES exist is reefer_temp_f, already selected below.
+            trip_type,
             -- Block 7 (migration 202606221000, Jorge-approved): pieces + customer PO round-trip in Edit.
             piece_count, customer_po_number,
             -- render-v6 §B reefer/tarp detail (migration 202606231400).
@@ -946,12 +954,41 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       // by verify-delivery-evidence-latch-wired while fixing the two driver paths — the guard caught
       // a site I had not been asked to look at, which is the point of scanning for the shape rather
       // than patching the three known files.
-      await latchOnDeliveryEvidence({
+      await latchOnDeliveryEvidence(client, {
         operatingCompanyId: String(row.operating_company_id),
         loadId: String(row.id),
         targetStatus: String(row.status),
         actorUserId: req.user!.uuid,
       });
+
+      // ACCT-F166 — this route recognised revenue and opened NO settlement.
+      //
+      // THE GAP: `updateLoadStatus` (apps/frontend/src/api/loads.ts) sends the office status change to
+      // PATCH /api/v1/dispatch/loads/:id/transition ONLY when an operating company is known AND the
+      // target maps to a dispatch transition status. Every other status change — and every drop on a
+      // lane the mapper does not handle — FALLS BACK here. The latch above was wired to this route,
+      // so revenue recognition fired; `pingSettlementOnLoadEvent` was not, so the driver's settlement
+      // was never opened. Revenue on the books, nothing to pay the driver from: the two halves of the
+      // same delivery disagreed depending on which endpoint the FE happened to choose.
+      //
+      // main's own LAW-2026-08-06-KANBAN-DROPSTATUS-CONTRACT already names this shape — "a lane the
+      // mapper does not handle silently falls back to the non-money mdata path, stamping no departure
+      // and opening no settlement". This closes the settlement half on the route itself, so the
+      // fallback is money-complete no matter what the FE picks.
+      //
+      // Non-fatal by design, matching the dispatch route: a settlement-ping failure must never 500 an
+      // office status change. Losing the status write is worse than deferring the settlement, which
+      // the twice-daily reconcile surfaces.
+      try {
+        await pingSettlementOnLoadEvent(client, {
+          loadId: String(row.id),
+          operatingCompanyId: String(row.operating_company_id),
+          dispatchTargetStatus: String(row.status),
+          actorUserId: req.user!.uuid,
+        });
+      } catch (err) {
+        console.warn({ err, load_id: String(row.id) }, "mdata_load_settlement_ping_failed");
+      }
 
       await appendCrudAudit(
         client,
