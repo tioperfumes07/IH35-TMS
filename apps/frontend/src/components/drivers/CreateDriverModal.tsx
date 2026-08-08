@@ -13,6 +13,7 @@ import {
 } from "../../api/mdata";
 import { listMyCompanies } from "../../api/org";
 import { Button } from "../Button";
+import { UploadModal } from "../documents/UploadModal";
 import { Combobox } from "../Combobox";
 import { Modal } from "../Modal";
 import { ParityDrawer } from "../parity/ParityDrawer";
@@ -170,6 +171,11 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
   const [overrideReturningWarning, setOverrideReturningWarning] = useState(false);
   const [rehireAction, setRehireAction] = useState<"rehire" | "new">("rehire");
   const [selectedPriorDriverId, setSelectedPriorDriverId] = useState<string | null>(null);
+<<<<<<< origin/main
+=======
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadedCount, setUploadedCount] = useState(0);
+>>>>>>> origin/cc-2/driver-create-doc-upload
   const [invitePending, setInvitePending] = useState(false);
   const [inviteSent, setInviteSent] = useState(false);
   const [createSummary, setCreateSummary] = useState<{
@@ -890,6 +896,43 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         <p className="text-sm text-slate-700">
           Phone {createSummary.phone} was already registered. Linked existing account.
         </p>
+      ) : null}
+      {/* DQF DOCUMENT UPLOAD — the create flow had NO upload control, so a new driver's licence,
+          medical card and INE could not be attached without leaving the flow and finding the profile.
+          It lives HERE rather than earlier in the form for a structural reason: docs.file_links.entity_id
+          is the DRIVER id, which does not exist until Save returns one. Buffering files before creation
+          and linking afterwards would need a queue with its own failure modes — and an upload whose link
+          step fails is exactly the orphan class that left docs.file_links empty for every stop-captured
+          POD. Attaching after the id exists cannot orphan. */}
+      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 p-2">
+        <span className="text-xs font-semibold text-gray-600">Driver qualification documents</span>
+        <Button
+          variant="secondary"
+          type="button"
+          data-testid="create-driver-upload-doc"
+          disabled={!createSummary?.driver_id}
+          onClick={() => setUploadOpen(true)}
+        >
+          + Upload document
+        </Button>
+        <span className="text-xs text-slate-600" data-testid="create-driver-upload-count">
+          {uploadedCount === 0 ? "None attached yet" : `${uploadedCount} attached`}
+        </span>
+      </div>
+      {uploadOpen && createSummary?.driver_id ? (
+        <UploadModal
+          entityType="driver"
+          entityId={createSummary.driver_id}
+          entityName={`${form.first_name ?? ""} ${form.last_name ?? ""}`.trim()}
+          // The VIEWED company, never the uploader's default — otherwise the file is filed under the
+          // wrong entity and never reappears when the driver aggregate refetches its company-scoped list.
+          operatingCompanyId={form.operating_company_id || undefined}
+          onClose={() => setUploadOpen(false)}
+          onUploadSuccess={() => {
+            setUploadedCount((n) => n + 1);
+            setUploadOpen(false);
+          }}
+        />
       ) : null}
       <div className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs break-all">{createSummary?.invite_url}</div>
       <div className="flex justify-end gap-2">
