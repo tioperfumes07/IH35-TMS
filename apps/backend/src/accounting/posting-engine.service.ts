@@ -9,6 +9,9 @@ import {
   InvoiceLoadSourceRequiredError as SharedInvoiceLoadSourceError,
 } from "./invoice-linkage-guards.js";
 import { resolveReversalDate, todayIso } from "./void.service.js";
+// ACCT-F59 second arm — single source of truth for "this load is delivered"; see
+// loadReachedDeliveryEvidence below for why this is imported rather than re-listed.
+import { isDeliveryEvidenceStatus } from "../dispatch/delivery-evidence-latch.js";
 
 // CHAIN-05 (BLOCK-03) adds "bank_categorization" (a categorized bank-feed line → direction-aware balanced
 // JE; built by buildBankCategorizationLines). NOTE: kept on ONE line — verify-posting-engine-mvp-contract
@@ -293,6 +296,49 @@ async function revrecLatchOwnsLoad(
     [operatingCompanyId, loadId]
   );
   return Boolean(res.rows[0]?.id);
+}
+
+/**
+ * ACCT-F59 SECOND ARM — the load has REACHED delivery evidence, so the latch either has recognized it
+ * or is about to, in this same request.
+ *
+ * WHY THIS EXISTS. `revrecLatchOwnsLoad` above asks "does a latch row exist YET?", which is a question
+ * about the past. On the delivery transition the invoice posts FIRST and the latch posts SECOND, inside
+ * one handler (`dispatch/loads.routes.ts`: convertProformaToOfficial -> sendDraftInvoice -> latchOn-
+ * DeliveryEvidence). Measured on prod for load L-20260806-0008: the invoice JE landed at
+ * 07:14:33.413711 and the latch's earn JE at 07:14:33.886651 — **473 ms later**. So the interlock ran,
+ * honestly found no latch row, allowed the post, and `4000 Freight/Line-haul Income` was credited twice
+ * for the same $1,875.50. Nothing was misconfigured and no guard was missing: the check was simply
+ * one-directional — it blocked invoice-after-latch and was blind to latch-after-invoice.
+ *
+ * Asking "has this load reached delivery evidence?" is a question about the load's OWN state, which is
+ * already true when the invoice posts. That makes the interlock ORDER-INDEPENDENT: reordering the
+ * handler, adding a fourth delivery path, or posting the invoice a millisecond earlier can no longer
+ * reopen the defect. Fixing the ordering alone would have left correctness resting on statement order in
+ * one function — the next edit to that block silently undoes it.
+ *
+ * Reuses `isDeliveryEvidenceStatus` rather than re-listing the statuses: that helper is deliberately the
+ * single definition of "delivered" shared by the office and driver paths, and duplicating it here is
+ * exactly how the two would drift apart.
+ */
+async function loadReachedDeliveryEvidence(
+  client: DbClient,
+  operatingCompanyId: string,
+  loadId: string
+): Promise<boolean> {
+  const res = await client.query<{ status: string | null }>(
+    `
+      SELECT l.status::text AS status
+      FROM mdata.loads l
+      WHERE l.operating_company_id = $1::uuid
+        AND l.id = $2::uuid
+        AND l.soft_deleted_at IS NULL
+      LIMIT 1
+    `,
+    [operatingCompanyId, loadId]
+  );
+  const status = res.rows[0]?.status ?? null;
+  return status ? isDeliveryEvidenceStatus(status) : false;
 }
 
 type PostingResult = {
@@ -718,11 +764,31 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
 
   // ACCT-F59 — refuse before resolving any account: if the DISP-01 latch already recognized this
   // load, the invoice's A/R + revenue legs are already on the books and posting again doubles both.
-  if (invoice.source_load_id && (await revrecLatchOwnsLoad(client, operatingCompanyId, invoice.source_load_id))) {
-    throw new InvoiceRevrecLatchOwnsLoadError(
-      invoice.source_load_id,
-      invoice.display_id ? `Invoice ${invoice.display_id}` : `Invoice ${sourceId}`
-    );
+  //
+  // TWO ARMS, deliberately. The first asks whether a latch row exists YET (invoice-after-latch). The
+  // second asks whether the LOAD has reached delivery evidence at all (latch-after-invoice) — the
+  // 473 ms race that put $1,875.50 of duplicate revenue on prod. Only the second arm is
+  // order-independent; see loadReachedDeliveryEvidence above.
+  if (invoice.source_load_id) {
+    const latchOwns = await revrecLatchOwnsLoad(client, operatingCompanyId, invoice.source_load_id);
+    const delivered = latchOwns
+      ? false
+      : await loadReachedDeliveryEvidence(client, operatingCompanyId, invoice.source_load_id);
+    if (latchOwns || delivered) {
+      throw new InvoiceRevrecLatchOwnsLoadError(
+        invoice.source_load_id,
+        invoice.display_id ? `Invoice ${invoice.display_id}` : `Invoice ${sourceId}`,
+        latchOwns
+          ? undefined
+          : `invoice_revrec_latch_owns_load: ${
+              invoice.display_id ? `Invoice ${invoice.display_id}` : `Invoice ${sourceId}`
+            } is sourced from load ${invoice.source_load_id}, which has REACHED DELIVERY EVIDENCE. The ` +
+            `DISP-01 two-event latch owns this load's revenue and A/R; it posts later in the same ` +
+            `delivery transition, so a latch row may not exist yet at this instant. Posting this ` +
+            `invoice would credit revenue a second time 473ms before the latch does. Refusing to post. ` +
+            `The invoice's A/R belongs to latch Event 2 (DR A/R / CR Unbilled) — do not post around it.`
+      );
+    }
   }
 
   const arAccountId = await resolveArAccountForCompany(client, operatingCompanyId);
