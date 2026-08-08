@@ -161,6 +161,30 @@ const KNOWN_COLLISIONS = new Map(Object.entries({
   "202607950000": [
     "202607950000_catalogs_items_backfill_from_qbo_mirror.sql",
     "202607950000_posting_batches_template_link.sql"
+  ],
+  // ── ACCEPTED 2026-08-08 by lead ruling ("collision CLOSED — document accept"). ──────────────────
+  // The ONLY entry added after this guard was written, and it is added because the collision is
+  // UNFIXABLE, not to turn a build green.
+  //
+  // BOTH FILES ARE ALREADY APPLIED ON PROD — `_system._schema_migrations` records
+  // ..._driver_settlements_is_sample_data at 07:08:47Z and ..._money_tables_audit_triggers at
+  // 07:55:13Z on 2026-08-08. Renaming an APPLIED migration is forbidden (checksum freeze, the
+  // 2026-07-25 outage), so there is no way to un-collide them. That is the identical justification
+  // the 28 historical pairs above carry, and the runner is unaffected for the identical reason:
+  // db-migrate.mjs keys its skip decision on FILENAME, not number, so a duplicated number never
+  // causes a wrong skip.
+  //
+  // HOW IT HAPPENED, so the class can be closed rather than repeated: verify-step numbers have
+  // CLAIMED-NUMBERS.json to serialise concurrent claims. MIGRATION numbers have NOTHING. Both authors
+  // independently checked main's max (202612340000), both correctly picked the next free number, and
+  // neither could see the other. The race is still open for the next two lanes that ship a migration
+  // in the same hour — see the board row for the proposed claim-registry fix.
+  //
+  // THE RATCHET IS NOT WEAKENED: this entry freezes exactly these TWO filenames. A THIRD file on
+  // 202612350000 is still a NEW collision and still fails — asserted in the selftest below.
+  "202612350000": [
+    "202612350000_driver_settlements_is_sample_data.sql",
+    "202612350000_money_tables_audit_triggers.sql"
   ]
 }));
 
@@ -321,6 +345,28 @@ function selftest() {
     ["distinct numbers", ["202609160000_a.sql", "202609170000_b.sql"], false],
     ["three-way collision", ["0001_a.sql", "0001_b.sql", "0001_c.sql"], true],
     ["non-numeric ignored", ["README.sql", "notes.sql"], false],
+    // RATCHET PROOF for the 2026-08-08 accepted pair. The frozen entry must exempt EXACTLY those two
+    // filenames and nothing more, so:
+    //   - the accepted pair alone -> NOT flagged (otherwise main stays red and the accept did nothing)
+    //   - the same number with a THIRD file -> STILL FLAGGED (otherwise the accept quietly turned
+    //     202612350000 into a free-for-all, which is exactly the edit this guard exists to prevent)
+    [
+      "accepted 2026-08-08 pair is exempt",
+      [
+        "202612350000_driver_settlements_is_sample_data.sql",
+        "202612350000_money_tables_audit_triggers.sql",
+      ],
+      false,
+    ],
+    [
+      "a THIRD file on the accepted number is still a NEW collision",
+      [
+        "202612350000_driver_settlements_is_sample_data.sql",
+        "202612350000_money_tables_audit_triggers.sql",
+        "202612350000_somebody_elses_new_migration.sql",
+      ],
+      true,
+    ],
   ];
   for (const [name, files, shouldFlag] of cases) {
     const flagged = findRepoCollisions(files).length > 0;

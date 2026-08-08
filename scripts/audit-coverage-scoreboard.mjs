@@ -27,14 +27,22 @@ const ENTITIES = ["TRANSP", "TRK", "USMCA"];
 const GATE_OK = new Set(["PASS", "AUDIT", "FIX", "FAIL", "UNV", "NA"]);
 /** DoD A–E + VERIFY V1–V8 — 13 gates (Program scoreboard + meta.gateTally). */
 export const GATE_LABELS_13 = ["A", "B", "C", "D", "E", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8"];
+/**
+ * Program board entity columns (audit spec B11 — certify only when BOTH are green).
+ * TRK stays on the class / ledger axes; the module table splits TRANSP + USMCA (= 26 gate cols).
+ */
+export const PROGRAM_BOARD_ENTITIES = ["TRANSP", "USMCA"];
 const SCOREBOARD_START = "## Scoreboard";
 
-/**
- * Per-gate tally across all module rows (both entities folded into cells).
- * applicable = non-NA cells; pass = PASS; fail = FAIL; unverified = UNV.
- * AUDIT/FIX count toward applicable only (weakest-column signal still honest).
- */
-export function computeGateTally(modules) {
+/** Worst-wins fold when collapsing entity cells (FAIL beats everything). */
+const GATE_RANK = { FAIL: 0, UNV: 1, FIX: 2, AUDIT: 3, PASS: 4, NA: 5 };
+export function worstGate(a, b) {
+  const A = GATE_OK.has(a) ? a : "UNV";
+  const B = GATE_OK.has(b) ? b : "UNV";
+  return (GATE_RANK[A] ?? 1) <= (GATE_RANK[B] ?? 1) ? A : B;
+}
+
+function tallyFromCellArrays(modules, pickCells) {
   const out = {};
   for (let i = 0; i < GATE_LABELS_13.length; i++) {
     const gate = GATE_LABELS_13[i];
@@ -43,7 +51,7 @@ export function computeGateTally(modules) {
     let fail = 0;
     let unverified = 0;
     for (const m of modules || []) {
-      const cells = Array.isArray(m.cells) ? m.cells : [];
+      const cells = pickCells(m) || [];
       const c = cells[i] || "UNV";
       if (c === "NA") continue;
       applicable += 1;
@@ -52,6 +60,27 @@ export function computeGateTally(modules) {
       else if (c === "UNV") unverified += 1;
     }
     out[gate] = { pass, applicable, fail, unverified };
+  }
+  return out;
+}
+
+/**
+ * Per-gate tally across module rows.
+ * Prefer folded `cells` (worst of TRANSP/USMCA) so the strip stays the "weakest column" signal.
+ */
+export function computeGateTally(modules) {
+  return tallyFromCellArrays(modules, (m) => (Array.isArray(m.cells) ? m.cells : []));
+}
+
+/** Per-entity 13-gate tallies — the honest B11 board. */
+export function computeGateTallyByEntity(modules) {
+  const out = {};
+  for (const ent of PROGRAM_BOARD_ENTITIES) {
+    out[ent] = tallyFromCellArrays(modules, (m) => {
+      const by = m.cellsByEntity && m.cellsByEntity[ent];
+      if (Array.isArray(by) && by.length === 13) return by;
+      return Array.isArray(m.cells) ? m.cells : [];
+    });
   }
   return out;
 }
@@ -717,51 +746,78 @@ export function emitProgramJson(rows, metrics, sidebarIds, opts = {}) {
   }
 
   const active = rows.filter((r) => !isSupersededRow(r));
-  const byModLayer = new Map(); // `${id}|${layer}` → rows[]
+  // `${entity}|${id}|${layer}` → rows[] — B11 requires TRANSP and USMCA as separate columns
+  const byEntModLayer = new Map();
   for (const r of active) {
-    if (!entitiesFor(r.entity).includes("TRANSP")) continue;
     if (!LAYERS.includes(r.layer)) continue;
     const p = parseModuleCell(r.module, sidebarIds);
     if (!p.ok) continue;
-    const key = `${p.id}|${r.layer}`;
-    if (!byModLayer.has(key)) byModLayer.set(key, []);
-    byModLayer.get(key).push(r);
+    const ents = entitiesFor(r.entity).filter((e) => PROGRAM_BOARD_ENTITIES.includes(e));
+    for (const ent of ents) {
+      const key = `${ent}|${p.id}|${r.layer}`;
+      if (!byEntModLayer.has(key)) byEntModLayer.set(key, []);
+      byEntModLayer.get(key).push(r);
+    }
+  }
+
+  function layerRowsFor(ent, modId, layer) {
+    const primary = byEntModLayer.get(`${ent}|${modId}|${layer}`) || [];
+    if (primary.length) return primary;
+    if (modId === "banking") return byEntModLayer.get(`${ent}|bank|${layer}`) || [];
+    if (modId === "bank") return byEntModLayer.get(`${ent}|banking|${layer}`) || [];
+    return [];
   }
 
   const sha = gitShortSha();
   const ledgerGeneratedAt = ledgerGitOr("%cI", "1970-01-01T00:00:00Z");
   const ledgerSourceSha = ledgerGitOr("%h", "unknown");
   const modules = prev.modules.map((m) => {
-    const cells = Array.isArray(m.cells) ? [...m.cells] : Array(13).fill("UNV");
-    while (cells.length < 13) cells.push("UNV");
-    for (let i = 0; i < 5; i++) {
-      const L = LAYERS[i];
-      const layerRows = byModLayer.get(`${m.module}|${L}`) || [];
-      // Also accept sidebar alias bank↔banking
-      const alt =
-        m.module === "banking"
-          ? byModLayer.get(`bank|${L}`) || []
-          : m.module === "bank"
-            ? byModLayer.get(`banking|${L}`) || []
-            : [];
-      const merged = layerRows.length ? layerRows : alt;
-      const next = gateFromLayerRows(merged);
-      if (next != null) {
-        // Never upgrade prior non-PASS → PASS unless ledger says GUARD VERIFIED (gateFromLayerRows already enforces)
-        // Never downgrade a prior FAIL/FIX to PASS via empty merge — only apply when rows exist
-        cells[i] = next;
-      } else if (!GATE_OK.has(cells[i]) || cells[i] === "PASS") {
-        // No ledger row: refuse to keep an unearned PASS — demote to UNV
-        if (cells[i] === "PASS") cells[i] = "UNV";
+    const priorFolded = Array.isArray(m.cells) ? [...m.cells] : Array(13).fill("UNV");
+    while (priorFolded.length < 13) priorFolded.push("UNV");
+    const priorByEnt = m.cellsByEntity && typeof m.cellsByEntity === "object" ? m.cellsByEntity : {};
+
+    const cellsByEntity = {};
+    for (const ent of PROGRAM_BOARD_ENTITIES) {
+      const seed = Array.isArray(priorByEnt[ent]) ? [...priorByEnt[ent]] : [...priorFolded];
+      while (seed.length < 13) seed.push("UNV");
+      // DoD A–E from ledger rows scoped to this entity
+      for (let i = 0; i < 5; i++) {
+        const L = LAYERS[i];
+        const merged = layerRowsFor(ent, m.module, L);
+        const next = gateFromLayerRows(merged);
+        if (next != null) {
+          seed[i] = next;
+        } else if (!GATE_OK.has(seed[i]) || seed[i] === "PASS") {
+          // No entity-scoped ledger row: refuse unearned PASS
+          if (seed[i] === "PASS") seed[i] = "UNV";
+        }
       }
+      // V1–V8: not Layer-modeled — keep prior per-entity seed; never invent PASS for USMCA from TRANSP fold
+      for (let i = 5; i < 13; i++) {
+        if (!GATE_OK.has(seed[i])) seed[i] = "UNV";
+        // First time splitting: if we only had folded PASS and no entity-specific prior, demote USMCA PASS→UNV
+        if (
+          ent === "USMCA" &&
+          seed[i] === "PASS" &&
+          !Array.isArray(priorByEnt.USMCA) &&
+          priorFolded[i] === "PASS"
+        ) {
+          seed[i] = "UNV";
+        }
+      }
+      cellsByEntity[ent] = seed.slice(0, 13);
     }
-    // V1–V8 (indices 5–12): not modeled as Layer column in the ledger — keep prior; never invent PASS
-    for (let i = 5; i < 13; i++) {
-      if (!GATE_OK.has(cells[i])) cells[i] = "UNV";
-      // Counts must never invent PASS — if somehow PASS without prior Cascade seed, leave only if already in prev
-    }
+
+    // Folded cells = worst across board entities (backward-compat tally / metrics)
+    const cells = Array.from({ length: 13 }, (_, i) =>
+      PROGRAM_BOARD_ENTITIES.reduce(
+        (acc, ent) => worstGate(acc, cellsByEntity[ent][i]),
+        cellsByEntity[PROGRAM_BOARD_ENTITIES[0]][i]
+      )
+    );
+
     const build = loadBuildFraction(m.module) || m.build;
-    return { ...m, build, cells };
+    return { ...m, build, cells, cellsByEntity };
   });
 
   const out = {
@@ -829,6 +885,7 @@ export function buildProgramScoreboardLive() {
   }
   const data = emitProgramJson(rows, metrics, ids, { write: false });
   const gateTally = computeGateTally(data.modules || []);
+  const gateTallyByEntity = computeGateTallyByEntity(data.modules || []);
   return {
     ...data,
     meta: {
@@ -838,6 +895,8 @@ export function buildProgramScoreboardLive() {
       failOpen: metrics.failOpen,
       defects: metrics.defectModules,
       gateTally,
+      gateTallyByEntity,
+      boardEntities: PROGRAM_BOARD_ENTITIES,
     },
   };
 }

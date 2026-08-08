@@ -300,7 +300,7 @@ function ensureGateTally(data: ScoreboardPayload): Record<string, unknown> {
   const existing = data.meta?.gateTally;
   if (existing && typeof existing === "object") return existing as Record<string, unknown>;
   // Fallback path: compute from modules if the live script didn't attach gateTally.
-  const modules = Array.isArray(data.modules) ? (data.modules as { cells?: string[] }[]) : [];
+  const modules = Array.isArray(data.modules) ? (data.modules as { cells?: string[]; cellsByEntity?: Record<string, string[]> }[]) : [];
   const gates = ["A", "B", "C", "D", "E", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8"];
   const out: Record<string, { pass: number; applicable: number; fail: number; unverified: number }> = {};
   for (let i = 0; i < gates.length; i++) {
@@ -317,6 +317,37 @@ function ensureGateTally(data: ScoreboardPayload): Record<string, unknown> {
       else if (c === "UNV") unverified += 1;
     }
     out[gates[i]] = { pass, applicable, fail, unverified };
+  }
+  return out;
+}
+
+function ensureGateTallyByEntity(data: ScoreboardPayload): Record<string, unknown> {
+  const existing = data.meta?.gateTallyByEntity;
+  if (existing && typeof existing === "object") return existing as Record<string, unknown>;
+  const modules = Array.isArray(data.modules)
+    ? (data.modules as { cells?: string[]; cellsByEntity?: Record<string, string[]> }[])
+    : [];
+  const gates = ["A", "B", "C", "D", "E", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8"];
+  const ents = ["TRANSP", "USMCA"];
+  const out: Record<string, Record<string, { pass: number; applicable: number; fail: number; unverified: number }>> = {};
+  for (const ent of ents) {
+    out[ent] = {};
+    for (let i = 0; i < gates.length; i++) {
+      let pass = 0;
+      let applicable = 0;
+      let fail = 0;
+      let unverified = 0;
+      for (const m of modules) {
+        const cells = m.cellsByEntity?.[ent] ?? m.cells ?? [];
+        const c = (cells[i] as string) || "UNV";
+        if (c === "NA") continue;
+        applicable += 1;
+        if (c === "PASS") pass += 1;
+        else if (c === "FAIL") fail += 1;
+        else if (c === "UNV") unverified += 1;
+      }
+      out[ent][gates[i]] = { pass, applicable, fail, unverified };
+    }
   }
   return out;
 }
@@ -427,6 +458,7 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
         const lastSyncedCt = formatCt(generatedAt) || null;
         const { prodReadAt, prodReadSource } = await stampProdReadAt(req);
         const gateTally = ensureGateTally(data);
+        const gateTallyByEntity = ensureGateTallyByEntity(data);
         const recentActivity = await loadRecentActivityFromGitHub(10);
         const classScoreboard = readClassScoreboardFromQueue();
         // 60s here would cap the by-class grid's reactivity at 60s no matter how fast the page polls.
@@ -441,6 +473,8 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
             prodReadAt,
             prodReadSource,
             gateTally,
+            gateTallyByEntity,
+            boardEntities: ["TRANSP", "USMCA"],
           },
           recentActivity,
           classScoreboard,

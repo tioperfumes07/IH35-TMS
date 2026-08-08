@@ -53,6 +53,55 @@ const curpSchema = z
   .regex(/^[A-Z0-9]{18}$/i, "CURP must be 18 alphanumeric characters");
 const ineSchema = z.string().trim().min(8, "INE must be between 8 and 20 characters").max(20, "INE must be between 8 and 20 characters");
 
+/**
+ * CURP → date of birth. Characters 5-10 of a CURP are the birth date as YYMMDD
+ * (MUGJ`840525`HTSXNR06 → 1984-05-25). Century is disambiguated by position 17: a DIGIT means
+ * 1900s (CURPs issued before 2000), a LETTER means 2000s. That is the RENAPO rule, not a guess —
+ * and it is why a naive `19${yy}` would misread every driver born after 1999.
+ *
+ * Returns null when the CURP is absent or the embedded date is not a real calendar date, so a
+ * malformed CURP degrades to "no DOB derived" rather than writing a wrong statutory field.
+ */
+export function deriveDobFromCurp(curp: string | null | undefined): string | null {
+  const raw = (curp ?? "").trim().toUpperCase();
+  if (!/^[A-Z0-9]{18}$/.test(raw)) return null;
+  const yy = raw.slice(4, 6);
+  const mm = raw.slice(6, 8);
+  const dd = raw.slice(8, 10);
+  if (!/^\d{2}$/.test(yy) || !/^\d{2}$/.test(mm) || !/^\d{2}$/.test(dd)) return null;
+  const century = /\d/.test(raw[16]!) ? "19" : "20";
+  const iso = `${century}${yy}-${mm}-${dd}`;
+  // Round-trip through Date to reject 1984-02-31 and friends.
+  const parsed = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== iso) return null;
+  return iso;
+}
+
+/**
+ * 49 CFR 391.21(b)(2) makes date of birth a statutory element of the driver's application for
+ * employment, so it is not an optional nicety. When BOTH a CURP and an explicit DOB are supplied
+ * they must agree: the CURP is a government-issued identifier and a DOB contradicting it is a data
+ * error, never a correction. Fail loud rather than silently preferring one.
+ */
+export class DriverDobCurpMismatchError extends Error {
+  constructor(readonly supplied: string, readonly derived: string) {
+    super(`date_of_birth ${supplied} contradicts the CURP-derived date ${derived}`);
+    this.name = "DriverDobCurpMismatchError";
+  }
+}
+
+export function resolveDateOfBirth(input: {
+  date_of_birth?: string | null;
+  curp?: string | null;
+}): string | null {
+  const derived = deriveDobFromCurp(input.curp);
+  const supplied = input.date_of_birth?.trim() || null;
+  if (supplied && derived && supplied !== derived) {
+    throw new DriverDobCurpMismatchError(supplied, derived);
+  }
+  return supplied ?? derived;
+}
+
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
@@ -107,6 +156,16 @@ const createDriverBodySchema = z.object({
   visa_expires_at: isoDateSchema.optional(),
   passport_number: z.string().trim().max(100).optional(),
   passport_expires_at: isoDateSchema.optional(),
+  // 49 CFR 391.21(b)(2) — date of birth is a statutory element of the driver application. Accepted
+  // explicitly AND derivable from the CURP; resolveDateOfBirth() rejects a supplied DOB that
+  // contradicts the CURP rather than silently picking one.
+  date_of_birth: isoDateSchema.optional(),
+  passport_country: z.string().trim().max(2).optional(),
+  // 49 CFR 391.21(b)(5) requires the licence(s) held. For B-1 Mexican drivers operating under
+  // reciprocity the operative credential is the Licencia Federal, NOT a US CDL — cdl_number above
+  // is the US credential and cannot carry it.
+  mexican_license_number: z.string().trim().max(100).optional(),
+  mexican_license_expiration: isoDateSchema.optional(),
   ine_number: ineSchema.optional(),
   curp: curpSchema.optional(),
   mx_address_line1: z.string().trim().max(200).optional(),
@@ -131,6 +190,16 @@ const createDriverBodySchema = z.object({
   // API: a UI-created driver was silently unassignable, an API/seed-created one was dispatchable
   // immediately. The divergence was the defect, not the gate. Both ends now say Probation.
   status: driverStatusSchema.default("Probation"),
+  /**
+   * OUTBOUND CONSENT — default FALSE. Creating a driver record must not message a human as a side
+   * effect; the caller opts in explicitly. Omitted = record only, no WhatsApp, no live invite link.
+   */
+  send_invite: z.boolean().optional().default(false),
+  /**
+   * QA/battery marker. A sample driver never triggers an outbound invite regardless of send_invite,
+   * and is distinguishable and cleanable afterwards.
+   */
+  is_sample_data: z.boolean().optional().default(false),
   notes: z.string().trim().max(2000).optional(),
   override_returning_warning: z.boolean().optional().default(false),
   /**
@@ -675,18 +744,20 @@ export async function createDriverCanonical(
               identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
               cdl_expires_at, hire_date, pay_basis, dot_medical_expires_at, hazmat_endorsement_expires_at,
               visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+              date_of_birth, passport_country, mexican_license_number, mexican_license_expiration,
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
               status, notes, prior_driver_id, rehire_count, is_rehire,
-            operating_company_id, created_by_user_id, updated_by_user_id
+            operating_company_id, created_by_user_id, updated_by_user_id, is_sample_data
             ) VALUES (
-            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$38
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$42,$43
             )
             RETURNING
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
               cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
               visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+              date_of_birth, passport_country, mexican_license_number, mexican_license_expiration,
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
@@ -715,6 +786,12 @@ export async function createDriverCanonical(
           b.passport_expires_at ?? null,
           b.ine_number ?? null,
           b.curp ?? null,
+          // 391.21(b)(2): explicit DOB when given, otherwise derived from the CURP. Throws when the
+          // two disagree — a government identifier is not overridden by a typed date.
+          resolveDateOfBirth({ date_of_birth: b.date_of_birth, curp: b.curp }),
+          b.passport_country ?? null,
+          b.mexican_license_number ?? null,
+          b.mexican_license_expiration ?? null,
           b.mx_address_line1 ?? null,
           b.mx_address_line2 ?? null,
           b.mx_city ?? null,
@@ -733,6 +810,7 @@ export async function createDriverCanonical(
           rehireState.is_rehire,
           resolvedOperatingCompanyId,
           authUser.uuid,
+          b.is_sample_data ?? false,
         ]
       );
       const row = res.rows[0];
@@ -800,7 +878,22 @@ export async function createDriverCanonical(
       // invite-entity-gate-exempt: resolvedOperatingCompanyId came from a lookup restricted to
       // `id IN (SELECT org.user_accessible_company_ids())`, which IS the membership check — the caller
       // cannot name a company they do not belong to, so there is nothing left to assert here.
-      if (onboardingEnabled && resolvedOperatingCompanyId && operatingCompany && identityUserId) {
+      // OUTBOUND-CONSENT GATE: creating a record must not, by itself, message a human. This block
+      // mints an invite token and queues a WhatsApp send; before this gate the Save button was also
+      // a Send button, so any placeholder or test driver carrying a real number got a live 72-hour
+      // link. Two additional conditions, both fail-closed:
+      //   send_invite  — the caller must ASK for the invite. Absent/false = record only.
+      //   is_sample_data — a QA/battery driver NEVER messages anyone, even if send_invite is true.
+      // The pre-existing conditions are unchanged: the invite still requires an entity and a login
+      // user, because an invite with nothing to log into is meaningless.
+      if (
+        onboardingEnabled &&
+        resolvedOperatingCompanyId &&
+        operatingCompany &&
+        identityUserId &&
+        b.send_invite === true &&
+        b.is_sample_data !== true
+      ) {
         const inviteToken = randomBytes(32).toString("hex");
         inviteUrl = `${driverInviteBaseUrl}/invite?token=${inviteToken}`;
         await client.query("SET LOCAL app.bypass_rls = 'lucia'");
@@ -982,6 +1075,18 @@ export async function createDriverCanonical(
 
     return { status: 201, body: created as Record<string, unknown> };
   } catch (err) {
+    // A DOB that contradicts the CURP is caller error, not a server fault — 400 with the two dates
+    // named, so the operator can see WHICH is wrong instead of retrying a 500.
+    if (err instanceof DriverDobCurpMismatchError) {
+      return {
+        status: 400,
+        body: {
+          error: "date_of_birth_contradicts_curp",
+          message: err.message,
+          fieldErrors: { date_of_birth: `CURP indicates ${err.derived}`, curp: `implies date of birth ${err.derived}` },
+        },
+      };
+    }
     const code = (err as { code?: string }).code;
     if (code === "23505")
       return {
@@ -1707,6 +1812,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
               cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at, endorsement_h,
               visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+              date_of_birth, passport_country, mexican_license_number, mexican_license_expiration,
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
@@ -1741,6 +1847,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
               cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at, endorsement_h,
               visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+              date_of_birth, passport_country, mexican_license_number, mexican_license_expiration,
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,

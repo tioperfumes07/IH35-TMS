@@ -87,7 +87,7 @@ function isRouteRegistrar(name) {
 // the entry is deleted, so it can never rot into a parking lot. Adding an entry requires the reason
 // to survive review; the empty map below is the correct starting state, and the guard is RED until
 // each of the 27 findings is either mounted or refused on the record.
-const REFUSED_MOUNTS = new Map([
+export const REFUSED_MOUNTS = new Map([
   // ── SECURITY: mounting would expose an unauthenticated endpoint ───────────────────────────────
   [
     // Key assembled from two literals on purpose. scripts/verify-no-bare-health-references.mjs scans
@@ -206,13 +206,8 @@ const REFUSED_MOUNTS = new Map([
   // Reasons carried over from scripts/verify-no-orphan-routes.mjs, which already recorded each of
   // these as intentionally unmounted. Re-litigating a documented decision is out of scope for a
   // parity sweep, and mounting code with no consumer expands runtime surface for zero benefit.
-  ["audit/dispatch-overrides.routes.ts", "Dead code — no frontend caller (2026-06 sweep; scripts/verify-no-orphan-routes.mjs)."],
-  ["brokerupdate/brokerupdate.routes.ts", "Dead code — no frontend caller (scripts/verify-no-orphan-routes.mjs)."],
-  ["safety/damage-continuity/continuity.routes.ts", "Dead code — no frontend caller (scripts/verify-no-orphan-routes.mjs). POST :id/auto-create-claim also opens a claim, which is money-adjacent."],
   ["safety/drug-pool.routes.ts", "Dead code — no frontend caller (scripts/verify-no-orphan-routes.mjs)."],
   ["integrations/samsara/samsara-master-sync.routes.ts", "Dead code / admin-only — no frontend caller (scripts/verify-no-orphan-routes.mjs); it also triggers an external Samsara sync that writes mdata.*."],
-  ["users/preferences/locale.routes.ts", "Dead code — no frontend caller (scripts/verify-no-orphan-routes.mjs)."],
-  ["utilization/utilization.routes.ts", "Dead code — no frontend caller (scripts/verify-no-orphan-routes.mjs)."],
 
   // ── NO CONSUMER, newly surfaced by THIS guard (the orphan guard could not see them) ───────────
   ["mexico-ops/mx-permits.routes.ts", "No consumer — nothing in apps/frontend or apps/driver-pwa calls /api/v1/mx-permits. Newly surfaced here: it exports `mxPermitsRoutes`, which the orphan guard's `register*Routes` pattern never matched. Triage the Mexico-ops module surface before wiring it."],
