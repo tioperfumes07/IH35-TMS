@@ -104,6 +104,9 @@ export type DriverLoadAvailability = {
   blocker?: string;
   work_order_id?: string | null;
   asset_id?: string | null;
+  /** FAIL-U1: operator-readable labels. ids stay for programmatic callers. */
+  work_order_display_id?: string | null;
+  asset_label?: string | null;
 };
 
 export type DispatchLoadListQuery = {
