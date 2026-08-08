@@ -37,10 +37,23 @@ import { fileURLToPath } from "node:url";
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const EXPENSES = "apps/backend/src/accounting/expenses.routes.ts";
 const BILLS = "apps/backend/src/accounting/bills.service.ts";
+const PAYMENTS = "apps/backend/src/accounting/customer-payments.routes.ts";
 const LABEL = "verify-expense-bill-sample-tag-writers";
 
+/**
+ * Strips JS *and* SQL comments.
+ *
+ * The SQL half is not decoration. My first version stripped only `//` and block comments, and the
+ * customer-payment fix carries an explanatory `-- …` comment INSIDE the INSERT column list that happens
+ * to contain the words `is_sample_data`. That comment satisfied the column check on its own: deleting
+ * the real column left the guard GREEN. Mutation-testing caught it, which is the entire reason the
+ * mutation step exists — a guard that reads its own explanation as evidence is worse than no guard.
+ */
 export function stripComments(src) {
-  return src.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  return src
+    .replace(/\/\/[^\n]*/g, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/--[^\n]*/g, "");
 }
 
 /** The expense route must ACCEPT the flag and PUSH it onto the dynamic column list. */
@@ -67,7 +80,17 @@ export function billWritesTag(src) {
   };
 }
 
-export function collectProblems(expenseSrc, billSrc) {
+/** The customer-payment route must ACCEPT the flag and name it in the accounting.payments INSERT. */
+export function paymentWritesTag(src) {
+  const clean = stripComments(src);
+  const insert = /INSERT\s+INTO\s+accounting\.payments\s*\(([\s\S]{0,900}?)\)/i.exec(clean);
+  return {
+    accepts: /is_sample_data\s*:\s*z\.boolean\(\)/.test(clean),
+    writes: insert ? /\bis_sample_data\b/.test(insert[1]) : false,
+  };
+}
+
+export function collectProblems(expenseSrc, billSrc, paymentSrc = "") {
   const problems = [];
   const e = expenseWritesTag(expenseSrc);
   if (!e.accepts) {
@@ -97,6 +120,24 @@ export function collectProblems(expenseSrc, billSrc) {
         `the way display_id is stamped (ACCT-F186) — four positional INSERT variants make a new column ` +
         `four places to drift (FAIL-F2).`
     );
+  }
+  // ACCT-F264 — same class, third writer. accounting.payments.is_sample_data exists on 12,129 rows and
+  // nothing wrote it. posting-engine resolves customer_payment from the SOURCE row, so an untagged
+  // payment produces an untagged journal entry.
+  if (paymentSrc) {
+    const pm = paymentWritesTag(paymentSrc);
+    if (!pm.accepts) {
+      problems.push(
+        `${PAYMENTS}: the create body schema has no is_sample_data, so a customer payment cannot be ` +
+          `marked TEST data and the INSERT has nothing to write (ACCT-F264).`
+      );
+    }
+    if (!pm.writes) {
+      problems.push(
+        `${PAYMENTS}: the accounting.payments INSERT does not name is_sample_data, so the field is ` +
+          `accepted and dropped — which reads as fixed and is not (ACCT-F264).`
+      );
+    }
   }
   return problems;
 }
@@ -131,19 +172,37 @@ if (process.argv.includes("--selftest")) {
     failures.push("COMMENTS satisfied the expense checks — false green");
   }
 
+  const GOOD_P = "is_sample_data: z.boolean().optional(),\nINSERT INTO accounting.payments (a, is_sample_data) VALUES ($1,$2)";
+  if (collectProblems(GOOD_E, GOOD_B, GOOD_P).length !== 0) failures.push("the corrected payment writer was flagged");
+  if (!collectProblems(GOOD_E, GOOD_B, "INSERT INTO accounting.payments (a, is_sample_data) VALUES ($1,$2)").some((p) => /cannot be marked TEST data/.test(p))) {
+    failures.push("a payment schema missing the field was NOT caught");
+  }
+  if (!collectProblems(GOOD_E, GOOD_B, "is_sample_data: z.boolean().optional(),\nINSERT INTO accounting.payments (a, b) VALUES ($1,$2)").some((p) => /accepted and dropped/.test(p))) {
+    failures.push("payment accepted-then-dropped was NOT caught");
+  }
+
+  // PINNED: an SQL comment inside the column list must NOT satisfy the payment check. This is the
+  // exact false green my own fix produced — the explanatory `-- …is_sample_data…` comment sat inside
+  // the INSERT parens and kept the guard green after the real column was deleted.
+  const SQL_COMMENT_FAKE =
+    "is_sample_data: z.boolean().optional(),\nINSERT INTO accounting.payments (a, -- is_sample_data lives here\n b) VALUES ($1,$2)";
+  if (!collectProblems(GOOD_E, GOOD_B, SQL_COMMENT_FAKE).some((p) => /accepted and dropped/.test(p))) {
+    failures.push("an SQL comment inside the column list faked a pass — the exact false green found by mutation");
+  }
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const f of failures) console.error("  - " + f);
     process.exit(1);
   }
   console.log(
-    `${LABEL} SELFTEST OK — 6/6 (corrected pair passes, missing expense schema caught, ` +
-      `accepted-then-dropped caught, bill non-writer caught, missing bill input caught, comments cannot fake)`
+    `${LABEL} SELFTEST OK — 10/10 (corrected pair passes, missing expense schema caught, ` +
+      `accepted-then-dropped caught, bill non-writer caught, missing bill input caught, comments cannot fake, payment writer covered, SQL comment cannot fake)`
   );
   process.exit(0);
 }
 
-for (const f of [EXPENSES, BILLS]) {
+for (const f of [EXPENSES, BILLS, PAYMENTS]) {
   if (!fs.existsSync(path.join(root, f))) {
     console.error(`${LABEL} FAIL — ${f} is missing; the sample-tag writers cannot be verified.`);
     process.exit(1);
@@ -151,11 +210,12 @@ for (const f of [EXPENSES, BILLS]) {
 }
 const problems = collectProblems(
   fs.readFileSync(path.join(root, EXPENSES), "utf8"),
-  fs.readFileSync(path.join(root, BILLS), "utf8")
+  fs.readFileSync(path.join(root, BILLS), "utf8"),
+  fs.existsSync(path.join(root, PAYMENTS)) ? fs.readFileSync(path.join(root, PAYMENTS), "utf8") : ""
 );
 if (problems.length) {
   console.error(`${LABEL} FAIL — ${problems.length} money writer(s) cannot mark a document as sample:`);
   for (const p of problems) console.error("  ✗ " + p);
   process.exit(1);
 }
-console.log(`${LABEL} OK — expense and bill writers both accept and persist is_sample_data.`);
+console.log(`${LABEL} OK — expense, bill and customer-payment writers all accept and persist is_sample_data.`);
