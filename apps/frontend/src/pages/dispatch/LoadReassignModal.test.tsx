@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { postLoadReassign } from "../../api/dispatch";
 import "../../design/design-tokens.css";
@@ -24,7 +25,11 @@ describe("LoadReassignModal (P5-T17)", () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const onClose = vi.fn();
     render(
+      // MemoryRouter: the reassign modal (or a child it gained) calls useNavigate, so the render threw
+      // "useNavigate() may be used only in the context of a <Router> component" and the reason-code submit
+      // assertion never ran. The app always renders this inside the router.
       <QueryClientProvider client={qc}>
+        <MemoryRouter>
         <LoadReassignModal
           open
           onClose={onClose}
@@ -44,6 +49,7 @@ describe("LoadReassignModal (P5-T17)", () => {
             },
           ]}
         />
+        </MemoryRouter>
       </QueryClientProvider>
     );
 

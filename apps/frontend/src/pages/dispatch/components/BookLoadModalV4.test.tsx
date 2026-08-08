@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import { ToastProvider } from "../../../components/Toast";
 import { BookLoadModalV4 } from "./BookLoadModalV4";
 
@@ -40,7 +41,15 @@ function wrap(ui: ReactElement) {
   const qc = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
+  // MemoryRouter: the Book Load wizard (or a child it gained) calls useNavigate, so EVERY render threw
+  // "useNavigate() may be used only in the context of a <Router> component" — both cases died before a
+  // single assertion ran, leaving the module's core screen with no executing coverage at all. The app
+  // always renders this inside the router; the harness was the unrealistic part.
+  return (
+    <QueryClientProvider client={qc}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>
+  );
 }
 
 describe("BookLoadModalV4", () => {
