@@ -95,6 +95,10 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
       // endpoint the full Customers page create uses) so the returned id is a bookable/invoiceable
       // FK. Previously this wrote to the QBO mirror (mdata.qbo_customers) that no customer picker/
       // search/list reads, so an inline-created customer never appeared and its id was dangling.
+      // Invoice send resolves recipient via ap_email → billing_email → ar_email (invoice-send.service).
+      // Backend maps `email` → billing_email; also stamp ar_email + ap_email from the same field so a
+      // quick-created customer is deliverable without opening CustomerDetail (Cascade #9 / $284k open).
+      const invoiceEmail = form.email.trim() || undefined;
       const res = await createCustomer({
         name: displayName,
         operating_company_id: operatingCompanyId,
@@ -102,13 +106,15 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
         // D1-4: persist the REAL parent hard link (parent_customer_id column added by migration
         // 202607050820). Only sent when this is a sub-customer; the backend re-validates it.
         parent_customer_id: form.isSubCustomer ? form.parentCustomerId : undefined,
-        email: form.email.trim() || undefined,
+        email: invoiceEmail,
+        ar_email: invoiceEmail,
+        ap_email: invoiceEmail,
         phone: form.phone.trim() || undefined,
         website: form.website.trim() || undefined,
         billing_address: form.billingLine1.trim() || undefined,
         billing_state: form.billingState.trim() || undefined,
         main_contact_name: `${form.firstName} ${form.lastName}`.trim() || undefined,
-        main_contact_email: form.email.trim() || undefined,
+        main_contact_email: invoiceEmail,
         main_contact_phone: form.phone.trim() || undefined,
         main_contact_mobile: form.mobile.trim() || undefined,
       });
@@ -157,8 +163,17 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
         <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={form.displayName} onChange={(e) => set("displayName", e.target.value)} placeholder="How this customer appears on transactions" />
       </label>
       <label className="block">
-        <span className="text-xs font-medium text-gray-700">Email</span>
-        <input type="email" className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={form.email} onChange={(e) => set("email", e.target.value)} />
+        <span className="text-xs font-medium text-gray-700">Billing / invoice email</span>
+        <input
+          type="email"
+          className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm"
+          value={form.email}
+          onChange={(e) => set("email", e.target.value)}
+          placeholder="Used when sending invoices"
+        />
+        <span className="mt-0.5 block text-[11px] text-slate-500">
+          Without this, invoices mark sent but cannot email the customer.
+        </span>
       </label>
       <div className="grid grid-cols-2 gap-3">
         <label className="block">

@@ -239,12 +239,17 @@ export function QuickCreateEntityModal({
         onCreated({ id: String(res.id), label: parsed.data.name });
       } else if (kind === "customer") {
         // D1-1: writes to mdata.customers (canonical) — already fixed in the prior customer path.
+        // Same deliverability stamp as NewCustomerDrawerForm: email → billing_email (API) + ar/ap.
+        const invoiceEmail = parsed.data.email || undefined;
         const res = await createCustomer({
           name: parsed.data.name,
           operating_company_id: operatingCompanyId,
-          email: parsed.data.email || undefined,
+          email: invoiceEmail,
+          ar_email: invoiceEmail,
+          ap_email: invoiceEmail,
           phone: parsed.data.phone || undefined,
           main_contact_name: parsed.data.company?.trim() || undefined,
+          main_contact_email: invoiceEmail,
         });
         onCreated({ id: String(res.id), label: parsed.data.name });
       } else if (kind === "item") {
