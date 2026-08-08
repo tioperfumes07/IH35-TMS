@@ -855,18 +855,21 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           SET status = 'void',
               voided_at = now(),
               void_reason = $2,
-              -- ACCT-F197 (Cascade FAIL-A1): ZERO THE OPEN BALANCE. Voiding set status and
-              -- voided_at but left amount_open_cents at its full value, so every surface that sums
-              -- that column kept counting a receivable nobody owes. Measured on prod: all 7 voided
-              -- USMCA invoices still carried their full open balance -- $3,983.07, which is 56.4%
-              -- of the entity's reported A/R -- and TRANSP was 49.7% by the same fault.
+              -- ACCT-F200 — DO NOT ADD 'amount_open_cents = 0' HERE. It was added once (ACCT-F197)
+              -- and took production down: that column is STORED GENERATED on prod
+              -- (attgenerated='s', expr total_cents - amount_paid_cents), so Postgres rejects the
+              -- statement and EVERY invoice void returned 500 until the revert in 6c73e28.
               --
-              -- This is NOT inventing a number. amount_open_cents is a DERIVED cache of
-              -- (total - paid); for a voided invoice the derived value IS zero, because a void owes
-              -- nothing. Leaving it stale is the invention.
+              -- The argument that used to sit here -- "a void owes nothing, so the derived value IS
+              -- zero" -- was wrong twice over. A voided $500 invoice legitimately has total 500,
+              -- paid 0, open 500: voiding changes an invoice's VALIDITY, not its face amount or its
+              -- payments. And there was nothing to correct anyway -- all nine open-A/R read paths
+              -- already exclude voided invoices via voided_at / status. The "56.4% of A/R" figure
+              -- was 0.48% ($3,988.07 of $836,934.70, verified on prod) and reachable only by summing
+              -- the raw column WITHOUT the voided filter, which no application surface does.
               --
-              -- The GL is untouched here: the reversing JE is posted separately by the void engine
-              -- when VOID_ENFORCEMENT_ENABLED is on. This corrects the subledger cache only.
+              -- Guarded two ways: scripts/verify-void-zeroes-open-balance.mjs (step 2861, inverted
+              -- from its original form) and scripts/verify-no-write-to-generated-column.mjs (2865).
               updated_at = now(),
               updated_by_user_id = $3
           WHERE id = $1
