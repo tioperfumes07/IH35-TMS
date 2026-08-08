@@ -202,7 +202,15 @@ export function ComplaintsTab() {
   }
 
   function resolveComplainant(row: Record<string, unknown>) {
-    if (row.complainant_driver_id) return <EntityLink kind="driver" id={String(row.complainant_driver_id)} />;
+    // FAIL-CP1: pass the resolved name. Without a label EntityLink prints the raw uuid.
+    if (row.complainant_driver_id)
+      return (
+        <EntityLink
+          kind="driver"
+          id={String(row.complainant_driver_id)}
+          label={row.complainant_driver_name ? String(row.complainant_driver_name) : "Driver"}
+        />
+      );
     if (row.complainant_customer_id) return <EntityLink kind="customer" id={String(row.complainant_customer_id)} />;
     if (row.complainant_user_id) {
       const employeeLabel = resolveUserLabel(String(row.complainant_user_id));
@@ -214,7 +222,15 @@ export function ComplaintsTab() {
 
   function resolveRespondent(row: Record<string, unknown>) {
     const driverId = row.respondent_driver_id ? String(row.respondent_driver_id) : "";
-    if (driverId) return <EntityLink kind="driver" id={driverId} />;
+    // FAIL-CP1: same fix on the respondent side — one uuid appeared in BOTH columns.
+    if (driverId)
+      return (
+        <EntityLink
+          kind="driver"
+          id={driverId}
+          label={row.respondent_driver_name ? String(row.respondent_driver_name) : "Driver"}
+        />
+      );
     if (row.respondent_user_id) {
       const employeeLabel = resolveUserLabel(String(row.respondent_user_id));
       return <span>{employeeLabel}</span>;
