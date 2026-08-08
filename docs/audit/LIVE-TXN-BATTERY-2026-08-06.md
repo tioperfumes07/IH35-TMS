@@ -8034,3 +8034,68 @@ background job, no other lane — wrote a single unexplained entry into it durin
 stronger statement than any individual PASS in this battery: **the USMCA GL has no dark writer.** It also
 retroactively validates the arithmetic of every unit above, because an off-by-one anywhere would have shown
 up here as a mismatch.
+
+## 128. ★★ BOARD ITEM PULLED — `LV-BANK-TWO-SIGN-CONVENTIONS`: the poster is SAFE, and the in-code description of the convention is **BACKWARDS ON 8,338 OF 8,338 ROWS**.
+
+The row measured `is_credit = true` rows only and concluded *"credits are stored negative, except Relay Fuel
+Wallet."* **It never looked at the money-OUT half of the table.** I did, database-wide, and the result
+reframes the finding.
+
+**MEASURED ON PROD, ALL THREE ENTITIES, discriminator `visible_all = 11,082 == n_live_tup = 11,082`:**
+
+| entity | `is_credit=false` (money OUT) | negative | **positive** | `is_credit=true` (money IN) | negative | positive |
+|---|---|---|---|---|---|---|
+| USMCA | 94 | 0 | **94** | 69 | 69 | 0 |
+| TRANSP | 4,800 | 0 | **4,800** | 1,279 | 1,171 | **108** |
+| TRK | 3,444 | 0 | **3,444** | 1,396 | 1,396 | 0 |
+| **total** | **8,338** | **0** | **8,338** | 2,744 | 2,636 | 108 |
+
+**Every money-out row in the database is POSITIVE. All 8,338. Zero exceptions, all three entities.**
+
+### ★ FILED (P1 · money · CC-1) — `LV-BANK-SIGN-COMMENT-IS-INVERTED`
+
+`apps/backend/src/banking/bank-feed-gl-posting.service.ts:8-9`, the file header that defines the rule for
+every future reader:
+> `// DIRECTION IS DRIVEN ONLY BY is_credit, NEVER by the sign of amount_cents (money-out is stored NEGATIVE;`
+> `// the posting engine posts Math.abs).`
+
+and again at `:253`:
+> `// Sign landmine: money-out is stored NEGATIVE. Magnitude only; direction from the is_credit flag.`
+
+**"Money-out is stored NEGATIVE" is false on 8,338 of 8,338 money-out rows. The real convention is the exact
+inverse: money-out POSITIVE, money-in NEGATIVE.**
+
+**THE CODE IS SAFE AND MUST NOT BE TOUCHED.** `:254` takes `Math.abs(Number(txn.amount_cents ?? 0))` and
+`:259` derives direction from `is_credit === true ? "money_in" : "money_out"`. It never reads the sign, so it
+is immune to the convention **and** to the 108 Relay exceptions. **This unit is a PASS on the poster** — and
+it is the direct answer to the question the two board rows leave hanging together, now that categorizing is
+proven to post a real JE (item 127): *does a Relay-Fuel-Wallet positive credit post backwards?* **No. Direction
+never touches the sign.**
+
+**WHAT IS WRONG IS THE ONE ARTEFACT EVERY FUTURE READER WILL TRUST.** The comment is the canonical in-repo
+statement of the convention, it sits in the money path, and it **calls itself a "sign landmine"** — the
+landmine is the comment. Anyone who writes a new reader from it (a report, an export, a reconciliation, a
+balance projection) and follows `money-out = negative` will be **exactly backwards on the entire table**, and
+the resulting numbers will look plausible because they are the right magnitudes with the wrong signs.
+
+### ★ AND IT CORRECTS THE PARENT ROW'S CHARACTERISATION
+
+The row is titled *"TWO mutually exclusive sign conventions"* and reports **2,634 negative vs 108 positive**.
+Read across the whole table, the truth is different and more useful:
+
+- **The sign encodes DIRECTION**, coherently: out = +, in = −. That holds for **10,974 of 11,082** rows.
+- **The 108 Relay Fuel Wallet rows are the only real exception**, exactly as the row's origin test established
+  — one account, one contiguous window, one description shape. **That part of the row is correct and stands.**
+- **The parent row's 2,634-vs-108 framing counted only the `is_credit=true` half**, which makes a
+  direction-encoding convention look like a credits-are-negative rule with an outlier.
+
+**So the schema is not "two conventions with nothing recording which applies" as broadly as stated** — it is
+**one consistent direction-encoding convention, 108 rows that violate it, and an authoritative comment that
+describes the opposite of both.** The fix list is therefore different: the parent row's ask (record which
+convention applies per row) is still right for the 108, but **the higher-value, five-minute fix is correcting
+the comment**, because that is what the next reader will actually build on.
+
+**METHOD NOTE — why the parent row missed this and it is not a criticism.** It asked "how are credits
+stored?", got a clean answer, and stopped. **The half of a two-valued column you did not query cannot
+contradict you.** The general form: when a finding is about a convention, measure **every** value of the
+discriminating flag, not the one the symptom pointed at.
