@@ -99,13 +99,20 @@ describe("FuelReconciliationPage", () => {
     render(wrap(<FuelReconciliationPage />));
     await screen.findByText("T-Hot");
     const tbody = screen.getByText("T-Hot").closest("tbody")!;
-    let first = within(tbody).getAllByRole("row")[0];
-    expect(first).toHaveTextContent("T-Calm");
-    await user.click(screen.getByText("Unit #"));
-    await waitFor(() => {
-      first = within(tbody).getAllByRole("row")[0];
-      expect(first).toHaveTextContent("T-Hot");
-    });
+    const first = () => within(tbody).getAllByRole("row")[0];
+    // ParityTable.toggleSort sorts a NEW key ASC and only flips to DESC on the next click of the ACTIVE
+    // key. "T-Calm" already sorts first in the fixture, so the ASC click is a NO-OP on row order — this
+    // previously clicked once and asserted "T-Hot", i.e. it expected the first click to be descending.
+    // Query the header by role with an anchored regex: once the column is active ParityTable appends a
+    // ▲/▼ to the label, so an exact getByText("Unit #") stops matching after the first click.
+    const unitHeader = () => screen.getByRole("button", { name: /^Unit #/ });
+    expect(first()).toHaveTextContent("T-Calm");
+
+    await user.click(unitHeader()); // asc
+    await waitFor(() => expect(first()).toHaveTextContent("T-Calm"));
+
+    await user.click(unitHeader()); // desc — the toggle that actually reorders
+    await waitFor(() => expect(first()).toHaveTextContent("T-Hot"));
   });
 
   it("shows Block V placeholder on API error", async () => {

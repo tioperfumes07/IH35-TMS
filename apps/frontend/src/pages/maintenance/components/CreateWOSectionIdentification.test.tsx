@@ -7,6 +7,9 @@ import { CreateWOSectionIdentification } from "./CreateWOSectionIdentification";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 
 const listMaintenanceVehicles = vi.fn();
+const listUnits = vi.fn();
+const getUnit = vi.fn();
+const getDriver = vi.fn();
 const listDrivers = vi.fn();
 const listVendors = vi.fn();
 const listCustomers = vi.fn();
@@ -15,7 +18,17 @@ vi.mock("../../../api/maintenance", () => ({
   listMaintenanceVehicles: (...args: unknown[]) => listMaintenanceVehicles(...args),
 }));
 
+// The unit picker is `EntityPicker kind="unit"`, whose registry entry calls `listUnits` from api/mdata
+// (components/parity/entityPickerRegistry.ts) — NOT the api/maintenance `listMaintenanceVehicles` this
+// test was written against before the migration. Because this factory replaces the whole module, an
+// omitted `listUnits` is not a passthrough: the registry's call blows up and the picker renders zero
+// options, surfacing as `Unable to find role="option" and name "T169"` — which reads as missing DATA.
 vi.mock("../../../api/mdata", () => ({
+  listUnits: (...args: unknown[]) => listUnits(...args),
+  // The Class auto-derive ({UNIT}-{LASTNAME}, §7) reads the SELECTED row via getUnit/getDriver, not the
+  // list call — omitting them left the derive falling back to the literal "UNIT-DRIVER".
+  getUnit: (...args: unknown[]) => getUnit(...args),
+  getDriver: (...args: unknown[]) => getDriver(...args),
   listVendors: (...args: unknown[]) => listVendors(...args),
   listCustomers: (...args: unknown[]) => listCustomers(...args),
   listDrivers: (...args: unknown[]) => listDrivers(...args),
@@ -120,6 +133,10 @@ describe("CreateWOSectionIdentification", () => {
     listMaintenanceVehicles.mockResolvedValue({
       rows: [{ id: "unit-1", unit_display_id: "T169" }],
     });
+    // Registry shape: { units: [{ id, unit_number }] } — see entityPickerRegistry.ts unit.list().
+    listUnits.mockResolvedValue({ units: [{ id: "unit-1", unit_number: "T169" }] });
+    getUnit.mockResolvedValue({ id: "unit-1", unit_number: "T169" });
+    getDriver.mockResolvedValue({ id: "driver-1", first_name: "Alex", last_name: "Driver" });
     listDrivers.mockResolvedValue({
       drivers: [{ id: "driver-1", first_name: "Alex", last_name: "Driver" }],
     });

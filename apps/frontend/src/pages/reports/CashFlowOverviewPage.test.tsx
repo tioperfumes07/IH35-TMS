@@ -64,7 +64,7 @@ describe("CashFlowOverviewPage", () => {
     vi.spyOn(reportsApi, "getCashFlowOverview").mockResolvedValue(samplePayload);
     render(wrap(<CashFlowOverviewPage />));
     await waitFor(() => expect(screen.getByText("Operating balance")).toBeInTheDocument());
-    expect(screen.getByText(/Cash flow overview/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Cash flow overview/i })).toBeInTheDocument();
     expect(screen.getAllByTestId("line-chart").length).toBeGreaterThanOrEqual(1);
   });
 

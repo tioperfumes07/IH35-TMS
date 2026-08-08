@@ -24,6 +24,8 @@ type Props = {
   className?: string;
   /** SAF-F31 — pass-through for server-side type-ahead (see components/Combobox.tsx). */
   onSearch?: (query: string) => void;
+  /** C1-A11Y — forwarded to the input so `<label htmlFor>` actually binds. See components/Combobox.tsx. */
+  id?: string;
 };
 
 export function Combobox({
@@ -36,6 +38,7 @@ export function Combobox({
   disabled = false,
   className,
   onSearch,
+  id,
 }: Props) {
   const mapped: BaseOption[] = options.map((option) => ({
     value: option.value,
@@ -51,6 +54,7 @@ export function Combobox({
       disabled={disabled}
       className={className}
       onSearch={onSearch}
+      id={id}
       allowAddNew={
         allowAddNew && onAddNew
           ? {
