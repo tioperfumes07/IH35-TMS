@@ -97,6 +97,7 @@ const VENDOR_SELECT_COLUMNS = `
   phone,
   email,
   operating_company_id,
+  driver_id,
   address_line1 AS address,
   address_line2,
   city,
