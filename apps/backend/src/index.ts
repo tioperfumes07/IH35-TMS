@@ -173,6 +173,11 @@ import { registerIftaQuarterlyPreparerRoutes } from "./ifta/ifta-quarterly-prepa
 import { registerFleetTrailerRoutes } from "./fleet/index.js";
 import { registerFuelPlannerRoutes } from "./fuel/planner.routes.js";
 import { registerFuelLovesUploadRoutes } from "./fuel/loves-upload.routes.js";
+import { registerDispatchOverrideAuditRoutes } from "./audit/dispatch-overrides.routes.js";
+import { registerBrokerUpdateRoutes } from "./brokerupdate/brokerupdate.routes.js";
+import { registerDamageContinuityRoutes } from "./safety/damage-continuity/continuity.routes.js";
+import { registerUserLocalePreferenceRoutes } from "./users/preferences/locale.routes.js";
+import { registerUtilizationRoutes } from "./utilization/utilization.routes.js";
 import { registerFuelTransactionImportRoutes } from "./fuel/fuel-transaction-import.routes.js";
 import { registerFuelTransactionsRoutes } from "./fuel/fuel-transactions.routes.js";
 import { registerFuelGlReflushRoutes } from "./fuel/fuel-gl-reflush.routes.js";
@@ -938,6 +943,16 @@ async function main() {
   await registerIftaQuarterlyPreparerRoutes(app);
   await registerFuelPlannerRoutes(app);
   await registerFuelLovesUploadRoutes(app);
+  // UNREACHABLE-ROUTE FIX (verify-route-file-mounted). These six route files declared endpoints that
+  // NO server ever served: they are outside every @fastify/autoload directory and exported no default
+  // plugin, so nothing mounted them. Live-proven on the deployed API before the fix — each path
+  // returned 404 while a mounted path returns 401, and a definitely-nonexistent /api/v1 path also
+  // returns 404, which is the discriminator that makes the 404 mean 'unmounted' rather than 'auth'.
+  await registerDispatchOverrideAuditRoutes(app);
+  await registerBrokerUpdateRoutes(app);
+  await registerDamageContinuityRoutes(app);
+  await registerUserLocalePreferenceRoutes(app);
+  await registerUtilizationRoutes(app);
   await registerFuelTransactionImportRoutes(app);
   await registerFuelTransactionsRoutes(app);
   // FUEL-01 — owner-gated idempotent re-flush for unposted fuel.fuel_transactions → GL
