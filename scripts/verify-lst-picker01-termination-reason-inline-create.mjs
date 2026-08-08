@@ -47,6 +47,18 @@ export function collectProblems(root = ROOT, registryOverride = undefined) {
     if (/allowAddNew[\s\S]{0,200}termination reasons catalog/.test(driverDetail)) {
       problems.push(`${FILES.driverDetail}: must not keep Combobox allowAddNew toast-only path`);
     }
+    // FAIL-D4 / React #310 — terminationReasonOptions useMemo must run BEFORE loading/not-found early returns
+    const memoIdx = code.search(/const terminationReasonOptions\s*=\s*useMemo\s*\(/);
+    const earlyIdx = code.search(/if\s*\(\s*driverQuery\.isLoading\s*\)/);
+    if (memoIdx < 0) {
+      problems.push(`${FILES.driverDetail}: missing terminationReasonOptions useMemo`);
+    } else if (earlyIdx < 0) {
+      problems.push(`${FILES.driverDetail}: missing driverQuery.isLoading early return (guard anchor)`);
+    } else if (memoIdx > earlyIdx) {
+      problems.push(
+        `${FILES.driverDetail}: terminationReasonOptions useMemo after driverQuery.isLoading early return (React hooks #310)`,
+      );
+    }
   }
 
   if (!terminateModal) problems.push(`missing ${FILES.terminateModal}`);
