@@ -96,12 +96,23 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
   const loadsRes = await client.query<{
     load_id: string; unit_id: string; tour_id: string | null; trip_type: "NB" | "TR" | "SB"; status: string;
     pickup_date: string | null; delivery_city: string | null; delivery_state: string | null; delivery_date: string | null;
+    load_driver_id: string | null; load_driver_name: string | null;
   }>(
+    // FAIL-TP1 — the board used to resolve the driver ONLY from telematics.vehicle_driver_assignments
+    // (below), i.e. from the Samsara ELD assignment on the UNIT. A load whose unit has no OPEN ELD
+    // assignment therefore rendered a BLANK driver even though mdata.loads.assigned_primary_driver_id was
+    // populated — which is why the same rows resolve a driver fine in the load drawer and on Kanban cards
+    // (those read the load). Trip Pairing is where a dispatcher picks who gets a return leg, so a blank
+    // driver there is not cosmetic. The DISPATCH assignment on the load is the authority for who is
+    // running the leg; the ELD assignment stays as the fallback live signal.
     `SELECT l.id::text AS load_id, l.assigned_unit_id::text AS unit_id, l.tour_id::text AS tour_id,
             l.trip_type::text AS trip_type, l.status::text AS status,
             pu.scheduled_arrival_at::text AS pickup_date,
-            de.city AS delivery_city, de.state AS delivery_state, de.scheduled_arrival_at::text AS delivery_date
+            de.city AS delivery_city, de.state AS delivery_state, de.scheduled_arrival_at::text AS delivery_date,
+            l.assigned_primary_driver_id::text AS load_driver_id,
+            nullif(trim(coalesce(ld.first_name,'') || ' ' || coalesce(ld.last_name,'')), '') AS load_driver_name
        FROM mdata.loads l
+       LEFT JOIN mdata.drivers ld ON ld.id = l.assigned_primary_driver_id
        LEFT JOIN LATERAL (
          SELECT scheduled_arrival_at FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'pickup'
          ORDER BY sequence_number ASC LIMIT 1) pu ON true
@@ -116,7 +127,13 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
 
   // Group active loads by unit → the unit's current tour.
   const legsByUnit = new Map<string, TripLeg[]>();
+  // FAIL-TP1: the driver the DISPATCHER assigned, per unit. Later rows win so this ends up holding the
+  // most recently listed leg's driver, and a leg with no assigned driver never overwrites one that has it.
+  const loadDriverByUnit = new Map<string, { driver_id: string; driver_name: string | null }>();
   for (const r of loadsRes.rows) {
+    if (r.load_driver_id) {
+      loadDriverByUnit.set(r.unit_id, { driver_id: r.load_driver_id, driver_name: r.load_driver_name });
+    }
     const list = legsByUnit.get(r.unit_id) ?? [];
     list.push({
       load_id: r.load_id, trip_type: r.trip_type, status: r.status,
@@ -130,7 +147,10 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
   const unbooked: TripPairingBoard["unbooked"] = [];
 
   for (const u of unitsRes.rows) {
-    const drv = driverByUnit.get(u.unit_id) ?? null;
+    // FAIL-TP1: prefer the load's dispatch-assigned driver; fall back to the ELD assignment.
+    const eldDrv = driverByUnit.get(u.unit_id) ?? null;
+    const loadDrv = loadDriverByUnit.get(u.unit_id) ?? null;
+    const drv = loadDrv ?? eldDrv;
     const legs = (legsByUnit.get(u.unit_id) ?? []).slice().sort(
       (a, b) => (a.pickup_date ?? "").localeCompare(b.pickup_date ?? "")
     );
