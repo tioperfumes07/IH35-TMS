@@ -198,8 +198,48 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
       }
     }
     const extra = config.createMapper ? config.createMapper(metadata) : {};
-    const columns = [config.codeColumn, config.nameColumn, config.descriptionColumn, ...Object.keys(extra)];
-    const values = [body.code, body.display_name, body.description ?? null, ...Object.values(extra)];
+    const rawColumns = [config.codeColumn, config.nameColumn, config.descriptionColumn, ...Object.keys(extra)];
+    const rawValues = [body.code, body.display_name, body.description ?? null, ...Object.values(extra)];
+
+    // ACCT-F192 (Cascade FAIL-L3) — a catalog may map two logical fields onto ONE physical column,
+    // and this builder emitted that column TWICE. Postgres rejects
+    // `INSERT INTO t (terms_name, terms_name, ...)` outright, so POST returned 500 for every such
+    // catalog. TWO are configured that way today, not one: payment_terms (codeColumn = nameColumn =
+    // 'terms_name') and account_role_bindings (both 'role_key'). Verified by reading every config.
+    //
+    // Fixed HERE rather than by renaming the two configs, because the next catalog registered with a
+    // single physical column would break identically and the failure looks like a database problem
+    // rather than a mapping one.
+    //
+    // A duplicate carrying the SAME value collapses to one column. A duplicate carrying DIFFERENT
+    // values is a 400, not a silent pick: `code` and `display_name` are BOTH required by the body
+    // schema, so choosing one would discard a value the caller explicitly supplied — and it would do
+    // so invisibly, on a financial catalog.
+    const columns: string[] = [];
+    const values: unknown[] = [];
+    for (let i = 0; i < rawColumns.length; i += 1) {
+      const col = rawColumns[i];
+      const seen = columns.indexOf(col);
+      if (seen === -1) {
+        columns.push(col);
+        values.push(rawValues[i]);
+        continue;
+      }
+      const first = values[seen];
+      const next = rawValues[i];
+      if (first === next || next === null || next === undefined) continue;
+      if (first === null || first === undefined) {
+        values[seen] = next;
+        continue;
+      }
+      return reply.code(400).send({
+        error: "catalog_column_value_conflict",
+        message:
+          `This catalog stores more than one field in the column '${col}', but two different values ` +
+          `were supplied for it. Send the same value, or omit one.`,
+        column: col,
+      });
+    }
     if (config.activeMode === "is_active") {
       columns.push("is_active");
       values.push(body.is_active ?? true);
