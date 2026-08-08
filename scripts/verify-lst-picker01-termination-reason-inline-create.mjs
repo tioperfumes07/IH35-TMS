@@ -59,6 +59,17 @@ export function collectProblems(root = ROOT, registryOverride = undefined) {
         `${FILES.driverDetail}: terminationReasonOptions useMemo after driverQuery.isLoading early return (React hooks #310)`,
       );
     }
+    // FAIL-D5 — partial form patch must MERGE over driver defaults (date click must not blank identity)
+    if (/Object\.keys\(\s*form\s*\)\.length\s*>\s*0\s*\)\s*return\s*form/.test(code)) {
+      problems.push(
+        `${FILES.driverDetail}: FAIL-D5 — hydratedForm must not return partial form when Object.keys(form).length > 0`,
+      );
+    }
+    if (!/\{\s*\.\.\.driverFormDefaults\s*,\s*\.\.\.form\s*\}/.test(code)) {
+      problems.push(
+        `${FILES.driverDetail}: FAIL-D5 — hydratedForm must merge {...driverFormDefaults, ...form}`,
+      );
+    }
   }
 
   if (!terminateModal) problems.push(`missing ${FILES.terminateModal}`);
