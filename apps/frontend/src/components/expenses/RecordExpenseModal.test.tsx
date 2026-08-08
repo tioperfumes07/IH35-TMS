@@ -15,7 +15,11 @@ vi.mock("../../api/accounting", () => ({
 vi.mock("../../api/catalog-accounts", () => ({
   listCatalogAccounts: vi.fn().mockResolvedValue({
     accounts: [
-      { id: "acct-1", account_number: "1000", account_name: "Cash", account_type: "Asset", is_postable: true, deactivated_at: null },
+      // account_type "Bank", not "Asset": ACCT-F92 narrowed the Payment-account picker to Bank/CreditCard
+      // (plus cash-like Asset SUBTYPES) precisely so an expense could not be recorded as paid FROM
+      // Accumulated Depreciation or A/R. This fixture still described a bare "Asset", which the corrected
+      // filter rightly rejects — the fixture was stale against a deliberate product fix, so the fixture moved.
+      { id: "acct-1", account_number: "1000", account_name: "Cash", account_type: "Bank", is_postable: true, deactivated_at: null },
     ],
   }),
 }));
@@ -128,10 +132,23 @@ describe("RecordExpenseModal", () => {
 
     const form = screen.getByTestId("record-expense-form");
     // Vendor + Category + Payment account use ReferenceSelect (mocked as <select aria-label=placeholder>).
-    await user.selectOptions(within(form).getByLabelText(/select category/i), "cat-1");
+    // The Category picker is mocked here as a native <select>, so selectOptions IS the right API — the
+    // failure was never a widget mismatch. Its OPTIONS arrive asynchronously: categoryOptions prefers the
+    // chart-of-accounts query and only falls back to getWoCostContext's expense_categories
+    // (RecordExpenseForm.tsx), so on the first tick the select holds just the placeholder and
+    // selectOptions throws `Value "cat-1" not found in options` — a message that names the id and reads
+    // like a missing fixture row rather than "the list has not loaded yet".
+    const categorySelect = within(form).getByLabelText(/select category/i);
+    await waitFor(() => expect(within(categorySelect).getByRole("option", { name: "Fuel" })).toBeInTheDocument());
+    await user.selectOptions(categorySelect, "cat-1");
     await user.type(within(form).getByLabelText(/amount/i), "42.50");
     await user.selectOptions(within(form).getByLabelText(/payment method/i), "cash");
-    await user.selectOptions(within(form).getByLabelText(/bank\/cash account/i), "acct-1");
+    // Same async shape as Category above: the accounts list arrives after first paint.
+    const accountSelect = within(form).getByLabelText(/bank\/cash account/i);
+    await waitFor(() =>
+      expect(accountSelect.querySelector('option[value="acct-1"]')).toBeInTheDocument(),
+    );
+    await user.selectOptions(accountSelect, "acct-1");
     await user.click(within(form).getByRole("button", { name: /record expense/i }));
 
     await waitFor(() => expect(accountingApi.createExpense).toHaveBeenCalledTimes(1));
