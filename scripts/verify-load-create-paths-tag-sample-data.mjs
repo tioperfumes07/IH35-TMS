@@ -23,7 +23,7 @@
  *   node scripts/verify-load-create-paths-tag-sample-data.mjs
  *   node scripts/verify-load-create-paths-tag-sample-data.mjs --selftest
  */
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -43,6 +43,42 @@ function readInsert(src) {
     .filter(Boolean);
   const placeholders = [...m[2].matchAll(/\$(\d+)/g)].map((p) => Number(p[1]));
   return { columns, placeholders };
+}
+
+/**
+ * Every OTHER non-test writer of mdata.loads must either tag, or be listed here with a reason.
+ * These two are classified DELIBERATELY UNTAGGED — origin test applied, not blanket-fixed:
+ *   - the EDI 204 handler creates loads from REAL broker tenders, so false is the CORRECT value;
+ *   - csv-seed-import, despite the name, imports REAL TRK/TRANSP rows (see its own header comment
+ *     about "real customer/vendor rows during seed import"), so false is likewise correct.
+ * Tagging either one true would INVENT sample data on real freight — the inverse of FAIL-T1.
+ * A NEW writer that appears here without tagging fails this guard until someone classifies it.
+ */
+const DELIBERATELY_UNTAGGED = new Map([
+  ["apps/backend/src/integrations/edi/transactions/inbound-204.handler.ts", "real broker EDI 204 tender — genuinely real freight"],
+  ["apps/backend/src/seed/csv-seed-import.ts", "imports REAL TRK/TRANSP historical rows despite the 'seed' name"],
+]);
+
+/** Every non-test .ts under apps/backend/src that writes mdata.loads. */
+function findLoadWriters(root) {
+  const out = [];
+  (function walk(dir) {
+    for (const entry of readdirSync(dir)) {
+      if (entry === "node_modules" || entry === "dist") continue;
+      const abs = path.join(dir, entry);
+      if (statSync(abs).isDirectory()) {
+        if (entry === "__tests__") continue;
+        walk(abs);
+        continue;
+      }
+      if (!entry.endsWith(".ts") || entry.endsWith(".test.ts") || entry.endsWith(".d.ts")) continue;
+      const src = readFileSync(abs, "utf8");
+      if (/INSERT INTO mdata\.loads/i.test(src)) {
+        out.push([path.relative(root, abs).split(path.sep).join("/"), src]);
+      }
+    }
+  })(path.join(root, "apps/backend/src"));
+  return out;
 }
 
 function assert(files) {
@@ -81,10 +117,23 @@ function assert(files) {
     problems.push(`${WIZARD}: the Book wizard create path must keep writing is_sample_data (FAIL-D6)`);
   }
 
+  // The point of FAIL-T1: a SECOND writer existed and nobody noticed. Enumerate them all so a THIRD
+  // cannot ship untagged either — tag it, or classify it in DELIBERATELY_UNTAGGED with a reason.
+  for (const [rel, src] of files.__writers ?? []) {
+    if (/is_sample_data/.test(src)) continue;
+    if (DELIBERATELY_UNTAGGED.has(rel)) continue;
+    problems.push(
+      `${rel}: writes INSERT INTO mdata.loads but never mentions is_sample_data. Either tag the load, ` +
+        `or add this path to DELIBERATELY_UNTAGGED in this guard with the reason it is genuinely real ` +
+        `freight (FAIL-T1: a second untagged writer went unnoticed for six loads).`,
+    );
+  }
+
   return problems;
 }
 
 const files = Object.fromEntries([ROUTE, WIZARD].map((rel) => [rel, readFileSync(path.join(ROOT, rel), "utf8")]));
+files.__writers = findLoadWriters(ROOT);
 
 if (SELFTEST) {
   const checks = [];
@@ -109,6 +158,19 @@ if (SELFTEST) {
   // 3. Plant a regression on path A.
   const wizardBroken = { ...files, [WIZARD]: files[WIZARD].replace(/is_sample_data/g, "unrelated_field") };
   checks.push(["wizard regression", assert(wizardBroken).some((p) => /FAIL-D6/.test(p))]);
+
+  // 4. Plant a brand-new untagged writer that is NOT in the allowlist.
+  const newWriter = {
+    ...files,
+    __writers: [...files.__writers, ["apps/backend/src/fake/new-load-writer.ts", "INSERT INTO mdata.loads (operating_company_id) VALUES ($1)"]],
+  };
+  checks.push(["unclassified new writer", assert(newWriter).some((p) => /never mentions is_sample_data/.test(p))]);
+
+  // 5. ...and that an allowlisted one is NOT flagged (no false positive on real-freight paths).
+  checks.push([
+    "allowlist honoured",
+    !assert(files).some((p) => /inbound-204|csv-seed-import/.test(p)),
+  ]);
 
   const failed = checks.filter(([, caught]) => !caught).map(([n]) => n);
   if (failed.length) {
