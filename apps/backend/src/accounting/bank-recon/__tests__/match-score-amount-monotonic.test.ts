@@ -15,7 +15,7 @@
  * lower than a larger one. That holds for any weights, any tolerance and any transaction size.
  */
 import { describe, expect, it } from "vitest";
-import { computeMatchScore } from "../match.service.js";
+import { computeMatchScore, compareCandidatesExactFirst } from "../match.service.js";
 
 const TOL = (amountCents: number) => Math.max(100, Math.round(Math.abs(amountCents) * 0.0001));
 
@@ -81,5 +81,51 @@ describe("ACCT-F179 — bank match amount score is monotonic in the gap", () => 
     expect(exact).toBeGreaterThan(nearMiss);
     // Tolerance answers "is this the same transaction?"; this change must not widen it.
     expect(score(TOL(amount), amount)).toBe(score(0, amount));
+  });
+});
+
+describe("FAIL-BM2 — an exact amount must never rank below a near miss", () => {
+  // Ordering is the property under test, so this exercises the same comparator the service uses rather
+  // than re-asserting score arithmetic (which match_score keeps, deliberately unchanged).
+  // Bound to the SERVICE's own comparator — a local copy here would keep passing if the service changed,
+  // which is precisely the failure mode this suite exists to catch.
+  const byExactThenScore = compareCandidatesExactFirst;
+
+  it("puts the exact-amount candidate first even when a $1-off candidate scores higher", () => {
+    const txnAmountCents = 1500;
+    // Exact amount, but nothing else matches: stale date, no memo overlap.
+    const exact = {
+      exact_amount: true,
+      match_score: computeMatchScore({
+        amountGapCents: 0, toleranceCents: 0, dateGapDays: 4, similarity: 0, txnAmountCents,
+      }),
+    };
+    // $1 off, but a perfect memo and same-day date.
+    const nearMiss = {
+      exact_amount: false,
+      match_score: computeMatchScore({
+        amountGapCents: 100, toleranceCents: 0, dateGapDays: 0, similarity: 1, txnAmountCents,
+      }),
+    };
+
+    // The inversion is real — this is the defect, and the score still reflects it.
+    expect(nearMiss.match_score).toBeGreaterThan(exact.match_score);
+
+    // ...but ordering must not.
+    const ranked = [nearMiss, exact].sort(byExactThenScore);
+    expect(ranked[0]).toBe(exact);
+  });
+
+  it("still ranks two exact-amount candidates by score", () => {
+    const txnAmountCents = 1500;
+    const better = {
+      exact_amount: true,
+      match_score: computeMatchScore({ amountGapCents: 0, toleranceCents: 0, dateGapDays: 0, similarity: 1, txnAmountCents }),
+    };
+    const worse = {
+      exact_amount: true,
+      match_score: computeMatchScore({ amountGapCents: 0, toleranceCents: 0, dateGapDays: 4, similarity: 0, txnAmountCents }),
+    };
+    expect([worse, better].sort(byExactThenScore)[0]).toBe(better);
   });
 });

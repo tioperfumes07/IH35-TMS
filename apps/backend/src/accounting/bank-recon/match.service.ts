@@ -64,6 +64,11 @@ export type MatchCandidate = {
   memo_similarity: number;
   match_score: number;
   auto_match: boolean;
+  /**
+   * FAIL-BM2 — true when the candidate's amount equals the bank line to the cent. Exposed so the UI can
+   * badge it, and used as the PRIMARY sort key so an exact amount can never rank below a near one.
+   */
+  exact_amount: boolean;
 };
 
 export type ResolveDifferenceInput = {
@@ -164,6 +169,26 @@ function toleranceForAmount(amountCents: number) {
  * · $64.20 (gap $854) 0.518 · $33.40 (gap $885) 0.509 — strictly ordered by closeness, so the $282 gap
  * now ranks first instead of second.
  */
+/**
+ * FAIL-BM2 — order candidates with amount-exactness as the PRIMARY key, match_score as the tie-break.
+ *
+ * match_score weights amount at 0.55 and date+memo at 0.45, so the 0.45 can outvote a perfect amount: on a
+ * $15.00 line an EXACT candidate with weak memo/date scores 0.590 while a $1-off candidate with perfect
+ * memo+date scores 0.966 — the near miss ranks first. On a reconciliation surface that is backwards. Amount
+ * equality is the strongest evidence two records are the same transaction; a memo is free text.
+ *
+ * Ordering rather than re-weighting is deliberate: the weights also feed the PERSISTED match_score, and
+ * inflating it for exact matches would change a stored number other code reads. autoMatch is untouched — it
+ * still keys on amountGapCents <= toleranceCents.
+ */
+export function compareCandidatesExactFirst(
+  a: { exact_amount: boolean; match_score: number },
+  b: { exact_amount: boolean; match_score: number },
+): number {
+  if (a.exact_amount !== b.exact_amount) return a.exact_amount ? -1 : 1;
+  return b.match_score - a.match_score;
+}
+
 export function computeMatchScore(input: {
   amountGapCents: number;
   toleranceCents: number;
@@ -734,9 +759,23 @@ export async function findCandidates(input: {
           memo_similarity: similarity,
           match_score: score,
           auto_match: autoMatch,
+          exact_amount: amountGapCents === 0,
         };
       })
-      .sort((a, b) => b.match_score - a.match_score)
+      // FAIL-BM2 — exactness is the PRIMARY key, score only breaks ties within a group.
+      // Exported as `compareCandidatesExactFirst` so the test binds to THIS comparator rather than
+      // reimplementing it — a copy in the test would stay green if this changed.
+      //
+      // match_score weights amount at 0.55 and date+memo at 0.45, so the 0.45 can outvote a perfect
+      // amount: a $15.00 line scores an EXACT candidate with weak memo/date at 0.590 and a $1-off
+      // candidate with perfect memo+date at 0.966 — the near miss ranks first. On a reconciliation
+      // surface that is backwards; amount equality is the strongest evidence two records are the same
+      // transaction, and a memo is free text.
+      //
+      // Ordering rather than re-weighting is deliberate: the weights also feed the persisted
+      // match_score, and inflating it for exact matches would change a stored number other code reads.
+      // autoMatch is untouched — it still keys on amountGapCents <= toleranceCents.
+      .sort(compareCandidatesExactFirst)
       .slice(0, 50);
 
     // Only persist an auto-match whose kind the banking.reconciliation_matches CHECK constraint
