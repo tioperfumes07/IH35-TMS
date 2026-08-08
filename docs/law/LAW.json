@@ -425,5 +425,12 @@
     "source_file": "apps/backend/src/dispatch/auth-gates/wf-038-active-driver.gate.ts",
     "guard": "scripts/verify-sql-column-existence.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-CATALOG-CONFIG-PHYSICAL-COLUMNS",
+    "title": "A GenericCatalogConfig may not assume a physical `deactivated_at` column exists on its table — Postgres resolves column references at PLAN time, so an unconditional reference 500s on EVERY request for any table lacking it, independent of data. 30 of 30 generic catalog configs lack an explicit hasDeactivatedAt declaration and 6 factory SQL sites reference deactivated_at unconditionally (LV-CAT-500, live-confirmed 2026-08-06). Every config must declare hasDeactivatedAt explicitly and every deactivated_at SQL reference in the factory must be gated on it. Guard is mutation-proven (--selftest PASS) but currently RED against the live tree (36 offenders) and NOT YET CI-wired — Cascade holds no verify-step band (same gap as CC-3; see scripts/.guard-exempt.json), so wiring is deferred to whichever banded lane (CC-2/Cursor) authors the fix under CLS-SCHEMA-DRIFT. This is the audit red-inventory baseline, not a fixed/enforced state. Fix authorship belongs to the mechanical lane, not Cascade.",
+    "source_file": "apps/backend/src/catalogs/generic-catalog.factory.ts",
+    "guard": "scripts/verify-catalog-config-physical-columns.mjs",
+    "type": "enforced"
   }
 ]

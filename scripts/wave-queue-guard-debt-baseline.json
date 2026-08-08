@@ -26,11 +26,7 @@
     {
       "id": "CLS-MONEY-HOLD",
       "guard": "scripts/verify-money-hold-surfaces.mjs"
-    },
-    {
-      "id": "CLS-SCHEMA-DRIFT",
-      "guard": "scripts/verify-catalog-config-physical-columns.mjs"
     }
   ],
-  "open_missing_count": 6
+  "open_missing_count": 5
 }

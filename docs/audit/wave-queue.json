@@ -1154,23 +1154,25 @@
           "note": "FIXED, PR #4525 (631da872e, merged). Hard 500 on every request since 2026-07-05 \u2014 caught by the existing verify-sql-read-targets guard, but the exact string sat in scripts/sql-read-targets-known-debt.json as an allowlist entry for a month. Fix sources escrow from driver_finance.escrow_ledger directly (entity-scoped, transaction_type='hold' only, no incorrect x100 scaling) and shrinks the allowlist by one line \u2014 the guard's shrink-only ratchet is the enforcement, not a new script."
         },
         {
-          "path": "apps/backend/src/catalogs/generic-catalog.factory.ts:70,165-166 \u2014 hardcodes `t.deactivated_at IS NULL/NOT NULL` (19 of 22 config tables lack the column) and defaults dbColumnForApiColumn to \"name\" (2 tables physically have display_name, not name)",
+          "path": "apps/backend/src/catalogs/generic-catalog.factory.ts:165-166,304,307,354,392 \u2014 hardcoded unconditional deactivated_at references in list/update/delete/restore SQL; generic-catalog.routes.ts config table lacks any hasDeactivatedAt declaration (30 of 30 configs)",
           "entity": "ALL",
-          "note": "OPEN, live-proven 2026-08-06 on prod (#4612, LV-CAT-500, not yet merged). 21 of 22 generic catalog list endpoints return HTTP 500 \u2014 every vendor-type/customer-type/PM-interval/fuel-station/etc picker across ALL THREE entities is silently empty because the FE swallows the 500. Recorded by the CC-3 live-verifier lane, which does not build; CC-3 builder lane owns the fix per the PR's own FIX REQUIREMENT (make the soft-delete predicate conditional on the column existing; default the display-name alias to identity)."
+          "note": "OPEN, live-proven 2026-08-06 on prod (#4612, LV-CAT-500, not yet merged). Guard scripts/verify-catalog-config-physical-columns.mjs now exists and is mutation-proven (--selftest PASS, 6 checks); registered docs/law/LAW.json LAW-2026-08-06-CATALOG-CONFIG-PHYSICAL-COLUMNS (guard resolves on disk). NOT YET CI-wired \u2014 Cascade holds no verify-step band (same gap as CC-3, see scripts/.guard-exempt.json) and the guard is genuinely RED against the live tree, so wiring it into a blocking step now would break every PR touching main. Live run against the current tree: 36 offenders (29 configs missing hasDeactivatedAt, 1 config never declared at all, 6 unconditional deactivated_at SQL sites in generic-catalog.factory.ts). Fix requires adding a required hasDeactivatedAt boolean to GenericCatalogConfig, populating it per-table from information_schema, and gating all 6 factory SQL sites on it \u2014 mechanical lane (CC-2/Cursor) owns authoring that fix AND wiring the guard into scripts/verify-steps/ in the same PR; Cascade does not author it (auditor+guard only, per standing order)."
         }
       ],
-      "completeness": "Two independently-discovered instances of the same pattern (code assumes a physical column shape it never verified against information_schema), one fixed and merged, one live-proven and open pending #4612's merge and the CC-3 build. No class-level guard exists yet that would catch a THIRD instance before it ships \u2014 the fixed instance was caught by a generic SQL-read-target allowlist (not schema-shape-aware), and the open instance has no guard at all yet.",
+      "completeness": "Two independently-discovered instances of the same pattern (code assumes a physical column shape it never verified against information_schema): instance 1 fixed and merged; instance 2 (LV-CAT-500) now has a mutation-proven guard (scripts/verify-catalog-config-physical-columns.mjs) establishing the red baseline, but it is not yet CI-wired (no Cascade verify-step band) and the fix itself is still unauthored \u2014 guard is RED (36 offenders) against the live tree until the mechanical lane lands it.",
       "guard": "scripts/verify-catalog-config-physical-columns.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "Instance 1 fixed and its allowlist line removed (verified: known-debt list shrinks by exactly 1). Instance 2 (LV-CAT-500) is OPEN on prod, no guard exists for it yet. Not registered in docs/law/LAW.json (file does not exist on main).",
+        "guard_sample": "verify-catalog-config-physical-columns --selftest PASS (6 checks); live run against current tree FAILS with 36 named offenders (file:line for each). Mutation-proven both directions. NOT CI-wired yet (see scripts/.guard-exempt.json). Registered docs/law/LAW.json.",
         "money_critical": false
       },
       "status": "open",
       "hotfiles": [
         "apps/backend/src/reports/driver-settlement-summary.routes.ts",
         "apps/backend/src/catalogs/generic-catalog.factory.ts",
-        "scripts/sql-read-targets-known-debt.json"
+        "apps/backend/src/catalogs/generic-catalog.routes.ts",
+        "scripts/sql-read-targets-known-debt.json",
+        "scripts/verify-catalog-config-physical-columns.mjs"
       ]
     },
     {
