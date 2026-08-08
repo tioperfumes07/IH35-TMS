@@ -94,13 +94,40 @@ export async function openLoadBookendedSettlement(
 
   const existing = await client.query<{ id: string; display_id: string | null }>(
     `
-      SELECT id, display_id
-      FROM driver_finance.driver_settlements
-      WHERE driver_id = $1
-        AND operating_company_id = $2
-        AND settlement_model = 'load_bookended'
-        AND trip_closed_at IS NULL
-      ORDER BY created_at DESC
+      SELECT s.id, s.display_id
+      FROM driver_finance.driver_settlements s
+      WHERE s.driver_id = $1
+        AND s.operating_company_id = $2
+        AND s.settlement_model = 'load_bookended'
+        AND s.trip_closed_at IS NULL
+        -- ACCT-F266 — do NOT reuse an ORPHANED bookend settlement.
+        --
+        -- Reuse is the point of the bookend model: one open settlement spans a driver's trip and later
+        -- loads attach to it. But the only condition was "this driver has an open one", so a settlement
+        -- whose ANCHOR LOAD died kept absorbing every future load for that driver, forever.
+        --
+        -- It cannot self-heal: trip_closed_at is set by the load-bookend close path, and that path never
+        -- fires for a load that was cancelled or soft-deleted. The settlement is therefore open by
+        -- accident, not by intent, and nothing ever closes it.
+        --
+        -- Live consequence (W3): orphan S-0099 captured L-20260808-0069 and L-20260808-0074, so neither
+        -- load could open its own settlement and both showed $0 driver pay against real delivered
+        -- freight. The money was not lost — it was attached to a settlement for a trip that no longer
+        -- exists, which is worse, because the paperwork looks complete.
+        --
+        -- Requiring a LIVE anchor keeps genuine multi-load bookending intact (an open settlement whose
+        -- first load is a real in-flight trip is still reused) and breaks only the orphan case. A
+        -- settlement with no anchor at all is likewise not reusable — there is nothing to continue.
+        AND s.first_load_id IS NOT NULL
+        AND EXISTS (
+          SELECT 1
+          FROM mdata.loads fl
+          WHERE fl.id = s.first_load_id
+            AND fl.operating_company_id = s.operating_company_id
+            AND fl.soft_deleted_at IS NULL
+            AND fl.status::text <> 'cancelled'
+        )
+      ORDER BY s.created_at DESC
       LIMIT 1
       FOR UPDATE
     `,
