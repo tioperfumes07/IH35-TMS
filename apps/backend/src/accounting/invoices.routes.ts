@@ -855,7 +855,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           SET status = 'void',
               voided_at = now(),
               void_reason = $2,
-              -- ACCT-F200 — DO NOT ADD `amount_open_cents = 0` HERE. It was added once (ACCT-F197)
+              -- ACCT-F200 — DO NOT ADD 'amount_open_cents = 0' HERE. It was added once (ACCT-F197)
               -- and took production down: that column is STORED GENERATED on prod
               -- (attgenerated='s', expr total_cents - amount_paid_cents), so Postgres rejects the
               -- statement and EVERY invoice void returned 500 until the revert in 6c73e28.
