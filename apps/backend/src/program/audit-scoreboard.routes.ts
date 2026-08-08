@@ -439,10 +439,156 @@ export function classCellFor(status: string): ClassCell {
   }
 }
 
+/**
+ * Owner 2026-08-08: individual CLS columns must be REAL — a queue row saying "drained" is not
+ * green until the named guard file exists on disk. Otherwise amber + guardMissing (tracker theater).
+ */
+export function classCellVerified(
+  status: string,
+  guard: string | null,
+  guardExists: boolean,
+): ClassCell & { guardMissing: boolean } {
+  const base = classCellFor(status);
+  if (base.code !== "CC") {
+    return { ...base, guardMissing: false };
+  }
+  if (!guard || !guardExists) {
+    return {
+      code: "BB",
+      tone: "amber",
+      label: guard ? "drained — guard missing on disk" : "drained — no guard named",
+      guardMissing: true,
+    };
+  }
+  return { ...base, guardMissing: false };
+}
+
+/**
+ * Owner 2026-08-08: matrix ROWS = each sidebar module, excluding chrome stubs
+ * (eld / help / program / system) → 26 rows. Columns = each CLS wave.
+ */
+export const PROGRAM_MATRIX_MODULE_IDS = [
+  "home",
+  "tasks",
+  "fuel",
+  "dispatch",
+  "driver-hub",
+  "maintenance",
+  "safety",
+  "compliance",
+  "drivers",
+  "fleet",
+  "insurance",
+  "legal",
+  "cash-flow",
+  "settlements",
+  "accounting",
+  "bank",
+  "factoring",
+  "finance",
+  "customers",
+  "vendors",
+  "inventory",
+  "form_425",
+  "lists",
+  "reports",
+  "docs",
+  "users",
+] as const;
+
+/** Wave-queue module tags → sidebar matrix row id (aliases only; never invent membership). */
+const WAVE_MODULE_TO_ROW: Record<string, (typeof PROGRAM_MATRIX_MODULE_IDS)[number] | null> = {
+  home: "home",
+  tasks: "tasks",
+  fuel: "fuel",
+  dispatch: "dispatch",
+  "driver-hub": "driver-hub",
+  maintenance: "maintenance",
+  safety: "safety",
+  compliance: "compliance",
+  drivers: "drivers",
+  fleet: "fleet",
+  insurance: "insurance",
+  legal: "legal",
+  "cash-flow": "cash-flow",
+  settlements: "settlements",
+  driver_finance: "settlements",
+  accounting: "accounting",
+  bank: "bank",
+  banking: "bank",
+  factoring: "factoring",
+  finance: "finance",
+  customers: "customers",
+  vendors: "vendors",
+  inventory: "inventory",
+  form_425: "form_425",
+  lists: "lists",
+  catalogs: "lists",
+  reports: "reports",
+  docs: "docs",
+  users: "users",
+  // Not matrix rows (chrome / stubs) — map to null so they never fabricate a cell.
+  eld: null,
+  help: null,
+  program: null,
+  system: null,
+};
+
+export function waveModulesTouchRow(waveModules: unknown, rowId: string): boolean {
+  if (!Array.isArray(waveModules) || waveModules.length === 0) return false;
+  for (const raw of waveModules) {
+    const key = String(raw ?? "")
+      .trim()
+      .toLowerCase();
+    if (!key) continue;
+    const mapped = WAVE_MODULE_TO_ROW[key];
+    if (mapped === rowId) return true;
+  }
+  return false;
+}
+
+export type ClassMatrixCell = {
+  code: "CC" | "BB" | "NN" | "XX" | "NA";
+  tone: "green" | "amber" | "grey" | "red" | "na";
+  label: string;
+  guardMissing: boolean;
+};
+
+/**
+ * Module × CLS matrix from the live queue. Cell is NA unless the wave names that module
+ * (after alias map). Status/tone come from classCellVerified — never invented tracker state.
+ */
+export function buildClassModuleMatrix(
+  classRows: Array<Record<string, unknown>>,
+  moduleIds: readonly string[] = PROGRAM_MATRIX_MODULE_IDS,
+): {
+  modules: string[];
+  classIds: string[];
+  cells: ClassMatrixCell[][];
+} {
+  const classIds = classRows.map((r) => String(r.id ?? ""));
+  const cells = moduleIds.map((mod) =>
+    classRows.map((r) => {
+      const touches = waveModulesTouchRow(r.moduleIds, mod);
+      if (!touches) {
+        return { code: "NA" as const, tone: "na" as const, label: "n/a", guardMissing: false };
+      }
+      return {
+        code: (r.code as ClassMatrixCell["code"]) || "NN",
+        tone: (r.tone as ClassMatrixCell["tone"]) || "grey",
+        label: String(r.label ?? r.status ?? ""),
+        guardMissing: Boolean(r.guardMissing),
+      };
+    }),
+  );
+  return { modules: [...moduleIds], classIds, cells };
+}
+
 export function readClassScoreboardFromQueue(): {
-  meta: { generatedAt: string; source: string };
+  meta: { generatedAt: string; source: string; columnCount: number; rowCount: number };
   summary: { total: number; drained: number; building: number; notStarted: number; liveDefect: number; drainedWithoutGuard: number };
   rows: Array<Record<string, unknown>>;
+  matrix: ReturnType<typeof buildClassModuleMatrix>;
 } | null {
   try {
     const parsed = JSON.parse(readFileSync(WAVE_QUEUE_JSON, "utf8")) as { waves?: unknown };
@@ -450,10 +596,13 @@ export function readClassScoreboardFromQueue(): {
     const rows = parsed.waves.map((raw) => {
       const w = (raw ?? {}) as Record<string, unknown>;
       const status = String(w.status ?? "");
-      const cell = classCellFor(status);
       const guard = typeof w.guard === "string" && w.guard ? w.guard : null;
+      const guardExists = guard != null && existsSync(path.join(REPO_ROOT, guard));
+      const cell = classCellVerified(status, guard, guardExists);
       const instances = Array.isArray(w.instances) ? w.instances.length : 0;
       const drainProof = (w.drain_proof ?? {}) as Record<string, unknown>;
+      const queueClaimsDrained = status.trim().toLowerCase() === "drained";
+      const moduleIds = Array.isArray(w.modules) ? w.modules.map((m) => String(m)) : [];
       return {
         id: String(w.id ?? ""),
         lane: String(w.lane ?? "—"),
@@ -463,28 +612,36 @@ export function readClassScoreboardFromQueue(): {
         tone: cell.tone,
         label: cell.label,
         instances,
-        modules: Array.isArray(w.modules) ? w.modules.length : 0,
+        modules: moduleIds.length,
+        moduleIds,
         guard,
-        // Existence only, and only meaningful for a DRAINED class: a drained class whose named guard
-        // file is absent is a registry defect, not proof the class is unguarded.
-        guardMissing: cell.code === "CC" && guard != null && !existsSync(path.join(REPO_ROOT, guard)),
+        guardMissing: cell.guardMissing,
         guardNearMatch: null,
-        // A DRAINED class that was money-critical is no longer a live defect — it is a drained one.
-        liveDefect: cell.code !== "CC" && drainProof.money_critical === true,
+        // Money-critical still open, OR queue claimed drained without a verifiable guard file.
+        liveDefect:
+          (cell.code !== "CC" && drainProof.money_critical === true) ||
+          (queueClaimsDrained && cell.guardMissing),
       };
     });
     const by = (code: string) => rows.filter((r) => r.code === code).length;
+    const matrix = buildClassModuleMatrix(rows);
     return {
-      meta: { generatedAt: new Date().toISOString(), source: "docs/audit/wave-queue.json (request-time)" },
+      meta: {
+        generatedAt: new Date().toISOString(),
+        source: "docs/audit/wave-queue.json (request-time)",
+        columnCount: rows.length,
+        rowCount: matrix.modules.length,
+      },
       summary: {
         total: rows.length,
         drained: by("CC"),
         building: by("BB"),
         notStarted: by("NN"),
         liveDefect: rows.filter((r) => r.liveDefect).length,
-        drainedWithoutGuard: rows.filter((r) => r.code === "CC" && r.guardMissing).length,
+        drainedWithoutGuard: rows.filter((r) => r.guardMissing).length,
       },
       rows,
+      matrix,
     };
   } catch {
     return null;
