@@ -177,11 +177,27 @@ export async function cancelLoad(
       //    driver is a business decision, not something this function may invent. It is recorded
       //    durably instead, so the payable cannot sit unnoticed the way the $960 one did.
       if (!pendingOwnerApproval) {
+        // FAIL-V1: `voided_at` and `void_reason` are NOT optional bookkeeping here — they are half of
+        // the void. `accounting.invoices` carries CHECK `invoices_void_state_authoritative`:
+        //     (status = 'void') = (voided_at IS NOT NULL)
+        // an IFF, so writing `status='void'` alone violates it, and because this runs inside the
+        // cancellation transaction the violation rolled back THE WHOLE CANCEL. The visible symptom was
+        // not "the invoice kept its status" — it was **a dispatched load could not be cancelled at
+        // all**, with a raw constraint name surfacing to the user. Reproduced live on
+        // L-20260808-0093 / INV-2026-00024 (still proforma, voided_at NULL).
+        //
+        // A correct voider already existed and this branch simply was not using it: INV-2026-00020 is
+        // void WITH voided_at set. Both halves are written together here so the two can never diverge.
+        //
+        // `voided_at` itself landed separately while this was in flight; what is added here is
+        // `void_reason`, so the row says WHY it was voided rather than only when. A void with no reason
+        // is the thing an auditor asks about, and the cancellation is the only place that still knows.
         const voidedInvoices = await client.query<{ id: string }>(
           `
             UPDATE accounting.invoices
                SET status = 'void',
                    voided_at = now(),
+                   void_reason = COALESCE(void_reason, $4),
                    updated_at = now(),
                    updated_by_user_id = $3
              WHERE source_load_id = $1::uuid
@@ -189,7 +205,12 @@ export async function cancelLoad(
                AND status = 'proforma'
             RETURNING id::text
           `,
-          [input.load_id, input.operating_company_id, userId]
+          [
+            input.load_id,
+            input.operating_company_id,
+            userId,
+            "Load cancelled — proforma voided by the cancellation cascade (FAIL-V1).",
+          ]
         );
 
         const liveInvoices = await client.query<{ id: string; status: string }>(
@@ -263,9 +284,35 @@ export async function cancelLoad(
       };
     } catch (error) {
       await client.query("ROLLBACK");
-      throw error;
+      throw translateCancellationDbError(error);
     }
   });
+}
+
+/**
+ * FAIL-V1: a cancel that trips a void-state CHECK surfaced the raw Postgres constraint name to the
+ * user — `invoices_void_state_authoritative` tells a dispatcher nothing, and it hid the fact that the
+ * failure was a MONEY-cascade bug rather than anything about their cancellation. The root cause is
+ * fixed above (both halves of the void are written together), so this path should now be unreachable
+ * for that constraint; it stays because "unreachable" is exactly what was believed before, and the
+ * next void-state divergence should announce itself in words instead of a constraint name.
+ *
+ * Only the void-state constraints are translated. Every other error is rethrown untouched — swallowing
+ * unknown database errors behind a friendly string is how a real failure becomes invisible.
+ */
+export function translateCancellationDbError(error: unknown): unknown {
+  const constraint = (error as { constraint?: string } | null)?.constraint;
+  const code = (error as { code?: string } | null)?.code;
+  if (code === "23514" && typeof constraint === "string" && /void_state_authoritative/.test(constraint)) {
+    const translated = new Error(
+      "E_CANCEL_VOID_STATE — the cancellation could not void this load's paperwork: a document was " +
+        "marked void without a void timestamp (or the reverse). The load was NOT cancelled and nothing " +
+        "was changed. This is a system defect, not a data-entry problem — report it with the load number."
+    );
+    (translated as { cause?: unknown }).cause = error;
+    return translated;
+  }
+  return error;
 }
 
 export async function listCancellations(
