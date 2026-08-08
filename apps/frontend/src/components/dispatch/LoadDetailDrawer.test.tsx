@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import * as jestDomMatchers from "@testing-library/jest-dom/matchers";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
+import * as accountingApi from "../../api/accounting";
 import type { LoadDetail } from "../../api/loads";
 import "../../design/design-tokens.css";
 import { LoadDetailDrawer } from "./LoadDetailDrawer";
@@ -25,6 +26,10 @@ vi.mock("../../api/loads", () => ({
 vi.mock("../../api/accounting", () => ({
   createInvoiceFromLoad: vi.fn(),
   listInvoices: vi.fn(),
+  // The drawer imports these too. A vi.mock factory REPLACES the module, so an omitted export is gone,
+  // not passed through — and the invoice-existence query below is what the $0-rate gate reads.
+  listLoadInvoices: vi.fn().mockResolvedValue({ invoices: [] }),
+  listLoadExpenses: vi.fn().mockResolvedValue({ expenses: [] }),
 }));
 
 vi.mock("../../api/dispatch", () => ({
@@ -38,8 +43,9 @@ vi.mock("../../api/docs", () => ({
   listFiles: vi.fn(),
 }));
 
+const pushToastSpy = vi.fn();
 vi.mock("../Toast", () => ({
-  useToast: () => ({ pushToast: vi.fn() }),
+  useToast: () => ({ pushToast: pushToastSpy }),
 }));
 
 vi.mock("./CancelLoadModal", () => ({
@@ -227,5 +233,42 @@ describe("LoadDetailDrawer footer cancel vs close (d-02)", () => {
     const primary = footerPrimaryAction();
     expect(primary).toHaveTextContent("Cancel Load");
     expect(primary.className).toMatch(/border-crit/);
+  });
+});
+
+describe("LV-INVOICE-RATE-SNAPSHOT — a $0-rate load must not mint an invoice", () => {
+  // An invoice snapshots load.rate_total_cents ONCE (accounting/from-load.ts:186) and no backend path ever
+  // re-syncs it, so an invoice created at rate 0 is permanently $0 — L-0087 ($3,210 load / $0 invoice).
+  // The button gated on status alone, which made that a single click on any delivered load.
+  function renderDelivered(rateCents: number) {
+    const load = mockLoadDetail({ status: "delivered", rate_total_cents: rateCents });
+    mockUseDispatchLoad.mockReturnValue({ data: load, isLoading: false, isError: false, error: null, refetch: vi.fn() });
+    mockUseLoad.mockReturnValue({ data: undefined, isLoading: false, isError: false, error: null, refetch: vi.fn() });
+    mockUseLoadAudit.mockReturnValue({ data: [], refetch: vi.fn() });
+    renderDrawer(<LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />);
+    return screen.getByRole("button", { name: /Create \/ View Invoice/i });
+  }
+
+  it("refuses to create when the load has no rate", async () => {
+    vi.mocked(accountingApi.createInvoiceFromLoad).mockClear();
+    pushToastSpy.mockClear();
+    const button = renderDelivered(0);
+    // Deliberately NOT asserting the button is disabled: this is a "Create / View" control and blocking it
+    // outright would also stop users viewing an already-created (already broken) invoice.
+    expect(button).not.toBeDisabled();
+    fireEvent.click(button);
+    // Wait on a POSITIVE signal (the refusal toast). A bare
+    // `waitFor(() => expect(fn).not.toHaveBeenCalled())` is vacuous here — it succeeds on the very first
+    // tick, before react-query would have invoked the mutation at all, so it passes even with the gate
+    // removed. Verified: this test now fails when the gate is disabled.
+    await waitFor(() => expect(pushToastSpy).toHaveBeenCalledWith(expect.stringMatching(/no rate yet/i), "error"));
+    expect(vi.mocked(accountingApi.createInvoiceFromLoad)).not.toHaveBeenCalled();
+  });
+
+  it("still creates normally when the load has a rate", async () => {
+    vi.mocked(accountingApi.createInvoiceFromLoad).mockClear();
+    vi.mocked(accountingApi.createInvoiceFromLoad).mockResolvedValue({ invoice: { id: "inv-1" } } as never);
+    fireEvent.click(renderDelivered(321000));
+    await waitFor(() => expect(vi.mocked(accountingApi.createInvoiceFromLoad)).toHaveBeenCalled());
   });
 });
