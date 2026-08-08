@@ -8335,3 +8335,63 @@ the difference between a work order and a scare.**
 entity's two most important control accounts have no split at all.** And **TRANSP's superseded `ap_control` /
 `ar_control` show the correct pattern end to end: mapping deactivated, account deactivated, zero postings.**
 The right behaviour already exists in this database — it simply was not applied to the other fifteen.
+
+## 133. ★★ BOARD ITEM PULLED — `LV-EXPENSE-VOID-UNREACHABLE`: CONFIRMED, the backend is FULLY READY (so the fix is UI-only), and it hands my own P0 its exact fix template.
+
+**Three results, and the third is worth more than the first two.**
+
+### 1 — CONFIRMED, with the numbers
+
+- **Zero frontend call sites.** `grep` for an expense-void caller across `apps/frontend/src` → **0**; there is
+  no `voidExpense` function anywhere in the app. The endpoint `POST /api/v1/expenses/:expenseId/void`
+  (`expenses.routes.ts:1045`) is genuinely unreachable from the product.
+- **27,072 expenses exist database-wide and NOT ONE has ever been voided** — `voided_at` set on **0**,
+  `deleted_at` set on **0** (measured in item 131's sweep, same run, discriminator satisfied).
+- **USMCA has 2 expenses, both `status='posted'` / `posting_status='posted'`** — both perfectly voidable by
+  the endpoint's own preconditions, and neither voidable by any human.
+
+### 2 — ★ SHARPENING: the backend is READY. This is a UI wire-up, not a flag flip.
+
+The route gates on `isVoidEnforcementEnabled` → **`VOID_ENFORCEMENT_ENABLED`**, and that flag has an
+**active enabled override for USMCA** (`default_enabled=false`, 3 entity overrides, USMCA among them). Same
+for `MONEY_CONTROL_VOID_REVERSAL_ENABLED` and `WO_VOID_ENABLED`.
+
+**So a caller hitting that endpoint today would pass the gate, pass the role check (Owner/Administrator/
+Accountant), find the expense, and post a reversing JE.** The row is a missing button — not a missing
+capability, and not a disabled feature. **That is the difference between a half-day of FE work and a
+finance-cluster decision, and the row does not currently say which it is.**
+
+### 3 — ★★ THE REFERENCE IMPLEMENTATION FOR MY OWN P0 IS THIS ENDPOINT
+
+Item 130 filed `LV-BILL-VOID-MARKERS-ARE-DISJOINT` (P0, $1,766.66): `accounting.bills` void writers set
+`status='void'` + `revoked_at` and **never** `voided_at`, while every voided bill on prod carries **only**
+`voided_at`. That row asked CC-1 to pick a canonical marker and align the writers.
+
+**It does not need to pick anything. The correct writer already exists, in the same codebase, one schema
+over** — `expenses.routes.ts` (~`:1090`):
+```sql
+UPDATE accounting.expenses
+   SET status='void',
+       posting_status = CASE WHEN posting_status='posted' THEN 'reversed' ELSE posting_status END,
+       …
+       voided_at=now(), voided_by_user_id=$3::uuid, void_reason=$4, updated_at=now()
+```
+**Every marker written together, in one statement: the state flag, the posting state, the timestamp, the
+actor and the reason.** Compare `bills.service.ts:1791-1793`, which writes `status`, `revoked_at`,
+`revoked_by_user_id`, `revoked_reason` — **and leaves `voided_at`, `voided_by_user_id`, `void_reason` NULL
+even though `accounting.bills` has all three columns.**
+
+**AND THIS EXPLAINS ITEM 131's CONTROL RESULT.** That sweep found `accounting.expenses` had **0
+disagreements across 27,072 rows** while `accounting.bills` had 4, and I used it to withdraw my own
+"everything must be drifting" prior. **Here is why expenses is clean: its writer writes all the markers at
+once.** The control and the cause line up — `accounting.expenses` is consistent *because* of this statement,
+not by luck.
+
+**So `LV-BILL-VOID-MARKERS-ARE-DISJOINT` converts from "decide a convention and align the writers" to "make
+`voidBill` write what `voidExpense` writes."** I have added that pointer to the P0's row. **A P0 whose fix is
+"copy the function 40 lines away" is a different piece of work from one whose fix begins with a design
+decision — and CC-1 should not spend an afternoon deciding something this codebase already decided.**
+
+**One caveat I am stating rather than glossing:** the expense void path has **never executed in production**
+(0 of 27,072). It is *correct by inspection*, not by live proof. **It is the right template and it is
+untested** — whoever ships the bill fix should exercise both.
