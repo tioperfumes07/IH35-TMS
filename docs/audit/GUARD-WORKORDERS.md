@@ -265,6 +265,42 @@ Status: **OPEN — TOP PRIORITY, NON-STOP**, owner-directed. This card never "co
 
 ## LIVE BOARD (GUARD updates as shas land)
 
+### **OPEN · P3 · `LV-INSURANCE-POLICY-CREATE-NOT-IDEMPOTENT`** — a money-writing route is outside the idempotency middleware; bills are protected, POLICIES are not
+
+**Owning lane: CC-1 (money controls — `middleware/idempotency.ts`).** Found by **CC-2** 2026-08-08 triaging the
+never-in-CI FE guard sweep. **CC-2 did NOT edit money middleware.**
+
+**CALIBRATED DELIBERATELY — my first read of this was worse than the truth.** `verify-insurance-module` reports
+`insurance/policies` missing from `REQUIRED_MATCHERS`, and the route is
+`POST /api/v1/insurance/policies/with-bills` → `createInsurancePolicyWithBills()` → `INSERT INTO
+accounting.bills`. That reads like "a money route with no idempotency". **It is not that bad**, and the
+difference matters:
+
+**WHAT IS ALREADY PROTECTED (verified in `policy-create-atomic.service.ts`):** every bill is written with a
+deterministic key `ins:{policyId}:{sequence}` and
+`ON CONFLICT (operating_company_id, qbo_idempotency_key) … DO NOTHING`. **A retry cannot duplicate the bills
+of a given policy** — the database prevents it.
+
+**WHAT IS NOT PROTECTED (verified on prod `pg_constraint`):** `insurance.policy` carries **only**
+`policy_pkey PRIMARY KEY (id)` — **no unique constraint on `(operating_company_id, policy_number)`**. So a
+retried POST mints a NEW policy id, whose bill keys (`ins:{newId}:…`) do not collide, and a second policy plus
+a second bill schedule is created. The middleware would have caught that; the DB cannot.
+
+**CURRENTLY UNREACHABLE, so it is P3 and not P1:** `insurance.policy` is **empty on prod — visible 0 ==
+n_live_tup 0**, a real zero, consistent with `LV-TXN-014` (*insurance policy creation is a HARD 500 on every
+entity*). Nobody can hit this path today. It becomes live the moment LV-TXN-014 is fixed.
+
+**FIX — CC-1's call, two defensible options:** add `/^\/api\/v1\/insurance\/policies(\/|$)/i` to
+`REQUIRED_MATCHERS`, and/or add a natural-key unique constraint on
+`insurance.policy (operating_company_id, policy_number)` — the DB-level option is the stronger one, per
+"a DB constraint beats a guard". **Sequence it with LV-TXN-014** so the control lands before the path opens.
+
+**The guard is TRUE, not stale** — the 2nd of 20 sweep guards telling the truth (with `verify-dispatch-eta-columns`).
+Its sibling assertion (`PolicyCreateModal.tsx` missing `selectedVendorId`) is untriaged and may be a separate
+FE gap.
+
+---
+
 ### **OPEN · P2 · `LV-DISPATCH-LIVE-ETA-BUILT-BUT-NEVER-WIRED`** — the live-ETA enrichment is exported, has zero callers anywhere in the repo, and is not covered by its own test
 
 **Owning lane: dispatch product decision (Cursor/REF to rule) — CC-2 found it, CC-2 did NOT wire it.**
