@@ -37,22 +37,29 @@ export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const filters: string[] = ["operating_company_id = $1::uuid"];
+      // FAIL-DD1: project driver_name — EntityLink without a label falls back to raw UUID on the card title.
+      const filters: string[] = ["p.operating_company_id = $1::uuid"];
       const values: unknown[] = [query.data.operating_company_id];
       if (query.data.driver_id) {
         values.push(query.data.driver_id);
-        filters.push(`driver_id = $${values.length}::uuid`);
+        filters.push(`p.driver_id = $${values.length}::uuid`);
       }
       if (query.data.status) {
         values.push(query.data.status);
-        filters.push(`status = $${values.length}`);
+        filters.push(`p.status = $${values.length}`);
       }
       const res = await client.query(
         `
-          SELECT *
-          FROM driver_finance.auto_deduction_policies
+          SELECT
+            p.*,
+            NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name
+          FROM driver_finance.auto_deduction_policies p
+          LEFT JOIN mdata.drivers d
+            ON d.id = p.driver_id
+           AND d.deactivated_at IS NULL
+           AND d.archived_at IS NULL
           WHERE ${filters.join(" AND ")}
-          ORDER BY created_at DESC
+          ORDER BY p.created_at DESC
         `,
         values
       );

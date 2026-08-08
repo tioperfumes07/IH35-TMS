@@ -134,6 +134,23 @@ requireMatch(
   "AutoDeductionPoliciesPanel must read driver_id from searchParams (driver-profile reverse link)"
 );
 
+// 7b. FAIL-DD1 — policy card title must use projected driver_name, never bare EntityLink id (UUID title).
+requireMatch(
+  "apps/backend/src/settlements/auto-deductions/policy.routes.ts",
+  /AS driver_name/,
+  "policy list must project driver_name from mdata.drivers (FAIL-DD1)"
+);
+requireMatch(
+  "apps/backend/src/settlements/auto-deductions/policy.routes.ts",
+  /LEFT JOIN mdata\.drivers/,
+  "policy list must JOIN mdata.drivers entity-scoped for the name (FAIL-DD1)"
+);
+requireMatch(
+  "apps/frontend/src/pages/drivers/AutoDeductionPolicies.tsx",
+  /EntityLink kind="driver" id=\{row\.driver_id\} label=\{row\.driver_name/,
+  "AutoDeductionPolicies card title must pass driver_name as EntityLink label (FAIL-DD1)"
+);
+
 // 8. DriverDetail: operations sub-view deep link + EarningsTab callback wiring (forward+reverse).
 requireMatch(
   "apps/frontend/src/pages/DriverDetail.tsx",
