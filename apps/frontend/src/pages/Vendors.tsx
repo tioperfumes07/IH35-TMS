@@ -130,6 +130,19 @@ export function VendorsPage() {
     return all;
   }, [vendorsRoster, listStatus, rosterCategory]);
 
+  // §7 RESTORE (FE-LIST-SEGMENT-TABS-DELETED-B3690EB68). b3690eb68 deleted the vendor list segment tabs
+  // while realigning this page to the side-rail layout; §7 is ADDITIVE-ONLY (archive, never delete) and the
+  // identical pattern still ships on Drivers (Drivers.tsx:659-665). Counts are computed off the full roster
+  // BEFORE the status filter, so each tab shows its own total rather than the filtered remainder.
+  const vendorTabCounts = useMemo(
+    () => ({
+      all: vendorsRoster.length,
+      active: vendorsRoster.filter((vendor) => vendor.deactivated_at == null).length,
+      inactive: vendorsRoster.filter((vendor) => vendor.deactivated_at != null).length,
+    }),
+    [vendorsRoster]
+  );
+
   // V8 — distinct categories present across the full roster (before the category filter), sorted.
   const categoryOptions = useMemo(() => {
     const set = new Set<string>();
@@ -316,6 +329,18 @@ export function VendorsPage() {
         }
       />
       {companyId ? <VendorsSyncPanel operatingCompanyId={companyId} /> : null}
+      {/* §7 RESTORE — segment tabs, additive. They drive the EXISTING `listStatus` state (:84), which already
+          filters the roster at :126-127, so no filtering logic is added and no URL behaviour changes: this
+          page's `?tab=` param stays owned by the vendor DETAIL tabs (:74/:397), untouched. */}
+      <SecondaryNavTabs
+        activeId={listStatus}
+        onChange={(id) => setListStatus(id as "active" | "inactive" | "all")}
+        tabs={[
+          { id: "all", label: `All (${vendorTabCounts.all})` },
+          { id: "active", label: `Active (${vendorTabCounts.active})` },
+          { id: "inactive", label: `Inactive (${vendorTabCounts.inactive})` },
+        ]}
+      />
       {viewMode === "list" ? (
         <VendorsListView
           companyId={companyId}

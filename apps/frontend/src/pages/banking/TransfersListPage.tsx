@@ -8,6 +8,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { CollapsedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -34,6 +35,10 @@ export function TransfersListPage() {
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  // ACCT-F176 — the banner below states what TRANSFER_GL_POSTING_ENABLED is doing, so it must READ
+  // it. Same defect and same live state as the bank-feed banner: global default false, per-entity
+  // override TRUE for USMCA, TRANSP and TRK, so "default OFF" was wrong for every real company.
+  const transferGlFlag = useFeatureFlag("TRANSFER_GL_POSTING_ENABLED", companyId || undefined);
   const [searchParams] = useSearchParams();
   const deepLinkTransferId = searchParams.get("transfer_id")?.trim() || "";
 
@@ -278,13 +283,46 @@ export function TransfersListPage() {
           className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
           data-testid="banking-transfer-gl-posting-honesty-banner"
         >
-          <p className="font-semibold">TMS journal entry link requires TRANSFER_GL_POSTING_ENABLED</p>
-          <p className="mt-1">
-            Transfer rows store QBO journal ids separately from TMS GL. A TMS JE appears in the TMS JE column only
-            when the existing transfer poster ran with the flag ON for this entity (default OFF). Zero linked JEs
-            with the flag OFF is expected — not proof that transfers post to the ledger. Reverse drill: JE detail
-            Source links map <code className="text-[11px]">transfer</code> → Banking Transfers.
-          </p>
+          {transferGlFlag.loading || transferGlFlag.error ? (
+            <>
+              <p className="font-semibold">
+                Checking whether recording a transfer posts a journal entry for this company…
+              </p>
+              <p className="mt-1">
+                <code className="text-[11px]">TRANSFER_GL_POSTING_ENABLED</code> is resolved per entity and has not
+                been read yet{transferGlFlag.error ? " (the lookup failed)" : ""}. Until it is,{" "}
+                <strong>assume recording a transfer DOES post</strong> — that is the assumption that cannot cost you
+                an unintended entry.
+              </p>
+            </>
+          ) : transferGlFlag.enabled ? (
+            <>
+              <p className="font-semibold">
+                Recording a transfer DOES post a TMS journal entry —{" "}
+                <code className="text-[11px]">TRANSFER_GL_POSTING_ENABLED</code> is ON for this company
+              </p>
+              <p className="mt-1">
+                The transfer poster runs for this entity, so a TMS JE is written to the live ledger and linked in the
+                TMS JE column. An EMPTY TMS JE column here therefore means those transfers were recorded before the
+                flag was turned on — it does not mean posting is off. Transfer rows still store QBO journal ids
+                separately from TMS GL. Reverse drill: JE detail Source links map{" "}
+                <code className="text-[11px]">transfer</code> → Banking Transfers.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-semibold">
+                TMS journal entry link requires <code className="text-[11px]">TRANSFER_GL_POSTING_ENABLED</code>, which
+                is OFF for this company
+              </p>
+              <p className="mt-1">
+                Transfer rows store QBO journal ids separately from TMS GL. A TMS JE appears in the TMS JE column only
+                when the existing transfer poster ran with the flag ON for this entity. Zero linked JEs with the flag
+                OFF is expected — not proof that transfers post to the ledger. Reverse drill: JE detail Source links
+                map <code className="text-[11px]">transfer</code> → Banking Transfers.
+              </p>
+            </>
+          )}
         </div>
       ) : null}
       {listState.isEmpty ? (

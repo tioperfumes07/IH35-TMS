@@ -427,7 +427,10 @@ describe("invariant #23 single-line-name phase-1 pages", () => {
   it("InvoicesListPage customer column uses .single-line-name", async () => {
     render(wrap(<InvoicesListPage />));
     const cell = await waitFor(() => within(screen.getByRole("table")).getByText("LONG CUSTOMER HOLDINGS LLC"));
-    expect(cell.classList.contains("single-line-name")).toBe(true);
+    // The class lives on the SPAN that wraps the cell's EntityLink (InvoicesListPage.tsx:248), so getByText
+    // returns the inner anchor and a direct classList check is false while the invariant actually HOLDS.
+    // Assert the truncating ancestor instead of demanding the class sit on the text node itself.
+    expect(cell.closest(".single-line-name")).not.toBeNull();
   });
 
   it("CashAdvanceRequestsPage driver column uses .single-line-name", async () => {

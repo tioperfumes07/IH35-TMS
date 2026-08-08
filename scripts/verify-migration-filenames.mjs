@@ -71,6 +71,17 @@ const HISTORICAL_TIMESTAMP_DUP_ALLOWLIST = new Set([
   "202606071500", "202606071800", "202606080112", "202606080205", "202607051000",
   "202607051200", "202607052300", "202607860000", "202607890000", "202607920000",
   "202607950000",
+  // ACCEPTED 2026-08-08 by lead ruling ("collision CLOSED — document accept"). BOTH files are already
+  // APPLIED on prod (_system._schema_migrations: ..._driver_settlements_is_sample_data 07:08:47Z,
+  // ..._money_tables_audit_triggers 07:55:13Z), and renaming an applied migration is forbidden by the
+  // checksum freeze, so the collision cannot be undone. Same justification as the 11 pairs above.
+  //
+  // HONEST LIMITATION OF *THIS* ALLOWLIST: it is keyed by NUMBER, not by the filename pair, so it
+  // would also excuse a THIRD file landing on 202612350000. That hole is closed by the other guard —
+  // verify-migration-no-number-collision freezes the exact two FILENAMES and its selftest asserts a
+  // third file on this number is still a NEW collision. That guard is the CI-wired one (verify-step
+  // 1561), so the ratchet survives; this entry only stops a duplicate red for the same accepted pair.
+  "202612350000",
 ]);
 
 function fail(lines) {

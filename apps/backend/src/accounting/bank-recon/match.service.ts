@@ -17,7 +17,7 @@ export type MatchState = "auto_matched" | "user_matched" | "rejected";
 // no GL JE is an orphan write — that's Part 2b (BLOCK-02 CHAIN-04), still gated. Inserting a kind
 // outside this set would violate the CHECK and 500 at runtime, so keep this guard as the source of
 // truth and keep it in lockstep with the migration's CHECK list.
-const PERSISTABLE_MATCH_KINDS: ReadonlySet<LedgerEntryKind> = new Set<LedgerEntryKind>([
+export const PERSISTABLE_MATCH_KINDS: ReadonlySet<LedgerEntryKind> = new Set<LedgerEntryKind>([
   "payment",
   "bill_payment",
   "transfer",
@@ -133,8 +133,49 @@ function toleranceForAmount(amountCents: number) {
   return Math.max(Q11_FIXED_TOLERANCE_CENTS, Math.round(Math.abs(amountCents) * Q11_PERCENT_TOLERANCE));
 }
 
-function computeMatchScore(input: { amountGapCents: number; toleranceCents: number; dateGapDays: number; similarity: number }) {
-  const amountScore = Math.max(0, 1 - input.amountGapCents / Math.max(input.toleranceCents, 1));
+/**
+ * ACCT-F179 — the amount term must stay MONOTONIC in the gap, not clamp to zero outside tolerance.
+ *
+ * WHAT WAS BROKEN (observed live on USMCA 2026-08-07, /banking/transactions): the match drawer for a
+ * $918.00 Zelle line ranked **#1 a JE off by $853.80** (score 0.202) above a JE off by **$282.00**
+ * (0.191), and gaps of $282.00 and $604.10 scored IDENTICALLY. The closest candidate by amount came
+ * second.
+ *
+ * The arithmetic: tolerance is `max($1.00, |amount| × 0.0001)` = **$1.00** on a $918 line, and the old
+ * term was `max(0, 1 - gap/tolerance)`. Every real candidate gap ($282–$885) is 282×–885× tolerance,
+ * so `1 - gap/tol` is deeply negative and the clamp forced amountScore to **0 for all of them**. The
+ * 0.55 weight — the MAJORITY of the score — contributed nothing, every candidate shared a 1-day date
+ * gap so dateScore tied too, and the ranking was decided entirely by the 0.25 fuzzy-memo term. A bank
+ * reconciliation was choosing its top suggestion by text similarity while ignoring the money.
+ *
+ * THE FIX IS NOT A WIDER TOLERANCE. Tolerance answers "is this the same transaction?" and $1.00 is
+ * correct for that — widening it to make ranking work would start AUTO-MATCHING things that are not
+ * the same payment, turning a bad suggestion into a bad posting. Ranking and auto-match are different
+ * questions and this only changes ranking; `autoMatch` still keys on `amountGapCents <= toleranceCents`
+ * exactly as before.
+ *
+ * Inside tolerance the score stays 1.0, so an exact match still beats a near one decisively. Outside
+ * it, the score decays with the gap RELATIVE TO THE TRANSACTION, which keeps it comparable across a
+ * $50 line and a $50,000 one: `1 / (1 + gap/amount)` → gap 0 ⇒ 1.0, gap = amount ⇒ 0.5, gap = 10×
+ * amount ⇒ 0.09. It never reaches zero, so a closer amount ALWAYS outranks a farther one and the
+ * majority weight always carries information.
+ *
+ * Recomputed against the four live candidates above: $1,200 (gap $282) 0.765 · $313.90 (gap $604) 0.603
+ * · $64.20 (gap $854) 0.518 · $33.40 (gap $885) 0.509 — strictly ordered by closeness, so the $282 gap
+ * now ranks first instead of second.
+ */
+export function computeMatchScore(input: {
+  amountGapCents: number;
+  toleranceCents: number;
+  dateGapDays: number;
+  similarity: number;
+  /** Absolute bank-line amount, so the gap can be judged relative to the transaction's own size. */
+  txnAmountCents: number;
+}) {
+  const amountScore =
+    input.amountGapCents <= input.toleranceCents
+      ? 1
+      : 1 / (1 + input.amountGapCents / Math.max(Math.abs(input.txnAmountCents), 1));
   const dateScore = Math.max(0, 1 - input.dateGapDays / AUTO_MATCH_DATE_WINDOW_DAYS);
   const memoScore = Math.max(0, Math.min(input.similarity, 1));
   return Number((0.55 * amountScore + 0.2 * dateScore + 0.25 * memoScore).toFixed(6));
@@ -684,6 +725,7 @@ export async function findCandidates(input: {
           toleranceCents,
           dateGapDays,
           similarity,
+          txnAmountCents: txnAmountAbs,
         });
         return {
           ...candidate,
@@ -698,8 +740,12 @@ export async function findCandidates(input: {
       .slice(0, 50);
 
     // Only persist an auto-match whose kind the banking.reconciliation_matches CHECK constraint
-    // accepts. 'bill'/'expense' auto-matches are returned as ranked suggestions but never written in
-    // Part 1 (see PERSISTABLE_MATCH_KINDS) — that keeps this Tier-3 and avoids a CHECK-violation 500.
+    // accepts (see PERSISTABLE_MATCH_KINDS) — that keeps this Tier-3 and avoids a CHECK-violation 500.
+    //
+    // This comment used to say "'bill'/'expense' auto-matches are ... never written". That was WRONG
+    // about `expense`, which IS in PERSISTABLE_MATCH_KINDS and IS written. Of the six LedgerEntryKind
+    // members exactly ONE — 'bill' — is non-persistable. Corrected because the nightly cron's
+    // auto-matched metric was built on the belief the comment described, and overcounted as a result.
     const best = ranked.find((row) => row.auto_match && PERSISTABLE_MATCH_KINDS.has(row.ledger_entry_kind));
     if (best) {
       await storeMatch(client, {
@@ -761,6 +807,7 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       toleranceCents,
       dateGapDays: 0,
       similarity,
+      txnAmountCents: txnAmountAbs,
     });
 
     await storeMatch(client, {

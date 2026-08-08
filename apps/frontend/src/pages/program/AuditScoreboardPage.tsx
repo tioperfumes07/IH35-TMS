@@ -20,10 +20,20 @@ import {
 } from "./programScoreboard.data";
 
 const GATE_LABELS = ["A", "B", "C", "D", "E", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8"];
+const BOARD_ENTITIES = ["TRANSP", "USMCA"] as const;
 const VIDX = [5, 6, 7, 8, 9, 10, 11, 12];
 
 const letter = (c: GateState) =>
   c === "NA" ? "—" : c === "PASS" ? "P" : c === "AUDIT" ? "A" : c === "FIX" ? "F" : c === "FAIL" ? "X" : "U";
+
+function cellsForEntity(
+  m: ProgramScoreboard["modules"][number],
+  ent: (typeof BOARD_ENTITIES)[number],
+): GateState[] {
+  const by = m.cellsByEntity?.[ent];
+  if (Array.isArray(by) && by.length === 13) return by;
+  return m.cells;
+}
 
 type RecentPrRow = {
   number: number;
@@ -33,11 +43,16 @@ type RecentPrRow = {
   url: string;
 };
 
+type GateTally = Record<string, { pass: number; applicable: number; fail: number; unverified: number }>;
+
 type LiveScoreboard = ProgramScoreboard & {
   meta: ProgramScoreboard["meta"] & {
     lastSyncedCt?: string | null;
     prodReadSource?: "neon_now" | "request_time" | "committed_fallback";
-    gateTally?: Record<string, { pass: number; applicable: number; fail: number; unverified: number }>;
+    gateTally?: GateTally;
+    gateTallyByEntity?: Record<string, GateTally>;
+    boardEntities?: string[];
+    recentActivitySource?: "git_log" | "github" | "ledger_committed";
   };
   recentActivity?: RecentPrRow[];
   // PROG-CLASS-STALE — computed per request from docs/audit/wave-queue.json by the backend. Null/absent
@@ -137,6 +152,15 @@ export function AuditScoreboardPage() {
   // Last synced = ledger git commit (meta.generatedAt / lastSyncedCt), America/Chicago CT — not wall clock.
   const lastSyncedLabel = sb.meta.lastSyncedCt || formatLedgerCt(sb.meta.generatedAt);
   const recentRows = sb.recentActivity ?? [];
+  const recentSource = sb.meta.recentActivitySource;
+  const recentSourceLabel =
+    recentSource === "git_log"
+      ? "live git log (request-time)"
+      : recentSource === "github"
+        ? "live GitHub pulls API"
+        : recentSource === "ledger_committed"
+          ? "committed ledger snapshot (may lag tip — not live)"
+          : "source unknown";
   // PROG-CLASS-STALE — live queue read first; the generated module is the fallback, and the board
   // labels it as one. Treated as unusable unless it actually carries rows, because an empty grid
   // presented as live is the same silent-empty failure as the PR feed.
@@ -147,22 +171,52 @@ export function AuditScoreboardPage() {
   const metrics = useMemo(() => {
     let prod = 0, audit = 0, fix = 0, fail = 0, unv = 0, certified = 0, vprod = 0, vopen = 0;
     for (const m of sb.modules) {
-      for (const c of m.cells) {
-        if (c === "PASS") prod++;
-        else if (c === "AUDIT") audit++;
-        else if (c === "FIX") fix++;
-        else if (c === "FAIL") fail++;
-        else if (c === "UNV") unv++;
+      for (const ent of BOARD_ENTITIES) {
+        const cells = cellsForEntity(m, ent);
+        for (const c of cells) {
+          if (c === "PASS") prod++;
+          else if (c === "AUDIT") audit++;
+          else if (c === "FIX") fix++;
+          else if (c === "FAIL") fail++;
+          else if (c === "UNV") unv++;
+        }
+        for (const i of VIDX) {
+          const c = cells[i];
+          if (c === "PASS") vprod++;
+          else if (c !== "NA") vopen++;
+        }
       }
-      for (const i of VIDX) {
-        const c = m.cells[i];
-        if (c === "PASS") vprod++;
-        else if (c !== "NA") vopen++;
-      }
-      const present = m.cells.filter((c) => c !== "NA");
-      if (present.length && present.every((c) => c === "PASS")) certified++;
+      // Certified only when BOTH entities have all applicable gates PASS (B11)
+      const bothOk = BOARD_ENTITIES.every((ent) => {
+        const present = cellsForEntity(m, ent).filter((c) => c !== "NA");
+        return present.length > 0 && present.every((c) => c === "PASS");
+      });
+      if (bothOk) certified++;
     }
     return { prod, audit, fix, fail, unv, certified, vprod, vopen };
+  }, [sb]);
+
+  const gateTallyByEntity = useMemo(() => {
+    const fromMeta = sb.meta.gateTallyByEntity;
+    if (fromMeta && typeof fromMeta === "object") return fromMeta;
+    const out: Record<string, Record<string, { pass: number; applicable: number; fail: number; unverified: number }>> = {};
+    for (const ent of BOARD_ENTITIES) {
+      const t: Record<string, { pass: number; applicable: number; fail: number; unverified: number }> = {};
+      for (let i = 0; i < GATE_LABELS.length; i++) {
+        let pass = 0, applicable = 0, fail = 0, unverified = 0;
+        for (const m of sb.modules) {
+          const c = cellsForEntity(m, ent)[i] || "UNV";
+          if (c === "NA") continue;
+          applicable++;
+          if (c === "PASS") pass++;
+          else if (c === "FAIL") fail++;
+          else if (c === "UNV") unverified++;
+        }
+        t[GATE_LABELS[i]] = { pass, applicable, fail, unverified };
+      }
+      out[ent] = t;
+    }
+    return out;
   }, [sb]);
 
   const gateTally = useMemo(() => {
@@ -223,20 +277,32 @@ export function AuditScoreboardPage() {
       <section className="recent" data-testid="program-scoreboard-recent-activity">
         <h2>
           Recent activity — last 10 PRs{" "}
-          <span className="sub">from the ledger git history · times in CT (America/Chicago)</span>
+          <span className="sub" data-testid="program-scoreboard-recent-source">
+            {recentSourceLabel} · times in CT (America/Chicago)
+          </span>
         </h2>
+        {recentSource === "ledger_committed" ? (
+          <div className="clsWarn" data-testid="program-scoreboard-recent-stale-warning">
+            Showing the committed scoreboard snapshot — live git log / GitHub did not answer. This can
+            lag tip; it is not a live feed.
+          </div>
+        ) : null}
         {recentRows.length === 0 ? (
           <p className="recent-empty">
-            No merges recorded in the ledger yet — this panel is generated from git history at build
-            time (never blocks the board).
+            No recent PRs from git log, GitHub, or the committed ledger — empty is honest, not a fake
+            green panel.
           </p>
         ) : (
           <ul className="recent-list">
             {recentRows.map((row) => (
-              <li key={row.number} data-testid={`program-scoreboard-recent-pr-${row.number}`}>
-                <a href={row.url} target="_blank" rel="noreferrer">
-                  #{row.number}
-                </a>
+              <li key={row.number || row.title} data-testid={`program-scoreboard-recent-pr-${row.number}`}>
+                {row.url ? (
+                  <a href={row.url} target="_blank" rel="noreferrer">
+                    #{row.number}
+                  </a>
+                ) : (
+                  <span>#{row.number || "—"}</span>
+                )}
                 <span className="recent-title">
                   {row.state ? <span className="recent-state">{row.state}</span> : null}
                   {row.title}
@@ -249,21 +315,54 @@ export function AuditScoreboardPage() {
       </section>
 
       <div className="gate-tally" data-testid="program-scoreboard-gate-tally">
-        <div className="gate-tally-hd">13-gate tally <span className="sub">pass / applicable · weakest column = next wave</span></div>
-        <div className="gate-tally-row">
-          {GATE_LABELS.map((g) => {
-            const t = gateTally[g] ?? { pass: 0, applicable: 0, fail: 0, unverified: 0 };
-            const ratio = t.applicable > 0 ? t.pass / t.applicable : 0;
-            const tone = t.applicable === 0 ? "na" : ratio >= 0.85 ? "strong" : ratio >= 0.4 ? "mid" : "weak";
-            return (
-              <div key={g} className={`gate-cell ${tone}`} data-testid={`program-scoreboard-gate-${g}`}>
-                <div className="gate-name">{g}</div>
-                <div className="gate-ratio">
-                  {t.pass}/{t.applicable}
-                </div>
+        <div className="gate-tally-hd">
+          Entity × 13-gate tallies{" "}
+          <span className="sub">TRANSP + USMCA · each gate its own · weakest column = next wave</span>
+        </div>
+        {BOARD_ENTITIES.map((ent) => {
+          const tally = gateTallyByEntity[ent] ?? gateTally;
+          return (
+            <div key={ent} className="gate-tally-ent" data-testid={`program-scoreboard-gate-tally-${ent}`}>
+              <div className="gate-tally-ent-hd">{ent}</div>
+              <div className="gate-tally-row">
+                {GATE_LABELS.map((g) => {
+                  const t = tally[g] ?? { pass: 0, applicable: 0, fail: 0, unverified: 0 };
+                  const ratio = t.applicable > 0 ? t.pass / t.applicable : 0;
+                  const tone = t.applicable === 0 ? "na" : ratio >= 0.85 ? "strong" : ratio >= 0.4 ? "mid" : "weak";
+                  return (
+                    <div
+                      key={g}
+                      className={`gate-cell ${tone}`}
+                      data-testid={`program-scoreboard-gate-${ent}-${g}`}
+                    >
+                      <div className="gate-name">{g}</div>
+                      <div className="gate-ratio">
+                        {t.pass}/{t.applicable}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          );
+        })}
+        <div className="gate-tally-fold" data-testid="program-scoreboard-gate-tally-folded">
+          <div className="gate-tally-ent-hd">Folded (worst of entities)</div>
+          <div className="gate-tally-row">
+            {GATE_LABELS.map((g) => {
+              const t = gateTally[g] ?? { pass: 0, applicable: 0, fail: 0, unverified: 0 };
+              const ratio = t.applicable > 0 ? t.pass / t.applicable : 0;
+              const tone = t.applicable === 0 ? "na" : ratio >= 0.85 ? "strong" : ratio >= 0.4 ? "mid" : "weak";
+              return (
+                <div key={g} className={`gate-cell ${tone}`} data-testid={`program-scoreboard-gate-${g}`}>
+                  <div className="gate-name">{g}</div>
+                  <div className="gate-ratio">
+                    {t.pass}/{t.applicable}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -394,28 +493,68 @@ export function AuditScoreboardPage() {
         ))}
       </div>
 
-      {/* MODULE TABLE */}
-      <h2>By module <span className="sub">DoD A·B·C·D·E + VERIFY 1–8 — 13 gates, provenance-honest</span></h2>
-      <div className="scroll overflow-x-auto">
-        <table>
+      {/* MODULE TABLE — B11: TRANSP × 13 + USMCA × 13 (= 26 gate columns) + Tier + Module + Gap */}
+      <h2>
+        By module{" "}
+        <span className="sub">
+          TRANSP × 13 + USMCA × 13 (= 26 gate columns) · certified only when BOTH entities are green
+        </span>
+      </h2>
+      <div className="scroll overflow-x-auto" data-testid="program-scoreboard-module-table">
+        <table className="ent-split">
           <thead>
             <tr>
-              <th rowSpan={2}>Tier</th><th rowSpan={2}>Module</th>
-              <th className="grp" colSpan={5}>DoD</th>
-              <th className="grpv" colSpan={8}>VERIFY (system)</th>
-              <th rowSpan={2}>Top open gap · live status</th>
+              <th rowSpan={3}>Tier</th>
+              <th rowSpan={3}>Module</th>
+              <th className="grp ent-t" colSpan={13}>
+                TRANSP
+              </th>
+              <th className="grp ent-u" colSpan={13}>
+                USMCA
+              </th>
+              <th rowSpan={3}>Top open gap · live status</th>
             </tr>
-            <tr>{GATE_LABELS.map((g) => <th className="g" key={g}>{g}</th>)}</tr>
+            <tr>
+              <th className="grp" colSpan={5}>
+                DoD
+              </th>
+              <th className="grpv" colSpan={8}>
+                VERIFY
+              </th>
+              <th className="grp" colSpan={5}>
+                DoD
+              </th>
+              <th className="grpv" colSpan={8}>
+                VERIFY
+              </th>
+            </tr>
+            <tr>
+              {BOARD_ENTITIES.map((ent) =>
+                GATE_LABELS.map((g) => (
+                  <th className="g" key={`${ent}-${g}`} data-testid={`program-scoreboard-col-${ent}-${g}`}>
+                    {g}
+                  </th>
+                )),
+              )}
+            </tr>
           </thead>
           <tbody>
             {sb.modules.map((m) => (
               <tr key={m.module}>
-                <td><span className="tier">{m.tier}</span></td>
+                <td>
+                  <span className="tier">{m.tier}</span>
+                </td>
                 <td className="mod">{m.module}</td>
-                {m.cells.map((c, i) => (
-                  <td className={`gc ${i === 5 ? "vsep" : ""}`} key={i}><span className={`cell ${c}`}>{letter(c)}</span></td>
-                ))}
-                <td><small className="j">{m.gap}</small></td>
+                {BOARD_ENTITIES.map((ent) =>
+                  cellsForEntity(m, ent).map((c, i) => (
+                    <td className={`gc ${i === 5 ? "vsep" : ""} ${ent === "USMCA" && i === 0 ? "ent-sep" : ""}`} key={`${ent}-${i}`}>
+                      <span className={`cell ${c}`}>{letter(c)}</span>
+                    </td>
+                  )),
+                )}
+                <td>
+                  <small className="j">{m.gap}</small>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -437,10 +576,11 @@ export function AuditScoreboardPage() {
       </div>
 
       <div className="note">
-        <b>Why {metrics.certified}/30 — honestly.</b> No module has all 13 gates PROD-VERIFIED per entity. The board is mostly
-        amber because those gates were traced in code but never exercised live — a code trace is not a pass. The gates the
-        last audits skipped — <b>V2 picker+creator, V3 connectivity/wiring, V4 deep linkage</b> — are where the real work is.
-        The insurance/legal web flips green the moment a claim is created and its chain is walked end to end, forward and reverse.
+        <b>Why {metrics.certified}/30 — honestly.</b> No module has all 13 gates PROD-VERIFIED in{" "}
+        <b>both</b> TRANSP and USMCA. The board now shows each entity’s 13 gates as its own columns
+        (26 gate columns). Amber cells are traced in code but not exercised live — a code trace is not a pass.
+        The gates shallow audits skipped — <b>V2 picker+creator, V3 connectivity/wiring, V4 deep linkage</b> —
+        are where the real work is.
       </div>
 
       <div className="foot">
@@ -544,6 +684,9 @@ const CSS = `
 .ih35sb .gate-tally{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:16px 0 0}
 .ih35sb .gate-tally-hd{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--slate);margin-bottom:10px}
 .ih35sb .gate-tally-hd .sub{text-transform:none;letter-spacing:0;font-weight:400;color:var(--slate-lt);margin-left:8px}
+.ih35sb .gate-tally-ent,.ih35sb .gate-tally-fold{margin-top:10px}
+.ih35sb .gate-tally-ent-hd{font-size:11px;font-weight:800;color:var(--navy);margin-bottom:6px;letter-spacing:.3px}
+.ih35sb .gate-tally-fold .gate-tally-ent-hd{color:var(--slate-lt);font-weight:600}
 .ih35sb .gate-tally-row{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:6px}
 .ih35sb .gate-cell{border-radius:8px;padding:8px 4px;text-align:center;border:1px solid var(--line);background:var(--gray-bg)}
 .ih35sb .gate-cell.strong{background:var(--navy);border-color:var(--navy);color:#fff}
@@ -608,14 +751,18 @@ const CSS = `
 .ih35sb .pc.zero .pn{color:var(--gray)} .ih35sb .pc.flag .pn{color:var(--red)} .ih35sb .pc.good .pn{color:var(--green)}
 .ih35sb .scroll{overflow-x:auto;border-radius:10px;border:1px solid var(--line)}
 .ih35sb table{width:100%;border-collapse:collapse;background:var(--card);min-width:900px}
+.ih35sb table.ent-split{min-width:1400px}
 .ih35sb th,.ih35sb td{padding:7px 8px;text-align:left;border-bottom:1px solid var(--line);font-size:12.5px}
 .ih35sb th{background:#f1f5f9;font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--slate-lt)}
 .ih35sb th.g{text-align:center;width:26px;padding:6px 3px}
 .ih35sb th.grp{text-align:center;color:var(--navy);border-bottom:2px solid var(--line)}
+.ih35sb th.grp.ent-t{background:#e8eef7;color:var(--navy)}
+.ih35sb th.grp.ent-u{background:#eef2f7;color:var(--slate)}
 .ih35sb th.grpv{text-align:center;color:var(--verify);border-bottom:2px solid var(--verify)}
 .ih35sb tr:last-child td{border-bottom:none}
 .ih35sb .mod{font-weight:600;white-space:nowrap}
 .ih35sb td.gc{text-align:center;padding:5px 3px} .ih35sb td.vsep{box-shadow:inset 2px 0 0 var(--verify)}
+.ih35sb td.ent-sep{box-shadow:inset 3px 0 0 var(--navy)}
 .ih35sb .cell{display:inline-block;width:22px;text-align:center;font-weight:800;font-size:10px;padding:3px 0;border-radius:4px}
 .ih35sb .cell.PASS{color:var(--green);background:var(--green-bg)} .ih35sb .cell.AUDIT{color:var(--amber);background:var(--amber-bg)}
 .ih35sb .cell.FIX{color:var(--accent);background:var(--accent-bg)} .ih35sb .cell.FAIL{color:var(--red);background:var(--red-bg)}

@@ -92,9 +92,15 @@ export async function buildWeeklyCloseDraftForDriver(
     `
       INSERT INTO driver_finance.driver_settlements (
         operating_company_id, display_id, driver_id, period_start, period_end, status,
-        gross_pay, deductions_total, reimbursements_total, net_pay
+        gross_pay, deductions_total, reimbursements_total, net_pay, is_sample_data
       )
-      VALUES ($1,$2,$3,$4,$5,'presettle',0,0,0,0)
+      VALUES (
+        $1,$2,$3,$4,$5,'presettle',0,0,0,0,
+        -- DERIVED from the driver, not hardcoded. A weekly close for a sample driver produces a
+        -- sample settlement; a literal here would strand it untagged in the live ledger exactly the
+        -- way the dispatch writer did (LV-SAMPLE-TAG-DISPATCH-HOLE).
+        COALESCE((SELECT d.is_sample_data FROM mdata.drivers d WHERE d.id = $3::uuid), false)
+      )
       RETURNING id::text AS id
     `,
     [opts.operatingCompanyId, displayId, opts.driverId, opts.weekStart, opts.weekEnd]

@@ -7,6 +7,19 @@ import path from "node:path";
 import process from "node:process";
 
 const ROOT = process.cwd();
+// Rule 17 (no-guard-hotfile-thrash): a guard must NOT require a package.json / ci.yml edit —
+// those are the shared hot files every lane contends on, and Rule 17 forbids a new guard from touching
+// them. What actually makes a guard run in CI is a verify-step, so check for that and report its
+// absence as a NOTE, never as a failure.
+const wiredStep__dispatch_eta_columns = fs
+  .readdirSync(path.join(ROOT, "scripts/verify-steps"))
+  .some((f) => /^\d+-verify-dispatch-eta-columns\.mjs$/.test(f));
+if (!wiredStep__dispatch_eta_columns) {
+  console.warn(
+    "verify-dispatch-eta-columns: NOTE — no scripts/verify-steps/NNNN-verify-dispatch-eta-columns.mjs, so this guard does not execute in CI. Wiring it requires a claimed step number (Rule 37); a package.json script does not wire it."
+  );
+}
+
 const failures = [];
 
 function fail(message) {
@@ -96,18 +109,7 @@ contains(".block-ready/DISPATCH-LIVE-ETA.json", manifest, [
   { pattern: /DispatchBoard\.tsx/, label: "DispatchBoard forbidden path" },
 ]);
 
-const pkg = read("package.json");
-contains("package.json", pkg, [
-  {
-    pattern: /"verify:dispatch-eta-columns":\s*"node scripts\/verify-dispatch-eta-columns\.mjs"/,
-    label: "npm script",
-  },
-]);
 
-const ci = read(".github/workflows/ci.yml");
-contains(".github/workflows/ci.yml", ci, [
-  { pattern: /verify:dispatch-eta-columns/, label: "CI workflow step" },
-]);
 
 if (failures.length) {
   console.error("verify:dispatch-eta-columns FAIL:");
