@@ -146,4 +146,36 @@ describe("MatchDrawer — Confirm-match exact-only (BANKREC-CONFIRM-01)", () => 
     await userEvent.click(confirmBtn);
     expect(bankingApi.acceptBankReconMatch).not.toHaveBeenCalled();
   });
+  it("FAIL-BM1: clicking the candidate row SELECTS it — the primary click must not be the drill-through", async () => {
+    // The row previously had no click handler at all: selection was only reachable via the small radio,
+    // while the most prominent clickable element was the EntityLink to the expense/bill. The natural click
+    // therefore navigated AWAY from the match the user was making and closed the drawer with nothing matched
+    // — which is what blocked the bank-match walk.
+    const c1 = candidate({ ledger_entry_id: "cand-1", amount_gap_cents: 0 });
+    vi.mocked(bankingApi.getMatchCandidates).mockResolvedValue({ candidates: [c1], match_candidates_count: 1 });
+
+    render(wrap(<MatchDrawer open bankTransactionId={bankTxnId} operatingCompanyId={companyId} onClose={vi.fn()} />));
+
+    const row = await screen.findByTestId("match-candidate-row");
+    const radio = within(row).getByTestId("match-candidate-select") as HTMLInputElement;
+    expect(radio.checked).toBe(false);
+
+    // Click the row body, deliberately NOT the radio and NOT the link.
+    await userEvent.click(within(row).getByTestId("match-candidate-amount"));
+    expect(radio.checked).toBe(true);
+  });
+
+  it("FAIL-BM1: the drill-through link does NOT also change the selection", async () => {
+    const c1 = candidate({ ledger_entry_id: "cand-1", amount_gap_cents: 0 });
+    vi.mocked(bankingApi.getMatchCandidates).mockResolvedValue({ candidates: [c1], match_candidates_count: 1 });
+
+    render(wrap(<MatchDrawer open bankTransactionId={bankTxnId} operatingCompanyId={companyId} onClose={vi.fn()} />));
+
+    const row = await screen.findByTestId("match-candidate-row");
+    const radio = within(row).getByTestId("match-candidate-select") as HTMLInputElement;
+
+    await userEvent.click(within(row).getByTestId("match-candidate-drillthrough"));
+    // Navigating must not silently select on the way out.
+    expect(radio.checked).toBe(false);
+  });
 });
