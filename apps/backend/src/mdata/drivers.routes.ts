@@ -102,8 +102,26 @@ export function resolveDateOfBirth(input: {
   return supplied ?? derived;
 }
 
+/**
+ * ACCT-F209 — the driver list cap made real drivers UNASSIGNABLE, not merely paginated.
+ *
+ * The default was 50 with `ORDER BY created_at DESC`, so the endpoint returned the 50 NEWEST drivers
+ * and silently dropped the rest. Measured on prod for USMCA: 89 listable rows, 50 returned, and of the
+ * 27 genuinely active drivers only 17 fell inside the window — 10 REAL, ACTIVE DRIVERS WERE UNREACHABLE
+ * in the Book Load picker. Because the sort is newest-first, the drivers hidden were the longest-tenured
+ * ones, which is the opposite of who a dispatcher is most likely to be looking for.
+ *
+ * That is what made this a blocker rather than an inconvenience: combined with a search that could not
+ * match a full name (ACCT-F203), there was NO route to those drivers at all — neither by scrolling nor
+ * by typing. Fixing search alone would have left the ten unreachable to anyone who did not already know
+ * to search; fixing the cap alone would have left them findable only by scrolling. Both were required.
+ *
+ * 250/1000 is sized against live rosters with headroom: TRANSP 89 listable and USMCA 89 today, and the
+ * ceiling is a guard against an unbounded scan, not a product limit. Pagination still works — offset is
+ * untouched — this only changes what a caller gets when it does not ask.
+ */
 const listQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(200).default(50),
+  limit: z.coerce.number().int().min(1).max(1000).default(250),
   offset: z.coerce.number().int().min(0).default(0),
   status: listStatusSchema.optional(),
   search: z.string().trim().min(1).max(100).optional(),
