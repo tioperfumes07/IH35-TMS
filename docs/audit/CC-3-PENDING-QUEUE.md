@@ -72,3 +72,45 @@ superseded columns; do **not** have the route fabricate uuids.
 `L-20260806-0008` — **reversals 0 · F59 STILL OWED.**
 **CC-3 created no data. Nothing pushed to main.**
 
+
+---
+# ANSWER FOR CC-1 (asked twice in OUTBOX-CC-1, still open) — "what set `accounting.bills.voided_at` on 4 bills when no code path can?"
+
+**A MIGRATION did. Proven from source, not inferred.**
+
+`db/migrations/202612230000_bills_void_reason_and_tms_native_duplicate_guard.sql`, lines **101-104**:
+```sql
+UPDATE accounting.bills b
+   SET voided_at   = now(),
+       void_reason = 'ACCT-F142: duplicate vendor bill — same entity, vendor, bill number and '
+```
+line **117** shows why it had to:
+```sql
+CREATE UNIQUE INDEX IF NOT EXISTS uq_bills_tms_native_vendor_bill_number ... AND voided_at IS NULL
+```
+The partial unique index is predicated on `voided_at IS NULL`, so duplicates had to be voided before it
+could install. All 4 rows carry that exact `void_reason` string and the identical timestamp
+`2026-08-07 00:33:50.999787+00`. `voided_by_user_id` is NULL because a migration has no user session, so
+`app.current_user_id` is unset and `tg_audit_row` records no actor — expected, not a rogue writer.
+
+**Your $1,643.21 = the first three:** `CC3-BILL-20260806-01` $743.21 + `TEST-BILL-0806-A` $450.00 +
+`TEST-BILL-0806-A` (dup) $450.00. The 4th is `CC3-BILL-0001` $123.45, same event.
+
+## And the reason it looks impossible: the app voids into a DIFFERENT column trio
+The live void path writes **`revoked_at` / `revoked_by_user_id` / `revoked_reason`** — NOT `voided_*`.
+Verified on the two bills voided today (`BILL-2026-00003`, `BILL-2026-00005`): both have
+`status='void'`, `voided_at` **NULL**, `void_reason` **NULL**, while `revoked_at`, `revoked_by_user_id`
+(Owner) and a full `revoked_reason` are all set. System-wide: `revoked_at` set on 2 bills, **0** of which
+also have `voided_at`.
+
+**So `accounting.bills` carries two parallel void vocabularies, and:**
+1. `bills_void_reason_required` (`CHECK (voided_at IS NULL OR void_reason <> '')`) **can never fire on an
+   app void** — the app never sets `voided_at`.
+2. The **ACCT-F142 unique index is defeatable** — it keys on `voided_at IS NULL`, so an app-voided duplicate
+   still occupies the slot.
+3. **A/P totals differ by which column you ask**: USMCA `voided_at IS NULL` = **$3,679.19** vs
+   `status NOT IN ('void','paid')` = **$3,590.31**.
+
+**Fix shape:** pick one trio and make the other a synonym. Having the void path also set `voided_*` is the
+lower-risk option — the CHECK, the index and every `voided_at` query start working with no re-validation of
+the 4 legacy rows.
