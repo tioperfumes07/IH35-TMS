@@ -246,9 +246,14 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
                 updated_at,
                 payment_batch_id,
                 payment_source_kind,
-                source_bank_transaction_id
+                source_bank_transaction_id,
+                is_sample_data
               )
-              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'posted',$12,now(),now(),$13,'manual',$14)
+              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'posted',$12,now(),now(),$13,'manual',$14,
+                -- ACCT-F265 — inherit the parent bill's sample flag. See bills.service.ts for the full
+                -- reasoning: four writers, and a per-caller parameter fails silently the moment one
+                -- forgets. A payment is never more or less sample than the bill it pays.
+                COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid), false))
               RETURNING id
             `,
             [
