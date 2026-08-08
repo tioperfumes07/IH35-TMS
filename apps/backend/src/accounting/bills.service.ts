@@ -49,6 +49,10 @@ type CreateBillInput = {
   amountCents: number;
   memo?: string;
   coaAccountId?: string;
+  // FAIL-F2 / ACCT-F262 — mark this bill as TEST data. Without it the flag could not be SUPPLIED, so
+  // the writer had nothing to write and every app-created bill looked like real money to the GL.
+  // Optional; only an explicit true marks sample.
+  isSampleData?: boolean;
   // HARD cross-module link (maintenance): real FK from the bill to its work order + unit. Persists into
   // the CANONICAL accounting.bills.linked_work_order_uuid column (the same one the WO-close posting path
   // writes) + the new unit_id. Nullable — a bill created outside maintenance has neither. The FK
@@ -1519,6 +1523,36 @@ export async function createBill(input: CreateBillInput, userId: string) {
     // expected state under parallel books, not a gap — stamping them would invent an identifier
     // for a document this system did not issue.
     const insertedId = String((res.rows[0] as { id?: string }).id ?? "");
+
+    // FAIL-F2 / ACCT-F262 — record that a bill is TEST data. `accounting.bills.is_sample_data` exists,
+    // defaults false, and NOTHING wrote it, so every bill the app created was indistinguishable from
+    // real money — and the GL inherited it, because posting-engine reads the source row's flag
+    // (ACCT-F212). An untagged bill produces an untagged journal entry.
+    //
+    // The proof is in the data operators typed. Bill `SAMPLE-CASCADE-1633` — the word SAMPLE is in its
+    // BILL NUMBER — was stored 2026-08-08 21:37 with is_sample_data=false, and its posting JE
+    // `bc094647` is false too. When someone puts SAMPLE in the only field that will accept it, the
+    // structured flag is missing, not declined.
+    //
+    // UPDATE-in-transaction, following ACCT-F186 immediately below and for the identical reason: there
+    // are FOUR INSERT variants above and the lockstep column/values/placeholder pattern is a documented
+    // landmine here. One UPDATE is one place to be right instead of four places to drift. Same client,
+    // so it commits or rolls back with the insert.
+    //
+    // Only an explicit `true` writes. Omitting it leaves the column at its false default, so no
+    // existing caller changes behaviour and nothing is retroactively re-classified.
+    if (insertedId && input.isSampleData === true) {
+      await client.query(
+        `
+          UPDATE accounting.bills
+             SET is_sample_data = true
+           WHERE id = $1::uuid
+             AND operating_company_id = $2::uuid
+        `,
+        [insertedId, input.operatingCompanyId]
+      );
+    }
+
     if (insertedId) {
       const billDisplayId = await nextBillDisplayId(client, input.operatingCompanyId, new Date(input.billDate));
       const stamped = await client.query<BillRow>(
