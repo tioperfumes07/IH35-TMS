@@ -151,7 +151,10 @@ export async function getAccountingHomeData(input: {
             JOIN catalogs.payment_terms pt ON pt.id = b.payment_terms_id
             WHERE b.operating_company_id = $1::uuid
               AND b.revoked_at IS NULL
-              AND b.status IN ('unpaid', 'partial')
+              -- ACCT-F183: BOTH spellings — see fin20-aging.service.ts. Matching only
+              -- 'partial' drops partially-paid bills from the payables KPI, understating what the
+              -- company owes.
+              AND b.status IN ('unpaid', 'partial', 'partially_paid')
               AND pt.early_payment_discount_pct IS NOT NULL
               AND pt.early_payment_discount_days IS NOT NULL
               AND (b.bill_date + (pt.early_payment_discount_days || ' days')::interval)::date
