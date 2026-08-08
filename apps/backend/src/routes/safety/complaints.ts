@@ -117,11 +117,20 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
         // client-side would silently drop a driver's complaints past that cap.
         driverFilter = `AND (complainant_driver_id = $${values.length} OR respondent_driver_id = $${values.length})`;
       }
+      // FAIL-CP1: the grid rendered raw driver uuids because the row carried only ids and
+      // EntityLink falls back to printing `id` when given no label. On a privacy-gated discipline
+      // record, "who complained about whom" is the entire content of the row — so resolve both
+      // names server-side rather than making every consumer re-join.
       const res = await client.query(
-        `SELECT * FROM safety.complaints
-         WHERE operating_company_id = $1
-         ${driverFilter}
-         ORDER BY filed_at DESC LIMIT 500`,
+        `SELECT c.*,
+                TRIM(CONCAT(cd.first_name, ' ', cd.last_name)) AS complainant_driver_name,
+                TRIM(CONCAT(rd.first_name, ' ', rd.last_name)) AS respondent_driver_name
+         FROM safety.complaints c
+         LEFT JOIN mdata.drivers cd ON cd.id = c.complainant_driver_id
+         LEFT JOIN mdata.drivers rd ON rd.id = c.respondent_driver_id
+         WHERE c.operating_company_id = $1
+         ${driverFilter.replace(/complainant_driver_id/g, "c.complainant_driver_id").replace(/respondent_driver_id/g, "c.respondent_driver_id")}
+         ORDER BY c.filed_at DESC LIMIT 500`,
         values
       );
       return res.rows;
