@@ -36,6 +36,8 @@ import {
 /** The caller's open transaction — posting must never open a second connection (LV-011). */
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { standingLatchJePredicate } from "./revrec-delivery-posting/poster.service.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 export const INVOICE_AR_GL_POSTING_FLAG_KEY = "INVOICE_AR_GL_POSTING_ENABLED";
 
@@ -43,8 +45,65 @@ type PostingResult = Awaited<ReturnType<typeof postSourceTransaction>>;
 
 export type InvoiceGlPostOutcome =
   | { posted: false; reason: "posting_disabled" }
+  | { posted: false; reason: "revrec_latch_already_posted_ar"; loadId: string }
   | { posted: false; reason: "post_failed"; code: string; message: string }
   | { posted: true; result: PostingResult };
+
+/**
+ * ACCT-F205 — THE INTERLOCK THAT WAS ONLY EVER A COMMENT.
+ *
+ * The two-event delivery latch (revrec-delivery-posting/poster.service.ts) posts, per load:
+ *   earn: DR 1150 Unbilled Revenue / CR 4000 Income
+ *   bill: DR 1100 A/R             / CR 1150 Unbilled Revenue
+ * so by the time the `bill` event has fired, A/R AND revenue are already on the books for that load.
+ *
+ * That poster's own header says: "When this latch is ON for an entity, keep
+ * INVOICE_AR_GL_POSTING_ENABLED OFF for load-sourced invoices (or extend the invoice poster to skip
+ * income credit) — otherwise bill-first A/R would double-recognize revenue. Coordination is
+ * owner-gated; both flags default OFF."
+ *
+ * THAT COORDINATION WAS NEVER ENFORCED IN CODE, and on prod BOTH flags are ON for USMCA and TRANSP.
+ * The result is materialized and measured, on load L-20260806-0008 ($1,875.50):
+ *   LATCH earn      DR 1150 187550 / CR 4000 187550
+ *   LATCH bill      DR 1100 187550 / CR 1150 187550
+ *   INVOICE f17a6483 DR 1100 187550 / CR 4000 187550   <-- A/R and Income BOTH counted twice
+ * A/R overstated by $1,875.50 and revenue overstated by $1,875.50, on one load, silently.
+ *
+ * This is the sanctioned second option from that header, implemented per-LOAD rather than per-flag so
+ * it holds no matter how the flags are set — a flag convention that nothing checks is not a control.
+ *
+ * IT USES standingLatchJePredicate ON PURPOSE. A latch whose journal entry has been reversed or voided
+ * must NOT block the invoice: that poster's header documents exactly this trap ("the ACCT-F59 invoice
+ * interlock would refuse that load's invoice forever"). Only a STANDING bill latch suppresses posting,
+ * so a reversed latch correctly lets the invoice post the A/R itself.
+ *
+ * Invoices with no source load are untouched — there is no latch to collide with.
+ */
+async function loadHasStandingBillLatch(
+  client: DbClient,
+  operatingCompanyId: string,
+  invoiceId: string
+): Promise<string | null> {
+  const res = await client.query<{ load_id: string }>(
+    `
+      SELECT r.load_id::text AS load_id
+        FROM accounting.invoices i
+        JOIN accounting.load_revenue_recognition_postings r
+          ON r.load_id = i.source_load_id
+         AND r.operating_company_id = i.operating_company_id
+       WHERE i.id = $1::uuid
+         AND i.operating_company_id = $2::uuid
+         AND i.source_load_id IS NOT NULL
+         AND r.event = 'bill'
+         AND r.voided_at IS NULL
+         AND COALESCE(r.is_active, true) = true
+         AND ${standingLatchJePredicate("r")}
+       LIMIT 1
+    `,
+    [invoiceId, operatingCompanyId]
+  );
+  return res.rows[0]?.load_id ?? null;
+}
 
 /**
  * Resolve INVOICE_AR_GL_POSTING_ENABLED for an entity (user override, then per-company override, then
@@ -92,6 +151,31 @@ export async function postInvoiceGlIfEnabled(
 ): Promise<InvoiceGlPostOutcome> {
   const enabled = await isInvoiceGlPostingEnabled(client, operatingCompanyId, actor.userId);
   if (!enabled) return { posted: false, reason: "posting_disabled" };
+
+  // ACCT-F205 — refuse to post A/R and revenue a second time for a load the delivery latch has
+  // already billed. Checked BEFORE the poster runs, because the poster is idempotent per invoice and
+  // would happily create a genuinely new, genuinely balanced, genuinely wrong JE.
+  const latchedLoadId = await loadHasStandingBillLatch(client, operatingCompanyId, invoiceId);
+  if (latchedLoadId) {
+    await appendCrudAudit(
+      client,
+      actor.userId,
+      "accounting.invoice.gl_post.skipped_revrec_latch_already_posted",
+      {
+        resource_type: "accounting.invoices",
+        invoice_id: invoiceId,
+        load_id: latchedLoadId,
+        operating_company_id: operatingCompanyId,
+        reason:
+          "the two-event delivery latch already posted DR A/R / CR Unbilled for this load, so posting " +
+          "the invoice would debit A/R and credit revenue a SECOND time for the same freight. The " +
+          "invoice remains a valid customer document; only its duplicate GL posting is suppressed.",
+      },
+      "warning",
+      "ACCT-F205"
+    );
+    return { posted: false, reason: "revrec_latch_already_posted_ar", loadId: latchedLoadId };
+  }
 
   try {
     // LV-011: post INSIDE the caller's transaction (postSourceTransactionInClientTx) instead of
