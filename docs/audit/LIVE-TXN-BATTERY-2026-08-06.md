@@ -8395,3 +8395,69 @@ decision — and CC-1 should not spend an afternoon deciding something this code
 **One caveat I am stating rather than glossing:** the expense void path has **never executed in production**
 (0 of 27,072). It is *correct by inspection*, not by live proof. **It is the right template and it is
 untested** — whoever ships the bill fix should exercise both.
+
+## 134. ★★★ THE REVENUE LATCH FIRES — first revenue recognition in USMCA history. `LV-TXN-004` is DEFINITIVELY a CALL-SITE bug, and I must correct my own item 112.
+
+**The largest open money P0 — the revenue latch that "never fires" — has been settled by executing it.**
+
+I called the production poster directly on two USMCA loads:
+
+| load | status | result |
+|---|---|---|
+| `L-20260802-0258` | `delivered` | `{posted:false, reason:"missing_delivery_evidence"}` |
+| **`LUSMCAFREIGHT-20260806-0001`** | `delivered_pending_docs` | **`{posted:true, journal_entry_id:"1fac8d19-…", event:"earn"}`** |
+
+### ★ IT WORKS. THE POSTER WAS NEVER THE BUG.
+
+JE `1fac8d19-668c-4f82-8d53-aba34592a2bb`, read back from prod:
+
+| seq | account | type | side | cents |
+|---|---|---|---|---|
+| 1 | **Unbilled Revenue** | Asset | **debit** | 100 |
+| 2 | **Freight / Line-haul Income** | Income | **credit** | 100 |
+
+**Net 0. Both lines USMCA.** And the economics are right for ASC 606 Event 1: on delivery you **recognise the
+income** and book the **unbilled receivable** as an asset — revenue earned, not yet invoiced.
+
+**`accounting.load_revenue_recognition_postings` for USMCA: 0 → 1.** Row `560dc6a1-…` carries `load_id`,
+`journal_entry_id`, `event='earn'`, `amount_cents`, `status='posted'`, `created_by_user_id`, and its own
+`voided_at` column. **USMCA journal entries 33 → 34**, exactly +1 — my attribution ledger from item 127 still
+reconciles.
+
+**SO `LV-TXN-004` / `LV-REVREC-NOT-FIRING` IS A CALL-SITE DEFECT, PROVEN BY EXECUTION.** Given a load with
+delivery evidence, `postLoadRevenueLatch()` posts a correct, balanced, entity-scoped, fully-linked entry.
+Nothing in the poster, the flag, the account mapping, the latch table or the period guard is broken.
+**Everything that remains is about who calls it and when** — which is exactly what item 40 diagnosed as a
+cross-connection read-your-own-writes bug at the call site. **That diagnosis is now confirmed from the other
+direction: the callee is exonerated.**
+
+### ★ THE EVIDENCE GATE IS ALSO CORRECT — the refusal is a PASS, not a failure
+
+`L-20260802-0258` is `delivered` and was refused with **`missing_delivery_evidence`**. That is the
+owner-approved Option B evidence gate (`poster.service.ts:253`, *"recognition is EVIDENCE-driven, never
+status-driven"*) doing its job: a load marked delivered without a POD **must not** recognise revenue.
+**Recognising it would be the defect.** Two loads, two different correct answers, from one call.
+
+### ★★ CORRECTION TO MY OWN ITEM 112 — I mis-quoted the scenario registry
+
+Item 112 wrote that `hop.revenue` *"declared JE **DR A/R / CR Unbilled Revenue**"*. **That is not what the
+registry says.** `scenario-registry.ts:182` reads:
+> `je: "DR Unbilled Revenue / CR Line-Haul Income"`
+
+**which is exactly what posted.** The registry's declared economics were RIGHT and my quotation of them was
+WRONG — I described Event 2 (billing: DR A/R / CR Unbilled Revenue) and attributed it to Event 1.
+
+**What this does and does not change.** It does **not** touch item 112's actual finding: `hop.revenue` and
+`hop.invoice` still run **byte-identical SQL** counting sent invoices, so the latch dot still measures
+something other than the latch, and `LV-SCENARIO-REVENUE-DOT-IS-FALSE-GREEN` stands entirely on that. **But
+the correction matters because I used the declared-JE mismatch as supporting colour, and it was not a
+mismatch.** Recorded plainly: the probe is wrong, the declared JE is right, and I confused the two.
+
+### A SECOND SELF-CHECK THAT CAME BACK CLEAN
+
+I noticed both GL lines carry **`source_transaction_type = NULL`** and `source_transaction_id = NULL`, unlike
+every other poster in this battery, and was ready to file "the revrec JE has no both-way linkage." **I
+checked first, and it was wrong:** `accounting.transaction_source_links` holds **3 rows** for this entry, and
+`load_revenue_recognition_postings` carries `load_id` + `journal_entry_id` directly. **The linkage is complete
+— it is simply carried by the latch table and TSL rather than by the posting columns.** Third would-be false
+positive killed by checking before filing.
