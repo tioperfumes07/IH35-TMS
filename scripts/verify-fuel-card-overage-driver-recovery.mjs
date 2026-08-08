@@ -20,9 +20,9 @@ function read(rel) {
   return fs.readFileSync(abs, "utf8");
 }
 
-function collectProblems() {
+function collectProblems(serviceOverride) {
   const problems = [];
-  const service = read(ENGINE);
+  const service = serviceOverride ?? read(ENGINE);
   const routes = read(ROUTES);
   const index = read(INDEX);
   const guard = read(FUEL03_GUARD);
@@ -39,6 +39,41 @@ function collectProblems() {
     }
     if (!service.includes("flushFuelCardOverageAfterCommit")) {
       problems.push(`${ENGINE} must flush overage after fuel ingest commit`);
+    }
+    // LV-TXN-009 — THE DEDUPE MUST BE CONSULTED, NOT MERELY CALLED.
+    //
+    // The approve path used to run `await loadExistingOverageDeductionLink(...)` with the result
+    // UNASSIGNED, under a comment claiming it existed "so we never double-create a settlement
+    // deduction". It deduped nothing: a read whose result is discarded is not a use, and no amount
+    // of populating the FKs would have changed that. It survived because verify-no-dead-schema only
+    // asks whether the columns are REFERENCED — a bare SELECT satisfies that while protecting
+    // nothing. Same family as a CI assertion that evaluates an empty table and passes vacuously.
+    //
+    // So assert the shape that actually protects the driver: the result is BOUND to a name, and
+    // that name is BRANCHED on. Both halves are required — binding without branching is the same
+    // no-op wearing a variable.
+    if (service.includes("loadExistingOverageDeductionLink")) {
+      const bound = /(?:const|let|var)\s+(\w+)\s*=\s*await\s+loadExistingOverageDeductionLink\s*\(/.exec(
+        service
+      );
+      if (!bound) {
+        problems.push(
+          `${ENGINE} calls loadExistingOverageDeductionLink but DISCARDS its result — bind it to a ` +
+            `variable. An unassigned await is a read that protects nothing (LV-TXN-009).`
+        );
+      } else {
+        const name = bound[1];
+        const branched = new RegExp(
+          `if\\s*\\([^)]*\\b${name}\\.(?:deduction_id|overage_deduction_id)\\b`
+        ).test(service);
+        if (!branched) {
+          problems.push(
+            `${ENGINE} binds loadExistingOverageDeductionLink to \`${name}\` but never branches on ` +
+              `${name}.deduction_id / ${name}.overage_deduction_id — the driver can still be charged ` +
+              `twice for the same gallon (LV-TXN-009).`
+          );
+        }
+      }
     }
   }
   if (routes) {
@@ -63,15 +98,52 @@ function selftest() {
     process.exit(1);
   }
   const service = read(ENGINE);
-  const bad = collectProblems.bind(null)();
-  const mutated = service + "\nawait createSettlementDeduction(";
-  const tmpProblems = [];
-  if (!/createSettlementDeduction/.test(mutated)) tmpProblems.push("mutation inert");
-  if (!/createSettlementDeduction/.test(mutated)) {
-    console.error("verify-fuel-card-overage-driver-recovery SELFTEST FAIL: mutation inert");
+
+  // The previous selftest built a mutated string and then regex-tested THE STRING IT JUST BUILT,
+  // never feeding it back through collectProblems. It could not fail — the one property a selftest
+  // exists to have. Every mutation below is now run through the REAL checker and must come back RED.
+  const mutations = [
+    {
+      why: "settlement auto-charge reintroduced",
+      src: service + "\nawait createSettlementDeduction(",
+    },
+    {
+      why: "dedupe result DISCARDED (the LV-TXN-009 defect verbatim)",
+      src: service.replace(
+        /(?:const|let|var)\s+\w+\s*=\s*await\s+loadExistingOverageDeductionLink\s*\(/,
+        "await loadExistingOverageDeductionLink("
+      ),
+    },
+    {
+      why: "dedupe BOUND but never branched on (the no-op wearing a variable)",
+      src: service.replace(
+        /if\s*\([^)]*\b\w+\.(?:deduction_id|overage_deduction_id)\b[^)]*\)/,
+        "if (false)"
+      ),
+    },
+    {
+      why: "flush-after-commit removed",
+      src: service.replaceAll("flushFuelCardOverageAfterCommit", "flushRemoved"),
+    },
+  ];
+
+  const inert = [];
+  for (const m of mutations) {
+    if (m.src === service) {
+      inert.push(`${m.why} — MUTATION INERT (it changed nothing; the guard proves nothing here)`);
+      continue;
+    }
+    if (collectProblems(m.src).length === 0) inert.push(`${m.why} — NOT DETECTED`);
+  }
+  if (inert.length) {
+    console.error("verify-fuel-card-overage-driver-recovery SELFTEST FAIL:");
+    for (const p of inert) console.error("  - " + p);
     process.exit(1);
   }
-  console.log("verify-fuel-card-overage-driver-recovery SELFTEST OK — FUEL-03 supersession enforced");
+  console.log(
+    `verify-fuel-card-overage-driver-recovery SELFTEST OK — ${mutations.length}/${mutations.length} mutations detected ` +
+      `(supersession, discarded dedupe, unbranched dedupe, missing flush)`
+  );
 }
 
 if (process.argv.includes("--selftest")) {

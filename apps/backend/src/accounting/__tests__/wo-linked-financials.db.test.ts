@@ -71,10 +71,26 @@ describeIntegration("WO↔bill/expense hard FK link (real Postgres)", () => {
     const id = randomUUID();
     await bypass(async () => {
       await db.query(
+        // ACCT-F174 — status and the void marker must AGREE. This fixture used to write
+        // status='unpaid' WITH revoked_at set, i.e. a half-voided bill, which is the exact state
+        // `bills_void_state_authoritative` now forbids. It is not the constraint that is wrong: both
+        // production void paths write `status='void', revoked_at=now()` together
+        // (bills.service.ts:1790, governance/void-cancel-executors.ts:231), so the fixture was
+        // encoding a shape the application never produces — and a fixture that models an impossible
+        // row tests nothing real. The assertion below is unaffected: the reverse drill-through
+        // excludes this bill on `revoked_at`, not on status.
         `INSERT INTO accounting.bills
            (id, operating_company_id, bill_number, bill_date, amount_cents, total_amount, status, linked_work_order_uuid, unit_id, revoked_at)
-         VALUES ($1::uuid, $2::uuid, $3, CURRENT_DATE, 12345, 123.45, 'unpaid', $4::uuid, $5::uuid, $6)`,
-        [id, companyId, `BILL-${suffix}-${id.slice(0, 4)}`, link, unit, opts?.revoked ? new Date().toISOString() : null]
+         VALUES ($1::uuid, $2::uuid, $3, CURRENT_DATE, 12345, 123.45, $7, $4::uuid, $5::uuid, $6)`,
+        [
+          id,
+          companyId,
+          `BILL-${suffix}-${id.slice(0, 4)}`,
+          link,
+          unit,
+          opts?.revoked ? new Date().toISOString() : null,
+          opts?.revoked ? "void" : "unpaid",
+        ]
       );
     });
     return id;

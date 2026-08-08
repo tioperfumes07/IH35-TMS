@@ -404,7 +404,12 @@ export async function getApAgingVendorBills(input: {
             FROM accounting.bills b
             WHERE b.operating_company_id = $1::uuid
               AND b.revoked_at IS NULL
-              AND b.status IN ('unpaid', 'partial')
+              -- ACCT-F183: BOTH spellings. accounting.bills.status carries 'partial' AND
+              -- 'partially_paid' as live values on prod, and matching only 'partial' DROPS every
+              -- partially-paid bill from payables. Measured live: 2 bills, $482.95 of open balance,
+              -- invisible here. bills.service.ts:528/574 already uses this exact pair — these two
+              -- read paths were simply never updated to match.
+              AND b.status IN ('unpaid', 'partial', 'partially_paid')
               AND GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0) > 0
               AND COALESCE(NULLIF(TRIM(b.vendor_uuid), ''), b.vendor_id, 'unknown') = $2::text
             ORDER BY COALESCE(b.due_date, b.bill_date) ASC, b.bill_number ASC

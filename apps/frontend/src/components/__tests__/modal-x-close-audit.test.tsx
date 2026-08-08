@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Modal } from "../Modal";
 import { FaultRuleModal } from "../maintenance/FaultRuleModal";
@@ -16,7 +17,27 @@ import type { Customer } from "../../api/mdata";
 
 function wrap(ui: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <QueryClientProvider client={client}>{ui}</QueryClientProvider>;
+  // MemoryRouter: several of these surfaces now call useNavigate (drill-through links added after this
+  // harness was written), which throws "useNavigate() may be used only in the context of a <Router>".
+  // The app always renders them inside the router, so the harness was the unrealistic part.
+  return (
+    <QueryClientProvider client={client}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>
+  );
+}
+
+/**
+ * Drawers that migrated to the shared ParityDrawer no longer label their X "Close <title>". ParityDrawer
+ * names the DIALOG (`aria-label={title}`) and labels the button plainly "Close" — which is correct a11y:
+ * the accessible name of the control is read within its named dialog. So scope the query to the dialog by
+ * title instead of expecting the title to be duplicated onto the button. This stays specific — it still
+ * proves THAT drawer's X is what fired onClose — without asserting a naming scheme the shared component
+ * deliberately does not use.
+ */
+function clickDrawerClose(title: string) {
+  const dialog = screen.getByRole("dialog", { name: title });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
 }
 
 afterEach(() => {
@@ -93,7 +114,7 @@ describe("modal x-close audit", () => {
         />
       )
     );
-    fireEvent.click(screen.getByRole("button", { name: "Close Fine Detail" }));
+    clickDrawerClose("Fine Detail");
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -110,7 +131,7 @@ describe("modal x-close audit", () => {
         />
       )
     );
-    fireEvent.click(screen.getByRole("button", { name: "Close Company Violation Detail" }));
+    clickDrawerClose("Company Violation Detail");
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -127,7 +148,7 @@ describe("modal x-close audit", () => {
         />
       )
     );
-    fireEvent.click(screen.getByRole("button", { name: "Close Integrity Alert Detail" }));
+    clickDrawerClose("Integrity Alert Detail");
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -227,7 +248,7 @@ describe("modal x-close audit", () => {
         />
       )
     );
-    fireEvent.click(screen.getByRole("button", { name: "Close Anomaly Detail" }));
+    clickDrawerClose("Anomaly Detail");
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

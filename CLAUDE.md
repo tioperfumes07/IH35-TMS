@@ -290,5 +290,4 @@ Owner sessions**: `org.user_accessible_company_ids()` returns EVERY active compa
 so **every unscoped read is load-bearing on its own predicate**.
 
 **5. EVERY LOOP.** read board → **grep-verify the card against main** → build **ONE complete atomic block**
-→ found another lane's defect? **write it to the board** → push → next. Never idle, never pause to
-summarize, never half-edit.
+→ found another lane's defect? **write it to the board** → push → next. Then **idle + post STATUS** — idle while waiting is compliance, not failure. WIP <= 3 or park; never open a new PR to stay busy; REF (Desktop) sequences all merges. (Owner-directed 2026-08-08: supersedes the prior 'never idle' loop for CC-1/CC-2/CC-3.)

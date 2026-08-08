@@ -77,10 +77,15 @@ describe("VendorsPage list tabs", () => {
     const user = userEvent.setup();
     renderVendorsAt("/vendors");
     await waitFor(() => expect(listVendorsMock).toHaveBeenCalled());
-    expect(await screen.findByText("Active Shop")).toBeInTheDocument();
+    // The default view is master-detail (useViewModePref("vendors", "master-detail")), which renders the
+    // vendor name in BOTH the sidebar and the detail panel — so the singular queries threw "Found multiple
+    // elements". Presence becomes "at least one", and absence becomes "none anywhere", which is a STRONGER
+    // check than queryByText: queryByText throws on multiple, so it could never have caught a stray second
+    // occurrence in the first place.
+    expect(await screen.findAllByText("Active Shop")).not.toHaveLength(0);
     await user.click(screen.getByRole("button", { name: /inactive \(1\)/i }));
-    expect(screen.queryByText("Active Shop")).toBeNull();
-    expect(screen.getByText("Old Shop")).toBeInTheDocument();
+    expect(screen.queryAllByText("Active Shop")).toHaveLength(0);
+    expect(screen.getAllByText("Old Shop")).not.toHaveLength(0);
   });
 
   it("by-category tab sets search params when type selected", async () => {
@@ -92,7 +97,7 @@ describe("VendorsPage list tabs", () => {
       ],
     });
     const router = renderVendorsAt("/vendors");
-    await screen.findByText("Fuel A");
+    await screen.findAllByText("Fuel A");
     await user.click(screen.getByRole("button", { name: /by category/i }));
     const select = await screen.findByLabelText(/vendor type/i);
     await user.selectOptions(select, "fuel");
@@ -100,7 +105,7 @@ describe("VendorsPage list tabs", () => {
       expect(router.state.location.search).toContain("tab=by-category");
       expect(router.state.location.search).toContain("category=fuel");
     });
-    expect(screen.getByText("Fuel A")).toBeInTheDocument();
-    expect(screen.queryByText("Repair B")).toBeNull();
+    expect(screen.getAllByText("Fuel A")).not.toHaveLength(0);
+    expect(screen.queryAllByText("Repair B")).toHaveLength(0);
   });
 });

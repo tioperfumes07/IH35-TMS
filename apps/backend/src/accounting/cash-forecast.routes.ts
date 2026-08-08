@@ -123,7 +123,13 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
     return { settings: updated };
   });
 
-  app.get("/api/v1/accounting/cash-forecast", async (req, reply) => {
+  // ACCT-F183: rate limit added because touching this file brought it into
+  // verify-new-auth-routes-rate-limited's scope — an authorizing read with no limit trips CodeQL
+  // js/missing-rate-limiting. 60/min matches the read-route convention (writes use 30/min).
+  app.get(
+    "/api/v1/accounting/cash-forecast",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessForecast(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -194,7 +200,9 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
           FROM accounting.bills
           WHERE operating_company_id = $1::uuid
             AND revoked_at IS NULL
-            AND status IN ('open', 'partial', 'unpaid')
+            -- ACCT-F183: 'partially_paid' too. Omitting it drops partially-paid bills from the
+            -- CASH FORECAST, so projected outflows look smaller than the money actually due.
+            AND status IN ('open', 'partial', 'partially_paid', 'unpaid')
             AND COALESCE(due_date, bill_date) BETWEEN $2::date AND $3::date
         `,
         [query.data.operating_company_id, startWeek, endWeek]

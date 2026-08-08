@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { nextBillDisplayId } from "./display-id.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
@@ -62,6 +63,12 @@ type CreateBillInput = {
   // Draft id used by UploadZone for create-time bill attachments; reconciled onto the real bill id in
   // the same txn (Option B inc 2 — docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
   attachmentDraftId?: string | null;
+  /**
+   * LV-AP-DUP: explicit operator override for the duplicate-vendor-invoice control. Absent/false
+   * means "warn and refuse"; a reason string means "the operator saw the warning and accepted it",
+   * which is an internal-control DECISION and is written to the audit trail, never silently.
+   */
+  duplicateOverrideReason?: string | null;
   /**
    * Vendor Bill create (LAW §9): when provided, must be non-empty and is INSERTed into
    * accounting.bill_lines in the SAME transaction as the bill header. Omitted = legacy
@@ -172,6 +179,17 @@ type BillPaymentRow = {
   status: string;
   created_at: string;
   revoked_at: string | null;
+  /**
+   * ACCT-F175 — true only for a non-cash settlement DEDUCTION payment (advance repaid / escrow
+   * withheld, `from_bank_account_id` NULL). Such a payment exists ONLY to close its bill's A/P in the
+   * subledger; its GL is owned by the settlement deduction JE, and the posting engine refuses to post
+   * it independently (posting-engine.service.ts:1324). It is therefore also the one payment kind that
+   * must NOT have its GL reversed on void — everything else must.
+   *
+   * The column was already returned by the `SELECT *` in voidBillPaymentInClientTx and simply was not
+   * declared here, so reading it was a type error even though the value was present.
+   */
+  settlement_deduction_noncash: boolean | null;
   // BANKREC-LISTSTATUS-01 (read-only, additive): true iff this bill_payment has an ACTIVE
   // (auto_matched|user_matched) banking.reconciliation_matches row.
   is_reconciled: boolean;
@@ -1182,6 +1200,25 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
   });
 }
 
+/**
+ * LV-AP-DUP — a duplicate vendor invoice was accepted with no warning and posted to the GL twice.
+ *
+ * Thrown instead of creating the second bill. Carries the existing bill so the UI can show WHICH
+ * one it collides with; the caller proceeds only by re-submitting with duplicateOverrideReason,
+ * which is the QBO/McLeod behaviour: warn, allow a deliberate override, record who decided.
+ */
+export class DuplicateBillNumberError extends Error {
+  readonly existingBillId: string;
+  readonly billNumber: string;
+  readonly httpStatus = 409;
+  constructor(existingBillId: string, billNumber: string) {
+    super("duplicate_bill_number_for_vendor");
+    this.name = "DuplicateBillNumberError";
+    this.existingBillId = existingBillId;
+    this.billNumber = billNumber;
+  }
+}
+
 export async function createBill(input: CreateBillInput, userId: string) {
   if (input.amountCents <= 0) throw new Error("bill_amount_must_be_positive");
 
@@ -1214,6 +1251,70 @@ export async function createBill(input: CreateBillInput, userId: string) {
     const hasClassId = (classCol.rowCount ?? 0) > 0;
     const classId = hasClassId ? (input.classId ?? null) : null;
     const vendorCols = await resolveBillVendorWriteColumns(client, input.operatingCompanyId, input.vendorId);
+
+    // LV-AP-DUP — DUPLICATE VENDOR-INVOICE CONTROL (live-proven: two identical $743.21 bills 10.3 s
+    // apart, BOTH posted, leaving $1,486.42 of expense and A/P for one $743.21 invoice).
+    //
+    // This is NOT the double-submit race and a disabled button would not have stopped it -- the two
+    // submissions were ten seconds apart. It is a missing detection RULE. It is also NOT the same
+    // defect as ACCT-F180: idempotency protects a RETRY of one request, whereas this is two
+    // deliberate requests with different keys, so neither fix subsumes the other.
+    //
+    // ENTITY-SCOPED, deliberately: bill_number is per-entity, so the predicate MUST include
+    // operating_company_id or a legitimate USMCA bill would collide with an unrelated TRANSP one.
+    // Vendor identity is matched across all three columns because a bill may carry any of them
+    // (mdata_vendor_id uuid, or vendor_uuid / vendor_id which are TEXT on prod).
+    //
+    // WARN, DO NOT HARD-BLOCK (QBO/McLeod behaviour): carriers legitimately reuse invoice numbers
+    // across vendors, and a hard block would make a real bill unenterable. Voided bills never
+    // collide -- a voided duplicate is precisely what a re-entry is meant to replace.
+    const billNumber = input.billNumber?.trim();
+    if (billNumber) {
+      const dup = await client.query<{ id: string }>(
+        `
+          SELECT b.id::text AS id
+            FROM accounting.bills b
+           WHERE b.operating_company_id = $1::uuid
+             AND b.voided_at IS NULL
+             AND b.bill_number = $2::text
+             AND (
+                   ($3::uuid IS NOT NULL AND b.mdata_vendor_id = $3::uuid)
+                OR ($4::text IS NOT NULL AND b.vendor_uuid = $4::text)
+                OR ($5::text IS NOT NULL AND b.vendor_id = $5::text)
+             )
+           LIMIT 1
+        `,
+        [
+          input.operatingCompanyId,
+          billNumber,
+          vendorCols.mdataVendorId ?? null,
+          vendorCols.vendorUuidText ?? null,
+          vendorCols.vendorIdText ?? null,
+        ]
+      );
+      const existingId = dup.rows[0]?.id;
+      if (existingId) {
+        const override = input.duplicateOverrideReason?.trim();
+        if (!override) throw new DuplicateBillNumberError(existingId, billNumber);
+        // The override is an internal-control decision, so it is recorded with who/when/why. A
+        // control that can be bypassed without a trace is not a control.
+        await appendCrudAudit(
+          client,
+          userId,
+          "accounting.bill_duplicate_number_override",
+          {
+            resource_type: "accounting.bills",
+            resource_id: existingId,
+            operating_company_id: input.operatingCompanyId,
+            bill_number: billNumber,
+            duplicate_of_bill_id: existingId,
+            override_reason: override,
+          },
+          "warning",
+          "LV-AP-DUP"
+        );
+      }
+    }
 
     const res = await client.query<BillRow>(
       hasInsuranceClaimId && hasClassId
@@ -1396,6 +1497,39 @@ export async function createBill(input: CreateBillInput, userId: string) {
           ]
     );
     if ((res.rowCount ?? 0) === 0 || !res.rows[0]) throw new Error("bill_insert_failed");
+
+    // ACCT-F186 — stamp the human-readable id. Bills were the ONLY money document without one:
+    // TMS-native bills 13 of 13 had display_id NULL on prod, while TMS-native invoices carry one
+    // 6 of 6 and payments 2 of 2. A bill is what you argue about with a vendor, attach to an
+    // approval, cite in a dispute and hand an auditor; without this it can only be cited by raw
+    // UUID, which is exactly what the app URL falls back to.
+    //
+    // Done as an UPDATE in THIS transaction rather than as an INSERT column, deliberately: there
+    // are FOUR INSERT variants above (insurance_claim_id x class_id), and the lockstep
+    // column/values/placeholder pattern is a documented landmine here — one UPDATE is one place to
+    // be right instead of four places to drift. Same client, so it is atomic with the insert.
+    //
+    // TMS-native ONLY. QBO-cloned bills keep their QBO identity and their NULL display_id is
+    // expected state under parallel books, not a gap — stamping them would invent an identifier
+    // for a document this system did not issue.
+    const insertedId = String((res.rows[0] as { id?: string }).id ?? "");
+    if (insertedId) {
+      const billDisplayId = await nextBillDisplayId(client, input.operatingCompanyId, new Date(input.billDate));
+      const stamped = await client.query<BillRow>(
+        `
+          UPDATE accounting.bills
+             SET display_id = $3::text
+           WHERE id = $1::uuid
+             AND operating_company_id = $2::uuid
+             AND display_id IS NULL
+             AND qbo_bill_id IS NULL
+          RETURNING *
+        `,
+        [insertedId, input.operatingCompanyId, billDisplayId]
+      );
+      if (stamped.rows[0]) res.rows[0] = stamped.rows[0];
+    }
+
     const created = normalizeBill(res.rows[0]);
 
     if (linesProvided && input.lines) {
@@ -1735,9 +1869,16 @@ export async function voidBill(
       }
     }
 
+    // LV-BILLVOID-DATE-ERROR-STILL-LIVE — bill_date is a DATE column, so a bare SELECT * hands
+    // node-postgres a JS Date rather than a string, and String(date).slice(0, 10) yields "Thu Aug 06"
+    // out of "Thu Aug 06 2026 00:00:00 GMT-0500 (Central Daylight Time)". That reaches SQL as a date
+    // literal and 500s the void. The governance executor never had this bug because it selects
+    // bill_date::text explicitly (void-cancel-executors.ts:196). Same cast here, under an alias so it
+    // cannot be confused with the raw column that normalizeBill still reads.
     const billRes = await client.query<BillRow>(
       `
-        SELECT *
+        SELECT *,
+               bill_date::text AS bill_date_iso
         FROM accounting.bills
         WHERE id = $1
           AND operating_company_id = $2
@@ -1771,7 +1912,15 @@ export async function voidBill(
       reversed_line_count: 0,
     };
     if (flagOn) {
-      const originalDate = String(billRaw.bill_date).slice(0, 10);
+      // Read the ::text alias, never String(bill_date): the raw column is a JS Date here.
+      const originalDate = String(
+        (billRaw as unknown as { bill_date_iso?: string | null }).bill_date_iso ?? ""
+      ).slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(originalDate)) {
+        // Refuse rather than hand postVoidReversal a malformed date. Substituting today's date would
+        // move a reversing entry into a different accounting period from the entry it reverses.
+        throw new Error(`bill_void_bill_date_unreadable: ${billId}`);
+      }
       reversal = await postVoidReversal(
         client,
         {
@@ -1840,7 +1989,20 @@ export async function voidBillPaymentInClientTx(
     paymentId: string;
     reason: string;
     userId: string;
-    reversePostedGl: boolean;
+    /**
+     * ACCT-F175 — OPTIONAL, and omitting it is the correct default.
+     *
+     * Whether a voided bill payment's GL must be reversed is a property of the PAYMENT, not of the
+     * caller: a non-cash settlement DEDUCTION payment (`settlement_deduction_noncash = true`) has no
+     * independent GL to reverse — the posting engine explicitly refuses to post it because its entry
+     * is owned by the settlement deduction JE — while every other bill payment has a real
+     * DR A/P / CR bank entry that MUST be reversed when it is voided.
+     *
+     * It used to be required, so each caller had to remember, and the user-facing one did not:
+     * `voidBillPayment` hardcoded `false` and no void through the UI ever reversed anything. Leave it
+     * unset and the value is derived from the row below, which cannot be forgotten.
+     */
+    reversePostedGl?: boolean;
     currentBusinessDate: string;
   }
 ) {
@@ -1878,7 +2040,14 @@ export async function voidBillPaymentInClientTx(
     const newPaidCents = Math.max(0, Number(bill.paid_cents) - paymentAmountCents);
     const storageStatus = storageStatusForPaid(Number(bill.amount_cents), newPaidCents);
 
-    const reversal = input.reversePostedGl
+    // ACCT-F175 — derive from the payment when the caller did not state it. A non-cash settlement
+    // deduction has no GL of its own to reverse; anything else does. The two explicit call sites in
+    // settlement-bill-payment-posting.service.ts pass exactly these values already (true for the cash
+    // payment, false for the deduction), so this changes nothing for them — it only stops the next
+    // caller from having to know, which is how the UI void path came to reverse nothing at all.
+    const reversePostedGl = input.reversePostedGl ?? payment.settlement_deduction_noncash !== true;
+
+    const reversal = reversePostedGl
       ? await reversePostedSourceTransactionInClientTx(
           client,
           {
@@ -2023,7 +2192,17 @@ export async function voidBillPayment(operatingCompanyId: string, paymentId: str
       paymentId,
       reason,
       userId,
-      reversePostedGl: false,
+      // ACCT-F175 — was hardcoded `false`, and this is the route the UI calls. Voiding a bill payment
+      // through the app therefore reversed NOTHING while the void panel stated it posts an
+      // equal-and-opposite entry. Live on prod: payment 8b68a9d7 ($33.40) was voided 2026-08-07
+      // 02:48:58 and its only journal entry is still the original DR 2000 A/P / CR 1295 Relay Fuel
+      // Wallet, with reverses_je_id and reversed_by_je_id both NULL — the GL says $33.40 left the
+      // wallet and $33.40 of payables was discharged, and neither happened.
+      //
+      // Deliberately OMITTED rather than set to `true`: the correct value is a property of the
+      // payment (a non-cash settlement deduction must NOT be reversed here — its GL belongs to the
+      // settlement deduction JE, and reversing it would credit cash that never moved). Leaving it
+      // unset lets voidBillPaymentInClientTx derive it from the row.
       currentBusinessDate,
     });
   });

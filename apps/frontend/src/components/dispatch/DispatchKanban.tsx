@@ -28,8 +28,19 @@ type Props = {
   listError?: DataTableErrorState;
 };
 
-// A truck-without-a-load as a synthetic kanban card (Unit + Driver; no load). id prefixed "unit:"
-// so it is inert to drag/status-drop (handleDragEnd can't find it among loads → no-op).
+/**
+ * A synthetic kanban card is a truck-without-a-load, id-prefixed "unit:". It is NOT a load, so it can never
+ * be status-dropped: handleDragEnd looks the id up in `loads` and finds nothing.
+ *
+ * LV-KANBAN-SYNTHETIC-CARD-INERT-DRAG: that inertness used to be invisible. These cards carry
+ * `status: "unassigned"`, and `canDragLoad("unassigned")` is true, so they rendered with drag listeners and a
+ * `cursor-grab` affordance — the dispatcher could pick one up, drag it across the board, drop it into a lane,
+ * and NOTHING happened, with no toast and no explanation. A control that looks live and always does nothing
+ * is worse than one that is visibly disabled. The affordance now matches the behaviour.
+ */
+export function isSyntheticKanbanCardId(id: string): boolean {
+  return id.startsWith("unit:");
+}
 function truckToKanbanLoad(unit: UnitsWithoutLoad): DispatchLoadRow {
   return {
     id: `unit:${unit.id}`,
@@ -288,7 +299,7 @@ function KanbanDispatchCard({
   hasActiveGeofenceBreach?: boolean;
   onClick: (id: string) => void;
 }) {
-  const draggableEnabled = canDragLoad(load.status);
+  const draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: load.id,
     data: { loadId: load.id, status: load.status },
@@ -394,7 +405,7 @@ function KanbanCompactCard({
   hasActiveGeofenceBreach?: boolean;
   onClick: (id: string) => void;
 }) {
-  const draggableEnabled = canDragLoad(load.status);
+  const draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: load.id,
     data: { loadId: load.id, status: load.status },
@@ -439,7 +450,7 @@ function KanbanStandardCard({
   hasActiveGeofenceBreach?: boolean;
   onClick: (id: string) => void;
 }) {
-  const draggableEnabled = canDragLoad(load.status);
+  const draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: load.id,
     data: { loadId: load.id, status: load.status },
@@ -645,13 +656,38 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
   const handleDragEnd = async (event: DragEndEvent) => {
     const activeId = event.active.id;
     const overId = event.over?.id;
-    if (!activeId || !overId) return;
+    // LV-KANBAN-DROP-OUTSIDE-DROPPABLE-IS-SILENT. `event.over` is null whenever the release does not
+    // resolve over a registered droppable — a near-miss with the pointer, or the keyboard sensor moving
+    // the overlay in pixel steps that never snap to a lane. This used to return bare: no request, no
+    // revert, no toast. A dispatcher then cannot tell "the server refused" from "my drag missed the
+    // lane" from "it worked", and a human really did report a load as moved when nothing had happened.
+    // It is NOT an error — they simply missed — so the tone is neutral. But it must not be silence.
+    if (!activeId || !overId) {
+      pushToast("Drop the card onto a lane to change its status.", "info");
+      return;
+    }
     const loadId = String(activeId);
     const targetColumnKey = String(overId).replace("column:", "");
     const targetGroup = KANBAN_STATUS_GROUPS.find((group) => group.key === targetColumnKey);
     const load = optimisticLoads.find((item) => item.id === loadId);
-    if (!targetGroup || !load) return;
-    if (resolveKanbanColumnKey(load) === targetColumnKey) return;
+    if (!load && isSyntheticKanbanCardId(loadId)) {
+      // Truck card: not a load, nothing to transition. Unreachable today because synthetic cards are no
+      // longer draggable (#4793), but it stays feedback-bearing so no early return in this handler is silent.
+      pushToast("That is a truck without a load — book it to a load first.", "info");
+      return;
+    }
+    if (!targetGroup || !load) {
+      // Not the synthetic case — an unknown column or a load id the board is rendering but does not hold.
+      // That is a bug state, not a user action, so it must not vanish silently.
+      pushToast("Could not move that card — the board could not identify it. Refresh and try again.", "error");
+      return;
+    }
+    if (resolveKanbanColumnKey(load) === targetColumnKey) {
+      // A true no-op: the card is already in this lane. Still say so — silence is what made a missed drop
+      // indistinguishable from a successful one.
+      pushToast(`Load ${load.load_number} is already in ${targetGroup.title}.`, "info");
+      return;
+    }
 
     const nextStatus = targetGroup.dropStatus;
     const previousLoads = optimisticLoads;

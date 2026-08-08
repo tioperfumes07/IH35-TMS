@@ -94,11 +94,24 @@ describe("SettlementSummaryPage", () => {
     await waitFor(() => expect(screen.getByText("Alpha")).toBeInTheDocument());
     const table = screen.getByRole("table");
     const header = within(table).getByText("Driver");
+    const nameColumn = () =>
+      within(table)
+        .getAllByRole("row")
+        .slice(1)
+        .map((r) => within(r).getAllByRole("cell")[1]?.textContent);
+    // ParityTable's uncontrolled sort makes the FIRST header click ascending. The fixture already arrives
+    // Alpha-then-Bravo, so asserting only the first click would pass without any sorting happening at all —
+    // vacuous. Assert BOTH directions: ascending keeps Alpha first, and the second click must flip to Bravo.
+    await user.click(header);
+    expect(nameColumn()[0]).toContain("Alpha");
     await user.click(header);
     const names = within(table)
       .getAllByRole("row")
       .slice(1)
-      .map((r) => within(r).getAllByRole("cell")[0]?.textContent);
+      // Cell 0 is ParityTable's ▸/▾ expander column, which it PREPENDS whenever `renderExpanded` is
+      // provided (ParityTable.tsx:690). This page passes one, so the driver name is cell 1. The test read
+      // cell 0 and got the caret glyph — "expected '▸' to contain 'Bravo'".
+      .map((r) => within(r).getAllByRole("cell")[1]?.textContent);
     expect(names[0]).toContain("Bravo");
   });
 
@@ -107,10 +120,14 @@ describe("SettlementSummaryPage", () => {
     vi.spyOn(reportsApi, "getSettlementSummary").mockResolvedValue(samplePayload);
     render(wrap(<SettlementSummaryPage />));
     await waitFor(() => expect(screen.getByText("Alpha")).toBeInTheDocument());
-    const dedCells = screen.getAllByText(/\$5,000\.00/);
-    const dedLink = dedCells.find((el) => el.classList.contains("underline"));
-    expect(dedLink).toBeTruthy();
-    await user.click(dedLink!);
+    // The deduction breakdown is still here and still correct — only the AFFORDANCE moved. It used to be
+    // an underlined $-amount cell; since this page migrated to ParityTable it is the row's ▸ expander
+    // (aria-label "Expand row"), which reveals the same renderExpanded() breakdown. The old selector found
+    // no underlined cell and failed on `expected undefined to be truthy`, which reads like a missing
+    // feature but is a moved control. Driving the real control instead of a stale one.
+    const expanders = screen.getAllByRole("button", { name: "Expand row" });
+    expect(expanders.length).toBeGreaterThan(0);
+    await user.click(expanders[0]);
     await waitFor(() => expect(screen.getByText(/fuel_advance/i)).toBeInTheDocument());
   });
 

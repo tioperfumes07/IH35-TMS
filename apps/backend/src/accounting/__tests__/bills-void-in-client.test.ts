@@ -78,3 +78,40 @@ describe("transaction-aware canonical bill-payment void", () => {
     expect(calls.some((call) => call.sql.includes("UPDATE banking.bank_accounts"))).toBe(false);
   });
 });
+
+/**
+ * LV-BILLVOID-DATE-ERROR-STILL-LIVE (ACCT-F180) — voiding a bill 500s on the reversal date.
+ *
+ * voidBill() read the bill with a bare SELECT *, so node-postgres returned bill_date as a JS Date.
+ * String(billRaw.bill_date).slice(0, 10) then produced "Thu Aug 06" out of
+ * "Thu Aug 06 2026 00:00:00 GMT-0500 (Central Daylight Time)", and that reached SQL as a date literal —
+ * a 500 on every flag-on bill void. The governance executor never had this bug because it selects
+ * bill_date::text explicitly (void-cancel-executors.ts:196).
+ *
+ * voidBill runs inside withCurrentUser, so rather than stand up a transaction harness these assert the
+ * two halves of the fix on the SHIPPED SOURCE, plus the arithmetic of the original expression so
+ * nobody restores it believing it worked.
+ */
+describe("ACCT-F180 — bill void passes a real ISO date to the reversal poster", () => {
+  const REAL_BILL_DATE = "2026-08-06";
+
+  it("the query asks for bill_date::text and the date is read from that alias", async () => {
+    const { readFileSync } = await import("node:fs");
+    const src = readFileSync(new URL("../bills.service.ts", import.meta.url), "utf8");
+
+    expect(src).toContain("bill_date::text AS bill_date_iso");
+    expect(src).toContain("bill_date_iso");
+    // The exact pre-fix expression must be gone — it is what produced "Thu Aug 06".
+    expect(src).not.toContain("String(billRaw.bill_date).slice(0, 10)");
+    // And the void must REFUSE rather than post a reversal on a malformed date: a reversing entry on
+    // the wrong day is worse than a refused void.
+    expect(src).toContain("bill_void_bill_date_unreadable");
+  });
+
+  it("String(Date).slice(0,10) — the ORIGINAL expression — does not produce a date at all", () => {
+    const asDriverReturnsIt = new Date("2026-08-06T00:00:00-05:00");
+    expect(String(asDriverReturnsIt).slice(0, 10)).not.toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(String(asDriverReturnsIt).slice(0, 10)).toBe("Thu Aug 06");
+    expect(REAL_BILL_DATE).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});

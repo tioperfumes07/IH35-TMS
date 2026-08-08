@@ -115,8 +115,13 @@ export async function postReserveMovement(
   }
   const inserted = await deps.client.query<Record<string, unknown>>(
     `
+        -- LV-TXN-016: prod RLS on this table gates WITH CHECK on operating_company_id, and the
+        -- column is NULLABLE, so omitting it leaves NULL, the check yields NULL, and the write
+        -- aborts 42501. tenant_id and operating_company_id are the same company id here
+        -- (tenant_id REFERENCES org.companies(id)), so both are written from the same value.
       INSERT INTO factoring.reserve_movement (
         tenant_id,
+        operating_company_id,
         batch_id,
         factor_id,
         direction,
@@ -124,6 +129,7 @@ export async function postReserveMovement(
         reason
       )
       VALUES (
+        $1::uuid,
         $1::uuid,
         $2::uuid,
         $3::uuid,

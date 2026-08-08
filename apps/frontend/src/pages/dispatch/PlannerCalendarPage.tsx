@@ -165,7 +165,16 @@ export function PlannerCalendarPage() {
   const handleDragEnd = async (event: DragEndEvent) => {
     const load = event.active.data.current?.load as PlannerLoadEvent | undefined;
     const target = event.over?.data.current as { driverId?: string; day?: string } | undefined;
-    if (!load || !target?.driverId || !target.day || !companyId) return;
+    // Two different situations shared one bare return, so a drop onto a REAL cell that could not be
+    // resolved vanished with no request, no toast and no reason. Keep them apart:
+    // (a) released outside any day cell — `event.over` is null. An EXPECTED no-op; stay silent.
+    if (!target?.driverId || !target.day) return;
+    // (b) released ON a real driver/day cell but the dragged load or the company could not be
+    //     resolved. That is a bug state, not a user action, so it must not disappear silently.
+    if (!load || !companyId) {
+      pushToast("Could not reschedule that load — the planner could not identify it. Refresh and try again.", "error");
+      return;
+    }
     const nextStartAt = `${target.day}T${load.start_at.slice(11)}`;
     try {
       await rescheduleM.mutateAsync({ loadId: load.id, startAt: nextStartAt, driverId: target.driverId });

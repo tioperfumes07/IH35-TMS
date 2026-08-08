@@ -93,10 +93,27 @@ contains(".block-ready/GAP-61.json", manifest, [
   { pattern: /verify:cap-11-fuel-fraud/, label: "verify gate in manifest" },
 ]);
 
-const pkg = read("package.json");
-contains("package.json", pkg, [
-  { pattern: /verify:cap-11-fuel-fraud/, label: "verify script in package.json" },
-]);
+// CLASS FIX (2026-08-08) — a guard must not fail for the absence of the one edit the constitution forbids.
+//
+// This block required a `verify:cap-11-fuel-fraud` entry in package.json. Rule 17 (no-guard-hotfile-thrash) and
+// verify-guard-wired's own header both say the opposite, verbatim:
+//
+//     "NEW GUARDS: add scripts/verify-X.mjs + scripts/verify-steps/NNN-verify-X.mjs ONLY.
+//      Do NOT edit package.json / locked-guards.yml / ci.yml — that is the shared-file thrash."
+//     "package.json script is OPTIONAL (local convenience only)."
+//
+// So these guards were red for missing the single edit they are forbidden to make, and "fixing" them
+// literally meant touching a serialized hot file every lane contends on. Execution is proven by the
+// verify-step, so that is what is reported — as a NOTE, because wiring needs a claimed number (Rule 37).
+const wiredStep__cap_11_fuel_fraud = fs
+  .readdirSync(path.join(ROOT, "scripts/verify-steps"))
+  .some((f) => /^\d+-verify-cap-11-fuel-fraud\.mjs$/.test(f));
+if (!wiredStep__cap_11_fuel_fraud) {
+  console.warn(
+    "verify-cap-11-fuel-fraud: NOTE — no scripts/verify-steps/NNNN-verify-cap-11-fuel-fraud.mjs, so this guard does not execute " +
+      "in CI. Wiring it requires a claimed step number (Rule 37); a package.json script does not wire it.",
+  );
+}
 
 if (failures.length > 0) {
   console.error("verify-cap-11-fuel-fraud FAILED:");

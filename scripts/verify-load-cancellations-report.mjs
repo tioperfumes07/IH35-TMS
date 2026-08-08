@@ -4,6 +4,19 @@ import path from "node:path";
 import process from "node:process";
 
 const ROOT = process.cwd();
+// Rule 17 (no-guard-hotfile-thrash): a guard must NOT require a package.json / ci.yml edit —
+// those are the shared hot files every lane contends on, and Rule 17 forbids a new guard from touching
+// them. What actually makes a guard run in CI is a verify-step, so check for that and report its
+// absence as a NOTE, never as a failure.
+const wiredStep__load_cancellations_report = fs
+  .readdirSync(path.join(ROOT, "scripts/verify-steps"))
+  .some((f) => /^\d+-verify-load-cancellations-report\.mjs$/.test(f));
+if (!wiredStep__load_cancellations_report) {
+  console.warn(
+    "verify-load-cancellations-report: NOTE — no scripts/verify-steps/NNNN-verify-load-cancellations-report.mjs, so this guard does not execute in CI. Wiring it requires a claimed step number (Rule 37); a package.json script does not wire it."
+  );
+}
+
 const failures = [];
 
 function fail(message) {
@@ -64,15 +77,7 @@ contains(".block-ready/GAP-10-DELTA-CANCELLATIONS-REPORT.json", blockManifest, [
   { pattern: /GAP-10-DELTA-CANCELLATIONS-REPORT/, label: "block id" },
 ]);
 
-const pkg = read("package.json");
-contains("package.json", pkg, [
-  { pattern: /verify:load-cancellations-report/, label: "npm verify script" },
-]);
 
-const ci = read(".github/workflows/ci.yml");
-contains(".github/workflows/ci.yml", ci, [
-  { pattern: /verify:load-cancellations-report/, label: "CI verify step" },
-]);
 
 if (failures.length > 0) {
   console.error("verify:load-cancellations-report — FAILED");

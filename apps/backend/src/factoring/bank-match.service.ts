@@ -125,15 +125,20 @@ export async function matchBankTxnToFactoringBatch(
   for (const row of scored) {
     await deps.client.query(
       `
+          -- LV-TXN-016: prod RLS on this table gates WITH CHECK on operating_company_id, and the
+          -- column is NULLABLE, so omitting it leaves NULL, the check yields NULL, and the write
+          -- aborts 42501. tenant_id and operating_company_id are the same company id here
+          -- (tenant_id REFERENCES org.companies(id)), so both are written from the same value.
         INSERT INTO factoring.bank_match_suggestion (
           tenant_id,
+          operating_company_id,
           bank_txn_id,
           batch_id,
           confidence,
           created_at,
           applied_at
         )
-        VALUES ($1::uuid, $2::uuid, $3::uuid, $4::numeric, now(), NULL)
+        VALUES ($1::uuid, $1::uuid, $2::uuid, $3::uuid, $4::numeric, now(), NULL)
       `,
       [tenantId, bankTxn.id, row.batch_id, row.confidence]
     );
