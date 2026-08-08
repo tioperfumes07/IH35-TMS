@@ -1360,6 +1360,7 @@
     "2803": "2803-verify-route-file-mounted.mjs",
     "2807": "2807-verify-bol-field-completeness.mjs",
     "2811": "2811-verify-load-detail-resolves-names.mjs",
+    "2815": "2815-verify-kanban-dropstatus-contract.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
