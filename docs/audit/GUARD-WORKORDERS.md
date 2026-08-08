@@ -265,6 +265,43 @@ Status: **OPEN — TOP PRIORITY, NON-STOP**, owner-directed. This card never "co
 
 ## LIVE BOARD (GUARD updates as shas land)
 
+### **OPEN · P2 · `LV-DISPATCH-LIVE-ETA-BUILT-BUT-NEVER-WIRED`** — the live-ETA enrichment is exported, has zero callers anywhere in the repo, and is not covered by its own test
+
+**Owning lane: dispatch product decision (Cursor/REF to rule) — CC-2 found it, CC-2 did NOT wire it.**
+Found by **CC-2** 2026-08-08 while triaging the never-in-CI FE guard sweep.
+
+**MEASURED, whole-repo, excluding node_modules:**
+```
+grep -rn "enrichLoadsLiveEta" . --include=*.ts --include=*.tsx --include=*.mjs --include=*.json
+  → apps/backend/src/telematics/dispatch-live-eta.service.ts:53   (the export itself)
+  → scripts/verify-dispatch-eta-columns.mjs:89                    (the guard asking for it)
+grep -rn "dispatch-live-eta" …
+  → apps/backend/src/telematics/__tests__/dispatch-live-eta.test.ts:2
+       imports deriveOnTimePrediction — a DIFFERENT function in the same module
+```
+**So `enrichLoadsLiveEta` has ZERO production callers and ZERO test coverage.** A sibling function in the same
+service (`deriveOnTimePrediction`) *is* tested, which is what makes this easy to miss: the module looks alive.
+
+**WHAT IT MEANS:** the dispatch live-ETA feature was built to the service layer and **never connected to a
+route**. `scripts/verify-dispatch-eta-columns.mjs` correctly reports `mdata/loads.routes.ts` is missing both
+the `include_live_eta` query param and the enrichment call. **This guard is NOT stale** — unlike
+`verify-pre-settlements`, `verify-book-load-modal-x-dismissible` and `verify-table-alignment`, which demanded
+retired or non-existent APIs. This one is telling the truth: the wiring is genuinely absent.
+
+**WHY CC-2 DID NOT JUST WIRE IT:** turning live ETA on is a **product and cost decision**, not a defect fix —
+it adds a telematics-backed enrichment to a hot list endpoint, and nobody has said the board should show those
+columns. Wiring an unbuilt feature on my own judgement is exactly the invented scope the standing orders
+forbid. **Rule it either way and it is a short PR:** wire it (route param + enrichment + the board flag), or
+retire the dead export and the guard together so the repo stops carrying a feature that cannot run.
+
+**ALSO CONFIRMED NEVER BUILT (same sweep, same category — reported, not touched):**
+- `verify-load-cancellations-report` — the report route is absent from `routes/manifest.tsx` (**0** matches).
+- `verify-active-driver-set` — `SafetyHome.tsx` has no cached active-drivers API usage (**0** matches).
+
+These are **backlog items, not defects and not stale guards** — a third category the sweep had to separate.
+
+---
+
 ### **OPEN · P1 · `MIGRATION-NUMBER-RACE-IS-INTRA-LANE`** — the band guard cannot prevent it, because both colliding migrations came from the SAME lane's concurrent branches
 
 **Owning lane: CC-3 (CI-guards) to build · CC-1 (me) diagnosed it and caused it.** Filed 2026-08-08.
