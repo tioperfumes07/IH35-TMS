@@ -98,6 +98,70 @@ function collectUsageGranted(fileTexts, createdSchemas) {
   return granted;
 }
 
+/**
+ * ACCT-F180 — every `INSERT ... ON CONFLICT ... DO UPDATE` target must have UPDATE granted.
+ *
+ * Recognises all three ways this repo grants UPDATE, because a grants guard that cannot read the
+ * project's own grants idiom reports correct code as broken. My first version knew only the literal
+ * forms and immediately produced a FALSE POSITIVE on owner.todays_attention_snapshot -- schema
+ * `owner` is granted solely via the format()-over-array loop in
+ * 202606271510_f1_ih35app_grants_extend.sql. I nearly boarded a defect that does not exist; the
+ * dynamic branch below is the fix, mirroring collectUsageGranted() above rather than reinventing it.
+ */
+const ONCONFLICT_BLANKET_SCHEMAS = new Set([
+  "accounting", "audit", "banking", "catalogs", "compliance", "dispatch", "docs",
+  "driver_finance", "factoring", "fuel", "identity", "maintenance", "master_data",
+  "mdata", "neon_auth", "org", "outbox", "reports", "safety", "views",
+]);
+
+function collectOnConflictGrantGaps(fileTexts) {
+  const SRC_DIR = path.join(__dirname, "..", "apps", "backend", "src");
+  if (!fs.existsSync(SRC_DIR)) return [];
+
+  const files = [];
+  (function walk(dir) {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const q = path.join(dir, e.name);
+      if (e.isDirectory()) {
+        if (e.name !== "node_modules" && e.name !== "__tests__") walk(q);
+      } else if (e.name.endsWith(".ts") && !e.name.includes(".test.")) files.push(q);
+    }
+  })(SRC_DIR);
+
+  const targets = new Map();
+  const re = /INSERT\s+INTO\s+([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)([\s\S]{0,4000}?)ON\s+CONFLICT\b([\s\S]{0,600}?)DO\s+UPDATE/gi;
+  for (const f of files) {
+    const src = fs.readFileSync(f, "utf8");
+    let m;
+    re.lastIndex = 0;
+    while ((m = re.exec(src)) !== null) {
+      if (/INSERT\s+INTO\s+[a-z_]/i.test(m[3])) continue;
+      const key = `${m[1]}.${m[2]}`;
+      if (!targets.has(key)) targets.set(key, path.relative(path.join(__dirname, ".."), f));
+    }
+  }
+
+  // Schemas granted UPDATE dynamically: ARRAY['a','b'] + format('... ON ALL TABLES IN SCHEMA %I ...').
+  const dyn = new Set();
+  const dynRe = /GRANT\s+[A-Z,\s]*\bUPDATE\b[A-Z,\s]*\s+ON\s+ALL\s+TABLES\s+IN\s+SCHEMA\s+%I[^']*?\bTO\s+ih35_app/i;
+  for (const { text } of fileTexts) {
+    if (!dynRe.test(text)) continue;
+    for (const q of text.matchAll(/'([a-z_][a-z0-9_]*)'/gi)) dyn.add(q[1].toLowerCase());
+  }
+
+  const all = fileTexts.map((f) => f.text).join("\n");
+  const gaps = [];
+  for (const [target, file] of targets) {
+    const [schema, table] = target.split(".");
+    if (ONCONFLICT_BLANKET_SCHEMAS.has(schema) || dyn.has(schema)) continue;
+    const explicit = new RegExp(`GRANT\\s+[A-Z,\\s]*\\bUPDATE\\b[A-Z,\\s]*\\s+ON\\s+(?:TABLE\\s+)?${schema}\\.${table}\\b`, "i");
+    const schemaWide = new RegExp(`GRANT\\s+[A-Z,\\s]*\\bUPDATE\\b[A-Z,\\s]*\\s+ON\\s+ALL\\s+TABLES\\s+IN\\s+SCHEMA\\s+${schema}\\b`, "i");
+    if (explicit.test(all) || schemaWide.test(all)) continue;
+    gaps.push(`${target} (${file}) — no migration grants UPDATE on it to ih35_app`);
+  }
+  return gaps;
+}
+
 function main() {
   const files = fs.readdirSync(MIG_DIR).filter((f) => f.endsWith(".sql")).sort();
   const fileTexts = files.map((name) => ({
@@ -136,10 +200,35 @@ function main() {
     ? `narrowed to ${[...watch].sort().join(", ") || "(none matched)"}`
     : `all ${watch.size} created schemas`;
 
-  if (findings.length === 0) {
-    console.log(`verify:schema-usage-grants — OK (${scope})`);
+  // ACCT-F180 — SECOND GRANT CLASS, SAME FAILURE MODE, folded in here rather than shipped as an
+  // orphan guard. This file's remit is "a grant the runtime needs is missing, so the code cannot
+  // run"; USAGE-on-schema was one instance, and INSERT ... ON CONFLICT DO UPDATE without UPDATE is
+  // another. PostgreSQL requires BOTH INSERT and UPDATE for ON CONFLICT DO UPDATE and checks them at
+  // PLAN time, so a missing UPDATE fails EVERY execution, not only the conflicting ones.
+  //
+  // public.idempotency_keys was granted SELECT, INSERT, DELETE. Its store is an ON CONFLICT DO
+  // UPDATE. It therefore never stored a single row (n_tup_ins = 0) while the endpoint kept 400-ing
+  // without an Idempotency-Key -- advertising a retry guarantee it could not deliver. One retried
+  // POST /accounting/bills produced TWO payables 295 ms apart on prod.
+  const conflictFindings = collectOnConflictGrantGaps(fileTexts);
+
+  if (findings.length === 0 && conflictFindings.length === 0) {
+    console.log(`verify:schema-usage-grants — OK (${scope}; ON CONFLICT DO UPDATE targets all have UPDATE)`);
     process.exit(0);
     return;
+  }
+
+  if (conflictFindings.length > 0) {
+    console.error(
+      "\nverify:schema-usage-grants — FAIL: INSERT ... ON CONFLICT DO UPDATE without an UPDATE grant\n" +
+        "(ACCT-F180). PostgreSQL checks the privilege at PLAN time, so every such statement fails\n" +
+        'with "permission denied" -- not just the conflicting ones:\n',
+    );
+    for (const f of conflictFindings) console.error(`  ✗ ${f}`);
+    if (findings.length === 0) {
+      console.error("");
+      process.exit(1);
+    }
   }
 
   console.error(
