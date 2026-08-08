@@ -139,7 +139,8 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `CI-CODEQL-BASELINE-STALE-ON-MAIN` | — | — | — | — | — | — | — | — |
 | ☐ | `LV-EXPENSE-CATEGORY-PICKER-EMPTY` | P1 | FE / mechanical lane | — | — | — | — | — | — |
 | ☐ | `LV-REVREC-BULK-LATCH-GUARD-READY` | P0 | CC-1 (money / revenue latch) | — | — | — | — | — | — |
-| ☐ | `LV-AUDIT-TRAIL-HAS-NO-ACTOR` | P0 | CC-1 (WORM / audit integrity) | — | — | — | — | — | — |
+| ☐ | `LV-AUDIT-TRAIL-HAS-NO-ACTOR` | P0 | CC-1 (WORM / audit integrity) | CC-1 | #4753 | 2026-08-07 | Rehearsed on Neon fork `br-soft-pine-akr8xlf4` of prod: PRE-FIX drivers UPDATE actor/role NULL; POST-FIX drivers AND accounting.invoices both name `d62f82f6…` / `Administrator`. One SECURITY DEFINER function behind 39 triggers, so all 39 audited tables are attributed at once. | `apps/backend/src/accounting/__tests__/worm-audit-actor-attribution.db.test.ts` (db-test; runs in the backend db.tests step) | — |
+| ☐ | `LV-EXPENSE-CATEGORY-PICKER-EMPTY-RC` | P1 | FE / mechanical | — | — | — | — | — | — |
 | ☐ | `LV-BANKING-QBO-CONNECTED-IS-HARDCODED` | P1 | FE / mechanical (render); CC-1 to sanity-che | — | — | — | — | — | — |
 | ☐ | `LV-BANK-MATCH-SCORE-SATURATES-TO-MEMO` | P1 | CC-1 (money / bank reconciliation) | — | — | — | — | — | — |
 | ☐ | `CI-CC3-GUARDS-NEED-A-BANDED-ADOPTER` | P1 | CC-1 or CC-2 — EITHER may take this; whoever | — | — | — | — | — | — |
