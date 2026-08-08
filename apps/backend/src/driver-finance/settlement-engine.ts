@@ -1,5 +1,6 @@
 import type { TeamSplitMethod } from "../mdata/driver-team.service.js";
 import { normalizeShares } from "../mdata/driver-team.service.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -91,6 +92,8 @@ export async function appendSettlementLineFromDriverBillIfMissing(
     loadId: string;
     teamId?: string | null;
     lineType?: "earnings" | "team_split_primary" | "team_split_secondary";
+    /** ACCT-F206 — real actor for the skip audit; an actor-less audit row is its own defect. */
+    actorUserId?: string | null;
   }
 ): Promise<void> {
   const reg = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.settlement_lines') IS NOT NULL AS ok`);
@@ -102,13 +105,50 @@ export async function appendSettlementLineFromDriverBillIfMissing(
       FROM driver_finance.driver_bills
       WHERE load_id = $1
         AND driver_id = $2
+        -- ACCT-F206: a VOIDED payable must never become a driver's earnings line. Without this the
+        -- newest bill wins regardless of status, and voiding is a status flip that does not move
+        -- created_at -- so as soon as the most recent bill for a load is voided and not replaced,
+        -- this would pay the driver from a payable the company revoked. Today's three double-billed
+        -- loads happen to have the void one FIRST, so the ordering saves it by accident; that is not
+        -- a control.
+        AND status <> 'void'
       ORDER BY created_at DESC
       LIMIT 1
     `,
     [input.loadId, input.driverId]
   );
   const bill = billRes.rows[0];
-  if (!bill?.id) return;
+  if (!bill?.id) {
+    // ACCT-F206: RECORD THE SKIP -- do not return silently.
+    //
+    // This is the leg that decides whether the driver is paid at all, and it was the ONLY silent one
+    // in this close path: settlements-load-bookended.service.ts explicitly calls recordPostingFlagSkip
+    // on both the contract-terms and the deduction legs "so the settlement close is never a silent
+    // no-op on this leg". The earnings leg had a bare `return`.
+    //
+    // The consequence is measured on prod: settlements d3ff8ea3 and c7422acc are both status='closed'
+    // with ZERO settlement_lines, for loads that never got a driver bill. The driver worked the load
+    // and is marked settled having been paid nothing, and there is no record anywhere saying why.
+    // A $0 settlement must be COUNTABLE, not invisible.
+    await appendCrudAudit(
+      client as never,
+      String(input.actorUserId ?? ""),
+      "driver_finance.settlement_line.skipped_no_eligible_driver_bill",
+      {
+        resource_type: "driver_finance.settlement_lines",
+        settlement_id: input.settlementId,
+        driver_id: input.driverId,
+        load_id: input.loadId,
+        reason:
+          "no non-voided driver_bills row for this driver/load, so the settlement has no earnings " +
+          "line to append. The settlement still closes; this records that it closes EMPTY for this " +
+          "load rather than leaving a $0 settlement unexplained.",
+      },
+      "warning",
+      "ACCT-F206"
+    );
+    return;
+  }
 
   const cents = Math.round(Number(bill.gross_amount_cents ?? 0));
   const dollars = cents / 100;

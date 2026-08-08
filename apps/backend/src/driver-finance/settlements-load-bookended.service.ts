@@ -327,6 +327,7 @@ async function closeLoadBookendedSettlementForDriver(
     loadId: opts.load.id,
     teamId: opts.team?.teamId ?? null,
     lineType,
+    actorUserId: opts.actorUserId ?? null,
   });
 
   await applyApprovedAbandonmentChargebacksToSettlement(client, {
