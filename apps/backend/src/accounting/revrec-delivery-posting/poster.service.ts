@@ -209,6 +209,8 @@ type LoadRow = {
   status: string;
   rate_total_cents: number;
   display_id: string | null;
+  /** ACCT-F210 — the load's sample flag, carried into every JE this poster creates. */
+  is_sample_data: boolean;
 };
 
 async function loadLoad(client: DbClient, operatingCompanyId: string, loadId: string): Promise<LoadRow | null> {
@@ -217,12 +219,17 @@ async function loadLoad(client: DbClient, operatingCompanyId: string, loadId: st
     status: string;
     rate_total_cents: string | number | null;
     display_id: string | null;
+    is_sample_data: boolean;
   }>(
     `
       SELECT id::text AS id,
              status::text AS status,
              rate_total_cents,
-             load_number::text AS display_id
+             load_number::text AS display_id,
+             -- ACCT-F210: carry the load's sample flag into the GL. FAIL-D6 made the load taggable
+             -- and the invoice/settlement paths already inherit it; without this the revenue JEs of a
+             -- SAMPLE load stayed untagged, and the GL is what financial statements are built from.
+             COALESCE(is_sample_data, false) AS is_sample_data
       FROM mdata.loads
       WHERE operating_company_id = $1::uuid
         AND id = $2::uuid
@@ -238,6 +245,7 @@ async function loadLoad(client: DbClient, operatingCompanyId: string, loadId: st
     status: row.status,
     rate_total_cents: Number(row.rate_total_cents ?? 0),
     display_id: row.display_id,
+    is_sample_data: row.is_sample_data === true,
   };
 }
 
@@ -370,6 +378,8 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
       memo,
       amount,
       entryDate: input.entry_date_iso.slice(0, 10),
+      // ACCT-F210 — read from the LOAD, never from a memo or load-number string match.
+      isSampleData: load.is_sample_data,
       postings,
     };
   });
@@ -389,6 +399,9 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
       entry_date: prepared.entryDate,
       memo: prepared.memo,
       source: "auto",
+      // ACCT-F210 — the GL inherits the load's sample flag, exactly as the invoice and settlement
+      // paths already do. One source of truth: the load. Never derived from a memo string.
+      is_sample_data: prepared.isSampleData,
       postings: prepared.postings,
     },
     { userId: input.actor_user_id, role: "system" }

@@ -165,6 +165,56 @@ async function readOriginalGlPostings(
   return res.rows.map((r) => ({ ...r, amount_cents: Number(r.amount_cents) }));
 }
 
+/**
+ * ACCT-F211 — is the entry being reversed SAMPLE money?
+ *
+ * A reversal must carry the same sample flag as the entry it reverses, or the books contradict
+ * themselves: the original is excluded from a real-money report while its reversal is included, so the
+ * reversal shows up as a standalone real entry with no matching original — unexplained money in the GL,
+ * created by the act of cleaning up test data.
+ *
+ * Derived from the ORIGINAL entry, never guessed and never string-matched. Both branches mirror
+ * readOriginalGlPostings exactly: a journal_entry reverses itself; every other type resolves through
+ * the postings the posting engine linked to it.
+ *
+ * ANY source entry being sample makes the reversal sample. A reversal spanning a sample and a real
+ * entry is not a situation this codebase can create — one voided document has one origin — and if it
+ * ever arises, marking the reversal sample is the safe direction: it keeps test money out of the real
+ * books rather than letting it in.
+ */
+async function readOriginalIsSampleData(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  entityType: VoidableEntityType,
+  entityId: string
+): Promise<boolean> {
+  if (entityType === "journal_entry") {
+    const res = await client.query<{ is_sample_data: boolean }>(
+      `
+        SELECT COALESCE(is_sample_data, false) AS is_sample_data
+        FROM accounting.journal_entries
+        WHERE operating_company_id = $1::uuid AND id = $2::uuid
+        LIMIT 1
+      `,
+      [operatingCompanyId, entityId]
+    );
+    return res.rows[0]?.is_sample_data === true;
+  }
+  const res = await client.query<{ any_sample: boolean }>(
+    `
+      SELECT bool_or(COALESCE(je.is_sample_data, false)) AS any_sample
+      FROM accounting.journal_entry_postings p
+      JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+      WHERE p.operating_company_id = $1::uuid
+        AND p.source_transaction_type = $3
+        AND p.source_transaction_id = $2
+        AND p.posting_batch_id IS NOT NULL
+    `,
+    [operatingCompanyId, entityId, entityType]
+  );
+  return res.rows[0]?.any_sample === true;
+}
+
 export type VoidReversalResult = {
   reversal_journal_entry_id: string | null;
   reversal_date: string | null;
@@ -195,6 +245,14 @@ export async function postVoidReversal(
     return { reversal_journal_entry_id: null, reversal_date: null, closed_period_reversal: false, reversed_line_count: 0 };
   }
 
+  // ACCT-F211 — inherit the sample flag from the entry being reversed, before anything is written.
+  const originalIsSample = await readOriginalIsSampleData(
+    client,
+    params.operatingCompanyId,
+    params.entityType,
+    params.entityId
+  );
+
   const cutoff = await closedPeriodCutoff(client, params.operatingCompanyId);
   const currentDate = params.currentDate ?? todayIso();
   const reversalDate = resolveReversalDate(params.originalDate, cutoff, currentDate);
@@ -206,11 +264,12 @@ export async function postVoidReversal(
   const header = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.journal_entries
-        (operating_company_id, entry_date, memo, status, source, created_by_user_id, qbo_sync_pending)
-      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true)
+        (operating_company_id, entry_date, memo, status, source, created_by_user_id, qbo_sync_pending,
+         is_sample_data)
+      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, $5)
       RETURNING id::text
     `,
-    [params.operatingCompanyId, reversalDate, params.memo, actor.userId]
+    [params.operatingCompanyId, reversalDate, params.memo, actor.userId, originalIsSample]
   );
   const reversalJeId = header.rows[0]!.id;
 

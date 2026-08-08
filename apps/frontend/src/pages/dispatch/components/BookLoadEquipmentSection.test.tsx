@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "../../../components/Toast";
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
 
 vi.mock("../../../components/drivers/DriverPickerWithCreate", () => ({
@@ -18,13 +19,18 @@ function Harness({ trailer }: { trailer: string }) {
   const form = useForm({ defaultValues: { trailer_type: trailer, requires_tarps: true } as Record<string, unknown> });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
+    // ToastProvider: this section (or a child it gained) calls useToast, so all three cases threw
+    // "useToast must be used inside ToastProvider" at render — the reefer/flatbed/HOS panel assertions never
+    // ran. The app always renders Book Load inside the provider; the harness was the unrealistic part.
     <QueryClientProvider client={client}>
+      <ToastProvider>
       <BookLoadEquipmentSection
         register={form.register as never}
         watch={form.watch as never}
         setValue={form.setValue as never}
         operatingCompanyId={undefined}
       />
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

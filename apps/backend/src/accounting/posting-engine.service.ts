@@ -605,12 +605,56 @@ async function getPostingBySource(
   return getExistingPostingResultByIdempotencyKey(client, operatingCompanyId, key, postingPurpose, sourceType, sourceId);
 }
 
+/**
+ * ACCT-F212 — does this source document carry the SAMPLE flag?
+ *
+ * Every journal entry the canonical poster writes inherits the sample flag of the document it posts.
+ * Without this, a SAMPLE invoice (tagged) produced a REAL journal entry, so the subledger and the
+ * ledger disagreed about the same transaction: the invoice was excluded from a real-money report while
+ * its own GL lines were counted. That is the ACCT-F211 contradiction on the main posting path rather
+ * than the void path, and it reaches far more rows.
+ *
+ * ONLY the five source types whose tables actually carry is_sample_data are mapped — verified on prod
+ * (migration 202612370000). Everything else returns false rather than guessing: a fuel event or a bank
+ * categorisation has no sample column, and inventing one would be fabricating a financial
+ * classification. Defaulting false keeps real books real, which is the safe direction here because the
+ * poster's output is the ledger itself.
+ */
+const SAMPLE_TAGGED_SOURCE_TABLES: Partial<Record<PostingSourceType, string>> = {
+  invoice: "accounting.invoices",
+  bill: "accounting.bills",
+  expense: "accounting.expenses",
+  bill_payment: "accounting.bill_payments",
+  customer_payment: "accounting.payments",
+};
+
+async function readSourceIsSampleData(
+  client: DbClient,
+  operatingCompanyId: string,
+  sourceType: PostingSourceType,
+  sourceId: string
+): Promise<boolean> {
+  const table = SAMPLE_TAGGED_SOURCE_TABLES[sourceType];
+  if (!table) return false;
+  const res = await client.query<{ is_sample_data: boolean }>(
+    `
+      SELECT COALESCE(is_sample_data, false) AS is_sample_data
+      FROM ${table}
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+      LIMIT 1
+    `,
+    [sourceId, operatingCompanyId]
+  );
+  return res.rows[0]?.is_sample_data === true;
+}
+
 async function createJournalEntryHeader(
   client: DbClient,
   operatingCompanyId: string,
   entryDate: string,
   memo: string,
-  createdByUserId: string
+  createdByUserId: string,
+  isSampleData: boolean
 ) {
   const created = await client.query<{ id: string }>(
     `
@@ -622,13 +666,14 @@ async function createJournalEntryHeader(
         source,
         created_by_user_id,
         qbo_sync_pending,
+        is_sample_data,
         created_at,
         updated_at
       )
-      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, now(), now())
+      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, $5, now(), now())
       RETURNING id::text
     `,
-    [operatingCompanyId, entryDate, memo, createdByUserId]
+    [operatingCompanyId, entryDate, memo, createdByUserId, isSampleData]
   );
   const journalEntryId = created.rows[0]?.id;
   if (!journalEntryId) throw new Error("posting_journal_entry_create_failed");
@@ -2087,12 +2132,16 @@ async function executePostingOnClient(client: DbClient, ctx: PostingExecCtx): Pr
     [postingBatchId]
   );
 
+  // ACCT-F212 — the JE inherits the SOURCE DOCUMENT's sample flag, so subledger and ledger agree.
+  const sourceIsSample = await readSourceIsSampleData(client, input.operating_company_id, sourceType, sourceId);
+
   const journalEntryId = await createJournalEntryHeader(
     client,
     input.operating_company_id,
     draft.postingDate,
     draft.memo,
-    actor.userId
+    actor.userId,
+    sourceIsSample
   );
 
   const postingIds = await insertPostingLines({
@@ -2267,12 +2316,23 @@ async function executeSourceReversalOnClient(
   const reversalBatchId = reversalBatch.rows[0]?.id;
   if (!reversalBatchId) throw new Error("reversal_batch_create_failed");
 
+  // ACCT-F212 — a reversal inherits the SAME flag as the source document it unwinds, exactly as the
+  // initial post does. If it did not, reversing a sample posting would leave a real entry with no
+  // matching original in a real-money report — the ACCT-F211 contradiction, reproduced here.
+  const reversalSourceIsSample = await readSourceIsSampleData(
+    client,
+    input.operating_company_id,
+    sourceType,
+    sourceId
+  );
+
   const reversalJeId = await createJournalEntryHeader(
     client,
     input.operating_company_id,
     reversalDate,
     `Reversal of ${original.journal_entry_id}`,
-    actor.userId
+    actor.userId,
+    reversalSourceIsSample
   );
 
   const reversalPostingIds: string[] = [];

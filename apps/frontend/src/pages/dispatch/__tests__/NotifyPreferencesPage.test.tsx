@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
+import { ToastProvider } from "../../../components/Toast";
 import { NotifyPreferencesPage } from "../NotifyPreferencesPage";
 
 vi.mock("../../../contexts/CompanyContext", () => ({
@@ -53,7 +54,12 @@ function wrap(ui: ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>{ui}</MemoryRouter>
+      {/* ToastProvider: the page (or a child it gained) calls useToast, so every render threw
+          "useToast must be used inside ToastProvider" and the test died before a single assertion.
+          The app always renders this inside the provider; the harness was the unrealistic part. */}
+      <MemoryRouter>
+        <ToastProvider>{ui}</ToastProvider>
+      </MemoryRouter>
     </QueryClientProvider>
   );
 }

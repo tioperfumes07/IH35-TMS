@@ -3,14 +3,23 @@ import type { ReactElement } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import { ToastProvider } from "../../../components/Toast";
 import { BookLoadModalV4 } from "./BookLoadModalV4";
 
-const searchMock = vi.fn();
+// The customer field does NOT search-as-you-type: it is a `ReferenceSelect` fed by a react-query bulk
+// preload (`listCustomers({limit: 5000})`, queryKey "book-load-v4-customers"). This file used to mock
+// `searchQboMasterData` — a function BookLoadModalV4 does not reference at all (0 occurrences) — so the
+// spy could never fire and the D3-3 test failed on "expected vi.fn() to be called at least once" while
+// looking like a missing-customer-data bug. Mock the seam the component actually calls.
+const listCustomersMock = vi.fn().mockResolvedValue({
+  customers: [{ id: "61111111-1111-4111-8111-111111111111", name: "LIVE TEST CUSTOMER LLC" }],
+});
 
-vi.mock("../../../api/qbo-mdata", () => ({
-  searchQboMasterData: (...args: unknown[]) => searchMock(...args),
-}));
+vi.mock("../../../api/mdata", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../api/mdata")>();
+  return { ...actual, listCustomers: (...args: unknown[]) => listCustomersMock(...args) };
+});
 
 vi.mock("../../../auth/useAuth", () => ({
   useAuth: () => ({
@@ -40,7 +49,15 @@ function wrap(ui: ReactElement) {
   const qc = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
+  // MemoryRouter: the Book Load wizard (or a child it gained) calls useNavigate, so EVERY render threw
+  // "useNavigate() may be used only in the context of a <Router> component" — both cases died before a
+  // single assertion ran, leaving the module's core screen with no executing coverage at all. The app
+  // always renders this inside the router; the harness was the unrealistic part.
+  return (
+    <QueryClientProvider client={qc}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>
+  );
 }
 
 describe("BookLoadModalV4", () => {
@@ -74,19 +91,6 @@ describe("BookLoadModalV4", () => {
 
   it("clears the stale customer_id when the picked customer text is edited over (D3-3)", async () => {
     const user = userEvent.setup();
-    searchMock.mockResolvedValue({
-      results: [
-        {
-          id: "61111111-1111-4111-8111-111111111111",
-          qbo_id: "qb-cust-77",
-          display_name: "LIVE TEST CUSTOMER LLC",
-          active: true,
-          company_name: "LIVE TEST CUSTOMER LLC",
-          primary_email: "ar@example.com",
-          primary_phone: "555-0100",
-        },
-      ],
-    });
 
     render(
       wrap(
@@ -101,22 +105,19 @@ describe("BookLoadModalV4", () => {
       )
     );
 
-    const customerInput = screen.getByPlaceholderText(/Select customer/i);
+    // Pick a real customer from the list — the picker is a listbox, so the option is clicked, not typed.
+    const customerInput = await screen.findByPlaceholderText(/Select customer/i);
     await user.click(customerInput);
-    await user.type(customerInput, "LIVE");
-
-    await waitFor(() => expect(searchMock).toHaveBeenCalled(), { timeout: 4000 });
-
-    const option = await screen.findByRole("button", { name: /LIVE TEST CUSTOMER LLC/i });
-    await user.click(option);
+    await user.click(await screen.findByRole("option", { name: /LIVE TEST CUSTOMER LLC/i }));
 
     // Precondition: a real customer FK was captured on the hidden customer_id field.
     const hidden = () => document.querySelector<HTMLInputElement>('input[name="customer_id"]');
     await waitFor(() => expect(hidden()?.value).toBe("61111111-1111-4111-8111-111111111111"));
 
-    // Typing over the picked customer must drop the old FK so the load can't book under it.
-    await user.type(customerInput, "X");
-
+    // THE INVARIANT. Typing over the picked customer must drop the old FK. Before the fix this held the
+    // ORIGINAL id while the box read "LIVE TEST CUSTOMER LLCXYZ" — a customer that does not exist — so a
+    // dispatcher could book the load against a customer that was no longer on screen.
+    await user.type(customerInput, "XYZ");
     await waitFor(() => expect(hidden()?.value).toBe(""));
   });
 });

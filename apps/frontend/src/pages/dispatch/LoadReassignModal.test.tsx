@@ -1,10 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { postLoadReassign } from "../../api/dispatch";
 import "../../design/design-tokens.css";
 import { LoadReassignModal } from "./LoadReassignModal";
+import { pickCombo } from "../../test-utils/pickCombo";
 
 vi.mock("../../api/dispatch", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/dispatch")>();
@@ -24,7 +26,11 @@ describe("LoadReassignModal (P5-T17)", () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const onClose = vi.fn();
     render(
+      // MemoryRouter: the reassign modal (or a child it gained) calls useNavigate, so the render threw
+      // "useNavigate() may be used only in the context of a <Router> component" and the reason-code submit
+      // assertion never ran. The app always renders this inside the router.
       <QueryClientProvider client={qc}>
+        <MemoryRouter>
         <LoadReassignModal
           open
           onClose={onClose}
@@ -44,12 +50,15 @@ describe("LoadReassignModal (P5-T17)", () => {
             },
           ]}
         />
+        </MemoryRouter>
       </QueryClientProvider>
     );
 
+    // The driver field is the shared `Combobox` (input role=combobox + listbox), not a native <select>,
+    // so `user.selectOptions(el, "<uuid>")` threw `Value "…" not found in options` and this test never
+    // reached the reassign submit it exists to cover. Options are addressed by visible text, not by id.
     const combos = screen.getAllByRole("combobox");
-    const driverSelect = combos[0];
-    await user.selectOptions(driverSelect, "00000000-0000-4000-8000-000000000010");
+    pickCombo(combos[0], /Test Driver/i);
 
     await user.click(screen.getByRole("button", { name: /^Reassign$/i }));
 

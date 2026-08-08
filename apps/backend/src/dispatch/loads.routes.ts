@@ -186,6 +186,9 @@ const createDispatchLoadBodySchema = z.object({
   miles_deadhead: z.number().int().min(0).optional(),
   pickup_number: z.string().trim().max(120).optional(),
   border_routing: z.string().trim().max(120).optional(),
+  // FAIL-D6 — demo/sample flag, set at creation. Column exists since 0403 (NOT NULL DEFAULT false) but
+  // no create path ever populated it, so every TMS-native load was written as `false` regardless.
+  is_sample_data: z.boolean().optional(),
   trailer_type: z.enum(["refrigerated_van", "dry_van", "flatbed", "lowboy", "power_only_no_trailer", "power_only_customer_trailer"]).optional(),
   // Trip Pairing (Block 04): optional at the API for now (Phase 1, additive — no break for in-flight
   // clients); the wizard makes it REQUIRED on the UI, and a follow-up flips this to required once the

@@ -72,7 +72,7 @@ describe("MultiStopEditor (P5-T18)", () => {
       expect(screen.getByText("#1 Type")).toBeInTheDocument();
     });
     const before = screen.getAllByRole("button", { name: /Drag to reorder/i }).length;
-    await user.click(screen.getByRole("button", { name: /\+ Add stop/i }));
+    await user.click(screen.getByRole("button", { name: /\+ Create stop/i }));
     const after = screen.getAllByRole("button", { name: /Drag to reorder/i }).length;
     expect(after).toBe(before + 1);
   });
