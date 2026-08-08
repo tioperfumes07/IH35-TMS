@@ -6,11 +6,9 @@
     "apps/frontend/src/components/accounting/JournalEntryTypePicker.tsx",
     "apps/frontend/src/components/customers/CustomerEditModal.tsx",
     "apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
-    "apps/frontend/src/components/driver-profile/AssignTruckModal.tsx",
     "apps/frontend/src/components/drivers/AuditHistoryTab.tsx",
     "apps/frontend/src/components/expenses/RecordExpenseForm.tsx",
     "apps/frontend/src/components/forms/TwoSectionLineEditor.tsx",
-    "apps/frontend/src/components/parity/EntityPicker.tsx",
     "apps/frontend/src/components/parity/drawers/NewCustomerDrawerForm.tsx",
     "apps/frontend/src/components/parity/drawers/NewServiceDrawerForm.tsx",
     "apps/frontend/src/components/parity/entityPickerRegistry.ts",
@@ -35,9 +33,7 @@
     "apps/frontend/src/pages/customers/CustomersListView.tsx",
     "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx",
     "apps/frontend/src/pages/dispatch/cargo-sensors/CargoSensorTimeline.tsx",
-    "apps/frontend/src/pages/dispatch/components/BookLoadCustomerSection.tsx",
     "apps/frontend/src/pages/dispatch/components/book-load-v4/ExpectedAdjustmentsCallout.tsx",
-    "apps/frontend/src/pages/drivers/onboarding/OnboardingStepVehicleAssignment.tsx",
     "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
     "apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx",
     "apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx",
@@ -48,12 +44,9 @@
     "apps/frontend/src/pages/qbo/QBOSyncStatusDashboardPage.tsx",
     "apps/frontend/src/pages/safety/HoursOfServicePage.tsx",
     "apps/frontend/src/pages/safety/InternalFinesPage.tsx",
-    "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx",
     "apps/frontend/src/pages/safety/components/CompanyViolationCreateModal.tsx",
     "apps/frontend/src/pages/safety/components/FineCreateModal.tsx",
     "apps/frontend/src/pages/safety/components/FineLifecycleActions.tsx",
-    "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx",
-    "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx",
-    "apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx"
+    "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx"
   ]
 }

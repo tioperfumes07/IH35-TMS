@@ -26,6 +26,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
+import { maskComments } from "./lib/mask-comments.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const LABEL = "verify-no-silent-list-caps";
@@ -64,14 +65,42 @@ const HANDLES_BOUNDARY = [
   /\bCappedListNotice\b/,
 ];
 
-export function auditFile(src, file = "<mem>") {
+export function auditFile(raw, file = "<mem>") {
+  // CLS-GUARD-READS-COMMENTS — find caps in CODE, not in prose.
+  //
+  // Measured on the real baseline 2026-08-07 by running this very function twice per file, once raw and
+  // once masked: SEVEN of the 53 pinned offenders flag ONLY because a `limit:200` appears inside a
+  // comment. Five of those comments exist specifically to record that the screen REPLACED its silent
+  // cap with a server-searched picker — `pages/safety/components/SafetyIncidentsClusterSurface.tsx:178`
+  // and `pages/safety/tabs/DOTInspectionsTab.tsx:139` are on the offender list because they documented
+  // their own fix. That is 13% of this class that is not debt, and it is the failure mode that teaches
+  // people to paste the word "total" in to silence a guard instead of fixing anything.
+  //
+  // maskComments is quote-aware, so a `limit: 200` inside a real string or template literal is still a
+  // cap and still caught; only genuine JS comments are blanked. It is also offset-preserving, which
+  // costs nothing here but keeps this consistent with every other guard that has adopted it.
+  //
+  // Masking can only REMOVE matches, never add one, so this can only shrink the offender set — a file
+  // that is clean today cannot become an offender because of it.
+  const src = maskComments(raw);
   const caps = [];
   for (const m of src.matchAll(CAP_RE)) {
     const n = Number(m[1]);
     if (Number.isFinite(n) && n >= MIN_CAP) caps.push(n);
   }
   if (caps.length === 0) return [];
-  if (HANDLES_BOUNDARY.some((re) => re.test(src))) return [];
+  // BOUNDARY evidence is deliberately still read from the RAW source, and that is a KNOWN, MEASURED
+  // gap rather than an oversight — masking it too is the correct rule and it is not shipped here.
+  //
+  // Masking both directions exposes exactly TWO files whose only boundary evidence is prose:
+  //   · apps/frontend/src/pages/factoring/FactoringHome.tsx — its sole standalone `total` / `count` are
+  //     in comments; the code has `chargeback_total`, which `\btotal\b` correctly does not match.
+  //   · apps/frontend/src/pages/safety/components/HosViolationCreateModal.tsx — `offset` in a comment only.
+  // Both are real defects, and this ratchet may only SHRINK, so they cannot simply be added to the
+  // baseline. FactoringHome is the money lane's file, so converging both halves here would mean either
+  // reaching into another lane or leaving the guard RED. Boarded instead with the evidence above, and
+  // the cap half — 7 of 53 offenders that are pure prose — is fixed now.
+  if (HANDLES_BOUNDARY.some((re) => re.test(raw))) return [];
   return [
     `${file}: fetches a hardcoded cap (limit=${[...new Set(caps)].join(", ")}) with no total, pager, ` +
       `offset or infinite query anywhere in the file. Row ${Math.min(...caps) + 1} is invisible and the ` +
