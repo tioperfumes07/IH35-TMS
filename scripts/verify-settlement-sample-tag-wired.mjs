@@ -16,6 +16,16 @@
  * column at all. This guard fails if ANY production INSERT omits it, so writer #5 cannot silently
  * reintroduce the gap.
  *
+ * KNOWN LIMIT, stated because a guard's blind spot must be written down, not discovered later:
+ * the [literal] arm parses the SQL VALUES tuple, so it catches `..., false)` written INTO the SQL.
+ * It CANNOT see a JavaScript-side hardcode — a writer that binds `$n` and passes a literal `false`
+ * in the params array reads as correctly parameterised to this parser. Verified deliberately:
+ * replacing `opts.isSampleData ?? load.is_sample_data ?? false` with `false` in
+ * settlements-load-bookended.service.ts leaves this guard GREEN, because the SQL still says `$15`.
+ * That is not a bug in the check; it is the boundary of a static SQL parser, and closing it needs
+ * either a TS-level assertion on the params array or a live post-deploy read. Do not read a green
+ * result here as proof that a derivation is real.
+ *
  * SCOPING: production code only. __tests__ fixtures are deliberately exempt — they construct rows
  * directly and are not a tag path.
  *
@@ -98,7 +108,12 @@ export function literalInSampleSlot(columns, valuesTuple, requiredColumn = REQUI
  * Find every `INSERT INTO <TABLE> ( ... )` column list in a source string and report which ones
  * omit the required column. Returns [{ index, columns }] for offenders.
  */
-export function findUntaggedInserts(source, table = TABLE, requiredColumn = REQUIRED_COLUMN) {
+export function findUntaggedInserts(rawSource, table = TABLE, requiredColumn = REQUIRED_COLUMN) {
+  // ACCT-F193: strip SQL line comments FIRST. A `-- why this column exists` note inside the column
+  // list otherwise gets absorbed into a column name, and the required column stops being recognised
+  // — the guard then reports a correctly-tagged INSERT as untagged. Caught by this guard failing on
+  // my own fix, which is the right way to find it.
+  const source = rawSource.replace(/^[ \t]*--[^\n]*$/gm, "");
   const offenders = [];
   const needle = `INSERT INTO ${table}`;
   let from = 0;
@@ -243,6 +258,38 @@ if (SELFTEST) {
   process.exit(0);
 }
 
+/**
+ * ACCT-F193 — EXTENDED FROM ONE TABLE TO THE LOAD-DERIVED MONEY DOCUMENTS.
+ *
+ * This guard was scoped to driver_finance.driver_settlements because that was the ONE money create
+ * type with no writable free-text column, so it was the only one that NEEDED a boolean to be
+ * taggable at all. Migration 202612370000 has since added is_sample_data to the accounting money
+ * tables (verified live on prod: all seven now carry it), so the same assertion can now protect the
+ * document a sample load actually produces first — its invoice.
+ *
+ * ONLY accounting.invoices is added, deliberately. A bill, a payment or a journal entry has no
+ * single parent row to inherit "sample" FROM — an invoice built from a load does. Asserting a
+ * derivation that has no source would just push writers to hardcode `false`, which is the exact
+ * defect this guard already catches on settlements.
+ */
+/**
+ * table -> the files that must carry the tag. `null` means EVERY writer of that table.
+ *
+ * accounting.invoices is scoped to the LOAD-DERIVED writer alone, and that narrowing was forced by
+ * this guard failing when I first extended it to the whole table: it reddened five other writers —
+ * invoices.routes.ts and invoices.service.ts (manual invoices, no parent row), recurring.worker.ts
+ * (no load), factoring/packet-assemble.service.ts, and qbo-ar-invoices-puller.ts (a CLONE writer,
+ * where requiring a local tag would break the import exactly as it would for items).
+ *
+ * None of those has a parent to inherit "sample" FROM. Demanding the column there would push writers
+ * to hardcode `false` — which is precisely the defect this guard already catches on settlements. So
+ * the assertion follows the DERIVATION, not the table.
+ */
+const TAGGED_TABLES = [
+  { table: TABLE, onlyFiles: null },
+  { table: "accounting.invoices", onlyFiles: ["accounting/from-load.ts"] },
+];
+
 const offenders = [];
 for (const file of walk(SRC)) {
   let source;
@@ -251,8 +298,11 @@ for (const file of walk(SRC)) {
   } catch {
     continue;
   }
-  if (!source.includes(`INSERT INTO ${TABLE}`)) continue;
-  for (const hit of findUntaggedInserts(source)) {
+  for (const { table: tbl, onlyFiles } of TAGGED_TABLES) {
+  if (!source.includes(`INSERT INTO ${tbl}`)) continue;
+  const rel = path.relative(ROOT, file);
+  if (onlyFiles && !onlyFiles.some((f) => rel.endsWith(f))) continue;
+  for (const hit of findUntaggedInserts(source, tbl)) {
     const line = source.slice(0, hit.index).split("\n").length;
     offenders.push({
       file: path.relative(ROOT, file),
@@ -260,7 +310,9 @@ for (const file of walk(SRC)) {
       columns: hit.columns,
       kind: hit.kind,
       literal: hit.literal,
+      table: tbl,
     });
+  }
   }
 }
 
@@ -269,7 +321,7 @@ if (offenders.length) {
     `verify-settlement-sample-tag-wired FAILED — ${offenders.length} production INSERT(s) into ${TABLE} cannot carry a Gate-B tag:`
   );
   for (const o of offenders) {
-    console.error(`  ${o.file}:${o.line}  [${o.kind}]`);
+    console.error(`  ${o.file}:${o.line}  [${o.kind}]  ${o.table}`);
     if (o.kind === "literal") {
       console.error(`    \`${REQUIRED_COLUMN}\` is hardcoded to the literal \`${o.literal}\``);
     } else {

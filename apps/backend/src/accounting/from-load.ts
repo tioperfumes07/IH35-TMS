@@ -105,6 +105,7 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
       SELECT
         l.id,
         l.customer_id,
+        l.is_sample_data,
         l.rate_total_cents,
         l.status,
         l.created_at,
@@ -151,9 +152,13 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
         ar_phone_snapshot,
         invoice_type,
         created_by_user_id,
-        updated_by_user_id
+        updated_by_user_id,
+        -- ACCT-F193: a sample load must produce a SAMPLE invoice. Derived from the load exactly as
+        -- driver-finance/settlements-load-bookended.service.ts:158 already does for settlements
+        -- (opts.isSampleData ?? load.is_sample_data ?? false) — one source of truth, not a new rule.
+        is_sample_data
       ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'from_load',$14,$14
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'from_load',$14,$14,$15
       )
       RETURNING *
     `,
@@ -172,6 +177,8 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
       load.ar_email ?? null,
       load.ar_phone ?? null,
       input.userId,
+      // ACCT-F193 — lockstep with the $15 placeholder and the is_sample_data column above.
+      load.is_sample_data ?? false,
     ]
   );
   const invoice = invoiceRes.rows[0];
