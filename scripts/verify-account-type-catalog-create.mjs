@@ -21,34 +21,35 @@ function read(rel) {
 // other six 400'd, and clearing it "succeeded" while silently writing detail_type_id=NULL. A guard on the
 // enum→code MAP alone would have passed throughout: the map was already correct and already used to filter
 // the dropdown. The defect was on the WRITE path, so that is what this asserts.
-export function assertCoaCreateTranslatesAccountType(drawerSrc) {
+export function assertCoaCreateTranslatesAccountType(drawerSrc, label = "AccountDrawer.tsx") {
   const problems = [];
   const src = drawerSrc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  const m = src.match(/const body = \{([\s\S]*?)\n      \};/);
-  if (!m) {
-    problems.push("AccountDrawer.tsx: could not read the create `body` object — refusing to pass vacuously.");
+
+  // Whole-file assertions, deliberately not a window around one payload. The two callers build their
+  // payload differently (AccountDrawer uses `const body = {…}`; the quick-create drawer inlines the object
+  // into chartOfAccountsCatalogClient.create()), and an earlier windowed version anchored on the FormState
+  // type declaration instead of the payload — passing or failing for the wrong reason depending on file
+  // layout. These two checks hold regardless of shape.
+  if (!/account_type:/.test(src)) {
+    problems.push(label + ": no account_type anywhere — refusing to pass vacuously.");
     return problems;
   }
-  const line = m[1].split("\n").find((l) => /(^|\s)account_type:/.test(l) || /account_type:\s*$/.test(l));
-  const block = m[1].match(/account_type:[\s\S]{0,200}/);
-  const text = (block ? block[0] : line || "");
-  if (!text) {
-    problems.push("AccountDrawer.tsx: create body has no account_type — refusing to pass vacuously.");
-    return problems;
-  }
-  if (/account_type:\s*form\.account_type\s*,/.test(text)) {
+  if (/account_type:\s*form\.(account_type|accountType)\s*,/.test(src)) {
     problems.push(
-      "AccountDrawer.tsx: the create body posts the raw UI enum (`account_type: form.account_type`). The " +
-        "backend matches catalogs.account_types.code|name, so any detail type on Asset/Liability/Expense/" +
-        "COGS/OtherIncome/OtherExpense 400s with detail_type_account_type_mismatch " +
-        "(COA-DETAIL-TYPE-VOCAB-MISMATCH). Translate at the boundary via the resolved catalog entry's .code.",
+      label +
+        ": posts the raw UI enum (account_type: form.accountType). The backend matches " +
+        "catalogs.account_types.code|name, so any detail type on Asset/Liability/Expense/COGS/OtherIncome/" +
+        "OtherExpense 400s with detail_type_account_type_mismatch, and clearing it silently saves " +
+        "detail_type_id=NULL (ACCT-F189 / COA-DETAIL-TYPE-VOCAB-MISMATCH). Translate at the boundary via " +
+        "the resolved catalog entry's .code.",
     );
   }
-  if (!/previewEntry\s*\?\s*previewEntry\.code|previewEntry\.code/.test(text)) {
+  if (!/previewEntry\.code/.test(src)) {
     problems.push(
-      "AccountDrawer.tsx: the create body no longer derives account_type from the resolved catalog entry " +
-        "(.code). Asset and Liability map to MANY codes (BANK|AR|OCA|FA|OA and CC|AP|OCL|LTL), so a flat " +
-        "enum→code map cannot disambiguate them — only the chosen detail type's owning row can.",
+      label +
+        ": no longer derives account_type from the resolved catalog entry (previewEntry.code). Asset and " +
+        "Liability map to MANY codes (BANK|AR|OCA|FA|OA and CC|AP|OCL|LTL), so a flat enum->code map cannot " +
+        "disambiguate them — only the chosen detail type's owning row can.",
     );
   }
   return problems;
@@ -131,7 +132,18 @@ if (process.argv.includes("--selftest")) {
 
 const errors = [
   ...assertAccountTypeCatalogCreate(),
-  ...assertCoaCreateTranslatesAccountType(read("apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx")),
+  // ACCT-F189 — BOTH CoA create callers. #4868 fixed the list-page drawer and #4874 the quick-create drawer;
+  // the guard must cover both or the regression can return through whichever one is left unwatched. Extended
+  // only AFTER #4874 landed: asserting the second file while it still posted the raw enum would have turned
+  // main red on purpose, which is the self-inflicted MAIN-RED class REF cleared in #4848.
+  ...assertCoaCreateTranslatesAccountType(
+    read("apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx"),
+    "AccountDrawer.tsx",
+  ),
+  ...assertCoaCreateTranslatesAccountType(
+    read("apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx"),
+    "NewAccountDrawerForm.tsx",
+  ),
 ];
 if (errors.length) {
   console.error(`${LABEL} FAIL`);
