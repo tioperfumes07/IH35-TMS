@@ -541,7 +541,26 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
     setShowSpecialNotes(false);
   }, [open, form]);
 
+  // FAIL-B5 — double Book+dispatch. There was NO in-flight state anywhere in this modal: no `isSubmitting`
+  // tracking, no re-entry guard, and the submit button's `disabled` covered only the repair-block and
+  // credit-limit gates. A second click (or Enter pressed twice) re-entered this function and issued a
+  // SECOND create, booking and dispatching the load twice. FIVE different controls call
+  // `form.handleSubmit(...)`, so guarding one button is not enough — the guard lives at the single choke
+  // point every one of them funnels through, and the button disable below is the visible affordance.
+  const submitInFlightRef = useRef(false);
+
   async function submitLoad(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
+    if (submitInFlightRef.current) return;
+    submitInFlightRef.current = true;
+    try {
+      return await submitLoadInner(values, saveMode, opts);
+    } finally {
+      // Released in `finally` so a thrown/rejected submit does not wedge the form shut.
+      submitInFlightRef.current = false;
+    }
+  }
+
+  async function submitLoadInner(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
     setGateBanner(null);
     setSubmitErrorMessage(null);
 
@@ -1519,7 +1538,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   Save draft
                 </Button>
               )}
-              <Button type="submit" disabled={repairBlockSubmitBlocked || (creditLimitBlock != null && (!canOverrideCreditLimit || !overrideCreditLimit))}>
+              <Button type="submit" disabled={form.formState.isSubmitting || repairBlockSubmitBlocked || (creditLimitBlock != null && (!canOverrideCreditLimit || !overrideCreditLimit))}>
                 {isEditMode ? "Save changes" : "Book + dispatch"}
               </Button>
             </div>
