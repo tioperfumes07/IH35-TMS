@@ -29,6 +29,9 @@ type EventDraft = {
   subject_type: "driver" | "unit" | "company";
   subject_driver_id: string;
   subject_unit_id: string;
+  /** FAIL-S1: safety.safety_events.related_load_id exists but the create form never sent it, and the
+      table is append-only — so every event ever logged is permanently orphaned from its load. */
+  related_load_id: string;
   location_text: string;
   injury_count: number;
   fatality_count: number;
@@ -68,6 +71,7 @@ function initialEventDraft(): EventDraft {
     subject_type: "company",
     subject_driver_id: "",
     subject_unit_id: "",
+    related_load_id: "",
     location_text: "",
     injury_count: 0,
     fatality_count: 0,
@@ -139,6 +143,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         subject_type: draft.subject_type,
         subject_driver_id: draft.subject_driver_id.trim() || undefined,
         subject_unit_id: draft.subject_unit_id.trim() || undefined,
+        related_load_id: draft.related_load_id.trim() || undefined,
         location_text: draft.location_text.trim() || undefined,
         injury_count: Number(draft.injury_count) || 0,
         fatality_count: Number(draft.fatality_count) || 0,
@@ -239,6 +244,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
       draft.description.trim() !== logDraftBaseline.description.trim() ||
       draft.subject_driver_id.trim() !== logDraftBaseline.subject_driver_id.trim() ||
       draft.subject_unit_id.trim() !== logDraftBaseline.subject_unit_id.trim() ||
+      draft.related_load_id.trim() !== logDraftBaseline.related_load_id.trim() ||
       draft.location_text.trim() !== logDraftBaseline.location_text.trim() ||
       draft.injury_count !== logDraftBaseline.injury_count ||
       draft.fatality_count !== logDraftBaseline.fatality_count ||
@@ -531,6 +537,17 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             value={draft.subject_unit_id || null}
             onChange={(next) => setDraft((prev) => ({ ...prev, subject_unit_id: next ?? "" }))}
             placeholder="Subject unit (optional)"
+          />
+          {/* FAIL-S1: same picker the External-Fines create modal already ships (FineCreateModal
+              "Related load"). Without it related_load_id is NULL at insert, and safety_events is
+              append-only, so the link can never be repaired afterwards. */}
+          <EntityPicker
+            kind="load"
+            operatingCompanyId={operatingCompanyId}
+            value={draft.related_load_id || null}
+            onChange={(next) => setDraft((prev) => ({ ...prev, related_load_id: next ?? "" }))}
+            placeholder="Related load (optional)"
+            dataTestId="safety-event-related-load-picker"
           />
           <label className="text-xs font-medium text-gray-700 sm:col-span-2">Location (DOT 390.15)</label>
           <input
