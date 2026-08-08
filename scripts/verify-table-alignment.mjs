@@ -68,15 +68,37 @@ for (const [key, human] of FLEET_HOUR_KEYS) {
 must("apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx", fleet, "ParityTable import", /components\/parity\/ParityTable/);
 must("apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx", fleet, "ParityTable usage", /<ParityTable\b/);
 
-// Compliance HOS Tracker (local table — numeric HH:MM headers must be right-aligned to match data).
+// Compliance HOS Tracker — numeric HH:MM headers must be right-aligned to match their data cells.
+//
+// STALE-ASSERTION FIX (2026-08-08): this block required `numeric: true` on each column and a
+// `h.numeric ? "text-right tabular-nums"` renderer. Both belonged to the LOCAL table this section used to
+// hand-roll. It has since migrated to the shared <ParityTable/>, whose `ParityColumn<T>` type has NO
+// `numeric` field at all — so the guard demanded a prop that does not exist in the component API, and
+// "fixing" it would have meant adding dead config (a TS excess property) to satisfy a checker.
+//
+// The intent was never in doubt: THIS FILE'S OWN HEADER already allows the ParityTable form —
+// "`numeric:true` in TableHeaderCell tables OR matching `className` + `cellClass` in ParityTable". Only
+// the assertion lagged the migration. The columns are, and were, right-aligned in both header and cell.
+//
+// ParityTable applies `column.className` to the <th> and `cellClass` to the <td>, so requiring BOTH to
+// carry `text-right` is what actually proves header/data alignment parity — which is the locked outcome.
 const hos = read("apps/frontend/src/pages/compliance/HosTrackerSection.tsx");
 for (const label of ["Drive", "Shift", "Cycle"]) {
-  const re = new RegExp(`label:\\s*"${label}",\\s*numeric:\\s*true`);
-  if (!re.test(hos)) {
-    fail(`HosTrackerSection: "${label}" header must be numeric:true (right-aligned) to match its tabular-nums data cell`);
+  // Grab the column object for this label and require right-alignment on the header AND the cell.
+  const block = new RegExp(`label:\\s*"${label}"[\\s\\S]{0,320}?\\n\\s{6}\\}`).exec(hos);
+  if (!block) {
+    fail(`HosTrackerSection: column "${label}" not found — refusing to pass vacuously`);
+    continue;
+  }
+  const hasHeaderRight = /className:\s*"[^"]*text-right/.test(block[0]);
+  const hasCellRight = /cellClass:\s*"[^"]*text-right/.test(block[0]);
+  if (!hasHeaderRight || !hasCellRight) {
+    fail(
+      `HosTrackerSection: "${label}" must be right-aligned on BOTH header (className) and cell (cellClass) ` +
+        `to match its tabular-nums data — header:${hasHeaderRight} cell:${hasCellRight}`,
+    );
   }
 }
-must("apps/frontend/src/pages/compliance/HosTrackerSection.tsx", hos, "numeric headers right-aligned", /h\.numeric\s*\?\s*"text-right tabular-nums"/);
 
 if (failures.length) {
   console.error("verify-table-alignment: FAIL");
