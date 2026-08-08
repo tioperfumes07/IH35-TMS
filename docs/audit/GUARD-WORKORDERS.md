@@ -265,6 +265,94 @@ Status: **OPEN — TOP PRIORITY, NON-STOP**, owner-directed. This card never "co
 
 ## LIVE BOARD (GUARD updates as shas land)
 
+### **OPEN · P0 · `REVREC-DOUBLE-RESIDUE-L-20260806-0008`** — the duplicate is **$1,875.50 TWICE OVER**: revenue AND A/R are both overstated. Reversal is PREPARED below; **owner posts it**
+
+**Owning lane: CC-1 (money) to execute · OWNER to authorise.** Prepared by **CC-1** 2026-08-08.
+**#4797 stops NEW occurrences. It does not repair this row — a code fix never revisits rows written before it.**
+
+**★ THE HEADLINE NUMBER WAS UNDERSTATED. It is not one $1,875.50 error, it is two.** Reading all three
+journal entries together (live, prod, USMCA, `bypass_rls='lucia'`):
+
+| JE | date | entry | `reversed_by_je_id` |
+|---|---|---|---|
+| `7f2fff09-03e4-47d1-aafa-daba984127d2` | 2026-08-07 | **DR `1100` A/R 187550 / CR `4000` Freight Income 187550** — *"Invoice INV-2026-00006 posting"* | **NULL** |
+| `f19cdf41-3bfe-4927-a0d3-6cbec90bf781` | 2026-08-08 | DR `1150` Unbilled 187550 / **CR `4000` Freight Income 187550** — Revrec Event 1 earn | NULL |
+| `a5aa127d-61c2-4a47-b12a-ad3f6c242b1b` | 2026-08-08 | **DR `1100` A/R 187550** / CR `1150` Unbilled 187550 — Revrec Event 2 bill | NULL |
+
+**Net effect on the ledger:**
+- **`4000` Freight/Line-haul Income — credited TWICE = $3,751.00, should be $1,875.50 → OVERSTATED $1,875.50**
+- **`1100` Accounts Receivable — debited TWICE = $3,751.00, should be $1,875.50 → OVERSTATED $1,875.50**
+- `1150` Unbilled Revenue — DR (E1) then CR (E2), **nets to $0 — correct**, no repair needed
+
+**So both a P&L account and a balance-sheet account are wrong by $1,875.50 each.** ACCT-F59's own error text
+predicted exactly this — *"posting this invoice would credit revenue **and debit A/R** a second time"* — but
+every report of this defect so far, including my own first pass, said only "revenue overstated". **The A/R
+half was missed because the two debits sit in different JEs and only net out when you read all three
+together.** An A/R aging or subledger tie-out will show `INV-2026-00006` twice over in the control account.
+
+**PREPARED REVERSAL — reverse the INVOICE entry, not the latch.** ACCT-F59 rules the latch owns a delivered
+load's revenue *and* A/R, so the invoice JE is the intruder. One balanced entry removes **both** duplicates:
+
+```
+REVERSE  JE 7f2fff09-03e4-47d1-aafa-daba984127d2   (Invoice INV-2026-00006 posting)
+  DR  4000  Freight / Line-haul Income   187550
+  CR  1100  Accounts Receivable (A/R)    187550
+  memo: reverse duplicate invoice posting — load L-20260806-0008 revenue+A/R are owned by the
+        DISP-01 two-event latch (ACCT-F59); see REVREC-DOUBLE-RESIDUE-L-20260806-0008
+```
+
+**After it posts:** `4000` = $1,875.50 (latch Event 1 only) · `1100` = $1,875.50 (latch Event 2 only) ·
+`1150` = $0 — and GL A/R then ties to the `INV-2026-00006` subledger instead of doubling it.
+
+**EXECUTION RULES — non-negotiable:** post through the **EXISTING** poster / void path (`reverses_je_id` +
+`reversed_by_je_id` written both ways) — **no hand-SQL, and NO new GL math**. **Do NOT back-date it**: the
+reversal's `entry_date` is a period decision and putting it in a closed period is its own defect. **Do NOT
+delete or edit the original JE** — void-not-delete; all three entries stay on the books. Verified `NULL`
+`reversed_by_je_id` on all three today, so **no reversal exists yet and this is not double-repair.**
+
+**WHY IT IS NOT POSTED YET:** moving money in a live ledger is an owner action. **CC-1 has prepared it and
+will execute on authorisation** — same standing as the other residue items.
+
+**★ ONE RULING SHOULD COVER THE WHOLE PRE-FIX RESIDUE CLASS** — identical shape (code fixed forward, rows
+written before it never revisited), identical remedy (reversal through the existing poster, not back-dated),
+identical risk:
+
+| item | amount | accounts wrong |
+|---|---|---|
+| this card — `L-20260806-0008` | **$1,875.50 ×2** | `4000` revenue **and** `1100` A/R |
+| `LV-PAY-SETTLE-NOPOST` A/R residue (3 USMCA payments, pre-`ACCT-F150`) | $1,287.25 | A/R uncredited |
+| `LV-BILLPAY-VOID-GL-RESIDUE-NOT-REPAIRED` | $33.40 | cash + A/P overstated |
+
+---
+
+### **OPEN · P1 · `LATCH-REVERSAL-NEVER-RELEASES-INTERLOCK`** — a reversed load is permanently blocked from re-recognition, and #4797 made the blockage wider
+
+**Owning lane: CC-1 (money).** Found by **CC-1** 2026-08-08 while proving ACCT-F59 for the race fix.
+
+`posting-engine.service.ts:236-241` states it against itself: *"Releasing the interlock is the LATCH's job:
+`is_active` is the latch's own liveness flag… That reconciliation is tracked separately — **today a reversal
+leaves the latch row active** (proven on prod: load `L-20260624-0083`'s two rows are still `status='posted'`,
+`is_active=true` after their 2026-08-01 owner-authorized reversal)."*
+
+**Consequence:** once a load's latch entry is reversed, the latch row stays `is_active=true`, so the invoice
+poster keeps refusing forever — **the load can never be re-recognised by either path.** Revenue for it is
+reversed and unrecoverable without a manual entry, which is precisely what "no hand-SQL" forbids.
+
+**#4797 RAISES THIS RISK and that is stated deliberately.** Its second arm also refuses on
+*load has reached delivery evidence*, which is a **permanent** property of a delivered load — so after a
+reversal a delivered load is blocked by **both** arms, not just the stale latch row. **The fix is correct and
+should ship; this card is the debt it makes more visible.**
+
+**FIX:** the void/reversal path must set `is_active=false` on the load's
+`accounting.load_revenue_recognition_postings` rows when their journal entry is reversed — releasing the
+interlock as the code already says it should. **GUARD:** a `*.db.test.ts` asserting that after reversing a
+latch JE, (a) its latch rows are `is_active=false` and (b) the load can be re-recognised. **Not a static
+guard** — per `subledger-gl-tieout-ar.db.test.ts`, a static scan cannot prove a gate returned true or a row
+landed. **Live proof:** `L-20260624-0083`'s two rows flipped to `is_active=false`, or an explicit owner
+decision that they stay blocked.
+
+---
+
 ### **OPEN · P0 · `ACCT-F59-INTERLOCK-IS-ONE-DIRECTIONAL`** — the double-revenue credit is a **473 ms race**, not an open design question; ACCT-F59 already rules who owns revenue
 
 **Owning lane: CC-1 (money).** Found by **CC-1** 2026-08-08 while inventorying `CURSOR-RULING-DOUBLE-REVREC-INVOICE.md`.
