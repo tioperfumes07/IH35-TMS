@@ -118,7 +118,16 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                       />
                     }
                   />
-                  <Field label="City" input={<input {...register(`stops.${index}.city`)} className={CELL} />} />
+                  <Field
+                    label="City"
+                    input={
+                      <input
+                        {...register(`stops.${index}.city`, { required: "City is required" })}
+                        className={CELL}
+                        aria-required="true"
+                      />
+                    }
+                  />
                   <Field
                     label="St"
                     input={
