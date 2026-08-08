@@ -247,7 +247,16 @@ async function loadScoringLeaderboard(
        AND e.operating_company_id = d.operating_company_id
        AND e.event_at >= (now() - interval '7 days')
       WHERE d.operating_company_id = $1::uuid
-        AND d.active = true
+        -- CLS-DRIVERS-ACTIVE-PHANTOM — d.active does not exist. Prod-verified on
+        -- br-fancy-credit-akjnd07a 2026-08-07: mdata.drivers has 89 columns and 0 named active, so
+        -- this threw 42703 and the driver-manager home harsh-events panel returned 500 on every call.
+        --
+        -- Replaced with THIS FILE'S OWN existing predicate — L121 and L325 already gate on
+        -- d.deactivated_at IS NULL — deliberately and narrowly. The system-wide meaning of "active
+        -- driver" is an OPEN OWNER DECISION (528 sites use deactivated_at alone, 20 also exclude
+        -- archived_at; on prod that is 118 vs 114 drivers), and this crash fix must not pre-empt it.
+        -- Adopting the file's own convention changes nothing about that question.
+        AND d.deactivated_at IS NULL
       GROUP BY d.id, d.first_name, d.last_name
       HAVING count(e.id) > 0
     `,
@@ -321,8 +330,11 @@ async function loadCoolingDrivers(client: DbClient, ociId: string): Promise<Cool
             AND m.driver_id = d.id
         ) msg_activity ON true
         WHERE d.operating_company_id = $1::uuid
+          -- CLS-DRIVERS-ACTIVE-PHANTOM — AND d.active = true removed; the column does not exist
+          -- (89 columns on mdata.drivers, 0 named active) so this threw 42703 and the cooling-off
+          -- panel 500'd. Pure DELETION: d.deactivated_at IS NULL on the line above was already the
+          -- real gate, so the result set is unchanged. No predicate decision is taken here.
           AND d.deactivated_at IS NULL
-          AND d.active = true
       ) cooling
       WHERE cooling.days_idle >= 14
       ORDER BY cooling.days_idle DESC, cooling.driver_name ASC

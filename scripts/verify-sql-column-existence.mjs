@@ -390,6 +390,30 @@ function analyzeSqlFragment(sql, schema) {
     aliasToTable.set(table.split(".")[1], table);
   }
 
+  // CTE / derived-table aliases SHADOW a same-named table alias. Run AFTER the table pass so the
+  // shadowing wins.
+  //
+  // The defect this closes (found 2026-08-07 by an unrelated edit shifting the fragment split, so it
+  // was latent, not new): `driver-metrics.service.ts` aliases `maintenance.work_orders AS w` inside a
+  // `wo_agg` CTE and then aliases the CTE ITSELF as `w` in the final statement — `LEFT JOIN wo_agg w`.
+  // `tableRe` only matches a SCHEMA-QUALIFIED relation, so the CTE binding was invisible and `w`
+  // stayed bound to `maintenance.work_orders`. The guard then reported `w.wo_count` and
+  // `w.avg_repair_cost` — the CTE's own aggregate OUTPUT names — as phantom columns on
+  // `maintenance.work_orders` (prod: 90 columns, 0 hits for either). Both were false positives on
+  // correct code, and under this file's contract a false positive must be fixed AT SOURCE and never
+  // allowlisted (the ACCT-F83 precedent recorded in the allowlist's own comment).
+  //
+  // DELETING the binding rather than re-pointing it is deliberate: the columns of a CTE or derived
+  // table are not knowable from this fragment, so the honest move is to stop checking that alias.
+  // Conservative by construction — this can only skip a check, never invent one.
+  const cteAliasRe = /\b(?:from|join)\s+(?!\()([a-z_][a-z0-9_]*)(?!\s*\.)\s+(?:as\s+)?([a-z_][a-z0-9_]*)/gi;
+  let cm;
+  while ((cm = cteAliasRe.exec(low))) {
+    const alias = cm[2];
+    if (["on", "using", "where", "left", "right", "inner", "outer", "join", "cross", "full", "set", "group", "order", "limit", "having", "union"].includes(alias)) continue;
+    aliasToTable.delete(alias);
+  }
+
   const isTarget = (t) => TARGET_TABLES.has(t) && schema.has(t);
 
   // (1) QUALIFIED refs alias.column — safe even with joins.
@@ -412,6 +436,42 @@ function analyzeSqlFragment(sql, schema) {
   const hasSubquery = /\(\s*select\b/i.test(low) || /\bwith\b[\s\S]*\bas\s*\(/i.test(low) || /\bunion\b/i.test(low);
   const distinctTargets = [...new Set(tableRefs.filter(isTarget))];
   const singleTable = tableRefs.length === 1 && distinctTargets.length === 1;
+  // `SET <col> =` belongs to the UPDATE TARGET, never to a FROM/JOIN-ed table — and it is checked
+  // OUTSIDE the single-table gate below, deliberately.
+  //
+  // TWO defects are closed here, and the second was found by the first's own selftest.
+  //
+  // (1) MIS-ATTRIBUTION. `UPDATE mdata.driver_profile_messages m SET read_at = ... FROM mdata.drivers d`
+  //     — tableRe only collects FROM/JOIN relations, so tableRefs was ["mdata.drivers"], the
+  //     single-table gate opened, and the SET pattern attributed `read_at` to mdata.drivers, which has
+  //     no such column. It IS a real column on driver_profile_messages, the table actually updated.
+  //     It sat in the allowlist as `messages.service.ts#mdata.drivers.read_at` and was never a defect.
+  //     Same class as the detention.service.ts case below: the (?<!\.) lookbehind fixed the QUALIFIED
+  //     half and left the unqualified SET half open.
+  //
+  // (2) MISSED COVERAGE. A plain `UPDATE t SET col = ...` with no FROM has ZERO table refs, so the
+  //     single-table gate never opened and its SET columns were never checked at all — a phantom
+  //     column in a bare UPDATE was invisible. That gap is REAL and is NOT closed here — closing it
+  //     immediately surfaced two findings, one of which is not mine to fix: `bank_accounts.visible`
+  //     EXISTS on prod (28 columns) but is absent from docs/schema-parity-baseline.json (25), i.e.
+  //     BASELINE DRIFT, which this file's contract says to fix at source in the DDL parser and NEVER
+  //     allowlist; and `bank_transactions.advance_id` is a genuine phantom in a money-lane file.
+  //     Regenerating a prod-derived cross-lane baseline is not a side effect to smuggle into this PR,
+  //     so the gate below is retained and BOTH findings are boarded. What ships here is the
+  //     mis-attribution fix only — strictly fewer false positives, no new coverage, no regression.
+  const updateTargetMatch = /\bupdate\s+([a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*)/i.exec(low);
+  if (singleTable && !hasSubquery && updateTargetMatch && isTarget(updateTargetMatch[1])) {
+    const target = updateTargetMatch[1];
+    const targetCols = schema.get(target);
+    const seenSet = new Set();
+    for (const m of low.matchAll(/\bset\s+([a-z_][a-z0-9_]*)\s*=/gi)) {
+      const col = m[1];
+      if (SQL_NOISE.has(col) || aliasToTable.has(col) || seenSet.has(col)) continue;
+      seenSet.add(col);
+      if (!targetCols.has(col)) violations.push({ table: target, column: col, ctx: `SET ${col}` });
+    }
+  }
+
   if (singleTable && !hasSubquery) {
     const table = distinctTargets[0];
     const cols = schema.get(table);
@@ -428,8 +488,11 @@ function analyzeSqlFragment(sql, schema) {
       /(?<!\.)\b([a-z_][a-z0-9_]*)\s+is\s+(?:not\s+)?null\b/gi,
       /(?<!\.)\b([a-z_][a-z0-9_]*)\s*(?:=|<>|!=|>=|<=|>|<)\s*(?:\$\d+|'|\d|true|false|now\(\))/gi,
       /(?<!\.)\b([a-z_][a-z0-9_]*)\s+in\s*\(/gi,
-      /\bset\s+([a-z_][a-z0-9_]*)\s*=/gi,
+      // A bare `SET <col> =` with no UPDATE target (the block above handles those) can only be the
+      // single FROM table's column.
+      ...(updateTargetMatch ? [] : [/\bset\s+([a-z_][a-z0-9_]*)\s*=/gi]),
     ];
+
     // ORDER BY / GROUP BY were NOT inspected before 2026-07-25. That blind spot is what let
     // `ORDER BY posted_at` ship against driver_finance.escrow_ledger, whose timestamp is created_at —
     // Postgres 42703, a hard 500 on a live read endpoint, with CI green. A phantom column in ORDER BY
@@ -575,6 +638,25 @@ function selftest() {
   // Alias rebound across CTEs must not false-positive: first CTE uses v=vendors, second uses v as output alias only in FROM scoped.
   check("CTE alias rebind across bodies — no false positive on clean cols",
     "WITH a AS (SELECT v.id FROM mdata.vendors v WHERE v.deactivated_at IS NULL), b AS (SELECT l.id FROM mdata.loads l WHERE l.status = $1) SELECT a.id FROM a JOIN b ON true", false);
+  // The live false positive this shadowing rule closes (driver-metrics.service.ts): the SAME alias `v`
+  // names a real table inside the CTE body and the CTE ITSELF in the final statement, and the CTE's
+  // aggregate OUTPUT name was reported as a phantom column on that table.
+  // UPDATE ... SET ... FROM: the SET column belongs to the UPDATE TARGET, never the FROM table. The
+  // live false positive (messages.service.ts): UPDATE mdata.driver_profile_messages SET read_at ...
+  // FROM mdata.drivers attributed read_at — a real column on the UPDATED table — to mdata.drivers.
+  check("UPDATE ... SET col FROM other-table does not attribute the SET column to the FROM table",
+    "UPDATE mdata.driver_profile_messages m SET read_at = now() FROM mdata.drivers d WHERE m.driver_id = d.id", false);
+  // A bare UPDATE with no FROM has zero table refs, so the single-table gate never opens and its SET
+  // columns are still unchecked. That is a KNOWN, BOARDED coverage gap, not an accident — pinning it
+  // as `clean` here records the current contract honestly instead of pretending the case is covered.
+  check("bare UPDATE with no FROM is NOT yet covered (boarded gap, pinned so it cannot change silently)",
+    "UPDATE mdata.vendors SET voided_at2 = now() WHERE id = $1", false);
+  check("a phantom SET column IS flagged when the UPDATE has a FROM (the gate opens)",
+    "UPDATE mdata.vendors SET voided_at2 = now() FROM mdata.loads l WHERE l.id = $1", true);
+  check("a CTE aliased with the SAME letter as a table shadows it — output name is not a column",
+    "WITH agg AS (SELECT v.id, COUNT(*)::numeric AS v_count FROM mdata.vendors v GROUP BY v.id) SELECT v.v_count FROM agg v", false);
+  check("shadowing does not hide a phantom on a genuinely table-bound alias",
+    "WITH agg AS (SELECT id FROM mdata.loads) SELECT v.voided_at2 FROM mdata.vendors v JOIN agg a ON true", true);
 
   // SELECT-list pass (CLS-SCHEMA-DRIFT). The first case is the VERBATIM live defect from
   // dispatch/auth-gates/wf-038-active-driver.gate.ts, reduced to the vendors fixture: a phantom column

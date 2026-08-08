@@ -234,7 +234,12 @@ export function buildDriverMetricsAggregationSql(): string {
         NULLIF(trim(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name
       FROM mdata.drivers d
       WHERE d.operating_company_id = $1::uuid
-        AND COALESCE(d.active, true) = true
+        -- CLS-DRIVERS-ACTIVE-PHANTOM — AND COALESCE(d.active, true) = true removed. The column does
+        -- not exist (prod-verified: 89 columns on mdata.drivers, 0 named active), so this threw
+        -- 42703 and driver integrity metrics never computed. Same shape as the sibling defect in
+        -- anomaly-detector.service.ts, and the same resolution: the COALESCE meant "an unset flag is
+        -- active", which is what deleting it does, and the deactivated_at gate below was already
+        -- doing the real work. Pure deletion; no predicate decision, which stays an open owner call.
         AND COALESCE(d.deactivated_at, NULL) IS NULL
     ),
     fuel_agg AS (

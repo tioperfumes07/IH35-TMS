@@ -64,7 +64,19 @@ export async function buildEquipmentAggregate(
       `
         SELECT l.id::text AS load_id, l.load_number, l.status::text
         FROM mdata.loads l
-        WHERE l.assigned_primary_unit_id = $1::uuid
+        -- CLS-SCHEMA-DRIFT — assigned_primary_unit_id does not exist on mdata.loads. Prod-verified
+        -- on br-fancy-credit-akjnd07a 2026-08-07: the table has 98 columns and 0 named
+        -- assigned_primary_unit_id; the real column is assigned_unit_id (the driver columns are
+        -- the ones that carry the primary/secondary split, not the unit).
+        --
+        -- This is a REVERSE-LINKAGE break, not just a 500: buildEquipmentAggregate feeds BOTH
+        -- GET /api/v1/mdata/equipment/:id (the trailer profile aggregate, equipment.routes.ts:328) and
+        -- GET .../export.pdf, and CurrentAssignmentSection.tsx renders this current_load. So the
+        -- equipment → load direction has never resolved. PRECISION: this query sits inside
+        -- if (unitId), and prod currently has ZERO equipment rows with current_unit_id set (183 rows,
+        -- 0 attached), so the phantom is LATENT today rather than actively 500ing. It fires the moment
+        -- a trailer is attached to a unit, which is the normal operating state.
+        WHERE l.assigned_unit_id = $1::uuid
           AND l.operating_company_id = $2::uuid
           AND l.soft_deleted_at IS NULL
           AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')

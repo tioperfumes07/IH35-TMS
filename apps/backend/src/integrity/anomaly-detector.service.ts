@@ -86,7 +86,16 @@ export class AnomalyDetectorService {
          AND mc.voided_at IS NULL
          AND (mc.expiry_date IS NULL OR mc.expiry_date >= current_date)
         WHERE d.operating_company_id = $1::uuid
-          AND COALESCE(d.active, true) = true
+          -- CLS-DRIVERS-ACTIVE-PHANTOM — AND COALESCE(d.active, true) = true removed. The column
+          -- does not exist (prod-verified: mdata.drivers has 89 columns, 0 named active), so this
+          -- threw 42703 and the expired-medical-card anomaly detector never ran. The COALESCE reads
+          -- as defensive but cannot rescue a column that is absent — a missing COLUMN is a parse
+          -- error, not a NULL.
+          --
+          -- Pure DELETION, and the author's own intent: COALESCE(d.active, true) means "treat an
+          -- unset flag as active", which is exactly what removing it does. d.deactivated_at IS NULL
+          -- below was already the real gate. No predicate decision is taken here — the system-wide
+          -- meaning of "active driver" is an open owner decision.
           AND d.deactivated_at IS NULL
           AND mc.id IS NULL
         ORDER BY d.id

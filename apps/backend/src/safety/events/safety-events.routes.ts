@@ -257,7 +257,16 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
             n.note,
             n.created_by::text,
             n.created_at::text,
-            i.name AS created_by_name
+            -- CLS-SCHEMA-DRIFT — i.name does not exist. Prod-verified on br-fancy-credit-akjnd07a
+            -- 2026-08-07: identity.users has 17 columns and none named name, so this threw 42703 and
+            -- GET /api/v1/safety/events-log/:id/notes returned 500 on EVERY call — safety-event notes
+            -- could not be read at all. Route is mounted (index.ts registers registerSafetyEventsRoutes).
+            --
+            -- Composed the same way as every other actor-name read in the repo. The email fallback is
+            -- load-bearing, not decoration: 13 of 26 users on prod have neither first_name nor
+            -- last_name set, so without it half of all note attributions would render blank — and a
+            -- blank "who" on an audit-shaped record is worse than a plain-looking email.
+            COALESCE(NULLIF(TRIM(CONCAT_WS(' ', i.first_name, i.last_name)), ''), i.email) AS created_by_name
           FROM safety.safety_event_notes n
           LEFT JOIN identity.users i ON i.id = n.created_by
           WHERE n.safety_event_id = $1::uuid
