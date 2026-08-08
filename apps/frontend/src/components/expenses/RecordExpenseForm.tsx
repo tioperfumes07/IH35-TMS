@@ -250,6 +250,12 @@ export function RecordExpenseForm({
             createKind="category"
             operatingCompanyId={operatingCompanyId}
             placeholder="Select category…"
+            // LV-EXPENSE-CATEGORY-PICKER-EMPTY-RC: without loading, an open dropdown during CoA fetch
+            // shows ONLY "+ Add new category" (Combobox hides options until data arrives) — operators
+            // then mint duplicate expense accounts. Payment already had disabled=; category had neither.
+            // Combobox suppresses allowAddNew while loading=true, so the corruption path cannot fire.
+            loading={paymentAccountsQuery.isLoading || paymentAccountsQuery.isFetching}
+            disabled={!operatingCompanyId}
             onOptionCreated={(opt) => {
               setValues((prev) => ({
                 ...prev,
