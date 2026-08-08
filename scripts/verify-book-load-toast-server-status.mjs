@@ -55,6 +55,27 @@ export function auditModal(src) {
     );
   }
 
+  // CLASS INSTANCE 2 (2026-08-08): the maintenance-advisory branch returns EARLY from the submit handler
+  // and its Continue button fired its own hardcoded green toast — "Load booked with maintenance advisory" —
+  // that had never seen the response. True, but silent about dispatch: a book_dispatch landing on
+  // assigned_not_dispatched still rendered green. Same file, same flow, same shape as the defect above, so
+  // the guard has to cover it or the class is only half closed.
+  if (/pendingCloseAfterAdvisory/.test(src)) {
+    const advisoryToast = src.match(/pendingCloseAfterAdvisory\s*\?[\s\S]{0,1400}?pushToast\(([\s\S]{0,400}?)\)\s*;/);
+    if (!advisoryToast) {
+      problems.push(
+        `${MODAL}: the maintenance-advisory Continue branch no longer has a readable pushToast — refusing to ` +
+          `pass vacuously on a path that already shipped this defect once.`,
+      );
+    } else if (!/bookLoadToastMessage/.test(advisoryToast[1])) {
+      problems.push(
+        `${MODAL}: the maintenance-advisory Continue toast does not use bookLoadToastMessage(). It fires after ` +
+          `an early return, so it must report the status carried over from the response — not a hardcoded ` +
+          `"success" (LV-DISPATCH-TOAST-LIES, class instance 2).`,
+      );
+    }
+  }
+
   // ...and the server status has to actually be read off the response.
   if (!/payload[\s\S]{0,200}?\.status\b/.test(src) && !/serverStatus/.test(src)) {
     problems.push(
@@ -94,6 +115,16 @@ if (process.argv.includes("--selftest")) {
     pushToast(bookLoadToastMessage(saveMode, serverStatus), bookLoadToastTone(saveMode, serverStatus));
   `;
   const shippedDefect = `pushToast(saveMode === "draft" ? "Draft saved" : "Load booked and dispatched", "success");`;
+  const goodAdvisory = `
+    {gateBanner.type === "advisory" && pendingCloseAfterAdvisory ? (
+      <Button onClick={() => { pushToast(\`\${bookLoadToastMessage("book_dispatch", advisoryServerStatus)} · maintenance advisory\`, bookLoadToastTone("book_dispatch", advisoryServerStatus)); }} />
+    ) : null}
+  `;
+  const badAdvisory = `
+    {gateBanner.type === "advisory" && pendingCloseAfterAdvisory ? (
+      <Button onClick={() => { pushToast("Load booked with maintenance advisory", "success"); }} />
+    ) : null}
+  `;
   const goodHelper = `
     if (saveMode === "draft") return "Draft saved";
     if (!serverStatus) return "Load booked — status unconfirmed";
@@ -105,6 +136,8 @@ if (process.argv.includes("--selftest")) {
     ["fixed modal", () => auditModal(goodModal), 0],
     ["THE SHIPPED DEFECT — saveMode picks the dispatched wording", () => auditModal(shippedDefect), 3],
     ["modal no longer uses the helper", () => auditModal(goodModal.replace("bookLoadToastMessage", "somethingElse")), 1],
+    ["advisory branch reports the server status", () => auditModal(goodModal + goodAdvisory), 0],
+    ["CLASS BAR — advisory branch back to a hardcoded green toast", () => auditModal(goodModal + badAdvisory), 1],
     ["fixed helper", () => auditHelper(goodHelper), 0],
     ["helper stops gating on the server status", () => auditHelper(goodHelper.replace('serverStatus === "dispatched"', "true")), 1],
     ["helper claims dispatch when status is missing", () => auditHelper(goodHelper.replace('"Load booked — status unconfirmed"', '"Load booked and dispatched"')), 1],

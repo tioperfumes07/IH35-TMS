@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookLoadToastMessage, bookLoadToastTone } from "../book-load-toast";
+import { bookLoadToastMessage, bookLoadToastTone, serverStatusOf } from "../book-load-toast";
 
 /**
  * LV-DISPATCH-TOAST-LIES. The regression bar is the exact live case CC-3 proved on prod:
@@ -43,5 +43,23 @@ describe("bookLoadToastMessage", () => {
   it("maps the other real statuses honestly", () => {
     expect(bookLoadToastMessage("book_dispatch", "cancelled")).toBe("Load booked — cancelled");
     expect(bookLoadToastMessage("book_dispatch", "in_transit")).toBe("Load booked — in transit");
+  });
+});
+
+describe("serverStatusOf", () => {
+  it("reads the status off the 201 row", () => {
+    expect(serverStatusOf({ id: "x", status: "assigned_not_dispatched" })).toBe("assigned_not_dispatched");
+  });
+
+  it("returns null for anything that is not a usable status, so no caller can claim dispatch from junk", () => {
+    for (const junk of [null, undefined, 42, "a string", {}, { status: 7 }, { status: "" }, { status: "   " }]) {
+      expect(serverStatusOf(junk)).toBeNull();
+    }
+  });
+
+  it("feeds the advisory path so it cannot render green on a non-dispatched load", () => {
+    const status = serverStatusOf({ status: "assigned_not_dispatched" });
+    expect(bookLoadToastMessage("book_dispatch", status)).toBe("Load booked — assigned, NOT dispatched");
+    expect(bookLoadToastTone("book_dispatch", status)).toBe("info");
   });
 });
