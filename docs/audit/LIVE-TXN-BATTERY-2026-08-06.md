@@ -8851,3 +8851,67 @@ three documents silently dropped would produce a record that **looks** complete 
 missing exactly the evidence a DOT audit asks for. **Under the directive's own rule — *"If a required field
 or wizard step does NOT exist in the UI, STOP and file it as a gap"* — this is the stop.** The gap is filed;
 the row is not created.
+
+## 141. ★★★ SCENARIO A EXECUTED THROUGH THE APP — driver created on TRANSP. **And the save proved a 4th hidden column: DATE OF BIRTH silently vanished.**
+
+**Owner authorised the test creation. Run end to end in the live product** (MCP Chrome, authenticated
+`tioperfumes07@gmail.com`, entity **TRANSP**), every field the form offers filled from the INE and the
+Constancia de Aptitud Psicofísica.
+
+**RESULT — `DRIVER CREATED SUCCESSFULLY`, driver count 87 → 88.**
+
+| | |
+|---|---|
+| **driver id** | **`49427973-e93e-4ea7-a2eb-eb9eefa7f331`** |
+| entity | `91e0bf0a-…` **TRANSP** · `status Probation` |
+| created_by | `e4117991-…` (owner) · `2026-08-08T01:10:08.606Z` |
+
+**PERSISTED, verified by reading the row back off prod:** `first_name` *Jorge Pablo Guadalupe* ·
+`last_name` *Muñoz Gonzalez* · `curp` **MUGJ840525HTSXNR06** · `ine_number` **MZGNJR84052528H400** ·
+`mx_address_line1` *Gonzalez Ortega 1362* · `mx_address_line2` *Colonia Madero* · `mx_city` *Nuevo Laredo* ·
+`mx_postal_code` **88270** · `mx_state` **TAM** · `phone` **+528671040205** · `visa_type` **B1** ·
+`visa_number` **TEST-124567890** · `visa_expires_at` **2028-04-01** · `passport_expires_at` **2026-09-15** ·
+`dot_medical_expires_at` **2028-01-23**.
+
+### ★★ THE SAVE PROVED A FOURTH HIDDEN COLUMN — and it is the worst one
+
+Item 140 found three columns the DB has and the form hides. **The persisted row proves a fourth:**
+
+| supplied by the owner | column | stored |
+|---|---|---|
+| **DOB 25/05/1984** (on the INE, in the CURP) | **`date_of_birth` EXISTS** | **NULL** |
+| Licencia Federal `TAMP240052` | `mexican_license_number` EXISTS | **NULL** |
+| Licence expiry 2027-03-27 | `mexican_license_expiration` EXISTS | **NULL** |
+| Passport country **Mexico** | `passport_country` EXISTS | **NULL** |
+
+**`date_of_birth` is not an edge case.** It is on the INE, it is encoded in the CURP the form *did* accept
+(`MUGJ**840525**HTSXNR06`), the owner stated it explicitly — **and the Create Driver panel has no input for
+it, so it saved as NULL with no warning.** A driver-qualification file without a date of birth cannot
+support an MVR order, a Clearinghouse query, or a DOT age check. **Four columns, all present in the schema,
+all unreachable from the create screen.**
+
+### AUDIT + LINKAGE — what the save actually wrote
+
+**`audit.audit_events` — 5 events, all naming the owner as actor:**
+`mdata.drivers.created` (BT-1-PHASE1-AUDIT) · `mdata.driver.linked_to_user` (BT-3-DRIVER-ONBOARDING) ·
+`identity.driver_invite.created` (BT-3-DRIVER-ONBOARDING) · **2 × `catalogs.accounts.created`
+(DRIVER-SUBACCOUNT-AUTO-PROVISION)** — the flow auto-provisioned two GL sub-accounts for the driver
+(`6cdc9f01-…`, `49ea76c2-…`). **That is real, correct wiring and it happened without being asked for.**
+
+**`audit.row_changes` — 1 row, `drivers INSERT`, `changed_by_user_id = NULL`, `changed_by_role = NULL`.**
+**A third live reproduction of the P0** — and the sharpest yet: **five `audit_events` rows name
+`e4117991-…` in the same transaction while the WORM row-change names nobody.** Exactly the
+`app.current_user_id` vs `app.user_id` mismatch from item 136 — the application layer knows; the trigger
+does not.
+
+**`docs.file_links` for this driver = 0.** As predicted in item 140: there is no upload control in the
+create flow, so the three documents could not be attached. **The directive's proof requirement — file_links
+both-way for all 3 files — remains unmet, and not for want of trying.**
+
+### ★ ONE SIDE EFFECT THE OWNER SHOULD KNOW ABOUT
+
+Saving **sent a real WhatsApp invite to +528671040205** ("Invite expires in 72 hours") with a live
+tokenised link. **The create flow dispatches an outbound message to the driver's phone with no separate
+confirmation step** — the Save button is also a Send button. Harmless here (it is the owner's own number,
+and he authorised the test), but **anyone creating a placeholder or test driver with a real number in it
+will message that person.** Filed.
