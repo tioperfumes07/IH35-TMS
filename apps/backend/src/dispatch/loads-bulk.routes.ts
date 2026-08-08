@@ -15,6 +15,7 @@ import {
   loadStatusRequiresDeliveryDepartureStamp,
   stampFinalActiveDeliveryDeparture,
 } from "./stamp-final-delivery-departure.js";
+import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
 
 // Transitions that fire escrow-proposal + settlement side-effects on the per-load endpoint
 // (PATCH /dispatch/loads/:id/status). Bulk set_status does NOT run those financial hooks, so moving a
@@ -105,6 +106,23 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
     if (loadStatusRequiresDeliveryDepartureStamp(mdataStatus)) {
       await stampFinalActiveDeliveryDeparture(client, id, statusPayload.delivered_at ?? null);
     }
+    // LV-BULK-DELIVER-NOLATCH (live-proven on prod 2026-08-07) — this route had the STAMP half of
+    // WIRE-07 and not the LATCH half. It accepts the delivery statuses (PER_LOAD_ONLY_TRANSITIONS
+    // above fences off only the three abandonment states), writes them, and stamps the delivery
+    // departure — then told the workflow spine the load delivered while the ledger heard nothing.
+    // Office bulk "Mark delivered" is a REAL delivery path, so deliver → revenue → invoice → GL →
+    // bank stalled for every load moved this way. The comment at the top of this file half-saw it:
+    // it fenced off three statuses, and the delivery statuses fell through the very hole it was
+    // written to close. Shared helper: no-op unless the status is delivery evidence, and it defers
+    // the poster to after COMMIT so this path does not reproduce LV-REVREC-NOT-FIRING — the bulk
+    // stamp above is written on this same `client` and would be invisible to the poster's own
+    // connection if the latch fired inline.
+    await latchOnDeliveryEvidence(client, {
+      operatingCompanyId,
+      loadId: id,
+      targetStatus: mdataStatus,
+      actorUserId: actorUserId,
+    });
     // Parity with the per-load endpoint: a bulk status change must land on the dispatch event spine so
     // downstream workflow consumers (timeline, notifications) see it. (Non-financial event-bus write.)
     await emitDispatchSpineEvent(client as unknown as Parameters<typeof emitDispatchSpineEvent>[0], {

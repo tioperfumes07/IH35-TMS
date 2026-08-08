@@ -177,7 +177,8 @@ export function DispatchPage({
     refetchInterval: 30_000,
   });
 
-  const statusMutation = useUpdateLoadStatus();
+  // LV-TXN-004: pass opco so Kanban status drops hit money-aware /dispatch/.../transition.
+  const statusMutation = useUpdateLoadStatus(defaultCompanyIds[0] ?? null);
   // Canonical first: `/dispatch/loads/:id`. `?load_id=` and the older `?load=` are kept as LEGACY
   // BOOKMARKS (emailed board links, saved tabs) so nothing that already works stops working —
   // C5 forbids WRITING the query form, never reading it.
@@ -436,6 +437,15 @@ export function DispatchPage({
               setNewLoadOpen(true);
             }}
             onStatusDrop={async (id, nextStatus) => {
+              // DO NOT add a try/catch here. DispatchKanban owns this failure path and handles it correctly:
+              // it wraps this call (DispatchKanban.tsx:661-668), REVERTS its optimistic move on rejection and
+              // shows "Status change rejected by server. Reverted." Catching here without re-throwing makes
+              // the promise resolve, so that revert never runs — the card stays in the lane the server
+              // REJECTED and the Kanban fires its SUCCESS toast on a failed write.
+              //
+              // That is not hypothetical: #4788 shipped exactly that catch on the belief this layer had no
+              // error handling. It did — one level up, in the component that owns the optimistic state, which
+              // is where it belongs. The rejection must propagate. Enforced by verify-step 2815.
               await statusMutation.mutateAsync({ id, body: { new_status: nextStatus } });
             }}
           />

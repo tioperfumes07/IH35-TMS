@@ -1,9 +1,11 @@
 ---
 description: Cursor lane NEVER IDLE — always drain Cascade CLS waves (owner 2026-08-04)
-alwaysApply: true
+alwaysApply: false
 ---
 
 # RULE 31 — CURSOR NEVER IDLE · WAVE DRAIN (owner 2026-08-04)
+
+> SUPERSEDED 2026-08-08 (owner-directed): the never-idle loop is removed. Idle + STATUS is compliance. WIP<=3, REF sequences. See CONTINUOUS-DISCIPLINE.md.
 
 **Owner word:** continuous mode. Cursor fixer lane **never idles, never stops** while Cascade mechanical / UI class waves remain open.
 

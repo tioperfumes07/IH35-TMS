@@ -9,6 +9,14 @@ export type UploadQueueItem = {
   category_id: string | null;
   entity_type: "driver" | "load" | "load_stop" | "standalone";
   entity_id: string | null;
+  /**
+   * The load a `load_stop` capture belongs to. `docs.file_links.entity_type` has no `load_stop`
+   * member (prod CHECK: driver·customer·vendor·unit·equipment·load·settlement·invoice·tax_document),
+   * so a stop-scoped upload has to be linked through its PARENT LOAD or it is linked to nothing at
+   * all — which is exactly how every stop-captured BOL/POD became an orphan. Optional so existing
+   * queue rows in IndexedDB (written before this field existed) deserialize unchanged.
+   */
+  parent_load_id?: string | null;
   document_date: string | null;
   expiration_date: string | null;
   description: string | null;
