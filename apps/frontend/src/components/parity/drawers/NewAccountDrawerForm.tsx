@@ -155,7 +155,14 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
         display_name: form.name.trim(),
         description: form.description.trim() || undefined,
         metadata: {
-          account_type: form.accountType,
+          // COA-DETAIL-TYPE-VOCAB-MISMATCH (ACCT-F189) — SECOND caller of the same defect. The backend
+          // resolves account_type against catalogs.account_types.code|name, but this posts the 8-value
+          // QBO-style UI enum, of which only "Equity"/"Income" match by name — so picking any detail type
+          // on the other six 400s with detail_type_account_type_mismatch. `previewEntry` already resolves
+          // the exact catalog row, preferring the one that OWNS the chosen detail type, so its .code
+          // disambiguates the one-to-many enums (Asset -> BANK|AR|OCA|FA|OA, Liability -> CC|AP|OCL|LTL)
+          // that no flat enum->code map could. Same boundary translation as AccountDrawer.tsx.
+          account_type: form.detailTypeId && previewEntry ? previewEntry.code : form.accountType,
           account_subtype: form.detailType || undefined,
           detail_type_id: form.detailTypeId || undefined,
           // Only send a parent when the sub-account toggle is on, so unticking it cannot leave a
