@@ -9,14 +9,23 @@ import * as safetyApi from "../../api/safety";
 import { ToastProvider } from "../Toast";
 import { AccidentReportDrawer } from "./AccidentReportDrawer";
 
-vi.mock("../../api/safety", () => ({
-  createSafetyAccident: vi.fn().mockResolvedValue({ id: "accident-1" }),
-  patchSafetyAccident: vi.fn().mockResolvedValue({ id: "accident-1" }),
-  addAccidentPhoto: vi.fn().mockResolvedValue({}),
-  setSafetyAccidentStatus: vi.fn().mockResolvedValue({}),
-  spawnSafetyLiability: vi.fn().mockResolvedValue({}),
-  spawnSafetyWo: vi.fn().mockResolvedValue({}),
-}));
+// Spread the real module instead of replacing it wholesale. This mock listed only the six writes the
+// drawer used when the file was written; the drawer has since started reading user preferences, and a
+// bare replacement turned that into a hard "No getUserPreferences export is defined on the mock" that
+// killed ALL EIGHT tests at import time — none of which are about preferences. Overriding only what the
+// tests actually drive keeps the next added call from taking the whole file down with it.
+vi.mock("../../api/safety", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../api/safety")>();
+  return {
+    ...actual,
+    createSafetyAccident: vi.fn().mockResolvedValue({ id: "accident-1" }),
+    patchSafetyAccident: vi.fn().mockResolvedValue({ id: "accident-1" }),
+    addAccidentPhoto: vi.fn().mockResolvedValue({}),
+    setSafetyAccidentStatus: vi.fn().mockResolvedValue({}),
+    spawnSafetyLiability: vi.fn().mockResolvedValue({}),
+    spawnSafetyWo: vi.fn().mockResolvedValue({}),
+  };
+});
 
 // SC1: the four catalogs source from the real company-scoped list functions.
 vi.mock("../../api/mdata", () => ({
