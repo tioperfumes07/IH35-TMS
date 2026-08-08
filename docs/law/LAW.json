@@ -460,5 +460,12 @@
     "source_file": "apps/backend/src/dispatch/loads-bulk.routes.ts",
     "guard": "scripts/verify-delivery-evidence-latch-wired.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-08-SETTLEMENT-SAMPLE-TAG-EVERY-WRITER",
+    "title": "driver_finance.driver_settlements is the ONE money create type with no writable free-text column (prod: 54 cols, zero is_sample_data, zero memo/notes/description/internal_notes), so a Gate-B sample settlement was an untagged live financial record no purge query could find; is_sample_data is therefore the ONLY tag path, and because FOUR production writers insert into this table — not the one the sample-tag evidence doc named, at a path that does not exist — every production INSERT must name the column or a patched-one-writer fix leaves three untagged while the column makes everyone believe the gap is closed",
+    "source_file": "apps/backend/src/driver-finance/settlements.routes.ts",
+    "guard": "scripts/verify-settlement-sample-tag-wired.mjs",
+    "type": "enforced"
   }
 ]

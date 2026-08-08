@@ -124,11 +124,12 @@ export async function openLoadBookendedSettlement(
         settlement_model,
         first_load_id,
         first_load_number,
-        trip_started_at
+        trip_started_at,
+        is_sample_data
       )
       VALUES (
         $1,$2,$3,$4::date,$5::date,'open',0,0,0,0,
-        'load_bookended',$6,$7,$8::timestamptz
+        'load_bookended',$6,$7,$8::timestamptz,false
       )
       RETURNING id, display_id
     `,

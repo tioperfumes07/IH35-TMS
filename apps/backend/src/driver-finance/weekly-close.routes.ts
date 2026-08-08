@@ -92,9 +92,9 @@ export async function buildWeeklyCloseDraftForDriver(
     `
       INSERT INTO driver_finance.driver_settlements (
         operating_company_id, display_id, driver_id, period_start, period_end, status,
-        gross_pay, deductions_total, reimbursements_total, net_pay
+        gross_pay, deductions_total, reimbursements_total, net_pay, is_sample_data
       )
-      VALUES ($1,$2,$3,$4,$5,'presettle',0,0,0,0)
+      VALUES ($1,$2,$3,$4,$5,'presettle',0,0,0,0,false)
       RETURNING id::text AS id
     `,
     [opts.operatingCompanyId, displayId, opts.driverId, opts.weekStart, opts.weekEnd]
