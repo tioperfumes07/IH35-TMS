@@ -867,7 +867,6 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
               --
               -- The GL is untouched here: the reversing JE is posted separately by the void engine
               -- when VOID_ENFORCEMENT_ENABLED is on. This corrects the subledger cache only.
-              amount_open_cents = 0,
               updated_at = now(),
               updated_by_user_id = $3
           WHERE id = $1
