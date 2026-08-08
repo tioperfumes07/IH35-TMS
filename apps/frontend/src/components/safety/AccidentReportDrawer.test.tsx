@@ -4,10 +4,11 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import * as mdataApi from "../../api/mdata";
-import * as dispatchApi from "../../api/dispatch";
 import * as safetyApi from "../../api/safety";
 import { ToastProvider } from "../Toast";
 import { AccidentReportDrawer } from "./AccidentReportDrawer";
+import { pickCombo } from "../../test-utils/pickCombo";
+import * as loadsApi from "../../api/loads";
 
 // Spread the real module instead of replacing it wholesale. This mock listed only the six writes the
 // drawer used when the file was written; the drawer has since started reading user preferences, and a
@@ -39,6 +40,16 @@ vi.mock("../../api/mdata", () => ({
   // "+ Add new". A factory mock replaces the WHOLE module, so omitting one export made every test in
   // this file throw at import time — all 8 were failing for that reason alone, asserting nothing.
   createDriver: vi.fn().mockResolvedValue({ driver: { id: "driver-uuid-new" } }),
+}));
+
+// The load picker is `EntityPicker kind="load"`, whose registry entry calls `listLoads` from api/loads
+// (entityPickerRegistry.ts) — NOT the api/dispatch `listDispatchLoads` mocked below, which is the
+// pre-migration API. Unmocked, the real module runs and the option list is empty.
+vi.mock("../../api/loads", () => ({
+  listLoads: vi.fn().mockResolvedValue({
+    loads: [{ id: "load-uuid-1", load_number: "LD-9001", customer_name: "Acme", first_pickup_city: "Laredo" }],
+    total_count: 1,
+  }),
 }));
 
 vi.mock("../../api/dispatch", () => ({
@@ -121,7 +132,13 @@ describe("AccidentReportDrawer catalogs (SC1)", () => {
     // All four catalogs load company-scoped.
     expect(vi.mocked(mdataApi.listUnits)).toHaveBeenCalledWith(expect.objectContaining({ operating_company_id: "co-1" }));
     expect(vi.mocked(mdataApi.listVendors)).toHaveBeenCalledWith(expect.objectContaining({ operating_company_id: "co-1" }));
-    expect(vi.mocked(dispatchApi.listDispatchLoads)).toHaveBeenCalledWith(expect.objectContaining({ operating_company_id: "co-1", view: "loads" }));
+    // The load catalog moved to `EntityPicker kind="load"`, which calls listLoads (api/loads) — NOT
+    // dispatchApi.listDispatchLoads, which this line asserted before the migration and which the drawer no
+    // longer calls at all (0 invocations). The entity-scoping check is the point of this test, so it now
+    // follows the REAL call rather than being dropped. Note the registry passes the company as an ARRAY.
+    expect(vi.mocked(loadsApi.listLoads)).toHaveBeenCalledWith(
+      expect.objectContaining({ operating_company_id: ["co-1"] })
+    );
   });
 
   it("stores the driver uuid (not the display name) on selection", async () => {
@@ -150,14 +167,23 @@ describe("AccidentReportDrawer catalogs (SC1)", () => {
       await user.selectOptions(select, value);
       expect(select.value).toBe(value);
     };
-    // Driver uses the real Combobox (see above); the other three are the mocked native selects.
+    // Driver AND unit use the real Combobox; only vendor + load are the mocked native selects.
+    // The unit picker migrated to `EntityPicker kind="unit"` (AccidentReportDrawer.tsx:282), which this
+    // file does NOT stub — it stubs shared/Combobox and parity/ReferenceSelect. So `pick()` no longer
+    // applies to it: user.selectOptions drives a real <select>, and the EntityPicker renders an
+    // input role="combobox" whose options exist only while the listbox is OPEN. That mismatch surfaced as
+    // `Unable to find role="option" and name /T-101/`, which reads as a missing unit rather than as a
+    // control that had never been opened. The comment on this line said "the other three are the mocked
+    // native selects" — true before the migration, stale after it.
     const driverWrap = await screen.findByTestId("accident-driver-picker");
     const driverInput = within(driverWrap).getByRole("combobox") as HTMLInputElement;
     await user.click(driverInput);
     await user.click(await screen.findByText("Alfredo Cazares"));
-    await pick("accident-unit-picker", "unit-uuid-1", /T-101/);
+    const unitWrap = await screen.findByTestId("accident-unit-picker");
+    pickCombo(within(unitWrap).getByRole("combobox"), /T-101/);
     await pick("accident-vendor-picker", "vendor-uuid-1", /Laredo Diesel/);
-    await pick("accident-load-picker", "load-uuid-1", /LD-9001/);
+    const loadWrap = await screen.findByTestId("accident-load-picker");
+    pickCombo(within(loadWrap).getByRole("combobox"), /LD-9001/);
 
     await user.click(screen.getByTestId("accident-save-btn"));
     await waitFor(() => expect(vi.mocked(safetyApi.createSafetyAccident)).toHaveBeenCalled());
