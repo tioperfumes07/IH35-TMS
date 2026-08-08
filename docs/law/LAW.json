@@ -502,5 +502,12 @@
     "source_file": "scripts/verify-regclass-fallback-intent.mjs",
     "guard": "scripts/verify-regclass-fallback-intent.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-FLAG-HONESTY-BANNER-READS-FLAG",
+    "title": "A banner that tells the operator what a feature flag is doing must READ that flag — two Banking banners asserted 'stays OFF by default' from literals while BANK_FEED_GL_POSTING_ENABLED and TRANSFER_GL_POSTING_ENABLED were overridden ON for all three entities, so categorizing a row posted a real balanced journal entry the operator had just been told would not exist",
+    "source_file": "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+    "guard": "scripts/verify-flag-honesty-banner-reads-flag.mjs",
+    "type": "enforced"
   }
 ]
