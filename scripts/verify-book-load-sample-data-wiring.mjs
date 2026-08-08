@@ -33,6 +33,9 @@ const SERVICE = "apps/backend/src/dispatch/book-load.service.ts";
 // while create was green. Guarding create alone let "sample" silently reset to false on every edit.
 const EDIT_MAP = "apps/frontend/src/pages/dispatch/components/book-load-v4/editLoadMapping.ts";
 const UPDATE_SVC = "apps/backend/src/dispatch/update-load.service.ts";
+// FAIL-B4 completion — the WRITE half is useless if the READ half never returns the field: the edit
+// prefill hydrates from `load.is_sample_data`, so the detail SELECT must actually select it.
+const READ_ROUTE = "apps/backend/src/mdata/loads.routes.ts";
 
 function assert(files) {
   const problems = [];
@@ -56,6 +59,10 @@ function assert(files) {
   // ---- FAIL-B4: the EDIT chain (prefill -> dirty-gated patch -> update schema -> column map)
   const editMap = files[EDIT_MAP] ?? "";
   const updateSvc = files[UPDATE_SVC] ?? "";
+  const readRoute = files[READ_ROUTE] ?? "";
+  if (!/is_sample_data/.test(readRoute)) {
+    problems.push(`${READ_ROUTE}: GET /mdata/loads/:id must SELECT is_sample_data or the edit checkbox can never hydrate`);
+  }
   if (!/is_sample_data:\s*Boolean\(/.test(editMap)) {
     problems.push(`${EDIT_MAP}: edit PREFILL must hydrate is_sample_data (else the box shows unchecked on a sample load)`);
   }
@@ -90,7 +97,7 @@ function assert(files) {
   return problems;
 }
 
-const files = Object.fromEntries([MODAL, API, ROUTES, SERVICE, EDIT_MAP, UPDATE_SVC].map((rel) => [rel, readFileSync(path.join(ROOT, rel), "utf8")]));
+const files = Object.fromEntries([MODAL, API, ROUTES, SERVICE, EDIT_MAP, UPDATE_SVC, READ_ROUTE].map((rel) => [rel, readFileSync(path.join(ROOT, rel), "utf8")]));
 
 if (SELFTEST) {
   const checks = [
@@ -100,6 +107,7 @@ if (SELFTEST) {
     ["edit prefill dropped", { ...files, [EDIT_MAP]: files[EDIT_MAP].replace(/is_sample_data:\s*Boolean\([^\n]*\n/, "") }],
     ["edit patch field dropped", { ...files, [EDIT_MAP]: files[EDIT_MAP].replace(/\["is_sample_data",[^\n]*\n/, "") }],
     ["update column map dropped", { ...files, [UPDATE_SVC]: files[UPDATE_SVC].replace(/\n\s*is_sample_data:\s*"is_sample_data",/, "") }],
+    ["detail SELECT dropped", { ...files, [READ_ROUTE]: files[READ_ROUTE].replace(/is_sample_data/g, "x_removed") }],
   ];
   for (const [name, planted] of checks) {
     if (!assert(planted).length) {

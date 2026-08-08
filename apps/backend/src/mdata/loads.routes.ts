@@ -746,6 +746,12 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             -- Edit wizard can round-trip them. Read-only enrichment; every column verified present in
             -- book-load.service.ts INSERT + accepted by the PATCH schema (no fabricated fields).
             customer_wo_number, pickup_number, border_routing, driver_instructions_text,
+            -- FAIL-B4 completion: the Edit wizard prefills the sample checkbox from this field, and the
+            -- book-load INSERT has written it since FAIL-D6 — but this SELECT never returned it, so the
+            -- box rendered UNCHECKED on every edit of a sample load no matter what the row held. Verified
+            -- live on prod: GET /api/v1/mdata/loads/:id answered 200 for a known sample load with the key
+            -- entirely ABSENT from the payload. Column verified present (migration 0403), not fabricated.
+            is_sample_data,
             requires_tarps, tarp_type, lumper_amount_cents,
             customer_chargeback_requested, customer_chargeback_reason, live_load_number,
             anticipated_chargeback_cents, anticipated_chargeback_reason,
