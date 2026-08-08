@@ -63,6 +63,12 @@ type CreateBillInput = {
   // the same txn (Option B inc 2 — docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
   attachmentDraftId?: string | null;
   /**
+   * LV-AP-DUP: explicit operator override for the duplicate-vendor-invoice control. Absent/false
+   * means "warn and refuse"; a reason string means "the operator saw the warning and accepted it",
+   * which is an internal-control DECISION and is written to the audit trail, never silently.
+   */
+  duplicateOverrideReason?: string | null;
+  /**
    * Vendor Bill create (LAW §9): when provided, must be non-empty and is INSERTed into
    * accounting.bill_lines in the SAME transaction as the bill header. Omitted = legacy
    * programmatic callers (settlement/insurance) that still add lines on their own path.
@@ -1193,6 +1199,25 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
   });
 }
 
+/**
+ * LV-AP-DUP — a duplicate vendor invoice was accepted with no warning and posted to the GL twice.
+ *
+ * Thrown instead of creating the second bill. Carries the existing bill so the UI can show WHICH
+ * one it collides with; the caller proceeds only by re-submitting with duplicateOverrideReason,
+ * which is the QBO/McLeod behaviour: warn, allow a deliberate override, record who decided.
+ */
+export class DuplicateBillNumberError extends Error {
+  readonly existingBillId: string;
+  readonly billNumber: string;
+  readonly httpStatus = 409;
+  constructor(existingBillId: string, billNumber: string) {
+    super("duplicate_bill_number_for_vendor");
+    this.name = "DuplicateBillNumberError";
+    this.existingBillId = existingBillId;
+    this.billNumber = billNumber;
+  }
+}
+
 export async function createBill(input: CreateBillInput, userId: string) {
   if (input.amountCents <= 0) throw new Error("bill_amount_must_be_positive");
 
@@ -1225,6 +1250,70 @@ export async function createBill(input: CreateBillInput, userId: string) {
     const hasClassId = (classCol.rowCount ?? 0) > 0;
     const classId = hasClassId ? (input.classId ?? null) : null;
     const vendorCols = await resolveBillVendorWriteColumns(client, input.operatingCompanyId, input.vendorId);
+
+    // LV-AP-DUP — DUPLICATE VENDOR-INVOICE CONTROL (live-proven: two identical $743.21 bills 10.3 s
+    // apart, BOTH posted, leaving $1,486.42 of expense and A/P for one $743.21 invoice).
+    //
+    // This is NOT the double-submit race and a disabled button would not have stopped it -- the two
+    // submissions were ten seconds apart. It is a missing detection RULE. It is also NOT the same
+    // defect as ACCT-F180: idempotency protects a RETRY of one request, whereas this is two
+    // deliberate requests with different keys, so neither fix subsumes the other.
+    //
+    // ENTITY-SCOPED, deliberately: bill_number is per-entity, so the predicate MUST include
+    // operating_company_id or a legitimate USMCA bill would collide with an unrelated TRANSP one.
+    // Vendor identity is matched across all three columns because a bill may carry any of them
+    // (mdata_vendor_id uuid, or vendor_uuid / vendor_id which are TEXT on prod).
+    //
+    // WARN, DO NOT HARD-BLOCK (QBO/McLeod behaviour): carriers legitimately reuse invoice numbers
+    // across vendors, and a hard block would make a real bill unenterable. Voided bills never
+    // collide -- a voided duplicate is precisely what a re-entry is meant to replace.
+    const billNumber = input.billNumber?.trim();
+    if (billNumber) {
+      const dup = await client.query<{ id: string }>(
+        `
+          SELECT b.id::text AS id
+            FROM accounting.bills b
+           WHERE b.operating_company_id = $1::uuid
+             AND b.voided_at IS NULL
+             AND b.bill_number = $2::text
+             AND (
+                   ($3::uuid IS NOT NULL AND b.mdata_vendor_id = $3::uuid)
+                OR ($4::text IS NOT NULL AND b.vendor_uuid = $4::text)
+                OR ($5::text IS NOT NULL AND b.vendor_id = $5::text)
+             )
+           LIMIT 1
+        `,
+        [
+          input.operatingCompanyId,
+          billNumber,
+          vendorCols.mdataVendorId ?? null,
+          vendorCols.vendorUuidText ?? null,
+          vendorCols.vendorIdText ?? null,
+        ]
+      );
+      const existingId = dup.rows[0]?.id;
+      if (existingId) {
+        const override = input.duplicateOverrideReason?.trim();
+        if (!override) throw new DuplicateBillNumberError(existingId, billNumber);
+        // The override is an internal-control decision, so it is recorded with who/when/why. A
+        // control that can be bypassed without a trace is not a control.
+        await appendCrudAudit(
+          client,
+          userId,
+          "accounting.bill_duplicate_number_override",
+          {
+            resource_type: "accounting.bills",
+            resource_id: existingId,
+            operating_company_id: input.operatingCompanyId,
+            bill_number: billNumber,
+            duplicate_of_bill_id: existingId,
+            override_reason: override,
+          },
+          "warning",
+          "LV-AP-DUP"
+        );
+      }
+    }
 
     const res = await client.query<BillRow>(
       hasInsuranceClaimId && hasClassId

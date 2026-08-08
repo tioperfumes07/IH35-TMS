@@ -7,6 +7,7 @@ import {
   createBill,
   getBillDetail,
   getBillPaymentDetail,
+  DuplicateBillNumberError,
   listBillPayments,
   listBillPaymentsForBill,
   listBills,
@@ -66,6 +67,9 @@ const createBillLineSchema = z.object({
 const createBillBodySchema = z.object({
   vendor_id: z.string().trim().min(1),
   bill_number: z.string().trim().max(200).optional(),
+  // LV-AP-DUP — the operator's explicit acceptance of the duplicate-vendor-invoice warning. Its
+  // ABSENCE is what makes the control real: a caller cannot create a duplicate without saying why.
+  duplicate_override_reason: z.string().trim().min(1).max(500).optional(),
   bill_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   amount_cents: z.coerce.number().int().positive(),
@@ -288,6 +292,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           insuranceClaimId: body.data.insurance_claim_id,
           classId: body.data.class_id,
           attachmentDraftId: body.data.attachment_draft_id,
+          duplicateOverrideReason: body.data.duplicate_override_reason,
           lines: body.data.lines?.map((line) => ({
             accountId: line.account_id,
             amountCents: line.amount_cents,
@@ -330,6 +335,19 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         message === "bill_vendor_not_in_company"
       ) {
         return reply.code(400).send({ error: message });
+      }
+      // LV-AP-DUP — a duplicate vendor invoice is a CONFLICT the operator can resolve, not a server
+      // fault. 409 carries the colliding bill id so the UI can link straight to it, and names the
+      // field that overrides it -- a warning the caller cannot act on is just a failure.
+      if (error instanceof DuplicateBillNumberError) {
+        return reply.code(409).send({
+          error: error.message,
+          message:
+            `Bill number ${error.billNumber} already exists for this vendor in this entity. ` +
+            `Re-submit with duplicate_override_reason to record it deliberately.`,
+          existing_bill_id: error.existingBillId,
+          override_field: "duplicate_override_reason",
+        });
       }
       throw error;
     }
