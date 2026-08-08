@@ -119,6 +119,7 @@ type FormValues = BookLoadFormValues & {
   miles_deadhead: number;
   pickup_number: string;
   border_routing: string;
+  is_sample_data: boolean;
   cash_advance_cents: number;
   fuel_advance_cents: number;
   factoring_company_vendor_id: string;
@@ -310,6 +311,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
       miles_deadhead: 0,
       pickup_number: "",
       border_routing: "",
+      is_sample_data: false,
       cash_advance_cents: 0,
       fuel_advance_cents: 0,
       factoring_company_vendor_id: "",
@@ -641,6 +643,9 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         miles_deadhead: numOrUndef(values.miles_deadhead),
         pickup_number: values.pickup_number || undefined,
         border_routing: values.border_routing || undefined,
+        // FAIL-D6 — send the flag explicitly. Sending `undefined` when false is fine (the column is NOT
+        // NULL DEFAULT false), but sending it always keeps the request self-describing.
+        is_sample_data: values.is_sample_data,
         trip_type: values.trip_type || undefined,
         tour_id: values.tour_id || undefined,
         // Guard empty → undefined: the backend trailer_type is z.enum(...).optional(), which rejects "" (a
@@ -1120,6 +1125,21 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Pickup #
                       <input {...form.register("pickup_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+                    </label>
+                    {/* FAIL-D6 — the ONLY UI path that sets mdata.loads.is_sample_data. The column has
+                        existed since migration 0403 (NOT NULL DEFAULT false) but no create surface ever
+                        populated it, so every TMS-native load was written `false` whether it was real or a
+                        demo fixture — and nothing downstream could tell them apart. Owner ruling §9.8 keeps
+                        this column BANNED as a delete-selector; this marks data at birth, it selects
+                        nothing for destruction. */}
+                    <label className="flex items-end gap-1.5 text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      <input
+                        type="checkbox"
+                        data-testid="book-load-is-sample-data"
+                        {...form.register("is_sample_data")}
+                        className="mb-1 h-3.5 w-3.5 rounded-sm border-gray-300"
+                      />
+                      <span className="mb-0.5">Sample / demo load</span>
                     </label>
                   </div>
 

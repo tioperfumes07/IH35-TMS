@@ -109,6 +109,14 @@ export type BookLoadInput = {
   miles_deadhead?: number;
   pickup_number?: string;
   border_routing?: string;
+  /**
+   * FAIL-D6 — marks a load as demo/sample data at CREATION. `mdata.loads.is_sample_data` has existed
+   * since migration 0403 (NOT NULL DEFAULT false) but NOTHING in the UI or this service ever set it, so
+   * every TMS-native load — real or demo — was written as `false`. Owner ruling §9.8 calls the column
+   * untrustworthy precisely because it "has been wrong on real rows"; setting it correctly at birth is
+   * what makes it trustworthy. It is BANNED as a delete-selector and this change does not make it one.
+   */
+  is_sample_data?: boolean;
   trailer_type?: "refrigerated_van" | "dry_van" | "flatbed" | "lowboy" | "power_only_no_trailer" | "power_only_customer_trailer";
   assigned_unit_id?: string;
   // W-FIX-3b: the selected trailer (mdata.equipment id) → persisted post-insert to the real link
@@ -1330,9 +1338,9 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           detention_bill_customer_per_hour_cents, detention_driver_pay_per_hour_cents,
           late_delivery_risk_y_n, late_delivery_est_deduction_cents, late_delivery_reason,
           ocr_source_pdf_r2_key, miles_practical, miles_shortest, miles_deadhead,
-          customer_wo_number, pickup_number, border_routing
+          customer_wo_number, pickup_number, border_routing, is_sample_data
         )
-        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39)
+        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40)
         RETURNING *
       `,
       [
@@ -1375,6 +1383,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         input.customer_wo_number ?? null,
         input.pickup_number ?? null,
         input.border_routing ?? null,
+        input.is_sample_data ?? false,
       ]
     );
     const load = loadRes.rows[0] as Record<string, unknown>;

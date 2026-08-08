@@ -210,6 +210,8 @@ export type DispatchBookLoadPayload = {
   miles_deadhead?: number;
   pickup_number?: string;
   border_routing?: string;
+  /** FAIL-D6 — marks this load as demo/sample data (mdata.loads.is_sample_data). */
+  is_sample_data?: boolean;
   // CUSTVEND-PAR-1: Manager+ override when customer is at/over credit limit.
   override_credit_limit?: boolean;
 };
