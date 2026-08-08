@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { getDispatchAvailableDrivers, type AvailableDriverRow } from "../../api/dispatch";
+import { listDrivers } from "../../api/mdata";
 import { Combobox } from "../../components/Combobox";
 import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 
@@ -43,13 +44,39 @@ export function AssignDriverDropdown({
     queryFn: () =>
       getDispatchAvailableDrivers({
         operating_company_id: operatingCompanyId,
-        load_id: loadId,
+        load_id: loadId as string,
         for_pickup_at: forPickupAt,
       }),
     enabled: Boolean(loadId && operatingCompanyId && driversOverride == null),
   });
 
-  const drivers = driversOverride ?? q.data?.drivers ?? [];
+  // FAIL-D1 — the driver picker showed ZERO drivers on Book Load, with no error and no empty-state reason.
+  // Cause: the query above is gated on `loadId`, and during Book Load the load does not exist yet, so it never
+  // ran. `/dispatch/available-drivers` also REQUIRES load_id server-side, so it cannot serve the pre-create
+  // case at all. Neither the API nor the data was broken — measured on prod, that endpoint returns 24 drivers
+  // for USMCA and the shared names search returns 27; the picker simply never asked.
+  //
+  // Pre-create fallback: source the roster from the load-independent driver list. HOS/proximity fields are not
+  // available without a load, so they are reported as unknown rather than invented — `hos_safe: true` here
+  // would fake a safety clearance this endpoint cannot give, and the caller already re-checks HOS on select.
+  const rosterQ = useQuery({
+    queryKey: ["dispatch", "available-drivers", "preload-roster", operatingCompanyId],
+    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }),
+    enabled: Boolean(!loadId && operatingCompanyId && driversOverride == null),
+  });
+
+  const rosterDrivers: AvailableDriverRow[] = (rosterQ.data?.drivers ?? []).map((d) => ({
+    driver_id: d.id,
+    display_name: [d.first_name, d.last_name].filter(Boolean).join(" ").trim() || d.id,
+    display_id: null,
+    hours_remaining_today: 0,
+    hours_remaining_week: 0,
+    distance_to_pickup_miles: 0,
+    hos_safe: false,
+    is_in_violation: false,
+  }));
+
+  const drivers = driversOverride ?? (loadId ? q.data?.drivers ?? [] : rosterDrivers);
   const sorted = useMemo(() => {
     const copy = [...drivers];
     copy.sort((a, b) => {
