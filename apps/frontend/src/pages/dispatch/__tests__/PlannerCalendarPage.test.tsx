@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as dispatchApi from "../../../api/dispatch";
 import { PlannerCalendarPage } from "../PlannerCalendarPage";
 
@@ -53,8 +53,19 @@ function wrap(ui: ReactNode) {
 
 describe("PlannerCalendarPage (B21-D4)", () => {
   beforeEach(() => {
+    // PIN THE CLOCK. The page derives its week from `new Date()` (parseWeekStart with no argument),
+    // but every fixture below is anchored to the week of 2026-06-02. Without a pinned clock these
+    // tests passed only during that one real-world week and have been failing ever since — the
+    // fixtures land on days the calendar no longer renders, so the chips and overlays are simply
+    // absent. Pinning makes them deterministic instead of a time bomb.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date("2026-06-03T12:00:00.000Z"));
     vi.spyOn(dispatchApi, "getDispatchPlannerWeek").mockResolvedValue(weekPayload);
     vi.spyOn(dispatchApi, "patchDispatchPlannerLoadStartAt").mockResolvedValue(weekPayload.loads[0]);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("renders planner calendar page shell", async () => {

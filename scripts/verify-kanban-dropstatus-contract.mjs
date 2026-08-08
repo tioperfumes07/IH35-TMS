@@ -166,6 +166,100 @@ export function auditSyntheticCardNotDraggable(kanbanSrc) {
   return problems;
 }
 
+/**
+ * LV-KANBAN-DROP-OUTSIDE-DROPPABLE-IS-SILENT — the CLASS rule, filed by CC-3 with live evidence.
+ *
+ * `handleDragEnd` grew branch by branch, and each new one was written as a bare `return;`. The worst of
+ * them was the first: `if (!activeId || !overId) return;`, which fires whenever a release does not resolve
+ * over a registered droppable — an ordinary near-miss on an 11-lane board, or the keyboard sensor never
+ * snapping to a lane. CC-3 measured four such drops producing no HTTP request, no `audit.row_changes` row,
+ * no `updated_at` change and no toast; a human then reported a load as moved to Completed that had never
+ * moved. Silence made a missed drag indistinguishable from a successful one.
+ *
+ * So the rule is per-BRANCH, not per-bug: every early return in this handler must either change state or
+ * tell the operator something. That way branch #6 cannot be added silently later.
+ */
+export function auditDragEndBranchesSpeak(kanbanSrc) {
+  const problems = [];
+  const src = kanbanSrc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  const start = src.indexOf("const handleDragEnd");
+  if (start === -1) {
+    problems.push(`DispatchKanban.tsx: no handleDragEnd found — refusing to pass vacuously.`);
+    return problems;
+  }
+  const body = src.slice(start, src.indexOf("\n  };", start) + 1);
+  if (body.length < 40) {
+    problems.push(`DispatchKanban.tsx: could not read the handleDragEnd body — refusing to pass vacuously.`);
+    return problems;
+  }
+  const speaks = (chunk) => /pushToast|setOptimisticLoads/.test(chunk);
+  // Shape 1: a bare one-line guard — `if (...) return;`
+  for (const m of body.matchAll(/if\s*\(([^)]*(?:\([^)]*\))?[^)]*)\)\s*return;/g)) {
+    problems.push(
+      `DispatchKanban.tsx: handleDragEnd returns silently on "${m[1].trim()}" — no toast, no state change. ` +
+        `The dispatcher cannot tell a missed drop from a successful one ` +
+        `(LV-KANBAN-DROP-OUTSIDE-DROPPABLE-IS-SILENT).`,
+    );
+  }
+  // Shape 2: a block guard whose body returns without saying anything.
+  for (const m of body.matchAll(/if\s*\(([^)]*(?:\([^)]*\))?[^)]*)\)\s*\{([\s\S]*?)\}/g)) {
+    if (/\breturn\b/.test(m[2]) && !speaks(m[2])) {
+      problems.push(
+        `DispatchKanban.tsx: the handleDragEnd branch "${m[1].trim()}" returns without a toast or a state ` +
+          `change (LV-KANBAN-DROP-OUTSIDE-DROPPABLE-IS-SILENT).`,
+      );
+    }
+  }
+  return problems;
+}
+
+// LV-PLANNER-DROP-SILENT-NOOP — the planner calendar is the SECOND drop surface in dispatch. Its
+// handleDragEnd once collapsed two unrelated situations into one bare `return;`: released outside any
+// day cell (an EXPECTED no-op, silence is right) and released ON a real driver/day cell with a load
+// that could not be resolved (a bug state that must never vanish). Only the first may be silent.
+export function auditPlannerDropSilentNoop(plannerSrc) {
+  const problems = [];
+  const src = plannerSrc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  const start = src.indexOf("const handleDragEnd");
+  if (start === -1) {
+    problems.push(
+      `PlannerCalendarPage.tsx: no handleDragEnd found — scope is wrong, refusing to pass vacuously.`,
+    );
+    return problems;
+  }
+  const body = src.slice(start, src.indexOf("\n  };", start) + 1);
+  if (body.length < 40) {
+    problems.push(`PlannerCalendarPage.tsx: could not read the handleDragEnd body — refusing to pass vacuously.`);
+    return problems;
+  }
+  // The shipped defect shape: ONE return whose condition mixes the dragged load with the drop target.
+  for (const m of body.matchAll(/if\s*\(([^)]*(?:\([^)]*\))?[^)]*)\)\s*return;/g)) {
+    const cond = m[1];
+    if (/\bload\b/.test(cond) && /\btarget\b/.test(cond)) {
+      problems.push(
+        `PlannerCalendarPage.tsx: handleDragEnd returns silently on a condition that mixes the dragged ` +
+          `load with the drop target ("${cond.trim()}"). Dropping onto a REAL driver/day cell with an ` +
+          `unresolvable load then produces no request, no toast and no reason ` +
+          `(LV-PLANNER-DROP-SILENT-NOOP).`,
+      );
+    }
+  }
+  // The bug-state branch must tell the operator something.
+  const loadGuard = body.match(/if\s*\(\s*!load[^)]*\)\s*\{([\s\S]*?)\}/);
+  if (!loadGuard) {
+    problems.push(
+      `PlannerCalendarPage.tsx: handleDragEnd has no dedicated !load branch, so an unresolvable load on a ` +
+        `real cell cannot be reported to the operator (LV-PLANNER-DROP-SILENT-NOOP).`,
+    );
+  } else if (!/pushToast/.test(loadGuard[1])) {
+    problems.push(
+      `PlannerCalendarPage.tsx: the !load branch in handleDragEnd does not pushToast, so the drop still ` +
+        `vanishes silently (LV-PLANNER-DROP-SILENT-NOOP).`,
+    );
+  }
+  return problems;
+}
+
 export function audit(frontendSrc, backendSrc, apiSrc) {
   const accepted = acceptedStatuses(backendSrc);
   if (!accepted || accepted.length === 0) {
@@ -262,7 +356,43 @@ if (process.argv.includes("--selftest")) {
     ["catch that re-throws is allowed", `onStatusDrop={async (id, nextStatus) => {\n try { await m(); } catch (e) { log(e); throw e; }\n }}`, 0],
     ["handler missing — must not pass vacuously", `no handler here`, 1],
   ];
+  const plannerOk = `const handleDragEnd = async (event) => {\n    const load = event.active.data.current?.load;\n    const target = event.over?.data.current;\n    if (!target?.driverId || !target.day) return;\n    if (!load || !companyId) {\n      pushToast("Could not reschedule that load.", "error");\n      return;\n    }\n    await go();\n  };\n`;
+  const plannerCases = [
+    ["planner: expected no-op silent, bug state toasts (correct)", plannerOk, 0],
+    [
+      "REGRESSION BAR — one bare return mixing load and target (the shipped defect)",
+      `const handleDragEnd = async (event) => {\n    const load = event.active.data.current?.load;\n    const target = event.over?.data.current;\n    if (!load || !target?.driverId || !target.day || !companyId) return;\n    await go();\n  };\n`,
+      2,
+    ],
+    [
+      "planner: !load branch present but says nothing to the operator",
+      plannerOk.replace(`pushToast("Could not reschedule that load.", "error");\n`, ""),
+      1,
+    ],
+    ["planner: handler missing — must not pass vacuously", `no handler here`, 1],
+  ];
   let failed = 0;
+  for (const [name, plannerSrc, want] of plannerCases) {
+    const got = auditPlannerDropSilentNoop(plannerSrc).length;
+    if (got !== want) {
+      console.error(`SELFTEST FAIL: ${name} — expected ${want}, got ${got}`);
+      failed++;
+    }
+  }
+  const speakOk = `const handleDragEnd = async (event) => {\n    if (!activeId || !overId) {\n      pushToast("Drop the card onto a lane.", "info");\n      return;\n    }\n    setOptimisticLoads(x);\n  };\n`;
+  const speakCases = [
+    ["kanban: every early return speaks (correct)", speakOk, 0],
+    ["REGRESSION BAR — the shipped bare `if (!activeId || !overId) return;`", `const handleDragEnd = async (event) => {\n    if (!activeId || !overId) return;\n    setOptimisticLoads(x);\n  };\n`, 1],
+    ["kanban: block branch returns saying nothing", `const handleDragEnd = async (event) => {\n    if (!targetGroup) {\n      log("x");\n      return;\n    }\n  };\n`, 1],
+    ["kanban: handler missing — must not pass vacuously", `no handler here`, 1],
+  ];
+  for (const [name, kanbanSrc, want] of speakCases) {
+    const got = auditDragEndBranchesSpeak(kanbanSrc).length;
+    if (got !== want) {
+      console.error(`SELFTEST FAIL: ${name} — expected ${want}, got ${got}`);
+      failed++;
+    }
+  }
   for (const [name, kanbanSrc, want] of syntheticCases) {
     const got = auditSyntheticCardNotDraggable(kanbanSrc).length;
     if (got !== want) {
@@ -285,11 +415,11 @@ if (process.argv.includes("--selftest")) {
     }
   }
   if (failed) process.exit(1);
-  console.log(`${LABEL} SELFTEST PASS — ${cases.length + dropCases.length + syntheticCases.length} mutations detected correctly`);
+  console.log(`${LABEL} SELFTEST PASS — ${cases.length + dropCases.length + syntheticCases.length + plannerCases.length + speakCases.length} mutations detected correctly`);
   process.exit(0);
 }
 
-for (const rel of [FE, BE, API]) {
+for (const rel of [FE, BE, API, "apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx"]) {
   if (!fs.existsSync(path.join(ROOT, rel))) {
     console.error(`${LABEL} FAIL — missing ${rel}; scope is wrong, refusing to pass vacuously.`);
     process.exit(1);
@@ -298,10 +428,13 @@ for (const rel of [FE, BE, API]) {
 
 const feSrc = fs.readFileSync(path.join(ROOT, FE), "utf8");
 const PAGE = "apps/frontend/src/pages/Dispatch.tsx";
+const PLANNER = "apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx";
 const problems = [
   ...audit(feSrc, fs.readFileSync(path.join(ROOT, BE), "utf8"), fs.readFileSync(path.join(ROOT, API), "utf8")),
   ...auditDropErrorHandling(fs.readFileSync(path.join(ROOT, PAGE), "utf8")),
   ...auditSyntheticCardNotDraggable(feSrc),
+  ...auditDragEndBranchesSpeak(feSrc),
+  ...auditPlannerDropSilentNoop(fs.readFileSync(path.join(ROOT, PLANNER), "utf8")),
 ];
 if (problems.length) {
   console.error(`${LABEL} FAIL — a Kanban lane drops to a status the API rejects, or one that silently skips the money path:\n`);
