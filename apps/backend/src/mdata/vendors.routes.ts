@@ -144,6 +144,12 @@ const detailQuerySchema = z.object({
 });
 
 const createVendorBodySchema = z.object({
+  /**
+   * ACCT-F220 — lets a caller mark a vendor as SAMPLE data at creation. mdata.vendors has carried
+   * is_sample_data all along and this route never wrote it, so no operator could tag a vendor through
+   * the product. Three vendors were created untagged on prod this way in a single packet.
+   */
+  is_sample_data: z.boolean().optional(),
   name: z.string().trim().min(1).max(200),
   vendor_code: z.string().trim().max(100).optional(),
   vendor_type: vendorTypeWriteSchema,
@@ -598,6 +604,8 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         addOptional("payment_terms_id", b.payment_terms_id);
         addOptional("default_expense_account_id", b.default_expense_account_id);
         addOptional("account_number", b.account_number);
+        // ACCT-F220 — same gap as customers: the column existed, the route never wrote it.
+        addOptional("is_sample_data", b.is_sample_data);
 
         const res = await client.query(
           `
