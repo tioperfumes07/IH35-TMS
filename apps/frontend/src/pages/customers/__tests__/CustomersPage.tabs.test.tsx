@@ -8,6 +8,15 @@ import { ToastProvider } from "../../../components/Toast";
 import { useAuth } from "../../../auth/useAuth";
 import { CustomersPage } from "../../Customers";
 
+// CompanyProvider is never mounted by this harness, so every render threw
+// "useCompanyContext must be used within CompanyProvider" and React Router swallowed it into its default
+// ErrorBoundary — which is why the failure surfaced as "expected vi.fn() to be called at least once"
+// rather than as the context error it actually was. Mocking the hook is the pattern the rest of the
+// suite already uses for this context.
+vi.mock("../../../contexts/CompanyContext", () => ({
+  useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
+}));
+
 vi.mock("../../../auth/useAuth", () => ({
   useAuth: vi.fn(),
 }));

@@ -58,9 +58,17 @@ const profileFixture = {
   },
 };
 
-vi.mock("../../api/client", () => ({
-  apiRequest: vi.fn(),
-}));
+// Spread the real module. This mock exported only apiRequest; the page now also imports ApiError from
+// here, so the wholesale form threw "No ApiError export is defined on the mock" at IMPORT TIME and took
+// all six tests down before any of them ran. The sibling api/mdata mock two lines below already uses
+// importOriginal — this one just never caught up.
+vi.mock("../../api/client", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../api/client")>();
+  return {
+    ...actual,
+    apiRequest: vi.fn(),
+  };
+});
 
 vi.mock("../../api/mdata", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/mdata")>();
@@ -142,7 +150,10 @@ describe("VehicleProfilePage", () => {
 
   it("opens status modal when changing to OOS", async () => {
     render(wrap(<VehicleProfilePage />));
-    await screen.findByText(/Unit T-501/);
+    // Load gate, not an assertion: wait until the unit has rendered before touching the status select.
+    // The page now shows "Unit T-501" in more than one place, so the singular findByText threw
+    // "Found multiple elements" — it was asserting a uniqueness this test never meant to claim.
+    await screen.findAllByText(/Unit T-501/);
     const select = screen.getByDisplayValue("InService");
     fireEvent.change(select, { target: { value: "OutOfService" } });
     expect(await screen.findByTestId("vp-status-change-modal")).toBeInTheDocument();
