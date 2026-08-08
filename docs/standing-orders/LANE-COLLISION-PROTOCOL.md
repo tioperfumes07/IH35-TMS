@@ -4,6 +4,23 @@
 Enforced by `scripts/verify-lane-territory.mjs` + `scripts/verify-hotfile-single-open-pr.mjs`
 (`LAW-2026-08-07-LANE-TERRITORY`). Load at the start of every session.**
 
+## 0. METHOD — VERTICAL SWEEP BY CLASS (states the owner's permanent method; every lane order must)
+
+Work is drained **VERTICALLY, by CLASS, globally and universally** — one defect class swept across the
+whole system at once. **Not module-by-module. Not the old block way.** Pick the class, sweep it
+globally against repo *and* prod, classify ORIGIN before calling any gap a defect, fix the root cause
+once in one PR, ship one mutation-proven ratcheting guard, and call the class drained only at zero live
+instances **and** a guard that exists. Modules certify LAST, from drained classes.
+
+This section exists because `LAW-2026-08-07-VERTICAL-METHOD` requires **every** file in
+`docs/standing-orders/` to state the method — the rule was already in all four lane orders and a lane
+still reverted, which is the argument for a guard over prose. A new standing order that omitted it
+would quietly reopen that hole, so `scripts/verify-vertical-method-law-present.mjs` fails the build
+until it is here. **Never delete the method line to make that guard pass.**
+
+Lane territory (below) is the *collision* rule and is orthogonal: it says WHO may touch a file, not
+HOW work is sequenced. Both apply at once.
+
 ## Supersedes (drift resolved 2026-08-07 — three documents existed for one problem)
 
 | document | disposition |

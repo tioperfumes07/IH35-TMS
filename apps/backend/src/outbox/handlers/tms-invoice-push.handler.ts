@@ -105,6 +105,7 @@ async function loadInvoice(
         c.billing_state AS customer_billing_state
       FROM accounting.invoices i
       JOIN mdata.customers c ON c.id = i.customer_id
+                             AND c.operating_company_id = $2::uuid
       WHERE i.id = $1::uuid
         AND i.operating_company_id = $2::uuid
       LIMIT 1

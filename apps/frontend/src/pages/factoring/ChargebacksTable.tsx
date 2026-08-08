@@ -3,6 +3,7 @@
  * Migrated to shared ParityTable grammar; amount formatting, sign, column order,
  * EntityLink, and bulk Export Selected / Dispute stub preserved 1:1.
  */
+import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useToast } from "../../components/Toast";
@@ -48,7 +49,7 @@ export function ChargebacksTable({ rows, fmtCurrency, fmtDate }: Props) {
         <EntityLink
           kind="factoring_advance"
           id={row.factoring_advance_id}
-          label={row.statement_reference || row.factoring_advance_id.slice(0, 8)}
+          label={entityLabel(row.statement_reference, row.factoring_advance_id, "Advance")}
         />
       ),
     },

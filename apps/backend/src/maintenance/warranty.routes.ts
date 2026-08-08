@@ -196,6 +196,7 @@ export async function detectWarrantyEligiblePartsFromWorkOrder(
                 pw.warranty_months, pw.parts_inventory_id::text, v.vendor_name AS vendor_name
          FROM maintenance.parts_warranty pw
          LEFT JOIN mdata.vendors v ON v.id = pw.vendor_id
+                                   AND v.operating_company_id = $1::uuid
          WHERE pw.operating_company_id = $1
            AND pw.parts_inventory_id = $2
            AND pw.archived_at IS NULL
@@ -213,6 +214,7 @@ export async function detectWarrantyEligiblePartsFromWorkOrder(
                 pw.warranty_months, pw.parts_inventory_id::text, v.vendor_name AS vendor_name
          FROM maintenance.parts_warranty pw
          LEFT JOIN mdata.vendors v ON v.id = pw.vendor_id
+                                   AND v.operating_company_id = $1::uuid
          WHERE pw.operating_company_id = $1
            AND pw.work_order_id = $2
            AND pw.archived_at IS NULL

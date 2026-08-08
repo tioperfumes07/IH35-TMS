@@ -6,6 +6,7 @@
  *
  * Reuses existing driver-finance APIs only — no new backend services.
  */
+import { entityLabel } from "../../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
@@ -248,7 +249,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
       {preSettlementQ.data?.settlement ? (
         <section className="rounded-sm border border-gray-200 bg-white p-3">
           <h4 className="mb-2 text-xs font-semibold uppercase text-gray-600">
-            This settlement (<EntityLink kind="settlement" id={preSettlementQ.data.settlement.id} label={preSettlementQ.data.settlement.display_id ?? preSettlementQ.data.settlement.id.slice(0, 8)} />)
+            This settlement (<EntityLink kind="settlement" id={preSettlementQ.data.settlement.id} label={entityLabel(preSettlementQ.data.settlement.display_id, preSettlementQ.data.settlement.id, "Record")} />)
           </h4>
           <div className="space-y-1">
             {fineDeductionLines.map((line) => (

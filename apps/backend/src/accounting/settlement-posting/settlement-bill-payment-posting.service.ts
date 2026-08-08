@@ -35,6 +35,7 @@
 // provisioned (never credits the shared recovery account for advance/escrow, never guesses).
 
 import { withCurrentUser } from "../../auth/db.js";
+import { DriverVendorMissingError, resolveDriverVendorLink } from "../driver-vendor-link.service.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../../banking/bank-account-visibility.js";
@@ -324,9 +325,19 @@ export async function postSettlementBillPayment(
     );
     const driverName = String(driverRes.rows[0]?.driver_name ?? "").trim();
     const driverHireDate = driverRes.rows[0]?.hire_date ?? null;
-    const driverVendorId = String(driverRes.rows[0]?.qbo_vendor_id ?? settlement.driver_id).trim();
-    if (!driverVendorId) {
-      throw new SettlementBillPaymentError("DRIVER_VENDOR_MISSING", `No vendor linkage for driver ${settlement.driver_id}`);
+    // CLS-DRIVER-VENDOR-UUID-FALLBACK — was `qbo_vendor_id ?? settlement.driver_id`, which made the
+    // DRIVER_VENDOR_MISSING check below unreachable (a uuid is never falsy) and handed createBill a
+    // DRIVER id in the vendor slot. On prod 0 of 181 drivers carry a qbo_vendor_id, so that fallback
+    // was the only branch ever taken. The canonical link is mdata.vendors.driver_id; no vendor is a
+    // hard stop, never a substitute id.
+    let driverVendorId: string;
+    try {
+      driverVendorId = (await resolveDriverVendorLink(client, opco, settlement.driver_id)).vendorId;
+    } catch (err) {
+      if (err instanceof DriverVendorMissingError) {
+        throw new SettlementBillPaymentError("DRIVER_VENDOR_MISSING", err.message);
+      }
+      throw err;
     }
 
     // Per-load bills + deductions.

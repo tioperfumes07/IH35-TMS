@@ -20,6 +20,16 @@ export default {
     await ctx.run("node", ["scripts/verify-wave-queue-guards-exist.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-wave-queue-guards-exist.mjs"]);
 
+    // LAW-2026-08-07-VERTICAL-METHOD — the owner's permanent method, now enforced rather than merely
+    // written. Work is drained VERTICALLY by CLASS, globally and universally: never module-by-module,
+    // never the old block way. It was ALREADY stated in all four lane standing orders and a lane still
+    // reverted, which is the whole argument for a guard: prose is followed only while someone
+    // remembers it. Presence ratchet, sub-second, same pattern as the standing-directive check.
+    // It does NOT judge whether a given PR is vertical — that is judgment, and judgment rules stay
+    // judgment rather than being force-guarded into noise.
+    await ctx.run("node", ["scripts/verify-vertical-method-law-present.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-vertical-method-law-present.mjs"]);
+
     // LAW-2026-08-07-LANE-TERRITORY — stop the lanes colliding, enforced rather than written.
     // Measured over 60 PRs: lanes do NOT collide on domain code (dispatch/mdata/frontend are CC-2
     // only; accounting/driver-finance/migrations/.github are CC-1 only). They collide on shared entry

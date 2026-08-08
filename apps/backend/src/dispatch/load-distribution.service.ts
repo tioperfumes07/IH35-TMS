@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { generateLoadInstructionsPdf } from "./pdf-generator.service.js";
@@ -15,7 +16,7 @@ type DistributionInput = {
 
 export async function distributeLoadInstructions(input: DistributionInput) {
   return withCurrentUser(input.requested_by_user_id, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+    await setScopedCompanyContext(client, input.requested_by_user_id, input.operating_company_id);
     const hasPwaNotifications = await client
       .query<{ exists: boolean }>(`SELECT to_regclass('pwa.driver_notifications') IS NOT NULL AS exists`)
       .then((res) => Boolean(res.rows[0]?.exists))

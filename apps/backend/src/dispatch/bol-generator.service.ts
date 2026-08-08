@@ -117,9 +117,12 @@ export async function fetchBolPayload(client: PoolClient, operatingCompanyId: st
         u.display_id AS unit_display
       FROM mdata.loads l
       JOIN mdata.customers c ON c.id = l.customer_id
+                             AND c.operating_company_id = $2::uuid
       JOIN org.companies comp ON comp.id = l.operating_company_id
       LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+                                AND d.operating_company_id = $2::uuid
       LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
       WHERE l.id = $1::uuid
         AND l.operating_company_id = $2::uuid
         AND l.soft_deleted_at IS NULL

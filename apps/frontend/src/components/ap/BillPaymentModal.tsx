@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listVendorBills, type VendorBill } from "../../api/accounting";
@@ -94,7 +95,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
         return [
           {
             bill_id: bill.id,
-            bill_number: bill.bill_number ?? bill.id.slice(0, 8),
+            bill_number: entityLabel(bill.bill_number, bill.id, "Record"),
             original_balance_cents: open,
             payment_amount_cents: apply,
           },
@@ -108,7 +109,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
       return [
         {
           bill_id: bill.id,
-          bill_number: bill.bill_number ?? bill.id.slice(0, 8),
+          bill_number: entityLabel(bill.bill_number, bill.id, "Record"),
           original_balance_cents: billOpenBalanceCents(bill),
           payment_amount_cents: apply,
         },
@@ -299,7 +300,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
                         />
                       </td>
                     ) : null}
-                    <td className="px-2 py-1.5">{bill.bill_number ?? bill.id.slice(0, 8)}</td>
+                    <td className="px-2 py-1.5">{entityLabel(bill.bill_number, bill.id, "Record")}</td>
                     <td className="px-2 py-1.5">{money(open)}</td>
                     <td className="px-2 py-1.5">
                       {autoApply ? (
@@ -309,7 +310,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
                           valueDollars={amounts[bill.id] ?? null}
                           onChangeDollars={(d) => setAmounts((prev) => ({ ...prev, [bill.id]: d }))}
                           disabled={!included[bill.id]}
-                          ariaLabel={`Apply to ${bill.bill_number ?? bill.id.slice(0, 8)}`}
+                          ariaLabel={`Apply to ${entityLabel(bill.bill_number, bill.id, "Record")}`}
                           className="w-24"
                         />
                       )}

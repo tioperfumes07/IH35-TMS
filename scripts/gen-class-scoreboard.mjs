@@ -12,11 +12,21 @@
  * renders truth, it cannot manufacture it. Every cell here is derived from wave-queue.json. If a class
  * is wrong on the board, the queue is wrong — fix it there.
  *
- * CELL CODES (2 letters, per the standing order) and the status they come from:
- *   CC = drained   — status "drained"                     (green)
- *   BB = building  — status "open" AND instances claimed   (amber)
- *   NN = not started — status "open", nothing claimed      (grey)
- *   XX = live defect — status "open" AND drain_proof.money_critical or a FAIL-verdict instance (red)
+ * CELL CODES (2 letters, per the standing order) and the status they come from — COLOUR LAW,
+ * owner-stated 2026-08-07. The cell's colour is a function of the queue's `status` field and nothing
+ * else; see classifyCell() for why inferring it from instance text was wrong.
+ *   CC = drained     — status "drained"                     (green)
+ *   BB = in progress — status "draining" / "in_progress"     (amber)
+ *   NN = open        — anything else, incl. "open"           (neutral/grey)
+ *   XX = blocked     — status "blocked"                      (red — reserved, never the backlog)
+ * `liveDefect` is a SEPARATE boolean (drain_proof.money_critical on a not-yet-drained class), so the
+ * money-critical signal is kept without spending the blocked colour on it.
+ *
+ * THIS FILE IS THE OFFLINE FALLBACK, NOT THE LIVE PATH. The Programs page reads `classScoreboard`
+ * off GET /api/v1/program/audit-scoreboard, which the backend computes per request from the same
+ * queue — that is what makes the grid react without a redeploy (PROG-CLASS-STALE). What is emitted
+ * here is only what the page shows when that live read fails, and the page labels it as such.
+ * classifyCell() here and classCellFor() in the backend MUST stay in agreement.
  *
  * HONEST LIMIT — READ BEFORE TRUSTING A GREEN CELL. "drained" is the queue's own claim. This generator
  * does NOT re-verify it against prod, and a class is only genuinely drained when every instance is
@@ -33,25 +43,41 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const QUEUE = path.join(ROOT, "docs/audit/wave-queue.json");
 const OUT = path.join(ROOT, "apps/frontend/src/pages/program/classScoreboard.data.ts");
 
-/** Two-letter cell code + tone, derived ONLY from queue fields. */
+/**
+ * Two-letter cell code + tone, derived ONLY from the queue's `status`.
+ *
+ * COLOUR LAW (owner-stated 2026-08-07): drained = green · draining/in-progress = amber ·
+ * open/not-started = neutral · blocked = red.
+ *
+ * The previous mapping inferred a tone from the SHAPE of a wave's `instances` — a money_critical flag
+ * or a regex for FAIL/defect/BROKEN painted the cell red, and a regex for `#1234|block` painted it
+ * amber. Two problems. First, it disagreed with the owner's law: 12 classes whose only sin was being
+ * OPEN rendered red, spending the one colour reserved for blocked on the ordinary backlog state, so a
+ * genuinely blocked class would have been invisible in a field of red. Second, a tone that depends on
+ * regex-matching free text inside instance notes is not reactive to the thing it claims to show —
+ * editing a note's wording could flip a cell's colour without any status change.
+ *
+ * Status is the field the queue actually maintains, so status is what colours the cell. The
+ * money_critical signal is NOT discarded: it is carried out as a separate `liveDefect` flag.
+ *
+ * MUST agree with classCellFor() in apps/backend/src/program/audit-scoreboard.routes.ts — that is the
+ * live path and this is the offline fallback; two different mappings would mean the board changed
+ * colour depending on whether the API answered. Guarded by verify-class-scoreboard-live-sourced.mjs.
+ */
 export function classifyCell(wave) {
-  const status = String(wave.status ?? "").toLowerCase();
-  const instances = Array.isArray(wave.instances) ? wave.instances : [];
-  const proof = wave.drain_proof ?? {};
-
-  if (status === "drained") return { code: "CC", tone: "green", label: "drained" };
-
-  // A money-critical open class, or one whose instances carry an explicit FAIL/defect note, is a live
-  // defect rather than merely unstarted — the board should show red, not grey.
-  const moneyCritical = proof.money_critical === true;
-  const hasDefect = instances.some((i) => /(?:^|\W)(FAIL|defect|BROKEN)/i.test(JSON.stringify(i ?? {})));
-  if (moneyCritical || hasDefect) return { code: "XX", tone: "red", label: "live defect" };
-
-  // "Building" = someone has already resolved instances (a PR/block id is recorded on any of them).
-  const claimed = instances.some((i) => /#\d{3,}|PR\s*#?\d{3,}|block/i.test(JSON.stringify(i ?? {})));
-  if (claimed) return { code: "BB", tone: "amber", label: "in progress" };
-
-  return { code: "NN", tone: "grey", label: "not started" };
+  const status = String(wave.status ?? "").trim().toLowerCase();
+  switch (status) {
+    case "drained":
+      return { code: "CC", tone: "green", label: "drained" };
+    case "draining":
+    case "in_progress":
+    case "in progress":
+      return { code: "BB", tone: "amber", label: "in progress" };
+    case "blocked":
+      return { code: "XX", tone: "red", label: "blocked" };
+    default:
+      return { code: "NN", tone: "grey", label: "not started" };
+  }
 }
 
 /**
@@ -96,10 +122,17 @@ export function buildRows(queue) {
         // EXISTENCE ONLY. A true value means the NAMED FILE is not on disk — which in practice has
         // meant a STALE REFERENCE (the guard was renamed or split) at least as often as a missing
         // guard. Both are registry defects worth surfacing; neither asserts the class is unprotected.
-        guardMissing: guard ? !fs.existsSync(path.join(ROOT, guard)) : true,
+        // Scoped to DRAINED classes, matching the backend's live path. An OPEN class with no guard
+        // named is the expected state, not a registry defect, and flagging all of them buried the
+        // handful that actually matter: a class CLAIMING drained whose guard file is not there.
+        guardMissing: cell.code === "CC" && guard != null && !fs.existsSync(path.join(ROOT, guard)),
         // Best-effort: a same-subject guard under a different filename, so a stale reference is
         // distinguishable from a genuinely absent one without claiming either.
         guardNearMatch: guard ? nearMatchFor(guard) : null,
+        // Carried separately from the tone so the money-critical signal survives the colour law
+        // (open is neutral, red is reserved for blocked) instead of being encoded in it.
+        // A DRAINED class that was money-critical is no longer a live defect — it is a drained one.
+        liveDefect: cell.code !== "CC" && (w.drain_proof ?? {}).money_critical === true,
       };
     })
     .sort((a, b) => a.id.localeCompare(b.id));
@@ -112,7 +145,8 @@ export function summarise(rows) {
     drained: by("CC"),
     building: by("BB"),
     notStarted: by("NN"),
-    liveDefect: by("XX"),
+    // Counted from the flag, not the tone — see the colour law in classifyCell().
+    liveDefect: rows.filter((r) => r.liveDefect).length,
     // The number that matters most and is easiest to lose: classes claiming drained with no guard file.
     drainedWithoutGuard: rows.filter((r) => r.code === "CC" && r.guardMissing).length,
   };
@@ -124,12 +158,18 @@ export function summarise(rows) {
 const IS_ENTRY = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (IS_ENTRY && process.argv.includes("--selftest")) {
+  // COLOUR LAW cases. B and E are the corrections: an OPEN class is neutral even when it is
+  // money-critical or its notes say FAIL — red belongs to BLOCKED alone, and C proves a note
+  // mentioning a PR number no longer flips a cell to amber behind the status field's back.
   const cases = [
     [{ id: "A", status: "drained" }, "CC"],
-    [{ id: "B", status: "open", drain_proof: { money_critical: true } }, "XX"],
-    [{ id: "C", status: "open", instances: [{ note: "landed in #4321" }] }, "BB"],
+    [{ id: "B", status: "open", drain_proof: { money_critical: true } }, "NN"],
+    [{ id: "C", status: "open", instances: [{ note: "landed in #4321" }] }, "NN"],
     [{ id: "D", status: "open", instances: [{ note: "nothing yet" }] }, "NN"],
-    [{ id: "E", status: "open", instances: [{ note: "OPEN — real defect, FAIL" }] }, "XX"],
+    [{ id: "E", status: "open", instances: [{ note: "OPEN — real defect, FAIL" }] }, "NN"],
+    [{ id: "F", status: "draining" }, "BB"],
+    [{ id: "G", status: "blocked" }, "XX"],
+    [{ id: "H", status: "DRAINING" }, "BB"],
   ];
   let bad = 0;
   for (const [wave, want] of cases) {
@@ -143,6 +183,19 @@ if (IS_ENTRY && process.argv.includes("--selftest")) {
   const rows = buildRows({ waves: [{ id: "Z", status: "drained", guard: "scripts/does-not-exist-xyz.mjs" }] });
   if (summarise(rows).drainedWithoutGuard !== 1) {
     console.error("SELFTEST FAIL: drainedWithoutGuard not counted");
+    bad++;
+  }
+  // An OPEN class that names no guard is the expected state and must NOT be counted as a registry
+  // defect — that over-count is what buried the drained-without-guard signal.
+  const openNoGuard = buildRows({ waves: [{ id: "Y", status: "open" }] });
+  if (openNoGuard[0].guardMissing !== false || summarise(openNoGuard).drainedWithoutGuard !== 0) {
+    console.error("SELFTEST FAIL: an open class with no guard was flagged as a registry defect");
+    bad++;
+  }
+  // money_critical must survive as a flag now that it no longer colours the cell.
+  const mc = buildRows({ waves: [{ id: "X", status: "open", drain_proof: { money_critical: true } }] });
+  if (mc[0].liveDefect !== true || summarise(mc).liveDefect !== 1) {
+    console.error("SELFTEST FAIL: money_critical lost when it stopped driving the tone");
     bad++;
   }
   if (bad) process.exit(1);
@@ -193,6 +246,7 @@ export interface ClassRow {
   guard: string | null;
   guardMissing: boolean;
   guardNearMatch: string | null;
+  liveDefect: boolean;
 }
 export interface ClassScoreboard {
   meta: { generatedAt: string; source: string };

@@ -50,7 +50,9 @@ export async function registerAutoWoDraftsRoutes(app: FastifyInstance) {
             u.unit_number
           FROM maintenance.work_orders w
           LEFT JOIN maintenance.samsara_fault_code_history h ON h.id = w.origin_fault_history_id
+          -- CLS-JOIN-ENTITY-UNSCOPED (see §4: units carry owner/leased, never operating_company_id)
           LEFT JOIN mdata.units u ON u.id = w.unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = w.operating_company_id
           WHERE w.operating_company_id = $1::uuid
             AND w.origin = 'fault_auto'
             AND w.status = 'draft'

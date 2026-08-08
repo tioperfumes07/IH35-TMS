@@ -8,13 +8,23 @@ const ASSET_PARENT = "asset-parent";
 const ESCROW_PARENT = "escrow-parent";
 
 // A client where the parents resolve, and a given set of sub-account names are reported as already existing.
-function makeClient(opts: { roster: { id: string; first_name: string; last_name: string }[]; existingNames: Set<string> }) {
+function makeClient(opts: {
+  roster: { id: string; first_name: string; last_name: string }[];
+  existingNames: Set<string>;
+  /** ACCT-F164 — driver ids that already have an A/P vendor. */
+  existingVendorDriverIds?: Set<string>;
+}) {
   const sqls: { sql: string; params: unknown[] }[] = [];
   const client = {
     query: vi.fn(async (sql: string, params?: unknown[]) => {
       sqls.push({ sql, params: params ?? [] });
       if (sql.includes("FROM mdata.drivers") && sql.includes("operating_company_id = $1")) {
         return { rows: opts.roster };
+      }
+      // ACCT-F164 — the A/P vendor existence probe.
+      if (sql.includes("FROM mdata.vendors") && sql.includes("driver_id = $2")) {
+        const [, driverId] = params as [string, string];
+        return { rows: (opts.existingVendorDriverIds ?? new Set()).has(driverId) ? [{ one: 1 }] : [] };
       }
       // resolveCanonicalParentAccount: by parent name + type
       if (sql.includes("parent_account_id IS NULL")) {
@@ -40,16 +50,27 @@ describe("driver sub-account bulk backfill — DRY-RUN", () => {
         { id: "d2", first_name: "Beto", last_name: "Cruz" }, // asset exists, escrow missing
       ],
       existingNames: new Set(["Driver Cash Advance- Beto Cruz"]),
+      // d2 already has an A/P vendor; d1 does not — so the third primitive is asserted independently
+      // of the two sub-accounts rather than moving in lockstep with them.
+      existingVendorDriverIds: new Set(["d2"]),
     });
 
     const report = await runDriverSubAccountBackfill(client as never, { operatingCompanyId: "oc" });
 
     expect(report.mode).toBe("dry-run"); // apply defaults OFF
     expect(report.rows).toEqual([
-      { driver_id: "d1", driver_name: "Ana Reyes", asset_subaccount: "CREATE", escrow_subaccount: "CREATE" },
-      { driver_id: "d2", driver_name: "Beto Cruz", asset_subaccount: "SKIP-exists", escrow_subaccount: "CREATE" },
+      { driver_id: "d1", driver_name: "Ana Reyes", asset_subaccount: "CREATE", escrow_subaccount: "CREATE", ap_vendor: "CREATE" },
+      { driver_id: "d2", driver_name: "Beto Cruz", asset_subaccount: "SKIP-exists", escrow_subaccount: "CREATE", ap_vendor: "SKIP-exists" },
     ]);
-    expect(report.totals).toMatchObject({ drivers_scanned: 2, asset_to_create: 1, escrow_to_create: 2, already_existing: 1 });
+    expect(report.totals).toMatchObject({
+      drivers_scanned: 2,
+      asset_to_create: 1,
+      escrow_to_create: 2,
+      // ACCT-F164 — only d1 needs a vendor. A driver can hold both sub-accounts and still be UNPAYABLE
+      // without one, which is why this is counted separately rather than folded into already_existing.
+      ap_vendor_to_create: 1,
+      already_existing: 1,
+    });
 
     // ZERO writes in dry-run.
     expect(sqls.some((s) => /\b(INSERT|UPDATE|DELETE)\b/i.test(s.sql))).toBe(false);

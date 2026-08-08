@@ -95,6 +95,7 @@ async function resolveAssetForWorkOrder(
         a.unit_code
       FROM maintenance.work_orders w
       JOIN mdata.units u ON u.id = w.unit_id
+                         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
       JOIN mdata.assets a
         ON a.tenant_id = w.operating_company_id
        AND a.unit_code = u.unit_number

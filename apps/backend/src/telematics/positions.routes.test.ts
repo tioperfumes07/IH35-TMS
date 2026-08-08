@@ -6,9 +6,18 @@ const requireAuthState = { allowed: true };
 const executedSql: string[] = [];
 const queryParams: unknown[][] = [];
 
+// Membership probe issued by assertCompanyMembership, which setScopedCompanyContext runs BEFORE
+// setting the tenant GUC (CLS-GUC-CALLER-SCOPED). operating_company_id arrives in the QUERY STRING
+// here, so without that probe the caller picks the scope RLS then faithfully enforces. Default: the
+// caller DOES belong to the company; flip `memberOfCompany` to exercise the rejection.
+const membershipState = { memberOfCompany: true };
+
 const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
   executedSql.push(sql);
   if (values) queryParams.push(values);
+  if (sql.includes("org.user_company_access")) {
+    return membershipState.memberOfCompany ? { rows: [{ ok: 1 }], rowCount: 1 } : { rows: [], rowCount: 0 };
+  }
   if (sql.includes("set_config('app.operating_company_id'")) {
     return { rows: [] };
   }
@@ -50,6 +59,7 @@ describe("telematics positions routes", () => {
 
   beforeEach(() => {
     requireAuthState.allowed = true;
+    membershipState.memberOfCompany = true;
     executedSql.length = 0;
     queryParams.length = 0;
     queryMock.mockClear();
@@ -108,10 +118,31 @@ describe("telematics positions routes", () => {
     expect(latestSql).toContain("WHERE p.operating_company_id = $1::uuid");
   });
 
+  // CLS-GUC-CALLER-SCOPED. operating_company_id is caller-supplied here, so the membership probe is the
+  // only thing standing between a Dispatcher and another entity's live truck positions — under
+  // PERMANENT LAW 4 an "accessible companies" predicate would NOT have stopped it. The GUC must never
+  // be set, and the position query must never run, for a company the caller does not belong to.
+  it("rejects a caller-named company the user does not belong to, before the GUC is set", async () => {
+    membershipState.memberOfCompany = false;
+    const foreign = "44444444-4444-4444-8444-444444444444";
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "GET",
+      url: `/api/v1/telematics/positions/latest?operating_company_id=${foreign}`,
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(executedSql.some((sql) => sql.includes("set_config('app.operating_company_id'"))).toBe(false);
+    expect(executedSql.some((sql) => sql.includes("FROM telematics.vehicle_latest_position p"))).toBe(false);
+  });
+
   it("returns one row per unit from the latest-position view contract", async () => {
     queryMock.mockImplementation(async (sql: string, values?: unknown[]) => {
       executedSql.push(sql);
       if (values) queryParams.push(values);
+      if (sql.includes("org.user_company_access")) {
+        return { rows: [{ ok: 1 }], rowCount: 1 };
+      }
       if (sql.includes("FROM telematics.vehicle_latest_position p")) {
         return {
           rows: [

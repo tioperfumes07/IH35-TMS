@@ -96,6 +96,7 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
          FROM integrations.relay_company_cards c
          LEFT JOIN banking.bank_accounts ba ON ba.id = c.funding_bank_account_id
          LEFT JOIN catalogs.accounts led ON led.id = ba.ledger_account_id
+                                         AND led.operating_company_id = $1::uuid
          WHERE c.operating_company_id = $1::uuid AND c.voided_at IS NULL
          ORDER BY c.card_last4`,
         [opco]

@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { randomUUID } from "node:crypto";
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -38,7 +39,7 @@ export type OcrIntakeQueueRow = {
 
 async function withCompany<T>(userId: string, operatingCompanyId: string, fn: (client: PoolClient) => Promise<T>) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await setScopedCompanyContext(client, userId, operatingCompanyId);
     return fn(client);
   });
 }

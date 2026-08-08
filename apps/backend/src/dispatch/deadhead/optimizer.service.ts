@@ -1,3 +1,4 @@
+import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../../auth/db.js";
 
 export const DEFAULT_DEADHEAD_RATE_PER_MILE_CENTS = 250;
@@ -213,7 +214,7 @@ async function resolveDropCoordinates(
 export async function findBestLoadForUnit(userId: string, input: FindBestLoadForUnitInput): Promise<NextLoadSuggestion[]> {
   const maxDeadhead = input.max_deadhead_miles ?? DEFAULT_MAX_DEADHEAD_MILES;
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+    await setScopedCompanyContext(client, userId, input.operating_company_id);
 
     const drop = await resolveDropCoordinates(client, input);
     if (!drop) return [];
