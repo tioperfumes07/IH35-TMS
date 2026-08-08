@@ -462,6 +462,19 @@ export function voidInvoice(id: string, operatingCompanyId: string, reason?: str
   });
 }
 
+/**
+ * FAIL-A2 — the expense void backend has existed and been sound all along (it posts a reversing JE and
+ * records `reversed_by_je_id`, which the INVOICE void does NOT); there was simply no UI to reach it.
+ * `reason` is REQUIRED here, not optional as on `voidInvoice`: the route parses
+ * `z.object({ operating_company_id, reason: z.string().trim().min(1) })`, so a blank reason is a 400.
+ */
+export function voidExpense(id: string, operatingCompanyId: string, reason: string) {
+  return apiRequest<{ id: string; voided_at: string | null; reversed_by_je_id: string | null }>(
+    withCompany(`/api/v1/expenses/${id}/void`, operatingCompanyId),
+    { method: "POST", body: { reason } }
+  );
+}
+
 export function addInvoiceLine(
   invoiceId: string,
   operatingCompanyId: string,

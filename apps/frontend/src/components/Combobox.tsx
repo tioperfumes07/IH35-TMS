@@ -141,10 +141,10 @@ export function Combobox({
 
   const filteredOptions = useMemo(() => {
     const sourceOptions = options.filter((option) => !option.disabled);
-    // When the server did the filtering, do not filter again — a server match whose label does not
-    // literally contain the typed text (a unit matched by VIN, a load matched by customer) would be
-    // dropped on the way to the screen.
-    if (onSearch) return sourceOptions.slice(0, MAX_VISIBLE_OPTIONS);
+    // When the server did the filtering, do not filter OR re-cap — FE-COMBOBOX-50-DISPLAY-CAP:
+    // ACCT-F209 returned the full roster from the API, then this slice hid everyone past 50 with
+    // no notice (DriverPicker browse: 51 rows = 50 drivers + Create). Server owns the page size.
+    if (onSearch) return sourceOptions;
     if (!query.trim()) {
       return sourceOptions.slice(0, MAX_VISIBLE_OPTIONS);
     }
@@ -161,6 +161,13 @@ export function Combobox({
       .map((entry) => entry.option)
       .slice(0, MAX_VISIBLE_OPTIONS);
   }, [filterMode, onSearch, options, query]);
+
+  // Local (non-server) browse still caps for scroll perf — tell the operator instead of silent hide.
+  const localBrowseTruncated = useMemo(() => {
+    if (onSearch) return false;
+    const enabledCount = options.filter((option) => !option.disabled).length;
+    return enabledCount > MAX_VISIBLE_OPTIONS;
+  }, [onSearch, options]);
 
   // QB-STD-1/2: "+ Add new" is always the FIRST row when allowAddNew is configured — visible
   // the moment the dropdown opens, before any keystroke. No typed-query gate.
@@ -338,6 +345,14 @@ export function Combobox({
             ) : null}
             {!loading && filteredOptions.length === 0 && !showAddNew ? (
               <div className="px-2 py-2 text-[13px] text-gray-500">No matches</div>
+            ) : null}
+            {!loading && localBrowseTruncated ? (
+              <div
+                className="border-b border-slate-100 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-600"
+                data-testid="combobox-truncated-notice"
+              >
+                Showing first {MAX_VISIBLE_OPTIONS} — type to search the rest
+              </div>
             ) : null}
             {!loading &&
               filteredOptions.map((option, index) => {
