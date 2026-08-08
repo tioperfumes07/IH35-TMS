@@ -1406,7 +1406,15 @@
     "09": "09-verify-migration-application-consistency.mjs",
     "2904": "2904-verify-vendor-bill-memo-preserves-operator-tag.mjs",
     "2906": "2906-verify-settlements-fe-has-tests.mjs",
-    "2908": "2908-verify-customers-vendors-list-segment-tabs.mjs"
+    "2908": "2908-verify-customers-vendors-list-segment-tabs.mjs",
+    "2913": "CC-2 verify-parity-table-sort-toggle-contract (was mis-wired in package.json; DoD \u00a74)",
+    "2915": "CC-2 verify-combobox-id-label-binding (was mis-wired in package.json; DoD \u00a74)",
+    "2917": "CC-2 verify-book-load-sample-data-wiring (was mis-wired in package.json; DoD \u00a74)",
+    "2919": "CC-2 verify-complaint-create-contract (was mis-wired in package.json; DoD \u00a74)",
+    "2921": "CC-2 verify-complaint-insert-notnull-columns (was mis-wired in package.json; DoD \u00a74)",
+    "2923": "CC-2 verify-book-load-single-submit (was mis-wired in package.json; DoD \u00a74)",
+    "2925": "CC-2 verify-book-stop-city-required (was mis-wired in package.json; DoD \u00a74)",
+    "2927": "CC-2 verify-settlement-payment-events-honest (was mis-wired in package.json; DoD \u00a74)"
   },
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
