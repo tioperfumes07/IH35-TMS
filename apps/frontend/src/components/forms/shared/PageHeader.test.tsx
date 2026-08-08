@@ -1,7 +1,20 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PageHeader } from "./PageHeader";
+
+// PageHeader's back control is a <button> that calls navigate(), not an <a href> — §7 requires the
+// arrow on every module header, and it falls back to navigate(-1) when no backHref is given. These tests
+// were written against the older anchor-with-href markup, so they asserted `href` and expected NO back
+// control on a root page. Both are stale: assert the DESTINATION instead, which is the behaviour that
+// actually matters and which an href-only check never proved was wired to anything.
+const navigateSpy = vi.fn();
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router-dom")>();
+  return { ...actual, useNavigate: () => navigateSpy };
+});
+
+beforeEach(() => navigateSpy.mockClear());
 
 describe("PageHeader primitive (invariant #21)", () => {
   it("renders back + breadcrumb on drilled-in page", () => {
@@ -18,7 +31,8 @@ describe("PageHeader primitive (invariant #21)", () => {
         />
       </MemoryRouter>,
     );
-    expect(screen.getByTestId("page-header-back")).toHaveAttribute("href", "/maintenance");
+    fireEvent.click(screen.getByTestId("page-header-back"));
+    expect(navigateSpy).toHaveBeenCalledWith("/maintenance");
     expect(screen.getByTestId("page-header-breadcrumb")).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
       "Work Order WO-T169-IS-05-06-2026-0035-23914",
@@ -31,18 +45,21 @@ describe("PageHeader primitive (invariant #21)", () => {
         <PageHeader title="Maintenance" backHref="/home" subtitle="14 new in last 3 days" />
       </MemoryRouter>,
     );
-    expect(screen.getByTestId("page-header-back")).toHaveAttribute("href", "/home");
+    fireEvent.click(screen.getByTestId("page-header-back"));
+    expect(navigateSpy).toHaveBeenCalledWith("/home");
     expect(screen.queryByTestId("page-header-breadcrumb")).toBeNull();
     expect(screen.getByText("14 new in last 3 days")).toBeInTheDocument();
   });
 
-  it("hides back and breadcrumb on root-style page", () => {
+  it("keeps the back arrow on a root-style page and falls back to history", () => {
     render(
       <MemoryRouter>
         <PageHeader title="Home" />
       </MemoryRouter>,
     );
-    expect(screen.queryByTestId("page-header-back")).toBeNull();
+    // §7: the arrow stays on every module header; with no backHref it goes back in history.
+    fireEvent.click(screen.getByTestId("page-header-back"));
+    expect(navigateSpy).toHaveBeenCalledWith(-1);
     expect(screen.queryByTestId("page-header-breadcrumb")).toBeNull();
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Home");
   });
