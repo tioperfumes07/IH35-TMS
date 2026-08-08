@@ -44,6 +44,10 @@ const createBodySchema = z.object({
   deductions_total: z.number().default(0),
   reimbursements_total: z.number().default(0),
   net_pay: z.number().default(0),
+  // Gate-B sample tag. Defaults false so every ordinary settlement is real by default — a sample must
+  // be asked for explicitly, never inherited. This is the ONLY tag path on this table: unlike every
+  // other money create type, driver_settlements has no writable free-text field to hide a tag in.
+  is_sample_data: z.boolean().default(false),
   lines: z.array(
     z.object({
       line_type: z.enum([
@@ -341,9 +345,9 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         `
           INSERT INTO driver_finance.driver_settlements (
             operating_company_id, display_id, driver_id, period_start, period_end, status,
-            gross_pay, deductions_total, reimbursements_total, net_pay
+            gross_pay, deductions_total, reimbursements_total, net_pay, is_sample_data
           )
-          VALUES ($1,$2,$3,$4,$5,'presettle',$6,$7,$8,$9)
+          VALUES ($1,$2,$3,$4,$5,'presettle',$6,$7,$8,$9,$10)
           RETURNING *
         `,
         [
@@ -356,6 +360,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           body.deductions_total,
           body.reimbursements_total,
           body.net_pay,
+          body.is_sample_data,
         ]
       );
       const settlement = settlementRes.rows[0];
