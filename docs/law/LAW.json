@@ -432,5 +432,12 @@
     "source_file": "apps/backend/src/dispatch/auth-gates/wf-038-active-driver.gate.ts",
     "guard": "scripts/verify-sql-column-existence.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-POD-BOL-EVIDENCE-LINKAGE",
+    "title": "A POD/BOL captured at a stop must be linked to its PARENT LOAD (docs.file_links has no load_stop entity type, so dropping the link orphans the evidence), and the hop.pod_bol scenario probe must COUNT the canonical stores the office reads back — dispatch.pod_documents + dispatch.bol_documents — not only the document library",
+    "source_file": "apps/driver-pwa/src/lib/upload-sync.ts",
+    "guard": "scripts/verify-pod-bol-evidence-linkage.mjs",
+    "type": "enforced"
   }
 ]

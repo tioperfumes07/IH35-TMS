@@ -18,6 +18,12 @@ type UploadDocumentModalProps = {
   onQueued: () => void;
   defaultEntityType?: "driver" | "standalone" | "load_stop";
   defaultEntityId?: string | null;
+  /**
+   * Required whenever `defaultEntityType` is `"load_stop"`: `docs.file_links` cannot hold a stop id,
+   * so the capture is linked through its parent load. Without it a stop-captured BOL/POD is an
+   * orphan — see resolveEntityLinks in lib/upload-sync.ts (CLS-ORPHAN-SURFACE).
+   */
+  parentLoadId?: string | null;
   allowedCategoryCodes?: string[];
   title?: string;
 };
@@ -39,6 +45,7 @@ export function UploadDocumentModal({
   onQueued,
   defaultEntityType = "driver",
   defaultEntityId = null,
+  parentLoadId = null,
   allowedCategoryCodes,
   title,
 }: UploadDocumentModalProps) {
@@ -137,6 +144,9 @@ export function UploadDocumentModal({
         category_id: categoryId,
         entity_type: entityType,
         entity_id: entityType === "driver" ? driverId : defaultEntityId,
+        // Carried so a stop capture can be linked to its load — docs.file_links has no load_stop
+        // entity type, and dropping the link instead is what orphaned every POD (CLS-ORPHAN-SURFACE).
+        parent_load_id: entityType === "load_stop" ? parentLoadId : null,
         document_date: documentDate || null,
         expiration_date: expirationDate || null,
         description: description.trim() || null,
