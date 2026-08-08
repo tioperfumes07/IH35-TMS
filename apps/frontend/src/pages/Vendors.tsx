@@ -81,7 +81,20 @@ export function VendorsPage() {
   const [selectedVendorId, setSelectedVendorId] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [listStatus, setListStatus] = useState<"active" | "inactive" | "all">("active");
+  // §7 list segments are URL-addressable via `listTab` — NOT `tab`, which belongs to the vendor DETAIL tabs
+  // (:74) and whose existing deep-links must keep working (CURSOR-RULING-PARAM-LIST-TAB, locked 2026-08-08).
+  // Reusing `tab` here would silently repoint every saved detail link.
+  const listStatus = ((): "active" | "inactive" | "all" => {
+    const raw = (searchParams.get("listTab") ?? "active").toLowerCase();
+    return raw === "inactive" || raw === "all" ? raw : "active";
+  })();
+  const setListStatus = (next: "active" | "inactive" | "all") => {
+    const params = new URLSearchParams(searchParams);
+    // "active" is the default view, so keep the URL clean rather than pinning the default.
+    if (next === "active") params.delete("listTab");
+    else params.set("listTab", next);
+    setSearchParams(params, { replace: true });
+  };
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
