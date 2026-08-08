@@ -354,9 +354,12 @@ export function DriverDetailPage() {
     enabled: activeTab === "Legal Matters" && Boolean(driver?.operating_company_id) && Boolean(id),
   });
 
-  const hydratedForm = useMemo(() => {
-    if (!driver) return form;
-    if (Object.keys(form).length > 0) return form;
+  // FAIL-D5: never replace the whole hydrated form with a partial `form` patch.
+  // First DatePicker/input onChange used to set form={cdl_expires_at:…} only; the old
+  // `Object.keys(form).length > 0 ? form : defaults` path then blanked name/phone/CDL#
+  // and fell Status back to Combobox default "Probation". Merge overlays instead.
+  const driverFormDefaults = useMemo(() => {
+    if (!driver) return {};
     return {
       first_name: driver.first_name ?? "",
       last_name: driver.last_name ?? "",
@@ -392,7 +395,12 @@ export function DriverDetailPage() {
       status: driver.status,
       notes: driver.notes ?? "",
     };
-  }, [driver, form]);
+  }, [driver]);
+
+  const hydratedForm = useMemo(() => {
+    if (!driver) return form;
+    return { ...driverFormDefaults, ...form };
+  }, [driver, driverFormDefaults, form]);
 
   const selectedLineHistory = useMemo(() => {
     const rows = historyQuery.data?.line_items ?? [];
@@ -436,6 +444,7 @@ export function DriverDetailPage() {
     onSuccess: (updated) => {
       queryClient.setQueryData(["driver", id], updated);
       queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      setForm({});
       setEditMode(false);
       pushToast("Driver updated", "success");
     },
