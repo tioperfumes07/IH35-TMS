@@ -109,6 +109,9 @@ const createExpenseBodySchema = z.object({
   amount_cents: z.coerce.number().int().positive(),
   vendor_uuid: z.string().uuid().optional(),
   memo: z.string().trim().max(2000).optional(),
+  // FAIL-F2 / ACCT-F262 — without this the flag could not be SUPPLIED at all, so the writer below had
+  // nothing to write. Optional so existing callers are unchanged; only an explicit true marks sample.
+  is_sample_data: z.boolean().optional(),
   payment_account_uuid: z.string().uuid().optional(),
   // HARD cross-module link (maintenance): persist the WO + unit id as a real FK, not just a memo string.
   work_order_id: z.string().uuid().optional().nullable(),
@@ -531,6 +534,23 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
 
         const columns: string[] = ["operating_company_id", "status", "transaction_date", "total_amount_cents"];
         const values: unknown[] = [body.operating_company_id, "posted", body.expense_date, body.amount_cents];
+
+        // FAIL-F2 / ACCT-F262 — the expense writer could not record that an expense is TEST data.
+        // `accounting.expenses.is_sample_data` exists and defaults false, and NOTHING ever wrote it, so
+        // every expense the app created was permanently indistinguishable from real money. The GL then
+        // inherits it: posting-engine reads the source row's flag (ACCT-F212), so an untagged expense
+        // produces an untagged journal entry and sample spend lands in real books.
+        //
+        // The operators already told us, in the only field that would take it. Two expenses created
+        // 2026-08-08 21:30 and 21:31 carry memos reading `USMCA_GATEB_SAMPLE_2026-08-08 … TEST data`
+        // and `SAMPLE expense for banking match test` — both stored with is_sample_data=false. When
+        // people type SAMPLE into a free-text memo, the structured flag is missing, not ignored.
+        //
+        // Optional and defaulting to false, deliberately: a caller that omits it keeps today's
+        // behaviour exactly, so this cannot retroactively re-classify anything. Only an explicit
+        // `true` marks sample.
+        columns.push(`is_sample_data`);
+        values.push(body.is_sample_data === true);
 
         if (hasVendor) {
           columns.push(`vendor_uuid`);

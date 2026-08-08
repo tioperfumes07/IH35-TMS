@@ -543,6 +543,19 @@ export function VendorDetailPage() {
 
       {activeTab === "Profile" ? (
         <DataPanel title="Vendor Profile">
+          {/* FAIL-AP1 — Vendor → Driver reverse when mdata.vendors.driver_id is set.
+              Distinct from QBO Mapping. */}
+          {vendor.driver_id ? (
+            <div
+              className="mb-3 rounded-sm border border-slate-200 bg-slate-50 p-3"
+              data-testid="vendor-linked-driver"
+            >
+              <div className="text-[11px] uppercase text-slate-600">Linked driver (A/P payee)</div>
+              <div className="mt-1 text-sm font-semibold text-gray-900">
+                <EntityLink kind="driver" id={vendor.driver_id} label="Open driver profile →" />
+              </div>
+            </div>
+          ) : null}
           {/* Edit control at the TOP so it's discoverable — the fields (Vendor Type, etc.) are
               read-only until Edit is on, matching QBO's header Edit. Previously the only Edit button
               was buried at the bottom, so the profile looked un-editable and dropdowns wouldn't open. */}

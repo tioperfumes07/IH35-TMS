@@ -222,10 +222,16 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
             const canConfirm = !isBill && isExactMatch;
             const isConfirming = confirmMutation.isPending && confirmingId === c.ledger_entry_id;
             return (
+              // FAIL-BM1 — the row's PRIMARY click must SELECT the candidate, not drill through. Before
+              // this, the only way to select was the small radio, while the most prominent clickable thing
+              // in the row was the EntityLink — so the natural click navigated away from the match the user
+              // was trying to make, losing the drawer. Drill-through is now strictly secondary: it still
+              // works, but only when the link itself is clicked (see stopPropagation below).
               <div
                 key={`${c.ledger_entry_kind}:${c.ledger_entry_id}`}
                 data-testid="match-candidate-row"
-                className={`rounded border px-3 py-2 ${
+                onClick={() => setSelectedId(c.ledger_entry_id)}
+                className={`cursor-pointer rounded border px-3 py-2 ${
                   isTopAuto ? "border-slate-400 bg-slate-50" : "border-slate-200 bg-white"
                 } ${isSelected ? "ring-1 ring-slate-400" : ""}`}
               >
@@ -240,13 +246,17 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
                       onChange={() => setSelectedId(c.ledger_entry_id)}
                     />
                     {c.ledger_entry_id ? (
-                      <EntityLink
-                        kind={KIND_ENTITY[c.ledger_entry_kind]}
-                        id={c.ledger_entry_id}
-                        label={KIND_LABELS[c.ledger_entry_kind]}
-                        data-testid="match-candidate-kind"
-                        className={kindBadgeClassName()}
-                      />
+                      // Drill-through stays available but must not also fire the row's select — otherwise
+                      // navigating would silently change the selection on the way out.
+                      <span onClick={(event) => event.stopPropagation()} data-testid="match-candidate-drillthrough">
+                        <EntityLink
+                          kind={KIND_ENTITY[c.ledger_entry_kind]}
+                          id={c.ledger_entry_id}
+                          label={KIND_LABELS[c.ledger_entry_kind]}
+                          data-testid="match-candidate-kind"
+                          className={kindBadgeClassName()}
+                        />
+                      </span>
                     ) : null}
                     {isTopAuto ? (
                       <span

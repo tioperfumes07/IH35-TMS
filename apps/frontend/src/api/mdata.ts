@@ -814,7 +814,25 @@ export type VendorOption = {
   payment_terms_id?: string | null;
   default_expense_account_id?: string | null;
   account_number?: string | null;
+  /** Canonical TMS A/P bridge — mdata.vendors.driver_id (NOT qbo_vendor_id). FAIL-AP1 reverse. */
+  driver_id?: string | null;
 };
+
+export type DriverApVendorLink = {
+  id: string;
+  name: string | null;
+  qbo_vendor_id: string | null;
+  operating_company_id: string;
+  driver_id: string;
+};
+
+/** FAIL-AP1 — soft-miss returns `{ vendor: null }` when no active A/P vendor is linked. */
+export function getDriverApVendor(driverId: string, operatingCompanyId: string) {
+  const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ vendor: DriverApVendorLink | null; operating_company_id?: string; driver_id?: string }>(
+    `/api/v1/mdata/drivers/${encodeURIComponent(driverId)}/ap-vendor?${qs.toString()}`
+  );
+}
 
 export function listDriverQualifications(driverId: string, includeInactive?: boolean) {
   const query = includeInactive ? "?include_inactive=true" : "";

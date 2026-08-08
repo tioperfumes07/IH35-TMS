@@ -56,11 +56,20 @@ export function triggerHasNoopGuard(sql) {
   const wholeDoc = /to_jsonb\(\s*OLD\s*\)\s*-\s*\w+[\s\S]{0,80}?IS\s+NOT\s+DISTINCT\s+FROM[\s\S]{0,80}?to_jsonb\(\s*NEW\s*\)\s*-\s*\w+/i.test(
     clean
   );
-  const updateOnly = /TG_OP\s*=\s*'UPDATE'[\s\S]{0,400}?IS\s+NOT\s+DISTINCT\s+FROM/i.test(clean);
+  const updateOnly = /TG_OP\s*=\s*'UPDATE'[\s\S]{0,600}?IS\s+NOT\s+DISTINCT\s+FROM/i.test(clean);
   const naiveColumnSkip =
     /IF\s+OLD\.updated_at\s+IS\s+DISTINCT\s+FROM\s+NEW\.updated_at/i.test(clean) ||
     /RETURN\s+NEW\s*;\s*--?\s*skip.*updated_at/i.test(clean);
-  return { wholeDoc, updateOnly, naiveColumnSkip };
+  // ACCT-F259 — the noise keys must be DERIVED from the row, not hard-coded. My ACCT-F255 shipped
+  // ARRAY['updated_at','last_qbo_synced_at'], measured on accounting.bills alone, and it was 0.8%
+  // effective: mdata.vendors/customers and banking.bank_transactions spell it `qbo_synced_at`, so
+  // nothing was stripped and every touch-write still recorded. A literal list is correct only for the
+  // tables it was measured on and silently re-opens on the next spelling — so the guard now demands the
+  // pattern form.
+  const hardCodedList = /v_noise_keys\s+text\[\]\s*:=\s*ARRAY\s*\[/i.test(clean);
+  const derivedByPattern =
+    /FROM\s+jsonb_each\s*\(\s*to_jsonb\(\s*NEW\s*\)\s*\)/i.test(clean) && /LIKE\s*'%\\_synced\\_at'/i.test(clean);
+  return { wholeDoc, updateOnly, naiveColumnSkip, hardCodedList, derivedByPattern };
 }
 
 export function collectProblems({ dbTs, triggerSql }) {
@@ -105,6 +114,16 @@ export function collectProblems({ dbTs, triggerSql }) {
         `change also touches updated_at, so this would suppress the rows that matter most (ACCT-F255).`
     );
   }
+  if (b.hardCodedList || !b.derivedByPattern) {
+    problems.push(
+      `audit.tg_audit_row: the noise keys are hard-coded instead of derived from the row. That is the ` +
+        `ACCT-F259 defect: ARRAY['updated_at','last_qbo_synced_at'] was measured on accounting.bills ` +
+        `and shipped as if general, and it was 0.8% effective — mdata.vendors/customers and ` +
+        `banking.bank_transactions spell it 'qbo_synced_at', so nothing was stripped and 1,774 of 1,794 ` +
+        `no-op UPDATEs still recorded. Derive the keys per row ` +
+        `(key = 'updated_at' OR key LIKE '%\\_synced\\_at') so a new spelling cannot silently re-open it.`
+    );
+  }
   return problems;
 }
 
@@ -128,7 +147,12 @@ if (process.argv.includes("--selftest")) {
     "export async function withLuciaBypass<T>(fn, opts) {\n await c.query(\"SELECT set_config('app.current_user_id', $1::text, true)\", [a]);\n}\nexport type X = 1;";
   const BAD_TS = "export async function withLuciaBypass<T>(fn) {\n await c.query('SET LOCAL app.bypass_rls = 1');\n}\nexport type X = 1;";
   const GOOD_SQL =
-    "IF TG_OP = 'UPDATE' THEN IF (to_jsonb(OLD) - v_noise_keys) IS NOT DISTINCT FROM (to_jsonb(NEW) - v_noise_keys) THEN RETURN NEW; END IF; END IF;";
+    "IF TG_OP = 'UPDATE' THEN SELECT array_agg(key) INTO v_noise_keys FROM jsonb_each(to_jsonb(NEW)) WHERE key = 'updated_at' OR key LIKE '%\\_synced\\_at';" +
+    " IF (to_jsonb(OLD) - v_noise_keys) IS NOT DISTINCT FROM (to_jsonb(NEW) - v_noise_keys) THEN RETURN NEW; END IF; END IF;";
+  // ACCT-F259 — the exact shape I shipped and that proved 0.8% effective must now FAIL.
+  const HARDCODED =
+    "IF TG_OP = 'UPDATE' THEN v_noise_keys text[] := ARRAY['updated_at','last_qbo_synced_at'];" +
+    " IF (to_jsonb(OLD) - v_noise_keys) IS NOT DISTINCT FROM (to_jsonb(NEW) - v_noise_keys) THEN RETURN NEW; END IF; END IF;";
 
   if (collectProblems({ dbTs: GOOD_TS, triggerSql: GOOD_SQL }).length !== 0) {
     failures.push("the corrected pair was flagged");
@@ -155,14 +179,18 @@ if (process.argv.includes("--selftest")) {
     failures.push("a skip not confined to UPDATE was NOT caught");
   }
 
+  if (!collectProblems({ dbTs: GOOD_TS, triggerSql: HARDCODED }).some((p) => /hard-coded instead of derived/.test(p))) {
+    failures.push("the hard-coded ARRAY form was accepted — that is the exact 0.8%-effective shape");
+  }
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const f of failures) console.error("  - " + f);
     process.exit(1);
   }
   console.log(
-    `${LABEL} SELFTEST OK — 6/6 (corrected pair passes, missing actor caught, missing trigger guard ` +
-      `caught, single-column skip rejected, comment cannot fake, non-UPDATE skip caught)`
+    `${LABEL} SELFTEST OK — 7/7 (corrected pair passes, missing actor caught, missing trigger guard ` +
+      `caught, single-column skip rejected, comment cannot fake, non-UPDATE skip caught, hard-coded noise list rejected)`
   );
   process.exit(0);
 }

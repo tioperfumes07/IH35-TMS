@@ -2407,6 +2407,45 @@ async function executeSourceReversalOnClient(
     );
     lineSequence += 1;
   }
+  // LV-INVOICE-VOID-REVERSAL-HAS-NO-JE-LINKAGE — link the reversal to its original AT THE JOURNAL-ENTRY
+  // level, both directions. The LINE level was already linked (reversal_of_line_id / reversed_by_line_id
+  // above); the JE level was not, so the pair was discoverable only by string-parsing the memo
+  // `Reversal of <uuid>`.
+  //
+  // WHY A MEMO IS NOT A LINK: `SELECT count(*) FROM accounting.journal_entries WHERE voided_at IS NOT
+  // NULL` is 0 — no journal entry is ever voided in place, because reversal-by-new-JE is the only
+  // mechanism WORM permits. That makes reverses_je_id / reversed_by_je_id THE ONLY machine-readable
+  // audit link between a JE and its reversal, and a NULL makes the reversal invisible to every
+  // structural query. Measured on prod 2026-08-08: 26 JEs carry a `Reversal of …` memo, only 24 carry
+  // the FK, and one of the two memo-only rows (8fd32bec, USMCA bill-payment void) was created THAT DAY
+  // — a live path, not historical residue.
+  //
+  // This is not academic: my own ACCT-F251 sweep had to fall back to memo-matching to find unreversed
+  // voided bills, precisely because this FK could not be trusted. A guard that greps memos is a guard
+  // that breaks the day someone rewords a memo.
+  await client.query(
+    `
+      UPDATE accounting.journal_entries
+      SET reverses_je_id = $2::uuid,
+          updated_at = now()
+      WHERE id = $1::uuid
+        AND operating_company_id = $3::uuid
+        AND reverses_je_id IS NULL
+    `,
+    [reversalJeId, original.journal_entry_id, input.operating_company_id]
+  );
+  await client.query(
+    `
+      UPDATE accounting.journal_entries
+      SET reversed_by_je_id = $2::uuid,
+          updated_at = now()
+      WHERE id = $1::uuid
+        AND operating_company_id = $3::uuid
+        AND reversed_by_je_id IS NULL
+    `,
+    [original.journal_entry_id, reversalJeId, input.operating_company_id]
+  );
+
   await client.query(`UPDATE accounting.posting_batches SET batch_status = 'reversed', updated_at = now() WHERE id = $1::uuid`, [
       original.posting_batch_id,
   ]);

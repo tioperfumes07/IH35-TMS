@@ -69,6 +69,7 @@ export function SelectCombobox({
       }}
     >
       <Combobox
+        id={id}
         options={options
           .filter((opt) => !opt.disabled)
           .map((opt) => ({
