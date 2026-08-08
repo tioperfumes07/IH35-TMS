@@ -52,6 +52,23 @@ export function collectProblems(root = ROOT) {
   if (/listDrivers\s*\(/.test(code)) {
     problems.push(`${FILE}: must not call listDrivers (capped roster)`);
   }
+  // FAIL-CA1: cash-advance money picker must include Probation (create default), not Active-only.
+  if (!/driverRoster=["']active_or_probation["']/.test(code)) {
+    problems.push(
+      `${FILE}: FAIL-CA1 — DriverPickerWithCreate must pass driverRoster="active_or_probation" (Probation create default)`
+    );
+  }
+  const registry = readRel(root, "apps/frontend/src/components/parity/entityPickerRegistry.ts");
+  if (registry && !/active_or_probation/.test(registry)) {
+    problems.push(
+      "entityPickerRegistry.ts: driver list must support driverRoster active_or_probation (FAIL-CA1)"
+    );
+  }
+  if (registry && !/\["Active",\s*"Probation"\]/.test(registry) && !/\('Active',\s*'Probation'\)/.test(registry)) {
+    problems.push(
+      'entityPickerRegistry.ts: money roster must fetch Active+Probation (FAIL-CA1)'
+    );
+  }
   if (/search:\s*""/.test(code)) {
     problems.push(`${FILE}: must not hardcode search:""`);
   }

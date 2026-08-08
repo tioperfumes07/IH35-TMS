@@ -82,7 +82,17 @@ export type EntityPickerConfig = {
    * in the react-query key. When false, Combobox keeps client-side filter (API has no search yet).
    */
   serverSearch: boolean;
-  list: (operatingCompanyId: string, opts?: { search?: string }) => Promise<EntityPickerOption[]>;
+  list: (
+    operatingCompanyId: string,
+    opts?: {
+      search?: string;
+      /**
+       * FAIL-CA1: driver create defaults to Probation; money surfaces must see Active+Probation.
+       * Dispatch/Book Load keep default `active_only` so DQF gates stay on Active roster.
+       */
+      driverRoster?: "active_only" | "active_or_probation";
+    }
+  ) => Promise<EntityPickerOption[]>;
 };
 
 function nonEmpty(...parts: Array<string | null | undefined>): string {
@@ -109,16 +119,34 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
       // EntityPicker is used across Safety (accidents filters, fines, escrow, …) — one silent
       // truncation reproduced on every call site. Typed term → server `search`; empty term still
       // pages the newest 200 (endpoint default is 50).
-      const res = await listDrivers({
-        operating_company_id: operatingCompanyId,
-        status: "Active",
-        limit: 200,
-        search: opts?.search || undefined,
-      });
-      return (res.drivers ?? []).map((d) => ({
-        value: d.id,
-        label: nonEmpty(d.first_name, d.last_name) || String(d.id),
-      }));
+      // FAIL-CA1: money pickers pass driverRoster=active_or_probation — create defaults to Probation
+      // (owner-locked); Active-only hid fresh SAMPLE drivers and only offered duplicate +Create.
+      const search = opts?.search || undefined;
+      const moneyRoster = opts?.driverRoster === "active_or_probation";
+      const statuses = moneyRoster ? (["Active", "Probation"] as const) : (["Active"] as const);
+      const pages = await Promise.all(
+        statuses.map((status) =>
+          listDrivers({
+            operating_company_id: operatingCompanyId,
+            status,
+            limit: 200,
+            search,
+          })
+        )
+      );
+      const seen = new Set<string>();
+      const out: EntityPickerOption[] = [];
+      for (const res of pages) {
+        for (const d of res.drivers ?? []) {
+          if (seen.has(d.id)) continue;
+          seen.add(d.id);
+          out.push({
+            value: d.id,
+            label: nonEmpty(d.first_name, d.last_name) || String(d.id),
+          });
+        }
+      }
+      return out;
     },
   },
 

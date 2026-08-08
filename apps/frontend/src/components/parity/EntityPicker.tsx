@@ -76,6 +76,11 @@ export type EntityPickerProps = {
   dataTestId?: string;
   /** Notified when a record is created inline, so a parent can refetch a dependent list. */
   onCreated?: (id: string) => void;
+  /**
+   * FAIL-CA1 — driver kinds only. Money surfaces include Probation (create default); dispatch stays
+   * Active-only. Ignored for non-driver kinds.
+   */
+  driverRoster?: "active_only" | "active_or_probation";
 };
 
 export function EntityPicker({
@@ -93,6 +98,7 @@ export function EntityPicker({
   dataField,
   dataTestId,
   onCreated,
+  driverRoster = "active_only",
 }: EntityPickerProps) {
   const config = getEntityPickerConfig(kind);
   const [createOpen, setCreateOpen] = useState(false);
@@ -102,11 +108,21 @@ export function EntityPicker({
   const [rosterSearch, setRosterSearch] = useState("");
 
   const queryEnabled = enabled && Boolean(operatingCompanyId);
+  const driverRosterKey = kind === "driver" ? driverRoster : "n/a";
 
   const rosterQuery = useQuery({
-    queryKey: ["entity-picker", kind, operatingCompanyId, config.serverSearch ? rosterSearch : ""],
+    queryKey: [
+      "entity-picker",
+      kind,
+      operatingCompanyId,
+      config.serverSearch ? rosterSearch : "",
+      driverRosterKey,
+    ],
     queryFn: () =>
-      config.list(operatingCompanyId, config.serverSearch ? { search: rosterSearch || undefined } : undefined),
+      config.list(operatingCompanyId, {
+        ...(config.serverSearch ? { search: rosterSearch || undefined } : {}),
+        ...(kind === "driver" ? { driverRoster } : {}),
+      }),
     enabled: queryEnabled,
   });
 
