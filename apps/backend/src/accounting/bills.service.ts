@@ -1735,9 +1735,16 @@ export async function voidBill(
       }
     }
 
+    // LV-BILLVOID-DATE-ERROR-STILL-LIVE — bill_date is a DATE column, so a bare SELECT * hands
+    // node-postgres a JS Date rather than a string, and String(date).slice(0, 10) yields "Thu Aug 06"
+    // out of "Thu Aug 06 2026 00:00:00 GMT-0500 (Central Daylight Time)". That reaches SQL as a date
+    // literal and 500s the void. The governance executor never had this bug because it selects
+    // bill_date::text explicitly (void-cancel-executors.ts:196). Same cast here, under an alias so it
+    // cannot be confused with the raw column that normalizeBill still reads.
     const billRes = await client.query<BillRow>(
       `
-        SELECT *
+        SELECT *,
+               bill_date::text AS bill_date_iso
         FROM accounting.bills
         WHERE id = $1
           AND operating_company_id = $2
@@ -1771,7 +1778,15 @@ export async function voidBill(
       reversed_line_count: 0,
     };
     if (flagOn) {
-      const originalDate = String(billRaw.bill_date).slice(0, 10);
+      // Read the ::text alias, never String(bill_date): the raw column is a JS Date here.
+      const originalDate = String(
+        (billRaw as unknown as { bill_date_iso?: string | null }).bill_date_iso ?? ""
+      ).slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(originalDate)) {
+        // Refuse rather than hand postVoidReversal a malformed date. Substituting today's date would
+        // move a reversing entry into a different accounting period from the entry it reverses.
+        throw new Error(`bill_void_bill_date_unreadable: ${billId}`);
+      }
       reversal = await postVoidReversal(
         client,
         {
