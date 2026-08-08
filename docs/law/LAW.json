@@ -460,5 +460,12 @@
     "source_file": "apps/backend/src/dispatch/loads-bulk.routes.ts",
     "guard": "scripts/verify-delivery-evidence-latch-wired.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-08-VENDOR-TYPE-APP-DB-PARITY",
+    "title": "The app-layer vendor_type allow-list must equal the mdata.vendors CHECK constraint, case-normalised — a bare z.string() over a case-sensitive closed CHECK turns the most likely input ('other') into an opaque HTTP 500/23514 instead of a 400 naming the legal values; every DB CHECK/enum needs an app-layer counterpart that fails FIRST",
+    "source_file": "apps/backend/src/mdata/vendors.routes.ts",
+    "guard": "scripts/verify-vendor-type-app-db-parity.mjs",
+    "type": "enforced"
   }
 ]
