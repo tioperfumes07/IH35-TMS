@@ -30,29 +30,39 @@ const listQuerySchema = companyQuerySchema.extend({
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
 export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
-  app.get("/api/v1/auto-deductions/policies", async (req, reply) => {
+  app.get(
+    "/api/v1/auto-deductions/policies",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const filters: string[] = ["operating_company_id = $1::uuid"];
+      // FAIL-DD1: project driver_name — EntityLink without a label falls back to raw UUID on the card title.
+      const filters: string[] = ["p.operating_company_id = $1::uuid"];
       const values: unknown[] = [query.data.operating_company_id];
       if (query.data.driver_id) {
         values.push(query.data.driver_id);
-        filters.push(`driver_id = $${values.length}::uuid`);
+        filters.push(`p.driver_id = $${values.length}::uuid`);
       }
       if (query.data.status) {
         values.push(query.data.status);
-        filters.push(`status = $${values.length}`);
+        filters.push(`p.status = $${values.length}`);
       }
       const res = await client.query(
         `
-          SELECT *
-          FROM driver_finance.auto_deduction_policies
+          SELECT
+            p.*,
+            NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name
+          FROM driver_finance.auto_deduction_policies p
+          LEFT JOIN mdata.drivers d
+            ON d.id = p.driver_id
+           AND d.deactivated_at IS NULL
+           AND d.archived_at IS NULL
           WHERE ${filters.join(" AND ")}
-          ORDER BY created_at DESC
+          ORDER BY p.created_at DESC
         `,
         values
       );
@@ -60,9 +70,13 @@ export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
     });
 
     return { rows };
-  });
+  }
+  );
 
-  app.post("/api/v1/auto-deductions/policies", async (req, reply) => {
+  app.post(
+    "/api/v1/auto-deductions/policies",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -102,9 +116,13 @@ export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
     });
 
     return reply.code(201).send({ policy: row });
-  });
+  }
+  );
 
-  app.patch("/api/v1/auto-deductions/policies/:id", async (req, reply) => {
+  app.patch(
+    "/api/v1/auto-deductions/policies/:id",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -134,9 +152,13 @@ export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
 
     if (!row) return reply.code(404).send({ error: "policy_not_found" });
     return { policy: row };
-  });
+  }
+  );
 
-  app.delete("/api/v1/auto-deductions/policies/:id", async (req, reply) => {
+  app.delete(
+    "/api/v1/auto-deductions/policies/:id",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -162,7 +184,8 @@ export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
 
     if (!updated) return reply.code(404).send({ error: "policy_not_found_or_not_active" });
     return { ok: true };
-  });
+  }
+  );
 }
 
 export default fp(

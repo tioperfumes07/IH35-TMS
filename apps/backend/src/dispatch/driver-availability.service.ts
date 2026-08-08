@@ -9,6 +9,10 @@ export type DriverAssignmentAvailability = {
   blocker?: string;
   work_order_id?: string;
   asset_id?: string | null;
+  /** FAIL-U1: operator-facing labels. The ids above stay for programmatic callers; these are what
+      a dispatcher can actually read. `WO ad7c6b47-…` told nobody which work order or which truck. */
+  work_order_display_id?: string | null;
+  asset_label?: string | null;
 };
 
 export async function canAssignLoadToDriver(
@@ -21,14 +25,21 @@ export async function canAssignLoadToDriver(
       id: string;
       asset_id: string | null;
       status: string;
+      display_id: string | null;
+      unit_number: string | null;
     }>(
       `
-        SELECT id::text AS id, unit_id::text AS asset_id, status::text AS status
-        FROM maintenance.work_orders
-        WHERE driver_id = $1
-          AND operating_company_id = $2
-          AND status::text NOT IN ('completed', 'cancelled')
-        ORDER BY created_at DESC
+        SELECT wo.id::text AS id,
+               wo.unit_id::text AS asset_id,
+               wo.status::text AS status,
+               wo.display_id::text AS display_id,
+               u.unit_number::text AS unit_number
+        FROM maintenance.work_orders wo
+        LEFT JOIN mdata.units u ON u.id = wo.unit_id
+        WHERE wo.driver_id = $1
+          AND wo.operating_company_id = $2
+          AND wo.status::text NOT IN ('completed', 'cancelled')
+        ORDER BY wo.created_at DESC
         LIMIT 1
       `,
       [driverId, tenantId]
@@ -41,11 +52,17 @@ export async function canAssignLoadToDriver(
       return { ok: true };
     }
 
+    // FAIL-U1: prefer the human label; fall back to the uuid only when the row genuinely has none.
+    const woLabel = activeWo.display_id || activeWo.id;
+    const assetLabel = activeWo.unit_number || activeWo.asset_id;
+
     return {
       ok: false,
-      blocker: `Driver's truck is in repair (WO ${activeWo.id})`,
+      blocker: `Driver's truck is in repair (WO ${woLabel})`,
       work_order_id: activeWo.id,
       asset_id: activeWo.asset_id ?? null,
+      work_order_display_id: activeWo.display_id ?? null,
+      asset_label: assetLabel ?? null,
     };
   };
 

@@ -913,6 +913,12 @@ export function createExpense(
     unit_id?: string;
     /** WAVE-H2 — optional ops load FK (not silently dropped server-side). */
     load_id?: string;
+    /**
+     * FAIL-F2 class-B — accounting.expenses.is_sample_data. The backend has accepted this since
+     * expenses.routes.ts:114 and NOTHING in the FE supplied it, so every expense created through the app
+     * landed indistinguishable from real money — including ones with SAMPLE in their own memo.
+     */
+    is_sample_data?: boolean;
     driver_id?: string;
     attachment_draft_id?: string;
   }

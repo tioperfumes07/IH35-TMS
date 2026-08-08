@@ -447,8 +447,22 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     () => Math.max(activeCount - onLoadsCount - onLeaveCount, 0),
     [activeCount, onLoadsCount, onLeaveCount]
   );
+  // NO-WINDOW / FAIL-S2 — this counted an ALLOWLIST of three statuses (presettle/acked/locked), so any
+  // settlement in a status outside that list vanished from the KPI. It is not hypothetical: live settlements
+  // carry status `closed` (with approval_status `needs_review`), and `closed` is not even a member of the
+  // shared SettlementStatus union (draft|presettle|acked|locked|paid|held|cancelled) — so real driver money
+  // sat behind a card reading 0 while the ledger was correct.
+  //
+  // Inverted to a DENYlist: a settlement is "due" unless it is settled or abandoned. A KPI whose job is
+  // "how many need attention" must fail OPEN — an unrecognised status is surfaced, never silently dropped.
   const settleDueCount = useMemo(
-    () => (settlementsQuery.data?.settlements ?? []).filter((s) => ["presettle", "acked", "locked"].includes(String(s.status))).length,
+    () =>
+      (settlementsQuery.data?.settlements ?? []).filter((s) => {
+        const status = String(s.status ?? "").toLowerCase();
+        if (["paid", "cancelled", "canceled"].includes(status)) return false;
+        // Paid-by-payment-state also closes it out, even when the status word lags behind.
+        return !["cleared", "manual_paid"].includes(String(s.payment_state ?? "").toLowerCase());
+      }).length,
     [settlementsQuery.data?.settlements]
   );
   const escrowTotal = useMemo(

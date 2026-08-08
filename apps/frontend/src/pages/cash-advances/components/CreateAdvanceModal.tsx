@@ -320,6 +320,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                 shell="drawer"
                 placeholder="Select driver"
                 dataField="cash-advance-driver"
+                driverRoster="active_or_probation"
               />
             </label>
 

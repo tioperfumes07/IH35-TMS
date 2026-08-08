@@ -405,6 +405,9 @@ function normalizeBill(row: BillRow) {
 
 // Exported for allocations.service.ts (Allocations list reuses the same QBO-snapshot vendor
 // display-name lookup as listBills — never invent a second vendor-name resolver).
+/** LV-BILLS-VENDOR-UUID — only uuid-shaped ids can be mdata.vendors rows; QBO ids are short numerics. */
+const UUID_SHAPE_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function resolveVendorDisplayMap(
   operatingCompanyId: string,
   vendorIds: string[]
@@ -436,6 +439,27 @@ export async function resolveVendorDisplayMap(
     const map: Record<string, string> = {};
     for (const row of res.rows) {
       map[row.vendor_id] = row.display_name ?? row.vendor_id;
+    }
+
+    // LV-BILLS-VENDOR-UUID — the snapshot above is the QBO identifier space only. TMS-native (USMCA) bills
+    // carry an mdata.vendors UUID in vendor_uuid, which never appears in qbo_archive, so EVERY such row
+    // fell through to displaying a raw UUID. Resolve the uuid-shaped ids against mdata.vendors as well.
+    // QBO wins where both exist: the snapshot is the system-of-record name under parallel books.
+    const unresolved = vendorIds.filter((id) => !map[id] && UUID_SHAPE_RE.test(id));
+    if (unresolved.length) {
+      const local = await client.query<{ id: string; vendor_name: string | null }>(
+        `
+          SELECT v.id::text AS id, v.vendor_name
+          FROM mdata.vendors v
+          WHERE v.operating_company_id = $1::uuid
+            AND v.id = ANY($2::uuid[])
+        `,
+        [operatingCompanyId, unresolved]
+      );
+      for (const row of local.rows) {
+        const name = (row.vendor_name ?? "").trim();
+        if (name) map[row.id] = name;
+      }
     }
     return map;
   });

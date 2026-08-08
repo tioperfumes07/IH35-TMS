@@ -86,7 +86,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="text-sm font-semibold text-gray-900">
-              <EntityLink kind="driver" id={row.driver_id} />
+              <EntityLink kind="driver" id={row.driver_id} label={row.driver_name || undefined} />
             </div>
             <div className="text-xs text-gray-600">{typeLabel} · {money(deducted)} / {money(owed)}</div>
           </div>
@@ -187,6 +187,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
                 disabled={Boolean(lockedDriverId)}
                 placeholder="Select driver…"
                 dataField="auto-deduction-driver"
+                driverRoster="active_or_probation"
               />
             </div>
             {lockedDriverId ? (

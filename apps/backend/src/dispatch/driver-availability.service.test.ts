@@ -27,6 +27,9 @@ describe("canAssignLoadToDriver", () => {
               id: "WO-123",
               asset_id: "UNIT-7",
               status: "open",
+              // FAIL-U1: the row now carries operator-readable labels alongside the ids.
+              display_id: "WO-T120-RS-08-08-2026-0002-PEND0",
+              unit_number: "T120",
             },
           ] as T[],
         };
@@ -41,9 +44,12 @@ describe("canAssignLoadToDriver", () => {
 
     expect(result).toEqual({
       ok: false,
-      blocker: "Driver's truck is in repair (WO WO-123)",
+      // FAIL-U1: names the work order a dispatcher can look up, not its uuid.
+      blocker: "Driver's truck is in repair (WO WO-T120-RS-08-08-2026-0002-PEND0)",
       work_order_id: "WO-123",
       asset_id: "UNIT-7",
+      work_order_display_id: "WO-T120-RS-08-08-2026-0002-PEND0",
+      asset_label: "T120",
     });
   });
 

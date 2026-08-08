@@ -17,7 +17,7 @@ vi.mock("../../../api/client", () => ({
 }));
 
 describe("FaultDraftsPage", () => {
-  it("renders fault-driven drafts heading", () => {
+  it("renders fault-driven drafts heading", async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
@@ -27,6 +27,9 @@ describe("FaultDraftsPage", () => {
       </QueryClientProvider>
     );
     expect(screen.getByText("Fault-Driven Drafts")).toBeTruthy();
-    expect(screen.getByText(/No fault-driven draft work orders pending review/)).toBeTruthy();
+    // ParityTable renders emptyText only once the query SETTLES (it shows a loading state first), so this
+    // must be awaited. Read synchronously it fails with "Unable to find an element with the text", which
+    // reads as missing copy rather than as a control that has not finished loading.
+    expect(await screen.findByText(/No fault-driven draft work orders pending review/)).toBeTruthy();
   });
 });
