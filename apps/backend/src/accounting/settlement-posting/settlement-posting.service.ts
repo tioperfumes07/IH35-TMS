@@ -92,6 +92,8 @@ type SettlementRow = {
   deductions_total: string;
   reimbursements_total: string;
   net_pay: string;
+  /** ACCT-F213 — the settlement's own sample flag, inherited by the journal entry it posts. */
+  is_sample_data: boolean;
 };
 
 type DeductionRow = {
@@ -107,7 +109,11 @@ async function loadSettlement(client: DbClient, operatingCompanyId: string, sett
   const res = await client.query<SettlementRow>(
     `
       SELECT id::text, driver_id::text, display_id, status, locked_at::text, period_end::text,
-             gross_pay::text, deductions_total::text, reimbursements_total::text, net_pay::text
+             gross_pay::text, deductions_total::text, reimbursements_total::text, net_pay::text,
+             -- ACCT-F213: driver_finance.driver_settlements carries is_sample_data (verified on prod),
+             -- so this poster CAN inherit honestly. fuel.fuel_transactions and maintenance.work_orders
+             -- do NOT carry it, which is exactly why their posters stay baselined instead of guessing.
+             COALESCE(is_sample_data, false) AS is_sample_data
       FROM driver_finance.driver_settlements
       WHERE operating_company_id = $1::uuid AND id = $2::uuid
       LIMIT 1
@@ -347,11 +353,20 @@ export async function postSettlementToGl(
     const headerRes = await client.query<{ id: string }>(
       `
         INSERT INTO accounting.journal_entries
-          (operating_company_id, entry_date, memo, status, source, created_by_user_id, qbo_sync_pending, created_at, updated_at)
-        VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, now(), now())
+          (operating_company_id, entry_date, memo, status, source, created_by_user_id, qbo_sync_pending,
+           is_sample_data, created_at, updated_at)
+        VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, $5, now(), now())
         RETURNING id::text
       `,
-      [input.operatingCompanyId, settlement.period_end, `Driver settlement ${settlement.display_id ?? settlement.id} posting`, actor.userId]
+      [
+        input.operatingCompanyId,
+        settlement.period_end,
+        `Driver settlement ${settlement.display_id ?? settlement.id} posting`,
+        actor.userId,
+        // ACCT-F213 — inherit from the settlement being posted, so the payroll subledger and the
+        // ledger agree about whether this driver pay is sample money.
+        settlement.is_sample_data,
+      ]
     );
     const journalEntryId = headerRes.rows[0]?.id;
     if (!journalEntryId) throw new Error("settlement_journal_entry_insert_failed");
