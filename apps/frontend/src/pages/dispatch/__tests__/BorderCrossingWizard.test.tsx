@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { ToastProvider } from "../../../components/Toast";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { BorderCrossingWizardPage } from "../BorderCrossingWizardPage";
 
@@ -32,8 +33,13 @@ describe("BorderCrossingWizardPage", () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={qc}>
+        {/* ToastProvider: the page (or a child it gained) calls useToast, so every render threw
+            "useToast must be used inside ToastProvider" and the test died before a single assertion.
+            The app always renders this inside the provider; the harness was the unrealistic part. */}
         <MemoryRouter>
+          <ToastProvider>
           <BorderCrossingWizardPage />
+          </ToastProvider>
         </MemoryRouter>
       </QueryClientProvider>
     );
