@@ -108,10 +108,14 @@ describeIntegration("CLS-SUBLEDGER-GL-DARK-TIEOUT — A/R subledger ties to the 
         [loadId, companyId, `L-TIE-${suffix}-${invoiceId.slice(0, 4)}`, customerId, INVOICE_CENTS, userId]
       );
       await db.query(
+        // amount_open_cents is GENERATED ALWAYS AS (total_cents - amount_paid_cents) — inserting into
+        // it raises "cannot insert a non-DEFAULT value". Leaving it to the database is not a
+        // workaround, it is the point: the A/R subledger balance this test asserts on is maintained
+        // by the column itself as payments apply, so nothing here can fake the subledger side moving.
         `INSERT INTO accounting.invoices
            (id, operating_company_id, customer_id, display_id, issue_date, due_date,
-            subtotal_cents, tax_cents, total_cents, amount_open_cents, status, source_load_id)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,$5,0,$5,$5,'sent',$6::uuid)`,
+            subtotal_cents, tax_cents, total_cents, status, source_load_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,CURRENT_DATE,CURRENT_DATE,$5,0,$5,'sent',$6::uuid)`,
         [invoiceId, companyId, customerId, `INV-TIE-${suffix}-${invoiceId.slice(0, 4)}`, INVOICE_CENTS, loadId]
       );
       await db.query(
