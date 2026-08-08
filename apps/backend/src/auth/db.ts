@@ -184,7 +184,7 @@ function instrumentClientForDev<C extends pg.PoolClient>(client: C): C {
  */
 export async function withLuciaBypass<T>(
   fn: (client: pg.PoolClient) => Promise<T>,
-  opts?: { actorUserId?: string | null }
+  opts?: { actorUserId?: string | null; sessionId?: string | null }
 ): Promise<T> {
   const client = await luciaPool.connect();
   let scoped: pg.PoolClient | null = null;
@@ -212,6 +212,13 @@ export async function withLuciaBypass<T>(
     const actor = opts?.actorUserId;
     if (typeof actor === "string" && UUID_RE.test(actor)) {
       await client.query("SELECT set_config('app.current_user_id', $1::text, true)", [actor]);
+    }
+    // ACCT-F257 — same for the session, on this wrapper too. Attributing the user but not the session
+    // would answer "who" and still leave "in which session" unanswerable, which is half the question
+    // an audit reviewer actually asks.
+    const sessionIdLb = opts?.sessionId;
+    if (typeof sessionIdLb === "string" && sessionIdLb.length > 0 && sessionIdLb.length <= 255) {
+      await client.query("SELECT set_config('app.session_id', $1::text, true)", [sessionIdLb]);
     }
     // LV-REVREC-NOT-FIRING — the after-commit queue is opened on BOTH transaction wrappers, not just
     // withCurrentUser. This one also opens a real BEGIN on its own pool, so a caller here that
@@ -269,9 +276,25 @@ export async function withSavepoint<T>(
   }
 }
 
+/**
+ * ACCT-F257 — the audit trail records WHICH SESSION acted, and it has never once been able to.
+ *
+ * `audit.tg_audit_row` writes `session_id` from `current_setting('app.session_id', true)`. Nothing in
+ * the backend has ever set that GUC — measured live: `audit.row_changes` holds 2,340,091 rows and
+ * `session_id` is populated on ZERO of them.
+ *
+ * The id is not missing, it is DROPPED. `session-middleware.ts` sets `req.session = { id: ... }` on
+ * every authenticated request; it simply never reaches the database wrapper. So "which session booked
+ * this load" is unanswerable not because the data was never captured, but because it was captured and
+ * discarded one layer above the audit trigger.
+ *
+ * Optional for the same reason `actorUserId` is on withLuciaBypass: cron, outbox drain and other
+ * system writers have no session, and inventing one would be worse than a NULL.
+ */
 export async function withCurrentUser<T>(
   userUuid: string,
-  fn: (client: pg.PoolClient) => Promise<T>
+  fn: (client: pg.PoolClient) => Promise<T>,
+  opts?: { sessionId?: string | null }
 ): Promise<T> {
   if (!/^[0-9a-f-]{36}$/i.test(userUuid)) {
     throw new Error("Invalid UUID for app.current_user_id");
@@ -293,6 +316,15 @@ export async function withCurrentUser<T>(
       await client.query(`SET LOCAL ROLE ${APP_DB_ROLE}`);
     }
     await client.query(`SELECT set_config('app.current_user_id', $1::text, true)`, [userUuid]);
+    // ACCT-F257 — carry the session the caller is acting under. Transaction-local like every GUC
+    // above, so it cannot leak to the next borrower of this pooled connection. Bounded and
+    // non-empty-checked rather than regex-validated: Lucia session ids are opaque tokens, not UUIDs,
+    // so demanding a UUID shape here would silently reject every real session and leave the column
+    // NULL while looking fixed.
+    const sessionIdCu = opts?.sessionId;
+    if (typeof sessionIdCu === "string" && sessionIdCu.length > 0 && sessionIdCu.length <= 255) {
+      await client.query(`SELECT set_config('app.session_id', $1::text, true)`, [sessionIdCu]);
+    }
     // LV-REVREC-NOT-FIRING — this is the ONE funnel every scoped route transaction goes through, so
     // it is where after-commit work is drained. A side-effect that opens its own connection (the
     // revenue latch does, via withLuciaBypass) cannot see this transaction's uncommitted rows;
