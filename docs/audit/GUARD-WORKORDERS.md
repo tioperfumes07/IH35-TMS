@@ -265,6 +265,81 @@ Status: **OPEN — TOP PRIORITY, NON-STOP**, owner-directed. This card never "co
 
 ## LIVE BOARD (GUARD updates as shas land)
 
+### ⛔ `CI-F001-ACTIONS-STARTUP-FAILURE-REPO-WIDE` — **P0 · OPEN · CI IS DOWN REPO-WIDE · OWNER ACTION REQUIRED**
+
+**Found by:** CC-1 (BUILD-MONEY), 2026-08-07 23:15 CDT. **Owning lane:** **OWNER** (account-level billing —
+no lane can fix this in code; see "why no coder can fix this"). **Blast radius: every lane, every PR, and
+the production deploy path.**
+
+**THE DEFECT.** Since **2026-08-08 02:55 UTC** every GitHub Actions run in this repository fails with
+`conclusion=startup_failure`, `path=BuildFailed`, empty workflow `name`, and **0 jobs** — meaning the run is
+never created, so **no guard, no typecheck, no required check ever executes**. `mergeStateStatus` still
+reports `CLEAN` because there is nothing red — **there is nothing at all.** This is the
+`empty-rollup-is-not-green` trap operating at repo scale.
+
+**LIVE EVIDENCE (produced this session, re-runnable):**
+
+| Probe | Command | Result |
+|---|---|---|
+| Last SUCCESSFUL run repo-wide | `gh run list --limit 100 --json workflowName,conclusion,headSha,createdAt` | `PR Evidence Block (Rule 16)` · `48399f8` · **2026-08-08T02:39:25Z** — nothing succeeds after this |
+| Failure density | same | **44 of the last 100 runs = `startup_failure`**; the newest **30 consecutive** are all `startup_failure` |
+| Scope = all events | same | fails on `push`, `pull_request`, `schedule`, AND `workflow_dispatch` |
+| Scope = all branches | same | fails on `main`, `dependabot/*`, and feature branches alike |
+| Run has no jobs | `gh api repos/tioperfumes07/IH35-TMS/actions/runs/31238934965/jobs` | `total_count = 0`; check-suite `84769199732` → `latest_check_runs_count: 0` |
+| NOT a YAML regression | `git diff --stat 0c72047 origin/main -- .github/` | **empty** — zero `.github/` changes across the entire breakage window |
+| NOT disabled workflows | `gh api repos/.../actions/workflows` | **30 of 30 `state: active`** — none disabled |
+| NOT repo settings | `gh api repos/.../actions/permissions` | `{"enabled":true,"allowed_actions":"all"}` |
+| NOT a GitHub incident | `githubstatus.com/api/v2/summary.json` | **"All Systems Operational"**, zero incidents |
+
+**ROOT CAUSE (as far as an agent can verify).** Every content-level and repo-level cause is **excluded by
+the evidence above**. A failure that hits *all* workflows, *all* events, and *all* branches simultaneously —
+with valid YAML, active workflows, enabled Actions, and a green GitHub status page — is the documented
+signature of an **account-level GitHub Actions spending-limit / quota exhaustion**.
+
+**UNVERIFIED — needs owner check.** I could **not** confirm the quota directly: the billing endpoint
+(`/users/tioperfumes07/settings/billing/actions`) returns `404` and requires the `user` OAuth scope.
+**I did not run `gh auth refresh` to grant it** — widening a credential's scope is an access-control change
+and is prohibited (CLAUDE.md §1.6). Stated as UNVERIFIED rather than asserted as fact, per §10b.
+
+**WHY NO CODER CAN FIX THIS.** There is no code change that restores CI here — the YAML is already correct
+and unchanged. Any lane "fixing" this in the repo would be fabricating a fix for a defect that is not in the
+repo. **OWNER ACTION:** open GitHub → *Settings → Billing → Plans and usage → Actions* and confirm whether
+the spending limit is exhausted; raise it or add a payment method. If the quota is healthy, the next step is
+a GitHub Support ticket citing check-suite `84769199732` (`startup_failure`, 0 check runs, `path=BuildFailed`).
+
+**CONSEQUENCE ALREADY REALISED — the active merge trio shipped UNVERIFIED.** Desktop merged all three at
+`2026-08-08T04:12` while CI was down:
+
+| PR | Merge commit | CI that actually ran |
+|---|---|---|
+| #4753 audit actor GUC | `cf748b44b` | 24/24 SUCCESS — **but from BEFORE the outage; not re-run against tip-main** |
+| #4744 void state authoritative | `2885e447e` | 24/24 SUCCESS — **same caveat** |
+| **#4766 bill void date (`bills.service.ts`)** | `1b85ad8b8` | **ZERO checks. Never ran. 0/0.** |
+
+**#4766 is the sharp edge:** it modifies backend money code (`apps/backend/src/accounting/bills.service.ts`)
+and reached `main` with **no typecheck, no guard suite, no required check** — its workflows had already
+`startup_failure`d twice (03:23:02 push, 03:23:14 PR). I re-fired them via close/reopen at 04:12:30 and got
+`startup_failure` a third time, which is how the repo-wide outage was found. STATUS-NOW listed it as
+"CLEAN — guards proven"; **`CLEAN` there meant "nothing red", not "verified".**
+
+**PROD STATE AT TIME OF FILING:** `GET /api/v1/healthz/shallow` → `34d8da7`. Main is at `1b85ad8b8`.
+**Prod has NOT yet picked up the trio.** Render `autoDeploy` is not disabled in `render.yaml` and
+`deploy-approval.yml` is a *recording* gate ("Render auto-deploy proceeds after this environment
+approval"), so the deploy is expected to proceed independently of Actions — but `prod-postdeploy-verify`
+and `deploy-parity-monitor` **will not run**, so the deploy lands unwatched.
+
+**DEFINITION OF DONE (permanent fix, no patch):**
+1. Actions runs are created again — proven by one `success` conclusion on a `main` push.
+2. **#4766 is retro-verified on tip-main** (CC-3): re-run the full suite against `1b85ad8b8` and confirm
+   `bills.service.ts` passes typecheck + the money guards it never faced.
+3. A guard closes the class: **a merge must be blocked when the head SHA has ZERO completed check runs**,
+   not merely when a check is red. Today `mergeStateStatus: CLEAN` is indistinguishable between "all green"
+   and "nothing ran" — that ambiguity is what let #4766 through. Owning lane for that guard: **CC-3
+   (CI-guards)**, registered in `docs/law/LAW.json`.
+
+**DO NOT PATCH BY:** re-running individual workflows until one sticks, editing `.github/workflows/*` to
+"fix" valid YAML, disabling required checks to unblock merges, or marking the trio verified on the strength
+of pre-outage green. All four hide the outage instead of ending it.
 
 ---
 
