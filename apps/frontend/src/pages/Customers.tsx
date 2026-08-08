@@ -120,7 +120,16 @@ function CustomerDetailsTab({
           <DetailRow label="Mobile" value={dash(customer.main_contact_mobile)} />
           <DetailRow label="Fax" value={dash(customer.fax_phone)} />
           <DetailRow label="Website" value={dash(customer.website)} />
-          <DetailRow label="Main contact" value={dash(customer.main_contact_name)} />
+          {/* invariant #23 (§7): unlike the roster cell, DetailRow's value span is `break-words`, so a long
+              main-contact name really does wrap here — this one IS a repair, not just canonicalisation. */}
+          <DetailRow
+            label="Main contact"
+            value={
+              <span title={customer.main_contact_name ?? undefined} className="single-line-name">
+                {dash(customer.main_contact_name)}
+              </span>
+            }
+          />
           <DetailRow label="A/R email" value={dash(customer.ar_email)} />
           <DetailRow label="A/P email" value={dash(customer.ap_email)} />
           <DetailRow label="Notes" value={dash(displayEntityNotes(customer.notes))} />

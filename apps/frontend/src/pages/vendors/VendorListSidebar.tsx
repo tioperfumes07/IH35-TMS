@@ -133,7 +133,12 @@ export function VendorListSidebar({
                     <td style={{ width: widths.name }} className="max-w-0 truncate px-2 py-1.5">
                       {/* Anchor navigation (cmd-click / keyboard) via CardLink; also selects the master-detail row. */}
                       <CardLink href={`/vendors/${vendor.id}`} onNavigate={() => onSelectVendor(vendor.id)} className="block truncate text-sm font-medium text-gray-900 hover:underline">
-                        {vendor.name}
+                        {/* invariant #23 (§7 owner-locked): the canonical `single-line-name` token, plus the
+                            title so the full name is still readable once ellipsised. The surrounding
+                            `truncate` already prevented wrapping here — this page never rendered the name
+                            through ParityTable — so this adds the CANONICAL treatment and the tooltip, it
+                            does not repair a wrap. */}
+                        <span title={vendor.name} className="single-line-name">{vendor.name}</span>
                       </CardLink>
                     </td>
                     <td style={{ width: widths.open_balance }} className="px-2 py-1.5 text-right text-xs tabular-nums text-gray-700">{fmtMoney(openByVendorId.get(vendor.id) ?? 0)}</td>
