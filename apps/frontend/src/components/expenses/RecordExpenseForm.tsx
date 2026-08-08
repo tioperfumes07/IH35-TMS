@@ -192,6 +192,7 @@ export function RecordExpenseForm({
               canonical mdata.vendors), matching Category. The submit sends vendor_uuid (canonical id) only;
               a freshly created vendor selects + persists (survives reload). No free-text-only picker. */}
           <ReferenceSelect
+            id={fieldId("vendor")}
             value={values.vendorUuid || null}
             onChange={(next) => {
               if (!next) {
@@ -223,7 +224,10 @@ export function RecordExpenseForm({
               first row (full COA wizard → canonical catalogs.accounts), matching Bills / the split modal
               (FIX-02). Existing categories map their QBO account id (category_qbo_id) on select; a freshly
               created local category selects + persists to catalogs.accounts (survives reload in the CoA). */}
+          {/* C1-A11Y: the label above uses htmlFor={fieldId("category")}; without this id the label bound
+              to nothing — unlabelled for screen readers, and getByLabelText addressed the wrong element. */}
           <ReferenceSelect
+            id={fieldId("category")}
             value={values.categoryId || null}
             onChange={(next) => {
               if (!next) {
