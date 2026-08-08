@@ -217,7 +217,12 @@ const createDispatchLoadBodySchema = z.object({
         sequence_number: z.number().int().min(1),
         location_id: z.string().uuid().optional(),
         company_name: z.string().trim().max(200).optional(),
-        city: z.string().trim().max(120).optional(),
+        // P0 BLANK-STOP-CITIES: city was `.optional()` here and unvalidated in the wizard, so the Book
+        // path shipped loads whose pickup AND delivery stops had empty cities — proved on 2/2 stops of
+        // L-20260808-0093 and 2/2 of L-20260808-0062. A cityless stop breaks routing, ETA and IFTA
+        // jurisdiction miles, and nothing downstream can reconstruct it. Required on CREATE only:
+        // updateDispatchLoadBodySchema keeps `.optional()` because Edit sends partial patches.
+        city: z.string().trim().min(1, "city is required").max(120),
         state: z.string().trim().max(120).optional(),
         country: z.string().trim().max(120).optional(),
         address_line1: z.string().trim().max(300).optional(),
@@ -254,6 +259,9 @@ const updateDispatchLoadBodySchema = z.object({
   customer_wo_number: z.string().trim().max(120).nullable().optional(),
   pickup_number: z.string().trim().max(120).nullable().optional(),
   border_routing: z.string().trim().max(120).nullable().optional(),
+  // FAIL-B4 — the EDIT path never accepted this. zod strips unknown keys, so a correct UI and a correct
+  // column-writer still lost the flag in between. Create had it since FAIL-D6; update did not.
+  is_sample_data: z.boolean().optional(),
   driver_instructions_text: z.string().trim().max(5000).nullable().optional(),
   notes: z.string().trim().max(5000).nullable().optional(),
   requires_tarps: z.boolean().optional(),

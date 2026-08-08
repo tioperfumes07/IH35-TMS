@@ -1400,7 +1400,8 @@
     "2885": "2885-verify-money-create-tags-sample-data.mjs",
     "2889": "2889-verify-driver-list-cap-covers-roster.mjs",
     "2893": "2893-verify-gl-inherits-load-sample-tag.mjs",
-    "2897": "2897-verify-void-reversal-inherits-sample-tag.mjs"
+    "2897": "2897-verify-void-reversal-inherits-sample-tag.mjs",
+    "2898": "2898-verify-book-dispatch-sets-dispatched.mjs"
   },
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",

@@ -78,7 +78,18 @@ export async function getArAgingReport(input: {
           -- write that value. Guarded by scripts/verify-void-status-literal-matches-column.mjs,
           -- which fails when a predicate names a literal the column's CHECK constraint forbids, and
           -- fails again when an exclusion names ONLY the unreachable spelling.
-          AND i.status NOT IN ('paid', 'void', 'voided', 'draft')
+          -- ACCT-F223 — 'proforma' EXCLUDED. A proforma invoice posts NO journal entry: it is a
+          -- projection created at Book time, not a receivable the customer owes. Verified on prod:
+          -- every proforma has ZERO rows in accounting.journal_entry_postings.
+          --
+          -- Counting them here made A/R aging disagree with the general ledger by $22,720.00 on USMCA
+          -- alone (8 proformas), including $4,910 sitting on a load that had been CANCELLED. Aging
+          -- drives collections, DSO and the balance-sheet A/R figure, so a projection in this report
+          -- is not a harmless extra row -- it is an invented receivable.
+          --
+          -- 'draft' was already excluded for exactly this reason; 'proforma' is the same class and was
+          -- simply missed. If a proforma is genuinely owed, it becomes 'sent' and appears here then.
+          AND i.status NOT IN ('paid', 'void', 'voided', 'draft', 'proforma')
         ORDER BY c.customer_name ASC, i.due_date ASC
       `,
       [input.operating_company_id]

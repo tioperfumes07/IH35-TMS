@@ -33,9 +33,21 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
   const [form, setForm] = useState({
     complaint_date: companyToday(),
     complainant_type: "external",
+    // P1 complaint_consistency_failed — these three keys are the CONTRACT names. They were
+    // developer-named uuid keys the endpoint does not accept, and the complainant name did not exist, so this
+    // page POSTed a body the endpoint could not accept: `complaint_type` is REQUIRED by the zod schema,
+    // and `validateConsistency` needs `respondent_driver_id` (type=driver) plus `complainant_external_name`
+    // (type=external). Every create from this page failed.
+    complainant_external_name: "",
+    // The complainant dropdown offers driver/customer/employee/external/anonymous, but the payload only
+    // ever carried a NAME — so "from Jorge" (a DRIVER complainant) could never satisfy the contract and
+    // came back complaint_consistency_failed. Each type needs its own id field.
+    complainant_driver_id: "",
+    complainant_user_id: "",
+    complainant_customer_id: "",
     respondent_type: "driver",
-    respondent_uuid: "",
-    complaint_type_uuid: "",
+    respondent_driver_id: "",
+    complaint_type: "",
     summary: "",
     severity: "medium",
   });
@@ -47,12 +59,38 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => createComplaint(operatingCompanyId, form),
+    mutationFn: () =>
+      // Send the CONTRACT, not the form object. `complaint_date` is a plain YYYY-MM-DD and the schema's
+      // `filed_at` is `.datetime()` — posting the raw form would fail zod on that alone, and the server
+      // already defaults filed_at to now(), so it is deliberately omitted.
+      createComplaint(operatingCompanyId, {
+        complainant_type: form.complainant_type,
+        ...(form.complainant_type === "anonymous" ? {} : { [complainantIdentityKey]: complainantIdentityValue }),
+        respondent_type: form.respondent_type,
+        respondent_driver_id: form.respondent_driver_id,
+        complaint_type: form.complaint_type,
+        summary: form.summary,
+        severity: form.severity,
+      }),
     onSuccess: async () => {
       setForm((prev) => ({ ...prev, summary: "" }));
       await queryClient.invalidateQueries({ queryKey: ["safety", "complaints", operatingCompanyId] });
     },
   });
+
+  // Which identity field the server requires depends entirely on complainant_type (validateConsistency).
+  const complainantIdentityKey =
+    form.complainant_type === "driver"
+      ? "complainant_driver_id"
+      : form.complainant_type === "employee"
+        ? "complainant_user_id"
+        : form.complainant_type === "customer"
+          ? "complainant_customer_id"
+          : "complainant_external_name";
+  const complainantIdentityValue = String((form as Record<string, string>)[complainantIdentityKey] ?? "");
+  const complainantIdentityPlaceholder =
+    form.complainant_type === "external" ? "Complainant name" : `Complainant ${form.complainant_type} id`;
+  const complainantReady = form.complainant_type === "anonymous" || Boolean(complainantIdentityValue);
 
   const columns = useMemo<Array<ParityColumn<ComplaintRow>>>(
     () => [
@@ -85,8 +123,16 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
           <option value="external">external</option>
           <option value="anonymous">anonymous</option>
         </SelectCombobox>
-        <input value={form.respondent_uuid} placeholder="respondent_uuid" onChange={(e) => setForm((v) => ({ ...v, respondent_uuid: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
-        <input value={form.complaint_type_uuid} placeholder="complaint_type_uuid" onChange={(e) => setForm((v) => ({ ...v, complaint_type_uuid: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
+        {form.complainant_type === "anonymous" ? null : (
+          <input
+            value={complainantIdentityValue}
+            placeholder={complainantIdentityPlaceholder}
+            onChange={(e) => setForm((v) => ({ ...v, [complainantIdentityKey]: e.target.value }))}
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+          />
+        )}
+        <input value={form.respondent_driver_id} placeholder="Respondent driver id" onChange={(e) => setForm((v) => ({ ...v, respondent_driver_id: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
+        <input value={form.complaint_type} placeholder="Complaint type" onChange={(e) => setForm((v) => ({ ...v, complaint_type: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
         <input value={form.summary} placeholder="Summary" onChange={(e) => setForm((v) => ({ ...v, summary: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs" />
         <SelectCombobox value={form.severity} onChange={(e) => setForm((v) => ({ ...v, severity: e.target.value }))} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
           <option value="low">low</option>
@@ -94,7 +140,7 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
           <option value="high">high</option>
           <option value="critical">critical</option>
         </SelectCombobox>
-        <button type="button" className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white" disabled={!form.respondent_uuid || !form.complaint_type_uuid || !form.summary || createMutation.isPending} onClick={() => createMutation.mutate()}>
+        <button type="button" className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white" disabled={!complainantReady || !form.respondent_driver_id || !form.complaint_type || !form.summary || createMutation.isPending} onClick={() => createMutation.mutate()}>
           + Create Complaint
         </button>
       </div>

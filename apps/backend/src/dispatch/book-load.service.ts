@@ -1290,12 +1290,20 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     //
     // A team assignment crews the load just as a primary driver does, so either satisfies this.
     const hasCrew = Boolean(input.assigned_primary_driver_id) || Boolean(input.team_id);
+    // FAIL-B3 — `Book + dispatch` must land as `dispatched` when a crew is present.
+    // Measured live 2026-08-08: wizard primary action sent save_mode=book_dispatch, toast historically
+    // claimed "dispatched", but statusForInsert only mirrored the route default
+    // `assigned_not_dispatched` via toMdataStatus(input.status). Outbox event
+    // `dispatch.load.dispatched` fired while the row stayed pre-dispatch — button label lied.
+    // Draft still drafts; no-crew book_dispatch still demotes to unassigned (FAIL-D3).
     const statusForInsert =
       input.save_mode === "draft"
         ? "draft"
-        : !hasCrew && input.status === "assigned_not_dispatched"
-          ? "unassigned"
-          : toMdataStatus(input.status);
+        : input.save_mode === "book_dispatch" && hasCrew
+          ? "dispatched"
+          : !hasCrew && input.status === "assigned_not_dispatched"
+            ? "unassigned"
+            : toMdataStatus(input.status);
     const v3Metadata = {
       customer_po_number: input.customer_po_number ?? null,
       hazmat: Boolean(input.hazmat),
