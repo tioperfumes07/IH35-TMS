@@ -93,31 +93,38 @@ export function moneyPathStatuses(apiSrc) {
 const MONEY_FREE_PRE_DISPATCH = new Set(["planned", "booked"]);
 
 /**
- * LV-KANBAN-DROP-SILENT-FAILURE (2026-08-08). The drop handler must SURFACE a failure.
+ * LV-KANBAN-DROP-SWALLOWED-REJECTION (2026-08-08, INVERTED — read the history, it matters).
  *
- * `onStatusDrop` awaited `statusMutation.mutateAsync(...)` with no catch, and `useUpdateLoadStatus` has an
- * `onSuccess` handler only — no `onError`. So a refused transition, a 403 or a network error became an
- * unhandled promise rejection: no toast, no banner, card springs back. A failed drag looked exactly like a
- * successful one, which is how a load got reported as "Completed" while prod still held
- * delivered_pending_docs. The lane vocabulary being right (asserted above) is worthless if the write can
- * fail in silence.
+ * This assertion previously demanded the OPPOSITE: that `onStatusDrop` in Dispatch.tsx contain a try/catch.
+ * That was wrong and it shipped (#4788). `DispatchKanban` is the ONLY consumer of this prop and it already
+ * wraps the call (DispatchKanban.tsx:661-668): on rejection it REVERTS its optimistic move and shows
+ * "Status change rejected by server. Reverted." Catching upstream without re-throwing makes the promise
+ * resolve, so that revert never runs — the card stays in the lane the server REJECTED and the Kanban fires
+ * its SUCCESS toast on a failed write. A guard that requires the swallow enforces the bug.
+ *
+ * So the rule is inverted: the drop handler must let the rejection PROPAGATE. A catch is permitted only if it
+ * re-throws (or returns a rejected promise), because the optimistic state lives in the consumer and only the
+ * consumer can roll it back.
  */
-export function auditDropErrorHandling(pageSrc) {
+export function auditDropErrorHandling(rawPageSrc) {
   const problems = [];
+  // Strip comments FIRST. The handler's own comment explains why a try/catch must not be added here, and a
+  // naive scan flagged the word "catch" inside that explanation — the guard failing on the very text that
+  // documents the rule. Same comment-stripping the sibling guards in this repo already do.
+  const pageSrc = rawPageSrc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
   const m = pageSrc.match(/onStatusDrop=\{async \([^)]*\) => \{([\s\S]*?)\n\s*\}\}/);
   if (!m) {
     problems.push(`onStatusDrop handler not found in the dispatch page — refusing to pass vacuously.`);
     return problems;
   }
   const body = m[1];
-  if (!/\bcatch\b/.test(body)) {
+  if (/\bcatch\b/.test(body) && !/\bthrow\b/.test(body)) {
     problems.push(
-      `onStatusDrop awaits the status mutation without a catch. Any failure becomes an unhandled rejection ` +
-        `with no toast, so a refused drop is indistinguishable from a successful one ` +
-        `(LV-KANBAN-DROP-SILENT-FAILURE).`,
+      `onStatusDrop swallows the rejection: it catches without re-throwing. DispatchKanban owns this failure ` +
+        `path (it reverts its optimistic move and toasts "rejected by server"); swallowing here makes the ` +
+        `promise resolve, so the card KEEPS the status the server refused and the Kanban shows SUCCESS. ` +
+        `Let it propagate (LV-KANBAN-DROP-SWALLOWED-REJECTION — this is what #4788 got backwards).`,
     );
-  } else if (!/pushToast\([^)]*"error"|pushToast\([\s\S]{0,200}?"error"/.test(body)) {
-    problems.push(`onStatusDrop catches the failure but never raises an error toast — the operator still sees nothing.`);
   }
   return problems;
 }
@@ -207,9 +214,9 @@ if (process.argv.includes("--selftest")) {
     ["money path: mapper unparseable — must not pass vacuously", good, be, "const nope = 1;", 1],
   ];
   const dropCases = [
-    ["drop surfaces failures", `onStatusDrop={async (id, nextStatus) => {\n try { await m(); } catch (e) { pushToast(\`x\`, "error"); }\n }}`, 0],
-    ["SILENT BAR — drop awaits with no catch (the shipped defect)", `onStatusDrop={async (id, nextStatus) => {\n await statusMutation.mutateAsync({ id });\n }}`, 1],
-    ["drop catches but shows nothing", `onStatusDrop={async (id, nextStatus) => {\n try { await m(); } catch (e) { console.log(e); }\n }}`, 1],
+    ["propagating handler (correct — Kanban reverts)", `onStatusDrop={async (id, nextStatus) => {\n await statusMutation.mutateAsync({ id });\n }}`, 0],
+    ["REGRESSION BAR — catch without re-throw (what #4788 shipped)", `onStatusDrop={async (id, nextStatus) => {\n try { await m(); } catch (e) { pushToast(\`x\`, "error"); }\n }}`, 1],
+    ["catch that re-throws is allowed", `onStatusDrop={async (id, nextStatus) => {\n try { await m(); } catch (e) { log(e); throw e; }\n }}`, 0],
     ["handler missing — must not pass vacuously", `no handler here`, 1],
   ];
   let failed = 0;
