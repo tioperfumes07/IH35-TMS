@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { pickExactDate } from "../../test-utils/pickDate";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
@@ -98,10 +99,12 @@ describe("PolicyDetail edit and archive", () => {
     // Anchored: the policy edit panel's "Status" label must not match the Payment Schedule
     // panel's "Payment status filter" label (added when PaymentScheduleTab was wired in).
     await user.selectOptions(screen.getByLabelText(/^Status$/i), "expired");
-    await user.clear(screen.getByLabelText(/Effective date/i));
-    await user.type(screen.getByLabelText(/Effective date/i), "2026-02-15");
-    await user.clear(screen.getByLabelText(/Expiry date/i));
-    await user.type(screen.getByLabelText(/Expiry date/i), "2027-02-15");
+    // These are DatePickers (button + calendar popover), not editable inputs, so `user.clear`/`user.type`
+    // threw "clear() is only supported on editable elements". The assertion below checks the EXACT dates
+    // reach the API, so the helper navigates to the target month rather than picking an arbitrary day —
+    // weakening the assertion would delete the only proof the edited dates are actually submitted.
+    pickExactDate(screen.getByText(/Effective date/i).closest("label") as HTMLElement, "2026-02-15");
+    pickExactDate(screen.getByText(/Expiry date/i).closest("label") as HTMLElement, "2027-02-15");
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
 
     await waitFor(() => {
