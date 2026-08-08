@@ -128,6 +128,9 @@ export function ReferenceSelect({
           onSearch={onSearch}
           value={value}
           onChange={onChange}
+          // This wrapper IS the reference/FK picker, so the committed id must never survive its text being
+          // edited (Book Load booked against an invisible customer that way).
+          clearCommittedOnEdit
           placeholder={placeholder}
           disabled={disabled}
           loading={loading}
