@@ -1,0 +1,23 @@
+[
+  "bill_to_party",
+  "bol_number",
+  "carrier_address_full",
+  "carrier_mc",
+  "carrier_usdot",
+  "consignee_address_full",
+  "consignor_name",
+  "declared_value",
+  "freight_charge_terms",
+  "freight_class",
+  "hazmat_block",
+  "hazmat_emergency_phone",
+  "nmfc_item",
+  "package_type",
+  "seal_number",
+  "ship_date",
+  "signature_carrier",
+  "signature_consignee",
+  "signature_shipper",
+  "special_instructions",
+  "trailer_number"
+]

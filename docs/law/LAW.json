@@ -439,5 +439,12 @@
     "source_file": "apps/driver-pwa/src/lib/upload-sync.ts",
     "guard": "scripts/verify-pod-bol-evidence-linkage.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-BOL-FIELD-COMPLETENESS-ADDITIVE-ONLY",
+    "title": "A generated Bill of Lading must carry the 49 CFR 373.101 floor (names of consignor AND consignee, origin and destination, number of packages, description of freight, weight) plus the NMFTA/VICS blocks, and a field on the document today may NEVER be dropped to make a check pass — the missing set is a ratchet that may only shrink",
+    "source_file": "apps/backend/src/dispatch/bol-generator.service.ts",
+    "guard": "scripts/verify-bol-field-completeness.mjs",
+    "type": "enforced"
   }
 ]
