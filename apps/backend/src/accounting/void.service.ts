@@ -333,6 +333,53 @@ export async function postVoidReversal(
     "CODER-12-VOID-SPINE"
   );
 
+  // ACCT-F268 — write the JOURNAL-ENTRY-level reversal FK here, in the shared primitive.
+  //
+  // postVoidReversal has SIX callers (bills, invoices, payments, journal-entries, loan-payment,
+  // void.service itself) and only journal-entries.service.ts wrote reverses_je_id / reversed_by_je_id
+  // afterwards. Every other void therefore produced a reversal linked to its original ONLY by the memo
+  // string `Reversal of …` — which is how JE 8fd32bec (a bill-payment void made that same day) ended up
+  // discoverable only by parsing prose.
+  //
+  // Why the FK is load-bearing: `journal_entries WHERE voided_at IS NOT NULL` is 0 on prod. No JE is
+  // ever voided in place — reversal-by-new-JE is the only mechanism WORM permits — so this FK is the
+  // ONLY machine-readable link between a reversal and its original. ACCT-F256 fixed the posting-engine
+  // path; this closes the other five by putting it in the one place they all pass through, rather than
+  // asking six callers to remember (the ACCT-F265 lesson).
+  //
+  // LINKED ONLY WHEN UNAMBIGUOUS. A void reverses an ENTITY, and an entity may have been posted across
+  // more than one journal entry; pointing a single FK at one of several would assert something false.
+  // When the source resolves to exactly one JE we link both directions; otherwise the per-line
+  // reversal_of_line_id / reversed_by_line_id links above remain the record, and nothing is invented.
+  if (reversalJeId) {
+    const src = await client.query<{ je_id: string }>(
+      `
+        SELECT DISTINCT p.journal_entry_uuid::text AS je_id
+        FROM accounting.journal_entry_postings p
+        WHERE p.operating_company_id = $1::uuid
+          AND p.source_transaction_type = $3
+          AND p.source_transaction_id = $2
+          AND p.posting_batch_id IS NOT NULL
+          AND p.journal_entry_uuid <> $4::uuid
+        LIMIT 2
+      `,
+      [params.operatingCompanyId, params.entityId, params.entityType, reversalJeId]
+    );
+    if (src.rows.length === 1 && src.rows[0]?.je_id) {
+      const originalJeId = String(src.rows[0].je_id);
+      await client.query(
+        `UPDATE accounting.journal_entries SET reverses_je_id = $2::uuid, updated_at = now()
+          WHERE id = $1::uuid AND operating_company_id = $3::uuid AND reverses_je_id IS NULL`,
+        [reversalJeId, originalJeId, params.operatingCompanyId]
+      );
+      await client.query(
+        `UPDATE accounting.journal_entries SET reversed_by_je_id = $2::uuid, updated_at = now()
+          WHERE id = $1::uuid AND operating_company_id = $3::uuid AND reversed_by_je_id IS NULL`,
+        [originalJeId, reversalJeId, params.operatingCompanyId]
+      );
+    }
+  }
+
   return {
     reversal_journal_entry_id: reversalJeId,
     reversal_date: reversalDate,
