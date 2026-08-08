@@ -8526,3 +8526,74 @@ service, and I will not fabricate a request path. **The count of latch calls (0)
 parameterized write and the guard's green output are all directly verified; the operator-facing consequence
 follows from those four facts rather than from a live click.** Stated so nobody upgrades it to an
 observation I did not make.
+
+## 136. ★★★ ROOT CAUSE FOUND — `LV-AUDIT-TRAIL-HAS-NO-ACTOR` (P0) is a **ONE-WORD GUC NAME MISMATCH**. The trigger reads `app.user_id`; the application sets `app.current_user_id`.
+
+**The open P0 has been reproduced repeatedly — 2 of 2,319,894 rows naming a user, and item 117 proved it
+still reproduces on writes made today. Nobody had root-caused it. It is one word.**
+
+### WHAT THE TRIGGER READS — `audit.tg_audit_row()`, read from the live function definition on prod
+
+```sql
+v_user_text := NULLIF(current_setting('app.user_id', true), '');
+…
+changed_by_user_id = v_changed_by_user,
+changed_by_role    = NULLIF(current_setting('app.user_role',  true), ''),
+session_id         = NULLIF(current_setting('app.session_id', true), '')
+```
+
+### WHAT THE APPLICATION SETS — every `set_config('app.*')` in the backend, counted, tests excluded
+
+| GUC | set_config call sites |
+|---|---|
+| `app.operating_company_id` | **858** |
+| `app.bypass_rls` | 18 |
+| **`app.user_role`** | **14** |
+| `app.current_operating_company_id` | 10 |
+| `app.active_company_id` | 3 |
+| `app.factoring_balance_as_of` | 2 |
+| **`app.current_user_id`** | **2** |
+| **`app.user_id`** | **0** |
+| **`app.session_id`** | **0** |
+
+**`app.user_id` is never set. Not once, anywhere in the backend.** And `auth/db.ts:232` — the shared
+`withCurrentUser()` wrapper that every authenticated write passes through — sets:
+```ts
+await client.query(`SELECT set_config('app.current_user_id', $1::text, true)`, [userUuid]);
+```
+
+**`app.current_user_id` versus `app.user_id`. The application and the audit trigger use different names for
+the same fact, so `current_setting('app.user_id', true)` returns empty on every write, the UUID regex fails,
+and `changed_by_user` stays NULL. 2,319,894 times.**
+
+`app.session_id` is likewise never set — which is why **zero** rows carry a session, exactly as the P0 reports.
+
+### Why `changed_by_role` is also NULL, and it is a different reason
+
+`app.user_role` **is** set — but only at **14** call sites, against **858** for `app.operating_company_id`.
+The money write paths this battery exercised are not among them: item 117's bill, bill-line and journal-entry
+rows all landed with `changed_by_role = NULL` while `app.operating_company_id` was set correctly on the same
+connection. **So the actor is a NAME mismatch and the role is a COVERAGE gap — two different fixes, and a
+patch that only renames the GUC will leave the role blank.**
+
+### ★ FILED (P0 · legal evidence · CC-1) — `LV-AUDIT-ACTOR-GUC-NAME-MISMATCH`
+
+**This converts the P0 from "the WORM trail records no actor — investigate" into a one-line change with a
+known blast radius**, and it explains every previously puzzling observation at once:
+- **why the app "knows who acted" yet the trigger does not** (item 117: the same transaction wrote
+  `bill_payments.created_by_user_id = e4117991-…` and an `accounting.bill.created` audit event) — those are
+  application-layer writes that never consult a GUC;
+- **why exactly 2 rows out of 2.3 million have an actor** — two writers somewhere must set `app.user_id`
+  directly, or wrote the column by another path;
+- **why a backfill was never going to work** — the identity was never captured, so there is nothing to
+  backfill from.
+
+**It is the same defect class as battery item 109/110** — *"handlers set a tenant GUC the RLS policies do not
+read"*. **A GUC is a contract between two files that never import each other, and nothing in TypeScript, in
+Postgres, or in CI checks that the setter and the reader agree on the string.** That is the durable lesson
+and the guard that must ship with the fix.
+
+**WHAT I VERIFIED AND WHAT I DID NOT.** Verified: the live function body on prod, the exact set_config
+inventory with counts, and `withCurrentUser`'s line. **Not verified: that renaming fixes it end to end** — I
+did not alter prod DDL and will not; the fix belongs to CC-1 and must be proven by a fresh write landing with
+a non-NULL `changed_by_user_id`. **The mismatch is proven; the repair is not, and I am not claiming it.**
