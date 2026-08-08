@@ -509,5 +509,12 @@
     "source_file": "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
     "guard": "scripts/verify-flag-honesty-banner-reads-flag.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-AR-RECEIPT-POSTS-IN-CALLER-TX",
+    "title": "A customer-payment (A/R receipt) GL post must run on the CALLER'S transaction — postSourceTransactionInClientTx. The pool-connection poster opens a second connection where the caller's uncommitted payment and applications are invisible, so it silently posts nothing: the subledger moves, the GL stays dark, and the subledger-to-GL tie-out fails (USMCA: 3 payments, $1,287.25, zero postings; an invoice reading 'paid' against GL A/R still carrying $1,200.00)",
+    "source_file": "apps/backend/src/accounting/payments/apply.service.ts",
+    "guard": "scripts/verify-customer-payment-posts-in-caller-tx.mjs",
+    "type": "enforced"
   }
 ]

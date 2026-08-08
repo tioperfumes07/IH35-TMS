@@ -1,5 +1,5 @@
 import { nextCreditMemoDisplayId } from "../display-id.js";
-import { postSourceTransaction } from "../posting-engine.service.js";
+import { postSourceTransactionInClientTx } from "../posting-engine.service.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { recordPostingFlagSkip, POSTING_FLAG_SKIP_RESULT } from "../posting-flag-skip-audit.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
@@ -325,7 +325,24 @@ export async function applyPayment(client: Queryable, input: ApplyPaymentInput, 
     user_uuid: actor.user_id,
   });
   if (customerPaymentPostingEnabled) {
-    await postSourceTransaction(
+    // ACCT-F165 — MUST be the in-client-tx poster, on the CALLER'S client.
+    //
+    // This called postSourceTransaction(), which opens its OWN pool connection and its OWN
+    // transaction. Every write above — applyToInvoice/applyToBill inserting
+    // accounting.payment_applications — happens on `client`, inside the caller's still-open
+    // transaction. From a second connection those rows are UNCOMMITTED and therefore INVISIBLE, so
+    // the poster looked at a payment with no visible applications, had nothing to post, and returned
+    // without writing a journal entry. No error, no skip audit — the receipt just stayed dark.
+    //
+    // The two sibling ROUTES (payments.routes.ts, customer-payments.routes.ts) already carry this
+    // exact fix and this exact explanation in their comments. This shared service was missed, and it
+    // is the path the office UI's payment-application action actually runs through — which is why
+    // the routes read as fixed while USMCA payments kept posting nothing.
+    //
+    // Passing `client` also makes the applications and their journal entry commit or roll back as ONE
+    // unit: there is no window where A/R has moved in the subledger and the GL has not.
+    await postSourceTransactionInClientTx(
+      client,
       {
         operating_company_id: input.operating_company_id,
         source_transaction_type: "customer_payment",
