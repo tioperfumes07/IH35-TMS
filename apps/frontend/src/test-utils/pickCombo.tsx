@@ -42,3 +42,16 @@ export function pickCombo(combo: HTMLElement, option: string | RegExp): void {
   }
   fireEvent.click(wanted);
 }
+
+/**
+ * Open a `Combobox`-backed control WITHOUT selecting anything, for tests that only need to assert what the
+ * list contains. `SelectCombobox` flattens `<option>` children into the shared Combobox, so unlike a native
+ * `<select>` — whose options are always in the DOM — these exist ONLY while the listbox is open. A test
+ * written against the old native markup therefore fails with "Unable to find role=option", which reads as
+ * missing DATA rather than a closed dropdown (LoadTemplateLibrary looked like the templates API returned
+ * nothing). Opens on focus, matching the component; see `pickCombo` for the same mechanics plus selection.
+ */
+export function openCombo(combo: HTMLElement): void {
+  fireEvent.focus(combo);
+  fireEvent.click(combo);
+}
