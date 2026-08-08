@@ -58,7 +58,7 @@ export async function getArAgingReport(input: {
           AND i.amount_open_cents IS NOT NULL
           AND i.amount_open_cents > 0
           AND i.voided_at IS NULL
-          -- ACCT-F167 / CLS-VOID-LITERAL-DEAD — 'void' was MISSING and its absence was live money.
+          -- ACCT-F171 / CLS-VOID-LITERAL-DEAD — 'void' was MISSING and its absence was live money.
           --
           -- accounting.invoices.status spells a void as 'void'. On prod br-fancy-credit-akjnd07a the
           -- constraint invoices_status_check pins the domain to

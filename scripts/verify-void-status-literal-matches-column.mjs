@@ -4,7 +4,7 @@
  * column. Such a predicate is not a weak filter; it is a filter that never fires, and it reads to
  * every future reader as if the case were handled.
  *
- * WHAT WAS BROKEN (ACCT-F167, live-proven on Neon prod br-fancy-credit-akjnd07a 2026-08-07):
+ * WHAT WAS BROKEN (ACCT-F171, live-proven on Neon prod br-fancy-credit-akjnd07a 2026-08-07):
  * `accounting/ar-aging.service.ts` excluded `status NOT IN ('paid', 'voided', 'draft')`.
  * `accounting.invoices.status` spells a void as **'void'**, and **'voided' is not merely absent —
  * it is FORBIDDEN by `invoices_status_check`**, whose domain is
@@ -149,7 +149,7 @@ export function auditSources(files, enrolled = ENROLLED) {
           problems.push(
             `${rel}: excludes ${entry.table}.${entry.column} values ${hit.literals.map((l) => `'${l}'`).join(", ")} ` +
               `but NOT '${entry.voidLiteral}' — the only spelling a void actually takes in this column. ` +
-              `This exclusion removes nothing; voided rows stay in the result. That is ACCT-F167, ` +
+              `This exclusion removes nothing; voided rows stay in the result. That is ACCT-F171, ` +
               `which counted a voided $2,450.00 invoice as 56.6% of USMCA's reported A/R. ` +
               `Predicate: ${hit.text}`
           );
@@ -256,7 +256,7 @@ function selftest() {
     const real = readFileSync(abs, "utf8");
     const mutated = real.replace("'paid', 'void', 'voided', 'draft'", "'paid', 'voided', 'draft'");
     if (mutated === real) {
-      failures.push(`case9 FAIL — ${rel} no longer carries the corrected predicate; ACCT-F167 is back`);
+      failures.push(`case9 FAIL — ${rel} no longer carries the corrected predicate; ACCT-F171 is back`);
     } else if (auditSources([{ rel, src: mutated }]).problems.length === 0) {
       failures.push(`case9 FAIL — restoring the pre-fix predicate in the REAL ${rel} left this guard GREEN`);
     }

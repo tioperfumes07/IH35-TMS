@@ -1,4 +1,4 @@
-// verify-void-status-literal-matches-column — CLS-VOID-LITERAL-DEAD / ACCT-F167.
+// verify-void-status-literal-matches-column — CLS-VOID-LITERAL-DEAD / ACCT-F171.
 // A/R aging excluded status 'voided', a value accounting.invoices.status can NEVER hold — the
 // CHECK constraint forbids it. So the status half of the void exclusion could not fire and the
 // filter rested on voided_at alone; one invoice with status='void' and voided_at NULL slipped
