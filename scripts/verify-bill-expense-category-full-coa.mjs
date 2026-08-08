@@ -35,18 +35,38 @@ function assertExpense(src) {
   if (!/categoryOptions[\s\S]{0,400}paymentAccountsQuery\.data\?\.accounts/.test(src)) {
     errors.push("RecordExpenseForm: categoryOptions is not sourced from the full COA (paymentAccountsQuery.data.accounts)");
   }
+  // LV-EXPENSE-CATEGORY-PICKER-EMPTY-RC: Category ReferenceSelect must pass loading= from the CoA query
+  // so Combobox suppresses "+ Add new category" during fetch (otherwise operators mint duplicate accounts).
+  const categoryBlock = src.match(/createKind=["']category["'][\s\S]{0,600}/);
+  if (!categoryBlock) {
+    errors.push("RecordExpenseForm: Category ReferenceSelect createKind=\"category\" not found");
+  } else if (!/loading=\{[^}]*paymentAccountsQuery\.(isLoading|isFetching)/.test(categoryBlock[0])) {
+    errors.push(
+      "RecordExpenseForm: Category ReferenceSelect must pass loading={paymentAccountsQuery.isLoading|isFetching} " +
+        "so Combobox hides + Add new during CoA fetch (LV-EXPENSE-CATEGORY-PICKER-EMPTY-RC)"
+    );
+  }
   return errors;
 }
 
 if (process.argv.includes("--selftest")) {
   const billGood = "import { getCoaAccounts } from '../../api/banking';\nconst x = coaAccountsQuery.data?.accounts ?? [];";
   const billBad = "const fromAccounting = accountingCategoriesQuery.data;";
-  const expGood = "const categoryOptions = useMemo(() => { const c = paymentAccountsQuery.data?.accounts ?? []; });";
+  const expGood =
+    "const categoryOptions = useMemo(() => { const c = paymentAccountsQuery.data?.accounts ?? []; });\n" +
+    '<ReferenceSelect createKind="category" loading={paymentAccountsQuery.isLoading || paymentAccountsQuery.isFetching} />';
   const expBad = "const categoryOptions = useMemo(() => costContextQuery.data?.expense_categories);";
+  const expNoLoading =
+    "const categoryOptions = useMemo(() => { const c = paymentAccountsQuery.data?.accounts ?? []; });\n" +
+    '<ReferenceSelect createKind="category" placeholder="Select category…" />';
   if (assertBill(billGood).length !== 0) { console.error("SELFTEST FAIL: bill good flagged", assertBill(billGood)); process.exit(1); }
   if (assertBill(billBad).length === 0) { console.error("SELFTEST FAIL: bill bad passed"); process.exit(1); }
   if (assertExpense(expGood).length !== 0) { console.error("SELFTEST FAIL: expense good flagged", assertExpense(expGood)); process.exit(1); }
   if (assertExpense(expBad).length === 0) { console.error("SELFTEST FAIL: expense bad passed"); process.exit(1); }
+  if (assertExpense(expNoLoading).length === 0) {
+    console.error("SELFTEST FAIL: expense missing loading passed");
+    process.exit(1);
+  }
   console.log("verify-bill-expense-category-full-coa selftest OK");
   process.exit(0);
 }
