@@ -187,6 +187,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
                 disabled={Boolean(lockedDriverId)}
                 placeholder="Select driver…"
                 dataField="auto-deduction-driver"
+                driverRoster="active_or_probation"
               />
             </div>
             {lockedDriverId ? (

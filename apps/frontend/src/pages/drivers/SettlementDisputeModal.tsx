@@ -116,6 +116,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
             open={open}
             placeholder="Select driver"
             dataField="settlement-dispute-driver"
+            driverRoster="active_or_probation"
           />
         </label>
 
