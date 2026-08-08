@@ -152,7 +152,12 @@ describe("TrainingRecordsPage", () => {
     render(wrap(<TrainingRecordsPage operatingCompanyId={companyId} />));
     expect(await screen.findByTestId("training-record-row-rec-1")).toBeTruthy();
     await user.click(screen.getByTestId("training-records-create-btn"));
-    fireEvent.change(screen.getByTestId("training-record-driver"), { target: { value: "driver-1" } });
+    // The driver picker is a Combobox, and `dataField` renders as the attribute `data-field`
+    // (Combobox.tsx:379) — NOT `data-testid`. `getByTestId("training-record-driver")` therefore could never
+    // match, no matter what the page rendered. Query the attribute the component actually emits.
+    const driverPicker = document.querySelector('[data-field="training-record-driver"]');
+    if (!driverPicker) throw new Error("training-record-driver picker not rendered");
+    fireEvent.change(driverPicker, { target: { value: "driver-1" } });
     await user.type(screen.getByTestId("training-record-name"), "Cargo securement");
     await user.click(screen.getByTestId("training-record-submit"));
     await waitFor(() => {
