@@ -19,6 +19,12 @@ import {
   type GateState,
 } from "./programScoreboard.data";
 
+type ClassModuleMatrix = {
+  modules: string[];
+  classIds: string[];
+  cells: Array<Array<{ code: string; tone: string; label: string; guardMissing: boolean }>>;
+};
+
 const GATE_LABELS = ["A", "B", "C", "D", "E", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8"];
 const BOARD_ENTITIES = ["TRANSP", "USMCA"] as const;
 const VIDX = [5, 6, 7, 8, 9, 10, 11, 12];
@@ -167,6 +173,13 @@ export function AuditScoreboardPage() {
   const liveClassBoard = sb.classScoreboard;
   const classBoardIsFallback = !liveClassBoard || !Array.isArray(liveClassBoard.rows) || liveClassBoard.rows.length === 0;
   const classBoard: ClassScoreboard = classBoardIsFallback ? CLASS_SCOREBOARD : (liveClassBoard as ClassScoreboard);
+  const classMatrix =
+    !classBoardIsFallback && liveClassBoard && "matrix" in liveClassBoard
+      ? (liveClassBoard as ClassScoreboard & { matrix?: ClassModuleMatrix }).matrix
+      : undefined;
+  const classSourceLabel = classBoardIsFallback
+    ? "build-time fallback (not live)"
+    : (classBoard.meta?.source ?? "docs/audit/wave-queue.json (request-time)");
 
   const metrics = useMemo(() => {
     let prod = 0, audit = 0, fix = 0, fail = 0, unv = 0, certified = 0, vprod = 0, vopen = 0;
@@ -381,23 +394,20 @@ export function AuditScoreboardPage() {
         <Lg c="UNV" t="U — not exercised / 0 data" /><Lg c="NA" t="— N/A" />
       </div>
 
-      {/* BY-CLASS SCOREBOARD — the other axis of the work.
-          The gate tally above is per-MODULE; work is dispatched vertically by defect CLASS across all
-          modules, and that status lives in docs/audit/wave-queue.json.
-
-          PROG-CLASS-STALE: this grid used to render from the generated `classScoreboard.data.ts`
-          ONLY. A build-time module cannot change without a frontend redeploy, so the board drifted —
-          on 2026-08-07 it showed 26 classes while the queue held 31, with two classes missing
-          outright. It now reads `classScoreboard` off the live payload, which the backend computes
-          per request from the queue, so it moves on the same 3s poll as everything else on this page.
-          The generated module remains ONLY as the offline fallback, and when it is what is being
-          shown the board says so instead of passing it off as live. */}
+      {/* CLS × MODULE MATRIX — owner 2026-08-08.
+          Columns = each individual CLS issue (~31 from wave-queue). Rows = each sidebar module
+          excluding eld/help/program/system (=26). NOT the consolidated 13 gates, NOT entity×13.
+          Live from classScoreboard on the 3s poll — never a hand-built tracker. Green only when
+          queue says drained AND the named guard file exists on disk. */}
       <h2>
-        By class{" "}
+        Individual issues × modules{" "}
         <span className="sub">
-          {classBoard.summary.total} classes · {classBoard.summary.drained} drained ·{" "}
-          {classBoard.summary.building} in progress · {classBoard.summary.notStarted} open ·{" "}
-          {classBoard.summary.liveDefect} live defect — CC drained / BB in progress / NN open / XX blocked
+          {classMatrix
+            ? `${classMatrix.modules.length} module rows × ${classMatrix.classIds.length} CLS columns`
+            : `${classBoard.summary.total} classes (matrix unavailable)`}{" "}
+          · {classBoard.summary.drained} verified drained · {classBoard.summary.building} in progress ·{" "}
+          {classBoard.summary.notStarted} open · {classBoard.summary.drainedWithoutGuard} drained without
+          guard — source {classSourceLabel}
         </span>
       </h2>
       {classBoardIsFallback ? (
@@ -408,27 +418,54 @@ export function AuditScoreboardPage() {
       ) : null}
       {classBoard.summary.drainedWithoutGuard > 0 ? (
         <div className="clsWarn" data-testid="class-scoreboard-guard-warning">
-          {classBoard.summary.drainedWithoutGuard} class(es) marked <strong>drained</strong> name a guard file
-          that is not on disk. A class is only drained when its guard exists — these are registry defects
-          (usually a stale filename), not proof the class is unguarded.
+          {classBoard.summary.drainedWithoutGuard} class(es) claim <strong>drained</strong> without a guard
+          file on disk — shown amber, not green. Queue text alone is not verification.
         </div>
       ) : null}
-      <div className="clsGrid" data-testid="class-scoreboard">
-        {classBoard.rows.map((r) => (
-          <div
-            className={`clsCell ${r.tone}`}
-            key={r.id}
-            data-testid={`class-cell-${r.id}`}
-            data-tone={r.tone}
-            data-status={r.status}
-            title={`${r.id} — ${r.label} · lane ${r.lane} · ${r.instances} instance(s)`}
-          >
-            <span className="clsCode">{r.code}</span>
-            <span className="clsId">{r.id.replace(/^CLS-/, "")}</span>
-            {r.guardMissing ? <span className="clsFlag" title={`guard not found: ${r.guard ?? "none named"}`}>!</span> : null}
-          </div>
-        ))}
-      </div>
+      {classMatrix ? (
+        <div className="scroll overflow-x-auto" data-testid="class-scoreboard-columns">
+          <table className="cls-matrix" data-testid="class-scoreboard">
+            <thead>
+              <tr>
+                <th className="mod sticky">Module</th>
+                {classMatrix.classIds.map((id) => (
+                  <th className="g" key={id} data-testid={`class-col-${id}`} title={id}>
+                    {id.replace(/^CLS-/, "")}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {classMatrix.modules.map((mod, ri) => (
+                <tr key={mod}>
+                  <td className="mod sticky">{mod}</td>
+                  {classMatrix.cells[ri]?.map((c, ci) => {
+                    const clsId = classMatrix.classIds[ci] ?? String(ci);
+                    return (
+                      <td
+                        className="gc"
+                        key={`${mod}-${clsId}`}
+                        data-testid={`class-cell-${mod}-${clsId}`}
+                        data-tone={c.tone}
+                        title={`${mod} × ${clsId} — ${c.label}`}
+                      >
+                        <span className={`cell ${c.code === "NA" ? "NA" : c.tone === "green" ? "PASS" : c.tone === "amber" ? "AUDIT" : c.tone === "red" ? "FAIL" : "UNV"}`}>
+                          {c.code === "NA" ? "—" : c.code}
+                          {c.guardMissing ? "!" : ""}
+                        </span>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="clsWarn" data-testid="class-scoreboard-matrix-missing">
+          Live classScoreboard.matrix missing — cannot render module × CLS columns without inventing cells.
+        </div>
+      )}
 
       {/* THE STANDARD */}
       <h2>The standard <span className="sub">what "complete" means — every gate below, PROD-VERIFIED, in both entities</span></h2>
