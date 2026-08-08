@@ -56,6 +56,45 @@ function walk(dir, out = []) {
 }
 
 /**
+ * LV-SAMPLE-TAG-DISPATCH-HOLE: naming the column is NOT enough. The load-bookended writer — the one
+ * dispatch calls on `in_transit` — named `is_sample_data` and then supplied the LITERAL `false`, so
+ * every settlement it auto-opened was hardcoded "not sample data" no matter what the parent load
+ * said. A Gate-B sample load therefore produced an UNTAGGED live financial record while this guard
+ * sat green, because the column was present in the column list.
+ *
+ * So the value must be DERIVED (a bind param, or a SELECT/COALESCE off the parent row), never a
+ * literal. Given the column list and the VALUES tuple, returns the literal found in that column's
+ * position, or null when the slot is derived.
+ */
+export function literalInSampleSlot(columns, valuesTuple, requiredColumn = REQUIRED_COLUMN) {
+  const cols = columns.split(",").map((c) => c.trim().replace(/\s+/g, " "));
+  const idx = cols.indexOf(requiredColumn);
+  if (idx === -1) return null; // absence is the other check's job
+
+  // Split the VALUES tuple on top-level commas only, so a nested COALESCE(...)/SELECT stays intact.
+  const parts = [];
+  let depth = 0;
+  let cur = "";
+  for (const ch of valuesTuple) {
+    if (ch === "(") depth += 1;
+    if (ch === ")") depth -= 1;
+    if (ch === "," && depth === 0) {
+      parts.push(cur);
+      cur = "";
+      continue;
+    }
+    cur += ch;
+  }
+  parts.push(cur);
+  if (parts.length !== cols.length) return null; // shape we cannot read textually — not a verdict
+
+  // Strip SQL comments so a `-- note` above the value does not masquerade as the value.
+  const slot = parts[idx].replace(/--[^\n]*/g, "").trim().toLowerCase();
+  if (/^(true|false|null)$/.test(slot)) return slot;
+  return null;
+}
+
+/**
  * Find every `INSERT INTO <TABLE> ( ... )` column list in a source string and report which ones
  * omit the required column. Returns [{ index, columns }] for offenders.
  */
@@ -105,7 +144,32 @@ export function findUntaggedInserts(source, table = TABLE, requiredColumn = REQU
       .map((c) => c.trim().replace(/\s+/g, " "))
       .filter(Boolean);
     if (!named.includes(requiredColumn)) {
-      offenders.push({ index: at, columns: named.join(", ") });
+      offenders.push({ index: at, columns: named.join(", "), kind: "missing" });
+      continue;
+    }
+
+    // Column IS named — now make sure its value is derived, not a hardcoded literal.
+    const valuesAt = source.slice(close).search(/\bVALUES\b/i);
+    if (valuesAt === -1) continue;
+    const vOpen = source.indexOf("(", close + valuesAt);
+    if (vOpen === -1) continue;
+    let vDepth = 0;
+    let vClose = -1;
+    for (let i = vOpen; i < source.length; i += 1) {
+      const ch = source[i];
+      if (ch === "(") vDepth += 1;
+      else if (ch === ")") {
+        vDepth -= 1;
+        if (vDepth === 0) {
+          vClose = i;
+          break;
+        }
+      }
+    }
+    if (vClose === -1) continue;
+    const literal = literalInSampleSlot(columns, source.slice(vOpen + 1, vClose), requiredColumn);
+    if (literal) {
+      offenders.push({ index: at, columns: named.join(", "), kind: "literal", literal });
     }
   }
   return offenders;
@@ -139,12 +203,43 @@ if (SELFTEST) {
     failures.push("INSERT ... SELECT silently passed");
   }
 
+  // LV-SAMPLE-TAG-DISPATCH-HOLE — the defect this guard MISSED the first time. The column is named,
+  // so the original check passed, but the value is the literal `false`: every settlement the dispatch
+  // writer auto-opened was hardcoded "not sample data" regardless of the parent load.
+  const literalFalse = `
+    INSERT INTO ${TABLE} (
+      operating_company_id, display_id, driver_id, period_start, period_end, status,
+      gross_pay, deductions_total, reimbursements_total, net_pay, is_sample_data
+    ) VALUES ($1,$2,$3,$4,$5,'presettle',0,0,0,0,false)
+  `;
+  const derivedFromParent = `
+    INSERT INTO ${TABLE} (
+      operating_company_id, display_id, driver_id, period_start, period_end, status,
+      gross_pay, deductions_total, reimbursements_total, net_pay, is_sample_data
+    ) VALUES (
+      $1,$2,$3,$4,$5,'presettle',0,0,0,0,
+      COALESCE((SELECT d.is_sample_data FROM mdata.drivers d WHERE d.id = $3::uuid), false)
+    )
+  `;
+  const lit = findUntaggedInserts(literalFalse);
+  if (lit.length !== 1 || lit[0].kind !== "literal") {
+    failures.push("hardcoded literal `false` NOT caught — this is the exact dispatch hole");
+  }
+  if (findUntaggedInserts(derivedFromParent).length !== 0) {
+    failures.push("COALESCE/SELECT-derived value was flagged (false positive on the fix)");
+  }
+  if (findUntaggedInserts(literalFalse.replace(",false)", ",true)")).length !== 1) {
+    failures.push("hardcoded literal `true` NOT caught");
+  }
+
   if (failures.length) {
     console.error("verify-settlement-sample-tag-wired SELFTEST FAILED:");
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log("verify-settlement-sample-tag-wired SELFTEST OK — 5/5 (catches the defect, passes the fix)");
+  console.log(
+    "verify-settlement-sample-tag-wired SELFTEST OK — 8/8 (missing column, hardcoded literal, and INSERT..SELECT all caught; derived values pass)"
+  );
   process.exit(0);
 }
 
@@ -159,23 +254,36 @@ for (const file of walk(SRC)) {
   if (!source.includes(`INSERT INTO ${TABLE}`)) continue;
   for (const hit of findUntaggedInserts(source)) {
     const line = source.slice(0, hit.index).split("\n").length;
-    offenders.push({ file: path.relative(ROOT, file), line, columns: hit.columns });
+    offenders.push({
+      file: path.relative(ROOT, file),
+      line,
+      columns: hit.columns,
+      kind: hit.kind,
+      literal: hit.literal,
+    });
   }
 }
 
 if (offenders.length) {
   console.error(
-    `verify-settlement-sample-tag-wired FAILED — ${offenders.length} production INSERT(s) into ${TABLE} omit \`${REQUIRED_COLUMN}\`:`
+    `verify-settlement-sample-tag-wired FAILED — ${offenders.length} production INSERT(s) into ${TABLE} cannot carry a Gate-B tag:`
   );
   for (const o of offenders) {
-    console.error(`  ${o.file}:${o.line}`);
-    console.error(`    columns: ${o.columns}`);
+    console.error(`  ${o.file}:${o.line}  [${o.kind}]`);
+    if (o.kind === "literal") {
+      console.error(`    \`${REQUIRED_COLUMN}\` is hardcoded to the literal \`${o.literal}\``);
+    } else {
+      console.error(`    columns: ${o.columns}`);
+    }
   }
   console.error(
-    `\n  A settlement written without \`${REQUIRED_COLUMN}\` cannot be found by the Gate-B purge sweep.\n` +
-      `  This table has NO free-text column to fall back on — this column is the only tag path.\n` +
-      `  Add ${REQUIRED_COLUMN} to the column list (user-facing create routes accept it and default false;\n` +
-      `  system-generated writers pass a literal false).`
+    `\n  A settlement that cannot carry \`${REQUIRED_COLUMN}\` is invisible to the Gate-B purge sweep, and\n` +
+      `  this table has NO free-text column to fall back on — this column is the only tag path.\n` +
+      `\n  [missing] add ${REQUIRED_COLUMN} to the column list.\n` +
+      `  [literal] DERIVE the value, never hardcode it: bind it from the caller, or COALESCE it off the\n` +
+      `            parent row (load for the dispatch/bookended writer, driver for the weekly close).\n` +
+      `            A literal is how LV-SAMPLE-TAG-DISPATCH-HOLE shipped: the column was named, this guard\n` +
+      `            was green, and every auto-opened settlement was still hardcoded "not sample data".`
   );
   process.exit(1);
 }
