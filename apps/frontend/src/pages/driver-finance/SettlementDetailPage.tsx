@@ -556,7 +556,22 @@ export function SettlementDetailPage() {
                       <p className="text-gray-500">{new Date(event.created_at).toLocaleString()}</p>
                     </div>
                   ))}
-                  {(paymentEventsQuery.data?.events ?? []).length === 0 ? (
+                  {/* LV-SETTLEMENT-DETAIL-CALLS-REFUSED-ROUTE — this query had NO error branch, so a failed
+                      fetch left `data` undefined, fell into `length === 0`, and the panel asserted
+                      "No payment events yet." as FACT. On a settlement that is a money-adjacent surface
+                      telling whoever decides whether a driver was paid that no payments exist, when the
+                      truth is the data was never obtainable. The endpoint is on the deliberate-refusal
+                      registry ("settlement-payment moves money"), so today it always 404s — but the bug is
+                      the silent false negative, not the 404, and it would outlive any routing decision.
+                      An honest "couldn't load" is strictly safer than a confident wrong "none". */}
+                  {paymentEventsQuery.isError ? (
+                    <p className="text-xs text-[#dc2626]" data-testid="settlement-payment-events-error">
+                      Couldn't load payment events — this is not the same as “none”. Retry or check with
+                      accounting before concluding the driver was unpaid.
+                    </p>
+                  ) : paymentEventsQuery.isLoading ? (
+                    <p className="text-xs text-gray-500">Loading payment events…</p>
+                  ) : (paymentEventsQuery.data?.events ?? []).length === 0 ? (
                     <p className="text-xs text-gray-500">No payment events yet.</p>
                   ) : null}
                 </div>
