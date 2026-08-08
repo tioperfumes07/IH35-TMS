@@ -52,6 +52,7 @@ type LiveScoreboard = ProgramScoreboard & {
     gateTally?: GateTally;
     gateTallyByEntity?: Record<string, GateTally>;
     boardEntities?: string[];
+    recentActivitySource?: "git_log" | "github" | "ledger_committed";
   };
   recentActivity?: RecentPrRow[];
   // PROG-CLASS-STALE — computed per request from docs/audit/wave-queue.json by the backend. Null/absent
@@ -151,6 +152,15 @@ export function AuditScoreboardPage() {
   // Last synced = ledger git commit (meta.generatedAt / lastSyncedCt), America/Chicago CT — not wall clock.
   const lastSyncedLabel = sb.meta.lastSyncedCt || formatLedgerCt(sb.meta.generatedAt);
   const recentRows = sb.recentActivity ?? [];
+  const recentSource = sb.meta.recentActivitySource;
+  const recentSourceLabel =
+    recentSource === "git_log"
+      ? "live git log (request-time)"
+      : recentSource === "github"
+        ? "live GitHub pulls API"
+        : recentSource === "ledger_committed"
+          ? "committed ledger snapshot (may lag tip — not live)"
+          : "source unknown";
   // PROG-CLASS-STALE — live queue read first; the generated module is the fallback, and the board
   // labels it as one. Treated as unusable unless it actually carries rows, because an empty grid
   // presented as live is the same silent-empty failure as the PR feed.
@@ -267,20 +277,32 @@ export function AuditScoreboardPage() {
       <section className="recent" data-testid="program-scoreboard-recent-activity">
         <h2>
           Recent activity — last 10 PRs{" "}
-          <span className="sub">from the ledger git history · times in CT (America/Chicago)</span>
+          <span className="sub" data-testid="program-scoreboard-recent-source">
+            {recentSourceLabel} · times in CT (America/Chicago)
+          </span>
         </h2>
+        {recentSource === "ledger_committed" ? (
+          <div className="clsWarn" data-testid="program-scoreboard-recent-stale-warning">
+            Showing the committed scoreboard snapshot — live git log / GitHub did not answer. This can
+            lag tip; it is not a live feed.
+          </div>
+        ) : null}
         {recentRows.length === 0 ? (
           <p className="recent-empty">
-            No merges recorded in the ledger yet — this panel is generated from git history at build
-            time (never blocks the board).
+            No recent PRs from git log, GitHub, or the committed ledger — empty is honest, not a fake
+            green panel.
           </p>
         ) : (
           <ul className="recent-list">
             {recentRows.map((row) => (
-              <li key={row.number} data-testid={`program-scoreboard-recent-pr-${row.number}`}>
-                <a href={row.url} target="_blank" rel="noreferrer">
-                  #{row.number}
-                </a>
+              <li key={row.number || row.title} data-testid={`program-scoreboard-recent-pr-${row.number}`}>
+                {row.url ? (
+                  <a href={row.url} target="_blank" rel="noreferrer">
+                    #{row.number}
+                  </a>
+                ) : (
+                  <span>#{row.number || "—"}</span>
+                )}
                 <span className="recent-title">
                   {row.state ? <span className="recent-state">{row.state}</span> : null}
                   {row.title}
