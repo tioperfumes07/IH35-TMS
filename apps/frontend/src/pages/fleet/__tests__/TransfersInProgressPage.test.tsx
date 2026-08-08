@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 import { TransfersInProgressPage } from "../TransfersInProgressPage";
@@ -15,7 +16,10 @@ describe("TransfersInProgressPage", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
+        {/* MemoryRouter: the page calls useNavigate/Link, so every render threw "useNavigate() may be used only in the context of a <Router>". Same shape as the ToastProvider class — a missing provider reads as a broken page. */}
+        <MemoryRouter>
         <TransfersInProgressPage />
+        </MemoryRouter>
       </QueryClientProvider>
     );
     expect(screen.getByTestId("transfers-in-progress-page")).toBeInTheDocument();

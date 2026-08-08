@@ -1,4 +1,6 @@
 import type { ComponentProps } from "react";
+import { MemoryRouter } from "react-router-dom";
+import { ToastProvider } from "../../Toast";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -13,9 +15,13 @@ vi.mock("../../../api/client", () => ({
   apiRequest: vi.fn(),
 }));
 
-vi.mock("../../../api/mdata", () => ({
-  patchUnit: vi.fn(),
-}));
+// Spread the REAL module instead of listing exports by hand. The hand-written mock returned only
+// `patchUnit`, so the moment the modal's EntityPicker reached for `createDriver` the whole module came back
+// without it and vitest threw. Every future export this component gains would break the test the same way.
+vi.mock("../../../api/mdata", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../api/mdata")>();
+  return { ...actual, patchUnit: vi.fn() };
+});
 
 vi.mock("../../../api/org", () => ({
   listMyCompanies: vi.fn().mockResolvedValue({
@@ -34,6 +40,11 @@ function renderModal(props: Partial<ComponentProps<typeof EditVehicleModal>> = {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
+      {/* ToastProvider: the component calls useToast, so every render threw "useToast must be used inside ToastProvider" and the test died before one assertion. The app always renders inside the provider; the harness was the unrealistic part. */}
+      {/* MemoryRouter: with the ToastProvider added, the NEXT missing provider surfaced — the modal's
+          EntityPicker calls useNavigate. These harness gaps STACK, so fixing one reveals the next. */}
+      <MemoryRouter>
+      <ToastProvider>
       <EditVehicleModal
         open
         unitId="unit-1"
@@ -41,6 +52,8 @@ function renderModal(props: Partial<ComponentProps<typeof EditVehicleModal>> = {
         onClose={vi.fn()}
         {...props}
       />
+      </ToastProvider>
+      </MemoryRouter>
     </QueryClientProvider>
   );
 }
