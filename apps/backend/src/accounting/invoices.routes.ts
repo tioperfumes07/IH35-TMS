@@ -789,7 +789,13 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     return result.data;
   });
 
-  app.post("/api/v1/accounting/invoices/:id/void", async (req, reply) => {
+  // ACCT-F197: rate limit added because touching this file brought the route into
+  // verify-new-auth-routes-rate-limited's scope — an authorizing WRITE with no limit trips CodeQL
+  // js/missing-rate-limiting. 30/min matches the write-route convention here (reads use 60/min).
+  app.post(
+    "/api/v1/accounting/invoices/:id/void",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     // G9-C3: voiding an invoice is an EXECUTOR-only action (Owner|Administrator|Accountant). This gate is
@@ -849,6 +855,19 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           SET status = 'void',
               voided_at = now(),
               void_reason = $2,
+              -- ACCT-F197 (Cascade FAIL-A1): ZERO THE OPEN BALANCE. Voiding set status and
+              -- voided_at but left amount_open_cents at its full value, so every surface that sums
+              -- that column kept counting a receivable nobody owes. Measured on prod: all 7 voided
+              -- USMCA invoices still carried their full open balance -- $3,983.07, which is 56.4%
+              -- of the entity's reported A/R -- and TRANSP was 49.7% by the same fault.
+              --
+              -- This is NOT inventing a number. amount_open_cents is a DERIVED cache of
+              -- (total - paid); for a voided invoice the derived value IS zero, because a void owes
+              -- nothing. Leaving it stale is the invention.
+              --
+              -- The GL is untouched here: the reversing JE is posted separately by the void engine
+              -- when VOID_ENFORCEMENT_ENABLED is on. This corrects the subledger cache only.
+              amount_open_cents = 0,
               updated_at = now(),
               updated_by_user_id = $3
           WHERE id = $1
