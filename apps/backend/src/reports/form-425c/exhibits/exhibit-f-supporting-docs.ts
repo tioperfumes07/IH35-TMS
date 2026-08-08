@@ -203,6 +203,9 @@ export async function buildExhibitF(
       WHERE b.operating_company_id = $1
         AND b.bill_date >= $2::date
         AND b.bill_date <= $3::date
+        -- ACCT-F202: voidBill() writes revoked_at, never voided_at. Filtering voided_at alone put
+        -- VOIDED bills into a Chapter 11 monthly operating report as live liabilities.
+        AND b.revoked_at IS NULL
         AND b.voided_at IS NULL
       ORDER BY b.bill_date DESC
     `,
@@ -216,6 +219,9 @@ export async function buildExhibitF(
       WHERE b.operating_company_id = $1
         AND b.bill_date >= $2::date
         AND b.bill_date <= $3::date
+        -- ACCT-F202: voidBill() writes revoked_at, never voided_at. Filtering voided_at alone put
+        -- VOIDED bills into a Chapter 11 monthly operating report as live liabilities.
+        AND b.revoked_at IS NULL
         AND b.voided_at IS NULL
     `,
     [input.operating_company_id, input.period_start, input.period_end]

@@ -1275,6 +1275,12 @@ export async function createBill(input: CreateBillInput, userId: string) {
           SELECT b.id::text AS id
             FROM accounting.bills b
            WHERE b.operating_company_id = $1::uuid
+             -- ACCT-F202: BOTH columns, because a bill can be voided two different ways. voidBill()
+             -- writes revoked_at (never voided_at), so the original voided_at IS NULL test alone matched
+             -- every properly-voided bill and kept blocking re-entry of its number -- the exact
+             -- behaviour the comment above promises it will not do. voided_at is checked too because
+             -- 4 bills on prod carry it from an out-of-band write no code path produces.
+             AND b.revoked_at IS NULL
              AND b.voided_at IS NULL
              AND b.bill_number = $2::text
              AND (

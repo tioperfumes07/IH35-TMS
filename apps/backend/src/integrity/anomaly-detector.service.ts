@@ -47,6 +47,9 @@ export class AnomalyDetectorService {
         FROM accounting.bills b
         LEFT JOIN accounting.bill_lines bl ON bl.bill_id = b.id AND bl.voided_at IS NULL
         WHERE b.operating_company_id = $1::uuid
+          -- ACCT-F202: voidBill() writes revoked_at, never voided_at, so voided_at alone excluded
+          -- nothing and every properly-voided bill was still scanned for anomalies.
+          AND b.revoked_at IS NULL
           AND b.voided_at IS NULL
         GROUP BY b.id, b.bill_number, b.amount_cents
         HAVING COUNT(bl.id) = 0

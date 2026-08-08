@@ -397,7 +397,11 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     probe: {
       sql: `
         SELECT count(*)::text AS n FROM accounting.bills b
-         WHERE b.voided_at IS NULL
+         -- ACCT-F202: voidBill() writes revoked_at, NOT voided_at, so filtering voided_at alone
+         -- counted every properly-voided bill as live. Both columns are checked because prod also
+         -- holds 4 bills carrying voided_at from an out-of-band write no code path produces.
+         WHERE b.revoked_at IS NULL
+           AND b.voided_at IS NULL
            AND b.qbo_bill_id IS NULL  -- TMS-NATIVE ONLY (16,245 of 16,250 are QBO clones)
            AND ($1::uuid IS NULL OR b.operating_company_id = $1::uuid)
       `,
