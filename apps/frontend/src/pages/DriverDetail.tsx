@@ -690,7 +690,12 @@ export function DriverDetailPage() {
   ];
 
   const hasPhoneLogin = Boolean(driver.identity_user_id);
-  const maskedPhone = driver.phone.replace(/^(\+?\d{0,2})?(\d{3})(\d{3})(\d{4})$/, "$2-$3-$4");
+  // LV-DRIVER-DETAIL-PAGE-CRASHES — this line threw and blanked the whole page. The root cause was
+  // the payload shape (fixed in api/mdata.ts getDriver), but the guard stays: it is the ONLY
+  // unguarded string operation in this component and the same field is already guarded at L363
+  // (`driver.phone ?? ""`) and L842 (`driver.phone ?? "—"`), so it was inconsistent as well as
+  // fragile. A formatter at render-top must never assume an optional field is present.
+  const maskedPhone = (driver.phone ?? "").replace(/^(\+?\d{0,2})?(\d{3})(\d{3})(\d{4})$/, "$2-$3-$4");
   const qualifications = qualificationsQuery.data ?? [];
   const companies = companiesQuery.data ?? [];
   const authorizations = companyAuthQuery.data ?? [];

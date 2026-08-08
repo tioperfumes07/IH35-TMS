@@ -48,10 +48,17 @@ export function check({ mdataApi, pages }) {
 
   if (!mdataApi) {
     errs.push("apps/frontend/src/api/mdata.ts: missing");
-  } else if (/export function getDriver\(id: string, operatingCompanyId\?\: string\)/.test(mdataApi)) {
+    // `async` is tolerated; a REQUIRED, non-optional operatingCompanyId is not. The assertion this
+    // guard exists for is that the company param can never be dropped or made optional — that is what
+    // fail-closes the driver roster to 0 rows. Pinning the exact declaration TEXT additionally
+    // forbade `export async function …`, which is how the aggregate-envelope unwrap had to be written
+    // (LV-DRIVER-DETAIL-PAGE-CRASHES: the endpoint returns { driver, … } whenever the company id is
+    // sent, so getDriver must await and unwrap). Widened to the SHAPE, never to the requirement —
+    // both the optional-param arm and the must-be-declared arm still fire, mutation-proven.
+  } else if (/export (?:async )?function getDriver\(id: string, operatingCompanyId\?\: string\)/.test(mdataApi)) {
     errs.push("getDriver(id, operatingCompanyId?) must require operatingCompanyId (remove optional ?)");
-  } else if (!/export function getDriver\(id: string, operatingCompanyId: string\)/.test(mdataApi)) {
-    errs.push("getDriver must be declared as getDriver(id: string, operatingCompanyId: string)");
+  } else if (!/export (?:async )?function getDriver\(id: string, operatingCompanyId: string\)/.test(mdataApi)) {
+    errs.push("getDriver must be declared as getDriver(id: string, operatingCompanyId: string) (async is allowed)");
   }
 
   for (const { file, idArg, companyVar } of SCOPED_PAGES) {

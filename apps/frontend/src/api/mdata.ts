@@ -167,13 +167,43 @@ export function previewTeamSettlementSplit(loadId: string, operatingCompanyId: s
   );
 }
 
-export function getDriver(id: string, operatingCompanyId: string) {
+export async function getDriver(id: string, operatingCompanyId: string): Promise<Driver> {
   // operating_company_id is required — scopes the lookup to the SELECTED company +
   // its driver_company_authorizations (matching the DQF list + aggregate fetch).
   // Without the param, opening a driver under a non-default selected company 404s
   // even though the driver is reachable — the DriverDetailPage "Driver not found" bug.
   const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
-  return apiRequest<Driver>(`/api/v1/mdata/drivers/${id}${qs}`);
+  const payload = await apiRequest<Driver | { driver: Driver }>(`/api/v1/mdata/drivers/${id}${qs}`);
+
+  // LV-DRIVER-DETAIL-PAGE-CRASHES (P0) — this endpoint has TWO response shapes and we always trigger
+  // the wrapped one.
+  //
+  // `GET /api/v1/mdata/drivers/:id` parses the query with driverAggregateQuerySchema, which REQUIRES
+  // operating_company_id (drivers.routes.ts). We always send it, so the aggregate branch always wins
+  // and the response is the ENVELOPE `{ driver, license, medical_card, documents, ... }` — never the
+  // flat row this function's return type promised. Every caller then read flat fields off the
+  // envelope and got `undefined`.
+  //
+  // What that cost: DriverDetail.tsx:693 called `.replace()` on `driver.phone` at render-top, threw
+  // "Cannot read properties of undefined (reading 'replace')", and the driver profile rendered
+  // NOTHING — taking the entire driver-qualification file (license, medical, documents, drug test,
+  // permits) and document upload with it. It was NOT entity-specific and NOT a data problem: `phone`
+  // is populated for every driver on prod; it was simply one level deeper in the payload.
+  //
+  // FIVE more surfaces degraded SILENTLY instead of crashing, which is why it went unnoticed —
+  // DriverAutocomplete (name fell back to the raw uuid), DriverHosDetailPage ("undefined undefined"
+  // in the subtitle), CreateWOSectionIdentification (blank driver last name on a work order),
+  // CreateMultipleBillsPage, DriverLayoverHistoryPage.
+  //
+  // Unwrapped HERE, in the one shared client, rather than teaching six call sites about the envelope.
+  // Both shapes are accepted so the non-aggregate branch (no company id) keeps working, and the check
+  // requires `driver` to be an OBJECT so a flat row carrying a scalar field named `driver` is never
+  // mistaken for an envelope.
+  if (payload && typeof payload === "object" && "driver" in payload) {
+    const inner = (payload as { driver: unknown }).driver;
+    if (inner && typeof inner === "object") return inner as Driver;
+  }
+  return payload as Driver;
 }
 
 export function createDriver(body: CreateDriverInput) {
