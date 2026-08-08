@@ -265,6 +265,56 @@ Status: **OPEN — TOP PRIORITY, NON-STOP**, owner-directed. This card never "co
 
 ## LIVE BOARD (GUARD updates as shas land)
 
+### **OPEN · P1 · `MIGRATION-NUMBER-RACE-IS-INTRA-LANE`** — the band guard cannot prevent it, because both colliding migrations came from the SAME lane's concurrent branches
+
+**Owning lane: CC-3 (CI-guards) to build · CC-1 (me) diagnosed it and caused it.** Filed 2026-08-08.
+**Read this before "fix" #1 gets built twice — I nearly filed the wrong fix myself.**
+
+**WHAT HAPPENED.** `202612350000` was used by two migrations, both applied on prod, forcing the accepted
+freeze in #4800 (`_driver_settlements_is_sample_data` 07:08:47Z, `_money_tables_audit_triggers` 07:55:13Z).
+
+**THE OBVIOUS DIAGNOSIS IS WRONG.** A per-lane band guard already exists and already runs in the money gate —
+`scripts/verify-migration-lane-band.mjs`: **`claude/` → HH 00–11, `cursor/`|`chore/`|`feat/`|`fix/` → HH
+12–23**, disjoint by construction. My first theory was *"the three CC seats share the `claude/` band, so
+subdivide it per seat."* **I checked before filing it, and it is wrong.**
+
+**BOTH COLLIDING MIGRATIONS ARE CC-1'S OWN**, from two concurrently-open CC-1 branches:
+`claude/settlement-sample-tag-202612350000` (this seat) and the branch behind **#4757 / ACCT-F178** (also
+CC-1). Same lane, same seat, both in-band (`HH=00`). **A finer band — per seat or otherwise — would not have
+prevented it**, because the two claimants were the same claimant at two different moments.
+
+**THE ACTUAL MECHANISM: "next free" is computed against `origin/main`, and main is not the whole world.**
+Each branch was cut at a different time, each correctly ran the documented check (*number strictly above
+main's current max*, then `202612340000`), and each got `202612350000`. **Neither could see the other, because
+the other was an unmerged branch.** The check is honest and still wrong, the same way the ACCT-F59 interlock
+was honest and still wrong: **it asks a question about the past when the conflicting fact lives in the
+present.**
+
+**WHY VERIFY-STEPS DO NOT HAVE THIS BUG:** `scripts/verify-steps/CLAIMED-NUMBERS.json` reserves the number in
+a file that must be **merged to main FIRST** (Rule 37, claim-before-author). The reservation is visible to
+every other branch the moment it lands. **Migrations have no equivalent — there is nothing to collide with
+until both files are already on main, i.e. until it is too late to renumber** (checksum freeze).
+
+**FIX — the same shape that already works one directory over:**
+**(a) RECOMMENDED — a migration claim registry**, `db/migrations/CLAIMED-MIGRATION-NUMBERS.json`, merged
+before the migration file is authored, exactly mirroring `CLAIMED-NUMBERS.json` + Rule 37. Proven mechanism,
+proven guard shape, no new concepts.
+**(b) WEAKER — widen "next free" to consider OPEN BRANCHES/PRs**, not just `origin/main`
+(`git ls-remote --heads` + the migration filenames on each). Catches more than main-only, but is racy by
+nature and depends on remote state at check time. **Use (a).**
+
+**DO NOT "FIX" IT BY:** subdividing the lane band (does not address a same-lane race — proven above), or
+re-checking main's max harder at push time (main still cannot see an unmerged sibling branch).
+
+**GUARD:** the registry's own claim-before-author check, mirroring `verify-verify-step-claimed-on-main.mjs`.
+**Live proof:** two concurrently-open branches adding migrations cannot both pass the gate.
+
+**COST IF NOT FIXED:** it recurs whenever one lane has two migration branches open at once — which is normal —
+and each recurrence is **unfixable after the fact** (both files apply, renaming is forbidden by the checksum
+freeze), so every one permanently consumes another frozen-baseline entry and another main-red until accepted.
+
+---
+
 ### **OPEN · P0 · `REVREC-DOUBLE-RESIDUE-L-20260806-0008`** — the duplicate is **$1,875.50 TWICE OVER**: revenue AND A/R are both overstated. Reversal is PREPARED below; **owner posts it**
 
 **Owning lane: CC-1 (money) to execute · OWNER to authorise.** Prepared by **CC-1** 2026-08-08.
