@@ -80,15 +80,24 @@ describe("Drivers reference catalog pages", () => {
 
       fireEvent.click(screen.getAllByRole("button", { name: "+ Create" })[0]!);
       expect(await screen.findByText(`Create ${catalog.title}`)).toBeInTheDocument();
-      const textboxes = screen.getAllByRole("textbox");
-      fireEvent.change(textboxes[1]!, { target: { value: "NEW" } });
-      fireEvent.change(textboxes[2]!, { target: { value: "New row" } });
+      // Target by LABEL, not position. This drove getAllByRole("textbox")[1] and [2], but index 0 is the
+      // LIST search box and index 1 is the numeric sort-order input — so it typed the code into a number
+      // field and the label into the code field, left a required field empty, and the form never submitted:
+      // `create` was called 0 times. Bumping the indices would pass today and break on the next added field,
+      // which is exactly how this test died.
+      fireEvent.change(screen.getByLabelText("Code"), { target: { value: "NEW" } });
+      fireEvent.change(screen.getByLabelText("Label"), { target: { value: "New row" } });
       fireEvent.click(screen.getAllByRole("button", { name: "+ Create" }).at(-1)!);
       await waitFor(() =>
         expect(createSpy).toHaveBeenCalledWith({ code: "NEW", label: "New row", sort_order: 50 })
       );
 
-      fireEvent.change(screen.getByRole("combobox"), { target: { value: "archived" } });
+      // Two comboboxes render here now, so the singular getByRole threw "Found multiple elements".
+      // This stays POSITIONAL on purpose and it is not the fix I wanted: NEITHER combobox exposes an
+      // accessible name (both dump as label=NONE), so there is nothing to scope by from the test side.
+      // The real fix is on the product — give these selects a label/aria-label — and that is filed as an
+      // a11y gap rather than worked around silently here.
+      fireEvent.change(screen.getAllByRole("combobox")[0]!, { target: { value: "archived" } });
       await waitFor(() => expect(listSpy).toHaveBeenCalled());
 
       fireEvent.click(screen.getByRole("button", { name: "Archive" }));
