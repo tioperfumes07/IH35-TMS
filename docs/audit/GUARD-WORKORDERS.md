@@ -265,6 +265,74 @@ Status: **OPEN — TOP PRIORITY, NON-STOP**, owner-directed. This card never "co
 
 ## LIVE BOARD (GUARD updates as shas land)
 
+### **OPEN · P0 · `ACCT-F59-INTERLOCK-IS-ONE-DIRECTIONAL`** — the double-revenue credit is a **473 ms race**, not an open design question; ACCT-F59 already rules who owns revenue
+
+**Owning lane: CC-1 (money).** Found by **CC-1** 2026-08-08 while inventorying `CURSOR-RULING-DOUBLE-REVREC-INVOICE.md`.
+**Read this BEFORE asking the owner "which side credits 4000" — that question is already answered in-repo.**
+
+**1. THE DESIGN IS ALREADY RULED.** `apps/backend/src/accounting/__tests__/posting-engine-revrec-interlock.test.ts`
+(**ACCT-F59**) states it verbatim: *"the invoice A/R poster **must refuse** a load-sourced invoice whose load
+already carries an active DISP-01 revenue-recognition latch row… Run both over one load and revenue AND A/R
+are both stated twice. On prod both flags are ON for TRANSP and USMCA (verified 2026-08-01), so this is a
+**mechanism, not a style preference**."* **The latch owns the `4000` credit; the invoice must refuse.** That
+also matches ASC 606 — revenue is earned at delivery, not at billing, and an invoice-side credit stamps the
+**invoice date** rather than the delivery date, which is the date an auditor tests.
+
+**2. IT DOUBLE-CREDITED ANYWAY, AND THE TIMING PROVES WHY (live, prod, `L-20260806-0008`):**
+
+```
+invoice row created   2026-08-07 02:05:48.506        (proforma, previous day)
+invoice JE posted     2026-08-08 07:14:33.413711     <- income credited
+latch earn JE posted  2026-08-08 07:14:33.886651     <- income credited AGAIN, 473 ms later
+```
+
+ACCT-F59's gate asks *"does this load already carry an active latch row?"* At `.413` the answer was
+legitimately **NO** — the latch row did not exist until `.886`. **The interlock refused nothing because it
+looked for a latch that had not happened yet.** It blocks invoice-after-latch and is **blind to
+latch-after-invoice**.
+
+**3. CAUSE IS STATEMENT ORDER IN ONE HANDLER** — `apps/backend/src/dispatch/loads.routes.ts`, same delivery
+transition: `convertProformaToOfficial` (1334) → `sendDraftInvoice` (1340, posts income) → …
+→ `latchOnDeliveryEvidence` (1368, posts income again). Invoice first, latch second, ~0.5 s apart — exactly
+the observed gap.
+
+**4. MEASURED IMPACT (live):** `4000 Freight/Line-haul Income` overstated **$1,875.50** on `L-20260806-0008`.
+Full inventory of loads carrying latch rows: `L-20260624-0083` ($15,000, latch only — correct) and
+`LUSMCAFREIGHT-20260806-0001` ($1.00, latch only — correct). **One load today — but it lands on EVERY
+delivered-and-invoiced load once Gate B opens**, because that handler is the normal path.
+
+**5. FIX — PREFER THE ORDER-INDEPENDENT ONE.**
+**(a) Reorder** the handler so the latch runs first: smallest diff, but correctness then depends on statement
+order and the next edit to that block silently reopens the defect. **(b) RECOMMENDED — the invoice poster
+skips its income leg whenever `source_load_id` IS NOT NULL and the load is at or past a delivery-evidence
+status, regardless of whether a latch row exists yet**; books `DR A/R / CR Unbilled`, leaving the latch as the
+sole `4000` terminus. Cannot be reopened by reordering, and it is what the poster's own header already
+prescribes (*"extend the invoice poster to skip income credit"*). **Manual (non-load) invoices keep crediting
+`4000` directly** — no latch ever runs for them. **Write NO new GL math; reuse the existing poster.**
+
+**6. GUARD — the invariant is RULING-INDEPENDENT, so it can be built before any decision:** *for any load,
+`4000` is credited exactly once.* **Build it as a `*.db.test.ts`, NOT a static guard** — the reason is stated
+on main in `subledger-gl-tieout-ar.db.test.ts`: *"A static scan can prove a poster is CALLED and correctly
+ORDERED. It structurally cannot prove that a gate returned true, that a flag resolved ON, that the JE
+balanced, or that a row landed."* A static guard would have been green through this entire defect.
+
+**7. ⚠ DETECTION TRAP — DO NOT join on `source_transaction_type`.** The latch's postings carry
+`source_transaction_type = NULL` and **structurally cannot carry it**: `CreateJournalEntryInput` /
+`CreatePostingInput` in `journal-entries.service.ts` have no such field, so the latch records provenance via
+`writeTransactionSourceLink` + `accounting.load_revenue_recognition_postings` instead. **Any census grouping
+by `source_transaction_type` is blind to every latch posting** — which is precisely why `4000` looked like it
+carried only `invoice` credits and the untyped rows were filed as a "minor data-quality note". Join through
+`load_revenue_recognition_postings` instead. Also note `accounting.invoices` links loads via
+**`source_load_id`**, not `load_id` — the obvious name does not exist.
+
+**8. REPAIR of the existing $1,875.50** is a reversing entry through the **existing** poster, never
+back-dated, never hand-SQL — **same "pre-fix residue" class as the $1,287.25 A/R and $33.40 A/P items. One
+owner ruling should cover all three.**
+
+**Status: OPEN — narrowed owner question is "confirm ACCT-F59 stands, approve fix (b)", NOT "which side owns revenue".**
+
+---
+
 ### **OPEN · P1 · `FE-TSC-RED-ON-TIP-MAIN-4780`** — the frontend typecheck is RED on tip-main and the offending commit is already on prod
 
 **Owning lane: whoever authored #4780 (`PROG-SCOREBOARD-ENTITY-COLUMNS`) — NOT CC-2.** Found by **CC-2** 2026-08-08 while typechecking an unrelated dispatch change.
