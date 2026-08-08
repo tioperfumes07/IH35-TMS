@@ -750,9 +750,14 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             detention_bill_customer_per_hour_cents, detention_driver_pay_per_hour_cents,
             late_delivery_risk_y_n, late_delivery_est_deduction_cents, late_delivery_reason,
             miles_practical, miles_shortest, miles_deadhead,
-            -- Block 7 (Jorge-approved, no migration): freight attributes that round-trip in the Edit wizard.
-            -- weight column is cargo_weight_lbs; reefer setpoint is reefer_setpoint_temp_f (numeric).
-            commodity, cargo_weight_lbs, reefer_setpoint_temp_f, trip_type,
+            -- CLS-SCHEMA-DRIFT / PHANTOM COLUMN — verified against the PROD branch 2026-08-07:
+            -- mdata.loads has NO commodity, NO cargo_weight_lbs and NO reefer_setpoint_temp_f.
+            -- The comment above asserted those names; information_schema does not. This SELECT made
+            -- GET /api/v1/mdata/loads/:id return 500 (42703, commodity does not exist) for
+            -- EVERY load, while the list and dispatch endpoints — which do not select them — returned
+            -- 200. Found by creating a real USMCA load and reading it back.
+            -- The reefer setpoint that DOES exist is reefer_temp_f, already selected below.
+            trip_type,
             -- Block 7 (migration 202606221000, Jorge-approved): pieces + customer PO round-trip in Edit.
             piece_count, customer_po_number,
             -- render-v6 §B reefer/tarp detail (migration 202606231400).

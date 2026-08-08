@@ -84,6 +84,27 @@ const SQL_NOISE = new Set([
   "now","current_date","current_timestamp","count","sum","avg","min","max","lower","upper","trim",
   "cast","date","interval","extract","to_char","to_date","array","any","all","some","unnest","jsonb",
   "text","uuid","int","integer","bigint","boolean","numeric","timestamptz","json","date_trunc",
+  // SELECT-list vocabulary (see the select-list pass below). These appear as BARE identifiers inside
+  // expressions — not as function names followed by `(` — so the "not followed by (" filter does not
+  // remove them and they would be reported as phantom columns.
+  //   EXTRACT(EPOCH FROM x)        → epoch, and the field names day/month/year/hour/…
+  //   ts AT TIME ZONE 'UTC'        → at, time, zone
+  //   ROW_NUMBER() OVER (PARTITION BY a ORDER BY b ROWS UNBOUNDED PRECEDING)
+  //   agg(...) FILTER (WHERE …), DISTINCT ON (…), CASE … END, INTERVAL '1 day'
+  "epoch","day","days","month","months","year","years","hour","hours","minute","minutes","second",
+  "seconds","week","weeks","quarter","dow","doy","at","time","zone","local","localtime",
+  "over","partition","by","order","group","filter","where","from","select","rows","range","groups",
+  "preceding","following","unbounded","current","row","within","having","limit","offset","for",
+  "returning","values","into","update","insert","delete","set","conflict","do","nothing","excluded",
+  "left","right","inner","outer","full","cross","natural","lateral","join","union","intersect","except",
+  "asc","desc","nulls","first","last","collate","similar","escape","symmetric","isnull","notnull",
+  "with","without","ordinality","default","primary","unique","check","constraint",
+  // TRIM(BOTH|LEADING|TRAILING '<chars>' FROM col) — the position keyword sits in column position and
+  // is followed by a literal, not a `(`. All three are RESERVED words in Postgres, so none can ever be
+  // a bare (unquoted) column name; listing them here cannot mask a real phantom column.
+  // Found by running the select-list pass repo-wide: qbo/unlinked-entities.routes.ts uses
+  // `trim(both ' ' FROM concat_ws(...))` three times and each was reported as a phantom `both` column.
+  "both","leading","trailing",
 ]);
 
 function loadSchema() {
@@ -201,6 +222,116 @@ export function splitWithQueryFragments(sql) {
   skipWs();
   if (i < norm.length) fragments.push(norm.slice(i));
   return fragments.length ? fragments : [norm];
+}
+
+/**
+ * Return the SELECT list of a fragment — the text between the leading `SELECT` and its OWN `FROM` —
+ * or null when the fragment is not a SELECT.
+ *
+ * Paren-depth aware, and that is not a nicety: `SELECT EXTRACT(EPOCH FROM created_at) FROM mdata.loads`
+ * contains a `FROM` at depth 1 that does NOT end the select list. A naive `indexOf(" from ")` would cut
+ * the list at `EPOCH ` and silently drop every projected column after it from analysis.
+ */
+export function extractSelectList(low) {
+  // Lookbehind, not `(^|[\s(])`: extractTemplateLiterals hands us the literal WITH its enclosing
+  // backticks, so the real-world string starts "`SELECT …" — no whitespace and no `(` before the
+  // keyword. The anchored form matched nothing there, which made this whole pass silently inert on
+  // every single-line query in the repo while passing in isolation. Exactly the fake-green shape the
+  // guard exists to prevent, so it is asserted in the selftest.
+  const m = /(?<![\w.$])select\s+/i.exec(low);
+  if (!m) return null;
+  let i = m.index + m[0].length;
+  // optional DISTINCT / DISTINCT ON (...) / ALL
+  const dm = /^(?:distinct(?:\s+on\s*)?|all)\s*/i.exec(low.slice(i));
+  if (dm) i += dm[0].length;
+  const start = i;
+  let depth = 0;
+  while (i < low.length) {
+    const ch = low[i];
+    if (ch === "(") depth++;
+    else if (ch === ")") {
+      if (depth === 0) break; // fragment ended (we started inside a paren)
+      depth--;
+    } else if (depth === 0 && /\s/.test(ch) && /^\s+from\s/.test(low.slice(i))) {
+      return low.slice(start, i);
+    }
+    i++;
+  }
+  return null; // no depth-0 FROM → SELECT with no table; nothing to attribute
+}
+
+/**
+ * Unqualified column references inside a SELECT list.
+ *
+ * The gap this closes (CLS-SCHEMA-DRIFT, live 42703 in dispatch/auth-gates/wf-038-active-driver.gate.ts):
+ * every unqualified-column pattern above keys on a WHERE/SET/ORDER-BY shape, so a phantom column that is
+ * merely PROJECTED was invisible. `SELECT COALESCE(is_dispatch_blocked,false) FROM mdata.drivers` — a
+ * column that lives on mdata.UNITS, not mdata.drivers — passed this guard with exit 0 while the endpoint
+ * that runs it returned 500 on every call. A phantom column in the SELECT list is exactly as fatal as one
+ * in WHERE; only the clause differed. Same lesson the ORDER BY pass learned in 2026-07-25.
+ *
+ * `AS <alias>` is stripped FIRST because in a select list an alias is a BINDING, not a reference — and
+ * the real bug aliases the phantom back to its own name (`COALESCE(is_dispatch_blocked,false) AS
+ * is_dispatch_blocked`). Treating select-list aliases as excluded names the way the ORDER BY pass
+ * legitimately does would have skipped the very defect this pass exists to catch.
+ */
+export function unqualifiedSelectListColumns(selectList) {
+  const cleaned = stripInterpolations(selectList)
+    .replace(/'(?:[^']|'')*'/g, " ") // string literals
+    // output-alias BINDINGS (not references). The quoted arm is not optional: the analyzer lowercases
+    // the whole statement, so `account_class AS "accountClass"` arrives as `as "accountclass"` and the
+    // bare-identifier form does not match past the quote. That left the alias in the stream and it was
+    // reported as a phantom `banking.bank_accounts.accountclass` — camelCase aliases are how every
+    // route that shapes JSON directly in SQL is written, so this arm is load-bearing, not an edge case.
+    .replace(/\bas\s+(?:"[^"]*"|[a-z_][a-z0-9_]*)/gi, " ")
+    // Any REMAINING double-quoted identifier is dropped rather than checked. A quoted reference is
+    // case-SENSITIVE in Postgres and its true case was already destroyed by the upstream lowercase, so
+    // it cannot be matched against the schema without inventing a case. Conservative by construction:
+    // this can only skip a check, never invent one.
+    .replace(/"[^"]*"/g, " ")
+    .replace(/::\s*[a-z_][a-z0-9_]*(?:\s*\[\s*\])?/gi, " ") // casts: status::text
+    .replace(/\$\d+/g, " ") // bind params
+    .replace(/\b\d+(?:\.\d+)?\b/g, " "); // numeric literals
+  const out = [];
+  // Unqualified means BOTH sides: not preceded by `.` (it is not the column half of `alias.col`) and
+  // not followed by `.` (it is not the QUALIFIER half either). Omitting the second lookahead reported
+  // every table alias in the projection as a phantom column — `SELECT c.total FROM …` yielded a
+  // "column" named `c` — which is 23 of the 83 raw hits on main, all noise. Function names are
+  // excluded by the `(` lookahead.
+  const re = /(?<![.\w])([a-z_][a-z0-9_]*)\b(?!\s*[.(])/g;
+  let m;
+  while ((m = re.exec(cleaned))) out.push(m[1]);
+  return out;
+}
+
+/**
+ * Remove `${…}` template-literal interpolations, brace-depth aware so nested templates
+ * (`${cond ? `a` : `b`}`) are excised whole.
+ *
+ * These are JS, never SQL: an interpolation holds a fragment variable (`${accountSelectCols}`), a
+ * conditional, or in a few files an entire nested `await client.query(…)`. Reading their identifiers as
+ * column names produced the other large false-positive block on main — `catalogs.accounts.account_select_cols`,
+ * `mdata.vendors.vendor_select_columns`, `maintenance.work_orders.await`. Whatever a fragment variable
+ * expands to is itself analyzed wherever that fragment is a literal; the placeholder is not.
+ */
+export function stripInterpolations(s) {
+  let out = "";
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === "$" && s[i + 1] === "{") {
+      let depth = 1;
+      i += 2;
+      while (i < s.length && depth > 0) {
+        if (s[i] === "{") depth++;
+        else if (s[i] === "}") depth--;
+        i++;
+      }
+      i--; // loop increment re-advances past the closing brace
+      out += " ";
+      continue;
+    }
+    out += s[i];
+  }
+  return out;
 }
 
 export function analyzeSql(sql, schema) {
@@ -325,6 +456,19 @@ function analyzeSqlFragment(sql, schema) {
         if (!cols.has(term)) violations.push({ table, column: term, ctx: `ORDER/GROUP BY ${term}` });
       }
     }
+    // SELECT-list unqualified columns — same conservative gate as every other unqualified pass
+    // (exactly one target table in the FROM, no join, no subquery/CTE/UNION), so an unqualified name
+    // here can only belong to that one table.
+    const selectList = extractSelectList(low);
+    if (selectList) {
+      const seenSel = new Set();
+      for (const col of unqualifiedSelectListColumns(selectList)) {
+        if (SQL_NOISE.has(col) || aliasToTable.has(col) || seenSel.has(col)) continue;
+        seenSel.add(col);
+        if (!cols.has(col)) violations.push({ table, column: col, ctx: `SELECT list ${col}` });
+      }
+    }
+
     const seen = new Set();
     for (const re of patterns) {
       let m;
@@ -432,9 +576,69 @@ function selftest() {
   check("CTE alias rebind across bodies — no false positive on clean cols",
     "WITH a AS (SELECT v.id FROM mdata.vendors v WHERE v.deactivated_at IS NULL), b AS (SELECT l.id FROM mdata.loads l WHERE l.status = $1) SELECT a.id FROM a JOIN b ON true", false);
 
+  // SELECT-list pass (CLS-SCHEMA-DRIFT). The first case is the VERBATIM live defect from
+  // dispatch/auth-gates/wf-038-active-driver.gate.ts, reduced to the vendors fixture: a phantom column
+  // projected through COALESCE and aliased back to its own name. This exited 0 before the pass existed.
+  check("phantom in SELECT list via COALESCE + self-alias",
+    "SELECT status::text, COALESCE(voided_at,false) AS voided_at FROM mdata.vendors WHERE id = $1::uuid LIMIT 1", true);
+  check("phantom bare in SELECT list",
+    "SELECT id, voided_at FROM mdata.vendors WHERE id = $1", true);
+  check("real cols in SELECT list clean",
+    "SELECT id, deactivated_at, vendor_name FROM mdata.vendors WHERE id = $1", false);
+  // Casts must not be read as columns.
+  check("cast type name not flagged as column",
+    "SELECT id::text, vendor_name::varchar FROM mdata.vendors WHERE id = $1", false);
+  // A depth-1 FROM inside EXTRACT must not truncate the select list — if it did, `voided_at` after it
+  // would go unanalyzed and this case would come back clean.
+  check("EXTRACT(... FROM ...) does not truncate the select list",
+    "SELECT EXTRACT(EPOCH FROM deactivated_at) AS age, voided_at FROM mdata.vendors WHERE id = $1", true);
+  check("EXTRACT with only real cols clean",
+    "SELECT EXTRACT(EPOCH FROM deactivated_at) AS age, vendor_name FROM mdata.vendors WHERE id = $1", false);
+  // Function names and string literals are not columns.
+  check("function name + string literal not flagged",
+    "SELECT COALESCE(vendor_name, 'unknown_placeholder_col') AS n FROM mdata.vendors WHERE id = $1", false);
+  // Output alias of a real expression must not be re-read as a column reference.
+  check("output alias binding not treated as a column",
+    "SELECT vendor_name AS totally_not_a_column FROM mdata.vendors WHERE id = $1", false);
+  // SELECT * must stay clean.
+  check("select star clean", "SELECT * FROM mdata.vendors WHERE id = $1", false);
+  // Joins still skip the unqualified select-list pass (ambiguous attribution).
+  check("join skips unqualified select-list pass",
+    "SELECT voided_at FROM mdata.vendors v JOIN mdata.loads l ON l.id = v.id", false);
+  // The repo scanner passes the literal WITH its backticks. This case is the reason the select-list
+  // pass reported nothing repo-wide on its first cut while every bare-string case above passed.
+  check("backtick-delimited literal (as the scanner actually passes it)",
+    "`SELECT COALESCE(voided_at,false) AS voided_at FROM mdata.vendors WHERE id = $1`", true);
+  // Table aliases in the projection are qualifiers, not columns.
+  check("qualified projection through an alias not flagged as a bare column",
+    "`SELECT v.vendor_name, v.deactivated_at FROM mdata.vendors v WHERE v.id = $1`", false);
+  // JS interpolations are not SQL.
+  check("template interpolation is not a column",
+    "`SELECT ${vendorSelectColumns}, vendor_name FROM mdata.vendors WHERE id = $1`", false);
+
+  // The two parser gaps the repo-wide run exposed. Both are regressions-in-waiting: each produced a
+  // confident, wrong "phantom column" verdict, and a guard that cries wolf is a guard that gets muted.
+  // TRIM position keywords (BOTH/LEADING/TRAILING) sit in column position, followed by a literal.
+  check("trim(both ' ' from …) — position keyword is not a column",
+    "`SELECT trim(both ' ' FROM vendor_name) AS n FROM mdata.vendors WHERE id = $1`", false);
+  check("trim(leading/trailing …) — position keywords are not columns",
+    "`SELECT trim(leading '0' FROM vendor_name) AS a, trim(trailing ' ' FROM vendor_name) AS b FROM mdata.vendors WHERE id = $1`", false);
+  // A camelCase output alias is quoted, and the analyzer has already lowercased the statement.
+  check("quoted camelCase output alias is a binding, not a column",
+    "`SELECT vendor_name AS \"vendorName\", deactivated_at::text AS \"deactivatedAt\" FROM mdata.vendors WHERE id = $1`", false);
+  // The alias arm must not become a blanket amnesty: a phantom column aliased to a quoted name is
+  // still a phantom column, because the phantom is on the LEFT of the AS.
+  check("phantom column with a quoted alias is still flagged",
+    "`SELECT voided_at AS \"voidedAt\" FROM mdata.vendors WHERE id = $1`", true);
+
   console.log(ok ? "self-test PASS" : "self-test FAIL");
   if (!ok) process.exit(1);
 }
 
+// Only auto-run when invoked as the entry point. verify-step 142 spawns this file as a subprocess
+// (`node scripts/verify-sql-column-existence.mjs`), so the guard still runs in CI exactly as before —
+// but `import`ing the module to exercise analyzeSql/extractSelectList no longer scans the whole repo
+// and process.exit(1)s before the importer's own code can run.
+const IS_ENTRY = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (process.argv.includes("--selftest")) selftest();
-else runGuard();
+else if (IS_ENTRY) runGuard();

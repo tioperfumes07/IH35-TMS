@@ -1,5 +1,19 @@
 [
   {
+    "id": "LAW-2026-08-06-CI-CONCURRENCY-SHA-SCOPED",
+    "title": "A workflow may not key its concurrency group on a bare ref — a queued run that never executed can otherwise be cancelled into a permanently dead required check, leaving the PR unmergeable with no code failure",
+    "source_file": ".github/workflows/ci.yml",
+    "guard": "scripts/verify-ci-concurrency-sha-scoped.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-BUSINESS-DATE-PARSED-LOCAL",
+    "title": "A business date (YYYY-MM-DD) must never be pinned to UTC for display — it has no timezone, and new Date(iso+\"T00:00:00Z\") renders one day early for every viewer west of UTC, which silently showed the wrong day cash position in Central Time",
+    "source_file": "apps/frontend/src/lib/businessDate.ts",
+    "guard": "scripts/verify-business-date-parsed-local.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-08-05-B2-ENFORCED-GUARD-OR-NOT-LAW",
     "title": "LAW = ENFORCED GUARD, OR IT IS NOT LAW — every NEW rule ships a guard registered in docs/law/LAW.json; verify-law-registry.mjs is a required check that reddens when a registered law's guard file is missing",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
@@ -273,13 +287,6 @@
     "type": "enforced"
   },
   {
-    "id": "LAW-2026-08-06-CI-CONCURRENCY-SHA-SCOPED",
-    "title": "A workflow may not key its concurrency group on a bare ref — a queued run that never executed can otherwise be cancelled into a permanently dead required check, leaving the PR unmergeable with no code failure",
-    "source_file": ".github/workflows/ci.yml",
-    "guard": "scripts/verify-ci-concurrency-sha-scoped.mjs",
-    "type": "enforced"
-  },
-  {
     "id": "LAW-2026-08-06-DISP-WIRE-07-DEPARTURE-EVIDENCE",
     "title": "Every path stamping mdata.load_stops.actual_departure_at must write a real clock value (now() or COALESCE onto now()), never a bare client parameter — that stamp is the delivery evidence revenue recognition and invoice gating hang off",
     "source_file": "apps/backend/src/dispatch/stamp-final-delivery-departure.ts",
@@ -298,6 +305,13 @@
     "title": "A component that owns a polling query is a page-level singleton — mounting it inside a .map()ed child multiplies both the render and the prod read rate by the collection length, silently and with no visual error",
     "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
     "guard": "scripts/verify-scenario-tracker-single-mount.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX",
+    "title": "NEVER GUESS · NEVER DEFER · ALWAYS VERIFY · ALWAYS FIX, NEVER PATCH — every change fixes the root cause at its source, ships a guard that fails on the bug and passes on the fix, and is proven live on prod; CI-green is the floor, not the verdict; when a fact cannot be verified the required output is UNVERIFIED, never a guess",
+    "source_file": "docs/law/NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX.md",
+    "guard": "scripts/verify-no-patch-or-defer-language.mjs",
     "type": "enforced"
   },
   {
@@ -322,10 +336,10 @@
     "type": "enforced"
   },
   {
-    "id": "LAW-2026-08-06-CLS-ORPHAN-SURFACE-DRILL",
-    "title": "A nav/leaf that drills through to detail (bill row, Chart-of-Accounts reachability, cash-flow 7-day strip) may not silently lose its drill-through wiring",
-    "source_file": "scripts/verify-orphan-surface-drill.mjs",
-    "guard": "scripts/verify-orphan-surface-drill.mjs",
+    "id": "LAW-2026-08-07-LANE-TERRITORY",
+    "title": "Lanes do not edit each other's domain territory; shared append-only registries are union-merged, never owned",
+    "source_file": "docs/standing-orders/LANE-COLLISION-PROTOCOL.md",
+    "guard": "scripts/verify-lane-territory.mjs",
     "type": "enforced"
   },
   {
@@ -333,20 +347,6 @@
     "title": "Every dispatch Kanban lane dropStatus must be a status loadStatusSchema accepts — a lane whose drop the API rejects is a silent dead end, and the frontend lane list and backend enum live in separate files owned by separate lanes so they drift independently",
     "source_file": "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
     "guard": "scripts/verify-kanban-dropstatus-contract.mjs",
-    "type": "enforced"
-  },
-  {
-    "id": "LAW-2026-08-06-BUSINESS-DATE-PARSED-LOCAL",
-    "title": "A business date (YYYY-MM-DD) must never be pinned to UTC for display — it has no timezone, and new Date(iso+\"T00:00:00Z\") renders one day early for every viewer west of UTC, which silently showed the wrong day cash position in Central Time",
-    "source_file": "apps/frontend/src/lib/businessDate.ts",
-    "guard": "scripts/verify-business-date-parsed-local.mjs",
-    "type": "enforced"
-  },
-  {
-    "id": "LAW-2026-08-07-NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX",
-    "title": "NEVER GUESS · NEVER DEFER · ALWAYS VERIFY · ALWAYS FIX, NEVER PATCH — every change fixes the root cause at its source, ships a guard that fails on the bug and passes on the fix, and is proven live on prod; CI-green is the floor, not the verdict; when a fact cannot be verified the required output is UNVERIFIED, never a guess",
-    "source_file": "docs/law/NEVER-GUESS-NEVER-DEFER-ALWAYS-VERIFY-ALWAYS-FIX.md",
-    "guard": "scripts/verify-no-patch-or-defer-language.mjs",
     "type": "enforced"
   },
   {
@@ -361,6 +361,13 @@
     "title": "The dispatch load-detail query must RESOLVE the primary driver name and unit number, not only carry their ids — a drawer that renders a covered load as \"Unassigned\" invites double-assignment, and the entity predicates on those joins must scope units by the owner/leased pair",
     "source_file": "apps/backend/src/dispatch/loads.routes.ts",
     "guard": "scripts/verify-load-detail-resolves-names.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-06-CLS-ORPHAN-SURFACE-DRILL",
+    "title": "A nav/leaf that drills through to detail (bill row, Chart-of-Accounts reachability, cash-flow 7-day strip) may not silently lose its drill-through wiring",
+    "source_file": "scripts/verify-orphan-surface-drill.mjs",
+    "guard": "scripts/verify-orphan-surface-drill.mjs",
     "type": "enforced"
   },
   {
@@ -417,6 +424,20 @@
     "title": "set_config('app.operating_company_id', …, true) is TRANSACTION-LOCAL — setting it on a raw pool.connect() client with no BEGIN sets nothing, it is discarded before the next statement (proven on PostgreSQL 16.14), so every FORCED-RLS policy sees an empty scope; use withCurrentUser, which opens the transaction and issues SET LOCAL ROLE ih35_app fail-closed",
     "source_file": "apps/backend/src/maintenance/severe-repair-estimate.routes.ts",
     "guard": "scripts/verify-tenant-guc-inside-txn.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-SQL-SELECT-LIST-PHANTOM-COLUMN",
+    "title": "A phantom column in the SELECT LIST is as fatal as one in WHERE — both throw 42703 and 500 the endpoint — so verify-sql-column-existence must check PROJECTED columns, not only WHERE/SET/ORDER-BY ones; a select-list-only phantom passed the guard with exit 0 while the route it lived in failed on every call",
+    "source_file": "apps/backend/src/dispatch/auth-gates/wf-038-active-driver.gate.ts",
+    "guard": "scripts/verify-sql-column-existence.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-POD-BOL-EVIDENCE-LINKAGE",
+    "title": "A POD/BOL captured at a stop must be linked to its PARENT LOAD (docs.file_links has no load_stop entity type, so dropping the link orphans the evidence), and the hop.pod_bol scenario probe must COUNT the canonical stores the office reads back — dispatch.pod_documents + dispatch.bol_documents — not only the document library",
+    "source_file": "apps/driver-pwa/src/lib/upload-sync.ts",
+    "guard": "scripts/verify-pod-bol-evidence-linkage.mjs",
     "type": "enforced"
   }
 ]
