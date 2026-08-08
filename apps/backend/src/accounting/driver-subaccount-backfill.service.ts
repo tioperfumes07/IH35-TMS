@@ -15,6 +15,10 @@ import {
   DRIVER_ADVANCE_PARENT_NAME,
   type SubAccountPlan,
 } from "./driver-subaccount-provision.service.js";
+// ACCT-F164 — the THIRD financial primitive a driver needs. Escrow + advance sub-accounts alone do
+// not make a driver payable: A/P needs a VENDOR. Nothing else in the backend creates one except the
+// QBO puller, which never runs for USMCA (no QuickBooks, locked decision §8.5).
+import { ensureDriverApVendor } from "./driver-vendor-link.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -27,6 +31,8 @@ export type BackfillRow = {
   driver_name: string;
   asset_subaccount: SubAccountDecision;
   escrow_subaccount: SubAccountDecision;
+  /** ACCT-F164 — the driver's A/P vendor, without which the driver cannot be paid at all. */
+  ap_vendor: SubAccountDecision;
 };
 export type BackfillReport = {
   mode: "dry-run" | "apply";
@@ -35,6 +41,7 @@ export type BackfillReport = {
     drivers_scanned: number;
     asset_to_create: number;
     escrow_to_create: number;
+    ap_vendor_to_create: number;
     already_existing: number;
     no_parent: number;
   };
@@ -80,7 +87,7 @@ export async function runDriverSubAccountBackfill(
   const drivers = input.drivers ?? (await loadDriverRoster(client, input.operatingCompanyId));
 
   const rows: BackfillRow[] = [];
-  const totals = { drivers_scanned: 0, asset_to_create: 0, escrow_to_create: 0, already_existing: 0, no_parent: 0 };
+  const totals = { drivers_scanned: 0, asset_to_create: 0, escrow_to_create: 0, ap_vendor_to_create: 0, already_existing: 0, no_parent: 0 };
 
   for (const d of drivers) {
     totals.drivers_scanned += 1;
@@ -95,6 +102,16 @@ export async function runDriverSubAccountBackfill(
       subAccountName: driverEscrowSubAccountName(d.driverName, d.hireDate ?? null),
       operatingCompanyId: input.operatingCompanyId,
     });
+
+    // ACCT-F164 — plan the A/P vendor. Read-only in dry-run, exactly like the sub-account plans.
+    const vendorExists = await client.query<{ one: number }>(
+      `SELECT 1 AS one FROM mdata.vendors
+        WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid AND deactivated_at IS NULL
+        LIMIT 1`,
+      [input.operatingCompanyId, d.driverId]
+    );
+    const apVendorDecision: SubAccountDecision = vendorExists.rows[0] ? "SKIP-exists" : "CREATE";
+    if (apVendorDecision === "CREATE") totals.ap_vendor_to_create += 1;
 
     if (assetPlan.action === "create") totals.asset_to_create += 1;
     if (escrowPlan.action === "create") totals.escrow_to_create += 1;
@@ -125,6 +142,9 @@ export async function runDriverSubAccountBackfill(
           coaAccountId: escRes.accountId,
         });
       }
+      // ACCT-F164 — same gate, same idempotence. A driver with both sub-accounts and no vendor is
+      // still unpayable, so this belongs in the same apply pass rather than a separate errand.
+      await ensureDriverApVendor(client, input.operatingCompanyId, d.driverId, d.driverName, input.actorUserId);
     }
 
     rows.push({
@@ -132,6 +152,7 @@ export async function runDriverSubAccountBackfill(
       driver_name: d.driverName,
       asset_subaccount: decisionOf(assetPlan.action),
       escrow_subaccount: decisionOf(escrowPlan.action),
+      ap_vendor: apVendorDecision,
     });
   }
 

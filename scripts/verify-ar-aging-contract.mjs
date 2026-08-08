@@ -40,11 +40,27 @@ try {
   assertMatches(service, /i\.amount_open_cents IS NOT NULL/, "AR Aging must exclude null outstanding balances");
   assertMatches(service, /i\.amount_open_cents > 0/, "AR Aging must enforce positive outstanding balances");
   assertMatches(service, /i\.voided_at IS NULL/, "AR Aging must exclude voided invoices");
-  assertMatches(
-    service,
-    /i\.status NOT IN \('paid', 'voided', 'draft'\)/,
-    "AR Aging must include status safety-net exclusion for paid/voided/draft",
-  );
+  // ACCT-F171 / CLS-GUARD-PINS-CALLSITE — this used to assert the EXACT tuple
+  // `i.status NOT IN ('paid', 'voided', 'draft')`, which pinned the defect instead of the
+  // requirement. `accounting.invoices.status` spells a void as 'void' and `invoices_status_check`
+  // FORBIDS 'voided', so that predicate excluded nothing: one invoice with status='void' and
+  // voided_at NULL was counted, and USMCA reported $4,325.50 of receivables where $1,875.50 was real.
+  // Adding the missing 'void' — the fix — turned this guard RED, which is a guard punishing a correct
+  // change. It now asserts each element the exclusion MUST contain, so a superset or a different
+  // ordering passes and a missing element still fails.
+  const statusExclusion = /i\.status NOT IN \(([^)]*)\)/.exec(service);
+  if (!statusExclusion) {
+    throw new Error("AR Aging must include a status safety-net exclusion (i.status NOT IN (...))");
+  }
+  for (const required of ["paid", "void", "draft"]) {
+    if (!new RegExp(`'${required}'`).test(statusExclusion[1])) {
+      throw new Error(
+        `AR Aging status exclusion is missing '${required}'. Found: ${statusExclusion[0]}. ` +
+          `Note 'void' is the ONLY spelling accounting.invoices.status can hold — ` +
+          `invoices_status_check forbids 'voided', so excluding that alone excludes nothing (ACCT-F171).`,
+      );
+    }
+  }
 
   assertIncludes(
     service,

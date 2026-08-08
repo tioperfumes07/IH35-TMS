@@ -45,6 +45,7 @@ import { RecordTransferModal } from "../RecordTransferModal";
 import { RecordCCPaymentModal } from "../RecordCCPaymentModal";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import {
   buildPagedBankTxnGroups,
@@ -242,6 +243,10 @@ export function BankingTransactionsDesignView({
   highlightTransactionId,
 }: Props) {
   const { pushToast } = useToast();
+  // ACCT-F176 — the GL-posting honesty banner below MUST read this rather than assert a literal.
+  // Resolved per entity: the flag's global default is false while every existing company carries an
+  // override of true, so a banner written from the default is wrong for every real operator.
+  const bankFeedGlFlag = useFeatureFlag("BANK_FEED_GL_POSTING_ENABLED", companyId);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   // DEFECT-7 — the expanded-row "Match candidates" pane. Clicking the Match button expands the row (so
   // matchCandidatesQuery runs) and scrolls this pane into view, surfacing the ranked candidates that were
@@ -2152,16 +2157,64 @@ export function BankingTransactionsDesignView({
             className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
             data-testid="banking-bank-feed-gl-posting-honesty-banner"
           >
-            <p className="font-semibold">Categorize tags are not ledger posts — BANK_FEED_GL_POSTING_ENABLED stays OFF by default</p>
-            <p className="mt-1">
-              Categorize persists driver/unit/load/vendor fields immediately; that alone does not post a balanced TMS
-              JE. <code className="text-[11px]">matched_journal_entry_id</code> is <strong>not</strong> proof that
-              bank-feed GL posting is live — recon Match can also stamp it when{" "}
-              <code className="text-[11px]">ledger_entry_kind = &apos;je&apos;</code> (see{" "}
-              <code className="text-[11px]">match.service.ts</code>), and the flag-gated bank-feed poster is a separate
-              path (default OFF). A JE link with the flag OFF is a match/link, not “posting is on.” Reverse drill: JE
-              detail Source maps <code className="text-[11px]">bank_categorization</code> → Banking Transactions.
-            </p>
+            {/*
+              ACCT-F176 — this banner used to be a hardcoded <p> asserting the flag "stays OFF by
+              default" and that categorizing "does not post a balanced TMS JE". Both sentences were
+              literals; the banner never read the flag. Measured on prod 2026-08-07,
+              BANK_FEED_GL_POSTING_ENABLED has default_enabled=false but a per-entity override of TRUE
+              for USMCA, TRANSP and TRK — i.e. ON in every entity that exists. Categorizing one row
+              ($918.00) produced a new balanced JE whose own memo read "Bank categorization … posting".
+              An operator trusting the banner and working the queue would have posted a JE per row into
+              a live ledger.
+
+              It now reads the resolved per-entity flag and states what is actually true. The three
+              branches are deliberate: while the value is unknown it asserts NEITHER direction, because
+              a confident wrong answer is what caused this.
+            */}
+            {bankFeedGlFlag.loading || bankFeedGlFlag.error ? (
+              <>
+                <p className="font-semibold">
+                  Checking whether categorizing posts a journal entry for this company…
+                </p>
+                <p className="mt-1">
+                  <code className="text-[11px]">BANK_FEED_GL_POSTING_ENABLED</code> is resolved per entity and has not
+                  been read yet
+                  {bankFeedGlFlag.error ? " (the lookup failed)" : ""}. Until it is,{" "}
+                  <strong>treat categorizing as if it DOES post</strong> — that is the assumption that cannot cost you
+                  an unintended entry.
+                </p>
+              </>
+            ) : bankFeedGlFlag.enabled ? (
+              <>
+                <p className="font-semibold">
+                  Categorizing DOES post a journal entry — <code className="text-[11px]">BANK_FEED_GL_POSTING_ENABLED</code>{" "}
+                  is ON for this company
+                </p>
+                <p className="mt-1">
+                  Each row you categorize and post writes a balanced TMS journal entry to the live ledger, stamps{" "}
+                  <code className="text-[11px]">matched_journal_entry_id</code> and sets{" "}
+                  <code className="text-[11px]">review_state = &apos;matched&apos;</code>. Work the queue deliberately:
+                  categorizing every remaining row posts one entry per row. Reverse drill: JE detail Source maps{" "}
+                  <code className="text-[11px]">bank_categorization</code> → Banking Transactions.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-semibold">
+                  Categorize tags are not ledger posts —{" "}
+                  <code className="text-[11px]">BANK_FEED_GL_POSTING_ENABLED</code> is OFF for this company
+                </p>
+                <p className="mt-1">
+                  Categorize persists driver/unit/load/vendor fields immediately; with the flag off that alone does not
+                  post a balanced TMS JE. <code className="text-[11px]">matched_journal_entry_id</code> is{" "}
+                  <strong>not</strong> proof that bank-feed GL posting is live — recon Match can also stamp it when{" "}
+                  <code className="text-[11px]">ledger_entry_kind = &apos;je&apos;</code> (see{" "}
+                  <code className="text-[11px]">match.service.ts</code>), and the flag-gated bank-feed poster is a
+                  separate path. A JE link with the flag OFF is a match/link, not “posting is on.” Reverse drill: JE
+                  detail Source maps <code className="text-[11px]">bank_categorization</code> → Banking Transactions.
+                </p>
+              </>
+            )}
           </div>
           <div
             className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"

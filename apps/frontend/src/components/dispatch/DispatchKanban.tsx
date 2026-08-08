@@ -28,8 +28,19 @@ type Props = {
   listError?: DataTableErrorState;
 };
 
-// A truck-without-a-load as a synthetic kanban card (Unit + Driver; no load). id prefixed "unit:"
-// so it is inert to drag/status-drop (handleDragEnd can't find it among loads → no-op).
+/**
+ * A synthetic kanban card is a truck-without-a-load, id-prefixed "unit:". It is NOT a load, so it can never
+ * be status-dropped: handleDragEnd looks the id up in `loads` and finds nothing.
+ *
+ * LV-KANBAN-SYNTHETIC-CARD-INERT-DRAG: that inertness used to be invisible. These cards carry
+ * `status: "unassigned"`, and `canDragLoad("unassigned")` is true, so they rendered with drag listeners and a
+ * `cursor-grab` affordance — the dispatcher could pick one up, drag it across the board, drop it into a lane,
+ * and NOTHING happened, with no toast and no explanation. A control that looks live and always does nothing
+ * is worse than one that is visibly disabled. The affordance now matches the behaviour.
+ */
+export function isSyntheticKanbanCardId(id: string): boolean {
+  return id.startsWith("unit:");
+}
 function truckToKanbanLoad(unit: UnitsWithoutLoad): DispatchLoadRow {
   return {
     id: `unit:${unit.id}`,
@@ -288,7 +299,7 @@ function KanbanDispatchCard({
   hasActiveGeofenceBreach?: boolean;
   onClick: (id: string) => void;
 }) {
-  const draggableEnabled = canDragLoad(load.status);
+  const draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: load.id,
     data: { loadId: load.id, status: load.status },
@@ -394,7 +405,7 @@ function KanbanCompactCard({
   hasActiveGeofenceBreach?: boolean;
   onClick: (id: string) => void;
 }) {
-  const draggableEnabled = canDragLoad(load.status);
+  const draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: load.id,
     data: { loadId: load.id, status: load.status },
@@ -439,7 +450,7 @@ function KanbanStandardCard({
   hasActiveGeofenceBreach?: boolean;
   onClick: (id: string) => void;
 }) {
-  const draggableEnabled = canDragLoad(load.status);
+  const draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: load.id,
     data: { loadId: load.id, status: load.status },
@@ -650,7 +661,13 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
     const targetColumnKey = String(overId).replace("column:", "");
     const targetGroup = KANBAN_STATUS_GROUPS.find((group) => group.key === targetColumnKey);
     const load = optimisticLoads.find((item) => item.id === loadId);
-    if (!targetGroup || !load) return;
+    if (!load && isSyntheticKanbanCardId(loadId)) return; // truck card: not a load, nothing to transition
+    if (!targetGroup || !load) {
+      // Not the synthetic case — an unknown column or a load id the board is rendering but does not hold.
+      // That is a bug state, not a user action, so it must not vanish silently.
+      pushToast("Could not move that card — the board could not identify it. Refresh and try again.", "error");
+      return;
+    }
     if (resolveKanbanColumnKey(load) === targetColumnKey) return;
 
     const nextStatus = targetGroup.dropStatus;
