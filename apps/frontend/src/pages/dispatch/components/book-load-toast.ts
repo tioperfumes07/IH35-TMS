@@ -60,3 +60,16 @@ export function bookLoadToastTone(saveMode: string, serverStatus: string | null 
   if (saveMode === "draft") return "success";
   return serverStatus === "dispatched" ? "success" : "info";
 }
+
+/**
+ * Read the load status off a create/update response, or null when it is absent or not a string.
+ *
+ * Shared so every toast path in this flow reads the response the SAME way. The maintenance-advisory
+ * branch returns early from the submit handler and previously fired its own green toast that had never
+ * seen the response at all — the second instance of LV-DISPATCH-TOAST-LIES, in the same file.
+ */
+export function serverStatusOf(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null;
+  const status = (payload as Record<string, unknown>).status;
+  return typeof status === "string" && status.trim() !== "" ? status : null;
+}

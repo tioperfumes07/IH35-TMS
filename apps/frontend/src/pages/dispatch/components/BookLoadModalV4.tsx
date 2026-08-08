@@ -17,7 +17,7 @@ import { createDispatchLoad } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
 import { getLoad, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
 import { buildEditPrefill, buildEditPatchBody } from "./book-load-v4/editLoadMapping";
-import { bookLoadToastMessage, bookLoadToastTone } from "./book-load-toast";
+import { bookLoadToastMessage, bookLoadToastTone, serverStatusOf } from "./book-load-toast";
 import { listCustomers, listVendors } from "../../../api/mdata";
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
@@ -226,6 +226,12 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
   const [overrideReason, setOverrideReason] = useState("");
   const [overrideToken, setOverrideToken] = useState<string | null>(null);
   const [pendingCloseAfterAdvisory, setPendingCloseAfterAdvisory] = useState(false);
+  // LV-DISPATCH-TOAST-LIES (class instance 2). The maintenance-advisory branch returns EARLY from the
+  // submit handler, so the created load's server status would be lost by the time the operator presses
+  // Continue — and that Continue handler then fired its own green "success" toast that had never seen the
+  // response. Same shape as the defect this file already fixed one branch above: an outcome asserted from
+  // local state. Carrying the status forward is what lets the advisory path tell the truth too.
+  const [advisoryServerStatus, setAdvisoryServerStatus] = useState<string | null>(null);
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
   const [creditLimitBlock, setCreditLimitBlock] = useState<{ exposure_cents: number; limit_cents: number; credit_limit_source: string | null; can_override: boolean } | null>(null);
   const [overrideCreditLimit, setOverrideCreditLimit] = useState(false);
@@ -694,6 +700,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         ? ((payload as Record<string, unknown>).wf_044_maintenance_warnings as Array<Record<string, unknown>>)
         : [];
       if (warnings.length > 0 && saveMode === "book_dispatch") {
+        setAdvisoryServerStatus(serverStatusOf(payload));
         setPendingCloseAfterAdvisory(true);
         setGateBanner({
           type: "advisory",
@@ -706,7 +713,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
       // `save_mode: "book_dispatch"` does NOT force `dispatched` (book-load.service.ts writes
       // `toMdataStatus(input.status)`), so asserting dispatch from `saveMode` told a dispatcher a truck was
       // rolling under an audited DOT override while the record sat at `assigned_not_dispatched`.
-      const serverStatus = typeof (payload as Record<string, unknown>)?.status === "string" ? String((payload as Record<string, unknown>).status) : null;
+      const serverStatus = serverStatusOf(payload);
       pushToast(bookLoadToastMessage(saveMode, serverStatus), bookLoadToastTone(saveMode, serverStatus));
       onCreated();
       onClose();
@@ -977,7 +984,13 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     size="sm"
                     variant="secondary"
                     onClick={() => {
-                      pushToast("Load booked with maintenance advisory", "success");
+                      // Report what the SERVER returned, exactly like the main path. "Booked with a
+                      // maintenance advisory" was true but silent about dispatch: a book_dispatch that
+                      // landed on assigned_not_dispatched still rendered green here.
+                      pushToast(
+                        `${bookLoadToastMessage("book_dispatch", advisoryServerStatus)} · maintenance advisory`,
+                        bookLoadToastTone("book_dispatch", advisoryServerStatus),
+                      );
                       onCreated();
                       setPendingCloseAfterAdvisory(false);
                       finalizeBookLoadClose();
