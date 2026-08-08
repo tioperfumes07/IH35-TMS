@@ -195,6 +195,9 @@ export async function registerMaintenanceDriversRoutes(app: FastifyInstance) {
       status: body.data.status,
       notes: body.data.notes,
       create_login_user: false,
+      // INVITE-NOT-ON-SAVE: explicit false. This surface never invites (see the note above), and the
+      // flag is stated rather than inherited so the intent survives a future default change.
+      send_invite: false,
       override_returning_warning: false,
       is_rehire: false,
     };

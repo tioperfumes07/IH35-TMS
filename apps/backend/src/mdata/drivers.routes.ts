@@ -85,6 +85,14 @@ const driverByIdQuerySchema = z.object({
 const createDriverBodySchema = z.object({
   identity_user_id: z.string().uuid().optional(),
   create_login_user: z.boolean().optional().default(false),
+  // INVITE-NOT-ON-SAVE (owner report 2026-08-07): creating a driver used to FIRE A REAL WHATSAPP
+  // MESSAGE with a live 72-hour token to whatever phone was on the record, with no confirmation —
+  // so anyone entering a placeholder or test driver with a real number messaged that person.
+  // Sending is now OPT-IN and defaults to FALSE. The invite ROW is still created either way, so the
+  // office keeps a copy-able invite URL; what changed is that the MESSAGE is not enqueued unless the
+  // caller explicitly asks. The deliberate send path already existed:
+  // POST /api/v1/mdata/drivers/:id/resend-invite.
+  send_invite: z.boolean().optional().default(false),
   operating_company_id: z.string().uuid().optional(),
   first_name: z.string().trim().min(1).max(100),
   last_name: z.string().trim().min(1).max(100),
@@ -822,6 +830,15 @@ export async function createDriverCanonical(
         );
         inviteExpiresAt = inviteRes.rows[0]?.expires_at ?? null;
 
+        // The invite ROW above is always written; the MESSAGE is not. Two independent conditions must
+        // both hold, because default-off alone would not protect a caller that opts in on a seeded row:
+        //   · send_invite must be explicitly true (Save does not send), and
+        //   · the driver must not be sample/test data — messaging a seeded record is never intended.
+        // `is_sample_data` is defence in depth rather than the main protection: the office create path
+        // does not set it today, so a hand-typed test driver still relies on send_invite defaulting to
+        // false. Recorded so nobody mistakes the flag for full coverage.
+        const suppressForSampleData = row.is_sample_data === true;
+        if (b.send_invite === true && !suppressForSampleData) {
         await client.query(
           `
               INSERT INTO outbox.events (event_type, payload, next_retry_at)
@@ -841,6 +858,7 @@ export async function createDriverCanonical(
             }),
           ]
         );
+        }
 
         await appendCrudAudit(
           client,
