@@ -1359,6 +1359,7 @@
     "2799": "2799-verify-guards-mask-comments.mjs",
     "2803": "2803-verify-route-file-mounted.mjs",
     "2807": "2807-verify-bol-field-completeness.mjs",
+    "2811": "2811-verify-load-detail-resolves-names.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
