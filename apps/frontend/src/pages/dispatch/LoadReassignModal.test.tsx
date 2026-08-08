@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import { postLoadReassign } from "../../api/dispatch";
 import "../../design/design-tokens.css";
 import { LoadReassignModal } from "./LoadReassignModal";
+import { pickCombo } from "../../test-utils/pickCombo";
 
 vi.mock("../../api/dispatch", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/dispatch")>();
@@ -53,9 +54,11 @@ describe("LoadReassignModal (P5-T17)", () => {
       </QueryClientProvider>
     );
 
+    // The driver field is the shared `Combobox` (input role=combobox + listbox), not a native <select>,
+    // so `user.selectOptions(el, "<uuid>")` threw `Value "…" not found in options` and this test never
+    // reached the reassign submit it exists to cover. Options are addressed by visible text, not by id.
     const combos = screen.getAllByRole("combobox");
-    const driverSelect = combos[0];
-    await user.selectOptions(driverSelect, "00000000-0000-4000-8000-000000000010");
+    pickCombo(combos[0], /Test Driver/i);
 
     await user.click(screen.getByRole("button", { name: /^Reassign$/i }));
 
