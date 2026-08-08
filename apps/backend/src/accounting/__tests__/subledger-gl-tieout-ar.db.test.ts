@@ -183,7 +183,14 @@ describeIntegration("CLS-SUBLEDGER-GL-DARK-TIEOUT — A/R subledger ties to the 
 
   beforeAll(async () => {
     await ensureIntegrationPrerequisites();
-    db = new pg.Client(buildPgClientConfig());
+    // buildPgClientConfig REQUIRES the connection string. Calling it bare compiled clean and then
+    // fell through to pg's localhost default, so this suite was the only one of 865 that could not
+    // reach the CI Postgres (ECONNREFUSED ::1:5432) — beforeAll threw, all three tests reported as
+    // skipped, and the suite failed on the hooks. Read it explicitly and fail with a sentence that
+    // says what is missing, exactly as the sibling db.tests do.
+    const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
+    if (!cs) throw new Error("DATABASE_DIRECT_URL or DATABASE_URL is required for this db.test");
+    db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
 
     // The actor must EXIST before createIsolatedOperatingCompany({actorUserId}) — that helper is
