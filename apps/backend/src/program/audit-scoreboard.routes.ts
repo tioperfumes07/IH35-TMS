@@ -9,6 +9,7 @@
 // NON-FINANCIAL. Light Neon `SELECT now()` stamps meta.prodReadAt (honest "live prod
 // read"). Never query accounting.*.
 
+import { execSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -50,7 +51,9 @@ export type RecentPr = {
   url: string;
 };
 
-type RecentCache = { atMs: number; items: RecentPr[] };
+export type RecentActivitySource = "git_log" | "github" | "ledger_committed";
+
+type RecentCache = { atMs: number; items: RecentPr[]; source: RecentActivitySource };
 let recentCache: RecentCache | null = null;
 
 type ScoreboardCache = { atMs: number; data: ScoreboardPayload; source: "ledger_live" | "committed_fallback" };
@@ -144,43 +147,53 @@ function readRecentActivityFromLedger(limit: number): RecentPr[] {
   }
 }
 
-export async function loadRecentActivityFromGitHub(limit = 10): Promise<RecentPr[]> {
-  const now = Date.now();
-  if (recentCache && now - recentCache.atMs < RECENT_CACHE_MS) {
-    return recentCache.items.slice(0, limit);
+/**
+ * Request-time `git log` — same shape as scripts/audit-coverage-scoreboard.mjs ledgerRecentActivity,
+ * but computed NOW so the panel moves when main moves (no waiting for a scoreboard JSON regenerate).
+ */
+export function readRecentActivityFromGitLog(limit = 10): RecentPr[] {
+  const SEP = "\u001f";
+  let raw = "";
+  for (const ref of ["origin/main", "HEAD"]) {
+    try {
+      raw = execSync(`git log ${ref} -n ${Math.max(limit, 10)} --format=%h${SEP}%cI${SEP}%s`, {
+        cwd: REPO_ROOT,
+        encoding: "utf8",
+        timeout: 8_000,
+      }).trim();
+      if (raw) break;
+    } catch {
+      /* shallow / missing ref — try next */
+    }
   }
-
-  // PROG-PRFEED-PRIVATE-EMPTY — the LEDGER is the source, GitHub is only a fallback.
-  //
-  // This panel went permanently empty when the repo was made private: the GitHub call still answered,
-  // it just returned nothing, so the endpoint replied 200 with `recentActivity: []` and the board
-  // rendered "No recent PRs returned yet" forever instead of failing. An empty array is
-  // indistinguishable from "nothing has merged", which is why it went unnoticed.
-  //
-  // docs/audit/program-scoreboard.json is generated in CI from `git log` (see
-  // scripts/audit-coverage-scoreboard.mjs) and committed, so it ships with the deploy. Reading it needs
-  // no token and cannot be emptied by a visibility change — the same reason "Last synced" survived the
-  // event that killed this panel. The GitHub path is kept only as a fallback for the case where the
-  // artifact is absent; it is no longer the primary source.
-  const ledger = readRecentActivityFromLedger(limit);
-  if (ledger.length > 0) {
-    recentCache = { atMs: now, items: ledger };
-    return ledger.slice(0, limit);
+  if (!raw) return [];
+  const items: RecentPr[] = [];
+  for (const line of raw.split("\n")) {
+    const [sha, iso, ...rest] = line.split(SEP);
+    if (!sha) continue;
+    const subject = rest.join(SEP);
+    const m = /\(#(\d+)\)\s*$/.exec(subject || "");
+    const number = m ? Number(m[1]) : 0;
+    items.push({
+      number,
+      title: (subject || "").replace(/\s*\(#\d+\)\s*$/, "").trim() || sha,
+      state: "merged",
+      mergedAtCt: formatCt(iso) || "—",
+      url: number ? `https://github.com/tioperfumes07/IH35-TMS/pull/${number}` : "",
+    });
+    if (items.length >= limit) break;
   }
+  return items;
+}
 
+async function fetchRecentActivityFromGitHubApi(limit: number): Promise<RecentPr[]> {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), GITHUB_FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(GITHUB_PULLS_URL, { headers: githubHeaders(), signal: ac.signal });
-    if (!res.ok) {
-      recentCache = { atMs: now, items: [] };
-      return [];
-    }
+    if (!res.ok) return [];
     const raw = (await res.json()) as unknown;
-    if (!Array.isArray(raw)) {
-      recentCache = { atMs: now, items: [] };
-      return [];
-    }
+    if (!Array.isArray(raw)) return [];
     const items: RecentPr[] = [];
     for (const row of raw) {
       if (!row || typeof row !== "object") continue;
@@ -202,15 +215,49 @@ export async function loadRecentActivityFromGitHub(limit = 10): Promise<RecentPr
       });
       if (items.length >= limit) break;
     }
-    recentCache = { atMs: now, items };
     return items;
   } catch {
-    // Timeout / network / abort — empty panel, never 500 the scoreboard.
-    recentCache = { atMs: now, items: [] };
     return [];
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * PROG-PRFEED-STALE-LEDGER (2026-08-08) — committed program-scoreboard.json recentActivity was
+ * preferred whenever non-empty, so the panel froze at ~#4776 while main advanced past #4850.
+ *
+ * Order (live first; empty panel only if every source fails):
+ *   1. request-time `git log` (no token; works on private repos; moves with the deploy tip)
+ *   2. GitHub pulls API (token when present)
+ *   3. committed ledger artifact — LAST, and labeled stale so it cannot pass as live
+ *
+ * Empty GitHub must never win over a populated git log. A non-empty stale ledger must never block
+ * (1) or (2).
+ */
+export async function loadRecentActivityFromGitHub(
+  limit = 10,
+): Promise<{ items: RecentPr[]; source: RecentActivitySource }> {
+  const now = Date.now();
+  if (recentCache && now - recentCache.atMs < RECENT_CACHE_MS) {
+    return { items: recentCache.items.slice(0, limit), source: recentCache.source };
+  }
+
+  const fromGit = readRecentActivityFromGitLog(limit);
+  if (fromGit.length > 0) {
+    recentCache = { atMs: now, items: fromGit, source: "git_log" };
+    return { items: fromGit.slice(0, limit), source: "git_log" };
+  }
+
+  const fromGh = await fetchRecentActivityFromGitHubApi(limit);
+  if (fromGh.length > 0) {
+    recentCache = { atMs: now, items: fromGh, source: "github" };
+    return { items: fromGh.slice(0, limit), source: "github" };
+  }
+
+  const ledger = readRecentActivityFromLedger(limit);
+  recentCache = { atMs: now, items: ledger, source: "ledger_committed" };
+  return { items: ledger.slice(0, limit), source: "ledger_committed" };
 }
 
 async function loadCommittedFallback(): Promise<ScoreboardPayload> {
@@ -459,7 +506,7 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
         const { prodReadAt, prodReadSource } = await stampProdReadAt(req);
         const gateTally = ensureGateTally(data);
         const gateTallyByEntity = ensureGateTallyByEntity(data);
-        const recentActivity = await loadRecentActivityFromGitHub(10);
+        const recent = await loadRecentActivityFromGitHub(10);
         const classScoreboard = readClassScoreboardFromQueue();
         // 60s here would cap the by-class grid's reactivity at 60s no matter how fast the page polls.
         // The queue read is a single small JSON parse, so it is cheap enough to serve fresh.
@@ -475,8 +522,9 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
             gateTally,
             gateTallyByEntity,
             boardEntities: ["TRANSP", "USMCA"],
+            recentActivitySource: recent.source,
           },
-          recentActivity,
+          recentActivity: recent.items,
           classScoreboard,
         });
       } catch {
@@ -491,9 +539,14 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
       if (!requireAuth(req, reply)) return;
-      const items = await loadRecentActivityFromGitHub(10);
+      const recent = await loadRecentActivityFromGitHub(10);
       reply.header("cache-control", "public, max-age=60");
-      return reply.send({ items, zone: "America/Chicago", label: "CT", source: "github_live" });
+      return reply.send({
+        items: recent.items,
+        zone: "America/Chicago",
+        label: "CT",
+        source: recent.source,
+      });
     },
   );
 }
