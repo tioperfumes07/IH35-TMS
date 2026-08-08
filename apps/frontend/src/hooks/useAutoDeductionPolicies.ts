@@ -10,6 +10,8 @@ export type AutoDeductionPolicy = {
   id: string;
   operating_company_id?: string;
   driver_id: string;
+  /** FAIL-DD1 — projected from mdata.drivers on list; EntityLink label (never raw UUID title). */
+  driver_name?: string | null;
   deduction_type: AutoDeductionDeductionType;
   total_owed_cents: number;
   deducted_so_far_cents: number;
