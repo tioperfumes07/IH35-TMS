@@ -235,7 +235,19 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
       const parentId = form.is_subaccount && form.parent_account_id.trim() ? form.parent_account_id : null;
       const body = {
         account_name: form.account_name.trim(),
-        account_type: form.account_type,
+        // COA-DETAIL-TYPE-VOCAB-MISMATCH: the backend resolves account_type against
+        // catalogs.account_types.code|name (accounts.routes.ts:121-123), but the picker's value is the
+        // 8-value QBO-style UI enum ("Expense", "CostOfGoodsSold", …). Only "Equity" and "Income" happen to
+        // match by name, so choosing ANY detail type on the other six 400'd with
+        // detail_type_account_type_mismatch — and clearing the detail type "fixed" it by silently saving
+        // detail_type_id=NULL / account_subtype=NULL, which breaks CoA→QBO parity with no warning.
+        // Translate at the boundary: `previewEntry` already resolves the exact catalog row, preferring the
+        // one that OWNS the chosen detail type, so its .code disambiguates the one-to-many enums
+        // (Asset → BANK|AR|OCA|FA|OA, Liability → CC|AP|OCL|LTL) that no flat enum→code map could.
+        // Only applied when a detail type is actually selected; the cleared-detail-type path already
+        // succeeded and is left untouched.
+        account_type:
+          form.detail_type_id.trim() && previewEntry ? previewEntry.code : form.account_type,
         account_number: form.account_number.trim() || null,
         // account_subtype + notes are .optional() (not .nullable()) on the create schema, so an empty value
         // must be omitted (undefined), NOT sent as null — sending null was the "validation_error" on save.
