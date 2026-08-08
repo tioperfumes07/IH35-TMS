@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as safetyApi from "../../../api/safety";
 import { PermitsPage } from "../PermitsPage";
+import { pickDate } from "../../../test-utils/pickDate";
 
 const companyId = "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071";
 
@@ -72,7 +73,9 @@ describe("PermitsPage (A23-13)", () => {
     expect(screen.getByTestId("permits-create-modal")).toBeTruthy();
     await user.type(screen.getByLabelText(/Permit number/i), "TX-OA-200");
     await user.type(screen.getByLabelText(/Holder name/i), "IH35");
-    await user.type(screen.getByLabelText(/Expiry date/i), "2027-06-01");
+    // Expiry date is the shared DatePicker (button + calendar popover), not a typeable input — typing into
+    // it set nothing, so `disabled={!draft.expiry_date}` kept Create disabled and the submit never ran.
+    pickDate(screen.getByText(/Expiry date/i).closest("label") as HTMLElement);
     await user.click(screen.getByRole("button", { name: "Create" }));
     await waitFor(() => {
       expect(safetyApi.createSafetyPermit).toHaveBeenCalled();
