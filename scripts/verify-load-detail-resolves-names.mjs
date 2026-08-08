@@ -34,6 +34,32 @@ const FILE = "apps/backend/src/dispatch/loads.routes.ts";
 /** The two columns LoadDetailDrawer.tsx reads with `?? "Unassigned"` / `?? "—"`. */
 const REQUIRED_COLUMNS = ["assigned_primary_driver_name", "assigned_unit_number"];
 
+/**
+ * Every ON-clause for `LEFT JOIN <table> <alias>` in `src`, one entry per OCCURRENCE.
+ *
+ * WHY PER-OCCURRENCE (2026-08-08, mutation-proven): the first version of this guard asserted the entity
+ * predicates with a file-wide `regex.test(src)`. `loads.routes.ts` contains TWO `LEFT JOIN mdata.units u`
+ * — the list query (~L597) and the detail query (~L710) — so a correct predicate on EITHER satisfied the
+ * whole assertion. Unscoping one join individually PASSED; the check could only fire when both broke at
+ * the same time, which is the opposite of what a guard is for. That is a false green, and it is precisely
+ * the `CI-...-FAKE-GREEN` shape the card forbids. Slicing per occurrence makes each join stand on its own.
+ *
+ * The slice runs from the alias to the next clause keyword, so one join's ON-clause can never borrow the
+ * predicate of the join below it.
+ */
+function joinOnClauses(src, table, alias) {
+  const opener = new RegExp(String.raw`LEFT JOIN\s+${table}\s+${alias}\b`, "gi");
+  const closer = /\n\s*(?:LEFT\s+JOIN|INNER\s+JOIN|JOIN|WHERE|GROUP\s+BY|ORDER\s+BY|LIMIT|\)\s)/i;
+  const clauses = [];
+  let m;
+  while ((m = opener.exec(src)) !== null) {
+    const rest = src.slice(m.index + m[0].length);
+    const end = rest.search(closer);
+    clauses.push(rest.slice(0, end === -1 ? rest.length : end));
+  }
+  return clauses;
+}
+
 export function auditSource(src) {
   const problems = [];
 
@@ -47,21 +73,31 @@ export function auditSource(src) {
     }
   }
 
-  // The resolving joins must stay entity-scoped. mdata.units has NO operating_company_id (§4) — it is
-  // scoped by the owner/leased PAIR, and the live case that exposed this bug was a TRK-owned unit leased
-  // to USMCA, which a bare owner_company_id predicate would silently drop.
-  const primaryJoin = /LEFT JOIN\s+mdata\.drivers\s+pd\b[\s\S]{0,240}?operating_company_id\s*=\s*l\.operating_company_id/i;
-  if (/LEFT JOIN\s+mdata\.drivers\s+pd\b/i.test(src) && !primaryJoin.test(src)) {
-    problems.push(`${FILE}: the primary-driver join is not scoped to the load's operating_company_id.`);
-  }
+  // The resolving joins must stay entity-scoped — EACH ONE, not "at least one of them". Adding a join
+  // unscoped would trade a blank label for a cross-entity leak, which is strictly worse than the bug.
+  joinOnClauses(src, String.raw`mdata\.drivers`, "pd").forEach((on, i) => {
+    if (!/\bpd\.operating_company_id\s*=\s*l\.operating_company_id/i.test(on)) {
+      problems.push(
+        `${FILE}: primary-driver join #${i + 1} (LEFT JOIN mdata.drivers pd) is not scoped to the load's ` +
+          `operating_company_id — a driver from another entity can resolve into this load's payload.`,
+      );
+    }
+  });
 
-  const unitJoin = /LEFT JOIN\s+mdata\.units\s+u\b[\s\S]{0,240}?COALESCE\s*\(\s*u\.currently_leased_to_company_id\s*,\s*u\.owner_company_id\s*\)\s*=\s*l\.operating_company_id/i;
-  if (/LEFT JOIN\s+mdata\.units\s+u\b/i.test(src) && !unitJoin.test(src)) {
-    problems.push(
-      `${FILE}: the unit join must use COALESCE(currently_leased_to_company_id, owner_company_id) = ` +
-        `l.operating_company_id. mdata.units has no operating_company_id column (§4).`,
-    );
-  }
+  // mdata.units has NO operating_company_id (§4) — it is scoped by the owner/leased PAIR. The live case
+  // that exposed this bug was a TRK-owned unit leased to USMCA, which `owner_company_id` alone drops.
+  joinOnClauses(src, String.raw`mdata\.units`, "u").forEach((on, i) => {
+    const scoped =
+      /COALESCE\s*\(\s*u\.currently_leased_to_company_id\s*,\s*u\.owner_company_id\s*\)\s*=\s*l\.operating_company_id/i;
+    if (!scoped.test(on)) {
+      problems.push(
+        `${FILE}: unit join #${i + 1} (LEFT JOIN mdata.units u) must use ` +
+          `COALESCE(currently_leased_to_company_id, owner_company_id) = l.operating_company_id. ` +
+          `mdata.units has no operating_company_id column (§4), and owner_company_id alone silently drops ` +
+          `every TRK-owned / leased-to-operator unit — the exact shape of the load that exposed LV-TXN-002.`,
+      );
+    }
+  });
 
   return problems;
 }
@@ -77,12 +113,44 @@ if (process.argv.includes("--selftest")) {
     LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
   `;
+  // TWO units joins, mirroring the real file (list query ~L597 + detail query ~L710). The old file-wide
+  // `.test()` passed whenever EITHER stayed correct, so these two-join cases are the regression bar.
+  const twoUnitJoins = `
+    SELECT l.*,
+      NULLIF(TRIM(CONCAT(pd.first_name,' ',pd.last_name)),'') AS assigned_primary_driver_name,
+      u.unit_number AS assigned_unit_number
+    FROM views.dispatch_load_with_driver_status l
+    LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                           AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
+    WHERE l.operating_company_id = $1;
+
+    SELECT l.* FROM views.dispatch_load_with_driver_status l
+    LEFT JOIN mdata.drivers pd ON pd.id = l.assigned_primary_driver_id
+                              AND pd.operating_company_id = l.operating_company_id
+    LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                           AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
+    WHERE l.id = $1
+  `;
+  // Unscope ONLY the SECOND units join — the exact live mutation that the old guard let through.
+  const secondUnitJoinUnscoped = twoUnitJoins.replace(
+    /COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\)([\s\S]*?)COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\)/,
+    "COALESCE(u.currently_leased_to_company_id, u.owner_company_id)$1u.owner_company_id",
+  );
+  // ...and ONLY the first.
+  const firstUnitJoinUnscoped = twoUnitJoins.replace(
+    /COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\)/,
+    "u.owner_company_id",
+  );
+
   const cases = [
     ["fully fixed query", good, 0],
     ["missing BOTH columns (the shipped defect)", good.replace(/AS assigned_primary_driver_name/, "AS x").replace(/AS assigned_unit_number/, "AS y"), 2],
     ["missing only the unit number", good.replace(/AS assigned_unit_number/, "AS y"), 1],
     ["unit join scoped by owner_company_id alone (drops leased units)", good.replace(/COALESCE\([^)]*\)/, "u.owner_company_id"), 1],
     ["primary-driver join unscoped (cross-entity leak)", good.replace(/\s+AND pd\.operating_company_id = l\.operating_company_id/, ""), 1],
+    ["two units joins, both correct", twoUnitJoins, 0],
+    ["REGRESSION BAR — only the SECOND units join unscoped (old guard passed this)", secondUnitJoinUnscoped, 1],
+    ["REGRESSION BAR — only the FIRST units join unscoped (old guard passed this)", firstUnitJoinUnscoped, 1],
   ];
   let bad = 0;
   for (const [name, src, want] of cases) {
