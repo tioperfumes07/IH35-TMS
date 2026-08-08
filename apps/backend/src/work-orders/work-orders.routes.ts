@@ -61,6 +61,19 @@ const createWorkOrderBodySchema = z.object({
 
 const patchWorkOrderBodySchema = createWorkOrderBodySchema.partial().omit({ operating_company_id: true }).extend({
   linked_load_id: z.string().uuid().nullable().optional(),
+  // ACCT-F273 / FAIL-M1 (save-header half) — repair_complaint was accepted by NOBODY here, so zod's
+  // default strip() silently discarded it: the Save returned 200, wrote nothing, and showed no error.
+  // That is the "no error, no toast, description + complaint unchanged" symptom on the card.
+  //
+  // The field is real everywhere else: maintenance.work_orders.repair_complaint exists (migration
+  // 202606221100), the FE sends it (WorkOrderDetailPage.tsx:467), and two-section-service.ts:255 already
+  // persists it on its own path. Only this route dropped it on the floor.
+  //
+  // The trio is added together on purpose — complaint / cause / correction is one diagnostic record, and
+  // accepting one third of it would leave the same silent-drop for the other two.
+  repair_complaint: z.string().trim().max(4000).nullable().optional(),
+  repair_cause: z.string().trim().max(4000).nullable().optional(),
+  repair_correction: z.string().trim().max(4000).nullable().optional(),
 });
 
 const listQuerySchema = companyQuerySchema.extend({
@@ -849,6 +862,11 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       };
 
       if (body.description !== undefined) push(`description = $IDX`, body.description);
+      // ACCT-F273 — accepted above AND written here. Accepting a field in the schema without pushing it
+      // is accepted-then-dropped, which reads as fixed and is not (the ACCT-F220 trap).
+      if (body.repair_complaint !== undefined) push(`repair_complaint = $IDX`, body.repair_complaint);
+      if (body.repair_cause !== undefined) push(`repair_cause = $IDX`, body.repair_cause);
+      if (body.repair_correction !== undefined) push(`repair_correction = $IDX`, body.repair_correction);
       if (body.notes_internal !== undefined) push(`notes_internal = $IDX`, body.notes_internal);
       if (body.notes_to_vendor !== undefined) push(`notes_to_vendor = $IDX`, body.notes_to_vendor);
       if (body.shop_name !== undefined) push(`shop_name = $IDX`, body.shop_name);
