@@ -1579,7 +1579,18 @@ export async function createBill(input: CreateBillInput, userId: string) {
             amountDollars,
             line.description ?? null,
             section,
-            line.expenseCategoryUuid ?? accountId,
+            // ACCT-F194: NEVER fall back to accountId here. This column is
+            // expense_category_uuid and must hold a catalogs.expense_categories id; accountId is a
+            // catalogs.accounts id. The old `?? accountId` wrote a GL ACCOUNT into the CATEGORY
+            // column whenever a caller supplied no category, and the poster resolves categories via
+            // expense_category_account_map KEYED ON A CATEGORY UUID — so an account id there
+            // resolves to nothing and the expense is SILENTLY UNCATEGORIZED. Nothing errored.
+            //
+            // Measured on prod: 4 of the 15 populated rows were account ids, and THREE were written
+            // on 2026-08-07 — the board card had it as a single legacy row from 07-22. NULL is the
+            // honest value for "no category supplied"; inventing one from an account is what made
+            // the defect invisible.
+            line.expenseCategoryUuid ?? null,
             line.serviceItemUuid ?? null,
             line.categoryKind ?? null,
             line.categoryCode ?? null,
