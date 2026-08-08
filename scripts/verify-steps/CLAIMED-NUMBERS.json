@@ -1420,6 +1420,7 @@
     "2935": "CC-2 verify-loaded-miles-written-on-book",
     "2937": "CC-2 verify-money-creates-supply-sample-flag",
     "2939": "CC-2 verify-settle-due-kpi-fails-open (NO-WINDOW FAIL-S2)",
+    "2941": "CC-2 verify-deduction-total-counts-pending-ack (DD2 NO-WINDOW)",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",

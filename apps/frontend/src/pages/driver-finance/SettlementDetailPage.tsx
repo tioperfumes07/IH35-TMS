@@ -159,7 +159,13 @@ export function SettlementDetailPage() {
     const earningsTotal = earnings.reduce((sum, row) => sum + row.amount, 0);
     const extraTotal = extra.reduce((sum, row) => sum + row.amount, 0);
     const reimbTotal = reimbursements.reduce((sum, row) => sum + row.amount, 0);
-    const deductionTotal = deductions.reduce((sum, row) => sum + (row.pending_ack ? 0 : row.this_period_amount), 0);
+    // DD2 / NO-WINDOW — this excluded any pending_ack deduction from the total, so a real deduction the
+    // ledger already holds showed as $0 on screen. That is both a missing window over driver money and the
+    // `pending_acknowledgment` blocking pattern §9.5 forbids outright: the SIGNED HIRE CONTRACT authorizes
+    // settlement deductions, there is NO separate driver e-sign and no per-expense acknowledgment gate.
+    // Every deduction now counts toward the total; pending_ack stays as a DISCLOSURE (badge + its own
+    // subtotal below), which is the company-user sign-off control MUST 3.4.2(d)(e) actually requires.
+    const deductionTotal = deductions.reduce((sum, row) => sum + row.this_period_amount, 0);
     const pendingAckTotal = deductions.reduce((sum, row) => sum + (row.pending_ack ? row.this_period_amount : 0), 0);
     return { earningsTotal, extraTotal, reimbTotal, deductionTotal, pendingAckTotal };
   }, [deductions, earnings, extra, reimbursements]);
