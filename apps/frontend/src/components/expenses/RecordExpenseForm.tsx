@@ -357,6 +357,7 @@ export function RecordExpenseForm({
         Payment account *
         <div className="mt-1">
           <ReferenceSelect
+            id={fieldId("payment-account")}
             value={values.paymentAccountId || null}
             onChange={(next) => {
               const match = paymentAccountOptions.find((row) => row.id === (next ?? ""));
