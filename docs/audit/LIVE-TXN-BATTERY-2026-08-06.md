@@ -8726,3 +8726,66 @@ tarp pay, a deduction, and a settlement tying to $1,987.95 / $2,415.11) and ever
 **I am not deferring the gap work.** The 13 field gaps above are filed now, in full, because they are
 determinable from the schema and they block Scenario A **even with a browser** — the wizard cannot capture
 what the database cannot hold.
+
+## 139. ★★ OWNER SCENARIO B — the capability audit I CAN do while access is blocked. **Two gaps that stop it tying to the cent, and a CONSTITUTION correction.**
+
+Scenario B cannot be executed for the same access reason as Scenario A. **But its arithmetic makes specific
+demands on the schema, and those are checkable now** — so the blocked half is reported and the determinable
+half is delivered rather than deferred.
+
+### ★ GAP 1 (P1) — `LV-NO-TARP-ACCESSORIAL-PAY-TYPE`: $100.00 of the driver's $1,987.95 cannot be typed
+
+Scenario B requires **Tarp: Enlonada 25.00 + Desenlonada 25.00** on each of two loads — **$100.00 of
+additional driver pay**, and an explicit line on the printed settlement.
+
+**`catalogs.driver_pay_types` contains exactly TWO codes, per entity** (6 rows = 2 codes × 3 entities):
+
+| code | display_name |
+|---|---|
+| `EXTRA-STOP` | Extra stop pay |
+| `TONU` | TONU |
+
+**There is no tarp, enlonada/desenlonada, or general accessorial pay type.** Tarping is not an exotic
+accessorial — it is standard flatbed pay, and both of Scenario B's loads are flatbeds (`FB-56710`,
+`FB-56704`). **The catalogue that exists to name driver pay reasons cannot name the one this settlement
+needs.**
+
+`driver_finance.settlement_lines.line_type` **does** admit `extra_pay` (CHECK list: `earnings`, `extra_pay`,
+`reimbursement`, `deduction`, `advance_recovery`, `escrow`, `abandonment_chargeback`, `team_split_primary`,
+`team_split_secondary`, `auto_deduction`, `dispute_adjustment`, `escrow_contribution`). **So the $100 can be
+carried as an untyped `extra_pay` line with free-text `description`** — which ties the total but leaves the
+reason unqueryable: no report can ever answer *"how much did we pay in tarp pay this quarter?"* **Ties to the
+cent, fails as data.**
+
+### ★ GAP 2 (P1) — `LV-PAY-RATE-CANNOT-SPLIT-LOADED-VS-EMPTY`
+
+Scenario B pays **$0.50/mi loaded AND empty** — 3,411.1 loaded + 384.8 empty. **`driver_finance.driver_pay_rates`
+carries a single `rate_per_mile_cents`**, with `basis_type` CHECK-limited to `per_mile_pay` / `per_load_pay`
+and `miles_basis` CHECK-limited to **`short_miles` / `practical_miles`**.
+
+**There is no loaded-vs-empty dimension anywhere in the rate.** This scenario happens to survive because both
+rates are $0.50 — **but the schema cannot express the far more common arrangement where empty miles pay less
+than loaded**, which is the McLeod/Alvys norm and the thing a driver contract argues about. **Passing this
+scenario would prove nothing about the general case, and I am saying so rather than letting a green tick
+imply it.** (`mdata.loads` does carry `loaded_miles`, `miles_deadhead`, `deadhead_miles_to_pickup` and
+`empty_or_loaded_at_cruce`, so the *mileage* is modelled — it is the **rate** that cannot differentiate.)
+
+### ★★ CONSTITUTION CORRECTION — `CLAUDE.md` §4 is WRONG about `settlement_lines`
+
+§4 states: *"driver earnings = **`driver_finance.settlement_lines`** (→ `driver_settlements`; **no
+`load_id`**)."*
+
+**Read live from prod, `settlement_lines` HAS a `load_id` column** — it is in the column list alongside
+`settlement_id`, `source_driver_bill_id`, `source_table`, `source_id`, `source_reference_id`,
+`posting_account_id` and `split_partner_driver_id`.
+
+**This matters more than a typo.** §4 is the schema-landmine section every agent reads before writing SQL,
+and it exists precisely because *"services were written against schema names that don't exist."* **Here it
+does the opposite — it tells an agent a real column is absent**, which is how a settlement→load join gets
+built through `source_reference_id` or a driver-bill hop when a direct FK was available all along. **And
+Scenario B's proof requirement is exactly that join: "both-way linkage settlement↔loads↔driver↔fuel."** The
+correction is filed so the next agent building it does not route around a column that exists.
+
+**Also worth recording for whoever builds Scenario B:** `settlement_lines` is **empty database-wide** (item
+123) — so this `load_id` has never carried a value, and the linkage it enables is **untested**, not merely
+unused.
