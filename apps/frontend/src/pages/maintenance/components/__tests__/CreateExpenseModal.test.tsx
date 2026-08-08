@@ -5,6 +5,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { CreateExpenseModal } from "../CreateExpenseModal";
 import { ToastProvider } from "../../../../components/Toast";
 import { createExpense } from "../../../../api/accounting";
+import { MemoryRouter } from "react-router-dom";
 
 const VENDOR_ID = "11111111-1111-4111-8111-111111111111";
 const ACCT_ID = "22222222-2222-4222-8222-222222222222";
@@ -87,6 +88,10 @@ function renderModal(onClose = vi.fn(), extra?: { linkedUnitId?: string }) {
   const invalidateSpy = vi.spyOn(client, "invalidateQueries");
   render(
     <QueryClientProvider client={client}>
+      {/* These modals use react-router now; with no Router in scope React Router throws
+          "Cannot destructure property 'basename'", which reads as a component crash rather than a
+          missing test wrapper. */}
+      <MemoryRouter>
       <ToastProvider>
         <CreateExpenseModal
           open={true}
@@ -97,6 +102,7 @@ function renderModal(onClose = vi.fn(), extra?: { linkedUnitId?: string }) {
           onClose={onClose}
         />
       </ToastProvider>
+      </MemoryRouter>
     </QueryClientProvider>
   );
   return { onClose, invalidateSpy };

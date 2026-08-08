@@ -5,6 +5,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { CreateBillModal } from "../CreateBillModal";
 import { ToastProvider } from "../../../../components/Toast";
 import { createVendorBill } from "../../../../api/accounting";
+import { MemoryRouter } from "react-router-dom";
 
 const VENDOR_ID = "11111111-1111-4111-8111-111111111111";
 const WO_ID = "22222222-2222-4222-8222-222222222222";
@@ -17,6 +18,10 @@ vi.mock("../../../../api/mdata", () => ({
   listVendors: vi.fn(() => Promise.resolve({ vendors: [{ id: VENDOR_ID, name: "Ace Parts" }] })),
   listDrivers: vi.fn(() => Promise.resolve({ drivers: [] })),
   listUnits: vi.fn(() => Promise.resolve({ units: [{ id: UNIT_ID, unit_number: "T-101" }] })),
+  // A vi.mock factory REPLACES the module, so every export the component reaches must be listed here —
+  // an omitted one is GONE, not passed through, and vitest fails with "No export is defined on the mock".
+  createDriver: vi.fn(),
+  createVendor: vi.fn(),
 }));
 
 vi.mock("../../../../components/parity/ParityDrawer", () => ({
@@ -50,15 +55,20 @@ vi.mock("../../../../components/parity/ReferenceSelect", () => ({
     onChange,
     options,
     placeholder,
+    createKind,
   }: {
     value: string | null;
     onChange: (v: string | null) => void;
     options: Array<{ value: string; label: string }>;
     placeholder?: string;
+    createKind?: string;
   }) => (
     <select
       aria-label={placeholder ?? "Vendor"}
-      data-testid="vendor-reference-select"
+      // Derive the testid per picker: the modal renders MORE THAN ONE ReferenceSelect now, and a
+      // hardcoded id made getByTestId ambiguous ("Found multiple elements"), which reads as a duplicate
+      // control rather than a mock that labels every picker identically.
+      data-testid={`${createKind ?? "vendor"}-reference-select`}
       value={value ?? ""}
       onChange={(event) => onChange(event.target.value || null)}
     >
@@ -77,6 +87,10 @@ function renderModal(onClose = vi.fn(), extra?: { linkedUnitId?: string }) {
   const invalidateSpy = vi.spyOn(client, "invalidateQueries");
   render(
     <QueryClientProvider client={client}>
+      {/* These modals use react-router now; with no Router in scope React Router throws
+          "Cannot destructure property 'basename'", which reads as a component crash rather than a
+          missing test wrapper. */}
+      <MemoryRouter>
       <ToastProvider>
         <CreateBillModal
           open={true}
@@ -87,6 +101,7 @@ function renderModal(onClose = vi.fn(), extra?: { linkedUnitId?: string }) {
           onClose={onClose}
         />
       </ToastProvider>
+      </MemoryRouter>
     </QueryClientProvider>
   );
   return { onClose, invalidateSpy };
