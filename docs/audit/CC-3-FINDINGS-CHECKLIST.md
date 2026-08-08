@@ -143,6 +143,9 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `CI-CC3-HAS-NO-VERIFY-STEP-BAND` | — | owner / lane-allocation decision (NOT self-a | — | — | — | — | — | — |
 | ☐ | `CI-CODEQL-BASELINE-STALE-ON-MAIN` | — | — | — | — | — | — | — | — |
 | ☐ | `LV-EXPENSE-CATEGORY-PICKER-EMPTY` | P1 | FE / mechanical lane | — | — | — | — | — | — |
+| ☐ | `LV-REVREC-BULK-LATCH-GUARD-READY` | P0 | CC-1 (money / revenue latch) | — | — | — | — | — | — |
+| ☐ | `LV-AUDIT-TRAIL-HAS-NO-ACTOR` | P0 | CC-1 (WORM / audit integrity) | CC-1 | #4753 | 2026-08-07 | Rehearsed on Neon fork `br-soft-pine-akr8xlf4` of prod: PRE-FIX drivers UPDATE actor/role NULL; POST-FIX drivers AND accounting.invoices both name `d62f82f6…` / `Administrator`. One SECURITY DEFINER function behind 39 triggers, so all 39 audited tables are attributed at once. | `apps/backend/src/accounting/__tests__/worm-audit-actor-attribution.db.test.ts` (db-test; runs in the backend db.tests step) | — |
+| ☐ | `LV-EXPENSE-CATEGORY-PICKER-EMPTY-RC` | P1 | FE / mechanical | — | — | — | — | — | — |
 | ☐ | `LV-EXPENSE-CATEGORY-PICKER-EMPTY-RC` | P1 | FE / mechanical | — | — | — | — | — | — |
 | ☑ | `LV-REVREC-BULK-LATCH-GUARD-READY` | P0 | CC-1 (money / revenue latch) | CC-1 | #4730 | 2026-08-07 | CC-3's widened matcher from `0579e654e` restored in the SAME PR as the fix, byte-identical where not deliberately extended; `--selftest` exit **0**; the guard now also REFUSES to pass when its non-literal signals match no file (the state it was in while printing OK through the defect). | `scripts/verify-delivery-evidence-latch-wired.mjs` + step `2634` | — |
 | ☐ | `LV-REVREC-LEDGER-DBTEST` | P0 | CC-1 / money (db-test) | — | — | — | — | — | — |
