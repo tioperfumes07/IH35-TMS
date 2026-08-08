@@ -30,6 +30,7 @@
  * verify-balanced-ledger.mjs). Honest limitation: CI's database is a fresh ephemeral one with no fuel
  * rows, so this is VACUOUS there. Its teeth are live — GUARD/CC-2 runs it against prod.
  */
+import fs from "node:fs";
 import process from "node:process";
 import { createRequire } from "node:module";
 
@@ -86,7 +87,50 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} --selftest FAIL — contradiction check does not detect load_required=true alongside an exemption reason.`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS — 4 mutations detected; scope is import-safe by construction.`);
+  // Mutations 5-6 (LV-TXN-013) are BEHAVIOURAL, and deliberately not source-greps.
+  //
+  // My first attempt at these two asserted against this file's own text -- /NOT EXERCISED/.test(self)
+  // and /loopback/.test(self). Both were DEAD ON ARRIVAL and I only found out by trying to break
+  // them: renaming NOT EXERCISED to PASS everywhere also rewrote the regex that was supposed to
+  // catch it, and `loopback` kept matching the prose in the comment above rather than any code. A
+  // guard that reads its own source cannot mutation-test itself -- the mutation edits the assertion
+  // too. So both now call the real functions with real inputs.
+
+  // 5: zero rows examined must NOT be reported as a pass. This guard was green in CI its whole life
+  // because "nothing to check" printed the same word as "checked, all clean".
+  const empty = describeCorpus(0, "");
+  const clean = describeCorpus(7, "");
+  if (empty.verdict === "PASS") {
+    console.error(`${LABEL} --selftest FAIL — an EMPTY corpus is reported as PASS (LV-TXN-013).`);
+    process.exit(1);
+  }
+  if (clean.verdict !== "PASS") {
+    console.error(`${LABEL} --selftest FAIL — a genuinely clean non-empty corpus is not reported as PASS.`);
+    process.exit(1);
+  }
+
+  // 6: fixture planting must be refused anywhere but a throwaway loopback scratch DB.
+  const allowed = "postgres://verify:verify@localhost:54329/ih35_verify";
+  const refused = [
+    "postgres://u:p@ep-fancy-credit-akjnd07a.us-east-2.aws.neon.tech/neondb",
+    "postgres://u:p@10.0.0.5:5432/ih35_verify",
+    "postgres://u:p@localhost:5432/neondb",
+  ];
+  if (!isEphemeralTarget(allowed)) {
+    console.error(`${LABEL} --selftest FAIL — the local CI scratch DB is refused; the exercise can never run.`);
+    process.exit(1);
+  }
+  for (const r of refused) {
+    if (isEphemeralTarget(r)) {
+      console.error(`${LABEL} --selftest FAIL — would plant fixture rows into ${r}. Refusal is not unconditional.`);
+      process.exit(1);
+    }
+  }
+
+  console.log(
+    `${LABEL} --selftest PASS — 6 checks (4 scope mutations + empty-corpus is not a pass + fixture ` +
+      `planting refused on 3 non-ephemeral targets incl. the prod host).`
+  );
   process.exit(0);
 }
 
@@ -110,6 +154,112 @@ try {
   console.log(`${LABEL} SKIP — database unreachable (${error.code ?? error.message}); live assertion not possible here.`);
   await client.end().catch(() => {});
   process.exit(0);
+}
+
+/**
+ * Prove the detection SQL actually fires, by planting a violation and requiring it to be caught.
+ *
+ * REFUSES TO RUN unless the target is unmistakably a throwaway local database: the host must be
+ * loopback AND the database name must look like a verify/test scratch DB. Anything else -- any
+ * remote host, prod, a branch, a developer's real DB -- is declined, loudly, and the caller falls
+ * back to reporting the live half as un-exercised. Belt and braces: the whole thing runs inside a
+ * transaction that is ALWAYS rolled back, so even on the ephemeral DB no row survives.
+ *
+ * Without this, the queries below are never executed against a single matching row anywhere in CI.
+ */
+function isEphemeralTarget(connStr) {
+  let host = "";
+  let dbname = "";
+  try {
+    const u = new URL(connStr);
+    host = u.hostname;
+    dbname = u.pathname.replace(/^\//, "");
+  } catch {
+    return false;
+  }
+  const isLoopback = host === "localhost" || host === "127.0.0.1" || host === "::1";
+  const isScratch = /verify|test/i.test(dbname);
+  return isLoopback && isScratch;
+}
+
+/**
+ * Decide how to REPORT the live half. Split out so the selftest can call it with a zero corpus and
+ * prove that "examined nothing" never renders as PASS — the whole of LV-TXN-013.
+ */
+function describeCorpus(corpus, exercised) {
+  if (corpus === 0) {
+    return {
+      verdict: "NOT EXERCISED",
+      text:
+        `${LABEL} NOT EXERCISED — 0 TMS-native fuel rows (load_required=true) in this database, so the ` +
+        `linkage assertion evaluated an EMPTY SET and proves nothing about linkage here. This is the ` +
+        `expected state in CI, whose database is built from migrations and holds no production rows; ` +
+        `the only environment where the live half means anything is prod. ${exercised}`,
+    };
+  }
+  return {
+    verdict: "PASS",
+    text:
+      `${LABEL} PASS — ${corpus} TMS-native fuel cost(s) examined, every one carries its load, no ` +
+      `load_required/exemption contradictions, and no orphaned expense→load links. Import-origin ` +
+      `rows (load_required=false) are expected state and are not counted. ${exercised}`,
+  };
+}
+
+async function exerciseDetectionOnEphemeralDb(c) {
+  if (!isEphemeralTarget(connectionString)) {
+    return "Detection-exercise DECLINED — target is not an ephemeral local scratch database; refusing to plant rows.";
+  }
+
+  try {
+    await c.query("BEGIN");
+    await c.query("SELECT set_config('app.bypass_rls','lucia',true)");
+    const opco = (
+      await c.query(`SELECT id::text AS id FROM org.companies WHERE is_active = true LIMIT 1`)
+    ).rows[0]?.id;
+    if (!opco) {
+      await c.query("ROLLBACK");
+      return "Detection-exercise SKIPPED — no active company row to scope a fixture to.";
+    }
+
+    // Violation 1: TMS-native fuel cost with no load.
+    const planted = await c.query(
+      `INSERT INTO fuel.fuel_transactions (operating_company_id, load_required, load_id, transaction_reference)
+       VALUES ($1::uuid, true, NULL, 'LV-TXN-013-FIXTURE')
+       RETURNING id::text AS id`,
+      [opco]
+    );
+    const caughtUnlinked = (await c.query(FUEL_UNLINKED_SQL)).rows.some((r) => r.id === planted.rows[0].id);
+
+    // Violation 2: load_required=true alongside an exemption reason (the contradiction).
+    await c.query(
+      `UPDATE fuel.fuel_transactions SET load_exemption_reason = 'LV-TXN-013-FIXTURE' WHERE id = $1::uuid`,
+      [planted.rows[0].id]
+    );
+    const caughtContradiction = (await c.query(CONTRADICTION_SQL)).rows.some(
+      (r) => r.id === planted.rows[0].id
+    );
+
+    await c.query("ROLLBACK");
+
+    if (!caughtUnlinked || !caughtContradiction) {
+      const missed = [
+        !caughtUnlinked && "unlinked TMS-native fuel cost",
+        !caughtContradiction && "load_required/exemption contradiction",
+      ]
+        .filter(Boolean)
+        .join(" + ");
+      console.error(
+        `${LABEL} FAIL — detection-exercise: a planted violation was NOT caught (${missed}). The live ` +
+          `query does not detect the defect it claims to; a clean run against real data would mean nothing.`
+      );
+      process.exit(1);
+    }
+    return "Detection-exercise PASSED — 2 planted violations caught and rolled back (live SQL proven, not assumed).";
+  } catch (e) {
+    await c.query("ROLLBACK").catch(() => {});
+    return `Detection-exercise SKIPPED — fixture could not be planted (${e.message.split("\n")[0]}).`;
+  }
 }
 
 try {
@@ -154,11 +304,30 @@ try {
     );
     process.exit(1);
   }
-  console.log(
-    `${LABEL} PASS — every TMS-native fuel cost carries its load, no load_required/exemption ` +
-      `contradictions, and no orphaned expense→load links. Import-origin rows (load_required=false) ` +
-      `are expected state and are not counted.`
-  );
+  // LV-TXN-013 — A CLEAN RESULT OVER AN EMPTY TABLE IS NOT A PASS.
+  //
+  // In CI this script DOES connect: ci.yml supplies a DATABASE_URL, so the SKIP branch above never
+  // fires. But that database is a fresh ephemeral instance built from migrations, and migrations
+  // create schema, not rows. All three queries returned zero rows because there was NOTHING TO
+  // EXAMINE -- and the script printed PASS. The live half has therefore been vacuously green in
+  // every CI run since it was wired, and could never have observed a regression.
+  //
+  // Two fixes, because either alone is insufficient:
+  //   (1) SAY SO. An empty corpus is reported as NOT EXERCISED, never as PASS. Still exit 0 -- CI
+  //       legitimately has no production data and a permanently-red guard gets muted -- but the
+  //       output no longer claims an assurance it did not earn.
+  //   (2) PROVE THE QUERIES actually detect what they claim, by planting each violation and
+  //       requiring it to be caught. This runs ONLY against an unmistakably ephemeral local
+  //       database and ALWAYS rolls back, so the detection logic is exercised for real in CI
+  //       without any row ever surviving.
+  const corpus = (
+    await client.query(
+      `SELECT count(*)::int AS n FROM fuel.fuel_transactions WHERE load_required = true`
+    )
+  ).rows[0]?.n ?? 0;
+
+  const exercised = await exerciseDetectionOnEphemeralDb(client);
+  console.log(describeCorpus(corpus, exercised).text);
 } catch (error) {
   console.error(`${LABEL} FAIL — ${error.message}`);
   process.exitCode = 1;
