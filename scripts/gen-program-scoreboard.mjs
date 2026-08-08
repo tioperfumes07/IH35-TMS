@@ -43,10 +43,24 @@ for (const k of required) {
 }
 if (!Array.isArray(data.modules) || data.modules.length === 0) fail("modules[] is empty");
 const OK = new Set(["PASS", "AUDIT", "FIX", "FAIL", "UNV", "NA"]);
+const BOARD_ENTS = ["TRANSP", "USMCA"];
 for (const m of data.modules) {
   if (!Array.isArray(m.cells) || m.cells.length !== 13) fail(`module ${m.module}: cells must be length 13`);
   for (const c of m.cells) if (!OK.has(c)) fail(`module ${m.module}: invalid gate state "${c}"`);
+  if (!m.cellsByEntity || typeof m.cellsByEntity !== "object") {
+    fail(`module ${m.module}: cellsByEntity required (TRANSP + USMCA × 13)`);
+  }
+  for (const ent of BOARD_ENTS) {
+    const arr = m.cellsByEntity[ent];
+    if (!Array.isArray(arr) || arr.length !== 13) {
+      fail(`module ${m.module}: cellsByEntity.${ent} must be length 13`);
+    }
+    for (const c of arr) if (!OK.has(c)) fail(`module ${m.module}: cellsByEntity.${ent} invalid "${c}"`);
+  }
 }
+
+// PROG-PRFEED-PRIVATE-EMPTY: recentActivity is API-served only — never embed in the typecheck seed.
+const { recentActivity: _dropFeed, ...seedData } = data;
 
 const header = `// ─────────────────────────────────────────────────────────────────────────────
 // GENERATED FILE — do not hand-edit.
@@ -56,7 +70,17 @@ const header = `// ────────────────────�
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type GateState = "PASS" | "AUDIT" | "FIX" | "FAIL" | "UNV" | "NA";
-export interface ModuleRow { tier: string; module: string; build: string; cells: GateState[]; gap: string; }
+export type CellsByEntity = { TRANSP: GateState[]; USMCA: GateState[] };
+export interface ModuleRow {
+  tier: string;
+  module: string;
+  build: string;
+  /** Worst-of-entities fold (compat / weakest-column tally). */
+  cells: GateState[];
+  /** B11 — one 13-gate strip per entity (TRANSP + USMCA). */
+  cellsByEntity: CellsByEntity;
+  gap: string;
+}
 export interface ProdMetric { n: string; label: string; detail: string; tone?: "good" | "flag" | "zero"; }
 export interface ChainNode { title: string; table: string; fk: string; chip: string; chipTone: "prod" | "unv" | "fix" | "fail"; hub?: boolean; branch?: boolean; }
 export interface GuardItem { badge: string; tone: "ver" | "pend" | "flag" | "fail"; text: string; }
@@ -65,7 +89,7 @@ export interface ProgramScoreboard {
   modules: ModuleRow[]; prod: ProdMetric[]; chain: ChainNode[]; chainMoney: string; chainReverse: string; guard: GuardItem[];
 }
 
-export const PROGRAM_SCOREBOARD: ProgramScoreboard = ${JSON.stringify(data, null, 2)};
+export const PROGRAM_SCOREBOARD: ProgramScoreboard = ${JSON.stringify(seedData, null, 2)};
 `;
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
