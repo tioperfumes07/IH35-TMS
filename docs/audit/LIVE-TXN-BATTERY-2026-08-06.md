@@ -8099,3 +8099,56 @@ the comment**, because that is what the next reader will actually build on.
 stored?", got a clean answer, and stopped. **The half of a two-valued column you did not query cannot
 contradict you.** The general form: when a finding is about a convention, measure **every** value of the
 discriminating flag, not the one the symptom pointed at.
+
+## 129. ★★ BOARD ITEM PULLED — `LV-BANK-MATCH-SCORE-SATURATES-TO-MEMO` (P1): the arithmetic is CONFIRMED, the blast radius is BOUNDED (it cannot auto-write), and the auto-matcher has NEVER FIRED ONCE.
+
+**The row's root cause is right and I am not re-deriving it. Two things it does not say change what the fixer
+should do.**
+
+### 1 — ★ BOUNDED: the saturated score CANNOT cause a wrong auto-match. The gate does not use the score.
+
+`apps/backend/src/accounting/bank-recon/match.service.ts:677-680` computes `autoMatch` as a **separate
+boolean that never reads `match_score`**:
+```ts
+const autoMatch =
+  amountGapCents <= toleranceCents &&                    // hard gate: max($1.00, 0.01%)
+  dateGapDays <= AUTO_MATCH_DATE_WINDOW_DAYS &&          // 5
+  similarity >= AUTO_MATCH_MEMO_SIMILARITY_MIN;          // 0.8
+```
+and `:703` persists only `ranked.find((row) => row.auto_match && PERSISTABLE_MATCH_KINDS.has(...))`.
+
+**So the $853.80-gap candidate that ranks #1 can never be written as a match** — it fails the hard amount
+gate by 853×. **The defect is confined to the ORDERING of human-facing suggestions.**
+
+**That is a bound, not a dismissal, and the harm path is still money.** Item 127 proved that acting on this
+screen posts a real balanced JE into the live GL. So the chain is: saturated score → wrong candidate ranked
+#1 → operator trusts "Recommended matches" → real JE against the wrong ledger entry. **It requires a human
+click, which is exactly the distinction CC-1 needs: this is a ranking-quality fix, not an emergency stop on
+an automated writer.** Recording it because a P1 that reads as "the matcher writes wrong matches" would be
+triaged very differently from one that reads "the matcher recommends wrong matches."
+
+### 2 — ★ FILED (P2 · money · CC-1) — `LV-BANK-AUTOMATCH-NEVER-FIRED`
+
+**`banking.reconciliation_matches` holds ZERO rows, database-wide, all entities** — discriminator
+`visible_all = 0 == n_live_tup = 0`. **No auto-match has ever been written, for anyone, ever.** The
+persistence path at `:703-715` has never executed.
+
+**A structural reason is visible in the constants, and I am labelling what is proven vs. reasoned.**
+**PROVEN:** `AUTO_MATCH_MEMO_SIMILARITY_MIN = 0.8` (`:95`) is an **AND** term — a candidate matching the
+amount to the cent and the date to the day **still cannot auto-match** unless its memo is ≥80% similar.
+**REASONED (not asserted as the cause):** the two sides being compared are a bank feed string and a
+machine-generated ledger memo — *"Zelle payment to Dreamline Transit LLC for INV-418334"* versus
+*"Bank categorization cb271ba0-691a-48b5-ad07-3669bbe6c569 posting"* (item 127's actual JE memo). Those
+cannot plausibly reach 0.8 on any fuzzy metric. **A memo gate on machine-written memos is a gate on a field
+that carries no matching signal.**
+
+**Why 0 rows is a verdict here and not a false zero:** the discriminator is satisfied on the same relation,
+and the surrounding population is emphatically non-empty — **158 USMCA rows sit in `for_review`** and 5 are
+`matched` (by the manual path, which stamps `matched_journal_entry_id` directly). **The reconciliation
+subsystem is in use; only its automatic half has never produced a row.**
+
+**Together with the parent row this reads clearly:** the auto-matcher is gated so tightly it has never fired,
+while the human-facing ranking that operators actually use is scored by a formula whose majority weight
+(0.55) contributes **nothing** whenever no candidate is within $1.00 — which, given the same population, is
+almost always. **The strict half is unreachable and the loose half is misleading. Fixing one without the
+other just moves the problem.**
