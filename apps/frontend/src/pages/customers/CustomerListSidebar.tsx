@@ -130,7 +130,12 @@ export function CustomerListSidebar({
                     <td style={{ width: widths.name }} className="max-w-0 truncate px-2 py-1.5">
                       {/* Anchor navigation (cmd-click / keyboard) via CardLink; also selects the master-detail row. */}
                       <CardLink href={`/customers/${customer.id}`} onNavigate={() => onSelectCustomer(customer.id)} className="block truncate text-sm font-medium text-gray-900 hover:underline">
-                        {customer.name}
+                        {/* invariant #23 (§7 owner-locked): the canonical `single-line-name` token, plus the
+                            title so the full name is still readable once ellipsised. The surrounding
+                            `truncate` already prevented wrapping here — this page never rendered the name
+                            through ParityTable — so this adds the CANONICAL treatment and the tooltip, it
+                            does not repair a wrap. */}
+                        <span title={customer.name} className="single-line-name">{customer.name}</span>
                       </CardLink>
                     </td>
                     <td style={{ width: widths.open_balance }} className="px-2 py-1.5 text-right text-xs tabular-nums text-gray-700">{fmtMoney(openByCustomerId.get(customer.id) ?? 0)}</td>
