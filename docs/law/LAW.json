@@ -1,5 +1,12 @@
 [
   {
+    "id": "LAW-2026-08-07-LOAD-STATUS-MONEY-EFFECTS-SHARED",
+    "title": "Every endpoint that writes mdata.loads.status must apply the load-status money side-effects through the shared applyLoadStatusMoneyEffects() — the revenue latch AND the settlement ping. Two status endpoints each internally consistent disagreed with each other, and the office Kanban called the one with no money, so every load dragged to delivered recognised no revenue and opened no driver settlement",
+    "source_file": "apps/backend/src/accounting/load-status-money-effects.service.ts",
+    "guard": "scripts/verify-load-status-money-effects-wired.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-08-05-B2-ENFORCED-GUARD-OR-NOT-LAW",
     "title": "LAW = ENFORCED GUARD, OR IT IS NOT LAW — every NEW rule ships a guard registered in docs/law/LAW.json; verify-law-registry.mjs is a required check that reddens when a registered law's guard file is missing",
     "source_file": "docs/lockdown/00_LOCKED_DECISIONS.md",
@@ -378,10 +385,17 @@
     "type": "enforced"
   },
   {
-    "id": "LAW-2026-08-07-FINDINGS-REGISTER-CODER-SIGNOFF",
-    "title": "Every CC-3 finding is written to the board AND listed in docs/audit/CC-3-FINDINGS-CHECKLIST.md; the coder who fixes it ticks its own row with coder+PR+date+live-proof+guard, never CC-3; a tick without that evidence is a false completion claim; CC-3 re-verifies live and stamps VERIFIED or reopens",
-    "source_file": "docs/audit/CC-3-FINDINGS-CHECKLIST.md",
-    "guard": "scripts/verify-findings-register-signoff.mjs",
+    "id": "LAW-2026-08-07-RECENT-ACTIVITY-LEDGER-SOURCED",
+    "title": "A board panel must not depend on an unauthenticated runtime GitHub call — a visibility change empties it silently, and an empty array is indistinguishable from 'nothing happened'; derive it from the ledger at generation time",
+    "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
+    "guard": "scripts/verify-recent-activity-ledger-sourced.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-07-CLASS-SCOREBOARD-LIVE-SOURCED",
+    "title": "A status board must be served from the source of truth at REQUEST time, not rendered from a committed build artifact — a generated module can only change on a redeploy, so the Programs by-class grid silently drifted to 26 classes while the wave queue held 31; and where a fallback is shown, the board must say so",
+    "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
+    "guard": "scripts/verify-class-scoreboard-live-sourced.mjs",
     "type": "enforced"
   },
   {
@@ -399,17 +413,10 @@
     "type": "enforced"
   },
   {
-    "id": "LAW-2026-08-07-RECENT-ACTIVITY-LEDGER-SOURCED",
-    "title": "A board panel must not depend on an unauthenticated runtime GitHub call — a visibility change empties it silently, and an empty array is indistinguishable from 'nothing happened'; derive it from the ledger at generation time",
-    "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
-    "guard": "scripts/verify-recent-activity-ledger-sourced.mjs",
-    "type": "enforced"
-  },
-  {
-    "id": "LAW-2026-08-07-CLASS-SCOREBOARD-LIVE-SOURCED",
-    "title": "A status board must be served from the source of truth at REQUEST time, not rendered from a committed build artifact — a generated module can only change on a redeploy, so the Programs by-class grid silently drifted to 26 classes while the wave queue held 31; and where a fallback is shown, the board must say so",
-    "source_file": "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
-    "guard": "scripts/verify-class-scoreboard-live-sourced.mjs",
+    "id": "LAW-2026-08-07-FINDINGS-REGISTER-CODER-SIGNOFF",
+    "title": "Every CC-3 finding is written to the board AND listed in docs/audit/CC-3-FINDINGS-CHECKLIST.md; the coder who fixes it ticks its own row with coder+PR+date+live-proof+guard, never CC-3; a tick without that evidence is a false completion claim; CC-3 re-verifies live and stamps VERIFIED or reopens",
+    "source_file": "docs/audit/CC-3-FINDINGS-CHECKLIST.md",
+    "guard": "scripts/verify-findings-register-signoff.mjs",
     "type": "enforced"
   },
   {

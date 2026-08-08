@@ -34,7 +34,17 @@ const SRC = "apps/backend/src";
 const EVIDENCE_STATUSES = ["delivered_pending_docs", "completed_docs_received"];
 
 /** Referencing any of these counts as "latched". */
-const LATCH_MARKERS = ["latchOnDeliveryEvidence", "postLoadRevenueLatch"];
+const LATCH_MARKERS = [
+  "latchOnDeliveryEvidence",
+  "postLoadRevenueLatch",
+  // ACCT-F166/F170 — the shared service that applies BOTH the revenue latch and the settlement ping.
+  // Added because this guard, like verify-revrec-two-event-latch and verify-acct-disp01-preflip-wiring,
+  // asserted a CALL SITE: extracting the latch into one shared function (so the office and dispatch
+  // endpoints could not drift apart — the LV-TXN-004 defect) turned all three RED on a better tree.
+  // A guard that punishes correct extraction teaches people to inline, which recreates the drift.
+  // verify-load-status-money-effects-wired.mjs holds the shared service to calling BOTH primitives.
+  "applyLoadStatusMoneyEffects",
+];
 
 /**
  * Files that legitimately NAME a delivery-evidence status without transitioning a load into one:

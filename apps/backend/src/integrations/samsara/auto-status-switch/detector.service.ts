@@ -4,6 +4,7 @@
 import { appendCrudAudit } from "../../../audit/crud-audit.js";
 import { notifyDriverWebPush } from "../../../services/push-notification.service.js";
 import { validateLoadStopStatusWrite } from "../../../dispatch/load-state-machine.js";
+import { applyLoadStatusMoneyEffects } from "../../../accounting/load-status-money-effects.service.js";
 
 const SYSTEM_USER_ID = "00000000-0000-4000-8000-000000000001";
 
@@ -416,6 +417,11 @@ async function flagIntransitIssue(
   return { event_uuid: eventRes.rows[0]?.uuid ?? "" };
 }
 
+// ACCT-F167 — GPS-driven status changes have no human actor. Same constant and same env override the
+// fuel auto-poster uses (accounting/fuel-posting/maybe-post-from-fuel-transaction.service.ts), so
+// automated money side-effects are attributed consistently instead of each path inventing an actor.
+const SYSTEM_ACTOR_USER_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-4000-8000-000000000001";
+
 export async function applyAutoSwitch(
   client: DbClient,
   operatingCompanyId: string,
@@ -453,6 +459,23 @@ export async function applyAutoSwitch(
   }
 
   await client.query(`UPDATE mdata.loads SET status = $2, updated_at = now() WHERE id = $1::uuid`, [loadUuid, newStatus]);
+
+  // ACCT-F167 / LV-TXN-004 — a GPS ping that moves a load must carry the same money side-effects as a
+  // human moving it. This writer advances loads with NO ONE WATCHING, which makes a silent miss here
+  // worse than on an office control: nobody is present to notice the settlement never opened.
+  //
+  // Verified rather than assumed: newStatus here is only "in_transit" | "at_delivery", so the DISP-01
+  // revenue latch (delivered_pending_docs / completed_docs_received) never fires from this path — but
+  // pingSettlementOnLoadEvent switches on "in_transit", which is exactly what this writer produces.
+  // So the settlement ping is the effect that matters here, and it was missing.
+  // Non-fatal by contract: a telematics-driven status change must not be rolled back by a ledger hiccup.
+  await applyLoadStatusMoneyEffects({
+    client,
+    operatingCompanyId,
+    loadId: loadUuid,
+    targetStatus: newStatus,
+    actorUserId: SYSTEM_ACTOR_USER_ID,
+  });
 
   const eventRes = await client.query<{ uuid: string }>(
     `

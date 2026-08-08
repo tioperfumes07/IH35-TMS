@@ -42,7 +42,7 @@ import type { PoolClient } from "pg";
 import { convertProformaToOfficial } from "../accounting/proforma-convert.service.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-import { postLoadRevenueLatch } from "../accounting/revrec-delivery-posting/poster.service.js";
+import { applyLoadStatusMoneyEffects } from "../accounting/load-status-money-effects.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 
 // Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
@@ -1343,31 +1343,17 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         }
       }
 
-      // DISP-01 — two-event revenue latch (flag OFF → no-op). Earn at delivery; bill at POD.
-      if (targetStatus === "delivered_pending_docs" || targetStatus === "completed_docs_received") {
-        try {
-          await postLoadRevenueLatch({
-            operating_company_id: operatingCompanyId,
-            load_id: params.data.id,
-            target_status: targetStatus,
-            entry_date_iso: companyBusinessDate(),
-            actor_user_id: authUser.uuid,
-          });
-        } catch (err) {
-          console.warn({ err, load_id: params.data.id, targetStatus }, "disp_01_revrec_latch_failed");
-        }
-      }
-
-      try {
-        await pingSettlementOnLoadEvent(client, {
-          loadId: params.data.id,
-          operatingCompanyId,
-          dispatchTargetStatus: targetStatus,
-          actorUserId: authUser.uuid,
-        });
-      } catch (err) {
-        console.warn({ err }, "dispatch_load_settlement_ping_failed");
-      }
+      // ACCT-F166 — the money side-effects of a status change now live in ONE place, so this endpoint
+      // and PATCH /api/v1/mdata/loads/:id/status (the one the office Kanban actually calls) cannot
+      // drift apart again. Behaviour is unchanged: same latch statuses, same ping, same warn keys,
+      // still non-fatal.
+      await applyLoadStatusMoneyEffects({
+        client,
+        operatingCompanyId,
+        loadId: params.data.id,
+        targetStatus,
+        actorUserId: authUser.uuid,
+      });
       await emitDispatchSpineEvent(client, {
         operating_company_id: operatingCompanyId,
         actor_user_id: authUser.uuid,
