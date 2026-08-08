@@ -474,5 +474,12 @@
     "source_file": "apps/backend/src/mdata/vendors.routes.ts",
     "guard": "scripts/verify-vendor-type-app-db-parity.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-08-BOOK-LOAD-TOAST-REPORTS-SERVER-STATUS",
+    "title": "A success toast must report the status the SERVER returned, never the one the click intended — save_mode 'book_dispatch' does not force 'dispatched', so asserting dispatch from the local save mode told a dispatcher a truck was rolling under an audited DOT override while the load sat at assigned_not_dispatched",
+    "source_file": "apps/frontend/src/pages/dispatch/components/book-load-toast.ts",
+    "guard": "scripts/verify-book-load-toast-server-status.mjs",
+    "type": "enforced"
   }
 ]
