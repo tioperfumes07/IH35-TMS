@@ -102,7 +102,7 @@ describe("VendorsPage list tabs", () => {
     const select = await screen.findByLabelText(/vendor type/i);
     await user.selectOptions(select, "fuel");
     await waitFor(() => {
-      expect(router.state.location.search).toContain("tab=by-category");
+      expect(router.state.location.search).toContain("listTab=by-category");
       expect(router.state.location.search).toContain("category=fuel");
     });
     expect(screen.getAllByText("Fuel A")).not.toHaveLength(0);

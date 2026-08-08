@@ -42,6 +42,14 @@ type ComboboxProps = {
    * e2e selector already target — converting a control must never silently break a test's handle.
    */
   dataTestId?: string;
+  /**
+   * C1-A11Y: `id` for the text input. Additive, and the same precedent as `dataTestId` above but for a
+   * STRONGER reason: `id` is what `<label htmlFor>` binds to. Without it every call site that renders
+   * `<label htmlFor="x"> + <SelectCombobox id="x">` produces a label bound to NOTHING — the control is
+   * unlabelled for screen readers, and `getByLabelText` cannot address it in tests (which is how this
+   * was found: a DailyTasks picker test could not reach its own Assignee field).
+   */
+  id?: string;
   className?: string;
 };
 
@@ -117,6 +125,7 @@ export function Combobox({
   filterMode = "contains",
   dataField,
   dataTestId,
+  id,
   className,
   onSearch,
 }: ComboboxProps) {
@@ -428,6 +437,7 @@ export function Combobox({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
+          id={id}
           role="combobox"
           aria-expanded={open}
           aria-controls={listboxId}

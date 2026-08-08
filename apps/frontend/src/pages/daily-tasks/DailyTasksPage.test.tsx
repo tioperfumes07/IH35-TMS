@@ -9,6 +9,7 @@ import type { DailyTask } from "../../api/dailyTasks";
 import * as identityApi from "../../api/identity";
 import { ToastProvider } from "../../components/Toast";
 import { DailyTasksPage } from "./DailyTasksPage";
+import { pickCombo } from "../../test-utils/pickCombo";
 
 vi.mock("../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({
@@ -225,7 +226,13 @@ describe("DailyTasksPage", () => {
     await user.click(screen.getByRole("button", { name: "+ Create" }));
     await user.type(screen.getByLabelText(/Title/i), "Review fuel receipts");
     await user.type(screen.getByLabelText(/Description/i), "Close daily reconciliation.");
-    await user.selectOptions(screen.getByLabelText(/Assignee/i), "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1");
+    // FE-SUITE picker class: Assignee is the shared `Combobox` (input role="combobox" + popover
+    // role="listbox"), NOT a <select>. user.selectOptions only drives a real <select>/<option> pair, so it
+    // threw `Value "aaaaaaaa-…-aaa1" not found in options` — a message that names the UUID and never the
+    // widget, which is why this class reads as a missing fixture row. A listbox option is addressed by its
+    // VISIBLE TEXT, not its id.
+    // Exact label, not /Assignee/i — the task detail panel also renders "Assignee: <email>".
+    pickCombo(screen.getByLabelText("Assignee"), /dispatcher@test.invalid/);
     await user.click(screen.getAllByRole("button", { name: "+ Create" })[1]);
     await waitFor(() => expect(dailyTasksApi.createDailyTask).toHaveBeenCalled());
 

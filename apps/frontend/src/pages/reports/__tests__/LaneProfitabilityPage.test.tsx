@@ -70,7 +70,11 @@ describe("LaneProfitabilityPage", () => {
     );
 
     expect(await screen.findByText("Lane profitability")).toBeTruthy();
-    expect(screen.getByText("Total loads")).toBeTruthy();
+    // "Lane profitability" is the page TITLE and renders immediately, outside the `query.data` gate — so
+    // awaiting it proves only that the shell mounted, not that data arrived. Everything below lives inside
+    // `{query.data ? ... }`, so it must be awaited too; asserting it synchronously raced the query and the
+    // failure read as "Unable to find the text: Total loads", i.e. as a missing LABEL rather than a race.
+    expect(await screen.findByText("Total loads")).toBeTruthy();
     expect(screen.getByText("Most profitable lane")).toBeTruthy();
     expect(screen.getByText("Export CSV")).toBeTruthy();
   });

@@ -6,7 +6,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as cashAdvanceApi from "../../../api/cashAdvanceRequests";
 import * as driverFinanceApi from "../../../api/driverFinance";
 import * as liabilitiesApi from "../../../api/liabilities";
+import * as mdataApi from "../../../api/mdata";
+import * as accountingApi from "../../../api/accounting";
 import { EarningsTab } from "../EarningsTab";
+import * as autoDeductionHooks from "../../../hooks/useAutoDeductionPolicies";
 
 const companyId = "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071";
 const driverId = "d1111111-1111-4111-8111-111111111111";
@@ -86,6 +89,9 @@ describe("EarningsTab", () => {
     vi.spyOn(cashAdvanceApi.cashAdvanceRequestsOfficeApi, "list").mockResolvedValue({
       requests: [{ id: "adv-1", driver_id: driverId, status: "approved", amount_cents: 50000 }],
     });
+    vi.spyOn(autoDeductionHooks, "listAutoDeductionPolicies").mockResolvedValue({ rows: [] });
+    vi.spyOn(mdataApi, "getDriverApVendor").mockResolvedValue({ vendor: null });
+    vi.spyOn(accountingApi, "listVendorBills").mockResolvedValue({ rows: [] });
   });
 
   it("renders live debt and earnings summary", async () => {
@@ -140,6 +146,32 @@ describe("EarningsTab", () => {
     );
     fireEvent.click(await screen.findByTestId("driver-earnings-pay-rates-link"));
     expect(onOpenEquipmentAssignments).toHaveBeenCalled();
+  });
+
+  it("FAIL-AP1: shows A/P vendor EntityLink when driver_id bridge exists", async () => {
+    vi.mocked(mdataApi.getDriverApVendor).mockResolvedValue({
+      vendor: {
+        id: "v-ap-1",
+        name: "Neftali Coronado Urbano",
+        qbo_vendor_id: null,
+        operating_company_id: companyId,
+        driver_id: driverId,
+      },
+    });
+    vi.mocked(accountingApi.listVendorBills).mockResolvedValue({
+      rows: [
+        {
+          id: "bill-1",
+          amount_cents: 50000,
+          paid_cents: 0,
+          balance_cents: 50000,
+        } as accountingApi.VendorBill,
+      ],
+    });
+    render(wrap(<EarningsTab driverId={driverId} operatingCompanyId={companyId} />));
+    expect(await screen.findByTestId("driver-earnings-ap-vendor-link")).toBeTruthy();
+    expect(await screen.findByTestId("driver-earnings-ap-vendor-open-total")).toHaveTextContent("$500.00");
+    expect(screen.getByTestId("driver-earnings-ap-vendor-open").getAttribute("href")).toBe("/vendors/v-ap-1");
   });
 
   it("refresh triggers live debt recompute", async () => {

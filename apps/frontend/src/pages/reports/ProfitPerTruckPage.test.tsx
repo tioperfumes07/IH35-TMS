@@ -117,10 +117,23 @@ describe("ProfitPerTruckPage", () => {
     render(wrap(<ProfitPerTruckPage />));
     await waitFor(() => expect(screen.getByText("101")).toBeInTheDocument());
     const table = screen.getByRole("table");
-    await user.click(within(table).getByText("Miles"));
-    await user.click(within(table).getByText("Miles"));
-    const firstDataRow = within(table).getAllByRole("row")[1];
-    expect(within(firstDataRow).getByText("102")).toBeInTheDocument();
+    // ParityTable appends a ▲/▼ to the ACTIVE sort header, so after the first click the header text is
+    // "Miles▲" and a second exact `getByText("Miles")` no longer matches — which is why clicking twice
+    // failed while clicking once worked. Target the button by accessible name anchored at the start, so
+    // the assertion survives the arrow instead of depending on the sort being off.
+    const milesHeader = () => within(table).getByRole("button", { name: /^Miles/ });
+    const firstRow = () => within(table).getAllByRole("row")[1];
+
+    // ParityTable.toggleSort: a NEW key sorts ASC, clicking the ACTIVE key flips to DESC. The page passes
+    // no initial sortKey, so click 1 = asc and click 2 = desc. This previously clicked twice and asserted
+    // the ASC winner (102, 10k miles), which only holds after ONE click — it was asserting the state it
+    // had already toggled past. Assert BOTH directions instead: that proves the toggle, and unlike a
+    // single expectation it cannot be satisfied by a sort that is stuck.
+    await user.click(milesHeader());
+    expect(within(firstRow()).getByText("102")).toBeInTheDocument(); // asc — 10,000 mi
+
+    await user.click(milesHeader());
+    expect(within(firstRow()).getByText("101")).toBeInTheDocument(); // desc — 40,000 mi
   });
 
   it("navigates to asset financial tab on row click", async () => {

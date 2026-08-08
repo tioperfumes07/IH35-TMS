@@ -133,6 +133,14 @@ const createLoadBodySchema = z.object({
   assigned_secondary_driver_id: z.string().uuid().optional(),
   team_id: z.string().uuid().optional(),
   notes: z.string().trim().max(5000).optional(),
+  // FAIL-T1 — this is the SECOND load-create path and it never tagged sample data. The Book wizard
+  // (dispatch/book-load.service.ts, numbers from load-id-reservation.service.ts:74 => "L-<ymd>-<seq>")
+  // has carried is_sample_data since FAIL-D6; THIS route numbers loads "L<COMPANY_TOKEN>-<ymd>-<seq>"
+  // (nextLoadNumber, ~line 286) and its INSERT simply omitted the column, so every row it wrote took the
+  // false default. Prod 2026-08-08: LUSMCAFREIGHT-20260808-0001..0004 plus two older ones were 0-for-6
+  // tagged at INSERT while the "L-" path was 11-of-11. Untagged is not cosmetic — one Delivered step on
+  // an untagged load fires revrec into REAL income.
+  is_sample_data: z.coerce.boolean().default(false),
   pickup: z.object({
     location_id: z.string().uuid().optional(),
     address_line1: z.string().trim().max(300).optional(),
@@ -349,14 +357,14 @@ export async function registerLoadRoutes(app: FastifyInstance) {
                 INSERT INTO mdata.loads (
                   operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
                   assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
-                  dispatcher_user_id, notes
+                  dispatcher_user_id, notes, is_sample_data
                 ) VALUES (
-                  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12
+                  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
                 )
                 RETURNING
                   id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
                   assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
-                  dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id
+                  dispatcher_user_id, notes, is_sample_data, created_at, updated_at, soft_deleted_at, deleted_by_user_id
               `,
               [
                 b.operating_company_id,
@@ -371,6 +379,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
                 b.team_id ?? null,
                 authUser.uuid,
                 b.notes ?? null,
+                b.is_sample_data ?? false,
               ]
             );
             await client.query(`RELEASE SAVEPOINT create_load`);
