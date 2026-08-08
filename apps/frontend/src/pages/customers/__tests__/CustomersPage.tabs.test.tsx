@@ -146,7 +146,7 @@ describe("CustomersPage list tabs", () => {
     expect(screen.getByRole("button", { name: /watch \(1\)/i })).toBeInTheDocument();
   });
 
-  it("clicking Preferred filters rows and sets ?tab=preferred", async () => {
+  it("clicking Preferred filters rows and sets ?listTab=preferred", async () => {
     const user = userEvent.setup();
     listCustomersMock.mockResolvedValue({
       customers: [
@@ -155,10 +155,16 @@ describe("CustomersPage list tabs", () => {
       ],
     });
     const router = renderCustomersAt("/customers");
-    await screen.findByText("Preferred Co");
+    // Default view is master-detail, which renders a customer name in BOTH the sidebar and the detail panel,
+    // so the singular queries throw "Found multiple elements". Presence becomes "at least one"; absence
+    // becomes "none anywhere", which is STRICTLY STRONGER than queryByText (that throws on multiples and so
+    // could never have caught a stray second occurrence).
+    await screen.findAllByText("Preferred Co");
     await user.click(screen.getByRole("button", { name: /preferred \(1\)/i }));
-    expect(screen.getByText("Preferred Co")).toBeInTheDocument();
-    expect(screen.queryByText("Other Co")).toBeNull();
-    expect(router.state.location.search).toContain("tab=preferred");
+    expect(screen.getAllByText("Preferred Co")).not.toHaveLength(0);
+    expect(screen.queryAllByText("Other Co")).toHaveLength(0);
+    // CURSOR-RULING-PARAM-LIST-TAB (2026-08-08): list segments own `listTab`; `tab` stays with the DETAIL
+    // tabs so existing detail deep-links keep working. The old assertion predates that ruling.
+    expect(router.state.location.search).toContain("listTab=preferred");
   });
 });
