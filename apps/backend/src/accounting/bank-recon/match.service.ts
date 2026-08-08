@@ -17,7 +17,7 @@ export type MatchState = "auto_matched" | "user_matched" | "rejected";
 // no GL JE is an orphan write — that's Part 2b (BLOCK-02 CHAIN-04), still gated. Inserting a kind
 // outside this set would violate the CHECK and 500 at runtime, so keep this guard as the source of
 // truth and keep it in lockstep with the migration's CHECK list.
-const PERSISTABLE_MATCH_KINDS: ReadonlySet<LedgerEntryKind> = new Set<LedgerEntryKind>([
+export const PERSISTABLE_MATCH_KINDS: ReadonlySet<LedgerEntryKind> = new Set<LedgerEntryKind>([
   "payment",
   "bill_payment",
   "transfer",
@@ -740,8 +740,12 @@ export async function findCandidates(input: {
       .slice(0, 50);
 
     // Only persist an auto-match whose kind the banking.reconciliation_matches CHECK constraint
-    // accepts. 'bill'/'expense' auto-matches are returned as ranked suggestions but never written in
-    // Part 1 (see PERSISTABLE_MATCH_KINDS) — that keeps this Tier-3 and avoids a CHECK-violation 500.
+    // accepts (see PERSISTABLE_MATCH_KINDS) — that keeps this Tier-3 and avoids a CHECK-violation 500.
+    //
+    // This comment used to say "'bill'/'expense' auto-matches are ... never written". That was WRONG
+    // about `expense`, which IS in PERSISTABLE_MATCH_KINDS and IS written. Of the six LedgerEntryKind
+    // members exactly ONE — 'bill' — is non-persistable. Corrected because the nightly cron's
+    // auto-matched metric was built on the belief the comment described, and overcounted as a result.
     const best = ranked.find((row) => row.auto_match && PERSISTABLE_MATCH_KINDS.has(row.ledger_entry_kind));
     if (best) {
       await storeMatch(client, {
