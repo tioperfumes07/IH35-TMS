@@ -168,10 +168,21 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
           INSERT INTO safety.complaints (
             operating_company_id, filed_at, complainant_type, complainant_driver_id, complainant_user_id, complainant_customer_id,
             complainant_external_name, complainant_external_contact, respondent_type, respondent_driver_id, respondent_user_id,
-            complaint_type, summary, evidence_doc_ids, severity, status, resolution, created_by
+            complaint_type, summary, evidence_doc_ids, severity, status, resolution, created_by,
+            -- P1 LIVE 500: safety.complaints.complaint_date is a NOT NULL date column with NO default
+            -- (migration 0050 line 322) and this INSERT never populated it, so EVERY create failed with
+            -- Postgres 23502: null value in column complaint_date violates not-null constraint.
+            -- That is why live complaints sat at 0 - not a payload problem; the request had already
+            -- passed zod AND validateConsistency before it reached here.
+            -- Migration 0051 introduced filed_at and BACK-FILLED it FROM complaint_date, i.e. filed_at
+            -- superseded this column but the NOT NULL was left behind with nothing writing it.
+            -- Derived from the SAME $2 expression as filed_at (not a new parameter) so the two can never
+            -- disagree, and so a caller-supplied filed_at lands on the same calendar day.
+            complaint_date
           )
           VALUES (
-            $1, COALESCE($2::timestamptz, now()), $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, COALESCE($16, 'open'), $17, $18
+            $1, COALESCE($2::timestamptz, now()), $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, COALESCE($16, 'open'), $17, $18,
+            COALESCE($2::timestamptz, now())::date
           )
           RETURNING *
         `,
