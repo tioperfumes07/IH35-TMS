@@ -105,6 +105,8 @@ export type DispatchLoadRow = {
   customer_wo_number?: string | null;
   pickup_number?: string | null;
   border_routing?: string | null;
+  /** FAIL-B4 — sample/demo flag, editable after creation (mdata.loads.is_sample_data). */
+  is_sample_data?: boolean;
   driver_instructions_text?: string | null;
   requires_tarps?: boolean | null;
   tarp_type?: string | null;

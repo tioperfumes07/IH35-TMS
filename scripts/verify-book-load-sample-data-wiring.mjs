@@ -29,6 +29,10 @@ const MODAL = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
 const API = "apps/frontend/src/api/dispatch.ts";
 const ROUTES = "apps/backend/src/dispatch/loads.routes.ts";
 const SERVICE = "apps/backend/src/dispatch/book-load.service.ts";
+// FAIL-B4 — the EDIT path is a separate four-link chain from the CREATE path, and it was entirely unwired
+// while create was green. Guarding create alone let "sample" silently reset to false on every edit.
+const EDIT_MAP = "apps/frontend/src/pages/dispatch/components/book-load-v4/editLoadMapping.ts";
+const UPDATE_SVC = "apps/backend/src/dispatch/update-load.service.ts";
 
 function assert(files) {
   const problems = [];
@@ -47,6 +51,22 @@ function assert(files) {
   if (!/is_sample_data\?:\s*boolean;/.test(api)) problems.push(`${API}: request type must carry is_sample_data`);
   if (!/is_sample_data:\s*z\.boolean\(\)\.optional\(\)/.test(routes)) {
     problems.push(`${ROUTES}: create schema must accept is_sample_data (zod strips unknown keys)`);
+  }
+
+  // ---- FAIL-B4: the EDIT chain (prefill -> dirty-gated patch -> update schema -> column map)
+  const editMap = files[EDIT_MAP] ?? "";
+  const updateSvc = files[UPDATE_SVC] ?? "";
+  if (!/is_sample_data:\s*Boolean\(/.test(editMap)) {
+    problems.push(`${EDIT_MAP}: edit PREFILL must hydrate is_sample_data (else the box shows unchecked on a sample load)`);
+  }
+  if (!/\["is_sample_data",\s*"is_sample_data"/.test(editMap)) {
+    problems.push(`${EDIT_MAP}: SCALAR_FIELDS must include is_sample_data (the patch body is dirtyFields-gated, so without it a toggle is never sent)`);
+  }
+  if (!/is_sample_data:\s*z\.boolean\(\)\.optional\(\)[\s\S]*is_sample_data:\s*z\.boolean\(\)\.optional\(\)/.test(routes)) {
+    problems.push(`${ROUTES}: BOTH the create and update schemas must accept is_sample_data (zod strips unknown keys)`);
+  }
+  if (!/is_sample_data:\s*"is_sample_data"/.test(updateSvc)) {
+    problems.push(`${UPDATE_SVC}: SCALAR_COLUMNS must map is_sample_data or the edit never writes the column`);
   }
 
   const start = service.indexOf("INSERT INTO mdata.loads");
@@ -70,13 +90,16 @@ function assert(files) {
   return problems;
 }
 
-const files = Object.fromEntries([MODAL, API, ROUTES, SERVICE].map((rel) => [rel, readFileSync(path.join(ROOT, rel), "utf8")]));
+const files = Object.fromEntries([MODAL, API, ROUTES, SERVICE, EDIT_MAP, UPDATE_SVC].map((rel) => [rel, readFileSync(path.join(ROOT, rel), "utf8")]));
 
 if (SELFTEST) {
   const checks = [
     ["submit payload dropped", { ...files, [MODAL]: files[MODAL].replace(/is_sample_data:\s*values\.is_sample_data,/, "") }],
     ["schema key dropped", { ...files, [ROUTES]: files[ROUTES].replace(/is_sample_data:\s*z\.boolean\(\)\.optional\(\),/, "") }],
     ["INSERT column dropped", { ...files, [SERVICE]: files[SERVICE].replace(/,\s*is_sample_data\n/, "\n") }],
+    ["edit prefill dropped", { ...files, [EDIT_MAP]: files[EDIT_MAP].replace(/is_sample_data:\s*Boolean\([^\n]*\n/, "") }],
+    ["edit patch field dropped", { ...files, [EDIT_MAP]: files[EDIT_MAP].replace(/\["is_sample_data",[^\n]*\n/, "") }],
+    ["update column map dropped", { ...files, [UPDATE_SVC]: files[UPDATE_SVC].replace(/\n\s*is_sample_data:\s*"is_sample_data",/, "") }],
   ];
   for (const [name, planted] of checks) {
     if (!assert(planted).length) {
