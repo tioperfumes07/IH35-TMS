@@ -789,7 +789,13 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     return result.data;
   });
 
-  app.post("/api/v1/accounting/invoices/:id/void", async (req, reply) => {
+  // ACCT-F197: rate limit added because touching this file brought the route into
+  // verify-new-auth-routes-rate-limited's scope — an authorizing WRITE with no limit trips CodeQL
+  // js/missing-rate-limiting. 30/min matches the write-route convention here (reads use 60/min).
+  app.post(
+    "/api/v1/accounting/invoices/:id/void",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     // G9-C3: voiding an invoice is an EXECUTOR-only action (Owner|Administrator|Accountant). This gate is
