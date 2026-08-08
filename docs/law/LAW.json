@@ -344,7 +344,7 @@
   },
   {
     "id": "LAW-2026-08-06-KANBAN-DROPSTATUS-CONTRACT",
-    "title": "Every dispatch Kanban lane dropStatus must be a status loadStatusSchema accepts — a lane whose drop the API rejects is a silent dead end, and the frontend lane list and backend enum live in separate files owned by separate lanes so they drift independently",
+    "title": "Every dispatch Kanban lane dropStatus must be a status loadStatusSchema accepts AND must reach the money-aware /dispatch transition (or be an explicitly listed pre-dispatch exception) — a lane whose drop the API rejects is a silent dead end, and after #4769 a lane the mapper does not handle silently falls back to the non-money mdata path, stamping no departure and opening no settlement; all three ends live in separate files owned by separate lanes so they drift independently",
     "source_file": "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
     "guard": "scripts/verify-kanban-dropstatus-contract.mjs",
     "type": "enforced"
