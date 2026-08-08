@@ -8969,3 +8969,64 @@ driver was not completed, so **whether USMCA driver profiles render is UNVERIFIE
 crashes, one captured stack; that is what is proven. **The fixer should establish the entity dimension
 first** — if it reproduces on USMCA too it is a single frontend bug, and if it does not, the trigger is in
 TRANSP's data.
+
+## 143. ★★★ ALL THREE DOCUMENTS UPLOADED THROUGH THE APP — the FIRST file links in the system's history. Plus a P1: none of them is hashed.
+
+**Owner-authorised. Uploaded through the real product** (Safety → Driver Files → qualification profile →
+Documents → `+ Upload`), all three to driver `49427973-…` on **TRANSP**.
+
+### ★ CORRECTION TO MY OWN ITEM 142 — the upload path EXISTS; it is just not where I looked
+
+I reported uploads blocked by the `DriverDetail` crash. **That was true of that page and wrong as a
+conclusion.** There is a **second, working driver profile** at
+`/safety/driver-files` → *Qualification profiles* → **Open profile**, and it renders fine and carries the
+upload control. **The DriverDetail crash (item 142) is unchanged and still P0** — but it does not block
+documents. **I over-generalised from one broken route; recording it because the fix priority changes.**
+
+### THE PROOF — read back off prod
+
+**`docs.files` (3 rows, all `operating_company_id = 91e0bf0a-…` TRANSP, all `uploader = e4117991-…`):**
+
+| file id | filename | mime | bytes | in R2 | expiry |
+|---|---|---|---|---|---|
+| `7f304725-b8c8-4b03-88e6-1371e522d46c` | `INE Jorge Pablo Munoz.jpeg` | image/jpeg | 1,097,850 | ✅ | — |
+| `17d9064d-27e2-4935-878a-ac89aacbcff3` | `Medical Exam-Jorge.jpeg` | image/jpeg | 147,894 | ✅ | **2028-01-23** |
+| `b0cb79aa-4296-4c0a-9f4e-e1d555dc1b93` | `Licencia Federal Jorge Munoz-Constancia-MUGJ840525HTSXNR06.pdf` | application/pdf | 323,788 | ✅ | — |
+
+**`docs.file_links` — 3 rows, both-way linkage complete:**
+`08052947-…` · `4b5915fb-…` · `5fe9a474-…` — each `entity_type='driver'`,
+`entity_id='49427973-e93e-4ea7-a2eb-eb9eefa7f331'`, `created_by_user_id='e4117991-…'`, `deleted_at IS NULL`.
+
+**★ THESE ARE THE FIRST THREE ROWS THE TABLE HAS EVER HELD.** `docs.file_links` total = **3**,
+`n_live_tup = 3`. Battery item 105 recorded the write path as *"fully wired, merely never exercised."*
+**It is now exercised, and it works.** `hop.pod_bol`'s blocker was never the code.
+
+### ★ FILED (P1 · legal evidence) — `LV-DOCS-FILES-NOT-HASHED`
+
+**`sha256_hash` is NULL on all three files.** The column exists on `docs.files`; nothing populates it. **A
+document store for driver-qualification and legal evidence with no content hash cannot prove a file was not
+swapped after upload** — which is the entire point of holding the scan rather than the data. R2 keys and
+versioning are there; the integrity proof is not.
+
+### ★ FILED (P1 · parity) — `LV-DOC-CATEGORIES-MISSING-IDENTITY-AND-MX-LICENCE`
+
+The category picker offers **exactly 10**: Accident Report · Anti-Doping Test Result · **Commercial Driver
+License (CDL)** · DOT Inspection Report · DOT Medical Card · DVIR · Legal Document · Other · Signed
+Acknowledgment · Tax Form.
+
+**There is no identity document, no passport, no visa, and no Mexican federal licence category.** The INE
+and the Licencia Federal **both had to be filed under "Other"** — two unlike documents in the same bucket,
+neither queryable by type. The only licence category is the **US CDL**, which this driver does not hold.
+**I put the full identification in each Description rather than mislabel them as CDLs** — the correct
+choice, and it is exactly the kind of workaround that makes a DQF unauditable at scale.
+
+**The medical card, by contrast, worked properly:** category `DOT Medical Card`, and the form **enforced
+`Expiration Date (required)`** — the one category that behaves like a compliance document does.
+
+### AN OBSERVATION FOR THE FIXER — two document tables, one written
+
+**`safety.driver_documents` for this driver = 0 rows**, while `docs.file_links` = 3. The upload path writes
+`docs.files` + `docs.file_links`; **`safety.driver_documents` (which has `doc_type`, `effective_date`,
+`expiry_date`, `r2_key`, `voided_at`) is untouched.** The DQF page reads the `docs.*` pair correctly, so
+nothing is broken today — **but two schemas describe the same fact and only one is populated**, which is the
+`RETIRE → CANONICAL` shape from LAW §5. Worth a ruling before something starts reading the empty one.
