@@ -194,11 +194,19 @@ describeIntegration("CLS-SUBLEDGER-GL-DARK-TIEOUT — A/R subledger ties to the 
     if (row.control_account_id == null) {
       throw new Error("ar_control resolved to NO account — the seeded role binding is not visible to the report");
     }
-    if (row.control == null) {
-      throw new Error("ar_control control_balance_cents is NULL — treating that as 0 would fake a tie");
-    }
+    // A NULL control balance means ZERO, and that is not a fudge — it is the documented behaviour of
+    // `accounting.fn_account_balances_as_of`, whose HAVING clause EXCLUDES any account whose closing
+    // balance nets to zero. A fully-settled A/R control therefore returns no row at all. The service
+    // itself coerces the same way (`input.control_balance_cents ?? 0`,
+    // subledger-gl-control-rec.service.ts:61), so reading it differently here would test something the
+    // product does not do.
+    //
+    // The protection against a broken role lookup silently reading as a perfect tie is kept, and it is
+    // the check ABOVE this one: control_account_id must resolve. With the role bound, a null balance
+    // is a real zero; with the role unbound it is a lookup failure, and those are now distinguished
+    // rather than conflated. CI taught me this — my first version threw on NULL and failed case 1.
     return {
-      control: row.control,
+      control: row.control ?? 0,
       subledger: row.subledger,
       variance: row.variance,
       status: row.status,
@@ -289,6 +297,31 @@ describeIntegration("CLS-SUBLEDGER-GL-DARK-TIEOUT — A/R subledger ties to the 
     await db.end();
   });
 
+  /**
+   * Why the GL side might read zero when a post just succeeded — dumped on failure rather than guessed.
+   *
+   * `accounting.fn_account_balances_as_of` counts a posting only when its batch is `posted`/`reversed`
+   * and its entry_date is on or before the as-of date, and it drops the account entirely when the
+   * closing balance nets to zero. Any of those produces a legitimate-looking zero and they are
+   * indistinguishable from outside. So when the control side is not what the test expects, print the
+   * postings and their batch status rather than leaving the next reader to re-derive it.
+   */
+  async function glDiagnostic(): Promise<string> {
+    const res = await db.query<Record<string, unknown>>(
+      `SELECT jp.debit_or_credit, jp.amount_cents::text AS amount_cents, je.entry_date::text AS entry_date,
+              je.status AS je_status, COALESCE(pb.batch_status, '(no batch)') AS batch_status,
+              a.account_number
+         FROM accounting.journal_entry_postings jp
+         JOIN accounting.journal_entries je ON je.id = jp.journal_entry_uuid
+         LEFT JOIN accounting.posting_batches pb ON pb.id = jp.posting_batch_id
+         LEFT JOIN catalogs.accounts a ON a.id = jp.account_id
+        WHERE jp.operating_company_id = $1::uuid
+        ORDER BY je.entry_date DESC, a.account_number`,
+      [companyId]
+    );
+    return `\npostings for this company (${res.rows.length}):\n${res.rows.map((r) => JSON.stringify(r)).join("\n")}`;
+  }
+
   it("posted invoice, no payment yet → subledger and control BOTH carry it, and the report says tied", async () => {
     await setFlag(INVOICE_FLAG, true);
     const { invoiceId } = await seedInvoice();
@@ -298,7 +331,9 @@ describeIntegration("CLS-SUBLEDGER-GL-DARK-TIEOUT — A/R subledger ties to the 
     const row = await arTieOut();
     // Both sides must be the invoice — a tie at ZERO on both sides would be a vacuous pass, and is
     // exactly what a mis-scoped query returns.
-    expect(row.control).toBe(INVOICE_CENTS);
+    expect(row.control, `ar_control read ${row.control}, expected ${INVOICE_CENTS}${await glDiagnostic()}`).toBe(
+      INVOICE_CENTS
+    );
     expect(row.subledger).toBe(INVOICE_CENTS);
     expect(row.variance).toBe(0);
     expect(row.status).toBe("tied");
