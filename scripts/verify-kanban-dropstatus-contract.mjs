@@ -166,6 +166,53 @@ export function auditSyntheticCardNotDraggable(kanbanSrc) {
   return problems;
 }
 
+/**
+ * LV-KANBAN-DROP-OUTSIDE-DROPPABLE-IS-SILENT — the CLASS rule, filed by CC-3 with live evidence.
+ *
+ * `handleDragEnd` grew branch by branch, and each new one was written as a bare `return;`. The worst of
+ * them was the first: `if (!activeId || !overId) return;`, which fires whenever a release does not resolve
+ * over a registered droppable — an ordinary near-miss on an 11-lane board, or the keyboard sensor never
+ * snapping to a lane. CC-3 measured four such drops producing no HTTP request, no `audit.row_changes` row,
+ * no `updated_at` change and no toast; a human then reported a load as moved to Completed that had never
+ * moved. Silence made a missed drag indistinguishable from a successful one.
+ *
+ * So the rule is per-BRANCH, not per-bug: every early return in this handler must either change state or
+ * tell the operator something. That way branch #6 cannot be added silently later.
+ */
+export function auditDragEndBranchesSpeak(kanbanSrc) {
+  const problems = [];
+  const src = kanbanSrc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  const start = src.indexOf("const handleDragEnd");
+  if (start === -1) {
+    problems.push(`DispatchKanban.tsx: no handleDragEnd found — refusing to pass vacuously.`);
+    return problems;
+  }
+  const body = src.slice(start, src.indexOf("\n  };", start) + 1);
+  if (body.length < 40) {
+    problems.push(`DispatchKanban.tsx: could not read the handleDragEnd body — refusing to pass vacuously.`);
+    return problems;
+  }
+  const speaks = (chunk) => /pushToast|setOptimisticLoads/.test(chunk);
+  // Shape 1: a bare one-line guard — `if (...) return;`
+  for (const m of body.matchAll(/if\s*\(([^)]*(?:\([^)]*\))?[^)]*)\)\s*return;/g)) {
+    problems.push(
+      `DispatchKanban.tsx: handleDragEnd returns silently on "${m[1].trim()}" — no toast, no state change. ` +
+        `The dispatcher cannot tell a missed drop from a successful one ` +
+        `(LV-KANBAN-DROP-OUTSIDE-DROPPABLE-IS-SILENT).`,
+    );
+  }
+  // Shape 2: a block guard whose body returns without saying anything.
+  for (const m of body.matchAll(/if\s*\(([^)]*(?:\([^)]*\))?[^)]*)\)\s*\{([\s\S]*?)\}/g)) {
+    if (/\breturn\b/.test(m[2]) && !speaks(m[2])) {
+      problems.push(
+        `DispatchKanban.tsx: the handleDragEnd branch "${m[1].trim()}" returns without a toast or a state ` +
+          `change (LV-KANBAN-DROP-OUTSIDE-DROPPABLE-IS-SILENT).`,
+      );
+    }
+  }
+  return problems;
+}
+
 // LV-PLANNER-DROP-SILENT-NOOP — the planner calendar is the SECOND drop surface in dispatch. Its
 // handleDragEnd once collapsed two unrelated situations into one bare `return;`: released outside any
 // day cell (an EXPECTED no-op, silence is right) and released ON a real driver/day cell with a load
@@ -332,6 +379,20 @@ if (process.argv.includes("--selftest")) {
       failed++;
     }
   }
+  const speakOk = `const handleDragEnd = async (event) => {\n    if (!activeId || !overId) {\n      pushToast("Drop the card onto a lane.", "info");\n      return;\n    }\n    setOptimisticLoads(x);\n  };\n`;
+  const speakCases = [
+    ["kanban: every early return speaks (correct)", speakOk, 0],
+    ["REGRESSION BAR — the shipped bare `if (!activeId || !overId) return;`", `const handleDragEnd = async (event) => {\n    if (!activeId || !overId) return;\n    setOptimisticLoads(x);\n  };\n`, 1],
+    ["kanban: block branch returns saying nothing", `const handleDragEnd = async (event) => {\n    if (!targetGroup) {\n      log("x");\n      return;\n    }\n  };\n`, 1],
+    ["kanban: handler missing — must not pass vacuously", `no handler here`, 1],
+  ];
+  for (const [name, kanbanSrc, want] of speakCases) {
+    const got = auditDragEndBranchesSpeak(kanbanSrc).length;
+    if (got !== want) {
+      console.error(`SELFTEST FAIL: ${name} — expected ${want}, got ${got}`);
+      failed++;
+    }
+  }
   for (const [name, kanbanSrc, want] of syntheticCases) {
     const got = auditSyntheticCardNotDraggable(kanbanSrc).length;
     if (got !== want) {
@@ -354,7 +415,7 @@ if (process.argv.includes("--selftest")) {
     }
   }
   if (failed) process.exit(1);
-  console.log(`${LABEL} SELFTEST PASS — ${cases.length + dropCases.length + syntheticCases.length + plannerCases.length} mutations detected correctly`);
+  console.log(`${LABEL} SELFTEST PASS — ${cases.length + dropCases.length + syntheticCases.length + plannerCases.length + speakCases.length} mutations detected correctly`);
   process.exit(0);
 }
 
@@ -372,6 +433,7 @@ const problems = [
   ...audit(feSrc, fs.readFileSync(path.join(ROOT, BE), "utf8"), fs.readFileSync(path.join(ROOT, API), "utf8")),
   ...auditDropErrorHandling(fs.readFileSync(path.join(ROOT, PAGE), "utf8")),
   ...auditSyntheticCardNotDraggable(feSrc),
+  ...auditDragEndBranchesSpeak(feSrc),
   ...auditPlannerDropSilentNoop(fs.readFileSync(path.join(ROOT, PLANNER), "utf8")),
 ];
 if (problems.length) {
