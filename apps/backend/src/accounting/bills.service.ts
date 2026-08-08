@@ -1792,9 +1792,20 @@ export async function payBill(input: PayBillInput, userId: string) {
           status,
           created_by_user_id,
           created_at,
-          updated_at
+          updated_at,
+          is_sample_data
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'posted',$12,now(),now())
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'posted',$12,now(),now(),
+          -- ACCT-F265 — a bill payment INHERITS its bill's sample flag rather than asking the caller.
+          -- accounting.bill_payments.is_sample_data exists on 6,551 rows and no writer set it, so paying
+          -- a SAMPLE bill produced a REAL payment and (via posting-engine, which reads the source row)
+          -- a REAL journal entry. There are FOUR bill_payment writers; an optional parameter would mean
+          -- four callers each remembering, and the one that forgets is silent. Deriving from the parent
+          -- is correct by construction and matches how this codebase already does it — the invoice
+          -- derives from the load (ACCT-F193), the revrec latch derives from the load (ACCT-F210), the
+          -- settlement derives from the load. A payment is never more or less sample than the bill it
+          -- pays. COALESCE keeps the historical default if the bill row is somehow unreadable.
+          COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid), false))
         RETURNING *
       `,
       [

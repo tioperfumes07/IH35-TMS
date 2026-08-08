@@ -7,6 +7,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
 import { createComplaintV64, listComplaints, patchComplaintV64, voidComplaintV64 } from "../../../api/safetyV64";
 import { listComplaintTypes } from "../../../api/catalogs-safety";
+import { listAssignableUsers } from "../../../api/identity";
+import { listCustomers } from "../../../api/mdata";
 import { useAuth } from "../../../auth/useAuth";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
@@ -22,6 +24,9 @@ function isPrivacyGateError(error: unknown) {
   return String((error.data as { error?: string })?.error ?? "") === "E_COMPLAINT_PRIVACY_GATED";
 }
 
+type ComplainantType = "external" | "driver" | "employee" | "customer" | "anonymous";
+type RespondentType = "driver" | "employee";
+
 export function ComplaintsTab() {
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();
@@ -30,8 +35,14 @@ export function ComplaintsTab() {
   const isOwner = auth.user?.role === "Owner";
   const canCreate = ["Owner", "Administrator", "Safety"].includes(String(auth.user?.role ?? ""));
   const [form, setForm] = useState({
+    complainant_type: "external" as ComplainantType,
     complainant_external_name: "",
+    complainant_driver_id: "",
+    complainant_user_id: "",
+    complainant_customer_id: "",
+    respondent_type: "driver" as RespondentType,
     respondent_driver_id: "",
+    respondent_user_id: "",
     complaint_type: "",
     summary: "",
     severity: "medium" as "low" | "medium" | "high" | "critical",
@@ -44,9 +55,6 @@ export function ComplaintsTab() {
     retry: false,
   });
 
-  // Complaint-types catalog (catalogs.complaint_types) — the same source as /lists/safety/complaint-types.
-  // We store the stable type_code into the v6.4 complaint_type field.
-  // SAF-B29 wave-5: typed term must reach listComplaintTypes (query key includes search).
   const [complaintTypeSearch, setComplaintTypeSearch] = useState("");
   const complaintTypesQuery = useQuery({
     queryKey: ["safety-v64", "complaint-types", companyId, complaintTypeSearch],
@@ -59,6 +67,34 @@ export function ComplaintsTab() {
     enabled: Boolean(companyId),
     retry: false,
   });
+
+  const usersQuery = useQuery({
+    queryKey: ["identity", "assignable-users", "complaints"],
+    queryFn: () => listAssignableUsers(),
+    enabled: canCreate,
+    staleTime: 60_000,
+  });
+
+  const [customerSearch, setCustomerSearch] = useState("");
+  const customersQuery = useQuery({
+    queryKey: ["safety-v64", "complaints-customers", companyId, customerSearch],
+    queryFn: () =>
+      listCustomers({
+        operating_company_id: companyId,
+        limit: customerSearch ? 200 : 500,
+        search: customerSearch || undefined,
+      }),
+    enabled: Boolean(companyId) && canCreate && form.complainant_type === "customer",
+    staleTime: 60_000,
+  });
+
+  const customerOptions = useMemo(
+    () =>
+      (customersQuery.data?.customers ?? [])
+        .map((c) => ({ value: String(c.id), label: String(c.name ?? c.id) }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [customersQuery.data]
+  );
 
   const complaintTypeByCode = useMemo(() => {
     const map = new Map<string, string>();
@@ -78,19 +114,61 @@ export function ComplaintsTab() {
     [complaintTypesQuery.data]
   );
 
+  const userOptions = useMemo(
+    () =>
+      (usersQuery.data?.users ?? [])
+        .filter((u) => !u.deactivated_at)
+        .map((u) => ({
+          value: String(u.id),
+          label: String(u.name || u.email || u.id),
+        })),
+    [usersQuery.data]
+  );
+
+  const complainantIdentityKey =
+    form.complainant_type === "driver"
+      ? "complainant_driver_id"
+      : form.complainant_type === "employee"
+        ? "complainant_user_id"
+        : form.complainant_type === "customer"
+          ? "complainant_customer_id"
+          : "complainant_external_name";
+  const complainantIdentityValue = String((form as Record<string, string>)[complainantIdentityKey] ?? "");
+  const complainantReady = form.complainant_type === "anonymous" || Boolean(complainantIdentityValue);
+  const respondentReady =
+    form.respondent_type === "driver" ? Boolean(form.respondent_driver_id) : Boolean(form.respondent_user_id);
+
   const createMutation = useMutation({
-    mutationFn: () =>
-      createComplaintV64(companyId, {
-        complainant_type: "external",
-        complainant_external_name: form.complainant_external_name,
-        respondent_type: "driver",
-        respondent_driver_id: form.respondent_driver_id,
+    mutationFn: () => {
+      const body: Record<string, unknown> = {
+        complainant_type: form.complainant_type,
+        respondent_type: form.respondent_type,
         complaint_type: form.complaint_type,
         summary: form.summary,
         severity: form.severity,
-      }),
+      };
+      if (form.complainant_type !== "anonymous") {
+        body[complainantIdentityKey] = complainantIdentityValue;
+      }
+      if (form.respondent_type === "driver") {
+        body.respondent_driver_id = form.respondent_driver_id;
+      } else {
+        body.respondent_user_id = form.respondent_user_id;
+      }
+      return createComplaintV64(companyId, body);
+    },
     onSuccess: async () => {
-      setForm((prev) => ({ ...prev, respondent_driver_id: "", complaint_type: "", summary: "" }));
+      setForm((prev) => ({
+        ...prev,
+        complainant_external_name: "",
+        complainant_driver_id: "",
+        complainant_user_id: "",
+        complainant_customer_id: "",
+        respondent_driver_id: "",
+        respondent_user_id: "",
+        complaint_type: "",
+        summary: "",
+      }));
       await queryClient.invalidateQueries({ queryKey: ["safety-v64", "complaints", companyId] });
     },
   });
@@ -102,7 +180,6 @@ export function ComplaintsTab() {
     },
   });
 
-  // SAF-F11: void is reason-required (owner-gated, evidentiary record).
   const [voidTargetId, setVoidTargetId] = useState<string | null>(null);
   const voidMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => voidComplaintV64(companyId, id, reason),
@@ -111,24 +188,37 @@ export function ComplaintsTab() {
     },
   });
 
-  // No silent disable: enumerate which required fields are still missing so the disabled + Create
-  // control always explains itself (locked rule — a disabled control must state why).
   const missingFields: string[] = [];
-  if (!form.complainant_external_name) missingFields.push("Complainant");
-  if (!form.respondent_driver_id) missingFields.push("Respondent driver");
+  if (!complainantReady) missingFields.push("Complainant");
+  if (!respondentReady) missingFields.push(form.respondent_type === "driver" ? "Respondent driver" : "Respondent employee");
   if (!form.complaint_type) missingFields.push("Type");
   if (!form.summary) missingFields.push("Summary");
   const createDisabled = missingFields.length > 0 || createMutation.isPending;
 
-  // LIST-EMPTY: the empty message renders only after the complaints query settles.
   const listState = useListState(complaintsQuery, (complaintsQuery.data?.complaints ?? []).length === 0);
+
+  function resolveUserLabel(userId: string) {
+    return userOptions.find((u) => u.value === userId)?.label ?? "Employee";
+  }
+
+  function resolveComplainant(row: Record<string, unknown>) {
+    if (row.complainant_driver_id) return <EntityLink kind="driver" id={String(row.complainant_driver_id)} />;
+    if (row.complainant_customer_id) return <EntityLink kind="customer" id={String(row.complainant_customer_id)} />;
+    if (row.complainant_user_id) {
+      const employeeLabel = resolveUserLabel(String(row.complainant_user_id));
+      return <span>{employeeLabel}</span>;
+    }
+    if (row.complainant_external_name) return <span>{String(row.complainant_external_name)}</span>;
+    return <span>{String(row.complainant_type ?? "—")}</span>;
+  }
 
   function resolveRespondent(row: Record<string, unknown>) {
     const driverId = row.respondent_driver_id ? String(row.respondent_driver_id) : "";
-    if (driverId) {
-      return <EntityLink kind="driver" id={driverId} />;
+    if (driverId) return <EntityLink kind="driver" id={driverId} />;
+    if (row.respondent_user_id) {
+      const employeeLabel = resolveUserLabel(String(row.respondent_user_id));
+      return <span>{employeeLabel}</span>;
     }
-    if (row.respondent_user_id) return <span>{String(row.respondent_user_id)}</span>;
     return <span>—</span>;
   }
 
@@ -140,7 +230,7 @@ export function ComplaintsTab() {
 
   const columns: Array<ParityColumn<Record<string, unknown>>> = [
     { key: "filed_at", label: "Filed", sortable: true, render: (row) => formatDateUS(row.filed_at) },
-    { key: "complainant_external_name", label: "Complainant", sortable: true, render: (row) => String(row.complainant_external_name ?? row.complainant_type ?? "—") },
+    { key: "complainant", label: "Complainant", render: (row) => resolveComplainant(row) },
     { key: "respondent", label: "Respondent", render: (row) => resolveRespondent(row) },
     { key: "complaint_type", label: "Type", sortable: true, render: (row) => resolveType(row) },
     { key: "severity", label: "Severity", sortable: true, render: (row) => String(row.severity ?? "—") },
@@ -191,19 +281,113 @@ export function ComplaintsTab() {
       </div>
       {canCreate ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <div className="grid gap-2 md:grid-cols-6">
-            <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Complainant" value={form.complainant_external_name} onChange={(e) => setForm((v) => ({ ...v, complainant_external_name: e.target.value }))} />
-            <DriverPickerWithCreate
-              operatingCompanyId={companyId}
-              value={form.respondent_driver_id || null}
-              onChange={(next) => setForm((v) => ({ ...v, respondent_driver_id: next ?? "" }))}
-              placeholder="Respondent driver"
+          <div className="grid gap-2 md:grid-cols-3 lg:grid-cols-6">
+            <SelectCombobox
               className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-            />
-            {/*
-              LST-PICKER-01: ReferenceSelect first-row create → POST catalogs.complaint_types.
-              Options keyed by type_code (createdValueField=code) — v6.4 stores the code.
-            */}
+              value={form.complainant_type}
+              onChange={(e) =>
+                setForm((v) => ({
+                  ...v,
+                  complainant_type: e.target.value as ComplainantType,
+                  complainant_external_name: "",
+                  complainant_driver_id: "",
+                  complainant_user_id: "",
+                  complainant_customer_id: "",
+                }))
+              }
+            >
+              <option value="external">Complainant: external</option>
+              <option value="driver">Complainant: driver</option>
+              <option value="employee">Complainant: employee</option>
+              <option value="customer">Complainant: customer</option>
+              <option value="anonymous">Complainant: anonymous</option>
+            </SelectCombobox>
+
+            {form.complainant_type === "anonymous" ? (
+              <span className="rounded-sm border border-dashed border-gray-300 px-2 py-1 text-xs text-slate-500">No identity</span>
+            ) : form.complainant_type === "driver" ? (
+              <DriverPickerWithCreate
+                operatingCompanyId={companyId}
+                value={form.complainant_driver_id || null}
+                onChange={(next) => setForm((v) => ({ ...v, complainant_driver_id: next ?? "" }))}
+                placeholder="Complainant driver"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              />
+            ) : form.complainant_type === "employee" ? (
+              <SelectCombobox
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                value={form.complainant_user_id}
+                onChange={(e) => setForm((v) => ({ ...v, complainant_user_id: e.target.value }))}
+              >
+                <option value="">{usersQuery.isLoading ? "Loading…" : "Complainant employee"}</option>
+                {userOptions.map((u) => (
+                  <option key={u.value} value={u.value}>
+                    {u.label}
+                  </option>
+                ))}
+              </SelectCombobox>
+            ) : form.complainant_type === "customer" ? (
+              <ReferenceSelect
+                value={form.complainant_customer_id || null}
+                onChange={(next) => setForm((v) => ({ ...v, complainant_customer_id: next ?? "" }))}
+                options={customerOptions}
+                createKind="customer"
+                operatingCompanyId={companyId}
+                placeholder={customersQuery.isLoading ? "Loading customers…" : "Complainant customer"}
+                loading={customersQuery.isLoading}
+                onSearch={setCustomerSearch}
+                onOptionCreated={() => {
+                  void queryClient.invalidateQueries({ queryKey: ["safety-v64", "complaints-customers", companyId] });
+                }}
+              />
+            ) : (
+              <input
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                placeholder="Complainant name"
+                value={form.complainant_external_name}
+                onChange={(e) => setForm((v) => ({ ...v, complainant_external_name: e.target.value }))}
+              />
+            )}
+
+            <SelectCombobox
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              value={form.respondent_type}
+              onChange={(e) =>
+                setForm((v) => ({
+                  ...v,
+                  respondent_type: e.target.value as RespondentType,
+                  respondent_driver_id: "",
+                  respondent_user_id: "",
+                }))
+              }
+            >
+              <option value="driver">Respondent: driver</option>
+              <option value="employee">Respondent: employee</option>
+            </SelectCombobox>
+
+            {form.respondent_type === "driver" ? (
+              <DriverPickerWithCreate
+                operatingCompanyId={companyId}
+                value={form.respondent_driver_id || null}
+                onChange={(next) => setForm((v) => ({ ...v, respondent_driver_id: next ?? "" }))}
+                placeholder="Respondent driver"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              />
+            ) : (
+              <SelectCombobox
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                value={form.respondent_user_id}
+                onChange={(e) => setForm((v) => ({ ...v, respondent_user_id: e.target.value }))}
+              >
+                <option value="">{usersQuery.isLoading ? "Loading…" : "Respondent employee"}</option>
+                {userOptions.map((u) => (
+                  <option key={u.value} value={u.value}>
+                    {u.label}
+                  </option>
+                ))}
+              </SelectCombobox>
+            )}
+
             <ReferenceSelect
               value={form.complaint_type || null}
               onChange={(next) => setForm((v) => ({ ...v, complaint_type: next ?? "" }))}
@@ -218,14 +402,28 @@ export function ComplaintsTab() {
                 void queryClient.invalidateQueries({ queryKey: ["safety-v64", "complaint-types", companyId] });
               }}
             />
-            <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Summary" value={form.summary} onChange={(e) => setForm((v) => ({ ...v, summary: e.target.value }))} />
-            <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={form.severity} onChange={(e) => setForm((v) => ({ ...v, severity: e.target.value as typeof form.severity }))}>
+            <input
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              placeholder="Summary"
+              value={form.summary}
+              onChange={(e) => setForm((v) => ({ ...v, summary: e.target.value }))}
+            />
+            <SelectCombobox
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              value={form.severity}
+              onChange={(e) => setForm((v) => ({ ...v, severity: e.target.value as typeof form.severity }))}
+            >
               <option value="low">low</option>
               <option value="medium">medium</option>
               <option value="high">high</option>
               <option value="critical">critical</option>
             </SelectCombobox>
-            <button type="button" className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60" disabled={createDisabled} onClick={() => createMutation.mutate()}>
+            <button
+              type="button"
+              className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
+              disabled={createDisabled}
+              onClick={() => createMutation.mutate()}
+            >
               + Create
             </button>
           </div>
@@ -241,7 +439,9 @@ export function ComplaintsTab() {
           </div>
           {createMutation.isError ? (
             <p className="mt-1 text-[11px] text-red-700">
-              {createMutation.error instanceof ApiError ? String((createMutation.error.data as { error?: string })?.error ?? "Could not file complaint.") : "Could not file complaint."}
+              {createMutation.error instanceof ApiError
+                ? String((createMutation.error.data as { error?: string })?.error ?? "Could not file complaint.")
+                : "Could not file complaint."}
             </p>
           ) : null}
         </div>

@@ -68,6 +68,20 @@ if (!/\bSelectCombobox\b/.test(src)) {
   failures.push("expected SelectCombobox usage for the respondent and type pickers.");
 }
 
+// LV-COMPLAINTS-TAB-CANNOT-EXPRESS-DRIVER-OR-EMPLOYEE — dual-path complainant + respondent.
+if (!/complainant_type/.test(src) || !/value="driver"/.test(src) || !/value="employee"/.test(src) || !/value="customer"/.test(src)) {
+  failures.push("complainant_type must be selectable (driver/employee/customer/external/anonymous) — not hardcoded external.");
+}
+if (!/respondent_type/.test(src) || !/respondent_user_id/.test(src)) {
+  failures.push("respondent_type must support employee via respondent_user_id (backend contract).");
+}
+if (!/\blistAssignableUsers\b/.test(src)) {
+  failures.push("employee identity must use listAssignableUsers — not a raw UUID text box.");
+}
+if (!/\blistCustomers\b/.test(src) || !/complainant_customer_id/.test(src)) {
+  failures.push("customer complainant must use listCustomers + complainant_customer_id.");
+}
+
 if (failures.length > 0) {
   console.error("[verify-complaints-creator] FAILED — Safety Complaints creator regressed:");
   for (const f of failures) console.error(`  - ${f}`);

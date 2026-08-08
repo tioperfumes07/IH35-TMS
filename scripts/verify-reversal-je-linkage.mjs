@@ -31,6 +31,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = "apps/backend/src/accounting/posting-engine.service.ts";
+const VOID_SVC = "apps/backend/src/accounting/void.service.ts";
 const LABEL = "verify-reversal-je-linkage";
 
 export function stripComments(src) {
@@ -48,7 +49,21 @@ export function reversalLinkage(src) {
   return { writesForward, writesBack, createsReversal };
 }
 
-export function collectProblems(src) {
+/**
+ * ACCT-F268 — postVoidReversal is the SHARED primitive with six callers; only one wrote the FK
+ * afterwards, so five void paths produced reversals linked to their original by memo text alone.
+ * The FK belongs in the primitive, not in each caller (the ACCT-F265 lesson).
+ */
+export function voidPrimitiveLinks(src) {
+  const clean = stripComments(src);
+  return {
+    found: /export\s+async\s+function\s+postVoidReversal\b/.test(clean),
+    forward: /UPDATE\s+accounting\.journal_entries[\s\S]{0,200}?SET\s+reverses_je_id\s*=/i.test(clean),
+    back: /UPDATE\s+accounting\.journal_entries[\s\S]{0,200}?SET\s+reversed_by_je_id\s*=/i.test(clean),
+  };
+}
+
+export function collectProblems(src, voidSrc = "") {
   const problems = [];
   const r = reversalLinkage(src);
   if (!r.createsReversal) {
@@ -72,6 +87,19 @@ export function collectProblems(src) {
         `"what did this reverse?" but not "was this reversed?" — and that second question is the one ` +
         `every integrity sweep asks (ACCT-F256).`
     );
+  }
+  if (voidSrc) {
+    const v = voidPrimitiveLinks(voidSrc);
+    if (!v.found) {
+      problems.push(`${VOID_SVC}: postVoidReversal not found — if the shared void primitive moved, move this guard with it (ACCT-F268).`);
+    } else if (!v.forward || !v.back) {
+      problems.push(
+        `${VOID_SVC}: postVoidReversal does not write BOTH reversal FKs. It has six callers and only ` +
+          `one wrote them afterwards, so five void paths link a reversal to its original by MEMO TEXT ` +
+          `only — JE 8fd32bec is exactly that. No JE is ever voided in place, so this FK is the only ` +
+          `machine-readable reversal link (ACCT-F268).`
+      );
+    }
   }
   return problems;
 }
@@ -99,14 +127,20 @@ if (process.argv.includes("--selftest")) {
     failures.push("an UPDATE on the wrong table satisfied the forward check");
   }
 
+  const GOOD_V = "export async function postVoidReversal(){ await c.query(`UPDATE accounting.journal_entries SET reverses_je_id = $2::uuid`); await c.query(`UPDATE accounting.journal_entries SET reversed_by_je_id = $2::uuid`); }";
+  if (collectProblems(CREATE + FWD + BACK, GOOD_V).length !== 0) failures.push("the linked void primitive was flagged");
+  if (!collectProblems(CREATE + FWD + BACK, "export async function postVoidReversal(){ return 1; }").some((p) => /does not write BOTH reversal FKs/.test(p))) {
+    failures.push("an unlinked void primitive was NOT caught");
+  }
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const f of failures) console.error("  - " + f);
     process.exit(1);
   }
   console.log(
-    `${LABEL} SELFTEST OK — 6/6 (linked engine passes, missing forward caught, missing back caught, ` +
-      `both reported together, comments cannot fake, wrong table rejected)`
+    `${LABEL} SELFTEST OK — 8/8 (linked engine passes, missing forward caught, missing back caught, ` +
+      `both reported together, comments cannot fake, wrong table rejected, void primitive covered)`
   );
   process.exit(0);
 }
@@ -116,7 +150,11 @@ if (!fs.existsSync(p)) {
   console.error(`${LABEL} FAIL — ${ENGINE} is missing.`);
   process.exit(1);
 }
-const problems = collectProblems(fs.readFileSync(p, "utf8"));
+const vp = path.join(root, VOID_SVC);
+const problems = collectProblems(
+  fs.readFileSync(p, "utf8"),
+  fs.existsSync(vp) ? fs.readFileSync(vp, "utf8") : ""
+);
 if (problems.length) {
   console.error(`${LABEL} FAIL — ${problems.length} gap(s) in reversal linkage:`);
   for (const x of problems) console.error("  ✗ " + x);

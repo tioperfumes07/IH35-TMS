@@ -75,6 +75,15 @@ export type ReferenceSelectProps = {
   createdValueField?: "id" | "code";
   /** Extra create fields from parent form context (e.g. dispatcher event_type already selected). */
   createExtras?: { event_type?: string; severity?: string };
+  /**
+   * C1-A11Y (second instance) — forwarded to the Combobox input so `<label htmlFor>` actually binds.
+   * Without it, every call site pairing a htmlFor label with this picker renders a label bound to NOTHING:
+   * the control is unlabelled for screen readers and `getByLabelText` addresses the wrong element. The same
+   * defect was fixed for shared/SelectCombobox; this component was NOT covered by that change.
+   * Found via RecordExpenseForm's Category picker, whose label bound to nothing and whose selection
+   * therefore never committed — surfacing as the form's own "Category is required".
+   */
+  id?: string;
 };
 
 export function ReferenceSelect({
@@ -92,6 +101,7 @@ export function ReferenceSelect({
   lockControl,
   createdValueField = "id",
   createExtras,
+  id,
 }: ReferenceSelectProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [created, setCreated] = useState<ReferenceOption[]>([]);
@@ -124,6 +134,7 @@ export function ReferenceSelect({
         {/* QB-STD-1/2: the "+" row lives inside the Combobox dropdown as its permanent first row.
         No external button — the Combobox allowAddNew now always-shows the row on open. */}
         <Combobox
+          id={id}
           options={comboOptions}
           onSearch={onSearch}
           value={value}
