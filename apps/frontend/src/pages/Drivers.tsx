@@ -693,7 +693,25 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               )}
             </>
           ) : null}
-          {subnavTab === "settlements" || subnavTab === "pre_settlements" ? (
+          {/* FAIL-S2: Settlements ≠ Pre-settlements. Canonical list lives at /driver-finance/settlements
+              (route redirect). Pre-settlements tab keeps the open-bookend panel only. */}
+          {subnavTab === "settlements" ? (
+            <div data-testid="drivers-settlements-canonical-redirect-hint">
+              <DataPanel title="Settlements">
+                <DataPanelRow>
+                  <span className="text-sm text-gray-700">Settlement runs, acknowledgements, and payouts live in Driver Finance.</span>
+                  <Link
+                    to="/driver-finance/settlements"
+                    className="text-xs text-slate-700 underline"
+                    data-testid="drivers-settlements-link"
+                  >
+                    View all settlements →
+                  </Link>
+                </DataPanelRow>
+              </DataPanel>
+            </div>
+          ) : null}
+          {subnavTab === "pre_settlements" ? (
             <PreSettlementsPanel rows={settlementsReadyRows} loading={settlementsQuery.isLoading} />
           ) : null}
           {subnavTab === "cash_advances" ? (

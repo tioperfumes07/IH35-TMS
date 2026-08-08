@@ -915,7 +915,9 @@ export const ROUTES = React.Children.toArray(
           path="/drivers/settlements"
           element={
             <ProtectedRoute>
-              <DriversSubtabRoute subnav="settlements" />
+              {/* FAIL-S2: Drivers "Settlements" tab must land on the canonical list/detail subledger —
+                  not PreSettlementsPanel (same defect as CHAIN-07 accounting redirect). */}
+              <PreserveSearchNavigate to="/driver-finance/settlements" />
             </ProtectedRoute>
           }
         />
