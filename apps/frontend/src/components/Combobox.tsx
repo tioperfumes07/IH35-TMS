@@ -12,6 +12,12 @@ type ComboboxProps = {
   options: ComboboxOption[];
   value: string | null;
   onChange: (value: string | null) => void;
+  /**
+   * Reference/FK pickers set this: editing the text of a COMMITTED selection clears it, so the visible
+   * text and the committed id can never disagree. Filter comboboxes leave it off — see the input's
+   * onChange for the measured reason.
+   */
+  clearCommittedOnEdit?: boolean;
   placeholder?: string;
   loading?: boolean;
   error?: string;
@@ -101,6 +107,7 @@ export function Combobox({
   options,
   value,
   onChange,
+  clearCommittedOnEdit = false,
   placeholder = "Select...",
   loading = false,
   error,
@@ -382,6 +389,20 @@ export function Combobox({
           onChange={(event) => {
             setQuery(event.target.value);
             setOpen(true);
+            // ★ For REFERENCE pickers, typing over a COMMITTED selection invalidates it. Without this, the
+            // input showed the edited text while the parent still held the OLD id: Book Load let a
+            // dispatcher pick "LIVE TEST CUSTOMER LLC", type over it, see "LIVE TEST CUSTOMER LLCXYZ" — a
+            // customer that does not exist — and book the load against the ORIGINAL customer's FK. Verified
+            // live before the fix: after typing, `input[name="customer_id"]` still held 61111111-…
+            // Re-selecting commits again via commitSelection, so the only state this drops is the stale one.
+            //
+            // ★ WHY THIS IS OPT-IN AND NOT THE DEFAULT — I tried it as the default first and MEASURED a
+            // regression: the full FE suite went 58 red files → 59 (+5 tests), all in
+            // drivers-reference-catalog, which uses this Combobox as a plain ARCHIVE FILTER. Clearing a
+            // filter's committed value on edit is wrong; clearing a foreign key's is right. So the flag
+            // lives here and `ReferenceSelect` (the FK/reference picker, 96 call sites) turns it on, while
+            // the 13 raw-Combobox filter sites keep the old behaviour. Same invariant, correct layer.
+            if (clearCommittedOnEdit && value !== null && value !== "") onChange(null);
           }}
           onFocus={() => {
             if (!disabled) {
