@@ -7,6 +7,7 @@ import * as reportsApi from "../../api/reports";
 import * as schedApi from "../../api/scheduled-reports";
 import { ToastProvider } from "../../components/Toast";
 import { ScheduleReportModal } from "./ScheduleReportModal";
+import { pickCombo } from "../../test-utils/pickCombo";
 
 function wrap(ui: ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -26,7 +27,7 @@ describe("ScheduleReportModal", () => {
   });
 
   it("shows min revenue when profit report selected", async () => {
-    const user = userEvent.setup();
+    // No userEvent here anymore: the report picker is a SelectCombobox, driven via pickCombo (fireEvent).
     const onClose = vi.fn();
     render(
       wrap(
@@ -35,7 +36,11 @@ describe("ScheduleReportModal", () => {
     );
     await screen.findByRole("heading", { name: /schedule a report/i });
     const reportSelect = screen.getAllByRole("combobox")[0]!;
-    await user.selectOptions(reportSelect, "customer-profitability");
+    // The control is a `SelectCombobox` (the shared Combobox), NOT a native <select>: its rows exist only
+    // while the listbox is OPEN and are addressed by VISIBLE TEXT, not by value. `user.selectOptions(el, id)`
+    // therefore threw `Value "…" not found in options`, a message that names the ID and never the widget —
+    // so it read as missing DATA rather than a control that changed shape.
+    pickCombo(reportSelect, /customer-profitability/);
     expect(await screen.findByLabelText(/min revenue/i)).toBeInTheDocument();
   });
 
