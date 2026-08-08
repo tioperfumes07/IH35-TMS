@@ -495,5 +495,12 @@
     "source_file": "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
     "guard": "scripts/verify-book-load-toast-server-status.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-08-REGCLASS-FALLBACK-DECLARES-INTENT",
+    "title": "A to_regclass table-presence probe must declare what its FALSE branch means — throw, fail closed, or degrade WITH a signal; a bare permissive return silently disables the control (notifications.suppression_rules FAILED OPEN and mailed every suppressed recipient). Ratcheted per file against a frozen baseline so the class cannot grow while individual sites are dispositioned",
+    "source_file": "scripts/verify-regclass-fallback-intent.mjs",
+    "guard": "scripts/verify-regclass-fallback-intent.mjs",
+    "type": "enforced"
   }
 ]
