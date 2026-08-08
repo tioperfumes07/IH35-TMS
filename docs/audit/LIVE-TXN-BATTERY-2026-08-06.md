@@ -9030,3 +9030,152 @@ choice, and it is exactly the kind of workaround that makes a DQF unauditable at
 `expiry_date`, `r2_key`, `voided_at`) is untouched.** The DQF page reads the `docs.*` pair correctly, so
 nothing is broken today — **but two schemas describe the same fact and only one is populated**, which is the
 `RETIRE → CANONICAL` shape from LAW §5. Worth a ruling before something starts reading the empty one.
+
+---
+
+# CC-3 VERIFY — PR #4753 (ACCT-F177) + PR #4744 (ACCT-F174) — 2026-08-08 04:20 CDT
+
+**Seat:** CC-3 = VER (verify only; did not build, did not merge — maker ≠ checker).
+**Prod SHA at time of verdict:** `34d8da7` (`/api/v1/healthz/shallow`, re-curled — **not** `6020040`).
+**Neon:** project `tiny-field-89581227`, prod branch `br-fancy-credit-akjnd07a`, db `neondb`,
+RLS-bypassed via `set_config('app.bypass_rls','lucia',true)`.
+**Isolated proof branch:** `br-orange-hat-akbo91eg` (`cc3-verify-4753-4744`), forked from prod — both
+migrations were applied THERE, never to prod.
+
+## TIMING FACT (not a defect — recorded so the board is not misled)
+
+Both PRs were **merged by Desktop at 2026-08-08T04:12Z**, i.e. **before** this PASS was posted
+(`#4753`→`cf748b44b`, `#4744`→`2885e447e`, `#4766`→`1b85ad8b8`). **Prod was still `34d8da7` at verdict
+time, so neither migration had run yet** — this verification was therefore still pre-deploy on the
+thing that matters (the migration), and its conclusion is PASS. Recorded only because the queue in
+`STATUS-NOW.md` said "Desktop merge after CC-3 PASS".
+
+---
+
+## VERDICT: **PASS** — #4753 (ACCT-F177, WORM actor attribution)
+
+**PR head** `8cffb555`. Single migration `202612340000_worm_audit_actor_attribution.sql` +
+one db test. Migration number is above main's prior max (`202612320000`); no collision.
+
+**Defect reproduced on PROD (the card's numbers are real):**
+
+| measure | prod value |
+|---|---|
+| `audit.row_changes` total | **2,327,765** |
+| ... with `changed_by_user_id` | **2** |
+| ... with `changed_by_role` | **0** |
+| written in last 7 days | **266,995** |
+| ... of those naming an actor | **0** |
+
+**Root cause confirmed by reading the DEPLOYED function body, not inferred** — `pg_get_functiondef`
+on prod shows `audit.tg_audit_row` resolving the actor with `current_setting('app.user_id', true)`
+only. Live introspection: `reads_current_user_id = false`, `reads_legacy_user_id = true`,
+**39 triggers** on the one function, `SECURITY DEFINER`, owner `neondb_owner`.
+
+**The GUC census confirms the app never sets that key** (`set_config` sites in `apps/backend/src`):
+`app.user_id` = **0** · `app.current_user_id` = 7 · `app.user_role` = 14 · `app.operating_company_id` = 1006.
+`withCurrentUser` (`apps/backend/src/auth/db.ts:211-242`) does `BEGIN` → `SET LOCAL ROLE` →
+`set_config('app.current_user_id', …, true)` → `fn()` → `COMMIT`, so the GUC is set **in the same
+transaction as the writes**; 610 files route through it.
+
+**LIVE PROOF on the isolated branch — a user write now names WHO:**
+
+```
+UPDATE mdata.customers (id 3e066edd-…, USMCA) with app.current_user_id set, app.user_role NOT set
+→ audit.row_changes: op=UPDATE
+  changed_by_user_id = d62f82f6-b5ce-47a5-bd4e-a97a90cc6775   ← NAMED
+  changed_by_role    = Administrator                          ← NAMED (via identity.users fallback)
+  tenant_id          = 5c854333-…  (USMCA, correct)
+```
+
+**Completeness discriminator on the SAME row:** that row's earlier `INSERT` (2026-08-02, pre-migration)
+carries `changed_by_user_id = NULL`, `changed_by_role = NULL`. Before/after on one row — not an empty set.
+
+**Two risks I checked rather than assumed, both CLEAR:**
+
+1. **`identity.users` has `FORCE ROW LEVEL SECURITY` + 3 policies**, and FORCE binds even the table
+   owner — so the migration's stated reason ("SECURITY DEFINER owned by neondb_owner, so it reads
+   regardless of RLS") is **not** why it works. It works because **`neondb_owner` has `rolbypassrls = true`**,
+   which outranks FORCE. Empirically settled: the role resolved to `Administrator` with `app.user_role`
+   unset. The comment's reasoning is imprecise; the behaviour is correct. Not a blocker.
+2. **The replacement drops `audit` from `search_path`** (deployed: `pg_catalog, public, audit`; new:
+   `pg_catalog, public`). Safe — every table reference in the body is schema-qualified
+   (`audit.row_changes`, `identity.users`), and the branch run inserted audit rows successfully.
+
+**No column-list regression:** new INSERT column list is byte-identical to the deployed one (10 columns,
+same order). `audit.row_changes.action` is nullable with no default, so omitting it is safe.
+**No backfill** of the 2.3M NULL rows — correct; the actor was never captured and inventing it would be
+fabricated evidence.
+
+---
+
+## VERDICT: **PASS** — #4744 (ACCT-F174, void state authoritative)
+
+**PR head** `acf13360`. Migration `202612330000_void_state_authoritative_bills_invoices.sql` + one db test.
+
+**Defect reproduced on PROD, both directions, exactly as the card states:**
+
+| table | total | `voided_at` set | `revoked_at` set | `status='void'` | violation |
+|---|---|---|---|---|---|
+| `accounting.bills` | **16,261** | 4 | **0** | **0** | **4** (marker set, status not) |
+| `accounting.invoices` | **11,987** | 5 | — | 6 | **1** (status set, marker not) |
+
+The invoice is **`INV-2026-00005`, `total_cents = 245000` ($2,450.00), `voided_at = NULL`, `status = void`** —
+the row behind the A/R aging overstatement. Both defects are live and they are **different** defects, so a
+one-directional constraint would have passed half of them. `revoked_at = 0` and `status='void' = 0` on bills
+independently corroborate the card's strongest claim: **neither canonical void code path has ever executed in
+production** — the writer was migration `202612230000` §2.
+
+**THE RISK THAT ACTUALLY MATTERED — would `VALIDATE CONSTRAINT` abort the prod deploy?** §4 runs
+`VALIDATE` on 16,261 + 11,987 existing rows; any row the §1/§2 repairs miss aborts the migration and
+**breaks the prod deploy**. Measured on prod BEFORE applying:
+
+```
+invoices with voided_at NOT NULL AND status <> 'void'   = 0   ← not repaired by §2; would have failed VALIDATE
+bills   with status='void' AND both timestamps NULL     = 0   ← not repaired by §1; would have failed VALIDATE
+bills   residual violations outside §1's predicate      = 0
+invoices status='void' with all three fallbacks NULL    = 0   ← COALESCE in §2 cannot yield NULL
+```
+
+All zero → **the repairs are exactly co-extensive with the constraint. VALIDATE cannot abort.** Confirmed by
+execution: both `VALIDATE CONSTRAINT` statements succeeded on the branch, leaving **0 violations** on both
+tables (bills `status='void'` 0→4; invoices `voided_at` 5→6).
+
+**LIVE PROOF that the state is now AUTHORITATIVE — the DB rejects both corrupt shapes and accepts the good one:**
+
+```
+UPDATE accounting.bills SET voided_at=now(), void_reason='…'   -- the exact shape migration 202612230000 §2 wrote
+  → ERROR: violates check constraint "bills_void_state_authoritative"        REJECTED ✅
+UPDATE accounting.invoices SET status='void'                    -- the exact INV-2026-00005 shape
+  → ERROR: violates check constraint "invoices_void_state_authoritative"     REJECTED ✅
+UPDATE accounting.invoices SET status='void', voided_at=now()   -- a CORRECT void
+  → RETURNING INV-2026-00001 | void | 2026-08-08 04:19:09       ACCEPTED ✅ (no false positive)
+```
+
+Side observation from probe 1: bills also carry a pre-existing `bills_void_reason_required` constraint,
+which fired first until a reason was supplied — a void with no reason was already refused. Consistent, not
+conflicting.
+
+**Scope is bounded and stated** (§5): `bill_payments` (`revoked_at`), `vendor_credit_applications`
+(`voided_reason`), `payments` (`voided_at`) are explicitly NOT covered and remain open on the board. Correct
+call — their spellings differ and copy-pasting the pairing would assert something untrue.
+
+---
+
+## SUMMARY
+
+```
+VERDICT: PASS
+PR: #4753 / #4744
+SHA: 8cffb555 / acf13360  (merged cf748b44b / 2885e447e; prod 34d8da7, migrations NOT yet run)
+NEON: 4753 — prod fn reads app.user_id (app sets it 0x); after fix on br-orange-hat-akbo91eg a USMCA
+      write named actor d62f82f6 + role Administrator, same row's prior INSERT NULL.
+      4744 — prod bills 4 marker-without-status, invoices 1 status-without-marker (INV-2026-00005 $2,450);
+      0 rows would fail VALIDATE; both constraints validated; both corrupt writes REJECTED, correct void ACCEPTED.
+APP: healthz/shallow = 34d8da7, ok:true (re-curled at verdict time)
+AUDIT_ACTOR: named
+BLOCKED: none
+```
+
+**Cleanup owed:** Neon branch `br-orange-hat-akbo91eg` still exists (throwaway, forked from prod, contains
+probe mutations). It must be deleted; CC-3 does not delete Neon branches autonomously.
