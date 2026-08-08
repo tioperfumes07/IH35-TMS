@@ -2,6 +2,7 @@ import type React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { ToastProvider } from "../../../components/Toast";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as hosApi from "../../../api/hos";
 import * as mdataApi from "../../../api/mdata";
@@ -14,7 +15,12 @@ function wrap(ui: React.ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <QueryClientProvider client={qc}>
-      <MemoryRouter>{ui}</MemoryRouter>
+      {/* ToastProvider: the violation-create modal (or a child it gained) calls useToast, so opening it threw
+          "useToast must be used inside ToastProvider" — which surfaced as the modal simply never appearing.
+          The app always renders this inside the provider; the harness was the unrealistic part. */}
+      <MemoryRouter>
+        <ToastProvider>{ui}</ToastProvider>
+      </MemoryRouter>
     </QueryClientProvider>
   );
 }
