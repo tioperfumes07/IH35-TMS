@@ -8597,3 +8597,60 @@ and the guard that must ship with the fix.
 inventory with counts, and `withCurrentUser`'s line. **Not verified: that renaming fixes it end to end** — I
 did not alter prod DDL and will not; the fix belongs to CC-1 and must be proven by a fresh write landing with
 a non-NULL `changed_by_user_id`. **The mismatch is proven; the repair is not, and I am not claiming it.**
+
+## 137. ★★ THE GUC SETTER/READER DIFF — run in full, both directions. **The orphaned-read class is EXACTLY TWO, and both ARE the P0.**
+
+Item 136's board row makes the full setter/reader diff condition (4). **I ran it rather than leaving it.**
+This is the same discipline as item 121's flag diff — and unlike that one, the class here is genuinely bounded
+rather than mostly false positives.
+
+**METHOD — both directions, and the reader side covers all three kinds of DB consumer.** Reads extracted with
+`regexp_matches(body, 'current_setting\(\s*''(app\.[a-z_]+)''')` over **`pg_proc`** (every non-system
+function), **`pg_policies`** (every RLS policy), and **`pg_views`** (all 50 views). Writes counted from
+`set_config('app.*')` in `apps/backend/src`, tests excluded.
+
+| GUC | read by functions | used by policies | used by views | **set by backend** |
+|---|---|---|---|---|
+| `app.operating_company_id` | — | **635** | 1 | **858** |
+| `app.bypass_rls` | 2 | **151** | — | 18 |
+| `app.current_operating_company_id` | — | 14 | — | 10 |
+| `app.current_user_id` | 2 | 3 | — | 2 |
+| `app.user_role` | 1 | 2 | — | 14 |
+| `app.factoring_balance_as_of` | — | — | **1** | 2 |
+| **`app.user_id`** | **1** | — | — | **0** ← orphaned READ |
+| **`app.session_id`** | **1** | — | — | **0** ← orphaned READ |
+| **`app.active_company_id`** | — | — | — | 3 ← orphaned WRITE |
+
+### ★ RESULT 1 — the orphaned-read class is EXACTLY TWO, and both are inside `audit.tg_audit_row()`
+
+**`app.user_id` and `app.session_id` are the only GUCs the database reads that the application never sets.**
+Both live in the audit trigger; both are item 136's P0. **So the root cause is not the first instance of a
+sprawling class — it is the whole class.** That is good news and worth stating plainly: **CC-1 fixing
+`LV-AUDIT-ACTOR-GUC-NAME-MISMATCH` closes the orphaned-read problem entirely**, with nothing else to hunt.
+
+**A check that came back clean and kept a false positive out.** `app.factoring_balance_as_of` has 2 writers
+and appeared in **no** function or policy — it looked orphaned. **It is read by a VIEW.** Had the sweep
+covered only `pg_proc` and `pg_policies` — the two obvious places — it would have been filed as a third
+instance. **The completeness of the reader side is what makes the "exactly two" trustworthy**, and it is the
+same lesson as item 128's half-a-column: *the place you did not look cannot contradict you.*
+
+### ★ RESULT 2 — FILED (low · CC-2) — `LV-ORPHANED-GUC-WRITE-ACTIVE-COMPANY-ID`
+
+**`app.active_company_id` is set at 3 backend sites and read by NOTHING** — no function, no policy, no view:
+- `auth/db.ts:172` — set to `LUCIA_BYPASS_SENTINEL_COMPANY_ID` on the lucia-bypass path
+- `integrations/relay-payments/relay-health.routes.ts:53` — set to the operating company
+- `auth/db.test.ts:50` — asserted in a test, **so a unit test enforces a GUC that nothing consumes**
+
+**Low severity, and the reason to file it is the NAME.** A GUC called `active_company_id`, set on the
+bypass-RLS path next to real tenant scoping, reads like a scoping control. **It is inert.** Anyone who
+believes setting it scopes something is wrong, and the test asserting it lends it false authority. **The
+danger is not what it does — it is what a future reader will assume it does.**
+
+### WHY THIS UNIT MATTERS BEYOND ITS SIZE
+
+Two P0-class defects in this codebase — item 136 and battery items 109/110 — are the same shape: **a GUC is a
+contract between a `.ts` file and a `.sql` object that never reference each other, and nothing in TypeScript,
+in Postgres, or in CI checks that the two spellings agree.** **This diff is that missing check, and it takes
+one query per direction.** It is now run, its result is bounded (**2 orphaned reads, 1 orphaned write, 6 GUCs
+correctly paired**), and the guard specified on item 136's row has a proven implementation shape rather than a
+hopeful description.
