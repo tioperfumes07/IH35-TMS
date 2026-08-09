@@ -277,6 +277,42 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           ]
         );
         const row = res.rows[0];
+
+        // FAIL-INS-POLICY-ASSET-404 — mint the canonical mdata.assets row alongside the unit.
+        //
+        // insurance.policy_unit.asset_id and insurance.claim reference mdata.assets, but unit-create
+        // never wrote one, so a freshly created unit could never be insured: the wizard resolver
+        // (resolve-asset-id.shared.ts) resolves unit -> asset through `a.id | a.unit_id | a.unit_code`
+        // and all three miss when no asset row exists. This is the going-forward half of that fix; the
+        // backfill for existing units is migration 202612460000.
+        //
+        // Tenancy mirrors mdata.units: the LESSEE operates the unit (TRK owns, TRANSP/USMCA runs it),
+        // so the asset belongs to COALESCE(currently_leased_to, owner) — the same expression the
+        // backfill uses, so both halves agree.
+        //
+        // Deliberately NOT set: insured_value_cents / acquisition_cost_cents stay NULL rather than 0.
+        // NULL means "not stated"; 0 would assert a valued-at-nothing asset into a table insurance
+        // reads. The owner supplies real insured values.
+        //
+        // ON CONFLICT on the natural key (tenant_id, unit_code) keeps this idempotent and stops a
+        // retry or a re-created unit number from failing the whole create.
+        await client.query(
+          `
+            INSERT INTO mdata.assets (tenant_id, unit_code, asset_type, vin, make, model, year, status, unit_id)
+            VALUES ($1::uuid, $2, 'tractor', $3, $4, $5, $6, 'active', $7::uuid)
+            ON CONFLICT (tenant_id, unit_code) DO NOTHING
+          `,
+          [
+            resolvedLeasedId ?? resolvedOwnerId,
+            row.unit_number,
+            row.vin,
+            row.make ?? null,
+            row.model ?? null,
+            row.year ?? null,
+            row.id,
+          ]
+        );
+
         await appendCrudAudit(client, authUser.uuid, "mdata.units.created", {
           resource_id: row.id,
           resource_type: "mdata.units",
