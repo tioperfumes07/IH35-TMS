@@ -1,3 +1,4 @@
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { useEffect, useState } from "react";
 import { ApiError } from "../../../api/client";
 import { createCompanyViolationType, deactivateCompanyViolationType, updateCompanyViolationType, type CompanyViolationTypeRow } from "../../../api/catalogs-safety";
@@ -88,7 +89,7 @@ export function CompanyViolationTypeModal({ open, companyId, row, onClose, onSav
     } catch (error) {
       if (error instanceof ApiError) {
         const data = (error.data as Record<string, unknown>) ?? {};
-        setSubmitError(String(data.error ?? data.message ?? error.message));
+        setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError("Failed to save Company Violation Type.");
       }
@@ -108,7 +109,7 @@ export function CompanyViolationTypeModal({ open, companyId, row, onClose, onSav
     } catch (error) {
       if (error instanceof ApiError) {
         const data = (error.data as Record<string, unknown>) ?? {};
-        setSubmitError(String(data.error ?? data.message ?? error.message));
+        setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError("Failed to deactivate Company Violation Type.");
       }

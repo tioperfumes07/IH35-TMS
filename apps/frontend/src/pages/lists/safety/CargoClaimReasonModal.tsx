@@ -1,3 +1,4 @@
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { useEffect, useState } from "react";
 import { ApiError } from "../../../api/client";
 import {
@@ -99,7 +100,7 @@ export function CargoClaimReasonModal({ open, companyId, row, onClose, onSaved }
     } catch (error) {
       if (error instanceof ApiError) {
         const data = (error.data as Record<string, unknown>) ?? {};
-        setSubmitError(String(data.error ?? data.message ?? error.message));
+        setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError("Failed to save Cargo Claim Reason.");
       }
@@ -119,7 +120,7 @@ export function CargoClaimReasonModal({ open, companyId, row, onClose, onSaved }
     } catch (error) {
       if (error instanceof ApiError) {
         const data = (error.data as Record<string, unknown>) ?? {};
-        setSubmitError(String(data.error ?? data.message ?? error.message));
+        setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError("Failed to deactivate Cargo Claim Reason.");
       }

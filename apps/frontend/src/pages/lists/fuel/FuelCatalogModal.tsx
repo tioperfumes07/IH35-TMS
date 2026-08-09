@@ -1,3 +1,4 @@
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { useEffect, useState } from "react";
 import { ApiError } from "../../../api/client";
 import type { FuelCatalogCreateBody, FuelCatalogRow, FuelCatalogUpdateBody } from "../../../api/catalogs-fuel";
@@ -88,7 +89,7 @@ export function FuelCatalogModal({ open, operatingCompanyId, displayName, client
     } catch (error) {
       if (error instanceof ApiError) {
         const data = (error.data as Record<string, unknown>) ?? {};
-        setSubmitError(String(data.error ?? data.message ?? error.message));
+        setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError(`Failed to save ${displayName}.`);
       }
@@ -108,7 +109,7 @@ export function FuelCatalogModal({ open, operatingCompanyId, displayName, client
     } catch (error) {
       if (error instanceof ApiError) {
         const data = (error.data as Record<string, unknown>) ?? {};
-        setSubmitError(String(data.error ?? data.message ?? error.message));
+        setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError(`Failed to deactivate ${displayName}.`);
       }
