@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -44,7 +45,7 @@ function money(cents: number) {
 
 function displayBillLabel(bill: VendorBill) {
   const remaining = Math.max(0, Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0));
-  const billRef = bill.bill_number || bill.id.slice(0, 8);
+  const billRef = entityLabel(bill.bill_number, bill.id, "Bill");
   const vendor = bill.vendor_name || bill.vendor_id || "Vendor";
   return `${vendor} · ${billRef} · Due ${bill.due_date || "-"} · ${money(remaining)}`;
 }
@@ -132,7 +133,7 @@ export function BillPaymentsListPage() {
       { key: "payment_date", label: "Payment date", sortable: true, render: (row) => formatDateUS(row.payment_date) },
       { key: "amount_cents", label: "Amount", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_cents) },
       { key: "payment_method", label: "Method", sortable: true },
-      { key: "bill_id", label: "Bill ID", sortable: true, render: (row) => <EntityLink kind="bill" id={row.bill_id} label={row.bill_id.slice(0, 8)} /> },
+      { key: "bill_id", label: "Bill ID", sortable: true, render: (row) => <EntityLink kind="bill" id={row.bill_id} label={entityLabel(null, row.bill_id, "Bill")} /> },
       { key: "vendor_id", label: "Vendor ID", sortable: true, render: (row) => <EntityLink kind="vendor" id={row.mdata_vendor_id} label={row.vendor_name ?? row.vendor_id} /> },
       { key: "reference_number", label: "Reference", sortable: true, sortValue: (row) => row.reference_number ?? row.check_number ?? "", render: (row) => row.reference_number ?? row.check_number ?? "-" },
       { key: "memo", label: "Memo", sortable: true, sortValue: (row) => row.memo ?? "", render: (row) => row.memo ?? "-" },
@@ -144,7 +145,7 @@ export function BillPaymentsListPage() {
           <EntityLink
             kind="journal_entry"
             id={row.journal_entry_id ?? undefined}
-            label={row.journal_entry_id ? row.journal_entry_id.slice(0, 8) : undefined}
+            label={row.journal_entry_id ? entityLabel(null, row.journal_entry_id, "Journal entry") : undefined}
           />
         ),
       },
@@ -156,7 +157,7 @@ export function BillPaymentsListPage() {
           <EntityLink
             kind="bank_transaction"
             id={row.matched_bank_transaction_id ?? undefined}
-            label={row.matched_bank_transaction_id ? row.matched_bank_transaction_id.slice(0, 8) : undefined}
+            label={row.matched_bank_transaction_id ? entityLabel(null, row.matched_bank_transaction_id, "Bank transaction") : undefined}
           />
         ),
       },
