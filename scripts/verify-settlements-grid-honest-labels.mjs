@@ -104,12 +104,28 @@ function checkAccountingHub() {
   }
 }
 
+function checkDisputesTab() {
+  const TARGET = "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx";
+  const src = readFileSync(join(repoRoot, TARGET), "utf8");
+  const code = stripComments(src);
+  if (/\{row\.period_start\s*\?\?/.test(code) || /Period:\s*\{detail\.period_start\s*\?\?/.test(code)) {
+    failures.push(`${TARGET}: must not interpolate raw period_start/period_end (ISO) — use formatDateUS`);
+  }
+  if (!/formatDateUS\s*\(\s*row\.period_start/.test(code) || !/formatDateUS\s*\(\s*row\.period_end/.test(code)) {
+    failures.push(`${TARGET}: list Period column must use formatDateUS on start and end`);
+  }
+  if (!/formatDateUS\s*\(\s*detail\.period_start/.test(code) || !/formatDateUS\s*\(\s*detail\.period_end/.test(code)) {
+    failures.push(`${TARGET}: detail Period line must use formatDateUS on start and end`);
+  }
+}
+
 checkTable();
 checkHeader();
 checkDetail();
 checkPreSettlements();
 checkEarningsTab();
 checkAccountingHub();
+checkDisputesTab();
 
 if (failures.length > 0) {
   console.error("FAIL verify-settlements-grid-honest-labels");

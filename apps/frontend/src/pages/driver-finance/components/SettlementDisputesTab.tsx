@@ -2,6 +2,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { formatDateUS } from "../../../lib/formatDate";
 import { titleize } from "../../../lib/titleize";
 import {
   getSettlementDispute,
@@ -158,7 +159,10 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
                     );
                   })()}
                 </td>
-                <td className="px-3 py-2">{row.period_start ?? "-"} to {row.period_end ?? "-"}</td>
+                <td className="px-3 py-2">
+                  {row.period_start ? formatDateUS(row.period_start) : "—"} to{" "}
+                  {row.period_end ? formatDateUS(row.period_end) : "—"}
+                </td>
                 <td className="px-3 py-2">{row.dispute_category}</td>
                 <td className="max-w-[240px] truncate px-3 py-2" title={row.dispute_description}>
                   {row.dispute_description}
@@ -229,7 +233,10 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
             </div>
             <div className="rounded-sm border border-gray-100 p-2">
               <p className="font-semibold text-gray-700">Settlement Breakdown</p>
-              <p>Period: {detail.period_start ?? "-"} to {detail.period_end ?? "-"}</p>
+              <p>
+                Period: {detail.period_start ? formatDateUS(detail.period_start) : "—"} to{" "}
+                {detail.period_end ? formatDateUS(detail.period_end) : "—"}
+              </p>
               <p>Gross: {money(Number(detail.gross_pay ?? 0))}</p>
               <p>Deductions: {money(Number(detail.deductions_total ?? 0))}</p>
               <p>Net: {money(Number(detail.net_pay ?? 0))}</p>
