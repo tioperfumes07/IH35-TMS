@@ -15,10 +15,12 @@ import {
 } from "../../api/tasks";
 import { listAssignableUsers } from "../../api/identity";
 import { listCustomers } from "../../api/mdata";
+import { Combobox } from "../Combobox";
 import { EntityPicker } from "../parity/EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import type { IdentityUser } from "../../types/api";
 import { companyToday } from "../../lib/businessDate";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -169,7 +171,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
       setNewProfileName("");
       pushToast("Profile added", "success");
     },
-    onError: (err) => pushToast(String((err as Error).message || "Could not add profile"), "error"),
+    onError: (err) => pushToast(userFacingApiError(err, "Could not add profile"), "error"),
   });
 
   const mutation = useMutation({
@@ -200,11 +202,20 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
       onCreated?.();
       onClose();
     },
-    onError: (err) => pushToast(String((err as Error).message || "Could not create task"), "error"),
+    onError: (err) => pushToast(userFacingApiError(err, "Could not create task"), "error"),
   });
 
   const canSubmit =
     Boolean(operatingCompanyId) && title.trim().length > 0 && assignedTo.length > 0 && scheduledDate.length > 0 && !mutation.isPending;
+
+  const profileOptions = useMemo(
+    () => profiles.map((p) => ({ value: p.id, label: p.name })),
+    [profiles],
+  );
+  const assigneeOptions = useMemo(
+    () => users.map((u) => ({ value: u.id, label: userLabel(u) })),
+    [users],
+  );
 
   const labelCls = "block text-[11px] font-semibold uppercase tracking-wide text-gray-600";
   const inputCls = "mt-1 w-full rounded-sm border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-800 focus:border-slate-300 focus:outline-hidden";
@@ -237,31 +248,25 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
           </p>
         ) : null}
 
-        {/* Profile picker + inline add */}
-        <div>
-          <label className={labelCls} htmlFor="create-task-profile">Profile</label>
-          <div className="mt-1 flex items-center gap-2">
-            <select
-              id="create-task-profile"
-              className="w-full rounded-sm border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-800 focus:border-slate-300 focus:outline-hidden"
-              value={taskTypeId}
-              onChange={(e) => {
-                setTaskTypeId(e.target.value);
-                applyProfile(profiles.find((p) => p.id === e.target.value));
+        {/* Profile picker + inline add (first-row + Add new — not an external sibling button) */}
+        <div data-testid="create-task-profile-picker">
+          <label className={labelCls}>Profile</label>
+          <div className="mt-1">
+            <Combobox
+              options={profileOptions}
+              value={taskTypeId || null}
+              onChange={(next) => {
+                const id = next ?? "";
+                setTaskTypeId(id);
+                applyProfile(profiles.find((p) => p.id === id));
               }}
-            >
-              <option value="">{profilesQuery.isLoading ? "Loading…" : "No profile"}</option>
-              {profiles.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-            <button
-              type="button"
-              className="whitespace-nowrap rounded-sm border border-gray-300 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 hover:bg-gray-50"
-              onClick={() => setShowAddProfile((v) => !v)}
-            >
-              + Create profile
-            </button>
+              placeholder={profilesQuery.isLoading ? "Loading…" : "No profile"}
+              loading={profilesQuery.isLoading}
+              allowAddNew={{
+                label: "+ Add new profile",
+                onAdd: () => setShowAddProfile(true),
+              }}
+            />
           </div>
           {showAddProfile ? (
             <div className="mt-2 flex items-center gap-2">
@@ -285,14 +290,17 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelCls} htmlFor="create-task-assignee">Assignee</label>
-            <select id="create-task-assignee" className={inputCls} value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
-              <option value="">{usersQuery.isLoading ? "Loading…" : "Select an employee"}</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>{userLabel(u)}</option>
-              ))}
-            </select>
+          <div data-testid="create-task-assignee-picker">
+            <label className={labelCls}>Assignee</label>
+            <div className="mt-1">
+              <Combobox
+                options={assigneeOptions}
+                value={assignedTo || null}
+                onChange={(next) => setAssignedTo(next ?? "")}
+                placeholder={usersQuery.isLoading ? "Loading…" : "Select an employee"}
+                loading={usersQuery.isLoading}
+              />
+            </div>
           </div>
           <div>
             <label className={labelCls} htmlFor="create-task-date">Scheduled date</label>
