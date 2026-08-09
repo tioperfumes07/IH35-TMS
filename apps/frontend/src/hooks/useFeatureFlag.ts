@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import {
-import { userFacingApiError } from "../lib/api-error-message";
   getCachedFeatureFlag,
   refreshFeatureFlag,
   startFeatureFlagRefresh,
   subscribeFeatureFlag,
 } from "../lib/feature-flags-client";
+import { userFacingApiError } from "../lib/api-error-message";
 
 export function useFeatureFlag(flagKey: string, operatingCompanyId?: string | null) {
   const [enabled, setEnabled] = useState<boolean>(() => getCachedFeatureFlag(flagKey, operatingCompanyId) ?? false);
@@ -25,7 +25,7 @@ export function useFeatureFlag(flagKey: string, operatingCompanyId?: string | nu
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(userFacingApiError(err, err));
+          setError(userFacingApiError(err, "Failed to load feature flag"));
           setLoading(false);
         }
       });
