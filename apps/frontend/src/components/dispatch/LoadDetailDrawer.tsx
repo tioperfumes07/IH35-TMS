@@ -29,6 +29,7 @@ import { FinesDeductionsCard } from "./tabs/FinesDeductionsCard";
 import { SettlementProfitabilityCard } from "./tabs/SettlementProfitabilityCard";
 import { InsuranceClaimsReverseSection } from "../insurance/InsuranceClaimsReverseSection";
 import { LoadSafetyReverseSection } from "../safety/LoadSafetyReverseSection";
+import { LoadWorkOrdersReverseSection } from "./LoadWorkOrdersReverseSection";
 import { BookLoadModalV4 } from "../../pages/dispatch/components/BookLoadModalV4";
 import { CargoSensorTimeline } from "../../pages/dispatch/cargo-sensors/CargoSensorTimeline";
 import { EntityLink } from "../shared/EntityLink";
@@ -509,6 +510,13 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                     operatingCompanyId={load.operating_company_id}
                     loadId={load.id}
                     data-testid="load-detail-safety-records"
+                  />
+                ) : null}
+                {load.operating_company_id ? (
+                  <LoadWorkOrdersReverseSection
+                    operatingCompanyId={load.operating_company_id}
+                    loadId={load.id}
+                    data-testid="load-detail-work-orders"
                   />
                 ) : null}
               </div>
