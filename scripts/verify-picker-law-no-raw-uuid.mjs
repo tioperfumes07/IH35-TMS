@@ -203,22 +203,6 @@ const EXEMPTIONS = [
     reason:
       "Samsara→QBO vendor dedupe target. Reported as a canonical/mirror divergence finding rather than wired against the mirror.",
   },
-  {
-    file: `${SRC}/pages/safety/ComplaintsPage.tsx`,
-    field: "respondent_uuid",
-    category: "archived-superseded",
-    successor: `${SRC}/pages/safety/tabs/ComplaintsTab.tsx`,
-    reason:
-      "@archived surface (sunset 2026-09-01, not mounted in routes/manifest.tsx). The live successor ComplaintsTab.tsx already uses DriverPickerWithCreate for the respondent. ARCHIVE-not-DELETE forbids deleting the file, and editing dead code adds risk without adding correctness.",
-  },
-  {
-    file: `${SRC}/pages/safety/ComplaintsPage.tsx`,
-    field: "complaint_type_uuid",
-    category: "archived-superseded",
-    successor: `${SRC}/pages/safety/tabs/ComplaintsTab.tsx`,
-    reason:
-      "@archived surface as above; the live successor ComplaintsTab.tsx renders a bounded complaint-type selector instead of a raw uuid box. Left untouched under ARCHIVE-not-DELETE.",
-  },
 ];
 
 /**
