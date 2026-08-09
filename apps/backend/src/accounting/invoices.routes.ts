@@ -478,7 +478,9 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     return reply.code(created.code).send(created.data);
   });
 
-  app.post("/api/v1/accounting/invoices/from-load", async (req, reply) => {
+  // ACCT-F289 — rate limit matches the sibling money-mutating POST at :809 (30/min), not the 60–120
+  // of the read routes: this one MINTS an invoice and a display_id, so it is a write, not a query.
+  app.post("/api/v1/accounting/invoices/from-load", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -505,6 +507,18 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       return reply.code(result.idempotent ? 200 : 201).send(result);
     } catch (error) {
       if ((error as { code?: string }).code === "load_not_found") return reply.code(404).send({ error: "load_not_found" });
+      // ACCT-F289 — ACCT-F267 made buildInvoiceFromLoad throw `load_has_no_rate` rather than mint a
+      // permanently $0 invoice, but no caller translated it, so the user's own "create invoice from
+      // load" action answered with an opaque 500 and no way to know the fix is "set the rate first".
+      // 422 (not 400): the request is well-formed, the LOAD is not yet in a billable state.
+      if ((error as { code?: string }).code === "load_has_no_rate") {
+        return reply.code(422).send({
+          error: "load_has_no_rate",
+          message: "This load has no customer rate yet. Set the rate, then create the invoice.",
+          load_id: (error as { load_id?: string }).load_id ?? body.data.load_id,
+          rate_total_cents: (error as { rate_total_cents?: number }).rate_total_cents ?? 0,
+        });
+      }
       throw error;
     }
   });

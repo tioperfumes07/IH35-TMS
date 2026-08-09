@@ -1518,12 +1518,57 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           `
         );
         if (Boolean(col.rows[0]?.ok)) {
-          await buildInvoiceFromLoad(client, {
-            userId: input.requestingUserUuid,
-            operatingCompanyId: input.operating_company_id,
-            loadId: String(load.id),
-            asProforma: true,
-          });
+          // ACCT-F289 — ACCT-F267 taught buildInvoiceFromLoad to REFUSE a zero-rate load
+          // (throw `load_has_no_rate`) so a rate-late load can never mint a permanently $0
+          // invoice. That refusal is correct, but this call site awaits it INSIDE the booking
+          // transaction on the booking client, so the throw rolled the whole booking back: a
+          // rate-late load (bookLoadRateTotalCents([]) === 0, the quicksave/rate-TBD path) could
+          // not be booked AT ALL while the flag was on. Verified live on prod
+          // br-fancy-credit-akjnd07a: the column EXISTS (so this is the branch that runs) and
+          // INVOICE_PROFORMA_PIPELINE_ENABLED is enabled=true for all three entities.
+          //
+          // The governing policy is already stated by the sibling branch below and is applied
+          // here unchanged: an accounting projection must never block dispatch from booking a
+          // real load. The skip becomes COUNTABLE instead — same append-only audit row, same
+          // client, so it commits with the load or not at all.
+          //
+          // ONLY `load_has_no_rate` is caught. Everything else still propagates, so "failures
+          // are loud" survives. Swallowing this one is safe INSIDE an open transaction only
+          // because F267 throws BEFORE any write (its check sits after SELECTs and above the
+          // INSERT), so the transaction is not left aborted and the booking can still commit.
+          try {
+            await buildInvoiceFromLoad(client, {
+              userId: input.requestingUserUuid,
+              operatingCompanyId: input.operating_company_id,
+              loadId: String(load.id),
+              asProforma: true,
+            });
+          } catch (error) {
+            if ((error as { code?: string })?.code !== "load_has_no_rate") throw error;
+            await appendCrudAudit(
+              client,
+              input.requestingUserUuid,
+              "accounting.invoice.proforma_skipped_no_rate",
+              {
+                load_id: String(load.id),
+                operating_company_id: input.operating_company_id,
+                flag: "INVOICE_PROFORMA_PIPELINE_ENABLED",
+                rate_total_cents: bookLoadRateTotalCents(input.charges),
+                reason: "load_has_no_rate",
+                finding: "ACCT-F289",
+              },
+              "warning",
+              "ACCT-F289"
+            );
+            console.error(
+              {
+                load_id: String(load.id),
+                operating_company_id: input.operating_company_id,
+                rate_total_cents: bookLoadRateTotalCents(input.charges),
+              },
+              "acct_f289_proforma_skipped_no_rate"
+            );
+          }
         } else {
           // WIRE-01 — this branch used to be an empty `if`, so when the column was absent the
           // proforma was skipped with NO log, NO error and NO record, directly contradicting the
