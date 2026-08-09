@@ -157,7 +157,7 @@ async function handleBillBulk(ctx: BulkPerEntityContext<BillBulkPayload>): Promi
           -- ACCT-F265 — inherit the parent bill's sample flag (see bills.service.ts). This is the BULK
           -- path, where a per-caller parameter is most likely to be forgotten and least likely to be
           -- noticed: one omission silently marks an entire batch of payments as real money.
-          COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid), false))
+          COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid AND b.operating_company_id = $1::uuid), false))
       `,
       [
         operatingCompanyId,

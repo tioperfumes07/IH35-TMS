@@ -128,6 +128,7 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
               ) AS applied_to_bills
             FROM accounting.bill_payments bp
             JOIN accounting.bills b ON b.id = bp.bill_id
+             AND b.operating_company_id = bp.operating_company_id
             WHERE ${groupedWhere}
             GROUP BY COALESCE(bp.payment_batch_id, bp.id)
           )
@@ -253,7 +254,7 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
                 -- ACCT-F265 — inherit the parent bill's sample flag. See bills.service.ts for the full
                 -- reasoning: four writers, and a per-caller parameter fails silently the moment one
                 -- forgets. A payment is never more or less sample than the bill it pays.
-                COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid), false))
+                COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid AND b.operating_company_id = $1::uuid), false))
               RETURNING id
             `,
             [

@@ -530,5 +530,12 @@
     "source_file": "apps/backend/src/catalogs/generic-catalog.factory.ts",
     "guard": "scripts/verify-catalog-config-physical-columns.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-09-CLS-CALENDAR-INVOICE-SEND-DATE-CAST",
+    "title": "CLS-CALENDAR — invoice send/post SQL that binds a calendar date must use a Postgres-safe date string (toISOString().slice(0,10) or equivalent), never String(Date) which is not castable to ::date and blocks the money send path",
+    "source_file": "apps/backend/src/accounting/invoice-send.service.ts",
+    "guard": "scripts/verify-invoice-send-date-cast.mjs",
+    "type": "enforced"
   }
 ]

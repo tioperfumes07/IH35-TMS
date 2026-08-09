@@ -2266,9 +2266,10 @@ async function executeSourceReversalOnClient(
       SELECT je.entry_date::text
       FROM accounting.journal_entries je
       WHERE je.id = $1::uuid
+        AND je.operating_company_id = $2::uuid
       LIMIT 1
     `,
-    [original.journal_entry_id]
+    [original.journal_entry_id, input.operating_company_id]
   );
   const originalDate = headerDate.rows[0]?.entry_date;
   if (!originalDate) throw new PostingEngineError("SOURCE_NOT_FOUND", "Original journal entry missing");
@@ -2412,13 +2413,13 @@ async function executeSourceReversalOnClient(
   // above); the JE level was not, so the pair was discoverable only by string-parsing the memo
   // `Reversal of <uuid>`.
   //
-  // WHY A MEMO IS NOT A LINK: `SELECT count(*) FROM accounting.journal_entries WHERE voided_at IS NOT
-  // NULL` is 0 — no journal entry is ever voided in place, because reversal-by-new-JE is the only
-  // mechanism WORM permits. That makes reverses_je_id / reversed_by_je_id THE ONLY machine-readable
-  // audit link between a JE and its reversal, and a NULL makes the reversal invisible to every
-  // structural query. Measured on prod 2026-08-08: 26 JEs carry a `Reversal of …` memo, only 24 carry
-  // the FK, and one of the two memo-only rows (8fd32bec, USMCA bill-payment void) was created THAT DAY
-  // — a live path, not historical residue.
+  // WHY A MEMO IS NOT A LINK: counting journal_entries with voided_at IS NOT NULL is 0 — no journal
+  // entry is ever voided in place, because reversal-by-new-JE is the only mechanism WORM permits.
+  // That makes reverses_je_id / reversed_by_je_id THE ONLY machine-readable audit link between a JE
+  // and its reversal, and a NULL makes the reversal invisible to every structural query. Measured on
+  // prod 2026-08-08: 26 JEs carry a "Reversal of …" memo, only 24 carry the FK, and one of the two
+  // memo-only rows (8fd32bec, USMCA bill-payment void) was created THAT DAY — a live path, not
+  // historical residue.
   //
   // This is not academic: my own ACCT-F251 sweep had to fall back to memo-matching to find unreversed
   // voided bills, precisely because this FK could not be trusted. A guard that greps memos is a guard

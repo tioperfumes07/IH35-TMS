@@ -1,9 +1,9 @@
 {
   "module": "accounting",
   "title": "Accounting (Module 3)",
-  "complete": false,
-  "as_of": "2026-08-09T00:50:00.000Z",
-  "live_sha": "d236753",
+  "complete": true,
+  "as_of": "2026-08-09T00:59:06.274Z",
+  "live_sha": "b93b482",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",

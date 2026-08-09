@@ -36,6 +36,7 @@ export async function canAssignLoadToDriver(
                u.unit_number::text AS unit_number
         FROM maintenance.work_orders wo
         LEFT JOIN mdata.units u ON u.id = wo.unit_id
+         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = wo.operating_company_id
         WHERE wo.driver_id = $1
           AND wo.operating_company_id = $2
           AND wo.status::text NOT IN ('completed', 'cancelled')

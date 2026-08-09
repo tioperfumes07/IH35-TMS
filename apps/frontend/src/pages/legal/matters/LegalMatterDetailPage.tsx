@@ -12,6 +12,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
@@ -266,7 +267,11 @@ export function LegalMatterDetailPage() {
                 <div>
                   <strong>Related driver:</strong>{" "}
                   {matter?.related_driver_id ? (
-                    <EntityLink kind="driver" id={String(matter.related_driver_id)} label={String(matter.related_driver_name ?? "Open driver")} />
+                    <EntityLink
+                      kind="driver"
+                      id={String(matter.related_driver_id)}
+                      label={entityLabel(matter.related_driver_name, matter.related_driver_id, "Driver")}
+                    />
                   ) : (
                     "—"
                   )}
@@ -277,7 +282,7 @@ export function LegalMatterDetailPage() {
                     <EntityLink
                       kind="claim"
                       id={String(matter.insurance_claim_id)}
-                      label={String(matter.insurance_claim_number ?? matter.insurance_claim_id)}
+                      label={entityLabel(matter.insurance_claim_number, matter.insurance_claim_id, "Claim")}
                     />
                   ) : (
                     "—"
@@ -289,7 +294,7 @@ export function LegalMatterDetailPage() {
                     <EntityLink
                       kind="lawsuit"
                       id={String(matter.insurance_lawsuit_id)}
-                      label={String(matter.insurance_lawsuit_case_number ?? matter.insurance_lawsuit_id)}
+                      label={entityLabel(matter.insurance_lawsuit_case_number, matter.insurance_lawsuit_id, "Lawsuit")}
                       data-testid="matter-insurance-lawsuit-link"
                     />
                   ) : (
@@ -299,7 +304,11 @@ export function LegalMatterDetailPage() {
                 <div>
                   <strong>Unit:</strong>{" "}
                   {matter?.unit_id ? (
-                    <EntityLink kind="unit" id={String(matter.unit_id)} label={String(matter.unit_number ?? matter.unit_id)} />
+                    <EntityLink
+                      kind="unit"
+                      id={String(matter.unit_id)}
+                      label={entityLabel(matter.unit_number, matter.unit_id, "Unit")}
+                    />
                   ) : (
                     "—"
                   )}

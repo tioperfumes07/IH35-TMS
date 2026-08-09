@@ -380,7 +380,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
               -- ACCT-F265 — inherit the parent bill's sample flag (see bills.service.ts). A cash advance
               -- settled against a SAMPLE bill must not produce a REAL payment; the driver-advance path
               -- is the one most likely to be exercised with fixture data.
-              COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid), false))
+              COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid AND b.operating_company_id = $1::uuid), false))
             RETURNING id
           `,
           [companyId, advance.linked_bill_id, advance.amount, "cash_advance", advance.id]
