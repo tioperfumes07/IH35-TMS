@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -40,7 +41,7 @@ export function BillPaymentDetailPage() {
   const payment = detailQuery.data?.payment;
   if (!payment) return <div className="p-4 text-sm text-red-600">Bill payment not found.</div>;
 
-  const displayId = payment.reference_number ?? payment.check_number ?? payment.id.slice(0, 8);
+  const displayId = entityLabel(payment.reference_number ?? payment.check_number, payment.id, "Payment");
   const isVoided = Boolean(payment.revoked_at);
 
   return (
@@ -75,13 +76,13 @@ export function BillPaymentDetailPage() {
         {payment.bill_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Bill</span>
-            <EntityLink kind="bill" id={payment.bill_id} label={payment.bill_number ?? payment.bill_id.slice(0, 8)} />
+            <EntityLink kind="bill" id={payment.bill_id} label={entityLabel(payment.bill_number, payment.bill_id, "Bill")} />
           </DataPanelRow>
         ) : null}
         {payment.vendor_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Vendor</span>
-            <EntityLink kind="vendor" id={payment.mdata_vendor_id} label={payment.vendor_name ?? payment.vendor_id.slice(0, 8)} />
+            <EntityLink kind="vendor" id={payment.mdata_vendor_id} label={entityLabel(payment.vendor_name, payment.vendor_id, "Vendor")} />
           </DataPanelRow>
         ) : null}
         {payment.journal_entry_id ? (
@@ -93,7 +94,7 @@ export function BillPaymentDetailPage() {
               label={
                 payment.journal_entry_date
                   ? `${formatDateUS(payment.journal_entry_date)}${payment.journal_entry_memo ? ` — ${payment.journal_entry_memo}` : ""}`
-                  : payment.journal_entry_id.slice(0, 8)
+                  : entityLabel(null, payment.journal_entry_id, "Journal entry")
               }
             />
           </DataPanelRow>
@@ -115,7 +116,7 @@ export function BillPaymentDetailPage() {
                         ? ` (${money(Number(payment.matched_bank_transaction_amount_cents))})`
                         : ""
                     }`
-                  : payment.matched_bank_transaction_id.slice(0, 8)
+                  : entityLabel(null, payment.matched_bank_transaction_id, "Bank transaction")
               }
             />
           </DataPanelRow>
