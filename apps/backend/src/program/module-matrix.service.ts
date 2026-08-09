@@ -177,6 +177,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "fuel") {
     return /\bfuel\b|\brelay\b|\bloves\b|\bexpense[\s_-]?mapping/i;
   }
+  if (moduleId === "drivers") {
+    return /\bdrivers?\b|\bcdl\b|\bpay[\s_-]?rate|\bdeductions?\b|\bapplicants?\b/i;
+  }
   // maintenance (default)
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }

@@ -170,6 +170,7 @@ export function assertScoreboardContract(sources) {
       !/banking\.required\.json/.test(matrixPage) ||
       !/dispatch\.required\.json/.test(matrixPage) ||
       !/fuel\.required\.json/.test(matrixPage) ||
+      !/drivers\.required\.json/.test(matrixPage) ||
       !/settlements\.required\.json/.test(matrixPage)
     ) {
       problems.push(
@@ -192,7 +193,7 @@ export function assertScoreboardContract(sources) {
     }
   }
 
-  for (const mod of ["maintenance", "safety", "insurance", "legal", "accounting", "banking", "dispatch", "settlements", "fuel"]) {
+  for (const mod of ["maintenance", "safety", "insurance", "legal", "accounting", "banking", "dispatch", "settlements", "fuel", "drivers"]) {
     const mapRel = `docs/specs/scoreboard/modules/${mod}.required.json`;
     const mapPath = path.join(ROOT, mapRel);
     if (!fs.existsSync(mapPath)) {
