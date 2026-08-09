@@ -114,7 +114,7 @@ describe("CostBreakdownBox", () => {
       />
     );
 
-    const productServiceInput = screen.getAllByPlaceholderText("Product/Service")[0];
+    const productServiceInput = screen.getAllByPlaceholderText(/product\/service/i)[0];
     const lineCard = productServiceInput.closest("div.rounded.border.border-gray-200.bg-white.p-2");
     const removeButton = within(lineCard as HTMLElement).getByRole("button", { name: "x" });
     fireEvent.click(removeButton);
@@ -253,7 +253,7 @@ describe("CostBreakdownBox", () => {
       />
     );
 
-    const input = screen.getByPlaceholderText("expense_category_uuid");
+    const input = screen.getByPlaceholderText(/select category/i);
     expect(input).toBeDisabled();
     await userEvent.type(input, "new-value");
     expect(onSectionAChange).not.toHaveBeenCalled();
@@ -270,9 +270,9 @@ describe("CostBreakdownBox", () => {
       />
     );
 
-    const rowGrid = screen.getByPlaceholderText("Product/Service").closest("div.grid");
+    const rowGrid = screen.getByPlaceholderText(/product\/service/i).closest("div.grid");
     expect(rowGrid?.children.length).toBe(7);
-    expect(screen.getByPlaceholderText("Product/Service")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/product\/service/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Description")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Location")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Qty")).toBeInTheDocument();
