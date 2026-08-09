@@ -40,7 +40,7 @@ describe("ScheduleReportModal", () => {
     // while the listbox is OPEN and are addressed by VISIBLE TEXT, not by value. `user.selectOptions(el, id)`
     // therefore threw `Value "…" not found in options`, a message that names the ID and never the widget —
     // so it read as missing DATA rather than a control that changed shape.
-    pickCombo(reportSelect, /customer-profitability/);
+    pickCombo(reportSelect, /Customer profitability/);
     expect(await screen.findByLabelText(/min revenue/i)).toBeInTheDocument();
   });
 
