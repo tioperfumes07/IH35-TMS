@@ -392,7 +392,20 @@ export function WorkOrderDetailPage() {
     if (!linkedFinancialsQ.data) return [];
     return linkedFinancialsQ.data.expenses.map((expense) => ({
       ...expense,
-      expense_link: <EntityLink kind="expense" id={expense.id} label={expense.id.slice(0, 8)} />,
+      expense_link: (
+        <EntityLink
+          kind="expense"
+          id={expense.id}
+          label={entityLabel(
+            expense.memo?.trim() ||
+              (expense.transaction_date
+                ? `Expense · ${formatDateUS(expense.transaction_date)}`
+                : null),
+            expense.id,
+            "Expense",
+          )}
+        />
+      ),
     }));
   }, [linkedFinancialsQ.data]);
 
