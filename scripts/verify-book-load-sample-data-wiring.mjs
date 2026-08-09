@@ -103,7 +103,7 @@ if (SELFTEST) {
   const checks = [
     ["submit payload dropped", { ...files, [MODAL]: files[MODAL].replace(/is_sample_data:\s*values\.is_sample_data,/, "") }],
     ["schema key dropped", { ...files, [ROUTES]: files[ROUTES].replace(/is_sample_data:\s*z\.boolean\(\)\.optional\(\),/, "") }],
-    ["INSERT column dropped", { ...files, [SERVICE]: files[SERVICE].replace(/,\s*is_sample_data\n/, "\n") }],
+    ["INSERT column dropped", { ...files, [SERVICE]: files[SERVICE].replace(/,\s*is_sample_data\s*,/, ",") }],
     ["edit prefill dropped", { ...files, [EDIT_MAP]: files[EDIT_MAP].replace(/is_sample_data:\s*Boolean\([^\n]*\n/, "") }],
     ["edit patch field dropped", { ...files, [EDIT_MAP]: files[EDIT_MAP].replace(/\["is_sample_data",[^\n]*\n/, "") }],
     ["update column map dropped", { ...files, [UPDATE_SVC]: files[UPDATE_SVC].replace(/\n\s*is_sample_data:\s*"is_sample_data",/, "") }],
