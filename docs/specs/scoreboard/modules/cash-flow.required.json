@@ -1,0 +1,220 @@
+{
+  "module": "cash-flow",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "Cash Flow sidebar module",
+    "pages": "apps/frontend/src/pages/cash-flow/*"
+  },
+  "columns": [
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "home",
+      "tab": "Home",
+      "sub": "Cash Flow page shell",
+      "route_hint": "/cash-flow",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "tab.daily_prediction",
+      "tab": "Projected (Auto)",
+      "sub": "Daily prediction tab",
+      "route_hint": "/cash-flow",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "tab.actual_vs_projected",
+      "tab": "Actual vs Projected",
+      "sub": "Actual vs projected tab",
+      "route_hint": "/cash-flow?tab=actual_vs_projected",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "tab.manual_daily_projections",
+      "tab": "Manual Daily Projections",
+      "sub": "Manual projections (flag-gated)",
+      "route_hint": "/cash-flow?tab=manual_daily_projections",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "hop.banking",
+      "tab": "Banking hop",
+      "sub": "Banking home cash position",
+      "route_hint": "/banking",
+      "required": [
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "hop.reports.cash_flow_statement",
+      "tab": "Reports hop",
+      "sub": "Cash flow statement report",
+      "route_hint": "/reports/cash-flow-statement",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "hop.reports.cash_flow",
+      "tab": "Reports hop",
+      "sub": "Cash flow report",
+      "route_hint": "/reports/cash-flow",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "hop.reports.cash_flow_overview",
+      "tab": "Reports hop",
+      "sub": "Cash flow overview",
+      "route_hint": "/reports/cash-flow-overview",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "hop.cash_advances",
+      "tab": "Cash Advances hop",
+      "sub": "Cash advances module",
+      "route_hint": "/cash-advances",
+      "required": [
+        "driver",
+        "liability",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "create.manual_projection",
+      "tab": "Manual Daily Projections",
+      "sub": "+ Create manual projection row",
+      "route_hint": "/cash-flow?tab=manual_daily_projections",
+      "required": [
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "gl_je"
+      ]
+    }
+  ]
+}
