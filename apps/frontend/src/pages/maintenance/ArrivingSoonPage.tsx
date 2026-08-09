@@ -102,6 +102,9 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
 
   const cards = query.data?.cards ?? [];
   const counts = query.data?.counts ?? { total: 0, severe: 0, warning: 0, info: 0, already_arrived: 0 };
+  // MAINT-S03 — settled-only empty (never mid-fetch false-empty; never empty-on-error).
+  const listLoading =
+    query.isPending || (query.isFetching && cards.length === 0 && !query.isError);
 
   // Parent row per unit/load; the nested issues[] open in the per-row expand below.
   const columns: Array<ParityColumn<ArrivingSoonCardType>> = [
@@ -196,7 +199,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
   );
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-testid="maint-arriving-soon">
       <ArrivingSoonFilterBar
         withinHours={withinHours}
         severityMin={severityMin}
@@ -209,14 +212,25 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
         onIncludeNonYardChange={setIncludeNonYard}
       />
 
+      {query.isError ? (
+        <div
+          className="rounded-sm border border-slate-300 bg-slate-50 p-3 text-xs text-slate-700"
+          data-testid="maint-arriving-soon-error"
+          role="alert"
+        >
+          Arriving Soon failed to load for this entity. Retry or check the maintenance arriving-soon API —
+          this is not an empty queue.
+        </div>
+      ) : null}
+
       {/* Desktop/tablet: full parity table. Mobile: stacked cards (same data, no horizontal scroll). */}
       <div className="hidden sm:block">
         <ParityTable<ArrivingSoonCardType>
           columns={columns}
           rows={cards}
           rowKey={(card) => `${card.load_id}:${card.unit_id}`}
-          loading={query.isLoading}
-          emptyText="No units arriving with open issues. The shop has nothing to prep right now."
+          loading={listLoading}
+          emptyText="No units arriving with open issues for this entity — arrivals with shop-prep issues populate this queue as loads approach the yard."
           storageKey="maint-arriving-soon"
           exportFilename="arriving-soon"
           rowActions={rowActions}
@@ -224,20 +238,22 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
         />
       </div>
       <div className="space-y-2 sm:hidden">
-        {query.isLoading ? <div className="text-xs text-gray-500">Loading...</div> : null}
-        {!query.isLoading && cards.length === 0 ? (
-          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-500">
-            No units arriving with open issues. The shop has nothing to prep right now.
+        {listLoading ? <div className="text-xs text-gray-500">Loading...</div> : null}
+        {!listLoading && !query.isError && cards.length < 1 ? (
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-500" data-testid="maint-arriving-soon-empty-mobile">
+            Nothing to prep for this entity right now.
           </div>
         ) : null}
-        {cards.map((card) => (
-          <ArrivingSoonCard
-            key={`${card.load_id}:${card.unit_id}`}
-            card={card}
-            canConvert={canConvert}
-            onConvert={(c) => setSelectedCard(c)}
-          />
-        ))}
+        {!listLoading && !query.isError
+          ? cards.map((card) => (
+              <ArrivingSoonCard
+                key={`${card.load_id}:${card.unit_id}`}
+                card={card}
+                canConvert={canConvert}
+                onConvert={(c) => setSelectedCard(c)}
+              />
+            ))
+          : null}
       </div>
 
       <ConvertIssueToWOModal

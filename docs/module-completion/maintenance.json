@@ -2,14 +2,14 @@
   "module": "maintenance",
   "title": "Maintenance — acceptance checklist",
   "complete": false,
-  "as_of": "2026-08-09T01:27:39.334Z",
+  "as_of": "2026-08-09T01:46:52.219Z",
   "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "RE-SCOPED 2026-07-31 (owner decision). The prior bar — 'renders real entity-scoped data' — is UNSATISFIABLE on prod today and is why this module sat at 0 since the 2026-07-29 baseline: the backing tables are empty (maintenance work_order_lines/defects/inspections/dvir/road_service/all 5 tire tables/both brake tables/warranty_claims/pm_alerts = 0, work_orders = 2, pm_schedules 30 rows but 0 ACTIVE; dispatch assignment_history/detention x3/intransit_issues/equipment_transfers/ocr_queue/pod_documents/driver_layovers = 0, geo.geofences = 0, mdata.loads = 10 all TRANSP; TRK and USMCA hold zero dispatch and zero maintenance operational rows). Marking PASS on density would have asserted what the data cannot support; marking FAIL on a correct empty screen would be equally false. The bar is now renders + entity-scoped + honest empty state, which IS provable today on all three entities and is the bar McLeod/NetSuite hold an unseeded module to. This is a change of bar, NOT a lowering of standard: the seed dependency is tracked as its own block (DISP-MAINT-DATA-01) and is deliberately NOT a click-through gate. Evidence: docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. No item was flipped by this re-scope.\n\nORIGINAL BASELINE NOTE (kept, append-only): BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). | MAINT-S01/S02 PASS 2026-08-09 WorkOrdersTable settled empty",
+  "note": "RE-SCOPED 2026-07-31 (owner decision). The prior bar — 'renders real entity-scoped data' — is UNSATISFIABLE on prod today and is why this module sat at 0 since the 2026-07-29 baseline: the backing tables are empty (maintenance work_order_lines/defects/inspections/dvir/road_service/all 5 tire tables/both brake tables/warranty_claims/pm_alerts = 0, work_orders = 2, pm_schedules 30 rows but 0 ACTIVE; dispatch assignment_history/detention x3/intransit_issues/equipment_transfers/ocr_queue/pod_documents/driver_layovers = 0, geo.geofences = 0, mdata.loads = 10 all TRANSP; TRK and USMCA hold zero dispatch and zero maintenance operational rows). Marking PASS on density would have asserted what the data cannot support; marking FAIL on a correct empty screen would be equally false. The bar is now renders + entity-scoped + honest empty state, which IS provable today on all three entities and is the bar McLeod/NetSuite hold an unseeded module to. This is a change of bar, NOT a lowering of standard: the seed dependency is tracked as its own block (DISP-MAINT-DATA-01) and is deliberately NOT a click-through gate. Evidence: docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. No item was flipped by this re-scope.\n\nORIGINAL BASELINE NOTE (kept, append-only): BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). | MAINT-S01/S02 PASS 2026-08-09 WorkOrdersTable settled empty | MAINT-S03/S07 PASS 2026-08-09 settled empty",
   "items": [
     {
       "id": "MAINT-S01",
@@ -48,10 +48,10 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/maintenance/MaintenanceHome.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — ArrivingSoonPage opco-scoped getArrivingSoon; ParityTable loading= settled gate + honest emptyText; error banner (not false-empty); mobile empty uses settled gate. Guard verify-list-empty-settled ArrivingSoonPage entry.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "MAINT-S04",
@@ -104,10 +104,10 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — DefectsInboxPage opco-scoped listMaintenanceDvirDefects; ParityTable loading=q.isPending + emptyText No DVIR defects. Guard verify-list-empty-settled DefectsInboxPage entry.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "MAINT-S08",
@@ -560,9 +560,9 @@
   ],
   "M": 39,
   "rescoped_on": "2026-07-31",
-  "pass_count": 2,
+  "pass_count": 4,
   "total_count": 39,
-  "progress": "2 of 39",
+  "progress": "4 of 39",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 1,

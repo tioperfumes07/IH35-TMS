@@ -277,7 +277,7 @@
     {
       "tier": "1",
       "module": "maintenance",
-      "build": "2/39",
+      "build": "4/39",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -2121,6 +2121,15 @@
   },
   "recentActivity": [
     {
+      "number": 5064,
+      "title": "FINDING: PROG-SCOREBOARD-STALE-BUILDS",
+      "state": "merged",
+      "mergedAtCt": "08/08/2026, 08:46 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5064",
+      "sha": "18d80b6dd",
+      "committedAtIso": "2026-08-08T20:46:07-05:00"
+    },
+    {
       "number": 5063,
       "title": "FINDING: LV-001",
       "state": "merged",
@@ -2200,15 +2209,6 @@
       "url": "",
       "sha": "a623133e1",
       "committedAtIso": "2026-08-08T20:20:39-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: FAIL-SET3 — the settlement render/print route 500'd on every settlement, always, on two column names that were never real",
-      "state": "merged",
-      "mergedAtCt": "08/08/2026, 08:18 PM CT",
-      "url": "",
-      "sha": "b5cc023f9",
-      "committedAtIso": "2026-08-08T20:18:21-05:00"
     }
   ]
 }
