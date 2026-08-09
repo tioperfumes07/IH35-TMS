@@ -83,6 +83,7 @@ import { useUrlSort } from "../hooks/useUrlSort";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { useListState } from "../components/list-state";
 import { EntityLink } from "../components/shared/EntityLink";
+import { entityLabel } from "../lib/entity-label";
 
 const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks", "Loads", "Per-Customer P&L", "Audit History"] as const;
 type CustomerTab = (typeof tabs)[number];
@@ -1928,7 +1929,7 @@ export function CustomerDetailPage() {
             <div className="space-y-1 text-sm text-gray-700">
               <div>Eligible: {billingSummary?.factoring_eligible ? "Yes" : "No"}</div>
               <div>Recourse: {billingSummary?.factoring_recourse_type ?? "Default"}</div>
-              <div>Company Vendor: <EntityLink kind="vendor" id={billingSummary?.factoring_company_vendor_id ?? undefined} label={billingSummary?.factoring_company_vendor_id?.slice(0, 8) ?? "Not set"} /></div>
+              <div>Company Vendor: <EntityLink kind="vendor" id={billingSummary?.factoring_company_vendor_id ?? undefined} label={billingSummary?.factoring_company_vendor_id ? entityLabel(null, billingSummary.factoring_company_vendor_id, "Vendor") : "Not set"} /></div>
             </div>
           </DataPanel>
           <DataPanel title="Credit Terms">

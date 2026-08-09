@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AtRiskDriverCard } from "../../components/drivers/AtRiskDriverCard";
+import { entityLabel } from "../../lib/entity-label";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 
@@ -50,7 +51,7 @@ export function RetentionDashboard() {
             <Link key={row.driver_uuid} to={`/drivers/${row.driver_uuid}`}>
               <AtRiskDriverCard
                 driverUuid={row.driver_uuid}
-                driverName={row.driver_uuid.slice(0, 8)}
+                driverName={entityLabel(null, row.driver_uuid, "Driver")}
                 operatingCompanyId={companyId}
                 riskScore={row.retention_risk_score}
                 tier={row.retention_tier}
