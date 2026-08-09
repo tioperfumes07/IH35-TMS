@@ -330,6 +330,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "cash-flow") {
     return /\bcash[\s_-]?flow\b|\bforecast\b|\bprojected\b|\bdaily[\s_-]?prediction/i;
   }
+  if (moduleId === "home") {
+    return /\bhome\b|\bowner[\s_-]?home|\bquick[\s_-]?jump|\bkpi\b|\battention[\s_-]?list/i;
+  }
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 

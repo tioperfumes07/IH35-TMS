@@ -1,0 +1,378 @@
+{
+  "module": "home",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "Home / role dashboards",
+    "pages": "apps/frontend/src/pages/home/*",
+    "jumps": "homeQuickJumps.ts"
+  },
+  "columns": [
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "route.root",
+      "tab": "Routes",
+      "sub": "App root /",
+      "route_hint": "/",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "route.home",
+      "tab": "Routes",
+      "sub": "/home role router",
+      "route_hint": "/home",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "route.home_ops",
+      "tab": "Routes",
+      "sub": "/home/ops role dashboards",
+      "route_hint": "/home/ops",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "role.owner",
+      "tab": "Role homes",
+      "sub": "Owner home",
+      "route_hint": "/home",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "gl_je",
+        "load",
+        "driver"
+      ]
+    },
+    {
+      "id": "role.dispatcher",
+      "tab": "Role homes",
+      "sub": "Dispatcher home",
+      "route_hint": "/home",
+      "required": [
+        "customer",
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "role.accountant",
+      "tab": "Role homes",
+      "sub": "Accounting home",
+      "route_hint": "/home",
+      "required": [
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "role.safety",
+      "tab": "Role homes",
+      "sub": "Safety home",
+      "route_hint": "/home",
+      "required": [
+        "driver",
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "role.manager",
+      "tab": "Role homes",
+      "sub": "Driver manager home",
+      "route_hint": "/home",
+      "required": [
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "role.default",
+      "tab": "Role homes",
+      "sub": "Default home",
+      "route_hint": "/home",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "surface.qbo_style",
+      "tab": "Surfaces",
+      "sub": "QBO-style home",
+      "route_hint": "/home",
+      "required": [
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "surface.kpi_cards",
+      "tab": "Surfaces",
+      "sub": "Home KPI cards + range toggle",
+      "route_hint": "/home",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "surface.attention_list",
+      "tab": "Surfaces",
+      "sub": "Attention list",
+      "route_hint": "/home",
+      "required": [
+        "customer",
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "surface.quick_actions",
+      "tab": "Surfaces",
+      "sub": "Quick actions bar",
+      "route_hint": "/home",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "surface.fleet_restore",
+      "tab": "Surfaces",
+      "sub": "Fleet restore card",
+      "route_hint": "/home",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "jump.maintenance",
+      "tab": "Quick jumps",
+      "sub": "→ Maintenance",
+      "route_hint": "/maintenance",
+      "required": [
+        "unit",
+        "vendor",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "jump.accounting",
+      "tab": "Quick jumps",
+      "sub": "→ Accounting",
+      "route_hint": "/accounting/invoices",
+      "required": [
+        "customer",
+        "ap_bill",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "jump.banking",
+      "tab": "Quick jumps",
+      "sub": "→ Banking",
+      "route_hint": "/banking",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "jump.fuel",
+      "tab": "Quick jumps",
+      "sub": "→ Fuel",
+      "route_hint": "/fuel",
+      "required": [
+        "unit",
+        "load",
+        "expense",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "jump.safety",
+      "tab": "Quick jumps",
+      "sub": "→ Safety",
+      "route_hint": "/safety",
+      "required": [
+        "driver",
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "jump.drivers",
+      "tab": "Quick jumps",
+      "sub": "→ Drivers",
+      "route_hint": "/drivers",
+      "required": [
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "jump.dispatch",
+      "tab": "Quick jumps",
+      "sub": "→ Dispatch",
+      "route_hint": "/dispatch",
+      "required": [
+        "customer",
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "jump.lists",
+      "tab": "Quick jumps",
+      "sub": "→ Lists",
+      "route_hint": "/lists",
+      "required": [
+        "picker_law",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hub.driver",
+      "tab": "Driver hub",
+      "sub": "Driver hub page",
+      "route_hint": "/driver-hub",
+      "required": [
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hub.driver_reporting",
+      "tab": "Driver hub",
+      "sub": "Driver hub reporting",
+      "route_hint": "/driver-hub/reporting",
+      "required": [
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hop.program",
+      "tab": "Program hop",
+      "sub": "Scenario tracker → Program",
+      "route_hint": "/program",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    }
+  ]
+}
