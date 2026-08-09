@@ -107,7 +107,17 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   // Migrated to the shared QBO-parity grid — columns and order are preserved verbatim (§7 additive-only).
   const columns: Array<ParityColumn<InternalFineRow>> = [
     { key: "imposed_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.imposed_date) },
-    { key: "driver_id", label: "Driver", render: (row) => <EntityLink kind="driver" id={row.driver_id as string | undefined} /> },
+    {
+      key: "driver_id",
+      label: "Driver",
+      render: (row) => (
+        <EntityLink
+          kind="driver"
+          id={row.driver_id as string | undefined}
+          label={(row.driver_name as string | undefined)?.trim() || "Driver"}
+        />
+      ),
+    },
     { key: "reason_code", label: "Reason", render: (row) => String(row.reason_code ?? row.reason_name ?? "—") },
     { key: "amount", label: "Amount", render: (row) => `$${Number(row.amount ?? 0).toFixed(2)}` },
     { key: "status", label: "Status", sortable: true, render: (row) => toStatusLabel(String(row.status ?? "pending")) },
