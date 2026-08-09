@@ -1,0 +1,229 @@
+{
+  "module": "form_425",
+  "entity_default": "USMCA",
+  "source": {
+    "pages": "apps/frontend/src/pages/form425c/*",
+    "sidebar": "form_425 → /425c"
+  },
+  "columns": [
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "home",
+      "tab": "Home",
+      "sub": "Form 425C home",
+      "route_hint": "/425c",
+      "required": [
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "tab.profile",
+      "tab": "Profiles",
+      "sub": "Company profiles tab",
+      "route_hint": "/425c",
+      "required": [
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "tab.qb",
+      "tab": "QB Import",
+      "sub": "QuickBooks import tab",
+      "route_hint": "/425c?tab=qb",
+      "required": [
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "tab.form",
+      "tab": "Current Period",
+      "sub": "Current period form tab",
+      "route_hint": "/425c?tab=form",
+      "required": [
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "tab.merge",
+      "tab": "Merge & Export",
+      "sub": "Merge export tab",
+      "route_hint": "/425c?tab=merge",
+      "required": [
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "tab.history",
+      "tab": "History",
+      "sub": "Filing history tab",
+      "route_hint": "/425c?tab=history",
+      "required": [
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "exhibits",
+      "tab": "Exhibits",
+      "sub": "Exhibits viewer",
+      "route_hint": "/425c/exhibits",
+      "required": [
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "redirect.form425c",
+      "tab": "Routes",
+      "sub": "/form-425c → /425c",
+      "route_hint": "/form-425c",
+      "required": [
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "hop.safety_audit",
+      "tab": "Safety hop",
+      "sub": "Safety audit-425c",
+      "route_hint": "/safety/audit-425c",
+      "required": [
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "hop.maint_compliance",
+      "tab": "Maintenance hop",
+      "sub": "Maintenance compliance 425C",
+      "route_hint": "/maintenance/compliance",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hop.compliance",
+      "tab": "Compliance hop",
+      "sub": "Compliance module",
+      "route_hint": "/compliance",
+      "required": [
+        "driver",
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "law.virtual_banks_excluded",
+      "tab": "425C Law",
+      "sub": "Factoring/Escrow excluded from main bank totals (lines 19-23)",
+      "route_hint": "/425c",
+      "required": [
+        "liability",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    }
+  ]
+}
