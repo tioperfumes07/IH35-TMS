@@ -350,13 +350,37 @@ async function collectAssignedDriverIdsForDrugGate(
 /** Set by resolveDriverBasePayCents so the created bill can label a §7 placeholder rate. */
 let lastResolvedRateWasTestData = false;
 
+/**
+ * ACCT-F283 — WHY the last resolve returned null, decided at the point the code already knows.
+ *
+ * The skip audit's `reason` was a DISJUNCTION: "no active pay rate for this driver/entity, OR the load
+ * has no miles captured yet". Both branches are real, but the resolver knows exactly which one it took
+ * and was throwing that away. A reader then had to re-derive it from `miles_shortest` in the payload —
+ * and the event's NAME (`skipped_no_pay_rate`) asserts the first branch, so anyone who trusted the name
+ * investigated the driver's pay rate when the missing data was the load's mileage.
+ *
+ * Measured on prod 2026-08-09: L-20260806-0008 skipped with the driver holding a valid 48c/mi rate
+ * created THREE DAYS earlier — the rate was found, the miles were NULL. 20 of 28 driver-seated loads
+ * are in that state, so the mislabelling recurs on every one of them.
+ *
+ * The event NAME is deliberately unchanged: it is asserted by driver-bills.test.ts and by two guards
+ * (verify-disp-wire-02-driver-bill, verify-load-creators-mint-or-audit-driver-pay). Renaming breaks
+ * three consumers to fix a wording problem; making the reason DETERMINATE breaks none.
+ */
+type PayResolveMiss = "no_pay_rate_configured" | "load_has_no_mileage" | "rate_not_priceable" | null;
+let lastPayResolveMiss: PayResolveMiss = null;
+
 async function resolveDriverBasePayCents(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   operatingCompanyId: string,
   driverId: string | null | undefined,
   load: Record<string, unknown>
 ): Promise<number | null> {
-  if (!driverId) return null;
+  lastPayResolveMiss = null;
+  if (!driverId) {
+    lastPayResolveMiss = "no_pay_rate_configured";
+    return null;
+  }
 
   const rateRes = await client.query<{
     basis_type: string;
@@ -379,7 +403,10 @@ async function resolveDriverBasePayCents(
     [operatingCompanyId, driverId]
   );
   const rate = rateRes.rows[0];
-  if (!rate) return null;
+  if (!rate) {
+    lastPayResolveMiss = "no_pay_rate_configured";
+    return null;
+  }
   if (rate.is_test_data) {
     // §7 placeholder rates exist so the skeleton can be exercised before real per-driver rates are
     // entered. Pricing from one is allowed, but it must never pass silently as operational truth —
@@ -391,7 +418,11 @@ async function resolveDriverBasePayCents(
 
   if (rate.basis_type === "per_load_pay") {
     const flat = Number(rate.flat_per_load_cents ?? 0);
-    return Number.isFinite(flat) && flat > 0 ? Math.round(flat) : null;
+    if (!Number.isFinite(flat) || flat <= 0) {
+      lastPayResolveMiss = "rate_not_priceable";
+      return null;
+    }
+    return Math.round(flat);
   }
 
   // per_mile_pay — SHORTEST miles by default, because the approved Load Wizard prototype states
@@ -402,10 +433,16 @@ async function resolveDriverBasePayCents(
       : Number(load.miles_shortest ?? Number.NaN);
   // Fail closed rather than assume zero: a load whose mileage has not been captured yet cannot be
   // priced, and a 0-mile bill would look like a settled $0 rather than an unpriced load.
-  if (!Number.isFinite(miles) || miles <= 0) return null;
+  if (!Number.isFinite(miles) || miles <= 0) {
+    lastPayResolveMiss = "load_has_no_mileage";
+    return null;
+  }
 
   const perMile = Number(rate.rate_per_mile_cents ?? 0);
-  if (!Number.isFinite(perMile) || perMile <= 0) return null;
+  if (!Number.isFinite(perMile) || perMile <= 0) {
+    lastPayResolveMiss = "rate_not_priceable";
+    return null;
+  }
   return Math.round(perMile * miles);
 }
 
@@ -461,10 +498,22 @@ export async function createDriverBillArtifacts(
         load_id: String(load.id),
         load_number: String(load.load_number ?? loadNumber),
         operating_company_id: input.operating_company_id,
+        // ACCT-F283 — DETERMINATE cause, not a disjunction. The resolver knows which branch it took;
+        // emitting "A or B" forced every reader to re-derive it and made the event NAME
+        // (skipped_no_pay_rate) look authoritative when the miss was the load's mileage.
+        skip_cause: lastPayResolveMiss ?? "unknown",
         reason:
-          "no active driver_finance.driver_pay_rates row for this driver/entity, or the load has no " +
-          "miles captured yet for a per-mile basis. Refusing to derive driver pay from the customer " +
-          "rate (locked driver model: wage/fee, never a % of linehaul).",
+          lastPayResolveMiss === "load_has_no_mileage"
+            ? "driver HAS an active pay rate, but this load has no mileage captured, so a per-mile " +
+              "basis cannot be priced. NOT a missing pay rate — the event name is retained for its " +
+              "existing consumers; see skip_cause. Fails closed because a 0-mile bill would read as a " +
+              "settled $0 rather than an unpriced load."
+            : lastPayResolveMiss === "rate_not_priceable"
+              ? "an active pay rate exists but carries no usable amount (non-positive or missing " +
+                "rate_per_mile_cents / flat_per_load_cents), so it cannot price this load."
+              : "no active driver_finance.driver_pay_rates row for this driver/entity. Refusing to " +
+                "derive driver pay from the customer rate (locked driver model: wage/fee, never a % " +
+                "of linehaul).",
         driver_id: primaryDriverForPay,
         miles_shortest: load.miles_shortest ?? null,
         extra_stop_bonus_cents: extraStopBonusCents,
