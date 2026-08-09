@@ -4,6 +4,8 @@ type Props = {
   rows: Array<Record<string, unknown>>;
   onOpenDetail: (row: Record<string, unknown>) => void;
   onMarkDisbursed: (row: Record<string, unknown>) => void;
+  /** SETL-S02 — show spinner row while parent useListState is loading. */
+  isLoading?: boolean;
 };
 
 function statusPill(status: string) {
@@ -15,7 +17,7 @@ function statusPill(status: string) {
   return "bg-gray-100 text-gray-700";
 }
 
-export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed }: Props) {
+export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed, isLoading = false }: Props) {
   return (
     <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
       <table className="min-w-[1200px] w-full text-left text-xs">
@@ -33,49 +35,50 @@ export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed }: Props
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => {
-            const status = String(row.disbursement_status ?? "pending_approval");
-            return (
-              <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1 font-medium">{String(row.display_id ?? String(row.id).slice(0, 8))}</td>
-                <td className="px-2 py-1">
-                  <EntityLink
-                    kind="driver"
-                    id={row.driver_id ? String(row.driver_id) : null}
-                    label={String(row.driver_full_name ?? "—")}
-                    onClick={(event) => event.stopPropagation()}
-                  />
-                </td>
-                <td className="px-2 py-1">${Number(row.amount ?? 0).toFixed(2)}</td>
-                <td className="px-2 py-1">{String(row.purpose ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.disbursement_method ?? "—")}</td>
-                <td className="px-2 py-1">
-                  <span className={`rounded-full px-2 py-0.5 ${statusPill(status)}`}>{status}</span>
-                </td>
-                <td className="px-2 py-1">${Number(row.outstanding_balance ?? 0).toFixed(2)}</td>
-                <td className="px-2 py-1">{String(row.created_at ?? "").slice(0, 10) || "—"}</td>
-                <td className="px-2 py-1">
-                  <div className="flex gap-2">
-                    <button type="button" className="text-slate-700 underline" onClick={() => onOpenDetail(row)}>
-                      View Detail
-                    </button>
-                    {status !== "disbursed" && status !== "reversed" ? (
-                      <button type="button" className="text-slate-700 underline" onClick={() => onMarkDisbursed(row)}>
-                        Mark Disbursed
-                      </button>
-                    ) : null}
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-          {rows.length === 0 ? (
+          {isLoading ? (
             <tr>
               <td colSpan={9} className="px-2 py-3 text-center text-gray-500">
-                No cash advances found.
+                Loading cash advances…
               </td>
             </tr>
-          ) : null}
+          ) : (
+            rows.map((row) => {
+              const status = String(row.disbursement_status ?? "pending_approval");
+              return (
+                <tr key={String(row.id)} className="border-t border-gray-100">
+                  <td className="px-2 py-1 font-medium">{String(row.display_id ?? String(row.id).slice(0, 8))}</td>
+                  <td className="px-2 py-1">
+                    <EntityLink
+                      kind="driver"
+                      id={row.driver_id ? String(row.driver_id) : null}
+                      label={String(row.driver_full_name ?? "—")}
+                      onClick={(event) => event.stopPropagation()}
+                    />
+                  </td>
+                  <td className="px-2 py-1">${Number(row.amount ?? 0).toFixed(2)}</td>
+                  <td className="px-2 py-1">{String(row.purpose ?? "—")}</td>
+                  <td className="px-2 py-1">{String(row.disbursement_method ?? "—")}</td>
+                  <td className="px-2 py-1">
+                    <span className={`rounded-full px-2 py-0.5 ${statusPill(status)}`}>{status}</span>
+                  </td>
+                  <td className="px-2 py-1">${Number(row.outstanding_balance ?? 0).toFixed(2)}</td>
+                  <td className="px-2 py-1">{String(row.created_at ?? "").slice(0, 10) || "—"}</td>
+                  <td className="px-2 py-1">
+                    <div className="flex gap-2">
+                      <button type="button" className="text-slate-700 underline" onClick={() => onOpenDetail(row)}>
+                        View Detail
+                      </button>
+                      {status !== "disbursed" && status !== "reversed" ? (
+                        <button type="button" className="text-slate-700 underline" onClick={() => onMarkDisbursed(row)}>
+                          Mark Disbursed
+                        </button>
+                      ) : null}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })
+          )}
         </tbody>
       </table>
     </div>

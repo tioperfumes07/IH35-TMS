@@ -8,6 +8,8 @@ import { useUrlSort } from "../../../hooks/useUrlSort";
 type Props = {
   rows: SettlementListRow[];
   onOpen: (id: string) => void;
+  /** SETL-S01 — ParityTable emptyText only when settled (never mid-fetch). */
+  loading?: boolean;
 };
 
 function statusClass(status: SettlementListRow["status"]) {
@@ -18,7 +20,7 @@ function statusClass(status: SettlementListRow["status"]) {
   return "bg-gray-100 text-gray-700";
 }
 
-export function SettlementsTable({ rows, onOpen }: Props) {
+export function SettlementsTable({ rows, onOpen, loading = false }: Props) {
   // BANK-SORT-ROLLOUT-OPS — ?sort=/?dir= URL persistence via the shared useUrlSort hook
   // (BANK-SORT-ROLLOUT-ACCT), same contract as the dispatch board and fleet/WO lists so a
   // shared/bookmarked settlements link preserves the chosen column sort.
@@ -137,7 +139,8 @@ export function SettlementsTable({ rows, onOpen }: Props) {
       rowKey={(row) => row.id}
       storageKey="driver-finance-settlements-list"
       tableTestId="driver-finance-settlements-table"
-      emptyText="No settlements found."
+      loading={loading}
+      emptyText="No settlements found — none created for this entity yet (or no rows match the current filter)."
       sortKey={sortKey}
       sortDirection={sortDirection}
       onSortChange={onSortChange}

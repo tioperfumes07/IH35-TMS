@@ -210,6 +210,7 @@ export function SettlementsPage() {
 
       <SettlementsTable
         rows={focusedSettlements}
+        loading={listQuery.isPending || (listQuery.isFetching && focusedSettlements.length === 0)}
         onOpen={(id) => {
           const next = new URLSearchParams(searchParams);
           next.set("settlement_id", id);
