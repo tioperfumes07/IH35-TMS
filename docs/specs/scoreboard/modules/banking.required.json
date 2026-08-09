@@ -1,0 +1,220 @@
+{
+  "module": "banking",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Banking",
+    "nav": "apps/frontend/src/pages/banking/BANKING_NAV_CONFIG.ts",
+    "routes": "/banking/*"
+  },
+  "columns": [
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "accounts",
+      "tab": "Accounts",
+      "sub": "Bank account tiles",
+      "route_hint": "/banking",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "transactions.list",
+      "tab": "Transactions",
+      "sub": "All transactions",
+      "route_hint": "/banking/transactions",
+      "required": [
+        "vendor",
+        "customer",
+        "gl_je",
+        "expense",
+        "ap_bill",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "transactions.categorize",
+      "tab": "Transactions",
+      "sub": "Match / Categorize",
+      "route_hint": "/banking/transactions",
+      "required": [
+        "vendor",
+        "customer",
+        "gl_je",
+        "expense",
+        "ap_bill",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "reconciliation",
+      "tab": "Reconciliation",
+      "sub": "Reconciliation workspace",
+      "route_hint": "/banking/reconciliation",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "qbo_chrome",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "factoring",
+      "tab": "Factoring (Faro)",
+      "sub": "Banking factoring entry",
+      "route_hint": "/banking/factoring",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "driver_escrow",
+      "tab": "Driver Escrow",
+      "sub": "Escrow virtual bank",
+      "route_hint": "/banking/driver-escrow",
+      "required": [
+        "driver",
+        "liability",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "relay_card",
+      "tab": "Relay Card",
+      "sub": "Relay card",
+      "route_hint": "/banking/relay-card",
+      "required": [
+        "driver",
+        "unit",
+        "expense",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "reports",
+      "tab": "Reports",
+      "sub": "Banking reports",
+      "route_hint": "/banking/reports",
+      "required": [
+        "gl_je",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "statement_import",
+      "tab": "Statement Import",
+      "sub": "CSV statement import",
+      "route_hint": "/banking/statement-import",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "plaid",
+      "tab": "Plaid Connections",
+      "sub": "Plaid feed config",
+      "route_hint": "/banking/plaid-connections",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "settings",
+      "tab": "Settings",
+      "sub": "Banking settings",
+      "route_hint": "/banking/settings",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    }
+  ]
+}

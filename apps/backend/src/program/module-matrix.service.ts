@@ -165,6 +165,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "accounting") {
     return /\baccounting\b|\bbills?\b|\bexpenses?\b|\binvoices?\b|\bjournal|\bcoa\b|\bgl\b|\bfactoring\b|\bescrow\b/i;
   }
+  if (moduleId === "banking") {
+    return /\bbanking\b|\bbank[\s_-]?txn|\breconcil|\bplaid\b|\bundeposited|\bmatch[\s_-]?categor/i;
+  }
   // maintenance (default)
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
