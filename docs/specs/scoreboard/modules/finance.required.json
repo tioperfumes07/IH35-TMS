@@ -1,0 +1,329 @@
+{
+  "module": "finance",
+  "entity_default": "USMCA",
+  "source": {
+    "pages": "apps/frontend/src/pages/finance/*",
+    "tabs": "FinanceModuleTabs.tsx"
+  },
+  "columns": [
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "hub",
+      "tab": "Hub",
+      "sub": "Finance hub landing",
+      "route_hint": "/finance",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "hub.alias",
+      "tab": "Hub",
+      "sub": "/finance-hub alias",
+      "route_hint": "/finance-hub",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "nav.overview",
+      "tab": "Overview",
+      "sub": "Finance overview",
+      "route_hint": "/finance/overview",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "nav.statements",
+      "tab": "Statements",
+      "sub": "Financial statements (P&L/BS/TB)",
+      "route_hint": "/finance/statements",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "statements.pl",
+      "tab": "Statements",
+      "sub": "P&L sub-tab",
+      "route_hint": "/finance/statements",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "statements.bs",
+      "tab": "Statements",
+      "sub": "Balance sheet sub-tab",
+      "route_hint": "/finance/statements?tab=bs",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "statements.tb",
+      "tab": "Statements",
+      "sub": "Trial balance sub-tab",
+      "route_hint": "/finance/statements?tab=tb",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "nav.ar_ap_aging",
+      "tab": "AR/AP Aging",
+      "sub": "AR/AP aging",
+      "route_hint": "/finance/ar-ap-aging",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "nav.projections",
+      "tab": "Projections",
+      "sub": "Finance projections",
+      "route_hint": "/finance/projections",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "nav.scenarios",
+      "tab": "Scenarios",
+      "sub": "Finance scenarios",
+      "route_hint": "/finance/scenarios",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "nav.break_even",
+      "tab": "Break-even",
+      "sub": "Break-even analysis",
+      "route_hint": "/finance/break-even",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "nav.calculator",
+      "tab": "Calculator",
+      "sub": "Finance calculator",
+      "route_hint": "/finance/calculator",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "nav.amortization",
+      "tab": "Amortization",
+      "sub": "Amortization schedule",
+      "route_hint": "/finance/amortization",
+      "required": [
+        "liability",
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "nav.loan_wizard",
+      "tab": "Loan Wizard",
+      "sub": "Loan wizard",
+      "route_hint": "/finance/loan-wizard",
+      "required": [
+        "liability",
+        "vendor",
+        "gl_je",
+        "picker_law",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hop.accounting",
+      "tab": "Accounting hop",
+      "sub": "Accounting module",
+      "route_hint": "/accounting",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "hop.cash_flow",
+      "tab": "Cash Flow hop",
+      "sub": "Cash flow module",
+      "route_hint": "/cash-flow",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "hop.reports",
+      "tab": "Reports hop",
+      "sub": "Reports P&L",
+      "route_hint": "/reports/profit-loss",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    }
+  ]
+}
