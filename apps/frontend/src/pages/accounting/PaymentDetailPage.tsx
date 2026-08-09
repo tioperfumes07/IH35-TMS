@@ -22,6 +22,13 @@ function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
 
+function accountLabel(name: string | null | undefined, number: string | null | undefined, id: string) {
+  if (name && number) return `${number} — ${name}`;
+  if (name) return name;
+  if (number) return number;
+  return id.slice(0, 8);
+}
+
 export function PaymentDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
@@ -215,7 +222,21 @@ export function PaymentDetailPage() {
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Deposited to</span>
-          <span className="text-sm text-gray-900"><EntityLink kind="account" id={payment.deposited_to_account_id || undefined} label={payment.deposited_to_account_id ? payment.deposited_to_account_id.slice(0, 8) : "-"} /></span>
+          <span className="text-sm text-gray-900">
+            <EntityLink
+              kind="account"
+              id={payment.deposited_to_account_id || undefined}
+              label={
+                payment.deposited_to_account_id
+                  ? accountLabel(
+                      payment.deposited_to_account_name,
+                      payment.deposited_to_account_number,
+                      payment.deposited_to_account_id
+                    )
+                  : "-"
+              }
+            />
+          </span>
         </DataPanelRow>
         {payment.matched_bank_transaction_id ? (
           <DataPanelRow>
@@ -224,7 +245,19 @@ export function PaymentDetailPage() {
               <EntityLink
                 kind="bank_transaction"
                 id={payment.matched_bank_transaction_id}
-                label={payment.matched_bank_transaction_id.slice(0, 8)}
+                label={
+                  payment.matched_bank_transaction_date
+                    ? `${formatDateUS(payment.matched_bank_transaction_date)}${
+                        payment.matched_bank_transaction_description
+                          ? ` — ${payment.matched_bank_transaction_description}`
+                          : ""
+                      }${
+                        payment.matched_bank_transaction_amount_cents
+                          ? ` (${money(Number(payment.matched_bank_transaction_amount_cents))})`
+                          : ""
+                      }`
+                    : payment.matched_bank_transaction_id.slice(0, 8)
+                }
               />
             </span>
           </DataPanelRow>
