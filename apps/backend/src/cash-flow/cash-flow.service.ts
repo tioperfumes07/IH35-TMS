@@ -94,8 +94,29 @@ function variancePct(projected: number, actual: number): number | null {
   return Math.round(((actual - projected) / Math.abs(projected)) * 10000) / 100;
 }
 
-/** Statuses that mean "this load is real revenue" (excludes only 'cancelled'). */
-const ACTIVE_LOAD_FILTER = `l.status <> 'cancelled'`;
+/**
+ * Loads that are real revenue: not cancelled AND not soft-deleted.
+ *
+ * ACCT-F278 — this filtered `cancelled` only, so every SOFT-DELETED load still counted as projected
+ * income across all six load queries below. Measured on prod br-fancy-credit-akjnd07a 2026-08-08
+ * (bypass_rls in the SAME txn; COMPLETE: visible 29 == n_live_tup 29): 2 of 29 loads are
+ * soft-deleted, BOTH non-cancelled, carrying $6,600.00 of rate_total_cents. That is $6,600 of
+ * income projected off records the system considers deleted — on a screen an owner makes decisions
+ * from. Not a rounding curiosity.
+ *
+ * WHY IT BELONGS IN THE SHARED CONSTANT: all six load queries interpolate this one string, so the
+ * predicate is fixed in one place and cannot drift per-site. Patching six call sites individually is
+ * the divergence shape ACCT-F166 was born from.
+ *
+ * WHY SOFT-DELETE IS NOT COVERED BY THE STATUS CHECK: soft-deleting a load does not change its
+ * status, so a soft-deleted load sits at `delivered`/`in_transit` and passes `<> 'cancelled'`
+ * cleanly. The two are independent axes and both must be excluded.
+ *
+ * ★ AND NO APPLICATION CODE WRITES mdata.loads.soft_deleted_at — it is one of the two confirmed
+ * out-of-band prod writers. Rows can therefore enter this state with no app path that produced
+ * them, which means this service cannot be relied on to "never see" one. The filter is the control.
+ */
+const ACTIVE_LOAD_FILTER = `l.status <> 'cancelled' AND l.soft_deleted_at IS NULL`;
 
 /**
  * CASH-1 fix (void-exclusion no-op): the canonical void write-path
