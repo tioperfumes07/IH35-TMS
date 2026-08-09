@@ -345,6 +345,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "finance") {
     return /\bfinance\b|\bamortization\b|\bbreak[\s_-]?even|\bloan[\s_-]?wizard|\bprojections?\b/i;
   }
+  if (moduleId === "docs") {
+    return /\bdocs?\b|\bdocuments?\b|\bfile[\s_-]?links?\b|\bupload\b/i;
+  }
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 
