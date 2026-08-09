@@ -8,7 +8,10 @@ type Props = {
   periodEnd: string;
   status: string;
   computedAt: string | null;
-  loadIds: string[];
+  /** Loads this settlement covers. `number` is the human load number; `id` is only the drill target.
+   *  A null `number` means the payload genuinely did not carry one — it is NOT a licence to print a uuid
+   *  by default (SETTLEMENT-DETAIL-SHOWS-RAW-UUID). */
+  loads: { id: string; number: string | null }[];
   onRefresh: () => void;
 };
 
@@ -20,7 +23,7 @@ export function SettlementHeader({
   periodEnd,
   status,
   computedAt,
-  loadIds,
+  loads,
   onRefresh,
 }: Props) {
   return (
@@ -39,12 +42,16 @@ export function SettlementHeader({
       <div>
         <div className="text-[10px] uppercase text-gray-500">Loads in cycle</div>
         <div className="text-sm">
-          {loadIds.length === 0 ? (
+          {loads.length === 0 ? (
             "—"
           ) : (
             <div className="flex flex-wrap gap-1">
-              {loadIds.map((loadId) => (
-                <EntityLink key={loadId} kind="load" id={loadId} label={loadId.slice(0, 8)} className="text-slate-700 hover:underline" />
+              {/* SETTLEMENT-DETAIL-SHOWS-RAW-UUID: this printed `id.slice(0, 8)` — an opaque hex fragment —
+                  while the human load number was already on the same record. Show the number; fall back to
+                  the truncated id ONLY when the payload carried no number, so the fallback stays visible as
+                  a data gap instead of being the normal case. */}
+              {loads.map((load) => (
+                <EntityLink key={load.id} kind="load" id={load.id} label={load.number ?? load.id.slice(0, 8)} className="text-slate-700 hover:underline" />
               ))}
             </div>
           )}

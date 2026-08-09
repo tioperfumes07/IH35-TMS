@@ -115,13 +115,19 @@ export function SettlementDetailPage() {
   // LAW OF THE LAND §9 (2026-07-22): "Loads in cycle" reverse-link — distinct load ids carried
   // directly on settlement_lines.load_id (Jorge LOCKED 2026-06-27 direct-trace column), not just the
   // header's single settlementLoadId (a settlement may cover multiple loads for a driver's period).
-  const settlementLoadIds = useMemo(() => {
-    const ids = new Set<string>();
+  // SETTLEMENT-DETAIL-SHOWS-RAW-UUID: carry the load NUMBER alongside the id. The line already has it
+  // (`line.load_number`), so the header no longer has to print a uuid fragment for a load it can name.
+  const settlementLoads = useMemo(() => {
+    const byId = new Map<string, string | null>();
     for (const line of lines) {
       const loadId = (line as Record<string, unknown>).load_id;
-      if (typeof loadId === "string" && loadId) ids.add(loadId);
+      if (typeof loadId !== "string" || !loadId) continue;
+      const num = (line as Record<string, unknown>).load_number;
+      const number = typeof num === "string" && num ? num : null;
+      // First non-null number wins; a later line without one must not erase it.
+      if (!byId.has(loadId) || (byId.get(loadId) === null && number !== null)) byId.set(loadId, number);
     }
-    return Array.from(ids);
+    return Array.from(byId, ([id, number]) => ({ id, number }));
   }, [lines]);
 
   const teamSplitQuery = useQuery({
@@ -223,7 +229,7 @@ export function SettlementDetailPage() {
         periodEnd={String(settlement.period_end ?? "-")}
         status={String(settlement.status ?? "-")}
         computedAt={debt.computedAt}
-        loadIds={settlementLoadIds}
+        loads={settlementLoads}
         onRefresh={() => void debt.refresh()}
       />
       {canOpenDispute ? (
