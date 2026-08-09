@@ -83,10 +83,23 @@ function checkPreSettlements() {
   }
 }
 
+function checkEarningsTab() {
+  const TARGET = "apps/frontend/src/components/drivers/EarningsTab.tsx";
+  const src = readFileSync(join(repoRoot, TARGET), "utf8");
+  const code = stripComments(src);
+  if (/label=\{`\$\{row\.period_start\}/.test(code)) {
+    failures.push(`${TARGET}: must not interpolate raw row.period_start into settlement label`);
+  }
+  if (!/formatDateUS\s*\(\s*row\.period_start/.test(code) || !/formatDateUS\s*\(\s*row\.period_end/.test(code)) {
+    failures.push(`${TARGET}: settlement period EntityLink must use formatDateUS`);
+  }
+}
+
 checkTable();
 checkHeader();
 checkDetail();
 checkPreSettlements();
+checkEarningsTab();
 
 if (failures.length > 0) {
   console.error("FAIL verify-settlements-grid-honest-labels");
@@ -95,5 +108,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  "PASS verify-settlements-grid-honest-labels — list+header+presettlements period formatted, no uuid-as-display-id",
+  "PASS verify-settlements-grid-honest-labels — list+header+presettle+earnings period formatted, no uuid-as-display-id",
 );
