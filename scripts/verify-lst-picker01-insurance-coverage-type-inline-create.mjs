@@ -34,6 +34,27 @@ function stripComments(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 }
 
+function checkInsurerVendor(problems, rel, src) {
+  if (!src) return;
+  const code = stripComments(src);
+  // FAIL-INS-VENDOR-UX: free-text insurer_name caused live 409 insurance_vendor_not_found.
+  if (!/createKind=["']vendor["']/.test(code)) {
+    problems.push(`${rel}: insurer must use ReferenceSelect createKind=vendor (mdata.vendors R=W)`);
+  }
+  if (!/listVendors/.test(code)) {
+    problems.push(`${rel}: must load vendors via listVendors for insurer picker`);
+  }
+  // Bare free-text insurer — Cascade proved "SAMPLE Progressive Commercial" always 409s.
+  if (/Insurer Name \*/.test(src) && /value=\{[^}]*insurer_name/.test(src) && /<input[\s\S]*insurer_name/.test(src)) {
+    problems.push(`${rel}: must not keep bare <input> for insurer name`);
+  }
+  if (rel === WIZARD) {
+    if (!/mapPolicyWithBillsError|insurance_vendor_not_found/.test(code)) {
+      problems.push(`${rel}: must map insurance_vendor_not_found to an actionable UI message`);
+    }
+  }
+}
+
 function checkConsumer(problems, rel, src) {
   if (!src) {
     problems.push(`missing ${rel}`);
@@ -57,6 +78,7 @@ function checkConsumer(problems, rel, src) {
   if (/<option value="">Select type<\/option>/.test(src) && /typesQuery\.data/.test(src)) {
     problems.push(`${rel}: must not keep the bare <select> for coverage type`);
   }
+  checkInsurerVendor(problems, rel, src);
 }
 
 /** @returns {string[]} */
@@ -162,13 +184,28 @@ if (process.argv.includes("--selftest")) {
     (s) => s.replace(/INSERT INTO insurance\.type_catalog/, "INSERT INTO insurance.type_catalog_v2"),
     "INSERT must write insurance.type_catalog"
   );
+  expectCaught(
+    "wizard-vendor-picker-removed",
+    WIZARD,
+    (s) => s.replace(/createKind=["']vendor["']/, 'createKind="customer"'),
+    "createKind=vendor"
+  );
+  expectCaught(
+    "wizard-vendor-error-map-removed",
+    WIZARD,
+    (s) =>
+      s
+        .replace(/mapPolicyWithBillsError/g, "String")
+        .replace(/insurance_vendor_not_found/g, "vendor_missing"),
+    "insurance_vendor_not_found"
+  );
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAIL:`);
     for (const f of failures) console.error("  - " + f);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST OK — 5 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST OK — 7 planted defects caught, live sources clean`);
 } else {
   const problems = collectProblems();
   if (problems.length) {
@@ -177,6 +214,6 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   console.log(
-    `${LABEL} OK — PolicyCreateModal + PolicyCreateWizard use ReferenceSelect createKind=insurance_coverage_type (insurance.type_catalog)`
+    `${LABEL} OK — PolicyCreateModal + PolicyCreateWizard: coverage_type + insurer vendor ReferenceSelect (type_catalog + mdata.vendors)`
   );
 }

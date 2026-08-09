@@ -46,6 +46,8 @@ checkFile("PolicyCreateWizard", WIZARD_PATH, [
   ["term_months used", /term_months|termMonths/],
   ["unit_ids used", /unit_ids|unitIds/],
   ["0-unit guard (disabled when 0)", /selectedUnitIds\.length\s*===\s*0/],
+  ["insurer vendor picker (createKind=vendor)", /createKind=["']vendor["']/],
+  ["insurance_vendor_not_found UX map", /insurance_vendor_not_found/],
 ]);
 
 checkFile("useCostPerVehicle hook", HOOK_PATH, [

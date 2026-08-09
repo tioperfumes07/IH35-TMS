@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -26,6 +25,10 @@ const mdataMocks = {
       { id: "unit-2", unit_code: "TRL001", asset_type: "Trailer", status: "active" },
     ],
   }),
+  listVendors: vi.fn().mockResolvedValue({
+    vendors: [{ id: "vendor-1", name: "Progressive Commercial", vendor_type: "Insurance" }],
+    total: 1,
+  }),
 };
 
 vi.mock("../../api/insurance", () => ({
@@ -37,6 +40,7 @@ vi.mock("../../api/insurance", () => ({
 
 vi.mock("../../api/mdata", () => ({
   listUnits: (...args: unknown[]) => mdataMocks.listUnits(...args),
+  listVendors: (...args: unknown[]) => mdataMocks.listVendors(...args),
 }));
 
 vi.mock("../Modal", () => ({
@@ -89,14 +93,10 @@ describe("PolicyCreateWizard", () => {
 
   it("uses '+ Create policy' vocabulary (Guard B)", async () => {
     render(wrap(<PolicyCreateWizard {...defaultProps} />));
-    const user = userEvent.setup();
-    await user.type(screen.getByLabelText(/Insurer Name/i) ?? document.querySelector('input')!, "Test Ins");
-    // The final submit button must contain '+ Create policy'
-    // Advance to step 4 is needed; just check the wizard renders correctly first
-    // The button at step 4 will have '+ Create policy + schedule N bills'
-    // We verify the guard script covers this — here just verify no "New policy" text
+    // Final submit uses '+ Create policy'; no forbidden New/Add vocab on step 1.
     expect(screen.queryByText(/\+ New policy/i)).toBeNull();
     expect(screen.queryByText(/\+ Add policy/i)).toBeNull();
+    expect(screen.getByText(/Insurer \(vendor\)/i)).toBeInTheDocument();
   });
 
   it("step 2 shows 0-selection warning and Next disabled", async () => {
@@ -124,12 +124,8 @@ describe("PolicyCreateWizard", () => {
 
   it("renders allocation methods with equal_split as default", async () => {
     render(wrap(<PolicyCreateWizard {...defaultProps} />));
-    const user = userEvent.setup();
-    await user.type(screen.getAllByRole("textbox")[0]!, "Insurer A");
-    await user.type(screen.getAllByRole("textbox")[1]!, "POL-001");
-    // step1 Next with coverage type blank → should fail validation but let's try direct step advance
-    // Step 3 shows allocation — just confirm default by checking rendered html once we get there
-    // For now verify equal_split text not yet visible (step 1)
+    // Allocation UI is on step 3 — not visible on step 1.
     expect(screen.queryByText(/equal split/i)).toBeNull();
+    expect(screen.getByText(/Insurer \(vendor\)/i)).toBeInTheDocument();
   });
 });

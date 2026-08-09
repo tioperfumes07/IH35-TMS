@@ -4,11 +4,13 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, apiRequest } from "../../api/client";
 import { insurancePoliciesApi, listInsuranceTypeCatalog, type InsurancePolicyStatus } from "../../api/insurance";
-import { listUnits } from "../../api/mdata";
+import { listUnits, listVendors } from "../../api/mdata";
+import { ListErrorState } from "../ListErrorState";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 type Props = {
   open: boolean;
@@ -18,6 +20,7 @@ type Props = {
 };
 
 type FormState = {
+  insurer_vendor_id: string;
   insurer_name: string;
   policy_number: string;
   coverage_type: string;
@@ -42,6 +45,7 @@ type UnitOption = {
 };
 
 const INITIAL_FORM: FormState = {
+  insurer_vendor_id: "",
   insurer_name: "",
   policy_number: "",
   coverage_type: "",
@@ -109,6 +113,10 @@ function mapApi4xxToFieldErrors(error: ApiError): {
   if (payload.error === "coverage_type_not_found") {
     fieldErrors.coverage_type = "Selected coverage type is not active for this company.";
   }
+  if (payload.error === "insurance_vendor_not_found") {
+    fieldErrors.insurer_name =
+      "No vendor matches this insurer name. Pick an existing vendor or use + Add new (writes mdata.vendors).";
+  }
   if (payload.error === "forbidden") {
     return { fieldErrors, formError: "You are not allowed to create insurance policies." };
   }
@@ -128,12 +136,32 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState | "covered_units", string>>>({});
   const [formError, setFormError] = useState<string>("");
   const [serverError, setServerError] = useState<string>("");
+  const [vendorSearch, setVendorSearch] = useState("");
 
   const typesQuery = useQuery({
     queryKey: ["insurance", "type-catalog", operatingCompanyId],
     enabled: open && Boolean(operatingCompanyId),
     queryFn: () => listInsuranceTypeCatalog({ operating_company_id: operatingCompanyId }).then((result) => result.types),
   });
+
+  const vendorsQuery = useQuery({
+    queryKey: ["insurance", "policy-create", "vendors", operatingCompanyId, vendorSearch],
+    enabled: open && Boolean(operatingCompanyId),
+    queryFn: () =>
+      listVendors({
+        operating_company_id: operatingCompanyId,
+        limit: 200,
+        search: vendorSearch.trim() || undefined,
+      }).then((result) => result.vendors),
+  });
+
+  const vendorOptions = useMemo(
+    () =>
+      (vendorsQuery.data ?? [])
+        .filter((v) => Boolean(v.id) && Boolean(v.name?.trim()))
+        .map((v) => ({ value: v.id, label: v.name.trim() })),
+    [vendorsQuery.data]
+  );
 
   // SAF-B29: never silent listUnits(limit:500) — covered-units multi-select must re-query on type-ahead.
   const [unitSearch, setUnitSearch] = useState("");
@@ -157,6 +185,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
     setForm(INITIAL_FORM);
     setSelectedUnitIds([]);
     setUnitSearch("");
+    setVendorSearch("");
     setFieldErrors({});
     setFormError("");
     setServerError("");
@@ -230,7 +259,9 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
   const onSubmit = () => {
     const nextFieldErrors: Partial<Record<keyof FormState | "covered_units", string>> = {};
 
-    if (!form.insurer_name.trim()) nextFieldErrors.insurer_name = "Insurer name is required.";
+    if (!form.insurer_vendor_id.trim() || !form.insurer_name.trim()) {
+      nextFieldErrors.insurer_name = "Select an insurer vendor (or + Add new).";
+    }
     if (!form.policy_number.trim()) nextFieldErrors.policy_number = "Policy number is required.";
     if (!form.coverage_type) nextFieldErrors.coverage_type = "Coverage type is required.";
     if (!form.effective_date) nextFieldErrors.effective_date = "Effective date is required.";
@@ -309,12 +340,46 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
 
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Insurer Name *</span>
-            <input
-              className="w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={form.insurer_name}
-              onChange={(event) => updateField("insurer_name", event.target.value)}
-            />
+            <span className="text-xs font-semibold text-slate-700">Insurer (vendor) *</span>
+            {vendorsQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load vendors"
+                {...formatQueryErrorDetail(vendorsQuery.error)}
+                onRetry={() => void vendorsQuery.refetch()}
+                className="py-4"
+              />
+            ) : (
+              <ReferenceSelect
+                value={form.insurer_vendor_id || null}
+                onChange={(next) => {
+                  const id = next ?? "";
+                  const label = vendorOptions.find((o) => o.value === id)?.label ?? "";
+                  setForm((current) => ({
+                    ...current,
+                    insurer_vendor_id: id,
+                    insurer_name: label || (id ? current.insurer_name : ""),
+                  }));
+                  setFieldErrors((current) => ({ ...current, insurer_name: undefined }));
+                  setFormError("");
+                  setServerError("");
+                }}
+                options={vendorOptions}
+                createKind="vendor"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Select insurer vendor"
+                onSearch={setVendorSearch}
+                onOptionCreated={async (opt) => {
+                  setForm((current) => ({
+                    ...current,
+                    insurer_vendor_id: opt.value,
+                    insurer_name: opt.label,
+                  }));
+                  await queryClient.invalidateQueries({
+                    queryKey: ["insurance", "policy-create", "vendors", operatingCompanyId],
+                  });
+                }}
+              />
+            )}
             {fieldErrors.insurer_name ? <span className="text-xs text-red-700">{fieldErrors.insurer_name}</span> : null}
           </label>
 
