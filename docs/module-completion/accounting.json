@@ -2,8 +2,8 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": false,
-  "as_of": "2026-07-31T20:45:00.000Z",
-  "live_sha": "efba811",
+  "as_of": "2026-08-09T00:50:00.000Z",
+  "live_sha": "d236753",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -621,16 +621,16 @@
         "VERIFY-6"
       ],
       "spec": "flow6-auto-invoice-sending · ACCT-R-24 · owner B2d",
-      "status": "UNVERIFIED",
-      "evidence": "CODE+NEON 2026-07-31: mig 202609100090 ledgered on br-fancy-credit; proforma status+broker_customer_advance_liability on prod; guard 1836+1900. POD fire still data-blocked: lucia pending_docs_loads=0, proforma_n=0 (11977 invoices). DISP-FILTER-01 (#3915) landed for filter contract.",
+      "status": "PASS",
+      "evidence": "CODE: loads.routes delivered_pending_docs → convertProformaToOfficial → sendDraftInvoice (shared with POST /accounting/invoices/:id/send). Guards 1836+1643+1234 PASS. FLAG: INVOICE_PROFORMA_PIPELINE_ENABLED override enabled=true TRANSP+TRK+USMCA (lib.feature_flags). NEON lucia 2026-08-09: loads delivered_pending_docs=3 completed_docs_received=5; USMCA load-linked invoices with sent_at include INV-2026-00017 (L-20260808-0069, still delivered_pending_docs) + INV-2026-00018 (L-20260808-0074) + INV-2026-00019/00023 (completed_docs_received). healthz d236753.",
       "pr": null,
-      "live_proof": "UNVERIFIED — Neon mig applied 2026-07-31 20:25Z; no delivered_pending_docs loads to exercise auto-send",
-      "prod_verified": false
+      "live_proof": "Neon lucia 2026-08-09: INV-2026-00017 sent_at=2026-08-08T22:42:53Z load L-20260808-0069 status=delivered_pending_docs USMCA; INV-2026-00018 sent_at=2026-08-08T22:42:54Z L-20260808-0074 same; verify-flow6-auto-invoice-sending PASS + --selftest PASS; healthz version=d236753",
+      "prod_verified": true
     }
   ],
-  "pass_count": 38,
+  "pass_count": 39,
   "total_count": 39,
-  "progress": "38 of 39",
+  "progress": "39 of 39",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 4,
