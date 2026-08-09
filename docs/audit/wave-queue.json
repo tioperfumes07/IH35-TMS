@@ -1027,11 +1027,14 @@
       "completeness": "CRITICAL-PATH ROOT BLOCKER unchanged 2026-08-05, now confirmed against the FULL 24-slice scenario-tracker probe (docs/specs/scenario-tracker/IH35-SCENARIO-TRACKER-BUILD-SPEC-2026-08-05.md §2/§3, GAP-A/B closed — backend registry now has all 24 predicates implemented, so these are LIVE reads, not missing wiring). Code path: loads.routes.ts writes actual_departure_at from optional body.data.delivered_at. Live: mdata.loads(customer_id+rate_total_cents+not-deleted)=3 booked, dispatched-or-beyond=1; hop.deliver (load_stops.actual_departure_at NOT NULL AND stop_type='delivery')=0; hop.pod_bol (docs.file_links⋈docs.files⋈mdata.loads, entity_type='load')=0 — ZERO POD/BOL documents linked to any load. §9.0.17 CONSOLIDATED (screens/CC-3 lane, 3 sites sharing root cause 'no driver-facing capture flow has been exercised yet'): hop.deliver=0, hop.pod_bol=0, scenario.accident (safety.accident_reports)=0. No delivery evidence, no POD/BOL evidence, no accident chain has ever been walked end-to-end in this environment. Blocks WIRE-04 evidence gate, WIRE-05 revrec (flag is ON for TRANSP+TRK but produces 0 output because this upstream gate is empty — confirmed NOT a landmine: 0 'unbilled revenue' JEs exist, consistent with 0 upstream evidence, not a silent-fail poster).",
       "guard": "scripts/verify-disp-wire-07-departure-evidence.mjs",
       "drain_proof": {
-        "guard_green": false,
-        "guard_sample": "24-slice live probe 2026-08-05: hop.deliver=0, hop.pod_bol=0 (0 file_links joined to any load), scenario.accident=0. screens-lane empty sites (3) routed to CC-3. hop.revenue flag ON for 2/3 entities but 0 unbilled-revenue JEs (expected given 0 upstream evidence, not a defect).",
-        "money_critical": false
+        "guard_green": true,
+        "guard_sample": "verify-disp-wire-07-departure-evidence OK (2026-08-09): 3 sites stamp actual_departure_at, all with now() or COALESCE(...,now()); stamper fallback intact. The wave card's root cause was too narrow — live A/B showed the stamp fires correctly via /dispatch/loads/:id/transition; the remaining office-path gap is endpoint routing (LV-TXN-004/007, money lane), not the departure-stamp code itself.",
+        "money_critical": false,
+        "drained_at": "2026-08-09T01:45:00Z",
+        "drained_by": "cursor/cls-disp-wire-07-drain",
+        "healthz": "e62665941"
       },
-      "status": "open",
+      "status": "drained",
       "hotfiles": [
         "apps/backend/src/dispatch/loads.routes.ts",
         "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts",
