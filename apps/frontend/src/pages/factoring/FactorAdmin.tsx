@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
 import {
@@ -169,7 +170,7 @@ export function FactorAdmin() {
       pushToast("NOA config saved", "success");
       await queryClient.invalidateQueries({ queryKey: ["factoring", "factors", companyId] });
     },
-    onError: (error) => pushToast(String((error as Error).message || "Failed to save NOA config"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to save NOA config"), "error"),
   });
 
   const createLorMutation = useMutation({
@@ -187,7 +188,7 @@ export function FactorAdmin() {
       pushToast("Letter of Release recorded", "success");
       await queryClient.invalidateQueries({ queryKey: ["factoring", "lor", companyId, selectedFactor?.id] });
     },
-    onError: (error) => pushToast(String((error as Error).message || "Failed to record LOR"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to record LOR"), "error"),
   });
 
   const deactivateFactorMutation = useMutation({
@@ -201,11 +202,11 @@ export function FactorAdmin() {
       await queryClient.invalidateQueries({ queryKey: ["factoring", "factors", companyId] });
     },
     onError: (error) => {
-      const msg = String((error as Error).message || "");
+      const msg = userFacingApiError(error, "Failed to deactivate factor");
       if (msg.includes("active_assignments_exist") || msg.includes("409")) {
         pushToast("Factor has active customer assignments. Record a Letter of Release first.", "error");
       } else {
-        pushToast(msg || "Failed to deactivate factor", "error");
+        pushToast(msg, "error");
       }
     },
   });
@@ -227,7 +228,7 @@ export function FactorAdmin() {
       pushToast("Factor created", "success");
       await queryClient.invalidateQueries({ queryKey: ["factoring", "factors", companyId] });
     },
-    onError: (error) => pushToast(String((error as Error).message || "Failed to create factor"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to create factor"), "error"),
   });
 
   const assignMutation = useMutation({
@@ -242,7 +243,7 @@ export function FactorAdmin() {
       setDetailCustomerId(assignCustomerId);
       await queryClient.invalidateQueries({ queryKey: ["factoring", "customer-factor-detail", companyId, assignCustomerId] });
     },
-    onError: (error) => pushToast(String((error as Error).message || "Failed to assign customer"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to assign customer"), "error"),
   });
 
   const selectedCustomer = useMemo(

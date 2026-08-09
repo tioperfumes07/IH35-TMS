@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { usePlaidLink } from "react-plaid-link";
 import { createPlaidLinkToken, exchangePlaidPublicToken, type PlaidBankAccount, type PlaidLinkAccountType } from "../../api/banking";
 import { useAuth } from "../../auth/useAuth";
@@ -40,7 +41,7 @@ export function PlaidLinkButton({ operatingCompanyId, onSuccess, accountType = "
       .catch((error) => {
         if (!cancelled) {
           setLinkToken(null);
-          pushToast(String((error as Error).message || "Unable to initialize Plaid Link"), "error");
+          pushToast(userFacingApiError(error, "Unable to initialize Plaid Link"), "error");
         }
       })
       .finally(() => {
@@ -69,7 +70,7 @@ export function PlaidLinkButton({ operatingCompanyId, onSuccess, accountType = "
             onSuccess(res.accounts);
           })
           .catch((error) => {
-            pushToast(String((error as Error).message || "Bank connection failed"), "error");
+            pushToast(userFacingApiError(error, "Bank connection failed"), "error");
           })
           .finally(() => {
             setExchanging(false);

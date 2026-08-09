@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createFactoringBatchDraft,
@@ -43,12 +44,12 @@ export function BatchWizard() {
 
   const draftMutation = useMutation({
     mutationFn: (invoiceIds: string[]) => createFactoringBatchDraft(companyId, invoiceIds),
-    onError: (error) => pushToast(String((error as Error).message || "Failed to create draft batch"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to create draft batch"), "error"),
   });
 
   const submitMutation = useMutation({
     mutationFn: (batchId: string) => submitFactoringBatch(batchId, companyId),
-    onError: (error) => pushToast(String((error as Error).message || "Failed to submit batch"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to submit batch"), "error"),
   });
 
   const selectedCount = selectedInvoiceIds.length;

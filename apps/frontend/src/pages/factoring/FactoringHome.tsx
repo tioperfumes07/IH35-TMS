@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
@@ -452,7 +453,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                         await queryClient.invalidateQueries({ queryKey: ["factoring"] });
                         await queryClient.invalidateQueries({ queryKey: ["factoring", "factors", companyId] });
                       } catch (error) {
-                        pushToast(String((error as Error).message || "Failed to save profile"), "error");
+                        pushToast(userFacingApiError(error, "Failed to save profile"), "error");
                       } finally {
                         setSavingFactorProfile(false);
                       }
@@ -618,7 +619,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                   await queryClient.invalidateQueries({ queryKey: ["factoring"] });
                   await queryClient.invalidateQueries({ queryKey: ["banking"] });
                 } catch (error) {
-                  pushToast(String((error as Error).message || "Failed to deactivate factor"), "error");
+                  pushToast(userFacingApiError(error, "Failed to deactivate factor"), "error");
                 } finally {
                   setDeactivating(false);
                 }
@@ -697,7 +698,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                   setFaroFileName("");
                   await queryClient.invalidateQueries({ queryKey: ["data-infra", "faro-imports", companyId] });
                 } catch (error) {
-                  pushToast(String((error as Error).message || "Faro import failed"), "error");
+                  pushToast(userFacingApiError(error, "Faro import failed"), "error");
                 } finally {
                   setCreatingFaro(false);
                 }
@@ -787,7 +788,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                     setLoanPrincipalCents("");
                     setLoanStartedOn("");
                   } catch (error) {
-                    pushToast(String((error as Error).message || "Loan create failed"), "error");
+                    pushToast(userFacingApiError(error, "Loan create failed"), "error");
                   } finally {
                     setCreatingLoan(false);
                   }
@@ -921,7 +922,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                     pushToast("Driver vendor merge recorded", "success");
                     await queryClient.invalidateQueries({ queryKey: ["data-infra", "vendor-merges", companyId] });
                   } catch (error) {
-                    pushToast(String((error as Error).message || "Vendor merge failed"), "error");
+                    pushToast(userFacingApiError(error, "Vendor merge failed"), "error");
                   } finally {
                     setCreatingMerge(false);
                   }
@@ -1019,7 +1020,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                   await queryClient.invalidateQueries({ queryKey: ["data-infra", "equipment-loan-ledger", loanAction.loanId, companyId] });
                   setLoanAction(null);
                 } catch (error) {
-                  pushToast(String((error as Error).message || "Failed to record"), "error");
+                  pushToast(userFacingApiError(error, "Failed to record"), "error");
                 } finally {
                   setLoanActionSaving(false);
                 }
