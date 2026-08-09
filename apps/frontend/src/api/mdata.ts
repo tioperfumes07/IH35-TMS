@@ -34,6 +34,34 @@ export function listDrivers(params: {
   }));
 }
 
+/** Canonical assigned loads reverse for a driver (primary OR secondary). Not the assignment-change log. */
+export type DriverAssignedLoad = {
+  id: string;
+  load_number: string | null;
+  status: string;
+  customer_id: string | null;
+  customer_name: string | null;
+  assigned_unit_id: string | null;
+  assigned_unit_number: string | null;
+  rate_total_cents: number | null;
+  created_at: string | null;
+};
+
+export function listDriverAssignedLoads(
+  driverId: string,
+  operatingCompanyId: string,
+  opts: { limit?: number; offset?: number } = {}
+) {
+  const query = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+    limit: String(opts.limit ?? 50),
+    offset: String(opts.offset ?? 0),
+  });
+  return apiRequest<{ loads: DriverAssignedLoad[]; total_count: number }>(
+    `/api/v1/drivers/${encodeURIComponent(driverId)}/loads?${query.toString()}`
+  );
+}
+
 export type DriverImportSummary = {
   total: number;
   will_create: number;
