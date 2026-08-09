@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createSafetyEvent,
@@ -96,6 +97,17 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   const [unitFilter, setUnitFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  // C-13 / LST-F106: Safety Home drill links here as /safety/safety-events?event_id=<id>.
+  // Detail panel loads via getSafetyEventDetail — no need for the id to be in the current list page.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const eventIdParam = searchParams.get("event_id");
+  useEffect(() => {
+    if (!eventIdParam) return;
+    setSelectedEventId(eventIdParam);
+    const next = new URLSearchParams(searchParams);
+    next.delete("event_id");
+    setSearchParams(next, { replace: true });
+  }, [eventIdParam, searchParams, setSearchParams]);
   const [logModalOpen, setLogModalOpen] = useState(false);
   const [draft, setDraft] = useState<EventDraft>(initialEventDraft);
   const [logDraftBaseline, setLogDraftBaseline] = useState<EventDraft | null>(null);

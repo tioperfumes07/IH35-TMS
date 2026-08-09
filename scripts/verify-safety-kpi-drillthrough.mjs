@@ -110,6 +110,15 @@ requireAll(tabPath, tab, [
     pattern: /accident_id=\$\{/,
     label: "accident drill detailTo uses ?accident_id= deeplink",
   },
+  // C-13 / LST-F106 — event drill Open record must deep-link to safety-events.
+  {
+    pattern: /event_id=\$\{/,
+    label: "event drill detailTo uses ?event_id= deeplink",
+  },
+  {
+    pattern: /\/safety\/safety-events\?event_id=/,
+    label: "event drill targets /safety/safety-events?event_id=",
+  },
 ]);
 // A KPI/drill link must never be a bare `/safety` (no trailing segment).
 // Accidents must never read a phantom row.status (defaults to "open" = no-op fake filter).
@@ -124,6 +133,18 @@ forbid(tabPath, tab, [
     pattern: /\/\/ No per-id accident detail route exists/,
     label: "stale comment claiming no accident deeplink (C-13 closed)",
   },
+  {
+    pattern: /detailTo:\s*null,\s*\n\s*\}\)\);/,
+    label: "event drill still leaves detailTo: null (dead Open record)",
+  },
+]);
+
+// LST-F106 — SafetyEventsPage must honor ?event_id= for Home drill reverse hop.
+const eventsPagePath = "apps/frontend/src/pages/safety/SafetyEventsPage.tsx";
+const eventsPage = read(eventsPagePath);
+requireAll(eventsPagePath, eventsPage, [
+  { pattern: /searchParams\.get\("event_id"\)/, label: "reads ?event_id= from URL" },
+  { pattern: /setSelectedEventId\(eventIdParam\)/, label: "opens detail from event_id param" },
 ]);
 
 
