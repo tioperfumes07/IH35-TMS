@@ -305,9 +305,9 @@ export async function createInsurancePolicyWithBills(
       const costPerMonth = costPerUnit[i] ?? 0;
       await client.query(
         `INSERT INTO insurance.policy_unit (
-           tenant_id, policy_id, asset_id, insured_value_cents, cost_per_month_cents
+           tenant_id, operating_company_id, policy_id, asset_id, insured_value_cents, cost_per_month_cents
          )
-         VALUES ($1::uuid,$2::uuid,$3::uuid,0,$4)`,
+         VALUES ($1::uuid,$1::uuid,$2::uuid,$3::uuid,0,$4)`,
         [input.operatingCompanyId, policyId, resolvedAssetId, costPerMonth]
       );
       await appendCrudAudit(client, input.userId, "insurance.policy_unit.created", {

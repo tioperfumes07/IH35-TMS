@@ -490,8 +490,8 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         unitRow = upd.rows[0] as Record<string, unknown>;
       } else {
         const ins = await client.query(
-          `INSERT INTO insurance.policy_unit (tenant_id, policy_id, asset_id, insured_value_cents)
-           VALUES ($1::uuid, $2::uuid, $3::uuid, $4)
+          `INSERT INTO insurance.policy_unit (tenant_id, operating_company_id, policy_id, asset_id, insured_value_cents)
+           VALUES ($1::uuid, $1::uuid, $2::uuid, $3::uuid, $4)
            RETURNING id::text, policy_id::text, asset_id::text, insured_value_cents::bigint, removed_at::text, created_at::text, updated_at::text`,
           [body.operating_company_id, params.data.policy_id, resolvedAssetId, body.insured_value_cents]
         );
@@ -627,11 +627,11 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     const result = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
       const insertRes = await client.query(
         `INSERT INTO insurance.policy (
-           tenant_id, renewed_from_policy_id, policy_number, coverage_type, coverage_type_id,
+           tenant_id, operating_company_id, renewed_from_policy_id, policy_number, coverage_type, coverage_type_id,
            effective_date, expiry_date, total_premium_cents, down_payment_cents, installment_count,
            due_day, pay_day, late_fee_pct, insurer_email, agent_contact, status, vendor_id, insurer_name
          )
-         SELECT $1::uuid, $2::uuid, $3, coverage_type, coverage_type_id,
+         SELECT $1::uuid, $1::uuid, $2::uuid, $3, coverage_type, coverage_type_id,
            $4::date, $5::date, $6, $7, $8,
            due_day, pay_day, late_fee_pct, insurer_email, agent_contact, 'pending', vendor_id, insurer_name
          FROM insurance.policy
@@ -652,8 +652,8 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       if (!newPolicy) return { kind: "policy_not_found" as const };
 
       await client.query(
-        `INSERT INTO insurance.policy_unit (tenant_id, policy_id, asset_id, insured_value_cents)
-         SELECT $1::uuid, $2::uuid, asset_id, insured_value_cents
+        `INSERT INTO insurance.policy_unit (tenant_id, operating_company_id, policy_id, asset_id, insured_value_cents)
+         SELECT $1::uuid, $1::uuid, $2::uuid, asset_id, insured_value_cents
          FROM insurance.policy_unit
          WHERE tenant_id = $1::uuid AND policy_id = $3::uuid AND removed_at IS NULL`,
         [body.operating_company_id, newPolicy.id, params.data.policy_id]
