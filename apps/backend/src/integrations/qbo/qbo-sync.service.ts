@@ -641,11 +641,58 @@ export async function listSyncQueue(params: {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [params.operatingCompanyId]);
     const res = await client.query(
       `
-        SELECT *
-        FROM integrations.qbo_sync_queue
-        WHERE operating_company_id = $1
-          AND ($2::text IS NULL OR sync_status = $2)
-        ORDER BY created_at DESC
+        SELECT
+          q.*,
+          COALESCE(
+            CASE q.entity_type
+              WHEN 'bill' THEN b.display_id
+              WHEN 'expense' THEN e.expense_number
+              WHEN 'invoice' THEN i.display_id
+              WHEN 'payment' THEN p.display_id
+              WHEN 'bill_payment' THEN bp.bill_number
+              WHEN 'factoring_advance' THEN fa.display_id
+              WHEN 'settlement' THEN s.display_id
+              WHEN 'credit_memo' THEN vc.display_id
+              ELSE NULL
+            END,
+            LEFT(q.entity_id::text, 8)
+          ) AS display_id
+        FROM integrations.qbo_sync_queue q
+        LEFT JOIN accounting.bills b
+          ON q.entity_type = 'bill'
+         AND b.id = q.entity_id
+         AND b.operating_company_id = q.operating_company_id
+        LEFT JOIN accounting.expenses e
+          ON q.entity_type = 'expense'
+         AND e.id = q.entity_id
+         AND e.operating_company_id = q.operating_company_id
+        LEFT JOIN accounting.invoices i
+          ON q.entity_type = 'invoice'
+         AND i.id = q.entity_id
+         AND i.operating_company_id = q.operating_company_id
+        LEFT JOIN accounting.payments p
+          ON q.entity_type = 'payment'
+         AND p.id = q.entity_id
+         AND p.operating_company_id = q.operating_company_id
+        LEFT JOIN accounting.bill_payments bp
+          ON q.entity_type = 'bill_payment'
+         AND bp.id = q.entity_id
+         AND bp.operating_company_id = q.operating_company_id
+        LEFT JOIN accounting.factoring_advances fa
+          ON q.entity_type = 'factoring_advance'
+         AND fa.id = q.entity_id
+         AND fa.operating_company_id = q.operating_company_id
+        LEFT JOIN driver_finance.driver_settlements s
+          ON q.entity_type = 'settlement'
+         AND s.id = q.entity_id
+         AND s.operating_company_id = q.operating_company_id
+        LEFT JOIN accounting.vendor_credits vc
+          ON q.entity_type = 'credit_memo'
+         AND vc.id = q.entity_id
+         AND vc.operating_company_id = q.operating_company_id
+        WHERE q.operating_company_id = $1
+          AND ($2::text IS NULL OR q.sync_status = $2)
+        ORDER BY q.created_at DESC
         LIMIT $3 OFFSET $4
       `,
       [params.operatingCompanyId, params.status ?? null, params.limit, params.offset]

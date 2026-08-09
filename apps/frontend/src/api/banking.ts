@@ -225,6 +225,8 @@ export type QboSyncQueueItem = {
   id: string;
   entity_type: string;
   entity_id: string;
+  /** Human-readable identifier resolved from the source entity; falls back to entity_id prefix. */
+  display_id: string;
   sync_status: "pending" | "in_flight" | "synced" | "failed" | "blocked";
   attempt_count: number;
   max_attempts: number;
