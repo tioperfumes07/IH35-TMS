@@ -150,7 +150,7 @@ export function assertScoreboardContract(sources) {
   const matrixPageRel = "apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx";
   const matrixPage = sources?.[matrixPageRel] ?? (fs.existsSync(path.join(ROOT, matrixPageRel)) ? read(matrixPageRel) : "");
   if (matrixPage) {
-    if (!/resolveApiUrl\(\s*["']\/api\/v1\/program\/module-matrix/.test(matrixPage)) {
+    if (!/resolveApiUrl\(\s*[`'"]\/api\/v1\/program\/module-matrix/.test(matrixPage)) {
       problems.push(
         `${matrixPageRel}: must fetch live Audited/Done via resolveApiUrl("/api/v1/program/module-matrix…")`,
       );
@@ -161,6 +161,53 @@ export function assertScoreboardContract(sources) {
     if (!/module-matrix-sample-banner/.test(matrixPage)) {
       problems.push(`${matrixPageRel}: must keep SAMPLE/unavailable banner when API fails`);
     }
+    if (!/safety\.required\.json/.test(matrixPage) || !/maintenance\.required\.json/.test(matrixPage)) {
+      problems.push(
+        `${matrixPageRel}: must import maintenance + safety Required maps (module-by-module board)`,
+      );
+    }
+    if (
+      !/module-matrix-module-rail/.test(matrixPage) ||
+      (!/module-matrix-pill-safety/.test(matrixPage) && !/module-matrix-pill-\$\{id\}/.test(matrixPage))
+    ) {
+      problems.push(
+        `${matrixPageRel}: must expose clickable Safety pill on module rail (MATRIX-REQ-SAFETY)`,
+      );
+    }
+    if (!/picker_law|qbo_chrome|connectivity|reverse_link/.test(matrixPage)) {
+      problems.push(
+        `${matrixPageRel}: chrome/wiring columns (picker/QBO/connectivity/reverse) must be named on the board`,
+      );
+    }
+  }
+
+  for (const mod of ["maintenance", "safety"]) {
+    const mapRel = `docs/specs/scoreboard/modules/${mod}.required.json`;
+    const mapPath = path.join(ROOT, mapRel);
+    if (!fs.existsSync(mapPath)) {
+      problems.push(`${mapRel}: Required map missing`);
+      continue;
+    }
+    try {
+      const map = JSON.parse(fs.readFileSync(mapPath, "utf8"));
+      const ids = new Set((map.columns ?? []).map((c) => c.id));
+      for (const need of ["picker_law", "qbo_chrome", "connectivity", "reverse_link"]) {
+        if (!ids.has(need)) {
+          problems.push(`${mapRel}: must include chrome/wiring column ${need}`);
+        }
+      }
+      if (!Array.isArray(map.leaves) || map.leaves.length < 1) {
+        problems.push(`${mapRel}: must list leaves`);
+      }
+    } catch (e) {
+      problems.push(`${mapRel}: invalid JSON (${e instanceof Error ? e.message : e})`);
+    }
+  }
+
+  if (route && !/module=maintenance\|safety|SUPPORTED|safety/.test(route)) {
+    problems.push(
+      `${routeRel}: module-matrix route must allow module=maintenance|safety (not maintenance-only)`,
+    );
   }
 
   const emitRel = "scripts/audit-coverage-scoreboard.mjs";

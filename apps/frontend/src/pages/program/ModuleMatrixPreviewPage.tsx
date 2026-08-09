@@ -1,15 +1,17 @@
 /**
  * Module matrix scoreboard — owner-approved layout (2026-08-08).
- * Box 1 Required: docs/specs/scoreboard/modules/maintenance.required.json
+ * Box 1 Required: docs/specs/scoreboard/modules/<module>.required.json
  * Boxes 2–3 Audited/Done: GET /api/v1/program/module-matrix (MATRIX-LIVE-RAD)
+ * Chrome/picker/wiring columns are Required law (owner 2026-08-08) — part of full linkage.
  * SAMPLE banner only when the live API is unavailable.
  * Design lock: docs/specs/scoreboard/MODULE-MATRIX-SCOREBOARD-LOCKED.md
  */
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
 import maintRequired from "@scoreboard/modules/maintenance.required.json";
+import safetyRequired from "@scoreboard/modules/safety.required.json";
 import { ProgramModuleNav } from "./ProgramModuleNav";
 
 type Tri = "done" | "audited" | "unaudited" | "na";
@@ -43,6 +45,7 @@ type LiveCell = {
 
 type LiveMatrix = {
   sample: false;
+  module?: string;
   entity_default?: string;
   leaves: Array<{ id: string; cells: Record<string, LiveCell> }>;
   metrics?: {
@@ -58,8 +61,22 @@ type LiveMatrix = {
   meta?: { honesty?: string; prodReadAt?: string };
 };
 
-const REQUIRED_MAP = maintRequired as RequiredMap;
-const COLS = REQUIRED_MAP.columns;
+type MatrixModuleId = "maintenance" | "safety";
+
+const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
+  maintenance: maintRequired as RequiredMap,
+  safety: safetyRequired as RequiredMap,
+};
+
+const LIVE_MODULES: MatrixModuleId[] = ["maintenance", "safety"];
+
+const MODULES = [
+  "Home", "Dispatch", "Drivers", "Fleet", "Trailers", "Maintenance", "Safety", "Insurance",
+  "Legal", "Accounting", "Banking", "Settlements", "Fuel", "Factoring", "Customers", "Vendors",
+  "Lists", "Reports", "Inventory", "Compliance", "Cash flow", "Finance hub", "Tasks",
+  "Notifications", "System", "Program",
+] as const;
+
 const MATRIX_POLL_MS = 3000;
 
 function Cell({ state }: { state: Tri }) {
@@ -99,13 +116,6 @@ function Cell({ state }: { state: Tri }) {
   );
 }
 
-const MODULES = [
-  "Home", "Dispatch", "Drivers", "Fleet", "Trailers", "Maintenance", "Safety", "Insurance",
-  "Legal", "Accounting", "Banking", "Settlements", "Fuel", "Factoring", "Customers", "Vendors",
-  "Lists", "Reports", "Inventory", "Compliance", "Cash flow", "Finance hub", "Tasks",
-  "Notifications", "System", "Program",
-] as const;
-
 type Row =
   | { kind: "section"; label: string }
   | {
@@ -127,7 +137,6 @@ function cellState(
   if (live?.state === "done" || live?.state === "audited" || live?.state === "unaudited") {
     return live.state;
   }
-  // Honest fallback when API is down or cell missing: Required but not audited.
   return "unaudited";
 }
 
@@ -138,7 +147,31 @@ function leafPct(cells: Tri[]): number {
   return Math.round((done / owed.length) * 100);
 }
 
-function sectionForLeaf(leaf: RequiredLeaf): string {
+function sectionForLeaf(moduleId: MatrixModuleId, leaf: RequiredLeaf): string {
+  if (moduleId === "safety") {
+    if (leaf.id.startsWith("driver_files") || leaf.id.startsWith("drug") || leaf.id.startsWith("safety_meet") || leaf.id.startsWith("training")) {
+      return "Driver Files & Training";
+    }
+    if (leaf.id.startsWith("hos") || leaf.id.startsWith("eld")) return "Hours & Fatigue";
+    if (leaf.id.startsWith("idvr") || leaf.id.startsWith("dot") || leaf.id.startsWith("driver_scoring") || leaf.id.startsWith("csa") || leaf.id.startsWith("cert")) {
+      return "Inspections & FMCSA";
+    }
+    if (
+      leaf.id.startsWith("accident") ||
+      leaf.id.startsWith("damage") ||
+      leaf.id.startsWith("cargo") ||
+      leaf.id.startsWith("trailer") ||
+      leaf.id.startsWith("safety_events") ||
+      leaf.id.startsWith("photo")
+    ) {
+      return "Incidents & Claims";
+    }
+    if (leaf.id.includes("fine") || leaf.id.startsWith("complaint")) return "Fines & Discipline";
+    if (leaf.id.startsWith("escrow")) return "Driver Financial Safety";
+    if (leaf.id.startsWith("leave") || leaf.id.startsWith("driver_scheduler")) return "Workforce Planning";
+    if (leaf.id.startsWith("settings")) return "Settings";
+    return "Compliance Docs & Monitoring";
+  }
   if (leaf.id.startsWith("wo.")) return "Work Orders";
   if (leaf.id.startsWith("pm.")) return "Preventive";
   if (
@@ -157,18 +190,23 @@ function sectionForLeaf(leaf: RequiredLeaf): string {
   return "Master data / programs";
 }
 
-function buildRows(liveByLeaf: Map<string, Record<string, LiveCell>> | null): Row[] {
+function buildRows(
+  moduleId: MatrixModuleId,
+  map: RequiredMap,
+  liveByLeaf: Map<string, Record<string, LiveCell>> | null,
+): Row[] {
   const rows: Row[] = [];
   let lastSection = "";
-  for (const leaf of REQUIRED_MAP.leaves) {
-    const section = sectionForLeaf(leaf);
+  for (const leaf of map.leaves) {
+    const section = sectionForLeaf(moduleId, leaf);
     if (section !== lastSection) {
       rows.push({ kind: "section", label: section });
       lastSection = section;
     }
     const req = new Set(leaf.required);
-    const cells = COLS.map((c) => cellState(leaf.id, c.id, req, liveByLeaf));
-    const indent: 1 | 2 = leaf.id.startsWith("wo.source.") ? 2 : 1;
+    const cells = map.columns.map((c) => cellState(leaf.id, c.id, req, liveByLeaf));
+    const indent: 1 | 2 =
+      leaf.id.startsWith("wo.source.") || leaf.id.endsWith(".create") ? 2 : 1;
     rows.push({
       kind: "leaf",
       leaf,
@@ -186,12 +224,12 @@ function pctClass(n: number) {
   return "lo";
 }
 
-function boardMetrics(rows: Row[], live: LiveMatrix | null) {
+function boardMetrics(map: RequiredMap, rows: Row[], live: LiveMatrix | null) {
   if (live?.metrics) {
     return {
       modulePct: live.metrics.modulePct,
-      leafCount: live.metrics.leafCount || REQUIRED_MAP.leaves.length,
-      colCount: live.metrics.colCount || COLS.length,
+      leafCount: live.metrics.leafCount || map.leaves.length,
+      colCount: live.metrics.colCount || map.columns.length,
       requiredCells: live.metrics.requiredCells,
       doneCells: live.metrics.doneCells,
       buildQueue: live.metrics.buildQueue,
@@ -212,17 +250,26 @@ function boardMetrics(rows: Row[], live: LiveMatrix | null) {
   const modulePct = requiredCells === 0 ? 0 : Math.round((doneCells / requiredCells) * 100);
   return {
     modulePct,
-    leafCount: REQUIRED_MAP.leaves.length,
-    colCount: COLS.length,
+    leafCount: map.leaves.length,
+    colCount: map.columns.length,
     requiredCells,
     doneCells,
     buildQueue,
   };
 }
 
-async function fetchModuleMatrix(): Promise<LiveMatrix | null> {
+function parseModule(raw: string | null): MatrixModuleId {
+  if (raw === "safety") return "safety";
+  return "maintenance";
+}
+
+function titleCase(id: MatrixModuleId): string {
+  return id === "safety" ? "Safety" : "Maintenance";
+}
+
+async function fetchModuleMatrix(moduleId: MatrixModuleId): Promise<LiveMatrix | null> {
   const r = await fetch(
-    resolveApiUrl("/api/v1/program/module-matrix?module=maintenance"),
+    resolveApiUrl(`/api/v1/program/module-matrix?module=${moduleId}`),
     { credentials: "include" },
   );
   if (!r.ok) return null;
@@ -232,13 +279,17 @@ async function fetchModuleMatrix(): Promise<LiveMatrix | null> {
 }
 
 export function ModuleMatrixPreviewPage() {
+  const [params, setParams] = useSearchParams();
+  const moduleId = parseModule(params.get("module"));
+  const requiredMap = REQUIRED_BY_MODULE[moduleId];
+  const cols = requiredMap.columns;
+
   const { data: live, isError, isFetched } = useQuery({
-    queryKey: ["program", "module-matrix", "maintenance"],
-    queryFn: fetchModuleMatrix,
+    queryKey: ["program", "module-matrix", moduleId],
+    queryFn: () => fetchModuleMatrix(moduleId),
     refetchInterval: MATRIX_POLL_MS,
     refetchIntervalInBackground: true,
     staleTime: 0,
-    // Keep last good live payload across blips — never invent SAMPLE cells while we have live data.
     placeholderData: (prev) => prev ?? undefined,
   });
 
@@ -254,18 +305,46 @@ export function ModuleMatrixPreviewPage() {
     return m;
   }, [live, liveOk]);
 
-  const rows = useMemo(() => buildRows(liveByLeaf), [liveByLeaf]);
-  const metrics = boardMetrics(rows, liveOk ? live! : null);
+  const rows = useMemo(
+    () => buildRows(moduleId, requiredMap, liveByLeaf),
+    [moduleId, requiredMap, liveByLeaf],
+  );
+  const metrics = boardMetrics(requiredMap, rows, liveOk ? live! : null);
+
+  const groupSpans = useMemo(() => {
+    const groups: Array<{ group: string; span: number }> = [];
+    for (const c of cols) {
+      const last = groups[groups.length - 1];
+      if (last && last.group === c.group) last.span += 1;
+      else groups.push({ group: c.group, span: 1 });
+    }
+    return groups;
+  }, [cols]);
+
+  function selectModule(id: MatrixModuleId) {
+    const next = new URLSearchParams(params);
+    if (id === "maintenance") next.delete("module");
+    else next.set("module", id);
+    setParams(next, { replace: true });
+  }
+
+  function pillClass(label: string): string {
+    const id = label.toLowerCase() as MatrixModuleId;
+    if (LIVE_MODULES.includes(id)) {
+      return id === moduleId ? "mod-pill on" : "mod-pill live";
+    }
+    return "mod-pill dim";
+  }
 
   return (
-    <div className="ih35mm" data-testid="module-matrix-preview">
+    <div className="ih35mm" data-testid="module-matrix-preview" data-module={moduleId}>
       <style>{CSS}</style>
 
       {showSampleBanner ? (
         <div className="banner" data-testid="module-matrix-sample-banner">
           <b>LIVE FEED UNAVAILABLE.</b> Box 1 Required is still from{" "}
-          <code>docs/specs/scoreboard/modules/maintenance.required.json</code>
-          {" "}({REQUIRED_MAP.leaves.length} leaves). Audited / Done cannot be projected — showing
+          <code>docs/specs/scoreboard/modules/{moduleId}.required.json</code>
+          {" "}({requiredMap.leaves.length} leaves). Audited / Done cannot be projected — showing
           Required + unaudited (✕✕) until <code>GET /api/v1/program/module-matrix</code> responds.
         </div>
       ) : liveOk ? (
@@ -285,12 +364,12 @@ export function ModuleMatrixPreviewPage() {
       <header className="hd">
         <div className="t">Program — Module matrix scoreboards</div>
         <div className="s">
-          One shell · 26 module boards. Each board shows only the columns that module’s tabs / sub-tabs can need.
-          Cell = <b>Required</b> · <b>Audited</b> · <b>Done</b>. Tab % and module % roll up from required cells only.
+          One shell · 26 module boards. Columns include linkage, money, <b>pickers / QBO chrome</b>, and
+          <b> connectivity / reverse link</b> — full wiring, not chrome-only. Cell = Required · Audited · Done.
         </div>
         <div className="synced">
-          Active board: <b>Maintenance</b> · Entity:{" "}
-          <b>{live?.entity_default ?? REQUIRED_MAP.entity_default}</b> ·{" "}
+          Active board: <b>{titleCase(moduleId)}</b> · Entity:{" "}
+          <b>{live?.entity_default ?? requiredMap.entity_default}</b> ·{" "}
           <span className="synced-note">
             {liveOk
               ? "Required map imported · Audited/Done from module-matrix API"
@@ -299,20 +378,37 @@ export function ModuleMatrixPreviewPage() {
         </div>
       </header>
 
-      <div className="module-rail">
+      <div className="module-rail" data-testid="module-matrix-module-rail">
         <div className="lbl">26 module boards — open one at a time (columns scoped per module)</div>
-        {MODULES.map((m) => (
-          <span key={m} className={m === "Maintenance" ? "mod-pill on" : "mod-pill dim"}>
-            {m}
-          </span>
-        ))}
+        {MODULES.map((m) => {
+          const id = m.toLowerCase() as MatrixModuleId;
+          const liveable = LIVE_MODULES.includes(id);
+          if (liveable) {
+            return (
+              <button
+                key={m}
+                type="button"
+                className={pillClass(m)}
+                data-testid={`module-matrix-pill-${id}`}
+                onClick={() => selectModule(id)}
+              >
+                {m}
+              </button>
+            );
+          }
+          return (
+            <span key={m} className="mod-pill dim" title="Required map not authored yet">
+              {m}
+            </span>
+          );
+        })}
       </div>
 
       <div className="metrics">
         <div className={`metric ${metrics.modulePct >= 40 ? "amb" : "big"}`}>
           <div className="n">{metrics.modulePct}%</div>
           <div className="l">
-            Maintenance module %
+            {titleCase(moduleId)} module %
             <br />
             (done ÷ required{liveOk ? "" : " · pending live"})
           </div>
@@ -323,7 +419,7 @@ export function ModuleMatrixPreviewPage() {
         </div>
         <div className="metric">
           <div className="n">{metrics.colCount}</div>
-          <div className="l">Scoped columns<br />(not all system cards)</div>
+          <div className="l">Scoped columns<br />(incl. chrome + wiring)</div>
         </div>
         <div className="metric">
           <div className="n">{metrics.requiredCells}</div>
@@ -340,37 +436,55 @@ export function ModuleMatrixPreviewPage() {
       </div>
 
       <h2>
-        Maintenance matrix{" "}
+        {titleCase(moduleId)} matrix{" "}
         <span className="sub">left = module tree · top = scoped columns · cell = R / A / D</span>
       </h2>
 
       <div className="legend">
         <span>
           <span className="tri">
-            <span className="bx req-y">R</span>
-            <span className="bx map-w">A</span>
-            <span className="bx done-y">D</span>
-          </span>{" "}
-          Required · Audited · Done
+            <span className="bx req-y">✓</span>
+            <span className="bx map-n">✕</span>
+            <span className="bx done-n">✕</span>
+          </span>
+          Required · not audited
         </span>
-        <span><span className="bx req-y">✓</span> Required / complete</span>
-        <span><span className="bx map-w">●</span> Audited / in progress (not done)</span>
-        <span><span className="bx map-n">✕</span> Required but not audited → Done also ✕</span>
-        <span><span className="bx req-n">·</span> Not applicable (not in %)</span>
+        <span>
+          <span className="tri">
+            <span className="bx req-y">✓</span>
+            <span className="bx map-w">●</span>
+            <span className="bx done-n">✕</span>
+          </span>
+          Audited / in progress
+        </span>
+        <span>
+          <span className="tri">
+            <span className="bx req-y">✓</span>
+            <span className="bx map-y">✓</span>
+            <span className="bx done-y">✓</span>
+          </span>
+          Done (live)
+        </span>
       </div>
 
       <div className="scroll">
         <table>
           <thead>
             <tr>
-              <th className="leaf" rowSpan={2}>Module leaf</th>
-              <th className="grp" colSpan={6}>Linkage targets</th>
-              <th className="grp" colSpan={4}>Money / economics</th>
-              <th className="grp" colSpan={2}>Process cards</th>
+              <th className="leaf" rowSpan={2}>
+                Tab / sub-tab / create
+              </th>
+              {groupSpans.map((g) => (
+                <th key={g.group} className="grp" colSpan={g.span}>
+                  {g.group}
+                </th>
+              ))}
             </tr>
             <tr>
-              {COLS.map((c) => (
-                <th key={c.id} className="col">{c.label}</th>
+              {cols.map((c) => (
+                <th key={c.id} className="col">
+                  {c.label}
+                </th>
               ))}
             </tr>
           </thead>
@@ -378,8 +492,8 @@ export function ModuleMatrixPreviewPage() {
             {rows.map((row, i) => {
               if (row.kind === "section") {
                 return (
-                  <tr key={`s-${i}`} className="section">
-                    <td colSpan={1 + COLS.length}>{row.label}</td>
+                  <tr key={`s-${row.label}-${i}`} className="section">
+                    <td colSpan={1 + cols.length}>{row.label}</td>
                   </tr>
                 );
               }
@@ -390,8 +504,8 @@ export function ModuleMatrixPreviewPage() {
                     {row.leaf.sub ? <span className="sub">{row.leaf.sub}</span> : null}
                     <span className={`pct ${pctClass(row.pct)}`}>{row.pct}%</span>
                   </td>
-                  {row.cells.map((st, j) => (
-                    <td key={COLS[j].id} className="gc">
+                  {row.cells.map((st, ci) => (
+                    <td key={cols[ci].id} className="gc">
                       <Cell state={st} />
                     </td>
                   ))}
@@ -403,18 +517,20 @@ export function ModuleMatrixPreviewPage() {
       </div>
 
       <div className="note">
-        <b>Cell law:</b> Required + not audited → ✓ ✕ ✕ (both 2 and 3 red). Required + audited/in progress → ✓ ● ✕
-        (box 2 yellow, box 3 red). Complete → ✓ ✓ ✓. Insurance claim is N/A on normal Create WO — required on
-        Accident repair / damage accident path only. PM Schedule requires unit + Maint WO only.
-        {" "}Done green only from live_scenario_probe holds — never from “page exists.”
+        <b>Cell law:</b> Required + not audited → ✓ ✕ ✕. Required + audited/in progress → ✓ ● ✕.
+        Complete → ✓ ✓ ✓. <b>Picker +Add new</b>, <b>QBO chrome</b>, <b>Connectivity</b>, and{" "}
+        <b>Reverse link</b> are Required columns — they roll into module %. Done green only from
+        live_scenario_probe holds (process columns today) — chrome/wiring Done stays red until live probes exist.
       </div>
 
       <div className="foot">
         Design lock: <code>docs/specs/scoreboard/MODULE-MATRIX-SCOREBOARD-LOCKED.md</code>
         {" · "}
-        Required map: <code>docs/specs/scoreboard/modules/maintenance.required.json</code>
+        Required map: <code>docs/specs/scoreboard/modules/{moduleId}.required.json</code>
         {" · "}
-        API: <code>GET /api/v1/program/module-matrix?module=maintenance</code>
+        Shared columns: <code>docs/specs/scoreboard/columns.shared.json</code>
+        {" · "}
+        API: <code>GET /api/v1/program/module-matrix?module={moduleId}</code>
         {" · "}
         <Link to="/program">Scenario tracker</Link>
         {" · "}
@@ -433,9 +549,6 @@ const CSS = `
 .ih35mm .banner.live{background:var(--green-bg);border-color:#86efac;color:#14532d}
 .ih35mm .banner.live b{color:#166534}
 .ih35mm .banner b{color:#92400e}
-.ih35mm .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px;flex-wrap:wrap}
-.ih35mm .tab{padding:9px 14px;font-size:13px;font-weight:600;color:var(--slate-lt);text-decoration:none;border-bottom:2px solid transparent}
-.ih35mm .tab.active{color:var(--navy);border-bottom-color:var(--navy)}
 .ih35mm .hd{background:linear-gradient(135deg,var(--navy),var(--navy-dk));color:#fff;padding:16px 20px;border-radius:10px}
 .ih35mm .hd .t{font-size:18px;font-weight:700}
 .ih35mm .hd .s{color:#94a3b8;font-size:12px;margin-top:6px;line-height:1.55}
@@ -444,8 +557,10 @@ const CSS = `
 .ih35mm .hd .synced-note{color:#94a3b8}
 .ih35mm .module-rail{display:flex;flex-wrap:wrap;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:14px 0}
 .ih35mm .module-rail .lbl{width:100%;font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--slate-lt);margin-bottom:2px}
-.ih35mm .mod-pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--gray-bg);color:var(--slate)}
+.ih35mm .mod-pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--gray-bg);color:var(--slate);cursor:default;font-family:inherit}
+.ih35mm button.mod-pill{cursor:pointer}
 .ih35mm .mod-pill.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.ih35mm .mod-pill.live{background:#fff;color:var(--navy);border-color:var(--navy)}
 .ih35mm .mod-pill.dim{opacity:.55}
 .ih35mm .metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:0 0 16px}
 .ih35mm .metric{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 13px}
