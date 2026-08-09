@@ -504,12 +504,34 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
       form.setValue("accessorial_cents", sum, { shouldDirty: false });
     }
   }, [accessorialRows, form]);
-  const driverBillPreview = useMemo(() => {
+  // WIRE-02 / ACCT-F63 — the driver bill preview must NEVER fall back to the customer charges.
+  // This memo used to `return sectionTotal + extraRatesCents`, which is the IDENTICAL expression
+  // assigned to `customerInvoiceTotal` eight lines above: whenever miles or the per-mile rate were
+  // missing, the operator was shown the CUSTOMER invoice total labelled as the driver bill. That is
+  // the same defect ACCT-F63/WIRE-02 removed from book-load.service.ts, surviving in the FE.
+  //
+  // It also promised a figure the backend will never mint. With no miles,
+  // `resolveDriverBasePayCents` returns null and the booking writes
+  // `driver_finance.driver_bill.skipped_no_pay_rate` instead of a bill.
+  //
+  // Measured on prod (br-fancy-credit-akjnd07a, 2026-08-09): USMCA has 25 live loads, 24 with no
+  // shortest miles and 22 with no miles at all, against 22 that DO carry a customer rate — 18 skip
+  // events, 2 driver bills. So the fallback was not an edge case; it was what the operator saw on
+  // essentially every load, and the number it showed was always the wrong side of the ledger.
+  //
+  // Not priceable is now shown AS not priceable. Dispatch is never blocked from booking.
+  const driverBillPreview = useMemo<number | null>(() => {
     const miles = Number(milesShortest || 0);
     const rate = Number(driverPayRatePerMile || 0);
     if (miles > 0 && rate > 0) return Math.round(miles * rate * 100);
-    return sectionTotal + extraRatesCents;
-  }, [driverPayRatePerMile, milesShortest, sectionTotal, extraRatesCents]);
+    return null;
+  }, [driverPayRatePerMile, milesShortest]);
+  const driverBillMissing = useMemo(() => {
+    const missing: string[] = [];
+    if (!(Number(milesShortest || 0) > 0)) missing.push("shortest miles");
+    if (!(Number(driverPayRatePerMile || 0) > 0)) missing.push("driver pay rate / mile");
+    return missing;
+  }, [milesShortest, driverPayRatePerMile]);
   const ratePerMile = useMemo(() => {
     const miles = Number(milesShortest || 0);
     if (miles <= 0) return 0;
@@ -1562,8 +1584,18 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
           <div className="flex shrink-0 items-center justify-between border-t border-gray-200 bg-white px-3 py-2">
             <div className="text-xs text-gray-600">
               Driver bill preview <span className="font-mono font-semibold text-gray-800">{billNumberPreview}</span>{" "}
-              <span className="font-mono text-sm font-bold text-gray-900">{money.format((driverBillPreview || 0) / 100)}</span>
-              <div className="text-[9.5px] text-gray-500">{Number(milesShortest || 0).toLocaleString()} short mi × ${(Number(driverPayRatePerMile || 0)).toFixed(2)}/mi · recalculates on field changes</div>
+              {driverBillPreview === null ? (
+                <span className="font-semibold text-[#dc2626]" data-testid="book-load-driver-bill-not-priceable">
+                  Not priceable — no driver bill will be created
+                </span>
+              ) : (
+                <span className="font-mono text-sm font-bold text-gray-900">{money.format(driverBillPreview / 100)}</span>
+              )}
+              <div className="text-[9.5px] text-gray-500">
+                {driverBillPreview === null
+                  ? `Missing ${driverBillMissing.join(" and ")}. The load still books; driver pay is recorded as skipped until this is entered.`
+                  : `${Number(milesShortest || 0).toLocaleString()} short mi × $${Number(driverPayRatePerMile || 0).toFixed(2)}/mi · recalculates on field changes`}
+              </div>
             </div>
             <div className="flex gap-2">
               <Button type="button" variant="secondary" onClick={attemptBookLoadClose}>
