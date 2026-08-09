@@ -505,7 +505,7 @@ export const CATALOG_PICKER_CONFIGS = {
     entityScoped: true,
     readWriteParity: "same-endpoint-verified",
     evidence:
-      "apps/backend/src/catalogs/driver/factory.ts SELECT+INSERT catalogs.driver_deduction_types (optionalBooleans may_draw_escrow); EscrowForfeitModal filtered consumer",
+      "apps/backend/src/catalogs/driver/factory.ts:253 SELECT+INSERT catalogs.driver_deduction_types (optionalBooleans may_draw_escrow); EscrowForfeitModal filtered consumer",
     consumerPath: "apps/frontend/src/pages/safety/components/EscrowForfeitModal.tsx",
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
@@ -660,7 +660,7 @@ export const CATALOG_PICKER_CONFIGS = {
     entityScoped: true,
     readWriteParity: "same-endpoint-verified",
     evidence:
-      "apps/backend/src/catalogs/safety/complaint-types.routes.ts SELECT+INSERT catalogs.complaint_types; ComplaintsTab catalogs-safety list consumer",
+      "apps/backend/src/catalogs/safety/complaint-types.routes.ts:127 SELECT+INSERT catalogs.complaint_types; ComplaintsTab catalogs-safety list consumer",
     consumerPath: "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx",
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
@@ -705,7 +705,7 @@ export const CATALOG_PICKER_CONFIGS = {
     entityScoped: true,
     readWriteParity: "same-endpoint-verified",
     evidence:
-      "apps/backend/src/catalogs/safety/dot-violation-types.routes.ts SELECT+INSERT catalogs.dot_violation_types; HOSViolationsTab + HosViolationCreateModal catalogs-safety list consumers",
+      "apps/backend/src/catalogs/safety/dot-violation-types.routes.ts:168 SELECT+INSERT catalogs.dot_violation_types; HOSViolationsTab + HosViolationCreateModal catalogs-safety list consumers",
     consumerPath: [
       "apps/frontend/src/pages/safety/tabs/HOSViolationsTab.tsx",
       "apps/frontend/src/pages/safety/components/HosViolationCreateModal.tsx",
@@ -800,7 +800,7 @@ export const CATALOG_PICKER_CONFIGS = {
     entityScoped: true,
     readWriteParity: "same-endpoint-verified",
     evidence:
-      "apps/backend/src/catalogs/safety/cargo-claim-reasons.routes.ts SELECT+INSERT catalogs.cargo_claim_reasons; CargoClaimIntakeSurface catalogs-safety list consumer",
+      "apps/backend/src/catalogs/safety/cargo-claim-reasons.routes.ts:142 SELECT+INSERT catalogs.cargo_claim_reasons; CargoClaimIntakeSurface catalogs-safety list consumer",
     consumerPath: "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx",
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
@@ -848,7 +848,7 @@ export const CATALOG_PICKER_CONFIGS = {
     entityScoped: true,
     readWriteParity: "same-endpoint-verified",
     evidence:
-      "apps/backend/src/catalogs/safety/internal-fine-reasons.routes.ts SELECT+INSERT catalogs.internal_fine_reasons; InternalFinesPage catalogs-safety list consumer",
+      "apps/backend/src/catalogs/safety/internal-fine-reasons.routes.ts:143 SELECT+INSERT catalogs.internal_fine_reasons; InternalFinesPage catalogs-safety list consumer",
     consumerPath: "apps/frontend/src/pages/safety/InternalFinesPage.tsx",
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
@@ -895,7 +895,7 @@ export const CATALOG_PICKER_CONFIGS = {
     entityScoped: true,
     readWriteParity: "same-endpoint-verified",
     evidence:
-      "apps/backend/src/catalogs/generic-catalog.factory.ts entityScoped INSERT + routes.ts dispatchErrorReasonsCatalogConfig; picker list apps/backend/src/mdata/dispatcher-safety-events.routes.ts GET catalogs/dispatcher-error-reasons",
+      "apps/backend/src/catalogs/generic-catalog.factory.ts:246 entityScoped INSERT + routes.ts dispatchErrorReasonsCatalogConfig; picker list apps/backend/src/mdata/dispatcher-safety-events.routes.ts GET catalogs/dispatcher-error-reasons",
     consumerPath: "apps/frontend/src/pages/UserDetail.tsx",
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
@@ -941,7 +941,7 @@ export const CATALOG_PICKER_CONFIGS = {
     entityScoped: true,
     readWriteParity: "same-endpoint-verified",
     evidence:
-      "apps/backend/src/catalogs/generic-catalog.factory.ts entityScoped INSERT + routes.ts customerQualityEventReasonsCatalogConfig",
+      "apps/backend/src/catalogs/generic-catalog.factory.ts:246 entityScoped INSERT + routes.ts customerQualityEventReasonsCatalogConfig",
     consumerPath: "apps/frontend/src/pages/CustomerDetail.tsx",
     fields: CATALOG_FIELDS,
     create: async (operatingCompanyId, values) => {
@@ -990,7 +990,7 @@ export const CATALOG_PICKER_CONFIGS = {
     entityScoped: true,
     readWriteParity: "same-endpoint-verified",
     evidence:
-      "apps/backend/src/mdata/driver-safety-events.routes.ts SELECT+INSERT catalogs.driver_termination_reasons; DriverDetail safety-event picker consumer",
+      "apps/backend/src/mdata/driver-safety-events.routes.ts:187 SELECT+INSERT catalogs.driver_termination_reasons; DriverDetail safety-event picker consumer",
     consumerPath: [
       "apps/frontend/src/pages/DriverDetail.tsx",
       "apps/frontend/src/components/drivers/TerminateConfirmModal.tsx",
