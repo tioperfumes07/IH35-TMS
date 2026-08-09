@@ -187,10 +187,12 @@ export function assertScoreboardContract(sources) {
       !/form_425\.required\.json/.test(matrixPage) ||
       !/finance\.required\.json/.test(matrixPage) ||
       !/docs\.required\.json/.test(matrixPage) ||
-      !/system\.required\.json/.test(matrixPage)
+      !/system\.required\.json/.test(matrixPage) ||
+      !/users\.required\.json/.test(matrixPage) ||
+      !/help\.required\.json/.test(matrixPage)
     ) {
       problems.push(
-        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/lists/factoring/reports/inventory/compliance/cash-flow/home/program/tasks/form_425/finance/docs/system/settlements`,
+        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/lists/factoring/reports/inventory/compliance/cash-flow/home/program/tasks/form_425/finance/docs/system/users/help/settlements`,
       );
     }
     if (
@@ -236,6 +238,8 @@ export function assertScoreboardContract(sources) {
     "finance",
     "docs",
     "system",
+    "users",
+    "help",
   ]) {
     const mapRel = `docs/specs/scoreboard/modules/${mod}.required.json`;
     const mapPath = path.join(ROOT, mapRel);
@@ -619,6 +623,28 @@ export function assertScoreboardContract(sources) {
         }
       }
 
+
+      // MATRIX-REQ-USERS
+      if (mod === "users") {
+        const leafIds = new Set((map.leaves ?? []).map((l) => l.id));
+        if ((map.leaves ?? []).length < 5) {
+          problems.push(`${mapRel}: Users Required map must have ≥5 leaves — got ${(map.leaves ?? []).length}`);
+        }
+        for (const need of ["list", "detail", "create", "role_change"]) {
+          if (!leafIds.has(need)) problems.push(`${mapRel}: missing Users leaf ${need}`);
+        }
+      }
+      // MATRIX-REQ-HELP
+      if (mod === "help") {
+        const leafIds = new Set((map.leaves ?? []).map((l) => l.id));
+        if ((map.leaves ?? []).length < 6) {
+          problems.push(`${mapRel}: Help Required map must have ≥6 leaves — got ${(map.leaves ?? []).length}`);
+        }
+        for (const need of ["center", "overview", "runbooks", "article", "search"]) {
+          if (!leafIds.has(need)) problems.push(`${mapRel}: missing Help leaf ${need}`);
+        }
+      }
+
     } catch (e) {
       problems.push(`${mapRel}: invalid JSON (${e instanceof Error ? e.message : e})`);
     }
@@ -650,12 +676,12 @@ export function assertScoreboardContract(sources) {
 
   if (
     route &&
-    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors\|lists\|factoring\|reports\|inventory\|compliance\|cash-flow\|home\|program\|tasks\|form_425\|finance\|docs\|system|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|SUPPORTED.*lists|SUPPORTED.*factoring|SUPPORTED.*reports|SUPPORTED.*inventory|SUPPORTED.*compliance|SUPPORTED.*cash-flow|SUPPORTED.*home|SUPPORTED.*program|SUPPORTED.*tasks|SUPPORTED.*form_425|SUPPORTED.*finance|SUPPORTED.*docs|SUPPORTED.*system|dispatch/.test(
+    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors\|lists\|factoring\|reports\|inventory\|compliance\|cash-flow\|home\|program\|tasks\|form_425\|finance\|docs\|system\|users\|help|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|SUPPORTED.*lists|SUPPORTED.*factoring|SUPPORTED.*reports|SUPPORTED.*inventory|SUPPORTED.*compliance|SUPPORTED.*cash-flow|SUPPORTED.*home|SUPPORTED.*program|SUPPORTED.*tasks|SUPPORTED.*form_425|SUPPORTED.*finance|SUPPORTED.*docs|SUPPORTED.*system|SUPPORTED.*users|SUPPORTED.*help|dispatch/.test(
       route,
     )
   ) {
     problems.push(
-      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists|factoring|reports|inventory|compliance|cash-flow|home|program|tasks|form_425|finance|docs|system`,
+      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists|factoring|reports|inventory|compliance|cash-flow|home|program|tasks|form_425|finance|docs|system|users|help`,
     );
   }
 

@@ -36,6 +36,8 @@ import form425Required from "@scoreboard/modules/form_425.required.json";
 import financeRequired from "@scoreboard/modules/finance.required.json";
 import docsRequired from "@scoreboard/modules/docs.required.json";
 import systemRequired from "@scoreboard/modules/system.required.json";
+import usersRequired from "@scoreboard/modules/users.required.json";
+import helpRequired from "@scoreboard/modules/help.required.json";
 import { ProgramModuleNav } from "./ProgramModuleNav";
 
 type Tri = "done" | "audited" | "unaudited" | "na";
@@ -118,7 +120,9 @@ type MatrixModuleId =
   | "form_425"
   | "finance"
   | "docs"
-  | "system";
+  | "system"
+  | "users"
+  | "help";
 
 const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   maintenance: maintRequired as RequiredMap,
@@ -147,6 +151,8 @@ const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   finance: financeRequired as RequiredMap,
   docs: docsRequired as RequiredMap,
   system: systemRequired as RequiredMap,
+  users: usersRequired as RequiredMap,
+  help: helpRequired as RequiredMap,
 };
 
 const LIVE_MODULES: MatrixModuleId[] = [
@@ -176,6 +182,8 @@ const LIVE_MODULES: MatrixModuleId[] = [
   "finance",
   "docs",
   "system",
+  "users",
+  "help",
 ];
 
 const MODULES = [
@@ -462,7 +470,7 @@ function parseModule(raw: string | null): MatrixModuleId {
   if (raw === "insurance") return "insurance";
   if (raw === "legal") return "legal";
   if (raw === "accounting") return "accounting";
-  if (raw === "banking") return "banking";
+  if (raw === "banking" || raw === "bank") return "banking";
   if (raw === "dispatch") return "dispatch";
   if (raw === "settlements") return "settlements";
   if (raw === "fuel") return "fuel";
@@ -483,6 +491,8 @@ function parseModule(raw: string | null): MatrixModuleId {
   if (raw === "finance" || raw === "finance-hub" || raw === "finance_hub") return "finance";
   if (raw === "docs") return "docs";
   if (raw === "system") return "system";
+  if (raw === "users") return "users";
+  if (raw === "help") return "help";
   return "maintenance";
 }
 

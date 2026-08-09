@@ -1,0 +1,166 @@
+{
+  "module": "help",
+  "entity_default": "USMCA",
+  "source": {
+    "pages": "apps/frontend/src/pages/help/*"
+  },
+  "columns": [
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "center",
+      "tab": "Help center",
+      "sub": "Help center home",
+      "route_hint": "/help",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "overview",
+      "tab": "Help",
+      "sub": "Help overview",
+      "route_hint": "/help/overview",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "runbooks",
+      "tab": "Runbooks",
+      "sub": "Runbooks index",
+      "route_hint": "/help/runbooks",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "article",
+      "tab": "Articles",
+      "sub": "Help article by slug",
+      "route_hint": "/help/:slug",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "search",
+      "tab": "Help center",
+      "sub": "Search articles",
+      "route_hint": "/help",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "cat.getting_started",
+      "tab": "Categories",
+      "sub": "Getting Started",
+      "route_hint": "/help",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "cat.dispatch",
+      "tab": "Categories",
+      "sub": "Dispatching Loads",
+      "route_hint": "/help",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "cat.settlements",
+      "tab": "Categories",
+      "sub": "Driver Settlements",
+      "route_hint": "/help",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "cat.banking",
+      "tab": "Categories",
+      "sub": "Banking & Reconciliation",
+      "route_hint": "/help",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "cat.reports",
+      "tab": "Categories",
+      "sub": "Reports",
+      "route_hint": "/help",
+      "required": [
+        "connectivity"
+      ]
+    }
+  ]
+}

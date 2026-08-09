@@ -1,0 +1,160 @@
+{
+  "module": "users",
+  "entity_default": "USMCA",
+  "source": {
+    "pages": "apps/frontend/src/pages/Users.tsx"
+  },
+  "columns": [
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "list",
+      "tab": "Users",
+      "sub": "Users list",
+      "route_hint": "/users",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "detail",
+      "tab": "Users",
+      "sub": "User detail",
+      "route_hint": "/users/:id",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "create",
+      "tab": "Users",
+      "sub": "+ Create / invite user",
+      "route_hint": "/users",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "role_change",
+      "tab": "Users",
+      "sub": "Role change modal",
+      "route_hint": "/users",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "deactivate",
+      "tab": "Users",
+      "sub": "Deactivate user",
+      "route_hint": "/users",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "tab.all",
+      "tab": "Filters",
+      "sub": "All users tab",
+      "route_hint": "/users",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "kpi",
+      "tab": "KPIs",
+      "sub": "Users KPI strip",
+      "route_hint": "/users",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    }
+  ]
+}
