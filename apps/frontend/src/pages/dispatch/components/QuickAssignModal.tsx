@@ -50,6 +50,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadNumber, hardWar
           Driver <span className="text-red-500">*</span>
           <div className="mt-0.5">
             <DriverPickerWithCreate
+              driverRoster="active_or_probation"
               operatingCompanyId={operatingCompanyId}
               value={driverId || null}
               onChange={(next) => setDriverId(next ?? "")}

@@ -42,6 +42,12 @@ export function collectProblems(root = ROOT) {
   if (/SelectCombobox[\s\S]{0,200}assigned_trailer_unit_id/.test(code) || /SelectCombobox[\s\S]{0,120}trailers\.map/.test(code)) {
     problems.push(`${FILE}: must not keep SelectCombobox dual path for trailer unit`);
   }
+
+  // FAIL-CA1: newly created drivers default to Probation — Active-only hid them on Book Load.
+  if (!/driverRoster=["']active_or_probation["']/.test(code)) {
+    problems.push(`${FILE}: FAIL-CA1 — DriverPickerWithCreate must pass driverRoster="active_or_probation"`);
+  }
+
   if (/limit:\s*500/.test(code)) {
     problems.push(`${FILE}: must not fetch silent limit:500 fleet page`);
   }
