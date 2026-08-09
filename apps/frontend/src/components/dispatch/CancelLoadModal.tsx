@@ -20,8 +20,16 @@ function extractCancelError(err: unknown): string {
       const firstField = fieldErrors ? Object.values(fieldErrors).flat()[0] : undefined;
       if (firstField) return firstField;
     }
-    if (typeof data.message === "string") return data.message;
-    if (typeof data.error === "string") return `Cancel failed: ${data.error}`;
+    if (typeof data.message === "string" && data.message.trim()) return data.message;
+    if (typeof data.blocker === "string" && data.blocker.trim()) return data.blocker;
+    // CU-09 / C-08 class: never surface a bare E_* machine code as the operator toast.
+    if (typeof data.error === "string" && data.error.trim()) {
+      const code = data.error.trim();
+      if (/^E_[A-Z0-9_]+$/.test(code)) {
+        return `Cancel failed: ${code.replace(/^E_/, "").replace(/_/g, " ").toLowerCase()}`;
+      }
+      return `Cancel failed: ${code}`;
+    }
     return `Cancel failed (HTTP ${err.status}).`;
   }
   return err instanceof Error ? err.message : "Cancel failed. Please try again.";
