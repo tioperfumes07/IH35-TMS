@@ -13,6 +13,10 @@ export type AutoDeductionPolicy = {
   /** FAIL-DD1 — projected from mdata.drivers on list; EntityLink label (never raw UUID title). */
   driver_name?: string | null;
   deduction_type: AutoDeductionDeductionType;
+  /** SETL-LINK-01 — joined from catalogs.driver_deduction_types */
+  default_recovery_rail?: string | null;
+  may_draw_escrow?: boolean | null;
+  survives_separation?: boolean | null;
   total_owed_cents: number;
   deducted_so_far_cents: number;
   max_per_settlement_cents: number;

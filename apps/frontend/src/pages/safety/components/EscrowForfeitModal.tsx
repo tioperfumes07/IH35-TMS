@@ -62,11 +62,16 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
         .filter((r) => r.may_draw_escrow === true)
         .map((r) => ({
           value: r.code,
-          label: `${r.display_name} (${r.code})`,
+          label: `${r.display_name} (${r.code}) · rail ${r.default_recovery_rail ?? "ask"}`,
           type: r.code,
         })),
     [drawReasonsQuery.data]
   );
+
+  const selectedDrawMeta = useMemo(() => {
+    if (!reasonCode) return null;
+    return (drawReasonsQuery.data?.rows ?? []).find((r) => r.code === reasonCode) ?? null;
+  }, [drawReasonsQuery.data, reasonCode]);
 
   const liabilitiesQuery = useQuery({
     queryKey: ["driver-liabilities", "forfeit-picker", operatingCompanyId, row?.id],
@@ -164,6 +169,12 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
               }}
             />
           </div>
+          {selectedDrawMeta ? (
+            <span className="mt-1 block text-[11px] text-slate-600" data-testid="escrow-forfeit-catalog-recovery-meta">
+              Catalog recovery: {selectedDrawMeta.default_recovery_rail ?? "ask"}
+              {selectedDrawMeta.survives_separation ? " · survives separation" : ""}
+            </span>
+          ) : null}
         </label>
 
         <label className="block text-xs">

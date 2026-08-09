@@ -8,6 +8,14 @@ import { driverDeductionTypesCatalogClient, type DriverCatalogRow } from "../api
 
 export type DriverDeductionTypeOption = { value: string; label: string };
 
+/** SETL-LINK-01 — recovery policy carried on catalogs.driver_deduction_types (not dead weight). */
+export type DriverDeductionTypeRecoveryMeta = {
+  default_recovery_rail: string;
+  may_draw_escrow: boolean;
+  survives_separation: boolean;
+  display_name: string;
+};
+
 export type UseDriverDeductionTypeCatalogOptions = {
   operatingCompanyId: string;
   enabled?: boolean;
@@ -44,6 +52,31 @@ export function buildDriverDeductionTypeLabelMap(rows: DriverCatalogRow[]): Map<
   return map;
 }
 
+export function buildDriverDeductionTypeRecoveryMetaMap(
+  rows: DriverCatalogRow[]
+): Map<string, DriverDeductionTypeRecoveryMeta> {
+  const map = new Map<string, DriverDeductionTypeRecoveryMeta>();
+  for (const row of rows) {
+    map.set(row.code, {
+      default_recovery_rail: row.default_recovery_rail ?? "ask",
+      may_draw_escrow: Boolean(row.may_draw_escrow),
+      survives_separation: Boolean(row.survives_separation),
+      display_name: row.display_name,
+    });
+  }
+  return map;
+}
+
+/**
+ * DoD §8 ask options for a catalog row: never offer escrow/split when may_draw_escrow=false
+ * (matches ck_driver_deduction_types_escrow_rail_coherent).
+ */
+export function recoveryRailOptionsForMeta(meta: DriverDeductionTypeRecoveryMeta | null | undefined): string[] {
+  const all = ["escrow", "settlement", "split", "ask"];
+  if (!meta || meta.may_draw_escrow) return all;
+  return all.filter((rail) => rail !== "escrow" && rail !== "split");
+}
+
 export function useDriverDeductionTypeCatalog({
   operatingCompanyId,
   enabled = true,
@@ -70,11 +103,13 @@ export function useDriverDeductionTypeCatalog({
   );
 
   const labelByCode = useMemo(() => buildDriverDeductionTypeLabelMap(rows), [rows]);
+  const recoveryMetaByCode = useMemo(() => buildDriverDeductionTypeRecoveryMetaMap(rows), [rows]);
 
   return {
     query,
     options,
     labelByCode,
+    recoveryMetaByCode,
     rows,
   };
 }

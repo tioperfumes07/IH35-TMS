@@ -4,8 +4,10 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   driverDeductionTypeQueryKey,
+  recoveryRailOptionsForMeta,
   useDriverDeductionTypeCatalog,
 } from "../../hooks/useDriverDeductionTypeCatalog";
+import { INSURANCE_CLAIM_RECOVERY_RAIL_VALUES } from "../../api/insurance";
 import { Button } from "../../components/Button";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -14,6 +16,13 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useAutoDeductionPolicies, useAutoDeductionPolicyMutations } from "../../hooks/useAutoDeductionPolicies";
+
+const RAIL_LABELS: Record<string, string> = {
+  escrow: "Escrow first",
+  settlement: "Settlement first",
+  split: "Settlement then escrow shortfall",
+  ask: "Ask every time (no default)",
+};
 
 type Props = {
   operatingCompanyId: string;
@@ -43,19 +52,28 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
   const policiesQuery = useAutoDeductionPolicies(operatingCompanyId, lockedDriverId);
   const { createMutation, patchMutation, cancelMutation } = useAutoDeductionPolicyMutations(operatingCompanyId);
   // SETL-PICK-01: entity-scoped catalogs.driver_deduction_types via shared hook + ReferenceSelect inline create.
+  // SETL-LINK-01: consume default_recovery_rail / may_draw_escrow / survives_separation (DoD §8 ask pre-select).
   const {
     query: deductionTypesQuery,
     options: deductionTypeOptions,
     labelByCode: deductionTypeLabelByCode,
+    recoveryMetaByCode,
   } = useDriverDeductionTypeCatalog({ operatingCompanyId });
 
   const [createOpen, setCreateOpen] = useState(false);
   const [driverId, setDriverId] = useState(lockedDriverId ?? "");
   const [deductionType, setDeductionType] = useState("");
+  const [recoveryRail, setRecoveryRail] = useState<string>("ask");
   const [totalOwed, setTotalOwed] = useState("500.00");
   const [maxPerSettlement, setMaxPerSettlement] = useState("100.00");
   const [memo, setMemo] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  const selectedRecoveryMeta = deductionType ? recoveryMetaByCode.get(deductionType) : undefined;
+  const recoveryRailChoices = useMemo(
+    () => recoveryRailOptionsForMeta(selectedRecoveryMeta),
+    [selectedRecoveryMeta]
+  );
 
   useEffect(() => {
     if (lockedDriverId) setDriverId(lockedDriverId);
@@ -66,6 +84,14 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
       setDeductionType(deductionTypeOptions[0].value);
     }
   }, [deductionType, deductionTypeOptions]);
+
+  // Pre-select catalog default when type changes; never silent — operator can still change the ask.
+  useEffect(() => {
+    if (!selectedRecoveryMeta) return;
+    const allowed = recoveryRailOptionsForMeta(selectedRecoveryMeta);
+    const preferred = selectedRecoveryMeta.default_recovery_rail;
+    setRecoveryRail(allowed.includes(preferred) ? preferred : "ask");
+  }, [selectedRecoveryMeta]);
 
   const grouped = useMemo(() => {
     const rows = policiesQuery.data?.rows ?? [];
@@ -81,6 +107,8 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
     const deducted = Number(row.deducted_so_far_cents ?? 0);
     const pct = owed > 0 ? Math.min(100, Math.round((deducted / owed) * 100)) : 0;
     const typeLabel = deductionTypeLabelByCode.get(row.deduction_type) ?? row.deduction_type;
+    const rail = row.default_recovery_rail ?? recoveryMetaByCode.get(row.deduction_type)?.default_recovery_rail;
+    const mayEscrow = row.may_draw_escrow ?? recoveryMetaByCode.get(row.deduction_type)?.may_draw_escrow;
     return (
       <div key={row.id} className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -89,6 +117,12 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
               <EntityLink kind="driver" id={row.driver_id} label={row.driver_name || undefined} />
             </div>
             <div className="text-xs text-gray-600">{typeLabel} · {money(deducted)} / {money(owed)}</div>
+            {rail ? (
+              <div className="mt-0.5 text-[11px] text-slate-600" data-testid="auto-deduction-policy-recovery-meta">
+                Recovery: {RAIL_LABELS[rail] ?? rail}
+                {mayEscrow ? " · may draw escrow" : " · escrow blocked"}
+              </div>
+            ) : null}
           </div>
           <StatusBadge status={row.status} />
         </div>
@@ -162,12 +196,14 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
               return;
             }
             try {
+              const railNote = `recovery_rail=${recoveryRail}`;
+              const memoWithRail = memo.trim() ? `${memo.trim()} · ${railNote}` : railNote;
               await createMutation.mutateAsync({
                 driver_id: driverId,
                 deduction_type: deductionType,
                 total_owed_cents: totalCents,
                 max_per_settlement_cents: maxCents,
-                memo: memo || undefined,
+                memo: memoWithRail,
               });
               setCreateOpen(false);
             } catch (submitError) {
@@ -225,6 +261,36 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
             {deductionTypesQuery.isError ? (
               <span className="text-[10px] font-normal text-red-600">Could not load deduction types from catalog.</span>
             ) : null}
+          </label>
+          {/*
+            SETL-LINK-01: catalog default_recovery_rail pre-selects the mandatory ask (DoD §8).
+            Options exclude escrow/split when may_draw_escrow=false (coherence CHECK).
+          */}
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600" data-testid="auto-deduction-recovery-rail-field">
+            Recovery rail (always ask)
+            <select
+              className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+              value={recoveryRail}
+              onChange={(e) => setRecoveryRail(e.target.value)}
+              disabled={!deductionType}
+            >
+              {(recoveryRailChoices.length ? recoveryRailChoices : [...INSURANCE_CLAIM_RECOVERY_RAIL_VALUES]).map((rail) => (
+                <option key={rail} value={rail}>
+                  {RAIL_LABELS[rail] ?? rail}
+                </option>
+              ))}
+            </select>
+            {selectedRecoveryMeta ? (
+              <span className="text-[10px] font-normal text-slate-600" data-testid="auto-deduction-catalog-recovery-meta">
+                Catalog default: {RAIL_LABELS[selectedRecoveryMeta.default_recovery_rail] ?? selectedRecoveryMeta.default_recovery_rail}
+                {" · "}
+                {selectedRecoveryMeta.may_draw_escrow ? "may draw escrow" : "escrow blocked"}
+                {" · "}
+                {selectedRecoveryMeta.survives_separation ? "survives separation" : "ends at separation"}
+              </span>
+            ) : (
+              <span className="text-[10px] font-normal text-slate-500">Select a type to load catalog recovery policy.</span>
+            )}
           </label>
           <div className="grid grid-cols-2 gap-2">
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
