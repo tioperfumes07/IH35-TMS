@@ -1099,6 +1099,22 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         [input.assigned_primary_driver_id, input.operating_company_id]
       );
       const hos = hosRows[0] ?? null;
+      // Manual miles (no PC*MILER): refuse book with a seated driver when shortest miles are missing.
+      // Pay basis is short_miles — silent 0 produces no driver bill (F277) and looks like success.
+      if (!(Number(input.miles_shortest ?? 0) > 0) && !input.override_token) {
+        return {
+          kind: "error",
+          status: 422,
+          payload: {
+            error: "E_MILES_SHORTEST_REQUIRED",
+            message:
+              "Enter shortest miles before booking with a driver. PC*MILER is not connected — type short and practical miles manually on Book Load.",
+            details: { missing: ["shortest miles"] },
+            wf_044_maintenance_warnings: wf044Warnings,
+            insurance_coverage_gap_warnings: insuranceCoverageWarnings,
+          },
+        };
+      }
       if (hos?.is_in_violation) {
         if (!input.override_token) {
           await appendCrudAudit(

@@ -21,10 +21,14 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SELFTEST = process.argv.includes("--selftest");
 const LABEL = "verify-loaded-miles-written-on-book";
 const SVC = "apps/backend/src/dispatch/book-load.service.ts";
+const MODAL = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
+const STRIP = "apps/frontend/src/pages/dispatch/components/book-load-v4/MilesStrip.tsx";
 
 function assert(files) {
   const problems = [];
   const src = files[SVC] ?? "";
+  const modal = files[MODAL] ?? "";
+  const strip = files[STRIP] ?? "";
   const m = /INSERT INTO mdata\.loads\s*\(([\s\S]*?)\)\s*VALUES\s*\(([\s\S]*?)\)/i.exec(src);
   if (!m) return [`${SVC}: INSERT INTO mdata.loads anchor drifted`];
   const columns = m[1].split(",").map((c) => c.replace(/--[^\n]*/g, "").trim()).filter(Boolean);
@@ -63,10 +67,30 @@ function assert(files) {
         `per_mile_pay/short_miles; using practical here would silently change what drivers are paid.`,
     );
   }
+  // Manual miles (no PC*MILER): MilesStrip must expose editable shortest/practical — hidden register-only = FAIL.
+  if (!/data-testid="book-miles-shortest"/.test(strip) || !/onShortestChange/.test(strip)) {
+    problems.push(
+      `${STRIP}: must expose editable shortest miles (data-testid=book-miles-shortest + onShortestChange) — ` +
+        `display-only strip left every book at 0 without PC*MILER.`,
+    );
+  }
+  if (/className="hidden"[\s\S]{0,200}?miles_shortest/.test(modal) || /hidden[\s\S]{0,120}?register\("miles_shortest"/.test(modal)) {
+    problems.push(
+      `${MODAL}: miles_shortest must not live only inside a hidden register block — operators must type miles.`,
+    );
+  }
+  if (!/onShortestChange=\{/.test(modal) || !/Stops · Miles \(manual\)/.test(modal)) {
+    problems.push(`${MODAL}: must wire MilesStrip onShortestChange and label section as manual miles (not PC*MILER-only).`);
+  }
+  if (!/E_MILES_SHORTEST_REQUIRED/.test(src)) {
+    problems.push(`${SVC}: must refuse book with seated driver when miles_shortest missing (E_MILES_SHORTEST_REQUIRED).`);
+  }
   return problems;
 }
 
-const files = Object.fromEntries([SVC].map((r) => [r, readFileSync(path.join(ROOT, r), "utf8")]));
+const files = Object.fromEntries(
+  [SVC, MODAL, STRIP].map((r) => [r, readFileSync(path.join(ROOT, r), "utf8")]),
+);
 
 if (SELFTEST) {
   const checks = [];
@@ -89,6 +113,16 @@ if (SELFTEST) {
     process.exit(1);
   }
   checks.push(["basis flipped to practical", assert(practical).some((p) => /PAY basis/.test(p))]);
+  const hiddenMiles = {
+    ...files,
+    [STRIP]: files[STRIP].replace(/data-testid="book-miles-shortest"/g, 'data-testid="book-miles-shortest-GONE"'),
+  };
+  checks.push(["miles strip not editable", assert(hiddenMiles).some((p) => /editable shortest/.test(p))]);
+  const noServerRefuse = {
+    ...files,
+    [SVC]: files[SVC].replace(/E_MILES_SHORTEST_REQUIRED/g, "E_MILES_GONE"),
+  };
+  checks.push(["server refuse removed", assert(noServerRefuse).some((p) => /E_MILES_SHORTEST_REQUIRED/.test(p))]);
   const failed = checks.filter(([, c]) => !c).map(([n]) => n);
   if (failed.length) { console.error(`${LABEL} SELFTEST FAIL — not caught: ${failed.join(", ")}`); process.exit(1); }
   console.log(`${LABEL} SELFTEST PASS — ${checks.length}/${checks.length} planted regressions caught`);

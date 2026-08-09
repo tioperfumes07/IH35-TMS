@@ -667,6 +667,16 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
       pushToast("Select a Trip Type before booking", "error");
       return;
     }
+    // Manual miles (no PC*MILER): per-mile pay reads miles_shortest — refuse silent 0 when a driver is seated.
+    const seatedDriver = Boolean(values.assigned_primary_driver_id?.trim?.() || values.assigned_primary_driver_id);
+    if (saveMode === "book_dispatch" && seatedDriver && !(Number(values.miles_shortest) > 0)) {
+      form.setError("miles_shortest", {
+        type: "required",
+        message: "Enter shortest miles (driver pay). PC*MILER is not connected — type them manually.",
+      });
+      pushToast("Enter shortest miles before booking with a driver", "error");
+      return;
+    }
     const token = opts?.override ? overrideToken ?? crypto.randomUUID() : undefined;
     if (opts?.override && !overrideToken) setOverrideToken(token ?? null);
     try {
@@ -1466,17 +1476,27 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
             <section className="blw-sec">
               <div className="blw-sec-hd">
                 <span className="blw-sec-chip">C</span>
-                <span className="blw-sec-name">Stops · PC*MILER routing</span>
-                <span className="blw-sec-meta">1 pickup · 1 delivery</span>
+                <span className="blw-sec-name">Stops · Miles (manual)</span>
+                <span className="blw-sec-meta">1 pickup · 1 delivery · type short + long</span>
               </div>
               <div className="space-y-2 p-3">
                 <BookLoadStopsSection control={form.control as never} register={form.register as never} setValue={form.setValue as never} />
-                <MilesStrip practical={milesPractical} shortest={milesShortest} deadhead={milesDeadhead} ratePerMile={ratePerMile} />
-                <p className="blw-note">Shortest miles (highlighted) used for driver pay. Practical used for fuel planning and ETA.</p>
+                <MilesStrip
+                  practical={milesPractical}
+                  shortest={milesShortest}
+                  deadhead={milesDeadhead}
+                  ratePerMile={ratePerMile}
+                  shortestRequired={Boolean(assignedPrimaryDriverId)}
+                  onPracticalChange={(n) => form.setValue("miles_practical", n, { shouldDirty: true, shouldValidate: true })}
+                  onShortestChange={(n) => form.setValue("miles_shortest", n, { shouldDirty: true, shouldValidate: true })}
+                  onDeadheadChange={(n) => form.setValue("miles_deadhead", n, { shouldDirty: true, shouldValidate: true })}
+                />
+                <p className="blw-note">
+                  Enter Shortest (driver pay) and Practical/long (fuel + ETA) by hand — PC*MILER is not connected yet.
+                  With a driver seated, Shortest must be greater than 0 or Book is refused.
+                </p>
+                {/* border_routing stays form-backed but not operator-facing here */}
                 <div className="hidden">
-                  <input type="number" {...form.register("miles_practical", { valueAsNumber: true })} />
-                  <input type="number" {...form.register("miles_shortest", { valueAsNumber: true })} />
-                  <input type="number" {...form.register("miles_deadhead", { valueAsNumber: true })} />
                   <input {...form.register("border_routing")} />
                 </div>
               </div>
