@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -100,5 +101,26 @@ describe("InvoiceDetailPage mutation error handling", () => {
     await waitFor(() =>
       expect(screen.getByTestId("toast-message")).toHaveTextContent("Period is closed — cannot send invoice")
     );
+  });
+
+  it("surfaces a toast and keeps the void dialog open when voidInvoice rejects", async () => {
+    voidInvoiceMock.mockRejectedValue(new Error("Invoice is already paid — cannot void"));
+
+    render(wrap(<InvoiceDetailPage />));
+
+    const voidButton = await screen.findByRole("button", { name: "Void" });
+    fireEvent.click(voidButton);
+
+    const reasonInput = await screen.findByPlaceholderText(/Required reason/);
+    await userEvent.type(reasonInput, "duplicate invoice");
+
+    const submitButton = screen.getAllByRole("button", { name: "Void" })[1];
+    fireEvent.click(submitButton);
+
+    await waitFor(() => expect(voidInvoiceMock).toHaveBeenCalledOnce());
+    await waitFor(() =>
+      expect(screen.getByTestId("toast-message")).toHaveTextContent("Invoice is already paid — cannot void")
+    );
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 });
