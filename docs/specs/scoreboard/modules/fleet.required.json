@@ -1,0 +1,940 @@
+{
+  "module": "fleet",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Vehicle Profile · Trailer Profile (Fleet module)",
+    "nav": "apps/frontend/src/pages/fleet/FleetHomePage.tsx + FleetTablePage kind/status sub-tabs",
+    "profiles": "VehicleProfilePage · TrailerProfilePage · UnitDetail (permits/toll-tags/tasks/brakes/tires/finance)",
+    "modals": "CreateUnitModal · CreateTrailerModal · EditVehicleModal (8 tabs) · EditTrailerModal · QuickAssignModal · StatusChangeModal",
+    "routes": "apps/frontend/src/routes/manifest.tsx /fleet/*"
+  },
+  "columns": [
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "scenario.maintenance",
+      "group": "process",
+      "label": "Maint WO"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "home.roster",
+      "tab": "Home",
+      "sub": "Fleet roster (units + trailers)",
+      "route_hint": "/fleet",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "home.create_unit",
+      "tab": "Home",
+      "sub": "+ Create Unit",
+      "route_hint": "/fleet",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "home.create_trailer",
+      "tab": "Home",
+      "sub": "+ Create Trailer",
+      "route_hint": "/fleet",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "roster.kind.all",
+      "tab": "Roster",
+      "sub": "Kind filter · All",
+      "route_hint": "/fleet?kind=",
+      "required": [
+        "unit",
+        "trailer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "roster.kind.trucks",
+      "tab": "Roster",
+      "sub": "Kind filter · Trucks",
+      "route_hint": "/fleet?kind=truck",
+      "required": [
+        "driver",
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "roster.kind.trailers",
+      "tab": "Roster",
+      "sub": "Kind filter · Trailers",
+      "route_hint": "/fleet?kind=trailer",
+      "required": [
+        "trailer",
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "roster.kind.company",
+      "tab": "Roster",
+      "sub": "Kind filter · Company Vehicles",
+      "route_hint": "/fleet?kind=company",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "roster.filter.type",
+      "tab": "Roster",
+      "sub": "Type filter (Truck · Tractor · Reefer · …)",
+      "route_hint": "/fleet?type=",
+      "required": [
+        "unit",
+        "trailer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "roster.filter.status_active",
+      "tab": "Roster",
+      "sub": "KPI filter · Active (InService)",
+      "route_hint": "/fleet?status=InService",
+      "required": [
+        "unit",
+        "trailer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "roster.filter.status_inshop",
+      "tab": "Roster",
+      "sub": "KPI filter · In-Shop",
+      "route_hint": "/fleet?status=InMaintenance",
+      "required": [
+        "unit",
+        "scenario.maintenance",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "roster.filter.status_oos",
+      "tab": "Roster",
+      "sub": "KPI filter · Out-of-Service",
+      "route_hint": "/fleet?status=OutOfService",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "roster.bulk.status",
+      "tab": "Roster",
+      "sub": "Bulk · Change Status",
+      "route_hint": "/fleet",
+      "required": [
+        "unit",
+        "trailer",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "roster.bulk.type",
+      "tab": "Roster",
+      "sub": "Bulk · Change Type",
+      "route_hint": "/fleet",
+      "required": [
+        "unit",
+        "trailer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "roster.bulk.inactivate",
+      "tab": "Roster",
+      "sub": "Bulk · Inactivate / Reactivate",
+      "route_hint": "/fleet",
+      "required": [
+        "unit",
+        "trailer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "roster.row.edit_unit",
+      "tab": "Roster",
+      "sub": "Row Edit · truck/tractor",
+      "route_hint": "/fleet",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "roster.row.edit_trailer",
+      "tab": "Roster",
+      "sub": "Row Edit · trailer",
+      "route_hint": "/fleet",
+      "required": [
+        "trailer",
+        "unit",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.profile.identity",
+      "tab": "Vehicle Profile",
+      "sub": "Identity · status · plates · quick availability",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "unit.profile.telemetry",
+      "tab": "Vehicle Profile",
+      "sub": "Live telemetry (Samsara)",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.profile.driver_assign",
+      "tab": "Vehicle Profile",
+      "sub": "Driver assignment (default + current)",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "driver",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "unit.profile.quick_assign",
+      "tab": "Vehicle Profile",
+      "sub": "Quick Assign modal",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "driver",
+        "unit",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.profile.current_load",
+      "tab": "Vehicle Profile",
+      "sub": "Current load + backhaul suggestions",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "driver",
+        "customer",
+        "unit",
+        "trailer",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "unit.profile.trip_cost",
+      "tab": "Vehicle Profile",
+      "sub": "Trip cost calculator",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "load",
+        "expense",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.profile.maintenance",
+      "tab": "Vehicle Profile",
+      "sub": "Maintenance snapshot + ServiceTimeline + parts history",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "scenario.maintenance",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.profile.compliance",
+      "tab": "Vehicle Profile",
+      "sub": "Compliance / plates / permits chips",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.profile.insurance_summary",
+      "tab": "Vehicle Profile",
+      "sub": "Insurance summary",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.profile.reefer",
+      "tab": "Vehicle Profile",
+      "sub": "Reefer section (conditional trailer linkage)",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "trailer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.profile.financial_pl",
+      "tab": "Vehicle Profile",
+      "sub": "Financial P&L · ownership cost · comparables",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "load",
+        "expense",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.profile.documents",
+      "tab": "Vehicle Profile",
+      "sub": "Documents + photo gallery",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "unit.profile.legal_reverse",
+      "tab": "Vehicle Profile",
+      "sub": "Legal matters reverse section",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.profile.insurance_claims_reverse",
+      "tab": "Vehicle Profile",
+      "sub": "Insurance claims reverse section",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.profile.safety_reverse",
+      "tab": "Vehicle Profile",
+      "sub": "Safety records reverse (DOT · DVIR · accidents)",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.profile.bank_txns",
+      "tab": "Vehicle Profile",
+      "sub": "Linked bank transactions",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "expense",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.profile.audit_history",
+      "tab": "Vehicle Profile",
+      "sub": "Audit history tab",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.profile.qbo_mapping",
+      "tab": "Vehicle Profile",
+      "sub": "QBO vendor + Class mapping",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "vendor",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.profile.action_bar",
+      "tab": "Vehicle Profile",
+      "sub": "Action bar (Edit · Archive · PDF export)",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "unit.edit.identity",
+      "tab": "Edit Vehicle",
+      "sub": "Modal tab · Identity",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.edit.insurance",
+      "tab": "Edit Vehicle",
+      "sub": "Modal tab · Insurance",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.edit.irp_plates",
+      "tab": "Edit Vehicle",
+      "sub": "Modal tab · IRP / Plates",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.edit.reefer",
+      "tab": "Edit Vehicle",
+      "sub": "Modal tab · Reefer (conditional)",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "trailer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.edit.financial",
+      "tab": "Edit Vehicle",
+      "sub": "Modal tab · Financial",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "vendor",
+        "expense",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.edit.lifecycle",
+      "tab": "Edit Vehicle",
+      "sub": "Modal tab · Lifecycle (Sold · Transferred · Damaged · OOS)",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.edit.quick_availability",
+      "tab": "Edit Vehicle",
+      "sub": "Modal tab · Quick-availability + default driver",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "picker_law",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.edit.documents",
+      "tab": "Edit Vehicle",
+      "sub": "Modal tab · Documents",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "unit.detail.permits",
+      "tab": "Unit Detail",
+      "sub": "Permits tab",
+      "route_hint": "/fleet/units/:id/detail?tab=permits",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "unit.detail.toll_tags",
+      "tab": "Unit Detail",
+      "sub": "Toll Tags tab",
+      "route_hint": "/fleet/units/:id/detail?tab=toll-tags",
+      "required": [
+        "unit",
+        "expense",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.detail.tasks",
+      "tab": "Unit Detail",
+      "sub": "Tasks tab",
+      "route_hint": "/fleet/units/:id/detail?tab=tasks",
+      "required": [
+        "unit",
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.detail.brakes",
+      "tab": "Unit Detail",
+      "sub": "Brakes tab",
+      "route_hint": "/fleet/units/:id/detail?tab=brakes",
+      "required": [
+        "unit",
+        "scenario.maintenance",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.detail.tires",
+      "tab": "Unit Detail",
+      "sub": "Tires tab",
+      "route_hint": "/fleet/units/:id/detail?tab=tires",
+      "required": [
+        "unit",
+        "scenario.maintenance",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.detail.finance_linkage",
+      "tab": "Unit Detail",
+      "sub": "Loan / Lease / Depr. finance linkage",
+      "route_hint": "/fleet/units/:id/detail?tab=finance",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "trailer.profile.identity",
+      "tab": "Trailer Profile",
+      "sub": "Identity · status badge · status change entry",
+      "route_hint": "/fleet/trailers/:id",
+      "required": [
+        "trailer",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "trailer.profile.specs",
+      "tab": "Trailer Profile",
+      "sub": "Type specs",
+      "route_hint": "/fleet/trailers/:id",
+      "required": [
+        "trailer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "trailer.profile.assignment",
+      "tab": "Trailer Profile",
+      "sub": "Current assignment (tractor pairing)",
+      "route_hint": "/fleet/trailers/:id",
+      "required": [
+        "trailer",
+        "unit",
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "trailer.profile.reefer",
+      "tab": "Trailer Profile",
+      "sub": "Reefer telemetry + reefer hours (conditional)",
+      "route_hint": "/fleet/trailers/:id",
+      "required": [
+        "trailer",
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "trailer.profile.maintenance",
+      "tab": "Trailer Profile",
+      "sub": "Maintenance snapshot + ServiceTimeline",
+      "route_hint": "/fleet/trailers/:id",
+      "required": [
+        "trailer",
+        "unit",
+        "vendor",
+        "ap_bill",
+        "scenario.maintenance",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "trailer.profile.compliance",
+      "tab": "Trailer Profile",
+      "sub": "Compliance / plates",
+      "route_hint": "/fleet/trailers/:id",
+      "required": [
+        "trailer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "trailer.profile.insurance_claims_reverse",
+      "tab": "Trailer Profile",
+      "sub": "Insurance claims reverse section",
+      "route_hint": "/fleet/trailers/:id",
+      "required": [
+        "trailer",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "trailer.profile.safety_reverse",
+      "tab": "Trailer Profile",
+      "sub": "Safety records reverse (DOT · interchange)",
+      "route_hint": "/fleet/trailers/:id",
+      "required": [
+        "trailer",
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "trailer.profile.documents",
+      "tab": "Trailer Profile",
+      "sub": "Documents upload/list",
+      "route_hint": "/fleet/trailers/:id",
+      "required": [
+        "trailer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "trailer.profile.bank_txns",
+      "tab": "Trailer Profile",
+      "sub": "Linked bank transactions",
+      "route_hint": "/fleet/trailers/:id",
+      "required": [
+        "trailer",
+        "expense",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "trailer.profile.legal_reverse",
+      "tab": "Trailer Profile",
+      "sub": "Legal matters reverse (equipment_id filter)",
+      "route_hint": "/fleet/trailers/:id",
+      "required": [
+        "trailer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "trailer.profile.audit_history",
+      "tab": "Trailer Profile",
+      "sub": "Audit history tab",
+      "route_hint": "/fleet/trailers/:id",
+      "required": [
+        "trailer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "trailer.profile.action_bar",
+      "tab": "Trailer Profile",
+      "sub": "Action bar (Edit · Status · Archive · PDF)",
+      "route_hint": "/fleet/trailers/:id",
+      "required": [
+        "trailer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "trailer.status_change",
+      "tab": "Trailer Profile",
+      "sub": "Status Change modal",
+      "route_hint": "/fleet/trailers/:id",
+      "required": [
+        "trailer",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "trailer.edit",
+      "tab": "Trailer Profile",
+      "sub": "Edit Trailer modal",
+      "route_hint": "/fleet/trailers/:id",
+      "required": [
+        "trailer",
+        "unit",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "transfers.in_progress",
+      "tab": "Transfers",
+      "sub": "Equipment transfers in progress (dual ack)",
+      "route_hint": "/fleet/transfers-in-progress",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "map.redirect",
+      "tab": "Map",
+      "sub": "Fleet map → Dispatch map (driver/unit hop)",
+      "route_hint": "/fleet/map",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    }
+  ]
+}

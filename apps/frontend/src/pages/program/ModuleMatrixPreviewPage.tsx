@@ -20,6 +20,7 @@ import dispatchRequired from "@scoreboard/modules/dispatch.required.json";
 import settlementsRequired from "@scoreboard/modules/settlements.required.json";
 import fuelRequired from "@scoreboard/modules/fuel.required.json";
 import driversRequired from "@scoreboard/modules/drivers.required.json";
+import fleetRequired from "@scoreboard/modules/fleet.required.json";
 import { ProgramModuleNav } from "./ProgramModuleNav";
 
 type Tri = "done" | "audited" | "unaudited" | "na";
@@ -76,7 +77,18 @@ type LiveMatrix = {
   };
 };
 
-type MatrixModuleId = "maintenance" | "safety" | "insurance" | "legal" | "accounting" | "banking" | "dispatch" | "settlements" | "fuel" | "drivers";
+type MatrixModuleId =
+  | "maintenance"
+  | "safety"
+  | "insurance"
+  | "legal"
+  | "accounting"
+  | "banking"
+  | "dispatch"
+  | "settlements"
+  | "fuel"
+  | "drivers"
+  | "fleet";
 
 const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   maintenance: maintRequired as RequiredMap,
@@ -89,6 +101,7 @@ const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   settlements: settlementsRequired as RequiredMap,
   fuel: fuelRequired as RequiredMap,
   drivers: driversRequired as RequiredMap,
+  fleet: fleetRequired as RequiredMap,
 };
 
 const LIVE_MODULES: MatrixModuleId[] = [
@@ -102,6 +115,7 @@ const LIVE_MODULES: MatrixModuleId[] = [
   "settlements",
   "fuel",
   "drivers",
+  "fleet",
 ];
 
 const MODULES = [
