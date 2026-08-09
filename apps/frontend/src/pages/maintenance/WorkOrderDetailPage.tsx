@@ -701,7 +701,7 @@ export function WorkOrderDetailPage() {
                 <div className="text-[11px] text-gray-500">Unit</div>
                 <p>
                   {wo.unit_id ? (
-                    <EntityLink kind="unit" id={String(wo.unit_id)} label={wo.unit_number ?? undefined} />
+                    <EntityLink kind="unit" id={String(wo.unit_id)} label={typeof wo.unit_number === "string" ? wo.unit_number : undefined} />
                   ) : (
                     "—"
                   )}
@@ -714,7 +714,7 @@ export function WorkOrderDetailPage() {
                     <EntityLink
                       kind="load"
                       id={String(wo.load_id)}
-                      label={wo.linked_load_number ?? undefined}
+                      label={typeof wo.linked_load_number === "string" ? wo.linked_load_number : undefined}
                     />
                   ) : (
                     "—"
