@@ -183,10 +183,11 @@ export function assertScoreboardContract(sources) {
       !/cash-flow\.required\.json/.test(matrixPage) ||
       !/home\.required\.json/.test(matrixPage) ||
       !/program\.required\.json/.test(matrixPage) ||
-      !/tasks\.required\.json/.test(matrixPage)
+      !/tasks\.required\.json/.test(matrixPage) ||
+      !/form_425\.required\.json/.test(matrixPage)
     ) {
       problems.push(
-        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/lists/factoring/reports/inventory/compliance/cash-flow/home/program/tasks/settlements`,
+        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/lists/factoring/reports/inventory/compliance/cash-flow/home/program/tasks/form_425/settlements`,
       );
     }
     if (
@@ -228,6 +229,7 @@ export function assertScoreboardContract(sources) {
     "home",
     "program",
     "tasks",
+    "form_425",
   ]) {
     const mapRel = `docs/specs/scoreboard/modules/${mod}.required.json`;
     const mapPath = path.join(ROOT, mapRel);
@@ -563,6 +565,18 @@ export function assertScoreboardContract(sources) {
         }
       }
 
+
+      // MATRIX-REQ-FORM-425C
+      if (mod === "form_425") {
+        const leafIds = new Set((map.leaves ?? []).map((l) => l.id));
+        if ((map.leaves ?? []).length < 8) {
+          problems.push(`${mapRel}: Form 425C Required map must have ≥8 leaves — got ${(map.leaves ?? []).length}`);
+        }
+        for (const need of ["home", "tab.profile", "tab.qb", "tab.form", "tab.merge", "tab.history", "exhibits", "law.virtual_banks_excluded"]) {
+          if (!leafIds.has(need)) problems.push(`${mapRel}: missing Form 425C leaf ${need}`);
+        }
+      }
+
     } catch (e) {
       problems.push(`${mapRel}: invalid JSON (${e instanceof Error ? e.message : e})`);
     }
@@ -594,12 +608,12 @@ export function assertScoreboardContract(sources) {
 
   if (
     route &&
-    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors\|lists\|factoring\|reports\|inventory\|compliance\|cash-flow\|home\|program\|tasks|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|SUPPORTED.*lists|SUPPORTED.*factoring|SUPPORTED.*reports|SUPPORTED.*inventory|SUPPORTED.*compliance|SUPPORTED.*cash-flow|SUPPORTED.*home|SUPPORTED.*program|SUPPORTED.*tasks|dispatch/.test(
+    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors\|lists\|factoring\|reports\|inventory\|compliance\|cash-flow\|home\|program\|tasks\|form_425|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|SUPPORTED.*lists|SUPPORTED.*factoring|SUPPORTED.*reports|SUPPORTED.*inventory|SUPPORTED.*compliance|SUPPORTED.*cash-flow|SUPPORTED.*home|SUPPORTED.*program|SUPPORTED.*tasks|SUPPORTED.*form_425|dispatch/.test(
       route,
     )
   ) {
     problems.push(
-      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists|factoring|reports|inventory|compliance|cash-flow|home|program|tasks`,
+      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists|factoring|reports|inventory|compliance|cash-flow|home|program|tasks|form_425`,
     );
   }
 
