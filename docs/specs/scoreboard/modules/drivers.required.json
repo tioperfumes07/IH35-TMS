@@ -1,0 +1,249 @@
+{
+  "module": "drivers",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "IH35_ARCHITECTURAL_DESIGN — Drivers",
+    "nav": "DRIVERS_SUBTAB_PATH",
+    "routes": "/drivers/*"
+  },
+  "columns": [
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "home",
+      "tab": "Drivers",
+      "sub": "Drivers home",
+      "route_hint": "/drivers",
+      "required": [
+        "driver",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "profiles.list",
+      "tab": "Profiles",
+      "sub": "Driver profiles",
+      "route_hint": "/drivers/profiles",
+      "required": [
+        "driver",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "profiles.create",
+      "tab": "Profiles",
+      "sub": "+ Create Driver",
+      "route_hint": "/drivers/profiles",
+      "required": [
+        "driver",
+        "unit",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "profiles.detail",
+      "tab": "Profiles",
+      "sub": "Driver detail",
+      "route_hint": "/drivers/profiles/:id",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "settlements",
+      "tab": "Settlements",
+      "sub": "Drivers settlements hop",
+      "route_hint": "/drivers/settlements",
+      "required": [
+        "driver",
+        "load",
+        "liability",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "pre_settlements",
+      "tab": "Pre-settlements",
+      "sub": "Pre-settlements",
+      "route_hint": "/drivers/pre-settlements",
+      "required": [
+        "driver",
+        "load",
+        "liability",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "cash_advances",
+      "tab": "Cash Advances",
+      "sub": "Cash advances",
+      "route_hint": "/drivers/cash-advances",
+      "required": [
+        "driver",
+        "liability",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "permits",
+      "tab": "Permits",
+      "sub": "Driver permits",
+      "route_hint": "/drivers/permits",
+      "required": [
+        "driver",
+        "connectivity",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "pay_rate_templates",
+      "tab": "Pay Rate Templates",
+      "sub": "Pay rate templates",
+      "route_hint": "/drivers/pay-rate-templates",
+      "required": [
+        "driver",
+        "gl_je",
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "deductions",
+      "tab": "Deductions",
+      "sub": "Deductions",
+      "route_hint": "/drivers/deductions",
+      "required": [
+        "driver",
+        "liability",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "team_splits",
+      "tab": "Team Splits",
+      "sub": "Team splits",
+      "route_hint": "/drivers/team-splits",
+      "required": [
+        "driver",
+        "load",
+        "connectivity",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "disputes",
+      "tab": "Disputes",
+      "sub": "Disputes",
+      "route_hint": "/drivers/disputes",
+      "required": [
+        "driver",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "leave",
+      "tab": "Leave",
+      "sub": "Leave",
+      "route_hint": "/drivers/leave",
+      "required": [
+        "driver",
+        "connectivity",
+        "picker_law"
+      ]
+    }
+  ]
+}

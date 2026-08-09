@@ -58,7 +58,7 @@ Legend for the matrix build: **HAVE** · **YELLOW** (have source, not yet wired 
 
 | Box | Do we have the data? | What exists today | Gap |
 |---|---|---|---|
-| **1 Required** | **HAVE** (9 modules through Fuel/Settlements) | `docs/specs/scoreboard/modules/{maintenance,safety,insurance,legal,accounting,banking,dispatch,settlements,fuel}.required.json` + shared vocabulary | Remaining ~17 module boards |
+| **1 Required** | **HAVE** (10 modules through Drivers) | `docs/specs/scoreboard/modules/{maintenance,safety,insurance,legal,accounting,banking,dispatch,settlements,fuel,drivers}.required.json` | Remaining ~16 |
 
 ### Column groups (every module board may subset)
 
