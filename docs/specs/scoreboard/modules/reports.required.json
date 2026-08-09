@@ -1,0 +1,1186 @@
+{
+  "module": "reports",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 13 REPORTS",
+    "nav": "apps/frontend/src/pages/reports/ReportsSubNav.tsx REPORTS_SUB_NAV_ITEMS",
+    "flyout": "apps/frontend/src/components/reports/CategoryHoverNav.tsx REPORT_CATEGORY_FLYOUT_ITEMS",
+    "dedicated": "apps/frontend/src/components/reports/phase6ReportLinks.ts PHASE_6_REPORT_HREFS",
+    "routes": "apps/frontend/src/routes/manifest.tsx /reports/*"
+  },
+  "columns": [
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "home.reports",
+      "tab": "Reports home",
+      "sub": "Category hover nav + KPI strip",
+      "route_hint": "/reports",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "home.hub",
+      "tab": "Category hub",
+      "sub": "Nine-category hover hub",
+      "route_hint": "/reports/hub",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "home.custom_builder",
+      "tab": "Reports home",
+      "sub": "+ Custom report inline builder",
+      "route_hint": "/reports",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "home.kpi_strip",
+      "tab": "Reports home",
+      "sub": "MTD / scheduled / top lane KPI cards",
+      "route_hint": "/reports",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "load",
+        "customer",
+        "driver"
+      ]
+    },
+    {
+      "id": "subnav.reports",
+      "tab": "Sub-nav",
+      "sub": "Reports · home link",
+      "route_hint": "/reports",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "subnav.category_hub",
+      "tab": "Sub-nav",
+      "sub": "Category hub link",
+      "route_hint": "/reports/hub",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "subnav.run_report",
+      "tab": "Sub-nav",
+      "sub": "Run report flyout (CategoryHoverNav dedupe)",
+      "route_hint": "/reports/hub",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "subnav.cancellations",
+      "tab": "Sub-nav",
+      "sub": "Cancellations shortcut",
+      "route_hint": "/reports/cancellations",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "load"
+      ]
+    },
+    {
+      "id": "subnav.scheduled_custom",
+      "tab": "Sub-nav",
+      "sub": "Scheduled (custom) shortcut",
+      "route_hint": "/reports/scheduled-custom",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "subnav.audit",
+      "tab": "Sub-nav",
+      "sub": "Audit reports cluster",
+      "route_hint": "/reports/audit/activity-by-user",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "filter.all",
+      "tab": "Category filter",
+      "sub": "All hover flyout",
+      "route_hint": "/reports",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "filter.operations",
+      "tab": "Category filter",
+      "sub": "Operations hover flyout",
+      "route_hint": "/reports",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "filter.financial",
+      "tab": "Category filter",
+      "sub": "Financial hover flyout",
+      "route_hint": "/reports",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "filter.drivers",
+      "tab": "Category filter",
+      "sub": "Drivers hover flyout",
+      "route_hint": "/reports",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "filter.fleet",
+      "tab": "Category filter",
+      "sub": "Fleet hover flyout",
+      "route_hint": "/reports",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "filter.fuel",
+      "tab": "Category filter",
+      "sub": "Fuel hover flyout",
+      "route_hint": "/reports",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "filter.safety",
+      "tab": "Category filter",
+      "sub": "Safety hover flyout",
+      "route_hint": "/reports",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "filter.compliance",
+      "tab": "Category filter",
+      "sub": "Compliance hover flyout",
+      "route_hint": "/reports",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "filter.automation",
+      "tab": "Category filter",
+      "sub": "Automation hover flyout",
+      "route_hint": "/reports",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "filter.saved",
+      "tab": "Category filter",
+      "sub": "Saved hover flyout",
+      "route_hint": "/reports",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "cat.ops_dispatch",
+      "tab": "Category landing",
+      "sub": "Ops & dispatch",
+      "route_hint": "/reports/categories/ops-dispatch",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "cat.driver_perf",
+      "tab": "Category landing",
+      "sub": "Driver performance",
+      "route_hint": "/reports/categories/driver-perf",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "cat.equipment",
+      "tab": "Category landing",
+      "sub": "Equipment",
+      "route_hint": "/reports/categories/equipment",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "cat.safety",
+      "tab": "Category landing",
+      "sub": "Safety",
+      "route_hint": "/reports/categories/safety",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "cat.customers",
+      "tab": "Category landing",
+      "sub": "Customers",
+      "route_hint": "/reports/categories/customers",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "cat.vendors",
+      "tab": "Category landing",
+      "sub": "Vendors",
+      "route_hint": "/reports/categories/vendors",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "cat.accounting",
+      "tab": "Category landing",
+      "sub": "Accounting",
+      "route_hint": "/reports/categories/accounting",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "cat.tax_reg",
+      "tab": "Category landing",
+      "sub": "Tax & regulatory",
+      "route_hint": "/reports/categories/tax-reg",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "cat.multi_company",
+      "tab": "Category landing",
+      "sub": "Multi-company",
+      "route_hint": "/reports/categories/multi-company",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "report.management",
+      "tab": "Management package",
+      "sub": "Owner weekly / quarter-close pack",
+      "route_hint": "/reports/management",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "report.ifta",
+      "tab": "IFTA",
+      "sub": "IFTA preparer (legacy route)",
+      "route_hint": "/reports/ifta",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "expense"
+      ]
+    },
+    {
+      "id": "report.ifta_preparer",
+      "tab": "IFTA",
+      "sub": "Tax-regulatory IFTA preparer",
+      "route_hint": "/reports/ifta-preparer",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "expense"
+      ]
+    },
+    {
+      "id": "report.ar_aging",
+      "tab": "A/R aging",
+      "sub": "Dedicated AR aging page",
+      "route_hint": "/reports/ar-aging",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "customer"
+      ]
+    },
+    {
+      "id": "report.ap_aging",
+      "tab": "A/P aging",
+      "sub": "Dedicated AP aging page",
+      "route_hint": "/reports/ap-aging",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "vendor"
+      ]
+    },
+    {
+      "id": "report.trial_balance",
+      "tab": "Trial balance",
+      "sub": "GL trial balance",
+      "route_hint": "/reports/trial-balance",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "report.profit_loss",
+      "tab": "Profit & loss",
+      "sub": "Income statement",
+      "route_hint": "/reports/profit-loss",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "report.balance_sheet",
+      "tab": "Balance sheet",
+      "sub": "Assets / liabilities / equity",
+      "route_hint": "/reports/balance-sheet",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "report.cash_flow_statement",
+      "tab": "Cash flow statement",
+      "sub": "Operating / investing / financing",
+      "route_hint": "/reports/cash-flow-statement",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "report.cash_flow",
+      "tab": "Cash flow",
+      "sub": "Cash flow report (legacy route)",
+      "route_hint": "/reports/cash-flow",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "report.per_truck_cpm",
+      "tab": "Per-truck CPM",
+      "sub": "Cost-per-mile dashboard alias",
+      "route_hint": "/reports/per-truck-cpm",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "unit",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "report.cash_flow_overview",
+      "tab": "Cash flow overview",
+      "sub": "Liquidity + projection",
+      "route_hint": "/reports/cash-flow-overview",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "report.settlement_summary",
+      "tab": "Settlement summary",
+      "sub": "Driver pay breakdown",
+      "route_hint": "/reports/settlement-summary",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "driver",
+        "liability"
+      ]
+    },
+    {
+      "id": "report.customer_profitability",
+      "tab": "Customer profitability",
+      "sub": "Margin by customer",
+      "route_hint": "/reports/customer-profitability",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "customer",
+        "load"
+      ]
+    },
+    {
+      "id": "report.profit_per_truck",
+      "tab": "Profit per truck",
+      "sub": "Unit economics dashboard",
+      "route_hint": "/reports/profit-per-truck",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "unit",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "report.lane_profitability",
+      "tab": "Lane profitability",
+      "sub": "Lane heatmap / margin",
+      "route_hint": "/reports/lane-profitability",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "load",
+        "customer"
+      ]
+    },
+    {
+      "id": "report.cancellations",
+      "tab": "Cancellations",
+      "sub": "Load cancellation analysis",
+      "route_hint": "/reports/cancellations",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "load"
+      ]
+    },
+    {
+      "id": "report.late_arrival",
+      "tab": "Late arrival",
+      "sub": "On-time performance",
+      "route_hint": "/reports/late-arrival",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "load",
+        "driver"
+      ]
+    },
+    {
+      "id": "report.trip_profitability",
+      "tab": "Trip profitability",
+      "sub": "Trip-level margin",
+      "route_hint": "/reports/trip-profitability",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "load"
+      ]
+    },
+    {
+      "id": "report.fuel_reconciliation",
+      "tab": "Fuel reconciliation",
+      "sub": "Card vs WO reconcile",
+      "route_hint": "/reports/fuel-reconciliation",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "load",
+        "expense",
+        "vendor"
+      ]
+    },
+    {
+      "id": "report.maintenance_cost_per_unit",
+      "tab": "Maintenance cost per unit",
+      "sub": "WO spend by unit",
+      "route_hint": "/reports/maintenance-cost-per-unit",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "unit",
+        "vendor",
+        "ap_bill"
+      ]
+    },
+    {
+      "id": "report.dispatch_margin",
+      "tab": "Dispatch margin",
+      "sub": "Load margin report",
+      "route_hint": "/reports/dispatch-margin",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "load",
+        "customer"
+      ]
+    },
+    {
+      "id": "report.geofence_dwell",
+      "tab": "Geofence dwell",
+      "sub": "Site dwell windows",
+      "route_hint": "/reports/geofence-dwell",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "report.geofence_reconciliation",
+      "tab": "Geofence reconciliation",
+      "sub": "GPS vs geofence events",
+      "route_hint": "/reports/geofence-reconciliation",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "report.booking_gap",
+      "tab": "Booking gap",
+      "sub": "Unbooked capacity gaps",
+      "route_hint": "/reports/booking-gap",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "load"
+      ]
+    },
+    {
+      "id": "report.deadhead",
+      "tab": "Deadhead optimization",
+      "sub": "Empty miles analysis",
+      "route_hint": "/reports/deadhead",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "load",
+        "unit"
+      ]
+    },
+    {
+      "id": "report.scheduled",
+      "tab": "Scheduled reports",
+      "sub": "Email automation manager",
+      "route_hint": "/reports/scheduled",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "report.scheduled_custom",
+      "tab": "Scheduled (custom)",
+      "sub": "Custom scheduled reports",
+      "route_hint": "/reports/scheduled-custom",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "runner.profit_truck_mtd",
+      "tab": "Profit per truck · MTD",
+      "sub": "Runner MTD margin",
+      "route_hint": "/reports/run/profit-truck-mtd",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "runner.dispatch_board",
+      "tab": "Dispatch board health",
+      "sub": "Live load movement",
+      "route_hint": "/reports/run/dispatch-board",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "load"
+      ]
+    },
+    {
+      "id": "runner.detention_claims",
+      "tab": "Detention claims",
+      "sub": "Billed vs collected",
+      "route_hint": "/reports/run/detention-claims",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "load"
+      ]
+    },
+    {
+      "id": "runner.cash_position",
+      "tab": "Cash position + AR",
+      "sub": "Daily liquidity",
+      "route_hint": "/reports/run/cash-position",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "runner.driver_pay_history",
+      "tab": "Driver pay history",
+      "sub": "Settlement history by driver",
+      "route_hint": "/reports/run/driver-pay-history",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "driver"
+      ]
+    },
+    {
+      "id": "runner.driver_settlement",
+      "tab": "Driver settlement summary",
+      "sub": "Runner settlement table",
+      "route_hint": "/reports/run/driver-settlement",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "driver"
+      ]
+    },
+    {
+      "id": "runner.fleet_utilization",
+      "tab": "Fleet utilization",
+      "sub": "Idle vs loaded time",
+      "route_hint": "/reports/run/fleet-utilization",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "unit"
+      ]
+    },
+    {
+      "id": "runner.fuel_savings",
+      "tab": "Fuel savings",
+      "sub": "Rec vs actual savings",
+      "route_hint": "/reports/run/fuel-savings",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "expense"
+      ]
+    },
+    {
+      "id": "runner.fuel_price_variance",
+      "tab": "Fuel price variance",
+      "sub": "Price delta report",
+      "route_hint": "/reports/run/fuel-price-variance",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "expense"
+      ]
+    },
+    {
+      "id": "runner.csa_fleet",
+      "tab": "Internal inspection rollup",
+      "sub": "CSA-style fleet score",
+      "route_hint": "/reports/run/csa-fleet",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "runner.hos_violations",
+      "tab": "HOS violations trend",
+      "sub": "Fatigue compliance trend",
+      "route_hint": "/reports/run/hos-violations",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "driver"
+      ]
+    },
+    {
+      "id": "runner.ifta_quarterly",
+      "tab": "IFTA quarterly prep",
+      "sub": "Quarterly fuel tax prep",
+      "route_hint": "/reports/run/ifta-quarterly",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "expense"
+      ]
+    },
+    {
+      "id": "runner.dot_audit_pack",
+      "tab": "DOT audit packet",
+      "sub": "Compliance export pack",
+      "route_hint": "/reports/run/dot-audit-pack",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "runner.saved_owner_pack",
+      "tab": "Owner weekly pack",
+      "sub": "Saved report preset",
+      "route_hint": "/reports/run/saved-owner-pack",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "runner.saved_quarter_close",
+      "tab": "Quarter close package",
+      "sub": "Saved close preset",
+      "route_hint": "/reports/run/saved-quarter-close",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "runner.maint_cost_unit",
+      "tab": "Maintenance cost per unit",
+      "sub": "Runner alias maint-cost-unit",
+      "route_hint": "/reports/run/maint-cost-unit",
+      "required": [
+        "load",
+        "driver",
+        "unit",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "unit"
+      ]
+    },
+    {
+      "id": "audit.activity_by_user",
+      "tab": "Audit",
+      "sub": "Activity by user",
+      "route_hint": "/reports/audit/activity-by-user",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "audit.activity_by_module",
+      "tab": "Audit",
+      "sub": "Activity by module",
+      "route_hint": "/reports/audit/activity-by-module",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "audit.financial_change_log",
+      "tab": "Audit",
+      "sub": "Financial change log",
+      "route_hint": "/reports/audit/financial-change-log",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "audit.maintenance_decision_log",
+      "tab": "Audit",
+      "sub": "Maintenance decision log",
+      "route_hint": "/reports/audit/maintenance-decision-log",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "audit.deduction_trail",
+      "tab": "Audit",
+      "sub": "Deduction trail",
+      "route_hint": "/reports/audit/deduction-trail",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "audit.void_reversal",
+      "tab": "Audit",
+      "sub": "Void & reversal",
+      "route_hint": "/reports/audit/void-reversal",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "audit.period_close_history",
+      "tab": "Audit",
+      "sub": "Period close history",
+      "route_hint": "/reports/audit/period-close-history",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    }
+  ]
+}

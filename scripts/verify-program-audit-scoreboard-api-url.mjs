@@ -176,10 +176,11 @@ export function assertScoreboardContract(sources) {
       !/vendors\.required\.json/.test(matrixPage) ||
       !/settlements\.required\.json/.test(matrixPage) ||
       !/lists\.required\.json/.test(matrixPage) ||
-      !/factoring\.required\.json/.test(matrixPage)
+      !/factoring\.required\.json/.test(matrixPage) ||
+      !/reports\.required\.json/.test(matrixPage)
     ) {
       problems.push(
-        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/lists/factoring/settlements`,
+        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/lists/factoring/reports/settlements`,
       );
     }
     if (
@@ -214,6 +215,7 @@ export function assertScoreboardContract(sources) {
     "vendors",
     "lists",
     "factoring",
+    "reports",
   ]) {
     const mapRel = `docs/specs/scoreboard/modules/${mod}.required.json`;
     const mapPath = path.join(ROOT, mapRel);
@@ -413,6 +415,40 @@ export function assertScoreboardContract(sources) {
           }
         }
       }
+      // MATRIX-REQ-REPORTS — stub map is FAIL. Must mirror /reports* manifest + sub-nav + runners.
+      if (mod === "reports") {
+        const leafIds = new Set((map.leaves ?? []).map((l) => l.id));
+        if ((map.leaves ?? []).length < 45) {
+          problems.push(
+            `${mapRel}: Reports Required map must have ≥45 leaves (home + hub + dedicated routes + categories + audit + runners) — got ${(map.leaves ?? []).length}`,
+          );
+        }
+        if (map.entity_default !== "USMCA") {
+          problems.push(`${mapRel}: entity_default must be USMCA for Reports matrix board`);
+        }
+        for (const need of [
+          "home.reports",
+          "home.hub",
+          "subnav.run_report",
+          "report.trial_balance",
+          "report.profit_loss",
+          "report.ar_aging",
+          "report.settlement_summary",
+          "report.lane_profitability",
+          "report.fuel_reconciliation",
+          "report.cancellations",
+          "report.deadhead",
+          "report.scheduled",
+          "cat.accounting",
+          "audit.activity_by_user",
+          "runner.dispatch_board",
+          "filter.financial",
+        ]) {
+          if (!leafIds.has(need)) {
+            problems.push(`${mapRel}: missing Reports leaf ${need} (ReportsSubNav / manifest /reports*)`);
+          }
+        }
+      }
     } catch (e) {
       problems.push(`${mapRel}: invalid JSON (${e instanceof Error ? e.message : e})`);
     }
@@ -444,12 +480,12 @@ export function assertScoreboardContract(sources) {
 
   if (
     route &&
-    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors\|lists\|factoring|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|SUPPORTED.*lists|SUPPORTED.*factoring|dispatch/.test(
+    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors\|lists\|factoring\|reports|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|SUPPORTED.*lists|SUPPORTED.*factoring|SUPPORTED.*reports|dispatch/.test(
       route,
     )
   ) {
     problems.push(
-      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists|factoring`,
+      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists|factoring|reports`,
     );
   }
 
