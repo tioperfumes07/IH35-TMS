@@ -289,21 +289,23 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                     data-testid={`claim-reverse-accident-${a.id}`}
                   />
                 ))}
+                {/* C-03: bare list Links omit ?incident_id= — destination opens nothing.
+                    EntityLink kinds resolve to list + ?incident_id= (SafetyIncidentsClusterSurface honors). */}
                 {graph.reverse.incidents.map((i) => (
-                  <Link
+                  <EntityLink
                     key={i.id}
-                    className="mr-2 text-slate-700 underline"
-                    to={
+                    kind={
                       i.incident_type === "trailer_interchange"
-                        ? "/safety/trailer-interchanges"
+                        ? "trailer_interchange"
                         : i.incident_type === "cargo_claim"
-                          ? "/safety/cargo-claims"
-                          : "/safety/damage-reports"
+                          ? "cargo_claim"
+                          : "damage_report"
                     }
+                    id={i.id}
+                    label={`Incident ${entityLabel(i.incident_type, i.id, "Record")}`}
+                    className="mr-2 text-slate-700 underline"
                     data-testid={`claim-reverse-incident-${i.id}`}
-                  >
-                    Incident {entityLabel(i.incident_type, i.id, "Record")}
-                  </Link>
+                  />
                 ))}
                 {(graph.reverse.bills ?? []).map((b) => (
                   <EntityLink

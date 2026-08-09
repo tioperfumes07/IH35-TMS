@@ -114,11 +114,43 @@ export function assertSafetyEntityLink(sources) {
     problems.push(`${routesRel}: accidents list query must LATERAL-join insurance.claim on accident_report_id`);
   }
 
+  // C-03 — ClaimsTab reverse incidents must deep-link (EntityLink + incident_id), not bare list Links.
+  const claimsTabRel = "apps/frontend/src/pages/insurance/ClaimsTab.tsx";
+  const claimsTab = stripComments(sources?.[claimsTabRel] ?? read(claimsTabRel));
+  const reverseBlock = claimsTab.split("graph.reverse.incidents")[1] ?? "";
+  if (
+    !/kind=\{[^}]*trailer_interchange/.test(reverseBlock) ||
+    !/kind=\{[^}]*cargo_claim/.test(reverseBlock) ||
+    !/damage_report/.test(reverseBlock)
+  ) {
+    problems.push(
+      `${claimsTabRel}: reverse.incidents must EntityLink kind=trailer_interchange|cargo_claim|damage_report (C-03)`
+    );
+  }
+  if (/to=\{[^}]*\/safety\/(trailer-interchanges|cargo-claims|damage-reports)"/.test(reverseBlock) ||
+      /to=\{[\s\S]*?\/safety\/trailer-interchanges"/.test(reverseBlock)) {
+    problems.push(
+      `${claimsTabRel}: reverse.incidents must not use bare <Link to="/safety/…"> without ?incident_id= (C-03 facade)`
+    );
+  }
+  // Simpler facade detect: Link + one of the three bare paths inside the incidents map
+  if (/<Link[\s\S]{0,400}\/safety\/(trailer-interchanges|cargo-claims|damage-reports)(?!\?incident_id=)/.test(reverseBlock)) {
+    problems.push(
+      `${claimsTabRel}: reverse.incidents bare Link to incident list without ?incident_id= (C-03)`
+    );
+  }
+
   return problems;
 }
 
 if (SELFTEST) {
-  const live = { [ENTITYLINK]: read(ENTITYLINK), [ACCIDENTS]: read(ACCIDENTS), [FINES]: read(FINES) };
+  const CLAIMS_TAB = "apps/frontend/src/pages/insurance/ClaimsTab.tsx";
+  const live = {
+    [ENTITYLINK]: read(ENTITYLINK),
+    [ACCIDENTS]: read(ACCIDENTS),
+    [FINES]: read(FINES),
+    [CLAIMS_TAB]: read(CLAIMS_TAB),
+  };
   const failures = [];
   const expectCaught = (name, mutated, needle) => {
     if (JSON.stringify(mutated) === JSON.stringify(live)) {
@@ -149,6 +181,25 @@ if (SELFTEST) {
     { ...live, [FINES]: live[FINES].replace(/searchParams\.get\("fine_id"\)/, 'null /* removed */ || String("")') },
     "never reads ?fine_id=",
   );
+  // 4. C-03 — ClaimsTab reverse incidents regress to bare list Links (no ?incident_id=).
+  {
+    const start = live[CLAIMS_TAB].indexOf("graph.reverse.incidents.map");
+    const end = live[CLAIMS_TAB].indexOf("{(graph.reverse.bills", start);
+    if (start < 0 || end < 0) {
+      failures.push("claims-incident-bare-link: could not locate reverse.incidents block");
+    } else {
+      const planted =
+        live[CLAIMS_TAB].slice(0, start) +
+        `graph.reverse.incidents.map((i) => (
+                  <Link key={i.id} className="mr-2 text-slate-700 underline" to="/safety/damage-reports" data-testid={\`claim-reverse-incident-\${i.id}\`}>
+                    Incident
+                  </Link>
+                ))
+                ` +
+        live[CLAIMS_TAB].slice(end);
+      expectCaught("claims-incident-bare-link", { ...live, [CLAIMS_TAB]: planted }, "C-03");
+    }
+  }
 
   const liveProblems = assertSafetyEntityLink(live);
   if (liveProblems.length) failures.push(`live sources FAIL: ${liveProblems.join(" | ")}`);
@@ -158,7 +209,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 3 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 4 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
