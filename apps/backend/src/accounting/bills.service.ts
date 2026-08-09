@@ -1183,7 +1183,12 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
     const paymentRes = await client.query<
       BillPaymentRow & {
         journal_entry_id: string | null;
+        journal_entry_date: string | null;
+        journal_entry_memo: string | null;
         matched_bank_transaction_id: string | null;
+        matched_bank_transaction_date: string | null;
+        matched_bank_transaction_description: string | null;
+        matched_bank_transaction_amount_cents: string | null;
         vendor_name: string | null;
         bill_number: string | null;
       }
@@ -1194,10 +1199,13 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
           ${BILL_PAYMENT_MDATA_VENDOR_ID_SQL} AS mdata_vendor_id,
           v.vendor_name,
           b.bill_number,
-          (
-            ${BILL_PAYMENT_JOURNAL_ENTRY_ID_SQL}
-          ) AS journal_entry_id,
-          ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
+          je_link.journal_entry_id,
+          je.entry_date AS journal_entry_date,
+          je.memo AS journal_entry_memo,
+          bt_link.matched_bank_transaction_id,
+          bt.transaction_date AS matched_bank_transaction_date,
+          bt.description AS matched_bank_transaction_description,
+          bt.amount_cents::text AS matched_bank_transaction_amount_cents
         FROM accounting.bill_payments bp
         LEFT JOIN mdata.vendors v
           ON v.id = (
@@ -1211,6 +1219,29 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
         LEFT JOIN accounting.bills b
           ON b.id = bp.bill_id
          AND b.operating_company_id = bp.operating_company_id
+        LEFT JOIN LATERAL (
+          SELECT jep.journal_entry_uuid::text AS journal_entry_id
+          FROM accounting.journal_entry_postings jep
+          WHERE jep.operating_company_id = bp.operating_company_id
+            AND jep.source_transaction_type = 'bill_payment'
+            AND jep.source_transaction_id = bp.id::text
+          ORDER BY jep.created_at ASC
+          LIMIT 1
+        ) je_link ON true
+        LEFT JOIN accounting.journal_entries je
+          ON je.id = je_link.journal_entry_id::uuid
+         AND je.operating_company_id = bp.operating_company_id
+        LEFT JOIN LATERAL (
+          SELECT bt.id::text AS matched_bank_transaction_id
+          FROM banking.bank_transactions bt
+          WHERE bt.operating_company_id = bp.operating_company_id
+            AND bt.matched_bill_payment_id = bp.id
+          ORDER BY bt.transaction_date DESC, bt.created_at DESC
+          LIMIT 1
+        ) bt_link ON true
+        LEFT JOIN banking.bank_transactions bt
+          ON bt.id = bt_link.matched_bank_transaction_id::uuid
+         AND bt.operating_company_id = bp.operating_company_id
         WHERE bp.id = $1::uuid
           AND bp.operating_company_id = $2::uuid
         LIMIT 1
@@ -1224,7 +1255,12 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
         ...row,
         amount_cents: Number(row.amount_cents ?? Math.round(Number(row.amount ?? 0) * 100)),
         journal_entry_id: row.journal_entry_id ?? null,
+        journal_entry_date: row.journal_entry_date ?? null,
+        journal_entry_memo: row.journal_entry_memo ?? null,
         matched_bank_transaction_id: row.matched_bank_transaction_id ?? null,
+        matched_bank_transaction_date: row.matched_bank_transaction_date ?? null,
+        matched_bank_transaction_description: row.matched_bank_transaction_description ?? null,
+        matched_bank_transaction_amount_cents: row.matched_bank_transaction_amount_cents ?? null,
         vendor_name: row.vendor_name ?? null,
         bill_number: row.bill_number ?? null,
       },
