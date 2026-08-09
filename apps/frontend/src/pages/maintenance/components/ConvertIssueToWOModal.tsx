@@ -7,6 +7,7 @@ import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -35,7 +36,7 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
       if (payload.unit_blocked) pushToast("Unit auto-blocked for dispatch (severe issue)", "info");
       onDone();
     },
-    onError: (error) => pushToast(String((error as Error).message || "Failed to convert issue"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to convert issue"), "error"),
   });
 
   useEscapeKey(onClose, open);

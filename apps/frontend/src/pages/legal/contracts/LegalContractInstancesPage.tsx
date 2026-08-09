@@ -16,6 +16,7 @@ import { UnifiedContractCreatorModal } from "./UnifiedContractCreatorModal";
 import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { CollapsedListFilters, TableSearch } from "../../../components/table";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 const STATUS_OPTIONS: Array<{ value: "all" | LegalContractStatus; label: string }> = [
   { value: "all", label: "All statuses" },
@@ -59,7 +60,7 @@ export function LegalContractInstancesPage() {
     onSuccess: (res) => {
       pushToast(`Library ready — ${res.inserted} added, ${res.already_present} already present.`, "success");
     },
-    onError: (error) => pushToast(String((error as Error).message || "Seed failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Seed failed"), "error"),
   });
 
   const listQuery = useQuery({
@@ -125,7 +126,7 @@ export function LegalContractInstancesPage() {
       pushToast("Reminder sent for selected contracts", "success");
       await refresh();
     },
-    onError: (error) => pushToast(String((error as Error).message || "Failed to send reminder"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to send reminder"), "error"),
   });
 
   const columns = useMemo<ParityColumn<LegalContractSummary>[]>(

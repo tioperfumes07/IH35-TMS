@@ -18,6 +18,7 @@ import {
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -68,7 +69,7 @@ export function CollectionsPage() {
       await invalidateCollections();
       pushToast(`Collections sync complete: +${result.created} created, ${result.resolved} resolved`, "success");
     },
-    onError: (error) => pushToast(String((error as Error).message ?? "Collections sync failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Collections sync failed"), "error"),
   });
 
   const logContactMutation = useMutation({
@@ -86,7 +87,7 @@ export function CollectionsPage() {
       setContactNotes("");
       pushToast("Contact logged", "success");
     },
-    onError: (error) => pushToast(String((error as Error).message ?? "Contact log failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Contact log failed"), "error"),
   });
 
   const resolveMutation = useMutation({
@@ -101,7 +102,7 @@ export function CollectionsPage() {
       await invalidateCollections();
       pushToast("Task resolved", "success");
     },
-    onError: (error) => pushToast(String((error as Error).message ?? "Resolve failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Resolve failed"), "error"),
   });
 
   return (
