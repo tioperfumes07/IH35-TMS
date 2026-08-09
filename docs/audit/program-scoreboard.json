@@ -171,7 +171,7 @@
     {
       "tier": "1",
       "module": "accounting",
-      "build": "38/39",
+      "build": "39/39",
       "cells": [
         "FAIL",
         "AUDIT",
@@ -277,7 +277,7 @@
     {
       "tier": "1",
       "module": "maintenance",
-      "build": "0/39",
+      "build": "2/39",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -330,7 +330,7 @@
     {
       "tier": "1",
       "module": "settlements",
-      "build": "1/9",
+      "build": "8/9",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -595,7 +595,7 @@
     {
       "tier": "2",
       "module": "safety",
-      "build": "36/38",
+      "build": "38/38",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -807,7 +807,7 @@
     {
       "tier": "3",
       "module": "customers",
-      "build": "9/10",
+      "build": "10/10",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 4776,
-      "title": "Cascade- docs(board): salvage FMCSA/settlement/linkage findings orphaned by the close of #4760",
+      "number": 5063,
+      "title": "FINDING: LV-001",
       "state": "merged",
-      "mergedAtCt": "08/08/2026, 01:42 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4776",
-      "sha": "7d448b634",
-      "committedAtIso": "2026-08-08T01:42:17-05:00"
+      "mergedAtCt": "08/08/2026, 08:45 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5063",
+      "sha": "f7ecb33d2",
+      "committedAtIso": "2026-08-08T20:45:02-05:00"
     },
     {
-      "number": 4730,
-      "title": "CC-1 fix(accounting): LV-REVREC-NOT-FIRING + LV-BULK-DELIVER-NOLATCH — the revenue latch ran BEFORE its own transaction committed, and bulk deliver never latched at all",
+      "number": 5062,
+      "title": "FINDING: MAINT-WO-FORWARD-LINKS",
       "state": "merged",
-      "mergedAtCt": "08/08/2026, 01:38 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4730",
-      "sha": "30ce12a69",
-      "committedAtIso": "2026-08-08T01:38:50-05:00"
-    },
-    {
-      "number": 4775,
-      "title": "FINDING: LV-TXN-017 — CLAIM-RESERVE 2819 for the vendor_type app/DB parity guard",
-      "state": "merged",
-      "mergedAtCt": "08/08/2026, 01:37 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4775",
-      "sha": "41d4fad32",
-      "committedAtIso": "2026-08-08T01:37:37-05:00"
-    },
-    {
-      "number": 4758,
-      "title": "CC-2 fix(drivers): P0 LV-DRIVER-DETAIL-PAGE-CRASHES — the driver profile bound the AGGREGATE ENVELOPE as a flat row; one API-client bug broke six surfaces",
-      "state": "merged",
-      "mergedAtCt": "08/08/2026, 01:26 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4758",
-      "sha": "223b8a247",
-      "committedAtIso": "2026-08-08T01:26:30-05:00"
+      "mergedAtCt": "08/08/2026, 08:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5062",
+      "sha": "f757cec3f",
+      "committedAtIso": "2026-08-08T20:44:07-05:00"
     },
     {
       "number": 0,
-      "title": "docs(audit): CC-3 FINDING LV-BILLPAY-VOID-GL-RESIDUE-NOT-REPAIRED — #4749 fixed the code, not the broken row",
+      "title": "docs(audit): transcribe CC-1's board rows into the shared board — attributed to CC-1, carried not adopted (ACCT-F276-R1, F275 unpushed, F259 closed, ECON-005 refusal)",
       "state": "merged",
-      "mergedAtCt": "08/08/2026, 01:23 AM CT",
+      "mergedAtCt": "08/08/2026, 08:41 PM CT",
       "url": "",
-      "sha": "9bf00d6b5",
-      "committedAtIso": "2026-08-08T01:23:43-05:00"
+      "sha": "73273ba31",
+      "committedAtIso": "2026-08-08T20:41:30-05:00"
     },
     {
-      "number": 4774,
-      "title": "FINDING: LV-TXN-005 — after #4769 a Kanban lane whose status the mapper does not handle SILENTLY falls back to the non-money endpoint, and nothing asserted otherwise",
+      "number": 5061,
+      "title": "FINDING: MAINT-S01 + MAINT-S02",
       "state": "merged",
-      "mergedAtCt": "08/08/2026, 01:08 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4774",
-      "sha": "c24cd8dd4",
-      "committedAtIso": "2026-08-08T01:08:40-05:00"
+      "mergedAtCt": "08/08/2026, 08:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5061",
+      "sha": "bc75b91c2",
+      "committedAtIso": "2026-08-08T20:27:58-05:00"
     },
     {
-      "number": 4749,
-      "title": "FINDING: ACCT-F175 — voiding a bill payment reversed NOTHING; the GL kept $33.40 of cash that had already left the bank",
+      "number": 5060,
+      "title": "FINDING: SETL-LINK-01",
       "state": "merged",
-      "mergedAtCt": "08/08/2026, 01:06 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4749",
-      "sha": "f7bb8b8bd",
-      "committedAtIso": "2026-08-08T01:06:32-05:00"
+      "mergedAtCt": "08/08/2026, 08:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5060",
+      "sha": "15472407b",
+      "committedAtIso": "2026-08-08T20:26:36-05:00"
     },
     {
-      "number": 4734,
-      "title": "FINDING: ACCT-F165 + ACCT-F166 + ACCT-F171 — CLAIM-RESERVE 2797, 2801 and 2805 (cc-1 band)",
+      "number": 0,
+      "title": "FINDING: FAIL-S1-REVERSE — the load↔safety-event link existed in the database and appeared on no screen",
       "state": "merged",
-      "mergedAtCt": "08/08/2026, 12:58 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4734",
-      "sha": "a45b9d725",
-      "committedAtIso": "2026-08-08T05:58:14Z"
+      "mergedAtCt": "08/08/2026, 08:23 PM CT",
+      "url": "",
+      "sha": "88fa3e575",
+      "committedAtIso": "2026-08-08T20:23:36-05:00"
     },
     {
-      "number": 4773,
-      "title": "FINDING: LV-TXN-005-MONEY-PATH — CLAIM-RESERVE 2815 for the Kanban money-path contract guard",
+      "number": 5059,
+      "title": "CC-2 FINDING: LV-VENDORBILLLINES-PERMIT-TEST-STALE — #5048's PERMIT mapping is correct (real catalog row, prevents uncategorized posting); the test is stale and its fix must keep the unknown-code-to-null half",
       "state": "merged",
-      "mergedAtCt": "08/08/2026, 12:55 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4773",
-      "sha": "6668871df",
-      "committedAtIso": "2026-08-08T00:55:20-05:00"
+      "mergedAtCt": "08/08/2026, 08:22 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5059",
+      "sha": "f6f0364c3",
+      "committedAtIso": "2026-08-08T20:22:43-05:00"
     },
     {
-      "number": 4772,
-      "title": "FINDING: CI-ACTIONS-DEAD-2026-08-08 — no GitHub workflow has executed repo-wide since 02:39Z, so \"merge on green\" is a no-op for every lane, and #4769/#4770/#4771 all merged with zero CI",
+      "number": 5058,
+      "title": "FINDING: SETL-S01 + SETL-S02 + SETL-S03",
       "state": "merged",
-      "mergedAtCt": "08/08/2026, 12:53 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/4772",
-      "sha": "429b94bcb",
-      "committedAtIso": "2026-08-08T00:53:19-05:00"
+      "mergedAtCt": "08/08/2026, 08:22 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5058",
+      "sha": "47aaf3682",
+      "committedAtIso": "2026-08-08T20:22:34-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: LOAD-WO-REVERSE — a load carrying two repairs showed no maintenance at all, because nothing could ask for a load's work orders",
+      "state": "merged",
+      "mergedAtCt": "08/08/2026, 08:20 PM CT",
+      "url": "",
+      "sha": "a623133e1",
+      "committedAtIso": "2026-08-08T20:20:39-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: FAIL-SET3 — the settlement render/print route 500'd on every settlement, always, on two column names that were never real",
+      "state": "merged",
+      "mergedAtCt": "08/08/2026, 08:18 PM CT",
+      "url": "",
+      "sha": "b5cc023f9",
+      "committedAtIso": "2026-08-08T20:18:21-05:00"
     }
   ]
 }
