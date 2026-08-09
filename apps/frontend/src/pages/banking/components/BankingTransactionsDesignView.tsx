@@ -28,6 +28,7 @@ import { PrintOrientationDialog, applyPrintOrientationStyles } from "./PrintOrie
 import { BulkActionBar } from "../../../components/bulk/BulkActionBar";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { Button } from "../../../components/Button";
 import { useBulkSelection } from "../../../hooks/useBulkSelection";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -1500,7 +1501,7 @@ export function BankingTransactionsDesignView({
                   <EntityLink kind="customer" id={links.customer_id} label={links.customer_name || "Customer"} />
                 ) : null}
                 {links?.item_id ? (
-                  <span className="text-gray-700">Item: {links.item_name || links.item_id.slice(0, 8)}</span>
+                  <span className="text-gray-700">Item: {entityLabel(links.item_name, links.item_id, "Item")}</span>
                 ) : null}
                 {links?.deduction_id ? (
                   <span className="text-gray-700" title={links.deduction_status ?? undefined}>

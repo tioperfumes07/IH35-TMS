@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { entityLabel } from "../../lib/entity-label";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
@@ -340,7 +341,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
                 const when = accident.accident_at ? String(accident.accident_at).slice(0, 10) : "no date";
                 return (
                   <option key={id} value={id}>
-                    {id.slice(0, 8)} — {when}
+                    {entityLabel(null, id, "Accident")} — {when}
                   </option>
                 );
               })}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { entityLabel } from "../../lib/entity-label";
 import { patchAssignTrailer } from "../../api/dispatch";
 import { EntityPicker } from "../parity/EntityPicker";
 import { optimisticPatch } from "../../lib/optimisticPatch";
@@ -46,7 +47,7 @@ export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, dis
         className="h-8 w-full text-xs"
         onChange={async (next) => {
           if (!next) return;
-          const label = next.slice(0, 8);
+          const label = entityLabel(null, next, "Trailer");
           const prior = { trailerId, label: displayLabel };
           const result = await optimisticPatch({
             applyOptimistic: () => onAssigned({ trailerId: next, label }),

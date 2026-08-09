@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { getDispatchAvailableDrivers, type AvailableDriverRow } from "../../api/dispatch";
 import { listDrivers } from "../../api/mdata";
@@ -197,7 +198,7 @@ export function AssignDriverDropdown({
         shell={shell}
         onClose={() => setDriverCreateOpen(false)}
         onCreated={(createdId) => {
-          setCreatedOption({ driver_id: createdId, display_name: `Driver ${createdId.slice(0, 8)}` });
+          setCreatedOption({ driver_id: createdId, display_name: entityLabel(null, createdId, "Driver") });
           onChange(createdId);
           setDriverCreateOpen(false);
           void q.refetch();
