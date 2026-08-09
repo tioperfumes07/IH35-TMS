@@ -5,6 +5,7 @@
  */
 
 import { useMemo, useState } from "react";
+import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { listPositionHistory, type PositionHistoryRecord } from "../../api/position-history";
@@ -130,7 +131,7 @@ export default function PositionHistoryPage() {
           row.actor_name ? (
             <span className="text-gray-900">{row.actor_name}</span>
           ) : row.actor_id ? (
-            <span className="font-mono text-xs text-gray-900">{row.actor_id}</span>
+            <span className="text-xs text-gray-900">{entityLabel(null, row.actor_id, "User")}</span>
           ) : (
             <span className="text-gray-400">—</span>
           ),

@@ -9,6 +9,7 @@ import {
   listUnits,
   type DriverQboMappingStatus,
 } from "../../api/mdata";
+import { listClassesForJe } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -18,6 +19,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useToast } from "../../components/Toast";
 import { VendorLinkageModal } from "../../components/qbo/VendorLinkageModal";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { entityLabel } from "../../lib/entity-label";
 
 type TabKey = "drivers" | "assets";
 
@@ -74,6 +76,21 @@ export function QboVendorLinkagePage() {
     queryFn: () => listUnits({ operating_company_id: companyId }),
     enabled: Boolean(companyId),
   });
+
+  const classesQuery = useQuery({
+    queryKey: ["qbo-vendor-linkage", "classes", companyId],
+    queryFn: listClassesForJe,
+    enabled: Boolean(companyId),
+  });
+
+  const classNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of classesQuery.data?.classes ?? []) {
+      const label = c.class_code ? `${c.class_code} — ${c.class_name}` : c.class_name;
+      map.set(c.id, label);
+    }
+    return map;
+  }, [classesQuery.data?.classes]);
 
   const rows = useMemo(() => {
     const source = driversQuery.data?.rows ?? [];
@@ -155,7 +172,8 @@ export function QboVendorLinkagePage() {
         label: "QBO Class",
         sortable: true,
         sortValue: (row) => row.qbo_class_id ?? "",
-        render: (row) => row.qbo_class_id ?? "-",
+        render: (row) =>
+          row.qbo_class_id ? entityLabel(classNameById.get(row.qbo_class_id), row.qbo_class_id, "Class") : "—",
       },
       {
         key: "actions",
@@ -163,18 +181,25 @@ export function QboVendorLinkagePage() {
         alwaysVisible: true,
         render: (row) => (
           <div className="flex items-center gap-2">
-            <input
+            <SelectCombobox
+              className="h-7 min-w-[10rem] rounded-sm border border-gray-300 px-2 text-xs"
               value={classByUnit[row.id] ?? row.qbo_class_id ?? ""}
               onChange={(event) => setClassByUnit((current) => ({ ...current, [row.id]: event.target.value }))}
-              className="h-7 rounded-sm border border-gray-300 px-2 text-xs"
-              placeholder="QBO class id"
-            />
+            >
+              <option value="">Select class…</option>
+              {(classesQuery.data?.classes ?? []).map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.class_code ? `${c.class_code} — ` : ""}
+                  {c.class_name}
+                </option>
+              ))}
+            </SelectCombobox>
             <Button
               size="sm"
               onClick={() => {
                 const qboClassId = (classByUnit[row.id] ?? row.qbo_class_id ?? "").trim();
                 if (!qboClassId) {
-                  pushToast("Enter QBO class id", "error");
+                  pushToast("Select a class", "error");
                   return;
                 }
                 void linkUnitQboClass(row.id, {
@@ -196,7 +221,7 @@ export function QboVendorLinkagePage() {
         ),
       },
     ];
-  }, [classByUnit, companyId, pushToast, queryClient]);
+  }, [classByUnit, classNameById, classesQuery.data?.classes, companyId, pushToast, queryClient]);
 
   async function autoLinkHighConfidence() {
     const candidates = (driversQuery.data?.rows ?? []).filter((row) => !row.qbo_vendor_id);

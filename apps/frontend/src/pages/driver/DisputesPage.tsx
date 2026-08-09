@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useTranslation } from "react-i18next";
 import { getOperatingCompanyId } from "../../lib/auth-token";
 
@@ -11,7 +12,7 @@ export function DisputesPage() {
       <p className="text-sm text-slate-700">{t("driver.disputes_blurb")}</p>
       {companyId ? (
         <p className="text-[11px] text-slate-500">
-          Company scope: <span className="font-mono">{companyId}</span>
+          Company scope: <span>{entityLabel(null, companyId, "Company")}</span>
         </p>
       ) : null}
     </div>

@@ -128,18 +128,18 @@ function ExpandedEventDetail({ row }: { row: SpineEvent }) {
         {row.correlation_id ? (
           <div>
             <span className="font-semibold text-gray-500">Correlation ID: </span>
-            <span className="font-mono text-gray-700">{row.correlation_id}</span>
+            <span className="text-gray-700">{entityLabel(null, row.correlation_id, "Correlation")}</span>
           </div>
         ) : null}
         {row.source_reference_id ? (
           <div>
             <span className="font-semibold text-gray-500">Source ref: </span>
-            <span className="font-mono text-gray-700">{row.source_reference_id}</span>
+            <span className="text-gray-700">{entityLabel(null, row.source_reference_id, "Source")}</span>
           </div>
         ) : null}
         <div>
           <span className="font-semibold text-gray-500">Event ID: </span>
-          <span className="font-mono text-gray-700">{row.event_id}</span>
+          <span className="text-gray-700">{entityLabel(null, row.event_id, "Event")}</span>
         </div>
       </div>
     </div>
