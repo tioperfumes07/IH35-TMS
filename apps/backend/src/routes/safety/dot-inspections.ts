@@ -126,19 +126,34 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
       const filters: string[] = [];
       if (query.data.unit_id) {
         values.push(query.data.unit_id);
-        filters.push(`AND unit_id = $${values.length}`);
+        filters.push(`AND di.unit_id = $${values.length}`);
       }
       if (query.data.trailer_id) {
         values.push(query.data.trailer_id);
-        filters.push(`AND trailer_id = $${values.length}`);
+        filters.push(`AND di.trailer_id = $${values.length}`);
       }
+      // CLS-UUID-LABEL: this list never joined the driver/unit/WO names, so the frontend's
+      // EntityLink rendered the raw driver_id/unit_id/auto_spawned_wo_id uuids with no label
+      // (same class as LST-F105/107/108/109/111/112). Mirrors safety.accident_reports' join.
       const res = await client.query(
         `
-          SELECT *
-          FROM safety.dot_inspections
-          WHERE operating_company_id = $1
+          SELECT di.*,
+                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+                 u.unit_number AS unit_number,
+                 wo.display_id AS work_order_display_id
+          FROM safety.dot_inspections di
+          LEFT JOIN mdata.drivers d
+            ON d.id = di.driver_id
+           AND d.operating_company_id = di.operating_company_id
+          LEFT JOIN mdata.units u
+            ON u.id = di.unit_id
+           AND (u.owner_company_id = di.operating_company_id
+                OR u.currently_leased_to_company_id = di.operating_company_id)
+          LEFT JOIN maintenance.work_orders wo
+            ON wo.id = di.auto_spawned_wo_id
+          WHERE di.operating_company_id = $1
           ${filters.join("\n          ")}
-          ORDER BY inspection_date DESC, created_at DESC
+          ORDER BY di.inspection_date DESC, di.created_at DESC
           LIMIT 500
         `,
         values
