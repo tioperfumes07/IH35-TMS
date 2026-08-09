@@ -6,6 +6,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
   createGeofence,
@@ -169,12 +170,12 @@ export function GeofencesPage() {
         render: (item) => {
           if (!item.location_ref_id) return "—";
           if (item.location_kind === "customer_site") {
-            return <EntityLink kind="customer" id={item.location_ref_id} label={item.location_ref_id.slice(0, 8)} />;
+            return <EntityLink kind="customer" id={item.location_ref_id} label={entityLabel(null, item.location_ref_id, "Customer")} />;
           }
           if (item.location_kind === "vendor_site") {
-            return <EntityLink kind="vendor" id={item.location_ref_id} label={item.location_ref_id.slice(0, 8)} />;
+            return <EntityLink kind="vendor" id={item.location_ref_id} label={entityLabel(null, item.location_ref_id, "Vendor")} />;
           }
-          return item.location_ref_id.slice(0, 8);
+          return entityLabel(null, item.location_ref_id, "Location");
         },
       },
       {

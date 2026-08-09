@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getBankTransactionsByLinkage } from "../../api/banking";
 import { EntityLink } from "../shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
@@ -84,7 +85,7 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
                   <EntityLink
                     kind="bank_transaction"
                     id={row.bank_transaction_id}
-                    label={row.description?.trim() || row.bank_transaction_id.slice(0, 8)}
+                    label={entityLabel(row.description?.trim() || null, row.bank_transaction_id, "Bank transaction")}
                   />
                   <div className="mt-0.5 text-[11px] text-gray-500">
                     {formatDateUS(row.transaction_date) || "—"}
