@@ -22,7 +22,13 @@ type RecordTypeFilter = "driver-fine" | "company-violation";
 
 export function FinesPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
-  const [recordTypeFilter, setRecordTypeFilter] = useState<RecordTypeFilter>("driver-fine");
+  const [searchParams, setSearchParams] = useSearchParams();
+  // C-06: Home "Open Company Violations" drills with ?record_type=company-violation so the
+  // merged External Fines tab opens on the company-violation filter (not the driver-fine default).
+  const recordTypeFromUrl = searchParams.get("record_type");
+  const initialRecordType: RecordTypeFilter =
+    recordTypeFromUrl === "company-violation" ? "company-violation" : "driver-fine";
+  const [recordTypeFilter, setRecordTypeFilter] = useState<RecordTypeFilter>(initialRecordType);
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [subjectTypeFilter, setSubjectTypeFilter] = useState<string>("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -59,7 +65,6 @@ export function FinesPage({ operatingCompanyId }: Props) {
   const rows = finesQuery.data?.fines ?? [];
 
   // SAF-F33 reverse drill-through: /safety/external-fines?fine_id=<id> opens that fine's drawer.
-  const [searchParams, setSearchParams] = useSearchParams();
   const fineIdParam = searchParams.get("fine_id");
   useEffect(() => {
     if (!fineIdParam || rows.length === 0) return;
@@ -71,6 +76,12 @@ export function FinesPage({ operatingCompanyId }: Props) {
       setSearchParams(next, { replace: true });
     }
   }, [fineIdParam, rows, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    if (recordTypeFromUrl === "company-violation" || recordTypeFromUrl === "driver-fine") {
+      setRecordTypeFilter(recordTypeFromUrl);
+    }
+  }, [recordTypeFromUrl]);
 
   // SAF-B12: the drawer's lifecycle actions (contest / dismiss / reduce / link-payment) invalidate this
   // query. `selectedFine` is a snapshot of the row taken when the drawer opened, so on its own the drawer
