@@ -318,6 +318,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "factoring") {
     return /\bfactoring\b|\bfaro\b|\bfactor[\s_-]?recon|\brecourse\b|\bchargeback|\breserve[\s_-]?movement|\badvance|\bbatch\b|\bpacket|\bletter[\s_-]?of[\s_-]?release/i;
   }
+  if (moduleId === "inventory") {
+    return /\binventory\b|\bparts[\s_-]?inventory|\bparts[\s_-]?invoice[\s_-]?links|\bINV-/i;
+  }
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 
@@ -434,6 +437,7 @@ function loadModuleProbes(moduleId: string): { slices: ModuleProbe[]; progress: 
     legal: ["legal"],
     customers: ["customers"],
     vendors: ["vendors"],
+    inventory: ["inventory"],
   };
   const keys = alias[moduleId] ?? [moduleId];
   for (const k of keys) {
@@ -508,8 +512,35 @@ function leafMatchesItem(leaf: RequiredLeaf, item: CompletionItem): boolean {
   ) {
     return /\bfactoring\b|\bfaro\b|\bfactor|\brecourse|\breserve|\badvance|\bbatch|\bpacket/i.test(title);
   }
+  if (
+    id.startsWith("parts.") ||
+    id.startsWith("assignments.") ||
+    id.startsWith("purchases.") ||
+    id.startsWith("nav.")
+  ) {
+    return /\binventory\b|\bINV-/i.test(title);
+  }
+  if (
+    id.startsWith("parts.") ||
+    id.startsWith("assignments.") ||
+    id.startsWith("purchases.") ||
+    id.startsWith("nav.")
+  ) {
+    return /\binventory\b|\bINV-/i.test(title);
+  }
   if (id === "period_close" || id === "month_close") return /\bperiod|month[\s_-]?close|close\b/i.test(title);
   if (id === "reports") return /\breports?\b|p&l|balance\s*sheet|trial\s*balance/i.test(title);
+  if (
+    id.startsWith("report.") ||
+    id.startsWith("reports.") ||
+    id.startsWith("runner.") ||
+    id.startsWith("cat.") ||
+    (id.startsWith("audit.") && leaf.route_hint.startsWith("/reports/audit"))
+  ) {
+    return /\breports?\b|\btrial\s*balance|\bprofit|\bbalance\s*sheet|\bar[\s_-]?aging|\bap[\s_-]?aging|\bifta|\blane|\bdeadhead|\bsettlement[\s_-]?summary|\bcancellation|\bgeofence|\bfuel[\s_-]?reconcil|\bscheduled|\baudit/i.test(
+      title,
+    );
+  }
   if (id === "home") return /\baccounting\b|home|surf|structural/i.test(title);
 
   // maintenance / safety / others (existing)

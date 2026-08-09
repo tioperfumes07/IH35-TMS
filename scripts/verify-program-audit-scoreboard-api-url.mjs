@@ -176,10 +176,11 @@ export function assertScoreboardContract(sources) {
       !/vendors\.required\.json/.test(matrixPage) ||
       !/settlements\.required\.json/.test(matrixPage) ||
       !/lists\.required\.json/.test(matrixPage) ||
-      !/factoring\.required\.json/.test(matrixPage)
+      !/factoring\.required\.json/.test(matrixPage) ||
+      !/inventory\.required\.json/.test(matrixPage)
     ) {
       problems.push(
-        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/lists/factoring/settlements`,
+        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/lists/factoring/inventory/settlements`,
       );
     }
     if (
@@ -214,6 +215,7 @@ export function assertScoreboardContract(sources) {
     "vendors",
     "lists",
     "factoring",
+    "inventory",
   ]) {
     const mapRel = `docs/specs/scoreboard/modules/${mod}.required.json`;
     const mapPath = path.join(ROOT, mapRel);
@@ -413,6 +415,72 @@ export function assertScoreboardContract(sources) {
           }
         }
       }
+      // MATRIX-REQ-REPORTS — stub map is FAIL. Must mirror /reports* manifest + sub-nav + runners.
+      if (mod === "reports") {
+        const leafIds = new Set((map.leaves ?? []).map((l) => l.id));
+        if ((map.leaves ?? []).length < 35) {
+          problems.push(
+            `${mapRel}: Reports Required map must have ≥35 leaves (home + hub + dedicated routes + categories + audit + runners) — got ${(map.leaves ?? []).length}`,
+          );
+        }
+        if (map.entity_default !== "USMCA") {
+          problems.push(`${mapRel}: entity_default must be USMCA for Reports matrix board`);
+        }
+        for (const need of [
+          "reports.home",
+          "reports.hub",
+          "reports.create_custom",
+          "reports.subnav.run_report",
+          "report.profit_loss",
+          "report.ifta_summary",
+          "report.settlements_summary",
+          "report.customer_profitability",
+          "report.lane_profitability",
+          "report.cancellation_analysis",
+          "report.trial_balance",
+          "report.ar_aging",
+          "report.deadhead",
+          "report.fuel_reconciliation",
+          "cat.accounting",
+          "audit.activity_by_user",
+          "runner.shell",
+        ]) {
+          if (!leafIds.has(need)) {
+            problems.push(`${mapRel}: missing Reports leaf ${need} (ReportsSubNav / manifest /reports*)`);
+          }
+        }
+      }
+      // MATRIX-REQ-INVENTORY — stub map is FAIL. Must mirror /inventory parts · assignments · purchases.
+      if (mod === "inventory") {
+        const leafIds = new Set((map.leaves ?? []).map((l) => l.id));
+        if ((map.leaves ?? []).length < 20) {
+          problems.push(
+            `${mapRel}: Inventory Required map must have ≥20 leaves (module tabs + parts/create/edit + assignments trail + purchases honest empty) — got ${(map.leaves ?? []).length}`,
+          );
+        }
+        for (const need of [
+          "nav.parts_tab",
+          "nav.assignments_tab",
+          "nav.purchases_tab",
+          "parts.roster",
+          "parts.create",
+          "parts.create.vendor_picker",
+          "parts.edit",
+          "parts.column.vendor_link",
+          "assignments.trail",
+          "assignments.wo_link",
+          "assignments.unit_link",
+          "assignments.vendor_link",
+          "assignments.honest_empty",
+          "purchases.honest_empty",
+          "purchases.crosslink_parts",
+          "purchases.crosslink_assignments",
+        ]) {
+          if (!leafIds.has(need)) {
+            problems.push(`${mapRel}: missing Inventory leaf ${need} (InventoryModuleTabs / manifest /inventory*)`);
+          }
+        }
+      }
     } catch (e) {
       problems.push(`${mapRel}: invalid JSON (${e instanceof Error ? e.message : e})`);
     }
@@ -444,12 +512,12 @@ export function assertScoreboardContract(sources) {
 
   if (
     route &&
-    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors\|lists\|factoring|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|SUPPORTED.*lists|SUPPORTED.*factoring|dispatch/.test(
+    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors\|lists\|factoring\|inventory|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|SUPPORTED.*lists|SUPPORTED.*factoring|SUPPORTED.*inventory|dispatch/.test(
       route,
     )
   ) {
     problems.push(
-      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists|factoring`,
+      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists|factoring|inventory`,
     );
   }
 

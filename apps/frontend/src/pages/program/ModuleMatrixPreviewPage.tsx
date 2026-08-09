@@ -25,6 +25,9 @@ import customersRequired from "@scoreboard/modules/customers.required.json";
 import vendorsRequired from "@scoreboard/modules/vendors.required.json";
 import listsRequired from "@scoreboard/modules/lists.required.json";
 import factoringRequired from "@scoreboard/modules/factoring.required.json";
+import inventoryRequired from "@scoreboard/modules/inventory.required.json";
+import inventoryRequired from "@scoreboard/modules/inventory.required.json";
+import reportsRequired from "@scoreboard/modules/reports.required.json";
 import { ProgramModuleNav } from "./ProgramModuleNav";
 
 type Tri = "done" | "audited" | "unaudited" | "na";
@@ -96,7 +99,9 @@ type MatrixModuleId =
   | "customers"
   | "vendors"
   | "lists"
-  | "factoring";
+  | "factoring"
+  | "inventory"
+  | "reports";
 
 const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   maintenance: maintRequired as RequiredMap,
@@ -114,6 +119,8 @@ const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   vendors: vendorsRequired as RequiredMap,
   lists: listsRequired as RequiredMap,
   factoring: factoringRequired as RequiredMap,
+  inventory: inventoryRequired as RequiredMap,
+  reports: reportsRequired as RequiredMap,
 };
 
 const LIVE_MODULES: MatrixModuleId[] = [
@@ -132,6 +139,8 @@ const LIVE_MODULES: MatrixModuleId[] = [
   "vendors",
   "lists",
   "factoring",
+  "inventory",
+  "reports",
 ];
 
 const MODULES = [
@@ -226,6 +235,13 @@ function sectionForLeaf(moduleId: MatrixModuleId, leaf: RequiredLeaf): string {
   }
   if (moduleId === "fuel") {
     return leaf.tab || "Fuel";
+  }
+  if (moduleId === "inventory") {
+    if (leaf.id.startsWith("nav.")) return "Module nav";
+    if (leaf.id.startsWith("parts.")) return "Parts & Stock";
+    if (leaf.id.startsWith("assignments.")) return "Assignments";
+    if (leaf.id.startsWith("purchases.")) return "Purchase History";
+    return "Inventory";
   }
   if (moduleId === "factoring") {
     if (leaf.id.startsWith("home.")) return "Factoring home";
@@ -428,6 +444,8 @@ function parseModule(raw: string | null): MatrixModuleId {
   if (raw === "vendors") return "vendors";
   if (raw === "lists") return "lists";
   if (raw === "factoring") return "factoring";
+  if (raw === "inventory") return "inventory";
+  if (raw === "reports") return "reports";
   return "maintenance";
 }
 
@@ -446,6 +464,8 @@ function titleCase(id: MatrixModuleId): string {
   if (id === "vendors") return "Vendors";
   if (id === "lists") return "Lists";
   if (id === "factoring") return "Factoring";
+  if (id === "inventory") return "Inventory";
+  if (id === "reports") return "Reports";
   return "Maintenance";
 }
 
