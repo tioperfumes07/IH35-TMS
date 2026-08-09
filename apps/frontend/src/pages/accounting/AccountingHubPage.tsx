@@ -313,7 +313,7 @@ export function AccountingHubPage() {
 
   const unmatchedRows: AmountRow[] = unmatchedItems.slice(0, 5).map((item) => ({
     key: item.id,
-    left: `${item.entity_type} · ${item.entity_id}`,
+    left: `${item.entity_type} · ${item.display_id}`,
     right: item.sync_status,
     muted: relativeRetry(item.next_attempt_at),
   }));
