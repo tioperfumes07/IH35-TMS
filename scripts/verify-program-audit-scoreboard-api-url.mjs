@@ -186,10 +186,11 @@ export function assertScoreboardContract(sources) {
       !/tasks\.required\.json/.test(matrixPage) ||
       !/form_425\.required\.json/.test(matrixPage) ||
       !/finance\.required\.json/.test(matrixPage) ||
-      !/docs\.required\.json/.test(matrixPage)
+      !/docs\.required\.json/.test(matrixPage) ||
+      !/system\.required\.json/.test(matrixPage)
     ) {
       problems.push(
-        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/lists/factoring/reports/inventory/compliance/cash-flow/home/program/tasks/form_425/finance/docs/settlements`,
+        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/lists/factoring/reports/inventory/compliance/cash-flow/home/program/tasks/form_425/finance/docs/system/settlements`,
       );
     }
     if (
@@ -234,6 +235,7 @@ export function assertScoreboardContract(sources) {
     "form_425",
     "finance",
     "docs",
+    "system",
   ]) {
     const mapRel = `docs/specs/scoreboard/modules/${mod}.required.json`;
     const mapPath = path.join(ROOT, mapRel);
@@ -605,6 +607,18 @@ export function assertScoreboardContract(sources) {
         }
       }
 
+
+      // MATRIX-REQ-SYSTEM
+      if (mod === "system") {
+        const leafIds = new Set((map.leaves ?? []).map((l) => l.id));
+        if ((map.leaves ?? []).length < 8) {
+          problems.push(`${mapRel}: System Required map must have ≥8 leaves — got ${(map.leaves ?? []).length}`);
+        }
+        for (const need of ["home", "tab.overview", "tab.qbo_recon", "tab.qbo_sync", "tab.program", "tab.software", "tab.claude_coder", "law.no_tms_qbo_writeback"]) {
+          if (!leafIds.has(need)) problems.push(`${mapRel}: missing System leaf ${need}`);
+        }
+      }
+
     } catch (e) {
       problems.push(`${mapRel}: invalid JSON (${e instanceof Error ? e.message : e})`);
     }
@@ -636,12 +650,12 @@ export function assertScoreboardContract(sources) {
 
   if (
     route &&
-    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors\|lists\|factoring\|reports\|inventory\|compliance\|cash-flow\|home\|program\|tasks\|form_425\|finance\|docs|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|SUPPORTED.*lists|SUPPORTED.*factoring|SUPPORTED.*reports|SUPPORTED.*inventory|SUPPORTED.*compliance|SUPPORTED.*cash-flow|SUPPORTED.*home|SUPPORTED.*program|SUPPORTED.*tasks|SUPPORTED.*form_425|SUPPORTED.*finance|SUPPORTED.*docs|dispatch/.test(
+    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors\|lists\|factoring\|reports\|inventory\|compliance\|cash-flow\|home\|program\|tasks\|form_425\|finance\|docs\|system|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|SUPPORTED.*lists|SUPPORTED.*factoring|SUPPORTED.*reports|SUPPORTED.*inventory|SUPPORTED.*compliance|SUPPORTED.*cash-flow|SUPPORTED.*home|SUPPORTED.*program|SUPPORTED.*tasks|SUPPORTED.*form_425|SUPPORTED.*finance|SUPPORTED.*docs|SUPPORTED.*system|dispatch/.test(
       route,
     )
   ) {
     problems.push(
-      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists|factoring|reports|inventory|compliance|cash-flow|home|program|tasks|form_425|finance|docs`,
+      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists|factoring|reports|inventory|compliance|cash-flow|home|program|tasks|form_425|finance|docs|system`,
     );
   }
 

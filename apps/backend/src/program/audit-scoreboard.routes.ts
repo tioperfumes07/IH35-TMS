@@ -743,11 +743,12 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
         "form_425",
         "finance",
         "docs",
+        "system",
       ]);
       if (!SUPPORTED.has(moduleId)) {
         return reply.code(400).send({
           error: "unsupported_module",
-          message: `module-matrix supports module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists|factoring|reports|inventory|compliance|cash-flow|home|program|tasks|form_425|finance|docs`,
+          message: `module-matrix supports module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists|factoring|reports|inventory|compliance|cash-flow|home|program|tasks|form_425|finance|docs|system`,
         });
       }
       try {
