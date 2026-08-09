@@ -9,16 +9,24 @@ const LABEL = "verify-factor-admin-assign-factor-picker";
 const SELFTEST = process.argv.includes("--selftest");
 const FILE = "apps/frontend/src/pages/factoring/FactorAdmin.tsx";
 
+function stripComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+}
+
 function assertSrc(src) {
   const problems = [];
-  if (!/data-testid="factor-admin-assign-factor-picker"/.test(src)) {
+  const code = stripComments(src);
+  if (!/data-testid="factor-admin-assign-factor-picker"/.test(code)) {
     problems.push("missing assign-factor picker testid");
   }
-  if (!/allowAddNew=\{\{[\s\S]*label:\s*"\+ Add new factor"/.test(src)) {
+  if (!/allowAddNew=\{\{[\s\S]*label:\s*"\+ Add new factor"/.test(code)) {
     problems.push("missing + Add new factor allowAddNew");
   }
-  // The assign-factor block must not use a native <select> for factor choice.
-  const assignBlock = src.match(
+  if (!/<Combobox[\s\S]{0,400}?allowAddNew=/.test(code)) {
+    problems.push("assign factor field is not Combobox+allowAddNew");
+  }
+  // The assign-factor block must not use a native <select> for factor choice (ignore comment prose).
+  const assignBlock = code.match(
     /data-testid="factor-admin-assign-factor-picker"[\s\S]{0,800}?Effective date/,
   )?.[0];
   if (!assignBlock) problems.push("could not locate assign-factor picker block");
