@@ -163,6 +163,7 @@ import { registerSettlementsDisputesRoutes } from "./settlements/disputes/disput
 import { registerSettlementApprovalRoutes } from "./settlements/approval.routes.js";
 import { registerAutoDeductionPolicyRoutes } from "./settlements/auto-deductions/policy.routes.js";
 import { registerSettlementDisputeRoutes } from "./driver-finance/settlement-dispute.routes.js";
+import { registerSettlementPaymentRoutes } from "./driver-finance/settlement-payment.routes.js";
 import { registerHomeRoutes } from "./home/home.routes.js";
 import { registerReportsRoutes } from "./reports/index.js";
 import { registerReportsScheduledCrudRoutes } from "./reports/scheduled-reports.routes.js";
@@ -913,6 +914,9 @@ async function main() {
   // (registerSettlementsMvpRoutes) stays UNMOUNTED — see scripts/verify-no-orphan-routes.mjs.
   await registerSettlementApprovalRoutes(app);
   await registerSettlementDisputeRoutes(app);
+  // LV-SETTLEMENT-DETAIL-CALLS-REFUSED-ROUTE — FE already calls queue/mark-sent/cleared/bounced/
+  // paid-manually + payment-events. Refusal was "owner OK" theater; OWNER LAW 2026-08-03 = mount on proof.
+  await registerSettlementPaymentRoutes(app);
   await registerAutoDeductionPolicyRoutes(app);
   await registerDriverFinanceSettlementHtmlRoutes(app);
   await registerDriverFinanceDriverBillsRoutes(app);

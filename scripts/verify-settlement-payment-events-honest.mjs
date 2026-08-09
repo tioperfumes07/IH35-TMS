@@ -6,9 +6,9 @@
  * `SettlementDetailPage` queried `payment-events` with NO error branch. A failed fetch left `data`
  * undefined, fell through to `length === 0`, and the panel rendered "No payment events yet." — stating as
  * FACT that no payments occurred on a MONEY document, when the truth was that the data was never
- * obtainable. Today that endpoint is on `verify-route-file-mounted`'s deliberate-refusal registry
- * ("settlement-payment moves money") so it always 404s, but the defect is the silent false negative and it
- * would outlive any decision about mounting the route.
+ * obtainable. The settlement-payment routes are now mounted (index.ts); the defect was the silent
+ * false-negative empty state, and this guard still ratchets the ERROR-before-empty ordering so a
+ * transient 5xx never looks like “no payments”.
  *
  * This guard asserts the ERROR branch exists and is checked BEFORE the empty-state branch — the ordering is
  * the whole fix, since `isError` and `length === 0` are both true on a failed fetch.

@@ -163,11 +163,9 @@ export const REFUSED_MOUNTS = new Map([
   // what makes the exhibits reviewable at all, and rendering an exhibit is not filing one. The
   // routes stay read-only and role-gated (currentAuthUser + 403 + withCompanyScope), pinned by
   // scripts/verify-form425c-exhibits-route-mounted.mjs. This list may only shrink.
-  [
-    "driver-finance/settlement-payment.routes.ts",
-    "HELD financial — marks settlement payments sent/cleared/bounced/paid. Money-moving. Reason " +
-      "carried over from scripts/verify-no-orphan-routes.mjs; owner OK required.",
-  ],
+  // driver-finance/settlement-payment.routes.ts — REMOVED from refusals 2026-08-09 (Cursor #5158+).
+  // FE SettlementDetail already called these endpoints; "owner OK" refusal contradicted OWNER LAW
+  // (no holds). Mounted via registerSettlementPaymentRoutes in apps/backend/src/index.ts.
   [
     "banking/manual-je.routes.deprecated.ts",
     "ARCHIVED — deliberately retained as the preserved original of an archived path (apps/backend/src/" +
