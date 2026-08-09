@@ -181,12 +181,17 @@ export type Payment = {
   amount_applied_cents: number;
   amount_unapplied_cents: number;
   deposited_to_account_id: string | null;
+  deposited_to_account_number?: string | null;
+  deposited_to_account_name?: string | null;
   notes: string | null;
   voided_at: string | null;
   void_reason: string | null;
   created_at: string;
   /** Law §9: bank feed / recon reverse hop (source_bank_transaction_id or matched_payment_id). */
   matched_bank_transaction_id?: string | null;
+  matched_bank_transaction_date?: string | null;
+  matched_bank_transaction_description?: string | null;
+  matched_bank_transaction_amount_cents?: number | string | null;
 };
 
 export type PaymentApplication = {

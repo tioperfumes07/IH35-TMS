@@ -94,11 +94,22 @@ async function fetchPaymentDetail(
       SELECT
         p.*,
         c.customer_name,
-        ${PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
+        ${PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id,
+        dep_acct.account_number AS deposited_to_account_number,
+        dep_acct.account_name AS deposited_to_account_name,
+        bt.transaction_date AS matched_bank_transaction_date,
+        bt.description AS matched_bank_transaction_description,
+        bt.amount_cents::text AS matched_bank_transaction_amount_cents
       FROM accounting.payments p
       JOIN mdata.customers c
         ON c.id = p.customer_id
        AND c.operating_company_id = p.operating_company_id
+      LEFT JOIN catalogs.accounts dep_acct
+        ON dep_acct.id = p.deposited_to_account_id
+       AND dep_acct.operating_company_id = p.operating_company_id
+      LEFT JOIN banking.bank_transactions bt
+        ON bt.id = ${PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL}::uuid
+       AND bt.operating_company_id = p.operating_company_id
       WHERE p.id = $1
       LIMIT 1
     `,
