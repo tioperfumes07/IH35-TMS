@@ -9,6 +9,7 @@ import {
   type AttachmentEntityType,
   type AttachmentRow,
 } from "../api/attachments";
+import { userFacingApiError } from "../lib/api-error-message";
 import { Button } from "./Button";
 import { SelectCombobox } from "./shared/SelectCombobox";
 
@@ -147,7 +148,7 @@ export function UploadZone({
           onOcrParsed(ocr.parsed);
         }
       } catch (uploadError) {
-        setError(`Failed to upload ${file.name}: ${String((uploadError as Error).message ?? "unknown_error")}`);
+        setError(`Failed to upload ${file.name}: ${userFacingApiError(uploadError, "Upload failed")}`);
       } finally {
         setUploadingByName((current) => {
           const copy = { ...current };

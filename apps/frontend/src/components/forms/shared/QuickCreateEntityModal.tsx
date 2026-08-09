@@ -12,6 +12,7 @@ import { type ComboboxOption } from "../../../components/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { listPaymentTermOptions } from "../../../api/mdata";
 import { listCatalogAccounts } from "../../../api/catalog-accounts";
 
@@ -335,7 +336,7 @@ export function QuickCreateEntityModal({
       setDefaultExpenseAccountId(null);
       onClose();
     } catch (error) {
-      pushToast(String((error as Error).message ?? "Create failed"), "error");
+      pushToast(userFacingApiError(error, "Create failed"), "error");
     } finally {
       setSaving(false);
     }

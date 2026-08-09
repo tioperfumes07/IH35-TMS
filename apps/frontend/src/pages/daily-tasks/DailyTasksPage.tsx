@@ -19,6 +19,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -172,7 +173,7 @@ export function DailyTasksPage() {
       setPriority("normal");
       invalidateTasks();
     },
-    onError: (error) => pushToast(String((error as Error).message ?? "Create failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Create failed"), "error"),
   });
 
   const acceptMut = useMutation({
@@ -181,7 +182,7 @@ export function DailyTasksPage() {
       pushToast("Task accepted", "success");
       invalidateTasks();
     },
-    onError: (error) => pushToast(String((error as Error).message ?? "Accept failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Accept failed"), "error"),
   });
 
   const completeMut = useMutation({
@@ -190,7 +191,7 @@ export function DailyTasksPage() {
       pushToast("Task completed", "success");
       invalidateTasks();
     },
-    onError: (error) => pushToast(String((error as Error).message ?? "Complete failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Complete failed"), "error"),
   });
 
   const submitCreate = async () => {

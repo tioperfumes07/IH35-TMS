@@ -23,6 +23,7 @@ import { EntityPicker } from "../parity/EntityPicker";
 import { ReferenceSelect, type ReferenceOption } from "../parity/ReferenceSelect";
 import { useToast } from "../Toast";
 import { companyToday } from "../../lib/businessDate";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { DatePicker } from "../forms/DatePicker";
 
 type Props = {
@@ -199,7 +200,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
         onUpdated();
         onClose();
       })
-      .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"))
+      .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"))
       .finally(() => setSaving(false));
   };
 
@@ -534,7 +535,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   void detailQuery.refetch();
                   onUpdated();
                 })
-                .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"))
+                .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"))
             }
           >
             Spawn WO
@@ -558,7 +559,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                     pushToast("Photo added", "success");
                     onUpdated();
                   })
-                  .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"))
+                  .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"))
                   .finally(() => setUploading(false));
               }}
             />

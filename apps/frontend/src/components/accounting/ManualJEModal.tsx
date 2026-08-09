@@ -8,6 +8,7 @@ import { useToast } from "../Toast";
 import { DatePicker } from "../forms/DatePicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { companyToday } from "../../lib/businessDate";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { JournalEntryTypePicker } from "./JournalEntryTypePicker";
 
 type Props = {
@@ -150,7 +151,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
       reset();
       onClose();
     } catch (error) {
-      pushToast(String((error as Error).message || "Failed"), "error");
+      pushToast(userFacingApiError(error, "Failed to save journal entry"), "error");
     } finally {
       setLoading(false);
     }
