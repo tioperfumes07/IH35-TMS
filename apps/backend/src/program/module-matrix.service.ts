@@ -168,6 +168,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "banking") {
     return /\bbanking\b|\bbank[\s_-]?txn|\breconcil|\bplaid\b|\bundeposited|\bmatch[\s_-]?categor/i;
   }
+  if (moduleId === "dispatch") {
+    return /\bdispatch\b|\bloads?\b|\bbook[\s_-]?load|\bassignments?\b/i;
+  }
   // maintenance (default)
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
