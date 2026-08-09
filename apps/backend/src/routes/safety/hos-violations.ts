@@ -87,12 +87,19 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
         values.push(query.data.source);
         filters.push(`source = $${values.length}`);
       }
+      // CLS-UUID-LABEL: no driver join — HOSViolationsTab's EntityLink reads row.driver_name
+      // (undefined here), so it fell back to rendering the raw driver_id uuid. Mirrors the
+      // driver-join pattern already used on accidents/dot_inspections/internal_fines/training.
       const res = await client.query(
         `
-          SELECT *
-          FROM safety.hos_violations
-          WHERE ${filters.join(" AND ")}
-          ORDER BY occurred_at DESC, created_at DESC
+          SELECT hv.*,
+                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name
+          FROM safety.hos_violations hv
+          LEFT JOIN mdata.drivers d
+            ON d.id = hv.driver_id
+           AND d.operating_company_id = hv.operating_company_id
+          WHERE ${filters.map((f) => `hv.${f}`).join(" AND ")}
+          ORDER BY hv.occurred_at DESC, hv.created_at DESC
           LIMIT 500
         `,
         values
