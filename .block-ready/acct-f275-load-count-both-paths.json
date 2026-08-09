@@ -1,0 +1,27 @@
+{
+  "block_id": "acct-f275-load-count-both-paths",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "FINISH-DISPATCH-SAFETY-SETTLEMENTS",
+  "task": "ACCT-F275: both settlement load_count subqueries counted db.load_id over an INNER JOIN on source_driver_bill_id, so a settlement line carrying only the denormalized settlement_lines.load_id was DROPPED BY THE JOIN and never counted. Live on prod br-fancy-credit-akjnd07a: S-20260808-0085 and S-20260808-0090 each cover exactly one load and the shipped query returned load_count=0 for both. Now COUNT(DISTINCT COALESCE(db.load_id, sl.load_id)) over a LEFT JOIN, with the COALESCE also gating the IS NOT NULL filter and driver_bills.load_id canonical-first. Same rule and same COALESCE order as the ACCT-F290 bookend CTE — one rule, two call sites. NO posting-math change, NO migration, additive only.",
+  "branch": "claude/acct-f275-load-count-counts-both-paths",
+  "lane": "CC-1",
+  "allowed_files": [
+    "apps/backend/src/driver-finance/settlements.routes.ts",
+    "scripts/verify-settlement-load-count-counts-both-paths.mjs",
+    "scripts/verify-steps/2953-verify-settlement-load-count-counts-both-paths.mjs",
+    ".block-ready/acct-f275-load-count-both-paths.json"
+  ],
+  "acceptance": [
+    { "kind": "guard", "script": "scripts/verify-settlement-load-count-counts-both-paths.mjs", "wired_into": "scripts/verify-steps/2953 (CC-1 band n=1 mod 4; reserved on main by the claim PR before the guard was authored, per Rule 25)" },
+    { "kind": "live", "assert": "guard exits 0 — 2 of 2 call sites (denominator printed in the guard's own output), 4 mutation probes proven non-inert. Probe 2 is load-bearing: COALESCE over an INNER join reads as both-paths while the join has already dropped the rows, which is the shape a naive COALESCE-grep guard would pass." },
+    { "kind": "live", "assert": "prod br-fancy-credit-akjnd07a, bypass_rls in the SAME txn: shipped query returns load_count 0 for S-20260808-0085 and S-20260808-0090; fixed query returns 1 for each. 7 settlements COMPLETE (visible 7 == n_live_tup 7)." },
+    { "kind": "route", "value": "GET /api/v1/driver-finance/settlements", "note": "the Settlements screen showed 0 loads for settlements that cover one" },
+    { "kind": "design", "spec": "docs/audit/GUARD-WORKORDERS.md", "sections": ["ACCT-F275-NEVER-SHIPPED"] }
+  ],
+  "linkage": "driver_finance.settlement_lines.source_driver_bill_id -> driver_finance.driver_bills.load_id (canonical) with settlement_lines.load_id as denormalized fallback -> mdata.loads; surfaces as load_count on the settlements list + detail responses.",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "none - CC-1 never merges its own money PR (Cascade merges as non-author). PUSH HELD under Rule 27 (one open PR per area) until PR #5139 merges; the branch is committed and ready."
+}
