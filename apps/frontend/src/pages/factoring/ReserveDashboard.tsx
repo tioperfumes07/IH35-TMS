@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  createFactor,
   getReserveBalanceHistory,
   getReserveBalances,
   getReserveReleaseForecast,
@@ -9,7 +10,11 @@ import {
   type FactoringReserveReleaseForecastPoint,
 } from "../../api/factoring";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { Button } from "../../components/Button";
+import { Combobox } from "../../components/Combobox";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useListState } from "../../components/list-state";
@@ -76,8 +81,18 @@ const FORECAST_COLUMNS: Array<ParityColumn<FactoringReserveReleaseForecastPoint>
 export function ReserveDashboard() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const { pushToast } = useToast();
+  const queryClient = useQueryClient();
 
   const [selectedFactorId, setSelectedFactorId] = useState<string>("");
+  const [showAddFactorModal, setShowAddFactorModal] = useState(false);
+  const [addForm, setAddForm] = useState({
+    name: "",
+    advance_rate: "0.95",
+    fee_rate: "0.025",
+    reserve_rate: "0.10",
+    recourse_days: "90",
+  });
   const [page, setPage] = useState(0);
   const pageSize = 20;
 
@@ -85,6 +100,28 @@ export function ReserveDashboard() {
     queryKey: ["factoring", "factors", "all", companyId],
     queryFn: () => listFactors(companyId, { active_only: false }).then((res) => res.factors),
     enabled: Boolean(companyId),
+  });
+  const factorFilterOptions = useMemo(
+    () => (factorsQuery.data ?? []).map((factor) => ({ value: factor.id, label: factor.name })),
+    [factorsQuery.data],
+  );
+  const addFactorMutation = useMutation({
+    mutationFn: async () =>
+      createFactor(companyId, {
+        name: addForm.name.trim(),
+        advance_rate: Number(addForm.advance_rate),
+        fee_rate: Number(addForm.fee_rate),
+        reserve_rate: Number(addForm.reserve_rate),
+        recourse_days: Number(addForm.recourse_days),
+      }),
+    onSuccess: async (created) => {
+      setShowAddFactorModal(false);
+      setAddForm({ name: "", advance_rate: "0.95", fee_rate: "0.025", reserve_rate: "0.10", recourse_days: "90" });
+      if (created?.id) setSelectedFactorId(created.id);
+      pushToast("Factor created", "success");
+      await queryClient.invalidateQueries({ queryKey: ["factoring", "factors"] });
+    },
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to create factor"), "error"),
   });
 
   const balancesQuery = useQuery({
@@ -189,20 +226,22 @@ export function ReserveDashboard() {
       />
       <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-end gap-3">
-        <div>
+        <div className="min-w-[240px]" data-testid="reserve-dashboard-factor-picker">
           <div className="text-xs uppercase tracking-wide text-gray-500">Factor Filter</div>
-          <select
-            className="mt-1 rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={selectedFactorId}
-            onChange={(event) => setSelectedFactorId(event.target.value)}
-          >
-            <option value="">Select factor</option>
-            {(factorsQuery.data ?? []).map((factor) => (
-              <option key={factor.id} value={factor.id}>
-                {factor.name}
-              </option>
-            ))}
-          </select>
+          {/* LST-F158: bare <select> had no + Add new — operators left Reserves to create a factor. */}
+          <div className="mt-1">
+            <Combobox
+              options={factorFilterOptions}
+              value={selectedFactorId || null}
+              onChange={(next) => setSelectedFactorId(next ?? "")}
+              placeholder="Select factor"
+              loading={factorsQuery.isLoading}
+              allowAddNew={{
+                label: "+ Add new factor",
+                onAdd: () => setShowAddFactorModal(true),
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -329,6 +368,74 @@ export function ReserveDashboard() {
         )}
       </div>
       </div>
+
+      {showAddFactorModal ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
+          <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
+            <div className="mb-3 text-sm font-semibold text-gray-900">Add Factor</div>
+            <div className="space-y-2 text-xs">
+              <label className="block">
+                <div className="mb-1">Name</div>
+                <input
+                  value={addForm.name}
+                  onChange={(event) => setAddForm((current) => ({ ...current, name: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1">Advance Rate (0-1)</div>
+                <input
+                  value={addForm.advance_rate}
+                  onChange={(event) => setAddForm((current) => ({ ...current, advance_rate: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1">Fee Rate (0-1)</div>
+                <input
+                  value={addForm.fee_rate}
+                  onChange={(event) => setAddForm((current) => ({ ...current, fee_rate: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1">Reserve Rate (0-1)</div>
+                <input
+                  value={addForm.reserve_rate}
+                  onChange={(event) => setAddForm((current) => ({ ...current, reserve_rate: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1">Recourse Days</div>
+                <input
+                  value={addForm.recourse_days}
+                  onChange={(event) => setAddForm((current) => ({ ...current, recourse_days: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button size="sm" variant="secondary" onClick={() => setShowAddFactorModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                loading={addFactorMutation.isPending}
+                onClick={() => {
+                  if (!addForm.name.trim()) {
+                    pushToast("Factor name is required", "error");
+                    return;
+                  }
+                  void addFactorMutation.mutateAsync();
+                }}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
