@@ -1,14 +1,12 @@
-// Driver 21-day inactivity sweep — READ / PREVIEW ONLY. Writes NOTHING.
+// Driver inactivity preview — READ / PREVIEW ONLY. Writes NOTHING.
 //
-// Goal: surface every active driver who hasn't logged into the app in > 21 days, so Jorge can approve the exact
-// list BEFORE any deactivation. Login time is NOT on mdata.drivers — it lives on the auth user
-// (identity.users.last_login_at, populated on session create), joined via mdata.drivers.identity_user_id.
-//
-// The actual deactivation (status='Inactive' + deactivated_at) is a SEPARATE, Jorge-approved Tier-1 mass write —
-// NOT here. This file has no INSERT/UPDATE/DELETE.
+// Owner 2026-08-08: Active roster = activity in last 30 days. The mass write lives in
+// migration 202612451400 + mdata/driver-active-30d.service.ts (load/drive/hire signals).
+// This preview still surfaces login/drive buckets for operators; it never mutates.
 import type { PoolClient } from "pg";
 
-export const INACTIVITY_THRESHOLD_DAYS = 21;
+/** Owner 2026-08-08: active roster = 30 days of activity (was 21-day preview). */
+export const INACTIVITY_THRESHOLD_DAYS = 30;
 
 export type InactivityBucket = "OVER_21" | "UNDER_21" | "NEVER_LOGGED_IN" | "NO_LOGIN_ACCOUNT";
 export type InactivityRow = {

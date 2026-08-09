@@ -51,6 +51,7 @@ import { initializeVehicleDriverPairingWorker } from "./jobs/vehicle-driver-pair
 import { initializeAutoStatusSwitchWorker } from "./jobs/auto-status-switch-worker.js";
 import { registerActiveDriverSetRoutes } from "./integrations/samsara/active-driver-set/routes.js";
 import { initializeActiveDriverSetRecomputeWorker } from "./jobs/active-driver-set-recompute.js";
+import { initializeDriverActive30dWorker } from "./jobs/driver-active-30d-worker.js";
 import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
 import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
@@ -1403,6 +1404,13 @@ async function main() {
     app.log.info("[STARTUP] active-driver-set-recompute worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] active-driver-set-recompute worker failed");
+  }
+
+  try {
+    initializeDriverActive30dWorker(app);
+    app.log.info("[STARTUP] driver-active-30d worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] driver-active-30d worker failed");
   }
 
   try {
