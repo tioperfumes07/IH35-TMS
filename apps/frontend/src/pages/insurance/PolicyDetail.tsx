@@ -127,9 +127,18 @@ export function PolicyDetail() {
     [],
   );
 
+  // C-16: this table listed claims for the policy but the claim number was plain text — the
+  // office could see a claim was attached but had no way to open it. EntityLink kind="claim"
+  // already resolves to /safety/insurance/claims?claim_id= (ClaimsTab selects+highlights the row),
+  // the same reverse chrome pattern used everywhere else claims are listed on another entity.
   const claimColumns = useMemo<ParityColumn<InsuranceClaim>[]>(
     () => [
-      { key: "claim_number", label: "Claim #", sortable: true },
+      {
+        key: "claim_number",
+        label: "Claim #",
+        sortable: true,
+        render: (claim) => <EntityLink kind="claim" id={claim.id} label={claim.claim_number} />,
+      },
       { key: "status", label: "Status", sortable: true },
       { key: "amount_claimed_cents", label: "Claimed", sortable: true, render: (claim) => formatMoney(claim.amount_claimed_cents) },
     ],
@@ -138,7 +147,12 @@ export function PolicyDetail() {
 
   const lawsuitColumns = useMemo<ParityColumn<InsuranceLawsuit>[]>(
     () => [
-      { key: "case_number", label: "Case #", sortable: true },
+      {
+        key: "case_number",
+        label: "Case #",
+        sortable: true,
+        render: (row) => <EntityLink kind="lawsuit" id={row.id} label={row.case_number} />,
+      },
       { key: "status", label: "Status", sortable: true },
       { key: "demand_cents", label: "Demand", sortable: true, render: (row) => formatMoney(row.demand_cents) },
     ],
