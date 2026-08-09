@@ -22,7 +22,7 @@ function assertSrc(src) {
   if (!/allowAddNew=\{\{[\s\S]*label:\s*"\+ Add new program"/.test(code)) {
     problems.push("missing + Add new program allowAddNew");
   }
-  const block = code.match(/data-testid="add-training-program"[\s\S]{0,900}?Completion date/)?.[0];
+  const block = code.match(/data-testid="add-training-program"[\s\S]{0,1600}?add-training-completed/)?.[0];
   if (!block) problems.push("could not locate training program picker block");
   else if (/<select[\s>]/.test(block)) problems.push("training program picker still uses bare <select>");
   else if (!/<Combobox[\s\S]{0,500}?allowAddNew=/.test(block)) {
