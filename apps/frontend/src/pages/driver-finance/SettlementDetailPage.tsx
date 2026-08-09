@@ -28,6 +28,7 @@ import { DebtBanner } from "./components/DebtBanner";
 import { DeductionsSection, type DeductionRow } from "./components/DeductionsSection";
 import { EarningsSection } from "./components/EarningsSection";
 import { EscrowVisualizer } from "./components/EscrowVisualizer";
+import { SETTLEMENT_DISPUTE_CATEGORY_OPTIONS } from "./settlementDisputeCategories";
 import { ExtraPaySection } from "./components/ExtraPaySection";
 import { FinalizeBlock } from "./components/FinalizeBlock";
 import { HoldDeductionModal } from "./components/HoldDeductionModal";
@@ -233,16 +234,14 @@ export function SettlementDetailPage() {
               value={disputeCategory}
               onChange={(event) => setDisputeCategory(event.target.value)}
               className="rounded-sm border border-slate-300 bg-white px-2 py-1"
+              data-testid="settlement-detail-dispute-category"
             >
-              <option value="missing_pay">missing_pay</option>
-              <option value="wrong_deduction">wrong_deduction</option>
-              <option value="miscalculated_mileage">miscalculated_mileage</option>
-              <option value="wrong_rate">wrong_rate</option>
-              <option value="detention_not_paid">detention_not_paid</option>
-              <option value="cash_advance_dispute">cash_advance_dispute</option>
-              <option value="fine_dispute">fine_dispute</option>
-              <option value="escrow_dispute">escrow_dispute</option>
-              <option value="other">other</option>
+              {/* SETL-PICK-03: same options module as SettlementDisputeModal (DB CHECK). */}
+              {SETTLEMENT_DISPUTE_CATEGORY_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </SelectCombobox>
             {/* M-1: dollars-mode QBO money entry; bridged so Math.round(disputeAmount*100) is byte-for-byte. */}
             <MoneyInput
