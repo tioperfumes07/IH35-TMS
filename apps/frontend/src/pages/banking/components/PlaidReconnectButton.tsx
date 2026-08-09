@@ -4,6 +4,7 @@ import { createPlaidUpdateLinkToken, exchangePlaidPublicToken } from "../../../a
 import { useAuth } from "../../../auth/useAuth";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { useToast } from "../../../components/Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 export { plaidItemBadgeClasses, plaidItemBadgeLabel } from "./plaid-item-display";
 
@@ -37,7 +38,7 @@ export function PlaidReconnectButton({ operatingCompanyId, plaidItemId, onComple
       .catch((err: unknown) => {
         if (!cancelled) {
           setLinkToken(null);
-          pushToast(String((err as Error).message || "Could not start Plaid update"), "error");
+          pushToast(userFacingApiError(err, "Could not start Plaid update"), "error");
         }
       })
       .finally(() => {
@@ -63,7 +64,7 @@ export function PlaidReconnectButton({ operatingCompanyId, plaidItemId, onComple
             pushToast("Bank connection updated", "success");
             onComplete();
           })
-          .catch((err: unknown) => pushToast(String((err as Error).message || "Update failed"), "error"))
+          .catch((err: unknown) => pushToast(userFacingApiError(err, "Update failed"), "error"))
           .finally(() => setBusy(false));
       },
     }),

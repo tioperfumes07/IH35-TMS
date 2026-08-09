@@ -24,6 +24,7 @@ import { listAutoDeductionPolicies, type AutoDeductionPolicy } from "../../../ho
 import { Button } from "../../Button";
 import { Modal } from "../../Modal";
 import { formatUsdCents } from "../../../lib/money";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 export type FinesDeductionsCardProps = {
   loadId: string;
@@ -125,7 +126,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
       await invalidateAll();
     },
     onError: (err) => {
-      setActionError(err instanceof ApiError ? `${err.status}: ${err.message}` : String((err as Error).message ?? err));
+      setActionError(userFacingApiError(err, "Request failed"));
     },
   });
 
@@ -144,7 +145,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
       await invalidateAll();
     },
     onError: (err) => {
-      setActionError(err instanceof ApiError ? `${err.status}: ${err.message}` : String((err as Error).message ?? err));
+      setActionError(userFacingApiError(err, "Request failed"));
     },
   });
 

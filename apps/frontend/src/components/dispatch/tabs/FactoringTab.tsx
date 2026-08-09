@@ -18,6 +18,7 @@ import { listFactors } from "../../../api/factoring";
 import { apiRequest } from "../../../api/client";
 import { Button } from "../../Button";
 import { useToast } from "../../Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
@@ -240,7 +241,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
       void queryClient.invalidateQueries({ queryKey: ["loads"] });
       onPacketUpdated?.();
     },
-    onError: (err) => pushToast(String((err as Error).message ?? "Failed"), "error"),
+    onError: (err) => pushToast(userFacingApiError(err, "Failed"), "error"),
   });
 
   const approveMutation = useMutation({
@@ -263,7 +264,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
       void queryClient.invalidateQueries({ queryKey: ["load", loadId] });
       onPacketUpdated?.();
     },
-    onError: (err) => pushToast(String((err as Error).message ?? "Failed"), "error"),
+    onError: (err) => pushToast(userFacingApiError(err, "Failed"), "error"),
   });
 
   const submitMutation = useMutation({
@@ -290,7 +291,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
       void queryClient.invalidateQueries({ queryKey: ["accounting", "factoring-advances"] });
       onPacketUpdated?.();
     },
-    onError: (err) => pushToast(String((err as Error).message ?? "Submission failed"), "error"),
+    onError: (err) => pushToast(userFacingApiError(err, "Submission failed"), "error"),
   });
 
   // ── loading guard ──────────────────────────────────────────────────────────
