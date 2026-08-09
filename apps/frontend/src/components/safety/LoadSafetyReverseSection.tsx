@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
   getSafetyAccidents,
+  listSafetyEventLog,
   listSafetyIncidents,
   type SafetyIncidentType,
 } from "../../api/safety";
@@ -84,6 +85,8 @@ export function LoadSafetyReverseSection({
         ) : null}
       </div>
 
+      <LoadSafetyEventsBlock companyId={operatingCompanyId} loadId={loadId} />
+
       {INCIDENT_KINDS.map((kind) => (
         <LoadIncidentBlock
           key={kind.type}
@@ -92,6 +95,62 @@ export function LoadSafetyReverseSection({
           kind={kind}
         />
       ))}
+    </div>
+  );
+}
+
+/**
+ * FAIL-S1 REVERSE half. #5019 gave the Log Safety Event form a Related load picker, so new events
+ * finally carry `related_load_id` — proven live on prod (event 262f6d5e → load L-20260808-0085).
+ * But this section listed Accidents, Damage Reports, Trailer Interchanges and Cargo Claims and NOT
+ * safety events, so the link existed in the database and appeared on no screen: open the load and it
+ * still looked clean. §10a is explicit that a link is only done when it drills BOTH ways.
+ */
+function LoadSafetyEventsBlock({ companyId, loadId }: { companyId: string; loadId: string }) {
+  const query = useQuery({
+    queryKey: ["safety", "reverse", "events-log", "load", companyId, loadId],
+    queryFn: () => listSafetyEventLog(companyId, { related_load_id: loadId }),
+    enabled: Boolean(companyId) && Boolean(loadId),
+  });
+  const rows = query.data?.events ?? [];
+
+  return (
+    <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="load-safety-reverse-safety-events">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-slate-900">
+          Safety Events
+          {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
+        </h3>
+        <Link className="text-xs font-semibold text-slate-700 underline" to="/safety/safety-events">
+          Open Safety Events
+        </Link>
+      </div>
+      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+      {query.isError ? <p className="text-sm text-red-600">Could not load safety events for this load.</p> : null}
+      {!query.isLoading && !query.isError && rows.length === 0 ? (
+        <p className="text-sm text-gray-500">None linked to this load.</p>
+      ) : null}
+      {rows.length > 0 ? (
+        <ul className="space-y-2">
+          {rows.map((row) => (
+            <li key={row.id} className="text-sm text-slate-700" data-testid={`load-safety-event-${row.id}`}>
+              {/* Deliberately NOT an EntityLink. There is no `safety_event` kind, and adding one
+                  would point at /safety/safety-events?event_id=… — a param that page does not read,
+                  so the link would navigate to an unfiltered list and look like a drill that worked.
+                  EntityLink's contract is that every declared kind resolves to a real route, so the
+                  honest render is the title plus the list link in this block's header. The missing
+                  deep-link is filed rather than faked. */}
+              <span className="font-medium text-slate-900">{row.title || `Safety event ${row.id.slice(0, 8)}`}</span>
+              <span className="ml-2 text-xs text-gray-500">
+                {row.occurred_at ? formatDateUS(String(row.occurred_at).slice(0, 10)) : "—"}
+                {` · ${row.severity} · ${row.status}`}
+                {row.subject_driver_name ? ` · ${row.subject_driver_name}` : ""}
+                {row.subject_unit_number ? ` · ${row.subject_unit_number}` : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

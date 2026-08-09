@@ -14,6 +14,10 @@ const listQuerySchema = companyQuerySchema.extend({
   status: z.enum(["open", "acknowledged", "closed"]).optional(),
   severity: z.enum(["low", "medium", "high", "critical"]).optional(),
   search: z.string().trim().min(1).max(120).optional(),
+  // SAF-C01-REVERSE / FAIL-S1 reverse half: the load drawer needs to ask "which safety events are on
+  // THIS load". The column and the join were already here — only the filter was missing, so the
+  // reverse direction had no server-side question to ask and the load looked clean.
+  related_load_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(200),
 });
 
@@ -86,6 +90,10 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
       if (query.data.search) {
         values.push(`%${query.data.search}%`);
         filters.push(`(e.title ILIKE $${values.length} OR COALESCE(e.description, '') ILIKE $${values.length})`);
+      }
+      if (query.data.related_load_id) {
+        values.push(query.data.related_load_id);
+        filters.push(`e.related_load_id = $${values.length}::uuid`);
       }
       values.push(query.data.limit);
       const limitParam = values.length;
