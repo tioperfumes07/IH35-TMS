@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
+import { HoverDropdownNav, type NavChild, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
 import { buildCatalogPath, DOMAIN_CONFIG } from "./components/AllCatalogsMap";
 
 const DOMAIN_ORDER = ["safety", "maintenance", "dispatch", "fuel", "drivers", "fleet", "accounting", "names_master"] as const;
@@ -16,11 +16,11 @@ const DOMAIN_LABELS: Record<(typeof DOMAIN_ORDER)[number], string> = {
 };
 
 /** Live catalogs for a domain from DOMAIN_CONFIG — hub + subnav must not diverge (LST-F100/F101). */
-function domainCatalogNavChildren(domainKey: string): NavItem[] {
+function domainCatalogNavChildren(domainKey: string): NavChild[] {
   const domain = DOMAIN_CONFIG.find((d) => d.key === domainKey);
   if (!domain) return [];
   const seen = new Set<string>();
-  const children: NavItem[] = [];
+  const children: NavChild[] = [];
   for (const catalog of domain.catalogs) {
     if (!catalog.live || !catalog.catalogKey) continue;
     if (seen.has(catalog.catalogKey)) continue;

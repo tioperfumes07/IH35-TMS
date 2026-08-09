@@ -83,12 +83,45 @@ export function DOTInspectionsTab() {
 
   const columns: Array<ParityColumn<Record<string, unknown>>> = [
     { key: "inspection_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.inspection_date) },
-    { key: "driver_id", label: "Driver", render: (row) => <EntityLink kind="driver" id={row.driver_id as string | undefined} /> },
-    { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id as string | undefined} /> },
+    {
+      key: "driver_id",
+      label: "Driver",
+      render: (row) => (
+        <EntityLink
+          kind="driver"
+          id={row.driver_id as string | undefined}
+          label={(row.driver_name as string | undefined)?.trim() || "Driver"}
+        />
+      ),
+    },
+    {
+      key: "unit_id",
+      label: "Unit",
+      render: (row) => (
+        <EntityLink
+          kind="unit"
+          id={row.unit_id as string | undefined}
+          label={(row.unit_number as string | undefined)?.trim() || "Unit"}
+        />
+      ),
+    },
     { key: "fmcsa_level", label: "Level", sortable: true, render: (row) => String(row.fmcsa_level ?? "—") },
     { key: "outcome", label: "Outcome", sortable: true, render: (row) => String(row.outcome ?? "—") },
     { key: "csa_points", label: "CSA Pts", sortable: true, render: (row) => String(row.csa_points ?? "0") },
-    { key: "auto_spawned_wo_id", label: "WO Spawned", render: (row) => <EntityLink kind="work_order" id={row.auto_spawned_wo_id as string | undefined} /> },
+    {
+      key: "auto_spawned_wo_id",
+      label: "WO Spawned",
+      render: (row) =>
+        row.auto_spawned_wo_id ? (
+          <EntityLink
+            kind="work_order"
+            id={row.auto_spawned_wo_id as string}
+            label={(row.work_order_display_id as string | undefined)?.trim() || "Work order"}
+          />
+        ) : (
+          "—"
+        ),
+    },
     {
       key: "action",
       label: "Actions",
