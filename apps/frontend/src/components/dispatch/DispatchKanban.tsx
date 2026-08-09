@@ -30,7 +30,8 @@ type Props = {
   // Awaiting-assignment cards are synthetic trucks (no load) — clicking one books a load FOR that truck
   // rather than opening a (non-existent) load drawer. Receives the bare unit id.
   onBookForUnit?: (unitId: string) => void;
-  onStatusDrop: (loadId: string, nextStatus: LoadStatus) => Promise<void>;
+  /** May resolve with `{ driver_bill_mint }` from PATCH …/transition (MILES-ON-BOOK). */
+  onStatusDrop: (loadId: string, nextStatus: LoadStatus) => Promise<unknown>;
   // DB-2: clicking a lane header navigates to the List view pre-filtered to that lane's statuses
   // (reuses the existing `statuses` + `view` URL params; additive — header becomes a button).
   onColumnHeaderClick?: (statuses: string[]) => void;
@@ -746,8 +747,17 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
       current.map((item) => (item.id === loadId ? { ...item, status: nextStatus, flag_code: nextStatus === "cancelled" ? "RED" : item.flag_code } : item))
     );
     try {
-      await onStatusDrop(loadId, nextStatus);
+      const dropResult = await onStatusDrop(loadId, nextStatus);
       pushToast(`Load ${load.load_number} moved to ${targetGroup.title}`, "success");
+      const mint = (dropResult as { driver_bill_mint?: { outcome?: string; missing?: string[] } } | null)?.driver_bill_mint;
+      if (mint?.outcome === "skipped_no_pay_rate") {
+        const missing =
+          Array.isArray(mint.missing) && mint.missing.length > 0 ? mint.missing.join(", ") : "pay inputs";
+        pushToast(
+          `Driver pay NOT minted for ${load.load_number} — missing ${missing}. Enter shortest miles so pay can be priced (never invent from customer rate).`,
+          "info"
+        );
+      }
     } catch (error) {
       setOptimisticLoads(previousLoads);
       // KANBAN-REVERSE-NOMOVE (owner-live): forward moves worked, backward ones "did not move". They were

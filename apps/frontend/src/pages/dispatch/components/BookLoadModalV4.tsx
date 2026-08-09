@@ -820,6 +820,15 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
       // rolling under an audited DOT override while the record sat at `assigned_not_dispatched`.
       const serverStatus = serverStatusOf(payload);
       pushToast(bookLoadToastMessage(saveMode, serverStatus), bookLoadToastTone(saveMode, serverStatus));
+      const mint = (payload as { driver_bill_mint?: { outcome?: string; missing?: string[] } }).driver_bill_mint;
+      if (mint?.outcome === "skipped_no_pay_rate") {
+        const missing =
+          Array.isArray(mint.missing) && mint.missing.length > 0 ? mint.missing.join(", ") : "pay inputs";
+        pushToast(
+          `Load booked, but driver pay was NOT minted — missing ${missing}. Enter shortest miles before delivery so the driver bill can be created.`,
+          "info"
+        );
+      }
       onCreated();
       onClose();
     } catch (error) {

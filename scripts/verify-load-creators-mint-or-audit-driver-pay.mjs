@@ -150,6 +150,38 @@ export function collectDeliveryBackstopProblems(files) {
   return problems;
 }
 
+
+/**
+ * MILES-ON-BOOK — skip must be operator-visible, not audit-only.
+ */
+export function collectMilesOnBookLoudProblems() {
+  const problems = [];
+  const read = (rel) => {
+    const fp = path.join(root, rel);
+    return fs.existsSync(fp) ? fs.readFileSync(fp, "utf8") : "";
+  };
+  const book = read("apps/backend/src/dispatch/book-load.service.ts");
+  const routes = read("apps/backend/src/dispatch/loads.routes.ts");
+  const bookFe = read("apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx");
+  const kanban = read("apps/frontend/src/components/dispatch/DispatchKanban.tsx");
+  if (!book.includes("DriverBillMintOutcome") || !book.includes("skipped_no_pay_rate")) {
+    problems.push("book-load.service.ts: DriverBillMintOutcome / skipped_no_pay_rate missing.");
+  }
+  if (!book.includes("driver_bill_mint")) {
+    problems.push("book-load.service.ts: book response must include driver_bill_mint.");
+  }
+  if (!routes.includes("driver_bill_mint") || !routes.includes("driverBillOutcome")) {
+    problems.push("loads.routes.ts: must return driver_bill_mint from transition (MILES-ON-BOOK).");
+  }
+  if (!bookFe.includes("driver_bill_mint") || !bookFe.includes("skipped_no_pay_rate")) {
+    problems.push("BookLoadModalV4.tsx: must toast skipped_no_pay_rate.");
+  }
+  if (!kanban.includes("driver_bill_mint") || !kanban.includes("skipped_no_pay_rate")) {
+    problems.push("DispatchKanban.tsx: must toast delivery pay skip.");
+  }
+  return problems;
+}
+
 function readTree() {
   return walk(SRC_DIR).map((f) => ({ rel: path.relative(root, f), src: fs.readFileSync(f, "utf8") }));
 }
@@ -193,7 +225,7 @@ function selftest() {
     const files = c.files ?? readTree();
     const problems = c.files
       ? collectProblems(files).filter((p) => !p.includes("no longer creates loads"))
-      : [...collectProblems(files), ...collectDeliveryBackstopProblems(files)];
+      : [...collectProblems(files), ...collectDeliveryBackstopProblems(files), ...collectMilesOnBookLoudProblems()];
     const ok = c.expect === 0 ? problems.length === 0 : problems.length >= (c.expectAtLeast ?? 1);
     if (ok) pass += 1;
     else console.error(`  selftest FAIL: ${c.name} -> ${JSON.stringify(problems)}`);
@@ -208,8 +240,12 @@ function selftest() {
     if (bad.length >= 1) pass += 1;
     else console.error("  selftest FAIL: delivery backstop empty stubs");
   }
-  const deliveryCases = pass; // pass already counts prior cases; add one more to denominator below
-  const total = cases.length + 1;
+  {
+    const loud = collectMilesOnBookLoudProblems();
+    if (loud.length === 0) pass += 1;
+    else console.error("  selftest FAIL: miles-on-book loud on real tree", loud);
+  }
+  const total = cases.length + 2;
   console.log(`${LABEL} selftest ${pass}/${total}`);
   return pass === total ? 0 : 1;
 }
@@ -221,7 +257,7 @@ function main() {
     return 1;
   }
   const tree = readTree();
-  const problems = [...collectProblems(tree), ...collectDeliveryBackstopProblems(tree)];
+  const problems = [...collectProblems(tree), ...collectDeliveryBackstopProblems(tree), ...collectMilesOnBookLoudProblems()];
   if (problems.length) {
     console.error(`${LABEL}: FAIL`);
     for (const p of problems) console.error(`  - ${p}`);
