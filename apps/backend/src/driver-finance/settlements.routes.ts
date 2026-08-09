@@ -143,11 +143,23 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             s.payment_bounced_reason,
             s.payment_method,
             (
-              SELECT COUNT(DISTINCT db.load_id)::int
+              -- ACCT-F275 — count the covered loads through BOTH linkages, canonical first.
+              --
+              -- This counted db.load_id over an INNER JOIN on source_driver_bill_id, so a line that
+              -- carries only the denormalized settlement_lines.load_id was DROPPED by the join and
+              -- never counted. Live on prod br-fancy-credit-akjnd07a: S-20260808-0085 and
+              -- S-20260808-0090 each cover one load and the screen reported load_count 0.
+              --
+              -- driver_bills.load_id stays CANONICAL (it is first in the COALESCE); sl.load_id is the
+              -- denormalized fallback, and the join becomes LEFT so a line with no bill still counts.
+              -- The COALESCE also gates the IS NOT NULL filter, or the fallback rows are discarded
+              -- before they can be counted. Same rule and same COALESCE order as the ACCT-F290
+              -- bookend CTE — one rule, two call sites, so the two cannot drift apart.
+              SELECT COUNT(DISTINCT COALESCE(db.load_id, sl.load_id))::int
               FROM driver_finance.settlement_lines sl
-              JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+              LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
               WHERE sl.settlement_id = s.id
-                AND db.load_id IS NOT NULL
+                AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
             ) AS load_count
           FROM views.driver_settlement_with_debt v
           JOIN driver_finance.driver_settlements s ON s.id = v.id
@@ -223,11 +235,23 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             s.payment_bounced_reason,
             s.payment_method,
             (
-              SELECT COUNT(DISTINCT db.load_id)::int
+              -- ACCT-F275 — count the covered loads through BOTH linkages, canonical first.
+              --
+              -- This counted db.load_id over an INNER JOIN on source_driver_bill_id, so a line that
+              -- carries only the denormalized settlement_lines.load_id was DROPPED by the join and
+              -- never counted. Live on prod br-fancy-credit-akjnd07a: S-20260808-0085 and
+              -- S-20260808-0090 each cover one load and the screen reported load_count 0.
+              --
+              -- driver_bills.load_id stays CANONICAL (it is first in the COALESCE); sl.load_id is the
+              -- denormalized fallback, and the join becomes LEFT so a line with no bill still counts.
+              -- The COALESCE also gates the IS NOT NULL filter, or the fallback rows are discarded
+              -- before they can be counted. Same rule and same COALESCE order as the ACCT-F290
+              -- bookend CTE — one rule, two call sites, so the two cannot drift apart.
+              SELECT COUNT(DISTINCT COALESCE(db.load_id, sl.load_id))::int
               FROM driver_finance.settlement_lines sl
-              JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+              LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
               WHERE sl.settlement_id = s.id
-                AND db.load_id IS NOT NULL
+                AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
             ) AS load_count
           FROM views.driver_settlement_with_debt v
           JOIN driver_finance.driver_settlements s ON s.id = v.id
