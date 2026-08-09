@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { entityLabel } from "../../lib/entity-label";
 import { useLocation } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createVendorBill } from "../../api/accounting";
@@ -313,7 +314,7 @@ export function CreateMultipleBillsPage() {
             {rows.map((row) => (
               <tr key={row.id} className="border-b border-gray-100">
                 <td className="px-2 py-1.5 font-mono text-[11px] text-gray-600">
-                  {row.bank_transaction_id ? row.bank_transaction_id.slice(0, 8) : "manual"}
+                  {row.bank_transaction_id ? entityLabel(null, row.bank_transaction_id, "Bank transaction") : "manual"}
                 </td>
                 <td className="px-2 py-1.5">
                   <div className="min-w-[180px]">

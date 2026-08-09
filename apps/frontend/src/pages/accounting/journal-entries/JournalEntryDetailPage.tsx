@@ -15,6 +15,7 @@ import { DataPanelRow } from "../../../components/layout/DataPanelRow";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 
@@ -25,7 +26,7 @@ function money(cents: number) {
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 function humanMemo(memo: string | null | undefined): string {
   if (!memo) return "—";
-  return memo.replace(UUID_RE, (uuid) => uuid.slice(0, 8));
+  return memo.replace(UUID_RE, (uuid) => entityLabel(null, uuid, "Record"));
 }
 
 /** LST-F105: page chrome must not lead with a bare UUID fragment as the JE identity. */
@@ -114,7 +115,7 @@ function SourceEntityLink({
 }) {
   const kind = postingEntityKind(type);
   if (!kind || !id) return <>{label ?? id ?? "—"}</>;
-  return <EntityLink kind={kind} id={id} label={label ?? id.slice(0, 8)} />;
+  return <EntityLink kind={kind} id={id} label={entityLabel(label, id, "Record")} />;
 }
 
 function uniqueSourceRows(rows: JournalEntrySourceLink[]): Array<{
@@ -310,7 +311,7 @@ export function JournalEntryDetailPage() {
               <EntityLink
                 kind="bank_transaction"
                 id={entry.matched_bank_transaction_id}
-                label={entry.matched_bank_transaction_id.slice(0, 8)}
+                label={entityLabel(null, entry.matched_bank_transaction_id, "Bank transaction")}
               />
             </span>
           </DataPanelRow>
@@ -327,7 +328,7 @@ export function JournalEntryDetailPage() {
             {sourceRows.map((row) => (
               <li key={row.key} className="flex items-center gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{row.type}</span>
-                <SourceEntityLink type={row.type} id={row.id} label={row.id.slice(0, 8)} />
+                <SourceEntityLink type={row.type} id={row.id} label={entityLabel(null, row.id, "Source")} />
               </li>
             ))}
           </ul>

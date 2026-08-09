@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -60,7 +61,7 @@ export function RecurringBillList() {
     mutationFn: (uuid: string) =>
       generateRecurringBillNow(uuid, companyId, `generate-${uuid}-${Date.now()}`),
     onSuccess: (result: { billUuid: string }) => {
-      pushToast(`Bill generated: ${result.billUuid.slice(0, 8)}…`, "success");
+      pushToast(`Bill generated: ${entityLabel(null, result.billUuid, "Bill")}`, "success");
       void queryClient.invalidateQueries({ queryKey: ["accounting", "bills"] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "recurring-bills"] });
     },
@@ -87,7 +88,7 @@ export function RecurringBillList() {
         cellClass: "font-mono text-xs",
         sortValue: (tmpl) => tmpl.vendor_name ?? tmpl.vendor_uuid,
         render: (tmpl) => (
-          <EntityLink kind="vendor" id={tmpl.vendor_uuid} label={tmpl.vendor_name ?? (tmpl.vendor_uuid.slice(0, 8) + "…")} />
+          <EntityLink kind="vendor" id={tmpl.vendor_uuid} label={entityLabel(tmpl.vendor_name, tmpl.vendor_uuid, "Vendor")} />
         ),
       },
       {

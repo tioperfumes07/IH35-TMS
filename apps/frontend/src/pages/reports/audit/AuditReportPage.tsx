@@ -39,7 +39,7 @@ const AUDIT_REPORT_COLUMNS: Array<ParityColumn<AuditReportTableRow>> = [
     render: (row) => (
       <span className="text-gray-500">
         {row.subject_type ?? "—"}
-        {row.subject_id ? ` · ${row.subject_id.slice(0, 8)}…` : ""}
+        {row.subject_id ? ` · ${entityLabel(null, row.subject_id, "Subject")}` : ""}
       </span>
     ),
   },

@@ -13,6 +13,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { CollapsedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -219,7 +220,7 @@ export function DisputeQueuePage() {
           <EntityLink
             kind="driver"
             id={row.driver_id}
-            label={row.driver_name ?? row.driver_id.slice(0, 8)}
+            label={entityLabel(row.driver_name, row.driver_id, "Driver")}
             data-testid="dispute-queue-driver-link"
           />
         ),
