@@ -10,6 +10,7 @@ import {
 import { useAuth } from "../../auth/useAuth";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 /**
  * SAF-F17 — the REVERSE half of the asset↔safety link (unit and trailer profiles).
@@ -215,7 +216,7 @@ export function AssetSafetyReverseSection({
               <EntityLink
                 kind="accident"
                 id={s(accident.id) || null}
-                label={s(accident.description) || `Accident ${s(accident.id).slice(0, 8)}`}
+                label={entityLabel(s(accident.description) || null, s(accident.id), "Accident")}
                 className="font-semibold text-slate-700"
               />
               <div className="mt-1 text-xs text-gray-600">
@@ -282,7 +283,7 @@ export function AssetSafetyReverseSection({
                 <EntityLink
                   kind="work_order"
                   id={s(dvir.follow_up_wo_id) || null}
-                  label={s(dvir.follow_up_wo_id).slice(0, 8)}
+                  label={entityLabel(null, s(dvir.follow_up_wo_id), "Work order")}
                   className="font-semibold text-slate-700"
                 />
               </div>

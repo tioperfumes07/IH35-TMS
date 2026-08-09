@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { entityLabel } from "../../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { listSafetyIncidents } from "../../../api/safety";
@@ -59,7 +60,7 @@ export function MaintenanceDamageRegisterTab({ operatingCompanyId }: Props) {
       key: "id",
       label: "Report #",
       // safety.incidents has no display/sequence number → short id slice is the stable record reference.
-      render: (row) => (row.id ? String(row.id).slice(0, 8) : "—"),
+      render: (row) => (row.id ? entityLabel(null, String(row.id), "Damage") : "—"),
     },
     {
       key: "unit_number",

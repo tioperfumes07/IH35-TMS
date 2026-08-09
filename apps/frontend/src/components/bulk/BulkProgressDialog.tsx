@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { entityLabel } from "../../lib/entity-label";
 import { Modal } from "../Modal";
 
 export type BulkFailure = {
@@ -87,10 +88,10 @@ export function BulkProgressDialog({
                   <li key={item.id}>
                     {href ? (
                       <a href={href} className="font-mono underline">
-                        {item.id.slice(0, 8)}…
+                        {entityLabel(null, item.id, "Item")}
                       </a>
                     ) : (
-                      <span className="font-mono">{item.id.slice(0, 8)}…</span>
+                      <span>{entityLabel(null, item.id, "Item")}</span>
                     )}
                     {": "}
                     {item.message}
