@@ -305,13 +305,23 @@ export async function postVoidReversal(
         // BLOCK 2: deterministic key per voided entity so a second void of the same entity cannot
         // double-post a reversing JE (uq_jep_company_idempotency_line). Shared across reversal lines.
         `void:${params.entityType}:${params.entityId}`,
-        // ACCT-F295 — THE STRUCTURAL LINK. Without this the reversal is discoverable only by parsing
-        // the JE memo for a uuid, which is invisible to every structured query: an auditor joining
-        // journal_entry_postings on source columns sees the original debit with no offset and
-        // concludes money is missing. That is not hypothetical — it produced a false "$2,207.57 of
-        // voided A/R never reversed" P0 in one session, and a hand-posted correction on that report
-        // would have DOUBLE-CREDITED A/R. NULL is tolerated (older rows predate this and legitimately
-        // have none); what is fixed is that NEW reversals are findable without reading prose.
+        // ACCT-F295 — extend the LINE-TO-LINE GL reversal chain to void-service reversals.
+        //
+        // ACCURACY NOTE, because my first version of this comment overstated the problem: the reversal
+        // was ALREADY linked structurally, by the writeTransactionSourceLink call below
+        // (relationship_role='reversal_of'), which ties each reversal LINE to the original ENTITY. It
+        // was never "findable only by parsing the memo" — I had simply not known that link table
+        // existed when I audited, which is what produced a false "$2,207.57 of voided A/R never
+        // reversed" alarm. The data was linked; my query was incomplete.
+        //
+        // What was genuinely MISSING is the line-to-line chain: the comment below states that
+        // reversal_of_line_id / reversed_by_line_id are carried "on posting-engine reversals", i.e.
+        // NOT on these. So a void reversal could be traced to its INVOICE but not to the exact
+        // POSTING it offsets. That matters when an entity has several postings across accounts and
+        // you need to know which credit answers which debit.
+        //
+        // NULL is tolerated: rows written before this legitimately have none, and backfilling would
+        // be inventing linkage.
         line.id,
       ]
     );
