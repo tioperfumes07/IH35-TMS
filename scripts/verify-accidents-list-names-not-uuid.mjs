@@ -28,11 +28,12 @@ const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*
 
 /** The GET /api/v1/safety/accidents list handler body. */
 function accidentsListHandler(routeSrc) {
-  const start = routeSrc.indexOf('app.get("/api/v1/safety/accidents"');
-  if (start === -1) return "";
+  const match = routeSrc.match(/app\.get\s*\(\s*["']\/api\/v1\/safety\/accidents["']/);
+  if (!match) return "";
+  const start = match.index;
   const rest = routeSrc.slice(start);
   const end = rest.indexOf("return { accidents:");
-  return end === -1 ? rest.slice(0, 1500) : rest.slice(0, end + 40);
+  return end === -1 ? rest.slice(0, 2500) : rest.slice(0, end + 40);
 }
 
 export function assertAccidentsNames(sources) {
@@ -98,11 +99,8 @@ if (SELFTEST) {
     {
       ...live,
       [ROUTE]: live[ROUTE].replace(
-        // SAF-F17 widened the params from a literal `[query.data.operating_company_id]` array to a
-        // built `values` array (the route gained an optional unit_id filter). The ASSERTION is
-        // unchanged — only this mutation's match had to follow the source, or the selftest silently
-        // went inert and stopped proving anything.
-        /const res = await client\.query\(\s*`\s*\n\s*SELECT ar\.\*,[\s\S]*?LIMIT 500\s*`,\s*\n\s*(?:values|\[query\.data\.operating_company_id\])\s*\n\s*\);/,
+        // Replace the whole entity-joined query call with a SELECT * and catch-swallow.
+        /const res = await client\.query\(\s*[\s\S]*?\s*,\s*values\s*\);/,
         "const res = await client.query(`SELECT * FROM safety.accident_reports WHERE operating_company_id = $1 ORDER BY accident_at DESC LIMIT 500`, [query.data.operating_company_id]).catch(() => ({ rows: [] }));"
       ),
     },
