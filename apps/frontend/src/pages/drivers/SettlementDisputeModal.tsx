@@ -25,11 +25,11 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
   const [submitting, setSubmitting] = useState(false);
 
   const [driverId, setDriverId] = useState("");
-  const [settlementId, setSettlementId] = useState("");
-  const [disputeCategory, setDisputeCategory] =
+  const [settlement_id, set_settlement_id] = useState("");
+  const [dispute_category, set_dispute_category] =
     useState<SettlementDisputeCategoryOption>("missing_pay");
   const [claimedDollars, setClaimedDollars] = useState("");
-  const [description, setDescription] = useState("");
+  const [dispute_description, set_dispute_description] = useState("");
   const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
 
   const settlementsQuery = useQuery({
@@ -49,11 +49,11 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
 
   async function handleSubmit() {
     const claimedCents = Math.round(Number(claimedDollars) * 100);
-    if (!driverId || !settlementId || !companyId || !Number.isFinite(claimedCents) || claimedCents <= 0) {
+    if (!driverId || !settlement_id || !companyId || !Number.isFinite(claimedCents) || claimedCents <= 0) {
       pushToast("Driver, settlement, and claimed amount are required", "error");
       return;
     }
-    if (description.trim().length < 20) {
+    if (dispute_description.trim().length < 20) {
       // Canonical dispute table (driver_finance.driver_settlement_disputes) enforces >=20 trimmed chars.
       pushToast("Description must be at least 20 characters", "error");
       return;
@@ -75,19 +75,19 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
       // SETL-PICK-03: same writer as SettlementDetailPage (dispute_category CHECK), not legacy dispute_type.
       await openSettlementDispute({
         operating_company_id: companyId,
-        settlement_id: settlementId,
+        settlement_id: settlement_id,
         driver_id: driverId,
-        dispute_category: disputeCategory,
-        dispute_description: description.trim(),
+        dispute_category: dispute_category,
+        dispute_description: dispute_description.trim(),
         disputed_amount_cents: claimedCents,
       });
       pushToast("Dispute submitted", "success");
       setDriverId("");
-      setSettlementId("");
+      set_settlement_id("");
       setClaimedDollars("");
-      setDescription("");
+      set_dispute_description("");
       setEvidenceFiles([]);
-      setDisputeCategory("missing_pay");
+      set_dispute_category("missing_pay");
       onClose();
     } catch (error) {
       pushToast(String((error as Error).message ?? "submit_failed"), "error");
@@ -111,7 +111,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
               value={driverId || null}
               onChange={(next) => {
                 setDriverId(next ?? "");
-                setSettlementId("");
+                set_settlement_id("");
               }}
               open={open}
               placeholder="Select driver"
@@ -124,9 +124,9 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
             <span className="font-medium">Settlement</span>
             <select
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={settlementId}
+              value={settlement_id}
               disabled={!driverId}
-              onChange={(e) => setSettlementId(e.target.value)}
+              onChange={(e) => set_settlement_id(e.target.value)}
             >
               <option value="">Select settlement</option>
               {settlementOptions.map((option) => (
@@ -141,8 +141,8 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
             <span className="font-medium">Dispute type</span>
             <select
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={disputeCategory}
-              onChange={(e) => setDisputeCategory(e.target.value as SettlementDisputeCategoryOption)}
+              value={dispute_category}
+              onChange={(e) => set_dispute_category(e.target.value as SettlementDisputeCategoryOption)}
               data-testid="settlement-dispute-category"
             >
               {SETTLEMENT_DISPUTE_CATEGORY_OPTIONS.map((option) => (
@@ -167,8 +167,8 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
             <span className="font-medium">Description</span>
             <textarea
               className="min-h-24 w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={dispute_description}
+              onChange={(e) => set_dispute_description(e.target.value)}
               placeholder="Explain what is wrong with this settlement (min 20 characters)"
             />
           </label>

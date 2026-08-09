@@ -421,10 +421,10 @@ export function isInert(attrs) {
 
 const READ_PREFIX = /^(list|get|fetch|search|count|use[A-Z])/;
 const API_WRITE_PREFIX =
-  /^(create|update|patch|save|post|add|submit|record|book|assign|upsert|delete|void|apply|send|import|generate|spawn|link|attach|mark|approve|reject|resolve|register|file|request|confirm|cancel|complete|finalize|remove|reopen|release|revoke|restore|archive|activate|deactivate|renew|pay|adjust|reclass|acknowledge|escalate|transfer|merge|hold|forfeit|dispute|sync|convert|issue|log)/;
+  /^(create|open|update|patch|save|post|add|submit|record|book|assign|upsert|delete|void|apply|send|import|generate|spawn|link|attach|mark|approve|reject|resolve|register|file|request|confirm|cancel|complete|finalize|remove|reopen|release|revoke|restore|archive|activate|deactivate|renew|pay|adjust|reclass|acknowledge|escalate|transfer|merge|hold|forfeit|dispute|sync|convert|issue|log)/;
 /** camelCase verb + Capital — hook mutators and local submit helpers, never a React setter. */
 const LOCAL_WRITE_CALL =
-  /\b((?:create|update|patch|save|submit|post|upsert|delete|void|apply|send|record|book|assign|spawn|issue|register|confirm|approve|reject|remove|archive|activate|deactivate|renew|pay|adjust|reclass|generate|import|convert|complete|finalize|resolve|escalate|acknowledge|attach|link|mark|log|file|request|sync|transfer|merge|hold|release|forfeit|dispute|verify|do|handle|perform|run|persist|commit|write|push|add|insert)[A-Z][\w$]*)\s*\(/g;
+  /\b((?:create|open|update|patch|save|submit|post|upsert|delete|void|apply|send|record|book|assign|spawn|issue|register|confirm|approve|reject|remove|archive|activate|deactivate|renew|pay|adjust|reclass|generate|import|convert|complete|finalize|resolve|escalate|acknowledge|attach|link|mark|log|file|request|sync|transfer|merge|hold|release|forfeit|dispute|verify|do|handle|perform|run|persist|commit|write|push|add|insert)[A-Z][\w$]*)\s*\(/g;
 /** `client.create(...)`, `catalogClient.update(...)` — a writer reached through an object. */
 const MEMBER_WRITE_CALL = /\.\s*(?:create|update|patch|save|remove|destroy|post|put|upsert|del|void)\s*\(/g;
 
