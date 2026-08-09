@@ -259,6 +259,7 @@ export async function createFactor(
       `
         INSERT INTO factoring.factor (
           tenant_id,
+          operating_company_id,
           name,
           advance_rate,
           fee_rate,
@@ -278,6 +279,7 @@ export async function createFactor(
           updated_at
         )
         VALUES (
+          $1::uuid,
           $1::uuid,
           $2,
           $3::numeric,
@@ -589,6 +591,7 @@ export async function createLetterOfRelease(
     `
       INSERT INTO factoring.letter_of_release (
         tenant_id,
+        operating_company_id,
         factor_id,
         issued_date,
         effective_release_date,
@@ -597,6 +600,7 @@ export async function createLetterOfRelease(
         created_at
       )
       VALUES (
+        $1::uuid,
         $1::uuid,
         $2::uuid,
         $3::date,
@@ -688,6 +692,7 @@ export async function assignCustomerToFactor(
     `
       INSERT INTO factoring.customer_factor_assignment (
         tenant_id,
+        operating_company_id,
         customer_id,
         factor_id,
         effective_from,
@@ -695,6 +700,7 @@ export async function assignCustomerToFactor(
         created_at
       )
       VALUES (
+        $1::uuid,
         $1::uuid,
         $2::uuid,
         $3::uuid,
