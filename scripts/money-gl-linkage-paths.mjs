@@ -85,7 +85,8 @@ const RULE = [
 
 function auditSql(table, uuid) {
   return `
--- ACCT-F294 COMPLETE GL LINKAGE AUDIT for ${table} = ${uuid}
+-- ACCT-F294 COMPLETE GL LINKAGE AUDIT (all SIX paths) for ${table} = ${uuid}
+-- Rows may repeat across paths — that is CORRECT, it shows WHICH linkage each posting is reachable by.
 -- Run with: SELECT set_config('app.bypass_rls','lucia',true) in the SAME transaction.
 WITH direct AS (
   SELECT 'path1_direct'::text AS path, jep.journal_entry_uuid::text AS je_id,
@@ -116,11 +117,34 @@ structural AS (
     FROM accounting.journal_entry_postings jep
    WHERE jep.reversal_of_line_id IN (
            SELECT id FROM accounting.journal_entry_postings WHERE source_transaction_id::text = '${uuid}')
+),
+source_links AS (
+  -- PATH 5: a SEPARATE link table. linked_object_id is TEXT, not uuid — compare as text.
+  SELECT 'path5_transaction_source_links'::text, jep.journal_entry_uuid::text,
+         jep.debit_or_credit, jep.amount_cents, jep.account_id::text
+    FROM accounting.transaction_source_links tsl
+    JOIN accounting.journal_entry_postings jep ON jep.id = tsl.journal_entry_posting_id
+   WHERE tsl.linked_object_id = '${uuid}'
+),
+je_level AS (
+  -- PATH 6: ENTRY-level reversal pairing, in BOTH directions.
+  SELECT 'path6_je_level_reversal'::text, jep.journal_entry_uuid::text,
+         jep.debit_or_credit, jep.amount_cents, jep.account_id::text
+    FROM accounting.journal_entries je
+    JOIN accounting.journal_entry_postings jep ON jep.journal_entry_uuid = je.id
+   WHERE je.reverses_je_id IN (
+           SELECT DISTINCT journal_entry_uuid FROM accounting.journal_entry_postings
+            WHERE source_transaction_id::text = '${uuid}')
+      OR je.reversed_by_je_id IN (
+           SELECT DISTINCT journal_entry_uuid FROM accounting.journal_entry_postings
+            WHERE source_transaction_id::text = '${uuid}')
 )
 SELECT * FROM direct
 UNION ALL SELECT * FROM latch
 UNION ALL SELECT * FROM void_rev
-UNION ALL SELECT * FROM structural;
+UNION ALL SELECT * FROM structural
+UNION ALL SELECT * FROM source_links
+UNION ALL SELECT * FROM je_level;
 `.trim();
 }
 
