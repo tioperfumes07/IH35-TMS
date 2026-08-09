@@ -86,7 +86,16 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
           <ul className="divide-y divide-gray-100">
             {linkedExpenses.map((e) => (
               <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-sm">
-                <EntityLink kind="expense" id={e.id} label={e.id.slice(0, 8)} />
+                <EntityLink
+                  kind="expense"
+                  id={e.id}
+                  label={entityLabel(
+                    e.memo?.trim() ||
+                      (e.transaction_date ? `Expense · ${fmtDate(e.transaction_date)}` : null),
+                    e.id,
+                    "Expense",
+                  )}
+                />
                 <span className="text-xs tabular-nums text-gray-600">{fmtCents(e.total_amount_cents)}</span>
               </li>
             ))}
