@@ -43,6 +43,7 @@ import { convertProformaToOfficial } from "../accounting/proforma-convert.servic
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
+import { ensureDriverBillArtifactsForLoad } from "./book-load.service.js";
 
 // Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
 // (BookLoadStopsSection.tsx). RHF reads a hidden input's value as a STRING ("" when empty), so
@@ -1330,6 +1331,16 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       if (loadStatusRequiresDeliveryDepartureStamp(targetStatus)) {
         // CLS-DISP-WIRE-07 — shared stamp (also used by bulk + mdata status paths).
         await stampFinalActiveDeliveryDeparture(client, params.data.id, body.data.delivered_at ?? null);
+
+        // ACCT-F277 — delivery cannot recognize freight revenue while silently carrying no driver
+        // cost record. Re-enter the canonical idempotent pay path: an existing Book bill is a no-op;
+        // a secondary-created load mints from configured pay inputs or records the honest
+        // skipped_no_pay_rate audit. Missing mileage is never converted into a $0 payable.
+        await ensureDriverBillArtifactsForLoad(client, {
+          loadId: params.data.id,
+          operatingCompanyId,
+          actorUserId: authUser.uuid,
+        });
       }
 
       // ND-INV-01 — at POD (delivered_pending_docs), convert proforma → draft so send/A/R/factoring can proceed.

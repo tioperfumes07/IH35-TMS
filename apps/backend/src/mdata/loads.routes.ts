@@ -18,6 +18,7 @@ import {
   loadStatusRequiresDeliveryDepartureStamp,
   stampFinalActiveDeliveryDeparture,
 } from "../dispatch/stamp-final-delivery-departure.js";
+import { ensureDriverBillArtifactsForLoad } from "../dispatch/book-load.service.js";
 
 const loadStatusSchema = z.enum([
   "draft",
@@ -428,6 +429,16 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             if (stopRow) createdStops.push(stopRow);
           }
         }
+
+        // ACCT-F277 — this secondary creator can seat a driver but historically bypassed the
+        // canonical driver-pay path. Converge immediately: mint from the configured rate when
+        // inputs are complete, otherwise leave the same durable skipped_no_pay_rate audit used by
+        // Book Load. Never derive driver wages from rate_total_cents (customer freight revenue).
+        await ensureDriverBillArtifactsForLoad(client, {
+          loadId: String(inserted.id),
+          operatingCompanyId: b.operating_company_id,
+          actorUserId: authUser.uuid,
+        });
 
         await appendCrudAudit(
           client,
@@ -962,6 +973,17 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       // Same stamp as dispatch transition + bulk set_status (never overwrite driver departure).
       if (loadStatusRequiresDeliveryDepartureStamp(String(row.status))) {
         await stampFinalActiveDeliveryDeparture(client, row.id, null);
+      }
+
+      // ACCT-F277 — delivery is the final idempotent backstop. A Book-created bill is a no-op;
+      // a load created through a secondary path is minted now if its configured pay inputs exist;
+      // missing per-mile mileage/rate remains a durable, queryable skip rather than silent $0 pay.
+      if (loadStatusRequiresDeliveryDepartureStamp(String(row.status))) {
+        await ensureDriverBillArtifactsForLoad(client, {
+          loadId: String(row.id),
+          operatingCompanyId: String(row.operating_company_id),
+          actorUserId: authUser.uuid,
+        });
       }
 
       // CLS-DISP-WIRE-07 — this route STAMPED the departure but never LATCHED revenue, so a load

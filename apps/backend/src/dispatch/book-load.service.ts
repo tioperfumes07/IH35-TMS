@@ -416,8 +416,26 @@ export async function createDriverBillArtifacts(
   loadNumber: string,
   stops: BookLoadStop[]
 ) {
+  const primaryDriverForPay = input.assigned_primary_driver_id ?? null;
+  if (!primaryDriverForPay && !input.team_id) return;
+
   const hasDriverBills = await relationExists(client, "driver_finance.driver_bills");
   if (!hasDriverBills) return;
+
+  // ACCT-F277 — the Book, mdata-create, and delivery paths all converge here. Serialize per load,
+  // then make the operation idempotent so a later delivery event cannot duplicate the bill minted
+  // at booking (and retries cannot duplicate either). A voided bill remains evidence of an
+  // intentional reversal and is not silently re-minted.
+  await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [String(load.id)]);
+  const existingBill = await client.query<{ id: string }>(
+    `SELECT id::text
+       FROM driver_finance.driver_bills
+      WHERE operating_company_id = $1::uuid
+        AND load_id = $2::uuid
+      LIMIT 1`,
+    [input.operating_company_id, String(load.id)]
+  );
+  if (existingBill.rows[0]) return;
 
   const extraPickupCount = stops.filter((s) => s.stop_type === "pickup").length > 1 ? stops.filter((s) => s.stop_type === "pickup").length - 1 : 0;
   const extraDropCount = stops.filter((s) => s.stop_type === "delivery").length > 1 ? stops.filter((s) => s.stop_type === "delivery").length - 1 : 0;
@@ -445,7 +463,6 @@ export async function createDriverBillArtifacts(
   // driver_pay_basis do not exist (verified on prod). Inventing a rate here would be fabricating
   // financial data, so this refuses to mint a payable it cannot source. Dispatch still books the
   // load; the missing bill is recorded durably below so it is countable, not silent.
-  const primaryDriverForPay = input.assigned_primary_driver_id ?? null;
   const basePayCents = await resolveDriverBasePayCents(
     client,
     input.operating_company_id,
@@ -453,6 +470,20 @@ export async function createDriverBillArtifacts(
     load
   );
   if (basePayCents === null) {
+    // Repeated delivery/status events may retry after an unpriced booking. Keep one durable skip
+    // record per load until real miles/rate data appears; once it does, the same path mints the bill.
+    const priorSkip = await client.query<{ exists: boolean }>(
+      `SELECT EXISTS (
+         SELECT 1
+           FROM audit.audit_events
+          WHERE event_class = 'driver_finance.driver_bill.skipped_no_pay_rate'
+            AND payload->>'load_id' = $1
+            AND payload->>'operating_company_id' = $2
+       ) AS exists`,
+      [String(load.id), input.operating_company_id]
+    );
+    if (priorSkip.rows[0]?.exists) return;
+
     await appendCrudAudit(
       client,
       input.requestingUserUuid,
@@ -663,6 +694,68 @@ export async function createDriverBillArtifacts(
     },
     "info",
     "P6-D2"
+  );
+}
+
+/**
+ * ACCT-F277 — canonical re-entrant entry point for any path that has only a load id.
+ *
+ * Delivery is the final backstop: if booking used a secondary creator, or pay inputs were completed
+ * after booking, delivery retries the same idempotent bill mint. If an active per-mile rate still
+ * cannot be priced because shortest miles are absent, createDriverBillArtifacts records the loud,
+ * queryable skip instead of deriving wages from customer revenue.
+ */
+export async function ensureDriverBillArtifactsForLoad(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  input: { loadId: string; operatingCompanyId: string; actorUserId: string }
+): Promise<void> {
+  const loadRes = await client.query<Record<string, unknown>>(
+    `SELECT id, operating_company_id, load_number, customer_id, status,
+            assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
+            requires_tarps, miles_shortest, miles_practical
+       FROM mdata.loads
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND soft_deleted_at IS NULL
+      LIMIT 1`,
+    [input.loadId, input.operatingCompanyId]
+  );
+  const load = loadRes.rows[0];
+  if (!load) throw new Error("driver_bill_load_not_found_or_cross_entity");
+  if (!load.assigned_primary_driver_id && !load.team_id) return;
+
+  const stopsRes = await client.query<BookLoadStop>(
+    `SELECT stop_type, sequence_number, lumper_required, lumper_paid_by, lumper_amount_cents
+       FROM mdata.load_stops
+      WHERE load_id = $1::uuid
+        AND soft_deleted_at IS NULL
+      ORDER BY sequence_number`,
+    [input.loadId]
+  );
+
+  await createDriverBillArtifacts(
+    client,
+    {
+      requestingUserUuid: input.actorUserId,
+      requestingUserRole: "system",
+      operating_company_id: input.operatingCompanyId,
+      customer_id: String(load.customer_id),
+      status: "assigned_not_dispatched",
+      assigned_primary_driver_id: load.assigned_primary_driver_id
+        ? String(load.assigned_primary_driver_id)
+        : undefined,
+      assigned_secondary_driver_id: load.assigned_secondary_driver_id
+        ? String(load.assigned_secondary_driver_id)
+        : undefined,
+      team_id: load.team_id ? String(load.team_id) : undefined,
+      requires_tarps: Boolean(load.requires_tarps),
+      charges: [],
+      stops: stopsRes.rows,
+      save_mode: "book_dispatch",
+    },
+    load,
+    String(load.load_number),
+    stopsRes.rows
   );
 }
 
