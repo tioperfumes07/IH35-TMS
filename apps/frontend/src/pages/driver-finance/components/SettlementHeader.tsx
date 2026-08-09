@@ -1,9 +1,9 @@
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { formatDateUS } from "../../../lib/formatDate";
 
 type Props = {
   driverId: string | null;
   driverName: string;
-  driverDisplayId: string;
   periodStart: string;
   periodEnd: string;
   status: string;
@@ -18,7 +18,6 @@ type Props = {
 export function SettlementHeader({
   driverId,
   driverName,
-  driverDisplayId,
   periodStart,
   periodEnd,
   status,
@@ -33,11 +32,12 @@ export function SettlementHeader({
         <div className="text-sm font-semibold">
           <EntityLink kind="driver" id={driverId} label={driverName} />
         </div>
-        <div className="text-xs text-gray-500">{driverDisplayId}</div>
       </div>
       <div>
         <div className="text-[10px] uppercase text-gray-500">Settlement Period</div>
-        <div className="text-sm font-semibold">{periodStart} — {periodEnd}</div>
+        <div className="text-sm font-semibold">
+          {formatDateUS(periodStart)} — {formatDateUS(periodEnd)}
+        </div>
       </div>
       <div>
         <div className="text-[10px] uppercase text-gray-500">Loads in cycle</div>
@@ -46,10 +46,7 @@ export function SettlementHeader({
             "—"
           ) : (
             <div className="flex flex-wrap gap-1">
-              {/* SETTLEMENT-DETAIL-SHOWS-RAW-UUID: this printed `id.slice(0, 8)` — an opaque hex fragment —
-                  while the human load number was already on the same record. Show the number; fall back to
-                  the truncated id ONLY when the payload carried no number, so the fallback stays visible as
-                  a data gap instead of being the normal case. */}
+              {/* SETTLEMENT-DETAIL-SHOWS-RAW-UUID: show load number; truncated id only when number missing. */}
               {loads.map((load) => (
                 <EntityLink key={load.id} kind="load" id={load.id} label={load.number ?? load.id.slice(0, 8)} className="text-slate-700 hover:underline" />
               ))}
@@ -60,7 +57,7 @@ export function SettlementHeader({
       <div className="text-right">
         <div className="text-[10px] uppercase text-gray-500">Status</div>
         <div className="text-sm font-semibold">{status}</div>
-        <div className="mt-1 text-[10px] text-gray-500">Recompute: {computedAt ?? "n/a"}</div>
+        <div className="mt-1 text-[10px] text-gray-500">Recompute: {computedAt ? formatDateUS(computedAt) : "n/a"}</div>
         <button type="button" className="mt-1 text-xs text-slate-700 underline" onClick={onRefresh}>Refresh</button>
       </div>
     </div>

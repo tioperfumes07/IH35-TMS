@@ -224,7 +224,6 @@ export function SettlementDetailPage() {
       <SettlementHeader
         driverId={driverId}
         driverName={String(settlement.driver_full_name ?? "-")}
-        driverDisplayId={String(settlement.driver_display_id ?? "-")}
         periodStart={String(settlement.period_start ?? "-")}
         periodEnd={String(settlement.period_end ?? "-")}
         status={String(settlement.status ?? "-")}
