@@ -4,6 +4,7 @@ import { DataPanel } from "../layout/DataPanel";
 import { DataPanelRow } from "../layout/DataPanelRow";
 import { colors } from "../../design/tokens";
 import { formatUsd } from "../../lib/money";
+import { formatDateUS } from "../../lib/formatDate";
 
 function formatMoney(value: number) {
   return formatUsd(value);
@@ -28,13 +29,13 @@ export function PreSettlementsPanel({ rows, loading = false, title = "Pre-settle
               <EntityLink
                 kind="driver"
                 id={settlement.driver_id}
-                label={settlement.driver_display_id || settlement.driver_full_name}
+                label={settlement.driver_full_name || "Driver"}
               />
               <span className="text-gray-400">·</span>
               <EntityLink
                 kind="settlement"
                 id={settlement.id}
-                label={`${settlement.period_start} – ${settlement.period_end}`}
+                label={`${formatDateUS(settlement.period_start)} – ${formatDateUS(settlement.period_end)}`}
               />
               {settlement.load_count > 0 ? (
                 <>
