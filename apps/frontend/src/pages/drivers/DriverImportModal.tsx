@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { userFacingApiError } from "../../lib/api-error-message";
 import {
   importDriversCsv,
   type DriverImportResponse,
@@ -74,7 +75,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
       const res = await importDriversCsv(file, companyId, "preview");
       setPreview(res);
     } catch (error) {
-      const message = String((error as Error).message || "Preview failed");
+      const message = userFacingApiError(error, "Preview failed");
       setPreview(null);
       setPreviewError(message);
     } finally {
@@ -91,7 +92,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
       onImported();
       onClose();
     } catch (error) {
-      pushToast(String((error as Error).message || "Import failed"), "error");
+      pushToast(userFacingApiError(error, "Import failed"), "error");
     } finally {
       setBusy(false);
     }

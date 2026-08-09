@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import type { VendorOption } from "../../api/mdata";
@@ -140,7 +141,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
       setTableResetKey((k) => k + 1);
       pushToast(`${result.succeeded.length} vendor(s) updated (${vars.action}).`, "success");
     },
-    onError: (error) => pushToast(String((error as Error).message || "Bulk update failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Bulk update failed"), "error"),
   });
 
   return (

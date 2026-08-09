@@ -1,4 +1,5 @@
 import { holdLiability, markLiabilityPaidOff, resumeLiability } from "../../../api/liabilities";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import { EntityLink } from "../../../components/shared/EntityLink";
@@ -76,7 +77,7 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
                   pushToast("Liability held", "success");
                   onUpdated();
                 })
-                .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"))
+                .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"))
             }
           >
             Hold
@@ -90,7 +91,7 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
                   pushToast("Liability resumed", "success");
                   onUpdated();
                 })
-                .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"))
+                .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"))
             }
           >
             Resume
@@ -104,7 +105,7 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
                   pushToast("Liability marked paid off", "success");
                   onUpdated();
                 })
-                .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"))
+                .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"))
             }
           >
             Mark Paid Off

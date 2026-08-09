@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { uploadBankStatementCsv } from "../../api/banking";
 import { ActionButton } from "../shared/ActionButton";
 import { useToast } from "../Toast";
@@ -39,7 +40,7 @@ export function StatementUpload({ bankAccountId, onUploaded }: Props) {
                 }
                 onUploaded();
               })
-              .catch((error) => pushToast(String((error as Error).message || "CSV upload failed"), "error"))
+              .catch((error) => pushToast(userFacingApiError(error, "CSV upload failed"), "error"))
               .finally(() => setUploading(false));
           }}
         >

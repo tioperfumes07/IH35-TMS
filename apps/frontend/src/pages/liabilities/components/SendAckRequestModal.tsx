@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { sendLiabilityAckRequest } from "../../../api/liabilities";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
@@ -28,7 +29,7 @@ export function SendAckRequestModal({ open, operatingCompanyId, liabilityId, onC
       onSent();
       onClose();
     } catch (error) {
-      pushToast(String((error as Error).message || "Failed"), "error");
+      pushToast(userFacingApiError(error, "Request failed"), "error");
     } finally {
       setLoading(false);
     }
