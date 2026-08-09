@@ -14,6 +14,8 @@ type TransferRow = {
   transfer_location: string;
   from_driver_uuid: string | null;
   to_driver_uuid: string | null;
+  from_driver_name?: string | null;
+  to_driver_name?: string | null;
   created_at: string;
 };
 
@@ -42,8 +44,21 @@ export function EquipmentTransferRequests() {
         label: "From → To",
         render: (row) => (
           <>
-            <EntityLink kind="driver" id={row.from_driver_uuid} label={row.from_driver_uuid?.slice(0, 8)} /> →{" "}
-            <EntityLink kind="driver" id={row.to_driver_uuid} label={row.to_driver_uuid?.slice(0, 8)} />
+            {/* Raw-uuid display class: this printed `from_driver_uuid.slice(0, 8)` — an opaque hex fragment —
+                while the driver's NAME was one LEFT JOIN away in the list query. Show the name; fall back to the
+                truncated id ONLY when the payload carried none, so a uuid here means MISSING DATA rather than
+                normal rendering. */}
+            <EntityLink
+              kind="driver"
+              id={row.from_driver_uuid}
+              label={row.from_driver_name ?? row.from_driver_uuid?.slice(0, 8)}
+            />{" "}
+            →{" "}
+            <EntityLink
+              kind="driver"
+              id={row.to_driver_uuid}
+              label={row.to_driver_name ?? row.to_driver_uuid?.slice(0, 8)}
+            />
           </>
         ),
       },
