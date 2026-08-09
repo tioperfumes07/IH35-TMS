@@ -2,8 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { getDispatchAvailableDrivers, type AvailableDriverRow } from "../../api/dispatch";
 import { listDrivers } from "../../api/mdata";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { Combobox } from "../../components/Combobox";
 import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
+
+/** Pre-create roster page size. Named so the cap and its disclosure can never drift apart. */
+const ROSTER_LIMIT = 200;
 
 export type AssignDriverDropdownProps = {
   loadId: string;
@@ -61,7 +65,7 @@ export function AssignDriverDropdown({
   // would fake a safety clearance this endpoint cannot give, and the caller already re-checks HOS on select.
   const rosterQ = useQuery({
     queryKey: ["dispatch", "available-drivers", "preload-roster", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }),
+    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: ROSTER_LIMIT }),
     enabled: Boolean(!loadId && operatingCompanyId && driversOverride == null),
   });
 
@@ -134,6 +138,18 @@ export function AssignDriverDropdown({
   return (
     <div className="space-y-1">
       <label className="text-xs font-semibold text-gray-600">Driver</label>
+      {/* CLS-SILENT-CAP: the pre-create roster asks for limit ROSTER_LIMIT drivers. Before this, a company
+          with more active drivers than the cap silently lost the overflow — the dispatcher saw a complete-
+          looking list and had no way to know a driver was missing. listDrivers returns the server-side
+          `total` for the same filters, so the notice states "Showing N of M" rather than guessing; it
+          renders nothing at all until the list is actually capped. */}
+      <CappedListNotice
+        shown={rosterDrivers.length}
+        limit={ROSTER_LIMIT}
+        total={rosterQ.data?.total ?? null}
+        hint="Type to search for a driver that is not listed."
+        className="text-[11px] text-slate-600"
+      />
       <Combobox
         className="h-9 w-full text-sm"
         options={comboboxOptions}
