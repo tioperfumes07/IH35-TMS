@@ -1,0 +1,183 @@
+{
+  "module": "fuel",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "IH35_ARCHITECTURAL_DESIGN — Fuel",
+    "nav": "apps/frontend/src/pages/fuel/FUEL_TABS_CONFIG.ts",
+    "routes": "/fuel/*"
+  },
+  "columns": [
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "home",
+      "tab": "Home",
+      "sub": "Fuel home",
+      "route_hint": "/fuel",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "planner",
+      "tab": "Planner",
+      "sub": "Fuel planner",
+      "route_hint": "/fuel/planner",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "connectivity",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "relay_inbox",
+      "tab": "Relay inbox",
+      "sub": "Relay card inbox",
+      "route_hint": "/fuel/inbox",
+      "required": [
+        "driver",
+        "unit",
+        "expense",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "settings",
+      "tab": "Settings",
+      "sub": "Fuel settings",
+      "route_hint": "/fuel/settings",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "expense_mapping",
+      "tab": "Expense mapping",
+      "sub": "Fuel→expense map",
+      "route_hint": "/fuel/expense-mapping",
+      "required": [
+        "expense",
+        "gl_je",
+        "vendor",
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "history",
+      "tab": "History & savings",
+      "sub": "History",
+      "route_hint": "/fuel/history",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "loves_prices",
+      "tab": "Loves prices",
+      "sub": "Loves price feed",
+      "route_hint": "/fuel/loves-prices",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "compliance",
+      "tab": "Compliance",
+      "sub": "Fuel compliance",
+      "route_hint": "/fuel/compliance",
+      "required": [
+        "unit",
+        "driver",
+        "connectivity"
+      ]
+    }
+  ]
+}

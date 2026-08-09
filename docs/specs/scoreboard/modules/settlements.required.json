@@ -1,0 +1,173 @@
+{
+  "module": "settlements",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "IH35_ARCHITECTURAL_DESIGN — Settlements / driver finance",
+    "nav": "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
+    "routes": "/driver-finance/*"
+  },
+  "columns": [
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "settlements.list",
+      "tab": "Settlements",
+      "sub": "Settlements list",
+      "route_hint": "/driver-finance/settlements",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "gl_je",
+        "ap_bill",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "settlements.detail",
+      "tab": "Settlements",
+      "sub": "Settlement detail",
+      "route_hint": "/driver-finance/settlements/:id",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "gl_je",
+        "ap_bill",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "settlements.disputes",
+      "tab": "Settlements",
+      "sub": "Disputes tab",
+      "route_hint": "/driver-finance/settlements?tab=disputes",
+      "required": [
+        "driver",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "settlement_close",
+      "tab": "Settlement Close",
+      "sub": "Close arrival",
+      "route_hint": "/driver-finance/settlement-close",
+      "required": [
+        "driver",
+        "load",
+        "liability",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "cash_advances",
+      "tab": "Cash Advances",
+      "sub": "Cash advance requests",
+      "route_hint": "/driver-finance/cash-advance-requests",
+      "required": [
+        "driver",
+        "liability",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "pre_settlements",
+      "tab": "Pre-Settlements",
+      "sub": "Pre-settlements",
+      "route_hint": "/drivers/pre-settlements",
+      "required": [
+        "driver",
+        "load",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    }
+  ]
+}
