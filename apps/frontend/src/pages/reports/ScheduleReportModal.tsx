@@ -41,21 +41,28 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
   const [showCron, setShowCron] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const libraryIds = useMemo(() => {
+  const extraReports = useMemo(
+    () => [
+      { id: "cash-flow-overview", name: "Cash flow overview" },
+      { id: "settlement-summary", name: "Settlement summary" },
+      { id: "customer-profitability", name: "Customer profitability" },
+      { id: "profit-per-truck", name: "Profit per truck" },
+      { id: "fuel-reconciliation", name: "Fuel reconciliation" },
+      { id: "maintenance-cost-per-unit", name: "Maintenance cost per unit" },
+      { id: "ar-aging", name: "A/R aging" },
+      { id: "ap-aging", name: "A/P aging" },
+    ],
+    [],
+  );
+
+  const libraryOptions = useMemo(() => {
     const rows = libQuery.data ?? [];
-    const base = rows.map((r) => r.id);
-    const extras = [
-      "cash-flow-overview",
-      "settlement-summary",
-      "customer-profitability",
-      "profit-per-truck",
-      "fuel-reconciliation",
-      "maintenance-cost-per-unit",
-      "ar-aging",
-      "ap-aging",
-    ];
-    return [...new Set([...extras, ...base])];
-  }, [libQuery.data]);
+    const base = rows.map((r) => ({ id: r.id, name: r.name }));
+    const seen = new Set(base.map((r) => r.id));
+    return [...base, ...extraReports.filter((e) => !seen.has(e.id))];
+  }, [libQuery.data, extraReports]);
+
+  const selectedReportName = libraryOptions.find((o) => o.id === reportId)?.name ?? reportId;
 
   function buildPayload(): ScheduledReportCreatePayload {
     const rec = recipients
@@ -83,7 +90,7 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
     return {
       operating_company_id: operatingCompanyId,
       report_id: reportId,
-      name: reportId,
+      name: selectedReportName,
       parameters,
       frequency,
       recipients: rec.length ? rec : [defaultEmail].filter(Boolean),
@@ -99,9 +106,9 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
         <label className="block text-xs text-gray-600">
           Report
           <SelectCombobox className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={reportId} onChange={(e) => setReportId(e.target.value)}>
-            {libraryIds.map((id) => (
-              <option key={id} value={id}>
-                {id}
+            {libraryOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.name}
               </option>
             ))}
           </SelectCombobox>
