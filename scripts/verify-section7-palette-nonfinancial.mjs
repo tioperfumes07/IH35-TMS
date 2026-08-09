@@ -40,7 +40,7 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 468; // honest ratchet 2026-08-08 — WO detail/modal dropped amber/emerald status classes (MAINT forward-links PR)
+const BASELINE = 467; // ratchet 2026-08-09 — LoadDetailDriverPayTab dropped green-700 net pay class (FAIL-SETL-DRIVER-PAY-TAB)
 
 function walk(dir) {
   let out = [];

@@ -2,14 +2,24 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { formatMoneyCents } from "./constants";
 
+/**
+ * Load → Driver Pay tab reads driver_finance.driver_bills (header payables),
+ * NOT settlement_lines. The prior bug mapped settlement-line shapes onto bills,
+ * so every real payable rendered as $0 — FAIL-SETL-DRIVER-PAY-TAB.
+ */
 type DriverBillRow = {
   id: string;
   driver_id: string;
   load_id: string;
-  line_type: string;
-  amount: number | null;
-  amount_cents: number | null;
-  description: string | null;
+  load_number?: string | null;
+  bill_number: string;
+  gross_amount_cents: number;
+  miles_basis?: number | null;
+  miles_basis_type?: string | null;
+  rate_per_mile_cents?: number | null;
+  status: string;
+  notes?: string | null;
+  settled_in_settlement_id?: string | null;
   created_at: string;
 };
 
@@ -19,27 +29,35 @@ type Props = {
   currencyCode: "USD" | "MXN";
 };
 
-function getAmountCents(row: DriverBillRow): number {
-  if (row.amount_cents !== null && row.amount_cents !== undefined) return Number(row.amount_cents);
-  if (row.amount !== null && row.amount !== undefined) return Math.round(Number(row.amount) * 100);
-  return 0;
+function statusBadge(status: string): string {
+  switch (status) {
+    case "open":
+      return "bg-slate-100 text-slate-700";
+    case "approved":
+      return "bg-slate-100 text-slate-800";
+    case "paid":
+      return "bg-slate-200 text-slate-900";
+    case "void":
+      return "bg-gray-50 text-gray-400 line-through";
+    case "disputed":
+      return "bg-red-50 text-red-800";
+    default:
+      return "bg-gray-100 text-gray-700";
+  }
 }
 
-const EARNINGS_TYPES = new Set(["earnings", "extra_pay", "team_split_primary", "team_split_secondary"]);
-const DEDUCTION_TYPES = new Set(["deduction", "abandonment_chargeback"]);
-const ADVANCE_TYPES = new Set(["advance", "cash_advance"]);
-const REIMBURSEMENT_TYPES = new Set(["reimbursement"]);
-
-function lineTypeBadge(type: string): string {
-  if (EARNINGS_TYPES.has(type)) return "bg-slate-100 text-slate-700";
-  if (DEDUCTION_TYPES.has(type)) return "bg-red-100 text-red-800";
-  if (ADVANCE_TYPES.has(type)) return "bg-orange-100 text-orange-800";
-  if (REIMBURSEMENT_TYPES.has(type)) return "bg-slate-100 text-slate-700";
-  return "bg-gray-100 text-gray-700";
+function statusLabel(status: string): string {
+  return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function lineTypeLabel(type: string): string {
-  return type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+function billDescription(bill: DriverBillRow): string {
+  const parts: string[] = [];
+  if (bill.miles_basis != null && bill.rate_per_mile_cents != null) {
+    const basis = bill.miles_basis_type === "practical" ? "practical" : "short";
+    parts.push(`${bill.miles_basis} ${basis} mi × ${formatMoneyCents(bill.rate_per_mile_cents, "USD")}/mi`);
+  }
+  if (bill.notes?.trim()) parts.push(bill.notes.trim());
+  return parts.length > 0 ? parts.join(" · ") : "Driver payable";
 }
 
 export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCode }: Props) {
@@ -89,80 +107,52 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
     return (
       <div className="space-y-3">
         <div className="rounded-sm border border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-500">
-          No pay lines recorded yet for this load.
+          No driver bill for this load yet.
           <div className="mt-1 text-xs text-gray-400">
-            Pay lines populate once a settlement is composed for the assigned driver.
+            Payables mint when the load is booked with miles and a driver pay rate (or on deliver when that path is armed). Settlement composition is separate.
           </div>
         </div>
       </div>
     );
   }
 
-  let grossCents = 0;
-  let deductionsCents = 0;
-  let advanceCents = 0;
-  let reimbursementsCents = 0;
-
-  for (const bill of bills) {
-    const cents = getAmountCents(bill);
-    if (EARNINGS_TYPES.has(bill.line_type)) grossCents += cents;
-    else if (DEDUCTION_TYPES.has(bill.line_type)) deductionsCents += cents;
-    else if (ADVANCE_TYPES.has(bill.line_type)) advanceCents += cents;
-    else if (REIMBURSEMENT_TYPES.has(bill.line_type)) reimbursementsCents += cents;
-  }
-
-  const netCents = grossCents - deductionsCents - advanceCents + reimbursementsCents;
+  const active = bills.filter((b) => b.status !== "void");
+  const grossCents = active.reduce((sum, b) => sum + Number(b.gross_amount_cents ?? 0), 0);
+  const voidedCount = bills.length - active.length;
 
   return (
     <div className="space-y-4">
-      {/* Summary card */}
       <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm">
         <div>
-          <div className="text-xs text-gray-500">Gross earnings</div>
+          <div className="text-xs text-gray-500">Driver bills (open/approved/paid)</div>
           <div className="font-semibold text-gray-900">{formatMoneyCents(grossCents, currencyCode)}</div>
         </div>
         <div>
-          <div className="text-xs text-gray-500">Deductions</div>
-          <div className="font-semibold text-red-600">
-            {deductionsCents > 0 ? `−${formatMoneyCents(deductionsCents, currencyCode)}` : formatMoneyCents(0, currencyCode)}
-          </div>
-        </div>
-        {advanceCents > 0 ? (
-          <div>
-            <div className="text-xs text-gray-500">Advance offset</div>
-            <div className="font-semibold text-orange-600">−{formatMoneyCents(advanceCents, currencyCode)}</div>
-          </div>
-        ) : null}
-        {reimbursementsCents > 0 ? (
-          <div>
-            <div className="text-xs text-gray-500">Reimbursements</div>
-            <div className="font-semibold text-slate-700">+{formatMoneyCents(reimbursementsCents, currencyCode)}</div>
-          </div>
-        ) : null}
-        <div className="col-span-2 border-t border-gray-200 pt-2">
-          <div className="text-xs font-semibold text-gray-500">Net pay</div>
-          <div className={`text-base font-bold ${netCents >= 0 ? "text-green-700" : "text-red-700"}`}>
-            {formatMoneyCents(netCents, currencyCode)}
+          <div className="text-xs text-gray-500">Bill count</div>
+          <div className="font-semibold text-gray-900">
+            {active.length}
+            {voidedCount > 0 ? <span className="ml-1 text-xs font-normal text-gray-500">(+{voidedCount} void)</span> : null}
           </div>
         </div>
       </div>
 
-      {/* Line items */}
       <div className="space-y-1">
-        <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Pay Lines</div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Driver bills</div>
         {bills.map((bill) => {
-          const cents = getAmountCents(bill);
-          const isNegative = DEDUCTION_TYPES.has(bill.line_type) || ADVANCE_TYPES.has(bill.line_type);
+          const cents = Number(bill.gross_amount_cents ?? 0);
+          const isVoid = bill.status === "void";
           return (
             <div key={bill.id} className="flex items-center justify-between rounded-sm border border-gray-100 p-2 text-sm">
               <div className="flex min-w-0 flex-col gap-0.5">
-                <span className={`self-start rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${lineTypeBadge(bill.line_type)}`}>
-                  {lineTypeLabel(bill.line_type)}
-                </span>
-                <span className="truncate text-xs text-gray-600">{bill.description || "—"}</span>
+                <div className="flex flex-wrap items-center gap-1">
+                  <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${statusBadge(bill.status)}`}>
+                    {statusLabel(bill.status)}
+                  </span>
+                  <span className="truncate text-xs font-medium text-gray-800">{bill.bill_number}</span>
+                </div>
+                <span className="truncate text-xs text-gray-600">{billDescription(bill)}</span>
               </div>
-              <span className={`ml-3 shrink-0 font-semibold ${isNegative ? "text-red-600" : "text-gray-900"}`}>
-                {isNegative ? "−" : ""}
+              <span className={`ml-3 shrink-0 font-semibold ${isVoid ? "text-gray-400 line-through" : "text-gray-900"}`}>
                 {formatMoneyCents(Math.abs(cents), currencyCode)}
               </span>
             </div>
