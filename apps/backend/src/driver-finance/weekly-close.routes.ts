@@ -113,10 +113,32 @@ export async function buildWeeklyCloseDraftForDriver(
     const cents = Number(bill.gross_amount_cents ?? 0) / 100;
     await client.query(
       `
-        INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount)
-        VALUES ($1::uuid,'earnings',$2,$3)
+        -- ACCT-F277: stamp source_driver_bill_id. This loop already HOLDS the driver bill it is
+        -- paying from -- bill.id is driver_bills.id (settlements.service.ts listDriverBillsForSettlementPeriod
+        -- selects db.id::text AS id) -- and it was dropping that link on the floor, writing an
+        -- earnings line that could never name the bill or the load it came from.
+        --
+        -- WHY IT MATTERS BEYOND A NULL COLUMN: the canonical settlement GL poster
+        -- (accounting/settlement-posting/settlement-bill-payment-posting.service.ts:251) joins
+        -- settlement_lines -> driver_bills THROUGH THIS COLUMN. With it NULL the poster has nothing
+        -- to post, which is why driver_settlement_gl_runs / _gl_bills are 0 rows on prod while
+        -- SETTLEMENT_GL_POSTING_ENABLED has been ON for all three entities since 2026-07-26.
+        -- Measured 2026-08-08 (prod br-fancy-credit-akjnd07a, bypass_rls in-txn, visible 4 ==
+        -- n_live_tup 4): source_driver_bill_id populated on 0 of 4 settlement_lines while 6 of 6
+        -- driver_bills carry load_id. CLS-MONEY-HOLD/HOLD-001 is that chain, not an owner hold.
+        --
+        -- ON CONFLICT mirrors settlement-engine.ts, which writes this same column under the same
+        -- partial unique index. Re-closing a week must not throw or double-pay a bill.
+        --
+        -- DELIBERATELY NOT ALSO WRITING settlement_lines.load_id: driver_bills.load_id is CANONICAL
+        -- (ACCT-F275) and the line column is a denormalized copy. Adding a second writer to the
+        -- redundant column is exactly how the two linkages drift apart and disagree. The load is
+        -- reachable through the bill.
+        INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount, source_driver_bill_id)
+        VALUES ($1::uuid,'earnings',$2,$3,$4::uuid)
+        ON CONFLICT (source_driver_bill_id) WHERE source_driver_bill_id IS NOT NULL DO NOTHING
       `,
-      [settlementId, `Driver bill ${bill.bill_number ?? bill.load_number ?? bill.id}`, cents]
+      [settlementId, `Driver bill ${bill.bill_number ?? bill.load_number ?? bill.id}`, cents, bill.id]
     );
   }
 
