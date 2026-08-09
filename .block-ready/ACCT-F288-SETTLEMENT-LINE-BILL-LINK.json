@@ -1,0 +1,15 @@
+{
+  "block_id": "ACCT-F288-SETTLEMENT-LINE-BILL-LINK",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "MONEY-DRIVER-PAY",
+  "task": "ACCT-F288 (was filed as ACCT-F277; that id is now TAKEN ON MAIN by #5125, a DIFFERENT change) \u2014 LINK 2 of the HOLD-001 chain. #5125 shipped ensureDriverBillArtifactsForLoad so a driver_bill EXISTS on create/deliver; this makes that bill REACHABLE BY THE GL POSTER. buildWeeklyCloseDraftForDriver loops `for (const bill of bills)` and INSERTs an earnings settlement_line WITHOUT source_driver_bill_id while holding the bill (bill.id IS driver_bills.id \u2014 settlements.service.ts selects db.id::text AS id). The canonical poster (settlement-bill-payment-posting.service.ts:251) joins settlement_lines -> driver_bills THROUGH that column, so with it NULL the poster has nothing to post: driver_settlement_gl_runs / _gl_bills / payrun_gl_runs are all 0 rows on prod while SETTLEMENT_GL_POSTING_ENABLED has been ON for all three entities since 2026-07-26. WITH BILLS BUT NO LINK THAT STAYS 0. A pay-run surface built before this lands will RUN, REPORT SUCCESS AND POST NOTHING. FIX: stamp source_driver_bill_id from the bill in hand, ON CONFLICT (source_driver_bill_id) WHERE source_driver_bill_id IS NOT NULL DO NOTHING \u2014 mirroring settlement-engine.ts under the same partial unique index, so re-closing a week neither throws nor double-pays. SCOPED TO ONE WRITER: settlements.routes.ts and settlements-mvp.routes.ts insert caller-supplied body.lines with no bill context; linking those would be fabrication. NOT also writing settlement_lines.load_id: per ACCT-F275 driver_bills.load_id is canonical and the line column a denormalized copy. LIVE PROOF: prod br-fancy-credit-akjnd07a bypass_rls in-txn, COMPLETE (visible 4 == n_live_tup 4) -> settlement_lines 4, source_driver_bill_id 0, driver_bills 6 with load_id 6; index uniq_settlement_lines_source_driver_bill_id CONFIRMED present before relying on ON CONFLICT; backend npx tsc -b exit 0. No migration, no new GL math. Merge on green.",
+  "branch": "claude/acct-f288-settlement-line-bill-link",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/ACCT-F288-SETTLEMENT-LINE-BILL-LINK.json",
+    "apps/backend/src/driver-finance/weekly-close.routes.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": false
+}
