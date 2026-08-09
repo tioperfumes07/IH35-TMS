@@ -96,6 +96,18 @@ contains(`${PAGE_DIR}/AccidentHistoryView.tsx`, accidentPage, [
   { pattern: /entityKind:\s*"unit"/, label: "accident → unit EntityLink" },
   { pattern: /entityKind:\s*"load"/, label: "accident → load EntityLink" },
 ]);
+const fuelPage = read(`${PAGE_DIR}/FuelHistoryView.tsx`);
+contains(`${PAGE_DIR}/FuelHistoryView.tsx`, fuelPage, [
+  { pattern: /entityKind:\s*"vendor"/, label: "fuel → vendor EntityLink" },
+  { pattern: /entityKind:\s*"unit"/, label: "fuel → unit EntityLink" },
+  { pattern: /entityKind:\s*"load"/, label: "fuel → load EntityLink" },
+]);
+const fuelSvc = read(`${BACKEND_DIR}/fuel-history.service.ts`);
+contains(`${BACKEND_DIR}/fuel-history.service.ts`, fuelSvc, [
+  { pattern: /ft\.vendor_id::text/, label: "fuel SELECT projects vendor_id" },
+  { pattern: /ft\.unit_id::text/, label: "fuel SELECT projects unit_id" },
+  { pattern: /ft\.load_id::text/, label: "fuel SELECT projects load_id" },
+]);
 
 // OperationsDepthNav lists all 12 sub-views
 const nav = read("apps/frontend/src/components/drivers/OperationsDepthNav.tsx");

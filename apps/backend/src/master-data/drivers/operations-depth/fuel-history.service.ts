@@ -8,6 +8,9 @@ export type FuelHistoryRow = {
   merchant: string | null;
   gallons: string | null;
   total_amount: string | null;
+  vendor_id: string | null;
+  unit_id: string | null;
+  load_id: string | null;
   created_at: string;
 };
 
@@ -51,6 +54,9 @@ export async function getDriverFuelHistory(
         COALESCE(v.vendor_name, ft.location_city) AS merchant,
         ft.gallons::text,
         ft.total_cost::text AS total_amount,
+        ft.vendor_id::text,
+        ft.unit_id::text,
+        ft.load_id::text,
         ft.created_at::text
       FROM fuel.fuel_transactions ft
       LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id
