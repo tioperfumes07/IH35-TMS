@@ -1257,3 +1257,32 @@ display IDs are server-generated and unique; on live data they are not.
 these are live rows, so **supersede/renumber, never delete**; (c) ship a guard that fails on any duplicate
 `display_id` among non-voided invoices, so the class cannot return.
 **CC-3 does not build this** (maker≠checker) — CC-3 will live-verify the fix once deployed.
+
+## OPEN · CC-2/CC-1 · P1 · SQL-READ-TARGETS-FALSE-PHANTOMS — the guard reports 26+ real prod objects as missing
+**Found by CC-3, SIX-HOUR #40, live-verified on prod `br-fancy-credit-akjnd07a` (prod SHA `02bab31`).**
+
+`scripts/verify-sql-read-targets.mjs` FAILs with *"64 NEW phantom read target(s)"*. **Most are false.**
+
+**CAUSE 1 — it runs blind.** Its own first output line:
+`model = schema-parity baseline (FALLBACK — set DATABASE_URL for authoritative DB introspection)`
+It compares code to a **migration-derived** model while **prod has diverged**. Per §0 (prod wins) the model is wrong,
+not the code. **All 20 distinct "TABLE not in migrated schema" names were checked against prod — 20 of 20 EXIST:**
+`_system._schema_migrations` · `accounting.vendor_balances` · `catalogs.civil_fine_types` ·
+`catalogs.expense_categories` · `catalogs.maintenance_labor_codes` · `catalogs.qbo_categories` ·
+`catalogs.tire_positions` · `factoring.v_factor_reserve_balance` · `maintenance.v_arriving_soon` ·
+`reference.cdl_endorsements` · `reference.cdl_restrictions` · `reference.employment_statuses` ·
+`reference.license_classes` · `reference.medical_card_statuses` · `safety.v_driver_dwell_outliers` ·
+`safety.v_fuel_mpg_anomalies` · `safety.v_hos_pattern_breaks` · `safety.v_safety_events_with_active` ·
+`safety.v_wo_cost_outliers` · `telematics.vehicle_latest_position`
+
+**CAUSE 2 — filename tokens parsed as `table.column` (6 hits):** `bills.service`, `loads.routes`,
+`invoices.routes` are `bills.service.ts` / `loads.routes.ts` / `invoices.routes.ts`.
+
+**WHY P1:** this is the guard that catches a query against a column that genuinely does not exist. Crying phantom
+on 26+ real objects trains every lane to ignore its output, so the day it reports a true phantom nobody looks.
+A noisy guard is worse than no guard — it launders a real signal into background noise.
+
+**ASK:** (a) wire `DATABASE_URL` introspection so the model is prod, not migrations — the guard's own fallback
+message already prescribes this; (b) skip `.service` / `.routes` / `.cron` filename tokens; (c) re-baseline the
+known-debt list against the real remainder afterwards.
+**CC-3 will not build it:** #5018 pruned this guard's debt file, so it is maker-adjacent — CC-3 verifies the fix.
