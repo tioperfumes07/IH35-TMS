@@ -17,6 +17,7 @@ import {
 } from "../../api/collections";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -166,7 +167,7 @@ export function CollectionsPage() {
                   <EntityLink
                     kind="customer"
                     id={task.customer_id}
-                    label={task.customer_name ?? task.customer_id.slice(0, 8)}
+                    label={entityLabel(task.customer_name, task.customer_id, "Customer")}
                   />
                 </div>
                 <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-600">
@@ -203,17 +204,27 @@ export function CollectionsPage() {
                     <EntityLink
                       kind="customer"
                       id={detailQuery.data?.task.customer_id ?? undefined}
-                      label={
-                        detailQuery.data?.task.customer_name ??
-                        detailQuery.data?.task.customer_id?.slice(0, 8) ??
-                        "-"
-                      }
+                      label={entityLabel(
+                        detailQuery.data?.task.customer_name,
+                        detailQuery.data?.task.customer_id,
+                        "Customer",
+                      )}
                     />
                   </div>
                 </div>
                 <div>
                   <div className="text-xs uppercase tracking-wide text-gray-500">Invoice</div>
-                  <div className="font-medium"><EntityLink kind="invoice" id={detailQuery.data?.task.invoice_id ?? undefined} label={detailQuery.data?.task.invoice_id?.slice(0, 8) ?? "-"} /></div>
+                  <div className="font-medium">
+                    <EntityLink
+                      kind="invoice"
+                      id={detailQuery.data?.task.invoice_id ?? undefined}
+                      label={
+                        detailQuery.data?.task.invoice_id
+                          ? entityLabel(null, detailQuery.data.task.invoice_id, "Invoice")
+                          : "-"
+                      }
+                    />
+                  </div>
                 </div>
                 <div>
                   <div className="text-xs uppercase tracking-wide text-gray-500">Amount due</div>
