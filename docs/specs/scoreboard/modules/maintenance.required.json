@@ -8,18 +8,86 @@
     "routes": "apps/frontend/src/routes/manifest.tsx /maintenance/*"
   },
   "columns": [
-    { "id": "driver", "group": "linkage", "label": "Driver" },
-    { "id": "customer", "group": "linkage", "label": "Customer" },
-    { "id": "vendor", "group": "linkage", "label": "Vendor" },
-    { "id": "unit", "group": "linkage", "label": "Unit" },
-    { "id": "trailer", "group": "linkage", "label": "Trailer" },
-    { "id": "load", "group": "linkage", "label": "Load" },
-    { "id": "ap_bill", "group": "money", "label": "AP / Bill" },
-    { "id": "expense", "group": "money", "label": "Expense" },
-    { "id": "gl_je", "group": "money", "label": "GL / JE" },
-    { "id": "inventory", "group": "money", "label": "Inventory" },
-    { "id": "scenario.maintenance", "group": "process", "label": "Maint WO" },
-    { "id": "scenario.insurance", "group": "process", "label": "Insurance claim" }
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "inventory",
+      "group": "money",
+      "label": "Inventory"
+    },
+    {
+      "id": "scenario.maintenance",
+      "group": "process",
+      "label": "Maint WO"
+    },
+    {
+      "id": "scenario.insurance",
+      "group": "process",
+      "label": "Insurance claim"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
   ],
   "leaves": [
     {
@@ -38,7 +106,11 @@
         "expense",
         "gl_je",
         "inventory",
-        "scenario.maintenance"
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
       ]
     },
     {
@@ -54,7 +126,11 @@
         "expense",
         "gl_je",
         "inventory",
-        "scenario.maintenance"
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
       ]
     },
     {
@@ -69,7 +145,11 @@
         "ap_bill",
         "expense",
         "gl_je",
-        "scenario.maintenance"
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
       ]
     },
     {
@@ -88,7 +168,11 @@
         "gl_je",
         "inventory",
         "scenario.maintenance",
-        "scenario.insurance"
+        "scenario.insurance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
       ]
     },
     {
@@ -104,7 +188,11 @@
         "expense",
         "gl_je",
         "inventory",
-        "scenario.maintenance"
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
       ]
     },
     {
@@ -121,7 +209,11 @@
         "expense",
         "gl_je",
         "inventory",
-        "scenario.maintenance"
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
       ]
     },
     {
@@ -137,7 +229,11 @@
         "expense",
         "gl_je",
         "inventory",
-        "scenario.maintenance"
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
       ]
     },
     {
@@ -153,7 +249,11 @@
         "ap_bill",
         "expense",
         "gl_je",
-        "scenario.maintenance"
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
       ]
     },
     {
@@ -161,28 +261,64 @@
       "tab": "Work Orders",
       "sub": "+ Create Bill",
       "route_hint": "/maintenance",
-      "required": ["vendor", "unit", "ap_bill", "gl_je", "scenario.maintenance"]
+      "required": [
+        "vendor",
+        "unit",
+        "ap_bill",
+        "gl_je",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "wo.create_expense",
       "tab": "Work Orders",
       "sub": "+ Create Expense",
       "route_hint": "/maintenance",
-      "required": ["vendor", "unit", "expense", "gl_je", "scenario.maintenance"]
+      "required": [
+        "vendor",
+        "unit",
+        "expense",
+        "gl_je",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "in_transit.promote_to_wo",
       "tab": "In-Transit Issues",
       "sub": "Promote to WO",
       "route_hint": "/maintenance/in-transit-issues",
-      "required": ["driver", "unit", "load", "scenario.maintenance"]
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "arriving_soon.convert_to_wo",
       "tab": "Arriving Soon",
       "sub": "Convert to WO",
       "route_hint": "/maintenance/arriving-soon",
-      "required": ["unit", "scenario.maintenance"]
+      "required": [
+        "unit",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "damage_reports.intake",
@@ -194,7 +330,11 @@
         "unit",
         "trailer",
         "scenario.maintenance",
-        "scenario.insurance"
+        "scenario.insurance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
       ]
     },
     {
@@ -202,14 +342,29 @@
       "tab": "Driver Reports",
       "sub": "Driver-reported issues",
       "route_hint": "/maintenance/driver-reports",
-      "required": ["driver", "unit", "scenario.maintenance"]
+      "required": [
+        "driver",
+        "unit",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "severe_repairs.convert_to_wo",
       "tab": "Severe Repairs",
       "sub": "Convert to WO",
       "route_hint": "/maintenance/severe-repairs",
-      "required": ["unit", "scenario.maintenance"]
+      "required": [
+        "unit",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "road_service.active",
@@ -224,7 +379,11 @@
         "ap_bill",
         "expense",
         "gl_je",
-        "scenario.maintenance"
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
       ]
     },
     {
@@ -232,91 +391,190 @@
       "tab": "DVIR defects",
       "sub": "Convert to WO",
       "route_hint": "/maintenance/defects",
-      "required": ["driver", "unit", "trailer", "scenario.maintenance"]
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "pre_flight_dvir.queue",
       "tab": "Pre-Flight DVIR",
       "sub": "Defect queue",
       "route_hint": "/maintenance/pre-flight-dvir",
-      "required": ["driver", "unit", "scenario.maintenance"]
+      "required": [
+        "driver",
+        "unit",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "parts_inventory.record_purchase",
       "tab": "Parts Inventory",
       "sub": "+ Record Purchase / + Create Part",
       "route_hint": "/maintenance/parts-inventory",
-      "required": ["vendor", "inventory", "ap_bill", "expense", "gl_je"]
+      "required": [
+        "vendor",
+        "inventory",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "pm.schedule.create",
       "tab": "PM Schedule",
       "sub": "+ Create",
       "route_hint": "/maintenance/pm-schedule",
-      "required": ["unit", "scenario.maintenance"]
+      "required": [
+        "unit",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "pm.auto_engine.run",
       "tab": "PM Auto Engine",
       "sub": "Auto-WO runs",
       "route_hint": "/maintenance/pm-auto-engine",
-      "required": ["unit", "scenario.maintenance"]
+      "required": [
+        "unit",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "inspections.create",
       "tab": "Inspections",
       "sub": "+ Create Inspection",
       "route_hint": "/maintenance/inspections",
-      "required": ["driver", "unit", "scenario.maintenance"]
+      "required": [
+        "driver",
+        "unit",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "parts.create",
       "tab": "Parts",
       "sub": "+ Create Part",
       "route_hint": "/maintenance/parts",
-      "required": ["vendor", "inventory"]
+      "required": [
+        "vendor",
+        "inventory",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "vendors.create",
       "tab": "Vendors",
       "sub": "+ Create Vendor",
       "route_hint": "/maintenance/vendors",
-      "required": ["vendor"]
+      "required": [
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "fault_rules.create",
       "tab": "Fault Rules",
       "sub": "+ Create Rule",
       "route_hint": "/maintenance/fault-rules",
-      "required": ["scenario.maintenance"]
+      "required": [
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "fault_drafts.review",
       "tab": "Fault Drafts",
       "sub": "Review draft WO",
       "route_hint": "/maintenance/fault-drafts",
-      "required": ["unit", "scenario.maintenance"]
+      "required": [
+        "unit",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "tires.create_record",
       "tab": "Tire Program",
       "sub": "+ Create Tire Record",
       "route_hint": "/maintenance/tires",
-      "required": ["unit", "trailer", "inventory", "scenario.maintenance"]
+      "required": [
+        "unit",
+        "trailer",
+        "inventory",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "tires.create_brand",
       "tab": "Tire Program",
       "sub": "+ Create Brand",
       "route_hint": "/maintenance/tires",
-      "required": ["inventory"]
+      "required": [
+        "inventory",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "warranty.create_claim",
       "tab": "Warranty Claims",
       "sub": "+ Create Claim",
       "route_hint": "/maintenance/warranty-claims",
-      "required": ["vendor", "unit", "ap_bill", "scenario.maintenance"]
+      "required": [
+        "vendor",
+        "unit",
+        "ap_bill",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
     }
   ]
 }

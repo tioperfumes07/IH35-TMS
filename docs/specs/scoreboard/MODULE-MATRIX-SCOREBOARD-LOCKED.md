@@ -7,7 +7,7 @@
 ## Shape (non-negotiable)
 
 1. **One Program shell · ~26 module boards** (open one module at a time).
-2. **Per module:** left = that module’s tree (tabs → sub-tabs → create surfaces). Top = **only** columns that module can need (linkage atoms + money/econ + process cards) — not the full system wall.
+2. **Per module:** left = that module’s tree (tabs → sub-tabs → create surfaces). Top = **only** columns that module can need — **linkage atoms + money/econ + chrome (pickers / QBO style) + wiring (connectivity / reverse link) + process cards** — not the full system wall. Owner 2026-08-08: pickers, QBO chrome, and small wiring details are **part of** full linkage / connectivity / wiring, not optional polish after the matrix.
 3. **Each cell = 3 boxes:** Required · Audited · Done — owner state law (2026-08-08):
 
 | State | Box 1 Required | Box 2 Audited | Box 3 Done | Meaning |
@@ -58,7 +58,17 @@ Legend for the matrix build: **HAVE** · **YELLOW** (have source, not yet wired 
 
 | Box | Do we have the data? | What exists today | Gap |
 |---|---|---|---|
-| **1 Required** | **HAVE** (Maintenance) | `docs/specs/scoreboard/modules/maintenance.required.json` | Other 25 module boards still need Required maps |
+| **1 Required** | **HAVE** (Maintenance + Safety) | `docs/specs/scoreboard/modules/{maintenance,safety}.required.json` + shared vocabulary `columns.shared.json` (includes **picker_law / qbo_chrome / connectivity / reverse_link**) | Remaining ~24 module boards still need Required maps |
+
+### Column groups (every module board may subset)
+
+| Group | Examples | Counts toward Done only when |
+|---|---|---|
+| **linkage** | Driver · Customer · Vendor · Unit · Trailer · Load | Live both-way FK / EntityLink prove |
+| **money** | AP/Bill · Expense · GL/JE · Inventory · Liability/Escrow | Live money terminus / balanced JE where owed |
+| **chrome** | **Picker +Add new** · **QBO chrome** (ParityDrawer, calendar, Due, +Create, no box-in-box) | Live V1/V2 click-through |
+| **wiring** | **Connectivity** (nav→route→API→canonical) · **Reverse link** | Live V3/V4 |
+| **process** | `scenario.*` slices | `live_scenario_probe` holds |
 | **2 Audited** | **HAVE (projected)** | `GET /api/v1/program/module-matrix` ← ledger + GUARD + wave-queue + module-completion | Leaf×column precision still coarse (keyword + surface PASS) |
 | **3 Done** | **HAVE (strict)** | Same API ← `live_scenario_probe` holds only (`scenario.maintenance` today) | Linkage/money columns have **no** per-column live probe yet — stay red Done until Neon/scenario proof exists |
 
