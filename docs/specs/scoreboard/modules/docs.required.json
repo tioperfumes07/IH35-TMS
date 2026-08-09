@@ -1,0 +1,204 @@
+{
+  "module": "docs",
+  "entity_default": "USMCA",
+  "source": {
+    "pages": "apps/frontend/src/pages/docs/DocsHomePage.tsx"
+  },
+  "columns": [
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "home",
+      "tab": "Home",
+      "sub": "Docs home",
+      "route_hint": "/docs",
+      "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "tab.all",
+      "tab": "Entity tabs",
+      "sub": "All entities",
+      "route_hint": "/docs",
+      "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "tab.driver",
+      "tab": "Entity tabs",
+      "sub": "Drivers filter",
+      "route_hint": "/docs?entity=driver",
+      "required": [
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "tab.customer",
+      "tab": "Entity tabs",
+      "sub": "Customers filter",
+      "route_hint": "/docs?entity=customer",
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "tab.vendor",
+      "tab": "Entity tabs",
+      "sub": "Vendors filter",
+      "route_hint": "/docs?entity=vendor",
+      "required": [
+        "vendor",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "tab.unit",
+      "tab": "Entity tabs",
+      "sub": "Units filter",
+      "route_hint": "/docs?entity=unit",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "tab.equipment",
+      "tab": "Entity tabs",
+      "sub": "Equipment filter",
+      "route_hint": "/docs?entity=equipment",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "upload",
+      "tab": "Upload",
+      "sub": "Upload modal",
+      "route_hint": "/docs",
+      "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "kpi",
+      "tab": "KPIs",
+      "sub": "Foundation KPIs",
+      "route_hint": "/docs",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "table.entity_link",
+      "tab": "Table",
+      "sub": "EntityLink on linked files",
+      "route_hint": "/docs",
+      "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    }
+  ]
+}
